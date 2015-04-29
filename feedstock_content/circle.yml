@@ -7,7 +7,7 @@ dependencies:
   # just to pull each time. #rollondockercaching
   override:
     - docker pull pelson/conda64_obvious_ci
-    - docker pull pelson/conda32_obvious_ci
+#    - docker pull pelson/conda32_obvious_ci
 
 test:
   override:

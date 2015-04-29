@@ -13,7 +13,7 @@ while getopts :u:c: OPT; do
       u)
         UPLOAD_OWNER="${OPTARG}" ;;
       c)
-        UPLOAD_CHANNEL="$OPTARG}" ;;
+        UPLOAD_CHANNEL="{$OPTARG}" ;;
       [?])
         # got invalid option
         echo "Usage: $0 [-u upload-owner] [-c upload-channel]" >&2
@@ -77,8 +77,8 @@ conda info
 {% if test_setup -%}
 {{ test_setup }}{%- endif %}
 {% block test_and_upload %}
-conda build --test /recipe_root || exit $?
-/recipe_root/ci_support/upload_or_check_non_existence.py /recipe_root $UPLOAD_OWNER --channel=$UPLOAD_CHANNEL || exit $?
+conda build --test /recipe_root || exit 1
+/recipe_root/ci_support/upload_or_check_non_existence.py /recipe_root $UPLOAD_OWNER --channel=$UPLOAD_CHANNEL || exit 1
 {% endblock %}
 
 EOF
