@@ -1,8 +1,11 @@
 from jinja2 import Environment, FileSystemLoader
 import os
+import stat
 import yaml
+import warnings
 
 from conda_build.metadata import MetaData
+from conda.resolve import MatchSpec
 
 
 def render_run_docker_build(jinja_env, forge_config, forge_dir):
@@ -13,6 +16,8 @@ def render_run_docker_build(jinja_env, forge_config, forge_dir):
     run_docker_build_fname = os.path.join(forge_dir, 'ci_support', 'run_docker_build.sh')
     with open(run_docker_build_fname, 'w') as fh:
         fh.write(template.render(**forge_config))
+    st = os.stat(run_docker_build_fname)
+    os.chmod(run_docker_build_fname, st.st_mode | stat.S_IEXEC)
 
 
 def render_README(jinja_env, forge_config, forge_dir):
@@ -32,6 +37,8 @@ def copytree(src, dst, ignore=None, root_dst=None):
         if os.path.relpath(d, root_dst) in ignore:
             continue
         elif os.path.isdir(s):
+            if not os.path.exists(d):
+                os.makedirs(d)
             copytree(s, d, ignore, root_dst=root_dst)
         else:
             shutil.copy2(s, d)
@@ -50,8 +57,10 @@ full_matrix = [{'python': '2.7', 'numpy': '1.8'},
                ]
 
 def compute_build_matrix(meta, special_versions=None):
-    build_deps = meta.ms_depends('build')
-    dep_names = [ms.name for ms in meta.ms_depends('build')]
+    # Create match specs, without conda clobbering various versions (such as numpy + python)
+    build_deps = [MatchSpec(spec) for spec in meta.get_value('requirements/build', [])]
+#     build_deps = meta.ms_depends('build')
+    dep_names = [ms.name for ms in build_deps]
     if special_versions is None:
         special_versions = {'python': ['2.7', '3.4'],
                             'numpy': ['1.8', '1.9']}
@@ -76,7 +85,7 @@ def compute_build_matrix(meta, special_versions=None):
             if match_spec.name == dependency_name:
                 for version in possible_versions[:]:
                     suitable_version = all(version_spec.match(version)
-                                           for version_spec in match_spec.vspecs)
+                                           for version_spec in getattr(match_spec, 'vspecs', []))
                     if not suitable_version:
                         possible_versions.remove(version)
     import itertools
@@ -98,7 +107,8 @@ def compute_build_matrix(meta, special_versions=None):
 
 
 def main(forge_file_directory):
-    config = {'templates': {'run_docker_build': 'run_docker_build.tmpl'}}
+    config = {'docker': {'image': 'pelson/conda64_obvious_ci', 'command': 'bash'},
+              'templates': {'run_docker_build': 'run_docker_build.tmpl'}}
     forge_dir = os.path.abspath(forge_file_directory)
 
     forge_yml = os.path.join(forge_dir, "forge.yml")
@@ -119,7 +129,8 @@ def main(forge_file_directory):
 #     matrix.append([('foo', '1')])
 #     print matrix
     # TODO: Allow the forge.yml to filter the matrix.
-    # TODO: What if no matrix items are figured out, and the template is matrix oriented?
+    # TODO: What if no matrix items are figured out, and the template is matrix oriented? And visa-versa.
+    print matrix
     if matrix:
         config['matrix'] = matrix
 
@@ -135,6 +146,8 @@ def main(forge_file_directory):
 
 if True and __name__ == '__main__':
     main('../udunits-feedstock')
+    main('../libmo_unpack-feedstock')
+    main('../mo_pack-feedstock')
 
 elif __name__ == '__main__':
     import argparse

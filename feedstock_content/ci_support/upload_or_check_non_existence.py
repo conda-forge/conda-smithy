@@ -106,4 +106,8 @@ if __name__ == '__main__':
         else:
             print('Distribution {} already \nexists on {}\'s {} channel (md5 has been '
                   'checked for consistency)'.format(bldpkg_path(meta), owner, channel))
-
+    else:
+        print("No BINSTAR_TOKEN present, so no upload is taking place. "
+              "The distribution just built {} already available on {}'s "
+              "{} channel.".format('is' if exists else 'is not',
+                                   owner, channel))
