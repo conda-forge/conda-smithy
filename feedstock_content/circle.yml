@@ -1,0 +1,15 @@
+machine:
+  services:
+    - docker
+
+dependencies:
+  # Note, we used to use the naive caching of docker images, but found that it was quicker
+  # just to pull each time. #rollondockercaching
+  override:
+    - docker pull pelson/conda64_obvious_ci
+    - docker pull pelson/conda32_obvious_ci
+
+test:
+  override:
+    # Run, test and (if we have a BINSTAR_TOKEN) upload the distributions.
+    - ./ci_support/run_docker_build.sh -u conda-forge -c main
