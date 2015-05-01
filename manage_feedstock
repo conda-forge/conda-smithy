@@ -1,0 +1,91 @@
+#!/usr/bin/env python
+import argparse
+import json
+import os
+import subprocess
+import sys
+
+
+here = os.path.abspath(os.path.dirname(__file__))
+
+
+def create_parser():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--forge-organisation', default='conda-forge')
+    subparsers = parser.add_subparsers(dest='subcommand')
+
+    # Don't clone into the same directory as this script (go up one level to
+    # mirror the) github org. Otherwise, clone to the cwd.
+    if os.path.abspath(os.getcwd()) == here:
+        default_root = os.path.dirname(here)
+    else:
+        default_root = os.getcwd()
+
+    parser.add_argument('--git-root', help='Where the feedstocks are stored.',
+                        default=default_root)
+
+    clone = subparsers.add_parser('clone')
+
+    identify = subparsers.add_parser('identify')
+
+    return parser, [clone, identify]
+
+
+def clone(args):
+    root_dir = args.git_root
+    for pkg in repo_names():
+        target = '{}-feedstock'.format(pkg)
+        if not os.path.exists(os.path.join(root_dir, target)):
+            print 'Cloning {}'.format(pkg)
+            git_url = 'https://github.com/{}/{}-feedstock.git'.format(args.forge_organisation, pkg)
+            subprocess.check_output(['git', 'clone', git_url, target], cwd=root_dir)
+            subprocess.check_call(['git', 'remote', 'rename', 'origin', 'upstream'],
+                                  cwd=os.path.join(root_dir, target))
+            print
+        else:
+            print 'Skipping {}'.format(pkg)
+
+
+def identify(args):
+    """
+    Find all feedstock repositories in the given github forge organisation.
+
+    """
+    import requests
+
+    git_api_url = "https://api.github.com/orgs/{}/repos".format(args.forge_organisation)
+    request = requests.get(git_api_url)
+    if request.status_code != 200:
+        request.raise_for_status()
+    repos = request.json()
+    repo_names = [repo['name'][:-10] for repo in repos
+                  if repo['name'].endswith('feedstock')]
+    if not repo_names:
+        raise ValueError('No feedstocks found. Not creating JSON.')
+    with open('feedstock-repos.json', 'w') as fh:
+        json.dump(sorted(repo_names), fh)
+
+
+def repo_names():
+    if not os.path.exists('feedstock-repos.json'):
+        raise ValueError('Feedstock repos json files missing. Run identify.')
+    with open('feedstock-repos.json', 'r') as fh:
+        return json.load(fh)
+
+
+subcommands = {'clone': clone,
+               'identify': identify}
+
+
+if __name__ == '__main__':
+    parser, _ = create_parser()
+    if len(sys.argv) > 1:
+        args = parser.parse_args()
+    elif 0:
+        args = parser.parse_args(['clone'])#, 'bar'])
+    elif 1:
+        args = parser.parse_args(['identify'])
+
+    # Figure out which subcommand function to call, and call it.
+    subcommand_function = subcommands[args.subcommand]
+    subcommand_function(args)
