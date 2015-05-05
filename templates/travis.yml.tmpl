@@ -1,0 +1,39 @@
+
+{% set conda_vars = {'python': 'CONDA_PY', 'numpy': 'CONDA_NPY'} %}
+
+{% macro matrix_env(matrix_item) -%}
+    {% for dep_name, version in matrix_item %}{{ conda_vars.get(dep_name, dep_name) }}={{version}}  {% endfor %}
+{%- endmacro %}
+
+language: objective-c
+
+{% block env %}
+{% if matrix[0]%}
+env:
+  matrix:
+    {% for case in matrix %}
+    - {{- matrix_env(case) }}
+    {% endfor %}
+{% endif %}
+
+#  global:
+#    - secure: "d37de1LGE70o1w+gB/6vv8pY29gz9ASffPyvMTeDauBdfGKrnk9ZVJd65arEOOUf0Vv5Ay89+VhcphuUSKDzUWjXwNSHmfOiG+FQinXRNnnSHB/3Iji8UOlZU2/DNMfe5pEl2X8ryVVhg0Xv41/Z+oo2UvB3rOO6XNbyWHb7L/I="
+
+{% endblock %}
+
+install:
+    - MINICONDA_URL="http://repo.continuum.io/miniconda"
+      MINICONDA_FILE="Miniconda3-3.7.3-MacOSX-x86_64.sh"
+      wget "${MINICONDA_URL}/${MINICONDA_FILE}"
+      bash $MINICONDA_FILE -b
+
+      export PATH=/Users/travis/miniconda3/bin:$PATH
+
+      conda update --yes conda
+      conda install --yes conda-build jinja2 binstar
+
+script:
+  - conda build .
+
+after_success:
+  - echo "Upload!"

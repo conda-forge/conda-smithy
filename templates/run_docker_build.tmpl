@@ -13,7 +13,7 @@ while getopts :u:c: OPT; do
       u)
         UPLOAD_OWNER="${OPTARG}" ;;
       c)
-        UPLOAD_CHANNEL="{$OPTARG}" ;;
+        UPLOAD_CHANNEL="${$OPTARG}" ;;
       [?])
         # got invalid option
         echo "Usage: $0 [-u upload-owner] [-c upload-channel]" >&2

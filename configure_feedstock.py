@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 from jinja2 import Environment, FileSystemLoader
 import os
 import stat
@@ -18,6 +19,13 @@ def render_run_docker_build(jinja_env, forge_config, forge_dir):
         fh.write(template.render(**forge_config))
     st = os.stat(run_docker_build_fname)
     os.chmod(run_docker_build_fname, st.st_mode | stat.S_IEXEC)
+
+
+def render_travis(jinja_env, forge_config, forge_dir):
+    template = jinja_env.get_template('travis.yml.tmpl')
+    target_fname = os.path.join(forge_dir, '.travis.yml')
+    with open(target_fname, 'w') as fh:
+        fh.write(template.render(**forge_config))
 
 
 def render_README(jinja_env, forge_config, forge_dir):
@@ -130,7 +138,6 @@ def main(forge_file_directory):
 #     print matrix
     # TODO: Allow the forge.yml to filter the matrix.
     # TODO: What if no matrix items are figured out, and the template is matrix oriented? And visa-versa.
-    print matrix
     if matrix:
         config['matrix'] = matrix
 
@@ -141,6 +148,8 @@ def main(forge_file_directory):
 
     copy_feedstock_content(forge_dir)
     render_run_docker_build(env, config, forge_dir)
+#     print matrix
+    render_travis(env, config, forge_dir)
     render_README(env, config, forge_dir)
 
 
