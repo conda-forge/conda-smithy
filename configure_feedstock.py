@@ -9,6 +9,13 @@ from conda_build.metadata import MetaData
 from conda.resolve import MatchSpec
 
 
+__version__ = '0.1.0'
+
+
+def about_template():
+    return '# This file was generated automatically by conda-forge (vn {}).'.format(__version__)
+
+
 def render_run_docker_build(jinja_env, forge_config, forge_dir):
     # TODO: Conda has a convenience for accessing nested yaml content.
     template_name = forge_config.get('templates', {}).get('run_docker_build',
@@ -25,6 +32,7 @@ def render_travis(jinja_env, forge_config, forge_dir):
     template = jinja_env.get_template('travis.yml.tmpl')
     target_fname = os.path.join(forge_dir, '.travis.yml')
     with open(target_fname, 'w') as fh:
+        fh.write(about_template())
         fh.write(template.render(**forge_config))
 
 
@@ -32,6 +40,14 @@ def render_README(jinja_env, forge_config, forge_dir):
     template = jinja_env.get_template('README.tmpl')
     target_fname = os.path.join(forge_dir, 'README')
     with open(target_fname, 'w') as fh:
+        fh.write(template.render(**forge_config))
+
+
+def render_appveyor(jinja_env, forge_config, forge_dir):
+    template = jinja_env.get_template('appveyor.yml.tmpl')
+    target_fname = os.path.join(forge_dir, 'appveyor.yml')
+    with open(target_fname, 'w') as fh:
+        fh.write(about_template())
         fh.write(template.render(**forge_config))
 
 
@@ -115,8 +131,13 @@ def compute_build_matrix(meta, special_versions=None):
 
 
 def main(forge_file_directory):
+    recipe_dir = 'recipe'
     config = {'docker': {'image': 'pelson/conda64_obvious_ci', 'command': 'bash'},
-              'templates': {'run_docker_build': 'run_docker_build.tmpl'}}
+              'templates': {'run_docker_build': 'run_docker_build.tmpl'},
+              'travis': [],
+              'circle': [],
+              'appveyor': [],
+              'recipe_dir': recipe_dir}
     forge_dir = os.path.abspath(forge_file_directory)
 
     forge_yml = os.path.join(forge_dir, "forge.yml")
@@ -129,8 +150,8 @@ def main(forge_file_directory):
         # values. (XXX except dicts within dicts need to be dealt with!)
         config.update(file_config)
 
-    # TODO: Allow the recipe to live higher than the root of the repository.
-    meta = MetaData(forge_dir)
+    meta_dir = os.path.join(forge_dir, config['recipe_dir'])
+    meta = MetaData(meta_dir)
     config['package'] = meta
 
     matrix = compute_build_matrix(meta)
@@ -148,8 +169,10 @@ def main(forge_file_directory):
 
     copy_feedstock_content(forge_dir)
     render_run_docker_build(env, config, forge_dir)
+    print config
 #     print matrix
     render_travis(env, config, forge_dir)
+    render_appveyor(env, config, forge_dir)
     render_README(env, config, forge_dir)
 
 

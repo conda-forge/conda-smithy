@@ -44,7 +44,7 @@ def upload(cli, meta, owner, channels):
     try:
         with open('binstar.token', 'w') as fh:
             fh.write(cli.token)
-        subprocess.check_call(['binstar', '-t', 'binstar.token',
+        subprocess.check_call(['binstar', '--quiet', '-t', 'binstar.token',
                                'upload', bldpkg_path(meta),
                                '--user={}'.format(owner),
                                '--channel={}'.format(channels)],
@@ -79,7 +79,7 @@ def add_distribution_to_channel(binstar_cli, meta, owner, channel='main'):
 
 
 if __name__ == '__main__':
-    token = os.environ['BINSTAR_TOKEN']
+    token = os.environ.get('BINSTAR_TOKEN')
 
     description = ('Upload or check consistency of a built version of a '
                    'conda recipe with binstar. Note: The existence of the '
