@@ -11,6 +11,8 @@ from conda.resolve import MatchSpec
 
 __version__ = '0.1.0'
 
+conda_forge_content = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
+
 
 def about_template():
     return '# This file was generated automatically by conda-forge (vn {}).'.format(__version__)
@@ -52,7 +54,7 @@ def render_appveyor(jinja_env, forge_config, forge_dir):
 
 
 import shutil
-def copytree(src, dst, ignore=None, root_dst=None):
+def copytree(src, dst, ignore=(), root_dst=None):
     if root_dst is None:
         root_dst = dst
     for item in os.listdir(src):
@@ -69,7 +71,7 @@ def copytree(src, dst, ignore=None, root_dst=None):
 
 
 def copy_feedstock_content(forge_dir):
-    feedstock_content = os.path.join(os.path.dirname(__file__),
+    feedstock_content = os.path.join(conda_forge_content,
                                      'feedstock_content')
     copytree(feedstock_content, forge_dir, 'README')
 
@@ -130,6 +132,13 @@ def compute_build_matrix(meta, special_versions=None):
 #     return matrix
 
 
+def meta_of_feedstock(forge_dir):
+    recipe_dir = 'recipe'
+    meta_dir = os.path.join(forge_dir, recipe_dir)
+    meta = MetaData(meta_dir)
+    return meta
+
+
 def main(forge_file_directory):
     recipe_dir = 'recipe'
     config = {'docker': {'image': 'pelson/conda64_obvious_ci', 'command': 'bash'},
@@ -140,9 +149,9 @@ def main(forge_file_directory):
               'recipe_dir': recipe_dir}
     forge_dir = os.path.abspath(forge_file_directory)
 
-    forge_yml = os.path.join(forge_dir, "forge.yml")
+    forge_yml = os.path.join(forge_dir, "conda-forge.yml")
     if not os.path.exists(forge_yml):
-        warnings.warn('No forge.yml found. Assuming default options.')
+        warnings.warn('No conda-forge.yml found. Assuming default options.')
     else:
         with open(forge_yml, "r") as fh:
             file_config = list(yaml.load_all(fh))[0]
@@ -150,9 +159,7 @@ def main(forge_file_directory):
         # values. (XXX except dicts within dicts need to be dealt with!)
         config.update(file_config)
 
-    meta_dir = os.path.join(forge_dir, config['recipe_dir'])
-    meta = MetaData(meta_dir)
-    config['package'] = meta
+    config['package'] = meta = meta_of_feedstock(forge_file_directory)
 
     matrix = compute_build_matrix(meta)
 #     matrix.append([('foo', '1')])
@@ -162,15 +169,13 @@ def main(forge_file_directory):
     if matrix:
         config['matrix'] = matrix
 
-    tmplt_dir = os.path.join(os.path.dirname(__file__), 'templates')
+    tmplt_dir = os.path.join(conda_forge_content, 'templates')
     # Load templates from the feedstock in preference to the smithy's templates.
     env = Environment(loader=FileSystemLoader([os.path.join(forge_dir, 'templates'),
                                                tmplt_dir]))
 
     copy_feedstock_content(forge_dir)
     render_run_docker_build(env, config, forge_dir)
-    print config
-#     print matrix
     render_travis(env, config, forge_dir)
     render_appveyor(env, config, forge_dir)
     render_README(env, config, forge_dir)
@@ -184,9 +189,9 @@ if True and __name__ == '__main__':
 elif __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser(description=('Configure a feedstock given '
-                                                  'a forge.yml file.'))
+                                                  'a conda-forge.yml file.'))
     parser.add_argument('forge_file_directory',
-                        help=('the directory containing the forge.yml file '
+                        help=('the directory containing the conda-forge.yml file '
                               'used to configure the feedstock'))
 
     args = parser.parse_args()

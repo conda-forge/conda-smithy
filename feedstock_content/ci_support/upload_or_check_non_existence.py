@@ -99,6 +99,7 @@ if __name__ == '__main__':
         on_channel = distribution_exists_on_channel(cli, meta, owner, channel)
         if not exists:
             upload(cli, meta, owner, channel)
+            print('Uploaded {}'.format(bldpkg_path(meta)))
         elif not on_channel:
             print('Adding distribution {} to {}\'s {} channel'
                   ''.format(bldpkg_path(meta), owner, channel))

@@ -48,7 +48,7 @@ install:
 build: off
 
 test_script:
-    - "%CMD_IN_ENV% conda build .\{{ recipe_dir }}"
+    - "%CMD_IN_ENV% conda build {{ recipe_dir }}"
 before_deploy:
     - "set /p \"BINSTAR_TOKEN=\"< binstar_token.txt"
 deploy_script:
