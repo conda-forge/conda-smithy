@@ -12,4 +12,4 @@ dependencies:
 test:
   override:
     # Run, test and (if we have a BINSTAR_TOKEN) upload the distributions.
-    - ./ci_support/run_docker_build.sh -u conda-forge -c main
+    - ./ci_support/run_docker_build.sh

@@ -4,32 +4,18 @@
 
 FEEDSTOCK_ROOT=$(cd "$(dirname "$0")/.."; pwd;)
 RECIPE_ROOT=$FEEDSTOCK_ROOT/{{ recipe_dir }}
-echo $RECIPE_ROOT
 
-UPLOAD_OWNER="conda-forge"
+UPLOAD_OWNER="{{ channels['target'] }}"
 UPLOAD_CHANNEL="main"
 
-while getopts :u:c: OPT; do
-    case "$OPT" in
-      u)
-        UPLOAD_OWNER="${OPTARG}" ;;
-      c)
-        UPLOAD_CHANNEL="${$OPTARG}" ;;
-      [?])
-        # got invalid option
-        echo "Usage: $0 [-u upload-owner] [-c upload-channel]" >&2
-        exit 1 ;;
-    esac
-done
-
-
-echo ${UPLOAD_OWNER}
+docker info
 
 config=$(cat <<CONDARC
 
 channels:
- - conda-forge
- - file:///feedstock_root/build_artefacts
+{% for channel in channels.get('sources', []) %}
+ - {{ channel }}
+{% endfor %}
  - defaults # As we need conda-build
 
 conda-build:
@@ -37,7 +23,8 @@ conda-build:
 
 show_channel_urls: True
 
-CONDARC)
+CONDARC
+)
 
 cat << EOF | docker run -i \
                         -v ${RECIPE_ROOT}:/recipe_root \
@@ -83,3 +70,4 @@ conda build --test /recipe_root || exit 1
 {% endblock %}
 
 EOF
+

@@ -146,6 +146,7 @@ def main(forge_file_directory):
               'travis': [],
               'circle': [],
               'appveyor': [],
+              'channels': {'sources': [], 'target': []},
               'recipe_dir': recipe_dir}
     forge_dir = os.path.abspath(forge_file_directory)
 
@@ -195,4 +196,4 @@ elif __name__ == '__main__':
                               'used to configure the feedstock'))
 
     args = parser.parse_args()
-    main(args.forge_file)
+    main(args.forge_file_directory)
