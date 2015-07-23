@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function
 from jinja2 import Environment, FileSystemLoader
 import os
 import stat
@@ -164,7 +165,7 @@ def main(forge_file_directory):
 
     matrix = compute_build_matrix(meta)
 #     matrix.append([('foo', '1')])
-#     print matrix
+#     print(matrix)
     # TODO: Allow the forge.yml to filter the matrix.
     # TODO: What if no matrix items are figured out, and the template is matrix oriented? And visa-versa.
     if matrix:

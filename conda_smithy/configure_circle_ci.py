@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function
 import os
 import requests
 
@@ -44,14 +45,14 @@ def add_project_to_circle(user, project):
              for repo in repos]
     if '{}/{}'.format(user, project).lower() not in repos:
         # Apparently there is an endpoint for this, but it doesn't seem to work...
-        print ' * Goto https://circleci.com/add-projects'
+        print(' * Goto https://circleci.com/add-projects')
 #         # Try adding it.
 #         data = {'username': user, 'reponame': project}
 #         response = requests.post(url, data, headers=headers)
 #         if response.status_code != 201:
 #             response.raise_for_status()
     else:
-        print ' * {}/{} already enabled on CircleCI'.format(user, project)
+        print(' * {}/{} already enabled on CircleCI'.format(user, project))
 
 
 def add_project_to_appveyor(user, project):
@@ -65,10 +66,10 @@ def add_project_to_appveyor(user, project):
     repos = [repo['repositoryName'].lower() for repo in response.json()]
 
     if '{}/{}'.format(user, project).lower() in repos:
-        print ' * {}/{} already enabled on appveyor'.format(user, project)
+        print(' * {}/{} already enabled on appveyor'.format(user, project))
     else:
         # Apparently there is an endpoint for this, but it doesn't seem to work...
-        print ' * Goto https://ci.appveyor.com/projects/new'
+        print(' * Goto https://ci.appveyor.com/projects/new')
 #         # Try adding it.
 #         data = {'repositoryProvider': 'gitHub', 'repositoryName': '{}/{}'.format(user, project)}
 #         response = requests.post(url, headers=headers, data=data)
@@ -114,4 +115,4 @@ if __name__ == '__main__':
 #     add_project_to_circle(args.user, args.project)
     add_project_to_appveyor(args.user, args.project)
 #     add_project_to_travis(args.user, args.project)
-    print 'Done'
+    print('Done')

@@ -1,3 +1,6 @@
 *.token
 feedstock-repos.json
 *.pyc
+build/
+conda_smithy.egg-info/
+dist/

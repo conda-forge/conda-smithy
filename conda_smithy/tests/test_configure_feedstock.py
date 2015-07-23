@@ -1,3 +1,4 @@
+from __future__ import print_function
 import unittest
 import configure_feedstock
 from conda_build.metadata import MetaData
@@ -19,12 +20,12 @@ class Test_compute_build_matrix(unittest.TestCase):
     def test_numpy_no_python(self):
         self.add_requirements('numpy')
         r = configure_feedstock.compute_build_matrix(self.meta)
-        print r
+        print(r)
 
     def test_min_numpy(self):
         self.add_requirements('numpy >18', 'python')
         r = configure_feedstock.compute_build_matrix(self.meta)
-        print r
+        print(r)
 
     def test_py2(self):
         self.add_requirements('python 2.7')
