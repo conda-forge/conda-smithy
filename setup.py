@@ -29,9 +29,9 @@ def main():
                   'conda_smithy.feedstock_content.ci_support',
                   ],
         package_dir={'conda_smithy': 'conda_smithy', 
-                     'conda_smithy.feedstock_content': 'feedstock_content', 
+                     'conda_smithy.feedstock_content': 'conda_smithy/feedstock_content', 
                      'conda_smithy.feedstock_content.ci_support': 
-                        'feedstock_content/ci_support', 
+                        'conda_smithy/feedstock_content/ci_support', 
                      },
         package_data={'conda_smithy.feedstock_content': ['README', '*.*'],
                       'conda_smithy.feedstock_content.ci_support': ['*'],
