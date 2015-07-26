@@ -27,14 +27,17 @@ def main():
         packages=['conda_smithy', 
                   'conda_smithy.feedstock_content', 
                   'conda_smithy.feedstock_content.ci_support',
+                  'conda_smithy.templates', 
                   ],
         package_dir={'conda_smithy': 'conda_smithy', 
                      'conda_smithy.feedstock_content': 'conda_smithy/feedstock_content', 
                      'conda_smithy.feedstock_content.ci_support': 
                         'conda_smithy/feedstock_content/ci_support', 
+                     'conda_smithy.templates': 'conda_smithy/templates', 
                      },
         package_data={'conda_smithy.feedstock_content': ['README', '*.*'],
                       'conda_smithy.feedstock_content.ci_support': ['*'],
+                      'conda_smithy.templates': ['*'],
                       },
         zip_safe=False,
         )
