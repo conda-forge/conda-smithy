@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function
 import os
 import requests
 import subprocess
@@ -92,7 +93,7 @@ class GithubCreate(Subcommand):
         repo = user_or_org.create_repo(os.path.basename(args.feedstock_directory),
                                        has_wiki=False,
                                        description='A conda-smithy repository for {}.'.format(meta.name()))
-        print 'Created {} on github'.format(repo.full_name)
+        print('Created {} on github'.format(repo.full_name))
 
 
 class RegisterFeedstockCI(Subcommand):
