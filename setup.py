@@ -23,7 +23,8 @@ def main():
         author='Phil Elson',
         author_email='pelson.pub@gmail.com',
         url='https://github.com/conda-forge/conda-smithy',
-        scripts=[os.path.join('scripts', 'conda-smithy')],
+        entry_points=dict(console_scripts=[
+            'conda-smithy = conda_smithy.conda_smithy:main']),
         packages=['conda_smithy',
                   'conda_smithy.feedstock_content',
                   'conda_smithy.feedstock_content.ci_support',
