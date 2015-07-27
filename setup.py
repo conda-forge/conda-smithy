@@ -4,7 +4,7 @@ import os.path
 from setuptools import setup
 
 
-tl_package = 'obvci'
+tl_package = 'conda_smithy'
 vn_context, vn_fname = {}, os.path.join(tl_package, '_version.py')
 try:
     with open(vn_fname, 'r') as fh:
@@ -17,23 +17,23 @@ except IOError:
 def main():
     skw = dict(
         name='conda-smithy',
-        version='0.1.0dev0',
+        version=version,
         description='A package to create repositories for conda recipes, and automate '
                     'their building with CI tools on Linux, OSX and Windows.',
         author='Phil Elson',
         author_email='pelson.pub@gmail.com',
         url='https://github.com/conda-forge/conda-smithy',
         scripts=[os.path.join('scripts', 'conda-smithy')],
-        packages=['conda_smithy', 
-                  'conda_smithy.feedstock_content', 
+        packages=['conda_smithy',
+                  'conda_smithy.feedstock_content',
                   'conda_smithy.feedstock_content.ci_support',
-                  'conda_smithy.templates', 
+                  'conda_smithy.templates',
                   ],
-        package_dir={'conda_smithy': 'conda_smithy', 
-                     'conda_smithy.feedstock_content': 'conda_smithy/feedstock_content', 
-                     'conda_smithy.feedstock_content.ci_support': 
-                        'conda_smithy/feedstock_content/ci_support', 
-                     'conda_smithy.templates': 'conda_smithy/templates', 
+        package_dir={'conda_smithy': 'conda_smithy',
+                     'conda_smithy.feedstock_content': 'conda_smithy/feedstock_content',
+                     'conda_smithy.feedstock_content.ci_support':
+                        'conda_smithy/feedstock_content/ci_support',
+                     'conda_smithy.templates': 'conda_smithy/templates',
                      },
         package_data={'conda_smithy.feedstock_content': ['README', '*.*'],
                       'conda_smithy.feedstock_content.ci_support': ['*'],
