@@ -12,7 +12,7 @@ from conda.resolve import MatchSpec
 
 __version__ = '0.1.0'
 
-conda_forge_content = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
+conda_forge_content = os.path.abspath(os.path.dirname(__file__))
 
 
 def about_template():
