@@ -1,9 +1,11 @@
 #!/usr/bin/env python
-from __future__ import print_function
+from __future__ import print_function, absolute_import
+
 import os
 import requests
 import subprocess
 import sys
+import argparse
 
 from conda_build.metadata import MetaData
 
@@ -131,7 +133,7 @@ class RegisterFeedstockCI(Subcommand):
         configure_circle_ci.add_project_to_travis(owner, repo)
 
 
-if __name__ == '__main__':
+def main():
 #     UX:
 #         conda-smithy init /path/to/udunits-recipe ./
 #         conda-smithy github-create ./ --organization=conda-forge --remote-name=upstream
@@ -142,8 +144,6 @@ if __name__ == '__main__':
 #         conda smithy create-forge ./recipe
 
 #        conda smithy clone-all
-
-    import argparse
 
     parser = argparse.ArgumentParser("conda-smithy - conda recipe building, made powerful.")
     subparser = parser.add_subparsers()
@@ -162,3 +162,7 @@ if __name__ == '__main__':
         args = parser.parse_args()
 
     args.subcommand_func(args)
+
+
+if __name__ == '__main__':
+    main()
