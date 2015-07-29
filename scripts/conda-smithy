@@ -77,8 +77,11 @@ class GithubCreate(Subcommand):
         group.add_argument("--organization", default="conda-forge")
 
     def __call__(self, args):
-        with open(os.path.expanduser('~/.conda-smithy/github.token'), 'r') as fh:
-            token = fh.read().strip()
+        try:
+            with open(os.path.expanduser('~/.conda-smithy/github.token'), 'r') as fh:
+                token = fh.read().strip()
+        except IOError:
+            print('No github token. Put one in ~/.conda-smithy/github.token')
         meta = configure_feedstock.meta_of_feedstock(args.feedstock_directory)
 
         from github import Github
@@ -129,7 +132,7 @@ class RegisterFeedstockCI(Subcommand):
 
 
 if __name__ == '__main__':
-#     UX: 
+#     UX:
 #         conda-smithy init /path/to/udunits-recipe ./
 #         conda-smithy github-create ./ --organization=conda-forge --remote-name=upstream
 #         conda-smithy register-feedstock-ci ./
