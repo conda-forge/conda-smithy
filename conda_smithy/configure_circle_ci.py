@@ -9,12 +9,18 @@ import requests
 # curl -X POST --header "Content-Type: application/json" -d '{"name":"foo", "value":"bar"}'
 # https://circleci.com/api/v1/project/:username/:project/envvar?circle-token=:token
 
-# Create a token at https://circleci.com/account/api. Put it in circle.token
-with open(os.path.expanduser('~/.conda-smithy/circle.token'), 'r') as fh:
-    circle_token = fh.read().strip()
+try:
+    # Create a token at https://circleci.com/account/api. Put it in circle.token
+    with open(os.path.expanduser('~/.conda-smithy/circle.token'), 'r') as fh:
+        circle_token = fh.read().strip()
+except IOError:
+    print('No circle token. Put one in ~/.conda-smithy/circle.token')
 
-with open(os.path.expanduser('~/.conda-smithy/appveyor.token'), 'r') as fh:
-    appveyor_token = fh.read().strip()
+try:
+    with open(os.path.expanduser('~/.conda-smithy/appveyor.token'), 'r') as fh:
+        appveyor_token = fh.read().strip()
+except IOError:
+    print('No appveyor token. Put one in ~/.conda-smithy/appveyor.token')
 
 
 
