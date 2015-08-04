@@ -95,7 +95,7 @@ class GithubCreate(Subcommand):
         else:
             # Use the organization provided.
             user_or_org = gh.get_organization(args.organization)
-        repo = user_or_org.create_repo(os.path.basename(args.feedstock_directory),
+        repo = user_or_org.create_repo(os.path.basename(os.path.abspath(args.feedstock_directory)),
                                        has_wiki=False,
                                        description='A conda-smithy repository for {}.'.format(meta.name()))
         print('Created {} on github'.format(repo.full_name))
