@@ -1,6 +1,0 @@
-Making a new feedstock
-----------------------
-
- * Run configure_readstock.py <directory_of_conda_recipe>
- * Register with each of the CI services.
- * Push the repository
