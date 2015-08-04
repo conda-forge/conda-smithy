@@ -22,9 +22,18 @@ You should be able to test parts of `conda-smithy` with whatever tokens you have
 Making a new feedstock
 ----------------------
 
-1. Make the feedstock repo: `conda smithy init <directory_of_conda_recipe>`. For a recipe called `foo`, this creates a directory called `foo-feedstock`, populates it with CI setup skeletons, and initializes it as a git repo.
-2. Create a github repo: `conda smithy github-create --organization conda-forge foo-feedstock`. This requires a github token. You can try it out with a github user account instead of an organization be replacing the organization argument with `--user github_user_name`.
-3. Register the feedstock with CI services: `conda smithy register-feedstock-ci --organization conda-forge foo-feedstock`. This requires tokens for the CI services. You can give the name of a user instead of organization with `--user github_user_name`.
+1. **Make the feedstock repo:** `conda smithy init
+<directory_of_conda_recipe>`.     For a recipe called `foo`, this creates a
+directory called `foo-feedstock`, populates it with CI setup skeletons, and
+initializes it as a git repo.
+2. **Create a github repo:** `conda smithy github-create --organization conda-
+forge foo-feedstock`. This requires a github token. You can try it out with a
+github user account instead of an organization be replacing the organization
+argument with `--user github_user_name`.
+3. **Register the feedstock with CI services:** `conda smithy register-
+feedstock-ci --organization conda-forge foo-feedstock`. This requires tokens
+for the CI services. You can give the name of a user instead of organization
+with `--user github_user_name`.
 
 Running a build
 ---------------
