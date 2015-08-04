@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import os.path
 
-from setuptools import setup
+from setuptools import setup, find_packages
 
 
 tl_package = 'conda_smithy'
@@ -12,6 +12,10 @@ try:
     version = vn_context.get('__version__', 'dev')
 except IOError:
     version = 'dev'
+
+
+with open('requirements.txt') as f:
+    requirements = f.read().splitlines()
 
 
 def main():
@@ -25,21 +29,11 @@ def main():
         url='https://github.com/conda-forge/conda-smithy',
         entry_points=dict(console_scripts=[
             'conda-smithy = conda_smithy.conda_smithy:main']),
-        packages=['conda_smithy',
-                  'conda_smithy.feedstock_content',
-                  'conda_smithy.feedstock_content.ci_support',
-                  'conda_smithy.templates',
-                  ],
-        package_dir={'conda_smithy': 'conda_smithy',
-                     'conda_smithy.feedstock_content': 'conda_smithy/feedstock_content',
-                     'conda_smithy.feedstock_content.ci_support':
-                        'conda_smithy/feedstock_content/ci_support',
-                     'conda_smithy.templates': 'conda_smithy/templates',
-                     },
-        package_data={'conda_smithy.feedstock_content': ['README', '*.*'],
-                      'conda_smithy.feedstock_content.ci_support': ['*'],
-                      'conda_smithy.templates': ['*'],
-                      },
+        packages=find_packages(),
+        install_requires=requirements,
+        include_package_data=True,
+        # As conda-smithy has resources as part of the codebase, it is
+        # not zip-safe.
         zip_safe=False,
         )
     setup(**skw)

@@ -1,0 +1,4 @@
+include requirements.txt
+recursive-include conda_smithy/feedstock_content *
+recursive-include conda_smithy/templates *.tmpl
+

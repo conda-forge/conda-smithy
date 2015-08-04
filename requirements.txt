@@ -1,0 +1,4 @@
+Jinja2
+requests
+conda-build
+conda
