@@ -91,7 +91,7 @@ class GithubCreate(Subcommand):
         if args.user is not None:
             pass
             # User has been defined, and organization has not.
-            user_or_org.get_user(args.user)
+            user_or_org = gh.get_user()
         else:
             # Use the organization provided.
             user_or_org = gh.get_organization(args.organization)
