@@ -40,8 +40,12 @@ install:
       conda update --yes conda
       conda install --yes conda-build jinja2 binstar
 
+      {% for channel in channels.get('sources', []) %}
+      conda config --add channels {{ channel }}
+      {% endfor %}
+
 script:
   - conda build ./{{ recipe_dir }}
 
 after_success:
-  - ./ci_support/upload_or_check_non_existence.py ./{{ recipe_dir }} conda-forge --channel=main
+  - ./ci_support/upload_or_check_non_existence.py ./{{ recipe_dir }} {{ channels['target'] }} --channel=main
