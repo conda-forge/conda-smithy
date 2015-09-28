@@ -20,8 +20,9 @@ def generate_feedstock_content(target_directory, recipe_dir):
     configure_feedstock.copytree(recipe_dir, target_recipe_dir)
 
     forge_yml = os.path.join(target_directory, 'conda-forge.yml')
-    with open(forge_yml, 'w') as fh:
-        fh.write('[]')
+    if not os.path.exists(forge_yml):
+        with open(forge_yml, 'w') as fh:
+            fh.write('[]')
 
     configure_feedstock.main(target_directory)
 
