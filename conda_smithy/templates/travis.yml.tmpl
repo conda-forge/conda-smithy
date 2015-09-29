@@ -1,5 +1,5 @@
 
-{% set conda_vars = {'python': ' CONDA_PY', 'numpy': 'CONDA_NPY'} %}
+{% set conda_vars = {'python': 'CONDA_PY', 'numpy': 'CONDA_NPY'} %}
 
 {% macro matrix_env(matrix_item) -%}
     {% for dep_name, version in matrix_item %}{{ conda_vars.get(dep_name, dep_name) }}={{version}}  {% endfor %}
@@ -14,7 +14,7 @@ env:
 {% if matrix[0] %}
   matrix:
     {% for case in matrix %}
-    - {{- matrix_env(case) }}
+    - {{ matrix_env(case) }}
     {% endfor %}
 {% endif %}
 
