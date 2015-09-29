@@ -1,7 +1,7 @@
 {% set conda_vars = {'python': 'CONDA_PY', 'numpy': 'CONDA_NPY'} %}
 
 {% macro matrix_env(arch, matrix_item) -%}
-  - TARGET_ARCH: {{ arch }}{% for dep_name, version in matrix_item %}
+  - TARGET_ARCH: {{ arch }}{% for dep_name, version in matrix_item | sort %}
       {{ conda_vars.get(dep_name, dep_name) }}: {{version}}{% endfor %}
 {%- endmacro %}
 
@@ -19,10 +19,10 @@ environment:
   CONDA_PY: "27"
 
   BINSTAR_TOKEN:
-    # Generated with "binstar auth --create --name appveyor -o conda-forge" and encrypted on ci.appveyor.com/tools/encrypt. 
+    # Generated with "binstar auth --create --name appveyor -o conda-forge" and encrypted on ci.appveyor.com/tools/encrypt.
     secure: wtylLGtp/ID3G3DFT2uxuLFXuijFqmxI6phj60izpNC3pxd585bR6k2oonf5iGGb
 
-  matrix:{% for case in matrix %}
+  matrix:{% for case in matrix | sort %}
     {{ matrix_env("x86", case) }}
     {{ matrix_env("x64", case) }}
 {% endfor %}
@@ -53,4 +53,3 @@ before_deploy:
     - "set /p \"BINSTAR_TOKEN=\"< binstar_token.txt"
 deploy_script:
     - 'python ci_support\upload_or_check_non_existence.py .\{{ recipe_dir }} conda-forge --channel=main'
-

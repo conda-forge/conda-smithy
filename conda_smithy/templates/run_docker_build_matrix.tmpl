@@ -3,19 +3,19 @@
 {% set conda_vars = {'python': 'CONDA_PY', 'numpy': 'CONDA_NPY'} %}
 
 {% macro matrix_env(matrix_item) -%}
-    {% for dep_name, version in matrix_item %}
+    {% for dep_name, version in matrix_item | sort %}
     export {{ conda_vars.get(dep_name, dep_name) }}={{version}}{% endfor %}
 {%- endmacro %}
 
 {% block build -%}# Embarking on {{ matrix|length }} case(s).
-{% for case in matrix %}
+{% for case in matrix | sort %}
     set -x
     {{- matrix_env(case) }}
     set +x
     {{ super()|indent }}
 {% endfor %}{% endblock -%}
 
-{% block test_and_upload -%}{% for case in matrix -%}
+{% block test_and_upload -%}{% for case in matrix | sort -%}
     {{- matrix_env(case) }}
     {{ super()|indent }}
 {%- endfor %}{% endblock -%}

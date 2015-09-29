@@ -13,7 +13,7 @@ docker info
 config=$(cat <<CONDARC
 
 channels:
-{% for channel in channels.get('sources', []) %}
+{% for channel in channels.get('sources', []) | sort %}
  - {{ channel }}
 {% endfor %}
  - defaults # As we need conda-build
@@ -70,4 +70,3 @@ conda build --test /recipe_root || exit 1
 {% endblock %}
 
 EOF
-
