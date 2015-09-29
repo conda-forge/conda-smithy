@@ -14,7 +14,7 @@ env:
 {% if matrix[0] %}
   matrix:
     {% for case in matrix %}
-    - {{- matrix_env(case) }}
+    - {{ matrix_env(case) }}
     {% endfor %}
 {% endif %}
 
@@ -38,10 +38,14 @@ install:
       export PATH=/Users/travis/miniconda3/bin:$PATH
 
       conda update --yes conda
-      conda install --yes conda-build jinja2 binstar
+      conda install --yes conda-build jinja2 anaconda-client
+
+      {% for channel in channels.get('sources', []) %}
+      conda config --add channels {{ channel }}
+      {% endfor %}
 
 script:
   - conda build ./{{ recipe_dir }}
 
 after_success:
-  - ./ci_support/upload_or_check_non_existence.py ./{{ recipe_dir }} conda-forge --channel=main
+  - ./ci_support/upload_or_check_non_existence.py ./{{ recipe_dir }} {{ channels['target'] }} --channel=main

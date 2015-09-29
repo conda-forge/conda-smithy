@@ -163,7 +163,11 @@ def main(forge_file_directory):
 
     config['package'] = meta = meta_of_feedstock(forge_file_directory)
 
-    matrix = compute_build_matrix(meta)
+    
+    # see if there is a 'matrix' key from conda-forge.yml and pass it to compute_build_matrix as the special_versions
+    # key
+    special_versions = config.get('matrix')
+    matrix = compute_build_matrix(meta, special_versions)
 #     matrix.append([('foo', '1')])
 #     print(matrix)
     # TODO: Allow the forge.yml to filter the matrix.
