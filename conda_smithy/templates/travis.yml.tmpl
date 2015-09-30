@@ -20,7 +20,7 @@ env:
 
 {% if travis.secure %}
   global:
-{% for name, hashed_secure in travis.secure.items() %}
+{% for name, hashed_secure in travis.secure | dictsort %}
     # The {{ name }} secure variable. This is defined canonically in forge.yml.
     - secure: "{{ hashed_secure }}"
 {% endfor %}
