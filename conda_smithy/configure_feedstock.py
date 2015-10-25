@@ -142,7 +142,7 @@ def meta_of_feedstock(forge_dir):
 
 def main(forge_file_directory):
     recipe_dir = 'recipe'
-    config = {'docker': {'image': 'pelson/conda64_obvious_ci', 'command': 'bash'},
+    config = {'docker': {'image': 'pelson/obvious-ci:latest_x64', 'command': 'bash'},
               'templates': {'run_docker_build': 'run_docker_build.tmpl'},
               'travis': [],
               'circle': [],
