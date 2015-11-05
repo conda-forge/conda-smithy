@@ -2,7 +2,7 @@
 {% set conda_vars = {'python': 'CONDA_PY', 'numpy': 'CONDA_NPY'} %}
 
 {% macro matrix_env(matrix_item) -%}
-    {% for dep_name, version in matrix_item | sort %}{{ conda_vars.get(dep_name, dep_name) }}={{version}}  {% endfor %}
+    {% for dep_name, version in matrix_item | sort %}{{ conda_vars.get(dep_name, dep_name) }}={{version|replace('.', '')}}  {% endfor %}
 {%- endmacro %}
 
 language: objective-c
@@ -48,4 +48,6 @@ script:
   - conda build ./{{ recipe_dir }}
 
 after_success:
-  - ./ci_support/upload_or_check_non_existence.py ./{{ recipe_dir }} {{ channels['target'] }} --channel=main
+{% for owner, channel in channels['targets'] %}
+  - ./ci_support/upload_or_check_non_existence.py ./{{ recipe_dir }} {{ owner }} --channel={{ channel }}
+{% endfor %}

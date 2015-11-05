@@ -89,7 +89,7 @@ def compute_build_matrix(meta, special_versions=None):
 #     build_deps = meta.ms_depends('build')
     dep_names = [ms.name for ms in build_deps]
     if special_versions is None:
-        special_versions = {'python': ['2.7', '3.4'],
+        special_versions = {'python': ['2.7', '3.4', '3.5'],
                             'numpy': ['1.8', '1.9']}
 
     # Sometimes we put a numpy dependency in, without explicitly stating that we depend on python.
@@ -143,11 +143,11 @@ def meta_of_feedstock(forge_dir):
 def main(forge_file_directory):
     recipe_dir = 'recipe'
     config = {'docker': {'image': 'pelson/obvious-ci:latest_x64', 'command': 'bash'},
-              'templates': {'run_docker_build': 'run_docker_build.tmpl'},
+              'templates': {'run_docker_build': 'run_docker_build_matrix.tmpl'},
               'travis': [],
               'circle': [],
               'appveyor': [],
-              'channels': {'sources': [], 'target': []},
+              'channels': {'sources': ['conda-forge'], 'targets': [['conda-forge', 'main']]},
               'recipe_dir': recipe_dir}
     forge_dir = os.path.abspath(forge_file_directory)
 
@@ -187,7 +187,7 @@ def main(forge_file_directory):
     render_README(env, config, forge_dir)
 
 
-if True and __name__ == '__main__':
+if False and __name__ == '__main__':
     main('../udunits-feedstock')
     main('../libmo_unpack-feedstock')
     main('../mo_pack-feedstock')

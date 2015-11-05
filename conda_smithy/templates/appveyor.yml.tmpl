@@ -2,7 +2,7 @@
 
 {% macro matrix_env(arch, matrix_item) -%}
   - TARGET_ARCH: {{ arch }}{% for dep_name, version in matrix_item | sort %}
-      {{ conda_vars.get(dep_name, dep_name) }}: {{version}}{% endfor %}
+      {{ conda_vars.get(dep_name, dep_name) }}: {{version|replace('.', '')}}{% endfor %}
 {%- endmacro %}
 
 environment:
@@ -33,7 +33,6 @@ platform:
     - x64
 
 install:
-    - cmd: echo %BINSTAR_TOKEN%>binstar_token.txt & set "BINSTAR_TOKEN=hidden"
     - cmd: python -c "from urllib2 import urlopen; open('bootstrap-obvious-ci-and-miniconda.py', 'w').write(urlopen('https://raw.githubusercontent.com/pelson/Obvious-CI/v0.1.0/bootstrap-obvious-ci-and-miniconda.py').read())"
     - cmd: python bootstrap-obvious-ci-and-miniconda.py %CONDA_INSTALL_LOCN% %TARGET_ARCH% %CONDA_PY:~0,1% --without-obvci
     - cmd: set PATH=%CONDA_INSTALL_LOCN%;%CONDA_INSTALL_LOCN%\scripts;%PATH%
@@ -42,14 +41,14 @@ install:
     - cmd: conda install -c http://conda.binstar.org/pelson/channel/development --yes --quiet obvious-ci
     - cmd: conda config --add channels http://conda.binstar.org/conda-forge
     - cmd: conda info
-    - cmd: conda install -n root --quiet --yes conda-build binstar jinja2 setuptools
+    - cmd: conda install -n root --quiet --yes conda-build anaconda-client jinja2 setuptools
 
 # Skip .NET project specific build phase.
 build: off
 
 test_script:
     - "%CMD_IN_ENV% conda build {{ recipe_dir }}"
-before_deploy:
-    - "set /p \"BINSTAR_TOKEN=\"< binstar_token.txt"
 deploy_script:
-    - 'python ci_support\upload_or_check_non_existence.py .\{{ recipe_dir }} conda-forge --channel=main'
+{% for owner, channel in channels['targets'] %}
+    - 'python ci_support\upload_or_check_non_existence.py .\{{ recipe_dir }} {{ owner }} --channel={{ channel }}'
+{% endfor %}
