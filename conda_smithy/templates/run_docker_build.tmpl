@@ -5,8 +5,6 @@
 FEEDSTOCK_ROOT=$(cd "$(dirname "$0")/.."; pwd;)
 RECIPE_ROOT=$FEEDSTOCK_ROOT/{{ recipe_dir }}
 
-UPLOAD_CHANNEL="main"
-
 docker info
 
 config=$(cat <<CONDARC
