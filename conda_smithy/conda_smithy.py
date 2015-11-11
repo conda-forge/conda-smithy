@@ -154,6 +154,7 @@ class RegisterFeedstockCI(Subcommand):
 
         print('CI Summary for {}/{} (may take some time):'.format(owner, repo))
         configure_circle_ci.add_project_to_circle(owner, repo)
+        configure_circle_ci.add_token_to_circle(owner, repo)
         configure_circle_ci.add_project_to_appveyor(owner, repo)
         configure_circle_ci.add_project_to_travis(owner, repo)
 

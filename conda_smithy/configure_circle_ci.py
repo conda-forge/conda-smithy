@@ -24,7 +24,7 @@ except IOError:
 
 
 
-def add_BINSTAR_TOKEN_to_circle(user, project):
+def add_token_to_circle(user, project):
     url_template = ('https://circleci.com/api/v1/project/{user}/{project}/envvar?'
                     'circle-token={token}')
     url = url_template.format(token=circle_token, user=user, project=project)
@@ -37,33 +37,32 @@ def add_BINSTAR_TOKEN_to_circle(user, project):
 def add_project_to_circle(user, project):
     headers = {'Content-Type': 'application/json',
                'Accept': 'application/json'}
-    url_template = ('https://circleci.com/api/v1/projects?'
+    url_template = ('https://circleci.com/api/v1/{component}?'
                     'circle-token={token}')
-    url = url_template.format(token=circle_token)
-    data = {'username': user, 'reponame': project}
+    url = url_template.format(component='projects', token=circle_token)
+    data = {'username': user, 'repo': project}
     response = requests.get(url, headers=headers)
 
     if response.status_code != 201:
         response.raise_for_status()
 
     repos = response.json()
-    repos = ['{repo[username]}/repo[reponame]'.format(repo=repo).lower()
-             for repo in repos]
-    if '{}/{}'.format(user, project).lower() not in repos:
-        # Apparently there is an endpoint for this, but it doesn't seem to work...
-        print(' * Goto https://circleci.com/add-projects')
-#         # Try adding it.
-#         data = {'username': user, 'reponame': project}
-#         response = requests.post(url, data, headers=headers)
-#         if response.status_code != 201:
-#             response.raise_for_status()
-    else:
+    matching = [repo for repo in repos if repo['username'] == data['username'] and repo['reponame'] == data['repo']]
+    
+    if matching and matching[0].get('followed', False):
         print(' * {}/{} already enabled on CircleCI'.format(user, project))
+    else:
+        url = url_template.format(component='project/{}/{}/follow'.format(user, project).lower(), token=circle_token)
+        response = requests.post(url, headers={})
+        # It is a strange response code, but is doing what was asked...
+        if response.status_code != 400:
+            response.raise_for_status()
+        print(' * Added to circle-ci')
 
 
 def add_project_to_appveyor(user, project):
     headers = {'Authorization': 'Bearer {}'.format(appveyor_token),
-               'Content-Type': 'application/json'}
+               }
     url = 'https://ci.appveyor.com/api/projects'
 
     response = requests.get(url, headers=headers)
@@ -74,18 +73,18 @@ def add_project_to_appveyor(user, project):
     if '{}/{}'.format(user, project).lower() in repos:
         print(' * {}/{} already enabled on appveyor'.format(user, project))
     else:
-        # Apparently there is an endpoint for this, but it doesn't seem to work...
-        print(' * Goto https://ci.appveyor.com/projects/new')
-#         # Try adding it.
-#         data = {'repositoryProvider': 'gitHub', 'repositoryName': '{}/{}'.format(user, project)}
-#         response = requests.post(url, headers=headers, data=data)
-#         if response.status_code != 201:
-#             response.raise_for_status()
+        data = {'repositoryProvider': 'gitHub', 'repositoryName': '{}/{}'.format(user, project)}
+        response = requests.post(url, headers=headers, data=data)
+        if response.status_code != 201:
+            response.raise_for_status()
+        print(' * {}/{} has been enabled on appveyor'.format(user, project))
 
 
 def add_project_to_travis(user, project):
-    headers = {'User-Agent': 'conda-smithy',
-              'Accept': 'application/vnd.travis-ci.2+json'}
+    headers = {
+               'User-Agent': 'conda-smithy',
+               'Accept': 'application/vnd.travis-ci.2+json'
+               }
     endpoint = 'https://api.travis-ci.org'
     url = '{}/auth/github'.format(endpoint)
     with open(os.path.expanduser('~/.conda-smithy/github.token'), 'r') as fh:
@@ -104,7 +103,7 @@ def add_project_to_travis(user, project):
     found = 'id' in content
 
     if not found:
-        # ... doesn't look like there is an endpoint for this.
+        # ... doesn't look like there is an endpoint for this. (https://github.com/travis-ci/travis-api/issues/213)
         print(' * Goto https://travis-ci.org/profile/{} to register the project'.format(user))
     else:
         print(' * {}/{} already enabled on travis-ci'.format(user, project))
@@ -115,10 +114,10 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("user")
     parser.add_argument("project")
-    args = parser.parse_args(['pelson', 'matplotlib'])
+#    args = parser.parse_args(['pelson', 'udunits-delme-feedstock'])
 #     args = parser.parse_args(['conda-forge', 'udunits-feedstock'])
 
-#     add_project_to_circle(args.user, args.project)
+    add_project_to_circle(args.user, args.project)
     add_project_to_appveyor(args.user, args.project)
-#     add_project_to_travis(args.user, args.project)
+    add_project_to_travis(args.user, args.project)
     print('Done')
