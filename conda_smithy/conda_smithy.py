@@ -78,6 +78,9 @@ class GithubCreate(Subcommand):
         group = subcommand_parser.add_mutually_exclusive_group()
         group.add_argument("--user")
         group.add_argument("--organization", default="conda-forge")
+        subcommand_parser.add_argument("--remote-name", default="upstream",
+                                       help="The name of the remote to add to the local repo (default: upstream). "
+                                            "An empty string will disable adding of a remote.")
 
     def __call__(self, args):
         try:
@@ -88,6 +91,8 @@ class GithubCreate(Subcommand):
         meta = configure_feedstock.meta_of_feedstock(args.feedstock_directory)
 
         from github import Github
+        from github.GithubException import GithubException
+        from git import Repo
         gh = Github(token)
         if args.user is not None:
             pass
@@ -96,10 +101,29 @@ class GithubCreate(Subcommand):
         else:
             # Use the organization provided.
             user_or_org = gh.get_organization(args.organization)
-        repo = user_or_org.create_repo(os.path.basename(os.path.abspath(args.feedstock_directory)),
-                                       has_wiki=False,
-                                       description='A conda-smithy repository for {}.'.format(meta.name()))
-        print('Created {} on github'.format(repo.full_name))
+
+        repo_name = os.path.basename(os.path.abspath(args.feedstock_directory))
+        try:
+            gh_repo = user_or_org.create_repo(repo_name, has_wiki=False,
+                                              description='A conda-smithy repository for {}.'.format(meta.name()))
+            print('Created {} on github'.format(gh_repo.full_name))
+        except GithubException as gh_except:
+            if gh_except.data.get('errors', [{}])[0].get('message', '') != u'name already exists on this account':
+                raise
+            gh_repo = user_or_org.get_repo(repo_name)
+            print('Github repository already exists.')
+
+        # Now add this new repo as a remote on the local clone.
+        repo = Repo(args.feedstock_directory)
+        remote_name = args.remote_name.strip()
+        if remote_name:
+            if remote_name in [remote.name for remote in repo.remotes]:
+                existing_remote = repo.remotes[remote_name]
+                if existing_remote.url != gh_repo.ssh_url:
+                    print("Remote {} already exists, and doesn't point to {} "
+                          "(it points to {}).".format(remote_name, gh_repo.ssh_url, existing_remote.url))
+            else:
+                repo.create_remote(remote_name, gh_repo.ssh_url)
 
 
 class RegisterFeedstockCI(Subcommand):
