@@ -112,11 +112,13 @@ def add_project_to_travis(user, project):
     else:
         repo_id = found[0]['id']
         url = '{}/hooks'.format(endpoint)
-        response = requests.put(url, headers=headers, data={'hook[id]': repo_id, 'hook[active]': True})
+        response = requests.put(url, headers=headers, json={'hook': {'id': repo_id, 'active': True}})
         if response.json().get('result'):
-            print(' * Registered on travis-ci (takes a minute or so for this to appear online)')
+            print(' * Registered on travis-ci')
         else:
             raise RuntimeError('Unable to register on travis-ci, response from hooks was negative')
+        url = '{}/users/sync'.format(endpoint)
+        response = requests.post(url, headers=headers)
 
 
 def travis_token_update_conda_forge_config(feedstock_directory, user, project):
@@ -127,12 +129,16 @@ def travis_token_update_conda_forge_config(feedstock_directory, user, project):
     slug =  "{}/{}".format(user, project)
 
     forge_yaml = os.path.join(feedstock_directory, 'conda-forge.yml')
-    with open(forge_yaml, 'r') as fh:
-        code = ruamel.yaml.load(fh, ruamel.yaml.RoundTripLoader)
-    
+    if os.path.exists(forge_yaml):
+        with open(forge_yaml, 'r') as fh:
+            code = ruamel.yaml.load(fh, ruamel.yaml.RoundTripLoader)
+    else:
+        code = {}
+
     # Code could come in as an empty list.
     if not code:
         code = {}
+
     code.setdefault('travis', {}).setdefault('secure', {})['BINSTAR_TOKEN'] = travis.encrypt(slug, item)
     with open(forge_yaml, 'w') as fh:
         fh.write(ruamel.yaml.dump(code, Dumper=ruamel.yaml.RoundTripDumper))
@@ -143,10 +149,10 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("user")
     parser.add_argument("project")
-    args = parser.parse_args(['conda-forge', 'udunits-delme-feedstock'])
+    args = parser.parse_args(['pelson', 'udunits-delme-feedstock'])
 
-    add_project_to_circle(args.user, args.project)
-    add_project_to_appveyor(args.user, args.project)
+#    add_project_to_circle(args.user, args.project)
+#    add_project_to_appveyor(args.user, args.project)
     add_project_to_travis(args.user, args.project)
-    travis_token_update_conda_forge_config('../udunits-delme-feedstock', args.user, args.project)
+#    travis_token_update_conda_forge_config('../udunits-delme-feedstock', args.user, args.project)
     print('Done')

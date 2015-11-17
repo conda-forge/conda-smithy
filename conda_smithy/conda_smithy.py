@@ -9,7 +9,7 @@ import argparse
 
 from conda_build.metadata import MetaData
 
-import conda_smithy.configure_circle_ci as configure_circle_ci
+import conda_smithy.ci_register as ci_register
 import conda_smithy.configure_feedstock as configure_feedstock
 
 
@@ -153,11 +153,11 @@ class RegisterFeedstockCI(Subcommand):
         repo = os.path.basename(os.path.abspath(args.feedstock_directory))
 
         print('CI Summary for {}/{} (may take some time):'.format(owner, repo))
-        configure_circle_ci.add_project_to_travis(owner, repo)
-        configure_circle_ci.travis_token_update_conda_forge_config(args.feedstock_directory, owner, repo)
-        configure_circle_ci.add_project_to_circle(owner, repo)
-        configure_circle_ci.add_token_to_circle(owner, repo)
-        configure_circle_ci.add_project_to_appveyor(owner, repo)
+        ci_register.add_project_to_travis(owner, repo)
+        ci_register.travis_token_update_conda_forge_config(args.feedstock_directory, owner, repo)
+        ci_regiser.add_project_to_circle(owner, repo)
+        ci_register.add_token_to_circle(owner, repo)
+        ci_register.add_project_to_appveyor(owner, repo)
 
 
 def main():
