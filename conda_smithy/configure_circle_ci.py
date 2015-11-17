@@ -83,7 +83,7 @@ def add_project_to_appveyor(user, project):
 def add_project_to_travis(user, project):
     headers = {
                'User-Agent': 'conda-smithy',
-               'Accept': 'application/vnd.travis-ci.2+json'
+               'Accept': 'application/vnd.travis-ci.2+json',
                }
     endpoint = 'https://api.travis-ci.org'
     url = '{}/auth/github'.format(endpoint)
@@ -97,16 +97,45 @@ def add_project_to_travis(user, project):
     token = response.json()['access_token']
     headers['Authorization'] = 'token {}'.format(token)
 
-    url = '{}/repos/{}/{}'.format(endpoint, user, project)
-    response = requests.get(url)
+    url = '{}/hooks'.format(endpoint)
+    response = requests.get(url, headers=headers)
     content = response.json()
-    found = 'id' in content
-
+    found = [hooked for hooked in content['hooks']
+             if hooked['owner_name'] == user and hooked['name'] == project]
+    
     if not found:
-        # ... doesn't look like there is an endpoint for this. (https://github.com/travis-ci/travis-api/issues/213)
-        print(' * Goto https://travis-ci.org/profile/{} to register the project'.format(user))
-    else:
+        print(" * Travis doesn't know about the repo, synching (takes a few seconds). Re-run to get travisi-ci enabled.")
+        url = '{}/users/sync'.format(endpoint)
+        response = requests.post(url, headers=headers)
+    elif found[0]['active'] is True:
         print(' * {}/{} already enabled on travis-ci'.format(user, project))
+    else:
+        repo_id = found[0]['id']
+        url = '{}/hooks'.format(endpoint)
+        response = requests.put(url, headers=headers, data={'hook[id]': repo_id, 'hook[active]': True})
+        if response.json().get('result'):
+            print(' * Registered on travis-ci (takes a minute or so for this to appear online)')
+        else:
+            raise RuntimeError('Unable to register on travis-ci, response from hooks was negative')
+
+
+def travis_token_update_conda_forge_config(feedstock_directory, user, project):
+    import vendored
+    import vendored.travis_encrypt as travis
+    import ruamel.yaml
+    item = 'BINSTAR_TOKEN="{}"'.format(os.environ['BINSTAR_TOKEN'])
+    slug =  "{}/{}".format(user, project)
+
+    forge_yaml = os.path.join(feedstock_directory, 'conda-forge.yml')
+    with open(forge_yaml, 'r') as fh:
+        code = ruamel.yaml.load(fh, ruamel.yaml.RoundTripLoader)
+    
+    # Code could come in as an empty list.
+    if not code:
+        code = {}
+    code.setdefault('travis', {}).setdefault('secure', {})['BINSTAR_TOKEN'] = travis.encrypt(slug, item)
+    with open(forge_yaml, 'w') as fh:
+        fh.write(ruamel.yaml.dump(code, Dumper=ruamel.yaml.RoundTripDumper))
 
 
 if __name__ == '__main__':
@@ -114,10 +143,10 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("user")
     parser.add_argument("project")
-#    args = parser.parse_args(['pelson', 'udunits-delme-feedstock'])
-#     args = parser.parse_args(['conda-forge', 'udunits-feedstock'])
+    args = parser.parse_args(['conda-forge', 'udunits-delme-feedstock'])
 
     add_project_to_circle(args.user, args.project)
     add_project_to_appveyor(args.user, args.project)
     add_project_to_travis(args.user, args.project)
+    travis_token_update_conda_forge_config('../udunits-delme-feedstock', args.user, args.project)
     print('Done')

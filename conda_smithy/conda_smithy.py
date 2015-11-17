@@ -153,10 +153,11 @@ class RegisterFeedstockCI(Subcommand):
         repo = os.path.basename(os.path.abspath(args.feedstock_directory))
 
         print('CI Summary for {}/{} (may take some time):'.format(owner, repo))
+        configure_circle_ci.add_project_to_travis(owner, repo)
+        configure_circle_ci.travis_token_update_conda_forge_config(args.feedstock_directory, owner, repo)
         configure_circle_ci.add_project_to_circle(owner, repo)
         configure_circle_ci.add_token_to_circle(owner, repo)
         configure_circle_ci.add_project_to_appveyor(owner, repo)
-        configure_circle_ci.add_project_to_travis(owner, repo)
 
 
 def main():
@@ -188,6 +189,17 @@ def main():
         args = parser.parse_args()
 
     args.subcommand_func(args)
+
+
+class Rerender(Subcommand):
+    subcommand = 'rerender'
+    def __init__(self, parser):
+        # conda-smithy render /path/to/udunits-recipe
+        subcommand_parser = Subcommand.__init__(self, parser)
+        subcommand_parser.add_argument("--feedstock_directory", default=os.getcwd())
+
+    def __call__(self, args):
+        configure_feedstock.main(args.feedstock_directory)
 
 
 if __name__ == '__main__':

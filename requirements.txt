@@ -2,5 +2,7 @@ Jinja2
 requests
 conda-build
 conda
-pygithub 1.*
+pygithub <2
+ruamel.yaml
 gitpython
+pycrypto
