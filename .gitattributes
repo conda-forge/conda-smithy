@@ -1,0 +1,1 @@
+conda_smithy/_version.py export-subst

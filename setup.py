@@ -2,16 +2,7 @@
 import os.path
 
 from setuptools import setup, find_packages
-
-
-tl_package = 'conda_smithy'
-vn_context, vn_fname = {}, os.path.join(tl_package, '_version.py')
-try:
-    with open(vn_fname, 'r') as fh:
-        exec(fh.read(), vn_context)
-    version = vn_context.get('__version__', 'dev')
-except IOError:
-    version = 'dev'
+import versioneer
 
 
 with open('requirements.txt') as f:
@@ -21,7 +12,7 @@ with open('requirements.txt') as f:
 def main():
     skw = dict(
         name='conda-smithy',
-        version=version,
+        version=versioneer.get_version(),
         description='A package to create repositories for conda recipes, and automate '
                     'their building with CI tools on Linux, OSX and Windows.',
         author='Phil Elson',
@@ -35,6 +26,7 @@ def main():
         # As conda-smithy has resources as part of the codebase, it is
         # not zip-safe.
         zip_safe=False,
+        cmdclass=versioneer.get_cmdclass(),
         )
     setup(**skw)
 
