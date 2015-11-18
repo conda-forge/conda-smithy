@@ -79,6 +79,32 @@ def add_project_to_appveyor(user, project):
             response.raise_for_status()
         print(' * {}/{} has been enabled on appveyor'.format(user, project))
 
+    
+
+def appveyor_encrypt_binstar_token(feedstock_directory, user, project):
+    import ruamel.yaml
+
+    headers = {'Authorization': 'Bearer {}'.format(appveyor_token)}
+    url = 'https://ci.appveyor.com/api/account/encrypt'
+    response = requests.post(url, headers=headers, data={"plainValue": os.environ['BINSTAR_TOKEN']})
+    if response.status_code != 200:
+        raise ValueError(response)
+
+    forge_yaml = os.path.join(feedstock_directory, 'conda-forge.yml')
+    if os.path.exists(forge_yaml):
+        with open(forge_yaml, 'r') as fh:
+            code = ruamel.yaml.load(fh, ruamel.yaml.RoundTripLoader)
+    else:
+        code = {}
+
+    # Code could come in as an empty list.
+    if not code:
+        code = {}
+
+    code.setdefault('appveyor', {}).setdefault('secure', {})['BINSTAR_TOKEN'] = response.content
+    with open(forge_yaml, 'w') as fh:
+        fh.write(ruamel.yaml.dump(code, Dumper=ruamel.yaml.RoundTripDumper))
+
 
 def add_project_to_travis(user, project):
     headers = {
@@ -153,6 +179,7 @@ if __name__ == '__main__':
 
 #    add_project_to_circle(args.user, args.project)
 #    add_project_to_appveyor(args.user, args.project)
-    add_project_to_travis(args.user, args.project)
+#    add_project_to_travis(args.user, args.project)
+    appveyor_encrypt_binstar_token('../udunits-delme-feedstock', args.user, args.project)
 #    travis_token_update_conda_forge_config('../udunits-delme-feedstock', args.user, args.project)
     print('Done')
