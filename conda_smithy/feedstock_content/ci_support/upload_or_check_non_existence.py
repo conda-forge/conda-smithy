@@ -29,14 +29,18 @@ def built_distribution_already_exists(cli, meta, owner):
         dist_info = {}
 
     exists = bool(dist_info)
-    if exists:
-        md5_on_binstar = dist_info.get('md5')
-        with open(fname, 'rb') as fh:
-            md5_of_build = hashlib.md5(fh.read()).hexdigest()
-
-        if md5_on_binstar != md5_of_build:
-            raise ValueError('This build ({}), and the build already on binstar '
-                             '({}) are different.'.format(md5_of_build, md5_on_binstar))
+    # Unfortunately, we cannot check the md5 quality of the built distribution, as
+    # this will depend on fstat information such as modification date (because
+    # distributions are tar files). Therefore we can only assume that the distribution
+    # just built, and the one on anaconda.org are the same.
+#    if exists:
+#        md5_on_binstar = dist_info.get('md5')
+#        with open(fname, 'rb') as fh:
+#            md5_of_build = hashlib.md5(fh.read()).hexdigest()
+#
+#        if md5_on_binstar != md5_of_build:
+#            raise ValueError('This build ({}), and the build already on binstar '
+#                             '({}) are different.'.format(md5_of_build, md5_on_binstar))
     return exists
 
 
@@ -105,8 +109,8 @@ if __name__ == '__main__':
                   ''.format(bldpkg_path(meta), owner, channel))
             add_distribution_to_channel(cli, meta, owner, channel)
         else:
-            print('Distribution {} already \nexists on {}\'s {} channel (md5 has been '
-                  'checked for consistency)'.format(bldpkg_path(meta), owner, channel))
+            print('Distribution {} already \nexists on {}\'s {} channel.'
+                  ''.format(bldpkg_path(meta), owner, channel))
     else:
         print("No BINSTAR_TOKEN present, so no upload is taking place. "
               "The distribution just built {} already available on {}'s "

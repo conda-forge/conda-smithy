@@ -40,8 +40,8 @@ def render_travis(jinja_env, forge_config, forge_dir):
 
 
 def render_README(jinja_env, forge_config, forge_dir):
-    template = jinja_env.get_template('README.tmpl')
-    target_fname = os.path.join(forge_dir, 'README')
+    template = jinja_env.get_template('README.md.tmpl')
+    target_fname = os.path.join(forge_dir, 'README.md')
     with open(target_fname, 'w') as fh:
         fh.write(template.render(**forge_config))
 
@@ -136,6 +136,8 @@ def compute_build_matrix(meta, special_versions=None):
 def meta_of_feedstock(forge_dir):
     recipe_dir = 'recipe'
     meta_dir = os.path.join(forge_dir, recipe_dir)
+    if not os.path.exists(meta_dir):
+        raise IOError("The given directory isn't a feedstock.")
     meta = MetaData(meta_dir)
     return meta
 

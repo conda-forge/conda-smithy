@@ -1,4 +1,4 @@
 The contents of this directory are automatically pulled over to the feedstock
 repository when ../configure_feedstock.py is executed.
 
-Want to edit the README for a feedstock? Take a look at templates/README.tmpl
+Want to edit the README for a feedstock? Take a look at templates/README.md.tmpl

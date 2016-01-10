@@ -23,7 +23,6 @@ except IOError:
     print('No appveyor token. Put one in ~/.conda-smithy/appveyor.token')
 
 
-
 def add_token_to_circle(user, project):
     url_template = ('https://circleci.com/api/v1/project/{user}/{project}/envvar?'
                     'circle-token={token}')
@@ -108,7 +107,8 @@ def appveyor_encrypt_binstar_token(feedstock_directory, user, project):
 
 def add_project_to_travis(user, project):
     headers = {
-               'User-Agent': 'conda-smithy',
+               # If the user-agent isn't defined correctly, we will recieve a 403.
+               'User-Agent': 'MyClient/1.0.0',
                'Accept': 'application/vnd.travis-ci.2+json',
                }
     endpoint = 'https://api.travis-ci.org'
@@ -116,7 +116,7 @@ def add_project_to_travis(user, project):
     with open(os.path.expanduser('~/.conda-smithy/github.token'), 'r') as fh:
         github_token = fh.read().strip()
     data = {"github_token": github_token}
-    response = requests.post(url, data=data, headers=headers)
+    response = requests.post(url, json=data, headers=headers)
     if response.status_code != 201:
         response.raise_for_status()
 
