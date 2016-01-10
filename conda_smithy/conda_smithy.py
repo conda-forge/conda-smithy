@@ -41,8 +41,8 @@ def create_git_repo(target, meta):
 class Subcommand(object):
     #: The name of the subcommand
     subcommand = None
-    def __init__(self, parser):
-        subcommand_parser = parser.add_parser(self.subcommand)
+    def __init__(self, parser, help=None):
+        subcommand_parser = parser.add_parser(self.subcommand, help=help)
         subcommand_parser.set_defaults(subcommand_func=self)
         return subcommand_parser
 
@@ -54,7 +54,7 @@ class Init(Subcommand):
     subcommand = 'init'
     def __init__(self, parser):
         # conda-smithy init /path/to/udunits-recipe ./
-        subcommand_parser = Subcommand.__init__(self, parser)
+        subcommand_parser = Subcommand.__init__(self, parser, "Create a feedstock git repository.")
         subcommand_parser.add_argument("recipe_directory")
         subcommand_parser.add_argument("--feedstock-directory",
                                        default='./{package.name}-feedstock')
@@ -62,6 +62,8 @@ class Init(Subcommand):
                                        default=False)
 
     def __call__(self, args):
+        if not os.path.isdir(args.recipe_directory):
+            raise IOError("The recipe directory should be the directory of the conda-recipe. Got {}".format(args.recipe_directory))
         meta = MetaData(args.recipe_directory)
         feedstock_directory = args.feedstock_directory.format(package=argparse.Namespace(name=meta.name()))
         generate_feedstock_content(feedstock_directory, args.recipe_directory)
@@ -73,7 +75,7 @@ class GithubCreate(Subcommand):
     subcommand = 'github-create'
     def __init__(self, parser):
         #  conda-smithy github-create ./ --organization=conda-forge
-        subcommand_parser = Subcommand.__init__(self, parser)
+        subcommand_parser = Subcommand.__init__(self, parser, "Create a github repo for a feedstock")
         subcommand_parser.add_argument("feedstock_directory")
         group = subcommand_parser.add_mutually_exclusive_group()
         group.add_argument("--user")
@@ -152,10 +154,10 @@ class RegisterFeedstockCI(Subcommand):
         owner = args.user or args.organization
         repo = os.path.basename(os.path.abspath(args.feedstock_directory))
 
-        print('CI Summary for {}/{} (may take some time):'.format(owner, repo))
+        print('CI Summary for {}/{} (can take ~30s):'.format(owner, repo))
         ci_register.add_project_to_travis(owner, repo)
         ci_register.travis_token_update_conda_forge_config(args.feedstock_directory, owner, repo)
-        ci_regiser.add_project_to_circle(owner, repo)
+        ci_register.add_project_to_circle(owner, repo)
         ci_register.add_token_to_circle(owner, repo)
         ci_register.add_project_to_appveyor(owner, repo)
 
@@ -172,7 +174,7 @@ def main():
 
 #        conda smithy clone-all
 
-    parser = argparse.ArgumentParser("conda-smithy - conda recipe building, made powerful.")
+    parser = argparse.ArgumentParser("a tool to help create, administer and manage feedstocks")
     subparser = parser.add_subparsers()
     # TODO: Consider allowing plugins/extensions using entry_points.
     # http://reinout.vanrees.org/weblog/2010/01/06/zest-releaser-entry-points.html
@@ -193,6 +195,18 @@ def main():
 
 class Rerender(Subcommand):
     subcommand = 'rerender'
+    def __init__(self, parser):
+        # conda-smithy render /path/to/udunits-recipe
+        subcommand_parser = Subcommand.__init__(self, parser)
+        subcommand_parser.add_argument("--feedstock_directory", default=os.getcwd())
+
+    def __call__(self, args):
+        configure_feedstock.main(args.feedstock_directory)
+
+
+class Regenerate(Subcommand):
+    # A poor-man's alias for rerender.
+    subcommand = 'regenerate'
     def __init__(self, parser):
         # conda-smithy render /path/to/udunits-recipe
         subcommand_parser = Subcommand.__init__(self, parser)
