@@ -5,10 +5,6 @@ from setuptools import setup, find_packages
 import versioneer
 
 
-with open('requirements.txt') as f:
-    requirements = f.read().splitlines()
-
-
 def main():
     skw = dict(
         name='conda-smithy',
@@ -21,7 +17,6 @@ def main():
         entry_points=dict(console_scripts=[
             'conda-smithy = conda_smithy.cli:main']),
         packages=find_packages(),
-        install_requires=requirements,
         include_package_data=True,
         # As conda-smithy has resources as part of the codebase, it is
         # not zip-safe.
