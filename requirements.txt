@@ -2,6 +2,7 @@ Jinja2
 requests
 conda-build
 conda
+conda-build-all
 pygithub <2
 ruamel.yaml
 gitpython

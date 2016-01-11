@@ -1,31 +1,29 @@
-
-{% set conda_vars = {'python': 'CONDA_PY', 'numpy': 'CONDA_NPY'} %}
-
+{%- set conda_vars = {'python': 'CONDA_PY', 'numpy': 'CONDA_NPY'} -%}
 {% macro matrix_env(matrix_item) -%}
     {% for dep_name, version in matrix_item | sort %}{{ conda_vars.get(dep_name, dep_name) }}={{version|replace('.', '')}}  {% endfor %}
 {%- endmacro %}
+# This file was generated automatically from conda-smithy. To update this configuration,
+# update the conda-forge.yaml and/or the recipe/meta.yaml.
 
 language: objective-c
 
-{% block env %}
-{% if matrix[0] or travis.secure %}
+{% block env -%}
+{% if matrix[0] or travis.secure -%}
 env:
-
-{% if matrix[0] %}
+  {%- if matrix[0] %}
   matrix:
     {% for case in matrix | sort %}
     - {{ matrix_env(case) }}
-    {% endfor %}
-{% endif %}
-
-{% if travis.secure %}
+    {%- endfor %}
+  {%- endif %}
+  {%- if travis.secure %}
   global:
-{% for name, hashed_secure in travis.secure | dictsort %}
+    {%- for name, hashed_secure in travis.secure | dictsort %}
     # The {{ name }} secure variable. This is defined canonically in forge.yml.
     - secure: "{{ hashed_secure }}"
-{% endfor %}
-{% endif %}
-{% endif %}
+    {%- endfor %}
+  {%- endif %}
+{%- endif %}
 {% endblock %}
 
 install:

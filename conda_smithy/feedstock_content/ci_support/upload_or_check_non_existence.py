@@ -82,7 +82,7 @@ def add_distribution_to_channel(binstar_cli, meta, owner, channel='main'):
     binstar_cli.add_channel(channel, owner, meta.name(), meta.version())
 
 
-if __name__ == '__main__':
+def main():
     token = os.environ.get('BINSTAR_TOKEN')
 
     description = ('Upload or check consistency of a built version of a '
@@ -98,6 +98,9 @@ if __name__ == '__main__':
 
     cli = get_binstar(argparse.Namespace(token=token, site=None))
     meta = MetaData(recipe_dir)
+    if meta.skip():
+        print("No upload to take place - this configuration was skipped in build/skip.")
+        return
     exists = built_distribution_already_exists(cli, meta, owner)
     if token:
         on_channel = distribution_exists_on_channel(cli, meta, owner, channel)
@@ -116,3 +119,6 @@ if __name__ == '__main__':
               "The distribution just built {} already available on {}'s "
               "{} channel.".format('is' if exists else 'is not',
                                    owner, channel))
+
+if __name__ == '__main__':
+    main()
