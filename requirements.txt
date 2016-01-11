@@ -4,6 +4,6 @@ conda-build
 conda
 conda-build-all
 pygithub <2
-ruamel.yaml
 gitpython
+# ruamel.yaml
 pycrypto

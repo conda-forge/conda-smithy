@@ -1,0 +1,34 @@
+{% set data = load_setuptools() %}
+
+package:
+    name: conda-smithy
+    version: {{data.get('version') or '0.1.0dev2'}}
+
+source:
+  path: ../
+
+requirements:
+  build:
+    - setuptools
+    - python
+  run:
+    - python
+    - conda-build-all
+    - setuptools
+    - conda
+    - conda-build
+    - jinja2
+    - requests
+    - pycrypto
+    - gitpython
+    - pygithub <2
+    - ruamel.yaml
+    - ruamel.ordereddict
+
+test:
+  commands:
+    - conda smithy --help
+  imports:
+    - conda_smithy
+    - conda_smithy.ci_register
+    - conda_smithy.configure_feedstock
