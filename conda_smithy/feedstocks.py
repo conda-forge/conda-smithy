@@ -19,7 +19,7 @@ def feedstock_repos(gh_organization):
     return sorted(repos, key=lambda repo: repo.name)
 
 
-def list(gh_organization):
+def list_feedstocks(gh_organization):
     for repo in feedstock_repos(gh_organization):
         print(repo.name)
 
@@ -45,8 +45,21 @@ def fetch_feedstocks(feedstock_directory):
 
 
 def feedstocks_list_handle_args(args):
-    return list(args.organization)
+    return list_feedstocks(args.organization)
 
+
+def feedstocks_clone_all_handle_args(args):
+    for repo in feedstock_repos(args.organization):
+        clone_directory = os.path.join(args.feedstocks_directory, repo.name)
+        if not os.path.exists(clone_directory):
+            print('Cloning {}'.format(repo.name))
+            new_repo = Repo.init(clone_directory)
+            new_repo.clone(repo.ssh_url)
+        clone = Repo(clone_directory)
+        if 'upstream' in [remote.name for remote in clone.remotes]:
+            clone.delete_remote('upstream')
+        clone.create_remote('upstream', url=repo.ssh_url)
+        
 
 def feedstocks_list_cloned_handle_args(args):
     for feedstock_directory in cloned_feedstocks(args.feedstocks_directory):
@@ -84,6 +97,11 @@ def main():
     list_feedstocks = subparsers.add_parser('list', help='List all of the feedstocks available on the GitHub organization.')
     list_feedstocks.set_defaults(func=feedstocks_list_handle_args)
     list_feedstocks.add_argument("--organization", default="conda-forge")
+
+    clone_feedstocks = subparsers.add_parser('clone', help='Clone all of the feedstocks available on the GitHub organization.')
+    clone_feedstocks.set_defaults(func=feedstocks_clone_all_handle_args)
+    clone_feedstocks.add_argument("--organization", default="conda-forge")
+    clone_feedstocks.add_argument("--feedstocks-directory", default="./")
 
     list_cloned_feedstocks = subparsers.add_parser('list-cloned', help='List all of the feedstocks which have been cloned.')
     list_cloned_feedstocks.set_defaults(func=feedstocks_list_cloned_handle_args)
