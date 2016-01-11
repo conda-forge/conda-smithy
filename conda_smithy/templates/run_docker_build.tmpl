@@ -39,33 +39,12 @@ conda info
 {%if build_setup %}
 {{ build_setup }}{% endif %}
 
-{% block build -%}conda build --no-test /recipe_root || exit 1
+{% block build -%}conda build /recipe_root --quiet || exit 1
+{% for owner, channel in channels['targets'] %}
+/feedstock_root/ci_support/upload_or_check_non_existence.py /recipe_root {{ owner }} --channel={{ channel }} || exit 1
+{% endfor %}
 
 {% endblock -%}
 
 EOF
 
-
-# In a separate docker, run the test...
-cat << EOF | docker run -i \
-                        -v ${RECIPE_ROOT}:/recipe_root \
-                        -v ${FEEDSTOCK_ROOT}:/feedstock_root \
-                        -a stdin -a stdout -a stderr \
-                        {{ docker.image }} \
-                        {{ docker.command }} || exit $?
-
-export BINSTAR_TOKEN=${BINSTAR_TOKEN}
-export PYTHONUNBUFFERED=1
-echo "$config" > ~/.condarc
-
-conda info
-{% if test_setup -%}
-{{ test_setup }}{%- endif %}
-{% block test_and_upload %}
-conda build --test /recipe_root || exit 1
-{% for owner, channel in channels['targets'] %}
-/feedstock_root/ci_support/upload_or_check_non_existence.py /recipe_root {{ owner }} --channel={{ channel }} || exit 1
-{% endfor %}
-{% endblock %}
-
-EOF

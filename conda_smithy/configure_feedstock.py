@@ -1,22 +1,19 @@
-#!/usr/bin/env python
 from __future__ import print_function
-from jinja2 import Environment, FileSystemLoader
+
 import os
+import shutil
 import stat
 import yaml
 import warnings
 
-from conda_build.metadata import MetaData
+import conda.api
 from conda.resolve import MatchSpec
+from conda_build.metadata import MetaData
+from conda_build_all.version_matrix import special_case_version_matrix, filter_cases
+from jinja2 import Environment, FileSystemLoader
 
-
-__version__ = '0.1.0'
 
 conda_forge_content = os.path.abspath(os.path.dirname(__file__))
-
-
-def about_template():
-    return '# This file was generated automatically by conda-forge (vn {}).'.format(__version__)
 
 
 def render_run_docker_build(jinja_env, forge_config, forge_dir):
@@ -35,7 +32,6 @@ def render_travis(jinja_env, forge_config, forge_dir):
     template = jinja_env.get_template('travis.yml.tmpl')
     target_fname = os.path.join(forge_dir, '.travis.yml')
     with open(target_fname, 'w') as fh:
-        fh.write(about_template())
         fh.write(template.render(**forge_config))
 
 
@@ -50,11 +46,9 @@ def render_appveyor(jinja_env, forge_config, forge_dir):
     template = jinja_env.get_template('appveyor.yml.tmpl')
     target_fname = os.path.join(forge_dir, 'appveyor.yml')
     with open(target_fname, 'w') as fh:
-        fh.write(about_template())
         fh.write(template.render(**forge_config))
 
 
-import shutil
 def copytree(src, dst, ignore=(), root_dst=None):
     if root_dst is None:
         root_dst = dst
@@ -77,62 +71,6 @@ def copy_feedstock_content(forge_dir):
     copytree(feedstock_content, forge_dir, 'README')
 
 
-
-full_matrix = [{'python': '2.7', 'numpy': '1.8'},
-               {'python': '2.7', 'numpy': '1.9'},
-               {'python': '3.5', 'numpy': '1.9'},
-               ]
-
-def compute_build_matrix(meta, special_versions=None):
-    # Create match specs, without conda clobbering various versions (such as numpy + python)
-    build_deps = [MatchSpec(spec) for spec in meta.get_value('requirements/build', [])]
-#     build_deps = meta.ms_depends('build')
-    dep_names = [ms.name for ms in build_deps]
-    if special_versions is None:
-        special_versions = {'python': ['2.7', '3.4', '3.5'],
-                            'numpy': ['1.8', '1.9']}
-
-    # Sometimes we put a numpy dependency in, without explicitly stating that we depend on python.
-    # Handle this case.
-    if 'numpy' in dep_names and 'python' not in dep_names:
-        meta.get_section('requirements').setdefault('build', []).append('python >2.3')
-        build_deps = meta.ms_depends('build')
-        dep_names = [ms.name for ms in meta.ms_depends('build')]
-
-    # Remove any special versions which aren't important here.
-    for special_item in list(special_versions.keys()):
-        if special_item not in dep_names:
-            special_versions.pop(special_item)
-        else:
-            # Ensure that the iterable of versions is mutable.
-            special_versions[special_item] = list(special_versions[special_item])
-
-    for dependency_name, possible_versions in special_versions.items():
-        for match_spec in build_deps:
-            if match_spec.name == dependency_name:
-                for version in possible_versions[:]:
-                    suitable_version = all(version_spec.match(version)
-                                           for version_spec in getattr(match_spec, 'vspecs', []))
-                    if not suitable_version:
-                        possible_versions.remove(version)
-    import itertools
-
-    # Expand the each version into a (name, version) pair.
-    versions = [[(name, version) for version in versions]
-                for name, versions in special_versions.items()]
-    matrix = list(itertools.product(*versions))
-    return matrix
-
-
-# def build_matrix_to_env_variables(matrix):
-#     cases = {'python': 'CONDA_PY', 'numpy': 'CONDA_NPY'}
-#     variables = []
-#     for case in matrix:
-#         vars = [[cases.get(name, name), version] for name, version in case]
-#         variables.append(vars)
-#     return matrix
-
-
 def meta_of_feedstock(forge_dir):
     recipe_dir = 'recipe'
     meta_dir = os.path.join(forge_dir, recipe_dir)
@@ -140,6 +78,13 @@ def meta_of_feedstock(forge_dir):
         raise IOError("The given directory isn't a feedstock.")
     meta = MetaData(meta_dir)
     return meta
+
+
+def compute_build_matrix(meta):
+    index = conda.api.get_index()
+    mtx = special_case_version_matrix(meta, index)
+    mtx = list(filter_cases(mtx, ['python >=2.7,<3|>=3.4', 'numpy >=1.9']))
+    return mtx
 
 
 def main(forge_file_directory):
@@ -164,16 +109,8 @@ def main(forge_file_directory):
         config.update(file_config)
 
     config['package'] = meta = meta_of_feedstock(forge_file_directory)
-
     
-    # see if there is a 'matrix' key from conda-forge.yml and pass it to compute_build_matrix as the special_versions
-    # key
-    special_versions = config.get('matrix')
-    matrix = compute_build_matrix(meta, special_versions)
-#     matrix.append([('foo', '1')])
-#     print(matrix)
-    # TODO: Allow the forge.yml to filter the matrix.
-    # TODO: What if no matrix items are figured out, and the template is matrix oriented? And visa-versa.
+    matrix = compute_build_matrix(meta)
     if matrix:
         config['matrix'] = matrix
 
@@ -189,12 +126,7 @@ def main(forge_file_directory):
     render_README(env, config, forge_dir)
 
 
-if False and __name__ == '__main__':
-    main('../udunits-feedstock')
-    main('../libmo_unpack-feedstock')
-    main('../mo_pack-feedstock')
-
-elif __name__ == '__main__':
+if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser(description=('Configure a feedstock given '
                                                   'a conda-forge.yml file.'))
