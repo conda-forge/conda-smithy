@@ -19,7 +19,7 @@ def main():
         author_email='pelson.pub@gmail.com',
         url='https://github.com/conda-forge/conda-smithy',
         entry_points=dict(console_scripts=[
-            'conda-smithy = conda_smithy.conda_smithy:main']),
+            'conda-smithy = conda_smithy.cli:main']),
         packages=find_packages(),
         install_requires=requirements,
         include_package_data=True,
