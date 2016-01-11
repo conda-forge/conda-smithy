@@ -1,6 +1,4 @@
 #!/usr/bin/env python
-import os.path
-
 from setuptools import setup, find_packages
 import versioneer
 
@@ -15,6 +13,7 @@ def main():
         author_email='pelson.pub@gmail.com',
         url='https://github.com/conda-forge/conda-smithy',
         entry_points=dict(console_scripts=[
+            'feedstocks = conda_smithy.feedstocks:main',
             'conda-smithy = conda_smithy.cli:main']),
         packages=find_packages(),
         include_package_data=True,

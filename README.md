@@ -11,7 +11,8 @@ Overview
 Installation
 ------------
 
-Clone this repo then `python setup.py install`.
+See the requirements list in conda_smithy.recipe/meta.yaml, then clone this
+repo and `python setup.py install`.
 
 Setup
 -----
@@ -36,6 +37,8 @@ instead of an organization by replacing the organization argument with
 `conda smithy register-feedstock-ci --organization conda-forge foo-feedstock`.
 This requires tokens for the CI services. You can give the name of a user instead
 of organization with `--user github_user_name`.
+4. Regenerate the feedstock with ``conda smithy regenerate foo-feedstock``
+5. Commit the changes ``cd foo-feedstock && git commit``, then push ``git push upstream master``.
 
 Running a build
 ---------------
