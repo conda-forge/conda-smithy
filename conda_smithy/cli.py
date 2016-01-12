@@ -10,6 +10,7 @@ from conda_build.metadata import MetaData
 
 from . import ci_register
 from . import configure_feedstock
+from . import lint_recipe
 
 
 def generate_feedstock_content(target_directory, recipe_dir):
@@ -151,6 +152,25 @@ def main():
         args = parser.parse_args()
 
     args.subcommand_func(args)
+
+
+class RecipeLint(Subcommand):
+    subcommand = 'recipe-lint'
+    def __init__(self, parser):
+        subcommand_parser = Subcommand.__init__(self, parser)
+        subcommand_parser.add_argument("recipe_directory", default=[os.getcwd()], nargs='*')
+
+    def __call__(self, args):
+        all_good = True 
+        for recipe in args.recipe_directory:
+            lint = lint_recipe.main(os.path.join(recipe))
+            if lint:
+                all_good = False
+                print('{} has some lint:\n  {}'.format(recipe, '\n  '.join(lint)))
+            else:
+                print('{} is in fine form'.format(recipe))
+        # Exit code 1 for some lint, 0 for no lint.
+        sys.exit(int(not all_good))
 
 
 class Rerender(Subcommand):
