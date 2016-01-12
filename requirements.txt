@@ -1,1 +1,12 @@
-# Please see conda_smithy.recipe/meta.yaml for the canonical runtime requirements.
+# This list is duplicated in the conda_smithy.recipe/meta.yaml.
+
+conda-build-all
+setuptools
+conda
+conda-build
+jinja2
+requests
+pycrypto
+gitpython
+pygithub <2
+ruamel.yaml

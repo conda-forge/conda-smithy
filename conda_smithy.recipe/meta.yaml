@@ -23,7 +23,6 @@ requirements:
     - gitpython
     - pygithub <2
     - ruamel.yaml
-    - ruamel.ordereddict
 
 test:
   commands:

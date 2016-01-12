@@ -1,0 +1,37 @@
+# The language in this case has no bearing - we are going to be making use of conda for a
+# python distribution for the scientific python stack.
+language: python
+
+sudo: false
+
+env:
+    global:
+       - CONDA_INSTALL_LOCN="${HOME}/conda"
+
+    matrix:
+        - PYTHON=2.7
+        # - PYTHON=3.5  (requires ruamel.yaml to exist for py35)
+
+install:
+    - mkdir -p ${HOME}/cache/pkgs
+    - "[ ! -f ${HOME}/cache/miniconda.sh ] && wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ${HOME}/cache/miniconda.sh || :"
+    - bash ${HOME}/cache/miniconda.sh -b -p ${CONDA_INSTALL_LOCN} && export PATH=${CONDA_INSTALL_LOCN}/bin:$PATH
+
+    # Re-use the pacakges in the cache, and download any new ones into that location.
+    - rm -rf ${CONDA_INSTALL_LOCN}/pkgs && ln -s ${HOME}/cache/pkgs ${CONDA_INSTALL_LOCN}/pkgs
+
+    # Now do the things we need to do to install it.
+    - conda install --file requirements.txt nose python=${PYTHON} --yes --quiet -c conda-forge
+    - python setup.py install
+
+script:
+    - nosetests conda_smithy
+
+
+# We store the files that are downloaded from continuum.io, but not the environments that are created.
+cache:
+    directories:
+      - $HOME/cache
+before_cache:
+  # Remove all untarred directories.
+  - find $CONDA_INSTALL_LOCN/pkgs/ -mindepth 1 -maxdepth 1 -type d -exec rm -r {} \;

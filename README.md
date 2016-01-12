@@ -8,6 +8,8 @@ Overview
 + Register the repo on github and push it.
 + Connect the repo to the CI services travis-ci.org, appveyor.com, circleci.com
 
+[![Build Status](https://travis-ci.org/conda-forge/conda-smithy.svg)](https://travis-ci.org/conda-forge/conda-smithy)
+
 Installation
 ------------
 
