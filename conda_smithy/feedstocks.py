@@ -15,13 +15,9 @@ def feedstock_repos(gh_organization):
     repos = []
     for repo in org.get_repos():
         if repo.name.endswith('-feedstock'):
+            repo.package_name = repo.name.rsplit('-feedstock', 1)[0]
             repos.append(repo)
-    return sorted(repos, key=lambda repo: repo.name)
-
-
-def list_feedstocks(gh_organization):
-    for repo in feedstock_repos(gh_organization):
-        print(repo.name)
+    return sorted(repos, key=lambda repo: repo.name.lower())
 
 
 def cloned_feedstocks(feedstocks_directory):
@@ -45,7 +41,8 @@ def fetch_feedstocks(feedstock_directory):
 
 
 def feedstocks_list_handle_args(args):
-    return list_feedstocks(args.organization)
+   for repo in feedstock_repos(gh_organization):
+        print(repo.name)
 
 
 def feedstocks_clone_all_handle_args(args):
