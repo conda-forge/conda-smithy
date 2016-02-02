@@ -34,6 +34,11 @@ def init_git_repo(target):
 def create_git_repo(target, msg):
     init_git_repo(target)
     subprocess.check_call(['git', 'add', '*'], cwd=target)
+    if sys.platform == "win32":
+        # prevent this:
+        # bash: line 1: ./ci_support/run_docker_build.sh: Permission denied
+        # ./ci_support/run_docker_build.sh returned exit code 126
+        subprocess.check_call(['git', 'update-index' '--chmod=+x' 'ci_support/run_docker_build.sh'], cwd=target)
     subprocess.check_call(['git', 'commit', '-m', msg], cwd=target)
 
 
