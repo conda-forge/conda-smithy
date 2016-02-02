@@ -5,6 +5,7 @@ import requests
 import subprocess
 import sys
 import argparse
+import yaml
 
 from conda_build.metadata import MetaData
 
@@ -13,16 +14,38 @@ from . import configure_feedstock
 from . import lint_recipe
 
 
-def generate_feedstock_content(target_directory, recipe_dir):
-    target_recipe_dir = os.path.join(target_directory, 'recipe')
+def generate_feedstock_content(target_directory, orig_recipe_dir):
+    target_recipe_dir = os.path.join(target_directory, "recipe")
     if not os.path.exists(target_recipe_dir):
         os.makedirs(target_recipe_dir)
-    configure_feedstock.copytree(recipe_dir, target_recipe_dir)
+    configure_feedstock.copytree(orig_recipe_dir, target_recipe_dir)
 
     forge_yml = os.path.join(target_directory, 'conda-forge.yml')
     if not os.path.exists(forge_yml):
         with open(forge_yml, 'w') as fh:
-            fh.write('[]')
+            data = {'is_pile': False}
+            yaml.safe_dump(data, fh)
+
+    configure_feedstock.main(target_directory)
+
+def generate_pile_content(target_directory):
+    target_recipes_dir = os.path.join(target_directory, "recipes")
+    if not os.path.exists(target_recipes_dir):
+        os.makedirs(target_recipes_dir)
+
+    forge_yml = os.path.join(target_directory, 'conda-forge.yml')
+    if not os.path.exists(forge_yml):
+        with open(forge_yml, 'w') as fh:
+            placeholder = '<will be updated by "conda-smithy register-feedstock-ci">'
+            data = {'is_pile': True,
+                    'travis': {'secure': {'BINSTAR_TOKEN': placeholder}},
+                    'appveyor': {'secure': {'BINSTAR_TOKEN': placeholder}},
+                    # circle-ci needs the token uploaded, so no need to cache ...
+                    'channels': {'sources': ['owner, e.g. "conda-forge"'],
+                                 'targets': [['<owner, e.g. "conda-forge">',
+                                              '<channel, e.g. "main">']]}
+                    }
+            yaml.safe_dump(data, fh)
 
     configure_feedstock.main(target_directory)
 
@@ -75,6 +98,27 @@ class Init(Subcommand):
             msg = 'Initial commit of the {} feedstock.'.format(meta.name())
             create_git_repo(feedstock_directory, msg)
 
+class InitPile(Subcommand):
+    subcommand = 'initpile'
+    def __init__(self, parser):
+        # conda-smithy init /path/to/udunits-recipe ./
+        subcommand_parser = Subcommand.__init__(self, parser,
+                                                "Create a 'pile', a git repository, which can "
+                                                "build multiple conda recipes.")
+        subcommand_parser.add_argument("--target-directory",
+                                       default='./conda-packages-builder',
+                                       help="Target directory where the pile should be created.")
+        subcommand_parser.add_argument("--no-git-repo", action='store_true',
+                                       default=False,
+                                       help="Do not init the pile as a git repository.")
+
+    def __call__(self, args):
+        generate_pile_content(args.target_directory)
+        if not args.no_git_repo:
+            msg = 'Initial commit of the pile.'
+            create_git_repo(args.target_directory, msg)
+        print("Repository created, please edit conda-forge.yml to configure the upload channels\n"
+              "and afterwards call 'conda smithy github-create'")
 
 class GithubCreate(Subcommand):
     subcommand = 'github-create'
@@ -92,6 +136,8 @@ class GithubCreate(Subcommand):
     def __call__(self, args):
         from . import github
         github.create_github_repo(args)
+        print("Repository registered at github, now call 'conda smithy register-feedstock-ci'")
+
 
 
 class RegisterFeedstockCI(Subcommand):
@@ -126,6 +172,10 @@ class RegisterFeedstockCI(Subcommand):
         ci_register.add_project_to_circle(owner, repo)
         ci_register.add_token_to_circle(owner, repo)
         ci_register.add_project_to_appveyor(owner, repo)
+        ci_register.appveyor_encrypt_binstar_token(args.feedstock_directory, owner, repo)
+        print("CI services enabled, now regenerate the feedstock/pile via \n"
+              "'conda smithy regenerate'. Afterwards commit and push to github.")
+
 
 
 def main():
@@ -184,6 +234,8 @@ class Rerender(Subcommand):
         # conda-smithy render /path/to/udunits-recipe
         subcommand_parser = Subcommand.__init__(self, parser)
         subcommand_parser.add_argument("--feedstock_directory", default=os.getcwd())
+        subcommand_parser.add_argument("--recipe-directory",
+                                       default='./recipe')
 
     def __call__(self, args):
         configure_feedstock.main(args.feedstock_directory)
@@ -196,6 +248,8 @@ class Regenerate(Subcommand):
         # conda-smithy render /path/to/udunits-recipe
         subcommand_parser = Subcommand.__init__(self, parser)
         subcommand_parser.add_argument("--feedstock_directory", default=os.getcwd())
+        subcommand_parser.add_argument("--recipe-directory",
+                                       default='./recipe')
 
     def __call__(self, args):
         configure_feedstock.main(args.feedstock_directory)

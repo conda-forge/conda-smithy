@@ -8,9 +8,9 @@
 language: objective-c
 
 {% block env -%}
-{% if matrix[0] or travis.secure -%}
+{% if (matrix and matrix[0]) or travis.secure -%}
 env:
-  {%- if matrix[0] %}
+  {%- if matrix and matrix[0] %}
   matrix:
     {% for case in matrix | sort %}
     - {{ matrix_env(case) }}
@@ -19,7 +19,7 @@ env:
   {%- if travis.secure %}
   global:
     {%- for name, hashed_secure in travis.secure | dictsort %}
-    # The {{ name }} secure variable. This is defined canonically in forge.yml.
+    # The {{ name }} secure variable. This is defined canonically in conda-forge.yml.
     - secure: "{{ hashed_secure }}"
     {%- endfor %}
   {%- endif %}
@@ -38,10 +38,17 @@ install:
       conda update --yes conda
       conda install --yes conda-build jinja2 anaconda-client
 
+{%- if is_pile %}
+      conda config --add channels conda-forge
+      # TODO: remove version after conda-build-all has a new release
+      conda install --yes conda-build-all conda-build=1.18.2
+{% endif %}
+
       {% for channel in channels.get('sources', []) %}
       conda config --add channels {{ channel }}
       {% endfor %}
 
+{%- if not is_pile %}
 script:
   - conda build ./{{ recipe_dir }}
 
@@ -49,3 +56,9 @@ after_success:
 {% for owner, channel in channels['targets'] %}
   - ./ci_support/upload_or_check_non_existence.py ./{{ recipe_dir }} {{ owner }} --channel={{ channel }}
 {% endfor %}
+{% else %}
+script:
+  - conda buildall ./recipes --no-inspect-conda-bld-directory  {% if False %}
+    {% endif %}{% for owner, channel in channels['targets'] %} --upload-channels "{{ owner }}/channel/{{ channel }}"{% endfor %}{% if False %}
+    {% endif %}{% for owner, channel in channels['targets'] %} --inspect-channels "{{ owner }}/channel/{{ channel }}"{% endfor %}
+{% endif %}
