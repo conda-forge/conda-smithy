@@ -31,10 +31,9 @@ def init_git_repo(target):
     subprocess.check_call(['git', 'init'], cwd=target)
 
 
-def create_git_repo(target, meta):
+def create_git_repo(target, msg):
     init_git_repo(target)
     subprocess.check_call(['git', 'add', '*'], cwd=target)
-    msg = 'Initial commit of the {} feedstock.'.format(meta.name())
     subprocess.check_call(['git', 'commit', '-m', msg], cwd=target)
 
 
@@ -68,7 +67,8 @@ class Init(Subcommand):
         feedstock_directory = args.feedstock_directory.format(package=argparse.Namespace(name=meta.name()))
         generate_feedstock_content(feedstock_directory, args.recipe_directory)
         if not args.no_git_repo:
-            create_git_repo(feedstock_directory, meta)
+            msg = 'Initial commit of the {} feedstock.'.format(meta.name())
+            create_git_repo(feedstock_directory, msg)
 
 
 class GithubCreate(Subcommand):
