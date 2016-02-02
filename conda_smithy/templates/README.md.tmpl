@@ -30,10 +30,7 @@ conda install {{ package.name() }}
 It is possible to list all of the versions of {{ package.name() }} available on your platform with:
 
 ```
-{% for channel in channels.get('sources', []) %}
 conda search {{ package.name() }} --channel {{ channel }}
-{% endfor %}
-
 ```
 
 
@@ -91,6 +88,7 @@ Once the conda-forge channel has been enabled, packages can be installed with:
 
 ```
 conda install <package-name>
+```
 {% endif %}
 
 Terminology
