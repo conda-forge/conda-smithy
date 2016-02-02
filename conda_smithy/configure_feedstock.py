@@ -71,8 +71,7 @@ def copy_feedstock_content(forge_dir):
     copytree(feedstock_content, forge_dir, 'README')
 
 
-def meta_of_feedstock(forge_dir):
-    recipe_dir = 'recipe'
+def meta_of_feedstock(forge_dir, recipe_dir):
     meta_dir = os.path.join(forge_dir, recipe_dir)
     if not os.path.exists(meta_dir):
         raise IOError("The given directory isn't a feedstock.")
@@ -87,8 +86,7 @@ def compute_build_matrix(meta):
     return mtx
 
 
-def main(forge_file_directory):
-    recipe_dir = 'recipe'
+def main(forge_file_directory, recipe_dir):
     config = {'docker': {'image': 'pelson/obvious-ci:latest_x64', 'command': 'bash'},
               'templates': {'run_docker_build': 'run_docker_build_matrix.tmpl'},
               'travis': [],
@@ -108,7 +106,7 @@ def main(forge_file_directory):
         # values. (XXX except dicts within dicts need to be dealt with!)
         config.update(file_config)
 
-    config['package'] = meta = meta_of_feedstock(forge_file_directory)
+    config['package'] = meta = meta_of_feedstock(forge_file_directory, recipe_dir)
     
     matrix = compute_build_matrix(meta)
     if matrix:
