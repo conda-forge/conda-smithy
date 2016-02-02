@@ -14,7 +14,7 @@ from . import lint_recipe
 
 
 def generate_feedstock_content(target_directory, recipe_dir):
-    target_recipe_dir = os.path.join(target_directory, 'recipe')
+    target_recipe_dir = os.path.join(target_directory, recipe_dir)
     if not os.path.exists(target_recipe_dir):
         os.makedirs(target_recipe_dir)
     configure_feedstock.copytree(recipe_dir, target_recipe_dir)
@@ -24,7 +24,7 @@ def generate_feedstock_content(target_directory, recipe_dir):
         with open(forge_yml, 'w') as fh:
             fh.write('[]')
 
-    configure_feedstock.main(target_directory)
+    configure_feedstock.main(target_directory, recipe_dir)
 
 
 def init_git_repo(target):
