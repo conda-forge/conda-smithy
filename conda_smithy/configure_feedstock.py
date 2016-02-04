@@ -119,10 +119,6 @@ def main(forge_file_directory):
     if not config['is_multi']:
         config['package'] = meta = meta_of_feedstock(forge_file_directory)
 
-        matrix = compute_build_matrix(meta)
-        if matrix:
-            config['matrix'] = matrix
-
     tmplt_dir = os.path.join(conda_forge_content, 'templates')
     # Load templates from the feedstock in preference to the smithy's templates.
     env = Environment(loader=FileSystemLoader([os.path.join(forge_dir, 'templates'),

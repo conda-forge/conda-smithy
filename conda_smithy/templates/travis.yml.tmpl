@@ -1,30 +1,16 @@
-{%- set conda_vars = {'python': 'CONDA_PY', 'numpy': 'CONDA_NPY'} -%}
-{% macro matrix_env(matrix_item) -%}
-    {% for dep_name, version in matrix_item | sort %}{{ conda_vars.get(dep_name, dep_name) }}={{version|replace('.', '')}}  {% endfor %}
-{%- endmacro %}
 # This file was generated automatically from conda-smithy. To update this configuration,
 # update the conda-forge.yaml and/or the recipe/meta.yaml.
 
 language: objective-c
 
-{% block env -%}
-{% if (matrix and matrix[0]) or travis.secure -%}
+{% if travis.secure -%}
 env:
-  {%- if matrix and matrix[0] %}
-  matrix:
-    {% for case in matrix | sort %}
-    - {{ matrix_env(case) }}
-    {%- endfor %}
-  {%- endif %}
-  {%- if travis.secure %}
   global:
     {%- for name, hashed_secure in travis.secure | dictsort %}
     # The {{ name }} secure variable. This is defined canonically in conda-forge.yml.
     - secure: "{{ hashed_secure }}"
     {%- endfor %}
-  {%- endif %}
 {%- endif %}
-{% endblock %}
 
 install:
     - |
@@ -35,29 +21,16 @@ install:
 
       export PATH=/Users/travis/miniconda3/bin:$PATH
 
-      conda update --yes conda
-      conda install --yes conda-build jinja2 anaconda-client
-
-{%- if is_multi %}
-      conda config --add channels conda-forge
-      conda install --yes conda-build-all conda-build
-{% endif %}
+      conda install -n root --quiet -c conda-forge --yes conda-build-all conda-build jinja2 anaconda-client setuptools
 
       {% for channel in channels.get('sources', []) %}
       conda config --add channels {{ channel }}
       {% endfor %}
+      conda info
 
-{%- if not is_multi %}
-script:
-  - conda build ./{{ recipe_dir }}
 
-after_success:
-{% for owner, channel in channels['targets'] %}
-  - ./ci_support/upload_or_check_non_existence.py ./{{ recipe_dir }} {{ owner }} --channel={{ channel }}
-{% endfor %}
-{% else %}
 script:
-  - conda buildall ./recipes --no-inspect-conda-bld-directory  {% if False %}
+  - conda buildall ./{{ recipe_dir }} --no-inspect-conda-bld-directory  {% if False %}
     {% endif %}{% for owner, channel in channels['targets'] %} --upload-channels "{{ owner }}/channel/{{ channel }}"{% endfor %}{% if False %}
     {% endif %}{% for owner, channel in channels['targets'] %} --inspect-channels "{{ owner }}/channel/{{ channel }}"{% endfor %}
-{% endif %}
+

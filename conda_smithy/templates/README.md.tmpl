@@ -94,18 +94,15 @@ conda install <package-name>
 Terminology
 ===========
 
-**feedstock** - a repository with a single conda recipe (raw material), supporting scripts and
+**feedstock** - a repository with one or more conda recipe (raw material), supporting scripts and
                 CI configuration
-
-**pile** - a repository with multiple recipes in addition to the supporting scripts and CI
-           configuration
 
 **conda-smithy** - the tool which helps orchestrate the feedstock or a pile.
                    Its primary use is in the construction of the CI ``.yml`` files
                    and simplify the management of *many* feedstocks.
 
-**conda-forge** - the place where the feedstock and smithy live and work to
-                  produce the finished article (built conda distributions)
+**conda-forge** - a github organisation which builds `conda smithy` and produces conda packages
+                  for the `conda-forge` channel.
 
 {% if not is_multi %}Current build status
 ====================
