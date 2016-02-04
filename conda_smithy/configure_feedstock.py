@@ -98,6 +98,7 @@ def compute_build_matrix(meta):
 
 def main(forge_file_directory):
     config = {'is_pile': False,
+              'recipe_dir': "recipe",
               'docker': {'image': 'pelson/obvious-ci:latest_x64', 'command': 'bash'},
               'templates': {'run_docker_build': 'run_docker_build_matrix.tmpl'},
               'travis': [],
