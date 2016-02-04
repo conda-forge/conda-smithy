@@ -64,8 +64,7 @@ install:
     - cmd: conda install -n root --quiet --yes conda-build anaconda-client jinja2 setuptools
 
 {% if is_multi %}
-    # TODO: remove version after conda-build-all has a new release
-    - cmd: conda install -n root --quiet -c conda-forge --yes conda-build-all conda-build=1.18.2
+    - cmd: conda install -n root --quiet -c conda-forge --yes conda-build-all conda-build
 {% endif %}
 
 # Skip .NET project specific build phase.

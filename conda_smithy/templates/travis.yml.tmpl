@@ -40,8 +40,7 @@ install:
 
 {%- if is_multi %}
       conda config --add channels conda-forge
-      # TODO: remove version after conda-build-all has a new release
-      conda install --yes conda-build-all conda-build=1.18.2
+      conda install --yes conda-build-all conda-build
 {% endif %}
 
       {% for channel in channels.get('sources', []) %}

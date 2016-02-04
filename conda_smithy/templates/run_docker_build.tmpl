@@ -55,8 +55,7 @@ conda info
 
 {% endblock -%}
 {% else %}
-# TODO: remove version after conda-build-all has a new release
-conda install --yes conda-build-all conda-build=1.18.2
+conda install --yes conda-build-all conda-build
 conda buildall /recipe_root --no-inspect-conda-bld-directory \
   {% for owner, channel in channels['targets'] %} --upload-channels "{{ owner }}/channel/{{ channel }}"{% endfor %}\
   {% for owner, channel in channels['targets'] %} --inspect-channels "{{ owner }}/channel/{{ channel }}"{% endfor %}
