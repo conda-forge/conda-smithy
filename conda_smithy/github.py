@@ -27,7 +27,7 @@ def create_github_repo(args):
     with open("conda-forge.yml", "r") as fh:
         file_config = list(yaml.load_all(fh))[0]
 
-    is_feedstock = False if file_config.get("is_pile") else True
+    is_feedstock = False if file_config.get("is_multi") else True
     if is_feedstock:
         meta = configure_feedstock.meta_of_feedstock(args.feedstock_directory)
 
