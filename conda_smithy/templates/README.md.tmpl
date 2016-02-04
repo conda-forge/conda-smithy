@@ -1,4 +1,4 @@
-{% set channel = channels.get('sources', ['<set source in conda-forge,yml'])[0] %}{%if not is_pile
+{% set channel = channels.get('sources', ['<set source in conda-forge,yml'])[0] %}{%if not is_multi
 %}About {{ package.name() }}
 ======{{ '=' * package.name()|length }}
 
@@ -55,7 +55,7 @@ To manage the continuous integration and simplify feedstock maintenance
 Using the ``conda-forge.yml`` within this repository, it is possible to regenerate all of
 this feedstock's supporting files (e.g. the CI configuration files) with ``conda smithy regenerate``.
 
-{% endif %}{%if is_pile %}
+{% endif %}{%if is_multi %}
 About this package builder repository
 =====================================
 
@@ -107,7 +107,7 @@ Terminology
 **conda-forge** - the place where the feedstock and smithy live and work to
                   produce the finished article (built conda distributions)
 
-{% if not is_pile %}Current build status
+{% if not is_multi %}Current build status
 ====================
 Linux: [![Circle CI](https://circleci.com/gh/conda-forge/{{package.name()}}-feedstock.svg?style=svg)](https://circleci.com/gh/conda-forge/{{package.name()}}-feedstock)
 OSX: [![TravisCI](https://travis-ci.org/conda-forge/{{package.name()}}-feedstock.svg?branch=master)](https://travis-ci.org/conda-forge/{{package.name()}}-feedstock) 
@@ -129,7 +129,7 @@ In order to produce a uniquely identifiable distribution:
  * If the version of a package **is** being increased, please remember to return
    the [``build/number``](http://conda.pydata.org/docs/building/meta-yaml.html#build-number-and-string)
    back to 0.
-{% endif %}{% if is_pile %}Updating individual recipes
+{% endif %}{% if is_multi %}Updating individual recipes
 ===========================
 
 If you would like to improve the individual recipes, please take the normal

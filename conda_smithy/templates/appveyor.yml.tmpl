@@ -27,7 +27,7 @@ environment:
     secure: "{{ hashed_secure }}"
   {%- endfor %}
 {%- endif %}
-{% if not is_pile %}
+{% if not is_multi %}
   matrix:{% for case in matrix | sort %}
     {{ matrix_env("x86", case) }}
     {{ matrix_env("x64", case) }}
@@ -63,7 +63,7 @@ install:
     - cmd: conda info
     - cmd: conda install -n root --quiet --yes conda-build anaconda-client jinja2 setuptools
 
-{% if is_pile %}
+{% if is_multi %}
     # TODO: remove version after conda-build-all has a new release
     - cmd: conda install -n root --quiet -c conda-forge --yes conda-build-all conda-build=1.18.2
 {% endif %}
@@ -71,7 +71,7 @@ install:
 # Skip .NET project specific build phase.
 build: off
 
-{% if not is_pile %}
+{% if not is_multi %}
 test_script:
     - "%CMD_IN_ENV% conda build {{ recipe_dir }} --quiet"
 deploy_script:

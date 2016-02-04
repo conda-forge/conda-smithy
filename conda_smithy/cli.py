@@ -16,10 +16,10 @@ _CONFIG_PLACEHOLDER = '<will be updated by "conda-smithy register-feedstock-ci">
 
 PY2 = sys.version_info[0] == 2
 
-def generate_feedstock_content(target_directory, source_recipe_dir, is_pile, meta):
+def generate_feedstock_content(target_directory, source_recipe_dir, is_multi, meta):
     recipe_target_dir = None
     # setup the dirs
-    if is_pile:
+    if is_multi:
         recipe_dir = "recipes"
         target_recipes_dir = os.path.join(target_directory, recipe_dir)
         if not os.path.exists(target_recipes_dir):
@@ -43,7 +43,7 @@ def generate_feedstock_content(target_directory, source_recipe_dir, is_pile, met
     forge_yml = os.path.join(target_directory, 'conda-forge.yml')
     if not os.path.exists(forge_yml):
         with open(forge_yml, 'w') as fh:
-            data = {'is_pile': is_pile,
+            data = {'is_multi': is_multi,
                     'recipe_dir': recipe_dir, # this is a bit misleading, as in the multi case it
                                               #  actually holds multiple recipes...
                     'travis': {'secure': {'BINSTAR_TOKEN': _CONFIG_PLACEHOLDER}},
@@ -112,7 +112,7 @@ class Init(Subcommand):
                                        help="Do not init the feedstock as a git repository.")
 
     def __call__(self, args):
-        is_pile = args.multi
+        is_multi = args.multi
         # check some error conditions
         if args.recipe_directory and not os.path.isdir(args.recipe_directory):
             raise IOError("The source recipe directory should be the directory of the "
@@ -125,7 +125,7 @@ class Init(Subcommand):
         else:
             meta = None
 
-        if is_pile:
+        if is_multi:
             feedstock_directory = args.feedstock_directory.format(package=argparse.Namespace(
                 name="multi-package"))
             msg = 'Initial commit of the multi packages feedstock.'.format(meta.name())
@@ -133,7 +133,7 @@ class Init(Subcommand):
             feedstock_directory = args.feedstock_directory.format(package=argparse.Namespace(name=meta.name()))
             msg = 'Initial commit of the {} feedstock.'.format(meta.name())
 
-        generate_feedstock_content(feedstock_directory, args.recipe_directory, is_pile, meta)
+        generate_feedstock_content(feedstock_directory, args.recipe_directory, is_multi, meta)
         if not args.no_git_repo:
             create_git_repo(feedstock_directory, msg)
 

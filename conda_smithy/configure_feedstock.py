@@ -71,11 +71,11 @@ def copytree(src, dst, ignore=(), root_dst=None):
             shutil.copy2(s, d)
 
 
-def copy_feedstock_content(forge_dir, is_pile=False):
+def copy_feedstock_content(forge_dir, is_multi=False):
     feedstock_content = os.path.join(conda_forge_content,
                                      'feedstock_content')
     ignore = ['README']
-    if is_pile:
+    if is_multi:
         ignore.append(os.path.join('ci_support', 'upload_or_check_non_existence.py'))
     copytree(feedstock_content, forge_dir, ignore)
 
@@ -97,7 +97,7 @@ def compute_build_matrix(meta):
 
 
 def main(forge_file_directory):
-    config = {'is_pile': False,
+    config = {'is_multi': False,
               'recipe_dir': "recipe",
               'docker': {'image': 'pelson/obvious-ci:latest_x64', 'command': 'bash'},
               'templates': {'run_docker_build': 'run_docker_build_matrix.tmpl'},
@@ -116,7 +116,7 @@ def main(forge_file_directory):
         # The config is just the union of the defaults, and the overriden
         # values. (XXX except dicts within dicts need to be dealt with!)
         config.update(file_config)
-    if not config['is_pile']:
+    if not config['is_multi']:
         config['package'] = meta = meta_of_feedstock(forge_file_directory)
 
         matrix = compute_build_matrix(meta)
@@ -128,12 +128,12 @@ def main(forge_file_directory):
     env = Environment(loader=FileSystemLoader([os.path.join(forge_dir, 'templates'),
                                                tmplt_dir]))
 
-    copy_feedstock_content(forge_dir, config['is_pile'])
+    copy_feedstock_content(forge_dir, config['is_multi'])
     render_run_docker_build(env, config, forge_dir)
     render_travis(env, config, forge_dir)
     render_appveyor(env, config, forge_dir)
     render_README(env, config, forge_dir)
-    if config['is_pile']:
+    if config['is_multi']:
         render_recipes_README(env, config, forge_dir)
 
 

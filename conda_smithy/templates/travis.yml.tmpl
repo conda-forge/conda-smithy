@@ -38,7 +38,7 @@ install:
       conda update --yes conda
       conda install --yes conda-build jinja2 anaconda-client
 
-{%- if is_pile %}
+{%- if is_multi %}
       conda config --add channels conda-forge
       # TODO: remove version after conda-build-all has a new release
       conda install --yes conda-build-all conda-build=1.18.2
@@ -48,7 +48,7 @@ install:
       conda config --add channels {{ channel }}
       {% endfor %}
 
-{%- if not is_pile %}
+{%- if not is_multi %}
 script:
   - conda build ./{{ recipe_dir }}
 
