@@ -159,14 +159,14 @@ class GithubCreate(Subcommand):
     def __call__(self, args):
         from . import github
         github.create_github_repo(args)
-        print("\nRepository registered at github, now call 'conda smithy register-feedstock-ci'")
+        print("\nRepository registered at github, now call 'conda smithy register-ci'")
 
 
 
 class RegisterFeedstockCI(Subcommand):
     subcommand = 'register-ci'
     def __init__(self, parser):
-        # conda-smithy register-feedstock-ci ./
+        # conda-smithy register-ci ./
         super(RegisterFeedstockCI, self).__init__(parser, "Register a feedstock at the CI "
                                                               "services which do the builds.")
         scp = self.subcommand_parser
