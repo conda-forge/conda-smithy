@@ -12,7 +12,8 @@ from . import ci_register
 from . import configure_feedstock
 from . import lint_recipe
 
-_CONFIG_PLACEHOLDER = '<will be updated by "conda-smithy register-feedstock-ci">'
+_CONFIG_CI_PLACEHOLDER = '<will be updated by "conda-smithy register-ci">'
+_CONFIG_GH_PLACEHOLDER = '<will be updated by "conda-smithy register-github">'
 
 PY2 = sys.version_info[0] == 2
 
@@ -46,12 +47,14 @@ def generate_feedstock_content(target_directory, source_recipe_dir, is_multi, me
             data = {'is_multi': is_multi,
                     'recipe_dir': recipe_dir, # this is a bit misleading, as in the multi case it
                                               #  actually holds multiple recipes...
-                    'travis': {'secure': {'BINSTAR_TOKEN': _CONFIG_PLACEHOLDER}},
-                    'appveyor': {'secure': {'BINSTAR_TOKEN': _CONFIG_PLACEHOLDER}},
+                    'travis': {'secure': {'BINSTAR_TOKEN': _CONFIG_CI_PLACEHOLDER}},
+                    'appveyor': {'secure': {'BINSTAR_TOKEN': _CONFIG_CI_PLACEHOLDER}},
                     # circle-ci needs the token uploaded, so no need to cache ...
                     'channels': {'sources': ['owner, e.g. "conda-forge"'],
                                  'targets': [['<owner, e.g. "conda-forge">',
-                                              '<channel, e.g. "main">']]}
+                                              '<channel, e.g. "main">']]},
+                    "github": {"user_or_org": _CONFIG_GH_PLACEHOLDER,
+                                 "repo_name": _CONFIG_GH_PLACEHOLDER}
                     }
             yaml.safe_dump(data, fh)
 
@@ -138,7 +141,7 @@ class Init(Subcommand):
             create_git_repo(feedstock_directory, msg)
 
         print("\nRepository created, please edit conda-forge.yml to configure the upload channels\n"
-              "and afterwards call 'conda smithy register-github'")
+              "and afterwards call 'conda smithy register-github ...'")
 
 class RegisterGithub(Subcommand):
     subcommand = 'register-github'

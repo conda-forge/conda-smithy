@@ -1,6 +1,7 @@
 from __future__ import print_function
 
 import os
+from os.path import join, isdir
 import shutil
 import stat
 import yaml
@@ -104,7 +105,9 @@ def main(forge_file_directory):
               'travis': [],
               'circle': [],
               'appveyor': [],
-              'channels': {'sources': ['conda-forge'], 'targets': [['conda-forge', 'main']]}}
+              'channels': {'sources': ['conda-forge'], 'targets': [['conda-forge', 'main']]},
+              'github': {'user_or_org': '<unconfigured>', 'repo_name': '<unconfigured>'}
+              }
     forge_dir = os.path.abspath(forge_file_directory)
 
     forge_yml = os.path.join(forge_dir, "conda-forge.yml")
@@ -116,8 +119,16 @@ def main(forge_file_directory):
         # The config is just the union of the defaults, and the overriden
         # values. (XXX except dicts within dicts need to be dealt with!)
         config.update(file_config)
+        if not 'github' in file_config:
+            print("github values not present in conda-forge.yml: please add 'github.user_or_org' "
+                  "and 'github.repo_name' settings or rerun 'conda smithy register-github ...'.")
     if not config['is_multi']:
         config['package'] = meta = meta_of_feedstock(forge_file_directory)
+    else:
+        d = join(forge_dir, 'recipes')
+        recipes = [join(d, s) for s in os.listdir(d) if isdir(join(d, s))]
+        recipes_meta = [MetaData(d) for d in recipes]
+        config['packages'] = recipes_meta
 
     tmplt_dir = os.path.join(conda_forge_content, 'templates')
     # Load templates from the feedstock in preference to the smithy's templates.

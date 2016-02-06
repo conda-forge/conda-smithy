@@ -66,3 +66,9 @@ def create_github_repo(args):
                       "(it points to {}).".format(remote_name, gh_repo.ssh_url, existing_remote.url))
         else:
             repo.create_remote(remote_name, gh_repo.ssh_url)
+    with open("conda-forge.yml", 'w') as fh:
+        org_or_user_name = args.user if args.user is not None else args.organization
+        file_config["github"] = {"user_or_org": org_or_user_name,
+                                 "repo_name": repo_name}
+        yaml.safe_dump(file_config, fh)
+
