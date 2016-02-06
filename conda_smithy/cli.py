@@ -138,13 +138,13 @@ class Init(Subcommand):
             create_git_repo(feedstock_directory, msg)
 
         print("\nRepository created, please edit conda-forge.yml to configure the upload channels\n"
-              "and afterwards call 'conda smithy github-create'")
+              "and afterwards call 'conda smithy register-github'")
 
-class GithubCreate(Subcommand):
-    subcommand = 'github-create'
+class RegisterGithub(Subcommand):
+    subcommand = 'register-github'
     def __init__(self, parser):
-        #  conda-smithy github-create ./ --organization=conda-forge
-        super(GithubCreate, self).__init__(parser, "Create a repo for a feedstock at github.")
+        #  conda-smithy register-github ./ --organization=conda-forge
+        super(RegisterGithub, self).__init__(parser, "Register a repo for a feedstock at github.")
         scp = self.subcommand_parser
         scp.add_argument("feedstock_directory",
                          help="The directory of the feedstock git repository.")
@@ -163,11 +163,11 @@ class GithubCreate(Subcommand):
 
 
 
-class RegisterFeedstockCI(Subcommand):
+class RegisterCI(Subcommand):
     subcommand = 'register-ci'
     def __init__(self, parser):
         # conda-smithy register-ci ./
-        super(RegisterFeedstockCI, self).__init__(parser, "Register a feedstock at the CI "
+        super(RegisterCI, self).__init__(parser, "Register a feedstock at the CI "
                                                               "services which do the builds.")
         scp = self.subcommand_parser
         scp.add_argument("--feedstock_directory", default=os.getcwd(),
