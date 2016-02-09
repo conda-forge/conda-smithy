@@ -1,6 +1,7 @@
 from __future__ import print_function
 
 import os
+from os.path import join, isdir
 import shutil
 import stat
 import yaml
@@ -17,10 +18,7 @@ conda_forge_content = os.path.abspath(os.path.dirname(__file__))
 
 
 def render_run_docker_build(jinja_env, forge_config, forge_dir):
-    # TODO: Conda has a convenience for accessing nested yaml content.
-    template_name = forge_config.get('templates', {}).get('run_docker_build',
-                                                    'run_docker_build_matrix.tmpl')
-    template = jinja_env.get_template(template_name)
+    template = jinja_env.get_template('run_docker_build.tmpl')
     run_docker_build_fname = os.path.join(forge_dir, 'ci_support', 'run_docker_build.sh')
     with open(run_docker_build_fname, 'w') as fh:
         fh.write(template.render(**forge_config))
@@ -68,7 +66,8 @@ def copytree(src, dst, ignore=(), root_dst=None):
 def copy_feedstock_content(forge_dir):
     feedstock_content = os.path.join(conda_forge_content,
                                      'feedstock_content')
-    copytree(feedstock_content, forge_dir, 'README')
+    ignore = ['README']
+    copytree(feedstock_content, forge_dir, ignore)
 
 
 def meta_of_feedstock(forge_dir):
@@ -88,14 +87,13 @@ def compute_build_matrix(meta):
 
 
 def main(forge_file_directory):
-    recipe_dir = 'recipe'
-    config = {'docker': {'image': 'pelson/obvious-ci:latest_x64', 'command': 'bash'},
+    config = {'recipe_dir': "recipe",
+              'docker': {'image': 'pelson/obvious-ci:latest_x64', 'command': 'bash'},
               'templates': {'run_docker_build': 'run_docker_build_matrix.tmpl'},
               'travis': [],
               'circle': [],
               'appveyor': [],
               'channels': {'sources': ['conda-forge'], 'targets': [['conda-forge', 'main']]},
-              'recipe_dir': recipe_dir,
               'github': {'user_or_org': '<unconfigured>', 'repo_name': '<unconfigured>'}
               }
     forge_dir = os.path.abspath(forge_file_directory)
@@ -113,10 +111,6 @@ def main(forge_file_directory):
             print("github values not present in conda-forge.yml: please add 'github.user_or_org' "
                   "and 'github.repo_name' settings or rerun 'conda smithy register-github ...'.")
     config['package'] = meta = meta_of_feedstock(forge_file_directory)
-    
-    matrix = compute_build_matrix(meta)
-    if matrix:
-        config['matrix'] = matrix
 
     tmplt_dir = os.path.join(conda_forge_content, 'templates')
     # Load templates from the feedstock in preference to the smithy's templates.
