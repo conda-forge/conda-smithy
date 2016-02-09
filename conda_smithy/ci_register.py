@@ -2,6 +2,7 @@
 from __future__ import print_function
 import os
 import requests
+import time
 
 
 # https://circleci.com/docs/api#add-environment-variable
@@ -124,16 +125,30 @@ def add_project_to_travis(user, project):
     headers['Authorization'] = 'token {}'.format(token)
 
     url = '{}/hooks'.format(endpoint)
-    response = requests.get(url, headers=headers)
-    content = response.json()
-    found = [hooked for hooked in content['hooks']
-             if hooked['owner_name'] == user and hooked['name'] == project]
-    
-    if not found:
-        print(" * Travis doesn't know about the repo, synching (takes a few seconds). Re-run to get travisi-ci enabled.")
-        url = '{}/users/sync'.format(endpoint)
-        response = requests.post(url, headers=headers)
-    elif found[0]['active'] is True:
+
+    found = False
+    count = 0
+
+    while not found:
+        count += 1
+
+        response = requests.get(url, headers=headers)
+        content = response.json()
+        found = [hooked for hooked in content['hooks']
+                 if hooked['owner_name'] == user and hooked['name'] == project]
+        
+        if not found:
+            if count == 1:
+                print(" * Travis doesn't know about the repo, synching (takes a few seconds).")
+                url = '{}/users/sync'.format(endpoint)
+                response = requests.post(url, headers=headers)
+            time.sleep(3)
+
+        if count > 5:
+            print('  * Unable to register the repo on Travis (is it down?)')
+            return
+
+    if found[0]['active'] is True:
         print(' * {}/{} already enabled on travis-ci'.format(user, project))
     else:
         repo_id = found[0]['id']

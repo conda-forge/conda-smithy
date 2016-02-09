@@ -8,5 +8,5 @@ jinja2
 requests
 pycrypto
 gitpython
-pygithub 1.*
+pygithub <2
 ruamel.yaml
