@@ -39,6 +39,12 @@ def render_README(jinja_env, forge_config, forge_dir):
     with open(target_fname, 'w') as fh:
         fh.write(template.render(**forge_config))
 
+def render_recipes_README(jinja_env, forge_config, forge_dir):
+    template = jinja_env.get_template('recipes_README.md.tmpl')
+    target_fname = os.path.join(forge_dir, forge_config['recipe_dir'], 'README.md')
+    with open(target_fname, 'w') as fh:
+        fh.write(template.render(**forge_config))
+
 
 def render_appveyor(jinja_env, forge_config, forge_dir):
     template = jinja_env.get_template('appveyor.yml.tmpl')
@@ -63,7 +69,7 @@ def copytree(src, dst, ignore=(), root_dst=None):
             shutil.copy2(s, d)
 
 
-def copy_feedstock_content(forge_dir):
+def copy_feedstock_content(forge_dir, is_multi=False):
     feedstock_content = os.path.join(conda_forge_content,
                                      'feedstock_content')
     ignore = ['README']
@@ -86,7 +92,8 @@ def compute_build_matrix(meta):
 
 
 def main(forge_file_directory):
-    config = {'recipe_dir': "recipe",
+    config = {'is_multi': False,
+              'recipe_dir': "recipe",
               'docker': {'image': 'pelson/obvious-ci:latest_x64', 'command': 'bash'},
               'templates': {'run_docker_build': 'run_docker_build_matrix.tmpl'},
               'travis': [],
@@ -110,18 +117,27 @@ def main(forge_file_directory):
         if not 'github' in file_config:
             print("github values not present in conda-forge.yml: please add 'github.user_or_org' "
                   "and 'github.repo_name' settings or rerun 'conda smithy register-github ...'.")
-    config['package'] = meta = meta_of_feedstock(forge_file_directory, config["recipe_dir"])
+
+    if not config['is_multi']:
+        config['package'] = meta = meta_of_feedstock(forge_file_directory, config["recipe_dir"])
+    else:
+        d = join(forge_dir, config["recipe_dir"])
+        recipes = [join(d, s) for s in os.listdir(d) if isdir(join(d, s))]
+        recipes_meta = [MetaData(d) for d in recipes]
+        config['packages'] = recipes_meta
 
     tmplt_dir = os.path.join(conda_forge_content, 'templates')
     # Load templates from the feedstock in preference to the smithy's templates.
     env = Environment(loader=FileSystemLoader([os.path.join(forge_dir, 'templates'),
                                                tmplt_dir]))
 
-    copy_feedstock_content(forge_dir)
+    copy_feedstock_content(forge_dir, config['is_multi'])
     render_run_docker_build(env, config, forge_dir)
     render_travis(env, config, forge_dir)
     render_appveyor(env, config, forge_dir)
     render_README(env, config, forge_dir)
+    if config['is_multi']:
+        render_recipes_README(env, config, forge_dir)
 
 
 if __name__ == '__main__':

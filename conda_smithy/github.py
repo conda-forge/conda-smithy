@@ -27,8 +27,10 @@ def create_github_repo(args):
     with open("conda-forge.yml", "r") as fh:
         file_config = list(yaml.load_all(fh))[0]
 
-    recipe_dir = file_config.get("recipe_dir", "recipe")
-    meta = configure_feedstock.meta_of_feedstock(args.feedstock_directory, recipe_dir)
+    is_feedstock = False if file_config.get("is_multi") else True
+    if is_feedstock:
+        recipe_dir = file_config.get("recipe_dir", "recipe")
+        meta = configure_feedstock.meta_of_feedstock(args.feedstock_directory, recipe_dir)
 
     from git import Repo
     gh = Github(token)
@@ -42,7 +44,10 @@ def create_github_repo(args):
 
     repo_name = os.path.basename(os.path.abspath(args.feedstock_directory))
     try:
-        desc = 'A conda-smithy repository for {}.'.format(meta.name())
+        if is_feedstock:
+            desc = 'A conda-smithy repository for {}.'.format(meta.name())
+        else:
+            desc = 'A conda packages builder repository'
         gh_repo = user_or_org.create_repo(repo_name, has_wiki=False, description=desc)
         print('Created {} on github'.format(gh_repo.full_name))
     except GithubException as gh_except:

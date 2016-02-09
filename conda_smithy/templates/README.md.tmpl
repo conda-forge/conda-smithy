@@ -1,5 +1,5 @@
-{% set channel = channels.get('sources', ['<set source in conda-forge,yml'])[0] %}
-About {{ package.name() }}
+{% set channel = channels.get('sources', ['<set source in conda-forge,yml'])[0] %}{%
+if not is_multi%}About {{ package.name() }}
 ======{{ '=' * package.name()|length }}
 
 * Home: {{ package.meta.about.home }}
@@ -30,10 +30,59 @@ It is possible to list all of the versions of {{ package.name() }} available on 
 conda search {{ package.name() }} --channel {{ channel }}
 ```
 
+{% else %}About this package builder repository
+=====================================
+
+This is a package builder repository, which builds several conda recipes and uploads them to a
+custom anaconda channel named "{{ channel }}".
+
+Included packages
+=================
+{% for package in packages %}
+{{ package.name() }}
+{{ '-' * package.name()|length }}
+
+* Home: {{ package.meta.about.home }}
+* Package license: {{ package.meta.about.license }}
+* Feedstock license: BSD
+* Summary: {{ package.meta.about.summary }}
+{% if package.meta.extra and package.meta.extra.description != ""%}* {{ package.meta.extra.description }}{% endif %}
+
+{% endfor %}
+
+Working with the "{{ channel }}" conda channel
+================================={{ '=' * channel|length }}
+
+Listing all packages from the "{{ channel }}" channel can be achieved by
+
+```
+conda search -c {{ channel }} --override-channels
+```
+
+Installing a package can be done with:
+
+```
+conda install -c {{ channel }} <package-name>
+```
+
+
+You can permanently add the channel by using the following command:
+
+```
+conda config --add channels {{ channel }}
+```
+
+Once the conda-forge channel has been enabled, packages can be installed with:
+
+```
+conda install <package-name>
+```
+{% endif %}
+
 Terminology
 ===========
 
-**feedstock** - a repository with a conda recipe (raw material), supporting scripts and
+**feedstock** - a repository with one or more conda recipes (raw material), supporting scripts and
                 CI configuration
 
 **conda-smithy** - the tool which helps orchestrate the feedstock.
@@ -49,6 +98,7 @@ Linux: [![Circle CI](https://circleci.com/gh/{{ github.user_or_org }}/{{ github.
 OSX: [![TravisCI](https://travis-ci.org/{{ github.user_or_org }}/{{ github.repo_name }}.svg?branch=master)](https://travis-ci.org/{{ github.user_or_org }}/{{ github.repo_name }})
 Windows: [![AppVeyor](https://ci.appveyor.com/api/projects/status/github/{{ github.user_or_org }}/{{ github.repo_name }}?svg=True)](https://ci.appveyor.com/project/{{ github.user_or_org }}/{{ github.repo_name }}/branch/master)
 
+{% if not is_multi %}
 Updating {{ package.name() }}-feedstock
 ========={{ '=' * package.name()|length }}==========
 
@@ -58,6 +108,18 @@ be run on the appropriate platforms to give the reviewer an opportunity to confi
 changes result in a successful build. Once merged, the recipe will be re-built and uploaded
 automatically to the "{{ channel }}" channel, whereupon they will be available for everybody to
 install and use.
+
+{% else %}
+Updating individual recipes
+===========================
+
+If you would like to improve the individual recipes, please take the normal
+route of forking this repository and submitting a PR. Upon submission, your changes will
+be run on the appropriate platforms to give the reviewer an opportunity to confirm that the
+changes result in a successful build. Once merged, the recipe will be re-built and built packages
+uploaded automatically to the "{{ channel }}" channel, whereupon they will be available for
+everybody to install and use.
+{% endif %}
 
 In order to produce a uniquely identifiable distribution:
  * If the version of a package **is not** being increased, please add or increase
