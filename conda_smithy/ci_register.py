@@ -134,8 +134,11 @@ def add_project_to_travis(user, project):
 
         response = requests.get(url, headers=headers)
         content = response.json()
-        found = [hooked for hooked in content['hooks']
-                 if hooked['owner_name'] == user and hooked['name'] == project]
+        try:
+            found = [hooked for hooked in content['hooks']
+                     if hooked['owner_name'] == user and hooked['name'] == project]
+        except KeyError:
+            pass
         
         if not found:
             if count == 1:
