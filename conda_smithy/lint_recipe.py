@@ -1,9 +1,15 @@
 import os
 
+import jinja2
 import ruamel.yaml
 
 
 EXPECTED_SECTION_ORDER = ['package', 'source', 'build', 'requirements', 'test', 'app', 'about', 'extra']
+
+
+class NullUndefined(jinja2.Undefined):
+    def __unicode__(self):
+        return unicode(self._undefined_name)
 
 
 def lintify(meta):
@@ -40,7 +46,11 @@ def main(recipe_dir):
     recipe_meta = os.path.join(recipe_dir, 'meta.yaml')
     if not os.path.exists(recipe_dir):
         raise IOError('Feedstock has no recipe/meta.yaml.')
+
+    env = jinja2.Environment(undefined=NullUndefined)
+
     with open(recipe_meta, 'r') as fh:
-        meta = ruamel.yaml.load(fh, ruamel.yaml.RoundTripLoader)
+        content = env.from_string(''.join(fh)).render()
+        meta = ruamel.yaml.load(content, ruamel.yaml.RoundTripLoader)
     results = lintify(meta)
     return results
