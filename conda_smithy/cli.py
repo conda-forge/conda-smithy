@@ -1,10 +1,10 @@
 from __future__ import print_function, absolute_import
 
 import os
-import requests
 import subprocess
 import sys
 import argparse
+import yaml
 
 from conda_build.metadata import MetaData
 
@@ -12,6 +12,8 @@ from . import ci_register
 from . import configure_feedstock
 from . import lint_recipe
 
+_CONFIG_CI_PLACEHOLDER = '<will be updated by "conda-smithy register-ci">'
+_CONFIG_GH_PLACEHOLDER = '<will be updated by "conda-smithy register-github">'
 
 PY2 = sys.version_info[0] == 2
 
@@ -24,13 +26,23 @@ def generate_feedstock_content(target_directory, source_recipe_dir, meta):
     if source_recipe_dir:
         configure_feedstock.copytree(source_recipe_dir, target_recipe_dir)
 
+    # Init a first version of the config file
     forge_yml = os.path.join(target_directory, 'conda-forge.yml')
     if not os.path.exists(forge_yml):
         with open(forge_yml, 'w') as fh:
-            fh.write('[]')
+            data = {'recipe_dir': recipe_dir,
+                    'travis': {'secure': {'BINSTAR_TOKEN': _CONFIG_CI_PLACEHOLDER}},
+                    'appveyor': {'secure': {'BINSTAR_TOKEN': _CONFIG_CI_PLACEHOLDER}},
+                    # circle-ci needs the token uploaded, so no need to cache ...
+                    'channels': {'sources': ['owner, e.g. "conda-forge"'],
+                                 'targets': [['<owner, e.g. "conda-forge">',
+                                              '<channel, e.g. "main">']]},
+                    "github": {"user_or_org": _CONFIG_GH_PLACEHOLDER,
+                                 "repo_name": _CONFIG_GH_PLACEHOLDER}
+                    }
+            yaml.safe_dump(data, fh)
 
     configure_feedstock.main(target_directory)
-
 
 def init_git_repo(target):
     subprocess.check_call(['git', 'init'], cwd=target)
