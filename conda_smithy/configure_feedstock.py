@@ -70,8 +70,7 @@ def copy_feedstock_content(forge_dir):
     copytree(feedstock_content, forge_dir, ignore)
 
 
-def meta_of_feedstock(forge_dir):
-    recipe_dir = 'recipe'
+def meta_of_feedstock(forge_dir, recipe_dir = 'recipe'):
     meta_dir = os.path.join(forge_dir, recipe_dir)
     if not os.path.exists(meta_dir):
         raise IOError("The given directory isn't a feedstock.")
@@ -110,7 +109,7 @@ def main(forge_file_directory):
         if not 'github' in file_config:
             print("github values not present in conda-forge.yml: please add 'github.user_or_org' "
                   "and 'github.repo_name' settings or rerun 'conda smithy register-github ...'.")
-    config['package'] = meta = meta_of_feedstock(forge_file_directory)
+    config['package'] = meta = meta_of_feedstock(forge_file_directory, config["recipe_dir"])
 
     tmplt_dir = os.path.join(conda_forge_content, 'templates')
     # Load templates from the feedstock in preference to the smithy's templates.

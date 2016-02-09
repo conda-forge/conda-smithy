@@ -27,7 +27,8 @@ def create_github_repo(args):
     with open("conda-forge.yml", "r") as fh:
         file_config = list(yaml.load_all(fh))[0]
 
-    meta = configure_feedstock.meta_of_feedstock(args.feedstock_directory)
+    recipe_dir = file_config.get("recipe_dir", "recipe")
+    meta = configure_feedstock.meta_of_feedstock(args.feedstock_directory, recipe_dir)
 
     from git import Repo
     gh = Github(token)
