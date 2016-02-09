@@ -50,8 +50,7 @@ def feedstocks_clone_all_handle_args(args):
         clone_directory = os.path.join(args.feedstocks_directory, repo.name)
         if not os.path.exists(clone_directory):
             print('Cloning {}'.format(repo.name))
-            new_repo = Repo.init(clone_directory)
-            new_repo.clone(repo.ssh_url)
+            new_repo = Repo.clone_from(repo.ssh_url, clone_directory)
         clone = Repo(clone_directory)
         if 'upstream' in [remote.name for remote in clone.remotes]:
             clone.delete_remote('upstream')
@@ -117,3 +116,7 @@ def main():
 
     args = parser.parse_args()
     return args.func(args)
+
+
+if __name__ == '__main__':
+    main()
