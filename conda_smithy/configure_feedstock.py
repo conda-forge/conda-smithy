@@ -95,7 +95,9 @@ def main(forge_file_directory):
               'circle': [],
               'appveyor': [],
               'channels': {'sources': ['conda-forge'], 'targets': [['conda-forge', 'main']]},
-              'recipe_dir': recipe_dir}
+              'recipe_dir': recipe_dir,
+              'github': {'user_or_org': '<unconfigured>', 'repo_name': '<unconfigured>'}
+              }
     forge_dir = os.path.abspath(forge_file_directory)
 
     forge_yml = os.path.join(forge_dir, "conda-forge.yml")
@@ -107,7 +109,9 @@ def main(forge_file_directory):
         # The config is just the union of the defaults, and the overriden
         # values. (XXX except dicts within dicts need to be dealt with!)
         config.update(file_config)
-
+        if not 'github' in file_config:
+            print("github values not present in conda-forge.yml: please add 'github.user_or_org' "
+                  "and 'github.repo_name' settings or rerun 'conda smithy register-github ...'.")
     config['package'] = meta = meta_of_feedstock(forge_file_directory)
     
     matrix = compute_build_matrix(meta)
