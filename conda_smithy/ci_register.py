@@ -143,8 +143,8 @@ def add_project_to_travis(user, project):
         if not found:
             if count == 1:
                 print(" * Travis doesn't know about the repo, synching (takes a few seconds).")
-                url = '{}/users/sync'.format(endpoint)
-                response = requests.post(url, headers=headers)
+                synch_url = '{}/users/sync'.format(endpoint)
+                response = requests.post(synch_url, headers=headers)
             time.sleep(3)
 
         if count > 5:
