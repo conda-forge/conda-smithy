@@ -93,7 +93,8 @@ def main(forge_file_directory):
               'circle': [],
               'appveyor': [],
               'channels': {'sources': ['conda-forge'], 'targets': [['conda-forge', 'main']]},
-              'github': {'user_or_org': '<unconfigured>', 'repo_name': '<unconfigured>'}
+              'github': {'user_or_org': '<unconfigured>', 'repo_name': '<unconfigured>'},
+              'matrix_condition': ["python >=2.7"]
               }
     forge_dir = os.path.abspath(forge_file_directory)
 

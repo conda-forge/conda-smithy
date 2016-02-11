@@ -31,6 +31,7 @@ install:
 
 script:
   - conda buildall ./{{ recipe_dir }} --no-inspect-conda-bld-directory  {% if False %}
+    {% endif %}{% if matrix_condition %} --matrix-conditions {% for cond in matrix_condition %} "{{ cond }}"{% endfor %}{% endif %}{% if False %}
     {% endif %}{% for owner, channel in channels['targets'] %} --upload-channels "{{ owner }}/channel/{{ channel }}"{% endfor %}{% if False %}
     {% endif %}{% for owner, channel in channels['targets'] %} --inspect-channels "{{ owner }}/channel/{{ channel }}"{% endfor %}
 
