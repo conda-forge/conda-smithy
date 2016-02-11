@@ -149,8 +149,9 @@ def add_project_to_travis(user, project):
             time.sleep(3)
 
         if count > 20:
-            print('  * Unable to register the repo on Travis (is it down?)')
-            return
+            msg = ('Unable to register the repo on Travis\n'
+                   '(Is it down? Is the "{}" name spelt correctly? [note: case sensitive])')
+            raise RuntimeError(msg.format(user))
 
     if found[0]['active'] is True:
         print(' * {}/{} already enabled on travis-ci'.format(user, project))

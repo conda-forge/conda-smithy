@@ -14,7 +14,9 @@ def gh_token():
             with open(os.path.expanduser('~/.conda-smithy/github.token'), 'r') as fh:
                 token = fh.read().strip()
         except IOError:
-            print('No github token. Put one in ~/.conda-smithy/github.token')
+            msg = ('No github token. Go to https://github.com/settings/tokens/new and generate\n'
+                   'a token with repo access. Put it in ~/.conda-smithy/github.token')
+            raise RuntimeError(msg)
         return token
 
 

@@ -97,12 +97,16 @@ class Init(Subcommand):
         feedstock_directory = args.feedstock_directory.format(package=argparse.Namespace(name=meta.name()))
         msg = 'Initial commit of the {} feedstock.'.format(meta.name())
 
-        generate_feedstock_content(feedstock_directory, args.recipe_directory, meta)
-        if not args.no_git_repo:
-            create_git_repo(feedstock_directory, msg)
+        try:
+            generate_feedstock_content(feedstock_directory, args.recipe_directory, meta)
+            if not args.no_git_repo:
+                create_git_repo(feedstock_directory, msg)
 
-        print("\nRepository created, please edit conda-forge.yml to configure the upload channels\n"
-              "and afterwards call 'conda smithy register-github'")
+            print("\nRepository created, please edit conda-forge.yml to configure the upload channels\n"
+                  "and afterwards call 'conda smithy register-github'")
+        except RuntimeError as e:
+            print(e.message)
+
 
 class RegisterGithub(Subcommand):
     subcommand = 'register-github'
@@ -122,9 +126,11 @@ class RegisterGithub(Subcommand):
 
     def __call__(self, args):
         from . import github
-        github.create_github_repo(args)
-        print("\nRepository registered at github, now call 'conda smithy register-ci'")
-
+        try:
+            github.create_github_repo(args)
+            print("\nRepository registered at github, now call 'conda smithy register-ci'")
+        except RuntimeError as e:
+            print(e.message)
 
 
 class RegisterCI(Subcommand):
@@ -146,15 +152,17 @@ class RegisterCI(Subcommand):
         repo = os.path.basename(os.path.abspath(args.feedstock_directory))
 
         print('CI Summary for {}/{} (can take ~30s):'.format(owner, repo))
-        ci_register.add_project_to_travis(owner, repo)
-        ci_register.travis_token_update_conda_forge_config(args.feedstock_directory, owner, repo)
-        ci_register.add_project_to_circle(owner, repo)
-        ci_register.add_token_to_circle(owner, repo)
-        ci_register.add_project_to_appveyor(owner, repo)
-        ci_register.appveyor_encrypt_binstar_token(args.feedstock_directory, owner, repo)
-        print("\nCI services enabled, now regenerate the feedstock/pile via \n"
-              "'conda smithy regenerate'. Afterwards commit and push to github.")
-
+        try:
+            ci_register.add_project_to_travis(owner, repo)
+            ci_register.travis_token_update_conda_forge_config(args.feedstock_directory, owner, repo)
+            ci_register.add_project_to_circle(owner, repo)
+            ci_register.add_token_to_circle(owner, repo)
+            ci_register.add_project_to_appveyor(owner, repo)
+            ci_register.appveyor_encrypt_binstar_token(args.feedstock_directory, owner, repo)
+            print("\nCI services enabled, now regenerate the feedstock/pile via \n"
+                  "'conda smithy regenerate'. Afterwards commit and push to github.")
+        except RuntimeError as e:
+            print(e.message)
 
 class Regenerate(Subcommand):
     subcommand = 'regenerate'
@@ -167,8 +175,12 @@ class Regenerate(Subcommand):
                          help="The directory of the feedstock git repository.")
 
     def __call__(self, args):
-        configure_feedstock.main(args.feedstock_directory)
-        print("\nCI support files regenerated. These need to be pushed to github!")
+        try:
+            configure_feedstock.main(args.feedstock_directory)
+            print("\nCI support files regenerated. These need to be pushed to github!")
+        except RuntimeError as e:
+            print(e.message)
+
 
 class RecipeLint(Subcommand):
     subcommand = 'recipe-lint'
