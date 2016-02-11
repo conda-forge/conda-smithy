@@ -19,14 +19,14 @@ install:
       wget "${MINICONDA_URL}/${MINICONDA_FILE}"
       bash $MINICONDA_FILE -b
 
-      export PATH=/Users/travis/miniconda3/bin:$PATH
-
-      conda install -n root --quiet -c conda-forge --yes conda-build-all conda-build jinja2 anaconda-client setuptools
+    - export PATH=/Users/travis/miniconda3/bin:$PATH
+    - conda update --yes conda
+    - conda install -n root --quiet -c conda-forge --yes conda-build-all conda-build jinja2 anaconda-client setuptools
 
       {% for channel in channels.get('sources', []) %}
-      conda config --add channels {{ channel }}
+    - conda config --add channels {{ channel }}
       {% endfor %}
-      conda info
+    - conda info
 
 
 script:
