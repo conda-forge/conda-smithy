@@ -38,7 +38,8 @@ def generate_feedstock_content(target_directory, source_recipe_dir, meta):
                                  'targets': [['<owner, e.g. "conda-forge">',
                                               '<channel, e.g. "main">']]},
                     "github": {"user_or_org": _CONFIG_GH_PLACEHOLDER,
-                                 "repo_name": _CONFIG_GH_PLACEHOLDER}
+                                 "repo_name": _CONFIG_GH_PLACEHOLDER},
+                    "matrix_condition": ["python >=2.7"]
                     }
             yaml.safe_dump(data, fh)
 

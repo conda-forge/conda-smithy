@@ -42,8 +42,9 @@ conda info
 
 conda install -n root --quiet -c conda-forge --yes conda-build-all conda-build anaconda-client jinja2 setuptools
 
-conda buildall /recipe_root --no-inspect-conda-bld-directory \
-  {% for owner, channel in channels['targets'] %} --upload-channels "{{ owner }}/channel/{{ channel }}"{% endfor %}\
-  {% for owner, channel in channels['targets'] %} --inspect-channels "{{ owner }}/channel/{{ channel }}"{% endfor %}
+conda buildall /recipe_root --no-inspect-conda-bld-directory {% if False %}
+    {% endif %}{% if matrix_condition %} --matrix-conditions {% for cond in matrix_condition %} "{{ cond }}"{% endfor %}    {% endif %}{% if False %}
+    {% endif %}{% for owner, channel in channels['targets'] %} --upload-channels "{{ owner }}/channel/{{ channel }}"{% endfor %}{% if False %}
+    {% endif %}{% for owner, channel in channels['targets'] %} --inspect-channels "{{ owner }}/channel/{{ channel }}"{% endfor %}
 
 EOF
