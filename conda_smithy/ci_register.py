@@ -157,11 +157,9 @@ def add_project_to_travis(user, project):
             time.sleep(3)
 
         if count > 5:
-            print('  * Unable to register the repo on Travis (is it down?)')
-            print("    Please also ensure that the user/org name is spelled correctly "
-                  "(case sensitiv).")
-
-            sys.exit(1)
+            msg = ('Unable to register the repo on Travis\n'
+                   '(Is it down? Is the "{}" name spelled right [note: case sensitive]?)')
+            raise RuntimeError(msg.format(user))
 
     if found[0]['active'] is True:
         print(' * {}/{} already enabled on travis-ci'.format(user, project))
