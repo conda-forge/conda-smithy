@@ -27,16 +27,12 @@ except IOError:
           'put it in ~/.conda-smithy/appveyor.token')
 
 try:
-    anaconda_token = os.environ['BINSTAR_TOKEN']
-except KeyError:
-    try:
-        with open(os.path.expanduser('~/.conda-smithy/anaconda.token'), 'r') as fh:
-            anaconda_token = fh.read().strip()
-    except IOError:
-        print('No anaconda token. Create a token via\n'
-              '  anaconda auth --create --name conda-smithy --scopes "repos conda api"'
-              'and put it in ~/.conda-smithy/anaconda.token')
-
+    with open(os.path.expanduser('~/.conda-smithy/anaconda.token'), 'r') as fh:
+        anaconda_token = fh.read().strip()
+except IOError:
+    print('No anaconda token. Create a token via\n'
+          '  anaconda auth --create --name conda-smithy --scopes "repos conda api"'
+          'and put it in ~/.conda-smithy/anaconda.token')
 
 
 def add_token_to_circle(user, project):
