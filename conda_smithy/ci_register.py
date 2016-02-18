@@ -147,7 +147,7 @@ def add_project_to_travis(user, project):
                 response = requests.post(synch_url, headers=headers)
             time.sleep(3)
 
-        if count > 5:
+        if count > 20:
             print('  * Unable to register the repo on Travis (is it down?)')
             return
 
