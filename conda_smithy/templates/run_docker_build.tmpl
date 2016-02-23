@@ -13,7 +13,7 @@ channels:
 {% for channel in channels.get('sources', []) | sort %}
  - {{ channel }}
 {% endfor %}
- - defaults # As we need conda-build
+ - defaults
 
 conda-build:
  root-dir: /feedstock_root/build_artefacts
@@ -30,6 +30,7 @@ cat << EOF | docker run -i \
                         {{ docker.image }} \
                         {{ docker.command }} || exit $?
 
+# The BINSTAR secure variable is set by 'conda smithy register-ci' via a web request.
 export BINSTAR_TOKEN=${BINSTAR_TOKEN}
 export PYTHONUNBUFFERED=1
 
@@ -41,12 +42,10 @@ conda info
 {%if build_setup %}
 {{ build_setup }}{% endif %}
 
-{% block build -%}conda build /recipe_root --quiet || exit 1
-{% for owner, channel in channels['targets'] %}
-/feedstock_root/ci_support/upload_or_check_non_existence.py /recipe_root {{ owner }} --channel={{ channel }} || exit 1
-{% endfor %}
+conda install -n root --quiet -c conda-forge --yes conda-build-all conda-build anaconda-client jinja2 setuptools
 
-{% endblock -%}
+conda buildall /recipe_root --no-inspect-conda-bld-directory \
+  {% for owner, channel in channels['targets'] %} --upload-channels "{{ owner }}/channel/{{ channel }}"{% endfor %}\
+  {% for owner, channel in channels['targets'] %} --inspect-channels "{{ owner }}/channel/{{ channel }}"{% endfor %}
 
 EOF
-
