@@ -21,7 +21,7 @@ install:
     - rm -rf ${CONDA_INSTALL_LOCN}/pkgs && ln -s ${HOME}/cache/pkgs ${CONDA_INSTALL_LOCN}/pkgs
 
     # Now do the things we need to do to install it.
-    - conda install --file requirements.txt nose python=${PYTHON} --yes --quiet -c conda-forge
+    - conda install --file requirements.txt nose mock python=${PYTHON} --yes --quiet -c conda-forge
     - python setup.py install
 
 script:

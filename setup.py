@@ -21,6 +21,9 @@ def main():
         # not zip-safe.
         zip_safe=False,
         cmdclass=versioneer.get_cmdclass(),
+        extras_require={
+            'test': ['six']
+        }
         )
     setup(**skw)
 
