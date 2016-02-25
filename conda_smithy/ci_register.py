@@ -4,7 +4,9 @@ import os
 import requests
 import time
 
-
+from conda_smithy import vendored
+from conda_smithy.vendored import travis_encrypt as travis
+import ruamel.yaml
 # https://circleci.com/docs/api#add-environment-variable
 
 # curl -X POST --header "Content-Type: application/json" -d '{"name":"foo", "value":"bar"}'
@@ -79,7 +81,6 @@ def add_project_to_appveyor(user, project):
             response.raise_for_status()
         print(' * {}/{} has been enabled on appveyor'.format(user, project))
 
-    
 
 def appveyor_encrypt_binstar_token(feedstock_directory, user, project):
     import ruamel.yaml
@@ -166,11 +167,8 @@ def add_project_to_travis(user, project):
 
 
 def travis_token_update_conda_forge_config(feedstock_directory, user, project):
-    import vendored
-    import vendored.travis_encrypt as travis
-    import ruamel.yaml
     item = 'BINSTAR_TOKEN="{}"'.format(os.environ['BINSTAR_TOKEN'])
-    slug =  "{}/{}".format(user, project)
+    slug = "{}/{}".format(user, project)
 
     forge_yaml = os.path.join(feedstock_directory, 'conda-forge.yml')
     if os.path.exists(forge_yaml):
@@ -183,10 +181,15 @@ def travis_token_update_conda_forge_config(feedstock_directory, user, project):
     if not code:
         code = {}
 
-    code.setdefault('travis', {}).setdefault('secure', {})['BINSTAR_TOKEN'] = travis.encrypt(slug, item)
+    code.setdefault('travis', {}).setdefault('secure', {})['BINSTAR_TOKEN'] = (
+        _encrypt_binstar_token(slug, item)
+    )
     with open(forge_yaml, 'w') as fh:
         fh.write(ruamel.yaml.dump(code, Dumper=ruamel.yaml.RoundTripDumper))
 
+
+def _encrypt_binstar_token(slug, item):
+    return travis.encrypt(slug, item.encode()).decode('utf-8')
 
 if __name__ == '__main__':
     import argparse
