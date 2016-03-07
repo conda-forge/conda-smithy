@@ -1,5 +1,7 @@
 from __future__ import absolute_import
+import argparse
 import glob
+import multiprocessing
 import os
 
 from git import Repo, GitCommandError
@@ -22,22 +24,51 @@ def feedstock_repos(gh_organization):
 
 def cloned_feedstocks(feedstocks_directory):
     """
-    Return a generator of all cloned feedstock directories.
+    Return a generator of all cloned feedstocks.
+    The feedstock will be generated as an argparse.Namespace and can be used:
+
+        for feedstock in cloned_feedstocks(path_to_feedstocks_directory):
+            print(feedstock.name)  # The name of the feedstock, e.g. conda-smithy-feedstock
+            print(feedstock.package)  # The name of the package within the feedstock, e.g. conda-smithy
+            print(feedstock.directory)  # The absolute path to the repo
 
     """
     pattern = os.path.abspath(os.path.join(feedstocks_directory, '*-feedstock'))
-    return sorted(glob.glob(pattern))
+    for feedstock_dir in sorted(glob.glob(pattern)):
+        feedstock_basename = os.path.basename(feedstock_dir)
+        feedstock_package = feedstock_basename.rsplit('-feedstock', 1)[0]
+        feedstock = argparse.Namespace(name=feedstock_basename,
+                                       package=feedstock_package,
+                                       directory=feedstock_dir)
+        yield feedstock
+
+
+def fetch_feedstock(repo_dir):
+    """Git fetch --all a single git repository."""
+    repo = Repo(repo_dir)
+    for remote in repo.remotes:
+        try:
+            remote.fetch()
+        except GitCommandError:
+            print("Failed to fetch {} from {}.".format(remote.name, remote.url))
 
 
 def fetch_feedstocks(feedstock_directory):
-    for repo_dir in cloned_feedstocks(feedstock_directory):
-        repo = Repo(repo_dir)
-        print('Fetching for {}'.format(os.path.basename(repo_dir)))
-        for remote in repo.remotes:
-            try:
-                remote.fetch()
-            except GitCommandError:
-                print("Failed to fetch {} from {}.".format(remote.name, remote.url))
+    """
+    Do a git fetch on all of the cloned feedstocks.
+
+    Note: This function uses multiprocessing to parallelise the fetch process.
+
+    """
+    feedstocks = list(cloned_feedstocks(feedstock_directory))
+    # We pick the minimum of ncpus x10 and total feedstocks for the pool size.
+    n_processes = min([len(feedstocks), multiprocessing.cpu_count() * 10])
+    pool = multiprocessing.Pool(n_processes)
+    for repo in cloned_feedstocks(feedstock_directory):
+        repo_dir = repo.directory
+        pool.apply_async(fetch_feedstock, args=(repo_dir, ))
+    pool.close()
+    pool.join()
 
 
 def feedstocks_list_handle_args(args):
@@ -45,9 +76,9 @@ def feedstocks_list_handle_args(args):
         print(repo.name)
 
 
-def feedstocks_clone_all_handle_args(args):
-    for repo in feedstock_repos(args.organization):
-        clone_directory = os.path.join(args.feedstocks_directory, repo.name)
+def clone_all(gh_org, feedstocks_dir):
+    for repo in feedstock_repos(gh_org):
+        clone_directory = os.path.join(feedstocks_dir, repo.name)
         if not os.path.exists(clone_directory):
             print('Cloning {}'.format(repo.name))
             new_repo = Repo.clone_from(repo.ssh_url, clone_directory)
@@ -55,22 +86,24 @@ def feedstocks_clone_all_handle_args(args):
         if 'upstream' in [remote.name for remote in clone.remotes]:
             clone.delete_remote('upstream')
         clone.create_remote('upstream', url=repo.ssh_url)
-        
+
+
+def feedstocks_clone_all_handle_args(args):
+    return clone_all(args.organization, args.feedstocks_directory)
+
 
 def feedstocks_list_cloned_handle_args(args):
-    for feedstock_directory in cloned_feedstocks(args.feedstocks_directory):
-        print(os.path.basename(feedstock_directory))
+    for feedstock in cloned_feedstocks(args.feedstocks_directory):
+        print(os.path.basename(feedstock.directory))
 
 
 def feedstocks_apply_cloned_handle_args(args):
     import subprocess
-    for feedstock_directory in cloned_feedstocks(args.feedstocks_directory):
-        feedstock_basename = os.path.basename(feedstock_directory)
-        feedstock_package = feedstock_basename.rsplit('-feedstock', 1)[0]
+    for feedstock in cloned_feedstocks(args.feedstocks_directory):
         env = os.environ.copy()
-        context = {'FEEDSTOCK_DIRECTORY': feedstock_directory,
-                   'FEEDSTOCK_BASENAME': feedstock_basename,
-                   'FEEDSTOCK_NAME': feedstock_package}
+        context = {'FEEDSTOCK_DIRECTORY': feedstock.directory,
+                   'FEEDSTOCK_BASENAME': feedstock.name,
+                   'FEEDSTOCK_NAME': feedstock.package}
         env.update(context)
         cmd = [item.format(feedstock_directory, **context) for item in args.cmd]
         print('\nRunning "{}" for {}:'.format(' '.join(cmd), feedstock_package))
@@ -81,13 +114,7 @@ def feedstocks_fetch_handle_args(args):
     return fetch_feedstocks(args.feedstocks_directory)
 
 
-def feedstocks_fetch_handle_args(args):
-    return fetch_feedstocks(args.feedstocks_directory)
-
-
 def main():
-    import argparse
-
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers()
     list_feedstocks = subparsers.add_parser('list', help='List all of the feedstocks available on the GitHub organization.')
