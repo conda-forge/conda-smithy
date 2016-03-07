@@ -1,10 +1,10 @@
 from __future__ import print_function, absolute_import
 
 import os
-import requests
 import subprocess
 import sys
 import argparse
+import yaml
 
 from conda_build.metadata import MetaData
 
@@ -12,25 +12,54 @@ from . import ci_register
 from . import configure_feedstock
 from . import lint_recipe
 
+_CONFIG_CI_PLACEHOLDER = '<will be updated by "conda-smithy register-ci">'
+_CONFIG_GH_PLACEHOLDER = '<will be updated by "conda-smithy register-github">'
 
 PY2 = sys.version_info[0] == 2
 
-def generate_feedstock_content(target_directory, source_recipe_dir, meta):
-    recipe_dir = "recipe"
-    target_recipe_dir = os.path.join(target_directory, recipe_dir)
-    if not os.path.exists(target_recipe_dir):
-        os.makedirs(target_recipe_dir)
+def generate_feedstock_content(target_directory, source_recipe_dir, is_multi, meta):
+    recipe_target_dir = None
+    # setup the dirs
+    if is_multi:
+        recipe_dir = "recipes"
+        target_recipes_dir = os.path.join(target_directory, recipe_dir)
+        if not os.path.exists(target_recipes_dir):
+            os.makedirs(target_recipes_dir)
+        if meta:
+            # default name for the recipe dir under ./recipes is the name of the package
+            target_recipe_dir = os.path.join(target_recipes_dir, meta.name())
+            if not os.path.exists(target_recipe_dir):
+                os.makedirs(target_recipe_dir)
+
+    else:
+        recipe_dir = "recipe"
+        target_recipe_dir = os.path.join(target_directory, recipe_dir)
+        if not os.path.exists(target_recipe_dir):
+            os.makedirs(target_recipe_dir)
     # If there is a source recipe, copy it now to the right dir
     if source_recipe_dir:
         configure_feedstock.copytree(source_recipe_dir, target_recipe_dir)
 
+    # Init a first version of the config file
     forge_yml = os.path.join(target_directory, 'conda-forge.yml')
     if not os.path.exists(forge_yml):
         with open(forge_yml, 'w') as fh:
-            fh.write('[]')
+            data = {'is_multi': is_multi,
+                    'recipe_dir': recipe_dir, # this is a bit misleading, as in the multi case it
+                                              #  actually holds multiple recipes...
+                    'travis': {'secure': {'BINSTAR_TOKEN': _CONFIG_CI_PLACEHOLDER}},
+                    'appveyor': {'secure': {'BINSTAR_TOKEN': _CONFIG_CI_PLACEHOLDER}},
+                    # circle-ci needs the token uploaded, so no need to cache ...
+                    'channels': {'sources': ['owner, e.g. "conda-forge"'],
+                                 'targets': [['<owner, e.g. "conda-forge">',
+                                              '<channel, e.g. "main">']]},
+                    "github": {"user_or_org": _CONFIG_GH_PLACEHOLDER,
+                                 "repo_name": _CONFIG_GH_PLACEHOLDER},
+                    "matrix_condition": ["python >=2.7"]
+                    }
+            yaml.safe_dump(data, fh)
 
     configure_feedstock.main(target_directory)
-
 
 def init_git_repo(target):
     subprocess.check_call(['git', 'init'], cwd=target)
@@ -71,17 +100,22 @@ class Init(Subcommand):
         # conda-smithy init /path/to/udunits-recipe ./
 
         super(Init, self).__init__(parser, "Create a feedstock git repository, which can contain "
-                                           "one conda recipes.")
+                                           "one or multiple conda recipes.")
         scp = self.subcommand_parser
         scp.add_argument("recipe_directory", help="The path to the source recipe directory.")
+        scp.add_argument("--multi", action='store_true', default=False,
+                                       help="Build a multi recipes feedstock.")
         scp.add_argument("--feedstock-directory", default='./{package.name}-feedstock',
                         help="Target directory, where the new feedstock git repository should be "
-                             "created. (Default: './<packagename>-feedstock')")
+                             "created. For a single recipe feedstock, the default is "
+                             "'./<packagename>-feedstock'. For a multi recipes feedstock, "
+                             "the default will be './multi-package-feedstock'.")
         scp.add_argument("--no-git-repo", action='store_true',
                                        default=False,
                                        help="Do not init the feedstock as a git repository.")
 
     def __call__(self, args):
+        is_multi = args.multi
         # check some error conditions
         if args.recipe_directory and not os.path.isdir(args.recipe_directory):
             raise IOError("The source recipe directory should be the directory of the "
@@ -94,11 +128,16 @@ class Init(Subcommand):
         else:
             meta = None
 
-        feedstock_directory = args.feedstock_directory.format(package=argparse.Namespace(name=meta.name()))
-        msg = 'Initial commit of the {} feedstock.'.format(meta.name())
+        if is_multi:
+            feedstock_directory = args.feedstock_directory.format(package=argparse.Namespace(
+                name="multi-package"))
+            msg = 'Initial commit of the multi packages feedstock.'.format(meta.name())
+        else:
+            feedstock_directory = args.feedstock_directory.format(package=argparse.Namespace(name=meta.name()))
+            msg = 'Initial commit of the {} feedstock.'.format(meta.name())
 
         try:
-            generate_feedstock_content(feedstock_directory, args.recipe_directory, meta)
+            generate_feedstock_content(feedstock_directory, args.recipe_directory, is_multi, meta)
             if not args.no_git_repo:
                 create_git_repo(feedstock_directory, msg)
 

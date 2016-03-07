@@ -1,6 +1,8 @@
 from __future__ import absolute_import
 
 import os
+import sys
+import yaml
 
 import github
 from github import Github
@@ -22,7 +24,13 @@ def gh_token():
 
 def create_github_repo(args):
     token = gh_token()
-    meta = configure_feedstock.meta_of_feedstock(args.feedstock_directory)
+    with open("conda-forge.yml", "r") as fh:
+        file_config = list(yaml.load_all(fh))[0]
+
+    is_feedstock = False if file_config.get("is_multi") else True
+    if is_feedstock:
+        recipe_dir = file_config.get("recipe_dir", "recipe")
+        meta = configure_feedstock.meta_of_feedstock(args.feedstock_directory, recipe_dir)
 
     from git import Repo
     gh = Github(token)
@@ -36,8 +44,11 @@ def create_github_repo(args):
 
     repo_name = os.path.basename(os.path.abspath(args.feedstock_directory))
     try:
-        gh_repo = user_or_org.create_repo(repo_name, has_wiki=False,
-                                          description='A conda-smithy repository for {}.'.format(meta.name()))
+        if is_feedstock:
+            desc = 'A conda-smithy repository for {}.'.format(meta.name())
+        else:
+            desc = 'A conda packages builder repository'
+        gh_repo = user_or_org.create_repo(repo_name, has_wiki=False, description=desc)
         print('Created {} on github'.format(gh_repo.full_name))
     except GithubException as gh_except:
         if gh_except.data.get('errors', [{}])[0].get('message', '') != u'name already exists on this account':
@@ -56,3 +67,9 @@ def create_github_repo(args):
                       "(it points to {}).".format(remote_name, gh_repo.ssh_url, existing_remote.url))
         else:
             repo.create_remote(remote_name, gh_repo.ssh_url)
+    with open("conda-forge.yml", 'w') as fh:
+        org_or_user_name = args.user if args.user is not None else args.organization
+        file_config["github"] = {"user_or_org": org_or_user_name,
+                                 "repo_name": repo_name}
+        yaml.safe_dump(file_config, fh)
+

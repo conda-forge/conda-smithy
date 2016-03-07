@@ -1,6 +1,7 @@
 #!/usr/bin/env python
-from __future__ import print_function
+from __future__ import print_function, absolute_import
 import os
+import sys
 import requests
 import time
 
@@ -17,20 +18,30 @@ try:
     with open(os.path.expanduser('~/.conda-smithy/circle.token'), 'r') as fh:
         circle_token = fh.read().strip()
 except IOError:
-    print('No circle token. Put one in ~/.conda-smithy/circle.token')
+    print('No circle token.  Create a token at https://circleci.com/account/api and\n'
+          'put it in ~/.conda-smithy/circle.token')
 
 try:
     with open(os.path.expanduser('~/.conda-smithy/appveyor.token'), 'r') as fh:
         appveyor_token = fh.read().strip()
 except IOError:
-    print('No appveyor token. Put one in ~/.conda-smithy/appveyor.token')
+    print('No appveyor token. Create a token at https://ci.appveyor.com/api-token and\n'
+          'put it in ~/.conda-smithy/appveyor.token')
+
+try:
+    with open(os.path.expanduser('~/.conda-smithy/anaconda.token'), 'r') as fh:
+        anaconda_token = fh.read().strip()
+except IOError:
+    print('No anaconda token. Create a token via\n'
+          '  anaconda auth --create --name conda-smithy --scopes "repos conda api"'
+          'and put it in ~/.conda-smithy/anaconda.token')
 
 
 def add_token_to_circle(user, project):
     url_template = ('https://circleci.com/api/v1/project/{user}/{project}/envvar?'
                     'circle-token={token}')
     url = url_template.format(token=circle_token, user=user, project=project)
-    data = {'name': 'BINSTAR_TOKEN', 'value': os.environ['BINSTAR_TOKEN']}
+    data = {'name': 'BINSTAR_TOKEN', 'value': anaconda_token}
     response = requests.post(url, data)
     if response.status_code != 201:
         raise ValueError(response)
@@ -87,7 +98,7 @@ def appveyor_encrypt_binstar_token(feedstock_directory, user, project):
 
     headers = {'Authorization': 'Bearer {}'.format(appveyor_token)}
     url = 'https://ci.appveyor.com/api/account/encrypt'
-    response = requests.post(url, headers=headers, data={"plainValue": os.environ['BINSTAR_TOKEN']})
+    response = requests.post(url, headers=headers, data={"plainValue": anaconda_token})
     if response.status_code != 200:
         raise ValueError(response)
 
@@ -115,9 +126,7 @@ def add_project_to_travis(user, project):
                }
     endpoint = 'https://api.travis-ci.org'
     url = '{}/auth/github'.format(endpoint)
-    with open(os.path.expanduser('~/.conda-smithy/github.token'), 'r') as fh:
-        github_token = fh.read().strip()
-    data = {"github_token": github_token}
+    data = {"github_token": gh_token()}
     response = requests.post(url, json=data, headers=headers)
     if response.status_code != 201:
         response.raise_for_status()

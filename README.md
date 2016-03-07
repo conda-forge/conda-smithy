@@ -4,7 +4,7 @@ Overview
 `conda-smithy` is a tool for combining a conda recipe with configurations to build using freely hosted CI services into a single repository, also known as a feedstock.
 `conda-smithy` is still a work-in-progress, but when complete, `conda-smithy` will:
 
-+ Create a git repo with a conda recipe and the files to run conda builds via CI
++ Create a git repo with one or more conda recipes and the files to run conda builds via CI
   services.
 + Register the repo on github and push it.
 + Connect the repo to the CI services travis-ci.org, appveyor.com, circleci.com
@@ -34,12 +34,14 @@ Making a new feedstock
 1. **Make the feedstock repo:** `conda smithy init
 <directory_of_conda_recipe>`.     For a recipe called `foo`, this creates a
 directory called `foo-feedstock`, populates it with CI setup skeletons, adds the recipe under
-`recipe` and initializes it as a git repo.
+`recipe` and initializes it as a git repo. You can also build a multi recipe feedstock by passing
+in `--multi`. This creates a directory called `multi-recipe-feedstock`, and puts the recipe
+under `recipes/foo`.
 2. **Create a github repo:** `conda smithy github-create --organization conda-forge ./foo-feedstock`.
 This requires a github token. You can try it out with a github user account
 instead of an organization by replacing the organization argument with
 `--user github_user_name`.
-3. **Register the feedstock with CI services:** 
+3. **Register the feedstock with CI services:**
 `conda smithy register-ci --organization conda-forge ./foo-feedstock`.
 This requires tokens for the CI services. You can give the name of a user instead
 of organization with `--user github_user_name`.
