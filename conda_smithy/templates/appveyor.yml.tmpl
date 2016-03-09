@@ -23,7 +23,7 @@ environment:
   {%- for name, hashed_secure in appveyor.secure | dictsort %}
   {{ name }}:
     # The {{ name }} secure variable. This is defined canonically in conda-forge.yml.
-    - secure: {{ hashed_secure }}
+    secure: {{ hashed_secure }}
   {%- endfor %}
 
   matrix:{% for case in matrix | sort %}
