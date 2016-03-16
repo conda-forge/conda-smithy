@@ -89,7 +89,7 @@ def compute_build_matrix(meta):
 
 def main(forge_file_directory):
     recipe_dir = 'recipe'
-    config = {'docker': {'image': 'jjhelmus/conda-forge-x86_64:latest', 'command': 'bash'},
+    config = {'docker': {'image': 'condaforge/conda-forge-x86_64:latest', 'command': 'bash'},
               'templates': {'run_docker_build': 'run_docker_build_matrix.tmpl'},
               'travis': [],
               'circle': [],
