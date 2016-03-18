@@ -31,3 +31,8 @@ test:
     - conda_smithy
     - conda_smithy.ci_register
     - conda_smithy.configure_feedstock
+
+about:
+  home: https://github.com/conda-forge/conda-smithy
+  license: BSD 3-clause
+  summary: A package to create repositories for conda recipes, and automate their building with CI tools on Linux, OSX and Windows.
