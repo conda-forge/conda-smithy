@@ -105,9 +105,9 @@ def feedstocks_apply_cloned_handle_args(args):
                    'FEEDSTOCK_BASENAME': feedstock.name,
                    'FEEDSTOCK_NAME': feedstock.package}
         env.update(context)
-        cmd = [item.format(feedstock_directory, **context) for item in args.cmd]
-        print('\nRunning "{}" for {}:'.format(' '.join(cmd), feedstock_package))
-        subprocess.check_call(cmd, env=env, cwd=feedstock_directory)
+        cmd = [item.format(feedstock.directory, feedstock=feedstock, **context) for item in args.cmd]
+        print('\nRunning "{}" for {}:'.format(' '.join(cmd), feedstock.package))
+        subprocess.check_call(cmd, env=env, cwd=feedstock.directory)
 
 
 def feedstocks_fetch_handle_args(args):
