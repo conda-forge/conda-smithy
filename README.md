@@ -39,7 +39,7 @@ directory called `foo-feedstock`, populates it with CI setup skeletons, adds the
 This requires a github token. You can try it out with a github user account
 instead of an organization by replacing the organization argument with
 `--user github_user_name`.
-3. **Register the feedstock with CI services:** 
+3. **Register the feedstock with CI services:**
 `conda smithy register-ci --organization conda-forge ./foo-feedstock`.
 This requires tokens for the CI services. You can give the name of a user instead
 of organization with `--user github_user_name`.
@@ -50,3 +50,9 @@ Running a build
 ---------------
 
 When everything is configured you can trigger a build with a push to the feedstock repo on github.
+
+
+Conda-smithy in a nutshell
+--------------------------
+
+![tools](http://imgs.xkcd.com/comics/tools.png)
