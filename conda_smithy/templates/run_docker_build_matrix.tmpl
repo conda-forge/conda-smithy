@@ -4,7 +4,8 @@
 
 {% macro matrix_env(matrix_item) -%}
     {% for dep_name, version in matrix_item | sort %}
-    export {{ conda_vars.get(dep_name, dep_name) }}={{version|replace('.', '')}}{% endfor %}
+        {%- if dep_name in conda_vars %}{% set version = version|replace('.', '') %}{% endif %}
+    export {{ conda_vars.get(dep_name, 'CONDA_' + dep_name|upper) }}={{ version }}{% endfor %}
 {%- endmacro %}
 
 {% block build -%}# Embarking on {{ matrix|length }} case(s).
