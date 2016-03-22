@@ -1,5 +1,6 @@
 from __future__ import print_function
 
+from contextlib import contextmanager
 import os
 import shutil
 import stat
@@ -8,6 +9,7 @@ import warnings
 
 import conda.api
 from conda.resolve import MatchSpec
+import conda_build.metadata
 from conda_build.metadata import MetaData
 from conda_build_all.version_matrix import special_case_version_matrix, filter_cases
 from jinja2 import Environment, FileSystemLoader
@@ -17,6 +19,15 @@ conda_forge_content = os.path.abspath(os.path.dirname(__file__))
 
 
 def render_run_docker_build(jinja_env, forge_config, forge_dir):
+    with fudge_subdir('linux-64'):
+        meta = forge_config['package']
+        meta.parse_again()
+        matrix = compute_build_matrix(meta)
+
+    if matrix:
+        forge_config = forge_config.copy()
+        forge_config['matrix'] = matrix
+
     # TODO: Conda has a convenience for accessing nested yaml content.
     template_name = forge_config.get('templates', {}).get('run_docker_build',
                                                     'run_docker_build_matrix.tmpl')
@@ -28,7 +39,24 @@ def render_run_docker_build(jinja_env, forge_config, forge_dir):
     os.chmod(run_docker_build_fname, st.st_mode | stat.S_IEXEC)
 
 
+@contextmanager
+def fudge_subdir(subdir):
+    orig = conda_build.metadata.cc.subdir
+    conda_build.metadata.cc.subdir = subdir
+    yield
+    conda_build.metadata.cc.subdir = orig
+
+
 def render_travis(jinja_env, forge_config, forge_dir):
+    with fudge_subdir('osx-64'):
+        meta = forge_config['package']
+        meta.parse_again()
+        matrix = compute_build_matrix(meta)
+
+    if matrix:
+        forge_config = forge_config.copy()
+        forge_config['matrix'] = matrix
+
     template = jinja_env.get_template('travis.yml.tmpl')
     target_fname = os.path.join(forge_dir, '.travis.yml')
     with open(target_fname, 'w') as fh:
@@ -43,6 +71,19 @@ def render_README(jinja_env, forge_config, forge_dir):
 
 
 def render_appveyor(jinja_env, forge_config, forge_dir):
+    with fudge_subdir('win-64'):
+        meta = forge_config['package']
+        meta.parse_again()
+        matrix = compute_build_matrix(meta)
+
+    if matrix:
+        forge_config = forge_config.copy()
+        forge_config['matrix'] = matrix
+
+    # TODO: Remove the appveyor result if it is Win skip.
+    # Note: This should look at all of the matrix items, and only
+    # skip if *all* of them skip. We definitely want to unit test that.
+
     template = jinja_env.get_template('appveyor.yml.tmpl')
     target_fname = os.path.join(forge_dir, 'appveyor.yml')
     with open(target_fname, 'w') as fh:
@@ -110,10 +151,6 @@ def main(forge_file_directory):
 
     config['package'] = meta = meta_of_feedstock(forge_file_directory)
     
-    matrix = compute_build_matrix(meta)
-    if matrix:
-        config['matrix'] = matrix
-
     tmplt_dir = os.path.join(conda_forge_content, 'templates')
     # Load templates from the feedstock in preference to the smithy's templates.
     env = Environment(loader=FileSystemLoader([os.path.join(forge_dir, 'templates'),
