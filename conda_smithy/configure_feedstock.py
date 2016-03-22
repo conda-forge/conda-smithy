@@ -12,6 +12,7 @@ from conda.resolve import MatchSpec
 import conda_build.metadata
 from conda_build.metadata import MetaData
 from conda_build_all.version_matrix import special_case_version_matrix, filter_cases
+from conda_build_all.resolved_distribution import ResolvedDistribution
 from jinja2 import Environment, FileSystemLoader
 
 
@@ -23,20 +24,30 @@ def render_run_docker_build(jinja_env, forge_config, forge_dir):
         meta = forge_config['package']
         meta.parse_again()
         matrix = compute_build_matrix(meta)
+        cases_not_skipped = []
+        for case in matrix:
+            if not ResolvedDistribution(meta, case).skip():
+                cases_not_skipped.append(case)
+        matrix = cases_not_skipped
 
-    if matrix:
-        forge_config = forge_config.copy()
-        forge_config['matrix'] = matrix
+    target_fname = os.path.join(forge_dir, 'ci_support', 'run_docker_build.sh')
+    if not matrix:
+        # There is nothing to be built (it is all skipped), but to keep the
+        # show on the road, we put in a basic matrix configuration (it will
+        # be skipped anyway).
+        matrix = [()]
+
+    forge_config = forge_config.copy()
+    forge_config['matrix'] = matrix
 
     # TODO: Conda has a convenience for accessing nested yaml content.
     template_name = forge_config.get('templates', {}).get('run_docker_build',
                                                     'run_docker_build_matrix.tmpl')
     template = jinja_env.get_template(template_name)
-    run_docker_build_fname = os.path.join(forge_dir, 'ci_support', 'run_docker_build.sh')
-    with open(run_docker_build_fname, 'w') as fh:
+    with open(target_fname, 'w') as fh:
         fh.write(template.render(**forge_config))
-    st = os.stat(run_docker_build_fname)
-    os.chmod(run_docker_build_fname, st.st_mode | stat.S_IEXEC)
+    st = os.stat(target_fname)
+    os.chmod(target_fname, st.st_mode | stat.S_IEXEC)
 
 
 @contextmanager
@@ -53,12 +64,24 @@ def render_travis(jinja_env, forge_config, forge_dir):
         meta.parse_again()
         matrix = compute_build_matrix(meta)
 
-    if matrix:
-        forge_config = forge_config.copy()
-        forge_config['matrix'] = matrix
+        cases_not_skipped = []
+        for case in matrix:
+            if not ResolvedDistribution(meta, case).skip():
+                cases_not_skipped.append(case)
+        matrix = cases_not_skipped
+
+    target_fname = os.path.join(forge_dir, '.travis.yml')
+
+    if not matrix:
+        # There is nothing to be built (it is all skipped), but to keep the
+        # show on the road, we put in a basic matrix configuration (it will
+        # be skipped anyway).
+        matrix = [()]
+
+    forge_config = forge_config.copy()
+    forge_config['matrix'] = matrix
 
     template = jinja_env.get_template('travis.yml.tmpl')
-    target_fname = os.path.join(forge_dir, '.travis.yml')
     with open(target_fname, 'w') as fh:
         fh.write(template.render(**forge_config))
 
@@ -76,18 +99,26 @@ def render_appveyor(jinja_env, forge_config, forge_dir):
         meta.parse_again()
         matrix = compute_build_matrix(meta)
 
-    if matrix:
+        cases_not_skipped = []
+        for case in matrix:
+            if not ResolvedDistribution(meta, case).skip():
+                cases_not_skipped.append(case)
+        matrix = cases_not_skipped
+
+    target_fname = os.path.join(forge_dir, 'appveyor.yml')
+
+    if not matrix:
+        # There are no cases to build (not even a case without any special
+        # dependencies), so remove the appveyor.yml if it exists.
+        if os.path.exists(target_fname):
+            os.remove(target_fname)
+    else:
         forge_config = forge_config.copy()
         forge_config['matrix'] = matrix
 
-    # TODO: Remove the appveyor result if it is Win skip.
-    # Note: This should look at all of the matrix items, and only
-    # skip if *all* of them skip. We definitely want to unit test that.
-
-    template = jinja_env.get_template('appveyor.yml.tmpl')
-    target_fname = os.path.join(forge_dir, 'appveyor.yml')
-    with open(target_fname, 'w') as fh:
-        fh.write(template.render(**forge_config))
+        template = jinja_env.get_template('appveyor.yml.tmpl')
+        with open(target_fname, 'w') as fh:
+            fh.write(template.render(**forge_config))
 
 
 def copytree(src, dst, ignore=(), root_dst=None):
