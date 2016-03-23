@@ -1,5 +1,6 @@
 from __future__ import print_function
 from collections import OrderedDict
+from contextlib import contextmanager
 import os
 import shutil
 import subprocess
@@ -8,6 +9,13 @@ import textwrap
 import unittest
 
 import conda_smithy.lint_recipe as linter
+
+
+@contextmanager
+def tmp_directory():
+    tmp_dir = tempfile.mkdtemp('recipe_')
+    yield tmp_dir
+    shutil.rmtree(tmp_dir)
 
 
 class Test_linter(unittest.TestCase):
@@ -71,46 +79,56 @@ class Test_linter(unittest.TestCase):
         lints = linter.lintify({'test': {'imports': 'sys'}})
         self.assertNotIn(expected_message, lints)
 
+    def test_test_section_with_recipe(self):
+        # If we have a run_test.py file, we shouldn't need to provide other tests.
+
+        expected_message = 'The recipe must have some tests.'
+
+        with tmp_directory() as recipe_dir:
+            lints = linter.lintify({}, recipe_dir)
+            self.assertIn(expected_message, lints)
+
+            with open(os.path.join(recipe_dir, 'run_test.py'), 'w') as fh:
+                fh.write('# foo')
+            lints = linter.lintify({}, recipe_dir)
+            self.assertNotIn(expected_message, lints)
+
 
 class TestCLI_recipe_lint(unittest.TestCase):
-    def setUp(self):
-        self.tmp_dir = tempfile.mkdtemp('recipe_')
-
-    def tearDown(self):
-        shutil.rmtree(self.tmp_dir)
-
     def test_cli_fail(self):
-        with open(os.path.join(self.tmp_dir, 'meta.yaml'), 'w') as fh:
-            fh.write(textwrap.dedent("""
-                package:
-                    name: 'test_package'
-                build: []
-                requirements: []
-                """))
-        child = subprocess.Popen(['conda-smithy', 'recipe-lint', self.tmp_dir],
-                                 stdout=subprocess.PIPE)
-        child.communicate()
-        self.assertEqual(child.returncode, 1)
+        with tmp_directory() as recipe_dir:
+            with open(os.path.join(recipe_dir, 'meta.yaml'), 'w') as fh:
+                fh.write(textwrap.dedent("""
+                    package:
+                        name: 'test_package'
+                    build: []
+                    requirements: []
+                    """))
+            child = subprocess.Popen(['conda-smithy', 'recipe-lint', recipe_dir],
+                                     stdout=subprocess.PIPE)
+            child.communicate()
+            self.assertEqual(child.returncode, 1)
  
     def test_cli_success(self):
-        with open(os.path.join(self.tmp_dir, 'meta.yaml'), 'w') as fh:
-            fh.write(textwrap.dedent("""
-                package:
-                    name: 'test_package'
-                test: []
-                about:
-                    home: something
-                    license: something else
-                    summary: a test recipe
-                extra:
-                    recipe-maintainers:
-                        - a
-                        - b
-                """))
-        child = subprocess.Popen(['conda-smithy', 'recipe-lint', self.tmp_dir],
-                                 stdout=subprocess.PIPE)
-        child.communicate()
-        self.assertEqual(child.returncode, 0)
+        with tmp_directory() as recipe_dir:
+            with open(os.path.join(recipe_dir, 'meta.yaml'), 'w') as fh:
+                fh.write(textwrap.dedent("""
+                    package:
+                        name: 'test_package'
+                    test: []
+                    about:
+                        home: something
+                        license: something else
+                        summary: a test recipe
+                    extra:
+                        recipe-maintainers:
+                            - a
+                            - b
+                    """))
+            child = subprocess.Popen(['conda-smithy', 'recipe-lint', recipe_dir],
+                                     stdout=subprocess.PIPE)
+            child.communicate()
+            self.assertEqual(child.returncode, 0)
 
 
 if __name__ == '__main__':
