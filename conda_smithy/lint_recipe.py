@@ -12,9 +12,8 @@ class NullUndefined(jinja2.Undefined):
         return unicode(self._undefined_name)
 
 
-def lintify(meta):
+def lintify(meta, recipe_dir=None):
     lints = []
-
     major_sections = list(meta.keys())
 
     # 1: Top level meta.yaml keys should have a specific order.
@@ -36,7 +35,12 @@ def lintify(meta):
 
     # 4: The recipe should have some tests.
     if 'test' not in major_sections:
-        lints.append('The recipe must have some tests.')
+        test_files = ['run_test.py', 'run_test.sh', 'run_test.bat', 'run_test.pl']
+        a_test_file_exists = (recipe_dir is not None and
+                              any(os.path.exists(os.path.join(recipe_dir, test_file))
+                                  for test_file in test_files))
+        if not a_test_file_exists:
+            lints.append('The recipe must have some tests.')
 
     return lints
 
