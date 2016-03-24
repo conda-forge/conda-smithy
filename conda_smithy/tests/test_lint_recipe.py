@@ -36,12 +36,20 @@ class Test_linter(unittest.TestCase):
         expected_message = "The summary item is expected in the about section."
         self.assertIn(expected_message, lints)
 
-    def test_bad_about_license(self):
+    def test_invalid_license_unknown(self):
         meta = {'about': {'home': 'a URL',
                           'summary': 'A test summary',
                           'license': 'unknown'}}
         lints = linter.lintify(meta)
-        expected_message = "The recipe license cannot be unknown."
+        expected_message = "The recipe have a valid OSI license."
+        self.assertIn(expected_message, lints)
+
+    def test_invalid_license_close(self):
+        meta = {'about': {'home': 'a URL',
+                          'summary': 'A test summary',
+                          'license': 'GPL'}}
+        lints = linter.lintify(meta)
+        expected_message = "The recipe have a valid OSI license."
         self.assertIn(expected_message, lints)
 
     def test_missing_about_home(self):

@@ -1,11 +1,27 @@
 import os
 
+import difflib
 import jinja2
 import ruamel.yaml
 
 
 EXPECTED_SECTION_ORDER = ['package', 'source', 'build', 'requirements', 'test', 'app', 'about', 'extra']
 
+rootpath = os.path.abspath(os.path.dirname(__file__))
+
+def _parse_osi():
+    """
+    Source: https://opensource.org/licenses/alphabetical
+
+    """
+    licenses = os.path.join(rootpath, 'osi_licenses.txt')
+    with open(licenses, 'r') as f:
+        lines = f.readlines()
+    strings = []
+    for line in lines:
+        string = line[line.find("(")+1:line.find(")")]
+        strings.append(string)
+    return strings
 
 class NullUndefined(jinja2.Undefined):
     def __unicode__(self):
@@ -42,13 +58,18 @@ def lintify(meta, recipe_dir=None):
         if not a_test_file_exists:
             lints.append('The recipe must have some tests.')
 
-    # 5: License cannot be 'unknown.'
-    license = meta.get('about', {}).get('license', '').lower()
-    if 'unknown' == license.strip():
-        lints.append('The recipe license cannot be unknown.')
+    # 5: Must have a valid OSI license.
+    license = meta.get('about', {}).get('license', '')
+    known = _parse_osi()
+    if license not in known:
+        suggestions = ' '.join(list(difflib.get_close_matches(license, known)))
+        if suggestions:
+            msg = '\nInstead of {} did you mean any of these: {}?'.format
+            msg = msg(license, suggestions)
+            lints.append(msg)
+        lints.append('The recipe have a valid OSI license.')
 
     return lints
-
 
 def main(recipe_dir):
     recipe_dir = os.path.abspath(recipe_dir)
