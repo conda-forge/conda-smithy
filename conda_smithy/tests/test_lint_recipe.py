@@ -36,6 +36,14 @@ class Test_linter(unittest.TestCase):
         expected_message = "The summary item is expected in the about section."
         self.assertIn(expected_message, lints)
 
+    def test_bad_about_license(self):
+        meta = {'about': {'home': 'a URL',
+                          'summary': 'A test summary',
+                          'license': 'unknown'}}
+        lints = linter.lintify(meta)
+        expected_message = "The recipe license cannot be unknown."
+        self.assertIn(expected_message, lints)
+
     def test_missing_about_home(self):
         meta = {'about': {'license': 'BSD',
                           'summary': 'A test summary'}}
@@ -62,7 +70,7 @@ class Test_linter(unittest.TestCase):
 
         lints = linter.lintify({'extra': {'recipe-maintainers': []}})
         self.assertIn(expected_message, lints)
-    
+
         # No extra section at all.
         lints = linter.lintify({})
         self.assertIn(expected_message, lints)
@@ -108,7 +116,7 @@ class TestCLI_recipe_lint(unittest.TestCase):
                                      stdout=subprocess.PIPE)
             child.communicate()
             self.assertEqual(child.returncode, 1)
- 
+
     def test_cli_success(self):
         with tmp_directory() as recipe_dir:
             with open(os.path.join(recipe_dir, 'meta.yaml'), 'w') as fh:
