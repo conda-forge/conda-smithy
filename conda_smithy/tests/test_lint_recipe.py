@@ -134,7 +134,7 @@ class TestCLI_recipe_lint(unittest.TestCase):
                     test: []
                     about:
                         home: something
-                        license: something else
+                        license: MIT
                         summary: a test recipe
                     extra:
                         recipe-maintainers:
