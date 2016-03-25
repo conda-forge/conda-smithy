@@ -106,13 +106,19 @@ def render_appveyor(jinja_env, forge_config, forge_dir):
         matrix = cases_not_skipped
 
     target_fname = os.path.join(forge_dir, 'appveyor.yml')
+    target_fname_disabled = os.path.join(forge_dir, 'disabled_appveyor.yml')
 
     if not matrix:
         # There are no cases to build (not even a case without any special
         # dependencies), so remove the appveyor.yml if it exists.
         if os.path.exists(target_fname):
-            os.remove(target_fname)
+            if os.path.exists(target_fname_disabled):
+                os.remove(target_fname_disabled)
+            os.rename(target_fname, target_fname_disabled)
     else:
+        if os.path.exists(target_fname_disabled):
+            os.remove(target_fname_disabled)
+
         forge_config = forge_config.copy()
         forge_config['matrix'] = matrix
 
