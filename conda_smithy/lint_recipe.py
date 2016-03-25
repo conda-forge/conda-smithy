@@ -42,6 +42,11 @@ def lintify(meta, recipe_dir=None):
         if not a_test_file_exists:
             lints.append('The recipe must have some tests.')
 
+    # 5: License cannot be 'unknown.'
+    license = meta.get('about', {}).get('license', '').lower()
+    if 'unknown' == license.strip():
+        lints.append('The recipe license cannot be unknown.')
+
     return lints
 
 
