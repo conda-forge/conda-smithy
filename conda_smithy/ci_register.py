@@ -83,8 +83,6 @@ def add_project_to_appveyor(user, project):
 
 
 def appveyor_encrypt_binstar_token(feedstock_directory, user, project):
-    import ruamel.yaml
-
     headers = {'Authorization': 'Bearer {}'.format(appveyor_token)}
     url = 'https://ci.appveyor.com/api/account/encrypt'
     response = requests.post(url, headers=headers, data={"plainValue": os.environ['BINSTAR_TOKEN']})
@@ -105,6 +103,26 @@ def appveyor_encrypt_binstar_token(feedstock_directory, user, project):
     code.setdefault('appveyor', {}).setdefault('secure', {})['BINSTAR_TOKEN'] = response.content
     with open(forge_yaml, 'w') as fh:
         fh.write(ruamel.yaml.dump(code, Dumper=ruamel.yaml.RoundTripDumper))
+
+
+def appveyor_configure(user, project):
+    """Configure appveyor so that it skips building if there is no appveyor.yml present."""
+    headers = {'Authorization': 'Bearer {}'.format(appveyor_token)}
+    url = 'https://ci.appveyor.com/api/projects/{}/{}/settings'.format(user, project)
+    response = requests.get(url, headers=headers)
+    if response.status_code != 200:
+        raise ValueError(response)
+    content = response.json()
+    settings = content['settings']
+    skip_appveyor = u'skipBranchesWithoutAppveyorYml'
+    print('{: <30}: Current setting for {} = {}.'
+          ''.format(project, skip_appveyor, settings[skip_appveyor]))
+    settings[skip_appveyor] = True
+    url = 'https://ci.appveyor.com/api/projects'.format(user, project)
+
+    response = requests.put(url, headers=headers, json=settings)
+    if response.status_code != 204:
+        raise ValueError(response)
 
 
 def add_project_to_travis(user, project):
@@ -202,6 +220,7 @@ if __name__ == '__main__':
 #    add_project_to_circle(args.user, args.project)
 #    add_project_to_appveyor(args.user, args.project)
 #    add_project_to_travis(args.user, args.project)
-    appveyor_encrypt_binstar_token('../udunits-delme-feedstock', args.user, args.project)
+#    appveyor_encrypt_binstar_token('../udunits-delme-feedstock', args.user, args.project)
+#    appveyor_configure('conda-forge', 'glpk-feedstock')
 #    travis_token_update_conda_forge_config('../udunits-delme-feedstock', args.user, args.project)
     print('Done')
