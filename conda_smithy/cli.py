@@ -166,8 +166,9 @@ class RegisterCI(Subcommand):
             ci_register.add_token_to_circle(owner, repo)
             ci_register.add_project_to_appveyor(owner, repo)
             ci_register.appveyor_encrypt_binstar_token(args.feedstock_directory, owner, repo)
-            print("\nCI services enabled, now regenerate the feedstock/pile via \n"
-                  "'conda smithy regenerate'. Afterwards commit and push to github.")
+            ci_register.appveyor_configure(owner, repo)
+            print("\nCI services have been enabled enabled. You may wish to regnerate the feedstock.\n"
+                  "Any changes will need commiting to the repo.")
         except RuntimeError as e:
             print(e.message)
 
