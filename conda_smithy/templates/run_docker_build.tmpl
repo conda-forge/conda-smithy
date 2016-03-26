@@ -45,12 +45,12 @@ conda install --yes conda-build==1.18.2
 conda info
 
 {% if build_setup %}
-{{ build_setup }}{% endif %}
-{% block build %}
-  conda build /recipe_root --quiet || exit 1
+{{ build_setup }}{% endif -%}
+{%- block build %}
+conda build /recipe_root --quiet || exit 1
 {%- for owner, channel in channels['targets'] %}
-  /feedstock_root/ci_support/upload_or_check_non_existence.py /recipe_root {{ owner }} --channel={{ channel }} || exit 1
-{%- endfor %}
+/feedstock_root/ci_support/upload_or_check_non_existence.py /recipe_root {{ owner }} --channel={{ channel }} || exit 1
+{%- endfor -%}
 {%- endblock -%}
 
 EOF
