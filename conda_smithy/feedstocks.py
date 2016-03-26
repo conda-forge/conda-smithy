@@ -64,7 +64,7 @@ def fetch_feedstocks(feedstock_directory):
     # We pick the minimum of ncpus x10 and total feedstocks for the pool size.
     n_processes = min([len(feedstocks), multiprocessing.cpu_count() * 10])
     pool = multiprocessing.Pool(n_processes)
-    for repo in cloned_feedstocks(feedstock_directory):
+    for repo in feedstocks:
         repo_dir = repo.directory
         pool.apply_async(fetch_feedstock, args=(repo_dir, ))
     pool.close()
@@ -76,16 +76,29 @@ def feedstocks_list_handle_args(args):
         print(repo.name)
 
 
+def clone_feedstock(feedstock_gh_repo, feedstocks_dir):
+    repo = feedstock_gh_repo
+
+    clone_directory = os.path.join(feedstocks_dir, repo.name)
+    if not os.path.exists(clone_directory):
+        print('Cloning {}'.format(repo.name))
+        new_repo = Repo.clone_from(repo.ssh_url, clone_directory)
+    clone = Repo(clone_directory)
+    if 'upstream' in [remote.name for remote in clone.remotes]:
+        clone.delete_remote('upstream')
+    clone.create_remote('upstream', url=repo.ssh_url)
+
+
 def clone_all(gh_org, feedstocks_dir):
-    for repo in feedstock_repos(gh_org):
-        clone_directory = os.path.join(feedstocks_dir, repo.name)
-        if not os.path.exists(clone_directory):
-            print('Cloning {}'.format(repo.name))
-            new_repo = Repo.clone_from(repo.ssh_url, clone_directory)
-        clone = Repo(clone_directory)
-        if 'upstream' in [remote.name for remote in clone.remotes]:
-            clone.delete_remote('upstream')
-        clone.create_remote('upstream', url=repo.ssh_url)
+    feedstocks = feedstock_repos(gh_org)
+
+    # We pick the minimum of ncpus x10 and total feedstocks for the pool size.
+    n_processes = min([len(feedstocks), multiprocessing.cpu_count() * 10])
+    pool = multiprocessing.Pool(n_processes)
+    for repo in feedstocks:
+        pool.apply_async(clone_feedstock, args=(repo, feedstocks_dir))
+    pool.close()
+    pool.join()
 
 
 def feedstocks_clone_all_handle_args(args):
