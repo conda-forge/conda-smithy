@@ -3,20 +3,20 @@
 {% macro matrix_env(matrix_item) -%}
     {% for dep_name, version in matrix_item | sort %}
         {%- if dep_name in conda_vars %}{% set version = version|replace('.', '') %}{% endif %}
-  export {{ conda_vars.get(dep_name, 'CONDA_' + dep_name|upper) }}={{ version }}{% endfor %}
+    export {{ conda_vars.get(dep_name, 'CONDA_' + dep_name|upper) }}={{ version }}{% endfor %}
 {%- endmacro -%}
 
 {%- block build -%}
   # Embarking on {{ matrix|length }} case(s).
 {%- for case in matrix | sort %}
   {%- if case %}
-  set -x
-  {{- matrix_env(case) }}
-  set +x
-  {% endif -%}
-  {{ super() }}
+    set -x
+    {{- matrix_env(case) }}
+    set +x
+  {%- endif -%}
+  {{- super()|indent(4) }}
 {% endfor %}{% endblock -%}
 {%- block test_and_upload -%}{% for case in matrix | sort -%}
-  {{ matrix_env(case) }}
-  {{- super()|indent(2) }}
+    {{ matrix_env(case) }}
+    {{- super()|indent(4) }}
 {%- endfor -%}{% endblock -%}
