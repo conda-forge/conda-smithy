@@ -194,6 +194,14 @@ def main(forge_file_directory):
                                                tmplt_dir]))
 
     copy_feedstock_content(forge_dir)
+
+    # conda-build has some really fruity behaviour where it needs CONDA_NPY
+    # and CONDA_PY in order to even read a meta. Because we compute version
+    # matricies anyway the actual number makes absolutely no difference.
+    import conda_build.config
+    conda_build.metadata.config.CONDA_NPY = '99.9'
+    conda_build.metadata.config.CONDA_PY = 10
+
     render_run_docker_build(env, config, forge_dir)
     render_travis(env, config, forge_dir)
     render_appveyor(env, config, forge_dir)

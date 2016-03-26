@@ -88,13 +88,6 @@ class Init(Subcommand):
                           "conda-recipe you want to build a feedstock for. Got {}".format(
                 args.recipe_directory))
 
-        # conda-build has some really fruity behaviour where it needs CONDA_NPY
-        # and CONDA_PY in order to even read a meta. Because we compute version
-        # matricies anyway the actual number makes absolutely no difference.
-        import conda_build.config
-        conda_build.metadata.config.CONDA_NPY = '99.9'
-        conda_build.metadata.config.CONDA_PY = 10
-
         # Get some information about the source recipe.
         if args.recipe_directory:
             meta = MetaData(args.recipe_directory)
