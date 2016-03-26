@@ -1,4 +1,5 @@
 import os
+import re
 
 import jinja2
 import ruamel.yaml
@@ -15,6 +16,10 @@ class NullUndefined(jinja2.Undefined):
 def lintify(meta, recipe_dir=None):
     lints = []
     major_sections = list(meta.keys())
+
+    # If the recipe_dir exists (no guarantee within this function) , we can find the
+    # meta.yaml within it.
+    meta_fname = os.path.join(recipe_dir or '', 'meta.yaml')
 
     # 1: Top level meta.yaml keys should have a specific order.
     section_order_sorted = sorted(major_sections, key=EXPECTED_SECTION_ORDER.index)
@@ -47,7 +52,35 @@ def lintify(meta, recipe_dir=None):
     if 'unknown' == license.strip():
         lints.append('The recipe license cannot be unknown.')
 
+    # 6: Selectors should be in a tidy form.
+    if recipe_dir is not None and os.path.exists(meta_fname):
+        bad_selectors = []
+        # Good selectors look like ".*\s\s#\s[...]"
+        good_selectors_pat = re.compile(r'(.+?)\s{2,}#\s\[(.+)\](?(2).*)$')
+        with open(meta_fname, 'r') as fh:
+            for selector_line in selector_lines(fh):
+                if not good_selectors_pat.match(selector_line):
+                    bad_selectors.append(selector_line)
+        if bad_selectors:
+            lints.append('Selectors are suggested to take a "  # [<selector>]" '
+                         'form.')
+    
     return lints
+
+
+def selector_lines(lines):
+    # Using the same pattern defined in conda-build (metadata.py), we identify selectors.
+    sel_pat = re.compile(r'(.+?)\s*(#.*)?\[(.+)\](?(2).*)$')
+
+    for line in lines:
+        line = line.rstrip()
+        if line.lstrip().startswith('#'):
+            # Don't bother with comment only lines
+            continue
+        m = sel_pat.match(line)
+        if m:
+            cond = m.group(3)
+            yield line
 
 
 def main(recipe_dir):

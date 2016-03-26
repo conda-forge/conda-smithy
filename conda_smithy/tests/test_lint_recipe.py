@@ -101,6 +101,31 @@ class Test_linter(unittest.TestCase):
             lints = linter.lintify({}, recipe_dir)
             self.assertNotIn(expected_message, lints)
 
+    def test_selectors(self):
+        expected_message = 'Selectors are suggested to take a "  # [<selector>]" form.'
+
+        with tmp_directory() as recipe_dir:
+            def assert_selector(selector, is_good=True):
+                with open(os.path.join(recipe_dir, 'meta.yaml'), 'w') as fh:
+                    fh.write("""
+                            package:
+                               name: foo_py2  # [py2k]
+                               {}
+                             """.format(selector))
+                lints = linter.lintify({}, recipe_dir)
+                if is_good:
+                    message = "Found lints when there shouldn't have been a lint for '{}'.".format(selector)
+                else:
+                    message = "Expecting lints for '{}', but didn't get any.".format(selector)
+                self.assertEqual(not is_good, 
+                                 any(lint.startswith(expected_message) for lint in lints),
+                                 message)
+
+            assert_selector("name: foo_py3      # [py3k]")
+            assert_selector("name: foo_py3  [py3k]", is_good=False)
+            assert_selector("name: foo_py3  #[py3k]", is_good=False)
+            assert_selector("name: foo_py3 # [py3k]", is_good=False)
+
 
 class TestCLI_recipe_lint(unittest.TestCase):
     def test_cli_fail(self):
@@ -114,8 +139,8 @@ class TestCLI_recipe_lint(unittest.TestCase):
                     """))
             child = subprocess.Popen(['conda-smithy', 'recipe-lint', recipe_dir],
                                      stdout=subprocess.PIPE)
-            child.communicate()
-            self.assertEqual(child.returncode, 1)
+            out, _ = child.communicate()
+            self.assertEqual(child.returncode, 1, out)
 
     def test_cli_success(self):
         with tmp_directory() as recipe_dir:
@@ -135,8 +160,8 @@ class TestCLI_recipe_lint(unittest.TestCase):
                     """))
             child = subprocess.Popen(['conda-smithy', 'recipe-lint', recipe_dir],
                                      stdout=subprocess.PIPE)
-            child.communicate()
-            self.assertEqual(child.returncode, 0)
+            out, _ = child.communicate()
+            self.assertEqual(child.returncode, 0, out)
 
 
 if __name__ == '__main__':
