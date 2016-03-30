@@ -50,7 +50,7 @@ def add_project_to_circle(user, project):
 
     repos = response.json()
     matching = [repo for repo in repos if repo['username'] == data['username'] and repo['reponame'] == data['repo']]
-    
+
     if matching and matching[0].get('followed', False):
         print(' * {}/{} already enabled on CircleCI'.format(user, project))
     else:
@@ -108,6 +108,8 @@ def appveyor_encrypt_binstar_token(feedstock_directory, user, project):
 def appveyor_configure(user, project):
     """Configure appveyor so that it skips building if there is no appveyor.yml present."""
     headers = {'Authorization': 'Bearer {}'.format(appveyor_token)}
+    # I have reasons to believe this is all AppVeyor is doing to the API URL.
+    project = project.replace('_', '-')
     url = 'https://ci.appveyor.com/api/projects/{}/{}/settings'.format(user, project)
     response = requests.get(url, headers=headers)
     if response.status_code != 200:
@@ -158,7 +160,7 @@ def add_project_to_travis(user, project):
                      if hooked['owner_name'] == user and hooked['name'] == project]
         except KeyError:
             pass
-        
+
         if not found:
             if count == 1:
                 print(" * Travis doesn't know about the repo, synching (takes a few seconds).")
