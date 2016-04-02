@@ -100,7 +100,7 @@ def appveyor_encrypt_binstar_token(feedstock_directory, user, project):
     if not code:
         code = {}
 
-    code.setdefault('appveyor', {}).setdefault('secure', {})['BINSTAR_TOKEN'] = response.content
+    code.setdefault('appveyor', {}).setdefault('secure', {})['BINSTAR_TOKEN'] = response.content.decode('utf-8')
     with open(forge_yaml, 'w') as fh:
         fh.write(ruamel.yaml.dump(code, Dumper=ruamel.yaml.RoundTripDumper))
 
