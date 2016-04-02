@@ -27,6 +27,9 @@ env:
 {%- endif %}
 {% endblock %}
 
+before install:
+    - brew remove --force $(brew list)
+
 install:
     - |
       MINICONDA_URL="http://repo.continuum.io/miniconda"
