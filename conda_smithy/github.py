@@ -10,14 +10,14 @@ from . import configure_feedstock
 
 
 def gh_token():
-        try:
-            with open(os.path.expanduser('~/.conda-smithy/github.token'), 'r') as fh:
-                token = fh.read().strip()
-        except IOError:
-            msg = ('No github token. Go to https://github.com/settings/tokens/new and generate\n'
-                   'a token with repo access. Put it in ~/.conda-smithy/github.token')
-            raise RuntimeError(msg)
-        return token
+    try:
+        with open(os.path.expanduser('~/.conda-smithy/github.token'), 'r') as fh:
+            token = fh.read().strip()
+    except IOError:
+        msg = ('No github token. Go to https://github.com/settings/tokens/new and generate\n'
+               'a token with repo access. Put it in ~/.conda-smithy/github.token')
+        raise RuntimeError(msg)
+    return token
 
 
 def create_github_repo(args):
