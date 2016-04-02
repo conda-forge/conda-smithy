@@ -161,7 +161,7 @@ def meta_of_feedstock(forge_dir):
 def compute_build_matrix(meta):
     index = conda.api.get_index()
     mtx = special_case_version_matrix(meta, index)
-    mtx = list(filter_cases(mtx, ['python >=2.7,<3|>=3.4', 'numpy >=1.9']))
+    mtx = list(filter_cases(mtx, ['python >=2.7,<3|>=3.4', 'numpy >=1.10']))
     return mtx
 
 
