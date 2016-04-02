@@ -94,5 +94,5 @@ def main(recipe_dir):
     with open(recipe_meta, 'r') as fh:
         content = env.from_string(''.join(fh)).render()
         meta = ruamel.yaml.load(content, ruamel.yaml.RoundTripLoader)
-    results = lintify(meta)
+    results = lintify(meta, recipe_dir)
     return results
