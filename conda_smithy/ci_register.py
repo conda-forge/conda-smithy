@@ -4,9 +4,12 @@ import os
 import requests
 import time
 
-from conda_smithy import vendored
-from conda_smithy.vendored import travis_encrypt as travis
 import ruamel.yaml
+
+from .vendored import travis_encrypt as travis
+from . import github
+
+
 # https://circleci.com/docs/api#add-environment-variable
 
 # curl -X POST --header "Content-Type: application/json" -d '{"name":"foo", "value":"bar"}'
@@ -135,9 +138,7 @@ def add_project_to_travis(user, project):
                }
     endpoint = 'https://api.travis-ci.org'
     url = '{}/auth/github'.format(endpoint)
-    with open(os.path.expanduser('~/.conda-smithy/github.token'), 'r') as fh:
-        github_token = fh.read().strip()
-    data = {"github_token": github_token}
+    data = {"github_token": github.gh_token()}
     response = requests.post(url, json=data, headers=headers)
     if response.status_code != 201:
         response.raise_for_status()
@@ -212,12 +213,47 @@ def travis_token_update_conda_forge_config(feedstock_directory, user, project):
 def _encrypt_binstar_token(slug, item):
     return travis.encrypt(slug, item.encode()).decode('utf-8')
 
+
+def add_conda_linting(user, repo):
+    if user != 'conda-forge':
+        print('Unable to register {}/{} for conda-linting at this time as only '
+              'conda-forge repos are supported.'.format(user, repo))
+    
+    headers = {'Authorization': 'token {}'.format(github.gh_token())}
+    url = 'https://api.github.com/repos/{}/{}/hooks'.format(user, repo)
+
+    # Get the current hooks to determine if anything needs doing.
+    response = requests.get(url, headers=headers)
+    registered = response.json()
+    hook_by_url = {hook['config'].get('url'): hook for hook in registered
+                   if 'url' in hook['config']}
+
+    hook_url = "http://conda-forge.herokuapp.com/conda-linting/hook"
+
+    payload = {
+          "name": "web",
+          "active": True,
+          "events": [
+            "pull_request"
+          ],
+          "config": {
+            "url": hook_url,
+            "content_type": "json"
+          }
+        }
+
+    if hook_url not in hook_by_url:
+        response = requests.post(url, json=payload, headers=headers)
+        if response.status_code != 200:
+            response.raise_for_status() 
+
+
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument("user")
     parser.add_argument("project")
-    args = parser.parse_args(['pelson', 'udunits-delme-feedstock'])
+    args = parser.parse_args(['conda-forge', 'conda-smithy-feedstock'])
 
 #    add_project_to_circle(args.user, args.project)
 #    add_project_to_appveyor(args.user, args.project)
@@ -225,4 +261,5 @@ if __name__ == '__main__':
 #    appveyor_encrypt_binstar_token('../udunits-delme-feedstock', args.user, args.project)
 #    appveyor_configure('conda-forge', 'glpk-feedstock')
 #    travis_token_update_conda_forge_config('../udunits-delme-feedstock', args.user, args.project)
+    add_conda_linting(args.user, 'matplotlib-feedstock')
     print('Done')
