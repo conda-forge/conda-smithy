@@ -112,7 +112,7 @@ def appveyor_configure(user, project):
     """Configure appveyor so that it skips building if there is no appveyor.yml present."""
     headers = {'Authorization': 'Bearer {}'.format(appveyor_token)}
     # I have reasons to believe this is all AppVeyor is doing to the API URL.
-    project = project.replace('_', '-')
+    project = project.replace('_', '-').replace('.', '-')
     url = 'https://ci.appveyor.com/api/projects/{}/{}/settings'.format(user, project)
     response = requests.get(url, headers=headers)
     if response.status_code != 200:
@@ -218,7 +218,7 @@ def add_conda_linting(user, repo):
     if user != 'conda-forge':
         print('Unable to register {}/{} for conda-linting at this time as only '
               'conda-forge repos are supported.'.format(user, repo))
-    
+
     headers = {'Authorization': 'token {}'.format(github.gh_token())}
     url = 'https://api.github.com/repos/{}/{}/hooks'.format(user, repo)
 
@@ -245,7 +245,7 @@ def add_conda_linting(user, repo):
     if hook_url not in hook_by_url:
         response = requests.post(url, json=payload, headers=headers)
         if response.status_code != 200:
-            response.raise_for_status() 
+            response.raise_for_status()
 
 
 if __name__ == '__main__':
