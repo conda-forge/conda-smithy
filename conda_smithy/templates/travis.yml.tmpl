@@ -27,7 +27,7 @@ env:
 {%- endif %}
 {% endblock %}
 
-before install:
+before_install:
     - brew remove --force $(brew list)
 
 install:
