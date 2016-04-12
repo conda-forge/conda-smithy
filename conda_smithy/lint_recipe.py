@@ -66,7 +66,8 @@ def lintify(meta, recipe_dir=None):
                          'form.')
 
     # 7: The build section should have a build number.
-    build_number = meta.get('build', {}).get('number', None)
+    build_section = meta.get('build', {}) or {}
+    build_number = build_section.get('number', None)
     if build_number is None:
         lints.append('The recipe must have a `build/number` section.')
 

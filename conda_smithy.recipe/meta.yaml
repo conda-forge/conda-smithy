@@ -2,7 +2,7 @@
 
 package:
     name: conda-smithy
-    version: {{data.get('version') or '0.1.0dev2'}}
+    version: {{ (data.get('version') or '0.1.0dev2') | replace('+', '_') | replace('/', '_') }}
 
 source:
   path: ../
@@ -25,6 +25,9 @@ requirements:
     - ruamel.yaml
 
 test:
+  requires:
+    - nose
+    - mock
   commands:
     - conda smithy --help
   imports:
