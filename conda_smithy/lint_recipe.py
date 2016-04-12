@@ -71,6 +71,14 @@ def lintify(meta, recipe_dir=None):
     if build_number is None:
         lints.append('The recipe must have a `build/number` section.')
 
+    # 8: The build section should be before the run section in requirements.
+    requirements_section = meta.get('requirements', {}) or {}
+    EXPECTED_REQUIREMENTS_ORDER = ['build', 'run']
+    requirements_order_sorted = sorted(requirements_section, key=EXPECTED_REQUIREMENTS_ORDER.index)
+    if requirements_section.keys() != requirements_order_sorted:
+        lints.append('The `requirements/build` section should be defined before '
+                     'the `requirements/run` section.')
+
     return lints
 
 

@@ -127,7 +127,6 @@ class Test_linter(unittest.TestCase):
             assert_selector("name: foo_py3 # [py3k]", is_good=False)
 
     def test_missing_build_number(self):
-
         expected_message = "The recipe must have a `build/number` section."
 
         meta = {'build': {'skip': 'True',
@@ -140,6 +139,20 @@ class Test_linter(unittest.TestCase):
                           'script': 'python setup.py install'}}
         lints = linter.lintify(meta)
         self.assertIn(expected_message, lints)
+
+    def test_bad_requirements_order(self):
+        expected_message = ("The `requirements/build` section should be defined "
+                            "before the `requirements/run` section.")
+
+        meta = {'requirements': OrderedDict([['run', 'a'],
+                                             ['build', 'a']])}
+        lints = linter.lintify(meta)
+        self.assertIn(expected_message, lints)
+
+        meta = {'requirements': OrderedDict([['build', 'a'],
+                                             ['run', 'a']])}
+        lints = linter.lintify(meta)
+        self.assertNotIn(expected_message, lints)
 
 
 class TestCLI_recipe_lint(unittest.TestCase):
