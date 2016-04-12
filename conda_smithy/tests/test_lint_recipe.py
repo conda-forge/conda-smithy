@@ -24,8 +24,9 @@ class Test_linter(unittest.TestCase):
                             ['build', {}],
                             ['source', {}]])
         lints = linter.lintify(meta)
-        expected_message = "The top level meta keys are in an unexpected order. Expecting ['package', 'source', 'build']."
-        self.assertIn(expected_message, lints)
+        expected_msg = ("The top level meta keys are in an unexpected "
+                        "order. Expecting ['package', 'source', 'build'].")
+        self.assertIn(expected_msg, lints)
 
     def test_missing_about_license_and_summary(self):
         meta = {'about': {'home': 'a URL'}}
@@ -66,7 +67,8 @@ class Test_linter(unittest.TestCase):
         self.assertIn(expected_message, lints)
 
     def test_maintainers_section(self):
-        expected_message = 'The recipe could do with some maintainers listed in the "extra/recipe-maintainers" section.'
+        expected_message = ('The recipe could do with some maintainers listed '
+                            'in the "extra/recipe-maintainers" section.')
 
         lints = linter.lintify({'extra': {'recipe-maintainers': []}})
         self.assertIn(expected_message, lints)
@@ -88,7 +90,8 @@ class Test_linter(unittest.TestCase):
         self.assertNotIn(expected_message, lints)
 
     def test_test_section_with_recipe(self):
-        # If we have a run_test.py file, we shouldn't need to provide other tests.
+        # If we have a run_test.py file, we shouldn't need to provide
+        # other tests.
 
         expected_message = 'The recipe must have some tests.'
 
@@ -102,7 +105,8 @@ class Test_linter(unittest.TestCase):
             self.assertNotIn(expected_message, lints)
 
     def test_selectors(self):
-        expected_message = 'Selectors are suggested to take a "  # [<selector>]" form.'
+        expected_message = ('Selectors are suggested to take a '
+                            '"  # [<selector>]" form.')
 
         with tmp_directory() as recipe_dir:
             def assert_selector(selector, is_good=True):
@@ -114,11 +118,14 @@ class Test_linter(unittest.TestCase):
                              """.format(selector))
                 lints = linter.lintify({}, recipe_dir)
                 if is_good:
-                    message = "Found lints when there shouldn't have been a lint for '{}'.".format(selector)
+                    message = ("Found lints when there shouldn't have been a "
+                               "lint for '{}'.".format(selector))
                 else:
-                    message = "Expecting lints for '{}', but didn't get any.".format(selector)
+                    message = ("Expecting lints for '{}', but didn't get any."
+                               "".format(selector))
                 self.assertEqual(not is_good,
-                                 any(lint.startswith(expected_message) for lint in lints),
+                                 any(lint.startswith(expected_message)
+                                     for lint in lints),
                                  message)
 
             assert_selector("name: foo_py3      # [py3k]")
@@ -141,8 +148,8 @@ class Test_linter(unittest.TestCase):
         self.assertIn(expected_message, lints)
 
     def test_bad_requirements_order(self):
-        expected_message = ("The `requirements/build` section should be defined "
-                            "before the `requirements/run` section.")
+        expected_message = ("The `requirements/build` section should be "
+                            "defined before the `requirements/run` section.")
 
         meta = {'requirements': OrderedDict([['run', 'a'],
                                              ['build', 'a']])}
@@ -153,6 +160,21 @@ class Test_linter(unittest.TestCase):
                                              ['run', 'a']])}
         lints = linter.lintify(meta)
         self.assertNotIn(expected_message, lints)
+
+    def test_no_sha_with_dl(self):
+        expected_message = ("When defining a source/url please add a sha256, "
+                            "sha1 or md5 checksum (sha256 preferably).")
+        meta = {'source': {'url': None}}
+        self.assertIn(expected_message, linter.lintify(meta))
+
+        meta = {'source': {'url': None, 'sha1': None}}
+        self.assertNotIn(expected_message, linter.lintify(meta))
+
+        meta = {'source': {'url': None, 'sha256': None}}
+        self.assertNotIn(expected_message, linter.lintify(meta))
+
+        meta = {'source': {'url': None, 'md5': None}}
+        self.assertNotIn(expected_message, linter.lintify(meta))
 
 
 class TestCLI_recipe_lint(unittest.TestCase):
@@ -165,7 +187,8 @@ class TestCLI_recipe_lint(unittest.TestCase):
                     build: []
                     requirements: []
                     """))
-            child = subprocess.Popen(['conda-smithy', 'recipe-lint', recipe_dir],
+            child = subprocess.Popen(['conda-smithy', 'recipe-lint',
+                                      recipe_dir],
                                      stdout=subprocess.PIPE)
             out, _ = child.communicate()
             self.assertEqual(child.returncode, 1, out)
@@ -188,7 +211,8 @@ class TestCLI_recipe_lint(unittest.TestCase):
                             - a
                             - b
                     """))
-            child = subprocess.Popen(['conda-smithy', 'recipe-lint', recipe_dir],
+            child = subprocess.Popen(['conda-smithy', 'recipe-lint',
+                                      recipe_dir],
                                      stdout=subprocess.PIPE)
             out, _ = child.communicate()
             self.assertEqual(child.returncode, 0, out)
