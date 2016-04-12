@@ -79,6 +79,11 @@ def lintify(meta, recipe_dir=None):
         lints.append('The `requirements/build` section should be defined before '
                      'the `requirements/run` section.')
 
+    # 9: Files downloaded should have a hash.
+    source_section = meta.get('source', {}) or {}
+    if 'url' in source_section and not {'sha1', 'sha256', 'md5'} & set(source_section.keys()):
+        lints.append('When defining a source/url please add a sha256, sha1 or md5 checksum (sha256 preferably).')
+
     return lints
 
 

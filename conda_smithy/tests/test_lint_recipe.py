@@ -154,6 +154,21 @@ class Test_linter(unittest.TestCase):
         lints = linter.lintify(meta)
         self.assertNotIn(expected_message, lints)
 
+    def test_no_sha_with_dl(self):
+        expected_message = ("When defining a source/url please add a sha256, sha1 "
+                            "or md5 checksum (sha256 preferably).")
+        meta = {'source': {'url': None}}
+        self.assertIn(expected_message, linter.lintify(meta))
+
+        meta = {'source': {'url': None, 'sha1': None}}
+        self.assertNotIn(expected_message, linter.lintify(meta))
+
+        meta = {'source': {'url': None, 'sha256': None}}
+        self.assertNotIn(expected_message, linter.lintify(meta))
+
+        meta = {'source': {'url': None, 'md5': None}}
+        self.assertNotIn(expected_message, linter.lintify(meta))
+
 
 class TestCLI_recipe_lint(unittest.TestCase):
     def test_cli_fail(self):
