@@ -64,7 +64,12 @@ def lintify(meta, recipe_dir=None):
         if bad_selectors:
             lints.append('Selectors are suggested to take a "  # [<selector>]" '
                          'form.')
-    
+
+    # 7: The build section should have a build number.
+    build_number = meta.get('build', {}).get('number', None)
+    if build_number is None:
+        lints.append('The recipe must have a `build/number` section.')
+
     return lints
 
 

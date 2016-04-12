@@ -20,9 +20,9 @@ def tmp_directory():
 
 class Test_linter(unittest.TestCase):
     def test_bad_order(self):
-        meta = OrderedDict([['package', []],
-                            ['build', []],
-                            ['source', []]])
+        meta = OrderedDict([['package', {}],
+                            ['build', {}],
+                            ['source', {}]])
         lints = linter.lintify(meta)
         expected_message = "The top level meta keys are in an unexpected order. Expecting ['package', 'source', 'build']."
         self.assertIn(expected_message, lints)
@@ -117,7 +117,7 @@ class Test_linter(unittest.TestCase):
                     message = "Found lints when there shouldn't have been a lint for '{}'.".format(selector)
                 else:
                     message = "Expecting lints for '{}', but didn't get any.".format(selector)
-                self.assertEqual(not is_good, 
+                self.assertEqual(not is_good,
                                  any(lint.startswith(expected_message) for lint in lints),
                                  message)
 
@@ -125,6 +125,21 @@ class Test_linter(unittest.TestCase):
             assert_selector("name: foo_py3  [py3k]", is_good=False)
             assert_selector("name: foo_py3  #[py3k]", is_good=False)
             assert_selector("name: foo_py3 # [py3k]", is_good=False)
+
+    def test_missing_build_number(self):
+
+        expected_message = "The recipe must have a `build/number` section."
+
+        meta = {'build': {'skip': 'True',
+                          'script': 'python setup.py install',
+                          'number': 0}}
+        lints = linter.lintify(meta)
+        self.assertNotIn(expected_message, lints)
+
+        meta = {'build': {'skip': 'True',
+                          'script': 'python setup.py install'}}
+        lints = linter.lintify(meta)
+        self.assertIn(expected_message, lints)
 
 
 class TestCLI_recipe_lint(unittest.TestCase):
@@ -148,6 +163,8 @@ class TestCLI_recipe_lint(unittest.TestCase):
                 fh.write(textwrap.dedent("""
                     package:
                         name: 'test_package'
+                    build:
+                        number: 0
                     test: []
                     about:
                         home: something
