@@ -44,6 +44,9 @@ conda update --yes --all
 conda install --yes conda-build==1.18.2
 conda info
 
+# Installs anything from a \`yum_requirements.txt\` file in a recipe with \`yum\`.
+test -f "recipe_root/yum_requirements.txt" && (cat "recipe_root/yum_requirements.txt" | xargs -r yum install -y) || true
+
 {% if build_setup %}
 {{ build_setup }}{% endif -%}
 {%- block build %}
