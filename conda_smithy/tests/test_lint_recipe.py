@@ -80,6 +80,11 @@ class Test_linter(unittest.TestCase):
         lints = linter.lintify({'extra': {'recipe-maintainers': ['a']}})
         self.assertNotIn(expected_message, lints)
 
+        expected_message = ('The "extra" section was expected to be a '
+                            'dictionary, but got a list.')
+        lints = linter.lintify({'extra': ['recipe-maintainers']})
+        self.assertIn(expected_message, lints)
+
     def test_test_section(self):
         expected_message = 'The recipe must have some tests.'
 
