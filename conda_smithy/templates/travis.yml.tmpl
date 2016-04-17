@@ -39,6 +39,7 @@ install:
 
       export PATH=/Users/travis/miniconda3/bin:$PATH
 
+      conda config --set show_channel_urls true
       conda update --yes conda
       conda install --yes conda-build jinja2 anaconda-client
       {%- for channel in channels.get('sources', []) %}
