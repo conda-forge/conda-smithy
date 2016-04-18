@@ -16,6 +16,15 @@ class NullUndefined(jinja2.Undefined):
         return unicode(self._undefined_name)
 
 
+def get_section(parent, name, lints):
+    section = parent.get(name, {})
+    if not isinstance(section, dict):
+        lints.append('The "{}" section was expected to be a dictionary, but '
+                     'got a {}.'.format(name, type(section).__name__))
+        section = {}
+    return section
+
+
 def lintify(meta, recipe_dir=None):
     lints = []
     major_sections = list(meta.keys())
@@ -23,6 +32,12 @@ def lintify(meta, recipe_dir=None):
     # If the recipe_dir exists (no guarantee within this function) , we can
     # find the meta.yaml within it.
     meta_fname = os.path.join(recipe_dir or '', 'meta.yaml')
+
+    source_section = get_section(meta, 'source', lints)
+    build_section = get_section(meta, 'build', lints)
+    requirements_section = get_section(meta, 'requirements', lints)
+    about_section = get_section(meta, 'about', lints)
+    extra_section = get_section(meta, 'extra', lints)
 
     # 1: Top level meta.yaml keys should have a specific order.
     section_order_sorted = sorted(major_sections,
@@ -33,14 +48,12 @@ def lintify(meta, recipe_dir=None):
 
     # 2: The about section should have a home, license and summary.
     for about_item in ['home', 'license', 'summary']:
-        about_section = meta.get('about', {}) or {}
         # if the section doesn't exist, or is just empty, lint it.
         if not about_section.get(about_item, ''):
             lints.append('The {} item is expected in the about section.'
                          ''.format(about_item))
 
     # 3: The recipe should have some maintainers.
-    extra_section = meta.get('extra', {}) or {}
     if not extra_section.get('recipe-maintainers', []):
         lints.append('The recipe could do with some maintainers listed in '
                      'the "extra/recipe-maintainers" section.')
@@ -57,7 +70,7 @@ def lintify(meta, recipe_dir=None):
             lints.append('The recipe must have some tests.')
 
     # 5: License cannot be 'unknown.'
-    license = meta.get('about', {}).get('license', '').lower()
+    license = about_section.get('license', '').lower()
     if 'unknown' == license.strip():
         lints.append('The recipe license cannot be unknown.')
 
@@ -75,13 +88,10 @@ def lintify(meta, recipe_dir=None):
                          '"  # [<selector>]" form.')
 
     # 7: The build section should have a build number.
-    build_section = meta.get('build', {}) or {}
-    build_number = build_section.get('number', None)
-    if build_number is None:
+    if build_section.get('number', None) is None:
         lints.append('The recipe must have a `build/number` section.')
 
     # 8: The build section should be before the run section in requirements.
-    requirements_section = meta.get('requirements', {}) or {}
     requirements_order_sorted = sorted(requirements_section,
                                        key=REQUIREMENTS_ORDER.index)
     if requirements_section.keys() != requirements_order_sorted:
@@ -89,7 +99,6 @@ def lintify(meta, recipe_dir=None):
                      'before the `requirements/run` section.')
 
     # 9: Files downloaded should have a hash.
-    source_section = meta.get('source', {}) or {}
     if ('url' in source_section and
             not ({'sha1', 'sha256', 'md5'} & set(source_section.keys()))):
         lints.append('When defining a source/url please add a sha256, sha1 '
