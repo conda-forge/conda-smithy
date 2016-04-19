@@ -85,7 +85,7 @@ def lintify(meta, recipe_dir=None):
                     bad_selectors.append(selector_line)
         if bad_selectors:
             lints.append('Selectors are suggested to take a '
-                         '"<two spaces>#<one space>[<selector>]" form.')
+                         '``<two spaces>#<one space>[<expression>]`` form.')
 
     # 7: The build section should have a build number.
     if build_section.get('number', None) is None:
