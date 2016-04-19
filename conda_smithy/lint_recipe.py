@@ -94,7 +94,7 @@ def lintify(meta, recipe_dir=None):
     # 8: The build section should be before the run section in requirements.
     requirements_order_sorted = sorted(requirements_section,
                                        key=REQUIREMENTS_ORDER.index)
-    if requirements_section.keys() != requirements_order_sorted:
+    if list(requirements_section.keys()) != requirements_order_sorted:
         lints.append('The `requirements/build` section should be defined '
                      'before the `requirements/run` section.')
 
