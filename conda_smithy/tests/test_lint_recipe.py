@@ -222,6 +222,32 @@ class TestCLI_recipe_lint(unittest.TestCase):
             out, _ = child.communicate()
             self.assertEqual(child.returncode, 0, out)
 
+    def test_cli_environ(self):
+        with tmp_directory() as recipe_dir:
+            with open(os.path.join(recipe_dir, 'meta.yaml'), 'w') as fh:
+                fh.write(textwrap.dedent("""
+                    package:
+                        name: 'test_package'
+                    build:
+                        number: 0
+                    test:
+                        requires:
+                            - python {{ environ['PY_VER'] + '*' }}  # [win]
+                    about:
+                        home: something
+                        license: something else
+                        summary: a test recipe
+                    extra:
+                        recipe-maintainers:
+                            - a
+                            - b
+                    """))
+            child = subprocess.Popen(['conda-smithy', 'recipe-lint',
+                                      recipe_dir],
+                                     stdout=subprocess.PIPE)
+            out, _ = child.communicate()
+            self.assertEqual(child.returncode, 0, out)
+
 
 if __name__ == '__main__':
     unittest.main()
