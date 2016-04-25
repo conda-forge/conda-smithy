@@ -15,6 +15,11 @@ class NullUndefined(jinja2.Undefined):
     def __unicode__(self):
         return unicode(self._undefined_name)
 
+    def __getattr__(self, name):
+        return unicode('{}.{}'.format(self, name))
+
+    def __getitem__(self, name):
+        return '{}["{}"]'.format(self, name)
 
 def get_section(parent, name, lints):
     section = parent.get(name, {})
