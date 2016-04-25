@@ -10,7 +10,7 @@ env:
 
     matrix:
         - PYTHON=2.7
-        # - PYTHON=3.5  (requires ruamel.yaml to exist for py35)
+        - PYTHON=3.5
 
 install:
     - mkdir -p ${HOME}/cache/pkgs
