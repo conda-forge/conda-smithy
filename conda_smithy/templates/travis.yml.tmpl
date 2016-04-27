@@ -28,7 +28,10 @@ env:
 {% endblock %}
 
 before_install:
+    # Remove homebrew.
     - brew remove --force $(brew list)
+    - brew cleanup -s
+    - rm -rf $(brew --cache)
 
 install:
     - |
