@@ -44,25 +44,16 @@ def add_project_to_circle(user, project):
                'Accept': 'application/json'}
     url_template = ('https://circleci.com/api/v1/{component}?'
                     'circle-token={token}')
-    url = url_template.format(component='projects', token=circle_token)
-    data = {'username': user, 'repo': project}
-    response = requests.get(url, headers=headers)
 
-    if response.status_code != 201:
+    # Note, we used to check to see whether the project was already registered, but it started
+    # timing out once we had too many repos, so now the approach is simply "add it always".
+
+    url = url_template.format(component='project/{}/{}/follow'.format(user, project).lower(), token=circle_token)
+    response = requests.post(url, headers={})
+    # It is a strange response code, but is doing what was asked...
+    if response.status_code != 400:
         response.raise_for_status()
-
-    repos = response.json()
-    matching = [repo for repo in repos if repo['username'] == data['username'] and repo['reponame'] == data['repo']]
-
-    if matching and matching[0].get('followed', False):
-        print(' * {}/{} already enabled on CircleCI'.format(user, project))
-    else:
-        url = url_template.format(component='project/{}/{}/follow'.format(user, project).lower(), token=circle_token)
-        response = requests.post(url, headers={})
-        # It is a strange response code, but is doing what was asked...
-        if response.status_code != 400:
-            response.raise_for_status()
-        print(' * Added to circle-ci')
+    print(' * {}/{} enabled on CircleCI')
 
 
 def add_project_to_appveyor(user, project):
