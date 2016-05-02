@@ -167,7 +167,7 @@ def compute_build_matrix(meta):
 
 def main(forge_file_directory):
     recipe_dir = 'recipe'
-    config = {'docker': {'image': 'pelson/obvious-ci:latest_x64', 'command': 'bash'},
+    config = {'docker': {'image': 'condaforge/linux-anvil', 'command': 'bash'},
               'templates': {'run_docker_build': 'run_docker_build_matrix.tmpl'},
               'travis': [],
               'circle': [],
