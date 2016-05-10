@@ -69,9 +69,10 @@ Terminology
 
 Current build status
 ====================
+{% set appveyor_name = package.name().replace('_', '-').replace('.', '-') %}
 Linux: [![Circle CI](https://circleci.com/gh/conda-forge/{{package.name()}}-feedstock.svg?style=svg)](https://circleci.com/gh/conda-forge/{{package.name()}}-feedstock)
 OSX: [![TravisCI](https://travis-ci.org/conda-forge/{{package.name()}}-feedstock.svg?branch=master)](https://travis-ci.org/conda-forge/{{package.name()}}-feedstock) 
-Windows: [![AppVeyor](https://ci.appveyor.com/api/projects/status/github/conda-forge/{{package.name()}}-feedstock?svg=True)](https://ci.appveyor.com/project/conda-forge/{{package.name()}}-feedstock/branch/master)
+Windows: [![AppVeyor](https://ci.appveyor.com/api/projects/status/github/conda-forge/{{appveyor_name}}-feedstock?svg=True)](https://ci.appveyor.com/project/conda-forge/{{appveyor_name}}-feedstock/branch/master)
 
 Current release info
 ====================

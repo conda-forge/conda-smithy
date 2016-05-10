@@ -14,19 +14,59 @@ environment:
   # We set a default Python version for the miniconda that is to be installed. This can be
   # overridden in the matrix definition where appropriate.
   CONDA_PY: "27"
-
-  {%- for name, hashed_secure in (appveyor.secure or {}) | dictsort %}
-  {{ name }}:
-    # The {{ name }} secure variable. This is defined canonically in conda-forge.yml.
-    secure: {{ hashed_secure }}
-  {%- endfor %}
+  BINSTAR_TOKEN:
+    # The BINSTAR_TOKEN secure variable. This is defined canonically in conda-forge.yml.
+    secure: MP4hZYylDyUWEsrt3u3cod2sbFeRwUziH02mvQOdbjsTO/l1yIxDkP/76rSIjcGC
 
   matrix:
-  {%- for case in matrix %}
-    {%- for dep_name, version in case %}
-    {% if loop.first %}- {% else %}  {% endif %}{{ dep_name }}: {{version }}
-    {%- endfor %}
-{% endfor %}
+    - TARGET_ARCH: x86
+      CONDA_NPY: 110
+      CONDA_PY: 27
+
+    - TARGET_ARCH: x64
+      CONDA_NPY: 110
+      CONDA_PY: 27
+
+    - TARGET_ARCH: x86
+      CONDA_NPY: 111
+      CONDA_PY: 27
+
+    - TARGET_ARCH: x64
+      CONDA_NPY: 111
+      CONDA_PY: 27
+
+    - TARGET_ARCH: x86
+      CONDA_NPY: 110
+      CONDA_PY: 34
+
+    - TARGET_ARCH: x64
+      CONDA_NPY: 110
+      CONDA_PY: 34
+
+    - TARGET_ARCH: x86
+      CONDA_NPY: 111
+      CONDA_PY: 34
+
+    - TARGET_ARCH: x64
+      CONDA_NPY: 111
+      CONDA_PY: 34
+
+    - TARGET_ARCH: x86
+      CONDA_NPY: 110
+      CONDA_PY: 35
+
+    - TARGET_ARCH: x64
+      CONDA_NPY: 110
+      CONDA_PY: 35
+
+    - TARGET_ARCH: x86
+      CONDA_NPY: 111
+      CONDA_PY: 35
+
+    - TARGET_ARCH: x64
+      CONDA_NPY: 111
+      CONDA_PY: 35
+
 
 # We always use a 64-bit machine, but can build x86 distributions
 # with the TARGET_ARCH variable.
@@ -65,8 +105,7 @@ install:
 build: off
 
 test_script:
-    - "%CMD_IN_ENV% conda build {{ recipe_dir }} --quiet"
+    - "%CMD_IN_ENV% conda build recipe --quiet"
 deploy_script:
-{% for owner, channel in channels['targets'] %}
-    - 'python ci_support\upload_or_check_non_existence.py .\{{ recipe_dir }} {{ owner }} --channel={{ channel }}'
-{% endfor %}
+
+    - 'python ci_support\upload_or_check_non_existence.py .\recipe conda-forge --channel=main'

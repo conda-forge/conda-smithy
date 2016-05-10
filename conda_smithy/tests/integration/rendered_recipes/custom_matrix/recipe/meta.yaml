@@ -1,0 +1,31 @@
+{% set VERSION = os.environ.get('VC_VERSION', '9')|string %}
+{% set runtime_years = {'9': '2008', '10': '2010', '14': '2015'} %}
+{% set runtime_year = runtime_years[VERSION] %}
+
+package:
+  name: vc
+  version: {{ VERSION }}
+
+build:
+  number: 0
+  track_features:
+    - vc{{ VERSION }}
+  skip: true  # [not win]
+  skip: true  # [{{ VERSION }} == 10 and win64]
+
+requirements:
+  run:
+    - vs{{ runtime_year }}_runtime
+
+about:
+  home: https://github.com/conda/conda/wiki/VC-features
+  license: Modified BSD License (3-clause)
+  summary: A meta-package to track VC features.
+
+extra:
+  recipe-maintainers:
+    - jakirkham
+    - 183amir
+    - pelson
+    - patricksnape
+    - msarahan

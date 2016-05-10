@@ -1,14 +1,13 @@
 {%- extends "run_docker_build.tmpl" -%}
-{%- set conda_vars = {'python': 'CONDA_PY', 'numpy': 'CONDA_NPY'} -%}
 {% macro matrix_env(matrix_item) -%}
-    {% for dep_name, version in matrix_item | sort %}
-        {%- if dep_name in conda_vars %}{% set version = version|replace('.', '') %}{% endif %}
-    export {{ conda_vars.get(dep_name, 'CONDA_' + dep_name|upper) }}={{ version }}{% endfor %}
+  {%- for dep_name, version in matrix_item %}
+    export {{ dep_name }}={{version }}
+  {%- endfor %}
 {%- endmacro -%}
 
 {%- block build -%}
   # Embarking on {{ matrix|length }} case(s).
-{%- for case in matrix | sort %}
+{%- for case in matrix %}
   {%- if case %}
     set -x
     {{- matrix_env(case) }}
@@ -16,7 +15,7 @@
   {%- endif -%}
   {{- super()|indent(4) }}
 {% endfor %}{% endblock -%}
-{%- block test_and_upload -%}{% for case in matrix | sort -%}
+{%- block test_and_upload -%}{% for case in matrix -%}
     {{ matrix_env(case) }}
     {{- super()|indent(4) }}
 {%- endfor -%}{% endblock -%}
