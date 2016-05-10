@@ -56,14 +56,13 @@ install:
     - cmd: set PYTHONUNBUFFERED=1
 
     - cmd: conda config --set show_channel_urls true
+    - cmd: conda config --add channels conda-team
+    - cmd: conda config --add channels conda-team/label/dev
+    - cmd: conda config --add channels conda-forge
     - cmd: conda install -c http://conda.binstar.org/pelson/channel/development --yes --quiet obvious-ci
-    - cmd: conda config --add channels http://conda.binstar.org/conda-forge
     - cmd: conda info
     - cmd: conda install -n root --quiet --yes conda-build anaconda-client jinja2 setuptools
-    # Workaround for Python 3.4 and x64 bug in latest conda-build.
-    # FIXME: Remove once there is a release that fixes the upstream issue
-    # ( https://github.com/conda/conda-build/issues/895 ).
-    - cmd: if "%TARGET_ARCH%" == "x64" if "%CONDA_PY%" == "34" conda install conda-build=1.20.0 --yes
+    - cmd: conda update --yes --quiet --all
 
 # Skip .NET project specific build phase.
 build: off
