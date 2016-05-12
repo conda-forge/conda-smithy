@@ -318,7 +318,7 @@ def main(forge_file_directory):
     else:
         with open(forge_yml, "r") as fh:
             file_config = list(yaml.load_all(fh))[0]
-        if file_config:
+        if isinstance(file_config, dict):
             # The config is just the union of the defaults, and the overriden
             # values.
             for key, value in file_config.items():
