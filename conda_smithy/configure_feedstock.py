@@ -4,6 +4,7 @@ from contextlib import contextmanager
 import os
 import shutil
 import stat
+import textwrap
 import yaml
 import warnings
 
@@ -40,9 +41,33 @@ def render_run_docker_build(jinja_env, forge_config, forge_dir):
     forge_config = forge_config.copy()
     forge_config['matrix'] = matrix
 
+    # If there is a "yum_requirements.txt" file in the recipe, we honour it.
+    yum_requirements_fpath = os.path.join(forge_dir, 'recipe',
+                                          'yum_requirements.txt')
+    if os.path.exists(yum_requirements_fpath):
+        with open(yum_requirements_fpath) as fh:
+            requirements = [line.strip() for line in fh
+                            if line.strip() and not line.strip().startswith('#')]
+        if not requirements:
+            raise ValueError("No yum requirements enabled in the "
+                             "yum_requirements.txt, please remove the file "
+                             "or add some.")
+        build_setup = textwrap.dedent("""\
+            # Install the yum requirements defined canonically in the
+            # "recipe/yum_requirements.txt" file. After updating that file,
+            # run "conda smithy rerender" and this line be updated
+            # automatically.
+            yum install -y {}
+
+
+        """.format(' '.join(requirements)))
+        forge_config['build_setup'] = build_setup
+
     # TODO: Conda has a convenience for accessing nested yaml content.
-    template_name = forge_config.get('templates', {}).get('run_docker_build',
-                                                    'run_docker_build_matrix.tmpl')
+    templates = forge_config.get('templates', {})
+    template_name = templates.get('run_docker_build',
+                                  'run_docker_build_matrix.tmpl')
+
     template = jinja_env.get_template(template_name)
     with open(target_fname, 'w') as fh:
         fh.write(template.render(**forge_config))
@@ -169,9 +194,9 @@ def main(forge_file_directory):
     recipe_dir = 'recipe'
     config = {'docker': {'image': 'condaforge/linux-anvil', 'command': 'bash'},
               'templates': {'run_docker_build': 'run_docker_build_matrix.tmpl'},
-              'travis': [],
-              'circle': [],
-              'appveyor': [],
+              'travis': {},
+              'circle': {},
+              'appveyor': {},
               'channels': {'sources': ['conda-forge'], 'targets': [['conda-forge', 'main']]},
               'recipe_dir': recipe_dir}
     forge_dir = os.path.abspath(forge_file_directory)
@@ -183,9 +208,12 @@ def main(forge_file_directory):
         with open(forge_yml, "r") as fh:
             file_config = list(yaml.load_all(fh))[0]
         # The config is just the union of the defaults, and the overriden
-        # values. (XXX except dicts within dicts need to be dealt with!)
-        config.update(file_config)
-
+        # values.
+        for key, value in file_config.items():
+            config_item = config.setdefault(key, value)
+            # Deal with dicts within dicts.
+            if isinstance(value, dict):
+                config_item.update(value)
     config['package'] = meta = meta_of_feedstock(forge_file_directory)
     
     tmplt_dir = os.path.join(conda_forge_content, 'templates')
