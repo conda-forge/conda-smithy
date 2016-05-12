@@ -31,7 +31,7 @@ def render_run_docker_build(jinja_env, forge_config, forge_dir):
             with enable_vars(vars):
                 if not ResolvedDistribution(meta, pkgs).skip():
                     cases_not_skipped.append(vars + sorted(pkgs))
-        matrix = sorted(cases_not_skipped)
+        matrix = sorted(cases_not_skipped, key=sort_without_target_arch)
 
     target_fname = os.path.join(forge_dir, 'ci_support', 'run_docker_build.sh')
     if not matrix:
@@ -97,7 +97,7 @@ def render_travis(jinja_env, forge_config, forge_dir):
             with enable_vars(vars):
                 if not ResolvedDistribution(meta, pkgs).skip():
                     cases_not_skipped.append(vars + sorted(pkgs))
-        matrix = sorted(cases_not_skipped)
+        matrix = sorted(cases_not_skipped, key=sort_without_target_arch)
 
     target_fname = os.path.join(forge_dir, '.travis.yml')
 
@@ -165,6 +165,21 @@ def split_case(case):
     return pkgs, vars
 
 
+def sort_without_target_arch(case):
+    arch_order = 0
+    python = None
+    cmp_case = []
+    for name, val in case:
+        if name == 'TARGET_ARCH':
+            arch_order = {'x86': 1, 'x64': 2}.get(val, 0)
+        elif name == 'python':
+            # We group all pythons together.
+            python = val
+        else:
+            cmp_case.append([name, val])
+    return [python, cmp_case, arch_order]
+
+
 def render_appveyor(jinja_env, forge_config, forge_dir):
     full_matrix = []
     for platform, arch in [['win-32', 'x86'], ['win-64', 'x64']]:
@@ -184,22 +199,7 @@ def render_appveyor(jinja_env, forge_config, forge_dir):
                 full_matrix.extend([arch_env] + list(case)
                                    for case in cases_not_skipped)
 
-    matrix = full_matrix
-
-    def sort_without_target_arch(case):
-        arch = None
-        python = None
-        cmp_case = []
-        for name, val in case:
-            if name == 'TARGET_ARCH':
-                arch_order = {'x86': 1, 'x64': 2}.get(val, 0)
-            elif name == 'python':
-                # We group all pythons together.
-                python = val
-            else:
-                cmp_case.append([name, val])
-        return [python, cmp_case, arch_order]
-    matrix = sorted(matrix, key=sort_without_target_arch)
+    matrix = sorted(full_matrix, key=sort_without_target_arch)
 
     target_fname = os.path.join(forge_dir, 'appveyor.yml')
     target_fname_disabled = os.path.join(forge_dir, 'disabled_appveyor.yml')
