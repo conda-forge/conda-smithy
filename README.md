@@ -14,8 +14,14 @@ Overview
 Installation
 ------------
 
-See the requirements list in conda_smithy.recipe/meta.yaml, then clone this
-repo and `python setup.py install`.
+The easiest way to install conda-smithy is to use conda and conda-forge:
+
+```
+conda install -c conda-forge conda-smithy
+```
+
+To install conda-smithy from source, see the requirements file in `requirements.txt`, clone this
+repo, and `python setup.py install`.
 
 Setup
 -----
