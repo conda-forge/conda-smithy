@@ -53,7 +53,7 @@ def add_project_to_circle(user, project):
     # It is a strange response code, but is doing what was asked...
     if response.status_code != 400:
         response.raise_for_status()
-    print(' * {}/{} enabled on CircleCI')
+    print(' * {}/{} enabled on CircleCI'.format(user, project))
 
 
 def add_project_to_appveyor(user, project):

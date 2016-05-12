@@ -24,12 +24,14 @@ def render_run_docker_build(jinja_env, forge_config, forge_dir):
     with fudge_subdir('linux-64'):
         meta = forge_config['package']
         meta.parse_again()
-        matrix = compute_build_matrix(meta)
+        matrix = compute_build_matrix(meta, forge_config.get('matrix'))
         cases_not_skipped = []
         for case in matrix:
-            if not ResolvedDistribution(meta, case).skip():
-                cases_not_skipped.append(case)
-        matrix = cases_not_skipped
+            pkgs, vars = split_case(case)
+            with enable_vars(vars):
+                if not ResolvedDistribution(meta, pkgs).skip():
+                    cases_not_skipped.append(vars + sorted(pkgs))
+        matrix = sorted(cases_not_skipped)
 
     target_fname = os.path.join(forge_dir, 'ci_support', 'run_docker_build.sh')
     if not matrix:
@@ -38,8 +40,8 @@ def render_run_docker_build(jinja_env, forge_config, forge_dir):
         # be skipped anyway).
         matrix = [()]
 
-    forge_config = forge_config.copy()
-    forge_config['matrix'] = matrix
+    matrix = prepare_matrix_for_env_vars(matrix)
+    forge_config = update_matrix(forge_config, matrix)
 
     # If there is a "yum_requirements.txt" file in the recipe, we honour it.
     yum_requirements_fpath = os.path.join(forge_dir, 'recipe',
@@ -87,13 +89,15 @@ def render_travis(jinja_env, forge_config, forge_dir):
     with fudge_subdir('osx-64'):
         meta = forge_config['package']
         meta.parse_again()
-        matrix = compute_build_matrix(meta)
+        matrix = compute_build_matrix(meta, forge_config.get('matrix'))
 
         cases_not_skipped = []
         for case in matrix:
-            if not ResolvedDistribution(meta, case).skip():
-                cases_not_skipped.append(case)
-        matrix = cases_not_skipped
+            pkgs, vars = split_case(case)
+            with enable_vars(vars):
+                if not ResolvedDistribution(meta, pkgs).skip():
+                    cases_not_skipped.append(vars + sorted(pkgs))
+        matrix = sorted(cases_not_skipped)
 
     target_fname = os.path.join(forge_dir, '.travis.yml')
 
@@ -103,8 +107,8 @@ def render_travis(jinja_env, forge_config, forge_dir):
         # be skipped anyway).
         matrix = [()]
 
-    forge_config = forge_config.copy()
-    forge_config['matrix'] = matrix
+    matrix = prepare_matrix_for_env_vars(matrix)
+    forge_config = update_matrix(forge_config, matrix)
 
     template = jinja_env.get_template('travis.yml.tmpl')
     with open(target_fname, 'w') as fh:
@@ -118,17 +122,84 @@ def render_README(jinja_env, forge_config, forge_dir):
         fh.write(template.render(**forge_config))
 
 
-def render_appveyor(jinja_env, forge_config, forge_dir):
-    with fudge_subdir('win-64'):
-        meta = forge_config['package']
-        meta.parse_again()
-        matrix = compute_build_matrix(meta)
+class MatrixCaseEnvVar(object):
+    def __init__(self, name, value):
+        self.name = name
+        self.value = value
 
-        cases_not_skipped = []
-        for case in matrix:
-            if not ResolvedDistribution(meta, case).skip():
-                cases_not_skipped.append(case)
-        matrix = cases_not_skipped
+    def __iter__(self):
+        # We make the Var iterable so that loops like
+        # ``for name, value in cases`` can be used.
+        return iter([self.name, self.value])
+
+    def __cmp__(self, other):
+        # Implement ordering so that sorting functions as expected.
+        if not isinstance(other, type(self)):
+            return -3
+        elif other.name != self.name:
+            return -2
+        else:
+            return cmp(self.value, other.value)
+
+
+@contextmanager
+def enable_vars(vars):
+    existing = {}
+    for var in vars:
+        if var.name in os.environ:
+            existing[var.name] = os.environ[var.name]
+        os.environ[var.name] = str(var.value)
+    yield
+    for var in vars:
+        if var.name in existing:
+            os.environ[var.name] = existing[var.name]
+        else:
+            os.environ.pop(var.name)
+
+
+def split_case(case):
+    vars = [item for item in case
+            if isinstance(item, MatrixCaseEnvVar)]
+    pkgs = [item for item in case
+            if not isinstance(item, MatrixCaseEnvVar)]
+    return pkgs, vars
+
+
+def render_appveyor(jinja_env, forge_config, forge_dir):
+    full_matrix = []
+    for platform, arch in [['win-32', 'x86'], ['win-64', 'x64']]:
+        with fudge_subdir(platform):
+            meta = forge_config['package']
+            meta.parse_again()
+            matrix = compute_build_matrix(meta, forge_config.get('matrix'))
+
+            cases_not_skipped = []
+            for case in matrix:
+                pkgs, vars = split_case(case)
+                with enable_vars(vars):
+                    if not ResolvedDistribution(meta, pkgs).skip():
+                        cases_not_skipped.append(vars + sorted(pkgs))
+            if cases_not_skipped:
+                arch_env = MatrixCaseEnvVar('TARGET_ARCH', arch)
+                full_matrix.extend([arch_env] + list(case)
+                                   for case in cases_not_skipped)
+
+    matrix = full_matrix
+
+    def sort_without_target_arch(case):
+        arch = None
+        python = None
+        cmp_case = []
+        for name, val in case:
+            if name == 'TARGET_ARCH':
+                arch_order = {'x86': 1, 'x64': 2}.get(val, 0)
+            elif name == 'python':
+                # We group all pythons together.
+                python = val
+            else:
+                cmp_case.append([name, val])
+        return [python, cmp_case, arch_order]
+    matrix = sorted(matrix, key=sort_without_target_arch)
 
     target_fname = os.path.join(forge_dir, 'appveyor.yml')
     target_fname_disabled = os.path.join(forge_dir, 'disabled_appveyor.yml')
@@ -144,12 +215,48 @@ def render_appveyor(jinja_env, forge_config, forge_dir):
         if os.path.exists(target_fname_disabled):
             os.remove(target_fname_disabled)
 
-        forge_config = forge_config.copy()
-        forge_config['matrix'] = matrix
-
+        matrix = prepare_matrix_for_env_vars(matrix)
+        forge_config = update_matrix(forge_config, matrix)
         template = jinja_env.get_template('appveyor.yml.tmpl')
         with open(target_fname, 'w') as fh:
             fh.write(template.render(**forge_config))
+
+
+def update_matrix(forge_config, new_matrix):
+    """
+    Return a new config with the build matrix updated.
+
+    """
+    forge_config = forge_config.copy()
+    forge_config['matrix'] = new_matrix
+    return forge_config
+
+
+def prepare_matrix_for_env_vars(matrix):
+    """
+    Turns a matrix with environment variables and pakages into a matrix of
+    just environment variables. The package variables are prefixed with CONDA,
+    and special cases such as Python and Numpy are handled.
+
+    """
+    special_conda_vars = {'python': 'CONDA_PY', 'numpy': 'CONDA_NPY'}
+    env_matrix = []
+    for case in matrix:
+        new_case = []
+        for item in case:
+            if isinstance(item, MatrixCaseEnvVar):
+                new_case.append((item.name, item.value))
+            else:
+                # We have a package, so transform it into something conda understands.
+                name, value = item
+                if name in special_conda_vars:
+                    name = special_conda_vars[name]
+                    value = str(value).replace('.', '')
+                else:
+                    name = 'CONDA_' + name.upper()
+                new_case.append((name, value))
+        env_matrix.append(new_case)
+    return env_matrix
 
 
 def copytree(src, dst, ignore=(), root_dst=None):
@@ -183,10 +290,14 @@ def meta_of_feedstock(forge_dir):
     return meta
 
 
-def compute_build_matrix(meta):
+def compute_build_matrix(meta, existing_matrix=None):
     index = conda.api.get_index()
     mtx = special_case_version_matrix(meta, index)
     mtx = list(filter_cases(mtx, ['python >=2.7,<3|>=3.4', 'numpy >=1.10']))
+    if existing_matrix:
+        mtx = [tuple(mtx_case) + tuple(MatrixCaseEnvVar(*item) for item in case)
+               for case in sorted(existing_matrix)
+               for mtx_case in mtx]
     return mtx
 
 

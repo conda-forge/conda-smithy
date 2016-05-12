@@ -1,7 +1,7 @@
-{%- set conda_vars = {'python': 'CONDA_PY', 'numpy': 'CONDA_NPY'} -%}
 {%- macro matrix_env(matrix_item) -%}
-    {% for dep_name, version in matrix_item | sort %}{%- if dep_name in conda_vars %}{% set version = version|replace('.', '') %}{% endif -%}
-        {{ conda_vars.get(dep_name, 'CONDA_' + dep_name|upper) }}={{ version }}{% if not loop.last %}  {% endif %}{% endfor %}
+    {% for dep_name, version in matrix_item -%}
+        {{ dep_name }}={{ version }}{% if not loop.last %}  {% endif %}
+    {%- endfor %}
 {%- endmacro -%}
 # This file was generated automatically from conda-smithy. To update this configuration,
 # update the conda-forge.yaml and/or the recipe/meta.yaml.
@@ -13,7 +13,7 @@ language: objective-c
 env:
   {%- if matrix[0] %}
   matrix:
-    {% for case in matrix | sort %}
+    {% for case in matrix %}
     - {{ matrix_env(case) }}
     {%- endfor %}
   {%- endif %}
