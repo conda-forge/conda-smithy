@@ -1,9 +1,0 @@
-* Auto register on circle-ci
-* Auto create github repo
-* Auto add all files to local clone
-* Auto commit (+ push?)
-
-
-* Apply to all recipes?
-
-* Look up cookiecutter: https://github.com/audreyr/cookiecutter
