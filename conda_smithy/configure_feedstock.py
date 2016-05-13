@@ -317,7 +317,7 @@ def main(forge_file_directory):
         warnings.warn('No conda-forge.yml found. Assuming default options.')
     else:
         with open(forge_yml, "r") as fh:
-            file_config = list(yaml.load_all(fh))[0]
+            file_config = list(yaml.load_all(fh))[0] or {}
         # The config is just the union of the defaults, and the overriden
         # values.
         for key, value in file_config.items():
