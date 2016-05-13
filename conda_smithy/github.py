@@ -34,7 +34,7 @@ def create_github_repo(args):
         # Use the organization provided.
         user_or_org = gh.get_organization(args.organization)
 
-    repo_name = meta.name()
+    repo_name = '{}-feedstock'.format(meta.name())
     try:
         gh_repo = user_or_org.create_repo(repo_name, has_wiki=False,
                                           description='A conda-smithy repository for {}.'.format(meta.name()))
