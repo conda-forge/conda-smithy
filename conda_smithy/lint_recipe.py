@@ -21,6 +21,7 @@ class NullUndefined(jinja2.Undefined):
     def __getitem__(self, name):
         return '{}["{}"]'.format(self, name)
 
+
 def get_section(parent, name, lints):
     section = parent.get(name, {})
     if not isinstance(section, dict):
@@ -137,7 +138,7 @@ def main(recipe_dir):
     env = jinja2.Environment(undefined=NullUndefined)
 
     with open(recipe_meta, 'r') as fh:
-        content = env.from_string(''.join(fh)).render()
+        content = env.from_string(''.join(fh)).render(os=os)
         meta = ruamel.yaml.load(content, ruamel.yaml.RoundTripLoader)
     results = lintify(meta, recipe_dir)
     return results
