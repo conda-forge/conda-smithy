@@ -138,6 +138,19 @@ class Test_linter(unittest.TestCase):
             assert_selector("name: foo_py3  #[py3k]", is_good=False)
             assert_selector("name: foo_py3 # [py3k]", is_good=False)
 
+    def test_jinja_os_environ(self):
+        # Test that we can use os.environ in a recipe. We don't care about
+        # the results here.
+        with tmp_directory() as recipe_dir:
+            with open(os.path.join(recipe_dir, 'meta.yaml'), 'w') as fh:
+                fh.write("""
+                        {% set version = os.environ.get('WIBBLE') %}
+                        package:
+                           name: foo
+                           version: {{ version }}
+                         """)
+            lints = linter.main(recipe_dir)
+
     def test_missing_build_number(self):
         expected_message = "The recipe must have a `build/number` section."
 
