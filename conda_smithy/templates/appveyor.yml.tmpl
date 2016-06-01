@@ -53,7 +53,8 @@ install:
 
     - cmd: conda config --set show_channel_urls true
     - cmd: conda install -c pelson/channel/development --yes --quiet obvious-ci
-    - cmd: conda config --add channels conda-forge
+    {%- for channel in channels.get('sources', []) %}
+    - cmd: conda config --add channels {{ channel }}{% endfor %}
     - cmd: conda info
     - cmd: conda install -n root --quiet --yes conda-build anaconda-client jinja2 setuptools
     # Workaround for Python 3.4 and x64 bug in latest conda-build.
