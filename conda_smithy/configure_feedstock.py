@@ -309,6 +309,7 @@ def main(forge_file_directory):
               'circle': {},
               'appveyor': {},
               'channels': {'sources': ['conda-forge'], 'targets': [['conda-forge', 'main']]},
+              'github': {'user_or_org': 'conda-forge', 'repo_name': ''},
               'recipe_dir': recipe_dir}
     forge_dir = os.path.abspath(forge_file_directory)
 
@@ -326,6 +327,8 @@ def main(forge_file_directory):
             if isinstance(value, dict):
                 config_item.update(value)
     config['package'] = meta = meta_of_feedstock(forge_file_directory)
+    if not config['github']['repo_name']:
+        config['github']['repo_name'] = meta.name()+'-feedstock'
     
     tmplt_dir = os.path.join(conda_forge_content, 'templates')
     # Load templates from the feedstock in preference to the smithy's templates.
