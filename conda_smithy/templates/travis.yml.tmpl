@@ -4,7 +4,7 @@
     {%- endfor %}
 {%- endmacro -%}
 # This file was generated automatically from conda-smithy. To update this configuration,
-# update the conda-forge.yaml and/or the recipe/meta.yaml.
+# update the conda-forge.yaml and/or the recipe/meta.yaml and run `conda smithy rerender`.
 
 language: objective-c
 
@@ -42,17 +42,17 @@ install:
 
       export PATH=/Users/travis/miniconda3/bin:$PATH
 
-      conda config --set show_channel_urls true
-      conda update --yes conda
-      conda install --yes conda-build=1.20.0 jinja2 anaconda-client
       {%- for channel in channels.get('sources', []) %}
       conda config --add channels {{ channel }}
       {% endfor %}
+      conda install --yes --quiet conda-forge-build-setup
+      source activate root
+      conda info 
 
 script:
   - conda build ./{{ recipe_dir }}
 
 after_success:
 {% for owner, channel in channels['targets'] %}
-  - ./ci_support/upload_or_check_non_existence.py ./{{ recipe_dir }} {{ owner }} --channel={{ channel }}
+  - upload_or_check_exists ./{{ recipe_dir }} {{ owner }} --channel={{ channel }}
 {% endfor %}
