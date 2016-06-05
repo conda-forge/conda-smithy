@@ -391,6 +391,7 @@ def main(forge_file_directory):
     # remove those now.
     old_files = [
         'disabled_appveyor.yml',
+        os.path.join('ci_support', 'upload_or_check_non_existence.py'),
     ]
     for old_file in old_files:
         fpath = os.path.join(forge_dir, old_file)
