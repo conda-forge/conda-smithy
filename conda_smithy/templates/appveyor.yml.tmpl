@@ -7,7 +7,7 @@ environment:
   # SDK v7.0 MSVC Express 2008's SetEnv.cmd script will fail if the
   # /E:ON and /V:ON options are not enabled in the batch script intepreter
   # See: http://stackoverflow.com/a/13751649/163740
-  CMD_IN_ENV: "cmd /E:ON /V:ON /C with_visual_studio.cmd"
+  CMD_IN_ENV: "cmd /E:ON /V:ON /C with_appveyor_visual_studio.cmd"
 
   {%- for name, hashed_secure in (appveyor.secure or {}) | dictsort %}
   {{ name }}:
@@ -42,11 +42,11 @@ install:
 
     - cmd: if %TARGET_ARCH%==x64 (set miniconda_suffix="-x64") else (set miniconda_suffix="")
     - cmd: set PATH=C:\Miniconda3%miniconda_suffix%;C:\Miniconda3%miniconda_suffix%\Scripts;%PATH%
-    - cmd: conda update conda --quiet --yes
 
     {%- for channel in channels.get('sources', []) %}
     - cmd: conda config --add channels {{ channel }}{% endfor %}
-    - cmd: conda install -n root --quiet --yes conda-forge-build-setup
+    - cmd: conda update --all --quiet --yes
+    - cmd: conda install --quiet --yes conda-forge-build-setup
     - cmd: activate root
     - cmd: conda info
 
