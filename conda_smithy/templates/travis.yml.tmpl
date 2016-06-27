@@ -47,7 +47,7 @@ install:
       conda install --yes conda-build=1.20.0 jinja2 anaconda-client
       {%- for channel in channels.get('sources', []) %}
       conda config --add channels {{ channel }}
-      {% endfor %}
+      {%- endfor %}
 
 script:
   - conda build ./{{ recipe_dir }}
