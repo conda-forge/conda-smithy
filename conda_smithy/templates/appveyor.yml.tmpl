@@ -55,7 +55,6 @@ install:
     - cmd: conda install -c pelson/channel/development --yes --quiet obvious-ci
     {%- for channel in channels.get('sources', []) %}
     - cmd: conda config --add channels {{ channel }}{% endfor %}
-    - cmd: conda install -n root --quiet --yes conda-build anaconda-client jinja2 setuptools
     - cmd: conda install -n root --quiet --yes conda-forge-build-setup
     - cmd: run_conda_forge_build_setup
 
