@@ -102,17 +102,16 @@ def render_travis(jinja_env, forge_config, forge_dir):
     target_fname = os.path.join(forge_dir, '.travis.yml')
 
     if not matrix:
-        # There is nothing to be built (it is all skipped), but to keep the
-        # show on the road, we put in a basic matrix configuration (it will
-        # be skipped anyway).
-        matrix = [()]
-
-    matrix = prepare_matrix_for_env_vars(matrix)
-    forge_config = update_matrix(forge_config, matrix)
-
-    template = jinja_env.get_template('travis.yml.tmpl')
-    with open(target_fname, 'w') as fh:
-        fh.write(template.render(**forge_config))
+        # There are no cases to build (not even a case without any special
+        # dependencies), so remove the appveyor.yml if it exists.
+        if os.path.exists(target_fname):
+            os.remove(target_fname)
+    else:
+        matrix = prepare_matrix_for_env_vars(matrix)
+        forge_config = update_matrix(forge_config, matrix)
+        template = jinja_env.get_template('travis.yml.tmpl')
+        with open(target_fname, 'w') as fh:
+            fh.write(template.render(**forge_config))
 
 
 def render_README(jinja_env, forge_config, forge_dir):
