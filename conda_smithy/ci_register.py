@@ -136,7 +136,7 @@ def appveyor_configure(user, project):
 def add_project_to_travis(user, project):
     headers = {
                # If the user-agent isn't defined correctly, we will recieve a 403.
-               'User-Agent': 'MyClient/1.0.0',
+               'User-Agent': 'Travis/1.0',
                'Accept': 'application/vnd.travis-ci.2+json',
                }
     endpoint = 'https://api.travis-ci.org'
