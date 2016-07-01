@@ -42,7 +42,8 @@ conda clean --lock
 
 conda update --yes --all
 conda install --yes conda-build
-conda info
+conda install --yes conda-forge-build-setup
+source run_conda_forge_build_setup
 
 {% if build_setup %}
 {{ build_setup }}{% endif -%}
