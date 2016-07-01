@@ -11,6 +11,7 @@ from conda_build.metadata import MetaData
 from . import ci_register
 from . import configure_feedstock
 from . import lint_recipe
+from . import __version__
 
 
 PY2 = sys.version_info[0] == 2
@@ -219,6 +220,10 @@ def main():
             # A poor-man's alias for regenerate.
             subcommand = 'rerender'
         Rerender(subparser)
+
+    parser.add_argument('--version', action='version',
+                        version=__version__,
+                        help="Show conda-smithy's version, and exit.")
 
     if not sys.argv[1:]:
         args = parser.parse_args(['--help'])
