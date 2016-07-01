@@ -312,6 +312,14 @@ def main(forge_file_directory):
               'recipe_dir': recipe_dir}
     forge_dir = os.path.abspath(forge_file_directory)
 
+    # An older conda-smithy used to have some files which should no longer exist,
+    # remove those now.
+    old_files = [os.path.join('ci_support', 'upload_or_check_non_existence.py')]
+    for old_file in old_files:
+        fpath = os.path.join(forge_dir, old_file)
+        if os.path.exists(fpath):
+            os.remove(fpath)
+
     forge_yml = os.path.join(forge_dir, "conda-forge.yml")
     if not os.path.exists(forge_yml):
         warnings.warn('No conda-forge.yml found. Assuming default options.')

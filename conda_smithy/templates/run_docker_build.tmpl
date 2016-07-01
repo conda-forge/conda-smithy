@@ -8,20 +8,15 @@
 FEEDSTOCK_ROOT=$(cd "$(dirname "$0")/.."; pwd;)
 RECIPE_ROOT=$FEEDSTOCK_ROOT/{{ recipe_dir }}
 
-docker info
-
 config=$(cat <<CONDARC
 
 channels:
 {%- for channel in channels.get('sources', []) | sort %}
  - {{ channel }}
 {% endfor %}
- - defaults # As we need conda-build
 
 conda-build:
  root-dir: /feedstock_root/build_artefacts
-
-show_channel_urls: true
 
 CONDARC
 )
@@ -40,8 +35,9 @@ echo "$config" > ~/.condarc
 # A lock sometimes occurs with incomplete builds. The lock file is stored in build_artefacts.
 conda clean --lock
 
-conda update --yes --all
-conda install --yes conda-build
+conda update --yes --all --quiet
+conda install --yes --quiet conda-forge-build-setup
+source activate root
 conda info
 
 {% if build_setup %}
@@ -49,7 +45,7 @@ conda info
 {%- block build %}
 conda build /recipe_root --quiet || exit 1
 {%- for owner, channel in channels['targets'] %}
-/feedstock_root/ci_support/upload_or_check_non_existence.py /recipe_root {{ owner }} --channel={{ channel }} || exit 1
+upload_or_check_exists /recipe_root {{ owner }} --channel={{ channel }} || exit 1
 {%- endfor -%}
 {%- endblock -%}
 
