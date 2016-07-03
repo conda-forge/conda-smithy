@@ -42,12 +42,12 @@ install:
 
       export PATH=/Users/travis/miniconda3/bin:$PATH
 
-      conda config --set show_channel_urls true
-      conda update --yes conda
-      conda install --yes conda-build=1.20.0 jinja2 anaconda-client
       {%- for channel in channels.get('sources', []) %}
       conda config --add channels {{ channel }}
       {%- endfor %}
+      conda config --set show_channel_urls true
+      conda install --yes --quiet conda-forge-build-setup
+      source run_conda_forge_build_setup
 
 script:
   - conda build ./{{ recipe_dir }}
