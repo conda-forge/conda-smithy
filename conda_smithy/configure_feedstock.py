@@ -103,7 +103,7 @@ def render_travis(jinja_env, forge_config, forge_dir):
 
     if not matrix:
         # There are no cases to build (not even a case without any special
-        # dependencies), so remove the appveyor.yml if it exists.
+        # dependencies), so remove the .travis.yml if it exists.
         if os.path.exists(target_fname):
             os.remove(target_fname)
     else:
