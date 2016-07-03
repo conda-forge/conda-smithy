@@ -1,3 +1,12 @@
+{%- block env -%}
+{%- if not matrix -%}
+general:
+  branches:
+    ignore:
+      - /.*/
+
+{% endif -%}
+{% endblock -%}
 machine:
   services:
     - docker
@@ -12,3 +21,4 @@ test:
   override:
     # Run, test and (if we have a BINSTAR_TOKEN) upload the distributions.
     - ./ci_support/run_docker_build.sh
+{# Keep the terminal newline. #}
