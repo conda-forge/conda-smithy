@@ -138,6 +138,7 @@ def add_project_to_travis(user, project):
                # If the user-agent isn't defined correctly, we will recieve a 403.
                'User-Agent': 'Travis/1.0',
                'Accept': 'application/vnd.travis-ci.2+json',
+               'Content-Type': 'application/json'
                }
     endpoint = 'https://api.travis-ci.org'
     url = '{}/auth/github'.format(endpoint)
