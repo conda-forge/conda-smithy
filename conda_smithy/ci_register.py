@@ -138,6 +138,7 @@ def add_project_to_travis(user, project):
                # If the user-agent isn't defined correctly, we will recieve a 403.
                'User-Agent': 'Travis/1.0',
                'Accept': 'application/vnd.travis-ci.2+json',
+               'Content-Type': 'application/json'
                }
     endpoint = 'https://api.travis-ci.org'
     url = '{}/auth/github'.format(endpoint)
@@ -215,6 +216,56 @@ def travis_token_update_conda_forge_config(feedstock_directory, user, project):
 
 def _encrypt_binstar_token(slug, item):
     return travis.encrypt(slug, item.encode()).decode('utf-8')
+
+
+def travis_configure(user, project):
+    """Configure travis so that it skips building if there is no .travis.yml present."""
+    headers = {
+               # If the user-agent isn't defined correctly, we will recieve a 403.
+               'User-Agent': 'Travis/1.0',
+               'Accept': 'application/vnd.travis-ci.2+json',
+               'Content-Type': 'application/json'
+               }
+    endpoint = 'https://api.travis-ci.org'
+    url = '{}/auth/github'.format(endpoint)
+    data = {"github_token": github.gh_token()}
+    response = requests.post(url, json=data, headers=headers)
+    if response.status_code != 201:
+        response.raise_for_status()
+
+    token = response.json()['access_token']
+    headers['Authorization'] = 'token {}'.format(token)
+
+    url = '{}/hooks'.format(endpoint)
+
+    response = requests.get(url, headers=headers)
+    content = response.json()
+    try:
+        found = [hooked for hooked in content['hooks']
+                 if hooked['owner_name'] == user and hooked['name'] == project]
+    except KeyError:
+        print("Unable to find {user}/{project}".format(user=user, project=project))
+        raise
+
+    if found[0]['active'] is False:
+        raise InputError(
+            "Repo {user}/{project} is not active on Travis CI".format(user=user, project=project)
+        )
+
+    url = '{}/repos/{user}/{project}'.format(endpoint, user=user, project=project)
+    response = requests.get(url, headers=headers)
+    content = response.json()
+    repo_id = content['repo']['id']
+
+    url = '{}/repos/{repo_id}/settings'.format(endpoint, repo_id=repo_id)
+    data = {
+        "settings": {
+            "builds_only_with_travis_yml": True,
+        }
+    }
+    response = requests.patch(url, json=data, headers=headers)
+    if response.status_code != 204:
+        response.raise_for_status()
 
 
 def add_conda_linting(user, repo):
