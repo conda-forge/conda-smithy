@@ -44,7 +44,7 @@ install:
 
       {%- for channel in channels.get('sources', []) %}
       conda config --add channels {{ channel }}
-      {% endfor %}
+      {%- endfor %}
       conda config --set show_channel_urls true
       conda install --yes --quiet conda-forge-build-setup
       source run_conda_forge_build_setup
