@@ -41,6 +41,34 @@ except KeyError:
               '  anaconda auth --create --name conda-smithy --scopes "repos conda api"\n'
               'and put it in ~/.conda-smithy/anaconda.token')
 
+
+def travis_headers():
+    headers = {
+               # If the user-agent isn't defined correctly, we will recieve a 403.
+               'User-Agent': 'Travis/1.0',
+               'Accept': 'application/vnd.travis-ci.2+json',
+               'Content-Type': 'application/json'
+               }
+    endpoint = 'https://api.travis-ci.org'
+    url = '{}/auth/github'.format(endpoint)
+    data = {"github_token": github.gh_token()}
+    travis_token = os.path.expanduser('~/.conda-smithy/travis.token')
+    if not os.path.exists(travis_token):
+        response = requests.post(url, json=data, headers=headers)
+        if response.status_code != 201:
+            response.raise_for_status()
+        token = response.json()['access_token']
+        with open(travis_token, 'w') as fh:
+            fh.write(token)
+        # TODO: Set the permissions on the file.
+    else:
+        with open(travis_token, 'r') as fh:
+            token = fh.read().strip()
+
+    headers['Authorization'] = 'token {}'.format(token)
+    return headers
+
+
 def add_token_to_circle(user, project):
     url_template = ('https://circleci.com/api/v1/project/{user}/{project}/envvar?'
                     'circle-token={token}')
@@ -134,22 +162,9 @@ def appveyor_configure(user, project):
 
 
 def add_project_to_travis(user, project):
-    headers = {
-               # If the user-agent isn't defined correctly, we will recieve a 403.
-               'User-Agent': 'Travis/1.0',
-               'Accept': 'application/vnd.travis-ci.2+json',
-               'Content-Type': 'application/json'
-               }
+    headers = travis_headers()
     endpoint = 'https://api.travis-ci.org'
-    url = '{}/auth/github'.format(endpoint)
-    data = {"github_token": github.gh_token()}
-    response = requests.post(url, json=data, headers=headers)
-    if response.status_code != 201:
-        response.raise_for_status()
-
-    token = response.json()['access_token']
-    headers['Authorization'] = 'token {}'.format(token)
-
+    
     url = '{}/hooks'.format(endpoint)
 
     found = False
@@ -220,21 +235,8 @@ def _encrypt_binstar_token(slug, item):
 
 def travis_configure(user, project):
     """Configure travis so that it skips building if there is no .travis.yml present."""
-    headers = {
-               # If the user-agent isn't defined correctly, we will recieve a 403.
-               'User-Agent': 'Travis/1.0',
-               'Accept': 'application/vnd.travis-ci.2+json',
-               'Content-Type': 'application/json'
-               }
     endpoint = 'https://api.travis-ci.org'
-    url = '{}/auth/github'.format(endpoint)
-    data = {"github_token": github.gh_token()}
-    response = requests.post(url, json=data, headers=headers)
-    if response.status_code != 201:
-        response.raise_for_status()
-
-    token = response.json()['access_token']
-    headers['Authorization'] = 'token {}'.format(token)
+    headers = travis_headers()
 
     url = '{}/hooks'.format(endpoint)
 
