@@ -67,7 +67,7 @@ def lintify(meta, recipe_dir=None):
     # 3: The recipe should have some maintainers.
     if not extra_section.get('recipe-maintainers', []):
         lints.append('The recipe could do with some maintainers listed in '
-                     'the "extra/recipe-maintainers" section.')
+                     'the `extra/recipe-maintainers` section.')
 
     # 4: The recipe should have some tests.
     if 'test' not in major_sections:
