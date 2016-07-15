@@ -40,6 +40,7 @@ def render_run_docker_build(jinja_env, forge_config, forge_dir):
         if os.path.exists(target_fname):
             os.remove(target_fname)
     else:
+        forge_config["ci_enabled"].append("circle")
         matrix = prepare_matrix_for_env_vars(matrix)
         forge_config = update_matrix(forge_config, matrix)
 
@@ -128,6 +129,7 @@ def render_travis(jinja_env, forge_config, forge_dir):
         if os.path.exists(target_fname):
             os.remove(target_fname)
     else:
+        forge_config["ci_enabled"].append("travis")
         matrix = prepare_matrix_for_env_vars(matrix)
         forge_config = update_matrix(forge_config, matrix)
         template = jinja_env.get_template('travis.yml.tmpl')
@@ -229,6 +231,7 @@ def render_appveyor(jinja_env, forge_config, forge_dir):
         if os.path.exists(target_fname):
             os.remove(target_fname)
     else:
+        forge_config["ci_enabled"].append("appveyor")
         matrix = prepare_matrix_for_env_vars(matrix)
         forge_config = update_matrix(forge_config, matrix)
         template = jinja_env.get_template('appveyor.yml.tmpl')
@@ -319,6 +322,7 @@ def main(forge_file_directory):
     recipe_dir = 'recipe'
     config = {'docker': {'image': 'condaforge/linux-anvil', 'command': 'bash'},
               'templates': {'run_docker_build': 'run_docker_build_matrix.tmpl'},
+              'ci_enabled': [],
               'travis': {},
               'circle': {},
               'appveyor': {},
