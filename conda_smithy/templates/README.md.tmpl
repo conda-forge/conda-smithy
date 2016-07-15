@@ -71,7 +71,7 @@ Current build status
 ====================
 {%- set appveyor_badge_name = github.repo_name.replace('_', '-') %}
 {%- set appveyor_url_name = appveyor_badge_name.replace('.', '-') %}
-{%- set disabled_badge_url = "ci_support/disabled.svg" %}
+{%- set disabled_badge_url = "https://cdn.rawgit.com/%s/%s/master/ci_support/disabled.svg"|format(github.user_or_org, github.repo_name) %}
 {# #}
 {%- if "circle" in ci_enabled %}
 Linux: [![Circle CI](https://circleci.com/gh/{{github.user_or_org}}/{{github.repo_name}}.svg?style=svg)](https://circleci.com/gh/{{github.user_or_org}}/{{github.repo_name}})
