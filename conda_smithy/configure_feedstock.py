@@ -349,7 +349,17 @@ def main(forge_file_directory):
     config['package'] = meta = meta_of_feedstock(forge_file_directory)
     if not config['github']['repo_name']:
         config['github']['repo_name'] = meta.name()+'-feedstock'
-    
+
+    for each_ci in ["travis", "circle", "appveyor"]:
+        if config[each_ci].pop("enabled", None):
+            warnings.warn(
+                "It is not allowed to set the `enabled` parameter for `%s`."
+                " All CIs are enabled by default. To disable a CI, please"
+                " add `skip: true` to the `build` section of `meta.yaml`"
+                " and an appropriate selector so as to disable the build." \
+                % each_ci
+            )
+
     tmplt_dir = os.path.join(conda_forge_content, 'templates')
     # Load templates from the feedstock in preference to the smithy's templates.
     env = Environment(loader=FileSystemLoader([os.path.join(forge_dir, 'templates'),
