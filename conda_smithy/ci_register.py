@@ -151,8 +151,9 @@ def appveyor_configure(user, project):
     content = response.json()
     settings = content['settings']
     skip_appveyor = u'skipBranchesWithoutAppveyorYml'
-    print('{: <30}: Current setting for {} = {}.'
-          ''.format(project, skip_appveyor, settings[skip_appveyor]))
+    if not settings[skip_appveyor]:
+        print('{: <30}: Current setting for {} = {}.'
+              ''.format(project, skip_appveyor, settings[skip_appveyor]))
     settings[skip_appveyor] = True
     url = 'https://ci.appveyor.com/api/projects'.format(user, project)
 

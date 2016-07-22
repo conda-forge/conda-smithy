@@ -42,16 +42,14 @@ def handle_args():
 
 def get_public_key(repo):
     keyurl = 'https://api.travis-ci.org/repos/{0}/key'.format(repo)
-    try:
-        r = requests.get(keyurl)
-        r.raise_for_status()
-    except Exception as e:
-        raise SystemExit(e)
-    else:
-        try:
-            key = r.json()
-        except Exception as e:
-            raise SystemExit(e)
+    r = requests.get(keyurl,
+                     headers={
+                       # If the user-agent isn't defined correctly, we will recieve a 403.
+                       'User-Agent': 'Travis/1.0',
+                       'Accept': 'application/vnd.travis-ci.2+json',
+                       'Content-Type': 'application/json'})
+    r.raise_for_status()
+    key = r.json()
 
     return key.get('key')
 
