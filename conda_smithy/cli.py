@@ -107,7 +107,7 @@ class Init(Subcommand):
             print("\nRepository created, please edit conda-forge.yml to configure the upload channels\n"
                   "and afterwards call 'conda smithy register-github'")
         except RuntimeError as e:
-            print(e.message)
+            print(e)
 
 
 class RegisterGithub(Subcommand):
@@ -132,7 +132,7 @@ class RegisterGithub(Subcommand):
             github.create_github_repo(args)
             print("\nRepository registered at github, now call 'conda smithy register-ci'")
         except RuntimeError as e:
-            print(e.message)
+            print(e)
 
 
 class RegisterCI(Subcommand):
@@ -168,7 +168,7 @@ class RegisterCI(Subcommand):
             print("\nCI services have been enabled enabled. You may wish to regnerate the feedstock.\n"
                   "Any changes will need commiting to the repo.")
         except RuntimeError as e:
-            print(e.message)
+            print(e)
 
 class Regenerate(Subcommand):
     subcommand = 'regenerate'
@@ -185,7 +185,7 @@ class Regenerate(Subcommand):
             configure_feedstock.main(args.feedstock_directory)
             print("\nCI support files regenerated. These need to be pushed to github!")
         except RuntimeError as e:
-            print(e.message)
+            print(e)
 
 
 class RecipeLint(Subcommand):
