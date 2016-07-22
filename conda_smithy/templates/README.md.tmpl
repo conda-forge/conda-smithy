@@ -9,7 +9,7 @@ Feedstock license: BSD 3-Clause
 
 Summary: {{ package.meta.about.summary }}
 
-{% if package.meta.extra and package.meta.extra.description %}{{ package.meta.extra.description }}{% endif %}
+{% if package.meta.about.description %}{{ package.meta.about.description }}{% endif %}
 
 Installing {{ package.name() }}
 ==========={{ '=' * package.name()|length }}
