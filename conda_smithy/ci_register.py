@@ -6,7 +6,6 @@ import time
 
 import ruamel.yaml
 
-from .vendored import travis_encrypt as travis
 from . import github
 
 
@@ -224,14 +223,38 @@ def travis_token_update_conda_forge_config(feedstock_directory, user, project):
         code = {}
 
     code.setdefault('travis', {}).setdefault('secure', {})['BINSTAR_TOKEN'] = (
-        _encrypt_binstar_token(slug, item)
+        travis_encrypt_binstar_token(slug, item)
     )
     with open(forge_yaml, 'w') as fh:
         fh.write(ruamel.yaml.dump(code, Dumper=ruamel.yaml.RoundTripDumper))
 
 
-def _encrypt_binstar_token(slug, item):
-    return travis.encrypt(slug, item.encode()).decode('utf-8')
+def travis_encrypt_binstar_token(repo, string_to_encrypt):
+    # Copyright 2014 Matt Martz <matt@sivel.net>
+    # All Rights Reserved.
+    #
+    #    Licensed under the Apache License, Version 2.0 (the "License"); you may
+    #    not use this file except in compliance with the License. You may obtain
+    #    a copy of the License at
+    #
+    #         http://www.apache.org/licenses/LICENSE-2.0
+    #
+    #    Unless required by applicable law or agreed to in writing, software
+    #    distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+    #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+    #    License for the specific language governing permissions and limitations
+    #    under the License.
+    from Crypto.PublicKey import RSA
+    from Crypto.Cipher import PKCS1_v1_5
+    import base64
+
+    keyurl = 'https://api.travis-ci.org/repos/{0}/key'.format(repo)
+    r = requests.get(keyurl, headers=travis_headers())
+    r.raise_for_status()
+    public_key = r.json()['key']
+    key = RSA.importKey(public_key)
+    cipher = PKCS1_v1_5.new(key)
+    return base64.b64encode(cipher.encrypt(string_to_encrypt.encode())).decode('utf-8')
 
 
 def travis_configure(user, project):
