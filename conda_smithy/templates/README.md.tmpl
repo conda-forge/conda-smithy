@@ -73,17 +73,17 @@ Current build status
 {%- set appveyor_url_name = appveyor_badge_name.replace('.', '-') %}
 {%- set disabled_badge_url = "https://cdn.rawgit.com/conda-forge/conda-smithy/922e8b413e290a1dc5d012134abc179dd5080153/conda_smithy/feedstock_content/ci_support/disabled.svg" %}
 {# #}
-{%- if "circle" in ci_enabled %}
+{%- if circle.enabled %}
 Linux: [![Circle CI](https://circleci.com/gh/{{github.user_or_org}}/{{github.repo_name}}.svg?style=svg)](https://circleci.com/gh/{{github.user_or_org}}/{{github.repo_name}})
 {%- else %}
 Linux: ![]({{ disabled_badge_url }})
 {%- endif %}
-{%- if "travis" in ci_enabled %}
+{%- if travis.enabled %}
 OSX: [![TravisCI](https://travis-ci.org/{{github.user_or_org}}/{{github.repo_name}}.svg?branch=master)](https://travis-ci.org/{{github.user_or_org}}/{{github.repo_name}})
 {%- else %}
 OSX: ![]({{ disabled_badge_url }})
 {%- endif %}
-{%- if "appveyor" in ci_enabled %}
+{%- if appveyor.enabled %}
 Windows: [![AppVeyor](https://ci.appveyor.com/api/projects/status/github/{{github.user_or_org}}/{{appveyor_badge_name}}?svg=True)](https://ci.appveyor.com/project/{{github.user_or_org}}/{{appveyor_url_name}}/branch/master)
 {%- else %}
 Windows: ![]({{ disabled_badge_url }})
