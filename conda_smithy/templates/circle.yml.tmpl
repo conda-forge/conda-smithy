@@ -1,4 +1,4 @@
-{%- block env -%}
+{%- block env_branches -%}
 {%- if not matrix -%}
 general:
   branches:
@@ -7,6 +7,8 @@ general:
 
 {% endif -%}
 {% endblock -%}
+{% block env_dependencies -%}
+{%- if matrix -%}
 machine:
   services:
     - docker
@@ -17,8 +19,16 @@ dependencies:
   override:
     - docker pull condaforge/linux-anvil
 
+{% endif -%}
+{% endblock -%}
 test:
   override:
+{%- block env_test %}
+{%- if matrix %}
     # Run, test and (if we have a BINSTAR_TOKEN) upload the distributions.
     - ./ci_support/run_docker_build.sh
-{# Keep the terminal newline. #}
+{% else %}
+    # In case the skip fails for some reason, do a fast finish.
+    - exit 0
+{% endif -%}
+{%- endblock %}
