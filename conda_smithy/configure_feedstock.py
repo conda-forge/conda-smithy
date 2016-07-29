@@ -298,7 +298,11 @@ def copytree(src, dst, ignore=(), root_dst=None):
 def copy_feedstock_content(forge_dir):
     feedstock_content = os.path.join(conda_forge_content,
                                      'feedstock_content')
-    copytree(feedstock_content, forge_dir, 'README')
+    copytree(
+        feedstock_content,
+        forge_dir,
+        ['README', 'ci_support/disabled.svg']
+    )
 
 
 def meta_of_feedstock(forge_dir):
