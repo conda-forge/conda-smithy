@@ -227,6 +227,13 @@ def render_appveyor(jinja_env, forge_config, forge_dir):
 
     target_fname = os.path.join(forge_dir, 'appveyor.yml')
 
+    # Clean up any stray `disabled_appveyor.yml` files.
+    # This should be removed after everything is re-render
+    # with `conda-smithy` version 1.0.0 or later.
+    target_fname_disabled = os.path.join(forge_dir, 'disabled_appveyor.yml')
+    if os.path.exists(target_fname_disabled):
+        os.remove(target_fname_disabled)
+
     if not matrix:
         # There are no cases to build (not even a case without any special
         # dependencies), so remove the appveyor.yml if it exists.
