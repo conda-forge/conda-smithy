@@ -37,9 +37,11 @@ def render_run_docker_build(jinja_env, forge_config, forge_dir):
     if not matrix:
         # There are no cases to build (not even a case without any special
         # dependencies), so remove the run_docker_build.sh if it exists.
+        forge_config["circle"]["enabled"] = False
         if os.path.exists(target_fname):
             os.remove(target_fname)
     else:
+        forge_config["circle"]["enabled"] = True
         matrix = prepare_matrix_for_env_vars(matrix)
         forge_config = update_matrix(forge_config, matrix)
 
@@ -125,9 +127,11 @@ def render_travis(jinja_env, forge_config, forge_dir):
     if not matrix:
         # There are no cases to build (not even a case without any special
         # dependencies), so remove the .travis.yml if it exists.
+        forge_config["travis"]["enabled"] = False
         if os.path.exists(target_fname):
             os.remove(target_fname)
     else:
+        forge_config["travis"]["enabled"] = True
         matrix = prepare_matrix_for_env_vars(matrix)
         forge_config = update_matrix(forge_config, matrix)
         template = jinja_env.get_template('travis.yml.tmpl')
@@ -233,9 +237,11 @@ def render_appveyor(jinja_env, forge_config, forge_dir):
     if not matrix:
         # There are no cases to build (not even a case without any special
         # dependencies), so remove the appveyor.yml if it exists.
+        forge_config["appveyor"]["enabled"] = False
         if os.path.exists(target_fname):
             os.remove(target_fname)
     else:
+        forge_config["appveyor"]["enabled"] = True
         matrix = prepare_matrix_for_env_vars(matrix)
         forge_config = update_matrix(forge_config, matrix)
         template = jinja_env.get_template('appveyor.yml.tmpl')
@@ -299,7 +305,11 @@ def copytree(src, dst, ignore=(), root_dst=None):
 def copy_feedstock_content(forge_dir):
     feedstock_content = os.path.join(conda_forge_content,
                                      'feedstock_content')
-    copytree(feedstock_content, forge_dir, 'README')
+    copytree(
+        feedstock_content,
+        forge_dir,
+        ['README', 'ci_support/disabled.svg']
+    )
 
 
 def meta_of_feedstock(forge_dir):
@@ -350,7 +360,17 @@ def main(forge_file_directory):
     config['package'] = meta = meta_of_feedstock(forge_file_directory)
     if not config['github']['repo_name']:
         config['github']['repo_name'] = meta.name()+'-feedstock'
-    
+
+    for each_ci in ["travis", "circle", "appveyor"]:
+        if config[each_ci].pop("enabled", None):
+            warnings.warn(
+                "It is not allowed to set the `enabled` parameter for `%s`."
+                " All CIs are enabled by default. To disable a CI, please"
+                " add `skip: true` to the `build` section of `meta.yaml`"
+                " and an appropriate selector so as to disable the build." \
+                % each_ci
+            )
+
     tmplt_dir = os.path.join(conda_forge_content, 'templates')
     # Load templates from the feedstock in preference to the smithy's templates.
     env = Environment(loader=FileSystemLoader([os.path.join(forge_dir, 'templates'),
