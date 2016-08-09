@@ -28,7 +28,7 @@ test:
     # Run, test and (if we have a BINSTAR_TOKEN) upload the distributions.
     - ./ci_support/run_docker_build.sh
 {% else %}
-    # In case the skip fails for some reason, do a fast finish.
+    # The Circle-CI build should not be active, but if this is not true for some reason, do a fast finish.
     - exit 0
 {% endif -%}
 {%- endblock %}
