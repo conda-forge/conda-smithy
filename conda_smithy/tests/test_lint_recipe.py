@@ -68,7 +68,7 @@ class Test_linter(unittest.TestCase):
 
     def test_maintainers_section(self):
         expected_message = ('The recipe could do with some maintainers listed '
-                            'in the "extra/recipe-maintainers" section.')
+                            'in the `extra/recipe-maintainers` section.')
 
         lints = linter.lintify({'extra': {'recipe-maintainers': []}})
         self.assertIn(expected_message, lints)
