@@ -279,6 +279,7 @@ class TestCLI_recipe_lint(unittest.TestCase):
                         home: something
                         license: something else
                         summary: αβɣ
+                        description: moɿɘ uniɔobɘ!
                          """)
             # Just run it and make sure it does not raise.
             linter.main(recipe_dir)
