@@ -1,6 +1,9 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 from __future__ import print_function
 from collections import OrderedDict
 from contextlib import contextmanager
+import io
 import os
 import shutil
 import subprocess
@@ -261,6 +264,24 @@ class TestCLI_recipe_lint(unittest.TestCase):
             out, _ = child.communicate()
             self.assertEqual(child.returncode, 0, out)
 
+    def test_unicode(self):
+        """
+        Tests that unicode does not confuse the linter.
+        """
+        with tmp_directory() as recipe_dir:
+            with io.open(os.path.join(recipe_dir, 'meta.yaml'), 'wt') as fh:
+                fh.write(u"""
+                    package:
+                        name: 'test_package'
+                    build:
+                        number: 0
+                    about:
+                        home: something
+                        license: something else
+                        summary: αβɣ
+                         """)
+            # Just run it and make sure it does not raise.
+            linter.main(recipe_dir)
 
 if __name__ == '__main__':
     unittest.main()
