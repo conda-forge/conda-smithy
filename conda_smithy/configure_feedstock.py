@@ -14,13 +14,6 @@ from conda_build_all.version_matrix import special_case_version_matrix, filter_c
 from conda_build_all.resolved_distribution import ResolvedDistribution
 from jinja2 import Environment, FileSystemLoader
 
-# conda build 1.21.12+, supports conda 4.2+
-try:
-    from conda_build.conda_interface import cc
-# conda build <1.21.12, no conda 4.2 support
-except ImportError:
-    from conda_build.metadata import cc
-
 conda_forge_content = os.path.abspath(os.path.dirname(__file__))
 
 
@@ -104,8 +97,15 @@ def render_circle(jinja_env, forge_config, forge_dir):
     with open(target_fname, 'w') as fh:
         fh.write(template.render(**forge_config))
 
+
 @contextmanager
 def fudge_subdir(subdir):
+    # conda build <1.21.12 (no conda 4.2+)
+    try:
+        import conda_build.metadata.cc as cc
+    # conda build 1.21.12+ (supports conda 4.2+)
+    except ImportError:
+        import conda_build.metadata as cc
     orig = cc.subdir
     cc.subdir = subdir
     yield
