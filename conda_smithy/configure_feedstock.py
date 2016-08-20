@@ -102,9 +102,10 @@ def render_circle(jinja_env, forge_config, forge_dir):
 def fudge_subdir(subdir):
     # conda build <1.21.12 (no conda 4.2+)
     try:
-        import conda_build.metadata.cc as cc
+        import conda_build.metadata
+        cc = conda_build.metadata.cc
     # conda build 1.21.12+ (supports conda 4.2+)
-    except ImportError:
+    except AttributeError:
         import conda_build.metadata as cc
     orig = cc.subdir
     cc.subdir = subdir
