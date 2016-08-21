@@ -69,12 +69,11 @@ Terminology
 
 Current build status
 ====================
-{%- set appveyor_badge_name = github.repo_name.replace('_', '-') %}
-{%- set appveyor_url_name = appveyor_badge_name.replace('.', '-') %}
+{%- set appveyor_url_name = github.repo_name.replace('_', '-').replace('.', '-') %}
 
 Linux: [![Circle CI](https://circleci.com/gh/{{github.user_or_org}}/{{github.repo_name}}.svg?style=svg)](https://circleci.com/gh/{{github.user_or_org}}/{{github.repo_name}})
 OSX: [![TravisCI](https://travis-ci.org/{{github.user_or_org}}/{{github.repo_name}}.svg?branch=master)](https://travis-ci.org/{{github.user_or_org}}/{{github.repo_name}})
-Windows: [![AppVeyor](https://ci.appveyor.com/api/projects/status/github/{{github.user_or_org}}/{{appveyor_badge_name}}?svg=True)](https://ci.appveyor.com/project/{{github.user_or_org}}/{{appveyor_url_name}}/branch/master)
+Windows: [![AppVeyor](https://ci.appveyor.com/api/projects/status/github/{{github.user_or_org}}/{{github.repo_name}}?svg=True)](https://ci.appveyor.com/project/{{github.user_or_org}}/{{appveyor_url_name}}/branch/master)
 
 Current release info
 ====================
