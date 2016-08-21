@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
 import argparse
 import glob
 import multiprocessing
@@ -125,6 +125,98 @@ def feedstocks_apply_cloned_handle_args(args):
 
 def feedstocks_fetch_handle_args(args):
     return fetch_feedstocks(args.feedstocks_directory)
+
+
+import jinja2
+import six
+class NullUndefined(jinja2.Undefined):
+    def __unicode__(self):
+        return six.text_type(self._undefined_name)
+
+    def __getattr__(self, name):
+        return six.text_type('{}.{}'.format(self, name))
+
+    def __getitem__(self, name):
+        return '{}["{}"]'.format(self, name)
+
+
+env = jinja2.Environment(undefined=NullUndefined)
+import git
+
+def feedstocks_repos(organization, feedstocks_directory, pull_up_to_date=False, randomise=False, regexp=None):
+    """
+    Generator of (feedstock, yaml) for each feedstock in the given
+    feedstock_directory.
+
+    Parameters
+    ----------
+    pull_up_to_date : bool (default: True)
+        If True, clone all (missing) feedstocks before operation, and fetch
+        all feedstocks as each one is being yielded. 
+    randomise: bool (default: False)
+        If True, randomise the order of the generated feedstocks. This is
+        especially useful if no particular priority should be given to
+        the "aardvark" feedstock over the "zebra" feedstock ;) .
+    regepx: string (default: None)
+        If not None, a regular expression which can be used to filter the
+        feedstock based on its name. For example '^python' would yield
+        only feedstocks starting with the word "python".
+
+    """
+    # We can't do anything without having all of the feestocks cloned
+    # (the existing clones don't need to be fetched though).
+    if pull_up_to_date:
+        print('Cloning')
+        #clone_all(organization, feedstocks_directory)
+        print('Done cloning')
+
+    feedstocks = cloned_feedstocks(feedstocks_directory)
+
+    if regexp:
+        import re
+        regexp = re.compile(regexp)
+        feedstocks = [feedstock for feedstock in feedstocks
+                      if regexp.match(feedstock.package)]
+
+    if randomise:
+        import random
+        feedstocks = list(feedstocks)
+        random.shuffle(feedstocks)
+
+    for feedstock in feedstocks:
+        repo = git.Repo(feedstock.directory)
+        upstream = repo.remotes.upstream
+
+        if pull_up_to_date:
+            print('fetching ', feedstock)
+            upstream.fetch()
+
+        yield repo, feedstock
+
+
+def feedstocks_yaml(organization, feedstocks_directory, **feedstocks_repo_kwargs):
+    for repo, feedstock in feedstocks_repos(organization, feedstocks_directory, **feedstocks_repo_kwargs):
+        upstream = repo.remotes.upstream
+        try:
+            refs = upstream.refs
+        except AssertionError:
+            # In early versions of gitpython and empty list of refs resulted in an
+            # assertion error (https://github.com/gitpython-developers/GitPython/pull/499).
+            refs = []
+
+        if not refs:
+            upstream.fetch()
+            refs = upstream.refs
+
+        import ruamel.yaml
+        for ref in refs:
+            remote_branch = ref.remote_head #.replace('{}/'.format(gh_me.login), '')
+
+            content = ref.commit.tree['recipe']['meta.yaml'].data_stream.read()
+            parsable_content = env.from_string(content).render(os=os)
+            yaml = ruamel.yaml.load(parsable_content, ruamel.yaml.RoundTripLoader)
+
+            yield (feedstock, ref, content, yaml)
 
 
 def main():
