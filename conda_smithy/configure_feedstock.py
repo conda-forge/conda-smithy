@@ -9,13 +9,10 @@ import yaml
 import warnings
 
 import conda.api
-from conda.resolve import MatchSpec
-import conda_build.metadata
 from conda_build.metadata import MetaData
 from conda_build_all.version_matrix import special_case_version_matrix, filter_cases
 from conda_build_all.resolved_distribution import ResolvedDistribution
 from jinja2 import Environment, FileSystemLoader
-
 
 conda_forge_content = os.path.abspath(os.path.dirname(__file__))
 
@@ -100,12 +97,20 @@ def render_circle(jinja_env, forge_config, forge_dir):
     with open(target_fname, 'w') as fh:
         fh.write(template.render(**forge_config))
 
+
 @contextmanager
 def fudge_subdir(subdir):
-    orig = conda_build.metadata.cc.subdir
-    conda_build.metadata.cc.subdir = subdir
+    # conda build <1.21.12 (no conda 4.2+)
+    try:
+        import conda_build.metadata
+        cc = conda_build.metadata.cc
+    # conda build 1.21.12+ (supports conda 4.2+)
+    except AttributeError:
+        import conda_build.metadata as cc
+    orig = cc.subdir
+    cc.subdir = subdir
     yield
-    conda_build.metadata.cc.subdir = orig
+    cc.subdir = orig
 
 
 def render_travis(jinja_env, forge_config, forge_dir):
