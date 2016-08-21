@@ -313,7 +313,7 @@ def copy_feedstock_content(forge_dir):
     copytree(
         feedstock_content,
         forge_dir,
-        ['README', 'ci_support/disabled.svg']
+        'README'
     )
 
 

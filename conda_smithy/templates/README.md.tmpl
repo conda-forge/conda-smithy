@@ -71,7 +71,10 @@ Current build status
 ====================
 {%- set appveyor_badge_name = github.repo_name.replace('_', '-') %}
 {%- set appveyor_url_name = appveyor_badge_name.replace('.', '-') %}
-{%- set disabled_badge_url = "https://cdn.rawgit.com/conda-forge/conda-smithy/922e8b413e290a1dc5d012134abc179dd5080153/conda_smithy/feedstock_content/ci_support/disabled.svg" %}
+
+{%- set disabled_badge_commit = "90845bba35bec53edac7a16638aa4d77217a3713" %}
+{%- set disabled_badge_path = "conda_smithy/static/disabled.svg" %}
+{%- set disabled_badge_url = "https://cdn.rawgit.com/conda-forge/conda-smithy/%s/%s"|format(disabled_badge_commit, disabled_badge_path) %}
 {# #}
 {%- if circle.enabled %}
 Linux: [![Circle CI](https://circleci.com/gh/{{github.user_or_org}}/{{github.repo_name}}.svg?style=shield)](https://circleci.com/gh/{{github.user_or_org}}/{{github.repo_name}})
