@@ -1,3 +1,4 @@
+import io
 import os
 import re
 
@@ -67,7 +68,7 @@ def lintify(meta, recipe_dir=None):
     # 3: The recipe should have some maintainers.
     if not extra_section.get('recipe-maintainers', []):
         lints.append('The recipe could do with some maintainers listed in '
-                     'the "extra/recipe-maintainers" section.')
+                     'the `extra/recipe-maintainers` section.')
 
     # 4: The recipe should have some tests.
     if 'test' not in major_sections:
@@ -90,7 +91,7 @@ def lintify(meta, recipe_dir=None):
         bad_selectors = []
         # Good selectors look like ".*\s\s#\s[...]"
         good_selectors_pat = re.compile(r'(.+?)\s{2,}#\s\[(.+)\](?(2).*)$')
-        with open(meta_fname, 'r') as fh:
+        with io.open(meta_fname, 'rt') as fh:
             for selector_line in selector_lines(fh):
                 if not good_selectors_pat.match(selector_line):
                     bad_selectors.append(selector_line)
@@ -142,7 +143,7 @@ def main(recipe_dir):
 
     env = jinja2.Environment(undefined=NullUndefined)
 
-    with open(recipe_meta, 'r') as fh:
+    with io.open(recipe_meta, 'rt') as fh:
         content = env.from_string(''.join(fh)).render(os=os)
         meta = ruamel.yaml.load(content, ruamel.yaml.RoundTripLoader)
     results = lintify(meta, recipe_dir)

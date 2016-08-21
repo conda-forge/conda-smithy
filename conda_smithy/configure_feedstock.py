@@ -9,13 +9,10 @@ import yaml
 import warnings
 
 import conda.api
-from conda.resolve import MatchSpec
-import conda_build.metadata
 from conda_build.metadata import MetaData
 from conda_build_all.version_matrix import special_case_version_matrix, filter_cases
 from conda_build_all.resolved_distribution import ResolvedDistribution
 from jinja2 import Environment, FileSystemLoader
-
 
 conda_forge_content = os.path.abspath(os.path.dirname(__file__))
 
@@ -37,9 +34,11 @@ def render_run_docker_build(jinja_env, forge_config, forge_dir):
     if not matrix:
         # There are no cases to build (not even a case without any special
         # dependencies), so remove the run_docker_build.sh if it exists.
+        forge_config["circle"]["enabled"] = False
         if os.path.exists(target_fname):
             os.remove(target_fname)
     else:
+        forge_config["circle"]["enabled"] = True
         matrix = prepare_matrix_for_env_vars(matrix)
         forge_config = update_matrix(forge_config, matrix)
 
@@ -98,12 +97,20 @@ def render_circle(jinja_env, forge_config, forge_dir):
     with open(target_fname, 'w') as fh:
         fh.write(template.render(**forge_config))
 
+
 @contextmanager
 def fudge_subdir(subdir):
-    orig = conda_build.metadata.cc.subdir
-    conda_build.metadata.cc.subdir = subdir
+    # conda build <1.21.12 (no conda 4.2+)
+    try:
+        import conda_build.metadata
+        cc = conda_build.metadata.cc
+    # conda build 1.21.12+ (supports conda 4.2+)
+    except AttributeError:
+        import conda_build.metadata as cc
+    orig = cc.subdir
+    cc.subdir = subdir
     yield
-    conda_build.metadata.cc.subdir = orig
+    cc.subdir = orig
 
 
 def render_travis(jinja_env, forge_config, forge_dir):
@@ -125,9 +132,11 @@ def render_travis(jinja_env, forge_config, forge_dir):
     if not matrix:
         # There are no cases to build (not even a case without any special
         # dependencies), so remove the .travis.yml if it exists.
+        forge_config["travis"]["enabled"] = False
         if os.path.exists(target_fname):
             os.remove(target_fname)
     else:
+        forge_config["travis"]["enabled"] = True
         matrix = prepare_matrix_for_env_vars(matrix)
         forge_config = update_matrix(forge_config, matrix)
         template = jinja_env.get_template('travis.yml.tmpl')
@@ -223,12 +232,21 @@ def render_appveyor(jinja_env, forge_config, forge_dir):
 
     target_fname = os.path.join(forge_dir, 'appveyor.yml')
 
+    # Clean up any stray `disabled_appveyor.yml` files.
+    # This should be removed after everything is re-render
+    # with `conda-smithy` version 1.0.0 or later.
+    target_fname_disabled = os.path.join(forge_dir, 'disabled_appveyor.yml')
+    if os.path.exists(target_fname_disabled):
+        os.remove(target_fname_disabled)
+
     if not matrix:
         # There are no cases to build (not even a case without any special
         # dependencies), so remove the appveyor.yml if it exists.
+        forge_config["appveyor"]["enabled"] = False
         if os.path.exists(target_fname):
             os.remove(target_fname)
     else:
+        forge_config["appveyor"]["enabled"] = True
         matrix = prepare_matrix_for_env_vars(matrix)
         forge_config = update_matrix(forge_config, matrix)
         template = jinja_env.get_template('appveyor.yml.tmpl')
@@ -292,7 +310,11 @@ def copytree(src, dst, ignore=(), root_dst=None):
 def copy_feedstock_content(forge_dir):
     feedstock_content = os.path.join(conda_forge_content,
                                      'feedstock_content')
-    copytree(feedstock_content, forge_dir, 'README')
+    copytree(
+        feedstock_content,
+        forge_dir,
+        'README'
+    )
 
 
 def meta_of_feedstock(forge_dir):
@@ -343,7 +365,17 @@ def main(forge_file_directory):
     config['package'] = meta = meta_of_feedstock(forge_file_directory)
     if not config['github']['repo_name']:
         config['github']['repo_name'] = meta.name()+'-feedstock'
-    
+
+    for each_ci in ["travis", "circle", "appveyor"]:
+        if config[each_ci].pop("enabled", None):
+            warnings.warn(
+                "It is not allowed to set the `enabled` parameter for `%s`."
+                " All CIs are enabled by default. To disable a CI, please"
+                " add `skip: true` to the `build` section of `meta.yaml`"
+                " and an appropriate selector so as to disable the build." \
+                % each_ci
+            )
+
     tmplt_dir = os.path.join(conda_forge_content, 'templates')
     # Load templates from the feedstock in preference to the smithy's templates.
     env = Environment(loader=FileSystemLoader([os.path.join(forge_dir, 'templates'),

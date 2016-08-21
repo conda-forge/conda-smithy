@@ -1,6 +1,9 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 from __future__ import print_function
 from collections import OrderedDict
 from contextlib import contextmanager
+import io
 import os
 import shutil
 import subprocess
@@ -68,7 +71,7 @@ class Test_linter(unittest.TestCase):
 
     def test_maintainers_section(self):
         expected_message = ('The recipe could do with some maintainers listed '
-                            'in the "extra/recipe-maintainers" section.')
+                            'in the `extra/recipe-maintainers` section.')
 
         lints = linter.lintify({'extra': {'recipe-maintainers': []}})
         self.assertIn(expected_message, lints)
@@ -261,6 +264,25 @@ class TestCLI_recipe_lint(unittest.TestCase):
             out, _ = child.communicate()
             self.assertEqual(child.returncode, 0, out)
 
+    def test_unicode(self):
+        """
+        Tests that unicode does not confuse the linter.
+        """
+        with tmp_directory() as recipe_dir:
+            with io.open(os.path.join(recipe_dir, 'meta.yaml'), 'wt') as fh:
+                fh.write(u"""
+                    package:
+                        name: 'test_package'
+                    build:
+                        number: 0
+                    about:
+                        home: something
+                        license: something else
+                        summary: αβɣ
+                        description: moɿɘ uniɔobɘ!
+                         """)
+            # Just run it and make sure it does not raise.
+            linter.main(recipe_dir)
 
 if __name__ == '__main__':
     unittest.main()
