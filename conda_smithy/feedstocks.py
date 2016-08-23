@@ -4,6 +4,7 @@ import glob
 import multiprocessing
 import os
 
+import git
 from git import Repo, GitCommandError
 from github import Github
 
@@ -127,22 +128,6 @@ def feedstocks_fetch_handle_args(args):
     return fetch_feedstocks(args.feedstocks_directory)
 
 
-import jinja2
-import six
-class NullUndefined(jinja2.Undefined):
-    def __unicode__(self):
-        return six.text_type(self._undefined_name)
-
-    def __getattr__(self, name):
-        return six.text_type('{}.{}'.format(self, name))
-
-    def __getitem__(self, name):
-        return '{}["{}"]'.format(self, name)
-
-
-env = jinja2.Environment(undefined=NullUndefined)
-import git
-
 def feedstocks_repos(organization, feedstocks_directory, pull_up_to_date=False, randomise=False, regexp=None):
     """
     Generator of (feedstock, yaml) for each feedstock in the given
@@ -150,7 +135,7 @@ def feedstocks_repos(organization, feedstocks_directory, pull_up_to_date=False, 
 
     Parameters
     ----------
-    pull_up_to_date : bool (default: True)
+    pull_up_to_date : bool (default: False)
         If True, clone all (missing) feedstocks before operation, and fetch
         all feedstocks as each one is being yielded. 
     randomise: bool (default: False)
@@ -166,9 +151,8 @@ def feedstocks_repos(organization, feedstocks_directory, pull_up_to_date=False, 
     # We can't do anything without having all of the feestocks cloned
     # (the existing clones don't need to be fetched though).
     if pull_up_to_date:
-        print('Cloning')
-        #clone_all(organization, feedstocks_directory)
-        print('Done cloning')
+        print('Cloning all missing repos...')
+        clone_all(organization, feedstocks_directory)
 
     feedstocks = cloned_feedstocks(feedstocks_directory)
 
@@ -188,13 +172,58 @@ def feedstocks_repos(organization, feedstocks_directory, pull_up_to_date=False, 
         upstream = repo.remotes.upstream
 
         if pull_up_to_date:
-            print('fetching ', feedstock)
+            print('Fetching ', feedstock.package)
             upstream.fetch()
 
         yield repo, feedstock
 
 
-def feedstocks_yaml(organization, feedstocks_directory, **feedstocks_repo_kwargs):
+def yaml_meta(content):
+    """
+    Read the contents of meta.yaml into a ruamel.yaml document.
+
+    """
+    import jinja2
+    import ruamel.yaml
+    import six
+
+
+    class NullUndefined(jinja2.Undefined):
+        def __unicode__(self):
+            return six.text_type(self._undefined_name)
+
+        def __getattr__(self, name):
+            return six.text_type('{}.{}'.format(self, name))
+
+        def __getitem__(self, name):
+            return '{}["{}"]'.format(self, name)
+
+
+    class StrDict(dict):
+        def __getitem__(self, key, default=''):
+            # Unlike a normal dictionary, if the string doesn't exist, return an empty string. 
+            if key in self:
+                return self[key]
+            else:
+                return default
+
+
+    env = jinja2.Environment(undefined=NullUndefined)
+    parsable_content = env.from_string(content).render(os=os, environ=StrDict())
+    yaml = ruamel.yaml.load(parsable_content, ruamel.yaml.RoundTripLoader)
+    return yaml
+
+
+def feedstocks_yaml(organization, feedstocks_directory, use_local=False, **feedstocks_repo_kwargs):
+    """
+    Parameters
+    ----------
+
+    use_local: bool
+        If True, the meta.yaml will be taken from the locally checked out branch, rather than from the commit
+        of the git ref.
+
+    """
     for repo, feedstock in feedstocks_repos(organization, feedstocks_directory, **feedstocks_repo_kwargs):
         upstream = repo.remotes.upstream
         try:
@@ -208,15 +237,27 @@ def feedstocks_yaml(organization, feedstocks_directory, **feedstocks_repo_kwargs
             upstream.fetch()
             refs = upstream.refs
 
-        import ruamel.yaml
         for ref in refs:
             remote_branch = ref.remote_head #.replace('{}/'.format(gh_me.login), '')
 
-            content = ref.commit.tree['recipe']['meta.yaml'].data_stream.read()
-            parsable_content = env.from_string(content).render(os=os)
-            yaml = ruamel.yaml.load(parsable_content, ruamel.yaml.RoundTripLoader)
+            try:
+                if use_local:
+                    with open(os.path.join(feedstock.directory, 'recipe', 'meta.yaml'), 'r') as fh:
+                        content = ''.join(fh.readlines())
+                else:
+                    blob = ref.commit.tree['recipe']['meta.yaml']
+                    stream = blob.data_stream
+                    content = stream.read().decode('utf-8')
+                yaml = yaml_meta(content)
+            except:
+                # Add a helpful comment so we know what we are working with and reraise.
+                print('Failed on {}'.format(feedstock.package))
+                raise
 
             yield (feedstock, ref, content, yaml)
+            if use_local:
+                # There is no point in us doing this for each branch - we will get the same result each time.
+                break
 
 
 def main():
