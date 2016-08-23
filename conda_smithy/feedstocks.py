@@ -216,6 +216,8 @@ def yaml_meta(content):
 
 def feedstocks_yaml(organization, feedstocks_directory, use_local=False, **feedstocks_repo_kwargs):
     """
+    Generator of (feedstock, ref, content, yaml) for each upstream git ref of each feedstock.
+
     Parameters
     ----------
 
