@@ -83,11 +83,12 @@ def clone_feedstock(feedstock_gh_repo, feedstocks_dir):
     clone_directory = os.path.join(feedstocks_dir, repo.name)
     if not os.path.exists(clone_directory):
         print('Cloning {}'.format(repo.name))
-        new_repo = Repo.clone_from(repo.ssh_url, clone_directory)
+        new_repo = Repo.clone_from(repo.clone_url, clone_directory)
+        clone.delete_remote('origin')
     clone = Repo(clone_directory)
     if 'upstream' in [remote.name for remote in clone.remotes]:
         clone.delete_remote('upstream')
-    clone.create_remote('upstream', url=repo.ssh_url)
+    clone.create_remote('upstream', url=repo.clone_url)
 
 
 def clone_all(gh_org, feedstocks_dir):
