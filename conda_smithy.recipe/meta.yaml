@@ -20,7 +20,7 @@ requirements:
     - conda-build-all
     - setuptools
     - conda
-    - conda-build
+    - conda-build >=1.21.12
     - jinja2
     - requests
     - pycrypto

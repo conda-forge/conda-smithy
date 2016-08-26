@@ -9,6 +9,8 @@ import yaml
 import warnings
 
 import conda.api
+import conda.config
+import conda_build.metadata
 from conda_build.metadata import MetaData
 from conda_build_all.version_matrix import special_case_version_matrix, filter_cases
 from conda_build_all.resolved_distribution import ResolvedDistribution
@@ -100,17 +102,24 @@ def render_circle(jinja_env, forge_config, forge_dir):
 
 @contextmanager
 def fudge_subdir(subdir):
-    # conda build <1.21.12 (no conda 4.2+)
-    try:
-        import conda_build.metadata
-        cc = conda_build.metadata.cc
-    # conda build 1.21.12+ (supports conda 4.2+)
-    except AttributeError:
-        import conda_build.metadata as cc
-    orig = cc.subdir
-    cc.subdir = subdir
+    """
+    Override the subdir (aka platform) that conda and conda_build see
+    both when fetching the index and in parsing conda build MetaData.
+
+    """
+    # Store conda-build and conda.config's existing settings.
+    conda_orig = conda.config.subdir
+    cb_orig = conda_build.metadata.subdir
+
+    # Set them to what we want.
+    conda.config.subdir = subdir
+    conda_build.metadata.subdir = subdir
+
     yield
-    cc.subdir = orig
+
+    # Set them back to what they were
+    conda.config.subdir = conda_orig
+    conda_build.metadata.subdir = cb_orig
 
 
 def render_travis(jinja_env, forge_config, forge_dir):
