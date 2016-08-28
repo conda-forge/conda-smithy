@@ -28,11 +28,11 @@ class Test_fudge_subdir(unittest.TestCase):
                            name: foo_the_rest  # [not (win or osx)]
                          """)
             meta = conda_build.metadata.MetaData(recipe_dir)
-            with cnfgr_fdstk.fudge_subdir('win-64'):
+            with cnfgr_fdstk.fudge_subdir('win-64', meta):
                 meta.parse_again()
                 self.assertEqual(meta.name(), 'foo_win')
 
-            with cnfgr_fdstk.fudge_subdir('osx-64'):
+            with cnfgr_fdstk.fudge_subdir('osx-64', meta):
                 meta.parse_again()
                 self.assertEqual(meta.name(), 'foo_osx')
 

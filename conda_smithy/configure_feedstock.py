@@ -20,8 +20,8 @@ conda_forge_content = os.path.abspath(os.path.dirname(__file__))
 
 
 def render_run_docker_build(jinja_env, forge_config, forge_dir):
-    with fudge_subdir('linux-64'):
-        meta = forge_config['package']
+    meta = forge_config['package']
+    with fudge_subdir('linux-64', meta):
         meta.parse_again()
         matrix = compute_build_matrix(meta, forge_config.get('matrix'))
         cases_not_skipped = []
@@ -79,8 +79,8 @@ def render_run_docker_build(jinja_env, forge_config, forge_dir):
 
 
 def render_circle(jinja_env, forge_config, forge_dir):
-    with fudge_subdir('linux-64'):
-        meta = forge_config['package']
+    meta = forge_config['package']
+    with fudge_subdir('linux-64', meta):
         meta.parse_again()
         matrix = compute_build_matrix(meta, forge_config.get('matrix'))
 
@@ -101,7 +101,7 @@ def render_circle(jinja_env, forge_config, forge_dir):
 
 
 @contextmanager
-def fudge_subdir(subdir):
+def fudge_subdir(subdir, meta=None):
     """
     Override the subdir (aka platform) that conda and conda_build see
     both when fetching the index and in parsing conda build MetaData.
@@ -109,22 +109,25 @@ def fudge_subdir(subdir):
     """
     # Store conda-build and conda.config's existing settings.
     conda_orig = conda.config.subdir
-    cb_orig = conda_build.metadata.subdir
+    if meta:
+        cb_orig = meta.config.subdir
 
     # Set them to what we want.
     conda.config.subdir = subdir
-    conda_build.metadata.subdir = subdir
+    if meta:
+        meta.config.subdir = subdir
 
     yield
 
     # Set them back to what they were
     conda.config.subdir = conda_orig
-    conda_build.metadata.subdir = cb_orig
+    if meta:
+        meta.config.subdir = cb_orig
 
 
 def render_travis(jinja_env, forge_config, forge_dir):
-    with fudge_subdir('osx-64'):
-        meta = forge_config['package']
+    meta = forge_config['package']
+    with fudge_subdir('osx-64', meta):
         meta.parse_again()
         matrix = compute_build_matrix(meta, forge_config.get('matrix'))
 
@@ -221,8 +224,8 @@ def sort_without_target_arch(case):
 def render_appveyor(jinja_env, forge_config, forge_dir):
     full_matrix = []
     for platform, arch in [['win-32', 'x86'], ['win-64', 'x64']]:
-        with fudge_subdir(platform):
-            meta = forge_config['package']
+        meta = forge_config['package']
+        with fudge_subdir(platform, meta):
             meta.parse_again()
             matrix = compute_build_matrix(meta, forge_config.get('matrix'))
 
