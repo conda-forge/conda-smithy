@@ -25,6 +25,7 @@ class Test_fudge_subdir(unittest.TestCase):
                         package:
                            name: foo_win  # [win]
                            name: foo_osx  # [osx]
+                           name: foo_the_rest  # [not (win or osx)]
                          """)
             meta = conda_build.metadata.MetaData(recipe_dir)
             with cnfgr_fdstk.fudge_subdir('win-64'):
