@@ -10,6 +10,7 @@ import sys
 from binstar_client.utils import get_binstar
 import binstar_client.errors
 import conda.config
+from conda.api import get_index
 from conda_build.metadata import MetaData
 from conda_build.build import bldpkg_path
 
@@ -64,10 +65,19 @@ def distribution_exists_on_channel(binstar_cli, meta, owner, channel='main'):
     Note from @pelson: As far as I can see, there is no easy way to do this on binstar.
 
     """
-    fname = '{}/{}.tar.bz2'.format(conda.config.subdir, meta.dist())
-    distributions_on_channel = [dist['basename'] for dist in
-                                binstar_cli.show_channel(owner=owner, channel=channel)['files']]
-    return fname in distributions_on_channel
+    fname = '{}.tar.bz2'.format(meta.dist())
+    channel_url = '/'.join([owner, 'label', channel])
+
+    distributions_on_channel = get_index([channel_url],
+                                         prepend=False, use_cache=False)
+
+    try:
+        on_channel = (distributions_on_channel[fname]['subdir'] ==
+                      conda.config.subdir)
+    except KeyError:
+        on_channel = False
+
+    return on_channel
 
 
 def add_distribution_to_channel(binstar_cli, meta, owner, channel='main'):
