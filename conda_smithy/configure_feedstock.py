@@ -83,7 +83,6 @@ def render_run_docker_build(jinja_env, forge_config, forge_dir):
             """)
         else:
             build_setup += textwrap.dedent("""\
-                conda install --yes --quiet conda-forge-build-setup
                 source run_conda_forge_build_setup
 
             """)
@@ -234,7 +233,6 @@ def render_travis(jinja_env, forge_config, forge_dir):
             """.format(recipe_dir=forge_config["recipe_dir"]))
         else:
             build_setup += textwrap.dedent("""\
-                conda install --yes --quiet conda-forge-build-setup
                 source run_conda_forge_build_setup
             """)
 
@@ -400,7 +398,6 @@ def render_appveyor(jinja_env, forge_config, forge_dir):
         else:
             build_setup += textwrap.dedent("""\
 
-                conda install -n root --quiet --yes conda-forge-build-setup
                 run_conda_forge_build_setup
             """)
 
