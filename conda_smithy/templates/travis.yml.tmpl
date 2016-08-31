@@ -42,7 +42,7 @@ install:
       curl -O "${MINICONDA_URL}/${MINICONDA_FILE}"
       bash $MINICONDA_FILE -b
 
-      export PATH=/Users/travis/miniconda3/bin:$PATH
+      source /Users/travis/miniconda3/bin/activate root
 
       {%- for channel in channels.get('sources', []) %}
       conda config --add channels {{ channel }}
