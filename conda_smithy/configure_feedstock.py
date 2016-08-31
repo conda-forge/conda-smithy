@@ -109,20 +109,26 @@ def fudge_subdir(subdir, meta=None):
     """
     # Store conda-build and conda.config's existing settings.
     conda_orig = conda.config.subdir
-    if meta:
+    if meta and hasattr(meta, 'config'):
         cb_orig = meta.config.subdir
+    else:
+        cb_meta_orig = conda_build.metadata.subdir
 
     # Set them to what we want.
     conda.config.subdir = subdir
-    if meta:
+    if meta and hasattr(meta, 'config'):
         meta.config.subdir = subdir
+    else:
+        conda_build.metadata.subdir = subdir
 
     yield
 
     # Set them back to what they were
     conda.config.subdir = conda_orig
-    if meta:
+    if meta and hasattr(meta, 'config'):
         meta.config.subdir = cb_orig
+    else:
+        conda_build.metadata.subdir = cb_meta_orig
 
 
 def render_travis(jinja_env, forge_config, forge_dir):

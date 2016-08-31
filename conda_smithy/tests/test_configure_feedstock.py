@@ -37,11 +37,21 @@ class Test_fudge_subdir(unittest.TestCase):
                 self.assertEqual(meta.name(), 'foo_osx')
 
     def test_fetch_index(self):
+        with tmp_directory() as recipe_dir:
+            with open(os.path.join(recipe_dir, 'meta.yaml'), 'w') as fh:
+                fh.write("""
+                        package:
+                            name: foo_win  # [win]
+                            name: foo_osx  # [osx]
+                            name: foo_the_rest  # [not (win or osx)]
+                            """)
+            meta = conda_build.metadata.MetaData(recipe_dir)
+
         # Get the index for OSX and Windows. They should be different.
 
-        with cnfgr_fdstk.fudge_subdir('win-64'):
+        with cnfgr_fdstk.fudge_subdir('win-64', meta):
             win_index = conda.api.get_index()
-        with cnfgr_fdstk.fudge_subdir('osx-64'):
+        with cnfgr_fdstk.fudge_subdir('osx-64', meta):
             osx_index = conda.api.get_index()
         self.assertNotEqual(win_index.keys(), osx_index.keys(),
                             ('The keys for the Windows and OSX index were the same.'
