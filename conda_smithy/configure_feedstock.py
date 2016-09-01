@@ -11,6 +11,11 @@ import warnings
 import conda.api
 import conda.config
 import conda_build.metadata
+try:
+    import conda_build.api
+except ImportError:
+    # old conda-build
+    pass
 from conda_build.metadata import MetaData
 from conda_build_all.version_matrix import special_case_version_matrix, filter_cases
 from conda_build_all.resolved_distribution import ResolvedDistribution
@@ -19,9 +24,17 @@ from jinja2 import Environment, FileSystemLoader
 conda_forge_content = os.path.abspath(os.path.dirname(__file__))
 
 
+def meta_config(meta):
+    if hasattr(meta, 'config'):
+        config = meta.config
+    else:
+        config = conda_build.config
+    return config
+
+
 def render_run_docker_build(jinja_env, forge_config, forge_dir):
     meta = forge_config['package']
-    with fudge_subdir('linux-64', meta):
+    with fudge_subdir('linux-64', build_config=meta_config(meta)):
         meta.parse_again()
         matrix = compute_build_matrix(meta, forge_config.get('matrix'))
         cases_not_skipped = []
@@ -80,7 +93,7 @@ def render_run_docker_build(jinja_env, forge_config, forge_dir):
 
 def render_circle(jinja_env, forge_config, forge_dir):
     meta = forge_config['package']
-    with fudge_subdir('linux-64', meta):
+    with fudge_subdir('linux-64', build_config=meta_config(meta)):
         meta.parse_again()
         matrix = compute_build_matrix(meta, forge_config.get('matrix'))
 
@@ -101,7 +114,7 @@ def render_circle(jinja_env, forge_config, forge_dir):
 
 
 @contextmanager
-def fudge_subdir(subdir, meta=None):
+def fudge_subdir(subdir, build_config):
     """
     Override the subdir (aka platform) that conda and conda_build see
     both when fetching the index and in parsing conda build MetaData.
@@ -109,31 +122,31 @@ def fudge_subdir(subdir, meta=None):
     """
     # Store conda-build and conda.config's existing settings.
     conda_orig = conda.config.subdir
-    if meta and hasattr(meta, 'config'):
-        cb_orig = meta.config.subdir
-    else:
-        cb_meta_orig = conda_build.metadata.subdir
+    cb_orig = build_config.subdir
 
     # Set them to what we want.
     conda.config.subdir = subdir
-    if meta and hasattr(meta, 'config'):
-        meta.config.subdir = subdir
-    else:
+    build_config.subdir = subdir
+
+    if not hasattr(conda_build, 'api'):
+        # Old conda-builds have a copied subdir value, so we need to change that too.
+        copied_subdir_orig = conda_build.metadata.subdir
         conda_build.metadata.subdir = subdir
 
     yield
 
     # Set them back to what they were
     conda.config.subdir = conda_orig
-    if meta and hasattr(meta, 'config'):
-        meta.config.subdir = cb_orig
-    else:
-        conda_build.metadata.subdir = cb_meta_orig
+    build_config.subdir = cb_orig
+
+    if not hasattr(conda_build, 'api'):
+        # Old conda-builds have a copied subdir value, so we need to change that too.
+        conda_build.metadata.subdir = copied_subdir_orig
 
 
 def render_travis(jinja_env, forge_config, forge_dir):
     meta = forge_config['package']
-    with fudge_subdir('osx-64', meta):
+    with fudge_subdir('osx-64', build_config=meta_config(meta)):
         meta.parse_again()
         matrix = compute_build_matrix(meta, forge_config.get('matrix'))
 
@@ -228,10 +241,10 @@ def sort_without_target_arch(case):
 
 
 def render_appveyor(jinja_env, forge_config, forge_dir):
+    meta = forge_config['package']
     full_matrix = []
     for platform, arch in [['win-32', 'x86'], ['win-64', 'x64']]:
-        meta = forge_config['package']
-        with fudge_subdir(platform, meta):
+        with fudge_subdir(platform, build_config=meta_config(meta)):
             meta.parse_again()
             matrix = compute_build_matrix(meta, forge_config.get('matrix'))
 
@@ -335,12 +348,15 @@ def copy_feedstock_content(forge_dir):
     )
 
 
-def meta_of_feedstock(forge_dir):
+def meta_of_feedstock(forge_dir, config=None):
     recipe_dir = 'recipe'
     meta_dir = os.path.join(forge_dir, recipe_dir)
     if not os.path.exists(meta_dir):
         raise IOError("The given directory isn't a feedstock.")
-    meta = MetaData(meta_dir)
+    if hasattr(conda_build, 'api'):
+        meta = MetaData(meta_dir, config=config)
+    else:
+        meta = MetaData(meta_dir)
     return meta
 
 
@@ -356,6 +372,17 @@ def compute_build_matrix(meta, existing_matrix=None):
 
 
 def main(forge_file_directory):
+    if hasattr(conda_build, 'api'):
+        build_config = conda_build.api.Config()
+    else:
+        build_config = conda_build.config.config
+
+    # conda-build has some really fruity behaviour where it needs CONDA_NPY
+    # and CONDA_PY in order to even read a meta. Because we compute version
+    # matricies anyway the actual number makes absolutely no difference.
+    build_config.CONDA_NPY = '99.9'
+    build_config.CONDA_PY = 10
+
     recipe_dir = 'recipe'
     config = {'docker': {'image': 'condaforge/linux-anvil', 'command': 'bash'},
               'templates': {'run_docker_build': 'run_docker_build_matrix.tmpl'},
@@ -380,7 +407,7 @@ def main(forge_file_directory):
             # Deal with dicts within dicts.
             if isinstance(value, dict):
                 config_item.update(value)
-    config['package'] = meta = meta_of_feedstock(forge_file_directory)
+    config['package'] = meta = meta_of_feedstock(forge_file_directory, config=build_config)
     if not config['github']['repo_name']:
         config['github']['repo_name'] = meta.name()+'-feedstock'
 
@@ -400,13 +427,6 @@ def main(forge_file_directory):
                                                tmplt_dir]))
 
     copy_feedstock_content(forge_dir)
-
-    # conda-build has some really fruity behaviour where it needs CONDA_NPY
-    # and CONDA_PY in order to even read a meta. Because we compute version
-    # matricies anyway the actual number makes absolutely no difference.
-    import conda_build.config
-    conda_build.metadata.config.CONDA_NPY = '99.9'
-    conda_build.metadata.config.CONDA_PY = 10
 
     render_run_docker_build(env, config, forge_dir)
     render_circle(env, config, forge_dir)
