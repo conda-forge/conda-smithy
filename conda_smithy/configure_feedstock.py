@@ -128,11 +128,20 @@ def fudge_subdir(subdir, build_config):
     conda.config.subdir = subdir
     build_config.subdir = subdir
 
+    if not hasattr(conda_build, 'api'):
+        # Old conda-builds have a copied subdir value, so we need to change that too.
+        copied_subdir_orig = conda_build.metadata.subdir
+        conda_build.metadata.subdir = subdir
+
     yield
 
     # Set them back to what they were
     conda.config.subdir = conda_orig
     build_config.subdir = cb_orig
+
+    if not hasattr(conda_build, 'api'):
+        # Old conda-builds have a copied subdir value, so we need to change that too.
+        conda_build.metadata.subdir = copied_subdir_orig
 
 
 def render_travis(jinja_env, forge_config, forge_dir):
