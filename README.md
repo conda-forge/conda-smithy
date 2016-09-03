@@ -58,8 +58,8 @@ Optionally, you can choose a channel to upload to in `conda-forge.yml`.
   ```
   Default is `[conda-forge, main]`.
   
-4. Regenerate the feedstock with ``conda smithy regenerate ./foo-feedstock``
-5. Commit the changes ``cd foo-feedstock && git commit``, then push ``git push upstream master``.
+4. **Regenerate the feedstock:** ``conda smithy regenerate ./foo-feedstock``
+5. **Commit the changes:** ``cd foo-feedstock && git commit``, then push ``git push upstream master``.
 
 Running a build
 ---------------
