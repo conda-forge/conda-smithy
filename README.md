@@ -55,7 +55,7 @@ of organization with `--user github_user_name`.
        targets:
          - [target_channel, target_label]
     ```
-      Default channel and default label are `conda-forge` and `main`.
+      Default is `[conda-forge, main]`.
 4. Regenerate the feedstock with ``conda smithy regenerate ./foo-feedstock``
 5. Commit the changes ``cd foo-feedstock && git commit``, then push ``git push upstream master``.
 
