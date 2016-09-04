@@ -39,6 +39,7 @@ conda search {{ package.name() }} --channel {{github.user_or_org}}
 ```
 
 
+{% if github.user_or_org == 'conda-forge' %}
 About conda-forge
 =================
 
@@ -72,6 +73,7 @@ Terminology
 
 **conda-forge** - the place where the feedstock and smithy live and work to
                   produce the finished article (built conda distributions)
+{%- endif %}
 
 Current build status
 ====================
