@@ -49,8 +49,17 @@ instead of an organization by replacing the organization argument with
 `conda smithy register-ci --organization conda-forge ./foo-feedstock`.
 This requires tokens for the CI services. You can give the name of a user instead
 of organization with `--user github_user_name`.
-4. Regenerate the feedstock with ``conda smithy regenerate ./foo-feedstock``
-5. Commit the changes ``cd foo-feedstock && git commit``, then push ``git push upstream master``.
+4. **Specify the feedstock channel and label:**
+Optionally, you can choose a channel to upload to in `conda-forge.yml`.
+  ```
+  channels:
+   targets:
+     - [target_channel, target_label]
+  ```
+  Default is `[conda-forge, main]`.
+  
+4. **Regenerate the feedstock:** ``conda smithy regenerate ./foo-feedstock``
+5. **Commit the changes:** ``cd foo-feedstock && git commit``, then push ``git push upstream master``.
 
 Running a build
 ---------------
