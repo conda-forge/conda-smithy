@@ -12,7 +12,7 @@ import conda_smithy.configure_feedstock as cnfgr_fdstk
 
 @contextmanager
 def tmp_directory():
-    tmp_dir = tempfile.mkdtemp('recipe_')
+    tmp_dir = tempfile.mkdtemp('_recipe')
     yield tmp_dir
     shutil.rmtree(tmp_dir)
 
@@ -28,20 +28,30 @@ class Test_fudge_subdir(unittest.TestCase):
                            name: foo_the_rest  # [not (win or osx)]
                          """)
             meta = conda_build.metadata.MetaData(recipe_dir)
-            with cnfgr_fdstk.fudge_subdir('win-64'):
-                meta.parse_again()
+            config = cnfgr_fdstk.meta_config(meta)
+
+            kwargs = {}
+            if hasattr(conda_build, 'api'):
+                kwargs['config'] = config
+
+            with cnfgr_fdstk.fudge_subdir('win-64', config):
+                meta.parse_again(**kwargs)
                 self.assertEqual(meta.name(), 'foo_win')
 
-            with cnfgr_fdstk.fudge_subdir('osx-64'):
-                meta.parse_again()
+            with cnfgr_fdstk.fudge_subdir('osx-64', config):
+                meta.parse_again(**kwargs)
                 self.assertEqual(meta.name(), 'foo_osx')
 
     def test_fetch_index(self):
-        # Get the index for OSX and Windows. They should be different.
+        if hasattr(conda_build, 'api'):
+            config = conda_build.api.Config()
+        else:
+            config = conda_build.config
 
-        with cnfgr_fdstk.fudge_subdir('win-64'):
+        # Get the index for OSX and Windows. They should be different.
+        with cnfgr_fdstk.fudge_subdir('win-64', config):
             win_index = conda.api.get_index()
-        with cnfgr_fdstk.fudge_subdir('osx-64'):
+        with cnfgr_fdstk.fudge_subdir('osx-64', config):
             osx_index = conda.api.get_index()
         self.assertNotEqual(win_index.keys(), osx_index.keys(),
                             ('The keys for the Windows and OSX index were the same.'

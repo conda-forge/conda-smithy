@@ -1,6 +1,6 @@
 # The language in this case has no bearing - we are going to be making use of conda for a
 # python distribution for the scientific python stack.
-language: python
+language: generic
 
 sudo: false
 
@@ -10,6 +10,8 @@ env:
 
     matrix:
         - PYTHON=2.7
+        - PYTHON=3.5
+          CONDA_PKGS='conda-build=1.*'
         - PYTHON=3.5
 
 install:
@@ -21,7 +23,7 @@ install:
     - rm -rf ${CONDA_INSTALL_LOCN}/pkgs && ln -s ${HOME}/cache/pkgs ${CONDA_INSTALL_LOCN}/pkgs
 
     # Now do the things we need to do to install it.
-    - conda install --file requirements.txt nose mock python=${PYTHON} --yes --quiet -c conda-forge
+    - conda install --file requirements.txt nose mock python=${PYTHON} ${CONDA_PKGS} --yes --quiet -c conda-forge
     - python setup.py install
 
 script:
