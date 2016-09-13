@@ -73,7 +73,7 @@ def fetch_feedstocks(feedstock_directory):
 
 
 def feedstocks_list_handle_args(args):
-   for repo in feedstock_repos(gh_organization):
+   for repo in feedstock_repos(args.organization):
         print(repo.name)
 
 
@@ -266,7 +266,11 @@ def feedstocks_yaml(organization, feedstocks_directory, use_local=False, **feeds
 def main():
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers()
-    list_feedstocks = subparsers.add_parser('list', help='List all of the feedstocks available on the GitHub organization.')
+    list_feedstocks_help = ('List all of the feedstocks available on the '
+                            'GitHub organization. Specify the GitHub '
+                            'organisation with the `--organisation` flag.')
+    list_feedstocks = subparsers.add_parser('list',
+                                            help=list_feedstocks_help)
     list_feedstocks.set_defaults(func=feedstocks_list_handle_args)
     list_feedstocks.add_argument("--organization", default="conda-forge")
 
