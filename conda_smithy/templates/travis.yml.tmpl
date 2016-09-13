@@ -54,5 +54,5 @@ install:
 script:
   - conda build ./{{ recipe_dir }}
 {% for owner, channel in channels['targets'] %}
-  - ./ci_support/upload_or_check_non_existence.py ./{{ recipe_dir }} {{ owner }} --channel={{ channel }}
+  - upload_or_check_non_existence ./{{ recipe_dir }} {{ owner }} --channel={{ channel }}
 {% endfor %}

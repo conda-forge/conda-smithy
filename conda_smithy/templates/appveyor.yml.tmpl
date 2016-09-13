@@ -64,6 +64,6 @@ build: off
 test_script:
     - "%CMD_IN_ENV% conda build {{ recipe_dir }} --quiet"
 deploy_script:
-{% for owner, channel in channels['targets'] %}
-    - 'python ci_support\upload_or_check_non_existence.py .\{{ recipe_dir }} {{ owner }} --channel={{ channel }}'
+{%- for owner, channel in channels['targets'] %}
+    - cmd: upload_or_check_non_existence .\{{ recipe_dir }} {{ owner }} --channel={{ channel }}
 {% endfor %}
