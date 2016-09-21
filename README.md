@@ -17,7 +17,7 @@ Installation
 The easiest way to install conda-smithy is to use conda and conda-forge:
 
 ```
-conda install -c conda-forge conda-smithy
+conda install -n root -c conda-forge conda-smithy
 ```
 
 To install conda-smithy from source, see the requirements file in `requirements.txt`, clone this
@@ -33,6 +33,17 @@ place them. If you need help getting tokens please ask on the
 
 You should be able to test parts of `conda-smithy` with whatever tokens you have.
 For example, you should be able to `conda smithy register-github` without the CI service tokens.
+
+Re-rendering an existing feedstock
+----------------------------------
+
+Periodically feedstocks need to be upgraded to include new features. To do
+this we use `conda-smithy` to go through a process called re-rendering.
+Make sure you have installed `conda-smithy` before proceeding.
+
+1. `cd <feedstock directory>`
+2. `conda smithy rerender`
+3. Commit and push all changes
 
 Making a new feedstock
 ----------------------
