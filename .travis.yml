@@ -17,7 +17,8 @@ env:
 install:
     - mkdir -p ${HOME}/cache/pkgs
     - "[ ! -f ${HOME}/cache/miniconda.sh ] && wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ${HOME}/cache/miniconda.sh || :"
-    - bash ${HOME}/cache/miniconda.sh -b -p ${CONDA_INSTALL_LOCN} && export PATH=${CONDA_INSTALL_LOCN}/bin:$PATH
+    - bash ${HOME}/cache/miniconda.sh -b -p ${CONDA_INSTALL_LOCN}
+    - source ${CONDA_INSTALL_LOCN}/bin/activate root
 
     # Re-use the packages in the cache, and download any new ones into that location.
     - rm -rf ${CONDA_INSTALL_LOCN}/pkgs && ln -s ${HOME}/cache/pkgs ${CONDA_INSTALL_LOCN}/pkgs

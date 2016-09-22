@@ -48,7 +48,7 @@ source run_conda_forge_build_setup
 {%- block build %}
 conda build /recipe_root --quiet || exit 1
 {%- for owner, channel in channels['targets'] %}
-/feedstock_root/ci_support/upload_or_check_non_existence.py /recipe_root {{ owner }} --channel={{ channel }} || exit 1
+upload_or_check_non_existence /recipe_root {{ owner }} --channel={{ channel }} || exit 1
 {%- endfor -%}
 {%- endblock -%}
 
