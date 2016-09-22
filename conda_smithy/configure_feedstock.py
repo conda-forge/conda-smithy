@@ -390,6 +390,7 @@ def main(forge_file_directory):
     # An older conda-smithy used to have some files which should no longer exist,
     # remove those now.
     old_files = [
+        'disabled_appveyor.yml',
     ]
     for old_file in old_files:
         fpath = os.path.join(forge_dir, old_file)
