@@ -14,25 +14,25 @@ Summary: {{ package.meta.about.summary }}
 Installing {{ package.name() }}
 ==========={{ '=' * package.name()|length }}
 
-Installing {{ package.name() }} from the {{ channels.targets[0][0] }} channel can be achieved by adding {{ channels.targets[0][0] }} to your channels with:
+Installing `{{ package.name() }}` from the `{{ channels.targets[0][0] }}` channel can be achieved by adding `{{ channels.targets[0][0] }}` to your channels with:
 
 ```
 conda config --add channels {{ channels.targets[0][0] }}
 ```
 
-Once the {{ channels.targets[0][0] }} channel has been enabled, {{ package.name() }} can be installed with:
+Once the `{{ channels.targets[0][0] }}` channel has been enabled, `{{ package.name() }}` can be installed with:
 
 ```
 conda install {{ package.name() }}
 ```
 
-Or {{ package.name() }} can be installed with a single command:
+Or `{{ package.name() }}` can be installed with a single command:
 
 ```
 conda install {{ package.name() }} -c {{ channels.targets[0][0] }}
 ```
 
-It is possible to list all of the versions of {{ package.name() }} available on your platform with:
+It is possible to list all of the versions of `{{ package.name() }}` available on your platform with:
 
 ```
 conda search {{ package.name() }} --channel {{ channels.targets[0][0] }}
