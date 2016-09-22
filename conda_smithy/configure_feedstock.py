@@ -45,13 +45,18 @@ def render_run_docker_build(jinja_env, forge_config, forge_dir):
                     cases_not_skipped.append(vars + sorted(pkgs))
         matrix = sorted(cases_not_skipped, key=sort_without_target_arch)
 
-    target_fname = os.path.join(forge_dir, 'ci_support', 'run_docker_build.sh')
     if not matrix:
         # There are no cases to build (not even a case without any special
         # dependencies), so remove the run_docker_build.sh if it exists.
         forge_config["circle"]["enabled"] = False
-        if os.path.exists(target_fname):
-            os.remove(target_fname)
+
+        target_fnames = [
+            os.path.join(forge_dir, 'ci_support', 'run_docker_build.sh'),
+            os.path.join(forge_dir, 'ci_support', 'checkout_merge_commit.sh'),
+        ]
+        for each_target_fname in target_fnames:
+            if os.path.exists(each_target_fname):
+                os.remove(each_target_fname)
     else:
         forge_config["circle"]["enabled"] = True
         matrix = prepare_matrix_for_env_vars(matrix)
@@ -85,6 +90,7 @@ def render_run_docker_build(jinja_env, forge_config, forge_dir):
                                       'run_docker_build_matrix.tmpl')
 
         template = jinja_env.get_template(template_name)
+        target_fname = os.path.join(forge_dir, 'ci_support', 'run_docker_build.sh')
         with open(target_fname, 'w') as fh:
             fh.write(template.render(**forge_config))
         st = os.stat(target_fname)
