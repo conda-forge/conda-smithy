@@ -159,7 +159,7 @@ def render_circle(jinja_env, forge_config, forge_dir):
                 # "recipe/yum_requirements.txt" file. After updating that file,
                 # run "conda smithy rerender" and this line be updated
                 # automatically.
-                yum install -y {}
+                /usr/bin/sudo -n yum install -y {}
 
 
             """.format(' '.join(requirements)))
