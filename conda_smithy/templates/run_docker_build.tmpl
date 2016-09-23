@@ -34,7 +34,10 @@ cat << EOF | {{ docker.executable }} run -i \
                         {{ docker.image }} \
                         {{ docker.command }} || exit 1
 
+set -e
+set +x
 export BINSTAR_TOKEN=${BINSTAR_TOKEN}
+set -x
 export PYTHONUNBUFFERED=1
 
 echo "$config" > ~/.condarc
