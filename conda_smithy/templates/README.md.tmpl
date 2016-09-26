@@ -84,25 +84,25 @@ Current build status
 {%- set disabled_badge_url = "https://cdn.rawgit.com/conda-forge/conda-smithy/%s/%s"|format(disabled_badge_commit, disabled_badge_path) %}
 {# #}
 {%- if circle.enabled %}
-Linux: [![Circle CI](https://circleci.com/gh/{{ github.user_or_org }}/{{github.repo_name}}.svg?style=shield)](https://circleci.com/gh/{{ github.user_or_org }}/{{github.repo_name}})
+Linux: [![Circle CI](https://circleci.com/gh/{{ github.user_or_org }}/{{ github.repo_name }}.svg?style=shield)](https://circleci.com/gh/{{ github.user_or_org }}/{{ github.repo_name }})
 {%- else %}
 Linux: ![]({{ disabled_badge_url }})
 {%- endif %}
 {%- if travis.enabled %}
-OSX: [![TravisCI](https://travis-ci.org/{{ github.user_or_org }}/{{github.repo_name}}.svg?branch=master)](https://travis-ci.org/{{ github.user_or_org }}/{{github.repo_name}})
+OSX: [![TravisCI](https://travis-ci.org/{{ github.user_or_org }}/{{ github.repo_name }}.svg?branch=master)](https://travis-ci.org/{{ github.user_or_org }}/{{ github.repo_name }})
 {%- else %}
 OSX: ![]({{ disabled_badge_url }})
 {%- endif %}
 {%- if appveyor.enabled %}
-Windows: [![AppVeyor](https://ci.appveyor.com/api/projects/status/github/{{ github.user_or_org }}/{{github.repo_name}}?svg=True)](https://ci.appveyor.com/project/{{ github.user_or_org }}/{{appveyor_url_name}}/branch/master)
+Windows: [![AppVeyor](https://ci.appveyor.com/api/projects/status/github/{{ github.user_or_org }}/{{ github.repo_name }}?svg=True)](https://ci.appveyor.com/project/{{ github.user_or_org }}/{{ appveyor_url_name }}/branch/master)
 {%- else %}
 Windows: ![]({{ disabled_badge_url }})
 {%- endif %}
 
 Current release info
 ====================
-Version: [![Anaconda-Server Badge](https://anaconda.org/{{ channels.targets[0][0] }}/{{package.name()}}/badges/version.svg)](https://anaconda.org/{{ channels.targets[0][0] }}/{{package.name()}})
-Downloads: [![Anaconda-Server Badge](https://anaconda.org/{{ channels.targets[0][0] }}/{{package.name()}}/badges/downloads.svg)](https://anaconda.org/{{ channels.targets[0][0] }}/{{package.name()}})
+Version: [![Anaconda-Server Badge](https://anaconda.org/{{ channels.targets[0][0] }}/{{ package.name() }}/badges/version.svg)](https://anaconda.org/{{ channels.targets[0][0] }}/{{ package.name() }})
+Downloads: [![Anaconda-Server Badge](https://anaconda.org/{{ channels.targets[0][0] }}/{{ package.name() }}/badges/downloads.svg)](https://anaconda.org/{{ channels.targets[0][0] }}/{{ package.name() }})
 
 
 Updating {{ package.name() }}-feedstock
