@@ -390,7 +390,7 @@ def main(forge_file_directory):
               'circle': {},
               'appveyor': {},
               'channels': {'sources': ['conda-forge'], 'targets': [['conda-forge', 'main']]},
-              'github': {'user_or_org': 'conda-forge', 'repo_name': '', 'branch_name': 'master'},
+              'github': {'user_or_org': 'conda-forge', 'repo_name': ''},
               'recipe_dir': recipe_dir}
     forge_dir = os.path.abspath(forge_file_directory)
 
