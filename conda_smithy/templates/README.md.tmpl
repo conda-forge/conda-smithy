@@ -26,12 +26,6 @@ Once the `{{ channels.targets[0][0] }}` channel has been enabled, `{{ package.na
 conda install {{ package.name() }}
 ```
 
-Or, without updating your channel list, `{{ package.name() }}` can be installed with a single command:
-
-```
-conda install {{ package.name() }} -c {{ channels.targets[0][0] }}
-```
-
 It is possible to list all of the versions of `{{ package.name() }}` available on your platform with:
 
 ```
