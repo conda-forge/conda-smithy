@@ -1,3 +1,5 @@
+{% set channel_name = channels.targets[0][0] %}
+
 About {{ package.name() }}
 ======{{ '=' * package.name()|length }}
 
@@ -14,13 +16,13 @@ Summary: {{ package.meta.about.summary }}
 Installing {{ package.name() }}
 ==========={{ '=' * package.name()|length }}
 
-Installing `{{ package.name() }}` from the `{{ channels.targets[0][0] }}` channel can be achieved by adding `{{ channels.targets[0][0] }}` to your channels with:
+Installing `{{ package.name() }}` from the `{{ channel_name }}` channel can be achieved by adding `{{ channel_name }}` to your channels with:
 
 ```
-conda config --add channels {{ channels.targets[0][0] }}
+conda config --add channels {{ channel_name }}
 ```
 
-Once the `{{ channels.targets[0][0] }}` channel has been enabled, `{{ package.name() }}` can be installed with:
+Once the `{{ channel_name }}` channel has been enabled, `{{ package.name() }}` can be installed with:
 
 ```
 conda install {{ package.name() }}
@@ -29,10 +31,10 @@ conda install {{ package.name() }}
 It is possible to list all of the versions of `{{ package.name() }}` available on your platform with:
 
 ```
-conda search {{ package.name() }} --channel {{ channels.targets[0][0] }}
+conda search {{ package.name() }} --channel {{ channel_name }}
 ```
 
-{% if channels.targets[0][0] == 'conda-forge' %}
+{% if channel_name == 'conda-forge' %}
 
 About conda-forge
 =================
@@ -95,8 +97,8 @@ Windows: ![]({{ disabled_badge_url }})
 
 Current release info
 ====================
-Version: [![Anaconda-Server Badge](https://anaconda.org/{{ channels.targets[0][0] }}/{{ package.name() }}/badges/version.svg)](https://anaconda.org/{{ channels.targets[0][0] }}/{{ package.name() }})
-Downloads: [![Anaconda-Server Badge](https://anaconda.org/{{ channels.targets[0][0] }}/{{ package.name() }}/badges/downloads.svg)](https://anaconda.org/{{ channels.targets[0][0] }}/{{ package.name() }})
+Version: [![Anaconda-Server Badge](https://anaconda.org/{{ channel_name }}/{{ package.name() }}/badges/version.svg)](https://anaconda.org/{{ channel_name }}/{{ package.name() }})
+Downloads: [![Anaconda-Server Badge](https://anaconda.org/{{ channel_name }}/{{ package.name() }}/badges/downloads.svg)](https://anaconda.org/{{ channel_name }}/{{ package.name() }})
 
 
 Updating {{ package.name() }}-feedstock
@@ -107,8 +109,8 @@ package version, please fork this repository and submit a PR. Upon submission,
 your changes will be run on the appropriate platforms to give the reviewer an
 opportunity to confirm that the changes result in a successful build. Once
 merged, the recipe will be re-built and uploaded automatically to the
-`{{ channels.targets[0][0] }}` channel, whereupon the built conda packages will be available for
-everybody to install and use from the `{{ channels.targets[0][0] }}` channel.
+`{{ channel_name }}` channel, whereupon the built conda packages will be available for
+everybody to install and use from the `{{ channel_name }}` channel.
 Note that all branches in the {{ github.user_or_org }}/{{ package.name() }}-feedstock are
 immediately built and any created packages are uploaded, so PRs should be based
 on branches in forks and branches in the main repository should only be used to
