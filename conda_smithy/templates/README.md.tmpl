@@ -1,3 +1,5 @@
+{%- set channel_name = channels.targets[0][0] -%}
+
 About {{ package.name() }}
 ======{{ '=' * package.name()|length }}
 
@@ -14,24 +16,25 @@ Summary: {{ package.meta.about.summary }}
 Installing {{ package.name() }}
 ==========={{ '=' * package.name()|length }}
 
-Installing {{ package.name() }} from the conda-forge channel can be achieved by adding conda-forge to your channels with:
+Installing `{{ package.name() }}` from the `{{ channel_name }}` channel can be achieved by adding `{{ channel_name }}` to your channels with:
 
 ```
-conda config --add channels conda-forge
+conda config --add channels {{ channel_name }}
 ```
 
-Once the conda-forge channel has been enabled, {{ package.name() }} can be installed with:
+Once the `{{ channel_name }}` channel has been enabled, `{{ package.name() }}` can be installed with:
 
 ```
 conda install {{ package.name() }}
 ```
 
-It is possible to list all of the versions of {{ package.name() }} available on your platform with:
+It is possible to list all of the versions of `{{ package.name() }}` available on your platform with:
 
 ```
-conda search {{ package.name() }} --channel conda-forge
+conda search {{ package.name() }} --channel {{ channel_name }}
 ```
 
+{% if channel_name == 'conda-forge' %}
 
 About conda-forge
 =================
@@ -66,6 +69,7 @@ Terminology
 
 **conda-forge** - the place where the feedstock and smithy live and work to
                   produce the finished article (built conda distributions)
+{%- endif %}
 
 Current build status
 ====================
@@ -76,25 +80,25 @@ Current build status
 {%- set disabled_badge_url = "https://cdn.rawgit.com/conda-forge/conda-smithy/%s/%s"|format(disabled_badge_commit, disabled_badge_path) %}
 {# #}
 {%- if circle.enabled %}
-Linux: [![Circle CI](https://circleci.com/gh/{{github.user_or_org}}/{{github.repo_name}}.svg?style=shield)](https://circleci.com/gh/{{github.user_or_org}}/{{github.repo_name}})
+Linux: [![Circle CI](https://circleci.com/gh/{{ github.user_or_org }}/{{ github.repo_name }}.svg?style=shield)](https://circleci.com/gh/{{ github.user_or_org }}/{{ github.repo_name }})
 {%- else %}
 Linux: ![]({{ disabled_badge_url }})
 {%- endif %}
 {%- if travis.enabled %}
-OSX: [![TravisCI](https://travis-ci.org/{{github.user_or_org}}/{{github.repo_name}}.svg?branch=master)](https://travis-ci.org/{{github.user_or_org}}/{{github.repo_name}})
+OSX: [![TravisCI](https://travis-ci.org/{{ github.user_or_org }}/{{ github.repo_name }}.svg?branch=master)](https://travis-ci.org/{{ github.user_or_org }}/{{ github.repo_name }})
 {%- else %}
 OSX: ![]({{ disabled_badge_url }})
 {%- endif %}
 {%- if appveyor.enabled %}
-Windows: [![AppVeyor](https://ci.appveyor.com/api/projects/status/github/{{github.user_or_org}}/{{github.repo_name}}?svg=True)](https://ci.appveyor.com/project/{{github.user_or_org}}/{{appveyor_url_name}}/branch/master)
+Windows: [![AppVeyor](https://ci.appveyor.com/api/projects/status/github/{{ github.user_or_org }}/{{ github.repo_name }}?svg=True)](https://ci.appveyor.com/project/{{ github.user_or_org }}/{{ appveyor_url_name }}/branch/master)
 {%- else %}
 Windows: ![]({{ disabled_badge_url }})
 {%- endif %}
 
 Current release info
 ====================
-Version: [![Anaconda-Server Badge](https://anaconda.org/conda-forge/{{package.name()}}/badges/version.svg)](https://anaconda.org/conda-forge/{{package.name()}})
-Downloads: [![Anaconda-Server Badge](https://anaconda.org/conda-forge/{{package.name()}}/badges/downloads.svg)](https://anaconda.org/conda-forge/{{package.name()}})
+Version: [![Anaconda-Server Badge](https://anaconda.org/{{ channel_name }}/{{ package.name() }}/badges/version.svg)](https://anaconda.org/{{ channel_name }}/{{ package.name() }})
+Downloads: [![Anaconda-Server Badge](https://anaconda.org/{{ channel_name }}/{{ package.name() }}/badges/downloads.svg)](https://anaconda.org/{{ channel_name }}/{{ package.name() }})
 
 
 Updating {{ package.name() }}-feedstock
@@ -105,9 +109,9 @@ package version, please fork this repository and submit a PR. Upon submission,
 your changes will be run on the appropriate platforms to give the reviewer an
 opportunity to confirm that the changes result in a successful build. Once
 merged, the recipe will be re-built and uploaded automatically to the
-`conda-forge` channel, whereupon the built conda packages will be available for
-everybody to install and use from the `conda-forge` channel.
-Note that all branches in the conda-forge/{{ package.name() }}-feedstock are
+`{{ channel_name }}` channel, whereupon the built conda packages will be available for
+everybody to install and use from the `{{ channel_name }}` channel.
+Note that all branches in the {{ github.user_or_org }}/{{ package.name() }}-feedstock are
 immediately built and any created packages are uploaded, so PRs should be based
 on branches in forks and branches in the main repository should only be used to
 build distinct package versions.
