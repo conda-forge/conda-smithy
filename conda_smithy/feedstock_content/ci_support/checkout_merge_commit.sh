@@ -23,6 +23,5 @@ fi
 # Check for merge conflicts.
 if [[ -n "${CIRCLE_PR_NUMBER}" ]]
 then
-    git checkout -qf "pr/${CIRCLE_PR_NUMBER}/merge"
     git branch --merged | grep "pr/${CIRCLE_PR_NUMBER}/head" > /dev/null
 fi
