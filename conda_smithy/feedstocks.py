@@ -242,6 +242,8 @@ def feedstocks_yaml(organization, feedstocks_directory, use_local=False, **feeds
 
         for ref in refs:
             remote_branch = ref.remote_head #.replace('{}/'.format(gh_me.login), '')
+            if remote_branch.endswith('HEAD'):
+                continue
 
             try:
                 if use_local:
