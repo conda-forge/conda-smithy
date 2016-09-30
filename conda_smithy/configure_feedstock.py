@@ -419,7 +419,7 @@ def main(forge_file_directory):
                 config_item.update(value)
     config['package'] = meta = meta_of_feedstock(forge_file_directory, config=build_config)
     if not config['github']['repo_name']:
-        config['github']['repo_name'] = meta.name()+'-feedstock'
+        config['github']['repo_name'] = os.path.basename(forge_dir)
 
     for each_ci in ["travis", "circle", "appveyor"]:
         if config[each_ci].pop("enabled", None):
