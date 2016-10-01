@@ -186,7 +186,7 @@ class Regenerate(Subcommand):
             print("\nCI support files regenerated. These need to be pushed to github!")
             print("\nYou can commit the changes with:\n\n"
                   "    git add -A\n"
-                  "    git commit -m 'MNT: rerender with conda-smithy %s'" % __version__)
+                  "    git commit -m 'MNT: Re-rendered with conda-smithy %s'" % __version__)
         except RuntimeError as e:
             print(e)
 
