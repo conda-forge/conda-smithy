@@ -34,7 +34,7 @@ It is possible to list all of the versions of `{{ package.name() }}` available o
 conda search {{ package.name() }} --channel {{ channel_name }}
 ```
 
-{% if channel_name == 'conda-forge' %}
+{%- if channel_name == 'conda-forge' -%}
 
 About conda-forge
 =================
