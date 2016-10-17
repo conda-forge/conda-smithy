@@ -41,10 +41,24 @@ def init_git_repo(target):
 def create_git_repo(target, msg):
     init_git_repo(target)
     subprocess.check_call(['git', 'add', '-A'], cwd=target)
-    if sys.platform == "win32":
-        # Ensure shell scripts have executable permissions.
-        subprocess.check_call(['git', 'update-index', '--chmod=+x', 'ci_support/checkout_merge_commit.sh'], cwd=target)
-        subprocess.check_call(['git', 'update-index', '--chmod=+x', 'ci_support/run_docker_build.sh'], cwd=target)
+
+    # Ensure shell scripts have executable permissions.
+    executable_files = [
+        "ci_support/checkout_merge_commit.sh",
+        "ci_support/run_docker_build.sh",
+    ]
+    for each_executable_file in executable_files:
+        if os.path.exists(os.path.join(target, each_executable_file)):
+            subprocess.check_call(
+                [
+                    'git',
+                    'update-index',
+                    '--chmod=+x',
+                    each_executable_file
+                ],
+                cwd=target
+            )
+
     subprocess.check_call(['git', 'commit', '-m', msg], cwd=target)
 
 
