@@ -11,7 +11,7 @@ general:
 {%- if matrix -%}
 checkout:
   post:
-    - ./ci_support/checkout_merge_commit.sh
+    - bash ci_support/checkout_merge_commit.sh
 
 machine:
   services:
@@ -30,7 +30,7 @@ test:
 {%- block env_test %}
 {%- if matrix %}
     # Run, test and (if we have a BINSTAR_TOKEN) upload the distributions.
-    - ./ci_support/run_docker_build.sh
+    - bash ci_support/run_docker_build.sh
 {% else %}
     # The Circle-CI build should not be active, but if this is not true for some reason, do a fast finish.
     - exit 0
