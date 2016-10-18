@@ -198,7 +198,6 @@ class Regenerate(Subcommand):
             configure_feedstock.main(args.feedstock_directory)
             print("\nCI support files regenerated. These need to be pushed to github!")
             print("\nYou can commit the changes with:\n\n"
-                  "    git add -A\n"
                   "    git commit -m 'MNT: Re-rendered with conda-smithy %s'" % __version__)
         except RuntimeError as e:
             print(e)

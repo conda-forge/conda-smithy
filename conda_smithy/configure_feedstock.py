@@ -32,6 +32,77 @@ def meta_config(meta):
     return config
 
 
+def get_repo(path, search_parent_directories=True):
+    repo = None
+    try:
+        import git
+        repo = git.Repo(
+            path,
+            search_parent_directories=search_parent_directories
+        )
+    except ImportError:
+        pass
+    except git.InvalidGitRepositoryError:
+        pass
+
+    return repo
+
+
+def get_file_blob(repo, filename):
+    idx = repo.index
+    rel_filepath = os.path.relpath(filename, repo.working_dir)
+    blob = idx.iter_blobs(lambda _: _[1].path == rel_filepath).next()[1]
+    return blob
+
+
+def get_mode_file(filename):
+    repo = get_repo(filename)
+    if repo:
+        blob = get_file_blob(repo, filename)
+        mode = blob.mode
+    else:
+        mode = os.stat(filename).st_mode
+
+    return mode
+
+
+def set_mode_file(filename, mode):
+    repo = get_repo(filename)
+    if repo:
+        blob = get_file_blob(repo, filename)
+        blob.mode |= mode
+        repo.index.add([blob])
+
+    os.chmod(filename, mode)
+
+
+@contextmanager
+def write_file(filename):
+    with open(filename, "w") as fh:
+        yield fh
+
+    repo = get_repo(filename)
+    if repo:
+        repo.index.add([filename])
+
+
+def remove_file(filename):
+    if os.path.exists(filename):
+        repo = get_repo(filename)
+        if repo:
+            repo.index.remove([filename])
+
+        os.remove(filename)
+
+
+def copy_file(src, dst):
+    shutil.copy2(src, dst)
+
+    repo = get_repo(dst)
+    if repo:
+        repo.index.add([dst])
+
+
 def render_run_docker_build(jinja_env, forge_config, forge_dir):
     meta = forge_config['package']
     with fudge_subdir('linux-64', build_config=meta_config(meta)):
@@ -55,8 +126,7 @@ def render_run_docker_build(jinja_env, forge_config, forge_dir):
             os.path.join(forge_dir, 'ci_support', 'checkout_merge_commit.sh'),
         ]
         for each_target_fname in target_fnames:
-            if os.path.exists(each_target_fname):
-                os.remove(each_target_fname)
+            remove_file(each_target_fname)
     else:
         forge_config["circle"]["enabled"] = True
         matrix = prepare_matrix_for_env_vars(matrix)
@@ -91,7 +161,7 @@ def render_run_docker_build(jinja_env, forge_config, forge_dir):
 
         template = jinja_env.get_template(template_name)
         target_fname = os.path.join(forge_dir, 'ci_support', 'run_docker_build.sh')
-        with open(target_fname, 'w') as fh:
+        with write_file(target_fname) as fh:
             fh.write(template.render(**forge_config))
 
         # Fix permissions.
@@ -100,12 +170,11 @@ def render_run_docker_build(jinja_env, forge_config, forge_dir):
             os.path.join(forge_dir, 'ci_support', 'checkout_merge_commit.sh'),
         ]
         for each_target_fname in target_fnames:
-            if os.path.exists(each_target_fname):
-                st = os.stat(each_target_fname)
-                os.chmod(
-                    each_target_fname,
-                    st.st_mode | stat.S_IXOTH | stat.S_IXGRP | stat.S_IXUSR
-                )
+            mode = get_mode_file(each_target_fname)
+            set_mode_file(
+                each_target_fname,
+                mode | stat.S_IXOTH | stat.S_IXGRP | stat.S_IXUSR
+            )
 
 
 def render_circle(jinja_env, forge_config, forge_dir):
@@ -126,7 +195,7 @@ def render_circle(jinja_env, forge_config, forge_dir):
     matrix = prepare_matrix_for_env_vars(matrix)
     forge_config = update_matrix(forge_config, matrix)
     template = jinja_env.get_template('circle.yml.tmpl')
-    with open(target_fname, 'w') as fh:
+    with write_file(target_fname) as fh:
         fh.write(template.render(**forge_config))
 
 
@@ -181,21 +250,20 @@ def render_travis(jinja_env, forge_config, forge_dir):
         # There are no cases to build (not even a case without any special
         # dependencies), so remove the .travis.yml if it exists.
         forge_config["travis"]["enabled"] = False
-        if os.path.exists(target_fname):
-            os.remove(target_fname)
+        remove_file(target_fname)
     else:
         forge_config["travis"]["enabled"] = True
         matrix = prepare_matrix_for_env_vars(matrix)
         forge_config = update_matrix(forge_config, matrix)
         template = jinja_env.get_template('travis.yml.tmpl')
-        with open(target_fname, 'w') as fh:
+        with write_file(target_fname) as fh:
             fh.write(template.render(**forge_config))
 
 
 def render_README(jinja_env, forge_config, forge_dir):
     template = jinja_env.get_template('README.md.tmpl')
     target_fname = os.path.join(forge_dir, 'README.md')
-    with open(target_fname, 'w') as fh:
+    with write_file(target_fname) as fh:
         fh.write(template.render(**forge_config))
 
 
@@ -284,14 +352,13 @@ def render_appveyor(jinja_env, forge_config, forge_dir):
         # There are no cases to build (not even a case without any special
         # dependencies), so remove the appveyor.yml if it exists.
         forge_config["appveyor"]["enabled"] = False
-        if os.path.exists(target_fname):
-            os.remove(target_fname)
+        remove_file(target_fname)
     else:
         forge_config["appveyor"]["enabled"] = True
         matrix = prepare_matrix_for_env_vars(matrix)
         forge_config = update_matrix(forge_config, matrix)
         template = jinja_env.get_template('appveyor.yml.tmpl')
-        with open(target_fname, 'w') as fh:
+        with write_file(target_fname) as fh:
             fh.write(template.render(**forge_config))
 
 
@@ -345,7 +412,7 @@ def copytree(src, dst, ignore=(), root_dst=None):
                 os.makedirs(d)
             copytree(s, d, ignore, root_dst=root_dst)
         else:
-            shutil.copy2(s, d)
+            copy_file(s, d)
 
 
 def copy_feedstock_content(forge_dir):
@@ -411,9 +478,7 @@ def main(forge_file_directory):
         os.path.join('ci_support', 'upload_or_check_non_existence.py'),
     ]
     for old_file in old_files:
-        fpath = os.path.join(forge_dir, old_file)
-        if os.path.exists(fpath):
-            os.remove(fpath)
+        remove_file(os.path.join(forge_dir, old_file))
 
     forge_yml = os.path.join(forge_dir, "conda-forge.yml")
     if not os.path.exists(forge_yml):
