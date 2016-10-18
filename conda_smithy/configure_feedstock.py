@@ -94,7 +94,7 @@ def render_run_docker_build(jinja_env, forge_config, forge_dir):
         with open(target_fname, 'w') as fh:
             fh.write(template.render(**forge_config))
         st = os.stat(target_fname)
-        os.chmod(target_fname, st.st_mode | stat.S_IEXEC)
+        os.chmod(target_fname, st.st_mode | stat.S_IXOTH | stat.S_IXGRP | stat.S_IXUSR)
 
 
 def render_circle(jinja_env, forge_config, forge_dir):
