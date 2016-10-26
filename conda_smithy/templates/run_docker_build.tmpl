@@ -25,6 +25,7 @@ show_channel_urls: true
 CONDARC
 )
 
+
 # In order for the conda-build process in the container to write to the mounted
 # volumes, we need to run with the same id as the host machine, which is
 # normally the owner of the mounted volumes, or at least has write permission
@@ -37,14 +38,13 @@ fi
 
 rm -f "$FEEDSTOCK_ROOT/build_artifacts/conda-forge-build-done"
 
-cat << EOF | {{ docker.executable }} run -i \
-                        -v "${RECIPE_ROOT}":/home/conda/recipe_root \
-                        -v "${FEEDSTOCK_ROOT}":/home/conda/feedstock_root \
-                        -e CONFIG="$CONFIG" \
-                        -e HOST_USER_ID="${HOST_USER_ID}" \
-                        -a stdin -a stdout -a stderr \
-                        {{ docker.image }} \
-                        {{ docker.command }} || exit 1
+ARTEFACTS="$FEEDSTOCK_ROOT/build_artefacts"
+
+test -d "$ARTEFACTS" || mkdir "$ARTEFACTS"
+DONE_CANARY="$ARTEFACTS/conda-forge-build-done"
+rm -f "$DONE_CANARY"
+
+cat << EOF > "$ARTEFACTS/conda-forge-build.sh"
 
 set -e
 set +x
@@ -68,9 +68,14 @@ conda build /home/conda/recipe_root -m /home/conda/feedstock_root/.ci_support/${
 touch /home/conda/feedstock_root/build_artifacts/conda-forge-build-done
 EOF
 
-# double-check that the build got to the end
-# see https://github.com/conda-forge/conda-smithy/pull/337
-# for a possible fix
-set -x
-test -f "$FEEDSTOCK_ROOT/build_artifacts/conda-forge-build-done" || exit 1
+docker run -i \
+    -v "${RECIPE_ROOT}":/home/conda/recipe_root \
+    -v "${FEEDSTOCK_ROOT}":/home/conda/feedstock_root \
+    -e HOST_USER_ID="${HOST_USER_ID}" \
+    {{ matrix_env_vars(matrix) }} \
+    {{ docker.image }} \
+    {{ docker.command }} \
+    /feedstock_root/build_artefacts/conda-forge-build.sh || exit $?
 
+# check that the end of the script was reached
+test -f "$DONE_CANARY"

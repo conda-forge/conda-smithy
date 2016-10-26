@@ -1,0 +1,25 @@
+{%- extends "docker_build.tmpl" -%}
+{% macro matrix_env(matrix_item) -%}
+  {%- for dep_name, version in matrix_item %}
+    export {{ dep_name }}={{version }}
+  {%- endfor %}
+{%- endmacro -%}
+
+{% macro matrix_super -%}
+  # Embarking on {{ matrix|length }} case(s).
+{%- for case in matrix %}
+  {%- if case %}
+    set -x
+    {{- matrix_env(case) }}
+    set +x
+  {%- endif %}
+    {{ super() | indent(4) }}
+{% endfor %}{%- endmacro -%}
+
+{%- block build -%}
+  {{ matrix_super() }}
+{% endblock -%}
+
+{%- block upload -%}
+  {{ matrix_super() }}
+{% endblock -%}
