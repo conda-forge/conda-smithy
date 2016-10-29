@@ -198,7 +198,7 @@ class Regenerate(Subcommand):
     def __call__(self, args):
         try:
             configure_feedstock.main(args.feedstock_directory)
-            print("\nRe-rendered with conda-smithy %s." % __version__)
+            print("\nRe-rendered with conda-smithy %s.\n" % __version__)
 
             is_git_repo = os.path.exists(os.path.join(args.feedstock_directory, ".git"))
             if is_git_repo:
@@ -226,14 +226,15 @@ class Regenerate(Subcommand):
                             git_args,
                             cwd=args.feedstock_directory
                         )
+                        print("")
                     else:
                         print(
-                            "\nYou can commit the changes with:\n\n"
+                            "You can commit the changes with:\n\n"
                             "    git commit -m 'MNT: Re-rendered with conda-smithy %s'\n" % __version__
                         )
-                    print("\nThese changes need to be pushed to github!\n")
+                    print("These changes need to be pushed to github!\n")
                 else:
-                    print("\nNo changes made. This feedstock is up-to-date.\n")
+                    print("No changes made. This feedstock is up-to-date.\n")
         except RuntimeError as e:
             print(e)
         except subprocess.CalledProcessError as e:
