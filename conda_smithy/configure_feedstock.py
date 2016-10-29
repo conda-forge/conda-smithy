@@ -21,6 +21,14 @@ from conda_build_all.version_matrix import special_case_version_matrix, filter_c
 from conda_build_all.resolved_distribution import ResolvedDistribution
 from jinja2 import Environment, FileSystemLoader
 
+from conda_smithy.feedstock_io import (
+    get_mode_file,
+    set_mode_file,
+    write_file,
+    remove_file,
+    copy_file,
+)
+
 conda_forge_content = os.path.abspath(os.path.dirname(__file__))
 
 
@@ -55,8 +63,7 @@ def render_run_docker_build(jinja_env, forge_config, forge_dir):
             os.path.join(forge_dir, 'ci_support', 'checkout_merge_commit.sh'),
         ]
         for each_target_fname in target_fnames:
-            if os.path.exists(each_target_fname):
-                os.remove(each_target_fname)
+            remove_file(each_target_fname)
     else:
         forge_config["circle"]["enabled"] = True
         matrix = prepare_matrix_for_env_vars(matrix)
@@ -91,7 +98,7 @@ def render_run_docker_build(jinja_env, forge_config, forge_dir):
 
         template = jinja_env.get_template(template_name)
         target_fname = os.path.join(forge_dir, 'ci_support', 'run_docker_build.sh')
-        with open(target_fname, 'w') as fh:
+        with write_file(target_fname) as fh:
             fh.write(template.render(**forge_config))
 
         # Fix permissions.
@@ -100,12 +107,11 @@ def render_run_docker_build(jinja_env, forge_config, forge_dir):
             os.path.join(forge_dir, 'ci_support', 'checkout_merge_commit.sh'),
         ]
         for each_target_fname in target_fnames:
-            if os.path.exists(each_target_fname):
-                st = os.stat(each_target_fname)
-                os.chmod(
-                    each_target_fname,
-                    st.st_mode | stat.S_IXOTH | stat.S_IXGRP | stat.S_IXUSR
-                )
+            mode = get_mode_file(each_target_fname)
+            set_mode_file(
+                each_target_fname,
+                mode | stat.S_IXOTH | stat.S_IXGRP | stat.S_IXUSR
+            )
 
 
 def render_circle(jinja_env, forge_config, forge_dir):
@@ -126,7 +132,7 @@ def render_circle(jinja_env, forge_config, forge_dir):
     matrix = prepare_matrix_for_env_vars(matrix)
     forge_config = update_matrix(forge_config, matrix)
     template = jinja_env.get_template('circle.yml.tmpl')
-    with open(target_fname, 'w') as fh:
+    with write_file(target_fname) as fh:
         fh.write(template.render(**forge_config))
 
 
@@ -181,21 +187,20 @@ def render_travis(jinja_env, forge_config, forge_dir):
         # There are no cases to build (not even a case without any special
         # dependencies), so remove the .travis.yml if it exists.
         forge_config["travis"]["enabled"] = False
-        if os.path.exists(target_fname):
-            os.remove(target_fname)
+        remove_file(target_fname)
     else:
         forge_config["travis"]["enabled"] = True
         matrix = prepare_matrix_for_env_vars(matrix)
         forge_config = update_matrix(forge_config, matrix)
         template = jinja_env.get_template('travis.yml.tmpl')
-        with open(target_fname, 'w') as fh:
+        with write_file(target_fname) as fh:
             fh.write(template.render(**forge_config))
 
 
 def render_README(jinja_env, forge_config, forge_dir):
     template = jinja_env.get_template('README.md.tmpl')
     target_fname = os.path.join(forge_dir, 'README.md')
-    with open(target_fname, 'w') as fh:
+    with write_file(target_fname) as fh:
         fh.write(template.render(**forge_config))
 
 
@@ -284,14 +289,13 @@ def render_appveyor(jinja_env, forge_config, forge_dir):
         # There are no cases to build (not even a case without any special
         # dependencies), so remove the appveyor.yml if it exists.
         forge_config["appveyor"]["enabled"] = False
-        if os.path.exists(target_fname):
-            os.remove(target_fname)
+        remove_file(target_fname)
     else:
         forge_config["appveyor"]["enabled"] = True
         matrix = prepare_matrix_for_env_vars(matrix)
         forge_config = update_matrix(forge_config, matrix)
         template = jinja_env.get_template('appveyor.yml.tmpl')
-        with open(target_fname, 'w') as fh:
+        with write_file(target_fname) as fh:
             fh.write(template.render(**forge_config))
 
 
@@ -345,7 +349,7 @@ def copytree(src, dst, ignore=(), root_dst=None):
                 os.makedirs(d)
             copytree(s, d, ignore, root_dst=root_dst)
         else:
-            shutil.copy2(s, d)
+            copy_file(s, d)
 
 
 def copy_feedstock_content(forge_dir):
@@ -411,9 +415,7 @@ def main(forge_file_directory):
         os.path.join('ci_support', 'upload_or_check_non_existence.py'),
     ]
     for old_file in old_files:
-        fpath = os.path.join(forge_dir, old_file)
-        if os.path.exists(fpath):
-            os.remove(fpath)
+        remove_file(os.path.join(forge_dir, old_file))
 
     forge_yml = os.path.join(forge_dir, "conda-forge.yml")
     if not os.path.exists(forge_yml):
