@@ -93,8 +93,19 @@ def render_run_docker_build(jinja_env, forge_config, forge_dir):
         target_fname = os.path.join(forge_dir, 'ci_support', 'run_docker_build.sh')
         with open(target_fname, 'w') as fh:
             fh.write(template.render(**forge_config))
-        st = os.stat(target_fname)
-        os.chmod(target_fname, st.st_mode | stat.S_IEXEC)
+
+        # Fix permissions.
+        target_fnames = [
+            os.path.join(forge_dir, 'ci_support', 'run_docker_build.sh'),
+            os.path.join(forge_dir, 'ci_support', 'checkout_merge_commit.sh'),
+        ]
+        for each_target_fname in target_fnames:
+            if os.path.exists(each_target_fname):
+                st = os.stat(each_target_fname)
+                os.chmod(
+                    each_target_fname,
+                    st.st_mode | stat.S_IXOTH | stat.S_IXGRP | stat.S_IXUSR
+                )
 
 
 def render_circle(jinja_env, forge_config, forge_dir):
