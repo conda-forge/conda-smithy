@@ -57,13 +57,19 @@ def write_file(filename):
         repo.index.add([filename])
 
 
-def remove_file(filename):
-    if os.path.exists(filename):
-        repo = get_repo(filename)
-        if repo:
-            repo.index.remove([filename])
+def touch_file(filename):
+    with write_file(filename) as fh:
+        fh.write("")
 
-        os.remove(filename)
+
+def remove_file(filename):
+    touch_file(filename)
+
+    repo = get_repo(filename)
+    if repo:
+        repo.index.remove([filename])
+
+    os.remove(filename)
 
 
 def copy_file(src, dst):
