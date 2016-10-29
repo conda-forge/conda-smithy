@@ -198,7 +198,7 @@ class Regenerate(Subcommand):
     def __call__(self, args):
         try:
             configure_feedstock.main(args.feedstock_directory)
-            print("\nRe-rendered with conda-smithy %s'." % __version__)
+            print("\nRe-rendered with conda-smithy %s." % __version__)
 
             is_git_repo = os.path.exists(os.path.join(args.feedstock_directory, ".git"))
             if is_git_repo:
