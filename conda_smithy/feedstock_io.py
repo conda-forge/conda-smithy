@@ -22,7 +22,7 @@ def get_repo(path, search_parent_directories=True):
 def get_file_blob(repo, filename):
     idx = repo.index
     rel_filepath = os.path.relpath(filename, repo.working_dir)
-    blob = idx.iter_blobs(lambda _: _[1].path == rel_filepath).next()[1]
+    blob = next(idx.iter_blobs(lambda _: _[1].path == rel_filepath))[1]
     return blob
 
 
