@@ -1,3 +1,4 @@
 *.pyc
 
 build_artifacts
+ci_support/build.sh

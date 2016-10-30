@@ -38,13 +38,13 @@ fi
 
 rm -f "$FEEDSTOCK_ROOT/build_artifacts/conda-forge-build-done"
 
-ARTEFACTS="$FEEDSTOCK_ROOT/build_artefacts"
+ARTFACTS="$FEEDSTOCK_ROOT/build_artifacts"
 
-test -d "$ARTEFACTS" || mkdir "$ARTEFACTS"
-DONE_CANARY="$ARTEFACTS/conda-forge-build-done"
+test -d "$ARTIFACTS" || mkdir "$ARTIFACTS"
+DONE_CANARY="$ARTIFACTS/conda-forge-build-done"
 rm -f "$DONE_CANARY"
 
-cat << EOF > "$ARTEFACTS/conda-forge-build.sh"
+cat << EOF > "$FEEDSTOCK_ROOT/ci_support/build.sh"
 
 set -e
 set +x
@@ -75,7 +75,7 @@ docker run -i \
     {{ matrix_env_vars(matrix) }} \
     {{ docker.image }} \
     {{ docker.command }} \
-    /feedstock_root/build_artefacts/conda-forge-build.sh || exit $?
+    /home/conda/feedstock_root/ci_support/build.sh || exit $?
 
 # check that the end of the script was reached
 test -f "$DONE_CANARY"
