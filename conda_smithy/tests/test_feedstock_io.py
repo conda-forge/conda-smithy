@@ -269,6 +269,35 @@ class TestFeedstockIO_w_Git(unittest.TestCase):
         self.assertFalse(list(self.repo.index.iter_blobs(filter_filename)))
 
 
+    def test_copy_file(self):
+        filename1 = "test1.txt"
+        filename2 = "test2.txt"
+
+        write_text = "text"
+        with open(filename1, "w") as fh:
+            fh.write(write_text)
+
+        self.assertTrue(os.path.exists(filename1))
+        self.assertFalse(os.path.exists(filename2))
+
+        filter_filename = lambda _: _[1].path == filename2
+        self.assertFalse(list(self.repo.index.iter_blobs(filter_filename)))
+
+        fio.copy_file(filename1, filename2)
+
+        self.assertTrue(os.path.exists(filename1))
+        self.assertTrue(os.path.exists(filename2))
+
+        filter_filename = lambda _: _[1].path == filename2
+        self.assertTrue(list(self.repo.index.iter_blobs(filter_filename)))
+
+        read_text = ""
+        with open(filename2, "r") as fh:
+            read_text = fh.read()
+
+        self.assertEqual(write_text, read_text)
+
+
     def tearDown(self):
         os.chdir(self.old_dir)
         del self.old_dir
