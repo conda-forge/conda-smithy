@@ -228,6 +228,24 @@ class TestFeedstockIO_w_Git(unittest.TestCase):
         self.assertEqual(write_text, read_text)
 
 
+    def test_touch_file(self):
+        filename = "test.txt"
+
+        fio.touch_file(filename)
+
+        read_text = ""
+        with open(filename, "r") as fh:
+            read_text = fh.read()
+
+        self.assertEqual("", read_text)
+
+        filter_filename = lambda _: _[1].path == filename
+        blob = list(self.repo.index.iter_blobs(filter_filename))[0][1]
+        read_text = blob.data_stream[3].read().decode("utf-8")
+
+        self.assertEqual("", read_text)
+
+
     def tearDown(self):
         os.chdir(self.old_dir)
         del self.old_dir
