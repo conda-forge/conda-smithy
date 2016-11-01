@@ -83,6 +83,18 @@ class TestFeedstockIO_wo_Git(unittest.TestCase):
         self.assertEqual(write_text, read_text)
 
 
+    def test_touch_file(self):
+        filename = "test.txt"
+
+        fio.touch_file(filename)
+
+        read_text = ""
+        with open(filename, "r") as fh:
+            read_text = fh.read()
+
+        self.assertEqual("", read_text)
+
+
     def tearDown(self):
         os.chdir(self.old_dir)
         del self.old_dir
