@@ -75,6 +75,10 @@ def remove_file(filename):
 
     os.remove(filename)
 
+    dirname = os.path.dirname(filename)
+    if not os.listdir(dirname):
+        os.removedirs(dirname)
+
 
 def copy_file(src, dst):
     shutil.copy2(src, dst)
