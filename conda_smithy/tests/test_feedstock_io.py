@@ -150,6 +150,10 @@ class TestFeedstockIO_w_Git(unittest.TestCase):
         os.chdir(self.tmp_dir)
 
 
+    def test_repo(self):
+        self.assertTrue(isinstance(fio.get_repo(""), git.Repo))
+
+
     def tearDown(self):
         os.chdir(self.old_dir)
         del self.old_dir
