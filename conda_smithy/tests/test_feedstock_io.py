@@ -154,6 +154,23 @@ class TestFeedstockIO_w_Git(unittest.TestCase):
         self.assertTrue(isinstance(fio.get_repo(""), git.Repo))
 
 
+    def test_get_file_blob(self):
+        filename = "test.txt"
+
+        with open(filename, "w") as fh:
+            fh.write("")
+
+        self.repo.index.add([filename])
+
+        blob = None
+        try:
+            blob = fio.get_file_blob(self.repo, filename)
+        except StopIteration:
+            self.fail("Unable to find the file we added.")
+
+        self.assertEqual(blob.name, filename)
+
+
     def test_get_mode_file(self):
         filename = "test.txt"
 
