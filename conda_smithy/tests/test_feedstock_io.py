@@ -1,4 +1,7 @@
+import functools
+import operator as op
 import os
+import stat
 import shutil
 import tempfile
 import unittest
@@ -16,6 +19,30 @@ class TestFeedstockIO_wo_Git(unittest.TestCase):
 
     def test_repo(self):
         self.assertTrue(fio.get_repo("") is None)
+
+
+    def test_get_mode_file(self):
+        filename = "test.txt"
+
+        with open(filename, "w") as fh:
+            fh.write("")
+
+        perms = [
+            stat.S_IWUSR,
+            stat.S_IXUSR,
+            stat.S_IRUSR,
+            stat.S_IXGRP,
+            stat.S_IRGRP,
+            stat.S_IROTH
+        ]
+
+        set_mode = functools.reduce(op.or_, perms)
+
+        os.chmod(filename, set_mode)
+
+        file_mode = fio.get_mode_file(filename)
+
+        self.assertEqual(file_mode & set_mode, set_mode)
 
 
     def tearDown(self):
