@@ -182,6 +182,32 @@ class TestFeedstockIO_w_Git(unittest.TestCase):
         self.assertEqual(file_mode & set_mode, set_mode)
 
 
+    def test_set_mode_file(self):
+        filename = "test.txt"
+
+        with open(filename, "w") as fh:
+            fh.write("")
+
+        self.repo.index.add([filename])
+
+        perms = [
+            stat.S_IWUSR,
+            stat.S_IXUSR,
+            stat.S_IRUSR,
+            stat.S_IXGRP,
+            stat.S_IRGRP,
+            stat.S_IROTH
+        ]
+
+        set_mode = functools.reduce(op.or_, perms)
+
+        fio.set_mode_file(filename, set_mode)
+
+        file_mode = os.stat(filename).st_mode
+
+        self.assertEqual(file_mode & set_mode, set_mode)
+
+
     def tearDown(self):
         os.chdir(self.old_dir)
         del self.old_dir
