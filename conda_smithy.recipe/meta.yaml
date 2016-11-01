@@ -10,6 +10,9 @@ source:
 build:
   number: 0
   script: python setup.py install --single-version-externally-managed --record=record.txt
+  entry_points:
+    - feedstocks = conda_smithy.feedstocks:main
+    - conda-smithy = conda_smithy.cli:main
 
 requirements:
   build:
