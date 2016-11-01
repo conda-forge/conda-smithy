@@ -95,6 +95,19 @@ class TestFeedstockIO_wo_Git(unittest.TestCase):
         self.assertEqual("", read_text)
 
 
+    def test_remove_file(self):
+        filename = "test.txt"
+
+        with open(filename, "w") as fh:
+            fh.write("")
+
+        self.assertTrue(os.path.exists(filename))
+
+        fio.remove_file(filename)
+
+        self.assertFalse(os.path.exists(filename))
+
+
     def tearDown(self):
         os.chdir(self.old_dir)
         del self.old_dir
