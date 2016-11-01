@@ -246,6 +246,29 @@ class TestFeedstockIO_w_Git(unittest.TestCase):
         self.assertEqual("", read_text)
 
 
+    def test_remove_file(self):
+        filename = "test.txt"
+
+        with open(filename, "w") as fh:
+            fh.write("")
+
+        self.repo.index.add([filename])
+
+        self.assertTrue(os.path.exists(filename))
+
+        filter_filename = lambda _: _[1].path == filename
+        self.assertTrue(list(self.repo.index.iter_blobs(filter_filename)))
+
+        self.assertTrue(os.path.exists(filename))
+
+        fio.remove_file(filename)
+
+        self.assertFalse(os.path.exists(filename))
+
+        filter_filename = lambda _: _[1].path == filename
+        self.assertFalse(list(self.repo.index.iter_blobs(filter_filename)))
+
+
     def tearDown(self):
         os.chdir(self.old_dir)
         del self.old_dir
