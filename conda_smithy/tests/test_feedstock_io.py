@@ -69,6 +69,20 @@ class TestFeedstockIO_wo_Git(unittest.TestCase):
         self.assertEqual(file_mode & set_mode, set_mode)
 
 
+    def test_write_file(self):
+        filename = "test.txt"
+
+        write_text = "text"
+        with fio.write_file(filename) as fh:
+            fh.write(write_text)
+
+        read_text = ""
+        with open(filename, "r") as fh:
+            read_text = fh.read()
+
+        self.assertEqual(write_text, read_text)
+
+
     def tearDown(self):
         os.chdir(self.old_dir)
         del self.old_dir
