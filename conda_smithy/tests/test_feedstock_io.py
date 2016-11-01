@@ -14,6 +14,10 @@ class TestFeedstockIO_wo_Git(unittest.TestCase):
         os.chdir(self.tmp_dir)
 
 
+    def test_repo(self):
+        self.assertTrue(fio.get_repo("") is None)
+
+
     def tearDown(self):
         os.chdir(self.old_dir)
         del self.old_dir
