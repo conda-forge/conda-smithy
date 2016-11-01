@@ -46,7 +46,7 @@ install:
 
     # Cywing's git breaks conda-build. (See https://github.com/conda-forge/conda-smithy-feedstock/pull/2.)
     - cmd: rmdir C:\cygwin /s /q
-    - appveyor DownloadFile "https://raw.githubusercontent.com/conda-forge/conda-smithy/master/bootstrap-obvious-ci-and-miniconda.py"
+    - appveyor DownloadFile "https://raw.githubusercontent.com/conda-forge/conda-smithy/e976c7e84bb3c4846e7562afd1a42c4b535b51f5/bootstrap-obvious-ci-and-miniconda.py"
     - cmd: python bootstrap-obvious-ci-and-miniconda.py %CONDA_INSTALL_LOCN% %TARGET_ARCH% %CONDA_PY:~0,1% --without-obvci
 
     # Add a hack to switch to `conda` version `4.1.12` before activating.
