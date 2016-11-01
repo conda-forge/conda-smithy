@@ -6,6 +6,8 @@ import shutil
 import tempfile
 import unittest
 
+import git
+
 import conda_smithy.feedstock_io as fio
 
 
@@ -129,6 +131,23 @@ class TestFeedstockIO_wo_Git(unittest.TestCase):
             read_text = fh.read()
 
         self.assertEqual(write_text, read_text)
+
+
+    def tearDown(self):
+        os.chdir(self.old_dir)
+        del self.old_dir
+
+        shutil.rmtree(self.tmp_dir)
+        del self.tmp_dir
+
+
+class TestFeedstockIO_w_Git(unittest.TestCase):
+    def setUp(self):
+        self.old_dir = os.getcwd()
+
+        self.tmp_dir = tempfile.mkdtemp()
+        self.repo = git.Repo.init(self.tmp_dir)
+        os.chdir(self.tmp_dir)
 
 
     def tearDown(self):
