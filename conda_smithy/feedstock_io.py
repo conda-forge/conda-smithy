@@ -49,6 +49,10 @@ def set_mode_file(filename, mode):
 
 @contextmanager
 def write_file(filename):
+    dirname = os.path.dirname(filename)
+    if not os.path.exists(dirname):
+        os.makedirs(dirname)
+
     with open(filename, "w") as fh:
         yield fh
 
@@ -70,6 +74,10 @@ def remove_file(filename):
         repo.index.remove([filename])
 
     os.remove(filename)
+
+    dirname = os.path.dirname(filename)
+    if not os.listdir(dirname):
+        os.removedirs(dirname)
 
 
 def copy_file(src, dst):
