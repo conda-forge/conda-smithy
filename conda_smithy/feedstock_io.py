@@ -53,7 +53,7 @@ def set_mode_file(filename, mode):
 @contextmanager
 def write_file(filename):
     dirname = os.path.dirname(filename)
-    if not os.path.exists(dirname):
+    if dirname and not os.path.exists(dirname):
         os.makedirs(dirname)
 
     with open(filename, "w") as fh:
@@ -79,7 +79,7 @@ def remove_file(filename):
     os.remove(filename)
 
     dirname = os.path.dirname(filename)
-    if not os.listdir(dirname):
+    if dirname and not os.listdir(dirname):
         os.removedirs(dirname)
 
 
