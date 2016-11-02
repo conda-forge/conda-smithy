@@ -1,8 +1,8 @@
 {% set data = load_setuptools() %}
 
 package:
-    name: conda-smithy
-    version: {{ (data.get('version') or '0.1.0dev2') | replace('+', '_') | replace('/', '_') }}
+  name: conda-smithy
+  version: {{ (data.get('version') or '0.1.0dev2') | replace('+', '_') | replace('/', '_') }}
 
 source:
   path: ../
@@ -10,15 +10,17 @@ source:
 build:
   number: 0
   script: python setup.py install --single-version-externally-managed --record=record.txt
+  entry_points:
+    - feedstocks = conda_smithy.feedstocks:main
+    - conda-smithy = conda_smithy.cli:main
 
 requirements:
   build:
-    - setuptools
     - python
+    - setuptools
   run:
     - python
     - conda-build-all
-    - setuptools
     - conda
     - conda-build >=1.21.12
     - jinja2
@@ -32,14 +34,16 @@ test:
   requires:
     - nose
     - mock
-  commands:
-    - conda smithy --help
   imports:
     - conda_smithy
     - conda_smithy.ci_register
     - conda_smithy.configure_feedstock
+  commands:
+    - conda smithy --help
 
 about:
   home: https://github.com/conda-forge/conda-smithy
   license: BSD 3-clause
+  license_family: BSD
+  license_file: LICENSE
   summary: A package to create repositories for conda recipes, and automate their building with CI tools on Linux, OSX and Windows.
