@@ -21,10 +21,9 @@ def main():
         # not zip-safe.
         zip_safe=False,
         cmdclass=versioneer.get_cmdclass(),
-        extras_require={
-            'test': ['six']
-        }
-        )
+        tests_require=['six'],
+        test_suite='conda_smithy',
+    )
     setup(**skw)
 
 
