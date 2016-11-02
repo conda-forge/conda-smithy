@@ -20,11 +20,17 @@ def get_repo(path, search_parent_directories=True):
 
 
 def get_file_blob(repo, filename):
-    idx = repo.index
-    relrepo = lambda pth: os.path.relpath(pth, repo.working_dir)
+    from git.index.typ import BlobFilter
 
-    rel_filepath = relrepo(filename)
-    blob = next(idx.iter_blobs(lambda b: relrepo(b[1].path) == rel_filepath))[1]
+    idx = repo.index
+
+    repo_dir = os.path.abspath(repo.working_dir)
+
+    filename = os.path.abspath(filename)
+    filename = os.path.relpath(filename, repo_dir)
+    filename = os.path.normpath(filename)
+
+    blob = next(idx.iter_blobs(BlobFilter(filename)))[1]
 
     return blob
 
