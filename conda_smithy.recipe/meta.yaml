@@ -32,7 +32,6 @@ requirements:
 
 test:
   requires:
-    - nose
     - mock
   imports:
     - conda_smithy
