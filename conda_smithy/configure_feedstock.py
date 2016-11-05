@@ -1,5 +1,6 @@
 from __future__ import print_function, unicode_literals
 
+from collections import OrderedDict as odict
 from contextlib import contextmanager
 import os
 import shutil
@@ -293,6 +294,30 @@ def render_appveyor(jinja_env, forge_config, forge_dir):
     else:
         forge_config["appveyor"]["enabled"] = True
         matrix = prepare_matrix_for_env_vars(matrix)
+
+        # Specify AppVeyor Miniconda location.
+        matrix, old_matrix = [], matrix
+        for case in old_matrix:
+            case = odict(case)
+
+            # Set `root`'s `python` version.
+            case["CONDA_INSTALL_LOCN"] = "C:\\\\Miniconda"
+            if case.get("CONDA_PY") == "27":
+                case["CONDA_INSTALL_LOCN"] += ""
+            elif case.get("CONDA_PY") == "34":
+                case["CONDA_INSTALL_LOCN"] += "3"
+            elif case.get("CONDA_PY") == "35":
+                case["CONDA_INSTALL_LOCN"] += "35"
+
+            # Set architecture.
+            if case.get("TARGET_ARCH") == "x86":
+                case["CONDA_INSTALL_LOCN"] += ""
+            if case.get("TARGET_ARCH") == "x64":
+                case["CONDA_INSTALL_LOCN"] += "-x64"
+
+            matrix.append(list(case.items()))
+        del old_matrix
+
         forge_config = update_matrix(forge_config, matrix)
         template = jinja_env.get_template('appveyor.yml.tmpl')
         with write_file(target_fname) as fh:
