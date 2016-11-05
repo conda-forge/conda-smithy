@@ -13,7 +13,7 @@ environment:
 
   # We set a default Python version for the miniconda that is to be installed. This can be
   # overridden in the matrix definition where appropriate.
-  CONDA_PY: "27"
+  CONDA_PY: "35"
 
   {%- for name, hashed_secure in (appveyor.secure or {}) | dictsort %}
   {{ name }}:
