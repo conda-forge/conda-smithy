@@ -197,6 +197,15 @@ class Test_linter(unittest.TestCase):
         meta = {'source': {'url': None, 'md5': None}}
         self.assertNotIn(expected_message, linter.lintify(meta))
 
+    def test_redundant_license(self):
+        meta = {'about': {'home': 'a URL',
+                          'summary': 'A test summary',
+                          'license': 'MIT License'}}
+        lints = linter.lintify(meta)
+        expected_message = ('The recipe `license` should not include '
+                            'the word "License".')
+        self.assertIn(expected_message, lints)
+
 
 class TestCLI_recipe_lint(unittest.TestCase):
     def test_cli_fail(self):

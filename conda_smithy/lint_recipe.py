@@ -116,6 +116,12 @@ def lintify(meta, recipe_dir=None):
         lints.append('When defining a source/url please add a sha256, sha1 '
                      'or md5 checksum (sha256 preferably).')
 
+    # 10: License should not include the word 'license'.
+    license = about_section.get('license', '').lower()
+    if 'license' in license.lower():
+        lints.append('The recipe `license` should not include the word '
+                     '"License".')
+
     return lints
 
 
