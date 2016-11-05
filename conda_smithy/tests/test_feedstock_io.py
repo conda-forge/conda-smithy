@@ -1,7 +1,10 @@
 from __future__ import unicode_literals
 
+import functools
 import io
+import operator as op
 import os
+import stat
 import shutil
 import tempfile
 import unittest
@@ -87,6 +90,34 @@ class TestFeedstockIO(unittest.TestCase):
                 self.fail("Unable to find the file we added.")
 
             self.assertEqual(blob.name, os.path.basename(filename))
+
+
+    def test_get_mode_file(self):
+        perms = [
+            stat.S_IWUSR,
+            stat.S_IXUSR,
+            stat.S_IRUSR,
+            stat.S_IXGRP,
+            stat.S_IRGRP,
+            stat.S_IROTH
+        ]
+
+        set_mode = functools.reduce(op.or_, perms)
+
+        for tmp_dir, repo, pathfunc in parameterize():
+            filename = "test.txt"
+            filename = os.path.join(tmp_dir, filename)
+            with io.open(filename, "w", encoding = "utf-8") as fh:
+                fh.write("")
+
+            os.chmod(filename, set_mode)
+            if repo is not None:
+                blob = repo.index.add([filename])[0].to_blob(repo)
+                blob.mode = set_mode
+                repo.index.add([blob])
+
+            file_mode = fio.get_mode_file(pathfunc(filename))
+            self.assertEqual(file_mode & set_mode, set_mode)
 
 
     def tearDown(self):
