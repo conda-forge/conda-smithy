@@ -175,6 +175,26 @@ class TestFeedstockIO(unittest.TestCase):
                     self.assertEqual(write_text, read_text)
 
 
+    def test_touch_file(self):
+        for tmp_dir, repo, pathfunc in parameterize():
+            for filename in ["test.txt", "dir1/dir2/test.txt"]:
+                filename = os.path.join(tmp_dir, filename)
+
+                fio.touch_file(pathfunc(filename))
+
+                read_text = ""
+                with io.open(filename, "r", encoding="utf-8") as fh:
+                    read_text = fh.read()
+
+                self.assertEqual("", read_text)
+
+                if repo is not None:
+                    blob = next(repo.index.iter_blobs(BlobFilter(filename)))[1]
+                    read_text = blob.data_stream[3].read().decode("utf-8")
+
+                    self.assertEqual("", read_text)
+
+
     def tearDown(self):
         os.chdir(self.old_dir)
         del self.old_dir
