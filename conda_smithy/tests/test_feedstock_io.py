@@ -10,6 +10,7 @@ import tempfile
 import unittest
 
 import git
+from git.index.typ import BlobFilter
 
 import conda_smithy.feedstock_io as fio
 
@@ -118,6 +119,35 @@ class TestFeedstockIO(unittest.TestCase):
 
             file_mode = fio.get_mode_file(pathfunc(filename))
             self.assertEqual(file_mode & set_mode, set_mode)
+
+
+    def test_set_mode_file(self):
+        perms = [
+            stat.S_IWUSR,
+            stat.S_IXUSR,
+            stat.S_IRUSR,
+            stat.S_IXGRP,
+            stat.S_IRGRP,
+            stat.S_IROTH
+        ]
+
+        set_mode = functools.reduce(op.or_, perms)
+
+        for tmp_dir, repo, pathfunc in parameterize():
+            filename = "test.txt"
+            filename = os.path.join(tmp_dir, filename)
+            with io.open(filename, "w", encoding = "utf-8") as fh:
+                fh.write("")
+            if repo is not None:
+                repo.index.add([filename])
+
+            fio.set_mode_file(pathfunc(filename), set_mode)
+
+            file_mode = os.stat(filename).st_mode
+            self.assertEqual(file_mode & set_mode, set_mode)
+            if repo is not None:
+                blob = next(repo.index.iter_blobs(BlobFilter(filename)))[1]
+                self.assertEqual(blob.mode & set_mode, set_mode)
 
 
     def tearDown(self):
