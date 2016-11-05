@@ -1,4 +1,7 @@
+from __future__ import unicode_literals
+
 from contextlib import contextmanager
+import io
 import os
 import shutil
 
@@ -62,7 +65,7 @@ def write_file(filename):
     if dirname and not os.path.exists(dirname):
         os.makedirs(dirname)
 
-    with open(filename, "w") as fh:
+    with io.open(filename, "w", encoding="utf-8") as fh:
         yield fh
 
     repo = get_repo(filename)
