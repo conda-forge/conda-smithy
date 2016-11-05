@@ -28,7 +28,7 @@ install:
     - python setup.py install
 
 script:
-    - nosetests conda_smithy
+    - python setup.py test
 
 
 # We store the files that are downloaded from continuum.io, but not the environments that are created.
