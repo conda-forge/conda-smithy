@@ -195,6 +195,41 @@ class TestFeedstockIO(unittest.TestCase):
                     self.assertEqual("", read_text)
 
 
+    def test_remove_file(self):
+        for tmp_dir, repo, pathfunc in parameterize():
+            for filename in ["test.txt", "dir1/dir2/test.txt"]:
+                dirname = os.path.dirname(filename)
+                if dirname and not os.path.exists(dirname):
+                    os.makedirs(dirname)
+
+                filename = os.path.join(tmp_dir, filename)
+
+                with io.open(filename, "w", encoding="utf-8") as fh:
+                    fh.write("")
+                if repo is not None:
+                    repo.index.add([filename])
+
+                self.assertTrue(os.path.exists(filename))
+                if dirname:
+                    self.assertTrue(os.path.exists(dirname))
+                    self.assertTrue(os.path.exists(os.path.dirname(dirname)))
+                if repo is not None:
+                    self.assertTrue(
+                        list(repo.index.iter_blobs(BlobFilter(filename)))
+                    )
+
+                fio.remove_file(pathfunc(filename))
+
+                self.assertFalse(os.path.exists(filename))
+                if dirname:
+                    self.assertFalse(os.path.exists(dirname))
+                    self.assertFalse(os.path.exists(os.path.dirname(dirname)))
+                if repo is not None:
+                    self.assertFalse(
+                        list(repo.index.iter_blobs(BlobFilter(filename)))
+                    )
+
+
     def tearDown(self):
         os.chdir(self.old_dir)
         del self.old_dir
