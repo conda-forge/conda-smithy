@@ -10,6 +10,7 @@ Overview
 + Connect the repo to the CI services travis-ci.org, appveyor.com, circleci.com
 
 [![Build Status](https://travis-ci.org/conda-forge/conda-smithy.svg)](https://travis-ci.org/conda-forge/conda-smithy)
+[![Coverage Status](https://coveralls.io/repos/github/conda-forge/conda-smithy/badge.svg?branch=master)](https://coveralls.io/github/conda-forge/conda-smithy?branch=master)
 
 Installation
 ------------
