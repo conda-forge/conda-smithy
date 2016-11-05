@@ -230,6 +230,47 @@ class TestFeedstockIO(unittest.TestCase):
                     )
 
 
+    def test_copy_file(self):
+        for tmp_dir, repo, pathfunc in parameterize():
+            filename1 = "test1.txt"
+            filename2 = "test2.txt"
+
+            filename1 = os.path.join(tmp_dir, filename1)
+            filename2 = os.path.join(tmp_dir, filename2)
+
+            write_text = "text"
+            with io.open(filename1, "w", encoding = "utf-8") as fh:
+                fh.write(write_text)
+
+            self.assertTrue(os.path.exists(filename1))
+            self.assertFalse(os.path.exists(filename2))
+            if repo is not None:
+                self.assertFalse(
+                    list(repo.index.iter_blobs(BlobFilter(filename2)))
+                )
+
+            fio.copy_file(pathfunc(filename1), pathfunc(filename2))
+
+            self.assertTrue(os.path.exists(filename1))
+            self.assertTrue(os.path.exists(filename2))
+            if repo is not None:
+                self.assertTrue(
+                    list(repo.index.iter_blobs(BlobFilter(filename2)))
+                )
+
+            read_text = ""
+            with io.open(filename2, "r", encoding="utf-8") as fh:
+                read_text = fh.read()
+
+            self.assertEqual(write_text, read_text)
+
+            if repo is not None:
+                blob = next(repo.index.iter_blobs(BlobFilter(filename2)))[1]
+                read_text = blob.data_stream[3].read().decode("utf-8")
+
+                self.assertEqual(write_text, read_text)
+
+
     def tearDown(self):
         os.chdir(self.old_dir)
         del self.old_dir
