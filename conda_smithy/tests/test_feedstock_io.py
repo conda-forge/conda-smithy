@@ -150,6 +150,31 @@ class TestFeedstockIO(unittest.TestCase):
                 self.assertEqual(blob.mode & set_mode, set_mode)
 
 
+    def test_write_file(self):
+        for tmp_dir, repo, pathfunc in parameterize():
+            for filename in ["test.txt", "dir1/dir2/test.txt"]:
+                filename = os.path.join(tmp_dir, filename)
+
+                write_text = "text"
+
+                with fio.write_file(pathfunc(filename)) as fh:
+                    fh.write(write_text)
+                if repo is not None:
+                    repo.index.add([filename])
+
+                read_text = ""
+                with io.open(filename, "r", encoding="utf-8") as fh:
+                    read_text = fh.read()
+
+                self.assertEqual(write_text, read_text)
+
+                if repo is not None:
+                    blob = next(repo.index.iter_blobs(BlobFilter(filename)))[1]
+                    read_text = blob.data_stream[3].read().decode("utf-8")
+
+                    self.assertEqual(write_text, read_text)
+
+
     def tearDown(self):
         os.chdir(self.old_dir)
         del self.old_dir
