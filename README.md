@@ -43,8 +43,13 @@ this we use `conda-smithy` to go through a process called re-rendering.
 Make sure you have installed `conda-smithy` before proceeding.
 
 1. `cd <feedstock directory>`
-2. `conda smithy rerender`
+2. `conda smithy rerender [--commit]`
 3. Commit and push all changes
+
+Optionally one can commit the changes automatically with `conda-smithy` version `1.4.1+`.
+To do this just use the `--commit`/`-c` option. By default this will open an editor to make a commit.
+It will provide a default commit message and show the changes to be added. If you wish to do this
+automatically, please just use `--commit auto`/`-c auto` and it will use the stock commit message.
 
 Making a new feedstock
 ----------------------
