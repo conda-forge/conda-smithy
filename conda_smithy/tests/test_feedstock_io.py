@@ -67,6 +67,28 @@ class TestFeedstockIO(unittest.TestCase):
                 )
 
 
+    def test_get_file_blob(self):
+        for tmp_dir, repo, pathfunc in parameterize():
+            if repo is None:
+                continue
+
+            filename = "test.txt"
+            filename = os.path.join(tmp_dir, filename)
+
+            with io.open(filename, "w", encoding = "utf-8") as fh:
+                fh.write("")
+
+            repo.index.add([filename])
+
+            blob = None
+            try:
+                blob = fio.get_file_blob(repo, filename)
+            except StopIteration:
+                self.fail("Unable to find the file we added.")
+
+            self.assertEqual(blob.name, os.path.basename(filename))
+
+
     def tearDown(self):
         os.chdir(self.old_dir)
         del self.old_dir
