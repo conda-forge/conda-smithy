@@ -127,10 +127,9 @@ def lintify(meta, recipe_dir=None):
     if recipe_dir is not None and os.path.exists(meta_fname):
         with io.open(meta_fname, 'r') as f:
             lines = f.read().split('\n')
-
+        # Count the number of empty lines from the end of the file
         empty_lines = itertools.takewhile(lambda x: x == '', reversed(lines))
         end_empty_lines_count = len(list(empty_lines))
-
         if end_empty_lines_count != 1:
             lints.append('There should be one empty line at the end of the '
                          'file.')
