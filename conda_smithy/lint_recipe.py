@@ -6,7 +6,7 @@ import re
 import jinja2
 import ruamel.yaml
 
-from conda_build.metadata import allowed_license_families
+from conda_build.metadata import ensure_valid_license_family
 
 # patch over differences between PY2 and PY3
 try:
@@ -137,10 +137,10 @@ def lintify(meta, recipe_dir=None):
                          'file.')
 
     # 12: License family must be valid (conda-build checks for that)
-    license_family = about_section.get('license_family', '')
-    if license_family and not license_family in allowed_license_families:
-        lints.append('The recipe license_family `{}` is invalid: must be one of {}.'
-                     ''.format(license_family, ', '.join(allowed_license_families)))
+    try:
+        ensure_valid_license_family(meta)
+    except RuntimeError as e:
+        lints.append(str(e))
 
     return lints
 

@@ -54,10 +54,8 @@ class Test_linter(unittest.TestCase):
                           'license': 'BSD 3-clause',
                           'license_family': 'BSD3'}}
         lints = linter.lintify(meta)
-        allowed = ', '.join(linter.allowed_license_families)
-        expected_message = ("The recipe license_family `BSD3` is invalid: "
-                            "must be one of {}.".format(allowed))
-        self.assertIn(expected_message, lints)
+        expected = "about/license_family 'BSD3' not allowed"
+        self.assertTrue(any(lint.startswith(expected) for lint in lints))
 
     def test_missing_about_home(self):
         meta = {'about': {'license': 'BSD',
