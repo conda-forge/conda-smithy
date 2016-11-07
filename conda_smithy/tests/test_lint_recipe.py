@@ -222,7 +222,7 @@ class Test_linter(unittest.TestCase):
             b'extra:\r\n  recipe-maintainers:\r\n    - goanpeca\r\n\r\n\r\n',
         ]
         # Exactly one empty line at the end of the file
-        valid_content = b'extra:/n  recipe-maintainers:\n    - goanpeca\n'
+        valid_content = b'extra:\n  recipe-maintainers:\n    - goanpeca\n'
 
         for content in bad_contents + [valid_content]:
             with tmp_directory() as recipe_dir:
