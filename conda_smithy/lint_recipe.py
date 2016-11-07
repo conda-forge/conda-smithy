@@ -122,6 +122,21 @@ def lintify(meta, recipe_dir=None):
         lints.append('The recipe `license` should not include the word '
                      '"License".')
 
+    # 11: There should be one empty line at the end of the file.
+    if recipe_dir is not None and os.path.exists(meta_fname):
+        with open(meta_fname, 'r') as f:
+            lines = f.read().split('\n')
+
+        end_empty_lines_count = 0
+        for i, line in enumerate(reversed(lines)):
+            print(i, line)
+            if line != '':
+                break
+            end_empty_lines_count = i + 1
+
+        if lines[-1] != '' or end_empty_lines_count != 1:
+            lints.append('There should be one empty line at the end of the '
+                         'file.')
     return lints
 
 
