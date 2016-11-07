@@ -218,24 +218,24 @@ class Test_linter(unittest.TestCase):
     def test_end_empty_line(self):
         bad_contents = [
             # No empty lines at the end of the file
-            b'extra:\n  recipe-maintainers:\n    - goanpeca',
-            b'extra:\r  recipe-maintainers:\r    - goanpeca',
-            b'extra:\r\n  recipe-maintainers:\r\n    - goanpeca',
+            'extra:\n  recipe-maintainers:\n    - goanpeca',
+            'extra:\r  recipe-maintainers:\r    - goanpeca',
+            'extra:\r\n  recipe-maintainers:\r\n    - goanpeca',
             # Two empty lines at the end of the file
-            b'extra:\n  recipe-maintainers:\n    - goanpeca\n\n',
-            b'extra:\r  recipe-maintainers:\r    - goanpeca\r\r',
-            b'extra:\r\n  recipe-maintainers:\r\n    - goanpeca\r\n\r\n',
+            'extra:\n  recipe-maintainers:\n    - goanpeca\n\n',
+            'extra:\r  recipe-maintainers:\r    - goanpeca\r\r',
+            'extra:\r\n  recipe-maintainers:\r\n    - goanpeca\r\n\r\n',
             # Three empty lines at the end of the file
-            b'extra:\n  recipe-maintainers:\n    - goanpeca\n\n\n',
-            b'extra:\r  recipe-maintainers:\r    - goanpeca\r\r\r',
-            b'extra:\r\n  recipe-maintainers:\r\n    - goanpeca\r\n\r\n\r\n',
+            'extra:\n  recipe-maintainers:\n    - goanpeca\n\n\n',
+            'extra:\r  recipe-maintainers:\r    - goanpeca\r\r\r',
+            'extra:\r\n  recipe-maintainers:\r\n    - goanpeca\r\n\r\n\r\n',
         ]
         # Exactly one empty line at the end of the file
-        valid_content = b'extra:\n  recipe-maintainers:\n    - goanpeca\n'
+        valid_content = 'extra:\n  recipe-maintainers:\n    - goanpeca\n'
 
         for content in bad_contents + [valid_content]:
             with tmp_directory() as recipe_dir:
-                with io.open(os.path.join(recipe_dir, 'meta.yaml'), 'wb') as f:
+                with io.open(os.path.join(recipe_dir, 'meta.yaml'), 'w') as f:
                     f.write(content)
                 lints = linter.lintify({}, recipe_dir=recipe_dir)
                 expected_message = ('There should be one empty line at the '
