@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from __future__ import print_function
+from __future__ import print_function, unicode_literals
 from collections import OrderedDict
 from contextlib import contextmanager
 import io
@@ -318,7 +318,7 @@ class TestCLI_recipe_lint(unittest.TestCase):
         """
         with tmp_directory() as recipe_dir:
             with io.open(os.path.join(recipe_dir, 'meta.yaml'), 'wt') as fh:
-                fh.write(u"""
+                fh.write("""
                     package:
                         name: 'test_package'
                     build:
