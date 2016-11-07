@@ -1,4 +1,5 @@
 import io
+import itertools
 import os
 import re
 
@@ -124,16 +125,13 @@ def lintify(meta, recipe_dir=None):
 
     # 11: There should be one empty line at the end of the file.
     if recipe_dir is not None and os.path.exists(meta_fname):
-        with open(meta_fname, 'r') as f:
+        with io.open(meta_fname, 'r') as f:
             lines = f.read().split('\n')
 
-        end_empty_lines_count = 0
-        for i, line in enumerate(reversed(lines)):
-            if line != '':
-                break
-            end_empty_lines_count = i + 1
+        empty_lines = itertools.takewhile(lambda x: x == '', reversed(lines))
+        end_empty_lines_count = len(list(empty_lines))
 
-        if lines[-1] != '' or end_empty_lines_count != 1:
+        if end_empty_lines_count != 1:
             lints.append('There should be one empty line at the end of the '
                          'file.')
     return lints

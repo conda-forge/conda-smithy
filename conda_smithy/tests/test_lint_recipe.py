@@ -209,33 +209,25 @@ class Test_linter(unittest.TestCase):
     def test_end_empty_line(self):
         bad_contents = [
             # No empty lines at the end of the file
-            '''extra:/n
-                 recipe-maintainers:
-                   - goanpeca''',
+            b'extra:\n  recipe-maintainers:\n    - goanpeca',
+            b'extra:\r  recipe-maintainers:\r    - goanpeca',
+            b'extra:\r\n  recipe-maintainers:\r\n    - goanpeca',
             # Two empty lines at the end of the file
-            '''extra:/n
-                 recipe-maintainers:
-                   - goanpeca
-
-            ''',
+            b'extra:\n  recipe-maintainers:\n    - goanpeca\n\n',
+            b'extra:\r  recipe-maintainers:\r    - goanpeca\r\r',
+            b'extra:\r\n  recipe-maintainers:\r\n    - goanpeca\r\n\r\n',
             # Three empty lines at the end of the file
-            '''extra:/n
-                 recipe-maintainers:
-                   - goanpeca
-
-
-            ''',
+            b'extra:\n  recipe-maintainers:\n    - goanpeca\n\n\n',
+            b'extra:\r  recipe-maintainers:\r    - goanpeca\r\r\r',
+            b'extra:\r\n  recipe-maintainers:\r\n    - goanpeca\r\n\r\n\r\n',
         ]
         # Exactly one empty line at the end of the file
-        valid_content = '''
-            extra:/n
-              recipe-maintainers:
-                - goanpeca
-            '''
+        valid_content = b'extra:/n  recipe-maintainers:\n    - goanpeca\n'
+
         for content in bad_contents + [valid_content]:
             with tmp_directory() as recipe_dir:
-                with open(os.path.join(recipe_dir, 'meta.yaml'), 'w') as fh:
-                    fh.write(textwrap.dedent(content))
+                with io.open(os.path.join(recipe_dir, 'meta.yaml'), 'wb') as f:
+                    f.write(content)
                 meta = {}
                 lints = linter.lintify(meta, recipe_dir=recipe_dir)
                 expected_message = ('There should be one empty line at the '
