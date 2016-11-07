@@ -228,11 +228,9 @@ class Test_linter(unittest.TestCase):
             with tmp_directory() as recipe_dir:
                 with io.open(os.path.join(recipe_dir, 'meta.yaml'), 'wb') as f:
                     f.write(content)
-                meta = {}
-                lints = linter.lintify(meta, recipe_dir=recipe_dir)
+                lints = linter.lintify({}, recipe_dir=recipe_dir)
                 expected_message = ('There should be one empty line at the '
                                     'end of the file.')
-
                 if content == valid_content:
                     self.assertNotIn(expected_message, lints)
                 else:
