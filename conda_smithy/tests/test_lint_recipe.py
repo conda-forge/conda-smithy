@@ -116,7 +116,7 @@ class Test_linter(unittest.TestCase):
             lints = linter.lintify({}, recipe_dir)
             self.assertIn(expected_message, lints)
 
-            with open(os.path.join(recipe_dir, 'run_test.py'), 'w') as fh:
+            with io.open(os.path.join(recipe_dir, 'run_test.py'), 'w') as fh:
                 fh.write('# foo')
             lints = linter.lintify({}, recipe_dir)
             self.assertNotIn(expected_message, lints)
@@ -127,7 +127,7 @@ class Test_linter(unittest.TestCase):
 
         with tmp_directory() as recipe_dir:
             def assert_selector(selector, is_good=True):
-                with open(os.path.join(recipe_dir, 'meta.yaml'), 'w') as fh:
+                with io.open(os.path.join(recipe_dir, 'meta.yaml'), 'w') as fh:
                     fh.write("""
                             package:
                                name: foo_py2  # [py2k]
@@ -154,7 +154,7 @@ class Test_linter(unittest.TestCase):
         # Test that we can use os.environ in a recipe. We don't care about
         # the results here.
         with tmp_directory() as recipe_dir:
-            with open(os.path.join(recipe_dir, 'meta.yaml'), 'w') as fh:
+            with io.open(os.path.join(recipe_dir, 'meta.yaml'), 'w') as fh:
                 fh.write("""
                         {% set version = os.environ.get('WIBBLE') %}
                         package:
@@ -249,7 +249,7 @@ class Test_linter(unittest.TestCase):
 class TestCLI_recipe_lint(unittest.TestCase):
     def test_cli_fail(self):
         with tmp_directory() as recipe_dir:
-            with open(os.path.join(recipe_dir, 'meta.yaml'), 'w') as fh:
+            with io.open(os.path.join(recipe_dir, 'meta.yaml'), 'w') as fh:
                 fh.write(textwrap.dedent("""
                     package:
                         name: 'test_package'
@@ -264,7 +264,7 @@ class TestCLI_recipe_lint(unittest.TestCase):
 
     def test_cli_success(self):
         with tmp_directory() as recipe_dir:
-            with open(os.path.join(recipe_dir, 'meta.yaml'), 'w') as fh:
+            with io.open(os.path.join(recipe_dir, 'meta.yaml'), 'w') as fh:
                 fh.write(textwrap.dedent("""
                     package:
                         name: 'test_package'
@@ -288,7 +288,7 @@ class TestCLI_recipe_lint(unittest.TestCase):
 
     def test_cli_environ(self):
         with tmp_directory() as recipe_dir:
-            with open(os.path.join(recipe_dir, 'meta.yaml'), 'w') as fh:
+            with io.open(os.path.join(recipe_dir, 'meta.yaml'), 'w') as fh:
                 fh.write(textwrap.dedent("""
                     package:
                         name: 'test_package'
