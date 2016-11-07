@@ -129,7 +129,6 @@ def lintify(meta, recipe_dir=None):
 
         end_empty_lines_count = 0
         for i, line in enumerate(reversed(lines)):
-            print(i, line)
             if line != '':
                 break
             end_empty_lines_count = i + 1
