@@ -57,8 +57,12 @@ def lintify(meta, recipe_dir=None):
     section_order_sorted = sorted(major_sections,
                                   key=EXPECTED_SECTION_ORDER.index)
     if major_sections != section_order_sorted:
+        section_order_sorted_str = map(lambda s: "'%s'" % s,
+                                       section_order_sorted)
+        section_order_sorted_str = ", ".join(section_order_sorted_str)
+        section_order_sorted_str = "[" + section_order_sorted_str + "]"
         lints.append('The top level meta keys are in an unexpected order. '
-                     'Expecting {}.'.format(section_order_sorted))
+                     'Expecting {}.'.format(section_order_sorted_str))
 
     # 2: The about section should have a home, license and summary.
     for about_item in ['home', 'license', 'summary']:
