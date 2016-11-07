@@ -12,11 +12,6 @@ import ruamel.yaml
 
 from conda_build.metadata import ensure_valid_license_family
 
-# patch over differences between PY2 and PY3
-try:
-    text_type = unicode
-except NameError:
-    text_type = str
 
 EXPECTED_SECTION_ORDER = ['package', 'source', 'build', 'requirements',
                           'test', 'app', 'about', 'extra']
@@ -26,10 +21,10 @@ REQUIREMENTS_ORDER = ['build', 'run']
 
 class NullUndefined(jinja2.Undefined):
     def __unicode__(self):
-        return text_type(self._undefined_name)
+        return self._undefined_name
 
     def __getattr__(self, name):
-        return text_type('{}.{}'.format(self, name))
+        return '{}.{}'.format(self, name)
 
     def __getitem__(self, name):
         return '{}["{}"]'.format(self, name)
