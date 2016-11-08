@@ -1,7 +1,9 @@
 from __future__ import print_function, unicode_literals
 
 from contextlib import contextmanager
+import io
 import os
+import difflib
 import shutil
 import stat
 import textwrap
@@ -41,7 +43,7 @@ def meta_config(meta):
     return config
 
 
-def render_run_docker_build(jinja_env, forge_config, forge_dir):
+def render_run_docker_build(jinja_env, forge_config, forge_dir, strict=False):
     meta = forge_config['package']
     with fudge_subdir('linux-64', build_config=meta_config(meta)):
         meta.parse_again()
@@ -99,8 +101,7 @@ def render_run_docker_build(jinja_env, forge_config, forge_dir):
 
         template = jinja_env.get_template(template_name)
         target_fname = os.path.join(forge_dir, 'ci_support', 'run_docker_build.sh')
-        with write_file(target_fname) as fh:
-            fh.write(template.render(**forge_config))
+        write_rendered_file(target_fname, template, forge_config, strict)
 
         # Fix permissions.
         target_fnames = [
@@ -115,7 +116,7 @@ def render_run_docker_build(jinja_env, forge_config, forge_dir):
             )
 
 
-def render_circle(jinja_env, forge_config, forge_dir):
+def render_circle(jinja_env, forge_config, forge_dir, strict=False):
     meta = forge_config['package']
     with fudge_subdir('linux-64', build_config=meta_config(meta)):
         meta.parse_again()
@@ -133,8 +134,7 @@ def render_circle(jinja_env, forge_config, forge_dir):
     matrix = prepare_matrix_for_env_vars(matrix)
     forge_config = update_matrix(forge_config, matrix)
     template = jinja_env.get_template('circle.yml.tmpl')
-    with write_file(target_fname) as fh:
-        fh.write(template.render(**forge_config))
+    write_rendered_file(target_fname, template, forge_config, strict)
 
 
 @contextmanager
@@ -168,7 +168,7 @@ def fudge_subdir(subdir, build_config):
         conda_build.metadata.subdir = copied_subdir_orig
 
 
-def render_travis(jinja_env, forge_config, forge_dir):
+def render_travis(jinja_env, forge_config, forge_dir, strict=False):
     meta = forge_config['package']
     with fudge_subdir('osx-64', build_config=meta_config(meta)):
         meta.parse_again()
@@ -194,8 +194,7 @@ def render_travis(jinja_env, forge_config, forge_dir):
         matrix = prepare_matrix_for_env_vars(matrix)
         forge_config = update_matrix(forge_config, matrix)
         template = jinja_env.get_template('travis.yml.tmpl')
-        with write_file(target_fname) as fh:
-            fh.write(template.render(**forge_config))
+        write_rendered_file(target_fname, template, forge_config, strict)
 
 
 def render_README(jinja_env, forge_config, forge_dir):
@@ -263,7 +262,7 @@ def sort_without_target_arch(case):
     return [python, cmp_case, arch_order]
 
 
-def render_appveyor(jinja_env, forge_config, forge_dir):
+def render_appveyor(jinja_env, forge_config, forge_dir, strict=False):
     meta = forge_config['package']
     full_matrix = []
     for platform, arch in [['win-32', 'x86'], ['win-64', 'x64']]:
@@ -296,8 +295,7 @@ def render_appveyor(jinja_env, forge_config, forge_dir):
         matrix = prepare_matrix_for_env_vars(matrix)
         forge_config = update_matrix(forge_config, matrix)
         template = jinja_env.get_template('appveyor.yml.tmpl')
-        with write_file(target_fname) as fh:
-            fh.write(template.render(**forge_config))
+        write_rendered_file(target_fname, template, forge_config, strict)
 
 
 def update_matrix(forge_config, new_matrix):
@@ -386,7 +384,28 @@ def compute_build_matrix(meta, existing_matrix=None):
     return mtx
 
 
-def main(forge_file_directory):
+def write_rendered_file(target_fname, template, forge_config, strict=False):
+    content = template.render(**forge_config)
+    if strict and (os.path.isfile(target_fname)):
+        with io.open(target_fname, 'r', encoding='utf-8') as fh:
+            old_content = fh.readlines()
+        
+        # If the existing file has exactly one changed line (len(diff) == 2)
+        # Then it implies the only difference between both files is the version
+        # number, so we can avoid rerendering the file if strict=True.
+        diff = list(difflib.ndiff(content.splitlines(1), old_content))
+        diff = [line for line in diff if '-' in line[0] or '+' in line[0]]
+        comments = [line for line in diff if line.strip()[1] == '#']
+        if len(comments) == len(diff):
+            print('{}: Not rerendered because no changes detected'
+                  .format(target_fname))
+            return
+                  
+    with write_file(target_fname) as fh:
+        fh.write(content)
+        
+
+def main(forge_file_directory, strict=False):
     if hasattr(conda_build, 'api'):
         build_config = conda_build.api.Config()
     else:
@@ -456,10 +475,10 @@ def main(forge_file_directory):
 
     copy_feedstock_content(forge_dir)
 
-    render_run_docker_build(env, config, forge_dir)
-    render_circle(env, config, forge_dir)
-    render_travis(env, config, forge_dir)
-    render_appveyor(env, config, forge_dir)
+    render_run_docker_build(env, config, forge_dir, strict)
+    render_circle(env, config, forge_dir, strict)
+    render_travis(env, config, forge_dir, strict)
+    render_appveyor(env, config, forge_dir, strict)
     render_README(env, config, forge_dir)
 
 
