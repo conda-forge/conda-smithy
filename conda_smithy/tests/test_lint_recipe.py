@@ -206,6 +206,36 @@ class Test_linter(unittest.TestCase):
                             'the word "License".')
         self.assertIn(expected_message, lints)
 
+    def test_end_empty_line(self):
+        bad_contents = [
+            # No empty lines at the end of the file
+            b'extra:\n  recipe-maintainers:\n    - goanpeca',
+            b'extra:\r  recipe-maintainers:\r    - goanpeca',
+            b'extra:\r\n  recipe-maintainers:\r\n    - goanpeca',
+            # Two empty lines at the end of the file
+            b'extra:\n  recipe-maintainers:\n    - goanpeca\n\n',
+            b'extra:\r  recipe-maintainers:\r    - goanpeca\r\r',
+            b'extra:\r\n  recipe-maintainers:\r\n    - goanpeca\r\n\r\n',
+            # Three empty lines at the end of the file
+            b'extra:\n  recipe-maintainers:\n    - goanpeca\n\n\n',
+            b'extra:\r  recipe-maintainers:\r    - goanpeca\r\r\r',
+            b'extra:\r\n  recipe-maintainers:\r\n    - goanpeca\r\n\r\n\r\n',
+        ]
+        # Exactly one empty line at the end of the file
+        valid_content = b'extra:\n  recipe-maintainers:\n    - goanpeca\n'
+
+        for content in bad_contents + [valid_content]:
+            with tmp_directory() as recipe_dir:
+                with io.open(os.path.join(recipe_dir, 'meta.yaml'), 'wb') as f:
+                    f.write(content)
+                lints = linter.lintify({}, recipe_dir=recipe_dir)
+                expected_message = ('There should be one empty line at the '
+                                    'end of the file.')
+                if content == valid_content:
+                    self.assertNotIn(expected_message, lints)
+                else:
+                    self.assertIn(expected_message, lints)
+
 
 class TestCLI_recipe_lint(unittest.TestCase):
     def test_cli_fail(self):

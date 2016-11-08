@@ -5,3 +5,5 @@ feedstock-repos.json
 build/
 conda_smithy.egg-info/
 dist/
+.cache
+.DS_Store
