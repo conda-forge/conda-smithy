@@ -21,6 +21,7 @@ from conda_build_all.version_matrix import special_case_version_matrix, filter_c
 from conda_build_all.resolved_distribution import ResolvedDistribution
 from jinja2 import Environment, FileSystemLoader
 
+from . import __version__
 from conda_smithy.feedstock_io import (
     get_mode_file,
     set_mode_file,
@@ -405,7 +406,8 @@ def main(forge_file_directory):
               'appveyor': {},
               'channels': {'sources': ['conda-forge'], 'targets': [['conda-forge', 'main']]},
               'github': {'user_or_org': 'conda-forge', 'repo_name': ''},
-              'recipe_dir': recipe_dir}
+              'recipe_dir': recipe_dir,
+              'smithy_version': __version__}
     forge_dir = os.path.abspath(forge_file_directory)
 
     # An older conda-smithy used to have some files which should no longer exist,
