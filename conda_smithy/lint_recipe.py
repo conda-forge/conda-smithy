@@ -6,6 +6,8 @@ import re
 import jinja2
 import ruamel.yaml
 
+from conda_build.metadata import ensure_valid_license_family
+
 # patch over differences between PY2 and PY3
 try:
     text_type = unicode
@@ -133,6 +135,13 @@ def lintify(meta, recipe_dir=None):
         if end_empty_lines_count != 1:
             lints.append('There should be one empty line at the end of the '
                          'file.')
+
+    # 12: License family must be valid (conda-build checks for that)
+    try:
+        ensure_valid_license_family(meta)
+    except RuntimeError as e:
+        lints.append(str(e))
+
     return lints
 
 

@@ -48,6 +48,15 @@ class Test_linter(unittest.TestCase):
         expected_message = "The recipe license cannot be unknown."
         self.assertIn(expected_message, lints)
 
+    def test_bad_about_license_family(self):
+        meta = {'about': {'home': 'a URL',
+                          'summary': 'A test summary',
+                          'license': 'BSD 3-clause',
+                          'license_family': 'BSD3'}}
+        lints = linter.lintify(meta)
+        expected = "about/license_family 'BSD3' not allowed"
+        self.assertTrue(any(lint.startswith(expected) for lint in lints))
+
     def test_missing_about_home(self):
         meta = {'about': {'license': 'BSD',
                           'summary': 'A test summary'}}
