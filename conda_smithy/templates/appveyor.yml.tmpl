@@ -4,8 +4,6 @@
 
 environment:
 
-  CONDA_INSTALL_LOCN: "C:\\conda"
-
   # SDK v7.0 MSVC Express 2008's SetEnv.cmd script will fail if the
   # /E:ON and /V:ON options are not enabled in the batch script intepreter
   # See: http://stackoverflow.com/a/13751649/163740
@@ -14,8 +12,9 @@ environment:
   # We set a default Python version for the miniconda that is to be installed. This can be
   # overridden in the matrix definition where appropriate.
   CONDA_PY: "27"
+  CONDA_INSTALL_LOCN: "C:\\Miniconda-x64"
 
-  {%- for name, hashed_secure in (appveyor.secure or {}) | dictsort %}
+  {% for name, hashed_secure in (appveyor.secure or {}) | dictsort -%}
   {{ name }}:
     # The {{ name }} secure variable. This is defined canonically in conda-forge.yml.
     secure: {{ hashed_secure }}
@@ -46,25 +45,26 @@ install:
 
     # Cywing's git breaks conda-build. (See https://github.com/conda-forge/conda-smithy-feedstock/pull/2.)
     - cmd: rmdir C:\cygwin /s /q
-    - appveyor DownloadFile "https://raw.githubusercontent.com/conda-forge/conda-smithy/e976c7e84bb3c4846e7562afd1a42c4b535b51f5/bootstrap-obvious-ci-and-miniconda.py"
-    - cmd: python bootstrap-obvious-ci-and-miniconda.py %CONDA_INSTALL_LOCN% %TARGET_ARCH% %CONDA_PY:~0,1% --without-obvci
+
+    # Add our channels.
+    - cmd: set "OLDPATH=%PATH%"
+    - cmd: set "PATH=%CONDA_INSTALL_LOCN%\\Scripts;%CONDA_INSTALL_LOCN%\\Library\\bin;%PATH%"
+    - cmd: conda config --set show_channel_urls true
+    {%- for channel in channels.get('sources', []) %}
+    - cmd: conda config --add channels {{ channel }}{% endfor %}
 
     # Add a hack to switch to `conda` version `4.1.12` before activating.
     # This is required to handle a long path activation issue.
     # Please see PR ( https://github.com/conda/conda/pull/3349 ).
-    - cmd: set "OLDPATH=%PATH%"
-    - cmd: set "PATH=%CONDA_INSTALL_LOCN%\\Scripts;%CONDA_INSTALL_LOCN%\\Library\\bin;%PATH%"
     - cmd: conda install --yes --quiet conda=4.1.12
     - cmd: set "PATH=%OLDPATH%"
     - cmd: set "OLDPATH="
 
+    # Actually activate `conda`.
     - cmd: call %CONDA_INSTALL_LOCN%\Scripts\activate.bat
     - cmd: set PYTHONUNBUFFERED=1
 
-    - cmd: conda config --set show_channel_urls true
-    - cmd: conda install -c pelson/channel/development --yes --quiet obvious-ci
-    {%- for channel in channels.get('sources', []) %}
-    - cmd: conda config --add channels {{ channel }}{% endfor %}
+    - cmd: conda install -n root --quiet --yes obvious-ci
     - cmd: conda install -n root --quiet --yes conda-forge-build-setup
     - cmd: run_conda_forge_build_setup
 
