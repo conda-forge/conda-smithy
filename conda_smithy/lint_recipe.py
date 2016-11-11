@@ -1,3 +1,7 @@
+# -*- coding: utf-8 -*-
+
+from __future__ import unicode_literals
+
 import io
 import itertools
 import os
@@ -8,11 +12,6 @@ import ruamel.yaml
 
 from conda_build.metadata import ensure_valid_license_family
 
-# patch over differences between PY2 and PY3
-try:
-    text_type = unicode
-except NameError:
-    text_type = str
 
 EXPECTED_SECTION_ORDER = ['package', 'source', 'build', 'requirements',
                           'test', 'app', 'about', 'extra']
@@ -22,10 +21,10 @@ REQUIREMENTS_ORDER = ['build', 'run']
 
 class NullUndefined(jinja2.Undefined):
     def __unicode__(self):
-        return text_type(self._undefined_name)
+        return self._undefined_name
 
     def __getattr__(self, name):
-        return text_type('{}.{}'.format(self, name))
+        return '{}.{}'.format(self, name)
 
     def __getitem__(self, name):
         return '{}["{}"]'.format(self, name)
@@ -58,8 +57,12 @@ def lintify(meta, recipe_dir=None):
     section_order_sorted = sorted(major_sections,
                                   key=EXPECTED_SECTION_ORDER.index)
     if major_sections != section_order_sorted:
+        section_order_sorted_str = map(lambda s: "'%s'" % s,
+                                       section_order_sorted)
+        section_order_sorted_str = ", ".join(section_order_sorted_str)
+        section_order_sorted_str = "[" + section_order_sorted_str + "]"
         lints.append('The top level meta keys are in an unexpected order. '
-                     'Expecting {}.'.format(section_order_sorted))
+                     'Expecting {}.'.format(section_order_sorted_str))
 
     # 2: The about section should have a home, license and summary.
     for about_item in ['home', 'license', 'summary']:

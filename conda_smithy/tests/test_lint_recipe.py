@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from __future__ import print_function
+from __future__ import print_function, unicode_literals
 from collections import OrderedDict
 from contextlib import contextmanager
 import io
@@ -116,7 +116,7 @@ class Test_linter(unittest.TestCase):
             lints = linter.lintify({}, recipe_dir)
             self.assertIn(expected_message, lints)
 
-            with open(os.path.join(recipe_dir, 'run_test.py'), 'w') as fh:
+            with io.open(os.path.join(recipe_dir, 'run_test.py'), 'w') as fh:
                 fh.write('# foo')
             lints = linter.lintify({}, recipe_dir)
             self.assertNotIn(expected_message, lints)
@@ -127,7 +127,7 @@ class Test_linter(unittest.TestCase):
 
         with tmp_directory() as recipe_dir:
             def assert_selector(selector, is_good=True):
-                with open(os.path.join(recipe_dir, 'meta.yaml'), 'w') as fh:
+                with io.open(os.path.join(recipe_dir, 'meta.yaml'), 'w') as fh:
                     fh.write("""
                             package:
                                name: foo_py2  # [py2k]
@@ -154,7 +154,7 @@ class Test_linter(unittest.TestCase):
         # Test that we can use os.environ in a recipe. We don't care about
         # the results here.
         with tmp_directory() as recipe_dir:
-            with open(os.path.join(recipe_dir, 'meta.yaml'), 'w') as fh:
+            with io.open(os.path.join(recipe_dir, 'meta.yaml'), 'w') as fh:
                 fh.write("""
                         {% set version = os.environ.get('WIBBLE') %}
                         package:
@@ -218,24 +218,24 @@ class Test_linter(unittest.TestCase):
     def test_end_empty_line(self):
         bad_contents = [
             # No empty lines at the end of the file
-            b'extra:\n  recipe-maintainers:\n    - goanpeca',
-            b'extra:\r  recipe-maintainers:\r    - goanpeca',
-            b'extra:\r\n  recipe-maintainers:\r\n    - goanpeca',
+            'extra:\n  recipe-maintainers:\n    - goanpeca',
+            'extra:\r  recipe-maintainers:\r    - goanpeca',
+            'extra:\r\n  recipe-maintainers:\r\n    - goanpeca',
             # Two empty lines at the end of the file
-            b'extra:\n  recipe-maintainers:\n    - goanpeca\n\n',
-            b'extra:\r  recipe-maintainers:\r    - goanpeca\r\r',
-            b'extra:\r\n  recipe-maintainers:\r\n    - goanpeca\r\n\r\n',
+            'extra:\n  recipe-maintainers:\n    - goanpeca\n\n',
+            'extra:\r  recipe-maintainers:\r    - goanpeca\r\r',
+            'extra:\r\n  recipe-maintainers:\r\n    - goanpeca\r\n\r\n',
             # Three empty lines at the end of the file
-            b'extra:\n  recipe-maintainers:\n    - goanpeca\n\n\n',
-            b'extra:\r  recipe-maintainers:\r    - goanpeca\r\r\r',
-            b'extra:\r\n  recipe-maintainers:\r\n    - goanpeca\r\n\r\n\r\n',
+            'extra:\n  recipe-maintainers:\n    - goanpeca\n\n\n',
+            'extra:\r  recipe-maintainers:\r    - goanpeca\r\r\r',
+            'extra:\r\n  recipe-maintainers:\r\n    - goanpeca\r\n\r\n\r\n',
         ]
         # Exactly one empty line at the end of the file
-        valid_content = b'extra:\n  recipe-maintainers:\n    - goanpeca\n'
+        valid_content = 'extra:\n  recipe-maintainers:\n    - goanpeca\n'
 
         for content in bad_contents + [valid_content]:
             with tmp_directory() as recipe_dir:
-                with io.open(os.path.join(recipe_dir, 'meta.yaml'), 'wb') as f:
+                with io.open(os.path.join(recipe_dir, 'meta.yaml'), 'w') as f:
                     f.write(content)
                 lints = linter.lintify({}, recipe_dir=recipe_dir)
                 expected_message = ('There should be one empty line at the '
@@ -249,7 +249,7 @@ class Test_linter(unittest.TestCase):
 class TestCLI_recipe_lint(unittest.TestCase):
     def test_cli_fail(self):
         with tmp_directory() as recipe_dir:
-            with open(os.path.join(recipe_dir, 'meta.yaml'), 'w') as fh:
+            with io.open(os.path.join(recipe_dir, 'meta.yaml'), 'w') as fh:
                 fh.write(textwrap.dedent("""
                     package:
                         name: 'test_package'
@@ -264,7 +264,7 @@ class TestCLI_recipe_lint(unittest.TestCase):
 
     def test_cli_success(self):
         with tmp_directory() as recipe_dir:
-            with open(os.path.join(recipe_dir, 'meta.yaml'), 'w') as fh:
+            with io.open(os.path.join(recipe_dir, 'meta.yaml'), 'w') as fh:
                 fh.write(textwrap.dedent("""
                     package:
                         name: 'test_package'
@@ -288,7 +288,7 @@ class TestCLI_recipe_lint(unittest.TestCase):
 
     def test_cli_environ(self):
         with tmp_directory() as recipe_dir:
-            with open(os.path.join(recipe_dir, 'meta.yaml'), 'w') as fh:
+            with io.open(os.path.join(recipe_dir, 'meta.yaml'), 'w') as fh:
                 fh.write(textwrap.dedent("""
                     package:
                         name: 'test_package'
@@ -318,7 +318,7 @@ class TestCLI_recipe_lint(unittest.TestCase):
         """
         with tmp_directory() as recipe_dir:
             with io.open(os.path.join(recipe_dir, 'meta.yaml'), 'wt') as fh:
-                fh.write(u"""
+                fh.write("""
                     package:
                         name: 'test_package'
                     build:
