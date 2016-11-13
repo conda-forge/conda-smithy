@@ -22,7 +22,7 @@ requirements:
     - python
     - conda-build-all
     - conda
-    - conda-build >=1.21.12
+    - conda-build >=1.21.12,!=2.0.9
     - jinja2
     - requests
     - pycrypto
