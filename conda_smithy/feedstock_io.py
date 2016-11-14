@@ -4,6 +4,7 @@ from contextlib import contextmanager
 import io
 import os
 import shutil
+import stat
 
 
 def get_repo(path, search_parent_directories=True):
@@ -22,40 +23,21 @@ def get_repo(path, search_parent_directories=True):
     return repo
 
 
-def get_file_blob(repo, filename):
-    from git.index.typ import BlobFilter
+def set_exe_file(filename, set_exe=True):
+    IXALL = stat.S_IXOTH | stat.S_IXGRP | stat.S_IXUSR
 
-    idx = repo.index
-
-    repo_dir = os.path.abspath(repo.working_dir)
-
-    filename = os.path.abspath(filename)
-    filename = os.path.relpath(filename, repo_dir)
-    filename = os.path.normpath(filename)
-
-    blob = next(idx.iter_blobs(BlobFilter(filename)))[1]
-
-    return blob
-
-
-def get_mode_file(filename):
     repo = get_repo(filename)
     if repo:
-        blob = get_file_blob(repo, filename)
-        mode = blob.mode
+        mode = "+x" if set_exe else "-x"
+        repo.git.execute(
+            ["git", "update-index", "--chmod=%s" % mode, filename]
+        )
+
+    mode = os.stat(filename).st_mode
+    if set_exe:
+        mode |= IXALL
     else:
-        mode = os.stat(filename).st_mode
-
-    return mode
-
-
-def set_mode_file(filename, mode):
-    repo = get_repo(filename)
-    if repo:
-        blob = get_file_blob(repo, filename)
-        blob.mode |= mode
-        repo.index.add([blob])
-
+        mode -= mode & IXALL
     os.chmod(filename, mode)
 
 

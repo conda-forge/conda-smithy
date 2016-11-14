@@ -23,8 +23,7 @@ from conda_build_all.resolved_distribution import ResolvedDistribution
 from jinja2 import Environment, FileSystemLoader
 
 from conda_smithy.feedstock_io import (
-    get_mode_file,
-    set_mode_file,
+    set_exe_file,
     write_file,
     remove_file,
     copy_file,
@@ -108,11 +107,7 @@ def render_run_docker_build(jinja_env, forge_config, forge_dir):
             os.path.join(forge_dir, 'ci_support', 'checkout_merge_commit.sh'),
         ]
         for each_target_fname in target_fnames:
-            mode = get_mode_file(each_target_fname)
-            set_mode_file(
-                each_target_fname,
-                mode | stat.S_IXOTH | stat.S_IXGRP | stat.S_IXUSR
-            )
+            set_exe_file(each_target_fname, True)
 
 
 def render_circle(jinja_env, forge_config, forge_dir):
