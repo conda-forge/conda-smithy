@@ -53,7 +53,7 @@ def set_mode_file(filename, mode):
     repo = get_repo(filename)
     if repo:
         blob = get_file_blob(repo, filename)
-        blob.mode |= mode
+        blob.mode = mode
         repo.index.add([blob])
 
     os.chmod(filename, mode)
