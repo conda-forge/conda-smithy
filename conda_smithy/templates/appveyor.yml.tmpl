@@ -9,11 +9,6 @@ environment:
   # See: http://stackoverflow.com/a/13751649/163740
   CMD_IN_ENV: "cmd /E:ON /V:ON /C obvci_appveyor_python_build_env.cmd"
 
-  # We set a default Python version for the miniconda that is to be installed. This can be
-  # overridden in the matrix definition where appropriate.
-  CONDA_PY: "27"
-  CONDA_INSTALL_LOCN: "C:\\Miniconda-x64"
-
   {% for name, hashed_secure in (appveyor.secure or {}) | dictsort -%}
   {{ name }}:
     # The {{ name }} secure variable. This is defined canonically in conda-forge.yml.
