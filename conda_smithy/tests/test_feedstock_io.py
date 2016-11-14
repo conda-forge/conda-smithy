@@ -150,6 +150,35 @@ class TestFeedstockIO(unittest.TestCase):
                 self.assertEqual(blob.mode & set_mode, set_mode)
 
 
+    def test_set_exe_file(self):
+        perms = [
+            stat.S_IXUSR,
+            stat.S_IXGRP,
+            stat.S_IXOTH
+        ]
+
+        set_mode = functools.reduce(op.or_, perms)
+
+        for set_exe in [True, False]:
+            for tmp_dir, repo, pathfunc in parameterize():
+                filename = "test.txt"
+                filename = os.path.join(tmp_dir, filename)
+                with io.open(filename, "w", encoding="utf-8") as fh:
+                    fh.write("")
+                if repo is not None:
+                    repo.index.add([filename])
+
+                fio.set_exe_file(pathfunc(filename), set_exe)
+
+                file_mode = os.stat(filename).st_mode
+                self.assertEqual(file_mode & set_mode,
+                                 int(set_exe) * set_mode)
+                if repo is not None:
+                    blob = next(repo.index.iter_blobs(BlobFilter(filename)))[1]
+                    self.assertEqual(blob.mode & set_mode,
+                                     int(set_exe) * set_mode)
+
+
     def test_write_file(self):
         for tmp_dir, repo, pathfunc in parameterize():
             for filename in ["test.txt", "dir1/dir2/test.txt"]:
