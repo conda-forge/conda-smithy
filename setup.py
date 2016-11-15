@@ -22,7 +22,6 @@ def main():
         zip_safe=False,
         cmdclass=versioneer.get_cmdclass(),
         tests_require=['six'],
-        test_suite='conda_smithy',
     )
     setup(**skw)
 
