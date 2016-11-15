@@ -36,11 +36,11 @@ class Test_fudge_subdir(unittest.TestCase):
 
             with cnfgr_fdstk.fudge_subdir('win-64', config):
                 meta.parse_again(**kwargs)
-                self.assertEqual(meta.name(), 'foo_win')
+                assert meta.name() == 'foo_win'
 
             with cnfgr_fdstk.fudge_subdir('osx-64', config):
                 meta.parse_again(**kwargs)
-                self.assertEqual(meta.name(), 'foo_osx')
+                assert meta.name() == 'foo_osx'
 
     def test_fetch_index(self):
         if hasattr(conda_build, 'api'):
@@ -53,10 +53,10 @@ class Test_fudge_subdir(unittest.TestCase):
             win_index = conda.api.get_index()
         with cnfgr_fdstk.fudge_subdir('osx-64', config):
             osx_index = conda.api.get_index()
-        self.assertNotEqual(win_index.keys(), osx_index.keys(),
+        assert win_index.keys() != osx_index.keys(), \
                             ('The keys for the Windows and OSX index were the same.'
                              ' Subdir is not working and will result in mis-rendering '
-                             '(e.g. https://github.com/SciTools/conda-build-all/issues/49).'))
+                             '(e.g. https://github.com/SciTools/conda-build-all/issues/49).')
 
 
 

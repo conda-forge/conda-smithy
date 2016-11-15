@@ -61,14 +61,9 @@ class TestFeedstockIO(unittest.TestCase):
     def test_repo(self):
         for tmp_dir, repo, pathfunc in parameterize():
             if repo is None:
-                self.assertTrue(
-                    fio.get_repo(pathfunc(tmp_dir)) is None
-                )
+                assert fio.get_repo(pathfunc(tmp_dir)) is None
             else:
-                self.assertIsInstance(
-                    fio.get_repo(pathfunc(tmp_dir)),
-                    git.Repo
-                )
+                assert isinstance(fio.get_repo(pathfunc(tmp_dir)), git.Repo)
 
 
     def test_set_exe_file(self):
@@ -92,12 +87,12 @@ class TestFeedstockIO(unittest.TestCase):
                 fio.set_exe_file(pathfunc(filename), set_exe)
 
                 file_mode = os.stat(filename).st_mode
-                self.assertEqual(file_mode & set_mode,
-                                 int(set_exe) * set_mode)
+                assert file_mode & set_mode == \
+                                 int(set_exe) * set_mode
                 if repo is not None:
                     blob = next(repo.index.iter_blobs(BlobFilter(filename)))[1]
-                    self.assertEqual(blob.mode & set_mode,
-                                     int(set_exe) * set_mode)
+                    assert blob.mode & set_mode == \
+                                     int(set_exe) * set_mode
 
 
     def test_write_file(self):
@@ -116,13 +111,13 @@ class TestFeedstockIO(unittest.TestCase):
                 with io.open(filename, "r", encoding="utf-8") as fh:
                     read_text = fh.read()
 
-                self.assertEqual(write_text, read_text)
+                assert write_text == read_text
 
                 if repo is not None:
                     blob = next(repo.index.iter_blobs(BlobFilter(filename)))[1]
                     read_text = blob.data_stream[3].read().decode("utf-8")
 
-                    self.assertEqual(write_text, read_text)
+                    assert write_text == read_text
 
 
     def test_touch_file(self):
@@ -136,13 +131,13 @@ class TestFeedstockIO(unittest.TestCase):
                 with io.open(filename, "r", encoding="utf-8") as fh:
                     read_text = fh.read()
 
-                self.assertEqual("", read_text)
+                assert "" == read_text
 
                 if repo is not None:
                     blob = next(repo.index.iter_blobs(BlobFilter(filename)))[1]
                     read_text = blob.data_stream[3].read().decode("utf-8")
 
-                    self.assertEqual("", read_text)
+                    assert "" == read_text
 
 
     def test_remove_file(self):
@@ -159,25 +154,21 @@ class TestFeedstockIO(unittest.TestCase):
                 if repo is not None:
                     repo.index.add([filename])
 
-                self.assertTrue(os.path.exists(filename))
+                assert os.path.exists(filename)
                 if dirname:
-                    self.assertTrue(os.path.exists(dirname))
-                    self.assertTrue(os.path.exists(os.path.dirname(dirname)))
+                    assert os.path.exists(dirname)
+                    assert os.path.exists(os.path.dirname(dirname))
                 if repo is not None:
-                    self.assertTrue(
-                        list(repo.index.iter_blobs(BlobFilter(filename)))
-                    )
+                    assert list(repo.index.iter_blobs(BlobFilter(filename)))
 
                 fio.remove_file(pathfunc(filename))
 
-                self.assertFalse(os.path.exists(filename))
+                assert not os.path.exists(filename)
                 if dirname:
-                    self.assertFalse(os.path.exists(dirname))
-                    self.assertFalse(os.path.exists(os.path.dirname(dirname)))
+                    assert not os.path.exists(dirname)
+                    assert not os.path.exists(os.path.dirname(dirname))
                 if repo is not None:
-                    self.assertFalse(
-                        list(repo.index.iter_blobs(BlobFilter(filename)))
-                    )
+                    assert not list(repo.index.iter_blobs(BlobFilter(filename)))
 
 
     def test_copy_file(self):
@@ -192,33 +183,29 @@ class TestFeedstockIO(unittest.TestCase):
             with io.open(filename1, "w", encoding="utf-8") as fh:
                 fh.write(write_text)
 
-            self.assertTrue(os.path.exists(filename1))
-            self.assertFalse(os.path.exists(filename2))
+            assert os.path.exists(filename1)
+            assert not os.path.exists(filename2)
             if repo is not None:
-                self.assertFalse(
-                    list(repo.index.iter_blobs(BlobFilter(filename2)))
-                )
+                assert not list(repo.index.iter_blobs(BlobFilter(filename2)))
 
             fio.copy_file(pathfunc(filename1), pathfunc(filename2))
 
-            self.assertTrue(os.path.exists(filename1))
-            self.assertTrue(os.path.exists(filename2))
+            assert os.path.exists(filename1)
+            assert os.path.exists(filename2)
             if repo is not None:
-                self.assertTrue(
-                    list(repo.index.iter_blobs(BlobFilter(filename2)))
-                )
+                assert list(repo.index.iter_blobs(BlobFilter(filename2)))
 
             read_text = ""
             with io.open(filename2, "r", encoding="utf-8") as fh:
                 read_text = fh.read()
 
-            self.assertEqual(write_text, read_text)
+            assert write_text == read_text
 
             if repo is not None:
                 blob = next(repo.index.iter_blobs(BlobFilter(filename2)))[1]
                 read_text = blob.data_stream[3].read().decode("utf-8")
 
-                self.assertEqual(write_text, read_text)
+                assert write_text == read_text
 
 
     def tearDown(self):
