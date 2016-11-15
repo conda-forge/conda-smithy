@@ -32,6 +32,7 @@ requirements:
 
 test:
   requires:
+    - pytest
     - mock
   imports:
     - conda_smithy
@@ -39,6 +40,7 @@ test:
     - conda_smithy.configure_feedstock
   commands:
     - conda smithy --help
+    - pytest conda_smithy/tests
 
 about:
   home: https://github.com/conda-forge/conda-smithy
