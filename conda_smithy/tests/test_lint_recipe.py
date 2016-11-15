@@ -1,27 +1,17 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 from __future__ import print_function, unicode_literals
-from collections import OrderedDict
-from contextlib import contextmanager
+
 import io
 import os
-import shutil
 import subprocess
-import tempfile
 import textwrap
-import unittest
+from collections import OrderedDict
 
 import conda_smithy.lint_recipe as linter
 
 
-@contextmanager
-def tmp_directory():
-    tmp_dir = tempfile.mkdtemp('recipe_')
-    yield tmp_dir
-    shutil.rmtree(tmp_dir)
-
-
-class Test_linter(unittest.TestCase):
+class Test_linter(object):
     def test_bad_order(self):
         meta = OrderedDict([['package', {}],
                             ['build', {}],
@@ -106,62 +96,62 @@ class Test_linter(unittest.TestCase):
         lints = linter.lintify({'test': {'imports': 'sys'}})
         assert expected_message not in lints
 
-    def test_test_section_with_recipe(self):
+    def test_test_section_with_recipe(self, tmpdir):
         # If we have a run_test.py file, we shouldn't need to provide
         # other tests.
 
         expected_message = 'The recipe must have some tests.'
 
-        with tmp_directory() as recipe_dir:
-            lints = linter.lintify({}, recipe_dir)
-            assert expected_message in lints
+        lints = linter.lintify({}, str(tmpdir))
+        assert expected_message in lints
 
-            with io.open(os.path.join(recipe_dir, 'run_test.py'), 'w') as fh:
-                fh.write('# foo')
-            lints = linter.lintify({}, recipe_dir)
-            assert expected_message not in lints
+        with io.open(os.path.join(str(tmpdir), 'run_test.py'), 'w') as fh:
+            fh.write('# foo')
+        lints = linter.lintify({}, str(tmpdir))
+        assert expected_message not in lints
 
-    def test_selectors(self):
+    def test_selectors(self, tmpdir):
         expected_message = ('Selectors are suggested to take a '
                             '``<two spaces>#<one space>[<expression>]`` form.')
 
-        with tmp_directory() as recipe_dir:
-            def assert_selector(selector, is_good=True):
-                with io.open(os.path.join(recipe_dir, 'meta.yaml'), 'w') as fh:
-                    fh.write("""
-                            package:
-                               name: foo_py2  # [py2k]
-                               {}
-                             """.format(selector))
-                lints = linter.lintify({}, recipe_dir)
-                if is_good:
-                    message = ("Found lints when there shouldn't have been a "
-                               "lint for '{}'.".format(selector))
-                else:
-                    message = ("Expecting lints for '{}', but didn't get any."
-                               "".format(selector))
-                assert (not is_good) == \
-                                 any(lint.startswith(expected_message)
-                                     for lint in lints), \
-                                 message
+        recipe_dir = str(tmpdir)
 
-            assert_selector("name: foo_py3      # [py3k]")
-            assert_selector("name: foo_py3  [py3k]", is_good=False)
-            assert_selector("name: foo_py3  #[py3k]", is_good=False)
-            assert_selector("name: foo_py3 # [py3k]", is_good=False)
-
-    def test_jinja_os_environ(self):
-        # Test that we can use os.environ in a recipe. We don't care about
-        # the results here.
-        with tmp_directory() as recipe_dir:
+        def assert_selector(selector, is_good=True):
             with io.open(os.path.join(recipe_dir, 'meta.yaml'), 'w') as fh:
                 fh.write("""
-                        {% set version = os.environ.get('WIBBLE') %}
                         package:
-                           name: foo
-                           version: {{ version }}
-                         """)
-            lints = linter.main(recipe_dir)
+                           name: foo_py2  # [py2k]
+                           {}
+                         """.format(selector))
+            lints = linter.lintify({}, recipe_dir)
+            if is_good:
+                message = ("Found lints when there shouldn't have been a "
+                           "lint for '{}'.".format(selector))
+            else:
+                message = ("Expecting lints for '{}', but didn't get any."
+                           "".format(selector))
+            assert (not is_good) == \
+                             any(lint.startswith(expected_message)
+                                 for lint in lints), \
+                             message
+
+        assert_selector("name: foo_py3      # [py3k]")
+        assert_selector("name: foo_py3  [py3k]", is_good=False)
+        assert_selector("name: foo_py3  #[py3k]", is_good=False)
+        assert_selector("name: foo_py3 # [py3k]", is_good=False)
+
+    def test_jinja_os_environ(self, tmpdir):
+        # Test that we can use os.environ in a recipe. We don't care about
+        # the results here.
+        recipe_dir = str(tmpdir)
+        with io.open(os.path.join(recipe_dir, 'meta.yaml'), 'w') as fh:
+            fh.write("""
+                    {% set version = os.environ.get('WIBBLE') %}
+                    package:
+                       name: foo
+                       version: {{ version }}
+                     """)
+        lints = linter.main(recipe_dir)
 
     def test_missing_build_number(self):
         expected_message = "The recipe must have a `build/number` section."
@@ -215,7 +205,7 @@ class Test_linter(unittest.TestCase):
                             'the word "License".')
         assert expected_message in lints
 
-    def test_end_empty_line(self):
+    def test_end_empty_line(self, tmpdir):
         bad_contents = [
             # No empty lines at the end of the file
             'extra:\n  recipe-maintainers:\n    - goanpeca',
@@ -234,103 +224,101 @@ class Test_linter(unittest.TestCase):
         valid_content = 'extra:\n  recipe-maintainers:\n    - goanpeca\n'
 
         for content in bad_contents + [valid_content]:
-            with tmp_directory() as recipe_dir:
-                with io.open(os.path.join(recipe_dir, 'meta.yaml'), 'w') as f:
-                    f.write(content)
-                lints = linter.lintify({}, recipe_dir=recipe_dir)
-                expected_message = ('There should be one empty line at the '
-                                    'end of the file.')
-                if content == valid_content:
-                    assert expected_message not in lints
-                else:
-                    assert expected_message in lints
+            recipe_dir = str(tmpdir)
+            with io.open(os.path.join(recipe_dir, 'meta.yaml'), 'w') as f:
+                f.write(content)
+            lints = linter.lintify({}, recipe_dir=recipe_dir)
+            expected_message = ('There should be one empty line at the '
+                                'end of the file.')
+            if content == valid_content:
+                assert expected_message not in lints
+            else:
+                assert expected_message in lints
 
 
-class TestCLI_recipe_lint(unittest.TestCase):
-    def test_cli_fail(self):
-        with tmp_directory() as recipe_dir:
-            with io.open(os.path.join(recipe_dir, 'meta.yaml'), 'w') as fh:
-                fh.write(textwrap.dedent("""
-                    package:
-                        name: 'test_package'
-                    build: []
-                    requirements: []
-                    """))
-            child = subprocess.Popen(['conda-smithy', 'recipe-lint',
-                                      recipe_dir],
-                                     stdout=subprocess.PIPE)
-            out, _ = child.communicate()
-            assert child.returncode == 1, out
+class TestCLI_recipe_lint(object):
+    def test_cli_fail(self, tmpdir):
+        recipe_dir = str(tmpdir)
+        with io.open(os.path.join(recipe_dir, 'meta.yaml'), 'w') as fh:
+            fh.write(textwrap.dedent("""
+                package:
+                    name: 'test_package'
+                build: []
+                requirements: []
+                """))
+        child = subprocess.Popen(['conda-smithy', 'recipe-lint',
+                                  recipe_dir],
+                                 stdout=subprocess.PIPE)
+        out, _ = child.communicate()
+        assert child.returncode == 1, out
 
-    def test_cli_success(self):
-        with tmp_directory() as recipe_dir:
-            with io.open(os.path.join(recipe_dir, 'meta.yaml'), 'w') as fh:
-                fh.write(textwrap.dedent("""
-                    package:
-                        name: 'test_package'
-                    build:
-                        number: 0
-                    test: []
-                    about:
-                        home: something
-                        license: something else
-                        summary: a test recipe
-                    extra:
-                        recipe-maintainers:
-                            - a
-                            - b
-                    """))
-            child = subprocess.Popen(['conda-smithy', 'recipe-lint',
-                                      recipe_dir],
-                                     stdout=subprocess.PIPE)
-            out, _ = child.communicate()
-            assert child.returncode == 0, out
+    def test_cli_success(self, tmpdir):
+        recipe_dir = str(tmpdir)
+        with io.open(os.path.join(recipe_dir, 'meta.yaml'), 'w') as fh:
+            fh.write(textwrap.dedent("""
+                package:
+                    name: 'test_package'
+                build:
+                    number: 0
+                test: []
+                about:
+                    home: something
+                    license: something else
+                    summary: a test recipe
+                extra:
+                    recipe-maintainers:
+                        - a
+                        - b
+                """))
+        child = subprocess.Popen(['conda-smithy', 'recipe-lint',
+                                  recipe_dir],
+                                 stdout=subprocess.PIPE)
+        out, _ = child.communicate()
+        assert child.returncode == 0, out
 
-    def test_cli_environ(self):
-        with tmp_directory() as recipe_dir:
-            with io.open(os.path.join(recipe_dir, 'meta.yaml'), 'w') as fh:
-                fh.write(textwrap.dedent("""
-                    package:
-                        name: 'test_package'
-                    build:
-                        number: 0
-                    test:
-                        requires:
-                            - python {{ environ['PY_VER'] + '*' }}  # [win]
-                    about:
-                        home: something
-                        license: something else
-                        summary: a test recipe
-                    extra:
-                        recipe-maintainers:
-                            - a
-                            - b
-                    """))
-            child = subprocess.Popen(['conda-smithy', 'recipe-lint',
-                                      recipe_dir],
-                                     stdout=subprocess.PIPE)
-            out, _ = child.communicate()
-            assert child.returncode == 0, out
+    def test_cli_environ(self, tmpdir):
+        recipe_dir = str(tmpdir)
+        with io.open(os.path.join(recipe_dir, 'meta.yaml'), 'w') as fh:
+            fh.write(textwrap.dedent("""
+                package:
+                    name: 'test_package'
+                build:
+                    number: 0
+                test:
+                    requires:
+                        - python {{ environ['PY_VER'] + '*' }}  # [win]
+                about:
+                    home: something
+                    license: something else
+                    summary: a test recipe
+                extra:
+                    recipe-maintainers:
+                        - a
+                        - b
+                """))
+        child = subprocess.Popen(['conda-smithy', 'recipe-lint',
+                                  recipe_dir],
+                                 stdout=subprocess.PIPE)
+        out, _ = child.communicate()
+        assert child.returncode == 0, out
 
-    def test_unicode(self):
+    def test_unicode(self, tmpdir):
         """
         Tests that unicode does not confuse the linter.
         """
-        with tmp_directory() as recipe_dir:
-            with io.open(os.path.join(recipe_dir, 'meta.yaml'), 'wt') as fh:
-                fh.write("""
-                    package:
-                        name: 'test_package'
-                    build:
-                        number: 0
-                    about:
-                        home: something
-                        license: something else
-                        summary: αβɣ
-                        description: moɿɘ uniɔobɘ!
-                         """)
-            # Just run it and make sure it does not raise.
-            linter.main(recipe_dir)
+        recipe_dir = str(tmpdir)
+        with io.open(os.path.join(recipe_dir, 'meta.yaml'), 'wt', encoding='UTF-8') as fh:
+            fh.write("""
+                package:
+                    name: 'test_package'
+                build:
+                    number: 0
+                about:
+                    home: something
+                    license: something else
+                    summary: αβɣ
+                    description: moɿɘ uniɔobɘ!
+                     """)
+        # Just run it and make sure it does not raise.
+        linter.main(recipe_dir)
 
-if __name__ == '__main__':
-    unittest.main()
