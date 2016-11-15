@@ -9,6 +9,7 @@ import textwrap
 from collections import OrderedDict
 
 import conda_smithy.lint_recipe as linter
+import pytest
 
 
 class Test_linter(object):
@@ -110,35 +111,35 @@ class Test_linter(object):
         lints = linter.lintify({}, str(tmpdir))
         assert expected_message not in lints
 
-    def test_selectors(self, tmpdir):
+    @pytest.mark.parametrize('selector, is_good', [
+        ("name: foo_py3      # [py3k]", True),
+        ("name: foo_py3  [py3k]", False),
+        ("name: foo_py3  #[py3k]", False),
+        ("name: foo_py3 # [py3k]", False),
+    ])
+    def test_selectors(self, tmpdir, selector, is_good):
         expected_message = ('Selectors are suggested to take a '
                             '``<two spaces>#<one space>[<expression>]`` form.')
 
         recipe_dir = str(tmpdir)
 
-        def assert_selector(selector, is_good=True):
-            with io.open(os.path.join(recipe_dir, 'meta.yaml'), 'w') as fh:
-                fh.write("""
-                        package:
-                           name: foo_py2  # [py2k]
-                           {}
-                         """.format(selector))
-            lints = linter.lintify({}, recipe_dir)
-            if is_good:
-                message = ("Found lints when there shouldn't have been a "
-                           "lint for '{}'.".format(selector))
-            else:
-                message = ("Expecting lints for '{}', but didn't get any."
-                           "".format(selector))
-            assert (not is_good) == \
-                             any(lint.startswith(expected_message)
-                                 for lint in lints), \
-                             message
-
-        assert_selector("name: foo_py3      # [py3k]")
-        assert_selector("name: foo_py3  [py3k]", is_good=False)
-        assert_selector("name: foo_py3  #[py3k]", is_good=False)
-        assert_selector("name: foo_py3 # [py3k]", is_good=False)
+        with io.open(os.path.join(recipe_dir, 'meta.yaml'), 'w') as fh:
+            fh.write("""
+                    package:
+                       name: foo_py2  # [py2k]
+                       {}
+                     """.format(selector))
+        lints = linter.lintify({}, recipe_dir)
+        if is_good:
+            message = ("Found lints when there shouldn't have been a "
+                       "lint for '{}'.".format(selector))
+        else:
+            message = ("Expecting lints for '{}', but didn't get any."
+                       "".format(selector))
+        assert (not is_good) == \
+                         any(lint.startswith(expected_message)
+                             for lint in lints), \
+                         message
 
     def test_jinja_os_environ(self, tmpdir):
         # Test that we can use os.environ in a recipe. We don't care about
@@ -205,35 +206,33 @@ class Test_linter(object):
                             'the word "License".')
         assert expected_message in lints
 
-    def test_end_empty_line(self, tmpdir):
-        bad_contents = [
-            # No empty lines at the end of the file
-            'extra:\n  recipe-maintainers:\n    - goanpeca',
-            'extra:\r  recipe-maintainers:\r    - goanpeca',
-            'extra:\r\n  recipe-maintainers:\r\n    - goanpeca',
-            # Two empty lines at the end of the file
-            'extra:\n  recipe-maintainers:\n    - goanpeca\n\n',
-            'extra:\r  recipe-maintainers:\r    - goanpeca\r\r',
-            'extra:\r\n  recipe-maintainers:\r\n    - goanpeca\r\n\r\n',
-            # Three empty lines at the end of the file
-            'extra:\n  recipe-maintainers:\n    - goanpeca\n\n\n',
-            'extra:\r  recipe-maintainers:\r    - goanpeca\r\r\r',
-            'extra:\r\n  recipe-maintainers:\r\n    - goanpeca\r\n\r\n\r\n',
-        ]
+    @pytest.mark.parametrize('content, good', [
+        # No empty lines at the end of the file
+        ('extra:\n  recipe-maintainers:\n    - goanpeca', False),
+        ('extra:\r  recipe-maintainers:\r    - goanpeca', False),
+        ('extra:\r\n  recipe-maintainers:\r\n    - goanpeca', False),
+        # Two empty lines at the end of the file
+        ('extra:\n  recipe-maintainers:\n    - goanpeca\n\n', False),
+        ('extra:\r  recipe-maintainers:\r    - goanpeca\r\r', False),
+        ('extra:\r\n  recipe-maintainers:\r\n    - goanpeca\r\n\r\n', False),
+        # Three empty lines at the end of the file
+        ('extra:\n  recipe-maintainers:\n    - goanpeca\n\n\n', False),
+        ('extra:\r  recipe-maintainers:\r    - goanpeca\r\r\r', False),
+        ('extra:\r\n  recipe-maintainers:\r\n    - goanpeca\r\n\r\n\r\n', False),
         # Exactly one empty line at the end of the file
-        valid_content = 'extra:\n  recipe-maintainers:\n    - goanpeca\n'
-
-        for content in bad_contents + [valid_content]:
-            recipe_dir = str(tmpdir)
-            with io.open(os.path.join(recipe_dir, 'meta.yaml'), 'w') as f:
-                f.write(content)
-            lints = linter.lintify({}, recipe_dir=recipe_dir)
-            expected_message = ('There should be one empty line at the '
-                                'end of the file.')
-            if content == valid_content:
-                assert expected_message not in lints
-            else:
-                assert expected_message in lints
+        ('extra:\n  recipe-maintainers:\n    - goanpeca\n', True),
+    ])
+    def test_end_empty_line(self, tmpdir, content, good):
+        recipe_dir = str(tmpdir)
+        with io.open(os.path.join(recipe_dir, 'meta.yaml'), 'w') as f:
+            f.write(content)
+        lints = linter.lintify({}, recipe_dir=recipe_dir)
+        expected_message = ('There should be one empty line at the '
+                            'end of the file.')
+        if good:
+            assert expected_message not in lints
+        else:
+            assert expected_message in lints
 
 
 class TestCLI_recipe_lint(object):
