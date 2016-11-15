@@ -5,68 +5,47 @@ import io
 import operator as op
 import os
 import stat
-import shutil
-import tempfile
-import unittest
-
-import git
-from git.index.typ import BlobFilter
+import sys
 
 import conda_smithy.feedstock_io as fio
+import git
+import py
+import pytest
+from git.index.typ import BlobFilter
 
 
-def keep_dir(dirname):
-    keep_filename = os.path.join(dirname, ".keep")
-    with io.open(keep_filename, "w", encoding="utf-8") as fh:
-        fh.write("")
+class TestFeedstockIO(object):
 
+    @pytest.fixture(autouse=True)
+    def setup(self, tmpdir):
+        tmpdir.chdir()
+        tmpdir.join('.keep').write('')
 
-def parameterize():
-    for pathfunc in [
-        lambda pth, tmp_dir: os.path.relpath(pth, tmp_dir),
-        lambda pth, tmp_dir: pth
-    ]:
-        for get_repo in [
-            lambda tmp_dir: None,
-            lambda tmp_dir: git.Repo.init(tmp_dir)
-        ]:
-            try:
-                tmp_dir = tempfile.mkdtemp()
-                keep_dir(tmp_dir)
+    @pytest.fixture(params=['relative', 'absolute'])
+    def path(self, tmpdir_factory, tmpdir, request):
+        result = tmpdir_factory.mktemp('smithy')
+        if request.param == 'relative':
+            result = tmpdir.bestrelpath(result)
+        return str(result)
 
-                old_dir = os.getcwd()
-                os.chdir(tmp_dir)
+    @pytest.fixture(params=['git', 'no-vcs'])
+    def repo(self, request, path):
+        if request.param == 'git':
+            return git.Repo.init(str(path))
+        else:
+            return None
 
-                yield (
-                    tmp_dir,
-                    get_repo(tmp_dir),
-                    lambda pth: pathfunc(pth, tmp_dir)
-                )
-            finally:
-                os.chdir(old_dir)
-                shutil.rmtree(tmp_dir)
+    def test_repo(self, repo, path):
+        if repo is None:
+            assert fio.get_repo(str(path)) is None
+        else:
+            assert isinstance(fio.get_repo(str(path)), git.Repo)
 
+    @pytest.mark.parametrize('set_exe', [True, False])
+    def test_set_exe_file(self, set_exe, repo, path):
+        if set_exe and sys.platform.startswith('win'):
+            pytest.skip('Not possible to set executable flag on Windows')
 
-class TestFeedstockIO(unittest.TestCase):
-    def setUp(self):
-        self.old_dir = os.getcwd()
-
-        self.tmp_dir = tempfile.mkdtemp()
-        os.chdir(self.tmp_dir)
-
-        with io.open(os.path.abspath(".keep"), "w", encoding="utf-8") as fh:
-            fh.write("")
-
-
-    def test_repo(self):
-        for tmp_dir, repo, pathfunc in parameterize():
-            if repo is None:
-                assert fio.get_repo(pathfunc(tmp_dir)) is None
-            else:
-                assert isinstance(fio.get_repo(pathfunc(tmp_dir)), git.Repo)
-
-
-    def test_set_exe_file(self):
         perms = [
             stat.S_IXUSR,
             stat.S_IXGRP,
@@ -75,146 +54,107 @@ class TestFeedstockIO(unittest.TestCase):
 
         set_mode = functools.reduce(op.or_, perms)
 
-        for set_exe in [True, False]:
-            for tmp_dir, repo, pathfunc in parameterize():
-                filename = "test.txt"
-                filename = os.path.join(tmp_dir, filename)
-                with io.open(filename, "w", encoding="utf-8") as fh:
-                    fh.write("")
-                if repo is not None:
-                    repo.index.add([filename])
+        filename = py.path.local(path).join("test.txt")
+        filename.ensure(file=1)
+        if repo is not None:
+            repo.index.add([str(filename)])
 
-                fio.set_exe_file(pathfunc(filename), set_exe)
+        fio.set_exe_file(str(filename), set_exe)
 
-                file_mode = os.stat(filename).st_mode
-                assert file_mode & set_mode == \
-                                 int(set_exe) * set_mode
-                if repo is not None:
-                    blob = next(repo.index.iter_blobs(BlobFilter(filename)))[1]
-                    assert blob.mode & set_mode == \
-                                     int(set_exe) * set_mode
+        file_mode = os.stat(str(filename)).st_mode
+        assert file_mode & set_mode == \
+                         int(set_exe) * set_mode
+        if repo is not None:
+            blob = next(repo.index.iter_blobs(BlobFilter(str(filename))))[1]
+            assert blob.mode & set_mode == \
+                             int(set_exe) * set_mode
 
+    @pytest.mark.parametrize('filename', ["test.txt", "dir1/dir2/test.txt"])
+    def test_write_file(self, filename, path, repo):
+        filename = os.path.join(path, filename)
 
-    def test_write_file(self):
-        for tmp_dir, repo, pathfunc in parameterize():
-            for filename in ["test.txt", "dir1/dir2/test.txt"]:
-                filename = os.path.join(tmp_dir, filename)
+        write_text = "text"
 
-                write_text = "text"
+        with fio.write_file(filename) as fh:
+            fh.write(write_text)
+        if repo is not None:
+            repo.index.add([filename])
 
-                with fio.write_file(pathfunc(filename)) as fh:
-                    fh.write(write_text)
-                if repo is not None:
-                    repo.index.add([filename])
+        with io.open(filename, "r", encoding="utf-8") as fh:
+            read_text = fh.read()
 
-                read_text = ""
-                with io.open(filename, "r", encoding="utf-8") as fh:
-                    read_text = fh.read()
+        assert write_text == read_text
 
-                assert write_text == read_text
+        if repo is not None:
+            blob = next(repo.index.iter_blobs(BlobFilter(filename)))[1]
+            read_text = blob.data_stream[3].read().decode("utf-8")
 
-                if repo is not None:
-                    blob = next(repo.index.iter_blobs(BlobFilter(filename)))[1]
-                    read_text = blob.data_stream[3].read().decode("utf-8")
+        assert write_text == read_text
 
-                    assert write_text == read_text
+    @pytest.mark.parametrize('filename', ["test.txt", "dir1/dir2/test.txt"])
+    def test_touch_file(self, path, filename, repo):
+        filename = os.path.join(path, filename)
 
+        fio.touch_file(filename)
 
-    def test_touch_file(self):
-        for tmp_dir, repo, pathfunc in parameterize():
-            for filename in ["test.txt", "dir1/dir2/test.txt"]:
-                filename = os.path.join(tmp_dir, filename)
+        with io.open(filename, "r", encoding="utf-8") as fh:
+            read_text = fh.read()
 
-                fio.touch_file(pathfunc(filename))
+        assert "" == read_text
 
-                read_text = ""
-                with io.open(filename, "r", encoding="utf-8") as fh:
-                    read_text = fh.read()
+        if repo is not None:
+            blob = next(repo.index.iter_blobs(BlobFilter(filename)))[1]
+            read_text = blob.data_stream[3].read().decode("utf-8")
 
-                assert "" == read_text
+            assert "" == read_text
 
-                if repo is not None:
-                    blob = next(repo.index.iter_blobs(BlobFilter(filename)))[1]
-                    read_text = blob.data_stream[3].read().decode("utf-8")
+    @pytest.mark.parametrize('filename', ["test.txt", "dir1/dir2/test.txt"])
+    def test_remove_file(self, path, filename, repo, tmpdir):
+        dirname = os.path.dirname(filename)
+        filename = py.path.local(path).join(filename)
+        filename.ensure(file=1)
 
-                    assert "" == read_text
+        if repo is not None:
+            repo.index.add([str(filename)])
 
+        assert filename.isfile()
+        if repo is not None:
+            assert list(repo.index.iter_blobs(BlobFilter(str(filename))))
 
-    def test_remove_file(self):
-        for tmp_dir, repo, pathfunc in parameterize():
-            for filename in ["test.txt", "dir1/dir2/test.txt"]:
-                dirname = os.path.dirname(filename)
-                if dirname and not os.path.exists(dirname):
-                    os.makedirs(dirname)
+        fio.remove_file(str(filename))
 
-                filename = os.path.join(tmp_dir, filename)
+        assert not filename.isfile()
+        if dirname:
+            assert not py.path.local(filename.dirname).isdir()
+        if repo is not None:
+            assert not list(repo.index.iter_blobs(BlobFilter(str(filename))))
 
-                with io.open(filename, "w", encoding="utf-8") as fh:
-                    fh.write("")
-                if repo is not None:
-                    repo.index.add([filename])
+    def test_copy_file(self, repo, path):
+        filename1 = os.path.join(path, "test1.txt")
+        filename2 = os.path.join(path, "test2.txt")
 
-                assert os.path.exists(filename)
-                if dirname:
-                    assert os.path.exists(dirname)
-                    assert os.path.exists(os.path.dirname(dirname))
-                if repo is not None:
-                    assert list(repo.index.iter_blobs(BlobFilter(filename)))
+        write_text = 'text'
+        py.path.local(filename1).write(write_text)
 
-                fio.remove_file(pathfunc(filename))
+        assert os.path.isfile(filename1)
+        assert not os.path.isfile(filename2)
+        if repo is not None:
+            assert not list(repo.index.iter_blobs(BlobFilter(filename2)))
 
-                assert not os.path.exists(filename)
-                if dirname:
-                    assert not os.path.exists(dirname)
-                    assert not os.path.exists(os.path.dirname(dirname))
-                if repo is not None:
-                    assert not list(repo.index.iter_blobs(BlobFilter(filename)))
+        fio.copy_file(os.path.join(path, str(filename1)), os.path.join(path, str(filename2)))
 
+        assert os.path.isfile(filename1)
+        assert os.path.isfile(filename2)
+        if repo is not None:
+            assert list(repo.index.iter_blobs(BlobFilter(filename2)))
 
-    def test_copy_file(self):
-        for tmp_dir, repo, pathfunc in parameterize():
-            filename1 = "test1.txt"
-            filename2 = "test2.txt"
+        with io.open(filename2, "r", encoding="utf-8") as fh:
+            read_text = fh.read()
 
-            filename1 = os.path.join(tmp_dir, filename1)
-            filename2 = os.path.join(tmp_dir, filename2)
+        assert write_text == read_text
 
-            write_text = "text"
-            with io.open(filename1, "w", encoding="utf-8") as fh:
-                fh.write(write_text)
-
-            assert os.path.exists(filename1)
-            assert not os.path.exists(filename2)
-            if repo is not None:
-                assert not list(repo.index.iter_blobs(BlobFilter(filename2)))
-
-            fio.copy_file(pathfunc(filename1), pathfunc(filename2))
-
-            assert os.path.exists(filename1)
-            assert os.path.exists(filename2)
-            if repo is not None:
-                assert list(repo.index.iter_blobs(BlobFilter(filename2)))
-
-            read_text = ""
-            with io.open(filename2, "r", encoding="utf-8") as fh:
-                read_text = fh.read()
+        if repo is not None:
+            blob = next(repo.index.iter_blobs(BlobFilter(filename2)))[1]
+            read_text = blob.data_stream[3].read().decode("utf-8")
 
             assert write_text == read_text
-
-            if repo is not None:
-                blob = next(repo.index.iter_blobs(BlobFilter(filename2)))[1]
-                read_text = blob.data_stream[3].read().decode("utf-8")
-
-                assert write_text == read_text
-
-
-    def tearDown(self):
-        os.chdir(self.old_dir)
-        del self.old_dir
-
-        shutil.rmtree(self.tmp_dir)
-        del self.tmp_dir
-
-
-if __name__ == '__main__':
-    unittest.main()
