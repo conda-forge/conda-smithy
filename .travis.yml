@@ -29,7 +29,7 @@ install:
 
 script:
     - coverage erase
-    - coverage run --source . -m pytest conda_smithy/tests
+    - coverage run --source conda_smithy -m pytest conda_smithy/tests
     - coverage report
 
 after_success:
