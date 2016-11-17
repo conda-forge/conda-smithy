@@ -390,9 +390,10 @@ def write_rendered_file(target_fname, template, forge_config, strict=False):
         with io.open(target_fname, 'r', encoding='utf-8') as fh:
             old_content = fh.readlines()
         
-        # If the existing file has exactly one changed line (len(diff) == 2)
-        # Then it implies the only difference between both files is the version
-        # number, so we can avoid rerendering the file if strict=True.
+        # When strict=True, avoid re-rendering the file. This is done
+        # by checking whether or not the changes are only in comments,
+        # which is useful for preventing things like re-rendering from
+        # bumping version numbers.
         diff = list(difflib.ndiff(content.splitlines(1), old_content))
         diff = [line for line in diff if '-' in line[0] or '+' in line[0]]
         comments = [line for line in diff if line.strip()[1] == '#']
