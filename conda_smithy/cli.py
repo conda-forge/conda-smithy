@@ -110,7 +110,7 @@ class Init(Subcommand):
             meta = None
 
         feedstock_directory = args.feedstock_directory.format(package=argparse.Namespace(name=meta.name()))
-        msg = 'Initial commit of the {} feedstock.'.format(meta.name())
+        msg = 'Initial commit of the {} feedstock rendered with conda-smithy {}'.format(meta.name(), __version__)
 
         try:
             generate_feedstock_content(feedstock_directory, args.recipe_directory, meta)
