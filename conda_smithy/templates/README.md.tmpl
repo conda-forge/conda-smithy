@@ -13,6 +13,35 @@ Summary: {{ package.meta.about.summary }}
 
 {% if package.meta.about.description %}{{ package.meta.about.description }}{% endif %}
 
+Current build status
+====================
+{%- set appveyor_url_name = github.repo_name.replace('_', '-').replace('.', '-') %}
+
+{%- set disabled_badge_commit = "90845bba35bec53edac7a16638aa4d77217a3713" %}
+{%- set disabled_badge_path = "conda_smithy/static/disabled.svg" %}
+{%- set disabled_badge_url = "https://cdn.rawgit.com/conda-forge/conda-smithy/%s/%s"|format(disabled_badge_commit, disabled_badge_path) %}
+{# #}
+{%- if circle.enabled %}
+Linux: [![Circle CI](https://circleci.com/gh/{{ github.user_or_org }}/{{ github.repo_name }}.svg?style=shield)](https://circleci.com/gh/{{ github.user_or_org }}/{{ github.repo_name }})
+{%- else %}
+Linux: ![]({{ disabled_badge_url }})
+{%- endif %}
+{%- if travis.enabled %}
+OSX: [![TravisCI](https://travis-ci.org/{{ github.user_or_org }}/{{ github.repo_name }}.svg?branch=master)](https://travis-ci.org/{{ github.user_or_org }}/{{ github.repo_name }})
+{%- else %}
+OSX: ![]({{ disabled_badge_url }})
+{%- endif %}
+{%- if appveyor.enabled %}
+Windows: [![AppVeyor](https://ci.appveyor.com/api/projects/status/github/{{ github.user_or_org }}/{{ github.repo_name }}?svg=True)](https://ci.appveyor.com/project/{{ github.user_or_org }}/{{ appveyor_url_name }}/branch/master)
+{%- else %}
+Windows: ![]({{ disabled_badge_url }})
+{%- endif %}
+
+Current release info
+====================
+Version: [![Anaconda-Server Badge](https://anaconda.org/{{ channel_name }}/{{ package.name() }}/badges/version.svg)](https://anaconda.org/{{ channel_name }}/{{ package.name() }})
+Downloads: [![Anaconda-Server Badge](https://anaconda.org/{{ channel_name }}/{{ package.name() }}/badges/downloads.svg)](https://anaconda.org/{{ channel_name }}/{{ package.name() }})
+
 Installing {{ package.name() }}
 ==========={{ '=' * package.name()|length }}
 
@@ -69,35 +98,6 @@ Terminology
 **conda-forge** - the place where the feedstock and smithy live and work to
                   produce the finished article (built conda distributions)
 {%- endif %}
-
-Current build status
-====================
-{%- set appveyor_url_name = github.repo_name.replace('_', '-').replace('.', '-') %}
-
-{%- set disabled_badge_commit = "90845bba35bec53edac7a16638aa4d77217a3713" %}
-{%- set disabled_badge_path = "conda_smithy/static/disabled.svg" %}
-{%- set disabled_badge_url = "https://cdn.rawgit.com/conda-forge/conda-smithy/%s/%s"|format(disabled_badge_commit, disabled_badge_path) %}
-{# #}
-{%- if circle.enabled %}
-Linux: [![Circle CI](https://circleci.com/gh/{{ github.user_or_org }}/{{ github.repo_name }}.svg?style=shield)](https://circleci.com/gh/{{ github.user_or_org }}/{{ github.repo_name }})
-{%- else %}
-Linux: ![]({{ disabled_badge_url }})
-{%- endif %}
-{%- if travis.enabled %}
-OSX: [![TravisCI](https://travis-ci.org/{{ github.user_or_org }}/{{ github.repo_name }}.svg?branch=master)](https://travis-ci.org/{{ github.user_or_org }}/{{ github.repo_name }})
-{%- else %}
-OSX: ![]({{ disabled_badge_url }})
-{%- endif %}
-{%- if appveyor.enabled %}
-Windows: [![AppVeyor](https://ci.appveyor.com/api/projects/status/github/{{ github.user_or_org }}/{{ github.repo_name }}?svg=True)](https://ci.appveyor.com/project/{{ github.user_or_org }}/{{ appveyor_url_name }}/branch/master)
-{%- else %}
-Windows: ![]({{ disabled_badge_url }})
-{%- endif %}
-
-Current release info
-====================
-Version: [![Anaconda-Server Badge](https://anaconda.org/{{ channel_name }}/{{ package.name() }}/badges/version.svg)](https://anaconda.org/{{ channel_name }}/{{ package.name() }})
-Downloads: [![Anaconda-Server Badge](https://anaconda.org/{{ channel_name }}/{{ package.name() }}/badges/downloads.svg)](https://anaconda.org/{{ channel_name }}/{{ package.name() }})
 
 
 Updating {{ package.name() }}-feedstock
