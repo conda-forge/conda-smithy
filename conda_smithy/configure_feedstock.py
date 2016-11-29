@@ -295,6 +295,9 @@ def render_appveyor(jinja_env, forge_config, forge_dir):
         for case in old_matrix:
             case = odict(case)
 
+            # Use Python 2.7 as a fallback when no Python version is set.
+            case["CONDA_PY"] = case.get("CONDA_PY", "27")
+
             # Set `root`'s `python` version.
             case["CONDA_INSTALL_LOCN"] = "C:\\\\Miniconda"
             if case.get("CONDA_PY") == "27":
