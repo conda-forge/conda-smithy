@@ -62,6 +62,9 @@ install:
     - cmd: conda install -n root --quiet --yes obvious-ci
     - cmd: conda install -n root --quiet --yes conda-forge-build-setup
     - cmd: run_conda_forge_build_setup
+    # This needs to be updated to conda-forge channel before PR
+    - appveyor DownloadFile "https://raw.githubusercontent.com/shadowwalkersb/conda-smithy/fix-appveyor-vc9-64/appveyor/setup_x64.bat"
+    - cmd: call setup_x64.bat
 
 # Skip .NET project specific build phase.
 build: off
