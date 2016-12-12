@@ -69,6 +69,24 @@ def render_run_docker_build(jinja_env, forge_config, forge_dir):
         matrix = prepare_matrix_for_env_vars(matrix)
         forge_config = update_matrix(forge_config, matrix)
 
+        build_setup = ""
+
+        # If the recipe supplies its own conda-forge-build-setup script,
+        # we use it instead of the global one.
+        cfbs_fpath = os.path.join(forge_dir, 'recipe',
+                                  'run_conda_forge_build_setup_linux')
+        if os.path.exists(cfbs_fpath):
+            build_setup += textwrap.dedent("""\
+                # Overriding global conda-forge-build-setup with local copy.
+                source /recipe_root/run_conda_forge_build_setup_linux
+
+            """)
+        else:
+            build_setup += textwrap.dedent("""\
+                source run_conda_forge_build_setup
+
+            """)
+
         # If there is a "yum_requirements.txt" file in the recipe, we honour it.
         yum_requirements_fpath = os.path.join(forge_dir, 'recipe',
                                               'yum_requirements.txt')
@@ -80,7 +98,8 @@ def render_run_docker_build(jinja_env, forge_config, forge_dir):
                 raise ValueError("No yum requirements enabled in the "
                                  "yum_requirements.txt, please remove the file "
                                  "or add some.")
-            build_setup = textwrap.dedent("""\
+            build_setup += textwrap.dedent("""\
+
                 # Install the yum requirements defined canonically in the
                 # "recipe/yum_requirements.txt" file. After updating that file,
                 # run "conda smithy rerender" and this line be updated
@@ -89,7 +108,19 @@ def render_run_docker_build(jinja_env, forge_config, forge_dir):
 
 
             """.format(' '.join(requirements)))
-            forge_config['build_setup'] = build_setup
+
+        forge_config['build_setup'] = build_setup
+
+        # If the recipe supplies its own conda-forge-build-setup upload script,
+        # we use it instead of the global one.
+        upload_fpath = os.path.join(forge_dir, 'recipe',
+                                    'upload_or_check_non_existence.py')
+        if os.path.exists(upload_fpath):
+            forge_config['upload_script'] = (
+                "/recipe_root/upload_or_check_non_existence.py"
+            )
+        else:
+            forge_config['upload_script'] = "upload_or_check_non_existence"
 
         # TODO: Conda has a convenience for accessing nested yaml content.
         templates = forge_config.get('templates', {})
@@ -188,6 +219,41 @@ def render_travis(jinja_env, forge_config, forge_dir):
         forge_config["travis"]["enabled"] = True
         matrix = prepare_matrix_for_env_vars(matrix)
         forge_config = update_matrix(forge_config, matrix)
+
+        build_setup = ""
+
+        # If the recipe supplies its own conda-forge-build-setup script,
+        # we use it instead of the global one.
+        cfbs_fpath = os.path.join(forge_dir, 'recipe',
+                                  'run_conda_forge_build_setup_osx')
+        if os.path.exists(cfbs_fpath):
+            build_setup += textwrap.dedent("""\
+                # Overriding global conda-forge-build-setup with local copy.
+                source {recipe_dir}/run_conda_forge_build_setup_osx
+            """.format(recipe_dir=forge_config["recipe_dir"]))
+        else:
+            build_setup += textwrap.dedent("""\
+                source run_conda_forge_build_setup
+            """)
+
+        build_setup = build_setup.strip()
+        build_setup = build_setup.replace("\n", "\n      ")
+
+        forge_config['build_setup'] = build_setup
+
+        # If the recipe supplies its own conda-forge-build-setup upload script,
+        # we use it instead of the global one.
+        upload_fpath = os.path.join(forge_dir, 'recipe',
+                                    'upload_or_check_non_existence.py')
+        if os.path.exists(upload_fpath):
+            forge_config['upload_script'] = (
+                "{recipe_dir}/upload_or_check_non_existence.py".format(
+                    recipe_dir=forge_config["recipe_dir"]
+                )
+            )
+        else:
+            forge_config['upload_script'] = "upload_or_check_non_existence"
+
         template = jinja_env.get_template('travis.yml.tmpl')
         with write_file(target_fname) as fh:
             fh.write(template.render(**forge_config))
@@ -317,6 +383,43 @@ def render_appveyor(jinja_env, forge_config, forge_dir):
         del old_matrix
 
         forge_config = update_matrix(forge_config, matrix)
+
+        build_setup = ""
+
+        # If the recipe supplies its own conda-forge-build-setup script,
+        # we use it instead of the global one.
+        cfbs_fpath = os.path.join(forge_dir, 'recipe',
+                                  'run_conda_forge_build_setup_osx')
+        if os.path.exists(cfbs_fpath):
+            build_setup += textwrap.dedent("""\
+                # Overriding global conda-forge-build-setup with local copy.
+                {recipe_dir}\\run_conda_forge_build_setup_win
+            """.format(recipe_dir=forge_config["recipe_dir"]))
+        else:
+            build_setup += textwrap.dedent("""\
+
+                run_conda_forge_build_setup
+            """)
+
+        build_setup = build_setup.rstrip()
+        build_setup = build_setup.replace("\n", "\n    - cmd: ")
+        build_setup = build_setup.lstrip()
+
+        forge_config['build_setup'] = build_setup
+
+        # If the recipe supplies its own conda-forge-build-setup upload script,
+        # we use it instead of the global one.
+        upload_fpath = os.path.join(forge_dir, 'recipe',
+                                    'upload_or_check_non_existence.py')
+        if os.path.exists(upload_fpath):
+            forge_config['upload_script'] = (
+                "{recipe_dir}\\upload_or_check_non_existence".format(
+                    recipe_dir=forge_config["recipe_dir"]
+                )
+            )
+        else:
+            forge_config['upload_script'] = "upload_or_check_non_existence"
+
         template = jinja_env.get_template('appveyor.yml.tmpl')
         with write_file(target_fname) as fh:
             fh.write(template.render(**forge_config))

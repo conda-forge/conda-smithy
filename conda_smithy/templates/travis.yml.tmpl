@@ -50,10 +50,11 @@ install:
       {%- endfor %}
       conda config --set show_channel_urls true
       conda install --yes --quiet conda-forge-build-setup
-      source run_conda_forge_build_setup
+      {% if build_setup -%}
+      {{ build_setup }}{% endif %}
 
 script:
   - conda build ./{{ recipe_dir }}
 {% for owner, channel in channels['targets'] %}
-  - upload_or_check_non_existence ./{{ recipe_dir }} {{ owner }} --channel={{ channel }}
+  - {{ upload_script }} ./{{ recipe_dir }} {{ owner }} --channel={{ channel }}
 {% endfor %}

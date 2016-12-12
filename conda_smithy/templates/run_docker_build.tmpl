@@ -41,14 +41,13 @@ echo "$config" > ~/.condarc
 conda clean --lock
 
 conda install --yes --quiet conda-forge-build-setup
-source run_conda_forge_build_setup
-
-{% if build_setup %}
+{% if build_setup -%}
 {{ build_setup }}{% endif -%}
+
 {%- block build %}
 conda build /recipe_root --quiet || exit 1
 {%- for owner, channel in channels['targets'] %}
-upload_or_check_non_existence /recipe_root {{ owner }} --channel={{ channel }} || exit 1
+{{ upload_script }} /recipe_root {{ owner }} --channel={{ channel }} || exit 1
 {%- endfor -%}
 {%- endblock -%}
 

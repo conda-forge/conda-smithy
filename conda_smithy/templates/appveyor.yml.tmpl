@@ -61,7 +61,8 @@ install:
 
     - cmd: conda install -n root --quiet --yes obvious-ci
     - cmd: conda install -n root --quiet --yes conda-forge-build-setup
-    - cmd: run_conda_forge_build_setup
+    {% if build_setup -%}
+    {{ build_setup }}{% endif %}
 
 # Skip .NET project specific build phase.
 build: off
@@ -70,5 +71,5 @@ test_script:
     - "%CMD_IN_ENV% conda build {{ recipe_dir }} --quiet"
 deploy_script:
 {%- for owner, channel in channels['targets'] %}
-    - cmd: upload_or_check_non_existence .\{{ recipe_dir }} {{ owner }} --channel={{ channel }}
+    - cmd: {{ upload_script }} .\{{ recipe_dir }} {{ owner }} --channel={{ channel }}
 {% endfor %}
