@@ -500,8 +500,9 @@ def meta_of_feedstock(forge_dir, config=None):
     return meta
 
 
-def compute_build_matrix(meta, existing_matrix=None):
-    index = conda.api.get_index()
+def compute_build_matrix(meta, existing_matrix=None, channel_sources=tuple()):
+    channel_sources = tuple(channel_sources)
+    index = conda.api.get_index(channel_urls=channel_sources)
     mtx = special_case_version_matrix(meta, index)
     mtx = list(filter_cases(mtx, ['python >=2.7,<3|>=3.4', 'numpy >=1.10']))
     if existing_matrix:
