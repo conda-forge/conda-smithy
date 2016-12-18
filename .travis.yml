@@ -11,6 +11,10 @@ env:
     matrix:
         - PYTHON=2.7
         - PYTHON=3.5
+          CONDA_PKGS='conda=4.1.* conda-env=2.5.* conda-build=1.*'
+        - PYTHON=3.5
+          CONDA_PKGS='conda=4.1.* conda-env=2.5.*'
+        - PYTHON=3.5
           CONDA_PKGS='conda-build=1.*'
         - PYTHON=3.5
 
