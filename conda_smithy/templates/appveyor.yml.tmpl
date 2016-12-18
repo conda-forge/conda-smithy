@@ -54,6 +54,7 @@ install:
 
     # Add our channels.
     - cmd: conda config --set show_channel_urls true
+    - cmd: conda config --remove channels defaults
     {%- for channel in channels.get('sources', [])|reverse %}
     - cmd: conda config --add channels {{ channel }}{% endfor %}
 

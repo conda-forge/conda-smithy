@@ -44,7 +44,7 @@ install:
       bash $MINICONDA_FILE -b
 
       source /Users/travis/miniconda3/bin/activate root
-
+      conda config --remove channels defaults
       {%- for channel in channels.get('sources', [])|reverse %}
       conda config --add channels {{ channel }}
       {%- endfor %}
