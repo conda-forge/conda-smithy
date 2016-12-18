@@ -45,7 +45,7 @@ install:
     - cmd: set "OLDPATH=%PATH%"
     - cmd: set "PATH=%CONDA_INSTALL_LOCN%\\Scripts;%CONDA_INSTALL_LOCN%\\Library\\bin;%PATH%"
     - cmd: conda config --set show_channel_urls true
-    {%- for channel in channels.get('sources', []) %}
+    {%- for channel in channels.get('sources', [])|reverse %}
     - cmd: conda config --add channels {{ channel }}{% endfor %}
 
     # Add a hack to switch to `conda` version `4.1.12` before activating.

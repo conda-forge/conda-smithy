@@ -45,7 +45,7 @@ install:
 
       source /Users/travis/miniconda3/bin/activate root
 
-      {%- for channel in channels.get('sources', []) %}
+      {%- for channel in channels.get('sources', [])|reverse %}
       conda config --add channels {{ channel }}
       {%- endfor %}
       conda config --set show_channel_urls true

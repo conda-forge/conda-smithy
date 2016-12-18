@@ -13,7 +13,7 @@ docker info
 config=$(cat <<CONDARC
 
 channels:
-{%- for channel in channels.get('sources', []) | sort %}
+{%- for channel in channels.get('sources', []) %}
  - {{ channel }}
 {%- endfor %}
  - defaults # As we need conda-build
