@@ -16,7 +16,6 @@ channels:
 {%- for channel in channels.get('sources', []) %}
  - {{ channel }}
 {%- endfor %}
- - defaults # As we need conda-build
 
 conda-build:
  root-dir: /feedstock_root/build_artefacts
