@@ -11,6 +11,7 @@ import jinja2
 import ruamel.yaml
 
 from conda_build.metadata import ensure_valid_license_family
+from conda_smithy import pinning
 
 
 EXPECTED_SECTION_ORDER = ['package', 'source', 'build', 'requirements',
@@ -148,6 +149,22 @@ def lintify(meta, recipe_dir=None):
         ensure_valid_license_family(meta)
     except RuntimeError as e:
         lints.append(str(e))
+
+    # 13: Dependencies should be pinned according to our pinning rules
+    for dep_section in requirements_section:
+        for dependency in requirements_section.get(dep_section):
+            # py27 compatiblity: ugly way of doing split(maxsplit=1)
+            dep_split = dependency.split(None, 1)
+            if len(dep_split) == 1:
+                pkg, version = dep_split[0], ''
+            else:
+                pkg, version = dep_split
+
+            if pkg in pinning:
+                expected_pin = pinning[pkg]
+                if expected_pin != version:
+                    lints.append('The %s dependency %r should be pinned to version %s' %
+                                 (dep_section, pkg, expected_pin))
 
     return lints
 
