@@ -1,7 +1,6 @@
 from __future__ import print_function, absolute_import
 
 import os
-import requests
 import subprocess
 import sys
 import time
@@ -13,10 +12,14 @@ from . import ci_register
 from . import configure_feedstock
 from . import feedstock_io
 from . import lint_recipe
+from . import update_pinning
 from . import __version__
+
+from cf_pinning import __version__ as pinning_version
 
 
 PY2 = sys.version_info[0] == 2
+
 
 def generate_feedstock_content(target_directory, source_recipe_dir, meta):
     target_directory = os.path.abspath(target_directory)
@@ -242,6 +245,67 @@ class RecipeLint(Subcommand):
         # Exit code 1 for some lint, 0 for no lint.
         sys.exit(int(not all_good))
 
+
+class UpdatePinning(Subcommand):
+    subcommand = 'update-pinning'
+    aliases = ['repin']
+
+    def __init__(self, parser):
+        info = 'Update pinned dependencies to the latest versions'
+        super(UpdatePinning, self).__init__(parser, info)
+        scp = self.subcommand_parser
+        scp.add_argument("--feedstock_directory", default=os.getcwd(),
+                         help="The directory of the feedstock git repository.")
+        scp.add_argument("-c", "--commit", nargs='?', choices=["edit", "auto"], const="edit",
+                         help="Whether to setup a commit or not.")
+
+    def __call__(self, args):
+        try:
+            update_pinning.main(args.feedstock_directory)
+            print()
+            print('updated pinnings to conda-forge-pinning %s.'
+                  % pinning_version)
+
+            is_git_repo = os.path.exists(os.path.join(args.feedstock_directory, ".git"))
+            if is_git_repo:
+                commit_msg = 'MNT: updated pinnings to conda-forge-pinning %s' % pinning_version
+                has_staged_changes = subprocess.call(
+                    [
+                        "git", "diff", "--cached", "--quiet", "--exit-code"
+                    ],
+                    cwd=args.feedstock_directory
+                )
+                if has_staged_changes:
+                    if args.commit:
+                        git_args = [
+                            'git',
+                            'commit',
+                            '-m',
+                            commit_msg
+                        ]
+                        if args.commit == "edit":
+                            git_args += [
+                                '--edit',
+                                '--status',
+                                '--verbose'
+                            ]
+                        subprocess.check_call(
+                            git_args,
+                            cwd=args.feedstock_directory
+                        )
+                        print()
+                    else:
+                        print(
+                            'You can commit the changes with:\n\n'
+                            '    %s\n' % commit_msg
+                        )
+                    print("These changes need to be pushed to github!\n")
+                else:
+                    print("No changes made. This feedstock is up-to-date.\n")
+        except RuntimeError as e:
+            print(e)
+        except subprocess.CalledProcessError as e:
+            print(e)
 
 
 def main():

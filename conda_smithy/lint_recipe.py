@@ -11,6 +11,7 @@ import jinja2
 import ruamel.yaml
 
 from conda_build.metadata import ensure_valid_license_family
+from cf_pinning import get_replacements
 
 
 EXPECTED_SECTION_ORDER = ['package', 'source', 'build', 'requirements',
@@ -148,6 +149,14 @@ def lintify(meta, recipe_dir=None):
         ensure_valid_license_family(meta)
     except RuntimeError as e:
         lints.append(str(e))
+
+    # 13: Dependencies should be pinned according to our pinning rules
+    for dep_section in ['build', 'run']:
+        if not requirements_section.get(dep_section):
+            continue
+        for obs_pin, exp_pin in get_replacements(requirements_section, dep_section):
+            lints.append('Improper pinning in %s section: %r should be pinned to %r' %
+                         (dep_section, obs_pin, str(exp_pin)))
 
     return lints
 
