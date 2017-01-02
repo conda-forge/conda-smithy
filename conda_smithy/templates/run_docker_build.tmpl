@@ -68,14 +68,14 @@ conda build /home/conda/recipe_root -m /home/conda/feedstock_root/.ci_support/${
 touch /home/conda/feedstock_root/build_artifacts/conda-forge-build-done
 EOF
 
-docker run -i \
-    -v "${RECIPE_ROOT}":/home/conda/recipe_root \
-    -v "${FEEDSTOCK_ROOT}":/home/conda/feedstock_root \
-    -e HOST_USER_ID="${HOST_USER_ID}" \
-    {{ matrix_env_vars(matrix) }} \
-    {{ docker.image }} \
-    {{ docker.command }} \
-    /home/conda/feedstock_root/ci_support/build.sh || exit $?
+docker run -it \
+           -v "${RECIPE_ROOT}":/home/conda/recipe_root \
+           -v "${FEEDSTOCK_ROOT}":/home/conda/feedstock_root \
+           -e HOST_USER_ID="${HOST_USER_ID}" \
+           {{ matrix_env_vars(matrix) }} \
+           {{ docker.image }} \
+           {{ docker.command }} \
+           /home/conda/feedstock_root/ci_support/build.sh || exit $?
 
 # check that the end of the script was reached
 test -f "$DONE_CANARY"
