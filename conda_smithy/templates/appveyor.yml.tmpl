@@ -41,11 +41,15 @@ install:
     # Cywing's git breaks conda-build. (See https://github.com/conda-forge/conda-smithy-feedstock/pull/2.)
     - cmd: rmdir C:\cygwin /s /q
 
-    # Add path, activate `conda` and update conda.
+    # Add a hack to update conda as the included copy is too old.
+    - cmd: set "OLDPATH=%PATH%"
     - cmd: set "PATH=%CONDA_INSTALL_LOCN%\\Scripts;%CONDA_INSTALL_LOCN%\\Library\\bin;%PATH%"
     - cmd: conda update --yes --quiet conda
-    - cmd: call %CONDA_INSTALL_LOCN%\Scripts\activate.bat
+    - cmd: set "PATH=%OLDPATH%"
+    - cmd: set "OLDPATH="
 
+    # Actually activate `conda`.
+    - cmd: call %CONDA_INSTALL_LOCN%\Scripts\activate.bat
     - cmd: set PYTHONUNBUFFERED=1
 
     # Add our channels.
