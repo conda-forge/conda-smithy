@@ -8,7 +8,7 @@ import git
 from git import Repo, GitCommandError
 from github import Github
 
-from . import github as smithy_github
+from conda_smithy import github as smithy_github
 
 
 def feedstock_repos(gh_organization):

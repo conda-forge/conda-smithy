@@ -9,10 +9,10 @@ import argparse
 
 from conda_build.metadata import MetaData
 
-from . import ci_register
-from . import configure_feedstock
-from . import lint_recipe
-from . import __version__
+from conda_smithy import ci_register
+from conda_smithy import configure_feedstock
+from conda_smithy import lint_recipe
+from conda_smithy import __version__
 
 
 PY2 = sys.version_info[0] == 2
@@ -140,7 +140,7 @@ class RegisterGithub(Subcommand):
                                             "An empty string will disable adding of a remote.")
 
     def __call__(self, args):
-        from . import github
+        from conda_smithy import github
         try:
             github.create_github_repo(args)
             print("\nRepository registered at github, now call 'conda smithy register-ci'")
