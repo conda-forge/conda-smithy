@@ -47,7 +47,7 @@ def write_file(filename):
     if dirname and not os.path.exists(dirname):
         os.makedirs(dirname)
 
-    with io.open(filename, "w", encoding="utf-8") as fh:
+    with io.open(filename, "w", encoding="utf-8", newline="\n") as fh:
         yield fh
 
     repo = get_repo(filename)

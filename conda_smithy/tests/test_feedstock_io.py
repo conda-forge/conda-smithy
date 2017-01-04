@@ -17,7 +17,7 @@ import conda_smithy.feedstock_io as fio
 
 def keep_dir(dirname):
     keep_filename = os.path.join(dirname, ".keep")
-    with io.open(keep_filename, "w", encoding="utf-8") as fh:
+    with io.open(keep_filename, "w", encoding="utf-8", newline="\n") as fh:
         fh.write("")
 
 
@@ -54,7 +54,7 @@ class TestFeedstockIO(unittest.TestCase):
         self.tmp_dir = tempfile.mkdtemp()
         os.chdir(self.tmp_dir)
 
-        with io.open(os.path.abspath(".keep"), "w", encoding="utf-8") as fh:
+        with io.open(os.path.abspath(".keep"), "w", encoding="utf-8", newline="\n") as fh:
             fh.write("")
 
 
@@ -84,7 +84,7 @@ class TestFeedstockIO(unittest.TestCase):
             for tmp_dir, repo, pathfunc in parameterize():
                 filename = "test.txt"
                 filename = os.path.join(tmp_dir, filename)
-                with io.open(filename, "w", encoding="utf-8") as fh:
+                with io.open(filename, "w", encoding="utf-8", newline="\n") as fh:
                     fh.write("")
                 if repo is not None:
                     repo.index.add([filename])
@@ -154,7 +154,7 @@ class TestFeedstockIO(unittest.TestCase):
 
                 filename = os.path.join(tmp_dir, filename)
 
-                with io.open(filename, "w", encoding="utf-8") as fh:
+                with io.open(filename, "w", encoding="utf-8", newline="\n") as fh:
                     fh.write("")
                 if repo is not None:
                     repo.index.add([filename])
@@ -189,7 +189,7 @@ class TestFeedstockIO(unittest.TestCase):
             filename2 = os.path.join(tmp_dir, filename2)
 
             write_text = "text"
-            with io.open(filename1, "w", encoding="utf-8") as fh:
+            with io.open(filename1, "w", encoding="utf-8", newline="\n") as fh:
                 fh.write(write_text)
 
             self.assertTrue(os.path.exists(filename1))
