@@ -1,4 +1,3 @@
-
 # The language in this case has no bearing - we are going to be making use of conda for a
 # python distribution for the scientific python stack.
 language: generic
