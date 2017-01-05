@@ -31,7 +31,7 @@ install:
 
 script:
     - coverage erase
-    - coverage run --source . setup.py test
+    - coverage run -m unittest discover
     - coverage report
 
 after_success:
