@@ -71,7 +71,11 @@ def render_run_docker_build(jinja_env, forge_config, forge_dir):
     meta = forge_config['package']
     with fudge_subdir('linux-64', build_config=meta_config(meta)):
         meta.parse_again()
-        matrix = compute_build_matrix(meta, forge_config.get('matrix'))
+        matrix = compute_build_matrix(
+            meta,
+            forge_config.get('matrix'),
+            forge_config.get('channels', {}).get('sources', tuple())
+        )
         cases_not_skipped = []
         for case in matrix:
             pkgs, vars = split_case(case)
@@ -172,7 +176,11 @@ def render_circle(jinja_env, forge_config, forge_dir):
     meta = forge_config['package']
     with fudge_subdir('linux-64', build_config=meta_config(meta)):
         meta.parse_again()
-        matrix = compute_build_matrix(meta, forge_config.get('matrix'))
+        matrix = compute_build_matrix(
+            meta,
+            forge_config.get('matrix'),
+            forge_config.get('channels', {}).get('sources', tuple())
+        )
 
         cases_not_skipped = []
         for case in matrix:
@@ -225,7 +233,11 @@ def render_travis(jinja_env, forge_config, forge_dir):
     meta = forge_config['package']
     with fudge_subdir('osx-64', build_config=meta_config(meta)):
         meta.parse_again()
-        matrix = compute_build_matrix(meta, forge_config.get('matrix'))
+        matrix = compute_build_matrix(
+            meta,
+            forge_config.get('matrix'),
+            forge_config.get('channels', {}).get('sources', tuple())
+        )
 
         cases_not_skipped = []
         for case in matrix:
@@ -357,7 +369,11 @@ def render_appveyor(jinja_env, forge_config, forge_dir):
     for platform, arch in [['win-32', 'x86'], ['win-64', 'x64']]:
         with fudge_subdir(platform, build_config=meta_config(meta)):
             meta.parse_again()
-            matrix = compute_build_matrix(meta, forge_config.get('matrix'))
+            matrix = compute_build_matrix(
+                meta,
+                forge_config.get('matrix'),
+                forge_config.get('channels', {}).get('sources', tuple())
+            )
 
             cases_not_skipped = []
             for case in matrix:
