@@ -135,9 +135,12 @@ def lintify(meta, recipe_dir=None):
         # Count the number of empty lines from the end of the file
         empty_lines = itertools.takewhile(lambda x: x == '', reversed(lines))
         end_empty_lines_count = len(list(empty_lines))
-        if end_empty_lines_count != 1:
-            lints.append('There should be one empty line at the end of the '
-                         'file.')
+        if end_empty_lines_count > 1:
+            lints.append('There are too many lines.  There should be one empty '
+                         'line at the end of the file.')
+        elif end_empty_lines_count < 1:
+            lints.append('There are too few lines.  There should be one empty '
+                         'line at the end of the file.')
 
     # 12: License family must be valid (conda-build checks for that)
     try:
