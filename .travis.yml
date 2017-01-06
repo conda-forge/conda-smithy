@@ -10,7 +10,7 @@ env:
 
     matrix:
         - PYTHON=2.7
-          CONDA_PKGS='conda=4.1.* enum34'
+          CONDA_PKGS='conda=4.1.*'
         - PYTHON=3.5
           CONDA_PKGS='conda=4.1.* conda-build=1.*'
         - PYTHON=3.5
