@@ -229,8 +229,8 @@ class Regenerate(Subcommand):
                         print("")
                     else:
                         print(
-                            "You can commit the changes with:\n\n"
-                            "    git commit -m 'MNT: Re-rendered with conda-smithy %s'\n" % __version__
+                            'You can commit the changes with:\n\n'
+                            '    git commit -m "MNT: Re-rendered with conda-smithy %s"\n' % __version__
                         )
                     print("These changes need to be pushed to github!\n")
                 else:
