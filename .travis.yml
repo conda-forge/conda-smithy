@@ -26,12 +26,12 @@ install:
     - rm -rf ${CONDA_INSTALL_LOCN}/pkgs && ln -s ${HOME}/cache/pkgs ${CONDA_INSTALL_LOCN}/pkgs
 
     # Now do the things we need to do to install it.
-    - conda install --file requirements.txt coverage=3 python-coveralls mock python=${PYTHON} setuptools=23.0.0 ${CONDA_PKGS} --yes --quiet -c conda-forge
+    - conda install --file requirements.txt coverage=3 pytest python-coveralls mock python=${PYTHON} setuptools=23.0.0 ${CONDA_PKGS} --yes --quiet -c conda-forge
     - python setup.py install
 
 script:
     - coverage erase
-    - coverage run --source . setup.py test
+    - coverage run --source conda_smithy -m pytest conda_smithy/tests
     - coverage report
 
 after_success:
