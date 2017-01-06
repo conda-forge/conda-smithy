@@ -11,6 +11,33 @@ import warnings
 
 import conda.api
 import conda.config
+
+try:
+    # Try conda's API in newer 4.2.x and 4.3.x.
+    from conda.exports import (
+        DEFAULT_CHANNELS_UNIX,
+        DEFAULT_CHANNELS_WIN,
+    )
+except ImportError:
+    try:
+        # Fallback for old versions of 4.2.x and 4.3.x.
+        from conda.base.constants import (
+            DEFAULT_CHANNELS_UNIX,
+            DEFAULT_CHANNELS_WIN,
+        )
+    except ImportError:
+        # Fallback for very old conda (e.g. 4.1.x).
+        DEFAULT_CHANNELS_UNIX = (
+            'https://repo.continuum.io/pkgs/free',
+            'https://repo.continuum.io/pkgs/pro',
+        )
+
+        DEFAULT_CHANNELS_WIN = (
+            'https://repo.continuum.io/pkgs/free',
+            'https://repo.continuum.io/pkgs/pro',
+            'https://repo.continuum.io/pkgs/msys2',
+        )
+
 import conda_build.metadata
 try:
     import conda_build.api
@@ -502,6 +529,23 @@ def meta_of_feedstock(forge_dir, config=None):
 
 def compute_build_matrix(meta, existing_matrix=None, channel_sources=tuple()):
     channel_sources = tuple(channel_sources)
+
+    # Override what `defaults` means depending on the platform used.
+    try:
+        i = channel_sources.index("defaults")
+
+        defaults = DEFAULT_CHANNELS_UNIX
+        if meta_config(meta).subdir.startswith("win"):
+            defaults = DEFAULT_CHANNELS_WIN
+
+        channel_sources = (
+            channel_sources[:i] +
+            defaults +
+            channel_sources[i+1:]
+        )
+    except ValueError:
+        pass
+
     index = conda.api.get_index(channel_urls=channel_sources)
     mtx = special_case_version_matrix(meta, index)
     mtx = list(filter_cases(mtx, ['python >=2.7,<3|>=3.4', 'numpy >=1.10']))
