@@ -27,7 +27,7 @@ install:
 
     # Now do the things we need to do to install it.
     - conda install --file requirements.txt coverage=3 python-coveralls mock python=${PYTHON} setuptools=23.0.0 ${CONDA_PKGS} --yes --quiet -c conda-forge
-    - python setup.py install
+    - pip install -e .
 
 script:
     - coverage erase
