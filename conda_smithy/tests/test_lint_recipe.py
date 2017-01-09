@@ -239,20 +239,18 @@ class Test_linter(unittest.TestCase):
                 with io.open(os.path.join(recipe_dir, 'meta.yaml'), 'w') as f:
                     f.write(content)
                 lints = linter.lintify({}, recipe_dir=recipe_dir)
-                expected_message = ('There should be one empty line at the '
-                                    'end of the file.')
+                if lines > 1:
+                    expected_message = ('There are {} too many lines.  '
+                                        'There should be one empty line '
+                                        'at the end of the '
+                                        'file.'.format(lines - 1))
+                else:
+                    expected_message = ('There are too few lines.  '
+                                        'There should be one empty line at'
+                                        ' the end of the file.')
                 if content == valid_content:
                     self.assertNotIn(expected_message, lints)
                 else:
-                    if lines > 1:
-                        expected_message = ('There are {} too many lines.  '
-                                            'There should be one empty line '
-                                            'at the end of the '
-                                            'file.'.format(lines - 1))
-                    else:
-                        expected_message = ('There are too few lines.  '
-                                            'There should be one empty line at'
-                                            ' the end of the file.')
 
                     self.assertIn(expected_message, lints)
 
