@@ -69,7 +69,7 @@ def travis_headers():
 
 
 def add_token_to_circle(user, project):
-    url_template = ('https://circleci.com/api/v1.1/project/{user}/{project}/envvar?'
+    url_template = ('https://circleci.com/api/v1.1/project/github/{user}/{project}/envvar?'
                     'circle-token={token}')
     url = url_template.format(token=circle_token, user=user, project=project)
     data = {'name': 'BINSTAR_TOKEN', 'value': anaconda_token}
@@ -81,13 +81,13 @@ def add_token_to_circle(user, project):
 def add_project_to_circle(user, project):
     headers = {'Content-Type': 'application/json',
                'Accept': 'application/json'}
-    url_template = ('https://circleci.com/api/v1.1/{component}?'
+    url_template = ('https://circleci.com/api/v1.1/project/github/{component}?'
                     'circle-token={token}')
 
     # Note, we used to check to see whether the project was already registered, but it started
     # timing out once we had too many repos, so now the approach is simply "add it always".
 
-    url = url_template.format(component='project/{}/{}/follow'.format(user, project).lower(), token=circle_token)
+    url = url_template.format(component='{}/{}/follow'.format(user, project).lower(), token=circle_token)
     response = requests.post(url, headers={})
     # It is a strange response code, but is doing what was asked...
     if response.status_code != 400:
@@ -95,8 +95,8 @@ def add_project_to_circle(user, project):
 
     # Note, here we are using a non-public part of the API and may change
     # Enable building PRs from forks
-    url = url_template.format(component='project/{}/{}/settings'.format(user, project).lower(), token=circle_token)
-    response = requests.post(url, headers=headers, data={'feature_flags':{'build-fork-prs':True}})
+    url = url_template.format(component='{}/{}/settings'.format(user, project).lower(), token=circle_token)
+    response = requests.put(url, headers=headers, json={'feature_flags':{'build-fork-prs':True}})
     if response.status_code != 200:
         response.raise_for_status()
 
