@@ -92,6 +92,15 @@ def add_project_to_circle(user, project):
     # It is a strange response code, but is doing what was asked...
     if response.status_code != 400:
         response.raise_for_status()
+
+    # Note, here we are using a non-public part of the API and may change
+    # Enable building PRs from forks
+    url = url_template.format(component='project/{}/{}/settings'.format(user, project).lower(), token=circle_token)
+    response = requests.post(url, headers={}, data={'feature_flags':{'build-fork-prs':true}})
+    # It is a strange response code, but is doing what was asked...
+    if response.status_code != 400:
+        response.raise_for_status()
+
     print(' * {}/{} enabled on CircleCI'.format(user, project))
 
 
