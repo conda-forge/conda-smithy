@@ -64,7 +64,7 @@ install:
 build: off
 
 test_script:
-    - "%CMD_IN_ENV% conda build {{ recipe_dir }} --quiet --no-build-id"
+    - "%CMD_IN_ENV% conda build {{ recipe_dir }} --quiet --no-build-id --croot C:\"
 deploy_script:
 {%- for owner, channel in channels['targets'] %}
     - cmd: {{ upload_script }} .\{{ recipe_dir }} {{ owner }} --channel={{ channel }}
