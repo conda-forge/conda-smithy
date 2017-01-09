@@ -370,7 +370,7 @@ def render_appveyor(jinja_env, forge_config, forge_dir):
                 case["CONDA_INSTALL_LOCN"] += ""
             elif case.get("CONDA_PY") == "34":
                 case["CONDA_INSTALL_LOCN"] += "3"
-            elif case.get("CONDA_PY") == "35":
+            elif case.get("CONDA_PY") in ("35", "36"):
                 case["CONDA_INSTALL_LOCN"] += "35"
 
             # Set architecture.
