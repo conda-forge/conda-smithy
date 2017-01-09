@@ -411,8 +411,6 @@ def render_appveyor(jinja_env, forge_config, forge_dir):
             case["CONDA_INSTALL_LOCN"] = "C:\\\\Miniconda"
             if case.get("CONDA_PY") == "27":
                 case["CONDA_INSTALL_LOCN"] += ""
-            elif case.get("CONDA_PY") == "34":
-                case["CONDA_INSTALL_LOCN"] += "3"
             elif case.get("CONDA_PY") in ("35", "36"):
                 case["CONDA_INSTALL_LOCN"] += "35"
 
@@ -565,7 +563,7 @@ def compute_build_matrix(meta, existing_matrix=None, channel_sources=tuple()):
     index = conda.api.get_index(channel_urls=channel_sources,
                                 platform=meta_config(meta).subdir)
     mtx = special_case_version_matrix(meta, index)
-    mtx = list(filter_cases(mtx, ['python >=2.7,<3|>=3.4', 'numpy >=1.10']))
+    mtx = list(filter_cases(mtx, ['python >=2.7,<3|>=3.5', 'numpy >=1.10']))
     if existing_matrix:
         mtx = [tuple(mtx_case) + tuple(MatrixCaseEnvVar(*item) for item in case)
                for case in sorted(existing_matrix)
