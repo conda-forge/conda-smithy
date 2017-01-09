@@ -96,7 +96,7 @@ def add_project_to_circle(user, project):
     # Note, here we are using a non-public part of the API and may change
     # Enable building PRs from forks
     url = url_template.format(component='project/{}/{}/settings'.format(user, project).lower(), token=circle_token)
-    response = requests.post(url, headers={}, data={'feature_flags':{'build-fork-prs':True}})
+    response = requests.post(url, headers=headers, data={'feature_flags':{'build-fork-prs':True}})
     if response.status_code != 200:
         response.raise_for_status()
 
