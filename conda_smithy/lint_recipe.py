@@ -136,8 +136,9 @@ def lintify(meta, recipe_dir=None):
         empty_lines = itertools.takewhile(lambda x: x == '', reversed(lines))
         end_empty_lines_count = len(list(empty_lines))
         if end_empty_lines_count > 1:
-            lints.append('There are too many lines.  There should be one empty '
-                         'line at the end of the file.')
+            lints.append('There are {} too many lines.  '
+                         'There should be one empty line at the end of the '
+                         'file.'.format(end_empty_lines_count - 1))
         elif end_empty_lines_count < 1:
             lints.append('There are too few lines.  There should be one empty '
                          'line at the end of the file.')

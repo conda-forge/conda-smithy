@@ -233,7 +233,8 @@ class Test_linter(unittest.TestCase):
         # Exactly one empty line at the end of the file
         valid_content = 'extra:\n  recipe-maintainers:\n    - goanpeca\n'
 
-        for content in bad_contents + [valid_content]:
+        for content, lines in zip(bad_contents + [valid_content],
+                                  [0, 0, 0, 2, 2, 2, 3, 3, 3, 1]):
             with tmp_directory() as recipe_dir:
                 with io.open(os.path.join(recipe_dir, 'meta.yaml'), 'w') as f:
                     f.write(content)
@@ -243,6 +244,16 @@ class Test_linter(unittest.TestCase):
                 if content == valid_content:
                     self.assertNotIn(expected_message, lints)
                 else:
+                    if lines > 1:
+                        expected_message = ('There are {} too many lines.  '
+                                            'There should be one empty line '
+                                            'at the end of the '
+                                            'file.'.format(lines - 1))
+                    else:
+                        expected_message = ('There are too few lines.  '
+                                            'There should be one empty line at'
+                                            ' the end of the file.')
+
                     self.assertIn(expected_message, lints)
 
 
@@ -331,6 +342,7 @@ class TestCLI_recipe_lint(unittest.TestCase):
                          """)
             # Just run it and make sure it does not raise.
             linter.main(recipe_dir)
+
 
 if __name__ == '__main__':
     unittest.main()
