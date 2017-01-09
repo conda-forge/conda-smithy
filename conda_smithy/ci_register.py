@@ -69,7 +69,7 @@ def travis_headers():
 
 
 def add_token_to_circle(user, project):
-    url_template = ('https://circleci.com/api/v1/project/{user}/{project}/envvar?'
+    url_template = ('https://circleci.com/api/v1.1/project/{user}/{project}/envvar?'
                     'circle-token={token}')
     url = url_template.format(token=circle_token, user=user, project=project)
     data = {'name': 'BINSTAR_TOKEN', 'value': anaconda_token}
@@ -81,7 +81,7 @@ def add_token_to_circle(user, project):
 def add_project_to_circle(user, project):
     headers = {'Content-Type': 'application/json',
                'Accept': 'application/json'}
-    url_template = ('https://circleci.com/api/v1/{component}?'
+    url_template = ('https://circleci.com/api/v1.1/{component}?'
                     'circle-token={token}')
 
     # Note, we used to check to see whether the project was already registered, but it started
