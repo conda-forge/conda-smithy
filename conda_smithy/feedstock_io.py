@@ -76,7 +76,7 @@ def remove_file(filename):
 
 def copy_file(src, dst):
     with io.open(src, "r", encoding="utf-8") as fh_src:
-        with io.open(dst, "w", encoding="utf-8", newline="\n") as fh_dst:
+        with write_file(dst) as fh_dst:
             for line in fh_src:
                 fh_dst.write(line)
 
