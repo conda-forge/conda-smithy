@@ -47,7 +47,7 @@ def write_file(filename):
     if dirname and not os.path.exists(dirname):
         os.makedirs(dirname)
 
-    with io.open(filename, "w", encoding="utf-8", newline="\n") as fh:
+    with io.open(filename, "w", encoding="utf-8", newline="") as fh:
         yield fh
 
     repo = get_repo(filename)
@@ -75,7 +75,7 @@ def remove_file(filename):
 
 
 def copy_file(src, dst):
-    with io.open(src, "r", encoding="utf-8") as fh_src:
+    with io.open(src, "r", encoding="utf-8", newline="") as fh_src:
         with write_file(dst) as fh_dst:
             for line in fh_src:
                 fh_dst.write(line)
