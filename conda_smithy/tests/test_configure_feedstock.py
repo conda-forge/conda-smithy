@@ -50,9 +50,11 @@ class Test_fudge_subdir(unittest.TestCase):
 
         # Get the index for OSX and Windows. They should be different.
         with cnfgr_fdstk.fudge_subdir('win-64', config):
-            win_index = conda.api.get_index(platform='win-64')
+            win_index = conda.api.get_index(channel_urls=['defaults'],
+                                            platform='win-64')
         with cnfgr_fdstk.fudge_subdir('osx-64', config):
-            osx_index = conda.api.get_index(platform='osx-64')
+            osx_index = conda.api.get_index(channel_urls=['defaults'],
+                                            platform='osx-64')
         self.assertNotEqual(win_index.keys(), osx_index.keys(),
                             ('The keys for the Windows and OSX index were the same.'
                              ' Subdir is not working and will result in mis-rendering '

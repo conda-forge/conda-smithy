@@ -11,6 +11,33 @@ import warnings
 
 import conda.api
 import conda.config
+
+try:
+    # Try conda's API in newer 4.2.x and 4.3.x.
+    from conda.exports import (
+        DEFAULT_CHANNELS_UNIX,
+        DEFAULT_CHANNELS_WIN,
+    )
+except ImportError:
+    try:
+        # Fallback for old versions of 4.2.x and 4.3.x.
+        from conda.base.constants import (
+            DEFAULT_CHANNELS_UNIX,
+            DEFAULT_CHANNELS_WIN,
+        )
+    except ImportError:
+        # Fallback for very old conda (e.g. 4.1.x).
+        DEFAULT_CHANNELS_UNIX = (
+            'https://repo.continuum.io/pkgs/free',
+            'https://repo.continuum.io/pkgs/pro',
+        )
+
+        DEFAULT_CHANNELS_WIN = (
+            'https://repo.continuum.io/pkgs/free',
+            'https://repo.continuum.io/pkgs/pro',
+            'https://repo.continuum.io/pkgs/msys2',
+        )
+
 import conda_build.metadata
 try:
     import conda_build.api
@@ -44,7 +71,11 @@ def render_run_docker_build(jinja_env, forge_config, forge_dir):
     meta = forge_config['package']
     with fudge_subdir('linux-64', build_config=meta_config(meta)):
         meta.parse_again()
-        matrix = compute_build_matrix(meta, forge_config.get('matrix'))
+        matrix = compute_build_matrix(
+            meta,
+            forge_config.get('matrix'),
+            forge_config.get('channels', {}).get('sources', tuple())
+        )
         cases_not_skipped = []
         for case in matrix:
             pkgs, vars = split_case(case)
@@ -145,7 +176,11 @@ def render_circle(jinja_env, forge_config, forge_dir):
     meta = forge_config['package']
     with fudge_subdir('linux-64', build_config=meta_config(meta)):
         meta.parse_again()
-        matrix = compute_build_matrix(meta, forge_config.get('matrix'))
+        matrix = compute_build_matrix(
+            meta,
+            forge_config.get('matrix'),
+            forge_config.get('channels', {}).get('sources', tuple())
+        )
 
         cases_not_skipped = []
         for case in matrix:
@@ -198,7 +233,11 @@ def render_travis(jinja_env, forge_config, forge_dir):
     meta = forge_config['package']
     with fudge_subdir('osx-64', build_config=meta_config(meta)):
         meta.parse_again()
-        matrix = compute_build_matrix(meta, forge_config.get('matrix'))
+        matrix = compute_build_matrix(
+            meta,
+            forge_config.get('matrix'),
+            forge_config.get('channels', {}).get('sources', tuple())
+        )
 
         cases_not_skipped = []
         for case in matrix:
@@ -330,7 +369,11 @@ def render_appveyor(jinja_env, forge_config, forge_dir):
     for platform, arch in [['win-32', 'x86'], ['win-64', 'x64']]:
         with fudge_subdir(platform, build_config=meta_config(meta)):
             meta.parse_again()
-            matrix = compute_build_matrix(meta, forge_config.get('matrix'))
+            matrix = compute_build_matrix(
+                meta,
+                forge_config.get('matrix'),
+                forge_config.get('channels', {}).get('sources', tuple())
+            )
 
             cases_not_skipped = []
             for case in matrix:
@@ -500,8 +543,27 @@ def meta_of_feedstock(forge_dir, config=None):
     return meta
 
 
-def compute_build_matrix(meta, existing_matrix=None):
-    index = conda.api.get_index(platform=meta_config(meta).subdir)
+def compute_build_matrix(meta, existing_matrix=None, channel_sources=tuple()):
+    channel_sources = tuple(channel_sources)
+
+    # Override what `defaults` means depending on the platform used.
+    try:
+        i = channel_sources.index("defaults")
+
+        defaults = DEFAULT_CHANNELS_UNIX
+        if meta_config(meta).subdir.startswith("win"):
+            defaults = DEFAULT_CHANNELS_WIN
+
+        channel_sources = (
+            channel_sources[:i] +
+            defaults +
+            channel_sources[i+1:]
+        )
+    except ValueError:
+        pass
+
+    index = conda.api.get_index(channel_urls=channel_sources,
+                                platform=meta_config(meta).subdir)
     mtx = special_case_version_matrix(meta, index)
     mtx = list(filter_cases(mtx, ['python >=2.7,<3|>=3.4', 'numpy >=1.10']))
     if existing_matrix:
