@@ -54,6 +54,8 @@ def write_file(filename):
     if repo:
         repo.index.add([filename])
 
+    set_exe_file(filename, set_exe=False)
+
 
 def touch_file(filename):
     with write_file(filename) as fh:
