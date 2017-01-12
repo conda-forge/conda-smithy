@@ -251,7 +251,6 @@ class Test_linter(unittest.TestCase):
                 if content == valid_content:
                     self.assertNotIn(expected_message, lints)
                 else:
-
                     self.assertIn(expected_message, lints)
 
 
