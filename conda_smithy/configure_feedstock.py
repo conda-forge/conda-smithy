@@ -3,14 +3,20 @@ from __future__ import print_function, unicode_literals
 from collections import OrderedDict as odict
 from contextlib import contextmanager
 import os
-import shutil
-import stat
+import re
+import io
 import textwrap
 import yaml
 import warnings
 
 import conda.api
 import conda.config
+
+from conda_smithy.lint_recipe import NullUndefined
+from conda_smithy import pinning
+
+import jinja2
+import ruamel
 
 try:
     # Try conda's API in newer 4.2.x and 4.3.x.
@@ -646,6 +652,49 @@ def main(forge_file_directory):
     render_travis(env, config, forge_dir)
     render_appveyor(env, config, forge_dir)
     render_README(env, config, forge_dir)
+    update_pinning(env, config, forge_dir)
+
+
+def update_pinning(jinja_env, forge_config, forge_dir):
+
+    recipe_dir = os.path.join(forge_dir, 'recipe')
+    recipe_meta = os.path.join(recipe_dir, 'meta.yaml')
+
+    # copy pasted - is there a function doing this?
+    if not os.path.exists(recipe_dir):
+        raise IOError('Feedstock has no recipe/meta.yaml.')
+    env = jinja2.Environment(undefined=NullUndefined)
+    with io.open(recipe_meta, 'rt') as fh:
+        content = ''.join(fh)
+        rendered_content = env.from_string(content).render(os=os)
+        recipe = ruamel.yaml.load(rendered_content, ruamel.yaml.RoundTripLoader)
+
+    replacements = {}
+    for section_name in ['run', 'build']:
+        requirements = recipe.get('requirements')
+        if requirements is None:
+            break
+        section = requirements.get(section_name)
+        if not section:
+            continue
+
+        for pos, dep in enumerate(section):
+            for name, version in pinning.items():
+                pin = '%s %s' % (name, version)
+                if re.match(r'^\s*%s\s*' % name, dep) and dep != pin:
+                    replacements['- ' + str(dep)] = '- ' + pin
+    if replacements:
+        current_build_number = recipe['build']['number']
+        replacements['number: {}'.format(current_build_number)] = 'number: {}'.format(current_build_number + 1)
+    for orig, new in replacements.items():
+        content = re.sub(
+            # Use capture groups to get the indentation correct.
+            r"(^\s*)%s(\s*)$" % orig,
+            r"\1%s\2" % new,
+            content,
+            flags=re.MULTILINE)
+    with open(recipe_meta, 'w') as fh:
+        fh.write(content)
 
 
 if __name__ == '__main__':
