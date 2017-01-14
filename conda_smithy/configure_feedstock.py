@@ -679,7 +679,8 @@ def update_pinning(jinja_env, forge_config, forge_dir):
             continue
 
         for pos, dep in enumerate(section):
-            for name, version in pinning.items():
+            for name, versions in pinning.items():
+                version = versions[section_name]
                 pin = '%s %s' % (name, version)
                 if re.match(r'^\s*%s\s*' % name, dep) and dep != pin:
                     replacements['- ' + str(dep)] = '- ' + pin

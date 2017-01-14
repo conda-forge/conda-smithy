@@ -161,7 +161,7 @@ def lintify(meta, recipe_dir=None):
                 pkg, version = dep_split
 
             if pkg in pinning:
-                expected_pin = pinning[pkg]
+                expected_pin = pinning[pkg][dep_section]
                 if expected_pin != version:
                     lints.append('The %s dependency %r should be pinned to version %s' %
                                  (dep_section, pkg, expected_pin))
