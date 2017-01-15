@@ -70,8 +70,8 @@ of organization with `--user github_user_name`.
 Optionally, you can choose a channel to upload to in `conda-forge.yml`.
   ```
   channels:
-   targets:
-     - [target_channel, target_label]
+    targets:
+      - [target_channel, target_label]
   ```
   Default is `[conda-forge, main]`.
   
