@@ -151,8 +151,11 @@ def lintify(meta, recipe_dir=None):
         lints.append(str(e))
 
     # 13: Dependencies should be pinned according to our pinning rules
-    for dep_section in requirements_section:
-        for dependency in requirements_section.get(dep_section):
+    for dep_section in ['build', 'run']:
+        dep_list = requirements_section.get(dep_section)
+        if not dep_list:
+            continue
+        for dependency in dep_list:
             # py27 compatiblity: ugly way of doing split(maxsplit=1)
             dep_split = dependency.split(None, 1)
             if len(dep_split) == 1:
@@ -165,7 +168,6 @@ def lintify(meta, recipe_dir=None):
                 if expected_pin != version:
                     lints.append('The %s dependency %r should be pinned to version %s' %
                                  (dep_section, pkg, expected_pin))
-
     return lints
 
 
