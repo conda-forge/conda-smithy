@@ -21,6 +21,7 @@
   "libsvm":"3.21|3.21.*",
   "libtiff":"4.0.*",
   "libxml2":"2.9.*",
+  "metis":"5.1.*",
   "ncurses":"5.9*",
   "netcdf-cxx4":"4.3.*",
   "netcdf-fortran":"4.4.*",

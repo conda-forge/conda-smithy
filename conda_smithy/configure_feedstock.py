@@ -575,6 +575,42 @@ def compute_build_matrix(meta, existing_matrix=None, channel_sources=tuple()):
     return mtx
 
 
+def update_recipe_pinning(parsed_recipe, raw_recipe):
+    replacements = {}
+    for section_name in ['run', 'build']:
+        requirements = parsed_recipe.get('requirements')
+        if requirements is None:
+            break
+        section = requirements.get(section_name)
+        if not section:
+            continue
+
+        for pos, dep in enumerate(section):
+            for name, versions in pinning.items():
+                version = versions[section_name]
+                pin = '%s %s' % (name, version)
+                if re.match(r'^\s*%s\s*' % name, dep.split(' ', 1)[0]) and dep != pin:
+                    replacements['- ' + str(dep)] = '- ' + pin
+
+    if replacements:
+        current_build_number = parsed_recipe['build']['number']
+        replacements['number: {}'.format(current_build_number)] = 'number: {}'.format(current_build_number + 1)
+
+    for orig, new in replacements.items():
+        raw_recipe = re.sub(
+            # Use capture groups to get the indentation correct.
+            # (|#.*) replaces (#.*)? to circumvent the "unmatched group" error
+            # see: https://bugs.python.org/issue1519638
+            r'(^\s*)%s(\s*)(|#.*)$' % re.escape(orig),
+            r'\1%s\2\3' % new,
+            raw_recipe,
+            flags=re.MULTILINE
+        )
+
+    has_changed = bool(replacements)
+    return raw_recipe, has_changed
+
+
 def update_pinning(jinja_env, forge_config, forge_dir):
 
     recipe_dir = os.path.join(forge_dir, 'recipe')
@@ -588,31 +624,11 @@ def update_pinning(jinja_env, forge_config, forge_dir):
         rendered_content = jinja_env.from_string(content).render(os=os)
         recipe = ruamel.yaml.load(rendered_content, ruamel.yaml.RoundTripLoader)
 
-    replacements = {}
-    for section_name in ['run', 'build']:
-        requirements = recipe.get('requirements')
-        if requirements is None:
-            break
-        section = requirements.get(section_name)
-        if not section:
-            continue
+    changed_content, has_changed = update_recipe_pinning(recipe, content)
 
-        for pos, dep in enumerate(section):
-            for name, versions in pinning.items():
-                version = versions[section_name]
-                pin = '%s %s' % (name, version)
-                if re.match(r'^\s*%s\s*' % name, dep) and dep != pin:
-                    replacements['- ' + str(dep)] = '- ' + pin
-
-    if replacements:
-        current_build_number = recipe['build']['number']
-        replacements['number: {}'.format(current_build_number)] = 'number: {}'.format(current_build_number + 1)
-
-    for orig, new in replacements.items():
-        content = content.replace(orig, new)
-
-    with open(recipe_meta, 'w') as fh:
-        fh.write(content)
+    if has_changed:
+        with open(recipe_meta, 'w') as fh:
+            fh.write(changed_content)
 
 
 def main(forge_file_directory):
