@@ -2,7 +2,9 @@ from __future__ import print_function, unicode_literals
 
 from collections import OrderedDict as odict
 from contextlib import contextmanager
+import io
 import os
+import difflib
 import shutil
 import stat
 import textwrap
@@ -49,6 +51,7 @@ from conda_build_all.version_matrix import special_case_version_matrix, filter_c
 from conda_build_all.resolved_distribution import ResolvedDistribution
 from jinja2 import Environment, FileSystemLoader
 
+from . import __version__
 from conda_smithy.feedstock_io import (
     set_exe_file,
     write_file,
@@ -67,7 +70,7 @@ def meta_config(meta):
     return config
 
 
-def render_run_docker_build(jinja_env, forge_config, forge_dir):
+def render_run_docker_build(jinja_env, forge_config, forge_dir, strict=False):
     meta = forge_config['package']
     with fudge_subdir('linux-64', build_config=meta_config(meta)):
         meta.parse_again()
@@ -160,8 +163,7 @@ def render_run_docker_build(jinja_env, forge_config, forge_dir):
 
         template = jinja_env.get_template(template_name)
         target_fname = os.path.join(forge_dir, 'ci_support', 'run_docker_build.sh')
-        with write_file(target_fname) as fh:
-            fh.write(template.render(**forge_config))
+        write_rendered_file(target_fname, template, forge_config, strict)
 
         # Fix permissions.
         target_fnames = [
@@ -172,7 +174,7 @@ def render_run_docker_build(jinja_env, forge_config, forge_dir):
             set_exe_file(each_target_fname, True)
 
 
-def render_circle(jinja_env, forge_config, forge_dir):
+def render_circle(jinja_env, forge_config, forge_dir, strict=False):
     meta = forge_config['package']
     with fudge_subdir('linux-64', build_config=meta_config(meta)):
         meta.parse_again()
@@ -194,8 +196,7 @@ def render_circle(jinja_env, forge_config, forge_dir):
     matrix = prepare_matrix_for_env_vars(matrix)
     forge_config = update_matrix(forge_config, matrix)
     template = jinja_env.get_template('circle.yml.tmpl')
-    with write_file(target_fname) as fh:
-        fh.write(template.render(**forge_config))
+    write_rendered_file(target_fname, template, forge_config, strict)
 
 
 @contextmanager
@@ -229,7 +230,7 @@ def fudge_subdir(subdir, build_config):
         conda_build.metadata.subdir = copied_subdir_orig
 
 
-def render_travis(jinja_env, forge_config, forge_dir):
+def render_travis(jinja_env, forge_config, forge_dir, strict=False):
     meta = forge_config['package']
     with fudge_subdir('osx-64', build_config=meta_config(meta)):
         meta.parse_again()
@@ -294,8 +295,7 @@ def render_travis(jinja_env, forge_config, forge_dir):
             forge_config['upload_script'] = "upload_or_check_non_existence"
 
         template = jinja_env.get_template('travis.yml.tmpl')
-        with write_file(target_fname) as fh:
-            fh.write(template.render(**forge_config))
+        write_rendered_file(target_fname, template, forge_config, strict)
 
 
 def render_README(jinja_env, forge_config, forge_dir):
@@ -363,7 +363,7 @@ def sort_without_target_arch(case):
     return [python, cmp_case, arch_order]
 
 
-def render_appveyor(jinja_env, forge_config, forge_dir):
+def render_appveyor(jinja_env, forge_config, forge_dir, strict=False):
     meta = forge_config['package']
     full_matrix = []
     for platform, arch in [['win-32', 'x86'], ['win-64', 'x64']]:
@@ -462,8 +462,7 @@ def render_appveyor(jinja_env, forge_config, forge_dir):
             forge_config['upload_script'] = "upload_or_check_non_existence"
 
         template = jinja_env.get_template('appveyor.yml.tmpl')
-        with write_file(target_fname) as fh:
-            fh.write(template.render(**forge_config))
+        write_rendered_file(target_fname, template, forge_config, strict)
 
 
 def update_matrix(forge_config, new_matrix):
@@ -571,7 +570,29 @@ def compute_build_matrix(meta, existing_matrix=None, channel_sources=tuple()):
     return mtx
 
 
-def main(forge_file_directory):
+def write_rendered_file(target_fname, template, forge_config, strict=False):
+    content = template.render(**forge_config)
+    if strict and (os.path.isfile(target_fname)):
+        with io.open(target_fname, 'r', encoding='utf-8') as fh:
+            old_content = fh.readlines()
+        
+        # When strict=True, avoid re-rendering the file. This is done
+        # by checking whether or not the changes are only in comments,
+        # which is useful for preventing things like re-rendering from
+        # bumping version numbers.
+        diff = list(difflib.ndiff(content.splitlines(1), old_content))
+        diff = [line for line in diff if '-' in line[0] or '+' in line[0]]
+        comments = [line for line in diff if line.strip()[1] == '#']
+        if len(comments) == len(diff):
+            print('{}: Not rerendered because no changes detected'
+                  .format(target_fname))
+            return
+                  
+    with write_file(target_fname) as fh:
+        fh.write(content)
+        
+
+def main(forge_file_directory, strict=False):
     if hasattr(conda_build, 'api'):
         build_config = conda_build.api.Config()
     else:
@@ -592,7 +613,8 @@ def main(forge_file_directory):
               'channels': {'sources': ['conda-forge', 'defaults'],
                            'targets': [['conda-forge', 'main']]},
               'github': {'user_or_org': 'conda-forge', 'repo_name': ''},
-              'recipe_dir': recipe_dir}
+              'recipe_dir': recipe_dir,
+              'smithy_version': __version__}
     forge_dir = os.path.abspath(forge_file_directory)
 
     # An older conda-smithy used to have some files which should no longer exist,
@@ -641,10 +663,10 @@ def main(forge_file_directory):
 
     copy_feedstock_content(forge_dir)
 
-    render_run_docker_build(env, config, forge_dir)
-    render_circle(env, config, forge_dir)
-    render_travis(env, config, forge_dir)
-    render_appveyor(env, config, forge_dir)
+    render_run_docker_build(env, config, forge_dir, strict)
+    render_circle(env, config, forge_dir, strict)
+    render_travis(env, config, forge_dir, strict)
+    render_appveyor(env, config, forge_dir, strict)
     render_README(env, config, forge_dir)
 
 
