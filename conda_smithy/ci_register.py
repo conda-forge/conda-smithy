@@ -96,6 +96,11 @@ def add_project_to_circle(user, project):
     # Note, here we are using a non-public part of the API and may change
     # Enable building PRs from forks
     url = url_template.format(component='{}/{}/settings'.format(user, project).lower(), token=circle_token)
+    # Disable CircleCI secrets in builds of forked PRs explicitly.
+    response = requests.put(url, headers=headers, json={'feature_flags':{'forks-receive-secret-env-vars':False}})
+    if response.status_code != 200:
+        response.raise_for_status()
+    # Enable CircleCI builds on forked PRs.
     response = requests.put(url, headers=headers, json={'feature_flags':{'build-fork-prs':True}})
     if response.status_code != 200:
         response.raise_for_status()
