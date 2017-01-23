@@ -270,7 +270,7 @@ def main():
     subparsers = parser.add_subparsers()
     list_feedstocks_help = ('List all of the feedstocks available on the '
                             'GitHub organization. Specify the GitHub '
-                            'organisation with the `--organisation` flag.')
+                            'organization with the `--organization` flag.')
     list_feedstocks = subparsers.add_parser('list',
                                             help=list_feedstocks_help)
     list_feedstocks.set_defaults(func=feedstocks_list_handle_args)
