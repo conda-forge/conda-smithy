@@ -13,7 +13,7 @@ import ruamel
 import conda.api
 import conda.config
 
-from conda_smithy import pinning
+from cf_pinning import pinning
 
 
 try:

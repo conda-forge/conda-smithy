@@ -11,7 +11,7 @@ import jinja2
 import ruamel.yaml
 
 from conda_build.metadata import ensure_valid_license_family
-from conda_smithy import pinning
+from cf_pinning import pinning
 
 
 EXPECTED_SECTION_ORDER = ['package', 'source', 'build', 'requirements',

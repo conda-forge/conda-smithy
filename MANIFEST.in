@@ -4,4 +4,3 @@ recursive-include conda_smithy/templates *.tmpl
 
 include versioneer.py
 include conda_smithy/_version.py
-include conda_smithy/pinning.json
