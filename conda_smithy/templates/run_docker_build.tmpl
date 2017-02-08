@@ -5,6 +5,8 @@
 # changes to this script, consider a proposal to conda-smithy so that other feedstocks can also
 # benefit from the improvement.
 
+set -e
+
 FEEDSTOCK_ROOT=$(cd "$(dirname "$0")/.."; pwd;)
 RECIPE_ROOT=$FEEDSTOCK_ROOT/{{ recipe_dir }}
 
@@ -57,7 +59,8 @@ conda install --yes --quiet conda-forge-ci-setup=1
 {% if build_setup -%}
 {{ build_setup }}{% endif -%}
 
-conda build /home/conda/recipe_root  -m /home/conda/feedstock_root/.ci_support/${CONFIG}.yaml --quiet || exit 1
+{%- block build %}
+conda build /home/conda/recipe_root -m /home/conda/feedstock_root/.ci_support/${CONFIG}.yaml --quiet
 
 touch /home/conda/feedstock_root/build_artifacts/conda-forge-build-done
 EOF
@@ -76,12 +79,12 @@ CONTAINER=$(docker create -t \
            /home/conda/feedstock_root/ci_support/build.sh || exit $?)
 
 # build
-docker start -i $CONTAINER || exit 1
-test -f "$DONE_CANARY" || exit 1
+docker start -i $CONTAINER
+test -f "$DONE_CANARY"
 rm -f "$DONE_CANARY"
 
 # commit, so we can run upload in the same environment
-IMAGE=$(docker commit $CONTAINER || exit 1)
+IMAGE=$(docker commit $CONTAINER)
 
 # upload with the token passed through stdin
 # FIXME: Should this run if there is no token?
@@ -89,7 +92,7 @@ cat << EOF | docker run --rm -i \
     $VOLUMES \
     $IMAGE \
     {{ docker.command }} || exit $?
-
+set -e
 export BINSTAR_TOKEN=${BINSTAR_TOKEN}
 
 {%- block test_and_upload %}
@@ -102,7 +105,7 @@ export BINSTAR_TOKEN=${BINSTAR_TOKEN}
 touch /home/conda/feedstock_root/build_artifacts/conda-forge-build-done
 EOF
 
-test -f "$DONE_CANARY" || exit 1
+test -f "$DONE_CANARY"
 # everything succeeded, remove our container and image
 docker rm -f "$CONTAINER"
 docker rmi "$IMAGE"
