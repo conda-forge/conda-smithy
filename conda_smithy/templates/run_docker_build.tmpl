@@ -25,6 +25,8 @@ show_channel_urls: true
 CONDARC
 )
 
+rm -f "$FEEDSTOCK_ROOT/build_artefacts/conda-forge-build-done"
+
 cat << EOF | docker run -i \
                         -v "${RECIPE_ROOT}":/recipe_root \
                         -v "${FEEDSTOCK_ROOT}":/feedstock_root \
@@ -50,5 +52,10 @@ conda build /recipe_root --quiet || exit 1
 {%- endfor -%}
 {%- endblock -%}
 
+touch /feedstock_root/build_artefacts/conda-forge-build-done
 EOF
 
+# double-check that the build got to the end
+# see https://github.com/conda-forge/conda-smithy/pull/337
+# for a possible fix
+test -f "$FEEDSTOCK_ROOT/build_artefacts/conda-forge-build-done" || exit 1
