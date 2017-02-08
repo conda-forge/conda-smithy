@@ -47,9 +47,6 @@ rm -f "$DONE_CANARY"
 cat << EOF > "$FEEDSTOCK_ROOT/ci_support/build.sh"
 
 set -e
-set +x
-export BINSTAR_TOKEN=${BINSTAR_TOKEN}
-set -x
 export PYTHONUNBUFFERED=1
 
 echo "$config" > ~/.condarc
@@ -60,22 +57,54 @@ conda install --yes --quiet conda-forge-ci-setup=1
 {% if build_setup -%}
 {{ build_setup }}{% endif -%}
 
-conda build /home/conda/recipe_root -m /home/conda/feedstock_root/.ci_support/${CONFIG}.yaml --quiet || exit 1
-{%- for owner, channel in channels['targets'] %}
-{{ upload_script }} /home/conda/recipe_root {{ owner }} --channel={{ channel }} -m /home/conda/feedstock_root/.ci_support/${CONFIG}.yaml || exit 1
-{%- endfor %}
+conda build /home/conda/recipe_root  -m /home/conda/feedstock_root/.ci_support/${CONFIG}.yaml --quiet || exit 1
 
 touch /home/conda/feedstock_root/build_artifacts/conda-forge-build-done
 EOF
 
-docker run -it \
-           -v "${RECIPE_ROOT}":/home/conda/recipe_root \
-           -v "${FEEDSTOCK_ROOT}":/home/conda/feedstock_root \
+# Create and run the container in two comamnds,
+# so we have a handle on the container ID
+VOLUMES="-v "${RECIPE_ROOT}":/home/conda/recipe_root \
+         -v "${FEEDSTOCK_ROOT}":/home/conda/feedstock_root"
+
+CONTAINER=$(docker create -t \
+           $VOLUMES \
            -e HOST_USER_ID="${HOST_USER_ID}" \
            {{ matrix_env_vars(matrix) }} \
            {{ docker.image }} \
            {{ docker.command }} \
-           /home/conda/feedstock_root/ci_support/build.sh || exit $?
+           /home/conda/feedstock_root/ci_support/build.sh || exit $?)
+
+# build
+docker start -i $CONTAINER || exit 1
+test -f "$DONE_CANARY" || exit 1
+rm -f "$DONE_CANARY"
+
+# commit, so we can run upload in the same environment
+IMAGE=$(docker commit $CONTAINER || exit 1)
+
+# upload with the token passed through stdin
+# FIXME: Should this run if there is no token?
+cat << EOF | docker run --rm -i \
+    $VOLUMES \
+    $IMAGE \
+    {{ docker.command }} || exit $?
+
+export BINSTAR_TOKEN=${BINSTAR_TOKEN}
+
+{%- block test_and_upload %}
+{%- for owner, channel in channels['targets'] %}
+{{ upload_script }} /home/conda/recipe_root {{ owner }} --channel={{ channel }} -m /home/conda/feedstock_root/.ci_support/${CONFIG}.yaml || exit 1
+{%- endfor -%}
+{%- endblock %}
 
 # check that the end of the script was reached
-test -f "$DONE_CANARY"
+touch /home/conda/feedstock_root/build_artifacts/conda-forge-build-done
+EOF
+
+test -f "$DONE_CANARY" || exit 1
+# everything succeeded, remove our container and image
+docker rm -f "$CONTAINER"
+docker rmi "$IMAGE"
+
+echo "done"
