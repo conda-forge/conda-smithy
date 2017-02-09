@@ -58,4 +58,5 @@ EOF
 # double-check that the build got to the end
 # see https://github.com/conda-forge/conda-smithy/pull/337
 # for a possible fix
+set -x
 test -f "$FEEDSTOCK_ROOT/build_artefacts/conda-forge-build-done" || exit 1
