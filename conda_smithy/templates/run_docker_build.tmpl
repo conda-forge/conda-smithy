@@ -32,7 +32,7 @@ cat << EOF | docker run -i \
                         -v "${FEEDSTOCK_ROOT}":/feedstock_root \
                         -a stdin -a stdout -a stderr \
                         {{ docker.image }} \
-                        {{ docker.command }} || exit $?
+                        {{ docker.command }} || exit 1
 
 export BINSTAR_TOKEN=${BINSTAR_TOKEN}
 export PYTHONUNBUFFERED=1
