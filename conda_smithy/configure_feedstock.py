@@ -67,7 +67,7 @@ def meta_config(meta):
     return config
 
 
-def render_run_docker_build(jinja_env, forge_config, forge_dir):
+def render_circle(jinja_env, forge_config, forge_dir):
     meta = forge_config['package']
     with fudge_subdir('linux-64', build_config=meta_config(meta)):
         meta.parse_again()
@@ -171,28 +171,7 @@ def render_run_docker_build(jinja_env, forge_config, forge_dir):
         for each_target_fname in target_fnames:
             set_exe_file(each_target_fname, True)
 
-
-def render_circle(jinja_env, forge_config, forge_dir):
-    meta = forge_config['package']
-    with fudge_subdir('linux-64', build_config=meta_config(meta)):
-        meta.parse_again()
-        matrix = compute_build_matrix(
-            meta,
-            forge_config.get('matrix'),
-            forge_config.get('channels', {}).get('sources', tuple())
-        )
-
-        cases_not_skipped = []
-        for case in matrix:
-            pkgs, vars = split_case(case)
-            with enable_vars(vars):
-                if not ResolvedDistribution(meta, pkgs).skip():
-                    cases_not_skipped.append(vars + sorted(pkgs))
-        matrix = sorted(cases_not_skipped, key=sort_without_target_arch)
-
     target_fname = os.path.join(forge_dir, 'circle.yml')
-    matrix = prepare_matrix_for_env_vars(matrix)
-    forge_config = update_matrix(forge_config, matrix)
     template = jinja_env.get_template('circle.yml.tmpl')
     with write_file(target_fname) as fh:
         fh.write(template.render(**forge_config))
@@ -641,7 +620,6 @@ def main(forge_file_directory):
 
     copy_feedstock_content(forge_dir)
 
-    render_run_docker_build(env, config, forge_dir)
     render_circle(env, config, forge_dir)
     render_travis(env, config, forge_dir)
     render_appveyor(env, config, forge_dir)
