@@ -90,8 +90,8 @@ def render_run_docker_build(jinja_env, forge_config, forge_dir):
         forge_config["circle"]["enabled"] = False
 
         target_fnames = [
-            os.path.join(forge_dir, 'ci_support', 'run_docker_build.sh'),
             os.path.join(forge_dir, 'ci_support', 'checkout_merge_commit.sh'),
+            os.path.join(forge_dir, 'ci_support', 'run_docker_build.sh'),
         ]
         for each_target_fname in target_fnames:
             remove_file(each_target_fname)
@@ -165,8 +165,8 @@ def render_run_docker_build(jinja_env, forge_config, forge_dir):
 
         # Fix permissions.
         target_fnames = [
-            os.path.join(forge_dir, 'ci_support', 'run_docker_build.sh'),
             os.path.join(forge_dir, 'ci_support', 'checkout_merge_commit.sh'),
+            os.path.join(forge_dir, 'ci_support', 'run_docker_build.sh'),
         ]
         for each_target_fname in target_fnames:
             set_exe_file(each_target_fname, True)
