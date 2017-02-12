@@ -73,7 +73,7 @@ def fetch_feedstocks(feedstock_directory):
 
 
 def feedstocks_list_handle_args(args):
-   for repo in feedstock_repos(args.organization):
+    for repo in feedstock_repos(args.organization):
         print(repo.name)
 
 
@@ -83,7 +83,7 @@ def clone_feedstock(feedstock_gh_repo, feedstocks_dir):
     clone_directory = os.path.join(feedstocks_dir, repo.name)
     if not os.path.exists(clone_directory):
         print('Cloning {}'.format(repo.name))
-        new_repo = Repo.clone_from(repo.clone_url, clone_directory)
+        clone = Repo.clone_from(repo.clone_url, clone_directory)
         clone.delete_remote('origin')
     clone = Repo(clone_directory)
     if 'upstream' in [remote.name for remote in clone.remotes]:
