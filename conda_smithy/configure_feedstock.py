@@ -101,6 +101,29 @@ def render_circle(jinja_env, forge_config, forge_dir):
         matrix = prepare_matrix_for_env_vars(matrix)
         forge_config = update_matrix(forge_config, matrix)
 
+        fast_finish = textwrap.dedent("""\
+            {get_fast_finish_script} | \\
+                 python - -v --ci "circle" "${{CIRCLE_PROJECT_USERNAME}}/${{CIRCLE_PROJECT_REPONAME}}" "${{CIRCLE_BUILD_NUM}}" "${{CIRCLE_PR_NUMBER}}"
+        """)
+        get_fast_finish_script = ""
+
+        # If the recipe supplies its own conda-forge-build-setup script,
+        # we use it instead of the global one.
+        cfbs_fpath = os.path.join(forge_dir, 'recipe',
+                                  'ff_ci_pr_build.py')
+        if os.path.exists(cfbs_fpath):
+            get_fast_finish_script += "cat {recipe_dir}/ff_ci_pr_build.py".format(recipe_dir=forge_config["recipe_dir"])
+        else:
+            get_fast_finish_script += "curl https://raw.githubusercontent.com/conda-forge/conda-forge-build-setup-feedstock/master/recipe/ff_ci_pr_build.py"
+
+        fast_finish = fast_finish.format(
+            get_fast_finish_script=get_fast_finish_script
+        )
+
+        fast_finish = fast_finish.strip()
+
+        forge_config['fast_finish'] = fast_finish
+
         build_setup = ""
 
         # If the recipe supplies its own conda-forge-build-setup script,
@@ -158,9 +181,14 @@ def render_circle(jinja_env, forge_config, forge_dir):
         templates = forge_config.get('templates', {})
         template_name = templates.get('run_docker_build',
                                       'run_docker_build_matrix.tmpl')
-
         template = jinja_env.get_template(template_name)
         target_fname = os.path.join(forge_dir, 'ci_support', 'run_docker_build.sh')
+        with write_file(target_fname) as fh:
+            fh.write(template.render(**forge_config))
+
+        template_name = 'fast_finish_ci_pr_build.sh.tmpl'
+        template = jinja_env.get_template(template_name)
+        target_fname = os.path.join(forge_dir, 'ci_support', 'fast_finish_ci_pr_build.sh')
         with write_file(target_fname) as fh:
             fh.write(template.render(**forge_config))
 
@@ -239,6 +267,30 @@ def render_travis(jinja_env, forge_config, forge_dir):
         forge_config["travis"]["enabled"] = True
         matrix = prepare_matrix_for_env_vars(matrix)
         forge_config = update_matrix(forge_config, matrix)
+
+        fast_finish = textwrap.dedent("""\
+            ({get_fast_finish_script} | \\
+                python - -v --ci "travis" "${{TRAVIS_REPO_SLUG}}" "${{TRAVIS_BUILD_NUMBER}}" "${{TRAVIS_PULL_REQUEST}}") || exit 1
+        """)
+        get_fast_finish_script = ""
+
+        # If the recipe supplies its own conda-forge-build-setup script,
+        # we use it instead of the global one.
+        cfbs_fpath = os.path.join(forge_dir, 'recipe',
+                                  'ff_ci_pr_build.py')
+        if os.path.exists(cfbs_fpath):
+            get_fast_finish_script += "cat {recipe_dir}/ff_ci_pr_build.py".format(recipe_dir=forge_config["recipe_dir"])
+        else:
+            get_fast_finish_script += "curl https://raw.githubusercontent.com/conda-forge/conda-forge-build-setup-feedstock/master/recipe/ff_ci_pr_build.py"
+
+        fast_finish = fast_finish.format(
+            get_fast_finish_script=get_fast_finish_script
+        )
+
+        fast_finish = fast_finish.strip()
+        fast_finish = fast_finish.replace("\n", "\n      ")
+
+        forge_config['fast_finish'] = fast_finish
 
         build_setup = ""
 
@@ -405,6 +457,34 @@ def render_appveyor(jinja_env, forge_config, forge_dir):
         del old_matrix
 
         forge_config = update_matrix(forge_config, matrix)
+
+        get_fast_finish_script = ""
+        fast_finish_script = ""
+        fast_finish = textwrap.dedent("""\
+            {get_fast_finish_script}
+            {fast_finish_script} -v --ci "appveyor" "%APPVEYOR_ACCOUNT_NAME%/%APPVEYOR_PROJECT_SLUG%" "%APPVEYOR_BUILD_NUMBER%" "%APPVEYOR_PULL_REQUEST_NUMBER%"
+        """)
+
+        # If the recipe supplies its own conda-forge-build-setup script,
+        # we use it instead of the global one.
+        cfbs_fpath = os.path.join(forge_dir, 'recipe',
+                                  'ff_ci_pr_build.py')
+        if os.path.exists(cfbs_fpath):
+            fast_finish_script += "{recipe_dir}\\ff_ci_pr_build".format(recipe_dir=forge_config["recipe_dir"])
+        else:
+            get_fast_finish_script += "curl https://raw.githubusercontent.com/conda-forge/conda-forge-build-setup-feedstock/master/recipe/ff_ci_pr_build.py > ff_ci_pr_build.py"
+            fast_finish_script += "ff_ci_pr_build"
+            fast_finish += "del {fast_finish_script}.py"
+
+        fast_finish = fast_finish.format(
+            get_fast_finish_script=get_fast_finish_script,
+            fast_finish_script=fast_finish_script,
+        )
+
+        fast_finish = fast_finish.strip()
+        fast_finish = fast_finish.replace("\n", "\n        ")
+
+        forge_config['fast_finish'] = fast_finish
 
         build_setup = ""
 
