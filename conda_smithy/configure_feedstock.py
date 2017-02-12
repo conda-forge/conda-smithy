@@ -91,6 +91,7 @@ def render_circle(jinja_env, forge_config, forge_dir):
 
         target_fnames = [
             os.path.join(forge_dir, 'ci_support', 'checkout_merge_commit.sh'),
+            os.path.join(forge_dir, 'ci_support', 'fast_finish_ci_pr_build.sh'),
             os.path.join(forge_dir, 'ci_support', 'run_docker_build.sh'),
         ]
         for each_target_fname in target_fnames:
@@ -166,6 +167,7 @@ def render_circle(jinja_env, forge_config, forge_dir):
         # Fix permissions.
         target_fnames = [
             os.path.join(forge_dir, 'ci_support', 'checkout_merge_commit.sh'),
+            os.path.join(forge_dir, 'ci_support', 'fast_finish_ci_pr_build.sh'),
             os.path.join(forge_dir, 'ci_support', 'run_docker_build.sh'),
         ]
         for each_target_fname in target_fnames:

@@ -11,6 +11,7 @@ general:
 {%- if matrix -%}
 checkout:
   post:
+    - ./ci_support/fast_finish_ci_pr_build.sh
     - ./ci_support/checkout_merge_commit.sh
 
 machine:
