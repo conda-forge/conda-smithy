@@ -385,7 +385,6 @@ def render_appveyor(jinja_env, forge_config, forge_dir):
                 arch_env = MatrixCaseEnvVar('TARGET_ARCH', arch)
                 full_matrix.extend([arch_env] + list(case)
                                    for case in cases_not_skipped)
-
     matrix = sorted(full_matrix, key=sort_without_target_arch)
 
     target_fname = os.path.join(forge_dir, 'appveyor.yml')
@@ -495,7 +494,8 @@ def prepare_matrix_for_env_vars(matrix):
                 name, value = item
                 if name in special_conda_vars:
                     name = special_conda_vars[name]
-                    value = str(value).replace('.', '')
+                    if name.upper() != 'CONDA_R':
+                        value = str(value).replace('.', '')
                 else:
                     name = 'CONDA_' + name.upper()
                 new_case.append((name, value))
