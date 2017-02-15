@@ -364,7 +364,6 @@ def render_appveyor(jinja_env, forge_config, forge_dir):
                 arch_env = MatrixCaseEnvVar('TARGET_ARCH', arch)
                 full_matrix.extend([arch_env] + list(case)
                                    for case in cases_not_skipped)
-
     matrix = sorted(full_matrix, key=sort_without_target_arch)
 
     target_fname = os.path.join(forge_dir, 'appveyor.yml')
@@ -457,12 +456,12 @@ def update_matrix(forge_config, new_matrix):
 
 def prepare_matrix_for_env_vars(matrix):
     """
-    Turns a matrix with environment variables and pakages into a matrix of
+    Turns a matrix with environment variables and packages into a matrix of
     just environment variables. The package variables are prefixed with CONDA,
-    and special cases such as Python and Numpy are handled.
+    and special cases such as Python, NumPy, and R are handled.
 
     """
-    special_conda_vars = {'python': 'CONDA_PY', 'numpy': 'CONDA_NPY'}
+    special_conda_vars = {'python': 'CONDA_PY', 'numpy': 'CONDA_NPY', 'r-base': 'CONDA_R'}
     env_matrix = []
     for case in matrix:
         new_case = []
@@ -474,7 +473,8 @@ def prepare_matrix_for_env_vars(matrix):
                 name, value = item
                 if name in special_conda_vars:
                     name = special_conda_vars[name]
-                    value = str(value).replace('.', '')
+                    if name.upper() != 'CONDA_R':
+                        value = str(value).replace('.', '')
                 else:
                     name = 'CONDA_' + name.upper()
                 new_case.append((name, value))
@@ -542,7 +542,7 @@ def compute_build_matrix(meta, existing_matrix=None, channel_sources=tuple()):
     index = conda.api.get_index(channel_urls=channel_sources,
                                 platform=meta_config(meta).subdir)
     mtx = special_case_version_matrix(meta, index)
-    mtx = list(filter_cases(mtx, ['python >=2.7,<3|>=3.5', 'numpy >=1.11']))
+    mtx = list(filter_cases(mtx, ['python >=2.7,<3|>=3.5', 'numpy >=1.11', 'r-base >=3.3.2']))
     if existing_matrix:
         mtx = [tuple(mtx_case) + tuple(MatrixCaseEnvVar(*item) for item in case)
                for case in sorted(existing_matrix)
