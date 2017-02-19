@@ -6,7 +6,7 @@ import github
 from github import Github
 from github.GithubException import GithubException
 
-from . import configure_feedstock
+from conda_smithy import configure_feedstock
 
 
 def gh_token():

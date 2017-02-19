@@ -1,12 +1,12 @@
 #!/usr/bin/env python
-from __future__ import print_function
+from __future__ import absolute_import, print_function
 import os
 import requests
 import time
 
 import ruamel.yaml
 
-from . import github
+from conda_smithy import github
 
 
 # https://circleci.com/docs/api#add-environment-variable
