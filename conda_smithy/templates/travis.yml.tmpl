@@ -31,6 +31,10 @@ env:
 {% endblock %}
 
 before_install:
+    # Fast finish the PR.
+    - |
+      {{ fast_finish }}
+
     # Remove homebrew.
     - |
       echo ""

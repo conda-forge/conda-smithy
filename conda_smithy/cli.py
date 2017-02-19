@@ -45,6 +45,7 @@ def create_git_repo(target, msg):
     # Ensure shell scripts have executable permissions.
     executable_files = [
         "ci_support/checkout_merge_commit.sh",
+        "ci_support/fast_finish_ci_pr_build.sh",
         "ci_support/run_docker_build.sh",
     ]
     for each_executable_file in executable_files:
