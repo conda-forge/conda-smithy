@@ -11,6 +11,7 @@ from conda_build.metadata import MetaData
 
 from . import ci_register
 from . import configure_feedstock
+from . import feedstock_io
 from . import lint_recipe
 from . import __version__
 
@@ -18,6 +19,7 @@ from . import __version__
 PY2 = sys.version_info[0] == 2
 
 def generate_feedstock_content(target_directory, source_recipe_dir, meta):
+    target_directory = os.path.abspath(target_directory)
     recipe_dir = "recipe"
     target_recipe_dir = os.path.join(target_directory, recipe_dir)
     if not os.path.exists(target_recipe_dir):
@@ -28,39 +30,15 @@ def generate_feedstock_content(target_directory, source_recipe_dir, meta):
 
     forge_yml = os.path.join(target_directory, 'conda-forge.yml')
     if not os.path.exists(forge_yml):
-        with open(forge_yml, 'w') as fh:
-            fh.write('[]')
+        with feedstock_io.write_file(forge_yml) as fh:
+            fh.write(u"[]")
 
-    configure_feedstock.main(target_directory)
-
-
-def init_git_repo(target):
-    subprocess.check_call(['git', 'init'], cwd=target)
-
-
-def create_git_repo(target, msg):
-    init_git_repo(target)
-    subprocess.check_call(['git', 'add', '-A'], cwd=target)
-
-    # Ensure shell scripts have executable permissions.
-    executable_files = [
-        "ci_support/checkout_merge_commit.sh",
-        "ci_support/fast_finish_ci_pr_build.sh",
-        "ci_support/run_docker_build.sh",
-    ]
-    for each_executable_file in executable_files:
-        if os.path.exists(os.path.join(target, each_executable_file)):
-            subprocess.check_call(
-                [
-                    'git',
-                    'update-index',
-                    '--chmod=+x',
-                    each_executable_file
-                ],
-                cwd=target
-            )
-
-    subprocess.check_call(['git', 'commit', '-m', msg], cwd=target)
+    cwd = os.getcwd()
+    os.chdir(target_directory)
+    try:
+        configure_feedstock.main(target_directory)
+    finally:
+        os.chdir(cwd)
 
 
 class Subcommand(object):
@@ -114,9 +92,12 @@ class Init(Subcommand):
         msg = 'Initial feedstock commit with conda-smithy {}.'.format(__version__)
 
         try:
+            os.makedirs(feedstock_directory)
+            if not args.no_git_repo:
+                subprocess.check_call(['git', 'init'], cwd=feedstock_directory)
             generate_feedstock_content(feedstock_directory, args.recipe_directory, meta)
             if not args.no_git_repo:
-                create_git_repo(feedstock_directory, msg)
+                subprocess.check_call(['git', 'commit', '-m', msg], cwd=feedstock_directory)
 
             print("\nRepository created, please edit conda-forge.yml to configure the upload channels\n"
                   "and afterwards call 'conda smithy register-github'")
