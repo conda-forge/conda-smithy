@@ -46,7 +46,7 @@ def miniconda_url(target_system, target_arch, major_py_version, miniconda_versio
 
     if major_py_version not in ['2', '3']:
         raise ValueError('Unexpected major Python version {!r}.'.format(major_py_version))
-    template_values['major_py_version'] = major_py_version if major_py_version == '3' else ''
+    template_values['major_py_version'] = major_py_version
     
     return MINICONDA_URL_TEMPLATE.format(**template_values)
 
