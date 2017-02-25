@@ -645,7 +645,9 @@ def main(forge_file_directory):
     build_config.CONDA_PY = 10
 
     recipe_dir = 'recipe'
-    config = {'docker': {'image': 'condaforge/linux-anvil', 'command': 'bash'},
+    config = {'docker': {'executable': 'docker',
+                         'image': 'condaforge/linux-anvil',
+                         'command': 'bash'},
               'templates': {'run_docker_build': 'run_docker_build_matrix.tmpl'},
               'travis': {},
               'circle': {},
