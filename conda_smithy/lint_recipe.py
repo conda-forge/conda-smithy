@@ -21,6 +21,16 @@ REQUIREMENTS_ORDER = ['build', 'run']
 
 TEST_KEYS = {'imports', 'commands'}
 
+EXPECTED_SUBSECTION_HEADINGS = {'package': ['name', 'version', ],
+                                'source': ['fn', 'url', 'sha256', ],
+                                'build': ['number', 'script'],
+                                'requirements': ['build', 'run'],
+                                'test': ['source_files', 'commands',
+                                         'requires'],
+                                'about': ['home', 'license', 'license_file',
+                                          'summary', 'description', 'doc_url',
+                                          'dev_url'],
+                                'extra': ['recipe-maintainers']}
 
 class NullUndefined(jinja2.Undefined):
     def __unicode__(self):
@@ -174,6 +184,15 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
         lints.append('Using pinned numpy packages is a deprecated pattern.  Consider '
                      'using the method outlined '
                      '[here](https://conda-forge.org/docs/meta.html#building-against-numpy).')
+
+    # 16: Subheaders should be in the allowed subheadings
+    for section in major_sections:
+        expected_subsections = EXPECTED_SUBSECTION_HEADINGS[section]
+        for subsection in get_section(meta, section, lints):
+            if subsection not in expected_subsections:
+                lints.append('The {} section contained an unexpected '
+                             'subsection name. {} is not a valid subsection'
+                             ' name.'.format(section, subsection))
 
     return lints
 
