@@ -11,7 +11,7 @@ import github
 import jinja2
 import ruamel.yaml
 
-from conda_build.metadata import ensure_valid_license_family
+from conda_build.metadata import ensure_valid_license_family, FIELDS
 
 
 EXPECTED_SECTION_ORDER = ['package', 'source', 'build', 'requirements',
@@ -187,7 +187,7 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
 
     # 16: Subheaders should be in the allowed subheadings
     for section in major_sections:
-        expected_subsections = EXPECTED_SUBSECTION_HEADINGS[section]
+        expected_subsections = FIELDS[section]
         for subsection in get_section(meta, section, lints):
             if subsection not in expected_subsections:
                 lints.append('The {} section contained an unexpected '
