@@ -443,8 +443,10 @@ def render_appveyor(jinja_env, forge_config, forge_dir):
             case["CONDA_INSTALL_LOCN"] = "C:\\\\Miniconda"
             if case.get("CONDA_PY") == "27":
                 case["CONDA_INSTALL_LOCN"] += ""
-            elif case.get("CONDA_PY") in ("35", "36"):
+            elif case.get("CONDA_PY") == "35":
                 case["CONDA_INSTALL_LOCN"] += "35"
+            elif case.get("CONDA_PY") == "36":
+                case["CONDA_INSTALL_LOCN"] += "36"
 
             # Set architecture.
             if case.get("TARGET_ARCH") == "x86":
