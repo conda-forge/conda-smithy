@@ -11,6 +11,13 @@ language: generic
 os: osx
 osx_image: xcode6.4
 
+cache:
+  directories:
+  - $HOME/miniconda3
+
+before_cache:
+  - rm -rf $HOME/miniconda3/conda-bld
+
 {% block env -%}
 {% if matrix[0] or travis.secure -%}
 env:
@@ -49,11 +56,14 @@ install:
     # Install Miniconda.
     - |
       echo ""
-      echo "Installing a fresh version of Miniconda."
-      MINICONDA_URL="https://repo.continuum.io/miniconda"
-      MINICONDA_FILE="Miniconda3-latest-MacOSX-x86_64.sh"
-      curl -L -O "${MINICONDA_URL}/${MINICONDA_FILE}"
-      bash $MINICONDA_FILE -b
+      if [ ! -f $HOME/miniconda3/bin/activate ]; then
+          echo "Installing a fresh version of Miniconda."
+          MINICONDA_URL="https://repo.continuum.io/miniconda"
+          MINICONDA_FILE="Miniconda3-latest-MacOSX-x86_64.sh"
+          curl -L -O "${MINICONDA_URL}/${MINICONDA_FILE}"
+          rm -rf $HOME/miniconda3
+          bash $MINICONDA_FILE -b
+      fi
 
     # Configure conda.
     - |
