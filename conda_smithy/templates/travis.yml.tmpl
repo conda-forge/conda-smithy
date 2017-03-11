@@ -39,10 +39,9 @@ before_install:
     - |
       echo ""
       echo "Removing homebrew from Travis CI to avoid conflicts."
-      curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/uninstall > ~/uninstall_homebrew
-      chmod +x ~/uninstall_homebrew
-      ~/uninstall_homebrew -fq
-      rm ~/uninstall_homebrew
+      sudo mv /usr/local /usr/local.old
+      hash -r
+      if brew --version; then exit 1; fi
 
 
 install:
