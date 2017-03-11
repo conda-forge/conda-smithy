@@ -14,6 +14,8 @@ import ruamel.yaml
 from conda_build.metadata import ensure_valid_license_family, FIELDS
 
 
+FIELDS['extra'] = ['recipe-maintainers']
+
 EXPECTED_SECTION_ORDER = ['package', 'source', 'build', 'requirements',
                           'test', 'app', 'about', 'extra']
 
