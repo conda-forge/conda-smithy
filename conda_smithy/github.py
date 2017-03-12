@@ -1,6 +1,9 @@
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
 
 import os
+
+import git
+from git import Repo
 
 import github
 from github import Github
@@ -24,8 +27,8 @@ def create_github_repo(args):
     token = gh_token()
     meta = configure_feedstock.meta_of_feedstock(args.feedstock_directory)
 
-    from git import Repo
     gh = Github(token)
+    user_or_org = None
     if args.user is not None:
         pass
         # User has been defined, and organization has not.
