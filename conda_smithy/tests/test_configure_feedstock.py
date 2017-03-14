@@ -85,7 +85,7 @@ class Test_fudge_subdir(unittest.TestCase):
 
             def test(expect_skip=False):
                 meta.parse_again(**kwargs)
-                
+
                 if expect_skip:
                     self.assertEqual(meta.skip(), True)
 
@@ -102,9 +102,6 @@ class Test_fudge_subdir(unittest.TestCase):
 
                 if expect_skip:
                     self.assertEqual(cases_not_skipped, [])
-
-            with cnfgr_fdstk.fudge_subdir('linux-32', config):
-                test()
 
             with cnfgr_fdstk.fudge_subdir('linux-64', config):
                 test()
