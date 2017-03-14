@@ -8,6 +8,7 @@ import conda_build.metadata
 import conda.api
 
 import conda_smithy.configure_feedstock as cnfgr_fdstk
+from conda_build_all.resolved_distribution import ResolvedDistribution
 
 
 @contextmanager
@@ -60,6 +61,60 @@ class Test_fudge_subdir(unittest.TestCase):
                              ' Subdir is not working and will result in mis-rendering '
                              '(e.g. https://github.com/SciTools/conda-build-all/issues/49).'))
 
+    def test_r(self):
+        with tmp_directory() as recipe_dir:
+            with open(os.path.join(recipe_dir, 'meta.yaml'), 'w') as fh:
+                fh.write("""
+                        package:
+                           name: r-test
+                           version: 1.0.0
+                        build:
+                           skip: True  # [win]
+                        requirements:
+                           build:
+                              - r-base
+                           run:
+                              - r-base
+                         """)
+            meta = conda_build.metadata.MetaData(recipe_dir)
+            config = cnfgr_fdstk.meta_config(meta)
+
+            kwargs = {}
+            if hasattr(conda_build, 'api'):
+                kwargs['config'] = config
+
+            def test(expect_skip=False):
+                meta.parse_again(**kwargs)
+
+                if expect_skip:
+                    self.assertEqual(meta.skip(), True)
+
+                matrix = cnfgr_fdstk.compute_build_matrix(
+                    meta,
+                    channel_sources=["defaults", "conda-forge"]
+                )
+
+                cases_not_skipped = []
+                for case in matrix:
+                    pkgs, vars = cnfgr_fdstk.split_case(case)
+                    with cnfgr_fdstk.enable_vars(vars):
+                        if not ResolvedDistribution(meta, pkgs).skip():
+                            cases_not_skipped.append(vars + sorted(pkgs))
+
+                if expect_skip:
+                    self.assertEqual(cases_not_skipped, [])
+
+            with cnfgr_fdstk.fudge_subdir('linux-64', config):
+                test()
+
+            with cnfgr_fdstk.fudge_subdir('win-32', config):
+                test(expect_skip=True)
+
+            with cnfgr_fdstk.fudge_subdir('win-64', config):
+                test(expect_skip=True)
+
+            with cnfgr_fdstk.fudge_subdir('osx-64', config):
+                test()
 
 
 if __name__ == '__main__':
