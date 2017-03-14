@@ -603,6 +603,10 @@ def meta_of_feedstock(forge_dir, config=None):
 
 
 def compute_build_matrix(meta, existing_matrix=None, channel_sources=tuple()):
+    if meta.skip():
+        # return empty version matrix if build will be skipped
+        return set()
+
     channel_sources = tuple(channel_sources)
 
     # Override what `defaults` means depending on the platform used.

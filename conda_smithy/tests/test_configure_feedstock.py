@@ -85,12 +85,13 @@ class Test_fudge_subdir(unittest.TestCase):
 
             def test(expect_skip=False):
                 meta.parse_again(**kwargs)
+                
+                if expect_skip:
+                    self.assertEqual(meta.skip(), True)
+
                 matrix = cnfgr_fdstk.compute_build_matrix(
                     meta
                 )
-
-                if expect_skip:
-                    self.assertEqual(meta.skip(), True)
 
                 cases_not_skipped = []
                 for case in matrix:
