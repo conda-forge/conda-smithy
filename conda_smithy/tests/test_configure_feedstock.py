@@ -90,7 +90,8 @@ class Test_fudge_subdir(unittest.TestCase):
                     self.assertEqual(meta.skip(), True)
 
                 matrix = cnfgr_fdstk.compute_build_matrix(
-                    meta
+                    meta,
+                    channel_sources=["defaults", "conda-forge"]
                 )
 
                 cases_not_skipped = []
