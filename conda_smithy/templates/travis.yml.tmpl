@@ -65,7 +65,7 @@ install:
       conda config --add channels {{ channel }}
       {%- endfor %}
       conda config --set show_channel_urls true
-      conda install --yes --quiet conda-forge-build-setup
+      conda install --yes --quiet conda-forge-build-setup -c conda-forge
       {% if build_setup -%}
       {{ build_setup }}{% endif %}
 
