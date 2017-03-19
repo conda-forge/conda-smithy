@@ -20,7 +20,7 @@ requirements:
     - setuptools
   run:
     - python
-    - conda-build-all
+    - conda-build-all >=1.0.2
     - conda
     - conda-build >=1.21.12,!=2.0.9
     - jinja2
