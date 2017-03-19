@@ -111,6 +111,10 @@ class RegisterGithub(Subcommand):
         #  conda-smithy register-github ./ --organization=conda-forge
         super(RegisterGithub, self).__init__(parser, "Register a repo for a feedstock at github.")
         scp = self.subcommand_parser
+        scp.add_argument("--add-teams",
+                         action='store_true',
+                         default=False,
+                         help="Create teams and register maintainers to them.")
         scp.add_argument("feedstock_directory",
                          help="The directory of the feedstock git repository.")
         group = scp.add_mutually_exclusive_group()
