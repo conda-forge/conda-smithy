@@ -48,8 +48,8 @@ install:
     - cmd: conda config --add channels {{ channel }}{% endfor %}
 
     # Configure the VM.
-    - cmd: conda install -n root --quiet --yes obvious-ci -c conda-forge
-    - cmd: conda install -n root --quiet --yes conda-forge-build-setup -c conda-forge
+    - cmd: conda install -n root --quiet --yes -c conda-forge obvious-ci
+    - cmd: conda install -n root --quiet --yes -c conda-forge conda-forge-build-setup
     {% if build_setup -%}
     {{ build_setup }}{% endif %}
 
