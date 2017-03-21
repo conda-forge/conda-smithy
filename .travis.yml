@@ -20,7 +20,7 @@ env:
 
 install:
     - mkdir -p ${HOME}/cache/pkgs
-    - "[ ! -f ${HOME}/cache/miniconda.sh ] && wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ${HOME}/cache/miniconda.sh || :"
+    - "[ ! -f ${HOME}/cache/miniconda.sh ] && wget https://repo.continuum.io/miniconda/Miniconda3-4.2.12-Linux-x86_64.sh -O ${HOME}/cache/miniconda.sh || :"
     - bash ${HOME}/cache/miniconda.sh -b -p ${CONDA_INSTALL_LOCN}
     - source ${CONDA_INSTALL_LOCN}/bin/activate root
 
