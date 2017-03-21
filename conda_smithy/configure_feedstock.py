@@ -471,7 +471,7 @@ def render_appveyor(jinja_env, forge_config, forge_dir):
         if os.path.exists(cfbs_fpath):
             fast_finish_script += "{recipe_dir}\\ff_ci_pr_build".format(recipe_dir=forge_config["recipe_dir"])
         else:
-            get_fast_finish_script += "curl https://raw.githubusercontent.com/conda-forge/conda-forge-build-setup-feedstock/master/recipe/ff_ci_pr_build.py > ff_ci_pr_build.py"
+            get_fast_finish_script += '''powershell -Command "(New-Object Net.WebClient).DownloadFile('https://raw.githubusercontent.com/conda-forge/conda-forge-build-setup-feedstock/master/recipe/ff_ci_pr_build.py', 'ff_ci_pr_build.py')"'''
             fast_finish_script += "ff_ci_pr_build"
             fast_finish += "del {fast_finish_script}.py"
 
