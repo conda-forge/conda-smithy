@@ -61,7 +61,9 @@ directory called `foo-feedstock`, populates it with CI setup skeletons, adds the
 2. **Create a github repo:** `conda smithy register-github --organization conda-forge ./foo-feedstock`.
 This requires a github token. You can try it out with a github user account
 instead of an organization by replacing the organization argument with
-`--user github_user_name`.
+`--user github_user_name`. If you are interested in adding teams for your feedstocks,
+you can provide the `--add-teams` option to create them. This can be done when creating
+the feedstock or after.
 3. **Register the feedstock with CI services:**
 `conda smithy register-ci --organization conda-forge --feedstock_directory ./foo-feedstock`.
 This requires tokens for the CI services. You can give the name of a user instead

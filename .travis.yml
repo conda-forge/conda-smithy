@@ -13,14 +13,14 @@ env:
         - PYTHON=3.5
           CONDA_PKGS='conda=4.1.* conda-env=2.5.* conda-build=1.*'
         - PYTHON=3.5
-          CONDA_PKGS='conda=4.1.* conda-env=2.5.*'
+          CONDA_PKGS='conda=4.1.* conda-env=2.5.* conda-build=2.1.4'
         - PYTHON=3.5
           CONDA_PKGS='conda-build=1.*'
         - PYTHON=3.5
 
 install:
     - mkdir -p ${HOME}/cache/pkgs
-    - "[ ! -f ${HOME}/cache/miniconda.sh ] && wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ${HOME}/cache/miniconda.sh || :"
+    - "[ ! -f ${HOME}/cache/miniconda.sh ] && wget https://repo.continuum.io/miniconda/Miniconda3-4.2.12-Linux-x86_64.sh -O ${HOME}/cache/miniconda.sh || :"
     - bash ${HOME}/cache/miniconda.sh -b -p ${CONDA_INSTALL_LOCN}
     - source ${CONDA_INSTALL_LOCN}/bin/activate root
 
@@ -33,7 +33,7 @@ install:
 
 script:
     - coverage erase
-    - coverage run --source . setup.py test
+    - coverage run -m unittest discover
     - coverage report
 
 after_success:
