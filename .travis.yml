@@ -20,9 +20,7 @@ env:
         - PYTHON=3.5
           CONDA_PKGS='conda=4.3.14 conda-build=2.1.7 conda-build-all=1.0.1 conda-env=2.6.0 conda-verify=2.0.0'
         - PYTHON=3.5
-          CONDA_PKGS='conda-build-all=1.0.1'
-        - PYTHON=3.5
-          CONDA_PKGS='conda-env=2.6.0'
+          CONDA_PKGS='conda-build-all=1.0.2 conda=4.3.14 conda-build=2.1.7 conda-env=2.6.0 conda-verify=2.0.0'
 
 install:
     - mkdir -p ${HOME}/cache/pkgs
