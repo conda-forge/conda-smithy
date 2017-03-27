@@ -8,7 +8,7 @@ import os
 import jinja2
 import ruamel.yaml
 
-from cf_pinning import update_recipe_pinning
+from conda_smithy.pinning import update_recipe_pinning
 from conda_smithy.feedstock_io import write_file
 
 
