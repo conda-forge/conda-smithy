@@ -34,6 +34,7 @@ place them. If you need help getting tokens please ask on the
 
 You should be able to test parts of `conda-smithy` with whatever tokens you have.
 For example, you should be able to `conda smithy register-github` without the CI service tokens.
+Re-rendering an existing feedstock is also possible without CI service tokens set.
 
 Re-rendering an existing feedstock
 ----------------------------------
@@ -41,6 +42,7 @@ Re-rendering an existing feedstock
 Periodically feedstocks need to be upgraded to include new features. To do
 this we use `conda-smithy` to go through a process called re-rendering.
 Make sure you have installed `conda-smithy` before proceeding.
+Re-rendering an existing feedstock is possible without CI service tokens set.
 
 1. `cd <feedstock directory>`
 2. `conda smithy rerender [--commit]`
