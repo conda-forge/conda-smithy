@@ -155,8 +155,8 @@ def lintify(meta, recipe_dir=None):
             os.path.basename(recipe_dir) != package_section.get('name','')):
         lints.append('The package name ("{}") does not match the recipe '
                      'directory name ("{}").'
-                     ''.format(os.path.basename(recipe_dir),
-                               package_section.get('name','')))
+                     ''.format(package_section.get('name',''),
+                               os.path.basename(recipe_dir)))
 
     return lints
 
