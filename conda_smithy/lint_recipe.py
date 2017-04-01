@@ -47,6 +47,7 @@ def lintify(meta, recipe_dir=None):
     # find the meta.yaml within it.
     meta_fname = os.path.join(recipe_dir or '', 'meta.yaml')
 
+    package_section = get_section(meta, 'package', lints)
     source_section = get_section(meta, 'source', lints)
     build_section = get_section(meta, 'build', lints)
     requirements_section = get_section(meta, 'requirements', lints)
@@ -148,6 +149,14 @@ def lintify(meta, recipe_dir=None):
         ensure_valid_license_family(meta)
     except RuntimeError as e:
         lints.append(str(e))
+
+    # 13: The recipe directory name should be the name of the package.
+    if (recipe_dir is not None and
+            os.path.basename(recipe_dir) != package_section.get('name','')):
+        lints.append('The package name ("{}") does not match the recipe '
+                     'directory name ("{}").'
+                     ''.format(os.path.basename(recipe_dir),
+                               package_section.get('name','')))
 
     return lints
 
