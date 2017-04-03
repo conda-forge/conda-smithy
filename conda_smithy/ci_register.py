@@ -177,7 +177,7 @@ def appveyor_configure(user, project):
 def add_project_to_travis(user, project):
     headers = travis_headers()
     endpoint = 'https://api.travis-ci.org'
-    
+
     url = '{}/hooks'.format(endpoint)
 
     found = False
@@ -187,7 +187,15 @@ def add_project_to_travis(user, project):
         count += 1
 
         response = requests.get(url, headers=headers)
-        content = response.json()
+        try:
+            content = response.json()
+        except ValueError:
+            # We regularly seem to hit this issue during automated feedstock registration on github.
+            # https://github.com/conda-forge/conda-smithy/issues/233
+            # ValueError: No JSON object could be decoded
+            # Maybe trying again in a few seconds will fix this.
+            print('travis-ci says: %s' % response.text)
+            raise
         try:
             found = [hooked for hooked in content['hooks']
                      if hooked['owner_name'] == user and hooked['name'] == project]
