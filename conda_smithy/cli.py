@@ -7,6 +7,7 @@ import sys
 import time
 import argparse
 
+import conda
 from conda_build.metadata import MetaData
 
 from . import ci_register
@@ -271,6 +272,13 @@ def main():
         args = parser.parse_args(['--help'])
     else:
         args = parser.parse_args()
+
+    # Check conda version for compatibility
+    conda_version_tuple = tuple(map(int, conda.__version__.split('.')[:3]))
+    if conda_version_tuple > (4, 2):
+        print('You appear to be using conda {}, but conda-smithy {} is\ncurrently only compatible with conda versions < 4.3.'.format(
+            conda.__version__, __version__))
+        sys.exit(2)
 
     args.subcommand_func(args)
 
