@@ -188,8 +188,9 @@ def add_project_to_travis(user, project):
 
         response = requests.get(url, headers=headers)
         try:
+            response.raise_for_status()
             content = response.json()
-        except ValueError:
+        except (requests.HTTPError, ValueError):
             # We regularly seem to hit this issue during automated feedstock registration on github.
             # https://github.com/conda-forge/conda-smithy/issues/233
             # ValueError: No JSON object could be decoded
@@ -207,6 +208,7 @@ def add_project_to_travis(user, project):
                 print(" * Travis doesn't know about the repo, synching (takes a few seconds).")
                 synch_url = '{}/users/sync'.format(endpoint)
                 response = requests.post(synch_url, headers=headers)
+                response.raise_for_status()
             time.sleep(3)
 
         if count > 20:
@@ -220,12 +222,14 @@ def add_project_to_travis(user, project):
         repo_id = found[0]['id']
         url = '{}/hooks'.format(endpoint)
         response = requests.put(url, headers=headers, json={'hook': {'id': repo_id, 'active': True}})
+        response.raise_for_status()
         if response.json().get('result'):
             print(' * Registered on travis-ci')
         else:
             raise RuntimeError('Unable to register on travis-ci, response from hooks was negative')
         url = '{}/users/sync'.format(endpoint)
         response = requests.post(url, headers=headers)
+        response.raise_for_status()
 
 
 def travis_token_update_conda_forge_config(feedstock_directory, user, project):
@@ -286,6 +290,7 @@ def travis_configure(user, project):
     url = '{}/hooks'.format(endpoint)
 
     response = requests.get(url, headers=headers)
+    response.raise_for_status()
     content = response.json()
     try:
         found = [hooked for hooked in content['hooks']
@@ -301,6 +306,7 @@ def travis_configure(user, project):
 
     url = '{}/repos/{user}/{project}'.format(endpoint, user=user, project=project)
     response = requests.get(url, headers=headers)
+    response.raise_for_status()
     content = response.json()
     repo_id = content['repo']['id']
 
@@ -325,6 +331,7 @@ def add_conda_linting(user, repo):
 
     # Get the current hooks to determine if anything needs doing.
     response = requests.get(url, headers=headers)
+    response.raise_for_status()
     registered = response.json()
     hook_by_url = {hook['config'].get('url'): hook for hook in registered
                    if 'url' in hook['config']}
