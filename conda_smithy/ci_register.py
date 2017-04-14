@@ -176,7 +176,6 @@ def appveyor_configure(user, project):
 
 def add_project_to_travis(user, project):
     headers = travis_headers()
-
     endpoint = 'https://api.travis-ci.org'
 
     url = '{}/repos/{}/{}'.format(endpoint, user, project)
@@ -194,7 +193,7 @@ def add_project_to_travis(user, project):
 
         if "repo" in content:
             break
-        elif count ==1:
+        elif count == 1:
             print(" * Travis doesn't know about the repo, synching (takes a few seconds).")
             synch_url = '{}/users/sync'.format(endpoint)
             response = requests.post(synch_url, headers=headers)
