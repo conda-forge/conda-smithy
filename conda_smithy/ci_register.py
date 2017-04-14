@@ -202,6 +202,7 @@ def add_project_to_travis(user, project):
             print(" * Travis doesn't know about the repo, synching (takes a few seconds).")
             synch_url = '{}/users/sync'.format(endpoint)
             response = requests.post(synch_url, headers=headers)
+            response.raise_for_status()
             time.sleep(3)
 
         if count > 20:
