@@ -178,16 +178,21 @@ def add_project_to_travis(user, project):
     headers = travis_headers()
     endpoint = 'https://api.travis-ci.org'
 
-    url = '{}/repos/{}/{}'.format(endpoint, user, project)
+    url = '{}/repos/{user}/{project}'.format(endpoint, user=user, project=project)
 
     count = 0
 
     while True:
         count += 1
+
         response = requests.get(url, headers=headers)
         try:
             content = response.json()
         except ValueError:
+            # We regularly seem to hit this issue during automated feedstock registration on github.
+            # https://github.com/conda-forge/conda-smithy/issues/233
+            # ValueError: No JSON object could be decoded
+            # Maybe trying again in a few seconds will fix this.
             print('travis-ci says: %s' % response.text)
             content = {}
 
@@ -280,6 +285,11 @@ def travis_configure(user, project):
     response.raise_for_status()
     content = response.json()
     repo_id = content['repo']['id']
+
+    if content['repo']['active'] is not True:
+        raise ValueError(
+            "Repo {user}/{project} is not active on Travis CI".format(user=user, project=project)
+        )
 
     url = '{}/repos/{repo_id}/settings'.format(endpoint, repo_id=repo_id)
     data = {
