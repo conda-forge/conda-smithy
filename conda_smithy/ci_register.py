@@ -287,23 +287,6 @@ def travis_configure(user, project):
     endpoint = 'https://api.travis-ci.org'
     headers = travis_headers()
 
-    url = '{}/hooks'.format(endpoint)
-
-    response = requests.get(url, headers=headers)
-    response.raise_for_status()
-    content = response.json()
-    try:
-        found = [hooked for hooked in content['hooks']
-                 if hooked['owner_name'] == user and hooked['name'] == project]
-    except KeyError:
-        print("Unable to find {user}/{project}".format(user=user, project=project))
-        raise
-
-    if found[0]['active'] is False:
-        raise InputError(
-            "Repo {user}/{project} is not active on Travis CI".format(user=user, project=project)
-        )
-
     url = '{}/repos/{user}/{project}'.format(endpoint, user=user, project=project)
     response = requests.get(url, headers=headers)
     response.raise_for_status()
