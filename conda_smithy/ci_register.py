@@ -176,27 +176,25 @@ def appveyor_configure(user, project):
 
 def add_project_to_travis(user, project):
     headers = travis_headers()
-    repo_headers = headers.copy()
-    repo_headers['Accept'] = 'application/json'
 
     endpoint = 'https://api.travis-ci.org'
 
-    url = '{}/{}/{}'.format(endpoint, user, project)
+    url = '{}/repos/{}/{}'.format(endpoint, user, project)
 
     count = 0
 
     while True:
         count += 1
-        response = requests.get(url, headers=repo_headers)
+        response = requests.get(url, headers=headers)
         try:
             content = response.json()
         except ValueError:
             print('travis-ci says: %s' % response.text)
             content = {}
 
-        if "id" in content:
+        if "repo" in content:
             break
-        elif count == 1:
+        elif count ==1:
             print(" * Travis doesn't know about the repo, synching (takes a few seconds).")
             synch_url = '{}/users/sync'.format(endpoint)
             response = requests.post(synch_url, headers=headers)
@@ -207,10 +205,10 @@ def add_project_to_travis(user, project):
                    '(Is it down? Is the "{}" name spelt correctly? [note: case sensitive])')
             raise RuntimeError(msg.format(user))
 
-    if content['active'] is True:
+    if content['repo']['active'] is True:
         print(' * {}/{} already enabled on travis-ci'.format(user, project))
     else:
-        repo_id = content['id']
+        repo_id = content['repo']['id']
         url = '{}/hooks'.format(endpoint)
         response = requests.put(url, headers=headers, json={'hook': {'id': repo_id, 'active': True}})
         response.raise_for_status()
