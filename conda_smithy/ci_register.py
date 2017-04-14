@@ -176,35 +176,36 @@ def appveyor_configure(user, project):
 
 def add_project_to_travis(user, project):
     headers = travis_headers()
+    repo_headers = headers.copy()
+    repo_headers['Accept'] = 'application/json'
+
     endpoint = 'https://api.travis-ci.org'
-
-    url = '{}/{}/{}/key'.format(endpoint, user, project)
-
-    found = False
-    count = 0
-    response = requests.get(url, headers=headers)
-    content = response.json()
-
-    if "key" not in content:
-        print(" * Travis doesn't know about the repo, synching (takes a few seconds).")
-        synch_url = '{}/users/sync'.format(endpoint)
-        response = requests.post(synch_url, headers=headers)
-        response.raise_for_status()
-    time.sleep(3)
 
     url = '{}/{}/{}'.format(endpoint, user, project)
 
-    response = requests.get(url, headers=headers)
-    try:
-        response.raise_for_status()
-        content = response.json()
-    except (requests.HTTPError, ValueError):
-        # We regularly seem to hit this issue during automated feedstock registration on github.
-        # https://github.com/conda-forge/conda-smithy/issues/233
-        # ValueError: No JSON object could be decoded
-        # Maybe trying again in a few seconds will fix this.
-        print('travis-ci says: %s' % response.text)
-        raise
+    count = 0
+
+    while True:
+        count += 1
+        try:
+            response = requests.get(url, headers=repo_headers)
+            content = response.json()
+        except (requests.HTTPError, ValueError):
+            print('travis-ci says: %s' % response.text)
+            content = {}
+
+        if "id" in content:
+            break
+        elif count == 1:
+            print(" * Travis doesn't know about the repo, synching (takes a few seconds).")
+            synch_url = '{}/users/sync'.format(endpoint)
+            response = requests.post(synch_url, headers=headers)
+            time.sleep(3)
+
+        if count > 20:
+            msg = ('Unable to register the repo on Travis\n'
+                   '(Is it down? Is the "{}" name spelt correctly? [note: case sensitive])')
+            raise RuntimeError(msg.format(user))
 
     if content['active'] is True:
         print(' * {}/{} already enabled on travis-ci'.format(user, project))
