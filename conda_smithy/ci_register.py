@@ -187,10 +187,10 @@ def add_project_to_travis(user, project):
 
     while True:
         count += 1
+        response = requests.get(url, headers=repo_headers)
         try:
-            response = requests.get(url, headers=repo_headers)
             content = response.json()
-        except (requests.HTTPError, ValueError):
+        except ValueError:
             print('travis-ci says: %s' % response.text)
             content = {}
 
