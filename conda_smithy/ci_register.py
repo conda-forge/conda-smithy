@@ -191,12 +191,11 @@ def add_project_to_travis(user, project):
             content = response.json()
             if "repo" in content:
                 break
-        except requests.HTTPError:
+        except requests.HTTPError as e:
             # We regularly seem to hit this issue during automated feedstock registration on github.
             # https://github.com/conda-forge/conda-smithy/issues/233
-            # ValueError: No JSON object could be decoded
-            # Maybe trying again in a few seconds will fix this.
-            print('travis-ci says: %s' % response.text)
+            # Repo is not available on travis-ci yet.
+            print(e)
 
         if count == 1:
             print(" * Travis doesn't know about the repo, synching (takes a few seconds).")
