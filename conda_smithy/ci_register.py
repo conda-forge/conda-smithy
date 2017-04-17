@@ -220,9 +220,6 @@ def add_project_to_travis(user, project):
             print(' * Registered on travis-ci')
         else:
             raise RuntimeError('Unable to register on travis-ci, response from hooks was negative')
-        url = '{}/users/sync'.format(endpoint)
-        response = requests.post(url, headers=headers)
-        response.raise_for_status()
 
 
 def travis_token_update_conda_forge_config(feedstock_directory, user, project):
