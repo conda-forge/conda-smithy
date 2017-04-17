@@ -178,37 +178,30 @@ def add_project_to_travis(user, project):
     headers = travis_headers()
     endpoint = 'https://api.travis-ci.org'
 
-    url = '{}/hooks'.format(endpoint)
+    url = '{}/repos/{user}/{project}'.format(endpoint, user=user, project=project)
 
-    found = False
     count = 0
 
-    while not found:
+    while True:
         count += 1
 
         response = requests.get(url, headers=headers)
         try:
             response.raise_for_status()
             content = response.json()
-        except (requests.HTTPError, ValueError):
+            if "repo" in content:
+                break
+        except requests.HTTPError as e:
             # We regularly seem to hit this issue during automated feedstock registration on github.
             # https://github.com/conda-forge/conda-smithy/issues/233
-            # ValueError: No JSON object could be decoded
-            # Maybe trying again in a few seconds will fix this.
-            print('travis-ci says: %s' % response.text)
-            raise
-        try:
-            found = [hooked for hooked in content['hooks']
-                     if hooked['owner_name'] == user and hooked['name'] == project]
-        except KeyError:
-            pass
+            # Repo is not available on travis-ci yet.
+            print(e)
 
-        if not found:
-            if count == 1:
-                print(" * Travis doesn't know about the repo, synching (takes a few seconds).")
-                synch_url = '{}/users/sync'.format(endpoint)
-                response = requests.post(synch_url, headers=headers)
-                response.raise_for_status()
+        if count == 1:
+            print(" * Travis doesn't know about the repo, synching (takes a few seconds).")
+            synch_url = '{}/users/sync'.format(endpoint)
+            response = requests.post(synch_url, headers=headers)
+            response.raise_for_status()
             time.sleep(3)
 
         if count > 20:
@@ -216,10 +209,10 @@ def add_project_to_travis(user, project):
                    '(Is it down? Is the "{}" name spelt correctly? [note: case sensitive])')
             raise RuntimeError(msg.format(user))
 
-    if found[0]['active'] is True:
+    if content['repo']['active'] is True:
         print(' * {}/{} already enabled on travis-ci'.format(user, project))
     else:
-        repo_id = found[0]['id']
+        repo_id = content['repo']['id']
         url = '{}/hooks'.format(endpoint)
         response = requests.put(url, headers=headers, json={'hook': {'id': repo_id, 'active': True}})
         response.raise_for_status()
@@ -287,28 +280,16 @@ def travis_configure(user, project):
     endpoint = 'https://api.travis-ci.org'
     headers = travis_headers()
 
-    url = '{}/hooks'.format(endpoint)
-
-    response = requests.get(url, headers=headers)
-    response.raise_for_status()
-    content = response.json()
-    try:
-        found = [hooked for hooked in content['hooks']
-                 if hooked['owner_name'] == user and hooked['name'] == project]
-    except KeyError:
-        print("Unable to find {user}/{project}".format(user=user, project=project))
-        raise
-
-    if found[0]['active'] is False:
-        raise InputError(
-            "Repo {user}/{project} is not active on Travis CI".format(user=user, project=project)
-        )
-
     url = '{}/repos/{user}/{project}'.format(endpoint, user=user, project=project)
     response = requests.get(url, headers=headers)
     response.raise_for_status()
     content = response.json()
     repo_id = content['repo']['id']
+
+    if content['repo']['active'] is not True:
+        raise ValueError(
+            "Repo {user}/{project} is not active on Travis CI".format(user=user, project=project)
+        )
 
     url = '{}/repos/{repo_id}/settings'.format(endpoint, repo_id=repo_id)
     data = {
