@@ -192,13 +192,26 @@ def add_project_to_travis(user, project):
             if "repo" in content:
                 break
         except requests.HTTPError as e:
-            # We regularly seem to hit this issue during automated feedstock registration on github.
-            # https://github.com/conda-forge/conda-smithy/issues/233
-            # Repo is not available on travis-ci yet.
             print(e)
 
         if count == 1:
+            def wait_until_synced(ignore=False):
+                is_sync_url = '{}/users'.format(endpoint)
+                response = requests.post(is_sync_url, headers=headers)
+                content = response.json()
+                for c in range(20):
+                    if ("is_syncing" in content and content["is_syncing"] == False):
+                        break
+                    time.sleep(3)
+                else:
+                    if ignore:
+                        print(" * Travis is being synced by somebody else. Ignoring")
+                    else:
+                        raise RuntimeError('Synching is not finishing for a minute now')
+
+            wait_until_synced(ignore=True)
             print(" * Travis doesn't know about the repo, synching (takes a few seconds).")
+
             synch_url = '{}/users/sync'.format(endpoint)
             response = requests.post(synch_url, headers=headers)
             if response.status_code != 409:
@@ -206,8 +219,8 @@ def add_project_to_travis(user, project):
                 # same time. This can happen in conda-forge/staged-recipes when two master builds
                 # start at the same time
                 response.raise_for_status()
+            wait_until_synced(ignore=False)
 
-        # synching might not be finished yet. sleep before retrying
         time.sleep(5)
 
         if count > 20:
