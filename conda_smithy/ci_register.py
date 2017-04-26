@@ -215,7 +215,7 @@ def add_project_to_travis(user, project):
             synch_url = '{}/users/sync'.format(endpoint)
             response = requests.post(synch_url, headers=headers)
             if response.status_code != 409:
-                # 409 status code is for indicatng that another synching might be happening at the
+                # 409 status code is for indicating that another synching might be happening at the
                 # same time. This can happen in conda-forge/staged-recipes when two master builds
                 # start at the same time
                 response.raise_for_status()
