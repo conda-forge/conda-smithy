@@ -174,42 +174,47 @@ def appveyor_configure(user, project):
         raise ValueError(response)
 
 
+def travis_wait_until_synced(user, ignore=False):
+    headers = travis_headers()
+    endpoint = 'https://api.travis-ci.org'
+    is_sync_url = '{}/users'.format(endpoint)
+    response = requests.post(is_sync_url, headers=headers)
+    content = response.json()
+    for c in range(20):
+        if ("is_syncing" in content and content["is_syncing"] == False):
+            break
+        time.sleep(3)
+    else:
+        if ignore:
+            print(" * Travis is being synced by somebody else. Ignoring")
+        else:
+            raise RuntimeError("Syncing has not finished for a minute now.")
+
+
+def travis_get_repo_info(user, project):
+    headers = travis_headers()
+    endpoint = 'https://api.travis-ci.org'
+    url = '{}/repos/{user}/{project}'.format(endpoint, user=user, project=project)
+    response = requests.get(url, headers=headers)
+    try:
+        response.raise_for_status()
+        content = response.json()
+        if "repo" in content:
+            return content["repo"]
+    except requests.HTTPError as e:
+        print(e)
+    return {}
+
+
 def add_project_to_travis(user, project):
     headers = travis_headers()
     endpoint = 'https://api.travis-ci.org'
 
-    def get_repo_info():
-        url = '{}/repos/{user}/{project}'.format(endpoint, user=user, project=project)
-        response = requests.get(url, headers=headers)
-        try:
-            response.raise_for_status()
-            content = response.json()
-            if "repo" in content:
-                return content
-        except requests.HTTPError as e:
-            print(e)
-        return {}
-
-    def wait_until_synced(ignore=False):
-        is_sync_url = '{}/users'.format(endpoint)
-        response = requests.post(is_sync_url, headers=headers)
-        content = response.json()
-        for c in range(20):
-            if ("is_syncing" in content and content["is_syncing"] == False):
-                break
-            time.sleep(3)
-        else:
-            if ignore:
-                print(" * Travis is being synced by somebody else. Ignoring")
-            else:
-                raise RuntimeError('Synching is not finishing for a minute now')
-
-
-    content = get_repo_info()
+    repo_info = travis_get_repo_info(user, project)
     if not content:
         # Travis need syncing. Wait until other syncs are finished.
-        wait_until_synced(ignore=True)
-        content = get_repo_info()
+        wait_until_synced(user, ignore=True)
+        repo_info = travis_get_repo_info(user, project)
         if not content:
             print(" * Travis doesn't know about the repo, synching (takes a few seconds).")
             synch_url = '{}/users/sync'.format(endpoint)
@@ -219,18 +224,18 @@ def add_project_to_travis(user, project):
                 # same time. This can happen in conda-forge/staged-recipes when two master builds
                 # start at the same time
                 response.raise_for_status()
-            wait_until_synced(ignore=False)
-            content = get_repo_info()
+            wait_until_synced(user, ignore=False)
+            repo_info = travis_get_repo_info(user, project)
 
     if not content:
         msg = ('Unable to register the repo on Travis\n'
                '(Is it down? Is the "{}" name spelt correctly? [note: case sensitive])')
         raise RuntimeError(msg.format(user))
 
-    if content['repo']['active'] is True:
+    if repo_info['active'] is True:
         print(' * {}/{} already enabled on travis-ci'.format(user, project))
     else:
-        repo_id = content['repo']['id']
+        repo_id = repo_info['id']
         url = '{}/hooks'.format(endpoint)
         response = requests.put(url, headers=headers, json={'hook': {'id': repo_id, 'active': True}})
         response.raise_for_status()
