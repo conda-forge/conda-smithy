@@ -178,40 +178,40 @@ def add_project_to_travis(user, project):
     headers = travis_headers()
     endpoint = 'https://api.travis-ci.org'
 
-    url = '{}/repos/{user}/{project}'.format(endpoint, user=user, project=project)
-
-    count = 0
-
-    while True:
-        count += 1
-
+    def get_repo_info():
+        url = '{}/repos/{user}/{project}'.format(endpoint, user=user, project=project)
         response = requests.get(url, headers=headers)
         try:
             response.raise_for_status()
             content = response.json()
             if "repo" in content:
-                break
+                return content
         except requests.HTTPError as e:
             print(e)
+        return {}
 
-        if count == 1:
-            def wait_until_synced(ignore=False):
-                is_sync_url = '{}/users'.format(endpoint)
-                response = requests.post(is_sync_url, headers=headers)
-                content = response.json()
-                for c in range(20):
-                    if ("is_syncing" in content and content["is_syncing"] == False):
-                        break
-                    time.sleep(3)
-                else:
-                    if ignore:
-                        print(" * Travis is being synced by somebody else. Ignoring")
-                    else:
-                        raise RuntimeError('Synching is not finishing for a minute now')
+    def wait_until_synced(ignore=False):
+        is_sync_url = '{}/users'.format(endpoint)
+        response = requests.post(is_sync_url, headers=headers)
+        content = response.json()
+        for c in range(20):
+            if ("is_syncing" in content and content["is_syncing"] == False):
+                break
+            time.sleep(3)
+        else:
+            if ignore:
+                print(" * Travis is being synced by somebody else. Ignoring")
+            else:
+                raise RuntimeError('Synching is not finishing for a minute now')
 
-            wait_until_synced(ignore=True)
+
+    content = get_repo_info()
+    if not content:
+        # Travis need syncing. Wait until other syncs are finished.
+        wait_until_synced(ignore=True)
+        content = get_repo_info()
+        if not content:
             print(" * Travis doesn't know about the repo, synching (takes a few seconds).")
-
             synch_url = '{}/users/sync'.format(endpoint)
             response = requests.post(synch_url, headers=headers)
             if response.status_code != 409:
@@ -220,13 +220,12 @@ def add_project_to_travis(user, project):
                 # start at the same time
                 response.raise_for_status()
             wait_until_synced(ignore=False)
+            content = get_repo_info()
 
-        time.sleep(5)
-
-        if count > 20:
-            msg = ('Unable to register the repo on Travis\n'
-                   '(Is it down? Is the "{}" name spelt correctly? [note: case sensitive])')
-            raise RuntimeError(msg.format(user))
+    if not content:
+        msg = ('Unable to register the repo on Travis\n'
+               '(Is it down? Is the "{}" name spelt correctly? [note: case sensitive])')
+        raise RuntimeError(msg.format(user))
 
     if content['repo']['active'] is True:
         print(' * {}/{} already enabled on travis-ci'.format(user, project))
