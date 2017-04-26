@@ -212,13 +212,13 @@ def add_project_to_travis(user, project):
 
     repo_info = travis_get_repo_info(user, project)
     if not content:
-        # Travis need syncing. Wait until other syncs are finished.
+        # Travis needs syncing. Wait until other syncs are finished.
         wait_until_synced(user, ignore=True)
         repo_info = travis_get_repo_info(user, project)
         if not content:
             print(" * Travis doesn't know about the repo, synching (takes a few seconds).")
-            synch_url = '{}/users/sync'.format(endpoint)
-            response = requests.post(synch_url, headers=headers)
+            sync_url = '{}/users/sync'.format(endpoint)
+            response = requests.post(sync_url, headers=headers)
             if response.status_code != 409:
                 # 409 status code is for indicating that another synching might be happening at the
                 # same time. This can happen in conda-forge/staged-recipes when two master builds
