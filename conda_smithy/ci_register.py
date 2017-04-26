@@ -300,13 +300,10 @@ def travis_configure(user, project):
     endpoint = 'https://api.travis-ci.org'
     headers = travis_headers()
 
-    url = '{}/repos/{user}/{project}'.format(endpoint, user=user, project=project)
-    response = requests.get(url, headers=headers)
-    response.raise_for_status()
-    content = response.json()
-    repo_id = content['repo']['id']
+    repo_info = travis_get_repo_info(user, project)
+    repo_id = repo_info['id']
 
-    if content['repo']['active'] is not True:
+    if repo_info['active'] is not True:
         raise ValueError(
             "Repo {user}/{project} is not active on Travis CI".format(user=user, project=project)
         )
