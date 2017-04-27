@@ -27,6 +27,9 @@ install:
     - cmd: |
         {{ fast_finish }}
 
+    # Install workaround 64-bit support for VS 2008.
+    - cmd: if "%TARGET_ARCH%" == "x64" if "%CONDA_PY%" == "27" call ci_support\vs2008\setup_x64.bat
+
     # Cywing's git breaks conda-build. (See https://github.com/conda-forge/conda-smithy-feedstock/pull/2.)
     - cmd: rmdir C:\cygwin /s /q
 
