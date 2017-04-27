@@ -178,7 +178,7 @@ def travis_wait_until_synced(user, ignore=False):
     headers = travis_headers()
     endpoint = 'https://api.travis-ci.org'
     is_sync_url = '{}/users'.format(endpoint)
-    response = requests.post(is_sync_url, headers=headers)
+    response = requests.get(is_sync_url, headers=headers)
     content = response.json()
     for c in range(20):
         if ("is_syncing" in content and content["is_syncing"] == False):
@@ -211,11 +211,11 @@ def add_project_to_travis(user, project):
     endpoint = 'https://api.travis-ci.org'
 
     repo_info = travis_get_repo_info(user, project)
-    if not content:
+    if not repo_info:
         # Travis needs syncing. Wait until other syncs are finished.
-        wait_until_synced(user, ignore=True)
+        travis_wait_until_synced(user, ignore=True)
         repo_info = travis_get_repo_info(user, project)
-        if not content:
+        if not repo_info:
             print(" * Travis doesn't know about the repo, synching (takes a few seconds).")
             sync_url = '{}/users/sync'.format(endpoint)
             response = requests.post(sync_url, headers=headers)
@@ -224,10 +224,10 @@ def add_project_to_travis(user, project):
                 # same time. This can happen in conda-forge/staged-recipes when two master builds
                 # start at the same time
                 response.raise_for_status()
-            wait_until_synced(user, ignore=False)
+            travis_wait_until_synced(user, ignore=False)
             repo_info = travis_get_repo_info(user, project)
 
-    if not content:
+    if not repo_info:
         msg = ('Unable to register the repo on Travis\n'
                '(Is it down? Is the "{}" name spelt correctly? [note: case sensitive])')
         raise RuntimeError(msg.format(user))
