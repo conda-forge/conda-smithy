@@ -51,6 +51,10 @@ export BINSTAR_TOKEN=${BINSTAR_TOKEN}
 set -x
 export PYTHONUNBUFFERED=1
 
+# MAKEFLAGS is passed through conda build: https://github.com/conda/conda-build/pull/917
+# 2 cores are available: https://discuss.circleci.com/t/what-runs-on-the-node-container-by-default/1443
+export MAKEFLAGS="-j2 ${MAKEFLAGS}"
+
 echo "$config" > ~/.condarc
 # A lock sometimes occurs with incomplete builds. The lock file is stored in build_artefacts.
 conda clean --lock
