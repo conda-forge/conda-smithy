@@ -184,12 +184,12 @@ def travis_wait_until_synced(user, ignore=False):
         print(".", end="", flush=True)
         if ("user" in content and content["user"]["is_syncing"] == False):
             break
-        time.sleep(3)
+        time.sleep(6)
     else:
         if ignore:
             print(" * Travis is being synced by somebody else. Ignoring")
         else:
-            raise RuntimeError("Syncing has not finished for a minute now.")
+            raise RuntimeError("Syncing has not finished for two minutes now.")
     print("")
 
 
