@@ -3,6 +3,7 @@ from __future__ import print_function
 import os
 import requests
 import time
+import sys
 
 import ruamel.yaml
 
@@ -181,7 +182,8 @@ def travis_wait_until_synced(user, ignore=False):
     for c in range(20):
         response = requests.get(is_sync_url, headers=headers)
         content = response.json()
-        print(".", end="", flush=True)
+        print(".", end="")
+        sys.stdout.flush()
         if ("user" in content and content["user"]["is_syncing"] == False):
             break
         time.sleep(6)
@@ -216,11 +218,13 @@ def add_project_to_travis(user, project):
     repo_info = travis_get_repo_info(user, project, show_error=False)
     if not repo_info:
         # Travis needs syncing. Wait until other syncs are finished.
-        print(" * Travis: checking if there's a syncing already", end="", flush=True)
+        print(" * Travis: checking if there's a syncing already", end="")
+        sys.stdout.flush()
         travis_wait_until_synced(user, ignore=True)
         repo_info = travis_get_repo_info(user, project, show_error=False)
         if not repo_info:
-            print(" * Travis doesn't know about the repo, syncing (takes a few seconds).", end="", flush=True)
+            print(" * Travis doesn't know about the repo, syncing (takes a few seconds).", end="")
+            sys.stdout.flush()
             sync_url = '{}/users/sync'.format(endpoint)
             response = requests.post(sync_url, headers=headers)
             if response.status_code != 409:
