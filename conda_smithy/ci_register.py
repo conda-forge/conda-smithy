@@ -3,6 +3,7 @@ from __future__ import print_function
 import os
 import requests
 import time
+import sys
 
 import ruamel.yaml
 
@@ -174,45 +175,75 @@ def appveyor_configure(user, project):
         raise ValueError(response)
 
 
+def travis_wait_until_synced(user, ignore=False):
+    headers = travis_headers()
+    endpoint = 'https://api.travis-ci.org'
+    is_sync_url = '{}/users'.format(endpoint)
+    for c in range(20):
+        response = requests.get(is_sync_url, headers=headers)
+        content = response.json()
+        print(".", end="")
+        sys.stdout.flush()
+        if ("user" in content and content["user"]["is_syncing"] == False):
+            break
+        time.sleep(6)
+    else:
+        if ignore:
+            print(" * Travis is being synced by somebody else. Ignoring")
+        else:
+            raise RuntimeError("Syncing has not finished for two minutes now.")
+    print("")
+
+
+def travis_get_repo_info(user, project, show_error=False):
+    headers = travis_headers()
+    endpoint = 'https://api.travis-ci.org'
+    url = '{}/repos/{user}/{project}'.format(endpoint, user=user, project=project)
+    response = requests.get(url, headers=headers)
+    try:
+        response.raise_for_status()
+        content = response.json()
+        if "repo" in content:
+            return content["repo"]
+    except requests.HTTPError as e:
+        if show_error:
+            print(e)
+    return {}
+
+
 def add_project_to_travis(user, project):
     headers = travis_headers()
     endpoint = 'https://api.travis-ci.org'
 
-    url = '{}/repos/{user}/{project}'.format(endpoint, user=user, project=project)
+    repo_info = travis_get_repo_info(user, project, show_error=False)
+    if not repo_info:
+        # Travis needs syncing. Wait until other syncs are finished.
+        print(" * Travis: checking if there's a syncing already", end="")
+        sys.stdout.flush()
+        travis_wait_until_synced(user, ignore=True)
+        repo_info = travis_get_repo_info(user, project, show_error=False)
+        if not repo_info:
+            print(" * Travis doesn't know about the repo, syncing (takes a few seconds).", end="")
+            sys.stdout.flush()
+            sync_url = '{}/users/sync'.format(endpoint)
+            response = requests.post(sync_url, headers=headers)
+            if response.status_code != 409:
+                # 409 status code is for indicating that another synching might be happening at the
+                # same time. This can happen in conda-forge/staged-recipes when two master builds
+                # start at the same time
+                response.raise_for_status()
+            travis_wait_until_synced(user, ignore=False)
+            repo_info = travis_get_repo_info(user, project)
 
-    count = 0
+    if not repo_info:
+        msg = ('Unable to register the repo on Travis\n'
+               '(Is it down? Is the "{}/{}" name spelt correctly? [note: case sensitive])')
+        raise RuntimeError(msg.format(user, project))
 
-    while True:
-        count += 1
-
-        response = requests.get(url, headers=headers)
-        try:
-            response.raise_for_status()
-            content = response.json()
-            if "repo" in content:
-                break
-        except requests.HTTPError as e:
-            # We regularly seem to hit this issue during automated feedstock registration on github.
-            # https://github.com/conda-forge/conda-smithy/issues/233
-            # Repo is not available on travis-ci yet.
-            print(e)
-
-        if count == 1:
-            print(" * Travis doesn't know about the repo, synching (takes a few seconds).")
-            synch_url = '{}/users/sync'.format(endpoint)
-            response = requests.post(synch_url, headers=headers)
-            response.raise_for_status()
-            time.sleep(3)
-
-        if count > 20:
-            msg = ('Unable to register the repo on Travis\n'
-                   '(Is it down? Is the "{}" name spelt correctly? [note: case sensitive])')
-            raise RuntimeError(msg.format(user))
-
-    if content['repo']['active'] is True:
+    if repo_info['active'] is True:
         print(' * {}/{} already enabled on travis-ci'.format(user, project))
     else:
-        repo_id = content['repo']['id']
+        repo_id = repo_info['id']
         url = '{}/hooks'.format(endpoint)
         response = requests.put(url, headers=headers, json={'hook': {'id': repo_id, 'active': True}})
         response.raise_for_status()
@@ -220,9 +251,6 @@ def add_project_to_travis(user, project):
             print(' * Registered on travis-ci')
         else:
             raise RuntimeError('Unable to register on travis-ci, response from hooks was negative')
-        url = '{}/users/sync'.format(endpoint)
-        response = requests.post(url, headers=headers)
-        response.raise_for_status()
 
 
 def travis_token_update_conda_forge_config(feedstock_directory, user, project):
@@ -280,13 +308,10 @@ def travis_configure(user, project):
     endpoint = 'https://api.travis-ci.org'
     headers = travis_headers()
 
-    url = '{}/repos/{user}/{project}'.format(endpoint, user=user, project=project)
-    response = requests.get(url, headers=headers)
-    response.raise_for_status()
-    content = response.json()
-    repo_id = content['repo']['id']
+    repo_info = travis_get_repo_info(user, project)
+    repo_id = repo_info['id']
 
-    if content['repo']['active'] is not True:
+    if repo_info['active'] is not True:
         raise ValueError(
             "Repo {user}/{project} is not active on Travis CI".format(user=user, project=project)
         )
