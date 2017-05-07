@@ -149,6 +149,14 @@ def lintify(meta, recipe_dir=None):
     except RuntimeError as e:
         lints.append(str(e))
 
+    # 13: There should be no comments
+    if recipe_dir is not None and os.path.exists(meta_fname):
+        with io.open(meta_fname, 'r') as f:
+            lines = f.read().split('\n')
+        bad_lines = [i for i, line in enumerate(lines) if line.strip().startswith("#")]
+        if bad_lines:
+            lints.append('There are lines ({}) which start with #. '
+                         'There should be no comments.'.format(bad_lines))
     return lints
 
 
