@@ -23,6 +23,9 @@ platform:
     - x64
 
 install:
+    # Setup PATH for curl
+    - set PATH=C:\Program Files\Git\mingw64\bin;%PATH%
+
     # If there is a newer build queued for the same PR, cancel this one.
     - cmd: |
         {{ fast_finish }}
