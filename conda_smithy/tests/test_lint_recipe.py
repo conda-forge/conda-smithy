@@ -15,9 +15,11 @@ import conda_smithy.lint_recipe as linter
 
 
 @contextmanager
-def tmp_directory():
+def tmp_directory(dirname='test_package'):
     tmp_dir = tempfile.mkdtemp('recipe_')
-    yield tmp_dir
+    recipe_dir = os.path.join(tmp_dir, dirname)
+    os.mkdir(recipe_dir)
+    yield recipe_dir
     shutil.rmtree(tmp_dir)
 
 
@@ -252,6 +254,14 @@ class Test_linter(unittest.TestCase):
                     self.assertNotIn(expected_message, lints)
                 else:
                     self.assertIn(expected_message, lints)
+
+    def test_package_name_must_match_dir(self):
+        meta = { 'package': { 'name': 'wrong_package' } }
+        expected_message = ('The package name ("wrong_package") does not '
+                            'match the recipe directory name '
+                            '("test_package").')
+        self.assertIn(expected_message,
+                      linter.lintify(meta, recipe_dir='test_package'))
 
 
 class TestCLI_recipe_lint(unittest.TestCase):
