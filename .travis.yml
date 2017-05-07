@@ -30,6 +30,7 @@ install:
     # Now do the things we need to do to install it.
     - conda install --file requirements.txt coverage=3 python-coveralls mock python=${PYTHON} ${CONDA_PKGS} --yes --quiet -c conda-forge
     - python setup.py install
+    - pip install git+https://github.com/johanneskoester/conda-build-all.git
 
 script:
     - coverage erase
