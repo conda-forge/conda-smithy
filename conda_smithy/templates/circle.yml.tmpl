@@ -24,14 +24,31 @@ dependencies:
   override:
     - docker pull condaforge/linux-anvil
 
+{%- if matrix %}
+{%- if 'ccache-toolchain' in ' '.join(package['meta']['requirements']['build']) %}
+    # Run, test and (if we have a BINSTAR_TOKEN) upload the distributions.
+    - ./ci_support/run_docker_build.sh || touch ./build_failed
+  cache_directories:
+    - "./build_artefacts/.ccache"
+{% else %}
+{% endif -%}
+{% endif -%}
+
 {% endif -%}
 {% endblock -%}
+
 test:
   override:
 {%- block env_test %}
 {%- if matrix %}
+
+{%- if 'ccache-toolchain' in ' '.join(package['meta']['requirements']['build']) %}
+    - if test -f ./build_failed; then exit 1; fi
+{% else %}
     # Run, test and (if we have a BINSTAR_TOKEN) upload the distributions.
     - ./ci_support/run_docker_build.sh
+{% endif -%}
+
 {% else %}
     # The Circle-CI build should not be active, but if this is not true for some reason, do a fast finish.
     - exit 0

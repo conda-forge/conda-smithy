@@ -11,6 +11,13 @@ language: generic
 os: osx
 osx_image: xcode6.4
 
+{%- if 'ccache-toolchain' in ' '.join(package['meta']['requirements']['build']) %}
+cache:
+  branch: no-md5deep
+  directories:
+  - $HOME/.ccache
+{%- endif %}
+
 {% block env -%}
 {% if matrix[0] or travis.secure -%}
 env:
