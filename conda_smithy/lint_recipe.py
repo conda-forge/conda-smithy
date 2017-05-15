@@ -14,7 +14,7 @@ from conda_build.metadata import ensure_valid_license_family
 
 
 EXPECTED_SECTION_ORDER = ['package', 'source', 'build', 'requirements',
-                          'test', 'app', 'about', 'extra']
+                          'outputs', 'test', 'app', 'about', 'extra']
 
 REQUIREMENTS_ORDER = ['build', 'run']
 
