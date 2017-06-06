@@ -103,7 +103,7 @@ def create_github_repo(args):
             maintainers = set(
                 meta.meta.get('extra', {}).get('recipe-maintainers', [])
             )
-            teams = {team.name: team for team in user_or_org.get_teams()}
+            teams = {team.name: team for team in gh_repo.get_teams()}
             team_name = meta.name()
 
             # Try to get team or create it if it doesn't exist.
