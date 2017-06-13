@@ -9,9 +9,7 @@
   # Embarking on {{ matrix|length }} case(s).
 {%- for case in matrix %}
   {%- if case %}
-    set -x
     {{- matrix_env(case) }}
-    set +x
   {%- endif -%}
   {{- super()|indent(4) }}
 {% endfor %}{% endblock -%}
