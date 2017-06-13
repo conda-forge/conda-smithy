@@ -15,7 +15,7 @@ env:
         - PYTHON=3.5
           CONDA_PKGS='conda=4.1.* conda-env=2.5.* conda-build=2.1.4'
         - PYTHON=3.5
-          CONDA_PKGS='conda-build=1.*'
+          CONDA_PKGS='conda=4.2.* conda-env=2.5.* conda-build=2.1.*'
         - PYTHON=3.5
 
 install:
