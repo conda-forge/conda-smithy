@@ -1,6 +1,5 @@
 [run]
 branch = True
-erase = True
 package = conda_smithy
 [report]
 exclude_lines =
