@@ -77,7 +77,11 @@ install:
       {{ build_setup }}{% endif %}
 
 script:
+{%- if 'ccache-toolchain' in ' '.join(package['meta']['requirements']['build']) %}
+  - conda build --no-build-id ./{{ recipe_dir }}
+{%- else %}
   - conda build ./{{ recipe_dir }}
+{%- endif %}
 {% for owner, channel in channels['targets'] %}
   - {{ upload_script }} ./{{ recipe_dir }} {{ owner }} --channel={{ channel }}
 {% endfor %}

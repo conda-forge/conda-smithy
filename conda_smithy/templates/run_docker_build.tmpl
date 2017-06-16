@@ -60,7 +60,11 @@ conda install --yes --quiet conda-forge-build-setup
 {{ build_setup }}{% endif -%}
 
 {%- block build %}
+{%- if 'ccache-toolchain' in ' '.join(package['meta']['requirements']['build']) %}
+conda build --no-build-id /recipe_root --quiet || exit 1
+{%- else %}
 conda build /recipe_root --quiet || exit 1
+{%- endif %}
 {%- for owner, channel in channels['targets'] %}
 {{ upload_script }} /recipe_root {{ owner }} --channel={{ channel }} || exit 1
 {%- endfor -%}
