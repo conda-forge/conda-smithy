@@ -78,6 +78,9 @@ install:
 
 script:
 {%- if 'ccache-toolchain' in ' '.join(package['meta']['requirements']['build']) %}
+  # ccache uses the compiler command line to generate the cache keys, so we can't have a
+  # different path for every build. ccache provides CCACHE_BASEDIR variable to solve this
+  # but it's better to avoid setting it as it has some side effects.
   - conda build --no-build-id ./{{ recipe_dir }}
 {%- else %}
   - conda build ./{{ recipe_dir }}

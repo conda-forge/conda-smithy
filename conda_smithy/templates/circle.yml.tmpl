@@ -43,7 +43,7 @@ test:
 {%- if matrix %}
 
 {%- if 'ccache-toolchain' in ' '.join(package['meta']['requirements']['build']) %}
-    - if test -f ./build_failed; then exit 1; fi
+    - if test -f ./build_failed; echo "Build step failed. Please look at the exact error message above"; then exit 1; fi
 {% else %}
     # Run, test and (if we have a BINSTAR_TOKEN) upload the distributions.
     - ./ci_support/run_docker_build.sh
