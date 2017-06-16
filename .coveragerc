@@ -1,7 +1,6 @@
 [run]
 branch = True
-erase = True
-package = conda_smithy
+source = conda_smithy
 [report]
 exclude_lines =
     # Ignore coverage of code that requires the module to be executed.
