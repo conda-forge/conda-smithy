@@ -27,6 +27,8 @@ dependencies:
 {%- if matrix %}
 {%- if 'ccache-toolchain' in ' '.join(package['meta']['requirements']['build']) %}
     # Run, test and (if we have a BINSTAR_TOKEN) upload the distributions.
+    # If any command present on dependencies section fails, CircleCI doesn't
+    # cache anything. That's why we need to check for failure later
     - ./ci_support/run_docker_build.sh || touch ./build_failed
   cache_directories:
     - "./build_artefacts/.ccache"
