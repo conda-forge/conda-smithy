@@ -13,7 +13,7 @@ jobs:
       - run:
           # The Circle-CI build should not be active, but if this is not true for some reason, do a fast finish.
           command: exit 0
-{% else %}
+{%- else %}
     steps:
       - checkout
       - run:
@@ -26,6 +26,22 @@ jobs:
       - run:
           # Run, test and (if we have a BINSTAR_TOKEN) upload the distributions.
           command: ./ci_support/run_docker_build.sh
-{# #}
 {%- endif -%}
 {%- endblock %}
+
+workflows:
+  version: 2
+  build_and_test:
+    jobs:
+{%- block env_deps -%}
+{%- if not matrix %}
+      - build:
+          filters:
+            branches:
+              ignore:
+                - /.*/
+{%- else %}
+      - build
+{%- endif -%}
+{%- endblock %}
+{# #}
