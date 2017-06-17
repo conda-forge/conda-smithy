@@ -4,13 +4,6 @@ jobs:
   build:
     working_directory: ~/test
     machine: true
-{%- block env_branches -%}
-{%- if not matrix %}
-    branches:
-      ignore:
-        - /.*/
-{%- endif -%}
-{%- endblock -%}
 {%- block env_test -%}
 {%- if matrix %}
     steps:
@@ -26,6 +19,9 @@ jobs:
           # Run, test and (if we have a BINSTAR_TOKEN) upload the distributions.
           command: ./ci_support/run_docker_build.sh
 {% else %}
+    branches:
+      ignore:
+        - /.*/
     steps:
       - run:
           # The Circle-CI build should not be active, but if this is not true for some reason, do a fast finish.
