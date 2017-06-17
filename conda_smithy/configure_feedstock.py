@@ -201,7 +201,7 @@ def render_circle(jinja_env, forge_config, forge_dir):
         for each_target_fname in target_fnames:
             set_exe_file(each_target_fname, True)
 
-    target_fname = os.path.join(forge_dir, 'circle.yml')
+    target_fname = os.path.join(forge_dir, '.circleci', 'config.yml')
     template = jinja_env.get_template('circle.yml.tmpl')
     with write_file(target_fname) as fh:
         fh.write(template.render(**forge_config))
@@ -665,6 +665,7 @@ def main(forge_file_directory):
     old_files = [
         'disabled_appveyor.yml',
         os.path.join('ci_support', 'upload_or_check_non_existence.py'),
+        'circle.yml',
     ]
     for old_file in old_files:
         remove_file(os.path.join(forge_dir, old_file))
