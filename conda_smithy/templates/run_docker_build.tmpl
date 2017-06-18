@@ -72,12 +72,10 @@ conda install --yes --quiet conda-forge-build-setup
 {% if build_setup -%}
 {{ build_setup }}{% endif -%}
 
-{%- block build %}
 conda build /recipe_root --quiet || exit 1
 {%- for owner, channel in channels['targets'] %}
 {{ upload_script }} /recipe_root {{ owner }} --channel={{ channel }} || exit 1
-{%- endfor -%}
-{%- endblock -%}
+{%- endfor %}
 
 touch /feedstock_root/build_artefacts/conda-forge-build-done
 EOF

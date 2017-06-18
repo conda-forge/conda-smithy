@@ -178,9 +178,7 @@ def render_circle(jinja_env, forge_config, forge_dir):
             forge_config['upload_script'] = "upload_or_check_non_existence"
 
         # TODO: Conda has a convenience for accessing nested yaml content.
-        templates = forge_config.get('templates', {})
-        template_name = templates.get('run_docker_build',
-                                      'run_docker_build_matrix.tmpl')
+        template_name = 'run_docker_build.tmpl'
         template = jinja_env.get_template(template_name)
         target_fname = os.path.join(forge_dir, 'ci_support', 'run_docker_build.sh')
         with write_file(target_fname) as fh:
@@ -650,7 +648,7 @@ def main(forge_file_directory):
     config = {'docker': {'executable': 'docker',
                          'image': 'condaforge/linux-anvil',
                          'command': 'bash'},
-              'templates': {'run_docker_build': 'run_docker_build_matrix.tmpl'},
+              'templates': {},
               'travis': {},
               'circle': {},
               'appveyor': {},
