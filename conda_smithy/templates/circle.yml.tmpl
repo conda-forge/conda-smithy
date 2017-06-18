@@ -1,3 +1,10 @@
+{%- macro matrix_case_name(matrix_item) -%}
+    build
+    {%- for dep, ver in matrix_item -%}
+        __{{ dep }}_{{ ver }}
+    {%- endfor %}
+{%- endmacro -%}
+
 version: 2
 
 jobs:
@@ -14,9 +21,16 @@ jobs:
           # The Circle-CI build should not be active, but if this is not true for some reason, do a fast finish.
           command: exit 0
 {%- else %}
-  build:
+{%- for case in matrix %}
+  {{ matrix_case_name(case) }}:
     working_directory: ~/test
     machine: true
+    {%- if case[0] %}
+    environment:
+      {%- for dep, ver in case %}
+      - {{ dep }}: "{{ ver }}"
+      {%- endfor -%}
+    {%- endif %}
     steps:
       - checkout
       - run:
@@ -26,9 +40,18 @@ jobs:
             ./ci_support/checkout_merge_commit.sh
       - run:
           command: docker pull condaforge/linux-anvil
+      {%- if case[0] %}
+      - run:
+          name: Print conda-build environment variables
+          command: |
+            {%- for dep, ver in case %}
+            echo {{ '"' }}{{ dep }}{{ '=${' }}{{ dep }}{{ '}"' }}
+            {%- endfor -%}
+      {%- endif %}
       - run:
           # Run, test and (if we have a BINSTAR_TOKEN) upload the distributions.
           command: ./ci_support/run_docker_build.sh
+{%- endfor -%}
 {%- endif -%}
 {%- endblock %}
 
@@ -44,7 +67,9 @@ workflows:
               ignore:
                 - /.*/
 {%- else %}
-      - build
+{%- for case in matrix %}
+      - {{ matrix_case_name(case) }}
+{%- endfor -%}
 {%- endif -%}
 {%- endblock %}
 {# #}
