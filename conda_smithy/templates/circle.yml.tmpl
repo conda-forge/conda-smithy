@@ -1,11 +1,11 @@
 version: 2
 
 jobs:
+{%- block env_test -%}
+{%- if not matrix %}
   build:
     working_directory: ~/test
     machine: true
-{%- block env_test -%}
-{%- if not matrix %}
     branches:
       ignore:
         - /.*/
@@ -14,6 +14,9 @@ jobs:
           # The Circle-CI build should not be active, but if this is not true for some reason, do a fast finish.
           command: exit 0
 {%- else %}
+  build:
+    working_directory: ~/test
+    machine: true
     steps:
       - checkout
       - run:
