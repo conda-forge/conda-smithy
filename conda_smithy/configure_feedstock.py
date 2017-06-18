@@ -702,7 +702,8 @@ def main(forge_file_directory):
 
     tmplt_dir = os.path.join(conda_forge_content, 'templates')
     # Load templates from the feedstock in preference to the smithy's templates.
-    env = Environment(loader=FileSystemLoader([os.path.join(forge_dir, 'templates'),
+    env = Environment(extensions=['jinja2.ext.do'],
+                      loader=FileSystemLoader([os.path.join(forge_dir, 'templates'),
                                                tmplt_dir]))
 
     copy_feedstock_content(forge_dir)
