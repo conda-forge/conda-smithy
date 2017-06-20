@@ -75,10 +75,20 @@ def remove_file(filename):
 
 
 def copy_file(src, dst):
-    with io.open(src, "r", encoding="utf-8") as fh_src:
-        with io.open(dst, "w", encoding="utf-8", newline="\n") as fh_dst:
-            for line in fh_src:
-                fh_dst.write(line)
+    """
+    Tried to copy utf-8 text files line-by-line to avoid
+    getting CRLF characters added on Windows.
+
+    If the file fails to be decoed with utf-8 we revert to a regular copy.
+    """
+    try:
+        with io.open(src, "r", encoding="utf-8") as fh_src:
+            with io.open(dst, "w", encoding="utf-8", newline="\n") as fh_dst:
+                for line in fh_src:
+                    fh_dst.write(line)
+    except UnicodeDecodeError:
+        # Leave any other files alone.
+        shutil.copy(src, dst)
 
     shutil.copymode(src, dst)
 

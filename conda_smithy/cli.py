@@ -33,7 +33,7 @@ def generate_feedstock_content(target_directory, source_recipe_dir, meta):
         except Exception as e:
             import sys
             raise type(e)(
-                str(e) + ' while copyin file %s' % source_recipe_dir
+                str(e) + ' while copying file %s' % source_recipe_dir
                 ).with_traceback(sys.exc_info()[2])
 
     forge_yml = os.path.join(target_directory, 'conda-forge.yml')
