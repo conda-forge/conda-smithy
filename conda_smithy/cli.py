@@ -28,7 +28,13 @@ def generate_feedstock_content(target_directory, source_recipe_dir, meta):
         os.makedirs(target_recipe_dir)
     # If there is a source recipe, copy it now to the right dir
     if source_recipe_dir:
-        configure_feedstock.copytree(source_recipe_dir, target_recipe_dir)
+        try:
+            configure_feedstock.copytree(source_recipe_dir, target_recipe_dir)
+        except Exception as e:
+            import sys
+            raise type(e)(
+                str(e) + ' while copyin file %s' % source_recipe_dir
+                ).with_traceback(sys.exc_info()[2])
 
     forge_yml = os.path.join(target_directory, 'conda-forge.yml')
     if not os.path.exists(forge_yml):
