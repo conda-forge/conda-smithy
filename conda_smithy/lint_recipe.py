@@ -47,7 +47,7 @@ class NullUndefined(jinja2.Undefined):
 
 def get_section(parent, name, lints):
     section = parent.get(name, {})
-    if not isinstance(section, dict):
+    if not isinstance(section, dict, ruamel.yaml.CommentedSeq):
         lints.append('The "{}" section was expected to be a dictionary, but '
                      'got a {}.'.format(name, type(section).__name__))
         section = {}
