@@ -309,6 +309,22 @@ class Test_linter(unittest.TestCase):
             self.assertNotIn(expected_message, lints)
 
 
+    def test_bad_subheader(self):
+        expected_message = 'The {} section contained an unexpected ' \
+                           'subsection name. {} is not a valid subsection' \
+                           ' name.'.format('build', 'ski')
+        meta = {'build': {'skip': 'True',
+                          'script': 'python setup.py install',
+                          'number': 0}}
+        lints = linter.lintify(meta)
+        self.assertNotIn(expected_message, lints)
+
+        meta = {'build': {'ski': 'True',
+                          'script': 'python setup.py install',
+                          'number': 0}}
+        lints = linter.lintify(meta)
+        self.assertIn(expected_message, lints)
+
 class TestCLI_recipe_lint(unittest.TestCase):
     def test_cli_fail(self):
         with tmp_directory() as recipe_dir:
