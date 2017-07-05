@@ -17,7 +17,9 @@ import conda_smithy.lint_recipe as linter
 @contextmanager
 def tmp_directory():
     tmp_dir = tempfile.mkdtemp('recipe_')
-    yield tmp_dir
+    recipe_dir = os.path.join(tmp_dir, 'recipe')
+    os.mkdir(recipe_dir)
+    yield recipe_dir
     shutil.rmtree(tmp_dir)
 
 
@@ -213,6 +215,19 @@ class Test_linter(unittest.TestCase):
         lints = linter.lintify(meta)
         expected_message = ('The recipe `license` should not include '
                             'the word "License".')
+        self.assertIn(expected_message, lints)
+
+    def test_maintainer_non_list(self):
+        meta = {'extra': {'recipe-maintainers': 'Luke'}}
+        lints = linter.lintify(meta)
+        expected_message = ('recipe maintainers should be a json list.')
+        self.assertIn(expected_message, lints)
+
+    def test_recipe_name(self):
+        meta = {'package': {'name': 'mp++'}}
+        lints = linter.lintify(meta)
+        expected_message = ('recipe name has invalid characters. only lowercase alpha, '
+                            'numeric, underscores, hyphens and dots allowed')
         self.assertIn(expected_message, lints)
 
     def test_end_empty_line(self):

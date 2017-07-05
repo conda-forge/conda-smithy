@@ -52,6 +52,7 @@ def lintify(meta, recipe_dir=None):
     requirements_section = get_section(meta, 'requirements', lints)
     about_section = get_section(meta, 'about', lints)
     extra_section = get_section(meta, 'extra', lints)
+    package_section = get_section(meta, 'package', lints)
 
     # 1: Top level meta.yaml keys should have a specific order.
     section_order_sorted = sorted(major_sections,
@@ -75,6 +76,10 @@ def lintify(meta, recipe_dir=None):
     if not extra_section.get('recipe-maintainers', []):
         lints.append('The recipe could do with some maintainers listed in '
                      'the `extra/recipe-maintainers` section.')
+
+    # 3b: Maintainers should be a list
+    if not isinstance(extra_section.get('recipe-maintainers', []), list):
+        lints.append('recipe maintainers should be a json list.')
 
     # 4: The recipe should have some tests.
     if 'test' not in major_sections:
@@ -149,7 +154,55 @@ def lintify(meta, recipe_dir=None):
     except RuntimeError as e:
         lints.append(str(e))
 
+    # 13: Check that the recipe_dir has the same name as the recipe_name)
+    recipe_name = package_section.get('name', '').strip()
+    if recipe_dir:
+        # Above ensures that recipe_dir is not None. It is None in tests.
+        recipe_dirname = os.path.basename(recipe_dir)
+        if recipe_dirname != 'recipe' and recipe_dirname != recipe_name:
+            lints.append('recipe directory and the name has to be the same')
+
+    # 14: Check that the recipe name is valid
+    if re.match('^[a-z0-9_\-.]+$', recipe_name) is None:
+        lints.append('recipe name has invalid characters. only lowercase alpha, numeric, '
+                     'underscores, hyphens and dots allowed')
+
+    # 15: Run conda-forge specific lints
+    if os.environ.get('CONDA_FORGE_LINTS'):
+        run_conda_forge_lints(meta, recipe_dir, lints)
+
     return lints
+
+
+def run_conda_forge_lints(meta, recipe_dir, lints):
+    import github
+    gh = github.Github(os.environ['GH_TOKEN'])
+    package_section = get_section(meta, 'package', lints)
+    extra_section = get_section(meta, 'extra', lints)
+    recipe_dirname = os.path.basename(recipe_dir) if recipe_dir else 'recipe'
+    recipe_name = package_section.get('name', '').strip()
+    is_staged_recipes = recipe_dirname != 'recipe'
+
+    # 1: Check that the recipe does not exist in conda-forge
+    if is_staged_recipes:
+        cf = gh.get_user('conda-forge')
+        try:
+            cf.get_repo('{}-feedstock'.format(recipe_name))
+            feedstock_exists = True
+        except github.UnknownObjectException as e:
+            feedstock_exists = False
+
+        if feedstock_exists:
+            lints.append('feedstock with the same name exists in conda-forge')
+
+    # 2: Check that the recipe maintainers exists:
+    maintainers = extra_section.get('recipe-maintainers', [])
+    for maintainer in maintainers:
+        try:
+            print(maintainer)
+            gh.get_user(maintainer)
+        except github.UnknownObjectException as e:
+            lints.append('Recipe maintainer "{}" does not exist'.format(maintainer))
 
 
 def selector_lines(lines):
