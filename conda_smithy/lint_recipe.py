@@ -6,6 +6,7 @@ import io
 import itertools
 import os
 import re
+import github
 
 import jinja2
 import ruamel.yaml
@@ -154,7 +155,7 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
     except RuntimeError as e:
         lints.append(str(e))
 
-    # 13: Check that the recipe_dir has the same name as the recipe_name)
+    # 13: Check that the recipe_dir has the same name as the recipe_name
     recipe_name = package_section.get('name', '').strip()
     if recipe_dir:
         # Above ensures that recipe_dir is not None. It is None in tests.
@@ -175,7 +176,6 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
 
 
 def run_conda_forge_lints(meta, recipe_dir, lints):
-    import github
     gh = github.Github(os.environ['GH_TOKEN'])
     package_section = get_section(meta, 'package', lints)
     extra_section = get_section(meta, 'extra', lints)

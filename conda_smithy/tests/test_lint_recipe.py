@@ -10,14 +10,18 @@ import subprocess
 import tempfile
 import textwrap
 import unittest
+import warnings
+import github
 
 import conda_smithy.lint_recipe as linter
 
+def is_gh_token_set():
+    return 'GH_TOKEN' in os.environ
 
 @contextmanager
-def tmp_directory():
+def tmp_directory(recipe_dir_name='recipe'):
     tmp_dir = tempfile.mkdtemp('recipe_')
-    recipe_dir = os.path.join(tmp_dir, 'recipe')
+    recipe_dir = os.path.join(tmp_dir, recipe_dir_name)
     os.mkdir(recipe_dir)
     yield recipe_dir
     shutil.rmtree(tmp_dir)
@@ -265,6 +269,54 @@ class Test_linter(unittest.TestCase):
                     self.assertNotIn(expected_message, lints)
                 else:
                     self.assertIn(expected_message, lints)
+
+    @unittest.skipUnless(is_gh_token_set(), "GH_TOKEN not set")
+    def test_maintainer_exists(self):
+        lints = linter.lintify({'extra': {'recipe-maintainers': ['support']}}, conda_forge=True)
+        expected_message = ('Recipe maintainer "support" does not exist')
+        self.assertIn(expected_message, lints)
+
+        lints = linter.lintify({'extra': {'recipe-maintainers': ['isuruf']}}, conda_forge=True)
+        expected_message = ('Recipe maintainer "isuruf" does not exist')
+        self.assertNotIn(expected_message, lints)
+
+        expected_message = 'Feedstock with the same name exists in conda-forge'
+        # Check that feedstock exists if staged_recipes
+        lints = linter.lintify({'package': {'name': 'python'}}, recipe_dir='python', conda_forge=True)
+        self.assertIn(expected_message, lints)
+        lints = linter.lintify({'package': {'name': 'python'}}, recipe_dir='python', conda_forge=False)
+        self.assertNotIn(expected_message, lints)
+        # No lint if in a feedstock
+        lints = linter.lintify({'package': {'name': 'python'}}, recipe_dir='recipe', conda_forge=True)
+        self.assertNotIn(expected_message, lints)
+        lints = linter.lintify({'package': {'name': 'python'}}, recipe_dir='recipe', conda_forge=False)
+        self.assertNotIn(expected_message, lints)
+
+        # Make sure there's no feedstock named python1 before proceeding
+        gh = github.Github(os.environ['GH_TOKEN'])
+        cf = gh.get_user('conda-forge')
+        try:
+            cf.get_repo('python1q-feedstock')
+            feedstock_exists = True
+        except github.UnknownObjectException as e:
+            feedstock_exists = False
+
+        if feedstock_exists:
+            warnings.warn("There's a feedstock named python1, but tests assume that there isn't")
+        else:
+            lints = linter.lintify({'package': {'name': 'python1'}}, recipe_dir="python", conda_forge=True)
+            self.assertNotIn(expected_message, lints)
+
+    def test_recipe_dir(self):
+        meta = {'package': {'name': 'python'}}
+        expected_message = ('Recipe directory and the name has to be the same')
+
+        lints = linter.lintify(meta, recipe_dir="python1")
+        self.assertIn(expected_message, lints)
+        lints = linter.lintify(meta, recipe_dir="recipe")
+        self.assertNotIn(expected_message, lints)
+        lints = linter.lintify(meta, recipe_dir="python")
+        self.assertNotIn(expected_message, lints)
 
 
 class TestCLI_recipe_lint(unittest.TestCase):
