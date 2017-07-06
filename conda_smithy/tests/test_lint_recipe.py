@@ -99,6 +99,10 @@ class Test_linter(unittest.TestCase):
         lints = linter.lintify({'extra': ['recipe-maintainers']})
         self.assertIn(expected_message, lints)
 
+        lints = linter.lintify({'extra': {'recipe-maintainers': 'Luke'}})
+        expected_message = ('Recipe maintainers should be a json list.')
+        self.assertIn(expected_message, lints)
+
     def test_test_section(self):
         expected_message = 'The recipe must have some tests.'
 
@@ -217,16 +221,10 @@ class Test_linter(unittest.TestCase):
                             'the word "License".')
         self.assertIn(expected_message, lints)
 
-    def test_maintainer_non_list(self):
-        meta = {'extra': {'recipe-maintainers': 'Luke'}}
-        lints = linter.lintify(meta)
-        expected_message = ('recipe maintainers should be a json list.')
-        self.assertIn(expected_message, lints)
-
     def test_recipe_name(self):
         meta = {'package': {'name': 'mp++'}}
         lints = linter.lintify(meta)
-        expected_message = ('recipe name has invalid characters. only lowercase alpha, '
+        expected_message = ('Recipe name has invalid characters. only lowercase alpha, '
                             'numeric, underscores, hyphens and dots allowed')
         self.assertIn(expected_message, lints)
 

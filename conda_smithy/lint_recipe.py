@@ -39,7 +39,7 @@ def get_section(parent, name, lints):
     return section
 
 
-def lintify(meta, recipe_dir=None):
+def lintify(meta, recipe_dir=None, conda_forge=False):
     lints = []
     major_sections = list(meta.keys())
 
@@ -79,7 +79,7 @@ def lintify(meta, recipe_dir=None):
 
     # 3b: Maintainers should be a list
     if not isinstance(extra_section.get('recipe-maintainers', []), list):
-        lints.append('recipe maintainers should be a json list.')
+        lints.append('Recipe maintainers should be a json list.')
 
     # 4: The recipe should have some tests.
     if 'test' not in major_sections:
@@ -160,15 +160,15 @@ def lintify(meta, recipe_dir=None):
         # Above ensures that recipe_dir is not None. It is None in tests.
         recipe_dirname = os.path.basename(recipe_dir)
         if recipe_dirname != 'recipe' and recipe_dirname != recipe_name:
-            lints.append('recipe directory and the name has to be the same')
+            lints.append('Recipe directory and the name has to be the same')
 
     # 14: Check that the recipe name is valid
     if re.match('^[a-z0-9_\-.]+$', recipe_name) is None:
-        lints.append('recipe name has invalid characters. only lowercase alpha, numeric, '
+        lints.append('Recipe name has invalid characters. only lowercase alpha, numeric, '
                      'underscores, hyphens and dots allowed')
 
     # 15: Run conda-forge specific lints
-    if os.environ.get('CONDA_FORGE_LINTS'):
+    if conda_forge:
         run_conda_forge_lints(meta, recipe_dir, lints)
 
     return lints
@@ -193,13 +193,12 @@ def run_conda_forge_lints(meta, recipe_dir, lints):
             feedstock_exists = False
 
         if feedstock_exists:
-            lints.append('feedstock with the same name exists in conda-forge')
+            lints.append('Feedstock with the same name exists in conda-forge')
 
     # 2: Check that the recipe maintainers exists:
     maintainers = extra_section.get('recipe-maintainers', [])
     for maintainer in maintainers:
         try:
-            print(maintainer)
             gh.get_user(maintainer)
         except github.UnknownObjectException as e:
             lints.append('Recipe maintainer "{}" does not exist'.format(maintainer))
@@ -221,7 +220,7 @@ def selector_lines(lines):
             yield line
 
 
-def main(recipe_dir):
+def main(recipe_dir, conda_forge=False):
     recipe_dir = os.path.abspath(recipe_dir)
     recipe_meta = os.path.join(recipe_dir, 'meta.yaml')
     if not os.path.exists(recipe_dir):
@@ -232,5 +231,5 @@ def main(recipe_dir):
     with io.open(recipe_meta, 'rt') as fh:
         content = env.from_string(''.join(fh)).render(os=os)
         meta = ruamel.yaml.load(content, ruamel.yaml.RoundTripLoader)
-    results = lintify(meta, recipe_dir)
+    results = lintify(meta, recipe_dir, conda_forge)
     return results
