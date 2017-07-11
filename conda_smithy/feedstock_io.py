@@ -79,7 +79,7 @@ def copy_file(src, dst):
     Tried to copy utf-8 text files line-by-line to avoid
     getting CRLF characters added on Windows.
 
-    If the file fails to be decoed with utf-8 we revert to a regular copy.
+    If the file fails to be decoded with utf-8, we revert to a regular copy.
     """
     try:
         with io.open(src, "r", encoding="utf-8") as fh_src:
