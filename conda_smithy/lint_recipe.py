@@ -73,7 +73,7 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
             lints.append('The {} item is expected in the about section.'
                          ''.format(about_item))
 
-    # 3: The recipe should have some maintainers.
+    # 3a: The recipe should have some maintainers.
     if not extra_section.get('recipe-maintainers', []):
         lints.append('The recipe could do with some maintainers listed in '
                      'the `extra/recipe-maintainers` section.')
