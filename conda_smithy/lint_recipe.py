@@ -149,6 +149,22 @@ def lintify(meta, recipe_dir=None):
     except RuntimeError as e:
         lints.append(str(e))
 
+    # 13: If cython is a build-dependency then python should be a run-time
+    # dependency. This ensures that packages will be marked correctly by conda
+    if 'cython' in requirements_section.get('build', '') and 'python' not in requirements_section.get('run', ''):
+        lints.append("When using cython then python should be a run-time dependency")
+
+
+    # 14: If ``skip: True  # [py3k]`` python should be a run-time dependency
+    if recipe_dir is not None and os.path.exists(meta_fname):
+        with io.open(meta_fname, 'rt') as fh:
+            for selector_line in selector_lines(fh):
+                if 'py3k' in selector_line and 'python' not in requirements_section.get('run', ''):
+                    lints.append("When building python 2 only packages include python as a run-time "
+                                 "dependency to ensure it can't be installed on python 3.")
+                    # this will only happen once
+                    break
+
     return lints
 
 
