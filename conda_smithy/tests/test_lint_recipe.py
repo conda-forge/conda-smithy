@@ -253,36 +253,14 @@ class Test_linter(unittest.TestCase):
                 else:
                     self.assertIn(expected_message, lints)
 
-    def test_cython_python_run_time_dependency(self):
-        meta = {'requirements': {'build': ['cython', 'python']}}
-        lints = linter.lintify(meta)
-        expected_message = "When using cython then python should be a run-time dependency"
-        self.assertIn(expected_message, lints)
-
-    def test_skip_python3_python_run_time_dependency(self):
-        metalines = """
-build:
-  number: 0
-  skip: True  # [py3k]
-  script: python setup.py install --single-version-externally-managed --record record.txt
-
-requirements:
-  build:
-    - python
-
-  run:
-    - scipy
-        """
-        with tmp_directory() as recipe_dir:
-            with io.open(os.path.join(recipe_dir, 'meta.yaml'), 'w') as fh:
-                fh.write(metalines)
-            lints = linter.lintify({}, recipe_dir=recipe_dir)
-
-        expected_message = ("When building python 2 only packages include python as a run-time "
-                            "dependency to ensure it can't be installed on python 3.")
-        self.assertIn(expected_message, lints)
-
-
+    def test_implicit_python_run_time_dependency(self):
+        build_deps = ['cython', 'numpy x.x']
+        expected_message = ("Found python related compilation requirement "
+                            "please add python as a run-time dependency")
+        for dep in build_deps:
+            meta = {'requirements': {'build': [dep, 'python']}}
+            lints = linter.lintify(meta)
+            self.assertIn(expected_message, lints)
 
 
 class TestCLI_recipe_lint(unittest.TestCase):
