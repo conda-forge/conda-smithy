@@ -19,11 +19,9 @@ def is_gh_token_set():
     return 'GH_TOKEN' in os.environ
 
 @contextmanager
-def tmp_directory(recipe_dir_name='recipe'):
+def tmp_directory():
     tmp_dir = tempfile.mkdtemp('recipe_')
-    recipe_dir = os.path.join(tmp_dir, recipe_dir_name)
-    os.mkdir(recipe_dir)
-    yield recipe_dir
+    yield tmp_dir
     shutil.rmtree(tmp_dir)
 
 
@@ -306,17 +304,6 @@ class Test_linter(unittest.TestCase):
         else:
             lints = linter.lintify({'package': {'name': 'python1'}}, recipe_dir="python", conda_forge=True)
             self.assertNotIn(expected_message, lints)
-
-    def test_recipe_dir(self):
-        meta = {'package': {'name': 'python'}}
-        expected_message = ('Recipe directory and the name has to be the same')
-
-        lints = linter.lintify(meta, recipe_dir="python1")
-        self.assertIn(expected_message, lints)
-        lints = linter.lintify(meta, recipe_dir="recipe")
-        self.assertNotIn(expected_message, lints)
-        lints = linter.lintify(meta, recipe_dir="python")
-        self.assertNotIn(expected_message, lints)
 
 
 class TestCLI_recipe_lint(unittest.TestCase):

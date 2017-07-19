@@ -155,20 +155,12 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
     except RuntimeError as e:
         lints.append(str(e))
 
-    # 13: Check that the recipe_dir has the same name as the recipe_name
-    recipe_name = package_section.get('name', '').strip()
-    if recipe_dir:
-        # Above ensures that recipe_dir is not None. It is None in tests.
-        recipe_dirname = os.path.basename(recipe_dir)
-        if recipe_dirname != 'recipe' and recipe_dirname != recipe_name:
-            lints.append('Recipe directory and the name has to be the same')
-
-    # 14: Check that the recipe name is valid
+    # 13: Check that the recipe name is valid
     if re.match('^[a-z0-9_\-.]+$', recipe_name) is None:
         lints.append('Recipe name has invalid characters. only lowercase alpha, numeric, '
                      'underscores, hyphens and dots allowed')
 
-    # 15: Run conda-forge specific lints
+    # 14: Run conda-forge specific lints
     if conda_forge:
         run_conda_forge_lints(meta, recipe_dir, lints)
 
