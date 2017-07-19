@@ -177,7 +177,7 @@ def run_conda_forge_lints(meta, recipe_dir, lints):
 
     # 1: Check that the recipe does not exist in conda-forge
     if is_staged_recipes:
-        cf = gh.get_user('conda-forge')
+        cf = gh.get_user(os.getenv('GH_ORG', 'conda-forge'))
         try:
             cf.get_repo('{}-feedstock'.format(recipe_name))
             feedstock_exists = True
