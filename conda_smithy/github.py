@@ -61,7 +61,7 @@ def has_in_members(team, member):
 
 
 def get_cached_team(org, team_name, description=""):
-    cached_file = os.path.expanduser('~/.conda-smithy/{}-{}-team'.format(org.name, team_name))
+    cached_file = os.path.expanduser('~/.conda-smithy/{}-{}-team'.format(org.login, team_name))
     try:
         with open(cached_file, 'r') as fh:
             team_id = int(fh.read().strip())
@@ -168,7 +168,7 @@ def create_github_repo(args):
             all_members_team = get_cached_team(user_or_org, team_name, description)
 
             # Add new members to all-members
-            for new_maintainer in maintainers - current_maintainers_handles:
+            for new_member in maintainers - current_maintainers_handles:
                 if not has_in_members(all_members_team, new_member):
                     print(
                         "Adding a new member ({}) to {}. Welcome! :)".format(
