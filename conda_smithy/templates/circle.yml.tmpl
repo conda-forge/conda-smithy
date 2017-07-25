@@ -51,7 +51,7 @@ jobs:
       {%- if 'ccache-toolchain' in ' '.join(package['meta']['requirements']['build']) %}
       - restore_cache:
           keys:
-            - ccache-{{ .Branch }}
+            - ccache-{{ '{{' }} .Branch {{ '}}' }}
             - ccache
       {%- endif %}
       - run:
@@ -59,7 +59,7 @@ jobs:
           command: ./ci_support/run_docker_build.sh
       {%- if 'ccache-toolchain' in ' '.join(package['meta']['requirements']['build']) %}
       - save_cache:
-          key: ccache-{{ .Branch }}
+          key: ccache-{{ '{{' }} .Branch {{ '}}' }}
           paths:
             - ./build_artefacts/.ccache
           when: always
