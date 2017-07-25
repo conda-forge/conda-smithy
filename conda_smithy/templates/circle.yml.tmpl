@@ -61,6 +61,10 @@ jobs:
             - ./build_artefacts/.ccache
           when: always
       - save_cache:
+          filters:
+            branches:
+              only:
+                - master
           key: ccache
           paths:
             - ./build_artefacts/.ccache
