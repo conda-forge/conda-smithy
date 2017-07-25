@@ -51,21 +51,12 @@ jobs:
       - restore_cache:
           keys:
             - ccache-{{ '{{' }} .Branch {{ '}}' }}
-            - ccache
+            - ccache-master
       - run:
           # Run, test and (if we have a BINSTAR_TOKEN) upload the distributions.
           command: ./ci_support/run_docker_build.sh
       - save_cache:
           key: ccache-{{ '{{' }} .Branch {{ '}}' }}
-          paths:
-            - ./build_artefacts/.ccache
-          when: always
-      - save_cache:
-          filters:
-            branches:
-              only:
-                - master
-          key: ccache
           paths:
             - ./build_artefacts/.ccache
           when: always
