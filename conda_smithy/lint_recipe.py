@@ -156,6 +156,7 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
         lints.append(str(e))
 
     # 13: Check that the recipe name is valid
+    recipe_name = package_section.get('name', '').strip()
     if re.match('^[a-z0-9_\-.]+$', recipe_name) is None:
         lints.append('Recipe name has invalid characters. only lowercase alpha, numeric, '
                      'underscores, hyphens and dots allowed')
