@@ -72,14 +72,10 @@ conda install --yes --quiet conda-forge-build-setup
 {% if build_setup -%}
 {{ build_setup }}{% endif -%}
 
-{%- if 'ccache-toolchain' in ' '.join(package['meta']['requirements']['build']) %}
 # ccache uses the compiler command line to generate the cache keys, so we can't have a
 # different path for every build. ccache provides CCACHE_BASEDIR variable to solve this
 # but it's better to avoid setting it as it has some side effects.
 conda build --no-build-id /recipe_root --quiet || exit 1
-{%- else %}
-conda build /recipe_root --quiet || exit 1
-{%- endif %}
 {%- for owner, channel in channels['targets'] %}
 {{ upload_script }} /recipe_root {{ owner }} --channel={{ channel }} || exit 1
 {%- endfor %}

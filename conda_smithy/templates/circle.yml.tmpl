@@ -48,16 +48,13 @@ jobs:
             echo {{ '"' }}{{ dep }}{{ '=${' }}{{ dep }}{{ '}"' }}
             {%- endfor -%}
       {%- endif %}
-      {%- if 'ccache-toolchain' in ' '.join(package['meta']['requirements']['build']) %}
       - restore_cache:
           keys:
             - ccache-{{ '{{' }} .Branch {{ '}}' }}
             - ccache
-      {%- endif %}
       - run:
           # Run, test and (if we have a BINSTAR_TOKEN) upload the distributions.
           command: ./ci_support/run_docker_build.sh
-      {%- if 'ccache-toolchain' in ' '.join(package['meta']['requirements']['build']) %}
       - save_cache:
           key: ccache-{{ '{{' }} .Branch {{ '}}' }}
           paths:
@@ -68,7 +65,6 @@ jobs:
           paths:
             - ./build_artefacts/.ccache
           when: always
-      {%- endif %}
 {%- endfor -%}
 {%- endif -%}
 {%- endblock %}
