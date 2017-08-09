@@ -39,7 +39,7 @@ jobs:
             ./ci_support/fast_finish_ci_pr_build.sh
             ./ci_support/checkout_merge_commit.sh
       - run:
-          command: docker pull condaforge/linux-anvil
+          command: docker pull {{ docker.image }}
       {%- if case[0] %}
       - run:
           name: Print conda-build environment variables
