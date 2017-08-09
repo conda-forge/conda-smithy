@@ -3,14 +3,13 @@ from __future__ import print_function, unicode_literals
 from collections import OrderedDict as odict
 from contextlib import contextmanager
 import os
-import shutil
-import stat
 import textwrap
-import yaml
 import warnings
 
+import yaml
 import conda.api
 import conda.config
+
 
 try:
     # Try conda's API in newer 4.2.x and 4.3.x.
