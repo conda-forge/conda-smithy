@@ -294,7 +294,7 @@ class Test_linter(unittest.TestCase):
         gh = github.Github(os.environ['GH_TOKEN'])
         cf = gh.get_user('conda-forge')
         try:
-            cf.get_repo('python1q-feedstock')
+            cf.get_repo('python1-feedstock')
             feedstock_exists = True
         except github.UnknownObjectException as e:
             feedstock_exists = False
