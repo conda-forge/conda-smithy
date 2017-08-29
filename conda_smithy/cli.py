@@ -171,7 +171,7 @@ class RegisterCI(Subcommand):
             ci_register.add_project_to_appveyor(owner, repo)
             ci_register.appveyor_encrypt_binstar_token(args.feedstock_directory, owner, repo)
             ci_register.appveyor_configure(owner, repo)
-            ci_register.add_conda_linting(owner, repo)
+            ci_register.add_conda_forge_webservice_hooks(owner, repo)
             print("\nCI services have been enabled. You may wish to regenerate the feedstock.\n"
                   "Any changes will need commiting to the repo.")
         except RuntimeError as e:

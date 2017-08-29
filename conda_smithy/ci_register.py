@@ -327,21 +327,7 @@ def travis_configure(user, project):
         response.raise_for_status()
 
 
-def add_conda_linting(user, repo):
-    if user != 'conda-forge':
-        print('Unable to register {}/{} for conda-linting at this time as only '
-              'conda-forge repos are supported.'.format(user, repo))
-
-    headers = {'Authorization': 'token {}'.format(github.gh_token())}
-    url = 'https://api.github.com/repos/{}/{}/hooks'.format(user, repo)
-
-    # Get the current hooks to determine if anything needs doing.
-    response = requests.get(url, headers=headers)
-    response.raise_for_status()
-    registered = response.json()
-    hook_by_url = {hook['config'].get('url'): hook for hook in registered
-                   if 'url' in hook['config']}
-
+def get_conda_linting_hook_info():
     hook_url = "http://conda-forge.herokuapp.com/conda-linting/hook"
 
     payload = {
@@ -356,10 +342,50 @@ def add_conda_linting(user, repo):
           }
         }
 
-    if hook_url not in hook_by_url:
-        response = requests.post(url, json=payload, headers=headers)
-        if response.status_code != 200:
-            response.raise_for_status()
+    return hook_url, payload
+
+
+def get_conda_forge_teams_hook_info():
+    hook_url = "http://conda-forge.herokuapp.com/conda-forge-teams/hook"
+
+    payload = {
+          "name": "web",
+          "active": True,
+          "events": [
+            "push"
+          ],
+          "config": {
+            "url": hook_url,
+            "content_type": "json"
+          }
+        }
+
+    return hook_url, payload
+
+
+def add_conda_forge_webservice_hooks(user, repo):
+    if user != 'conda-forge':
+        print('Unable to register {}/{} for conda-linting at this time as only '
+              'conda-forge repos are supported.'.format(user, repo))
+
+    headers = {'Authorization': 'token {}'.format(github.gh_token())}
+    url = 'https://api.github.com/repos/{}/{}/hooks'.format(user, repo)
+
+    # Get the current hooks to determine if anything needs doing.
+    response = requests.get(url, headers=headers)
+    response.raise_for_status()
+    registered = response.json()
+    hook_by_url = {hook['config'].get('url'): hook for hook in registered
+                   if 'url' in hook['config']}
+
+    hooks = [get_conda_linting_hook_info(), get_conda_forge_teams_hook_info()]
+
+    for hook in hooks:
+        hook_url, payload = hook
+        if hook_url not in hook_by_url:
+            response = requests.post(url, json=payload, headers=headers)
+            if response.status_code != 200:
+                response.raise_for_status()
 
 
 if __name__ == '__main__':
@@ -367,7 +393,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("user")
     parser.add_argument("project")
-    args = parser.parse_args(['conda-forge', 'conda-smithy-feedstock'])
+    args = parser.parse_args()
 
 #    add_project_to_circle(args.user, args.project)
 #    add_project_to_appveyor(args.user, args.project)
@@ -375,5 +401,5 @@ if __name__ == '__main__':
 #    appveyor_encrypt_binstar_token('../udunits-delme-feedstock', args.user, args.project)
 #    appveyor_configure('conda-forge', 'glpk-feedstock')
 #    travis_token_update_conda_forge_config('../udunits-delme-feedstock', args.user, args.project)
-    add_conda_linting(args.user, 'matplotlib-feedstock')
+    add_conda_forge_webservice_hooks(args.user, args.project)
     print('Done')
