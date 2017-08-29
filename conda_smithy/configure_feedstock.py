@@ -336,8 +336,13 @@ def render_travis(jinja_env, forge_config, forge_dir):
 
 
 def render_README(jinja_env, forge_config, forge_dir):
+    meta = forge_config['package']
     template = jinja_env.get_template('README.md.tmpl')
     target_fname = os.path.join(forge_dir, 'README.md')
+    if meta.noarch:
+        forge_config['noarch_python'] = True
+    else:
+        forge_config['noarch_python'] = False
     with write_file(target_fname) as fh:
         fh.write(template.render(**forge_config))
 
