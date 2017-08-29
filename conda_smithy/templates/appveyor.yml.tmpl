@@ -45,7 +45,7 @@ install:
     # Configure the VM.
     - cmd: appveyor-retry conda install -n root --quiet --yes conda-forge-build-setup
     {% if build_setup -%}
-    appveyor-retry {{ build_setup }}{% endif %}
+    {{ build_setup }}{% endif %}
 
 # Skip .NET project specific build phase.
 build: off
