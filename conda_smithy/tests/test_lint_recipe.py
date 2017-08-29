@@ -253,6 +253,15 @@ class Test_linter(unittest.TestCase):
                 else:
                     self.assertIn(expected_message, lints)
 
+    def test_implicit_python_run_time_dependency(self):
+        build_deps = ['cython', 'numpy x.x']
+        expected_message = ("Found python related compilation requirement "
+                            "please add python as a run-time dependency")
+        for dep in build_deps:
+            meta = {'requirements': {'build': [dep, 'python']}}
+            lints = linter.lintify(meta)
+            self.assertIn(expected_message, lints)
+
 
 class TestCLI_recipe_lint(unittest.TestCase):
     def test_cli_fail(self):

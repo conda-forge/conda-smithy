@@ -149,6 +149,14 @@ def lintify(meta, recipe_dir=None):
     except RuntimeError as e:
         lints.append(str(e))
 
+    # 13: If cython/numpy is a build-dependency then python should be a run-time
+    # dependency. This ensures that packages will be marked correctly by conda
+    build_deps = ['cython', 'numpy x.x']
+    need_python_run_time = any([dep in requirements_section.get('build', '') for dep in build_deps])
+    if need_python_run_time and 'python' not in requirements_section.get('run', ''):
+        lints.append("Found python related compilation requirement "
+                     "please add python as a run-time dependency")
+
     return lints
 
 
