@@ -52,6 +52,33 @@ def add_membership(team, member):
     return (headers, data)
 
 
+def has_in_members(team, member):
+    status, headers, data = team._requester.requestJson(
+        "GET",
+        self.url + "/members/" + member
+    )
+    return status == 204
+
+
+def get_cached_team(org, team_name, description=""):
+    cached_file = os.path.expanduser('~/.conda-smithy/{}-{}-team'.format(org.login, team_name))
+    try:
+        with open(cached_file, 'r') as fh:
+            team_id = int(fh.read().strip())
+            return org.get_team(team_id)
+    except IOError:
+        pass
+
+    team = next((team for team in org.get_teams() if team.name == team_name), None)
+    if not team:
+        team = create_team(org, team_name, description, [])
+
+    with open(cached_file, 'w') as fh:
+        fh.write(str(team.id))
+
+    return team
+
+
 def create_github_repo(args):
     token = gh_token()
     meta = configure_feedstock.meta_of_feedstock(args.feedstock_directory)
@@ -103,11 +130,9 @@ def create_github_repo(args):
             maintainers = set(
                 meta.meta.get('extra', {}).get('recipe-maintainers', [])
             )
-            teams = {team.name: team for team in user_or_org.get_teams()}
             team_name = meta.name()
-
             # Try to get team or create it if it doesn't exist.
-            team = teams.get(team_name)
+            team = next((team for team in gh_repo.get_teams() if team.name == team_name), None)
             current_maintainers = []
             if not team:
                 team = create_team(
@@ -117,10 +142,10 @@ def create_github_repo(args):
                         choice(superlative), team_name
                     )
                 )
-                teams[team_name] = team
+                team.add_to_repos(gh_repo)
             else:
                 current_maintainers = team.get_members()
-            team.add_to_repos(gh_repo)
+
 
             # Add only the new maintainers to the team.
             current_maintainers_handles = set([
@@ -137,31 +162,18 @@ def create_github_repo(args):
                     )
                 )
 
-            # Add new members to all-members team. Welcome! :)
+            # Get the all-members team
             team_name = 'all-members'
-            team = teams.get(team_name)
-            current_members = []
-            if not team:
-                team = create_team(
-                    user_or_org,
-                    team_name,
-                    "All of the awesome {} contributors!".format(
-                        user_or_org.name
-                    ),
-                    []
-                )
-                teams[team_name] = team
-            else:
-                current_members = team.get_members()
+            description = "All of the awesome {} contributors!".format(user_or_org.name)
+            all_members_team = get_cached_team(user_or_org, team_name, description)
 
-            # Add only the new members to the team.
-            current_members_handles = set([
-                each_member.login.lower() for each_member in current_members
-            ])
-            for new_member in maintainers - current_members_handles:
-                print(
-                    "Adding a new member ({}) to {}. Welcome! :)".format(
-                        new_member, user_or_org.name
+            # Add new members to all-members
+            for new_member in maintainers - current_maintainers_handles:
+                if not has_in_members(all_members_team, new_member):
+                    print(
+                        "Adding a new member ({}) to {}. Welcome! :)".format(
+                            new_member, user_or_org.name
+                        )
                     )
-                )
-                add_membership(team, new_member)
+                    add_membership(all_members_team, new_member)
+
