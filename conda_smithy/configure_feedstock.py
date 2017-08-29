@@ -244,7 +244,7 @@ def render_travis(jinja_env, forge_config, forge_dir):
         meta.parse_again()
         if meta.noarch:
             # do not build noarch, including noarch: python, packages on Travis CI.
-            matrix = ()
+            matrix = []
         else:
             matrix = compute_build_matrix(
                 meta,
@@ -408,7 +408,7 @@ def render_appveyor(jinja_env, forge_config, forge_dir):
             meta.parse_again()
             if meta.noarch:
                 # do not build noarch, include noarch: python packages on AppVeyor.
-                matrix = ()
+                matrix = []
             else:
                 matrix = compute_build_matrix(
                     meta,
