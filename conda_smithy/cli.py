@@ -240,12 +240,13 @@ class RecipeLint(Subcommand):
     def __init__(self, parser):
         super(RecipeLint, self).__init__(parser, "Lint a single conda recipe.")
         scp = self.subcommand_parser
+        scp.add_argument("--conda-forge", action='store_true')
         scp.add_argument("recipe_directory", default=[os.getcwd()], nargs='*')
 
     def __call__(self, args):
         all_good = True
         for recipe in args.recipe_directory:
-            lint = lint_recipe.main(os.path.join(recipe))
+            lint = lint_recipe.main(os.path.join(recipe), conda_forge=args.conda_forge)
             if lint:
                 all_good = False
                 print('{} has some lint:\n  {}'.format(recipe, '\n  '.join(lint)))

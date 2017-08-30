@@ -6,6 +6,7 @@ import io
 import itertools
 import os
 import re
+import github
 
 import jinja2
 import ruamel.yaml
@@ -39,7 +40,7 @@ def get_section(parent, name, lints):
     return section
 
 
-def lintify(meta, recipe_dir=None):
+def lintify(meta, recipe_dir=None, conda_forge=False):
     lints = []
     major_sections = list(meta.keys())
 
@@ -52,6 +53,7 @@ def lintify(meta, recipe_dir=None):
     requirements_section = get_section(meta, 'requirements', lints)
     about_section = get_section(meta, 'about', lints)
     extra_section = get_section(meta, 'extra', lints)
+    package_section = get_section(meta, 'package', lints)
 
     # 1: Top level meta.yaml keys should have a specific order.
     section_order_sorted = sorted(major_sections,
@@ -71,10 +73,14 @@ def lintify(meta, recipe_dir=None):
             lints.append('The {} item is expected in the about section.'
                          ''.format(about_item))
 
-    # 3: The recipe should have some maintainers.
+    # 3a: The recipe should have some maintainers.
     if not extra_section.get('recipe-maintainers', []):
         lints.append('The recipe could do with some maintainers listed in '
                      'the `extra/recipe-maintainers` section.')
+
+    # 3b: Maintainers should be a list
+    if not isinstance(extra_section.get('recipe-maintainers', []), list):
+        lints.append('Recipe maintainers should be a json list.')
 
     # 4: The recipe should have some tests.
     if 'test' not in major_sections:
@@ -149,7 +155,46 @@ def lintify(meta, recipe_dir=None):
     except RuntimeError as e:
         lints.append(str(e))
 
+    # 13: Check that the recipe name is valid
+    recipe_name = package_section.get('name', '').strip()
+    if re.match('^[a-z0-9_\-.]+$', recipe_name) is None:
+        lints.append('Recipe name has invalid characters. only lowercase alpha, numeric, '
+                     'underscores, hyphens and dots allowed')
+
+    # 14: Run conda-forge specific lints
+    if conda_forge:
+        run_conda_forge_lints(meta, recipe_dir, lints)
+
     return lints
+
+
+def run_conda_forge_lints(meta, recipe_dir, lints):
+    gh = github.Github(os.environ['GH_TOKEN'])
+    package_section = get_section(meta, 'package', lints)
+    extra_section = get_section(meta, 'extra', lints)
+    recipe_dirname = os.path.basename(recipe_dir) if recipe_dir else 'recipe'
+    recipe_name = package_section.get('name', '').strip()
+    is_staged_recipes = recipe_dirname != 'recipe'
+
+    # 1: Check that the recipe does not exist in conda-forge
+    if is_staged_recipes:
+        cf = gh.get_user(os.getenv('GH_ORG', 'conda-forge'))
+        try:
+            cf.get_repo('{}-feedstock'.format(recipe_name))
+            feedstock_exists = True
+        except github.UnknownObjectException as e:
+            feedstock_exists = False
+
+        if feedstock_exists:
+            lints.append('Feedstock with the same name exists in conda-forge')
+
+    # 2: Check that the recipe maintainers exists:
+    maintainers = extra_section.get('recipe-maintainers', [])
+    for maintainer in maintainers:
+        try:
+            gh.get_user(maintainer)
+        except github.UnknownObjectException as e:
+            lints.append('Recipe maintainer "{}" does not exist'.format(maintainer))
 
 
 def selector_lines(lines):
@@ -168,7 +213,7 @@ def selector_lines(lines):
             yield line
 
 
-def main(recipe_dir):
+def main(recipe_dir, conda_forge=False):
     recipe_dir = os.path.abspath(recipe_dir)
     recipe_meta = os.path.join(recipe_dir, 'meta.yaml')
     if not os.path.exists(recipe_dir):
@@ -179,5 +224,5 @@ def main(recipe_dir):
     with io.open(recipe_meta, 'rt') as fh:
         content = env.from_string(''.join(fh)).render(os=os)
         meta = ruamel.yaml.load(content, ruamel.yaml.RoundTripLoader)
-    results = lintify(meta, recipe_dir)
+    results = lintify(meta, recipe_dir, conda_forge)
     return results
