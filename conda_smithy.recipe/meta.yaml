@@ -21,7 +21,7 @@ requirements:
   run:
     - python
     - conda-build-all >=1.0.2
-    - conda
+    - conda >=4.2
     - conda-build >=1.21.12,!=2.0.9
     - jinja2
     - requests
