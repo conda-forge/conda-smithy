@@ -9,6 +9,8 @@ import conda.api
 
 import conda_smithy.configure_feedstock as cnfgr_fdstk
 from conda_build_all.resolved_distribution import ResolvedDistribution
+from conda_build import __version__ as conda_build_version
+from distutils.version import LooseVersion
 
 
 @contextmanager
@@ -156,17 +158,20 @@ class Test_fudge_subdir(unittest.TestCase):
                 if expect_skip:
                     self.assertEqual(cases_not_skipped, [[]])
 
+            conda_build_supports_noarch = \
+                LooseVersion(conda_build_version) >= LooseVersion("2.1.17")
+
             with cnfgr_fdstk.fudge_subdir('linux-64', config):
                 test()
 
             with cnfgr_fdstk.fudge_subdir('win-32', config):
-                test(expect_skip=True)
+                test(expect_skip=conda_build_supports_noarch)
 
             with cnfgr_fdstk.fudge_subdir('win-64', config):
-                test(expect_skip=True)
+                test(expect_skip=conda_build_supports_noarch)
 
             with cnfgr_fdstk.fudge_subdir('osx-64', config):
-                test(expect_skip=True)
+                test(expect_skip=conda_build_supports_noarch)
 
 
 if __name__ == '__main__':
