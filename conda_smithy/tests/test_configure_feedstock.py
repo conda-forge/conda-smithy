@@ -9,6 +9,8 @@ import conda.api
 
 import conda_smithy.configure_feedstock as cnfgr_fdstk
 from conda_build_all.resolved_distribution import ResolvedDistribution
+from conda_build import __version__ as conda_build_version
+from distutils.version import LooseVersion
 
 
 @contextmanager
@@ -115,6 +117,61 @@ class Test_fudge_subdir(unittest.TestCase):
 
             with cnfgr_fdstk.fudge_subdir('osx-64', config):
                 test()
+
+    def test_noarch(self):
+        with tmp_directory() as recipe_dir:
+            with open(os.path.join(recipe_dir, 'meta.yaml'), 'w') as fh:
+                fh.write("""
+                        package:
+                           name: python-noarch-test
+                           version: 1.0.0
+                        build:
+                           noarch: python
+                        requirements:
+                           build:
+                              - python
+                           run:
+                              - python
+                         """)
+            meta = conda_build.metadata.MetaData(recipe_dir)
+            config = cnfgr_fdstk.meta_config(meta)
+
+            kwargs = {}
+            if hasattr(conda_build, 'api'):
+                kwargs['config'] = config
+
+            def test(expect_skip=False):
+                meta.parse_again(**kwargs)
+
+                matrix = cnfgr_fdstk.compute_build_matrix(
+                    meta,
+                    channel_sources=["defaults", "conda-forge"]
+                )
+
+                cases_not_skipped = []
+                for case in matrix:
+                    pkgs, vars = cnfgr_fdstk.split_case(case)
+                    with cnfgr_fdstk.enable_vars(vars):
+                        if not ResolvedDistribution(meta, pkgs).skip():
+                            cases_not_skipped.append(vars + sorted(pkgs))
+
+                if expect_skip:
+                    self.assertEqual(cases_not_skipped, [[]])
+
+            conda_build_supports_noarch = \
+                LooseVersion(conda_build_version) >= LooseVersion("2.1.17")
+
+            with cnfgr_fdstk.fudge_subdir('linux-64', config):
+                test()
+
+            with cnfgr_fdstk.fudge_subdir('win-32', config):
+                test(expect_skip=conda_build_supports_noarch)
+
+            with cnfgr_fdstk.fudge_subdir('win-64', config):
+                test(expect_skip=conda_build_supports_noarch)
+
+            with cnfgr_fdstk.fudge_subdir('osx-64', config):
+                test(expect_skip=conda_build_supports_noarch)
 
 
 if __name__ == '__main__':

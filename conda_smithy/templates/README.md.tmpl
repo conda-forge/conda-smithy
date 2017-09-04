@@ -21,6 +21,14 @@ Current build status
 {%- set disabled_badge_path = "conda_smithy/static/disabled.svg" %}
 {%- set disabled_badge_url = "https://cdn.rawgit.com/conda-forge/conda-smithy/%s/%s"|format(disabled_badge_commit, disabled_badge_path) %}
 {# #}
+
+{%- if noarch_python %}
+{%- if circle.enabled %}
+All platforms: [![Circle CI](https://circleci.com/gh/{{ github.user_or_org }}/{{ github.repo_name }}.svg?style=shield)](https://circleci.com/gh/{{ github.user_or_org }}/{{ github.repo_name }})
+{%- else %}
+All platforms: ![]({{ disabled_badge_url }})
+{%- endif %}
+{%- else %}
 {%- if circle.enabled %}
 Linux: [![Circle CI](https://circleci.com/gh/{{ github.user_or_org }}/{{ github.repo_name }}.svg?style=shield)](https://circleci.com/gh/{{ github.user_or_org }}/{{ github.repo_name }})
 {%- else %}
@@ -35,6 +43,7 @@ OSX: ![]({{ disabled_badge_url }})
 Windows: [![AppVeyor](https://ci.appveyor.com/api/projects/status/github/{{ github.user_or_org }}/{{ github.repo_name }}?svg=True)](https://ci.appveyor.com/project/{{ github.user_or_org }}/{{ appveyor_url_name }}/branch/master)
 {%- else %}
 Windows: ![]({{ disabled_badge_url }})
+{%- endif %}
 {%- endif %}
 
 Current release info
