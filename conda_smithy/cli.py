@@ -156,12 +156,12 @@ class RegisterCI(Subcommand):
                            help="github organisation under which to register this repo")
 
     def __call__(self, args):
+        from conda_smithy import ci_register
         owner = args.user or args.organization
         repo = os.path.basename(os.path.abspath(args.feedstock_directory))
 
         print('CI Summary for {}/{} (can take ~30s):'.format(owner, repo))
         try:
-            from conda_smithy import ci_register
             ci_register.add_project_to_travis(owner, repo)
             ci_register.travis_token_update_conda_forge_config(args.feedstock_directory, owner, repo)
             time.sleep(1)
