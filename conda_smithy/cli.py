@@ -11,7 +11,6 @@ import conda
 from distutils.version import LooseVersion
 from conda_build.metadata import MetaData
 
-from . import ci_register
 from . import configure_feedstock
 from . import feedstock_io
 from . import lint_recipe
@@ -157,6 +156,7 @@ class RegisterCI(Subcommand):
                            help="github organisation under which to register this repo")
 
     def __call__(self, args):
+        from conda_smithy import ci_register
         owner = args.user or args.organization
         repo = os.path.basename(os.path.abspath(args.feedstock_directory))
 
