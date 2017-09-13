@@ -143,7 +143,7 @@ def configure_github_team(meta, gh_repo):
     maintainers = set(
         meta.meta.get('extra', {}).get('recipe-maintainers', [])
     )
-
+    maintainers = set(maintainer.lower() for maintainer in maintainers)
     team_name = meta.name()
     # Try to get team or create it if it doesn't exist.
     team = next((team for team in gh_repo.get_teams() if team.name == team_name), None)
