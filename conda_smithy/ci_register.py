@@ -327,33 +327,11 @@ def travis_configure(user, project):
         response.raise_for_status()
 
 
-def get_conda_linting_hook_info():
-    hook_url = "http://conda-forge.herokuapp.com/conda-linting/hook"
-
+def get_conda_hook_info(hook_url, events):
     payload = {
           "name": "web",
           "active": True,
-          "events": [
-            "pull_request"
-          ],
-          "config": {
-            "url": hook_url,
-            "content_type": "json"
-          }
-        }
-
-    return hook_url, payload
-
-
-def get_conda_forge_teams_hook_info():
-    hook_url = "http://conda-forge.herokuapp.com/conda-forge-teams/hook"
-
-    payload = {
-          "name": "web",
-          "active": True,
-          "events": [
-            "push"
-          ],
+          "events": events,
           "config": {
             "url": hook_url,
             "content_type": "json"
@@ -379,8 +357,18 @@ def add_conda_forge_webservice_hooks(user, repo):
                    if 'url' in hook['config']}
 
     hooks = [
-        get_conda_linting_hook_info(),
-        get_conda_forge_teams_hook_info()
+        get_conda_hook_info(
+            "http://conda-forge.herokuapp.com/conda-linting/hook",
+            [
+                "pull_request"
+            ]
+        ),
+        get_conda_hook_info(
+            "http://conda-forge.herokuapp.com/conda-forge-teams/hook",
+            [
+                "push"
+            ]
+        ),
     ]
 
     for hook in hooks:
