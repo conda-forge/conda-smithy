@@ -52,6 +52,14 @@ def add_membership(team, member):
     return (headers, data)
 
 
+def remove_membership(team, member):
+    headers, data = team._requester.requestJsonAndCheck(
+        "DELETE",
+        team.url + "/memberships/" + member
+    )
+    return (headers, data)
+
+
 def has_in_members(team, member):
     status, headers, data = team._requester.requestJson(
         "GET",
@@ -116,64 +124,73 @@ def create_github_repo(args):
         else:
             repo.create_remote(remote_name, gh_repo.ssh_url)
 
-    # Add a team for this repo and add the maintainers to it.
     if args.add_teams:
         if isinstance(user_or_org, Organization):
-            superlative = [
-                'awesome', 'slick', 'formidable', 'awe-inspiring',
-                'breathtaking', 'magnificent', 'wonderous', 'stunning',
-                'astonishing', 'superb', 'splendid', 'impressive',
-                'unbeatable', 'excellent', 'top', 'outstanding', 'exalted',
-                'standout', 'smashing'
-            ]
+            configure_github_team(meta, gh_repo)
 
-            maintainers = set(
-                meta.meta.get('extra', {}).get('recipe-maintainers', [])
+
+def configure_github_team(meta, gh_repo):
+
+    # Add a team for this repo and add the maintainers to it.
+    superlative = [
+        'awesome', 'slick', 'formidable', 'awe-inspiring',
+        'breathtaking', 'magnificent', 'wonderous', 'stunning',
+        'astonishing', 'superb', 'splendid', 'impressive',
+        'unbeatable', 'excellent', 'top', 'outstanding', 'exalted',
+        'standout', 'smashing'
+    ]
+
+    maintainers = set(
+        meta.meta.get('extra', {}).get('recipe-maintainers', [])
+    )
+
+    team_name = meta.name()
+    # Try to get team or create it if it doesn't exist.
+    team = next((team for team in gh_repo.get_teams() if team.name == team_name), None)
+    current_maintainers = []
+    if not team:
+        team = create_team(
+            user_or_org,
+            team_name,
+            'The {} {} contributors!'.format(
+                choice(superlative), team_name
             )
-            team_name = meta.name()
-            # Try to get team or create it if it doesn't exist.
-            team = next((team for team in gh_repo.get_teams() if team.name == team_name), None)
-            current_maintainers = []
-            if not team:
-                team = create_team(
-                    user_or_org,
-                    team_name,
-                    'The {} {} contributors!'.format(
-                        choice(superlative), team_name
-                    )
+        )
+        team.add_to_repos(gh_repo)
+    else:
+        current_maintainers = team.get_members()
+
+
+    # Add only the new maintainers to the team.
+    current_maintainers_handles = set([
+        e.login.lower() for e in current_maintainers
+    ])
+    for new_maintainer in maintainers - current_maintainers_handles:
+        add_membership(team, new_maintainer)
+
+    # Mention any maintainers that need to be removed (unlikely here).
+    for old_maintainer in current_maintainers_handles - maintainers:
+        print(
+            "AN OLD MEMBER ({}) NEEDS TO BE REMOVED FROM {}".format(
+                old_maintainer, repo_name
+            )
+        )
+
+    # Get the all-members team
+    team_name = 'all-members'
+    description = "All of the awesome {} contributors!".format(user_or_org.name)
+    all_members_team = get_cached_team(user_or_org, team_name, description)
+    new_conda_forge_members = set()
+
+    # Add new members to all-members
+    for new_member in maintainers - current_maintainers_handles:
+        if not has_in_members(all_members_team, new_member):
+            print(
+                "Adding a new member ({}) to {}. Welcome! :)".format(
+                    new_member, user_or_org.name
                 )
-                team.add_to_repos(gh_repo)
-            else:
-                current_maintainers = team.get_members()
+            )
+            add_membership(all_members_team, new_member)
+            new_conda_forge_members.add(new_member)
 
-
-            # Add only the new maintainers to the team.
-            current_maintainers_handles = set([
-                e.login.lower() for e in current_maintainers
-            ])
-            for new_maintainer in maintainers - current_maintainers_handles:
-                add_membership(team, new_maintainer)
-
-            # Mention any maintainers that need to be removed (unlikely here).
-            for old_maintainer in current_maintainers_handles - maintainers:
-                print(
-                    "AN OLD MEMBER ({}) NEEDS TO BE REMOVED FROM {}".format(
-                        old_maintainer, repo_name
-                    )
-                )
-
-            # Get the all-members team
-            team_name = 'all-members'
-            description = "All of the awesome {} contributors!".format(user_or_org.name)
-            all_members_team = get_cached_team(user_or_org, team_name, description)
-
-            # Add new members to all-members
-            for new_member in maintainers - current_maintainers_handles:
-                if not has_in_members(all_members_team, new_member):
-                    print(
-                        "Adding a new member ({}) to {}. Welcome! :)".format(
-                            new_member, user_or_org.name
-                        )
-                    )
-                    add_membership(all_members_team, new_member)
-
+    return maintainers, current_maintainers_handles, new_conda_forge_members
