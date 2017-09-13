@@ -364,6 +364,12 @@ def add_conda_forge_webservice_hooks(user, repo):
             ]
         ),
         get_conda_hook_info(
+            "http://conda-forge.herokuapp.com/conda-forge-feedstocks/hook",
+            [
+                "push"
+            ]
+        ),
+        get_conda_hook_info(
             "http://conda-forge.herokuapp.com/conda-forge-teams/hook",
             [
                 "push"
