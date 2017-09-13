@@ -378,7 +378,10 @@ def add_conda_forge_webservice_hooks(user, repo):
     hook_by_url = {hook['config'].get('url'): hook for hook in registered
                    if 'url' in hook['config']}
 
-    hooks = [get_conda_linting_hook_info(), get_conda_forge_teams_hook_info()]
+    hooks = [
+        get_conda_linting_hook_info(),
+        get_conda_forge_teams_hook_info()
+    ]
 
     for hook in hooks:
         hook_url, payload = hook
