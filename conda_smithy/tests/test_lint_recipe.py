@@ -111,6 +111,9 @@ class Test_linter(unittest.TestCase):
         lints = linter.lintify({})
         self.assertIn(expected_message, lints)
 
+        lints = linter.lintify({'test': {'files': 'foo'}})
+        self.assertIn(expected_message, lints)
+
         lints = linter.lintify({'test': {'imports': 'sys'}})
         self.assertNotIn(expected_message, lints)
 
