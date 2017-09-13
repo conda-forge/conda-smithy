@@ -126,10 +126,10 @@ def create_github_repo(args):
 
     if args.add_teams:
         if isinstance(user_or_org, Organization):
-            configure_github_team(meta, gh_repo)
+            configure_github_team(meta, gh_repo, user_or_org)
 
 
-def configure_github_team(meta, gh_repo):
+def configure_github_team(meta, gh_repo, org):
 
     # Add a team for this repo and add the maintainers to it.
     superlative = [
@@ -150,7 +150,7 @@ def configure_github_team(meta, gh_repo):
     current_maintainers = []
     if not team:
         team = create_team(
-            user_or_org,
+            org,
             team_name,
             'The {} {} contributors!'.format(
                 choice(superlative), team_name
@@ -178,8 +178,8 @@ def configure_github_team(meta, gh_repo):
 
     # Get the all-members team
     team_name = 'all-members'
-    description = "All of the awesome {} contributors!".format(user_or_org.name)
-    all_members_team = get_cached_team(user_or_org, team_name, description)
+    description = "All of the awesome {} contributors!".format(org.name)
+    all_members_team = get_cached_team(org, team_name, description)
     new_conda_forge_members = set()
 
     # Add new members to all-members
@@ -187,7 +187,7 @@ def configure_github_team(meta, gh_repo):
         if not has_in_members(all_members_team, new_member):
             print(
                 "Adding a new member ({}) to {}. Welcome! :)".format(
-                    new_member, user_or_org.name
+                    new_member, org.name
                 )
             )
             add_membership(all_members_team, new_member)
