@@ -55,7 +55,7 @@ def add_membership(team, member):
 def has_in_members(team, member):
     status, headers, data = team._requester.requestJson(
         "GET",
-        self.url + "/members/" + member
+        team.url + "/members/" + member
     )
     return status == 204
 
