@@ -19,6 +19,8 @@ EXPECTED_SECTION_ORDER = ['package', 'source', 'build', 'requirements',
 
 REQUIREMENTS_ORDER = ['build', 'run']
 
+TEST_KEYS = {'imports', 'commands'}
+
 
 class NullUndefined(jinja2.Undefined):
     def __unicode__(self):
@@ -51,6 +53,7 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
     source_section = get_section(meta, 'source', lints)
     build_section = get_section(meta, 'build', lints)
     requirements_section = get_section(meta, 'requirements', lints)
+    test_section = get_section(meta, 'test', lints)
     about_section = get_section(meta, 'about', lints)
     extra_section = get_section(meta, 'extra', lints)
     package_section = get_section(meta, 'package', lints)
@@ -83,7 +86,7 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
         lints.append('Recipe maintainers should be a json list.')
 
     # 4: The recipe should have some tests.
-    if 'test' not in major_sections:
+    if not any(key in TEST_KEYS for key in test_section):
         test_files = ['run_test.py', 'run_test.sh', 'run_test.bat',
                       'run_test.pl']
         a_test_file_exists = (recipe_dir is not None and

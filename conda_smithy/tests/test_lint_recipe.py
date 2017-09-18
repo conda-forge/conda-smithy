@@ -111,6 +111,9 @@ class Test_linter(unittest.TestCase):
         lints = linter.lintify({})
         self.assertIn(expected_message, lints)
 
+        lints = linter.lintify({'test': {'files': 'foo'}})
+        self.assertIn(expected_message, lints)
+
         lints = linter.lintify({'test': {'imports': 'sys'}})
         self.assertNotIn(expected_message, lints)
 
@@ -330,7 +333,9 @@ class TestCLI_recipe_lint(unittest.TestCase):
                         name: 'test_package'
                     build:
                         number: 0
-                    test: []
+                    test:
+                        imports:
+                            - foo
                     about:
                         home: something
                         license: something else
@@ -357,6 +362,8 @@ class TestCLI_recipe_lint(unittest.TestCase):
                     test:
                         requires:
                             - python {{ environ['PY_VER'] + '*' }}  # [win]
+                        imports:
+                            - foo
                     about:
                         home: something
                         license: something else
