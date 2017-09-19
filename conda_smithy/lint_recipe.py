@@ -210,7 +210,7 @@ def run_conda_forge_lints(meta, recipe_dir, lints):
 def selector_lines(lines):
     # Using the same pattern defined in conda-build (metadata.py),
     # we identify selectors.
-    sel_pat = re.compile(r'(.+?)\s*(#.*)?\[(.+)\](?(2).*)$')
+    sel_pat = re.compile(r'(.+?)\s*(#.*)?\[([^\[\]]+)\](?(2).*)$')
 
     for line in lines:
         line = line.rstrip()
