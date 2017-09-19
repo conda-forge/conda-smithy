@@ -369,6 +369,13 @@ def add_conda_forge_webservice_hooks(user, repo):
                 "push"
             ]
         ),
+        get_conda_hook_info(
+            "http://conda-forge.herokuapp.com/conda-forge-command/hook",
+            [
+                "pull_request_review", "pull_request",
+                "pull_request_review_comment", "issue_comment", "issue",
+            ]
+        ),
     ]
 
     for hook in hooks:
