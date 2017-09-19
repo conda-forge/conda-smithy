@@ -60,7 +60,13 @@ Installing `{{ package.name() }}` from the `{{ channel_name }}` channel can be a
 conda config --add channels {{ channel_name }}
 ```
 
-Once the `{{ channel_name }}` channel has been enabled, `{{ package.name() }}` can be installed with:
+Once the `{{ channel_name }}` channel has been enabled, update `conda` with
+
+```
+conda update conda
+```
+
+After that `{{ package.name() }}` can be installed with:
 
 ```
 conda install {{ package.name() }}
