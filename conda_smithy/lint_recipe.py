@@ -104,15 +104,18 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
     # 6: Selectors should be in a tidy form.
     if recipe_dir is not None and os.path.exists(meta_fname):
         bad_selectors = []
+        bad_lines = []
         # Good selectors look like ".*\s\s#\s[...]"
         good_selectors_pat = re.compile(r'(.+?)\s{2,}#\s\[(.+)\](?(2).*)$')
         with io.open(meta_fname, 'rt') as fh:
-            for selector_line in selector_lines(fh):
+            for selector_line, line_number in selector_lines(fh):
                 if not good_selectors_pat.match(selector_line):
                     bad_selectors.append(selector_line)
+                    bad_lines.append(line_number)
         if bad_selectors:
             lints.append('Selectors are suggested to take a '
-                         '``<two spaces>#<one space>[<expression>]`` form.')
+                         '``<two spaces>#<one space>[<expression>]`` form.'
+                         'see lines {}'.format(bad_lines))
 
     # 7: The build section should have a build number.
     if build_section.get('number', None) is None:
@@ -212,7 +215,7 @@ def selector_lines(lines):
     # we identify selectors.
     sel_pat = re.compile(r'(.+?)\s*(#.*)?\[([^\[\]]+)\](?(2).*)$')
 
-    for line in lines:
+    for i, line in enumerate(lines):
         line = line.rstrip()
         if line.lstrip().startswith('#'):
             # Don't bother with comment only lines
@@ -220,7 +223,7 @@ def selector_lines(lines):
         m = sel_pat.match(line)
         if m:
             m.group(3)
-            yield line
+            yield line, i
 
 
 def main(recipe_dir, conda_forge=False):
