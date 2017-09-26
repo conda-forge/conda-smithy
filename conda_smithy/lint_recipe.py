@@ -11,10 +11,16 @@ import github
 import jinja2
 import ruamel.yaml
 
-from conda_build.metadata import ensure_valid_license_family, FIELDS
+from conda_build.metadata import (ensure_valid_license_family,
+                                  FIELDS as cbfields)
 
+FIELDS = cbfields.copy()
 
-FIELDS['extra'] = ['recipe-maintainers']
+# Just in case 'extra' moves into conda_build
+if 'extra' not in FIELDS.keys():
+    FIELDS['extra'] = []
+
+FIELDS['extra'].append('recipe-maintainers')
 
 EXPECTED_SECTION_ORDER = ['package', 'source', 'build', 'requirements',
                           'test', 'app', 'about', 'extra']
