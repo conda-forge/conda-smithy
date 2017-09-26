@@ -13,8 +13,9 @@ import ruamel.yaml
 
 from conda_build.metadata import (ensure_valid_license_family,
                                   FIELDS as cbfields)
+import copy
 
-FIELDS = cbfields.copy()
+FIELDS = copy.deepcopy().cbfields
 
 # Just in case 'extra' moves into conda_build
 if 'extra' not in FIELDS.keys():
