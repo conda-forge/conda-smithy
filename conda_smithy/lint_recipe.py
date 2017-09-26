@@ -10,7 +10,6 @@ import github
 
 import jinja2
 import ruamel.yaml
-from ruamel.yaml.comments import CommentedSeq
 
 from conda_build.metadata import ensure_valid_license_family, FIELDS
 
@@ -48,7 +47,7 @@ class NullUndefined(jinja2.Undefined):
 
 def get_section(parent, name, lints):
     section = parent.get(name, {})
-    if not isinstance(section, (dict, CommentedSeq)):
+    if not isinstance(section, dict):
         lints.append('The "{}" section was expected to be a dictionary, but '
                      'got a {}.'.format(name, type(section).__name__))
         section = {}
