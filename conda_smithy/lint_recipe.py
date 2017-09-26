@@ -23,20 +23,6 @@ REQUIREMENTS_ORDER = ['build', 'run']
 
 TEST_KEYS = {'imports', 'commands'}
 
-EXPECTED_SUBSECTION_HEADINGS = {'package': ['name', 'version', ],
-                                'source': ['fn', 'url', 'sha256', ],
-                                'build': ['number', 'script', 'noarch',
-                                          'features', 'track_features',
-                                          'detect_binary_files_with_prefix',
-                                          'binary_relocation', 'entry_points',
-                                          'rpaths'],
-                                'requirements': ['build', 'run'],
-                                'test': ['source_files', 'commands',
-                                         'requires', 'imports'],
-                                'about': ['home', 'license', 'license_file',
-                                          'summary', 'description', 'doc_url',
-                                          'dev_url'],
-                                'extra': ['recipe-maintainers']}
 
 class NullUndefined(jinja2.Undefined):
     def __unicode__(self):
