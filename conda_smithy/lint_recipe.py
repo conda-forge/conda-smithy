@@ -11,8 +11,17 @@ import github
 import jinja2
 import ruamel.yaml
 
-from conda_build.metadata import ensure_valid_license_family
+from conda_build.metadata import (ensure_valid_license_family,
+                                  FIELDS as cbfields)
+import copy
 
+FIELDS = copy.deepcopy(cbfields)
+
+# Just in case 'extra' moves into conda_build
+if 'extra' not in FIELDS.keys():
+    FIELDS['extra'] = []
+
+FIELDS['extra'].append('recipe-maintainers')
 
 EXPECTED_SECTION_ORDER = ['package', 'source', 'build', 'requirements',
                           'test', 'app', 'about', 'extra']
@@ -177,6 +186,15 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
         lints.append('Using pinned numpy packages is a deprecated pattern.  Consider '
                      'using the method outlined '
                      '[here](https://conda-forge.org/docs/meta.html#building-against-numpy).')
+
+    # 16: Subheaders should be in the allowed subheadings
+    for section in major_sections:
+        expected_subsections = FIELDS.get(section, [])
+        for subsection in get_section(meta, section, lints):
+            if subsection not in expected_subsections:
+                lints.append('The {} section contained an unexpected '
+                             'subsection name. {} is not a valid subsection'
+                             ' name.'.format(section, subsection))
 
     return lints
 
