@@ -54,6 +54,8 @@ def write_file(filename):
     if repo:
         repo.index.add([filename])
 
+    set_exe_file(filename, set_exe=False)
+
 
 def touch_file(filename):
     with write_file(filename) as fh:
@@ -83,7 +85,7 @@ def copy_file(src, dst):
     """
     try:
         with io.open(src, "r", encoding="utf-8") as fh_src:
-            with io.open(dst, "w", encoding="utf-8", newline="\n") as fh_dst:
+            with write_file(dst) as fh_dst:
                 for line in fh_src:
                     fh_dst.write(line)
     except UnicodeDecodeError:
