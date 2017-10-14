@@ -304,11 +304,35 @@ def render_travis(jinja_env, forge_config, forge_dir):
             build_setup += textwrap.dedent("""\
                 # Overriding global conda-forge-build-setup with local copy.
                 source {recipe_dir}/run_conda_forge_build_setup_osx
+
             """.format(recipe_dir=forge_config["recipe_dir"]))
         else:
             build_setup += textwrap.dedent("""\
                 source run_conda_forge_build_setup
+
             """)
+
+        # If there is a "brew_requirements.txt" file in the recipe, we honour it.
+        brew_requirements_fpath = os.path.join(forge_dir, 'recipe',
+                                              'brew_requirements.txt')
+        if os.path.exists(brew_requirements_fpath):
+            with open(brew_requirements_fpath) as fh:
+                requirements = [line.strip() for line in fh
+                                if line.strip() and not line.strip().startswith('#')]
+            if not requirements:
+                raise ValueError("No brew requirements enabled in the "
+                                 "brew_requirements.txt, please remove the file "
+                                 "or add some.")
+            build_setup += textwrap.dedent("""\
+
+                # Install the brew requirements defined canonically in the
+                # "recipe/brew_requirements.txt" file. After updating that file,
+                # run "conda smithy rerender" and this line be updated
+                # automatically.
+                brew cask install {}
+
+
+            """.format(' '.join(requirements)))
 
         build_setup = build_setup.strip()
         build_setup = build_setup.replace("\n", "\n      ")
