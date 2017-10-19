@@ -163,7 +163,7 @@ class Test_linter(unittest.TestCase):
             assert_selector("name: foo_py3 # [py3k]", is_good=False)
 
     def test_noarch_selectors(self):
-        expected_start = "Selectors don't work for `noarch` packages."
+        expected_start = "`noarch` packages can't have selectors."
 
         with tmp_directory() as recipe_dir:
             def assert_noarch_selector(noarch, selector, is_good=False):
