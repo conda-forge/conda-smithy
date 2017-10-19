@@ -162,7 +162,7 @@ class Test_linter(unittest.TestCase):
             assert_selector("name: foo_py3  #[py3k]", is_good=False)
             assert_selector("name: foo_py3 # [py3k]", is_good=False)
 
-    def test_noarch_selector(self):
+    def test_noarch_selectors(self):
         expected_start = "Selectors don't work for `noarch` packages."
 
         with tmp_directory() as recipe_dir:
@@ -173,7 +173,7 @@ class Test_linter(unittest.TestCase):
                               noarch: {}
                               skip: true  # {}
                             """.format(noarch, selector))
-                lints = linter.lintify({}, recipe_dir)
+                lints = linter.main(recipe_dir)
                 if is_good:
                     message = ("Found lints when there shouldn't have "
                                "been a lint for '{}', '{}'."
