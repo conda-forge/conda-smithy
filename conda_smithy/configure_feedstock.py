@@ -637,7 +637,7 @@ def compute_build_matrix(meta, existing_matrix=None, channel_sources=tuple()):
     index = conda.api.get_index(channel_urls=channel_sources,
                                 platform=meta_config(meta).subdir)
     mtx = special_case_version_matrix(meta, index)
-    mtx = list(filter_cases(mtx, ['python >=2.7,<3|>=3.5', 'numpy >=1.11', 'r-base >=3.3.2']))
+    mtx = list(filter_cases(mtx, ['python >=2.7,<3|>=3.5', 'numpy >=1.11', 'r-base ==3.3.2|==3.4.1']))
     if existing_matrix:
         mtx = [tuple(mtx_case) + tuple(MatrixCaseEnvVar(*item) for item in case)
                for case in sorted(existing_matrix)
