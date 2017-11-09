@@ -11,8 +11,6 @@ env:
     matrix:
         - PYTHON=2.7
         - PYTHON=3.5
-          CONDA_PKGS='conda=4.2.* conda-env=2.5.* conda-build=2.1.*'
-        - PYTHON=3.5
 
 install:
     - mkdir -p ${HOME}/cache/pkgs
