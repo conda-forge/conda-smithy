@@ -24,7 +24,7 @@ if 'extra' not in FIELDS.keys():
 FIELDS['extra'].append('recipe-maintainers')
 
 EXPECTED_SECTION_ORDER = ['package', 'source', 'build', 'requirements',
-                          'test', 'app', 'about', 'extra']
+                          'test', 'app', 'outputs', 'about', 'extra']
 
 REQUIREMENTS_ORDER = ['build', 'run']
 
