@@ -162,6 +162,34 @@ class Test_linter(unittest.TestCase):
             assert_selector("name: foo_py3  #[py3k]", is_good=False)
             assert_selector("name: foo_py3 # [py3k]", is_good=False)
 
+    def test_noarch_selectors(self):
+        expected_start = "`noarch` packages can't have selectors."
+
+        with tmp_directory() as recipe_dir:
+            def assert_noarch_selector(noarch, selector, is_good=False):
+                with io.open(os.path.join(recipe_dir, 'meta.yaml'), 'w') as fh:
+                    fh.write("""
+                            build:
+                              noarch: {}
+                              skip: true  # {}
+                            """.format(noarch, selector))
+                lints = linter.main(recipe_dir)
+                if is_good:
+                    message = ("Found lints when there shouldn't have "
+                               "been a lint for '{}', '{}'."
+                              ).format(noarch, selector)
+                else:
+                    message = ("Expected lints for '{}', '{}', but didn't "
+                               "get any.").format(noarch, selector)
+                self.assertEqual(not is_good,
+                                 any(lint.startswith(expected_start)
+                                     for lint in lints),
+                                 message)
+
+            assert_noarch_selector('python', '[py2k]')
+            assert_noarch_selector('generic', '[win]')
+            assert_noarch_selector('python', '', is_good=True)
+
     def test_jinja_os_environ(self):
         # Test that we can use os.environ in a recipe. We don't care about
         # the results here.

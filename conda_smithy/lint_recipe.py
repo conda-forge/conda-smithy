@@ -196,6 +196,14 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
                              'subsection name. {} is not a valid subsection'
                              ' name.'.format(section, subsection))
 
+    # 17: noarch doesn't work with selectors
+    if build_section.get('noarch') is not None:
+        with io.open(meta_fname, 'rt') as fh:
+            if any(True for l in selector_lines(fh)):
+                lints.append("`noarch` packages can't have selectors. If "
+                             "the selectors are necessary, please remove "
+                             "`noarch: {}`.".format(build_section['noarch']))
+
     return lints
 
 
