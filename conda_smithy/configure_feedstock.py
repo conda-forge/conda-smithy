@@ -507,12 +507,12 @@ def render_appveyor(jinja_env, forge_config, forge_dir):
         if os.path.exists(cfbs_fpath):
             build_setup += textwrap.dedent("""\
                 # Overriding global conda-forge-build-setup with local copy.
-                {recipe_dir}\\run_conda_forge_build_setup_win
+                appveyor-retry {recipe_dir}\\run_conda_forge_build_setup_win
             """.format(recipe_dir=forge_config["recipe_dir"]))
         else:
             build_setup += textwrap.dedent("""\
 
-                run_conda_forge_build_setup
+                appveyor-retry run_conda_forge_build_setup
             """)
 
         build_setup = build_setup.rstrip()
