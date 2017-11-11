@@ -458,6 +458,7 @@ def render_appveyor(jinja_env, forge_config, forge_dir):
                 case["CONDA_INSTALL_LOCN"] += "35"
             elif case.get("CONDA_PY") == "36":
                 case["CONDA_INSTALL_LOCN"] += "36"
+                case["APPVEYOR_BUILD_WORKER_IMAGE"] = "Visual Studio 2017"
 
             # Set architecture.
             if case.get("TARGET_ARCH") == "x86":
