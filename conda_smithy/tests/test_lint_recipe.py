@@ -354,6 +354,11 @@ class Test_linter(unittest.TestCase):
         lints = linter.lintify(meta)
         self.assertIn(expected_message, lints)
 
+    def test_outputs(self):
+        meta = OrderedDict([['outputs', [{'name': 'asd'}]]])
+        lints = linter.lintify(meta)
+
+
 class TestCLI_recipe_lint(unittest.TestCase):
     def test_cli_fail(self):
         with tmp_directory() as recipe_dir:

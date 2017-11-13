@@ -190,6 +190,8 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
     # 16: Subheaders should be in the allowed subheadings
     for section in major_sections:
         expected_subsections = FIELDS.get(section, [])
+        if not expected_subsections:
+            continue
         for subsection in get_section(meta, section, lints):
             if subsection not in expected_subsections:
                 lints.append('The {} section contained an unexpected '
