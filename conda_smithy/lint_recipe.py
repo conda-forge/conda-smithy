@@ -67,6 +67,17 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
     extra_section = get_section(meta, 'extra', lints)
     package_section = get_section(meta, 'package', lints)
 
+    # 0: Top level keys should be expected
+    unexpected_sections = []
+    for section in major_sections:
+        if section not in EXPECTED_SECTION_ORDER:
+            lints.append('The top level meta key {} is unexpected'
+                            .format(section))
+            unexpected_sections.append(section)
+
+    for section in unexpected_sections:
+        major_sections.remove(section)
+
     # 1: Top level meta.yaml keys should have a specific order.
     section_order_sorted = sorted(major_sections,
                                   key=EXPECTED_SECTION_ORDER.index)

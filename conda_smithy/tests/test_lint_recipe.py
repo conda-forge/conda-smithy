@@ -26,6 +26,14 @@ def tmp_directory():
 
 
 class Test_linter(unittest.TestCase):
+    def test_bad_top_level(self):
+        meta = OrderedDict([['package', {}],
+                            ['build', {}],
+                            ['sources', {}]])
+        lints = linter.lintify(meta)
+        expected_msg = ("The top level meta key sources is unexpected")
+        self.assertIn(expected_msg, lints)
+
     def test_bad_order(self):
         meta = OrderedDict([['package', {}],
                             ['build', {}],
