@@ -63,9 +63,10 @@ install:
       conda install --yes --quiet conda-forge-build-setup
       {% if build_setup -%}
       {{ build_setup }}{% endif %}
+      conda install -n root --quiet --yes -c defaults conda-build
 
 script:
-  - conda build travis/$FOLDER
+  - conda build ./{{ recipe_dir }} -m ./travis/${FOLDER}/conda_build_config.yaml
 {% for owner, channel in channels['targets'] %}
   - {{ upload_script }} ./{{ recipe_dir }} {{ owner }} --channel={{ channel }}
 {% endfor %}

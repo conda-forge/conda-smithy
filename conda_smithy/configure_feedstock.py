@@ -83,14 +83,39 @@ def package_key(meta):
     tp = meta.config.variant.get('target_platform')
     if tp and tp != meta.config.subdir and 'target_platform' not in build_vars:
         build_vars += 'target-' + tp
-    key = [meta.name(), meta.version()]
+    key = []
     if build_vars:
         key.append(build_vars)
     key = "-".join(key)
     return key
 
 
-def dump_subspace_recipe_folder(meta, root_path, output_dir):
+def copytree(src, dst, ignore=(), root_dst=None):
+    if root_dst is None:
+        root_dst = dst
+    for item in os.listdir(src):
+        s = os.path.join(src, item)
+        d = os.path.join(dst, item)
+        if os.path.relpath(d, root_dst) in ignore:
+            continue
+        elif os.path.isdir(s):
+            if not os.path.exists(d):
+                os.makedirs(d)
+            copytree(s, d, ignore, root_dst=root_dst)
+        else:
+            copy_file(s, d)
+
+
+def rmtree(src):
+    for item in os.listdir(src):
+        s = os.path.join(src, item)
+        if os.path.isdir(s):
+            rmtree(s)
+        else:
+            remove_file(s)
+
+
+def dump_subspace_config_folder(meta, root_path, output_dir):
     if meta.meta_path:
         recipe = os.path.dirname(meta.meta_path)
     else:
@@ -102,15 +127,21 @@ def dump_subspace_recipe_folder(meta, root_path, output_dir):
     # copy base recipe into a folder named for this node
     out_folder = os.path.join(output_dir, folder_name)
     if os.path.isdir(out_folder):
-        shutil.rmtree(out_folder)
-    shutil.copytree(os.path.join(root_path, recipe), out_folder)
+        rmtree(out_folder)
+    os.makedirs(out_folder)
     # write the conda_build_config.yml for this particular metadata into that
     #   recipe This should sit alongside meta.yaml, where conda-build will be
     #   able to find it
     # get rid of the special object notation in the yaml file for objects that we dump
     yaml.add_representer(set, yaml.representer.SafeRepresenter.represent_list)
     yaml.add_representer(tuple, yaml.representer.SafeRepresenter.represent_list)
-    with open(os.path.join(out_folder, 'conda_build_config.yaml'), 'w') as f:
+
+    # sort keys so that we don't have random shuffling in config values showing up in diffs
+    for k, v in meta.config.squished_variants.items():
+        if type(v) in [list, set, tuple]:
+            meta.config.squished_variants[k] = sorted(list(v))
+
+    with write_file(os.path.join(out_folder, 'conda_build_config.yaml')) as f:
         yaml.dump(meta.config.squished_variants, f, default_flow_style=False)
     return folder_name
 
@@ -124,6 +155,10 @@ def render_circle(jinja_env, forge_config, forge_dir):
 
     build_configurations = os.path.join(forge_dir, 'circle')
     if os.path.isdir(build_configurations):
+        # this takes care of removing any existing git-registered files
+        rmtree(build_configurations)
+    if os.path.isdir(build_configurations):
+        # this takes care of removing any files not registered with git
         shutil.rmtree(build_configurations)
 
     if not metas:
@@ -144,7 +179,8 @@ def render_circle(jinja_env, forge_config, forge_dir):
         os.makedirs(build_configurations)
         folders = []
         for meta, _, _ in metas:
-            folders.append(dump_subspace_recipe_folder(meta, forge_dir, build_configurations))
+            folders.append(dump_subspace_config_folder(meta, forge_dir, build_configurations))
+        forge_config['folders'] = folders
 
         fast_finish = textwrap.dedent("""\
             {get_fast_finish_script} | \\
@@ -269,6 +305,10 @@ def render_travis(jinja_env, forge_config, forge_dir):
 
     build_configurations = os.path.join(forge_dir, 'travis')
     if os.path.isdir(build_configurations):
+        # this takes care of removing any existing git-registered files
+        rmtree(build_configurations)
+    if os.path.isdir(build_configurations):
+        # this takes care of removing any files not registered with git
         shutil.rmtree(build_configurations)
 
     if not metas:
@@ -280,7 +320,7 @@ def render_travis(jinja_env, forge_config, forge_dir):
         os.makedirs(build_configurations)
         folders = []
         for meta, _, _ in metas:
-            folders.append(dump_subspace_recipe_folder(meta, forge_dir, build_configurations))
+            folders.append(dump_subspace_config_folder(meta, forge_dir, build_configurations))
 
         forge_config["travis"]["enabled"] = True
         fast_finish = textwrap.dedent("""\
@@ -382,6 +422,10 @@ def render_appveyor(jinja_env, forge_config, forge_dir):
 
     build_configurations = os.path.join(forge_dir, 'appveyor')
     if os.path.isdir(build_configurations):
+        # this takes care of removing any existing git-registered files
+        rmtree(build_configurations)
+    if os.path.isdir(build_configurations):
+        # this takes care of removing any files not registered with git
         shutil.rmtree(build_configurations)
 
     if not metas:
@@ -395,7 +439,8 @@ def render_appveyor(jinja_env, forge_config, forge_dir):
         os.makedirs(build_configurations)
         folders = []
         for meta, _, _ in metas:
-            folders.append(dump_subspace_recipe_folder(meta, forge_dir, build_configurations))
+            folders.append(dump_subspace_config_folder(meta, forge_dir, build_configurations))
+        forge_config['folders'] = folders
 
         get_fast_finish_script = ""
         fast_finish_script = ""
@@ -464,22 +509,6 @@ def render_appveyor(jinja_env, forge_config, forge_dir):
         template = jinja_env.get_template('appveyor.yml.tmpl')
         with write_file(target_fname) as fh:
             fh.write(template.render(**forge_config))
-
-
-def copytree(src, dst, ignore=(), root_dst=None):
-    if root_dst is None:
-        root_dst = dst
-    for item in os.listdir(src):
-        s = os.path.join(src, item)
-        d = os.path.join(dst, item)
-        if os.path.relpath(d, root_dst) in ignore:
-            continue
-        elif os.path.isdir(s):
-            if not os.path.exists(d):
-                os.makedirs(d)
-            copytree(s, d, ignore, root_dst=root_dst)
-        else:
-            copy_file(s, d)
 
 
 def copy_feedstock_content(forge_dir):

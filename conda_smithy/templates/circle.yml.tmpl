@@ -15,7 +15,7 @@ jobs:
           command: exit 0
 {%- else %}
 {%- for folder in folders %}
-  {{ folder }}:
+  build_{{ folder }}:
     working_directory: ~/test
     machine: true
     environment:
@@ -49,7 +49,7 @@ workflows:
                 - /.*/
 {%- else %}
 {%- for folder in folders %}
-      - {{ folder }}
+      - build_{{ folder }}
 {%- endfor -%}
 {%- endif -%}
 {%- endblock %}

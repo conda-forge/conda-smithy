@@ -8,7 +8,6 @@ import conda_build.metadata
 import conda.api
 
 import conda_smithy.configure_feedstock as cnfgr_fdstk
-from conda_build_all.resolved_distribution import ResolvedDistribution
 from conda_build import __version__ as conda_build_version
 from distutils.version import LooseVersion
 

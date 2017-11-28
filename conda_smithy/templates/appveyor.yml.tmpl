@@ -47,11 +47,14 @@ install:
     {% if build_setup -%}
     {{ build_setup }}{% endif %}
 
+    # testing purposes: get conda-build from defaults
+    - cmd: conda install -n root --quiet --yes -c defaults conda-build
+
 # Skip .NET project specific build phase.
 build: off
 
 test_script:
-    - conda build appveyor\%FOLDER% --quiet
+    - conda build {{ recipe_dir }} -m appveyor/%FOLDER%/conda_build_config.yaml --quiet
 deploy_script:
 {%- for owner, channel in channels['targets'] %}
     - cmd: {{ upload_script }} .\{{ recipe_dir }} {{ owner }} --channel={{ channel }}

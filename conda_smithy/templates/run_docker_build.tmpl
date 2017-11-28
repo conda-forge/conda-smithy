@@ -59,7 +59,10 @@ conda install --yes --quiet conda-forge-build-setup
 {% if build_setup -%}
 {{ build_setup }}{% endif -%}
 
-conda build /recipe_root/circle/$FOLDER --quiet || exit 1
+# testing purposes: get conda-build from defaults
+conda install -n root --quiet --yes -c defaults conda-build
+
+conda build /recipe_root -m /feedstock_root/circle/$FOLDER/conda_build_config.yaml --quiet || exit 1
 {%- for owner, channel in channels['targets'] %}
 {{ upload_script }} /recipe_root {{ owner }} --channel={{ channel }} || exit 1
 {%- endfor %}
