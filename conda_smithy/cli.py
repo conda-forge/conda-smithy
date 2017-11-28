@@ -188,10 +188,14 @@ class Regenerate(Subcommand):
                          help="The directory of the feedstock git repository.")
         scp.add_argument("-c", "--commit", nargs='?', choices=["edit", "auto"], const="edit",
                          help="Whether to setup a commit or not.")
+        scp.add_argument("-m", "--variant-config-files", action="append",
+                         default=[os.path.join(sys.exec_prefix, 'conda_build_config.yaml')],
+                         help="path to conda_build_config.yaml defining your base matrix")
 
     def __call__(self, args):
         try:
-            configure_feedstock.main(args.feedstock_directory)
+            configure_feedstock.main(args.feedstock_directory,
+                                     variant_config_files=args.variant_config_files)
             print("\nRe-rendered with conda-smithy %s.\n" % __version__)
 
             is_git_repo = os.path.exists(os.path.join(args.feedstock_directory, ".git"))

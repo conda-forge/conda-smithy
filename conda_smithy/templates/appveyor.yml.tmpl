@@ -11,11 +11,9 @@ environment:
   {%- endfor %}
 
   matrix:
-  {%- for case in matrix %}
-    {%- for dep_name, version in case %}
-    {% if loop.first %}- {% else %}  {% endif %}{{ dep_name }}: {{version }}
-    {%- endfor %}
-{% endfor %}
+  {%- for folder in folders %}
+    - FOLDER: {{ folder}}
+  {% endfor %}
 
 # We always use a 64-bit machine, but can build x86 distributions
 # with the TARGET_ARCH variable.
@@ -31,7 +29,9 @@ install:
     - cmd: rmdir C:\cygwin /s /q
 
     # Add path, activate `conda` and update conda.
-    - cmd: call %CONDA_INSTALL_LOCN%\Scripts\activate.bat
+    # Around November of 2017, Appveyor changed Miniconda3-x64 from an old 3.4 install to a
+    #     symlink to the current version.
+    - cmd: call C:\Miniconda3-x64\Scripts\activate.bat
     - cmd: conda update --yes --quiet conda
 
     - cmd: set PYTHONUNBUFFERED=1
@@ -51,7 +51,7 @@ install:
 build: off
 
 test_script:
-    - conda build {{ recipe_dir }} --quiet
+    - conda build appveyor\%FOLDER% --quiet
 deploy_script:
 {%- for owner, channel in channels['targets'] %}
     - cmd: {{ upload_script }} .\{{ recipe_dir }} {{ owner }} --channel={{ channel }}

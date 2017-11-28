@@ -1,15 +1,8 @@
-{%- macro matrix_case_name(matrix_item) -%}
-    build
-    {%- for dep, ver in matrix_item -%}
-        __{{ dep }}_{{ ver }}
-    {%- endfor %}
-{%- endmacro -%}
-
 version: 2
 
 jobs:
 {%- block env_test -%}
-{%- if not matrix %}
+{%- if not folders %}
   build:
     working_directory: ~/test
     machine: true
@@ -21,16 +14,12 @@ jobs:
           # The Circle-CI build should not be active, but if this is not true for some reason, do a fast finish.
           command: exit 0
 {%- else %}
-{%- for case in matrix %}
-  {{ matrix_case_name(case) }}:
+{%- for folder in folders %}
+  {{ folder }}:
     working_directory: ~/test
     machine: true
-    {%- if case[0] %}
     environment:
-      {%- for dep, ver in case %}
-      - {{ dep }}: "{{ ver }}"
-      {%- endfor -%}
-    {%- endif %}
+      - FOLDER: "{{ folder }}"
     steps:
       - checkout
       - run:
@@ -40,14 +29,6 @@ jobs:
             ./ci_support/checkout_merge_commit.sh
       - run:
           command: docker pull {{ docker.image }}
-      {%- if case[0] %}
-      - run:
-          name: Print conda-build environment variables
-          command: |
-            {%- for dep, ver in case %}
-            echo {{ '"' }}{{ dep }}{{ '=${' }}{{ dep }}{{ '}"' }}
-            {%- endfor -%}
-      {%- endif %}
       - run:
           # Run, test and (if we have a BINSTAR_TOKEN) upload the distributions.
           command: ./ci_support/run_docker_build.sh
@@ -60,15 +41,15 @@ workflows:
   build_and_test:
     jobs:
 {%- block env_deps -%}
-{%- if not matrix %}
+{%- if not folders %}
       - build:
           filters:
             branches:
               ignore:
                 - /.*/
 {%- else %}
-{%- for case in matrix %}
-      - {{ matrix_case_name(case) }}
+{%- for folder in folders %}
+      - {{ folder }}
 {%- endfor -%}
 {%- endif -%}
 {%- endblock %}

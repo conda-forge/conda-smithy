@@ -1,16 +1,12 @@
 from __future__ import print_function, unicode_literals
 
-from collections import OrderedDict as odict
 from contextlib import contextmanager
 import os
+import re
 import shutil
-import stat
 import textwrap
 import yaml
 import warnings
-
-import conda.api
-import conda.config
 
 try:
     # Try conda's API in newer 4.2.x and 4.3.x.
@@ -38,15 +34,8 @@ except ImportError:
             'https://repo.continuum.io/pkgs/msys2',
         )
 
-import conda_build.metadata
-try:
-    import conda_build.api
-except ImportError:
-    # old conda-build
-    pass
+import conda_build.api
 from conda_build.metadata import MetaData
-from conda_build_all.version_matrix import special_case_version_matrix, filter_cases
-from conda_build_all.resolved_distribution import ResolvedDistribution
 from jinja2 import Environment, FileSystemLoader
 
 from conda_smithy.feedstock_io import (
@@ -67,24 +56,77 @@ def meta_config(meta):
     return config
 
 
-def render_circle(jinja_env, forge_config, forge_dir):
-    meta = forge_config['package']
-    with fudge_subdir('linux-64', build_config=meta_config(meta)):
-        meta.parse_again()
-        matrix = compute_build_matrix(
-            meta,
-            forge_config.get('matrix'),
-            forge_config.get('channels', {}).get('sources', tuple())
-        )
-        cases_not_skipped = []
-        for case in matrix:
-            pkgs, vars = split_case(case)
-            with enable_vars(vars):
-                if not ResolvedDistribution(meta, pkgs).skip():
-                    cases_not_skipped.append(vars + sorted(pkgs))
-        matrix = sorted(cases_not_skipped, key=sort_without_target_arch)
+def package_key(meta):
+    # get the build string from whatever conda-build makes of the configuration
+    variables = meta.get_loop_vars()
+    used_variables = set()
+    requirements = meta.extract_requirements_text().rstrip()
+    if not requirements:
+        requirements = (meta.get_value('requirements/build') +
+                        meta.get_value('requirements/run') +
+                        meta.get_value('requirements/host'))
+        requirements = '- ' + "\n- ".join(requirements)
+    for v in variables:
+        variant_regex = r"(\s*\{\{\s*%s\s*(?:.*?)?\}\})" % v
+        requirement_regex = r"(\-\s+%s(?:\s+|$))" % v
+        all_res = '|'.join((variant_regex, requirement_regex))
+        compiler_match = re.match(r'(.*?)_compiler$', v)
+        if compiler_match:
+            compiler_regex = (
+                r"(\s*\{\{\s*compiler\([\'\"]%s[\"\'].*\)\s*\}\})" % compiler_match.group(1))
+            all_res = '|'.join((all_res, compiler_regex))
+        if re.search(all_res, requirements, flags=re.MULTILINE | re.DOTALL):
+            used_variables.add(v)
+    build_vars = ''.join([k + str(meta.config.variant[k]) for k in sorted(list(used_variables))])
+    # kind of a special case.  Target platform determines a lot of output behavior, but may not be
+    #    explicitly listed in the recipe.
+    tp = meta.config.variant.get('target_platform')
+    if tp and tp != meta.config.subdir and 'target_platform' not in build_vars:
+        build_vars += 'target-' + tp
+    key = [meta.name(), meta.version()]
+    if build_vars:
+        key.append(build_vars)
+    key = "-".join(key)
+    return key
 
-    if not matrix:
+
+def dump_subspace_recipe_folder(meta, root_path, output_dir):
+    if meta.meta_path:
+        recipe = os.path.dirname(meta.meta_path)
+    else:
+        recipe = meta.get('extra', {}).get('parent_recipe', {})
+    assert recipe, ("no parent recipe set, and no path associated with this metadata")
+    # make recipe path relative
+    recipe = recipe.replace(root_path + '/', '')
+    folder_name = package_key(meta)
+    # copy base recipe into a folder named for this node
+    out_folder = os.path.join(output_dir, folder_name)
+    if os.path.isdir(out_folder):
+        shutil.rmtree(out_folder)
+    shutil.copytree(os.path.join(root_path, recipe), out_folder)
+    # write the conda_build_config.yml for this particular metadata into that
+    #   recipe This should sit alongside meta.yaml, where conda-build will be
+    #   able to find it
+    # get rid of the special object notation in the yaml file for objects that we dump
+    yaml.add_representer(set, yaml.representer.SafeRepresenter.represent_list)
+    yaml.add_representer(tuple, yaml.representer.SafeRepresenter.represent_list)
+    with open(os.path.join(out_folder, 'conda_build_config.yaml'), 'w') as f:
+        yaml.dump(meta.config.squished_variants, f, default_flow_style=False)
+    return folder_name
+
+
+def render_circle(jinja_env, forge_config, forge_dir):
+    metas = conda_build.api.render(os.path.join(forge_dir, 'recipe'),
+                                   variant_config_files=forge_config['variant_config_files'],
+                                   platform='linux', arch='64',
+                                   permit_undefined_jinja=True, finalize=False,
+                                   bypass_env_check=True)
+
+    build_configurations = os.path.join(forge_dir, 'circle')
+    if os.path.isdir(build_configurations):
+        shutil.rmtree(build_configurations)
+
+    if not metas:
         # There are no cases to build (not even a case without any special
         # dependencies), so remove the run_docker_build.sh if it exists.
         forge_config["circle"]["enabled"] = False
@@ -98,8 +140,11 @@ def render_circle(jinja_env, forge_config, forge_dir):
             remove_file(each_target_fname)
     else:
         forge_config["circle"]["enabled"] = True
-        matrix = prepare_matrix_for_env_vars(matrix)
-        forge_config = update_matrix(forge_config, matrix)
+
+        os.makedirs(build_configurations)
+        folders = []
+        for meta, _, _ in metas:
+            folders.append(dump_subspace_recipe_folder(meta, forge_dir, build_configurations))
 
         fast_finish = textwrap.dedent("""\
             {get_fast_finish_script} | \\
@@ -205,71 +250,39 @@ def render_circle(jinja_env, forge_config, forge_dir):
         fh.write(template.render(**forge_config))
 
 
-@contextmanager
-def fudge_subdir(subdir, build_config):
-    """
-    Override the subdir (aka platform) that conda and conda_build see
-    both when fetching the index and in parsing conda build MetaData.
-
-    """
-    # Store conda-build and conda.config's existing settings.
-    conda_orig = conda.config.subdir
-    cb_orig = build_config.subdir
-
-    # Set them to what we want.
-    conda.config.subdir = subdir
-    build_config.subdir = subdir
-
-    if not hasattr(conda_build, 'api'):
-        # Old conda-builds have a copied subdir value, so we need to change that too.
-        copied_subdir_orig = conda_build.metadata.subdir
-        conda_build.metadata.subdir = subdir
-
-    yield
-
-    # Set them back to what they were
-    conda.config.subdir = conda_orig
-    build_config.subdir = cb_orig
-
-    if not hasattr(conda_build, 'api'):
-        # Old conda-builds have a copied subdir value, so we need to change that too.
-        conda_build.metadata.subdir = copied_subdir_orig
-
-
 def render_travis(jinja_env, forge_config, forge_dir):
-    meta = forge_config['package']
-    with fudge_subdir('osx-64', build_config=meta_config(meta)):
-        meta.parse_again()
+    metas = conda_build.api.render(os.path.join(forge_dir, 'recipe'),
+                                   variant_config_files=forge_config['variant_config_files'],
+                                   platform='osx', arch='64',
+                                   permit_undefined_jinja=True, finalize=False,
+                                   bypass_env_check=True)
+
+    to_delete = []
+    for idx, (meta, _, _) in enumerate(metas):
         if meta.noarch:
             # do not build noarch, including noarch: python, packages on Travis CI.
-            matrix = []
-        else:
-            matrix = compute_build_matrix(
-                meta,
-                forge_config.get('matrix'),
-                forge_config.get('channels', {}).get('sources', tuple())
-            )
-
-        cases_not_skipped = []
-        for case in matrix:
-            pkgs, vars = split_case(case)
-            with enable_vars(vars):
-                if not ResolvedDistribution(meta, pkgs).skip():
-                    cases_not_skipped.append(vars + sorted(pkgs))
-        matrix = sorted(cases_not_skipped, key=sort_without_target_arch)
+            to_delete.append(idx)
+    for idx in to_delete:
+        del metas[idx]
 
     target_fname = os.path.join(forge_dir, '.travis.yml')
 
-    if not matrix:
+    build_configurations = os.path.join(forge_dir, 'travis')
+    if os.path.isdir(build_configurations):
+        shutil.rmtree(build_configurations)
+
+    if not metas:
         # There are no cases to build (not even a case without any special
         # dependencies), so remove the .travis.yml if it exists.
         forge_config["travis"]["enabled"] = False
         remove_file(target_fname)
     else:
-        forge_config["travis"]["enabled"] = True
-        matrix = prepare_matrix_for_env_vars(matrix)
-        forge_config = update_matrix(forge_config, matrix)
+        os.makedirs(build_configurations)
+        folders = []
+        for meta, _, _ in metas:
+            folders.append(dump_subspace_recipe_folder(meta, forge_dir, build_configurations))
 
+        forge_config["travis"]["enabled"] = True
         fast_finish = textwrap.dedent("""\
             ({get_fast_finish_script} | \\
                 python - -v --ci "travis" "${{TRAVIS_REPO_SLUG}}" "${{TRAVIS_BUILD_NUMBER}}" "${{TRAVIS_PULL_REQUEST}}") || exit 1
@@ -314,6 +327,7 @@ def render_travis(jinja_env, forge_config, forge_dir):
         build_setup = build_setup.replace("\n", "\n      ")
 
         forge_config['build_setup'] = build_setup
+        forge_config['folders'] = folders
 
         # If the recipe supplies its own conda-forge-build-setup upload script,
         # we use it instead of the global one.
@@ -334,141 +348,54 @@ def render_travis(jinja_env, forge_config, forge_dir):
 
 
 def render_README(jinja_env, forge_config, forge_dir):
-    meta = forge_config['package']
+    # we only care about the first metadata object for sake of readme
+    meta = conda_build.api.render(os.path.join(forge_dir, 'recipe'),
+                                  permit_undefined_jinja=True, finalize=False,
+                                  bypass_env_check=True)[0][0]
     template = jinja_env.get_template('README.md.tmpl')
     target_fname = os.path.join(forge_dir, 'README.md')
     if meta.noarch:
         forge_config['noarch_python'] = True
     else:
         forge_config['noarch_python'] = False
+    forge_config['package'] = meta
     with write_file(target_fname) as fh:
         fh.write(template.render(**forge_config))
 
 
-class MatrixCaseEnvVar(object):
-    def __init__(self, name, value):
-        self.name = name
-        self.value = value
-
-    def __iter__(self):
-        # We make the Var iterable so that loops like
-        # ``for name, value in cases`` can be used.
-        return iter([self.name, self.value])
-
-    def __cmp__(self, other):
-        # Implement ordering so that sorting functions as expected.
-        if not isinstance(other, type(self)):
-            return -3
-        elif other.name != self.name:
-            return -2
-        else:
-            return cmp(self.value, other.value)
-
-
-@contextmanager
-def enable_vars(vars):
-    existing = {}
-    for var in vars:
-        if var.name in os.environ:
-            existing[var.name] = os.environ[var.name]
-        os.environ[var.name] = str(var.value)
-    yield
-    for var in vars:
-        if var.name in existing:
-            os.environ[var.name] = existing[var.name]
-        else:
-            os.environ.pop(var.name)
-
-
-def split_case(case):
-    vars = [item for item in case
-            if isinstance(item, MatrixCaseEnvVar)]
-    pkgs = [item for item in case
-            if not isinstance(item, MatrixCaseEnvVar)]
-    return pkgs, vars
-
-
-def sort_without_target_arch(case):
-    arch_order = 0
-    python = None
-    cmp_case = []
-    for name, val in case:
-        if name == 'TARGET_ARCH':
-            arch_order = {'x86': 1, 'x64': 2}.get(val, 0)
-        elif name == 'python':
-            # We group all pythons together.
-            python = val
-        else:
-            cmp_case.append([name, val])
-    return [python, cmp_case, arch_order]
-
-
 def render_appveyor(jinja_env, forge_config, forge_dir):
-    meta = forge_config['package']
-    full_matrix = []
-    for platform, arch in [['win-32', 'x86'], ['win-64', 'x64']]:
-        with fudge_subdir(platform, build_config=meta_config(meta)):
-            meta.parse_again()
-            if meta.noarch:
-                # do not build noarch, include noarch: python packages on AppVeyor.
-                matrix = []
-            else:
-                matrix = compute_build_matrix(
-                    meta,
-                    forge_config.get('matrix'),
-                    forge_config.get('channels', {}).get('sources', tuple())
-                )
+    metas = conda_build.api.render(os.path.join(forge_dir, 'recipe'),
+                                   variant_config_files=forge_config['variant_config_files'],
+                                   platform='win', arch='64',
+                                   permit_undefined_jinja=True, finalize=False,
+                                   bypass_env_check=True)
 
-            cases_not_skipped = []
-            for case in matrix:
-                pkgs, vars = split_case(case)
-                with enable_vars(vars):
-                    if not ResolvedDistribution(meta, pkgs).skip():
-                        cases_not_skipped.append(vars + sorted(pkgs))
-            if cases_not_skipped:
-                arch_env = MatrixCaseEnvVar('TARGET_ARCH', arch)
-                full_matrix.extend([arch_env] + list(case)
-                                   for case in cases_not_skipped)
-    matrix = sorted(full_matrix, key=sort_without_target_arch)
+    to_delete = []
+    for idx, (meta, _, _) in enumerate(metas):
+        if meta.noarch:
+            # do not build noarch, including noarch: python, packages on Travis CI.
+            to_delete.append(idx)
+    for idx in to_delete:
+        del metas[idx]
 
     target_fname = os.path.join(forge_dir, 'appveyor.yml')
 
-    if not matrix:
+    build_configurations = os.path.join(forge_dir, 'appveyor')
+    if os.path.isdir(build_configurations):
+        shutil.rmtree(build_configurations)
+
+    if not metas:
         # There are no cases to build (not even a case without any special
         # dependencies), so remove the appveyor.yml if it exists.
         forge_config["appveyor"]["enabled"] = False
         remove_file(target_fname)
     else:
         forge_config["appveyor"]["enabled"] = True
-        matrix = prepare_matrix_for_env_vars(matrix)
 
-        # Specify AppVeyor Miniconda location.
-        matrix, old_matrix = [], matrix
-        for case in old_matrix:
-            case = odict(case)
-
-            # Use Python 2.7 as a fallback when no Python version is set.
-            case["CONDA_PY"] = case.get("CONDA_PY", "27")
-
-            # Set `root`'s `python` version.
-            case["CONDA_INSTALL_LOCN"] = "C:\\\\Miniconda"
-            if case.get("CONDA_PY") == "27":
-                case["CONDA_INSTALL_LOCN"] += ""
-            elif case.get("CONDA_PY") == "35":
-                case["CONDA_INSTALL_LOCN"] += "35"
-            elif case.get("CONDA_PY") == "36":
-                case["CONDA_INSTALL_LOCN"] += "36"
-
-            # Set architecture.
-            if case.get("TARGET_ARCH") == "x86":
-                case["CONDA_INSTALL_LOCN"] += ""
-            if case.get("TARGET_ARCH") == "x64":
-                case["CONDA_INSTALL_LOCN"] += "-x64"
-
-            matrix.append(list(case.items()))
-        del old_matrix
-
-        forge_config = update_matrix(forge_config, matrix)
+        os.makedirs(build_configurations)
+        folders = []
+        for meta, _, _ in metas:
+            folders.append(dump_subspace_recipe_folder(meta, forge_dir, build_configurations))
 
         get_fast_finish_script = ""
         fast_finish_script = ""
@@ -539,44 +466,6 @@ def render_appveyor(jinja_env, forge_config, forge_dir):
             fh.write(template.render(**forge_config))
 
 
-def update_matrix(forge_config, new_matrix):
-    """
-    Return a new config with the build matrix updated.
-
-    """
-    forge_config = forge_config.copy()
-    forge_config['matrix'] = new_matrix
-    return forge_config
-
-
-def prepare_matrix_for_env_vars(matrix):
-    """
-    Turns a matrix with environment variables and packages into a matrix of
-    just environment variables. The package variables are prefixed with CONDA,
-    and special cases such as Python, NumPy, and R are handled.
-
-    """
-    special_conda_vars = {'python': 'CONDA_PY', 'numpy': 'CONDA_NPY', 'r-base': 'CONDA_R'}
-    env_matrix = []
-    for case in matrix:
-        new_case = []
-        for item in case:
-            if isinstance(item, MatrixCaseEnvVar):
-                new_case.append((item.name, item.value))
-            else:
-                # We have a package, so transform it into something conda understands.
-                name, value = item
-                if name in special_conda_vars:
-                    name = special_conda_vars[name]
-                    if name.upper() != 'CONDA_R':
-                        value = str(value).replace('.', '')
-                else:
-                    name = 'CONDA_' + name.upper()
-                new_case.append((name, value))
-        env_matrix.append(new_case)
-    return env_matrix
-
-
 def copytree(src, dst, ignore=(), root_dst=None):
     if root_dst is None:
         root_dst = dst
@@ -615,48 +504,7 @@ def meta_of_feedstock(forge_dir, config=None):
     return meta
 
 
-def compute_build_matrix(meta, existing_matrix=None, channel_sources=tuple()):
-    channel_sources = tuple(channel_sources)
-
-    # Override what `defaults` means depending on the platform used.
-    try:
-        i = channel_sources.index("defaults")
-
-        defaults = DEFAULT_CHANNELS_UNIX
-        if meta_config(meta).subdir.startswith("win"):
-            defaults = DEFAULT_CHANNELS_WIN
-
-        channel_sources = (
-            channel_sources[:i] +
-            defaults +
-            channel_sources[i+1:]
-        )
-    except ValueError:
-        pass
-
-    index = conda.api.get_index(channel_urls=channel_sources,
-                                platform=meta_config(meta).subdir)
-    mtx = special_case_version_matrix(meta, index)
-    mtx = list(filter_cases(mtx, ['python >=2.7,<3|>=3.5', 'numpy >=1.11', 'r-base ==3.3.2|==3.4.1']))
-    if existing_matrix:
-        mtx = [tuple(mtx_case) + tuple(MatrixCaseEnvVar(*item) for item in case)
-               for case in sorted(existing_matrix)
-               for mtx_case in mtx]
-    return mtx
-
-
-def main(forge_file_directory):
-    if hasattr(conda_build, 'api'):
-        build_config = conda_build.api.Config()
-    else:
-        build_config = conda_build.config.config
-
-    # conda-build has some really fruity behaviour where it needs CONDA_NPY
-    # and CONDA_PY in order to even read a meta. Because we compute version
-    # matricies anyway the actual number makes absolutely no difference.
-    build_config.CONDA_NPY = '99.9'
-    build_config.CONDA_PY = 10
-
+def main(forge_file_directory, variant_config_files):
     recipe_dir = 'recipe'
     config = {'docker': {'executable': 'docker',
                          'image': 'condaforge/linux-anvil',
@@ -665,6 +513,7 @@ def main(forge_file_directory):
               'travis': {},
               'circle': {},
               'appveyor': {},
+              'variant_config_files': variant_config_files,
               'channels': {'sources': ['conda-forge', 'defaults'],
                            'targets': [['conda-forge', 'main']]},
               'github': {'user_or_org': 'conda-forge', 'repo_name': ''},
@@ -694,7 +543,7 @@ def main(forge_file_directory):
             # Deal with dicts within dicts.
             if isinstance(value, dict):
                 config_item.update(value)
-    config['package'] = meta = meta_of_feedstock(forge_file_directory, config=build_config)
+    config['package'] = forge_file_directory
     if not config['github']['repo_name']:
         feedstock_name = os.path.basename(forge_dir)
         if not feedstock_name.endswith("-feedstock"):

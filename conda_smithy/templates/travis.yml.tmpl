@@ -1,8 +1,3 @@
-{%- macro matrix_env(matrix_item) -%}
-    {% for dep_name, version in matrix_item -%}
-        {{ dep_name }}={{ version }}{% if not loop.last %}  {% endif %}
-    {%- endfor %}
-{%- endmacro -%}
 # This file was generated automatically from conda-smithy. To update this configuration,
 # update the conda-forge.yml and/or the recipe/meta.yaml.
 
@@ -12,12 +7,12 @@ os: osx
 osx_image: xcode6.4
 
 {% block env -%}
-{% if matrix[0] or travis.secure -%}
+{% if folders[0] or travis.secure -%}
 env:
-  {%- if matrix[0] %}
+  {%- if folders[0] %}
   matrix:
-    {% for case in matrix %}
-    - {{ matrix_env(case) }}
+    {% for folder in folders %}
+    - FOLDER={{ folder }}
     {%- endfor %}
   {%- endif %}
   {%- if travis.secure %}
@@ -70,7 +65,7 @@ install:
       {{ build_setup }}{% endif %}
 
 script:
-  - conda build ./{{ recipe_dir }}
+  - conda build travis/$FOLDER
 {% for owner, channel in channels['targets'] %}
   - {{ upload_script }} ./{{ recipe_dir }} {{ owner }} --channel={{ channel }}
 {% endfor %}
