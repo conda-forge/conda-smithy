@@ -48,25 +48,7 @@ conda_forge_content = os.path.abspath(os.path.dirname(__file__))
 
 def package_key(meta):
     # get the build string from whatever conda-build makes of the configuration
-    variables = meta.get_loop_vars()
-    used_variables = set()
-    requirements = meta.extract_requirements_text().rstrip()
-    if not requirements:
-        requirements = (meta.get_value('requirements/build') +
-                        meta.get_value('requirements/run') +
-                        meta.get_value('requirements/host'))
-        requirements = '- ' + "\n- ".join(requirements)
-    for v in variables:
-        variant_regex = r"(\s*\{\{\s*%s\s*(?:.*?)?\}\})" % v
-        requirement_regex = r"(\-\s+%s(?:\s+|$))" % v
-        all_res = '|'.join((variant_regex, requirement_regex))
-        compiler_match = re.match(r'(.*?)_compiler$', v)
-        if compiler_match:
-            compiler_regex = (
-                r"(\s*\{\{\s*compiler\([\'\"]%s[\"\'].*\)\s*\}\})" % compiler_match.group(1))
-            all_res = '|'.join((all_res, compiler_regex))
-        if re.search(all_res, requirements, flags=re.MULTILINE | re.DOTALL):
-            used_variables.add(v)
+    used_variables = meta.get_used_loop_vars()
     build_vars = ''.join([k + str(meta.config.variant[k]) for k in sorted(list(used_variables))])
     # kind of a special case.  Target platform determines a lot of output behavior, but may not be
     #    explicitly listed in the recipe.
@@ -124,8 +106,8 @@ def dump_subspace_config_file(meta, root_path, output_name):
             meta.config.squished_variants[k] = sorted(list(v))
 
     # filter out keys to only those used by the recipe, plus some important machinery junk
-    used_keys = {k: meta.config.squished_variants[k] for k in meta.get_used_loop_vars()}
-    extra_keys = ('zip_keys', 'pin_run_as_build', 'target_platform')
+    used_keys = {k: meta.config.squished_variants[k] for k in meta.get_used_vars()}
+    extra_keys = ('zip_keys', 'pin_run_as_build', 'target_platform', 'MACOSX_DEPLOYMENT_TARGET')
     for k in extra_keys:
         if k in meta.config.squished_variants and meta.config.squished_variants[k]:
             used_keys[k] = meta.config.squished_variants[k]
@@ -368,7 +350,7 @@ def _appveyor_specific_setup(jinja_env, forge_config, forge_dir):
     build_setup = ""
     # If the recipe supplies its own conda-forge-build-setup script,
     # we use it instead of the global one.
-    cfbs_fpath = os.path.join(forge_dir, 'recipe', 'run_conda_forge_build_setup_osx')
+    cfbs_fpath = os.path.join(forge_dir, 'recipe', 'run_conda_forge_build_setup_win.bat')
     if os.path.exists(cfbs_fpath):
         build_setup += textwrap.dedent("""\
             # Overriding global conda-forge-build-setup with local copy.
