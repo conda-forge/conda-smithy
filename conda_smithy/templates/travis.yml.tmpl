@@ -7,12 +7,12 @@ os: osx
 osx_image: xcode6.4
 
 {% block env -%}
-{% if folders[0] or travis.secure -%}
+{% if configs[0] or travis.secure -%}
 env:
-  {%- if folders[0] %}
+  {%- if configs[0] %}
   matrix:
-    {% for folder in folders %}
-    - FOLDER={{ folder }}
+    {% for config in configs %}
+    - CONFIG={{ config }}
     {%- endfor %}
   {%- endif %}
   {%- if travis.secure %}
@@ -63,10 +63,10 @@ install:
       conda install --yes --quiet conda-forge-build-setup
       {% if build_setup -%}
       {{ build_setup }}{% endif %}
-      conda install -n root --quiet --yes -c defaults conda-build
+      conda install -n root --quiet --yes -c msarahan conda-build
 
 script:
-  - conda build ./{{ recipe_dir }} -m ./travis/${FOLDER}/conda_build_config.yaml
+  - conda build ./{{ recipe_dir }} -m ./ci_support/matrix/travis_${CONFIG}.yaml
 {% for owner, channel in channels['targets'] %}
-  - {{ upload_script }} ./{{ recipe_dir }} {{ owner }} --channel={{ channel }}
+  - {{ upload_script }} ./{{ recipe_dir }} {{ owner }} --channel={{ channel }} -m ./ci_support/matrix/travis_${CONFIG}.yaml
 {% endfor %}

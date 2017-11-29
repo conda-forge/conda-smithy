@@ -40,7 +40,7 @@ rm -f "$FEEDSTOCK_ROOT/build_artefacts/conda-forge-build-done"
 cat << EOF | {{ docker.executable }} run -i \
                         -v "${RECIPE_ROOT}":/recipe_root \
                         -v "${FEEDSTOCK_ROOT}":/feedstock_root \
-                        -e FOLDER="$FOLDER" \
+                        -e CONFIG="$CONFIG" \
                         -a stdin -a stdout -a stderr \
                         {{ docker.image }} \
                         {{ docker.command }} || exit 1
@@ -60,11 +60,11 @@ conda install --yes --quiet conda-forge-build-setup
 {{ build_setup }}{% endif -%}
 
 # testing purposes: get conda-build from defaults
-conda install -n root --quiet --yes -c defaults conda-build
+conda install -n root --quiet --yes -c msarahan conda-build
 
-conda build /recipe_root -m /feedstock_root/circle/$FOLDER/conda_build_config.yaml --quiet || exit 1
+conda build /recipe_root -m /feedstock_root/ci_support/matrix/circle_${CONFIG}.yaml --quiet || exit 1
 {%- for owner, channel in channels['targets'] %}
-{{ upload_script }} /recipe_root {{ owner }} --channel={{ channel }} || exit 1
+{{ upload_script }} /recipe_root {{ owner }} --channel={{ channel }} -m /feedstock_root/ci_support/matrix/circle_${CONFIG}.yaml || exit 1
 {%- endfor %}
 
 touch /feedstock_root/build_artefacts/conda-forge-build-done

@@ -11,8 +11,8 @@ environment:
   {%- endfor %}
 
   matrix:
-  {%- for folder in folders %}
-    - FOLDER: {{ folder}}
+  {%- for config in configs %}
+    - CONFIG: {{ config}}
   {% endfor %}
 
 # We always use a 64-bit machine, but can build x86 distributions
@@ -48,14 +48,14 @@ install:
     {{ build_setup }}{% endif %}
 
     # testing purposes: get conda-build from defaults
-    - cmd: conda install -n root --quiet --yes -c defaults conda-build
+    - cmd: conda install -n root --quiet --yes -c msarahan conda-build
 
 # Skip .NET project specific build phase.
 build: off
 
 test_script:
-    - conda build {{ recipe_dir }} -m appveyor/%FOLDER%/conda_build_config.yaml --quiet
+    - conda build {{ recipe_dir }} -m ci_support/matrix/appveyor_%CONFIG%.yaml --quiet
 deploy_script:
 {%- for owner, channel in channels['targets'] %}
-    - cmd: {{ upload_script }} .\{{ recipe_dir }} {{ owner }} --channel={{ channel }}
+    - cmd: {{ upload_script }} .\{{ recipe_dir }} {{ owner }} --channel={{ channel }} -m ci_support/matrix/appveyor_%CONFIG%.yaml
 {% endfor %}

@@ -2,7 +2,7 @@ version: 2
 
 jobs:
 {%- block env_test -%}
-{%- if not folders %}
+{%- if not configs %}
   build:
     working_directory: ~/test
     machine: true
@@ -14,12 +14,12 @@ jobs:
           # The Circle-CI build should not be active, but if this is not true for some reason, do a fast finish.
           command: exit 0
 {%- else %}
-{%- for folder in folders %}
-  build_{{ folder }}:
+{%- for config in configs %}
+  build_{{ config }}:
     working_directory: ~/test
     machine: true
     environment:
-      - FOLDER: "{{ folder }}"
+      - CONFIG: "{{ config }}"
     steps:
       - checkout
       - run:
@@ -41,15 +41,15 @@ workflows:
   build_and_test:
     jobs:
 {%- block env_deps -%}
-{%- if not folders %}
+{%- if not configs %}
       - build:
           filters:
             branches:
               ignore:
                 - /.*/
 {%- else %}
-{%- for folder in folders %}
-      - build_{{ folder }}
+{%- for config in configs %}
+      - build_{{ config }}
 {%- endfor -%}
 {%- endif -%}
 {%- endblock %}
