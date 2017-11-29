@@ -431,7 +431,7 @@ def render_appveyor(jinja_env, forge_config, forge_dir):
                                    for case in cases_not_skipped)
     matrix = sorted(full_matrix, key=sort_without_target_arch)
 
-    target_fname = os.path.join(forge_dir, 'appveyor.yml')
+    target_fname = os.path.join(forge_dir, '.appveyor.yml')
 
     if not matrix:
         # There are no cases to build (not even a case without any special
@@ -677,6 +677,7 @@ def main(forge_file_directory):
         'disabled_appveyor.yml',
         os.path.join('ci_support', 'upload_or_check_non_existence.py'),
         'circle.yml',
+        'appveyor.yml',
     ]
     for old_file in old_files:
         remove_file(os.path.join(forge_dir, old_file))
