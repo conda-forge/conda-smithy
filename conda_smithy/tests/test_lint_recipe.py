@@ -143,7 +143,7 @@ class Test_linter(unittest.TestCase):
     def test_selectors(self):
         expected_message = ('Selectors are suggested to take a '
                          '``<two spaces>#<one space>[<expression>]`` form.'
-                         'see lines {}'.format([3]))
+                         ' See lines {}'.format([3]))
 
         with tmp_directory() as recipe_dir:
             def assert_selector(selector, is_good=True):
