@@ -174,29 +174,81 @@ class Test_linter(unittest.TestCase):
         expected_start = "`noarch` packages can't have selectors."
 
         with tmp_directory() as recipe_dir:
-            def assert_noarch_selector(noarch, selector, is_good=False):
+            def assert_noarch_selector(meta_string, is_good=False):
                 with io.open(os.path.join(recipe_dir, 'meta.yaml'), 'w') as fh:
-                    fh.write("""
-                            build:
-                              noarch: {}
-                              skip: true  # {}
-                            """.format(noarch, selector))
+                    fh.write(meta_string)
                 lints = linter.main(recipe_dir)
                 if is_good:
                     message = ("Found lints when there shouldn't have "
-                               "been a lint for '{}', '{}'."
-                              ).format(noarch, selector)
+                               "been a lint for '{}'."
+                              ).format(meta_string)
                 else:
-                    message = ("Expected lints for '{}', '{}', but didn't "
-                               "get any.").format(noarch, selector)
+                    message = ("Expected lints for '{}', but didn't "
+                               "get any.").format(meta_string)
                 self.assertEqual(not is_good,
                                  any(lint.startswith(expected_start)
                                      for lint in lints),
                                  message)
 
-            assert_noarch_selector('python', '[py2k]')
-            assert_noarch_selector('generic', '[win]')
-            assert_noarch_selector('python', '', is_good=True)
+            assert_noarch_selector("""
+                            build:
+                              noarch: python
+                              skip: true  # [py2k]
+                            """)
+            assert_noarch_selector("""
+                            build:
+                              noarch: generic
+                              skip: true  # [win]
+                            """)
+            assert_noarch_selector("""
+                            build:
+                              noarch: python
+                              skip: true  #
+                            """, is_good=True)
+            assert_noarch_selector("""
+                            build:
+                              noarch: python
+                              script:
+                                - echo "hello" # [unix]
+                                - echo "hello" # [win]
+                            """, is_good=True)
+            assert_noarch_selector("""
+                            build:
+                              noarch: python
+                              script:
+                                - echo "hello" # [unix]
+                                - echo "hello" # [win]
+                              requirements:
+                                build:
+                                  - python
+                            """, is_good=True)
+            assert_noarch_selector("""
+                            build:
+                              noarch: python
+                              script:
+                                - echo "hello" # [unix]
+                                - echo "hello" # [win]
+                              requirements:
+                                build:
+                                  - python
+                              tests:
+                                commands:
+                                  - cp asd qwe  # [unix]
+                            """, is_good=True)
+            assert_noarch_selector("""
+                            build:
+                              noarch: python
+                              script:
+                                - echo "hello" # [unix]
+                                - echo "hello" # [win]
+                              requirements:
+                                build:
+                                  - python
+                                  - enum34     # [py2k]
+                              tests:
+                                commands:
+                                  - cp asd qwe  # [unix]
+                            """)
 
     def test_jinja_os_environ(self):
         # Test that we can use os.environ in a recipe. We don't care about
