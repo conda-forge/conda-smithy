@@ -135,7 +135,7 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
         if bad_selectors:
             lints.append('Selectors are suggested to take a '
                          '``<two spaces>#<one space>[<expression>]`` form.'
-                         'see lines {}'.format(bad_lines))
+                         ' See lines {}'.format(bad_lines))
 
     # 7: The build section should have a build number.
     if build_section.get('number', None) is None:
