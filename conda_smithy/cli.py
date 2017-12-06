@@ -19,7 +19,7 @@ from . import __version__
 
 PY2 = sys.version_info[0] == 2
 
-def generate_feedstock_content(target_directory, source_recipe_dir, meta):
+def generate_feedstock_content(target_directory, source_recipe_dir, meta, variant_config_files):
     target_directory = os.path.abspath(target_directory)
     recipe_dir = "recipe"
     target_recipe_dir = os.path.join(target_directory, recipe_dir)
@@ -43,7 +43,7 @@ def generate_feedstock_content(target_directory, source_recipe_dir, meta):
     cwd = os.getcwd()
     os.chdir(target_directory)
     try:
-        configure_feedstock.main(target_directory)
+        configure_feedstock.main(target_directory, variant_config_files)
     finally:
         os.chdir(cwd)
 
@@ -81,6 +81,9 @@ class Init(Subcommand):
         scp.add_argument("--no-git-repo", action='store_true',
                                        default=False,
                                        help="Do not init the feedstock as a git repository.")
+        scp.add_argument("-m", "--variant-config-files", action="append",
+                         default=[os.path.join(sys.exec_prefix, 'conda_build_config.yaml')],
+                         help="path to conda_build_config.yaml defining your base matrix")
 
     def __call__(self, args):
         # check some error conditions
@@ -102,7 +105,8 @@ class Init(Subcommand):
             os.makedirs(feedstock_directory)
             if not args.no_git_repo:
                 subprocess.check_call(['git', 'init'], cwd=feedstock_directory)
-            generate_feedstock_content(feedstock_directory, args.recipe_directory, meta)
+            generate_feedstock_content(feedstock_directory, args.recipe_directory, meta,
+                                       args.variant_config_files)
             if not args.no_git_repo:
                 subprocess.check_call(['git', 'commit', '-m', msg], cwd=feedstock_directory)
 

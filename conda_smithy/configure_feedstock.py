@@ -2,7 +2,6 @@ from __future__ import print_function, unicode_literals
 
 import glob
 import os
-import re
 import textwrap
 import yaml
 import warnings
@@ -178,7 +177,7 @@ def _render_ci_provider(provider_name, jinja_env, forge_config, forge_dir, platf
         for config in configs:
             remove_file(config)
 
-    if not metas:
+    if not metas or all(m.skip() for m, _, _ in metas):
         # There are no cases to build (not even a case without any special
         # dependencies), so remove the run_docker_build.sh if it exists.
         forge_config[provider_name]["enabled"] = False
@@ -224,6 +223,7 @@ def _render_ci_provider(provider_name, jinja_env, forge_config, forge_dir, platf
         template = jinja_env.get_template(platform_template_file)
         with write_file(platform_target_path) as fh:
             fh.write(template.render(**forge_config))
+    return forge_config
 
 
 def _circle_specific_setup(jinja_env, forge_config, forge_dir):
@@ -410,8 +410,7 @@ def copy_feedstock_content(forge_dir):
     )
 
 
-def main(forge_file_directory, variant_config_files):
-    recipe_dir = 'recipe'
+def _load_forge_config(forge_dir, variant_config_files):
     config = {'docker': {'executable': 'docker',
                          'image': 'condaforge/linux-anvil',
                          'command': 'bash'},
@@ -423,8 +422,7 @@ def main(forge_file_directory, variant_config_files):
               'channels': {'sources': ['conda-forge', 'defaults'],
                            'targets': [['conda-forge', 'main']]},
               'github': {'user_or_org': 'conda-forge', 'repo_name': ''},
-              'recipe_dir': recipe_dir}
-    forge_dir = os.path.abspath(forge_file_directory)
+              'recipe_dir': 'recipe'}
 
     # An older conda-smithy used to have some files which should no longer exist,
     # remove those now.
@@ -449,12 +447,18 @@ def main(forge_file_directory, variant_config_files):
             # Deal with dicts within dicts.
             if isinstance(value, dict):
                 config_item.update(value)
-    config['package'] = forge_file_directory
+    config['package'] = os.path.basename(forge_dir)
     if not config['github']['repo_name']:
         feedstock_name = os.path.basename(forge_dir)
         if not feedstock_name.endswith("-feedstock"):
             feedstock_name += "-feedstock"
         config['github']['repo_name'] = feedstock_name
+    return config
+
+
+def main(forge_file_directory, variant_config_files):
+    forge_dir = os.path.abspath(forge_file_directory)
+    config = _load_forge_config(forge_dir, variant_config_files)
 
     for each_ci in ["travis", "circle", "appveyor"]:
         if config[each_ci].pop("enabled", None):
