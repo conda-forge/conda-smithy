@@ -14,9 +14,12 @@ import warnings
 import github
 
 import conda_smithy.lint_recipe as linter
+_thisdir = os.path.abspath(os.path.dirname(__file__))
+
 
 def is_gh_token_set():
     return 'GH_TOKEN' in os.environ
+
 
 @contextmanager
 def tmp_directory():
@@ -359,6 +362,10 @@ class Test_linter(unittest.TestCase):
                     self.assertNotIn(expected_message, lints)
                 else:
                     self.assertIn(expected_message, lints)
+
+    def test_cb3_jinja2_functions(self):
+        lints = linter.main(os.path.join(_thisdir, 'recipes', 'cb3_jinja2_functions', 'recipe'))
+        assert not lints
 
     @unittest.skipUnless(is_gh_token_set(), "GH_TOKEN not set")
     def test_maintainer_exists(self):

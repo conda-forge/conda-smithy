@@ -62,6 +62,8 @@ def package_key(meta):
 
 
 def copytree(src, dst, ignore=(), root_dst=None):
+    """This emulates shutil.copytree, but does so with our git file tracking, so that the new files
+    are added to the repo"""
     if root_dst is None:
         root_dst = dst
     for item in os.listdir(src):
@@ -78,6 +80,9 @@ def copytree(src, dst, ignore=(), root_dst=None):
 
 
 def dump_subspace_config_file(meta, root_path, output_name):
+    """With conda-build 3, it handles the build matrix.  We take what it spits out, and write a
+    config.yaml file for each matrix entry that it spits out.  References to a specific file
+    replace all of the old environment variables that specified a matrix entry."""
     if meta.meta_path:
         recipe = os.path.dirname(meta.meta_path)
     else:
@@ -92,9 +97,7 @@ def dump_subspace_config_file(meta, root_path, output_name):
         os.makedirs(out_folder)
     if os.path.isfile(out_path):
         remove_file(out_path)
-    # write the conda_build_config.yml for this particular metadata into that
-    #   recipe This should sit alongside meta.yaml, where conda-build will be
-    #   able to find it
+
     # get rid of the special object notation in the yaml file for objects that we dump
     yaml.add_representer(set, yaml.representer.SafeRepresenter.represent_list)
     yaml.add_representer(tuple, yaml.representer.SafeRepresenter.represent_list)

@@ -26,7 +26,7 @@ FIELDS['extra'].append('recipe-maintainers')
 EXPECTED_SECTION_ORDER = ['package', 'source', 'build', 'requirements',
                           'test', 'app', 'outputs', 'about', 'extra']
 
-REQUIREMENTS_ORDER = ['build', 'run']
+REQUIREMENTS_ORDER = ['build', 'host', 'run']
 
 TEST_KEYS = {'imports', 'commands'}
 
@@ -51,6 +51,26 @@ def get_section(parent, name, lints):
                      'got a {}.'.format(name, type(section).__name__))
         section = {}
     return section
+
+
+def lint_section_order(major_sections, lints):
+    section_order_sorted = sorted(major_sections,
+                                  key=EXPECTED_SECTION_ORDER.index)
+    if major_sections != section_order_sorted:
+        section_order_sorted_str = map(lambda s: "'%s'" % s,
+                                       section_order_sorted)
+        section_order_sorted_str = ", ".join(section_order_sorted_str)
+        section_order_sorted_str = "[" + section_order_sorted_str + "]"
+        lints.append('The top level meta keys are in an unexpected order. '
+                     'Expecting {}.'.format(section_order_sorted_str))
+
+
+def lint_about_contents(about_section, lints):
+    for about_item in ['home', 'license', 'summary']:
+        # if the section doesn't exist, or is just empty, lint it.
+        if not about_section.get(about_item, ''):
+            lints.append('The {} item is expected in the about section.'
+                         ''.format(about_item))
 
 
 def lintify(meta, recipe_dir=None, conda_forge=False):
@@ -81,22 +101,10 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
         major_sections.remove(section)
 
     # 1: Top level meta.yaml keys should have a specific order.
-    section_order_sorted = sorted(major_sections,
-                                  key=EXPECTED_SECTION_ORDER.index)
-    if major_sections != section_order_sorted:
-        section_order_sorted_str = map(lambda s: "'%s'" % s,
-                                       section_order_sorted)
-        section_order_sorted_str = ", ".join(section_order_sorted_str)
-        section_order_sorted_str = "[" + section_order_sorted_str + "]"
-        lints.append('The top level meta keys are in an unexpected order. '
-                     'Expecting {}.'.format(section_order_sorted_str))
+    lint_section_order(major_sections, lints)
 
     # 2: The about section should have a home, license and summary.
-    for about_item in ['home', 'license', 'summary']:
-        # if the section doesn't exist, or is just empty, lint it.
-        if not about_section.get(about_item, ''):
-            lints.append('The {} item is expected in the about section.'
-                         ''.format(about_item))
+    lint_about_contents(about_section, lints)
 
     # 3a: The recipe should have some maintainers.
     if not extra_section.get('recipe-maintainers', []):
@@ -295,6 +303,15 @@ def main(recipe_dir, conda_forge=False):
         raise IOError('Feedstock has no recipe/meta.yaml.')
 
     env = jinja2.Environment(undefined=NullUndefined)
+    env.globals.update(dict(compiler=lambda x: x + '_compiler_stub',
+                            pin_subpackage=lambda *args, **kwargs: 'subpackage_stub',
+                            pin_compatible=lambda *args, **kwargs: 'compatible_pin_stub',
+                            cdt=lambda *args, **kwargs: 'cdt_stub',
+    ))
+    # stub out cb3 jinja2 functions - they are not important for linting
+    #    if we don't stub them out, the ruamel.yaml load fails to interpret them
+    #    we can't just use conda-build's api.render functionality, because it would apply selectors
+
 
     with io.open(recipe_meta, 'rt') as fh:
         content = env.from_string(''.join(fh)).render(os=os)
