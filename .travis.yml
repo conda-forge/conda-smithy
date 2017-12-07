@@ -27,7 +27,9 @@ install:
     - python setup.py install --single-version-externally-managed --record=record.txt
 
 script:
-    - py.test tests --cov --cov-config .coveragerc
+    - coverage run --parallel-mode -m pytest tests
+    - coverage combine
+    - coverage report
 
 after_success:
     - coveralls
