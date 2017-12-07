@@ -9,7 +9,7 @@ env:
        - CONDA_INSTALL_LOCN="${HOME}/conda"
 
     matrix:
-        - PYTHON=2
+        # - PYTHON=2
         - PYTHON=3
 
 install:
