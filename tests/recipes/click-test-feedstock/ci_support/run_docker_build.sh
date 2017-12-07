@@ -6,16 +6,15 @@
 # benefit from the improvement.
 
 FEEDSTOCK_ROOT=$(cd "$(dirname "$0")/.."; pwd;)
-RECIPE_ROOT=$FEEDSTOCK_ROOT/{{ recipe_dir }}
+RECIPE_ROOT=$FEEDSTOCK_ROOT/recipe
 
 docker info
 
 config=$(cat <<CONDARC
 
 channels:
-{%- for channel in channels.get('sources', []) %}
- - {{ channel }}
-{%- endfor %}
+ - conda-forge
+ - defaults
 
 conda-build:
  root-dir: /feedstock_root/build_artefacts
@@ -37,13 +36,13 @@ fi
 
 rm -f "$FEEDSTOCK_ROOT/build_artefacts/conda-forge-build-done"
 
-cat << EOF | {{ docker.executable }} run -i \
+cat << EOF | docker run -i \
                         -v "${RECIPE_ROOT}":/recipe_root \
                         -v "${FEEDSTOCK_ROOT}":/feedstock_root \
                         -e CONFIG="$CONFIG" \
                         -a stdin -a stdout -a stderr \
-                        {{ docker.image }} \
-                        {{ docker.command }} || exit 1
+                        condaforge/linux-anvil \
+                        bash || exit 1
 
 set -e
 set +x
@@ -56,16 +55,13 @@ echo "$config" > ~/.condarc
 conda clean --lock
 
 conda install --yes --quiet conda-forge-build-setup
-{% if build_setup -%}
-{{ build_setup }}{% endif -%}
+source run_conda_forge_build_setup
 
 # testing purposes: get conda-build from defaults
 conda install -n root --quiet --yes -c defaults conda-build
 
 conda build /recipe_root -m /feedstock_root/ci_support/matrix/circle_${CONFIG}.yaml --quiet || exit 1
-{%- for owner, channel in channels['targets'] %}
-{{ upload_script }} /recipe_root {{ owner }} --channel={{ channel }} -m /feedstock_root/ci_support/matrix/circle_${CONFIG}.yaml || exit 1
-{%- endfor %}
+upload_or_check_non_existence /recipe_root conda-forge --channel=main -m /feedstock_root/ci_support/matrix/circle_${CONFIG}.yaml || exit 1
 
 touch /feedstock_root/build_artefacts/conda-forge-build-done
 EOF
@@ -75,4 +71,3 @@ EOF
 # for a possible fix
 set -x
 test -f "$FEEDSTOCK_ROOT/build_artefacts/conda-forge-build-done" || exit 1
-

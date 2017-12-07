@@ -7,7 +7,7 @@ import sys
 
 import ruamel.yaml
 
-from . import github
+from conda_smithy import github
 
 
 # https://circleci.com/docs/api#add-environment-variable

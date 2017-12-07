@@ -1,0 +1,27 @@
+package:
+  name: test_cb3_jinja2_functions
+  version: 1.0
+
+build:
+  number: 0
+
+requirements:
+  build:
+    - {{ compiler('c') }}
+  host:
+    - zlib
+  run:
+    - {{ pin_compatible('zlib') }}
+
+test:
+  commands:
+    - echo 'works'
+
+about:
+  home: home
+  summary: summary
+  license: BSD
+
+extra:
+  recipe-maintainers:
+    - mickey_mouse

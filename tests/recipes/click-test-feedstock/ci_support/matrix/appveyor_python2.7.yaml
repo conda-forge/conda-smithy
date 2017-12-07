@@ -1,0 +1,11 @@
+pin_run_as_build:
+  python:
+    max_pin: x.x
+    min_pin: x.x
+  r-base:
+    max_pin: x.x.x
+    min_pin: x.x.x
+python:
+- '2.7'
+target_platform:
+- win-64

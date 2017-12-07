@@ -15,14 +15,12 @@ def main():
         entry_points=dict(console_scripts=[
             'feedstocks = conda_smithy.feedstocks:main',
             'conda-smithy = conda_smithy.cli:main']),
-        packages=find_packages(),
         include_package_data=True,
+        packages=['conda_smithy'],
         # As conda-smithy has resources as part of the codebase, it is
         # not zip-safe.
         zip_safe=False,
         cmdclass=versioneer.get_cmdclass(),
-        tests_require=['six'],
-        test_suite='conda_smithy',
     )
     setup(**skw)
 

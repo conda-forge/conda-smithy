@@ -1,19 +1,16 @@
 from __future__ import absolute_import, print_function
 
 import os
-import random
 from random import choice
 
-import git
 from git import Repo
 
-import github
 from github import Github
 from github.GithubException import GithubException
 from github.Organization import Organization
 from github.Team import Team
 
-from . import configure_feedstock
+from conda_smithy import configure_feedstock
 
 
 def gh_token():
