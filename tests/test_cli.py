@@ -22,7 +22,7 @@ def test_init(py_recipe):
                                                        'feedstock_directory',
                                                        'variant_config_files'))
     args = ArgsObject(recipe_directory=os.path.join(recipe, 'recipe'),
-                      feedstock_directory=os.path.join(recipe, '{package}-feedstock'),
+                      feedstock_directory=os.path.join(recipe, '{package.name}-feedstock'),
                       no_git_repo=False,
                       variant_config_files=os.path.join(recipe, 'config.yaml'))
     init_obj(args)

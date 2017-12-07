@@ -113,7 +113,7 @@ class Init(Subcommand):
         else:
             meta = None
 
-        feedstock_directory = args.feedstock_directory.format(package=meta.name())
+        feedstock_directory = args.feedstock_directory.format(package=argparse.Namespace(name=meta.name()))
         msg = 'Initial feedstock commit with conda-smithy {}.'.format(__version__)
 
         try:
