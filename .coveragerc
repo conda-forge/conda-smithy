@@ -15,6 +15,6 @@ omit =
     */python?.?/*
     */site-packages/*
     *tests/*
+    *templates/*
     */versioneer.py
     */_version.py
-    */vendored/*
