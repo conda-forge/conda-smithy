@@ -93,8 +93,7 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
     unexpected_sections = []
     for section in major_sections:
         if section not in EXPECTED_SECTION_ORDER:
-            lints.append('The top level meta key {} is unexpected'
-                            .format(section))
+            lints.append('The top level meta key {} is unexpected' .format(section))
             unexpected_sections.append(section)
 
     for section in unexpected_sections:
@@ -231,8 +230,8 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
                     continue
                 if line_s.startswith("skip:") and is_selector_line(line):
                     lints.append("`noarch` packages can't have selectors. If "
-                         "the selectors are necessary, please remove "
-                         "`noarch: {}`.".format(build_section['noarch']))
+                                 "the selectors are necessary, please remove "
+                                 "`noarch: {}`.".format(build_section['noarch']))
                     break
                 if in_requirements:
                     if requirements_spacing == line[:-len(line.lstrip())]:
@@ -240,8 +239,8 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
                         continue
                     if is_selector_line(line):
                         lints.append("`noarch` packages can't have selectors. If "
-                             "the selectors are necessary, please remove "
-                             "`noarch: {}`.".format(build_section['noarch']))
+                                     "the selectors are necessary, please remove "
+                                     "`noarch: {}`.".format(build_section['noarch']))
                         break
 
     return lints
@@ -303,15 +302,15 @@ def main(recipe_dir, conda_forge=False):
         raise IOError('Feedstock has no recipe/meta.yaml.')
 
     env = jinja2.Environment(undefined=NullUndefined)
+
+    # stub out cb3 jinja2 functions - they are not important for linting
+    #    if we don't stub them out, the ruamel.yaml load fails to interpret them
+    #    we can't just use conda-build's api.render functionality, because it would apply selectors
     env.globals.update(dict(compiler=lambda x: x + '_compiler_stub',
                             pin_subpackage=lambda *args, **kwargs: 'subpackage_stub',
                             pin_compatible=lambda *args, **kwargs: 'compatible_pin_stub',
                             cdt=lambda *args, **kwargs: 'cdt_stub',
-    ))
-    # stub out cb3 jinja2 functions - they are not important for linting
-    #    if we don't stub them out, the ruamel.yaml load fails to interpret them
-    #    we can't just use conda-build's api.render functionality, because it would apply selectors
-
+                            ))
 
     with io.open(recipe_meta, 'rt') as fh:
         content = env.from_string(''.join(fh)).render(os=os)

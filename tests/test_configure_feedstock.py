@@ -75,3 +75,43 @@ def test_r_matrix_on_circle(r_recipe, jinja_env):
     assert os.path.isdir(matrix_dir)
     # single matrix entry - readme is generated later in main function
     assert len(os.listdir(matrix_dir)) == 2
+
+
+def test_py_matrix_appveyor(py_recipe, jinja_env):
+    cnfgr_fdstk.render_appveyor(jinja_env=jinja_env,
+                                forge_config=py_recipe.config,
+                                forge_dir=py_recipe.recipe)
+    # this configuration should be skipped
+    assert py_recipe.config['appveyor']['enabled']
+    matrix_dir = os.path.join(py_recipe.recipe, 'ci_support', 'matrix')
+    assert os.path.isdir(matrix_dir)
+    # 2 python versions, 2 target_platforms
+    assert len(os.listdir(matrix_dir)) == 4
+
+
+def test_py_matrix_travis(py_recipe, jinja_env):
+    cnfgr_fdstk.render_travis(jinja_env=jinja_env,
+                              forge_config=py_recipe.config,
+                              forge_dir=py_recipe.recipe)
+    # this configuration should be run
+    assert py_recipe.config['travis']['enabled']
+    # no appveyor.yaml should have been written.  Nothing else, either, since we only ran
+    #     appveyor render.  No matrix dir should exist.
+    matrix_dir = os.path.join(py_recipe.recipe, 'ci_support', 'matrix')
+    assert os.path.isdir(matrix_dir)
+    # single matrix entry - readme is generated later in main function
+    assert len(os.listdir(matrix_dir)) == 2
+
+
+def test_py_matrix_on_circle(py_recipe, jinja_env):
+    cnfgr_fdstk.render_circle(jinja_env=jinja_env,
+                              forge_config=py_recipe.config,
+                              forge_dir=py_recipe.recipe)
+    # this configuration should be run
+    assert py_recipe.config['circle']['enabled']
+    # no appveyor.yaml should have been written.  Nothing else, either, since we only ran
+    #     appveyor render.  No matrix dir should exist.
+    matrix_dir = os.path.join(py_recipe.recipe, 'ci_support', 'matrix')
+    assert os.path.isdir(matrix_dir)
+    # single matrix entry - readme is generated later in main function
+    assert len(os.listdir(matrix_dir)) == 2
