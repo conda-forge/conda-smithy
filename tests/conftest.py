@@ -57,6 +57,11 @@ def config_yaml(testing_workdir):
     os.makedirs(os.path.join(testing_workdir, 'ci_support'))
     with open(os.path.join(testing_workdir, 'ci_support', 'checkout_merge_commit.sh'), 'w') as f:
         f.write('echo dummy file')
+    with open(os.path.join(testing_workdir, 'short_config.yaml'), 'w') as f:
+        config = {
+            'python': ['2.7'],
+        }
+        yaml.dump(config, f, default_flow_style=False)
     return testing_workdir
 
 
@@ -117,6 +122,8 @@ requirements:
         - python
     run:
         - python
+about:
+    home: home
     """)
     return RecipeConfigPair(str(config_yaml),
                             _load_forge_config(config_yaml,
