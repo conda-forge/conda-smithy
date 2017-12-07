@@ -1,0 +1,43 @@
+# Python CircleCI 2.0 configuration file
+#
+# Check https://circleci.com/docs/2.0/language-python/ for more details
+#
+version: 2
+jobs:
+  "python-2":
+    docker:
+      # specify the version you desire here
+      # use `-browsers` prefix for selenium tests, e.g. `3.6.1-browsers`
+      - image: conda/miniconda2
+
+    working_directory: ~/repo
+
+    steps:
+      - checkout
+
+      - restore_cache:
+          keys:
+          - v1-dependencies-{{ checksum "requirements.txt" }}
+          # fallback to using the latest cache if no exact match is found
+          - v1-dependencies-
+
+      - run:
+          name: install dependencies
+          command: |
+            source /opt/conda/bin/activate
+            conda update --yes --quiet conda
+            conda install --file requirements.txt coverage python-coveralls mock pytest pytest-cov ${CONDA_PKGS} --yes --quiet -c conda-forge
+
+      - save_cache:
+          paths:
+            - /opt/conda/pkgs
+          key: v1-dependencies-{{ checksum "requirements.txt" }}
+
+      # run tests!
+      - run:
+          name: run tests
+          command: |
+            source /opt/bin/activate
+            python setup.py install --single-version-externally-managed --record=record.txt
+            py.test tests --cov --cov-config=.coveragerc
+            coverage
