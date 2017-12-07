@@ -15,12 +15,8 @@ exclude_lines =
 include = conda_smithy/*
 omit =
     *feedstock_content/*
-    */python?.?/*
-    */site-packages/*
     *static/*
-    *tests/*
     *templates/*
-    */versioneer.py
     */_version.py
     */vendored/*
     */__init__.py
