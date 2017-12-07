@@ -2,7 +2,7 @@
 
 setuptools
 conda
-conda-build >=3.0.30
+conda-build >=3.1.1
 jinja2
 requests
 pycrypto

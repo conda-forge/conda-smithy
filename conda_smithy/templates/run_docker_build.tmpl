@@ -60,7 +60,7 @@ conda install --yes --quiet conda-forge-build-setup
 {{ build_setup }}{% endif -%}
 
 # testing purposes: get conda-build from defaults
-conda install -n root --quiet --yes -c msarahan conda-build
+conda install -n root --quiet --yes -c defaults conda-build
 
 conda build /recipe_root -m /feedstock_root/ci_support/matrix/circle_${CONFIG}.yaml --quiet || exit 1
 {%- for owner, channel in channels['targets'] %}

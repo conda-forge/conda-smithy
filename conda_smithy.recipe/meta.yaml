@@ -2,7 +2,7 @@
 
 package:
   name: conda-smithy
-  version: {{ (data.get('version') or '0.1.0dev2') | replace('+', '_') | replace('/', '_') }}
+  version: {{ (data.get('version') or '0.1.0dev2') | replace('+', '_') | replace('/', '_') | replace('-', '_')}}
 
 source:
   path: ../
@@ -21,7 +21,7 @@ requirements:
   run:
     - python
     - conda >=4.2
-    - conda-build >=3.0.30
+    - conda-build >=3.1.1
     - jinja2
     - requests
     - pycrypto
@@ -32,12 +32,16 @@ requirements:
 test:
   requires:
     - mock
+    - pytest
   imports:
     - conda_smithy
     - conda_smithy.ci_register
     - conda_smithy.configure_feedstock
+  source_files:
+    - tests
   commands:
     - conda smithy --help
+    - py.test tests
 
 about:
   home: https://github.com/conda-forge/conda-smithy
