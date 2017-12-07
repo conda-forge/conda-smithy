@@ -45,10 +45,14 @@ def testing_workdir(tmpdir, request):
 def config_yaml(testing_workdir):
     config = {
         'python': ['2.7', '3.5'],
-        'r_base': ['3.3.2', '3.4.2']
+        'r_base': ['3.3.2', '3.4.2'],
     }
     with open(os.path.join(testing_workdir, 'config.yaml'), 'w') as f:
         yaml.dump(config, f, default_flow_style=False)
+        # need selectors, so write these more manually
+        f.write('target_platform:\n')
+        f.write('- win-64   # [win]\n')
+        f.write('- win-32   # [win]\n')
     # dummy file that needs to be present for circle ci.  This is created by the init function
     os.makedirs(os.path.join(testing_workdir, 'ci_support'))
     with open(os.path.join(testing_workdir, 'ci_support', 'checkout_merge_commit.sh'), 'w') as f:
@@ -93,6 +97,26 @@ requirements:
         - r-base
     run:
         - r-base
+    """)
+    return RecipeConfigPair(str(config_yaml),
+                            _load_forge_config(config_yaml,
+                                               variant_config_files=[os.path.join(config_yaml,
+                                                                                  'config.yaml')]))
+
+
+@pytest.fixture(scope='function')
+def py_recipe(config_yaml, request):
+    os.makedirs(os.path.join(config_yaml, 'recipe'))
+    with open(os.path.join(config_yaml, 'recipe', 'meta.yaml'), 'w') as fh:
+        fh.write("""
+package:
+    name: py-test
+    version: 1.0.0
+requirements:
+    build:
+        - python
+    run:
+        - python
     """)
     return RecipeConfigPair(str(config_yaml),
                             _load_forge_config(config_yaml,

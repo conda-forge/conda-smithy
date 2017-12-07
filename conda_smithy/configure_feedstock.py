@@ -6,32 +6,6 @@ import textwrap
 import yaml
 import warnings
 
-try:
-    # Try conda's API in newer 4.2.x and 4.3.x.
-    from conda.exports import (
-        DEFAULT_CHANNELS_UNIX,
-        DEFAULT_CHANNELS_WIN,
-    )
-except ImportError:
-    try:
-        # Fallback for old versions of 4.2.x and 4.3.x.
-        from conda.base.constants import (
-            DEFAULT_CHANNELS_UNIX,
-            DEFAULT_CHANNELS_WIN,
-        )
-    except ImportError:
-        # Fallback for very old conda (e.g. 4.1.x).
-        DEFAULT_CHANNELS_UNIX = (
-            'https://repo.continuum.io/pkgs/free',
-            'https://repo.continuum.io/pkgs/pro',
-        )
-
-        DEFAULT_CHANNELS_WIN = (
-            'https://repo.continuum.io/pkgs/free',
-            'https://repo.continuum.io/pkgs/pro',
-            'https://repo.continuum.io/pkgs/msys2',
-        )
-
 import conda_build.api
 from jinja2 import Environment, FileSystemLoader
 
@@ -171,7 +145,7 @@ def _render_ci_provider(provider_name, jinja_env, forge_config, forge_dir, platf
             if meta.noarch:
                 # do not build noarch, including noarch: python, packages on Travis CI.
                 to_delete.append(idx)
-        for idx in to_delete:
+        for idx in reversed(to_delete):
             del metas[idx]
 
     if os.path.isdir(os.path.join(forge_dir, 'ci_support', 'matrix')):
