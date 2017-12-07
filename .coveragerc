@@ -12,7 +12,6 @@ exclude_lines =
     # ( https://bitbucket.org/ned/coveragepy/issue/198/continue-marked-as-not-covered )
     # and Python issue ( http://bugs.python.org/issue2506 ).
     continue
-include = conda_smithy/*
 omit =
     *feedstock_content/*
     *static/*
