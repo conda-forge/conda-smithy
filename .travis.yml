@@ -27,7 +27,7 @@ install:
     - python setup.py develop
 
 script:
-    - py.test tests -n 3 --cov conda_smithy
+    - py.test tests -n 2 --cov conda_smithy
 
 after_success:
     - coveralls
