@@ -1,6 +1,8 @@
 [run]
 branch = True
-source = conda_smithy
+source =
+   conda_smithy
+   */site-packages/conda_smithy
 
 [report]
 exclude_lines =
