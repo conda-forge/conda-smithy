@@ -1,7 +1,6 @@
 from __future__ import print_function, absolute_import
 
 import os
-import requests
 import subprocess
 import sys
 import time
@@ -113,7 +112,7 @@ class Init(Subcommand):
         else:
             meta = None
 
-        feedstock_directory = args.feedstock_directory.format(package=meta.name())
+        feedstock_directory = args.feedstock_directory.format(package=argparse.Namespace(name=meta.name()))
         msg = 'Initial feedstock commit with conda-smithy {}.'.format(__version__)
 
         try:

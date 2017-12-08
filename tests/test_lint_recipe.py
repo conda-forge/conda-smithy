@@ -501,7 +501,7 @@ class TestCLI_recipe_lint(unittest.TestCase):
         Tests that unicode does not confuse the linter.
         """
         with tmp_directory() as recipe_dir:
-            with io.open(os.path.join(recipe_dir, 'meta.yaml'), 'wt') as fh:
+            with io.open(os.path.join(recipe_dir, 'meta.yaml'), 'wt', encoding='utf-8') as fh:
                 fh.write("""
                     package:
                         name: 'test_package'
