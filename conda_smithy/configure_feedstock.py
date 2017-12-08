@@ -1,12 +1,15 @@
 from __future__ import print_function, unicode_literals
 
 import glob
+from itertools import product
 import os
 import textwrap
 import yaml
 import warnings
 
 import conda_build.api
+import conda_build.utils
+import conda_build.variants
 from jinja2 import Environment, FileSystemLoader
 
 from conda_smithy.feedstock_io import (
@@ -19,15 +22,9 @@ from conda_smithy.feedstock_io import (
 conda_forge_content = os.path.abspath(os.path.dirname(__file__))
 
 
-def package_key(meta):
+def package_key(config, used_loop_vars, subdir):
     # get the build string from whatever conda-build makes of the configuration
-    used_variables = meta.get_used_loop_vars()
-    build_vars = ''.join([k + str(meta.config.variant[k]) for k in sorted(list(used_variables))])
-    # kind of a special case.  Target platform determines a lot of output behavior, but may not be
-    #    explicitly listed in the recipe.
-    tp = meta.config.variant.get('target_platform')
-    if tp and tp != meta.config.subdir and 'target_platform' not in build_vars:
-        build_vars += 'target-' + tp
+    build_vars = ''.join([k + str(config[k][0]) for k in sorted(list(used_loop_vars))])
     key = []
     if build_vars:
         key.append(build_vars)
@@ -53,44 +50,129 @@ def copytree(src, dst, ignore=(), root_dst=None):
             copy_file(s, d)
 
 
-def dump_subspace_config_file(meta, root_path, output_name):
+def break_up_top_level_values(top_level_keys, squished_variants):
+    """top-level values make up CI configurations.  We need to break them up
+    into individual files."""
+
+    accounted_for_keys = set()
+
+    # handle grouping from zip_keys for everything in conform_dict
+    zip_key_groups = []
+    if 'zip_keys' in squished_variants:
+        zip_key_groups = squished_variants['zip_keys']
+        if zip_key_groups and not isinstance(zip_key_groups[0], list):
+            zip_key_groups = [zip_key_groups]
+    zipped_configs = []
+    top_level_dimensions = []
+    for key in top_level_keys:
+        if key in accounted_for_keys:
+            # remove the used variables from the collection of all variables - we have them in the
+            #    other collections now
+            continue
+        if any(key in group for group in zip_key_groups):
+            for group in zip_key_groups:
+                if key in group:
+                    accounted_for_keys.update(set(group))
+                    # create a list of dicts that represent the different permutations that are
+                    #    zipped together.  Each dict in this list will be a different top-level
+                    #    config in its own file
+                    zipped_configs.append([{k: [squished_variants[k][idx]] for k in group}
+                                           for idx, _ in enumerate(squished_variants[key])])
+                    for k in group:
+                        del squished_variants[k]
+                    break
+
+        else:
+            # dimension slice is just this one variable, all other dimensions keep their variability
+            top_level_dimensions.append([{key: [val]} for val in squished_variants[key]])
+            del squished_variants[key]
+
+    configs = []
+    dimensions = []
+
+    # sort values so that the diff doesn't show randomly changing order
+    for key, value in squished_variants.items():
+        if type(value) in (list, set, tuple):
+            squished_variants[key] = sorted(list(value))
+
+    if top_level_dimensions:
+        dimensions.extend(top_level_dimensions)
+    if zipped_configs:
+        dimensions.extend(zipped_configs)
+    if squished_variants:
+        dimensions.append([squished_variants])
+    for permutation in product(*dimensions):
+        config = dict()
+        for perm in permutation:
+            config.update(perm)
+        configs.append(config)
+
+    return configs
+
+
+def _collapse_subpackage_variants(list_of_metas):
+    """Collapse all subpackage node variants into one aggregate collection of used variables
+
+    We get one node per output, but a given recipe can have multiple outputs.  Each output
+    can have its own used_vars, and we must unify all of the used variables for all of the
+    outputs"""
+
+    # things we consider "top-level" are things that we loop over with CI jobs.  We don't loop over
+    #     outputs with CI jobs.
+    top_level_loop_vars = set()
+
+    all_used_vars = set()
+
+    for meta in list_of_metas:
+        all_used_vars.update(meta.get_used_vars())
+
+    top_level_loop_vars = list_of_metas[0].get_used_loop_vars(force_top_level=True)
+    top_level_vars = list_of_metas[0].get_used_vars(force_top_level=True)
+
+    # this is the initial collection of all variants before we discard any.  "Squishing"
+    #     them is necessary because the input form is already broken out into one matrix
+    #     configuration per item, and we want a single dict, with each key representing many values
+    squished_input_variants = conda_build.variants.list_of_dicts_to_dict_of_lists(
+        list_of_metas[0].config.input_variants)
+
+    # Add in some variables that should always be preserved
+    all_used_vars.update(set(('zip_keys', 'pin_run_as_build', 'target_platform',
+                             'MACOSX_DEPLOYMENT_TARGET')))
+    all_used_vars.update(top_level_vars)
+
+    all_used_vars = {key: squished_input_variants[key]
+                     for key in all_used_vars if key in squished_input_variants}
+
+    return break_up_top_level_values(top_level_loop_vars, all_used_vars), top_level_loop_vars
+
+
+def dump_subspace_config_files(metas, root_path, output_name):
     """With conda-build 3, it handles the build matrix.  We take what it spits out, and write a
     config.yaml file for each matrix entry that it spits out.  References to a specific file
     replace all of the old environment variables that specified a matrix entry."""
-    if meta.meta_path:
-        recipe = os.path.dirname(meta.meta_path)
-    else:
-        recipe = meta.get('extra', {}).get('parent_recipe', {})
-    assert recipe, ("no parent recipe set, and no path associated with this metadata")
-    # make recipe path relative
-    recipe = recipe.replace(root_path + '/', '')
-    config_name = '{}_{}'.format(output_name, package_key(meta))
-    out_folder = os.path.join(root_path, 'ci_support', 'matrix')
-    out_path = os.path.join(out_folder, config_name) + '.yaml'
-    if not os.path.isdir(out_folder):
-        os.makedirs(out_folder)
-    if os.path.isfile(out_path):
-        remove_file(out_path)
+
+    # identify how to break up the complete set of used variables.  Anything considered
+    #     "top-level" should be broken up into a separate CI job.
+
+    configs, top_level_loop_vars = _collapse_subpackage_variants(metas)
 
     # get rid of the special object notation in the yaml file for objects that we dump
     yaml.add_representer(set, yaml.representer.SafeRepresenter.represent_list)
     yaml.add_representer(tuple, yaml.representer.SafeRepresenter.represent_list)
 
-    # sort keys so that we don't have random shuffling in config values showing up in diffs
-    for k, v in meta.config.squished_variants.items():
-        if type(v) in [list, set, tuple]:
-            meta.config.squished_variants[k] = sorted(list(v))
+    config_names = []
+    for config in configs:
+        config_name = '{}_{}'.format(output_name, package_key(config, top_level_loop_vars,
+                                                              metas[0].config.subdir))
+        out_folder = os.path.join(root_path, 'ci_support', 'matrix')
+        out_path = os.path.join(out_folder, config_name) + '.yaml'
+        if not os.path.isdir(out_folder):
+            os.makedirs(out_folder)
 
-    # filter out keys to only those used by the recipe, plus some important machinery junk
-    used_keys = {k: meta.config.squished_variants[k] for k in meta.get_used_vars()}
-    extra_keys = ('zip_keys', 'pin_run_as_build', 'target_platform', 'MACOSX_DEPLOYMENT_TARGET')
-    for k in extra_keys:
-        if k in meta.config.squished_variants and meta.config.squished_variants[k]:
-            used_keys[k] = meta.config.squished_variants[k]
-
-    with write_file(out_path) as f:
-        yaml.dump(used_keys, f, default_flow_style=False)
-    return package_key(meta)
+        with write_file(out_path) as f:
+            yaml.dump(config, f, default_flow_style=False)
+        config_names.append(config_name)
+    return config_names
 
 
 def _get_fast_finish_script(provider_name, forge_config, forge_dir, fast_finish_text):
@@ -138,10 +220,12 @@ def _render_ci_provider(provider_name, jinja_env, forge_config, forge_dir, platf
                                    platform=platform, arch=arch,
                                    permit_undefined_jinja=True, finalize=False,
                                    bypass_env_check=True)
+    # render returns some download & reparsing info that we don't care about
+    metas = [m for m, _, _ in metas]
 
     if not keep_noarch:
         to_delete = []
-        for idx, (meta, _, _) in enumerate(metas):
+        for idx, meta in enumerate(metas):
             if meta.noarch:
                 # do not build noarch, including noarch: python, packages on Travis CI.
                 to_delete.append(idx)
@@ -154,7 +238,7 @@ def _render_ci_provider(provider_name, jinja_env, forge_config, forge_dir, platf
         for config in configs:
             remove_file(config)
 
-    if not metas or all(m.skip() for m, _, _ in metas):
+    if not metas or all(m.skip() for m in metas):
         # There are no cases to build (not even a case without any special
         # dependencies), so remove the run_docker_build.sh if it exists.
         forge_config[provider_name]["enabled"] = False
@@ -166,10 +250,7 @@ def _render_ci_provider(provider_name, jinja_env, forge_config, forge_dir, platf
     else:
         forge_config[provider_name]["enabled"] = True
 
-        configs = []
-        for meta, _, _ in metas:
-            configs.append(dump_subspace_config_file(meta, forge_dir, provider_name))
-        forge_config['configs'] = configs
+        forge_config['configs'] = dump_subspace_config_files(metas, forge_dir, provider_name)
 
         forge_config['fast_finish'] = _get_fast_finish_script(provider_name,
                                                               forge_dir=forge_dir,
@@ -368,10 +449,7 @@ def render_README(jinja_env, forge_config, forge_dir):
                                   bypass_env_check=True)[0][0]
     template = jinja_env.get_template('README.md.tmpl')
     target_fname = os.path.join(forge_dir, 'README.md')
-    if meta.noarch:
-        forge_config['noarch_python'] = True
-    else:
-        forge_config['noarch_python'] = False
+    forge_config['noarch_python'] = meta.noarch
     forge_config['package'] = meta
     with write_file(target_fname) as fh:
         fh.write(template.render(**forge_config))

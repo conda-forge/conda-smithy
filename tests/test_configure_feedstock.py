@@ -1,6 +1,8 @@
 import os
 import conda_smithy.configure_feedstock as cnfgr_fdstk
 
+import pytest
+
 
 def test_noarch_skips_appveyor(noarch_recipe, jinja_env):
     cnfgr_fdstk.render_appveyor(jinja_env=jinja_env,
@@ -115,3 +117,20 @@ def test_py_matrix_on_circle(py_recipe, jinja_env):
     assert os.path.isdir(matrix_dir)
     # single matrix entry - readme is generated later in main function
     assert len(os.listdir(matrix_dir)) == 2
+
+
+def test_circle_with_yum_reqs(py_recipe, jinja_env):
+    with open(os.path.join(py_recipe.recipe, 'recipe', 'yum_requirements.txt'), 'w') as f:
+        f.write('nano\n')
+    cnfgr_fdstk.render_circle(jinja_env=jinja_env,
+                              forge_config=py_recipe.config,
+                              forge_dir=py_recipe.recipe)
+
+
+def test_circle_with_empty_yum_reqs_raises(py_recipe, jinja_env):
+    with open(os.path.join(py_recipe.recipe, 'recipe', 'yum_requirements.txt'), 'w') as f:
+        f.write('# effectively empty')
+    with pytest.raises(ValueError):
+        cnfgr_fdstk.render_circle(jinja_env=jinja_env,
+                                  forge_config=py_recipe.config,
+                                  forge_dir=py_recipe.recipe)
