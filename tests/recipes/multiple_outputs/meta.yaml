@@ -10,7 +10,6 @@ build:
 requirements:
   host:
     - libpng
-    - libtiff
     - libpq
 
 outputs:

@@ -26,6 +26,13 @@ def package_key(config, used_loop_vars, subdir):
     # get the build string from whatever conda-build makes of the configuration
     build_vars = ''.join([k + str(config[k][0]) for k in sorted(list(used_loop_vars))])
     key = []
+    # kind of a special case.  Target platform determines a lot of output behavior, but may not be
+    #    explicitly listed in the recipe.
+    tp = config.get('target_platform')
+    if tp and isinstance(tp, list):
+        tp = tp[0]
+    if tp and tp != subdir and 'target_platform' not in build_vars:
+        build_vars += 'target-' + tp
     if build_vars:
         key.append(build_vars)
     key = "-".join(key)
@@ -128,6 +135,8 @@ def _collapse_subpackage_variants(list_of_metas):
 
     top_level_loop_vars = list_of_metas[0].get_used_loop_vars(force_top_level=True)
     top_level_vars = list_of_metas[0].get_used_vars(force_top_level=True)
+    if 'target_platform' in all_used_vars:
+        top_level_loop_vars.add('target_platform')
 
     # this is the initial collection of all variants before we discard any.  "Squishing"
     #     them is necessary because the input form is already broken out into one matrix
@@ -136,8 +145,7 @@ def _collapse_subpackage_variants(list_of_metas):
         list_of_metas[0].config.input_variants)
 
     # Add in some variables that should always be preserved
-    all_used_vars.update(set(('zip_keys', 'pin_run_as_build', 'target_platform',
-                             'MACOSX_DEPLOYMENT_TARGET')))
+    all_used_vars.update(set(('zip_keys', 'pin_run_as_build', 'MACOSX_DEPLOYMENT_TARGET')))
     all_used_vars.update(top_level_vars)
 
     all_used_vars = {key: squished_input_variants[key]
