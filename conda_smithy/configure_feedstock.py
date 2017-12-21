@@ -453,6 +453,7 @@ def render_appveyor(jinja_env, forge_config, forge_dir):
 def render_README(jinja_env, forge_config, forge_dir):
     # we only care about the first metadata object for sake of readme
     meta = conda_build.api.render(os.path.join(forge_dir, 'recipe'),
+                                  variant_config_files=forge_config['variant_config_files'],
                                   permit_undefined_jinja=True, finalize=False,
                                   bypass_env_check=True)[0][0]
     template = jinja_env.get_template('README.md.tmpl')
