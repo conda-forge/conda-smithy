@@ -180,7 +180,7 @@ def dump_subspace_config_files(metas, root_path, output_name):
         with write_file(out_path) as f:
             yaml.dump(config, f, default_flow_style=False)
         config_names.append(config_name)
-    return config_names
+    return sorted(config_names)
 
 
 def _get_fast_finish_script(provider_name, forge_config, forge_dir, fast_finish_text):

@@ -1,1 +1,7 @@
-conda_smithy/_version.py export-subst
+* text=auto
+
+*.patch binary
+*.diff binary
+meta.yaml text eol=lf
+build.sh text eol=lf
+bld.bat text eol=crlf
