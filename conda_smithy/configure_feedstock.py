@@ -117,6 +117,23 @@ def break_up_top_level_values(top_level_keys, squished_variants):
     return configs
 
 
+def _trim_unused_zip_keys(all_used_vars):
+    """Remove unused keys in zip_keys sets, so that they don't cause unnecessary missing value
+    errors"""
+    groups = all_used_vars.get('zip_keys', [])
+    if groups and not isinstance(groups[0], list):
+        groups = [groups]
+    used_groups = []
+    for group in groups:
+        used_keys_in_group = [k for k in group if k in all_used_vars]
+        if len(used_keys_in_group) > 1:
+            used_groups.append(used_keys_in_group)
+    if used_groups:
+        all_used_vars['zip_keys'] = used_groups
+    elif 'zip_keys' in all_used_vars:
+        del all_used_vars['zip_keys']
+
+
 def _collapse_subpackage_variants(list_of_metas):
     """Collapse all subpackage node variants into one aggregate collection of used variables
 
@@ -150,6 +167,16 @@ def _collapse_subpackage_variants(list_of_metas):
 
     all_used_vars = {key: squished_input_variants[key]
                      for key in all_used_vars if key in squished_input_variants}
+
+    _trim_unused_zip_keys(all_used_vars)
+
+    # to deduplicate potentially zipped keys, we blow out the collection of variables, then
+    #     do a set operation, then collapse it again
+    all_used_vars = conda_build.variants.dict_of_lists_to_list_of_dicts(all_used_vars)
+    all_used_vars = set(conda_build.utils.HashableDict(variant) for variant in all_used_vars)
+    all_used_vars = conda_build.variants.list_of_dicts_to_dict_of_lists(list(all_used_vars))
+
+    _trim_unused_zip_keys(all_used_vars)
 
     return break_up_top_level_values(top_level_loop_vars, all_used_vars), top_level_loop_vars
 
