@@ -172,7 +172,10 @@ def _collapse_subpackage_variants(list_of_metas):
 
     # to deduplicate potentially zipped keys, we blow out the collection of variables, then
     #     do a set operation, then collapse it again
-    all_used_vars = conda_build.variants.dict_of_lists_to_list_of_dicts(all_used_vars)
+
+    all_used_vars = conda_build.variants.dict_of_lists_to_list_of_dicts(
+        all_used_vars, extend_keys={'zip_keys', 'pin_run_as_build',
+                                    'ignore_version', 'ignore_build_only_deps'})
     all_used_vars = set(conda_build.utils.HashableDict(variant) for variant in all_used_vars)
     all_used_vars = conda_build.variants.list_of_dicts_to_dict_of_lists(list(all_used_vars))
 
