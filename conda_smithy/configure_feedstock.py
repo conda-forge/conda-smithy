@@ -466,7 +466,7 @@ def _appveyor_specific_setup(jinja_env, forge_config, forge_dir):
 
 
 def render_appveyor(jinja_env, forge_config, forge_dir):
-    target_path = os.path.join(forge_dir, 'appveyor.yml')
+    target_path = os.path.join(forge_dir, '.appveyor.yml')
     fast_finish_text = textwrap.dedent("""\
             {get_fast_finish_script}
             {fast_finish_script} -v --ci "appveyor" "%APPVEYOR_ACCOUNT_NAME%/%APPVEYOR_PROJECT_SLUG%" "%APPVEYOR_BUILD_NUMBER%" "%APPVEYOR_PULL_REQUEST_NUMBER%"
@@ -524,6 +524,7 @@ def _load_forge_config(forge_dir, variant_config_files):
         'disabled_appveyor.yml',
         os.path.join('ci_support', 'upload_or_check_non_existence.py'),
         'circle.yml',
+        'appveyor.yml',
     ]
     for old_file in old_files:
         remove_file(os.path.join(forge_dir, old_file))
