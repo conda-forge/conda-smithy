@@ -391,8 +391,8 @@ def render_circle(jinja_env, forge_config, forge_dir):
     template_filename = 'circle.yml.tmpl'
     fast_finish_text = textwrap.dedent("""\
             {get_fast_finish_script} | \\
-                 python - -v --ci "circle" "${{CIRCLE_PROJECT_USERNAME}}/${{CIRCLE_PROJECT_REPONAME}}" "${{CIRCLE_BUILD_NUM}}" "${{CIRCLE_PR_NUMBER}}"  # NOQA
-        """)
+                 python - -v --ci "circle" "${{CIRCLE_PROJECT_USERNAME}}/${{CIRCLE_PROJECT_REPONAME}}" "${{CIRCLE_BUILD_NUM}}" "${{CIRCLE_PR_NUMBER}}"
+        """)  # NOQA
     extra_platform_files = [
         os.path.join(forge_dir, '.circleci', 'checkout_merge_commit.sh'),
         os.path.join(forge_dir, '.circleci', 'fast_finish_ci_pr_build.sh'),
