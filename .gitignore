@@ -1,3 +1,9 @@
+.coverage
+*.token
+feedstock-repos.json
 *.pyc
-
-build_artefacts
+build/
+conda_smithy.egg-info/
+dist/
+.cache
+.DS_Store
