@@ -431,9 +431,9 @@ def render_travis(jinja_env, forge_config, forge_dir):
     target_path = os.path.join(forge_dir, '.travis.yml')
     template_filename = 'travis.yml.tmpl'
     fast_finish_text = textwrap.dedent("""\
-            ({get_fast_finish_script} | \\
-                python - -v --ci "travis" "${{TRAVIS_REPO_SLUG}}" "${{TRAVIS_BUILD_NUMBER}}" "${{TRAVIS_PULL_REQUEST}}") || exit 1
-        """)
+        ({get_fast_finish_script} | \\
+                  python - -v --ci "travis" "${{TRAVIS_REPO_SLUG}}" "${{TRAVIS_BUILD_NUMBER}}" "${{TRAVIS_PULL_REQUEST}}") || exit 1
+    """)
 
     return _render_ci_provider('travis', jinja_env=jinja_env, forge_config=forge_config,
                                forge_dir=forge_dir, platform='osx', arch='64',
