@@ -15,6 +15,7 @@ env:
     - CONFIG={{ config }}
     {%- endfor %}
   {%- endif %}
+{##}
   {%- if travis.secure %}
   global:
     {%- for name, hashed_secure in travis.secure | dictsort %}
