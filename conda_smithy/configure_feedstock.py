@@ -366,21 +366,21 @@ def _circle_specific_setup(jinja_env, forge_config, forge_dir):
 
     # TODO: Conda has a convenience for accessing nested yaml content.
     template = jinja_env.get_template('run_docker_build.tmpl')
-    target_fname = os.path.join(forge_dir, 'ci_support', 'run_docker_build.sh')
+    target_fname = os.path.join(forge_dir, '.circleci', 'run_docker_build.sh')
     with write_file(target_fname) as fh:
         fh.write(template.render(**forge_config))
 
     template_name = 'fast_finish_ci_pr_build.sh.tmpl'
     template = jinja_env.get_template(template_name)
-    target_fname = os.path.join(forge_dir, 'ci_support', 'fast_finish_ci_pr_build.sh')
+    target_fname = os.path.join(forge_dir, '.circleci', 'fast_finish_ci_pr_build.sh')
     with write_file(target_fname) as fh:
         fh.write(template.render(**forge_config))
 
     # Fix permissions.
     target_fnames = [
-        os.path.join(forge_dir, 'ci_support', 'checkout_merge_commit.sh'),
-        os.path.join(forge_dir, 'ci_support', 'fast_finish_ci_pr_build.sh'),
-        os.path.join(forge_dir, 'ci_support', 'run_docker_build.sh'),
+        os.path.join(forge_dir, '.circleci', 'checkout_merge_commit.sh'),
+        os.path.join(forge_dir, '.circleci', 'fast_finish_ci_pr_build.sh'),
+        os.path.join(forge_dir, '.circleci', 'run_docker_build.sh'),
     ]
     for each_target_fname in target_fnames:
         set_exe_file(each_target_fname, True)
@@ -394,9 +394,9 @@ def render_circle(jinja_env, forge_config, forge_dir):
                  python - -v --ci "circle" "${{CIRCLE_PROJECT_USERNAME}}/${{CIRCLE_PROJECT_REPONAME}}" "${{CIRCLE_BUILD_NUM}}" "${{CIRCLE_PR_NUMBER}}"  # NOQA
         """)
     extra_platform_files = [
-        os.path.join(forge_dir, 'ci_support', 'checkout_merge_commit.sh'),
-        os.path.join(forge_dir, 'ci_support', 'fast_finish_ci_pr_build.sh'),
-        os.path.join(forge_dir, 'ci_support', 'run_docker_build.sh'),
+        os.path.join(forge_dir, '.circleci', 'checkout_merge_commit.sh'),
+        os.path.join(forge_dir, '.circleci', 'fast_finish_ci_pr_build.sh'),
+        os.path.join(forge_dir, '.circleci', 'run_docker_build.sh'),
         ]
 
     return _render_ci_provider('circle', jinja_env=jinja_env, forge_config=forge_config,
@@ -525,6 +525,9 @@ def _load_forge_config(forge_dir, variant_config_files):
         os.path.join('ci_support', 'upload_or_check_non_existence.py'),
         'circle.yml',
         'appveyor.yml',
+        os.path.join('ci_support', 'checkout_merge_commit.sh'),
+        os.path.join('ci_support', 'fast_finish_ci_pr_build.sh'),
+        os.path.join('ci_support', 'run_docker_build.sh'),
     ]
     for old_file in old_files:
         remove_file(os.path.join(forge_dir, old_file))

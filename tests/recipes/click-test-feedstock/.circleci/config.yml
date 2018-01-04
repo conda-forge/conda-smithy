@@ -11,13 +11,13 @@ jobs:
       - run:
           name: Fast finish outdated PRs and merge PRs
           command: |
-            ./ci_support/fast_finish_ci_pr_build.sh
-            ./ci_support/checkout_merge_commit.sh
+            ./.circleci/fast_finish_ci_pr_build.sh
+            ./.circleci/checkout_merge_commit.sh
       - run:
           command: docker pull condaforge/linux-anvil
       - run:
           # Run, test and (if we have a BINSTAR_TOKEN) upload the distributions.
-          command: ./ci_support/run_docker_build.sh
+          command: ./.circleci/run_docker_build.sh
   build_python3.6:
     working_directory: ~/test
     machine: true
@@ -28,13 +28,13 @@ jobs:
       - run:
           name: Fast finish outdated PRs and merge PRs
           command: |
-            ./ci_support/fast_finish_ci_pr_build.sh
-            ./ci_support/checkout_merge_commit.sh
+            ./.circleci/fast_finish_ci_pr_build.sh
+            ./.circleci/checkout_merge_commit.sh
       - run:
           command: docker pull condaforge/linux-anvil
       - run:
           # Run, test and (if we have a BINSTAR_TOKEN) upload the distributions.
-          command: ./ci_support/run_docker_build.sh
+          command: ./.circleci/run_docker_build.sh
 
 workflows:
   version: 2
