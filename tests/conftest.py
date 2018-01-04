@@ -54,7 +54,7 @@ def config_yaml(testing_workdir):
         f.write('- win-64   # [win]\n')
         f.write('- win-32   # [win]\n')
     # dummy file that needs to be present for circle ci.  This is created by the init function
-    os.makedirs(os.path.join(testing_workdir, 'ci_support'))
+    os.makedirs(os.path.join(testing_workdir, '.circleci'))
     with open(os.path.join(testing_workdir, '.circleci', 'checkout_merge_commit.sh'), 'w') as f:
         f.write('echo dummy file')
     with open(os.path.join(testing_workdir, 'short_config.yaml'), 'w') as f:
