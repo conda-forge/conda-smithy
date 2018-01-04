@@ -30,6 +30,8 @@ REQUIREMENTS_ORDER = ['build', 'run']
 
 TEST_KEYS = {'imports', 'commands'}
 
+sel_pat = re.compile(r'(.+?)\s*(#.*)?\[([^\[\]]+)\](?(2).*)$')
+
 
 class NullUndefined(jinja2.Undefined):
     def __unicode__(self):
@@ -135,7 +137,7 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
         if bad_selectors:
             lints.append('Selectors are suggested to take a '
                          '``<two spaces>#<one space>[<expression>]`` form.'
-                         'see lines {}'.format(bad_lines))
+                         ' See lines {}'.format(bad_lines))
 
     # 7: The build section should have a build number.
     if build_section.get('number', None) is None:
@@ -212,10 +214,27 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
     # 17: noarch doesn't work with selectors
     if build_section.get('noarch') is not None:
         with io.open(meta_fname, 'rt') as fh:
-            if any(True for l in selector_lines(fh)):
-                lints.append("`noarch` packages can't have selectors. If "
+            in_requirements = False
+            for line in fh:
+                line_s = line.strip()
+                if (line_s == "requirements:"):
+                    in_requirements = True
+                    requirements_spacing = line[:-len(line.lstrip())]
+                    continue
+                if line_s.startswith("skip:") and is_selector_line(line):
+                    lints.append("`noarch` packages can't have selectors. If "
+                         "the selectors are necessary, please remove "
+                         "`noarch: {}`.".format(build_section['noarch']))
+                    break
+                if in_requirements:
+                    if requirements_spacing == line[:-len(line.lstrip())]:
+                        in_requirements = False
+                        continue
+                    if is_selector_line(line):
+                        lints.append("`noarch` packages can't have selectors. If "
                              "the selectors are necessary, please remove "
                              "`noarch: {}`.".format(build_section['noarch']))
+                        break
 
     return lints
 
@@ -249,19 +268,23 @@ def run_conda_forge_lints(meta, recipe_dir, lints):
             lints.append('Recipe maintainer "{}" does not exist'.format(maintainer))
 
 
-def selector_lines(lines):
+def is_selector_line(line):
     # Using the same pattern defined in conda-build (metadata.py),
     # we identify selectors.
-    sel_pat = re.compile(r'(.+?)\s*(#.*)?\[([^\[\]]+)\](?(2).*)$')
+    line = line.rstrip()
+    if line.lstrip().startswith('#'):
+        # Don't bother with comment only lines
+        return False
+    m = sel_pat.match(line)
+    if m:
+        m.group(3)
+        return True
+    return False
 
+
+def selector_lines(lines):
     for i, line in enumerate(lines):
-        line = line.rstrip()
-        if line.lstrip().startswith('#'):
-            # Don't bother with comment only lines
-            continue
-        m = sel_pat.match(line)
-        if m:
-            m.group(3)
+        if is_selector_line(line):
             yield line, i
 
 
