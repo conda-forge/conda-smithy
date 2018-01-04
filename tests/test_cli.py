@@ -58,7 +58,9 @@ def test_init_multiple_output_matrix(testing_workdir):
         config = yaml.load(f)
     assert config['libpng'] == ['1.6']
     assert config['libpq'] == ['9.5']
-    assert config['libtiff'] == ['4.0']
+    # this is a zipped key, but it's not used, so it shouldn't show up
+    assert 'libtiff' not in config
+    assert 'zip_keys' not in config or not any('libtiff' in group for group in config['zip_keys'])
     # this is a variable only for one of the outputs
     assert config['jpeg'] == ['8', '9']
     # this is in conda_build_config.yaml, but is a transitive dependency.  It should

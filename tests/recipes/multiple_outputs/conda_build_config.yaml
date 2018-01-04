@@ -9,7 +9,7 @@ jpeg:
 libpng:
   - 1.6
   - 1.5
-# top-level, zipped
+# top-level, zipped, not used
 libtiff:
   - 4.0
   - 3.0
