@@ -13,7 +13,7 @@ environment:
   matrix:
   {%- for config in configs %}
     - CONFIG: {{ config}}
-  {% endfor %}
+{% endfor %}
 
 # We always use a 64-bit machine, but can build x86 distributions
 # with the TARGET_ARCH variable.
