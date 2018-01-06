@@ -31,7 +31,7 @@ channels:
 {%- endfor %}
 
 conda-build:
- root-dir: /feedstock_root/build_artefacts
+ root-dir: /home/conda/feedstock_root/build_artefacts
 
 show_channel_urls: true
 
@@ -51,8 +51,8 @@ fi
 rm -f "$FEEDSTOCK_ROOT/build_artefacts/conda-forge-build-done"
 
 cat << EOF | {{ docker.executable }} run -i \
-                        -v "${RECIPE_ROOT}":/recipe_root \
-                        -v "${FEEDSTOCK_ROOT}":/feedstock_root \
+                        -v "${RECIPE_ROOT}":/home/conda/recipe_root \
+                        -v "${FEEDSTOCK_ROOT}":/home/conda/feedstock_root \
                         {{ matrix_env_vars(matrix) }}
                         -a stdin -a stdout -a stderr \
                         {{ docker.image }} \
@@ -72,12 +72,12 @@ conda install --yes --quiet conda-forge-build-setup
 {% if build_setup -%}
 {{ build_setup }}{% endif -%}
 
-conda build /recipe_root --quiet || exit 1
+conda build /home/conda/recipe_root --quiet || exit 1
 {%- for owner, channel in channels['targets'] %}
-{{ upload_script }} /recipe_root {{ owner }} --channel={{ channel }} || exit 1
+{{ upload_script }} /home/conda/recipe_root {{ owner }} --channel={{ channel }} || exit 1
 {%- endfor %}
 
-touch /feedstock_root/build_artefacts/conda-forge-build-done
+touch /home/conda/feedstock_root/build_artefacts/conda-forge-build-done
 EOF
 
 # double-check that the build got to the end
