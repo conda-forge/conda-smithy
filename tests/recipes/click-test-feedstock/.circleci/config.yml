@@ -1,11 +1,11 @@
 version: 2
 
 jobs:
-  build_circle_python2.7:
+  build_python2.7:
     working_directory: ~/test
     machine: true
     environment:
-      - CONFIG: "circle_python2.7"
+      - CONFIG: "python2.7"
     steps:
       - checkout
       - run:
@@ -18,28 +18,11 @@ jobs:
       - run:
           # Run, test and (if we have a BINSTAR_TOKEN) upload the distributions.
           command: ./.circleci/run_docker_build.sh
-  build_circle_python3.5:
+  build_python3.6:
     working_directory: ~/test
     machine: true
     environment:
-      - CONFIG: "circle_python3.5"
-    steps:
-      - checkout
-      - run:
-          name: Fast finish outdated PRs and merge PRs
-          command: |
-            ./.circleci/fast_finish_ci_pr_build.sh
-            ./.circleci/checkout_merge_commit.sh
-      - run:
-          command: docker pull condaforge/linux-anvil
-      - run:
-          # Run, test and (if we have a BINSTAR_TOKEN) upload the distributions.
-          command: ./.circleci/run_docker_build.sh
-  build_circle_python3.6:
-    working_directory: ~/test
-    machine: true
-    environment:
-      - CONFIG: "circle_python3.6"
+      - CONFIG: "python3.6"
     steps:
       - checkout
       - run:
@@ -57,6 +40,5 @@ workflows:
   version: 2
   build_and_test:
     jobs:
-      - build_circle_python2.7
-      - build_circle_python3.5
-      - build_circle_python3.6
+      - build_python2.7
+      - build_python3.6
