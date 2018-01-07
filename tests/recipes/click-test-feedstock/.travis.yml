@@ -8,16 +8,20 @@ osx_image: xcode6.4
 
 env:
   matrix:
-    
-    - CONFIG=python2.7
-    - CONFIG=python3.6
+    - CONFIG=travis_python2.7
+    - CONFIG=travis_python3.5
+    - CONFIG=travis_python3.6
+
+  global:
+    # The BINSTAR_TOKEN secure variable. This is defined canonically in conda-forge.yml.
+    - secure: "hpenygdwPz7QYcs9jzswDne1iJDQE0afa8fJY8gIqFAYTe1QGGJoQ9WZAVUCarlh7YcWKLOd5Twe1worgS7kJbGBdWu9tMYua14Gg29r/gl7JkwCPms0jdT0HTdfzVCeyMABG+w1gGHyGUAcEuPNnO/Rfzu7/wKlhvbcbFqwYBklGBG5Z0OpcTLdPA5qvJ4Tjy9z1Aa7sfC1g4FybVnsPcne8g03naePkB5Zzb6J5LY6BIWYHfKaNChzLg8vw2ZKeoi0y7ivJQfi+VOqql3W01nbi72ZUZ0J7iIxYgRNGlF/F8hxLf7kcjFdbk3MkTXVmnXFqP+wG5ue2W8Qa2dImAL6qR7HOoCucRofU2oHtjyZQ0xYNYgg1ilVK+SffURX9YZoMNBAA0O/s14I9z5nBF2xvCnbHTRbdZKLrpyJNutVpmWkkGPsN8YJJS/zyXRrskdpIbRLfjD9qbs4a82msmDeTxeAgPz7jN4Eb074aBCv68svl9InxhuDSdoH1+taXd0VtNDXWSba3VXBcngL3zhxcmj4bd+/nvU1ca2c7Ks5udHSXbjBUI36zNUc5pR05HBpYVwp7EyGcL1OPJfyrOM9JZqCGg4jMUefhmw5hSwUy3TpgEncYAEq8FxyXDCq2XJjuHbq4lcEKP0aXhC/AJAhf2O8ZK2QeNYs7wqOCqE="
 
 
 before_install:
     # Fast finish the PR.
     - |
-      (curl https://raw.githubusercontent.com/conda-forge/conda-forge-build-setup-feedstock/master/recipe/ff_ci_pr_build.py | \
-    python - -v --ci "travis" "${TRAVIS_REPO_SLUG}" "${TRAVIS_BUILD_NUMBER}" "${TRAVIS_PULL_REQUEST}") || exit 1
+      (cat recipe/ff_ci_pr_build.py | \
+          python - -v --ci "travis" "${TRAVIS_REPO_SLUG}" "${TRAVIS_BUILD_NUMBER}" "${TRAVIS_PULL_REQUEST}") || exit 1
 
     # Remove homebrew.
     - |
@@ -49,10 +53,11 @@ install:
       conda config --add channels conda-forge
       conda config --set show_channel_urls true
       conda install --yes --quiet conda-forge-build-setup
-      source run_conda_forge_build_setup
+      # Overriding global conda-forge-build-setup with local copy.
+      source recipe/run_conda_forge_build_setup_osx
       conda install -n root --quiet --yes -c defaults conda-build
 
 script:
   - conda build ./recipe -m ./ci_support/matrix/travis_${CONFIG}.yaml
 
-  - upload_or_check_non_existence ./recipe conda-forge --channel=main -m ./ci_support/matrix/travis_${CONFIG}.yaml
+  - /recipe_root/upload_or_check_non_existence.py ./recipe conda-forge --channel=main -m ./ci_support/matrix/travis_${CONFIG}.yaml

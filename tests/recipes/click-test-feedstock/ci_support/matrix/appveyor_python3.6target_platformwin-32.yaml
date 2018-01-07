@@ -8,4 +8,6 @@ pin_run_as_build:
     min_pin: x.x.x
     max_pin: x.x.x
 python:
-- '2.7'
+- '3.6'
+target_platform:
+- win-32
