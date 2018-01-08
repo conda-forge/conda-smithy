@@ -21,8 +21,6 @@
 FEEDSTOCK_ROOT=$(cd "$(dirname "$0")/.."; pwd;)
 ARTIFACTS_ROOT=$FEEDSTOCK_ROOT/build_artifacts
 
-mkdir -p $ARTIFACTS_ROOT
-
 docker info
 
 config=$(cat <<CONDARC
@@ -50,23 +48,54 @@ if hash docker-machine 2> /dev/null && docker-machine active > /dev/null; then
     HOST_USER_ID=$(docker-machine ssh $(docker-machine active) id -u)
 fi
 
-# If the docker host has SELinux enabled, it is neccessary to add some
-# additional options to the volume
-VOLUME_OPTIONS=""
-if hash getenforce 2> /dev/null && getenforce | grep 'Enforcing' > /dev/null
-then
-  VOLUME_OPTIONS=",Z"
+# By default, the feedstock is mounted read-only (ro) and the build_artifacts
+# read/write (rw).
+#
+# ADVANCED
+#
+#     For live debugging inside the container, you can mount the feedstock
+#     read-writeable with:
+#
+#     CF_FEEDSTOCK_VOLUME_OPTIONS=rw ./run_docker_build.sh
+#
+# SELinux
+#
+#     ** WARNING: this can be very unsafe, see considerations here: **
+#     https://github.com/moby/moby/issues/30934
+#
+#     For SELinux enforcing hosts, you may temporarily change the HOST labels
+#     with:
+#
+#     CF_FEEDSTOCK_VOLUME_OPTIONS=ro,Z CF_ARTIFACTS_VOLUME_OPTIONS=rw,Z \
+#       /run_docker_build.sh
+#
+if [ -n "${CF_FEEDSTOCK_VOLUME_OPTIONS+set}" ]; then
+    CF_FEEDSTOCK_VOLUME_OPTIONS=ro
+fi
+if [ -n "${CF_ARTIFACTS_VOLUME_OPTIONS+set}" ]; then
+    CF_ARTIFACTS_VOLUME_OPTIONS=rw
 fi
 
-rm -f "$ARTIFACTS_ROOT/conda-forge-build-done"
+mkdir -p $ARTIFACTS_ROOT
+rm -f "$ARTIFACTS_ROOT/conda-forge-build-done" \
+    "$ARTIFACTS_ROOT/conda-forge-build-starting"
+touch "$ARTIFACTS_ROOT/conda-forge-build-starting"
 
 cat << EOF | {{ docker.executable }} run -i \
-                        -v "${FEEDSTOCK_ROOT}":/home/conda/feedstock_root:ro${VOLUME_OPTIONS} \
-                        -v "${ARTIFACTS_ROOT}":/home/conda/build_artifacts:rw${VOLUME_OPTIONS} \
+                        -v "${FEEDSTOCK_ROOT}":/home/conda/feedstock_root:${CF_FEEDSTOCK_VOLUME_OPTIONS} \
+                        -v "${ARTIFACTS_ROOT}":/home/conda/build_artifacts:${CF_ARTIFACTS_VOLUME_OPTIONS} \
                         {{ matrix_env_vars(matrix) }}
                         -a stdin -a stdout -a stderr \
                         {{ docker.image }} \
                         {{ docker.command }} || exit 1
+
+ls /home/conda/feedstock_root/ > /dev/null || \
+  echo "ERROR: ${FEEDSTOCK_ROOT} is not readable in the container!" &&
+  exit 1
+
+rm -f /home/build_artifacts/conda-forge-build-starting > /dev/null || \
+  echo "ERROR: ${ARTIFACTS_ROOT} is not writeable in the container!" &&
+  exit 1
 
 set -e
 set +x
