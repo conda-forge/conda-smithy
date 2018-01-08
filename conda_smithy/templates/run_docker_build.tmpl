@@ -61,12 +61,12 @@ fi
 rm -f "$ARTIFACTS_ROOT/conda-forge-build-done"
 
 cat << EOF | {{ docker.executable }} run -i \
-  -v "${FEEDSTOCK_ROOT}":/home/conda/feedstock_root:ro${VOLUME_OPTIONS} \
-  -v "${ARTIFACTS_ROOT}":/home/conda/build_artifacts:rw${VOLUME_OPTIONS} \
-  {{ matrix_env_vars(matrix) }}
-  -a stdin -a stdout -a stderr \
-  {{ docker.image }} \
-  {{ docker.command }} || exit 1
+                        -v "${FEEDSTOCK_ROOT}":/home/conda/feedstock_root:ro${VOLUME_OPTIONS} \
+                        -v "${ARTIFACTS_ROOT}":/home/conda/build_artifacts:rw${VOLUME_OPTIONS} \
+                        {{ matrix_env_vars(matrix) }}
+                        -a stdin -a stdout -a stderr \
+                        {{ docker.image }} \
+                        {{ docker.command }} || exit 1
 
 set -e
 set +x
