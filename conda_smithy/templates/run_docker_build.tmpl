@@ -21,6 +21,8 @@
 FEEDSTOCK_ROOT=$(cd "$(dirname "$0")/.."; pwd;)
 ARTIFACTS_ROOT=$FEEDSTOCK_ROOT/build_artifacts
 
+mkdir -p $ARTEFACTS_ROOT
+
 docker info
 
 config=$(cat <<CONDARC
