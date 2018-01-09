@@ -39,7 +39,7 @@ CONDARC
 )
 
 # In order for the conda-build process in the container to write to the mounted
-# volumes, we need to run with the same id as the host machine, which is
+# build_artifacts, we need to run with the same id as the host machine, which is
 # normally the owner of the mounted volumes, or at least has write permission
 HOST_USER_ID=$(id -u)
 # Check if docker-machine is being used (normally on OSX) and get the uid from
