@@ -6,7 +6,6 @@
 # benefit from the improvement.
 
 set -e
-
 FEEDSTOCK_ROOT=$(cd "$(dirname "$0")/.."; pwd;)
 RECIPE_ROOT=$FEEDSTOCK_ROOT/{{ recipe_dir }}
 
@@ -40,13 +39,13 @@ fi
 
 rm -f "$FEEDSTOCK_ROOT/build_artifacts/conda-forge-build-done"
 
-ARTFACTS="$FEEDSTOCK_ROOT/build_artifacts"
+ARTIFACTS="$FEEDSTOCK_ROOT/build_artifacts"
 
 test -d "$ARTIFACTS" || mkdir "$ARTIFACTS"
 DONE_CANARY="$ARTIFACTS/conda-forge-build-done"
 rm -f "$DONE_CANARY"
 
-cat << EOF > "$FEEDSTOCK_ROOT/ci_support/build.sh"
+cat << EOF > "$FEEDSTOCK_ROOT/.circleci/build.sh"
 
 set -e
 export PYTHONUNBUFFERED=1
@@ -61,7 +60,7 @@ conda install --yes --quiet conda-forge-ci-setup=1
 
 {%- block build %}
 conda build /home/conda/recipe_root -m /home/conda/feedstock_root/.ci_support/${CONFIG}.yaml --quiet
-{%- endblock -%}
+{%- endblock %}
 
 {%- block test_and_upload %}
 {%- for owner, channel in channels['targets'] %}
@@ -72,7 +71,9 @@ conda build /home/conda/recipe_root -m /home/conda/feedstock_root/.ci_support/${
 touch /home/conda/feedstock_root/build_artifacts/conda-forge-build-done
 EOF
 
+set +x
 echo "BINSTAR_TOKEN=${BINSTAR_TOKEN}" > "${FEEDSTOCK_ROOT}/env"
+set -x
 
 # Create and run the container in two commands,
 # so the token env isn't on disk too long
@@ -82,10 +83,10 @@ CONTAINER=$(docker create -t \
            -v "${FEEDSTOCK_ROOT}":/home/conda/feedstock_root \
            --env-file ${FEEDSTOCK_ROOT}/env \
            -e HOST_USER_ID="${HOST_USER_ID}" \
-           {{ matrix_env_vars(matrix) }} \
+           {{ matrix_env_vars(matrix) }}
            {{ docker.image }} \
            {{ docker.command }} \
-           /home/conda/feedstock_root/ci_support/build.sh || exit $?)
+           /home/conda/feedstock_root/.circleci/build.sh || exit $?)
 
 rm "${FEEDSTOCK_ROOT}/env"
 # do it
