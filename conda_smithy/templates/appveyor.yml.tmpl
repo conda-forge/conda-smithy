@@ -42,7 +42,7 @@ install:
     - cmd: conda.exe config --add channels {{ channel }}{% endfor %}
 
     # Configure the VM.
-    - cmd: conda.exe update -n root --quiet --yes conda-forge-build-setup
+    - cmd: conda.exe install -n root --quiet --yes --update-dependencies conda-forge-build-setup
     {% if build_setup -%}
     {{ build_setup }}{% endif %}
 
