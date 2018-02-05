@@ -286,6 +286,12 @@ class Test_linter(unittest.TestCase):
         lints = linter.lintify(meta)
         self.assertIn(expected_message, lints)
 
+        meta = {'requirements': OrderedDict([['run', 'a'],
+                                             ['invalid', 'a'],
+                                             ['build', 'a']])}
+        lints = linter.lintify(meta)
+        self.assertIn(expected_message, lints)
+
         meta = {'requirements': OrderedDict([['build', 'a'],
                                              ['run', 'a']])}
         lints = linter.lintify(meta)
