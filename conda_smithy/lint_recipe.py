@@ -151,9 +151,11 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
         lints.append('The recipe must have a `build/number` section.')
 
     # 8: The build section should be before the run section in requirements.
-    requirements_order_sorted = sorted(requirements_section,
+    seen_requirements = [
+            k for k in requirements_section if k in REQUIREMENTS_ORDER]
+    requirements_order_sorted = sorted(seen_requirements,
                                        key=REQUIREMENTS_ORDER.index)
-    if list(requirements_section.keys()) != requirements_order_sorted:
+    if seen_requirements != requirements_order_sorted:
         lints.append('The `requirements/build` section should be defined '
                      'before the `requirements/run` section.')
 
