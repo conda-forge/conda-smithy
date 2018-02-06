@@ -19,7 +19,7 @@
 # benefit from the improvement.
 
 FEEDSTOCK_ROOT=$(cd "$(dirname "$0")/.."; pwd;)
-RECIPE_ROOT=$FEEDSTOCK_ROOT/{{ recipe_dir }}
+ARTIFACTS_ROOT=$FEEDSTOCK_ROOT/build_artifacts
 
 docker info
 
@@ -31,7 +31,7 @@ channels:
 {%- endfor %}
 
 conda-build:
- root-dir: /home/conda/feedstock_root/build_artifacts
+ root-dir: /home/conda/build_artifacts
 
 show_channel_urls: true
 
@@ -39,7 +39,7 @@ CONDARC
 )
 
 # In order for the conda-build process in the container to write to the mounted
-# volumes, we need to run with the same id as the host machine, which is
+# build_artifacts, we need to run with the same id as the host machine, which is
 # normally the owner of the mounted volumes, or at least has write permission
 HOST_USER_ID=$(id -u)
 # Check if docker-machine is being used (normally on OSX) and get the uid from
@@ -48,15 +48,27 @@ if hash docker-machine 2> /dev/null && docker-machine active > /dev/null; then
     HOST_USER_ID=$(docker-machine ssh $(docker-machine active) id -u)
 fi
 
-rm -f "$FEEDSTOCK_ROOT/build_artifacts/conda-forge-build-done"
+mkdir -p $ARTIFACTS_ROOT
+
+rm -f "$ARTIFACTS_ROOT/conda-forge-build-done"
 
 cat << EOF | {{ docker.executable }} run -i \
-                        -v "${RECIPE_ROOT}":/home/conda/recipe_root \
-                        -v "${FEEDSTOCK_ROOT}":/home/conda/feedstock_root \
-                        {{ matrix_env_vars(matrix) }}
-                        -a stdin -a stdout -a stderr \
-                        {{ docker.image }} \
-                        {{ docker.command }} || exit 1
+    -v "${FEEDSTOCK_ROOT}":/home/conda/feedstock_root:${CF_FEEDSTOCK_VOLUME_OPTIONS:-ro} \
+    -v "${ARTIFACTS_ROOT}":/home/conda/build_artifacts:${CF_ARTIFACTS_VOLUME_OPTIONS:-rw} \
+    {{ matrix_env_vars(matrix) }}
+    -a stdin -a stdout -a stderr \
+    {{ docker.image }} \
+    {{ docker.command }} || exit 1
+
+if [[ ! -r /home/conda/feedstock_root/recipe/meta.yaml ]]; then
+  echo "ERROR: "${FEEDSTOCK_ROOT}" is not readable in the container"
+  exit 1
+fi
+
+if [[ ! -w /home/conda/build_artifacts ]]; then
+  echo "ERROR: ${ARTIFACTS_ROOT} is not writeable in the container"
+  exit 1
+fi
 
 set -e
 set +x
@@ -72,17 +84,16 @@ conda install --yes --quiet conda-forge-build-setup
 {% if build_setup -%}
 {{ build_setup }}{% endif -%}
 
-conda build /home/conda/recipe_root --quiet || exit 1
+conda build /home/conda/feedstock_root/recipe --quiet || exit 1
 {%- for owner, channel in channels['targets'] %}
-{{ upload_script }} /home/conda/recipe_root {{ owner }} --channel={{ channel }} || exit 1
+{{ upload_script }} /home/conda/feedstock_root/recipe {{ owner }} --channel={{ channel }} || exit 1
 {%- endfor %}
 
-touch /home/conda/feedstock_root/build_artifacts/conda-forge-build-done
+touch /home/conda/build_artifacts/conda-forge-build-done
 EOF
 
 # double-check that the build got to the end
 # see https://github.com/conda-forge/conda-smithy/pull/337
 # for a possible fix
 set -x
-test -f "$FEEDSTOCK_ROOT/build_artifacts/conda-forge-build-done" || exit 1
-
+test -f "$ARTIFACTS_ROOT/conda-forge-build-done" || exit 1
