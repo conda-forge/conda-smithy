@@ -163,13 +163,13 @@ def appveyor_configure(user, project):
         raise ValueError(response)
     content = response.json()
     settings = content['settings']
-    skip_appveyor = u'skipBranchesWithoutAppveyorYml'
-    if not settings[skip_appveyor]:
-        print('{: <30}: Current setting for {} = {}.'
-              ''.format(project, skip_appveyor, settings[skip_appveyor]))
-    settings[skip_appveyor] = True
-    url = 'https://ci.appveyor.com/api/projects'.format(user, project)
+    for required_setting in (u'skipBranchesWithoutAppveyorYml', u'rollingBuilds'):
+        if not settings[required_setting]:
+            print('{: <30}: Current setting for {} = {}.'
+                  ''.format(project, required_setting, settings[required_setting]))
+        settings[required_setting] = True
 
+    url = 'https://ci.appveyor.com/api/projects'.format(user, project)
     response = requests.put(url, headers=headers, json=settings)
     if response.status_code != 204:
         raise ValueError(response)
