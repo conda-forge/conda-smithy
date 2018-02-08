@@ -395,6 +395,18 @@ class Test_linter(unittest.TestCase):
         lints = linter.lintify({'package': {'name': 'python'}}, recipe_dir='recipe', conda_forge=False)
         self.assertNotIn(expected_message, lints)
 
+        expected_message = 'Recipe with the same name exists in bioconda'
+        # Check that feedstock exists if staged_recipes
+        lints = linter.lintify({'package': {'name': 'abawaca'}}, recipe_dir='abawaca', conda_forge=True)
+        self.assertIn(expected_message, lints)
+        lints = linter.lintify({'package': {'name': 'abawaca'}}, recipe_dir='abawaca', conda_forge=False)
+        self.assertNotIn(expected_message, lints)
+        # No lint if in a feedstock
+        lints = linter.lintify({'package': {'name': 'abawaca'}}, recipe_dir='recipe', conda_forge=True)
+        self.assertNotIn(expected_message, lints)
+        lints = linter.lintify({'package': {'name': 'abawaca'}}, recipe_dir='recipe', conda_forge=False)
+        self.assertNotIn(expected_message, lints)
+
         # Make sure there's no feedstock named python1 before proceeding
         gh = github.Github(os.environ['GH_TOKEN'])
         cf = gh.get_user('conda-forge')

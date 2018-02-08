@@ -288,6 +288,14 @@ def run_conda_forge_lints(meta, recipe_dir, lints):
         if feedstock_exists:
             lints.append('Feedstock with the same name exists in conda-forge')
 
+        bio = gh.get_user('bioconda').get_repo('bioconda-recipes')
+        try:
+            bio.get_dir_contents('recipes/{}'.format(recipe_name))
+        except github.UnknownObjectException as e:
+            pass
+        else:
+            lints.append('Recipe with the same name exists in bioconda')
+
     # 2: Check that the recipe maintainers exists:
     maintainers = extra_section.get('recipe-maintainers', [])
     for maintainer in maintainers:
