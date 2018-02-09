@@ -410,31 +410,32 @@ class Test_linter(unittest.TestCase):
             lints = linter.lintify({'package': {'name': 'python1'}}, recipe_dir="python", conda_forge=True)
             self.assertNotIn(expected_message, lints)
 
+        # Test bioconda recipe checking
         expected_message = 'Recipe with the same name exists in bioconda'
-        # Check that feedstock exists if staged_recipes
-        lints = linter.lintify({'package': {'name': 'abawaca'}}, recipe_dir='abawaca', conda_forge=True)
-        self.assertIn(expected_message, lints)
-        lints = linter.lintify({'package': {'name': 'abawaca'}}, recipe_dir='abawaca', conda_forge=False)
-        self.assertNotIn(expected_message, lints)
-        # No lint if in a feedstock
-        lints = linter.lintify({'package': {'name': 'abawaca'}}, recipe_dir='recipe', conda_forge=True)
-        self.assertNotIn(expected_message, lints)
-        lints = linter.lintify({'package': {'name': 'abawaca'}}, recipe_dir='recipe', conda_forge=False)
-        self.assertNotIn(expected_message, lints)
-
-        # Make sure there's no feedstock named python1 before proceeding
         bio = gh.get_user('bioconda').get_repo('bioconda-recipes')
         try:
-            bio.get_dir_contents('recipes/python1')
-            recipe_exists = True
+            bio.get_dir_contents('recipe/abacawa')
         except github.UnknownObjectException as e:
-            recipe_exists = False
-
-        if recipe_exists:
-            warnings.warn("There's a bioconda recipe named python1, but tests assume that there isn't")
+            warnings.warn("There's no bioconda recipe named abacawa, but tests assume that there is")
         else:
+            # Check that feedstock exists if staged_recipes
+            lints = linter.lintify({'package': {'name': 'abawaca'}}, recipe_dir='abawaca', conda_forge=True)
+            self.assertIn(expected_message, lints)
+            lints = linter.lintify({'package': {'name': 'abawaca'}}, recipe_dir='abawaca', conda_forge=False)
+            self.assertNotIn(expected_message, lints)
+            # No lint if in a feedstock
+            lints = linter.lintify({'package': {'name': 'abawaca'}}, recipe_dir='recipe', conda_forge=True)
+            self.assertNotIn(expected_message, lints)
+            lints = linter.lintify({'package': {'name': 'abawaca'}}, recipe_dir='recipe', conda_forge=False)
+            self.assertNotIn(expected_message, lints)
+
+        try:
+            bio.get_dir_contents('recipes/python1')
+        except github.UnknownObjectException as e:
             lints = linter.lintify({'package': {'name': 'python1'}}, recipe_dir="python1", conda_forge=True)
             self.assertNotIn(expected_message, lints)
+        else:
+            warnings.warn("There's a bioconda recipe named python1, but tests assume that there isn't")
 
 
 
