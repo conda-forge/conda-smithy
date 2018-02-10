@@ -621,7 +621,7 @@ def commit_changes(forge_file_directory, commit, cs_ver, cfp_ver):
                     '-m',
                     'MNT: {}'.format(msg)
                 ]
-                if args.commit == "edit":
+                if commit == "edit":
                     git_args += [
                         '--edit',
                         '--status',
