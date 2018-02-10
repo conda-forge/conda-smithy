@@ -273,7 +273,8 @@ def _render_ci_provider(provider_name, jinja_env, forge_config, forge_dir, platf
                                    variant_config_files=forge_config['variant_config_files'],
                                    platform=platform, arch=arch,
                                    permit_undefined_jinja=True, finalize=False,
-                                   bypass_env_check=True)
+                                   bypass_env_check=True,
+                                   channel_urls=forge_config.get('channels', {}).get('sources', []))
     # render returns some download & reparsing info that we don't care about
     metas = [m for m, _, _ in metas]
 
