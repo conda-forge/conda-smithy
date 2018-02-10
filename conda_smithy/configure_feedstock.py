@@ -136,14 +136,16 @@ def _trim_unused_zip_keys(all_used_vars):
 
 def _trim_unused_pin_run_as_build(all_used_vars):
     """Remove unused keys in pin_run_as_build sets"""
-    pkgs = all_used_vars.get('pin_run_as_build', [])
+    pkgs = all_used_vars.get('pin_run_as_build', {})
     used_pkgs = {}
     if pkgs:
         for key in pkgs.keys():
-            used_keys_in_pkg = [k for k in key if k in all_used_vars]
-            if len(used_keys_in_pkg) > 1:
+            if key in all_used_vars:
                 used_pkgs[key] = pkgs[key]
-    all_used_vars['pin_run_as_build'] = used_pkgs
+    if used_pkgs:
+        all_used_vars['pin_run_as_build'] = used_pkgs
+    elif 'pin_run_as_build' in all_used_vars:
+        del all_used_vars['pin_run_as_build']
 
 
 def _collapse_subpackage_variants(list_of_metas):
