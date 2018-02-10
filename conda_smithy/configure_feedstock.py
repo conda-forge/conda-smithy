@@ -134,6 +134,18 @@ def _trim_unused_zip_keys(all_used_vars):
         del all_used_vars['zip_keys']
 
 
+def _trim_unused_pin_run_as_build(all_used_vars):
+    """Remove unused keys in pin_run_as_build sets"""
+    pkgs = all_used_vars.get('pin_run_as_build', [])
+    used_pkgs = {}
+    if pkgs:
+        for key in pkgs.keys():
+            used_keys_in_pkg = [k for k in key if k in all_used_vars]
+            if len(used_keys_in_pkg) > 1:
+                used_pkgs[key] = pkgs[key]
+    all_used_vars['pin_run_as_build'] = used_pkgs
+
+
 def _collapse_subpackage_variants(list_of_metas):
     """Collapse all subpackage node variants into one aggregate collection of used variables
 
@@ -169,6 +181,7 @@ def _collapse_subpackage_variants(list_of_metas):
                      for key in all_used_vars if key in squished_input_variants}
 
     _trim_unused_zip_keys(all_used_vars)
+    _trim_unused_pin_run_as_build(all_used_vars)
 
     # to deduplicate potentially zipped keys, we blow out the collection of variables, then
     #     do a set operation, then collapse it again
