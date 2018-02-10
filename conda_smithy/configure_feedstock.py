@@ -193,6 +193,7 @@ def _collapse_subpackage_variants(list_of_metas):
     all_used_vars = conda_build.variants.list_of_dicts_to_dict_of_lists(list(all_used_vars))
 
     _trim_unused_zip_keys(all_used_vars)
+    _trim_unused_pin_run_as_build(all_used_vars)
 
     return break_up_top_level_values(top_level_loop_vars, all_used_vars), top_level_loop_vars
 
