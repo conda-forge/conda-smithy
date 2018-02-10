@@ -15,7 +15,8 @@ InitArgs = collections.namedtuple('ArgsObject', ('no_git_repo',
 
 RegenerateArgs = collections.namedtuple('ArgsObject', ('commit',
                                                        'feedstock_directory',
-                                                       'variant_config_files'))
+                                                       'variant_config_files',
+                                                       'no_check_uptodate'))
 
 
 def test_init(py_recipe):
@@ -79,7 +80,8 @@ def test_regenerate(py_recipe):
     feedstock_dir = os.path.join(_thisdir, 'recipes', 'click-test-feedstock')
     args = RegenerateArgs(feedstock_directory=feedstock_dir,
                           commit=False,
-                          variant_config_files=os.path.join(recipe, 'config.yaml'))
+                          variant_config_files=os.path.join(recipe, 'config.yaml'),
+                          no_check_uptodate=False)
     matrix_folder = os.path.join(feedstock_dir, 'ci_support', 'matrix')
 
     initial_commit = subprocess.check_output(['git', 'rev-parse', 'HEAD'],
@@ -94,7 +96,8 @@ def test_regenerate(py_recipe):
         # reduce the python matrix and make sure the matrix files reflect the change
         args = RegenerateArgs(feedstock_directory=feedstock_dir,
                               commit=False,
-                              variant_config_files=os.path.join(recipe, 'short_config.yaml'))
+                              variant_config_files=os.path.join(recipe, 'short_config.yaml'),
+                              no_check_uptodate=False)
         matrix_folder = os.path.join(feedstock_dir, 'ci_support', 'matrix')
         # one py ver, no target_platform  (tests that older configs don't stick around)
         regen_obj(args)
