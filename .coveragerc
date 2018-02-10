@@ -1,6 +1,16 @@
 [run]
 branch = True
 source = conda_smithy
+parallel = True
+omit =
+    *feedstock_content/*
+    *static/*
+    *templates/*
+    *tests/*
+    */_version.py
+    */vendored/*
+    */__init__.py
+
 [report]
 exclude_lines =
     # Ignore coverage of code that requires the module to be executed.
@@ -11,10 +21,3 @@ exclude_lines =
     # ( https://bitbucket.org/ned/coveragepy/issue/198/continue-marked-as-not-covered )
     # and Python issue ( http://bugs.python.org/issue2506 ).
     continue
-omit =
-    */python?.?/*
-    */site-packages/*
-    *tests/*
-    */versioneer.py
-    */_version.py
-    */vendored/*

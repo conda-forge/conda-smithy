@@ -9,12 +9,12 @@ env:
        - CONDA_INSTALL_LOCN="${HOME}/conda"
 
     matrix:
-        - PYTHON=2.7
-        - PYTHON=3.5
+        - PYTHON=2
+        - PYTHON=3
 
 install:
     - mkdir -p ${HOME}/cache/pkgs
-    - "[ ! -f ${HOME}/cache/miniconda.sh ] && wget https://repo.continuum.io/miniconda/Miniconda3-4.2.12-Linux-x86_64.sh -O ${HOME}/cache/miniconda.sh || :"
+    - "[ ! -f ${HOME}/cache/miniconda.sh ] && wget https://repo.continuum.io/miniconda/Miniconda${PYTHON}-latest-Linux-x86_64.sh -O ${HOME}/cache/miniconda.sh || :"
     - bash ${HOME}/cache/miniconda.sh -b -p ${CONDA_INSTALL_LOCN}
     - source ${CONDA_INSTALL_LOCN}/bin/activate root
     - conda update --yes --quiet conda
@@ -23,15 +23,14 @@ install:
     - rm -rf ${CONDA_INSTALL_LOCN}/pkgs && ln -s ${HOME}/cache/pkgs ${CONDA_INSTALL_LOCN}/pkgs
 
     # Now do the things we need to do to install it.
-    - conda install --file requirements.txt coverage python-coveralls mock python=${PYTHON} ${CONDA_PKGS} --yes --quiet -c conda-forge
-    - python setup.py install
+    - conda install --file requirements.txt coverage coveralls mock pytest pytest-cov ${CONDA_PKGS} --yes --quiet -c conda-forge
+    - python setup.py develop
 
 script:
-    - coverage erase
-    - coverage run -m unittest discover
-    - coverage report
+    - py.test tests --cov conda_smithy
 
 after_success:
+    - coverage combine
     - coveralls
 
 # We store the files that are downloaded from continuum.io, but not the environments that are created.

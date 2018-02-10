@@ -4,16 +4,13 @@
 
 environment:
 
-  {% for name, hashed_secure in (appveyor.secure or {}) | dictsort -%}
-  {{ name }}:
-    # The {{ name }} secure variable. This is defined canonically in conda-forge.yml.
-    secure: {{ hashed_secure }}
-  {%- endfor %}
+  
 
   matrix:
-  {%- for config in configs %}
-    - CONFIG: {{ config}}
-{% endfor %}
+    - CONFIG: python2.7
+  
+    - CONFIG: python3.6
+  
 
 # We always use a 64-bit machine, but can build x86 distributions
 # with the TARGET_ARCH variable.
@@ -23,7 +20,9 @@ platform:
 install:
     # If there is a newer build queued for the same PR, cancel this one.
     - cmd: |
-        {{ fast_finish }}
+        powershell -Command "(New-Object Net.WebClient).DownloadFile('https://raw.githubusercontent.com/conda-forge/conda-forge-build-setup-feedstock/master/recipe/ff_ci_pr_build.py', 'ff_ci_pr_build.py')"
+        ff_ci_pr_build -v --ci "appveyor" "%APPVEYOR_ACCOUNT_NAME%/%APPVEYOR_PROJECT_SLUG%" "%APPVEYOR_BUILD_NUMBER%" "%APPVEYOR_PULL_REQUEST_NUMBER%"
+        del ff_ci_pr_build.py
 
     # Cywing's git breaks conda-build. (See https://github.com/conda-forge/conda-smithy-feedstock/pull/2.)
     - cmd: rmdir C:\cygwin /s /q
@@ -32,20 +31,19 @@ install:
     # Around November of 2017, Appveyor changed Miniconda3-x64 from an old 3.4 install to a
     #     symlink to the current version.
     - cmd: call C:\Miniconda3-x64\Scripts\activate.bat
-    - cmd: conda.exe update --yes --quiet conda
+    - cmd: conda update --yes --quiet conda
 
     - cmd: set PYTHONUNBUFFERED=1
 
     # Add our channels.
-    - cmd: conda.exe config --set show_channel_urls true
-    - cmd: conda.exe config --remove channels defaults
-    {%- for channel in channels.get('sources', [])|reverse %}
-    - cmd: conda.exe config --add channels {{ channel }}{% endfor %}
+    - cmd: conda config --set show_channel_urls true
+    - cmd: conda config --remove channels defaults
+    - cmd: conda config --add channels defaults
+    - cmd: conda config --add channels conda-forge
 
     # Configure the VM.
-    - cmd: conda.exe install -n root --quiet --yes conda-forge-build-setup
-    {% if build_setup -%}
-    {{ build_setup }}{% endif %}
+    - cmd: conda install -n root --quiet --yes conda-forge-build-setup
+    - cmd: run_conda_forge_build_setup
 
     # testing purposes: get conda-build from defaults
     - cmd: conda install -n root --quiet --yes -c defaults conda-build
@@ -54,8 +52,6 @@ install:
 build: off
 
 test_script:
-    - conda.exe build {{ recipe_dir }} -m ci_support/matrix/appveyor_%CONFIG%.yaml --quiet
+    - conda build recipe -m ci_support/matrix/appveyor_%CONFIG%.yaml --quiet
 deploy_script:
-{%- for owner, channel in channels['targets'] %}
-    - cmd: {{ upload_script }} .\{{ recipe_dir }} {{ owner }} --channel={{ channel }} -m ci_support/matrix/appveyor_%CONFIG%.yaml
-{% endfor %}
+    - cmd: upload_or_check_non_existence .\recipe conda-forge --channel=main -m ci_support/matrix/appveyor_%CONFIG%.yaml

@@ -1,7 +1,6 @@
 from __future__ import print_function, absolute_import
 
 import os
-import requests
 import subprocess
 import sys
 import time
@@ -10,6 +9,7 @@ import argparse
 import conda
 from distutils.version import LooseVersion
 from conda_build.metadata import MetaData
+from conda_build.utils import ensure_list
 
 from . import configure_feedstock
 from . import feedstock_io
@@ -19,10 +19,24 @@ from . import __version__
 
 PY2 = sys.version_info[0] == 2
 
-def generate_feedstock_content(target_directory, source_recipe_dir, meta):
+
+def _absolute_variant_config_paths(variant_config_files, cwd):
+    config_files = []
+    for f in ensure_list(variant_config_files):
+        if f and not os.path.isabs(f):
+            config_files.append(os.path.normpath(os.path.join(cwd, f)))
+        else:
+            config_files.append(os.path.normpath(f))
+    return config_files
+
+
+def generate_feedstock_content(target_directory, source_recipe_dir, meta, variant_config_files):
     target_directory = os.path.abspath(target_directory)
     recipe_dir = "recipe"
     target_recipe_dir = os.path.join(target_directory, recipe_dir)
+
+    variant_config_files = _absolute_variant_config_paths(variant_config_files, cwd=os.getcwd())
+
     if not os.path.exists(target_recipe_dir):
         os.makedirs(target_recipe_dir)
     # If there is a source recipe, copy it now to the right dir
@@ -41,9 +55,10 @@ def generate_feedstock_content(target_directory, source_recipe_dir, meta):
             fh.write(u"[]")
 
     cwd = os.getcwd()
+    variant_config_files = _absolute_variant_config_paths(variant_config_files, cwd)
     os.chdir(target_directory)
     try:
-        configure_feedstock.main(target_directory)
+        configure_feedstock.main(target_directory, variant_config_files)
     finally:
         os.chdir(cwd)
 
@@ -68,6 +83,7 @@ class Subcommand(object):
 
 class Init(Subcommand):
     subcommand = 'init'
+
     def __init__(self, parser):
         # conda-smithy init /path/to/udunits-recipe ./
 
@@ -76,18 +92,19 @@ class Init(Subcommand):
         scp = self.subcommand_parser
         scp.add_argument("recipe_directory", help="The path to the source recipe directory.")
         scp.add_argument("--feedstock-directory", default='./{package.name}-feedstock',
-                        help="Target directory, where the new feedstock git repository should be "
-                             "created. (Default: './<packagename>-feedstock')")
-        scp.add_argument("--no-git-repo", action='store_true',
-                                       default=False,
-                                       help="Do not init the feedstock as a git repository.")
+                         help="Target directory, where the new feedstock git repository should be "
+                         "created. (Default: './<packagename>-feedstock')")
+        scp.add_argument("--no-git-repo", action='store_true', default=False,
+                         help="Do not init the feedstock as a git repository.")
+        scp.add_argument("-m", "--variant-config-files", action="append",
+                         help="path to conda_build_config.yaml defining your base matrix")
 
     def __call__(self, args):
         # check some error conditions
         if args.recipe_directory and not os.path.isdir(args.recipe_directory):
             raise IOError("The source recipe directory should be the directory of the "
                           "conda-recipe you want to build a feedstock for. Got {}".format(
-                args.recipe_directory))
+                              args.recipe_directory))
 
         # Get some information about the source recipe.
         if args.recipe_directory:
@@ -102,7 +119,8 @@ class Init(Subcommand):
             os.makedirs(feedstock_directory)
             if not args.no_git_repo:
                 subprocess.check_call(['git', 'init'], cwd=feedstock_directory)
-            generate_feedstock_content(feedstock_directory, args.recipe_directory, meta)
+            generate_feedstock_content(feedstock_directory, args.recipe_directory, meta,
+                                       args.variant_config_files)
             if not args.no_git_repo:
                 subprocess.check_call(['git', 'commit', '-m', msg], cwd=feedstock_directory)
 
@@ -188,10 +206,13 @@ class Regenerate(Subcommand):
                          help="The directory of the feedstock git repository.")
         scp.add_argument("-c", "--commit", nargs='?', choices=["edit", "auto"], const="edit",
                          help="Whether to setup a commit or not.")
+        scp.add_argument("-m", "--variant-config-files", action="append",
+                         help="path to conda_build_config.yaml defining your base matrix")
 
     def __call__(self, args):
         try:
-            configure_feedstock.main(args.feedstock_directory)
+            configure_feedstock.main(args.feedstock_directory,
+                                     variant_config_files=args.variant_config_files)
             print("\nRe-rendered with conda-smithy %s.\n" % __version__)
 
             is_git_repo = os.path.exists(os.path.join(args.feedstock_directory, ".git"))

@@ -6,19 +6,18 @@
 # benefit from the improvement.
 
 FEEDSTOCK_ROOT=$(cd "$(dirname "$0")/.."; pwd;)
-RECIPE_ROOT=$FEEDSTOCK_ROOT/{{ recipe_dir }}
+RECIPE_ROOT=$FEEDSTOCK_ROOT/recipe
 
 docker info
 
 config=$(cat <<CONDARC
 
 channels:
-{%- for channel in channels.get('sources', []) %}
- - {{ channel }}
-{%- endfor %}
+ - conda-forge
+ - defaults
 
 conda-build:
- root-dir: /home/conda/feedstock_root/build_artifacts
+ root-dir: /feedstock_root/build_artefacts
 
 show_channel_urls: true
 
@@ -35,15 +34,15 @@ if hash docker-machine 2> /dev/null && docker-machine active > /dev/null; then
     HOST_USER_ID=$(docker-machine ssh $(docker-machine active) id -u)
 fi
 
-rm -f "$FEEDSTOCK_ROOT/build_artifacts/conda-forge-build-done"
+rm -f "$FEEDSTOCK_ROOT/build_artefacts/conda-forge-build-done"
 
-cat << EOF | {{ docker.executable }} run -i \
-                        -v "${RECIPE_ROOT}":/home/conda/recipe_root \
-                        -v "${FEEDSTOCK_ROOT}":/home/conda/feedstock_root \
+cat << EOF | docker run -i \
+                        -v "${RECIPE_ROOT}":/recipe_root \
+                        -v "${FEEDSTOCK_ROOT}":/feedstock_root \
                         -e CONFIG="$CONFIG" \
                         -a stdin -a stdout -a stderr \
-                        {{ docker.image }} \
-                        {{ docker.command }} || exit 1
+                        condaforge/linux-anvil \
+                        bash || exit 1
 
 set -e
 set +x
@@ -52,27 +51,23 @@ set -x
 export PYTHONUNBUFFERED=1
 
 echo "$config" > ~/.condarc
-# A lock sometimes occurs with incomplete builds. The lock file is stored in build_artifacts.
+# A lock sometimes occurs with incomplete builds. The lock file is stored in build_artefacts.
 conda clean --lock
 
 conda install --yes --quiet conda-forge-build-setup
-{% if build_setup -%}
-{{ build_setup }}{% endif -%}
+source run_conda_forge_build_setup
 
 # testing purposes: get conda-build from defaults
 conda install -n root --quiet --yes -c defaults conda-build
 
-conda build /home/conda/recipe_root -m /home/conda/feedstock_root/ci_support/matrix/circle_${CONFIG}.yaml --quiet || exit 1
-{%- for owner, channel in channels['targets'] %}
-{{ upload_script }} /home/conda/recipe_root {{ owner }} --channel={{ channel }} -m /home/conda/feedstock_root/ci_support/matrix/circle_${CONFIG}.yaml || exit 1
-{%- endfor %}
+conda build /recipe_root -m /feedstock_root/ci_support/matrix/circle_${CONFIG}.yaml --quiet || exit 1
+upload_or_check_non_existence /recipe_root conda-forge --channel=main -m /feedstock_root/ci_support/matrix/circle_${CONFIG}.yaml || exit 1
 
-touch /home/conda/feedstock_root/build_artifacts/conda-forge-build-done
+touch /feedstock_root/build_artefacts/conda-forge-build-done
 EOF
 
 # double-check that the build got to the end
 # see https://github.com/conda-forge/conda-smithy/pull/337
 # for a possible fix
 set -x
-test -f "$FEEDSTOCK_ROOT/build_artifacts/conda-forge-build-done" || exit 1
-
+test -f "$FEEDSTOCK_ROOT/build_artefacts/conda-forge-build-done" || exit 1

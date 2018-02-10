@@ -1,0 +1,48 @@
+{%set name = "click" %}
+{%set version = "6.7" %}
+{%set compress_type = "tar.gz" %}
+{%set hash_type = "sha256" %}
+{%set hash_val = "f15516df478d5a56180fbf80e68f206010e6d160fc39fa508b65e035fd75130b" %}
+{%set build_num = "0" %}
+
+package:
+  name: {{ name|lower }}
+  version: {{ version }}
+
+source:
+  fn: {{ name }}-{{ version }}.{{ compress_type }}
+  url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name }}-{{ version }}.{{ compress_type }}
+  {{ hash_type }}: {{ hash_val }}
+
+build:
+  number: {{ build_num }}
+  script: python setup.py install --single-version-externally-managed --record=record.txt
+
+requirements:
+  host:
+    - python
+    - setuptools
+
+  run:
+    - python
+
+test:
+  imports:
+    - click
+
+about:
+  home: http://click.pocoo.org/
+  license: BSD 3-Clause
+  license_file: LICENSE
+  license_family: BSD
+  summary: 'A simple wrapper around optparse for powerful command line utilities.'
+  description: |
+    Click is a Python package for creating beautiful command line interfaces
+    in a composable way with as little code as necessary.
+  dev_url: https://github.com/pallets/click
+  doc_url: http://click.pocoo.org/
+  doc_source_url: https://github.com/pallets/click/blob/master/docs/index.rst
+
+extra:
+  recipe-maintainers:
+    - pmlandwehr

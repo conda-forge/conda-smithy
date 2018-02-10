@@ -26,7 +26,7 @@ FIELDS['extra'].append('recipe-maintainers')
 EXPECTED_SECTION_ORDER = ['package', 'source', 'build', 'requirements',
                           'test', 'app', 'outputs', 'about', 'extra']
 
-REQUIREMENTS_ORDER = ['build', 'run']
+REQUIREMENTS_ORDER = ['build', 'host', 'run']
 
 TEST_KEYS = {'imports', 'commands'}
 
@@ -53,6 +53,26 @@ def get_section(parent, name, lints):
     return section
 
 
+def lint_section_order(major_sections, lints):
+    section_order_sorted = sorted(major_sections,
+                                  key=EXPECTED_SECTION_ORDER.index)
+    if major_sections != section_order_sorted:
+        section_order_sorted_str = map(lambda s: "'%s'" % s,
+                                       section_order_sorted)
+        section_order_sorted_str = ", ".join(section_order_sorted_str)
+        section_order_sorted_str = "[" + section_order_sorted_str + "]"
+        lints.append('The top level meta keys are in an unexpected order. '
+                     'Expecting {}.'.format(section_order_sorted_str))
+
+
+def lint_about_contents(about_section, lints):
+    for about_item in ['home', 'license', 'summary']:
+        # if the section doesn't exist, or is just empty, lint it.
+        if not about_section.get(about_item, ''):
+            lints.append('The {} item is expected in the about section.'
+                         ''.format(about_item))
+
+
 def lintify(meta, recipe_dir=None, conda_forge=False):
     lints = []
     major_sections = list(meta.keys())
@@ -73,30 +93,17 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
     unexpected_sections = []
     for section in major_sections:
         if section not in EXPECTED_SECTION_ORDER:
-            lints.append('The top level meta key {} is unexpected'
-                            .format(section))
+            lints.append('The top level meta key {} is unexpected' .format(section))
             unexpected_sections.append(section)
 
     for section in unexpected_sections:
         major_sections.remove(section)
 
     # 1: Top level meta.yaml keys should have a specific order.
-    section_order_sorted = sorted(major_sections,
-                                  key=EXPECTED_SECTION_ORDER.index)
-    if major_sections != section_order_sorted:
-        section_order_sorted_str = map(lambda s: "'%s'" % s,
-                                       section_order_sorted)
-        section_order_sorted_str = ", ".join(section_order_sorted_str)
-        section_order_sorted_str = "[" + section_order_sorted_str + "]"
-        lints.append('The top level meta keys are in an unexpected order. '
-                     'Expecting {}.'.format(section_order_sorted_str))
+    lint_section_order(major_sections, lints)
 
     # 2: The about section should have a home, license and summary.
-    for about_item in ['home', 'license', 'summary']:
-        # if the section doesn't exist, or is just empty, lint it.
-        if not about_section.get(about_item, ''):
-            lints.append('The {} item is expected in the about section.'
-                         ''.format(about_item))
+    lint_about_contents(about_section, lints)
 
     # 3a: The recipe should have some maintainers.
     if not extra_section.get('recipe-maintainers', []):
@@ -225,8 +232,8 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
                     continue
                 if line_s.startswith("skip:") and is_selector_line(line):
                     lints.append("`noarch` packages can't have selectors. If "
-                         "the selectors are necessary, please remove "
-                         "`noarch: {}`.".format(build_section['noarch']))
+                                 "the selectors are necessary, please remove "
+                                 "`noarch: {}`.".format(build_section['noarch']))
                     break
                 if in_requirements:
                     if requirements_spacing == line[:-len(line.lstrip())]:
@@ -234,8 +241,8 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
                         continue
                     if is_selector_line(line):
                         lints.append("`noarch` packages can't have selectors. If "
-                             "the selectors are necessary, please remove "
-                             "`noarch: {}`.".format(build_section['noarch']))
+                                     "the selectors are necessary, please remove "
+                                     "`noarch: {}`.".format(build_section['noarch']))
                         break
 
     return lints
@@ -297,6 +304,15 @@ def main(recipe_dir, conda_forge=False):
         raise IOError('Feedstock has no recipe/meta.yaml.')
 
     env = jinja2.Environment(undefined=NullUndefined)
+
+    # stub out cb3 jinja2 functions - they are not important for linting
+    #    if we don't stub them out, the ruamel.yaml load fails to interpret them
+    #    we can't just use conda-build's api.render functionality, because it would apply selectors
+    env.globals.update(dict(compiler=lambda x: x + '_compiler_stub',
+                            pin_subpackage=lambda *args, **kwargs: 'subpackage_stub',
+                            pin_compatible=lambda *args, **kwargs: 'compatible_pin_stub',
+                            cdt=lambda *args, **kwargs: 'cdt_stub',
+                            ))
 
     with io.open(recipe_meta, 'rt') as fh:
         content = env.from_string(''.join(fh)).render(os=os)

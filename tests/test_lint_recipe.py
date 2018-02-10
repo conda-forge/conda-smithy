@@ -14,9 +14,12 @@ import warnings
 import github
 
 import conda_smithy.lint_recipe as linter
+_thisdir = os.path.abspath(os.path.dirname(__file__))
+
 
 def is_gh_token_set():
     return 'GH_TOKEN' in os.environ
+
 
 @contextmanager
 def tmp_directory():
@@ -366,6 +369,10 @@ class Test_linter(unittest.TestCase):
                 else:
                     self.assertIn(expected_message, lints)
 
+    def test_cb3_jinja2_functions(self):
+        lints = linter.main(os.path.join(_thisdir, 'recipes', 'cb3_jinja2_functions', 'recipe'))
+        assert not lints
+
     @unittest.skipUnless(is_gh_token_set(), "GH_TOKEN not set")
     def test_maintainer_exists(self):
         lints = linter.lintify({'extra': {'recipe-maintainers': ['support']}}, conda_forge=True)
@@ -500,7 +507,7 @@ class TestCLI_recipe_lint(unittest.TestCase):
         Tests that unicode does not confuse the linter.
         """
         with tmp_directory() as recipe_dir:
-            with io.open(os.path.join(recipe_dir, 'meta.yaml'), 'wt') as fh:
+            with io.open(os.path.join(recipe_dir, 'meta.yaml'), 'wt', encoding='utf-8') as fh:
                 fh.write("""
                     package:
                         name: 'test_package'
