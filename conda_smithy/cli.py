@@ -208,48 +208,14 @@ class Regenerate(Subcommand):
                          help="Whether to setup a commit or not.")
         scp.add_argument("-m", "--variant-config-files", action="append",
                          help="path to conda_build_config.yaml defining your base matrix")
+        scp.add_argument("--no-check-uptodate", default=False,
+                         help="Don't check that conda-smithy and conda-forge-pinning are uptodate")
 
     def __call__(self, args):
         try:
             configure_feedstock.main(args.feedstock_directory,
-                                     variant_config_files=args.variant_config_files)
-            print("\nRe-rendered with conda-smithy %s.\n" % __version__)
-
-            is_git_repo = os.path.exists(os.path.join(args.feedstock_directory, ".git"))
-            if is_git_repo:
-                has_staged_changes = subprocess.call(
-                    [
-                        "git", "diff", "--cached", "--quiet", "--exit-code"
-                    ],
-                    cwd=args.feedstock_directory
-                )
-                if has_staged_changes:
-                    if args.commit:
-                        git_args = [
-                            'git',
-                            'commit',
-                            '-m',
-                            'MNT: Re-rendered with conda-smithy %s' % __version__
-                        ]
-                        if args.commit == "edit":
-                            git_args += [
-                                '--edit',
-                                '--status',
-                                '--verbose'
-                            ]
-                        subprocess.check_call(
-                            git_args,
-                            cwd=args.feedstock_directory
-                        )
-                        print("")
-                    else:
-                        print(
-                            'You can commit the changes with:\n\n'
-                            '    git commit -m "MNT: Re-rendered with conda-smithy %s"\n' % __version__
-                        )
-                    print("These changes need to be pushed to github!\n")
-                else:
-                    print("No changes made. This feedstock is up-to-date.\n")
+                                     variant_config_files=args.variant_config_files,
+                                     no_check_uptodate=args.no_check_uptodate, commit=args.commit)
         except RuntimeError as e:
             print(e)
         except subprocess.CalledProcessError as e:
