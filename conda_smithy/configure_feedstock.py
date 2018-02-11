@@ -317,9 +317,14 @@ def _render_ci_provider(provider_name, jinja_env, forge_config, forge_dir, platf
         upload_fpath = os.path.join(forge_dir, 'recipe',
                                     'upload_or_check_non_existence.py')
         if os.path.exists(upload_fpath):
-            forge_config['upload_script'] = (
-                "/recipe_root/upload_or_check_non_existence.py"
-            )
+            if provider_name == "circle":
+                forge_config['upload_script'] = (
+                    "/home/conda/recipe_root/upload_or_check_non_existence.py"
+                )
+            else:
+                forge_config['upload_script'] = (
+                    "{}/upload_or_check_non_existence.py".format(forge_config["recipe_dir"])
+                )
         else:
             forge_config['upload_script'] = "upload_or_check_non_existence"
 
@@ -348,7 +353,7 @@ def _circle_specific_setup(jinja_env, forge_config, forge_dir):
     if os.path.exists(cfbs_fpath):
         build_setup += textwrap.dedent("""\
             # Overriding global conda-forge-build-setup with local copy.
-            source /recipe_root/run_conda_forge_build_setup_linux
+            source /home/conda/recipe_root/run_conda_forge_build_setup_linux
 
         """)
     else:
