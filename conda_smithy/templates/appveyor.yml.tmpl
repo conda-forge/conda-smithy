@@ -32,7 +32,6 @@ install:
     # Around November of 2017, Appveyor changed Miniconda3-x64 from an old 3.4 install to a
     #     symlink to the current version.
     - cmd: call C:\Miniconda3-x64\Scripts\activate.bat
-    - cmd: conda.exe update --yes --quiet conda
 
     - cmd: set PYTHONUNBUFFERED=1
 
@@ -41,6 +40,9 @@ install:
     - cmd: conda.exe config --remove channels defaults
     {%- for channel in channels.get('sources', [])|reverse %}
     - cmd: conda.exe config --add channels {{ channel }}{% endfor %}
+
+    # Update conda
+    - cmd: conda.exe update --yes --quiet conda
 
     # Configure the VM.
     - cmd: conda.exe install -n root --quiet --yes conda-forge-build-setup
