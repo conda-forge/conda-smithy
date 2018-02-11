@@ -41,6 +41,7 @@ cat << EOF | {{ docker.executable }} run -i \
                         -v "${RECIPE_ROOT}":/home/conda/recipe_root \
                         -v "${FEEDSTOCK_ROOT}":/home/conda/feedstock_root \
                         -e CONFIG="$CONFIG" \
+                        -e HOST_USER_ID="${HOST_USER_ID}" \
                         -a stdin -a stdout -a stderr \
                         {{ docker.image }} \
                         {{ docker.command }} || exit 1
