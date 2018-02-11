@@ -12,7 +12,7 @@ def test_noarch_skips_appveyor(noarch_recipe, jinja_env):
     assert not noarch_recipe.config['appveyor']['enabled']
     # no appveyor.yaml should have been written.  Nothing else, either, since we only ran
     #     appveyor render.  No matrix dir should exist.
-    assert not os.path.isdir(os.path.join(noarch_recipe.recipe, '.ci_support', 'matrix'))
+    assert not os.path.isdir(os.path.join(noarch_recipe.recipe, '.ci_support'))
 
 
 def test_noarch_skips_travis(noarch_recipe, jinja_env):
@@ -23,7 +23,7 @@ def test_noarch_skips_travis(noarch_recipe, jinja_env):
     assert not noarch_recipe.config['travis']['enabled']
     # no appveyor.yaml should have been written.  Nothing else, either, since we only ran
     #     appveyor render.  No matrix dir should exist.
-    assert not os.path.isdir(os.path.join(noarch_recipe.recipe, '.ci_support', 'matrix'))
+    assert not os.path.isdir(os.path.join(noarch_recipe.recipe, '.ci_support'))
 
 
 def test_noarch_runs_on_circle(noarch_recipe, jinja_env):
@@ -34,7 +34,7 @@ def test_noarch_runs_on_circle(noarch_recipe, jinja_env):
     assert noarch_recipe.config['circle']['enabled']
     # no appveyor.yaml should have been written.  Nothing else, either, since we only ran
     #     appveyor render.  No matrix dir should exist.
-    matrix_dir = os.path.join(noarch_recipe.recipe, '.ci_support', 'matrix')
+    matrix_dir = os.path.join(noarch_recipe.recipe, '.ci_support')
     assert os.path.isdir(matrix_dir)
     # single matrix entry - readme is generated later in main function
     assert len(os.listdir(matrix_dir)) == 1
@@ -48,7 +48,7 @@ def test_r_skips_appveyor(r_recipe, jinja_env):
     assert not r_recipe.config['appveyor']['enabled']
     # no appveyor.yaml should have been written.  Nothing else, either, since we only ran
     #     appveyor render.  No matrix dir should exist.
-    assert not os.path.isdir(os.path.join(r_recipe.recipe, '.ci_support', 'matrix'))
+    assert not os.path.isdir(os.path.join(r_recipe.recipe, '.ci_support'))
 
 
 def test_r_matrix_travis(r_recipe, jinja_env):
@@ -59,7 +59,7 @@ def test_r_matrix_travis(r_recipe, jinja_env):
     assert r_recipe.config['travis']['enabled']
     # no appveyor.yaml should have been written.  Nothing else, either, since we only ran
     #     appveyor render.  No matrix dir should exist.
-    matrix_dir = os.path.join(r_recipe.recipe, '.ci_support', 'matrix')
+    matrix_dir = os.path.join(r_recipe.recipe, '.ci_support')
     assert os.path.isdir(matrix_dir)
     # single matrix entry - readme is generated later in main function
     assert len(os.listdir(matrix_dir)) == 2
@@ -73,7 +73,7 @@ def test_r_matrix_on_circle(r_recipe, jinja_env):
     assert r_recipe.config['circle']['enabled']
     # no appveyor.yaml should have been written.  Nothing else, either, since we only ran
     #     appveyor render.  No matrix dir should exist.
-    matrix_dir = os.path.join(r_recipe.recipe, '.ci_support', 'matrix')
+    matrix_dir = os.path.join(r_recipe.recipe, '.ci_support')
     assert os.path.isdir(matrix_dir)
     # single matrix entry - readme is generated later in main function
     assert len(os.listdir(matrix_dir)) == 2
@@ -85,7 +85,7 @@ def test_py_matrix_appveyor(py_recipe, jinja_env):
                                 forge_dir=py_recipe.recipe)
     # this configuration should be skipped
     assert py_recipe.config['appveyor']['enabled']
-    matrix_dir = os.path.join(py_recipe.recipe, '.ci_support', 'matrix')
+    matrix_dir = os.path.join(py_recipe.recipe, '.ci_support')
     assert os.path.isdir(matrix_dir)
     # 2 python versions, 2 target_platforms
     assert len(os.listdir(matrix_dir)) == 4
@@ -99,7 +99,7 @@ def test_py_matrix_travis(py_recipe, jinja_env):
     assert py_recipe.config['travis']['enabled']
     # no appveyor.yaml should have been written.  Nothing else, either, since we only ran
     #     appveyor render.  No matrix dir should exist.
-    matrix_dir = os.path.join(py_recipe.recipe, '.ci_support', 'matrix')
+    matrix_dir = os.path.join(py_recipe.recipe, '.ci_support')
     assert os.path.isdir(matrix_dir)
     # single matrix entry - readme is generated later in main function
     assert len(os.listdir(matrix_dir)) == 2
@@ -113,7 +113,7 @@ def test_py_matrix_on_circle(py_recipe, jinja_env):
     assert py_recipe.config['circle']['enabled']
     # no appveyor.yaml should have been written.  Nothing else, either, since we only ran
     #     appveyor render.  No matrix dir should exist.
-    matrix_dir = os.path.join(py_recipe.recipe, '.ci_support', 'matrix')
+    matrix_dir = os.path.join(py_recipe.recipe, '.ci_support')
     assert os.path.isdir(matrix_dir)
     # single matrix entry - readme is generated later in main function
     assert len(os.listdir(matrix_dir)) == 2
