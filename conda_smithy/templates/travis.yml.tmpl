@@ -67,7 +67,7 @@ install:
       conda install -n root --quiet --yes -c defaults conda-build
 
 script:
-  - conda build ./{{ recipe_dir }} -m ./ci_support/matrix/travis_${CONFIG}.yaml
+  - conda build ./{{ recipe_dir }} -m ./ci_support/matrix/${CONFIG}.yaml
 {% for owner, channel in channels['targets'] %}
-  - {{ upload_script }} ./{{ recipe_dir }} {{ owner }} --channel={{ channel }} -m ./ci_support/matrix/travis_${CONFIG}.yaml
+  - {{ upload_script }} ./{{ recipe_dir }} {{ owner }} --channel={{ channel }} -m ./ci_support/matrix/${CONFIG}.yaml
 {% endfor %}
