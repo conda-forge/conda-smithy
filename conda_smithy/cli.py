@@ -73,8 +73,6 @@ class Init(Subcommand):
         scp.add_argument("--feedstock-directory", default='./{package.name}-feedstock',
                          help="Target directory, where the new feedstock git repository should be "
                          "created. (Default: './<packagename>-feedstock')")
-        scp.add_argument("--no-git-repo", action='store_true', default=False,
-                         help="Do not init the feedstock as a git repository.")
 
     def __call__(self, args):
         # check some error conditions
@@ -94,11 +92,9 @@ class Init(Subcommand):
 
         try:
             os.makedirs(feedstock_directory)
-            if not args.no_git_repo:
-                subprocess.check_call(['git', 'init'], cwd=feedstock_directory)
+            subprocess.check_call(['git', 'init'], cwd=feedstock_directory)
             generate_feedstock_content(feedstock_directory, args.recipe_directory)
-            if not args.no_git_repo:
-                subprocess.check_call(['git', 'commit', '-m', msg], cwd=feedstock_directory)
+            subprocess.check_call(['git', 'commit', '-m', msg], cwd=feedstock_directory)
 
             print("\nRepository created, please edit conda-forge.yml to configure the upload channels\n"
                   "and afterwards call 'conda smithy register-github'")
