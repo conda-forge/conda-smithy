@@ -53,6 +53,6 @@ install:
       conda install -n root --quiet --yes -c defaults conda-build
 
 script:
-  - conda build ./recipe -m ./ci_support/matrix/travis_${CONFIG}.yaml
+  - conda build ./recipe -m ./.ci_support/matrix/travis_${CONFIG}.yaml
 
-  - upload_or_check_non_existence ./recipe conda-forge --channel=main -m ./ci_support/matrix/travis_${CONFIG}.yaml
+  - upload_or_check_non_existence ./recipe conda-forge --channel=main -m ./.ci_support/matrix/travis_${CONFIG}.yaml

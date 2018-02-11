@@ -60,8 +60,8 @@ source run_conda_forge_build_setup
 # testing purposes: get conda-build from defaults
 conda install -n root --quiet --yes -c defaults conda-build
 
-conda build /recipe_root -m /feedstock_root/ci_support/matrix/circle_${CONFIG}.yaml --quiet || exit 1
-upload_or_check_non_existence /recipe_root conda-forge --channel=main -m /feedstock_root/ci_support/matrix/circle_${CONFIG}.yaml || exit 1
+conda build /recipe_root -m /feedstock_root/.ci_support/matrix/circle_${CONFIG}.yaml --quiet || exit 1
+upload_or_check_non_existence /recipe_root conda-forge --channel=main -m /feedstock_root/.ci_support/matrix/circle_${CONFIG}.yaml || exit 1
 
 touch /feedstock_root/build_artefacts/conda-forge-build-done
 EOF
