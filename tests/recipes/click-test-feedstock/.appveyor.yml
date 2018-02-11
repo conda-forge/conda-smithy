@@ -52,6 +52,6 @@ install:
 build: off
 
 test_script:
-    - conda build recipe -m ci_support/matrix/appveyor_%CONFIG%.yaml --quiet
+    - conda build recipe -m ci_support\matrix\appveyor_%CONFIG%.yaml --quiet
 deploy_script:
-    - cmd: upload_or_check_non_existence .\recipe conda-forge --channel=main -m ci_support/matrix/appveyor_%CONFIG%.yaml
+    - cmd: upload_or_check_non_existence .\recipe conda-forge --channel=main -m ci_support\matrix\appveyor_%CONFIG%.yaml
