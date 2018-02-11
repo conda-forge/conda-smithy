@@ -321,9 +321,13 @@ def _render_ci_provider(provider_name, jinja_env, forge_config, forge_dir, platf
                 forge_config['upload_script'] = (
                     "/home/conda/recipe_root/upload_or_check_non_existence.py"
                 )
+            elif provider_name == "travis":
+                forge_config['upload_script'] = (
+                    "{}/upload_or_check_non_existence.py".format(forge_config["recipe_dir"])
+                )
             else:
                 forge_config['upload_script'] = (
-                    os.path.join("upload_or_check_non_existence.py", forge_config["recipe_dir"])
+                    "{}\\upload_or_check_non_existence.py".format(forge_config["recipe_dir"])
                 )
         else:
             forge_config['upload_script'] = "upload_or_check_non_existence"
