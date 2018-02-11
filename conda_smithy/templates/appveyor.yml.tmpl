@@ -56,8 +56,8 @@ install:
 build: off
 
 test_script:
-    - conda.exe build {{ recipe_dir }} -m ci_support/matrix/%CONFIG%.yaml --quiet
+    - conda.exe build {{ recipe_dir }} -m ci_support\matrix\%CONFIG%.yaml --quiet
 deploy_script:
 {%- for owner, channel in channels['targets'] %}
-    - cmd: {{ upload_script }} .\{{ recipe_dir }} {{ owner }} --channel={{ channel }} -m ci_support/matrix/%CONFIG%.yaml
+    - cmd: {{ upload_script }} .\{{ recipe_dir }} {{ owner }} --channel={{ channel }} -m ci_support\matrix\%CONFIG%.yaml
 {% endfor %}
