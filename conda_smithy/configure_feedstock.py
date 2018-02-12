@@ -511,7 +511,7 @@ def render_README(jinja_env, forge_config, forge_dir):
     meta = conda_build.api.render(os.path.join(forge_dir, 'recipe'),
                                   variant_config_files=forge_config['variant_config_files'],
                                   permit_undefined_jinja=True, finalize=False,
-                                  bypass_env_check=True)[0][0]
+                                  bypass_env_check=True, trim_skip=False)[0][0]
     template = jinja_env.get_template('README.md.tmpl')
     target_fname = os.path.join(forge_dir, 'README.md')
     forge_config['noarch_python'] = meta.noarch

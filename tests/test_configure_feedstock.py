@@ -134,3 +134,9 @@ def test_circle_with_empty_yum_reqs_raises(py_recipe, jinja_env):
         cnfgr_fdstk.render_circle(jinja_env=jinja_env,
                                   forge_config=py_recipe.config,
                                   forge_dir=py_recipe.recipe)
+
+
+def test_render_with_all_skipped_generates_readme(skipped_recipe, jinja_env):
+    cnfgr_fdstk.render_README(jinja_env=jinja_env,
+                                forge_config=skipped_recipe.config,
+                                forge_dir=skipped_recipe.recipe)

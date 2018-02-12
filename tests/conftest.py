@@ -132,6 +132,30 @@ about:
 
 
 @pytest.fixture(scope='function')
+def skipped_recipe(config_yaml, request):
+    os.makedirs(os.path.join(config_yaml, 'recipe'))
+    with open(os.path.join(config_yaml, 'recipe', 'meta.yaml'), 'w') as fh:
+        fh.write("""
+package:
+    name: skip-test
+    version: 1.0.0
+build:
+    skip: True
+requirements:
+    build:
+        - python
+    run:
+        - python
+about:
+    home: home
+    """)
+    return RecipeConfigPair(str(config_yaml),
+                            _load_forge_config(config_yaml,
+                                               variant_config_files=[os.path.join(config_yaml,
+                                                                                  'config.yaml')]))
+
+
+@pytest.fixture(scope='function')
 def jinja_env(request):
     tmplt_dir = os.path.join(conda_forge_content, 'templates')
     # Load templates from the feedstock in preference to the smithy's templates.
