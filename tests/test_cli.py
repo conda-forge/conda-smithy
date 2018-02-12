@@ -50,7 +50,7 @@ def test_init_multiple_output_matrix(testing_workdir):
                     no_git_repo=False,
                     variant_config_files=os.path.join(recipe, 'conda_build_config.yaml'))
     init_obj(args)
-    matrix_dir = os.path.join(feedstock_dir, 'ci_support', 'matrix')
+    matrix_dir = os.path.join(feedstock_dir, '.ci_support')
     # the matrix should be consolidated among all outputs, as well as the top-level
     # reqs. Only the top-level reqs should have indedependent config files,
     # though - loops within outputs are contained in those top-level configs.
@@ -80,7 +80,7 @@ def test_regenerate(py_recipe):
     args = RegenerateArgs(feedstock_directory=feedstock_dir,
                           commit=False,
                           variant_config_files=os.path.join(recipe, 'config.yaml'))
-    matrix_folder = os.path.join(feedstock_dir, 'ci_support', 'matrix')
+    matrix_folder = os.path.join(feedstock_dir, '.ci_support')
 
     initial_commit = subprocess.check_output(['git', 'rev-parse', 'HEAD'],
                                              cwd=feedstock_dir).strip()
@@ -95,7 +95,7 @@ def test_regenerate(py_recipe):
         args = RegenerateArgs(feedstock_directory=feedstock_dir,
                               commit=False,
                               variant_config_files=os.path.join(recipe, 'short_config.yaml'))
-        matrix_folder = os.path.join(feedstock_dir, 'ci_support', 'matrix')
+        matrix_folder = os.path.join(feedstock_dir, '.ci_support')
         # one py ver, no target_platform  (tests that older configs don't stick around)
         regen_obj(args)
         assert len(os.listdir(matrix_folder)) == 4
