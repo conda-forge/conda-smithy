@@ -149,6 +149,6 @@ def test_render_windows_with_skipped_python(python_skipped_recipe, jinja_env):
     # this configuration should be skipped
     assert python_skipped_recipe.config['appveyor']['enabled']
 
-    matrix_dir = os.path.join(python_skipped_recipe.recipe, 'ci_support', 'matrix')
+    matrix_dir = os.path.join(python_skipped_recipe.recipe, '.ci_support')
     # matrix has 2.7, 3.5, 3.6, but 3.6 is skipped.  Should be 2 entries.
     assert len(os.listdir(matrix_dir)) == 2

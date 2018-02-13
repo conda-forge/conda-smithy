@@ -181,7 +181,7 @@ def _collapse_subpackage_variants(list_of_metas):
 
     # these are variables that only occur in the top level, and thus won't show up as loops in the
     #     above collection of all variants.  We need to transfer them from the input_variants.
-    preserve_top_level_loops = set(top_level_vars) - set(all_used_vars)
+    preserve_top_level_loops = set(top_level_loop_vars) - set(all_used_vars)
 
     # Add in some variables that should always be preserved
     all_used_vars.update(set(('zip_keys', 'pin_run_as_build', 'MACOSX_DEPLOYMENT_TARGET')))

@@ -80,21 +80,23 @@ def test_regenerate(py_recipe, testing_workdir):
     subprocess.call('git init'.split(), cwd=dest_dir)
     subprocess.call('git add *'.split(), cwd=dest_dir)
     subprocess.call('git commit -m "init"'.split(), cwd=dest_dir)
-    args = RegenerateArgs(feedstock_directory=dest_dir,
-                          commit=False,
-                          variant_config_files=os.path.join(recipe, 'config.yaml'))
-    matrix_folder = os.path.join(feedstock_dir, '.ci_support')
+    matrix_folder = os.path.join(dest_dir, '.ci_support')
 
     # original rendering was with py27, 36, no target_platform
     assert len(os.listdir(matrix_folder)) == 7
+
+    args = RegenerateArgs(feedstock_directory=dest_dir,
+                          commit=False,
+                          variant_config_files=os.path.join(recipe, 'config.yaml'))
     regen_obj(args)
+
     # should add 2, as the config.yaml adds in target_platform
     assert len(os.listdir(matrix_folder)) == 9
+
     # reduce the python matrix and make sure the matrix files reflect the change
     args = RegenerateArgs(feedstock_directory=dest_dir,
                           commit=False,
                           variant_config_files=os.path.join(recipe, 'short_config.yaml'))
-    matrix_folder = os.path.join(dest_dir, 'ci_support', 'matrix')
     # one py ver, no target_platform  (tests that older configs don't stick around)
     regen_obj(args)
     assert len(os.listdir(matrix_folder)) == 4
