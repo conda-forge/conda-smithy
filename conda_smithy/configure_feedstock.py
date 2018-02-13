@@ -160,9 +160,12 @@ def _collapse_subpackage_variants(list_of_metas):
     top_level_loop_vars = set()
 
     all_used_vars = set()
+    all_variants = set()
 
     for meta in list_of_metas:
         all_used_vars.update(meta.get_used_vars())
+        all_variants.update(conda_build.utils.HashableDict(v) for v in meta.config.variants)
+        all_variants.add(conda_build.utils.HashableDict(meta.config.variant))
 
     top_level_loop_vars = list_of_metas[0].get_used_loop_vars(force_top_level=True)
     top_level_vars = list_of_metas[0].get_used_vars(force_top_level=True)
@@ -174,30 +177,42 @@ def _collapse_subpackage_variants(list_of_metas):
     #     configuration per item, and we want a single dict, with each key representing many values
     squished_input_variants = conda_build.variants.list_of_dicts_to_dict_of_lists(
         list_of_metas[0].config.input_variants)
+    squished_used_variants = conda_build.variants.list_of_dicts_to_dict_of_lists(list(all_variants))
+
+    # these are variables that only occur in the top level, and thus won't show up as loops in the
+    #     above collection of all variants.  We need to transfer them from the input_variants.
+    preserve_top_level_loops = set(top_level_vars) - set(all_used_vars)
 
     # Add in some variables that should always be preserved
     all_used_vars.update(set(('zip_keys', 'pin_run_as_build', 'MACOSX_DEPLOYMENT_TARGET')))
     all_used_vars.update(top_level_vars)
 
-    all_used_vars = {key: squished_input_variants[key]
-                     for key in all_used_vars if key in squished_input_variants}
+    used_key_values = {key: squished_input_variants[key]
+                       for key in all_used_vars if key in squished_input_variants}
 
-    _trim_unused_zip_keys(all_used_vars)
-    _trim_unused_pin_run_as_build(all_used_vars)
+    for k, v in squished_used_variants.items():
+        if k in all_used_vars:
+            used_key_values[k] = v
+
+    for k in preserve_top_level_loops:
+        used_key_values[k] = squished_input_variants[k]
+
+    _trim_unused_zip_keys(used_key_values)
+    _trim_unused_pin_run_as_build(used_key_values)
 
     # to deduplicate potentially zipped keys, we blow out the collection of variables, then
     #     do a set operation, then collapse it again
 
-    all_used_vars = conda_build.variants.dict_of_lists_to_list_of_dicts(
-        all_used_vars, extend_keys={'zip_keys', 'pin_run_as_build',
-                                    'ignore_version', 'ignore_build_only_deps'})
-    all_used_vars = set(conda_build.utils.HashableDict(variant) for variant in all_used_vars)
-    all_used_vars = conda_build.variants.list_of_dicts_to_dict_of_lists(list(all_used_vars))
+    used_key_values = conda_build.variants.dict_of_lists_to_list_of_dicts(
+        used_key_values, extend_keys={'zip_keys', 'pin_run_as_build',
+                                      'ignore_version', 'ignore_build_only_deps'})
+    used_key_values = set(conda_build.utils.HashableDict(variant) for variant in used_key_values)
+    used_key_values = conda_build.variants.list_of_dicts_to_dict_of_lists(list(used_key_values))
 
-    _trim_unused_zip_keys(all_used_vars)
-    _trim_unused_pin_run_as_build(all_used_vars)
+    _trim_unused_zip_keys(used_key_values)
+    _trim_unused_pin_run_as_build(used_key_values)
 
-    return break_up_top_level_values(top_level_loop_vars, all_used_vars), top_level_loop_vars
+    return break_up_top_level_values(top_level_loop_vars, used_key_values), top_level_loop_vars
 
 
 def dump_subspace_config_files(metas, root_path, output_name):

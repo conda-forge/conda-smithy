@@ -97,11 +97,9 @@ def test_py_matrix_travis(py_recipe, jinja_env):
                               forge_dir=py_recipe.recipe)
     # this configuration should be run
     assert py_recipe.config['travis']['enabled']
-    # no appveyor.yaml should have been written.  Nothing else, either, since we only ran
-    #     appveyor render.  No matrix dir should exist.
     matrix_dir = os.path.join(py_recipe.recipe, '.ci_support')
     assert os.path.isdir(matrix_dir)
-    # single matrix entry - readme is generated later in main function
+    # two matrix enties - one per py ver
     assert len(os.listdir(matrix_dir)) == 2
 
 
@@ -138,5 +136,19 @@ def test_circle_with_empty_yum_reqs_raises(py_recipe, jinja_env):
 
 def test_render_with_all_skipped_generates_readme(skipped_recipe, jinja_env):
     cnfgr_fdstk.render_README(jinja_env=jinja_env,
-                                forge_config=skipped_recipe.config,
-                                forge_dir=skipped_recipe.recipe)
+                              forge_config=skipped_recipe.config,
+                              forge_dir=skipped_recipe.recipe)
+
+
+def test_render_windows_with_skipped_python(python_skipped_recipe, jinja_env):
+    config = python_skipped_recipe.config
+    config['variant_config_files'] = [os.path.join(python_skipped_recipe.recipe, 'long_config.yaml')]
+    cnfgr_fdstk.render_appveyor(jinja_env=jinja_env,
+                                forge_config=config,
+                                forge_dir=python_skipped_recipe.recipe)
+    # this configuration should be skipped
+    assert python_skipped_recipe.config['appveyor']['enabled']
+
+    matrix_dir = os.path.join(python_skipped_recipe.recipe, 'ci_support', 'matrix')
+    # matrix has 2.7, 3.5, 3.6, but 3.6 is skipped.  Should be 2 entries.
+    assert len(os.listdir(matrix_dir)) == 2
