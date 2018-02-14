@@ -178,15 +178,12 @@ class Regenerate(Subcommand):
                          help="The directory of the feedstock git repository.")
         scp.add_argument("-c", "--commit", nargs='?', choices=["edit", "auto"], const="edit",
                          help="Whether to setup a commit or not.")
-        scp.add_argument("-m", "--variant-config-files", action="append",
-                         help="path to conda_build_config.yaml defining your base matrix")
         scp.add_argument("--no-check-uptodate", default=False,
                          help="Don't check that conda-smithy and conda-forge-pinning are uptodate")
 
     def __call__(self, args):
         try:
             configure_feedstock.main(args.feedstock_directory,
-                                     variant_config_files=args.variant_config_files,
                                      no_check_uptodate=args.no_check_uptodate, commit=args.commit)
         except RuntimeError as e:
             print(e)
