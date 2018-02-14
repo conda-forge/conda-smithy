@@ -1,9 +1,8 @@
 # This list is duplicated in the conda_smithy.recipe/meta.yaml.
 
-conda-build-all >=1.0.3
 setuptools
 conda
-conda-build >=1.21.12,!=2.0.9
+conda-build >=3.1.2
 jinja2
 requests
 pycrypto

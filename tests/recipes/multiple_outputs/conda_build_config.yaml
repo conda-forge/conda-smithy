@@ -1,0 +1,32 @@
+# used by one of the outputs
+bzip2:
+  - 1.0
+# used by one of the outputs, loop var (will make up config name)
+jpeg:
+  - 8
+  - 9
+# used by top-level, zipped
+libpng:
+  - 1.6
+  - 1.5
+# top-level, zipped, not used
+libtiff:
+  - 4.0
+  - 3.0
+# top-level, not zipped
+libpq:
+  - 9.5
+  - 9.6
+# transient dep for libpng, should not be picked up
+zlib:
+  - 1.2
+# not used; part of zip group
+nonexistent:
+  - a
+  - b
+# zip these just for testing purposes
+zip_keys:
+  -
+    - libpng
+    - libtiff
+    - nonexistent

@@ -1,0 +1,39 @@
+{% set version='1.2.3' %}
+
+package:
+  name: test_multiple_outputs
+  version: {{ version }}
+
+build:
+  number: 0
+
+requirements:
+  host:
+    - libpng
+    - libpq
+
+outputs:
+  - name: test_output_1
+    requirements:
+      - bzip2
+    test:
+      commands:
+        - test -e $PREFIX/lib/libz.so     # [linux]
+        - test -e $PREFIX/lib/libz.dylib  # [osx]
+  - name: test_output_2
+    requirements:
+      host:
+        - jpeg
+    test:
+      commands:
+        - test -e $PREFIX/lib/libjpeg.so     # [linux]
+        - test -e $PREFIX/lib/libjpeg.dylib  # [osx]
+
+about:
+  home: home
+  summary: summary
+  license: BSD
+
+extra:
+  recipe-maintainers:
+    - mickey_mouse
