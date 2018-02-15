@@ -62,6 +62,11 @@ def config_yaml(testing_workdir):
             'python': ['2.7'],
         }
         yaml.dump(config, f, default_flow_style=False)
+    with open(os.path.join(testing_workdir, 'long_config.yaml'), 'w') as f:
+        config = {
+            'python': ['2.7', '3.5', '3.6'],
+        }
+        yaml.dump(config, f, default_flow_style=False)
     return testing_workdir
 
 
@@ -117,6 +122,53 @@ def py_recipe(config_yaml, request):
 package:
     name: py-test
     version: 1.0.0
+requirements:
+    build:
+        - python
+    run:
+        - python
+about:
+    home: home
+    """)
+    return RecipeConfigPair(str(config_yaml),
+                            _load_forge_config(config_yaml,
+                                               variant_config_files=[os.path.join(config_yaml,
+                                                                                  'config.yaml')]))
+
+
+@pytest.fixture(scope='function')
+def skipped_recipe(config_yaml, request):
+    os.makedirs(os.path.join(config_yaml, 'recipe'))
+    with open(os.path.join(config_yaml, 'recipe', 'meta.yaml'), 'w') as fh:
+        fh.write("""
+package:
+    name: skip-test
+    version: 1.0.0
+build:
+    skip: True
+requirements:
+    build:
+        - python
+    run:
+        - python
+about:
+    home: home
+    """)
+    return RecipeConfigPair(str(config_yaml),
+                            _load_forge_config(config_yaml,
+                                               variant_config_files=[os.path.join(config_yaml,
+                                                                                  'config.yaml')]))
+
+@pytest.fixture(scope='function')
+def python_skipped_recipe(config_yaml, request):
+    os.makedirs(os.path.join(config_yaml, 'recipe'))
+    with open(os.path.join(config_yaml, 'recipe', 'meta.yaml'), 'w') as fh:
+        fh.write("""
+package:
+    name: py-test
+    version: 1.0.0
+build:
+    skip: True   # [py36]
 requirements:
     build:
         - python

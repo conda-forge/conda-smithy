@@ -3,6 +3,7 @@ import collections
 import os
 import subprocess
 import yaml
+import shutil
 
 from conda_smithy import cli
 
@@ -37,9 +38,6 @@ def test_init(py_recipe):
     assert os.path.isdir(destination)
 
 
-#TODO: remove the 2 lines below. https://github.com/conda-forge/conda-smithy/issues/650
-import pytest
-@pytest.mark.xfail
 def test_init_multiple_output_matrix(testing_workdir):
     parser = argparse.ArgumentParser()
     subparser = parser.add_subparsers()
@@ -72,37 +70,36 @@ def test_init_multiple_output_matrix(testing_workdir):
     assert 'zlib' not in config
 
 
-def test_regenerate(py_recipe):
+def test_regenerate(py_recipe, testing_workdir):
     parser = argparse.ArgumentParser()
     subparser = parser.add_subparsers()
     regen_obj = cli.Regenerate(subparser)
     recipe = py_recipe.recipe
     feedstock_dir = os.path.join(_thisdir, 'recipes', 'click-test-feedstock')
-    args = RegenerateArgs(feedstock_directory=feedstock_dir,
+    dest_dir = os.path.join(testing_workdir, 'click-test-feedstock')
+    shutil.copytree(feedstock_dir, dest_dir)
+    subprocess.call('git init'.split(), cwd=dest_dir)
+    subprocess.call('git add *'.split(), cwd=dest_dir)
+    subprocess.call('git commit -m "init"'.split(), cwd=dest_dir)
+    matrix_folder = os.path.join(dest_dir, '.ci_support')
+
+    # original rendering was with py27, 36, no target_platform
+    assert len(os.listdir(matrix_folder)) == 7
+
+    args = RegenerateArgs(feedstock_directory=dest_dir,
                           commit=False,
                           variant_config_files=os.path.join(recipe, 'config.yaml'),
                           no_check_uptodate=False)
-    matrix_folder = os.path.join(feedstock_dir, '.ci_support')
+    regen_obj(args)
 
-    initial_commit = subprocess.check_output(['git', 'rev-parse', 'HEAD'],
-                                             cwd=feedstock_dir).strip()
-    try:
-        # original rendering was with py27, 36, no target_platform
-        assert len(os.listdir(matrix_folder)) == 7
-        regen_obj(args)
-        # should add 2, as the config.yaml adds in target_platform
-        assert len(os.listdir(matrix_folder)) == 9
+    # should add 2, as the config.yaml adds in target_platform
+    assert len(os.listdir(matrix_folder)) == 9
 
-        # reduce the python matrix and make sure the matrix files reflect the change
-        args = RegenerateArgs(feedstock_directory=feedstock_dir,
-                              commit=False,
-                              variant_config_files=os.path.join(recipe, 'short_config.yaml'),
-                              no_check_uptodate=False)
-        matrix_folder = os.path.join(feedstock_dir, '.ci_support')
-        # one py ver, no target_platform  (tests that older configs don't stick around)
-        regen_obj(args)
-        assert len(os.listdir(matrix_folder)) == 4
-    finally:
-        # reset the test dir for next time
-        subprocess.call(['git', 'reset', '--hard', initial_commit],
-                        cwd=feedstock_dir)
+    # reduce the python matrix and make sure the matrix files reflect the change
+    args = RegenerateArgs(feedstock_directory=dest_dir,
+                          commit=False,
+                          variant_config_files=os.path.join(recipe, 'short_config.yaml'),
+                          no_check_uptodate=False)
+    # one py ver, no target_platform  (tests that older configs don't stick around)
+    regen_obj(args)
+    assert len(os.listdir(matrix_folder)) == 4
