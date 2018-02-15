@@ -598,16 +598,6 @@ def _load_forge_config(forge_dir, exclusive_config_file):
     return config
 
 
-def get_installed_version(pkg):
-    from conda_build.conda_interface import root_dir, linked
-    root_linked = linked(root_dir)
-    vers_inst = [dist.split('::', 1)[-1].rsplit('-', 2)[1] for dist in root_linked
-        if dist.split('::', 1)[-1].rsplit('-', 2)[0] == pkg]
-    if not len(vers_inst) == 1:
-        return None
-    return vers_inst[0]
-
-
 def check_version_uptodate(resolve, name, installed_version, error_on_warn):
     from conda_build.conda_interface import VersionOrder, MatchSpec
     available_versions = [pkg.version for pkg in resolve.get_pkgs(MatchSpec(name))]
@@ -684,7 +674,9 @@ def main(forge_file_directory, no_check_uptodate, commit):
 
     # Don't check for conda-forge-pinning if there is one in the recipe
     if not os.path.exists(exclusive_config_file):
-        cf_pinning_ver = get_installed_version("conda-forge-pinning")
+        installed_vers = conda_build.conda_interface.get_installed_version(
+                                conda_build.conda_interface.root_dir, ["conda-forge-pinning"])
+        cf_pinning_ver = installed_vers["conda-forge-pinning"]
         if cf_pinning_ver:
             check_version_uptodate(r, "conda-forge-pinning", cf_pinning_ver, error_on_warn)
         else:
