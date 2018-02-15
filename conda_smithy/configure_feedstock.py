@@ -678,10 +678,12 @@ def main(forge_file_directory, no_check_uptodate, commit):
     check_version_uptodate(r, "conda-smithy", __version__, error_on_warn)
 
     forge_dir = os.path.abspath(forge_file_directory)
+    print(os.listdir(os.path.join(forge_dir, "recipe")))
+    print(os.path.join(forge_dir, "recipe"))
     exclusive_config_file = os.path.join(forge_dir, "recipe", "conda_build_config.yaml")
 
     # Don't check for conda-forge-pinning if there is one in the recipe
-    if os.path.exists(exclusive_config_file):
+    if not os.path.exists(exclusive_config_file):
         cf_pinning_ver = get_installed_version("conda-forge-pinning")
         if cf_pinning_ver:
             check_version_uptodate(r, "conda-forge-pinning", cf_pinning_ver, error_on_warn)
@@ -689,7 +691,7 @@ def main(forge_file_directory, no_check_uptodate, commit):
             raise RuntimeError("Install conda-forge-pinning or give a config file using -m")
         exclusive_config_file = os.path.join(conda_build.conda_interface.root_dir, "conda_build_config.yaml")
         if not os.path.exists(exclusive_config_file):
-            raise RuntimeError("conda-build_config.yaml from conda-forge-pinning is missing")
+            raise RuntimeError("conda_build_config.yaml from conda-forge-pinning is missing")
     else:
         cf_pinning_ver = None
 

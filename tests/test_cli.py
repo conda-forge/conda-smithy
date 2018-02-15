@@ -9,8 +9,7 @@ from conda_smithy import cli
 
 _thisdir = os.path.abspath(os.path.dirname(__file__))
 
-InitArgs = collections.namedtuple('ArgsObject', ('no_git_repo',
-                                                 'recipe_directory',
+InitArgs = collections.namedtuple('ArgsObject', ('recipe_directory',
                                                  'feedstock_directory'))
 
 RegenerateArgs = collections.namedtuple('ArgsObject', ('commit',
@@ -28,9 +27,7 @@ def test_init(py_recipe):
     recipe = py_recipe.recipe
     # expected args object has
     args = InitArgs(recipe_directory=os.path.join(recipe, 'recipe'),
-                    feedstock_directory=os.path.join(recipe, '{package.name}-feedstock'),
-                    no_git_repo=False,
-                    variant_config_files=os.path.join(recipe, 'config.yaml'))
+                    feedstock_directory=os.path.join(recipe, '{package.name}-feedstock'))
     init_obj(args)
     destination = os.path.join(recipe, 'py-test-feedstock')
     assert os.path.isdir(destination)
@@ -40,13 +37,16 @@ def test_init_multiple_output_matrix(testing_workdir):
     parser = argparse.ArgumentParser()
     subparser = parser.add_subparsers()
     init_obj = cli.Init(subparser)
+    regen_obj = cli.Regenerate(subparser)
     recipe = os.path.join(_thisdir, 'recipes', 'multiple_outputs')
     feedstock_dir = os.path.join(testing_workdir, 'multiple-outputs-test-feedstock')
     args = InitArgs(recipe_directory=recipe,
-                    feedstock_directory=feedstock_dir,
-                    no_git_repo=False,
-                    variant_config_files=os.path.join(recipe, 'conda_build_config.yaml'))
+                    feedstock_directory=feedstock_dir)
     init_obj(args)
+    args = RegenerateArgs(feedstock_directory=feedstock_dir,
+                          commit=False,
+                          no_check_uptodate=True)
+    regen_obj(args)
     matrix_dir = os.path.join(feedstock_dir, '.ci_support')
     # the matrix should be consolidated among all outputs, as well as the top-level
     # reqs. Only the top-level reqs should have indedependent config files,
@@ -84,17 +84,18 @@ def test_regenerate(py_recipe, testing_workdir):
     # original rendering was with py27, 36, no target_platform
     assert len(os.listdir(matrix_folder)) == 7
 
-    dest_file = os.path.join(dest_dir, 'conda_build_config.yaml')
+    dest_file = os.path.join(dest_dir, 'recipe', 'conda_build_config.yaml')
+    args = RegenerateArgs(feedstock_directory=dest_dir,
+                          commit=False,
+                          no_check_uptodate=True)
+
     try:
         shutil.copy(os.path.join(recipe, 'config.yaml'), dest_file)
-        args = RegenerateArgs(feedstock_directory=dest_dir,
-                              commit=False,
-                              no_check_uptodate=True)
+        regen_obj(args)
     finally:
         if os.path.exists(dest_file):
             os.remove(dest_file)
 
-    regen_obj(args)
 
     # should add 2, as the config.yaml adds in target_platform
     assert len(os.listdir(matrix_folder)) == 9
@@ -102,12 +103,10 @@ def test_regenerate(py_recipe, testing_workdir):
     # reduce the python matrix and make sure the matrix files reflect the change
     try:
         shutil.copy(os.path.join(recipe, 'short_config.yaml'), dest_file)
-        args = RegenerateArgs(feedstock_directory=dest_dir,
-                              commit=False,
-                              no_check_uptodate=True)
+        regen_obj(args)
     finally:
         if os.path.exists(dest_file):
             os.remove(dest_file)
+
     # one py ver, no target_platform  (tests that older configs don't stick around)
-    regen_obj(args)
     assert len(os.listdir(matrix_folder)) == 4
