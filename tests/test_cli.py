@@ -11,12 +11,10 @@ _thisdir = os.path.abspath(os.path.dirname(__file__))
 
 InitArgs = collections.namedtuple('ArgsObject', ('no_git_repo',
                                                  'recipe_directory',
-                                                 'feedstock_directory',
-                                                 'variant_config_files'))
+                                                 'feedstock_directory'))
 
 RegenerateArgs = collections.namedtuple('ArgsObject', ('commit',
                                                        'feedstock_directory',
-                                                       'variant_config_files',
                                                        'no_check_uptodate'))
 
 
@@ -86,20 +84,30 @@ def test_regenerate(py_recipe, testing_workdir):
     # original rendering was with py27, 36, no target_platform
     assert len(os.listdir(matrix_folder)) == 7
 
-    args = RegenerateArgs(feedstock_directory=dest_dir,
-                          commit=False,
-                          variant_config_files=os.path.join(recipe, 'config.yaml'),
-                          no_check_uptodate=False)
+    dest_file = os.path.join(dest_dir, 'conda_build_config.yaml')
+    try:
+        shutil.copy(os.path.join(recipe, 'config.yaml'), dest_file)
+        args = RegenerateArgs(feedstock_directory=dest_dir,
+                              commit=False,
+                              no_check_uptodate=True)
+    finally:
+        if os.path.exists(dest_file):
+            os.remove(dest_file)
+
     regen_obj(args)
 
     # should add 2, as the config.yaml adds in target_platform
     assert len(os.listdir(matrix_folder)) == 9
 
     # reduce the python matrix and make sure the matrix files reflect the change
-    args = RegenerateArgs(feedstock_directory=dest_dir,
-                          commit=False,
-                          variant_config_files=os.path.join(recipe, 'short_config.yaml'),
-                          no_check_uptodate=False)
+    try:
+        shutil.copy(os.path.join(recipe, 'short_config.yaml'), dest_file)
+        args = RegenerateArgs(feedstock_directory=dest_dir,
+                              commit=False,
+                              no_check_uptodate=True)
+    finally:
+        if os.path.exists(dest_file):
+            os.remove(dest_file)
     # one py ver, no target_platform  (tests that older configs don't stick around)
     regen_obj(args)
     assert len(os.listdir(matrix_folder)) == 4
