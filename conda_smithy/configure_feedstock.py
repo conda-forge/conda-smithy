@@ -670,7 +670,10 @@ def main(forge_file_directory, no_check_uptodate, commit):
     forge_dir = os.path.abspath(forge_file_directory)
     print(os.listdir(os.path.join(forge_dir, "recipe")))
     print(os.path.join(forge_dir, "recipe"))
-    exclusive_config_file = os.path.join(forge_dir, "recipe", "conda_build_config.yaml")
+
+    exclusive_config_file_default = os.path.join(forge_dir, "recipe", "conda_build_config.yaml")
+    config = _load_forge_config(forge_dir, exclusive_config_file_default)
+    exclusive_config_file = config['exclusive_config_file']
 
     # Don't check for conda-forge-pinning if there is one in the recipe
     if not os.path.exists(exclusive_config_file):
@@ -686,8 +689,6 @@ def main(forge_file_directory, no_check_uptodate, commit):
             raise RuntimeError("conda_build_config.yaml from conda-forge-pinning is missing")
     else:
         cf_pinning_ver = None
-
-    config = _load_forge_config(forge_dir, exclusive_config_file)
 
     for each_ci in ["travis", "circle", "appveyor"]:
         if config[each_ci].pop("enabled", None):
