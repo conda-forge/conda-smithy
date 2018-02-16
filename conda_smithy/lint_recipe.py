@@ -221,7 +221,7 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
                              ' name.'.format(section, subsection))
 
     # 17: noarch doesn't work with selectors
-    if build_section.get('noarch') is not None:
+    if build_section.get('noarch') is not None and os.path.exists(meta_fname):
         with io.open(meta_fname, 'rt') as fh:
             in_requirements = False
             for line in fh:
@@ -244,6 +244,17 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
                                      "the selectors are necessary, please remove "
                                      "`noarch: {}`.".format(build_section['noarch']))
                         break
+
+    # 18: noarch and python setup.py doesn't work
+    if build_section.get('noarch') == 'python':
+        if 'script' in build_section:
+            scripts = build_section['script']
+            if isinstance(scripts, str):
+                scripts = [scripts]
+            for script in scripts:
+                if "python setup.py install" in script:
+                    lints.append("`noarch: python` packages should use pip. "
+                                 "See https://conda-forge.org/docs/meta.html#use-pip")
 
     return lints
 
