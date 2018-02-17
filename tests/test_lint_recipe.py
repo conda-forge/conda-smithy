@@ -410,7 +410,6 @@ class Test_linter(unittest.TestCase):
             lints = linter.lintify({'package': {'name': 'python1'}}, recipe_dir="python", conda_forge=True)
             self.assertNotIn(expected_message, lints)
 
-
     def test_bad_subheader(self):
         expected_message = 'The {} section contained an unexpected ' \
                            'subsection name. {} is not a valid subsection' \
@@ -430,6 +429,17 @@ class Test_linter(unittest.TestCase):
     def test_outputs(self):
         meta = OrderedDict([['outputs', [{'name': 'asd'}]]])
         lints = linter.lintify(meta)
+
+    def test_script_blacklist(self):
+        expected_message = 'The command {} is not allowed'.format(
+            'python setup.py deps_install')
+        meta = {'build': {'script': 'python setup.py install'}}
+        lints = linter.lintify(meta)
+        self.assertNotIn(expected_message, lints)
+
+        meta = {'build': {'script': 'python setup.py deps_install'}}
+        lints = linter.lintify(meta)
+        self.assertIn(expected_message, lints)
 
 
 class TestCLI_recipe_lint(unittest.TestCase):
