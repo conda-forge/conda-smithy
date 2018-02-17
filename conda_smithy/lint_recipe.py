@@ -28,6 +28,8 @@ EXPECTED_SECTION_ORDER = ['package', 'source', 'build', 'requirements',
 
 REQUIREMENTS_ORDER = ['build', 'host', 'run']
 
+SCRIPT_BLACKLIST = ['python setup.py deps_install']
+
 TEST_KEYS = {'imports', 'commands'}
 
 sel_pat = re.compile(r'(.+?)\s*(#.*)?\[([^\[\]]+)\](?(2).*)$')
@@ -244,6 +246,11 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
                                      "the selectors are necessary, please remove "
                                      "`noarch: {}`.".format(build_section['noarch']))
                         break
+    # 18: blacklist some python commands
+    if build_section.get('script') is not None:
+        for bl in SCRIPT_BLACKLIST:
+            if bl in build_section.get('script'):
+                lints.append('The command {} is not allowed'.format(bl))
 
     # 18: noarch and python setup.py doesn't work
     if build_section.get('noarch') == 'python':
