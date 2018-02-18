@@ -682,9 +682,10 @@ def main(forge_file_directory, no_check_uptodate, commit):
             check_version_uptodate(r, "conda-forge-pinning", cf_pinning_ver, error_on_warn)
         else:
             raise RuntimeError("Install conda-forge-pinning or edit conda-forge.yml")
-        exclusive_config_file = os.path.join(conda_build.conda_interface.root_dir, "conda_build_config.yaml")
+        cf_pinning_file = os.path.join(conda_build.conda_interface.root_dir, "conda_build_config.yaml")
         if not os.path.exists(exclusive_config_file):
             raise RuntimeError("conda_build_config.yaml from conda-forge-pinning is missing")
+        config['exclusive_config_file'] = cf_pinning_file
     else:
         cf_pinning_ver = None
 
