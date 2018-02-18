@@ -671,19 +671,17 @@ def main(forge_file_directory, no_check_uptodate, commit):
     print(os.listdir(os.path.join(forge_dir, "recipe")))
     print(os.path.join(forge_dir, "recipe"))
 
-    exclusive_config_file_default = os.path.join(forge_dir, "recipe", "conda_build_config.yaml")
-    config = _load_forge_config(forge_dir, exclusive_config_file_default)
+    config = _load_forge_config(forge_dir, None)
     exclusive_config_file = config['exclusive_config_file']
 
-    # Don't check for conda-forge-pinning if there is one in the recipe
-    if not os.path.exists(exclusive_config_file):
+    if exclusive_config_file is None or not os.path.exists(exclusive_config_file):
         installed_vers = conda_build.conda_interface.get_installed_version(
                                 conda_build.conda_interface.root_dir, ["conda-forge-pinning"])
         cf_pinning_ver = installed_vers["conda-forge-pinning"]
         if cf_pinning_ver:
             check_version_uptodate(r, "conda-forge-pinning", cf_pinning_ver, error_on_warn)
         else:
-            raise RuntimeError("Install conda-forge-pinning or give a config file using -m")
+            raise RuntimeError("Install conda-forge-pinning or edit conda-forge.yml")
         exclusive_config_file = os.path.join(conda_build.conda_interface.root_dir, "conda_build_config.yaml")
         if not os.path.exists(exclusive_config_file):
             raise RuntimeError("conda_build_config.yaml from conda-forge-pinning is missing")
