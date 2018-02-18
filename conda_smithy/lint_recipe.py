@@ -13,6 +13,7 @@ import ruamel.yaml
 
 from conda_build.metadata import (ensure_valid_license_family,
                                   FIELDS as cbfields)
+import conda_build.conda_interface
 import copy
 
 FIELDS = copy.deepcopy(cbfields)
@@ -255,6 +256,14 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
                 if "python setup.py install" in script:
                     lints.append("`noarch: python` packages should use pip. "
                                  "See https://conda-forge.org/docs/meta.html#use-pip")
+
+    # 19: check version
+    if package_section.get('version') is not None:
+        ver = str(package_section.get('version'))
+        try:
+            conda_build.conda_interface.VersionOrder(ver)
+        except:
+            lints.append("Package version {} doesn't match conda spec".format(ver))
 
     return lints
 
