@@ -585,10 +585,12 @@ def _load_forge_config(forge_dir, exclusive_config_file):
         # The config is just the union of the defaults, and the overriden
         # values.
         for key, value in file_config.items():
-            config_item = config.setdefault(key, value)
             # Deal with dicts within dicts.
             if isinstance(value, dict):
+                config_item = config.setdefault(key, value)
                 config_item.update(value)
+            else:
+                config[key] = value
     config['package'] = os.path.basename(forge_dir)
     if not config['github']['repo_name']:
         feedstock_name = os.path.basename(forge_dir)
@@ -672,7 +674,7 @@ def main(forge_file_directory, no_check_uptodate, commit):
     config = _load_forge_config(forge_dir, None)
     exclusive_config_file = config['exclusive_config_file']
 
-    if exclusive_config_file is None or not os.path.exists(exclusive_config_file):
+    if exclusive_config_file is None:
         installed_vers = conda_build.conda_interface.get_installed_version(
                                 conda_build.conda_interface.root_dir, ["conda-forge-pinning"])
         cf_pinning_ver = installed_vers["conda-forge-pinning"]
@@ -681,10 +683,13 @@ def main(forge_file_directory, no_check_uptodate, commit):
         else:
             raise RuntimeError("Install conda-forge-pinning or edit conda-forge.yml")
         cf_pinning_file = os.path.join(conda_build.conda_interface.root_dir, "conda_build_config.yaml")
-        if not os.path.exists(exclusive_config_file):
+        if not os.path.exists(cf_pinning_file):
             raise RuntimeError("conda_build_config.yaml from conda-forge-pinning is missing")
         config['exclusive_config_file'] = cf_pinning_file
     else:
+        config['exclusive_config_file'] = os.path.join(forge_dir, exclusive_config_file)
+        if not os.path.exists(config['exclusive_config_file']):
+            raise RuntimeError("exclusive_config_file in conda-forge.yml is not found.")
         cf_pinning_ver = None
 
     for each_ci in ["travis", "circle", "appveyor"]:

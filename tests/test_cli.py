@@ -43,6 +43,8 @@ def test_init_multiple_output_matrix(testing_workdir):
     args = InitArgs(recipe_directory=recipe,
                     feedstock_directory=feedstock_dir)
     init_obj(args)
+    with open(os.path.join(feedstock_dir, "conda-forge.yml"), "w") as f:
+        f.write("exclusive_config_file: recipe/conda_build_config.yaml")
     args = RegenerateArgs(feedstock_directory=feedstock_dir,
                           commit=False,
                           no_check_uptodate=True)
@@ -89,24 +91,17 @@ def test_regenerate(py_recipe, testing_workdir):
                           commit=False,
                           no_check_uptodate=True)
 
-    try:
-        shutil.copy(os.path.join(recipe, 'config.yaml'), dest_file)
-        regen_obj(args)
-    finally:
-        if os.path.exists(dest_file):
-            os.remove(dest_file)
-
+    with open(os.path.join(dest_dir, "conda-forge.yml"), "w") as f:
+        f.write("exclusive_config_file: {}".format(os.path.join(recipe, 'config.yaml')))
+    regen_obj(args)
 
     # should add 2, as the config.yaml adds in target_platform
     assert len(os.listdir(matrix_folder)) == 9
 
     # reduce the python matrix and make sure the matrix files reflect the change
-    try:
-        shutil.copy(os.path.join(recipe, 'short_config.yaml'), dest_file)
-        regen_obj(args)
-    finally:
-        if os.path.exists(dest_file):
-            os.remove(dest_file)
+    with open(os.path.join(dest_dir, "conda-forge.yml"), "w") as f:
+        f.write("exclusive_config_file: {}".format(os.path.join(recipe, 'short_config.yaml')))
+    regen_obj(args)
 
     # one py ver, no target_platform  (tests that older configs don't stick around)
     assert len(os.listdir(matrix_folder)) == 4
