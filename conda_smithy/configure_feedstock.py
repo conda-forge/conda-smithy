@@ -668,8 +668,6 @@ def main(forge_file_directory, no_check_uptodate, commit):
     check_version_uptodate(r, "conda-smithy", __version__, error_on_warn)
 
     forge_dir = os.path.abspath(forge_file_directory)
-    print(os.listdir(os.path.join(forge_dir, "recipe")))
-    print(os.path.join(forge_dir, "recipe"))
 
     config = _load_forge_config(forge_dir, None)
     exclusive_config_file = config['exclusive_config_file']
