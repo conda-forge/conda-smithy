@@ -431,6 +431,19 @@ class Test_linter(unittest.TestCase):
         meta = OrderedDict([['outputs', [{'name': 'asd'}]]])
         lints = linter.lintify(meta)
 
+    def test_version(self):
+        meta = {'package': {'name': 'python',
+                            'version': '3.6.4'}}
+        expected_message = "Package version 3.6.4 doesn't match conda spec"
+        lints = linter.lintify(meta)
+        self.assertNotIn(expected_message, lints)
+
+        meta = {'package': {'name': 'python',
+                            'version': '2.0.0~alpha0'}}
+        expected_message = "Package version 2.0.0~alpha0 doesn't match conda spec"
+        lints = linter.lintify(meta)
+        self.assertIn(expected_message, lints)
+
 
 class TestCLI_recipe_lint(unittest.TestCase):
     def test_cli_fail(self):
