@@ -43,6 +43,8 @@ def test_init_multiple_output_matrix(testing_workdir):
     args = InitArgs(recipe_directory=recipe,
                     feedstock_directory=feedstock_dir)
     init_obj(args)
+    # Ignore conda-forge-pinning for this test, as the test relies on conda-forge-pinning
+    # not being present
     with open(os.path.join(feedstock_dir, "conda-forge.yml"), "w") as f:
         f.write("exclusive_config_file: recipe/conda_build_config.yaml")
     args = RegenerateArgs(feedstock_directory=feedstock_dir,
@@ -91,6 +93,8 @@ def test_regenerate(py_recipe, testing_workdir):
                           commit=False,
                           no_check_uptodate=True)
 
+    # Ignore conda-forge-pinning for this test, as the test relies on conda-forge-pinning
+    # not being present
     with open(os.path.join(dest_dir, "conda-forge.yml"), "w") as f:
         f.write("exclusive_config_file: {}".format(os.path.join(recipe, 'config.yaml')))
     regen_obj(args)
