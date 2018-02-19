@@ -49,9 +49,6 @@ install:
     {% if build_setup -%}
     {{ build_setup }}{% endif %}
 
-    # testing purposes: get conda-build from defaults
-    - cmd: conda install -n root --quiet --yes -c defaults conda-build
-
 # Skip .NET project specific build phase.
 build: off
 
