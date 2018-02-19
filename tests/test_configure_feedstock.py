@@ -142,7 +142,7 @@ def test_render_with_all_skipped_generates_readme(skipped_recipe, jinja_env):
 
 def test_render_windows_with_skipped_python(python_skipped_recipe, jinja_env):
     config = python_skipped_recipe.config
-    config['variant_config_files'] = [os.path.join(python_skipped_recipe.recipe, 'long_config.yaml')]
+    config['exclusive_config_file'] = os.path.join(python_skipped_recipe.recipe, 'long_config.yaml')
     cnfgr_fdstk.render_appveyor(jinja_env=jinja_env,
                                 forge_config=config,
                                 forge_dir=python_skipped_recipe.recipe)

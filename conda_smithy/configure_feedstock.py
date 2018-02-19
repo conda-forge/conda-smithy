@@ -3,6 +3,7 @@ from __future__ import print_function, unicode_literals
 import glob
 from itertools import product
 import os
+import subprocess
 import textwrap
 import yaml
 import warnings
@@ -10,6 +11,7 @@ import warnings
 import conda_build.api
 import conda_build.utils
 import conda_build.variants
+import conda_build.conda_interface
 from jinja2 import Environment, FileSystemLoader
 
 from conda_smithy.feedstock_io import (
@@ -18,6 +20,7 @@ from conda_smithy.feedstock_io import (
     remove_file,
     copy_file,
 )
+from . import __version__
 
 conda_forge_content = os.path.abspath(os.path.dirname(__file__))
 
@@ -285,7 +288,7 @@ def _render_ci_provider(provider_name, jinja_env, forge_config, forge_dir, platf
                         fast_finish_text, platform_target_path, platform_template_file,
                         platform_specific_setup, keep_noarch=False, extra_platform_files=None):
     metas = conda_build.api.render(os.path.join(forge_dir, 'recipe'),
-                                   variant_config_files=forge_config['variant_config_files'],
+                                   exclusive_config_file=forge_config['exclusive_config_file'],
                                    platform=platform, arch=arch,
                                    permit_undefined_jinja=True, finalize=False,
                                    bypass_env_check=True,
@@ -524,7 +527,7 @@ def render_appveyor(jinja_env, forge_config, forge_dir):
 def render_README(jinja_env, forge_config, forge_dir):
     # we only care about the first metadata object for sake of readme
     meta = conda_build.api.render(os.path.join(forge_dir, 'recipe'),
-                                  variant_config_files=forge_config['variant_config_files'],
+                                  exclusive_config_file=forge_config['exclusive_config_file'],
                                   permit_undefined_jinja=True, finalize=False,
                                   bypass_env_check=True, trim_skip=False)[0][0]
     template = jinja_env.get_template('README.md.tmpl')
@@ -545,7 +548,7 @@ def copy_feedstock_content(forge_dir):
     )
 
 
-def _load_forge_config(forge_dir, variant_config_files):
+def _load_forge_config(forge_dir, exclusive_config_file):
     config = {'docker': {'executable': 'docker',
                          'image': 'condaforge/linux-anvil',
                          'command': 'bash'},
@@ -553,7 +556,7 @@ def _load_forge_config(forge_dir, variant_config_files):
               'travis': {},
               'circle': {},
               'appveyor': {},
-              'variant_config_files': variant_config_files,
+              'exclusive_config_file': exclusive_config_file,
               'channels': {'sources': ['conda-forge', 'defaults'],
                            'targets': [['conda-forge', 'main']]},
               'github': {'user_or_org': 'conda-forge', 'repo_name': ''},
@@ -582,10 +585,12 @@ def _load_forge_config(forge_dir, variant_config_files):
         # The config is just the union of the defaults, and the overriden
         # values.
         for key, value in file_config.items():
-            config_item = config.setdefault(key, value)
             # Deal with dicts within dicts.
             if isinstance(value, dict):
+                config_item = config.setdefault(key, value)
                 config_item.update(value)
+            else:
+                config[key] = value
     config['package'] = os.path.basename(forge_dir)
     if not config['github']['repo_name']:
         feedstock_name = os.path.basename(forge_dir)
@@ -595,9 +600,97 @@ def _load_forge_config(forge_dir, variant_config_files):
     return config
 
 
-def main(forge_file_directory, variant_config_files):
+def check_version_uptodate(resolve, name, installed_version, error_on_warn):
+    from conda_build.conda_interface import VersionOrder, MatchSpec
+    available_versions = [pkg.version for pkg in resolve.get_pkgs(MatchSpec(name))]
+    available_versions = sorted(available_versions, key=VersionOrder)
+    most_recent_version = available_versions[-1]
+    if installed_version is None:
+        msg = "{} is not installed in root env.".format(name)
+    elif VersionOrder(installed_version) < VersionOrder(most_recent_version):
+        msg = "{} version in root env is out-of-date.".format(name)
+    else:
+        return
+    if error_on_warn:
+        raise RuntimeError("{} Exiting.".format(msg))
+    else:
+        print(msg)
+
+
+def commit_changes(forge_file_directory, commit, cs_ver, cfp_ver):
+    if cfp_ver:
+        msg = 'Re-rendered with conda-smithy {} and pinning {}'.format(cs_ver, cfp_ver)
+    else:
+        msg = 'Re-rendered with conda-smithy {}'.format(cs_ver)
+    print(msg)
+
+    is_git_repo = os.path.exists(os.path.join(forge_file_directory, ".git"))
+    if is_git_repo:
+        has_staged_changes = subprocess.call(
+            [
+                "git", "diff", "--cached", "--quiet", "--exit-code"
+            ],
+            cwd=forge_file_directory
+        )
+        if has_staged_changes:
+            if commit:
+                git_args = [
+                    'git',
+                    'commit',
+                    '-m',
+                    'MNT: {}'.format(msg)
+                ]
+                if commit == "edit":
+                    git_args += [
+                        '--edit',
+                        '--status',
+                        '--verbose'
+                    ]
+                subprocess.check_call(
+                    git_args,
+                    cwd=forge_file_directory
+                )
+                print("")
+            else:
+                print(
+                    'You can commit the changes with:\n\n'
+                    '    git commit -m "MNT: {}"\n'.format(msg)
+                )
+            print("These changes need to be pushed to github!\n")
+        else:
+            print("No changes made. This feedstock is up-to-date.\n")
+
+
+def main(forge_file_directory, no_check_uptodate, commit):
+    error_on_warn = False if no_check_uptodate else True
+    index = conda_build.conda_interface.get_index(channel_urls=['conda-forge']) 
+    r = conda_build.conda_interface.Resolve(index)
+
+    # Check that conda-smithy is up-to-date
+    check_version_uptodate(r, "conda-smithy", __version__, error_on_warn)
+
     forge_dir = os.path.abspath(forge_file_directory)
-    config = _load_forge_config(forge_dir, variant_config_files)
+
+    config = _load_forge_config(forge_dir, None)
+    exclusive_config_file = config['exclusive_config_file']
+
+    if exclusive_config_file is None:
+        installed_vers = conda_build.conda_interface.get_installed_version(
+                                conda_build.conda_interface.root_dir, ["conda-forge-pinning"])
+        cf_pinning_ver = installed_vers["conda-forge-pinning"]
+        if cf_pinning_ver:
+            check_version_uptodate(r, "conda-forge-pinning", cf_pinning_ver, error_on_warn)
+        else:
+            raise RuntimeError("Install conda-forge-pinning or edit conda-forge.yml")
+        cf_pinning_file = os.path.join(conda_build.conda_interface.root_dir, "conda_build_config.yaml")
+        if not os.path.exists(cf_pinning_file):
+            raise RuntimeError("conda_build_config.yaml from conda-forge-pinning is missing")
+        config['exclusive_config_file'] = cf_pinning_file
+    else:
+        config['exclusive_config_file'] = os.path.join(forge_dir, exclusive_config_file)
+        if not os.path.exists(config['exclusive_config_file']):
+            raise RuntimeError("exclusive_config_file in conda-forge.yml is not found.")
+        cf_pinning_ver = None
 
     for each_ci in ["travis", "circle", "appveyor"]:
         if config[each_ci].pop("enabled", None):
@@ -628,6 +721,8 @@ def main(forge_file_directory, variant_config_files):
                     "any matrix elements, you should change conda-smithy's input "
                     "conda_build_config.yaml and re-render the recipe, rather than editing "
                     "these files directly.")
+
+    commit_changes(forge_file_directory, commit, __version__, cf_pinning_ver)
 
 
 if __name__ == '__main__':

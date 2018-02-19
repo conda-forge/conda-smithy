@@ -88,8 +88,8 @@ requirements:
     """)
     return RecipeConfigPair(str(config_yaml),
                             _load_forge_config(config_yaml,
-                            variant_config_files=[os.path.join(config_yaml,
-                                                               'config.yaml')]))
+                            exclusive_config_file=os.path.join(config_yaml,
+                                                               'config.yaml')))
 
 
 @pytest.fixture(scope='function')
@@ -110,8 +110,8 @@ requirements:
     """)
     return RecipeConfigPair(str(config_yaml),
                             _load_forge_config(config_yaml,
-                                               variant_config_files=[os.path.join(config_yaml,
-                                                                                  'config.yaml')]))
+                                               exclusive_config_file=os.path.join(config_yaml,
+                                                                                  'config.yaml')))
 
 
 @pytest.fixture(scope='function')
@@ -132,8 +132,8 @@ about:
     """)
     return RecipeConfigPair(str(config_yaml),
                             _load_forge_config(config_yaml,
-                                               variant_config_files=[os.path.join(config_yaml,
-                                                                                  'config.yaml')]))
+                                               exclusive_config_file=os.path.join(config_yaml,
+                                                                                  'config.yaml')))
 
 
 @pytest.fixture(scope='function')
@@ -156,8 +156,8 @@ about:
     """)
     return RecipeConfigPair(str(config_yaml),
                             _load_forge_config(config_yaml,
-                                               variant_config_files=[os.path.join(config_yaml,
-                                                                                  'config.yaml')]))
+                                               exclusive_config_file=os.path.join(config_yaml,
+                                                                                  'config.yaml')))
 
 @pytest.fixture(scope='function')
 def python_skipped_recipe(config_yaml, request):
@@ -179,8 +179,8 @@ about:
     """)
     return RecipeConfigPair(str(config_yaml),
                             _load_forge_config(config_yaml,
-                                               variant_config_files=[os.path.join(config_yaml,
-                                                                                  'config.yaml')]))
+                                               exclusive_config_file=os.path.join(config_yaml,
+                                                                                  'config.yaml')))
 
 
 @pytest.fixture(scope='function')
