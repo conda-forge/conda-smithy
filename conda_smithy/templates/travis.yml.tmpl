@@ -61,10 +61,9 @@ install:
       conda config --add channels {{ channel }}
       {%- endfor %}
       conda config --set show_channel_urls true
-      conda install --yes --quiet conda-forge-build-setup
+      conda install --yes --quiet conda-forge-ci-setup=1
       {% if build_setup -%}
       {{ build_setup }}{% endif %}
-      conda install -n root --quiet --yes -c defaults conda-build
 
 script:
   - conda build ./{{ recipe_dir }} -m ./.ci_support/${CONFIG}.yaml
