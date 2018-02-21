@@ -187,7 +187,8 @@ def _collapse_subpackage_variants(list_of_metas):
     preserve_top_level_loops = set(top_level_loop_vars) - set(all_used_vars)
 
     # Add in some variables that should always be preserved
-    all_used_vars.update(set(('zip_keys', 'pin_run_as_build', 'MACOSX_DEPLOYMENT_TARGET')))
+    all_used_vars.update(set(('zip_keys', 'pin_run_as_build', 'MACOSX_DEPLOYMENT_TARGET',
+                              'CONDA_BUILD_SYSROOT', 'macos_min_version', 'macos_machine')))
     all_used_vars.update(top_level_vars)
 
     used_key_values = {key: squished_input_variants[key]
