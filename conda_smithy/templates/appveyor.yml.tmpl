@@ -41,16 +41,10 @@ install:
     {%- for channel in channels.get('sources', [])|reverse %}
     - cmd: conda.exe config --add channels {{ channel }}{% endfor %}
 
-    # Update conda
-    - cmd: conda.exe update --yes --quiet conda
-
     # Configure the VM.
-    - cmd: conda.exe install -n root --quiet --yes conda-forge-build-setup
+    - cmd: conda.exe install -n root --quiet --yes conda-forge-ci-setup=1
     {% if build_setup -%}
     {{ build_setup }}{% endif %}
-
-    # testing purposes: get conda-build from defaults
-    - cmd: conda install -n root --quiet --yes -c defaults conda-build
 
 # Skip .NET project specific build phase.
 build: off
