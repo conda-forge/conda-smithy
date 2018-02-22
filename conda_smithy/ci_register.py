@@ -41,16 +41,17 @@ except KeyError:
               '  anaconda auth --create --name conda-smithy --scopes "repos conda api"\n'
               'and put it in ~/.conda-smithy/anaconda.token')
 
+travis_endpoint = 'https://api.travis-ci.org'
 
 def travis_headers():
     headers = {
                # If the user-agent isn't defined correctly, we will recieve a 403.
                'User-Agent': 'Travis/1.0',
                'Accept': 'application/vnd.travis-ci.2+json',
-               'Content-Type': 'application/json'
+               'Content-Type': 'application/json',
+               'Travis-API-Version': '3'
                }
-    endpoint = 'https://api.travis-ci.org'
-    url = '{}/auth/github'.format(endpoint)
+    url = '{}/auth/github'.format(travis_endpoint)
     data = {"github_token": github.gh_token()}
     travis_token = os.path.expanduser('~/.conda-smithy/travis.token')
     if not os.path.exists(travis_token):
@@ -175,16 +176,15 @@ def appveyor_configure(user, project):
         raise ValueError(response)
 
 
-def travis_wait_until_synced(user, ignore=False):
+def travis_wait_until_synced(ignore=False):
     headers = travis_headers()
-    endpoint = 'https://api.travis-ci.org'
-    is_sync_url = '{}/users'.format(endpoint)
+    is_sync_url = '{}/user'.format(travis_endpoint)
     for c in range(20):
         response = requests.get(is_sync_url, headers=headers)
         content = response.json()
         print(".", end="")
         sys.stdout.flush()
-        if ("user" in content and content["user"]["is_syncing"] == False):
+        if ("is_syncing" in content and content["is_syncing"] == False):
             break
         time.sleep(6)
     else:
@@ -193,18 +193,17 @@ def travis_wait_until_synced(user, ignore=False):
         else:
             raise RuntimeError("Syncing has not finished for two minutes now.")
     print("")
+    return content
 
 
 def travis_get_repo_info(user, project, show_error=False):
     headers = travis_headers()
-    endpoint = 'https://api.travis-ci.org'
-    url = '{}/repos/{user}/{project}'.format(endpoint, user=user, project=project)
+    url = '{}/repo/{user}%2F{project}'.format(travis_endpoint, user=user, project=project)
     response = requests.get(url, headers=headers)
     try:
         response.raise_for_status()
         content = response.json()
-        if "repo" in content:
-            return content["repo"]
+        return content
     except requests.HTTPError as e:
         if show_error:
             print(e)
@@ -213,26 +212,25 @@ def travis_get_repo_info(user, project, show_error=False):
 
 def add_project_to_travis(user, project):
     headers = travis_headers()
-    endpoint = 'https://api.travis-ci.org'
 
     repo_info = travis_get_repo_info(user, project, show_error=False)
     if not repo_info:
         # Travis needs syncing. Wait until other syncs are finished.
         print(" * Travis: checking if there's a syncing already", end="")
         sys.stdout.flush()
-        travis_wait_until_synced(user, ignore=True)
+        user_info = travis_wait_until_synced(ignore=True)
         repo_info = travis_get_repo_info(user, project, show_error=False)
         if not repo_info:
             print(" * Travis doesn't know about the repo, syncing (takes a few seconds).", end="")
             sys.stdout.flush()
-            sync_url = '{}/users/sync'.format(endpoint)
+            sync_url = '{}/user/{}/sync'.format(travis_endpoint, user_info['id'])
             response = requests.post(sync_url, headers=headers)
             if response.status_code != 409:
                 # 409 status code is for indicating that another synching might be happening at the
                 # same time. This can happen in conda-forge/staged-recipes when two master builds
                 # start at the same time
                 response.raise_for_status()
-            travis_wait_until_synced(user, ignore=False)
+            travis_wait_until_synced(ignore=False)
             repo_info = travis_get_repo_info(user, project)
 
     if not repo_info:
@@ -244,18 +242,15 @@ def add_project_to_travis(user, project):
         print(' * {}/{} already enabled on travis-ci'.format(user, project))
     else:
         repo_id = repo_info['id']
-        url = '{}/hooks'.format(endpoint)
-        response = requests.put(url, headers=headers, json={'hook': {'id': repo_id, 'active': True}})
+        url = '{}/repo/{}/activate'.format(travis_endpoint, repo_id)
+        response = requests.post(url, headers=headers)
         response.raise_for_status()
-        if response.json().get('result'):
-            print(' * Registered on travis-ci')
-        else:
-            raise RuntimeError('Unable to register on travis-ci, response from hooks was negative')
+        print(' * {}/{} registered on travis-ci'.format(user, project))
 
 
 def travis_token_update_conda_forge_config(feedstock_directory, user, project):
     item = 'BINSTAR_TOKEN="{}"'.format(anaconda_token)
-    slug = "{}/{}".format(user, project)
+    slug = "{}%2F{}".format(user, project)
 
     forge_yaml = os.path.join(feedstock_directory, 'conda-forge.yml')
     if os.path.exists(forge_yaml):
@@ -294,10 +289,10 @@ def travis_encrypt_binstar_token(repo, string_to_encrypt):
     from Crypto.Cipher import PKCS1_v1_5
     import base64
 
-    keyurl = 'https://api.travis-ci.org/repos/{0}/key'.format(repo)
+    keyurl = 'https://api.travis-ci.org/repo/{0}/key_pair/generated'.format(repo)
     r = requests.get(keyurl, headers=travis_headers())
     r.raise_for_status()
-    public_key = r.json()['key']
+    public_key = r.json()['public_key']
     key = RSA.importKey(public_key)
     cipher = PKCS1_v1_5.new(key)
     return base64.b64encode(cipher.encrypt(string_to_encrypt.encode())).decode('utf-8')
@@ -305,7 +300,6 @@ def travis_encrypt_binstar_token(repo, string_to_encrypt):
 
 def travis_configure(user, project):
     """Configure travis so that it skips building if there is no .travis.yml present."""
-    endpoint = 'https://api.travis-ci.org'
     headers = travis_headers()
 
     repo_info = travis_get_repo_info(user, project)
@@ -316,15 +310,16 @@ def travis_configure(user, project):
             "Repo {user}/{project} is not active on Travis CI".format(user=user, project=project)
         )
 
-    url = '{}/repos/{repo_id}/settings'.format(endpoint, repo_id=repo_id)
-    data = {
-        "settings": {
-            "builds_only_with_travis_yml": True,
-        }
-    }
-    response = requests.patch(url, json=data, headers=headers)
-    if response.status_code != 204:
-        response.raise_for_status()
+    settings = [
+        ("builds_only_with_travis_yml", True),
+        ("auto_cancel_pull_requests", True),
+    ]
+    for name, value in settings:
+        url = '{}/repo/{repo_id}/setting/{name}'.format(travis_endpoint, repo_id=repo_id, name=name)
+        data = {"setting.value": value}
+        response = requests.patch(url, json=data, headers=headers)
+        if response.status_code != 204:
+            response.raise_for_status()
 
 
 def get_conda_hook_info(hook_url, events):
