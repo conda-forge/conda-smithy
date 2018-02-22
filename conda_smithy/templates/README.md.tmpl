@@ -28,12 +28,12 @@ All platforms: ![noarch disabled]({{ shield }}badge/noarch-disabled-lightgrey.sv
 {%- endif %}
 {%- else %}
 {%- if circle.enabled %}
-[![Linux]({{ shield }}circleci/project/github/{{ github.user_or_org }}/{{ github.repo_name }}/master.svg?label=linux)](https://circleci.com/gh/{{ github.user_or_org }}/{{ github.repo_name }})
+[![Linux]({{ shield }}circleci/project/github/{{ github.user_or_org }}/{{ github.repo_name }}/master.svg?label=Linux)](https://circleci.com/gh/{{ github.user_or_org }}/{{ github.repo_name }})
 {%- else %}
 ![Linux disabled]({{ shield }}badge/linux-disabled-lightgrey.svg)
 {%- endif %}
 {%- if travis.enabled %}
-[![OSX]({{ shield }}travis/{{ github.user_or_org }}/{{ github.repo_name }}/master.svg?label=OSX)](https://travis-ci.org/{{ github.user_or_org }}/{{ github.repo_name }})
+[![OSX]({{ shield }}travis/{{ github.user_or_org }}/{{ github.repo_name }}/master.svg?label=macOS)](https://travis-ci.org/{{ github.user_or_org }}/{{ github.repo_name }})
 {%- else %}
 ![Linux disabled]({{ shield }}badge/OSX-disabled-lightgrey.svg)
 {%- endif %}
