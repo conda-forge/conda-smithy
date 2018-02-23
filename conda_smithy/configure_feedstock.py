@@ -573,6 +573,7 @@ def _load_forge_config(forge_dir, exclusive_config_file):
         os.path.join('ci_support', 'checkout_merge_commit.sh'),
         os.path.join('ci_support', 'fast_finish_ci_pr_build.sh'),
         os.path.join('ci_support', 'run_docker_build.sh'),
+        'LICENSE',
     ]
     for old_file in old_files:
         remove_file(os.path.join(forge_dir, old_file))
