@@ -374,7 +374,7 @@ def _circle_specific_setup(jinja_env, forge_config, forge_dir):
     build_setup = ""
     if os.path.exists(cfbs_fpath):
         build_setup += textwrap.dedent("""\
-            # Overriding global run_conda_forge_build_setup with local copy.
+            # Overriding global run_conda_forge_build_setup_linux with local copy.
             source /home/conda/recipe_root/run_conda_forge_build_setup_linux
 
         """)
@@ -458,7 +458,7 @@ def _travis_specific_setup(jinja_env, forge_config, forge_dir):
     cfbs_fpath = os.path.join(forge_dir, 'recipe', 'run_conda_forge_build_setup_osx')
     if os.path.exists(cfbs_fpath):
         build_setup += textwrap.dedent("""\
-            # Overriding global run_conda_forge_build_setup with local copy.
+            # Overriding global run_conda_forge_build_setup_osx with local copy.
             source {recipe_dir}/run_conda_forge_build_setup_osx
         """.format(recipe_dir=forge_config["recipe_dir"]))
     else:
@@ -493,7 +493,7 @@ def _appveyor_specific_setup(jinja_env, forge_config, forge_dir):
     cfbs_fpath = os.path.join(forge_dir, 'recipe', 'run_conda_forge_build_setup_win.bat')
     if os.path.exists(cfbs_fpath):
         build_setup += textwrap.dedent("""\
-            # Overriding global run_conda_forge_build_setup with local copy.
+            # Overriding global run_conda_forge_build_setup_win with local copy.
             {recipe_dir}\\run_conda_forge_build_setup_win
         """.format(recipe_dir=forge_config["recipe_dir"]))
     else:
