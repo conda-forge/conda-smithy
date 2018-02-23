@@ -268,7 +268,7 @@ def _get_fast_finish_script(provider_name, forge_config, forge_dir, fast_finish_
         fast_finish_text = fast_finish_text.strip()
         fast_finish_text = fast_finish_text.replace("\n", "\n        ")
     else:
-        # If the recipe supplies its own run_conda_forge_build_setup script,
+        # If the recipe supplies its own ff_ci_pr_build.py script,
         # we use it instead of the global one.
         if os.path.exists(cfbs_fpath):
             get_fast_finish_script += "cat {recipe_dir}/ff_ci_pr_build.py".format(
@@ -330,7 +330,7 @@ def _render_ci_provider(provider_name, jinja_env, forge_config, forge_dir, platf
                                                               forge_config=forge_config,
                                                               fast_finish_text=fast_finish_text)
 
-        # If the recipe supplies its own run_conda_forge_build_setup upload script,
+        # If the recipe supplies its own upload_or_check_non_existence.py upload script,
         # we use it instead of the global one.
         upload_fpath = os.path.join(forge_dir, 'recipe',
                                     'upload_or_check_non_existence.py')
@@ -367,7 +367,7 @@ def _render_ci_provider(provider_name, jinja_env, forge_config, forge_dir, platf
 
 
 def _circle_specific_setup(jinja_env, forge_config, forge_dir):
-    # If the recipe supplies its own run_conda_forge_build_setup script,
+    # If the recipe supplies its own run_conda_forge_build_setup script_linux,
     # we use it instead of the global one.
     cfbs_fpath = os.path.join(forge_dir, 'recipe', 'run_conda_forge_build_setup_linux')
 
@@ -453,7 +453,7 @@ def render_circle(jinja_env, forge_config, forge_dir):
 
 def _travis_specific_setup(jinja_env, forge_config, forge_dir):
     build_setup = ""
-    # If the recipe supplies its own run_conda_forge_build_setup script,
+    # If the recipe supplies its own run_conda_forge_build_setup script_osx,
     # we use it instead of the global one.
     cfbs_fpath = os.path.join(forge_dir, 'recipe', 'run_conda_forge_build_setup_osx')
     if os.path.exists(cfbs_fpath):
@@ -488,7 +488,7 @@ def render_travis(jinja_env, forge_config, forge_dir):
 
 def _appveyor_specific_setup(jinja_env, forge_config, forge_dir):
     build_setup = ""
-    # If the recipe supplies its own run_conda_forge_build_setup script,
+    # If the recipe supplies its own run_conda_forge_build_setup_win.bat script,
     # we use it instead of the global one.
     cfbs_fpath = os.path.join(forge_dir, 'recipe', 'run_conda_forge_build_setup_win.bat')
     if os.path.exists(cfbs_fpath):
