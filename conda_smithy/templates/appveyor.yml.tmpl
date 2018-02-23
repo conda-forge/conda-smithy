@@ -11,10 +11,8 @@ environment:
   {%- endfor %}
 
   matrix:
-  {%- for case in matrix %}
-    {%- for dep_name, version in case %}
-    {% if loop.first %}- {% else %}  {% endif %}{{ dep_name }}: {{version }}
-    {%- endfor %}
+  {%- for config in configs %}
+    - CONFIG: {{ config}}
 {% endfor %}
 
 # We always use a 64-bit machine, but can build x86 distributions
@@ -31,19 +29,20 @@ install:
     - cmd: rmdir C:\cygwin /s /q
 
     # Add path, activate `conda` and update conda.
-    - cmd: call %CONDA_INSTALL_LOCN%\Scripts\activate.bat
-    - cmd: conda update --yes --quiet conda
+    # Around November of 2017, Appveyor changed Miniconda3-x64 from an old 3.4 install to a
+    #     symlink to the current version.
+    - cmd: call C:\Miniconda3-x64\Scripts\activate.bat
 
     - cmd: set PYTHONUNBUFFERED=1
 
     # Add our channels.
-    - cmd: conda config --set show_channel_urls true
-    - cmd: conda config --remove channels defaults
+    - cmd: conda.exe config --set show_channel_urls true
+    - cmd: conda.exe config --remove channels defaults
     {%- for channel in channels.get('sources', [])|reverse %}
-    - cmd: conda config --add channels {{ channel }}{% endfor %}
+    - cmd: conda.exe config --add channels {{ channel }}{% endfor %}
 
     # Configure the VM.
-    - cmd: conda install -n root --quiet --yes conda-forge-build-setup
+    - cmd: conda.exe install -n root --quiet --yes conda-forge-ci-setup=1
     {% if build_setup -%}
     {{ build_setup }}{% endif %}
 
@@ -51,8 +50,8 @@ install:
 build: off
 
 test_script:
-    - conda build {{ recipe_dir }} --quiet
+    - conda.exe build {{ recipe_dir }} -m .ci_support\%CONFIG%.yaml --quiet
 deploy_script:
 {%- for owner, channel in channels['targets'] %}
-    - cmd: {{ upload_script }} .\{{ recipe_dir }} {{ owner }} --channel={{ channel }}
+    - cmd: {{ upload_script }} .\{{ recipe_dir }} {{ owner }} --channel={{ channel }} -m .ci_support\%CONFIG%.yaml
 {% endfor %}

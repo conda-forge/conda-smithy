@@ -1,7 +1,6 @@
 from __future__ import print_function, absolute_import
 
 import os
-import requests
 import subprocess
 import sys
 import time
@@ -10,8 +9,8 @@ import argparse
 import conda
 from distutils.version import LooseVersion
 from conda_build.metadata import MetaData
+from conda_build.utils import ensure_list
 
-from . import ci_register
 from . import configure_feedstock
 from . import feedstock_io
 from . import lint_recipe
@@ -20,10 +19,11 @@ from . import __version__
 
 PY2 = sys.version_info[0] == 2
 
-def generate_feedstock_content(target_directory, source_recipe_dir, meta):
+def generate_feedstock_content(target_directory, source_recipe_dir):
     target_directory = os.path.abspath(target_directory)
     recipe_dir = "recipe"
     target_recipe_dir = os.path.join(target_directory, recipe_dir)
+
     if not os.path.exists(target_recipe_dir):
         os.makedirs(target_recipe_dir)
     # If there is a source recipe, copy it now to the right dir
@@ -40,13 +40,6 @@ def generate_feedstock_content(target_directory, source_recipe_dir, meta):
     if not os.path.exists(forge_yml):
         with feedstock_io.write_file(forge_yml) as fh:
             fh.write(u"[]")
-
-    cwd = os.getcwd()
-    os.chdir(target_directory)
-    try:
-        configure_feedstock.main(target_directory)
-    finally:
-        os.chdir(cwd)
 
 
 class Subcommand(object):
@@ -69,6 +62,7 @@ class Subcommand(object):
 
 class Init(Subcommand):
     subcommand = 'init'
+
     def __init__(self, parser):
         # conda-smithy init /path/to/udunits-recipe ./
 
@@ -77,18 +71,15 @@ class Init(Subcommand):
         scp = self.subcommand_parser
         scp.add_argument("recipe_directory", help="The path to the source recipe directory.")
         scp.add_argument("--feedstock-directory", default='./{package.name}-feedstock',
-                        help="Target directory, where the new feedstock git repository should be "
-                             "created. (Default: './<packagename>-feedstock')")
-        scp.add_argument("--no-git-repo", action='store_true',
-                                       default=False,
-                                       help="Do not init the feedstock as a git repository.")
+                         help="Target directory, where the new feedstock git repository should be "
+                         "created. (Default: './<packagename>-feedstock')")
 
     def __call__(self, args):
         # check some error conditions
         if args.recipe_directory and not os.path.isdir(args.recipe_directory):
             raise IOError("The source recipe directory should be the directory of the "
                           "conda-recipe you want to build a feedstock for. Got {}".format(
-                args.recipe_directory))
+                              args.recipe_directory))
 
         # Get some information about the source recipe.
         if args.recipe_directory:
@@ -101,11 +92,9 @@ class Init(Subcommand):
 
         try:
             os.makedirs(feedstock_directory)
-            if not args.no_git_repo:
-                subprocess.check_call(['git', 'init'], cwd=feedstock_directory)
-            generate_feedstock_content(feedstock_directory, args.recipe_directory, meta)
-            if not args.no_git_repo:
-                subprocess.check_call(['git', 'commit', '-m', msg], cwd=feedstock_directory)
+            subprocess.check_call(['git', 'init'], cwd=feedstock_directory)
+            generate_feedstock_content(feedstock_directory, args.recipe_directory)
+            subprocess.check_call(['git', 'commit', '-m', msg], cwd=feedstock_directory)
 
             print("\nRepository created, please edit conda-forge.yml to configure the upload channels\n"
                   "and afterwards call 'conda smithy register-github'")
@@ -157,6 +146,7 @@ class RegisterCI(Subcommand):
                            help="github organisation under which to register this repo")
 
     def __call__(self, args):
+        from conda_smithy import ci_register
         owner = args.user or args.organization
         repo = os.path.basename(os.path.abspath(args.feedstock_directory))
 
@@ -171,7 +161,7 @@ class RegisterCI(Subcommand):
             ci_register.add_project_to_appveyor(owner, repo)
             ci_register.appveyor_encrypt_binstar_token(args.feedstock_directory, owner, repo)
             ci_register.appveyor_configure(owner, repo)
-            ci_register.add_conda_linting(owner, repo)
+            ci_register.add_conda_forge_webservice_hooks(owner, repo)
             print("\nCI services have been enabled. You may wish to regenerate the feedstock.\n"
                   "Any changes will need commiting to the repo.")
         except RuntimeError as e:
@@ -188,47 +178,13 @@ class Regenerate(Subcommand):
                          help="The directory of the feedstock git repository.")
         scp.add_argument("-c", "--commit", nargs='?', choices=["edit", "auto"], const="edit",
                          help="Whether to setup a commit or not.")
+        scp.add_argument("--no-check-uptodate", default=False,
+                         help="Don't check that conda-smithy and conda-forge-pinning are uptodate")
 
     def __call__(self, args):
         try:
-            configure_feedstock.main(args.feedstock_directory)
-            print("\nRe-rendered with conda-smithy %s.\n" % __version__)
-
-            is_git_repo = os.path.exists(os.path.join(args.feedstock_directory, ".git"))
-            if is_git_repo:
-                has_staged_changes = subprocess.call(
-                    [
-                        "git", "diff", "--cached", "--quiet", "--exit-code"
-                    ],
-                    cwd=args.feedstock_directory
-                )
-                if has_staged_changes:
-                    if args.commit:
-                        git_args = [
-                            'git',
-                            'commit',
-                            '-m',
-                            'MNT: Re-rendered with conda-smithy %s' % __version__
-                        ]
-                        if args.commit == "edit":
-                            git_args += [
-                                '--edit',
-                                '--status',
-                                '--verbose'
-                            ]
-                        subprocess.check_call(
-                            git_args,
-                            cwd=args.feedstock_directory
-                        )
-                        print("")
-                    else:
-                        print(
-                            'You can commit the changes with:\n\n'
-                            '    git commit -m "MNT: Re-rendered with conda-smithy %s"\n' % __version__
-                        )
-                    print("These changes need to be pushed to github!\n")
-                else:
-                    print("No changes made. This feedstock is up-to-date.\n")
+            configure_feedstock.main(args.feedstock_directory,
+                                     no_check_uptodate=args.no_check_uptodate, commit=args.commit)
         except RuntimeError as e:
             print(e)
         except subprocess.CalledProcessError as e:
@@ -240,12 +196,13 @@ class RecipeLint(Subcommand):
     def __init__(self, parser):
         super(RecipeLint, self).__init__(parser, "Lint a single conda recipe.")
         scp = self.subcommand_parser
+        scp.add_argument("--conda-forge", action='store_true')
         scp.add_argument("recipe_directory", default=[os.getcwd()], nargs='*')
 
     def __call__(self, args):
         all_good = True
         for recipe in args.recipe_directory:
-            lint = lint_recipe.main(os.path.join(recipe))
+            lint = lint_recipe.main(os.path.join(recipe), conda_forge=args.conda_forge)
             if lint:
                 all_good = False
                 print('{} has some lint:\n  {}'.format(recipe, '\n  '.join(lint)))
