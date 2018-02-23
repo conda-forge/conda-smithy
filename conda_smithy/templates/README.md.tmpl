@@ -22,23 +22,23 @@ Current build status
 {%- if noarch_python %}
 {%- if circle.enabled %}
 All platforms:
-[![noarch]({{ shield }}circleci/project/github/{{ github.user_or_org }}/{{ github.repo_name }}.svg?label=noarch)](https://circleci.com/gh/{{ github.user_or_org }}/{{ github.repo_name }})
+[![noarch]({{ shield }}circleci/project/github/{{ github.user_or_org }}/{{ github.repo_name }}/master.svg?label=noarch)](https://circleci.com/gh/{{ github.user_or_org }}/{{ github.repo_name }})
 {%- else %}
 All platforms: ![noarch disabled]({{ shield }}badge/noarch-disabled-lightgrey.svg)
 {%- endif %}
 {%- else %}
 {%- if circle.enabled %}
-[![Linux]({{ shield }}circleci/project/github/{{ github.user_or_org }}/{{ github.repo_name }}.svg?label=linux)](https://circleci.com/gh/{{ github.user_or_org }}/{{ github.repo_name }})
+[![Linux]({{ shield }}circleci/project/github/{{ github.user_or_org }}/{{ github.repo_name }}/master.svg?label=Linux)](https://circleci.com/gh/{{ github.user_or_org }}/{{ github.repo_name }})
 {%- else %}
 ![Linux disabled]({{ shield }}badge/linux-disabled-lightgrey.svg)
 {%- endif %}
 {%- if travis.enabled %}
-[![OSX]({{ shield }}travis/{{ github.user_or_org }}/{{ github.repo_name }}.svg?label=OSX)](https://travis-ci.org/{{ github.user_or_org }}/{{ github.repo_name }})
+[![OSX]({{ shield }}travis/{{ github.user_or_org }}/{{ github.repo_name }}/master.svg?label=macOS)](https://travis-ci.org/{{ github.user_or_org }}/{{ github.repo_name }})
 {%- else %}
 ![Linux disabled]({{ shield }}badge/OSX-disabled-lightgrey.svg)
 {%- endif %}
 {%- if appveyor.enabled %}
-[![Windows]({{ shield }}appveyor/ci/{{ github.user_or_org }}/{{ github.repo_name }}.svg?label=Windows)](https://ci.appveyor.com/project/{{ github.user_or_org }}/{{ appveyor_url_name }}/branch/master)
+[![Windows]({{ shield }}appveyor/ci/{{ github.user_or_org }}/{{ github.repo_name }}/master.svg?label=Windows)](https://ci.appveyor.com/project/{{ github.user_or_org }}/{{ appveyor_url_name }}/branch/master)
 {%- else %}
 ![Windows disabled]({{ shield }}badge/Windows-disabled-lightgrey.svg)
 {%- endif %}
