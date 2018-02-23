@@ -47,5 +47,5 @@ about:
   home: https://github.com/conda-forge/conda-smithy
   license: BSD 3-clause
   license_family: BSD
-  license_file: LICENSE
+  license_file: LICENSE.txt
   summary: A package to create repositories for conda recipes, and automate their building with CI tools on Linux, OSX and Windows.
