@@ -300,6 +300,11 @@ def run_conda_forge_lints(meta, recipe_dir, lints):
         except github.UnknownObjectException as e:
             lints.append('Recipe maintainer "{}" does not exist'.format(maintainer))
 
+    # 3: if the recipe dir is inside the example dir
+    if recipe_dir is not None and 'recipes/example/' in recipe_dir:
+        lints.append('Please move the recipe out of the example dir and '
+                     'into its own dir.')
+
 
 def is_selector_line(line):
     # Using the same pattern defined in conda-build (metadata.py),
