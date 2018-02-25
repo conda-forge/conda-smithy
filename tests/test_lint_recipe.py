@@ -444,6 +444,18 @@ class Test_linter(unittest.TestCase):
         lints = linter.lintify(meta)
         self.assertIn(expected_message, lints)
 
+    def test_examples(self):
+        msg = 'Please move the recipe out of the example dir and into its '\
+              'own dir.'
+        lints = linter.lintify({'extra': {'recipe-maintainers': ['support']}},
+                               recipe_dir='recipes/example/',
+                               conda_forge=True)
+        self.assertIn(msg, lints)
+        lints = linter.lintify({'extra': {'recipe-maintainers': ['support']}},
+                               recipe_dir='python',
+                               conda_forge=True)
+        self.assertNotIn(msg, lints)
+
 
 class TestCLI_recipe_lint(unittest.TestCase):
     def test_cli_fail(self):
