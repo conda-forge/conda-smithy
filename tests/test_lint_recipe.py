@@ -444,6 +444,7 @@ class Test_linter(unittest.TestCase):
         lints = linter.lintify(meta)
         self.assertIn(expected_message, lints)
 
+    @unittest.skipUnless(is_gh_token_set(), "GH_TOKEN not set")
     def test_examples(self):
         msg = 'Please move the recipe out of the example dir and into its '\
               'own dir.'
