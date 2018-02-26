@@ -411,7 +411,8 @@ class Test_linter(unittest.TestCase):
             self.assertNotIn(expected_message, lints)
 
         # Test bioconda recipe checking
-        expected_message = 'Recipe with the same name exists in bioconda'
+        expected_message = ("Recipe with the same name exists in bioconda: "
+                            "please discuss with @conda-forge/bioconda-recipes.")
         bio = gh.get_user('bioconda').get_repo('bioconda-recipes')
         r = 'samtools'
         try:

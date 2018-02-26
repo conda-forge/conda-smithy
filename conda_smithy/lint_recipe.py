@@ -294,7 +294,8 @@ def run_conda_forge_lints(meta, recipe_dir, lints):
         except github.UnknownObjectException as e:
             pass
         else:
-            lints.append('Recipe with the same name exists in bioconda')
+            lints.append("Recipe with the same name exists in bioconda: "
+                         "please discuss with @conda-forge/bioconda-recipes.")
 
     # 2: Check that the recipe maintainers exists:
     maintainers = extra_section.get('recipe-maintainers', [])
