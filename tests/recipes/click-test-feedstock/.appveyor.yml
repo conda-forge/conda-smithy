@@ -20,7 +20,7 @@ platform:
 install:
     # If there is a newer build queued for the same PR, cancel this one.
     - cmd: |
-        powershell -Command "(New-Object Net.WebClient).DownloadFile('https://raw.githubusercontent.com/conda-forge/conda-forge-build-setup-feedstock/master/recipe/ff_ci_pr_build.py', 'ff_ci_pr_build.py')"
+        powershell -Command "(New-Object Net.WebClient).DownloadFile('https://raw.githubusercontent.com/conda-forge/conda-forge-ci-setup-feedstock/master/recipe/ff_ci_pr_build.py', 'ff_ci_pr_build.py')"
         ff_ci_pr_build -v --ci "appveyor" "%APPVEYOR_ACCOUNT_NAME%/%APPVEYOR_PROJECT_SLUG%" "%APPVEYOR_BUILD_NUMBER%" "%APPVEYOR_PULL_REQUEST_NUMBER%"
         del ff_ci_pr_build.py
 
@@ -42,7 +42,7 @@ install:
     - cmd: conda config --add channels conda-forge
 
     # Configure the VM.
-    - cmd: conda install -n root --quiet --yes conda-forge-build-setup
+    - cmd: conda install -n root --quiet --yes conda-forge-ci-setup
     - cmd: run_conda_forge_build_setup
 
     # testing purposes: get conda-build from defaults

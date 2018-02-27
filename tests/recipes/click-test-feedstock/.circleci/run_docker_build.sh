@@ -54,7 +54,7 @@ echo "$config" > ~/.condarc
 # A lock sometimes occurs with incomplete builds. The lock file is stored in build_artefacts.
 conda clean --lock
 
-conda install --yes --quiet conda-forge-build-setup
+conda install --yes --quiet conda-forge-ci-setup
 source run_conda_forge_build_setup
 
 # testing purposes: get conda-build from defaults
