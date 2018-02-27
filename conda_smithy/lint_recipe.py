@@ -264,7 +264,6 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
             conda_build.conda_interface.VersionOrder(ver)
         except:
             lints.append("Package version {} doesn't match conda spec".format(ver))
-
     return lints
 
 
@@ -304,6 +303,11 @@ def run_conda_forge_lints(meta, recipe_dir, lints):
             gh.get_user(maintainer)
         except github.UnknownObjectException as e:
             lints.append('Recipe maintainer "{}" does not exist'.format(maintainer))
+
+    # 3: if the recipe dir is inside the example dir
+    if recipe_dir is not None and 'recipes/example/' in recipe_dir:
+        lints.append('Please move the recipe out of the example dir and '
+                     'into its own dir.')
 
 
 def is_selector_line(line):
