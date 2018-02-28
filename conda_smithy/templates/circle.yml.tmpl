@@ -39,7 +39,7 @@ jobs:
       - save_cache:
           key: ccache-{{ '{{' }} .Branch {{ '}}' }}
           paths:
-            - ./build_artefacts/.ccache
+            - ./build_artifacts/.ccache
           when: always
 {%- endfor -%}
 {%- endif -%}
