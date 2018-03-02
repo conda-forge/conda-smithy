@@ -549,7 +549,7 @@ def copy_feedstock_content(forge_dir):
     )
 
 
-def _load_forge_config(forge_dir):
+def _load_forge_config(forge_dir, exclusive_config_file):
     config = {'docker': {'executable': 'docker',
                          'image': 'condaforge/linux-anvil',
                          'command': 'bash'},
@@ -598,6 +598,7 @@ def _load_forge_config(forge_dir):
         if not feedstock_name.endswith("-feedstock"):
             feedstock_name += "-feedstock"
         config['github']['repo_name'] = feedstock_name
+    config['exclusive_config_file'] = exclusive_config_file
     return config
 
 
@@ -672,14 +673,11 @@ def main(forge_file_directory, no_check_uptodate, commit, exclusive_config_file)
 
     forge_dir = os.path.abspath(forge_file_directory)
 
-    config = _load_forge_config(forge_dir)
-
     if exclusive_config_file is not None:
         exclusive_config_file = os.path.join(forge_dir, exclusive_config_file)
         if not os.path.exists(exclusive_config_file):
             raise RuntimeError("Given exclusive-config-file not found.")
         cf_pinning_ver = None
-        config['exclusive_config_file'] = exclusive_config_file
     else:
         installed_vers = conda_build.conda_interface.get_installed_version(
                                 conda_build.conda_interface.root_dir, ["conda-forge-pinning"])
@@ -691,7 +689,9 @@ def main(forge_file_directory, no_check_uptodate, commit, exclusive_config_file)
         cf_pinning_file = os.path.join(conda_build.conda_interface.root_dir, "conda_build_config.yaml")
         if not os.path.exists(cf_pinning_file):
             raise RuntimeError("conda_build_config.yaml from conda-forge-pinning is missing")
-        config['exclusive_config_file'] = cf_pinning_file
+        exclusive_config_file = cf_pinning_file
+
+    config = _load_forge_config(forge_dir, exclusive_config_file)
 
     for each_ci in ["travis", "circle", "appveyor"]:
         if config[each_ci].pop("enabled", None):
