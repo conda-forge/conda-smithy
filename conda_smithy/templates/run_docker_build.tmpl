@@ -58,15 +58,10 @@ conda install --yes --quiet conda-forge-ci-setup=1
 {% if build_setup -%}
 {{ build_setup }}{% endif -%}
 
-{%- block build %}
 conda build /home/conda/recipe_root -m /home/conda/feedstock_root/.ci_support/${CONFIG}.yaml --quiet
-{%- endblock %}
-
-{%- block test_and_upload %}
 {%- for owner, channel in channels['targets'] %}
-{{ upload_script }} /home/conda/recipe_root {{ owner }} --channel={{ channel }} -m /home/conda/feedstock_root/.ci_support/${CONFIG}.yaml || exit 1
-{%- endfor -%}
-{%- endblock %}
+{{ upload_script }} /home/conda/recipe_root {{ owner }} --channel={{ channel }} -m /home/conda/feedstock_root/.ci_support/${CONFIG}.yaml
+{%- endfor %}
 
 touch /home/conda/feedstock_root/build_artifacts/conda-forge-build-done
 EOF
@@ -83,7 +78,6 @@ CONTAINER=$(docker create -t \
            -v "${FEEDSTOCK_ROOT}":/home/conda/feedstock_root \
            --env-file ${FEEDSTOCK_ROOT}/env \
            -e HOST_USER_ID="${HOST_USER_ID}" \
-           {{ matrix_env_vars(matrix) }}
            {{ docker.image }} \
            {{ docker.command }} \
            /home/conda/feedstock_root/.circleci/build.sh || exit $?)
