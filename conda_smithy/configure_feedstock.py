@@ -410,16 +410,18 @@ def _circle_specific_setup(jinja_env, forge_config, forge_dir):
     forge_config['build_setup'] = build_setup
 
     # TODO: Conda has a convenience for accessing nested yaml content.
-    template = jinja_env.get_template('run_docker_build.tmpl')
-    target_fname = os.path.join(forge_dir, '.circleci', 'run_docker_build.sh')
-    with write_file(target_fname) as fh:
-        fh.write(template.render(**forge_config))
 
-    template_name = 'fast_finish_ci_pr_build.sh.tmpl'
-    template = jinja_env.get_template(template_name)
-    target_fname = os.path.join(forge_dir, '.circleci', 'fast_finish_ci_pr_build.sh')
-    with write_file(target_fname) as fh:
-        fh.write(template.render(**forge_config))
+    template_files = [
+        'docker_build_script.sh.tmpl',
+        'run_docker_build.sh.tmpl',
+        'fast_finish_ci_pr_build.sh.tmpl',
+    ]
+
+    for template_file in template_files:
+        template = jinja_env.get_template(template_file)
+        target_fname = os.path.join(forge_dir, '.circleci', template_file[:-len('.tmpl')])
+        with write_file(target_fname) as fh:
+            fh.write(template.render(**forge_config))
 
     # Fix permissions.
     target_fnames = [
@@ -665,7 +667,7 @@ def commit_changes(forge_file_directory, commit, cs_ver, cfp_ver):
 
 def main(forge_file_directory, no_check_uptodate, commit):
     error_on_warn = False if no_check_uptodate else True
-    index = conda_build.conda_interface.get_index(channel_urls=['conda-forge']) 
+    index = conda_build.conda_interface.get_index(channel_urls=['conda-forge'])
     r = conda_build.conda_interface.Resolve(index)
 
     # Check that conda-smithy is up-to-date
