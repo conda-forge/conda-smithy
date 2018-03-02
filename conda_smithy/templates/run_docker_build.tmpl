@@ -67,7 +67,7 @@ touch /home/conda/feedstock_root/build_artifacts/conda-forge-build-done
 EOF
 
 set +x
-echo "BINSTAR_TOKEN=${BINSTAR_TOKEN}" > "${FEEDSTOCK_ROOT}/env"
+echo "BINSTAR_TOKEN=${BINSTAR_TOKEN}" > "${FEEDSTOCK_ROOT}/.circleci/env"
 set -x
 
 # Create and run the container in two commands,
@@ -76,7 +76,8 @@ set -x
 CONTAINER=$(docker create -t \
            -v "${RECIPE_ROOT}":/home/conda/recipe_root \
            -v "${FEEDSTOCK_ROOT}":/home/conda/feedstock_root \
-           --env-file ${FEEDSTOCK_ROOT}/env \
+           --env-file ${FEEDSTOCK_ROOT}.circleci/env \
+           -e CONFIG="${CONFIG}" \
            -e HOST_USER_ID="${HOST_USER_ID}" \
            {{ docker.image }} \
            {{ docker.command }} \
