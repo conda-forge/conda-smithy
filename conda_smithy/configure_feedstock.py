@@ -549,7 +549,7 @@ def copy_feedstock_content(forge_dir):
     )
 
 
-def _load_forge_config(forge_dir, exclusive_config_file):
+def _load_forge_config(forge_dir):
     config = {'docker': {'executable': 'docker',
                          'image': 'condaforge/linux-anvil',
                          'command': 'bash'},
@@ -557,7 +557,6 @@ def _load_forge_config(forge_dir, exclusive_config_file):
               'travis': {},
               'circle': {},
               'appveyor': {},
-              'exclusive_config_file': exclusive_config_file,
               'channels': {'sources': ['conda-forge', 'defaults'],
                            'targets': [['conda-forge', 'main']]},
               'github': {'user_or_org': 'conda-forge', 'repo_name': ''},
@@ -663,7 +662,7 @@ def commit_changes(forge_file_directory, commit, cs_ver, cfp_ver):
             print("No changes made. This feedstock is up-to-date.\n")
 
 
-def main(forge_file_directory, no_check_uptodate, commit):
+def main(forge_file_directory, no_check_uptodate, commit, exclusive_config_file):
     error_on_warn = False if no_check_uptodate else True
     index = conda_build.conda_interface.get_index(channel_urls=['conda-forge']) 
     r = conda_build.conda_interface.Resolve(index)
@@ -673,10 +672,15 @@ def main(forge_file_directory, no_check_uptodate, commit):
 
     forge_dir = os.path.abspath(forge_file_directory)
 
-    config = _load_forge_config(forge_dir, None)
-    exclusive_config_file = config['exclusive_config_file']
+    config = _load_forge_config(forge_dir)
 
-    if exclusive_config_file is None:
+    if exclusive_config_file is not None:
+        exclusive_config_file = os.path.join(forge_dir, exclusive_config_file)
+        if not os.path.exists(exclusive_config_file):
+            raise RuntimeError("Given exclusive-config-file not found.")
+        cf_pinning_ver = None
+        config['exclusive_config_file'] = exclusive_config_file
+    else:
         installed_vers = conda_build.conda_interface.get_installed_version(
                                 conda_build.conda_interface.root_dir, ["conda-forge-pinning"])
         cf_pinning_ver = installed_vers["conda-forge-pinning"]
@@ -688,11 +692,6 @@ def main(forge_file_directory, no_check_uptodate, commit):
         if not os.path.exists(cf_pinning_file):
             raise RuntimeError("conda_build_config.yaml from conda-forge-pinning is missing")
         config['exclusive_config_file'] = cf_pinning_file
-    else:
-        config['exclusive_config_file'] = os.path.join(forge_dir, exclusive_config_file)
-        if not os.path.exists(config['exclusive_config_file']):
-            raise RuntimeError("exclusive_config_file in conda-forge.yml is not found.")
-        cf_pinning_ver = None
 
     for each_ci in ["travis", "circle", "appveyor"]:
         if config[each_ci].pop("enabled", None):

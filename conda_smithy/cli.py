@@ -180,11 +180,15 @@ class Regenerate(Subcommand):
                          help="Whether to setup a commit or not.")
         scp.add_argument("--no-check-uptodate", default=False,
                          help="Don't check that conda-smithy and conda-forge-pinning are uptodate")
+        scp.add_argument("-e", "--exclusive-config-file", default=None,
+                         help="Exclusive conda-build config file to replace conda-forge-pinning. " + \
+                              "For advanced usage only")
 
     def __call__(self, args):
         try:
             configure_feedstock.main(args.feedstock_directory,
-                                     no_check_uptodate=args.no_check_uptodate, commit=args.commit)
+                                     no_check_uptodate=args.no_check_uptodate, commit=args.commit,
+                                     exclusive_config_file=args.exclusive_config_file)
         except RuntimeError as e:
             print(e)
         except subprocess.CalledProcessError as e:
