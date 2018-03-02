@@ -33,6 +33,9 @@ install:
     #     symlink to the current version.
     - cmd: call C:\Miniconda3-x64\Scripts\activate.bat
 
+    # workaround for https://github.com/conda/conda/issues/6057
+    - cmd: conda.exe update conda
+
     - cmd: set PYTHONUNBUFFERED=1
 
     # Add our channels.
