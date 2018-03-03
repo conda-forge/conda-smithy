@@ -14,7 +14,8 @@ InitArgs = collections.namedtuple('ArgsObject', ('recipe_directory',
 
 RegenerateArgs = collections.namedtuple('ArgsObject', ('commit',
                                                        'feedstock_directory',
-                                                       'no_check_uptodate'))
+                                                       'no_check_uptodate',
+                                                       'exclusive_config_file'))
 
 
 def test_init(py_recipe):
@@ -45,11 +46,10 @@ def test_init_multiple_output_matrix(testing_workdir):
     init_obj(args)
     # Ignore conda-forge-pinning for this test, as the test relies on conda-forge-pinning
     # not being present
-    with open(os.path.join(feedstock_dir, "conda-forge.yml"), "w") as f:
-        f.write("exclusive_config_file: recipe/conda_build_config.yaml")
     args = RegenerateArgs(feedstock_directory=feedstock_dir,
                           commit=False,
-                          no_check_uptodate=True)
+                          no_check_uptodate=True,
+                          exclusive_config_file="recipe/conda_build_config.yaml")
     regen_obj(args)
     matrix_dir = os.path.join(feedstock_dir, '.ci_support')
     # the matrix should be consolidated among all outputs, as well as the top-level
@@ -88,23 +88,23 @@ def test_regenerate(py_recipe, testing_workdir):
     # original rendering was with py27, 36, no target_platform
     assert len(os.listdir(matrix_folder)) == 7
 
-    dest_file = os.path.join(dest_dir, 'recipe', 'conda_build_config.yaml')
-    args = RegenerateArgs(feedstock_directory=dest_dir,
-                          commit=False,
-                          no_check_uptodate=True)
-
     # Ignore conda-forge-pinning for this test, as the test relies on conda-forge-pinning
     # not being present
-    with open(os.path.join(dest_dir, "conda-forge.yml"), "w") as f:
-        f.write("exclusive_config_file: {}".format(os.path.join(recipe, 'config.yaml')))
+    args = RegenerateArgs(feedstock_directory=dest_dir,
+                          commit=False,
+                          no_check_uptodate=True,
+                          exclusive_config_file=os.path.join(recipe, 'config.yaml'))
+
     regen_obj(args)
 
     # should add 2, as the config.yaml adds in target_platform
     assert len(os.listdir(matrix_folder)) == 9
 
     # reduce the python matrix and make sure the matrix files reflect the change
-    with open(os.path.join(dest_dir, "conda-forge.yml"), "w") as f:
-        f.write("exclusive_config_file: {}".format(os.path.join(recipe, 'short_config.yaml')))
+    args = RegenerateArgs(feedstock_directory=dest_dir,
+                          commit=False,
+                          no_check_uptodate=True,
+                          exclusive_config_file=os.path.join(recipe, 'short_config.yaml'))
     regen_obj(args)
 
     # one py ver, no target_platform  (tests that older configs don't stick around)
