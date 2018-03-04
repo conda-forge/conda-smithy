@@ -583,6 +583,19 @@ def _load_forge_config(forge_dir, exclusive_config_file):
     else:
         with open(forge_yml, "r") as fh:
             file_config = list(yaml.load_all(fh))[0] or {}
+
+        # check for conda-smithy 2.x matrix which we can't auto-migrate
+        # to conda_build_config
+        if file_config.get('matrix') and not os.path.exists(
+            os.path.join(forge_dir, 'recipe', 'conda_build_config.yaml')
+        ):
+            # FIXME: update docs URL
+            raise ValueError(
+                'Cannot rerender with matrix in conda-forge.yml.'
+                ' Please migrate matrix to conda_build_config.yaml and try again.'
+                ' See https://github.com/conda-forge/conda-smithy/wiki/Release-Notes-3.0.0.rc1'
+                ' for more info.')
+
         # The config is just the union of the defaults, and the overriden
         # values.
         for key, value in file_config.items():
