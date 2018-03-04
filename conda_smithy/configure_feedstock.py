@@ -410,22 +410,24 @@ def _circle_specific_setup(jinja_env, forge_config, forge_dir):
     forge_config['build_setup'] = build_setup
 
     # TODO: Conda has a convenience for accessing nested yaml content.
-    template = jinja_env.get_template('run_docker_build.tmpl')
-    target_fname = os.path.join(forge_dir, '.circleci', 'run_docker_build.sh')
-    with write_file(target_fname) as fh:
-        fh.write(template.render(**forge_config))
+    template_files = [
+        'build_steps.sh.tmpl',
+        'run_docker_build.sh.tmpl',
+        'fast_finish_ci_pr_build.sh.tmpl',
+    ]
 
-    template_name = 'fast_finish_ci_pr_build.sh.tmpl'
-    template = jinja_env.get_template(template_name)
-    target_fname = os.path.join(forge_dir, '.circleci', 'fast_finish_ci_pr_build.sh')
-    with write_file(target_fname) as fh:
-        fh.write(template.render(**forge_config))
+    for template_file in template_files:
+        template = jinja_env.get_template(template_file)
+        target_fname = os.path.join(forge_dir, '.circleci', template_file[:-len('.tmpl')])
+        with write_file(target_fname) as fh:
+            fh.write(template.render(**forge_config))
 
     # Fix permissions.
     target_fnames = [
         os.path.join(forge_dir, '.circleci', 'checkout_merge_commit.sh'),
         os.path.join(forge_dir, '.circleci', 'fast_finish_ci_pr_build.sh'),
         os.path.join(forge_dir, '.circleci', 'run_docker_build.sh'),
+        os.path.join(forge_dir, '.circleci', 'build_steps.sh'),
     ]
     for each_target_fname in target_fnames:
         set_exe_file(each_target_fname, True)
