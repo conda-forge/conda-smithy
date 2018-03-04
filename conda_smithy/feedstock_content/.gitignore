@@ -1,3 +1,4 @@
 *.pyc
 
 build_artifacts
+.circleci/build-*.sh

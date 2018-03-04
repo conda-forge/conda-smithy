@@ -5,9 +5,14 @@
 # changes to this script, consider a proposal to conda-smithy so that other feedstocks can also
 # benefit from the improvement.
 
+set -euo pipefail
+
 FEEDSTOCK_ROOT=$(cd "$(dirname "$0")/.."; pwd;)
 RECIPE_ROOT=$FEEDSTOCK_ROOT/{{ recipe_dir }}
+# ensure BINSTAR_TOKEN is defined even if empty
+BINSTAR_TOKEN=${BINSTAR_TOKEN:-}
 
+set -x
 docker info
 
 config=$(cat <<CONDARC
@@ -35,21 +40,15 @@ if hash docker-machine 2> /dev/null && docker-machine active > /dev/null; then
     HOST_USER_ID=$(docker-machine ssh $(docker-machine active) id -u)
 fi
 
-rm -f "$FEEDSTOCK_ROOT/build_artifacts/conda-forge-build-done"
+ARTIFACTS="$FEEDSTOCK_ROOT/build_artifacts"
 
-cat << EOF | {{ docker.executable }} run -i \
-                        -v "${RECIPE_ROOT}":/home/conda/recipe_root \
-                        -v "${FEEDSTOCK_ROOT}":/home/conda/feedstock_root \
-                        -e CONFIG="$CONFIG" \
-                        -e HOST_USER_ID="${HOST_USER_ID}" \
-                        -a stdin -a stdout -a stderr \
-                        {{ docker.image }} \
-                        {{ docker.command }} || exit 1
+test -d "$ARTIFACTS" || mkdir "$ARTIFACTS"
+DONE_CANARY="$ARTIFACTS/conda-forge-build-done-${CONFIG}"
+rm -f "$DONE_CANARY"
 
-set -e
-set +x
-export BINSTAR_TOKEN=${BINSTAR_TOKEN}
-set -x
+cat << EOF > "$FEEDSTOCK_ROOT/.circleci/build-${CONFIG}.sh"
+
+set -xeuo pipefail
 export PYTHONUNBUFFERED=1
 
 echo "$config" > ~/.condarc
@@ -60,17 +59,23 @@ conda install --yes --quiet conda-forge-ci-setup=1
 {% if build_setup -%}
 {{ build_setup }}{% endif -%}
 
-conda build /home/conda/recipe_root -m /home/conda/feedstock_root/.ci_support/${CONFIG}.yaml --quiet || exit 1
+conda build /home/conda/recipe_root -m /home/conda/feedstock_root/.ci_support/${CONFIG}.yaml --quiet
 {%- for owner, channel in channels['targets'] %}
-{{ upload_script }} /home/conda/recipe_root {{ owner }} --channel={{ channel }} -m /home/conda/feedstock_root/.ci_support/${CONFIG}.yaml || exit 1
+{{ upload_script }} /home/conda/recipe_root {{ owner }} --channel={{ channel }} -m /home/conda/feedstock_root/.ci_support/${CONFIG}.yaml
 {%- endfor %}
 
-touch /home/conda/feedstock_root/build_artifacts/conda-forge-build-done
+touch "/home/conda/feedstock_root/build_artifacts/conda-forge-build-done-${CONFIG}"
 EOF
 
-# double-check that the build got to the end
-# see https://github.com/conda-forge/conda-smithy/pull/337
-# for a possible fix
-set -x
-test -f "$FEEDSTOCK_ROOT/build_artifacts/conda-forge-build-done" || exit 1
+docker run -it \
+           -v "${RECIPE_ROOT}":/home/conda/recipe_root \
+           -v "${FEEDSTOCK_ROOT}":/home/conda/feedstock_root \
+           -e CONFIG \
+           -e BINSTAR_TOKEN \
+           -e HOST_USER_ID \
+           {{ docker.image }} \
+           {{ docker.command }} \
+           /home/conda/feedstock_root/.circleci/build-${CONFIG}.sh
 
+# verify that the end of the script was reached
+test -f "$DONE_CANARY"
