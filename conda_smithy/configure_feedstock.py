@@ -312,6 +312,11 @@ def _render_ci_provider(provider_name, jinja_env, forge_config, forge_dir, platf
         for config in configs:
             remove_file(config)
 
+        configs = glob.glob(os.path.join(forge_dir, '.ci_support',
+                                         '{}_*'.format(platform)))
+        for config in configs:
+            remove_file(config)
+
     if not metas or all(m.skip() for m in metas):
         # There are no cases to build (not even a case without any special
         # dependencies), so remove the run_docker_build.sh if it exists.
@@ -324,7 +329,7 @@ def _render_ci_provider(provider_name, jinja_env, forge_config, forge_dir, platf
     else:
         forge_config[provider_name]["enabled"] = True
 
-        forge_config['configs'] = dump_subspace_config_files(metas, forge_dir, provider_name)
+        forge_config['configs'] = dump_subspace_config_files(metas, forge_dir, platform)
 
         forge_config['fast_finish'] = _get_fast_finish_script(provider_name,
                                                               forge_dir=forge_dir,
