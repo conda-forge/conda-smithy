@@ -163,7 +163,7 @@ def appveyor_configure(user, project):
         raise ValueError(response)
     content = response.json()
     settings = content['settings']
-    for required_setting in (u'skipBranchesWithoutAppveyorYml', u'rollingBuilds'):
+    for required_setting in (u'skipBranchesWithoutAppveyorYml', u'rollingBuildsOnlyForPullRequests '):
         if not settings[required_setting]:
             print('{: <30}: Current setting for {} = {}.'
                   ''.format(project, required_setting, settings[required_setting]))
