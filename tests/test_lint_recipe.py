@@ -266,6 +266,23 @@ class Test_linter(unittest.TestCase):
                          """)
             lints = linter.main(recipe_dir)
 
+    def test_jinja_load_file_regex(self):
+        # Test that we can use load_file_regex in a recipe. We don't care about
+        # the results here.
+        with tmp_directory() as recipe_dir:
+            with io.open(os.path.join(recipe_dir, 'sha256'), 'w') as fh:
+                fh.write("""
+                        fake  fakefile.txt
+                        """)
+            with io.open(os.path.join(recipe_dir, 'meta.yaml'), 'w') as fh:
+                fh.write("""
+                        {% set sha256 = load_file_regex('shasum', '.*') %}
+                        package:
+                          name: foo
+                          version: {{ version }}
+                        """)
+            lints = linter.main(recipe_dir)
+
     def test_missing_build_number(self):
         expected_message = "The recipe must have a `build/number` section."
 
