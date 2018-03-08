@@ -301,7 +301,9 @@ def main(recipe_dir, conda_forge=False):
     env = jinja2.Environment(undefined=NullUndefined)
 
     CondaBuildConfig = namedtuple('CondaBuildConfig', 'work_dir')
-    env.globals.update(dict(load_file_regex=lambda *args, **kwargs: load_file_regex(CondaBuildConfig(recipe_dir), *args, **kwargs),
+    env.globals.update(dict(load_file_regex=lambda *args, **kwargs: \
+                                load_file_regex(CondaBuildConfig(recipe_dir), \
+                                                *args, **kwargs),
                             ))
 
     with io.open(recipe_meta, 'rt') as fh:
