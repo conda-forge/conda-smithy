@@ -13,6 +13,10 @@ import ruamel.yaml
 
 from conda_build.metadata import (ensure_valid_license_family,
                                   FIELDS as cbfields)
+from conda_build.jinja_context import load_file_regex
+
+from collections import namedtuple
+
 import copy
 
 FIELDS = copy.deepcopy(cbfields)
@@ -295,6 +299,12 @@ def main(recipe_dir, conda_forge=False):
         raise IOError('Feedstock has no recipe/meta.yaml.')
 
     env = jinja2.Environment(undefined=NullUndefined)
+
+    CondaBuildConfig = namedtuple('CondaBuildConfig', 'work_dir')
+    env.globals.update(dict(load_file_regex=lambda *args, **kwargs: \
+                                load_file_regex(CondaBuildConfig(recipe_dir), \
+                                                *args, **kwargs),
+                            ))
 
     with io.open(recipe_meta, 'rt') as fh:
         content = env.from_string(''.join(fh)).render(os=os)
