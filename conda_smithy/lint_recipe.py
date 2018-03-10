@@ -13,10 +13,9 @@ import ruamel.yaml
 
 from conda_build.metadata import (ensure_valid_license_family,
                                   FIELDS as cbfields)
-from conda_build.jinja_context import load_file_regex
 import conda_build.conda_interface
 
-from collections import namedtuple
+from collections import defaultdict
 
 import copy
 
@@ -345,14 +344,12 @@ def main(recipe_dir, conda_forge=False):
     # stub out cb3 jinja2 functions - they are not important for linting
     #    if we don't stub them out, the ruamel.yaml load fails to interpret them
     #    we can't just use conda-build's api.render functionality, because it would apply selectors
-    CondaBuildConfig = namedtuple('CondaBuildConfig', 'work_dir')
     env.globals.update(dict(compiler=lambda x: x + '_compiler_stub',
                             pin_subpackage=lambda *args, **kwargs: 'subpackage_stub',
                             pin_compatible=lambda *args, **kwargs: 'compatible_pin_stub',
                             cdt=lambda *args, **kwargs: 'cdt_stub',
                             load_file_regex=lambda *args, **kwargs: \
-                                    load_file_regex(CondaBuildConfig(recipe_dir), \
-                                                    *args, **kwargs),
+                                    defaultdict(lambda : ''),
                             ))
 
     with io.open(recipe_meta, 'rt') as fh:
