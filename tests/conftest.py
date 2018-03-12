@@ -53,6 +53,12 @@ def config_yaml(testing_workdir):
         f.write('target_platform:\n')
         f.write('- win-64   # [win]\n')
         f.write('- win-32   # [win]\n')
+        f.write('c_compiler:\n  # [win]')
+        f.write('- vs2008\n  # [win]')
+        f.write('- vs2015\n  # [win]')
+        f.write('zip_keys:\n  # [win]')
+        f.write('- c_compiler\n   # [win]')
+        f.write('- python\n   # [win]')
     # dummy file that needs to be present for circle ci.  This is created by the init function
     os.makedirs(os.path.join(testing_workdir, '.circleci'))
     with open(os.path.join(testing_workdir, '.circleci', 'checkout_merge_commit.sh'), 'w') as f:
@@ -123,7 +129,9 @@ package:
     name: py-test
     version: 1.0.0
 requirements:
-    build:
+    build:                      # [win]
+        - {{ compiler('c') }}   # [win]
+    host:
         - python
     run:
         - python
@@ -158,6 +166,7 @@ about:
                             _load_forge_config(config_yaml,
                                                exclusive_config_file=os.path.join(config_yaml,
                                                                                   'config.yaml')))
+
 
 @pytest.fixture(scope='function')
 def python_skipped_recipe(config_yaml, request):

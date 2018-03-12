@@ -87,7 +87,8 @@ def test_py_matrix_appveyor(py_recipe, jinja_env):
     assert py_recipe.config['appveyor']['enabled']
     matrix_dir = os.path.join(py_recipe.recipe, '.ci_support')
     assert os.path.isdir(matrix_dir)
-    # 2 python versions, 2 target_platforms
+    # 2 python versions, 2 target_platforms.  Recipe uses c_compiler, but this is a zipped key
+    #     and shouldn't add extra configurations
     assert len(os.listdir(matrix_dir)) == 4
 
 
