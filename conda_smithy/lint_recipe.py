@@ -362,6 +362,7 @@ def jinja_lines(lines):
         if is_jinja_line(line):
             yield line, i
 
+
 def main(recipe_dir, conda_forge=False):
     recipe_dir = os.path.abspath(recipe_dir)
     recipe_meta = os.path.join(recipe_dir, 'meta.yaml')
