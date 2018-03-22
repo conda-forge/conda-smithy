@@ -32,7 +32,7 @@ REQUIREMENTS_ORDER = ['build', 'host', 'run']
 TEST_KEYS = {'imports', 'commands'}
 
 sel_pat = re.compile(r'(.+?)\s*(#.*)?\[([^\[\]]+)\](?(2).*)$')
-jinja_pat = re.compile(r'\{\s*%\s*(set)\s+[^\s]+\s*=\s*[^\s]+\s*%\s*\}')
+jinja_pat = re.compile(r'\s*\{%\s*(set)\s+[^\s]+\s*=\s*[^\s]+\s*%\}')
 
 
 class NullUndefined(jinja2.Undefined):
@@ -271,7 +271,7 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
         bad_jinja = []
         bad_lines = []
         # Good Jinja2 variable definitions look like "{% set .+ = .+ %}"
-        good_jinja_pat = re.compile(r'\{%\s(set)\s[^\s]+\s=\s[^\s]+\s%\}')
+        good_jinja_pat = re.compile(r'\s*\{%\s(set)\s[^\s]+\s=\s[^\s]+\s%\}')
         with io.open(meta_fname, 'rt') as fh:
             for jinja_line, line_number in jinja_lines(fh):
                 if not good_jinja_pat.match(jinja_line):
@@ -280,9 +280,9 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
         if bad_jinja:
             lints.append('Jinja2 variable definitions are suggested to '
                          'take a ``{{%<one space>set<one space>'
-                         '<expression><one space>=<one space><expression>'
-                         '<one space>%}}`` form. See lines {}'.format(
-                             bad_lines))
+                         '<variable name><one space>=<one space>'
+                         '<expression><one space>%}}`` form. See lines '
+                         '{}'.format(bad_lines))
     return lints
 
 
