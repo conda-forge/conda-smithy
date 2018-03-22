@@ -584,7 +584,7 @@ class TestCLI_recipe_lint(unittest.TestCase):
                             'take a ``{{%<one space>set<one space>'
                             '<variable name><one space>=<one space>'
                             '<expression><one space>%}}`` form. See lines '
-                            '{}'.format([3]))
+                            '{}'.format([2]))
 
         with tmp_directory() as recipe_dir:
             def assert_jinja(jinja_var, is_good=True):
