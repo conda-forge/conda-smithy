@@ -590,7 +590,7 @@ class TestCLI_recipe_lint(unittest.TestCase):
             def assert_jinja(jinja_var, is_good=True):
                 with io.open(os.path.join(recipe_dir, 'meta.yaml'), 'w') as fh:
                     fh.write("""
-                             {% set name = "conda-smithy" %}
+                             {{% set name = "conda-smithy" %}}
                              {}
                              """.format(jinja_var))
                 lints = linter.lintify({}, recipe_dir)
