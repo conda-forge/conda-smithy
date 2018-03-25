@@ -32,6 +32,7 @@ REQUIREMENTS_ORDER = ['build', 'host', 'run']
 TEST_KEYS = {'imports', 'commands'}
 
 sel_pat = re.compile(r'(.+?)\s*(#.*)?\[([^\[\]]+)\](?(2).*)$')
+jinja_pat = re.compile(r'\s*\{%\s*(set)\s+[^\s]+\s*=\s*[^\s]+\s*%\}')
 
 
 class NullUndefined(jinja2.Undefined):
@@ -264,6 +265,24 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
             conda_build.conda_interface.VersionOrder(ver)
         except:
             lints.append("Package version {} doesn't match conda spec".format(ver))
+
+    # 20: Jinja2 variable definitions should be nice.
+    if recipe_dir is not None and os.path.exists(meta_fname):
+        bad_jinja = []
+        bad_lines = []
+        # Good Jinja2 variable definitions look like "{% set .+ = .+ %}"
+        good_jinja_pat = re.compile(r'\s*\{%\s(set)\s[^\s]+\s=\s[^\s]+\s%\}')
+        with io.open(meta_fname, 'rt') as fh:
+            for jinja_line, line_number in jinja_lines(fh):
+                if not good_jinja_pat.match(jinja_line):
+                    bad_jinja.append(jinja_line)
+                    bad_lines.append(line_number)
+        if bad_jinja:
+            lints.append('Jinja2 variable definitions are suggested to '
+                         'take a ``{{%<one space>set<one space>'
+                         '<variable name><one space>=<one space>'
+                         '<expression><one space>%}}`` form. See lines '
+                         '{}'.format(bad_lines))
     return lints
 
 
@@ -324,9 +343,23 @@ def is_selector_line(line):
     return False
 
 
+def is_jinja_line(line):
+    line = line.rstrip()
+    m = jinja_pat.match(line)
+    if m:
+        return True
+    return False
+
+
 def selector_lines(lines):
     for i, line in enumerate(lines):
         if is_selector_line(line):
+            yield line, i
+
+
+def jinja_lines(lines):
+    for i, line in enumerate(lines):
+        if is_jinja_line(line):
             yield line, i
 
 

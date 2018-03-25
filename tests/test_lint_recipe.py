@@ -579,6 +579,38 @@ class TestCLI_recipe_lint(unittest.TestCase):
             # Just run it and make sure it does not raise.
             linter.main(recipe_dir)
 
+    def test_jinja_variable_def(self):
+        expected_message = ('Jinja2 variable definitions are suggested to '
+                            'take a ``{{%<one space>set<one space>'
+                            '<variable name><one space>=<one space>'
+                            '<expression><one space>%}}`` form. See lines '
+                            '{}'.format([2]))
+
+        with tmp_directory() as recipe_dir:
+            def assert_jinja(jinja_var, is_good=True):
+                with io.open(os.path.join(recipe_dir, 'meta.yaml'), 'w') as fh:
+                    fh.write("""
+                             {{% set name = "conda-smithy" %}}
+                             {}
+                             """.format(jinja_var))
+                lints = linter.lintify({}, recipe_dir)
+                if is_good:
+                    message = ("Found lints when there shouldn't have been a "
+                               "lint for '{}'.".format(jinja_var))
+                else:
+                    message = ("Expecting lints for '{}', but didn't get any."
+                               "".format(jinja_var))
+                self.assertEqual(not is_good,
+                                 any(lint.startswith(expected_message)
+                                     for lint in lints),
+                                 message)
+
+            assert_jinja('{% set version = "0.27.3" %}')
+            assert_jinja('{% set version="0.27.3" %}', is_good=False)
+            assert_jinja('{%set version = "0.27.3" %}', is_good=False)
+            assert_jinja('{% set version = "0.27.3"%}', is_good=False)
+            assert_jinja('{% set version= "0.27.3"%}', is_good=False)
+
 
 if __name__ == '__main__':
     unittest.main()
