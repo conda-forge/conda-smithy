@@ -14,6 +14,9 @@ import ruamel.yaml
 from conda_build.metadata import (ensure_valid_license_family,
                                   FIELDS as cbfields)
 import conda_build.conda_interface
+
+from collections import defaultdict
+
 import copy
 
 FIELDS = copy.deepcopy(cbfields)
@@ -378,6 +381,8 @@ def main(recipe_dir, conda_forge=False):
                             pin_subpackage=lambda *args, **kwargs: 'subpackage_stub',
                             pin_compatible=lambda *args, **kwargs: 'compatible_pin_stub',
                             cdt=lambda *args, **kwargs: 'cdt_stub',
+                            load_file_regex=lambda *args, **kwargs: \
+                                    defaultdict(lambda : ''),
                             ))
 
     with io.open(recipe_meta, 'rt') as fh:

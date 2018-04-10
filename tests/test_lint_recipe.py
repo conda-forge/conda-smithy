@@ -266,6 +266,26 @@ class Test_linter(unittest.TestCase):
                          """)
             lints = linter.main(recipe_dir)
 
+    def test_jinja_load_file_regex(self):
+        # Test that we can use load_file_regex in a recipe. We don't care about
+        # the results here.
+        with tmp_directory() as recipe_dir:
+            with io.open(os.path.join(recipe_dir, 'sha256'), 'w') as fh:
+                fh.write("""
+                        d0e46ea5fca7d4c077245fe0b4195a828d9d4d69be8a0bd46233b2c12abd2098  iwftc_osx.zip
+                        8ce4dc535b21484f65027be56263d8b0d9f58e57532614e1a8f6881f3b8fe260  iwftc_win.zip
+                        """)
+            with io.open(os.path.join(recipe_dir, 'meta.yaml'), 'w') as fh:
+                fh.write("""
+                        {% set sha256_osx = load_file_regex(load_file="sha256",
+                                                        regex_pattern="(?m)^(?P<sha256>[0-9a-f]+)\\s+iwftc_osx.zip$",
+                                                        from_recipe_dir=True)["sha256"] %}
+                        package:
+                          name: foo
+                          version: {{ version }}
+                        """)
+            lints = linter.main(recipe_dir)
+
     def test_missing_build_number(self):
         expected_message = "The recipe must have a `build/number` section."
 
