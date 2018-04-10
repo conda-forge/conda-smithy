@@ -124,7 +124,7 @@ def _trim_unused_zip_keys(all_used_vars):
     """Remove unused keys in zip_keys sets, so that they don't cause unnecessary missing value
     errors"""
     groups = all_used_vars.get('zip_keys', [])
-    if groups and not isinstance(groups[0], list):
+    if groups and not any(isinstance(groups[0], obj) for obj in (list, tuple)):
         groups = [groups]
     used_groups = []
     for group in groups:
@@ -187,8 +187,9 @@ def _collapse_subpackage_variants(list_of_metas):
     preserve_top_level_loops = set(top_level_loop_vars) - set(all_used_vars)
 
     # Add in some variables that should always be preserved
-    all_used_vars.update(set(('zip_keys', 'pin_run_as_build', 'MACOSX_DEPLOYMENT_TARGET',
-                              'macos_min_version', 'macos_machine')))
+    always_keep_keys = set(('zip_keys', 'pin_run_as_build', 'MACOSX_DEPLOYMENT_TARGET',
+                            'macos_min_version', 'macos_machine'))
+    all_used_vars.update(always_keep_keys)
     all_used_vars.update(top_level_vars)
 
     used_key_values = {key: squished_input_variants[key]
@@ -623,7 +624,8 @@ def check_version_uptodate(resolve, name, installed_version, error_on_warn):
     if installed_version is None:
         msg = "{} is not installed in root env.".format(name)
     elif VersionOrder(installed_version) < VersionOrder(most_recent_version):
-        msg = "{} version in root env is out-of-date.".format(name)
+        msg = "{} version in root env ({}) is out-of-date ({}).".format(
+            name, installed_version, most_recent_version)
     else:
         return
     if error_on_warn:
