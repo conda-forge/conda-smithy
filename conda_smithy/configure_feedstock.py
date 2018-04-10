@@ -188,7 +188,7 @@ def _collapse_subpackage_variants(list_of_metas):
 
     # Add in some variables that should always be preserved
     always_keep_keys = set(('zip_keys', 'pin_run_as_build', 'MACOSX_DEPLOYMENT_TARGET',
-                            'macos_min_version', 'macos_machine'))
+                            'macos_min_version', 'macos_machine', 'VERBOSE_AT', 'VERBOSE_CM'))
     all_used_vars.update(always_keep_keys)
     all_used_vars.update(top_level_vars)
 
