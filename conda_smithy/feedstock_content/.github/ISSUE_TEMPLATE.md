@@ -1,46 +1,25 @@
+<!--
 Thanks for reporting your issue.
-
-
 Please fill out the sections below.
+-->
+Issue:
 
-
-Example (code snippet, shell command, or screenshot):
-
+<br/>
+Environment (<code>conda list</code>):
 <details>
 
-
-
-</details>
-
-<br>
-Environment (`conda env export`):
-<br>
-<br>
-
-<details>
-
-```yaml
-name: test
-channels:
-- conda-forge
-- defaults
-dependencies:
-# Please fill these in. :)
--
 ```
+$ conda list
 
+```
 </details>
 
-<br>
-Details about `conda` and system (`conda info`):
-<br>
-<br>
-
+<br/>
+Details about  <code>conda</code> and system ( <code>conda info</code> ):
 <details>
 
 ```
 $ conda info
 
 ```
-
 </details>
