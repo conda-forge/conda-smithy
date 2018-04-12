@@ -2,12 +2,14 @@
 
 from __future__ import unicode_literals
 
+import datetime
 import io
 import itertools
 import os
 import re
-import github
+import time
 
+import github
 import jinja2
 import ruamel.yaml
 
@@ -383,6 +385,8 @@ def main(recipe_dir, conda_forge=False):
                             cdt=lambda *args, **kwargs: 'cdt_stub',
                             load_file_regex=lambda *args, **kwargs: \
                                     defaultdict(lambda : ''),
+                            datetime=datetime,
+                            time=time,
                             ))
 
     with io.open(recipe_meta, 'rt') as fh:
