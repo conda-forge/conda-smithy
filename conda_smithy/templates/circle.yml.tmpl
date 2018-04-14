@@ -48,7 +48,7 @@ workflows:
               ignore:
                 - /.*/
 {%- else %}
-{%- for config in configs %}
+{%- for config, _ in configs %}
       - build_{{ config }}
 {%- endfor -%}
 {%- endif -%}
