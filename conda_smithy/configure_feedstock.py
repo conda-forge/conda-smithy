@@ -234,7 +234,7 @@ def dump_subspace_config_files(metas, root_path, output_name):
     yaml.add_representer(set, yaml.representer.SafeRepresenter.represent_list)
     yaml.add_representer(tuple, yaml.representer.SafeRepresenter.represent_list)
 
-    config_names = []
+    result = []
     for config in configs:
         config_name = '{}_{}'.format(output_name, package_key(config, top_level_loop_vars,
                                                               metas[0].config.subdir))
@@ -245,8 +245,9 @@ def dump_subspace_config_files(metas, root_path, output_name):
 
         with write_file(out_path) as f:
             yaml.dump(config, f, default_flow_style=False)
-        config_names.append(config_name)
-    return sorted(config_names)
+        target_platform = config.get("target_platform", [""])[0]
+        result.append((config_name, target_platform))
+    return sorted(result)
 
 
 def _get_fast_finish_script(provider_name, forge_config, forge_dir, fast_finish_text):
