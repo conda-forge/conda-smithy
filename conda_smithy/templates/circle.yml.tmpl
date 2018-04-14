@@ -14,7 +14,7 @@ jobs:
           # The Circle-CI build should not be active, but if this is not true for some reason, do a fast finish.
           command: exit 0
 {%- else %}
-{%- for config in configs %}
+{%- for config, _ in configs %}
   build_{{ config }}:
     working_directory: ~/test
     machine: true
