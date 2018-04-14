@@ -220,7 +220,7 @@ def _collapse_subpackage_variants(list_of_metas):
     return break_up_top_level_values(top_level_loop_vars, used_key_values), top_level_loop_vars
 
 
-def dump_subspace_config_files(metas, root_path, output_name):
+def dump_subspace_config_files(metas, root_path, output_names):
     """With conda-build 3, it handles the build matrix.  We take what it spits out, and write a
     config.yaml file for each matrix entry that it spits out.  References to a specific file
     replace all of the old environment variables that specified a matrix entry."""
@@ -235,7 +235,7 @@ def dump_subspace_config_files(metas, root_path, output_name):
     yaml.add_representer(tuple, yaml.representer.SafeRepresenter.represent_list)
 
     result = []
-    for config in configs:
+    for config, output_name in zip(configs, output_names):
         config_name = '{}_{}'.format(output_name, package_key(config, top_level_loop_vars,
                                                               metas[0].config.subdir))
         out_folder = os.path.join(root_path, '.ci_support')
@@ -245,7 +245,7 @@ def dump_subspace_config_files(metas, root_path, output_name):
 
         with write_file(out_path) as f:
             yaml.dump(config, f, default_flow_style=False)
-        target_platform = config.get("target_platform", [""])[0]
+        target_platform = config.get("target_platform", [output_name])[0]
         result.append((config_name, target_platform))
     return sorted(result)
 
@@ -287,26 +287,37 @@ def _get_fast_finish_script(provider_name, forge_config, forge_dir, fast_finish_
     return fast_finish_text
 
 
-def _render_ci_provider(provider_name, jinja_env, forge_config, forge_dir, platform, arch,
+def _render_ci_provider(provider_name, jinja_env, forge_config, forge_dir, platforms, archs,
                         fast_finish_text, platform_target_path, platform_template_file,
-                        platform_specific_setup, keep_noarch=False, extra_platform_files=None):
-    metas = conda_build.api.render(os.path.join(forge_dir, 'recipe'),
+                        platform_specific_setup, keep_noarchs=None, extra_platform_files=None):
+
+    if keep_noarchs is None:
+        keep_noarchs = [False]*len(platforms)
+
+    metas_list = []
+    config_platforms = []
+    for platform, arch, keep_noarch in zip(platforms, archs, keep_noarchs):
+        metas = conda_build.api.render(os.path.join(forge_dir, 'recipe'),
                                    exclusive_config_file=forge_config['exclusive_config_file'],
                                    platform=platform, arch=arch,
                                    permit_undefined_jinja=True, finalize=False,
                                    bypass_env_check=True,
                                    channel_urls=forge_config.get('channels', {}).get('sources', []))
-    # render returns some download & reparsing info that we don't care about
-    metas = [m for m, _, _ in metas]
+        # render returns some download & reparsing info that we don't care about
+        metas = [m for m, _, _ in metas]
 
-    if not keep_noarch:
-        to_delete = []
-        for idx, meta in enumerate(metas):
-            if meta.noarch:
-                # do not build noarch, including noarch: python, packages on Travis CI.
-                to_delete.append(idx)
-        for idx in reversed(to_delete):
-            del metas[idx]
+        if not keep_noarch:
+            to_delete = []
+            for idx, meta in enumerate(metas):
+                if meta.noarch:
+                    # do not build noarch, including noarch: python, packages on Travis CI.
+                    to_delete.append(idx)
+            for idx in reversed(to_delete):
+                del metas[idx]
+        metas_list.extend(metas)
+        config_platforms.extend([platform]*len(metas))
+
+    metas = metas_list
 
     if os.path.isdir(os.path.join(forge_dir, '.ci_support')):
         configs = glob.glob(os.path.join(forge_dir, '.ci_support',
@@ -314,10 +325,11 @@ def _render_ci_provider(provider_name, jinja_env, forge_config, forge_dir, platf
         for config in configs:
             remove_file(config)
 
-        configs = glob.glob(os.path.join(forge_dir, '.ci_support',
-                                         '{}_*'.format(platform)))
-        for config in configs:
-            remove_file(config)
+        for platform in platforms:
+            configs = glob.glob(os.path.join(forge_dir, '.ci_support',
+                                             '{}_*'.format(platform)))
+            for config in configs:
+                remove_file(config)
 
     if not metas or all(m.skip() for m in metas):
         # There are no cases to build (not even a case without any special
@@ -331,7 +343,7 @@ def _render_ci_provider(provider_name, jinja_env, forge_config, forge_dir, platf
     else:
         forge_config[provider_name]["enabled"] = True
 
-        forge_config['configs'] = dump_subspace_config_files(metas, forge_dir, platform)
+        forge_config['configs'] = dump_subspace_config_files(metas, forge_dir, config_platforms)
 
         forge_config['fast_finish'] = _get_fast_finish_script(provider_name,
                                                               forge_dir=forge_dir,
@@ -451,11 +463,19 @@ def render_circle(jinja_env, forge_config, forge_dir):
         os.path.join(forge_dir, '.circleci', 'run_docker_build.sh'),
         ]
 
+    platforms = ['linux']
+    archs = ['64']
+    keep_noarchs = [True]
+    if forge_config['osx_provider'] == 'circle':
+        platforms.append('osx')
+        archs.append('64')
+        keep_noarchs.append(False)
+
     return _render_ci_provider('circle', jinja_env=jinja_env, forge_config=forge_config,
-                               forge_dir=forge_dir, platform='linux', arch='64',
+                               forge_dir=forge_dir, platforms=platforms, archs=archs,
                                fast_finish_text=fast_finish_text, platform_target_path=target_path,
                                platform_template_file=template_filename,
-                               platform_specific_setup=_circle_specific_setup, keep_noarch=True,
+                               platform_specific_setup=_circle_specific_setup, keep_noarchs=keep_noarchs,
                                extra_platform_files=extra_platform_files)
 
 
@@ -488,7 +508,7 @@ def render_travis(jinja_env, forge_config, forge_dir):
     """)
 
     return _render_ci_provider('travis', jinja_env=jinja_env, forge_config=forge_config,
-                               forge_dir=forge_dir, platform='osx', arch='64',
+                               forge_dir=forge_dir, platforms=['osx'], archs=['64'],
                                fast_finish_text=fast_finish_text, platform_target_path=target_path,
                                platform_template_file=template_filename,
                                platform_specific_setup=_travis_specific_setup)
@@ -526,7 +546,7 @@ def render_appveyor(jinja_env, forge_config, forge_dir):
     template_filename = 'appveyor.yml.tmpl'
 
     return _render_ci_provider('appveyor', jinja_env=jinja_env, forge_config=forge_config,
-                               forge_dir=forge_dir, platform='win', arch='64',
+                               forge_dir=forge_dir, platforms=['win'], archs=['64'],
                                fast_finish_text=fast_finish_text, platform_target_path=target_path,
                                platform_template_file=template_filename,
                                platform_specific_setup=_appveyor_specific_setup)
@@ -563,6 +583,7 @@ def _load_forge_config(forge_dir, exclusive_config_file):
               'templates': {},
               'travis': {},
               'circle': {},
+              'osx_provider': 'travis',
               'appveyor': {},
               'channels': {'sources': ['conda-forge', 'defaults'],
                            'targets': [['conda-forge', 'main']]},
