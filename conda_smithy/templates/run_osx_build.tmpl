@@ -16,8 +16,8 @@ bash $MINICONDA_FILE -b
 
 echo "Downloading sdk"
 curl -L -O https://github.com/phracker/MacOSX-SDKs/releases/download/10.13/MacOSX10.9.sdk.tar.xz
-tar -xvf $(xcode-select -p)/Platforms/MacOSX.platform/Developer/SDKs/
-sed -i '' "s|<string>10.11</string>|<string>10.9</string>|g" /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Info.plist
+tar -xf MacOSX10.9.sdk.tar.xz -C $(xcode-select -p)/Platforms/MacOSX.platform/Developer/SDKs/
+sed -i '' "s|<string>10.11</string>|<string>10.9</string>|g" $(xcode-select -p)/Platforms/MacOSX.platform/Info.plist
 
 echo "Configuring conda."
 source ~/miniconda3/bin/activate root
@@ -28,8 +28,8 @@ conda config --add channels {{ channel }}
 conda config --set show_channel_urls true
 conda install --yes --quiet conda-forge-ci-setup=1
 {% if build_setup -%}
-{{ build_setup }}{% endif %}
-
+{{ build_setup }}
+{%- endif %}
 set -e
 conda build ./{{ recipe_dir }} -m ./.ci_support/${CONFIG}.yaml
 {% for owner, channel in channels['targets'] %}
