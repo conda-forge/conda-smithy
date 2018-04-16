@@ -137,40 +137,42 @@ def test_circle_with_empty_yum_reqs_raises(py_recipe, jinja_env):
 
 
 def test_circle_osx(py_recipe, jinja_env):
-    travis_yml_file = os.path.join(py_recipe.recipe, '.travis.yml')
-    circle_osx_file = os.path.join(py_recipe.recipe, '.circleci', 'run_osx_build.sh')
-    circle_linux_file = os.path.join(py_recipe.recipe, '.circleci', 'run_docker_build.sh')
-    circle_config_file = os.path.join(py_recipe.recipe, '.circleci', 'config.yml')
+    forge_dir = py_recipe.recipe
+    travis_yml_file = os.path.join(forge_dir, '.travis.yml')
+    circle_osx_file = os.path.join(forge_dir, '.circleci', 'run_osx_build.sh')
+    circle_linux_file = os.path.join(forge_dir, '.circleci', 'run_docker_build.sh')
+    circle_config_file = os.path.join(forge_dir, '.circleci', 'config.yml')
 
     cnfgr_fdstk.render_circle(jinja_env=jinja_env,
                               forge_config=py_recipe.config,
-                              forge_dir=py_recipe.recipe)
+                              forge_dir=forge_dir)
     assert not os.path.exists(circle_osx_file)
     assert os.path.exists(circle_linux_file)
     assert os.path.exists(circle_config_file)
     cnfgr_fdstk.render_travis(jinja_env=jinja_env,
                               forge_config=py_recipe.config,
-                              forge_dir=py_recipe.recipe)
+                              forge_dir=forge_dir)
     assert os.path.exists(travis_yml_file)
 
     config = copy.deepcopy(py_recipe.config)
     config['provider']['osx'] = 'circle'
     cnfgr_fdstk.render_circle(jinja_env=jinja_env,
                               forge_config=config,
-                              forge_dir=config)
+                              forge_dir=forge_dir)
     assert os.path.exists(circle_osx_file)
     assert os.path.exists(circle_linux_file)
     assert os.path.exists(circle_config_file)
     cnfgr_fdstk.render_travis(jinja_env=jinja_env,
                               forge_config=config,
-                              forge_dir=py_recipe.recipe)
+                              forge_dir=forge_dir)
     assert not os.path.exists(travis_yml_file)
 
     config = copy.deepcopy(py_recipe.config)
     config['provider']['linux'] = 'dummy'
+    config['provider']['osx'] = 'circle'
     cnfgr_fdstk.render_circle(jinja_env=jinja_env,
                               forge_config=config,
-                              forge_dir=config)
+                              forge_dir=forge_dir)
     assert os.path.exists(circle_osx_file)
     assert not os.path.exists(circle_linux_file)
     assert os.path.exists(circle_config_file)

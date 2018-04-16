@@ -358,6 +358,11 @@ def _render_ci_provider(provider_name, jinja_env, forge_config, forge_dir, platf
                     for each_target_fname in extra_platform_files[platform]:
                         remove_file(each_target_fname)
 
+        for key in extra_platform_files.keys():
+            if key != 'common' and key not in platforms:
+                for each_target_fname in extra_platform_files[key]:
+                    remove_file(each_target_fname)
+
         forge_config[provider_name]["platforms"] = ','.join(fancy_platforms)
 
         forge_config['configs'] = configs
