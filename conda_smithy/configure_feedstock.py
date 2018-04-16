@@ -626,7 +626,7 @@ def _load_forge_config(forge_dir, exclusive_config_file):
               'circle': {},
               'appveyor': {},
               'osx_provider': 'travis',
-              'windows': {'enabled': False},
+              'win': {'enabled': False},
               'osx': {'enabled': False},
               'linux': {'enabled': False},
               'channels': {'sources': ['conda-forge', 'defaults'],
