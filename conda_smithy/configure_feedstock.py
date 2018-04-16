@@ -289,7 +289,7 @@ def _get_fast_finish_script(provider_name, forge_config, forge_dir, fast_finish_
 
 def _render_ci_provider(provider_name, jinja_env, forge_config, forge_dir, platforms, archs,
                         fast_finish_text, platform_target_path, platform_template_file,
-                        platform_specific_setup, keep_noarchs=None, extra_platform_files=None):
+                        platform_specific_setup, keep_noarchs=None, extra_platform_files={}):
 
     if keep_noarchs is None:
         keep_noarchs = [False]*len(platforms)
@@ -337,13 +337,15 @@ def _render_ci_provider(provider_name, jinja_env, forge_config, forge_dir, platf
         # dependencies), so remove the run_docker_build.sh if it exists.
         forge_config[provider_name]["enabled"] = False
 
-        extra_platform_files = [] if not extra_platform_files else extra_platform_files
-        target_fnames = [platform_target_path] + extra_platform_files
+        target_fnames = [platform_target_path]
+        if extra_platform_files:
+            for val in extra_platform_files.values():
+                target_fnames.extend(val)
         for each_target_fname in target_fnames:
             remove_file(each_target_fname)
     else:
         forge_config[provider_name]["enabled"] = True
-        fancy_name = {'linux': 'Linux', 'osx': 'OSX', 'windows': 'Windows'}
+        fancy_name = {'linux': 'Linux', 'osx': 'OSX', 'win': 'Windows'}
         fancy_platforms = []
 
         configs = []
@@ -352,6 +354,9 @@ def _render_ci_provider(provider_name, jinja_env, forge_config, forge_dir, platf
                 configs.extend(dump_subspace_config_files(metas, forge_dir, platform))
                 forge_config[platform]["enabled"] = True
                 fancy_platforms.append(fancy_name[platform])
+            elif platform in extra_platform_files:
+                    for each_target_fname in extra_platform_files[platform]:
+                        remove_file(each_target_fname)
 
         forge_config[provider_name]["platforms"] = ','.join(fancy_platforms)
 
@@ -384,8 +389,9 @@ def _render_ci_provider(provider_name, jinja_env, forge_config, forge_dir, platf
 
         # hook for extending with whatever platform specific junk we need.
         #     Function passed in as argument
-        for platform in platforms:
-            platform_specific_setup(jinja_env=jinja_env, forge_dir=forge_dir,
+        for platform, enable in zip(platforms, enable_platform):
+            if enable:
+                platform_specific_setup(jinja_env=jinja_env, forge_dir=forge_dir,
                                     forge_config=forge_config, platform=platform)
 
         template = jinja_env.get_template(platform_template_file)
@@ -501,18 +507,20 @@ def render_circle(jinja_env, forge_config, forge_dir):
             {get_fast_finish_script} | \\
                  python - -v --ci "circle" "${{CIRCLE_PROJECT_USERNAME}}/${{CIRCLE_PROJECT_REPONAME}}" "${{CIRCLE_BUILD_NUM}}" "${{CIRCLE_PR_NUMBER}}"
         """)  # NOQA
-    extra_platform_files = [
-        os.path.join(forge_dir, '.circleci', 'checkout_merge_commit.sh'),
-        os.path.join(forge_dir, '.circleci', 'fast_finish_ci_pr_build.sh'),
-        os.path.join(forge_dir, '.circleci', 'run_docker_build.sh'),
-        os.path.join(forge_dir, '.circleci', 'run_osx_build.sh'),
+    extra_platform_files = {
+        'common': [
+            os.path.join(forge_dir, '.circleci', 'checkout_merge_commit.sh'),
+            os.path.join(forge_dir, '.circleci', 'fast_finish_ci_pr_build.sh'),
+        ],
+        'linux': [
+            os.path.join(forge_dir, '.circleci', 'run_docker_build.sh'),
+        ],
+        'osx': [
+            os.path.join(forge_dir, '.circleci', 'run_osx_build.sh'),
         ]
+    }
 
     platforms, archs, keep_noarchs = _get_platforms_of_provider('circle', forge_config)
-    if not ('osx' in platforms):
-        remove_fname = os.path.join(forge_dir, '.circleci', 'run_osx_build.sh')
-        if os.path.exists(remove_fname):
-            remove_file(remove_fname)
 
     return _render_ci_provider('circle', jinja_env=jinja_env, forge_config=forge_config,
                                forge_dir=forge_dir, platforms=platforms, archs=archs,
