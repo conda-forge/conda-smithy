@@ -479,6 +479,21 @@ def _circle_specific_setup(jinja_env, forge_config, forge_dir, platform):
         set_exe_file(each_target_fname, True)
 
 
+def _get_platforms_of_provider(provider, forge_config):
+    platforms = []
+    keep_noarchs = []
+    archs = []
+    for platform in ['linux', 'osx', 'win']:
+        if forge_config['provider'][platform] == provider:
+            platforms.append(platform)
+            if platform == 'linux':
+                keep_noarchs.append(True)
+            else:
+                keep_noarchs.append(False)
+            archs.append('64')
+    return platforms, archs, keep_noarchs
+
+
 def render_circle(jinja_env, forge_config, forge_dir):
     target_path = os.path.join(forge_dir, '.circleci', 'config.yml')
     template_filename = 'circle.yml.tmpl'
@@ -493,14 +508,8 @@ def render_circle(jinja_env, forge_config, forge_dir):
         os.path.join(forge_dir, '.circleci', 'run_osx_build.sh'),
         ]
 
-    platforms = ['linux']
-    archs = ['64']
-    keep_noarchs = [True]
-    if forge_config['osx_provider'] == 'circle':
-        platforms.append('osx')
-        archs.append('64')
-        keep_noarchs.append(False)
-    else:
+    platforms, archs, keep_noarchs = _get_platforms_of_provider('circle', forge_config)
+    if not ('osx' in platforms):
         remove_fname = os.path.join(forge_dir, '.circleci', 'run_osx_build.sh')
         if os.path.exists(remove_fname):
             remove_file(remove_fname)
@@ -541,17 +550,12 @@ def render_travis(jinja_env, forge_config, forge_dir):
                   python - -v --ci "travis" "${{TRAVIS_REPO_SLUG}}" "${{TRAVIS_BUILD_NUMBER}}" "${{TRAVIS_PULL_REQUEST}}") || exit 1
     """)
 
-    if forge_config['osx_provider'] == 'circle':
-        platforms = []
-        archs = []
-    else:
-        platforms = ['osx']
-        archs = ['64']
+    platforms, archs, keep_noarchs = _get_platforms_of_provider('travis', forge_config)
 
     return _render_ci_provider('travis', jinja_env=jinja_env, forge_config=forge_config,
                                forge_dir=forge_dir, platforms=platforms, archs=archs,
                                fast_finish_text=fast_finish_text, platform_target_path=target_path,
-                               platform_template_file=template_filename,
+                               platform_template_file=template_filename, keep_noarchs=keep_noarchs,
                                platform_specific_setup=_travis_specific_setup)
 
 
@@ -586,10 +590,12 @@ def render_appveyor(jinja_env, forge_config, forge_dir):
         """)
     template_filename = 'appveyor.yml.tmpl'
 
+    platforms, archs, keep_noarchs = _get_platforms_of_provider('appveyor', forge_config)
+
     return _render_ci_provider('appveyor', jinja_env=jinja_env, forge_config=forge_config,
-                               forge_dir=forge_dir, platforms=['win'], archs=['64'],
+                               forge_dir=forge_dir, platforms=platforms, archs=archs,
                                fast_finish_text=fast_finish_text, platform_target_path=target_path,
-                               platform_template_file=template_filename,
+                               platform_template_file=template_filename, keep_noarchs=keep_noarchs,
                                platform_specific_setup=_appveyor_specific_setup)
 
 
@@ -625,7 +631,7 @@ def _load_forge_config(forge_dir, exclusive_config_file):
               'travis': {},
               'circle': {},
               'appveyor': {},
-              'osx_provider': 'travis',
+              'provider': {'linux': 'circle', 'osx': 'travis', 'win': 'appveyor'},
               'win': {'enabled': False},
               'osx': {'enabled': False},
               'linux': {'enabled': False},
