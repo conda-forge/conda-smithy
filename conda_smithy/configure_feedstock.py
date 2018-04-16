@@ -295,8 +295,8 @@ def _render_ci_provider(provider_name, jinja_env, forge_config, forge_dir, platf
         keep_noarchs = [False]*len(platforms)
 
     metas_list_of_lists = []
-    enable_provider = False
-    for platform, arch, keep_noarch in zip(platforms, archs, keep_noarchs):
+    enable_platform = [False]*len(platforms)
+    for i, (platform, arch, keep_noarch) in enumerate(zip(platforms, archs, keep_noarchs)):
         metas = conda_build.api.render(os.path.join(forge_dir, 'recipe'),
                                    exclusive_config_file=forge_config['exclusive_config_file'],
                                    platform=platform, arch=arch,
@@ -317,7 +317,7 @@ def _render_ci_provider(provider_name, jinja_env, forge_config, forge_dir, platf
 
         for meta in metas:
             if not meta.skip():
-                enable_provider = True
+                enable_platform[i] = True
         metas_list_of_lists.append(metas)
 
     if os.path.isdir(os.path.join(forge_dir, '.ci_support')):
@@ -332,7 +332,7 @@ def _render_ci_provider(provider_name, jinja_env, forge_config, forge_dir, platf
             for config in configs:
                 remove_file(config)
 
-    if not enable_provider:
+    if not any(enable_platform):
         # There are no cases to build (not even a case without any special
         # dependencies), so remove the run_docker_build.sh if it exists.
         forge_config[provider_name]["enabled"] = False
@@ -343,10 +343,17 @@ def _render_ci_provider(provider_name, jinja_env, forge_config, forge_dir, platf
             remove_file(each_target_fname)
     else:
         forge_config[provider_name]["enabled"] = True
+        fancy_name = {'linux': 'Linux', 'osx': 'OSX', 'windows': 'Windows'}
+        fancy_platforms = []
 
         configs = []
-        for metas, platform in zip(metas_list_of_lists, platforms):
-            configs.extend(dump_subspace_config_files(metas, forge_dir, platform))
+        for metas, platform, enable in zip(metas_list_of_lists, platforms, enable_platform):
+            if enable:
+                configs.extend(dump_subspace_config_files(metas, forge_dir, platform))
+                forge_config[platform]["enabled"] = True
+                fancy_platforms.append(fancy_name[platform])
+
+        forge_config[provider_name]["platforms"] = ','.join(fancy_platforms)
 
         forge_config['configs'] = configs
 
@@ -535,12 +542,14 @@ def render_travis(jinja_env, forge_config, forge_dir):
     """)
 
     if forge_config['osx_provider'] == 'circle':
-        if os.path.exists(target_path):
-            remove_file(target_path)
-        return
+        platforms = []
+        archs = []
+    else:
+        platforms = ['osx']
+        archs = ['64']
 
     return _render_ci_provider('travis', jinja_env=jinja_env, forge_config=forge_config,
-                               forge_dir=forge_dir, platforms=['osx'], archs=['64'],
+                               forge_dir=forge_dir, platforms=platforms, archs=archs,
                                fast_finish_text=fast_finish_text, platform_target_path=target_path,
                                platform_template_file=template_filename,
                                platform_specific_setup=_travis_specific_setup)
@@ -615,8 +624,11 @@ def _load_forge_config(forge_dir, exclusive_config_file):
               'templates': {},
               'travis': {},
               'circle': {},
-              'osx_provider': 'travis',
               'appveyor': {},
+              'osx_provider': 'travis',
+              'windows': {'enabled': False},
+              'osx': {'enabled': False},
+              'linux': {'enabled': False},
               'channels': {'sources': ['conda-forge', 'defaults'],
                            'targets': [['conda-forge', 'main']]},
               'github': {'user_or_org': 'conda-forge', 'repo_name': ''},
