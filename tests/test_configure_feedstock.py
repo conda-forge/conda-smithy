@@ -2,6 +2,7 @@ import os
 import conda_smithy.configure_feedstock as cnfgr_fdstk
 
 import pytest
+import copy
 
 
 def test_noarch_skips_appveyor(noarch_recipe, jinja_env):
@@ -133,6 +134,72 @@ def test_circle_with_empty_yum_reqs_raises(py_recipe, jinja_env):
         cnfgr_fdstk.render_circle(jinja_env=jinja_env,
                                   forge_config=py_recipe.config,
                                   forge_dir=py_recipe.recipe)
+
+
+def test_circle_osx(py_recipe, jinja_env):
+    travis_yml_file = os.path.join(py_recipe.recipe, '.travis.yml')
+    circle_osx_file = os.path.join(py_recipe.recipe, '.circleci', 'run_osx_build.sh')
+    circle_linux_file = os.path.join(py_recipe.recipe, '.circleci', 'run_docker_build.sh')
+    circle_config_file = os.path.join(py_recipe.recipe, '.circleci', 'config.yml')
+
+    cnfgr_fdstk.render_circle(jinja_env=jinja_env,
+                              forge_config=py_recipe.config,
+                              forge_dir=py_recipe.recipe)
+    assert not os.path.exists(circle_osx_file)
+    assert os.path.exists(circle_linux_file)
+    assert os.path.exists(circle_config_file)
+    cnfgr_fdstk.render_travis(jinja_env=jinja_env,
+                              forge_config=py_recipe.config,
+                              forge_dir=py_recipe.recipe)
+    assert os.path.exists(travis_yml_file)
+
+    config = copy.deepcopy(py_recipe.config)
+    config['provider']['osx'] = 'circle'
+    cnfgr_fdstk.render_circle(jinja_env=jinja_env,
+                              forge_config=config,
+                              forge_dir=config)
+    assert os.path.exists(circle_osx_file)
+    assert os.path.exists(circle_linux_file)
+    assert os.path.exists(circle_config_file)
+    cnfgr_fdstk.render_travis(jinja_env=jinja_env,
+                              forge_config=config,
+                              forge_dir=py_recipe.recipe)
+    assert not os.path.exists(travis_yml_file)
+
+    config = copy.deepcopy(py_recipe.config)
+    config['provider']['linux'] = 'dummy'
+    cnfgr_fdstk.render_circle(jinja_env=jinja_env,
+                              forge_config=config,
+                              forge_dir=config)
+    assert os.path.exists(circle_osx_file)
+    assert not os.path.exists(circle_linux_file)
+    assert os.path.exists(circle_config_file)
+
+
+def test_circle_skipped(linux_skipped_recipe, jinja_env):
+    forge_dir = linux_skipped_recipe.recipe
+    circle_osx_file = os.path.join(forge_dir, '.circleci', 'run_osx_build.sh')
+    circle_linux_file = os.path.join(forge_dir, '.circleci', 'run_docker_build.sh')
+    circle_config_file = os.path.join(forge_dir, '.circleci', 'config.yml')
+
+    cnfgr_fdstk.copy_feedstock_content(forge_dir)
+    cnfgr_fdstk.render_circle(jinja_env=jinja_env,
+                              forge_config=linux_skipped_recipe.config,
+                              forge_dir=forge_dir)
+    assert not os.path.exists(circle_osx_file)
+    assert not os.path.exists(circle_linux_file)
+    assert os.path.exists(circle_config_file)
+
+    config = copy.deepcopy(linux_skipped_recipe.config)
+    config['provider']['osx'] = 'circle'
+
+    cnfgr_fdstk.copy_feedstock_content(forge_dir)
+    cnfgr_fdstk.render_circle(jinja_env=jinja_env,
+                              forge_config=config,
+                              forge_dir=forge_dir)
+    assert os.path.exists(circle_osx_file)
+    assert not os.path.exists(circle_linux_file)
+    assert os.path.exists(circle_config_file)
 
 
 def test_render_with_all_skipped_generates_readme(skipped_recipe, jinja_env):
