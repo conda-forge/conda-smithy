@@ -191,6 +191,27 @@ about:
                                                exclusive_config_file=os.path.join(config_yaml,
                                                                                   'config.yaml')))
 
+@pytest.fixture(scope='function')
+def linux_skipped_recipe(config_yaml, request):
+    os.makedirs(os.path.join(config_yaml, 'recipe'))
+    with open(os.path.join(config_yaml, 'recipe', 'meta.yaml'), 'w') as fh:
+        fh.write("""
+package:
+    name: py-test
+    version: 1.0.0
+build:
+    skip: True   # [linux]
+requirements:
+    build:
+        - zlib
+about:
+    home: home
+    """)
+    return RecipeConfigPair(str(config_yaml),
+                            _load_forge_config(config_yaml,
+                                               exclusive_config_file=os.path.join(config_yaml,
+                                                                                  'config.yaml')))
+
 
 @pytest.fixture(scope='function')
 def jinja_env(request):
