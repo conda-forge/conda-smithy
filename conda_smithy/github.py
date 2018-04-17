@@ -1,19 +1,16 @@
 from __future__ import absolute_import, print_function
 
 import os
-import random
 from random import choice
 
-import git
 from git import Repo
 
-import github
 from github import Github
 from github.GithubException import GithubException
 from github.Organization import Organization
 from github.Team import Team
 
-from . import configure_feedstock
+import conda_build.api
 
 
 def gh_token():
@@ -89,7 +86,9 @@ def get_cached_team(org, team_name, description=""):
 
 def create_github_repo(args):
     token = gh_token()
-    meta = configure_feedstock.meta_of_feedstock(args.feedstock_directory)
+    meta = conda_build.api.render(args.feedstock_directory,
+                                  permit_undefined_jinja=True, finalize=False,
+                                  bypass_env_check=True, trim_skip=False)[0][0]
 
     gh = Github(token)
     user_or_org = None
@@ -103,8 +102,9 @@ def create_github_repo(args):
 
     repo_name = '{}-feedstock'.format(meta.name())
     try:
-        gh_repo = user_or_org.create_repo(repo_name, has_wiki=False,
-                                          description='A conda-smithy repository for {}.'.format(meta.name()))
+        gh_repo = user_or_org.create_repo(
+            repo_name, has_wiki=False,
+            description='A conda-smithy repository for {}.'.format(meta.name()))
         print('Created {} on github'.format(gh_repo.full_name))
     except GithubException as gh_except:
         if gh_except.data.get('errors', [{}])[0].get('message', '') != u'name already exists on this account':
@@ -120,7 +120,8 @@ def create_github_repo(args):
             existing_remote = repo.remotes[remote_name]
             if existing_remote.url != gh_repo.ssh_url:
                 print("Remote {} already exists, and doesn't point to {} "
-                      "(it points to {}).".format(remote_name, gh_repo.ssh_url, existing_remote.url))
+                      "(it points to {}).".format(remote_name, gh_repo.ssh_url,
+                                                  existing_remote.url))
         else:
             repo.create_remote(remote_name, gh_repo.ssh_url)
 
@@ -160,7 +161,6 @@ def configure_github_team(meta, gh_repo, org):
     else:
         current_maintainers = team.get_members()
 
-
     # Add only the new maintainers to the team.
     current_maintainers_handles = set([
         e.login.lower() for e in current_maintainers
@@ -172,7 +172,7 @@ def configure_github_team(meta, gh_repo, org):
     for old_maintainer in current_maintainers_handles - maintainers:
         print(
             "AN OLD MEMBER ({}) NEEDS TO BE REMOVED FROM {}".format(
-                old_maintainer, repo_name
+                old_maintainer, gh_repo
             )
         )
 
