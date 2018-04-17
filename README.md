@@ -22,7 +22,7 @@ conda install -n root -c conda-forge conda-smithy
 ```
 
 To install conda-smithy from source, see the requirements file in `requirements.txt`, clone this
-repo, and `python setup.py install`.
+repo, and `python -m pip install .`.
 
 Setup
 -----
