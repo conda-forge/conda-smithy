@@ -24,7 +24,7 @@ install:
 
     # Now do the things we need to do to install it.
     - conda install --file requirements.txt coverage coveralls mock pytest pytest-cov ${CONDA_PKGS} --yes --quiet -c conda-forge
-    - python setup.py develop
+    - python -m pip install -e .
 
 script:
     - py.test tests --cov conda_smithy
