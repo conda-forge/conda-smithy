@@ -12,7 +12,7 @@ def sdist_asset():
     ![python setup.py sdist]
     return fname
 
-$TAG_TEMPLATE = 'v$VERSION'
+$TAG_TEMPLATE = $GHRELEASE_NAME = 'v$VERSION'
 $GHRELEASE_ASSETS = [sdist_asset]
 $CONDA_FORGE_SOURCE_URL = ('https://github.com/conda-forge/conda-smithy/releases/'
                            'download/v$VERSION/conda-smithy-$VERSION.tar.gz')
