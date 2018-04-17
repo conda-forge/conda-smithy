@@ -90,6 +90,11 @@ def create_github_repo(args):
                                   permit_undefined_jinja=True, finalize=False,
                                   bypass_env_check=True, trim_skip=False)[0][0]
 
+    if "parent_recipe" in meta.meta["extra"]:
+        feedstock_name = meta.meta["extra"]["parent_recipe"]["name"]
+    else:
+        feedstock_name = meta.name()
+
     gh = Github(token)
     user_or_org = None
     if args.user is not None:
@@ -100,11 +105,11 @@ def create_github_repo(args):
         # Use the organization provided.
         user_or_org = gh.get_organization(args.organization)
 
-    repo_name = '{}-feedstock'.format(meta.name())
+    repo_name = '{}-feedstock'.format(feedstock_name)
     try:
         gh_repo = user_or_org.create_repo(
             repo_name, has_wiki=False,
-            description='A conda-smithy repository for {}.'.format(meta.name()))
+            description='A conda-smithy repository for {}.'.format(feedstock_name))
         print('Created {} on github'.format(gh_repo.full_name))
     except GithubException as gh_except:
         if gh_except.data.get('errors', [{}])[0].get('message', '') != u'name already exists on this account':
@@ -127,10 +132,10 @@ def create_github_repo(args):
 
     if args.add_teams:
         if isinstance(user_or_org, Organization):
-            configure_github_team(meta, gh_repo, user_or_org)
+            configure_github_team(meta, gh_repo, user_or_org, feedstock_name)
 
 
-def configure_github_team(meta, gh_repo, org):
+def configure_github_team(meta, gh_repo, org, feedstock_name):
 
     # Add a team for this repo and add the maintainers to it.
     superlative = [
@@ -145,7 +150,7 @@ def configure_github_team(meta, gh_repo, org):
         meta.meta.get('extra', {}).get('recipe-maintainers', [])
     )
     maintainers = set(maintainer.lower() for maintainer in maintainers)
-    team_name = meta.name()
+    team_name = feedstock_name
     # Try to get team or create it if it doesn't exist.
     team = next((team for team in gh_repo.get_teams() if team.name == team_name), None)
     current_maintainers = []
