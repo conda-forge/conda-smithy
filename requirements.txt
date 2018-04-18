@@ -9,3 +9,4 @@ pycrypto
 gitpython
 pygithub <2
 ruamel.yaml
+conda-smithy-pinnings
