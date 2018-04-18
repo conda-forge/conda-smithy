@@ -67,6 +67,7 @@ install:
 
 script:
   - conda build ./{{ recipe_dir }} -m ./.ci_support/${CONFIG}.yaml
+  - conda install --yes --quiet --offline --use-local anaconda-client
 {% for owner, channel in channels['targets'] %}
   - {{ upload_script }} ./{{ recipe_dir }} {{ owner }} --channel={{ channel }} -m ./.ci_support/${CONFIG}.yaml
 {% endfor %}
