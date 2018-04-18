@@ -28,6 +28,7 @@ requirements:
     - gitpython
     - pygithub <2
     - ruamel.yaml
+    - conda-forge-pinning
 
 test:
   requires:
