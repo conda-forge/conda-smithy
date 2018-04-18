@@ -7,3 +7,6 @@ conda_smithy.egg-info/
 dist/
 .cache
 .DS_Store
+
+# Rever
+rever/

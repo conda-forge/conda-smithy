@@ -11,7 +11,7 @@ osx_image: xcode6.4
 env:
   {%- if configs[0] %}
   matrix:
-    {%- for config in configs %}
+    {%- for config, _ in configs %}
     - CONFIG={{ config }}
     {%- endfor %}
   {%- endif %}

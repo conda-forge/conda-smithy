@@ -124,7 +124,7 @@ def _trim_unused_zip_keys(all_used_vars):
     """Remove unused keys in zip_keys sets, so that they don't cause unnecessary missing value
     errors"""
     groups = all_used_vars.get('zip_keys', [])
-    if groups and not isinstance(groups[0], list):
+    if groups and not any(isinstance(groups[0], obj) for obj in (list, tuple)):
         groups = [groups]
     used_groups = []
     for group in groups:
@@ -187,8 +187,9 @@ def _collapse_subpackage_variants(list_of_metas):
     preserve_top_level_loops = set(top_level_loop_vars) - set(all_used_vars)
 
     # Add in some variables that should always be preserved
-    all_used_vars.update(set(('zip_keys', 'pin_run_as_build', 'MACOSX_DEPLOYMENT_TARGET',
-                              'macos_min_version', 'macos_machine')))
+    always_keep_keys = set(('zip_keys', 'pin_run_as_build', 'MACOSX_DEPLOYMENT_TARGET',
+                            'macos_min_version', 'macos_machine'))
+    all_used_vars.update(always_keep_keys)
     all_used_vars.update(top_level_vars)
 
     used_key_values = {key: squished_input_variants[key]
@@ -233,7 +234,7 @@ def dump_subspace_config_files(metas, root_path, output_name):
     yaml.add_representer(set, yaml.representer.SafeRepresenter.represent_list)
     yaml.add_representer(tuple, yaml.representer.SafeRepresenter.represent_list)
 
-    config_names = []
+    result = []
     for config in configs:
         config_name = '{}_{}'.format(output_name, package_key(config, top_level_loop_vars,
                                                               metas[0].config.subdir))
@@ -244,8 +245,9 @@ def dump_subspace_config_files(metas, root_path, output_name):
 
         with write_file(out_path) as f:
             yaml.dump(config, f, default_flow_style=False)
-        config_names.append(config_name)
-    return sorted(config_names)
+        target_platform = config.get("target_platform", [output_name])[0]
+        result.append((config_name, target_platform))
+    return sorted(result)
 
 
 def _get_fast_finish_script(provider_name, forge_config, forge_dir, fast_finish_text):
@@ -285,26 +287,38 @@ def _get_fast_finish_script(provider_name, forge_config, forge_dir, fast_finish_
     return fast_finish_text
 
 
-def _render_ci_provider(provider_name, jinja_env, forge_config, forge_dir, platform, arch,
+def _render_ci_provider(provider_name, jinja_env, forge_config, forge_dir, platforms, archs,
                         fast_finish_text, platform_target_path, platform_template_file,
-                        platform_specific_setup, keep_noarch=False, extra_platform_files=None):
-    metas = conda_build.api.render(os.path.join(forge_dir, 'recipe'),
+                        platform_specific_setup, keep_noarchs=None, extra_platform_files={}):
+
+    if keep_noarchs is None:
+        keep_noarchs = [False]*len(platforms)
+
+    metas_list_of_lists = []
+    enable_platform = [False]*len(platforms)
+    for i, (platform, arch, keep_noarch) in enumerate(zip(platforms, archs, keep_noarchs)):
+        metas = conda_build.api.render(os.path.join(forge_dir, 'recipe'),
                                    exclusive_config_file=forge_config['exclusive_config_file'],
                                    platform=platform, arch=arch,
                                    permit_undefined_jinja=True, finalize=False,
                                    bypass_env_check=True,
                                    channel_urls=forge_config.get('channels', {}).get('sources', []))
-    # render returns some download & reparsing info that we don't care about
-    metas = [m for m, _, _ in metas]
+        # render returns some download & reparsing info that we don't care about
+        metas = [m for m, _, _ in metas]
 
-    if not keep_noarch:
-        to_delete = []
-        for idx, meta in enumerate(metas):
-            if meta.noarch:
-                # do not build noarch, including noarch: python, packages on Travis CI.
-                to_delete.append(idx)
-        for idx in reversed(to_delete):
-            del metas[idx]
+        if not keep_noarch:
+            to_delete = []
+            for idx, meta in enumerate(metas):
+                if meta.noarch:
+                    # do not build noarch, including noarch: python, packages on Travis CI.
+                    to_delete.append(idx)
+            for idx in reversed(to_delete):
+                del metas[idx]
+
+        for meta in metas:
+            if not meta.skip():
+                enable_platform[i] = True
+        metas_list_of_lists.append(metas)
 
     if os.path.isdir(os.path.join(forge_dir, '.ci_support')):
         configs = glob.glob(os.path.join(forge_dir, '.ci_support',
@@ -312,19 +326,46 @@ def _render_ci_provider(provider_name, jinja_env, forge_config, forge_dir, platf
         for config in configs:
             remove_file(config)
 
-    if not metas or all(m.skip() for m in metas):
+        for platform in platforms:
+            configs = glob.glob(os.path.join(forge_dir, '.ci_support',
+                                             '{}_*'.format(platform)))
+            for config in configs:
+                remove_file(config)
+
+    if not any(enable_platform):
         # There are no cases to build (not even a case without any special
         # dependencies), so remove the run_docker_build.sh if it exists.
         forge_config[provider_name]["enabled"] = False
 
-        extra_platform_files = [] if not extra_platform_files else extra_platform_files
-        target_fnames = [platform_target_path] + extra_platform_files
+        target_fnames = [platform_target_path]
+        if extra_platform_files:
+            for val in extra_platform_files.values():
+                target_fnames.extend(val)
         for each_target_fname in target_fnames:
             remove_file(each_target_fname)
     else:
         forge_config[provider_name]["enabled"] = True
+        fancy_name = {'linux': 'Linux', 'osx': 'OSX', 'win': 'Windows'}
+        fancy_platforms = []
 
-        forge_config['configs'] = dump_subspace_config_files(metas, forge_dir, provider_name)
+        configs = []
+        for metas, platform, enable in zip(metas_list_of_lists, platforms, enable_platform):
+            if enable:
+                configs.extend(dump_subspace_config_files(metas, forge_dir, platform))
+                forge_config[platform]["enabled"] = True
+                fancy_platforms.append(fancy_name[platform])
+            elif platform in extra_platform_files:
+                    for each_target_fname in extra_platform_files[platform]:
+                        remove_file(each_target_fname)
+
+        for key in extra_platform_files.keys():
+            if key != 'common' and key not in platforms:
+                for each_target_fname in extra_platform_files[key]:
+                    remove_file(each_target_fname)
+
+        forge_config[provider_name]["platforms"] = ','.join(fancy_platforms)
+
+        forge_config['configs'] = configs
 
         forge_config['fast_finish'] = _get_fast_finish_script(provider_name,
                                                               forge_dir=forge_dir,
@@ -353,7 +394,10 @@ def _render_ci_provider(provider_name, jinja_env, forge_config, forge_dir, platf
 
         # hook for extending with whatever platform specific junk we need.
         #     Function passed in as argument
-        platform_specific_setup(jinja_env=jinja_env, forge_dir=forge_dir, forge_config=forge_config)
+        for platform, enable in zip(platforms, enable_platform):
+            if enable:
+                platform_specific_setup(jinja_env=jinja_env, forge_dir=forge_dir,
+                                    forge_config=forge_config, platform=platform)
 
         template = jinja_env.get_template(platform_template_file)
         with write_file(platform_target_path) as fh:
@@ -367,70 +411,102 @@ def _render_ci_provider(provider_name, jinja_env, forge_config, forge_dir, platf
     return forge_config
 
 
-def _circle_specific_setup(jinja_env, forge_config, forge_dir):
+def _circle_specific_setup(jinja_env, forge_config, forge_dir, platform):
     # If the recipe supplies its own run_conda_forge_build_setup script_linux,
     # we use it instead of the global one.
-    cfbs_fpath = os.path.join(forge_dir, 'recipe', 'run_conda_forge_build_setup_linux')
+    if platform == 'linux':
+        cfbs_fpath = os.path.join(forge_dir, 'recipe', 'run_conda_forge_build_setup_linux')
+    else:
+        cfbs_fpath = os.path.join(forge_dir, 'recipe', 'run_conda_forge_build_setup_osx')
 
     build_setup = ""
     if os.path.exists(cfbs_fpath):
-        build_setup += textwrap.dedent("""\
-            # Overriding global run_conda_forge_build_setup_linux with local copy.
-            source /home/conda/recipe_root/run_conda_forge_build_setup_linux
+        if platform == 'linux':
+            build_setup += textwrap.dedent("""\
+                # Overriding global run_conda_forge_build_setup_linux with local copy.
+                source /home/conda/recipe_root/run_conda_forge_build_setup_linux
 
-        """)
+            """)
+        else:
+            build_setup += textwrap.dedent("""\
+                # Overriding global run_conda_forge_build_setup_osx with local copy.
+                source {recipe_dir}/run_conda_forge_build_setup_osx
+            """.format(recipe_dir=forge_config["recipe_dir"]))
     else:
         build_setup += textwrap.dedent("""\
             source run_conda_forge_build_setup
 
         """)
 
-    # If there is a "yum_requirements.txt" file in the recipe, we honour it.
-    yum_requirements_fpath = os.path.join(forge_dir, 'recipe',
-                                          'yum_requirements.txt')
-    if os.path.exists(yum_requirements_fpath):
-        with open(yum_requirements_fpath) as fh:
-            requirements = [line.strip() for line in fh
-                            if line.strip() and not line.strip().startswith('#')]
-        if not requirements:
-            raise ValueError("No yum requirements enabled in the "
-                             "yum_requirements.txt, please remove the file "
-                             "or add some.")
-        build_setup += textwrap.dedent("""\
+    if platform == 'linux':
+        # If there is a "yum_requirements.txt" file in the recipe, we honour it.
+        yum_requirements_fpath = os.path.join(forge_dir, 'recipe',
+                                              'yum_requirements.txt')
+        if os.path.exists(yum_requirements_fpath):
+            with open(yum_requirements_fpath) as fh:
+                requirements = [line.strip() for line in fh
+                                if line.strip() and not line.strip().startswith('#')]
+            if not requirements:
+                raise ValueError("No yum requirements enabled in the "
+                                 "yum_requirements.txt, please remove the file "
+                                 "or add some.")
+            build_setup += textwrap.dedent("""\
 
-            # Install the yum requirements defined canonically in the
-            # "recipe/yum_requirements.txt" file. After updating that file,
-            # run "conda smithy rerender" and this line be updated
-            # automatically.
-            /usr/bin/sudo -n yum install -y {}
+                # Install the yum requirements defined canonically in the
+                # "recipe/yum_requirements.txt" file. After updating that file,
+                # run "conda smithy rerender" and this line be updated
+                # automatically.
+                /usr/bin/sudo -n yum install -y {}
 
 
-        """.format(' '.join(requirements)))
+            """.format(' '.join(requirements)))
 
     forge_config['build_setup'] = build_setup
+
+    if platform == 'linux':
+        run_file_name = 'run_docker_build'
+    else:
+        run_file_name = 'run_osx_build'
 
     # TODO: Conda has a convenience for accessing nested yaml content.
     template_files = [
         'build_steps.sh.tmpl',
-        'run_docker_build.sh.tmpl',
+        '{}.sh.tmpl'.format(run_file_name),
         'fast_finish_ci_pr_build.sh.tmpl',
     ]
+
+    if platform == 'linux':
+        template_files.append('build_steps.sh.tmpl')
 
     for template_file in template_files:
         template = jinja_env.get_template(template_file)
         target_fname = os.path.join(forge_dir, '.circleci', template_file[:-len('.tmpl')])
         with write_file(target_fname) as fh:
             fh.write(template.render(**forge_config))
+        # Fix permission of template shell files
+        set_exe_file(target_fname, True)
 
-    # Fix permissions.
+    # Fix permission of other shell files.
     target_fnames = [
         os.path.join(forge_dir, '.circleci', 'checkout_merge_commit.sh'),
-        os.path.join(forge_dir, '.circleci', 'fast_finish_ci_pr_build.sh'),
-        os.path.join(forge_dir, '.circleci', 'run_docker_build.sh'),
-        os.path.join(forge_dir, '.circleci', 'build_steps.sh'),
     ]
-    for each_target_fname in target_fnames:
-        set_exe_file(each_target_fname, True)
+    for target_fname in target_fnames:
+        set_exe_file(target_fname, True)
+
+
+def _get_platforms_of_provider(provider, forge_config):
+    platforms = []
+    keep_noarchs = []
+    archs = []
+    for platform in ['linux', 'osx', 'win']:
+        if forge_config['provider'][platform] == provider:
+            platforms.append(platform)
+            if platform == 'linux':
+                keep_noarchs.append(True)
+            else:
+                keep_noarchs.append(False)
+            archs.append('64')
+    return platforms, archs, keep_noarchs
 
 
 def render_circle(jinja_env, forge_config, forge_dir):
@@ -440,21 +516,31 @@ def render_circle(jinja_env, forge_config, forge_dir):
             {get_fast_finish_script} | \\
                  python - -v --ci "circle" "${{CIRCLE_PROJECT_USERNAME}}/${{CIRCLE_PROJECT_REPONAME}}" "${{CIRCLE_BUILD_NUM}}" "${{CIRCLE_PR_NUMBER}}"
         """)  # NOQA
-    extra_platform_files = [
-        os.path.join(forge_dir, '.circleci', 'checkout_merge_commit.sh'),
-        os.path.join(forge_dir, '.circleci', 'fast_finish_ci_pr_build.sh'),
-        os.path.join(forge_dir, '.circleci', 'run_docker_build.sh'),
+    extra_platform_files = {
+        'common': [
+            os.path.join(forge_dir, '.circleci', 'checkout_merge_commit.sh'),
+            os.path.join(forge_dir, '.circleci', 'fast_finish_ci_pr_build.sh'),
+        ],
+        'linux': [
+            os.path.join(forge_dir, '.circleci', 'run_docker_build.sh'),
+            os.path.join(forge_dir, '.circleci', 'build_steps.sh'),
+        ],
+        'osx': [
+            os.path.join(forge_dir, '.circleci', 'run_osx_build.sh'),
         ]
+    }
+
+    platforms, archs, keep_noarchs = _get_platforms_of_provider('circle', forge_config)
 
     return _render_ci_provider('circle', jinja_env=jinja_env, forge_config=forge_config,
-                               forge_dir=forge_dir, platform='linux', arch='64',
+                               forge_dir=forge_dir, platforms=platforms, archs=archs,
                                fast_finish_text=fast_finish_text, platform_target_path=target_path,
                                platform_template_file=template_filename,
-                               platform_specific_setup=_circle_specific_setup, keep_noarch=True,
+                               platform_specific_setup=_circle_specific_setup, keep_noarchs=keep_noarchs,
                                extra_platform_files=extra_platform_files)
 
 
-def _travis_specific_setup(jinja_env, forge_config, forge_dir):
+def _travis_specific_setup(jinja_env, forge_config, forge_dir, platform):
     build_setup = ""
     # If the recipe supplies its own run_conda_forge_build_setup script_osx,
     # we use it instead of the global one.
@@ -482,14 +568,16 @@ def render_travis(jinja_env, forge_config, forge_dir):
                   python - -v --ci "travis" "${{TRAVIS_REPO_SLUG}}" "${{TRAVIS_BUILD_NUMBER}}" "${{TRAVIS_PULL_REQUEST}}") || exit 1
     """)
 
+    platforms, archs, keep_noarchs = _get_platforms_of_provider('travis', forge_config)
+
     return _render_ci_provider('travis', jinja_env=jinja_env, forge_config=forge_config,
-                               forge_dir=forge_dir, platform='osx', arch='64',
+                               forge_dir=forge_dir, platforms=platforms, archs=archs,
                                fast_finish_text=fast_finish_text, platform_target_path=target_path,
-                               platform_template_file=template_filename,
+                               platform_template_file=template_filename, keep_noarchs=keep_noarchs,
                                platform_specific_setup=_travis_specific_setup)
 
 
-def _appveyor_specific_setup(jinja_env, forge_config, forge_dir):
+def _appveyor_specific_setup(jinja_env, forge_config, forge_dir, platform):
     build_setup = ""
     # If the recipe supplies its own run_conda_forge_build_setup_win.bat script,
     # we use it instead of the global one.
@@ -520,10 +608,12 @@ def render_appveyor(jinja_env, forge_config, forge_dir):
         """)
     template_filename = 'appveyor.yml.tmpl'
 
+    platforms, archs, keep_noarchs = _get_platforms_of_provider('appveyor', forge_config)
+
     return _render_ci_provider('appveyor', jinja_env=jinja_env, forge_config=forge_config,
-                               forge_dir=forge_dir, platform='win', arch='64',
+                               forge_dir=forge_dir, platforms=platforms, archs=archs,
                                fast_finish_text=fast_finish_text, platform_target_path=target_path,
-                               platform_template_file=template_filename,
+                               platform_template_file=template_filename, keep_noarchs=keep_noarchs,
                                platform_specific_setup=_appveyor_specific_setup)
 
 
@@ -559,6 +649,10 @@ def _load_forge_config(forge_dir, exclusive_config_file):
               'travis': {},
               'circle': {},
               'appveyor': {},
+              'provider': {'linux': 'circle', 'osx': 'travis', 'win': 'appveyor'},
+              'win': {'enabled': False},
+              'osx': {'enabled': False},
+              'linux': {'enabled': False},
               'channels': {'sources': ['conda-forge', 'defaults'],
                            'targets': [['conda-forge', 'main']]},
               'github': {'user_or_org': 'conda-forge', 'repo_name': ''},
@@ -585,6 +679,19 @@ def _load_forge_config(forge_dir, exclusive_config_file):
     else:
         with open(forge_yml, "r") as fh:
             file_config = list(yaml.load_all(fh))[0] or {}
+
+        # check for conda-smithy 2.x matrix which we can't auto-migrate
+        # to conda_build_config
+        if file_config.get('matrix') and not os.path.exists(
+            os.path.join(forge_dir, 'recipe', 'conda_build_config.yaml')
+        ):
+            # FIXME: update docs URL
+            raise ValueError(
+                'Cannot rerender with matrix in conda-forge.yml.'
+                ' Please migrate matrix to conda_build_config.yaml and try again.'
+                ' See https://github.com/conda-forge/conda-smithy/wiki/Release-Notes-3.0.0.rc1'
+                ' for more info.')
+
         # The config is just the union of the defaults, and the overriden
         # values.
         for key, value in file_config.items():
@@ -612,7 +719,8 @@ def check_version_uptodate(resolve, name, installed_version, error_on_warn):
     if installed_version is None:
         msg = "{} is not installed in root env.".format(name)
     elif VersionOrder(installed_version) < VersionOrder(most_recent_version):
-        msg = "{} version in root env is out-of-date.".format(name)
+        msg = "{} version in root env ({}) is out-of-date ({}).".format(
+            name, installed_version, most_recent_version)
     else:
         return
     if error_on_warn:
@@ -667,7 +775,7 @@ def commit_changes(forge_file_directory, commit, cs_ver, cfp_ver):
 
 def main(forge_file_directory, no_check_uptodate, commit, exclusive_config_file):
     error_on_warn = False if no_check_uptodate else True
-    index = conda_build.conda_interface.get_index(channel_urls=['conda-forge']) 
+    index = conda_build.conda_interface.get_index(channel_urls=['conda-forge'])
     r = conda_build.conda_interface.Resolve(index)
 
     # Check that conda-smithy is up-to-date

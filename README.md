@@ -22,7 +22,7 @@ conda install -n root -c conda-forge conda-smithy
 ```
 
 To install conda-smithy from source, see the requirements file in `requirements.txt`, clone this
-repo, and `python setup.py install`.
+repo, and `python -m pip install .`.
 
 Setup
 -----
@@ -78,7 +78,7 @@ Optionally, you can choose a channel to upload to in `conda-forge.yml`.
       - [target_channel, target_label]
   ```
   Default is `[conda-forge, main]`.
-  
+
 5. **Re-render the feedstock:** ``conda smithy rerender --feedstock_directory ./foo-feedstock``
 6. **Commit the changes:** ``cd foo-feedstock && git commit``, then push ``git push upstream master``.
 
@@ -86,6 +86,17 @@ Running a build
 ---------------
 
 When everything is configured you can trigger a build with a push to the feedstock repo on github.
+
+Releasing conda-smithy
+----------------------
+To release a new version of conda-smithy, you can use the
+[rever](https://regro.github.io/rever-docs/index.html) release managment tool.
+Run `rever` in the root repo directory with the version number you want to release.
+For example,
+
+```sh
+$ rever 0.1.2
+```
 
 
 Conda-smithy in a nutshell

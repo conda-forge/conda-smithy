@@ -266,6 +266,26 @@ class Test_linter(unittest.TestCase):
                          """)
             lints = linter.main(recipe_dir)
 
+    def test_jinja_load_file_regex(self):
+        # Test that we can use load_file_regex in a recipe. We don't care about
+        # the results here.
+        with tmp_directory() as recipe_dir:
+            with io.open(os.path.join(recipe_dir, 'sha256'), 'w') as fh:
+                fh.write("""
+                        d0e46ea5fca7d4c077245fe0b4195a828d9d4d69be8a0bd46233b2c12abd2098  iwftc_osx.zip
+                        8ce4dc535b21484f65027be56263d8b0d9f58e57532614e1a8f6881f3b8fe260  iwftc_win.zip
+                        """)
+            with io.open(os.path.join(recipe_dir, 'meta.yaml'), 'w') as fh:
+                fh.write("""
+                        {% set sha256_osx = load_file_regex(load_file="sha256",
+                                                        regex_pattern="(?m)^(?P<sha256>[0-9a-f]+)\\s+iwftc_osx.zip$",
+                                                        from_recipe_dir=True)["sha256"] %}
+                        package:
+                          name: foo
+                          version: {{ version }}
+                        """)
+            lints = linter.main(recipe_dir)
+
     def test_missing_build_number(self):
         expected_message = "The recipe must have a `build/number` section."
 
@@ -578,6 +598,38 @@ class TestCLI_recipe_lint(unittest.TestCase):
                          """)
             # Just run it and make sure it does not raise.
             linter.main(recipe_dir)
+
+    def test_jinja_variable_def(self):
+        expected_message = ('Jinja2 variable definitions are suggested to '
+                            'take a ``{{%<one space>set<one space>'
+                            '<variable name><one space>=<one space>'
+                            '<expression><one space>%}}`` form. See lines '
+                            '{}'.format([2]))
+
+        with tmp_directory() as recipe_dir:
+            def assert_jinja(jinja_var, is_good=True):
+                with io.open(os.path.join(recipe_dir, 'meta.yaml'), 'w') as fh:
+                    fh.write("""
+                             {{% set name = "conda-smithy" %}}
+                             {}
+                             """.format(jinja_var))
+                lints = linter.lintify({}, recipe_dir)
+                if is_good:
+                    message = ("Found lints when there shouldn't have been a "
+                               "lint for '{}'.".format(jinja_var))
+                else:
+                    message = ("Expecting lints for '{}', but didn't get any."
+                               "".format(jinja_var))
+                self.assertEqual(not is_good,
+                                 any(lint.startswith(expected_message)
+                                     for lint in lints),
+                                 message)
+
+            assert_jinja('{% set version = "0.27.3" %}')
+            assert_jinja('{% set version="0.27.3" %}', is_good=False)
+            assert_jinja('{%set version = "0.27.3" %}', is_good=False)
+            assert_jinja('{% set version = "0.27.3"%}', is_good=False)
+            assert_jinja('{% set version= "0.27.3"%}', is_good=False)
 
 
 if __name__ == '__main__':
