@@ -6,7 +6,7 @@ $GITHUB_ORG = 'conda-forge'
 $ACTIVITIES = ['tag', 'push_tag', 'changelog', 'ghrelease', 'conda_forge']
 
 $CHANGELOG_FILENAME = 'CHANGELOG.rst'
-$CHANGELOG_IGNORE = ['TEMPLATE.rst']
+$CHANGELOG_TEMPLATE = 'TEMPLATE.rst'
 
 def sdist_asset():
     fname = os.path.join('dist', 'conda-smithy-' + $VERSION + '.tar.gz')
