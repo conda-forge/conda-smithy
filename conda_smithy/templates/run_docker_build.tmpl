@@ -56,7 +56,8 @@ echo "$config" > ~/.condarc
 # A lock sometimes occurs with incomplete builds. The lock file is stored in build_artifacts.
 conda clean --lock
 
-conda install --yes --quiet conda-forge-ci-setup=1 conda-build
+# Make sure we pull in the latest pinnimgs and conda-build versions too
+conda install --yes --quiet conda-forge-ci-setup=1 conda-build conda-forge-pinning
 {% if build_setup -%}
 {{ build_setup }}{% endif -%}
 
