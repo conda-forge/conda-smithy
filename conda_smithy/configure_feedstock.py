@@ -7,6 +7,7 @@ import subprocess
 import textwrap
 import yaml
 import warnings
+from collections import OrderedDict
 
 import conda_build.api
 import conda_build.utils
@@ -619,14 +620,16 @@ def render_appveyor(jinja_env, forge_config, forge_dir):
 
 def render_README(jinja_env, forge_config, forge_dir):
     # we only care about the first metadata object for sake of readme
-    meta = conda_build.api.render(os.path.join(forge_dir, 'recipe'),
+    metas = conda_build.api.render(os.path.join(forge_dir, 'recipe'),
                                   exclusive_config_file=forge_config['exclusive_config_file'],
                                   permit_undefined_jinja=True, finalize=False,
-                                  bypass_env_check=True, trim_skip=False)[0][0]
+                                  bypass_env_check=True, trim_skip=False)
     template = jinja_env.get_template('README.md.tmpl')
     target_fname = os.path.join(forge_dir, 'README.md')
-    forge_config['noarch_python'] = meta.noarch
-    forge_config['package'] = meta
+    forge_config['noarch_python'] = all(meta[0].noarch for meta in metas)
+    forge_config['package'] = metas[0][0]
+    forge_config['package_name'] = metas[0][0].meta['extra']['parent_recipe']['name']
+    forge_config['outputs'] = sorted(list(OrderedDict((meta[0].name(), None) for meta in metas)))
     with write_file(target_fname) as fh:
         fh.write(template.render(**forge_config))
 

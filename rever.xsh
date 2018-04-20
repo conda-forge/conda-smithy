@@ -3,8 +3,10 @@ import os
 $PROJECT = $GITHUB_REPO = 'conda-smithy'
 $GITHUB_ORG = 'conda-forge'
 
-$ACTIVITIES = ['tag', 'push_tag', 'ghrelease', 'conda_forge']
+$ACTIVITIES = ['changelog', 'tag', 'push_tag', 'ghrelease', 'conda_forge']
 
+$CHANGELOG_FILENAME = 'CHANGELOG.rst'
+$CHANGELOG_TEMPLATE = 'TEMPLATE.rst'
 
 def sdist_asset():
     fname = os.path.join('dist', 'conda-smithy-' + $VERSION + '.tar.gz')

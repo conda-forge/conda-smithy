@@ -1,7 +1,7 @@
 {%- set channel_name = channels.targets[0][0] -%}
 
-About {{ package.name() }}
-======{{ '=' * package.name()|length }}
+About {{ package_name }}
+======{{ '=' * package_name|length }}
 
 Home: {{ package.meta.about.home }}
 
@@ -50,29 +50,31 @@ All platforms: ![noarch disabled]({{ shield }}badge/noarch-disabled-lightgrey.sv
 Current release info
 ====================
 
-[![Conda Downloads]({{ shield }}conda/dn/{{ channel_name }}/{{ package.name() }}.svg)](https://anaconda.org/{{ channel_name }}/{{ package.name() }})
-[![Conda Version]({{ shield }}conda/vn/{{ channel_name }}/{{ package.name() }}.svg)](https://anaconda.org/{{ channel_name }}/{{ package.name() }})
-[![Conda Platforms]({{ shield }}conda/pn/{{ channel_name }}/{{ package.name() }}.svg)](https://anaconda.org/{{ channel_name }}/{{ package.name() }})
+| Name | Downloads | Version | Platforms |
+| --- | --- | --- | --- |
+{%- for output in outputs %}
+| [![Conda Recipe]({{ shield }}badge/recipe-{{ output.replace('-','--') }}-green.svg)](https://anaconda.org/{{ channel_name }}/{{ output }}) | [![Conda Downloads]({{ shield }}conda/dn/{{ channel_name }}/{{ output }}.svg)](https://anaconda.org/{{ channel_name }}/{{ output }}) | [![Conda Version]({{ shield }}conda/vn/{{ channel_name }}/{{ output }}.svg)](https://anaconda.org/{{ channel_name }}/{{ output }}) | [![Conda Platforms]({{ shield }}conda/pn/{{ channel_name }}/{{ output }}.svg)](https://anaconda.org/{{ channel_name }}/{{ output }}) |
+{%- endfor %}
 
-Installing {{ package.name() }}
-==========={{ '=' * package.name()|length }}
+Installing {{ package_name }}
+==========={{ '=' * package_name|length }}
 
-Installing `{{ package.name() }}` from the `{{ channel_name }}` channel can be achieved by adding `{{ channel_name }}` to your channels with:
+Installing `{{ package_name }}` from the `{{ channel_name }}` channel can be achieved by adding `{{ channel_name }}` to your channels with:
 
 ```
 conda config --add channels {{ channel_name }}
 ```
 
-Once the `{{ channel_name }}` channel has been enabled, `{{ package.name() }}` can be installed with:
+Once the `{{ channel_name }}` channel has been enabled, `{{ ', '.join(outputs) }}` can be installed with:
 
 ```
-conda install {{ package.name() }}
+conda install {{ ' '.join(outputs) }}
 ```
 
-It is possible to list all of the versions of `{{ package.name() }}` available on your platform with:
+It is possible to list all of the versions of `{{ outputs[0] }}` available on your platform with:
 
 ```
-conda search {{ package.name() }} --channel {{ channel_name }}
+conda search {{ outputs[0] }} --channel {{ channel_name }}
 ```
 
 {% if channel_name == 'conda-forge' %}
@@ -113,17 +115,17 @@ Terminology
 {%- endif %}
 
 
-Updating {{ package.name() }}-feedstock
-========={{ '=' * package.name()|length }}==========
+Updating {{ package_name }}-feedstock
+========={{ '=' * package_name|length }}==========
 
-If you would like to improve the {{ package.name() }} recipe or build a new
+If you would like to improve the {{ package_name }} recipe or build a new
 package version, please fork this repository and submit a PR. Upon submission,
 your changes will be run on the appropriate platforms to give the reviewer an
 opportunity to confirm that the changes result in a successful build. Once
 merged, the recipe will be re-built and uploaded automatically to the
 `{{ channel_name }}` channel, whereupon the built conda packages will be available for
 everybody to install and use from the `{{ channel_name }}` channel.
-Note that all branches in the {{ github.user_or_org }}/{{ package.name() }}-feedstock are
+Note that all branches in the {{ github.user_or_org }}/{{ package_name }}-feedstock are
 immediately built and any created packages are uploaded, so PRs should be based
 on branches in forks and branches in the main repository should only be used to
 build distinct package versions.

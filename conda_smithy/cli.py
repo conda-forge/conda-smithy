@@ -90,16 +90,13 @@ class Init(Subcommand):
         feedstock_directory = args.feedstock_directory.format(package=argparse.Namespace(name=meta.name()))
         msg = 'Initial feedstock commit with conda-smithy {}.'.format(__version__)
 
-        try:
-            os.makedirs(feedstock_directory)
-            subprocess.check_call(['git', 'init'], cwd=feedstock_directory)
-            generate_feedstock_content(feedstock_directory, args.recipe_directory)
-            subprocess.check_call(['git', 'commit', '-m', msg], cwd=feedstock_directory)
+        os.makedirs(feedstock_directory)
+        subprocess.check_call(['git', 'init'], cwd=feedstock_directory)
+        generate_feedstock_content(feedstock_directory, args.recipe_directory)
+        subprocess.check_call(['git', 'commit', '-m', msg], cwd=feedstock_directory)
 
-            print("\nRepository created, please edit conda-forge.yml to configure the upload channels\n"
-                  "and afterwards call 'conda smithy register-github'")
-        except RuntimeError as e:
-            print(e)
+        print("\nRepository created, please edit conda-forge.yml to configure the upload channels\n"
+              "and afterwards call 'conda smithy register-github'")
 
 
 class RegisterGithub(Subcommand):
@@ -124,11 +121,8 @@ class RegisterGithub(Subcommand):
 
     def __call__(self, args):
         from . import github
-        try:
-            github.create_github_repo(args)
-            print("\nRepository registered at github, now call 'conda smithy register-ci'")
-        except RuntimeError as e:
-            print(e)
+        github.create_github_repo(args)
+        print("\nRepository registered at github, now call 'conda smithy register-ci'")
 
 
 class RegisterCI(Subcommand):
@@ -151,21 +145,19 @@ class RegisterCI(Subcommand):
         repo = os.path.basename(os.path.abspath(args.feedstock_directory))
 
         print('CI Summary for {}/{} (can take ~30s):'.format(owner, repo))
-        try:
-            ci_register.add_project_to_travis(owner, repo)
-            ci_register.travis_token_update_conda_forge_config(args.feedstock_directory, owner, repo)
-            time.sleep(1)
-            ci_register.travis_configure(owner, repo)
-            ci_register.add_project_to_circle(owner, repo)
-            ci_register.add_token_to_circle(owner, repo)
-            ci_register.add_project_to_appveyor(owner, repo)
-            ci_register.appveyor_encrypt_binstar_token(args.feedstock_directory, owner, repo)
-            ci_register.appveyor_configure(owner, repo)
-            ci_register.add_conda_forge_webservice_hooks(owner, repo)
-            print("\nCI services have been enabled. You may wish to regenerate the feedstock.\n"
-                  "Any changes will need commiting to the repo.")
-        except RuntimeError as e:
-            print(e)
+        ci_register.add_project_to_travis(owner, repo)
+        ci_register.travis_token_update_conda_forge_config(args.feedstock_directory, owner, repo)
+        time.sleep(1)
+        ci_register.travis_configure(owner, repo)
+        ci_register.add_project_to_circle(owner, repo)
+        ci_register.add_token_to_circle(owner, repo)
+        ci_register.add_project_to_appveyor(owner, repo)
+        ci_register.appveyor_encrypt_binstar_token(args.feedstock_directory, owner, repo)
+        ci_register.appveyor_configure(owner, repo)
+        ci_register.add_conda_forge_webservice_hooks(owner, repo)
+        print("\nCI services have been enabled. You may wish to regenerate the feedstock.\n"
+              "Any changes will need commiting to the repo.")
+
 
 class Regenerate(Subcommand):
     subcommand = 'regenerate'
@@ -185,14 +177,9 @@ class Regenerate(Subcommand):
                               "For advanced usage only")
 
     def __call__(self, args):
-        try:
-            configure_feedstock.main(args.feedstock_directory,
-                                     no_check_uptodate=args.no_check_uptodate, commit=args.commit,
-                                     exclusive_config_file=args.exclusive_config_file)
-        except RuntimeError as e:
-            print(e)
-        except subprocess.CalledProcessError as e:
-            print(e)
+        configure_feedstock.main(args.feedstock_directory,
+                                 no_check_uptodate=args.no_check_uptodate, commit=args.commit,
+                                 exclusive_config_file=args.exclusive_config_file)
 
 
 class RecipeLint(Subcommand):
