@@ -203,6 +203,19 @@ class RecipeLint(Subcommand):
         sys.exit(int(not all_good))
 
 
+class Skeleton(Subcommand):
+    subcommand = 'skeleton'
+
+    def __init__(self, parser):
+        super(Skeleton, self).__init__(parser, "Make a conda-smithy skeleton")
+        scp = self.subcommand_parser
+        scp.add_argument("recipe_directory", default=[os.getcwd()], nargs='*')
+        scp.add_argument("source_directory", default=[os.getcwd()], nargs='*')
+
+    def __call__(self, args):
+        # All the skeleton generation code will go here
+        print('Skeleton created in folder: \n {}'.format(str(os.getcwd())))
+
 
 def main():
 
