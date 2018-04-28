@@ -62,6 +62,7 @@ conda install --yes --quiet conda-forge-ci-setup=1 conda-build
 {{ build_setup }}{% endif -%}
 
 conda build /home/conda/recipe_root -m /home/conda/feedstock_root/.ci_support/${CONFIG}.yaml --quiet || exit 1
+conda install --yes --quiet --offline --use-local anaconda-client || exit 1
 {%- for owner, channel in channels['targets'] %}
 {{ upload_script }} /home/conda/recipe_root {{ owner }} --channel={{ channel }} -m /home/conda/feedstock_root/.ci_support/${CONFIG}.yaml || exit 1
 {%- endfor %}
