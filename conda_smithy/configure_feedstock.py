@@ -470,25 +470,29 @@ def _circle_specific_setup(jinja_env, forge_config, forge_dir, platform):
         run_file_name = 'run_osx_build'
 
     # TODO: Conda has a convenience for accessing nested yaml content.
-    template = jinja_env.get_template('{}.tmpl'.format(run_file_name))
-    target_fname = os.path.join(forge_dir, '.circleci', '{}.sh'.format(run_file_name))
-    with write_file(target_fname) as fh:
-        fh.write(template.render(**forge_config))
+    template_files = [
+        'build_steps.sh.tmpl',
+        '{}.sh.tmpl'.format(run_file_name),
+        'fast_finish_ci_pr_build.sh.tmpl',
+    ]
 
-    template_name = 'fast_finish_ci_pr_build.sh.tmpl'
-    template = jinja_env.get_template(template_name)
-    target_fname = os.path.join(forge_dir, '.circleci', 'fast_finish_ci_pr_build.sh')
-    with write_file(target_fname) as fh:
-        fh.write(template.render(**forge_config))
+    if platform == 'linux':
+        template_files.append('build_steps.sh.tmpl')
 
-    # Fix permissions.
+    for template_file in template_files:
+        template = jinja_env.get_template(template_file)
+        target_fname = os.path.join(forge_dir, '.circleci', template_file[:-len('.tmpl')])
+        with write_file(target_fname) as fh:
+            fh.write(template.render(**forge_config))
+        # Fix permission of template shell files
+        set_exe_file(target_fname, True)
+
+    # Fix permission of other shell files.
     target_fnames = [
         os.path.join(forge_dir, '.circleci', 'checkout_merge_commit.sh'),
-        os.path.join(forge_dir, '.circleci', 'fast_finish_ci_pr_build.sh'),
-        os.path.join(forge_dir, '.circleci', '{}.sh'.format(run_file_name)),
     ]
-    for each_target_fname in target_fnames:
-        set_exe_file(each_target_fname, True)
+    for target_fname in target_fnames:
+        set_exe_file(target_fname, True)
 
 
 def _get_platforms_of_provider(provider, forge_config):
@@ -520,6 +524,7 @@ def render_circle(jinja_env, forge_config, forge_dir):
         ],
         'linux': [
             os.path.join(forge_dir, '.circleci', 'run_docker_build.sh'),
+            os.path.join(forge_dir, '.circleci', 'build_steps.sh'),
         ],
         'osx': [
             os.path.join(forge_dir, '.circleci', 'run_osx_build.sh'),
