@@ -3,7 +3,10 @@
 
 language: generic
 
-os: osx
+os:
+  - linux-ppc64le
+  - osx
+
 osx_image: xcode6.4
 
 {% block env -%}
@@ -29,30 +32,44 @@ env:
 before_install:
     # Fast finish the PR.
     - |
+      if [ "$TRAVIS_OS_NAME" == "osx" ]; then
       {{ fast_finish }}
+      fi
 
     # Remove homebrew.
     - |
+      if [ "$TRAVIS_OS_NAME" == "osx" ]; then
       echo ""
       echo "Removing homebrew from Travis CI to avoid conflicts."
       curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/uninstall > ~/uninstall_homebrew
       chmod +x ~/uninstall_homebrew
       ~/uninstall_homebrew -fq
       rm ~/uninstall_homebrew
+      fi
 
 
 install:
     # Install Miniconda.
     - |
+      if [ "$TRAVIS_OS_NAME" == "osx" ]; then
       echo ""
       echo "Installing a fresh version of Miniconda."
       MINICONDA_URL="https://repo.continuum.io/miniconda"
       MINICONDA_FILE="Miniconda3-latest-MacOSX-x86_64.sh"
       curl -L -O "${MINICONDA_URL}/${MINICONDA_FILE}"
       bash $MINICONDA_FILE -b
-
+      fi
+    - |
+      if [ "$TRAVIS_OS_NAME" == "linux-ppc64le" ]; then
+      echo "Installing a fresh version of Miniconda."
+      MINICONDA_URL="https://repo.continuum.io/miniconda"
+      MINICONDA_FILE="Miniconda3-latest-Linux-ppc64le.sh"
+      curl -L -O "${MINICONDA_URL}/${MINICONDA_FILE}"
+      bash $MINICONDA_FILE -b -p $HOME/miniconda
+      fi
     # Configure conda.
     - |
+      if [ "$TRAVIS_OS_NAME" == "osx" ]; then
       echo ""
       echo "Configuring conda."
       source /Users/travis/miniconda3/bin/activate root
@@ -64,9 +81,46 @@ install:
       conda install --yes --quiet conda-forge-ci-setup=1
       {% if build_setup -%}
       {{ build_setup }}{% endif %}
+      fi
+    - |
+      if [ "$TRAVIS_OS_NAME" == "linux-ppc64le" ]; then
+      echo "Configuring conda."
+      export PATH="$HOME/miniconda/bin:$PATH"
+      hash -r
+      {%- for channel in channels.get('sources', [])|reverse %}
+      conda config --add channels {{ channel }}
+      {%- endfor %}
+      conda config --set always_yes yes --set changeps1 no
+      conda update -q conda
+      conda info -a
+      {%- for channel in channels.get('sources', [])|reverse %}
+      conda config --add channels {{ channel }}
+      {%- endfor %}
+      conda config --set show_channel_urls true
+      conda install -n root conda-build
+      fi
 
 script:
   - conda build ./{{ recipe_dir }} -m ./.ci_support/${CONFIG}.yaml
+
+  # Build conda-forge-build-setup for PPC64LE
+  - |
+    if [ "$TRAVIS_OS_NAME" == "linux-ppc64le" ]; then
+    sudo apt-get install -y git
+    curr_dir=${PWD}
+    echo ${curr_dir}
+    cd ${HOME}
+    git clone https://github.com/kamasubb/conda-forge-build-setup-feedstock.git
+    cd conda-forge-build-setup-feedstock
+    conda build --no-test recipe
+    build_setup_package=`ls  ${HOME}/miniconda/conda-bld/linux-ppc64le/conda-forge-build-setup*.tar.bz2`
+    echo ${build_setup_package}
+    conda install --yes --use-local ${build_setup_package}
+    conda list | grep conda-forge-build-setup
+    source run_conda_forge_build_setup
+    cd ${curr_dir}
+    fi
+
 {% for owner, channel in channels['targets'] %}
   - {{ upload_script }} ./{{ recipe_dir }} {{ owner }} --channel={{ channel }} -m ./.ci_support/${CONFIG}.yaml
 {% endfor %}
