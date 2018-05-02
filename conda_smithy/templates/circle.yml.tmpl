@@ -17,7 +17,7 @@ jobs:
 {%- for config, platform in configs %}
   build_{{ config }}:
     working_directory: ~/test
-{%- if platform == 'linux' %}
+{%- if platform.startswith('linux') %}
     machine: true
 {%- else %}
     macos:
@@ -32,13 +32,13 @@ jobs:
           command: |
             ./.circleci/fast_finish_ci_pr_build.sh
             ./.circleci/checkout_merge_commit.sh
-{%- if platform == 'linux' %}
+{%- if platform.startswith('linux') %}
       - run:
           command: docker pull {{ docker.image }}
 {%- endif %}
       - run:
           # Run, test and (if we have a BINSTAR_TOKEN) upload the distributions.
-{%- if platform == 'linux' %}
+{%- if platform.startswith('linux') %}
           command: ./.circleci/run_docker_build.sh
 {%- else %}
           command: ./.circleci/run_osx_build.sh
