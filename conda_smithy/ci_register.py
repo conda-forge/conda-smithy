@@ -45,17 +45,23 @@ travis_endpoint = 'https://api.travis-ci.org'
 
 def travis_headers():
     headers = {
-               # If the user-agent isn't defined correctly, we will recieve a 403.
-               'User-Agent': 'Travis/1.0',
-               'Accept': 'application/vnd.travis-ci.2+json',
-               'Content-Type': 'application/json',
-               'Travis-API-Version': '3'
-               }
-    url = '{}/auth/github'.format(travis_endpoint)
-    data = {"github_token": github.gh_token()}
+       # If the user-agent isn't defined correctly, we will recieve a 403.
+       'User-Agent': 'Travis/1.0',
+       'Accept': 'application/json',
+       'Content-Type': 'application/json',
+       'Travis-API-Version': '3'
+    }
     travis_token = os.path.expanduser('~/.conda-smithy/travis.token')
     if not os.path.exists(travis_token):
-        response = requests.post(url, json=data, headers=headers)
+        # We generally want the V3 API, but can currently only auth with V2:
+        # https://github.com/travis-ci/travis-ci/issues/9273#issuecomment-370474214
+        v2_headers = headers.copy()
+        v2_headers['Accept'] = 'application/vnd.travis-ci.2+json'
+        del v2_headers['Travis-API-Version']
+
+        url = '{}/auth/github'.format(travis_endpoint)
+        data = {"github_token": github.gh_token()}
+        response = requests.post(url, json=data, headers=v2_headers)
         if response.status_code != 201:
             response.raise_for_status()
         token = response.json()['access_token']
