@@ -33,7 +33,7 @@ class Test_linter(unittest.TestCase):
         meta = OrderedDict([['package', {}],
                             ['build', {}],
                             ['sources', {}]])
-        lints = linter.lintify(meta)
+        lints, hints = linter.lintify(meta)
         expected_msg = ("The top level meta key sources is unexpected")
         self.assertIn(expected_msg, lints)
 
@@ -41,14 +41,14 @@ class Test_linter(unittest.TestCase):
         meta = OrderedDict([['package', {}],
                             ['build', {}],
                             ['source', {}]])
-        lints = linter.lintify(meta)
+        lints, hints = linter.lintify(meta)
         expected_msg = ("The top level meta keys are in an unexpected "
                         "order. Expecting ['package', 'source', 'build'].")
         self.assertIn(expected_msg, lints)
 
     def test_missing_about_license_and_summary(self):
         meta = {'about': {'home': 'a URL'}}
-        lints = linter.lintify(meta)
+        lints, hints = linter.lintify(meta)
         expected_message = "The license item is expected in the about section."
         self.assertIn(expected_message, lints)
 
@@ -59,7 +59,7 @@ class Test_linter(unittest.TestCase):
         meta = {'about': {'home': 'a URL',
                           'summary': 'A test summary',
                           'license': 'unknown'}}
-        lints = linter.lintify(meta)
+        lints, hints = linter.lintify(meta)
         expected_message = "The recipe license cannot be unknown."
         self.assertIn(expected_message, lints)
 
@@ -68,14 +68,14 @@ class Test_linter(unittest.TestCase):
                           'summary': 'A test summary',
                           'license': 'BSD 3-clause',
                           'license_family': 'BSD3'}}
-        lints = linter.lintify(meta)
+        lints, hints = linter.lintify(meta)
         expected = "about/license_family 'BSD3' not allowed"
         self.assertTrue(any(lint.startswith(expected) for lint in lints))
 
     def test_missing_about_home(self):
         meta = {'about': {'license': 'BSD',
                           'summary': 'A test summary'}}
-        lints = linter.lintify(meta)
+        lints, hints = linter.lintify(meta)
         expected_message = "The home item is expected in the about section."
         self.assertIn(expected_message, lints)
 
@@ -83,7 +83,7 @@ class Test_linter(unittest.TestCase):
         meta = {'about': {'home': '',
                           'summary': '',
                           'license': ''}}
-        lints = linter.lintify(meta)
+        lints, hints = linter.lintify(meta)
         expected_message = "The home item is expected in the about section."
         self.assertIn(expected_message, lints)
 
@@ -97,35 +97,35 @@ class Test_linter(unittest.TestCase):
         expected_message = ('The recipe could do with some maintainers listed '
                             'in the `extra/recipe-maintainers` section.')
 
-        lints = linter.lintify({'extra': {'recipe-maintainers': []}})
+        lints, hints = linter.lintify({'extra': {'recipe-maintainers': []}})
         self.assertIn(expected_message, lints)
 
         # No extra section at all.
-        lints = linter.lintify({})
+        lints, hints = linter.lintify({})
         self.assertIn(expected_message, lints)
 
-        lints = linter.lintify({'extra': {'recipe-maintainers': ['a']}})
+        lints, hints = linter.lintify({'extra': {'recipe-maintainers': ['a']}})
         self.assertNotIn(expected_message, lints)
 
         expected_message = ('The "extra" section was expected to be a '
                             'dictionary, but got a list.')
-        lints = linter.lintify({'extra': ['recipe-maintainers']})
+        lints, hints = linter.lintify({'extra': ['recipe-maintainers']})
         self.assertIn(expected_message, lints)
 
-        lints = linter.lintify({'extra': {'recipe-maintainers': 'Luke'}})
+        lints, hints = linter.lintify({'extra': {'recipe-maintainers': 'Luke'}})
         expected_message = ('Recipe maintainers should be a json list.')
         self.assertIn(expected_message, lints)
 
     def test_test_section(self):
         expected_message = 'The recipe must have some tests.'
 
-        lints = linter.lintify({})
+        lints, hints = linter.lintify({})
         self.assertIn(expected_message, lints)
 
-        lints = linter.lintify({'test': {'files': 'foo'}})
+        lints, hints = linter.lintify({'test': {'files': 'foo'}})
         self.assertIn(expected_message, lints)
 
-        lints = linter.lintify({'test': {'imports': 'sys'}})
+        lints, hints = linter.lintify({'test': {'imports': 'sys'}})
         self.assertNotIn(expected_message, lints)
 
     def test_test_section_with_recipe(self):
@@ -135,12 +135,12 @@ class Test_linter(unittest.TestCase):
         expected_message = 'The recipe must have some tests.'
 
         with tmp_directory() as recipe_dir:
-            lints = linter.lintify({}, recipe_dir)
+            lints, hints = linter.lintify({}, recipe_dir)
             self.assertIn(expected_message, lints)
 
             with io.open(os.path.join(recipe_dir, 'run_test.py'), 'w') as fh:
                 fh.write('# foo')
-            lints = linter.lintify({}, recipe_dir)
+            lints, hints = linter.lintify({}, recipe_dir)
             self.assertNotIn(expected_message, lints)
 
     def test_selectors(self):
@@ -156,7 +156,7 @@ class Test_linter(unittest.TestCase):
                                name: foo_py2  # [py2k]
                                {}
                              """.format(selector))
-                lints = linter.lintify({}, recipe_dir)
+                lints, hints = linter.lintify({}, recipe_dir)
                 if is_good:
                     message = ("Found lints when there shouldn't have been a "
                                "lint for '{}'.".format(selector))
@@ -292,12 +292,12 @@ class Test_linter(unittest.TestCase):
         meta = {'build': {'skip': 'True',
                           'script': 'python setup.py install',
                           'number': 0}}
-        lints = linter.lintify(meta)
+        lints, hints = linter.lintify(meta)
         self.assertNotIn(expected_message, lints)
 
         meta = {'build': {'skip': 'True',
                           'script': 'python setup.py install'}}
-        lints = linter.lintify(meta)
+        lints, hints = linter.lintify(meta)
         self.assertIn(expected_message, lints)
 
     def test_bad_requirements_order(self):
@@ -306,31 +306,31 @@ class Test_linter(unittest.TestCase):
 
         meta = {'requirements': OrderedDict([['run', 'a'],
                                              ['build', 'a']])}
-        lints = linter.lintify(meta)
+        lints, hints = linter.lintify(meta)
         self.assertIn(expected_message, lints)
 
         meta = {'requirements': OrderedDict([['run', 'a'],
                                              ['invalid', 'a'],
                                              ['build', 'a']])}
-        lints = linter.lintify(meta)
+        lints, hints = linter.lintify(meta)
         self.assertIn(expected_message, lints)
 
         meta = {'requirements': OrderedDict([['build', 'a'],
                                              ['run', 'a']])}
-        lints = linter.lintify(meta)
+        lints, hints = linter.lintify(meta)
         self.assertNotIn(expected_message, lints)
 
     def test_no_sha_with_dl(self):
         expected_message = ("When defining a source/url please add a sha256, "
                             "sha1 or md5 checksum (sha256 preferably).")
-        meta = {'source': {'url': None}}
-        self.assertIn(expected_message, linter.lintify(meta))
+        lints, hints = linter.lintify({'source': {'url': None}})
+        self.assertIn(expected_message, lints)
 
-        meta = {'source': {'url': None, 'sha1': None}}
-        self.assertNotIn(expected_message, linter.lintify(meta))
+        lints, hints = linter.lintify({'source': {'url': None, 'sha1': None}})
+        self.assertNotIn(expected_message, lints)
 
-        meta = {'source': {'url': None, 'sha256': None}}
-        self.assertNotIn(expected_message, linter.lintify(meta))
+        lints, hints = linter.lintify({'source': {'url': None, 'sha256': None}})
+        self.assertNotIn(expected_message, lints, hints)
 
         meta = {'source': {'url': None, 'md5': None}}
         self.assertNotIn(expected_message, linter.lintify(meta))
@@ -339,14 +339,14 @@ class Test_linter(unittest.TestCase):
         meta = {'about': {'home': 'a URL',
                           'summary': 'A test summary',
                           'license': 'MIT License'}}
-        lints = linter.lintify(meta)
+        lints, hints = linter.lintify(meta)
         expected_message = ('The recipe `license` should not include '
                             'the word "License".')
         self.assertIn(expected_message, lints)
 
     def test_recipe_name(self):
         meta = {'package': {'name': 'mp++'}}
-        lints = linter.lintify(meta)
+        lints, hints = linter.lintify(meta)
         expected_message = ('Recipe name has invalid characters. only lowercase alpha, '
                             'numeric, underscores, hyphens and dots allowed')
         self.assertIn(expected_message, lints)
@@ -374,7 +374,7 @@ class Test_linter(unittest.TestCase):
             with tmp_directory() as recipe_dir:
                 with io.open(os.path.join(recipe_dir, 'meta.yaml'), 'w') as f:
                     f.write(content)
-                lints = linter.lintify({}, recipe_dir=recipe_dir)
+                lints, hints = linter.lintify({}, recipe_dir=recipe_dir)
                 if lines > 1:
                     expected_message = ('There are {} too many lines.  '
                                         'There should be one empty line '
@@ -395,7 +395,7 @@ class Test_linter(unittest.TestCase):
 
     @unittest.skipUnless(is_gh_token_set(), "GH_TOKEN not set")
     def test_maintainer_exists(self):
-        lints = linter.lintify({'extra': {'recipe-maintainers': ['support']}}, conda_forge=True)
+        lints, hints = linter.lintify({'extra': {'recipe-maintainers': ['support']}}, conda_forge=True)
         expected_message = ('Recipe maintainer "support" does not exist')
         self.assertIn(expected_message, lints)
 
@@ -469,37 +469,37 @@ class Test_linter(unittest.TestCase):
         meta = {'build': {'skip': 'True',
                           'script': 'python setup.py install',
                           'number': 0}}
-        lints = linter.lintify(meta)
+        lints, hints = linter.lintify(meta)
         self.assertNotIn(expected_message, lints)
 
         meta = {'build': {'ski': 'True',
                           'script': 'python setup.py install',
                           'number': 0}}
-        lints = linter.lintify(meta)
+        lints, hints = linter.lintify(meta)
         self.assertIn(expected_message, lints)
 
     def test_outputs(self):
         meta = OrderedDict([['outputs', [{'name': 'asd'}]]])
-        lints = linter.lintify(meta)
+        lints, hints = linter.lintify(meta)
 
     def test_version(self):
         meta = {'package': {'name': 'python',
                             'version': '3.6.4'}}
         expected_message = "Package version 3.6.4 doesn't match conda spec"
-        lints = linter.lintify(meta)
+        lints, hints = linter.lintify(meta)
         self.assertNotIn(expected_message, lints)
 
         meta = {'package': {'name': 'python',
                             'version': '2.0.0~alpha0'}}
         expected_message = "Package version 2.0.0~alpha0 doesn't match conda spec"
-        lints = linter.lintify(meta)
+        lints, hints = linter.lintify(meta)
         self.assertIn(expected_message, lints)
 
     @unittest.skipUnless(is_gh_token_set(), "GH_TOKEN not set")
     def test_examples(self):
         msg = 'Please move the recipe out of the example dir and into its '\
               'own dir.'
-        lints = linter.lintify({'extra': {'recipe-maintainers': ['support']}},
+        lints, hints = linter.lintify({'extra': {'recipe-maintainers': ['support']}},
                                recipe_dir='recipes/example/',
                                conda_forge=True)
         self.assertIn(msg, lints)
@@ -613,7 +613,7 @@ class TestCLI_recipe_lint(unittest.TestCase):
                              {{% set name = "conda-smithy" %}}
                              {}
                              """.format(jinja_var))
-                lints = linter.lintify({}, recipe_dir)
+                lints, hints = linter.lintify({}, recipe_dir)
                 if is_good:
                     message = ("Found lints when there shouldn't have been a "
                                "lint for '{}'.".format(jinja_var))

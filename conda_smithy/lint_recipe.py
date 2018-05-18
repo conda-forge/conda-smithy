@@ -82,6 +82,7 @@ def lint_about_contents(about_section, lints):
 
 def lintify(meta, recipe_dir=None, conda_forge=False):
     lints = []
+    hints = []
     major_sections = list(meta.keys())
 
     # If the recipe_dir exists (no guarantee within this function) , we can
@@ -288,7 +289,15 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
                          '<variable name><one space>=<one space>'
                          '<expression><one space>%}}`` form. See lines '
                          '{}'.format(bad_lines))
-    return lints
+
+    # hints
+    # 1: Legacy usage of compilers
+    if build_reqs and ('toolchain' in build_reqs):
+        hints.append('Using toolchain directly in this manner is deprecated.  Consider '
+                     'using the compilers outlined '
+                     '[here](https://conda-forge.org/docs/meta.html#compilers).')
+
+    return lints, hints
 
 
 def run_conda_forge_lints(meta, recipe_dir, lints):
@@ -368,7 +377,7 @@ def jinja_lines(lines):
             yield line, i
 
 
-def main(recipe_dir, conda_forge=False):
+def main(recipe_dir, conda_forge=False, return_hints=False):
     recipe_dir = os.path.abspath(recipe_dir)
     recipe_meta = os.path.join(recipe_dir, 'meta.yaml')
     if not os.path.exists(recipe_dir):
@@ -392,5 +401,8 @@ def main(recipe_dir, conda_forge=False):
     with io.open(recipe_meta, 'rt') as fh:
         content = env.from_string(''.join(fh)).render(os=os)
         meta = ruamel.yaml.load(content, ruamel.yaml.RoundTripLoader)
-    results = lintify(meta, recipe_dir, conda_forge)
-    return results
+    results, hints = lintify(meta, recipe_dir, conda_forge)
+    if return_hints:
+        return results, hints
+    else:
+        return results
