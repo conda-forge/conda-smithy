@@ -33,7 +33,7 @@ class Test_linter(unittest.TestCase):
         meta = OrderedDict([['package', {}],
                             ['build', {}],
                             ['sources', {}]])
-        lints = linter.lintify(meta)
+        lints, hints = linter.lintify(meta)
         expected_msg = ("The top level meta key sources is unexpected")
         self.assertIn(expected_msg, lints)
 
@@ -41,14 +41,14 @@ class Test_linter(unittest.TestCase):
         meta = OrderedDict([['package', {}],
                             ['build', {}],
                             ['source', {}]])
-        lints = linter.lintify(meta)
+        lints, hints = linter.lintify(meta)
         expected_msg = ("The top level meta keys are in an unexpected "
                         "order. Expecting ['package', 'source', 'build'].")
         self.assertIn(expected_msg, lints)
 
     def test_missing_about_license_and_summary(self):
         meta = {'about': {'home': 'a URL'}}
-        lints = linter.lintify(meta)
+        lints, hints = linter.lintify(meta)
         expected_message = "The license item is expected in the about section."
         self.assertIn(expected_message, lints)
 
@@ -59,7 +59,7 @@ class Test_linter(unittest.TestCase):
         meta = {'about': {'home': 'a URL',
                           'summary': 'A test summary',
                           'license': 'unknown'}}
-        lints = linter.lintify(meta)
+        lints, hints = linter.lintify(meta)
         expected_message = "The recipe license cannot be unknown."
         self.assertIn(expected_message, lints)
 
@@ -68,14 +68,14 @@ class Test_linter(unittest.TestCase):
                           'summary': 'A test summary',
                           'license': 'BSD 3-clause',
                           'license_family': 'BSD3'}}
-        lints = linter.lintify(meta)
+        lints, hints = linter.lintify(meta)
         expected = "about/license_family 'BSD3' not allowed"
         self.assertTrue(any(lint.startswith(expected) for lint in lints))
 
     def test_missing_about_home(self):
         meta = {'about': {'license': 'BSD',
                           'summary': 'A test summary'}}
-        lints = linter.lintify(meta)
+        lints, hints = linter.lintify(meta)
         expected_message = "The home item is expected in the about section."
         self.assertIn(expected_message, lints)
 
@@ -83,7 +83,7 @@ class Test_linter(unittest.TestCase):
         meta = {'about': {'home': '',
                           'summary': '',
                           'license': ''}}
-        lints = linter.lintify(meta)
+        lints, hints = linter.lintify(meta)
         expected_message = "The home item is expected in the about section."
         self.assertIn(expected_message, lints)
 
@@ -292,12 +292,12 @@ class Test_linter(unittest.TestCase):
         meta = {'build': {'skip': 'True',
                           'script': 'python setup.py install',
                           'number': 0}}
-        lints = linter.lintify(meta)
+        lints, hints = linter.lintify(meta)
         self.assertNotIn(expected_message, lints)
 
         meta = {'build': {'skip': 'True',
                           'script': 'python setup.py install'}}
-        lints = linter.lintify(meta)
+        lints, hints = linter.lintify(meta)
         self.assertIn(expected_message, lints)
 
     def test_bad_requirements_order(self):
@@ -306,18 +306,18 @@ class Test_linter(unittest.TestCase):
 
         meta = {'requirements': OrderedDict([['run', 'a'],
                                              ['build', 'a']])}
-        lints = linter.lintify(meta)
+        lints, hints = linter.lintify(meta)
         self.assertIn(expected_message, lints)
 
         meta = {'requirements': OrderedDict([['run', 'a'],
                                              ['invalid', 'a'],
                                              ['build', 'a']])}
-        lints = linter.lintify(meta)
+        lints, hints = linter.lintify(meta)
         self.assertIn(expected_message, lints)
 
         meta = {'requirements': OrderedDict([['build', 'a'],
                                              ['run', 'a']])}
-        lints = linter.lintify(meta)
+        lints, hints = linter.lintify(meta)
         self.assertNotIn(expected_message, lints)
 
     def test_no_sha_with_dl(self):
@@ -339,14 +339,14 @@ class Test_linter(unittest.TestCase):
         meta = {'about': {'home': 'a URL',
                           'summary': 'A test summary',
                           'license': 'MIT License'}}
-        lints = linter.lintify(meta)
+        lints, hints = linter.lintify(meta)
         expected_message = ('The recipe `license` should not include '
                             'the word "License".')
         self.assertIn(expected_message, lints)
 
     def test_recipe_name(self):
         meta = {'package': {'name': 'mp++'}}
-        lints = linter.lintify(meta)
+        lints, hints = linter.lintify(meta)
         expected_message = ('Recipe name has invalid characters. only lowercase alpha, '
                             'numeric, underscores, hyphens and dots allowed')
         self.assertIn(expected_message, lints)
@@ -469,30 +469,30 @@ class Test_linter(unittest.TestCase):
         meta = {'build': {'skip': 'True',
                           'script': 'python setup.py install',
                           'number': 0}}
-        lints = linter.lintify(meta)
+        lints, hints = linter.lintify(meta)
         self.assertNotIn(expected_message, lints)
 
         meta = {'build': {'ski': 'True',
                           'script': 'python setup.py install',
                           'number': 0}}
-        lints = linter.lintify(meta)
+        lints, hints = linter.lintify(meta)
         self.assertIn(expected_message, lints)
 
     def test_outputs(self):
         meta = OrderedDict([['outputs', [{'name': 'asd'}]]])
-        lints = linter.lintify(meta)
+        lints, hints = linter.lintify(meta)
 
     def test_version(self):
         meta = {'package': {'name': 'python',
                             'version': '3.6.4'}}
         expected_message = "Package version 3.6.4 doesn't match conda spec"
-        lints = linter.lintify(meta)
+        lints, hints = linter.lintify(meta)
         self.assertNotIn(expected_message, lints)
 
         meta = {'package': {'name': 'python',
                             'version': '2.0.0~alpha0'}}
         expected_message = "Package version 2.0.0~alpha0 doesn't match conda spec"
-        lints = linter.lintify(meta)
+        lints, hints = linter.lintify(meta)
         self.assertIn(expected_message, lints)
 
     @unittest.skipUnless(is_gh_token_set(), "GH_TOKEN not set")
@@ -613,7 +613,7 @@ class TestCLI_recipe_lint(unittest.TestCase):
                              {{% set name = "conda-smithy" %}}
                              {}
                              """.format(jinja_var))
-                lints = linter.lintify({}, recipe_dir)
+                lints, hints = linter.lintify({}, recipe_dir)
                 if is_good:
                     message = ("Found lints when there shouldn't have been a "
                                "lint for '{}'.".format(jinja_var))
