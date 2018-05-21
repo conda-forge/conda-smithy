@@ -193,10 +193,16 @@ class RecipeLint(Subcommand):
     def __call__(self, args):
         all_good = True
         for recipe in args.recipe_directory:
-            lint = lint_recipe.main(os.path.join(recipe), conda_forge=args.conda_forge)
-            if lint:
+            lints, hints = lint_recipe.main(
+                os.path.join(recipe), conda_forge=args.conda_forge,
+                return_hints=True)
+            if lints:
                 all_good = False
-                print('{} has some lint:\n  {}'.format(recipe, '\n  '.join(lint)))
+                print('{} has some lint:\n  {}'.format(recipe, '\n  '.join(lints)))
+                if hints:
+                    print('{} also has some suggestions:\n  {}'.format(recipe, '\n  '.join(hints)))
+            elif hints:
+                print('{} has some suggestions:\n  {}'.format(recipe, '\n  '.join(hints)))
             else:
                 print('{} is in fine form'.format(recipe))
         # Exit code 1 for some lint, 0 for no lint.
