@@ -29,7 +29,7 @@ if [ -z "$CONFIG" ]; then
     exit 1
 fi
 
-test -d "$ARTIFACTS" || mkdir "$ARTIFACTS"
+mkdir -p "$ARTIFACTS"
 DONE_CANARY="$ARTIFACTS/conda-forge-build-done-${CONFIG}"
 rm -f "$DONE_CANARY"
 
