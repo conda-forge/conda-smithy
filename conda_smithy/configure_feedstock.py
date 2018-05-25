@@ -455,7 +455,7 @@ def _circle_specific_setup(jinja_env, forge_config, forge_dir, platform):
 
                 # Install the yum requirements defined canonically in the
                 # "recipe/yum_requirements.txt" file. After updating that file,
-                # run "conda smithy rerender" and this line be updated
+                # run "conda smithy rerender" and this line will be updated
                 # automatically.
                 /usr/bin/sudo -n yum install -y {}
 
@@ -471,7 +471,6 @@ def _circle_specific_setup(jinja_env, forge_config, forge_dir, platform):
 
     # TODO: Conda has a convenience for accessing nested yaml content.
     template_files = [
-        'build_steps.sh.tmpl',
         '{}.sh.tmpl'.format(run_file_name),
         'fast_finish_ci_pr_build.sh.tmpl',
     ]
