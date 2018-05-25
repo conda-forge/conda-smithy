@@ -471,7 +471,6 @@ def _circle_specific_setup(jinja_env, forge_config, forge_dir, platform):
 
     # TODO: Conda has a convenience for accessing nested yaml content.
     template_files = [
-        'build_steps.sh.tmpl',
         '{}.sh.tmpl'.format(run_file_name),
         'fast_finish_ci_pr_build.sh.tmpl',
     ]
