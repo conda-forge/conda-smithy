@@ -87,8 +87,21 @@ def break_up_top_level_values(top_level_keys, squished_variants):
                     # create a list of dicts that represent the different permutations that are
                     #    zipped together.  Each dict in this list will be a different top-level
                     #    config in its own file
-                    zipped_configs.append([{k: [squished_variants[k][idx]] for k in group}
-                                           for idx, _ in enumerate(squished_variants[key])])
+                    zipped_config = []
+                    variant_key_dict = OrderedDict()
+                    for idx, variant_key in enumerate(squished_variants[key]):
+                        if variant_key not in variant_key_dict:
+                            variant_key_dict[variant_key] = []
+                        variant_key_dict[variant_key].append({k: [squished_variants[k][idx]] for k in group})
+                    # merge dicts with the same `key` if `key` is repeated in the group.
+                    for variant_key, variant_key_val in variant_key_dict.items():
+                        squished_dict = conda_build.variants.list_of_dicts_to_dict_of_lists(
+                                            variant_key_val)
+                        for squished_dict_key, squished_dict_val in squished_dict.items():
+                            print(squished_dict_val)
+                            squished_dict[squished_dict_key] = sorted(list(squished_dict_val))
+                        zipped_config.append(squished_dict)
+                    zipped_configs.append(zipped_config)
                     for k in group:
                         del squished_variants[k]
                     break
