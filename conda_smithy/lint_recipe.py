@@ -164,8 +164,9 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
     requirements_order_sorted = sorted(seen_requirements,
                                        key=REQUIREMENTS_ORDER.index)
     if seen_requirements != requirements_order_sorted:
-        lints.append('The `requirements/build` section should be defined '
-                     'before the `requirements/run` section.')
+        lints.append('The `requirements/` sections should be defined '
+                     'in the following order: ' + ', '.join(REQUIREMENTS_ORDER)
+                     '; instead saw: ' + ', '.join(seen_requirements) + '.')
 
     # 9: Files downloaded should have a hash.
     if ('url' in source_section and
