@@ -301,8 +301,9 @@ class Test_linter(unittest.TestCase):
         self.assertIn(expected_message, lints)
 
     def test_bad_requirements_order(self):
-        expected_message = ("The `requirements/build` section should be "
-                            "defined before the `requirements/run` section.")
+        expected_message = ('The `requirements/` sections should be defined in '
+                            'the following order: build, host, run; '
+                            'instead saw: run, build.')
 
         meta = {'requirements': OrderedDict([['run', 'a'],
                                              ['build', 'a']])}
