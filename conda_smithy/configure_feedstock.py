@@ -790,7 +790,7 @@ def get_cfp_file_path(resolve=None, error_on_warn=True):
     cf_pinning_file = os.path.join(conda_build.conda_interface.root_dir, "conda_build_config.yaml")
     if not os.path.exists(cf_pinning_file):
         raise RuntimeError("conda_build_config.yaml from conda-forge-pinning is missing")
-    return cf_pinning_file
+    return cf_pinning_file, cf_pinning_ver
 
 
 def main(forge_file_directory, no_check_uptodate, commit, exclusive_config_file):
@@ -809,7 +809,7 @@ def main(forge_file_directory, no_check_uptodate, commit, exclusive_config_file)
             raise RuntimeError("Given exclusive-config-file not found.")
         cf_pinning_ver = None
     else:
-        exclusive_config_file = get_cfp_file_path(r, error_on_warn)
+        exclusive_config_file, cf_pinning_ver = get_cfp_file_path(r, error_on_warn)
 
     config = _load_forge_config(forge_dir, exclusive_config_file)
 

@@ -230,9 +230,10 @@ class UpdateCB3(Subcommand):
         output_file = args.output
         if output_file is None:
             output_file = recipe_file
-        cbc = os.path.join(os.getcwd(), args.cbc)
-        if cbc is None:
-            cbc = get_cfp_file_path()
+        if args.cbc is None:
+            cbc, _ = get_cfp_file_path()
+        else:
+            cbc = os.path.join(os.getcwd(), args.cbc)
         output_content, messages = update_cb3(recipe_file, cbc)
         with io.open(output_file, 'w') as fh:
             fh.write(output_content)
