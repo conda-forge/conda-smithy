@@ -68,9 +68,6 @@ def merge_list_of_dicts(list_of_dicts):
             if key not in squished_dict:
                 squished_dict[key] = []
             squished_dict[key].extend(val)
-    for key, val in squished_dict.items():
-        if isinstance(val, list):
-            squished_dict[key] = sorted(val)
     return squished_dict
 
 
