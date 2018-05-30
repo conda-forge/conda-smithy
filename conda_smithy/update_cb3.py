@@ -81,6 +81,12 @@ class NullUndefined(jinja2.Undefined):
 
 
 def get_compilers(url):
+    '''
+    Download the source and check for C/C++/Fortran
+    Also check if `np.get_include()` is present in the setup.py files
+    Return whether a C/C++/Fortran compiler is used and whether
+    numpy headers are used.
+    '''
     if isinstance(url, list):
         for u in url:
             r = requests.get(u, allow_redirects=True)
@@ -154,7 +160,8 @@ def update_cb3(recipe_path, conda_build_config_path):
 
     reqbuild_s = reqbuild_section.start
     reqbuild_line = lines[reqbuild_s-1]
-    messages['Replaced build with host'] = True
+
+    messages['Renamed build with host'] = True
     change_lines[reqbuild_s-1] = (reqbuild_line, reqbuild_line.replace('build:', 'host:'))
 
     url = orig_meta['source']['url']
@@ -364,9 +371,9 @@ def update_cb3(recipe_path, conda_build_config_path):
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument("recipe")
-    parser.add_argument("output")
-    parser.add_argument("config")
+    parser.add_argument("recipe", help="Path to recipe meta.yaml")
+    parser.add_argument("output", help="Path where updated recipe is stored")
+    parser.add_argument("config", help="Path to conda_build_config.yaml file")
     args = parser.parse_args()
     new_meta, msg = update_cb3(args.recipe, args.config)
     with io.open(args.output, 'w') as fh:
