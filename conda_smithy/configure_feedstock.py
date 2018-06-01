@@ -61,6 +61,16 @@ def copytree(src, dst, ignore=(), root_dst=None):
             copy_file(s, d)
 
 
+def merge_list_of_dicts(list_of_dicts):
+    squished_dict = OrderedDict()
+    for idict in list_of_dicts:
+        for key, val in idict.items():
+            if key not in squished_dict:
+                squished_dict[key] = []
+            squished_dict[key].extend(val)
+    return squished_dict
+
+
 def break_up_top_level_values(top_level_keys, squished_variants):
     """top-level values make up CI configurations.  We need to break them up
     into individual files."""
@@ -87,8 +97,17 @@ def break_up_top_level_values(top_level_keys, squished_variants):
                     # create a list of dicts that represent the different permutations that are
                     #    zipped together.  Each dict in this list will be a different top-level
                     #    config in its own file
-                    zipped_configs.append([{k: [squished_variants[k][idx]] for k in group}
-                                           for idx, _ in enumerate(squished_variants[key])])
+                    zipped_config = []
+                    variant_key_dict = OrderedDict()
+                    for idx, variant_key in enumerate(squished_variants[key]):
+                        if variant_key not in variant_key_dict:
+                            variant_key_dict[variant_key] = []
+                        variant_key_dict[variant_key].append({k: [squished_variants[k][idx]] for k in group})
+                    # merge dicts with the same `key` if `key` is repeated in the group.
+                    for variant_key, variant_key_val in variant_key_dict.items():
+                        squished_dict = merge_list_of_dicts(variant_key_val)
+                        zipped_config.append(squished_dict)
+                    zipped_configs.append(zipped_config)
                     for k in group:
                         del squished_variants[k]
                     break
