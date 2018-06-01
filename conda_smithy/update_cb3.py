@@ -120,6 +120,11 @@ def get_compilers(url):
 
 
 def update_cb3(recipe_path, conda_build_config_path):
+    '''
+    Update the recipe in `recipe_path` to use conda-build=3 features according
+    to conda-build config yaml in `conda_build_config_path`.
+    Returns the updated recipe and a message about the changes made.
+    '''
     yaml = ruamel.yaml.YAML()
     yaml.Constructor = MyConstructor
     yaml.allow_duplicate_keys = True
