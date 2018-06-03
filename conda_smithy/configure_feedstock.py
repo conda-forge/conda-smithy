@@ -8,6 +8,7 @@ import textwrap
 import yaml
 import warnings
 from collections import OrderedDict
+import copy
 
 import conda_build.api
 import conda_build.utils
@@ -71,6 +72,49 @@ def merge_list_of_dicts(list_of_dicts):
     return squished_dict
 
 
+def argsort(seq):
+    return sorted(range(len(seq)), key=seq.__getitem__)
+
+
+def sort_config(config, zip_key_groups):
+    groups = copy.deepcopy(zip_key_groups)
+    for i, group in enumerate(groups):
+        groups[i] = [pkg for pkg in group if pkg in config.keys()]
+    groups = [group for group in groups if group]
+
+    sorting_order = {}
+    for group in groups:
+        if not group:
+            continue
+        list_of_values = []
+        for idx in range(len(config[group[0]])):
+            values = []
+            for key in group:
+                values.append(config[key][idx])
+            list_of_values.append(tuple(values))
+
+        order = argsort(list_of_values)
+        for key in group:
+            sorting_order[key] = order
+
+    for key, value in config.items():
+        if isinstance(value, (list, set, tuple)):
+            val = list(value)
+            if key in sorting_order:
+                config[key] = [val[i] for i in sorting_order[key]]
+            else:
+                config[key] = sorted(val)
+        if key == "pin_run_as_build":
+            p = OrderedDict()
+            for pkg in sorted(list(value.keys())):
+                pkg_pins = value[pkg]
+                d = OrderedDict()
+                for pin in sorted(list(pkg_pins.keys())):
+                    d[pin] = pkg_pins[pin]
+                p[pkg] = d
+            config[key] = p
+
+
 def break_up_top_level_values(top_level_keys, squished_variants):
     """top-level values make up CI configurations.  We need to break them up
     into individual files."""
@@ -127,9 +171,15 @@ def break_up_top_level_values(top_level_keys, squished_variants):
     dimensions = []
 
     # sort values so that the diff doesn't show randomly changing order
-    for key, value in squished_variants.items():
-        if type(value) in (list, set, tuple):
-            squished_variants[key] = sorted(list(value))
+
+    if 'zip_keys' in squished_variants:
+        zip_key_groups = squished_variants['zip_keys']
+
+    sort_config(squished_variants, zip_key_groups)
+
+    for zipped_config in zipped_configs:
+        for config in zipped_config:
+            sort_config(config, zip_key_groups)
 
     if top_level_dimensions:
         dimensions.extend(top_level_dimensions)
