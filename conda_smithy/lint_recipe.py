@@ -67,8 +67,7 @@ def get_source_section(parent, lints):
     section = parent.get('source', {})
     if isinstance(section, dict):
         return [ section ]
-    elif (isinstance(section, ruamel.yaml.comments.CommentedSeq) or
-          isinstance(section, list)):
+    elif isinstance(section, list):
         return section
     else:
         lints.append('The "source" section was expected to be a dictionary or '
