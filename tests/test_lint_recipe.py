@@ -466,18 +466,27 @@ class Test_linter(unittest.TestCase):
     def test_bad_subheader(self):
         expected_message = 'The {} section contained an unexpected ' \
                            'subsection name. {} is not a valid subsection' \
-                           ' name.'.format('build', 'ski')
+                           ' name.'
         meta = {'build': {'skip': 'True',
                           'script': 'python setup.py install',
                           'number': 0}}
         lints, hints = linter.lintify(meta)
-        self.assertNotIn(expected_message, lints)
+        self.assertNotIn(expected_message.format('build', 'ski'), lints)
 
         meta = {'build': {'ski': 'True',
                           'script': 'python setup.py install',
                           'number': 0}}
         lints, hints = linter.lintify(meta)
-        self.assertIn(expected_message, lints)
+        self.assertIn(expected_message.format('build', 'ski'), lints)
+
+        meta = {'source': {'urll': 'http://test'}}
+        lints, hints = linter.lintify(meta)
+        self.assertIn(expected_message.format('source', 'urll'), lints)
+
+        meta = {'source': [{'urll': 'http://test'}, {'url': 'https://test'}]}
+        lints, hints = linter.lintify(meta)
+        self.assertIn(expected_message.format('source', 'urll'), lints)
+
 
     def test_outputs(self):
         meta = OrderedDict([['outputs', [{'name': 'asd'}]]])
