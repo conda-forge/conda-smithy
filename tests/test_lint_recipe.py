@@ -509,6 +509,10 @@ class Test_linter(unittest.TestCase):
                                conda_forge=True)
         self.assertNotIn(msg, lints)
 
+    def test_multiple_sources(self):
+        lints = linter.main(os.path.join(_thisdir, 'recipes', 'multiple_sources'))
+        print(lints)
+        assert not lints
 
 class TestCLI_recipe_lint(unittest.TestCase):
     def test_cli_fail(self):
