@@ -52,12 +52,28 @@ class NullUndefined(jinja2.Undefined):
 
 
 def get_section(parent, name, lints):
+    if name == 'source':
+        return get_source_section(parent, lints)
+
     section = parent.get(name, {})
     if not isinstance(section, dict):
         lints.append('The "{}" section was expected to be a dictionary, but '
                      'got a {}.'.format(name, type(section).__name__))
         section = {}
     return section
+
+
+def get_source_section(parent, lints):
+    section = parent.get('source', {})
+    if isinstance(section, dict):
+        return [ section ]
+    elif isinstance(section, list):
+        return section
+    else:
+        lints.append('The "source" section was expected to be a dictionary or '
+                     'a list, but got a {}.{}'.format(type(section).__module__,
+                         type(section).__name__))
+        return [ {} ]
 
 
 def lint_section_order(major_sections, lints):
@@ -89,7 +105,7 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
     # find the meta.yaml within it.
     meta_fname = os.path.join(recipe_dir or '', 'meta.yaml')
 
-    source_section = get_section(meta, 'source', lints)
+    sources_section = get_section(meta, 'source', lints)
     build_section = get_section(meta, 'build', lints)
     requirements_section = get_section(meta, 'requirements', lints)
     test_section = get_section(meta, 'test', lints)
@@ -169,10 +185,11 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
                      + '; instead saw: ' + ', '.join(seen_requirements) + '.')
 
     # 9: Files downloaded should have a hash.
-    if ('url' in source_section and
-            not ({'sha1', 'sha256', 'md5'} & set(source_section.keys()))):
-        lints.append('When defining a source/url please add a sha256, sha1 '
-                     'or md5 checksum (sha256 preferably).')
+    for source_section in sources_section:
+        if ('url' in source_section and
+                not ({'sha1', 'sha256', 'md5'} & set(source_section.keys()))):
+            lints.append('When defining a source/url please add a sha256, sha1 '
+                         'or md5 checksum (sha256 preferably).')
 
     # 10: License should not include the word 'license'.
     license = about_section.get('license', '').lower()
@@ -224,10 +241,17 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
         if not expected_subsections:
             continue
         for subsection in get_section(meta, section, lints):
-            if subsection not in expected_subsections:
+            if section != 'source' and subsection not in expected_subsections:
                 lints.append('The {} section contained an unexpected '
                              'subsection name. {} is not a valid subsection'
                              ' name.'.format(section, subsection))
+            elif section == 'source':
+                for source_subsection in subsection:
+                    if source_subsection not in expected_subsections:
+                        lints.append('The {} section contained an unexpected '
+                                     'subsection name. {} is not a valid subsection'
+                                     ' name.'.format(section, source_subsection))
+
 
     # 17: noarch doesn't work with selectors
     if build_section.get('noarch') is not None and os.path.exists(meta_fname):
