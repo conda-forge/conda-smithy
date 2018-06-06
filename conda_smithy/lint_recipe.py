@@ -38,7 +38,7 @@ TEST_KEYS = {'imports', 'commands'}
 
 sel_pat = re.compile(r'(.+?)\s*(#.*)?\[([^\[\]]+)\](?(2).*)$')
 jinja_pat = re.compile(r'\s*\{%\s*(set)\s+[^\s]+\s*=\s*[^\s]+\s*%\}')
-req_pat = re.compile(r'(.+?)(\s+([><=]+\w+)(,[><=]+\w+)*)')
+req_pat = re.compile(r'(.+?)(\s+([><=]+\w+)(,[><=]+\w+)*)?')
 
 
 class NullUndefined(jinja2.Undefined):
