@@ -38,6 +38,7 @@ TEST_KEYS = {'imports', 'commands'}
 
 sel_pat = re.compile(r'(.+?)\s*(#.*)?\[([^\[\]]+)\](?(2).*)$')
 jinja_pat = re.compile(r'\s*\{%\s*(set)\s+[^\s]+\s*=\s*[^\s]+\s*%\}')
+req_pat = re.compile(r'(.+?)(\s+([><=]+\w+)(,[><=]+\w+)*)')
 
 
 class NullUndefined(jinja2.Undefined):
@@ -314,6 +315,12 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
                          '<variable name><one space>=<one space>'
                          '<expression><one space>%}}`` form. See lines '
                          '{}'.format(bad_lines))
+
+    # 21: Verify requirements format
+    for subsection in requirements_section.values():
+        for req in subsection:
+            if not req_pat.match(req):
+                lints.append('Invalid requirements specification {}'.format(req))
 
     # hints
     # 1: Legacy usage of compilers
