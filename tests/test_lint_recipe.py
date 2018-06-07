@@ -522,6 +522,33 @@ class Test_linter(unittest.TestCase):
         lints = linter.main(os.path.join(_thisdir, 'recipes', 'multiple_sources'))
         assert not lints
 
+    def test_bad_requirement_spec(self):
+        expected_message = "Invalid requirements specification "
+        lints, hints = linter.lintify({'requirements': {'run': [
+            'python=2',
+            'python =2',
+            'python = 2',
+            'python=2.7|>=3.5,<4',
+            'python = 2.7|>=3.5,<4',
+            'python = 2.7|>= 3.5,< 4',
+            'somepackage >=1.0,<2.0 =py34_0',
+            'somepackage >= 1.0,<2.0 py34_0',
+            'somepackage >= 1.0,< 2.0 py34_0',
+        ]}})
+        self.assertNotIn(expected_message, lints)
+
+        # No spaces allowed around combination characters |,
+        invalid_reqs = [
+            'python=2.7 |>=3.5,<4',
+            'python=2.7| >=3.5,<4',
+            'python=2.7|>=3.5 ,<4',
+            'python=2.7|>=3.5, <4',
+        ]
+        lints, hints = linter.lintify({'requirements': {'run': invalid_reqs}})
+        invalid = [m[len(expected_message):] for m in lints if m.startswith(expected_message)]
+        self.assertEqual(invalid, invalid_reqs)
+        assert hints == []
+
 class TestCLI_recipe_lint(unittest.TestCase):
     def test_cli_fail(self):
         with tmp_directory() as recipe_dir:

@@ -21,6 +21,9 @@ from collections import defaultdict
 
 import copy
 
+from conda.models.match_spec import MatchSpec
+from conda.exceptions import CondaValueError, InvalidVersionSpecError
+
 FIELDS = copy.deepcopy(cbfields)
 
 # Just in case 'extra' moves into conda_build
@@ -38,7 +41,6 @@ TEST_KEYS = {'imports', 'commands'}
 
 sel_pat = re.compile(r'(.+?)\s*(#.*)?\[([^\[\]]+)\](?(2).*)$')
 jinja_pat = re.compile(r'\s*\{%\s*(set)\s+[^\s]+\s*=\s*[^\s]+\s*%\}')
-req_pat = re.compile(r'((?:.+?)[^><!,|]?)(?:(?<![=!|,<>])(?:[ =])([^-=,|<>]+?))?$')
 
 
 class NullUndefined(jinja2.Undefined):
@@ -319,7 +321,9 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
     # 21: Verify requirements format
     for subsection in requirements_section.values():
         for req in subsection:
-            if not req_pat.match(req):
+            try:
+                spec = MatchSpec(req)
+            except (CondaValueError, InvalidVersionSpecError) as e:
                 lints.append('Invalid requirements specification {}'.format(req))
 
     # hints
