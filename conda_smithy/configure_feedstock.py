@@ -139,6 +139,9 @@ def break_up_top_level_values(top_level_keys, squished_variants):
 
     return configs
 
+def _package_var_name(pkg):
+    return pkg.replace('-', '_')
+
 
 def _trim_unused_zip_keys(all_used_vars):
     """Remove unused keys in zip_keys sets, so that they don't cause unnecessary missing value
@@ -163,7 +166,7 @@ def _trim_unused_pin_run_as_build(all_used_vars):
     used_pkgs = {}
     if pkgs:
         for key in pkgs.keys():
-            if key in all_used_vars:
+            if _package_var_name(key) in all_used_vars:
                 used_pkgs[key] = pkgs[key]
     if used_pkgs:
         all_used_vars['pin_run_as_build'] = used_pkgs
