@@ -299,7 +299,7 @@ def _collapse_subpackage_variants(list_of_metas):
     return break_up_top_level_values(top_level_loop_vars, used_key_values), top_level_loop_vars
 
 
-def dump_subspace_config_files(metas, root_path, output_name):
+def dump_subspace_config_files(metas, root_path, platform, arch):
     """With conda-build 3, it handles the build matrix.  We take what it spits out, and write a
     config.yaml file for each matrix entry that it spits out.  References to a specific file
     replace all of the old environment variables that specified a matrix entry."""
@@ -313,6 +313,8 @@ def dump_subspace_config_files(metas, root_path, output_name):
     yaml.add_representer(set, yaml.representer.SafeRepresenter.represent_list)
     yaml.add_representer(tuple, yaml.representer.SafeRepresenter.represent_list)
 
+    platform_arch = "{}-{}".format(platform, arch)
+    output_name = platform if arch=="64" else platform_arch
     result = []
     for config in configs:
         config_name = '{}_{}'.format(output_name, package_key(config, top_level_loop_vars,
@@ -324,7 +326,7 @@ def dump_subspace_config_files(metas, root_path, output_name):
 
         with write_file(out_path) as f:
             yaml.dump(config, f, default_flow_style=False)
-        target_platform = config.get("target_platform", [output_name])[0]
+        target_platform = config.get("target_platform", [platform_arch])[0]
         result.append((config_name, target_platform))
     return sorted(result)
 
@@ -405,9 +407,10 @@ def _render_ci_provider(provider_name, jinja_env, forge_config, forge_dir, platf
         for config in configs:
             remove_file(config)
 
-        for platform in platforms:
+        for platform, arch in zip(platforms, archs):
+            plat_arch = platform if arch == '64' else "{}-{}".format(platform, arch)
             configs = glob.glob(os.path.join(forge_dir, '.ci_support',
-                                             '{}_*'.format(platform)))
+                                             '{}_*'.format(plat_arch)))
             for config in configs:
                 remove_file(config)
 
@@ -424,15 +427,16 @@ def _render_ci_provider(provider_name, jinja_env, forge_config, forge_dir, platf
             remove_file(each_target_fname)
     else:
         forge_config[provider_name]["enabled"] = True
-        fancy_name = {'linux': 'Linux', 'osx': 'OSX', 'win': 'Windows'}
+        fancy_name = {'linux': 'Linux', 'osx': 'OSX', 'win': 'Windows', 'linux_ppc64le': 'ppc64le'}
         fancy_platforms = []
 
         configs = []
-        for metas, platform, enable in zip(metas_list_of_lists, platforms, enable_platform):
+        for metas, platform, arch, enable in zip(metas_list_of_lists, platforms, archs, enable_platform):
+            plat_arch = platform if arch == "64" else "{}_{}".format(platform, arch)
             if enable:
-                configs.extend(dump_subspace_config_files(metas, forge_dir, platform))
-                forge_config[platform]["enabled"] = True
-                fancy_platforms.append(fancy_name[platform])
+                configs.extend(dump_subspace_config_files(metas, forge_dir, platform, arch))
+                forge_config[plat_arch]["enabled"] = True
+                fancy_platforms.append(fancy_name[plat_arch])
             elif platform in extra_platform_files:
                     for each_target_fname in extra_platform_files[platform]:
                         remove_file(each_target_fname)
@@ -576,14 +580,16 @@ def _get_platforms_of_provider(provider, forge_config):
     platforms = []
     keep_noarchs = []
     archs = []
-    for platform in ['linux', 'osx', 'win']:
-        if forge_config['provider'][platform] == provider:
+    for platform, arch in zip(['linux', 'osx', 'win', 'linux'],
+                              ['64',    '64',  '64',  'ppc64le']):
+        plat_arch = platform if arch == "64" else "{}_{}".format(platform, arch)
+        if forge_config['provider'][plat_arch] == provider:
             platforms.append(platform)
-            if platform == 'linux':
+            if plat_arch == 'linux':
                 keep_noarchs.append(True)
             else:
                 keep_noarchs.append(False)
-            archs.append('64')
+            archs.append(arch)
     return platforms, archs, keep_noarchs
 
 
@@ -729,10 +735,11 @@ def _load_forge_config(forge_dir, exclusive_config_file):
               'travis': {},
               'circle': {},
               'appveyor': {},
-              'provider': {'linux': 'circle', 'osx': 'travis', 'win': 'appveyor'},
+              'provider': {'linux': 'circle', 'osx': 'travis', 'win': 'appveyor', 'linux_ppc64le': ''},
               'win': {'enabled': False},
               'osx': {'enabled': False},
               'linux': {'enabled': False},
+              'linux_ppc64le': {'enabled': False},
               'channels': {'sources': ['conda-forge', 'defaults'],
                            'targets': [['conda-forge', 'main']]},
               'github': {'user_or_org': 'conda-forge',
