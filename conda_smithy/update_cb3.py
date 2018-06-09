@@ -7,6 +7,7 @@ import collections
 import requests
 import tempfile
 import tarfile
+from .utils import tmp_directory, parse_meta_yaml
 
 class Str(ruamel.yaml.scalarstring.ScalarString):
     __slots__ = ('lc')
@@ -69,17 +70,6 @@ class Section:
         return Section(sect, start, self.end)
 
 
-class NullUndefined(jinja2.Undefined):
-    def __unicode__(self):
-        return self._undefined_name
-
-    def __getattr__(self, name):
-        return '{}.{}'.format(self, name)
-
-    def __getitem__(self, name):
-        return '{}["{}"]'.format(self, name)
-
-
 def get_compilers(url):
     '''
     Download the source and check for C/C++/Fortran
@@ -96,25 +86,26 @@ def get_compilers(url):
     else:
         r = requests.get(url, allow_redirects=True)
     fname = url.split('/')[-1]
-    tmp_dir = tempfile.mkdtemp('modernize')
-    with open(os.path.join(tmp_dir, fname), 'wb') as f:
-        f.write(r.content)
-    need_numpy_pin = False
-    with tarfile.open(os.path.join(tmp_dir, fname)) as tf:
-        need_f = any([f.name.lower().endswith(('.f', '.f90', '.f77')) for f in tf])
-        # Fortran builds use CC to perform the link (they do not call the linker directly).
-        need_c = True if need_f else \
-                    any([f.name.lower().endswith('.c') for f in tf])
-        need_cxx = any([f.name.lower().endswith(('.cxx', '.cpp', '.cc', '.c++'))
-                    for f in tf])
-        for f in tf:
-            if f.name.lower().endswith('setup.py'):
-                try:
-                    content = tf.extractfile(f).read().decode("utf-8")
-                    if 'numpy.get_include()' in content or 'np.get_include()' in content:
-                        need_numpy_pin = True
-                except:
-                    pass
+
+    with tmp_directory() as tmp_dir:
+        with open(os.path.join(tmp_dir, fname), 'wb') as f:
+            f.write(r.content)
+        need_numpy_pin = False
+        with tarfile.open(os.path.join(tmp_dir, fname)) as tf:
+            need_f = any([f.name.lower().endswith(('.f', '.f90', '.f77')) for f in tf])
+            # Fortran builds use CC to perform the link (they do not call the linker directly).
+            need_c = True if need_f else \
+                        any([f.name.lower().endswith('.c') for f in tf])
+            need_cxx = any([f.name.lower().endswith(('.cxx', '.cpp', '.cc', '.c++'))
+                        for f in tf])
+            for f in tf:
+                if f.name.lower().endswith('setup.py'):
+                    try:
+                        content = tf.extractfile(f).read().decode("utf-8")
+                        if 'numpy.get_include()' in content or 'np.get_include()' in content:
+                            need_numpy_pin = True
+                    except:
+                        pass
     return need_f, need_c, need_cxx, need_numpy_pin
 
 
@@ -143,8 +134,8 @@ def update_cb3(recipe_path, conda_build_config_path):
                 else:
                     new_j += ' '
             content = content.replace(j, new_j)
-        content = env.from_string(content).render(os=os)
-        content2 = env.from_string(orig_content).render(os=os)
+        content = parse_meta_yaml(content)
+        content2 = parse_meta_yaml(orig_content)
         meta_ = yaml.load(content)
         orig_meta = yaml.load(content2)
         content2 = content2.split('\n')
