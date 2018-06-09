@@ -4,6 +4,7 @@ import jinja2
 import six
 import datetime
 import time
+from collections import defaultdict
 from contextlib import contextmanager
 
 @contextmanager
@@ -24,13 +25,10 @@ class NullUndefined(jinja2.Undefined):
         return '{}["{}"]'.format(self, name)
 
 
-class StrDict(dict):
-    def __getitem__(self, key, default=''):
-        # Unlike a normal dictionary, if the string doesn't exist, return an empty string. 
-        if key in self:
-            return self[key]
-        else:
-            return default
+class MockOS(dict):
+    def __init__(self):
+        self.environ = defaultdict(lambda: '')
+
 
 def render_meta_yaml(text):
     env = jinja2.Environment(undefined=NullUndefined)
@@ -48,5 +46,5 @@ def render_meta_yaml(text):
                             time=time,
                             ))
     
-    content = env.from_string(text).render(os=StrDict())
+    content = env.from_string(text).render(os=MockOS())
     return content
