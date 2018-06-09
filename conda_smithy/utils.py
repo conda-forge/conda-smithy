@@ -45,6 +45,6 @@ def render_meta_yaml(text):
                             datetime=datetime,
                             time=time,
                             ))
-    
-    content = env.from_string(text).render(os=MockOS())
+    mockos = MockOS()
+    content = env.from_string(text).render(os=mockos, environ=mockos.environ)
     return content
