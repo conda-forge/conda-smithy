@@ -97,14 +97,20 @@ def break_up_top_level_values(top_level_keys, squished_variants):
                     # create a list of dicts that represent the different permutations that are
                     #    zipped together.  Each dict in this list will be a different top-level
                     #    config in its own file
+
                     zipped_config = []
-                    variant_key_dict = OrderedDict()
+                    top_level_config_dict = OrderedDict()
                     for idx, variant_key in enumerate(squished_variants[key]):
-                        if variant_key not in variant_key_dict:
-                            variant_key_dict[variant_key] = []
-                        variant_key_dict[variant_key].append({k: [squished_variants[k][idx]] for k in group})
+                        top_level_config = []
+                        for k in group:
+                            if k in top_level_keys:
+                                top_level_config.append(squished_variants[k][idx])
+                        top_level_config = tuple(top_level_config)
+                        if top_level_config not in top_level_config_dict:
+                            top_level_config_dict[top_level_config] = []
+                        top_level_config_dict[top_level_config].append({k: [squished_variants[k][idx]] for k in group})
                     # merge dicts with the same `key` if `key` is repeated in the group.
-                    for variant_key, variant_key_val in variant_key_dict.items():
+                    for _, variant_key_val in top_level_config_dict.items():
                         squished_dict = merge_list_of_dicts(variant_key_val)
                         zipped_config.append(squished_dict)
                     zipped_configs.append(zipped_config)
