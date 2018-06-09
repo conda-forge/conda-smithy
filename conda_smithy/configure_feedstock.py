@@ -203,6 +203,21 @@ def _collapse_subpackage_variants(list_of_metas):
     #     configuration per item, and we want a single dict, with each key representing many values
     squished_input_variants = conda_build.variants.list_of_dicts_to_dict_of_lists(
         list_of_metas[0].config.input_variants)
+
+    all_variants = list(all_variants)
+    zip_keys_all = OrderedDict()
+    for variant in all_variants:
+        if 'zip_keys' in variant and variant['zip_keys']:
+            zip_keys = variant['zip_keys']
+            if isinstance(zip_keys[0], (list, tuple)):
+                for zip_key_group in zip_keys:
+                    zip_keys_all[tuple(sorted(zip_key_group))] = True
+            else:
+                zip_keys_all[tuple(sorted(zip_keys))] = True
+
+    if all_variants:
+        all_variants[0]['zip_keys'] = list(zip_keys_all.keys())
+
     squished_used_variants = conda_build.variants.list_of_dicts_to_dict_of_lists(list(all_variants))
 
     # these are variables that only occur in the top level, and thus won't show up as loops in the
