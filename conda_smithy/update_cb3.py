@@ -7,7 +7,7 @@ import collections
 import requests
 import tempfile
 import tarfile
-from .utils import tmp_directory, parse_meta_yaml
+from .utils import tmp_directory, render_meta_yaml
 
 class Str(ruamel.yaml.scalarstring.ScalarString):
     __slots__ = ('lc')
@@ -134,8 +134,8 @@ def update_cb3(recipe_path, conda_build_config_path):
                 else:
                     new_j += ' '
             content = content.replace(j, new_j)
-        content = parse_meta_yaml(content)
-        content2 = parse_meta_yaml(orig_content)
+        content = render_meta_yaml(content)
+        content2 = render_meta_yaml(orig_content)
         meta_ = yaml.load(content)
         orig_meta = yaml.load(content2)
         content2 = content2.split('\n')

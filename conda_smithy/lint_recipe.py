@@ -21,7 +21,7 @@ from collections import defaultdict
 
 import copy
 
-from .utils import parse_meta_yaml
+from .utils import render_meta_yaml
 
 FIELDS = copy.deepcopy(cbfields)
 
@@ -375,7 +375,7 @@ def main(recipe_dir, conda_forge=False, return_hints=False):
         raise IOError('Feedstock has no recipe/meta.yaml.')
 
     with io.open(recipe_meta, 'rt') as fh:
-        content = parse_meta_yaml(''.join(fh))
+        content = render_meta_yaml(''.join(fh))
         meta = ruamel.yaml.load(content, ruamel.yaml.RoundTripLoader)
     results, hints = lintify(meta, recipe_dir, conda_forge)
     if return_hints:

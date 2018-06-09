@@ -32,7 +32,7 @@ class StrDict(dict):
         else:
             return default
 
-def parse_meta_yaml(text):
+def render_meta_yaml(text):
     env = jinja2.Environment(undefined=NullUndefined)
 
     # stub out cb3 jinja2 functions - they are not important for linting
