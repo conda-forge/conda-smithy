@@ -109,7 +109,7 @@ def sort_config(config, zip_key_groups):
             for pkg in sorted(list(value.keys())):
                 pkg_pins = value[pkg]
                 d = OrderedDict()
-                for pin in sorted(list(pkg_pins.keys())):
+                for pin in list(reversed(sorted(pkg_pins.keys()))):
                     d[pin] = pkg_pins[pin]
                 p[pkg] = d
             config[key] = p
