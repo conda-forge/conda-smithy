@@ -218,7 +218,7 @@ def update_cb3(recipe_path, conda_build_config_path):
                 messages['Found cython requirement. Adding compiler'] = True
                 need_c = True
             if req in ['ninja', 'jom', 'cmake', 'automake', 'autoconf', 'libtool',
-                       'make', 'msinttypes', 'pkg-config', 'automake-wrapper', 'posix'] \
+                       'make', 'pkg-config', 'automake-wrapper', 'posix'] \
                     or req.startswith("{{p") or req.startswith("m2-") \
                     or (req_rendered in ['perl', 'texlive-core', 'curl', 'openssl', 'tar', 'gzip', 'patch']
                         and section == 'build' and req_rendered not in reqs['run']):
