@@ -95,7 +95,7 @@ def get_compilers(url):
             need_f = any([f.name.lower().endswith(('.f', '.f90', '.f77')) for f in tf])
             # Fortran builds use CC to perform the link (they do not call the linker directly).
             need_c = True if need_f else \
-                        any([f.name.lower().endswith('.c') for f in tf])
+                        any([f.name.lower().endswith(('.c', '.pyx')) for f in tf])
             need_cxx = any([f.name.lower().endswith(('.cxx', '.cpp', '.cc', '.c++'))
                         for f in tf])
             for f in tf:
@@ -119,7 +119,6 @@ def update_cb3(recipe_path, conda_build_config_path):
     yaml = ruamel.yaml.YAML()
     yaml.Constructor = MyConstructor
     yaml.allow_duplicate_keys = True
-    env = jinja2.Environment(undefined=NullUndefined)
 
     with io.open(recipe_path, 'rt') as fh:
         lines = list(fh)
@@ -215,6 +214,9 @@ def update_cb3(recipe_path, conda_build_config_path):
                         (req != req_rendered and req_rendered == 'toolchain'):
                     need_mingw_c = True
                 continue
+            if req_rendered == 'cython' and not (need_c or need_cxx or need_f):
+                messages['Found cython requirement. Adding compiler'] = True
+                need_c = True
             if req in ['ninja', 'jom', 'cmake', 'automake', 'autoconf', 'libtool',
                        'make', 'msinttypes', 'pkg-config', 'automake-wrapper', 'posix'] \
                     or req.startswith("{{p") or req.startswith("m2-") \
