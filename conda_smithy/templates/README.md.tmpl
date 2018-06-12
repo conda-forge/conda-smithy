@@ -22,19 +22,19 @@ Current build status
 {%- if noarch_python %}
 {%- if circle.enabled %}
 All platforms:
-[![noarch]({{ shield }}circleci/project/github/{{ github.user_or_org }}/{{ github.repo_name }}/master.svg?label=noarch)](https://circleci.com/gh/{{ github.user_or_org }}/{{ github.repo_name }})
+[![noarch]({{ shield }}circleci/project/github/{{ github.user_or_org }}/{{ github.repo_name }}/{{ github.branch_name }}.svg?label=noarch)](https://circleci.com/gh/{{ github.user_or_org }}/{{ github.repo_name }})
 {%- else %}
 All platforms: ![noarch disabled]({{ shield }}badge/noarch-disabled-lightgrey.svg)
 {%- endif %}
 {%- else %}
 {%- if circle.enabled %}
-[![{{ circle.platforms }}]({{ shield }}circleci/project/github/{{ github.user_or_org }}/{{ github.repo_name }}/master.svg?label={{ circle.platforms }})](https://circleci.com/gh/{{ github.user_or_org }}/{{ github.repo_name }})
+[![{{ circle.platforms }}]({{ shield }}circleci/project/github/{{ github.user_or_org }}/{{ github.repo_name }}/{{ github.branch_name }}.svg?label={{ circle.platforms }})](https://circleci.com/gh/{{ github.user_or_org }}/{{ github.repo_name }})
 {%- endif %}
 {%- if travis.enabled %}
-[![OSX]({{ shield }}travis/{{ github.user_or_org }}/{{ github.repo_name }}/master.svg?label=macOS)](https://travis-ci.org/{{ github.user_or_org }}/{{ github.repo_name }})
+[![OSX]({{ shield }}travis/{{ github.user_or_org }}/{{ github.repo_name }}/{{ github.branch_name }}.svg?label=macOS)](https://travis-ci.org/{{ github.user_or_org }}/{{ github.repo_name }})
 {%- endif %}
 {%- if appveyor.enabled %}
-[![Windows]({{ shield }}appveyor/ci/{{ github.user_or_org }}/{{ github.repo_name }}/master.svg?label=Windows)](https://ci.appveyor.com/project/{{ github.user_or_org }}/{{ appveyor_url_name }}/branch/master)
+[![Windows]({{ shield }}appveyor/ci/{{ github.user_or_org }}/{{ github.repo_name }}/{{ github.branch_name }}.svg?label=Windows)](https://ci.appveyor.com/project/{{ github.user_or_org }}/{{ appveyor_url_name }}/branch/{{ github.branch_name }})
 {%- endif %}
 {%- if not linux.enabled %}
 ![Linux disabled]({{ shield }}badge/linux-disabled-lightgrey.svg)
