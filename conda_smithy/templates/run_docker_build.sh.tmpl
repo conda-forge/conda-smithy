@@ -29,6 +29,12 @@ if [ -z "$CONFIG" ]; then
     exit 1
 fi
 
+if [ "$(uname -m)" = "x86_64" ]; then
+    DOCKER_IMAGE="{{ docker.image }}"
+else
+    DOCKER_IMAGE="{{ docker.image_ppc64le }}"
+fi
+
 mkdir -p "$ARTIFACTS"
 DONE_CANARY="$ARTIFACTS/conda-forge-build-done-${CONFIG}"
 rm -f "$DONE_CANARY"
@@ -39,7 +45,7 @@ rm -f "$DONE_CANARY"
            -e CONFIG \
            -e BINSTAR_TOKEN \
            -e HOST_USER_ID \
-           {{ docker.image }} \
+           $DOCKER_IMAGE \
            {{ docker.command }} \
            /home/conda/feedstock_root/.circleci/build_steps.sh
 
