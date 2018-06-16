@@ -58,7 +58,12 @@ def travis_headers():
        'Travis-API-Version': '3'
     }
     travis_token = os.path.expanduser('~/.conda-smithy/travis.token')
-    if not os.path.exists(travis_token):
+    try:
+        with open(travis_token, 'r') as fh:
+            token = fh.read().strip()
+        if not token:
+            raise ValueError
+    except (IOError, ValueError):
         # We generally want the V3 API, but can currently only auth with V2:
         # https://github.com/travis-ci/travis-ci/issues/9273#issuecomment-370474214
         v2_headers = headers.copy()
@@ -74,9 +79,6 @@ def travis_headers():
         with open(travis_token, 'w') as fh:
             fh.write(token)
         # TODO: Set the permissions on the file.
-    else:
-        with open(travis_token, 'r') as fh:
-            token = fh.read().strip()
 
     headers['Authorization'] = 'token {}'.format(token)
     return headers
