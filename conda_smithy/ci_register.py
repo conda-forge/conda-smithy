@@ -19,14 +19,18 @@ try:
     # Create a token at https://circleci.com/account/api. Put it in circle.token
     with open(os.path.expanduser('~/.conda-smithy/circle.token'), 'r') as fh:
         circle_token = fh.read().strip()
-except IOError:
+    if not circle_token:
+        raise ValueError()
+except (IOError, ValueError):
     print('No circle token.  Create a token at https://circleci.com/account/api and\n'
           'put it in ~/.conda-smithy/circle.token')
 
 try:
     with open(os.path.expanduser('~/.conda-smithy/appveyor.token'), 'r') as fh:
         appveyor_token = fh.read().strip()
-except IOError:
+    if not appveyor_token:
+        raise ValueError()
+except (IOError, ValueError):
     print('No appveyor token. Create a token at https://ci.appveyor.com/api-token and\n'
           'Put one in ~/.conda-smithy/appveyor.token')
 
@@ -36,7 +40,9 @@ except KeyError:
     try:
         with open(os.path.expanduser('~/.conda-smithy/anaconda.token'), 'r') as fh:
             anaconda_token = fh.read().strip()
-    except IOError:
+        if not anaconda_token:
+            raise ValueError()
+    except (IOError, ValueError):
         print('No anaconda token. Create a token via\n'
               '  anaconda auth --create --name conda-smithy --scopes "repos conda api"\n'
               'and put it in ~/.conda-smithy/anaconda.token')
