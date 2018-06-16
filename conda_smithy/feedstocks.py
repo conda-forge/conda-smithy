@@ -9,6 +9,7 @@ from git import Repo, GitCommandError
 from github import Github
 
 from . import github as smithy_github
+from .utils import render_meta_yaml
 
 
 def feedstock_repos(gh_organization):
@@ -184,34 +185,7 @@ def yaml_meta(content):
     Read the contents of meta.yaml into a ruamel.yaml document.
 
     """
-    import jinja2
-    import ruamel.yaml
-    import six
-
-
-    class NullUndefined(jinja2.Undefined):
-        def __unicode__(self):
-            return six.text_type(self._undefined_name)
-
-        def __getattr__(self, name):
-            return six.text_type('{}.{}'.format(self, name))
-
-        def __getitem__(self, name):
-            return '{}["{}"]'.format(self, name)
-
-
-    class StrDict(dict):
-        def __getitem__(self, key, default=''):
-            # Unlike a normal dictionary, if the string doesn't exist, return an empty string. 
-            if key in self:
-                return self[key]
-            else:
-                return default
-
-
-    env = jinja2.Environment(undefined=NullUndefined)
-    parsable_content = env.from_string(content).render(os=os, environ=StrDict())
-    yaml = ruamel.yaml.load(parsable_content, ruamel.yaml.RoundTripLoader)
+    yaml = ruamel.yaml.load(render_meta_yaml(content), ruamel.yaml.RoundTripLoader)
     return yaml
 
 

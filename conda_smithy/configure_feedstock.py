@@ -805,6 +805,24 @@ def commit_changes(forge_file_directory, commit, cs_ver, cfp_ver):
             print("No changes made. This feedstock is up-to-date.\n")
 
 
+def get_cfp_file_path(resolve=None, error_on_warn=True):
+    if resolve is None:
+        index = conda_build.conda_interface.get_index(channel_urls=['conda-forge'])
+        resolve = conda_build.conda_interface.Resolve(index)
+
+    installed_vers = conda_build.conda_interface.get_installed_version(
+                            conda_build.conda_interface.root_dir, ["conda-forge-pinning"])
+    cf_pinning_ver = installed_vers["conda-forge-pinning"]
+    if cf_pinning_ver:
+        check_version_uptodate(resolve, "conda-forge-pinning", cf_pinning_ver, error_on_warn)
+    else:
+        raise RuntimeError("Install conda-forge-pinning or edit conda-forge.yml")
+    cf_pinning_file = os.path.join(conda_build.conda_interface.root_dir, "conda_build_config.yaml")
+    if not os.path.exists(cf_pinning_file):
+        raise RuntimeError("conda_build_config.yaml from conda-forge-pinning is missing")
+    return cf_pinning_file, cf_pinning_ver
+
+
 def main(forge_file_directory, no_check_uptodate, commit, exclusive_config_file):
     error_on_warn = False if no_check_uptodate else True
     index = conda_build.conda_interface.get_index(channel_urls=['conda-forge'])
@@ -821,17 +839,7 @@ def main(forge_file_directory, no_check_uptodate, commit, exclusive_config_file)
             raise RuntimeError("Given exclusive-config-file not found.")
         cf_pinning_ver = None
     else:
-        installed_vers = conda_build.conda_interface.get_installed_version(
-                                conda_build.conda_interface.root_dir, ["conda-forge-pinning"])
-        cf_pinning_ver = installed_vers["conda-forge-pinning"]
-        if cf_pinning_ver:
-            check_version_uptodate(r, "conda-forge-pinning", cf_pinning_ver, error_on_warn)
-        else:
-            raise RuntimeError("Install conda-forge-pinning or edit conda-forge.yml")
-        cf_pinning_file = os.path.join(conda_build.conda_interface.root_dir, "conda_build_config.yaml")
-        if not os.path.exists(cf_pinning_file):
-            raise RuntimeError("conda_build_config.yaml from conda-forge-pinning is missing")
-        exclusive_config_file = cf_pinning_file
+        exclusive_config_file, cf_pinning_ver = get_cfp_file_path(r, error_on_warn)
 
     config = _load_forge_config(forge_dir, exclusive_config_file)
 

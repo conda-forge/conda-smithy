@@ -21,6 +21,8 @@ from collections import defaultdict
 
 import copy
 
+from .utils import render_meta_yaml
+
 FIELDS = copy.deepcopy(cbfields)
 
 # Just in case 'extra' moves into conda_build
@@ -38,17 +40,6 @@ TEST_KEYS = {'imports', 'commands'}
 
 sel_pat = re.compile(r'(.+?)\s*(#.*)?\[([^\[\]]+)\](?(2).*)$')
 jinja_pat = re.compile(r'\s*\{%\s*(set)\s+[^\s]+\s*=\s*[^\s]+\s*%\}')
-
-
-class NullUndefined(jinja2.Undefined):
-    def __unicode__(self):
-        return self._undefined_name
-
-    def __getattr__(self, name):
-        return '{}.{}'.format(self, name)
-
-    def __getitem__(self, name):
-        return '{}["{}"]'.format(self, name)
 
 
 def get_section(parent, name, lints):
@@ -408,23 +399,8 @@ def main(recipe_dir, conda_forge=False, return_hints=False):
     if not os.path.exists(recipe_dir):
         raise IOError('Feedstock has no recipe/meta.yaml.')
 
-    env = jinja2.Environment(undefined=NullUndefined)
-
-    # stub out cb3 jinja2 functions - they are not important for linting
-    #    if we don't stub them out, the ruamel.yaml load fails to interpret them
-    #    we can't just use conda-build's api.render functionality, because it would apply selectors
-    env.globals.update(dict(compiler=lambda x: x + '_compiler_stub',
-                            pin_subpackage=lambda *args, **kwargs: 'subpackage_stub',
-                            pin_compatible=lambda *args, **kwargs: 'compatible_pin_stub',
-                            cdt=lambda *args, **kwargs: 'cdt_stub',
-                            load_file_regex=lambda *args, **kwargs: \
-                                    defaultdict(lambda : ''),
-                            datetime=datetime,
-                            time=time,
-                            ))
-
     with io.open(recipe_meta, 'rt') as fh:
-        content = env.from_string(''.join(fh)).render(os=os)
+        content = render_meta_yaml(''.join(fh))
         meta = ruamel.yaml.load(content, ruamel.yaml.RoundTripLoader)
     results, hints = lintify(meta, recipe_dir, conda_forge)
     if return_hints:

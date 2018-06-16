@@ -5,6 +5,7 @@ import subprocess
 import sys
 import time
 import argparse
+import io
 
 import conda
 from distutils.version import LooseVersion
@@ -208,6 +209,36 @@ class RecipeLint(Subcommand):
         # Exit code 1 for some lint, 0 for no lint.
         sys.exit(int(not all_good))
 
+
+class UpdateCB3(Subcommand):
+    subcommand = 'update-cb3'
+    def __init__(self, parser):
+        # conda-smithy update-cb3 ./
+        super(UpdateCB3, self).__init__(parser, "Update a feedstock for conda-build=3")
+        scp = self.subcommand_parser
+        scp.add_argument("--recipe_directory", default=os.path.join(os.getcwd(), 'recipe'),
+                         help="The path to the source recipe directory.")
+        scp.add_argument("--output", default=None,
+                         help="Filename for the output. No output edits the recipe inplace")
+        scp.add_argument("--cbc", default=None,
+                         help="Path to conda_build_config.yaml. No path will use conda-forge-pinning")
+
+    def __call__(self, args):
+        from conda_smithy.update_cb3 import update_cb3
+        from conda_smithy.configure_feedstock import get_cfp_file_path
+        recipe_file = os.path.join(args.recipe_directory, 'meta.yaml')
+        output_file = args.output
+        if output_file is None:
+            output_file = recipe_file
+        if args.cbc is None:
+            cbc, _ = get_cfp_file_path()
+        else:
+            cbc = os.path.join(os.getcwd(), args.cbc)
+        output_content, messages = update_cb3(recipe_file, cbc)
+        with io.open(output_file, 'w') as fh:
+            fh.write(output_content)
+        print("List of changes done to the recipe:")
+        print(messages)
 
 
 def main():
