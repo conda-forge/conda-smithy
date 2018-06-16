@@ -685,7 +685,9 @@ def _load_forge_config(forge_dir, exclusive_config_file):
               'linux': {'enabled': False},
               'channels': {'sources': ['conda-forge', 'defaults'],
                            'targets': [['conda-forge', 'main']]},
-              'github': {'user_or_org': 'conda-forge', 'repo_name': ''},
+              'github': {'user_or_org': 'conda-forge',
+                         'repo_name': '',
+                         'branch_name': 'master'},
               'recipe_dir': 'recipe'}
 
     # An older conda-smithy used to have some files which should no longer exist,
