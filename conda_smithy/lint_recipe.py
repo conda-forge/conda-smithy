@@ -269,17 +269,6 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
                                      "`noarch: {}`.".format(build_section['noarch']))
                         break
 
-    # 18: noarch and python setup.py doesn't work
-    if build_section.get('noarch') == 'python':
-        if 'script' in build_section:
-            scripts = build_section['script']
-            if isinstance(scripts, str):
-                scripts = [scripts]
-            for script in scripts:
-                if "python setup.py install" in script:
-                    lints.append("`noarch: python` packages should use pip. "
-                                 "See https://conda-forge.org/docs/meta.html#use-pip")
-
     # 19: check version
     if package_section.get('version') is not None:
         ver = str(package_section.get('version'))
@@ -312,6 +301,16 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
         hints.append('Using toolchain directly in this manner is deprecated.  Consider '
                      'using the compilers outlined '
                      '[here](https://conda-forge.org/docs/meta.html#compilers).')
+
+    # 2: suggest pip
+    if 'script' in build_section:
+        scripts = build_section['script']
+        if isinstance(scripts, str):
+            scripts = [scripts]
+        for script in scripts:
+            if 'python setup.py install' in script:
+                hints.append('Whenever possible python packages should use pip. '
+                             'See https://conda-forge.org/docs/meta.html#use-pip')
 
     return lints, hints
 
