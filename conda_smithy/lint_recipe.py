@@ -217,7 +217,7 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
 
     # 14: Run conda-forge specific lints
     if conda_forge:
-        run_conda_forge_lints(meta, recipe_dir, lints)
+        run_conda_forge_specific(meta, recipe_dir, lints, hints)
 
     # 15: Check if we are using legacy patterns
     build_reqs = requirements_section.get('build', None)
@@ -315,7 +315,7 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
     return lints, hints
 
 
-def run_conda_forge_lints(meta, recipe_dir, lints):
+def run_conda_forge_specific(meta, recipe_dir, lints, hints):
     gh = github.Github(os.environ['GH_TOKEN'])
     package_section = get_section(meta, 'package', lints)
     extra_section = get_section(meta, 'extra', lints)
@@ -341,8 +341,8 @@ def run_conda_forge_lints(meta, recipe_dir, lints):
         except github.UnknownObjectException as e:
             pass
         else:
-            lints.append("Recipe with the same name exists in bioconda: "
-                         "please discuss with @conda-forge/bioconda-recipes.")
+            hints.append('Recipe with the same name exists in bioconda: '
+                         'please discuss with @conda-forge/bioconda-recipes.')
 
     # 2: Check that the recipe maintainers exists:
     maintainers = extra_section.get('recipe-maintainers', [])
