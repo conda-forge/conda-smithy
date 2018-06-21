@@ -214,13 +214,19 @@ def travis_wait_until_synced(ignore=False):
     return content
 
 
-def travis_get_repo_info(user, project, show_error=False):
+def travis_get_repo(user, project, show_error=False, check_admin_access=True):
     headers = travis_headers()
     url = '{}/repo/{user}%2F{project}'.format(travis_endpoint, user=user, project=project)
     response = requests.get(url, headers=headers)
     try:
         response.raise_for_status()
         content = response.json()
+        if check_admin_access:
+            if "@permissions" not in content:
+                return {}
+            permissions = content["@permissions"]
+            if "admin" not in permissions or not permissions["admin"]:
+                return {}
         return content
     except requests.HTTPError as e:
         if show_error:
@@ -231,13 +237,13 @@ def travis_get_repo_info(user, project, show_error=False):
 def add_project_to_travis(user, project):
     headers = travis_headers()
 
-    repo_info = travis_get_repo_info(user, project, show_error=False)
+    repo_info = travis_get_repo(user, project, show_error=False)
     if not repo_info:
         # Travis needs syncing. Wait until other syncs are finished.
         print(" * Travis: checking if there's a syncing already", end="")
         sys.stdout.flush()
         user_info = travis_wait_until_synced(ignore=True)
-        repo_info = travis_get_repo_info(user, project, show_error=False)
+        repo_info = travis_get_repo(user, project, show_error=False)
         if not repo_info:
             print(" * Travis doesn't know about the repo, syncing (takes a few seconds).", end="")
             sys.stdout.flush()
@@ -249,7 +255,7 @@ def add_project_to_travis(user, project):
                 # start at the same time
                 response.raise_for_status()
             travis_wait_until_synced(ignore=False)
-            repo_info = travis_get_repo_info(user, project)
+            repo_info = travis_get_repo(user, project)
 
     if not repo_info:
         msg = ('Unable to register the repo on Travis\n'
@@ -320,7 +326,7 @@ def travis_configure(user, project):
     """Configure travis so that it skips building if there is no .travis.yml present."""
     headers = travis_headers()
 
-    repo_info = travis_get_repo_info(user, project)
+    repo_info = travis_get_repo(user, project)
     repo_id = repo_info['id']
 
     if repo_info['active'] is not True:
