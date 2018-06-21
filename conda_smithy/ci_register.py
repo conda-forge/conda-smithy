@@ -214,19 +214,22 @@ def travis_wait_until_synced(ignore=False):
     return content
 
 
-def travis_get_repo(user, project, show_error=False, check_admin_access=True):
+def travis_repo_writable(repo_info):
+    if "@permissions" not in repo_info:
+        return False
+    permissions = repo_info["@permissiqons"]
+    if "admin" not in permissions or not permissions["admin"]:
+        return False
+    return True
+
+
+def travis_get_repo_info(user, project, show_error=False):
     headers = travis_headers()
     url = '{}/repo/{user}%2F{project}'.format(travis_endpoint, user=user, project=project)
     response = requests.get(url, headers=headers)
     try:
         response.raise_for_status()
         content = response.json()
-        if check_admin_access:
-            if "@permissions" not in content:
-                return {}
-            permissions = content["@permissions"]
-            if "admin" not in permissions or not permissions["admin"]:
-                return {}
         return content
     except requests.HTTPError as e:
         if show_error:
@@ -237,15 +240,18 @@ def travis_get_repo(user, project, show_error=False, check_admin_access=True):
 def add_project_to_travis(user, project):
     headers = travis_headers()
 
-    repo_info = travis_get_repo(user, project, show_error=False)
-    if not repo_info:
+    repo_info = travis_get_repo_info(user, project, show_error=False)
+    if not travis_repo_writable(repo_info):
         # Travis needs syncing. Wait until other syncs are finished.
         print(" * Travis: checking if there's a syncing already", end="")
         sys.stdout.flush()
         user_info = travis_wait_until_synced(ignore=True)
-        repo_info = travis_get_repo(user, project, show_error=False)
-        if not repo_info:
-            print(" * Travis doesn't know about the repo, syncing (takes a few seconds).", end="")
+        repo_info = travis_get_repo_info(user, project, show_error=False)
+        if not travis_repo_writable(repo_info):
+            if not repo_info:
+                print(" * Travis doesn't know about the repo, syncing (takes a few seconds).", end="")
+            else:
+                print(" * Travis repo settings are not writable, syncing (takes a few seconds).", end="")
             sys.stdout.flush()
             sync_url = '{}/user/{}/sync'.format(travis_endpoint, user_info['id'])
             response = requests.post(sync_url, headers=headers)
@@ -255,11 +261,15 @@ def add_project_to_travis(user, project):
                 # start at the same time
                 response.raise_for_status()
             travis_wait_until_synced(ignore=False)
-            repo_info = travis_get_repo(user, project)
+            repo_info = travis_get_repo_info(user, project)
 
     if not repo_info:
         msg = ('Unable to register the repo on Travis\n'
                '(Is it down? Is the "{}/{}" name spelt correctly? [note: case sensitive])')
+        raise RuntimeError(msg.format(user, project))
+
+    if not travis_repo_writable(repo_info)
+        msg = ('Access denied for the repo {}/{}')
         raise RuntimeError(msg.format(user, project))
 
     if repo_info['active'] is True:
@@ -326,7 +336,7 @@ def travis_configure(user, project):
     """Configure travis so that it skips building if there is no .travis.yml present."""
     headers = travis_headers()
 
-    repo_info = travis_get_repo(user, project)
+    repo_info = travis_get_repo_info(user, project)
     repo_id = repo_info['id']
 
     if repo_info['active'] is not True:
