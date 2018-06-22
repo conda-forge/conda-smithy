@@ -268,7 +268,7 @@ def add_project_to_travis(user, project):
                '(Is it down? Is the "{}/{}" name spelt correctly? [note: case sensitive])')
         raise RuntimeError(msg.format(user, project))
 
-    if not travis_repo_writable(repo_info)
+    if not travis_repo_writable(repo_info):
         msg = ('Access denied for the repo {}/{}')
         raise RuntimeError(msg.format(user, project))
 
