@@ -119,6 +119,8 @@ class RegisterGithub(Subcommand):
         scp.add_argument("--remote-name", default="upstream",
                                        help="The name of the remote to add to the local repo (default: upstream). "
                                             "An empty string will disable adding of a remote.")
+        scp.add_argument('--extra-admin-users', nargs='*', help="Extra users to be added as admins")
+
 
     def __call__(self, args):
         from . import github
@@ -150,6 +152,7 @@ class RegisterCI(Subcommand):
         ci_register.travis_token_update_conda_forge_config(args.feedstock_directory, owner, repo)
         time.sleep(1)
         ci_register.travis_configure(owner, repo)
+        ci_register.travis_cleanup(owner, repo)
         ci_register.add_project_to_circle(owner, repo)
         ci_register.add_token_to_circle(owner, repo)
         ci_register.add_project_to_appveyor(owner, repo)

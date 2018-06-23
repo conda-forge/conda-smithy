@@ -9,6 +9,7 @@ from github import Github
 from github.GithubException import GithubException
 from github.Organization import Organization
 from github.Team import Team
+import github
 
 import conda_build.api
 
@@ -132,9 +133,30 @@ def create_github_repo(args):
         else:
             repo.create_remote(remote_name, gh_repo.ssh_url)
 
+    for user in args.extra_admin_users:
+        gh_repo.add_to_collaborators(user, 'admin')
+
     if args.add_teams:
         if isinstance(user_or_org, Organization):
             configure_github_team(meta, gh_repo, user_or_org, feedstock_name)
+
+
+def accept_all_repository_invitations(gh):
+    user = gh.get_user()
+    invitations = github.PaginatedList.PaginatedList(
+            github.Invitation.Invitation,
+            user._requester,
+            user.url + "/repository_invitations",
+            None
+        )
+    for invite in invitations:
+        invite._requester.requestJsonAndCheck("PATCH", invite.url)
+
+
+def remove_from_project(gh, org, project):
+    user = gh.get_user()
+    repo = gh.get_repo("{}/{}".format(org, project))
+    repo.remove_from_collaborators(user)
 
 
 def configure_github_team(meta, gh_repo, org, feedstock_name):
