@@ -238,6 +238,11 @@ def travis_get_repo_info(user, project, show_error=False):
 
 
 def add_project_to_travis(user, project):
+    # Make sure the travis-ci user has accepted all invitations
+    if os.getenv("GH_TRAVIS_TOKEN"):
+        gh = github.Github(os.getenv("GH_TRAVIS_TOKEN"))
+        github.accept_all_repository_invitations(gh)
+
     headers = travis_headers()
 
     repo_info = travis_get_repo_info(user, project, show_error=False)
@@ -354,6 +359,12 @@ def travis_configure(user, project):
         response = requests.patch(url, json=data, headers=headers)
         if response.status_code != 204:
             response.raise_for_status()
+
+
+def travis_cleanup(org, project):
+    if os.getenv("GH_TRAVIS_TOKEN"):
+        gh = github.Github(os.getenv("GH_TRAVIS_TOKEN"))
+        github.remove_from_project(gh, org, project)
 
 
 def get_conda_hook_info(hook_url, events):
