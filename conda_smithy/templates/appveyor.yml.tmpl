@@ -2,6 +2,10 @@
 # file, make changes to conda-forge.yml and/or recipe/meta.yaml, and run
 # "conda smithy rerender".
 
+{% if appveyor.image -%}
+image: {{ appveyor.image }}
+{% endif -%}
+
 environment:
 
   {% for name, hashed_secure in (appveyor.secure or {}) | dictsort -%}
