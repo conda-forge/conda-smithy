@@ -244,13 +244,19 @@ def update_cb3(recipe_path, conda_build_config_path):
                         msg = 'Not sure how to remove pinnings for {}'.format(req)
                     else:
                         change_lines[i] = (lines[i], lines[i].replace(s[2], ' '*len(s[2])))
-                        msg = 'Removing pinnings for {} to use values from conda_build_config.yaml'.format(req)
+                        msg = ('Removing pinnings for {} to use values from '
+                               'conda_build_config.yaml. If you need the pin see '
+                               '[here](https://conda-forge.org/docs/meta.html#pinning-packages) '
+                               'for details.'.format(req))
                     if req == 'numpy':
                         if s[2].startswith('1') or s[2].startswith('x.x'):
                             need_numpy_pin = True
                         if need_numpy_pin and i > reqbuild_section.end:
                             line = lines[i].replace(s[2], ' '*len(s[2]))
-                            msg = 'Pinning numpy using pin_compatible'
+                            msg = ('Pinning numpy using pin_compatible. If you need to pin numpy '
+                                   'to a specific version see '
+                                   '[here](https://conda-forge.org/docs/meta.html'
+                                   '#building-against-numpy).')
                             change_lines[i] = (lines[i], line.replace('numpy'+' '*len(s[2]),
                                                 "{{ pin_compatible('numpy') }}"))
 
