@@ -718,7 +718,8 @@ def render_version(jinja_env, forge_config, forge_dir):
                             ["conda-forge-pinning", "conda-build", "python"])
     installed_vers['conda-smithy'] = __version__
     with write_file(os.path.join(forge_dir, '.smithy-version.json')) as fh:
-        json.dump(installed_vers, fh, sort_keys=True, indent=2)
+        fh.write(json.dumps(installed_vers, fh, sort_keys=True, indent=2))
+        fh.write('\n')
 
 
 def copy_feedstock_content(forge_dir):
