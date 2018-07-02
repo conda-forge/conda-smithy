@@ -218,7 +218,7 @@ def update_cb3(recipe_path, conda_build_config_path):
                 messages['Found cython requirement. Adding compiler'] = True
                 need_c = True
             if req in ['ninja', 'jom', 'cmake', 'automake', 'autoconf', 'libtool',
-                       'make', 'pkg-config', 'automake-wrapper', 'posix'] \
+                       'make', 'pkg-config', 'automake-wrapper', 'posix', 'm4'] \
                     or req.startswith("{{p") or req.startswith("m2-") \
                     or (req_rendered in ['perl', 'texlive-core', 'curl', 'openssl', 'tar', 'gzip', 'patch']
                         and section == 'build' and req_rendered not in reqs['run']):
@@ -293,7 +293,7 @@ def update_cb3(recipe_path, conda_build_config_path):
         if line.strip().startswith(vc14):
             need_c = True
             messages["Removed {} and added a skip".format(vc14)] = True
-            change_lines[i] = line, line.replace(vc14, 'skip: True  # [vc<14]')
+            change_lines[i] = line, line.replace(vc14, 'skip: True  # [win and vc<14]')
 
 
     features_section = build_section['features']
