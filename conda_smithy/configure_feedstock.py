@@ -2,6 +2,7 @@ from __future__ import print_function, unicode_literals
 
 import glob
 from itertools import product
+import json
 import os
 import subprocess
 import textwrap
@@ -711,6 +712,21 @@ def render_README(jinja_env, forge_config, forge_dir):
         fh.write(template.render(**forge_config))
 
 
+def render_versions(jinja_env, forge_config, forge_dir):
+    installed_vers = conda_build.conda_interface.get_installed_version(
+                            conda_build.conda_interface.root_dir,
+                            ["conda-forge-pinning", "conda-build", "python"])
+    installed_vers['conda-smithy'] = __version__
+    with write_file(os.path.join(forge_dir, '.smithy-versions.json')) as fh:
+        s = json.dumps(installed_vers, sort_keys=True, indent=2)
+        try:  # json.dumps has inconsistent text vs binary behavior on py2/3
+            s = s.decode('utf-8')
+        except AttributeError:
+            pass
+        fh.write(s)
+        fh.write('\n')
+
+
 def copy_feedstock_content(forge_dir):
     feedstock_content = os.path.join(conda_forge_content,
                                      'feedstock_content')
@@ -915,6 +931,7 @@ def main(forge_file_directory, no_check_uptodate, commit, exclusive_config_file)
     render_travis(env, config, forge_dir)
     render_appveyor(env, config, forge_dir)
     render_README(env, config, forge_dir)
+    render_versions(env, config, forge_dir)
 
     if os.path.isdir(os.path.join(forge_dir, '.ci_support')):
         with write_file(os.path.join(forge_dir, '.ci_support', 'README')) as f:
