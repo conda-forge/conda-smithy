@@ -2,7 +2,6 @@ from __future__ import print_function, unicode_literals
 
 import glob
 from itertools import product
-import json
 import os
 import subprocess
 import textwrap
@@ -712,22 +711,6 @@ def render_README(jinja_env, forge_config, forge_dir):
         fh.write(template.render(**forge_config))
 
 
-def render_version(jinja_env, forge_config, forge_dir):
-    installed_vers = conda_build.conda_interface.get_installed_version(
-                            conda_build.conda_interface.root_dir,
-                            ["conda-forge-pinning", "conda-build", "python"])
-    installed_vers['conda-smithy'] = __version__
-    with write_file(os.path.join(forge_dir, '.smithy-version.json')) as fh:
-        # json.dumps has inconsistent text vs binary behavior on py2/3
-        s = json.dumps(installed_vers, sort_keys=True, indent=2)
-        try:
-            s = s.decode('utf-8')
-        except AttributeError:  # on python 3 and s is already text
-            pass
-        fh.write(s)
-        fh.write('\n')
-
-
 def copy_feedstock_content(forge_dir):
     feedstock_content = os.path.join(conda_forge_content,
                                      'feedstock_content')
@@ -828,9 +811,6 @@ def check_version_uptodate(resolve, name, installed_version, error_on_warn):
         print(msg)
 
 
-no_rebuild_needed = {'.smithy-version.json', 'README.md'}
-
-
 def commit_changes(forge_file_directory, commit, cs_ver, cfp_ver):
     if cfp_ver:
         msg = 'Re-rendered with conda-smithy {} and pinning {}'.format(cs_ver, cfp_ver)
@@ -840,17 +820,13 @@ def commit_changes(forge_file_directory, commit, cs_ver, cfp_ver):
 
     is_git_repo = os.path.exists(os.path.join(forge_file_directory, ".git"))
     if is_git_repo:
-        out = subprocess.check_output(
+        has_staged_changes = subprocess.call(
             [
-                "git", "diff", "--cached", "--name-only"
+                "git", "diff", "--cached", "--quiet", "--exit-code"
             ],
             cwd=forge_file_directory
-        ).decode('utf-8').strip()
-        changed_files = set(out.split('\n')) if out else set()
-        if changed_files.issubset(no_rebuild_needed):
-            msg += '  [skip ci]'
-
-        if changed_files:
+        )
+        if has_staged_changes:
             if commit:
                 git_args = [
                     'git',
@@ -938,7 +914,6 @@ def main(forge_file_directory, no_check_uptodate, commit, exclusive_config_file)
     render_circle(env, config, forge_dir)
     render_travis(env, config, forge_dir)
     render_appveyor(env, config, forge_dir)
-    render_version(env, config, forge_dir)
     render_README(env, config, forge_dir)
 
     if os.path.isdir(os.path.join(forge_dir, '.ci_support')):
