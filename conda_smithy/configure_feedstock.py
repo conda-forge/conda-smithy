@@ -718,7 +718,13 @@ def render_version(jinja_env, forge_config, forge_dir):
                             ["conda-forge-pinning", "conda-build", "python"])
     installed_vers['conda-smithy'] = __version__
     with write_file(os.path.join(forge_dir, '.smithy-version.json')) as fh:
-        fh.write(json.dumps(installed_vers, fh, sort_keys=True, indent=2))
+        # json.dumps has inconsistent text vs binary behavior on py2/3
+        s = json.dumps(installed_vers, sort_keys=True, indent=2)
+        try:
+            s = s.decode('utf-8')
+        except AttributeError:  # on python 3 and s is already text
+            pass
+        fh.write(s)
         fh.write('\n')
 
 
