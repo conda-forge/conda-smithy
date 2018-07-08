@@ -312,7 +312,7 @@ def dump_subspace_config_files(metas, root_path, output_name):
     # get rid of the special object notation in the yaml file for objects that we dump
     yaml.add_representer(set, yaml.representer.SafeRepresenter.represent_list)
     yaml.add_representer(tuple, yaml.representer.SafeRepresenter.represent_list)
-    yaml.add_representer(OrderedDict, yaml.representer.SafeRepresenter.represent_mapping)
+    yaml.add_representer(OrderedDict, yaml.representer.SafeRepresenter.represent_dict)
 
     result = []
     for config in configs:
