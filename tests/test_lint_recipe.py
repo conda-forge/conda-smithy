@@ -128,6 +128,22 @@ class Test_linter(unittest.TestCase):
         lints, hints = linter.lintify({'test': {'imports': 'sys'}})
         self.assertNotIn(expected_message, lints)
 
+        lints, hints = linter.lintify({'outputs': [{'name': 'foo'}]})
+        self.assertIn(expected_message, lints)
+
+        lints, hints = linter.lintify({'outputs': [{'name': 'foo', 'test': {'files': 'foo'}}]})
+        self.assertIn(expected_message, lints)
+
+        lints, hints = linter.lintify({'outputs': [{'name': 'foo', 'test': {'imports': 'sys'}}]})
+        self.assertNotIn(expected_message, lints)
+
+        lints, hints = linter.lintify({'outputs': [
+          {'name': 'foo', 'test': {'imports': 'sys'}},
+          {'name': 'foobar', 'test': {'files': 'hi'}},
+        ]})
+        self.assertNotIn(expected_message, lints)
+        self.assertIn("It looks like the 'foobar' output doesn't have any tests.", hints)
+
     def test_test_section_with_recipe(self):
         # If we have a run_test.py file, we shouldn't need to provide
         # other tests.
