@@ -83,7 +83,7 @@ def iterate(tarzip):
 def name(tzinfo):
     if isinstance(tzinfo, zipfile.ZipInfo):
         return tzinfo.filename
-    elif isinstance(tzinfo, tarfile.TarFile):
+    elif isinstance(tzinfo, tarfile.TarInfo):
         return tzinfo.name
 
 
