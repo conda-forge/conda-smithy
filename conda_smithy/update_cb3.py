@@ -7,6 +7,7 @@ import collections
 import requests
 import tempfile
 import tarfile
+import zipfile
 from .utils import tmp_directory, render_meta_yaml
 
 class Str(ruamel.yaml.scalarstring.ScalarString):
@@ -69,6 +70,22 @@ class Section:
                 return Section(sect, start, end)
         return Section(sect, start, self.end)
 
+        
+def iterate(tarzip):
+    if isinstance(tarzip, zipfile.ZipFile):
+        for f in iter(tarzip.infolist()):
+            yield f
+    elif isinstance(tarzip, tarfile.TarFile):
+        for f in tarzip:
+            yield f
+
+
+def name(tzinfo):
+    if isinstance(tzinfo, zipfile.ZipInfo):
+        return tzinfo.filename
+    elif isinstance(tzinfo, tarfile.TarInfo):
+        return tzinfo.name
+
 
 def get_compilers(url):
     '''
@@ -85,21 +102,26 @@ def get_compilers(url):
                 break
     else:
         r = requests.get(url, allow_redirects=True)
-    fname = url.split('/')[-1]
+    fname = os.path.basename(url)
+    ext = os.path.splitext(url)[1]
+    if ext == '.zip':
+        tarzip_open = zipfile.ZipFile
+    else:
+        tarzip_open = tarfile.open
 
     with tmp_directory() as tmp_dir:
         with open(os.path.join(tmp_dir, fname), 'wb') as f:
             f.write(r.content)
         need_numpy_pin = False
-        with tarfile.open(os.path.join(tmp_dir, fname)) as tf:
-            need_f = any([f.name.lower().endswith(('.f', '.f90', '.f77')) for f in tf])
+        with tarzip_open(os.path.join(tmp_dir, fname)) as tf:
+            need_f = any([name(f).lower().endswith(('.f', '.f90', '.f77')) for f in iterate(tf)])
             # Fortran builds use CC to perform the link (they do not call the linker directly).
             need_c = True if need_f else \
-                        any([f.name.lower().endswith(('.c', '.pyx')) for f in tf])
-            need_cxx = any([f.name.lower().endswith(('.cxx', '.cpp', '.cc', '.c++'))
-                        for f in tf])
-            for f in tf:
-                if f.name.lower().endswith('setup.py'):
+                        any([name(f).lower().endswith(('.c', '.pyx')) for f in iterate(tf)])
+            need_cxx = any([name(f).lower().endswith(('.cxx', '.cpp', '.cc', '.c++'))
+                        for f in iterate(tf)])
+            for f in iterate(tf):
+                if name(f).lower().endswith('setup.py'):
                     try:
                         content = tf.extractfile(f).read().decode("utf-8")
                         if 'numpy.get_include()' in content or 'np.get_include()' in content:
