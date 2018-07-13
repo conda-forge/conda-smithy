@@ -122,22 +122,23 @@ def update_cb3(recipe_path, conda_build_config_path):
 
     with io.open(recipe_path, 'rt') as fh:
         lines = list(fh)
-        orig_content = ''.join(lines)
-        content = orig_content
-        jinjas = re.findall('{%(?:.+?)%}', content, re.DOTALL)
-        for j in jinjas:
-            new_j = ''
-            for c in j:
-                if c == '\n':
-                    new_j += '\n'
-                else:
-                    new_j += ' '
-            content = content.replace(j, new_j)
-        content = render_meta_yaml(content)
-        content2 = render_meta_yaml(orig_content)
-        meta_ = yaml.load(content)
-        orig_meta = yaml.load(content2)
-        content2 = content2.split('\n')
+    orig_content = ''.join(lines)
+    content = orig_content
+    compilers = re.findall("{{ compiler\('(.+?)'\) }}", content)
+    jinjas = re.findall('{%(?:.+?)%}', content, re.DOTALL)
+    for j in jinjas:
+        new_j = ''
+        for c in j:
+            if c == '\n':
+                new_j += '\n'
+            else:
+                new_j += ' '
+        content = content.replace(j, new_j)
+    content = render_meta_yaml(content)
+    content2 = render_meta_yaml(orig_content)
+    meta_ = yaml.load(content)
+    orig_meta = yaml.load(content2)
+    content2 = content2.split('\n')
 
     change_lines = {}
 
@@ -156,12 +157,12 @@ def update_cb3(recipe_path, conda_build_config_path):
     reqbuild_s = reqbuild_section.start
     reqbuild_line = lines[reqbuild_s-1]
 
-    messages['Renamed build with host'] = True
-    change_lines[reqbuild_s-1] = (reqbuild_line, reqbuild_line.replace('build:', 'host:'))
+    if not requirements_section['host']:
+        messages['Renamed build with host'] = True
+        change_lines[reqbuild_s-1] = (reqbuild_line, reqbuild_line.replace('build:', 'host:'))
 
     url = orig_meta['source']['url']
     need_f, need_c, need_cxx, need_numpy_pin = get_compilers(url)
-    #need_f, need_c, need_cxx, need_numpy_pin = False, False, False, False
     need_mingw_c = False
 
     with io.open(conda_build_config_path, 'r') as fh:
@@ -177,14 +178,16 @@ def update_cb3(recipe_path, conda_build_config_path):
     python_win_matrix = False
     python_dep = False
     section = 'build'
-    reqs = {'build': [], 'run': []}
+    reqs = {'build': [], 'host': [], 'run': []}
 
     # Setup requirements
     for i in range(requirements_section.start, requirements_section.end+1):
         line = lines[i].strip()
-        if line == 'run:':
+        if line == 'host':
+            section = 'host'
+        elif line == 'run:':
             section = 'run'
-        if line.startswith('- '):
+        elif line.startswith('- '):
             line = content2[i].strip()[2:].strip()
             req = line.split(' ')[0]
             reqs[section].append(req)
@@ -194,11 +197,13 @@ def update_cb3(recipe_path, conda_build_config_path):
     # Remove build stuff
     for i in range(requirements_section.start, requirements_section.end+1):
         line = lines[i].strip()
-        if line == 'run:':
+        if line == 'host':
+            section = 'host'
+        elif line == 'run:':
             section = 'run'
-        if line.startswith('- '):
+        elif line.startswith('- '):
             build_space = ' ' * (len(lines[i]) - len(lines[i].lstrip())) + '- '
-            line = lines[i].strip()[2:].strip()
+            line = line[2:].strip()
             req = line.replace('{{ ', '{{').replace(' }}', '}}').split(' ')[0]
             req_rendered = content2[i].strip()[2:].strip().split(' ')[0].strip()
             if len(req_rendered) == 0 or req_rendered not in req:
@@ -215,19 +220,20 @@ def update_cb3(recipe_path, conda_build_config_path):
                     need_mingw_c = True
                 continue
             if req_rendered == 'cython' and not (need_c or need_cxx or need_f):
-                messages['Found cython requirement. Adding compiler'] = True
-                need_c = True
+                if 'c' not in compilers:
+                    messages['Found cython requirement. Adding compiler'] = True
+                    need_c = True
             if req in ['ninja', 'jom', 'cmake', 'automake', 'autoconf', 'libtool',
                        'make', 'pkg-config', 'automake-wrapper', 'posix', 'm4'] \
                     or req.startswith("{{p") or req.startswith("m2-") \
                     or (req_rendered in ['perl', 'texlive-core', 'curl', 'openssl', 'tar', 'gzip', 'patch']
-                        and section == 'build' and req_rendered not in reqs['run']):
+                        and req_rendered not in reqs['run']) and section == 'build':
                 messages['Moving {} from host to build'.format(req)] = True
                 build_lines.append(lines[i].rstrip())
                 change_lines[i] = (lines[i], None)
                 continue
             if req == 'python' and '# [win]' in line:
-                messages['Moving `python # [win]` which was used for vc matrix'.format(req)] = True
+                messages['Moving `python # [win]` which was used for vc matrix'] = True
                 change_lines[i] = (lines[i], None)
                 python_win_matrix = True
                 continue
@@ -236,7 +242,7 @@ def update_cb3(recipe_path, conda_build_config_path):
 
             if req.replace('-', '_') in pinned_packages or \
                     (req_rendered.replace('-', '_') in pinned_packages):
-                s = list(filter(None, lines[i].strip().split(' ')))
+                s = list(filter(None, line.split(' ')))
                 if len(s) > 2 and not s[2].startswith('#') and i not in change_lines:
                     if not req.replace('-', '_') in pinned_packages and \
                             not ('m2w64-' + req_rendered.replace('-', '_')) in pinned_packages and \
@@ -331,15 +337,16 @@ def update_cb3(recipe_path, conda_build_config_path):
             build_lines.append(build_space + "{{ compiler('"+ name + "') }}")
             messages['Adding ' + p_name + ' compiler'] = True
 
-    if need_f:
+    if need_f and 'fortran' not in compilers:
         add_compiler('fortran', 'Fortran')
-    if need_c:
+    if need_c and 'c' not in compilers:
         add_compiler('c', 'C')
-    if need_cxx:
+    if need_cxx and 'cxx' not in compilers:
         add_compiler('cxx', 'C++')
 
     if build_lines:
-        build_lines = [' '*(len(reqbuild_line) - len(reqbuild_line.lstrip()))  +'build:'] + build_lines
+        if messages['Renamed build with host']:
+            build_lines = [' '*(len(reqbuild_line) - len(reqbuild_line.lstrip()))  +'build:'] + build_lines
         pos = requirements_section.start - 1
         change_lines[pos] = lines[pos], lines[pos] + '\n'.join(build_lines)
 
