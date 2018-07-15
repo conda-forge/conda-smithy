@@ -1,0 +1,34 @@
+# This file was generated automatically from conda-smithy. To update this configuration,
+# update the conda-forge.yml and/or the recipe/meta.yaml.
+try:
+    from ruamel_yaml import safe_load
+except ImportError:
+    from yaml import safe_load
+import subprocess
+import json
+import sys
+
+global_config = json.loads('''
+{{ channels | tojson }}''')
+call = subprocess.check_call
+
+
+def setup_conda_rc(config_file):
+    specific_config = safe_load(open(config_file))
+    if 'channel_sources' in specific_config:
+        # Due to rendering we may have more than one row for channel_sources, if nothing gets zipped with it
+        first_row = specific_config['channel_sources'][0]  # type: str
+        channels = [c.strip() for c in first_row.split(',')]
+    else:
+        channels = global_config['sources']
+
+    call(['conda', 'config', '--remove', 'channels', 'defaults'])
+    for c in reversed(channels):
+        call(['conda', 'config', '--add', 'channels', c])
+
+    call(['conda', 'config', '--set', 'show_channel_urls', 'true'])
+
+
+if __name__ == '__main__':
+    setup_conda_rc(sys.argv[1])
+
