@@ -56,17 +56,14 @@ install:
       echo ""
       echo "Configuring conda."
       source /Users/travis/miniconda3/bin/activate root
-      conda config --remove channels defaults
-      {%- for channel in channels.get('sources', [])|reverse %}
-      conda config --add channels {{ channel }}
-      {%- endfor %}
-      conda config --set show_channel_urls true
+
+      python ./.travis/update_condarc.py ./.ci_support/${CONFIG}.yaml
+
       conda install --yes --quiet conda-forge-ci-setup=1
       {% if build_setup -%}
       {{ build_setup }}{% endif %}
 
 script:
   - conda build ./{{ recipe_dir }} -m ./.ci_support/${CONFIG}.yaml
-{% for owner, channel in channels['targets'] %}
-  - {{ upload_script }} ./{{ recipe_dir }} {{ owner }} --channel={{ channel }} -m ./.ci_support/${CONFIG}.yaml
-{% endfor %}
+  - python ./.travis/upload_package.py ./{{ recipe_dir }} ./.ci_support/${CONFIG}.yaml
+

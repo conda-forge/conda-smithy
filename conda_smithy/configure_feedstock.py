@@ -195,6 +195,7 @@ def break_up_top_level_values(top_level_keys, squished_variants):
 
     return configs
 
+
 def _package_var_name(pkg):
     return pkg.replace('-', '_')
 
@@ -267,7 +268,7 @@ def _collapse_subpackage_variants(list_of_metas):
 
     # Add in some variables that should always be preserved
     always_keep_keys = set(('zip_keys', 'pin_run_as_build', 'MACOSX_DEPLOYMENT_TARGET',
-                            'macos_min_version', 'macos_machine'))
+                            'macos_min_version', 'macos_machine', 'channel_sources', 'channel_targets'))
     all_used_vars.update(always_keep_keys)
     all_used_vars.update(top_level_vars)
 
@@ -552,18 +553,17 @@ def _circle_specific_setup(jinja_env, forge_config, forge_dir, platform):
     template_files = [
         '{}.sh.tmpl'.format(run_file_name),
         'fast_finish_ci_pr_build.sh.tmpl',
+        'update_condarc.py.tmpl',
+        'upload_package.py.tmpl',
     ]
 
     if platform == 'linux':
         template_files.append('build_steps.sh.tmpl')
 
-    for template_file in template_files:
-        template = jinja_env.get_template(template_file)
-        target_fname = os.path.join(forge_dir, '.circleci', template_file[:-len('.tmpl')])
-        with write_file(target_fname) as fh:
-            fh.write(template.render(**forge_config))
-        # Fix permission of template shell files
-        set_exe_file(target_fname, True)
+    _render_tempate_exe_files(forge_config=forge_config,
+                              target_dir=os.path.join(forge_dir, '.circleci'),
+                              jinja_env=jinja_env,
+                              template_files=template_files)
 
     # Fix permission of other shell files.
     target_fnames = [
@@ -599,6 +599,8 @@ def render_circle(jinja_env, forge_config, forge_dir):
         'common': [
             os.path.join(forge_dir, '.circleci', 'checkout_merge_commit.sh'),
             os.path.join(forge_dir, '.circleci', 'fast_finish_ci_pr_build.sh'),
+            os.path.join(forge_dir, '.circleci', 'update_condarc.py'),
+            os.path.join(forge_dir, '.circleci', 'upload_package.py'),
         ],
         'linux': [
             os.path.join(forge_dir, '.circleci', 'run_docker_build.sh'),
@@ -634,9 +636,30 @@ def _travis_specific_setup(jinja_env, forge_config, forge_dir, platform):
             source run_conda_forge_build_setup
         """)
 
+    # TODO: Conda has a convenience for accessing nested yaml content.
+    template_files = [
+        'update_condarc.py.tmpl',
+        'upload_package.py.tmpl',
+    ]
+
+    _render_tempate_exe_files(forge_config=forge_config,
+                              target_dir=os.path.join(forge_dir, '.travis'),
+                              jinja_env=jinja_env,
+                              template_files=template_files)
+
     build_setup = build_setup.strip()
     build_setup = build_setup.replace("\n", "\n      ")
     forge_config['build_setup'] = build_setup
+
+
+def _render_tempate_exe_files(forge_config, target_dir, jinja_env, template_files):
+    for template_file in template_files:
+        template = jinja_env.get_template(template_file)
+        target_fname = os.path.join(target_dir, template_file[:-len('.tmpl')])
+        with write_file(target_fname) as fh:
+            fh.write(template.render(**forge_config))
+        # Fix permission of template shell files
+        set_exe_file(target_fname, True)
 
 
 def render_travis(jinja_env, forge_config, forge_dir):
@@ -648,12 +671,19 @@ def render_travis(jinja_env, forge_config, forge_dir):
     """)
 
     platforms, archs, keep_noarchs = _get_platforms_of_provider('travis', forge_config)
+    extra_platform_files = {
+        'common': [
+            os.path.join(forge_dir, '.travis', 'update_condarc.py'),
+            os.path.join(forge_dir, '.travis', 'upload_package.py'),
+        ]
+    }
 
     return _render_ci_provider('travis', jinja_env=jinja_env, forge_config=forge_config,
                                forge_dir=forge_dir, platforms=platforms, archs=archs,
                                fast_finish_text=fast_finish_text, platform_target_path=target_path,
                                platform_template_file=template_filename, keep_noarchs=keep_noarchs,
-                               platform_specific_setup=_travis_specific_setup)
+                               platform_specific_setup=_travis_specific_setup,
+                               extra_platform_files=extra_platform_files)
 
 
 def _appveyor_specific_setup(jinja_env, forge_config, forge_dir, platform):
