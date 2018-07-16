@@ -171,7 +171,7 @@ class Regenerate(Subcommand):
                          help="The directory of the feedstock git repository.")
         scp.add_argument("-c", "--commit", nargs='?', choices=["edit", "auto"], const="edit",
                          help="Whether to setup a commit or not.")
-        scp.add_argument("--no-check-uptodate", default=False,
+        scp.add_argument("--no-check-uptodate", action="store_true",
                          help="Don't check that conda-smithy and conda-forge-pinning are uptodate")
         scp.add_argument("-e", "--exclusive-config-file", default=None,
                          help="Exclusive conda-build config file to replace conda-forge-pinning. " + \
