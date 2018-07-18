@@ -57,7 +57,7 @@ install:
       echo "Configuring conda."
       source /Users/travis/miniconda3/bin/activate root
 
-      ./.travis/build_utils.py update_condarc ./.ci_support/${CONFIG}.yaml
+      ./.travis/build_utils.py setup_conda ./.ci_support/${CONFIG}.yaml
 
       conda install --yes --quiet conda-forge-ci-setup=1
       {% if build_setup -%}

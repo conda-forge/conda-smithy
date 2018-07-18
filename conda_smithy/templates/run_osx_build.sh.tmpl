@@ -20,7 +20,7 @@ source ~/miniconda3/bin/activate root
 export utils=./.circleci/build_utils.py
 
 $utils mangle_compiler ./.ci_support/${CONFIG}.yaml
-$utils update_condarc ./.ci_support/${CONFIG}.yaml
+$utils setup_conda ./.ci_support/${CONFIG}.yaml
 conda install --yes --quiet conda-forge-ci-setup=1
 
 {% if build_setup -%}
