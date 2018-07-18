@@ -57,13 +57,19 @@ install:
       echo "Configuring conda."
       source /Users/travis/miniconda3/bin/activate root
 
-      python ./.travis/update_condarc.py ./.ci_support/${CONFIG}.yaml
+      ./.travis/build_utils.py update_condarc ./.ci_support/${CONFIG}.yaml
 
       conda install --yes --quiet conda-forge-ci-setup=1
       {% if build_setup -%}
       {{ build_setup }}{% endif %}
 
+    # compiler cleanup
+    - |
+      ./.travis/build_utils.py mangle_compiler ./.ci_support/${CONFIG}.yaml
+
 script:
-  - conda build ./{{ recipe_dir }} -m ./.ci_support/${CONFIG}.yaml
-  - python ./.travis/upload_package.py ./{{ recipe_dir }} ./.ci_support/${CONFIG}.yaml
+  # generate the build number clobber
+  - ./.travis/build_utils.py make_build_number ./.ci_support/${CONFIG}.yaml
+  - conda build ./{{ recipe_dir }} -m ./.ci_support/${CONFIG}.yaml --clobber-file ./.ci_support/clobber_{CONFIG}.yaml
+  - ./.travis/build_utils.py upload_package ./{{ recipe_dir }} ./.ci_support/${CONFIG}.yaml
 
