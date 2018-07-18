@@ -60,7 +60,7 @@ def make_build_number(args):
             match = pat.match(line)
             if match:
                 prefix, suffix = match.groups()
-                line = prefix + str(int(suffix) + build_number_inc)
+                line = prefix + str(int(suffix) + build_number_inc) + '\n'
                 build_number_found = True
             recipe_dst.append(line)
 
