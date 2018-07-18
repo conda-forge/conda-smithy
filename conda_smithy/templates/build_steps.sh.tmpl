@@ -24,7 +24,7 @@ $utils setup_conda ${CI_SUPPORT}/${CONFIG}.yaml
 # A lock sometimes occurs with incomplete builds. The lock file is stored in build_artifacts.
 conda clean --lock
 
-conda install --yes --quiet conda-forge-ci-setup=1 conda-build
+conda install --yes --quiet conda-forge::conda-forge-ci-setup=1 conda-build
 {% if build_setup -%}
 {{ build_setup }}{% endif -%}
 
