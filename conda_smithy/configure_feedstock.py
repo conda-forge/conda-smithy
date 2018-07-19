@@ -269,7 +269,7 @@ def _collapse_subpackage_variants(list_of_metas):
     # Add in some variables that should always be preserved
     always_keep_keys = set(('zip_keys', 'pin_run_as_build', 'MACOSX_DEPLOYMENT_TARGET',
                             'macos_min_version', 'macos_machine',
-                            'channel_sources', 'channel_targets', 'docker_image', 'build_number_increment'))
+                            'channel_sources', 'channel_targets', 'docker_image', 'build_number_decrement'))
     all_used_vars.update(always_keep_keys)
     all_used_vars.update(top_level_vars)
 
@@ -311,7 +311,7 @@ def finalize_config(config, platform):
             pass
         else:
             config['channel_sources'] = [config['channel_sources'][0]]
-            config['build_number_increment'] = [config['build_number_increment'][0]]
+            config['build_number_decrement'] = [config['build_number_decrement'][-1]]
             # prefer to build with the newer compiler image, This ensures that for things that don't declare they need
             # compilers, they will fail
             config['docker_image'] = [config['docker_image'][-1]]

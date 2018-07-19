@@ -44,10 +44,35 @@ def upload_package(args):
 
 
 def make_build_number(args):
+    """
+    General logic
+
+        The purpose of this is to ensure that the new compilers have build
+        numbers > 1000 and legacy compilers have a build number < 1000.
+
+        This is done by reading the build_number_decrement which is rendered
+        into all the recipes.
+
+        For linux and osx we want to avoid building for the legacy compilers
+        with build numbers > 1000
+
+    Example matrix
+        - {'compiler_c': 'toolchain_c', 'build_number_decrement': 1000}
+        - {'compiler_c': 'gcc',         'build_number_decrement': 0}
+
+    """
     specific_config = safe_load(open(args.config_file))
-    build_number_inc = int(specific_config.get("build_number_increment", [0])[0])
+    build_number_dec = int(specific_config.get("build_number_decrement", [0])[0])
+    # specialized compilers
+
+    use_legacy_compilers = False
+    for key in {'c_compiler', 'cxx_compiler', 'fortran_compiler'}:
+        if 'toolchain_' in specific_config.get(key, ''):
+            use_legacy_compilers = True
+            break
+
     # nothing to do here
-    if build_number_inc == 0:
+    if build_number_dec == 0:
         return
 
     import re
@@ -60,7 +85,15 @@ def make_build_number(args):
             match = pat.match(line)
             if match:
                 prefix, suffix = match.groups()
-                line = prefix + str(int(suffix) + build_number_inc) + '\n'
+                orig_build_number = int(suffix)
+                if (orig_build_number < 1000):
+                    if not use_legacy_compilers:
+                        raise ValueError("Only legacy compilers only valid with build numbers < 1000")
+                    else:
+                        # keep original build number
+                        line = line
+                else:
+                    line = prefix + str(orig_build_number - build_number_dec) + '\n'
                 build_number_found = True
             recipe_dst.append(line)
 
@@ -71,7 +104,7 @@ def make_build_number(args):
         # conda build ignores clobber files that don't exist, so this is safe
         config_dir, filename = os.path.split(args.config_file)
         with open(os.path.join(config_dir, 'clobber_' + filename), 'w') as fo:
-            safe_dump({'build': {'number': 0 + build_number_inc}}, fo)
+            safe_dump({'build': {'number': 1000 - build_number_dec}}, fo)
 
 
 def mangle_compiler(args):
