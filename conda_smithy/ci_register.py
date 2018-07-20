@@ -217,7 +217,7 @@ def travis_wait_until_synced(ignore=False):
 def travis_repo_writable(repo_info):
     if "@permissions" not in repo_info:
         return False
-    permissions = repo_info["@permissiqons"]
+    permissions = repo_info["@permissions"]
     if "admin" not in permissions or not permissions["admin"]:
         return False
     return True
