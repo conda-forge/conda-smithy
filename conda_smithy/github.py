@@ -156,7 +156,7 @@ def accept_all_repository_invitations(gh):
 def remove_from_project(gh, org, project):
     user = gh.get_user()
     repo = gh.get_repo("{}/{}".format(org, project))
-    repo.remove_from_collaborators(user)
+    repo.remove_from_collaborators(user.login)
 
 
 def configure_github_team(meta, gh_repo, org, feedstock_name):
