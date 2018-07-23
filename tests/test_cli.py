@@ -55,8 +55,8 @@ def test_init_multiple_output_matrix(testing_workdir):
     # the matrix should be consolidated among all outputs, as well as the top-level
     # reqs. Only the top-level reqs should have indedependent config files,
     # though - loops within outputs are contained in those top-level configs.
-    assert len(os.listdir(matrix_dir)) == 13
-    linux_libpng16 = os.path.join(matrix_dir, 'linux_libpng1.6libpq9.5.yaml')
+    assert len(os.listdir(matrix_dir)) == 25
+    linux_libpng16 = os.path.join(matrix_dir, 'linux_jpeg8libpng1.6libpq9.5.yaml')
     assert os.path.isfile(linux_libpng16)
     with open(linux_libpng16) as f:
         config = yaml.load(f)
@@ -66,7 +66,7 @@ def test_init_multiple_output_matrix(testing_workdir):
     assert 'libtiff' not in config
     assert 'zip_keys' not in config or not any('libtiff' in group for group in config['zip_keys'])
     # this is a variable only for one of the outputs
-    assert config['jpeg'] == ['8', '9']
+    assert config['jpeg'] == ['8']
     # this is in conda_build_config.yaml, but is a transitive dependency.  It should
     #     not show up in the final configs.
     assert 'zlib' not in config
