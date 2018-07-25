@@ -4,6 +4,16 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.1.8
+====================
+
+**Fixed:**
+
+* Linter issue with multiple outputs and unexpected subsection checks
+
+
+
+
 v3.1.7
 ====================
 
