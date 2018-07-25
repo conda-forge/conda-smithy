@@ -122,10 +122,11 @@ def update_cb3(recipe_path, conda_build_config_path):
 
     with io.open(recipe_path, 'rt') as fh:
         lines = list(fh)
+
     orig_content = ''.join(lines)
     content = orig_content
-    compilers = re.findall("{{ compiler\('(.+?)'\) }}", content)
-    jinjas = re.findall('{%(?:.+?)%}', content, re.DOTALL)
+    compilers = re.findall('{{\s*compiler\(["\'](.+?)["\']\)\s*}}', content)
+    jinjas = re.findall('{%.+?%}', content, re.DOTALL)
     for j in jinjas:
         new_j = ''
         for c in j:
