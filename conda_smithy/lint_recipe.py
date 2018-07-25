@@ -249,7 +249,6 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
         expected_subsections = FIELDS.get(section, [])
         if not expected_subsections:
             continue
-        print(meta, section, get_section(meta, section, lints))
         for subsection in get_section(meta, section, lints):
             if (section != 'source'
                 and section != 'outputs'
