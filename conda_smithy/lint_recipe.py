@@ -249,12 +249,15 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
         expected_subsections = FIELDS.get(section, [])
         if not expected_subsections:
             continue
+        print(meta, section, get_section(meta, section, lints))
         for subsection in get_section(meta, section, lints):
-            if section != 'source' and subsection not in expected_subsections:
+            if (section != 'source'
+                and section != 'outputs'
+                and subsection not in expected_subsections):
                 lints.append('The {} section contained an unexpected '
                              'subsection name. {} is not a valid subsection'
                              ' name.'.format(section, subsection))
-            elif section == 'source':
+            elif section == 'source' or section == 'outputs':
                 for source_subsection in subsection:
                     if source_subsection not in expected_subsections:
                         lints.append('The {} section contained an unexpected '
