@@ -224,13 +224,15 @@ def update_cb3(recipe_path, conda_build_config_path):
                 if 'c' not in compilers:
                     messages['Found cython requirement. Adding compiler'] = True
                     need_c = True
-            if req in ['ninja', 'jom', 'cmake', 'automake', 'autoconf', 'libtool',
+            if req in (['ninja', 'jom', 'cmake', 'automake', 'autoconf', 'libtool',
                        'make', 'pkg-config', 'automake-wrapper', 'posix', 'm4'] \
                     or req.startswith("{{p") or req.startswith("m2-") \
                     or (req_rendered in ['perl', 'texlive-core', 'curl', 'openssl', 'tar', 'gzip', 'patch']
-                        and req_rendered not in reqs['run']) and section == 'build':
+                        and req_rendered not in reqs['run']))
+                    and section == 'host':
                 messages['Moving {} from host to build'.format(req)] = True
-                build_lines.append(lines[i].rstrip())
+                if req_rendered not in reqs['build']:
+                    build_lines.append(lines[i].rstrip())
                 change_lines[i] = (lines[i], None)
                 continue
             if req == 'python' and '# [win]' in line:
