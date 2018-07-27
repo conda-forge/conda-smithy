@@ -184,7 +184,7 @@ def update_cb3(recipe_path, conda_build_config_path):
     # Setup requirements
     for i in range(requirements_section.start, requirements_section.end+1):
         line = lines[i].strip()
-        if line == 'host':
+        if line == 'host:':
             section = 'host'
         elif line == 'run:':
             section = 'run'
@@ -198,7 +198,7 @@ def update_cb3(recipe_path, conda_build_config_path):
     # Remove build stuff
     for i in range(requirements_section.start, requirements_section.end+1):
         line = lines[i].strip()
-        if line == 'host':
+        if line == 'host:':
             section = 'host'
         elif line == 'run:':
             section = 'run'
@@ -224,16 +224,20 @@ def update_cb3(recipe_path, conda_build_config_path):
                 if 'c' not in compilers:
                     messages['Found cython requirement. Adding compiler'] = True
                     need_c = True
-            if req in (['ninja', 'jom', 'cmake', 'automake', 'autoconf', 'libtool',
+            if req in ['ninja', 'jom', 'cmake', 'automake', 'autoconf', 'libtool',
                        'make', 'pkg-config', 'automake-wrapper', 'posix', 'm4'] \
                     or req.startswith("{{p") or req.startswith("m2-") \
                     or (req_rendered in ['perl', 'texlive-core', 'curl', 'openssl', 'tar', 'gzip', 'patch']
-                        and req_rendered not in reqs['run']))
-                    and section == 'host':
-                messages['Moving {} from host to build'.format(req)] = True
-                if req_rendered not in reqs['build']:
+                        and section != 'run' and req_rendered not in reqs['run']):
+                if messages.get('Renamed build with host', False):
+                    messages['Moving {} from host to build'.format(req)] = True
                     build_lines.append(lines[i].rstrip())
-                change_lines[i] = (lines[i], None)
+                    change_lines[i] = (lines[i], None)
+                elif section == 'host':
+                    messages['Moving {} from host to build'.format(req)] = True
+                    if req_rendered not in reqs['build']:
+                        build_lines.append(lines[i].rstrip())
+                    change_lines[i] = (lines[i], None)
                 continue
             if req == 'python' and '# [win]' in line:
                 messages['Moving `python # [win]` which was used for vc matrix'] = True
@@ -348,9 +352,11 @@ def update_cb3(recipe_path, conda_build_config_path):
         add_compiler('cxx', 'C++')
 
     if build_lines:
-        if messages['Renamed build with host']:
+        if messages.get('Renamed build with host', False):
             build_lines = [' '*(len(reqbuild_line) - len(reqbuild_line.lstrip()))  +'build:'] + build_lines
-        pos = requirements_section.start - 1
+            pos = requirements_section.start - 1
+        else:
+            pos = reqbuild_section.start
         change_lines[pos] = lines[pos], lines[pos] + '\n'.join(build_lines)
 
     new_lines = []
