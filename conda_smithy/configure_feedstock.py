@@ -299,6 +299,12 @@ def _collapse_subpackage_variants(list_of_metas):
     return break_up_top_level_values(top_level_loop_vars, used_key_values), top_level_loop_vars
 
 
+def _yaml_represent_ordereddict(self, data):
+    # represent_dict processes dict-likes with a .sort() method or plain iterables of key-value
+    #     pairs. Only for the latter it never sorts and retains the order of the OrderedDict.
+    return yaml.representer.SafeRepresenter.represent_dict(self, data.items())
+
+
 def dump_subspace_config_files(metas, root_path, output_name):
     """With conda-build 3, it handles the build matrix.  We take what it spits out, and write a
     config.yaml file for each matrix entry that it spits out.  References to a specific file
@@ -312,7 +318,7 @@ def dump_subspace_config_files(metas, root_path, output_name):
     # get rid of the special object notation in the yaml file for objects that we dump
     yaml.add_representer(set, yaml.representer.SafeRepresenter.represent_list)
     yaml.add_representer(tuple, yaml.representer.SafeRepresenter.represent_list)
-    yaml.add_representer(OrderedDict, yaml.representer.SafeRepresenter.represent_dict)
+    yaml.add_representer(OrderedDict, _yaml_represent_ordereddict)
 
     result = []
     for config in configs:
