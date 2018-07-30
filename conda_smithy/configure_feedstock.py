@@ -299,10 +299,10 @@ def _collapse_subpackage_variants(list_of_metas):
     return break_up_top_level_values(top_level_loop_vars, used_key_values), top_level_loop_vars
 
 
-def _yaml_represent_ordereddict(self, data):
+def _yaml_represent_ordereddict(yaml_representer, data):
     # represent_dict processes dict-likes with a .sort() method or plain iterables of key-value
     #     pairs. Only for the latter it never sorts and retains the order of the OrderedDict.
-    return yaml.representer.SafeRepresenter.represent_dict(self, data.items())
+    return yaml.representer.SafeRepresenter.represent_dict(yaml_representer, data.items())
 
 
 def dump_subspace_config_files(metas, root_path, output_name):
