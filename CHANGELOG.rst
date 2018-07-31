@@ -4,6 +4,21 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.1.9
+====================
+
+**Added:**
+
+* Add merge_build_host: True #[win] for R packages in update-cb3
+
+
+**Changed:**
+
+* Package the tests
+
+
+
+
 v3.1.8
 ====================
 
