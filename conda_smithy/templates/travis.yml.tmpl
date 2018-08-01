@@ -70,6 +70,6 @@ install:
 script:
   # generate the build number clobber
   - ./.travis/build_utils.py make_build_number ./{{ recipe_dir }} ./.ci_support/${CONFIG}.yaml
-  - conda build ./{{ recipe_dir }} -m ./.ci_support/${CONFIG}.yaml --clobber-file ./.ci_support/clobber_{CONFIG}.yaml
+  - conda build ./{{ recipe_dir }} -m ./.ci_support/${CONFIG}.yaml --clobber-file ./.ci_support/clobber_${CONFIG}.yaml
   - ./.travis/build_utils.py upload_package ./{{ recipe_dir }} ./.ci_support/${CONFIG}.yaml
 
