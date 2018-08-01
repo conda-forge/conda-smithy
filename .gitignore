@@ -10,3 +10,6 @@ dist/
 
 # Rever
 rever/
+
+# Pycharm
+.idea/

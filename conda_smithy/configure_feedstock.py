@@ -310,11 +310,17 @@ def finalize_config(config, platform):
             # we have a compiled source here so the zip should take care of things appropriately
             pass
         else:
-            config['channel_sources'] = [config['channel_sources'][0]]
-            config['build_number_decrement'] = [config['build_number_decrement'][-1]]
-            # prefer to build with the newer compiler image, This ensures that for things that don't declare they need
-            # compilers, they will fail
-            config['docker_image'] = [config['docker_image'][-1]]
+            try:
+                config['channel_sources'] = [config['channel_sources'][0]]
+                config['build_number_decrement'] = [config['build_number_decrement'][-1]]
+                # prefer to build with the newer compiler image, This ensures that for things that don't declare they need
+                # compilers, they will fail
+                config['docker_image'] = [config['docker_image'][-1]]
+            except KeyError:
+                config['channel_sources'] = 'conda-forge,defaults'
+                config['build_number_decrement'] = '200'
+                config['docker_image'] = 'condaforge/linux-anvil'
+
     return config
 
 
