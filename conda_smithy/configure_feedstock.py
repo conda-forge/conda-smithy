@@ -590,10 +590,10 @@ def _circle_specific_setup(jinja_env, forge_config, forge_dir, platform):
     if platform == 'linux':
         template_files.append('build_steps.sh.tmpl')
 
-    _render_tempate_exe_files(forge_config=forge_config,
-                              target_dir=os.path.join(forge_dir, '.circleci'),
-                              jinja_env=jinja_env,
-                              template_files=template_files)
+    _render_template_exe_files(forge_config=forge_config,
+                               target_dir=os.path.join(forge_dir, '.circleci'),
+                               jinja_env=jinja_env,
+                               template_files=template_files)
 
     # Fix permission of other shell files.
     target_fnames = [
@@ -671,17 +671,17 @@ def _travis_specific_setup(jinja_env, forge_config, forge_dir, platform):
         'build_utils.py.tmpl',
     ]
 
-    _render_tempate_exe_files(forge_config=forge_config,
-                              target_dir=os.path.join(forge_dir, '.travis'),
-                              jinja_env=jinja_env,
-                              template_files=template_files)
+    _render_template_exe_files(forge_config=forge_config,
+                               target_dir=os.path.join(forge_dir, '.travis'),
+                               jinja_env=jinja_env,
+                               template_files=template_files)
 
     build_setup = build_setup.strip()
     build_setup = build_setup.replace("\n", "\n      ")
     forge_config['build_setup'] = build_setup
 
 
-def _render_tempate_exe_files(forge_config, target_dir, jinja_env, template_files):
+def _render_template_exe_files(forge_config, target_dir, jinja_env, template_files):
     for template_file in template_files:
         template = jinja_env.get_template(template_file)
         target_fname = os.path.join(target_dir, template_file[:-len('.tmpl')])
