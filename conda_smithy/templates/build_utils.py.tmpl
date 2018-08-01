@@ -71,7 +71,7 @@ def make_build_number(args):
             break
 
     import conda_build.api
-    rendered_recipe = conda_build.api.render(recipe_path=args.recipe_root, variants=args.config_file)
+    rendered_recipe = conda_build.api.render(recipe_path=args.recipe_root, variants=specific_config)
     build_numbers = set()
     for recipe, _, _ in rendered_recipe:
         build_numbers.add(recipe.get_value('build/number'))
