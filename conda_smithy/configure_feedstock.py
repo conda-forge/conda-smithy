@@ -324,7 +324,7 @@ def finalize_config(config, platform):
                 config['docker_image'] = [config['docker_image'][-1]]
             except KeyError:
                 config['channel_sources'] = 'conda-forge,defaults'
-                config['build_number_decrement'] = '200'
+                config['build_number_decrement'] = '0'
                 config['docker_image'] = 'condaforge/linux-anvil'
 
     return config
