@@ -37,6 +37,7 @@ EXPECTED_SECTION_ORDER = ['package', 'source', 'build', 'requirements',
 REQUIREMENTS_ORDER = ['build', 'host', 'run']
 
 TEST_KEYS = {'imports', 'commands'}
+TEST_FILES = ['run_test.py', 'run_test.sh', 'run_test.bat', 'run_test.pl']
 
 sel_pat = re.compile(r'(.+?)\s*(#.*)?\[([^\[\]]+)\](?(2).*)$')
 jinja_pat = re.compile(r'\s*\{%\s*(set)\s+[^\s]+\s*=\s*[^\s]+\s*%\}')
@@ -44,7 +45,9 @@ jinja_pat = re.compile(r'\s*\{%\s*(set)\s+[^\s]+\s*=\s*[^\s]+\s*%\}')
 
 def get_section(parent, name, lints):
     if name == 'source':
-        return get_source_section(parent, lints)
+        return get_list_section(parent, name, lints, allow_single=True)
+    elif name == 'outputs':
+        return get_list_section(parent, name, lints)
 
     section = parent.get(name, {})
     if not isinstance(section, dict):
@@ -54,17 +57,18 @@ def get_section(parent, name, lints):
     return section
 
 
-def get_source_section(parent, lints):
-    section = parent.get('source', {})
-    if isinstance(section, dict):
-        return [ section ]
+def get_list_section(parent, name, lints, allow_single=False):
+    section = parent.get(name, [])
+    if allow_single and isinstance(section, dict):
+        return [section]
     elif isinstance(section, list):
         return section
     else:
-        lints.append('The "source" section was expected to be a dictionary or '
-                     'a list, but got a {}.{}'.format(type(section).__module__,
-                         type(section).__name__))
-        return [ {} ]
+        msg = ('The "{}" section was expected to be a {}list, but got a {}.{}.'
+               .format(name, "dictionary or a " if allow_single else "",
+                       type(section).__module__, type(section).__name__))
+        lints.append(msg)
+        return [{}]
 
 
 def lint_section_order(major_sections, lints):
@@ -103,6 +107,7 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
     about_section = get_section(meta, 'about', lints)
     extra_section = get_section(meta, 'extra', lints)
     package_section = get_section(meta, 'package', lints)
+    outputs_section = get_section(meta, 'outputs', lints)
 
     # 0: Top level keys should be expected
     unexpected_sections = []
@@ -131,14 +136,27 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
 
     # 4: The recipe should have some tests.
     if not any(key in TEST_KEYS for key in test_section):
-        test_files = ['run_test.py', 'run_test.sh', 'run_test.bat',
-                      'run_test.pl']
         a_test_file_exists = (recipe_dir is not None and
                               any(os.path.exists(os.path.join(recipe_dir,
                                                               test_file))
-                                  for test_file in test_files))
+                                  for test_file in TEST_FILES))
         if not a_test_file_exists:
-            lints.append('The recipe must have some tests.')
+            has_outputs_test = False
+            no_test_hints = []
+            if outputs_section:
+                for out in outputs_section:
+                    test_out = get_section(out, 'test', lints)
+                    if any(key in TEST_KEYS for key in test_out):
+                        has_outputs_test = True
+                    else:
+                        no_test_hints.append(
+                            "It looks like the '{}' output doesn't "
+                            "have any tests.".format(out.get('name', '???')))
+
+            if has_outputs_test:
+                hints.extend(no_test_hints)
+            else:
+                lints.append('The recipe must have some tests.')
 
     # 5: License cannot be 'unknown.'
     license = about_section.get('license', '').lower()
@@ -232,11 +250,13 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
         if not expected_subsections:
             continue
         for subsection in get_section(meta, section, lints):
-            if section != 'source' and subsection not in expected_subsections:
+            if (section != 'source'
+                and section != 'outputs'
+                and subsection not in expected_subsections):
                 lints.append('The {} section contained an unexpected '
                              'subsection name. {} is not a valid subsection'
                              ' name.'.format(section, subsection))
-            elif section == 'source':
+            elif section == 'source' or section == 'outputs':
                 for source_subsection in subsection:
                     if source_subsection not in expected_subsections:
                         lints.append('The {} section contained an unexpected '

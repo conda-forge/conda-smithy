@@ -8,6 +8,6 @@
 
 **Fixed:**
 
-- Fix travis-ci API permission error (#812)
+- Fix OrderedDict order not being kept (#854)
 
 **Security:** None

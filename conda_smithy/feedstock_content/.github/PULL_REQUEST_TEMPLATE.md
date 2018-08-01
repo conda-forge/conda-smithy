@@ -6,7 +6,7 @@ Checklist
 * [ ] Used a fork of the feedstock to propose changes
 * [ ] Bumped the build number (if the version is unchanged)
 * [ ] Reset the build number to `0` (if the version changed)
-* [ ] [Re-rendered]( https://conda-forge.org/docs/conda_smithy.html#how-to-re-render ) with the latest `conda-smithy`
+* [ ] [Re-rendered]( https://conda-forge.org/docs/conda_smithy.html#how-to-re-render ) with the latest `conda-smithy` (`@conda-forge-admin, please rerender`)
 * [ ] Ensured the license file is being packaged.
 
 <!--

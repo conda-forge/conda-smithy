@@ -131,7 +131,6 @@ def get_compilers(url):
     return need_f, need_c, need_cxx, need_numpy_pin
 
 
-
 def update_cb3(recipe_path, conda_build_config_path):
     '''
     Update the recipe in `recipe_path` to use conda-build=3 features according
@@ -185,6 +184,7 @@ def update_cb3(recipe_path, conda_build_config_path):
     need_f, need_c, need_cxx, need_numpy_pin = get_compilers(url)
     #need_f, need_c, need_cxx, need_numpy_pin = False, False, False, False
     need_mingw_c = False
+    is_r_package = False
 
     with io.open(conda_build_config_path, 'r') as fh:
         config = ''.join(fh)
@@ -227,6 +227,8 @@ def update_cb3(recipe_path, conda_build_config_path):
                 req_rendered = req
             if req == 'libgfortran':
                 need_f = True
+            if req == 'r-base':
+                is_r_package = True
             if req_rendered in ['toolchain', 'gcc', 'libgcc', 'libgfortran', 'vc', 'm2w64-toolchain',
                        'mingwpy', 'system', 'gcc-libs', 'm2w64-gcc-libs']:
                 messages['Removing {} in favour of compiler()'.format(req)] = True
@@ -364,6 +366,11 @@ def update_cb3(recipe_path, conda_build_config_path):
         build_lines = [' '*(len(reqbuild_line) - len(reqbuild_line.lstrip()))  +'build:'] + build_lines
         pos = requirements_section.start - 1
         change_lines[pos] = lines[pos], lines[pos] + '\n'.join(build_lines)
+
+    if is_r_package:
+        messages['Adding merge_build_host: True  # [win]'] = True
+        pos = build_section.start - 1
+        change_lines[pos] = lines[pos], lines[pos] + ' '*(len(lines[pos + 1]) - len(lines[pos + 1].lstrip()))  + 'merge_build_host: True  # [win]'
 
     new_lines = []
 

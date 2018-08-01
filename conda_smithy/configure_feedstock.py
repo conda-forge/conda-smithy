@@ -301,6 +301,12 @@ def _collapse_subpackage_variants(list_of_metas):
     return break_up_top_level_values(top_level_loop_vars, used_key_values), top_level_loop_vars
 
 
+def _yaml_represent_ordereddict(yaml_representer, data):
+    # represent_dict processes dict-likes with a .sort() method or plain iterables of key-value
+    #     pairs. Only for the latter it never sorts and retains the order of the OrderedDict.
+    return yaml.representer.SafeRepresenter.represent_dict(yaml_representer, data.items())
+
+
 def finalize_config(config, platform):
     """Specialized handling to deal with the dual compiler output state.
     In a future state this SHOULD go away"""
@@ -337,7 +343,7 @@ def dump_subspace_config_files(metas, root_path, platform):
     # get rid of the special object notation in the yaml file for objects that we dump
     yaml.add_representer(set, yaml.representer.SafeRepresenter.represent_list)
     yaml.add_representer(tuple, yaml.representer.SafeRepresenter.represent_list)
-    yaml.add_representer(OrderedDict, yaml.representer.SafeRepresenter.represent_dict)
+    yaml.add_representer(OrderedDict, _yaml_represent_ordereddict)
 
     result = []
     for config in configs:
