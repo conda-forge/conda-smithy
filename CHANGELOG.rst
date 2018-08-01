@@ -4,6 +4,21 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.1.10
+====================
+
+**Changed:**
+
+- Change conda-smithy rerender text in PR template so that it is not invoked. (#858)
+
+
+**Fixed:**
+
+- Fix OrderedDict order not being kept (#854)
+
+
+
+
 v3.1.9
 ====================
 
