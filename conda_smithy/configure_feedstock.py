@@ -584,7 +584,6 @@ def _circle_specific_setup(jinja_env, forge_config, forge_dir, platform):
     template_files = [
         '{}.sh.tmpl'.format(run_file_name),
         'fast_finish_ci_pr_build.sh.tmpl',
-        'build_utils.py.tmpl',
     ]
 
     if platform == 'linux':
@@ -665,16 +664,6 @@ def _travis_specific_setup(jinja_env, forge_config, forge_dir, platform):
         build_setup += textwrap.dedent("""\
             source run_conda_forge_build_setup
         """)
-
-    # TODO: Conda has a convenience for accessing nested yaml content.
-    template_files = [
-        'build_utils.py.tmpl',
-    ]
-
-    _render_template_exe_files(forge_config=forge_config,
-                               target_dir=os.path.join(forge_dir, '.travis'),
-                               jinja_env=jinja_env,
-                               template_files=template_files)
 
     build_setup = build_setup.strip()
     build_setup = build_setup.replace("\n", "\n      ")

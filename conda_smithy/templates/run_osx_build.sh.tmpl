@@ -17,11 +17,9 @@ bash $MINICONDA_FILE -b
 echo "Configuring conda."
 source ~/miniconda3/bin/activate root
 
-export utils=./.circleci/build_utils.py
-
-$utils mangle_compiler ./.ci_support/${CONFIG}.yaml
-$utils setup_conda ./.ci_support/${CONFIG}.yaml
-conda install --yes --quiet conda-forge-ci-setup=1
+conda install --yes --quiet conda-forge::conda-forge-ci-setup=2
+mangle_compiler ./ ./{{ recipe_dir }} .ci_support/${CONFIG}.yaml
+setup_conda_rc ./ ./{{ recipe_dir }} ./.ci_support/${CONFIG}.yaml
 
 {% if build_setup -%}
 {{ build_setup }}
@@ -29,8 +27,8 @@ conda install --yes --quiet conda-forge-ci-setup=1
 
 set -e
 
-$utils make_build_number ./{{ recipe_dir }} ./.ci_support/${CONFIG}.yaml
+make_build_number ./ ./{{ recipe_dir }} ./.ci_support/${CONFIG}.yaml
 
 conda build ./{{ recipe_dir }} -m ./.ci_support/${CONFIG}.yaml --clobber-file ./.ci_support/clobber_${CONFIG}.yaml
 
-$utils upload_package ./{{ recipe_dir }} ./.ci_support/${CONFIG}.yaml
+upload_package ./ ./{{ recipe_dir }} ./.ci_support/${CONFIG}.yaml
