@@ -371,7 +371,7 @@ def _get_fast_finish_script(provider_name, forge_config, forge_dir, fast_finish_
             fast_finish_script = "{recipe_dir}\\ff_ci_pr_build".format(
                 recipe_dir=forge_config["recipe_dir"])
         else:
-            get_fast_finish_script = '''powershell -Command "(New-Object Net.WebClient).DownloadFile('https://raw.githubusercontent.com/conda-forge/conda-forge-ci-setup-feedstock/master/recipe/ff_ci_pr_build.py', 'ff_ci_pr_build.py')"'''  # NOQA
+            get_fast_finish_script = '''powershell -Command "(New-Object Net.WebClient).DownloadFile('https://raw.githubusercontent.com/conda-forge/conda-forge-ci-setup-feedstock/master/recipe/conda_forge_ci_setup/ff_ci_pr_build.py', 'ff_ci_pr_build.py')"'''  # NOQA
             fast_finish_script += "ff_ci_pr_build"
             fast_finish_text += "del {fast_finish_script}.py"
 
@@ -389,7 +389,7 @@ def _get_fast_finish_script(provider_name, forge_config, forge_dir, fast_finish_
             get_fast_finish_script += "cat {recipe_dir}/ff_ci_pr_build.py".format(
                 recipe_dir=forge_config["recipe_dir"])
         else:
-            get_fast_finish_script += "curl https://raw.githubusercontent.com/conda-forge/conda-forge-ci-setup-feedstock/master/recipe/ff_ci_pr_build.py"  # NOQA
+            get_fast_finish_script += "curl https://raw.githubusercontent.com/conda-forge/conda-forge-ci-setup-feedstock/master/recipe/conda_forge_ci_setup/ff_ci_pr_build.py"  # NOQA
 
         fast_finish_text = fast_finish_text.format(
             get_fast_finish_script=get_fast_finish_script
