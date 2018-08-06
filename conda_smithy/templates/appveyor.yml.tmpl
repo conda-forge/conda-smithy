@@ -50,7 +50,7 @@ install:
     - cmd: conda.exe config --add channels {{ channel }}{% endfor %}
 
     # Configure the VM.
-    - cmd: conda.exe install -n root --quiet --yes conda-forge-ci-setup=1
+    - cmd: conda.exe install -n root --quiet --yes conda-forge-ci-setup=2
     {% if build_setup -%}
     {{ build_setup }}{% endif %}
 
@@ -60,6 +60,4 @@ build: off
 test_script:
     - conda.exe build {{ recipe_dir }} -m .ci_support\%CONFIG%.yaml --quiet
 deploy_script:
-{%- for owner, channel in channels['targets'] %}
-    - cmd: {{ upload_script }} .\{{ recipe_dir }} {{ owner }} --channel={{ channel }} -m .ci_support\%CONFIG%.yaml
-{% endfor %}
+    - cmd: upload_package .\ .\{{ recipe_dir }} .ci_support\%CONFIG%.yaml
