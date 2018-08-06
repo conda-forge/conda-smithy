@@ -329,6 +329,11 @@ def finalize_config(config, platform):
                 config['channel_sources'] = ['conda-forge,defaults']
 
             try:
+                config['channel_targets'] = [config['channel_targets'][0]]
+            except KeyError:
+                config['channel_targets'] = ['conda-forge main']
+
+            try:
                 config['build_number_decrement'] = [config['build_number_decrement'][-1]]
             except KeyError:
                 config['build_number_decrement'] = ['0']
