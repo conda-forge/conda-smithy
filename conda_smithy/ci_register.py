@@ -398,25 +398,25 @@ def add_conda_forge_webservice_hooks(user, repo):
 
     hooks = [
         get_conda_hook_info(
-            "http://conda-forge.herokuapp.com/conda-linting/hook",
+            "https://conda-forge.herokuapp.com/conda-linting/hook",
             [
                 "pull_request"
             ]
         ),
         get_conda_hook_info(
-            "http://conda-forge.herokuapp.com/conda-forge-feedstocks/hook",
+            "https://conda-forge.herokuapp.com/conda-forge-feedstocks/hook",
             [
                 "push", "repository"
             ]
         ),
         get_conda_hook_info(
-            "http://conda-forge.herokuapp.com/conda-forge-teams/hook",
+            "https://conda-forge.herokuapp.com/conda-forge-teams/hook",
             [
                 "push", "repository"
             ]
         ),
         get_conda_hook_info(
-            "http://conda-forge.herokuapp.com/conda-forge-command/hook",
+            "https://conda-forge.herokuapp.com/conda-forge-command/hook",
             [
                 "pull_request_review", "pull_request",
                 "pull_request_review_comment", "issue_comment", "issues",
