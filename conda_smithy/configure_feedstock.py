@@ -365,18 +365,20 @@ def dump_subspace_config_files(metas, root_path, platform):
 def _get_fast_finish_script(provider_name, forge_config, forge_dir, fast_finish_text):
     get_fast_finish_script = ""
     fast_finish_script = ""
+    tooling_branch = 'branch2.0'
+
     cfbs_fpath = os.path.join(forge_dir, 'recipe', 'ff_ci_pr_build.py')
     if provider_name == 'appveyor':
         if os.path.exists(cfbs_fpath):
             fast_finish_script = "{recipe_dir}\\ff_ci_pr_build".format(
                 recipe_dir=forge_config["recipe_dir"])
         else:
-            get_fast_finish_script = '''powershell -Command "(New-Object Net.WebClient).DownloadFile('https://raw.githubusercontent.com/conda-forge/conda-forge-ci-setup-feedstock/master/recipe/conda_forge_ci_setup/ff_ci_pr_build.py', 'ff_ci_pr_build.py')"'''  # NOQA
+            get_fast_finish_script = '''powershell -Command "(New-Object Net.WebClient).DownloadFile('https://raw.githubusercontent.com/conda-forge/conda-forge-ci-setup-feedstock/{branch}/recipe/conda_forge_ci_setup/ff_ci_pr_build.py', 'ff_ci_pr_build.py')"'''  # NOQA
             fast_finish_script += "ff_ci_pr_build"
             fast_finish_text += "del {fast_finish_script}.py"
 
         fast_finish_text = fast_finish_text.format(
-            get_fast_finish_script=get_fast_finish_script,
+            get_fast_finish_script=get_fast_finish_script.format(branch=tooling_branch),
             fast_finish_script=fast_finish_script,
         )
 
@@ -389,10 +391,10 @@ def _get_fast_finish_script(provider_name, forge_config, forge_dir, fast_finish_
             get_fast_finish_script += "cat {recipe_dir}/ff_ci_pr_build.py".format(
                 recipe_dir=forge_config["recipe_dir"])
         else:
-            get_fast_finish_script += "curl https://raw.githubusercontent.com/conda-forge/conda-forge-ci-setup-feedstock/master/recipe/conda_forge_ci_setup/ff_ci_pr_build.py"  # NOQA
+            get_fast_finish_script += "curl https://raw.githubusercontent.com/conda-forge/conda-forge-ci-setup-feedstock/{branch}/recipe/conda_forge_ci_setup/ff_ci_pr_build.py"  # NOQA
 
         fast_finish_text = fast_finish_text.format(
-            get_fast_finish_script=get_fast_finish_script
+            get_fast_finish_script=get_fast_finish_script.format(branch=tooling_branch)
         )
 
         fast_finish_text = fast_finish_text.strip()
