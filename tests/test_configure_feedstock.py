@@ -222,3 +222,14 @@ def test_render_windows_with_skipped_python(python_skipped_recipe, jinja_env):
     matrix_dir = os.path.join(python_skipped_recipe.recipe, '.ci_support')
     # matrix has 2.7, 3.5, 3.6, but 3.6 is skipped.  Should be 2 entries.
     assert len(os.listdir(matrix_dir)) == 2
+
+
+def test_readme_has_terminating_newline(noarch_recipe, jinja_env):
+    cnfgr_fdstk.render_README(jinja_env=jinja_env,
+                              forge_config=noarch_recipe.config,
+                              forge_dir=noarch_recipe.recipe)
+    readme_path = os.path.join(noarch_recipe.recipe, 'README.md')
+    assert os.path.exists(readme_path)
+    with open(readme_path, 'rb') as readme_file:
+        readme_file.seek(-1, os.SEEK_END)
+        assert readme_file.read() == b'\n'
