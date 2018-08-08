@@ -19,5 +19,5 @@ exclude_lines =
     # Ignore continue statement in code as it can't be detected as covered
     # due to an optimization by the Python interpreter. See coverage issue
     # ( https://bitbucket.org/ned/coveragepy/issue/198/continue-marked-as-not-covered )
-    # and Python issue ( http://bugs.python.org/issue2506 ).
+    # and Python issue ( https://bugs.python.org/issue2506 ).
     continue
