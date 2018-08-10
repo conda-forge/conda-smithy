@@ -344,8 +344,8 @@ def run_conda_forge_specific(meta, recipe_dir, lints, hints):
     recipe_name = package_section.get('name', '').strip()
     is_staged_recipes = recipe_dirname != 'recipe'
 
-    # 1: Check that the recipe does not exist in conda-forge
-    if is_staged_recipes:
+    # 1: Check that the recipe does not exist in conda-forge or bioconda
+    if is_staged_recipes and recipe_name:
         cf = gh.get_user(os.getenv('GH_ORG', 'conda-forge'))
         try:
             cf.get_repo('{}-feedstock'.format(recipe_name))

@@ -467,6 +467,9 @@ class Test_linter(unittest.TestCase):
             self.assertNotIn(expected_message, lints)
             lints = linter.lintify({'package': {'name': r}}, recipe_dir='recipe', conda_forge=False)
             self.assertNotIn(expected_message, lints)
+            # No lint if the name isn't specified
+            lints = linter.lintify({}, recipe_dir=r, conda_forge=True)
+            self.assertNotIn(expected_message, lints)
 
         r = 'this-will-never-exist'
         try:
