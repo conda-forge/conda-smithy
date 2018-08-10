@@ -8,7 +8,6 @@ omit =
     *templates/*
     *tests/*
     */_version.py
-    */vendored/*
     */__init__.py
 
 [report]
