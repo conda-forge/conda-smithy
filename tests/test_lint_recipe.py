@@ -538,6 +538,14 @@ class Test_linter(unittest.TestCase):
         lints = linter.main(os.path.join(_thisdir, 'recipes', 'multiple_sources'))
         assert not lints
 
+    def test_string_source(self):
+        url = "http://mistake.com/v1.0.tar.gz"
+        lints, hints = linter.lintify({'source': url})
+        msg = ('The "source" section was expected to be a dictionary or a '
+               'list, but got a {}.{}.').format(
+                    type(url).__module__, type(url).__name__)
+        self.assertIn(msg, lints)
+
 class TestCLI_recipe_lint(unittest.TestCase):
     def test_cli_fail(self):
         with tmp_directory() as recipe_dir:

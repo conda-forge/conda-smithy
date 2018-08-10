@@ -4,8 +4,10 @@ from __future__ import unicode_literals
 
 try:
     from collections.abc import Sequence, Mapping
+    str_type = str
 except ImportError:  # python 2
     from collections import Sequence, Mapping
+    str_type = basestring
 import copy
 import io
 import itertools
@@ -60,7 +62,7 @@ def get_list_section(parent, name, lints, allow_single=False):
     section = parent.get(name, [])
     if allow_single and isinstance(section, Mapping):
         return [section]
-    elif isinstance(section, Sequence):
+    elif isinstance(section, Sequence) and not isinstance(section, str_type):
         return section
     else:
         msg = ('The "{}" section was expected to be a {}list, but got a {}.{}.'
