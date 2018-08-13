@@ -597,15 +597,17 @@ def _circle_specific_setup(jinja_env, forge_config, forge_dir, platform):
     template_files = [
         '{}.sh.tmpl'.format(run_file_name),
         'fast_finish_ci_pr_build.sh.tmpl',
+        'update_condarc.py.tmpl',
+        'upload_package.py.tmpl',
     ]
 
     if platform == 'linux':
         template_files.append('build_steps.sh.tmpl')
 
-    _render_template_exe_files(forge_config=forge_config,
-                               target_dir=os.path.join(forge_dir, '.circleci'),
-                               jinja_env=jinja_env,
-                               template_files=template_files)
+    _render_tempate_exe_files(forge_config=forge_config,
+                              target_dir=os.path.join(forge_dir, '.circleci'),
+                              jinja_env=jinja_env,
+                              template_files=template_files)
 
     # Fix permission of other shell files.
     target_fnames = [
@@ -677,6 +679,17 @@ def _travis_specific_setup(jinja_env, forge_config, forge_dir, platform):
         build_setup += textwrap.dedent("""\
             source run_conda_forge_build_setup
         """)
+
+    # TODO: Conda has a convenience for accessing nested yaml content.
+    template_files = [
+        'update_condarc.py.tmpl',
+        'upload_package.py.tmpl',
+    ]
+
+    _render_tempate_exe_files(forge_config=forge_config,
+                              target_dir=os.path.join(forge_dir, '.travis'),
+                              jinja_env=jinja_env,
+                              template_files=template_files)
 
     build_setup = build_setup.strip()
     build_setup = build_setup.replace("\n", "\n      ")
