@@ -4,6 +4,30 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.1.11
+====================
+
+**Changed:**
+
+* Upgrade links to HTTPS and update link targets where necessary (#866)
+
+
+**Removed:**
+
+* Drop `vendored` package/directory. A remnant that is no longer used.
+
+
+**Fixed:**
+
+None
+
+* Linter: packages without a `name` aren't actually in bioconda. (#872)
+* Linter: handle new versions of `ruamel.yaml` appropriately instead of complaining about `expected to be a dictionary, but got a CommentedMap`. (#871)
+* Fix missing newline in last line of generated readmes and add unit test for it (#864)
+
+
+
+
 v3.1.10
 ====================
 

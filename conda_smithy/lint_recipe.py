@@ -2,26 +2,27 @@
 
 from __future__ import unicode_literals
 
-import datetime
+try:
+    from collections.abc import Sequence, Mapping
+    str_type = str
+except ImportError:  # python 2
+    from collections import Sequence, Mapping
+    str_type = basestring
+import copy
 import io
 import itertools
 import os
 import re
-import time
 
 import github
-import jinja2
 import ruamel.yaml
 
 from conda_build.metadata import (ensure_valid_license_family,
                                   FIELDS as cbfields)
 import conda_build.conda_interface
 
-from collections import defaultdict
-
-import copy
-
 from .utils import render_meta_yaml
+
 
 FIELDS = copy.deepcopy(cbfields)
 
@@ -50,7 +51,7 @@ def get_section(parent, name, lints):
         return get_list_section(parent, name, lints)
 
     section = parent.get(name, {})
-    if not isinstance(section, dict):
+    if not isinstance(section, Mapping):
         lints.append('The "{}" section was expected to be a dictionary, but '
                      'got a {}.'.format(name, type(section).__name__))
         section = {}
@@ -59,9 +60,9 @@ def get_section(parent, name, lints):
 
 def get_list_section(parent, name, lints, allow_single=False):
     section = parent.get(name, [])
-    if allow_single and isinstance(section, dict):
+    if allow_single and isinstance(section, Mapping):
         return [section]
-    elif isinstance(section, list):
+    elif isinstance(section, Sequence) and not isinstance(section, str_type):
         return section
     else:
         msg = ('The "{}" section was expected to be a {}list, but got a {}.{}.'
@@ -343,8 +344,8 @@ def run_conda_forge_specific(meta, recipe_dir, lints, hints):
     recipe_name = package_section.get('name', '').strip()
     is_staged_recipes = recipe_dirname != 'recipe'
 
-    # 1: Check that the recipe does not exist in conda-forge
-    if is_staged_recipes:
+    # 1: Check that the recipe does not exist in conda-forge or bioconda
+    if is_staged_recipes and recipe_name:
         cf = gh.get_user(os.getenv('GH_ORG', 'conda-forge'))
         try:
             cf.get_repo('{}-feedstock'.format(recipe_name))

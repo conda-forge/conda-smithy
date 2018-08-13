@@ -317,7 +317,7 @@ def travis_encrypt_binstar_token(repo, string_to_encrypt):
     #    not use this file except in compliance with the License. You may obtain
     #    a copy of the License at
     #
-    #         http://www.apache.org/licenses/LICENSE-2.0
+    #         https://www.apache.org/licenses/LICENSE-2.0
     #
     #    Unless required by applicable law or agreed to in writing, software
     #    distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
@@ -398,25 +398,25 @@ def add_conda_forge_webservice_hooks(user, repo):
 
     hooks = [
         get_conda_hook_info(
-            "http://conda-forge.herokuapp.com/conda-linting/hook",
+            "https://conda-forge.herokuapp.com/conda-linting/hook",
             [
                 "pull_request"
             ]
         ),
         get_conda_hook_info(
-            "http://conda-forge.herokuapp.com/conda-forge-feedstocks/hook",
+            "https://conda-forge.herokuapp.com/conda-forge-feedstocks/hook",
             [
                 "push", "repository"
             ]
         ),
         get_conda_hook_info(
-            "http://conda-forge.herokuapp.com/conda-forge-teams/hook",
+            "https://conda-forge.herokuapp.com/conda-forge-teams/hook",
             [
                 "push", "repository"
             ]
         ),
         get_conda_hook_info(
-            "http://conda-forge.herokuapp.com/conda-forge-command/hook",
+            "https://conda-forge.herokuapp.com/conda-forge-command/hook",
             [
                 "pull_request_review", "pull_request",
                 "pull_request_review_comment", "issue_comment", "issues",

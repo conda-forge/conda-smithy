@@ -249,7 +249,7 @@ def main():
     parser = argparse.ArgumentParser("a tool to help create, administer and manage feedstocks.")
     subparser = parser.add_subparsers()
     # TODO: Consider allowing plugins/extensions using entry_points.
-    # http://reinout.vanrees.org/weblog/2010/01/06/zest-releaser-entry-points.html
+    # https://reinout.vanrees.org/weblog/2010/01/06/zest-releaser-entry-points.html
     for subcommand in Subcommand.__subclasses__():
         subcommand(subparser)
     # And the alias for rerender

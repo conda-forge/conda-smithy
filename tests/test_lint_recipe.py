@@ -467,6 +467,9 @@ class Test_linter(unittest.TestCase):
             self.assertNotIn(expected_message, lints)
             lints = linter.lintify({'package': {'name': r}}, recipe_dir='recipe', conda_forge=False)
             self.assertNotIn(expected_message, lints)
+            # No lint if the name isn't specified
+            lints = linter.lintify({}, recipe_dir=r, conda_forge=True)
+            self.assertNotIn(expected_message, lints)
 
         r = 'this-will-never-exist'
         try:
@@ -537,6 +540,14 @@ class Test_linter(unittest.TestCase):
     def test_multiple_sources(self):
         lints = linter.main(os.path.join(_thisdir, 'recipes', 'multiple_sources'))
         assert not lints
+
+    def test_string_source(self):
+        url = "http://mistake.com/v1.0.tar.gz"
+        lints, hints = linter.lintify({'source': url})
+        msg = ('The "source" section was expected to be a dictionary or a '
+               'list, but got a {}.{}.').format(
+                    type(url).__module__, type(url).__name__)
+        self.assertIn(msg, lints)
 
 class TestCLI_recipe_lint(unittest.TestCase):
     def test_cli_fail(self):
