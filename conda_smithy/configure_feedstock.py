@@ -795,6 +795,8 @@ def _load_forge_config(forge_dir, exclusive_config_file):
               'win': {'enabled': False},
               'osx': {'enabled': False},
               'linux': {'enabled': False},
+              # Compiler stack environment variable
+              'compiler_stack': 'comp4',
               'channels': {'sources': ['conda-forge', 'defaults'],
                            'targets': [['conda-forge', 'main']]},
               'github': {'user_or_org': 'conda-forge',
@@ -845,6 +847,10 @@ def _load_forge_config(forge_dir, exclusive_config_file):
                 config_item.update(value)
             else:
                 config[key] = value
+
+    # Set the environment variable for the compiler stack
+    os.environ['CF_COMPILER_STACK'] = config['compiler_stack']
+
     config['package'] = os.path.basename(forge_dir)
     if not config['github']['repo_name']:
         feedstock_name = os.path.basename(forge_dir)
