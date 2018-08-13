@@ -798,6 +798,12 @@ def _load_forge_config(forge_dir, exclusive_config_file):
               'linux': {'enabled': False},
               # Compiler stack environment variable
               'compiler_stack': 'comp4',
+              # Stack variables,  These can be used to impose global defaults for how far we build out
+              'min_py_ver': '27',
+              'max_py_ver': '36',
+              'min_r_ver': '34',
+              'max_r_ver': '34',
+
               'channels': {'sources': ['conda-forge', 'defaults'],
                            'targets': [['conda-forge', 'main']]},
               'github': {'user_or_org': 'conda-forge',
@@ -851,6 +857,11 @@ def _load_forge_config(forge_dir, exclusive_config_file):
 
     # Set the environment variable for the compiler stack
     os.environ['CF_COMPILER_STACK'] = config['compiler_stack']
+    # Set valid ranger for the supported platforms
+    os.environ['CF_MIN_PY_VER'] = config['min_py_ver']
+    os.environ['CF_MAX_PY_VER'] = config['max_py_ver']
+    os.environ['CF_MIN_R_VER'] = config['min_r_ver']
+    os.environ['CF_MAX_R_VER'] = config['max_r_ver']
 
     config['package'] = os.path.basename(forge_dir)
     if not config['github']['repo_name']:
