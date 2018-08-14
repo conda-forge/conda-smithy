@@ -11,6 +11,8 @@ dist/
 # Rever
 rever/
 
+# Pycharm
+.idea/
 # Notepad++ files
 nppBackup/
 
