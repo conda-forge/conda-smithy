@@ -132,7 +132,7 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
                      'the `extra/recipe-maintainers` section.')
 
     # 3b: Maintainers should be a list
-    if not isinstance(extra_section.get('recipe-maintainers', []), list):
+    if not isinstance(extra_section.get('recipe-maintainers', []), Sequence):
         lints.append('Recipe maintainers should be a json list.')
 
     # 4: The recipe should have some tests.
