@@ -4,6 +4,17 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.1.12
+====================
+
+**Fixed:**
+
+* fixed lint by checking that recipe-maintainers is an instance of
+  ``collections.abc.Sequence``
+
+
+
+
 v3.1.11
 ====================
 
