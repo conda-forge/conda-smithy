@@ -9,14 +9,14 @@ requirements:
   run:
     - python
 
+test:
+  commands:
+    - echo 'works'
+
 outputs:
   - name: foo
     extra:
       foo_variant: 1
-
-test:
-  commands:
-    - echo 'works'
 
 about:
   home: home
