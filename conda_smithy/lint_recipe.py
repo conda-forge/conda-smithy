@@ -31,6 +31,7 @@ if 'extra' not in FIELDS.keys():
     FIELDS['extra'] = []
 
 FIELDS['extra'].append('recipe-maintainers')
+FIELDS['outputs'].add('extra')
 
 EXPECTED_SECTION_ORDER = ['package', 'source', 'build', 'requirements',
                           'test', 'app', 'outputs', 'about', 'extra']
@@ -255,7 +256,8 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
         for subsection in get_section(meta, section, lints):
             if (section != 'source'
                 and section != 'outputs'
-                and subsection not in expected_subsections):
+                and subsection not in expected_subsections
+                and not subsection.endswith('variant')):
                 lints.append('The {} section contained an unexpected '
                              'subsection name. {} is not a valid subsection'
                              ' name.'.format(section, subsection))
