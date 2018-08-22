@@ -549,6 +549,10 @@ class Test_linter(unittest.TestCase):
                     type(url).__module__, type(url).__name__)
         self.assertIn(msg, lints)
 
+    def test_variant(self):
+        lints = linter.main(os.path.join(_thisdir, 'recipes', 'build_variants'))
+        assert not lints
+
 class TestCLI_recipe_lint(unittest.TestCase):
     def test_cli_fail(self):
         with tmp_directory() as recipe_dir:
