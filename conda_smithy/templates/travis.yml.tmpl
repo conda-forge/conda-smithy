@@ -12,7 +12,7 @@ env:
     {%- endfor %}
 {%- endif %}
 
-(% if configs[0] -%}
+{% if configs[0] -%}
 matrix:
   include:
     (%- for config, plat in configs %}
