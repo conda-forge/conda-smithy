@@ -15,7 +15,7 @@ env:
 {% if configs[0] -%}
 matrix:
   include:
-    (%- for config, plat in configs %}
+    {%- for config, plat in configs %}
     - env: CONFIG={{ config }}
     {%- if plat.startswith("osx") %}
       os: osx
