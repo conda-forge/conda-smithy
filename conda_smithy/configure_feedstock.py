@@ -478,7 +478,7 @@ def _render_ci_provider(provider_name, jinja_env, forge_config, forge_dir, platf
         fancy_platforms = []
 
         configs = []
-        for metas, platform, enable in zip(metas_list_of_lists, platforms, archs, enable_platform):
+        for metas, platform, arch, enable in zip(metas_list_of_lists, platforms, archs, enable_platform):
             plat_arch = platform if arch == "64" else "{}_{}".format(platform, arch)
             if enable:
                 configs.extend(dump_subspace_config_files(metas, forge_dir, platform, arch))
