@@ -17,7 +17,7 @@ matrix:
   include:
     (%- for config, plat in configs %}
     - env: CONFIG={{ config }}
-    {%- if plat.startswith={{"osx") %}
+    {%- if plat.startswith("osx") %}
       os: osx
       osx_image: xcode6.4
     {%- elif plat.startswith("linux-ppc64le") %}
