@@ -76,6 +76,7 @@ install:
       if [ "$TRAVIS_OS_NAME" == "osx" ]; then
         mangle_compiler ./ ./{{ recipe_dir }} ./.ci_support/${CONFIG}.yaml
       fi
+    {%- endif %}
 
 script:
   {%- if osx.enabled %}
