@@ -624,7 +624,7 @@ def _get_platforms_of_provider(provider, forge_config):
     platforms = []
     keep_noarchs = []
     archs = []
-    for platform, arch in zip['linux', 'osx', 'win', 'linux'],
+    for platform, arch in zip(['linux', 'osx', 'win', 'linux'],
                              ['64',    '64',  '64',  'ppc64le']):
         plat_arch = platform if arch == "64" else "{}_{}".format(platform, arch)
         if forge_config['provider'][plat_arch] == provider:
