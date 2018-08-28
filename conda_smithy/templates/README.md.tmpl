@@ -34,7 +34,7 @@ All platforms: ![noarch disabled]({{ shield }}badge/noarch-disabled-lightgrey.sv
 [![OSX]({{ shield }}travis/{{ github.user_or_org }}/{{ github.repo_name }}/{{ github.branch_name }}.svg?label=macOS)](https://travis-ci.org/{{ github.user_or_org }}/{{ github.repo_name }})
 {%- endif %}
 {%- if appveyor.enabled %}
-[![Windows]({{ shield }}appveyor/ci/{{ github.user_or_org }}/{{ github.repo_name }}/{{ github.branch_name }}.svg?label=Windows)](https://ci.appveyor.com/project/{{ github.user_or_org }}/{{ appveyor_url_name }}/branch/{{ github.branch_name }})
+[![Windows]({{ shield }}appveyor/ci/{{ github.user_or_org }}/{{ appveyor_url_name }}/{{ github.branch_name }}.svg?label=Windows)](https://ci.appveyor.com/project/{{ github.user_or_org }}/{{ appveyor_url_name }}/branch/{{ github.branch_name }})
 {%- endif %}
 {%- if not linux.enabled %}
 ![Linux disabled]({{ shield }}badge/linux-disabled-lightgrey.svg)
