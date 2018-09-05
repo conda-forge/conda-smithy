@@ -37,8 +37,8 @@ DONE_CANARY="$ARTIFACTS/conda-forge-build-done-${CONFIG}"
 rm -f "$DONE_CANARY"
 
 {{ docker.executable }} run -it \
-           -v "${RECIPE_ROOT}":/home/conda/recipe_root \
-           -v "${FEEDSTOCK_ROOT}":/home/conda/feedstock_root \
+           -v "${RECIPE_ROOT}":/home/conda/recipe_root:ro,z \
+           -v "${FEEDSTOCK_ROOT}":/home/conda/feedstock_root:rw,z \
            -e CONFIG \
            -e BINSTAR_TOKEN \
            -e HOST_USER_ID \
