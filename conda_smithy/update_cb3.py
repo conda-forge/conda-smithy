@@ -70,7 +70,7 @@ class Section:
                 return Section(sect, start, end)
         return Section(sect, start, self.end)
 
-        
+
 def iterate(tarzip):
     if isinstance(tarzip, zipfile.ZipFile):
         for f in iter(tarzip.infolist()):
@@ -229,13 +229,14 @@ def update_cb3(recipe_path, conda_build_config_path):
                 need_f = True
             if req == 'r-base':
                 is_r_package = True
-            if req_rendered in ['toolchain', 'gcc', 'libgcc', 'libgfortran', 'vc', 'm2w64-toolchain',
-                       'mingwpy', 'system', 'gcc-libs', 'm2w64-gcc-libs']:
+            if req_rendered in ['toolchain', 'toolchain3', 'gcc', 'libgcc',
+                       'libgfortran', 'vc', 'm2w64-toolchain', 'mingwpy', 'system',
+                       'gcc-libs', 'm2w64-gcc-libs']:
                 messages['Removing {} in favour of compiler()'.format(req)] = True
                 change_lines[i] = (lines[i], None)
                 need_c = True
                 if req in ['m2w64-toolchain', 'mingwpy'] or \
-                        (req != req_rendered and req_rendered == 'toolchain'):
+                        (req != req_rendered and req_rendered in ['toolchain', 'toolchain3']):
                     need_mingw_c = True
                 continue
             if req_rendered == 'cython' and not (need_c or need_cxx or need_f):
