@@ -133,8 +133,9 @@ def create_github_repo(args):
         else:
             repo.create_remote(remote_name, gh_repo.ssh_url)
 
-    for user in args.extra_admin_users:
-        gh_repo.add_to_collaborators(user, 'admin')
+    if args.extra_admin_users is not None:
+        for user in args.extra_admin_users:
+            gh_repo.add_to_collaborators(user, 'admin')
 
     if args.add_teams:
         if isinstance(user_or_org, Organization):
