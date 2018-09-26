@@ -472,6 +472,7 @@ def _render_ci_provider(provider_name, jinja_env, forge_config, forge_dir, platf
         forge_config[provider_name]["enabled"] = True
         fancy_name = {'linux': 'Linux', 'osx': 'OSX', 'win': 'Windows'}
         fancy_platforms = []
+        unfancy_platforms = set()
 
         configs = []
         for metas, platform, enable in zip(metas_list_of_lists, platforms, enable_platform):
@@ -479,6 +480,7 @@ def _render_ci_provider(provider_name, jinja_env, forge_config, forge_dir, platf
                 configs.extend(dump_subspace_config_files(metas, forge_dir, platform))
                 forge_config[platform]["enabled"] = True
                 fancy_platforms.append(fancy_name[platform])
+                unfancy_platforms.add(platform)
             elif platform in extra_platform_files:
                     for each_target_fname in extra_platform_files[platform]:
                         remove_file(each_target_fname)
@@ -489,6 +491,7 @@ def _render_ci_provider(provider_name, jinja_env, forge_config, forge_dir, platf
                     remove_file(each_target_fname)
 
         forge_config[provider_name]["platforms"] = ','.join(fancy_platforms)
+        forge_config[provider_name]["all_platforms"] = list(unfancy_platforms)
 
         forge_config['configs'] = configs
 
