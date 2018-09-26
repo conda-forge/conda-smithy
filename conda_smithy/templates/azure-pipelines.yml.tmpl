@@ -1,0 +1,17 @@
+jobs:
+  {% set all_platforms = [platform for (_, platform) in configs] %}
+  {% for platform in all_platforms %}
+
+  {% if platform == 'win-64' %}
+  - template: ./azure-pipelines/azure-pipelines-win.yml
+  {% endif %}
+
+  {% if platform == 'osx-64' %}
+  - template: ./azure-pipelines/azure-pipelines-osx.yml
+  {% endif %}
+
+  {% if platform == 'linux-64' %}
+  - template: ./azure-pipelines/azure-pipelines-linux.yml
+  {% endif %}
+
+  {% endfor %}

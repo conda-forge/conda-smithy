@@ -533,6 +533,7 @@ def _render_ci_provider(provider_name, jinja_env, forge_config, forge_dir, platf
         template = jinja_env.get_template(platform_template_file)
         with write_file(platform_target_path) as fh:
             fh.write(template.render(**forge_config))
+    # TODO: azure-pipelines might need the same as circle
     return forge_config
 
 
@@ -618,6 +619,7 @@ def _circle_specific_setup(jinja_env, forge_config, forge_dir, platform):
 def _get_platforms_of_provider(provider, forge_config):
     platforms = []
     keep_noarchs = []
+    # TODO arch seems meaningless now for most of smithy? REMOVE?
     archs = []
     for platform in ['linux', 'osx', 'win']:
         if forge_config['provider'][platform] == provider:
@@ -758,6 +760,52 @@ def render_appveyor(jinja_env, forge_config, forge_dir):
                                platform_specific_setup=_appveyor_specific_setup)
 
 
+def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
+    pass
+
+
+def _get_azure_platforms(provider, forge_config):
+    # While we are testing just return ALL for azure
+    return ['linux', 'osx', 'win'], ['64'], [True]
+
+
+def render_azure(jinja_env, forge_config, forge_dir):
+    target_path = os.path.join(forge_dir, 'azure-pipelines.yml')
+    template_filename = 'azure-pipelines.yml.tmpl'
+    fast_finish_text = ""
+    extra_platform_files = {
+        'common': [
+
+        ],
+        'linux': [
+            os.path.join(forge_dir, '.azure-pipelines', 'run_docker_build.sh'),
+            os.path.join(forge_dir, '.azure-pipelines', 'azure-pipelines-linux.yml'),
+        ],
+        'osx': [
+            os.path.join(forge_dir, '.azure-pipelines', 'azure-pipelines-osx.yml'),
+        ],
+        'win': [
+            os.path.join(forge_dir, '.azure-pipelines', 'azure-pipelines-osx.yml'),
+        ],
+    }
+
+    # TODO: for now just get this ignoring other pieces
+    platforms, archs, keep_noarchs = _get_azure_platforms('azure', forge_config)
+
+    return _render_ci_provider('azure',
+                               jinja_env=jinja_env,
+                               forge_config=forge_config,
+                               forge_dir=forge_dir,
+                               platforms=platforms,
+                               archs=archs,
+                               fast_finish_text=fast_finish_text,
+                               platform_target_path=target_path,
+                               platform_template_file=template_filename,
+                               platform_specific_setup=_azure_specific_setup,
+                               keep_noarchs=keep_noarchs,
+                               extra_platform_files=extra_platform_files)
+
+
 def render_README(jinja_env, forge_config, forge_dir):
     # we only care about the first metadata object for sake of readme
     metas = conda_build.api.render(os.path.join(forge_dir, 'recipe'),
@@ -792,6 +840,7 @@ def _load_forge_config(forge_dir, exclusive_config_file):
               'travis': {},
               'circle': {},
               'appveyor': {},
+              'azure': {},
               'provider': {'linux': 'circle', 'osx': 'travis', 'win': 'appveyor'},
               'win': {'enabled': False},
               'osx': {'enabled': False},
@@ -994,6 +1043,7 @@ def main(forge_file_directory, no_check_uptodate, commit, exclusive_config_file)
     render_circle(env, config, forge_dir)
     render_travis(env, config, forge_dir)
     render_appveyor(env, config, forge_dir)
+    render_azure(env, config, forge_dir)
     render_README(env, config, forge_dir)
 
     if os.path.isdir(os.path.join(forge_dir, '.ci_support')):
