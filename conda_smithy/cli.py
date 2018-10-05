@@ -154,6 +154,7 @@ class RegisterCI(Subcommand):
         ci_register.travis_configure(owner, repo)
         ci_register.travis_cleanup(owner, repo)
         ci_register.add_project_to_circle(owner, repo)
+        ci_register.add_project_to_azure(owner, repo)
         ci_register.add_token_to_circle(owner, repo)
         ci_register.add_project_to_appveyor(owner, repo)
         ci_register.appveyor_encrypt_binstar_token(args.feedstock_directory, owner, repo)

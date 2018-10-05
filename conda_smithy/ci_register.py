@@ -124,6 +124,15 @@ def add_project_to_circle(user, project):
     print(' * {}/{} enabled on CircleCI'.format(user, project))
 
 
+def add_project_to_azure(user, project):
+    from . import azure_ci_utils
+    if azure_ci_utils.repo_registered(user, project):
+        print(' * {}/{} already enabled on azure pipelines'.format(user, project))
+    else:
+        azure_ci_utils.register_repo(user, project)
+        print(' * {}/{} has been enabled on azure pipelines'.format(user, project))
+
+
 def add_project_to_appveyor(user, project):
     headers = {'Authorization': 'Bearer {}'.format(appveyor_token),
                }
