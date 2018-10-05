@@ -788,7 +788,7 @@ def render_azure(jinja_env, forge_config, forge_dir):
             os.path.join(forge_dir, '.azure-pipelines', 'azure-pipelines-osx.yml'),
         ],
         'win': [
-            os.path.join(forge_dir, '.azure-pipelines', 'azure-pipelines-osx.yml'),
+            os.path.join(forge_dir, '.azure-pipelines', 'azure-pipelines-win.yml'),
         ],
     }
 
