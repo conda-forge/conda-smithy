@@ -3,7 +3,6 @@ import typing
 
 from vsts.vss_connection import VssConnection
 from msrest.authentication import BasicAuthentication
-import pprint
 
 
 AZURE_TEAM_INSTANCE = os.getenv("AZURE_INSTANCE", "https://dev.azure.com/conda-forge")
@@ -12,13 +11,15 @@ AZURE_SERVICE_ENDPOINT_NAME = os.getenv("AZURE_SERVICE_ENDPOINT", "conda-forge")
 
 try:
     # Create a token at https://circleci.com/account/api. Put it in circle.token
-    with open(os.path.expanduser('~/.conda-smithy/azure.token'), 'r') as fh:
+    with open(os.path.expanduser("~/.conda-smithy/azure.token"), "r") as fh:
         AZURE_TOKEN = fh.read().strip()
     if not AZURE_TOKEN:
         raise ValueError()
 except (IOError, ValueError):
-    print('No circle token.  Create a token at https://dev.azure.com/conda-forge/_usersSettings/tokens and\n'
-          'put it in ~/.conda-smithy/azure.token')
+    print(
+        "No azure token.  Create a token at https://dev.azure.com/conda-forge/_usersSettings/tokens and\n"
+        "put it in ~/.conda-smithy/azure.token"
+    )
 
 
 credentials = BasicAuthentication("", AZURE_TOKEN)
@@ -86,10 +87,13 @@ def register_repo(github_org, repo_name, project_id=AZURE_PROJECT_ID):
         BuildRepository,
     )
     from vsts.build.v4_1.build_client import BuildClient
+    from vsts.task_agent.v4_0.task_agent_client import TaskAgentClient
     import inspect
+
     bclient: BuildClient = connection.get_client(
         "vsts.build.v4_1.build_client.BuildClient"
     )
+    aclient = TaskAgentClient(AZURE_TEAM_INSTANCE, credentials)
 
     source_repo = get_repo_reference(project_id, github_org, repo_name)
 
@@ -100,7 +104,7 @@ def register_repo(github_org, repo_name, project_id=AZURE_PROJECT_ID):
             k: v
             for k, v in source_repo.as_dict().items()
             if k in set(inspect.getfullargspec(BuildRepository).args) - {"url"}
-        }
+        },
     )
     new_repo.name = source_repo.properties["fullName"]
     new_repo.properties["cleanOptions"] = "0"
@@ -152,6 +156,9 @@ def register_repo(github_org, repo_name, project_id=AZURE_PROJECT_ID):
                 "triggerType": "continuousIntegration",
             },
         ],
+        variable_groups=aclient.get_variable_groups(
+            project=project_id, group_name="anaconda-org"
+        ),
         type="build",
     )
 
@@ -166,16 +173,13 @@ def register_repo(github_org, repo_name, project_id=AZURE_PROJECT_ID):
             definition=build_definition, definition_id=ed.id, project=ed.project
         )
     else:
-        bclient.create_definition(
-            definition=build_definition, project=project_id
-        )
+        bclient.create_definition(definition=build_definition, project=project_id)
 
 
 def repo_registered(github_org, repo_name, project_id=AZURE_PROJECT_ID):
-    from vsts.build.v4_1.models import (
-        BuildDefinitionReference,
-    )
+    from vsts.build.v4_1.models import BuildDefinitionReference
     from vsts.build.v4_1.build_client import BuildClient
+
     bclient: BuildClient = connection.get_client(
         "vsts.build.v4_1.build_client.BuildClient"
     )
