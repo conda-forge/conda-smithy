@@ -10,6 +10,7 @@ jobs:
       {{ config }}:
         CONFIG: {{ config}}
     {%- endif %}
+    {%- endfor %}
     env: {
       OSX_FORCE_SDK_DOWNLOAD: "1"
     }

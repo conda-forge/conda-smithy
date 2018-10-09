@@ -764,33 +764,46 @@ def render_appveyor(jinja_env, forge_config, forge_dir):
 
 
 def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
-    pass
+    # TODO:
+    platform_templates = {
+        'linux': [
+           'run_docker_build.sh.tmpl',
+            'azure-pipelines-linux.yml.tmpl',
+        ],
+        'osx': [
+            'azure-pipelines-osx.yml.tmpl',
+        ],
+        'win': [
+            'azure-pipelines-win.yml.tmpl',
+        ],
+    }
+    template_files = platform_templates.get(platform, [])
 
+    _render_template_exe_files(forge_config=forge_config,
+                               target_dir=os.path.join(forge_dir, '.azure-pipelines'),
+                               jinja_env=jinja_env,
+                               template_files=template_files)
 
 def _get_azure_platforms(provider, forge_config):
-    # While we are testing just return ALL for azure
-    return ['linux', 'osx', 'win'], ['64'], [True]
+    platforms = []
+    keep_noarchs = []
+    # TODO arch seems meaningless now for most of smithy? REMOVE?
+    archs = []
+    for platform in ['linux', 'osx', 'win']:
+        if True or (forge_config['provider'][platform] == provider):
+            platforms.append(platform)
+            if platform == 'linux':
+                keep_noarchs.append(True)
+            else:
+                keep_noarchs.append(False)
+            archs.append('64')
+    return platforms, archs, keep_noarchs
 
 
 def render_azure(jinja_env, forge_config, forge_dir):
     target_path = os.path.join(forge_dir, 'azure-pipelines.yml')
     template_filename = 'azure-pipelines.yml.tmpl'
     fast_finish_text = ""
-    extra_platform_files = {
-        'common': [
-
-        ],
-        'linux': [
-            os.path.join(forge_dir, '.azure-pipelines', 'run_docker_build.sh'),
-            os.path.join(forge_dir, '.azure-pipelines', 'azure-pipelines-linux.yml'),
-        ],
-        'osx': [
-            os.path.join(forge_dir, '.azure-pipelines', 'azure-pipelines-osx.yml'),
-        ],
-        'win': [
-            os.path.join(forge_dir, '.azure-pipelines', 'azure-pipelines-win.yml'),
-        ],
-    }
 
     # TODO: for now just get this ignoring other pieces
     platforms, archs, keep_noarchs = _get_azure_platforms('azure', forge_config)
@@ -805,8 +818,7 @@ def render_azure(jinja_env, forge_config, forge_dir):
                                platform_target_path=target_path,
                                platform_template_file=template_filename,
                                platform_specific_setup=_azure_specific_setup,
-                               keep_noarchs=keep_noarchs,
-                               extra_platform_files=extra_platform_files)
+                               keep_noarchs=keep_noarchs,)
 
 
 def render_README(jinja_env, forge_config, forge_dir):
