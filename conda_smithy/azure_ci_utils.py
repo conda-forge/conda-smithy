@@ -114,7 +114,7 @@ def register_repo(github_org, repo_name, project_id=AZURE_PROJECT_ID):
     new_repo.properties["labelSources"] = "0"
     new_repo.properties["fetchDepth"] = "0"
     new_repo.properties["labelSourcesFormat"] = "$(build.buildNumber)"
-    new_repo.properties["reportBuildStatus"] = "false"
+    new_repo.properties["reportBuildStatus"] = "true"
     new_repo.clean = False
 
     queues = get_queues(project_id)
