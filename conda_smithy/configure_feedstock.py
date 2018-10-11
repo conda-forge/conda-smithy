@@ -500,6 +500,10 @@ def _render_ci_provider(provider_name, jinja_env, forge_config, forge_dir, platf
                                                               forge_config=forge_config,
                                                               fast_finish_text=fast_finish_text)
 
+        # Allow disabling publication for a whole provider.  This is useful for testing new providers
+        forge_config['upload_packages'] = (forge_config.get(provider_name, {})
+                                                       .get('upload_packages', True))
+
         # If the recipe supplies its own upload_or_check_non_existence.py upload script,
         # we use it instead of the global one.
         upload_fpath = os.path.join(forge_dir, 'recipe',
@@ -784,13 +788,14 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
                                jinja_env=jinja_env,
                                template_files=template_files)
 
+
 def _get_azure_platforms(provider, forge_config):
     platforms = []
     keep_noarchs = []
     # TODO arch seems meaningless now for most of smithy? REMOVE?
     archs = []
     for platform in ['linux', 'osx', 'win']:
-        if True or (forge_config['provider'][platform] == provider):
+        if forge_config['azure']['force'] or (forge_config['provider'][platform] == provider):
             platforms.append(platform)
             if platform == 'linux':
                 keep_noarchs.append(True)
@@ -855,7 +860,13 @@ def _load_forge_config(forge_dir, exclusive_config_file):
               'travis': {},
               'circle': {},
               'appveyor': {},
-              'azure': {},
+              'azure': {
+                  # disallow publication of azure artifacts for now.
+                  'upload_packages': False,
+                  # Force building all supported providers.
+                  'force': True,
+
+              },
               'provider': {'linux': 'circle', 'osx': 'travis', 'win': 'appveyor'},
               'win': {'enabled': False},
               'osx': {'enabled': False},

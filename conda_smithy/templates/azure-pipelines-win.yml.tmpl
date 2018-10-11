@@ -86,6 +86,7 @@ jobs:
       displayName: Build recipe
       condition: not(contains(variables['CONFIG'], 'vs2008'))
 
-    # TODO: Upload token on azure pipelines?
+    {% if not upload_packages %}
     - script: |
         upload_package .\ .\{{ recipe_dir }} .ci_support\%CONFIG%.yaml
+    {% endif %}
