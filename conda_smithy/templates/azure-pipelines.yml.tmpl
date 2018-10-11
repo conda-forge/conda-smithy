@@ -1,15 +1,15 @@
 jobs:
   {%- for platform in azure.get('all_platforms', []) %}
   {%- if platform == 'win' %}
-  - template: ./azure-pipelines/azure-pipelines-win.yml
+  - template: ./.azure-pipelines/azure-pipelines-win.yml
 
   {% endif -%}
   {%- if platform == 'osx' %}
-  - template: ./azure-pipelines/azure-pipelines-osx.yml
+  - template: ./.azure-pipelines/azure-pipelines-osx.yml
 
   {% endif -%}
   {%- if platform == 'linux' %}
-  - template: ./azure-pipelines/azure-pipelines-linux.yml
+  - template: ./.azure-pipelines/azure-pipelines-linux.yml
 
   {% endif -%}
   {% endfor -%}
