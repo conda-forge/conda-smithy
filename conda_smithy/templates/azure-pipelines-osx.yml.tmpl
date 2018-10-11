@@ -37,9 +37,9 @@ jobs:
     displayName: 'Install miniconda'
 
   - script: |
-      set -x -e
       export PATH=$(Build.StagingDirectory)/miniconda/bin:$PATH
-      conda install --yes conda-forge::conda-forge-ci-setup=2
+      set -x -e
+      conda install --yes --quiet conda-forge::conda-forge-ci-setup=2
     displayName: 'Add conda-forge-ci-setup=2'
 
   - script: |
@@ -50,34 +50,34 @@ jobs:
       setup_conda_rc ./ ./recipe ./.ci_support/${CONFIG}.yaml
 
       source run_conda_forge_build_setup
-      conda update --yes --override-channels -c conda-forge -c defaults --all
+      conda update --yes --quiet --override-channels -c conda-forge -c defaults --all
     env: {
       OSX_FORCE_SDK_DOWNLOAD: "1"
     }
     displayName: Configure conda and conda-build
 
   - script: |
-      set -x -e
       export PATH=$(Build.StagingDirectory)/miniconda/bin:$PATH
+      set -x -e
       mangle_compiler ./ ./recipe ./.ci_support/${CONFIG}.yaml
     displayName: Mangle compiler
 
   - script: |
-      set -x -e
       export PATH=$(Build.StagingDirectory)/miniconda/bin:$PATH
+      set -x -e
       make_build_number ./ ./recipe ./.ci_support/${CONFIG}.yaml
     displayName: Generate build number clobber file
 
   - script: |
-      set -x -e
       export PATH=$(Build.StagingDirectory)/miniconda/bin:$PATH
+      set -x -e
       conda build ./recipe -m ./.ci_support/${CONFIG}.yaml --clobber-file ./.ci_support/clobber_${CONFIG}.yaml
     displayName: Build recipe
 
-  {% if not upload_packages %}
+  {% if upload_packages %}
   - script: |
-      set -x -e
       export PATH=$(Build.StagingDirectory)/miniconda/bin:$PATH
+      set -x -e
       upload_package ./ ./recipe ./.ci_support/${CONFIG}.yaml
     displayName: Upload recipe
   {% endif %}

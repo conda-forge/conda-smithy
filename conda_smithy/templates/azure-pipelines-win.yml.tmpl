@@ -88,7 +88,7 @@ jobs:
       displayName: Build recipe
       condition: not(contains(variables['CONFIG'], 'vs2008'))
 
-    {% if not upload_packages %}
+    {% if upload_packages %}
     - script: |
         upload_package .\ .\{{ recipe_dir }} .ci_support\%CONFIG%.yaml
     {% endif %}
