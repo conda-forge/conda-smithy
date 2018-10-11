@@ -771,8 +771,9 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
     # TODO:
     platform_templates = {
         'linux': [
-           'run_docker_build.sh.tmpl',
             'azure-pipelines-linux.yml.tmpl',
+            'run_docker_build.sh.tmpl',
+            'build_steps.sh.tmpl',
         ],
         'osx': [
             'azure-pipelines-osx.yml.tmpl',

@@ -1,5 +1,5 @@
 jobs:
-  {%- for platform in azure.get('all_platforms', []) %}
+  {%- for platform in azure.get('all_platforms', []) | sort %}
   {%- if platform == 'win' %}
   - template: ./.azure-pipelines/azure-pipelines-win.yml
 

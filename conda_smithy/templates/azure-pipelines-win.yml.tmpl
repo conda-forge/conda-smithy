@@ -5,7 +5,7 @@ jobs:
   strategy:
     maxParallel: 4
     matrix:
-    {%- for config, platform in configs %}
+    {%- for config, platform in configs | sort %}
     {%- if platform.startswith('win') %}
       {{ config }}:
         CONFIG: {{ config}}
