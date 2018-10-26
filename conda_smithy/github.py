@@ -206,9 +206,8 @@ def configure_github_team(meta, gh_repo, org, feedstock_name):
         )
 
     # Get the all-members team
-    team_name = 'all-members'
     description = "All of the awesome {} contributors!".format(org.name)
-    all_members_team = get_cached_team(org, team_name, description)
+    all_members_team = get_cached_team(org, 'all-members', description)
     new_conda_forge_members = set()
 
     # Add new members to all-members
