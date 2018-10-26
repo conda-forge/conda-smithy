@@ -177,7 +177,7 @@ def configure_github_team(meta, gh_repo, org, feedstock_name):
     team_name = feedstock_name
     # Try to get team or create it if it doesn't exist.
     team = next((team for team in gh_repo.get_teams() if team.name == team_name), None)
-    current_maintainers = []
+    current_maintainers = set()
     if not team:
         team = create_team(
             org,
@@ -188,17 +188,16 @@ def configure_github_team(meta, gh_repo, org, feedstock_name):
         )
         team.add_to_repos(gh_repo)
     else:
-        current_maintainers = team.get_members()
+        current_maintainers = set([
+            e.login.lower() for e in team.get_members()
+        ])
 
     # Add only the new maintainers to the team.
-    current_maintainers_handles = set([
-        e.login.lower() for e in current_maintainers
-    ])
-    for new_maintainer in maintainers - current_maintainers_handles:
+    for new_maintainer in maintainers - current_maintainers:
         add_membership(team, new_maintainer)
 
     # Mention any maintainers that need to be removed (unlikely here).
-    for old_maintainer in current_maintainers_handles - maintainers:
+    for old_maintainer in current_maintainers - maintainers:
         print(
             "AN OLD MEMBER ({}) NEEDS TO BE REMOVED FROM {}".format(
                 old_maintainer, gh_repo
@@ -211,7 +210,7 @@ def configure_github_team(meta, gh_repo, org, feedstock_name):
     new_org_members = set()
 
     # Add new members to all-members
-    for new_member in maintainers - current_maintainers_handles:
+    for new_member in maintainers - current_maintainers:
         if not has_in_members(all_members_team, new_member):
             print(
                 "Adding a new member ({}) to {}. Welcome! :)".format(
@@ -221,4 +220,4 @@ def configure_github_team(meta, gh_repo, org, feedstock_name):
             add_membership(all_members_team, new_member)
             new_org_members.add(new_member)
 
-    return maintainers, current_maintainers_handles, new_org_members
+    return maintainers, current_maintainers, new_org_members
