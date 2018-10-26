@@ -208,7 +208,7 @@ def configure_github_team(meta, gh_repo, org, feedstock_name):
     # Get the all-members team
     description = "All of the awesome {} contributors!".format(org.name)
     all_members_team = get_cached_team(org, 'all-members', description)
-    new_conda_forge_members = set()
+    new_org_members = set()
 
     # Add new members to all-members
     for new_member in maintainers - current_maintainers_handles:
@@ -219,6 +219,6 @@ def configure_github_team(meta, gh_repo, org, feedstock_name):
                 )
             )
             add_membership(all_members_team, new_member)
-            new_conda_forge_members.add(new_member)
+            new_org_members.add(new_member)
 
-    return maintainers, current_maintainers_handles, new_conda_forge_members
+    return maintainers, current_maintainers_handles, new_org_members
