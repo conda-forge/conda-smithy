@@ -192,9 +192,24 @@ def configure_github_team(meta, gh_repo, org, feedstock_name):
             e.login.lower() for e in team.get_members()
         ])
 
+    # Get the all-members team
+    description = "All of the awesome {} contributors!".format(org.name)
+    all_members_team = get_cached_team(org, 'all-members', description)
+    new_org_members = set()
+
     # Add only the new maintainers to the team.
+    # Also add the new maintainers to all-members if not already included.
     for new_maintainer in maintainers - current_maintainers:
         add_membership(team, new_maintainer)
+
+        if not has_in_members(all_members_team, new_maintainer):
+            print(
+                "Adding a new member ({}) to {}. Welcome! :)".format(
+                    new_maintainer, org.name
+                )
+            )
+            add_membership(all_members_team, new_maintainer)
+            new_org_members.add(new_maintainer)
 
     # Mention any maintainers that need to be removed (unlikely here).
     for old_maintainer in current_maintainers - maintainers:
@@ -203,21 +218,5 @@ def configure_github_team(meta, gh_repo, org, feedstock_name):
                 old_maintainer, gh_repo
             )
         )
-
-    # Get the all-members team
-    description = "All of the awesome {} contributors!".format(org.name)
-    all_members_team = get_cached_team(org, 'all-members', description)
-    new_org_members = set()
-
-    # Add new members to all-members
-    for new_member in maintainers - current_maintainers:
-        if not has_in_members(all_members_team, new_member):
-            print(
-                "Adding a new member ({}) to {}. Welcome! :)".format(
-                    new_member, org.name
-                )
-            )
-            add_membership(all_members_team, new_member)
-            new_org_members.add(new_member)
 
     return maintainers, current_maintainers, new_org_members
