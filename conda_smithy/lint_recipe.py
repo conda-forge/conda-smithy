@@ -317,15 +317,15 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
                          '<variable name><one space>=<one space>'
                          '<expression><one space>%}}`` form. See lines '
                          '{}'.format(bad_lines))
-
-    # hints
-    # 1: Legacy usage of compilers
+    
+    # 21: Legacy usage of compilers
     if build_reqs and ('toolchain' in build_reqs):
-        hints.append('Using toolchain directly in this manner is deprecated.  Consider '
+        lints.append('Using toolchain directly in this manner is deprecated.  Consider '
                      'using the compilers outlined '
                      '[here](https://conda-forge.org/docs/meta.html#compilers).')
 
-    # 2: suggest pip
+    # hints
+    # 1: suggest pip
     if 'script' in build_section:
         scripts = build_section['script']
         if isinstance(scripts, str):
