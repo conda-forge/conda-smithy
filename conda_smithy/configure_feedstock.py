@@ -472,6 +472,7 @@ def _render_ci_provider(provider_name, jinja_env, forge_config, forge_dir, platf
         forge_config[provider_name]["enabled"] = True
         fancy_name = {'linux': 'Linux', 'osx': 'OSX', 'win': 'Windows'}
         fancy_platforms = []
+        unfancy_platforms = set()
 
         configs = []
         for metas, platform, enable in zip(metas_list_of_lists, platforms, enable_platform):
@@ -479,6 +480,7 @@ def _render_ci_provider(provider_name, jinja_env, forge_config, forge_dir, platf
                 configs.extend(dump_subspace_config_files(metas, forge_dir, platform))
                 forge_config[platform]["enabled"] = True
                 fancy_platforms.append(fancy_name[platform])
+                unfancy_platforms.add(platform)
             elif platform in extra_platform_files:
                     for each_target_fname in extra_platform_files[platform]:
                         remove_file(each_target_fname)
@@ -489,6 +491,7 @@ def _render_ci_provider(provider_name, jinja_env, forge_config, forge_dir, platf
                     remove_file(each_target_fname)
 
         forge_config[provider_name]["platforms"] = ','.join(fancy_platforms)
+        forge_config[provider_name]["all_platforms"] = list(unfancy_platforms)
 
         forge_config['configs'] = configs
 
@@ -496,6 +499,10 @@ def _render_ci_provider(provider_name, jinja_env, forge_config, forge_dir, platf
                                                               forge_dir=forge_dir,
                                                               forge_config=forge_config,
                                                               fast_finish_text=fast_finish_text)
+
+        # Allow disabling publication for a whole provider.  This is useful for testing new providers
+        forge_config['upload_packages'] = (forge_config.get(provider_name, {})
+                                                       .get('upload_packages', True))
 
         # If the recipe supplies its own upload_or_check_non_existence.py upload script,
         # we use it instead of the global one.
@@ -533,6 +540,7 @@ def _render_ci_provider(provider_name, jinja_env, forge_config, forge_dir, platf
         template = jinja_env.get_template(platform_template_file)
         with write_file(platform_target_path) as fh:
             fh.write(template.render(**forge_config))
+    # TODO: azure-pipelines might need the same as circle
     return forge_config
 
 
@@ -618,6 +626,7 @@ def _circle_specific_setup(jinja_env, forge_config, forge_dir, platform):
 def _get_platforms_of_provider(provider, forge_config):
     platforms = []
     keep_noarchs = []
+    # TODO arch seems meaningless now for most of smithy? REMOVE?
     archs = []
     for platform in ['linux', 'osx', 'win']:
         if forge_config['provider'][platform] == provider:
@@ -758,6 +767,66 @@ def render_appveyor(jinja_env, forge_config, forge_dir):
                                platform_specific_setup=_appveyor_specific_setup)
 
 
+def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
+    # TODO:
+    platform_templates = {
+        'linux': [
+            'azure-pipelines-linux.yml.tmpl',
+            'run_docker_build.sh.tmpl',
+            'build_steps.sh.tmpl',
+        ],
+        'osx': [
+            'azure-pipelines-osx.yml.tmpl',
+        ],
+        'win': [
+            'azure-pipelines-win.yml.tmpl',
+        ],
+    }
+    template_files = platform_templates.get(platform, [])
+
+    _render_template_exe_files(forge_config=forge_config,
+                               target_dir=os.path.join(forge_dir, '.azure-pipelines'),
+                               jinja_env=jinja_env,
+                               template_files=template_files)
+
+
+def _get_azure_platforms(provider, forge_config):
+    platforms = []
+    keep_noarchs = []
+    # TODO arch seems meaningless now for most of smithy? REMOVE?
+    archs = []
+    for platform in ['linux', 'osx', 'win']:
+        if forge_config['azure']['force'] or (forge_config['provider'][platform] == provider):
+            platforms.append(platform)
+            if platform == 'linux':
+                keep_noarchs.append(True)
+            else:
+                keep_noarchs.append(False)
+            archs.append('64')
+    return platforms, archs, keep_noarchs
+
+
+def render_azure(jinja_env, forge_config, forge_dir):
+    target_path = os.path.join(forge_dir, 'azure-pipelines.yml')
+    template_filename = 'azure-pipelines.yml.tmpl'
+    fast_finish_text = ""
+
+    # TODO: for now just get this ignoring other pieces
+    platforms, archs, keep_noarchs = _get_azure_platforms('azure', forge_config)
+
+    return _render_ci_provider('azure',
+                               jinja_env=jinja_env,
+                               forge_config=forge_config,
+                               forge_dir=forge_dir,
+                               platforms=platforms,
+                               archs=archs,
+                               fast_finish_text=fast_finish_text,
+                               platform_target_path=target_path,
+                               platform_template_file=template_filename,
+                               platform_specific_setup=_azure_specific_setup,
+                               keep_noarchs=keep_noarchs,)
+
+
 def render_README(jinja_env, forge_config, forge_dir):
     # we only care about the first metadata object for sake of readme
     metas = conda_build.api.render(os.path.join(forge_dir, 'recipe'),
@@ -792,6 +861,13 @@ def _load_forge_config(forge_dir, exclusive_config_file):
               'travis': {},
               'circle': {},
               'appveyor': {},
+              'azure': {
+                  # disallow publication of azure artifacts for now.
+                  'upload_packages': False,
+                  # Force building all supported providers.
+                  'force': True,
+
+              },
               'provider': {'linux': 'circle', 'osx': 'travis', 'win': 'appveyor'},
               'win': {'enabled': False},
               'osx': {'enabled': False},
@@ -994,6 +1070,7 @@ def main(forge_file_directory, no_check_uptodate, commit, exclusive_config_file)
     render_circle(env, config, forge_dir)
     render_travis(env, config, forge_dir)
     render_appveyor(env, config, forge_dir)
+    render_azure(env, config, forge_dir)
     render_README(env, config, forge_dir)
 
     if os.path.isdir(os.path.join(forge_dir, '.ci_support')):

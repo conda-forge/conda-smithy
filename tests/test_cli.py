@@ -55,7 +55,8 @@ def test_init_multiple_output_matrix(testing_workdir):
     # the matrix should be consolidated among all outputs, as well as the top-level
     # reqs. Only the top-level reqs should have indedependent config files,
     # though - loops within outputs are contained in those top-level configs.
-    assert len(os.listdir(matrix_dir)) == 13
+    matrix_dir_len = len(os.listdir(matrix_dir))
+    assert matrix_dir_len == 13
     linux_libpng16 = os.path.join(matrix_dir, 'linux_libpng1.6libpq9.5.yaml')
     assert os.path.isfile(linux_libpng16)
     with open(linux_libpng16) as f:
