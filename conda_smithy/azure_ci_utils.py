@@ -10,7 +10,6 @@ AZURE_PROJECT_ID = os.getenv("AZURE_PROJECT_ID", "feedstock-builds")
 AZURE_SERVICE_ENDPOINT_NAME = os.getenv("AZURE_SERVICE_ENDPOINT", "conda-forge")
 
 try:
-    # Create a token at https://circleci.com/account/api. Put it in circle.token
     with open(os.path.expanduser("~/.conda-smithy/azure.token"), "r") as fh:
         AZURE_TOKEN = fh.read().strip()
     if not AZURE_TOKEN:

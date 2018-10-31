@@ -16,7 +16,6 @@ from . import github
 # https://circleci.com/api/v1/project/:username/:project/envvar?circle-token=:token
 
 try:
-    # Create a token at https://circleci.com/account/api. Put it in circle.token
     with open(os.path.expanduser('~/.conda-smithy/circle.token'), 'r') as fh:
         circle_token = fh.read().strip()
     if not circle_token:
