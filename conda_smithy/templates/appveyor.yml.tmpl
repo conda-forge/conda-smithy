@@ -34,7 +34,7 @@ install:
     - cmd: |
         {{ fast_finish }}
 
-    # Cywing's git breaks conda-build. (See https://github.com/conda-forge/conda-smithy-feedstock/pull/2.)
+    # Cygwin's git breaks conda-build. (See https://github.com/conda-forge/conda-smithy-feedstock/pull/2.)
     - cmd: rmdir C:\cygwin /s /q
 
     # Add path, activate `conda` and update conda.

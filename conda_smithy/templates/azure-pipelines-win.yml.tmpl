@@ -21,7 +21,7 @@ jobs:
       condition: contains(variables['CONFIG'], 'vs2008')
       displayName: Install vcpython27.msi (if needed)
 
-    # Cywing's git breaks conda-build. (See https://github.com/conda-forge/conda-smithy-feedstock/pull/2.)
+    # Cygwin's git breaks conda-build. (See https://github.com/conda-forge/conda-smithy-feedstock/pull/2.)
     # - script: rmdir C:\cygwin /s /q
     #   continueOnError: true
 
