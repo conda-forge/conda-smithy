@@ -178,7 +178,7 @@ def configure_github_team(meta, gh_repo, org, feedstock_name):
     team_name = feedstock_name
     # Try to get team or create it if it doesn't exist.
     team = next((team for team in gh_repo.get_teams() if team.name == team_name), None)
-    current_maintainers = []
+    current_maintainers = set()
     if not team:
         team = create_team(
             org,
@@ -189,38 +189,35 @@ def configure_github_team(meta, gh_repo, org, feedstock_name):
         )
         team.add_to_repos(gh_repo)
     else:
-        current_maintainers = team.get_members()
+        current_maintainers = set([
+            e.login.lower() for e in team.get_members()
+        ])
+
+    # Get the all-members team
+    description = "All of the awesome {} contributors!".format(org.name)
+    all_members_team = get_cached_team(org, 'all-members', description)
+    new_org_members = set()
 
     # Add only the new maintainers to the team.
-    current_maintainers_handles = set([
-        e.login.lower() for e in current_maintainers
-    ])
-    for new_maintainer in maintainers - current_maintainers_handles:
+    # Also add the new maintainers to all-members if not already included.
+    for new_maintainer in maintainers - current_maintainers:
         add_membership(team, new_maintainer)
 
+        if not has_in_members(all_members_team, new_maintainer):
+            print(
+                "Adding a new member ({}) to {}. Welcome! :)".format(
+                    new_maintainer, org.name
+                )
+            )
+            add_membership(all_members_team, new_maintainer)
+            new_org_members.add(new_maintainer)
+
     # Mention any maintainers that need to be removed (unlikely here).
-    for old_maintainer in current_maintainers_handles - maintainers:
+    for old_maintainer in current_maintainers - maintainers:
         print(
             "AN OLD MEMBER ({}) NEEDS TO BE REMOVED FROM {}".format(
                 old_maintainer, gh_repo
             )
         )
 
-    # Get the all-members team
-    team_name = 'all-members'
-    description = "All of the awesome {} contributors!".format(org.name)
-    all_members_team = get_cached_team(org, team_name, description)
-    new_conda_forge_members = set()
-
-    # Add new members to all-members
-    for new_member in maintainers - current_maintainers_handles:
-        if not has_in_members(all_members_team, new_member):
-            print(
-                "Adding a new member ({}) to {}. Welcome! :)".format(
-                    new_member, org.name
-                )
-            )
-            add_membership(all_members_team, new_member)
-            new_conda_forge_members.add(new_member)
-
-    return maintainers, current_maintainers_handles, new_conda_forge_members
+    return maintainers, current_maintainers, new_org_members
