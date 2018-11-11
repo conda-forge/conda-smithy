@@ -43,14 +43,8 @@ install:
 
     - cmd: set PYTHONUNBUFFERED=1
 
-    # Add our channels.
-    - cmd: conda.exe config --set show_channel_urls true
-    - cmd: conda.exe config --remove channels defaults
-    {%- for channel in channels.get('sources', [])|reverse %}
-    - cmd: conda.exe config --add channels {{ channel }}{% endfor %}
-
     # Configure the VM.
-    - cmd: conda.exe install -n root --quiet --yes conda-forge-ci-setup=2
+    - cmd: conda.exe install -n root --quiet --yes conda-forge::conda-forge-ci-setup=2
     - cmd: setup_conda_rc .\ .\recipe .\.ci_support\%CONFIG%.yaml
     {% if build_setup -%}
     {{ build_setup }}{% endif %}
