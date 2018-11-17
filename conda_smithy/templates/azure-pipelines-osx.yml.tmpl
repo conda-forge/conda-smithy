@@ -1,9 +1,10 @@
 jobs:
 - job: osx_64
   pool:
-    vmImage: xcode9-macos10.13
+    vmImage: macOS-10.13
   strategy:
     maxParallel: 8
+    timeoutInMinutes: 240
     matrix:
     {%- for config, platform in configs | sort %}
     {%- if platform.startswith('osx') %}

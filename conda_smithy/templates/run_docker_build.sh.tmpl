@@ -39,7 +39,20 @@ mkdir -p "$ARTIFACTS"
 DONE_CANARY="$ARTIFACTS/conda-forge-build-done-${CONFIG}"
 rm -f "$DONE_CANARY"
 
-{{ docker.executable }} run -it \
+{%- if docker.interactive is defined %}
+    {%- if docker.interactive %}
+# Enable running in interactive mode attached to a tty
+DOCKER_RUN_ARGS=" -it "
+    {%- else %}
+# Not all providers run with a real tty.  Disable using one
+DOCKER_RUN_ARGS=" "
+    {%- endif %}
+{%- else %}
+DOCKER_RUN_ARGS=" -it "
+{%- endif %}
+
+
+{{ docker.executable }} run ${DOCKER_RUN_ARGS} \
            -v "${RECIPE_ROOT}":/home/conda/recipe_root:ro,z \
            -v "${FEEDSTOCK_ROOT}":/home/conda/feedstock_root:rw,z \
            -e CONFIG \
