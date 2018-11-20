@@ -784,10 +784,12 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
     }
     template_files = platform_templates.get(platform, [])
 
+    forge_config['docker']['interactive'] = False
     _render_template_exe_files(forge_config=forge_config,
                                target_dir=os.path.join(forge_dir, '.azure-pipelines'),
                                jinja_env=jinja_env,
                                template_files=template_files)
+    forge_config['docker']['interactive'] = True
 
 
 def _get_azure_platforms(provider, forge_config):
@@ -856,7 +858,9 @@ def copy_feedstock_content(forge_dir):
 def _load_forge_config(forge_dir, exclusive_config_file):
     config = {'docker': {'executable': 'docker',
                          'image': 'condaforge/linux-anvil',
-                         'command': 'bash'},
+                         'command': 'bash',
+                         'interactive': True,
+                         },
               'templates': {},
               'travis': {},
               'circle': {},

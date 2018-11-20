@@ -4,6 +4,7 @@ jobs:
     vmImage: ubuntu-16.04
   strategy:
     maxParallel: 8
+    timeoutInMinutes: 240
     matrix:
     {%- for config, platform in configs | sort %}
     {%- if platform.startswith('linux') %}
