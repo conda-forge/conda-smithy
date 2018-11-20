@@ -859,7 +859,7 @@ def _load_forge_config(forge_dir, exclusive_config_file):
     config = {'docker': {'executable': 'docker',
                          'image': 'condaforge/linux-anvil',
                          'command': 'bash',
-                         'interactve': True,
+                         'interactive': True,
                          },
               'templates': {},
               'travis': {},
