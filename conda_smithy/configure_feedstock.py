@@ -869,8 +869,7 @@ def _load_forge_config(forge_dir, exclusive_config_file):
                   # disallow publication of azure artifacts for now.
                   'upload_packages': False,
                   # Force building all supported providers.
-                  'force': True,
-
+                  'force': False,
               },
               'provider': {'linux': 'circle', 'osx': 'travis', 'win': 'appveyor'},
               'win': {'enabled': False},
