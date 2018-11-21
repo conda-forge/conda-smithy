@@ -4,6 +4,23 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.2.0
+====================
+
+**Changed:**
+
+* updated toolchain lint to error
+
+
+**Fixed:**
+
+* The ``extra-admin-users`` flag can be None which is the default case. So, we have to check that before to make a loop on the entries of ``extra-admin-users`` list.
+* The ``update-cb3`` command now handles ``toolchain3`` in the same way that
+  ``toolchain`` is handled.
+
+
+
+
 v3.1.12
 ====================
 
