@@ -2,9 +2,9 @@ jobs:
 - job: win_64
   pool:
     vmImage: vs2017-win2016
+  timeoutInMinutes: 240
   strategy:
     maxParallel: 4
-    timeoutInMinutes: 240
     matrix:
     {%- for config, platform in configs | sort %}
     {%- if platform.startswith('win') %}
@@ -15,6 +15,7 @@ jobs:
   steps:
     # TODO: Fast finish on azure pipelines?
     - script: |
+        ECHO ON
         {{ fast_finish }}
 
     - script: |
