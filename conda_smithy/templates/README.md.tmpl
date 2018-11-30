@@ -139,3 +139,10 @@ In order to produce a uniquely identifiable distribution:
    the [``build/number``](https://conda.io/docs/user-guide/tasks/build-packages/define-metadata.html#build-number-and-string)
    back to 0.
 {# this comment ensures a trailing newline #}
+
+Feedstock Maintainers
+=====================
+
+{% for maintainer in maintainers -%}
+* [@{{maintainer}}](https://github.com/{{maintainer}}/)
+{% endfor %}

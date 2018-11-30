@@ -1,7 +1,7 @@
 from __future__ import print_function, unicode_literals
 
 import glob
-from itertools import product
+from itertools import product, chain
 import os
 import subprocess
 import textwrap
@@ -841,6 +841,7 @@ def render_README(jinja_env, forge_config, forge_dir):
     forge_config['package'] = metas[0][0]
     forge_config['package_name'] = metas[0][0].meta['extra']['parent_recipe']['name']
     forge_config['outputs'] = sorted(list(OrderedDict((meta[0].name(), None) for meta in metas)))
+    forge_config['maintainers'] = sorted(set(chain.from_iterable(meta[0].meta['extra']['recipe-maintainers'] for meta in metas)))
     with write_file(target_fname) as fh:
         fh.write(template.render(**forge_config))
 
