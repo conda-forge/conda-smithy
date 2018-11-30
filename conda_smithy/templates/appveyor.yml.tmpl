@@ -45,7 +45,7 @@ install:
 
     # Configure the VM.
     - cmd: conda.exe install -n root -c conda-forge --quiet --yes conda-forge-ci-setup=2
-    - cmd: setup_conda_rc .\ .\recipe .\.ci_support\%CONFIG%.yaml
+    - cmd: setup_conda_rc .\ .\{{ recipe_dir }} .\.ci_support\%CONFIG%.yaml
     {% if build_setup -%}
     {{ build_setup }}{% endif %}
 
