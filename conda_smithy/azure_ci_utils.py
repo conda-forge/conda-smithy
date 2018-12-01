@@ -8,7 +8,7 @@ from msrest.authentication import BasicAuthentication
 AZURE_TEAM_INSTANCE = os.getenv("AZURE_INSTANCE", "https://dev.azure.com/conda-forge")
 AZURE_PROJECT_ID = os.getenv("AZURE_PROJECT_ID", "feedstock-builds")
 AZURE_SERVICE_ENDPOINT_NAME = os.getenv("AZURE_SERVICE_ENDPOINT", "conda-forge")
-# Bydefault for now don't report on the build information back to github
+# By default for now don't report on the build information back to github
 AZURE_REPORT_BUILD_STATUS = os.getenv("AZURE_REPORT_BUILD_STATUS", "false")
 
 try:
