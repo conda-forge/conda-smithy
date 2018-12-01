@@ -6,6 +6,8 @@
 
 **Removed:** None
 
-**Fixed:** Azure fixed incorrect build setup
+**Fixed:**
+
+* Azure fixed incorrect build setup
 
 **Security:** None
