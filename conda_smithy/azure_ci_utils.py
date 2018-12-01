@@ -8,6 +8,8 @@ from msrest.authentication import BasicAuthentication
 AZURE_TEAM_INSTANCE = os.getenv("AZURE_INSTANCE", "https://dev.azure.com/conda-forge")
 AZURE_PROJECT_ID = os.getenv("AZURE_PROJECT_ID", "feedstock-builds")
 AZURE_SERVICE_ENDPOINT_NAME = os.getenv("AZURE_SERVICE_ENDPOINT", "conda-forge")
+# Bydefault for now don't report on the build information back to github
+AZURE_REPORT_BUILD_STATUS = os.getenv("AZURE_REPORT_BUILD_STATUS", "false")
 
 try:
     with open(os.path.expanduser("~/.conda-smithy/azure.token"), "r") as fh:
@@ -113,7 +115,7 @@ def register_repo(github_org, repo_name, project_id=AZURE_PROJECT_ID):
     new_repo.properties["labelSources"] = "0"
     new_repo.properties["fetchDepth"] = "0"
     new_repo.properties["labelSourcesFormat"] = "$(build.buildNumber)"
-    new_repo.properties["reportBuildStatus"] = "true"
+    new_repo.properties["reportBuildStatus"] = AZURE_REPORT_BUILD_STATUS
     new_repo.clean = False
 
     queues = get_queues(project_id)
