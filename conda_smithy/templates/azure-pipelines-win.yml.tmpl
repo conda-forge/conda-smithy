@@ -62,19 +62,15 @@ jobs:
 
     - script: set PYTHONUNBUFFERED=1
 
-    # Add our channels.
-    - script: conda.exe config --set show_channel_urls true
-      displayName: configure conda channels
-    - script: conda.exe config --remove channels defaults
-      displayName: configure conda channels
-    {%- for channel in channels.get('sources', []) | reverse  %}
-    - script: conda.exe config --add channels {{ channel }}
-      displayName: configure conda channels
-    {% endfor %}
-
+    # Configure the VM
+    - script: setup_conda_rc .\ .\{{ recipe_dir }} .\.ci_support\%CONFIG%.yaml
+    
+    {% if build_setup -%}
     # Configure the VM.
-    - script: call run_conda_forge_build_setup
+    - script: |
+        {{ build_setup}}
       displayName: conda-forge build setup
+    {{ build_setup }}{% endif %}
 
     # Special cased version setting some more things!
     - script: |
