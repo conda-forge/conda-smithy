@@ -10,6 +10,7 @@ jobs:
     {%- if platform.startswith('win') %}
       {{ config }}:
         CONFIG: {{ config}}
+        CONDA_BLD_PATH: D:\\bld\\
     {%- endif %}
     {%- endfor %}
   steps:
