@@ -4,6 +4,34 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.2.1
+====================
+
+**Added:**
+
+* Added support for rendering feedstock recipes for Azure pipelines.  
+  Presently this is enabled globally for all feedstocks going forward by default.
+  Azure builds are configured to not publish artifacts to anaconda.org
+* PR template asking for news entries 
+  (aka, I heard you like news, so I put a news item about adding news items into 
+  your news item, so you can add news while you add news)
+* Feedstock maintainers are now listed in the README file.
+
+
+**Removed:**
+
+* Python 2.7 support has been dropped.  Conda-smithy now requires python >= 3.5.
+
+
+**Fixed:**
+
+* Fixes issue with Circle job definition where "filters are incompatible with
+  workflows" when Linux is skipped. This was causing Linux jobs to be created
+  and then fail on feedstocks where Linux and Circle were not needed.
+
+
+
+
 v3.2.0
 ====================
 
