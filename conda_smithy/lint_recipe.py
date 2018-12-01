@@ -370,6 +370,9 @@ def run_conda_forge_specific(meta, recipe_dir, lints, hints):
     # 2: Check that the recipe maintainers exists:
     maintainers = extra_section.get('recipe-maintainers', [])
     for maintainer in maintainers:
+        if "/" in maintainer:
+            # It's a team. Checking for existence is expensive. Skip for now
+            continue
         try:
             gh.get_user(maintainer)
         except github.UnknownObjectException as e:

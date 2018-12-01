@@ -77,9 +77,20 @@ def get_cached_team(org, team_name, description=""):
     except IOError:
         pass
 
+    try:
+        repo = org.get_repo("{}-feedstock".format(team_name))
+        team = next((team for team in repo.get_teams() if team.name == team_name), None)
+        if team:
+            return team
+    except GithubException:
+        pass
+
     team = next((team for team in org.get_teams() if team.name == team_name), None)
     if not team:
-        team = create_team(org, team_name, description, [])
+        if description:
+            team = create_team(org, team_name, description, [])
+        else:
+            raise RuntimeError("Couldn't find team {}".format(team_name))
 
     with open(cached_file, 'w') as fh:
         fh.write(str(team.id))
@@ -175,9 +186,13 @@ def configure_github_team(meta, gh_repo, org, feedstock_name):
         meta.meta.get('extra', {}).get('recipe-maintainers', [])
     )
     maintainers = set(maintainer.lower() for maintainer in maintainers)
-    team_name = feedstock_name
+    maintainer_teams = set(m for m in maintainers if '/' in m)
+    maintainers = set(m for m in maintainers if '/' not in m)
+
     # Try to get team or create it if it doesn't exist.
-    team = next((team for team in gh_repo.get_teams() if team.name == team_name), None)
+    team_name = feedstock_name
+    current_maintainer_teams = list(gh_repo.get_teams())
+    team = next((team for team in current_maintainer_teams if team.name == team_name), None)
     current_maintainers = set()
     if not team:
         team = create_team(
@@ -194,7 +209,7 @@ def configure_github_team(meta, gh_repo, org, feedstock_name):
         ])
 
     # Get the all-members team
-    description = "All of the awesome {} contributors!".format(org.name)
+    description = "All of the awesome {} contributors!".format(org.login)
     all_members_team = get_cached_team(org, 'all-members', description)
     new_org_members = set()
 
@@ -206,7 +221,7 @@ def configure_github_team(meta, gh_repo, org, feedstock_name):
         if not has_in_members(all_members_team, new_maintainer):
             print(
                 "Adding a new member ({}) to {}. Welcome! :)".format(
-                    new_maintainer, org.name
+                    new_maintainer, org.login
                 )
             )
             add_membership(all_members_team, new_maintainer)
@@ -219,5 +234,12 @@ def configure_github_team(meta, gh_repo, org, feedstock_name):
                 old_maintainer, gh_repo
             )
         )
+
+    # Add any new maintainer team
+    maintainer_teams = set(m.split("/")[1] for m in maintainer_teams if m.startswith(str(org.login)))
+    current_maintainer_teams = [team.name for team in current_maintainer_teams]
+    for maintainer_team in maintainer_teams - set(current_maintainer_teams):
+        team = get_cached_team(org, maintainer_team)
+        team.add_to_repos(gh_repo)
 
     return maintainers, current_maintainers, new_org_members
