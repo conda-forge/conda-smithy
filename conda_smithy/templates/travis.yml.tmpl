@@ -58,7 +58,7 @@ install:
       echo "Configuring conda."
       source /Users/travis/miniconda3/bin/activate root
 
-      conda install --yes --quiet conda-forge::conda-forge-ci-setup=2
+      conda install -n root -c conda-forge --quiet --yes conda-forge-ci-setup=2
       setup_conda_rc ./ ./{{ recipe_dir }} ./.ci_support/${CONFIG}.yaml
 
       {% if build_setup -%}
@@ -73,4 +73,3 @@ script:
   - make_build_number ./ ./{{ recipe_dir }} ./.ci_support/${CONFIG}.yaml
   - conda build ./{{ recipe_dir }} -m ./.ci_support/${CONFIG}.yaml --clobber-file ./.ci_support/clobber_${CONFIG}.yaml
   - upload_package ./ ./{{ recipe_dir }} ./.ci_support/${CONFIG}.yaml
-
