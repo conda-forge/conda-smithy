@@ -839,7 +839,7 @@ def render_README(jinja_env, forge_config, forge_dir):
     if "parent_recipe" in metas[0][0].meta["extra"]:
         package_name = metas[0][0].meta["extra"]["parent_recipe"]["name"]
     else:
-        package_name = metas[0][0].meta.name()
+        package_name = metas[0][0].name()
 
     template = jinja_env.get_template('README.md.tmpl')
     target_fname = os.path.join(forge_dir, 'README.md')
