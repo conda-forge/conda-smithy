@@ -4,6 +4,25 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.2.2
+====================
+
+**Added:**
+
+* recipe-maintainers can now be a conda-forge github team
+
+
+**Fixed:**
+
+* Azure fixed incorrect build setup
+* Use setup_conda_rc for azure on windows
+* Fixed creating feedstocks with conda-build 3.17.x
+* Fixed bug in appveyor where custom channels are not used
+* Added conda-forge when installing conda-forge-ci-setup to prevent Circle from changing channel priority
+
+
+
+
 v3.2.1
 ====================
 
