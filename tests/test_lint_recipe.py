@@ -267,6 +267,23 @@ class Test_linter(unittest.TestCase):
                               tests:
                                 commands:
                                   - cp asd qwe  # [unix]
+                            """, is_good=True)
+            assert_noarch_selector("""
+                            build:
+                              noarch: python
+                              script:
+                                - echo "hello" # [unix]
+                                - echo "hello" # [win]
+                              requirements:
+                                build:
+                                  - python
+                                  - enum34     # [py2k]
+                                run:
+                                  - python
+                                  - enum34     # [py2k]
+                              tests:
+                                commands:
+                                  - cp asd qwe  # [unix]
                             """)
 
     def test_jinja_os_environ(self):
