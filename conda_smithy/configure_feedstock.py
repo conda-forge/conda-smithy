@@ -746,6 +746,8 @@ def _appveyor_specific_setup(jinja_env, forge_config, forge_dir, platform):
     build_setup = build_setup.rstrip()
     build_setup = build_setup.replace("\n", "\n    - cmd: ")
     build_setup = build_setup.lstrip()
+    # Explicitly add in  some newline characters to ensure that jinja templating doess't do something stupid
+    build_setup += '\n\n'
 
     forge_config['build_setup'] = build_setup
 
