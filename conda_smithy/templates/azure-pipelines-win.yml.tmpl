@@ -71,7 +71,7 @@ jobs:
     - script: |
         {{ build_setup}}
       displayName: conda-forge build setup
-    {{ build_setup }}{% endif %}
+    {% endif %}
 
     # Special cased version setting some more things!
     - script: |
