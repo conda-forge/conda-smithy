@@ -143,10 +143,6 @@ class RegisterCI(Subcommand):
                            help="github organisation under which to register this repo")
         for ci in ['Azure', 'Travis', 'Circle', 'Appveyor']:
             scp.add_argument(
-                '--with-{}'.format(ci.lower()), dest=ci.lower(),
-                action='store_true',
-                help="If set, {} will be registered".format(ci))
-            scp.add_argument(
                 '--without-{}'.format(ci.lower()), dest=ci.lower(),
                 action='store_false',
                 help="If set, {} will be not registered".format(ci))
