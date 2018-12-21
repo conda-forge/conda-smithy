@@ -18,3 +18,5 @@ nppBackup/
 
 # Pytest dirs/files
 .pytest_cache/
+
+.vscode/
