@@ -141,6 +141,17 @@ class RegisterCI(Subcommand):
         group.add_argument("--user", help="github username under which to register this repo")
         group.add_argument("--organization", default="conda-forge",
                            help="github organisation under which to register this repo")
+        for ci in ['Azure', 'Travis', 'Circle', 'Appveyor']:
+            scp.add_argument(
+                '--with-{}'.format(ci.lower()), dest=ci.lower(),
+                action='store_true',
+                help="If set, {} will be registered".format(ci))
+            scp.add_argument(
+                '--without-{}'.format(ci.lower()), dest=ci.lower(),
+                action='store_false',
+                help="If set, {} will be not registered".format(ci))
+            default = {ci.lower(): True}
+            scp.set_defaults(**default)
 
     def __call__(self, args):
         from conda_smithy import ci_register
@@ -148,17 +159,29 @@ class RegisterCI(Subcommand):
         repo = os.path.basename(os.path.abspath(args.feedstock_directory))
 
         print('CI Summary for {}/{} (can take ~30s):'.format(owner, repo))
-        ci_register.add_project_to_travis(owner, repo)
-        ci_register.travis_token_update_conda_forge_config(args.feedstock_directory, owner, repo)
-        time.sleep(1)
-        ci_register.travis_configure(owner, repo)
-        ci_register.travis_cleanup(owner, repo)
-        ci_register.add_project_to_circle(owner, repo)
-        ci_register.add_project_to_azure(owner, repo)
-        ci_register.add_token_to_circle(owner, repo)
-        ci_register.add_project_to_appveyor(owner, repo)
-        ci_register.appveyor_encrypt_binstar_token(args.feedstock_directory, owner, repo)
-        ci_register.appveyor_configure(owner, repo)
+        if args.travis:
+            ci_register.add_project_to_travis(owner, repo)
+            ci_register.travis_token_update_conda_forge_config(args.feedstock_directory, owner, repo)
+            time.sleep(1)
+            ci_register.travis_configure(owner, repo)
+            ci_register.travis_cleanup(owner, repo)
+        else:
+            print('Travis registration disabled.')
+        if args.circle:
+            ci_register.add_project_to_circle(owner, repo)
+            ci_register.add_token_to_circle(owner, repo)
+        else:
+            print('Circle registration disabled.')
+        if args.azure:
+            ci_register.add_project_to_azure(owner, repo)
+        else:
+            print('Azure registration disabled.')
+        if args.appveyor:
+            ci_register.add_project_to_appveyor(owner, repo)
+            ci_register.appveyor_encrypt_binstar_token(args.feedstock_directory, owner, repo)
+            ci_register.appveyor_configure(owner, repo)
+        else:
+            print('Appveyor registration disabled.')
         ci_register.add_conda_forge_webservice_hooks(owner, repo)
         print("\nCI services have been enabled. You may wish to regenerate the feedstock.\n"
               "Any changes will need commiting to the repo.")
