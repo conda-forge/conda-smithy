@@ -43,7 +43,9 @@ jobs:
 {%- else %}
           command: ./.circleci/run_osx_build.sh
 {%- endif %}
-          no_output_timeout: 30m
+{%- if idle_timeout_minutes %}
+          no_output_timeout: {{ idle_timeout_minutes }}m
+{%- endif %}
 {%- endfor -%}
 {%- endif -%}
 {%- endblock %}

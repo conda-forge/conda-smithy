@@ -70,5 +70,5 @@ install:
 script:
   # generate the build number clobber
   - make_build_number ./ ./{{ recipe_dir }} ./.ci_support/${CONFIG}.yaml
-  - travis_wait 30 conda build ./{{ recipe_dir }} -m ./.ci_support/${CONFIG}.yaml --clobber-file ./.ci_support/clobber_${CONFIG}.yaml
+  - {% if idle_timeout_minutes %}travis_wait {{ idle_timeout_minutes }}{% endif %} conda build ./{{ recipe_dir }} -m ./.ci_support/${CONFIG}.yaml --clobber-file ./.ci_support/clobber_${CONFIG}.yaml
   - upload_package ./ ./{{ recipe_dir }} ./.ci_support/${CONFIG}.yaml
