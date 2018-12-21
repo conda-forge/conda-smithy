@@ -14,6 +14,7 @@ import conda_build.api
 import conda_build.utils
 import conda_build.variants
 import conda_build.conda_interface
+from conda_build import __version__ as conda_build_version
 from jinja2 import Environment, FileSystemLoader
 
 from conda_smithy.feedstock_io import (
@@ -981,11 +982,12 @@ def check_version_uptodate(resolve, name, installed_version, error_on_warn):
         print(msg)
 
 
-def commit_changes(forge_file_directory, commit, cs_ver, cfp_ver):
+def commit_changes(forge_file_directory, commit, cs_ver, cfp_ver, cb_ver):
     if cfp_ver:
-        msg = 'Re-rendered with conda-smithy {} and pinning {}'.format(cs_ver, cfp_ver)
+        msg = 'Re-rendered with conda-build {}, conda-smithy {}, and conda-forge-pinning {}'.format(
+            cb_ver, cs_ver, cfp_ver)
     else:
-        msg = 'Re-rendered with conda-smithy {}'.format(cs_ver)
+        msg = 'Re-rendered with conda-build {} and conda-smithy {}'.format(cb_ver, cs_ver)
     print(msg)
 
     is_git_repo = os.path.exists(os.path.join(forge_file_directory, ".git"))
@@ -1094,7 +1096,7 @@ def main(forge_file_directory, no_check_uptodate, commit, exclusive_config_file)
                     "conda_build_config.yaml and re-render the recipe, rather than editing "
                     "these files directly.")
 
-    commit_changes(forge_file_directory, commit, __version__, cf_pinning_ver)
+    commit_changes(forge_file_directory, commit, __version__, cf_pinning_ver, conda_build_version)
 
 
 if __name__ == '__main__':
