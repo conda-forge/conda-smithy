@@ -871,7 +871,7 @@ def _load_forge_config(forge_dir, exclusive_config_file):
                          'image': 'condaforge/linux-anvil',
                          'command': 'bash',
                          'interactive': True,
-                         },
+                         },               
               'templates': {},
               'travis': {},
               'circle': {},
@@ -887,6 +887,9 @@ def _load_forge_config(forge_dir, exclusive_config_file):
               'win': {'enabled': False},
               'osx': {'enabled': False},
               'linux': {'enabled': False},
+              # Configurable idle timeout.  Used for packages that don't have chatty enough builds
+              # Applicable only to circleci and travis
+              'idle_timeout_minutes': None,
               # Compiler stack environment variable
               'compiler_stack': 'comp4',
               # Stack variables,  These can be used to impose global defaults for how far we build out
