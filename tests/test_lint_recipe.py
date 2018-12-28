@@ -302,6 +302,19 @@ class Test_linter(unittest.TestCase):
                         """)
             lints = linter.main(recipe_dir)
 
+    def test_target_platform(self):
+        # Test that we can use target_platform in a recipe. We don't care about
+        # the results here.
+        with tmp_directory() as recipe_dir:
+            with io.open(os.path.join(recipe_dir, 'meta.yaml'), 'w') as fh:
+                fh.write("""
+                        package:
+                           name: foo_{{ target_platform }}
+                           version: 1.0
+                         """)
+            lints = linter.main(recipe_dir)
+
+
     def test_missing_build_number(self):
         expected_message = "The recipe must have a `build/number` section."
 
