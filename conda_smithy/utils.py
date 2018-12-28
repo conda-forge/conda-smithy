@@ -44,6 +44,7 @@ def render_meta_yaml(text):
                                     defaultdict(lambda : ''),
                             datetime=datetime,
                             time=time,
+                            target_platform="linux-64",
                             ))
     mockos = MockOS()
     content = env.from_string(text).render(os=mockos, environ=mockos.environ)
