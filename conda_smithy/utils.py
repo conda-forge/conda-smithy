@@ -28,6 +28,7 @@ class NullUndefined(jinja2.Undefined):
 class MockOS(dict):
     def __init__(self):
         self.environ = defaultdict(lambda: '')
+        self.sep = '/'
 
 
 def render_meta_yaml(text):
