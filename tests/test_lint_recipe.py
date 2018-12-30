@@ -302,6 +302,20 @@ class Test_linter(unittest.TestCase):
                         """)
             lints = linter.main(recipe_dir)
 
+    def test_jinja_os_sep(self):
+        # Test that we can use os.sep in a recipe. 
+        with tmp_directory() as recipe_dir:
+            with io.open(os.path.join(recipe_dir, 'meta.yaml'), 'w') as fh:
+                fh.write("""
+                        package:
+                           name: foo_
+                           version: 1.0
+                        build:
+                          script: {{ os.sep }}
+                         """)
+            lints = linter.main(recipe_dir)
+
+
     def test_target_platform(self):
         # Test that we can use target_platform in a recipe. We don't care about
         # the results here.
@@ -313,7 +327,6 @@ class Test_linter(unittest.TestCase):
                            version: 1.0
                          """)
             lints = linter.main(recipe_dir)
-
 
     def test_missing_build_number(self):
         expected_message = "The recipe must have a `build/number` section."
