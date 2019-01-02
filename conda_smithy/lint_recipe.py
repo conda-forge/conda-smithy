@@ -273,7 +273,7 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
             in_runreqs = False
             for line in fh:
                 line_s = line.strip()
-                if (line_s == "run:"):
+                if (line_s == "host:" or line_s == "run:"):
                     in_runreqs = True
                     runreqs_spacing = line[:-len(line.lstrip())]
                     continue

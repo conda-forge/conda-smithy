@@ -8,6 +8,6 @@
 
 **Fixed:**
 
-* Linting only fails noarch recipes with selectors for runtime dependencies.
+* Linting only fails noarch recipes with selectors for host and runtime dependencies.
 
 **Security:** None
