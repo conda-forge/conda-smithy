@@ -267,6 +267,40 @@ class Test_linter(unittest.TestCase):
                               tests:
                                 commands:
                                   - cp asd qwe  # [unix]
+                            """, is_good=True)
+            assert_noarch_selector("""
+                            build:
+                              noarch: python
+                              requirements:
+                                run:
+                                  - python
+                                  - enum34     # [py2k]
+                            """)
+            assert_noarch_selector("""
+                            build:
+                              noarch: python
+                              requirements:
+                                host:
+                                  - python
+                                  - enum34     # [py2k]
+                            """)
+            assert_noarch_selector("""
+                            build:
+                              noarch: python
+                              requirements:
+                                host:
+                                  - enum34     # [py2k]
+                                run:
+                                  - python
+                            """)
+            assert_noarch_selector("""
+                            build:
+                              noarch: python
+                              requirements:
+                                host:
+                                  - python
+                                run:
+                                  - enum34     # [py2k]
                             """)
 
     def test_jinja_os_environ(self):

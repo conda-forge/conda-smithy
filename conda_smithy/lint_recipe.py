@@ -267,24 +267,24 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
                                      ' name.'.format(section, source_subsection))
 
 
-    # 17: noarch doesn't work with selectors
+    # 17: noarch doesn't work with selectors for runtime dependencies
     if build_section.get('noarch') is not None and os.path.exists(meta_fname):
         with io.open(meta_fname, 'rt') as fh:
-            in_requirements = False
+            in_runreqs = False
             for line in fh:
                 line_s = line.strip()
-                if (line_s == "requirements:"):
-                    in_requirements = True
-                    requirements_spacing = line[:-len(line.lstrip())]
+                if (line_s == "host:" or line_s == "run:"):
+                    in_runreqs = True
+                    runreqs_spacing = line[:-len(line.lstrip())]
                     continue
                 if line_s.startswith("skip:") and is_selector_line(line):
                     lints.append("`noarch` packages can't have selectors. If "
                                  "the selectors are necessary, please remove "
                                  "`noarch: {}`.".format(build_section['noarch']))
                     break
-                if in_requirements:
-                    if requirements_spacing == line[:-len(line.lstrip())]:
-                        in_requirements = False
+                if in_runreqs:
+                    if runreqs_spacing == line[:-len(line.lstrip())]:
+                        in_runreqs = False
                         continue
                     if is_selector_line(line):
                         lints.append("`noarch` packages can't have selectors. If "
