@@ -370,7 +370,8 @@ def dump_subspace_config_files(metas, root_path, platform):
         with write_file(out_path) as f:
             yaml.dump(config, f, default_flow_style=False)
         target_platform = config.get("target_platform", [platform])[0]
-        result.append((config_name, target_platform))
+        target_docker_image = config.get("docker_image", [None])[0]
+        result.append((config_name, target_platform, target_docker_image))
     return sorted(result)
 
 
@@ -833,6 +834,40 @@ def render_azure(jinja_env, forge_config, forge_dir):
                                keep_noarchs=keep_noarchs,)
 
 
+def _get_jenkins_platforms(provider, forge_config):
+    platforms = ['linux']
+    keep_noarchs = [True]
+    # TODO arch seems meaningless now for most of smithy? REMOVE?
+    archs = ['64']
+    return platforms, archs, keep_noarchs
+
+
+def render_jenkins(jinja_env, forge_config, forge_dir):
+    target_path = os.path.join(forge_dir, '.jenkins', 'Jenkinsfile')
+    template_filename = 'Jenkinsfile.tmpl'
+    fast_finish_text = ""
+
+    if not forge_config['jenkins']['enabled']:
+        remove_file(target_path)
+        return forge_config
+
+    # TODO: for now just get this ignoring other pieces
+    platforms, archs, keep_noarchs = _get_jenkins_platforms('jenkins', forge_config)
+
+    return _render_ci_provider('jenkins',
+                               jinja_env=jinja_env,
+                               forge_config=forge_config,
+                               forge_dir=forge_dir,
+                               platforms=platforms,
+                               archs=archs,
+                               fast_finish_text=fast_finish_text,
+                               platform_target_path=target_path,
+                               platform_template_file=template_filename,
+                               platform_specific_setup=_azure_specific_setup,
+                               keep_noarchs=keep_noarchs,)
+
+
+
 def render_README(jinja_env, forge_config, forge_dir):
     # we only care about the first metadata object for sake of readme
     metas = conda_build.api.render(os.path.join(forge_dir, 'recipe'),
@@ -882,6 +917,12 @@ def _load_forge_config(forge_dir, exclusive_config_file):
                   # Force building all supported providers.
                   'force': True,
 
+              },
+              'jenkins': {
+                  # disallow publication of azure artifacts for now.
+                  'upload_packages': False,
+                  # Force building all supported providers.
+                  'force': True,
               },
               'provider': {'linux': 'circle', 'osx': 'travis', 'win': 'appveyor'},
               'win': {'enabled': False},
@@ -1090,6 +1131,7 @@ def main(forge_file_directory, no_check_uptodate, commit, exclusive_config_file)
     render_travis(env, config, forge_dir)
     render_appveyor(env, config, forge_dir)
     render_azure(env, config, forge_dir)
+    render_jenkins(env, config, forge_dir)
     render_README(env, config, forge_dir)
 
     if os.path.isdir(os.path.join(forge_dir, '.ci_support')):

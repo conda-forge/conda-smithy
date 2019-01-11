@@ -1,0 +1,60 @@
+#!/usr/bin/groovy
+/*
+ {{ configs }}
+*/
+pipeline {
+  agent none
+  stages {
+{%- block env_test %}
+   stage('build') {
+      parallel {
+{%- for config, platform, config_docker_image  in configs %}
+        stage('{{ config }}') {
+          agent {
+            label '{{ config_docker_image }}'
+          }
+          environment {
+            CONFIG='${STAGE_NAME}'
+            CONDA_HOME=tool name: 'miniconda3', type: 'com.cloudbees.jenkins.plugins.customtools.CustomTool'
+          }
+          steps {
+            conda_forge_build()
+          }
+        }
+{%- endfor %}
+      }
+    }
+{%- endblock %}
+  }
+}
+
+def conda_forge_build()
+{
+  echo "install conda-forge-ci-setup."
+  sh """#!/usr/bin/env bash
+     source ${CONDA_HOME}/etc/profile.d/conda.sh
+     conda activate base
+
+     conda install --quiet --yes conda-forge::conda-forge-ci-setup=2
+     """
+  sh """#/usr/bin/env bash
+     source ${CONDA_HOME}/etc/profile.d/conda.sh
+     conda activate base
+
+     setup_conda_rc . ./recipe ./.ci_support/${CONFIG}.yaml
+     conda config --set always_copy True
+     source run_conda_forge_build_setup
+     export "CONDA_BLD_PATH=${WORKSPACE}/build_artifacts"
+
+     mangle_compiler . ./recipe ./.ci_support/${CONFIG}.yaml
+     make_build_number . ./recipe ./.ci_support/${CONFIG}.yaml
+     """
+
+  sh """#/usr/bin/env bash
+     source ${CONDA_HOME}/etc/profile.d/conda.sh
+     conda activate base
+     env
+
+     conda build ./recipe -m ./.ci_support/${CONFIG}.yaml --clobber-file ./.ci_support/clobber_${CONFIG}.yaml
+     """
+}
