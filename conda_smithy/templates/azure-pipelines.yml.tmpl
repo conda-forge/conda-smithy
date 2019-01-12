@@ -1,15 +1,20 @@
+{%- set platformset = [] %}
+{%- for config, platform in configs %}
+{%- set pfarchless = platform.split('-')[0] %}
+{%- if pfarchless not in platformset %}
+{%- do platformset.append(pfarchless) %}
+{%- endif %}
+{%- endfor %}
+
 jobs:
-  {%- for platform in azure.get('all_platforms', []) | sort %}
+  {%- for platform in platformset %}
   {%- if platform == 'win' %}
   - template: ./.azure-pipelines/azure-pipelines-win.yml
-
-  {% endif -%}
+  {%- endif %}
   {%- if platform == 'osx' %}
   - template: ./.azure-pipelines/azure-pipelines-osx.yml
-
-  {% endif -%}
+  {%- endif %}
   {%- if platform == 'linux' %}
   - template: ./.azure-pipelines/azure-pipelines-linux.yml
-
-  {% endif -%}
-  {% endfor -%}
+  {%- endif %}
+  {%- endfor %}
