@@ -28,9 +28,6 @@ from . import __version__
 conda_forge_content = os.path.abspath(os.path.dirname(__file__))
 
 
-QEMU_SPECIAL_LINUX_ARCHES = ['aarch64', 'ppc64le']
-
-
 def package_key(config, used_loop_vars, subdir):
     # get the build string from whatever conda-build makes of the configuration
     build_vars = ''.join([k + str(config[k][0]) for k in sorted(list(used_loop_vars))])
