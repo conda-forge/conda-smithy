@@ -6,10 +6,11 @@ jobs:
   strategy:
     maxParallel: 8
     matrix:
-    {%- for config, platform in configs | sort %}
+    {%- for config, platform, upload in configs | sort %}
     {%- if platform.startswith('linux') %}
       {{ config }}:
         CONFIG: {{ config}}
+        UPLOAD_PACKAGES: {{ upload }}
     {%- endif %}
     {%- endfor %}
   steps:

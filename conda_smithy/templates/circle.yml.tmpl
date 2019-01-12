@@ -11,7 +11,7 @@ jobs:
           # The Circle-CI build should not be active, but if this is not true for some reason, do a fast finish.
           command: exit 0
 {%- else %}
-{%- for config, platform in configs %}
+{%- for config, platform, _ in configs %}
   build_{{ config }}:
     working_directory: ~/test
 {%- if platform.startswith('linux') %}
@@ -59,7 +59,7 @@ workflows:
               ignore:
                 - /.*/
 {%- else %}
-{%- for config, _ in configs %}
+{%- for config, _, _ in configs %}
       - build_{{ config }}
 {%- endfor -%}
 {%- endif -%}

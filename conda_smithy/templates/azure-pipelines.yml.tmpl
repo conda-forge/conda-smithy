@@ -1,5 +1,5 @@
 {%- set platformset = [] %}
-{%- for config, platform in configs %}
+{%- for config, platform, _ in configs %}
 {%- set pfarchless = platform.split('-')[0] %}
 {%- if pfarchless not in platformset %}
 {%- do platformset.append(pfarchless) %}
