@@ -1,3 +1,7 @@
+# This file was generated automatically from conda-smithy. To update this configuration,
+# update the conda-forge.yml and/or the recipe/meta.yaml.
+# -*- mode: yaml -*-
+
 jobs:
 - job: win_64
   pool:
@@ -28,7 +32,6 @@ jobs:
     # Cygwin's git breaks conda-build. (See https://github.com/conda-forge/conda-smithy-feedstock/pull/2.)
     # - script: rmdir C:\cygwin /s /q
     #   continueOnError: true
-
 
     - powershell: |
         Set-PSDebug -Trace 1

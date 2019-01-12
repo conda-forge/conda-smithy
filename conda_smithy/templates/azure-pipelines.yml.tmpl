@@ -1,9 +1,13 @@
+# This file was generated automatically from conda-smithy. To update this configuration,
+# update the conda-forge.yml and/or the recipe/meta.yaml.
+# -*- mode: yaml -*-
+
 {%- set platformset = [] %}
 {%- for config, platform, _ in configs %}
-{%- set pfarchless = platform.split('-')[0] %}
-{%- if pfarchless not in platformset %}
-{%- do platformset.append(pfarchless) %}
-{%- endif %}
+  {%- set pfarchless = platform.split('-')[0] %}
+  {%- if pfarchless not in platformset %}
+    {%- do platformset.append(pfarchless) %}
+  {%- endif %}
 {%- endfor %}
 
 jobs:
