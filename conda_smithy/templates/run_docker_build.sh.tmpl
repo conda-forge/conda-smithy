@@ -58,6 +58,7 @@ DOCKER_RUN_ARGS=" -it "
            -e CONFIG \
            -e BINSTAR_TOKEN \
            -e HOST_USER_ID \
+           -e UPLOAD_PACKAGES \
            $DOCKER_IMAGE \
            {{ docker.command }} \
            /home/conda/feedstock_root/${PROVIDER_DIR}/build_steps.sh
