@@ -847,7 +847,7 @@ def render_jenkins(jinja_env, forge_config, forge_dir):
     template_filename = 'Jenkinsfile.tmpl'
     fast_finish_text = ""
 
-    if not forge_config['jenkins']['enabled']:
+    if not forge_config['jenkins'].get('enabled', False):
         remove_file(target_path)
         return forge_config
 
