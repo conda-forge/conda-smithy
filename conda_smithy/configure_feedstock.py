@@ -919,10 +919,8 @@ def _load_forge_config(forge_dir, exclusive_config_file):
 
               },
               'jenkins': {
-                  # disallow publication of azure artifacts for now.
+                  # disallow publication of jenkins artifacts for now.
                   'upload_packages': False,
-                  # Force building all supported providers.
-                  'force': True,
               },
               'provider': {'linux': 'circle', 'osx': 'travis', 'win': 'appveyor'},
               'win': {'enabled': False},
