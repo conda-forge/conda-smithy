@@ -22,8 +22,7 @@ conda clean --lock
 
 {% if build_setup -%}
 {{ build_setup }}{% endif -%}
-
-conda config --set conda-build.root-dir ${FEEDSTOCK_ROOT}/build-artifacts
+export CONDA_BLD_PATH=${ARTIFACTS:-${FEEDSTOCK_ROOT}/build_artifacts}
 
 # make the build number clobber
 make_build_number "${FEEDSTOCK_ROOT}" "${RECIPE_ROOT}" "${CONFIG_FILE}"
