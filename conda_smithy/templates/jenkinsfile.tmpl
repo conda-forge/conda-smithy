@@ -1,7 +1,4 @@
 #!/usr/bin/groovy
-/*
- {{ configs }}
-*/
 pipeline {
   agent none
   stages {
@@ -14,8 +11,8 @@ pipeline {
             label '{{ config_docker_image }}'
           }
           environment {
-            CONFIG='${STAGE_NAME}'
-            CONDA_HOME=tool name: 'miniconda3', type: 'com.cloudbees.jenkins.plugins.customtools.CustomTool'
+            CONFIG="${STAGE_NAME}"
+            CONDA_BLD_PATH="${WORKSPACE}/build_artifacts"
           }
           steps {
             conda_forge_build()
@@ -37,20 +34,19 @@ def conda_forge_build()
 
      conda install --quiet --yes conda-forge::conda-forge-ci-setup=2
      """
-  sh """#/usr/bin/env bash
+  sh """#!/usr/bin/env bash
      source ${CONDA_HOME}/etc/profile.d/conda.sh
      conda activate base
 
      setup_conda_rc . ./recipe ./.ci_support/${CONFIG}.yaml
      conda config --set always_copy True
      source run_conda_forge_build_setup
-     export "CONDA_BLD_PATH=${WORKSPACE}/build_artifacts"
 
      mangle_compiler . ./recipe ./.ci_support/${CONFIG}.yaml
      make_build_number . ./recipe ./.ci_support/${CONFIG}.yaml
      """
 
-  sh """#/usr/bin/env bash
+  sh """#!/usr/bin/env bash
      source ${CONDA_HOME}/etc/profile.d/conda.sh
      conda activate base
      env
