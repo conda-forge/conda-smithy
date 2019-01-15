@@ -382,7 +382,6 @@ def dump_subspace_config_files(metas, root_path, platform, arch, upload):
             yaml.dump(config, f, default_flow_style=False)
         target_platform = config.get("target_platform", [platform_arch])[0]
         result.append((config_name, target_platform, upload))
-    print(result)
     return sorted(result)
 
 
@@ -428,7 +427,6 @@ def _get_fast_finish_script(provider_name, forge_config, forge_dir, fast_finish_
 def _render_ci_provider(provider_name, jinja_env, forge_config, forge_dir, platforms, archs,
                         fast_finish_text, platform_target_path, platform_template_file,
                         platform_specific_setup, keep_noarchs=None, extra_platform_files={}, upload_packages=[]):
-    import pdb; pdb.set_trace()
     if keep_noarchs is None:
         keep_noarchs = [False]*len(platforms)
 
@@ -648,16 +646,19 @@ def _get_platforms_of_provider(provider, forge_config):
                 continue
             if forge_config['provider'][platform_arch] == provider:
                 platforms.append(platform)
+                archs.append(arch)
                 if platform == 'linux' and arch =='64':
                     keep_noarchs.append(True)
                 else:
                     keep_noarchs.append(False)
-                archs.append(arch)
                 upload_packages.append(True)
             elif provider=='azure' and forge_config['azure']['force'] and arch == '64':
                 platforms.append(platform)
                 archs.append(arch)
-                keep_noarchs.append(False)
+                if platform == 'linux' and arch =='64':
+                    keep_noarchs.append(True)
+                else:
+                    keep_noarchs.append(False)
                 upload_packages.append(False)
     return platforms, archs, keep_noarchs, upload_packages
 
