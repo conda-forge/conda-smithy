@@ -4,6 +4,15 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.2.7
+====================
+
+**Fixed:**
+
+* Fixed azure conditions for osx and win64
+
+
+
 v3.2.6
 ====================
 
