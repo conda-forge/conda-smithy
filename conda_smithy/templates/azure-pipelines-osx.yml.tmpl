@@ -85,4 +85,4 @@ jobs:
       set -x -e
       upload_package ./ ./recipe ./.ci_support/${CONFIG}.yaml
     displayName: Upload recipe
-    condition: not(equals(variables['UPLOAD_PACKAGES'], 'False'))
+    condition: not(eq(variables['UPLOAD_PACKAGES'], 'False'))

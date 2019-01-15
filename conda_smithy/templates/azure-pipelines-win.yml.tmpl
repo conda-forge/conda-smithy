@@ -93,5 +93,5 @@ jobs:
 
     - script: |
         upload_package .\ .\{{ recipe_dir }} .ci_support\%CONFIG%.yaml
-      condition: not(equals(variables['UPLOAD_PACKAGES'], 'False'))
+      condition: not(eq(variables['UPLOAD_PACKAGES'], 'False'))
 
