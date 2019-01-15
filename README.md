@@ -71,13 +71,12 @@ the feedstock or after.
 This requires tokens for the CI services. You can give the name of a user instead
 of organization with `--user github_user_name`.
 4. **Specify the feedstock channel and label:**
-Optionally, you can choose a channel to upload to in `conda-forge.yml`.
+Optionally, you can choose a channel to upload to in `recipe/conda_build_config.yaml`.
   ```
-  channels:
-    targets:
-      - [target_channel, target_label]
+  channel_targets:
+    - target_channel target_label
   ```
-  Default is `[conda-forge, main]`.
+  Default is `conda-forge main`.
 
 5. **Re-render the feedstock:** ``conda smithy rerender --feedstock_directory ./foo-feedstock``
 6. **Commit the changes:** ``cd foo-feedstock && git commit``, then push ``git push upstream master``.
