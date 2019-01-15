@@ -4,6 +4,15 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.2.4
+====================
+
+**Fixed:**
+
+* Fixed issue where azure was deleting linux configs for noarch packages.
+
+
+
 v3.2.3
 ====================
 
