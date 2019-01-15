@@ -4,6 +4,41 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.2.3
+====================
+
+**Added:**
+
+* Added `conda-build` version to git commit message produced by `conda smithy regenerate`
+* Made idle timeouts on travisci and circleci configurable.  To set this add to your `conda-forge-config.yml`
+  
+    .. code-block:: yaml
+
+    idle_timeout_minutes: 30
+None
+
+* Added preliminary multiarch builds for aarch64 and ppc64le using qemu on azure.  This will be enabled by
+means of a migrator at a later point in time.
+Command line options are now available for the command `conda smithy register-ci`
+to disable registration on a per-ci level. `--without-azure`, `--without-circle`,
+`--without-travis`, and `--without-appveyor` can now be used in conjunction with
+`conda smithy register-ci`.
+
+**Changed:**
+
+conda-build is now specified along side `conda-forge-ci-setup` installs so that it gets updated to the latest version available during each build.
+* Moved NumFOCUS badge to "About conda-forge" section in the feedstock README.
+* Removed ``branch2.0`` for the finding the fast-finish script, and changed it
+  back to ``master``.
+
+**Fixed:**
+
+* Linter no longer fails if meta.yaml uses `os.sep`
+* Fixed azure linux rendering caused by bad jinja rendering
+* Linting only fails noarch recipes with selectors for host and runtime dependencies.
+
+
+
 v3.2.2
 ====================
 
