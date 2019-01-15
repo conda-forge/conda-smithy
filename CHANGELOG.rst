@@ -4,6 +4,15 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.2.6
+====================
+
+**Fixed:**
+
+* Bugfix for uploading packages.
+
+
+
 v3.2.5
 ====================
 
