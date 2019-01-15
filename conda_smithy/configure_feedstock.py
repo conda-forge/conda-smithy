@@ -377,7 +377,7 @@ def dump_subspace_config_files(metas, root_path, platform):
 def _get_fast_finish_script(provider_name, forge_config, forge_dir, fast_finish_text):
     get_fast_finish_script = ""
     fast_finish_script = ""
-    tooling_branch = 'branch2.0'
+    tooling_branch = 'master'
 
     cfbs_fpath = os.path.join(forge_dir, 'recipe', 'ff_ci_pr_build.py')
     if provider_name == 'appveyor':
@@ -871,7 +871,7 @@ def _load_forge_config(forge_dir, exclusive_config_file):
                          'image': 'condaforge/linux-anvil',
                          'command': 'bash',
                          'interactive': True,
-                         },               
+                         },
               'templates': {},
               'travis': {},
               'circle': {},
