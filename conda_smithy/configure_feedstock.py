@@ -299,6 +299,9 @@ def _collapse_subpackage_variants(list_of_metas):
     _trim_unused_zip_keys(used_key_values)
     _trim_unused_pin_run_as_build(used_key_values)
 
+    print('top_level_loop_vars', top_level_loop_vars)
+    print('used_key_values', used_key_values)
+
     return break_up_top_level_values(top_level_loop_vars, used_key_values), top_level_loop_vars
 
 
@@ -342,7 +345,7 @@ def finalize_config(config, platform):
     return config
 
 
-def dump_subspace_config_files(metas, root_path, platform):
+def dump_subspace_config_files(metas, root_path, platform, arch, upload):
     """With conda-build 3, it handles the build matrix.  We take what it spits out, and write a
     config.yaml file for each matrix entry that it spits out.  References to a specific file
     replace all of the old environment variables that specified a matrix entry."""
@@ -357,9 +360,17 @@ def dump_subspace_config_files(metas, root_path, platform):
     yaml.add_representer(tuple, yaml.representer.SafeRepresenter.represent_list)
     yaml.add_representer(OrderedDict, _yaml_represent_ordereddict)
 
+    platform_arch = "{}-{}".format(platform, arch)
+    if arch == '64':
+        filename_arch = platform
+    else:
+        filename_arch = f'{platform}_{arch}'
+
+    output_name = platform if arch=="64" else platform_arch
+
     result = []
     for config in configs:
-        config_name = '{}_{}'.format(platform, package_key(config, top_level_loop_vars,
+        config_name = '{}_{}'.format(filename_arch, package_key(config, top_level_loop_vars,
                                                            metas[0].config.subdir))
         out_folder = os.path.join(root_path, '.ci_support')
         out_path = os.path.join(out_folder, config_name) + '.yaml'
@@ -369,8 +380,9 @@ def dump_subspace_config_files(metas, root_path, platform):
         config = finalize_config(config, platform)
         with write_file(out_path) as f:
             yaml.dump(config, f, default_flow_style=False)
-        target_platform = config.get("target_platform", [platform])[0]
-        result.append((config_name, target_platform))
+        target_platform = config.get("target_platform", [platform_arch])[0]
+        result.append((config_name, target_platform, upload))
+    print(result)
     return sorted(result)
 
 
@@ -415,7 +427,7 @@ def _get_fast_finish_script(provider_name, forge_config, forge_dir, fast_finish_
 
 def _render_ci_provider(provider_name, jinja_env, forge_config, forge_dir, platforms, archs,
                         fast_finish_text, platform_target_path, platform_template_file,
-                        platform_specific_setup, keep_noarchs=None, extra_platform_files={}):
+                        platform_specific_setup, keep_noarchs=None, extra_platform_files={}, upload_packages=[]):
 
     if keep_noarchs is None:
         keep_noarchs = [False]*len(platforms)
@@ -471,17 +483,21 @@ def _render_ci_provider(provider_name, jinja_env, forge_config, forge_dir, platf
             remove_file(each_target_fname)
     else:
         forge_config[provider_name]["enabled"] = True
-        fancy_name = {'linux': 'Linux', 'osx': 'OSX', 'win': 'Windows'}
+        fancy_name = {'linux': 'Linux', 'osx': 'OSX', 'win': 'Windows',
+            'linux_aarch64': 'aarch64'}
         fancy_platforms = []
         unfancy_platforms = set()
 
         configs = []
-        for metas, platform, enable in zip(metas_list_of_lists, platforms, enable_platform):
+        for metas, platform, arch, enable, upload in zip(metas_list_of_lists, platforms, archs, enable_platform, upload_packages):
             if enable:
-                configs.extend(dump_subspace_config_files(metas, forge_dir, platform))
-                forge_config[platform]["enabled"] = True
+                configs.extend(dump_subspace_config_files(metas, forge_dir, platform, arch, upload))
+                
+                plat_arch = platform if arch == "64" else "{}_{}".format(platform, arch)               
+                forge_config[plat_arch]["enabled"] = True
+
                 fancy_platforms.append(fancy_name[platform])
-                unfancy_platforms.add(platform)
+                unfancy_platforms.add(plat_arch)
             elif platform in extra_platform_files:
                     for each_target_fname in extra_platform_files[platform]:
                         remove_file(each_target_fname)
@@ -500,10 +516,6 @@ def _render_ci_provider(provider_name, jinja_env, forge_config, forge_dir, platf
                                                               forge_dir=forge_dir,
                                                               forge_config=forge_config,
                                                               fast_finish_text=fast_finish_text)
-
-        # Allow disabling publication for a whole provider.  This is useful for testing new providers
-        forge_config['upload_packages'] = (forge_config.get(provider_name, {})
-                                                       .get('upload_packages', True))
 
         # If the recipe supplies its own upload_or_check_non_existence.py upload script,
         # we use it instead of the global one.
@@ -627,17 +639,28 @@ def _circle_specific_setup(jinja_env, forge_config, forge_dir, platform):
 def _get_platforms_of_provider(provider, forge_config):
     platforms = []
     keep_noarchs = []
-    # TODO arch seems meaningless now for most of smithy? REMOVE?
     archs = []
+    upload_packages = []
     for platform in ['linux', 'osx', 'win']:
-        if forge_config['provider'][platform] == provider:
-            platforms.append(platform)
-            if platform == 'linux':
-                keep_noarchs.append(True)
-            else:
+        for arch in ['64', 'aarch64', 'ppc64le']:
+            platform_arch = platform if arch == '64' else "{}_{}".format(platform, arch)
+            if platform_arch not in forge_config['provider']:
+                continue
+            if forge_config['provider'][platform_arch] == provider:
+                platforms.append(platform)
+                if platform == 'linux' and arch =='64':
+                    keep_noarchs.append(True)
+                else:
+                    keep_noarchs.append(False)
+                archs.append(arch)
+                upload_packages.append(True)
+            elif provider=='azure' and forge_config['azure']['force'] and arch == '64':
+                platforms.append(platform)
+                archs.append(arch)
                 keep_noarchs.append(False)
-            archs.append('64')
-    return platforms, archs, keep_noarchs
+                upload_packages.append(False)
+
+    return platforms, archs, keep_noarchs, upload_packages
 
 
 def render_circle(jinja_env, forge_config, forge_dir):
@@ -661,14 +684,14 @@ def render_circle(jinja_env, forge_config, forge_dir):
         ]
     }
 
-    platforms, archs, keep_noarchs = _get_platforms_of_provider('circle', forge_config)
+    platforms, archs, keep_noarchs, upload_packages = _get_platforms_of_provider('circle', forge_config)
 
     return _render_ci_provider('circle', jinja_env=jinja_env, forge_config=forge_config,
                                forge_dir=forge_dir, platforms=platforms, archs=archs,
                                fast_finish_text=fast_finish_text, platform_target_path=target_path,
                                platform_template_file=template_filename,
                                platform_specific_setup=_circle_specific_setup, keep_noarchs=keep_noarchs,
-                               extra_platform_files=extra_platform_files)
+                               extra_platform_files=extra_platform_files, upload_packages=upload_packages)
 
 
 def _travis_specific_setup(jinja_env, forge_config, forge_dir, platform):
@@ -718,13 +741,14 @@ def render_travis(jinja_env, forge_config, forge_dir):
                   python - -v --ci "travis" "${{TRAVIS_REPO_SLUG}}" "${{TRAVIS_BUILD_NUMBER}}" "${{TRAVIS_PULL_REQUEST}}") || exit 1
     """)
 
-    platforms, archs, keep_noarchs = _get_platforms_of_provider('travis', forge_config)
+    platforms, archs, keep_noarchs, upload_packages = _get_platforms_of_provider('travis', forge_config)
 
     return _render_ci_provider('travis', jinja_env=jinja_env, forge_config=forge_config,
                                forge_dir=forge_dir, platforms=platforms, archs=archs,
                                fast_finish_text=fast_finish_text, platform_target_path=target_path,
                                platform_template_file=template_filename, keep_noarchs=keep_noarchs,
                                platform_specific_setup=_travis_specific_setup,
+                               upload_packages=upload_packages,
                                )
 
 
@@ -759,13 +783,14 @@ def render_appveyor(jinja_env, forge_config, forge_dir):
         """)
     template_filename = 'appveyor.yml.tmpl'
 
-    platforms, archs, keep_noarchs = _get_platforms_of_provider('appveyor', forge_config)
+    platforms, archs, keep_noarchs, upload_packages = _get_platforms_of_provider('appveyor', forge_config)
 
     return _render_ci_provider('appveyor', jinja_env=jinja_env, forge_config=forge_config,
                                forge_dir=forge_dir, platforms=platforms, archs=archs,
                                fast_finish_text=fast_finish_text, platform_target_path=target_path,
                                platform_template_file=template_filename, keep_noarchs=keep_noarchs,
-                               platform_specific_setup=_appveyor_specific_setup)
+                               platform_specific_setup=_appveyor_specific_setup,
+                               upload_packages=upload_packages)
 
 
 def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
@@ -796,29 +821,13 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
     forge_config['docker']['interactive'] = True
 
 
-def _get_azure_platforms(provider, forge_config):
-    platforms = []
-    keep_noarchs = []
-    # TODO arch seems meaningless now for most of smithy? REMOVE?
-    archs = []
-    for platform in ['linux', 'osx', 'win']:
-        if forge_config['azure']['force'] or (forge_config['provider'][platform] == provider):
-            platforms.append(platform)
-            if platform == 'linux':
-                keep_noarchs.append(True)
-            else:
-                keep_noarchs.append(False)
-            archs.append('64')
-    return platforms, archs, keep_noarchs
-
-
 def render_azure(jinja_env, forge_config, forge_dir):
     target_path = os.path.join(forge_dir, 'azure-pipelines.yml')
     template_filename = 'azure-pipelines.yml.tmpl'
     fast_finish_text = ""
 
     # TODO: for now just get this ignoring other pieces
-    platforms, archs, keep_noarchs = _get_azure_platforms('azure', forge_config)
+    platforms, archs, keep_noarchs, upload_packages = _get_platforms_of_provider('azure', forge_config)
 
     return _render_ci_provider('azure',
                                jinja_env=jinja_env,
@@ -830,7 +839,8 @@ def render_azure(jinja_env, forge_config, forge_dir):
                                platform_target_path=target_path,
                                platform_template_file=template_filename,
                                platform_specific_setup=_azure_specific_setup,
-                               keep_noarchs=keep_noarchs,)
+                               keep_noarchs=keep_noarchs,
+                               upload_packages=upload_packages)
 
 
 def render_README(jinja_env, forge_config, forge_dir):
@@ -883,10 +893,19 @@ def _load_forge_config(forge_dir, exclusive_config_file):
                   'force': True,
 
               },
-              'provider': {'linux': 'circle', 'osx': 'travis', 'win': 'appveyor'},
+              'provider': {
+                  'linux': 'circle', 
+                  'osx': 'travis', 
+                  'win': 'appveyor',
+                  # Following platforms are disabled by default
+                  'linux_aarch64': None,
+                  'linux_ppc64le': None,
+              },
               'win': {'enabled': False},
               'osx': {'enabled': False},
               'linux': {'enabled': False},
+              'linux_aarch64': {'enabled': False},
+              'linux_ppc64le': {'enabled': False},
               # Configurable idle timeout.  Used for packages that don't have chatty enough builds
               # Applicable only to circleci and travis
               'idle_timeout_minutes': None,
@@ -925,7 +944,7 @@ def _load_forge_config(forge_dir, exclusive_config_file):
         warnings.warn('No conda-forge.yml found. Assuming default options.')
     else:
         with open(forge_yml, "r") as fh:
-            file_config = list(yaml.load_all(fh))[0] or {}
+            file_config = list(yaml.safe_load_all(fh))[0] or {}
 
         # check for conda-smithy 2.x matrix which we can't auto-migrate
         # to conda_build_config
@@ -948,6 +967,11 @@ def _load_forge_config(forge_dir, exclusive_config_file):
                 config_item.update(value)
             else:
                 config[key] = value
+
+    log = yaml.safe_dump(config)
+    print("## CONFIGURATION USED\n")
+    print(log)
+    print("## END CONFIGURATION\n")
 
     # Set the environment variable for the compiler stack
     os.environ['CF_COMPILER_STACK'] = config['compiler_stack']

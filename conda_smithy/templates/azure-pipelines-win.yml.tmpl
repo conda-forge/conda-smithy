@@ -1,3 +1,7 @@
+# This file was generated automatically from conda-smithy. To update this configuration,
+# update the conda-forge.yml and/or the recipe/meta.yaml.
+# -*- mode: yaml -*-
+
 jobs:
 - job: win_64
   pool:
@@ -6,11 +10,12 @@ jobs:
   strategy:
     maxParallel: 4
     matrix:
-    {%- for config, platform in configs | sort %}
+    {%- for config, platform, upload in configs | sort %}
     {%- if platform.startswith('win') %}
       {{ config }}:
         CONFIG: {{ config}}
         CONDA_BLD_PATH: D:\\bld\\
+        UPLOAD_PACKAGES: {{ upload }}
     {%- endif %}
     {%- endfor %}
   steps:
@@ -27,7 +32,6 @@ jobs:
     # Cygwin's git breaks conda-build. (See https://github.com/conda-forge/conda-smithy-feedstock/pull/2.)
     # - script: rmdir C:\cygwin /s /q
     #   continueOnError: true
-
 
     - powershell: |
         Set-PSDebug -Trace 1
@@ -87,7 +91,7 @@ jobs:
       displayName: Build recipe
       condition: not(contains(variables['CONFIG'], 'vs2008'))
 
-    {% if upload_packages %}
     - script: |
         upload_package .\ .\{{ recipe_dir }} .ci_support\%CONFIG%.yaml
-    {% endif %}
+      condition: not(equals(variables['UPLOAD_PACKAGES'], 'False'))
+

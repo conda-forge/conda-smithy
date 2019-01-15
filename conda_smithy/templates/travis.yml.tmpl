@@ -1,5 +1,6 @@
 # This file was generated automatically from conda-smithy. To update this configuration,
 # update the conda-forge.yml and/or the recipe/meta.yaml.
+# -*- mode: yaml -*-
 
 language: generic
 
@@ -12,7 +13,7 @@ osx_image: {{ travis.get('osx_image', 'xcode9.4') }}
 env:
   {%- if configs[0] %}
   matrix:
-    {%- for config, _ in configs %}
+    {%- for config, _, _ in configs %}
     - CONFIG={{ config }}
     {%- endfor %}
   {%- endif %}

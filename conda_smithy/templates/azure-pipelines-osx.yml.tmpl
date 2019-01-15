@@ -1,3 +1,7 @@
+# This file was generated automatically from conda-smithy. To update this configuration,
+# update the conda-forge.yml and/or the recipe/meta.yaml.
+# -*- mode: yaml -*-
+
 jobs:
 - job: osx_64
   pool:
@@ -6,10 +10,11 @@ jobs:
   strategy:
     maxParallel: 8
     matrix:
-    {%- for config, platform in configs | sort %}
+    {%- for config, platform, upload in configs | sort %}
     {%- if platform.startswith('osx') %}
       {{ config }}:
-        CONFIG: {{ config}}
+        CONFIG: {{ config }}
+        UPLOAD_PACKAGES: {{ upload }}
     {%- endif %}
     {%- endfor %}
 
@@ -75,10 +80,9 @@ jobs:
       conda build ./recipe -m ./.ci_support/${CONFIG}.yaml --clobber-file ./.ci_support/clobber_${CONFIG}.yaml
     displayName: Build recipe
 
-  {% if upload_packages %}
   - script: |
       export PATH=$(Build.StagingDirectory)/miniconda/bin:$PATH
       set -x -e
       upload_package ./ ./recipe ./.ci_support/${CONFIG}.yaml
     displayName: Upload recipe
-  {% endif %}
+    condition: not(equals(variables['UPLOAD_PACKAGES'], 'False'))

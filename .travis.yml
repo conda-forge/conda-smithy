@@ -6,10 +6,9 @@ sudo: false
 
 env:
     global:
-       - CONDA_INSTALL_LOCN="${HOME}/conda"
+    - CONDA_INSTALL_LOCN="${HOME}/conda"
 
     matrix:
-        - PYTHON=2 CHANNEL="-c conda-forge"
         - PYTHON=3 CHANNEL="-c conda-forge"
 
 install:
@@ -36,7 +35,7 @@ after_success:
 # We store the files that are downloaded from continuum.io, but not the environments that are created.
 cache:
     directories:
-      - $HOME/cache
+        - $HOME/cache
 before_cache:
-  # Remove all untarred directories.
-  - find $CONDA_INSTALL_LOCN/pkgs/ -mindepth 1 -maxdepth 1 -type d -exec rm -r {} \;
+    # Remove all untarred directories.
+    - find $CONDA_INSTALL_LOCN/pkgs/ -mindepth 1 -maxdepth 1 -type d -exec rm -r {} \;
