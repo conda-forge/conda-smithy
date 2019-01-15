@@ -428,7 +428,7 @@ def _get_fast_finish_script(provider_name, forge_config, forge_dir, fast_finish_
 def _render_ci_provider(provider_name, jinja_env, forge_config, forge_dir, platforms, archs,
                         fast_finish_text, platform_target_path, platform_template_file,
                         platform_specific_setup, keep_noarchs=None, extra_platform_files={}, upload_packages=[]):
-
+    import pdb; pdb.set_trace()
     if keep_noarchs is None:
         keep_noarchs = [False]*len(platforms)
 
@@ -492,8 +492,8 @@ def _render_ci_provider(provider_name, jinja_env, forge_config, forge_dir, platf
         for metas, platform, arch, enable, upload in zip(metas_list_of_lists, platforms, archs, enable_platform, upload_packages):
             if enable:
                 configs.extend(dump_subspace_config_files(metas, forge_dir, platform, arch, upload))
-                
-                plat_arch = platform if arch == "64" else "{}_{}".format(platform, arch)               
+
+                plat_arch = platform if arch == "64" else "{}_{}".format(platform, arch)
                 forge_config[plat_arch]["enabled"] = True
 
                 fancy_platforms.append(fancy_name[platform])
@@ -659,7 +659,6 @@ def _get_platforms_of_provider(provider, forge_config):
                 archs.append(arch)
                 keep_noarchs.append(False)
                 upload_packages.append(False)
-
     return platforms, archs, keep_noarchs, upload_packages
 
 
@@ -878,7 +877,7 @@ def copy_feedstock_content(forge_dir):
 
 def _load_forge_config(forge_dir, exclusive_config_file):
     config = {'docker': {'executable': 'docker',
-                         'image': 'condaforge/linux-anvil',
+                         'image': 'condaforge/linux-anvil-gcc7',
                          'command': 'bash',
                          'interactive': True,
                          },
@@ -894,8 +893,8 @@ def _load_forge_config(forge_dir, exclusive_config_file):
 
               },
               'provider': {
-                  'linux': 'circle', 
-                  'osx': 'travis', 
+                  'linux': 'circle',
+                  'osx': 'travis',
                   'win': 'appveyor',
                   # Following platforms are disabled by default
                   'linux_aarch64': None,
@@ -910,10 +909,10 @@ def _load_forge_config(forge_dir, exclusive_config_file):
               # Applicable only to circleci and travis
               'idle_timeout_minutes': None,
               # Compiler stack environment variable
-              'compiler_stack': 'comp4',
+              'compiler_stack': 'comp7',
               # Stack variables,  These can be used to impose global defaults for how far we build out
               'min_py_ver': '27',
-              'max_py_ver': '36',
+              'max_py_ver': '37',
               'min_r_ver': '34',
               'max_r_ver': '34',
 
