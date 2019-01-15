@@ -4,6 +4,15 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.2.5
+====================
+
+**Fixed:**
+
+* Fixed docker image name from ``gcc7`` to ``comp7``.
+
+
+
 v3.2.4
 ====================
 
