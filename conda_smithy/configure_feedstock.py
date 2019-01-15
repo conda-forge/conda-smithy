@@ -878,7 +878,7 @@ def copy_feedstock_content(forge_dir):
 
 def _load_forge_config(forge_dir, exclusive_config_file):
     config = {'docker': {'executable': 'docker',
-                         'image': 'condaforge/linux-anvil-gcc7',
+                         'image': 'condaforge/linux-anvil-comp7',
                          'command': 'bash',
                          'interactive': True,
                          },
