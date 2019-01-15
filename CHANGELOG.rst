@@ -4,6 +4,15 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.2.8
+====================
+
+**Fixed:**
+
+* conda-clean --lock does nothing.  Remove it.
+
+
+
 v3.2.7
 ====================
 
