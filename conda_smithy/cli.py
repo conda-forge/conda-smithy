@@ -291,8 +291,8 @@ def main():
     # Check conda version for compatibility
     CONDA_VERSION_MAX = '4.7'
     if LooseVersion(conda.__version__) >= LooseVersion(CONDA_VERSION_MAX):
-        print('You appear to be using conda {}, but conda-smithy {} '
-              'is\ncurrently only compatible with conda versions < {}.'.format(
+        print('You appear to be using conda {}, but conda-smithy {}\n'
+              'is currently only compatible with conda versions < {}.\n'.format(
             conda.__version__, __version__, CONDA_VERSION_MAX))
         sys.exit(2)
 
