@@ -11,9 +11,9 @@ def get_repo(path, search_parent_directories=True):
     repo = None
     try:
         import git
+
         repo = git.Repo(
-            path,
-            search_parent_directories=search_parent_directories
+            path, search_parent_directories=search_parent_directories
         )
     except ImportError:
         pass

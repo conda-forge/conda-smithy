@@ -7,13 +7,18 @@ import yaml
 from jinja2 import Environment, FileSystemLoader
 from conda_build.utils import copy_into
 
-from conda_smithy.configure_feedstock import conda_forge_content, _load_forge_config
+from conda_smithy.configure_feedstock import (
+    conda_forge_content,
+    _load_forge_config,
+)
 
 
-RecipeConfigPair = collections.namedtuple('RecipeConfigPair', ('recipe', 'config'))
+RecipeConfigPair = collections.namedtuple(
+    "RecipeConfigPair", ("recipe", "config")
+)
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope="function")
 def testing_workdir(tmpdir, request):
     """ Create a workdir in a safe temporary folder; cd into dir above before test, cd out after
 
@@ -25,15 +30,15 @@ def testing_workdir(tmpdir, request):
 
     tmpdir.chdir()
     # temporary folder for profiling output, if any
-    tmpdir.mkdir('prof')
+    tmpdir.mkdir("prof")
 
     def return_to_saved_path():
-        if os.path.isdir(os.path.join(saved_path, 'prof')):
-            profdir = tmpdir.join('prof')
-            files = profdir.listdir('*.prof') if profdir.isdir() else []
+        if os.path.isdir(os.path.join(saved_path, "prof")):
+            profdir = tmpdir.join("prof")
+            files = profdir.listdir("*.prof") if profdir.isdir() else []
 
             for f in files:
-                copy_into(str(f), os.path.join(saved_path, 'prof', f.basename))
+                copy_into(str(f), os.path.join(saved_path, "prof", f.basename))
         os.chdir(saved_path)
 
     request.addfinalizer(return_to_saved_path)
@@ -41,46 +46,43 @@ def testing_workdir(tmpdir, request):
     return str(tmpdir)
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope="function")
 def config_yaml(testing_workdir):
-    config = {
-        'python': ['2.7', '3.5'],
-        'r_base': ['3.3.2', '3.4.2'],
-    }
-    with open(os.path.join(testing_workdir, 'config.yaml'), 'w') as f:
+    config = {"python": ["2.7", "3.5"], "r_base": ["3.3.2", "3.4.2"]}
+    with open(os.path.join(testing_workdir, "config.yaml"), "w") as f:
         yaml.dump(config, f, default_flow_style=False)
         # need selectors, so write these more manually
-        f.write('target_platform:\n')
-        f.write('- win-64   # [win]\n')
-        f.write('- win-32   # [win]\n')
-        f.write('c_compiler:\n  # [win]')
-        f.write('- vs2008\n  # [win]')
-        f.write('- vs2015\n  # [win]')
-        f.write('zip_keys:\n  # [win]')
-        f.write('- c_compiler\n   # [win]')
-        f.write('- python\n   # [win]')
+        f.write("target_platform:\n")
+        f.write("- win-64   # [win]\n")
+        f.write("- win-32   # [win]\n")
+        f.write("c_compiler:\n  # [win]")
+        f.write("- vs2008\n  # [win]")
+        f.write("- vs2015\n  # [win]")
+        f.write("zip_keys:\n  # [win]")
+        f.write("- c_compiler\n   # [win]")
+        f.write("- python\n   # [win]")
     # dummy file that needs to be present for circle ci.  This is created by the init function
-    os.makedirs(os.path.join(testing_workdir, '.circleci'))
-    with open(os.path.join(testing_workdir, '.circleci', 'checkout_merge_commit.sh'), 'w') as f:
-        f.write('echo dummy file')
-    with open(os.path.join(testing_workdir, 'short_config.yaml'), 'w') as f:
-        config = {
-            'python': ['2.7'],
-        }
+    os.makedirs(os.path.join(testing_workdir, ".circleci"))
+    with open(
+        os.path.join(testing_workdir, ".circleci", "checkout_merge_commit.sh"),
+        "w",
+    ) as f:
+        f.write("echo dummy file")
+    with open(os.path.join(testing_workdir, "short_config.yaml"), "w") as f:
+        config = {"python": ["2.7"]}
         yaml.dump(config, f, default_flow_style=False)
-    with open(os.path.join(testing_workdir, 'long_config.yaml'), 'w') as f:
-        config = {
-            'python': ['2.7', '3.5', '3.6'],
-        }
+    with open(os.path.join(testing_workdir, "long_config.yaml"), "w") as f:
+        config = {"python": ["2.7", "3.5", "3.6"]}
         yaml.dump(config, f, default_flow_style=False)
     return testing_workdir
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope="function")
 def noarch_recipe(config_yaml, request):
-    os.makedirs(os.path.join(config_yaml, 'recipe'))
-    with open(os.path.join(config_yaml, 'recipe', 'meta.yaml'), 'w') as fh:
-        fh.write("""
+    os.makedirs(os.path.join(config_yaml, "recipe"))
+    with open(os.path.join(config_yaml, "recipe", "meta.yaml"), "w") as fh:
+        fh.write(
+            """
 package:
     name: python-noarch-test
     version: 1.0.0
@@ -91,18 +93,23 @@ requirements:
         - python
     run:
         - python
-    """)
-    return RecipeConfigPair(str(config_yaml),
-                            _load_forge_config(config_yaml,
-                            exclusive_config_file=os.path.join(config_yaml,
-                                                               'config.yaml')))
+    """
+        )
+    return RecipeConfigPair(
+        str(config_yaml),
+        _load_forge_config(
+            config_yaml,
+            exclusive_config_file=os.path.join(config_yaml, "config.yaml"),
+        ),
+    )
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope="function")
 def r_recipe(config_yaml, request):
-    os.makedirs(os.path.join(config_yaml, 'recipe'))
-    with open(os.path.join(config_yaml, 'recipe', 'meta.yaml'), 'w') as fh:
-        fh.write("""
+    os.makedirs(os.path.join(config_yaml, "recipe"))
+    with open(os.path.join(config_yaml, "recipe", "meta.yaml"), "w") as fh:
+        fh.write(
+            """
 package:
     name: r-test
     version: 1.0.0
@@ -113,18 +120,23 @@ requirements:
         - r-base
     run:
         - r-base
-    """)
-    return RecipeConfigPair(str(config_yaml),
-                            _load_forge_config(config_yaml,
-                                               exclusive_config_file=os.path.join(config_yaml,
-                                                                                  'config.yaml')))
+    """
+        )
+    return RecipeConfigPair(
+        str(config_yaml),
+        _load_forge_config(
+            config_yaml,
+            exclusive_config_file=os.path.join(config_yaml, "config.yaml"),
+        ),
+    )
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope="function")
 def py_recipe(config_yaml, request):
-    os.makedirs(os.path.join(config_yaml, 'recipe'))
-    with open(os.path.join(config_yaml, 'recipe', 'meta.yaml'), 'w') as fh:
-        fh.write("""
+    os.makedirs(os.path.join(config_yaml, "recipe"))
+    with open(os.path.join(config_yaml, "recipe", "meta.yaml"), "w") as fh:
+        fh.write(
+            """
 package:
     name: py-test
     version: 1.0.0
@@ -137,18 +149,23 @@ requirements:
         - python
 about:
     home: home
-    """)
-    return RecipeConfigPair(str(config_yaml),
-                            _load_forge_config(config_yaml,
-                                               exclusive_config_file=os.path.join(config_yaml,
-                                                                                  'config.yaml')))
+    """
+        )
+    return RecipeConfigPair(
+        str(config_yaml),
+        _load_forge_config(
+            config_yaml,
+            exclusive_config_file=os.path.join(config_yaml, "config.yaml"),
+        ),
+    )
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope="function")
 def skipped_recipe(config_yaml, request):
-    os.makedirs(os.path.join(config_yaml, 'recipe'))
-    with open(os.path.join(config_yaml, 'recipe', 'meta.yaml'), 'w') as fh:
-        fh.write("""
+    os.makedirs(os.path.join(config_yaml, "recipe"))
+    with open(os.path.join(config_yaml, "recipe", "meta.yaml"), "w") as fh:
+        fh.write(
+            """
 package:
     name: skip-test
     version: 1.0.0
@@ -161,18 +178,23 @@ requirements:
         - python
 about:
     home: home
-    """)
-    return RecipeConfigPair(str(config_yaml),
-                            _load_forge_config(config_yaml,
-                                               exclusive_config_file=os.path.join(config_yaml,
-                                                                                  'config.yaml')))
+    """
+        )
+    return RecipeConfigPair(
+        str(config_yaml),
+        _load_forge_config(
+            config_yaml,
+            exclusive_config_file=os.path.join(config_yaml, "config.yaml"),
+        ),
+    )
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope="function")
 def python_skipped_recipe(config_yaml, request):
-    os.makedirs(os.path.join(config_yaml, 'recipe'))
-    with open(os.path.join(config_yaml, 'recipe', 'meta.yaml'), 'w') as fh:
-        fh.write("""
+    os.makedirs(os.path.join(config_yaml, "recipe"))
+    with open(os.path.join(config_yaml, "recipe", "meta.yaml"), "w") as fh:
+        fh.write(
+            """
 package:
     name: py-test
     version: 1.0.0
@@ -185,17 +207,23 @@ requirements:
         - python
 about:
     home: home
-    """)
-    return RecipeConfigPair(str(config_yaml),
-                            _load_forge_config(config_yaml,
-                                               exclusive_config_file=os.path.join(config_yaml,
-                                                                                  'config.yaml')))
+    """
+        )
+    return RecipeConfigPair(
+        str(config_yaml),
+        _load_forge_config(
+            config_yaml,
+            exclusive_config_file=os.path.join(config_yaml, "config.yaml"),
+        ),
+    )
 
-@pytest.fixture(scope='function')
+
+@pytest.fixture(scope="function")
 def linux_skipped_recipe(config_yaml, request):
-    os.makedirs(os.path.join(config_yaml, 'recipe'))
-    with open(os.path.join(config_yaml, 'recipe', 'meta.yaml'), 'w') as fh:
-        fh.write("""
+    os.makedirs(os.path.join(config_yaml, "recipe"))
+    with open(os.path.join(config_yaml, "recipe", "meta.yaml"), "w") as fh:
+        fh.write(
+            """
 package:
     name: py-test
     version: 1.0.0
@@ -206,15 +234,21 @@ requirements:
         - zlib
 about:
     home: home
-    """)
-    return RecipeConfigPair(str(config_yaml),
-                            _load_forge_config(config_yaml,
-                                               exclusive_config_file=os.path.join(config_yaml,
-                                                                                  'config.yaml')))
+    """
+        )
+    return RecipeConfigPair(
+        str(config_yaml),
+        _load_forge_config(
+            config_yaml,
+            exclusive_config_file=os.path.join(config_yaml, "config.yaml"),
+        ),
+    )
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope="function")
 def jinja_env(request):
-    tmplt_dir = os.path.join(conda_forge_content, 'templates')
+    tmplt_dir = os.path.join(conda_forge_content, "templates")
     # Load templates from the feedstock in preference to the smithy's templates.
-    return Environment(extensions=['jinja2.ext.do'], loader=FileSystemLoader([tmplt_dir]))
+    return Environment(
+        extensions=["jinja2.ext.do"], loader=FileSystemLoader([tmplt_dir])
+    )
