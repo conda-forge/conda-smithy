@@ -5,9 +5,13 @@ from vsts.vss_connection import VssConnection
 from msrest.authentication import BasicAuthentication
 
 
-AZURE_TEAM_INSTANCE = os.getenv("AZURE_INSTANCE", "https://dev.azure.com/conda-forge")
+AZURE_TEAM_INSTANCE = os.getenv(
+    "AZURE_INSTANCE", "https://dev.azure.com/conda-forge"
+)
 AZURE_PROJECT_ID = os.getenv("AZURE_PROJECT_ID", "feedstock-builds")
-AZURE_SERVICE_ENDPOINT_NAME = os.getenv("AZURE_SERVICE_ENDPOINT", "conda-forge")
+AZURE_SERVICE_ENDPOINT_NAME = os.getenv(
+    "AZURE_SERVICE_ENDPOINT", "conda-forge"
+)
 # By default for now don't report on the build information back to github
 AZURE_REPORT_BUILD_STATUS = os.getenv("AZURE_REPORT_BUILD_STATUS", "false")
 
@@ -28,7 +32,9 @@ connection = VssConnection(base_url=AZURE_TEAM_INSTANCE, creds=credentials)
 
 
 def get_service_endpoint(project_id=AZURE_PROJECT_ID):
-    from vsts.service_endpoint.v4_1.service_endpoint_client import ServiceEndpointClient
+    from vsts.service_endpoint.v4_1.service_endpoint_client import (
+        ServiceEndpointClient
+    )
     from vsts.service_endpoint.v4_1.models import ServiceEndpoint
 
     service_endpoint_client = ServiceEndpointClient(
@@ -36,7 +42,9 @@ def get_service_endpoint(project_id=AZURE_PROJECT_ID):
     )
     endpoints: typing.List[
         ServiceEndpoint
-    ] = service_endpoint_client.get_service_endpoints(project=project_id, type="GitHub")
+    ] = service_endpoint_client.get_service_endpoints(
+        project=project_id, type="GitHub"
+    )
     for service_endpoint in endpoints:
         if service_endpoint.name == AZURE_SERVICE_ENDPOINT_NAME:
             return service_endpoint
@@ -171,10 +179,14 @@ def register_repo(github_org, repo_name, project_id=AZURE_PROJECT_ID):
         assert len(existing_definitions) == 1
         ed = existing_definitions[0]
         bclient.update_definition(
-            definition=build_definition, definition_id=ed.id, project=ed.project
+            definition=build_definition,
+            definition_id=ed.id,
+            project=ed.project,
         )
     else:
-        bclient.create_definition(definition=build_definition, project=project_id)
+        bclient.create_definition(
+            definition=build_definition, project=project_id
+        )
 
 
 def repo_registered(github_org, repo_name, project_id=AZURE_PROJECT_ID):

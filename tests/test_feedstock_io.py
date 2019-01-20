@@ -24,11 +24,11 @@ def keep_dir(dirname):
 def parameterize():
     for pathfunc in [
         lambda pth, tmp_dir: os.path.relpath(pth, tmp_dir),
-        lambda pth, tmp_dir: pth
+        lambda pth, tmp_dir: pth,
     ]:
         for get_repo in [
             lambda tmp_dir: None,
-            lambda tmp_dir: git.Repo.init(tmp_dir)
+            lambda tmp_dir: git.Repo.init(tmp_dir),
         ]:
             try:
                 tmp_dir = tempfile.mkdtemp()
@@ -40,7 +40,7 @@ def parameterize():
                 yield (
                     tmp_dir,
                     get_repo(tmp_dir),
-                    lambda pth: pathfunc(pth, tmp_dir)
+                    lambda pth: pathfunc(pth, tmp_dir),
                 )
             finally:
                 os.chdir(old_dir)
@@ -54,29 +54,22 @@ class TestFeedstockIO(unittest.TestCase):
         self.tmp_dir = tempfile.mkdtemp()
         os.chdir(self.tmp_dir)
 
-        with io.open(os.path.abspath(".keep"), "w", encoding="utf-8", newline="\n") as fh:
+        with io.open(
+            os.path.abspath(".keep"), "w", encoding="utf-8", newline="\n"
+        ) as fh:
             fh.write("")
-
 
     def test_repo(self):
         for tmp_dir, repo, pathfunc in parameterize():
             if repo is None:
-                self.assertTrue(
-                    fio.get_repo(pathfunc(tmp_dir)) is None
-                )
+                self.assertTrue(fio.get_repo(pathfunc(tmp_dir)) is None)
             else:
                 self.assertIsInstance(
-                    fio.get_repo(pathfunc(tmp_dir)),
-                    git.Repo
+                    fio.get_repo(pathfunc(tmp_dir)), git.Repo
                 )
 
-
     def test_set_exe_file(self):
-        perms = [
-            stat.S_IXUSR,
-            stat.S_IXGRP,
-            stat.S_IXOTH
-        ]
+        perms = [stat.S_IXUSR, stat.S_IXGRP, stat.S_IXOTH]
 
         set_mode = functools.reduce(op.or_, perms)
 
@@ -84,7 +77,9 @@ class TestFeedstockIO(unittest.TestCase):
             for tmp_dir, repo, pathfunc in parameterize():
                 filename = "test.txt"
                 filename = os.path.join(tmp_dir, filename)
-                with io.open(filename, "w", encoding="utf-8", newline="\n") as fh:
+                with io.open(
+                    filename, "w", encoding="utf-8", newline="\n"
+                ) as fh:
                     fh.write("")
                 if repo is not None:
                     repo.index.add([filename])
@@ -92,13 +87,12 @@ class TestFeedstockIO(unittest.TestCase):
                 fio.set_exe_file(pathfunc(filename), set_exe)
 
                 file_mode = os.stat(filename).st_mode
-                self.assertEqual(file_mode & set_mode,
-                                 int(set_exe) * set_mode)
+                self.assertEqual(file_mode & set_mode, int(set_exe) * set_mode)
                 if repo is not None:
                     blob = next(repo.index.iter_blobs(BlobFilter(filename)))[1]
-                    self.assertEqual(blob.mode & set_mode,
-                                     int(set_exe) * set_mode)
-
+                    self.assertEqual(
+                        blob.mode & set_mode, int(set_exe) * set_mode
+                    )
 
     def test_write_file(self):
         for tmp_dir, repo, pathfunc in parameterize():
@@ -124,7 +118,6 @@ class TestFeedstockIO(unittest.TestCase):
 
                     self.assertEqual(write_text, read_text)
 
-
     def test_touch_file(self):
         for tmp_dir, repo, pathfunc in parameterize():
             for filename in ["test.txt", "dir1/dir2/test.txt"]:
@@ -144,7 +137,6 @@ class TestFeedstockIO(unittest.TestCase):
 
                     self.assertEqual("", read_text)
 
-
     def test_remove_file(self):
         for tmp_dir, repo, pathfunc in parameterize():
             for filename in ["test.txt", "dir1/dir2/test.txt"]:
@@ -154,7 +146,9 @@ class TestFeedstockIO(unittest.TestCase):
 
                 filename = os.path.join(tmp_dir, filename)
 
-                with io.open(filename, "w", encoding="utf-8", newline="\n") as fh:
+                with io.open(
+                    filename, "w", encoding="utf-8", newline="\n"
+                ) as fh:
                     fh.write("")
                 if repo is not None:
                     repo.index.add([filename])
@@ -178,7 +172,6 @@ class TestFeedstockIO(unittest.TestCase):
                     self.assertFalse(
                         list(repo.index.iter_blobs(BlobFilter(filename)))
                     )
-
 
     def test_copy_file(self):
         for tmp_dir, repo, pathfunc in parameterize():
@@ -220,7 +213,6 @@ class TestFeedstockIO(unittest.TestCase):
 
                 self.assertEqual(write_text, read_text)
 
-
     def tearDown(self):
         os.chdir(self.old_dir)
         del self.old_dir
@@ -229,5 +221,5 @@ class TestFeedstockIO(unittest.TestCase):
         del self.tmp_dir
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

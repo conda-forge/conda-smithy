@@ -11,6 +11,7 @@ Overview
 
 [![Build Status](https://travis-ci.org/conda-forge/conda-smithy.svg)](https://travis-ci.org/conda-forge/conda-smithy)
 [![Coverage Status](https://coveralls.io/repos/github/conda-forge/conda-smithy/badge.svg?branch=master)](https://coveralls.io/github/conda-forge/conda-smithy?branch=master)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
 
 Installation
 ------------
