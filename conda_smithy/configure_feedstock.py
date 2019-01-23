@@ -283,19 +283,22 @@ def _collapse_subpackage_variants(list_of_metas):
     preserve_top_level_loops = set(top_level_loop_vars) - set(all_used_vars)
 
     # Add in some variables that should always be preserved
-    always_keep_keys = set(
-        (
-            "zip_keys",
-            "pin_run_as_build",
-            "MACOSX_DEPLOYMENT_TARGET",
-            "macos_min_version",
-            "macos_machine",
-            "channel_sources",
-            "channel_targets",
-            "docker_image",
-            "build_number_decrement",
-        )
-    )
+    always_keep_keys = {
+        "zip_keys",
+        "pin_run_as_build",
+        "MACOSX_DEPLOYMENT_TARGET",
+        "macos_min_version",
+        "macos_machine",
+        "channel_sources",
+        "channel_targets",
+        "docker_image",
+        "build_number_decrement",
+        # The following keys are required for some of our aarch64 builds
+        # Added in https://github.com/conda-forge/conda-forge-pinning-feedstock/pull/180
+        "cdt_arch",
+        "cdt_name",
+        "BUILD",
+    }
     all_used_vars.update(always_keep_keys)
     all_used_vars.update(top_level_vars)
 
@@ -327,9 +330,9 @@ def _collapse_subpackage_variants(list_of_metas):
             "ignore_build_only_deps",
         },
     )
-    used_key_values = set(
+    used_key_values = {
         conda_build.utils.HashableDict(variant) for variant in used_key_values
-    )
+    }
     used_key_values = conda_build.variants.list_of_dicts_to_dict_of_lists(
         list(used_key_values)
     )
@@ -1287,7 +1290,7 @@ def get_cfp_file_path(resolve=None, error_on_warn=True):
 
 
 def main(
-    forge_file_directory, no_check_uptodate, commit, exclusive_config_file
+    forge_file_directory, no_check_uptodate=False, commit=False, exclusive_config_file=None
 ):
     error_on_warn = False if no_check_uptodate else True
     index = conda_build.conda_interface.get_index(channel_urls=["conda-forge"])
