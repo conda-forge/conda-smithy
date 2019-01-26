@@ -3,7 +3,7 @@
 # -*- mode: yaml -*-
 
 jobs:
-- job: win_64
+- job: win
   pool:
     vmImage: vs2017-win2016
   timeoutInMinutes: 240
@@ -79,16 +79,18 @@ jobs:
 
     # Special cased version setting some more things!
     - script: |
-        conda.exe build recipe -m .ci_support\%CONFIG%.yaml --quiet
+        conda.exe build recipe -m .ci_support\%CONFIG%.yaml
       displayName: Build recipe (vs2008)
-      env: {
-        VS90COMNTOOLS: "C:\\Program Files (x86)\\Common Files\\Microsoft\\Visual C++ for Python\\9.0\\VC\\bin",
-      }
+      env:
+        VS90COMNTOOLS: "C:\\Program Files (x86)\\Common Files\\Microsoft\\Visual C++ for Python\\9.0\\VC\\bin"
+        PYTHONUNBUFFERED: 1
       condition: contains(variables['CONFIG'], 'vs2008')
 
     - script: |
-        conda.exe build recipe -m .ci_support\%CONFIG%.yaml --quiet
+        conda.exe build recipe -m .ci_support\%CONFIG%.yaml
       displayName: Build recipe
+      env:
+        PYTHONUNBUFFERED: 1
       condition: not(contains(variables['CONFIG'], 'vs2008'))
 
     - script: |
