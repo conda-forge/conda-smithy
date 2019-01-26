@@ -4,6 +4,17 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.2.10
+====================
+
+**Changed:**
+
+* Ran ``black`` on the codebase
+* Added a few more always included keys.  These are required by the aarch64 migration.
+These in particular are: ``cdt_arch``, ``cdt_name``,  ``BUILD``.
+
+
+
 v3.2.9
 ====================
 
