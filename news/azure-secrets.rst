@@ -8,6 +8,6 @@
 
 **Fixed:**
 
-Secrets weren't getting passed to Azure properly.
+* Secrets weren't getting passed to Azure properly.
 
 **Security:** None

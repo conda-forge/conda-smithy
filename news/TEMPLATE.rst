@@ -1,11 +1,24 @@
-**Added:** None
+**Added:**
 
-**Changed:** None
+* <news item>
 
-**Deprecated:** None
+**Changed:**
 
-**Removed:** None
+* <news item>
 
-**Fixed:** None
+**Deprecated:**
 
-**Security:** None
+* <news item>
+
+**Removed:**
+
+* <news item>
+
+**Fixed:**
+
+* <news item>
+
+**Security:**
+
+* <news item>
+
