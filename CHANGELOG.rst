@@ -81,7 +81,7 @@ v3.2.3
 
 * Added `conda-build` version to git commit message produced by `conda smithy regenerate`
 * Made idle timeouts on travisci and circleci configurable.  To set this add to your `conda-forge-config.yml`
-  
+
     .. code-block:: yaml
 
     idle_timeout_minutes: 30
@@ -133,11 +133,11 @@ v3.2.1
 
 **Added:**
 
-* Added support for rendering feedstock recipes for Azure pipelines.  
+* Added support for rendering feedstock recipes for Azure pipelines.
   Presently this is enabled globally for all feedstocks going forward by default.
   Azure builds are configured to not publish artifacts to anaconda.org
-* PR template asking for news entries 
-  (aka, I heard you like news, so I put a news item about adding news items into 
+* PR template asking for news entries
+  (aka, I heard you like news, so I put a news item about adding news items into
   your news item, so you can add news while you add news)
 * Feedstock maintainers are now listed in the README file.
 
