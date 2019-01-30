@@ -4,6 +4,15 @@ conda-smithy Change Log
 
 .. current developments
 
+vv3.2.11
+====================
+
+**Fixed:**
+
+* Secrets weren't getting passed to Azure properly.
+
+
+
 v3.2.10
 ====================
 
