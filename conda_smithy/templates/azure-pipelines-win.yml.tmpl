@@ -77,6 +77,9 @@ jobs:
       displayName: conda-forge build setup
     {% endif %}
 
+    # Remove things that can interfere with the build
+    - script: |        
+
     # Special cased version setting some more things!
     - script: |
         conda.exe build recipe -m .ci_support\%CONFIG%.yaml
