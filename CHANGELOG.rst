@@ -4,6 +4,16 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.2.12
+====================
+
+**Fixed:**
+
+* Removed ``v`` from release that prevented conda-smithy version check from
+  working properly.
+
+
+
 v3.2.11
 ====================
 
