@@ -77,8 +77,10 @@ jobs:
       displayName: conda-forge build setup
     {% endif %}
 
-    # Remove things that can interfere with the build
-    - script: |        
+    - script: |
+        rmdir C:\strawberry /s /q
+      continueOnError: true
+      displayname: remove strawberryperl
 
     # Special cased version setting some more things!
     - script: |
