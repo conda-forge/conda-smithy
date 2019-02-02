@@ -181,7 +181,7 @@ def register_repo(github_org, repo_name, project_id=AZURE_PROJECT_ID):
         bclient.update_definition(
             definition=build_definition,
             definition_id=ed.id,
-            project=ed.project,
+            project=ed.project.name,
         )
     else:
         bclient.create_definition(

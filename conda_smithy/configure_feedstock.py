@@ -965,7 +965,7 @@ def render_appveyor(jinja_env, forge_config, forge_dir):
     fast_finish_text = textwrap.dedent(
         """\
             {get_fast_finish_script}
-            {fast_finish_script} -v --ci "appveyor" "%APPVEYOR_ACCOUNT_NAME%/%APPVEYOR_PROJECT_SLUG%" "%APPVEYOR_BUILD_NUMBER%" "%APPVEYOR_PULL_REQUEST_NUMBER%"
+            "%CONDA_INSTALL_LOCN%\python.exe" {fast_finish_script}.py -v --ci "appveyor" "%APPVEYOR_ACCOUNT_NAME%/%APPVEYOR_PROJECT_SLUG%" "%APPVEYOR_BUILD_NUMBER%" "%APPVEYOR_PULL_REQUEST_NUMBER%"
         """
     )
     template_filename = "appveyor.yml.tmpl"
