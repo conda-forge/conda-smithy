@@ -26,6 +26,8 @@ setup_conda_rc "${FEEDSTOCK_ROOT}" "${RECIPE_ROOT}" "${CONFIG_FILE}"
 
 {% if build_setup -%}
 {{ build_setup }}{% endif -%}
+{% if yum_build_setup is defined -%}
+{{ yum_build_setup }}{% endif -%}
 
 # make the build number clobber
 make_build_number "${FEEDSTOCK_ROOT}" "${RECIPE_ROOT}" "${CONFIG_FILE}"

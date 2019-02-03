@@ -709,37 +709,9 @@ def _circle_specific_setup(jinja_env, forge_config, forge_dir, platform):
         )
 
     if platform == "linux":
-        # If there is a "yum_requirements.txt" file in the recipe, we honour it.
-        yum_requirements_fpath = os.path.join(
-            forge_dir, "recipe", "yum_requirements.txt"
-        )
-        if os.path.exists(yum_requirements_fpath):
-            with open(yum_requirements_fpath) as fh:
-                requirements = [
-                    line.strip()
-                    for line in fh
-                    if line.strip() and not line.strip().startswith("#")
-                ]
-            if not requirements:
-                raise ValueError(
-                    "No yum requirements enabled in the "
-                    "yum_requirements.txt, please remove the file "
-                    "or add some."
-                )
-            build_setup += textwrap.dedent(
-                """\
-
-                # Install the yum requirements defined canonically in the
-                # "recipe/yum_requirements.txt" file. After updating that file,
-                # run "conda smithy rerender" and this line will be updated
-                # automatically.
-                /usr/bin/sudo -n yum install -y {}
-
-
-            """.format(
-                    " ".join(requirements)
-                )
-            )
+        yum_build_setup = generate_yum_requirements(forge_dir)
+        if yum_build_setup:
+            forge_config["yum_build_setup"] = yum_build_setup
 
     forge_config["build_setup"] = build_setup
 
@@ -770,6 +742,42 @@ def _circle_specific_setup(jinja_env, forge_config, forge_dir, platform):
     ]
     for target_fname in target_fnames:
         set_exe_file(target_fname, True)
+
+
+def generate_yum_requirements(forge_dir):
+    # If there is a "yum_requirements.txt" file in the recipe, we honour it.
+    yum_requirements_fpath = os.path.join(
+        forge_dir, "recipe", "yum_requirements.txt"
+    )
+    yum_build_setup = ''
+    if os.path.exists(yum_requirements_fpath):
+        with open(yum_requirements_fpath) as fh:
+            requirements = [
+                line.strip()
+                for line in fh
+                if line.strip() and not line.strip().startswith("#")
+            ]
+        if not requirements:
+            raise ValueError(
+                "No yum requirements enabled in the "
+                "yum_requirements.txt, please remove the file "
+                "or add some."
+            )
+        yum_build_setup = textwrap.dedent(
+            """\
+
+            # Install the yum requirements defined canonically in the
+            # "recipe/yum_requirements.txt" file. After updating that file,
+            # run "conda smithy rerender" and this line will be updated
+            # automatically.
+            /usr/bin/sudo -n yum install -y {}
+
+
+        """.format(
+                " ".join(requirements)
+            )
+        )
+    return yum_build_setup
 
 
 def _get_platforms_of_provider(provider, forge_config):
@@ -1004,7 +1012,14 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
     template_files = platform_templates.get(platform, [])
 
     # Explicitly add in a newline character to ensure that jinja templating doesn't do something stupid
-    forge_config["build_setup"] = "run_conda_forge_build_setup\n"
+    build_setup = "run_conda_forge_build_setup\n"
+
+    if platform == "linux":
+        yum_build_setup = generate_yum_requirements(forge_dir)
+        if yum_build_setup:
+            forge_config['yum_build_setup'] = yum_build_setup
+
+    forge_config["build_setup"] = build_setup
 
     forge_config["docker"]["interactive"] = False
     _render_template_exe_files(
