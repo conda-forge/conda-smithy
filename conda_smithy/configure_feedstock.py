@@ -1201,6 +1201,10 @@ def _load_forge_config(forge_dir, exclusive_config_file):
     print(log)
     print("## END CONFIGURATION\n")
 
+    for platform in ["linux_aarch64", "linux_ppc64le"]:
+        if config["provider"][platform] == "default":
+            config["provider"][platform] = "azure"
+
     # Set the environment variable for the compiler stack
     os.environ["CF_COMPILER_STACK"] = config["compiler_stack"]
     # Set valid ranger for the supported platforms
