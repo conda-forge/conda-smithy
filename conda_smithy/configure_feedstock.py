@@ -340,6 +340,9 @@ def _collapse_subpackage_variants(list_of_metas):
     _trim_unused_zip_keys(used_key_values)
     _trim_unused_pin_run_as_build(used_key_values)
 
+    print("top_level_loop_vars", top_level_loop_vars)
+    print("used_key_values", used_key_values)
+
     return (
         break_up_top_level_values(top_level_loop_vars, used_key_values),
         top_level_loop_vars,
@@ -1192,6 +1195,11 @@ def _load_forge_config(forge_dir, exclusive_config_file):
                 config_item.update(value)
             else:
                 config[key] = value
+
+    log = yaml.safe_dump(config)
+    print("## CONFIGURATION USED\n")
+    print(log)
+    print("## END CONFIGURATION\n")
 
     for platform in ["linux_aarch64", "linux_ppc64le"]:
         if config["provider"][platform] == "default":
