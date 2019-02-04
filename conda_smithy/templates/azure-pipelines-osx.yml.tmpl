@@ -77,6 +77,10 @@ jobs:
   - script: |
       export PATH=$(Build.StagingDirectory)/miniconda/bin:$PATH
       set -x -e
+      # set CONDA_BUILD_SYSROOT env which conda-forge-ci-setup stored
+      # in .ci_support/{config}.yaml in a previous stage.
+      # Without doing this, conda-build omits this env from the test stage
+      export CONDA_BUILD_SYSROOT=$(cat .ci_support/${CONFIG}.yaml  | shyaml get-value CONDA_BUILD_SYSROOT.0)
       conda build ./recipe -m ./.ci_support/${CONFIG}.yaml --clobber-file ./.ci_support/clobber_${CONFIG}.yaml
     displayName: Build recipe
 
