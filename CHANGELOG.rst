@@ -4,6 +4,25 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.2.13
+====================
+
+**Added:**
+
+* Allow enabling aarch64 and ppc64le using default provider
+
+**Changed:**
+
+* Appveyor will now use the conda python3.x executable to run the fast-finish script.
+* Azure windows builds are no longer silent.
+* Azure build definition updating now works.
+
+**Fixed:**
+
+* yum_requirements will now work on azure based linux builds.
+
+
+
 v3.2.12
 ====================
 
