@@ -39,26 +39,8 @@ mkdir -p "$ARTIFACTS"
 DONE_CANARY="$ARTIFACTS/conda-forge-build-done-${CONFIG}"
 rm -f "$DONE_CANARY"
 
-# Set up the docker image that we are going to use.  This is used to install yum requirements at build time if needed
+# Set up the docker image that we are going to use.
 {{ docker.executable }} pull $DOCKER_IMAGE
-
-# If we have yum requirements build a new specialized image that we will use to run our build in that includes
-# those dependencies.
-pushd ${RECIPE_ROOT}
-if [ -f ${RECIPE_ROOT}/yum_requirements.txt ]; then
-
-    cat >Dockerfile.yum <<DOCKERFILE
-FROM ${DOCKER_IMAGE}
-ADD yum_requirements.txt /opt/requirements.txt
-RUN yum -y install \$(cat /opt/requirements.txt)
-DOCKERFILE
-
-    export NEW_DOCKER_IMAGE="conda-smithy-$(openssl rand -hex 12)"
-    docker build -t ${NEW_DOCKER_IMAGE} --file Dockerfile.yum .
-    export DOCKER_IMAGE=$NEW_DOCKER_IMAGE
-    echo "Generated new image!"
-fi
-popd
 
 {%- if docker.interactive is defined %}
     {%- if docker.interactive %}

@@ -27,6 +27,13 @@ setup_conda_rc "${FEEDSTOCK_ROOT}" "${RECIPE_ROOT}" "${CONFIG_FILE}"
 {% if build_setup -%}
 {{ build_setup }}{% endif -%}
 
+# If we have yum requirements build a new specialized image that we will use to run our build in that includes
+# those dependencies.
+if [ -f ${RECIPE_ROOT}/yum_requirements.txt ]; then
+  sudo yum -y install $(cat ${RECIPE_ROOT}/yum_requirements.txt)
+fi
+
+
 # make the build number clobber
 make_build_number "${FEEDSTOCK_ROOT}" "${RECIPE_ROOT}" "${CONFIG_FILE}"
 
