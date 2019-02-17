@@ -149,19 +149,6 @@ def test_circle_with_yum_reqs(py_recipe, jinja_env):
     )
 
 
-def test_circle_with_empty_yum_reqs_raises(py_recipe, jinja_env):
-    with open(
-        os.path.join(py_recipe.recipe, "recipe", "yum_requirements.txt"), "w"
-    ) as f:
-        f.write("# effectively empty")
-    with pytest.raises(ValueError):
-        cnfgr_fdstk.render_circle(
-            jinja_env=jinja_env,
-            forge_config=py_recipe.config,
-            forge_dir=py_recipe.recipe,
-        )
-
-
 def test_circle_osx(py_recipe, jinja_env):
     forge_dir = py_recipe.recipe
     travis_yml_file = os.path.join(forge_dir, ".travis.yml")
