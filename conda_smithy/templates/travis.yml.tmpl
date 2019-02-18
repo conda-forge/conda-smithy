@@ -4,73 +4,95 @@
 
 language: generic
 
-os: osx
-osx_image: {{ travis.get('osx_image', 'xcode9.4') }}
+{% if travis.secure -%}
 
-
-{% block env -%}
-{% if configs[0] or travis.secure -%}
 env:
-  {%- if configs[0] %}
-  matrix:
-    {%- for config, _, _ in configs %}
-    - CONFIG={{ config }}
-    {%- endfor %}
-  {%- endif %}
-{##}
-  {%- if travis.secure %}
   global:
     {%- for name, hashed_secure in travis.secure | dictsort %}
     # The {{ name }} secure variable. This is defined canonically in conda-forge.yml.
     - secure: "{{ hashed_secure }}"
     {%- endfor %}
-  {%- endif %}
 {%- endif %}
-{% endblock %}
+
+{% if configs[0] -%}
+matrix:
+  include:
+    {%- for config, plat in configs %}
+    - env: CONFIG={{ config }}
+    {%- if plat.startswith("osx") %}
+      os: osx
+      osx_image: xcode9.4
+    {%- elif plat.startswith("linux-ppc64le") %}
+      os: linux-ppc64le
+    {%- endif %}
+
+    {%- endfor %}
+{%- endif %}
 
 before_install:
     # Fast finish the PR.
-    - |
-      {{ fast_finish }}
+    - {{ fast_finish }}
+{%- if osx.enabled %}
 
-    # Remove homebrew.
+    # Remove homebrew in osx
     - |
-      echo ""
-      echo "Removing homebrew from Travis CI to avoid conflicts."
-      curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/uninstall > ~/uninstall_homebrew
-      chmod +x ~/uninstall_homebrew
-      ~/uninstall_homebrew -fq
-      rm ~/uninstall_homebrew
-
+      if [ "$TRAVIS_OS_NAME" == "osx" ]; then
+        echo ""
+        echo "Removing homebrew from Travis CI to avoid conflicts."
+        curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/uninstall > ~/uninstall_homebrew
+        chmod +x ~/uninstall_homebrew
+        ~/uninstall_homebrew -fq
+        rm ~/uninstall_homebrew
+      fi
+{%- endif %}
 
 install:
+    {%- if osx.enabled %}
     # Install Miniconda.
     - |
-      echo ""
-      echo "Installing a fresh version of Miniconda."
-      MINICONDA_URL="https://repo.continuum.io/miniconda"
-      MINICONDA_FILE="Miniconda3-latest-MacOSX-x86_64.sh"
-      curl -L -O "${MINICONDA_URL}/${MINICONDA_FILE}"
-      bash $MINICONDA_FILE -b
+      if [ "$TRAVIS_OS_NAME" == "osx" ]; then
+        echo ""
+        echo "Installing a fresh version of Miniconda."
+        MINICONDA_URL="https://repo.continuum.io/miniconda"
+        MINICONDA_FILE="Miniconda3-latest-MacOSX-x86_64.sh"
+        curl -L -O "${MINICONDA_URL}/${MINICONDA_FILE}"
+        bash $MINICONDA_FILE -b
+      fi
 
     # Configure conda.
     - |
-      echo ""
-      echo "Configuring conda."
-      source /Users/travis/miniconda3/bin/activate root
+      if [ "$TRAVIS_OS_NAME" == "osx" ]; then
+        echo ""
+        echo "Configuring conda."
+        source /Users/travis/miniconda3/bin/activate root
 
-      conda install -n root -c conda-forge --quiet --yes conda-forge-ci-setup=2 conda-build
-      setup_conda_rc ./ ./{{ recipe_dir }} ./.ci_support/${CONFIG}.yaml
+        conda install -n root -c conda-forge --quiet --yes conda-forge-ci-setup=2 conda-build
+        setup_conda_rc ./ ./{{ recipe_dir }} ./.ci_support/${CONFIG}.yaml
 
-      {% if build_setup -%}
-      {{ build_setup }}{% endif %}
+        {% if build_setup -%}
+        {{ build_setup }}{% endif %}
+      fi
 
     # compiler cleanup
     - |
-      mangle_compiler ./ ./{{ recipe_dir }} ./.ci_support/${CONFIG}.yaml
+      if [ "$TRAVIS_OS_NAME" == "osx" ]; then
+        mangle_compiler ./ ./{{ recipe_dir }} ./.ci_support/${CONFIG}.yaml
+      fi
+    {%- endif %}
 
 script:
-  # generate the build number clobber
-  - make_build_number ./ ./{{ recipe_dir }} ./.ci_support/${CONFIG}.yaml
-  - {% if idle_timeout_minutes %}travis_wait {{ idle_timeout_minutes }}{% endif %} conda build ./{{ recipe_dir }} -m ./.ci_support/${CONFIG}.yaml --clobber-file ./.ci_support/clobber_${CONFIG}.yaml
-  - upload_package ./ ./{{ recipe_dir }} ./.ci_support/${CONFIG}.yaml
+  {%- if osx.enabled %}
+  - |
+    if [ "$TRAVIS_OS_NAME" == "osx" ]; then
+      # generate the build number clobber
+      make_build_number ./ ./{{ recipe_dir }} ./.ci_support/${CONFIG}.yaml
+      % if idle_timeout_minutes %}travis_wait {{ idle_timeout_minutes }}{% endif %} conda build ./{{ recipe_dir }} -m ./.ci_support/${CONFIG}.yaml --clobber-file ./.ci_support/clobber_${CONFIG}.yaml
+      upload_package ./ ./{{ recipe_dir }} ./.ci_support/${CONFIG}.yaml
+    fi
+  {%- endif %}
+{% if linux_ppc64le.enabled %}
+  - |
+    if [ "$TRAVIS_OS_NAME" == "linux*" ]; then
+      ./.travis/run_docker_build.sh
+    fi
+{%- endif %}

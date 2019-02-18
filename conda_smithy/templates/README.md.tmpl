@@ -48,6 +48,9 @@ All platforms: ![noarch disabled]({{ shield }}badge/noarch-disabled-lightgrey.sv
 {%- if not win.enabled %}
 ![Windows disabled]({{ shield }}badge/Windows-disabled-lightgrey.svg)
 {%- endif %}
+{%- if not linux_ppc64le.enabled %}
+![ppc64le disabled]({{ shield }}badge/ppc64le-disabled-lightgrey.svg)
+{%- endif %}
 {%- endif %}
 
 Current release info

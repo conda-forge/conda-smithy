@@ -546,7 +546,7 @@ def _render_ci_provider(
         for config in configs:
             remove_file(config)
 
-        for platform in platforms:
+        for platform, arch in zip(platforms, archs):
             configs = glob.glob(
                 os.path.join(forge_dir, ".ci_support", "{}_*".format(platform))
             )
@@ -597,7 +597,6 @@ def _render_ci_provider(
                 )
                 forge_config[plat_arch]["enabled"] = True
 
-                fancy_platforms.append(fancy_name[platform])
                 unfancy_platforms.add(plat_arch)
             elif platform in extra_platform_files:
                 for each_target_fname in extra_platform_files[platform]:
