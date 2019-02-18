@@ -396,6 +396,9 @@ def finalize_config(config, platform):
     return config
 
 
+_GENERATED_CONFIGS = set()
+
+
 def dump_subspace_config_files(metas, root_path, platform, arch, upload):
     """With conda-build 3, it handles the build matrix.  We take what it spits out, and write a
     config.yaml file for each matrix entry that it spits out.  References to a specific file
@@ -435,6 +438,8 @@ def dump_subspace_config_files(metas, root_path, platform, arch, upload):
         config = finalize_config(config, platform)
         with write_file(out_path) as f:
             yaml.dump(config, f, default_flow_style=False)
+            _GENERATED_CONFIGS.add(out_path)
+
         target_platform = config.get("target_platform", [platform_arch])[0]
         result.append((config_name, target_platform, upload))
     return sorted(result)
@@ -551,7 +556,8 @@ def _render_ci_provider(
                 os.path.join(forge_dir, ".ci_support", "{}_*".format(platform))
             )
             for config in configs:
-                remove_file(config)
+                if config not in _GENERATED_CONFIGS:
+                    remove_file(config)
 
     if not any(enable_platform):
         # There are no cases to build (not even a case without any special
@@ -879,8 +885,15 @@ def _travis_specific_setup(jinja_env, forge_config, forge_dir, platform):
         """
         )
 
-    # TODO: Conda has a convenience for accessing nested yaml content.
-    template_files = []
+    platform_templates = {
+        "linux": [
+            "run_docker_build.sh.tmpl",
+            "build_steps.sh.tmpl",
+        ],
+        "osx": [],
+        "win": [],
+    }
+    template_files = platform_templates.get(platform, [])
 
     _render_template_exe_files(
         forge_config=forge_config,
@@ -1203,6 +1216,8 @@ def _load_forge_config(forge_dir, exclusive_config_file):
     for platform in ["linux_aarch64", "linux_ppc64le"]:
         if config["provider"][platform] == "default":
             config["provider"][platform] = "azure"
+    if config["provider"]["linux_ppc64le"] == "native":
+        config["provider"][platform] = "travis"
 
     # Set the environment variable for the compiler stack
     os.environ["CF_COMPILER_STACK"] = config["compiler_stack"]
@@ -1352,11 +1367,11 @@ def main(
 
     copy_feedstock_content(forge_dir)
 
-    render_circle(env, config, forge_dir)
+    # render_circle(env, config, forge_dir)
     render_travis(env, config, forge_dir)
-    render_appveyor(env, config, forge_dir)
+    # render_appveyor(env, config, forge_dir)
     render_azure(env, config, forge_dir)
-    render_README(env, config, forge_dir)
+    # render_README(env, config, forge_dir)
 
     if os.path.isdir(os.path.join(forge_dir, ".ci_support")):
         with write_file(os.path.join(forge_dir, ".ci_support", "README")) as f:

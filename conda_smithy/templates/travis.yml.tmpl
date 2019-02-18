@@ -5,7 +5,6 @@
 language: generic
 
 {% if travis.secure -%}
-
 env:
   global:
     {%- for name, hashed_secure in travis.secure | dictsort %}
@@ -17,12 +16,12 @@ env:
 {% if configs[0] -%}
 matrix:
   include:
-    {%- for config, plat in configs %}
-    - env: CONFIG={{ config }}
-    {%- if plat.startswith("osx") %}
+    {%- for config, platform, upload in configs | sort %}
+    - env: CONFIG={{ config }} UPLOAD_PACKAGES={{ upload }}
+    {%- if platform.startswith("osx") %}
       os: osx
       osx_image: xcode9.4
-    {%- elif plat.startswith("linux-ppc64le") %}
+    {%- elif platform.startswith("linux-ppc64le") %}
       os: linux-ppc64le
     {%- endif %}
 
@@ -32,8 +31,8 @@ matrix:
 before_install:
     # Fast finish the PR.
     - {{ fast_finish }}
-{%- if osx.enabled %}
 
+{%- if osx.enabled %}
     # Remove homebrew in osx
     - |
       if [ "$TRAVIS_OS_NAME" == "osx" ]; then
@@ -81,15 +80,20 @@ install:
     {%- endif %}
 
 script:
-  {%- if osx.enabled %}
+{%- if osx.enabled %}
   - |
     if [ "$TRAVIS_OS_NAME" == "osx" ]; then
       # generate the build number clobber
       make_build_number ./ ./{{ recipe_dir }} ./.ci_support/${CONFIG}.yaml
-      % if idle_timeout_minutes %}travis_wait {{ idle_timeout_minutes }}{% endif %} conda build ./{{ recipe_dir }} -m ./.ci_support/${CONFIG}.yaml --clobber-file ./.ci_support/clobber_${CONFIG}.yaml
-      upload_package ./ ./{{ recipe_dir }} ./.ci_support/${CONFIG}.yaml
+      {% if idle_timeout_minutes %}travis_wait {{ idle_timeout_minutes }}{% endif %} conda build ./{{ recipe_dir }} -m ./.ci_support/${CONFIG}.yaml --clobber-file ./.ci_support/clobber_${CONFIG}.yaml
+      
+      if [[ "${UPLOAD_PACKAGES}" != "False" ]]; then
+        upload_package ./ ./{{ recipe_dir }} ./.ci_support/${CONFIG}.yaml
+      fi
     fi
-  {%- endif %}
+{%- endif %}
+
+  # TODO make this check better 
 {% if linux_ppc64le.enabled %}
   - |
     if [ "$TRAVIS_OS_NAME" == "linux*" ]; then
