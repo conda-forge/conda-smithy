@@ -37,7 +37,9 @@ matrix:
 before_install:
 {%- if 'linux' in platformset %}
     - |
-      if [ "$TRAVIS_OS_NAME" == "linux*" ]; then
+      echo ""
+      echo "Maybe install python for $TRAVIS_OS_NAME"  
+      if [[ "$TRAVIS_OS_NAME" == "linux.*" ]]; then
         sudo apt install python3-pip
         sudo pip install --upgrade pip
         sudo pip install setuptools shyaml
@@ -111,7 +113,7 @@ script:
   # TODO make this check better 
 {% if 'linux' in platformset %}
   - |
-    if [ "$TRAVIS_OS_NAME" == "linux*" ]; then
+    if [[ "$TRAVIS_OS_NAME" == "linux.*" ]]; then
       ./.travis/run_docker_build.sh
     fi
 {%- endif %}
