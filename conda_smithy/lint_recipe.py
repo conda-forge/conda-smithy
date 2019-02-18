@@ -406,7 +406,8 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
                 )
 
     # 2: suggest python noarch
-    if build_section.get("noarch") is None and build_reqs and ("compiler" not in build_reqs) and ("pip" in build_reqs):
+    if build_section.get("noarch") is None and build_reqs and not any(["_compiler_stub" in b for b in build_reqs]) \
+            and ("pip" in build_reqs):
         with io.open(meta_fname, "rt") as fh:
             in_runreqs = False
             no_arch_possible = True
