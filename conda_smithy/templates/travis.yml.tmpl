@@ -1,7 +1,13 @@
 # This file was generated automatically from conda-smithy. To update this configuration,
 # update the conda-forge.yml and/or the recipe/meta.yaml.
 # -*- mode: yaml -*-
-
+{%- set platformset = [] %}
+{%- for _, platform, _ in configs %}
+  {%- set pfarchless = platform.split('-')[0] %}
+  {%- if pfarchless not in platformset %}
+    {%- do platformset.append(pfarchless) %}
+  {%- endif %}
+{%- endfor %}
 language: generic
 
 {% if travis.secure -%}
@@ -29,10 +35,19 @@ matrix:
 {%- endif %}
 
 before_install:
+{%- if 'linux' in platformset %}
+    - |
+      if [ "$TRAVIS_OS_NAME" == "linux*" ]; then
+        sudo apt install python3-pip
+        sudo pip install --upgrade pip
+        sudo pip install setuptools shyaml
+      fi
+{%- endif %}
+
     # Fast finish the PR.
     - {{ fast_finish }}
 
-{%- if osx.enabled %}
+{%- if 'osx' in platformset %}
     # Remove homebrew in osx
     - |
       if [ "$TRAVIS_OS_NAME" == "osx" ]; then
@@ -46,7 +61,7 @@ before_install:
 {%- endif %}
 
 install:
-    {%- if osx.enabled %}
+    {%- if 'osx' in platformset %}
     # Install Miniconda.
     - |
       if [ "$TRAVIS_OS_NAME" == "osx" ]; then
@@ -80,7 +95,7 @@ install:
     {%- endif %}
 
 script:
-{%- if osx.enabled %}
+{%- if 'osx' in platformset %}
   - |
     if [ "$TRAVIS_OS_NAME" == "osx" ]; then
       # generate the build number clobber
@@ -94,7 +109,7 @@ script:
 {%- endif %}
 
   # TODO make this check better 
-{% if linux_ppc64le.enabled %}
+{% if 'linux' in platformset %}
   - |
     if [ "$TRAVIS_OS_NAME" == "linux*" ]; then
       ./.travis/run_docker_build.sh
