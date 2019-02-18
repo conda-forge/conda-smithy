@@ -439,7 +439,6 @@ class Test_linter(unittest.TestCase):
                 is_good=True,
             )
 
-
     def test_jinja_os_environ(self):
         # Test that we can use os.environ in a recipe. We don't care about
         # the results here.
