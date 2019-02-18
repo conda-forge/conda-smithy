@@ -1367,11 +1367,11 @@ def main(
 
     copy_feedstock_content(forge_dir)
 
-    # render_circle(env, config, forge_dir)
+    render_circle(env, config, forge_dir)
     render_travis(env, config, forge_dir)
-    # render_appveyor(env, config, forge_dir)
+    render_appveyor(env, config, forge_dir)
     render_azure(env, config, forge_dir)
-    # render_README(env, config, forge_dir)
+    render_README(env, config, forge_dir)
 
     if os.path.isdir(os.path.join(forge_dir, ".ci_support")):
         with write_file(os.path.join(forge_dir, ".ci_support", "README")) as f:
