@@ -603,6 +603,7 @@ def _render_ci_provider(
                 )
                 forge_config[plat_arch]["enabled"] = True
 
+                fancy_platforms.append(fancy_name[platform])
                 unfancy_platforms.add(plat_arch)
             elif platform in extra_platform_files:
                 for each_target_fname in extra_platform_files[platform]:
