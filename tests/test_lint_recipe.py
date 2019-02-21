@@ -366,6 +366,79 @@ class Test_linter(unittest.TestCase):
                             """
             )
 
+    def test_suggest_noarch(self):
+        expected_start = "Whenever possible python packages should use noarch."
+
+        with tmp_directory() as recipe_dir:
+
+            def assert_noarch_hint(meta_string, is_good=False):
+                with io.open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
+                    fh.write(meta_string)
+                lints, hints = linter.main(recipe_dir, return_hints=True)
+                if is_good:
+                    message = (
+                        "Found hints when there shouldn't have "
+                        "been a lint for '{}'."
+                    ).format(meta_string)
+                else:
+                    message = (
+                        "Expected hints for '{}', but didn't " "get any."
+                    ).format(meta_string)
+                self.assertEqual(
+                    not is_good,
+                    any(lint.startswith(expected_start) for lint in hints),
+                    message,
+                )
+
+            assert_noarch_hint(
+                """
+                            build:
+                              noarch: python
+                              script:
+                                - echo "hello" 
+                            requirements:
+                              build:
+                                - python
+                                - pip
+                            """,
+                is_good=True,
+            )
+            assert_noarch_hint(
+                """
+                            build:
+                              script:
+                                - echo "hello" 
+                            requirements:
+                              build:
+                                - python
+                                - pip
+                            """
+            )
+            assert_noarch_hint(
+                """
+                            build:
+                              script:
+                                - echo "hello" 
+                            requirements:
+                              build:
+                                - python
+                            """,
+                is_good=True
+            )
+            assert_noarch_hint(
+                """
+                            build:
+                              script:
+                                - echo "hello" 
+                            requirements:
+                              build:
+                                - python
+                                - {{ compiler('c') }}
+                                - pip
+                            """,
+                is_good=True,
+            )
+
     def test_jinja_os_environ(self):
         # Test that we can use os.environ in a recipe. We don't care about
         # the results here.
