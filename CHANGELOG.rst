@@ -4,6 +4,19 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.2.14
+====================
+
+**Added:**
+
+* hint to suggest using python noarch, when the build requirements include pip and no compiler is specified.
+
+**Fixed:**
+
+* qemu activation fixed so that we can use sudo.
+
+
+
 v3.2.13
 ====================
 
