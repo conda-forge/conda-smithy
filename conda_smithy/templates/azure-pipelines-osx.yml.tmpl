@@ -57,6 +57,10 @@ jobs:
 
       source run_conda_forge_build_setup
       conda update --yes --quiet --override-channels -c conda-forge -c defaults --all
+
+      # ensure that we export the variables that we set here to the next stage
+      echo "##vso[task.setvariable variable=CONDA_BUILD_SYSROOT]$CONDA_BUILD_SYSROOT"
+      echo "##vso[task.setvariable variable=MACOSX_DEPLOYMENT_TARGET]$MACOSX_DEPLOYMENT_TARGET"
     env: {
       OSX_FORCE_SDK_DOWNLOAD: "1"
     }
@@ -80,7 +84,7 @@ jobs:
       # set CONDA_BUILD_SYSROOT env which conda-forge-ci-setup stored
       # in .ci_support/{config}.yaml in a previous stage.
       # Without doing this, conda-build omits this env from the test stage
-      export CONDA_BUILD_SYSROOT=$(cat .ci_support/${CONFIG}.yaml  | shyaml get-value CONDA_BUILD_SYSROOT.0)
+      export CONDA_BUILD_SYSROOT=$(cat .ci_support/${CONFIG}.yaml  | shyaml get-value CONDA_BUILD_SYSROOT.0 $CONDA_BUILD_SYSROOT)
       conda build ./recipe -m ./.ci_support/${CONFIG}.yaml --clobber-file ./.ci_support/clobber_${CONFIG}.yaml
     displayName: Build recipe
 
