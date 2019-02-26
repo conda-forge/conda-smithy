@@ -410,7 +410,7 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
 
     # 2: suggest python noarch (skip on feedstocks)
     if build_section.get("noarch") is None and build_reqs and not any(["_compiler_stub" in b for b in build_reqs]) \
-            and ("pip" in build_reqs) and is_staged_recipes:
+            and ("pip" in build_reqs) and (is_staged_recipes or not conda_forge):
         with io.open(meta_fname, "rt") as fh:
             in_runreqs = False
             no_arch_possible = True
