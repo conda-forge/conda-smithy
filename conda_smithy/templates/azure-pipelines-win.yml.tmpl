@@ -31,8 +31,8 @@ jobs:
         CONDA: D:\\Miniconda3\\
       {% endif %}
   steps:
-
     {%- if 'vs2008' in config %}
+
     - script: |
         choco install vcpython27 -fdv -y --debug
       condition: contains(variables['CONFIG'], 'vs2008')
@@ -58,9 +58,9 @@ jobs:
         Get-ChildItem -Path $batchDir
         Get-ChildItem -Path ($batchDir + '\..')
       displayName: Patch VC9
-    {% endif %}
-
+    {%- endif %}
     {%- if 'vs2015' in config %}
+
     # Set up conda since the vs2015 does not have a miniconda installation
     - script: |
         @"%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -InputFormat None -ExecutionPolicy Bypass -Command "iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))" && SET "PATH=%PATH%;%ALLUSERSPROFILE%\chocolatey\bin"
@@ -81,9 +81,9 @@ jobs:
           Write-Host $line
         }
       displayName: Display miniconda3 installation log 
-    {% endif %}
-
+    {%- endif %}
     {% if 'vs2017' in config %}
+
     # Azure 2017 lacks the cmake piece needed for us to compiler successfully
     - powershell: |
         try 
@@ -137,6 +137,7 @@ jobs:
         CALL activate base
         conda install conda-build conda conda-forge::conda-forge-ci-setup -c conda-forge
       displayName: Install conda-build and activate environment
+      failOnStderr: false
 
     - script: |
         CALL activate base
@@ -146,7 +147,7 @@ jobs:
         CALL activate base
         run_conda_forge_build_setup
       displayName: run_conda_forge_build_setup
-     
+
     - script: |
         CALL activate base
         conda update --all
@@ -161,6 +162,7 @@ jobs:
         CALL activate base
         conda.exe build recipe -m .ci_support\%CONFIG%.yaml
       displayName: Build recipe
+      failOnStderr: false
       env:
         {% if 'vs2008' in config %}
         # Since we have a non-standard fake VC9 install set this override
@@ -174,5 +176,5 @@ jobs:
         BINSTAR_TOKEN: $(BINSTAR_TOKEN)
       condition: not(eq(variables['UPLOAD_PACKAGES'], 'False'))
 
-{%- endif %}
+{% endif %}
 {%- endfor %}
