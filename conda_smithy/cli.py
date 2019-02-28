@@ -248,6 +248,46 @@ class RegisterCI(Subcommand):
         )
 
 
+class AddAzureBuildId(Subcommand):
+    subcommand = "azure-buildid"
+
+    def __init__(self, parser):
+        # conda-smithy register-ci ./
+        super(AddAzureBuildId, self).__init__(
+            parser,
+            "Update the azure build id stored in the config file.",
+        )
+        scp = self.subcommand_parser
+        scp.add_argument(
+            "--feedstock_directory",
+            default=os.getcwd(),
+            help="The directory of the feedstock git repository.",
+        )
+        group = scp.add_mutually_exclusive_group()
+        group.add_argument(
+            "--user", help="github username under which to register this repo"
+        )
+        group.add_argument(
+            "--organization",
+            default="conda-forge",
+            help="github organisation under which to register this repo",
+        )
+
+    def __call__(self, args):
+        from conda_smithy.azure_ci_utils import get_build_id
+
+        owner = args.user or args.organization
+        repo = os.path.basename(os.path.abspath(args.feedstock_directory))
+
+        build_id = get_build_id(owner, repo)
+        import ruamel.yaml
+
+        from .utils import update_conda_forge_config
+        with update_conda_forge_config(args.feedstock_directory) as config:
+            config.setdefault("azure", {})
+            config["azure"]["build_id"] = build_id
+
+
 class Regenerate(Subcommand):
     subcommand = "regenerate"
     aliases = ["rerender"]

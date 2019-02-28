@@ -4,6 +4,18 @@ import typing
 from vsts.vss_connection import VssConnection
 from msrest.authentication import BasicAuthentication
 
+from vsts.build.v4_1.build_client import BuildClient
+from vsts.build.v4_1.models import BuildDefinitionReference
+from vsts.build.v4_1.build_client import BuildClient
+from vsts.task_agent.v4_0.task_agent_client import TaskAgentClient
+from vsts.task_agent.v4_0.models import TaskAgentQueue
+from vsts.service_endpoint.v4_1.service_endpoint_client import (
+    ServiceEndpointClient
+)
+from vsts.service_endpoint.v4_1.models import ServiceEndpoint
+from vsts.build.v4_1.build_client import BuildClient
+from vsts.build.v4_1.models import SourceRepositories, SourceRepository
+
 
 AZURE_TEAM_INSTANCE = os.getenv(
     "AZURE_INSTANCE", "https://dev.azure.com/conda-forge"
@@ -32,10 +44,7 @@ connection = VssConnection(base_url=AZURE_TEAM_INSTANCE, creds=credentials)
 
 
 def get_service_endpoint(project_id=AZURE_PROJECT_ID):
-    from vsts.service_endpoint.v4_1.service_endpoint_client import (
-        ServiceEndpointClient
-    )
-    from vsts.service_endpoint.v4_1.models import ServiceEndpoint
+
 
     service_endpoint_client = ServiceEndpointClient(
         base_url=AZURE_TEAM_INSTANCE, creds=credentials
@@ -53,9 +62,6 @@ def get_service_endpoint(project_id=AZURE_PROJECT_ID):
 
 
 def get_queues(project_id=AZURE_PROJECT_ID):
-    from vsts.task_agent.v4_0.task_agent_client import TaskAgentClient
-    from vsts.task_agent.v4_0.models import TaskAgentQueue
-
     aclient = TaskAgentClient(AZURE_TEAM_INSTANCE, credentials)
     queues: typing.List[TaskAgentQueue] = aclient.get_agent_queues(project_id)
     return queues
@@ -71,8 +77,7 @@ def get_default_queue(project_id):
 
 
 def get_repo_reference(project_id, github_org, repo_name):
-    from vsts.build.v4_1.build_client import BuildClient
-    from vsts.build.v4_1.models import SourceRepositories, SourceRepository
+
 
     service_endpoint = get_service_endpoint(project_id)
     bclient: BuildClient = connection.get_client(
@@ -95,13 +100,10 @@ def register_repo(github_org, repo_name, project_id=AZURE_PROJECT_ID):
         BuildDefinitionReference,
         BuildRepository,
     )
-    from vsts.build.v4_1.build_client import BuildClient
     from vsts.task_agent.v4_0.task_agent_client import TaskAgentClient
     import inspect
 
-    bclient: BuildClient = connection.get_client(
-        "vsts.build.v4_1.build_client.BuildClient"
-    )
+    bclient = build_client()
     aclient = TaskAgentClient(AZURE_TEAM_INSTANCE, credentials)
 
     source_repo = get_repo_reference(project_id, github_org, repo_name)
@@ -189,16 +191,32 @@ def register_repo(github_org, repo_name, project_id=AZURE_PROJECT_ID):
         )
 
 
-def repo_registered(github_org, repo_name, project_id=AZURE_PROJECT_ID):
-    from vsts.build.v4_1.models import BuildDefinitionReference
-    from vsts.build.v4_1.build_client import BuildClient
-
-    bclient: BuildClient = connection.get_client(
+def build_client() -> BuildClient:
+    return connection.get_client(
         "vsts.build.v4_1.build_client.BuildClient"
     )
 
+
+def repo_registered(github_org, repo_name, project_id=AZURE_PROJECT_ID):
     existing_definitions: typing.List[
         BuildDefinitionReference
-    ] = bclient.get_definitions(project=project_id, name=repo_name)
+    ] = build_client().get_definitions(project=project_id, name=repo_name)
 
     return bool(existing_definitions)
+
+
+def enable_reporting(user, repo, project_id=AZURE_PROJECT_ID):
+    bclient = build_client()
+    bdef_header = bclient.get_definitions(project=project_id, name=repo)[0]
+    bdef = bclient.get_definition(bdef_header.id, bdef_header.project.name)
+    bdef.repository.properties['reportBuildStatus'] = 'true'
+    bclient.update_definition(bdef, bdef.id, bdef.project.name)
+
+
+def get_build_id(user, repo, project_id=AZURE_PROJECT_ID):
+    bclient = build_client()
+    bdef_header = bclient.get_definitions(
+        project=AZURE_PROJECT_ID, name=repo)[0]
+    bdef: BuildDefinitionReference = bclient.get_definition(
+        bdef_header.id, bdef_header.project.name)
+    return bdef.id
