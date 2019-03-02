@@ -207,7 +207,7 @@ def get_build_id(user, repo, project_name=AZURE_PROJECT_NAME):
     of badges.
     This is needed by non-conda-forge use cases"""
     bclient = build_client()
-    bdef_header = bclient.get_definitions(project=AZURE_PROJECT_NAME, name=repo)[0]
+    bdef_header = bclient.get_definitions(project=project_name, name=repo)[0]
     bdef: BuildDefinition = bclient.get_definition(
         bdef_header.id, bdef_header.project.name
     )
