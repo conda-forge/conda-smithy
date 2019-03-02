@@ -17,6 +17,7 @@ from conda_build.utils import ensure_list
 from . import configure_feedstock
 from . import feedstock_io
 from . import lint_recipe
+from . import azure_ci_utils
 from . import __version__
 
 
@@ -273,21 +274,29 @@ class AddAzureBuildId(Subcommand):
         )
         group = scp.add_mutually_exclusive_group()
         group.add_argument(
-            "--user", help="github username under which to register this repo"
+            "--user", help="azure username for which this repo is enabled already"
         )
         group.add_argument(
             "--organization",
-            default="conda-forge",
-            help="github organisation under which to register this repo",
+            default=azure_ci_utils.AzureConfig._default_org,
+            help="azure organisation for which this repo is enabled already",
+        )
+        scp.add_argument(
+            '--project_name',
+            default=azure_ci_utils.AzureConfig._default_project_name,
+            help="project name that feedstocks are registered under"
         )
 
     def __call__(self, args):
-        from conda_smithy.azure_ci_utils import get_build_id
-
         owner = args.user or args.organization
         repo = os.path.basename(os.path.abspath(args.feedstock_directory))
 
-        build_info = get_build_id(owner, repo)
+        config = azure_ci_utils.AzureConfig(
+            org_or_user=owner,
+            project_name=args.project_name
+        )
+
+        build_info = azure_ci_utils.get_build_id(repo, config)
         import ruamel.yaml
 
         from .utils import update_conda_forge_config
