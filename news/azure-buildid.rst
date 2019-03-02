@@ -1,6 +1,7 @@
 **Added:**
 
-* Added a utility to retrieve the azure buildid.  This is needed to make badges
+* Added a utility to retrieve the azure buildid.  This is needed to make badges for non-conda forge users.
+* Added badges for azure ci builds.
 
 **Changed:**
 
