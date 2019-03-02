@@ -7,6 +7,8 @@ import time
 import argparse
 import io
 
+from textwrap import dedent
+
 import conda
 from distutils.version import LooseVersion
 from conda_build.metadata import MetaData
@@ -252,10 +254,16 @@ class AddAzureBuildId(Subcommand):
     subcommand = "azure-buildid"
 
     def __init__(self, parser):
-        # conda-smithy register-ci ./
+        # conda-smithy azure-buildid ./
         super(AddAzureBuildId, self).__init__(
             parser,
-            "Update the azure build id stored in the config file.",
+            dedent("""\
+                Update the azure configuration stored in the config file.
+                This command is affected by the following environment variables:
+                    AZURE_ORG_OR_USER
+                    AZURE_PROJECT_NAME
+                """
+            )
         )
         scp = self.subcommand_parser
         scp.add_argument(
@@ -279,13 +287,16 @@ class AddAzureBuildId(Subcommand):
         owner = args.user or args.organization
         repo = os.path.basename(os.path.abspath(args.feedstock_directory))
 
-        build_id = get_build_id(owner, repo)
+        build_info = get_build_id(owner, repo)
         import ruamel.yaml
 
         from .utils import update_conda_forge_config
         with update_conda_forge_config(args.feedstock_directory) as config:
             config.setdefault("azure", {})
-            config["azure"]["build_id"] = build_id
+            config["azure"]["build_id"] = build_info['build_id']
+            config["azure"]["user_or_org"] = build_info['user_or_org']
+            config["azure"]["project_name"] = build_info['project_name']
+            config["azure"]["project_id"] = build_info['project_id']
 
 
 class Regenerate(Subcommand):

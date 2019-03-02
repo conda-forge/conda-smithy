@@ -1,29 +1,28 @@
 import os
 import typing
 
-from vsts.vss_connection import VssConnection
 from msrest.authentication import BasicAuthentication
-
 from vsts.build.v4_1.build_client import BuildClient
-from vsts.build.v4_1.models import BuildDefinitionReference
-from vsts.build.v4_1.build_client import BuildClient
-from vsts.task_agent.v4_0.task_agent_client import TaskAgentClient
-from vsts.task_agent.v4_0.models import TaskAgentQueue
-from vsts.service_endpoint.v4_1.service_endpoint_client import (
-    ServiceEndpointClient
+from vsts.build.v4_1.models import (
+    BuildDefinition,
+    BuildDefinitionReference,
+    SourceRepositories,
+    SourceRepository,
 )
 from vsts.service_endpoint.v4_1.models import ServiceEndpoint
-from vsts.build.v4_1.build_client import BuildClient
-from vsts.build.v4_1.models import SourceRepositories, SourceRepository
+from vsts.service_endpoint.v4_1.service_endpoint_client import ServiceEndpointClient
+from vsts.task_agent.v4_0.models import TaskAgentQueue
+from vsts.task_agent.v4_0.task_agent_client import TaskAgentClient
+from vsts.vss_connection import VssConnection
 
-
+AZURE_ORG_OR_USER = os.getenv("AZURE_ORG_OR_USER", "conda-forge")
+# This will only need to be changed if you need to point to a non-standard azure
+# instance.
 AZURE_TEAM_INSTANCE = os.getenv(
-    "AZURE_INSTANCE", "https://dev.azure.com/conda-forge"
+    "AZURE_INSTANCE", f"https://dev.azure.com/{AZURE_ORG_OR_USER}"
 )
-AZURE_PROJECT_ID = os.getenv("AZURE_PROJECT_ID", "feedstock-builds")
-AZURE_SERVICE_ENDPOINT_NAME = os.getenv(
-    "AZURE_SERVICE_ENDPOINT", "conda-forge"
-)
+AZURE_PROJECT_NAME = os.getenv("AZURE_PROJECT_NAME", "feedstock-builds")
+
 # By default for now don't report on the build information back to github
 AZURE_REPORT_BUILD_STATUS = os.getenv("AZURE_REPORT_BUILD_STATUS", "false")
 
@@ -43,32 +42,30 @@ credentials = BasicAuthentication("", AZURE_TOKEN)
 connection = VssConnection(base_url=AZURE_TEAM_INSTANCE, creds=credentials)
 
 
-def get_service_endpoint(project_id=AZURE_PROJECT_ID):
-
-
+def get_service_endpoint(project_name=AZURE_PROJECT_NAME):
     service_endpoint_client = ServiceEndpointClient(
         base_url=AZURE_TEAM_INSTANCE, creds=credentials
     )
     endpoints: typing.List[
         ServiceEndpoint
     ] = service_endpoint_client.get_service_endpoints(
-        project=project_id, type="GitHub"
+        project=project_name, type="GitHub"
     )
     for service_endpoint in endpoints:
-        if service_endpoint.name == AZURE_SERVICE_ENDPOINT_NAME:
+        if service_endpoint.name == AZURE_ORG_OR_USER:
             return service_endpoint
     else:
         raise KeyError("Service endpoint not found")
 
 
-def get_queues(project_id=AZURE_PROJECT_ID):
+def get_queues(project_name=AZURE_PROJECT_NAME):
     aclient = TaskAgentClient(AZURE_TEAM_INSTANCE, credentials)
-    queues: typing.List[TaskAgentQueue] = aclient.get_agent_queues(project_id)
+    queues: typing.List[TaskAgentQueue] = aclient.get_agent_queues(project_name)
     return queues
 
 
-def get_default_queue(project_id):
-    queues = get_queues(project_id)
+def get_default_queue(project_name):
+    queues = get_queues(project_name)
     for q in queues:
         if q.name == "Default":
             return q
@@ -76,15 +73,13 @@ def get_default_queue(project_id):
         raise ValueError("Default queue not found")
 
 
-def get_repo_reference(project_id, github_org, repo_name):
-
-
-    service_endpoint = get_service_endpoint(project_id)
+def get_repo_reference(project_name, github_org, repo_name):
+    service_endpoint = get_service_endpoint(project_name)
     bclient: BuildClient = connection.get_client(
         "vsts.build.v4_1.build_client.BuildClient"
     )
     repos: SourceRepositories = bclient.list_repositories(
-        project=project_id,
+        project=project_name,
         provider_name="github",
         repository=f"{github_org}/{repo_name}",
         service_endpoint_id=service_endpoint.id,
@@ -94,7 +89,7 @@ def get_repo_reference(project_id, github_org, repo_name):
     return repo
 
 
-def register_repo(github_org, repo_name, project_id=AZURE_PROJECT_ID):
+def register_repo(github_org, repo_name, project_name=AZURE_PROJECT_NAME):
     from vsts.build.v4_1.models import (
         BuildDefinition,
         BuildDefinitionReference,
@@ -106,7 +101,7 @@ def register_repo(github_org, repo_name, project_id=AZURE_PROJECT_ID):
     bclient = build_client()
     aclient = TaskAgentClient(AZURE_TEAM_INSTANCE, credentials)
 
-    source_repo = get_repo_reference(project_id, github_org, repo_name)
+    source_repo = get_repo_reference(project_name, github_org, repo_name)
 
     new_repo = BuildRepository(
         type="GitHub",
@@ -128,9 +123,9 @@ def register_repo(github_org, repo_name, project_id=AZURE_PROJECT_ID):
     new_repo.properties["reportBuildStatus"] = AZURE_REPORT_BUILD_STATUS
     new_repo.clean = False
 
-    queues = get_queues(project_id)
-    default_queue = get_default_queue(project_id)
-    service_endpoint = get_service_endpoint(project_id)
+    queues = get_queues(project_name)
+    default_queue = get_default_queue(project_name)
+    service_endpoint = get_service_endpoint(project_name)
 
     build_definition = BuildDefinition(
         process={
@@ -168,7 +163,7 @@ def register_repo(github_org, repo_name, project_id=AZURE_PROJECT_ID):
             },
         ],
         variable_groups=aclient.get_variable_groups(
-            project=project_id, group_name="anaconda-org"
+            project=project_name, group_name="anaconda-org"
         ),
         type="build",
     )
@@ -176,47 +171,51 @@ def register_repo(github_org, repo_name, project_id=AZURE_PROJECT_ID):
     # clean up existing builds for the same feedstock if present
     existing_definitions: typing.List[
         BuildDefinitionReference
-    ] = bclient.get_definitions(project=project_id, name=repo_name)
+    ] = bclient.get_definitions(project=project_name, name=repo_name)
     if existing_definitions:
         assert len(existing_definitions) == 1
         ed = existing_definitions[0]
         bclient.update_definition(
-            definition=build_definition,
-            definition_id=ed.id,
-            project=ed.project.name,
+            definition=build_definition, definition_id=ed.id, project=ed.project.name
         )
     else:
-        bclient.create_definition(
-            definition=build_definition, project=project_id
-        )
+        bclient.create_definition(definition=build_definition, project=project_name)
 
 
 def build_client() -> BuildClient:
-    return connection.get_client(
-        "vsts.build.v4_1.build_client.BuildClient"
-    )
+    return connection.get_client("vsts.build.v4_1.build_client.BuildClient")
 
 
-def repo_registered(github_org, repo_name, project_id=AZURE_PROJECT_ID):
+def repo_registered(github_org, repo_name, project_name=AZURE_PROJECT_NAME):
     existing_definitions: typing.List[
         BuildDefinitionReference
-    ] = build_client().get_definitions(project=project_id, name=repo_name)
+    ] = build_client().get_definitions(project=project_name, name=repo_name)
 
     return bool(existing_definitions)
 
 
-def enable_reporting(user, repo, project_id=AZURE_PROJECT_ID):
+def enable_reporting(user, repo, project_name=AZURE_PROJECT_NAME):
     bclient = build_client()
-    bdef_header = bclient.get_definitions(project=project_id, name=repo)[0]
+    bdef_header = bclient.get_definitions(project=project_name, name=repo)[0]
     bdef = bclient.get_definition(bdef_header.id, bdef_header.project.name)
-    bdef.repository.properties['reportBuildStatus'] = 'true'
+    bdef.repository.properties["reportBuildStatus"] = "true"
     bclient.update_definition(bdef, bdef.id, bdef.project.name)
 
 
-def get_build_id(user, repo, project_id=AZURE_PROJECT_ID):
+def get_build_id(user, repo, project_name=AZURE_PROJECT_NAME):
+    """Get the neccesary build information to persist in the config file to allow rendering
+    of badges.
+    This is needed by non-conda-forge use cases"""
     bclient = build_client()
-    bdef_header = bclient.get_definitions(
-        project=AZURE_PROJECT_ID, name=repo)[0]
-    bdef: BuildDefinitionReference = bclient.get_definition(
-        bdef_header.id, bdef_header.project.name)
-    return bdef.id
+    bdef_header = bclient.get_definitions(project=AZURE_PROJECT_NAME, name=repo)[0]
+    bdef: BuildDefinition = bclient.get_definition(
+        bdef_header.id, bdef_header.project.name
+    )
+
+    return dict(
+        user_or_org=AZURE_ORG_OR_USER,
+        project_name=project_name,
+        build_id=bdef.id,
+        project_id=bdef.project.id,
+    )
+
