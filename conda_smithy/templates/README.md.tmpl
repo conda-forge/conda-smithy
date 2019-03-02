@@ -20,49 +20,121 @@ Current build status
 ====================
 {%- set appveyor_url_name = github.repo_name.replace('_', '-').replace('.', '-') %}
 {%- set shield = "https://img.shields.io/" %}
-{# #}
+{#  Due to github's markdown rendering within tables being a bit shaky, we have to fall back to an HTML table here since we wish
+  to use a <details> tag.  Markdown rendering within html tables is weird and only works if you make EVERYTHING a paragraph which
+  looks terrible.  This is the lesser of the evils.
+#}
 
-{%- if noarch_python %}
-{%- if circle.enabled %}
-All platforms:
-[![noarch]({{ shield }}circleci/project/github/{{ github.user_or_org }}/{{ github.repo_name }}/{{ github.branch_name }}.svg?label=noarch)](https://circleci.com/gh/{{ github.user_or_org }}/{{ github.repo_name }})
-{%- else %}
-All platforms: ![noarch disabled]({{ shield }}badge/noarch-disabled-lightgrey.svg)
+<table>
+{%- if noarch_python -%}
+  {%- if circle.enabled -%}
+  <tr>
+    <td>All platforms:</td>
+    <td>
+      <a href="https://circleci.com/gh/{{ github.user_or_org }}/{{ github.repo_name }}">
+        <img src="{{ shield }}circleci/project/github/{{ github.user_or_org }}/{{ github.repo_name }}/{{ github.branch_name }}.svg?label=noarch">
+      </a>
+    </td>
+  </tr>
+  {%- else -%}
+  <tr>
+    <td>All platforms:</td>
+    <td>
+      <img src="{{ shield }}badge/noarch-disabled-lightgrey.svg" alt="noarch disabled">
+    </td>
+  </tr>
+  {%- endif -%}
+{%- else -%}
+  {%- if circle.enabled -%}
+  <tr>
+    <td>CircleCI</td>
+    <td>
+      <a href="https://circleci.com/gh/{{ github.user_or_org }}/{{ github.repo_name }}">
+        <img alt="{{ circle.platforms }}" src="{{ shield }}circleci/project/github/{{ github.user_or_org }}/{{ github.repo_name }}/{{ github.branch_name }}.svg?label={{ circle.platforms }}">
+      </a>
+    </td>
+  </tr>
+  {%- endif -%}
+  {%- if travis.enabled -%}
+  <tr>
+    <td>Travis</td>
+    <td>
+      <a href="https://travis-ci.org/{{ github.user_or_org }}/{{ github.repo_name }}">
+        <img alt="macOS" src="{{ shield }}travis/{{ github.user_or_org }}/{{ github.repo_name }}/{{ github.branch_name }}.svg?label=macOS">
+      </a>
+    </td>
+  </tr>
+  {%- endif -%}
+  {%- if appveyor.enabled -%}
+  <tr>
+    <td>Appveyor</td>
+    <td>
+      <a href="https://ci.appveyor.com/project/{{ github.user_or_org }}/{{ appveyor_url_name }}/branch/{{ github.branch_name }}">
+        <img alt="windows" src="{{ shield }}appveyor/ci/{{ github.user_or_org }}/{{ appveyor_url_name }}/{{ github.branch_name }}.svg?label=Windows">
+      </a>
+    </td>
+  </tr>
+  {%- endif -%}
+  {%- if azure.enabled -%}
+    {#- Sample url #-}
+    {#- [![Azure Status](https://dev.azure.com/conda-forge/feedstock-builds/_apis/build/status/cryptography-feedstock?branchName=master)](https://dev.azure.com/conda-forge/feedstock-builds/_build/latest?definitionId=195&branchName=master) -#}
+    {% set azure_url %}https://dev.azure.com/{{ azure.user_or_org }}/{{ azure.project_name }}/_build/latest?definitionId={{ azure.build_id }}&branchName={{ github.branch_name }}{% endset %}
+    {% set azure_image_url %}https://dev.azure.com/{{ azure.user_or_org }}/{{ azure.project_name }}/_apis/build/status/{{ github.repo_name }}?branchName={{ github.branch_name }}{% endset %}
+  <tr>
+    <td>Azure</td>
+    <td>
+      <details>
+        <summary>
+          <a href="{{ azure_url }}">
+            <img src="{{ azure_image_url }}">
+          </a>
+        </summary>
+        <table>
+          <thead><tr><th>Variant</th><th>Status</th></tr></thead>
+          <tbody>
+          {%- for variant in variants -%}
+            {%- set variant_os = variant.split('_')[0] -%}
+            <tr>
+              <td>{{ variant.strip('_') }}</td>
+              <td>
+                <a href="{{ azure_url }}"">
+                  <img src="{{ azure_image_url }}&jobName={{ variant_os }}&configuration={{ variant }}" alt="variant">
+                </a>
+              </td>
+            </tr>
+          {%- endfor %}
+          </tbody>
+        </table>
+      </details>
+    </td>
+  </tr>
+  {%- endif %}
+  {%- if not linux.enabled %}
+  <tr>
+    <td>Linux</td>
+    <td>
+      <img src="{{ shield }}badge/linux-disabled-lightgrey.svg" alt="linux disabled">
+    </td>
+  </tr>
+  {%- endif %}
+  {%- if not osx.enabled %}
+  <tr>
+    <td>OSX</td>
+    <td>
+      <img src="{{ shield }}badge/OSX-disabled-lightgrey.svg" alt="OSX disabled">
+    </td>
+  </tr>
+  {%- endif %}
+  {%- if not win.enabled %}
+  <tr>
+    <td>Windows</td>
+    <td>
+      <img src="{{ shield }}badge/Windows-disabled-lightgrey.svg" alt="Windows disabled">
+    </td>
+  </tr>
+  {%- endif %}
 {%- endif %}
-{%- else %}
-{%- if circle.enabled %}
-[![{{ circle.platforms }}]({{ shield }}circleci/project/github/{{ github.user_or_org }}/{{ github.repo_name }}/{{ github.branch_name }}.svg?label={{ circle.platforms }})](https://circleci.com/gh/{{ github.user_or_org }}/{{ github.repo_name }})
-{%- endif %}
-{%- if travis.enabled %}
-[![OSX]({{ shield }}travis/{{ github.user_or_org }}/{{ github.repo_name }}/{{ github.branch_name }}.svg?label=macOS)](https://travis-ci.org/{{ github.user_or_org }}/{{ github.repo_name }})
-{%- endif %}
-{%- if appveyor.enabled %}
-[![Windows]({{ shield }}appveyor/ci/{{ github.user_or_org }}/{{ appveyor_url_name }}/{{ github.branch_name }}.svg?label=Windows)](https://ci.appveyor.com/project/{{ github.user_or_org }}/{{ appveyor_url_name }}/branch/{{ github.branch_name }})
-{%- endif %}
-{%- if azure.enabled %}
-{#- Sample url}
-{#- [![Azure Status](https://dev.azure.com/conda-forge/feedstock-builds/_apis/build/status/cryptography-feedstock?branchName=master)](https://dev.azure.com/conda-forge/feedstock-builds/_build/latest?definitionId=195&branchName=master) #}
-[![Build Status](https://dev.azure.com/{{ azure.user_or_org }}/{{ azure.project_name }}/_apis/build/status/{{ github.repo_name }}?branchName={{ github.branch_name }})](https://dev.azure.com/{{ azure.user_or_org }}/{{ azure.project_name }}/_build/latest?definitionId={{ azure.build_id }}&branchName={{ github.branch_name }})
-{%- endif %}
-{%- if not linux.enabled %}
-![Linux disabled]({{ shield }}badge/linux-disabled-lightgrey.svg)
-{%- endif %}
-{%- if not osx.enabled %}
-![OSX disabled]({{ shield }}badge/OSX-disabled-lightgrey.svg)
-{%- endif %}
-{%- if not win.enabled %}
-![Windows disabled]({{ shield }}badge/Windows-disabled-lightgrey.svg)
-{%- endif %}
-{%- endif %}
-
-{%- if azure.enabled %}
-| Variant | Status |
-| ------- | ------ |
-{%- for variant in variants %}
-{%- set variant_os = variant.split('_')[0] %}
-| `{{ variant.strip('_') }}` | [![Build Status](https://dev.azure.com/{{ azure.user_or_org }}/{{ azure.project_name }}/_apis/build/status/{{ github.repo_name }}?branchName={{ github.branch_name }}&jobName={{ variant_os }}&configuration={{ variant }})](https://dev.azure.com/{{ azure.user_or_org }}/{{ azure.project_name }}/_build/latest?definitionId={{ azure.build_id }}&branchName={{ github.branch_name }}) |
-{%- endfor %}
-{%- endif %}
+</table>
 
 Current release info
 ====================
