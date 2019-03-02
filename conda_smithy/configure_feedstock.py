@@ -973,7 +973,7 @@ def render_appveyor(jinja_env, forge_config, forge_dir):
     fast_finish_text = textwrap.dedent(
         """\
             {get_fast_finish_script}
-            "%CONDA_INSTALL_LOCN%\python.exe" {fast_finish_script}.py -v --ci "appveyor" "%APPVEYOR_ACCOUNT_NAME%/%APPVEYOR_PROJECT_SLUG%" "%APPVEYOR_BUILD_NUMBER%" "%APPVEYOR_PULL_REQUEST_NUMBER%"
+            "%CONDA_INSTALL_LOCN%\\python.exe" {fast_finish_script}.py -v --ci "appveyor" "%APPVEYOR_ACCOUNT_NAME%/%APPVEYOR_PROJECT_SLUG%" "%APPVEYOR_BUILD_NUMBER%" "%APPVEYOR_PULL_REQUEST_NUMBER%"
         """
     )
     template_filename = "appveyor.yml.tmpl"
@@ -1073,11 +1073,19 @@ def render_README(jinja_env, forge_config, forge_dir):
     else:
         package_name = metas[0][0].name()
 
+    ci_support_path = os.path.join(forge_dir, ".ci_support")
+    variants = []
+    for filename in os.listdir(ci_support_path):
+        if filename.endswith('.yaml'):
+            variant_name, _ = os.path.splitext(filename)
+            variants.append(variant_name)
+
     template = jinja_env.get_template("README.md.tmpl")
     target_fname = os.path.join(forge_dir, "README.md")
     forge_config["noarch_python"] = all(meta[0].noarch for meta in metas)
     forge_config["package"] = metas[0][0]
     forge_config["package_name"] = package_name
+    forge_config["variants"] = sorted(variants)
     forge_config["outputs"] = sorted(
         list(OrderedDict((meta[0].name(), None) for meta in metas))
     )
@@ -1089,6 +1097,9 @@ def render_README(jinja_env, forge_config, forge_dir):
             )
         )
     )
+    print("README")
+    print(yaml.dump(forge_config))
+
     with write_file(target_fname) as fh:
         fh.write(template.render(**forge_config))
 
@@ -1115,6 +1126,8 @@ def _load_forge_config(forge_dir, exclusive_config_file):
             "upload_packages": False,
             # Force building all supported providers.
             "force": True,
+            "project_name": "feedstock-builds",
+            "project_id": "84710dde-1620-425b-80d0-4cf5baca359d",
         },
         "provider": {
             "linux": "circle",
@@ -1195,6 +1208,9 @@ def _load_forge_config(forge_dir, exclusive_config_file):
                 config_item.update(value)
             else:
                 config[key] = value
+
+    # Set some more azure defaults
+    config["azure"].setdefault("user_or_org", config["github"]["user_or_org"])
 
     log = yaml.safe_dump(config)
     print("## CONFIGURATION USED\n")

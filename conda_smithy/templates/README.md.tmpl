@@ -1,7 +1,7 @@
 {%- set channel_name = channels.targets[0][0] -%}
-<!--
+{#-
 # -*- mode: jinja -*-
--->
+-#}
 
 About {{ package_name }}
 ======{{ '=' * package_name|length }}
@@ -39,6 +39,11 @@ All platforms: ![noarch disabled]({{ shield }}badge/noarch-disabled-lightgrey.sv
 {%- if appveyor.enabled %}
 [![Windows]({{ shield }}appveyor/ci/{{ github.user_or_org }}/{{ appveyor_url_name }}/{{ github.branch_name }}.svg?label=Windows)](https://ci.appveyor.com/project/{{ github.user_or_org }}/{{ appveyor_url_name }}/branch/{{ github.branch_name }})
 {%- endif %}
+{%- if azure.enabled %}
+{#- Sample url}
+{#- [![Azure Status](https://dev.azure.com/conda-forge/feedstock-builds/_apis/build/status/cryptography-feedstock?branchName=master)](https://dev.azure.com/conda-forge/feedstock-builds/_build/latest?definitionId=195&branchName=master) #}
+[![Build Status](https://dev.azure.com/{{ azure.user_or_org }}/{{ azure.project_name }}/_apis/build/status/{{ github.repo_name }}?branchName={{ github.branch_name }})](https://dev.azure.com/{{ azure.user_or_org }}/{{ azure.project_name }}/_build/latest?definitionId={{ azure.build_id }}&branchName={{ github.branch_name }})
+{%- endif %}
 {%- if not linux.enabled %}
 ![Linux disabled]({{ shield }}badge/linux-disabled-lightgrey.svg)
 {%- endif %}
@@ -48,6 +53,15 @@ All platforms: ![noarch disabled]({{ shield }}badge/noarch-disabled-lightgrey.sv
 {%- if not win.enabled %}
 ![Windows disabled]({{ shield }}badge/Windows-disabled-lightgrey.svg)
 {%- endif %}
+{%- endif %}
+
+{%- if azure.enabled %}
+| Variant | Status |
+| ------- | ------ |
+{%- for variant in variants %}
+{%- set variant_os = variant.split('_')[0] %}
+| `{{ variant.strip('_') }}` | [![Build Status](https://dev.azure.com/{{ azure.user_or_org }}/{{ azure.project_name }}/_apis/build/status/{{ github.repo_name }}?branchName={{ github.branch_name }}&jobName={{ variant_os }}&configuration={{ variant }})](https://dev.azure.com/{{ azure.user_or_org }}/{{ azure.project_name }}/_build/latest?definitionId={{ azure.build_id }}&branchName={{ github.branch_name }}) |
+{%- endfor %}
 {%- endif %}
 
 Current release info
