@@ -1075,10 +1075,11 @@ def render_README(jinja_env, forge_config, forge_dir):
 
     ci_support_path = os.path.join(forge_dir, ".ci_support")
     variants = []
-    for filename in os.listdir(ci_support_path):
-        if filename.endswith('.yaml'):
-            variant_name, _ = os.path.splitext(filename)
-            variants.append(variant_name)
+    if os.path.exist(ci_support_path):
+        for filename in os.listdir(ci_support_path):
+            if filename.endswith('.yaml'):
+                variant_name, _ = os.path.splitext(filename)
+                variants.append(variant_name)
 
     template = jinja_env.get_template("README.md.tmpl")
     target_fname = os.path.join(forge_dir, "README.md")
