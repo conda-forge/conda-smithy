@@ -258,13 +258,7 @@ class AddAzureBuildId(Subcommand):
         # conda-smithy azure-buildid ./
         super(AddAzureBuildId, self).__init__(
             parser,
-            dedent("""\
-                Update the azure configuration stored in the config file.
-                This command is affected by the following environment variables:
-                    AZURE_ORG_OR_USER
-                    AZURE_PROJECT_NAME
-                """
-            )
+            dedent("Update the azure configuration stored in the config file.")
         )
         scp = self.subcommand_parser
         scp.add_argument(
