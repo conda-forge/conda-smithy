@@ -1,6 +1,8 @@
 # This file was generated automatically from conda-smithy. To update this configuration,
 # update the conda-forge.yml and/or the recipe/meta.yaml.
-# -*- mode: yaml -*-
+{*
+# -*- mode: jinja -*-
+*}
 {%- set platformset = [] %}
 {%- for _, platform, _ in configs %}
   {%- set pfarchless = platform.split('-')[0] %}
@@ -37,22 +39,6 @@ matrix:
 {%- endif %}
 
 before_install:
-{%- if 'linux' in platformset %}
-    - |
-      echo ""
-      echo "Maybe install python for ${platform}"
-      if [[ ${platform} =~ .*linux.* ]]; then
-        sudo apt-get update
-        sudo apt-get install python3 python3-pip
-        sudo pip3 install --upgrade pip
-        sudo pip3 install setuptools shyaml
-
-        which python3
-        # force having a python symlink
-        sudo ln -fs /usr/bin/python3 /bin/python
-      fi
-{%- endif %}
-
     # Fast finish the PR.
     - |
       if [ "${platform}" == "osx-64" ]; then
@@ -116,14 +102,14 @@ script:
       # generate the build number clobber
       make_build_number ./ ./{{ recipe_dir }} ./.ci_support/${CONFIG}.yaml
       {% if idle_timeout_minutes %}travis_wait {{ idle_timeout_minutes }}{% endif %} conda build ./{{ recipe_dir }} -m ./.ci_support/${CONFIG}.yaml --clobber-file ./.ci_support/clobber_${CONFIG}.yaml
-      
+
       if [[ "${UPLOAD_PACKAGES}" != "False" ]]; then
         upload_package ./ ./{{ recipe_dir }} ./.ci_support/${CONFIG}.yaml
       fi
     fi
 {%- endif %}
 
-  # TODO make this check better 
+  # TODO make this check better
 {% if 'linux' in platformset %}
   - |
     echo "maybe linux build?"

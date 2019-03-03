@@ -396,9 +396,6 @@ def finalize_config(config, platform):
     return config
 
 
-_GENERATED_CONFIGS = set()
-
-
 def dump_subspace_config_files(metas, root_path, platform, arch, upload):
     """With conda-build 3, it handles the build matrix.  We take what it spits out, and write a
     config.yaml file for each matrix entry that it spits out.  References to a specific file
@@ -438,7 +435,6 @@ def dump_subspace_config_files(metas, root_path, platform, arch, upload):
         config = finalize_config(config, platform)
         with write_file(out_path) as f:
             yaml.dump(config, f, default_flow_style=False)
-            _GENERATED_CONFIGS.add(out_path)
 
         target_platform = config.get("target_platform", [platform_arch])[0]
         result.append((config_name, target_platform, upload))
@@ -541,23 +537,6 @@ def _render_ci_provider(
             if not meta.skip():
                 enable_platform[i] = True
         metas_list_of_lists.append(metas)
-
-    if os.path.isdir(os.path.join(forge_dir, ".ci_support")):
-        configs = glob.glob(
-            os.path.join(
-                forge_dir, ".ci_support", "{}_*".format(provider_name)
-            )
-        )
-        for config in configs:
-            remove_file(config)
-
-        for platform, arch in zip(platforms, archs):
-            configs = glob.glob(
-                os.path.join(forge_dir, ".ci_support", "{}_*".format(platform))
-            )
-            for config in configs:
-                if config not in _GENERATED_CONFIGS:
-                    remove_file(config)
 
     if not any(enable_platform):
         # There are no cases to build (not even a case without any special
@@ -1323,6 +1302,17 @@ def get_cfp_file_path(resolve=None, error_on_warn=True):
     return cf_pinning_file, cf_pinning_ver
 
 
+def clear_variants(forge_dir):
+    "Remove all variant files placed in the .ci_support path"
+    if os.path.isdir(os.path.join(forge_dir, ".ci_support")):
+        configs = glob.glob(
+            os.path.join(
+                forge_dir, ".ci_support", "*")
+        )
+        for config in configs:
+            remove_file(config)
+
+
 def main(
     forge_file_directory, no_check_uptodate=False, commit=False, exclusive_config_file=None
 ):
@@ -1367,6 +1357,7 @@ def main(
     )
 
     copy_feedstock_content(forge_dir)
+    clear_variants(forge_dir)
 
     render_circle(env, config, forge_dir)
     render_travis(env, config, forge_dir)
