@@ -1111,7 +1111,7 @@ def render_README(jinja_env, forge_config, forge_dir):
                 ))
             build_def = resp.json()["value"][0]
             forge_config['azure']['build_id'] = build_def['id']
-        except IndexError, IOError:
+        except (IndexError, IOError):
             pass
 
 
