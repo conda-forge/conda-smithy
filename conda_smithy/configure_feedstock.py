@@ -1075,7 +1075,7 @@ def render_README(jinja_env, forge_config, forge_dir):
 
     ci_support_path = os.path.join(forge_dir, ".ci_support")
     variants = []
-    if os.path.exist(ci_support_path):
+    if os.path.exists(ci_support_path):
         for filename in os.listdir(ci_support_path):
             if filename.endswith('.yaml'):
                 variant_name, _ = os.path.splitext(filename)
