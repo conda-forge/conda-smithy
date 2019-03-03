@@ -1115,6 +1115,8 @@ def _load_forge_config(forge_dir, exclusive_config_file):
             "upload_packages": False,
             # Force building all supported providers.
             "force": True,
+            # Default to a timeout of 6 hours.  This is the maximum for azure by default
+            "azure.timeout_minutes": 360
         },
         "provider": {
             "linux": "circle",
