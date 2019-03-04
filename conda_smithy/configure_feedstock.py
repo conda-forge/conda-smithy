@@ -1146,8 +1146,11 @@ def _load_forge_config(forge_dir, exclusive_config_file):
             "upload_packages": False,
             # Force building all supported providers.
             "force": True,
+            # name and id of azure project that the build pipeline is in
             "project_name": "feedstock-builds",
             "project_id": "84710dde-1620-425b-80d0-4cf5baca359d",
+            # Default to a timeout of 6 hours.  This is the maximum for azure by default
+            "timeout_minutes": 360
         },
         "provider": {
             "linux": "circle",
