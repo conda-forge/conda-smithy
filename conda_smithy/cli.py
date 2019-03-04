@@ -7,6 +7,8 @@ import time
 import argparse
 import io
 
+from textwrap import dedent
+
 import conda
 from distutils.version import LooseVersion
 from conda_build.metadata import MetaData
@@ -15,6 +17,7 @@ from conda_build.utils import ensure_list
 from . import configure_feedstock
 from . import feedstock_io
 from . import lint_recipe
+from . import azure_ci_utils
 from . import __version__
 
 
@@ -230,6 +233,11 @@ class RegisterCI(Subcommand):
         else:
             print("Circle registration disabled.")
         if args.azure:
+            if azure_ci_utils.default_config.token is None:
+                print(
+                    "No azure token.  Create a token at https://dev.azure.com/conda-forge/_usersSettings/tokens and\n"
+                    "put it in ~/.conda-smithy/azure.token"
+                )
             ci_register.add_project_to_azure(owner, repo)
         else:
             print("Azure registration disabled.")
@@ -246,6 +254,57 @@ class RegisterCI(Subcommand):
             "\nCI services have been enabled. You may wish to regenerate the feedstock.\n"
             "Any changes will need commiting to the repo."
         )
+
+
+class AddAzureBuildId(Subcommand):
+    subcommand = "azure-buildid"
+
+    def __init__(self, parser):
+        # conda-smithy azure-buildid ./
+        super(AddAzureBuildId, self).__init__(
+            parser,
+            dedent("Update the azure configuration stored in the config file.")
+        )
+        scp = self.subcommand_parser
+        scp.add_argument(
+            "--feedstock_directory",
+            default=os.getcwd(),
+            help="The directory of the feedstock git repository.",
+        )
+        group = scp.add_mutually_exclusive_group()
+        group.add_argument(
+            "--user", help="azure username for which this repo is enabled already"
+        )
+        group.add_argument(
+            "--organization",
+            default=azure_ci_utils.AzureConfig._default_org,
+            help="azure organisation for which this repo is enabled already",
+        )
+        scp.add_argument(
+            '--project_name',
+            default=azure_ci_utils.AzureConfig._default_project_name,
+            help="project name that feedstocks are registered under"
+        )
+
+    def __call__(self, args):
+        owner = args.user or args.organization
+        repo = os.path.basename(os.path.abspath(args.feedstock_directory))
+
+        config = azure_ci_utils.AzureConfig(
+            org_or_user=owner,
+            project_name=args.project_name
+        )
+
+        build_info = azure_ci_utils.get_build_id(repo, config)
+        import ruamel.yaml
+
+        from .utils import update_conda_forge_config
+        with update_conda_forge_config(args.feedstock_directory) as config:
+            config.setdefault("azure", {})
+            config["azure"]["build_id"] = build_info['build_id']
+            config["azure"]["user_or_org"] = build_info['user_or_org']
+            config["azure"]["project_name"] = build_info['project_name']
+            config["azure"]["project_id"] = build_info['project_id']
 
 
 class Regenerate(Subcommand):
