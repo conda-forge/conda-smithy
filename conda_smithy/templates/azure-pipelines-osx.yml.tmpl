@@ -6,7 +6,7 @@ jobs:
 - job: osx
   pool:
     vmImage: macOS-10.13
-  timeoutInMinutes: 240
+  timeoutInMinutes: {{ azure.timeout_minutes }}
   strategy:
     maxParallel: 8
     matrix:
