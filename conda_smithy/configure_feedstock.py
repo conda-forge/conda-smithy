@@ -870,7 +870,9 @@ def _travis_specific_setup(jinja_env, forge_config, forge_dir, platform):
             "run_docker_build.sh.tmpl",
             "build_steps.sh.tmpl",
         ],
-        "osx": [],
+        "osx": [
+            "run_osx_build.sh.tmpl",
+        ],
         "win": [],
     }
     template_files = platform_templates.get(platform, [])
@@ -913,6 +915,14 @@ def render_travis(jinja_env, forge_config, forge_dir):
         "travis", forge_config
     )
 
+    extra_platform_files = {
+        "linux": [
+            os.path.join(forge_dir, ".travis", "run_docker_build.sh"),
+            os.path.join(forge_dir, ".travis", "build_steps.sh"),
+        ],
+        "osx": [os.path.join(forge_dir, ".travis", "run_osx_build.sh")],
+    }
+
     return _render_ci_provider(
         "travis",
         jinja_env=jinja_env,
@@ -926,6 +936,7 @@ def render_travis(jinja_env, forge_config, forge_dir):
         keep_noarchs=keep_noarchs,
         platform_specific_setup=_travis_specific_setup,
         upload_packages=upload_packages,
+        extra_platform_files=extra_platform_files,
     )
 
 

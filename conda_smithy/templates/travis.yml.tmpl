@@ -1,8 +1,8 @@
 # This file was generated automatically from conda-smithy. To update this configuration,
 # update the conda-forge.yml and/or the recipe/meta.yaml.
-{*
+{#
 # -*- mode: jinja -*-
-*}
+#}
 {%- set platformset = [] %}
 {%- for _, platform, _ in configs %}
   {%- set pfarchless = platform.split('-')[0] %}
@@ -25,7 +25,7 @@ env:
 matrix:
   include:
     {%- for config, platform, upload in configs | sort %}
-    - env: CONFIG={{ config }} UPLOAD_PACKAGES={{ upload }} platform={{ platform }}
+    - env: CONFIG={{ config }} UPLOAD_PACKAGES={{ upload }} PLATFORM={{ platform }}
     {%- if platform.startswith("osx") %}
       os: osx
       osx_image: {{ travis.get('osx_image', 'xcode9.4') }}
@@ -34,85 +34,12 @@ matrix:
     {%- elif platform.startswith("linux-64") %}
       os: linux
     {%- endif %}
-
-    {%- endfor %}
+{% endfor %}
 {%- endif %}
-
-before_install:
-    # Fast finish the PR.
-    - |
-      if [ "${platform}" == "osx-64" ]; then
-      # for some reason this only works for osx, since we don't actually plan on building
-      # lots of artifacts for ppc64le here
-      {{ fast_finish }}
-      fi
-
-{%- if 'osx' in platformset %}
-    # Remove homebrew in osx
-    - |
-      if [ "${platform}" == "osx-64" ]; then
-        echo ""
-        echo "Removing homebrew from Travis CI to avoid conflicts."
-        curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/uninstall > ~/uninstall_homebrew
-        chmod +x ~/uninstall_homebrew
-        ~/uninstall_homebrew -fq
-        rm ~/uninstall_homebrew
-      fi
-{%- endif %}
-
-install:
-    {%- if 'osx' in platformset %}
-    # Install Miniconda.
-    - |
-      if [ "${platform}" == "osx-64" ]; then
-        echo ""
-        echo "Installing a fresh version of Miniconda."
-        MINICONDA_URL="https://repo.continuum.io/miniconda"
-        MINICONDA_FILE="Miniconda3-latest-MacOSX-x86_64.sh"
-        curl -L -O "${MINICONDA_URL}/${MINICONDA_FILE}"
-        bash $MINICONDA_FILE -b
-      fi
-
-    # Configure conda.
-    - |
-      if [ "${platform}" == "osx-64" ]; then
-        echo ""
-        echo "Configuring conda."
-        source /Users/travis/miniconda3/bin/activate root
-
-        conda install -n root -c conda-forge --quiet --yes conda-forge-ci-setup=2 conda-build
-        setup_conda_rc ./ ./{{ recipe_dir }} ./.ci_support/${CONFIG}.yaml
-
-        {% if build_setup -%}
-        {{ build_setup }}{% endif %}
-      fi
-
-    # compiler cleanup
-    - |
-      if [ "${platform}" == "osx-64" ]; then
-        mangle_compiler ./ ./{{ recipe_dir }} ./.ci_support/${CONFIG}.yaml
-      fi
-    {%- endif %}
-
 script:
-{%- if 'osx' in platformset %}
-  - |
-    echo "maybe osx build?"
-    if [ "${platform}" == "osx-64" ]; then
-      # generate the build number clobber
-      make_build_number ./ ./{{ recipe_dir }} ./.ci_support/${CONFIG}.yaml
-      {% if idle_timeout_minutes %}travis_wait {{ idle_timeout_minutes }}{% endif %} conda build ./{{ recipe_dir }} -m ./.ci_support/${CONFIG}.yaml --clobber-file ./.ci_support/clobber_${CONFIG}.yaml
-
-      if [[ "${UPLOAD_PACKAGES}" != "False" ]]; then
-        upload_package ./ ./{{ recipe_dir }} ./.ci_support/${CONFIG}.yaml
-      fi
-    fi
+{% if 'osx' in platformset %}
+  - [[ ${PLATFORM} =~ .*osx.* ]] && ./.travis/run_osx_build.sh;
 {%- endif %}
-
 {% if 'linux' in platformset %}
-  - |
-    echo "maybe linux build?"
-    if [[ ${platform} =~ .*linux.* ]]; then
-      ./.travis/run_docker_build.sh
-    fi
+  - [[ ${PLATFORM} =~ .*linux.* ]] && ./.travis/run_docker_build.sh;
 {%- endif %}
