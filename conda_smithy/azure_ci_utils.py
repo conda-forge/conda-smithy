@@ -44,7 +44,7 @@ class AzureConfig:
             self.token = None
 
         # By default for now don't report on the build information back to github
-        self.azure_report_build_status = os.getenv("AZURE_REPORT_BUILD_STATUS", "false")
+        self.azure_report_build_status = os.getenv("AZURE_REPORT_BUILD_STATUS", "true")
 
     @property
     def connection(self):
