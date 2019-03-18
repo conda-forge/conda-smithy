@@ -1348,8 +1348,17 @@ def get_cfp_file_path(resolve=None, error_on_warn=True):
 
 
 def main(
-    forge_file_directory, no_check_uptodate=False, commit=False, exclusive_config_file=None
+    forge_file_directory, no_check_uptodate=False, commit=False, exclusive_config_file=None, check=False
 ):
+    if check:
+        index = conda_build.conda_interface.get_index(channel_urls=["conda-forge"])
+        r = conda_build.conda_interface.Resolve(index)
+
+        # Check that conda-smithy is up-to-date
+        check_version_uptodate(r, "conda-smithy", __version__, True)
+        get_cfp_file_path(r, True)
+        return True
+       
     error_on_warn = False if no_check_uptodate else True
     index = conda_build.conda_interface.get_index(channel_urls=["conda-forge"])
     r = conda_build.conda_interface.Resolve(index)
