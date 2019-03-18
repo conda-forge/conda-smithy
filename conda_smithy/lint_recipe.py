@@ -405,7 +405,7 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
             if "python setup.py install" in script:
                 hints.append(
                     "Whenever possible python packages should use pip. "
-                    "See http://conda-forge.org/docs/maintainer/adding_pkgs.html#use-pip"
+                    "See https://conda-forge.org/docs/maintainer/adding_pkgs.html#use-pip"
                 )
 
     # 2: suggest python noarch (skip on feedstocks)
