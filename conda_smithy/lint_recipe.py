@@ -300,7 +300,7 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
         lints.append(
             "Using pinned numpy packages is a deprecated pattern.  Consider "
             "using the method outlined "
-            "[here](https://conda-forge.org/docs/meta.html#building-against-numpy)."
+            "[here](http://conda-forge.org/docs/maintainer/knowledge_base.html#linking-numpy)."
         )
 
     # 16: Subheaders should be in the allowed subheadings
