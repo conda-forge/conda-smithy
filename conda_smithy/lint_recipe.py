@@ -300,7 +300,7 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
         lints.append(
             "Using pinned numpy packages is a deprecated pattern.  Consider "
             "using the method outlined "
-            "[here](https://conda-forge.readthedocs.io/en/latest/meta.html#building-against-numpy)."
+            "[here](https://conda-forge.org/docs/maintainer/knowledge_base.html#linking-numpy)."
         )
 
     # 16: Subheaders should be in the allowed subheadings
@@ -392,7 +392,7 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
         lints.append(
             "Using toolchain directly in this manner is deprecated.  Consider "
             "using the compilers outlined "
-            "[here](https://conda-forge.readthedocs.io/en/latest/meta.html#compilers)."
+            "[here](https://conda-forge.org/docs/maintainer/knowledge_base.html#compilers)."
         )
 
     # hints
@@ -405,7 +405,7 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
             if "python setup.py install" in script:
                 hints.append(
                     "Whenever possible python packages should use pip. "
-                    "See https://conda-forge.readthedocs.io/en/latest/meta.html#use-pip"
+                    "See https://conda-forge.org/docs/maintainer/adding_pkgs.html#use-pip"
                 )
 
     # 2: suggest python noarch (skip on feedstocks)
@@ -433,7 +433,7 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
             if no_arch_possible:
                 hints.append(
                     "Whenever possible python packages should use noarch. "
-                    "See https://conda-forge.readthedocs.io/en/latest/meta.html#building-noarch-packages"
+                    "See https://conda-forge.org/docs/maintainer/knowledge_base.html#noarch-builds"
                 )
 
     return lints, hints
