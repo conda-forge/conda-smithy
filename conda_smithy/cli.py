@@ -342,7 +342,7 @@ class Regenerate(Subcommand):
             help="Exclusive conda-build config file to replace conda-forge-pinning. "
             + "For advanced usage only",
         )
-        scp.add_argument("--check", action="store_true", default=False, help="Check if regenerate can be performed")
+        scp.add_argument("--check", action="store_true", help="Check if regenerate can be performed")
 
     def __call__(self, args):
         configure_feedstock.main(
@@ -350,6 +350,7 @@ class Regenerate(Subcommand):
             no_check_uptodate=args.no_check_uptodate,
             commit=args.commit,
             exclusive_config_file=args.exclusive_config_file,
+            check=args.check
         )
 
 
