@@ -433,7 +433,7 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
             if no_arch_possible:
                 hints.append(
                     "Whenever possible python packages should use noarch. "
-                    "See http://conda-forge.org/docs/maintainer/knowledge_base.html#noarch-builds"
+                    "See https://conda-forge.org/docs/maintainer/knowledge_base.html#noarch-builds"
                 )
 
     return lints, hints
