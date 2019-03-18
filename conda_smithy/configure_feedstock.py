@@ -1153,8 +1153,8 @@ def _load_forge_config(forge_dir, exclusive_config_file):
             "timeout_minutes": 360
         },
         "provider": {
-            "linux": "circle",
-            "osx": "travis",
+            "linux": "azure",
+            "osx": "azure",
             "win": "appveyor",
             # Following platforms are disabled by default
             "linux_aarch64": None,

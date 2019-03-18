@@ -15,12 +15,7 @@ InitArgs = collections.namedtuple(
 
 RegenerateArgs = collections.namedtuple(
     "ArgsObject",
-    (
-        "commit",
-        "feedstock_directory",
-        "no_check_uptodate",
-        "exclusive_config_file",
-    ),
+    ("commit", "feedstock_directory", "no_check_uptodate", "exclusive_config_file"),
 )
 
 
@@ -48,9 +43,7 @@ def test_init_multiple_output_matrix(testing_workdir):
     init_obj = cli.Init(subparser)
     regen_obj = cli.Regenerate(subparser)
     recipe = os.path.join(_thisdir, "recipes", "multiple_outputs")
-    feedstock_dir = os.path.join(
-        testing_workdir, "multiple-outputs-test-feedstock"
-    )
+    feedstock_dir = os.path.join(testing_workdir, "multiple-outputs-test-feedstock")
     args = InitArgs(recipe_directory=recipe, feedstock_directory=feedstock_dir)
     init_obj(args)
     # Ignore conda-forge-pinning for this test, as the test relies on conda-forge-pinning

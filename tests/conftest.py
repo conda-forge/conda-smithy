@@ -7,15 +7,10 @@ import yaml
 from jinja2 import Environment, FileSystemLoader
 from conda_build.utils import copy_into
 
-from conda_smithy.configure_feedstock import (
-    conda_forge_content,
-    _load_forge_config,
-)
+from conda_smithy.configure_feedstock import conda_forge_content, _load_forge_config
 
 
-RecipeConfigPair = collections.namedtuple(
-    "RecipeConfigPair", ("recipe", "config")
-)
+RecipeConfigPair = collections.namedtuple("RecipeConfigPair", ("recipe", "config"))
 
 
 @pytest.fixture(scope="function")
@@ -64,8 +59,7 @@ def config_yaml(testing_workdir):
     # dummy file that needs to be present for circle ci.  This is created by the init function
     os.makedirs(os.path.join(testing_workdir, ".circleci"))
     with open(
-        os.path.join(testing_workdir, ".circleci", "checkout_merge_commit.sh"),
-        "w",
+        os.path.join(testing_workdir, ".circleci", "checkout_merge_commit.sh"), "w"
     ) as f:
         f.write("echo dummy file")
     with open(os.path.join(testing_workdir, "short_config.yaml"), "w") as f:
@@ -98,8 +92,7 @@ requirements:
     return RecipeConfigPair(
         str(config_yaml),
         _load_forge_config(
-            config_yaml,
-            exclusive_config_file=os.path.join(config_yaml, "config.yaml"),
+            config_yaml, exclusive_config_file=os.path.join(config_yaml, "config.yaml")
         ),
     )
 
@@ -125,8 +118,7 @@ requirements:
     return RecipeConfigPair(
         str(config_yaml),
         _load_forge_config(
-            config_yaml,
-            exclusive_config_file=os.path.join(config_yaml, "config.yaml"),
+            config_yaml, exclusive_config_file=os.path.join(config_yaml, "config.yaml")
         ),
     )
 
@@ -154,8 +146,7 @@ about:
     return RecipeConfigPair(
         str(config_yaml),
         _load_forge_config(
-            config_yaml,
-            exclusive_config_file=os.path.join(config_yaml, "config.yaml"),
+            config_yaml, exclusive_config_file=os.path.join(config_yaml, "config.yaml")
         ),
     )
 
@@ -183,8 +174,7 @@ about:
     return RecipeConfigPair(
         str(config_yaml),
         _load_forge_config(
-            config_yaml,
-            exclusive_config_file=os.path.join(config_yaml, "config.yaml"),
+            config_yaml, exclusive_config_file=os.path.join(config_yaml, "config.yaml")
         ),
     )
 
@@ -212,8 +202,7 @@ about:
     return RecipeConfigPair(
         str(config_yaml),
         _load_forge_config(
-            config_yaml,
-            exclusive_config_file=os.path.join(config_yaml, "config.yaml"),
+            config_yaml, exclusive_config_file=os.path.join(config_yaml, "config.yaml")
         ),
     )
 
@@ -239,8 +228,7 @@ about:
     return RecipeConfigPair(
         str(config_yaml),
         _load_forge_config(
-            config_yaml,
-            exclusive_config_file=os.path.join(config_yaml, "config.yaml"),
+            config_yaml, exclusive_config_file=os.path.join(config_yaml, "config.yaml")
         ),
     )
 

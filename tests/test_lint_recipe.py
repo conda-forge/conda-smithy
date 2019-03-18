@@ -114,15 +114,12 @@ class Test_linter(unittest.TestCase):
         self.assertNotIn(expected_message, lints)
 
         expected_message = (
-            'The "extra" section was expected to be a '
-            "dictionary, but got a list."
+            'The "extra" section was expected to be a ' "dictionary, but got a list."
         )
         lints, hints = linter.lintify({"extra": ["recipe-maintainers"]})
         self.assertIn(expected_message, lints)
 
-        lints, hints = linter.lintify(
-            {"extra": {"recipe-maintainers": "Luke"}}
-        )
+        lints, hints = linter.lintify({"extra": {"recipe-maintainers": "Luke"}})
         expected_message = "Recipe maintainers should be a json list."
         self.assertIn(expected_message, lints)
 
@@ -206,9 +203,8 @@ class Test_linter(unittest.TestCase):
                         "lint for '{}'.".format(selector)
                     )
                 else:
-                    message = (
-                        "Expecting lints for '{}', but didn't get any."
-                        "".format(selector)
+                    message = "Expecting lints for '{}', but didn't get any." "".format(
+                        selector
                     )
                 self.assertEqual(
                     not is_good,
@@ -232,8 +228,7 @@ class Test_linter(unittest.TestCase):
                 lints = linter.main(recipe_dir)
                 if is_good:
                     message = (
-                        "Found lints when there shouldn't have "
-                        "been a lint for '{}'."
+                        "Found lints when there shouldn't have " "been a lint for '{}'."
                     ).format(meta_string)
                 else:
                     message = (
@@ -377,8 +372,7 @@ class Test_linter(unittest.TestCase):
                 lints, hints = linter.main(recipe_dir, return_hints=True)
                 if is_good:
                     message = (
-                        "Found hints when there shouldn't have "
-                        "been a lint for '{}'."
+                        "Found hints when there shouldn't have " "been a lint for '{}'."
                     ).format(meta_string)
                 else:
                     message = (
@@ -423,7 +417,7 @@ class Test_linter(unittest.TestCase):
                               build:
                                 - python
                             """,
-                is_good=True
+                is_good=True,
             )
             assert_noarch_hint(
                 """
@@ -511,11 +505,7 @@ class Test_linter(unittest.TestCase):
         expected_message = "The recipe must have a `build/number` section."
 
         meta = {
-            "build": {
-                "skip": "True",
-                "script": "python setup.py install",
-                "number": 0,
-            }
+            "build": {"skip": "True", "script": "python setup.py install", "number": 0}
         }
         lints, hints = linter.lintify(meta)
         self.assertNotIn(expected_message, lints)
@@ -558,9 +548,7 @@ class Test_linter(unittest.TestCase):
         lints, hints = linter.lintify({"source": {"url": None, "sha1": None}})
         self.assertNotIn(expected_message, lints)
 
-        lints, hints = linter.lintify(
-            {"source": {"url": None, "sha256": None}}
-        )
+        lints, hints = linter.lintify({"source": {"url": None, "sha256": None}})
         self.assertNotIn(expected_message, lints, hints)
 
         meta = {"source": {"url": None, "md5": None}}
@@ -655,28 +643,20 @@ class Test_linter(unittest.TestCase):
         expected_message = "Feedstock with the same name exists in conda-forge"
         # Check that feedstock exists if staged_recipes
         lints = linter.lintify(
-            {"package": {"name": "python"}},
-            recipe_dir="python",
-            conda_forge=True,
+            {"package": {"name": "python"}}, recipe_dir="python", conda_forge=True
         )
         self.assertIn(expected_message, lints)
         lints = linter.lintify(
-            {"package": {"name": "python"}},
-            recipe_dir="python",
-            conda_forge=False,
+            {"package": {"name": "python"}}, recipe_dir="python", conda_forge=False
         )
         self.assertNotIn(expected_message, lints)
         # No lint if in a feedstock
         lints = linter.lintify(
-            {"package": {"name": "python"}},
-            recipe_dir="recipe",
-            conda_forge=True,
+            {"package": {"name": "python"}}, recipe_dir="recipe", conda_forge=True
         )
         self.assertNotIn(expected_message, lints)
         lints = linter.lintify(
-            {"package": {"name": "python"}},
-            recipe_dir="recipe",
-            conda_forge=False,
+            {"package": {"name": "python"}}, recipe_dir="recipe", conda_forge=False
         )
         self.assertNotIn(expected_message, lints)
 
@@ -695,9 +675,7 @@ class Test_linter(unittest.TestCase):
             )
         else:
             lints = linter.lintify(
-                {"package": {"name": "python1"}},
-                recipe_dir="python",
-                conda_forge=True,
+                {"package": {"name": "python1"}}, recipe_dir="python", conda_forge=True
             )
             self.assertNotIn(expected_message, lints)
 
@@ -732,9 +710,7 @@ class Test_linter(unittest.TestCase):
             )
             self.assertNotIn(expected_message, lints)
             lints = linter.lintify(
-                {"package": {"name": r}},
-                recipe_dir="recipe",
-                conda_forge=False,
+                {"package": {"name": r}}, recipe_dir="recipe", conda_forge=False
             )
             self.assertNotIn(expected_message, lints)
             # No lint if the name isn't specified
@@ -757,23 +733,19 @@ class Test_linter(unittest.TestCase):
             )
 
     def test_bad_subheader(self):
-        expected_message = "The {} section contained an unexpected " "subsection name. {} is not a valid subsection" " name."
+        expected_message = (
+            "The {} section contained an unexpected "
+            "subsection name. {} is not a valid subsection"
+            " name."
+        )
         meta = {
-            "build": {
-                "skip": "True",
-                "script": "python setup.py install",
-                "number": 0,
-            }
+            "build": {"skip": "True", "script": "python setup.py install", "number": 0}
         }
         lints, hints = linter.lintify(meta)
         self.assertNotIn(expected_message.format("build", "ski"), lints)
 
         meta = {
-            "build": {
-                "ski": "True",
-                "script": "python setup.py install",
-                "number": 0,
-            }
+            "build": {"ski": "True", "script": "python setup.py install", "number": 0}
         }
         lints, hints = linter.lintify(meta)
         self.assertIn(expected_message.format("build", "ski"), lints)
@@ -797,9 +769,7 @@ class Test_linter(unittest.TestCase):
         self.assertNotIn(expected_message, lints)
 
         meta = {"package": {"name": "python", "version": "2.0.0~alpha0"}}
-        expected_message = (
-            "Package version 2.0.0~alpha0 doesn't match conda spec"
-        )
+        expected_message = "Package version 2.0.0~alpha0 doesn't match conda spec"
         lints, hints = linter.lintify(meta)
         self.assertIn(expected_message, lints)
 
@@ -820,9 +790,7 @@ class Test_linter(unittest.TestCase):
         self.assertNotIn(msg, lints)
 
     def test_multiple_sources(self):
-        lints = linter.main(
-            os.path.join(_thisdir, "recipes", "multiple_sources")
-        )
+        lints = linter.main(os.path.join(_thisdir, "recipes", "multiple_sources"))
         assert not lints
 
     def test_string_source(self):
@@ -850,8 +818,7 @@ class TestCLI_recipe_lint(unittest.TestCase):
                     )
                 )
             child = subprocess.Popen(
-                ["conda-smithy", "recipe-lint", recipe_dir],
-                stdout=subprocess.PIPE,
+                ["conda-smithy", "recipe-lint", recipe_dir], stdout=subprocess.PIPE
             )
             out, _ = child.communicate()
             self.assertEqual(child.returncode, 1, out)
@@ -881,8 +848,7 @@ class TestCLI_recipe_lint(unittest.TestCase):
                     )
                 )
             child = subprocess.Popen(
-                ["conda-smithy", "recipe-lint", recipe_dir],
-                stdout=subprocess.PIPE,
+                ["conda-smithy", "recipe-lint", recipe_dir], stdout=subprocess.PIPE
             )
             out, _ = child.communicate()
             self.assertEqual(child.returncode, 0, out)
@@ -914,8 +880,7 @@ class TestCLI_recipe_lint(unittest.TestCase):
                     )
                 )
             child = subprocess.Popen(
-                ["conda-smithy", "recipe-lint", recipe_dir],
-                stdout=subprocess.PIPE,
+                ["conda-smithy", "recipe-lint", recipe_dir], stdout=subprocess.PIPE
             )
             out, _ = child.communicate()
             self.assertEqual(child.returncode, 0, out)
@@ -972,9 +937,8 @@ class TestCLI_recipe_lint(unittest.TestCase):
                         "lint for '{}'.".format(jinja_var)
                     )
                 else:
-                    message = (
-                        "Expecting lints for '{}', but didn't get any."
-                        "".format(jinja_var)
+                    message = "Expecting lints for '{}', but didn't get any." "".format(
+                        jinja_var
                     )
                 self.assertEqual(
                     not is_good,
