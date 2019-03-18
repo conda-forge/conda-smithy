@@ -392,7 +392,7 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
         lints.append(
             "Using toolchain directly in this manner is deprecated.  Consider "
             "using the compilers outlined "
-            "[here](http://conda-forge.org/docs/maintainer/knowledge_base.html#compilers)."
+            "[here](https://conda-forge.org/docs/maintainer/knowledge_base.html#compilers)."
         )
 
     # hints
