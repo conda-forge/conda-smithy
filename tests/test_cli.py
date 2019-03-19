@@ -53,6 +53,7 @@ def test_init_multiple_output_matrix(testing_workdir):
         commit=False,
         no_check_uptodate=True,
         exclusive_config_file="recipe/conda_build_config.yaml",
+        check=False
     )
     regen_obj(args)
     matrix_dir = os.path.join(feedstock_dir, ".ci_support")
@@ -102,6 +103,7 @@ def test_regenerate(py_recipe, testing_workdir):
         commit=False,
         no_check_uptodate=True,
         exclusive_config_file=os.path.join(recipe, "config.yaml"),
+        check=False
     )
 
     regen_obj(args)
