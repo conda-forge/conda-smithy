@@ -350,6 +350,7 @@ class Regenerate(Subcommand):
             no_check_uptodate=args.no_check_uptodate,
             commit=args.commit,
             exclusive_config_file=args.exclusive_config_file,
+            check=args.check
         )
 
 
