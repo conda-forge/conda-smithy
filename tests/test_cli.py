@@ -117,6 +117,7 @@ def test_regenerate(py_recipe, testing_workdir):
         commit=False,
         no_check_uptodate=True,
         exclusive_config_file=os.path.join(recipe, "short_config.yaml"),
+        check=False
     )
     regen_obj(args)
 
