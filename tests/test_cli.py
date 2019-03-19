@@ -15,7 +15,7 @@ InitArgs = collections.namedtuple(
 
 RegenerateArgs = collections.namedtuple(
     "ArgsObject",
-    ("commit", "feedstock_directory", "no_check_uptodate", "exclusive_config_file"),
+    ("commit", "feedstock_directory", "no_check_uptodate", "exclusive_config_file", "check"),
 )
 
 
