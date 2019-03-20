@@ -121,7 +121,7 @@ def register_repo(github_org, repo_name, config: AzureConfig = default_config):
     import inspect
 
     bclient = build_client()
-    aclient = TaskAgentClient(config.azure_team_instance, config.credentials)
+    aclient = TaskAgentClient(config.instance_base_url, config.credentials)
 
     source_repo = get_repo_reference(config, github_org, repo_name)
 
