@@ -4,6 +4,15 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.3.1
+====================
+
+**Fixed:**
+
+* Use `config.instance_base_url` instead of `config.azure_team_instance` when creating new feedstocks
+
+
+
 v3.3.0
 ====================
 
