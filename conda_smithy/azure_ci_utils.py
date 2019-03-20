@@ -67,7 +67,7 @@ default_config = AzureConfig()
 
 def get_service_endpoint(config: AzureConfig = default_config):
     service_endpoint_client = ServiceEndpointClient(
-        base_url=config.azure_team_instance, creds=config.credentials
+        base_url=config.instance_base_url, creds=config.credentials
     )
     endpoints: typing.List[
         ServiceEndpoint
@@ -82,7 +82,7 @@ def get_service_endpoint(config: AzureConfig = default_config):
 
 
 def get_queues(config: AzureConfig = default_config) -> typing.List[TaskAgentQueue]:
-    aclient = TaskAgentClient(config.azure_team_instance, config.credentials)
+    aclient = TaskAgentClient(config.instance_base_url, config.credentials)
     return aclient.get_agent_queues(config.project_name)
 
 
