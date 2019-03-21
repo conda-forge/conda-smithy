@@ -58,7 +58,7 @@ class AzureConfig:
         if self.token:
             return BasicAuthentication("", self.token)
         else:
-            warnings.warn("No token available.  No modfications will be possible!")
+            warnings.warn("No token available.  No modifications will be possible!")
             return Authentication()
 
 
@@ -229,7 +229,7 @@ def enable_reporting(repo, config: AzureConfig = default_config) -> None:
 
 
 def get_build_id(repo, config: AzureConfig = default_config) -> dict:
-    """Get the neccesary build information to persist in the config file to allow rendering
+    """Get the necessary build information to persist in the config file to allow rendering
     of badges.
     This is needed by non-conda-forge use cases"""
     bclient = build_client(config)
