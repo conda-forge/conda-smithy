@@ -75,7 +75,7 @@ def get_service_endpoint(config: AzureConfig = default_config):
         project=config.project_name, type="GitHub"
     )
     for service_endpoint in endpoints:
-        if service_endpoint.name == config.azure_org_or_user:
+        if service_endpoint.name == config.org_or_user:
             return service_endpoint
     else:
         raise KeyError("Service endpoint not found")
