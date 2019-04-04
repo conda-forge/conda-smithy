@@ -1358,7 +1358,7 @@ def main(
         check_version_uptodate(r, "conda-smithy", __version__, True)
         get_cfp_file_path(r, True)
         return True
-       
+
     error_on_warn = False if no_check_uptodate else True
     index = conda_build.conda_interface.get_index(channel_urls=["conda-forge"])
     r = conda_build.conda_interface.Resolve(index)
@@ -1400,6 +1400,7 @@ def main(
     )
 
     copy_feedstock_content(forge_dir)
+    os.chmod(os.path.join(forge_dir, "build-locally.xsh"), 0o755)
 
     render_circle(env, config, forge_dir)
     render_travis(env, config, forge_dir)
