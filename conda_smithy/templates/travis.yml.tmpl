@@ -41,5 +41,5 @@ script:
   - [[ ${PLATFORM} =~ .*osx.* ]] && ./.travis/run_osx_build.sh;
 {%- endif %}
 {% if 'linux' in platformset %}
-  - [[ ${PLATFORM} =~ .*linux.* ]] && ./.travis/run_docker_build.sh;
+  - [[ ${PLATFORM} =~ .*linux.* ]] && pip install shyaml --user && ./.travis/run_docker_build.sh;
 {%- endif %}
