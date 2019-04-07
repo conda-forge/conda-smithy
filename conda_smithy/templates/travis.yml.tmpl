@@ -38,8 +38,8 @@ matrix:
 {%- endif %}
 script:
 {% if 'osx' in platformset %}
-  - [[ ${PLATFORM} =~ .*osx.* ]] && ./.travis/run_osx_build.sh;
+  - if [[ ${PLATFORM} =~ .*osx.* ]]; then ./.travis/run_osx_build.sh; fi
 {%- endif %}
 {% if 'linux' in platformset %}
-  - [[ ${PLATFORM} =~ .*linux.* ]] && pip install shyaml --user && ./.travis/run_docker_build.sh;
+  - if [[ ${PLATFORM} =~ .*linux.* ]]; then pip install shyaml --user && ./.travis/run_docker_build.sh; fi
 {%- endif %}
