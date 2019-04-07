@@ -4,8 +4,10 @@ import jinja2
 import six
 import datetime
 import time
+import os
 from collections import defaultdict
 from contextlib import contextmanager
+import ruamel.yaml
 
 
 @contextmanager
@@ -53,3 +55,28 @@ def render_meta_yaml(text):
     mockos = MockOS()
     content = env.from_string(text).render(os=mockos, environ=mockos.environ)
     return content
+
+
+@contextmanager
+def update_conda_forge_config(feedstock_directory):
+    """Utility method used to update conda forge configuration files
+
+    Uage:
+    >>> with update_conda_forge_config(somepath) as cfg:
+    ...     cfg['foo'] = 'bar'
+    """
+    forge_yaml = os.path.join(feedstock_directory, "conda-forge.yml")
+    if os.path.exists(forge_yaml):
+        with open(forge_yaml, "r") as fh:
+            code = ruamel.yaml.load(fh, ruamel.yaml.RoundTripLoader)
+    else:
+        code = {}
+
+    # Code could come in as an empty list.
+    if not code:
+        code = {}
+
+    yield code
+
+    with open(forge_yaml, "w") as fh:
+        fh.write(ruamel.yaml.dump(code, Dumper=ruamel.yaml.RoundTripDumper))

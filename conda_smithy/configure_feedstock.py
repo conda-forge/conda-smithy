@@ -976,7 +976,7 @@ def render_appveyor(jinja_env, forge_config, forge_dir):
     fast_finish_text = textwrap.dedent(
         """\
             {get_fast_finish_script}
-            "%CONDA_INSTALL_LOCN%\python.exe" {fast_finish_script}.py -v --ci "appveyor" "%APPVEYOR_ACCOUNT_NAME%/%APPVEYOR_PROJECT_SLUG%" "%APPVEYOR_BUILD_NUMBER%" "%APPVEYOR_PULL_REQUEST_NUMBER%"
+            "%CONDA_INSTALL_LOCN%\\python.exe" {fast_finish_script}.py -v --ci "appveyor" "%APPVEYOR_ACCOUNT_NAME%/%APPVEYOR_PROJECT_SLUG%" "%APPVEYOR_BUILD_NUMBER%" "%APPVEYOR_PULL_REQUEST_NUMBER%"
         """
     )
     template_filename = "appveyor.yml.tmpl"
@@ -1076,11 +1076,20 @@ def render_README(jinja_env, forge_config, forge_dir):
     else:
         package_name = metas[0][0].name()
 
+    ci_support_path = os.path.join(forge_dir, ".ci_support")
+    variants = []
+    if os.path.exists(ci_support_path):
+        for filename in os.listdir(ci_support_path):
+            if filename.endswith('.yaml'):
+                variant_name, _ = os.path.splitext(filename)
+                variants.append(variant_name)
+
     template = jinja_env.get_template("README.md.tmpl")
     target_fname = os.path.join(forge_dir, "README.md")
     forge_config["noarch_python"] = all(meta[0].noarch for meta in metas)
     forge_config["package"] = metas[0][0]
     forge_config["package_name"] = package_name
+    forge_config["variants"] = sorted(variants)
     forge_config["outputs"] = sorted(
         list(OrderedDict((meta[0].name(), None) for meta in metas))
     )
@@ -1092,6 +1101,28 @@ def render_README(jinja_env, forge_config, forge_dir):
             )
         )
     )
+
+    if forge_config['azure'].get('build_id') is None:
+        # Try to retrieve the build_id from the interwebs
+        try:
+            import requests
+            resp = requests.get(
+                "https://dev.azure.com/{org}/{project_name}/_apis/build/definitions?name={repo}".format(
+                    org=forge_config["azure"]["user_or_org"],
+                    project_name=forge_config["azure"]["project_name"],
+                    repo=forge_config["github"]["repo_name"]
+                ))
+            build_def = resp.json()["value"][0]
+            forge_config['azure']['build_id'] = build_def['id']
+        except (IndexError, IOError):
+            pass
+
+
+    print("README")
+    print(yaml.dump(forge_config))
+
+
+
     with write_file(target_fname) as fh:
         fh.write(template.render(**forge_config))
 
@@ -1118,10 +1149,15 @@ def _load_forge_config(forge_dir, exclusive_config_file):
             "upload_packages": False,
             # Force building all supported providers.
             "force": True,
+            # name and id of azure project that the build pipeline is in
+            "project_name": "feedstock-builds",
+            "project_id": "84710dde-1620-425b-80d0-4cf5baca359d",
+            # Default to a timeout of 6 hours.  This is the maximum for azure by default
+            "timeout_minutes": 360
         },
         "provider": {
-            "linux": "circle",
-            "osx": "travis",
+            "linux": "azure",
+            "osx": "azure",
             "win": "appveyor",
             # Following platforms are disabled by default
             "linux_aarch64": None,
@@ -1198,6 +1234,9 @@ def _load_forge_config(forge_dir, exclusive_config_file):
                 config_item.update(value)
             else:
                 config[key] = value
+
+    # Set some more azure defaults
+    config["azure"].setdefault("user_or_org", config["github"]["user_or_org"])
 
     log = yaml.safe_dump(config)
     print("## CONFIGURATION USED\n")
@@ -1325,8 +1364,17 @@ def clear_variants(forge_dir):
 
 
 def main(
-    forge_file_directory, no_check_uptodate=False, commit=False, exclusive_config_file=None
+    forge_file_directory, no_check_uptodate=False, commit=False, exclusive_config_file=None, check=False
 ):
+    if check:
+        index = conda_build.conda_interface.get_index(channel_urls=["conda-forge"])
+        r = conda_build.conda_interface.Resolve(index)
+
+        # Check that conda-smithy is up-to-date
+        check_version_uptodate(r, "conda-smithy", __version__, True)
+        get_cfp_file_path(r, True)
+        return True
+       
     error_on_warn = False if no_check_uptodate else True
     index = conda_build.conda_interface.get_index(channel_urls=["conda-forge"])
     r = conda_build.conda_interface.Resolve(index)

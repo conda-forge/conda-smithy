@@ -8,6 +8,7 @@ import sys
 import ruamel.yaml
 
 from . import github
+from .utils import update_conda_forge_config
 
 
 # https://circleci.com/docs/api#add-environment-variable
@@ -197,22 +198,10 @@ def appveyor_encrypt_binstar_token(feedstock_directory, user, project):
     if response.status_code != 200:
         raise ValueError(response)
 
-    forge_yaml = os.path.join(feedstock_directory, "conda-forge.yml")
-    if os.path.exists(forge_yaml):
-        with open(forge_yaml, "r") as fh:
-            code = ruamel.yaml.load(fh, ruamel.yaml.RoundTripLoader)
-    else:
-        code = {}
-
-    # Code could come in as an empty list.
-    if not code:
-        code = {}
-
-    code.setdefault("appveyor", {}).setdefault("secure", {})[
-        "BINSTAR_TOKEN"
-    ] = response.content.decode("utf-8")
-    with open(forge_yaml, "w") as fh:
-        fh.write(ruamel.yaml.dump(code, Dumper=ruamel.yaml.RoundTripDumper))
+    with update_conda_forge_config(feedstock_directory) as code:
+        code.setdefault("appveyor", {}).setdefault("secure", {})[
+            "BINSTAR_TOKEN"
+        ] = response.content.decode("utf-8")
 
 
 def appveyor_configure(user, project):
@@ -242,7 +231,7 @@ def appveyor_configure(user, project):
             )
         settings[required_setting] = True
 
-    url = "https://ci.appveyor.com/api/projects".format(user, project)
+    url = "https://ci.appveyor.com/api/projects"
     response = requests.put(url, headers=headers, json=settings)
     if response.status_code != 204:
         raise ValueError(response)
@@ -251,7 +240,7 @@ def appveyor_configure(user, project):
 def travis_wait_until_synced(ignore=False):
     headers = travis_headers()
     is_sync_url = "{}/user".format(travis_endpoint)
-    for c in range(20):
+    for _ in range(20):
         response = requests.get(is_sync_url, headers=headers)
         content = response.json()
         print(".", end="")
@@ -357,22 +346,10 @@ def travis_token_update_conda_forge_config(feedstock_directory, user, project):
     item = 'BINSTAR_TOKEN="{}"'.format(anaconda_token)
     slug = "{}%2F{}".format(user, project)
 
-    forge_yaml = os.path.join(feedstock_directory, "conda-forge.yml")
-    if os.path.exists(forge_yaml):
-        with open(forge_yaml, "r") as fh:
-            code = ruamel.yaml.load(fh, ruamel.yaml.RoundTripLoader)
-    else:
-        code = {}
-
-    # Code could come in as an empty list.
-    if not code:
-        code = {}
-
-    code.setdefault("travis", {}).setdefault("secure", {})[
-        "BINSTAR_TOKEN"
-    ] = travis_encrypt_binstar_token(slug, item)
-    with open(forge_yaml, "w") as fh:
-        fh.write(ruamel.yaml.dump(code, Dumper=ruamel.yaml.RoundTripDumper))
+    with update_conda_forge_config(feedstock_directory) as code:
+        code.setdefault("travis", {}).setdefault("secure", {})[
+            "BINSTAR_TOKEN"
+        ] = travis_encrypt_binstar_token(slug, item)
 
 
 def travis_encrypt_binstar_token(repo, string_to_encrypt):

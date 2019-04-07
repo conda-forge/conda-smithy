@@ -4,6 +4,52 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.3.2
+====================
+
+
+
+v3.3.1
+====================
+
+**Fixed:**
+
+* Use `config.instance_base_url` instead of `config.azure_team_instance` when creating new feedstocks
+
+
+
+v3.3.0
+====================
+
+**Added:**
+
+* Added a utility to retrieve the azure buildid.  This is needed to make badges for non-conda forge users.
+* Added badges for azure ci builds.
+
+**Changed:**
+
+* Bumped up the maximum build time on azure to 6 hours!
+* Switched default provider for osx and linux to be azure.
+* ``conda-smithy regenerate`` now supports ``--check`` to see if regeneration can be performed
+* Bumped the license year to 2019.
+* Only suggest noarch in linting staged-recipes pull requests, not feedstocks.
+  Refer to issues #1021, #1030, #1031. Linter is not checking all prerequisites for noarch.
+
+
+
+v3.2.14
+====================
+
+**Added:**
+
+* hint to suggest using python noarch, when the build requirements include pip and no compiler is specified.
+
+**Fixed:**
+
+* qemu activation fixed so that we can use sudo.
+
+
+
 v3.2.13
 ====================
 

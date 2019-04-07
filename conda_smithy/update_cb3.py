@@ -373,7 +373,7 @@ def update_cb3(recipe_path, conda_build_config_path):
                         msg = (
                             "Removing pinnings for {} to use values from "
                             "conda_build_config.yaml. If you need the pin see "
-                            "[here](https://conda-forge.org/docs/meta.html#pinning-packages) "
+                            "[here](https://conda-forge.org/docs/maintainer/pinning_deps.html) "
                             "for details.".format(req)
                         )
                     if req == "numpy":
@@ -384,8 +384,8 @@ def update_cb3(recipe_path, conda_build_config_path):
                             msg = (
                                 "Pinning numpy using pin_compatible. If you need to pin numpy "
                                 "to a specific version see "
-                                "[here](https://conda-forge.org/docs/meta.html"
-                                "#building-against-numpy)."
+                                "[here](https://conda-forge.org/docs/maintainer/"
+                                "knowledge_base.html#linking-numpy)."
                             )
                             change_lines[i] = (
                                 lines[i],

@@ -134,6 +134,9 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
     package_section = get_section(meta, "package", lints)
     outputs_section = get_section(meta, "outputs", lints)
 
+    recipe_dirname = os.path.basename(recipe_dir) if recipe_dir else "recipe"
+    is_staged_recipes = recipe_dirname != "recipe"
+    
     # 0: Top level keys should be expected
     unexpected_sections = []
     for section in major_sections:
@@ -297,7 +300,7 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
         lints.append(
             "Using pinned numpy packages is a deprecated pattern.  Consider "
             "using the method outlined "
-            "[here](https://conda-forge.org/docs/meta.html#building-against-numpy)."
+            "[here](https://conda-forge.org/docs/maintainer/knowledge_base.html#linking-numpy)."
         )
 
     # 16: Subheaders should be in the allowed subheadings
@@ -389,7 +392,7 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
         lints.append(
             "Using toolchain directly in this manner is deprecated.  Consider "
             "using the compilers outlined "
-            "[here](https://conda-forge.org/docs/meta.html#compilers)."
+            "[here](https://conda-forge.org/docs/maintainer/knowledge_base.html#compilers)."
         )
 
     # hints
@@ -402,7 +405,35 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
             if "python setup.py install" in script:
                 hints.append(
                     "Whenever possible python packages should use pip. "
-                    "See https://conda-forge.org/docs/meta.html#use-pip"
+                    "See https://conda-forge.org/docs/maintainer/adding_pkgs.html#use-pip"
+                )
+
+    # 2: suggest python noarch (skip on feedstocks)
+    if build_section.get("noarch") is None and build_reqs and not any(["_compiler_stub" in b for b in build_reqs]) \
+            and ("pip" in build_reqs) and (is_staged_recipes or not conda_forge):
+        with io.open(meta_fname, "rt") as fh:
+            in_runreqs = False
+            no_arch_possible = True
+            for line in fh:
+                line_s = line.strip()
+                if line_s == "host:" or line_s == "run:":
+                    in_runreqs = True
+                    runreqs_spacing = line[: -len(line.lstrip())]
+                    continue
+                if line_s.startswith("skip:") and is_selector_line(line):
+                    no_arch_possible = False
+                    break
+                if in_runreqs:
+                    if runreqs_spacing == line[: -len(line.lstrip())]:
+                        in_runreqs = False
+                        continue
+                    if is_selector_line(line):
+                        no_arch_possible = False
+                        break
+            if no_arch_possible:
+                hints.append(
+                    "Whenever possible python packages should use noarch. "
+                    "See https://conda-forge.org/docs/maintainer/knowledge_base.html#noarch-builds"
                 )
 
     return lints, hints
