@@ -92,7 +92,7 @@ def test_r_matrix_travis(r_recipe, jinja_env):
     matrix_dir = os.path.join(r_recipe.recipe, ".ci_support")
     assert os.path.isdir(matrix_dir)
     # single matrix entry - readme is generated later in main function
-    assert len(os.listdir(matrix_dir)) == 4
+    assert len(os.listdir(matrix_dir)) == 2
 
 
 @pytest.mark.legacy_circle
@@ -151,7 +151,7 @@ def test_py_matrix_travis(py_recipe, jinja_env):
     matrix_dir = os.path.join(py_recipe.recipe, ".ci_support")
     assert os.path.isdir(matrix_dir)
     # two matrix enties - one per py ver
-    assert len(os.listdir(matrix_dir)) == 4
+    assert len(os.listdir(matrix_dir)) == 2
 
 
 @pytest.mark.legacy_circle
