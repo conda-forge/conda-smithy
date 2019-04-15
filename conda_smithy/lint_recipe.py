@@ -388,7 +388,8 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
             )
 
     # 21: Legacy usage of compilers
-    if build_reqs and ("toolchain" in build_reqs):
+    host_reqs = requirements_section.get("host", None)
+    if build_reqs and ("toolchain" in build_reqs) and not (host_reqs and ("r-base" in host_reqs)):
         lints.append(
             "Using toolchain directly in this manner is deprecated.  Consider "
             "using the compilers outlined "

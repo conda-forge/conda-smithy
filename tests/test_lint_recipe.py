@@ -433,6 +433,56 @@ class Test_linter(unittest.TestCase):
                 is_good=True,
             )
 
+    def test_legacy_compilers(self):
+        expected_start = "Using toolchain directly in this manner is deprecated."
+
+        with tmp_directory() as recipe_dir:
+
+            def assert_legacy_compilers(meta_string, is_good=False):
+                with io.open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
+                    fh.write(meta_string)
+                lints, hints = linter.main(recipe_dir, return_hints=True)
+                if is_good:
+                    message = (
+                        "Found hints when there shouldn't have " "been a lint for '{}'."
+                    ).format(meta_string)
+                else:
+                    message = (
+                        "Expected hints for '{}', but didn't " "get any."
+                    ).format(meta_string)
+                self.assertEqual(
+                    not is_good,
+                    any(lint.startswith(expected_start) for lint in lints),
+                    message,
+                )
+
+            assert_legacy_compilers(
+                """
+                            requirements:
+                              build:
+                                - toolchain
+                            """
+            )
+            assert_legacy_compilers(
+                """
+                            requirements:
+                              build:
+                                - toolchain
+                              host:
+                                - abc
+                            """
+            )
+            assert_legacy_compilers(
+                """
+                            requirements:
+                              build:
+                                - toolchain
+                              host:
+                                - r-base
+                            """,
+                is_good=True,
+            )
+
     def test_jinja_os_environ(self):
         # Test that we can use os.environ in a recipe. We don't care about
         # the results here.
