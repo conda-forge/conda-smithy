@@ -1,76 +1,45 @@
 # This file was generated automatically from conda-smithy. To update this configuration,
 # update the conda-forge.yml and/or the recipe/meta.yaml.
-# -*- mode: yaml -*-
-
+{#
+# -*- mode: jinja -*-
+#}
+{%- set platformset = [] %}
+{%- for _, platform, _ in configs %}
+  {%- set pfarchless = platform.split('-')[0] %}
+  {%- if pfarchless not in platformset %}
+    {%- do platformset.append(pfarchless) %}
+  {%- endif %}
+{%- endfor %}
 language: generic
 
-os: osx
-osx_image: {{ travis.get('osx_image', 'xcode9.4') }}
-
-
-{% block env -%}
-{% if configs[0] or travis.secure -%}
+{% if travis.secure -%}
 env:
-  {%- if configs[0] %}
-  matrix:
-    {%- for config, _, _ in configs %}
-    - CONFIG={{ config }}
-    {%- endfor %}
-  {%- endif %}
-{##}
-  {%- if travis.secure %}
   global:
     {%- for name, hashed_secure in travis.secure | dictsort %}
     # The {{ name }} secure variable. This is defined canonically in conda-forge.yml.
     - secure: "{{ hashed_secure }}"
     {%- endfor %}
-  {%- endif %}
 {%- endif %}
-{% endblock %}
 
-before_install:
-    # Fast finish the PR.
-    - |
-      {{ fast_finish }}
-
-    # Remove homebrew.
-    - |
-      echo ""
-      echo "Removing homebrew from Travis CI to avoid conflicts."
-      curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/uninstall > ~/uninstall_homebrew
-      chmod +x ~/uninstall_homebrew
-      ~/uninstall_homebrew -fq
-      rm ~/uninstall_homebrew
-
-
-install:
-    # Install Miniconda.
-    - |
-      echo ""
-      echo "Installing a fresh version of Miniconda."
-      MINICONDA_URL="https://repo.continuum.io/miniconda"
-      MINICONDA_FILE="Miniconda3-latest-MacOSX-x86_64.sh"
-      curl -L -O "${MINICONDA_URL}/${MINICONDA_FILE}"
-      bash $MINICONDA_FILE -b
-
-    # Configure conda.
-    - |
-      echo ""
-      echo "Configuring conda."
-      source /Users/travis/miniconda3/bin/activate root
-
-      conda install -n root -c conda-forge --quiet --yes conda-forge-ci-setup=2 conda-build
-      setup_conda_rc ./ ./{{ recipe_dir }} ./.ci_support/${CONFIG}.yaml
-
-      {% if build_setup -%}
-      {{ build_setup }}{% endif %}
-
-    # compiler cleanup
-    - |
-      mangle_compiler ./ ./{{ recipe_dir }} ./.ci_support/${CONFIG}.yaml
-
+{% if configs[0] -%}
+matrix:
+  include:
+    {%- for config, platform, upload in configs | sort %}
+    - env: CONFIG={{ config }} UPLOAD_PACKAGES={{ upload }} PLATFORM={{ platform }}
+    {%- if platform.startswith("osx") %}
+      os: osx
+      osx_image: {{ travis.get('osx_image', 'xcode9.4') }}
+    {%- elif platform.startswith("linux-ppc64le") %}
+      os: linux-ppc64le
+    {%- elif platform.startswith("linux-64") %}
+      os: linux
+    {%- endif %}
+{% endfor %}
+{%- endif %}
 script:
-  # generate the build number clobber
-  - make_build_number ./ ./{{ recipe_dir }} ./.ci_support/${CONFIG}.yaml
-  - {% if idle_timeout_minutes %}travis_wait {{ idle_timeout_minutes }}{% endif %} conda build ./{{ recipe_dir }} -m ./.ci_support/${CONFIG}.yaml --clobber-file ./.ci_support/clobber_${CONFIG}.yaml
-  - upload_package ./ ./{{ recipe_dir }} ./.ci_support/${CONFIG}.yaml
+{% if 'osx' in platformset %}
+  - if [[ ${PLATFORM} =~ .*osx.* ]]; then ./.travis/run_osx_build.sh; fi
+{%- endif %}
+{% if 'linux' in platformset %}
+  - if [[ ${PLATFORM} =~ .*linux.* ]]; then pip install shyaml --user && ./.travis/run_docker_build.sh; fi
+{%- endif %}
