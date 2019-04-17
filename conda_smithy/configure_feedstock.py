@@ -1243,10 +1243,11 @@ def _load_forge_config(forge_dir, exclusive_config_file):
     print(log)
     print("## END CONFIGURATION\n")
 
-    for platform in ["linux_aarch64", "linux_ppc64le"]:
+    for platform in ["linux_aarch64"]:
         if config["provider"][platform] == "default":
             config["provider"][platform] = "azure"
-    if config["provider"]["linux_ppc64le"] == "native":
+
+    if config["provider"]["linux_ppc64le"] in {"native", "default"}:
         config["provider"][platform] = "travis"
 
     # Set the environment variable for the compiler stack
