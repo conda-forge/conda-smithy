@@ -146,6 +146,9 @@ Current build status
     </td>
   </tr>
   {%- endif %}
+{%- if not linux_ppc64le.enabled %}
+![ppc64le disabled]({{ shield }}badge/ppc64le-disabled-lightgrey.svg)
+{%- endif %}
 {%- endif %}
 </table>
 

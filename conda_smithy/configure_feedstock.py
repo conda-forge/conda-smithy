@@ -435,6 +435,7 @@ def dump_subspace_config_files(metas, root_path, platform, arch, upload):
         config = finalize_config(config, platform)
         with write_file(out_path) as f:
             yaml.dump(config, f, default_flow_style=False)
+
         target_platform = config.get("target_platform", [platform_arch])[0]
         result.append((config_name, target_platform, upload))
     return sorted(result)
@@ -536,22 +537,6 @@ def _render_ci_provider(
             if not meta.skip():
                 enable_platform[i] = True
         metas_list_of_lists.append(metas)
-
-    if os.path.isdir(os.path.join(forge_dir, ".ci_support")):
-        configs = glob.glob(
-            os.path.join(
-                forge_dir, ".ci_support", "{}_*".format(provider_name)
-            )
-        )
-        for config in configs:
-            remove_file(config)
-
-        for platform in platforms:
-            configs = glob.glob(
-                os.path.join(forge_dir, ".ci_support", "{}_*".format(platform))
-            )
-            for config in configs:
-                remove_file(config)
 
     if not any(enable_platform):
         # There are no cases to build (not even a case without any special
@@ -880,8 +865,17 @@ def _travis_specific_setup(jinja_env, forge_config, forge_dir, platform):
         """
         )
 
-    # TODO: Conda has a convenience for accessing nested yaml content.
-    template_files = []
+    platform_templates = {
+        "linux": [
+            "run_docker_build.sh.tmpl",
+            "build_steps.sh.tmpl",
+        ],
+        "osx": [
+            "run_osx_build.sh.tmpl",
+        ],
+        "win": [],
+    }
+    template_files = platform_templates.get(platform, [])
 
     _render_template_exe_files(
         forge_config=forge_config,
@@ -921,6 +915,14 @@ def render_travis(jinja_env, forge_config, forge_dir):
         "travis", forge_config
     )
 
+    extra_platform_files = {
+        "linux": [
+            os.path.join(forge_dir, ".travis", "run_docker_build.sh"),
+            os.path.join(forge_dir, ".travis", "build_steps.sh"),
+        ],
+        "osx": [os.path.join(forge_dir, ".travis", "run_osx_build.sh")],
+    }
+
     return _render_ci_provider(
         "travis",
         jinja_env=jinja_env,
@@ -934,6 +936,7 @@ def render_travis(jinja_env, forge_config, forge_dir):
         keep_noarchs=keep_noarchs,
         platform_specific_setup=_travis_specific_setup,
         upload_packages=upload_packages,
+        extra_platform_files=extra_platform_files,
     )
 
 
@@ -1240,9 +1243,12 @@ def _load_forge_config(forge_dir, exclusive_config_file):
     print(log)
     print("## END CONFIGURATION\n")
 
-    for platform in ["linux_aarch64", "linux_ppc64le"]:
+    for platform in ["linux_aarch64"]:
         if config["provider"][platform] == "default":
             config["provider"][platform] = "azure"
+
+    if config["provider"]["linux_ppc64le"] in {"native", "default"}:
+        config["provider"][platform] = "travis"
 
     # Set the environment variable for the compiler stack
     os.environ["CF_COMPILER_STACK"] = config["compiler_stack"]
@@ -1347,6 +1353,17 @@ def get_cfp_file_path(resolve=None, error_on_warn=True):
     return cf_pinning_file, cf_pinning_ver
 
 
+def clear_variants(forge_dir):
+    "Remove all variant files placed in the .ci_support path"
+    if os.path.isdir(os.path.join(forge_dir, ".ci_support")):
+        configs = glob.glob(
+            os.path.join(
+                forge_dir, ".ci_support", "*")
+        )
+        for config in configs:
+            remove_file(config)
+
+
 def main(
     forge_file_directory, no_check_uptodate=False, commit=False, exclusive_config_file=None, check=False
 ):
@@ -1400,7 +1417,8 @@ def main(
     )
 
     copy_feedstock_content(forge_dir)
-    os.chmod(os.path.join(forge_dir, "build-locally.xsh"), 0o755)
+    os.chmod(os.path.join(forge_dir, "build-locally.py"), 0o755)
+    clear_variants(forge_dir)
 
     render_circle(env, config, forge_dir)
     render_travis(env, config, forge_dir)
