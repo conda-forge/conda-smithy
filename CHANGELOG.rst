@@ -4,6 +4,27 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.3.3
+====================
+
+**Added:**
+
+* Added native ppc64le support to for travis-ci.  This can be enabled by either using
+  `provider: {linux_ppc64le: travis}` or `provider: {linux_ppc64le: native}` in the conda-forge.yml.
+  These will be the new default behavior going forward for ppc64le builds.  If native builds are not needed the 
+  qemu based builds on azure will continue to function as before.
+* Added `DOCKER_IMAGE` variable to `run_docker_build.sh`
+
+**Changed:**
+
+* Fallback to default image in `run_docker_build.sh` if `shyaml` is not installed.
+
+**Fixed:**
+
+* Fixed badges for noarch builds using azure
+
+
+
 v3.3.2
 ====================
 
