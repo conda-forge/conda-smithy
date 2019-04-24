@@ -1,6 +1,6 @@
 **Added:**
 
-* New ``build-locally.xsh`` script that is added to the root feedstock directory when
+* New ``build-locally.py`` script that is added to the root feedstock directory when
   ``conda smithy rerender`` is run. This script runs conda build locally. Currently
   it only fully supports running docker builds.
 
