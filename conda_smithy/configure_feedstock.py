@@ -1248,7 +1248,7 @@ def _load_forge_config(forge_dir, exclusive_config_file):
             config["provider"][platform] = "azure"
 
     if config["provider"]["linux_ppc64le"] in {"native", "default"}:
-        config["provider"][platform] = "travis"
+        config["provider"]["linux_ppc64le"] = "travis"
 
     # Set the environment variable for the compiler stack
     os.environ["CF_COMPILER_STACK"] = config["compiler_stack"]
