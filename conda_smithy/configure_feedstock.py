@@ -240,6 +240,18 @@ def _trim_unused_pin_run_as_build(all_used_vars):
         del all_used_vars["pin_run_as_build"]
 
 
+def apply_migrations(list_of_metas):
+    # CFEP 9 variant mergin
+    migrations = glob.glob('./migrations/*.yaml')
+    from .variant_algebra import parse_variant, variant_add
+    
+    migration_variants = [(fn, parse_variant(fn)) for fn in migrations]
+    migration_variants.sort(key = lambda fn, v: (v.get('migration_ts'), fn))
+
+    for meta in list_of_metas:
+        
+
+
 def _collapse_subpackage_variants(list_of_metas):
     """Collapse all subpackage node variants into one aggregate collection of used variables
 
@@ -254,11 +266,16 @@ def _collapse_subpackage_variants(list_of_metas):
     all_used_vars = set()
     all_variants = set()
 
+    list_of_metas = apply_migrations(list_of_metas)
+
     for meta in list_of_metas:
         all_used_vars.update(meta.get_used_vars())
         all_variants.update(
             conda_build.utils.HashableDict(v) for v in meta.config.variants
         )
+
+
+
         all_variants.add(conda_build.utils.HashableDict(meta.config.variant))
 
     top_level_loop_vars = list_of_metas[0].get_used_loop_vars(
@@ -494,6 +511,7 @@ def _render_ci_provider(
         )
         # render returns some download & reparsing info that we don't care about
         metas = [m for m, _, _ in metas]
+
 
         if not keep_noarch:
             to_delete = []
