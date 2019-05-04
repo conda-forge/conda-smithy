@@ -72,6 +72,7 @@ export UPLOAD_PACKAGES="${UPLOAD_PACKAGES:-True}"
            -e BINSTAR_TOKEN \
            -e HOST_USER_ID \
            -e UPLOAD_PACKAGES \
+           -e CI \
            $DOCKER_IMAGE \
            {{ docker.command }} \
            /home/conda/feedstock_root/${PROVIDER_DIR}/build_steps.sh
