@@ -31,6 +31,7 @@ platform:
     - x64
 
 install:
+    - cmd: set "CI=appveyor"
     # If there is a newer build queued for the same PR, cancel this one.
     - cmd: |
         {{ fast_finish }}
