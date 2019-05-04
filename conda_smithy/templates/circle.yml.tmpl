@@ -41,11 +41,11 @@ jobs:
           # Run, test and (if we have a BINSTAR_TOKEN) upload the distributions.
 {%- if platform.startswith('linux') %}
           command: |
-            export CI=azure
+            export CI=circle
             ./.circleci/run_docker_build.sh
 {%- else %}
           command: |
-            export CI=azure
+            export CI=circle
             ./.circleci/run_osx_build.sh
 {%- endif %}
 {%- if idle_timeout_minutes %}
