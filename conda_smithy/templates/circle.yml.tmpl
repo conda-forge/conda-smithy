@@ -40,9 +40,13 @@ jobs:
       - run:
           # Run, test and (if we have a BINSTAR_TOKEN) upload the distributions.
 {%- if platform.startswith('linux') %}
-          command: ./.circleci/run_docker_build.sh
+          command: |
+            export CI=circle
+            ./.circleci/run_docker_build.sh
 {%- else %}
-          command: ./.circleci/run_osx_build.sh
+          command: |
+            export CI=circle
+            ./.circleci/run_osx_build.sh
 {%- endif %}
 {%- if idle_timeout_minutes %}
           no_output_timeout: {{ idle_timeout_minutes }}m
