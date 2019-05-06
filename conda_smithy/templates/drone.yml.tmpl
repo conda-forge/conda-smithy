@@ -15,7 +15,6 @@ steps:
     CONFIG: {{ config }}
     UPLOAD_PACKAGES: {{ upload }}
     PLATFORM: {{ platform }}
-    DOCKER_IMAGE: {{ docker.image }}
     #BINSTAR_TOKEN: ""
   commands:
   {%- if 'linux' in platform %}
