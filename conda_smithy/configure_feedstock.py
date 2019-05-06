@@ -9,7 +9,6 @@ import yaml
 import warnings
 from collections import OrderedDict
 import copy
-import sys
 
 import conda_build.api
 import conda_build.utils
