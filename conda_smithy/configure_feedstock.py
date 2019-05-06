@@ -1061,9 +1061,9 @@ def render_azure(jinja_env, forge_config, forge_dir):
 
 
 def _drone_specific_setup(jinja_env, forge_config, forge_dir, platform):
-    # TODO Update to only use the build and setup script
     platform_templates = {
         "linux": [
+            "build_steps.sh.tmpl",
             "build_and_run.sh.tmpl",
         ],
         "osx": [],
@@ -1307,9 +1307,9 @@ def _load_forge_config(forge_dir, exclusive_config_file):
         if config["provider"][platform] == "default":
             config["provider"][platform] = "azure"
 
-    # TODO: Switch default to native builds using Drone
-    # if config["provider"]["linux_aarch64"] in {"native", "default"}:
-    #     config["provider"]["linux_aarch64"] = "azure"
+    # TODO: Switch default to Drone
+    if config["provider"]["linux_aarch64"] in {"native"}:
+        config["provider"]["linux_aarch64"] = "drone"
 
     if config["provider"]["linux_ppc64le"] in {"native", "default"}:
         config["provider"]["linux_ppc64le"] = "travis"

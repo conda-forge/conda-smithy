@@ -10,9 +10,10 @@ set -xeuo pipefail
 # Activate the conda environment first
 . /opt/conda/bin/activate
 
-FEEDSTOCK_ROOT="${CI_WORKSPACE}"
-RECIPE_ROOT="${FEEDSTOCK_ROOT}/recipe"
-ARTIFACTS="${FEEDSTOCK_ROOT}/build_artifacts"
+# Set up the directories here needed for the build script
+export FEEDSTOCK_ROOT="${CI_WORKSPACE}"
+export RECIPE_ROOT="${FEEDSTOCK_ROOT}/recipe"
+export ARTIFACTS="${FEEDSTOCK_ROOT}/build_artifacts"
 
 if [ -z "$CONFIG" ]; then
     set +x
@@ -30,41 +31,8 @@ DONE_CANARY="$ARTIFACTS/conda-forge-build-done-${CONFIG}"
 rm -f "$DONE_CANARY"
 
 # Conda build
+./.drone/build_steps.sh
 
-#export PYTHONUNBUFFERED=1
-#export FEEDSTOCK_ROOT=/home/conda/feedstock_root
-#export RECIPE_ROOT=/home/conda/recipe_root
-export CI_SUPPORT="${FEEDSTOCK_ROOT}/.ci_support"
-export CONFIG_FILE="${CI_SUPPORT}/${CONFIG}.yaml"
-
-cat >~/.condarc <<CONDARC
-
-conda-build:
- root-dir: /home/conda/feedstock_root/build_artifacts
-
-CONDARC
-
-conda install --yes --quiet conda-forge-ci-setup=2 conda-build -c conda-forge
-
-# set up the condarc
-setup_conda_rc "${FEEDSTOCK_ROOT}" "${RECIPE_ROOT}" "${CONFIG_FILE}"
-
-{% if build_setup -%}
-{{ build_setup }}{% endif -%}
-{% if yum_build_setup is defined -%}
-{{ yum_build_setup }}{% endif -%}
-
-# make the build number clobber
-make_build_number "${FEEDSTOCK_ROOT}" "${RECIPE_ROOT}" "${CONFIG_FILE}"
-
-conda build "${RECIPE_ROOT}" -m "${CI_SUPPORT}/${CONFIG}.yaml" \
-    --clobber-file "${CI_SUPPORT}/clobber_${CONFIG}.yaml"
-
-if [[ "${UPLOAD_PACKAGES}" != "False" ]]; then
-    upload_package "${FEEDSTOCK_ROOT}" "${RECIPE_ROOT}" "${CONFIG_FILE}"
-fi
-
-touch "${ARTIFACTS}/conda-forge-build-done-${CONFIG}"
 # verify that the end of the script was reached
 test -f "$DONE_CANARY"
 
