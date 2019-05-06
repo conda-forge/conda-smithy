@@ -1063,7 +1063,6 @@ def _drone_specific_setup(jinja_env, forge_config, forge_dir, platform):
     platform_templates = {
         "linux": [
             "build_steps.sh.tmpl",
-            "build_and_run.sh.tmpl",
         ],
         "osx": [],
         "win": [],
