@@ -20,8 +20,8 @@ steps:
   commands:
   {%- if 'linux' in platform %}
     - . /opt/conda/bin/activate
-    - export FEEDSTOCK_ROOT="${CI_WORKSPACE}"
-    - export RECIPE_ROOT="${FEEDSTOCK_ROOT}/recipe"
+    - export FEEDSTOCK_ROOT="$CI_WORKSPACE"
+    - export RECIPE_ROOT="$FEEDSTOCK_ROOT/recipe"
     - ./.drone/build_steps.sh
     - echo "Done building"
   {%- endif %}
