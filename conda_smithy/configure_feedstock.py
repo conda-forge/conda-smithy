@@ -357,7 +357,16 @@ def _yaml_represent_ordereddict(yaml_representer, data):
     )
 
 
-def dump_subspace_config_files(metas, root_path, platform, arch, upload):
+def finalize_config(config, platform, forge_config):
+    """For configs without essential parameters like docker_image
+    add fallback value.
+    """
+    if platform.startswith("linux") and not "docker_image" in config:
+        config["docker_image"] = [forge_config["docker"]["fallback_image"]]
+    return config
+
+
+def dump_subspace_config_files(metas, root_path, platform, arch, upload, forge_config):
     """With conda-build 3, it handles the build matrix.  We take what it spits out, and write a
     config.yaml file for each matrix entry that it spits out.  References to a specific file
     replace all of the old environment variables that specified a matrix entry."""
@@ -392,6 +401,8 @@ def dump_subspace_config_files(metas, root_path, platform, arch, upload):
         out_path = os.path.join(out_folder, config_name) + ".yaml"
         if not os.path.isdir(out_folder):
             os.makedirs(out_folder)
+
+        config = finalize_config(config, platform, forge_config)
 
         with write_file(out_path) as f:
             yaml.dump(config, f, default_flow_style=False)
@@ -531,7 +542,7 @@ def _render_ci_provider(
             if enable:
                 configs.extend(
                     dump_subspace_config_files(
-                        metas, forge_dir, platform, arch, upload
+                        metas, forge_dir, platform, arch, upload, forge_config
                     )
                 )
 
