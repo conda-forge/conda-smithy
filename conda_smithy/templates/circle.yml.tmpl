@@ -26,7 +26,9 @@ jobs:
 {%- endif %}
     environment:
       - CONFIG: "{{ config_name }}"
+{%- if platform.startswith('linux') %}
         DOCKER_IMAGE: "{{ config["docker_image"][-1] }}"
+{%- endif %}
     steps:
       - checkout
       - run:
