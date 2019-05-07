@@ -15,8 +15,8 @@ jobs:
           # The Circle-CI build should not be active, but if this is not true for some reason, do a fast finish.
           command: exit 0
 {%- else %}
-{%- for config, platform, _ in configs %}
-  build_{{ config }}:
+{%- for config_name, platform, _, config in configs %}
+  build_{{ config_name }}:
     working_directory: ~/test
 {%- if platform.startswith('linux') %}
     machine: true
@@ -25,7 +25,8 @@ jobs:
       xcode: "9.0"
 {%- endif %}
     environment:
-      - CONFIG: "{{ config }}"
+      - CONFIG: "{{ config_name }}"
+        DOCKER_IMAGE: "{{ config["docker_image"][-1] }}"
     steps:
       - checkout
       - run:
@@ -33,10 +34,6 @@ jobs:
           command: |
             ./.circleci/fast_finish_ci_pr_build.sh
             ./.circleci/checkout_merge_commit.sh
-{%- if platform.startswith('linux') %}
-      - run:
-          command: docker pull {{ docker.image }}
-{%- endif %}
       - run:
           # Run, test and (if we have a BINSTAR_TOKEN) upload the distributions.
 {%- if platform.startswith('linux') %}
@@ -67,8 +64,8 @@ workflows:
               ignore:
                 - /.*/
 {%- else %}
-{%- for config, _, _ in configs %}
-      - build_{{ config }}
+{%- for config_name, _, _, _ in configs %}
+      - build_{{ config_name }}
 {%- endfor -%}
 {%- endif -%}
 {%- endblock %}

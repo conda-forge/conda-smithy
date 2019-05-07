@@ -10,10 +10,10 @@ jobs:
   strategy:
     maxParallel: 4
     matrix:
-    {%- for config, platform, upload in configs | sort %}
+    {%- for config_name, platform, upload, _ in configs | sort %}
     {%- if platform.startswith('win') %}
-      {{ config }}:
-        CONFIG: {{ config}}
+      {{ config_name }}:
+        CONFIG: {{ config_name}}
         CONDA_BLD_PATH: D:\\bld\\
         UPLOAD_PACKAGES: {{ upload }}
     {%- endif %}
