@@ -18,9 +18,10 @@ steps:
     #BINSTAR_TOKEN: ""
   commands:
   {%- if 'linux' in platform %}
-    - . /opt/conda/bin/activate
     - export FEEDSTOCK_ROOT="$CI_WORKSPACE"
     - export RECIPE_ROOT="$FEEDSTOCK_ROOT/recipe"
+    - export CI=drone
+    - . /opt/conda/bin/activate
     - ./.drone/build_steps.sh
     - echo "Done building"
   {%- endif %}
