@@ -19,11 +19,6 @@ jobs:
     {%- endif %}
     {%- endfor %}
   steps:
-  - script: |
-      sudo pip install --upgrade pip
-      sudo pip install setuptools shyaml
-    displayName: Install dependencies
-
   # configure qemu binfmt-misc running.  This allows us to run docker containers
   # embedded qemu-static
   - script: |
