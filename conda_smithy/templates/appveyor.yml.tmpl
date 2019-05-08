@@ -16,8 +16,8 @@ environment:
   {%- endfor %}
 
   matrix:
-  {%- for config, platform, _ in configs %}
-    - CONFIG: {{ config}}
+  {%- for config_name, platform, _, _ in configs %}
+    - CONFIG: {{ config_name}}
   {%- if "win-32" in platform %}
       CONDA_INSTALL_LOCN: C:\Miniconda36
 {% else %}

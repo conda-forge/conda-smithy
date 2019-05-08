@@ -4,7 +4,7 @@
 # -*- mode: jinja -*-
 #}
 {%- set platformset = [] %}
-{%- for _, platform, _ in configs %}
+{%- for _, platform, _, _ in configs %}
   {%- set pfarchless = platform.split('-')[0] %}
   {%- if pfarchless not in platformset %}
     {%- do platformset.append(pfarchless) %}
@@ -24,14 +24,16 @@ env:
 {% if configs[0] -%}
 matrix:
   include:
-    {%- for config, platform, upload in configs | sort %}
-    - env: CONFIG={{ config }} UPLOAD_PACKAGES={{ upload }} PLATFORM={{ platform }}
+    {%- for config_name, platform, upload, config in configs | sort %}
     {%- if platform.startswith("osx") %}
+    - env: CONFIG={{ config_name }} UPLOAD_PACKAGES={{ upload }} PLATFORM={{ platform }}
       os: osx
       osx_image: {{ travis.get('osx_image', 'xcode9.4') }}
     {%- elif platform.startswith("linux-ppc64le") %}
+    - env: CONFIG={{ config_name }} UPLOAD_PACKAGES={{ upload }} PLATFORM={{ platform }} DOCKER_IMAGE={{ config["docker_image"][-1] }}
       os: linux-ppc64le
     {%- elif platform.startswith("linux-64") %}
+    - env: CONFIG={{ config_name }} UPLOAD_PACKAGES={{ upload }} PLATFORM={{ platform }} DOCKER_IMAGE={{ config["docker_image"][-1] }}
       os: linux
     {%- endif %}
 {% endfor %}
@@ -42,5 +44,5 @@ script:
   - if [[ ${PLATFORM} =~ .*osx.* ]]; then ./.travis/run_osx_build.sh; fi
 {%- endif %}
 {% if 'linux' in platformset %}
-  - if [[ ${PLATFORM} =~ .*linux.* ]]; then pip install shyaml --user && ./.travis/run_docker_build.sh; fi
+  - if [[ ${PLATFORM} =~ .*linux.* ]]; then ./.travis/run_docker_build.sh; fi
 {%- endif %}

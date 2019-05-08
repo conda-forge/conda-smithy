@@ -357,46 +357,16 @@ def _yaml_represent_ordereddict(yaml_representer, data):
     )
 
 
-def finalize_config(config, platform):
-    """Specialized handling to deal with the dual compiler output state.
-    In a future state this SHOULD go away"""
-    # TODO: REMOVE WHEN NO LONGER NEEDED
-    if platform in {"linux", "osx"}:
-        if len(
-            {"c_compiler", "cxx_compiler", "fortran_compiler"}
-            & set(config.keys())
-        ):
-            # we have a compiled source here so the zip should take care of things appropriately
-            pass
-        else:
-            try:
-                # prefer to build with the newer compiler image, This ensures that for things that don't declare they need
-                # compilers, they will fail
-                config["docker_image"] = [config["docker_image"][-1]]
-            except KeyError:
-                config["docker_image"] = ["condaforge/linux-anvil"]
-
-            try:
-                config["channel_sources"] = [config["channel_sources"][0]]
-            except KeyError:
-                config["channel_sources"] = ["conda-forge,defaults"]
-
-            try:
-                config["channel_targets"] = [config["channel_targets"][0]]
-            except KeyError:
-                config["channel_targets"] = ["conda-forge main"]
-
-            try:
-                config["build_number_decrement"] = [
-                    config["build_number_decrement"][-1]
-                ]
-            except KeyError:
-                config["build_number_decrement"] = ["0"]
-
+def finalize_config(config, platform, forge_config):
+    """For configs without essential parameters like docker_image
+    add fallback value.
+    """
+    if platform.startswith("linux") and not "docker_image" in config:
+        config["docker_image"] = [forge_config["docker"]["fallback_image"]]
     return config
 
 
-def dump_subspace_config_files(metas, root_path, platform, arch, upload):
+def dump_subspace_config_files(metas, root_path, platform, arch, upload, forge_config):
     """With conda-build 3, it handles the build matrix.  We take what it spits out, and write a
     config.yaml file for each matrix entry that it spits out.  References to a specific file
     replace all of the old environment variables that specified a matrix entry."""
@@ -432,12 +402,13 @@ def dump_subspace_config_files(metas, root_path, platform, arch, upload):
         if not os.path.isdir(out_folder):
             os.makedirs(out_folder)
 
-        config = finalize_config(config, platform)
+        config = finalize_config(config, platform, forge_config)
+
         with write_file(out_path) as f:
             yaml.dump(config, f, default_flow_style=False)
 
         target_platform = config.get("target_platform", [platform_arch])[0]
-        result.append((config_name, target_platform, upload))
+        result.append((config_name, target_platform, upload, config))
     return sorted(result)
 
 
@@ -571,7 +542,7 @@ def _render_ci_provider(
             if enable:
                 configs.extend(
                     dump_subspace_config_files(
-                        metas, forge_dir, platform, arch, upload
+                        metas, forge_dir, platform, arch, upload, forge_config
                     )
                 )
 
@@ -1024,14 +995,12 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
 
     forge_config["build_setup"] = build_setup
 
-    forge_config["docker"]["interactive"] = False
     _render_template_exe_files(
         forge_config=forge_config,
         target_dir=os.path.join(forge_dir, ".azure-pipelines"),
         jinja_env=jinja_env,
         template_files=template_files,
     )
-    forge_config["docker"]["interactive"] = True
 
 
 def render_azure(jinja_env, forge_config, forge_dir):
@@ -1136,9 +1105,8 @@ def _load_forge_config(forge_dir, exclusive_config_file):
     config = {
         "docker": {
             "executable": "docker",
-            "image": "condaforge/linux-anvil-comp7",
+            "fallback_image": "condaforge/linux-anvil-comp7",
             "command": "bash",
-            "interactive": True,
         },
         "templates": {},
         "travis": {},
@@ -1217,12 +1185,17 @@ def _load_forge_config(forge_dir, exclusive_config_file):
         if file_config.get("matrix") and not os.path.exists(
             os.path.join(forge_dir, "recipe", "conda_build_config.yaml")
         ):
-            # FIXME: update docs URL
             raise ValueError(
                 "Cannot rerender with matrix in conda-forge.yml."
                 " Please migrate matrix to conda_build_config.yaml and try again."
                 " See https://github.com/conda-forge/conda-smithy/wiki/Release-Notes-3.0.0.rc1"
                 " for more info."
+            )
+
+        if file_config.get("docker") and file_config.get("docker").get("image"):
+            raise ValueError(
+                "Setting docker image in conda-forge.yml is removed now."
+                " Use conda_build_config.yaml instead"
             )
 
         # The config is just the union of the defaults, and the overriden

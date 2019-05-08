@@ -44,7 +44,12 @@ def testing_workdir(tmpdir, request):
 @pytest.fixture(scope="function")
 def config_yaml(testing_workdir):
     config = {"python": ["2.7", "3.5"], "r_base": ["3.3.2", "3.4.2"]}
+    os.makedirs(os.path.join(testing_workdir, "recipe"))
     with open(os.path.join(testing_workdir, "config.yaml"), "w") as f:
+        f.write("docker:\n")
+        f.write("  fallback_image:\n")
+        f.write("  - centos:6\n")
+    with open(os.path.join(testing_workdir, "recipe", "default_config.yaml"), "w") as f:
         yaml.dump(config, f, default_flow_style=False)
         # need selectors, so write these more manually
         f.write("target_platform:\n")
@@ -62,10 +67,10 @@ def config_yaml(testing_workdir):
         os.path.join(testing_workdir, ".circleci", "checkout_merge_commit.sh"), "w"
     ) as f:
         f.write("echo dummy file")
-    with open(os.path.join(testing_workdir, "short_config.yaml"), "w") as f:
+    with open(os.path.join(testing_workdir, "recipe", "short_config.yaml"), "w") as f:
         config = {"python": ["2.7"]}
         yaml.dump(config, f, default_flow_style=False)
-    with open(os.path.join(testing_workdir, "long_config.yaml"), "w") as f:
+    with open(os.path.join(testing_workdir, "recipe", "long_config.yaml"), "w") as f:
         config = {"python": ["2.7", "3.5", "3.6"]}
         yaml.dump(config, f, default_flow_style=False)
     return testing_workdir
@@ -73,7 +78,6 @@ def config_yaml(testing_workdir):
 
 @pytest.fixture(scope="function")
 def noarch_recipe(config_yaml, request):
-    os.makedirs(os.path.join(config_yaml, "recipe"))
     with open(os.path.join(config_yaml, "recipe", "meta.yaml"), "w") as fh:
         fh.write(
             """
@@ -92,14 +96,13 @@ requirements:
     return RecipeConfigPair(
         str(config_yaml),
         _load_forge_config(
-            config_yaml, exclusive_config_file=os.path.join(config_yaml, "config.yaml")
+            config_yaml, exclusive_config_file=os.path.join(config_yaml, "recipe", "default_config.yaml")
         ),
     )
 
 
 @pytest.fixture(scope="function")
 def r_recipe(config_yaml, request):
-    os.makedirs(os.path.join(config_yaml, "recipe"))
     with open(os.path.join(config_yaml, "recipe", "meta.yaml"), "w") as fh:
         fh.write(
             """
@@ -118,14 +121,13 @@ requirements:
     return RecipeConfigPair(
         str(config_yaml),
         _load_forge_config(
-            config_yaml, exclusive_config_file=os.path.join(config_yaml, "config.yaml")
+            config_yaml, exclusive_config_file=os.path.join(config_yaml, "recipe", "default_config.yaml")
         ),
     )
 
 
 @pytest.fixture(scope="function")
 def py_recipe(config_yaml, request):
-    os.makedirs(os.path.join(config_yaml, "recipe"))
     with open(os.path.join(config_yaml, "recipe", "meta.yaml"), "w") as fh:
         fh.write(
             """
@@ -146,14 +148,13 @@ about:
     return RecipeConfigPair(
         str(config_yaml),
         _load_forge_config(
-            config_yaml, exclusive_config_file=os.path.join(config_yaml, "config.yaml")
+            config_yaml, exclusive_config_file=os.path.join(config_yaml, "recipe", "default_config.yaml")
         ),
     )
 
 
 @pytest.fixture(scope="function")
 def skipped_recipe(config_yaml, request):
-    os.makedirs(os.path.join(config_yaml, "recipe"))
     with open(os.path.join(config_yaml, "recipe", "meta.yaml"), "w") as fh:
         fh.write(
             """
@@ -174,14 +175,13 @@ about:
     return RecipeConfigPair(
         str(config_yaml),
         _load_forge_config(
-            config_yaml, exclusive_config_file=os.path.join(config_yaml, "config.yaml")
+            config_yaml, exclusive_config_file=os.path.join(config_yaml, "recipe", "default_config.yaml")
         ),
     )
 
 
 @pytest.fixture(scope="function")
 def python_skipped_recipe(config_yaml, request):
-    os.makedirs(os.path.join(config_yaml, "recipe"))
     with open(os.path.join(config_yaml, "recipe", "meta.yaml"), "w") as fh:
         fh.write(
             """
@@ -202,14 +202,13 @@ about:
     return RecipeConfigPair(
         str(config_yaml),
         _load_forge_config(
-            config_yaml, exclusive_config_file=os.path.join(config_yaml, "config.yaml")
+            config_yaml, exclusive_config_file=os.path.join(config_yaml, "recipe", "default_config.yaml")
         ),
     )
 
 
 @pytest.fixture(scope="function")
 def linux_skipped_recipe(config_yaml, request):
-    os.makedirs(os.path.join(config_yaml, "recipe"))
     with open(os.path.join(config_yaml, "recipe", "meta.yaml"), "w") as fh:
         fh.write(
             """
@@ -228,7 +227,7 @@ about:
     return RecipeConfigPair(
         str(config_yaml),
         _load_forge_config(
-            config_yaml, exclusive_config_file=os.path.join(config_yaml, "config.yaml")
+            config_yaml, exclusive_config_file=os.path.join(config_yaml, "recipe", "default_config.yaml")
         ),
     )
 
