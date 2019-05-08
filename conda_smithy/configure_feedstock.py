@@ -1417,7 +1417,7 @@ def main(
     )
 
     copy_feedstock_content(forge_dir)
-    os.chmod(os.path.join(forge_dir, "build-locally.py"), 0o755)
+    set_exe_file(os.path.join(forge_dir, "build-locally.py"))
     clear_variants(forge_dir)
 
     render_circle(env, config, forge_dir)
