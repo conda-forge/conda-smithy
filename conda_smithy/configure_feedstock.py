@@ -625,12 +625,16 @@ def _render_ci_provider(
     return forge_config
 
 
-def _circle_specific_setup(jinja_env, forge_config, forge_dir, platform):
+def _get_build_setup_line(forge_dir, platform, forge_config):
     # If the recipe supplies its own run_conda_forge_build_setup script_linux,
     # we use it instead of the global one.
     if platform == "linux":
         cfbs_fpath = os.path.join(
             forge_dir, "recipe", "run_conda_forge_build_setup_linux"
+        )
+    elif platform == "win":
+        cfbs_fpath = os.path.join(
+            forge_dir, "recipe", "run_conda_forge_build_setup_win.bat"
         )
     else:
         cfbs_fpath = os.path.join(
@@ -643,9 +647,18 @@ def _circle_specific_setup(jinja_env, forge_config, forge_dir, platform):
             build_setup += textwrap.dedent(
                 """\
                 # Overriding global run_conda_forge_build_setup_linux with local copy.
-                source /home/conda/recipe_root/run_conda_forge_build_setup_linux
+                source ${RECIPE_ROOT}/run_conda_forge_build_setup_linux
 
             """
+            )
+        elif platform == "win":
+            build_setup += textwrap.dedent(
+                """\
+                # Overriding global run_conda_forge_build_setup_win with local copy.
+                {recipe_dir}\\run_conda_forge_build_setup_win
+            """.format(
+                    recipe_dir=forge_config["recipe_dir"]
+                )
             )
         else:
             build_setup += textwrap.dedent(
@@ -657,19 +670,31 @@ def _circle_specific_setup(jinja_env, forge_config, forge_dir, platform):
                 )
             )
     else:
-        build_setup += textwrap.dedent(
+        if platform == "win":
+            build_setup += textwrap.dedent(
+                """\
+                run_conda_forge_build_setup
+
+            """
+            )
+        else:
+            build_setup += textwrap.dedent(
             """\
             source run_conda_forge_build_setup
 
-        """
-        )
+            """
+            )
+    return build_setup
+
+
+def _circle_specific_setup(jinja_env, forge_config, forge_dir, platform):
 
     if platform == "linux":
         yum_build_setup = generate_yum_requirements(forge_dir)
         if yum_build_setup:
             forge_config["yum_build_setup"] = yum_build_setup
 
-    forge_config["build_setup"] = build_setup
+    forge_config["build_setup"] = _get_build_setup_line(forge_dir, platform, forge_config)
 
     if platform == "linux":
         run_file_name = "run_docker_build"
@@ -814,27 +839,7 @@ def render_circle(jinja_env, forge_config, forge_dir):
 
 
 def _travis_specific_setup(jinja_env, forge_config, forge_dir, platform):
-    build_setup = ""
-    # If the recipe supplies its own run_conda_forge_build_setup script_osx,
-    # we use it instead of the global one.
-    cfbs_fpath = os.path.join(
-        forge_dir, "recipe", "run_conda_forge_build_setup_osx"
-    )
-    if os.path.exists(cfbs_fpath):
-        build_setup += textwrap.dedent(
-            """\
-            # Overriding global run_conda_forge_build_setup_osx with local copy.
-            source {recipe_dir}/run_conda_forge_build_setup_osx
-        """.format(
-                recipe_dir=forge_config["recipe_dir"]
-            )
-        )
-    else:
-        build_setup += textwrap.dedent(
-            """\
-            source run_conda_forge_build_setup
-        """
-        )
+    build_setup = _get_build_setup_line(forge_dir, platform, forge_config)
 
     platform_templates = {
         "linux": [
@@ -912,32 +917,15 @@ def render_travis(jinja_env, forge_config, forge_dir):
 
 
 def _appveyor_specific_setup(jinja_env, forge_config, forge_dir, platform):
-    build_setup = ""
-    # If the recipe supplies its own run_conda_forge_build_setup_win.bat script,
-    # we use it instead of the global one.
-    cfbs_fpath = os.path.join(
-        forge_dir, "recipe", "run_conda_forge_build_setup_win.bat"
-    )
-    if os.path.exists(cfbs_fpath):
-        build_setup += textwrap.dedent(
-            """\
-            # Overriding global run_conda_forge_build_setup_win with local copy.
-            {recipe_dir}\\run_conda_forge_build_setup_win
-        """.format(
-                recipe_dir=forge_config["recipe_dir"]
-            )
-        )
-    else:
-        build_setup += textwrap.dedent(
-            """\
-
-            run_conda_forge_build_setup
-        """
-        )
-
+    build_setup = _get_build_setup_line(forge_dir, platform, forge_config)
     build_setup = build_setup.rstrip()
-    build_setup = build_setup.replace("\n", "\n    - cmd: ")
-    build_setup = build_setup.lstrip()
+    new_build_setup = ""
+    for line in build_setup.split("\n"):
+        if line.startswith("#"):
+            new_build_setup += "    " + line + "\n"
+        else:
+            new_build_setup += "    - cmd: " + line + "\n"
+    build_setup = new_build_setup.strip()
 
     forge_config["build_setup"] = build_setup
 
@@ -986,7 +974,7 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
     template_files = platform_templates.get(platform, [])
 
     # Explicitly add in a newline character to ensure that jinja templating doesn't do something stupid
-    build_setup = "run_conda_forge_build_setup\n"
+    build_setup = _get_build_setup_line(forge_dir, platform, forge_config)
 
     if platform == "linux":
         yum_build_setup = generate_yum_requirements(forge_dir)

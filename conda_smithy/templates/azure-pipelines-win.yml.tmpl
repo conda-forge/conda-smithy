@@ -74,7 +74,7 @@ jobs:
     # Configure the VM.
     - script: |
         set "CI=azure"
-        {{ build_setup}}
+        {{ build_setup.replace("\n", "\n        ").rstrip() }}
       displayName: conda-forge build setup
     {% endif %}
 

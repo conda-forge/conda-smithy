@@ -48,7 +48,7 @@ jobs:
 
       setup_conda_rc ./ ./recipe ./.ci_support/${CONFIG}.yaml
       export CI=azure
-      source run_conda_forge_build_setup
+      {{ build_setup.replace("\n", "\n      ").rstrip() }}
       conda update --yes --quiet --override-channels -c conda-forge -c defaults --all
     env: {
       OSX_FORCE_SDK_DOWNLOAD: "1"
