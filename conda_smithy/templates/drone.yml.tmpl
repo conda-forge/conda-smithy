@@ -1,8 +1,8 @@
 {% if configs[0] -%}
-{%- for config, platform, upload in configs | sort -%}
+{%- for config_name, platform, upload, config in configs | sort -%}
 ---
 kind: pipeline
-name: {{ config }}
+name: {{ config_name }}
 
 platform:
   os: linux
@@ -10,9 +10,9 @@ platform:
 
 steps:
 - name: Install and build
-  image: {{ docker.image }}
+  image: {{ config["docker_image"][-1] }}
   environment:
-    CONFIG: {{ config }}
+    CONFIG: {{ config_name }}
     UPLOAD_PACKAGES: {{ upload }}
     PLATFORM: {{ platform }}
     #BINSTAR_TOKEN: ""
