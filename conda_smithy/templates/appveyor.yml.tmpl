@@ -16,8 +16,8 @@ environment:
   {%- endfor %}
 
   matrix:
-  {%- for config, platform, _ in configs %}
-    - CONFIG: {{ config}}
+  {%- for config_name, platform, _, _ in configs %}
+    - CONFIG: {{ config_name}}
   {%- if "win-32" in platform %}
       CONDA_INSTALL_LOCN: C:\Miniconda36
 {% else %}
@@ -31,6 +31,7 @@ platform:
     - x64
 
 install:
+    - cmd: set "CI=appveyor"
     # If there is a newer build queued for the same PR, cancel this one.
     - cmd: |
         {{ fast_finish }}
