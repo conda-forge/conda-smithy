@@ -1047,10 +1047,6 @@ def _drone_specific_setup(jinja_env, forge_config, forge_dir, platform):
             forge_config['yum_build_setup'] = yum_build_setup
 
     forge_config["build_setup"] = build_setup
-    forge_config["docker"]["interactive"] = False
-
-    # Override the Docker image here so we don't need to set it in the template
-    forge_config["docker"]["image"] = "condaforge/linux-anvil-aarch64"
 
     _render_template_exe_files(
         forge_config=forge_config,
@@ -1058,7 +1054,6 @@ def _drone_specific_setup(jinja_env, forge_config, forge_dir, platform):
         jinja_env=jinja_env,
         template_files=template_files,
     )
-    forge_config["docker"]["interactive"] = True
 
 
 def render_drone(jinja_env, forge_config, forge_dir):
