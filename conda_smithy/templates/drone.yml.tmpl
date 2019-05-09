@@ -1,6 +1,14 @@
+---
+
+build_commands: &build_commands
+  - export FEEDSTOCK_ROOT="$CI_WORKSPACE"
+  - export RECIPE_ROOT="$FEEDSTOCK_ROOT/recipe"
+  - export CI=drone
+  - . /opt/conda/bin/activate
+  - echo "Done building"
+
 {% if configs[0] -%}
 {%- for config_name, platform, upload, config in configs | sort -%}
----
 kind: pipeline
 name: {{ config_name }}
 
@@ -16,15 +24,10 @@ steps:
     UPLOAD_PACKAGES: {{ upload }}
     PLATFORM: {{ platform }}
     #BINSTAR_TOKEN: ""
-  commands:
   {%- if 'linux' in platform %}
-    - export FEEDSTOCK_ROOT="$CI_WORKSPACE"
-    - export RECIPE_ROOT="$FEEDSTOCK_ROOT/recipe"
-    - export CI=drone
-    - . /opt/conda/bin/activate
-    - ./.drone/build_steps.sh
-    - echo "Done building"
+  commands: *build_commands
   {%- endif %}
+
 {% endfor %}
 {%- endif %}
 
