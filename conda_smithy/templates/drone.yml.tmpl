@@ -21,8 +21,8 @@ steps:
     - export FEEDSTOCK_ROOT="$CI_WORKSPACE"
     - export RECIPE_ROOT="$FEEDSTOCK_ROOT/recipe"
     - export CI=drone
-    - . /opt/conda/bin/activate
-    - ./.drone/build_steps.sh
+    - sed -i '$ichown -R conda:conda "$FEEDSTOCK_ROOT"' /opt/docker/bin/entrypoint
+    - /opt/docker/bin/entrypoint $FEEDSTOCK_ROOT/.drone/build_steps.sh
     - echo "Done building"
   {%- endif %}
 
