@@ -11,3 +11,4 @@ pygithub <2
 ruamel.yaml
 conda-forge-pinning
 vsts-python-api
+toolz
