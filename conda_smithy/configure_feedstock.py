@@ -244,13 +244,14 @@ def apply_migrations(list_of_metas, root_path):
     # CFEP 9 variant merging
     migrations_root = os.path.join(root_path, 'migrations', '*.yaml')
     migrations = glob.glob(migrations_root)
-    print(migrations_root, migrations)
-
+    
     from .variant_algebra import parse_variant, variant_add
     
-    migration_variants = [(fn, parse_variant(fn)) for fn in migrations]
+    migration_variants = [(fn, parse_variant(open(fn, 'r').read())) for fn in migrations]
     migration_variants.sort(key = lambda fn_v: (fn_v[1].get('migration_ts'), fn_v[0]))
-
+    if len(migration_variants):
+        print(f"Applying migrations: {','.join(k for k, v in migration_variants)}")
+    
     output_metas = []
     for meta in list_of_metas:
         variant = meta.config.variant
@@ -283,8 +284,6 @@ def _collapse_subpackage_variants(list_of_metas, root_path):
         all_variants.update(
             conda_build.utils.HashableDict(v) for v in meta.config.variants
         )
-
-
 
         all_variants.add(conda_build.utils.HashableDict(meta.config.variant))
 

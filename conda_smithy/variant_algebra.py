@@ -6,16 +6,22 @@ from conda.models.version import VersionOrder
 from functools import partial
 
 
-def parse_variant(variant_file_str: str, config=None):
+def parse_variant(variant_file_content: str, config=None):
+    """
+    Parameters
+    ----------
+    variant_file_content : str
+        The loaded vaiant contents.  This can include selectors etc.
+    """
     if not config:
         from conda_build.config import Config
 
         config = Config()
     from conda_build.metadata import select_lines, ns_cfg
 
-    with open(variant_file_str, 'r') as fo:
-        data = fo.read()
-        contents = select_lines(data, ns_cfg(config), variants_in_place=False)
+    contents = select_lines(
+        variant_file_content, ns_cfg(config), variants_in_place=False
+    )
     content = yaml.load(contents, Loader=yaml.loader.BaseLoader) or {}
     variants.trim_empty_keys(content)
     return content
