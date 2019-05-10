@@ -3,6 +3,7 @@ import conda_smithy.configure_feedstock as cnfgr_fdstk
 
 import pytest
 import copy
+import yaml
 
 
 def test_noarch_skips_appveyor(noarch_recipe, jinja_env):
@@ -335,3 +336,20 @@ def test_readme_has_terminating_newline(noarch_recipe, jinja_env):
     with open(readme_path, "rb") as readme_file:
         readme_file.seek(-1, os.SEEK_END)
         assert readme_file.read() == b"\n"
+
+
+def test_migrator_recipe(recipe_migration_cfep9, jinja_env):
+    cnfgr_fdstk.render_azure(
+        jinja_env=jinja_env,
+        forge_config=recipe_migration_cfep9.config,
+        forge_dir=recipe_migration_cfep9.recipe,
+    )
+
+    with open(
+        os.path.join(
+            recipe_migration_cfep9.recipe, ".ci_support", "linux_python2.7.yaml"
+        )
+    ) as fo:
+        variant = yaml.safe_load(fo)
+        assert variant["zlib"] == ["1000"]
+

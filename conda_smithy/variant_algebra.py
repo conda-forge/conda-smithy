@@ -13,7 +13,9 @@ def parse_variant(variant_file_str: str, config=None):
         config = Config()
     from conda_build.metadata import select_lines, ns_cfg
 
-    contents = select_lines(variant_file_str, ns_cfg(config), variants_in_place=False)
+    with open(variant_file_str, 'r') as fo:
+        data = fo.read()
+        contents = select_lines(data, ns_cfg(config), variants_in_place=False)
     content = yaml.load(contents, Loader=yaml.loader.BaseLoader) or {}
     variants.trim_empty_keys(content)
     return content
@@ -147,4 +149,3 @@ def variant_add(v1: dict, v2: dict):
     }
 
     return out
-

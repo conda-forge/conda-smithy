@@ -96,7 +96,8 @@ requirements:
     return RecipeConfigPair(
         str(config_yaml),
         _load_forge_config(
-            config_yaml, exclusive_config_file=os.path.join(config_yaml, "recipe", "default_config.yaml")
+            config_yaml, exclusive_config_file=os.path.join(
+                config_yaml, "recipe", "default_config.yaml")
         ),
     )
 
@@ -121,7 +122,8 @@ requirements:
     return RecipeConfigPair(
         str(config_yaml),
         _load_forge_config(
-            config_yaml, exclusive_config_file=os.path.join(config_yaml, "recipe", "default_config.yaml")
+            config_yaml, exclusive_config_file=os.path.join(
+                config_yaml, "recipe", "default_config.yaml")
         ),
     )
 
@@ -148,7 +150,44 @@ about:
     return RecipeConfigPair(
         str(config_yaml),
         _load_forge_config(
-            config_yaml, exclusive_config_file=os.path.join(config_yaml, "recipe", "default_config.yaml")
+            config_yaml, exclusive_config_file=os.path.join(
+                config_yaml, "recipe", "default_config.yaml")
+        ),
+    )
+
+
+@pytest.fixture(scope="function")
+def recipe_migration_cfep9(config_yaml, request):
+    # write a migrator
+    with open(os.path.join(config_yaml, "recipe", "meta.yaml"), "w") as fh:
+        fh.write(
+            """
+package:
+    name: py-test
+    version: 1.0.0
+requirements:
+    host:
+        - python
+        - zlib
+    run:
+        - python
+about:
+    home: home
+    """
+        )
+
+    os.mkdir(os.path.join(config_yaml, "migrations"))
+    with open(os.path.join(config_yaml, "migrations", "zlib.yaml"), "w") as fh:
+        fh.write("""
+zlib:
+    - 1000
+""")
+
+    return RecipeConfigPair(
+        str(config_yaml),
+        _load_forge_config(
+            config_yaml, exclusive_config_file=os.path.join(
+                config_yaml, "recipe", "default_config.yaml")
         ),
     )
 
@@ -175,7 +214,8 @@ about:
     return RecipeConfigPair(
         str(config_yaml),
         _load_forge_config(
-            config_yaml, exclusive_config_file=os.path.join(config_yaml, "recipe", "default_config.yaml")
+            config_yaml, exclusive_config_file=os.path.join(
+                config_yaml, "recipe", "default_config.yaml")
         ),
     )
 
@@ -202,7 +242,8 @@ about:
     return RecipeConfigPair(
         str(config_yaml),
         _load_forge_config(
-            config_yaml, exclusive_config_file=os.path.join(config_yaml, "recipe", "default_config.yaml")
+            config_yaml, exclusive_config_file=os.path.join(
+                config_yaml, "recipe", "default_config.yaml")
         ),
     )
 
@@ -227,7 +268,8 @@ about:
     return RecipeConfigPair(
         str(config_yaml),
         _load_forge_config(
-            config_yaml, exclusive_config_file=os.path.join(config_yaml, "recipe", "default_config.yaml")
+            config_yaml, exclusive_config_file=os.path.join(
+                config_yaml, "recipe", "default_config.yaml")
         ),
     )
 

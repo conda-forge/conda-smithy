@@ -240,19 +240,29 @@ def _trim_unused_pin_run_as_build(all_used_vars):
         del all_used_vars["pin_run_as_build"]
 
 
-def apply_migrations(list_of_metas):
-    # CFEP 9 variant mergin
-    migrations = glob.glob('./migrations/*.yaml')
+def apply_migrations(list_of_metas, root_path):
+    # CFEP 9 variant merging
+    migrations_root = os.path.join(root_path, 'migrations', '*.yaml')
+    migrations = glob.glob(migrations_root)
+    print(migrations_root, migrations)
+
     from .variant_algebra import parse_variant, variant_add
     
     migration_variants = [(fn, parse_variant(fn)) for fn in migrations]
-    migration_variants.sort(key = lambda fn, v: (v.get('migration_ts'), fn))
+    migration_variants.sort(key = lambda fn_v: (fn_v[1].get('migration_ts'), fn_v[0]))
 
+    output_metas = []
     for meta in list_of_metas:
-        
+        variant = meta.config.variant
+        for migrator_file, migration in migration_variants:
+            variant = variant_add(variant, migration)
+        meta.config.variant = variant
+        output_metas.append(meta)
+
+    return output_metas
 
 
-def _collapse_subpackage_variants(list_of_metas):
+def _collapse_subpackage_variants(list_of_metas, root_path):
     """Collapse all subpackage node variants into one aggregate collection of used variables
 
     We get one node per output, but a given recipe can have multiple outputs.  Each output
@@ -266,15 +276,13 @@ def _collapse_subpackage_variants(list_of_metas):
     all_used_vars = set()
     all_variants = set()
 
-    list_of_metas = apply_migrations(list_of_metas)
+    list_of_metas = apply_migrations(list_of_metas, root_path)
 
     for meta in list_of_metas:
         all_used_vars.update(meta.get_used_vars())
         all_variants.update(
             conda_build.utils.HashableDict(v) for v in meta.config.variants
         )
-
-
 
         all_variants.add(conda_build.utils.HashableDict(meta.config.variant))
 
@@ -391,7 +399,7 @@ def dump_subspace_config_files(metas, root_path, platform, arch, upload, forge_c
     # identify how to break up the complete set of used variables.  Anything considered
     #     "top-level" should be broken up into a separate CI job.
 
-    configs, top_level_loop_vars = _collapse_subpackage_variants(metas)
+    configs, top_level_loop_vars = _collapse_subpackage_variants(metas, root_path)
 
     # get rid of the special object notation in the yaml file for objects that we dump
     yaml.add_representer(set, yaml.representer.SafeRepresenter.represent_list)
