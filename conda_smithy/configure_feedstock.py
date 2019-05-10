@@ -284,6 +284,8 @@ def _collapse_subpackage_variants(list_of_metas, root_path):
             conda_build.utils.HashableDict(v) for v in meta.config.variants
         )
 
+
+
         all_variants.add(conda_build.utils.HashableDict(meta.config.variant))
 
     top_level_loop_vars = list_of_metas[0].get_used_loop_vars(
@@ -519,6 +521,7 @@ def _render_ci_provider(
         )
         # render returns some download & reparsing info that we don't care about
         metas = [m for m, _, _ in metas]
+
 
 
         if not keep_noarch:
