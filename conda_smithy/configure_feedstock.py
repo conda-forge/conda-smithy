@@ -241,7 +241,17 @@ def _trim_unused_pin_run_as_build(all_used_vars):
 
 
 def apply_migrations(list_of_metas, root_path):
-    # CFEP 9 variant merging
+    """CFEP-9 variant migrations
+    
+    Apply the list of migrations configurations to the build (in the correct sequence)
+    This will be used to change the variant within the list of MetaData instances, 
+    and return the migrated variants.
+
+    This has to happend before the final variant files are computed.
+
+    The method for application is determined by the variant algebra as defined by CFEP-9
+
+    """
     migrations_root = os.path.join(root_path, 'migrations', '*.yaml')
     migrations = glob.glob(migrations_root)
     

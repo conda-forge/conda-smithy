@@ -1,3 +1,18 @@
+"""Variant algebras
+
+This set of utilities are used to compose conda-build variants in a consistent way in 
+order to facilitate storing migration state within recipes rather than relying on 
+global state stored in something like `conda-forge-pinning`
+
+The primary function to run here is ``variant_add`` that will add two variant configs 
+together and produce a desired outcome.
+
+For full details on how this is supposed to work see CFEP-9
+
+https://github.com/conda-forge/conda-forge-enhancement-proposals/pull/13
+
+"""
+
 import yaml
 import toolz
 from conda_build.utils import ensure_list
@@ -50,7 +65,6 @@ def variant_key_add(k, v_left, v_right, ordering=None):
     common_length = min(len(v_left), len(v_right))
     for i in range(common_length):
         e_l, e_r = v_left[i], v_right[i]
-        print(i, e_l, e_r)
         if _version_order(e_l, ordering) < _version_order(e_r, ordering):
             out_v.append(e_r)
         else:
@@ -79,10 +93,6 @@ def variant_add(v1: dict, v2: dict):
     Present this assumes mostly flat dictionaries.
 
     TODO:
-        - Add support for special cases
-            - zip_keys
-            - pin_run_as_build
-            - __migrator: ordering:
         - Add support for special sums like replace
         - Add delete_key support
     """
