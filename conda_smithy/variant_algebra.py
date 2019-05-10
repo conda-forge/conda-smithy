@@ -42,10 +42,6 @@ def variant_key_add(k, v_left, v_right, ordering=None):
 
     This takes the higher version of the two things.
     """
-
-    # print (v_left)
-    # print (v_right)
-    # v_left, v_right = ensure_list(v_left[k]), ensure_list(v_right[k])
     out_v = []
     common_length = min(len(v_left), len(v_right))
     for i in range(common_length):
