@@ -1,10 +1,10 @@
 """Variant algebras
 
-This set of utilities are used to compose conda-build variants in a consistent way in 
-order to facilitate storing migration state within recipes rather than relying on 
+This set of utilities are used to compose conda-build variants in a consistent way in
+order to facilitate storing migration state within recipes rather than relying on
 global state stored in something like `conda-forge-pinning`
 
-The primary function to run here is ``variant_add`` that will add two variant configs 
+The primary function to run here is ``variant_add`` that will add two variant configs
 together and produce a desired outcome.
 
 For full details on how this is supposed to work see CFEP-9
@@ -39,6 +39,7 @@ def parse_variant(variant_file_content: str, config=None):
     )
     content = yaml.load(contents, Loader=yaml.loader.BaseLoader) or {}
     variants.trim_empty_keys(content)
+    content['migration_ts'] = float(content.get('migration_ts', -1.0))
     return content
 
 

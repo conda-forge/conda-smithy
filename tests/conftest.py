@@ -193,6 +193,27 @@ zlib:
 
 
 @pytest.fixture(scope="function")
+def recipe_migration_cfep9_downgrade(config_yaml, recipe_migration_cfep9):
+    # write a downgrade migrator that lives next to the current migrator.
+    # Only this, more recent migrator should apply.
+    with open(os.path.join(config_yaml, "migrations", "zlib-downgrade.yaml"), "w") as fh:
+        fh.write("""
+migration_ts: 1.0
+zlib:
+    - 999
+""")
+    #return recipe_migration_cfep9
+    return RecipeConfigPair(
+        str(config_yaml),
+        _load_forge_config(
+            config_yaml, exclusive_config_file=os.path.join(
+                config_yaml, "recipe", "default_config.yaml")
+        ),
+    )
+
+
+
+@pytest.fixture(scope="function")
 def skipped_recipe(config_yaml, request):
     with open(os.path.join(config_yaml, "recipe", "meta.yaml"), "w") as fh:
         fh.write(

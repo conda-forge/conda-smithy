@@ -353,3 +353,19 @@ def test_migrator_recipe(recipe_migration_cfep9, jinja_env):
         variant = yaml.safe_load(fo)
         assert variant["zlib"] == ["1000"]
 
+
+def test_migrator_downgrade_recipe(recipe_migration_cfep9_downgrade, jinja_env):
+    cnfgr_fdstk.render_azure(
+        jinja_env=jinja_env,
+        forge_config=recipe_migration_cfep9_downgrade.config,
+        forge_dir=recipe_migration_cfep9_downgrade.recipe,
+    )
+
+    with open(
+        os.path.join(
+            recipe_migration_cfep9_downgrade.recipe, ".ci_support", "linux_python2.7.yaml"
+        )
+    ) as fo:
+        variant = yaml.safe_load(fo)
+        assert variant["zlib"] == ["999"]
+
