@@ -26,14 +26,14 @@ matrix:
   include:
     {%- for config_name, platform, upload, config in configs | sort %}
     {%- if platform.startswith("osx") %}
-    - env: CONFIG={{ config_name }} UPLOAD_PACKAGES={{ upload }} PLATFORM={{ platform }}
+    - env: CONFIG={{ config_name }} UPLOAD_PACKAGES={{ upload }} PLATFORM={{ platform }} UPLOAD_TEST_REPORTS=False UPLOAD_COVERAGE_REPORT=False
       os: osx
       osx_image: {{ travis.get('osx_image', 'xcode9.4') }}
     {%- elif platform.startswith("linux-ppc64le") %}
-    - env: CONFIG={{ config_name }} UPLOAD_PACKAGES={{ upload }} PLATFORM={{ platform }} DOCKER_IMAGE={{ config["docker_image"][-1] }}
+    - env: CONFIG={{ config_name }} UPLOAD_PACKAGES={{ upload }} PLATFORM={{ platform }} UPLOAD_TEST_REPORTS=False UPLOAD_COVERAGE_REPORT=False DOCKER_IMAGE={{ config["docker_image"][-1] }}
       os: linux-ppc64le
     {%- elif platform.startswith("linux-64") %}
-    - env: CONFIG={{ config_name }} UPLOAD_PACKAGES={{ upload }} PLATFORM={{ platform }} DOCKER_IMAGE={{ config["docker_image"][-1] }}
+    - env: CONFIG={{ config_name }} UPLOAD_PACKAGES={{ upload }} PLATFORM={{ platform }} UPLOAD_TEST_REPORTS=False UPLOAD_COVERAGE_REPORT=False DOCKER_IMAGE={{ config["docker_image"][-1] }}
       os: linux
     {%- endif %}
 {% endfor %}

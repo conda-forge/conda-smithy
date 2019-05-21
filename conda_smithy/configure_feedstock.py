@@ -1144,6 +1144,8 @@ def _load_forge_config(forge_dir, exclusive_config_file):
             "branch_name": "master",
         },
         "recipe_dir": "recipe",
+        "test_reports": None,
+        "coverage_report": None
     }
 
     # An older conda-smithy used to have some files which should no longer exist,
