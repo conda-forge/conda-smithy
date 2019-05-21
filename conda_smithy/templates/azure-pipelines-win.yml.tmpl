@@ -16,6 +16,8 @@ jobs:
         CONFIG: {{ config_name}}
         CONDA_BLD_PATH: D:\\bld\\
         UPLOAD_PACKAGES: {{ upload }}
+        UPLOAD_TEST_REPORTS: "False"
+        UPLOAD_COVERAGE_REPORT: "False"
     {%- endif %}
     {%- endfor %}
   steps:
@@ -104,4 +106,3 @@ jobs:
       env:
         BINSTAR_TOKEN: $(BINSTAR_TOKEN)
       condition: not(eq(variables['UPLOAD_PACKAGES'], 'False'))
-

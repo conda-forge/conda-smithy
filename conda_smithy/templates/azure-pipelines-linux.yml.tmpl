@@ -15,6 +15,8 @@ jobs:
       {{ config_name }}:
         CONFIG: {{ config_name }}
         UPLOAD_PACKAGES: {{ upload }}
+        UPLOAD_TEST_REPORTS: "False"
+        UPLOAD_COVERAGE_REPORT: "False"
         DOCKER_IMAGE: {{ config["docker_image"][-1] }}
     {%- endif %}
     {%- endfor %}

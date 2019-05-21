@@ -12,6 +12,8 @@ from argparse import ArgumentParser
 def setup_environment(ns):
     os.environ["CONFIG"] = ns.config
     os.environ["UPLOAD_PACKAGES"] = "False"
+    os.environ["UPLOAD_TEST_REPORTS"] = "False"
+    os.environ["UPLOAD_COVERAGE_REPORT"] = "False"
 
 
 def run_docker_build(ns):
