@@ -40,8 +40,8 @@ Current build status
   <tr>
     {#- Sample url #-}
     {#- [![Azure Status](https://dev.azure.com/conda-forge/feedstock-builds/_apis/build/status/cryptography-feedstock?branchName=master)](https://dev.azure.com/conda-forge/feedstock-builds/_build/latest?definitionId=195&branchName=master) -#}
-    {% set azure_url %}https://dev.azure.com/{{ azure.user_or_org }}/{{ azure.project_name }}/_build/latest?definitionId={{ azure.build_id }}&branchName={{ github.branch_name }}{% endset %}
-    {% set azure_image_url %}https://dev.azure.com/{{ azure.user_or_org }}/{{ azure.project_name }}/_apis/build/status/{{ github.repo_name }}?branchName={{ github.branch_name }}{% endset %}
+    {%- set azure_url %}https://dev.azure.com/{{ azure.user_or_org }}/{{ azure.project_name }}/_build/latest?definitionId={{ azure.build_id }}&branchName={{ github.branch_name }}{%- endset -%}
+    {%- set azure_image_url %}https://dev.azure.com/{{ azure.user_or_org }}/{{ azure.project_name }}/_apis/build/status/{{ github.repo_name }}?branchName={{ github.branch_name }}{%- endset -%}
     <td>All platforms:</td>
     <td>
       <a href="{{ azure_url }}">
