@@ -2,6 +2,7 @@ from __future__ import print_function, unicode_literals
 
 import glob
 from itertools import product, chain
+import logging
 import os
 import subprocess
 import textwrap
@@ -14,18 +15,16 @@ import conda_build.api
 import conda_build.utils
 import conda_build.variants
 import conda_build.conda_interface
+import conda_build.render
+
 from conda_build import __version__ as conda_build_version
 from jinja2 import Environment, FileSystemLoader
 
-from conda_smithy.feedstock_io import (
-    set_exe_file,
-    write_file,
-    remove_file,
-    copy_file,
-)
+from conda_smithy.feedstock_io import set_exe_file, write_file, remove_file, copy_file
 from . import __version__
 
 conda_forge_content = os.path.abspath(os.path.dirname(__file__))
+logger = logging.getLogger(__name__)
 
 
 def package_key(config, used_loop_vars, subdir):
@@ -252,13 +251,20 @@ def apply_migrations(list_of_metas, root_path):
     The method for application is determined by the variant algebra as defined by CFEP-9
 
     """
-    migrations_root = os.path.join(root_path, 'migrations', '*.yaml')
+    migrations_root = os.path.join(root_path, "migrations", "*.yaml")
     migrations = glob.glob(migrations_root)
 
     from .variant_algebra import parse_variant, variant_add
 
-    migration_variants = [(fn, parse_variant(open(fn, 'r').read())) for fn in migrations]
-    migration_variants.sort(key = lambda fn_v: (-fn_v[1]['migration_ts'], fn_v[0]))
+    if len(list_of_metas) == 0:
+        return list_of_metas
+
+    config = list_of_metas[0].config
+
+    migration_variants = [
+        (fn, parse_variant(open(fn, "r").read(), config=config)) for fn in migrations
+    ]
+    migration_variants.sort(key=lambda fn_v: (fn_v[1]["migration_ts"], fn_v[0]))
     if len(migration_variants):
         print(f"Applying migrations: {','.join(k for k, v in migration_variants)}")
 
