@@ -502,8 +502,13 @@ def _render_ci_provider(
 
             """
             # Original call
-            combined_spec, extend_keys = old_combine_specs(specs, log_output=log_output)
-            
+
+            combined_spec_res = old_combine_specs(specs, log_output=log_output)
+            if isinstance(combined_spec_res, tuple):
+                combined_spec, extend_keys = combined_spec_res
+            else:
+                combined_spec = combined_spec_res
+
             migrations_root = os.path.join(forge_dir, "migrations", "*.yaml")
             migrations = glob.glob(migrations_root)
 
@@ -528,7 +533,11 @@ def _render_ci_provider(
                     continue
                 del specs[k]
 
-            return combined_spec, extend_keys
+            # Deal with legacy return value
+            if isinstance(combined_spec_res, tuple):
+                return combined_spec, extend_keys
+            else:
+                return combined_spec
 
         try:
             conda_build.variants.combine_specs = combine_specs_and_apply_migrations
