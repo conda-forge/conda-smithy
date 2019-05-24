@@ -502,7 +502,7 @@ def _render_ci_provider(
 
             """
             # Original call
-            combined_spec = old_combine_specs(specs, log_output=log_output)
+            combined_spec, extend_keys = old_combine_specs(specs, log_output=log_output)
             
             migrations_root = os.path.join(forge_dir, "migrations", "*.yaml")
             migrations = glob.glob(migrations_root)
@@ -519,9 +519,16 @@ def _render_ci_provider(
             for migrator_file, migration in migration_variants:
                 if 'migration_ts' in migration:
                     del migration['migration_ts']
-                combined_spec = variant_add(combined_spec, migration)
+                if len(migration):
+                    combined_spec = variant_add(combined_spec, migration)
 
-            return combined_spec
+            # Avoid spec based filtering that is done by default.
+            for k in specs.keys():
+                if k == 'internal_defaults':
+                    continue
+                del specs[k]
+
+            return combined_spec, extend_keys
 
         try:
             conda_build.variants.combine_specs = combine_specs_and_apply_migrations
