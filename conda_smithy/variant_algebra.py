@@ -18,10 +18,25 @@ import toolz
 from conda_build.utils import ensure_list
 import conda_build.variants as variants
 from conda.models.version import VersionOrder
+from conda_build.config import Config
 from functools import partial
 
 
-def parse_variant(variant_file_content: str, config=None):
+from typing import Any, Dict, List, Optional, Union
+
+
+def parse_variant(
+    variant_file_content: str, config: Optional[Config] = None
+) -> Dict[
+    str,
+    Union[
+        List[str],
+        float,
+        List[List[str]],
+        Dict[str, Dict[str, str]],
+        Dict[str, Dict[str, List[str]]],
+    ],
+]:
     """
     Parameters
     ----------
@@ -39,11 +54,14 @@ def parse_variant(variant_file_content: str, config=None):
     )
     content = yaml.load(contents, Loader=yaml.loader.BaseLoader) or {}
     variants.trim_empty_keys(content)
-    content['migration_ts'] = float(content.get('migration_ts', -1.0))
+    # TODO: Base this default on mtime or something
+    content["migration_ts"] = float(content.get("migration_ts", -1.0))
     return content
 
 
-def _version_order(v, ordering=None):
+def _version_order(
+    v: Union[str, float], ordering: Optional[List[str]] = None
+) -> Union[int, VersionOrder, float]:
     if ordering is not None:
         return ordering.index(v)
     else:
@@ -53,7 +71,12 @@ def _version_order(v, ordering=None):
             return v
 
 
-def variant_key_add(k, v_left, v_right, ordering=None):
+def variant_key_add(
+    k: str,
+    v_left: Union[List[str], List[float]],
+    v_right: Union[List[str], List[float]],
+    ordering: Optional[List[str]] = None,
+) -> Union[List[str], List[float]]:
     """Version summation adder.
 
     This takes the higher version of the two things.
@@ -84,7 +107,7 @@ def variant_key_set_merge(k, v_left, v_right, ordering=None):
     return sorted(out_v, key=partial(_version_order, ordering=ordering))
 
 
-def variant_add(v1: dict, v2: dict):
+def variant_add(v1: dict, v2: dict) -> Dict[str, Any]:
     """Adds the two variants together.
 
     Present this assumes mostly flat dictionaries.

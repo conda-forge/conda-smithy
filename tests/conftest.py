@@ -1,5 +1,6 @@
 import collections
 import os
+from textwrap import dedent
 
 import pytest
 import yaml
@@ -45,6 +46,7 @@ def testing_workdir(tmpdir, request):
 def config_yaml(testing_workdir):
     config = {"python": ["2.7", "3.5"], "r_base": ["3.3.2", "3.4.2"]}
     os.makedirs(os.path.join(testing_workdir, "recipe"))
+    os.makedirs(os.path.join(testing_workdir, "migrations"))
     with open(os.path.join(testing_workdir, "config.yaml"), "w") as f:
         f.write("docker:\n")
         f.write("  fallback_image:\n")
@@ -52,15 +54,21 @@ def config_yaml(testing_workdir):
     with open(os.path.join(testing_workdir, "recipe", "default_config.yaml"), "w") as f:
         yaml.dump(config, f, default_flow_style=False)
         # need selectors, so write these more manually
-        f.write("target_platform:\n")
-        f.write("- win-64   # [win]\n")
-        f.write("- win-32   # [win]\n")
-        f.write("c_compiler:\n  # [win]")
-        f.write("- vs2008\n  # [win]")
-        f.write("- vs2015\n  # [win]")
-        f.write("zip_keys:\n  # [win]")
-        f.write("- c_compiler\n   # [win]")
-        f.write("- python\n   # [win]")
+        f.write(dedent("""\
+        target_platform: 
+        - win-64        # [win]
+        - win-32        # [win]
+        c_compiler:     # [win]
+        - vs2008        # [win]
+        - vs2015        # [win]
+        vc:             # [win]
+        - '9'           # [win]
+        - '14'          # [win]
+        zip_keys:       # [win]
+        - c_compiler    # [win]
+        - python        # [win]
+        - vc            # [win]
+        """))
     # dummy file that needs to be present for circle ci.  This is created by the init function
     os.makedirs(os.path.join(testing_workdir, ".circleci"))
     with open(
@@ -176,7 +184,6 @@ about:
     """
         )
 
-    os.mkdir(os.path.join(config_yaml, "migrations"))
     with open(os.path.join(config_yaml, "migrations", "zlib.yaml"), "w") as fh:
         fh.write("""
 zlib:
@@ -211,6 +218,33 @@ zlib:
         ),
     )
 
+@pytest.fixture(scope="function")
+def recipe_migration_win_compiled(config_yaml, py_recipe):
+    with open(os.path.join(config_yaml, "migrations", "vc-migrate.yaml"), "w") as fh:
+        fh.write(dedent("""
+        migration_ts: 1.0
+        c_compiler:    # [win]
+            - vs2008   # [win]
+            - vs2017   # [win]
+        cxx_compiler:  # [win]
+            - vs2008   # [win]
+            - vs2017   # [win]
+        vc:            # [win]
+            - '9'      # [win]
+            - '14.1'   # [win]
+        zip_keys:
+            - - python          # [win]
+              - c_compiler      # [win]
+              - cxx_compiler    # [win]
+              - vc              # [win]
+        """))
+    return RecipeConfigPair(
+        str(config_yaml),
+        _load_forge_config(
+            config_yaml, exclusive_config_file=os.path.join(
+                config_yaml, "recipe", "default_config.yaml")
+        ),
+    )
 
 
 @pytest.fixture(scope="function")

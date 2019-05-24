@@ -239,46 +239,6 @@ def _trim_unused_pin_run_as_build(all_used_vars):
         del all_used_vars["pin_run_as_build"]
 
 
-def apply_migrations(list_of_metas, root_path):
-    """CFEP-9 variant migrations
-
-    Apply the list of migrations configurations to the build (in the correct sequence)
-    This will be used to change the variant within the list of MetaData instances,
-    and return the migrated variants.
-
-    This has to happend before the final variant files are computed.
-
-    The method for application is determined by the variant algebra as defined by CFEP-9
-
-    """
-    migrations_root = os.path.join(root_path, "migrations", "*.yaml")
-    migrations = glob.glob(migrations_root)
-
-    from .variant_algebra import parse_variant, variant_add
-
-    if len(list_of_metas) == 0:
-        return list_of_metas
-
-    config = list_of_metas[0].config
-
-    migration_variants = [
-        (fn, parse_variant(open(fn, "r").read(), config=config)) for fn in migrations
-    ]
-    migration_variants.sort(key=lambda fn_v: (fn_v[1]["migration_ts"], fn_v[0]))
-    if len(migration_variants):
-        print(f"Applying migrations: {','.join(k for k, v in migration_variants)}")
-
-    output_metas = []
-    for meta in list_of_metas:
-        variant = meta.config.variant
-        for migrator_file, migration in migration_variants:
-            variant = variant_add(variant, migration)
-        meta.config.variant = variant
-        output_metas.append(meta)
-
-    return output_metas
-
-
 def _collapse_subpackage_variants(list_of_metas, root_path):
     """Collapse all subpackage node variants into one aggregate collection of used variables
 
@@ -292,8 +252,6 @@ def _collapse_subpackage_variants(list_of_metas, root_path):
 
     all_used_vars = set()
     all_variants = set()
-
-    list_of_metas = apply_migrations(list_of_metas, root_path)
 
     for meta in list_of_metas:
         all_used_vars.update(meta.get_used_vars())
@@ -524,20 +482,62 @@ def _render_ci_provider(
     for i, (platform, arch, keep_noarch) in enumerate(
         zip(platforms, archs, keep_noarchs)
     ):
-        metas = conda_build.api.render(
-            os.path.join(forge_dir, "recipe"),
+        config = conda_build.config.get_or_merge_config(None,
             exclusive_config_file=forge_config["exclusive_config_file"],
             platform=platform,
             arch=arch,
-            permit_undefined_jinja=True,
-            finalize=False,
-            bypass_env_check=True,
-            channel_urls=forge_config.get("channels", {}).get("sources", []),
         )
+
+        old_combine_specs = conda_build.variants.combine_specs
+        def combine_specs_and_apply_migrations(specs, log_output=True):
+            """CFEP-9 variant migrations
+
+            Apply the list of migrations configurations to the build (in the correct sequence)
+            This will be used to change the variant within the list of MetaData instances,
+            and return the migrated variants.
+
+            This has to happend before the final variant files are computed.
+
+            The method for application is determined by the variant algebra as defined by CFEP-9
+
+            """
+            # Original call
+            combined_spec = old_combine_specs(specs, log_output=log_output)
+            
+            migrations_root = os.path.join(forge_dir, "migrations", "*.yaml")
+            migrations = glob.glob(migrations_root)
+
+            from .variant_algebra import parse_variant, variant_add
+
+            migration_variants = [
+                (fn, parse_variant(open(fn, "r").read(), config=config)) for fn in migrations
+            ]
+            migration_variants.sort(key=lambda fn_v: (fn_v[1]["migration_ts"], fn_v[0]))
+            if len(migration_variants):
+                print(f"Applying migrations: {','.join(k for k, v in migration_variants)}")
+
+            for migrator_file, migration in migration_variants:
+                if 'migration_ts' in migration:
+                    del migration['migration_ts']
+                combined_spec = variant_add(combined_spec, migration)
+
+            return combined_spec
+
+        try:
+            conda_build.variants.combine_specs = combine_specs_and_apply_migrations
+            metas = conda_build.api.render(
+                os.path.join(forge_dir, "recipe"),
+                config=config,
+                permit_undefined_jinja=True,
+                finalize=False,
+                bypass_env_check=True,
+                channel_urls=forge_config.get("channels", {}).get("sources", []),
+            )
+        finally:
+            conda_build.variants.combine_specs = old_combine_specs
+
         # render returns some download & reparsing info that we don't care about
         metas = [m for m, _, _ in metas]
-
-
 
         if not keep_noarch:
             to_delete = []
