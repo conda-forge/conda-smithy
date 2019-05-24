@@ -200,7 +200,7 @@ class RegisterCI(Subcommand):
             default="conda-forge",
             help="github organisation under which to register this repo",
         )
-        for ci in ["Azure", "Travis", "Circle", "Appveyor"]:
+        for ci in ["Azure", "Travis", "Circle", "Appveyor", "Drone"]:
             scp.add_argument(
                 "--without-{}".format(ci.lower()),
                 dest=ci.lower(),

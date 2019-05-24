@@ -78,6 +78,16 @@ Current build status
     </td>
   </tr>
   {%- endif -%}
+  {%- if drone.enabled -%}
+  <tr>
+    <td>Drone</td>
+    <td>
+      <a href="https://cloud.drone.io/{{ github.user_or_org }}/{{ github.repo_name }}">
+        <img alt="linux" src="{{ shield }}drone/build/{{ github.user_or_org }}/{{ github.branch_name }}.svg?label=Linux">
+      </a>
+    </td>
+  </tr>
+  {%- endif -%}
   {%- if appveyor.enabled -%}
   <tr>
     <td>Appveyor</td>

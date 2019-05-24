@@ -961,7 +961,6 @@ def render_appveyor(jinja_env, forge_config, forge_dir):
 
 
 def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
-    # TODO:
     platform_templates = {
         "linux": [
             "azure-pipelines-linux.yml.tmpl",
@@ -1016,6 +1015,59 @@ def render_azure(jinja_env, forge_config, forge_dir):
         upload_packages=upload_packages,
     )
 
+
+def _drone_specific_setup(jinja_env, forge_config, forge_dir, platform):
+    platform_templates = {
+        "linux": [
+            "build_steps.sh.tmpl",
+        ],
+        "osx": [],
+        "win": [],
+    }
+    template_files = platform_templates.get(platform, [])
+
+    # Explicitly add in a newline character to ensure that jinja templating doesn't do something stupid
+    build_setup = "run_conda_forge_build_setup\n"
+
+    if platform == "linux":
+        yum_build_setup = generate_yum_requirements(forge_dir)
+        if yum_build_setup:
+            forge_config['yum_build_setup'] = yum_build_setup
+
+    forge_config["build_setup"] = build_setup
+
+    _render_template_exe_files(
+        forge_config=forge_config,
+        target_dir=os.path.join(forge_dir, ".drone"),
+        jinja_env=jinja_env,
+        template_files=template_files,
+    )
+
+
+def render_drone(jinja_env, forge_config, forge_dir):
+    target_path = os.path.join(forge_dir, ".drone.yml")
+    template_filename = "drone.yml.tmpl"
+    fast_finish_text = ""
+
+    # TODO: for now just get this ignoring other pieces
+    platforms, archs, keep_noarchs, upload_packages = _get_platforms_of_provider(
+        "drone", forge_config
+    )
+
+    return _render_ci_provider(
+        "drone",
+        jinja_env=jinja_env,
+        forge_config=forge_config,
+        forge_dir=forge_dir,
+        platforms=platforms,
+        archs=archs,
+        fast_finish_text=fast_finish_text,
+        platform_target_path=target_path,
+        platform_template_file=template_filename,
+        platform_specific_setup=_drone_specific_setup,
+        keep_noarchs=keep_noarchs,
+        upload_packages=upload_packages,
+    )
 
 def render_README(jinja_env, forge_config, forge_dir):
     # we only care about the first metadata object for sake of readme
@@ -1097,6 +1149,7 @@ def _load_forge_config(forge_dir, exclusive_config_file):
             "command": "bash",
         },
         "templates": {},
+        "drone": {},
         "travis": {},
         "circle": {},
         "appveyor": {},
@@ -1207,6 +1260,10 @@ def _load_forge_config(forge_dir, exclusive_config_file):
     for platform in ["linux_aarch64"]:
         if config["provider"][platform] == "default":
             config["provider"][platform] = "azure"
+
+    # TODO: Switch default to Drone
+    if config["provider"]["linux_aarch64"] in {"native"}:
+        config["provider"]["linux_aarch64"] = "drone"
 
     if config["provider"]["linux_ppc64le"] in {"native", "default"}:
         config["provider"]["linux_ppc64le"] = "travis"
@@ -1358,7 +1415,7 @@ def main(
 
     config = _load_forge_config(forge_dir, exclusive_config_file)
 
-    for each_ci in ["travis", "circle", "appveyor"]:
+    for each_ci in ["travis", "circle", "appveyor", "drone"]:
         if config[each_ci].pop("enabled", None):
             warnings.warn(
                 "It is not allowed to set the `enabled` parameter for `%s`."
@@ -1385,6 +1442,7 @@ def main(
     render_travis(env, config, forge_dir)
     render_appveyor(env, config, forge_dir)
     render_azure(env, config, forge_dir)
+    render_drone(env, config, forge_dir)
     render_README(env, config, forge_dir)
 
     if os.path.isdir(os.path.join(forge_dir, ".ci_support")):
