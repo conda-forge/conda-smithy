@@ -4,6 +4,35 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.3.5
+====================
+
+**Added:**
+
+* Added native aarch64 support for builds using Drone.io. This can be enabled by
+  either using `provider: {linux_aarch64: drone}` or `provider: {linux_aarch64:
+  native}` in the conda-forge.yml.
+  
+  Currently, drone has to be enabled manually as there is no automatic CI
+  registration for repos.
+* export CI env variable with CI provider name
+* New ``build-locally.py`` script that is added to the root feedstock directory when
+  ``conda smithy rerender`` is run. This script runs conda build locally. Currently
+  it only fully supports running docker builds.
+* print when adding new team to maintiners of feedstock
+
+**Removed:**
+
+* `docker.image` in conda-forge.yml is removed
+* Removed the need for shyaml in CI env.
+
+**Fixed:**
+
+* removed empty lines causing current build status table to render as code
+* build setup script overriding is now supported on azure too
+
+
+
 v3.3.4
 ====================
 
