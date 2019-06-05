@@ -4,6 +4,15 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.3.6
+====================
+
+**Fixed:**
+
+* Indentation error in ``github.py``
+
+
+
 v3.3.5
 ====================
 
