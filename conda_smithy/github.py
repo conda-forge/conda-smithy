@@ -275,7 +275,7 @@ def configure_github_team(meta, gh_repo, org, feedstock_name):
     )
     current_maintainer_teams = [team.name for team in current_maintainer_teams]
     for maintainer_team in maintainer_teams - set(current_maintainer_teams):
-         print(
+        print(
             "Adding a new team ({}) to {}. Welcome! :)".format(
                 maintainer_team, org.login
             )
