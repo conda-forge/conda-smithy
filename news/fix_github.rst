@@ -16,7 +16,7 @@
 
 **Fixed:**
 
-* Indentation error in `github.py`
+* Indentation error in ``github.py``
 
 **Security:**
 
