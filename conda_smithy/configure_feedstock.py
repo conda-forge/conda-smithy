@@ -22,6 +22,7 @@ from conda_smithy.feedstock_io import (
     write_file,
     remove_file,
     copy_file,
+    remove_file_or_dir,
 )
 from . import __version__
 
@@ -1210,9 +1211,10 @@ def _load_forge_config(forge_dir, exclusive_config_file):
         os.path.join("ci_support", "fast_finish_ci_pr_build.sh"),
         os.path.join("ci_support", "run_docker_build.sh"),
         "LICENSE",
+        "__pycache__",
     ]
     for old_file in old_files:
-        remove_file(os.path.join(forge_dir, old_file))
+        remove_file_or_dir(os.path.join(forge_dir, old_file))
 
     forge_yml = os.path.join(forge_dir, "conda-forge.yml")
     if not os.path.exists(forge_yml):

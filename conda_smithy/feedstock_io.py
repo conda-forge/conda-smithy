@@ -60,6 +60,16 @@ def touch_file(filename):
         fh.write("")
 
 
+def remove_file_or_dir(filename):
+    if not os.path.isdir(filename):
+        return remove_file(filename)
+
+    repo = get_repo(filename)
+    if repo:
+        repo.index.remove([filename], r=True)
+    shutil.rmtree(filename)
+
+
 def remove_file(filename):
     touch_file(filename)
 
