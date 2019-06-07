@@ -1138,7 +1138,7 @@ def render_README(jinja_env, forge_config, forge_dir):
 
 def copy_feedstock_content(forge_dir):
     feedstock_content = os.path.join(conda_forge_content, "feedstock_content")
-    copytree(feedstock_content, forge_dir, "README")
+    copytree(feedstock_content, forge_dir, ("README", "__pycache__"))
 
 
 def _load_forge_config(forge_dir, exclusive_config_file):
