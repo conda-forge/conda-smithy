@@ -4,6 +4,19 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.3.7
+====================
+
+**Added:**
+
+* Added codeowners file
+
+**Fixed:**
+
+* Fixed checking in .pyc files
+
+
+
 v3.3.6
 ====================
 

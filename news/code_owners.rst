@@ -1,4 +1,0 @@
-**Added:**
-
-* Added codeowners file
-
