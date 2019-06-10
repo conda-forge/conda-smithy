@@ -1127,14 +1127,17 @@ def render_README(jinja_env, forge_config, forge_dir):
         except (IndexError, IOError):
             pass
 
-
     print("README")
     print(yaml.dump(forge_config))
 
-
-
     with write_file(target_fname) as fh:
         fh.write(template.render(**forge_config))
+
+    code_owners_file = os.path.join(forge_dir, ".github", "CODEOWNERS")
+
+    with write_file(code_owners_file) as fh:
+        for maintainer in forge_config["maintainers"]:
+            fh.write("* @{}\n".format(maintainer))
 
 
 def copy_feedstock_content(forge_dir):
