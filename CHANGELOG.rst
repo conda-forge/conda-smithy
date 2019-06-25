@@ -4,6 +4,15 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.4.0
+====================
+
+**Fixed:**
+
+* bumped conda version check in CLI to 5.0 (from 4.7)
+
+
+
 v3.3.7
 ====================
 
