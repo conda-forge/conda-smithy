@@ -1215,6 +1215,9 @@ def _load_forge_config(forge_dir, exclusive_config_file):
         os.path.join("ci_support", "run_docker_build.sh"),
         "LICENSE",
         "__pycache__",
+        os.path.join(".github", "CONTRIBUTING.md"),
+        os.path.join(".github", "ISSUE_TEMPLATE.md"),
+        os.path.join(".github", "PULL_REQUEST_TEMPLATE.md"),
     ]
     for old_file in old_files:
         remove_file_or_dir(os.path.join(forge_dir, old_file))
