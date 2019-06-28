@@ -252,7 +252,7 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
 
     # 10: License should not include the word 'license'.
     license = about_section.get("license", "").lower()
-    if "license" in license.lower():
+    if "license" in license.lower() and "unlicense" not in license.lower():
         lints.append(
             "The recipe `license` should not include the word " '"License".'
         )
@@ -281,6 +281,13 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
         ensure_valid_license_family(meta)
     except RuntimeError as e:
         lints.append(str(e))
+
+    # 12a: License family must be valid (conda-build checks for that)
+    license_family = about_section.get("license_family", license).lower()
+    license_file = about_section.get("license_file", "")
+    needed_families = ["gpl", "bsd", "mit", "apache", "psf"]
+    if license_file == "" and any(f for f in needed_families if f in license_family):
+        lints.append("license_file entry is missing, but is required.")
 
     # 13: Check that the recipe name is valid
     recipe_name = package_section.get("name", "").strip()
