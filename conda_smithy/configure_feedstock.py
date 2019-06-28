@@ -1133,13 +1133,13 @@ def render_README(jinja_env, forge_config, forge_dir):
     with write_file(target_fname) as fh:
         fh.write(template.render(**forge_config))
 
-    code_owners_file = os.path.join(forge_dir, ".github", "CODEOWNERS")
-
-    with write_file(code_owners_file) as fh:
-        line = "*"
-        for maintainer in forge_config["maintainers"]):
-            line = line + " @" + maintainer
-        fh.write(line)
+    if len(forge_config["maintainers"]) > 0:
+        code_owners_file = os.path.join(forge_dir, ".github", "CODEOWNERS")
+        with write_file(code_owners_file) as fh:
+            line = "*"
+            for maintainer in forge_config["maintainers"]):
+                line = line + " @" + maintainer
+            fh.write(line)
 
 
 def copy_feedstock_content(forge_dir):
