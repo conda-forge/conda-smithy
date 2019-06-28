@@ -1137,7 +1137,7 @@ def render_README(jinja_env, forge_config, forge_dir):
         code_owners_file = os.path.join(forge_dir, ".github", "CODEOWNERS")
         with write_file(code_owners_file) as fh:
             line = "*"
-            for maintainer in forge_config["maintainers"]):
+            for maintainer in forge_config["maintainers"]:
                 line = line + " @" + maintainer
             fh.write(line)
 
