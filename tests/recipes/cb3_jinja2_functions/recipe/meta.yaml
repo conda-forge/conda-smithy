@@ -21,6 +21,7 @@ about:
   home: home
   summary: summary
   license: BSD
+  license_file: LICENSE.txt
 
 extra:
   recipe-maintainers:
