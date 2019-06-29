@@ -24,7 +24,7 @@ test:
 about:
   home: home
   summary: summary
-  license: BSD
+  license: Creative Commons
 
 extra:
   recipe-maintainers:
