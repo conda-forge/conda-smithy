@@ -1,25 +1,67 @@
+"""Variant algebras
+
+This set of utilities are used to compose conda-build variants in a consistent way in
+order to facilitate storing migration state within recipes rather than relying on
+global state stored in something like `conda-forge-pinning`
+
+The primary function to run here is ``variant_add`` that will add two variant configs
+together and produce a desired outcome.
+
+For full details on how this is supposed to work see CFEP-9
+
+https://github.com/conda-forge/conda-forge-enhancement-proposals/pull/13
+
+"""
+
 import yaml
 import toolz
 from conda_build.utils import ensure_list
 import conda_build.variants as variants
 from conda.models.version import VersionOrder
+from conda_build.config import Config
 from functools import partial
 
 
-def parse_variant(variant_file_str: str, config=None):
+from typing import Any, Dict, List, Optional, Union
+
+
+def parse_variant(
+    variant_file_content: str, config: Optional[Config] = None
+) -> Dict[
+    str,
+    Union[
+        List[str],
+        float,
+        List[List[str]],
+        Dict[str, Dict[str, str]],
+        Dict[str, Dict[str, List[str]]],
+    ],
+]:
+    """
+    Parameters
+    ----------
+    variant_file_content : str
+        The loaded vaiant contents.  This can include selectors etc.
+    """
     if not config:
         from conda_build.config import Config
 
         config = Config()
     from conda_build.metadata import select_lines, ns_cfg
 
-    contents = select_lines(variant_file_str, ns_cfg(config), variants_in_place=False)
+    contents = select_lines(
+        variant_file_content, ns_cfg(config), variants_in_place=False
+    )
     content = yaml.load(contents, Loader=yaml.loader.BaseLoader) or {}
     variants.trim_empty_keys(content)
+    # TODO: Base this default on mtime or something
+    content["migration_ts"] = float(content.get("migration_ts", -1.0))
     return content
 
 
-def _version_order(v, ordering=None):
+def _version_order(
+    v: Union[str, float], ordering: Optional[List[str]] = None
+) -> Union[int, VersionOrder, float]:
     if ordering is not None:
         return ordering.index(v)
     else:
@@ -29,20 +71,20 @@ def _version_order(v, ordering=None):
             return v
 
 
-def variant_key_add(k, v_left, v_right, ordering=None):
+def variant_key_add(
+    k: str,
+    v_left: Union[List[str], List[float]],
+    v_right: Union[List[str], List[float]],
+    ordering: Optional[List[str]] = None,
+) -> Union[List[str], List[float]]:
     """Version summation adder.
 
     This takes the higher version of the two things.
     """
-
-    # print (v_left)
-    # print (v_right)
-    # v_left, v_right = ensure_list(v_left[k]), ensure_list(v_right[k])
     out_v = []
     common_length = min(len(v_left), len(v_right))
     for i in range(common_length):
         e_l, e_r = v_left[i], v_right[i]
-        print(i, e_l, e_r)
         if _version_order(e_l, ordering) < _version_order(e_r, ordering):
             out_v.append(e_r)
         else:
@@ -65,16 +107,12 @@ def variant_key_set_merge(k, v_left, v_right, ordering=None):
     return sorted(out_v, key=partial(_version_order, ordering=ordering))
 
 
-def variant_add(v1: dict, v2: dict):
+def variant_add(v1: dict, v2: dict) -> Dict[str, Any]:
     """Adds the two variants together.
 
     Present this assumes mostly flat dictionaries.
 
     TODO:
-        - Add support for special cases
-            - zip_keys
-            - pin_run_as_build
-            - __migrator: ordering:
         - Add support for special sums like replace
         - Add delete_key support
     """
@@ -147,4 +185,3 @@ def variant_add(v1: dict, v2: dict):
     }
 
     return out
-

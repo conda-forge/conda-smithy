@@ -11,7 +11,9 @@ import tempfile
 import textwrap
 import unittest
 import warnings
+
 import github
+import pytest
 
 import conda_smithy.lint_recipe as linter
 
@@ -817,6 +819,7 @@ class Test_linter(unittest.TestCase):
         self.assertIn(msg, lints)
 
 
+@pytest.mark.cli
 class TestCLI_recipe_lint(unittest.TestCase):
     def test_cli_fail(self):
         with tmp_directory() as recipe_dir:

@@ -133,6 +133,40 @@ def test_zip_keys():
     assert ["python", "vc", "vc_runtime"] in res["zip_keys"]
 
 
+def test_migrate_windows_compilers():
+    start = parse_variant(dedent(
+        """
+        c_compiler:
+            - vs2008
+            - vs2015
+        vc:
+            - '9'
+            - '14'
+        zip_keys:
+            - - vc
+              - c_compiler
+        """
+    ))
+
+    mig = parse_variant(dedent(
+        """
+        c_compiler:
+            - vs2008
+            - vs2017
+        vc:
+            - '9'
+            - '14.1'
+        """
+    ))
+
+    res = variant_add(start, mig)
+    print(res)
+
+    assert len(res["c_compiler"]) == 2
+    assert res["c_compiler"] == ['vs2008', 'vs2017']
+    assert len(res['zip_keys'][0]) == 2
+
+
 def test_pin_run_as_build():
     start = parse_variant(
         dedent(
