@@ -537,7 +537,6 @@ def _render_ci_provider(
 
         metas = conda_build.api.render(
             os.path.join(forge_dir, "recipe"),
-            #config=config,
             platform=platform,
             arch=arch,
             variants=migrated_combined_variant_spec,
