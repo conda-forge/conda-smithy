@@ -20,8 +20,13 @@ import conda_build.render
 from conda_build import __version__ as conda_build_version
 from jinja2 import Environment, FileSystemLoader
 
-from conda_smithy.feedstock_io import set_exe_file, write_file, remove_file, copy_file
+from conda_smithy.feedstock_io import (
+    set_exe_file, 
+    write_file, 
+    remove_file, 
+    copy_file
     remove_file_or_dir,
+)
 from . import __version__
 
 conda_forge_content = os.path.abspath(os.path.dirname(__file__))
