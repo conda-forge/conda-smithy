@@ -200,7 +200,7 @@ class RegisterCI(Subcommand):
             default="conda-forge",
             help="github organisation under which to register this repo",
         )
-        for ci in ["Azure", "Travis", "Circle", "Appveyor"]:
+        for ci in ["Azure", "Travis", "Circle", "Appveyor", "Drone"]:
             scp.add_argument(
                 "--without-{}".format(ci.lower()),
                 dest=ci.lower(),
@@ -472,7 +472,7 @@ def main():
         args = parser.parse_args()
 
     # Check conda version for compatibility
-    CONDA_VERSION_MAX = "4.7"
+    CONDA_VERSION_MAX = "5.0"
     if LooseVersion(conda.__version__) >= LooseVersion(CONDA_VERSION_MAX):
         print(
             "You appear to be using conda {}, but conda-smithy {}\n"

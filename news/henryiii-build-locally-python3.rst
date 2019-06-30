@@ -4,7 +4,7 @@
 
 **Changed:**
 
-* <news item>
+* ``build-locally.py`` now uses ``python3`` even if ``python`` is ``python2`` (Python 3.6+ was already required)
 
 **Deprecated:**
 
@@ -16,7 +16,7 @@
 
 **Fixed:**
 
-* Fixed badges for noarch builds using azure
+* <news item>
 
 **Security:**
 

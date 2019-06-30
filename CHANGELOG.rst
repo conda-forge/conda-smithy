@@ -4,6 +4,92 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.4.0
+====================
+
+**Fixed:**
+
+* bumped conda version check in CLI to 5.0 (from 4.7)
+
+
+
+v3.3.7
+====================
+
+**Added:**
+
+* Added codeowners file
+
+**Fixed:**
+
+* Fixed checking in .pyc files
+
+
+
+v3.3.6
+====================
+
+**Fixed:**
+
+* Indentation error in ``github.py``
+
+
+
+v3.3.5
+====================
+
+**Added:**
+
+* Added native aarch64 support for builds using Drone.io. This can be enabled by
+  either using `provider: {linux_aarch64: drone}` or `provider: {linux_aarch64:
+  native}` in the conda-forge.yml.
+  
+  Currently, drone has to be enabled manually as there is no automatic CI
+  registration for repos.
+* export CI env variable with CI provider name
+* New ``build-locally.py`` script that is added to the root feedstock directory when
+  ``conda smithy rerender`` is run. This script runs conda build locally. Currently
+  it only fully supports running docker builds.
+* print when adding new team to maintiners of feedstock
+
+**Removed:**
+
+* `docker.image` in conda-forge.yml is removed
+* Removed the need for shyaml in CI env.
+
+**Fixed:**
+
+* removed empty lines causing current build status table to render as code
+* build setup script overriding is now supported on azure too
+
+
+
+v3.3.4
+====================
+
+
+
+v3.3.3
+====================
+
+**Added:**
+
+* Added native ppc64le support to for travis-ci.  This can be enabled by either using
+  `provider: {linux_ppc64le: travis}` or `provider: {linux_ppc64le: native}` in the conda-forge.yml.
+  These will be the new default behavior going forward for ppc64le builds.  If native builds are not needed the 
+  qemu based builds on azure will continue to function as before.
+* Added `DOCKER_IMAGE` variable to `run_docker_build.sh`
+
+**Changed:**
+
+* Fallback to default image in `run_docker_build.sh` if `shyaml` is not installed.
+
+**Fixed:**
+
+* Fixed badges for noarch builds using azure
+
+
+
 v3.3.2
 ====================
 

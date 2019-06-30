@@ -16,8 +16,8 @@ environment:
   {%- endfor %}
 
   matrix:
-  {%- for config, platform, _ in configs %}
-    - CONFIG: {{ config}}
+  {%- for config_name, platform, _, _ in configs %}
+    - CONFIG: {{ config_name}}
   {%- if "win-32" in platform %}
       CONDA_INSTALL_LOCN: C:\Miniconda36
 {% else %}
@@ -31,6 +31,7 @@ platform:
     - x64
 
 install:
+    - cmd: set "CI=appveyor"
     # If there is a newer build queued for the same PR, cancel this one.
     - cmd: |
         {{ fast_finish }}
@@ -49,7 +50,7 @@ install:
     - cmd: conda.exe install -n root -c conda-forge --quiet --yes conda-forge-ci-setup=2 conda-build
     - cmd: setup_conda_rc .\ .\{{ recipe_dir }} .\.ci_support\%CONFIG%.yaml
     {% if build_setup -%}
-    {{ build_setup }}{% endif %}
+    {{ build_setup }}{%- endif %}
 
 # Skip .NET project specific build phase.
 build: off
