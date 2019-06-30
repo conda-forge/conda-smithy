@@ -459,6 +459,39 @@ def _get_fast_finish_script(
     return fast_finish_text
 
 
+def migrate_combined_spec(combined_spec, forge_dir, config):
+    """CFEP-9 variant migrations
+
+    Apply the list of migrations configurations to the build (in the correct sequence)
+    This will be used to change the variant within the list of MetaData instances,
+    and return the migrated variants.
+
+    This has to happend before the final variant files are computed.
+
+    The method for application is determined by the variant algebra as defined by CFEP-9
+
+    """
+    combined_spec = combined_spec.copy()
+    migrations_root = os.path.join(forge_dir, "migrations", "*.yaml")
+    migrations = glob.glob(migrations_root)
+
+    from .variant_algebra import parse_variant, variant_add
+
+    migration_variants = [
+        (fn, parse_variant(open(fn, "r").read(), config=config)) for fn in migrations
+    ]
+    migration_variants.sort(key=lambda fn_v: (fn_v[1]["migration_ts"], fn_v[0]))
+    if len(migration_variants):
+        print(f"Applying migrations: {','.join(k for k, v in migration_variants)}")
+
+    for migrator_file, migration in migration_variants:
+        if 'migration_ts' in migration:
+            del migration['migration_ts']
+        if len(migration):
+            combined_spec = variant_add(combined_spec, migration)
+    return combined_spec
+
+
 def _render_ci_provider(
     provider_name,
     jinja_env,
@@ -488,69 +521,25 @@ def _render_ci_provider(
             arch=arch,
         )
 
-        old_combine_specs = conda_build.variants.combine_specs
-        def combine_specs_and_apply_migrations(specs, log_output=True):
-            """CFEP-9 variant migrations
+        # Get the combined variants from normal variant locations prior to running migrations
+        combined_variant_spec, _ = conda_build.variants.get_package_combined_spec(
+            os.path.join(forge_dir, "recipe"),
+            config=config
+        )
 
-            Apply the list of migrations configurations to the build (in the correct sequence)
-            This will be used to change the variant within the list of MetaData instances,
-            and return the migrated variants.
+        migrated_combined_variant_spec = migrate_combined_spec(combined_variant_spec, forge_dir, config)
 
-            This has to happend before the final variant files are computed.
-
-            The method for application is determined by the variant algebra as defined by CFEP-9
-
-            """
-            # Original call
-
-            combined_spec_res = old_combine_specs(specs, log_output=log_output)
-            if isinstance(combined_spec_res, tuple):
-                combined_spec, extend_keys = combined_spec_res
-            else:
-                combined_spec = combined_spec_res
-
-            migrations_root = os.path.join(forge_dir, "migrations", "*.yaml")
-            migrations = glob.glob(migrations_root)
-
-            from .variant_algebra import parse_variant, variant_add
-
-            migration_variants = [
-                (fn, parse_variant(open(fn, "r").read(), config=config)) for fn in migrations
-            ]
-            migration_variants.sort(key=lambda fn_v: (fn_v[1]["migration_ts"], fn_v[0]))
-            if len(migration_variants):
-                print(f"Applying migrations: {','.join(k for k, v in migration_variants)}")
-
-            for migrator_file, migration in migration_variants:
-                if 'migration_ts' in migration:
-                    del migration['migration_ts']
-                if len(migration):
-                    combined_spec = variant_add(combined_spec, migration)
-
-            # Avoid spec based filtering that is done by default.
-            for k in specs.keys():
-                if k == 'internal_defaults':
-                    continue
-                del specs[k]
-
-            # Deal with legacy return value
-            if isinstance(combined_spec_res, tuple):
-                return combined_spec, extend_keys
-            else:
-                return combined_spec
-
-        try:
-            conda_build.variants.combine_specs = combine_specs_and_apply_migrations
-            metas = conda_build.api.render(
-                os.path.join(forge_dir, "recipe"),
-                config=config,
-                permit_undefined_jinja=True,
-                finalize=False,
-                bypass_env_check=True,
-                channel_urls=forge_config.get("channels", {}).get("sources", []),
-            )
-        finally:
-            conda_build.variants.combine_specs = old_combine_specs
+        metas = conda_build.api.render(
+            os.path.join(forge_dir, "recipe"),
+            #config=config,
+            platform=platform,
+            arch=arch,
+            variants=migrated_combined_variant_spec,
+            permit_undefined_jinja=True,
+            finalize=False,
+            bypass_env_check=True,
+            channel_urls=forge_config.get("channels", {}).get("sources", []),
+        )
 
         # render returns some download & reparsing info that we don't care about
         metas = [m for m, _, _ in metas]
