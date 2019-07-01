@@ -2,6 +2,7 @@ from __future__ import print_function, unicode_literals
 
 import glob
 from itertools import product, chain
+import logging
 import os
 import subprocess
 import textwrap
@@ -14,6 +15,8 @@ import conda_build.api
 import conda_build.utils
 import conda_build.variants
 import conda_build.conda_interface
+import conda_build.render
+
 from conda_build import __version__ as conda_build_version
 from jinja2 import Environment, FileSystemLoader
 
@@ -27,6 +30,7 @@ from conda_smithy.feedstock_io import (
 from . import __version__
 
 conda_forge_content = os.path.abspath(os.path.dirname(__file__))
+logger = logging.getLogger(__name__)
 
 
 def package_key(config, used_loop_vars, subdir):
@@ -241,7 +245,7 @@ def _trim_unused_pin_run_as_build(all_used_vars):
         del all_used_vars["pin_run_as_build"]
 
 
-def _collapse_subpackage_variants(list_of_metas):
+def _collapse_subpackage_variants(list_of_metas, root_path):
     """Collapse all subpackage node variants into one aggregate collection of used variables
 
     We get one node per output, but a given recipe can have multiple outputs.  Each output
@@ -260,6 +264,7 @@ def _collapse_subpackage_variants(list_of_metas):
         all_variants.update(
             conda_build.utils.HashableDict(v) for v in meta.config.variants
         )
+
         all_variants.add(conda_build.utils.HashableDict(meta.config.variant))
 
     top_level_loop_vars = list_of_metas[0].get_used_loop_vars(
@@ -375,7 +380,7 @@ def dump_subspace_config_files(metas, root_path, platform, arch, upload, forge_c
     # identify how to break up the complete set of used variables.  Anything considered
     #     "top-level" should be broken up into a separate CI job.
 
-    configs, top_level_loop_vars = _collapse_subpackage_variants(metas)
+    configs, top_level_loop_vars = _collapse_subpackage_variants(metas, root_path)
 
     # get rid of the special object notation in the yaml file for objects that we dump
     yaml.add_representer(set, yaml.representer.SafeRepresenter.represent_list)
@@ -460,6 +465,39 @@ def _get_fast_finish_script(
     return fast_finish_text
 
 
+def migrate_combined_spec(combined_spec, forge_dir, config):
+    """CFEP-9 variant migrations
+
+    Apply the list of migrations configurations to the build (in the correct sequence)
+    This will be used to change the variant within the list of MetaData instances,
+    and return the migrated variants.
+
+    This has to happend before the final variant files are computed.
+
+    The method for application is determined by the variant algebra as defined by CFEP-9
+
+    """
+    combined_spec = combined_spec.copy()
+    migrations_root = os.path.join(forge_dir, "migrations", "*.yaml")
+    migrations = glob.glob(migrations_root)
+
+    from .variant_algebra import parse_variant, variant_add
+
+    migration_variants = [
+        (fn, parse_variant(open(fn, "r").read(), config=config)) for fn in migrations
+    ]
+    migration_variants.sort(key=lambda fn_v: (fn_v[1]["migration_ts"], fn_v[0]))
+    if len(migration_variants):
+        print(f"Applying migrations: {','.join(k for k, v in migration_variants)}")
+
+    for migrator_file, migration in migration_variants:
+        if 'migration_ts' in migration:
+            del migration['migration_ts']
+        if len(migration):
+            combined_spec = variant_add(combined_spec, migration)
+    return combined_spec
+
+
 def _render_ci_provider(
     provider_name,
     jinja_env,
@@ -483,16 +521,31 @@ def _render_ci_provider(
     for i, (platform, arch, keep_noarch) in enumerate(
         zip(platforms, archs, keep_noarchs)
     ):
-        metas = conda_build.api.render(
-            os.path.join(forge_dir, "recipe"),
+        config = conda_build.config.get_or_merge_config(None,
             exclusive_config_file=forge_config["exclusive_config_file"],
             platform=platform,
             arch=arch,
+        )
+
+        # Get the combined variants from normal variant locations prior to running migrations
+        combined_variant_spec, _ = conda_build.variants.get_package_combined_spec(
+            os.path.join(forge_dir, "recipe"),
+            config=config
+        )
+
+        migrated_combined_variant_spec = migrate_combined_spec(combined_variant_spec, forge_dir, config)
+
+        metas = conda_build.api.render(
+            os.path.join(forge_dir, "recipe"),
+            platform=platform,
+            arch=arch,
+            variants=migrated_combined_variant_spec,
             permit_undefined_jinja=True,
             finalize=False,
             bypass_env_check=True,
             channel_urls=forge_config.get("channels", {}).get("sources", []),
         )
+
         # render returns some download & reparsing info that we don't care about
         metas = [m for m, _, _ in metas]
 
