@@ -208,6 +208,8 @@ def appveyor_configure(user, project):
     """Configure appveyor so that it skips building if there is no appveyor.yml present."""
     headers = {"Authorization": "Bearer {}".format(appveyor_token)}
     # I have reasons to believe this is all AppVeyor is doing to the API URL.
+    if project.startswith("_"):
+        project = project[1:]
     project = project.replace("_", "-").replace(".", "-")
     url = "https://ci.appveyor.com/api/projects/{}/{}/settings".format(
         user, project
