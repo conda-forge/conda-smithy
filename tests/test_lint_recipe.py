@@ -580,7 +580,7 @@ class Test_linter(unittest.TestCase):
         }
         lints, hints = linter.lintify(meta)
         expected_message = (
-            "license_file entry is missing, but is required."
+            "license_file entry is missing, but is expected."
         )
         self.assertNotIn(expected_message, lints)
         self.assertIn(expected_message, hints)
