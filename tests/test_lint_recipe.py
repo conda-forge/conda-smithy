@@ -391,7 +391,7 @@ class Test_linter(unittest.TestCase):
                             build:
                               noarch: python
                               script:
-                                - echo "hello" 
+                                - echo "hello"
                             requirements:
                               build:
                                 - python
@@ -403,7 +403,7 @@ class Test_linter(unittest.TestCase):
                 """
                             build:
                               script:
-                                - echo "hello" 
+                                - echo "hello"
                             requirements:
                               build:
                                 - python
@@ -414,7 +414,7 @@ class Test_linter(unittest.TestCase):
                 """
                             build:
                               script:
-                                - echo "hello" 
+                                - echo "hello"
                             requirements:
                               build:
                                 - python
@@ -425,7 +425,7 @@ class Test_linter(unittest.TestCase):
                 """
                             build:
                               script:
-                                - echo "hello" 
+                                - echo "hello"
                             requirements:
                               build:
                                 - python
@@ -773,6 +773,19 @@ class Test_linter(unittest.TestCase):
         meta = {"source": [{"urll": "http://test"}, {"url": "https://test"}]}
         lints, hints = linter.lintify(meta)
         self.assertIn(expected_message.format("source", "urll"), lints)
+
+    def test_no_git(self)
+        expected_message = (
+            "Building from git repositories is not allowed; please build from "
+            "a source tarball. [See the docs here.](https://conda-forge.org/docs/maintainer/adding_pkgs.html#build-from-tarballs-not-repos)"
+        )
+        meta = {"source": [{"git_url": "git@test"}]}
+        lints, hints = linter.lintify(meta)
+        self.assertIn(expected_message, lints)
+
+        meta = {"source": [{"git_tag": "master"}]}
+        lints, hints = linter.lintify(meta)
+        self.assertIn(expected_message, lints)
 
     def test_outputs(self):
         meta = OrderedDict([["outputs", [{"name": "asd"}]]])

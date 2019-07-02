@@ -136,7 +136,7 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
 
     recipe_dirname = os.path.basename(recipe_dir) if recipe_dir else "recipe"
     is_staged_recipes = recipe_dirname != "recipe"
-    
+
     # 0: Top level keys should be expected
     unexpected_sections = []
     for section in major_sections:
@@ -401,6 +401,15 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
             "using the compilers outlined "
             "[here](https://conda-forge.org/docs/maintainer/knowledge_base.html#compilers)."
         )
+
+    # 22:
+    for source_section in sources_section:
+        if "git_url" in source_section or "git_tag":
+            lints.append(
+                "Building from git repositories is not allowed; please build from "
+                "a source tarball. [See the docs here.](https://conda-forge.org/docs/maintainer/adding_pkgs.html#build-from-tarballs-not-repos)"
+            )
+
 
     # hints
     # 1: suggest pip
