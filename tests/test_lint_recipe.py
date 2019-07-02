@@ -572,16 +572,10 @@ class Test_linter(unittest.TestCase):
 
     def test_license_file_required(self):
         meta = {
-            "about": {
-                "home": "a URL",
-                "summary": "A test summary",
-                "license": "MIT",
-            }
+            "about": {"home": "a URL", "summary": "A test summary", "license": "MIT"}
         }
         lints, hints = linter.lintify(meta)
-        expected_message = (
-            "license_file entry is missing, but is required."
-        )
+        expected_message = "license_file entry is missing, but is required."
         self.assertIn(expected_message, lints)
 
     def test_recipe_name(self):
@@ -774,7 +768,7 @@ class Test_linter(unittest.TestCase):
         lints, hints = linter.lintify(meta)
         self.assertIn(expected_message.format("source", "urll"), lints)
 
-    def test_no_git(self)
+    def test_no_git(self):
         expected_message = (
             "Building from git repositories is not allowed; please build from "
             "a source tarball. [See the docs here.](https://conda-forge.org/docs/maintainer/adding_pkgs.html#build-from-tarballs-not-repos)"
