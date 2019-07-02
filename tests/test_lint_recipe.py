@@ -570,7 +570,7 @@ class Test_linter(unittest.TestCase):
         )
         self.assertIn(expected_message, lints)
 
-    def test_license_file_required(self):
+    def test_license_file_present(self):
         meta = {
             "about": {
                 "home": "a URL",
@@ -582,7 +582,8 @@ class Test_linter(unittest.TestCase):
         expected_message = (
             "license_file entry is missing, but is required."
         )
-        self.assertIn(expected_message, lints)
+        self.assertNotIn(expected_message, lints)
+        self.assertIn(expected_message, hints)
 
     def test_recipe_name(self):
         meta = {"package": {"name": "mp++"}}

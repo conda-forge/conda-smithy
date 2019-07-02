@@ -1,6 +1,6 @@
 **Added:**
 
-* license_file is required for GPL, MIT, BSD, APACHE, PSF
+* license_file is hinted for GPL, MIT, BSD, APACHE, PSF
 
 **Fixed:**
 
