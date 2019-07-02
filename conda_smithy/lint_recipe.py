@@ -282,13 +282,6 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
     except RuntimeError as e:
         lints.append(str(e))
 
-    # 12a: License family must be valid (conda-build checks for that)
-    license_family = about_section.get("license_family", license).lower()
-    license_file = about_section.get("license_file", "")
-    needed_families = ["gpl", "bsd", "mit", "apache", "psf"]
-    if license_file == "" and any(f for f in needed_families if f in license_family):
-        lints.append("license_file entry is missing, but is required.")
-
     # 13: Check that the recipe name is valid
     recipe_name = package_section.get("name", "").strip()
     if re.match("^[a-z0-9_\-.]+$", recipe_name) is None:
