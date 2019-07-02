@@ -19,7 +19,10 @@ import re
 import github
 import ruamel.yaml
 
-from conda_build.metadata import ensure_valid_license_family, FIELDS as cbfields
+from conda_build.metadata import (
+    ensure_valid_license_family,
+    FIELDS as cbfields,
+)
 import conda_build.conda_interface
 
 from .utils import render_meta_yaml
@@ -384,7 +387,7 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
 
     # 22:
     for source_section in sources_section:
-        if "git_url" in source_section or "git_tag":
+        if "git_url" in source_section or "git_tag" in source_section:
             lints.append(
                 "Building from git repositories is not allowed; please build from "
                 "a source tarball. [See the docs here.](https://conda-forge.org/docs/maintainer/adding_pkgs.html#build-from-tarballs-not-repos)"
