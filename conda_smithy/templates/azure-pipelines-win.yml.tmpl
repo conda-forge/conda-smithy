@@ -16,6 +16,9 @@ jobs:
         CONFIG: {{ config_name}}
         CONDA_BLD_PATH: D:\\bld\\
         UPLOAD_PACKAGES: {{ upload }}
+    {%- if upload_on_branch %}
+        UPLOAD_ON_BRANCH: {{ upload_on_branch }}
+    {%- endif %}
     {%- endif %}
     {%- endfor %}
   steps:
@@ -103,5 +106,6 @@ jobs:
         upload_package .\ .\{{ recipe_dir }} .ci_support\%CONFIG%.yaml
       env:
         BINSTAR_TOKEN: $(BINSTAR_TOKEN)
-      condition: not(eq(variables['UPLOAD_PACKAGES'], 'False'))
-
+      {%- if upload_on_branch %}
+      condition: and(eq(variables['UPLOAD_PACKAGES'], 'True'), eq(variables['Build.SourceBranch'], format('refs/heads/{0}', variables['UPLOAD_ON_BRANCH'])))
+      {%- endif %}

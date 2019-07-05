@@ -18,6 +18,9 @@ environment:
   matrix:
   {%- for config_name, platform, _, _ in configs %}
     - CONFIG: {{ config_name}}
+  {%- if upload_on_branch %}
+      UPLOAD_ON_BRANCH: {{ upload_on_branch }}
+{%- endif %}
   {%- if "win-32" in platform %}
       CONDA_INSTALL_LOCN: C:\Miniconda36
 {% else %}
@@ -58,4 +61,8 @@ build: off
 test_script:
     - conda.exe build {{ recipe_dir }} -m .ci_support\%CONFIG%.yaml
 deploy_script:
+  {%- if upload_on_branch %}
+    - if "%APPVEYOR_REPO_BRANCH%" == "%UPLOAD_ON_BRANCH%" (cmd: upload_package .\ .\{{ recipe_dir }} .ci_support\%CONFIG%.yaml) else (echo "Not uploading the package because %UPLOAD_ON_BRANCH% does not match %APPVEYOR_REPO_BRANCH%.")
+{% else %}
     - cmd: upload_package .\ .\{{ recipe_dir }} .ci_support\%CONFIG%.yaml
+{% endif -%}

@@ -15,6 +15,9 @@ jobs:
       {{ config_name }}:
         CONFIG: {{ config_name }}
         UPLOAD_PACKAGES: {{ upload }}
+    {%- if upload_on_branch %}
+        UPLOAD_ON_BRANCH: {{ upload_on_branch }}
+    {%- endif %}
     {%- endif %}
     {%- endfor %}
 
@@ -76,4 +79,6 @@ jobs:
     displayName: Upload recipe
     env:
       BINSTAR_TOKEN: $(BINSTAR_TOKEN)
-    condition: not(eq(variables['UPLOAD_PACKAGES'], 'False'))
+    {%- if upload_on_branch %}
+    condition: and(eq(variables['UPLOAD_PACKAGES'], 'True'), eq(variables['Build.SourceBranch'], format('refs/heads/{0}', variables['UPLOAD_ON_BRANCH'])))
+    {%- endif %}

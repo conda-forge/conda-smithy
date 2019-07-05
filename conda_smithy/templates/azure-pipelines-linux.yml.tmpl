@@ -15,6 +15,9 @@ jobs:
       {{ config_name }}:
         CONFIG: {{ config_name }}
         UPLOAD_PACKAGES: {{ upload }}
+    {%- if upload_on_branch %}
+        UPLOAD_ON_BRANCH: {{ upload_on_branch }}
+    {%- endif %}
         DOCKER_IMAGE: {{ config["docker_image"][-1] }}
     {%- endif %}
     {%- endfor %}
@@ -29,6 +32,13 @@ jobs:
 
   - script: |
         export CI=azure
+        {%- if upload_on_branch %}
+        if [ "$(Build.SourceBranch)" == "refs/heads/$UPLOAD_ON_BRANCH" -a $UPLOAD_PACKAGES == "True" ]; then
+            export UPLOAD_PACKAGES=True
+        else
+            export UPLOAD_PACKAGES=False
+        fi
+        {%- endif %}
         .azure-pipelines/run_docker_build.sh
     displayName: Run docker build
     env:
