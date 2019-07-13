@@ -2,12 +2,10 @@
 """
 Installs Miniconda with the latest version of Obvious-CI.
 
-This script supports Python 2 and 3 (>=2.6 and >=3.2+ respectively) and is
+This script supports Python  3 (>=3.2+) and is
 designed to run on OSX, Linux and Windows.
 
 """
-from __future__ import print_function
-
 import argparse
 import os
 import platform
@@ -49,7 +47,7 @@ def miniconda_url(
     miniconda_os_ext = {"Linux": "sh", "MacOSX": "sh", "Windows": "exe"}
     template_values["ext"] = miniconda_os_ext[template_values["OS"]]
 
-    if major_py_version not in ["2", "3"]:
+    if major_py_version not in ["3"]:
         raise ValueError(
             "Unexpected major Python version {!r}.".format(major_py_version)
         )
@@ -133,7 +131,7 @@ if __name__ == "__main__":
         "major_py_version",
         help="""The major Python version for the miniconda root env (may
                                                     still subsequently use another Python version).""",
-        choices=["2", "3"],
+        choices=["3"],
     )
     parser.add_argument(
         "--without-obvci",

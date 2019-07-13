@@ -1,15 +1,8 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import unicode_literals
+from collections.abc import Sequence, Mapping
+str_type = str
 
-try:
-    from collections.abc import Sequence, Mapping
-
-    str_type = str
-except ImportError:  # python 2
-    from collections import Sequence, Mapping
-
-    str_type = basestring
 import copy
 import io
 import itertools
