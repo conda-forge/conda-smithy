@@ -539,6 +539,7 @@ def _render_ci_provider(
             os.path.join(forge_dir, "recipe"),
             platform=platform,
             arch=arch,
+            ignore_system_variants=True,
             variants=migrated_combined_variant_spec,
             permit_undefined_jinja=True,
             finalize=False,
