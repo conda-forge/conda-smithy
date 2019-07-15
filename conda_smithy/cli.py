@@ -1,5 +1,3 @@
-from __future__ import print_function, absolute_import
-
 import os
 import subprocess
 import sys
@@ -21,7 +19,8 @@ from . import azure_ci_utils
 from . import __version__
 
 
-PY2 = sys.version_info[0] == 2
+if sys.version_info[0] == 2:
+    raise Exception("Conda-smithy does not support python 2!")
 
 
 def generate_feedstock_content(target_directory, source_recipe_dir):
@@ -54,14 +53,9 @@ class Subcommand(object):
     aliases = []
 
     def __init__(self, parser, help=None):
-        if PY2:
-            # aliases not allowed in 2.7 :-(
-            subcommand_parser = parser.add_parser(self.subcommand, help=help)
-        else:
-            subcommand_parser = parser.add_parser(
-                self.subcommand, help=help, aliases=self.aliases
-            )
-
+        subcommand_parser = parser.add_parser(
+            self.subcommand, help=help, aliases=self.aliases
+        )
         subcommand_parser.set_defaults(subcommand_func=self)
         self.subcommand_parser = subcommand_parser
 
@@ -451,14 +445,6 @@ def main():
     for subcommand in Subcommand.__subclasses__():
         subcommand(subparser)
     # And the alias for rerender
-    if PY2:
-
-        class Rerender(Regenerate):
-            # A poor-man's alias for regenerate.
-            subcommand = "rerender"
-
-        Rerender(subparser)
-
     parser.add_argument(
         "--version",
         action="version",
