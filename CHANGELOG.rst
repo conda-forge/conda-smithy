@@ -4,6 +4,32 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.4.1
+====================
+
+**Added:**
+
+* license_file is required for GPL, MIT, BSD, APACHE, PSF
+
+**Changed:**
+
+* ``build-locally.py`` now uses ``python3`` even if ``python`` is ``python2`` (Python 3.6+ was already required)
+
+**Removed:**
+
+* Github issue, PR and contributing files are removed as they are in https://github.com/conda-forge/.github
+* Support for python 2 Removed
+
+**Fixed:**
+
+* Fix configuring appveyor on repos starting with an underscore
+* Fixed an issue where conda system variants could be used after rendering migrations.
+* Fixed issue where only the last maintainer is review requested
+* Unlicense is allowed
+* Support newer ``shyaml`` versions by checking whether ``shyaml -h`` succeeds.
+
+
+
 v3.4.0
 ====================
 
