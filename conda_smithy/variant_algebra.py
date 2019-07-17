@@ -17,7 +17,7 @@ import yaml
 import toolz
 from conda_build.utils import ensure_list
 import conda_build.variants as variants
-from conda.models.version import VersionOrder
+from conda.exports import VersionOrder
 from conda_build.config import Config
 from functools import partial
 
