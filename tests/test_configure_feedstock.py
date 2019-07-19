@@ -186,6 +186,37 @@ def test_py_matrix_on_azure(py_recipe, jinja_env):
     assert len(os.listdir(matrix_dir)) == 8
 
 
+def test_upload_on_branch_azure(upload_on_branch_recipe, jinja_env):
+    cnfgr_fdstk.render_azure(
+        jinja_env=jinja_env, forge_config=upload_on_branch_recipe.config, forge_dir=upload_on_branch_recipe.recipe
+    )
+    # Check that the parameter is in the configuration.
+    assert 'upload_on_branch' in upload_on_branch_recipe.config
+    assert upload_on_branch_recipe.config['upload_on_branch'] == 'master'
+    # Check that the parameter is in the generated file.
+    with open(os.path.join(upload_on_branch_recipe.recipe, '.azure-pipelines', 'azure-pipelines-osx.yml')) as fp:
+        content = yaml.load(fp)
+    assert 'UPLOAD_ON_BRANCH' in content['jobs'][0]['strategy']['matrix']['osx_']
+    assert content['jobs'][0]['strategy']['matrix']['osx_']['UPLOAD_ON_BRANCH'] == 'master'
+    assert 'UPLOAD_ON_BRANCH' in content['jobs'][0]['steps'][-1]['condition']
+
+
+def test_upload_on_branch_appveyor(upload_on_branch_recipe, jinja_env):
+    cnfgr_fdstk.render_appveyor(
+        jinja_env=jinja_env, forge_config=upload_on_branch_recipe.config, forge_dir=upload_on_branch_recipe.recipe
+    )
+    # Check that the parameter is in the configuration.
+    assert 'upload_on_branch' in upload_on_branch_recipe.config
+    assert upload_on_branch_recipe.config['upload_on_branch'] == 'master'
+
+    # Check that the parameter is in the generated file.
+    with open(os.path.join(upload_on_branch_recipe.recipe, '.appveyor.yml')) as fp:
+        content = yaml.load(fp)
+    assert 'UPLOAD_ON_BRANCH' in content['environment']['matrix'][0]
+    assert content['environment']['matrix'][0]['UPLOAD_ON_BRANCH'] == 'master'
+    assert '%UPLOAD_ON_BRANCH%' in next(iter((content['deploy_script'][0].keys())))
+
+
 def test_circle_with_yum_reqs(py_recipe, jinja_env):
     with open(
         os.path.join(py_recipe.recipe, "recipe", "yum_requirements.txt"), "w"

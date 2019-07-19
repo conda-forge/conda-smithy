@@ -81,6 +81,9 @@ def config_yaml(testing_workdir):
     with open(os.path.join(testing_workdir, "recipe", "long_config.yaml"), "w") as f:
         config = {"python": ["2.7", "3.5", "3.6"]}
         yaml.dump(config, f, default_flow_style=False)
+    with open(os.path.join(testing_workdir, "conda-forge.yml"), "w") as f:
+        config = {"upload_on_branch": "master"}
+        yaml.dump(config, f, default_flow_style=False)
     return testing_workdir
 
 
@@ -160,6 +163,34 @@ about:
         _load_forge_config(
             config_yaml, exclusive_config_file=os.path.join(
                 config_yaml, "recipe", "default_config.yaml")
+        ),
+    )
+
+
+@pytest.fixture(scope="function")
+def upload_on_branch_recipe(config_yaml, request):
+    with open(os.path.join(config_yaml, "recipe", "meta.yaml"), "w") as fh:
+        fh.write(
+            """
+package:
+    name: py-test
+    version: 1.0.0
+requirements:
+    build:                      # [win]
+        - {{ compiler('c') }}   # [win]
+    host:
+        - python
+    run:
+        - python
+about:
+    home: home
+    """
+        )
+    return RecipeConfigPair(
+        str(config_yaml),
+        _load_forge_config(
+            config_yaml, exclusive_config_file=os.path.join(
+                config_yaml, "conda-forge.yml")
         ),
     )
 
