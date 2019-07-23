@@ -580,6 +580,7 @@ def _render_ci_provider(
             "osx": "OSX",
             "win": "Windows",
             "linux_aarch64": "aarch64",
+            "linux_armv7l": "armv7l",
         }
         fancy_platforms = []
         unfancy_platforms = set()
@@ -820,7 +821,7 @@ def _get_platforms_of_provider(provider, forge_config):
     archs = []
     upload_packages = []
     for platform in ["linux", "osx", "win"]:
-        for arch in ["64", "aarch64", "ppc64le"]:
+        for arch in ["64", "aarch64", "ppc64le", "armv7l"]:
             platform_arch = (
                 platform if arch == "64" else "{}_{}".format(platform, arch)
             )
@@ -1229,12 +1230,14 @@ def _load_forge_config(forge_dir, exclusive_config_file):
             # Following platforms are disabled by default
             "linux_aarch64": None,
             "linux_ppc64le": None,
+            "linux_armv7l": None,
         },
         "win": {"enabled": False},
         "osx": {"enabled": False},
         "linux": {"enabled": False},
         "linux_aarch64": {"enabled": False},
         "linux_ppc64le": {"enabled": False},
+        "linux_armv7l": {"enabled": False},
         # Configurable idle timeout.  Used for packages that don't have chatty enough builds
         # Applicable only to circleci and travis
         "idle_timeout_minutes": None,
@@ -1319,7 +1322,7 @@ def _load_forge_config(forge_dir, exclusive_config_file):
     print(log)
     print("## END CONFIGURATION\n")
 
-    for platform in ["linux_aarch64"]:
+    for platform in ["linux_aarch64", "linux_armv7l"]:
         if config["provider"][platform] == "default":
             config["provider"][platform] = "azure"
 
