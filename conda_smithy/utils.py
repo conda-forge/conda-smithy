@@ -1,13 +1,20 @@
 import shutil
 import tempfile
 import jinja2
-import six
 import datetime
 import time
 import os
 from collections import defaultdict
 from contextlib import contextmanager
+
 import ruamel.yaml
+
+
+# define global yaml API
+# roundrip-loader and allowing duplicate keys
+# for handling # [filter] / # [not filter]
+yaml = ruamel.yaml.YAML(typ='rt')
+yaml.allow_duplicate_keys = True
 
 
 @contextmanager
@@ -68,7 +75,7 @@ def update_conda_forge_config(feedstock_directory):
     forge_yaml = os.path.join(feedstock_directory, "conda-forge.yml")
     if os.path.exists(forge_yaml):
         with open(forge_yaml, "r") as fh:
-            code = ruamel.yaml.load(fh, ruamel.yaml.RoundTripLoader)
+            code = yaml.load(fh)
     else:
         code = {}
 
@@ -79,4 +86,4 @@ def update_conda_forge_config(feedstock_directory):
     yield code
 
     with open(forge_yaml, "w") as fh:
-        fh.write(ruamel.yaml.dump(code, Dumper=ruamel.yaml.RoundTripDumper))
+        fh.write(yaml.dump(code))

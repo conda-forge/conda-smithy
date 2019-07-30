@@ -290,7 +290,6 @@ class AddAzureBuildId(Subcommand):
         )
 
         build_info = azure_ci_utils.get_build_id(repo, config)
-        import ruamel.yaml
 
         from .utils import update_conda_forge_config
         with update_conda_forge_config(args.feedstock_directory) as config:

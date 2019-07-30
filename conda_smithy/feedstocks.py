@@ -8,10 +8,10 @@ from git import Repo, GitCommandError
 from github import Github
 
 from . import github as smithy_github
-from .utils import render_meta_yaml
+from .utils import render_meta_yaml, yaml
 
 
-def feedstock_repos(gh_organization):
+def feedstock_repos(gh_organization='conda-forge'):
     token = smithy_github.gh_token()
     gh = Github(token)
     org = gh.get_organization(gh_organization)
@@ -209,10 +209,7 @@ def yaml_meta(content):
     Read the contents of meta.yaml into a ruamel.yaml document.
 
     """
-    yaml = ruamel.yaml.load(
-        render_meta_yaml(content), ruamel.yaml.RoundTripLoader
-    )
-    return yaml
+    return yaml.load(render_meta_yaml(content))
 
 
 def feedstocks_yaml(
