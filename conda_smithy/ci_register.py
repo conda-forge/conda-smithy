@@ -4,8 +4,6 @@ import requests
 import time
 import sys
 
-import ruamel.yaml
-
 from . import github
 from .utils import update_conda_forge_config
 

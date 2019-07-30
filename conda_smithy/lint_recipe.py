@@ -10,7 +10,6 @@ import os
 import re
 
 import github
-import ruamel.yaml
 
 from conda_build.metadata import (
     ensure_valid_license_family,
@@ -18,7 +17,7 @@ from conda_build.metadata import (
 )
 import conda_build.conda_interface
 
-from .utils import render_meta_yaml
+from .utils import render_meta_yaml, yaml
 
 
 FIELDS = copy.deepcopy(cbfields)
@@ -533,7 +532,7 @@ def main(recipe_dir, conda_forge=False, return_hints=False):
 
     with io.open(recipe_meta, "rt") as fh:
         content = render_meta_yaml("".join(fh))
-        meta = ruamel.yaml.load(content, ruamel.yaml.RoundTripLoader)
+        meta = yaml.load(content)
     results, hints = lintify(meta, recipe_dir, conda_forge)
     if return_hints:
         return results, hints
