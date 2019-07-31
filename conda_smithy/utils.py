@@ -4,6 +4,7 @@ import jinja2
 import datetime
 import time
 import os
+import sys
 from collections import defaultdict
 from contextlib import contextmanager
 
@@ -60,7 +61,9 @@ def render_meta_yaml(text):
         )
     )
     mockos = MockOS()
-    content = env.from_string(text).render(os=mockos, environ=mockos.environ)
+    py_ver = '.'.join([str(v) for v in sys.version_info[:2]])
+    context = {'os':mockos, 'environ':mockos.environ, 'PY_VER':py_ver}
+    content = env.from_string(text).render(context)
     return content
 
 
