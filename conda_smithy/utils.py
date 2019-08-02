@@ -61,7 +61,7 @@ def render_meta_yaml(text):
         )
     )
     mockos = MockOS()
-    py_ver = ".".join([str(v) for v in sys.version_info[:2]])
+    py_ver = "3.7"
     context = {"os": mockos, "environ": mockos.environ, "PY_VER": py_ver}
     content = env.from_string(text).render(context)
     return content
