@@ -4,6 +4,7 @@ import jinja2
 import datetime
 import time
 import os
+import sys
 from collections import defaultdict
 from contextlib import contextmanager
 
@@ -13,7 +14,7 @@ import ruamel.yaml
 # define global yaml API
 # roundrip-loader and allowing duplicate keys
 # for handling # [filter] / # [not filter]
-yaml = ruamel.yaml.YAML(typ='rt')
+yaml = ruamel.yaml.YAML(typ="rt")
 yaml.allow_duplicate_keys = True
 
 
@@ -60,7 +61,9 @@ def render_meta_yaml(text):
         )
     )
     mockos = MockOS()
-    content = env.from_string(text).render(os=mockos, environ=mockos.environ)
+    py_ver = "3.7"
+    context = {"os": mockos, "environ": mockos.environ, "PY_VER": py_ver}
+    content = env.from_string(text).render(context)
     return content
 
 
