@@ -14,7 +14,7 @@ import ruamel.yaml
 # define global yaml API
 # roundrip-loader and allowing duplicate keys
 # for handling # [filter] / # [not filter]
-yaml = ruamel.yaml.YAML(typ='rt')
+yaml = ruamel.yaml.YAML(typ="rt")
 yaml.allow_duplicate_keys = True
 
 
@@ -61,8 +61,8 @@ def render_meta_yaml(text):
         )
     )
     mockos = MockOS()
-    py_ver = '.'.join([str(v) for v in sys.version_info[:2]])
-    context = {'os':mockos, 'environ':mockos.environ, 'PY_VER':py_ver}
+    py_ver = ".".join([str(v) for v in sys.version_info[:2]])
+    context = {"os": mockos, "environ": mockos.environ, "PY_VER": py_ver}
     content = env.from_string(text).render(context)
     return content
 
