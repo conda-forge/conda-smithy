@@ -1195,29 +1195,17 @@ def render_README(jinja_env, forge_config, forge_dir):
             fh.write(line)
 
 
-def generate_gitignore(forge_dir):
-    default_lines = ["*.pyc", "build_artifacts"]
+def render_gitignore(config, forge_dir):
     gitignore_path = os.path.join(forge_dir, ".gitignore")
-    ignore_lines = default_lines.copy()
-
-    try:
-        with open(gitignore_path, "r") as ignore_file:
-            for line in ignore_file.readlines():
-                if line.strip().replace("#"," ").split(" ")[0] in default_lines:
-                # recognize default lines with comments, such as `*.pyc#this is for the cache` line in .gitignore
-                    ignore_lines.remove(line.strip().replace("#"," ").split(" ")[0])
-                ignore_lines.append(line.strip())
-    except FileNotFoundError:
-        pass
 
     with open(gitignore_path, "w+") as ignore_file:
-        for name in ignore_lines:
-            ignore_file.write(name+"\n")
+        for fn in config["gitignore"]:
+            ignore_file.write(fn+"\n")
         
 
 def copy_feedstock_content(forge_dir):
     feedstock_content = os.path.join(conda_forge_content, "feedstock_content")
-    copytree(feedstock_content, forge_dir, ("README", "__pycache__", ".gitignore"))
+    copytree(feedstock_content, forge_dir, ("README", "__pycache__"))
 
 
 def _load_forge_config(forge_dir, exclusive_config_file):
@@ -1278,6 +1266,7 @@ def _load_forge_config(forge_dir, exclusive_config_file):
             "branch_name": "master",
         },
         "recipe_dir": "recipe",
+        "gitignore": ["*.pyc", "build_artifacts"]
     }
 
     # An older conda-smithy used to have some files which should no longer exist,
@@ -1331,6 +1320,8 @@ def _load_forge_config(forge_dir, exclusive_config_file):
             if isinstance(value, dict):
                 config_item = config.setdefault(key, value)
                 config_item.update(value)
+            elif key == "gitignore": # list value has two logics: some need replace while the others need extend
+                config[key].extend(value)
             else:
                 config[key] = value
 
@@ -1519,11 +1510,11 @@ def main(
         ),
     )
 
-    generate_gitignore(forge_dir)
     copy_feedstock_content(forge_dir)
     set_exe_file(os.path.join(forge_dir, "build-locally.py"))
     clear_variants(forge_dir)
 
+    render_gitignore(config, forge_dir)
     render_circle(env, config, forge_dir)
     render_travis(env, config, forge_dir)
     render_appveyor(env, config, forge_dir)
