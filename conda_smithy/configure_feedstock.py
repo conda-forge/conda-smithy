@@ -1200,12 +1200,15 @@ def generate_gitignore(forge_dir):
     gitignore_path = os.path.join(forge_dir, ".gitignore")
     ignore_lines = default_lines.copy()
 
-    with open(gitignore_path, "r+") as ignore_file:
-        for line in ignore_file.readlines():
-            if line.strip().replace("#"," ").split(" ")[0] in default_lines:
-            # recognize default lines with comments, such as `*.pyc#this is for the cache` line in .gitignore
-                ignore_lines.remove(line.strip().replace("#"," ").split(" ")[0])
-            ignore_lines.append(line.strip())
+    try:
+        with open(gitignore_path, "r") as ignore_file:
+            for line in ignore_file.readlines():
+                if line.strip().replace("#"," ").split(" ")[0] in default_lines:
+                # recognize default lines with comments, such as `*.pyc#this is for the cache` line in .gitignore
+                    ignore_lines.remove(line.strip().replace("#"," ").split(" ")[0])
+                ignore_lines.append(line.strip())
+    except FileNotFoundError:
+        pass
 
     with open(gitignore_path, "w+") as ignore_file:
         for name in ignore_lines:
