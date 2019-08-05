@@ -1195,9 +1195,26 @@ def render_README(jinja_env, forge_config, forge_dir):
             fh.write(line)
 
 
+def generate_gitignore(forge_dir):
+    default_lines = ["*.pyc", "build_artifacts"]
+    gitignore_path = os.path.join(forge_dir, ".gitignore")
+    ignore_lines = default_lines.copy()
+
+    with open(gitignore_path, "r+") as ignore_file:
+        for line in ignore_file.readlines():
+            if line.strip().replace("#"," ").split(" ")[0] in default_lines:
+            # recognize default lines with comments, such as `*.pyc#this is for the cache` line in .gitignore
+                ignore_lines.remove(line.strip().replace("#"," ").split(" ")[0])
+            ignore_lines.append(line.strip())
+
+    with open(gitignore_path, "w+") as ignore_file:
+        for name in ignore_lines:
+            ignore_file.write(name+"\n")
+        
+
 def copy_feedstock_content(forge_dir):
     feedstock_content = os.path.join(conda_forge_content, "feedstock_content")
-    copytree(feedstock_content, forge_dir, ("README", "__pycache__"))
+    copytree(feedstock_content, forge_dir, ("README", "__pycache__", ".gitignore"))
 
 
 def _load_forge_config(forge_dir, exclusive_config_file):
@@ -1499,6 +1516,7 @@ def main(
         ),
     )
 
+    generate_gitignore(forge_dir)
     copy_feedstock_content(forge_dir)
     set_exe_file(os.path.join(forge_dir, "build-locally.py"))
     clear_variants(forge_dir)
