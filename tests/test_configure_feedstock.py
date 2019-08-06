@@ -279,7 +279,8 @@ def test_circle_skipped(linux_skipped_recipe, jinja_env):
     circle_linux_file = os.path.join(forge_dir, ".circleci", "run_docker_build.sh")
     circle_config_file = os.path.join(forge_dir, ".circleci", "config.yml")
 
-    cnfgr_fdstk.copy_feedstock_content(forge_dir)
+    config = copy.deepcopy(linux_skipped_recipe.config)
+    cnfgr_fdstk.copy_feedstock_content(config, forge_dir)
     cnfgr_fdstk.render_circle(
         jinja_env=jinja_env,
         forge_config=linux_skipped_recipe.config,
@@ -289,10 +290,9 @@ def test_circle_skipped(linux_skipped_recipe, jinja_env):
     assert not os.path.exists(circle_linux_file)
     assert os.path.exists(circle_config_file)
 
-    config = copy.deepcopy(linux_skipped_recipe.config)
     config["provider"]["osx"] = "circle"
 
-    cnfgr_fdstk.copy_feedstock_content(forge_dir)
+    cnfgr_fdstk.copy_feedstock_content(config, forge_dir)
     cnfgr_fdstk.render_circle(
         jinja_env=jinja_env, forge_config=config, forge_dir=forge_dir
     )

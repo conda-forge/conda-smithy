@@ -1134,6 +1134,8 @@ def render_README(jinja_env, forge_config, forge_dir):
         trim_skip=False,
     )
 
+    if "README.md" in forge_config["skip_render"]:
+        return
     if "parent_recipe" in metas[0][0].meta["extra"]:
         package_name = metas[0][0].meta["extra"]["parent_recipe"]["name"]
     else:
@@ -1195,17 +1197,12 @@ def render_README(jinja_env, forge_config, forge_dir):
             fh.write(line)
 
 
-def render_gitignore(config, forge_dir):
-    gitignore_path = os.path.join(forge_dir, ".gitignore")
-
-    with open(gitignore_path, "w+") as ignore_file:
-        for fn in config["gitignore"]:
-            ignore_file.write(fn+"\n")
-        
-
-def copy_feedstock_content(forge_dir):
+def copy_feedstock_content(forge_config, forge_dir):
     feedstock_content = os.path.join(conda_forge_content, "feedstock_content")
-    copytree(feedstock_content, forge_dir, ("README", "__pycache__"))
+    skip_files = ["README", "__pycache__"]
+    for f in forge_config["skip_render"]:
+        skip_files.append(f)
+    copytree(feedstock_content, forge_dir, skip_files)
 
 
 def _load_forge_config(forge_dir, exclusive_config_file):
@@ -1266,7 +1263,7 @@ def _load_forge_config(forge_dir, exclusive_config_file):
             "branch_name": "master",
         },
         "recipe_dir": "recipe",
-        "gitignore": ["*.pyc", "build_artifacts"]
+        "skip_render": []
     }
 
     # An older conda-smithy used to have some files which should no longer exist,
@@ -1320,8 +1317,6 @@ def _load_forge_config(forge_dir, exclusive_config_file):
             if isinstance(value, dict):
                 config_item = config.setdefault(key, value)
                 config_item.update(value)
-            elif key == "gitignore": # list value has two logics: some need replace while the others need extend
-                config[key].extend(value)
             else:
                 config[key] = value
 
@@ -1510,11 +1505,10 @@ def main(
         ),
     )
 
-    copy_feedstock_content(forge_dir)
+    copy_feedstock_content(config, forge_dir)
     set_exe_file(os.path.join(forge_dir, "build-locally.py"))
     clear_variants(forge_dir)
 
-    render_gitignore(config, forge_dir)
     render_circle(env, config, forge_dir)
     render_travis(env, config, forge_dir)
     render_appveyor(env, config, forge_dir)
