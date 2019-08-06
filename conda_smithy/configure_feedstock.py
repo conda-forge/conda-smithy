@@ -1124,6 +1124,8 @@ def render_drone(jinja_env, forge_config, forge_dir):
     )
 
 def render_README(jinja_env, forge_config, forge_dir):
+    if "README.md" in forge_config["skip_render"]:
+        return
     # we only care about the first metadata object for sake of readme
     metas = conda_build.api.render(
         os.path.join(forge_dir, "recipe"),
@@ -1134,8 +1136,6 @@ def render_README(jinja_env, forge_config, forge_dir):
         trim_skip=False,
     )
 
-    if "README.md" in forge_config["skip_render"]:
-        return
     if "parent_recipe" in metas[0][0].meta["extra"]:
         package_name = metas[0][0].meta["extra"]["parent_recipe"]["name"]
     else:
