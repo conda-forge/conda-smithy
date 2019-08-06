@@ -1125,6 +1125,7 @@ def render_drone(jinja_env, forge_config, forge_dir):
 
 def render_README(jinja_env, forge_config, forge_dir):
     if "README.md" in forge_config["skip_render"]:
+        print("README.md rendering is skipped")
         return
     # we only care about the first metadata object for sake of readme
     metas = conda_build.api.render(
@@ -1202,6 +1203,7 @@ def copy_feedstock_content(forge_config, forge_dir):
     skip_files = ["README", "__pycache__"]
     for f in forge_config["skip_render"]:
         skip_files.append(f)
+        print("%s rendering is skipped" % f)
     copytree(feedstock_content, forge_dir, skip_files)
 
 

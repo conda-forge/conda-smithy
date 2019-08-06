@@ -391,3 +391,15 @@ def test_migrator_compiler_version_recipe(recipe_migration_win_compiled, jinja_e
     assert 'win_c_compilervs2008python2.7target_platformwin-64.yaml' in rendered_variants
     assert 'win_c_compilervs2017python3.5target_platformwin-32.yaml' in rendered_variants
     assert 'win_c_compilervs2017python3.5target_platformwin-64.yaml' in rendered_variants
+
+
+def test_files_skip_render(render_skipped_recipe, jinja_env):
+    cnfgr_fdstk.render_README(
+        jinja_env=jinja_env,
+        forge_config=render_skipped_recipe.config,
+        forge_dir=render_skipped_recipe.recipe,
+    )
+    skipped_files = [".gitignore", ".gitattributes", "README.md", "LICENSE.txt"]
+    for f in skipped_files:
+        fpath = os.path.join(render_skipped_recipe.recipe, f)
+        assert not os.path.exists(fpath)
