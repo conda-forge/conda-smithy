@@ -5,10 +5,14 @@ from collections.abc import Sequence, Mapping
 str_type = str
 
 import copy
+from glob import glob
 import io
 import itertools
 import os
 import re
+import shutil
+import subprocess
+import sys
 
 import github
 
@@ -522,6 +526,50 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
                     "Whenever possible python packages should use noarch. "
                     "See https://conda-forge.org/docs/maintainer/knowledge_base.html#noarch-builds"
                 )
+
+    # 3: suggest fixing all recipe/*.sh shellcheck findings
+    shell_scripts = glob(os.path.join(recipe_dir, "*.sh")) if recipe_dir else None
+    if shutil.which("shellcheck") is not None and shell_scripts:
+        MAX_SHELLCHECK_LINES = 50
+        cmd = [
+            "shellcheck",
+            "--enable=all",
+            "--shell=bash",
+            # SC2154: var is referenced but not assigned,
+            #         see https://github.com/koalaman/shellcheck/wiki/SC2154
+            "--exclude=SC2154",
+        ]
+
+        p = subprocess.Popen(
+            cmd + shell_scripts,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+        )
+        sc_stdout, _ = p.communicate()
+
+        if p.returncode == 1:
+            # All files successfully scanned with some issues.
+            findings = (
+                sc_stdout.decode(sys.stdout.encoding)
+                .replace("\r\n", "\n")
+                .splitlines()
+            )
+            hints.append(
+                "Whenever possible fix all shellcheck findings ('"
+                + " ".join(cmd)
+                + " recipe/*.sh -f diff | git apply' helps)"
+            )
+            hints.extend(findings[:50])
+            if len(findings) > MAX_SHELLCHECK_LINES:
+                hints.append(
+                    "Output restricted, there are '%s' more lines."
+                    % (len(findings) - MAX_SHELLCHECK_LINES)
+                )
+        elif p.returncode != 0:
+            # Something went wrong.
+            hints.append(
+                "There have been errors while scanning with shellcheck."
+            )
 
     return lints, hints
 
