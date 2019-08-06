@@ -399,6 +399,7 @@ def test_files_skip_render(render_skipped_recipe, jinja_env):
         forge_config=render_skipped_recipe.config,
         forge_dir=render_skipped_recipe.recipe,
     )
+    cnfgr_fdstk.copy_feedstock_content(render_skipped_recipe.config, render_skipped_recipe.recipe)
     skipped_files = [".gitignore", ".gitattributes", "README.md", "LICENSE.txt"]
     for f in skipped_files:
         fpath = os.path.join(render_skipped_recipe.recipe, f)
