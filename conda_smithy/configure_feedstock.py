@@ -344,8 +344,8 @@ def _collapse_subpackage_variants(list_of_metas, root_path):
     _trim_unused_zip_keys(used_key_values)
     _trim_unused_pin_run_as_build(used_key_values)
 
-    print("top_level_loop_vars", top_level_loop_vars)
-    print("used_key_values", used_key_values)
+    logger.debug("top_level_loop_vars {}".format(top_level_loop_vars))
+    logger.debug("used_key_values {}".format(used_key_values))
 
     return (
         break_up_top_level_values(top_level_loop_vars, used_key_values),
@@ -486,7 +486,7 @@ def migrate_combined_spec(combined_spec, forge_dir, config):
     ]
     migration_variants.sort(key=lambda fn_v: (fn_v[1]["migration_ts"], fn_v[0]))
     if len(migration_variants):
-        print(f"Applying migrations: {','.join(k for k, v in migration_variants)}")
+        logger.info(f"Applying migrations: {','.join(k for k, v in migration_variants)}")
 
     for migrator_file, migration in migration_variants:
         if 'migration_ts' in migration:
@@ -1125,7 +1125,7 @@ def render_drone(jinja_env, forge_config, forge_dir):
 
 def render_README(jinja_env, forge_config, forge_dir):
     if "README.md" in forge_config["skip_render"]:
-        print("README.md rendering is skipped")
+        logger.info("README.md rendering is skipped")
         return
     # we only care about the first metadata object for sake of readme
     metas = conda_build.api.render(
@@ -1183,8 +1183,8 @@ def render_README(jinja_env, forge_config, forge_dir):
         except (IndexError, IOError):
             pass
 
-    print("README")
-    print(yaml.dump(forge_config))
+    logger.debug("README")
+    logger.debug(yaml.dump(forge_config))
 
     with write_file(target_fname) as fh:
         fh.write(template.render(**forge_config))
@@ -1203,7 +1203,7 @@ def copy_feedstock_content(forge_config, forge_dir):
     skip_files = ["README", "__pycache__"]
     for f in forge_config["skip_render"]:
         skip_files.append(f)
-        print("%s rendering is skipped" % f)
+        logger.info("%s rendering is skipped" % f)
     copytree(feedstock_content, forge_dir, skip_files)
 
 
@@ -1326,9 +1326,9 @@ def _load_forge_config(forge_dir, exclusive_config_file):
     config["azure"].setdefault("user_or_org", config["github"]["user_or_org"])
 
     log = yaml.safe_dump(config)
-    print("## CONFIGURATION USED\n")
-    print(log)
-    print("## END CONFIGURATION\n")
+    logger.debug("## CONFIGURATION USED\n")
+    logger.debug(log)
+    logger.debug("## END CONFIGURATION\n")
 
     for platform in ["linux_aarch64", "linux_armv7l"]:
         if config["provider"][platform] == "default":
@@ -1378,7 +1378,7 @@ def check_version_uptodate(resolve, name, installed_version, error_on_warn):
     if error_on_warn:
         raise RuntimeError("{} Exiting.".format(msg))
     else:
-        print(msg)
+        logger.info(msg)
 
 
 def commit_changes(forge_file_directory, commit, cs_ver, cfp_ver, cb_ver):
@@ -1390,7 +1390,7 @@ def commit_changes(forge_file_directory, commit, cs_ver, cfp_ver, cb_ver):
         msg = "Re-rendered with conda-build {} and conda-smithy {}".format(
             cb_ver, cs_ver
         )
-    print(msg)
+    logger.info(msg)
 
     is_git_repo = os.path.exists(os.path.join(forge_file_directory, ".git"))
     if is_git_repo:
@@ -1404,15 +1404,15 @@ def commit_changes(forge_file_directory, commit, cs_ver, cfp_ver, cb_ver):
                 if commit == "edit":
                     git_args += ["--edit", "--status", "--verbose"]
                 subprocess.check_call(git_args, cwd=forge_file_directory)
-                print("")
+                logger.info("")
             else:
-                print(
+                logger.info(
                     "You can commit the changes with:\n\n"
                     '    git commit -m "MNT: {}"\n'.format(msg)
                 )
-            print("These changes need to be pushed to github!\n")
+            logger.info("These changes need to be pushed to github!\n")
         else:
-            print("No changes made. This feedstock is up-to-date.\n")
+            logger.info("No changes made. This feedstock is up-to-date.\n")
 
 
 def get_cfp_file_path(resolve=None, error_on_warn=True):
@@ -1458,6 +1458,10 @@ def clear_variants(forge_dir):
 def main(
     forge_file_directory, no_check_uptodate=False, commit=False, exclusive_config_file=None, check=False
 ):
+    import logging
+    loglevel = os.environ.get('CONDA_SMITHY_LOGLEVEL', 'INFO').upper()
+    logger.setLevel(loglevel)
+
     if check:
         index = conda_build.conda_interface.get_index(channel_urls=["conda-forge"])
         r = conda_build.conda_interface.Resolve(index)
