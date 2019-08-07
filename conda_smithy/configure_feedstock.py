@@ -1124,6 +1124,9 @@ def render_drone(jinja_env, forge_config, forge_dir):
     )
 
 def render_README(jinja_env, forge_config, forge_dir):
+    if "README.md" in forge_config["skip_render"]:
+        print("README.md rendering is skipped")
+        return
     # we only care about the first metadata object for sake of readme
     metas = conda_build.api.render(
         os.path.join(forge_dir, "recipe"),
@@ -1195,9 +1198,13 @@ def render_README(jinja_env, forge_config, forge_dir):
             fh.write(line)
 
 
-def copy_feedstock_content(forge_dir):
+def copy_feedstock_content(forge_config, forge_dir):
     feedstock_content = os.path.join(conda_forge_content, "feedstock_content")
-    copytree(feedstock_content, forge_dir, ("README", "__pycache__"))
+    skip_files = ["README", "__pycache__"]
+    for f in forge_config["skip_render"]:
+        skip_files.append(f)
+        print("%s rendering is skipped" % f)
+    copytree(feedstock_content, forge_dir, skip_files)
 
 
 def _load_forge_config(forge_dir, exclusive_config_file):
@@ -1258,6 +1265,7 @@ def _load_forge_config(forge_dir, exclusive_config_file):
             "branch_name": "master",
         },
         "recipe_dir": "recipe",
+        "skip_render": []
     }
 
     # An older conda-smithy used to have some files which should no longer exist,
@@ -1499,7 +1507,7 @@ def main(
         ),
     )
 
-    copy_feedstock_content(forge_dir)
+    copy_feedstock_content(config, forge_dir)
     set_exe_file(os.path.join(forge_dir, "build-locally.py"))
     clear_variants(forge_dir)
 

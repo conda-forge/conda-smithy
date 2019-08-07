@@ -279,7 +279,8 @@ def test_circle_skipped(linux_skipped_recipe, jinja_env):
     circle_linux_file = os.path.join(forge_dir, ".circleci", "run_docker_build.sh")
     circle_config_file = os.path.join(forge_dir, ".circleci", "config.yml")
 
-    cnfgr_fdstk.copy_feedstock_content(forge_dir)
+    config = copy.deepcopy(linux_skipped_recipe.config)
+    cnfgr_fdstk.copy_feedstock_content(config, forge_dir)
     cnfgr_fdstk.render_circle(
         jinja_env=jinja_env,
         forge_config=linux_skipped_recipe.config,
@@ -289,10 +290,9 @@ def test_circle_skipped(linux_skipped_recipe, jinja_env):
     assert not os.path.exists(circle_linux_file)
     assert os.path.exists(circle_config_file)
 
-    config = copy.deepcopy(linux_skipped_recipe.config)
     config["provider"]["osx"] = "circle"
 
-    cnfgr_fdstk.copy_feedstock_content(forge_dir)
+    cnfgr_fdstk.copy_feedstock_content(config, forge_dir)
     cnfgr_fdstk.render_circle(
         jinja_env=jinja_env, forge_config=config, forge_dir=forge_dir
     )
@@ -391,3 +391,16 @@ def test_migrator_compiler_version_recipe(recipe_migration_win_compiled, jinja_e
     assert 'win_c_compilervs2008python2.7target_platformwin-64.yaml' in rendered_variants
     assert 'win_c_compilervs2017python3.5target_platformwin-32.yaml' in rendered_variants
     assert 'win_c_compilervs2017python3.5target_platformwin-64.yaml' in rendered_variants
+
+
+def test_files_skip_render(render_skipped_recipe, jinja_env):
+    cnfgr_fdstk.render_README(
+        jinja_env=jinja_env,
+        forge_config=render_skipped_recipe.config,
+        forge_dir=render_skipped_recipe.recipe,
+    )
+    cnfgr_fdstk.copy_feedstock_content(render_skipped_recipe.config, render_skipped_recipe.recipe)
+    skipped_files = [".gitignore", ".gitattributes", "README.md", "LICENSE.txt"]
+    for f in skipped_files:
+        fpath = os.path.join(render_skipped_recipe.recipe, f)
+        assert not os.path.exists(fpath)
