@@ -24,7 +24,7 @@ requirements:
     - conda-build >=3.18.3
     - jinja2
     - requests
-    - pycrypto
+    - pycryptodome
     - gitpython
     - pygithub <2
     - ruamel.yaml
