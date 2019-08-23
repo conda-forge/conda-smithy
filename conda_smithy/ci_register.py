@@ -3,6 +3,7 @@ import os
 import requests
 import time
 import sys
+import subprocess
 
 from . import github
 from .utils import update_conda_forge_config
@@ -33,6 +34,17 @@ except (IOError, ValueError):
     print(
         "No appveyor token. Create a token at https://ci.appveyor.com/api-token and\n"
         "Put one in ~/.conda-smithy/appveyor.token"
+    )
+
+try:
+    with open(os.path.expanduser("~/.conda-smithy/drone.token"), "r") as fh:
+        drone_token = fh.read().strip()
+    if not drone_token:
+        raise ValueError()
+except (IOError, ValueError):
+    print(
+        "No drone token. Create a token at https://cloud.drone.io/account and\n"
+        "Put one in ~/.conda-smithy/drone.token"
     )
 
 try:
@@ -102,6 +114,30 @@ def add_token_to_circle(user, project):
         raise ValueError(response)
 
 
+def drone_env():
+    return {
+        'DRONE_TOKEN': drone_token,
+        'DRONE_SERVER': 'https://cloud.drone.io'
+    }
+
+
+def add_token_to_drone(user, project):
+    env = dict(os.environ)
+    env.update(drone_env())
+    subprocess.run(['drone', 'secret', 'add',
+        '--repository', f'{user}/{project}',
+        '--name', "BINSTAR_TOKEN",
+        '--data', anaconda_token
+        ], env=env
+    )
+
+
+def add_project_to_drone(user, project):
+    env = dict(os.environ)
+    env.update(drone_env())
+    subprocess.run(['drone', 'repo', 'enable', f'{user}/{project}'], env=env)
+
+    
 def add_project_to_circle(user, project):
     headers = {
         "Content-Type": "application/json",
