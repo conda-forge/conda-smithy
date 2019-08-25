@@ -40,6 +40,7 @@ matrix:
 {%- endif %}
 script:
   - export CI=travis
+  - export GIT_BRANCH="$TRAVIS_BRANCH"
 {% if 'osx' in platformset %}
   - if [[ ${PLATFORM} =~ .*osx.* ]]; then ./.travis/run_osx_build.sh; fi
 {%- endif %}

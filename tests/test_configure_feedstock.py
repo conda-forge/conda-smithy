@@ -198,19 +198,19 @@ def test_upload_on_branch_azure(upload_on_branch_recipe, jinja_env):
         content_osx = yaml.load(fp)
     assert 'UPLOAD_ON_BRANCH' in content_osx['jobs'][0]['strategy']['matrix']['osx_']
     assert content_osx['jobs'][0]['strategy']['matrix']['osx_']['UPLOAD_ON_BRANCH'] == 'master'
-    assert 'UPLOAD_ON_BRANCH' in content_osx['jobs'][0]['steps'][-1]['condition']
+    assert 'BUILD_SOURCEBRANCHNAME' in content_osx['jobs'][0]['steps'][-1]['script']
 
     with open(os.path.join(upload_on_branch_recipe.recipe, '.azure-pipelines', 'azure-pipelines-win.yml')) as fp:
         content_win = yaml.load(fp)
     assert 'UPLOAD_ON_BRANCH' in content_win['jobs'][0]['strategy']['matrix']['win_']
     assert content_win['jobs'][0]['strategy']['matrix']['win_']['UPLOAD_ON_BRANCH'] == 'master'
-    assert 'UPLOAD_ON_BRANCH' in content_win['jobs'][0]['steps'][-1]['condition']
+    assert 'BUILD_SOURCEBRANCHNAME' in content_win['jobs'][0]['steps'][-1]['script']
    
     with open(os.path.join(upload_on_branch_recipe.recipe, '.azure-pipelines', 'azure-pipelines-linux.yml')) as fp:
         content_lin = yaml.load(fp)
     assert 'UPLOAD_ON_BRANCH' in content_lin['jobs'][0]['strategy']['matrix']['linux_']
     assert content_lin['jobs'][0]['strategy']['matrix']['linux_']['UPLOAD_ON_BRANCH'] == 'master'
-    assert 'UPLOAD_ON_BRANCH' in content_lin['jobs'][0]['steps'][1]['script']
+    assert 'BUILD_SOURCEBRANCHNAME' in content_lin['jobs'][0]['steps'][1]['script']
 
 
 def test_upload_on_branch_appveyor(upload_on_branch_recipe, jinja_env):
@@ -226,7 +226,7 @@ def test_upload_on_branch_appveyor(upload_on_branch_recipe, jinja_env):
         content = yaml.load(fp)
     assert 'UPLOAD_ON_BRANCH' in content['environment']['matrix'][0]
     assert content['environment']['matrix'][0]['UPLOAD_ON_BRANCH'] == 'master'
-    assert '%UPLOAD_ON_BRANCH%' in next(iter((content['deploy_script'][0].keys())))
+    assert '%APPVEYOR_REPO_BRANCH%' in content['deploy_script'][0]
 
 
 def test_circle_with_yum_reqs(py_recipe, jinja_env):

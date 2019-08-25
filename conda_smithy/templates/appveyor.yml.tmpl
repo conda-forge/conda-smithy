@@ -61,8 +61,5 @@ build: off
 test_script:
     - conda.exe build {{ recipe_dir }} -m .ci_support\%CONFIG%.yaml
 deploy_script:
-  {%- if upload_on_branch %}
-    - if "%APPVEYOR_REPO_BRANCH%" == "%UPLOAD_ON_BRANCH%" (cmd: upload_package .\ .\{{ recipe_dir }} .ci_support\%CONFIG%.yaml) else (echo "Not uploading the package because %UPLOAD_ON_BRANCH% does not match %APPVEYOR_REPO_BRANCH%.")
-{% else %}
+    - set "GIT_BRANCH=%APPVEYOR_REPO_BRANCH%"
     - cmd: upload_package .\ .\{{ recipe_dir }} .ci_support\%CONFIG%.yaml
-{% endif -%}

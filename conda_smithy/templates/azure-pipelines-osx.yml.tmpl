@@ -75,10 +75,9 @@ jobs:
 
   - script: |
       source activate base
+      export GIT_BRANCH=$BUILD_SOURCEBRANCHNAME
       upload_package ./ ./recipe ./.ci_support/${CONFIG}.yaml
     displayName: Upload recipe
     env:
       BINSTAR_TOKEN: $(BINSTAR_TOKEN)
-    {%- if upload_on_branch %}
-    condition: and(eq(variables['UPLOAD_PACKAGES'], 'True'), eq(variables['Build.SourceBranch'], format('refs/heads/{0}', variables['UPLOAD_ON_BRANCH'])))
-    {%- endif %}
+    condition: not(eq(variables['UPLOAD_PACKAGES'], 'False'))

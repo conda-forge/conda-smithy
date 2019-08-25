@@ -32,13 +32,7 @@ jobs:
 
   - script: |
         export CI=azure
-        {%- if upload_on_branch %}
-        if [ "$(Build.SourceBranch)" == "refs/heads/$UPLOAD_ON_BRANCH" -a $UPLOAD_PACKAGES == "True" ]; then
-            export UPLOAD_PACKAGES=True
-        else
-            export UPLOAD_PACKAGES=False
-        fi
-        {%- endif %}
+        export GIT_BRANCH=$BUILD_SOURCEBRANCHNAME
         .azure-pipelines/run_docker_build.sh
     displayName: Run docker build
     env:

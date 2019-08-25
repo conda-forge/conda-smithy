@@ -15,12 +15,15 @@ steps:
     CONFIG: {{ config_name }}
     UPLOAD_PACKAGES: {{ upload }}
     PLATFORM: {{ platform }}
-    #BINSTAR_TOKEN: ""
+  {%- if upload_on_branch %}
+    UPLOAD_ON_BRANCH: {{ upload_on_branch }}
+{%- endif %}
   {%- if 'linux' in platform %}
   commands:
     - export FEEDSTOCK_ROOT="$CI_WORKSPACE"
     - export RECIPE_ROOT="$FEEDSTOCK_ROOT/recipe"
     - export CI=drone
+    - export GIT_BRANCH="$DRONE_BRANCH"
     - sed -i '$ichown -R conda:conda "$FEEDSTOCK_ROOT"' /opt/docker/bin/entrypoint
     - /opt/docker/bin/entrypoint $FEEDSTOCK_ROOT/.drone/build_steps.sh
     - echo "Done building"
