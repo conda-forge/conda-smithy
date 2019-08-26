@@ -100,6 +100,10 @@ jobs:
       condition: not(contains(variables['CONFIG'], 'vs2008'))
 
     - script: |
+        set "GIT_BRANCH=%BUILD_SOURCEBRANCHNAME%"
+{%- if upload_on_branch %}
+        set "UPLOAD_ON_BRANCH={{ upload_on_branch }}"
+{%- endif %}
         upload_package .\ .\{{ recipe_dir }} .ci_support\%CONFIG%.yaml
       env:
         BINSTAR_TOKEN: $(BINSTAR_TOKEN)
