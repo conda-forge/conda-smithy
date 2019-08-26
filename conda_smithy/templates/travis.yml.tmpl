@@ -39,11 +39,11 @@ matrix:
 {% endfor %}
 {%- endif %}
 script:
-  - export CI=travis
+   - export CI=travis
+   - export GIT_BRANCH="$TRAVIS_BRANCH"
 {%- if upload_on_branch %}
   - export UPLOAD_ON_BRANCH="{{ upload_on_branch }}"
 {%- endif %}
-  - export GIT_BRANCH="$TRAVIS_BRANCH"
 {% if 'osx' in platformset %}
   - if [[ ${PLATFORM} =~ .*osx.* ]]; then ./.travis/run_osx_build.sh; fi
 {%- endif %}
