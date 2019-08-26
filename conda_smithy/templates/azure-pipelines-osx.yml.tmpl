@@ -15,9 +15,6 @@ jobs:
       {{ config_name }}:
         CONFIG: {{ config_name }}
         UPLOAD_PACKAGES: {{ upload }}
-    {%- if upload_on_branch %}
-        UPLOAD_ON_BRANCH: {{ upload_on_branch }}
-    {%- endif %}
     {%- endif %}
     {%- endfor %}
 
