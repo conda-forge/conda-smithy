@@ -192,24 +192,21 @@ def test_upload_on_branch_azure(upload_on_branch_recipe, jinja_env):
     )
     # Check that the parameter is in the configuration.
     assert 'upload_on_branch' in upload_on_branch_recipe.config
-    assert upload_on_branch_recipe.config['upload_on_branch'] == 'master'
+    assert upload_on_branch_recipe.config['upload_on_branch'] == 'foo-branch'
     # Check that the parameter is in the generated file.
     with open(os.path.join(upload_on_branch_recipe.recipe, '.azure-pipelines', 'azure-pipelines-osx.yml')) as fp:
         content_osx = yaml.load(fp)
-    assert 'UPLOAD_ON_BRANCH' in content_osx['jobs'][0]['strategy']['matrix']['osx_']
-    assert content_osx['jobs'][0]['strategy']['matrix']['osx_']['UPLOAD_ON_BRANCH'] == 'master'
+    assert 'UPLOAD_ON_BRANCH="foo-branch"' in content_osx['jobs'][0]['steps'][-1]['script']
     assert 'BUILD_SOURCEBRANCHNAME' in content_osx['jobs'][0]['steps'][-1]['script']
 
     with open(os.path.join(upload_on_branch_recipe.recipe, '.azure-pipelines', 'azure-pipelines-win.yml')) as fp:
         content_win = yaml.load(fp)
-    assert 'UPLOAD_ON_BRANCH' in content_win['jobs'][0]['strategy']['matrix']['win_']
-    assert content_win['jobs'][0]['strategy']['matrix']['win_']['UPLOAD_ON_BRANCH'] == 'master'
+    assert 'UPLOAD_ON_BRANCH=foo-branch' in content_win['jobs'][0]['steps'][-1]['script']
     assert 'BUILD_SOURCEBRANCHNAME' in content_win['jobs'][0]['steps'][-1]['script']
-   
+
     with open(os.path.join(upload_on_branch_recipe.recipe, '.azure-pipelines', 'azure-pipelines-linux.yml')) as fp:
         content_lin = yaml.load(fp)
-    assert 'UPLOAD_ON_BRANCH' in content_lin['jobs'][0]['strategy']['matrix']['linux_']
-    assert content_lin['jobs'][0]['strategy']['matrix']['linux_']['UPLOAD_ON_BRANCH'] == 'master'
+    assert 'UPLOAD_ON_BRANCH="foo-branch"' in content_lin['jobs'][0]['steps'][1]['script']
     assert 'BUILD_SOURCEBRANCHNAME' in content_lin['jobs'][0]['steps'][1]['script']
 
 
@@ -219,14 +216,13 @@ def test_upload_on_branch_appveyor(upload_on_branch_recipe, jinja_env):
     )
     # Check that the parameter is in the configuration.
     assert 'upload_on_branch' in upload_on_branch_recipe.config
-    assert upload_on_branch_recipe.config['upload_on_branch'] == 'master'
+    assert upload_on_branch_recipe.config['upload_on_branch'] == 'foo-branch'
 
     # Check that the parameter is in the generated file.
     with open(os.path.join(upload_on_branch_recipe.recipe, '.appveyor.yml')) as fp:
         content = yaml.load(fp)
-    assert 'UPLOAD_ON_BRANCH' in content['environment']['matrix'][0]
-    assert content['environment']['matrix'][0]['UPLOAD_ON_BRANCH'] == 'master'
     assert '%APPVEYOR_REPO_BRANCH%' in content['deploy_script'][0]
+    assert 'UPLOAD_ON_BRANCH=foo-branch' in content['deploy_script'][1]
 
 
 def test_circle_with_yum_reqs(py_recipe, jinja_env):

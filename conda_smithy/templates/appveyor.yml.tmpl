@@ -18,9 +18,6 @@ environment:
   matrix:
   {%- for config_name, platform, _, _ in configs %}
     - CONFIG: {{ config_name}}
-  {%- if upload_on_branch %}
-      UPLOAD_ON_BRANCH: {{ upload_on_branch }}
-{%- endif %}
   {%- if "win-32" in platform %}
       CONDA_INSTALL_LOCN: C:\Miniconda36
 {% else %}
@@ -62,4 +59,7 @@ test_script:
     - conda.exe build {{ recipe_dir }} -m .ci_support\%CONFIG%.yaml
 deploy_script:
     - set "GIT_BRANCH=%APPVEYOR_REPO_BRANCH%"
+{%- if upload_on_branch %}
+    - set "UPLOAD_ON_BRANCH={{ upload_on_branch }}"
+{%- endif %}
     - cmd: upload_package .\ .\{{ recipe_dir }} .ci_support\%CONFIG%.yaml
