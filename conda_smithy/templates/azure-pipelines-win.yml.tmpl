@@ -107,4 +107,4 @@ jobs:
         upload_package .\ .\{{ recipe_dir }} .ci_support\%CONFIG%.yaml
       env:
         BINSTAR_TOKEN: $(BINSTAR_TOKEN)
-      condition: eq(variables['UPLOAD_PACKAGES'], 'True')
+      condition: not(eq(variables['UPLOAD_PACKAGES'], 'False'))
