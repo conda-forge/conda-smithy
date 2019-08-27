@@ -14,7 +14,7 @@ jobs:
     {%- if platform.startswith('win') %}
       {{ config_name }}:
         CONFIG: {{ config_name}}
-        CONDA_BLD_PATH: D:\\bld\\
+        CONDA_BLD_PATH: C:\\bld\\
         UPLOAD_PACKAGES: {{ upload }}
     {%- endif %}
     {%- endfor %}
