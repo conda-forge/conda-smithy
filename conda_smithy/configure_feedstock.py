@@ -907,6 +907,11 @@ def _travis_specific_setup(jinja_env, forge_config, forge_dir, platform):
     }
     template_files = platform_templates.get(platform, [])
 
+    if platform == "linux":
+        yum_build_setup = generate_yum_requirements(forge_dir)
+        if yum_build_setup:
+            forge_config['yum_build_setup'] = yum_build_setup
+
     _render_template_exe_files(
         forge_config=forge_config,
         target_dir=os.path.join(forge_dir, ".travis"),
