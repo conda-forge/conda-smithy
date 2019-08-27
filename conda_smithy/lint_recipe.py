@@ -128,7 +128,7 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
 
     recipe_dirname = os.path.basename(recipe_dir) if recipe_dir else "recipe"
     is_staged_recipes = recipe_dirname != "recipe"
-    
+
     # 0: Top level keys should be expected
     unexpected_sections = []
     for section in major_sections:
@@ -393,6 +393,44 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
             "using the compilers outlined "
             "[here](https://conda-forge.org/docs/maintainer/knowledge_base.html#compilers)."
         )
+
+    # 22: Single space in pinned requirements
+    for section, requirements in requirements_section.items():
+        for requirement in requirements:
+            req, _, _ = requirement.partition("#")
+            if "{{" in req:
+                continue
+            parts = req.split()
+            if req.count(" ") > 1:
+                # check for too many spaces
+                lints.append((
+                    "``requirements: {section}: {requirement}`` should only "
+                    "conatin a single space between the name and the pin, i.e. "
+                    "``{name} {pin}``"
+                ).format(
+                    section=section,
+                    requirement=requirement,
+                    name=parts[0],
+                    pin="".join(parts[1:],
+                )))
+                continue
+            # check that there is a space if there is a pin
+            bad_char_idx = [(parts[0].find(c), c) for c in "><="]
+            bad_char_idx = [bci for bci in bad_char_idx if bci[0] >= 0]
+            if bad_char_idx:
+                bad_char_idx.sort()
+                i = bad_char_idx[0][0]
+                lints.append((
+                    "``requirements: {section}: {requirement}`` must "
+                    "conatin a single space between the name and the pin, i.e. "
+                    "``{name} {pin}``"
+                ).format(
+                    section=section,
+                    requirement=requirement,
+                    name=parts[0][:i],
+                    pin=parts[0][i:] + "".join(parts[1:],
+                )))
+                continue
 
     # hints
     # 1: suggest pip

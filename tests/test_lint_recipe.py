@@ -390,7 +390,7 @@ class Test_linter(unittest.TestCase):
                             build:
                               noarch: python
                               script:
-                                - echo "hello" 
+                                - echo "hello"
                             requirements:
                               build:
                                 - python
@@ -402,7 +402,7 @@ class Test_linter(unittest.TestCase):
                 """
                             build:
                               script:
-                                - echo "hello" 
+                                - echo "hello"
                             requirements:
                               build:
                                 - python
@@ -413,7 +413,7 @@ class Test_linter(unittest.TestCase):
                 """
                             build:
                               script:
-                                - echo "hello" 
+                                - echo "hello"
                             requirements:
                               build:
                                 - python
@@ -424,7 +424,7 @@ class Test_linter(unittest.TestCase):
                 """
                             build:
                               script:
-                                - echo "hello" 
+                                - echo "hello"
                             requirements:
                               build:
                                 - python
@@ -816,6 +816,40 @@ class Test_linter(unittest.TestCase):
             "list, but got a {}.{}."
         ).format(type(url).__module__, type(url).__name__)
         self.assertIn(msg, lints)
+
+    def test_single_space_pins(self):
+        meta = {
+            "requirements": {
+                "build": [
+                    "{{ compilers('c') }}",
+                    "python >=3",
+                    "pip   19",
+                ],
+                "host": [
+                    "python >= 2",
+                ],
+                "run": [
+                    "xonsh>1.0",
+                    "conda= 4.*",
+                    "conda-smithy<=54.*",
+                ],
+            }
+        }
+        lints, hints = linter.lintify(meta)
+        filtered_lints = [lint for lint in lints if lint.startswith("``requirements: ")]
+        expected_messages = [
+            "``requirements: build: pip   19`` should only conatin a single space "
+            "between the name and the pin, i.e. ``pip 19``",
+            "``requirements: host: python >= 2`` should only conatin a single space "
+            "between the name and the pin, i.e. ``python >=2``",
+            "``requirements: run: xonsh>1.0`` must conatin a single space between the "
+            "name and the pin, i.e. ``xonsh >1.0``",
+            "``requirements: run: conda= 4.*`` must conatin a single space between the "
+            "name and the pin, i.e. ``conda =4.*``",
+            "``requirements: run: conda-smithy<=54.*`` must conatin a single space "
+            "between the name and the pin, i.e. ``conda-smithy <=54.*``",
+        ]
+        self.assertEqual(expected_messages, filtered_lints)
 
 
 @pytest.mark.cli
