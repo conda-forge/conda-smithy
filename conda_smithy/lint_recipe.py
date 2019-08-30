@@ -405,7 +405,7 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
                 # check for too many spaces
                 lints.append((
                     "``requirements: {section}: {requirement}`` should only "
-                    "conatin a single space between the name and the pin, i.e. "
+                    "contain a single space between the name and the pin, i.e. "
                     "``{name} {pin}``"
                 ).format(
                     section=section,
