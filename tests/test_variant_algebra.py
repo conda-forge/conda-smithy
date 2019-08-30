@@ -121,7 +121,7 @@ def test_ordering_downgrade():
     )
 
     res = variant_add(start, mig_compiler)
-    assert res["jpeg"] == [2.0]
+    assert res["jpeg"] == ['2.0']
     print(res)
 
 
