@@ -96,6 +96,35 @@ def test_ordering():
     # raise Exception()
 
 
+def test_ordering_downgrade():
+    start = parse_variant(
+        dedent(
+            """\
+    jpeg:
+        - 3.0
+    """
+        )
+    )
+
+    mig_compiler = parse_variant(
+        dedent(
+            """\
+    __migrator:
+        ordering:
+            jpeg:
+                - 3.0
+                - 2.0
+    jpeg:
+        - 2.0
+    """
+        )
+    )
+
+    res = variant_add(start, mig_compiler)
+    assert res["jpeg"] == ['2.0']
+    print(res)
+
+
 def test_zip_keys():
     start = parse_variant(
         dedent(
