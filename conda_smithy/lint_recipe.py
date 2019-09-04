@@ -401,11 +401,11 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
             if "{{" in req:
                 continue
             parts = req.split()
-            if req.count(" ") > 1:
+            if len(parts) > 2 and parts[1] in ["!=", "=", "==", ">", "<", "<=", ">="]:
                 # check for too many spaces
                 lints.append((
-                    "``requirements: {section}: {requirement}`` should only "
-                    "contain a single space between the name and the pin, i.e. "
+                    "``requirements: {section}: {requirement}`` should not "
+                    "contain a space between relational operator and the version, i.e. "
                     "``{name} {pin}``"
                 ).format(
                     section=section,
@@ -422,7 +422,7 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
                 i = bad_char_idx[0][0]
                 lints.append((
                     "``requirements: {section}: {requirement}`` must "
-                    "contain a single space between the name and the pin, i.e. "
+                    "contain a space between the name and the pin, i.e. "
                     "``{name} {pin}``"
                 ).format(
                     section=section,
