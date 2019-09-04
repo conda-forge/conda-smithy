@@ -827,6 +827,7 @@ class Test_linter(unittest.TestCase):
                 ],
                 "host": [
                     "python >= 2",
+                    "libcblas 3.8.* *netlib",
                 ],
                 "run": [
                     "xonsh>1.0",
