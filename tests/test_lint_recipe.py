@@ -848,7 +848,6 @@ class Test_linter(unittest.TestCase):
             "``requirements: run: conda-smithy<=54.*`` must contain a space "
             "between the name and the pin, i.e. ``conda-smithy <=54.*``",
         ]
-        print(filtered_lints)
         self.assertEqual(expected_messages, filtered_lints)
 
 
