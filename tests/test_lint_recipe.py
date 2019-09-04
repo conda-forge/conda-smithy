@@ -838,15 +838,15 @@ class Test_linter(unittest.TestCase):
         lints, hints = linter.lintify(meta)
         filtered_lints = [lint for lint in lints if lint.startswith("``requirements: ")]
         expected_messages = [
-            "``requirements: build: pip   19`` should only conatin a single space "
+            "``requirements: build: pip   19`` should only contain a single space "
             "between the name and the pin, i.e. ``pip 19``",
-            "``requirements: host: python >= 2`` should only conatin a single space "
+            "``requirements: host: python >= 2`` should only contain a single space "
             "between the name and the pin, i.e. ``python >=2``",
-            "``requirements: run: xonsh>1.0`` must conatin a single space between the "
+            "``requirements: run: xonsh>1.0`` must contain a single space between the "
             "name and the pin, i.e. ``xonsh >1.0``",
-            "``requirements: run: conda= 4.*`` must conatin a single space between the "
+            "``requirements: run: conda= 4.*`` must contain a single space between the "
             "name and the pin, i.e. ``conda =4.*``",
-            "``requirements: run: conda-smithy<=54.*`` must conatin a single space "
+            "``requirements: run: conda-smithy<=54.*`` must contain a single space "
             "between the name and the pin, i.e. ``conda-smithy <=54.*``",
         ]
         self.assertEqual(expected_messages, filtered_lints)
