@@ -4,6 +4,40 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.4.2
+====================
+
+**Added:**
+
+* Generating feedstocks with support for the linux-armv7l platform.
+* test of the downgrade functionality of the new pinning system
+* Mark generated files as generated so that github collapses them by deafult in diffs.
+* The linter will now recomend fixes for malformed pins,
+  suggesting a single space is inserted. For instance, both ``python>=3`` and
+  ``python >= 3`` will ought to be ``python >=3``.
+* New key ``upload_on_branch`` added to conda-forge.yml the value of which is checked
+  against the current git branch and upload will be skipped if they are not equal.
+  This is optional and an empty key skips the test.
+* Added `CONDA_SMITHY_LOGLEVEL` environment variable to change verbosity
+  of rendering. This can be either `debug` or `info`.
+
+**Changed:**
+
+* Add skip_render option to conda-forge.yaml. One could specify one or more filenames telling conda-smithy to skip making change on them. Files that could skip rendering include .gitignore, .gitattributes, README.md and LICENCE.txt.
+* Reduced verbosity of rendering
+
+**Fixed:**
+
+* recipe-lint compatibility with ruamel.yaml 0.16
+* Mock PY_VER in recipe check
+* Fixed badge rendering in readme template.
+* yum_requirements will now work on Travis based linux builds.
+* requirements: update to conda-build>=3.18.3
+* fix non-public conda import, use conda.exports
+* requirements: replace pycrypto with pycryptodome
+
+
+
 v3.4.1
 ====================
 
