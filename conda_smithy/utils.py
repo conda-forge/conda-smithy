@@ -88,5 +88,4 @@ def update_conda_forge_config(feedstock_directory):
 
     yield code
 
-    with open(forge_yaml, "w") as fh:
-        fh.write(yaml.dump(code))
+    yaml.dump(code, forge_yaml)
