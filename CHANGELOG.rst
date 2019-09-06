@@ -4,6 +4,15 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.4.5
+====================
+
+**Fixed:**
+
+* YAML ``dump()`` now used ``pathlib.Path`` object.
+
+
+
 v3.4.4
 ====================
 
