@@ -1183,6 +1183,7 @@ def render_README(jinja_env, forge_config, forge_dir):
                     project_name=forge_config["azure"]["project_name"],
                     repo=forge_config["github"]["repo_name"]
                 ))
+            resp.raise_for_status()
             build_def = resp.json()["value"][0]
             forge_config['azure']['build_id'] = build_def['id']
         except (IndexError, IOError):
