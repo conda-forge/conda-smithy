@@ -4,6 +4,15 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.4.4
+====================
+
+**Fixed:**
+
+* Updated conda-smithy to work with ruamel.yaml v0.16+.
+
+
+
 v3.4.3
 ====================
 
