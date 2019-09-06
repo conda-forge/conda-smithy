@@ -5,6 +5,7 @@ import datetime
 import time
 import os
 import sys
+from pathlib import Path
 from collections import defaultdict
 from contextlib import contextmanager
 
@@ -88,4 +89,4 @@ def update_conda_forge_config(feedstock_directory):
 
     yield code
 
-    yaml.dump(code, forge_yaml)
+    yaml.dump(code, Path(forge_yaml))
