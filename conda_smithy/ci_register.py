@@ -134,11 +134,13 @@ def drone_session():
 
 def add_token_to_drone(user, project):
     session = drone_session()
-    response = session.post(f'/api/repos/{user}/{project}/secrets', data={
+    response = session.post(f'/api/repos/{user}/{project}/secrets', json={
         "name": "BINSTAR_TOKEN",
         "data": anaconda_token,
+        "pull_request": False,
     })
     response.raise_for_status()
+    print(response.json())
 
 
 def add_project_to_drone(user, project):
