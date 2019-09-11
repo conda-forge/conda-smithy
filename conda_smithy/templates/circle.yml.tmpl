@@ -41,11 +41,11 @@ jobs:
 {%- if platform.startswith('linux') %}
           command: |
             export CI=circle
-            ./.circleci/run_docker_build.sh
+            ./.scripts/run_docker_build.sh
 {%- else %}
           command: |
             export CI=circle
-            ./.circleci/run_osx_build.sh
+            ./.scripts/run_osx_build.sh
 {%- endif %}
 {%- if idle_timeout_minutes %}
           no_output_timeout: {{ idle_timeout_minutes }}m

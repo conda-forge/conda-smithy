@@ -15,7 +15,7 @@ def setup_environment(ns):
 
 
 def run_docker_build(ns):
-    script = glob.glob(".*/run_docker_build.sh")[0]
+    script = glob.glob(".scripts/run_docker_build.sh")[0]
     subprocess.check_call(script)
 
 def verify_config(ns):
