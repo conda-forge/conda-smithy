@@ -273,8 +273,8 @@ def test_circle_osx(py_recipe, jinja_env):
 
     forge_dir = py_recipe.recipe
     travis_yml_file = os.path.join(forge_dir, ".travis.yml")
-    circle_osx_file = os.path.join(forge_dir, ".circleci", "run_osx_build.sh")
-    circle_linux_file = os.path.join(forge_dir, ".circleci", "run_docker_build.sh")
+    circle_osx_file = os.path.join(forge_dir, ".scripts", "run_osx_build.sh")
+    circle_linux_file = os.path.join(forge_dir, ".scripts", "run_docker_build.sh")
     circle_config_file = os.path.join(forge_dir, ".circleci", "config.yml")
 
     cnfgr_fdstk.render_circle(
@@ -314,8 +314,8 @@ def test_circle_osx(py_recipe, jinja_env):
 
 def test_circle_skipped(linux_skipped_recipe, jinja_env):
     forge_dir = linux_skipped_recipe.recipe
-    circle_osx_file = os.path.join(forge_dir, ".circleci", "run_osx_build.sh")
-    circle_linux_file = os.path.join(forge_dir, ".circleci", "run_docker_build.sh")
+    circle_osx_file = os.path.join(forge_dir, ".scripts", "run_osx_build.sh")
+    circle_linux_file = os.path.join(forge_dir, ".scripts", "run_docker_build.sh")
     circle_config_file = os.path.join(forge_dir, ".circleci", "config.yml")
 
     config = copy.deepcopy(linux_skipped_recipe.config)

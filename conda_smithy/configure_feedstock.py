@@ -757,16 +757,16 @@ def _circle_specific_setup(jinja_env, forge_config, forge_dir, platform):
 
     # TODO: Conda has a convenience for accessing nested yaml content.
     template_files = [
-        ".scripts/{}.sh.tmpl".format(run_file_name),
-        ".circleci/fast_finish_ci_pr_build.sh.tmpl",
+        "{}.sh.tmpl".format(run_file_name),
+        "fast_finish_ci_pr_build.sh.tmpl",
     ]
 
     if platform == "linux":
-        template_files.append(".scripts/build_steps.sh.tmpl")
+        template_files.append("build_steps.sh.tmpl")
 
     _render_template_exe_files(
         forge_config=forge_config,
-        target_dir=os.path.join(forge_dir),
+        target_dir=os.path.join(forge_dir, ".scripts"),
         jinja_env=jinja_env,
         template_files=template_files,
     )
@@ -1020,16 +1020,6 @@ def render_appveyor(jinja_env, forge_config, forge_dir):
 
 
 def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
-    platform_templates = {
-        "linux": [
-            "azure-pipelines-linux.yml.tmpl",
-            "run_docker_build.sh.tmpl",
-            "build_steps.sh.tmpl",
-        ],
-        "osx": ["azure-pipelines-osx.yml.tmpl"],
-        "win": ["azure-pipelines-win.yml.tmpl"],
-    }
-    template_files = platform_templates.get(platform, [])
 
     build_setup = _get_build_setup_line(forge_dir, platform, forge_config)
 
@@ -1040,9 +1030,33 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
 
     forge_config["build_setup"] = build_setup
 
+    platform_templates = {
+        "linux": [
+            "run_docker_build.sh.tmpl",
+            "build_steps.sh.tmpl",
+        ],
+    }
+    template_files = platform_templates.get(platform, [])
+
     _render_template_exe_files(
         forge_config=forge_config,
         target_dir=os.path.join(forge_dir, ".scripts"),
+        jinja_env=jinja_env,
+        template_files=template_files,
+    )
+
+    platform_templates = {
+        "linux": [
+            "azure-pipelines-linux.yml.tmpl",
+        ],
+        "osx": ["azure-pipelines-osx.yml.tmpl"],
+        "win": ["azure-pipelines-win.yml.tmpl"],
+    }
+    template_files = platform_templates.get(platform, [])
+
+    _render_template_exe_files(
+        forge_config=forge_config,
+        target_dir=os.path.join(forge_dir, ".azure-pipelines"),
         jinja_env=jinja_env,
         template_files=template_files,
     )
@@ -1287,7 +1301,7 @@ def _load_forge_config(forge_dir, exclusive_config_file):
         os.path.join(".github", "PULL_REQUEST_TEMPLATE.md"),
     ]
     for folder in [".azure-pipelines", ".circleci", ".drone", ".travis"]:
-        for old_file in ["run_docker_build.sh", "build_steps.sh", "run_osx_build.sh"]:
+        for old_file in ["run_docker_build.sh", "build_steps.sh", "run_osx_build.sh", "fast_finish_ci_pr_build.sh"]:
             old_files.append(os.path.join(folder, old_file))
 
     for old_file in old_files:
