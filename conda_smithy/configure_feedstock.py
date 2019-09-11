@@ -1336,16 +1336,16 @@ def _load_forge_config(forge_dir, exclusive_config_file):
     logger.debug(log)
     logger.debug("## END CONFIGURATION\n")
 
-    for platform in ["linux_aarch64", "linux_armv7l"]:
-        if config["provider"][platform] == "default":
-            config["provider"][platform] = "azure"
-
-    # TODO: Switch default to Drone
-    if config["provider"]["linux_aarch64"] in {"native"}:
+    if config["provider"]["linux_aarch64"] in {"default", "native"}:
         config["provider"]["linux_aarch64"] = "drone"
 
-    if config["provider"]["linux_ppc64le"] in {"native", "default"}:
+    if config["provider"]["linux_ppc64le"] in {"default", "native"}:
         config["provider"]["linux_ppc64le"] = "travis"
+
+    # Fallback handling set to azure, for platforms that are not fully specified by this time
+    for platform in config["provider"]:
+        if config["provider"][platform] in {"default", "emulated"}:
+            config["provider"][platform] = "azure"
 
     # Set the environment variable for the compiler stack
     os.environ["CF_COMPILER_STACK"] = config["compiler_stack"]
