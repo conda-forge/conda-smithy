@@ -5,7 +5,7 @@
 
 **Changed:**
 
-* <news item>
+* drone.io is now the default platform for aarch64 builds
 
 **Deprecated:**
 
