@@ -243,6 +243,13 @@ class RegisterCI(Subcommand):
             ci_register.appveyor_configure(owner, repo)
         else:
             print("Appveyor registration disabled.")
+
+        if args.drone:
+            ci_register.add_project_to_drone(owner, repo)
+            ci_register.add_token_to_drone(owner, repo)
+        else:
+            print("Drone registration disabled.")
+
         ci_register.add_conda_forge_webservice_hooks(owner, repo)
         print(
             "\nCI services have been enabled. You may wish to regenerate the feedstock.\n"

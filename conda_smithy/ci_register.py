@@ -36,6 +36,17 @@ except (IOError, ValueError):
     )
 
 try:
+    with open(os.path.expanduser("~/.conda-smithy/drone.token"), "r") as fh:
+        drone_token = fh.read().strip()
+    if not drone_token:
+        raise ValueError()
+except (IOError, ValueError):
+    print(
+        "No drone token. Create a token at https://cloud.drone.io/account and\n"
+        "Put one in ~/.conda-smithy/drone.token"
+    )
+
+try:
     anaconda_token = os.environ["BINSTAR_TOKEN"]
 except KeyError:
     try:
@@ -53,6 +64,19 @@ except KeyError:
         )
 
 travis_endpoint = "https://api.travis-ci.org"
+drone_endpoint = 'https://cloud.drone.io'
+
+
+class LiveServerSession(requests. Session):
+    """Utility class to avoid typing out urls all the time"""
+    def __init__(self, prefix_url=None, *args, **kwargs):
+        super(LiveServerSession, self).__init__(*args, **kwargs)
+        self.prefix_url = prefix_url
+
+    def request(self, method, url, *args, **kwargs):
+        from urllib.parse import urljoin
+        url = urljoin(self.prefix_url, url)
+        return super(LiveServerSession, self).request(method, url, *args, **kwargs)
 
 
 def travis_headers():
@@ -102,6 +126,35 @@ def add_token_to_circle(user, project):
         raise ValueError(response)
 
 
+def drone_session():
+    s = LiveServerSession(prefix_url=drone_endpoint)
+    s.headers.update({"Authorization": f"Bearer {drone_token}"})
+    return s
+
+
+def add_token_to_drone(user, project):
+    session = drone_session()
+    response = session.post(f'/api/repos/{user}/{project}/secrets', json={
+        "name": "BINSTAR_TOKEN",
+        "data": anaconda_token,
+        "pull_request": False,
+    })
+    response.raise_for_status()
+    print(response.json())
+
+
+def add_project_to_drone(user, project):
+    session = drone_session()
+    response = session.post(f'/api/repos/{user}/{project}')
+    response.raise_for_status()
+
+
+def regenerate_drone_webhooks(user, project):
+    session = drone_session()
+    response = session.post(f'/api/repos/{user}/{project}/repair')
+    response.raise_for_status()
+
+    
 def add_project_to_circle(user, project):
     headers = {
         "Content-Type": "application/json",
