@@ -3,7 +3,6 @@ import os
 import requests
 import time
 import sys
-import subprocess
 
 from . import github
 from .utils import update_conda_forge_config
@@ -65,6 +64,19 @@ except KeyError:
         )
 
 travis_endpoint = "https://api.travis-ci.org"
+drone_endpoint = 'https://cloud.drone.io'
+
+
+class LiveServerSession(requests. Session):
+    """Utility class to avoid typing out urls all the time"""
+    def __init__(self, prefix_url=None, *args, **kwargs):
+        super(LiveServerSession, self).__init__(*args, **kwargs)
+        self.prefix_url = prefix_url
+
+    def request(self, method, url, *args, **kwargs):
+        from urllib.parse import urljoin
+        url = urljoin(self.prefix_url, url)
+        return super(LiveServerSession, self).request(method, url, *args, **kwargs)
 
 
 def travis_headers():
@@ -114,28 +126,31 @@ def add_token_to_circle(user, project):
         raise ValueError(response)
 
 
-def drone_env():
-    return {
-        'DRONE_TOKEN': drone_token,
-        'DRONE_SERVER': 'https://cloud.drone.io'
-    }
+def drone_session():
+    s = LiveServerSession(prefix_url=drone_endpoint)
+    s.headers.update({"Authorization": f"Bearer {drone_token}"})
+    return s
 
 
 def add_token_to_drone(user, project):
-    env = dict(os.environ)
-    env.update(drone_env())
-    subprocess.run(['drone', 'secret', 'add',
-        '--repository', f'{user}/{project}',
-        '--name', "BINSTAR_TOKEN",
-        '--data', anaconda_token
-        ], env=env
-    )
+    session = drone_session()
+    response = session.post(f'/api/repos/{user}/{project}/secrets', data={
+        "name": "BINSTAR_TOKEN",
+        "data": anaconda_token,
+    })
+    response.raise_for_status()
 
 
 def add_project_to_drone(user, project):
-    env = dict(os.environ)
-    env.update(drone_env())
-    subprocess.run(['drone', 'repo', 'enable', f'{user}/{project}'], env=env)
+    session = drone_session()
+    response = session.post(f'/api/repos/{user}/{project}')
+    response.raise_for_status()
+
+
+def regenerate_drone_webhooks(user, project):
+    session = drone_session()
+    response = session.post(f'/api/repos/{user}/{project}/repair')
+    response.raise_for_status()
 
     
 def add_project_to_circle(user, project):
