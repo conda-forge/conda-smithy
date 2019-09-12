@@ -46,7 +46,6 @@ def testing_workdir(tmpdir, request):
 def config_yaml(testing_workdir):
     config = {"python": ["2.7", "3.5"], "r_base": ["3.3.2", "3.4.2"]}
     os.makedirs(os.path.join(testing_workdir, "recipe"))
-    os.makedirs(os.path.join(testing_workdir, ".ci_support", "migrations"))
     with open(os.path.join(testing_workdir, "config.yaml"), "w") as f:
         f.write("docker:\n")
         f.write("  fallback_image:\n")
@@ -215,6 +214,7 @@ about:
     """
         )
 
+    os.makedirs(os.path.join(config_yaml, ".ci_support", "migrations"), exist_ok=True)
     with open(os.path.join(config_yaml, ".ci_support", "migrations", "zlib.yaml"), "w") as fh:
         fh.write("""
 zlib:
@@ -234,6 +234,7 @@ zlib:
 def recipe_migration_cfep9_downgrade(config_yaml, recipe_migration_cfep9):
     # write a downgrade migrator that lives next to the current migrator.
     # Only this, more recent migrator should apply.
+    os.makedirs(os.path.join(config_yaml, ".ci_support", "migrations"), exist_ok=True)
     with open(os.path.join(config_yaml, ".ci_support", "migrations", "zlib-downgrade.yaml"), "w") as fh:
         fh.write("""
 migration_ts: 1.0
@@ -251,6 +252,7 @@ zlib:
 
 @pytest.fixture(scope="function")
 def recipe_migration_win_compiled(config_yaml, py_recipe):
+    os.makedirs(os.path.join(config_yaml, ".ci_support", "migrations"), exist_ok=True)
     with open(os.path.join(config_yaml, ".ci_support", "migrations", "vc-migrate.yaml"), "w") as fh:
         fh.write(dedent("""
         migration_ts: 1.0

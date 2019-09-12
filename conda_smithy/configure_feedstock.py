@@ -1455,7 +1455,7 @@ def clear_variants(forge_dir):
     if os.path.isdir(os.path.join(forge_dir, ".ci_support")):
         configs = glob.glob(
             os.path.join(
-                forge_dir, ".ci_support", "*.yml")
+                forge_dir, ".ci_support", "*.yaml")
         )
         for config in configs:
             remove_file(config)
