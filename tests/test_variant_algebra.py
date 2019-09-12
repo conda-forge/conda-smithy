@@ -125,7 +125,7 @@ def test_ordering_downgrade():
     print(res)
 
 
-def test_ordering_downgrade():
+def test_new_pinned_package():
     start = parse_variant(
         dedent(
             """\
