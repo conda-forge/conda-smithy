@@ -110,7 +110,6 @@ def test_regenerate(py_recipe, testing_workdir):
     regen_obj(args)
 
     # should add 2, as the config.yaml adds in target_platform
-    print(os.listdir(matrix_folder))
     assert len(os.listdir(matrix_folder)) == 9
 
     # reduce the python matrix and make sure the matrix files reflect the change
