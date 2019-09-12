@@ -476,7 +476,7 @@ def migrate_combined_spec(combined_spec, forge_dir, config):
 
     """
     combined_spec = combined_spec.copy()
-    migrations_root = os.path.join(forge_dir, "migrations", "*.yaml")
+    migrations_root = os.path.join(forge_dir, ".ci_support", "migrations", "*.yaml")
     migrations = glob.glob(migrations_root)
 
     from .variant_algebra import parse_variant, variant_add
@@ -1455,7 +1455,7 @@ def clear_variants(forge_dir):
     if os.path.isdir(os.path.join(forge_dir, ".ci_support")):
         configs = glob.glob(
             os.path.join(
-                forge_dir, ".ci_support", "*")
+                forge_dir, ".ci_support", "*.yaml")
         )
         for config in configs:
             remove_file(config)

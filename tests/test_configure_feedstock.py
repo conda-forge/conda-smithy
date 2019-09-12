@@ -402,7 +402,7 @@ def test_migrator_downgrade_recipe(recipe_migration_cfep9_downgrade, jinja_env):
         forge_config=recipe_migration_cfep9_downgrade.config,
         forge_dir=recipe_migration_cfep9_downgrade.recipe,
     )
-    assert len(os.listdir(os.path.join(recipe_migration_cfep9_downgrade.recipe, 'migrations'))) == 2
+    assert len(os.listdir(os.path.join(recipe_migration_cfep9_downgrade.recipe, '.ci_support', 'migrations'))) == 2
 
     with open(
         os.path.join(
@@ -422,7 +422,7 @@ def test_migrator_compiler_version_recipe(recipe_migration_win_compiled, jinja_e
         forge_config=recipe_migration_win_compiled.config,
         forge_dir=recipe_migration_win_compiled.recipe,
     )
-    assert len(os.listdir(os.path.join(recipe_migration_win_compiled.recipe, 'migrations'))) == 1
+    assert len(os.listdir(os.path.join(recipe_migration_win_compiled.recipe, '.ci_support', 'migrations'))) == 1
 
     rendered_variants = os.listdir(os.path.join(recipe_migration_win_compiled.recipe, ".ci_support"))
     
