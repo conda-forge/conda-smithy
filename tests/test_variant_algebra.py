@@ -125,6 +125,37 @@ def test_ordering_downgrade():
     print(res)
 
 
+def test_new_pinned_package():
+    start = parse_variant(
+        dedent(
+            """\
+    pin_run_as_build:
+        jpeg:
+            max_pin: x
+    jpeg:
+        - 3.0
+    """
+        )
+    )
+
+    mig_compiler = parse_variant(
+        dedent(
+            """\
+    pin_run_as_build:
+        gprc-cpp:
+            max_pin: x.x
+    gprc-cpp:
+        - 1.23
+    """
+        )
+    )
+
+    res = variant_add(start, mig_compiler)
+    assert res["gprc-cpp"] == ['1.23']
+    assert res['pin_run_as_build']["gprc-cpp"]['max_pin'] == 'x.x'
+    print(res)
+
+
 def test_zip_keys():
     start = parse_variant(
         dedent(
