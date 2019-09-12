@@ -156,7 +156,6 @@ def test_new_pinned_package():
     print(res)
 
 
-
 def test_zip_keys():
     start = parse_variant(
         dedent(
