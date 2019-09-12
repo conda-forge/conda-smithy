@@ -4,6 +4,25 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.4.6
+====================
+
+**Added:**
+
+* conda-smithy can now register packages on drone.io.  We plan on using this to help out with the aarch64
+  architecture builds.
+
+**Changed:**
+
+* drone.io is now the default platform for aarch64 builds
+* migrations folder changed from <feedstock_root>/migrations to <feedstock_root>/.ci_support/migrations
+
+**Fixed:**
+
+* Fix render_README crash when azure api returns 404
+
+
+
 v3.4.5
 ====================
 
