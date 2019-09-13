@@ -769,6 +769,7 @@ def _circle_specific_setup(jinja_env, forge_config, forge_dir, platform):
         target_dir=os.path.join(forge_dir, ".scripts"),
         jinja_env=jinja_env,
         template_files=template_files,
+        forge_dir=forge_dir,
     )
 
     # Fix permission of other shell files.
@@ -917,6 +918,7 @@ def _travis_specific_setup(jinja_env, forge_config, forge_dir, platform):
         target_dir=os.path.join(forge_dir, ".scripts"),
         jinja_env=jinja_env,
         template_files=template_files,
+        forge_dir=forge_dir,
     )
 
     build_setup = build_setup.strip()
@@ -925,13 +927,19 @@ def _travis_specific_setup(jinja_env, forge_config, forge_dir, platform):
 
 
 def _render_template_exe_files(
-    forge_config, target_dir, jinja_env, template_files
+    forge_config, target_dir, jinja_env, template_files, forge_dir
 ):
     for template_file in template_files:
         template = jinja_env.get_template(template_file)
         target_fname = os.path.join(target_dir, template_file[: -len(".tmpl")])
+        new_file_contents = template.render(**forge_config)
+        if target_fname in get_common_scripts(forge_dir) and os.path.exists(target_fname):
+            with open(target_fname, 'r') as fh:
+                old_file_contents = fh.read()
+                if old_file_contents != new_file_contents:
+                    raise RuntimeError("Same file {} is rendered twice with different contents".format(target_fname))
         with write_file(target_fname) as fh:
-            fh.write(template.render(**forge_config))
+            fh.write(new_file_contents)
         # Fix permission of template shell files
         set_exe_file(target_fname, True)
 
@@ -1043,6 +1051,7 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
         target_dir=os.path.join(forge_dir, ".scripts"),
         jinja_env=jinja_env,
         template_files=template_files,
+        forge_dir=forge_dir,
     )
 
     platform_templates = {
@@ -1059,6 +1068,7 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
         target_dir=os.path.join(forge_dir, ".azure-pipelines"),
         jinja_env=jinja_env,
         template_files=template_files,
+        forge_dir=forge_dir,
     )
 
 
@@ -1111,6 +1121,7 @@ def _drone_specific_setup(jinja_env, forge_config, forge_dir, platform):
         target_dir=os.path.join(forge_dir, ".scripts"),
         jinja_env=jinja_env,
         template_files=template_files,
+        forge_dir=forge_dir,
     )
 
 
@@ -1300,9 +1311,6 @@ def _load_forge_config(forge_dir, exclusive_config_file):
         os.path.join(".github", "ISSUE_TEMPLATE.md"),
         os.path.join(".github", "PULL_REQUEST_TEMPLATE.md"),
     ]
-    for folder in [".azure-pipelines", ".circleci", ".drone", ".travis"]:
-        for old_file in ["run_docker_build.sh", "build_steps.sh", "run_osx_build.sh", "fast_finish_ci_pr_build.sh"]:
-            old_files.append(os.path.join(folder, old_file))
 
     for old_file in old_files:
         remove_file_or_dir(os.path.join(forge_dir, old_file))
@@ -1475,6 +1483,16 @@ def clear_variants(forge_dir):
             remove_file(config)
 
 
+def get_common_scripts(forge_dir):
+    for old_file in ["run_docker_build.sh", "build_steps.sh", "run_osx_build.sh", "fast_finish_ci_pr_build.sh"]:
+        yield os.path.join(forge_dir, ".scripts", old_file)
+
+
+def clear_scripts(forge_dir):
+    for folder in [".azure-pipelines", ".circleci", ".drone", ".travis"]:
+        for old_file in ["run_docker_build.sh", "build_steps.sh", "run_osx_build.sh", "fast_finish_ci_pr_build.sh"]:
+            remove_file(os.path.join(forge_dir, folder, old_file))
+
 def main(
     forge_file_directory, no_check_uptodate=False, commit=False, exclusive_config_file=None, check=False
 ):
@@ -1534,6 +1552,7 @@ def main(
     copy_feedstock_content(config, forge_dir)
     set_exe_file(os.path.join(forge_dir, "build-locally.py"))
     clear_variants(forge_dir)
+    clear_scripts(forge_dir)
 
     render_circle(env, config, forge_dir)
     render_travis(env, config, forge_dir)
