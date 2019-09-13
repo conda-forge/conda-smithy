@@ -15,6 +15,8 @@ import conda_build.variants
 import conda_build.conda_interface
 import conda_build.render
 
+from copy import deepcopy
+
 from conda_build import __version__ as conda_build_version
 from jinja2 import Environment, FileSystemLoader
 
@@ -662,7 +664,7 @@ def _render_ci_provider(
                 platform_specific_setup(
                     jinja_env=jinja_env,
                     forge_dir=forge_dir,
-                    forge_config=forge_config,
+                    forge_config=deepcopy(forge_config),
                     platform=platform,
                 )
 
@@ -913,6 +915,11 @@ def _travis_specific_setup(jinja_env, forge_config, forge_dir, platform):
         if yum_build_setup:
             forge_config['yum_build_setup'] = yum_build_setup
 
+    if platform == "osx":
+        build_setup = build_setup.strip()
+        build_setup = build_setup.replace("\n", "\n      ")
+    forge_config["build_setup"] = build_setup
+
     _render_template_exe_files(
         forge_config=forge_config,
         target_dir=os.path.join(forge_dir, ".scripts"),
@@ -920,10 +927,6 @@ def _travis_specific_setup(jinja_env, forge_config, forge_dir, platform):
         template_files=template_files,
         forge_dir=forge_dir,
     )
-
-    build_setup = build_setup.strip()
-    build_setup = build_setup.replace("\n", "\n      ")
-    forge_config["build_setup"] = build_setup
 
 
 def _render_template_exe_files(
