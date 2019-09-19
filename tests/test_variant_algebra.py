@@ -96,6 +96,36 @@ def test_ordering():
     # raise Exception()
 
 
+def test_no_ordering():
+    start = parse_variant(
+        dedent(
+            """\
+    xyz:
+        - 1
+    """
+        )
+    )
+
+    mig_compiler = parse_variant(
+        dedent(
+            """\
+    __migrator:
+        kind:
+            version
+        migration_no:
+            1
+    xyz:
+        - 2
+    """
+        )
+    )
+
+    res = variant_add(start, mig_compiler)
+    assert res["xyz"] == ["2"]
+    print(res)
+    # raise Exception()
+
+
 def test_ordering_downgrade():
     start = parse_variant(
         dedent(
