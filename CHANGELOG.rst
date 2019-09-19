@@ -4,6 +4,15 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.4.8
+====================
+
+**Fixed:**
+
+* Don't make assumptions in ``conda_smithy/variant_algebra.py`` about the metadata
+
+
+
 v3.4.7
 ====================
 
