@@ -123,7 +123,7 @@ def variant_add(v1: dict, v2: dict) -> Dict[str, Any]:
     # deal with __migrator: ordering
     if "__migrator" in v2:
         print(v2)
-        ordering = v2["__migrator"].get("ordering")
+        ordering = v2["__migrator"].get("ordering", {})
         print(ordering)
     else:
         ordering = {}
