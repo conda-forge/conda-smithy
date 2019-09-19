@@ -112,6 +112,8 @@ def test_no_ordering():
     __migrator:
         kind:
             version
+        migration_no:
+            1
     xyz:
         - 2
     """

@@ -175,7 +175,7 @@ def variant_add(v1: dict, v2: dict) -> Dict[str, Any]:
     joint_variant = {}
     for k in joint:
         v_left, v_right = ensure_list(v1[k]), ensure_list(v2[k])
-        joint_variant[k] = variant_key_add(k, v_left, v_right, ordering=ordering.get(k, []))
+        joint_variant[k] = variant_key_add(k, v_left, v_right, ordering=ordering.get(k, None))
 
     out = {
         **toolz.keyfilter(lambda k: k in left, v1),
