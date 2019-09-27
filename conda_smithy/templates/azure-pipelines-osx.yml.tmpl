@@ -77,7 +77,7 @@ jobs:
       export UPLOAD_ON_BRANCH="{{ upload_on_branch }}"
 {%- endif %}
       upload_package ./ ./recipe ./.ci_support/${CONFIG}.yaml
-    displayName: Upload recipe
+    displayName: Upload package
     env:
       BINSTAR_TOKEN: $(BINSTAR_TOKEN)
     condition: not(eq(variables['UPLOAD_PACKAGES'], 'False'))
