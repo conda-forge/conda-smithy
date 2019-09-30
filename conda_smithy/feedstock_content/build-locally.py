@@ -15,8 +15,8 @@ def setup_environment(ns):
 
 
 def run_docker_build(ns):
-    script = glob.glob(".scripts/run_docker_build.sh")[0]
-    subprocess.check_call(script)
+    script = ".scripts/run_docker_build.sh"
+    subprocess.check_call([script])
 
 def verify_config(ns):
     valid_configs = {os.path.basename(f)[:-5] for f in glob.glob(".ci_support/*.yaml")}
