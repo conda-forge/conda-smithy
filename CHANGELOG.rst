@@ -4,6 +4,20 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.5.0
+====================
+
+**Added:**
+
+* conda-smithy will remove the ``.github/CODEOWNERS`` file in case the recipe
+  maintainers list is empty
+
+**Changed:**
+
+* Default windows provider was changed to azure.
+
+
+
 v3.4.8
 ====================
 
