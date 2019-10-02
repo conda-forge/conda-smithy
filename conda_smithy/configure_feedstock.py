@@ -1241,7 +1241,7 @@ def _load_forge_config(forge_dir, exclusive_config_file):
         "provider": {
             "linux": "azure",
             "osx": "azure",
-            "win": "appveyor",
+            "win": "azure",
             # Following platforms are disabled by default
             "linux_aarch64": None,
             "linux_ppc64le": None,
