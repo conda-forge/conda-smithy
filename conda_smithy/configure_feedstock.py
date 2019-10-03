@@ -1520,7 +1520,8 @@ def main(
     )
 
     copy_feedstock_content(config, forge_dir)
-    set_exe_file(os.path.join(forge_dir, "build-locally.py"))
+    if os.path.exists(os.path.join(forge_dir, "build-locally.py")):
+        set_exe_file(os.path.join(forge_dir, "build-locally.py"))
     clear_variants(forge_dir)
 
     render_circle(env, config, forge_dir)
