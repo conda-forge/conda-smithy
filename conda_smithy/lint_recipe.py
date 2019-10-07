@@ -45,6 +45,8 @@ REQUIREMENTS_ORDER = ["build", "host", "run"]
 TEST_KEYS = {"imports", "commands"}
 TEST_FILES = ["run_test.py", "run_test.sh", "run_test.bat", "run_test.pl"]
 
+NEEDED_FAMILIES = ["gpl", "bsd", "mit", "apache", "psf"]
+
 sel_pat = re.compile(r"(.+?)\s*(#.*)?\[([^\[\]]+)\](?(2).*)$")
 jinja_pat = re.compile(r"\s*\{%\s*(set)\s+[^\s]+\s*=\s*[^\s]+\s*%\}")
 
@@ -277,8 +279,7 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
     # 12a: License family must be valid (conda-build checks for that)
     license_family = about_section.get("license_family", license).lower()
     license_file = about_section.get("license_file", "")
-    needed_families = ["gpl", "bsd", "mit", "apache", "psf"]
-    if license_file == "" and any(f for f in needed_families if f in license_family):
+    if license_file == "" and any(f for f in NEEDED_FAMILIES if f in license_family):
         lints.append("license_file entry is missing, but is required.")
 
     # 13: Check that the recipe name is valid
