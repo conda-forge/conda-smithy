@@ -14,7 +14,9 @@ import conda_build.api
 
 def gh_token():
     try:
-        with open(os.path.expanduser("~/.conda-smithy/github.token"), "r") as fh:
+        with open(
+            os.path.expanduser("~/.conda-smithy/github.token"), "r"
+        ) as fh:
             token = fh.read().strip()
         if not token:
             raise ValueError()
@@ -76,13 +78,17 @@ def get_cached_team(org, team_name, description=""):
 
     try:
         repo = org.get_repo("{}-feedstock".format(team_name))
-        team = next((team for team in repo.get_teams() if team.name == team_name), None)
+        team = next(
+            (team for team in repo.get_teams() if team.name == team_name), None
+        )
         if team:
             return team
     except GithubException:
         pass
 
-    team = next((team for team in org.get_teams() if team.name == team_name), None)
+    team = next(
+        (team for team in org.get_teams() if team.name == team_name), None
+    )
     if not team:
         if description:
             team = create_team(org, team_name, description, [])
@@ -125,7 +131,9 @@ def create_github_repo(args):
         gh_repo = user_or_org.create_repo(
             repo_name,
             has_wiki=False,
-            description="A conda-smithy repository for {}.".format(feedstock_name),
+            description="A conda-smithy repository for {}.".format(
+                feedstock_name
+            ),
         )
         print("Created {} on github".format(gh_repo.full_name))
     except GithubException as gh_except:
@@ -214,7 +222,8 @@ def configure_github_team(meta, gh_repo, org, feedstock_name):
     team_name = feedstock_name
     current_maintainer_teams = list(gh_repo.get_teams())
     team = next(
-        (team for team in current_maintainer_teams if team.name == team_name), None
+        (team for team in current_maintainer_teams if team.name == team_name),
+        None,
     )
     current_maintainers = set()
     if not team:
@@ -225,7 +234,9 @@ def configure_github_team(meta, gh_repo, org, feedstock_name):
         )
         team.add_to_repos(gh_repo)
     else:
-        current_maintainers = set([e.login.lower() for e in team.get_members()])
+        current_maintainers = set(
+            [e.login.lower() for e in team.get_members()]
+        )
 
     # Get the all-members team
     description = "All of the awesome {} contributors!".format(org.login)
@@ -256,7 +267,9 @@ def configure_github_team(meta, gh_repo, org, feedstock_name):
 
     # Add any new maintainer team
     maintainer_teams = set(
-        m.split("/")[1] for m in maintainer_teams if m.startswith(str(org.login))
+        m.split("/")[1]
+        for m in maintainer_teams
+        if m.startswith(str(org.login))
     )
     current_maintainer_teams = [team.name for team in current_maintainer_teams]
     for maintainer_team in maintainer_teams - set(current_maintainer_teams):

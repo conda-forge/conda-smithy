@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from collections.abc import Sequence, Mapping
+
 str_type = str
 
 import copy
@@ -278,7 +279,9 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
     license_family = about_section.get("license_family", license).lower()
     license_file = about_section.get("license_file", "")
     needed_families = ["gpl", "bsd", "mit", "apache", "psf"]
-    if license_file == "" and any(f for f in needed_families if f in license_family):
+    if license_file == "" and any(
+        f for f in needed_families if f in license_family
+    ):
         lints.append("license_file entry is missing, but is required.")
 
     # 13: Check that the recipe name is valid
@@ -401,18 +404,28 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
             if "{{" in req:
                 continue
             parts = req.split()
-            if len(parts) > 2 and parts[1] in ["!=", "=", "==", ">", "<", "<=", ">="]:
+            if len(parts) > 2 and parts[1] in [
+                "!=",
+                "=",
+                "==",
+                ">",
+                "<",
+                "<=",
+                ">=",
+            ]:
                 # check for too many spaces
-                lints.append((
-                    "``requirements: {section}: {requirement}`` should not "
-                    "contain a space between relational operator and the version, i.e. "
-                    "``{name} {pin}``"
-                ).format(
-                    section=section,
-                    requirement=requirement,
-                    name=parts[0],
-                    pin="".join(parts[1:],
-                )))
+                lints.append(
+                    (
+                        "``requirements: {section}: {requirement}`` should not "
+                        "contain a space between relational operator and the version, i.e. "
+                        "``{name} {pin}``"
+                    ).format(
+                        section=section,
+                        requirement=requirement,
+                        name=parts[0],
+                        pin="".join(parts[1:]),
+                    )
+                )
                 continue
             # check that there is a space if there is a pin
             bad_char_idx = [(parts[0].find(c), c) for c in "><="]
@@ -420,16 +433,18 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
             if bad_char_idx:
                 bad_char_idx.sort()
                 i = bad_char_idx[0][0]
-                lints.append((
-                    "``requirements: {section}: {requirement}`` must "
-                    "contain a space between the name and the pin, i.e. "
-                    "``{name} {pin}``"
-                ).format(
-                    section=section,
-                    requirement=requirement,
-                    name=parts[0][:i],
-                    pin=parts[0][i:] + "".join(parts[1:],
-                )))
+                lints.append(
+                    (
+                        "``requirements: {section}: {requirement}`` must "
+                        "contain a space between the name and the pin, i.e. "
+                        "``{name} {pin}``"
+                    ).format(
+                        section=section,
+                        requirement=requirement,
+                        name=parts[0][:i],
+                        pin=parts[0][i:] + "".join(parts[1:]),
+                    )
+                )
                 continue
 
     # hints
@@ -446,8 +461,13 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
                 )
 
     # 2: suggest python noarch (skip on feedstocks)
-    if build_section.get("noarch") is None and build_reqs and not any(["_compiler_stub" in b for b in build_reqs]) \
-            and ("pip" in build_reqs) and (is_staged_recipes or not conda_forge):
+    if (
+        build_section.get("noarch") is None
+        and build_reqs
+        and not any(["_compiler_stub" in b for b in build_reqs])
+        and ("pip" in build_reqs)
+        and (is_staged_recipes or not conda_forge)
+    ):
         with io.open(meta_fname, "rt") as fh:
             in_runreqs = False
             no_arch_possible = True

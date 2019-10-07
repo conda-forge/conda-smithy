@@ -64,19 +64,23 @@ except KeyError:
         )
 
 travis_endpoint = "https://api.travis-ci.org"
-drone_endpoint = 'https://cloud.drone.io'
+drone_endpoint = "https://cloud.drone.io"
 
 
-class LiveServerSession(requests. Session):
+class LiveServerSession(requests.Session):
     """Utility class to avoid typing out urls all the time"""
+
     def __init__(self, prefix_url=None, *args, **kwargs):
         super(LiveServerSession, self).__init__(*args, **kwargs)
         self.prefix_url = prefix_url
 
     def request(self, method, url, *args, **kwargs):
         from urllib.parse import urljoin
+
         url = urljoin(self.prefix_url, url)
-        return super(LiveServerSession, self).request(method, url, *args, **kwargs)
+        return super(LiveServerSession, self).request(
+            method, url, *args, **kwargs
+        )
 
 
 def travis_headers():
@@ -134,15 +138,18 @@ def drone_session():
 
 def add_token_to_drone(user, project):
     session = drone_session()
-    response = session.post(f'/api/repos/{user}/{project}/secrets', json={
-        "name": "BINSTAR_TOKEN",
-        "data": anaconda_token,
-        "pull_request": False,
-    })
+    response = session.post(
+        f"/api/repos/{user}/{project}/secrets",
+        json={
+            "name": "BINSTAR_TOKEN",
+            "data": anaconda_token,
+            "pull_request": False,
+        },
+    )
     if response.status_code != 200:
         # Check that the token is in secrets already
         session = drone_session()
-        response2 = session.get(f'/api/repos/{user}/{project}/secrets')
+        response2 = session.get(f"/api/repos/{user}/{project}/secrets")
         response2.raise_for_status()
         for secret in response2.json():
             if "BINSTAR_TOKEN" == secret["name"]:
@@ -152,26 +159,26 @@ def add_token_to_drone(user, project):
 
 def drone_sync():
     session = drone_session()
-    response = session.post('/api/user/repos?async=true')
+    response = session.post("/api/user/repos?async=true")
     response.raise_for_status()
 
 
 def add_project_to_drone(user, project):
     session = drone_session()
-    response = session.post(f'/api/repos/{user}/{project}')
+    response = session.post(f"/api/repos/{user}/{project}")
     if response.status_code != 200:
         # Check that the project is registered already
         session = drone_session()
-        response = session.get(f'/api/repos/{user}/{project}')
+        response = session.get(f"/api/repos/{user}/{project}")
         response.raise_for_status()
 
 
 def regenerate_drone_webhooks(user, project):
     session = drone_session()
-    response = session.post(f'/api/repos/{user}/{project}/repair')
+    response = session.post(f"/api/repos/{user}/{project}/repair")
     response.raise_for_status()
 
-    
+
 def add_project_to_circle(user, project):
     headers = {
         "Content-Type": "application/json",
@@ -287,9 +294,9 @@ def appveyor_configure(user, project):
     content = response.json()
     settings = content["settings"]
     for required_setting in (
-        u"skipBranchesWithoutAppveyorYml",
-        u"rollingBuildsOnlyForPullRequests",
-        u"rollingBuilds",
+        "skipBranchesWithoutAppveyorYml",
+        "rollingBuildsOnlyForPullRequests",
+        "rollingBuilds",
     ):
         if not settings[required_setting]:
             print(

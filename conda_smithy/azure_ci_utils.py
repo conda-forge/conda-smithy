@@ -11,7 +11,9 @@ from vsts.build.v4_1.models import (
     SourceRepository,
 )
 from vsts.service_endpoint.v4_1.models import ServiceEndpoint
-from vsts.service_endpoint.v4_1.service_endpoint_client import ServiceEndpointClient
+from vsts.service_endpoint.v4_1.service_endpoint_client import (
+    ServiceEndpointClient,
+)
 from vsts.task_agent.v4_0.models import TaskAgentQueue
 from vsts.task_agent.v4_0.task_agent_client import TaskAgentClient
 from vsts.vss_connection import VssConnection
@@ -22,7 +24,9 @@ class AzureConfig:
     _default_org = "conda-forge"
     _default_project_name = "feedstock-builds"
 
-    def __init__(self, org_or_user=None, project_name=None, team_instance=None):
+    def __init__(
+        self, org_or_user=None, project_name=None, team_instance=None
+    ):
         self.org_or_user = org_or_user or os.getenv(
             "AZURE_ORG_OR_USER", self._default_org
         )
@@ -36,7 +40,9 @@ class AzureConfig:
         )
 
         try:
-            with open(os.path.expanduser("~/.conda-smithy/azure.token"), "r") as fh:
+            with open(
+                os.path.expanduser("~/.conda-smithy/azure.token"), "r"
+            ) as fh:
                 self.token = fh.read().strip()
             if not self.token:
                 raise ValueError()
@@ -44,7 +50,9 @@ class AzureConfig:
             self.token = None
 
         # By default for now don't report on the build information back to github
-        self.azure_report_build_status = os.getenv("AZURE_REPORT_BUILD_STATUS", "true")
+        self.azure_report_build_status = os.getenv(
+            "AZURE_REPORT_BUILD_STATUS", "true"
+        )
 
     @property
     def connection(self):
@@ -58,7 +66,9 @@ class AzureConfig:
         if self.token:
             return BasicAuthentication("", self.token)
         else:
-            warnings.warn("No token available.  No modifications will be possible!")
+            warnings.warn(
+                "No token available.  No modifications will be possible!"
+            )
             return Authentication()
 
 
@@ -81,7 +91,9 @@ def get_service_endpoint(config: AzureConfig = default_config):
         raise KeyError("Service endpoint not found")
 
 
-def get_queues(config: AzureConfig = default_config) -> typing.List[TaskAgentQueue]:
+def get_queues(
+    config: AzureConfig = default_config
+) -> typing.List[TaskAgentQueue]:
     aclient = TaskAgentClient(config.instance_base_url, config.credentials)
     return aclient.get_agent_queues(config.project_name)
 
@@ -198,7 +210,9 @@ def register_repo(github_org, repo_name, config: AzureConfig = default_config):
         assert len(existing_definitions) == 1
         ed = existing_definitions[0]
         bclient.update_definition(
-            definition=build_definition, definition_id=ed.id, project=ed.project.name
+            definition=build_definition,
+            definition_id=ed.id,
+            project=ed.project.name,
         )
     else:
         bclient.create_definition(
@@ -207,7 +221,9 @@ def register_repo(github_org, repo_name, config: AzureConfig = default_config):
 
 
 def build_client(config: AzureConfig = default_config) -> BuildClient:
-    return config.connection.get_client("vsts.build.v4_1.build_client.BuildClient")
+    return config.connection.get_client(
+        "vsts.build.v4_1.build_client.BuildClient"
+    )
 
 
 def repo_registered(
@@ -222,7 +238,9 @@ def repo_registered(
 
 def enable_reporting(repo, config: AzureConfig = default_config) -> None:
     bclient = build_client(config)
-    bdef_header = bclient.get_definitions(project=config.project_name, name=repo)[0]
+    bdef_header = bclient.get_definitions(
+        project=config.project_name, name=repo
+    )[0]
     bdef = bclient.get_definition(bdef_header.id, bdef_header.project.name)
     bdef.repository.properties["reportBuildStatus"] = "true"
     bclient.update_definition(bdef, bdef.id, bdef.project.name)
@@ -233,7 +251,9 @@ def get_build_id(repo, config: AzureConfig = default_config) -> dict:
     of badges.
     This is needed by non-conda-forge use cases"""
     bclient = build_client(config)
-    bdef_header = bclient.get_definitions(project=config.project_name, name=repo)[0]
+    bdef_header = bclient.get_definitions(
+        project=config.project_name, name=repo
+    )[0]
     bdef: BuildDefinition = bclient.get_definition(
         bdef_header.id, bdef_header.project.name
     )
