@@ -27,7 +27,7 @@ install:
 
 script:
     - py.test tests --cov conda_smithy
-    - black --check --line-length 79 .
+    - black --check --verbose .
 
 after_success:
     - coverage combine
