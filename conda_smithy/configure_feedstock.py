@@ -372,7 +372,9 @@ def finalize_config(config, platform, forge_config):
     return config
 
 
-def dump_subspace_config_files(metas, root_path, platform, arch, upload, forge_config):
+def dump_subspace_config_files(
+    metas, root_path, platform, arch, upload, forge_config
+):
     """With conda-build 3, it handles the build matrix.  We take what it spits out, and write a
     config.yaml file for each matrix entry that it spits out.  References to a specific file
     replace all of the old environment variables that specified a matrix entry."""
@@ -380,7 +382,9 @@ def dump_subspace_config_files(metas, root_path, platform, arch, upload, forge_c
     # identify how to break up the complete set of used variables.  Anything considered
     #     "top-level" should be broken up into a separate CI job.
 
-    configs, top_level_loop_vars = _collapse_subpackage_variants(metas, root_path)
+    configs, top_level_loop_vars = _collapse_subpackage_variants(
+        metas, root_path
+    )
 
     # get rid of the special object notation in the yaml file for objects that we dump
     yaml.add_representer(set, yaml.representer.SafeRepresenter.represent_list)
@@ -484,15 +488,20 @@ def migrate_combined_spec(combined_spec, forge_dir, config):
     from .variant_algebra import parse_variant, variant_add
 
     migration_variants = [
-        (fn, parse_variant(open(fn, "r").read(), config=config)) for fn in migrations
+        (fn, parse_variant(open(fn, "r").read(), config=config))
+        for fn in migrations
     ]
-    migration_variants.sort(key=lambda fn_v: (fn_v[1]["migration_ts"], fn_v[0]))
+    migration_variants.sort(
+        key=lambda fn_v: (fn_v[1]["migration_ts"], fn_v[0])
+    )
     if len(migration_variants):
-        logger.info(f"Applying migrations: {','.join(k for k, v in migration_variants)}")
+        logger.info(
+            f"Applying migrations: {','.join(k for k, v in migration_variants)}"
+        )
 
     for migrator_file, migration in migration_variants:
-        if 'migration_ts' in migration:
-            del migration['migration_ts']
+        if "migration_ts" in migration:
+            del migration["migration_ts"]
         if len(migration):
             combined_spec = variant_add(combined_spec, migration)
     return combined_spec
@@ -521,7 +530,8 @@ def _render_ci_provider(
     for i, (platform, arch, keep_noarch) in enumerate(
         zip(platforms, archs, keep_noarchs)
     ):
-        config = conda_build.config.get_or_merge_config(None,
+        config = conda_build.config.get_or_merge_config(
+            None,
             exclusive_config_file=forge_config["exclusive_config_file"],
             platform=platform,
             arch=arch,
@@ -529,11 +539,12 @@ def _render_ci_provider(
 
         # Get the combined variants from normal variant locations prior to running migrations
         combined_variant_spec, _ = conda_build.variants.get_package_combined_spec(
-            os.path.join(forge_dir, "recipe"),
-            config=config
+            os.path.join(forge_dir, "recipe"), config=config
         )
 
-        migrated_combined_variant_spec = migrate_combined_spec(combined_variant_spec, forge_dir, config)
+        migrated_combined_variant_spec = migrate_combined_spec(
+            combined_variant_spec, forge_dir, config
+        )
 
         metas = conda_build.api.render(
             os.path.join(forge_dir, "recipe"),
@@ -735,7 +746,7 @@ def _get_build_setup_line(forge_dir, platform, forge_config):
             )
         else:
             build_setup += textwrap.dedent(
-            """\
+                """\
             source run_conda_forge_build_setup
 
             """
@@ -750,11 +761,11 @@ def _circle_specific_setup(jinja_env, forge_config, forge_dir, platform):
         if yum_build_setup:
             forge_config["yum_build_setup"] = yum_build_setup
 
-    forge_config["build_setup"] = _get_build_setup_line(forge_dir, platform, forge_config)
+    forge_config["build_setup"] = _get_build_setup_line(
+        forge_dir, platform, forge_config
+    )
 
-    template_files = [
-        ".circleci/fast_finish_ci_pr_build.sh",
-    ]
+    template_files = [".circleci/fast_finish_ci_pr_build.sh"]
 
     if platform == "linux":
         template_files.append(".scripts/run_docker_build.sh")
@@ -782,7 +793,7 @@ def generate_yum_requirements(forge_dir):
     yum_requirements_fpath = os.path.join(
         forge_dir, "recipe", "yum_requirements.txt"
     )
-    yum_build_setup = ''
+    yum_build_setup = ""
     if os.path.exists(yum_requirements_fpath):
         with open(yum_requirements_fpath) as fh:
             requirements = [
@@ -894,13 +905,8 @@ def _travis_specific_setup(jinja_env, forge_config, forge_dir, platform):
     build_setup = _get_build_setup_line(forge_dir, platform, forge_config)
 
     platform_templates = {
-        "linux": [
-            ".scripts/run_docker_build.sh",
-            ".scripts/build_steps.sh",
-        ],
-        "osx": [
-            ".travis/run_osx_build.sh",
-        ],
+        "linux": [".scripts/run_docker_build.sh", ".scripts/build_steps.sh"],
+        "osx": [".travis/run_osx_build.sh"],
         "win": [],
     }
     template_files = platform_templates.get(platform, [])
@@ -908,7 +914,7 @@ def _travis_specific_setup(jinja_env, forge_config, forge_dir, platform):
     if platform == "linux":
         yum_build_setup = generate_yum_requirements(forge_dir)
         if yum_build_setup:
-            forge_config['yum_build_setup'] = yum_build_setup
+            forge_config["yum_build_setup"] = yum_build_setup
 
     if platform == "osx":
         build_setup = build_setup.strip()
@@ -927,14 +933,22 @@ def _render_template_exe_files(
     forge_config, jinja_env, template_files, forge_dir
 ):
     for template_file in template_files:
-        template = jinja_env.get_template(os.path.basename(template_file)+".tmpl")
+        template = jinja_env.get_template(
+            os.path.basename(template_file) + ".tmpl"
+        )
         target_fname = os.path.join(forge_dir, template_file)
         new_file_contents = template.render(**forge_config)
-        if target_fname in get_common_scripts(forge_dir) and os.path.exists(target_fname):
-            with open(target_fname, 'r') as fh:
+        if target_fname in get_common_scripts(forge_dir) and os.path.exists(
+            target_fname
+        ):
+            with open(target_fname, "r") as fh:
                 old_file_contents = fh.read()
                 if old_file_contents != new_file_contents:
-                    raise RuntimeError("Same file {} is rendered twice with different contents".format(target_fname))
+                    raise RuntimeError(
+                        "Same file {} is rendered twice with different contents".format(
+                            target_fname
+                        )
+                    )
         with write_file(target_fname) as fh:
             fh.write(new_file_contents)
         # Fix permission of template shell files
@@ -1031,7 +1045,7 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
     if platform == "linux":
         yum_build_setup = generate_yum_requirements(forge_dir)
         if yum_build_setup:
-            forge_config['yum_build_setup'] = yum_build_setup
+            forge_config["yum_build_setup"] = yum_build_setup
 
     forge_config["build_setup"] = build_setup
 
@@ -1081,9 +1095,7 @@ def render_azure(jinja_env, forge_config, forge_dir):
 
 def _drone_specific_setup(jinja_env, forge_config, forge_dir, platform):
     platform_templates = {
-        "linux": [
-            ".scripts/build_steps.sh",
-        ],
+        "linux": [".scripts/build_steps.sh"],
         "osx": [],
         "win": [],
     }
@@ -1094,7 +1106,7 @@ def _drone_specific_setup(jinja_env, forge_config, forge_dir, platform):
     if platform == "linux":
         yum_build_setup = generate_yum_requirements(forge_dir)
         if yum_build_setup:
-            forge_config['yum_build_setup'] = yum_build_setup
+            forge_config["yum_build_setup"] = yum_build_setup
 
     forge_config["build_setup"] = build_setup
 
@@ -1130,6 +1142,7 @@ def render_drone(jinja_env, forge_config, forge_dir):
         upload_packages=upload_packages,
     )
 
+
 def render_README(jinja_env, forge_config, forge_dir):
     if "README.md" in forge_config["skip_render"]:
         logger.info("README.md rendering is skipped")
@@ -1153,7 +1166,7 @@ def render_README(jinja_env, forge_config, forge_dir):
     variants = []
     if os.path.exists(ci_support_path):
         for filename in os.listdir(ci_support_path):
-            if filename.endswith('.yaml'):
+            if filename.endswith(".yaml"):
                 variant_name, _ = os.path.splitext(filename)
                 variants.append(variant_name)
 
@@ -1175,19 +1188,21 @@ def render_README(jinja_env, forge_config, forge_dir):
         )
     )
 
-    if forge_config['azure'].get('build_id') is None:
+    if forge_config["azure"].get("build_id") is None:
         # Try to retrieve the build_id from the interwebs
         try:
             import requests
+
             resp = requests.get(
                 "https://dev.azure.com/{org}/{project_name}/_apis/build/definitions?name={repo}".format(
                     org=forge_config["azure"]["user_or_org"],
                     project_name=forge_config["azure"]["project_name"],
-                    repo=forge_config["github"]["repo_name"]
-                ))
+                    repo=forge_config["github"]["repo_name"],
+                )
+            )
             resp.raise_for_status()
             build_def = resp.json()["value"][0]
-            forge_config['azure']['build_id'] = build_def['id']
+            forge_config["azure"]["build_id"] = build_def["id"]
         except (IndexError, IOError):
             pass
 
@@ -1236,7 +1251,7 @@ def _load_forge_config(forge_dir, exclusive_config_file):
             "project_name": "feedstock-builds",
             "project_id": "84710dde-1620-425b-80d0-4cf5baca359d",
             # Default to a timeout of 6 hours.  This is the maximum for azure by default
-            "timeout_minutes": 360
+            "timeout_minutes": 360,
         },
         "provider": {
             "linux": "azure",
@@ -1273,7 +1288,7 @@ def _load_forge_config(forge_dir, exclusive_config_file):
             "branch_name": "master",
         },
         "recipe_dir": "recipe",
-        "skip_render": []
+        "skip_render": [],
     }
 
     # An older conda-smithy used to have some files which should no longer exist,
@@ -1315,7 +1330,9 @@ def _load_forge_config(forge_dir, exclusive_config_file):
                 " for more info."
             )
 
-        if file_config.get("docker") and file_config.get("docker").get("image"):
+        if file_config.get("docker") and file_config.get("docker").get(
+            "image"
+        ):
             raise ValueError(
                 "Setting docker image in conda-forge.yml is removed now."
                 " Use conda_build_config.yaml instead"
@@ -1456,10 +1473,7 @@ def get_cfp_file_path(resolve=None, error_on_warn=True):
 def clear_variants(forge_dir):
     "Remove all variant files placed in the .ci_support path"
     if os.path.isdir(os.path.join(forge_dir, ".ci_support")):
-        configs = glob.glob(
-            os.path.join(
-                forge_dir, ".ci_support", "*")
-        )
+        configs = glob.glob(os.path.join(forge_dir, ".ci_support", "*"))
         for config in configs:
             remove_file(config)
 
@@ -1474,15 +1488,23 @@ def clear_scripts(forge_dir):
         for old_file in ["run_docker_build.sh", "build_steps.sh"]:
             remove_file(os.path.join(forge_dir, folder, old_file))
 
+
 def main(
-    forge_file_directory, no_check_uptodate=False, commit=False, exclusive_config_file=None, check=False
+    forge_file_directory,
+    no_check_uptodate=False,
+    commit=False,
+    exclusive_config_file=None,
+    check=False,
 ):
     import logging
-    loglevel = os.environ.get('CONDA_SMITHY_LOGLEVEL', 'INFO').upper()
+
+    loglevel = os.environ.get("CONDA_SMITHY_LOGLEVEL", "INFO").upper()
     logger.setLevel(loglevel)
 
     if check:
-        index = conda_build.conda_interface.get_index(channel_urls=["conda-forge"])
+        index = conda_build.conda_interface.get_index(
+            channel_urls=["conda-forge"]
+        )
         r = conda_build.conda_interface.Resolve(index)
 
         # Check that conda-smithy is up-to-date
@@ -1576,4 +1598,3 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     main(args.forge_file_directory)
-
