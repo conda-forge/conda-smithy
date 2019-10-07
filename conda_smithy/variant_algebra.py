@@ -123,7 +123,7 @@ def variant_add(v1: dict, v2: dict) -> Dict[str, Any]:
     # deal with __migrator: ordering
     if "__migrator" in v2:
         print(v2)
-        ordering = v2["__migrator"].get("ordering")
+        ordering = v2["__migrator"].get("ordering", {})
         print(ordering)
     else:
         ordering = {}
@@ -167,7 +167,9 @@ def variant_add(v1: dict, v2: dict) -> Dict[str, Any]:
 
         zk_out.extend(zk_l)
         zk_out.extend(zk_r)
-        zk_out = sorted([sorted(zk) for zk in zk_out], key=lambda x: (len(x), str(x)))
+        zk_out = sorted(
+            [sorted(zk) for zk in zk_out], key=lambda x: (len(x), str(x))
+        )
 
         joint.remove("zip_keys")
         special_variants["zip_keys"] = zk_out
@@ -175,7 +177,9 @@ def variant_add(v1: dict, v2: dict) -> Dict[str, Any]:
     joint_variant = {}
     for k in joint:
         v_left, v_right = ensure_list(v1[k]), ensure_list(v2[k])
-        joint_variant[k] = variant_key_add(k, v_left, v_right, ordering=ordering.get(k))
+        joint_variant[k] = variant_key_add(
+            k, v_left, v_right, ordering=ordering.get(k, None)
+        )
 
     out = {
         **toolz.keyfilter(lambda k: k in left, v1),

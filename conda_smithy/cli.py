@@ -243,6 +243,13 @@ class RegisterCI(Subcommand):
             ci_register.appveyor_configure(owner, repo)
         else:
             print("Appveyor registration disabled.")
+
+        if args.drone:
+            ci_register.add_project_to_drone(owner, repo)
+            ci_register.add_token_to_drone(owner, repo)
+        else:
+            print("Drone registration disabled.")
+
         ci_register.add_conda_forge_webservice_hooks(owner, repo)
         print(
             "\nCI services have been enabled. You may wish to regenerate the feedstock.\n"
@@ -257,7 +264,9 @@ class AddAzureBuildId(Subcommand):
         # conda-smithy azure-buildid ./
         super(AddAzureBuildId, self).__init__(
             parser,
-            dedent("Update the azure configuration stored in the config file.")
+            dedent(
+                "Update the azure configuration stored in the config file."
+            ),
         )
         scp = self.subcommand_parser
         scp.add_argument(
@@ -267,7 +276,8 @@ class AddAzureBuildId(Subcommand):
         )
         group = scp.add_mutually_exclusive_group()
         group.add_argument(
-            "--user", help="azure username for which this repo is enabled already"
+            "--user",
+            help="azure username for which this repo is enabled already",
         )
         group.add_argument(
             "--organization",
@@ -275,9 +285,9 @@ class AddAzureBuildId(Subcommand):
             help="azure organisation for which this repo is enabled already",
         )
         scp.add_argument(
-            '--project_name',
+            "--project_name",
             default=azure_ci_utils.AzureConfig._default_project_name,
-            help="project name that feedstocks are registered under"
+            help="project name that feedstocks are registered under",
         )
 
     def __call__(self, args):
@@ -285,19 +295,19 @@ class AddAzureBuildId(Subcommand):
         repo = os.path.basename(os.path.abspath(args.feedstock_directory))
 
         config = azure_ci_utils.AzureConfig(
-            org_or_user=owner,
-            project_name=args.project_name
+            org_or_user=owner, project_name=args.project_name
         )
 
         build_info = azure_ci_utils.get_build_id(repo, config)
 
         from .utils import update_conda_forge_config
+
         with update_conda_forge_config(args.feedstock_directory) as config:
             config.setdefault("azure", {})
-            config["azure"]["build_id"] = build_info['build_id']
-            config["azure"]["user_or_org"] = build_info['user_or_org']
-            config["azure"]["project_name"] = build_info['project_name']
-            config["azure"]["project_id"] = build_info['project_id']
+            config["azure"]["build_id"] = build_info["build_id"]
+            config["azure"]["user_or_org"] = build_info["user_or_org"]
+            config["azure"]["project_name"] = build_info["project_name"]
+            config["azure"]["project_id"] = build_info["project_id"]
 
 
 class Regenerate(Subcommand):
@@ -335,7 +345,12 @@ class Regenerate(Subcommand):
             help="Exclusive conda-build config file to replace conda-forge-pinning. "
             + "For advanced usage only",
         )
-        scp.add_argument("--check", action="store_true", default=False, help="Check if regenerate can be performed")
+        scp.add_argument(
+            "--check",
+            action="store_true",
+            default=False,
+            help="Check if regenerate can be performed",
+        )
 
     def __call__(self, args):
         configure_feedstock.main(
@@ -343,7 +358,7 @@ class Regenerate(Subcommand):
             no_check_uptodate=args.no_check_uptodate,
             commit=args.commit,
             exclusive_config_file=args.exclusive_config_file,
-            check=args.check
+            check=args.check,
         )
 
 

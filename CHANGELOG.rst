@@ -4,6 +4,62 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.5.0
+====================
+
+**Added:**
+
+* conda-smithy will remove the ``.github/CODEOWNERS`` file in case the recipe
+  maintainers list is empty
+
+**Changed:**
+
+* Default windows provider was changed to azure.
+
+
+
+v3.4.8
+====================
+
+**Fixed:**
+
+* Don't make assumptions in ``conda_smithy/variant_algebra.py`` about the metadata
+
+
+
+v3.4.7
+====================
+
+**Added:**
+
+* Added a method to sync user in drone
+
+**Changed:**
+
+* Check that a project is registered if registering fails on drone
+* Check that a project has the secret if adding secret fails on drone
+
+
+
+v3.4.6
+====================
+
+**Added:**
+
+* conda-smithy can now register packages on drone.io.  We plan on using this to help out with the aarch64
+  architecture builds.
+
+**Changed:**
+
+* drone.io is now the default platform for aarch64 builds
+* migrations folder changed from <feedstock_root>/migrations to <feedstock_root>/.ci_support/migrations
+
+**Fixed:**
+
+* Fix render_README crash when azure api returns 404
+
+
+
 v3.4.5
 ====================
 

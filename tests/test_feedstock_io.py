@@ -24,7 +24,10 @@ def parameterize():
         lambda pth, tmp_dir: os.path.relpath(pth, tmp_dir),
         lambda pth, tmp_dir: pth,
     ]:
-        for get_repo in [lambda tmp_dir: None, lambda tmp_dir: git.Repo.init(tmp_dir)]:
+        for get_repo in [
+            lambda tmp_dir: None,
+            lambda tmp_dir: git.Repo.init(tmp_dir),
+        ]:
             try:
                 tmp_dir = tempfile.mkdtemp()
                 keep_dir(tmp_dir)
@@ -32,7 +35,11 @@ def parameterize():
                 old_dir = os.getcwd()
                 os.chdir(tmp_dir)
 
-                yield (tmp_dir, get_repo(tmp_dir), lambda pth: pathfunc(pth, tmp_dir))
+                yield (
+                    tmp_dir,
+                    get_repo(tmp_dir),
+                    lambda pth: pathfunc(pth, tmp_dir),
+                )
             finally:
                 os.chdir(old_dir)
                 shutil.rmtree(tmp_dir)
@@ -55,7 +62,9 @@ class TestFeedstockIO(unittest.TestCase):
             if repo is None:
                 self.assertTrue(fio.get_repo(pathfunc(tmp_dir)) is None)
             else:
-                self.assertIsInstance(fio.get_repo(pathfunc(tmp_dir)), git.Repo)
+                self.assertIsInstance(
+                    fio.get_repo(pathfunc(tmp_dir)), git.Repo
+                )
 
     def test_set_exe_file(self):
         perms = [stat.S_IXUSR, stat.S_IXGRP, stat.S_IXOTH]
@@ -66,7 +75,9 @@ class TestFeedstockIO(unittest.TestCase):
             for tmp_dir, repo, pathfunc in parameterize():
                 filename = "test.txt"
                 filename = os.path.join(tmp_dir, filename)
-                with io.open(filename, "w", encoding="utf-8", newline="\n") as fh:
+                with io.open(
+                    filename, "w", encoding="utf-8", newline="\n"
+                ) as fh:
                     fh.write("")
                 if repo is not None:
                     repo.index.add([filename])
@@ -77,7 +88,9 @@ class TestFeedstockIO(unittest.TestCase):
                 self.assertEqual(file_mode & set_mode, int(set_exe) * set_mode)
                 if repo is not None:
                     blob = next(repo.index.iter_blobs(BlobFilter(filename)))[1]
-                    self.assertEqual(blob.mode & set_mode, int(set_exe) * set_mode)
+                    self.assertEqual(
+                        blob.mode & set_mode, int(set_exe) * set_mode
+                    )
 
     def test_write_file(self):
         for tmp_dir, repo, pathfunc in parameterize():
@@ -131,7 +144,9 @@ class TestFeedstockIO(unittest.TestCase):
 
                 filename = os.path.join(tmp_dir, filename)
 
-                with io.open(filename, "w", encoding="utf-8", newline="\n") as fh:
+                with io.open(
+                    filename, "w", encoding="utf-8", newline="\n"
+                ) as fh:
                     fh.write("")
                 if repo is not None:
                     repo.index.add([filename])
@@ -141,7 +156,9 @@ class TestFeedstockIO(unittest.TestCase):
                     self.assertTrue(os.path.exists(dirname))
                     self.assertTrue(os.path.exists(os.path.dirname(dirname)))
                 if repo is not None:
-                    self.assertTrue(list(repo.index.iter_blobs(BlobFilter(filename))))
+                    self.assertTrue(
+                        list(repo.index.iter_blobs(BlobFilter(filename)))
+                    )
 
                 fio.remove_file(pathfunc(filename))
 
@@ -150,7 +167,9 @@ class TestFeedstockIO(unittest.TestCase):
                     self.assertFalse(os.path.exists(dirname))
                     self.assertFalse(os.path.exists(os.path.dirname(dirname)))
                 if repo is not None:
-                    self.assertFalse(list(repo.index.iter_blobs(BlobFilter(filename))))
+                    self.assertFalse(
+                        list(repo.index.iter_blobs(BlobFilter(filename)))
+                    )
 
     def test_copy_file(self):
         for tmp_dir, repo, pathfunc in parameterize():
@@ -167,14 +186,18 @@ class TestFeedstockIO(unittest.TestCase):
             self.assertTrue(os.path.exists(filename1))
             self.assertFalse(os.path.exists(filename2))
             if repo is not None:
-                self.assertFalse(list(repo.index.iter_blobs(BlobFilter(filename2))))
+                self.assertFalse(
+                    list(repo.index.iter_blobs(BlobFilter(filename2)))
+                )
 
             fio.copy_file(pathfunc(filename1), pathfunc(filename2))
 
             self.assertTrue(os.path.exists(filename1))
             self.assertTrue(os.path.exists(filename2))
             if repo is not None:
-                self.assertTrue(list(repo.index.iter_blobs(BlobFilter(filename2))))
+                self.assertTrue(
+                    list(repo.index.iter_blobs(BlobFilter(filename2)))
+                )
 
             read_text = ""
             with io.open(filename2, "r", encoding="utf-8") as fh:

@@ -11,7 +11,7 @@ from . import github as smithy_github
 from .utils import render_meta_yaml, yaml
 
 
-def feedstock_repos(gh_organization='conda-forge'):
+def feedstock_repos(gh_organization="conda-forge"):
     token = smithy_github.gh_token()
     gh = Github(token)
     org = gh.get_organization(gh_organization)

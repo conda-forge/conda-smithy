@@ -96,6 +96,36 @@ def test_ordering():
     # raise Exception()
 
 
+def test_no_ordering():
+    start = parse_variant(
+        dedent(
+            """\
+    xyz:
+        - 1
+    """
+        )
+    )
+
+    mig_compiler = parse_variant(
+        dedent(
+            """\
+    __migrator:
+        kind:
+            version
+        migration_no:
+            1
+    xyz:
+        - 2
+    """
+        )
+    )
+
+    res = variant_add(start, mig_compiler)
+    assert res["xyz"] == ["2"]
+    print(res)
+    # raise Exception()
+
+
 def test_ordering_downgrade():
     start = parse_variant(
         dedent(
@@ -121,7 +151,38 @@ def test_ordering_downgrade():
     )
 
     res = variant_add(start, mig_compiler)
-    assert res["jpeg"] == ['2.0']
+    assert res["jpeg"] == ["2.0"]
+    print(res)
+
+
+def test_new_pinned_package():
+    start = parse_variant(
+        dedent(
+            """\
+    pin_run_as_build:
+        jpeg:
+            max_pin: x
+    jpeg:
+        - 3.0
+    """
+        )
+    )
+
+    mig_compiler = parse_variant(
+        dedent(
+            """\
+    pin_run_as_build:
+        gprc-cpp:
+            max_pin: x.x
+    gprc-cpp:
+        - 1.23
+    """
+        )
+    )
+
+    res = variant_add(start, mig_compiler)
+    assert res["gprc-cpp"] == ["1.23"]
+    assert res["pin_run_as_build"]["gprc-cpp"]["max_pin"] == "x.x"
     print(res)
 
 
@@ -163,8 +224,9 @@ def test_zip_keys():
 
 
 def test_migrate_windows_compilers():
-    start = parse_variant(dedent(
-        """
+    start = parse_variant(
+        dedent(
+            """
         c_compiler:
             - vs2008
             - vs2015
@@ -175,10 +237,12 @@ def test_migrate_windows_compilers():
             - - vc
               - c_compiler
         """
-    ))
+        )
+    )
 
-    mig = parse_variant(dedent(
-        """
+    mig = parse_variant(
+        dedent(
+            """
         c_compiler:
             - vs2008
             - vs2017
@@ -186,14 +250,15 @@ def test_migrate_windows_compilers():
             - '9'
             - '14.1'
         """
-    ))
+        )
+    )
 
     res = variant_add(start, mig)
     print(res)
 
     assert len(res["c_compiler"]) == 2
-    assert res["c_compiler"] == ['vs2008', 'vs2017']
-    assert len(res['zip_keys'][0]) == 2
+    assert res["c_compiler"] == ["vs2008", "vs2017"]
+    assert len(res["zip_keys"][0]) == 2
 
 
 def test_pin_run_as_build():
@@ -225,4 +290,3 @@ def test_pin_run_as_build():
     print(res)
 
     assert len(res["pin_run_as_build"]) == 3
-
