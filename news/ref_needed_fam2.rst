@@ -16,7 +16,7 @@
 
 **Fixed:**
 
-* <news item>
+* ship conf file for black so everyone uses the same settings
 
 **Security:**
 
