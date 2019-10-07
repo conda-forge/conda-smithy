@@ -22,11 +22,12 @@ install:
     - rm -rf ${CONDA_INSTALL_LOCN}/pkgs && ln -s ${HOME}/cache/pkgs ${CONDA_INSTALL_LOCN}/pkgs
 
     # Now do the things we need to do to install it.
-    - conda install --file requirements.txt coverage coveralls mock pytest pytest-cov ${CONDA_PKGS} --yes --quiet ${CHANNEL}
+    - conda install --file requirements.txt black coverage coveralls mock pytest pytest-cov ${CONDA_PKGS} --yes --quiet ${CHANNEL}
     - python -m pip install -e .
 
 script:
     - py.test tests --cov conda_smithy
+    - black --check
 
 after_success:
     - coverage combine
