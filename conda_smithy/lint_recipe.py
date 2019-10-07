@@ -12,10 +12,7 @@ import re
 
 import github
 
-from conda_build.metadata import (
-    ensure_valid_license_family,
-    FIELDS as cbfields,
-)
+from conda_build.metadata import ensure_valid_license_family, FIELDS as cbfields
 import conda_build.conda_interface
 
 from .utils import render_meta_yaml, yaml
@@ -45,6 +42,9 @@ REQUIREMENTS_ORDER = ["build", "host", "run"]
 
 TEST_KEYS = {"imports", "commands"}
 TEST_FILES = ["run_test.py", "run_test.sh", "run_test.bat", "run_test.pl"]
+
+
+NEEDED_FAMILIES = ["gpl", "bsd", "mit", "apache", "psf"]
 
 sel_pat = re.compile(r"(.+?)\s*(#.*)?\[([^\[\]]+)\](?(2).*)$")
 jinja_pat = re.compile(r"\s*\{%\s*(set)\s+[^\s]+\s*=\s*[^\s]+\s*%\}")
@@ -84,13 +84,9 @@ def get_list_section(parent, name, lints, allow_single=False):
 
 
 def lint_section_order(major_sections, lints):
-    section_order_sorted = sorted(
-        major_sections, key=EXPECTED_SECTION_ORDER.index
-    )
+    section_order_sorted = sorted(major_sections, key=EXPECTED_SECTION_ORDER.index)
     if major_sections != section_order_sorted:
-        section_order_sorted_str = map(
-            lambda s: "'%s'" % s, section_order_sorted
-        )
+        section_order_sorted_str = map(lambda s: "'%s'" % s, section_order_sorted)
         section_order_sorted_str = ", ".join(section_order_sorted_str)
         section_order_sorted_str = "[" + section_order_sorted_str + "]"
         lints.append(
@@ -104,8 +100,7 @@ def lint_about_contents(about_section, lints):
         # if the section doesn't exist, or is just empty, lint it.
         if not about_section.get(about_item, ""):
             lints.append(
-                "The {} item is expected in the about section."
-                "".format(about_item)
+                "The {} item is expected in the about section." "".format(about_item)
             )
 
 
@@ -134,9 +129,7 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
     unexpected_sections = []
     for section in major_sections:
         if section not in EXPECTED_SECTION_ORDER:
-            lints.append(
-                "The top level meta key {} is unexpected".format(section)
-            )
+            lints.append("The top level meta key {} is unexpected".format(section))
             unexpected_sections.append(section)
 
     for section in unexpected_sections:
@@ -158,9 +151,7 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
     # 3b: Maintainers should be a list
     if not (
         isinstance(extra_section.get("recipe-maintainers", []), Sequence)
-        and not isinstance(
-            extra_section.get("recipe-maintainers", []), str_type
-        )
+        and not isinstance(extra_section.get("recipe-maintainers", []), str_type)
     ):
         lints.append("Recipe maintainers should be a json list.")
 
@@ -217,12 +208,8 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
         lints.append("The recipe must have a `build/number` section.")
 
     # 8: The build section should be before the run section in requirements.
-    seen_requirements = [
-        k for k in requirements_section if k in REQUIREMENTS_ORDER
-    ]
-    requirements_order_sorted = sorted(
-        seen_requirements, key=REQUIREMENTS_ORDER.index
-    )
+    seen_requirements = [k for k in requirements_section if k in REQUIREMENTS_ORDER]
+    requirements_order_sorted = sorted(seen_requirements, key=REQUIREMENTS_ORDER.index)
     if seen_requirements != requirements_order_sorted:
         lints.append(
             "The `requirements/` sections should be defined "
@@ -246,9 +233,7 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
     # 10: License should not include the word 'license'.
     license = about_section.get("license", "").lower()
     if "license" in license.lower() and "unlicense" not in license.lower():
-        lints.append(
-            "The recipe `license` should not include the word " '"License".'
-        )
+        lints.append("The recipe `license` should not include the word " '"License".')
 
     # 11: There should be one empty line at the end of the file.
     if recipe_dir is not None and os.path.exists(meta_fname):
@@ -278,10 +263,7 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
     # 12a: License family must be valid (conda-build checks for that)
     license_family = about_section.get("license_family", license).lower()
     license_file = about_section.get("license_file", "")
-    needed_families = ["gpl", "bsd", "mit", "apache", "psf"]
-    if license_file == "" and any(
-        f for f in needed_families if f in license_family
-    ):
+    if license_file == "" and any(f for f in NEEDED_FAMILIES if f in license_family):
         lints.append("license_file entry is missing, but is required.")
 
     # 13: Check that the recipe name is valid
@@ -365,9 +347,7 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
         try:
             conda_build.conda_interface.VersionOrder(ver)
         except:
-            lints.append(
-                "Package version {} doesn't match conda spec".format(ver)
-            )
+            lints.append("Package version {} doesn't match conda spec".format(ver))
 
     # 20: Jinja2 variable definitions should be nice.
     if recipe_dir is not None and os.path.exists(meta_fname):
@@ -404,15 +384,7 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
             if "{{" in req:
                 continue
             parts = req.split()
-            if len(parts) > 2 and parts[1] in [
-                "!=",
-                "=",
-                "==",
-                ">",
-                "<",
-                "<=",
-                ">=",
-            ]:
+            if len(parts) > 2 and parts[1] in ["!=", "=", "==", ">", "<", "<=", ">="]:
                 # check for too many spaces
                 lints.append(
                     (
@@ -536,15 +508,12 @@ def run_conda_forge_specific(meta, recipe_dir, lints, hints):
         try:
             gh.get_user(maintainer)
         except github.UnknownObjectException as e:
-            lints.append(
-                'Recipe maintainer "{}" does not exist'.format(maintainer)
-            )
+            lints.append('Recipe maintainer "{}" does not exist'.format(maintainer))
 
     # 3: if the recipe dir is inside the example dir
     if recipe_dir is not None and "recipes/example/" in recipe_dir:
         lints.append(
-            "Please move the recipe out of the example dir and "
-            "into its own dir."
+            "Please move the recipe out of the example dir and " "into its own dir."
         )
 
 
