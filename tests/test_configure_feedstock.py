@@ -7,6 +7,7 @@ import yaml
 
 
 def test_noarch_skips_appveyor(noarch_recipe, jinja_env):
+    noarch_recipe.config["provider"]["win"] = "appveyor"
     cnfgr_fdstk.render_appveyor(
         jinja_env=jinja_env,
         forge_config=noarch_recipe.config,
@@ -69,6 +70,7 @@ def test_noarch_runs_on_azure(noarch_recipe, jinja_env):
 
 
 def test_r_skips_appveyor(r_recipe, jinja_env):
+    r_recipe.config["provider"]["win"] = "appveyor"
     cnfgr_fdstk.render_appveyor(
         jinja_env=jinja_env,
         forge_config=r_recipe.config,
@@ -416,6 +418,7 @@ def test_render_with_all_skipped_generates_readme(skipped_recipe, jinja_env):
 
 def test_render_windows_with_skipped_python(python_skipped_recipe, jinja_env):
     config = python_skipped_recipe.config
+    config["provider"]["win"] = "appveyor"
     config["exclusive_config_file"] = os.path.join(
         python_skipped_recipe.recipe, "recipe", "long_config.yaml"
     )
