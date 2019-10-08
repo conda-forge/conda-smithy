@@ -478,7 +478,9 @@ def test_migrator_downgrade_recipe(
         len(
             os.listdir(
                 os.path.join(
-                    recipe_migration_cfep9_downgrade.recipe, ".ci_support", "migrations"
+                    recipe_migration_cfep9_downgrade.recipe,
+                    ".ci_support",
+                    "migrations",
                 )
             )
         )
@@ -511,7 +513,9 @@ def test_migrator_compiler_version_recipe(
         len(
             os.listdir(
                 os.path.join(
-                    recipe_migration_win_compiled.recipe, ".ci_support", "migrations"
+                    recipe_migration_win_compiled.recipe,
+                    ".ci_support",
+                    "migrations",
                 )
             )
         )

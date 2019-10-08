@@ -482,7 +482,9 @@ def migrate_combined_spec(combined_spec, forge_dir, config):
 
     """
     combined_spec = combined_spec.copy()
-    migrations_root = os.path.join(forge_dir, ".ci_support", "migrations", "*.yaml")
+    migrations_root = os.path.join(
+        forge_dir, ".ci_support", "migrations", "*.yaml"
+    )
     migrations = glob.glob(migrations_root)
 
     from .variant_algebra import parse_variant, variant_add
@@ -1219,8 +1221,9 @@ def render_README(jinja_env, forge_config, forge_dir):
             for maintainer in forge_config["maintainers"]:
                 line = line + " @" + maintainer
             fh.write(line)
-    else:   
+    else:
         remove_file_or_dir(code_owners_file)
+
 
 def copy_feedstock_content(forge_config, forge_dir):
     feedstock_content = os.path.join(conda_forge_content, "feedstock_content")
@@ -1357,15 +1360,15 @@ def _load_forge_config(forge_dir, exclusive_config_file):
     logger.debug(log)
     logger.debug("## END CONFIGURATION\n")
 
-    if config["provider"]["linux_aarch64"] in {"default", "native"}:    
+    if config["provider"]["linux_aarch64"] in {"default", "native"}:
         config["provider"]["linux_aarch64"] = "drone"
 
     if config["provider"]["linux_ppc64le"] in {"default", "native"}:
         config["provider"]["linux_ppc64le"] = "travis"
 
-    # Fallback handling set to azure, for platforms that are not fully specified by this time   
-    for platform in config["provider"]: 
-        if config["provider"][platform] in {"default", "emulated"}: 
+    # Fallback handling set to azure, for platforms that are not fully specified by this time
+    for platform in config["provider"]:
+        if config["provider"][platform] in {"default", "emulated"}:
             config["provider"][platform] = "azure"
     # Set the environment variable for the compiler stack
     os.environ["CF_COMPILER_STACK"] = config["compiler_stack"]
