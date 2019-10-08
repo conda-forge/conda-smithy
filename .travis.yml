@@ -27,7 +27,7 @@ install:
 
 script:
     - py.test tests --cov conda_smithy
-    - black --check --verbose .
+    - black --check --verbose --config=pyproject.toml .
 
 after_success:
     - coverage combine
