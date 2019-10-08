@@ -136,6 +136,7 @@ def test_r_matrix_azure(r_recipe, jinja_env):
 
 
 def test_py_matrix_appveyor(py_recipe, jinja_env):
+    py_recipe.config["provider"]["win"] = "appveyor"
     cnfgr_fdstk.render_appveyor(
         jinja_env=jinja_env,
         forge_config=py_recipe.config,
@@ -265,6 +266,7 @@ def test_upload_on_branch_azure(upload_on_branch_recipe, jinja_env):
 
 
 def test_upload_on_branch_appveyor(upload_on_branch_recipe, jinja_env):
+    upload_on_branch_recipe.config["provider"]["win"] = "appveyor"
     cnfgr_fdstk.render_appveyor(
         jinja_env=jinja_env,
         forge_config=upload_on_branch_recipe.config,
@@ -476,7 +478,7 @@ def test_migrator_downgrade_recipe(
         len(
             os.listdir(
                 os.path.join(
-                    recipe_migration_cfep9_downgrade.recipe, "migrations"
+                    recipe_migration_cfep9_downgrade.recipe, ".ci_support", "migrations"
                 )
             )
         )
@@ -509,7 +511,7 @@ def test_migrator_compiler_version_recipe(
         len(
             os.listdir(
                 os.path.join(
-                    recipe_migration_win_compiled.recipe, "migrations"
+                    recipe_migration_win_compiled.recipe, ".ci_support", "migrations"
                 )
             )
         )

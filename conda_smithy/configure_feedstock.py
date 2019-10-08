@@ -482,7 +482,7 @@ def migrate_combined_spec(combined_spec, forge_dir, config):
 
     """
     combined_spec = combined_spec.copy()
-    migrations_root = os.path.join(forge_dir, "migrations", "*.yaml")
+    migrations_root = os.path.join(forge_dir, ".ci_support", "migrations", "*.yaml")
     migrations = glob.glob(migrations_root)
 
     from .variant_algebra import parse_variant, variant_add
@@ -1212,14 +1212,15 @@ def render_README(jinja_env, forge_config, forge_dir):
     with write_file(target_fname) as fh:
         fh.write(template.render(**forge_config))
 
+    code_owners_file = os.path.join(forge_dir, ".github", "CODEOWNERS")
     if len(forge_config["maintainers"]) > 0:
-        code_owners_file = os.path.join(forge_dir, ".github", "CODEOWNERS")
         with write_file(code_owners_file) as fh:
             line = "*"
             for maintainer in forge_config["maintainers"]:
                 line = line + " @" + maintainer
             fh.write(line)
-
+    else:   
+        remove_file_or_dir(code_owners_file)
 
 def copy_feedstock_content(forge_config, forge_dir):
     feedstock_content = os.path.join(conda_forge_content, "feedstock_content")
@@ -1256,7 +1257,7 @@ def _load_forge_config(forge_dir, exclusive_config_file):
         "provider": {
             "linux": "azure",
             "osx": "azure",
-            "win": "appveyor",
+            "win": "azure",
             # Following platforms are disabled by default
             "linux_aarch64": None,
             "linux_ppc64le": None,
@@ -1356,17 +1357,16 @@ def _load_forge_config(forge_dir, exclusive_config_file):
     logger.debug(log)
     logger.debug("## END CONFIGURATION\n")
 
-    for platform in ["linux_aarch64", "linux_armv7l"]:
-        if config["provider"][platform] == "default":
-            config["provider"][platform] = "azure"
-
-    # TODO: Switch default to Drone
-    if config["provider"]["linux_aarch64"] in {"native"}:
+    if config["provider"]["linux_aarch64"] in {"default", "native"}:    
         config["provider"]["linux_aarch64"] = "drone"
 
-    if config["provider"]["linux_ppc64le"] in {"native", "default"}:
+    if config["provider"]["linux_ppc64le"] in {"default", "native"}:
         config["provider"]["linux_ppc64le"] = "travis"
 
+    # Fallback handling set to azure, for platforms that are not fully specified by this time   
+    for platform in config["provider"]: 
+        if config["provider"][platform] in {"default", "emulated"}: 
+            config["provider"][platform] = "azure"
     # Set the environment variable for the compiler stack
     os.environ["CF_COMPILER_STACK"] = config["compiler_stack"]
     # Set valid ranger for the supported platforms
@@ -1473,7 +1473,7 @@ def get_cfp_file_path(resolve=None, error_on_warn=True):
 def clear_variants(forge_dir):
     "Remove all variant files placed in the .ci_support path"
     if os.path.isdir(os.path.join(forge_dir, ".ci_support")):
-        configs = glob.glob(os.path.join(forge_dir, ".ci_support", "*"))
+        configs = glob.glob(os.path.join(forge_dir, ".ci_support", "*.yaml"))
         for config in configs:
             remove_file(config)
 
@@ -1553,7 +1553,8 @@ def main(
     )
 
     copy_feedstock_content(config, forge_dir)
-    set_exe_file(os.path.join(forge_dir, "build-locally.py"))
+    if os.path.exists(os.path.join(forge_dir, "build-locally.py")):
+        set_exe_file(os.path.join(forge_dir, "build-locally.py"))
     clear_variants(forge_dir)
     clear_scripts(forge_dir)
 
