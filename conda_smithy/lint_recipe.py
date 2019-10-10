@@ -401,7 +401,7 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
 
     # 22: Single space in pinned requirements
     for section, requirements in requirements_section.items():
-        for requirement in requirements:
+        for requirement in requirements or []:
             req, _, _ = requirement.partition("#")
             if "{{" in req:
                 continue

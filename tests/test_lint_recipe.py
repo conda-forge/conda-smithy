@@ -301,6 +301,8 @@ class Test_linter(unittest.TestCase):
                               requirements:
                                 build:
                                   - python
+                                host: # empty sections are allowed and ignored
+                                run: # empty sections are allowed and ignored
                               tests:
                                 commands:
                                   - cp asd qwe  # [unix]
@@ -329,6 +331,7 @@ class Test_linter(unittest.TestCase):
                             build:
                               noarch: python
                               requirements:
+                                build: # empty sections are allowed and ignored
                                 run:
                                   - python
                                   - enum34     # [py2k]
