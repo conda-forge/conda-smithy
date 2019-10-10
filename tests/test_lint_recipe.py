@@ -301,6 +301,7 @@ class Test_linter(unittest.TestCase):
                               requirements:
                                 build:
                                   - python
+                                host: # empty sections are allowed and ignored
                               tests:
                                 commands:
                                   - cp asd qwe  # [unix]
