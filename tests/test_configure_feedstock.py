@@ -15,8 +15,6 @@ def test_noarch_skips_appveyor(noarch_recipe, jinja_env):
     )
     # this configuration should be skipped
     assert not noarch_recipe.config["appveyor"]["enabled"]
-    # no appveyor.yaml should have been written.  Nothing else, either, since we only ran
-    #     appveyor render.  No matrix dir should exist.
     assert not os.path.isdir(os.path.join(noarch_recipe.recipe, ".ci_support"))
 
 
@@ -72,8 +70,6 @@ def test_r_skips_appveyor(r_recipe, jinja_env):
     )
     # this configuration should be skipped
     assert not r_recipe.config["appveyor"]["enabled"]
-    # no appveyor.yaml should have been written.  Nothing else, either, since we only ran
-    #     appveyor render.  No matrix dir should exist.
     assert not os.path.isdir(os.path.join(r_recipe.recipe, ".ci_support"))
 
 
@@ -323,7 +319,7 @@ def test_circle_osx(py_recipe, jinja_env):
     travis_yml_file = os.path.join(forge_dir, ".travis.yml")
     circle_osx_file = os.path.join(forge_dir, ".circleci", "run_osx_build.sh")
     circle_linux_file = os.path.join(
-        forge_dir, ".circleci", "run_docker_build.sh"
+        forge_dir, ".scripts", "run_docker_build.sh"
     )
     circle_config_file = os.path.join(forge_dir, ".circleci", "config.yml")
 
@@ -366,7 +362,7 @@ def test_circle_skipped(linux_skipped_recipe, jinja_env):
     forge_dir = linux_skipped_recipe.recipe
     circle_osx_file = os.path.join(forge_dir, ".circleci", "run_osx_build.sh")
     circle_linux_file = os.path.join(
-        forge_dir, ".circleci", "run_docker_build.sh"
+        forge_dir, ".scripts", "run_docker_build.sh"
     )
     circle_config_file = os.path.join(forge_dir, ".circleci", "config.yml")
 

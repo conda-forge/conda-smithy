@@ -41,7 +41,7 @@ jobs:
 {%- if platform.startswith('linux') %}
           command: |
             export CI=circle
-            ./.circleci/run_docker_build.sh
+            ./.scripts/run_docker_build.sh
 {%- else %}
           command: |
             export CI=circle

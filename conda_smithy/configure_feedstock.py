@@ -15,6 +15,8 @@ import conda_build.variants
 import conda_build.conda_interface
 import conda_build.render
 
+from copy import deepcopy
+
 from conda_build import __version__ as conda_build_version
 from jinja2 import Environment, FileSystemLoader
 
@@ -675,7 +677,7 @@ def _render_ci_provider(
                 platform_specific_setup(
                     jinja_env=jinja_env,
                     forge_dir=forge_dir,
-                    forge_config=forge_config,
+                    forge_config=deepcopy(forge_config),
                     platform=platform,
                 )
 
@@ -765,25 +767,19 @@ def _circle_specific_setup(jinja_env, forge_config, forge_dir, platform):
         forge_dir, platform, forge_config
     )
 
+    template_files = [".circleci/fast_finish_ci_pr_build.sh"]
+
     if platform == "linux":
-        run_file_name = "run_docker_build"
+        template_files.append(".scripts/run_docker_build.sh")
+        template_files.append(".scripts/build_steps.sh")
     else:
-        run_file_name = "run_osx_build"
-
-    # TODO: Conda has a convenience for accessing nested yaml content.
-    template_files = [
-        "{}.sh.tmpl".format(run_file_name),
-        "fast_finish_ci_pr_build.sh.tmpl",
-    ]
-
-    if platform == "linux":
-        template_files.append("build_steps.sh.tmpl")
+        template_files.append(".circleci/run_osx_build.sh")
 
     _render_template_exe_files(
         forge_config=forge_config,
-        target_dir=os.path.join(forge_dir, ".circleci"),
         jinja_env=jinja_env,
         template_files=template_files,
+        forge_dir=forge_dir,
     )
 
     # Fix permission of other shell files.
@@ -880,8 +876,8 @@ def render_circle(jinja_env, forge_config, forge_dir):
             os.path.join(forge_dir, ".circleci", "fast_finish_ci_pr_build.sh"),
         ],
         "linux": [
-            os.path.join(forge_dir, ".circleci", "run_docker_build.sh"),
-            os.path.join(forge_dir, ".circleci", "build_steps.sh"),
+            os.path.join(forge_dir, ".scripts", "run_docker_build.sh"),
+            os.path.join(forge_dir, ".scripts", "build_steps.sh"),
         ],
         "osx": [os.path.join(forge_dir, ".circleci", "run_osx_build.sh")],
     }
@@ -911,8 +907,8 @@ def _travis_specific_setup(jinja_env, forge_config, forge_dir, platform):
     build_setup = _get_build_setup_line(forge_dir, platform, forge_config)
 
     platform_templates = {
-        "linux": ["run_docker_build.sh.tmpl", "build_steps.sh.tmpl"],
-        "osx": ["run_osx_build.sh.tmpl"],
+        "linux": [".scripts/run_docker_build.sh", ".scripts/build_steps.sh"],
+        "osx": [".travis/run_osx_build.sh"],
         "win": [],
     }
     template_files = platform_templates.get(platform, [])
@@ -922,26 +918,41 @@ def _travis_specific_setup(jinja_env, forge_config, forge_dir, platform):
         if yum_build_setup:
             forge_config["yum_build_setup"] = yum_build_setup
 
+    if platform == "osx":
+        build_setup = build_setup.strip()
+        build_setup = build_setup.replace("\n", "\n      ")
+    forge_config["build_setup"] = build_setup
+
     _render_template_exe_files(
         forge_config=forge_config,
-        target_dir=os.path.join(forge_dir, ".travis"),
         jinja_env=jinja_env,
         template_files=template_files,
+        forge_dir=forge_dir,
     )
-
-    build_setup = build_setup.strip()
-    build_setup = build_setup.replace("\n", "\n      ")
-    forge_config["build_setup"] = build_setup
 
 
 def _render_template_exe_files(
-    forge_config, target_dir, jinja_env, template_files
+    forge_config, jinja_env, template_files, forge_dir
 ):
     for template_file in template_files:
-        template = jinja_env.get_template(template_file)
-        target_fname = os.path.join(target_dir, template_file[: -len(".tmpl")])
+        template = jinja_env.get_template(
+            os.path.basename(template_file) + ".tmpl"
+        )
+        target_fname = os.path.join(forge_dir, template_file)
+        new_file_contents = template.render(**forge_config)
+        if target_fname in get_common_scripts(forge_dir) and os.path.exists(
+            target_fname
+        ):
+            with open(target_fname, "r") as fh:
+                old_file_contents = fh.read()
+                if old_file_contents != new_file_contents:
+                    raise RuntimeError(
+                        "Same file {} is rendered twice with different contents".format(
+                            target_fname
+                        )
+                    )
         with write_file(target_fname) as fh:
-            fh.write(template.render(**forge_config))
+            fh.write(new_file_contents)
         # Fix permission of template shell files
         set_exe_file(target_fname, True)
 
@@ -962,10 +973,10 @@ def render_travis(jinja_env, forge_config, forge_dir):
 
     extra_platform_files = {
         "linux": [
-            os.path.join(forge_dir, ".travis", "run_docker_build.sh"),
-            os.path.join(forge_dir, ".travis", "build_steps.sh"),
+            os.path.join(forge_dir, ".scripts", "run_docker_build.sh"),
+            os.path.join(forge_dir, ".scripts", "build_steps.sh"),
         ],
-        "osx": [os.path.join(forge_dir, ".travis", "run_osx_build.sh")],
+        "osx": [os.path.join(forge_dir, ".scripts", "run_osx_build.sh")],
     }
 
     return _render_ci_provider(
@@ -1030,18 +1041,7 @@ def render_appveyor(jinja_env, forge_config, forge_dir):
 
 
 def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
-    platform_templates = {
-        "linux": [
-            "azure-pipelines-linux.yml.tmpl",
-            "run_docker_build.sh.tmpl",
-            "build_steps.sh.tmpl",
-        ],
-        "osx": ["azure-pipelines-osx.yml.tmpl"],
-        "win": ["azure-pipelines-win.yml.tmpl"],
-    }
-    template_files = platform_templates.get(platform, [])
 
-    # Explicitly add in a newline character to ensure that jinja templating doesn't do something stupid
     build_setup = _get_build_setup_line(forge_dir, platform, forge_config)
 
     if platform == "linux":
@@ -1051,11 +1051,22 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
 
     forge_config["build_setup"] = build_setup
 
+    platform_templates = {
+        "linux": [
+            ".scripts/run_docker_build.sh",
+            ".scripts/build_steps.sh",
+            ".azure-pipelines/azure-pipelines-linux.yml",
+        ],
+        "osx": [".azure-pipelines/azure-pipelines-osx.yml"],
+        "win": [".azure-pipelines/azure-pipelines-win.yml"],
+    }
+    template_files = platform_templates.get(platform, [])
+
     _render_template_exe_files(
         forge_config=forge_config,
-        target_dir=os.path.join(forge_dir, ".azure-pipelines"),
         jinja_env=jinja_env,
         template_files=template_files,
+        forge_dir=forge_dir,
     )
 
 
@@ -1064,7 +1075,6 @@ def render_azure(jinja_env, forge_config, forge_dir):
     template_filename = "azure-pipelines.yml.tmpl"
     fast_finish_text = ""
 
-    # TODO: for now just get this ignoring other pieces
     platforms, archs, keep_noarchs, upload_packages = _get_platforms_of_provider(
         "azure", forge_config
     )
@@ -1087,14 +1097,13 @@ def render_azure(jinja_env, forge_config, forge_dir):
 
 def _drone_specific_setup(jinja_env, forge_config, forge_dir, platform):
     platform_templates = {
-        "linux": ["build_steps.sh.tmpl"],
+        "linux": [".scripts/build_steps.sh"],
         "osx": [],
         "win": [],
     }
     template_files = platform_templates.get(platform, [])
 
-    # Explicitly add in a newline character to ensure that jinja templating doesn't do something stupid
-    build_setup = "run_conda_forge_build_setup\n"
+    build_setup = _get_build_setup_line(forge_dir, platform, forge_config)
 
     if platform == "linux":
         yum_build_setup = generate_yum_requirements(forge_dir)
@@ -1105,9 +1114,9 @@ def _drone_specific_setup(jinja_env, forge_config, forge_dir, platform):
 
     _render_template_exe_files(
         forge_config=forge_config,
-        target_dir=os.path.join(forge_dir, ".drone"),
         jinja_env=jinja_env,
         template_files=template_files,
+        forge_dir=forge_dir,
     )
 
 
@@ -1116,7 +1125,6 @@ def render_drone(jinja_env, forge_config, forge_dir):
     template_filename = "drone.yml.tmpl"
     fast_finish_text = ""
 
-    # TODO: for now just get this ignoring other pieces
     platforms, archs, keep_noarchs, upload_packages = _get_platforms_of_provider(
         "drone", forge_config
     )
@@ -1303,6 +1311,7 @@ def _load_forge_config(forge_dir, exclusive_config_file):
         os.path.join(".github", "ISSUE_TEMPLATE.md"),
         os.path.join(".github", "PULL_REQUEST_TEMPLATE.md"),
     ]
+
     for old_file in old_files:
         remove_file_or_dir(os.path.join(forge_dir, old_file))
 
@@ -1361,7 +1370,6 @@ def _load_forge_config(forge_dir, exclusive_config_file):
     for platform in config["provider"]:
         if config["provider"][platform] in {"default", "emulated"}:
             config["provider"][platform] = "azure"
-
     # Set the environment variable for the compiler stack
     os.environ["CF_COMPILER_STACK"] = config["compiler_stack"]
     # Set valid ranger for the supported platforms
@@ -1473,6 +1481,17 @@ def clear_variants(forge_dir):
             remove_file(config)
 
 
+def get_common_scripts(forge_dir):
+    for old_file in ["run_docker_build.sh", "build_steps.sh"]:
+        yield os.path.join(forge_dir, ".scripts", old_file)
+
+
+def clear_scripts(forge_dir):
+    for folder in [".azure-pipelines", ".circleci", ".drone", ".travis"]:
+        for old_file in ["run_docker_build.sh", "build_steps.sh"]:
+            remove_file(os.path.join(forge_dir, folder, old_file))
+
+
 def main(
     forge_file_directory,
     no_check_uptodate=False,
@@ -1540,6 +1559,7 @@ def main(
     if os.path.exists(os.path.join(forge_dir, "build-locally.py")):
         set_exe_file(os.path.join(forge_dir, "build-locally.py"))
     clear_variants(forge_dir)
+    clear_scripts(forge_dir)
 
     render_circle(env, config, forge_dir)
     render_travis(env, config, forge_dir)
