@@ -367,7 +367,7 @@ def finalize_config(config, platform, forge_config):
     """
     if platform.startswith("linux"):
         if "docker_image" in config:
-            config["docker_image"] = config["docker_image"][0]
+            config["docker_image"] = [config["docker_image"][0]]
         else:
             config["docker_image"] = [forge_config["docker"]["fallback_image"]]
     return config

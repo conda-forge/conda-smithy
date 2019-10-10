@@ -15,7 +15,7 @@ jobs:
       {{ config_name }}:
         CONFIG: {{ config_name }}
         UPLOAD_PACKAGES: {{ upload }}
-        DOCKER_IMAGE: {{ config["docker_image"] }}
+        DOCKER_IMAGE: {{ config["docker_image"][0] }}
     {%- endif %}
     {%- endfor %}
   steps:
