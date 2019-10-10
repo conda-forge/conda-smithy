@@ -10,7 +10,7 @@ platform:
 
 steps:
 - name: Install and build
-  image: {{ config["docker_image"][-1] }}
+  image: {{ config["docker_image"][0] }}
   environment:
     CONFIG: {{ config_name }}
     UPLOAD_PACKAGES: {{ upload }}
