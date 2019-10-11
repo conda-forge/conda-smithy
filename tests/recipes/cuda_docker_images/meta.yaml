@@ -1,5 +1,5 @@
 package:
-  name: test_multiple_docker_images
+  name: test_cuda_docker_images
   version: 1.0
 
 build:

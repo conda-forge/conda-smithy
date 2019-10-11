@@ -81,14 +81,14 @@ def test_init_multiple_output_matrix(testing_workdir):
     assert "zlib" not in config
 
 
-def test_init_multiple_docker_images(testing_workdir):
+def test_init_cuda_docker_images(testing_workdir):
     parser = argparse.ArgumentParser()
     subparser = parser.add_subparsers()
     init_obj = cli.Init(subparser)
     regen_obj = cli.Regenerate(subparser)
-    recipe = os.path.join(_thisdir, "recipes", "multiple_docker_images")
+    recipe = os.path.join(_thisdir, "recipes", "cuda_docker_images")
     feedstock_dir = os.path.join(
-        testing_workdir, "multiple_docker_images-feedstock"
+        testing_workdir, "cuda_docker_images-feedstock"
     )
     args = InitArgs(recipe_directory=recipe, feedstock_directory=feedstock_dir)
     init_obj(args)
