@@ -123,6 +123,41 @@ def test_init_cuda_docker_images(testing_workdir):
         assert config["docker_image"] == [docker_image]
 
 
+def test_init_multiple_docker_images(testing_workdir):
+    parser = argparse.ArgumentParser()
+    subparser = parser.add_subparsers()
+    init_obj = cli.Init(subparser)
+    regen_obj = cli.Regenerate(subparser)
+    recipe = os.path.join(_thisdir, "recipes", "multiple_docker_images")
+    feedstock_dir = os.path.join(
+        testing_workdir, "multiple_docker_images-feedstock"
+    )
+    args = InitArgs(recipe_directory=recipe, feedstock_directory=feedstock_dir)
+    init_obj(args)
+    # Ignore conda-forge-pinning for this test, as the test relies on
+    # conda-forge-pinning not being present
+    args = RegenerateArgs(
+        feedstock_directory=feedstock_dir,
+        commit=False,
+        no_check_uptodate=True,
+        exclusive_config_file="recipe/conda_build_config.yaml",
+        check=False,
+    )
+    regen_obj(args)
+    matrix_dir = os.path.join(feedstock_dir, ".ci_support")
+    # the matrix should be consolidated among all outputs, as well as the
+    # top-level reqs. Only the top-level reqs should have indedependent config
+    # files, though - loops within outputs are contained in those top-level
+    # configs.
+    matrix_dir_len = len(os.listdir(matrix_dir))
+    assert matrix_dir_len == 2
+    fn = os.path.join(matrix_dir, "linux_.yaml")
+    assert os.path.isfile(fn)
+    with open(fn) as fh:
+        config = yaml.load(fh)
+    assert config["docker_image"] == ["pickme_a"]
+
+
 def test_regenerate(py_recipe, testing_workdir):
     parser = argparse.ArgumentParser()
     subparser = parser.add_subparsers()
