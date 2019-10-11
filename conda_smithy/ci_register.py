@@ -1,11 +1,8 @@
 #!/usr/bin/env python
-from __future__ import print_function
 import os
 import requests
 import time
 import sys
-
-import ruamel.yaml
 
 from . import github
 from .utils import update_conda_forge_config
@@ -39,6 +36,17 @@ except (IOError, ValueError):
     )
 
 try:
+    with open(os.path.expanduser("~/.conda-smithy/drone.token"), "r") as fh:
+        drone_token = fh.read().strip()
+    if not drone_token:
+        raise ValueError()
+except (IOError, ValueError):
+    print(
+        "No drone token. Create a token at https://cloud.drone.io/account and\n"
+        "Put one in ~/.conda-smithy/drone.token"
+    )
+
+try:
     anaconda_token = os.environ["BINSTAR_TOKEN"]
 except KeyError:
     try:
@@ -56,6 +64,23 @@ except KeyError:
         )
 
 travis_endpoint = "https://api.travis-ci.org"
+drone_endpoint = "https://cloud.drone.io"
+
+
+class LiveServerSession(requests.Session):
+    """Utility class to avoid typing out urls all the time"""
+
+    def __init__(self, prefix_url=None, *args, **kwargs):
+        super(LiveServerSession, self).__init__(*args, **kwargs)
+        self.prefix_url = prefix_url
+
+    def request(self, method, url, *args, **kwargs):
+        from urllib.parse import urljoin
+
+        url = urljoin(self.prefix_url, url)
+        return super(LiveServerSession, self).request(
+            method, url, *args, **kwargs
+        )
 
 
 def travis_headers():
@@ -103,6 +128,55 @@ def add_token_to_circle(user, project):
     response = requests.post(url, data)
     if response.status_code != 201:
         raise ValueError(response)
+
+
+def drone_session():
+    s = LiveServerSession(prefix_url=drone_endpoint)
+    s.headers.update({"Authorization": f"Bearer {drone_token}"})
+    return s
+
+
+def add_token_to_drone(user, project):
+    session = drone_session()
+    response = session.post(
+        f"/api/repos/{user}/{project}/secrets",
+        json={
+            "name": "BINSTAR_TOKEN",
+            "data": anaconda_token,
+            "pull_request": False,
+        },
+    )
+    if response.status_code != 200:
+        # Check that the token is in secrets already
+        session = drone_session()
+        response2 = session.get(f"/api/repos/{user}/{project}/secrets")
+        response2.raise_for_status()
+        for secret in response2.json():
+            if "BINSTAR_TOKEN" == secret["name"]:
+                return
+    response.raise_for_status()
+
+
+def drone_sync():
+    session = drone_session()
+    response = session.post("/api/user/repos?async=true")
+    response.raise_for_status()
+
+
+def add_project_to_drone(user, project):
+    session = drone_session()
+    response = session.post(f"/api/repos/{user}/{project}")
+    if response.status_code != 200:
+        # Check that the project is registered already
+        session = drone_session()
+        response = session.get(f"/api/repos/{user}/{project}")
+        response.raise_for_status()
+
+
+def regenerate_drone_webhooks(user, project):
+    session = drone_session()
+    response = session.post(f"/api/repos/{user}/{project}/repair")
+    response.raise_for_status()
 
 
 def add_project_to_circle(user, project):
@@ -208,6 +282,8 @@ def appveyor_configure(user, project):
     """Configure appveyor so that it skips building if there is no appveyor.yml present."""
     headers = {"Authorization": "Bearer {}".format(appveyor_token)}
     # I have reasons to believe this is all AppVeyor is doing to the API URL.
+    if project.startswith("_"):
+        project = project[1:]
     project = project.replace("_", "-").replace(".", "-")
     url = "https://ci.appveyor.com/api/projects/{}/{}/settings".format(
         user, project
@@ -218,9 +294,9 @@ def appveyor_configure(user, project):
     content = response.json()
     settings = content["settings"]
     for required_setting in (
-        u"skipBranchesWithoutAppveyorYml",
-        u"rollingBuildsOnlyForPullRequests",
-        u"rollingBuilds",
+        "skipBranchesWithoutAppveyorYml",
+        "rollingBuildsOnlyForPullRequests",
+        "rollingBuilds",
     ):
         if not settings[required_setting]:
             print(

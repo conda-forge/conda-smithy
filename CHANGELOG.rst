@@ -4,6 +4,176 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.6.0
+====================
+
+**Added:**
+
+* Ignore Drone CI files in GitHub diffs
+* Run ``black --check`` on CI to verify code is formatted correctly
+
+**Changed:**
+
+* Platform independent files like `run_docker_build.sh` are moved to `.scripts` folder
+* Standardize and test support for multiple docker images.
+* refactored ``conda_smithy.lint_recipe.NEEDED_FAMILIES`` to top level so external projects can access
+* Rerun ``black`` on the codebase.
+
+**Fixed:**
+
+* fix crash when host section was present but empty
+* fix build-locally.py in skip_render by not attempting to chmod +x it
+* ship conf file for black so everyone uses the same settings
+
+
+
+v3.5.0
+====================
+
+**Added:**
+
+* conda-smithy will remove the ``.github/CODEOWNERS`` file in case the recipe
+  maintainers list is empty
+
+**Changed:**
+
+* Default windows provider was changed to azure.
+
+
+
+v3.4.8
+====================
+
+**Fixed:**
+
+* Don't make assumptions in ``conda_smithy/variant_algebra.py`` about the metadata
+
+
+
+v3.4.7
+====================
+
+**Added:**
+
+* Added a method to sync user in drone
+
+**Changed:**
+
+* Check that a project is registered if registering fails on drone
+* Check that a project has the secret if adding secret fails on drone
+
+
+
+v3.4.6
+====================
+
+**Added:**
+
+* conda-smithy can now register packages on drone.io.  We plan on using this to help out with the aarch64
+  architecture builds.
+
+**Changed:**
+
+* drone.io is now the default platform for aarch64 builds
+* migrations folder changed from <feedstock_root>/migrations to <feedstock_root>/.ci_support/migrations
+
+**Fixed:**
+
+* Fix render_README crash when azure api returns 404
+
+
+
+v3.4.5
+====================
+
+**Fixed:**
+
+* YAML ``dump()`` now used ``pathlib.Path`` object.
+
+
+
+v3.4.4
+====================
+
+**Fixed:**
+
+* Updated conda-smithy to work with ruamel.yaml v0.16+.
+
+
+
+v3.4.3
+====================
+
+**Changed:**
+
+* In linting pins allow more than one space
+
+**Fixed:**
+
+* Don't lint setting build number
+
+
+
+v3.4.2
+====================
+
+**Added:**
+
+* Generating feedstocks with support for the linux-armv7l platform.
+* test of the downgrade functionality of the new pinning system
+* Mark generated files as generated so that github collapses them by deafult in diffs.
+* The linter will now recomend fixes for malformed pins,
+  suggesting a single space is inserted. For instance, both ``python>=3`` and
+  ``python >= 3`` will ought to be ``python >=3``.
+* New key ``upload_on_branch`` added to conda-forge.yml the value of which is checked
+  against the current git branch and upload will be skipped if they are not equal.
+  This is optional and an empty key skips the test.
+* Added `CONDA_SMITHY_LOGLEVEL` environment variable to change verbosity
+  of rendering. This can be either `debug` or `info`.
+
+**Changed:**
+
+* Add skip_render option to conda-forge.yaml. One could specify one or more filenames telling conda-smithy to skip making change on them. Files that could skip rendering include .gitignore, .gitattributes, README.md and LICENCE.txt.
+* Reduced verbosity of rendering
+
+**Fixed:**
+
+* recipe-lint compatibility with ruamel.yaml 0.16
+* Mock PY_VER in recipe check
+* Fixed badge rendering in readme template.
+* yum_requirements will now work on Travis based linux builds.
+* requirements: update to conda-build>=3.18.3
+* fix non-public conda import, use conda.exports
+* requirements: replace pycrypto with pycryptodome
+
+
+
+v3.4.1
+====================
+
+**Added:**
+
+* license_file is required for GPL, MIT, BSD, APACHE, PSF
+
+**Changed:**
+
+* ``build-locally.py`` now uses ``python3`` even if ``python`` is ``python2`` (Python 3.6+ was already required)
+
+**Removed:**
+
+* Github issue, PR and contributing files are removed as they are in https://github.com/conda-forge/.github
+* Support for python 2 Removed
+
+**Fixed:**
+
+* Fix configuring appveyor on repos starting with an underscore
+* Fixed an issue where conda system variants could be used after rendering migrations.
+* Fixed issue where only the last maintainer is review requested
+* Unlicense is allowed
+* Support newer ``shyaml`` versions by checking whether ``shyaml -h`` succeeds.
+
+
+
 v3.4.0
 ====================
 

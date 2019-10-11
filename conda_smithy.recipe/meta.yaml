@@ -21,10 +21,10 @@ requirements:
   run:
     - python >=3.6
     - conda >=4.2
-    - conda-build >=3.1.2
+    - conda-build >=3.18.3
     - jinja2
     - requests
-    - pycrypto
+    - pycryptodome
     - gitpython
     - pygithub <2
     - ruamel.yaml
