@@ -4,6 +4,29 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.6.0
+====================
+
+**Added:**
+
+* Ignore Drone CI files in GitHub diffs
+* Run ``black --check`` on CI to verify code is formatted correctly
+
+**Changed:**
+
+* Platform independent files like `run_docker_build.sh` are moved to `.scripts` folder
+* Standardize and test support for multiple docker images.
+* refactored ``conda_smithy.lint_recipe.NEEDED_FAMILIES`` to top level so external projects can access
+* Rerun ``black`` on the codebase.
+
+**Fixed:**
+
+* fix crash when host section was present but empty
+* fix build-locally.py in skip_render by not attempting to chmod +x it
+* ship conf file for black so everyone uses the same settings
+
+
+
 v3.5.0
 ====================
 
