@@ -1,0 +1,24 @@
+package:
+  name: test_multiple_docker_images
+  version: 1.0
+
+build:
+  number: 0
+  skip: true  # [not linux64]
+
+requirements:
+  build:
+    - {{ compiler("cuda") }}  # [cuda_compiler_version != "None"]
+
+test:
+  commands:
+    - echo 'works'
+
+about:
+  home: home
+  summary: summary
+  license: Creative Commons
+
+extra:
+  recipe-maintainers:
+    - gopher

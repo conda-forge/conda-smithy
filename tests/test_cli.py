@@ -81,6 +81,48 @@ def test_init_multiple_output_matrix(testing_workdir):
     assert "zlib" not in config
 
 
+def test_init_multiple_docker_images(testing_workdir):
+    parser = argparse.ArgumentParser()
+    subparser = parser.add_subparsers()
+    init_obj = cli.Init(subparser)
+    regen_obj = cli.Regenerate(subparser)
+    recipe = os.path.join(_thisdir, "recipes", "multiple_docker_images")
+    feedstock_dir = os.path.join(
+        testing_workdir, "multiple_docker_images-feedstock"
+    )
+    args = InitArgs(recipe_directory=recipe, feedstock_directory=feedstock_dir)
+    init_obj(args)
+    # Ignore conda-forge-pinning for this test, as the test relies on
+    # conda-forge-pinning not being present
+    args = RegenerateArgs(
+        feedstock_directory=feedstock_dir,
+        commit=False,
+        no_check_uptodate=True,
+        exclusive_config_file="recipe/conda_build_config.yaml",
+        check=False,
+    )
+    regen_obj(args)
+    matrix_dir = os.path.join(feedstock_dir, ".ci_support")
+    # the matrix should be consolidated among all outputs, as well as the
+    # top-level reqs. Only the top-level reqs should have indedependent config
+    # files, though - loops within outputs are contained in those top-level
+    # configs.
+    matrix_dir_len = len(os.listdir(matrix_dir))
+    assert matrix_dir_len == 5
+    for v in [None, "9.2", "10.0", "10.1"]:
+        fn = os.path.join(matrix_dir, f"linux_cuda_compiler_version{v}.yaml")
+        assert os.path.isfile(fn)
+        with open(fn) as fh:
+            config = yaml.load(fh)
+        assert config["cuda_compiler"] == ["nvcc"]
+        assert config["cuda_compiler_version"] == [f"{v}"]
+        if v is None:
+            docker_image = "condaforge/linux-anvil-comp7"
+        else:
+            docker_image = f"condaforge/linux-anvil-cuda:{v}"
+        assert config["docker_image"] == [docker_image]
+
+
 def test_regenerate(py_recipe, testing_workdir):
     parser = argparse.ArgumentParser()
     subparser = parser.add_subparsers()
