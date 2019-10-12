@@ -1400,9 +1400,9 @@ def check_version_uptodate(resolve, name, installed_version, error_on_warn):
     available_versions = sorted(available_versions, key=VersionOrder)
     most_recent_version = available_versions[-1]
     if installed_version is None:
-        msg = "{} is not installed in root env.".format(name)
+        msg = "{} is not installed in conda-smithy's environment.".format(name)
     elif VersionOrder(installed_version) < VersionOrder(most_recent_version):
-        msg = "{} version in root env ({}) is out-of-date ({}).".format(
+        msg = "{} version ({}) is out-of-date ({}) in conda-smithy's environment.".format(
             name, installed_version, most_recent_version
         )
     else:
