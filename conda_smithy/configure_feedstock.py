@@ -3,6 +3,7 @@ from itertools import product, chain
 import logging
 import os
 import subprocess
+import sys
 import textwrap
 import yaml
 import warnings
@@ -1563,6 +1564,7 @@ def main(
 
     loglevel = os.environ.get("CONDA_SMITHY_LOGLEVEL", "INFO").upper()
     logger.setLevel(loglevel)
+    logger.addHandler(logging.StreamHandler(sys.stdout))
 
     if check:
         index = conda_build.conda_interface.get_index(
