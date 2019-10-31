@@ -528,8 +528,22 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
                 )
 
     # 3: suggest fixing all recipe/*.sh shellcheck findings
-    shell_scripts = glob(os.path.join(recipe_dir, "*.sh")) if recipe_dir else None
-    if shutil.which("shellcheck") is not None and shell_scripts:
+    shellcheck_enabled = False
+    shell_scripts = []
+    if recipe_dir:
+        shell_scripts = glob(os.path.join(recipe_dir, "*.sh"))
+        # support feedstocks and staged-recipes
+        forge_yaml = glob(
+            os.path.join(recipe_dir, "..", "conda-forge.yml")
+        ) or glob(os.path.join(recipe_dir, "..", "..", "conda-forge.yml"),)
+        if shell_scripts and forge_yaml:
+            with open(forge_yaml[0], "r") as fh:
+                code = yaml.load(fh)
+                shellcheck_enabled = code.get("shellcheck", {}).get(
+                    "enabled", shellcheck_enabled
+                )
+
+    if shellcheck_enabled and shutil.which("shellcheck") and shell_scripts:
         MAX_SHELLCHECK_LINES = 50
         cmd = [
             "shellcheck",
