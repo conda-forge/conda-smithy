@@ -19,7 +19,7 @@ steps:
       from_secret: BINSTAR_TOKEN
   {%- if 'linux' in platform %}
   commands:
-    - export FEEDSTOCK_ROOT="$CI_WORKSPACE"
+    - export FEEDSTOCK_ROOT="${CI_WORKSPACE:-$(pwd)}"
     - export RECIPE_ROOT="$FEEDSTOCK_ROOT/recipe"
     - export CI=drone
     - export GIT_BRANCH="$DRONE_BRANCH"
