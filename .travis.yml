@@ -16,7 +16,7 @@ install:
     - "[ ! -f ${HOME}/cache/miniconda.sh ] && wget https://repo.continuum.io/miniconda/Miniconda${PYTHON}-latest-Linux-x86_64.sh -O ${HOME}/cache/miniconda.sh || :"
     - bash ${HOME}/cache/miniconda.sh -b -p ${CONDA_INSTALL_LOCN}
     - source ${CONDA_INSTALL_LOCN}/bin/activate base
-    - conda install -n base conda
+    - conda install --yes -n base conda
 
     # Re-use the packages in the cache, and download any new ones into that location.
     - rm -rf ${CONDA_INSTALL_LOCN}/pkgs && ln -s ${HOME}/cache/pkgs ${CONDA_INSTALL_LOCN}/pkgs
