@@ -92,7 +92,7 @@ def get_service_endpoint(config: AzureConfig = default_config):
 
 
 def get_queues(
-    config: AzureConfig = default_config
+    config: AzureConfig = default_config,
 ) -> typing.List[TaskAgentQueue]:
     aclient = TaskAgentClient(config.instance_base_url, config.credentials)
     return aclient.get_agent_queues(config.project_name)

@@ -543,7 +543,10 @@ def _render_ci_provider(
         )
 
         # Get the combined variants from normal variant locations prior to running migrations
-        combined_variant_spec, _ = conda_build.variants.get_package_combined_spec(
+        (
+            combined_variant_spec,
+            _,
+        ) = conda_build.variants.get_package_combined_spec(
             os.path.join(forge_dir, "recipe"), config=config
         )
 
@@ -885,9 +888,12 @@ def render_circle(jinja_env, forge_config, forge_dir):
         "osx": [os.path.join(forge_dir, ".circleci", "run_osx_build.sh")],
     }
 
-    platforms, archs, keep_noarchs, upload_packages = _get_platforms_of_provider(
-        "circle", forge_config
-    )
+    (
+        platforms,
+        archs,
+        keep_noarchs,
+        upload_packages,
+    ) = _get_platforms_of_provider("circle", forge_config)
 
     return _render_ci_provider(
         "circle",
@@ -970,9 +976,12 @@ def render_travis(jinja_env, forge_config, forge_dir):
     """
     )
 
-    platforms, archs, keep_noarchs, upload_packages = _get_platforms_of_provider(
-        "travis", forge_config
-    )
+    (
+        platforms,
+        archs,
+        keep_noarchs,
+        upload_packages,
+    ) = _get_platforms_of_provider("travis", forge_config)
 
     extra_platform_files = {
         "linux": [
@@ -1023,9 +1032,12 @@ def render_appveyor(jinja_env, forge_config, forge_dir):
     )
     template_filename = "appveyor.yml.tmpl"
 
-    platforms, archs, keep_noarchs, upload_packages = _get_platforms_of_provider(
-        "appveyor", forge_config
-    )
+    (
+        platforms,
+        archs,
+        keep_noarchs,
+        upload_packages,
+    ) = _get_platforms_of_provider("appveyor", forge_config)
 
     return _render_ci_provider(
         "appveyor",
@@ -1078,9 +1090,12 @@ def render_azure(jinja_env, forge_config, forge_dir):
     template_filename = "azure-pipelines.yml.tmpl"
     fast_finish_text = ""
 
-    platforms, archs, keep_noarchs, upload_packages = _get_platforms_of_provider(
-        "azure", forge_config
-    )
+    (
+        platforms,
+        archs,
+        keep_noarchs,
+        upload_packages,
+    ) = _get_platforms_of_provider("azure", forge_config)
 
     return _render_ci_provider(
         "azure",
@@ -1128,9 +1143,12 @@ def render_drone(jinja_env, forge_config, forge_dir):
     template_filename = "drone.yml.tmpl"
     fast_finish_text = ""
 
-    platforms, archs, keep_noarchs, upload_packages = _get_platforms_of_provider(
-        "drone", forge_config
-    )
+    (
+        platforms,
+        archs,
+        keep_noarchs,
+        upload_packages,
+    ) = _get_platforms_of_provider("drone", forge_config)
 
     return _render_ci_provider(
         "drone",
