@@ -4,8 +4,8 @@
 # -*- mode: jinja -*-
 #}
 {%- set platformset = [] %}
-{%- for _, platform, _, _ in configs %}
-  {%- set pfarchless = platform.split('-')[0] %}
+{%- for data in configs %}
+  {%- set pfarchless = data.platform.split('-')[0] %}
   {%- if pfarchless not in platformset %}
     {%- do platformset.append(pfarchless) %}
   {%- endif %}
@@ -24,16 +24,16 @@ env:
 {% if configs[0] -%}
 matrix:
   include:
-    {%- for config_name, platform, upload, config in configs | sort %}
-    {%- if platform.startswith("osx") %}
-    - env: CONFIG={{ config_name }} UPLOAD_PACKAGES={{ upload }} PLATFORM={{ platform }}
+    {%- for data in configs %}
+    {%- if data.platform.startswith("osx") %}
+    - env: CONFIG={{ data.config_name }} UPLOAD_PACKAGES={{ data.upload }} PLATFORM={{ data.platform }}
       os: osx
       osx_image: {{ travis.get('osx_image', 'xcode9.4') }}
-    {%- elif platform.startswith("linux-ppc64le") %}
-    - env: CONFIG={{ config_name }} UPLOAD_PACKAGES={{ upload }} PLATFORM={{ platform }} DOCKER_IMAGE={{ config["docker_image"][-1] }}
+    {%- elif data.platform.startswith("linux-ppc64le") %}
+    - env: CONFIG={{ data.config_name }} UPLOAD_PACKAGES={{ data.upload }} PLATFORM={{ data.platform }} DOCKER_IMAGE={{ data.config["docker_image"][-1] }}
       os: linux-ppc64le
-    {%- elif platform.startswith("linux-64") %}
-    - env: CONFIG={{ config_name }} UPLOAD_PACKAGES={{ upload }} PLATFORM={{ platform }} DOCKER_IMAGE={{ config["docker_image"][-1] }}
+    {%- elif data.platform.startswith("linux-64") %}
+    - env: CONFIG={{ data.config_name }} UPLOAD_PACKAGES={{ data.upload }} PLATFORM={{ data.platform }} DOCKER_IMAGE={{ data.config["docker_image"][-1] }}
       os: linux
     {%- endif %}
 {% endfor %}

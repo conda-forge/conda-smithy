@@ -1,8 +1,8 @@
 {% if configs[0] -%}
-{%- for config_name, platform, upload, config in configs | sort -%}
+{%- for data in configs -%}
 ---
 kind: pipeline
-name: {{ config_name }}
+name: {{ data.short_config_name }}
 
 platform:
   os: linux
@@ -10,14 +10,14 @@ platform:
 
 steps:
 - name: Install and build
-  image: {{ config["docker_image"][-1] }}
+  image: {{ data.config["docker_image"][-1] }}
   environment:
-    CONFIG: {{ config_name }}
-    UPLOAD_PACKAGES: {{ upload }}
-    PLATFORM: {{ platform }}
+    CONFIG: {{ data.config_name }}
+    UPLOAD_PACKAGES: {{ data.upload }}
+    PLATFORM: {{ data.platform }}
     BINSTAR_TOKEN: 
       from_secret: BINSTAR_TOKEN
-  {%- if 'linux' in platform %}
+  {%- if 'linux' in data.platform %}
   commands:
     - export FEEDSTOCK_ROOT="$DRONE_WORKSPACE"
     - export RECIPE_ROOT="$FEEDSTOCK_ROOT/recipe"
