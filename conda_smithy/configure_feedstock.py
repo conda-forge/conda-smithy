@@ -427,13 +427,15 @@ def dump_subspace_config_files(
             yaml.dump(config, f, default_flow_style=False)
 
         target_platform = config.get("target_platform", [platform_arch])[0]
-        result.append({
-            "config_name": config_name,
-            "platform": target_platform,
-            "upload": upload,
-            "config": config,
-            "short_config_name": short_config_name,
-        })
+        result.append(
+            {
+                "config_name": config_name,
+                "platform": target_platform,
+                "upload": upload,
+                "config": config,
+                "short_config_name": short_config_name,
+            }
+        )
     return sorted(result, key=lambda x: x["config_name"])
 
 
