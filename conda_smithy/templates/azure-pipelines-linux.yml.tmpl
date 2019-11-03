@@ -10,12 +10,12 @@ jobs:
   strategy:
     maxParallel: 8
     matrix:
-    {%- for config_name, platform, upload, config in configs | sort %}
-    {%- if platform.startswith('linux') %}
-      {{ config_name }}:
-        CONFIG: {{ config_name }}
-        UPLOAD_PACKAGES: {{ upload }}
-        DOCKER_IMAGE: {{ config["docker_image"][-1] }}
+    {%- for data in configs %}
+    {%- if data.platform.startswith('linux') %}
+      {{ data.config_name }}:
+        CONFIG: {{ data.config_name }}
+        UPLOAD_PACKAGES: {{ data.upload }}
+        DOCKER_IMAGE: {{ data.config["docker_image"][-1] }}
     {%- endif %}
     {%- endfor %}
   steps:

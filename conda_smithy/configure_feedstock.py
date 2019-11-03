@@ -8,6 +8,7 @@ import yaml
 import warnings
 from collections import OrderedDict
 import copy
+import hashlib
 
 import conda_build.api
 import conda_build.utils
@@ -417,12 +418,23 @@ def dump_subspace_config_files(
 
         config = finalize_config(config, platform, forge_config)
 
+        short_config_name = config_name
+        if len(short_config_name) >= 49:
+            h = hashlib.sha256(config_name.encode("utf-8")).hexdigest()[:10]
+            short_config_name = config_name[:35] + "_h" + h
+
         with write_file(out_path) as f:
             yaml.dump(config, f, default_flow_style=False)
 
         target_platform = config.get("target_platform", [platform_arch])[0]
-        result.append((config_name, target_platform, upload, config))
-    return sorted(result)
+        result.append({
+            "config_name": config_name,
+            "platform": target_platform,
+            "upload": upload,
+            "config": config,
+            "short_config_name": short_config_name,
+        })
+    return sorted(result, key=lambda x: x["config_name"])
 
 
 def _get_fast_finish_script(
