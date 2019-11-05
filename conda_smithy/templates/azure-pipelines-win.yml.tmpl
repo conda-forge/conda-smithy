@@ -83,6 +83,12 @@ jobs:
       continueOnError: true
       displayName: remove strawberryperl
 
+    - script: |
+        conda.exe render recipe -m .ci_support\%CONFIG%.yaml
+      displayName: Render recipe
+      env:
+        PYTHONUNBUFFERED: 1
+
     # Special cased version setting some more things!
     - script: |
         conda.exe build recipe -m .ci_support\%CONFIG%.yaml
