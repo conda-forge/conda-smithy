@@ -453,8 +453,16 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
     host_reqs = requirements_section.get("host", [])
     run_reqs = requirements_section.get("run", [])
     if build_section.get("noarch") is None:
-        filtered_host_reqs = [req for req in host_reqs if req == "python" or req.startswith("python ")]
-        filtered_run_reqs = [req for req in run_reqs if req == "python" or req.startswith("python ")]
+        filtered_host_reqs = [
+            req
+            for req in host_reqs
+            if req == "python" or req.startswith("python ")
+        ]
+        filtered_run_reqs = [
+            req
+            for req in run_reqs
+            if req == "python" or req.startswith("python ")
+        ]
         if filtered_host_reqs and not filtered_run_reqs:
             lints.append(
                 "If python is a host requirement, it should be a run requirement."
