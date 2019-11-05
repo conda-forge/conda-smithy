@@ -656,6 +656,9 @@ def _render_ci_provider(
         forge_config[provider_name]["platforms"] = ",".join(fancy_platforms)
         forge_config[provider_name]["all_platforms"] = list(unfancy_platforms)
 
+        # Copy the config now. Changes below shouldn't persist across CI.
+        forge_config = deepcopy(forge_config)
+
         forge_config["configs"] = configs
 
         forge_config["fast_finish"] = _get_fast_finish_script(
@@ -697,7 +700,7 @@ def _render_ci_provider(
                 platform_specific_setup(
                     jinja_env=jinja_env,
                     forge_dir=forge_dir,
-                    forge_config=deepcopy(forge_config),
+                    forge_config=forge_config,
                     platform=platform,
                 )
 
