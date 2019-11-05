@@ -449,6 +449,26 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
                 )
                 continue
 
+    # 23: non noarch builds shouldn't use version constraints on python
+    host_reqs = requirements_section.get("host", [])
+    run_reqs = requirements_section.get("run", [])
+    if build_section.get("noarch") is None:
+        filtered_host_reqs = [req for req in host_reqs if req == "python" or req.startswith("python ")]
+        filtered_run_reqs = [req for req in run_reqs if req == "python" or req.startswith("python ")]
+        if filtered_host_reqs and not filtered_run_reqs:
+            lints.append(
+                "If python is a host requirement, it should be a run requirement."
+            )
+        for reqs in [filtered_host_reqs, filtered_run_reqs]:
+            if "python" in reqs:
+                continue
+            for req in reqs:
+                constraint = req.split(" ", 1)[1]
+                if constraint.startswith(">") or constraint.startswith("<"):
+                    lints.append(
+                        "Non noarch: python packages should have a python requirement without any version constraints."
+                    )
+
     # hints
     # 1: suggest pip
     if "script" in build_section:
