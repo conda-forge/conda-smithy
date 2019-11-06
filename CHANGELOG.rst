@@ -4,6 +4,20 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.6.2
+====================
+
+**Changed:**
+
+* Changed the pipeline names in drone to less than 50 characters
+* .scripts folder is also hidden in PR diffs
+
+**Fixed:**
+
+* Fixed a bug in configuring appveyor.yml
+
+
+
 v3.6.1
 ====================
 
