@@ -881,6 +881,28 @@ class Test_linter(unittest.TestCase):
         ]
         self.assertEqual(expected_messages, filtered_lints)
 
+    def test_python_requirements(self):
+        meta = {"requirements": {"host": ["python >=3"]}}
+        lints, hints = linter.lintify(meta)
+        self.assertIn(
+            "If python is a host requirement, it should be a run requirement.",
+            lints,
+        )
+
+        meta = {"requirements": {"host": ["python >=3", "python"]}}
+        lints, hints = linter.lintify(meta)
+        self.assertNotIn(
+            "Non noarch: python packages should have a python requirement without any version constraints.",
+            lints,
+        )
+
+        meta = {"requirements": {"host": ["python >=3"]}}
+        lints, hints = linter.lintify(meta)
+        self.assertIn(
+            "Non noarch: python packages should have a python requirement without any version constraints.",
+            lints,
+        )
+
 
 @pytest.mark.cli
 class TestCLI_recipe_lint(unittest.TestCase):
