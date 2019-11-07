@@ -558,6 +558,9 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
             cmd + shell_scripts,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
+            env={
+                "PATH": os.getenv("PATH")
+            },  # exclude other env variables to protect against token leakage
         )
         sc_stdout, _ = p.communicate()
 
