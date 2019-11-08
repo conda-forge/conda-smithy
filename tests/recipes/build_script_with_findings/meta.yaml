@@ -1,0 +1,27 @@
+package:
+  name: test_cb3_multiple_sources
+  version: 1.0
+
+source:
+  - url: https://storage.googleapis.com/golang/go{{ version }}.src.tar.gz
+    sha256: {{ sha256 }}
+
+build:
+  number: 0
+
+requirements:
+  host:
+    - toolchain
+
+test:
+  commands:
+    - echo 'works'
+
+about:
+  home: home
+  summary: summary
+  license: Creative Commons
+
+extra:
+  recipe-maintainers:
+    - gopher

@@ -5,10 +5,14 @@ from collections.abc import Sequence, Mapping
 str_type = str
 
 import copy
+from glob import glob
 import io
 import itertools
 import os
 import re
+import shutil
+import subprocess
+import sys
 
 import github
 
@@ -522,6 +526,67 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
                     "Whenever possible python packages should use noarch. "
                     "See https://conda-forge.org/docs/maintainer/knowledge_base.html#noarch-builds"
                 )
+
+    # 3: suggest fixing all recipe/*.sh shellcheck findings
+    shellcheck_enabled = False
+    shell_scripts = []
+    if recipe_dir:
+        shell_scripts = glob(os.path.join(recipe_dir, "*.sh"))
+        # support feedstocks and staged-recipes
+        forge_yaml = glob(
+            os.path.join(recipe_dir, "..", "conda-forge.yml")
+        ) or glob(os.path.join(recipe_dir, "..", "..", "conda-forge.yml"),)
+        if shell_scripts and forge_yaml:
+            with open(forge_yaml[0], "r") as fh:
+                code = yaml.load(fh)
+                shellcheck_enabled = code.get("shellcheck", {}).get(
+                    "enabled", shellcheck_enabled
+                )
+
+    if shellcheck_enabled and shutil.which("shellcheck") and shell_scripts:
+        MAX_SHELLCHECK_LINES = 50
+        cmd = [
+            "shellcheck",
+            "--enable=all",
+            "--shell=bash",
+            # SC2154: var is referenced but not assigned,
+            #         see https://github.com/koalaman/shellcheck/wiki/SC2154
+            "--exclude=SC2154",
+        ]
+
+        p = subprocess.Popen(
+            cmd + shell_scripts,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            env={
+                "PATH": os.getenv("PATH")
+            },  # exclude other env variables to protect against token leakage
+        )
+        sc_stdout, _ = p.communicate()
+
+        if p.returncode == 1:
+            # All files successfully scanned with some issues.
+            findings = (
+                sc_stdout.decode(sys.stdout.encoding)
+                .replace("\r\n", "\n")
+                .splitlines()
+            )
+            hints.append(
+                "Whenever possible fix all shellcheck findings ('"
+                + " ".join(cmd)
+                + " recipe/*.sh -f diff | git apply' helps)"
+            )
+            hints.extend(findings[:50])
+            if len(findings) > MAX_SHELLCHECK_LINES:
+                hints.append(
+                    "Output restricted, there are '%s' more lines."
+                    % (len(findings) - MAX_SHELLCHECK_LINES)
+                )
+        elif p.returncode != 0:
+            # Something went wrong.
+            hints.append(
+                "There have been errors while scanning with shellcheck."
+            )
 
     return lints, hints
 

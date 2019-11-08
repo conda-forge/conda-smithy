@@ -903,6 +903,14 @@ class Test_linter(unittest.TestCase):
             lints,
         )
 
+    def test_build_sh_with_shellcheck_findings(self):
+        lints, hints = linter.main(
+            os.path.join(_thisdir, "recipes", "build_script_with_findings"),
+            return_hints=True,
+        )
+        assert "Whenever possible fix all shellcheck findings" in hints[0]
+        assert len(hints) == (50 + 2)
+
 
 @pytest.mark.cli
 class TestCLI_recipe_lint(unittest.TestCase):
