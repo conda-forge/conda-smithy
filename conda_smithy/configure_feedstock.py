@@ -1562,6 +1562,10 @@ def main(
 
     forge_dir = os.path.abspath(forge_file_directory)
 
+    # Check we are in a feedstock
+    if not os.path.exists(os.path.join(forge_dir, "conda-forge.yml")):
+        raise RuntimeError(f"Could not find `conda-forge.yml` in {forge_dir}.")
+
     if exclusive_config_file is not None:
         exclusive_config_file = os.path.join(forge_dir, exclusive_config_file)
         if not os.path.exists(exclusive_config_file):
