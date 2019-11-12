@@ -1357,10 +1357,10 @@ def _load_forge_config(forge_dir, exclusive_config_file):
     if not os.path.exists(forge_yml):
         raise RuntimeError(
             f"Could not find `conda-forge.yml` in {forge_dir}."
-             " Either you are not rerendering inside the recipe instead of"
-             " inside the feedstock root (likely) or there's no `conda-forge.yml` in"
-             " the feedstock root (unlikely). Add an empty `conda-forge.yml` file in"
-             " feedstock root if it's the latter."
+            " Either you are not rerendering inside the recipe instead of"
+            " inside the feedstock root (likely) or there's no `conda-forge.yml` in"
+            " the feedstock root (unlikely). Add an empty `conda-forge.yml` file in"
+            " feedstock root if it's the latter."
         )
     else:
         with open(forge_yml, "r") as fh:
