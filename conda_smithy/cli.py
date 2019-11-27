@@ -212,14 +212,16 @@ class RegisterCI(Subcommand):
 
         print("CI Summary for {}/{} (can take ~30s):".format(owner, repo))
         if args.travis:
-            # travis-ci.com registration is automatic
+            # Assume that the user has enabled travis-ci.com service
+            # user-wide or org-wide for all repos
             # ci_register.add_project_to_travis(owner, repo)
             ci_register.travis_token_update_conda_forge_config(
                 args.feedstock_directory, owner, repo
             )
             time.sleep(1)
             ci_register.travis_configure(owner, repo)
-            # travis-ci.com registration is automatic
+            # Assume that the user has enabled travis-ci.com service
+            # user-wide or org-wide for all repos
             # ci_register.travis_cleanup(owner, repo)
         else:
             print("Travis registration disabled.")
