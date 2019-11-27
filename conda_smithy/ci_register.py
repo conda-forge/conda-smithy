@@ -63,7 +63,7 @@ except KeyError:
             "and put it in ~/.conda-smithy/anaconda.token"
         )
 
-travis_endpoint = "https://api.travis-ci.org"
+travis_endpoint = "https://api.travis-ci.com"
 drone_endpoint = "https://cloud.drone.io"
 
 
@@ -447,7 +447,7 @@ def travis_encrypt_binstar_token(repo, string_to_encrypt):
     from Crypto.Cipher import PKCS1_v1_5
     import base64
 
-    keyurl = "https://api.travis-ci.org/repo/{0}/key_pair/generated".format(
+    keyurl = "https://api.travis-ci.com/repo/{0}/key_pair/generated".format(
         repo
     )
     r = requests.get(keyurl, headers=travis_headers())
