@@ -4,6 +4,26 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.6.3
+====================
+
+**Added:**
+
+* Added a lint for common mistakes in python requirements
+* Use shellcheck to lint ``*.sh`` files and provide findings as hints. Can be
+  enabled via conda-forge.yaml (shellcheck: enabled: True), default (no entry)
+  is False.
+* Support aarch64 on travis-ci.com
+* Support ppc64le on travis-ci.com
+* Check that the current working directory is a feedstock before re-rendering.
+
+**Changed:**
+
+* Update travis feedstock registration to no longer generate anything for
+travis-ci.org.
+
+
+
 v3.6.2
 ====================
 
