@@ -7,7 +7,8 @@ Overview
 + Create a git repo with a conda recipe and the files to run conda builds via CI
   services.
 + Register the repo on github and push it.
-+ Connect the repo to the CI services travis-ci.com, appveyor.com, circleci.com
++ Connect the repo to the CI services travis-ci.com, appveyor.com, circleci.com, dev.azure.com
+  (For travis-ci.com, configure your org or user to enable the service for all repos)
 
 [![Build Status](https://travis-ci.com/conda-forge/conda-smithy.svg)](https://travis-ci.com/conda-forge/conda-smithy)
 [![Coverage Status](https://coveralls.io/repos/github/conda-forge/conda-smithy/badge.svg?branch=master)](https://coveralls.io/github/conda-forge/conda-smithy?branch=master)
