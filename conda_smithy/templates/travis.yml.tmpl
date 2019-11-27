@@ -31,7 +31,12 @@ matrix:
       osx_image: {{ travis.get('osx_image', 'xcode9.4') }}
     {%- elif data.platform.startswith("linux-ppc64le") %}
     - env: CONFIG={{ data.config_name }} UPLOAD_PACKAGES={{ data.upload }} PLATFORM={{ data.platform }} DOCKER_IMAGE={{ data.config["docker_image"][-1] }}
-      os: linux-ppc64le
+      os: linux
+      arch: ppc64le
+    {%- elif data.platform.startswith("linux-aarch64") %}
+    - env: CONFIG={{ data.config_name }} UPLOAD_PACKAGES={{ data.upload }} PLATFORM={{ data.platform }} DOCKER_IMAGE={{ data.config["docker_image"][-1] }}
+      os: linux
+      arch: arm64
     {%- elif data.platform.startswith("linux-64") %}
     - env: CONFIG={{ data.config_name }} UPLOAD_PACKAGES={{ data.upload }} PLATFORM={{ data.platform }} DOCKER_IMAGE={{ data.config["docker_image"][-1] }}
       os: linux
