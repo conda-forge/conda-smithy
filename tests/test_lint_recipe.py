@@ -894,7 +894,10 @@ class Test_linter(unittest.TestCase):
             lints,
         )
 
-        meta = {"requirements": {"host": ["python >=3"]}, "outputs": [{"name": "foo"}]}
+        meta = {
+            "requirements": {"host": ["python >=3"]},
+            "outputs": [{"name": "foo"}],
+        }
         lints, hints = linter.lintify(meta)
         self.assertNotIn(
             "If python is a host requirement, it should be a run requirement.",
