@@ -881,6 +881,11 @@ class Test_linter(unittest.TestCase):
         ]
         self.assertEqual(expected_messages, filtered_lints)
 
+    def test_empty_host(self):
+        meta = {"requirements": {"build": None, "host": None, "run": None}}
+        # Test that this doesn't crash
+        lints, hints = linter.lintify(meta)
+
     def test_python_requirements(self):
         meta = {"requirements": {"host": ["python >=3"]}}
         lints, hints = linter.lintify(meta)
