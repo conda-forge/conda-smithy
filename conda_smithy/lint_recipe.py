@@ -454,8 +454,8 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
                 continue
 
     # 23: non noarch builds shouldn't use version constraints on python
-    host_reqs = requirements_section.get("host", []) or []
-    run_reqs = requirements_section.get("run", []) or []
+    host_reqs = requirements_section.get("host") or []
+    run_reqs = requirements_section.get("run") or []
     if build_section.get("noarch") is None:
         filtered_host_reqs = [
             req
