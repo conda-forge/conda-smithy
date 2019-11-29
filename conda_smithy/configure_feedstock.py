@@ -15,6 +15,7 @@ import conda_build.utils
 import conda_build.variants
 import conda_build.conda_interface
 import conda_build.render
+from conda_build.metadata import MetaData
 
 from copy import deepcopy
 
@@ -567,6 +568,14 @@ def _render_ci_provider(
         migrated_combined_variant_spec = migrate_combined_spec(
             combined_variant_spec, forge_dir, config
         )
+
+        # If we have a noarch: python recipe., prefer the most recent python versio
+        m = MetaData(
+            os.path.join(forge_dir, "recipe"),
+            config=config
+        )
+        if (m.noarch_python) or (m.noarch == 'python'):
+            migrated_combined_variant_spec["python"] = list(reversed(migrated_combined_variant_spec["python"]))
 
         metas = conda_build.api.render(
             os.path.join(forge_dir, "recipe"),

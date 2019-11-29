@@ -61,6 +61,24 @@ def test_noarch_runs_on_azure(noarch_recipe, jinja_env):
     assert len(os.listdir(matrix_dir)) == 1
 
 
+def test_noarch_python_renders_with_py3(noarch_recipe, jinja_env):
+    cnfgr_fdstk.render_azure(
+        jinja_env=jinja_env,
+        forge_config=noarch_recipe.config,
+        forge_dir=noarch_recipe.recipe,
+    )
+    # this configuration should be run
+    assert noarch_recipe.config["azure"]["enabled"]
+    matrix_dir = os.path.join(noarch_recipe.recipe, ".ci_support")
+    assert os.path.isdir(matrix_dir)
+    # single matrix entry - readme is generated later in main function
+    variants = os.listdir(matrix_dir)
+    assert len(variants) == 1
+    with open(Path(matrix_dir) / variants[0]) as fo:
+        variant = yaml.safe_load(fo)
+        assert variant['python'] != ['2.7']
+
+
 def test_r_skips_appveyor(r_recipe, jinja_env):
     r_recipe.config["provider"]["win"] = "appveyor"
     cnfgr_fdstk.render_appveyor(
