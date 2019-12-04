@@ -408,6 +408,53 @@ class RecipeLint(Subcommand):
         sys.exit(int(not all_good))
 
 
+POST_SKELETON_MESSAGE = """
+A skeleton for using CI has been generated! Please use the following steps
+to complete the CI process:
+
+1. Fill out {args.recipe_directory}/meta.yaml with your install and test code
+2. Commit all changes to the repo.
+3. Remember to register your repo with the CI providers.
+4. Rerender this repo to generate the CI configurations files.
+   This can be done with:
+
+        $ conda smithy rerender -c auto
+
+At any time in the future, you will be able to automatically update your CI configuration by
+re-running the rerender command above. Happy testing!
+"""
+
+
+class Skeleton(Subcommand):
+    subcommand = "skeleton"
+
+    def __init__(self, parser):
+        super(Skeleton, self).__init__(parser, "Generate skeleton for using CI outside of a feedstock")
+        scp = self.subcommand_parser
+        scp.add_argument(
+            "--feedstock-directory",
+            default=os.getcwd(),
+            help="The directory of the feedstock git repository.",
+            dest="feedstock_directory",
+        )
+        scp.add_argument("-r", "--recipe-directory", default="recipe", dest="recipe_directory")
+        scp.add_argument("package-name", nargs="?")
+
+    def __call__(self, args):
+        from conda_smithy.skeleton import generate
+
+        # complete configuration
+        if not hasattr(args, 'package_name'):
+            args.package_name = "pkg"
+
+        generate(
+            package_name=args.package_name,
+            feedstock_directory=args.feedstock_directory,
+            recipe_directory=args.recipe_directory,
+        )
+        print(POST_SKELETON_MESSAGE.format(args=args).strip())
+
+
 class UpdateCB3(Subcommand):
     subcommand = "update-cb3"
 

@@ -1536,6 +1536,21 @@ def clear_scripts(forge_dir):
             remove_file(os.path.join(forge_dir, folder, old_file))
 
 
+def make_jinja_env(feedstock_directory):
+    """Creates a Jinja environment usable for rendering templates"""
+    forge_dir = os.path.abspath(feedstock_directory)
+    tmplt_dir = os.path.join(conda_forge_content, "templates")
+    # Load templates from the feedstock in preference to the smithy's templates.
+    env = Environment(
+        extensions=["jinja2.ext.do"],
+        loader=FileSystemLoader(
+            [os.path.join(forge_dir, "templates"), tmplt_dir]
+        ),
+    )
+    return env
+
+
+
 def main(
     forge_file_directory,
     no_check_uptodate=False,
@@ -1590,14 +1605,7 @@ def main(
                 % each_ci
             )
 
-    tmplt_dir = os.path.join(conda_forge_content, "templates")
-    # Load templates from the feedstock in preference to the smithy's templates.
-    env = Environment(
-        extensions=["jinja2.ext.do"],
-        loader=FileSystemLoader(
-            [os.path.join(forge_dir, "templates"), tmplt_dir]
-        ),
-    )
+    env = make_jinja_env(forge_dir)
 
     copy_feedstock_content(config, forge_dir)
     if os.path.exists(os.path.join(forge_dir, "build-locally.py")):
