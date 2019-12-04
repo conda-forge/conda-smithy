@@ -414,6 +414,9 @@ to complete the CI process:
 
 1. Fill out {args.recipe_directory}/meta.yaml with your install and test code
 2. Commit all changes to the repo.
+
+        $ git add . && git commit -am "ran conda smithy skeleton"
+
 3. Remember to register your repo with the CI providers.
 4. Rerender this repo to generate the CI configurations files.
    This can be done with:
@@ -438,14 +441,14 @@ class Skeleton(Subcommand):
             dest="feedstock_directory",
         )
         scp.add_argument("-r", "--recipe-directory", default="recipe", dest="recipe_directory")
-        scp.add_argument("package-name", nargs="?")
+        scp.add_argument("package_name", nargs="?")
 
     def __call__(self, args):
         from conda_smithy.skeleton import generate
 
         # complete configuration
         if not hasattr(args, 'package_name'):
-            args.package_name = "pkg"
+            args.package_name = "package"
 
         generate(
             package_name=args.package_name,

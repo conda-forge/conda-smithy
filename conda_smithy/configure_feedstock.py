@@ -1333,26 +1333,6 @@ def _load_forge_config(forge_dir, exclusive_config_file):
         "skip_render": [],
     }
 
-    # An older conda-smithy used to have some files which should no longer exist,
-    # remove those now.
-    old_files = [
-        "disabled_appveyor.yml",
-        os.path.join("ci_support", "upload_or_check_non_existence.py"),
-        "circle.yml",
-        "appveyor.yml",
-        os.path.join("ci_support", "checkout_merge_commit.sh"),
-        os.path.join("ci_support", "fast_finish_ci_pr_build.sh"),
-        os.path.join("ci_support", "run_docker_build.sh"),
-        "LICENSE",
-        "__pycache__",
-        os.path.join(".github", "CONTRIBUTING.md"),
-        os.path.join(".github", "ISSUE_TEMPLATE.md"),
-        os.path.join(".github", "PULL_REQUEST_TEMPLATE.md"),
-    ]
-
-    for old_file in old_files:
-        remove_file_or_dir(os.path.join(forge_dir, old_file))
-
     forge_yml = os.path.join(forge_dir, "conda-forge.yml")
     if not os.path.exists(forge_yml):
         raise RuntimeError(
@@ -1395,6 +1375,28 @@ def _load_forge_config(forge_dir, exclusive_config_file):
                 config_item.update(value)
             else:
                 config[key] = value
+
+    # An older conda-smithy used to have some files which should no longer exist,
+    # remove those now.
+    old_files = [
+        "disabled_appveyor.yml",
+        os.path.join("ci_support", "upload_or_check_non_existence.py"),
+        "circle.yml",
+        "appveyor.yml",
+        os.path.join("ci_support", "checkout_merge_commit.sh"),
+        os.path.join("ci_support", "fast_finish_ci_pr_build.sh"),
+        os.path.join("ci_support", "run_docker_build.sh"),
+        "LICENSE",
+        "__pycache__",
+        os.path.join(".github", "CONTRIBUTING.md"),
+        os.path.join(".github", "ISSUE_TEMPLATE.md"),
+        os.path.join(".github", "PULL_REQUEST_TEMPLATE.md"),
+    ]
+
+    for old_file in old_files:
+        if os.path.basename(old_file) in config['skip_render']:
+            continue
+        remove_file_or_dir(os.path.join(forge_dir, old_file))
 
     # Set some more azure defaults
     config["azure"].setdefault("user_or_org", config["github"]["user_or_org"])
