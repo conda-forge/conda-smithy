@@ -1394,7 +1394,7 @@ def _load_forge_config(forge_dir, exclusive_config_file):
     ]
 
     for old_file in old_files:
-        if os.path.basename(old_file) in config['skip_render']:
+        if os.path.basename(old_file) in config["skip_render"]:
             continue
         remove_file_or_dir(os.path.join(forge_dir, old_file))
 
@@ -1550,7 +1550,6 @@ def make_jinja_env(feedstock_directory):
         ),
     )
     return env
-
 
 
 def main(

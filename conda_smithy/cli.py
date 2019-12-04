@@ -432,7 +432,9 @@ class Skeleton(Subcommand):
     subcommand = "skeleton"
 
     def __init__(self, parser):
-        super(Skeleton, self).__init__(parser, "Generate skeleton for using CI outside of a feedstock")
+        super(Skeleton, self).__init__(
+            parser, "Generate skeleton for using CI outside of a feedstock"
+        )
         scp = self.subcommand_parser
         scp.add_argument(
             "--feedstock-directory",
@@ -440,14 +442,19 @@ class Skeleton(Subcommand):
             help="The directory of the feedstock git repository.",
             dest="feedstock_directory",
         )
-        scp.add_argument("-r", "--recipe-directory", default="recipe", dest="recipe_directory")
+        scp.add_argument(
+            "-r",
+            "--recipe-directory",
+            default="recipe",
+            dest="recipe_directory",
+        )
         scp.add_argument("package_name", nargs="?")
 
     def __call__(self, args):
         from conda_smithy.skeleton import generate
 
         # complete configuration
-        if not hasattr(args, 'package_name'):
+        if not hasattr(args, "package_name"):
             args.package_name = "package"
 
         generate(

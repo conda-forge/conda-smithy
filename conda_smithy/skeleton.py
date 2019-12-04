@@ -12,18 +12,18 @@ from .configure_feedstock import make_jinja_env
 
 def _render_template(template_file, env, forge_dir, config):
     """Renders the template"""
-    template = env.get_template(
-        os.path.basename(template_file) + ".skel.tmpl"
-    )
+    template = env.get_template(os.path.basename(template_file) + ".skel.tmpl")
     target_fname = os.path.join(forge_dir, template_file)
     print("Genereating " + target_fname)
     new_file_contents = template.render(**config)
     os.makedirs(os.path.dirname(target_fname), exist_ok=True)
-    with open(target_fname, 'w') as fh:
+    with open(target_fname, "w") as fh:
         fh.write(new_file_contents)
 
 
-def generate(package_name="pkg", feedstock_directory=".", recipe_directory="recipe"):
+def generate(
+    package_name="pkg", feedstock_directory=".", recipe_directory="recipe"
+):
     """Generates the skeleton."""
     forge_dir = os.path.abspath(feedstock_directory)
     env = make_jinja_env(forge_dir)
@@ -34,4 +34,6 @@ def generate(package_name="pkg", feedstock_directory=".", recipe_directory="reci
     )
     # render templates
     _render_template("conda-forge.yml", env, forge_dir, config)
-    _render_template(os.path.join(recipe_directory, "meta.yaml"), env, forge_dir, config)
+    _render_template(
+        os.path.join(recipe_directory, "meta.yaml"), env, forge_dir, config
+    )
