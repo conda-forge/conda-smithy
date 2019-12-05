@@ -428,11 +428,11 @@ re-running the rerender command above. Happy testing!
 """
 
 
-class Skeleton(Subcommand):
-    subcommand = "skeleton"
+class CISkeleton(Subcommand):
+    subcommand = "ci-skeleton"
 
     def __init__(self, parser):
-        super(Skeleton, self).__init__(
+        super(CISkeleton, self).__init__(
             parser, "Generate skeleton for using CI outside of a feedstock"
         )
         scp = self.subcommand_parser
@@ -451,7 +451,7 @@ class Skeleton(Subcommand):
         scp.add_argument("package_name", nargs="?")
 
     def __call__(self, args):
-        from conda_smithy.skeleton import generate
+        from conda_smithy.ci_skeleton import generate
 
         # complete configuration
         if not hasattr(args, "package_name"):
