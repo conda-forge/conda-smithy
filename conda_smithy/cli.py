@@ -454,7 +454,7 @@ class CISkeleton(Subcommand):
         from conda_smithy.ci_skeleton import generate
 
         # complete configuration
-        if not hasattr(args, "package_name"):
+        if getattr(args, "package_name") is None:
             args.package_name = "package"
 
         generate(
