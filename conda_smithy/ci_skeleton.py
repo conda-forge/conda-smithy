@@ -12,7 +12,9 @@ from .configure_feedstock import make_jinja_env
 
 def _render_template(template_file, env, forge_dir, config):
     """Renders the template"""
-    template = env.get_template(os.path.basename(template_file) + ".ci-skel.tmpl")
+    template = env.get_template(
+        os.path.basename(template_file) + ".ci-skel.tmpl"
+    )
     target_fname = os.path.join(forge_dir, template_file)
     print("Genereating " + target_fname)
     new_file_contents = template.render(**config)
