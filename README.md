@@ -72,6 +72,9 @@ the feedstock or after.
 `conda smithy register-ci --organization conda-forge --feedstock_directory ./foo-feedstock`.
 This requires tokens for the CI services. You can give the name of a user instead
 of organization with `--user github_user_name`.
+     * For Azure, you will have to create a service connection with the same name as your github user or org
+        `https://dev.azure.com/YOUR_ORG/feedstock-builds/_settings/adminservices`
+     * For Azure builds, you will have to export the environment variable `AZURE_ORG_OR_USER` to point to your Azure org
 4. **Specify the feedstock channel and label:**
 Optionally, you can specify source channels and choose a channel to upload to in `recipe/conda_build_config.yaml`.
   ```yaml
