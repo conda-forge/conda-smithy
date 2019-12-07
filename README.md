@@ -75,6 +75,7 @@ of organization with `--user github_user_name`.
      * For Azure, you will have to create a service connection with the same name as your github user or org
         `https://dev.azure.com/YOUR_ORG/feedstock-builds/_settings/adminservices`
      * For Azure builds, you will have to export the environment variable `AZURE_ORG_OR_USER` to point to your Azure org
+     * If this is your first build on Azure, make sure to add [Library Variable Group](https://docs.microsoft.com/en-us/azure/devops/pipelines/process/variables?view=azure-devops&tabs=yaml%2Cbatch#share-variables-across-pipelines) containing your BINSTAR_TOKEN for automated anaconda uploads.
 4. **Specify the feedstock channel and label:**
 Optionally, you can specify source channels and choose a channel to upload to in `recipe/conda_build_config.yaml`.
   ```yaml
