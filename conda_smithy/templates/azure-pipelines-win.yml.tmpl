@@ -108,5 +108,4 @@ jobs:
       displayName: Upload package
       env:
         BINSTAR_TOKEN: $(BINSTAR_TOKEN)
-      condition: not(eq(variables['UPLOAD_PACKAGES'], 'False'))
-
+      condition: and(succeeded(), not(eq(variables['UPLOAD_PACKAGES'], 'False')))
