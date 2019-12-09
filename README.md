@@ -85,9 +85,19 @@ Optionally, you can specify source channels and choose a channel to upload to in
     - target_channel target_label
   ```
   Default source channels are `conda-forge,defaults`. Default for channel targets is `conda-forge main`.
+5. **Specify your branding in the README.md:**
+Optionally, you can specify the branding on the README.md file by adding the following the `conda-forge.yml` file:
+```
+github:
+  user_or_org: YOUR_GITHUB_USER_OR_ORG
+channels:
+  targets:
+  -
+    - YOUR_ANACONDA_CHANNEL
+```
 
-5. **Re-render the feedstock:** ``conda smithy rerender --feedstock_directory ./foo-feedstock``
-6. **Commit the changes:** ``cd foo-feedstock && git commit``, then push ``git push upstream master``.
+6. **Re-render the feedstock:** ``conda smithy rerender --feedstock_directory ./foo-feedstock``
+7. **Commit the changes:** ``cd foo-feedstock && git commit``, then push ``git push upstream master``.
 
 Running a build
 ---------------
