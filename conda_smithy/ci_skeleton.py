@@ -16,7 +16,7 @@ def _render_template(template_file, env, forge_dir, config):
         os.path.basename(template_file) + ".ci-skel.tmpl"
     )
     target_fname = os.path.join(forge_dir, template_file)
-    print("Genereating " + target_fname)
+    print("Generating " + target_fname, file=sys.stderr)
     new_file_contents = template.render(**config)
     os.makedirs(os.path.dirname(target_fname), exist_ok=True)
     with open(target_fname, "w") as fh:

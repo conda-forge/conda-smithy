@@ -415,7 +415,7 @@ to complete the CI process:
 1. Fill out {args.recipe_directory}/meta.yaml with your install and test code
 2. Commit all changes to the repo.
 
-        $ git add . && git commit -am "ran conda smithy skeleton"
+        $ git add . && git commit -m "ran conda smithy skeleton"
 
 3. Remember to register your repo with the CI providers.
 4. Rerender this repo to generate the CI configurations files.
