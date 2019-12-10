@@ -4,6 +4,7 @@ conda-forge to run their CI without having to worry about how to set it up,
 or keep it up-to-date.
 """
 import os
+import sys
 
 from jinja2 import Environment, FileSystemLoader
 
