@@ -1,5 +1,23 @@
-{{ '{%' }} set name = "{{ package_name }}" {{ '%}' }}
-{% raw %}{% set version = environ.get('GIT_DESCRIBE_TAG', 'untagged')|string|replace('-','_') %}
+import pytest
+
+from conda_smithy.ci_skeleton import generate
+
+
+CONDA_FORGE_YML = """recipe_dir: myrecipe
+skip_render:
+  - README.md
+  - LICENSE.txt
+  - .gitattributes
+  - .gitignore
+  - build-locally.py
+  - LICENSE
+  - .github/CONTRIBUTING.md
+  - .github/ISSUE_TEMPLATE.md
+  - .github/PULL_REQUEST_TEMPLATE.md
+"""
+
+META_YAML = """{% set name = "my-package" '%}
+{% set version = environ.get('GIT_DESCRIBE_TAG', 'untagged')|string|replace('-','_') %}
 
 package:
   name: {{ name|lower }}
@@ -37,15 +55,15 @@ requirements:
     - pip
   run:
     - python
-{% endraw %}
+
 test:
   # Some packages might need a `test/commands` key to check CLI.
   # List all the packages/modules that `run_test.py` imports.
   imports:
-    - {{ package_name|replace('-','_') }}
+    - my_package
   # Run your test commands here
   commands:
-    - {{ package_name }} --help
+    - my-package --help
     - pytest
   # declare any test-only requirements here
   requires:
@@ -54,7 +72,7 @@ test:
   source_files:
     - tests/
 
-# Uncomment and fill in {{ package_name }} metadata
+# Uncomment and fill in my-package metadata
 #about:
 #  home: https://github.com/conda-forge/conda-smithy
 #  license: BSD-3-Clause
@@ -67,3 +85,15 @@ test:
 #  recipe-maintainers:
 #    - BobaFett
 #    - LisaSimpson
+"""
+
+
+def test_generate(tmpdir):
+    generate(package_name="my-package", feedstock_directory=str(tmpdir), recipe_directory="myrecipe")
+    with open(tmpdir / "conda-forge.yml") as f:
+        conda_forge_yml = f.read()
+    assert conda_forge_yml == CONDA_FORGE_YML
+    with open(tmpdir / "myrecipe" / "meta.yaml") as f:
+        meta_yaml = f.read()
+    assert meta_yaml == META_YAML
+
