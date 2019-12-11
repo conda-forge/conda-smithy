@@ -15,7 +15,7 @@ skip_render:
   - .github/ISSUE_TEMPLATE.md
   - .github/PULL_REQUEST_TEMPLATE.md"""
 
-META_YAML = """{% set name = "my-package" '%}
+META_YAML = """{% set name = "my-package" %}
 {% set version = environ.get('GIT_DESCRIBE_TAG', 'untagged')|string|replace('-','_') %}
 
 package:
@@ -83,8 +83,7 @@ test:
 #extra:
 #  recipe-maintainers:
 #    - BobaFett
-#    - LisaSimpson
-"""
+#    - LisaSimpson"""
 
 
 def test_generate(tmpdir):
