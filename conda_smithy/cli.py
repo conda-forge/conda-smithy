@@ -409,8 +409,8 @@ class RecipeLint(Subcommand):
 
 
 POST_SKELETON_MESSAGE = """
-A skeleton for using CI has been generated! Please use the following steps
-to complete the CI process:
+A CI skeleton has been generated! Please use the following steps
+to complete the CI setup process:
 
 1. Fill out {args.recipe_directory}/meta.yaml with your install and test code
 2. Commit all changes to the repo.
