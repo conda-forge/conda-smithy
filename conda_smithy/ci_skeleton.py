@@ -1,7 +1,9 @@
 """Generate skeleton for using conda-forge CI configuration files outside of
-a feedstock (i.e. a outside of a forge context). This enables people to use
-conda-forge to run their CI without having to worry about how to set it up,
-or keep it up-to-date.
+a feedstock (i.e. a outside of a forge context). This enables people to run
+their CI without having to worry about how to set it up or keep it up-to-date,
+by reusing the same tools that conda-forge uses for its infrastructure.
+Note that your CI jobs will still execute under your organization, and not be
+added to conda-forge's queue.
 """
 import os
 import sys

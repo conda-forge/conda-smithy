@@ -34,7 +34,7 @@ build:
   # noarch: python
 
   number: {{ environ.get('GIT_DESCRIBE_NUMBER', '0' }}
-  string: {{ environ.get('GIT_BUILD_STR', '') }}
+  string: {{ [build_number, ('h' + PKG_HASH), environ.get('GIT_DESCRIBE_HASH', '')]|join('_') }}
 
   # If the installation is complex, or different between Unix and Windows,
   # use separate bld.bat and build.sh files instead of this key. By default,
