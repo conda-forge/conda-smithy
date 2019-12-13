@@ -33,7 +33,7 @@ build:
   # for more details.
   # noarch: python
 
-  number: {{ environ.get('GIT_DESCRIBE_NUMBER', '0' }}
+  number: {{ environ.get('GIT_DESCRIBE_NUMBER', '0') }}
   string: {{ [build_number, ('h' + PKG_HASH), environ.get('GIT_DESCRIBE_HASH', '')]|join('_') }}
 
   # If the installation is complex, or different between Unix and Windows,
@@ -85,6 +85,13 @@ test:
 #    - BobaFett
 #    - LisaSimpson"""
 
+GITIGNORE = """# conda smithy ci-skeleton start
+*.pyc
+
+build_artifacts
+# conda smithy ci-skeleton end
+"""
+
 
 def test_generate(tmpdir):
     generate(
@@ -98,3 +105,6 @@ def test_generate(tmpdir):
     with open(tmpdir / "myrecipe" / "meta.yaml") as f:
         meta_yaml = f.read()
     assert meta_yaml == META_YAML
+    with open(tmpdir / ".gitignore") as f:
+        gitignore = f.read()
+    assert gitignore == GITIGNORE
