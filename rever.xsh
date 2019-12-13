@@ -3,8 +3,9 @@ import os
 $PROJECT = $GITHUB_REPO = 'conda-smithy'
 $GITHUB_ORG = 'conda-forge'
 
-$ACTIVITIES = ['changelog', 'tag', 'push_tag', 'ghrelease', 'conda_forge']
+$ACTIVITIES = ['authors', 'changelog', 'tag', 'push_tag', 'ghrelease', 'conda_forge']
 
+$AUTHORS_FILENAME = 'AUTHORS.rst'
 $CHANGELOG_FILENAME = 'CHANGELOG.rst'
 $CHANGELOG_TEMPLATE = 'TEMPLATE.rst'
 
