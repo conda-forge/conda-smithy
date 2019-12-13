@@ -4,6 +4,23 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.6.5
+====================
+
+**Added:**
+
+* Added ``.gitignore`` entries when running ``ci-skeleton``.
+
+**Fixed:**
+
+* Fixed Jinja syntax error in ``ci-skeleton``.
+
+**Authors:**
+
+* Anthony Scopatz
+
+
+
 v3.6.4
 ====================
 
