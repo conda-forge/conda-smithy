@@ -10,7 +10,7 @@ import sys
 
 from jinja2 import Environment, FileSystemLoader
 
-from .configure_feedstock import make_jinja_env
+from .configure_feedstock import make_jinja_env, conda_forge_content
 
 
 def _render_template(template_file, env, forge_dir, config):
@@ -24,6 +24,36 @@ def _render_template(template_file, env, forge_dir, config):
     os.makedirs(os.path.dirname(target_fname), exist_ok=True)
     with open(target_fname, "w") as fh:
         fh.write(new_file_contents)
+
+
+def _insert_into_gitignore(
+    feedstock_directory=".",
+    prefix="# conda smithy ci-skeleton start\n",
+    suffix="# conda smithy ci-skeleton end\n",
+):
+    """Places gitignore contents into gitignore."""
+    # get current contents
+    fname = os.path.join(feedstock_directory, ".gitignore")
+    print("Updating " + fname)
+    if os.path.isfile(fname):
+        with open(fname, "r") as f:
+            s = f.read()
+        before, _, s = s.partition(prefix)
+        _, _, after = s.partition(suffix)
+    else:
+        before = after = ""
+        dname = os.path.dirname(fname)
+        if dname:
+            os.makedirs(dname, exist_ok=True)
+    # get new values
+    gi = os.path.join(conda_forge_content, "feedstock_content", ".gitignore")
+    with open(gi, "r") as f:
+        s = f.read()
+    new = prefix + s + suffix
+    # write out the file
+    with open(fname, "w") as f:
+        f.write(before + new + after)
+    return fname
 
 
 def generate(
@@ -42,3 +72,5 @@ def generate(
     _render_template(
         os.path.join(recipe_directory, "meta.yaml"), env, forge_dir, config
     )
+    # update files which may exist with other content
+    _insert_into_gitignore(feedstock_directory=feedstock_directory)
