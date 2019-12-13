@@ -1,14 +1,15 @@
 All of the people who have made at least one contribution to conda-smithy.
 Authors are sorted by number of commits.
 
-* John Kirkham
 * Isuru Fernando
+* Phil Elson
 * Anthony Scopatz
 * Christopher J. Wright
+* Filipe Fernandes
 * Dougal J. Sutherland
 * shadow_walker
+* Michael Sarahan
 * Min RK
-* Filipe Fernandes
 * Mark Harfouche
 * Eric Dill
 * Jan Schulz
@@ -19,7 +20,7 @@ Authors are sorted by number of commits.
 * C.A.M. Gerlach
 * Julian Rüth
 * refraction-ray
-* Marius van Niekerk
+* John Kirkham
 * Leopold Talirz
 * Gonzalo Pena-Castellanos
 * Daniel Bast
@@ -28,6 +29,7 @@ Authors are sorted by number of commits.
 * Carlo
 * Marcel Bargull
 * Matthew Craig
+* Marius van Niekerk
 * Johannes Köster
 * Matt McCormick
 * John Blischak
@@ -37,7 +39,6 @@ Authors are sorted by number of commits.
 * Peter Williams
 * Patrick Sodré
 * Josh Barnes
-* Phil Elson
 * Tobias Megies
 * Jonathan Helmus
 * Florian Rathgeber
@@ -68,7 +69,6 @@ Authors are sorted by number of commits.
 * Max Linke
 * Nathan Goldbaum
 * cshaley
-* Michael Sarahan
 * David Brochart
 * Julien Schueller
 * Duncan Macleod

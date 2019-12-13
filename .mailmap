@@ -9,16 +9,16 @@
 # This file is up-to-date if the command git log --format="%aN <%aE>" | sort -u
 # gives no duplicates.
 
-John Kirkham <jakirkham@gmail.com> John Kirkham <kirkhamj@janelia.hhmi.org>
-John Kirkham <jakirkham@gmail.com> jakirkham <kirkhamj@janelia.hhmi.org>
 Isuru Fernando <isuru.11@cse.mrt.ac.lk> Isuru Fernando <isuruf@gmail.com>
+Phil Elson <pelson.pub@gmail.com> pelson <pelson.pub@gmail.com>
 Anthony Scopatz <scopatz@gmail.com>
 Christopher J. Wright <cjwright4242gh@gmail.com> christopher <cjwright4242@gmail.com>
-Dougal J. Sutherland <dougal@gmail.com>
-shadow_walker <shadowwalkersb@gmail.com>
-Min RK <benjaminrk@gmail.com>
 Filipe Fernandes <ocefpaf@gmail.com> Filipe <ocefpaf@gmail.com>
 Filipe Fernandes <ocefpaf@gmail.com> ocefpaf <ocefpaf@gmail.com>
+Dougal J. Sutherland <dougal@gmail.com>
+shadow_walker <shadowwalkersb@gmail.com>
+Michael Sarahan <msarahan@gmail.com> Mike Sarahan <msarahan@gmail.com>
+Min RK <benjaminrk@gmail.com>
 Mark Harfouche <mark.harfouche@gmail.com>
 Eric Dill <edill@anaconda.com> Eric Dill <edill@bnl.gov>
 Eric Dill <edill@anaconda.com> Eric Dill <thedizzle@gmail.com>
@@ -30,8 +30,8 @@ Patrick Sodré <psodre@gmail.com>
 C.A.M. Gerlach <widenetservices@gmail.com>
 Julian Rüth <julian.rueth@fsfe.org>
 refraction-ray <kcanamgal@foxmail.com>
-Marius van Niekerk <marius.v.niekerk@gmail.com> mariusvniekerk <marius.vanniekerk@maxpoint.com>
-Marius van Niekerk <marius.v.niekerk@gmail.com> Marius Van Niekerk <marius.vanniekerk@maxpoint.com>
+John Kirkham <jakirkham@gmail.com> John Kirkham <kirkhamj@janelia.hhmi.org>
+John Kirkham <jakirkham@gmail.com> jakirkham <kirkhamj@janelia.hhmi.org>
 Leopold Talirz <leopold.talirz@gmail.com>
 Gonzalo Pena-Castellanos <goanpeca@gmail.com>
 Daniel Bast <2790401+dbast@users.noreply.github.com>
@@ -40,6 +40,8 @@ Chris Burr <christopher.burr@cern.ch> Chris Burr <chrisburr@users.noreply.github
 Carlo <carlo.dri@gmail.com> Carlo <carlodri@users.noreply.github.com>
 Marcel Bargull <marcel.bargull@udo.edu> Marcel Bargull <mbargull@users.noreply.github.com>
 Matthew Craig <mattwcraig@gmail.com> Matt Craig <mattwcraig@gmail.com>
+Marius van Niekerk <marius.v.niekerk@gmail.com> mariusvniekerk <marius.vanniekerk@maxpoint.com>
+Marius van Niekerk <marius.v.niekerk@gmail.com> Marius Van Niekerk <marius.vanniekerk@maxpoint.com>
 Johannes Köster <johannes.koester@tu-dortmund.de>
 Matt McCormick <matt.mccormick@kitware.com>
 John Blischak <jdblischak@gmail.com>
@@ -49,7 +51,6 @@ Elmar Pruesse <epruesse@users.noreply.github.com>
 Peter Williams <peter@newton.cx>
 Patrick Sodré <sodre@sodre.co>
 Josh Barnes <joshuacookebarnes@gmail.com>
-Phil Elson <pelson.pub@gmail.com> pelson <pelson.pub@gmail.com>
 Tobias Megies <megies@users.noreply.github.com>
 Jonathan Helmus <jjhelmus@gmail.com>
 Florian Rathgeber <florian.rathgeber@gmail.com>
@@ -80,7 +81,6 @@ danielballan <daniel.b.allan@gmail.com>
 Max Linke <max_linke@gmx.de>
 Nathan Goldbaum <ngoldbau@illinois.edu>
 cshaley <6740446+cshaley@users.noreply.github.com>
-Michael Sarahan <msarahan@gmail.com> Mike Sarahan <msarahan@gmail.com>
 David Brochart <david.brochart@gmail.com>
 Julien Schueller <schueller@phimeca.com>
 Duncan Macleod <duncan.macleod@ligo.org>
