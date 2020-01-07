@@ -1207,7 +1207,7 @@ def render_README(jinja_env, forge_config, forge_dir, render_info):
         metas = conda_build.api.render(
                 os.path.join(forge_dir, "recipe"),
                 exclusive_config_file=forge_config["exclusive_config_file"],
-                permit_undefined_jinja=False,
+                permit_undefined_jinja=True,
                 finalize=False,
                 bypass_env_check=True,
                 trim_skip=False,
