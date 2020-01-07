@@ -721,7 +721,8 @@ def _render_ci_provider(
             metas_list_of_lists=metas_list_of_lists,
             platforms=platforms,
             archs=archs,
-            enable_platform=enable_platform)
+            enable_platform=enable_platform,
+        )
     else:
         return forge_config
 
@@ -1207,20 +1208,22 @@ def render_README(jinja_env, forge_config, forge_dir, render_info=None):
     # pull out relevant metadata from rendering
     try:
         metas = conda_build.api.render(
-                os.path.join(forge_dir, "recipe"),
-                exclusive_config_file=forge_config["exclusive_config_file"],
-                permit_undefined_jinja=True,
-                finalize=False,
-                bypass_env_check=True,
-                trim_skip=False,
-            )
+            os.path.join(forge_dir, "recipe"),
+            exclusive_config_file=forge_config["exclusive_config_file"],
+            permit_undefined_jinja=True,
+            finalize=False,
+            bypass_env_check=True,
+            trim_skip=False,
+        )
         metas = [m[0] for m in metas]
     except Exception:
         # sometimes the above fails so we grab actual metadata
         done = False
         metas = []
         for md in render_info:
-            for _metas, enabled in zip(md['metas_list_of_lists'], md['enable_platform']):
+            for _metas, enabled in zip(
+                md["metas_list_of_lists"], md["enable_platform"]
+            ):
                 if enabled and len(_metas) > 0:
                     metas = _metas
                     done = True
@@ -1654,11 +1657,21 @@ def main(
 
     # the order of these calls appears to matter
     render_info = []
-    render_info.append(render_circle(env, config, forge_dir, return_metadata=True))
-    render_info.append(render_travis(env, config, forge_dir, return_metadata=True))
-    render_info.append(render_appveyor(env, config, forge_dir, return_metadata=True))
-    render_info.append(render_azure(env, config, forge_dir, return_metadata=True))
-    render_info.append(render_drone(env, config, forge_dir, return_metadata=True))
+    render_info.append(
+        render_circle(env, config, forge_dir, return_metadata=True)
+    )
+    render_info.append(
+        render_travis(env, config, forge_dir, return_metadata=True)
+    )
+    render_info.append(
+        render_appveyor(env, config, forge_dir, return_metadata=True)
+    )
+    render_info.append(
+        render_azure(env, config, forge_dir, return_metadata=True)
+    )
+    render_info.append(
+        render_drone(env, config, forge_dir, return_metadata=True)
+    )
     # put azure first just in case
     tmp = render_info[0]
     render_info[0] = render_info[-2]
