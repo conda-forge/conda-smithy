@@ -1197,10 +1197,12 @@ def render_drone(jinja_env, forge_config, forge_dir, return_metadata=False):
     )
 
 
-def render_README(jinja_env, forge_config, forge_dir, render_info):
+def render_README(jinja_env, forge_config, forge_dir, render_info=None):
     if "README.md" in forge_config["skip_render"]:
         logger.info("README.md rendering is skipped")
         return
+
+    render_info = render_info or []
 
     # pull out relevant metadata from rendering
     try:
@@ -1650,12 +1652,17 @@ def main(
     clear_variants(forge_dir)
     clear_scripts(forge_dir)
 
+    # the order of these calls appears to matter
     render_info = []
-    render_info.append(render_azure(env, config, forge_dir, return_metadata=True))
-    render_info.append(render_travis(env, config, forge_dir, return_metadata=True))
-    render_info.append(render_drone(env, config, forge_dir, return_metadata=True))
     render_info.append(render_circle(env, config, forge_dir, return_metadata=True))
+    render_info.append(render_travis(env, config, forge_dir, return_metadata=True))
     render_info.append(render_appveyor(env, config, forge_dir, return_metadata=True))
+    render_info.append(render_azure(env, config, forge_dir, return_metadata=True))
+    render_info.append(render_drone(env, config, forge_dir, return_metadata=True))
+    # put azure first just in case
+    tmp = render_info[0]
+    render_info[0] = render_info[-2]
+    render_info[-2] = tmp
     render_README(env, config, forge_dir, render_info)
 
     if os.path.isdir(os.path.join(forge_dir, ".ci_support")):
