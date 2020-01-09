@@ -540,6 +540,7 @@ def _render_ci_provider(
     keep_noarchs=None,
     extra_platform_files={},
     upload_packages=[],
+    return_metadata=False,
 ):
     if keep_noarchs is None:
         keep_noarchs = [False] * len(platforms)
@@ -714,7 +715,16 @@ def _render_ci_provider(
         with write_file(platform_target_path) as fh:
             fh.write(template.render(**forge_config))
     # TODO: azure-pipelines might need the same as circle
-    return forge_config
+    if return_metadata:
+        return dict(
+            forge_config=forge_config,
+            metas_list_of_lists=metas_list_of_lists,
+            platforms=platforms,
+            archs=archs,
+            enable_platform=enable_platform,
+        )
+    else:
+        return forge_config
 
 
 def _get_build_setup_line(forge_dir, platform, forge_config):
@@ -884,7 +894,7 @@ def _get_platforms_of_provider(provider, forge_config):
     return platforms, archs, keep_noarchs, upload_packages
 
 
-def render_circle(jinja_env, forge_config, forge_dir):
+def render_circle(jinja_env, forge_config, forge_dir, return_metadata=False):
     target_path = os.path.join(forge_dir, ".circleci", "config.yml")
     template_filename = "circle.yml.tmpl"
     fast_finish_text = textwrap.dedent(
@@ -926,6 +936,7 @@ def render_circle(jinja_env, forge_config, forge_dir):
         keep_noarchs=keep_noarchs,
         extra_platform_files=extra_platform_files,
         upload_packages=upload_packages,
+        return_metadata=return_metadata,
     )
 
 
@@ -983,7 +994,7 @@ def _render_template_exe_files(
         set_exe_file(target_fname, True)
 
 
-def render_travis(jinja_env, forge_config, forge_dir):
+def render_travis(jinja_env, forge_config, forge_dir, return_metadata=False):
     target_path = os.path.join(forge_dir, ".travis.yml")
     template_filename = "travis.yml.tmpl"
     fast_finish_text = textwrap.dedent(
@@ -1022,6 +1033,7 @@ def render_travis(jinja_env, forge_config, forge_dir):
         platform_specific_setup=_travis_specific_setup,
         upload_packages=upload_packages,
         extra_platform_files=extra_platform_files,
+        return_metadata=return_metadata,
     )
 
 
@@ -1039,7 +1051,7 @@ def _appveyor_specific_setup(jinja_env, forge_config, forge_dir, platform):
     forge_config["build_setup"] = build_setup
 
 
-def render_appveyor(jinja_env, forge_config, forge_dir):
+def render_appveyor(jinja_env, forge_config, forge_dir, return_metadata=False):
     target_path = os.path.join(forge_dir, ".appveyor.yml")
     fast_finish_text = textwrap.dedent(
         """\
@@ -1069,6 +1081,7 @@ def render_appveyor(jinja_env, forge_config, forge_dir):
         keep_noarchs=keep_noarchs,
         platform_specific_setup=_appveyor_specific_setup,
         upload_packages=upload_packages,
+        return_metadata=return_metadata,
     )
 
 
@@ -1102,7 +1115,7 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
     )
 
 
-def render_azure(jinja_env, forge_config, forge_dir):
+def render_azure(jinja_env, forge_config, forge_dir, return_metadata=False):
     target_path = os.path.join(forge_dir, "azure-pipelines.yml")
     template_filename = "azure-pipelines.yml.tmpl"
     fast_finish_text = ""
@@ -1127,6 +1140,7 @@ def render_azure(jinja_env, forge_config, forge_dir):
         platform_specific_setup=_azure_specific_setup,
         keep_noarchs=keep_noarchs,
         upload_packages=upload_packages,
+        return_metadata=return_metadata,
     )
 
 
@@ -1155,7 +1169,7 @@ def _drone_specific_setup(jinja_env, forge_config, forge_dir, platform):
     )
 
 
-def render_drone(jinja_env, forge_config, forge_dir):
+def render_drone(jinja_env, forge_config, forge_dir, return_metadata=False):
     target_path = os.path.join(forge_dir, ".drone.yml")
     template_filename = "drone.yml.tmpl"
     fast_finish_text = ""
@@ -1180,27 +1194,54 @@ def render_drone(jinja_env, forge_config, forge_dir):
         platform_specific_setup=_drone_specific_setup,
         keep_noarchs=keep_noarchs,
         upload_packages=upload_packages,
+        return_metadata=return_metadata,
     )
 
 
-def render_README(jinja_env, forge_config, forge_dir):
+def render_README(jinja_env, forge_config, forge_dir, render_info=None):
     if "README.md" in forge_config["skip_render"]:
         logger.info("README.md rendering is skipped")
         return
-    # we only care about the first metadata object for sake of readme
-    metas = conda_build.api.render(
-        os.path.join(forge_dir, "recipe"),
-        exclusive_config_file=forge_config["exclusive_config_file"],
-        permit_undefined_jinja=True,
-        finalize=False,
-        bypass_env_check=True,
-        trim_skip=False,
-    )
 
-    if "parent_recipe" in metas[0][0].meta["extra"]:
-        package_name = metas[0][0].meta["extra"]["parent_recipe"]["name"]
+    render_info = render_info or []
+
+    # pull out relevant metadata from rendering
+    try:
+        metas = conda_build.api.render(
+            os.path.join(forge_dir, "recipe"),
+            exclusive_config_file=forge_config["exclusive_config_file"],
+            permit_undefined_jinja=True,
+            finalize=False,
+            bypass_env_check=True,
+            trim_skip=False,
+        )
+        metas = [m[0] for m in metas]
+    except Exception:
+        # sometimes the above fails so we grab actual metadata
+        done = False
+        metas = []
+        for md in render_info:
+            for _metas, enabled in zip(
+                md["metas_list_of_lists"], md["enable_platform"]
+            ):
+                if enabled and len(_metas) > 0:
+                    metas = _metas
+                    done = True
+                    break
+            if done:
+                break
+
+    if len(metas) == 0:
+        raise RuntimeError(
+            "Could not create any metadata for rendering the README.md!"
+            " This likely indicates a serious bug or a feedstock with no actual"
+            " builds."
+        )
+
+    if "parent_recipe" in metas[0].meta["extra"]:
+        package_name = metas[0].meta["extra"]["parent_recipe"]["name"]
     else:
-        package_name = metas[0][0].name()
+        package_name = metas[0].name()
 
     ci_support_path = os.path.join(forge_dir, ".ci_support")
     variants = []
@@ -1212,17 +1253,17 @@ def render_README(jinja_env, forge_config, forge_dir):
 
     template = jinja_env.get_template("README.md.tmpl")
     target_fname = os.path.join(forge_dir, "README.md")
-    forge_config["noarch_python"] = all(meta[0].noarch for meta in metas)
-    forge_config["package"] = metas[0][0]
+    forge_config["noarch_python"] = all(meta.noarch for meta in metas)
+    forge_config["package"] = metas[0]
     forge_config["package_name"] = package_name
     forge_config["variants"] = sorted(variants)
     forge_config["outputs"] = sorted(
-        list(OrderedDict((meta[0].name(), None) for meta in metas))
+        list(OrderedDict((meta.name(), None) for meta in metas))
     )
     forge_config["maintainers"] = sorted(
         set(
             chain.from_iterable(
-                meta[0].meta["extra"].get("recipe-maintainers", [])
+                meta.meta["extra"].get("recipe-maintainers", [])
                 for meta in metas
             )
         )
@@ -1614,12 +1655,28 @@ def main(
     clear_variants(forge_dir)
     clear_scripts(forge_dir)
 
-    render_circle(env, config, forge_dir)
-    render_travis(env, config, forge_dir)
-    render_appveyor(env, config, forge_dir)
-    render_azure(env, config, forge_dir)
-    render_drone(env, config, forge_dir)
-    render_README(env, config, forge_dir)
+    # the order of these calls appears to matter
+    render_info = []
+    render_info.append(
+        render_circle(env, config, forge_dir, return_metadata=True)
+    )
+    render_info.append(
+        render_travis(env, config, forge_dir, return_metadata=True)
+    )
+    render_info.append(
+        render_appveyor(env, config, forge_dir, return_metadata=True)
+    )
+    render_info.append(
+        render_azure(env, config, forge_dir, return_metadata=True)
+    )
+    render_info.append(
+        render_drone(env, config, forge_dir, return_metadata=True)
+    )
+    # put azure first just in case
+    tmp = render_info[0]
+    render_info[0] = render_info[-2]
+    render_info[-2] = tmp
+    render_README(env, config, forge_dir, render_info)
 
     if os.path.isdir(os.path.join(forge_dir, ".ci_support")):
         with write_file(os.path.join(forge_dir, ".ci_support", "README")) as f:
