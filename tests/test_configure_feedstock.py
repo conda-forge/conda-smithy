@@ -553,3 +553,8 @@ def test_automerge_action(py_recipe, jinja_env):
         automerge_recipe.config, automerge_recipe.recipe
     )
     assert os.path.exists(os.path.join(automerge_recipe.recipe, '.github/workflows/main.yml'))
+    with open(os.path.join(automerge_recipe.recipe, '.github/workflows/main.yml')) as f:
+        action_config = yaml.safe_load(f)
+    assert 'jobs' in action_config
+    assert 'regro-cf-autotick-bot-action' in action_config['jobs']
+
