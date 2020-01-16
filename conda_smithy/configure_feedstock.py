@@ -1198,6 +1198,13 @@ def render_drone(jinja_env, forge_config, forge_dir, return_metadata=False):
     )
 
 
+def render_actions(jinja_env, forge_config, forge_dir, render_info=None):
+    if forge_config.get('bot', {}).get('automerge', False):
+        os.makedirs(f'{forge_dir}/.github/workflows/', exist_ok=True)
+        template = jinja_env.get_template("main.yml.tmpl")
+        with open(f'{forge_dir}/.github/workflows/main.yml', 'w') as f:
+            f.write(template.render(**forge_config))
+
 def render_README(jinja_env, forge_config, forge_dir, render_info=None):
     if "README.md" in forge_config["skip_render"]:
         logger.info("README.md rendering is skipped")
@@ -1677,6 +1684,7 @@ def main(
     render_info[0] = render_info[-2]
     render_info[-2] = tmp
     render_README(env, config, forge_dir, render_info)
+    render_actions(env, config, forge_dir, render_info)
 
     if os.path.isdir(os.path.join(forge_dir, ".ci_support")):
         with write_file(os.path.join(forge_dir, ".ci_support", "README")) as f:
