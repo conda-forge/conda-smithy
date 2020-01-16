@@ -548,9 +548,9 @@ def test_files_skip_render(render_skipped_recipe, jinja_env):
 
 
 def test_automerge_action(py_recipe, jinja_env):
-    cnfgr_fdstk.render_actions(jinja_env=jinja_env, forge_config=atuomerge_recipe.config,forge_dir=automerge_recipe.recipe)
+    cnfgr_fdstk.render_actions(jinja_env=jinja_env, forge_config=py_recipe.config,forge_dir=py_recipe.recipe)
     cnfgr_fdstk.copy_feedstock_content(
-        automerge_recipe.config, automerge_recipe.recipe
+        py_recipe.config, py_recipe.recipe
     )
     assert os.path.exists(os.path.join(automerge_recipe.recipe, '.github/workflows/main.yml'))
     with open(os.path.join(automerge_recipe.recipe, '.github/workflows/main.yml')) as f:
