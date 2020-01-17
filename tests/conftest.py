@@ -97,7 +97,7 @@ def config_yaml(testing_workdir):
         config = {"python": ["2.7", "3.5", "3.6"]}
         yaml.dump(config, f, default_flow_style=False)
     with open(os.path.join(testing_workdir, "conda-forge.yml"), "w") as f:
-        config = {"upload_on_branch": "foo-branch", 'bot': {'automerge': True}}
+        config = {"upload_on_branch": "foo-branch", "bot": {"automerge": True}}
         yaml.dump(config, f, default_flow_style=False)
     return testing_workdir
 

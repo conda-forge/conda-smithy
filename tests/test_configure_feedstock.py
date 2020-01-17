@@ -548,13 +548,18 @@ def test_files_skip_render(render_skipped_recipe, jinja_env):
 
 
 def test_automerge_action(py_recipe, jinja_env):
-    cnfgr_fdstk.render_actions(jinja_env=jinja_env, forge_config=py_recipe.config,forge_dir=py_recipe.recipe)
-    cnfgr_fdstk.copy_feedstock_content(
-        py_recipe.config, py_recipe.recipe
+    cnfgr_fdstk.render_actions(
+        jinja_env=jinja_env,
+        forge_config=py_recipe.config,
+        forge_dir=py_recipe.recipe,
     )
-    assert os.path.exists(os.path.join(py_recipe.recipe, '.github/workflows/main.yml'))
-    with open(os.path.join(py_recipe.recipe, '.github/workflows/main.yml')) as f:
+    cnfgr_fdstk.copy_feedstock_content(py_recipe.config, py_recipe.recipe)
+    assert os.path.exists(
+        os.path.join(py_recipe.recipe, ".github/workflows/main.yml")
+    )
+    with open(
+        os.path.join(py_recipe.recipe, ".github/workflows/main.yml")
+    ) as f:
         action_config = yaml.safe_load(f)
-    assert 'jobs' in action_config
-    assert 'regro-cf-autotick-bot-action' in action_config['jobs']
-
+    assert "jobs" in action_config
+    assert "regro-cf-autotick-bot-action" in action_config["jobs"]

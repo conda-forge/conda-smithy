@@ -1200,10 +1200,12 @@ def render_drone(jinja_env, forge_config, forge_dir, return_metadata=False):
 
 
 def render_actions(jinja_env, forge_config, forge_dir, render_info=None):
-    if forge_config.get('bot', {}).get('automerge', False):
-        os.makedirs(f'{forge_dir}/.github/workflows/', exist_ok=True)
-        shutil.copyfile(f'{conda_forge_content}/templates/main.yml.tmpl', 
-                        f'{forge_dir}/.github/workflows/main.yml')
+    if forge_config.get("bot", {}).get("automerge", False):
+        os.makedirs(f"{forge_dir}/.github/workflows/", exist_ok=True)
+        shutil.copyfile(
+            f"{conda_forge_content}/templates/main.yml.tmpl",
+            f"{forge_dir}/.github/workflows/main.yml",
+        )
 
 
 def render_README(jinja_env, forge_config, forge_dir, render_info=None):
