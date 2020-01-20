@@ -1206,6 +1206,12 @@ def render_actions(jinja_env, forge_config, forge_dir, render_info=None):
             f"{conda_forge_content}/templates/main.yml.tmpl",
             f"{forge_dir}/.github/workflows/main.yml",
         )
+    else:
+        if os.path.exists(f"{forge_dir}/.github/workflows/main.yml"):
+            try:
+                os.remove(f"{forge_dir}/.github/workflows/main.yml")
+            except Exception:
+                pass
 
 
 def render_README(jinja_env, forge_config, forge_dir, render_info=None):
