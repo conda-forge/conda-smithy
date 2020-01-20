@@ -453,10 +453,13 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
                 )
                 continue
 
-    # 23: non noarch builds shouldn't use version constraints on python
+    # 23: non noarch builds shouldn't use version constraints on python and r-base
     host_reqs = requirements_section.get("host") or []
     run_reqs = requirements_section.get("run") or []
+    # 23a. check for python
     if build_section.get("noarch") is None and not outputs_section:
+        filtered_host_reqs = []
+        filtered_run_reqs = []
         filtered_host_reqs = [
             req
             for req in host_reqs
@@ -479,6 +482,33 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
                 if constraint.startswith(">") or constraint.startswith("<"):
                     lints.append(
                         "Non noarch: python packages should have a python requirement without any version constraints."
+                    )
+    # 23b. check for r-base
+    if build_section.get("noarch") is None and not outputs_section:
+        filtered_host_reqs = []
+        filtered_run_reqs = []
+        filtered_host_reqs = [
+            req
+            for req in host_reqs
+            if req == "r-base" or req.startswith("r-base ")
+        ]
+        filtered_run_reqs = [
+            req
+            for req in run_reqs
+            if req == "r-base" or req.startswith("r-base ")
+        ]
+        if filtered_host_reqs and not filtered_run_reqs:
+            lints.append(
+                "If r-base is a host requirement, it should be a run requirement."
+            )
+        for reqs in [filtered_host_reqs, filtered_run_reqs]:
+            if "r-base" in reqs:
+                continue
+            for req in reqs:
+                constraint = req.split(" ", 1)[1]
+                if constraint.startswith(">") or constraint.startswith("<"):
+                    lints.append(
+                        "Non noarch: r-base packages should have a r-base requirement without any version constraints."
                     )
 
     # hints
