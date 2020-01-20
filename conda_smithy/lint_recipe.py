@@ -471,16 +471,22 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
             ]
             if filtered_host_reqs and not filtered_run_reqs:
                 lints.append(
-                    "If " + str(language) + " is a host requirement, it should be a run requirement."
+                    "If {0} is a host requirement, it should be a run requirement.".format(
+                        str(language)
+                    )
                 )
             for reqs in [filtered_host_reqs, filtered_run_reqs]:
                 if str(language) in reqs:
                     continue
                 for req in reqs:
                     constraint = req.split(" ", 1)[1]
-                    if constraint.startswith(">") or constraint.startswith("<"):
+                    if constraint.startswith(">") or constraint.startswith(
+                        "<"
+                    ):
                         lints.append(
-                            "Non noarch: " + str(language) + " packages should have a " + str(language) + " requirement without any version constraints."
+                            "Non noarch: {0} packages should have a {0} requirement without any version constraints.".format(
+                                str(language)
+                            )
                         )
 
     # hints
