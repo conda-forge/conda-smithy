@@ -567,7 +567,7 @@ def test_automerge_action_exists(py_recipe, jinja_env):
 
 def test_automerge_action_noton(py_recipe, jinja_env):
     cfg = copy.deepcopy(py_recipe.config)
-    del cfg["bot"]
+    cfg["bot"]["automerge"] = False
     cnfgr_fdstk.copy_feedstock_content(cfg, py_recipe.recipe)
     cnfgr_fdstk.render_actions(
         jinja_env=jinja_env, forge_config=cfg, forge_dir=py_recipe.recipe,
