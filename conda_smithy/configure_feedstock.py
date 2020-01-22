@@ -1205,7 +1205,7 @@ def render_actions(jinja_env, forge_config, forge_dir, render_info=None):
     if not forge_config.get("bot", {}).get("automerge", False):
         try:
             remove_file(f"{forge_dir}/.github/workflows/main.yml")
-        except Exceptions:
+        except (OSError, FileNotFoundError):
             pass
 
 
@@ -1383,6 +1383,9 @@ def _load_forge_config(forge_dir, exclusive_config_file):
         },
         "recipe_dir": "recipe",
         "skip_render": [],
+        "bot": {
+            "automerge": False,
+        },
     }
 
     forge_yml = os.path.join(forge_dir, "conda-forge.yml")
