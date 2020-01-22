@@ -1383,9 +1383,7 @@ def _load_forge_config(forge_dir, exclusive_config_file):
         },
         "recipe_dir": "recipe",
         "skip_render": [],
-        "bot": {
-            "automerge": False,
-        },
+        "bot": {"automerge": False,},
     }
 
     forge_yml = os.path.join(forge_dir, "conda-forge.yml")
