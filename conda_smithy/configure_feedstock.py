@@ -1204,11 +1204,10 @@ def render_actions(jinja_env, forge_config, forge_dir, render_info=None):
     # we have to remove it if the actions are not on
     # FIXME does this need to be a git rm?
     if not forge_config.get("bot", {}).get("automerge", False):
-        if os.path.exists(f"{forge_dir}/.github/workflows/main.yml"):
-            try:
-                os.remove(f"{forge_dir}/.github/workflows/main.yml")
-            except Exception:
-                pass
+        try:
+            remove_file(f"{forge_dir}/.github/workflows/main.yml")
+        except Exceptions:
+            pass
 
 
 def render_README(jinja_env, forge_config, forge_dir, render_info=None):
