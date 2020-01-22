@@ -1200,13 +1200,10 @@ def render_drone(jinja_env, forge_config, forge_dir, return_metadata=False):
 
 
 def render_actions(jinja_env, forge_config, forge_dir, render_info=None):
-    if forge_config.get("bot", {}).get("automerge", False):
-        os.makedirs(f"{forge_dir}/.github/workflows/", exist_ok=True)
-        shutil.copyfile(
-            f"{conda_forge_content}/templates/main.yml.tmpl",
-            f"{forge_dir}/.github/workflows/main.yml",
-        )
-    else:
+    # this file was copied over w/ all of the feedstock content
+    # we have to remove it if the actions are not on
+    # FIXME does this need to be a git rm?
+    if not forge_config.get("bot", {}).get("automerge", False):
         if os.path.exists(f"{forge_dir}/.github/workflows/main.yml"):
             try:
                 os.remove(f"{forge_dir}/.github/workflows/main.yml")
@@ -1693,6 +1690,7 @@ def main(
     render_info[0] = render_info[-2]
     render_info[-2] = tmp
     render_README(env, config, forge_dir, render_info)
+    # this function call has to come after `copy_feedstock_content`
     render_actions(env, config, forge_dir, render_info)
 
     if os.path.isdir(os.path.join(forge_dir, ".ci_support")):
