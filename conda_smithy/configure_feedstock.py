@@ -1202,7 +1202,6 @@ def render_drone(jinja_env, forge_config, forge_dir, return_metadata=False):
 def render_actions(jinja_env, forge_config, forge_dir, render_info=None):
     # this file was copied over w/ all of the feedstock content
     # we have to remove it if the actions are not on
-    # FIXME does this need to be a git rm?
     if not forge_config.get("bot", {}).get("automerge", False):
         try:
             remove_file(f"{forge_dir}/.github/workflows/main.yml")
