@@ -338,7 +338,7 @@
   first_commit: 2017-09-13 18:29:41
 - name: Anthony Scopatz
   email: scopatz@gmail.com
-  num_commits: 94
+  num_commits: 96
   first_commit: 2015-07-22 22:51:27
   github: scopatz
 - name: Florian Rathgeber
@@ -357,7 +357,7 @@
   - cjwright4242@gmail.com
   aliases:
   - christopher
-  num_commits: 89
+  num_commits: 99
   first_commit: 2017-01-05 19:25:16
   github: CJ-Wright
 - name: Jason Grout
@@ -389,3 +389,13 @@
   num_commits: 33
   first_commit: 2016-08-31 23:32:44
   github: shadowwalkersb
+- name: Matthew R Becker
+  email: becker.mr@gmail.com
+  num_commits: 9
+  first_commit: 2020-01-07 17:44:33
+  github: beckermr
+- name: Matthew R. Becker
+  email: beckermr@users.noreply.github.com
+  num_commits: 8
+  first_commit: 2020-01-19 19:32:30
+  github: beckermr
