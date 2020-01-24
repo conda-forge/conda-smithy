@@ -1198,6 +1198,16 @@ def render_drone(jinja_env, forge_config, forge_dir, return_metadata=False):
     )
 
 
+def render_actions(jinja_env, forge_config, forge_dir, render_info=None):
+    # this file was copied over w/ all of the feedstock content
+    # we have to remove it if the actions are not on
+    if not forge_config["bot"]["automerge"]:
+        try:
+            remove_file(f"{forge_dir}/.github/workflows/main.yml")
+        except (OSError, FileNotFoundError):
+            pass
+
+
 def render_README(jinja_env, forge_config, forge_dir, render_info=None):
     if "README.md" in forge_config["skip_render"]:
         logger.info("README.md rendering is skipped")
@@ -1372,6 +1382,7 @@ def _load_forge_config(forge_dir, exclusive_config_file):
         },
         "recipe_dir": "recipe",
         "skip_render": [],
+        "bot": {"automerge": False,},
     }
 
     forge_yml = os.path.join(forge_dir, "conda-forge.yml")
@@ -1677,6 +1688,8 @@ def main(
     render_info[0] = render_info[-2]
     render_info[-2] = tmp
     render_README(env, config, forge_dir, render_info)
+    # this function call has to come after `copy_feedstock_content`
+    render_actions(env, config, forge_dir, render_info)
 
     if os.path.isdir(os.path.join(forge_dir, ".ci_support")):
         with write_file(os.path.join(forge_dir, ".ci_support", "README")) as f:

@@ -63,7 +63,7 @@ def config_yaml(testing_workdir):
         f.write(
             dedent(
                 """\
-        target_platform: 
+        target_platform:
         - win-64        # [win]
         - win-32        # [win]
         c_compiler:     # [win]
