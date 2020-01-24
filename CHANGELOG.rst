@@ -4,6 +4,27 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.6.6
+====================
+
+**Added:**
+
+* ``conda smithy rerender`` now adds an automerge action if ``conda-forge.yml`` has ``bot: {automerge: True}`` set.
+  This action merges PRs that are opened by the ``regro-cf-autotick-bot``, are passing, and have the ``[bot-automerge]``
+  slug in the title.
+
+**Fixed:**
+
+* Fixed problems rendering the ``README.md`` for some ``Jinja2`` variables (#1215)
+
+**Authors:**
+
+* Christopher J. Wright
+* Matthew R Becker
+* Matthew R. Becker
+
+
+
 v3.6.5
 ====================
 
