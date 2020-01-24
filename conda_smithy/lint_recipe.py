@@ -197,8 +197,8 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
                 lints.append("The recipe must have some tests.")
 
     # 5: License cannot be 'unknown.'
-    license = about_section.get("license", "")
-    if "unknown" == license.strip().lower():
+    license = about_section.get("license", "").lower()
+    if "unknown" == license.strip():
         lints.append("The recipe license cannot be unknown.")
 
     # 6: Selectors should be in a tidy form.
