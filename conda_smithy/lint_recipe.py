@@ -197,8 +197,8 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
                 lints.append("The recipe must have some tests.")
 
     # 5: License cannot be 'unknown.'
-    license = about_section.get("license", "").lower()
-    if "unknown" == license.strip():
+    license = about_section.get("license", "")
+    if "unknown" == license.strip().lower():
         lints.append("The recipe license cannot be unknown.")
 
     # 6: Selectors should be in a tidy form.
@@ -587,6 +587,21 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
             hints.append(
                 "There have been errors while scanning with shellcheck."
             )
+
+    # 4: Check for SPDX
+    import license_expression
+    license = about_section.get("license", "")
+    licensing = license_expression.Licensing()
+    try:
+        parsed_licenses = set([l.key for l in licensing.license_symbols(license.strip())])
+    except license_expression.ExpressionError:
+        parsed_licenses = set([license])
+    with open(os.path.join(os.path.dirname(__file__), "licenses.txt"), "r") as f:
+        expected_licenses = f.readlines()
+        expected_licenses = set([l.strip() for l in expected_licenses])
+    if parsed_licenses - expected_licenses:
+        #print(parsed_licenses, expected_licenses)
+        hints.append("License is not an SPDX identifier (or Other) nor an SPDX license expression")
 
     return lints, hints
 
