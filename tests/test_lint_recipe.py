@@ -950,7 +950,6 @@ class Test_linter(unittest.TestCase):
             lints,
         )
 
-
     def test_build_sh_with_shellcheck_findings(self):
         lints, hints = linter.main(
             os.path.join(_thisdir, "recipes", "build_script_with_findings"),
