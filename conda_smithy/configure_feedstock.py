@@ -1396,7 +1396,8 @@ def _load_forge_config(forge_dir, exclusive_config_file):
         )
     else:
         with open(forge_yml, "r") as fh:
-            file_config = list(yaml.safe_load_all(fh))[0] or {}
+            documents = list(yaml.safe_load_all(fh))
+            file_config = (documents or [None])[0] or {}
 
         # check for conda-smithy 2.x matrix which we can't auto-migrate
         # to conda_build_config
