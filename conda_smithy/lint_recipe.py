@@ -484,7 +484,7 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
                         "<"
                     ):
                         lints.append(
-                            "Non noarch packages should have a {0} requirement without any version constraints.".format(
+                            "Non noarch packages should have {0} requirement without any version constraints.".format(
                                 str(language)
                             )
                         )
