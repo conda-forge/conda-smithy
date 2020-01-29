@@ -65,8 +65,10 @@ jobs:
         updateConda: false
       displayName: Install conda-build and activate environment
 
-    - script: set PYTHONUNBUFFERED=1
+    - script: set "Boost_ROOT="
 
+    - script: set PYTHONUNBUFFERED=1
+    
     # Configure the VM
     - script: setup_conda_rc .\ .\{{ recipe_dir }} .\.ci_support\%CONFIG%.yaml
 
