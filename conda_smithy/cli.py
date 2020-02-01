@@ -194,7 +194,7 @@ class RegisterCI(Subcommand):
             default="conda-forge",
             help="github organisation under which to register this repo",
         )
-        for ci in ["Azure", "Travis", "Circle", "Appveyor", "Drone"]:
+        for ci in ["Azure", "Travis", "Circle", "Appveyor", "Drone", "Webservice"]:
             scp.add_argument(
                 "--without-{}".format(ci.lower()),
                 dest=ci.lower(),
@@ -254,7 +254,10 @@ class RegisterCI(Subcommand):
         else:
             print("Drone registration disabled.")
 
-        ci_register.add_conda_forge_webservice_hooks(owner, repo)
+        if args.webservice:
+            ci_register.add_conda_forge_webservice_hooks(owner, repo)
+        else:
+            print("Heroku webservice registration disabled.")
         print(
             "\nCI services have been enabled. You may wish to regenerate the feedstock.\n"
             "Any changes will need commiting to the repo."
