@@ -4,6 +4,28 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.6.7
+====================
+
+**Added:**
+
+Non-noarch recipes shouldn't use version constraints on python and r-base. 
+The linter only checked for python, this PR addes the check for r-base.
+* Added an option to skip adding webhooks
+
+**Fixed:**
+
+* Azure builds for OSX and Windows only attempt to upload if builds succeeded
+  and the BINSTAR_TOKEN is available.
+
+**Authors:**
+
+* Isuru Fernando
+* Mark Harfouche
+* Natasha Pavlovikj
+
+
+
 v3.6.6
 ====================
 
