@@ -3,8 +3,8 @@ Authors are sorted by number of commits.
 
 * Isuru Fernando
 * Christopher J. Wright
-* Phil Elson
 * Anthony Scopatz
+* Phil Elson
 * Filipe Fernandes
 * Dougal J. Sutherland
 * shadow_walker
@@ -24,6 +24,7 @@ Authors are sorted by number of commits.
 * John Kirkham
 * Leopold Talirz
 * Matthew R. Becker
+* Natasha Pavlovikj
 * Gonzalo Pena-Castellanos
 * Daniel Bast
 * Maksim Rakitin

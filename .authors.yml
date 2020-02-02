@@ -246,7 +246,7 @@
   email: isuru.11@cse.mrt.ac.lk
   alternate_emails:
   - isuruf@gmail.com
-  num_commits: 257
+  num_commits: 259
   first_commit: 2017-01-08 22:03:03
   github: isuruf
 - name: Julian Rüth
@@ -328,7 +328,7 @@
   github: sodre
 - name: Mark Harfouche
   email: mark.harfouche@gmail.com
-  num_commits: 14
+  num_commits: 17
   first_commit: 2018-06-12 01:15:09
   github: hmaarrfk
 - name: Dougal J. Sutherland
@@ -338,7 +338,7 @@
   first_commit: 2017-09-13 18:29:41
 - name: Anthony Scopatz
   email: scopatz@gmail.com
-  num_commits: 96
+  num_commits: 98
   first_commit: 2015-07-22 22:51:27
   github: scopatz
 - name: Florian Rathgeber
@@ -399,3 +399,8 @@
   num_commits: 8
   first_commit: 2020-01-19 19:32:30
   github: beckermr
+- name: Natasha Pavlovikj
+  email: npavlovikj2@unl.edu
+  num_commits: 8
+  first_commit: 2020-01-20 13:45:51
+  github: npavlovikj
