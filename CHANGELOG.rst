@@ -4,6 +4,20 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.6.8
+====================
+
+**Changed:**
+
+* Changed the config name to remove * and space characters
+
+**Authors:**
+
+* Isuru Fernando
+* Min RK
+
+
+
 v3.6.7
 ====================
 
