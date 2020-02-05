@@ -118,7 +118,7 @@
   first_commit: 2019-02-17 13:35:45
 - name: Min RK
   email: benjaminrk@gmail.com
-  num_commits: 27
+  num_commits: 28
   first_commit: 2016-09-15 09:07:34
   github: minrk
 - name: Phil Elson
@@ -246,7 +246,7 @@
   email: isuru.11@cse.mrt.ac.lk
   alternate_emails:
   - isuruf@gmail.com
-  num_commits: 259
+  num_commits: 262
   first_commit: 2017-01-08 22:03:03
   github: isuruf
 - name: Julian Rüth
