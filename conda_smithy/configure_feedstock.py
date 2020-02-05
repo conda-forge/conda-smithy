@@ -50,7 +50,7 @@ def package_key(config, used_loop_vars, subdir):
     if build_vars:
         key.append(build_vars)
     key = "-".join(key)
-    return key
+    return key.replace("*", "_").replace(" ", "_")
 
 
 def copytree(src, dst, ignore=(), root_dst=None):
