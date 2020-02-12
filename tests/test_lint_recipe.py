@@ -918,6 +918,12 @@ class Test_linter(unittest.TestCase):
             lints,
         )
 
+        meta = {
+            "requirements": {"host": ["python"], "run": ["python-dateutil"]}
+        }
+        # Test that this doesn't crash
+        lints, hints = linter.lintify(meta)
+
     def test_r_base_requirements(self):
         meta = {"requirements": {"host": ["r-base >=3.5"]}}
         lints, hints = linter.lintify(meta)
