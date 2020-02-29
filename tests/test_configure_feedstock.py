@@ -547,6 +547,22 @@ def test_files_skip_render(render_skipped_recipe, jinja_env):
         assert not os.path.exists(fpath)
 
 
+def test_webservices_action_exists(py_recipe, jinja_env):
+    cnfgr_fdstk.copy_feedstock_content(py_recipe.config, py_recipe.recipe)
+    cnfgr_fdstk.render_actions(
+        jinja_env=jinja_env, forge_config=py_recipe.config, forge_dir=py_recipe.recipe,
+    )
+    assert os.path.exists(
+        os.path.join(py_recipe.recipe, ".github/workflows/webservices.yml")
+    )
+    with open(
+        os.path.join(py_recipe.recipe, ".github/workflows/webservices.yml")
+    ) as f:
+        action_config = yaml.safe_load(f)
+    assert "jobs" in action_config
+    assert "webservices" in action_config["jobs"]
+
+
 def test_automerge_action_exists(py_recipe, jinja_env):
     cfg = copy.deepcopy(py_recipe.config)
     cfg["bot"]["automerge"] = True
