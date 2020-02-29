@@ -462,12 +462,12 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
             filtered_host_reqs = [
                 req
                 for req in host_reqs
-                if req == str(language) or req.startswith(str(language))
+                if req.partition(" ")[0] == str(language)
             ]
             filtered_run_reqs = [
                 req
                 for req in run_reqs
-                if req == str(language) or req.startswith(str(language))
+                if req.partition(" ")[0] == str(language)
             ]
             if filtered_host_reqs and not filtered_run_reqs:
                 lints.append(
