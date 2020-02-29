@@ -541,6 +541,7 @@ def test_files_skip_render(render_skipped_recipe, jinja_env):
         ".gitattributes",
         "README.md",
         "LICENSE.txt",
+        ".github/workflows/webservices.yml",
     ]
     for f in skipped_files:
         fpath = os.path.join(render_skipped_recipe.recipe, f)

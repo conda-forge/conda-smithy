@@ -449,6 +449,7 @@ skip_render:
     - .gitattributes
     - README.md
     - LICENSE.txt
+    - .github/workflows
     """
         )
     return RecipeConfigPair(
