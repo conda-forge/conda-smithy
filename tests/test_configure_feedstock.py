@@ -550,7 +550,9 @@ def test_files_skip_render(render_skipped_recipe, jinja_env):
 def test_webservices_action_exists(py_recipe, jinja_env):
     cnfgr_fdstk.copy_feedstock_content(py_recipe.config, py_recipe.recipe)
     cnfgr_fdstk.render_actions(
-        jinja_env=jinja_env, forge_config=py_recipe.config, forge_dir=py_recipe.recipe,
+        jinja_env=jinja_env,
+        forge_config=py_recipe.config,
+        forge_dir=py_recipe.recipe,
     )
     assert os.path.exists(
         os.path.join(py_recipe.recipe, ".github/workflows/webservices.yml")
