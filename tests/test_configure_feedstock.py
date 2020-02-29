@@ -559,4 +559,3 @@ def test_automerge_action_exists(py_recipe, jinja_env):
         action_config = yaml.safe_load(f)
     assert "jobs" in action_config
     assert "regro-cf-autotick-bot-action" in action_config["jobs"]
-
