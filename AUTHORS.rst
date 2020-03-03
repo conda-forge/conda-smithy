@@ -11,6 +11,7 @@ Authors are sorted by number of commits.
 * Michael Sarahan
 * Min RK
 * Mark Harfouche
+* Matthew R Becker
 * Eric Dill
 * Jan Schulz
 * Josh Reichardt
@@ -20,10 +21,9 @@ Authors are sorted by number of commits.
 * C.A.M. Gerlach
 * Julian Rüth
 * refraction-ray
-* Matthew R Becker
+* Matthew R. Becker
 * John Kirkham
 * Leopold Talirz
-* Matthew R. Becker
 * Natasha Pavlovikj
 * Gonzalo Pena-Castellanos
 * Daniel Bast
@@ -76,3 +76,4 @@ Authors are sorted by number of commits.
 * Julien Schueller
 * Duncan Macleod
 * Jason Grout
+* Tim Werner

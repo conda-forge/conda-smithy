@@ -246,7 +246,7 @@
   email: isuru.11@cse.mrt.ac.lk
   alternate_emails:
   - isuruf@gmail.com
-  num_commits: 262
+  num_commits: 265
   first_commit: 2017-01-08 22:03:03
   github: isuruf
 - name: Julian Rüth
@@ -391,12 +391,12 @@
   github: shadowwalkersb
 - name: Matthew R Becker
   email: becker.mr@gmail.com
-  num_commits: 9
+  num_commits: 16
   first_commit: 2020-01-07 17:44:33
   github: beckermr
 - name: Matthew R. Becker
   email: beckermr@users.noreply.github.com
-  num_commits: 8
+  num_commits: 9
   first_commit: 2020-01-19 19:32:30
   github: beckermr
 - name: Natasha Pavlovikj
@@ -404,3 +404,7 @@
   num_commits: 8
   first_commit: 2020-01-20 13:45:51
   github: npavlovikj
+- name: Tim Werner
+  email: werner@inoviga.com
+  num_commits: 1
+  first_commit: 2020-02-12 09:02:01
