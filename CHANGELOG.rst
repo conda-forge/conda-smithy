@@ -4,6 +4,27 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.6.9
+====================
+
+**Added:**
+
+* Add automerge github actions when rerendering
+* Added the configuration file for the webservices github action
+
+**Fixed:**
+
+* Fix crash of linter when requirements contains packages that start with python in name
+
+**Authors:**
+
+* Isuru Fernando
+* Matthew R Becker
+* Matthew R. Becker
+* Tim Werner
+
+
+
 v3.6.8
 ====================
 
