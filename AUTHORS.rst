@@ -10,8 +10,8 @@ Authors are sorted by number of commits.
 * shadow_walker
 * Michael Sarahan
 * Min RK
-* Mark Harfouche
 * Matthew R Becker
+* Mark Harfouche
 * Eric Dill
 * Jan Schulz
 * Josh Reichardt
