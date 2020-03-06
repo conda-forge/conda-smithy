@@ -65,6 +65,8 @@ def _version_order(
     if ordering is not None:
         return ordering.index(v)
     else:
+        if isinstance(v, str):
+            v = v.replace(" ", ".").replace("*", "1")
         try:
             return VersionOrder(v)
         except:
