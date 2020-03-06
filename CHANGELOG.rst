@@ -4,6 +4,19 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.6.10
+====================
+
+**Fixed:**
+
+* Fixed variant comparisons when the variant has a space
+
+**Authors:**
+
+* Isuru Fernando
+
+
+
 v3.6.9
 ====================
 
