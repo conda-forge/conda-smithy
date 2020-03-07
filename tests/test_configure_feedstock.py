@@ -485,6 +485,14 @@ def test_migrator_delete_old(recipe_migration_cfep9, jinja_env):
     cfp_migration_dir = os.path.join(
         os.path.dirname(cfp_file), "share", "conda-forge", "migrations"
     )
+    assert os.path.exists(
+        os.path.join(
+            recipe_migration_cfep9.recipe,
+            ".ci_support",
+            "migrations",
+            "zlib.yaml",
+        )
+    )
     os.makedirs(cfp_migration_dir, exist_ok=True)
     cnfgr_fdstk.render_azure(
         jinja_env=jinja_env,
