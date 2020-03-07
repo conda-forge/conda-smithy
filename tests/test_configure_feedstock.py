@@ -428,6 +428,7 @@ def test_readme_has_terminating_newline(noarch_recipe, jinja_env):
         readme_file.seek(-1, os.SEEK_END)
         assert readme_file.read() == b"\n"
 
+
 def test_migrator_recipe(recipe_migration_cfep9, jinja_env):
     cnfgr_fdstk.render_azure(
         jinja_env=jinja_env,
@@ -448,12 +449,14 @@ def test_migrator_recipe(recipe_migration_cfep9, jinja_env):
 
 def test_migrator_cfp(recipe_migration_cfep9, jinja_env):
     cfp_file = recipe_migration_cfep9.config["exclusive_config_file"]
-    cfp_migration_dir = os.path.join(os.path.dirname(cfp_file), "share",
-                           "conda-forge", "migrations")
+    cfp_migration_dir = os.path.join(
+        os.path.dirname(cfp_file), "share", "conda-forge", "migrations"
+    )
     os.makedirs(cfp_migration_dir, exist_ok=True)
     with open(os.path.join(cfp_migration_dir, "zlib2.yaml"), "w") as f:
         f.write(
-            textwrap.dedent("""
+            textwrap.dedent(
+                """
                 migrator_ts: 1
                 zlib:
                    - 1001
