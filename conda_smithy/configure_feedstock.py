@@ -1605,7 +1605,10 @@ def get_migrations_in_dir(migrations_root):
             )
             # Use a object as timestamp to not delete it
             ts = migration_yaml.get("migrator_ts", object())
-            res[ts] = fn
+            migration_number = migration_yaml.get("__migrator", {}).get(
+                "migration_number", 1
+            )
+            res[ts] = (fn, migration_number)
     return res
 
 
@@ -1622,19 +1625,24 @@ def set_migration_fns(forge_dir, forge_config):
     migrations_in_feedstock = get_migrations_in_dir(migrations_root)
 
     if not os.path.exists(cfp_migrations_dir):
-        forge_config["migration_fns"] = list(migrations_in_feedstock.values())
+        migration_fns = [fn for fn, _ in migrations_in_feedstock.values()]
+        forge_config["migration_fns"] = migration_fns
         return
 
     migrations_in_cfp = get_migrations_in_dir(cfp_migrations_dir)
 
     result = []
-    for ts, fn in migrations_in_feedstock.items():
-        if type(ts) == object:
+    for ts, (fn, num) in migrations_in_feedstock.items():
+        if ts == object:
             # This file doesn't have a timestamp. Use it as it is.
             result.append(fn)
         elif ts in migrations_in_cfp:
-            # Use the one from cfp.
-            result.append(migrations_in_cfp[ts])
+            # Use the one from cfp if migration_numbers match
+            new_fn, new_num = migrations_in_cfp[ts]
+            if num == new_num:
+                result.append(new_fn)
+            else:
+                result.append(fn)
         else:
             # Delete this as this migration is over.
             remove_file(fn)
