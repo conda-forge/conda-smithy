@@ -41,7 +41,7 @@ def parse_variant(
     Parameters
     ----------
     variant_file_content : str
-        The loaded vaiant contents.  This can include selectors etc.
+        The loaded variant contents.  This can include selectors etc.
     """
     if not config:
         from conda_build.config import Config

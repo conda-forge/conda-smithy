@@ -9,6 +9,7 @@ import warnings
 from collections import OrderedDict
 import copy
 import hashlib
+import time
 
 import conda_build.api
 import conda_build.utils
@@ -486,7 +487,7 @@ def _get_fast_finish_script(
     return fast_finish_text
 
 
-def migrate_combined_spec(combined_spec, forge_dir, config):
+def migrate_combined_spec(combined_spec, forge_dir, config, forge_config):
     """CFEP-9 variant migrations
 
     Apply the list of migrations configurations to the build (in the correct sequence)
@@ -499,10 +500,9 @@ def migrate_combined_spec(combined_spec, forge_dir, config):
 
     """
     combined_spec = combined_spec.copy()
-    migrations_root = os.path.join(
-        forge_dir, ".ci_support", "migrations", "*.yaml"
-    )
-    migrations = glob.glob(migrations_root)
+    if "migration_fns" not in forge_config:
+        migrations = set_migration_fns(forge_dir, forge_config)
+    migrations = forge_config["migration_fns"]
 
     from .variant_algebra import parse_variant, variant_add
 
@@ -510,6 +510,7 @@ def migrate_combined_spec(combined_spec, forge_dir, config):
         (fn, parse_variant(open(fn, "r").read(), config=config))
         for fn in migrations
     ]
+
     migration_variants.sort(
         key=lambda fn_v: (fn_v[1]["migration_ts"], fn_v[0])
     )
@@ -566,7 +567,7 @@ def _render_ci_provider(
         )
 
         migrated_combined_variant_spec = migrate_combined_spec(
-            combined_variant_spec, forge_dir, config
+            combined_variant_spec, forge_dir, config, forge_config,
         )
 
         metas = conda_build.api.render(
@@ -1594,6 +1595,47 @@ def make_jinja_env(feedstock_directory):
     return env
 
 
+def get_migrations_in_dir(migrations_root):
+    res = {}
+    for fn in glob.glob(os.path.join(migrations_root, "*.yaml")):
+        with open(fn, "r") as f:
+            contents = f.read()
+            migration_yaml = yaml.load(contents, Loader=yaml.loader.BaseLoader) or {}
+            # Use a object as timestamp to not delete it
+            ts = migration_yaml.get('migrator_ts', object())
+            res[ts] = fn
+    return res
+
+
+def set_migration_fns(forge_dir, forge_config):
+    exclusive_config_file = forge_config["exclusive_config_file"]
+    cfp_migrations_dir = os.path.join(os.path.dirname(exclusive_config_file),
+                                      "share", "conda-forge", "migrations")
+
+    migrations_root = os.path.join(forge_dir, ".ci_support", "migrations")
+    migrations_in_feedstock = get_migrations_in_dir(migrations_root)
+
+    if not os.path.exists(cfp_migrations_dir):
+        forge_config["migration_fns"] = list(migrations_in_feedstock.values())
+        return
+
+    migrations_in_cfp = get_migrations_in_dir(cfp_migrations_dir)
+
+    result = []
+    for ts, fn in migrations_in_feedstock.items():
+        if type(ts) == object:
+            # This file doesn't have a timestamp. Use it as it is.
+            result.append(fn)
+        elif ts in migrations_in_cfp:
+            # Use the one from cfp.
+            result.append(migrations_in_cfp[ts])
+        else:
+            # Delete this as this migration is over.
+            remove_file(fn)
+    forge_config["migration_fns"] = result
+    return
+
+
 def main(
     forge_file_directory,
     no_check_uptodate=False,
@@ -1655,6 +1697,7 @@ def main(
         set_exe_file(os.path.join(forge_dir, "build-locally.py"))
     clear_variants(forge_dir)
     clear_scripts(forge_dir)
+    set_migration_fns(forge_dir, config)
 
     # the order of these calls appears to matter
     render_info = []
