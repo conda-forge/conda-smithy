@@ -447,7 +447,7 @@ def test_migrator_recipe(recipe_migration_cfep9, jinja_env):
         assert variant["zlib"] == ["1000"]
 
 
-def test_migrator_cfp(recipe_migration_cfep9, jinja_env):
+def test_migrator_cfp_override(recipe_migration_cfep9, jinja_env):
     cfp_file = recipe_migration_cfep9.config["exclusive_config_file"]
     cfp_migration_dir = os.path.join(
         os.path.dirname(cfp_file), "share", "conda-forge", "migrations"
@@ -478,6 +478,27 @@ def test_migrator_cfp(recipe_migration_cfep9, jinja_env):
     ) as fo:
         variant = yaml.safe_load(fo)
         assert variant["zlib"] == ["1001"]
+
+
+def test_migrator_delete_old(recipe_migration_cfep9, jinja_env):
+    cfp_file = recipe_migration_cfep9.config["exclusive_config_file"]
+    cfp_migration_dir = os.path.join(
+        os.path.dirname(cfp_file), "share", "conda-forge", "migrations"
+    )
+    os.makedirs(cfp_migration_dir, exist_ok=True)
+    cnfgr_fdstk.render_azure(
+        jinja_env=jinja_env,
+        forge_config=recipe_migration_cfep9.config,
+        forge_dir=recipe_migration_cfep9.recipe,
+    )
+    assert not os.path.exists(
+        os.path.join(
+            recipe_migration_cfep9.recipe,
+            ".ci_support",
+            "migrations",
+            "zlib.yaml",
+        )
+    )
 
 
 def test_migrator_downgrade_recipe(
