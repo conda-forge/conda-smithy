@@ -1596,6 +1596,10 @@ def make_jinja_env(feedstock_directory):
 
 
 def get_migrations_in_dir(migrations_root):
+    """
+    Given a directory, return the migrations as a mapping
+    from the timestamp to a tuple of (filename, migration_number)
+    """
     res = {}
     for fn in glob.glob(os.path.join(migrations_root, "*.yaml")):
         with open(fn, "r") as f:
@@ -1613,6 +1617,25 @@ def get_migrations_in_dir(migrations_root):
 
 
 def set_migration_fns(forge_dir, forge_config):
+    """
+    This will calculate the migration files and set migration_fns
+    in the forge_config as a list.
+    
+    First, this will look in the conda-forge-pinning (CFP) package
+    to see if it has migrations installed. If not, the filenames of
+    the migrations the feedstock are used.
+    
+    Then, this will look at migrations in the feedstock and if they
+    have a timestamp and doesn't exist in the CFP package, the
+    migration is considered old and deleted.
+    
+    Then, if there is a migration in the feedstock with the same
+    migration number and timestamp in the CFP package, the filename of
+    the migration in the CFP package is used.
+    
+    Finally, if none of the conditions are met for a migration in the
+    feedstock, the filename of the migration in the feedstock is used.
+    """
     exclusive_config_file = forge_config["exclusive_config_file"]
     cfp_migrations_dir = os.path.join(
         os.path.dirname(exclusive_config_file),
