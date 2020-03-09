@@ -168,7 +168,7 @@ def register_feedstock_token(user, project, token_repo):
 def register_feedstock_token_with_proviers(
         user, project, feedstock_directory,
         drone=True, circle=True,
-        appveyor=True, travis=True, azure=True
+        travis=True, azure=True
 ):
     # capture stdout, stderr and suppress all exceptions so we don't
     # spill tokens
@@ -252,35 +252,68 @@ def register_feedstock_token_with_proviers(
 
 def add_feedstock_token_to_circle(user, project, feedstock_token):
     url_template = (
-        "https://circleci.com/api/v1.1/project/github/{user}/{project}/envvar?"
+        "https://circleci.com/api/v1.1/project/github/{user}/{project}/envvar{extra}?"
         "circle-token={token}"
     )
-    url = url_template.format(token=circle_token, user=user, project=project)
+
+    r = requests.get(url_template.format(token=circle_token, user=user, project=project, extra=""))
+    if r.status_code != 200:
+        r.raise_for_status()
+
+    have_feedstock_token = False
+    for evar in r.json():
+        if evar["name"] == "FEEDSTOCK_TOKEN":
+            have_feedstock_token = True
+
+    if have_feedstock_token:
+        r = requests.delete(url_template.format(
+            token=circle_token,
+            user=user,
+            project=project,
+            extra="FEEDSTOCK_TOKEN",
+        ))
+        if r.status_code != 200:
+            r.raise_for_status()
+
     data = {"name": "FEEDSTOCK_TOKEN", "value": feedstock_token}
-    response = requests.post(url, data)
+    response = requests.post(
+        url_template.format(token=circle_token, user=user, project=project, extra=""),
+        data,
+    )
     if response.status_code != 201:
         raise ValueError(response)
 
 
 def add_feedstock_token_to_drone(user, project, feedstock_token):
     session = drone_session()
-    response = session.post(
-        f"/api/repos/{user}/{project}/secrets",
-        json={
-            "name": "FEEDSTOCK_TOKEN",
-            "data": feedstock_token,
-            "pull_request": False,
-        },
-    )
-    if response.status_code != 200:
-        # Check that the token is in secrets already
-        session = drone_session()
-        response2 = session.get(f"/api/repos/{user}/{project}/secrets")
-        response2.raise_for_status()
-        for secret in response2.json():
-            if "FEEDSTOCK_TOKEN" == secret["name"]:
-                return
-    response.raise_for_status()
+
+    r = session.get(f"/api/repos/{user}/{project}/secrets")
+    r.raise_for_status()
+    have_feedstock_token = False
+    for secret in r.json():
+        if "FEEDSTOCK_TOKEN" == secret["name"]:
+            have_feedstock_token = True
+
+    if have_feedstock_token:
+        r = session.patch(
+            f"/api/repos/{user}/{project}/secrets/FEEDSTOCK_TOKEN",
+            json={
+                "data": feedstock_token,
+                "pull_request": False,
+            },
+        )
+        r.raise_for_status()
+    else:
+        response = session.post(
+            f"/api/repos/{user}/{project}/secrets",
+            json={
+                "name": "FEEDSTOCK_TOKEN",
+                "data": feedstock_token,
+                "pull_request": False,
+            },
+        )
+        if response.status_code != 200:
+            response.raise_for_status()
 
 
 def add_feedstock_token_to_travis(user, project, feedstock_token):
@@ -291,18 +324,45 @@ def add_feedstock_token_to_travis(user, project, feedstock_token):
     repo_info = travis_get_repo_info(user, project)
     repo_id = repo_info["id"]
 
+    r = requests.get(
+        "{}/repo/{repo_id}/env_vars".format(travis_endpoint, repo_id=repo_id),
+        headers=headers,
+    )
+    if r.status_code != 200:
+        r.raise_for_status()
+
+    have_feedstock_token = False
+    ev_id = None
+    for ev in r.json()["env_vars"]:
+        if ev["name"] == "FEEDSTOCK_TOKEN":
+            have_feedstock_token = True
+            ev_id = ev["id"]
+
     data = {
         "env_var.name": "FEEDSTOCK_TOKEN",
         "env_var.value": feedstock_token,
         "env_var.public": "false",
     }
-    r = requests.post(
-        "{}/repo/{repo_id}/env_vars".format(travis_endpoint, repo_id=repo_id),
-        headers=headers,
-        json=data,
-    )
-    if r.status_code != 201:
+
+    if have_feedstock_token:
+        r = requests.patch(
+            "{}/repo/{repo_id}/env_var/{ev_id}".format(
+                travis_endpoint,
+                repo_id=repo_id,
+                ev_id=ev_id,
+            ),
+            headers=headers,
+            json=data,
+        )
         r.raise_for_status()
+    else:
+        r = requests.post(
+            "{}/repo/{repo_id}/env_vars".format(travis_endpoint, repo_id=repo_id),
+            headers=headers,
+            json=data,
+        )
+        if r.status_code != 201:
+            r.raise_for_status()
 
 
 def add_feedstock_token_to_azure(user, project, feedstock_token):
