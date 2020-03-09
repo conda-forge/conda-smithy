@@ -4,6 +4,35 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.6.11
+====================
+
+**Added:**
+
+* Added feature to upload the BINSTAR_TOKEN for travis-ci.com directly
+  through the API
+
+**Changed:**
+
+* Updated the version of macOS image to 10.14 for Azure Pipelines.
+* If conda-forge-pinning package has migrations installed, use those
+  migration yaml files instead of the ones from the feedstock if the
+  timestamp field match and remove if the migration yaml has a
+  timestamp and there's no corresponding one in conda-forge-pinning
+  which indicates that the migration is over.
+
+**Deprecated:**
+
+* Deprecated storing BINSTAR_TOKENs in the conda-forge.yml for travis
+
+**Authors:**
+
+* Isuru Fernando
+* Matthew R Becker
+* Maksim Rakitin
+
+
+
 v3.6.10
 ====================
 
