@@ -12,6 +12,15 @@
 {%- endfor %}
 language: generic
 
+{% if travis.secure -%}
+env:
+  global:
+    {%- for name, hashed_secure in travis.secure | dictsort %}
+    # The {{ name }} secure variable. This is defined canonically in conda-forge.yml.
+    - secure: "{{ hashed_secure }}"
+    {%- endfor %}
+{%- endif %}
+
 {% if configs[0] -%}
 matrix:
   include:
