@@ -8,11 +8,9 @@ import git
 import requests
 import scrypt
 
-from .utils import update_conda_forge_config
 from .ci_register import (
     circle_token,
     drone_session,
-    appveyor_token,
     travis_headers,
     travis_get_repo_info,
     travis_endpoint,
@@ -197,20 +195,6 @@ def register_feedstock_token_with_proviers(
                             failed = True
                             raise RuntimeError(err_msg)
 
-                if appveyor:
-                    try:
-                        appveyor_encrypt_feedstock_token(
-                            feedstock_directory, user, project, feedstock_token)
-                    except Exception as e:
-                        if "DEBUG_FEEDSTOCK_TOKENS" in os.environ:
-                            raise e
-                        else:
-                            err_msg = (
-                                "Failed to register feedstock token for %s/%s"
-                                " on appveyor!") % (user, project)
-                            failed = True
-                            raise RuntimeError(err_msg)
-
                 if drone:
                     try:
                         add_feedstock_token_to_drone(user, project, feedstock_token)
@@ -297,23 +281,6 @@ def add_feedstock_token_to_drone(user, project, feedstock_token):
             if "FEEDSTOCK_TOKEN" == secret["name"]:
                 return
     response.raise_for_status()
-
-
-def appveyor_encrypt_feedstock_token(
-    feedstock_directory, user, project, feedstock_token
-):
-    headers = {"Authorization": "Bearer {}".format(appveyor_token)}
-    url = "https://ci.appveyor.com/api/account/encrypt"
-    response = requests.post(
-        url, headers=headers, data={"plainValue": feedstock_token}
-    )
-    if response.status_code != 200:
-        raise ValueError(response)
-
-    with update_conda_forge_config(feedstock_directory) as code:
-        code.setdefault("appveyor", {}).setdefault("secure", {})[
-            "FEEDSTOCK_TOKEN"
-        ] = response.content.decode("utf-8")
 
 
 def add_feedstock_token_to_travis(user, project, feedstock_token):
