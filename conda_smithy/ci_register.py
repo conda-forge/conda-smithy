@@ -418,48 +418,6 @@ def add_project_to_travis(user, project):
         print(" * {}/{} registered on travis-ci".format(user, project))
 
 
-def travis_token_update_conda_forge_config(feedstock_directory, user, project):
-    item = 'BINSTAR_TOKEN="{}"'.format(anaconda_token)
-    slug = "{}%2F{}".format(user, project)
-
-    with update_conda_forge_config(feedstock_directory) as code:
-        code.setdefault("travis", {}).setdefault("secure", {})[
-            "BINSTAR_TOKEN"
-        ] = travis_encrypt_binstar_token(slug, item)
-
-
-def travis_encrypt_binstar_token(repo, string_to_encrypt):
-    # Copyright 2014 Matt Martz <matt@sivel.net>
-    # All Rights Reserved.
-    #
-    #    Licensed under the Apache License, Version 2.0 (the "License"); you may
-    #    not use this file except in compliance with the License. You may obtain
-    #    a copy of the License at
-    #
-    #         https://www.apache.org/licenses/LICENSE-2.0
-    #
-    #    Unless required by applicable law or agreed to in writing, software
-    #    distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
-    #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
-    #    License for the specific language governing permissions and limitations
-    #    under the License.
-    from Crypto.PublicKey import RSA
-    from Crypto.Cipher import PKCS1_v1_5
-    import base64
-
-    keyurl = "https://api.travis-ci.com/repo/{0}/key_pair/generated".format(
-        repo
-    )
-    r = requests.get(keyurl, headers=travis_headers())
-    r.raise_for_status()
-    public_key = r.json()["public_key"]
-    key = RSA.importKey(public_key)
-    cipher = PKCS1_v1_5.new(key)
-    return base64.b64encode(cipher.encrypt(string_to_encrypt.encode())).decode(
-        "utf-8"
-    )
-
-
 def travis_configure(user, project):
     """Configure travis so that it skips building if there is no .travis.yml present."""
     headers = travis_headers()
@@ -486,6 +444,20 @@ def travis_configure(user, project):
         response = requests.patch(url, json=data, headers=headers)
         if response.status_code != 204:
             response.raise_for_status()
+
+    # add the binstar token
+    data = {
+        "env_var.name": "BINSTAR_TOKEN",
+        "env_var.value": anaconda_token,
+        "env_var.public": "false",
+    }
+    r = requests.post(
+        "{}/repo/{repo_id}/env_vars".format(travis_endpoint, repo_id=repo_id),
+        headers=headers,
+        json=data,
+    )
+    if r.status_code != 201:
+        r.raise_for_status()
 
 
 def travis_cleanup(org, project):
