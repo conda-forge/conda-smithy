@@ -9,7 +9,7 @@
 
 **Deprecated:**
 
-* Removed the BINSTAR_TOKEN from the conda-forge.yml for travis-ci.com
+* Deprecated storing BINSTAR_TOKENs in the conda-forge.yml for travis
 
 **Removed:**
 
