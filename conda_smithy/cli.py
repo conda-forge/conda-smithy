@@ -224,6 +224,7 @@ class RegisterCI(Subcommand):
             # ci_register.add_project_to_travis(owner, repo)
             time.sleep(1)
             ci_register.travis_configure(owner, repo)
+            ci_register.add_token_to_travis(owner, repo)
             # Assume that the user has enabled travis-ci.com service
             # user-wide or org-wide for all repos
             # ci_register.travis_cleanup(owner, repo)

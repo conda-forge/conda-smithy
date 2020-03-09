@@ -445,7 +445,15 @@ def travis_configure(user, project):
         if response.status_code != 204:
             response.raise_for_status()
 
-    # add the binstar token
+
+def add_token_to_travis(user, project):
+    """Add the BINSTAR_TOKEN to travis."""
+
+    headers = travis_headers()
+
+    repo_info = travis_get_repo_info(user, project)
+    repo_id = repo_info["id"]
+
     data = {
         "env_var.name": "BINSTAR_TOKEN",
         "env_var.value": anaconda_token,
