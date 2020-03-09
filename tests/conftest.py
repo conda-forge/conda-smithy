@@ -245,6 +245,7 @@ about:
     ) as fh:
         fh.write(
             """
+migrator_ts: 1
 zlib:
     - 1000
 """

@@ -4,6 +4,7 @@ import conda_smithy.configure_feedstock as cnfgr_fdstk
 import pytest
 import copy
 import yaml
+import textwrap
 
 
 def test_noarch_skips_appveyor(noarch_recipe, jinja_env):
@@ -444,6 +445,68 @@ def test_migrator_recipe(recipe_migration_cfep9, jinja_env):
     ) as fo:
         variant = yaml.safe_load(fo)
         assert variant["zlib"] == ["1000"]
+
+
+def test_migrator_cfp_override(recipe_migration_cfep9, jinja_env):
+    cfp_file = recipe_migration_cfep9.config["exclusive_config_file"]
+    cfp_migration_dir = os.path.join(
+        os.path.dirname(cfp_file), "share", "conda-forge", "migrations"
+    )
+    os.makedirs(cfp_migration_dir, exist_ok=True)
+    with open(os.path.join(cfp_migration_dir, "zlib2.yaml"), "w") as f:
+        f.write(
+            textwrap.dedent(
+                """
+                migrator_ts: 1
+                zlib:
+                   - 1001
+                """
+            )
+        )
+    cnfgr_fdstk.render_azure(
+        jinja_env=jinja_env,
+        forge_config=recipe_migration_cfep9.config,
+        forge_dir=recipe_migration_cfep9.recipe,
+    )
+
+    with open(
+        os.path.join(
+            recipe_migration_cfep9.recipe,
+            ".ci_support",
+            "linux_python2.7.yaml",
+        )
+    ) as fo:
+        variant = yaml.safe_load(fo)
+        assert variant["zlib"] == ["1001"]
+
+
+def test_migrator_delete_old(recipe_migration_cfep9, jinja_env):
+    cfp_file = recipe_migration_cfep9.config["exclusive_config_file"]
+    cfp_migration_dir = os.path.join(
+        os.path.dirname(cfp_file), "share", "conda-forge", "migrations"
+    )
+    assert os.path.exists(
+        os.path.join(
+            recipe_migration_cfep9.recipe,
+            ".ci_support",
+            "migrations",
+            "zlib.yaml",
+        )
+    )
+    os.makedirs(cfp_migration_dir, exist_ok=True)
+    cnfgr_fdstk.render_azure(
+        jinja_env=jinja_env,
+        forge_config=recipe_migration_cfep9.config,
+        forge_dir=recipe_migration_cfep9.recipe,
+    )
+    assert not os.path.exists(
+        os.path.join(
+            recipe_migration_cfep9.recipe,
+            ".ci_support",
+            "migrations",
+            "zlib.yaml",
+        )
+    )
 
 
 def test_migrator_downgrade_recipe(
