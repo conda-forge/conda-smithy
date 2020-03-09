@@ -7,7 +7,7 @@
   email: mrakitin@bnl.gov
   alternate_emails:
   - mrakitin@users.noreply.github.com
-  num_commits: 6
+  num_commits: 9
   first_commit: 2019-07-19 17:37:24
   github: mrakitin
 - name: Gonzalo Pena-Castellanos
@@ -107,7 +107,7 @@
   aliases:
   - Filipe
   - ocefpaf
-  num_commits: 36
+  num_commits: 38
   first_commit: 2015-07-27 17:51:00
   github: ocefpaf
 - name: Jan Janßen
@@ -246,7 +246,7 @@
   email: isuru.11@cse.mrt.ac.lk
   alternate_emails:
   - isuruf@gmail.com
-  num_commits: 267
+  num_commits: 276
   first_commit: 2017-01-08 22:03:03
   github: isuruf
 - name: Julian Rüth
@@ -391,7 +391,7 @@
   github: shadowwalkersb
 - name: Matthew R Becker
   email: becker.mr@gmail.com
-  num_commits: 18
+  num_commits: 23
   first_commit: 2020-01-07 17:44:33
   github: beckermr
 - name: Matthew R. Becker

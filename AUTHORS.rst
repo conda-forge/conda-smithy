@@ -18,6 +18,7 @@ Authors are sorted by number of commits.
 * Justin Calamari
 * Jason Furmanek
 * Patrick Sodré
+* Maksim Rakitin
 * C.A.M. Gerlach
 * Julian Rüth
 * refraction-ray
@@ -27,7 +28,6 @@ Authors are sorted by number of commits.
 * Natasha Pavlovikj
 * Gonzalo Pena-Castellanos
 * Daniel Bast
-* Maksim Rakitin
 * Chris Burr
 * Carlo
 * Marcel Bargull
