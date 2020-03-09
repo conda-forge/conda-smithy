@@ -44,7 +44,9 @@ def add_feedstock_token_to_drone(user, project, feedstock_token):
     response.raise_for_status()
 
 
-def appveyor_encrypt_feedstock_token(feedstock_directory, user, project, feedstock_token):
+def appveyor_encrypt_feedstock_token(
+    feedstock_directory, user, project, feedstock_token
+):
     headers = {"Authorization": "Bearer {}".format(appveyor_token)}
     url = "https://ci.appveyor.com/api/account/encrypt"
     response = requests.post(
@@ -85,27 +87,27 @@ def add_feedstock_token_to_azure(user, project, feedstock_token):
     from .azure_ci_utils import build_client
     from .azure_ci_utils import default_config as config
     from vsts.build.v4_1.models import BuildDefinitionVariable
+
     bclient = build_client()
 
-    existing_definitions = bclient.get_definitions(project=config.project_name, name=project)
+    existing_definitions = bclient.get_definitions(
+        project=config.project_name, name=project
+    )
     if existing_definitions:
         assert len(existing_definitions) == 1
         ed = existing_definitions[0]
     else:
         raise RuntimeError(
-            "Cannot add FEEDSTOCK_TOKEN to a repo that is not already registered on azure CI!")
+            "Cannot add FEEDSTOCK_TOKEN to a repo that is not already registered on azure CI!"
+        )
 
     if ed.variables is None:
         ed.variables = {}
 
     ed.variables["FEEDSTOCK_TOKEN"] = BuildDefinitionVariable(
-        allow_override=False,
-        is_secret=True,
-        value=feedstock_token,
+        allow_override=False, is_secret=True, value=feedstock_token,
     )
 
     bclient.update_definition(
-        definition=ed,
-        definition_id=ed.id,
-        project=ed.project.name,
+        definition=ed, definition_id=ed.id, project=ed.project.name,
     )
