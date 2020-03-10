@@ -47,6 +47,10 @@ class AzureConfig:
             if not self.token:
                 raise ValueError()
         except (IOError, ValueError):
+            print(
+                "No azure token. Create a token and\n"
+                "put it in ~/.conda-smithy/azure.token"
+            )
             self.token = None
 
         # By default for now don't report on the build information back to github
