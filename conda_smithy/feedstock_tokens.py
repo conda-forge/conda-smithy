@@ -1,6 +1,7 @@
 import tempfile
 import os
 import json
+import sys
 import secrets
 from contextlib import redirect_stderr, redirect_stdout
 
@@ -293,7 +294,14 @@ def register_feedstock_token_with_proviers(
     failed = False
     err_msg = None
     with open(os.devnull, "w") as fp:
-        with redirect_stdout(fp), redirect_stderr(fp):
+        if "DEBUG_FEEDSTOCK_TOKENS" in os.environ:
+            fpo = sys.stdout
+            fpe = sys.stdout
+        else:
+            fpo = fp
+            fpe = fp
+
+        with redirect_stdout(fpo), redirect_stderr(fpe):
             try:
                 feedstock_token, err_msg = read_feedstock_token(user, project)
                 if err_msg:
@@ -409,7 +417,7 @@ def add_feedstock_token_to_circle(user, project, feedstock_token, clobber):
                 token=circle_token,
                 user=user,
                 project=project,
-                extra="FEEDSTOCK_TOKEN",
+                extra="/FEEDSTOCK_TOKEN",
             )
         )
         if r.status_code != 200:
@@ -442,7 +450,7 @@ def add_feedstock_token_to_drone(user, project, feedstock_token, clobber):
     if have_feedstock_token and clobber:
         r = session.patch(
             f"/api/repos/{user}/{project}/secrets/FEEDSTOCK_TOKEN",
-            json={"data": feedstock_token, "pull_request": False,},
+            json={"data": feedstock_token, "pull_request": False},
         )
         r.raise_for_status()
     elif not have_feedstock_token:
@@ -513,7 +521,7 @@ def add_feedstock_token_to_travis(user, project, feedstock_token, clobber):
 
 
 def add_feedstock_token_to_azure(user, project, feedstock_token, clobber):
-    from .azure_ci_utils import build_client
+    from .azure_ci_utils import build_client, get_default_build_definition
     from .azure_ci_utils import default_config as config
     from vsts.build.v4_1.models import BuildDefinitionVariable
 
@@ -531,18 +539,31 @@ def add_feedstock_token_to_azure(user, project, feedstock_token, clobber):
         )
 
     if not hasattr(ed, "variables") or ed.variables is None:
-        ed.variables = {}
+        variables = {}
+    else:
+        variables = ed.variables
 
-    if "FEEDSTOCK_TOKEN" in ed.variables:
+    if "FEEDSTOCK_TOKEN" in variables:
         have_feedstock_token = True
     else:
         have_feedstock_token = False
 
     if not have_feedstock_token or (have_feedstock_token and clobber):
-        ed.variables["FEEDSTOCK_TOKEN"] = BuildDefinitionVariable(
+        variables["FEEDSTOCK_TOKEN"] = BuildDefinitionVariable(
             allow_override=False, is_secret=True, value=feedstock_token,
         )
 
+        build_definition = get_default_build_definition(
+            user,
+            project,
+            config=config,
+            variables=variables,
+            id=ed.id,
+            revision=ed.revision,
+        )
+
         bclient.update_definition(
-            definition=ed, definition_id=ed.id, project=ed.project.name,
+            definition=build_definition,
+            definition_id=ed.id,
+            project=ed.project.name,
         )

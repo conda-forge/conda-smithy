@@ -666,6 +666,10 @@ class RegisterFeedstockToken(Subcommand):
                 "Token for repo %s/%s already exists!" % (owner, repo)
             )
 
+        print(
+            "Registering the feedstock tokens. Can take up to ~30 seconds."
+        )
+
         # do all providers first
         register_feedstock_token_with_proviers(
             owner,
