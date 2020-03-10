@@ -562,7 +562,7 @@ class GenerateFeedstockToken(Subcommand):
     def __init__(self, parser):
         super(GenerateFeedstockToken, self).__init__(
             parser,
-            "Generate a feedstock token at ~/.conda-smithy/{user/org}_{project}s_feedstock.token",
+            "Generate a feedstock token at ~/.conda-smithy/{user or org}_{project}_feedstock.token",
         )
         scp = self.subcommand_parser
         scp.add_argument(
