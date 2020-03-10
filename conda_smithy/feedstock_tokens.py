@@ -135,11 +135,11 @@ def feedstock_token_exists(user, project, token_repo):
     exists = False
     failed = False
     with tempfile.TemporaryDirectory() as tmpdir:
-        with open(os.devnull, "w") as fp, redirect_stdout(fp), redirect_stderr(fp):
+        with open(os.devnull, "w") as fp, redirect_stdout(fp), redirect_stderr(
+            fp
+        ):
             try:
-                feedstock_token, err_msg = read_feedstock_token(
-                    user, project
-                )
+                feedstock_token, err_msg = read_feedstock_token(user, project)
                 if err_msg:
                     failed = True
                     raise RuntimeError(err_msg)
@@ -207,11 +207,11 @@ def register_feedstock_token(user, project, token_repo):
     # capture stdout, stderr and suppress all exceptions so we don't
     # spill tokens
     with tempfile.TemporaryDirectory() as tmpdir:
-        with open(os.devnull, "w") as fp, redirect_stdout(fp), redirect_stderr(fp):
+        with open(os.devnull, "w") as fp, redirect_stdout(fp), redirect_stderr(
+            fp
+        ):
             try:
-                feedstock_token, err_msg = read_feedstock_token(
-                    user, project
-                )
+                feedstock_token, err_msg = read_feedstock_token(user, project)
                 if err_msg:
                     failed = True
                     raise RuntimeError(err_msg)
@@ -256,9 +256,7 @@ def register_feedstock_token(user, project, token_repo):
 
                 # push
                 repo.index.add(token_file)
-                repo.index.commit(
-                    "added token for %s/%s" % (user, project)
-                )
+                repo.index.commit("added token for %s/%s" % (user, project))
                 repo.remote().pull(rebase=True)
                 repo.remote().push()
             except Exception as e:
