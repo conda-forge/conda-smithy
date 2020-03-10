@@ -1,3 +1,24 @@
+"""This module generates and registers feedstock tokens.
+
+A feedstock_token is a unique token given to each feedstock that allows it
+to execute copies of outputs from a staging conda channel to a production channel.
+
+The correct way to use this module is to call its functions via the command
+line utility. The relevant functions are
+
+    conda-smithy generate-feedstock-token
+    conda-smithy register-feedstock-token
+
+The `generate-feedstock-token` command must be called before the `register-feedstock-token`
+command. It generates a random token and writes it to
+
+    ~/.conda-smithy/{user or org}_{repo w/o '-feedstock'}_feedstock.token
+
+Then when you call `register-feedstock-token`, the generated token is placed
+as a secret variable on the CI services. It is also hashed using `scrypt` and
+then uploaded to the token registry (a repo on GitHub).
+"""
+
 import tempfile
 import os
 import json
