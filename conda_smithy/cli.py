@@ -581,7 +581,9 @@ class GenerateFeedstockToken(Subcommand):
         )
 
     def __call__(self, args):
-        from conda_smithy.feedstock_tokens import generate_and_write_feedstock_token
+        from conda_smithy.feedstock_tokens import (
+            generate_and_write_feedstock_token,
+        )
 
         owner = args.user or args.organization
         repo = os.path.basename(os.path.abspath(args.feedstock_directory))
@@ -652,12 +654,17 @@ class RegisterFeedstockToken(Subcommand):
         repo = os.path.basename(os.path.abspath(args.feedstock_directory))
 
         if args.token_repo is None:
-            token_repo = "https://${GITHUB_TOKEN}@github.com/%s/feedstock-tokens" % owner
+            token_repo = (
+                "https://${GITHUB_TOKEN}@github.com/%s/feedstock-tokens"
+                % owner
+            )
         else:
             token_repo = args.token_repo
 
         if feedstock_token_exists(owner, repo, token_repo):
-            raise RuntimeError("Token for repo %s/%s already exists!" % (owner, repo))
+            raise RuntimeError(
+                "Token for repo %s/%s already exists!" % (owner, repo)
+            )
 
         # do all providers first
         register_feedstock_token_with_proviers(

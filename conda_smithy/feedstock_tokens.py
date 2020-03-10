@@ -32,7 +32,10 @@ def generate_and_write_feedstock_token(user, project):
                 pth = os.path.expanduser(pth)
                 if os.path.exists(pth):
                     failed = True
-                    err_msg = "Token for %s%s is already written locally!" % (user, project)
+                    err_msg = "Token for %s%s is already written locally!" % (
+                        user,
+                        project,
+                    )
                     raise RuntimeError(err_msg)
 
                 os.makedirs(os.path.dirname(pth), exist_ok=True)
@@ -52,8 +55,10 @@ def generate_and_write_feedstock_token(user, project):
                 (
                     "Generating the feedstock token for %s/%s failed!"
                     " Try the command locally with DEBUG_FEEDSTOCK_TOKENS"
-                    " defined in the environment to investigate!") % (user, project)
+                    " defined in the environment to investigate!"
                 )
+                % (user, project)
+            )
 
     return failed
 
@@ -72,16 +77,14 @@ def read_feedstock_token(user, project):
 
     # read the token
     user_token_pth = os.path.join(
-            "~",
-            ".conda-smithy",
-            "%s_%s_feedstock.token" % (user, project),
-        )
+        "~", ".conda-smithy", "%s_%s_feedstock.token" % (user, project),
+    )
     user_token_pth = os.path.expanduser(user_token_pth)
 
     if not os.path.exists(user_token_pth):
-        err_msg = "No token found in '~/.conda-smithy/%s_%s_feedstock.token'" % (
-            user,
-            project,
+        err_msg = (
+            "No token found in '~/.conda-smithy/%s_%s_feedstock.token'"
+            % (user, project,)
         )
     else:
         with open(user_token_pth, "r") as fp:
@@ -90,10 +93,7 @@ def read_feedstock_token(user, project):
             err_msg = (
                 "Empty token found in '~/.conda-smithy/"
                 "%s_%s_feedstock.token'"
-            ) % (
-                user,
-                project,
-            )
+            ) % (user, project,)
     return feedstock_token, err_msg
 
 
@@ -108,6 +108,7 @@ def feedstock_token_exists(user, project, token_repo):
     your environment before calling this function.
     """
     from .github import gh_token
+
     github_token = gh_token()
 
     exists = False
@@ -116,15 +117,16 @@ def feedstock_token_exists(user, project, token_repo):
         with open(os.devnull, "w") as fp:
             with redirect_stdout(fp), redirect_stderr(fp):
                 try:
-                    feedstock_token, err_msg = read_feedstock_token(user, project)
+                    feedstock_token, err_msg = read_feedstock_token(
+                        user, project
+                    )
                     if err_msg:
                         failed = True
                         raise RuntimeError(err_msg)
 
                     # clone the repo
                     _token_repo = (
-                        token_repo
-                        .replace("$GITHUB_TOKEN", github_token)
+                        token_repo.replace("$GITHUB_TOKEN", github_token)
                         .replace("${GITHUB_TOKEN}", github_token)
                         .replace("$GH_TOKEN", github_token)
                         .replace("${GH_TOKEN}", github_token)
@@ -152,8 +154,10 @@ def feedstock_token_exists(user, project, token_repo):
                 (
                     "Testing for the feedstock token for %s/%s failed!"
                     " Try the command locally with DEBUG_FEEDSTOCK_TOKENS"
-                    " defined in the environment to investigate!") % (user, project)
+                    " defined in the environment to investigate!"
                 )
+                % (user, project)
+            )
 
     return exists
 
@@ -173,6 +177,7 @@ def register_feedstock_token(user, project, token_repo):
     your environment before calling this function.
     """
     from .github import gh_token
+
     github_token = gh_token()
 
     failed = False
@@ -184,15 +189,16 @@ def register_feedstock_token(user, project, token_repo):
         with open(os.devnull, "w") as fp:
             with redirect_stdout(fp), redirect_stderr(fp):
                 try:
-                    feedstock_token, err_msg = read_feedstock_token(user, project)
+                    feedstock_token, err_msg = read_feedstock_token(
+                        user, project
+                    )
                     if err_msg:
                         failed = True
                         raise RuntimeError(err_msg)
 
                     # clone the repo
                     _token_repo = (
-                        token_repo
-                        .replace("$GITHUB_TOKEN", github_token)
+                        token_repo.replace("$GITHUB_TOKEN", github_token)
                         .replace("${GITHUB_TOKEN}", github_token)
                         .replace("$GH_TOKEN", github_token)
                         .replace("${GH_TOKEN}", github_token)
@@ -208,16 +214,17 @@ def register_feedstock_token(user, project, token_repo):
                     # check again since there might be a race condition
                     if os.path.exists(token_file):
                         failed = True
-                        err_msg = "Token for repo %s/%s already exists!" % (user, project)
+                        err_msg = "Token for repo %s/%s already exists!" % (
+                            user,
+                            project,
+                        )
                         raise RuntimeError(err_msg)
 
                     # salt, encrypt and write
                     salt = os.urandom(64)
                     maxtime = "0.1"
                     salted_token = scrypt.encrypt(
-                        salt,
-                        feedstock_token,
-                        maxtime=float(maxtime),
+                        salt, feedstock_token, maxtime=float(maxtime),
                     )
                     data = {
                         "salt": salt.hex(),
@@ -229,7 +236,9 @@ def register_feedstock_token(user, project, token_repo):
 
                     # push
                     repo.index.add(token_file)
-                    repo.index.commit("added token for %s/%s" % (user, project))
+                    repo.index.commit(
+                        "added token for %s/%s" % (user, project)
+                    )
                     repo.remote().pull(rebase=True)
                     repo.remote().push()
                 except Exception as e:
@@ -244,17 +253,23 @@ def register_feedstock_token(user, project, token_repo):
                 (
                     "Registering the feedstock token for %s/%s failed!"
                     " Try the command locally with DEBUG_FEEDSTOCK_TOKENS"
-                    " defined in the environment to investigate!") % (user, project)
+                    " defined in the environment to investigate!"
                 )
+                % (user, project)
+            )
 
     return failed
 
 
 def register_feedstock_token_with_proviers(
-        user, project, feedstock_directory,
-        drone=True, circle=True,
-        travis=True, azure=True,
-        clobber=True,
+    user,
+    project,
+    feedstock_directory,
+    drone=True,
+    circle=True,
+    travis=True,
+    azure=True,
+    clobber=True,
 ):
     """Register the feedstock token with provider CI services.
 
@@ -287,53 +302,65 @@ def register_feedstock_token_with_proviers(
 
                 if circle:
                     try:
-                        add_feedstock_token_to_circle(user, project, feedstock_token, clobber)
+                        add_feedstock_token_to_circle(
+                            user, project, feedstock_token, clobber
+                        )
                     except Exception as e:
                         if "DEBUG_FEEDSTOCK_TOKENS" in os.environ:
                             raise e
                         else:
                             err_msg = (
                                 "Failed to register feedstock token for %s/%s"
-                                " on circle!") % (user, project)
+                                " on circle!"
+                            ) % (user, project)
                             failed = True
                             raise RuntimeError(err_msg)
 
                 if drone:
                     try:
-                        add_feedstock_token_to_drone(user, project, feedstock_token, clobber)
+                        add_feedstock_token_to_drone(
+                            user, project, feedstock_token, clobber
+                        )
                     except Exception as e:
                         if "DEBUG_FEEDSTOCK_TOKENS" in os.environ:
                             raise e
                         else:
                             err_msg = (
                                 "Failed to register feedstock token for %s/%s"
-                                " on drone!") % (user, project)
+                                " on drone!"
+                            ) % (user, project)
                             failed = True
                             raise RuntimeError(err_msg)
 
                 if travis:
                     try:
-                        add_feedstock_token_to_travis(user, project, feedstock_token, clobber)
+                        add_feedstock_token_to_travis(
+                            user, project, feedstock_token, clobber
+                        )
                     except Exception as e:
                         if "DEBUG_FEEDSTOCK_TOKENS" in os.environ:
                             raise e
                         else:
                             err_msg = (
                                 "Failed to register feedstock token for %s/%s"
-                                " on travis!") % (user, project)
+                                " on travis!"
+                            ) % (user, project)
                             failed = True
                             raise RuntimeError(err_msg)
 
                 if azure:
                     try:
-                        add_feedstock_token_to_azure(user, project, feedstock_token, clobber)
+                        add_feedstock_token_to_azure(
+                            user, project, feedstock_token, clobber
+                        )
                     except Exception as e:
                         if "DEBUG_FEEDSTOCK_TOKENS" in os.environ:
                             raise e
                         else:
                             err_msg = (
                                 "Failed to register feedstock token for %s/%s"
-                                " on azure!") % (user, project)
+                                " on azure!"
+                            ) % (user, project)
                             failed = True
                             raise RuntimeError(err_msg)
 
@@ -349,8 +376,10 @@ def register_feedstock_token_with_proviers(
                 (
                     "Registering the feedstock token with proviers for %s/%s failed!"
                     " Try the command locally with DEBUG_FEEDSTOCK_TOKENS"
-                    " defined in the environment to investigate!") % (user, project)
+                    " defined in the environment to investigate!"
                 )
+                % (user, project)
+            )
 
 
 def add_feedstock_token_to_circle(user, project, feedstock_token, clobber):
@@ -361,7 +390,11 @@ def add_feedstock_token_to_circle(user, project, feedstock_token, clobber):
         "circle-token={token}"
     )
 
-    r = requests.get(url_template.format(token=circle_token, user=user, project=project, extra=""))
+    r = requests.get(
+        url_template.format(
+            token=circle_token, user=user, project=project, extra=""
+        )
+    )
     if r.status_code != 200:
         r.raise_for_status()
 
@@ -371,19 +404,23 @@ def add_feedstock_token_to_circle(user, project, feedstock_token, clobber):
             have_feedstock_token = True
 
     if have_feedstock_token and clobber:
-        r = requests.delete(url_template.format(
-            token=circle_token,
-            user=user,
-            project=project,
-            extra="FEEDSTOCK_TOKEN",
-        ))
+        r = requests.delete(
+            url_template.format(
+                token=circle_token,
+                user=user,
+                project=project,
+                extra="FEEDSTOCK_TOKEN",
+            )
+        )
         if r.status_code != 200:
             r.raise_for_status()
 
     if not have_feedstock_token or (have_feedstock_token and clobber):
         data = {"name": "FEEDSTOCK_TOKEN", "value": feedstock_token}
         response = requests.post(
-            url_template.format(token=circle_token, user=user, project=project, extra=""),
+            url_template.format(
+                token=circle_token, user=user, project=project, extra=""
+            ),
             data,
         )
         if response.status_code != 201:
@@ -405,10 +442,7 @@ def add_feedstock_token_to_drone(user, project, feedstock_token, clobber):
     if have_feedstock_token and clobber:
         r = session.patch(
             f"/api/repos/{user}/{project}/secrets/FEEDSTOCK_TOKEN",
-            json={
-                "data": feedstock_token,
-                "pull_request": False,
-            },
+            json={"data": feedstock_token, "pull_request": False,},
         )
         r.raise_for_status()
     elif not have_feedstock_token:
@@ -426,7 +460,11 @@ def add_feedstock_token_to_drone(user, project, feedstock_token, clobber):
 
 def add_feedstock_token_to_travis(user, project, feedstock_token, clobber):
     """Add the FEEDSTOCK_TOKEN to travis."""
-    from .ci_register import travis_endpoint, travis_headers, travis_get_repo_info
+    from .ci_register import (
+        travis_endpoint,
+        travis_headers,
+        travis_get_repo_info,
+    )
 
     headers = travis_headers()
 
@@ -456,9 +494,7 @@ def add_feedstock_token_to_travis(user, project, feedstock_token, clobber):
     if have_feedstock_token and clobber:
         r = requests.patch(
             "{}/repo/{repo_id}/env_var/{ev_id}".format(
-                travis_endpoint,
-                repo_id=repo_id,
-                ev_id=ev_id,
+                travis_endpoint, repo_id=repo_id, ev_id=ev_id,
             ),
             headers=headers,
             json=data,
@@ -466,7 +502,9 @@ def add_feedstock_token_to_travis(user, project, feedstock_token, clobber):
         r.raise_for_status()
     elif not have_feedstock_token:
         r = requests.post(
-            "{}/repo/{repo_id}/env_vars".format(travis_endpoint, repo_id=repo_id),
+            "{}/repo/{repo_id}/env_vars".format(
+                travis_endpoint, repo_id=repo_id
+            ),
             headers=headers,
             json=data,
         )
