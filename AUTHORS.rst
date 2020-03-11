@@ -77,3 +77,4 @@ Authors are sorted by number of commits.
 * Duncan Macleod
 * Jason Grout
 * Tim Werner
+* Dave Hirschfeld

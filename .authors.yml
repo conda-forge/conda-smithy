@@ -107,7 +107,7 @@
   aliases:
   - Filipe
   - ocefpaf
-  num_commits: 38
+  num_commits: 39
   first_commit: 2015-07-27 17:51:00
   github: ocefpaf
 - name: Jan Janßen
@@ -246,7 +246,7 @@
   email: isuru.11@cse.mrt.ac.lk
   alternate_emails:
   - isuruf@gmail.com
-  num_commits: 276
+  num_commits: 278
   first_commit: 2017-01-08 22:03:03
   github: isuruf
 - name: Julian Rüth
@@ -408,3 +408,7 @@
   email: werner@inoviga.com
   num_commits: 1
   first_commit: 2020-02-12 09:02:01
+- name: Dave Hirschfeld
+  email: dave.hirschfeld@gmail.com
+  num_commits: 1
+  first_commit: 2020-03-11 10:12:57
