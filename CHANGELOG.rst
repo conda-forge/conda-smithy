@@ -4,6 +4,20 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.6.12
+====================
+
+**Fixed:**
+
+* Fix bug with conda 4.6.14 on Windows
+
+**Authors:**
+
+* Filipe Fernandes
+* Dave Hirschfeld
+
+
+
 v3.6.11
 ====================
 
