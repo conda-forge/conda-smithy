@@ -447,7 +447,9 @@ def _get_fast_finish_script(
     fast_finish_script = ""
     tooling_branch = "master"
 
-    cfbs_fpath = os.path.join(forge_dir, forge_config["recipe_dir"], "ff_ci_pr_build.py")
+    cfbs_fpath = os.path.join(
+        forge_dir, forge_config["recipe_dir"], "ff_ci_pr_build.py"
+    )
     if provider_name == "appveyor":
         if os.path.exists(cfbs_fpath):
             fast_finish_script = "{recipe_dir}\\ff_ci_pr_build".format(
@@ -673,7 +675,9 @@ def _render_ci_provider(
         # If the recipe supplies its own upload_or_check_non_existence.py upload script,
         # we use it instead of the global one.
         upload_fpath = os.path.join(
-            forge_dir, forge_config["recipe_dir"], "upload_or_check_non_existence.py"
+            forge_dir,
+            forge_config["recipe_dir"],
+            "upload_or_check_non_existence.py",
         )
         if os.path.exists(upload_fpath):
             if provider_name == "circle":
@@ -733,15 +737,21 @@ def _get_build_setup_line(forge_dir, platform, forge_config):
     # we use it instead of the global one.
     if platform == "linux":
         cfbs_fpath = os.path.join(
-            forge_dir, forge_config["recipe_dir"], "run_conda_forge_build_setup_linux"
+            forge_dir,
+            forge_config["recipe_dir"],
+            "run_conda_forge_build_setup_linux",
         )
     elif platform == "win":
         cfbs_fpath = os.path.join(
-            forge_dir, forge_config["recipe_dir"], "run_conda_forge_build_setup_win.bat"
+            forge_dir,
+            forge_config["recipe_dir"],
+            "run_conda_forge_build_setup_win.bat",
         )
     else:
         cfbs_fpath = os.path.join(
-            forge_dir, forge_config["recipe_dir"], "run_conda_forge_build_setup_osx"
+            forge_dir,
+            forge_config["recipe_dir"],
+            "run_conda_forge_build_setup_osx",
         )
 
     build_setup = ""
@@ -1404,7 +1414,9 @@ def _load_forge_config(forge_dir, exclusive_config_file):
         # check for conda-smithy 2.x matrix which we can't auto-migrate
         # to conda_build_config
         if file_config.get("matrix") and not os.path.exists(
-            os.path.join(forge_dir, config["recipe_dir"], "conda_build_config.yaml")
+            os.path.join(
+                forge_dir, config["recipe_dir"], "conda_build_config.yaml"
+            )
         ):
             raise ValueError(
                 "Cannot rerender with matrix in conda-forge.yml."

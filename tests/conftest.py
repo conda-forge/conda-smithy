@@ -46,9 +46,11 @@ def testing_workdir(tmpdir, request):
 
     return str(tmpdir)
 
+
 @pytest.fixture(scope="function")
 def recipe_dirname():
     return "recipe"
+
 
 @pytest.fixture(scope="function")
 def config_yaml(testing_workdir, recipe_dirname):
@@ -59,7 +61,8 @@ def config_yaml(testing_workdir, recipe_dirname):
         f.write("  fallback_image:\n")
         f.write("  - centos:6\n")
     with open(
-        os.path.join(testing_workdir, recipe_dirname, "default_config.yaml"), "w"
+        os.path.join(testing_workdir, recipe_dirname, "default_config.yaml"),
+        "w",
     ) as f:
         yaml.dump(config, f, default_flow_style=False)
         # need selectors, so write these more manually
@@ -100,14 +103,19 @@ def config_yaml(testing_workdir, recipe_dirname):
         config = {"python": ["2.7", "3.5", "3.6"]}
         yaml.dump(config, f, default_flow_style=False)
     with open(os.path.join(testing_workdir, "conda-forge.yml"), "w") as f:
-        config = {"upload_on_branch": "foo-branch", "recipe_dir": recipe_dirname}
+        config = {
+            "upload_on_branch": "foo-branch",
+            "recipe_dir": recipe_dirname,
+        }
         yaml.dump(config, f, default_flow_style=False)
     return testing_workdir
 
 
 @pytest.fixture(scope="function")
 def noarch_recipe(config_yaml, recipe_dirname, request):
-    with open(os.path.join(config_yaml, recipe_dirname, "meta.yaml"), "w") as fh:
+    with open(
+        os.path.join(config_yaml, recipe_dirname, "meta.yaml"), "w"
+    ) as fh:
         fh.write(
             """
 package:

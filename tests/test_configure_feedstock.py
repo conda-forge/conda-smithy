@@ -6,6 +6,7 @@ import copy
 import yaml
 import textwrap
 
+
 def test_noarch_skips_appveyor(noarch_recipe, jinja_env):
     noarch_recipe.config["provider"]["win"] = "appveyor"
     cnfgr_fdstk.render_appveyor(
@@ -47,7 +48,7 @@ def test_noarch_runs_on_circle(noarch_recipe, jinja_env):
     assert len(os.listdir(matrix_dir)) == 1
 
 
-@pytest.mark.parametrize('recipe_dirname', ['recipe', 'custom_recipe_dir'])
+@pytest.mark.parametrize("recipe_dirname", ["recipe", "custom_recipe_dir"])
 def test_noarch_runs_on_azure(noarch_recipe, jinja_env):
     cnfgr_fdstk.render_azure(
         jinja_env=jinja_env,
