@@ -489,6 +489,16 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
                             )
                         )
 
+    # 24: make sure that license, license_file, and license_family are all present
+    license_fields = ["license", "license_file", "license_family"]
+    for license_field in license_fields:
+        if license_field not in about_section:
+            lints.append(
+                "The ``about: {license_field}:`` entry must exist".format(
+                    license_field=license_field
+                )
+            )
+
     # hints
     # 1: suggest pip
     if "script" in build_section:

@@ -964,6 +964,18 @@ class Test_linter(unittest.TestCase):
         assert "Whenever possible fix all shellcheck findings" in hints[0]
         assert len(hints) == (50 + 2)
 
+    def test_no_licenses(self):
+        meta = {"about": {"url": "http://example.com"}}
+        lints, hints = linter.lintify(meta)
+        license_fields = ["license", "license_file", "license_family"]
+        for license_field in license_fields:
+            self.assertIn(
+                "The ``about: {license_field}:`` entry must exist".format(
+                    license_field=license_field
+                ),
+                lints,
+            )
+
 
 @pytest.mark.cli
 class TestCLI_recipe_lint(unittest.TestCase):
