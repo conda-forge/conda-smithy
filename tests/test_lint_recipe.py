@@ -962,7 +962,7 @@ class Test_linter(unittest.TestCase):
             return_hints=True,
         )
         assert "Whenever possible fix all shellcheck findings" in hints[0]
-        assert len(hints) == (50 + 2)
+        assert len(hints) == (50 + 3)
 
     def test_no_licenses(self):
         meta = {"about": {"url": "http://example.com"}}
