@@ -968,7 +968,7 @@ class Test_linter(unittest.TestCase):
         meta = {"about": {"url": "http://example.com"}}
         lints, hints = linter.lintify(meta)
         self.assertIn(
-            "license entry is missing, but is required.", lints,
+            "The license item is expected in the about section.", lints,
         )
         self.assertIn(
             "license_family entry is missing, but is recommended.", hints

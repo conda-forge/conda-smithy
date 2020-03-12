@@ -285,8 +285,6 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
     # 12a: License family must be valid (conda-build checks for that)
     license_family = about_section.get("license_family", license).lower()
     license_file = about_section.get("license_file", "")
-    if "license" not in about_section:
-        lints.append("license entry is missing, but is required.")
     if license_file == "" and any(
         f for f in NEEDED_FAMILIES if f in license_family
     ):
