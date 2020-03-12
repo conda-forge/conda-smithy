@@ -285,6 +285,8 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
     # 12a: License family must be valid (conda-build checks for that)
     license_family = about_section.get("license_family", license).lower()
     license_file = about_section.get("license_file", "")
+    if "license" not in about_section:
+        lints.append("license entry is missing, but is required.")
     if license_file == "" and any(
         f for f in NEEDED_FAMILIES if f in license_family
     ):
@@ -489,16 +491,6 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
                             )
                         )
 
-    # 24: make sure that license, license_file, and license_family are all present
-    license_fields = ["license", "license_file", "license_family"]
-    for license_field in license_fields:
-        if license_field not in about_section:
-            lints.append(
-                "The ``about: {license_field}:`` entry must exist".format(
-                    license_field=license_field
-                )
-            )
-
     # hints
     # 1: suggest pip
     if "script" in build_section:
@@ -605,6 +597,10 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
             hints.append(
                 "There have been errors while scanning with shellcheck."
             )
+
+    # 4: recommend license_family
+    if "license_family" not in about_section:
+        lints.append("license_family entry is missing, but is recommended.")
 
     return lints, hints
 

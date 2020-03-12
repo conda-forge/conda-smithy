@@ -967,14 +967,21 @@ class Test_linter(unittest.TestCase):
     def test_no_licenses(self):
         meta = {"about": {"url": "http://example.com"}}
         lints, hints = linter.lintify(meta)
-        license_fields = ["license", "license_file", "license_family"]
-        for license_field in license_fields:
-            self.assertIn(
-                "The ``about: {license_field}:`` entry must exist".format(
-                    license_field=license_field
-                ),
-                lints,
-            )
+        self.assertIn(
+            "license entry is missing, but is required.", lints,
+        )
+        self.assertIn(
+            "license_family entry is missing, but is recommended.", hints
+        )
+
+        meta["about"]["license"] = "BSD-3-Clause"
+        lints, hints = linter.lintify(meta)
+        self.assertIn(
+            "license_file entry is missing, but is required.", lints,
+        )
+        self.assertIn(
+            "license_family entry is missing, but is recommended.", hints
+        )
 
 
 @pytest.mark.cli
