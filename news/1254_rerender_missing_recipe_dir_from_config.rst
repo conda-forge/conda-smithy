@@ -16,7 +16,7 @@
 
 **Fixed:**
 
-* Rerender use forge_config["recipe_dir"] instead of hardcoding "recipe" (#1254)
+* Rerender use forge_config["recipe_dir"] instead of hardcoding "recipe" (#1254 & #1257)
 
 **Security:**
 

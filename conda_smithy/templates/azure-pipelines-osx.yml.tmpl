@@ -46,7 +46,7 @@ jobs:
       source activate base
       echo "Configuring conda."
 
-      setup_conda_rc ./ ./recipe ./.ci_support/${CONFIG}.yaml
+      setup_conda_rc ./ "./{{ recipe_dir }}" ./.ci_support/${CONFIG}.yaml
       export CI=azure
       {{ build_setup.replace("\n", "\n      ").rstrip() }}
       conda update --yes --quiet --override-channels -c conda-forge -c defaults --all
@@ -57,17 +57,17 @@ jobs:
 
   - script: |
       source activate base
-      mangle_compiler ./ ./recipe ./.ci_support/${CONFIG}.yaml
+      mangle_compiler ./ "./{{ recipe_dir }}" ./.ci_support/${CONFIG}.yaml
     displayName: Mangle compiler
 
   - script: |
       source activate base
-      make_build_number ./ ./recipe ./.ci_support/${CONFIG}.yaml
+      make_build_number ./ "./{{ recipe_dir }}" ./.ci_support/${CONFIG}.yaml
     displayName: Generate build number clobber file
 
   - script: |
       source activate base
-      conda build ./recipe -m ./.ci_support/${CONFIG}.yaml --clobber-file ./.ci_support/clobber_${CONFIG}.yaml
+      conda build "./{{ recipe_dir }}" -m ./.ci_support/${CONFIG}.yaml --clobber-file ./.ci_support/clobber_${CONFIG}.yaml
     displayName: Build recipe
 
   - script: |
@@ -76,7 +76,7 @@ jobs:
 {%- if upload_on_branch %}
       export UPLOAD_ON_BRANCH="{{ upload_on_branch }}"
 {%- endif %}
-      upload_package ./ ./recipe ./.ci_support/${CONFIG}.yaml
+      upload_package ./ "./{{ recipe_dir }}" ./.ci_support/${CONFIG}.yaml
     displayName: Upload package
     env:
       BINSTAR_TOKEN: $(BINSTAR_TOKEN)
