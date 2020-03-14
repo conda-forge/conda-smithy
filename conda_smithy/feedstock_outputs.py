@@ -15,7 +15,9 @@ import git
 from .feedstock_tokens import is_valid_feedstock_token
 
 
-def copy_feedstock_outputs(outputs, staging_conda_channel, production_conda_channel):
+def copy_feedstock_outputs(
+    outputs, staging_conda_channel, production_conda_channel
+):
     """Copy outputs from one chanel to another.
 
     Parameters
@@ -35,6 +37,7 @@ def copy_feedstock_outputs(outputs, staging_conda_channel, production_conda_chan
         otherwise.
     """
     from .ci_register import anaconda_token
+
     ac = get_server_api(token=anaconda_token)
 
     copied = {o: False for o in outputs}
@@ -47,8 +50,8 @@ def copy_feedstock_outputs(outputs, staging_conda_channel, production_conda_chan
                 out["version"],
                 basename=urllib.parse.quote(out_name, safe=""),
                 to_owner=production_conda_channel,
-                from_label='main',
-                to_label='main',
+                from_label="main",
+                to_label="main",
             )
             copied[out_name] = True
         except BinstarError:
@@ -57,7 +60,14 @@ def copy_feedstock_outputs(outputs, staging_conda_channel, production_conda_chan
 
 
 def validate_feedstock_outputs(
-    user, project, outputs, feedstock_token, conda_channel, output_repo, token_repo, register=True
+    user,
+    project,
+    outputs,
+    feedstock_token,
+    conda_channel,
+    output_repo,
+    token_repo,
+    register=True,
 ):
     """Validate feedstock outputs.
 
@@ -94,11 +104,18 @@ def validate_feedstock_outputs(
     """
     valid = {o: False for o in outputs}
 
-    if not is_valid_feedstock_token(user, project, feedstock_token, token_repo):
+    if not is_valid_feedstock_token(
+        user, project, feedstock_token, token_repo
+    ):
         return valid, ["invalid feedstock token"]
 
     valid_outputs = is_valid_feedstock_output(
-        user, project, [o["name"] for _, o in outputs.items()], output_repo, register=register)
+        user,
+        project,
+        [o["name"] for _, o in outputs.items()],
+        output_repo,
+        register=register,
+    )
 
     valid_hashes = is_valid_output_hash(conda_channel, outputs)
 
@@ -106,7 +123,9 @@ def validate_feedstock_outputs(
     for o in outputs:
         _errors = []
         if not valid_outputs[outputs[o]["name"]]:
-            _errors.append("output %s not allowed for %s/%s" % (o, user, project))
+            _errors.append(
+                "output %s not allowed for %s/%s" % (o, user, project)
+            )
         if not valid_hashes[o]:
             _errors.append("output %s does not have a valid md5 checksum" % o)
 
@@ -155,7 +174,9 @@ def is_valid_output_hash(conda_channel, outputs):
     return valid
 
 
-def is_valid_feedstock_output(user, project, outputs, output_repo, register=True):
+def is_valid_feedstock_output(
+    user, project, outputs, output_repo, register=True
+):
     """Test if feedstock outputs are valid. Optionally register them if they do not exist.
 
     Parameters
@@ -179,6 +200,7 @@ def is_valid_feedstock_output(user, project, outputs, output_repo, register=True
         otherwise.
     """
     from .github import gh_token
+
     github_token = gh_token()
 
     feedstock = project.replace("-feedstock", "")
@@ -206,7 +228,9 @@ def is_valid_feedstock_output(user, project, outputs, output_repo, register=True
                     with open(pth, "w") as fp:
                         json.dump({"feedstocks": [feedstock]}, fp)
                     repo.index.add(pth)
-                    repo.index.commit("added output %s %s/%s" % (o, user, project))
+                    repo.index.commit(
+                        "added output %s %s/%s" % (o, user, project)
+                    )
                     made_commit = True
             else:
                 # make sure feedstock is ok

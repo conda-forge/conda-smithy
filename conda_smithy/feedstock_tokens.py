@@ -221,11 +221,11 @@ def is_valid_feedstock_token(user, project, feedstock_token, token_repo):
                 salted_token = scrypt.hash(
                     feedstock_token,
                     bytes.fromhex(token_data["salt"]),
-                    buflen=256).hex()
+                    buflen=256,
+                ).hex()
 
                 valid = hmac.compare_digest(
-                    salted_token,
-                    bytes.fromhex(token_data["hashed_token"]),
+                    salted_token, bytes.fromhex(token_data["hashed_token"]),
                 )
         except Exception as e:
             if "DEBUG_FEEDSTOCK_TOKENS" in os.environ:
