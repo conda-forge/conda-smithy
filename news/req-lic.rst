@@ -1,7 +1,7 @@
 **Added:**
 
-* Linter will now check for the existence of ``license``, ``license_file``, and
-  ``license_family`` fields in the about section.
+* Linter will now hint if the ``license_family`` fields in the about section
+  doesn't exist.
 
 **Changed:**
 
