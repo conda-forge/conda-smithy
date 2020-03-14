@@ -14,24 +14,33 @@ import git
 from .feedstock_tokens import is_valid_feedstock_token
 
 
-def feedstock_outputs_are_valid(
+def validate_feedstock_outputs(
     user, project, outputs, feedstock_token, conda_channel, output_repo, token_repo, register=True
 ):
+    valid = {o: False for o in outputs}
+
     if not is_valid_feedstock_token(user, project, feedstock_token, token_repo):
-        return False, "invalid feedstock token"
+        return valid, ["invalid feedstock token"]
 
     valid_outputs = is_valid_feedstock_output(
         user, project, [o["name"] for _, o in outputs.items()], output_repo, register=register)
 
     valid_hashes = is_valid_output_hash(conda_channel, outputs)
 
+    errors = []
     for o in outputs:
+        _errors = []
         if not valid_outputs[outputs[o]["name"]]:
-            return False, "output %s not allowed for %s" % (outputs[o]["name"], project)
+            _errors.append("output %s not allowed for %s/%s" % (o, user, project))
         if not valid_hashes[o]:
-            return False, "output %s does not have a valid md5 checksum" % o
+            _errors.append("output %s does not have a valid md5 checksum" % o)
 
-    return True
+        if len(_errors) > 0:
+            errors.extend(_errors)
+        else:
+            valid[o] = True
+
+    return valid, errors
 
 
 def is_valid_output_hash(conda_channel, outputs):
