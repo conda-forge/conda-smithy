@@ -14,6 +14,10 @@ import git
 from .feedstock_tokens import is_valid_feedstock_token
 
 
+def copy_feedstock_outputs(outputs, staging_conda_channel, production_conda_channel):
+    pass
+
+
 def validate_feedstock_outputs(
     user, project, outputs, feedstock_token, conda_channel, output_repo, token_repo, register=True
 ):
