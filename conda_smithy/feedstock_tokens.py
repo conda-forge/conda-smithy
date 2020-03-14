@@ -115,6 +115,7 @@ def read_feedstock_token(user, project):
                 "Empty token found in '~/.conda-smithy/"
                 "%s_%s_feedstock.token'"
             ) % (user, project,)
+            feedstock_token = None
     return feedstock_token, err_msg
 
 
@@ -134,16 +135,12 @@ def feedstock_token_exists(user, project, token_repo):
 
     exists = False
     failed = False
+    err_msg = None
     with tempfile.TemporaryDirectory() as tmpdir:
         with open(os.devnull, "w") as fp, redirect_stdout(fp), redirect_stderr(
             fp
         ):
             try:
-                feedstock_token, err_msg = read_feedstock_token(user, project)
-                if err_msg:
-                    failed = True
-                    raise RuntimeError(err_msg)
-
                 # clone the repo
                 _token_repo = (
                     token_repo.replace("$GITHUB_TOKEN", github_token)
@@ -158,8 +155,6 @@ def feedstock_token_exists(user, project, token_repo):
                     project.replace("-feedstock", "") + ".json",
                 )
 
-                # don't overwrite existing tokens
-                # check again since there might be a race condition
                 if os.path.exists(token_file):
                     exists = True
             except Exception as e:
