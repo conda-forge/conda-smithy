@@ -267,7 +267,6 @@ def register_feedstock_token(user, project, token_repo):
 def register_feedstock_token_with_proviers(
     user,
     project,
-    feedstock_directory,
     drone=True,
     circle=True,
     travis=True,

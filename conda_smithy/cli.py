@@ -672,7 +672,6 @@ class RegisterFeedstockToken(Subcommand):
         register_feedstock_token_with_proviers(
             owner,
             repo,
-            args.feedstock_directory,
             drone=args.drone,
             circle=args.circle,
             travis=args.travis,

@@ -10,6 +10,7 @@ from conda_smithy.feedstock_tokens import (
     read_feedstock_token,
     feedstock_token_exists,
     register_feedstock_token,
+    register_feedstock_token_with_proviers,
 )
 
 
@@ -64,10 +65,10 @@ def test_read_feedstock_token():
             os.remove(pth)
 
 
-@pytest.mark.parametrize("retval", [True, False,])
-@pytest.mark.parametrize("project", ["bar", "bar-feedstock",])
+@pytest.mark.parametrize("retval", [True, False])
+@pytest.mark.parametrize("project", ["bar", "bar-feedstock"])
 @pytest.mark.parametrize(
-    "repo", ["GITHUB_TOKEN", "${GITHUB_TOKEN}", "GH_TOKEN", "${GH_TOKEN}",]
+    "repo", ["GITHUB_TOKEN", "${GITHUB_TOKEN}", "GH_TOKEN", "${GH_TOKEN}"]
 )
 @mock.patch("conda_smithy.feedstock_tokens.tempfile")
 @mock.patch("conda_smithy.feedstock_tokens.git")
@@ -93,9 +94,9 @@ def test_feedstock_token_exists(
     )
 
 
-@pytest.mark.parametrize("project", ["bar", "bar-feedstock",])
+@pytest.mark.parametrize("project", ["bar", "bar-feedstock"])
 @pytest.mark.parametrize(
-    "repo", ["GITHUB_TOKEN", "${GITHUB_TOKEN}", "GH_TOKEN", "${GH_TOKEN}",]
+    "repo", ["GITHUB_TOKEN", "${GITHUB_TOKEN}", "GH_TOKEN", "${GH_TOKEN}"]
 )
 @mock.patch("conda_smithy.feedstock_tokens.tempfile")
 @mock.patch("conda_smithy.feedstock_tokens.git")
@@ -125,7 +126,7 @@ def test_feedstock_token_raises(
 
 
 @pytest.mark.parametrize(
-    "repo", ["GITHUB_TOKEN", "${GITHUB_TOKEN}", "GH_TOKEN", "${GH_TOKEN}",]
+    "repo", ["GITHUB_TOKEN", "${GITHUB_TOKEN}", "GH_TOKEN", "${GH_TOKEN}"]
 )
 @mock.patch("conda_smithy.feedstock_tokens.secrets")
 @mock.patch("conda_smithy.feedstock_tokens.os.urandom")
@@ -180,7 +181,7 @@ def test_register_feedstock_token_works(
 
 
 @pytest.mark.parametrize(
-    "repo", ["GITHUB_TOKEN", "${GITHUB_TOKEN}", "GH_TOKEN", "${GH_TOKEN}",]
+    "repo", ["GITHUB_TOKEN", "${GITHUB_TOKEN}", "GH_TOKEN", "${GH_TOKEN}"]
 )
 @mock.patch("conda_smithy.feedstock_tokens.secrets")
 @mock.patch("conda_smithy.feedstock_tokens.os.urandom")
@@ -224,7 +225,7 @@ def test_register_feedstock_token_notoken(
 
 
 @pytest.mark.parametrize(
-    "repo", ["GITHUB_TOKEN", "${GITHUB_TOKEN}", "GH_TOKEN", "${GH_TOKEN}",]
+    "repo", ["GITHUB_TOKEN", "${GITHUB_TOKEN}", "GH_TOKEN", "${GH_TOKEN}"]
 )
 @mock.patch("conda_smithy.feedstock_tokens.secrets")
 @mock.patch("conda_smithy.feedstock_tokens.os.urandom")
@@ -270,3 +271,153 @@ def test_register_feedstock_token_exists_already(
     repo.remote.return_value.push.assert_not_called()
 
     assert "Token for repo foo/bar already exists!" in str(e.value)
+
+
+@pytest.mark.parametrize("drone", [True, False])
+@pytest.mark.parametrize("circle", [True, False])
+@pytest.mark.parametrize("azure", [True, False])
+@pytest.mark.parametrize("travis", [True, False])
+@pytest.mark.parametrize("clobber", [True, False])
+@mock.patch("conda_smithy.feedstock_tokens.add_feedstock_token_to_drone")
+@mock.patch("conda_smithy.feedstock_tokens.add_feedstock_token_to_circle")
+@mock.patch("conda_smithy.feedstock_tokens.add_feedstock_token_to_travis")
+@mock.patch("conda_smithy.feedstock_tokens.add_feedstock_token_to_azure")
+def test_register_feedstock_token_with_proviers(
+    azure_mock,
+    travis_mock,
+    circle_mock,
+    drone_mock,
+    drone,
+    circle,
+    travis,
+    azure,
+    clobber,
+):
+    user = "foo"
+    project = "bar"
+
+    pth = os.path.expanduser("~/.conda-smithy/foo_bar_feedstock.token")
+
+    try:
+        generate_and_write_feedstock_token(user, project)
+        feedstock_token, _ = read_feedstock_token(user, project)
+
+        register_feedstock_token_with_proviers(
+            user,
+            project,
+            drone=drone,
+            circle=circle,
+            travis=travis,
+            azure=azure,
+            clobber=clobber,
+        )
+
+        if drone:
+            assert drone_mock.called_with(
+                user, project, feedstock_token, clobber
+            )
+        else:
+            drone_mock.assert_not_called()
+
+        if circle:
+            assert circle_mock.called_with(
+                user, project, feedstock_token, clobber
+            )
+        else:
+            circle_mock.assert_not_called()
+
+        if travis:
+            assert travis_mock.called_with(
+                user, project, feedstock_token, clobber
+            )
+        else:
+            travis_mock.assert_not_called()
+
+        if azure:
+            assert azure_mock.called_with(
+                user, project, feedstock_token, clobber
+            )
+        else:
+            azure_mock.assert_not_called()
+    finally:
+        if os.path.exists(pth):
+            os.remove(pth)
+
+
+@pytest.mark.parametrize("drone", [True, False])
+@pytest.mark.parametrize("circle", [True, False])
+@pytest.mark.parametrize("azure", [True, False])
+@pytest.mark.parametrize("travis", [True, False])
+@pytest.mark.parametrize("clobber", [True, False])
+@mock.patch("conda_smithy.feedstock_tokens.add_feedstock_token_to_drone")
+@mock.patch("conda_smithy.feedstock_tokens.add_feedstock_token_to_circle")
+@mock.patch("conda_smithy.feedstock_tokens.add_feedstock_token_to_travis")
+@mock.patch("conda_smithy.feedstock_tokens.add_feedstock_token_to_azure")
+def test_register_feedstock_token_with_proviers_notoken(
+    azure_mock,
+    travis_mock,
+    circle_mock,
+    drone_mock,
+    drone,
+    circle,
+    travis,
+    azure,
+    clobber,
+):
+    user = "foo"
+    project = "bar"
+
+    with pytest.raises(RuntimeError) as e:
+        register_feedstock_token_with_proviers(
+            user,
+            project,
+            drone=drone,
+            circle=circle,
+            travis=travis,
+            azure=azure,
+            clobber=clobber,
+        )
+
+    assert "No token" in str(e.value)
+
+    drone_mock.assert_not_called()
+    circle_mock.assert_not_called()
+    travis_mock.assert_not_called()
+    azure_mock.assert_not_called()
+
+
+@pytest.mark.parametrize("provider", ["drone", "circle", "travis", "azure"])
+@mock.patch("conda_smithy.feedstock_tokens.add_feedstock_token_to_drone")
+@mock.patch("conda_smithy.feedstock_tokens.add_feedstock_token_to_circle")
+@mock.patch("conda_smithy.feedstock_tokens.add_feedstock_token_to_travis")
+@mock.patch("conda_smithy.feedstock_tokens.add_feedstock_token_to_azure")
+def test_register_feedstock_token_with_proviers_error(
+    azure_mock, travis_mock, circle_mock, drone_mock, provider,
+):
+    user = "foo"
+    project = "bar"
+
+    pth = os.path.expanduser("~/.conda-smithy/foo_bar_feedstock.token")
+
+    if provider == "drone":
+        drone_mock.side_effect = ValueError("blah")
+    if provider == "circle":
+        circle_mock.side_effect = ValueError("blah")
+    if provider == "travis":
+        travis_mock.side_effect = ValueError("blah")
+    if provider == "azure":
+        azure_mock.side_effect = ValueError("blah")
+
+    try:
+        generate_and_write_feedstock_token(user, project)
+        feedstock_token, _ = read_feedstock_token(user, project)
+
+        with pytest.raises(RuntimeError) as e:
+            register_feedstock_token_with_proviers(
+                user, project,
+            )
+
+        assert "on %s" % provider in str(e.value)
+    finally:
+        if os.path.exists(pth):
+            os.remove(pth)
