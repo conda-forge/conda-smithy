@@ -237,14 +237,10 @@ def register_feedstock_token(user, project, token_repo):
 
                 # salt, encrypt and write
                 salt = os.urandom(64)
-                maxtime = "0.1"
-                salted_token = scrypt.encrypt(
-                    salt, feedstock_token, maxtime=float(maxtime),
-                )
+                salted_token = scrypt.hash(feedstock_token, salt, buflen=256)
                 data = {
                     "salt": salt.hex(),
                     "hashed_token": salted_token.hex(),
-                    "maxtime": maxtime,
                 }
                 with open(token_file, "w") as fp:
                     json.dump(data, fp)
