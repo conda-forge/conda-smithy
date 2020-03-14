@@ -10,7 +10,6 @@ from textwrap import dedent
 import conda
 from distutils.version import LooseVersion
 from conda_build.metadata import MetaData
-from conda_build.utils import ensure_list
 
 from . import configure_feedstock
 from . import feedstock_io
@@ -238,7 +237,8 @@ class RegisterCI(Subcommand):
         if args.azure:
             if azure_ci_utils.default_config.token is None:
                 print(
-                    "No azure token.  Create a token at https://dev.azure.com/conda-forge/_usersSettings/tokens and\n"
+                    "No azure token. Create a token at https://dev.azure.com/"
+                    "conda-forge/_usersSettings/tokens and\n"
                     "put it in ~/.conda-smithy/azure.token"
                 )
             ci_register.add_project_to_azure(owner, repo)
@@ -552,6 +552,134 @@ def main():
         sys.exit(2)
 
     args.subcommand_func(args)
+
+
+class GenerateFeedstockToken(Subcommand):
+    subcommand = "generate-feedstock-token"
+
+    def __init__(self, parser):
+        super(GenerateFeedstockToken, self).__init__(
+            parser,
+            "Generate a feedstock token at ~/.conda-smithy/{user or org}_{project}_feedstock.token",
+        )
+        scp = self.subcommand_parser
+        scp.add_argument(
+            "--feedstock_directory",
+            default=os.getcwd(),
+            help="The directory of the feedstock git repository.",
+        )
+        group = scp.add_mutually_exclusive_group()
+        group.add_argument(
+            "--user", help="github username under which to register this repo"
+        )
+        group.add_argument(
+            "--organization",
+            default="conda-forge",
+            help="github organisation under which to register this repo",
+        )
+
+    def __call__(self, args):
+        from conda_smithy.feedstock_tokens import (
+            generate_and_write_feedstock_token,
+        )
+
+        owner = args.user or args.organization
+        repo = os.path.basename(os.path.abspath(args.feedstock_directory))
+
+        generate_and_write_feedstock_token(owner, repo)
+        print(
+            "Your feedstock token has been generated at ~/.conda-smithy/%s_%s_feedstock.token\n"
+            "This token is stored in plaintext so be careful!" % (owner, repo)
+        )
+
+
+class RegisterFeedstockToken(Subcommand):
+    subcommand = "register-feedstock-token"
+
+    def __init__(self, parser):
+        # conda-smithy register-ci ./
+        super(RegisterFeedstockToken, self).__init__(
+            parser,
+            "Register the feedstock token w/ the CI services for builds and "
+            "with the token registry.",
+        )
+        scp = self.subcommand_parser
+        scp.add_argument(
+            "--feedstock_directory",
+            default=os.getcwd(),
+            help="The directory of the feedstock git repository.",
+        )
+        scp.add_argument(
+            "--token_repo",
+            default=None,
+            help=(
+                "The GitHub repo that stores feedstock tokens. The default is "
+                "{user or org}/feedstock-tokens on GitHub."
+            ),
+        )
+        group = scp.add_mutually_exclusive_group()
+        group.add_argument(
+            "--user", help="github username under which to register this repo"
+        )
+        group.add_argument(
+            "--organization",
+            default="conda-forge",
+            help="github organisation under which to register this repo",
+        )
+        for ci in [
+            "Azure",
+            "Travis",
+            "Circle",
+            "Drone",
+        ]:
+            scp.add_argument(
+                "--without-{}".format(ci.lower()),
+                dest=ci.lower(),
+                action="store_false",
+                help="If set, {} will be not registered".format(ci),
+            )
+            default = {ci.lower(): True}
+            scp.set_defaults(**default)
+
+    def __call__(self, args):
+        from conda_smithy.feedstock_tokens import (
+            register_feedstock_token_with_proviers,
+            register_feedstock_token,
+            feedstock_token_exists,
+        )
+
+        owner = args.user or args.organization
+        repo = os.path.basename(os.path.abspath(args.feedstock_directory))
+
+        if args.token_repo is None:
+            token_repo = (
+                "https://${GITHUB_TOKEN}@github.com/%s/feedstock-tokens"
+                % owner
+            )
+        else:
+            token_repo = args.token_repo
+
+        if feedstock_token_exists(owner, repo, token_repo):
+            raise RuntimeError(
+                "Token for repo %s/%s already exists!" % (owner, repo)
+            )
+
+        print("Registering the feedstock tokens. Can take up to ~30 seconds.")
+
+        # do all providers first
+        register_feedstock_token_with_proviers(
+            owner,
+            repo,
+            drone=args.drone,
+            circle=args.circle,
+            travis=args.travis,
+            azure=args.azure,
+        )
+
+        # then if that works do the github repo
+        register_feedstock_token(owner, repo, token_repo)
+
+        print("Successfully registered the feedstock token!")
 
 
 if __name__ == "__main__":
