@@ -7,7 +7,17 @@ import pytest
 from conda_smithy.feedstock_outputs import (
     is_valid_feedstock_output,
     is_valid_output_hash,
+    copy_feedstock_outputs,
+    validate_feedstock_outputs,
 )
+
+
+def test_copy_feedstock_outputs():
+    assert False
+
+
+def test_validate_feedstock_outputs():
+    assert False
 
 
 def test_is_valid_output_hash():

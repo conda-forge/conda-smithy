@@ -11,7 +11,16 @@ from conda_smithy.feedstock_tokens import (
     feedstock_token_exists,
     register_feedstock_token,
     register_feedstock_token_with_proviers,
+    is_valid_feedstock_token,
 )
+
+
+def test_is_valid_feedstock_token_nofile():
+    assert False
+
+
+def test_is_valid_feedstock_token_badtoken():
+    assert False
 
 
 def test_generate_and_write_feedstock_token():

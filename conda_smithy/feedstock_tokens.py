@@ -237,7 +237,7 @@ def is_valid_feedstock_token(user, project, feedstock_token, token_repo):
         else:
             raise RuntimeError(
                 (
-                    "Registering the feedstock token for %s/%s failed!"
+                    "Validating the feedstock token for %s/%s failed!"
                     " Try the command locally with DEBUG_FEEDSTOCK_TOKENS"
                     " defined in the environment to investigate!"
                 )
