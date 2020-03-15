@@ -4,7 +4,49 @@ from unittest import mock
 
 import pytest
 
-from conda_smithy.feedstock_outputs import is_valid_feedstock_output
+from conda_smithy.feedstock_outputs import (
+    is_valid_feedstock_output,
+    is_valid_output_hash,
+)
+
+
+def test_is_valid_output_hash():
+    outputs = {
+        "linux-64/python-3.8.2-h9d8adfe_4_cpython.tar.bz2": {
+            "name": "python",
+            "version": "3.8.2",
+            "md5": "7382171fb4c13dbedf98e0bd9b60f165",
+        },
+        # bad hash
+        "osx-64/python-3.8.2-hdc38147_4_cpython.tar.bz2": {
+            "name": "python",
+            "version": "3.8.2",
+            "md5": "7382171fb4c13dbedf98e0bd9b60f165",
+        },
+        # not a package
+        "linux-64/python-3.8.2-h9d8adfe_4_cpython.tar": {
+            "name": "python",
+            "version": "3.8.2",
+            "md5": "7382171fb4c13dbedf98e0bd9b60f165",
+        },
+        # bad metadata
+        "linux-64/python-3.7.6-h357f687_4_cpython.tar.bz2": {
+            "name": "dskljfals",
+            "version": "3.4.5",
+            "md5": "2f347da4a40715a5228412e56fb035d8",
+        },
+    }
+
+    valid = is_valid_output_hash("conda-forge", outputs)
+    assert valid == {
+        "linux-64/python-3.8.2-h9d8adfe_4_cpython.tar.bz2": True,
+        # bad hash
+        "osx-64/python-3.8.2-hdc38147_4_cpython.tar.bz2": False,
+        # not a package
+        "linux-64/python-3.8.2-h9d8adfe_4_cpython.tar": False,
+        # bad metadata
+        "linux-64/python-3.7.6-h357f687_4_cpython.tar.bz2": False,
+    }
 
 
 @pytest.mark.parametrize("register", [True, False])
