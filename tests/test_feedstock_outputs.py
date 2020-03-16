@@ -1,8 +1,11 @@
 import os
 import json
 from unittest import mock
+from collections import OrderedDict
 
 import pytest
+
+from binstar_client import BinstarError
 
 from conda_smithy.feedstock_outputs import (
     is_valid_feedstock_output,
@@ -12,12 +15,110 @@ from conda_smithy.feedstock_outputs import (
 )
 
 
-def test_copy_feedstock_outputs():
-    assert False
+@mock.patch("conda_smithy.feedstock_outputs._get_ac_api")
+def test_copy_feedstock_outputs(ac):
+    ac.return_value.copy.side_effect = [True, BinstarError("blah")]
+
+    outputs = OrderedDict()
+    outputs["boo"] = {"version": "1", "name": "boohoo"}
+    outputs["blah"] = {"version": "2", "name": "blahha"}
+
+    copied = copy_feedstock_outputs(outputs, "staging", "prod")
+
+    assert copied == {"boo": True, "blah": False}
+
+    assert ac.return_value.copy.called_with(
+        "staging",
+        "boohoo",
+        "1",
+        basename="boo",
+        to_owner="prod",
+        from_label="main",
+        to_label="main",
+    )
+
+    assert ac.return_value.copy.called_with(
+        "staging",
+        "blahha",
+        "2",
+        basename="blah",
+        to_owner="prod",
+        from_label="main",
+        to_label="main",
+    )
 
 
-def test_validate_feedstock_outputs():
-    assert False
+@mock.patch("conda_smithy.feedstock_outputs.is_valid_output_hash")
+@mock.patch("conda_smithy.feedstock_outputs.is_valid_feedstock_output")
+@mock.patch("conda_smithy.feedstock_outputs.is_valid_feedstock_token")
+def test_validate_feedstock_outputs_badtoken(
+    valid_token, valid_out, valid_hash
+):
+    valid_token.return_value = False
+    valid, errs = validate_feedstock_outputs(
+        "foo",
+        "bar-feedstock",
+        {"a": {}, "b": {}},
+        "abc",
+        "staging",
+        "output_repo",
+        "token_repo",
+        register=True,
+    )
+
+    assert not any(v for v in valid.values())
+    assert ["invalid feedstock token"] == errs
+
+    valid_out.assert_not_called()
+    valid_hash.assert_not_called()
+
+
+@mock.patch("conda_smithy.feedstock_outputs.is_valid_output_hash")
+@mock.patch("conda_smithy.feedstock_outputs.is_valid_feedstock_output")
+@mock.patch("conda_smithy.feedstock_outputs.is_valid_feedstock_token")
+def test_validate_feedstock_outputs_badoutputhash(
+    valid_token, valid_out, valid_hash
+):
+    valid_token.return_value = True
+    valid_out.return_value = {
+        "a-name": True,
+        "b-name": False,
+        "c-name": True,
+        "d-name": False,
+    }
+    valid_hash.return_value = {
+        "a": False,
+        "b": True,
+        "c": True,
+        "d": False,
+    }
+    valid, errs = validate_feedstock_outputs(
+        "foo",
+        "bar-feedstock",
+        {
+            "a": {"name": "a-name"},
+            "b": {"name": "b-name"},
+            "c": {"name": "c-name"},
+            "d": {"name": "d-name"},
+        },
+        "abc",
+        "staging",
+        "output_repo",
+        "token_repo",
+        register=True,
+    )
+
+    assert valid == {
+        "a": False,
+        "b": False,
+        "c": True,
+        "d": False,
+    }
+    assert len(errs) == 4
+    assert "output b not allowed for foo/bar-feedstock" in errs
+    assert "output d not allowed for foo/bar-feedstock" in errs
+    assert "output a does not have a valid md5 checksum" in errs
+    assert "output d does not have a valid md5 checksum" in errs
 
 
 def test_is_valid_output_hash():

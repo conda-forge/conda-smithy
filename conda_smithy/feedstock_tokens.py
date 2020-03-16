@@ -34,7 +34,7 @@ import scrypt
 
 def _munge_project(project):
     if project.endswith("-feedstock"):
-        return project[:-len("-feedstock")]
+        return project[: -len("-feedstock")]
     else:
         return project
 
@@ -106,7 +106,9 @@ def read_feedstock_token(user, project):
 
     # read the token
     user_token_pth = os.path.join(
-        "~", ".conda-smithy", "%s_%s_feedstock.token" % (user, _munge_project(project)),
+        "~",
+        ".conda-smithy",
+        "%s_%s_feedstock.token" % (user, _munge_project(project)),
     )
     user_token_pth = os.path.expanduser(user_token_pth)
 
@@ -219,8 +221,6 @@ def is_valid_feedstock_token(user, project, feedstock_token, token_repo):
                 tmpdir, "tokens", _munge_project(project) + ".json",
             )
 
-            # don't overwrite existing tokens
-            # check again since there might be a race condition
             if os.path.exists(token_file):
                 with open(token_file, "r") as fp:
                     token_data = json.load(fp)

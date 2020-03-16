@@ -15,6 +15,13 @@ import git
 from .feedstock_tokens import is_valid_feedstock_token
 
 
+def _get_ac_api():
+    """wrap this a function so we can more easily mock it when testing"""
+    from .ci_register import anaconda_token
+
+    return get_server_api(token=anaconda_token)
+
+
 def copy_feedstock_outputs(
     outputs, staging_conda_channel, production_conda_channel
 ):
@@ -36,9 +43,7 @@ def copy_feedstock_outputs(
         A dict keyed on the output name with True if the copy worked and False
         otherwise.
     """
-    from .ci_register import anaconda_token
-
-    ac = get_server_api(token=anaconda_token)
+    ac = _get_ac_api()
 
     copied = {o: False for o in outputs}
 
