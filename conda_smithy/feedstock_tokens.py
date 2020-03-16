@@ -32,6 +32,13 @@ import requests
 import scrypt
 
 
+def _munge_project(project):
+    if project.endswith("-feedstock"):
+        return project[:-len("-feedstock")]
+    else:
+        return project
+
+
 def generate_and_write_feedstock_token(user, project):
     """Generate a feedstock token and write it to
 
@@ -49,12 +56,12 @@ def generate_and_write_feedstock_token(user, project):
             pth = os.path.join(
                 "~",
                 ".conda-smithy",
-                "%s_%s_feedstock.token" % (user, project),
+                "%s_%s_feedstock.token" % (user, _munge_project(project)),
             )
             pth = os.path.expanduser(pth)
             if os.path.exists(pth):
                 failed = True
-                err_msg = "Token for %s%s is already written locally!" % (
+                err_msg = "Token for %s/%s is already written locally!" % (
                     user,
                     project,
                 )
@@ -99,14 +106,14 @@ def read_feedstock_token(user, project):
 
     # read the token
     user_token_pth = os.path.join(
-        "~", ".conda-smithy", "%s_%s_feedstock.token" % (user, project),
+        "~", ".conda-smithy", "%s_%s_feedstock.token" % (user, _munge_project(project)),
     )
     user_token_pth = os.path.expanduser(user_token_pth)
 
     if not os.path.exists(user_token_pth):
         err_msg = (
             "No token found in '~/.conda-smithy/%s_%s_feedstock.token'"
-            % (user, project,)
+            % (user, _munge_project(project))
         )
     else:
         with open(user_token_pth, "r") as fp:
@@ -115,7 +122,7 @@ def read_feedstock_token(user, project):
             err_msg = (
                 "Empty token found in '~/.conda-smithy/"
                 "%s_%s_feedstock.token'"
-            ) % (user, project,)
+            ) % (user, _munge_project(project))
             feedstock_token = None
     return feedstock_token, err_msg
 
@@ -150,7 +157,7 @@ def feedstock_token_exists(user, project, token_repo):
             )
             git.Repo.clone_from(_token_repo, tmpdir, depth=1)
             token_file = os.path.join(
-                tmpdir, "tokens", project.replace("-feedstock", "") + ".json",
+                tmpdir, "tokens", _munge_project(project) + ".json",
             )
 
             if os.path.exists(token_file):
@@ -209,7 +216,7 @@ def is_valid_feedstock_token(user, project, feedstock_token, token_repo):
             )
             git.Repo.clone_from(_token_repo, tmpdir, depth=1)
             token_file = os.path.join(
-                tmpdir, "tokens", project.replace("-feedstock", "") + ".json",
+                tmpdir, "tokens", _munge_project(project) + ".json",
             )
 
             # don't overwrite existing tokens
@@ -222,7 +229,7 @@ def is_valid_feedstock_token(user, project, feedstock_token, token_repo):
                     feedstock_token,
                     bytes.fromhex(token_data["salt"]),
                     buflen=256,
-                ).hex()
+                )
 
                 valid = hmac.compare_digest(
                     salted_token, bytes.fromhex(token_data["hashed_token"]),
@@ -288,7 +295,7 @@ def register_feedstock_token(user, project, token_repo):
             )
             repo = git.Repo.clone_from(_token_repo, tmpdir, depth=1)
             token_file = os.path.join(
-                tmpdir, "tokens", project.replace("-feedstock", "") + ".json",
+                tmpdir, "tokens", _munge_project(project) + ".json",
             )
 
             # don't overwrite existing tokens

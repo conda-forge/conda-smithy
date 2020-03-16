@@ -15,12 +15,90 @@ from conda_smithy.feedstock_tokens import (
 )
 
 
-def test_is_valid_feedstock_token_nofile():
-    assert False
+@pytest.mark.parametrize("project", ["bar", "bar-feedstock"])
+@pytest.mark.parametrize(
+    "repo", ["GITHUB_TOKEN", "${GITHUB_TOKEN}", "GH_TOKEN", "${GH_TOKEN}"]
+)
+@mock.patch("conda_smithy.feedstock_tokens.tempfile")
+@mock.patch("conda_smithy.feedstock_tokens.git")
+@mock.patch("conda_smithy.github.gh_token")
+def test_feedstock_tokens_roundtrip(
+    gh_mock, git_mock, tmp_mock, tmpdir, repo, project
+):
+    gh_mock.return_value = "abc123"
+    tmp_mock.TemporaryDirectory.return_value.__enter__.return_value = str(
+        tmpdir
+    )
+
+    user = "foo"
+    pth = os.path.expanduser("~/.conda-smithy/foo_bar_feedstock.token")
+    token_json_pth = os.path.join(tmpdir, "tokens", "bar.json")
+    os.makedirs(os.path.join(tmpdir, "tokens"), exist_ok=True)
+
+    try:
+        generate_and_write_feedstock_token(user, project)
+        assert os.path.exists(pth)
+
+        register_feedstock_token(user, project, repo)
+        assert os.path.exists(token_json_pth)
+
+        with open(pth, "r") as fp:
+            feedstock_token = fp.read().strip()
+
+        retval = is_valid_feedstock_token(user, project, feedstock_token, repo)
+    finally:
+        if os.path.exists(pth):
+            os.remove(pth)
+
+    assert retval
 
 
-def test_is_valid_feedstock_token_badtoken():
-    assert False
+@pytest.mark.parametrize("project", ["bar", "bar-feedstock"])
+@pytest.mark.parametrize(
+    "repo", ["GITHUB_TOKEN", "${GITHUB_TOKEN}", "GH_TOKEN", "${GH_TOKEN}"]
+)
+@mock.patch("conda_smithy.feedstock_tokens.tempfile")
+@mock.patch("conda_smithy.feedstock_tokens.git")
+@mock.patch("conda_smithy.github.gh_token")
+def test_is_valid_feedstock_token_nofile(
+    gh_mock, git_mock, tmp_mock, tmpdir, repo, project
+):
+    gh_mock.return_value = "abc123"
+    tmp_mock.TemporaryDirectory.return_value.__enter__.return_value = str(
+        tmpdir
+    )
+
+    user = "conda-forge"
+    feedstock_token = "akdjhfl"
+    retval = is_valid_feedstock_token(user, project, feedstock_token, repo)
+    assert not retval
+
+
+@pytest.mark.parametrize("project", ["bar", "bar-feedstock"])
+@pytest.mark.parametrize(
+    "repo", ["GITHUB_TOKEN", "${GITHUB_TOKEN}", "GH_TOKEN", "${GH_TOKEN}"]
+)
+@mock.patch("conda_smithy.feedstock_tokens.tempfile")
+@mock.patch("conda_smithy.feedstock_tokens.git")
+@mock.patch("conda_smithy.github.gh_token")
+def test_is_valid_feedstock_token_badtoken(
+    gh_mock, git_mock, tmp_mock, tmpdir, repo, project
+):
+    gh_mock.return_value = "abc123"
+    tmp_mock.TemporaryDirectory.return_value.__enter__.return_value = str(
+        tmpdir
+    )
+
+    user = "conda-forge"
+    feedstock_token = "akdjhfl"
+
+    token_pth = os.path.join(tmpdir, "tokens", "bar.json")
+    os.makedirs(os.path.dirname(token_pth), exist_ok=True)
+    with open(token_pth, "w") as fp:
+        json.dump({"salt": b"adf".hex(), "hashed_token": b"fgh".hex()}, fp)
+
+    retval = is_valid_feedstock_token(user, project, feedstock_token, repo)
+    assert not retval
 
 
 def test_generate_and_write_feedstock_token():
@@ -404,7 +482,7 @@ def test_register_feedstock_token_with_proviers_error(
     azure_mock, travis_mock, circle_mock, drone_mock, provider,
 ):
     user = "foo"
-    project = "bar"
+    project = "bar-feedstock"
 
     pth = os.path.expanduser("~/.conda-smithy/foo_bar_feedstock.token")
 
