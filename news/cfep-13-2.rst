@@ -1,6 +1,6 @@
 **Added:**
 
-* Added code to register and copy feedstock outputs per CFEP-13
+* Added code to validate feedstock tokens
 
 **Changed:**
 
