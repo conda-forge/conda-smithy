@@ -14,4 +14,3 @@ vsts-python-api
 toolz
 shellcheck
 scrypt
-anaconda-client

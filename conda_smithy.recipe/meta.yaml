@@ -33,7 +33,6 @@ requirements:
     - toolz
     - shellcheck
     - scrypt
-    - anaconda-client
 
 test:
   requires:
