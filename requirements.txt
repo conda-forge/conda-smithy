@@ -13,3 +13,4 @@ conda-forge-pinning
 vsts-python-api
 toolz
 shellcheck
+license-expression
