@@ -4,6 +4,7 @@ import conda_smithy.configure_feedstock as cnfgr_fdstk
 import pytest
 import copy
 import yaml
+import textwrap
 
 
 def test_noarch_skips_appveyor(noarch_recipe, jinja_env):
@@ -47,6 +48,7 @@ def test_noarch_runs_on_circle(noarch_recipe, jinja_env):
     assert len(os.listdir(matrix_dir)) == 1
 
 
+@pytest.mark.parametrize("recipe_dirname", ["recipe", "custom_recipe_dir"])
 def test_noarch_runs_on_azure(noarch_recipe, jinja_env):
     cnfgr_fdstk.render_azure(
         jinja_env=jinja_env,
@@ -446,6 +448,68 @@ def test_migrator_recipe(recipe_migration_cfep9, jinja_env):
         assert variant["zlib"] == ["1000"]
 
 
+def test_migrator_cfp_override(recipe_migration_cfep9, jinja_env):
+    cfp_file = recipe_migration_cfep9.config["exclusive_config_file"]
+    cfp_migration_dir = os.path.join(
+        os.path.dirname(cfp_file), "share", "conda-forge", "migrations"
+    )
+    os.makedirs(cfp_migration_dir, exist_ok=True)
+    with open(os.path.join(cfp_migration_dir, "zlib2.yaml"), "w") as f:
+        f.write(
+            textwrap.dedent(
+                """
+                migrator_ts: 1
+                zlib:
+                   - 1001
+                """
+            )
+        )
+    cnfgr_fdstk.render_azure(
+        jinja_env=jinja_env,
+        forge_config=recipe_migration_cfep9.config,
+        forge_dir=recipe_migration_cfep9.recipe,
+    )
+
+    with open(
+        os.path.join(
+            recipe_migration_cfep9.recipe,
+            ".ci_support",
+            "linux_python2.7.yaml",
+        )
+    ) as fo:
+        variant = yaml.safe_load(fo)
+        assert variant["zlib"] == ["1001"]
+
+
+def test_migrator_delete_old(recipe_migration_cfep9, jinja_env):
+    cfp_file = recipe_migration_cfep9.config["exclusive_config_file"]
+    cfp_migration_dir = os.path.join(
+        os.path.dirname(cfp_file), "share", "conda-forge", "migrations"
+    )
+    assert os.path.exists(
+        os.path.join(
+            recipe_migration_cfep9.recipe,
+            ".ci_support",
+            "migrations",
+            "zlib.yaml",
+        )
+    )
+    os.makedirs(cfp_migration_dir, exist_ok=True)
+    cnfgr_fdstk.render_azure(
+        jinja_env=jinja_env,
+        forge_config=recipe_migration_cfep9.config,
+        forge_dir=recipe_migration_cfep9.recipe,
+    )
+    assert not os.path.exists(
+        os.path.join(
+            recipe_migration_cfep9.recipe,
+            ".ci_support",
+            "migrations",
+            "zlib.yaml",
+        )
+    )
+
+
 def test_migrator_downgrade_recipe(
     recipe_migration_cfep9_downgrade, jinja_env
 ):
@@ -541,7 +605,35 @@ def test_files_skip_render(render_skipped_recipe, jinja_env):
         ".gitattributes",
         "README.md",
         "LICENSE.txt",
+        ".github/workflows/webservices.yml",
     ]
     for f in skipped_files:
         fpath = os.path.join(render_skipped_recipe.recipe, f)
         assert not os.path.exists(fpath)
+
+
+def test_webservices_action_exists(py_recipe, jinja_env):
+    cnfgr_fdstk.copy_feedstock_content(py_recipe.config, py_recipe.recipe)
+    assert os.path.exists(
+        os.path.join(py_recipe.recipe, ".github/workflows/webservices.yml")
+    )
+    with open(
+        os.path.join(py_recipe.recipe, ".github/workflows/webservices.yml")
+    ) as f:
+        action_config = yaml.safe_load(f)
+    assert "jobs" in action_config
+    assert "webservices" in action_config["jobs"]
+
+
+def test_automerge_action_exists(py_recipe, jinja_env):
+    cfg = copy.deepcopy(py_recipe.config)
+    cnfgr_fdstk.copy_feedstock_content(cfg, py_recipe.recipe)
+    assert os.path.exists(
+        os.path.join(py_recipe.recipe, ".github/workflows/main.yml")
+    )
+    with open(
+        os.path.join(py_recipe.recipe, ".github/workflows/main.yml")
+    ) as f:
+        action_config = yaml.safe_load(f)
+    assert "jobs" in action_config
+    assert "regro-cf-autotick-bot-action" in action_config["jobs"]

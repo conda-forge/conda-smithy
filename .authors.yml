@@ -7,7 +7,7 @@
   email: mrakitin@bnl.gov
   alternate_emails:
   - mrakitin@users.noreply.github.com
-  num_commits: 6
+  num_commits: 9
   first_commit: 2019-07-19 17:37:24
   github: mrakitin
 - name: Gonzalo Pena-Castellanos
@@ -107,7 +107,7 @@
   aliases:
   - Filipe
   - ocefpaf
-  num_commits: 36
+  num_commits: 39
   first_commit: 2015-07-27 17:51:00
   github: ocefpaf
 - name: Jan Janßen
@@ -118,7 +118,7 @@
   first_commit: 2019-02-17 13:35:45
 - name: Min RK
   email: benjaminrk@gmail.com
-  num_commits: 27
+  num_commits: 28
   first_commit: 2016-09-15 09:07:34
   github: minrk
 - name: Phil Elson
@@ -246,7 +246,7 @@
   email: isuru.11@cse.mrt.ac.lk
   alternate_emails:
   - isuruf@gmail.com
-  num_commits: 257
+  num_commits: 278
   first_commit: 2017-01-08 22:03:03
   github: isuruf
 - name: Julian Rüth
@@ -328,7 +328,7 @@
   github: sodre
 - name: Mark Harfouche
   email: mark.harfouche@gmail.com
-  num_commits: 14
+  num_commits: 17
   first_commit: 2018-06-12 01:15:09
   github: hmaarrfk
 - name: Dougal J. Sutherland
@@ -338,7 +338,7 @@
   first_commit: 2017-09-13 18:29:41
 - name: Anthony Scopatz
   email: scopatz@gmail.com
-  num_commits: 94
+  num_commits: 98
   first_commit: 2015-07-22 22:51:27
   github: scopatz
 - name: Florian Rathgeber
@@ -357,7 +357,7 @@
   - cjwright4242@gmail.com
   aliases:
   - christopher
-  num_commits: 89
+  num_commits: 99
   first_commit: 2017-01-05 19:25:16
   github: CJ-Wright
 - name: Jason Grout
@@ -389,3 +389,26 @@
   num_commits: 33
   first_commit: 2016-08-31 23:32:44
   github: shadowwalkersb
+- name: Matthew R Becker
+  email: becker.mr@gmail.com
+  num_commits: 23
+  first_commit: 2020-01-07 17:44:33
+  github: beckermr
+- name: Matthew R. Becker
+  email: beckermr@users.noreply.github.com
+  num_commits: 9
+  first_commit: 2020-01-19 19:32:30
+  github: beckermr
+- name: Natasha Pavlovikj
+  email: npavlovikj2@unl.edu
+  num_commits: 8
+  first_commit: 2020-01-20 13:45:51
+  github: npavlovikj
+- name: Tim Werner
+  email: werner@inoviga.com
+  num_commits: 1
+  first_commit: 2020-02-12 09:02:01
+- name: Dave Hirschfeld
+  email: dave.hirschfeld@gmail.com
+  num_commits: 1
+  first_commit: 2020-03-11 10:12:57

@@ -41,7 +41,7 @@ def parse_variant(
     Parameters
     ----------
     variant_file_content : str
-        The loaded vaiant contents.  This can include selectors etc.
+        The loaded variant contents.  This can include selectors etc.
     """
     if not config:
         from conda_build.config import Config
@@ -65,6 +65,8 @@ def _version_order(
     if ordering is not None:
         return ordering.index(v)
     else:
+        if isinstance(v, str):
+            v = v.replace(" ", ".").replace("*", "1")
         try:
             return VersionOrder(v)
         except:

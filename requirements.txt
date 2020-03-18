@@ -13,4 +13,5 @@ conda-forge-pinning
 vsts-python-api
 toolz
 shellcheck
+scrypt
 license-expression

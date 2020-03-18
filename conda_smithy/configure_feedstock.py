@@ -9,6 +9,7 @@ import warnings
 from collections import OrderedDict
 import copy
 import hashlib
+import time
 
 import conda_build.api
 import conda_build.utils
@@ -50,7 +51,7 @@ def package_key(config, used_loop_vars, subdir):
     if build_vars:
         key.append(build_vars)
     key = "-".join(key)
-    return key
+    return key.replace("*", "_").replace(" ", "_")
 
 
 def copytree(src, dst, ignore=(), root_dst=None):
@@ -446,7 +447,9 @@ def _get_fast_finish_script(
     fast_finish_script = ""
     tooling_branch = "master"
 
-    cfbs_fpath = os.path.join(forge_dir, "recipe", "ff_ci_pr_build.py")
+    cfbs_fpath = os.path.join(
+        forge_dir, forge_config["recipe_dir"], "ff_ci_pr_build.py"
+    )
     if provider_name == "appveyor":
         if os.path.exists(cfbs_fpath):
             fast_finish_script = "{recipe_dir}\\ff_ci_pr_build".format(
@@ -486,7 +489,7 @@ def _get_fast_finish_script(
     return fast_finish_text
 
 
-def migrate_combined_spec(combined_spec, forge_dir, config):
+def migrate_combined_spec(combined_spec, forge_dir, config, forge_config):
     """CFEP-9 variant migrations
 
     Apply the list of migrations configurations to the build (in the correct sequence)
@@ -499,10 +502,9 @@ def migrate_combined_spec(combined_spec, forge_dir, config):
 
     """
     combined_spec = combined_spec.copy()
-    migrations_root = os.path.join(
-        forge_dir, ".ci_support", "migrations", "*.yaml"
-    )
-    migrations = glob.glob(migrations_root)
+    if "migration_fns" not in forge_config:
+        migrations = set_migration_fns(forge_dir, forge_config)
+    migrations = forge_config["migration_fns"]
 
     from .variant_algebra import parse_variant, variant_add
 
@@ -510,6 +512,7 @@ def migrate_combined_spec(combined_spec, forge_dir, config):
         (fn, parse_variant(open(fn, "r").read(), config=config))
         for fn in migrations
     ]
+
     migration_variants.sort(
         key=lambda fn_v: (fn_v[1]["migration_ts"], fn_v[0])
     )
@@ -562,15 +565,15 @@ def _render_ci_provider(
             combined_variant_spec,
             _,
         ) = conda_build.variants.get_package_combined_spec(
-            os.path.join(forge_dir, "recipe"), config=config
+            os.path.join(forge_dir, forge_config["recipe_dir"]), config=config
         )
 
         migrated_combined_variant_spec = migrate_combined_spec(
-            combined_variant_spec, forge_dir, config
+            combined_variant_spec, forge_dir, config, forge_config,
         )
 
         metas = conda_build.api.render(
-            os.path.join(forge_dir, "recipe"),
+            os.path.join(forge_dir, forge_config["recipe_dir"]),
             platform=platform,
             arch=arch,
             ignore_system_variants=True,
@@ -672,7 +675,9 @@ def _render_ci_provider(
         # If the recipe supplies its own upload_or_check_non_existence.py upload script,
         # we use it instead of the global one.
         upload_fpath = os.path.join(
-            forge_dir, "recipe", "upload_or_check_non_existence.py"
+            forge_dir,
+            forge_config["recipe_dir"],
+            "upload_or_check_non_existence.py",
         )
         if os.path.exists(upload_fpath):
             if provider_name == "circle":
@@ -732,15 +737,21 @@ def _get_build_setup_line(forge_dir, platform, forge_config):
     # we use it instead of the global one.
     if platform == "linux":
         cfbs_fpath = os.path.join(
-            forge_dir, "recipe", "run_conda_forge_build_setup_linux"
+            forge_dir,
+            forge_config["recipe_dir"],
+            "run_conda_forge_build_setup_linux",
         )
     elif platform == "win":
         cfbs_fpath = os.path.join(
-            forge_dir, "recipe", "run_conda_forge_build_setup_win.bat"
+            forge_dir,
+            forge_config["recipe_dir"],
+            "run_conda_forge_build_setup_win.bat",
         )
     else:
         cfbs_fpath = os.path.join(
-            forge_dir, "recipe", "run_conda_forge_build_setup_osx"
+            forge_dir,
+            forge_config["recipe_dir"],
+            "run_conda_forge_build_setup_osx",
         )
 
     build_setup = ""
@@ -792,7 +803,7 @@ def _get_build_setup_line(forge_dir, platform, forge_config):
 def _circle_specific_setup(jinja_env, forge_config, forge_dir, platform):
 
     if platform == "linux":
-        yum_build_setup = generate_yum_requirements(forge_dir)
+        yum_build_setup = generate_yum_requirements(forge_config, forge_dir)
         if yum_build_setup:
             forge_config["yum_build_setup"] = yum_build_setup
 
@@ -823,10 +834,10 @@ def _circle_specific_setup(jinja_env, forge_config, forge_dir, platform):
         set_exe_file(target_fname, True)
 
 
-def generate_yum_requirements(forge_dir):
+def generate_yum_requirements(forge_config, forge_dir):
     # If there is a "yum_requirements.txt" file in the recipe, we honour it.
     yum_requirements_fpath = os.path.join(
-        forge_dir, "recipe", "yum_requirements.txt"
+        forge_dir, forge_config["recipe_dir"], "yum_requirements.txt"
     )
     yum_build_setup = ""
     if os.path.exists(yum_requirements_fpath):
@@ -951,7 +962,7 @@ def _travis_specific_setup(jinja_env, forge_config, forge_dir, platform):
     template_files = platform_templates.get(platform, [])
 
     if platform == "linux":
-        yum_build_setup = generate_yum_requirements(forge_dir)
+        yum_build_setup = generate_yum_requirements(forge_config, forge_dir)
         if yum_build_setup:
             forge_config["yum_build_setup"] = yum_build_setup
 
@@ -1090,7 +1101,7 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
     build_setup = _get_build_setup_line(forge_dir, platform, forge_config)
 
     if platform == "linux":
-        yum_build_setup = generate_yum_requirements(forge_dir)
+        yum_build_setup = generate_yum_requirements(forge_config, forge_dir)
         if yum_build_setup:
             forge_config["yum_build_setup"] = yum_build_setup
 
@@ -1127,6 +1138,8 @@ def render_azure(jinja_env, forge_config, forge_dir, return_metadata=False):
         upload_packages,
     ) = _get_platforms_of_provider("azure", forge_config)
 
+    logger.debug("azure platforms retreived")
+
     return _render_ci_provider(
         "azure",
         jinja_env=jinja_env,
@@ -1155,7 +1168,7 @@ def _drone_specific_setup(jinja_env, forge_config, forge_dir, platform):
     build_setup = _get_build_setup_line(forge_dir, platform, forge_config)
 
     if platform == "linux":
-        yum_build_setup = generate_yum_requirements(forge_dir)
+        yum_build_setup = generate_yum_requirements(forge_config, forge_dir)
         if yum_build_setup:
             forge_config["yum_build_setup"] = yum_build_setup
 
@@ -1208,7 +1221,7 @@ def render_README(jinja_env, forge_config, forge_dir, render_info=None):
     # pull out relevant metadata from rendering
     try:
         metas = conda_build.api.render(
-            os.path.join(forge_dir, "recipe"),
+            os.path.join(forge_dir, forge_config["recipe_dir"]),
             exclusive_config_file=forge_config["exclusive_config_file"],
             permit_undefined_jinja=True,
             finalize=False,
@@ -1372,25 +1385,38 @@ def _load_forge_config(forge_dir, exclusive_config_file):
         },
         "recipe_dir": "recipe",
         "skip_render": [],
+        "bot": {"automerge": False,},
     }
 
     forge_yml = os.path.join(forge_dir, "conda-forge.yml")
     if not os.path.exists(forge_yml):
         raise RuntimeError(
             f"Could not find `conda-forge.yml` in {forge_dir}."
-            " Either you are not rerendering inside the recipe instead of"
-            " inside the feedstock root (likely) or there's no `conda-forge.yml` in"
-            " the feedstock root (unlikely). Add an empty `conda-forge.yml` file in"
+            " Either you are not rerendering inside the feedstock root (likely)"
+            " or there's no `conda-forge.yml` in the feedstock root (unlikely)."
+            " Add an empty `conda-forge.yml` file in"
             " feedstock root if it's the latter."
         )
     else:
         with open(forge_yml, "r") as fh:
             file_config = list(yaml.safe_load_all(fh))[0] or {}
 
+        # The config is just the union of the defaults, and the overriden
+        # values.
+        for key, value in file_config.items():
+            # Deal with dicts within dicts.
+            if isinstance(value, dict):
+                config_item = config.setdefault(key, value)
+                config_item.update(value)
+            else:
+                config[key] = value
+
         # check for conda-smithy 2.x matrix which we can't auto-migrate
         # to conda_build_config
         if file_config.get("matrix") and not os.path.exists(
-            os.path.join(forge_dir, "recipe", "conda_build_config.yaml")
+            os.path.join(
+                forge_dir, config["recipe_dir"], "conda_build_config.yaml"
+            )
         ):
             raise ValueError(
                 "Cannot rerender with matrix in conda-forge.yml."
@@ -1406,16 +1432,6 @@ def _load_forge_config(forge_dir, exclusive_config_file):
                 "Setting docker image in conda-forge.yml is removed now."
                 " Use conda_build_config.yaml instead"
             )
-
-        # The config is just the union of the defaults, and the overriden
-        # values.
-        for key, value in file_config.items():
-            # Deal with dicts within dicts.
-            if isinstance(value, dict):
-                config_item = config.setdefault(key, value)
-                config_item.update(value)
-            else:
-                config[key] = value
 
     # An older conda-smithy used to have some files which should no longer exist,
     # remove those now.
@@ -1593,6 +1609,84 @@ def make_jinja_env(feedstock_directory):
     return env
 
 
+def get_migrations_in_dir(migrations_root):
+    """
+    Given a directory, return the migrations as a mapping
+    from the timestamp to a tuple of (filename, migration_number)
+    """
+    res = {}
+    for fn in glob.glob(os.path.join(migrations_root, "*.yaml")):
+        with open(fn, "r") as f:
+            contents = f.read()
+            migration_yaml = (
+                yaml.load(contents, Loader=yaml.loader.BaseLoader) or {}
+            )
+            # Use a object as timestamp to not delete it
+            ts = migration_yaml.get("migrator_ts", object())
+            migration_number = migration_yaml.get("__migrator", {}).get(
+                "migration_number", 1
+            )
+            res[ts] = (fn, migration_number)
+    return res
+
+
+def set_migration_fns(forge_dir, forge_config):
+    """
+    This will calculate the migration files and set migration_fns
+    in the forge_config as a list.
+    
+    First, this will look in the conda-forge-pinning (CFP) package
+    to see if it has migrations installed. If not, the filenames of
+    the migrations the feedstock are used.
+    
+    Then, this will look at migrations in the feedstock and if they
+    have a timestamp and doesn't exist in the CFP package, the
+    migration is considered old and deleted.
+    
+    Then, if there is a migration in the feedstock with the same
+    migration number and timestamp in the CFP package, the filename of
+    the migration in the CFP package is used.
+    
+    Finally, if none of the conditions are met for a migration in the
+    feedstock, the filename of the migration in the feedstock is used.
+    """
+    exclusive_config_file = forge_config["exclusive_config_file"]
+    cfp_migrations_dir = os.path.join(
+        os.path.dirname(exclusive_config_file),
+        "share",
+        "conda-forge",
+        "migrations",
+    )
+
+    migrations_root = os.path.join(forge_dir, ".ci_support", "migrations")
+    migrations_in_feedstock = get_migrations_in_dir(migrations_root)
+
+    if not os.path.exists(cfp_migrations_dir):
+        migration_fns = [fn for fn, _ in migrations_in_feedstock.values()]
+        forge_config["migration_fns"] = migration_fns
+        return
+
+    migrations_in_cfp = get_migrations_in_dir(cfp_migrations_dir)
+
+    result = []
+    for ts, (fn, num) in migrations_in_feedstock.items():
+        if ts == object:
+            # This file doesn't have a timestamp. Use it as it is.
+            result.append(fn)
+        elif ts in migrations_in_cfp:
+            # Use the one from cfp if migration_numbers match
+            new_fn, new_num = migrations_in_cfp[ts]
+            if num == new_num:
+                result.append(new_fn)
+            else:
+                result.append(fn)
+        else:
+            # Delete this as this migration is over.
+            remove_file(fn)
+    forge_config["migration_fns"] = result
+    return
+
+
 def main(
     forge_file_directory,
     no_check_uptodate=False,
@@ -1618,7 +1712,9 @@ def main(
 
     error_on_warn = False if no_check_uptodate else True
     index = conda_build.conda_interface.get_index(channel_urls=["conda-forge"])
+    logger.debug("Beginning Resolving Index")
     r = conda_build.conda_interface.Resolve(index)
+    logger.debug("Index rendered")
 
     # Check that conda-smithy is up-to-date
     check_version_uptodate(r, "conda-smithy", __version__, error_on_warn)
@@ -1648,30 +1744,38 @@ def main(
             )
 
     env = make_jinja_env(forge_dir)
+    logger.debug("env rendered")
 
     copy_feedstock_content(config, forge_dir)
     if os.path.exists(os.path.join(forge_dir, "build-locally.py")):
         set_exe_file(os.path.join(forge_dir, "build-locally.py"))
     clear_variants(forge_dir)
     clear_scripts(forge_dir)
+    set_migration_fns(forge_dir, config)
+    logger.debug("migration fns set")
 
     # the order of these calls appears to matter
     render_info = []
     render_info.append(
         render_circle(env, config, forge_dir, return_metadata=True)
     )
+    logger.debug("circle rendered")
     render_info.append(
         render_travis(env, config, forge_dir, return_metadata=True)
     )
+    logger.debug("travis rendered")
     render_info.append(
         render_appveyor(env, config, forge_dir, return_metadata=True)
     )
+    logger.debug("appveyor rendered")
     render_info.append(
         render_azure(env, config, forge_dir, return_metadata=True)
     )
+    logger.debug("azure rendered")
     render_info.append(
         render_drone(env, config, forge_dir, return_metadata=True)
     )
+    logger.debug("drone rendered")
     # put azure first just in case
     tmp = render_info[0]
     render_info[0] = render_info[-2]

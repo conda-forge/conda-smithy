@@ -155,6 +155,30 @@ def test_ordering_downgrade():
     print(res)
 
 
+def test_ordering_space():
+    start = parse_variant(
+        dedent(
+            """\
+    python:
+        - 2.7
+    """
+        )
+    )
+
+    mig_compiler = parse_variant(
+        dedent(
+            """\
+    python:
+        - 2.7 *_cpython
+    """
+        )
+    )
+
+    res = variant_add(start, mig_compiler)
+    assert res["python"] == ["2.7 *_cpython"]
+    print(res)
+
+
 def test_new_pinned_package():
     start = parse_variant(
         dedent(

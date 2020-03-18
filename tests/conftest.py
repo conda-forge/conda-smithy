@@ -48,22 +48,28 @@ def testing_workdir(tmpdir, request):
 
 
 @pytest.fixture(scope="function")
-def config_yaml(testing_workdir):
+def recipe_dirname():
+    return "recipe"
+
+
+@pytest.fixture(scope="function")
+def config_yaml(testing_workdir, recipe_dirname):
     config = {"python": ["2.7", "3.5"], "r_base": ["3.3.2", "3.4.2"]}
-    os.makedirs(os.path.join(testing_workdir, "recipe"))
+    os.makedirs(os.path.join(testing_workdir, recipe_dirname))
     with open(os.path.join(testing_workdir, "config.yaml"), "w") as f:
         f.write("docker:\n")
         f.write("  fallback_image:\n")
         f.write("  - centos:6\n")
     with open(
-        os.path.join(testing_workdir, "recipe", "default_config.yaml"), "w"
+        os.path.join(testing_workdir, recipe_dirname, "default_config.yaml"),
+        "w",
     ) as f:
         yaml.dump(config, f, default_flow_style=False)
         # need selectors, so write these more manually
         f.write(
             dedent(
                 """\
-        target_platform: 
+        target_platform:
         - win-64        # [win]
         - win-32        # [win]
         c_compiler:     # [win]
@@ -87,24 +93,29 @@ def config_yaml(testing_workdir):
     ) as f:
         f.write("echo dummy file")
     with open(
-        os.path.join(testing_workdir, "recipe", "short_config.yaml"), "w"
+        os.path.join(testing_workdir, recipe_dirname, "short_config.yaml"), "w"
     ) as f:
         config = {"python": ["2.7"]}
         yaml.dump(config, f, default_flow_style=False)
     with open(
-        os.path.join(testing_workdir, "recipe", "long_config.yaml"), "w"
+        os.path.join(testing_workdir, recipe_dirname, "long_config.yaml"), "w"
     ) as f:
         config = {"python": ["2.7", "3.5", "3.6"]}
         yaml.dump(config, f, default_flow_style=False)
     with open(os.path.join(testing_workdir, "conda-forge.yml"), "w") as f:
-        config = {"upload_on_branch": "foo-branch"}
+        config = {
+            "upload_on_branch": "foo-branch",
+            "recipe_dir": recipe_dirname,
+        }
         yaml.dump(config, f, default_flow_style=False)
     return testing_workdir
 
 
 @pytest.fixture(scope="function")
-def noarch_recipe(config_yaml, request):
-    with open(os.path.join(config_yaml, "recipe", "meta.yaml"), "w") as fh:
+def noarch_recipe(config_yaml, recipe_dirname, request):
+    with open(
+        os.path.join(config_yaml, recipe_dirname, "meta.yaml"), "w"
+    ) as fh:
         fh.write(
             """
 package:
@@ -124,7 +135,7 @@ requirements:
         _load_forge_config(
             config_yaml,
             exclusive_config_file=os.path.join(
-                config_yaml, "recipe", "default_config.yaml"
+                config_yaml, recipe_dirname, "default_config.yaml"
             ),
         ),
     )
@@ -245,6 +256,7 @@ about:
     ) as fh:
         fh.write(
             """
+migrator_ts: 1
 zlib:
     - 1000
 """
@@ -449,6 +461,7 @@ skip_render:
     - .gitattributes
     - README.md
     - LICENSE.txt
+    - .github/workflows
     """
         )
     return RecipeConfigPair(

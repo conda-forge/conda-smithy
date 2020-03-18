@@ -20,7 +20,7 @@ steps:
   {%- if 'linux' in data.platform %}
   commands:
     - export FEEDSTOCK_ROOT="$DRONE_WORKSPACE"
-    - export RECIPE_ROOT="$FEEDSTOCK_ROOT/recipe"
+    - export RECIPE_ROOT="$FEEDSTOCK_ROOT/{{ recipe_dir }}"
     - export CI=drone
     - export GIT_BRANCH="$DRONE_BRANCH"
 {%- if upload_on_branch %}

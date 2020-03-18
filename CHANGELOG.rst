@@ -4,6 +4,140 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.6.12
+====================
+
+**Fixed:**
+
+* Fix bug with conda 4.6.14 on Windows
+
+**Authors:**
+
+* Filipe Fernandes
+* Dave Hirschfeld
+
+
+
+v3.6.11
+====================
+
+**Added:**
+
+* Added feature to upload the BINSTAR_TOKEN for travis-ci.com directly
+  through the API
+
+**Changed:**
+
+* Updated the version of macOS image to 10.14 for Azure Pipelines.
+* If conda-forge-pinning package has migrations installed, use those
+  migration yaml files instead of the ones from the feedstock if the
+  timestamp field match and remove if the migration yaml has a
+  timestamp and there's no corresponding one in conda-forge-pinning
+  which indicates that the migration is over.
+
+**Deprecated:**
+
+* Deprecated storing BINSTAR_TOKENs in the conda-forge.yml for travis
+
+**Authors:**
+
+* Isuru Fernando
+* Matthew R Becker
+* Maksim Rakitin
+
+
+
+v3.6.10
+====================
+
+**Fixed:**
+
+* Fixed variant comparisons when the variant has a space
+
+**Authors:**
+
+* Isuru Fernando
+
+
+
+v3.6.9
+====================
+
+**Added:**
+
+* Add automerge github actions when rerendering
+* Added the configuration file for the webservices github action
+
+**Fixed:**
+
+* Fix crash of linter when requirements contains packages that start with python in name
+
+**Authors:**
+
+* Isuru Fernando
+* Matthew R Becker
+* Matthew R. Becker
+* Tim Werner
+
+
+
+v3.6.8
+====================
+
+**Changed:**
+
+* Changed the config name to remove * and space characters
+
+**Authors:**
+
+* Isuru Fernando
+* Min RK
+
+
+
+v3.6.7
+====================
+
+**Added:**
+
+Non-noarch recipes shouldn't use version constraints on python and r-base. 
+The linter only checked for python, this PR addes the check for r-base.
+* Added an option to skip adding webhooks
+
+**Fixed:**
+
+* Azure builds for OSX and Windows only attempt to upload if builds succeeded
+  and the BINSTAR_TOKEN is available.
+
+**Authors:**
+
+* Isuru Fernando
+* Mark Harfouche
+* Natasha Pavlovikj
+
+
+
+v3.6.6
+====================
+
+**Added:**
+
+* ``conda smithy rerender`` now adds an automerge action if ``conda-forge.yml`` has ``bot: {automerge: True}`` set.
+  This action merges PRs that are opened by the ``regro-cf-autotick-bot``, are passing, and have the ``[bot-automerge]``
+  slug in the title.
+
+**Fixed:**
+
+* Fixed problems rendering the ``README.md`` for some ``Jinja2`` variables (#1215)
+
+**Authors:**
+
+* Christopher J. Wright
+* Matthew R Becker
+* Matthew R. Becker
+
+
+
 v3.6.5
 ====================
 

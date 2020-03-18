@@ -940,14 +940,52 @@ class Test_linter(unittest.TestCase):
         meta = {"requirements": {"host": ["python >=3", "python"]}}
         lints, hints = linter.lintify(meta)
         self.assertNotIn(
-            "Non noarch: python packages should have a python requirement without any version constraints.",
+            "Non noarch packages should have python requirement without any version constraints.",
             lints,
         )
 
         meta = {"requirements": {"host": ["python >=3"]}}
         lints, hints = linter.lintify(meta)
         self.assertIn(
-            "Non noarch: python packages should have a python requirement without any version constraints.",
+            "Non noarch packages should have python requirement without any version constraints.",
+            lints,
+        )
+
+        meta = {
+            "requirements": {"host": ["python"], "run": ["python-dateutil"]}
+        }
+        # Test that this doesn't crash
+        lints, hints = linter.lintify(meta)
+
+    def test_r_base_requirements(self):
+        meta = {"requirements": {"host": ["r-base >=3.5"]}}
+        lints, hints = linter.lintify(meta)
+        self.assertIn(
+            "If r-base is a host requirement, it should be a run requirement.",
+            lints,
+        )
+
+        meta = {
+            "requirements": {"host": ["r-base >=3.5"]},
+            "outputs": [{"name": "foo"}],
+        }
+        lints, hints = linter.lintify(meta)
+        self.assertNotIn(
+            "If r-base is a host requirement, it should be a run requirement.",
+            lints,
+        )
+
+        meta = {"requirements": {"host": ["r-base >=3.5", "r-base"]}}
+        lints, hints = linter.lintify(meta)
+        self.assertNotIn(
+            "Non noarch packages should have r-base requirement without any version constraints.",
+            lints,
+        )
+
+        meta = {"requirements": {"host": ["r-base >=3.5"]}}
+        lints, hints = linter.lintify(meta)
+        self.assertIn(
+            "Non noarch packages should have r-base requirement without any version constraints.",
             lints,
         )
 
