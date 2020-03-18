@@ -584,6 +584,38 @@ class Test_linter(unittest.TestCase):
         )
         self.assertIn(expected_message, lints)
 
+    def test_spdx_license(self):
+        msg = "License is not an SPDX identifier (or Other) nor an SPDX license expression."
+        licenses = {
+            "BSD-100": False,
+            "GPL-2.0": True,
+            "Other": True,
+            "GPL-2.0 or MIT": True,
+            "GPL-2.0 | MIT": False,
+            "LLVM-exception": False,
+        }
+        for license, good in licenses.items():
+            meta = {"about": {"license": license}}
+            lints, hints = linter.lintify(meta)
+            if good:
+                self.assertNotIn(msg, hints)
+            else:
+                self.assertIn(msg, hints)
+
+    def test_spdx_license_exception(self):
+        msg = "License exception is not an SPDX exception."
+        licenses = {
+            "Apache 2.0 WITH LLVM-exception": True,
+            "Apache 2.0 WITH LLVM2-exception": False,
+        }
+        for license, good in licenses.items():
+            meta = {"about": {"license": license}}
+            lints, hints = linter.lintify(meta)
+            if good:
+                self.assertNotIn(msg, hints)
+            else:
+                self.assertIn(msg, hints)
+
     def test_license_file_required(self):
         meta = {
             "about": {
@@ -956,13 +988,18 @@ class Test_linter(unittest.TestCase):
             lints,
         )
 
+    @pytest.mark.skipif(
+        shutil.which("shellcheck") is None, reason="shellcheck not found"
+    )
     def test_build_sh_with_shellcheck_findings(self):
         lints, hints = linter.main(
             os.path.join(_thisdir, "recipes", "build_script_with_findings"),
             return_hints=True,
         )
-        assert "Whenever possible fix all shellcheck findings" in hints[0]
-        assert len(hints) == (50 + 2)
+        assert any(
+            "Whenever possible fix all shellcheck findings" in h for h in hints
+        )
+        assert len(hints) < 100
 
 
 @pytest.mark.cli

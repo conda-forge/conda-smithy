@@ -33,6 +33,7 @@ requirements:
     - toolz
     - shellcheck
     - scrypt
+    - license-expression
 
 test:
   requires:
