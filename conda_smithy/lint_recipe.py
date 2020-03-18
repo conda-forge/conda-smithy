@@ -598,12 +598,15 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
 
     # 4: Check for SPDX
     import license_expression
+
     license = about_section.get("license", "")
     licensing = license_expression.Licensing()
     parsed_exceptions = []
     try:
         parsed_licenses = []
-        parsed_licenses_with_exception = licensing.license_symbols(license.strip(), decompose=False)
+        parsed_licenses_with_exception = licensing.license_symbols(
+            license.strip(), decompose=False
+        )
         for l in parsed_licenses_with_exception:
             if isinstance(l, license_expression.LicenseWithExceptionSymbol):
                 parsed_licenses.append(l.license_symbol.key)
@@ -613,14 +616,20 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
     except license_expression.ExpressionError:
         parsed_licenses = [license]
 
-    with open(os.path.join(os.path.dirname(__file__), "licenses.txt"), "r") as f:
+    with open(
+        os.path.join(os.path.dirname(__file__), "licenses.txt"), "r"
+    ) as f:
         expected_licenses = f.readlines()
         expected_licenses = set([l.strip() for l in expected_licenses])
-    with open(os.path.join(os.path.dirname(__file__), "license_exceptions.txt"), "r") as f:
+    with open(
+        os.path.join(os.path.dirname(__file__), "license_exceptions.txt"), "r"
+    ) as f:
         expected_exceptions = f.readlines()
         expected_exceptions = set([l.strip() for l in expected_exceptions])
     if set(parsed_licenses) - expected_licenses:
-        hints.append("License is not an SPDX identifier (or Other) nor an SPDX license expression.")
+        hints.append(
+            "License is not an SPDX identifier (or Other) nor an SPDX license expression."
+        )
     if set(parsed_exceptions) - expected_exceptions:
         hints.append("License exception is not an SPDX exception.")
 

@@ -616,7 +616,6 @@ class Test_linter(unittest.TestCase):
             else:
                 self.assertIn(msg, hints)
 
-
     def test_license_file_required(self):
         meta = {
             "about": {
@@ -989,13 +988,17 @@ class Test_linter(unittest.TestCase):
             lints,
         )
 
-    @pytest.mark.skipif(shutil.which("shellcheck") is None, reason="shellcheck not found")
+    @pytest.mark.skipif(
+        shutil.which("shellcheck") is None, reason="shellcheck not found"
+    )
     def test_build_sh_with_shellcheck_findings(self):
         lints, hints = linter.main(
             os.path.join(_thisdir, "recipes", "build_script_with_findings"),
             return_hints=True,
         )
-        assert any("Whenever possible fix all shellcheck findings" in h for h in hints)
+        assert any(
+            "Whenever possible fix all shellcheck findings" in h for h in hints
+        )
         assert len(hints) < 100
 
 
