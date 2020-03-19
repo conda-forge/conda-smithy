@@ -5,16 +5,17 @@ Authors are sorted by number of commits.
 * Christopher J. Wright
 * Anthony Scopatz
 * Phil Elson
+* Matthew R Becker
 * Filipe Fernandes
 * Dougal J. Sutherland
 * shadow_walker
 * Michael Sarahan
 * Min RK
-* Matthew R Becker
 * Mark Harfouche
 * Eric Dill
 * Jan Schulz
 * Josh Reichardt
+* Matthew R. Becker
 * Justin Calamari
 * Jason Furmanek
 * Patrick Sodré
@@ -22,7 +23,6 @@ Authors are sorted by number of commits.
 * C.A.M. Gerlach
 * Julian Rüth
 * refraction-ray
-* Matthew R. Becker
 * John Kirkham
 * Leopold Talirz
 * Natasha Pavlovikj
@@ -32,6 +32,7 @@ Authors are sorted by number of commits.
 * Carlo
 * Marcel Bargull
 * Matthew Craig
+* Tim Snyder
 * Marius van Niekerk
 * Johannes Köster
 * Matt McCormick

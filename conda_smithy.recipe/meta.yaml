@@ -32,6 +32,8 @@ requirements:
     - vsts-python-api
     - toolz
     - shellcheck
+    - scrypt
+    - license-expression
 
 test:
   requires:
