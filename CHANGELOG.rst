@@ -4,6 +4,19 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.6.14
+====================
+
+**Fixed:**
+
+* Package MANIFEST did not include the ``license_exceptions.txt`` file properly.
+
+**Authors:**
+
+* Matthew R. Becker
+
+
+
 v3.6.13
 ====================
 
