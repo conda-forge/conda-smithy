@@ -4,6 +4,29 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.6.13
+====================
+
+**Added:**
+
+* Added code to validate feedstock tokens
+* Added code to register FEEDSTOCK_TOKENS per CFEP-13
+* Linter will now recommend SPDX expression for license entry
+
+**Fixed:**
+
+* Rerender use forge_config["recipe_dir"] instead of hardcoding "recipe" (#1254 & #1257)
+* Fixed bug where BINSTAR_TOKEN's were not properly patched if they already
+  existed for TravisCI.
+
+**Authors:**
+
+* Isuru Fernando
+* Matthew R Becker
+* Tim Snyder
+
+
+
 v3.6.12
 ====================
 
