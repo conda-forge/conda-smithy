@@ -585,18 +585,23 @@ class Test_linter(unittest.TestCase):
         self.assertIn(expected_message, lints)
 
     def test_spdx_license(self):
-        msg = "License is not an SPDX identifier (or Other) nor an SPDX license expression."
+        msg = "License is not an SPDX identifier (or a custom LicenseRef) nor an SPDX license expression."
         licenses = {
             "BSD-100": False,
-            "GPL-2.0": True,
-            "Other": True,
-            "GPL-2.0 or MIT": True,
-            "GPL-2.0 | MIT": False,
+            "GPL-2.0": False,
+            "GPL-2.0-only": True,
+            "Other": False,
+            "GPL-2.0-or-later or MIT": True,
+            "LGPL-2.0-only | MIT": False,
             "LLVM-exception": False,
+            "LicenseRef-kebab-case-2--with.dots OR MIT": True,
+            "LicenseRef-HDF5": True,
+            "LicenseRef-@HDF5": False,
         }
         for license, good in licenses.items():
             meta = {"about": {"license": license}}
             lints, hints = linter.lintify(meta)
+            print(license, good)
             if good:
                 self.assertNotIn(msg, hints)
             else:

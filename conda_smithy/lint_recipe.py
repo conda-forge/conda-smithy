@@ -616,6 +616,12 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
     except license_expression.ExpressionError:
         parsed_licenses = [license]
 
+    licenseref_regex = re.compile("^LicenseRef[a-zA-Z0-9\-.]*$")
+    filtered_licenses = []
+    for license in parsed_licenses:
+        if not licenseref_regex.match(license):
+            filtered_licenses.append(license)
+
     with open(
         os.path.join(os.path.dirname(__file__), "licenses.txt"), "r"
     ) as f:
@@ -626,9 +632,9 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
     ) as f:
         expected_exceptions = f.readlines()
         expected_exceptions = set([l.strip() for l in expected_exceptions])
-    if set(parsed_licenses) - expected_licenses:
+    if set(filtered_licenses) - expected_licenses:
         hints.append(
-            "License is not an SPDX identifier (or Other) nor an SPDX license expression."
+            "License is not an SPDX identifier (or a custom LicenseRef) nor an SPDX license expression."
         )
     if set(parsed_exceptions) - expected_exceptions:
         hints.append("License exception is not an SPDX exception.")
