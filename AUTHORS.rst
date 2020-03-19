@@ -5,12 +5,12 @@ Authors are sorted by number of commits.
 * Christopher J. Wright
 * Anthony Scopatz
 * Phil Elson
+* Matthew R Becker
 * Filipe Fernandes
 * Dougal J. Sutherland
 * shadow_walker
 * Michael Sarahan
 * Min RK
-* Matthew R Becker
 * Mark Harfouche
 * Eric Dill
 * Jan Schulz
@@ -32,6 +32,7 @@ Authors are sorted by number of commits.
 * Carlo
 * Marcel Bargull
 * Matthew Craig
+* Tim Snyder
 * Marius van Niekerk
 * Johannes Köster
 * Matt McCormick

@@ -107,7 +107,7 @@
   aliases:
   - Filipe
   - ocefpaf
-  num_commits: 39
+  num_commits: 41
   first_commit: 2015-07-27 17:51:00
   github: ocefpaf
 - name: Jan Janßen
@@ -246,7 +246,7 @@
   email: isuru.11@cse.mrt.ac.lk
   alternate_emails:
   - isuruf@gmail.com
-  num_commits: 278
+  num_commits: 286
   first_commit: 2017-01-08 22:03:03
   github: isuruf
 - name: Julian Rüth
@@ -391,7 +391,7 @@
   github: shadowwalkersb
 - name: Matthew R Becker
   email: becker.mr@gmail.com
-  num_commits: 23
+  num_commits: 66
   first_commit: 2020-01-07 17:44:33
   github: beckermr
 - name: Matthew R. Becker
@@ -412,3 +412,8 @@
   email: dave.hirschfeld@gmail.com
   num_commits: 1
   first_commit: 2020-03-11 10:12:57
+- name: Tim Snyder
+  email: snyder.tim@gmail.com
+  num_commits: 6
+  first_commit: 2020-03-12 12:51:58
+  github: timsnyder
