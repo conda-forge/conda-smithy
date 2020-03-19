@@ -15,6 +15,7 @@ Authors are sorted by number of commits.
 * Eric Dill
 * Jan Schulz
 * Josh Reichardt
+* Matthew R. Becker
 * Justin Calamari
 * Jason Furmanek
 * Patrick Sodré
@@ -22,7 +23,6 @@ Authors are sorted by number of commits.
 * C.A.M. Gerlach
 * Julian Rüth
 * refraction-ray
-* Matthew R. Becker
 * John Kirkham
 * Leopold Talirz
 * Natasha Pavlovikj
