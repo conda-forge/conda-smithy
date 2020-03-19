@@ -527,7 +527,9 @@ def add_token_to_travis(user, project):
         r.raise_for_status()
     else:
         r = requests.post(
-            "{}/repo/{repo_id}/env_vars".format(travis_endpoint, repo_id=repo_id),
+            "{}/repo/{repo_id}/env_vars".format(
+                travis_endpoint, repo_id=repo_id
+            ),
             headers=headers,
             json=data,
         )
