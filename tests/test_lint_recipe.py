@@ -588,10 +588,11 @@ class Test_linter(unittest.TestCase):
         msg = "License is not an SPDX identifier (or a custom LicenseRef) nor an SPDX license expression."
         licenses = {
             "BSD-100": False,
-            "GPL-2.0": True,
+            "GPL-2.0": False,
+            "GPL-2.0-only": True,
             "Other": False,
-            "GPL-2.0 or MIT": True,
-            "GPL-2.0 | MIT": False,
+            "GPL-2.0-or-later or MIT": True,
+            "LGPL-2.0-only | MIT": False,
             "LLVM-exception": False,
             "LicenseRef-kebab-case-2--with.dots OR MIT": True,
             "LicenseRef-HDF5": True,
