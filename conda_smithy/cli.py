@@ -43,7 +43,7 @@ def generate_feedstock_content(target_directory, source_recipe_dir):
     forge_yml = os.path.join(target_directory, "conda-forge.yml")
     if not os.path.exists(forge_yml):
         with feedstock_io.write_file(forge_yml) as fh:
-            fh.write(u"[]")
+            fh.write(u"{}")
 
 
 class Subcommand(object):
