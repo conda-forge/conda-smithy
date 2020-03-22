@@ -1630,7 +1630,8 @@ def get_migrations_in_dir(migrations_root):
     return res
 
 
-def get_cfp_migration_dir():
+def get_cfp_migration_dir(forge_config):
+    exclusive_config_file = forge_config["exclusive_config_file"]
     cfp_migrations_dir = os.path.join(
         os.path.dirname(exclusive_config_file),
         "share",
@@ -1661,8 +1662,7 @@ def set_migration_fns(forge_dir, forge_config):
     Finally, if none of the conditions are met for a migration in the
     feedstock, the filename of the migration in the feedstock is used.
     """
-    exclusive_config_file = forge_config["exclusive_config_file"]
-    cfp_migrations_dir = get_cfp_migration_dir()
+    cfp_migrations_dir = get_cfp_migration_dir(forge_config)
 
     migrations_root = os.path.join(forge_dir, ".ci_support", "migrations")
     migrations_in_feedstock = get_migrations_in_dir(migrations_root)
