@@ -502,17 +502,18 @@ def migrate_combined_spec(combined_spec, forge_dir, config, forge_config):
     The method for application is determined by the variant algebra as defined by CFEP-9
 
     """
-    combined_spec = combined_spec.copy()
-    if "migration_fns" not in forge_config:
-        migrations = set_migration_fns(forge_dir, forge_config)
-    migrations = forge_config["migration_fns"]
+    with tempfile.TemporaryDirectory() as td:
+        combined_spec = combined_spec.copy()
+        if "migration_fns" not in forge_config:
+            migrations = set_migration_fns(forge_dir, forge_config, td.name)
+        migrations = forge_config["migration_fns"]
 
-    from .variant_algebra import parse_variant, variant_add
+        from .variant_algebra import parse_variant, variant_add
 
-    migration_variants = [
-        (fn, parse_variant(open(fn, "r").read(), config=config))
-        for fn in migrations
-    ]
+        migration_variants = [
+            (fn, parse_variant(open(fn, "r").read(), config=config))
+            for fn in migrations
+        ]
 
     migration_variants.sort(
         key=lambda fn_v: (fn_v[1]["migration_ts"], fn_v[0])
@@ -1634,7 +1635,7 @@ def get_migrations_in_dir(migrations_root=None):
     return res
 
 
-def get_cfp_migration():
+def get_cfp_migration(temp_dir):
     """Load the migrations from the central migration store.
 
     Returns
@@ -1643,19 +1644,17 @@ def get_cfp_migration():
         The migrations from the central store loaded
     """
     # TODO: replace with a more flexable key value store? (dynamoDB?)
-    with tempfile.TemporaryDirectory() as td:
-        tdn = td.name
-        # TODO: potentially pull git args from a config (in case you wanted
-        #  to point at a different remote/branch/etc.)
-        subprocess.call(['git', 'clone', '--depth', '1', 'https://github.com/conda-forge/conda-forge-pinning-feedstock.git', tdn])
-        cfp_migration_dir = os.path.join(tdn, 'recipe', 'migrations')
-        if not os.path.exists(cfp_migration_dir):
-            cfp_migration_dir = None
-        migrations = get_migrations_in_dir(cfp_migration_dir)
+    # TODO: potentially pull git args from a config (in case you wanted
+    #  to point at a different remote/branch/etc.)
+    subprocess.call(['git', 'clone', '--depth', '1', 'https://github.com/conda-forge/conda-forge-pinning-feedstock.git', tdn])
+    cfp_migration_dir = os.path.join(temp_dir, 'recipe', 'migrations')
+    if not os.path.exists(cfp_migration_dir):
+        cfp_migration_dir = None
+    migrations = get_migrations_in_dir(cfp_migration_dir)
     return migrations
 
 
-def set_migration_fns(forge_dir, forge_config):
+def set_migration_fns(forge_dir, forge_config, temporary_directory_name):
     """
     This will calculate the migration files and set migration_fns
     in the forge_config as a list.
@@ -1675,7 +1674,7 @@ def set_migration_fns(forge_dir, forge_config):
     Finally, if none of the conditions are met for a migration in the
     feedstock, the filename of the migration in the feedstock is used.
     """
-    migrations_in_cfp = get_cfp_migration()
+    migrations_in_cfp = get_cfp_migration(temporary_directory_name)
 
     migrations_root = os.path.join(forge_dir, ".ci_support", "migrations")
     migrations_in_feedstock = get_migrations_in_dir(migrations_root)
