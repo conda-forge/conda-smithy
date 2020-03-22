@@ -4,6 +4,31 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.6.15
+====================
+
+**Added:**
+
+* Linter allows LicenseRef custom licenses.
+
+**Removed:**
+
+* Other is not a recognized license anymore.
+
+* Deprecated SPDX license are not recognized anymore.
+
+**Authors:**
+
+* Isuru Fernando
+* Matthew R Becker
+* Filipe Fernandes
+* Matthew R. Becker
+* Tim Snyder
+* Dave Hirschfeld
+* Nils Wentzell
+
+
+
 v3.6.14
 ====================
 
