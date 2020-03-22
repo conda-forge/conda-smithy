@@ -1630,6 +1630,17 @@ def get_migrations_in_dir(migrations_root):
     return res
 
 
+def get_cfp_migration_dir():
+    cfp_migrations_dir = os.path.join(
+        os.path.dirname(exclusive_config_file),
+        "share",
+        "conda-forge",
+        "migrations",
+    )
+    return cfp_migrations_dir
+
+
+
 def set_migration_fns(forge_dir, forge_config):
     """
     This will calculate the migration files and set migration_fns
@@ -1651,12 +1662,7 @@ def set_migration_fns(forge_dir, forge_config):
     feedstock, the filename of the migration in the feedstock is used.
     """
     exclusive_config_file = forge_config["exclusive_config_file"]
-    cfp_migrations_dir = os.path.join(
-        os.path.dirname(exclusive_config_file),
-        "share",
-        "conda-forge",
-        "migrations",
-    )
+    cfp_migrations_dir = get_cfp_migration_dir()
 
     migrations_root = os.path.join(forge_dir, ".ci_support", "migrations")
     migrations_in_feedstock = get_migrations_in_dir(migrations_root)
