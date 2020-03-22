@@ -1,4 +1,5 @@
 import glob
+import tempfile
 from itertools import product, chain
 import logging
 import os
@@ -1609,12 +1610,15 @@ def make_jinja_env(feedstock_directory):
     return env
 
 
-def get_migrations_in_dir(migrations_root):
+def get_migrations_in_dir(migrations_root=None):
     """
     Given a directory, return the migrations as a mapping
     from the timestamp to a tuple of (filename, migration_number)
     """
     res = {}
+    if migrations_root is None:
+        return res
+
     for fn in glob.glob(os.path.join(migrations_root, "*.yaml")):
         with open(fn, "r") as f:
             contents = f.read()
@@ -1630,16 +1634,25 @@ def get_migrations_in_dir(migrations_root):
     return res
 
 
-def get_cfp_migration_dir(forge_config):
-    exclusive_config_file = forge_config["exclusive_config_file"]
-    cfp_migrations_dir = os.path.join(
-        os.path.dirname(exclusive_config_file),
-        "share",
-        "conda-forge",
-        "migrations",
-    )
-    return cfp_migrations_dir
+def get_cfp_migration():
+    """Load the migrations from the central migration store.
 
+    Returns
+    -------
+    migrations : dict
+        The migrations from the central store loaded
+    """
+    # TODO: replace with a more flexable key value store? (dynamoDB?)
+    with tempfile.TemporaryDirectory() as td:
+        tdn = td.name
+        # TODO: potentially pull git args from a config (in case you wanted
+        #  to point at a different remote/branch/etc.)
+        subprocess.call(['git', 'clone', '--depth', '1', 'https://github.com/conda-forge/conda-forge-pinning-feedstock.git', tdn])
+        cfp_migration_dir = os.path.join(tdn, 'recipe', 'migrations')
+        if not os.path.exists(cfp_migration_dir):
+            cfp_migration_dir = None
+        migrations = get_migrations_in_dir(cfp_migration_dir)
+    return migrations
 
 
 def set_migration_fns(forge_dir, forge_config):
@@ -1662,17 +1675,15 @@ def set_migration_fns(forge_dir, forge_config):
     Finally, if none of the conditions are met for a migration in the
     feedstock, the filename of the migration in the feedstock is used.
     """
-    cfp_migrations_dir = get_cfp_migration_dir(forge_config)
+    migrations_in_cfp = get_cfp_migration()
 
     migrations_root = os.path.join(forge_dir, ".ci_support", "migrations")
     migrations_in_feedstock = get_migrations_in_dir(migrations_root)
 
-    if not os.path.exists(cfp_migrations_dir):
+    if not migrations_in_cfp:
         migration_fns = [fn for fn, _ in migrations_in_feedstock.values()]
         forge_config["migration_fns"] = migration_fns
         return
-
-    migrations_in_cfp = get_migrations_in_dir(cfp_migrations_dir)
 
     result = []
     for ts, (fn, num) in migrations_in_feedstock.items():
