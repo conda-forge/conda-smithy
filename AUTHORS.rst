@@ -79,3 +79,4 @@ Authors are sorted by number of commits.
 * Jason Grout
 * Tim Werner
 * Dave Hirschfeld
+* Nils Wentzell

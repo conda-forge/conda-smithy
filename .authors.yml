@@ -246,7 +246,7 @@
   email: isuru.11@cse.mrt.ac.lk
   alternate_emails:
   - isuruf@gmail.com
-  num_commits: 286
+  num_commits: 290
   first_commit: 2017-01-08 22:03:03
   github: isuruf
 - name: Julian Rüth
@@ -391,7 +391,7 @@
   github: shadowwalkersb
 - name: Matthew R Becker
   email: becker.mr@gmail.com
-  num_commits: 68
+  num_commits: 70
   first_commit: 2020-01-07 17:44:33
   github: beckermr
 - name: Matthew R. Becker
@@ -417,3 +417,8 @@
   num_commits: 6
   first_commit: 2020-03-12 12:51:58
   github: timsnyder
+- name: Nils Wentzell
+  email: nwentzell@flatironinstitute.org
+  num_commits: 1
+  first_commit: 2020-03-21 12:23:42
+  github: Wentzell
