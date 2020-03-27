@@ -16,7 +16,7 @@
 
 **Fixed:**
 
-* Linter now properly allows ``LicenseRef`` in the license section.
+* Linter now properly allows ``LicenseRef`` and ``-License`` in the license section.
 
 **Security:**
 
