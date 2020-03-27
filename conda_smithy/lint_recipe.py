@@ -252,7 +252,11 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
 
     # 10: License should not include the word 'license'.
     license = about_section.get("license", "").lower()
-    if "license" in license.lower() and "unlicense" not in license.lower():
+    if (
+        "license" in license.lower() and
+        "unlicense" not in license.lower() and
+        "licenseref" not in license.lower()
+    ):
         lints.append(
             "The recipe `license` should not include the word " '"License".'
         )
