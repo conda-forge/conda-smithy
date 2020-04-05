@@ -74,6 +74,7 @@ jobs:
     # Configure the VM.
     - script: |
         set "CI=azure"
+        call activate base
         {{ build_setup.replace("\n", "\n        ").rstrip() }}
       displayName: conda-forge build setup
     {% endif %}
@@ -85,6 +86,7 @@ jobs:
 
     # Special cased version setting some more things!
     - script: |
+        call activate base
         conda.exe build "{{ recipe_dir }}" -m .ci_support\%CONFIG%.yaml
       displayName: Build recipe (vs2008)
       env:
@@ -93,6 +95,7 @@ jobs:
       condition: contains(variables['CONFIG'], 'vs2008')
 
     - script: |
+        call activate base
         conda.exe build "{{ recipe_dir }}" -m .ci_support\%CONFIG%.yaml
       displayName: Build recipe
       env:
@@ -104,6 +107,7 @@ jobs:
 {%- if upload_on_branch %}
         set "UPLOAD_ON_BRANCH={{ upload_on_branch }}"
 {%- endif %}
+        call activate base
         upload_package .\ ".\{{ recipe_dir }}" .ci_support\%CONFIG%.yaml
       displayName: Upload package
       env:
