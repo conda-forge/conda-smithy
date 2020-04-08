@@ -12,10 +12,10 @@ Authors are sorted by number of commits.
 * Michael Sarahan
 * Min RK
 * Mark Harfouche
+* Matthew R. Becker
 * Eric Dill
 * Jan Schulz
 * Josh Reichardt
-* Matthew R. Becker
 * Justin Calamari
 * Jason Furmanek
 * Patrick Sodré
