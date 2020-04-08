@@ -1060,7 +1060,6 @@ def _appveyor_specific_setup(jinja_env, forge_config, forge_dir, platform):
     build_setup = new_build_setup.strip()
 
     forge_config["build_setup"] = build_setup
-    forge_config["appveyor"] = {"image": "Visual Studio 2017"}
 
 
 def render_appveyor(jinja_env, forge_config, forge_dir, return_metadata=False):
@@ -1338,7 +1337,7 @@ def _load_forge_config(forge_dir, exclusive_config_file):
         "drone": {},
         "travis": {},
         "circle": {},
-        "appveyor": {},
+        "appveyor": {"image": "Visual Studio 2017"},
         "azure": {
             # disallow publication of azure artifacts for now.
             "upload_packages": False,
