@@ -4,6 +4,26 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.6.16
+====================
+
+**Changed:**
+
+* Windows conda environment is activated before conda calls
+* Moved the appveyor image to Visual Studio 2017.
+
+**Fixed:**
+
+* Linter now properly allows ``LicenseRef`` and ``-License`` in the license section.
+
+**Authors:**
+
+* Isuru Fernando
+* Matthew R Becker
+* Matthew R. Becker
+
+
+
 v3.6.15
 ====================
 
