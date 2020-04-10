@@ -79,11 +79,6 @@ jobs:
       displayName: conda-forge build setup
     {% endif %}
 
-    - script: |
-        rmdir C:\strawberry /s /q
-      continueOnError: true
-      displayName: remove strawberryperl
-
     # Special cased version setting some more things!
     - script: |
         call activate base
