@@ -14,7 +14,6 @@ from conda_build.metadata import MetaData
 from . import configure_feedstock
 from . import feedstock_io
 from . import lint_recipe
-from . import azure_ci_utils
 from . import __version__
 
 
@@ -235,6 +234,8 @@ class RegisterCI(Subcommand):
         else:
             print("Circle registration disabled.")
         if args.azure:
+            from conda_smithy import azure_ci_utils
+
             if azure_ci_utils.default_config.token is None:
                 print(
                     "No azure token. Create a token at https://dev.azure.com/"
@@ -274,6 +275,8 @@ class AddAzureBuildId(Subcommand):
 
     def __init__(self, parser):
         # conda-smithy azure-buildid ./
+        from conda_smithy import azure_ci_utils
+
         super(AddAzureBuildId, self).__init__(
             parser,
             dedent(
@@ -303,6 +306,8 @@ class AddAzureBuildId(Subcommand):
         )
 
     def __call__(self, args):
+        from conda_smithy import azure_ci_utils
+
         owner = args.user or args.organization
         repo = os.path.basename(os.path.abspath(args.feedstock_directory))
 
