@@ -7,6 +7,18 @@ import requests
 from .utils import update_conda_forge_config
 
 
+def _get_anaconda_token():
+    """use this helper to enable easier patching for tests"""
+    try:
+        from .ci_register import anaconda_token
+
+        return anaconda_token
+    except ImportError:
+        raise RuntimeError(
+            "You must have the anaconda token defined to do token rotation!"
+        )
+
+
 def rotate_anaconda_token(
     user,
     project,
@@ -29,14 +41,10 @@ def rotate_anaconda_token(
     # we are swallong all of the logs below, so we do a test import here
     # to generate the proper errors for missing tokens
     # note that these imports cover all providers
-    try:
-        from .ci_register import anaconda_token
-    except ImportError:
-        raise RuntimeError(
-            "You must have the anaconda token defined to do token rotation!"
-        )
     from .ci_register import travis_endpoint  # noqa
     from .azure_ci_utils import default_config  # noqa
+
+    anaconda_token = _get_anaconda_token()
 
     # capture stdout, stderr and suppress all exceptions so we don't
     # spill tokens
