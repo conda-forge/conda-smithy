@@ -97,10 +97,12 @@ jobs:
         PYTHONUNBUFFERED: 1
       condition: not(contains(variables['CONFIG'], 'vs2008'))
 
+{%- if conda_forge_output_validation %}
     - script: |
         call activate base
         validate_recipe_outputs
       displayName: Validate Recipe Outputs
+{%- endif %}
 
     - script: |
         set "GIT_BRANCH=%BUILD_SOURCEBRANCHNAME%"

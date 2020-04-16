@@ -69,10 +69,12 @@ jobs:
       conda build "./{{ recipe_dir }}" -m ./.ci_support/${CONFIG}.yaml --clobber-file ./.ci_support/clobber_${CONFIG}.yaml
     displayName: Build recipe
 
+{%- if conda_forge_output_validation %}
   - script: |
       source activate base
       validate_recipe_outputs
     displayName: Validate Recipe Outputs
+{%- endif %}
 
   - script: |
       source activate base
