@@ -1,3 +1,13 @@
+"""This module updates/rotates anaconda/binstar tokens.
+
+The correct way to use this module is to call its functions via the command
+line utility. The relevant one is
+
+    conda-smithy update-anaconda-token
+
+Note that if you are using appveyor, you will need to push the changes to the
+conda-forge.yml in your feedstock to GitHub.
+"""
 import os
 import sys
 from contextlib import redirect_stderr, redirect_stdout
