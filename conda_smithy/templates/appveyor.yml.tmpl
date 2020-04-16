@@ -56,7 +56,8 @@ install:
 build: off
 
 test_script:
-    - conda.exe build {{ recipe_dir }} -m .ci_support\%CONFIG%.yaml
+    - cmd: conda.exe build {{ recipe_dir }} -m .ci_support\%CONFIG%.yaml
+    - cmd: validate_recipe_outputs
 deploy_script:
     - set "GIT_BRANCH=%APPVEYOR_REPO_BRANCH%"
 {%- if upload_on_branch %}

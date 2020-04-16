@@ -176,7 +176,7 @@ def test_feedstock_token_exists(
 
     assert feedstock_token_exists(user, project, repo) is retval
 
-    assert git_mock.Repo.clone_from.called_with(
+    git_mock.Repo.clone_from.assert_called_once_with(
         "abc123", str(tmpdir), depth=1,
     )
 
@@ -207,7 +207,7 @@ def test_feedstock_token_raises(
 
     assert "Testing for the feedstock token for" in str(e.value)
 
-    assert git_mock.Repo.clone_from.called_with(
+    git_mock.Repo.clone_from.assert_called_once_with(
         "abc123", str(tmpdir), depth=1,
     )
 
@@ -245,17 +245,17 @@ def test_register_feedstock_token_works(
         if os.path.exists(pth):
             os.remove(pth)
 
-    assert git_mock.Repo.clone_from.called_with(
+    git_mock.Repo.clone_from.assert_called_once_with(
         "abc123", str(tmpdir), depth=1,
     )
 
     repo = git_mock.Repo.clone_from.return_value
-    assert repo.index.add.called_with(token_json_pth)
-    assert repo.index.commit.called_with(
+    repo.index.add.assert_called_once_with(token_json_pth)
+    repo.index.commit.assert_called_once_with(
         "added token for %s/%s" % (user, project)
     )
-    assert repo.remote.return_value.pull.called_with(rebase=True)
-    assert repo.remote.return_value.push.called_with()
+    repo.remote.return_value.pull.assert_called_once_with(rebase=True)
+    repo.remote.return_value.push.assert_called_once_with()
 
     salted_token = scrypt.hash("fgh", b"\x80SA", buflen=256)
     data = {
@@ -347,7 +347,7 @@ def test_register_feedstock_token_exists_already(
         if os.path.exists(pth):
             os.remove(pth)
 
-    assert git_mock.Repo.clone_from.called_with(
+    git_mock.Repo.clone_from.assert_called_once_with(
         "abc123", str(tmpdir), depth=1,
     )
 
@@ -400,28 +400,28 @@ def test_register_feedstock_token_with_proviers(
         )
 
         if drone:
-            assert drone_mock.called_with(
+            drone_mock.assert_called_once_with(
                 user, project, feedstock_token, clobber
             )
         else:
             drone_mock.assert_not_called()
 
         if circle:
-            assert circle_mock.called_with(
+            circle_mock.assert_called_once_with(
                 user, project, feedstock_token, clobber
             )
         else:
             circle_mock.assert_not_called()
 
         if travis:
-            assert travis_mock.called_with(
+            travis_mock.assert_called_once_with(
                 user, project, feedstock_token, clobber
             )
         else:
             travis_mock.assert_not_called()
 
         if azure:
-            assert azure_mock.called_with(
+            azure_mock.assert_called_once_with(
                 user, project, feedstock_token, clobber
             )
         else:

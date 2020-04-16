@@ -522,43 +522,6 @@ class UpdateCB3(Subcommand):
         print(messages)
 
 
-def main():
-
-    parser = argparse.ArgumentParser(
-        "a tool to help create, administer and manage feedstocks."
-    )
-    subparser = parser.add_subparsers()
-    # TODO: Consider allowing plugins/extensions using entry_points.
-    # https://reinout.vanrees.org/weblog/2010/01/06/zest-releaser-entry-points.html
-    for subcommand in Subcommand.__subclasses__():
-        subcommand(subparser)
-    # And the alias for rerender
-    parser.add_argument(
-        "--version",
-        action="version",
-        version=__version__,
-        help="Show conda-smithy's version, and exit.",
-    )
-
-    if not sys.argv[1:]:
-        args = parser.parse_args(["--help"])
-    else:
-        args = parser.parse_args()
-
-    # Check conda version for compatibility
-    CONDA_VERSION_MAX = "5.0"
-    if LooseVersion(conda.__version__) >= LooseVersion(CONDA_VERSION_MAX):
-        print(
-            "You appear to be using conda {}, but conda-smithy {}\n"
-            "is currently only compatible with conda versions < {}.\n".format(
-                conda.__version__, __version__, CONDA_VERSION_MAX
-            )
-        )
-        sys.exit(2)
-
-    args.subcommand_func(args)
-
-
 class GenerateFeedstockToken(Subcommand):
     subcommand = "generate-feedstock-token"
 
@@ -685,6 +648,112 @@ class RegisterFeedstockToken(Subcommand):
         register_feedstock_token(owner, repo, token_repo)
 
         print("Successfully registered the feedstock token!")
+
+
+class UpdateAnacondaToken(Subcommand):
+    subcommand = "update-anaconda-token"
+    aliases = ["rotate-anaconda-token", "update-binstar-token", "rotate-binstar-token"]
+
+    def __init__(self, parser):
+        # conda-smithy register-ci ./
+        super(UpdateAnacondaToken, self).__init__(
+            parser,
+            "Update the anaconda/binstar token used for package uploads.",
+        )
+        scp = self.subcommand_parser
+        scp.add_argument(
+            "--feedstock_directory",
+            default=os.getcwd(),
+            help="The directory of the feedstock git repository.",
+        )
+        group = scp.add_mutually_exclusive_group()
+        group.add_argument(
+            "--user", help="github username under which to register this repo"
+        )
+        group.add_argument(
+            "--organization",
+            default="conda-forge",
+            help="github organisation under which to register this repo",
+        )
+        for ci in [
+            "Azure",
+            "Travis",
+            "Circle",
+            "Drone",
+            "Appveyor",
+        ]:
+            scp.add_argument(
+                "--without-{}".format(ci.lower()),
+                dest=ci.lower(),
+                action="store_false",
+                help="If set, {} will be not registered".format(ci),
+            )
+            default = {ci.lower(): True}
+            scp.set_defaults(**default)
+
+    def __call__(self, args):
+        from conda_smithy.anaconda_token_rotation import rotate_anaconda_token
+
+        owner = args.user or args.organization
+        repo = os.path.basename(os.path.abspath(args.feedstock_directory))
+
+        print("Updating the anaconda/binstar token. Can take up to ~30 seconds.")
+
+        # do all providers first
+        rotate_anaconda_token(
+            owner,
+            repo,
+            args.feedstock_directory,
+            drone=args.drone,
+            circle=args.circle,
+            travis=args.travis,
+            azure=args.azure,
+            appveyor=args.appveyor,
+        )
+
+        print("Successfully updated the anaconda/binstar token!")
+        if args.appveyor:
+            print(
+                "Appveyor tokens are stored in the repo so you must commit the "
+                "local changes and push them before the new token will be used!"
+            )
+
+
+def main():
+
+    parser = argparse.ArgumentParser(
+        "a tool to help create, administer and manage feedstocks."
+    )
+    subparser = parser.add_subparsers()
+    # TODO: Consider allowing plugins/extensions using entry_points.
+    # https://reinout.vanrees.org/weblog/2010/01/06/zest-releaser-entry-points.html
+    for subcommand in Subcommand.__subclasses__():
+        subcommand(subparser)
+    # And the alias for rerender
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=__version__,
+        help="Show conda-smithy's version, and exit.",
+    )
+
+    if not sys.argv[1:]:
+        args = parser.parse_args(["--help"])
+    else:
+        args = parser.parse_args()
+
+    # Check conda version for compatibility
+    CONDA_VERSION_MAX = "5.0"
+    if LooseVersion(conda.__version__) >= LooseVersion(CONDA_VERSION_MAX):
+        print(
+            "You appear to be using conda {}, but conda-smithy {}\n"
+            "is currently only compatible with conda versions < {}.\n".format(
+                conda.__version__, __version__, CONDA_VERSION_MAX
+            )
+        )
+        sys.exit(2)
+
+    args.subcommand_func(args)
 
 
 if __name__ == "__main__":
