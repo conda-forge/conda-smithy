@@ -320,12 +320,12 @@ def rotate_token_in_azure(user, project, binstar_token):
     )
 
 
-def rotate_token_in_appveyor(feedstock_directory):
-    from .ci_register import anaconda_token, appveyor_token
+def rotate_token_in_appveyor(feedstock_directory, binstar_token):
+    from .ci_register import appveyor_token
     headers = {"Authorization": "Bearer {}".format(appveyor_token)}
     url = "https://ci.appveyor.com/api/account/encrypt"
     response = requests.post(
-        url, headers=headers, data={"plainValue": anaconda_token}
+        url, headers=headers, data={"plainValue": binstar_token}
     )
     if response.status_code != 200:
         raise ValueError(response)
