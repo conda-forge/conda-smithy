@@ -97,6 +97,7 @@ jobs:
         PYTHONUNBUFFERED: 1
       condition: not(contains(variables['CONFIG'], 'vs2008'))
 
+{%- if conda_forge_output_validation %}
     - script: |
         set "GIT_BRANCH=%BUILD_SOURCEBRANCHNAME%"
 {%- if upload_on_branch %}
