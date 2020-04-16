@@ -32,7 +32,9 @@ def rotate_anaconda_token(
     try:
         from .ci_register import anaconda_token
     except ImportError:
-        raise RuntimeError("You must have the anaconda token defined to do token rotation!")
+        raise RuntimeError(
+            "You must have the anaconda token defined to do token rotation!"
+        )
     from .ci_register import travis_endpoint  # noqa
     from .azure_ci_utils import default_config  # noqa
 
@@ -52,9 +54,7 @@ def rotate_anaconda_token(
             try:
                 if circle:
                     try:
-                        rotate_token_in_circle(
-                            user, project, anaconda_token
-                        )
+                        rotate_token_in_circle(user, project, anaconda_token)
                     except Exception as e:
                         if "DEBUG_ANACONDA_TOKENS" in os.environ:
                             raise e
@@ -68,25 +68,20 @@ def rotate_anaconda_token(
 
                 if drone:
                     try:
-                        rotate_token_in_drone(
-                            user, project, anaconda_token
-                        )
+                        rotate_token_in_drone(user, project, anaconda_token)
                     except Exception as e:
                         if "DEBUG_ANACONDA_TOKENS" in os.environ:
                             raise e
                         else:
                             err_msg = (
-                                "Failed to rotate token for %s/%s"
-                                " on drone!"
+                                "Failed to rotate token for %s/%s" " on drone!"
                             ) % (user, project)
                             failed = True
                             raise RuntimeError(err_msg)
 
                 if travis:
                     try:
-                        rotate_token_in_travis(
-                            user, project, anaconda_token
-                        )
+                        rotate_token_in_travis(user, project, anaconda_token)
                     except Exception as e:
                         if "DEBUG_ANACONDA_TOKENS" in os.environ:
                             raise e
@@ -100,16 +95,13 @@ def rotate_anaconda_token(
 
                 if azure:
                     try:
-                        rotate_token_in_azure(
-                            user, project, anaconda_token
-                        )
+                        rotate_token_in_azure(user, project, anaconda_token)
                     except Exception as e:
                         if "DEBUG_ANACONDA_TOKENS" in os.environ:
                             raise e
                         else:
                             err_msg = (
-                                "Failed to rotate token for %s/%s"
-                                " on azure!"
+                                "Failed to rotate token for %s/%s" " on azure!"
                             ) % (user, project)
                             failed = True
                             raise RuntimeError(err_msg)
@@ -322,6 +314,7 @@ def rotate_token_in_azure(user, project, binstar_token):
 
 def rotate_token_in_appveyor(feedstock_directory, binstar_token):
     from .ci_register import appveyor_token
+
     headers = {"Authorization": "Bearer {}".format(appveyor_token)}
     url = "https://ci.appveyor.com/api/account/encrypt"
     response = requests.post(

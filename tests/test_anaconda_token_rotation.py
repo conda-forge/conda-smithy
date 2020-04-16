@@ -16,7 +16,7 @@ from conda_smithy.anaconda_token_rotation import rotate_anaconda_token
 @mock.patch("conda_smithy.anaconda_token_rotation.rotate_token_in_circle")
 @mock.patch("conda_smithy.anaconda_token_rotation.rotate_token_in_travis")
 @mock.patch("conda_smithy.anaconda_token_rotation.rotate_token_in_azure")
-def test_register_feedstock_token_with_proviers(
+def test_rotate_anaconda_token(
     azure_mock,
     travis_mock,
     circle_mock,
@@ -28,7 +28,6 @@ def test_register_feedstock_token_with_proviers(
     travis,
     azure,
     monkeypatch,
-    tmpdir,
 ):
     user = "foo"
     project = "bar"
@@ -47,81 +46,78 @@ def test_register_feedstock_token_with_proviers(
     )
 
     if drone:
-        drone_mock.assert_called_once_with(
-            user, project, "abc123"
-        )
+        drone_mock.assert_called_once_with(user, project, "abc123")
     else:
         drone_mock.assert_not_called()
 
     if circle:
-        circle_mock.assert_called_once_with(
-            user, project, "abc123"
-        )
+        circle_mock.assert_called_once_with(user, project, "abc123")
     else:
         circle_mock.assert_not_called()
 
     if travis:
-        travis_mock.assert_called_once_with(
-            user, project, "abc123"
-        )
+        travis_mock.assert_called_once_with(user, project, "abc123")
     else:
         travis_mock.assert_not_called()
 
     if azure:
-        azure_mock.assert_called_once_with(
-            user, project, "abc123"
-        )
+        azure_mock.assert_called_once_with(user, project, "abc123")
     else:
         azure_mock.assert_not_called()
 
     if appveyor:
-        appveyor_mock.assert_called_once_with(
-            user, project, "abc", "abc123"
-        )
+        appveyor_mock.assert_called_once_with("abc", "abc123")
     else:
         appveyor_mock.assert_not_called()
 
 
-# @pytest.mark.parametrize("drone", [True, False])
-# @pytest.mark.parametrize("circle", [True, False])
-# @pytest.mark.parametrize("azure", [True, False])
-# @pytest.mark.parametrize("travis", [True, False])
-# @pytest.mark.parametrize("clobber", [True, False])
-# @mock.patch("conda_smithy.feedstock_tokens.add_feedstock_token_to_drone")
-# @mock.patch("conda_smithy.feedstock_tokens.add_feedstock_token_to_circle")
-# @mock.patch("conda_smithy.feedstock_tokens.add_feedstock_token_to_travis")
-# @mock.patch("conda_smithy.feedstock_tokens.add_feedstock_token_to_azure")
-# def test_register_feedstock_token_with_proviers_notoken(
-#     azure_mock,
-#     travis_mock,
-#     circle_mock,
-#     drone_mock,
-#     drone,
-#     circle,
-#     travis,
-#     azure,
-#     clobber,
-# ):
-#     user = "foo"
-#     project = "bar"
-#
-#     with pytest.raises(RuntimeError) as e:
-#         register_feedstock_token_with_proviers(
-#             user,
-#             project,
-#             drone=drone,
-#             circle=circle,
-#             travis=travis,
-#             azure=azure,
-#             clobber=clobber,
-#         )
-#
-#     assert "No token" in str(e.value)
-#
-#     drone_mock.assert_not_called()
-#     circle_mock.assert_not_called()
-#     travis_mock.assert_not_called()
-#     azure_mock.assert_not_called()
+@pytest.mark.parametrize("appveyor", [True, False])
+@pytest.mark.parametrize("drone", [True, False])
+@pytest.mark.parametrize("circle", [True, False])
+@pytest.mark.parametrize("azure", [True, False])
+@pytest.mark.parametrize("travis", [True, False])
+@mock.patch("conda_smithy.anaconda_token_rotation.rotate_token_in_appveyor")
+@mock.patch("conda_smithy.anaconda_token_rotation.rotate_token_in_drone")
+@mock.patch("conda_smithy.anaconda_token_rotation.rotate_token_in_circle")
+@mock.patch("conda_smithy.anaconda_token_rotation.rotate_token_in_travis")
+@mock.patch("conda_smithy.anaconda_token_rotation.rotate_token_in_azure")
+def test_rotate_anaconda_token_notoken(
+    azure_mock,
+    travis_mock,
+    circle_mock,
+    drone_mock,
+    appveyor_mock,
+    appveyor,
+    drone,
+    circle,
+    travis,
+    azure,
+    monkeypatch,
+):
+    user = "foo"
+    project = "bar"
+
+    with pytest.raises(RuntimeError) as e:
+        rotate_anaconda_token(
+            user,
+            project,
+            None,
+            drone=drone,
+            circle=circle,
+            travis=travis,
+            azure=azure,
+            appveyor=appveyor,
+        )
+
+    assert "No token" in str(e.value)
+
+    drone_mock.assert_not_called()
+    circle_mock.assert_not_called()
+    travis_mock.assert_not_called()
+    azure_mock.assert_not_called()
+    appveyor_mock.assert_not_called()
+
+
 #
 #
 # @pytest.mark.parametrize("provider", ["drone", "circle", "travis", "azure"])

@@ -652,7 +652,11 @@ class RegisterFeedstockToken(Subcommand):
 
 class UpdateAnacondaToken(Subcommand):
     subcommand = "update-anaconda-token"
-    aliases = ["rotate-anaconda-token", "update-binstar-token", "rotate-binstar-token"]
+    aliases = [
+        "rotate-anaconda-token",
+        "update-binstar-token",
+        "rotate-binstar-token",
+    ]
 
     def __init__(self, parser):
         # conda-smithy register-ci ./
@@ -697,7 +701,9 @@ class UpdateAnacondaToken(Subcommand):
         owner = args.user or args.organization
         repo = os.path.basename(os.path.abspath(args.feedstock_directory))
 
-        print("Updating the anaconda/binstar token. Can take up to ~30 seconds.")
+        print(
+            "Updating the anaconda/binstar token. Can take up to ~30 seconds."
+        )
 
         # do all providers first
         rotate_anaconda_token(
