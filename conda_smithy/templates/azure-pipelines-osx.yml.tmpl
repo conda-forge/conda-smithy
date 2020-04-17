@@ -31,8 +31,8 @@ jobs:
 
   - script: |
       source activate base
-      conda install -n base -c conda-forge --quiet --yes conda-forge-ci-setup={{ conda_forge_ci_setup_version }} conda-build
-    displayName: 'Add conda-forge-ci-setup={{ conda_forge_ci_setup_version }}'
+      conda install -n base -c conda-forge --quiet --yes conda-forge-ci-setup=3 conda-build
+    displayName: 'Add conda-forge-ci-setup=3'
 
   - script: |
       echo "Mangling homebrew from Azure to avoid conflicts."
@@ -74,7 +74,6 @@ jobs:
       validate_recipe_outputs
     displayName: Validate Recipe Outputs
 {%- endif %}
-
   - script: |
       source activate base
       export GIT_BRANCH=$BUILD_SOURCEBRANCHNAME
