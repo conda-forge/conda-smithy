@@ -1342,7 +1342,7 @@ def _load_forge_config(forge_dir, exclusive_config_file):
             # disallow publication of azure artifacts for now.
             "upload_packages": False,
             # Force building all supported providers.
-            "force": True,
+            "force": False,
             # name and id of azure project that the build pipeline is in
             "project_name": "feedstock-builds",
             "project_id": "84710dde-1620-425b-80d0-4cf5baca359d",
