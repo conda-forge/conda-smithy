@@ -33,7 +33,7 @@ jobs:
       source activate base
       echo "Configuring conda."
 
-      conda install -c conda-forge --quiet --yes conda-forge-ci-setup=2 conda-build
+      conda install -c conda-forge --quiet --yes conda-forge-ci-setup=2 conda-build pip
 
       setup_conda_rc ./ "./{{ recipe_dir }}" ./.ci_support/${CONFIG}.yaml
 

@@ -48,7 +48,7 @@ install:
 
     # Configure the VM.
     # Tell conda we want an updated version of conda-forge-ci-setup and conda-build
-    - cmd: conda.exe install -n root -c conda-forge --quiet --yes conda-forge-ci-setup=2 conda-build
+    - cmd: conda.exe install -n root -c conda-forge --quiet --yes conda-forge-ci-setup=2 conda-build pip
     {%- if local_ci_setup is not none %}
     - cmd: conda.exe uninstall --quiet --yes --force conda-forge-ci-setup
     - cmd: pip install --no-deps {{ local_ci_setup|replace('/', '\\')|replace('%{', '%')|replace('}', '%') }}
