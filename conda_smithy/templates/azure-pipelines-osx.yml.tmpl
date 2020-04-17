@@ -31,8 +31,24 @@ jobs:
 
   - script: |
       source activate base
-      conda install -n base -c conda-forge --quiet --yes conda-forge-ci-setup=3 conda-build
-    displayName: 'Add conda-forge-ci-setup=3'
+      echo "Configuring conda."
+
+      conda install -c conda-forge --quiet --yes conda-forge-ci-setup=2 conda-build
+
+      setup_conda_rc ./ "./{{ recipe_dir }}" ./.ci_support/${CONFIG}.yaml
+
+      export CI=azure
+      {{ build_setup.replace("\n", "\n      ").rstrip() }}
+      conda update --yes --quiet --override-channels -c conda-forge -c defaults --all
+
+      {%- if local_ci_setup is not none %}
+      conda uninstall --quiet --yes --force conda-forge-ci-setup
+      RECIPE_ROOT={{ recipe_dir }} && pip install --no-deps {{ local_ci_setup }}
+      {%- endif %}
+    env: {
+      OSX_FORCE_SDK_DOWNLOAD: "1"
+    }
+    displayName: 'Configure conda, conda-build, and add conda-forge-ci-setup=2'
 
   - script: |
       echo "Mangling homebrew from Azure to avoid conflicts."
@@ -40,19 +56,6 @@ jobs:
       /usr/bin/sudo mangle_homebrew
       /usr/bin/sudo -k
     displayName: Mangle homebrew
-
-  - script: |
-      source activate base
-      echo "Configuring conda."
-
-      setup_conda_rc ./ "./{{ recipe_dir }}" ./.ci_support/${CONFIG}.yaml
-      export CI=azure
-      {{ build_setup.replace("\n", "\n      ").rstrip() }}
-      conda update --yes --quiet --override-channels -c conda-forge -c defaults --all
-    env: {
-      OSX_FORCE_SDK_DOWNLOAD: "1"
-    }
-    displayName: Configure conda and conda-build
 
   - script: |
       source activate base
