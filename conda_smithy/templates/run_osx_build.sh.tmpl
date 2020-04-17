@@ -14,7 +14,7 @@ echo -en 'travis_fold:end:install_miniconda\\r'
 echo "Configuring conda." && echo -en 'travis_fold:start:configure_conda\\r'
 source ~/miniconda3/bin/activate root
 
-conda install -n root -c conda-forge --quiet --yes conda-forge-ci-setup=2 conda-build
+conda install -n root -c conda-forge --quiet --yes conda-forge-ci-setup={{ conda_forge_ci_setup_version }} conda-build
 
 echo "Mangling homebrew in the CI to avoid conflicts." && echo -en 'travis_fold:start:mangle_homebrew\\r'
 /usr/bin/sudo mangle_homebrew
