@@ -71,12 +71,12 @@ jobs:
     # Configure the VM
     - script: |
         call activate base
-        setup_conda_rc .\ ".\{{ recipe_dir }}" .\.ci_support\%CONFIG%.yaml
         {%- if local_ci_setup is not none %}
         set "RECIPE_ROOT=.\{{ recipe_dir }}"
         conda.exe uninstall --quiet --yes --force conda-forge-ci-setup
         pip install --no-deps "{{ local_ci_setup|replace('/', '\\')|replace('${', '%')|replace('}', '%') }}"
         {%- endif %}
+        setup_conda_rc .\ ".\{{ recipe_dir }}" .\.ci_support\%CONFIG%.yaml
       displayName: conda-forge CI setup
 
     {% if build_setup -%}

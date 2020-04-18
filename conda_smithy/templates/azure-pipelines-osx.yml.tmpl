@@ -34,17 +34,16 @@ jobs:
       echo "Configuring conda."
 
       conda install -c conda-forge --quiet --yes conda-forge-ci-setup=2 conda-build pip
-
-      setup_conda_rc ./ "./{{ recipe_dir }}" ./.ci_support/${CONFIG}.yaml
-
-      export CI=azure
-      {{ build_setup.replace("\n", "\n      ").rstrip() }}
       conda update --yes --quiet --override-channels -c conda-forge -c defaults --all
-
       {%- if local_ci_setup is not none %}
       conda uninstall --quiet --yes --force conda-forge-ci-setup
       RECIPE_ROOT={{ recipe_dir }} && pip install --no-deps {{ local_ci_setup }}
       {%- endif %}
+
+      setup_conda_rc ./ "./{{ recipe_dir }}" ./.ci_support/${CONFIG}.yaml
+      export CI=azure
+      {{ build_setup.replace("\n", "\n      ").rstrip() }}
+
     env: {
       OSX_FORCE_SDK_DOWNLOAD: "1"
     }
