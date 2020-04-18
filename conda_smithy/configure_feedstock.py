@@ -1008,12 +1008,7 @@ def _render_template_exe_files(
 def render_travis(jinja_env, forge_config, forge_dir, return_metadata=False):
     target_path = os.path.join(forge_dir, ".travis.yml")
     template_filename = "travis.yml.tmpl"
-    fast_finish_text = textwrap.dedent(
-        """\
-        ({get_fast_finish_script} | \\
-                  python - -v --ci "travis" "${{TRAVIS_REPO_SLUG}}" "${{TRAVIS_BUILD_NUMBER}}" "${{TRAVIS_PULL_REQUEST}}") || exit 1
-    """
-    )
+    fast_finish_text = ""
 
     (
         platforms,
