@@ -701,18 +701,15 @@ def _render_ci_provider(
 
         # if the recipe has its own conda_forge_ci_setup package, then
         # install that
-        if (
-            os.path.exists(os.path.join(
+        if os.path.exists(
+            os.path.join(
                 forge_dir,
                 forge_config["recipe_dir"],
                 "conda_forge_ci_setup",
                 "__init__.py",
-            ))
-            and os.path.exists(os.path.join(
-                forge_dir,
-                forge_config["recipe_dir"],
-                "setup.py",
-            ))
+            )
+        ) and os.path.exists(
+            os.path.join(forge_dir, forge_config["recipe_dir"], "setup.py",)
         ):
             # the platform templates uses jinja2 to parse this correctly
             # for windows
