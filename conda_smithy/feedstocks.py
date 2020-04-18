@@ -8,7 +8,7 @@ from git import Repo, GitCommandError
 from github import Github
 
 from . import github as smithy_github
-from .utils import render_meta_yaml, yaml
+from .utils import render_meta_yaml, get_yaml
 
 
 def feedstock_repos(gh_organization="conda-forge"):
@@ -158,7 +158,7 @@ def feedstocks_repos(
     ----------
     pull_up_to_date : bool (default: False)
         If True, clone all (missing) feedstocks before operation, and fetch
-        all feedstocks as each one is being yielded. 
+        all feedstocks as each one is being yielded.
     randomise: bool (default: False)
         If True, randomise the order of the generated feedstocks. This is
         especially useful if no particular priority should be given to
@@ -209,7 +209,7 @@ def yaml_meta(content):
     Read the contents of meta.yaml into a ruamel.yaml document.
 
     """
-    return yaml.load(render_meta_yaml(content))
+    return get_yaml().load(render_meta_yaml(content))
 
 
 def feedstocks_yaml(
