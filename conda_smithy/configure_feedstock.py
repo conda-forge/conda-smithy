@@ -711,9 +711,6 @@ def _render_ci_provider(
         ) and os.path.exists(
             os.path.join(forge_dir, forge_config["recipe_dir"], "setup.py",)
         ):
-            # the platform templates uses jinja2 to parse this correctly
-            # for windows
-            # it needs to be "${RECIPE_ROOT}/." and not "$RECIPE_ROOT/."
             forge_config["local_ci_setup"] = True
         else:
             forge_config["local_ci_setup"] = False
