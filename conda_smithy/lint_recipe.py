@@ -22,7 +22,7 @@ from conda_build.metadata import (
 )
 import conda_build.conda_interface
 
-from .utils import render_meta_yaml, yaml
+from .utils import render_meta_yaml, get_yaml
 
 
 FIELDS = copy.deepcopy(cbfields)
@@ -551,7 +551,7 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
         ) or glob(os.path.join(recipe_dir, "..", "..", "conda-forge.yml"),)
         if shell_scripts and forge_yaml:
             with open(forge_yaml[0], "r") as fh:
-                code = yaml.load(fh)
+                code = get_yaml().load(fh)
                 shellcheck_enabled = code.get("shellcheck", {}).get(
                     "enabled", shellcheck_enabled
                 )
@@ -741,7 +741,7 @@ def main(recipe_dir, conda_forge=False, return_hints=False):
 
     with io.open(recipe_meta, "rt") as fh:
         content = render_meta_yaml("".join(fh))
-        meta = yaml.load(content)
+        meta = get_yaml().load(content)
     results, hints = lintify(meta, recipe_dir, conda_forge)
     if return_hints:
         return results, hints

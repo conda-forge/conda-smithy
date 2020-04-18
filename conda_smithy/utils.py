@@ -12,11 +12,13 @@ from contextlib import contextmanager
 import ruamel.yaml
 
 
-# define global yaml API
-# roundrip-loader and allowing duplicate keys
-# for handling # [filter] / # [not filter]
-yaml = ruamel.yaml.YAML(typ="rt")
-yaml.allow_duplicate_keys = True
+def get_yaml():
+    # define global yaml API
+    # roundrip-loader and allowing duplicate keys
+    # for handling # [filter] / # [not filter]
+    yaml = ruamel.yaml.YAML(typ="rt")
+    yaml.allow_duplicate_keys = True
+    return yaml
 
 
 @contextmanager
@@ -80,7 +82,7 @@ def update_conda_forge_config(feedstock_directory):
     forge_yaml = os.path.join(feedstock_directory, "conda-forge.yml")
     if os.path.exists(forge_yaml):
         with open(forge_yaml, "r") as fh:
-            code = yaml.load(fh)
+            code = get_yaml().load(fh)
     else:
         code = {}
 
@@ -90,4 +92,4 @@ def update_conda_forge_config(feedstock_directory):
 
     yield code
 
-    yaml.dump(code, Path(forge_yaml))
+    get_yaml().dump(code, Path(forge_yaml))
