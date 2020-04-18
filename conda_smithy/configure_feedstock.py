@@ -699,6 +699,28 @@ def _render_ci_provider(
         else:
             forge_config["upload_script"] = "upload_or_check_non_existence"
 
+        # if the recipe has its own conda_forge_ci_setup package, then
+        # install that
+        if (
+            os.path.exists(os.path.join(
+                forge_dir,
+                forge_config["recipe_dir"],
+                "conda_forge_ci_setup",
+                "__init__.py",
+            ))
+            and os.path.exists(os.path.join(
+                forge_dir,
+                forge_config["recipe_dir"],
+                "setup.py",
+            ))
+        ):
+            # the platform templates uses jinja2 to parse this correctly
+            # for windows
+            # it needs to be "${RECIPE_ROOT}/." and not "$RECIPE_ROOT/."
+            forge_config["local_ci_setup"] = "${RECIPE_ROOT}/."
+        else:
+            forge_config["local_ci_setup"] = None
+
         # hook for extending with whatever platform specific junk we need.
         #     Function passed in as argument
         for platform, enable in zip(platforms, enable_platform):
@@ -1384,7 +1406,6 @@ def _load_forge_config(forge_dir, exclusive_config_file):
         "skip_render": [],
         "bot": {"automerge": False},
         "conda_forge_output_validation": False,
-        "local_ci_setup": None,
     }
 
     forge_yml = os.path.join(forge_dir, "conda-forge.yml")
