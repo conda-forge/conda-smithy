@@ -15,9 +15,9 @@ echo "Configuring conda." && echo -en 'travis_fold:start:configure_conda\\r'
 source ~/miniconda3/bin/activate root
 
 conda install -n root -c conda-forge --quiet --yes conda-forge-ci-setup=2 pip conda-build
-{% if local_ci_setup is not none %}
+{% if local_ci_setup %}
 conda uninstall --quiet --yes --force conda-forge-ci-setup
-RECIPE_ROOT={{ recipe_dir }} && pip install --no-deps {{ local_ci_setup }}
+pip install --no-deps {{ recipe_dir }}/.
 {%- endif %}
 
 echo "Mangling homebrew in the CI to avoid conflicts." && echo -en 'travis_fold:start:mangle_homebrew\\r'

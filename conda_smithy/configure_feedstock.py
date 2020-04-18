@@ -714,9 +714,9 @@ def _render_ci_provider(
             # the platform templates uses jinja2 to parse this correctly
             # for windows
             # it needs to be "${RECIPE_ROOT}/." and not "$RECIPE_ROOT/."
-            forge_config["local_ci_setup"] = "${RECIPE_ROOT}/."
+            forge_config["local_ci_setup"] = True
         else:
-            forge_config["local_ci_setup"] = None
+            forge_config["local_ci_setup"] = False
 
         # hook for extending with whatever platform specific junk we need.
         #     Function passed in as argument
