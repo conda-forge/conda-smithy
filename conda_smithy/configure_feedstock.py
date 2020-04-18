@@ -1140,6 +1140,7 @@ def render_azure(jinja_env, forge_config, forge_dir, return_metadata=False):
 
     logger.debug("azure platforms retreived")
 
+    remove_file_or_dir(os.path.join(forge_dir, ".azure-pipelines"))
     return _render_ci_provider(
         "azure",
         jinja_env=jinja_env,
