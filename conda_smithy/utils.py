@@ -16,6 +16,8 @@ def get_yaml():
     # define global yaml API
     # roundrip-loader and allowing duplicate keys
     # for handling # [filter] / # [not filter]
+    # Don't use a global variable for this as a global
+    # variable will make conda-smithy thread unsafe.
     yaml = ruamel.yaml.YAML(typ="rt")
     yaml.allow_duplicate_keys = True
     return yaml
