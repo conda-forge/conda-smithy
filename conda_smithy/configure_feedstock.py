@@ -422,7 +422,8 @@ def dump_subspace_config_files(
             short_config_name = config_name[:35] + "_h" + h
 
         with write_file(out_path) as f:
-            yaml.safe_dump(config, f, default_flow_style=False)
+            # note this cannot be safe_dump
+            yaml.dump(config, f, default_flow_style=False)
 
         target_platform = config.get("target_platform", [platform_arch])[0]
         result.append(
@@ -1320,7 +1321,8 @@ def render_README(jinja_env, forge_config, forge_dir, render_info=None):
             pass
 
     logger.debug("README")
-    logger.debug(yaml.safe_dump(forge_config))
+    # note this cannot be safe_dump
+    logger.debug(yaml.dump(forge_config))
 
     with write_file(target_fname) as fh:
         fh.write(template.render(**forge_config))
