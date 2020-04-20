@@ -4,6 +4,17 @@ conda-smithy Change Log
 
 .. current developments
 
+**Changed:**
+
+* Allow people to pass extra arguments to ``docker run`` by setting
+  ``$CONDA_FORGE_DOCKER_RUN_ARGS``.
+
+**Authors:**
+
+* Peter K. G. Williams
+
+
+
 v3.6.16
 ====================
 
