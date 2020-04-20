@@ -9,7 +9,6 @@ import warnings
 from collections import OrderedDict
 import copy
 import hashlib
-import time
 
 import conda_build.api
 import conda_build.utils
@@ -404,8 +403,6 @@ def dump_subspace_config_files(
     else:
         filename_arch = f"{platform}_{arch}"
 
-    output_name = platform if arch == "64" else platform_arch
-
     result = []
     for config in configs:
         config_name = "{}_{}".format(
@@ -425,7 +422,7 @@ def dump_subspace_config_files(
             short_config_name = config_name[:35] + "_h" + h
 
         with write_file(out_path) as f:
-            yaml.dump(config, f, default_flow_style=False)
+            yaml.safe_dump(config, f, default_flow_style=False)
 
         target_platform = config.get("target_platform", [platform_arch])[0]
         result.append(
@@ -540,6 +537,7 @@ def _render_ci_provider(
     platform_target_path,
     platform_template_file,
     platform_specific_setup,
+    noarch_registry,
     keep_noarchs=None,
     extra_platform_files={},
     upload_packages=[],
@@ -547,6 +545,8 @@ def _render_ci_provider(
 ):
     if keep_noarchs is None:
         keep_noarchs = [False] * len(platforms)
+
+    local_noarch_registry = {}
 
     metas_list_of_lists = []
     enable_platform = [False] * len(platforms)
@@ -587,6 +587,15 @@ def _render_ci_provider(
         # render returns some download & reparsing info that we don't care about
         metas = [m for m, _, _ in metas]
 
+        # here we record anything conda build would make that is noarch
+        for meta in metas:
+            if not meta.skip() and meta.noarch:
+                if meta.dist() not in local_noarch_registry:
+                    local_noarch_registry[meta.dist()] = []
+                local_noarch_registry[meta.dist()].append(
+                    (provider_name, "{}-{}".format(platform, arch))
+                )
+
         if not keep_noarch:
             to_delete = []
             for idx, meta in enumerate(metas):
@@ -613,6 +622,15 @@ def _render_ci_provider(
         for each_target_fname in target_fnames:
             remove_file(each_target_fname)
     else:
+        # if a provider is enabled, then it will make the noarch packages above
+        # so we merge them with the global regisatry
+        # we resolve any conflicts at the end
+        for k, v in local_noarch_registry.items():
+            if k in noarch_registry:
+                noarch_registry[k].extend(local_noarch_registry[k])
+            else:
+                noarch_registry[k] = local_noarch_registry[k]
+
         forge_config[provider_name]["enabled"] = True
         fancy_name = {
             "linux": "Linux",
@@ -905,15 +923,15 @@ def _get_platforms_of_provider(provider, forge_config):
     return platforms, archs, keep_noarchs, upload_packages
 
 
-def render_circle(jinja_env, forge_config, forge_dir, return_metadata=False):
+def render_circle(jinja_env, forge_config, forge_dir, noarch_registry, return_metadata=False):
     target_path = os.path.join(forge_dir, ".circleci", "config.yml")
     template_filename = "circle.yml.tmpl"
     fast_finish_text = textwrap.dedent(
         """\
             {get_fast_finish_script} | \\
                  python - -v --ci "circle" "${{CIRCLE_PROJECT_USERNAME}}/${{CIRCLE_PROJECT_REPONAME}}" "${{CIRCLE_BUILD_NUM}}" "${{CIRCLE_PR_NUMBER}}"
-        """
-    )  # NOQA
+        """  # noqa
+    )
     extra_platform_files = {
         "common": [
             os.path.join(forge_dir, ".circleci", "checkout_merge_commit.sh"),
@@ -944,6 +962,7 @@ def render_circle(jinja_env, forge_config, forge_dir, return_metadata=False):
         platform_target_path=target_path,
         platform_template_file=template_filename,
         platform_specific_setup=_circle_specific_setup,
+        noarch_registry=noarch_registry,
         keep_noarchs=keep_noarchs,
         extra_platform_files=extra_platform_files,
         upload_packages=upload_packages,
@@ -1005,7 +1024,7 @@ def _render_template_exe_files(
         set_exe_file(target_fname, True)
 
 
-def render_travis(jinja_env, forge_config, forge_dir, return_metadata=False):
+def render_travis(jinja_env, forge_config, forge_dir, noarch_registry, return_metadata=False):
     target_path = os.path.join(forge_dir, ".travis.yml")
     template_filename = "travis.yml.tmpl"
     fast_finish_text = ""
@@ -1035,6 +1054,7 @@ def render_travis(jinja_env, forge_config, forge_dir, return_metadata=False):
         fast_finish_text=fast_finish_text,
         platform_target_path=target_path,
         platform_template_file=template_filename,
+        noarch_registry=noarch_registry,
         keep_noarchs=keep_noarchs,
         platform_specific_setup=_travis_specific_setup,
         upload_packages=upload_packages,
@@ -1057,13 +1077,13 @@ def _appveyor_specific_setup(jinja_env, forge_config, forge_dir, platform):
     forge_config["build_setup"] = build_setup
 
 
-def render_appveyor(jinja_env, forge_config, forge_dir, return_metadata=False):
+def render_appveyor(jinja_env, forge_config, forge_dir, noarch_registry, return_metadata=False):
     target_path = os.path.join(forge_dir, ".appveyor.yml")
     fast_finish_text = textwrap.dedent(
         """\
             {get_fast_finish_script}
             "%CONDA_INSTALL_LOCN%\\python.exe" {fast_finish_script}.py -v --ci "appveyor" "%APPVEYOR_ACCOUNT_NAME%/%APPVEYOR_PROJECT_SLUG%" "%APPVEYOR_BUILD_NUMBER%" "%APPVEYOR_PULL_REQUEST_NUMBER%"
-        """
+        """  # noqa
     )
     template_filename = "appveyor.yml.tmpl"
 
@@ -1084,6 +1104,7 @@ def render_appveyor(jinja_env, forge_config, forge_dir, return_metadata=False):
         fast_finish_text=fast_finish_text,
         platform_target_path=target_path,
         platform_template_file=template_filename,
+        noarch_registry=noarch_registry,
         keep_noarchs=keep_noarchs,
         platform_specific_setup=_appveyor_specific_setup,
         upload_packages=upload_packages,
@@ -1121,7 +1142,7 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
     )
 
 
-def render_azure(jinja_env, forge_config, forge_dir, return_metadata=False):
+def render_azure(jinja_env, forge_config, forge_dir, noarch_registry, return_metadata=False):
     target_path = os.path.join(forge_dir, "azure-pipelines.yml")
     template_filename = "azure-pipelines.yml.tmpl"
     fast_finish_text = ""
@@ -1147,6 +1168,7 @@ def render_azure(jinja_env, forge_config, forge_dir, return_metadata=False):
         platform_target_path=target_path,
         platform_template_file=template_filename,
         platform_specific_setup=_azure_specific_setup,
+        noarch_registry=noarch_registry,
         keep_noarchs=keep_noarchs,
         upload_packages=upload_packages,
         return_metadata=return_metadata,
@@ -1178,7 +1200,7 @@ def _drone_specific_setup(jinja_env, forge_config, forge_dir, platform):
     )
 
 
-def render_drone(jinja_env, forge_config, forge_dir, return_metadata=False):
+def render_drone(jinja_env, forge_config, forge_dir, noarch_registry, return_metadata=False):
     target_path = os.path.join(forge_dir, ".drone.yml")
     template_filename = "drone.yml.tmpl"
     fast_finish_text = ""
@@ -1201,6 +1223,7 @@ def render_drone(jinja_env, forge_config, forge_dir, return_metadata=False):
         platform_target_path=target_path,
         platform_template_file=template_filename,
         platform_specific_setup=_drone_specific_setup,
+        noarch_registry=noarch_registry,
         keep_noarchs=keep_noarchs,
         upload_packages=upload_packages,
         return_metadata=return_metadata,
@@ -1284,7 +1307,7 @@ def render_README(jinja_env, forge_config, forge_dir, render_info=None):
             import requests
 
             resp = requests.get(
-                "https://dev.azure.com/{org}/{project_name}/_apis/build/definitions?name={repo}".format(
+                "https://dev.azure.com/{org}/{project_name}/_apis/build/definitions?name={repo}".format(  # noqa
                     org=forge_config["azure"]["user_or_org"],
                     project_name=forge_config["azure"]["project_name"],
                     repo=forge_config["github"]["repo_name"],
@@ -1297,7 +1320,7 @@ def render_README(jinja_env, forge_config, forge_dir, render_info=None):
             pass
 
     logger.debug("README")
-    logger.debug(yaml.dump(forge_config))
+    logger.debug(yaml.safe_dump(forge_config))
 
     with write_file(target_fname) as fh:
         fh.write(template.render(**forge_config))
@@ -1311,6 +1334,43 @@ def render_README(jinja_env, forge_config, forge_dir, render_info=None):
             fh.write(line)
     else:
         remove_file_or_dir(code_owners_file)
+
+
+def resolve_noarch_conflicts_and_write(forge_dir, noarch_registry):
+    """Resolve any conflicts in the noarch registry and then write"""
+    fname = os.path.join(forge_dir, ".noarch_outputs.yaml")
+    if len(noarch_registry) == 0 and os.path.exists(fname):
+        remove_file(fname)
+        return
+
+    provider_index = {
+        "azure": 0,
+        "travis": 1,
+        "circle": 2,
+        "drone": 3,
+        "appveyor": 4
+    }
+
+    final_noarch_registry = {}
+    print(noarch_registry)
+    for k, v in noarch_registry.items():
+        if len(v) == 1:
+            final_noarch_registry[k] = {"ci": v[0], "subdir": v[1]}
+        else:
+            skeys = [
+                (
+                    provider_index.get(p, len(provider_index)),
+                    0 if a == "linux-64" else 1,
+                    (p, a),
+                )
+                for p, a in v
+            ]
+            skeys = sorted(skeys, key=lambda x: x[1])
+            skeys = sorted(skeys, key=lambda x: x[0])
+            final_noarch_registry[k] = {"ci": skeys[0][2][0], "subdir": skeys[0][2][1]}
+
+    with write_file(fname) as fp:
+        yaml.safe_dump(final_noarch_registry, fp, default_flow_style=False)
 
 
 def copy_feedstock_content(forge_config, forge_dir):
@@ -1381,7 +1441,7 @@ def _load_forge_config(forge_dir, exclusive_config_file):
         },
         "recipe_dir": "recipe",
         "skip_render": [],
-        "bot": {"automerge": False,},
+        "bot": {"automerge": False},
     }
 
     forge_yml = os.path.join(forge_dir, "conda-forge.yml")
@@ -1690,8 +1750,6 @@ def main(
     exclusive_config_file=None,
     check=False,
 ):
-    import logging
-
     loglevel = os.environ.get("CONDA_SMITHY_LOGLEVEL", "INFO").upper()
     logger.setLevel(loglevel)
 
@@ -1751,25 +1809,26 @@ def main(
     logger.debug("migration fns set")
 
     # the order of these calls appears to matter
+    noarch_registry = {}
     render_info = []
     render_info.append(
-        render_circle(env, config, forge_dir, return_metadata=True)
+        render_circle(env, config, forge_dir, noarch_registry, return_metadata=True)
     )
     logger.debug("circle rendered")
     render_info.append(
-        render_travis(env, config, forge_dir, return_metadata=True)
+        render_travis(env, config, forge_dir, noarch_registry, return_metadata=True)
     )
     logger.debug("travis rendered")
     render_info.append(
-        render_appveyor(env, config, forge_dir, return_metadata=True)
+        render_appveyor(env, config, forge_dir, noarch_registry, return_metadata=True)
     )
     logger.debug("appveyor rendered")
     render_info.append(
-        render_azure(env, config, forge_dir, return_metadata=True)
+        render_azure(env, config, forge_dir, noarch_registry, return_metadata=True)
     )
     logger.debug("azure rendered")
     render_info.append(
-        render_drone(env, config, forge_dir, return_metadata=True)
+        render_drone(env, config, forge_dir, noarch_registry, return_metadata=True)
     )
     logger.debug("drone rendered")
     # put azure first just in case
@@ -1777,6 +1836,8 @@ def main(
     render_info[0] = render_info[-2]
     render_info[-2] = tmp
     render_README(env, config, forge_dir, render_info)
+
+    resolve_noarch_conflicts_and_write(forge_dir, noarch_registry)
 
     if os.path.isdir(os.path.join(forge_dir, ".ci_support")):
         with write_file(os.path.join(forge_dir, ".ci_support", "README")) as f:
