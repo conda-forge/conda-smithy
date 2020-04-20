@@ -1343,6 +1343,11 @@ def resolve_noarch_conflicts_and_write(forge_dir, noarch_registry):
         remove_file(fname)
         return
 
+    print("initial noarch output set:\n%s" % yaml.safe_dump(noarch_registry))
+
+    # to establish priority, we rank the noarch builds first by provider and
+    # then by platform, with azure and linux-64 always coming first.
+    # then we pick the first one in the list
     provider_index = {
         "azure": 0,
         "travis": 1,
@@ -1350,9 +1355,7 @@ def resolve_noarch_conflicts_and_write(forge_dir, noarch_registry):
         "drone": 3,
         "appveyor": 4
     }
-
     final_noarch_registry = {}
-    print(noarch_registry)
     for k, v in noarch_registry.items():
         if len(v) == 1:
             final_noarch_registry[k] = {"ci": v[0], "subdir": v[1]}
@@ -1368,6 +1371,8 @@ def resolve_noarch_conflicts_and_write(forge_dir, noarch_registry):
             skeys = sorted(skeys, key=lambda x: x[1])
             skeys = sorted(skeys, key=lambda x: x[0])
             final_noarch_registry[k] = {"ci": skeys[0][2][0], "subdir": skeys[0][2][1]}
+
+    print("final noarch output set:\n%s" % yaml.safe_dump(final_noarch_registry))
 
     with write_file(fname) as fp:
         yaml.safe_dump(final_noarch_registry, fp, default_flow_style=False)
