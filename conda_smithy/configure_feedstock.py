@@ -1341,11 +1341,12 @@ def render_README(jinja_env, forge_config, forge_dir, render_info=None):
 def resolve_noarch_conflicts_and_write(forge_dir, noarch_registry):
     """Resolve any conflicts in the noarch registry and then write"""
     fname = os.path.join(forge_dir, ".noarch_outputs.yaml")
-    if len(noarch_registry) == 0 and os.path.exists(fname):
-        remove_file(fname)
+    if len(noarch_registry) == 0:
+        if os.path.exists(fname):
+            remove_file(fname)
         return
 
-    logger.debug("initial noarch output set:\n\n%s", yaml.safe_dump(noarch_registry))
+    logger.info("initial noarch outputs:\n\n%s", yaml.safe_dump(noarch_registry))
 
     # to establish priority, we rank the noarch builds first by provider and
     # then by platform, with azure and linux-64 always coming first.
@@ -1360,7 +1361,7 @@ def resolve_noarch_conflicts_and_write(forge_dir, noarch_registry):
     final_noarch_registry = {}
     for k, v in noarch_registry.items():
         if len(v) == 1:
-            final_noarch_registry[k] = {"ci": v[0], "subdir": v[1]}
+            final_noarch_registry[k] = {"ci": v[0][0], "subdir": v[0][1]}
         else:
             skeys = [
                 (
