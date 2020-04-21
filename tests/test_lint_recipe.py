@@ -180,6 +180,35 @@ class Test_linter(unittest.TestCase):
             lints, hints = linter.lintify({}, recipe_dir)
             self.assertNotIn(expected_message, lints)
 
+    def test_jinja2_vars(self):
+        expected_message = (
+            "Jinja2 variable references are suggested to take a ``{{<one space>"
+            "<variable name><one space>}}`` form. See lines %s."
+            % ([6, 8, 10, 11, 12])
+        )
+
+        with tmp_directory() as recipe_dir:
+            with io.open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
+                fh.write(
+                    """
+                    package:
+                       name: foo
+                    requirements:
+                      run:
+                        - {{name}}
+                        - {{ x.update({4:5}) }}
+                        - {{ name}}
+                        - {{ name }}
+                        - {{name|lower}}
+                        - {{ name|lower}}
+                        - {{name|lower }}
+                        - {{ name|lower }}
+                    """
+                )
+
+            _, hints = linter.lintify({}, recipe_dir)
+            self.assertTrue(any(h.startswith(expected_message) for h in hints))
+
     def test_selectors(self):
         expected_message = (
             "Selectors are suggested to take a "
