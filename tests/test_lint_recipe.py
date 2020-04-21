@@ -206,8 +206,8 @@ class Test_linter(unittest.TestCase):
                     """
                 )
 
-            lints, _ = linter.lintify({}, recipe_dir)
-            self.assertTrue(any(l.startswith(expected_message) for l in lints))
+            _, hints = linter.lintify({}, recipe_dir)
+            self.assertTrue(any(h.startswith(expected_message) for h in hints))
 
     def test_selectors(self):
         expected_message = (
