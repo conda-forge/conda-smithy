@@ -183,9 +183,8 @@ class Test_linter(unittest.TestCase):
     def test_jinja2_vars(self):
         expected_message = (
             "Jinja2 variable references are suggested to take a ``{{<one space>"
-            "<variable name><one space>}}`` form. See lines %s." % (
-                [6, 8, 10, 11, 12]
-            )
+            "<variable name><one space>}}`` form. See lines %s."
+            % ([6, 8, 10, 11, 12])
         )
 
         with tmp_directory() as recipe_dir:

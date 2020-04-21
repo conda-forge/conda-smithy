@@ -506,7 +506,7 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
                         var = m.group(1)
                         if var != " %s " % var.strip():
                             bad_vars.append(m.group(1).strip())
-                            bad_lines.append(i+1)
+                            bad_lines.append(i + 1)
         if bad_vars:
             lints.append(
                 "Jinja2 variable references are suggested to "
