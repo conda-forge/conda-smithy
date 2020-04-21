@@ -55,6 +55,7 @@ NEEDED_FAMILIES = ["gpl", "bsd", "mit", "apache", "psf"]
 
 sel_pat = re.compile(r"(.+?)\s*(#.*)?\[([^\[\]]+)\](?(2).*)$")
 jinja_pat = re.compile(r"\s*\{%\s*(set)\s+[^\s]+\s*=\s*[^\s]+\s*%\}")
+JINJA_VAR_PAT = re.compile(r"{{(.*?)}}")
 
 
 def get_section(parent, name, lints):
@@ -493,6 +494,25 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
                                 str(language)
                             )
                         )
+
+    # 24: jinja2 variable references should be {{<one space>var<one space>}}
+    if recipe_dir is not None and os.path.exists(meta_fname):
+        bad_vars = []
+        bad_lines = []
+        with io.open(meta_fname, "rt") as fh:
+            for i, line in enumerate(fh.readlines()):
+                for m in JINJA_VAR_PAT.finditer(line):
+                    if m.group(1) is not None:
+                        var = m.group(1)
+                        if var != " %s " % var.strip():
+                            bad_vars.append(m.group(1).strip())
+                            bad_lines.append(i+1)
+        if bad_vars:
+            lints.append(
+                "Jinja2 variable references are suggested to "
+                "take a ``{{<one space><variable name><one space>}}``"
+                " form. See lines %s." % (bad_lines,)
+            )
 
     # hints
     # 1: suggest pip
