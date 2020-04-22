@@ -4,6 +4,41 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.6.17
+====================
+
+**Added:**
+
+* Added a linter check for jinja2 variables to be of the form ``{{<one space><variable name><one space>}}``.
+
+**Changed:**
+
+* Change azure.force default to False in conda-forge.yml (#1252)
+* Use a faster script for removing homebrew on osx.
+
+**Removed:**
+
+* Removed No azure token warning when rerendering
+* Deleting strawberry perl was removed as conda-forge-ci-setup now filters the PATH
+* Removed fast finish script for travis as we now set the setting on travis
+
+**Fixed:**
+
+* Re-rendering now cleans old contents in ``.azure-pipelines``
+* Fixed the drone CI badge
+* Made yaml loading in conda_smithy thread safe
+
+**Authors:**
+
+* Isuru Fernando
+* Matthew R Becker
+* Matthew R. Becker
+* John Kirkham
+* Tim Snyder
+* Peter Williams
+
+
+
 **Changed:**
 
 * Allow people to pass extra arguments to ``docker run`` by setting
