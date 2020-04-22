@@ -679,17 +679,30 @@ def run_conda_forge_specific(meta, recipe_dir, lints, hints):
     if is_staged_recipes and recipe_name:
         cf = gh.get_user(os.getenv("GH_ORG", "conda-forge"))
         try:
-            cf.get_repo("{}-feedstock".format(recipe_name)) or cf.get_repo(
+            if cf.get_repo("{}-feedstock".format(recipe_name)):
+                existing_recipe_name = recipe_name
+                feedstock_exists = True
+            elif cf.get_repo(
                 "{}-feedstock".format(recipe_name.replace("-", "_"))
-            ) or cf.get_repo(
+            ):
+                existing_recipe_name = recipe_name.replace("-", "_")
+                feedstock_exists = True
+            elif cf.get_repo(
                 "{}-feedstock".format(recipe_name.replace("_", "-"))
-            )
-            feedstock_exists = True
+            ):
+                existing_recipe_name = recipe_name.replace("_", "-")
+                feedstock_exists = True
+            else:
+                feedstock_exists = False
         except github.UnknownObjectException as e:
             feedstock_exists = False
 
         if feedstock_exists:
-            lints.append("Feedstock with the same name exists in conda-forge")
+            lints.append(
+                'Feedstock with the name "{}" exists in conda-forge'.format(
+                    existing_recipe_name
+                )
+            )
 
         bio = gh.get_user("bioconda").get_repo("bioconda-recipes")
         try:
