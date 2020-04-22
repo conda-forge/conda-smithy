@@ -15,8 +15,13 @@ steps:
     CONFIG: {{ data.config_name }}
     UPLOAD_PACKAGES: {{ data.upload }}
     PLATFORM: {{ data.platform }}
-    BINSTAR_TOKEN: 
+    BINSTAR_TOKEN:
       from_secret: BINSTAR_TOKEN
+{%- if conda_forge_output_validation %}
+    FEEDSTOCK_TOKEN:
+      from_secret: FEEDSTOCK_TOKEN
+{%- endif %}
+
   {%- if 'linux' in data.platform %}
   commands:
     - export FEEDSTOCK_ROOT="$DRONE_WORKSPACE"
