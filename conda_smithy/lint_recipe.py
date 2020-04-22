@@ -679,19 +679,17 @@ def run_conda_forge_specific(meta, recipe_dir, lints, hints):
     if is_staged_recipes and recipe_name:
         cf = gh.get_user(os.getenv("GH_ORG", "conda-forge"))
         try:
-            if cf.get_repo("{}-feedstock".format(recipe_name)):
-                existing_recipe_name = recipe_name
-                feedstock_exists = True
-            elif cf.get_repo(
-                "{}-feedstock".format(recipe_name.replace("-", "_"))
+            for name in set(
+                [
+                    recipe_name,
+                    recipe_name.replace("-", "_"),
+                    recipe_name.replace("_", "-"),
+                ]
             ):
-                existing_recipe_name = recipe_name.replace("-", "_")
-                feedstock_exists = True
-            elif cf.get_repo(
-                "{}-feedstock".format(recipe_name.replace("_", "-"))
-            ):
-                existing_recipe_name = recipe_name.replace("_", "-")
-                feedstock_exists = True
+                if cf.get_repo("{}-feedstock".format(name)):
+                    existing_recipe_name = name
+                    feedstock_exists = True
+                    break
             else:
                 feedstock_exists = False
         except github.UnknownObjectException as e:
