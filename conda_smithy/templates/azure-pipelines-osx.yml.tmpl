@@ -33,7 +33,7 @@ jobs:
       source activate base
       echo "Configuring conda."
 
-      conda install -c conda-forge --quiet --yes conda-forge-ci-setup=2 conda-build pip
+      conda install -c conda-forge --quiet --yes conda-forge-ci-setup=3 conda-build pip
       conda update --yes --quiet --override-channels -c conda-forge -c defaults --all
       {%- if local_ci_setup %}
       conda uninstall --quiet --yes --force conda-forge-ci-setup
@@ -47,7 +47,7 @@ jobs:
     env: {
       OSX_FORCE_SDK_DOWNLOAD: "1"
     }
-    displayName: 'Configure conda, conda-build, and add conda-forge-ci-setup=2'
+    displayName: 'Configure conda, conda-build, and add conda-forge-ci-setup=3'
 
   - script: |
       echo "Mangling homebrew from Azure to avoid conflicts."

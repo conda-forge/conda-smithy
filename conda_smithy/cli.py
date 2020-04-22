@@ -659,7 +659,6 @@ class UpdateAnacondaToken(Subcommand):
     ]
 
     def __init__(self, parser):
-        # conda-smithy register-ci ./
         super(UpdateAnacondaToken, self).__init__(
             parser,
             "Update the anaconda/binstar token used for package uploads.",
@@ -672,12 +671,12 @@ class UpdateAnacondaToken(Subcommand):
         )
         group = scp.add_mutually_exclusive_group()
         group.add_argument(
-            "--user", help="github username under which to register this repo"
+            "--user", help="github username of the repo"
         )
         group.add_argument(
             "--organization",
             default="conda-forge",
-            help="github organisation under which to register this repo",
+            help="github organization of the repo",
         )
         for ci in [
             "Azure",
@@ -690,7 +689,7 @@ class UpdateAnacondaToken(Subcommand):
                 "--without-{}".format(ci.lower()),
                 dest=ci.lower(),
                 action="store_false",
-                help="If set, {} will be not registered".format(ci),
+                help="If set, the token on {} will be not changed.".format(ci),
             )
             default = {ci.lower(): True}
             scp.set_defaults(**default)
