@@ -1748,7 +1748,6 @@ def main(
     check_version_uptodate(r, "conda-smithy", __version__, error_on_warn)
 
     forge_dir = os.path.abspath(forge_file_directory)
-
     if exclusive_config_file is not None:
         exclusive_config_file = os.path.join(forge_dir, exclusive_config_file)
         if not os.path.exists(exclusive_config_file):
@@ -1760,6 +1759,7 @@ def main(
         )
 
     config = _load_forge_config(forge_dir, exclusive_config_file)
+    config["feedstock_name"] = os.path.basename(forge_dir)
 
     for each_ci in ["travis", "circle", "appveyor", "drone"]:
         if config[each_ci].pop("enabled", None):
