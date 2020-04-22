@@ -11,8 +11,8 @@ Authors are sorted by number of commits.
 * shadow_walker
 * Michael Sarahan
 * Min RK
-* Mark Harfouche
 * Matthew R. Becker
+* Mark Harfouche
 * Eric Dill
 * Jan Schulz
 * Josh Reichardt
@@ -28,19 +28,19 @@ Authors are sorted by number of commits.
 * Natasha Pavlovikj
 * Gonzalo Pena-Castellanos
 * Daniel Bast
+* Tim Snyder
 * Chris Burr
 * Carlo
 * Marcel Bargull
 * Matthew Craig
-* Tim Snyder
 * Marius van Niekerk
+* Peter Williams
 * Johannes Köster
 * Matt McCormick
 * John Blischak
 * Jan Janßen
 * xoviat
 * Elmar Pruesse
-* Peter Williams
 * Patrick Sodré
 * Josh Barnes
 * Tobias Megies
