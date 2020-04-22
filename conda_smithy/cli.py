@@ -670,9 +670,7 @@ class UpdateAnacondaToken(Subcommand):
             help="The directory of the feedstock git repository.",
         )
         group = scp.add_mutually_exclusive_group()
-        group.add_argument(
-            "--user", help="github username of the repo"
-        )
+        group.add_argument("--user", help="github username of the repo")
         group.add_argument(
             "--organization",
             default="conda-forge",
