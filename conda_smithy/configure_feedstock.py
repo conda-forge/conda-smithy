@@ -919,11 +919,6 @@ def render_circle(jinja_env, forge_config, forge_dir, return_metadata=False):
             os.path.join(forge_dir, ".circleci", "checkout_merge_commit.sh"),
             os.path.join(forge_dir, ".circleci", "fast_finish_ci_pr_build.sh"),
         ],
-        "linux": [
-            os.path.join(forge_dir, ".scripts", "run_docker_build.sh"),
-            os.path.join(forge_dir, ".scripts", "build_steps.sh"),
-        ],
-        "osx": [os.path.join(forge_dir, ".scripts", "run_osx_build.sh")],
     }
 
     (
@@ -994,6 +989,15 @@ def _render_template_exe_files(
             with open(target_fname, "r") as fh:
                 old_file_contents = fh.read()
                 if old_file_contents != new_file_contents:
+                    import difflib
+                    import sys
+                    print("diff:")
+                    sys.stdout.writelines(difflib.unified_diff(
+                        old_file_contents.splitlines(),
+                        new_file_contents.splitlines(),
+                        fromfile=target_fname,
+                        tofile=target_fname,
+                    ))
                     raise RuntimeError(
                         "Same file {} is rendered twice with different contents".format(
                             target_fname
@@ -1017,14 +1021,6 @@ def render_travis(jinja_env, forge_config, forge_dir, return_metadata=False):
         upload_packages,
     ) = _get_platforms_of_provider("travis", forge_config)
 
-    extra_platform_files = {
-        "linux": [
-            os.path.join(forge_dir, ".scripts", "run_docker_build.sh"),
-            os.path.join(forge_dir, ".scripts", "build_steps.sh"),
-        ],
-        "osx": [os.path.join(forge_dir, ".scripts", "run_osx_build.sh")],
-    }
-
     return _render_ci_provider(
         "travis",
         jinja_env=jinja_env,
@@ -1038,7 +1034,6 @@ def render_travis(jinja_env, forge_config, forge_dir, return_metadata=False):
         keep_noarchs=keep_noarchs,
         platform_specific_setup=_travis_specific_setup,
         upload_packages=upload_packages,
-        # extra_platform_files=extra_platform_files,
         return_metadata=return_metadata,
     )
 
@@ -1586,7 +1581,7 @@ def get_common_scripts(forge_dir):
 
 
 def clear_scripts(forge_dir):
-    for folder in [".azure-pipelines", ".circleci", ".drone", ".travis"]:
+    for folder in [".azure-pipelines", ".circleci", ".drone", ".travis", ".scripts"]:
         for old_file in ["run_docker_build.sh", "build_steps.sh", "run_osx_build.sh"]:
             remove_file(os.path.join(forge_dir, folder, old_file))
 
