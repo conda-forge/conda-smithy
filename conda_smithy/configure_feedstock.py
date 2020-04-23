@@ -817,7 +817,7 @@ def _circle_specific_setup(jinja_env, forge_config, forge_dir, platform):
         template_files.append(".scripts/run_docker_build.sh")
         template_files.append(".scripts/build_steps.sh")
     else:
-        template_files.append(".circleci/run_osx_build.sh")
+        template_files.append(".scripts/run_osx_build.sh")
 
     _render_template_exe_files(
         forge_config=forge_config,
@@ -956,7 +956,7 @@ def _travis_specific_setup(jinja_env, forge_config, forge_dir, platform):
 
     platform_templates = {
         "linux": [".scripts/run_docker_build.sh", ".scripts/build_steps.sh"],
-        "osx": [".travis/run_osx_build.sh"],
+        "osx": [".scripts/run_osx_build.sh"],
         "win": [],
     }
     template_files = platform_templates.get(platform, [])
@@ -1108,7 +1108,7 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
             ".scripts/build_steps.sh",
             ".azure-pipelines/azure-pipelines-linux.yml",
         ],
-        "osx": [".azure-pipelines/azure-pipelines-osx.yml"],
+        "osx": [".azure-pipelines/azure-pipelines-osx.yml", ".scripts/run_osx_build.sh"],
         "win": [".azure-pipelines/azure-pipelines-win.yml"],
     }
     template_files = platform_templates.get(platform, [])
