@@ -26,6 +26,7 @@ jobs:
 {%- endif %}
     environment:
       - CONFIG: "{{ data.config_name }}"
+      - UPLOAD_PACKAGES: "{{ data.upload }}"
 {%- if data.platform.startswith('linux') %}
         DOCKER_IMAGE: "{{ data.config["docker_image"][-1] }}"
 {%- endif %}

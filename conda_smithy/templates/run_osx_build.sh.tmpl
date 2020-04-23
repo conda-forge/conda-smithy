@@ -1,11 +1,8 @@
 #!/usr/bin/env bash
 
-# turn this off as the output is far too verbose
-# set -x
+set -x
 
-{{ fast_finish }}
-
-echo "Installing a fresh version of Miniforge."
+echo "\n\nInstalling a fresh version of Miniforge."
 if [[ ${CI} == "travis" ]]; then
   echo -en 'travis_fold:start:install_miniforge\\r'
 fi
@@ -17,7 +14,7 @@ if [[ ${CI} == "travis" ]]; then
   echo -en 'travis_fold:end:install_\\r'
 fi
 
-echo "Configuring conda."
+echo "\n\nConfiguring conda."
 if [[ ${CI} == "travis" ]]; then
   echo -en 'travis_fold:start:configure_conda\\r'
 fi
@@ -25,14 +22,14 @@ fi
 source ${HOME}/miniforge3/etc/profile.d/conda.sh
 conda activate base
 
-echo "Installing conda-forge-ci-setup=2 and conda-build."
+echo "\n\nInstalling conda-forge-ci-setup=2 and conda-build."
 conda install -n base --quiet --yes conda-forge-ci-setup=2 conda-build
 
-echo "Setting up the condarc and mangling the compiler."
+echo "\n\nSetting up the condarc and mangling the compiler."
 setup_conda_rc ./ ./{{ recipe_dir }} ./.ci_support/${CONFIG}.yaml
 mangle_compiler ./ ./{{ recipe_dir }} .ci_support/${CONFIG}.yaml
 
-echo "Mangling homebrew in the CI to avoid conflicts."
+echo "\n\nMangling homebrew in the CI to avoid conflicts."
 if [[ ${CI} == "travis" ]]; then
   echo -en 'travis_fold:start:mangle_homebrew\\r'
 fi
@@ -43,7 +40,7 @@ if [[ ${CI} == "travis" ]]; then
 fi
 
 {% if build_setup -%}
-echo "Running the build setup script."
+echo "\n\nRunning the build setup script."
 {{ build_setup }}
 {%- endif %}
 if [[ ${CI} == "travis" ]]; then
@@ -52,11 +49,11 @@ fi
 
 set -e
 
-echo "Making the build clobber file and running the build."
+echo "\n\nMaking the build clobber file and running the build."
 make_build_number ./ ./{{ recipe_dir }} ./.ci_support/${CONFIG}.yaml
 conda build ./{{ recipe_dir }} -m ./.ci_support/${CONFIG}.yaml --clobber-file ./.ci_support/clobber_${CONFIG}.yaml
 
 if [[ "${UPLOAD_PACKAGES}" != "False" ]]; then
-  echo "Uploading the packages."
+  echo "\n\nUploading the packages."
   upload_package ./ ./{{ recipe_dir }} ./.ci_support/${CONFIG}.yaml
 fi

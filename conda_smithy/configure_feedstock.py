@@ -923,7 +923,7 @@ def render_circle(jinja_env, forge_config, forge_dir, return_metadata=False):
             os.path.join(forge_dir, ".scripts", "run_docker_build.sh"),
             os.path.join(forge_dir, ".scripts", "build_steps.sh"),
         ],
-        "osx": [os.path.join(forge_dir, ".circleci", "run_osx_build.sh")],
+        "osx": [os.path.join(forge_dir, ".scripts", "run_osx_build.sh")],
     }
 
     (
@@ -1038,7 +1038,7 @@ def render_travis(jinja_env, forge_config, forge_dir, return_metadata=False):
         keep_noarchs=keep_noarchs,
         platform_specific_setup=_travis_specific_setup,
         upload_packages=upload_packages,
-        extra_platform_files=extra_platform_files,
+        # extra_platform_files=extra_platform_files,
         return_metadata=return_metadata,
     )
 
@@ -1581,13 +1581,13 @@ def clear_variants(forge_dir):
 
 
 def get_common_scripts(forge_dir):
-    for old_file in ["run_docker_build.sh", "build_steps.sh"]:
+    for old_file in ["run_docker_build.sh", "build_steps.sh", "run_osx_build.sh"]:
         yield os.path.join(forge_dir, ".scripts", old_file)
 
 
 def clear_scripts(forge_dir):
     for folder in [".azure-pipelines", ".circleci", ".drone", ".travis"]:
-        for old_file in ["run_docker_build.sh", "build_steps.sh"]:
+        for old_file in ["run_docker_build.sh", "build_steps.sh", "run_osx_build.sh"]:
             remove_file(os.path.join(forge_dir, folder, old_file))
 
 
