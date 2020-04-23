@@ -26,6 +26,9 @@ conda activate base
 
 conda install -n base --quiet --yes conda-forge-ci-setup=2 conda-build
 
+setup_conda_rc ./ ./{{ recipe_dir }} ./.ci_support/${CONFIG}.yaml
+mangle_compiler ./ ./{{ recipe_dir }} .ci_support/${CONFIG}.yaml
+
 echo "Mangling homebrew in the CI to avoid conflicts."
 if [[ ${CI} == "travis" ]]; then
   echo -en 'travis_fold:start:mangle_homebrew\\r'
@@ -35,9 +38,6 @@ fi
 if [[ ${CI} == "travis" ]]; then
   echo -en 'travis_fold:end:mangle_homebrew\\r'
 fi
-
-mangle_compiler ./ ./{{ recipe_dir }} .ci_support/${CONFIG}.yaml
-setup_conda_rc ./ ./{{ recipe_dir }} ./.ci_support/${CONFIG}.yaml
 
 {% if build_setup -%}
 {{ build_setup }}
