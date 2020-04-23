@@ -698,7 +698,7 @@ def run_conda_forge_specific(meta, recipe_dir, lints, hints):
         if feedstock_exists and existing_recipe_name == recipe_name:
             lints.append("Feedstock with the same name exists in conda-forge.")
         elif feedstock_exists:
-            lints.append(
+            hints.append(
                 "Feedstock with the name {} exists in conda-forge. Is it the same as this package ({})?".format(
                     existing_recipe_name,
                     recipe_name,
