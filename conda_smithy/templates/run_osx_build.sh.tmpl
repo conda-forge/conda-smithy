@@ -11,7 +11,7 @@ MINIFORGE_FILE="Miniforge3-MacOSX-x86_64.sh"
 curl -L -O "${MINIFORGE_URL}/${MINIFORGE_FILE}"
 bash $MINIFORGE_FILE -b
 if [[ ${CI} == "travis" ]]; then
-  echo -en 'travis_fold:end:install_\\r'
+  echo -en 'travis_fold:end:install_miniforge\\r'
 fi
 
 echo -e "\n\nConfiguring conda."
