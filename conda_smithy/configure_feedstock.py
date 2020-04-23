@@ -991,13 +991,16 @@ def _render_template_exe_files(
                 if old_file_contents != new_file_contents:
                     import difflib
                     import sys
+
                     print("diff:")
-                    sys.stdout.writelines(difflib.unified_diff(
-                        old_file_contents.splitlines(),
-                        new_file_contents.splitlines(),
-                        fromfile=target_fname,
-                        tofile=target_fname,
-                    ))
+                    sys.stdout.writelines(
+                        difflib.unified_diff(
+                            old_file_contents.splitlines(),
+                            new_file_contents.splitlines(),
+                            fromfile=target_fname,
+                            tofile=target_fname,
+                        )
+                    )
                     raise RuntimeError(
                         "Same file {} is rendered twice with different contents".format(
                             target_fname
@@ -1103,7 +1106,10 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
             ".scripts/build_steps.sh",
             ".azure-pipelines/azure-pipelines-linux.yml",
         ],
-        "osx": [".azure-pipelines/azure-pipelines-osx.yml", ".scripts/run_osx_build.sh"],
+        "osx": [
+            ".azure-pipelines/azure-pipelines-osx.yml",
+            ".scripts/run_osx_build.sh",
+        ],
         "win": [".azure-pipelines/azure-pipelines-win.yml"],
     }
     template_files = platform_templates.get(platform, [])
@@ -1576,13 +1582,27 @@ def clear_variants(forge_dir):
 
 
 def get_common_scripts(forge_dir):
-    for old_file in ["run_docker_build.sh", "build_steps.sh", "run_osx_build.sh"]:
+    for old_file in [
+        "run_docker_build.sh",
+        "build_steps.sh",
+        "run_osx_build.sh",
+    ]:
         yield os.path.join(forge_dir, ".scripts", old_file)
 
 
 def clear_scripts(forge_dir):
-    for folder in [".azure-pipelines", ".circleci", ".drone", ".travis", ".scripts"]:
-        for old_file in ["run_docker_build.sh", "build_steps.sh", "run_osx_build.sh"]:
+    for folder in [
+        ".azure-pipelines",
+        ".circleci",
+        ".drone",
+        ".travis",
+        ".scripts",
+    ]:
+        for old_file in [
+            "run_docker_build.sh",
+            "build_steps.sh",
+            "run_osx_build.sh",
+        ]:
             remove_file(os.path.join(forge_dir, folder, old_file))
 
 
