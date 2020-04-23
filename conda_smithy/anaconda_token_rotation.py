@@ -63,7 +63,7 @@ def rotate_anaconda_token(
     with open(os.devnull, "w") as fp:
         if "DEBUG_ANACONDA_TOKENS" in os.environ:
             fpo = sys.stdout
-            fpe = sys.stdout
+            fpe = sys.stderr
         else:
             fpo = fp
             fpe = fp
@@ -304,6 +304,8 @@ def rotate_token_in_azure(user, project, binstar_token):
         raise RuntimeError(
             "Cannot add BINSTAR_TOKEN to a repo that is not already registerd on azure CI!"
         )
+
+    ed = bclient.get_definition(ed.id, project=config.project_name)
 
     if not hasattr(ed, "variables") or ed.variables is None:
         variables = {}

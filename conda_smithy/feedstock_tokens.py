@@ -618,6 +618,8 @@ def add_feedstock_token_to_azure(user, project, feedstock_token, clobber):
             "Cannot add FEEDSTOCK_TOKEN to a repo that is not already registerd on azure CI!"
         )
 
+    ed = bclient.get_definition(ed.id, project=config.project_name)
+
     if not hasattr(ed, "variables") or ed.variables is None:
         variables = {}
     else:
