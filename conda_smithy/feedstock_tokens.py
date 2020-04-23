@@ -47,9 +47,7 @@ def generate_and_write_feedstock_token(user, project):
         try:
             token = secrets.token_hex(32)
             pth = os.path.join(
-                "~",
-                ".conda-smithy",
-                "%s_%s.token" % (user, project),
+                "~", ".conda-smithy", "%s_%s.token" % (user, project),
             )
             pth = os.path.expanduser(pth)
             if os.path.exists(pth):
@@ -99,24 +97,21 @@ def read_feedstock_token(user, project):
 
     # read the token
     user_token_pth = os.path.join(
-        "~",
-        ".conda-smithy",
-        "%s_%s.token" % (user, project),
+        "~", ".conda-smithy", "%s_%s.token" % (user, project),
     )
     user_token_pth = os.path.expanduser(user_token_pth)
 
     if not os.path.exists(user_token_pth):
-        err_msg = (
-            "No token found in '~/.conda-smithy/%s_%s.token'"
-            % (user, project)
+        err_msg = "No token found in '~/.conda-smithy/%s_%s.token'" % (
+            user,
+            project,
         )
     else:
         with open(user_token_pth, "r") as fp:
             feedstock_token = fp.read().strip()
         if not feedstock_token:
             err_msg = (
-                "Empty token found in '~/.conda-smithy/"
-                "%s_%s.token'"
+                "Empty token found in '~/.conda-smithy/" "%s_%s.token'"
             ) % (user, project)
             feedstock_token = None
     return feedstock_token, err_msg
@@ -151,9 +146,7 @@ def feedstock_token_exists(user, project, token_repo):
                 .replace("${GH_TOKEN}", github_token)
             )
             git.Repo.clone_from(_token_repo, tmpdir, depth=1)
-            token_file = os.path.join(
-                tmpdir, "tokens", project + ".json",
-            )
+            token_file = os.path.join(tmpdir, "tokens", project + ".json",)
 
             if os.path.exists(token_file):
                 exists = True
@@ -210,9 +203,7 @@ def is_valid_feedstock_token(user, project, feedstock_token, token_repo):
                 .replace("${GH_TOKEN}", github_token)
             )
             git.Repo.clone_from(_token_repo, tmpdir, depth=1)
-            token_file = os.path.join(
-                tmpdir, "tokens", project + ".json",
-            )
+            token_file = os.path.join(tmpdir, "tokens", project + ".json",)
 
             if os.path.exists(token_file):
                 with open(token_file, "r") as fp:
@@ -287,9 +278,7 @@ def register_feedstock_token(user, project, token_repo):
                 .replace("${GH_TOKEN}", github_token)
             )
             repo = git.Repo.clone_from(_token_repo, tmpdir, depth=1)
-            token_file = os.path.join(
-                tmpdir, "tokens", project + ".json",
-            )
+            token_file = os.path.join(tmpdir, "tokens", project + ".json",)
 
             # don't overwrite existing tokens
             # check again since there might be a race condition
