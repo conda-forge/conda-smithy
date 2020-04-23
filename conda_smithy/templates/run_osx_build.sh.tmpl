@@ -2,7 +2,7 @@
 
 set -x
 
-echo "\n\nInstalling a fresh version of Miniforge."
+echo -e "\n\nInstalling a fresh version of Miniforge."
 if [[ ${CI} == "travis" ]]; then
   echo -en 'travis_fold:start:install_miniforge\\r'
 fi
@@ -14,7 +14,7 @@ if [[ ${CI} == "travis" ]]; then
   echo -en 'travis_fold:end:install_\\r'
 fi
 
-echo "\n\nConfiguring conda."
+echo -e "\n\nConfiguring conda."
 if [[ ${CI} == "travis" ]]; then
   echo -en 'travis_fold:start:configure_conda\\r'
 fi
@@ -22,14 +22,14 @@ fi
 source ${HOME}/miniforge3/etc/profile.d/conda.sh
 conda activate base
 
-echo "\n\nInstalling conda-forge-ci-setup=2 and conda-build."
+echo -e "\n\nInstalling conda-forge-ci-setup=2 and conda-build."
 conda install -n base --quiet --yes conda-forge-ci-setup=2 conda-build
 
-echo "\n\nSetting up the condarc and mangling the compiler."
+echo -e "\n\nSetting up the condarc and mangling the compiler."
 setup_conda_rc ./ ./{{ recipe_dir }} ./.ci_support/${CONFIG}.yaml
 mangle_compiler ./ ./{{ recipe_dir }} .ci_support/${CONFIG}.yaml
 
-echo "\n\nMangling homebrew in the CI to avoid conflicts."
+echo -e "\n\nMangling homebrew in the CI to avoid conflicts."
 if [[ ${CI} == "travis" ]]; then
   echo -en 'travis_fold:start:mangle_homebrew\\r'
 fi
@@ -40,7 +40,7 @@ if [[ ${CI} == "travis" ]]; then
 fi
 
 {% if build_setup -%}
-echo "\n\nRunning the build setup script."
+echo -e "\n\nRunning the build setup script."
 {{ build_setup }}
 {%- endif %}
 if [[ ${CI} == "travis" ]]; then
@@ -49,11 +49,11 @@ fi
 
 set -e
 
-echo "\n\nMaking the build clobber file and running the build."
+echo -e "\n\nMaking the build clobber file and running the build."
 make_build_number ./ ./{{ recipe_dir }} ./.ci_support/${CONFIG}.yaml
 conda build ./{{ recipe_dir }} -m ./.ci_support/${CONFIG}.yaml --clobber-file ./.ci_support/clobber_${CONFIG}.yaml
 
 if [[ "${UPLOAD_PACKAGES}" != "False" ]]; then
-  echo "\n\nUploading the packages."
+  echo -e "\n\nUploading the packages."
   upload_package ./ ./{{ recipe_dir }} ./.ci_support/${CONFIG}.yaml
 fi
