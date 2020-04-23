@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
-set -x
+# turn this off as the output is far too verbose
+# set -x
 
 {{ fast_finish }}
 
@@ -24,8 +25,10 @@ fi
 source ${HOME}/miniforge3/etc/profile.d/conda.sh
 conda activate base
 
+echo "Installing conda-forge-ci-setup=2 and conda-build."
 conda install -n base --quiet --yes conda-forge-ci-setup=2 conda-build
 
+echo "Setting up the condarc and mangling the compiler."
 setup_conda_rc ./ ./{{ recipe_dir }} ./.ci_support/${CONFIG}.yaml
 mangle_compiler ./ ./{{ recipe_dir }} .ci_support/${CONFIG}.yaml
 
@@ -40,6 +43,7 @@ if [[ ${CI} == "travis" ]]; then
 fi
 
 {% if build_setup -%}
+echo "Running the build setup script."
 {{ build_setup }}
 {%- endif %}
 if [[ ${CI} == "travis" ]]; then
@@ -48,10 +52,11 @@ fi
 
 set -e
 
+echo "Making the build clobber file and running the build."
 make_build_number ./ ./{{ recipe_dir }} ./.ci_support/${CONFIG}.yaml
-
 conda build ./{{ recipe_dir }} -m ./.ci_support/${CONFIG}.yaml --clobber-file ./.ci_support/clobber_${CONFIG}.yaml
 
 if [[ "${UPLOAD_PACKAGES}" != "False" ]]; then
+  echo "Uploading the packages."
   upload_package ./ ./{{ recipe_dir }} ./.ci_support/${CONFIG}.yaml
 fi
