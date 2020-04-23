@@ -566,7 +566,7 @@ class GenerateFeedstockToken(Subcommand):
     def __init__(self, parser):
         super(GenerateFeedstockToken, self).__init__(
             parser,
-            "Generate a feedstock token at ~/.conda-smithy/{user or org}_{project}_feedstock.token",
+            "Generate a feedstock token at ~/.conda-smithy/{user or org}_{project}.token",
         )
         scp = self.subcommand_parser
         scp.add_argument(
@@ -594,7 +594,7 @@ class GenerateFeedstockToken(Subcommand):
 
         generate_and_write_feedstock_token(owner, repo)
         print(
-            "Your feedstock token has been generated at ~/.conda-smithy/%s_%s_feedstock.token\n"
+            "Your feedstock token has been generated at ~/.conda-smithy/%s_%s.token\n"
             "This token is stored in plaintext so be careful!" % (owner, repo)
         )
 

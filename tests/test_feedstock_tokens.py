@@ -31,8 +31,8 @@ def test_feedstock_tokens_roundtrip(
     )
 
     user = "foo"
-    pth = os.path.expanduser("~/.conda-smithy/foo_bar_feedstock.token")
-    token_json_pth = os.path.join(tmpdir, "tokens", "bar.json")
+    pth = os.path.expanduser("~/.conda-smithy/foo_%s.token" % project)
+    token_json_pth = os.path.join(tmpdir, "tokens", "%s.json" % project)
     os.makedirs(os.path.join(tmpdir, "tokens"), exist_ok=True)
 
     try:
@@ -92,7 +92,7 @@ def test_is_valid_feedstock_token_badtoken(
     user = "conda-forge"
     feedstock_token = "akdjhfl"
 
-    token_pth = os.path.join(tmpdir, "tokens", "bar.json")
+    token_pth = os.path.join(tmpdir, "tokens", "%s.json" % project)
     os.makedirs(os.path.dirname(token_pth), exist_ok=True)
     with open(token_pth, "w") as fp:
         json.dump({"salt": b"adf".hex(), "hashed_token": b"fgh".hex()}, fp)
@@ -105,7 +105,7 @@ def test_generate_and_write_feedstock_token():
     user = "bar"
     repo = "foo"
 
-    pth = os.path.expanduser("~/.conda-smithy/bar_foo_feedstock.token")
+    pth = os.path.expanduser("~/.conda-smithy/bar_foo.token")
 
     try:
         generate_and_write_feedstock_token(user, repo)
@@ -123,7 +123,7 @@ def test_generate_and_write_feedstock_token():
 def test_read_feedstock_token():
     user = "bar"
     repo = "foo"
-    pth = os.path.expanduser("~/.conda-smithy/bar_foo_feedstock.token")
+    pth = os.path.expanduser("~/.conda-smithy/bar_foo.token")
 
     # no token
     token, err = read_feedstock_token(user, repo)
@@ -171,7 +171,7 @@ def test_feedstock_token_exists(
     user = "foo"
     os.makedirs(os.path.join(tmpdir, "tokens"), exist_ok=True)
     if retval:
-        with open(os.path.join(tmpdir, "tokens", "bar.json"), "w") as fp:
+        with open(os.path.join(tmpdir, "tokens", "%s.json" % project), "w") as fp:
             fp.write("blarg")
 
     assert feedstock_token_exists(user, project, repo) is retval
@@ -199,7 +199,7 @@ def test_feedstock_token_raises(
     git_mock.Repo.clone_from.side_effect = ValueError("blarg")
     user = "foo"
     os.makedirs(os.path.join(tmpdir, "tokens"), exist_ok=True)
-    with open(os.path.join(tmpdir, "tokens", "bar.json"), "w") as fp:
+    with open(os.path.join(tmpdir, "tokens", "%s.json" % project), "w") as fp:
         fp.write("blarg")
 
     with pytest.raises(RuntimeError) as e:
@@ -233,8 +233,8 @@ def test_register_feedstock_token_works(
     user = "foo"
     project = "bar"
     os.makedirs(os.path.join(tmpdir, "tokens"), exist_ok=True)
-    pth = os.path.expanduser("~/.conda-smithy/foo_bar_feedstock.token")
-    token_json_pth = os.path.join(tmpdir, "tokens", "bar.json")
+    pth = os.path.expanduser("~/.conda-smithy/foo_%s.token" % project)
+    token_json_pth = os.path.join(tmpdir, "tokens", "%s.json" % project)
 
     try:
         generate_and_write_feedstock_token(user, project)
@@ -288,7 +288,7 @@ def test_register_feedstock_token_notoken(
     user = "foo"
     project = "bar"
     os.makedirs(os.path.join(tmpdir, "tokens"), exist_ok=True)
-    pth = os.path.expanduser("~/.conda-smithy/foo_bar_feedstock.token")
+    pth = os.path.expanduser("~/.conda-smithy/foo_bar.token")
     token_json_pth = os.path.join(tmpdir, "tokens", "bar.json")
 
     try:
@@ -332,7 +332,7 @@ def test_register_feedstock_token_exists_already(
     user = "foo"
     project = "bar"
     os.makedirs(os.path.join(tmpdir, "tokens"), exist_ok=True)
-    pth = os.path.expanduser("~/.conda-smithy/foo_bar_feedstock.token")
+    pth = os.path.expanduser("~/.conda-smithy/foo_bar.token")
     token_json_pth = os.path.join(tmpdir, "tokens", "bar.json")
     with open(token_json_pth, "w") as fp:
         fp.write("blarg")
@@ -383,7 +383,7 @@ def test_register_feedstock_token_with_proviers(
     user = "foo"
     project = "bar"
 
-    pth = os.path.expanduser("~/.conda-smithy/foo_bar_feedstock.token")
+    pth = os.path.expanduser("~/.conda-smithy/foo_bar.token")
 
     try:
         generate_and_write_feedstock_token(user, project)
@@ -484,7 +484,7 @@ def test_register_feedstock_token_with_proviers_error(
     user = "foo"
     project = "bar-feedstock"
 
-    pth = os.path.expanduser("~/.conda-smithy/foo_bar_feedstock.token")
+    pth = os.path.expanduser("~/.conda-smithy/foo_bar-feedstock.token")
 
     if provider == "drone":
         drone_mock.side_effect = ValueError("blah")
