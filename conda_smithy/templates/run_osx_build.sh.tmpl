@@ -4,16 +4,16 @@ set -x
 
 {{ fast_finish }}
 
-echo "Installing a fresh version of Miniconda."
+echo "Installing a fresh version of Miniforge."
 if [[ ${CI} == "travis" ]]; then
-  echo -en 'travis_fold:start:install_miniconda\\r'
+  echo -en 'travis_fold:start:install_miniforge\\r'
 fi
-MINICONDA_URL="https://github.com/conda-forge/miniforge/releases/download/4.8.3-2"
-MINICONDA_FILE="Miniforge3-MacOSX-x86_64.sh"
-curl -L -O "${MINICONDA_URL}/${MINICONDA_FILE}"
-bash $MINICONDA_FILE -b
+MINIFORGE_URL="https://github.com/conda-forge/miniforge/releases/download/4.8.3-2"
+MINIFORGE_FILE="Miniforge3-MacOSX-x86_64.sh"
+curl -L -O "${MINIFORGE_URL}/${MINIFORGE_FILE}"
+bash $MINIFORGE_FILE -b
 if [[ ${CI} == "travis" ]]; then
-  echo -en 'travis_fold:end:install_miniconda\\r'
+  echo -en 'travis_fold:end:install_\\r'
 fi
 
 echo "Configuring conda."
@@ -21,10 +21,10 @@ if [[ ${CI} == "travis" ]]; then
   echo -en 'travis_fold:start:configure_conda\\r'
 fi
 
-source ${HOME}/miniconda3/etc/profile.d/conda.sh
+source ${HOME}/miniforge3/etc/profile.d/conda.sh
 conda activate base
 
-conda install -n base -c conda-forge --quiet --yes conda-forge-ci-setup=2 conda-build
+conda install -n base --quiet --yes conda-forge-ci-setup=2 conda-build
 
 echo "Mangling homebrew in the CI to avoid conflicts."
 if [[ ${CI} == "travis" ]]; then
