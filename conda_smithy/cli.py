@@ -687,5 +687,77 @@ class RegisterFeedstockToken(Subcommand):
         print("Successfully registered the feedstock token!")
 
 
+class UpdateAnacondaToken(Subcommand):
+    subcommand = "update-anaconda-token"
+    aliases = [
+        "rotate-anaconda-token",
+        "update-binstar-token",
+        "rotate-binstar-token",
+    ]
+
+    def __init__(self, parser):
+        super(UpdateAnacondaToken, self).__init__(
+            parser,
+            "Update the anaconda/binstar token used for package uploads.",
+        )
+        scp = self.subcommand_parser
+        scp.add_argument(
+            "--feedstock_directory",
+            default=os.getcwd(),
+            help="The directory of the feedstock git repository.",
+        )
+        group = scp.add_mutually_exclusive_group()
+        group.add_argument("--user", help="github username of the repo")
+        group.add_argument(
+            "--organization",
+            default="conda-forge",
+            help="github organization of the repo",
+        )
+        for ci in [
+            "Azure",
+            "Travis",
+            "Circle",
+            "Drone",
+            "Appveyor",
+        ]:
+            scp.add_argument(
+                "--without-{}".format(ci.lower()),
+                dest=ci.lower(),
+                action="store_false",
+                help="If set, the token on {} will be not changed.".format(ci),
+            )
+            default = {ci.lower(): True}
+            scp.set_defaults(**default)
+
+    def __call__(self, args):
+        from conda_smithy.anaconda_token_rotation import rotate_anaconda_token
+
+        owner = args.user or args.organization
+        repo = os.path.basename(os.path.abspath(args.feedstock_directory))
+
+        print(
+            "Updating the anaconda/binstar token. Can take up to ~30 seconds."
+        )
+
+        # do all providers first
+        rotate_anaconda_token(
+            owner,
+            repo,
+            args.feedstock_directory,
+            drone=args.drone,
+            circle=args.circle,
+            travis=args.travis,
+            azure=args.azure,
+            appveyor=args.appveyor,
+        )
+
+        print("Successfully updated the anaconda/binstar token!")
+        if args.appveyor:
+            print(
+                "Appveyor tokens are stored in the repo so you must commit the "
+                "local changes and push them before the new token will be used!"
+            )
+
+
 if __name__ == "__main__":
     main()
