@@ -989,7 +989,8 @@ def _render_template_exe_files(
                     import difflib
 
                     logger.debug(
-                        "diff:\n%s" % (
+                        "diff:\n%s"
+                        % (
                             "\n".join(
                                 difflib.unified_diff(
                                     old_file_contents.splitlines(),
