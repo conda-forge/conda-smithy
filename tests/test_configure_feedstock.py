@@ -319,12 +319,13 @@ def test_circle_osx(py_recipe, jinja_env):
 
     forge_dir = py_recipe.recipe
     travis_yml_file = os.path.join(forge_dir, ".travis.yml")
-    circle_osx_file = os.path.join(forge_dir, ".circleci", "run_osx_build.sh")
+    circle_osx_file = os.path.join(forge_dir, ".scripts", "run_osx_build.sh")
     circle_linux_file = os.path.join(
         forge_dir, ".scripts", "run_docker_build.sh"
     )
     circle_config_file = os.path.join(forge_dir, ".circleci", "config.yml")
 
+    cnfgr_fdstk.clear_scripts(forge_dir)
     cnfgr_fdstk.render_circle(
         jinja_env=jinja_env, forge_config=py_recipe.config, forge_dir=forge_dir
     )
@@ -336,6 +337,7 @@ def test_circle_osx(py_recipe, jinja_env):
     )
     assert os.path.exists(travis_yml_file)
 
+    cnfgr_fdstk.clear_scripts(forge_dir)
     config = copy.deepcopy(py_recipe.config)
     config["provider"]["osx"] = "circle"
     cnfgr_fdstk.render_circle(
@@ -349,6 +351,7 @@ def test_circle_osx(py_recipe, jinja_env):
     )
     assert not os.path.exists(travis_yml_file)
 
+    cnfgr_fdstk.clear_scripts(forge_dir)
     config = copy.deepcopy(py_recipe.config)
     config["provider"]["linux"] = "dummy"
     config["provider"]["osx"] = "circle"
@@ -362,7 +365,7 @@ def test_circle_osx(py_recipe, jinja_env):
 
 def test_circle_skipped(linux_skipped_recipe, jinja_env):
     forge_dir = linux_skipped_recipe.recipe
-    circle_osx_file = os.path.join(forge_dir, ".circleci", "run_osx_build.sh")
+    circle_osx_file = os.path.join(forge_dir, ".scripts", "run_osx_build.sh")
     circle_linux_file = os.path.join(
         forge_dir, ".scripts", "run_docker_build.sh"
     )

@@ -961,9 +961,6 @@ def _travis_specific_setup(jinja_env, forge_config, forge_dir, platform):
         if yum_build_setup:
             forge_config["yum_build_setup"] = yum_build_setup
 
-    if platform == "osx":
-        build_setup = build_setup.strip()
-        build_setup = build_setup.replace("\n", "\n      ")
     forge_config["build_setup"] = build_setup
 
     _render_template_exe_files(
@@ -990,15 +987,17 @@ def _render_template_exe_files(
                 old_file_contents = fh.read()
                 if old_file_contents != new_file_contents:
                     import difflib
-                    import sys
 
-                    print("diff:")
-                    sys.stdout.writelines(
-                        difflib.unified_diff(
-                            old_file_contents.splitlines(),
-                            new_file_contents.splitlines(),
-                            fromfile=target_fname,
-                            tofile=target_fname,
+                    logger.debug(
+                        "diff:\n%s" % (
+                            "\n".join(
+                                difflib.unified_diff(
+                                    old_file_contents.splitlines(),
+                                    new_file_contents.splitlines(),
+                                    fromfile=target_fname,
+                                    tofile=target_fname,
+                                )
+                            )
                         )
                     )
                     raise RuntimeError(
