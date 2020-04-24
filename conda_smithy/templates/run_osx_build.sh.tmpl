@@ -6,7 +6,7 @@ echo -e "\n\nInstalling a fresh version of Miniforge."
 if [[ ${CI} == "travis" ]]; then
   echo -en 'travis_fold:start:install_miniforge\\r'
 fi
-MINIFORGE_URL="https://github.com/conda-forge/miniforge/releases/download/4.8.3-2"
+MINIFORGE_URL="https://github.com/conda-forge/miniforge/releases/latest/download"
 MINIFORGE_FILE="Miniforge3-MacOSX-x86_64.sh"
 curl -L -O "${MINIFORGE_URL}/${MINIFORGE_FILE}"
 bash $MINIFORGE_FILE -b
