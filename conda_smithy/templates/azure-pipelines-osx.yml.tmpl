@@ -21,62 +21,13 @@ jobs:
   steps:
   # TODO: Fast finish on azure pipelines?
   - script: |
-      echo "Fast Finish"
-      {{ fast_finish }}
-
-  - bash: |
-      echo "##vso[task.prependpath]$CONDA/bin"
-      sudo chown -R $USER $CONDA
-    displayName: Add conda to PATH
-
-  - script: |
-      source activate base
-      conda install -n base -c conda-forge --quiet --yes conda-forge-ci-setup=2 conda-build
-    displayName: 'Add conda-forge-ci-setup=2'
-
-  - script: |
-      echo "Mangling homebrew from Azure to avoid conflicts."
-      source activate base
-      /usr/bin/sudo mangle_homebrew
-      /usr/bin/sudo -k
-    displayName: Mangle homebrew
-
-  - script: |
-      source activate base
-      echo "Configuring conda."
-
-      setup_conda_rc ./ "./{{ recipe_dir }}" ./.ci_support/${CONFIG}.yaml
       export CI=azure
-      {{ build_setup.replace("\n", "\n      ").rstrip() }}
-      conda update --yes --quiet --override-channels -c conda-forge -c defaults --all
-    env: {
-      OSX_FORCE_SDK_DOWNLOAD: "1"
-    }
-    displayName: Configure conda and conda-build
-
-  - script: |
-      source activate base
-      mangle_compiler ./ "./{{ recipe_dir }}" ./.ci_support/${CONFIG}.yaml
-    displayName: Mangle compiler
-
-  - script: |
-      source activate base
-      make_build_number ./ "./{{ recipe_dir }}" ./.ci_support/${CONFIG}.yaml
-    displayName: Generate build number clobber file
-
-  - script: |
-      source activate base
-      conda build "./{{ recipe_dir }}" -m ./.ci_support/${CONFIG}.yaml --clobber-file ./.ci_support/clobber_${CONFIG}.yaml
-    displayName: Build recipe
-
-  - script: |
-      source activate base
+      export OSX_FORCE_SDK_DOWNLOAD="1"
       export GIT_BRANCH=$BUILD_SOURCEBRANCHNAME
 {%- if upload_on_branch %}
       export UPLOAD_ON_BRANCH="{{ upload_on_branch }}"
 {%- endif %}
-      upload_package ./ "./{{ recipe_dir }}" ./.ci_support/${CONFIG}.yaml
-    displayName: Upload package
+      ./.scripts/run_osx_build.sh
+    displayName: Run OSX build
     env:
       BINSTAR_TOKEN: $(BINSTAR_TOKEN)
-    condition: and(succeeded(), not(eq(variables['UPLOAD_PACKAGES'], 'False')))

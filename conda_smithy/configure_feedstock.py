@@ -817,7 +817,7 @@ def _circle_specific_setup(jinja_env, forge_config, forge_dir, platform):
         template_files.append(".scripts/run_docker_build.sh")
         template_files.append(".scripts/build_steps.sh")
     else:
-        template_files.append(".circleci/run_osx_build.sh")
+        template_files.append(".scripts/run_osx_build.sh")
 
     _render_template_exe_files(
         forge_config=forge_config,
@@ -919,11 +919,6 @@ def render_circle(jinja_env, forge_config, forge_dir, return_metadata=False):
             os.path.join(forge_dir, ".circleci", "checkout_merge_commit.sh"),
             os.path.join(forge_dir, ".circleci", "fast_finish_ci_pr_build.sh"),
         ],
-        "linux": [
-            os.path.join(forge_dir, ".scripts", "run_docker_build.sh"),
-            os.path.join(forge_dir, ".scripts", "build_steps.sh"),
-        ],
-        "osx": [os.path.join(forge_dir, ".circleci", "run_osx_build.sh")],
     }
 
     (
@@ -956,7 +951,7 @@ def _travis_specific_setup(jinja_env, forge_config, forge_dir, platform):
 
     platform_templates = {
         "linux": [".scripts/run_docker_build.sh", ".scripts/build_steps.sh"],
-        "osx": [".travis/run_osx_build.sh"],
+        "osx": [".scripts/run_osx_build.sh"],
         "win": [],
     }
     template_files = platform_templates.get(platform, [])
@@ -966,9 +961,6 @@ def _travis_specific_setup(jinja_env, forge_config, forge_dir, platform):
         if yum_build_setup:
             forge_config["yum_build_setup"] = yum_build_setup
 
-    if platform == "osx":
-        build_setup = build_setup.strip()
-        build_setup = build_setup.replace("\n", "\n      ")
     forge_config["build_setup"] = build_setup
 
     _render_template_exe_files(
@@ -994,6 +986,21 @@ def _render_template_exe_files(
             with open(target_fname, "r") as fh:
                 old_file_contents = fh.read()
                 if old_file_contents != new_file_contents:
+                    import difflib
+
+                    logger.debug(
+                        "diff:\n%s"
+                        % (
+                            "\n".join(
+                                difflib.unified_diff(
+                                    old_file_contents.splitlines(),
+                                    new_file_contents.splitlines(),
+                                    fromfile=target_fname,
+                                    tofile=target_fname,
+                                )
+                            )
+                        )
+                    )
                     raise RuntimeError(
                         "Same file {} is rendered twice with different contents".format(
                             target_fname
@@ -1017,14 +1024,6 @@ def render_travis(jinja_env, forge_config, forge_dir, return_metadata=False):
         upload_packages,
     ) = _get_platforms_of_provider("travis", forge_config)
 
-    extra_platform_files = {
-        "linux": [
-            os.path.join(forge_dir, ".scripts", "run_docker_build.sh"),
-            os.path.join(forge_dir, ".scripts", "build_steps.sh"),
-        ],
-        "osx": [os.path.join(forge_dir, ".scripts", "run_osx_build.sh")],
-    }
-
     return _render_ci_provider(
         "travis",
         jinja_env=jinja_env,
@@ -1038,7 +1037,6 @@ def render_travis(jinja_env, forge_config, forge_dir, return_metadata=False):
         keep_noarchs=keep_noarchs,
         platform_specific_setup=_travis_specific_setup,
         upload_packages=upload_packages,
-        extra_platform_files=extra_platform_files,
         return_metadata=return_metadata,
     )
 
@@ -1108,7 +1106,10 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
             ".scripts/build_steps.sh",
             ".azure-pipelines/azure-pipelines-linux.yml",
         ],
-        "osx": [".azure-pipelines/azure-pipelines-osx.yml"],
+        "osx": [
+            ".azure-pipelines/azure-pipelines-osx.yml",
+            ".scripts/run_osx_build.sh",
+        ],
         "win": [".azure-pipelines/azure-pipelines-win.yml"],
     }
     template_files = platform_templates.get(platform, [])
@@ -1581,13 +1582,27 @@ def clear_variants(forge_dir):
 
 
 def get_common_scripts(forge_dir):
-    for old_file in ["run_docker_build.sh", "build_steps.sh"]:
+    for old_file in [
+        "run_docker_build.sh",
+        "build_steps.sh",
+        "run_osx_build.sh",
+    ]:
         yield os.path.join(forge_dir, ".scripts", old_file)
 
 
 def clear_scripts(forge_dir):
-    for folder in [".azure-pipelines", ".circleci", ".drone", ".travis"]:
-        for old_file in ["run_docker_build.sh", "build_steps.sh"]:
+    for folder in [
+        ".azure-pipelines",
+        ".circleci",
+        ".drone",
+        ".travis",
+        ".scripts",
+    ]:
+        for old_file in [
+            "run_docker_build.sh",
+            "build_steps.sh",
+            "run_osx_build.sh",
+        ]:
             remove_file(os.path.join(forge_dir, folder, old_file))
 
 
