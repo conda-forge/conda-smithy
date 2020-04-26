@@ -23,7 +23,12 @@ source ${HOME}/miniforge3/etc/profile.d/conda.sh
 conda activate base
 
 echo -e "\n\nInstalling conda-forge-ci-setup=2 and conda-build."
-conda install -n base --quiet --yes conda-forge-ci-setup=2 conda-build
+conda install -n base --quiet --yes conda-forge-ci-setup=3 conda-build pip
+
+{% if local_ci_setup %}
+conda uninstall --quiet --yes --force conda-forge-ci-setup
+pip install --no-deps {{ recipe_dir }}/.
+{%- endif %}
 
 echo -e "\n\nSetting up the condarc and mangling the compiler."
 setup_conda_rc ./ ./{{ recipe_dir }} ./.ci_support/${CONFIG}.yaml
@@ -47,7 +52,11 @@ echo -e "\n\nMaking the build clobber file and running the build."
 make_build_number ./ ./{{ recipe_dir }} ./.ci_support/${CONFIG}.yaml
 conda build ./{{ recipe_dir }} -m ./.ci_support/${CONFIG}.yaml --clobber-file ./.ci_support/clobber_${CONFIG}.yaml
 
+{%- if conda_forge_output_validation %}
+validate_recipe_outputs "{{ feedstock_name }}"
+{%- endif %}
+
 if [[ "${UPLOAD_PACKAGES}" != "False" ]]; then
   echo -e "\n\nUploading the packages."
-  upload_package ./ ./{{ recipe_dir }} ./.ci_support/${CONFIG}.yaml
+  upload_package {% if conda_forge_output_validation %}--validate {% endif %}"{{ feedstock_name }}" ./ ./{{ recipe_dir }} ./.ci_support/${CONFIG}.yaml
 fi
