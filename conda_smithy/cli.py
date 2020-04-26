@@ -52,7 +52,7 @@ class Subcommand(object):
 
     def __init__(self, parser, help=None):
         subcommand_parser = parser.add_parser(
-            self.subcommand, help=help, aliases=self.aliases
+            self.subcommand, help=help, description=help, aliases=self.aliases
         )
         subcommand_parser.set_defaults(subcommand_func=self)
         self.subcommand_parser = subcommand_parser
@@ -525,7 +525,8 @@ class UpdateCB3(Subcommand):
 def main():
 
     parser = argparse.ArgumentParser(
-        "a tool to help create, administer and manage feedstocks."
+        prog="conda smithy",
+        description="a tool to help create, administer and manage feedstocks.",
     )
     subparser = parser.add_subparsers()
     # TODO: Consider allowing plugins/extensions using entry_points.
