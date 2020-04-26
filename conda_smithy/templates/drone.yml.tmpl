@@ -20,6 +20,8 @@ steps:
 {%- if conda_forge_output_validation %}
     FEEDSTOCK_TOKEN:
       from_secret: FEEDSTOCK_TOKEN
+    STAGING_BINSTAR_TOKEN:
+      from_secret: STAGING_BINSTAR_TOKEN
 {%- endif %}
 
   {%- if 'linux' in data.platform %}
