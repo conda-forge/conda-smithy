@@ -16,7 +16,7 @@
 
 **Fixed:**
 
-* <news item>
+* Fixed bug in feedstock token registration that deleted other secrets from azure.
 
 **Security:**
 
