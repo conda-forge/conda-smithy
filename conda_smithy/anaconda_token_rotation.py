@@ -311,6 +311,12 @@ def rotate_token_in_travis(
         ):
             del code["travis"]["secure"][token_name]
 
+            if len(code["travis"]["secure"]) == 0:
+                del code["travis"]["secure"]
+
+            if len(code["travis"]) == 0:
+                del code["travis"]
+
 
 def rotate_token_in_azure(user, project, binstar_token, token_name):
     from .azure_ci_utils import build_client, get_default_build_definition
