@@ -171,7 +171,9 @@ def test_feedstock_token_exists(
     user = "foo"
     os.makedirs(os.path.join(tmpdir, "tokens"), exist_ok=True)
     if retval:
-        with open(os.path.join(tmpdir, "tokens", "%s.json" % project), "w") as fp:
+        with open(
+            os.path.join(tmpdir, "tokens", "%s.json" % project), "w"
+        ) as fp:
             fp.write("blarg")
 
     assert feedstock_token_exists(user, project, repo) is retval
