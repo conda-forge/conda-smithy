@@ -44,30 +44,41 @@ def test_rotate_anaconda_token(
         travis=travis,
         azure=azure,
         appveyor=appveyor,
+        token_name="MY_FANCY_TOKEN",
     )
 
     if drone:
-        drone_mock.assert_called_once_with(user, project, anaconda_token)
+        drone_mock.assert_called_once_with(
+            user, project, anaconda_token, "MY_FANCY_TOKEN"
+        )
     else:
         drone_mock.assert_not_called()
 
     if circle:
-        circle_mock.assert_called_once_with(user, project, anaconda_token)
+        circle_mock.assert_called_once_with(
+            user, project, anaconda_token, "MY_FANCY_TOKEN"
+        )
     else:
         circle_mock.assert_not_called()
 
     if travis:
-        travis_mock.assert_called_once_with(user, project, anaconda_token)
+        travis_mock.assert_called_once_with(
+            user, project, "abc", anaconda_token, "MY_FANCY_TOKEN"
+        )
     else:
         travis_mock.assert_not_called()
 
     if azure:
-        azure_mock.assert_called_once_with(user, project, anaconda_token)
+        azure_mock.assert_called_once_with(
+            user, project, anaconda_token, "MY_FANCY_TOKEN"
+        )
     else:
         azure_mock.assert_not_called()
 
     if appveyor:
-        appveyor_mock.assert_called_once_with("abc", anaconda_token)
+        appveyor_mock.assert_called_once_with(
+            "abc", anaconda_token, "MY_FANCY_TOKEN"
+        )
     else:
         appveyor_mock.assert_not_called()
 
@@ -128,7 +139,7 @@ def test_rotate_anaconda_token_notoken(
 @mock.patch("conda_smithy.anaconda_token_rotation.rotate_token_in_circle")
 @mock.patch("conda_smithy.anaconda_token_rotation.rotate_token_in_travis")
 @mock.patch("conda_smithy.anaconda_token_rotation.rotate_token_in_azure")
-def test_rotate_anaconda_token_provier_error(
+def test_rotate_anaconda_token_provider_error(
     azure_mock,
     travis_mock,
     circle_mock,

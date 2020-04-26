@@ -706,6 +706,11 @@ class UpdateAnacondaToken(Subcommand):
             default=os.getcwd(),
             help="The directory of the feedstock git repository.",
         )
+        scp.add_argument(
+            "--token_name",
+            default="BINSTAR_TOKEN",
+            help="The name of the environment variable you'd like to store the token.",
+        )
         group = scp.add_mutually_exclusive_group()
         group.add_argument("--user", help="github username of the repo")
         group.add_argument(
@@ -749,6 +754,7 @@ class UpdateAnacondaToken(Subcommand):
             travis=args.travis,
             azure=args.azure,
             appveyor=args.appveyor,
+            token_name=args.token_name,
         )
 
         print("Successfully updated the anaconda/binstar token!")

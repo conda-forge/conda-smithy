@@ -38,6 +38,7 @@ def rotate_anaconda_token(
     travis=True,
     azure=True,
     appveyor=True,
+    token_name="BINSTAR_TOKEN",
 ):
     """Rotate the anaconda (binstar) token used by the CI providers
 
@@ -72,7 +73,9 @@ def rotate_anaconda_token(
             try:
                 if circle:
                     try:
-                        rotate_token_in_circle(user, project, anaconda_token)
+                        rotate_token_in_circle(
+                            user, project, anaconda_token, token_name
+                        )
                     except Exception as e:
                         if "DEBUG_ANACONDA_TOKENS" in os.environ:
                             raise e
@@ -86,7 +89,9 @@ def rotate_anaconda_token(
 
                 if drone:
                     try:
-                        rotate_token_in_drone(user, project, anaconda_token)
+                        rotate_token_in_drone(
+                            user, project, anaconda_token, token_name
+                        )
                     except Exception as e:
                         if "DEBUG_ANACONDA_TOKENS" in os.environ:
                             raise e
@@ -99,7 +104,13 @@ def rotate_anaconda_token(
 
                 if travis:
                     try:
-                        rotate_token_in_travis(user, project, anaconda_token)
+                        rotate_token_in_travis(
+                            user,
+                            project,
+                            feedstock_directory,
+                            anaconda_token,
+                            token_name,
+                        )
                     except Exception as e:
                         if "DEBUG_ANACONDA_TOKENS" in os.environ:
                             raise e
@@ -113,7 +124,9 @@ def rotate_anaconda_token(
 
                 if azure:
                     try:
-                        rotate_token_in_azure(user, project, anaconda_token)
+                        rotate_token_in_azure(
+                            user, project, anaconda_token, token_name
+                        )
                     except Exception as e:
                         if "DEBUG_ANACONDA_TOKENS" in os.environ:
                             raise e
@@ -127,7 +140,7 @@ def rotate_anaconda_token(
                 if appveyor:
                     try:
                         rotate_token_in_appveyor(
-                            feedstock_directory, anaconda_token
+                            feedstock_directory, anaconda_token, token_name
                         )
                     except Exception as e:
                         if "DEBUG_ANACONDA_TOKENS" in os.environ:
@@ -158,7 +171,7 @@ def rotate_anaconda_token(
             )
 
 
-def rotate_token_in_circle(user, project, binstar_token):
+def rotate_token_in_circle(user, project, binstar_token, token_name):
     from .ci_register import circle_token
 
     url_template = (
@@ -176,7 +189,7 @@ def rotate_token_in_circle(user, project, binstar_token):
 
     have_binstar_token = False
     for evar in r.json():
-        if evar["name"] == "BINSTAR_TOKEN":
+        if evar["name"] == token_name:
             have_binstar_token = True
 
     if have_binstar_token:
@@ -185,13 +198,13 @@ def rotate_token_in_circle(user, project, binstar_token):
                 token=circle_token,
                 user=user,
                 project=project,
-                extra="/BINSTAR_TOKEN",
+                extra="/%s" % token_name,
             )
         )
         if r.status_code != 200:
             r.raise_for_status()
 
-    data = {"name": "BINSTAR_TOKEN", "value": binstar_token}
+    data = {"name": token_name, "value": binstar_token}
     response = requests.post(
         url_template.format(
             token=circle_token, user=user, project=project, extra=""
@@ -202,7 +215,7 @@ def rotate_token_in_circle(user, project, binstar_token):
         raise ValueError(response)
 
 
-def rotate_token_in_drone(user, project, binstar_token):
+def rotate_token_in_drone(user, project, binstar_token, token_name):
     from .ci_register import drone_session
 
     session = drone_session()
@@ -211,12 +224,12 @@ def rotate_token_in_drone(user, project, binstar_token):
     r.raise_for_status()
     have_binstar_token = False
     for secret in r.json():
-        if "BINSTAR_TOKEN" == secret["name"]:
+        if token_name == secret["name"]:
             have_binstar_token = True
 
     if have_binstar_token:
         r = session.patch(
-            f"/api/repos/{user}/{project}/secrets/BINSTAR_TOKEN",
+            f"/api/repos/{user}/{project}/secrets/{token_name}",
             json={"data": binstar_token, "pull_request": False},
         )
         r.raise_for_status()
@@ -224,7 +237,7 @@ def rotate_token_in_drone(user, project, binstar_token):
         response = session.post(
             f"/api/repos/{user}/{project}/secrets",
             json={
-                "name": "BINSTAR_TOKEN",
+                "name": token_name,
                 "data": binstar_token,
                 "pull_request": False,
             },
@@ -233,8 +246,10 @@ def rotate_token_in_drone(user, project, binstar_token):
             response.raise_for_status()
 
 
-def rotate_token_in_travis(user, project, binstar_token):
-    """Add the BINSTAR_TOKEN to travis."""
+def rotate_token_in_travis(
+    user, project, feedstock_directory, binstar_token, token_name
+):
+    """update the binstar token in travis."""
     from .ci_register import (
         travis_endpoint,
         travis_headers,
@@ -256,12 +271,12 @@ def rotate_token_in_travis(user, project, binstar_token):
     have_binstar_token = False
     ev_id = None
     for ev in r.json()["env_vars"]:
-        if ev["name"] == "BINSTAR_TOKEN":
+        if ev["name"] == token_name:
             have_binstar_token = True
             ev_id = ev["id"]
 
     data = {
-        "env_var.name": "BINSTAR_TOKEN",
+        "env_var.name": token_name,
         "env_var.value": binstar_token,
         "env_var.public": "false",
     }
@@ -286,8 +301,18 @@ def rotate_token_in_travis(user, project, binstar_token):
         if r.status_code != 201:
             r.raise_for_status()
 
+    # we remove the token in the conda-forge.yml since on travis the
+    # encrypted values override any value we put in the API
+    with update_conda_forge_config(feedstock_directory) as code:
+        if (
+            "travis" in code
+            and "secure" in code["travis"]
+            and token_name in code["travis"]["secure"]
+        ):
+            del code["travis"]["secure"][token_name]
 
-def rotate_token_in_azure(user, project, binstar_token):
+
+def rotate_token_in_azure(user, project, binstar_token, token_name):
     from .azure_ci_utils import build_client, get_default_build_definition
     from .azure_ci_utils import default_config as config
     from vsts.build.v4_1.models import BuildDefinitionVariable
@@ -302,7 +327,8 @@ def rotate_token_in_azure(user, project, binstar_token):
         ed = existing_definitions[0]
     else:
         raise RuntimeError(
-            "Cannot add BINSTAR_TOKEN to a repo that is not already registerd on azure CI!"
+            "Cannot add %s to a repo that is not already registerd on azure CI!"
+            % token_name
         )
 
     ed = bclient.get_definition(ed.id, project=config.project_name)
@@ -312,7 +338,7 @@ def rotate_token_in_azure(user, project, binstar_token):
     else:
         variables = ed.variables
 
-    variables["BINSTAR_TOKEN"] = BuildDefinitionVariable(
+    variables[token_name] = BuildDefinitionVariable(
         allow_override=False, is_secret=True, value=binstar_token,
     )
 
@@ -332,7 +358,7 @@ def rotate_token_in_azure(user, project, binstar_token):
     )
 
 
-def rotate_token_in_appveyor(feedstock_directory, binstar_token):
+def rotate_token_in_appveyor(feedstock_directory, binstar_token, token_name):
     from .ci_register import appveyor_token
 
     headers = {"Authorization": "Bearer {}".format(appveyor_token)}
@@ -345,5 +371,5 @@ def rotate_token_in_appveyor(feedstock_directory, binstar_token):
 
     with update_conda_forge_config(feedstock_directory) as code:
         code.setdefault("appveyor", {}).setdefault("secure", {})[
-            "BINSTAR_TOKEN"
+            token_name
         ] = response.content.decode("utf-8")
