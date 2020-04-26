@@ -317,6 +317,13 @@ def rotate_token_in_travis(
             if len(code["travis"]) == 0:
                 del code["travis"]
 
+            print(
+                "An old value of the variable %s for travis was found in the "
+                "conda-forge.yml. You may need to rerender this feedstock to "
+                "use the new value since encrypted secrets inserted in travis.yml "
+                "files override those set in the UI/API!"
+            )
+
 
 def rotate_token_in_azure(user, project, binstar_token, token_name):
     from .azure_ci_utils import build_client, get_default_build_definition
