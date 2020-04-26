@@ -107,6 +107,12 @@ jobs:
 
 {%- if conda_forge_output_validation %}
     - script: |
+        call activate base
+        validate_recipe_outputs "{{ feedstock_name }}"
+      displayName: Validate Recipe Outputs
+{%- endif %}
+
+    - script: |
         set "GIT_BRANCH=%BUILD_SOURCEBRANCHNAME%"
 {%- if upload_on_branch %}
         set "UPLOAD_ON_BRANCH={{ upload_on_branch }}"
