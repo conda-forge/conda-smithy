@@ -709,7 +709,7 @@ class UpdateAnacondaToken(Subcommand):
         scp.add_argument(
             "--token_name",
             default="BINSTAR_TOKEN",
-            help="The name of the environment variable you'd like to store the token.",
+            help="The name of the environment variable you'd like to hold the token.",
         )
         group = scp.add_mutually_exclusive_group()
         group.add_argument("--user", help="github username of the repo")
