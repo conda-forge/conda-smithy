@@ -607,7 +607,12 @@ class RegisterFeedstockToken(Subcommand):
         super(RegisterFeedstockToken, self).__init__(
             parser,
             "Register the feedstock token w/ the CI services for builds and "
-            "with the token registry.",
+            "with the token registry. \n\n"
+            "All exceptions are swallowed and stdout/stderr from this function is"
+            "redirected to `/dev/null`. Sanitized error messages are"
+            "displayed at the end.\n\n"
+            "If you need to debug this function, define `DEBUG_ANACONDA_TOKENS` in"
+            "your environment before calling this function.",
         )
         scp = self.subcommand_parser
         scp.add_argument(
@@ -699,7 +704,12 @@ class UpdateAnacondaToken(Subcommand):
     def __init__(self, parser):
         super(UpdateAnacondaToken, self).__init__(
             parser,
-            "Update the anaconda/binstar token used for package uploads.",
+            "Update the anaconda/binstar token used for package uploads.\n\n"
+            "All exceptions are swallowed and stdout/stderr from this function is"
+            "redirected to `/dev/null`. Sanitized error messages are"
+            "displayed at the end.\n\n"
+            "If you need to debug this function, define `DEBUG_ANACONDA_TOKENS` in"
+            "your environment before calling this function.",
         )
         scp = self.subcommand_parser
         scp.add_argument(
