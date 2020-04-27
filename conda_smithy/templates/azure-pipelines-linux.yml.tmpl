@@ -7,7 +7,11 @@ jobs:
   pool:
   {%- if azure.pool is defined %}
   # self-hosted agent
+    {%- if azure.pool.name is defined %}
     name: {{ azure.pool.name }}
+    {%- else %}
+    name: {{ azure.pool }}
+    {%- endif %}
   {%- if azure.pool.demands is defined %}
     demands:
     {%- for requirement in azure.pool.demands %}
@@ -24,11 +28,7 @@ jobs:
   {%- endif %}
   timeoutInMinutes: {{ azure.timeout_minutes }}
   strategy:
-    {%- if azure.strategy is defined and azure.strategy.maxParallel is defined %}
     maxParallel: {{ azure.strategy.maxParallel }}
-    {%- else %}
-    maxParallel: 8
-    {%- endif %}
     matrix:
     {%- for data in configs %}
     {%- if data.platform.startswith('linux') %}

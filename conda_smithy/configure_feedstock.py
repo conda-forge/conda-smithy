@@ -1361,6 +1361,10 @@ def _load_forge_config(forge_dir, exclusive_config_file):
             "project_id": "84710dde-1620-425b-80d0-4cf5baca359d",
             # Default to a timeout of 6 hours.  This is the maximum for azure by default
             "timeout_minutes": 360,
+            "strategy": {
+                # Could be overwritten for self-hosted agents; used when "matrix" is set.
+                "maxParallel": 8,
+            }
         },
         "provider": {
             "linux": "azure",
