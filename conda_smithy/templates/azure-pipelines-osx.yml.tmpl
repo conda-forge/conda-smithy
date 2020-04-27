@@ -5,26 +5,19 @@
 jobs:
 - job: osx
   pool:
-  {%- if azure.pool is defined %}
-    # self-hosted agent
-    {%- if azure.pool.name is defined %}
-    name: {{ azure.pool.name }}
+  {%- for spec in azure.pool_osx %}
+    {%- if azure.pool_osx[spec] is string %}
+    {{ spec }}: {{ azure.pool_osx[spec] }}
     {%- else %}
-    name: {{ azure.pool }}
-    {%- endif %}
-  {%- if azure.pool.demands is defined %}
-    demands:
-    {%- for requirement in azure.pool.demands %}
-    - {{ requirement }}
+    {{ spec }}:
+    {%- for item in azure.pool_osx[spec] %}
+    - {{ item }}
     {%- endfor %}
-  {%- endif %}
+    {%- endif %}
+  {%- endfor %}
   {%- if azure.workspace is defined %}
   workspace:
     clean: {{ azure.workspace.clean }}
-  {%- endif %}
-  {%- else %}
-    # MS-hosted agent
-    vmImage: macOS-10.14
   {%- endif %}
   timeoutInMinutes: {{ azure.timeout_minutes }}
   strategy:

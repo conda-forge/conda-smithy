@@ -1352,6 +1352,10 @@ def _load_forge_config(forge_dir, exclusive_config_file):
         "circle": {},
         "appveyor": {"image": "Visual Studio 2017"},
         "azure": {
+            # default choices for MS-hosted agents
+            "pool_linux": {"vmImage": "ubuntu-16.04"},
+            "pool_osx": {"vmImage": "macOS-10.14"},
+            "pool_win": {"vmImage": "vs2017-win2016"},
             # disallow publication of azure artifacts for now.
             "upload_packages": False,
             # Force building all supported providers.
@@ -1361,10 +1365,10 @@ def _load_forge_config(forge_dir, exclusive_config_file):
             "project_id": "84710dde-1620-425b-80d0-4cf5baca359d",
             # Default to a timeout of 6 hours.  This is the maximum for azure by default
             "timeout_minutes": 360,
-            "strategy": {
-                # Could be overwritten for self-hosted agents; used when "matrix" is set.
-                "maxParallel": 8,
-            },
+            # Could be overwritten for self-hosted agents; used when "matrix" is set.
+            "strategy": {"maxParallel": 8},
+            # valid only when using self-hosted agents
+            "workspace": {"clean": None},
         },
         "provider": {
             "linux": "azure",
@@ -1429,9 +1433,17 @@ def _load_forge_config(forge_dir, exclusive_config_file):
             else:
                 config[key] = value
 
-        # overwrite the default on Win
-        if config["win"]["enabled"]:
-            config["azure"]["strategy"]["maxParallel"] = 4
+        # for self-hosted Azure agents
+        use_self_hosted_agent = False
+        for pool in ("pool_linux", "pool_osx", "pool_win"):
+            if "name" in config["azure"][pool]:
+                use_self_hosted_agent = True
+        if not use_self_hosted_agent:
+            # overwrite the default on Win
+            if config["win"]["enabled"]:
+                config["azure"]["strategy"]["maxParallel"] = 4
+        if config["azure"]["workspace"]["clean"] is None:
+            del config["azure"]["workspace"]
 
         # check for conda-smithy 2.x matrix which we can't auto-migrate
         # to conda_build_config

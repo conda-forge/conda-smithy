@@ -5,26 +5,19 @@
 jobs:
 - job: win
   pool:
-  {%- if azure.pool is defined %}
-    # self-hosted agent
-    {%- if azure.pool.name is defined %}
-    name: {{ azure.pool.name }}
+  {%- for spec in azure.pool_win %}
+    {%- if azure.pool_win[spec] is string %}
+    {{ spec }}: {{ azure.pool_win[spec] }}
     {%- else %}
-    name: {{ azure.pool }}
-    {%- endif %}
-  {%- if azure.pool.demands is defined %}
-    demands:
-    {%- for requirement in azure.pool.demands %}
-    - {{ requirement }}
+    {{ spec }}:
+    {%- for item in azure.pool_win[spec] %}
+    - {{ item }}
     {%- endfor %}
-  {%- endif %}
+    {%- endif %}
+  {%- endfor %}
   {%- if azure.workspace is defined %}
   workspace:
     clean: {{ azure.workspace.clean }}
-  {%- endif %}
-  {%- else %}
-    # MS-hosted agent
-    vmImage: vs2017-win2016
   {%- endif %}
   timeoutInMinutes: {{ azure.timeout_minutes }}
   strategy:
