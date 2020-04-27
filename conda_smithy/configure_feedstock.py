@@ -1364,7 +1364,7 @@ def _load_forge_config(forge_dir, exclusive_config_file):
             "strategy": {
                 # Could be overwritten for self-hosted agents; used when "matrix" is set.
                 "maxParallel": 8,
-            }
+            },
         },
         "provider": {
             "linux": "azure",
