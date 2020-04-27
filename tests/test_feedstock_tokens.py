@@ -31,8 +31,8 @@ def test_feedstock_tokens_roundtrip(
     )
 
     user = "foo"
-    pth = os.path.expanduser("~/.conda-smithy/foo_bar_feedstock.token")
-    token_json_pth = os.path.join(tmpdir, "tokens", "bar.json")
+    pth = os.path.expanduser("~/.conda-smithy/foo_%s.token" % project)
+    token_json_pth = os.path.join(tmpdir, "tokens", "%s.json" % project)
     os.makedirs(os.path.join(tmpdir, "tokens"), exist_ok=True)
 
     try:
@@ -92,7 +92,7 @@ def test_is_valid_feedstock_token_badtoken(
     user = "conda-forge"
     feedstock_token = "akdjhfl"
 
-    token_pth = os.path.join(tmpdir, "tokens", "bar.json")
+    token_pth = os.path.join(tmpdir, "tokens", "%s.json" % project)
     os.makedirs(os.path.dirname(token_pth), exist_ok=True)
     with open(token_pth, "w") as fp:
         json.dump({"salt": b"adf".hex(), "hashed_token": b"fgh".hex()}, fp)
@@ -105,7 +105,7 @@ def test_generate_and_write_feedstock_token():
     user = "bar"
     repo = "foo"
 
-    pth = os.path.expanduser("~/.conda-smithy/bar_foo_feedstock.token")
+    pth = os.path.expanduser("~/.conda-smithy/bar_foo.token")
 
     try:
         generate_and_write_feedstock_token(user, repo)
@@ -123,7 +123,7 @@ def test_generate_and_write_feedstock_token():
 def test_read_feedstock_token():
     user = "bar"
     repo = "foo"
-    pth = os.path.expanduser("~/.conda-smithy/bar_foo_feedstock.token")
+    pth = os.path.expanduser("~/.conda-smithy/bar_foo.token")
 
     # no token
     token, err = read_feedstock_token(user, repo)
@@ -155,7 +155,7 @@ def test_read_feedstock_token():
 @pytest.mark.parametrize("retval", [True, False])
 @pytest.mark.parametrize("project", ["bar", "bar-feedstock"])
 @pytest.mark.parametrize(
-    "repo", ["GITHUB_TOKEN", "${GITHUB_TOKEN}", "GH_TOKEN", "${GH_TOKEN}"]
+    "repo", ["$GITHUB_TOKEN", "${GITHUB_TOKEN}", "$GH_TOKEN", "${GH_TOKEN}"]
 )
 @mock.patch("conda_smithy.feedstock_tokens.tempfile")
 @mock.patch("conda_smithy.feedstock_tokens.git")
@@ -171,19 +171,21 @@ def test_feedstock_token_exists(
     user = "foo"
     os.makedirs(os.path.join(tmpdir, "tokens"), exist_ok=True)
     if retval:
-        with open(os.path.join(tmpdir, "tokens", "bar.json"), "w") as fp:
+        with open(
+            os.path.join(tmpdir, "tokens", "%s.json" % project), "w"
+        ) as fp:
             fp.write("blarg")
 
     assert feedstock_token_exists(user, project, repo) is retval
 
-    assert git_mock.Repo.clone_from.called_with(
+    git_mock.Repo.clone_from.assert_called_once_with(
         "abc123", str(tmpdir), depth=1,
     )
 
 
 @pytest.mark.parametrize("project", ["bar", "bar-feedstock"])
 @pytest.mark.parametrize(
-    "repo", ["GITHUB_TOKEN", "${GITHUB_TOKEN}", "GH_TOKEN", "${GH_TOKEN}"]
+    "repo", ["$GITHUB_TOKEN", "${GITHUB_TOKEN}", "$GH_TOKEN", "${GH_TOKEN}"]
 )
 @mock.patch("conda_smithy.feedstock_tokens.tempfile")
 @mock.patch("conda_smithy.feedstock_tokens.git")
@@ -199,7 +201,7 @@ def test_feedstock_token_raises(
     git_mock.Repo.clone_from.side_effect = ValueError("blarg")
     user = "foo"
     os.makedirs(os.path.join(tmpdir, "tokens"), exist_ok=True)
-    with open(os.path.join(tmpdir, "tokens", "bar.json"), "w") as fp:
+    with open(os.path.join(tmpdir, "tokens", "%s.json" % project), "w") as fp:
         fp.write("blarg")
 
     with pytest.raises(RuntimeError) as e:
@@ -207,13 +209,13 @@ def test_feedstock_token_raises(
 
     assert "Testing for the feedstock token for" in str(e.value)
 
-    assert git_mock.Repo.clone_from.called_with(
+    git_mock.Repo.clone_from.assert_called_once_with(
         "abc123", str(tmpdir), depth=1,
     )
 
 
 @pytest.mark.parametrize(
-    "repo", ["GITHUB_TOKEN", "${GITHUB_TOKEN}", "GH_TOKEN", "${GH_TOKEN}"]
+    "repo", ["$GITHUB_TOKEN", "${GITHUB_TOKEN}", "$GH_TOKEN", "${GH_TOKEN}"]
 )
 @mock.patch("conda_smithy.feedstock_tokens.secrets")
 @mock.patch("conda_smithy.feedstock_tokens.os.urandom")
@@ -233,8 +235,8 @@ def test_register_feedstock_token_works(
     user = "foo"
     project = "bar"
     os.makedirs(os.path.join(tmpdir, "tokens"), exist_ok=True)
-    pth = os.path.expanduser("~/.conda-smithy/foo_bar_feedstock.token")
-    token_json_pth = os.path.join(tmpdir, "tokens", "bar.json")
+    pth = os.path.expanduser("~/.conda-smithy/foo_%s.token" % project)
+    token_json_pth = os.path.join(tmpdir, "tokens", "%s.json" % project)
 
     try:
         generate_and_write_feedstock_token(user, project)
@@ -245,17 +247,17 @@ def test_register_feedstock_token_works(
         if os.path.exists(pth):
             os.remove(pth)
 
-    assert git_mock.Repo.clone_from.called_with(
+    git_mock.Repo.clone_from.assert_called_once_with(
         "abc123", str(tmpdir), depth=1,
     )
 
     repo = git_mock.Repo.clone_from.return_value
-    assert repo.index.add.called_with(token_json_pth)
-    assert repo.index.commit.called_with(
+    repo.index.add.assert_called_once_with(token_json_pth)
+    repo.index.commit.assert_called_once_with(
         "added token for %s/%s" % (user, project)
     )
-    assert repo.remote.return_value.pull.called_with(rebase=True)
-    assert repo.remote.return_value.push.called_with()
+    repo.remote.return_value.pull.assert_called_once_with(rebase=True)
+    repo.remote.return_value.push.assert_called_once_with()
 
     salted_token = scrypt.hash("fgh", b"\x80SA", buflen=256)
     data = {
@@ -268,7 +270,7 @@ def test_register_feedstock_token_works(
 
 
 @pytest.mark.parametrize(
-    "repo", ["GITHUB_TOKEN", "${GITHUB_TOKEN}", "GH_TOKEN", "${GH_TOKEN}"]
+    "repo", ["$GITHUB_TOKEN", "${GITHUB_TOKEN}", "$GH_TOKEN", "${GH_TOKEN}"]
 )
 @mock.patch("conda_smithy.feedstock_tokens.secrets")
 @mock.patch("conda_smithy.feedstock_tokens.os.urandom")
@@ -288,7 +290,7 @@ def test_register_feedstock_token_notoken(
     user = "foo"
     project = "bar"
     os.makedirs(os.path.join(tmpdir, "tokens"), exist_ok=True)
-    pth = os.path.expanduser("~/.conda-smithy/foo_bar_feedstock.token")
+    pth = os.path.expanduser("~/.conda-smithy/foo_bar.token")
     token_json_pth = os.path.join(tmpdir, "tokens", "bar.json")
 
     try:
@@ -312,7 +314,7 @@ def test_register_feedstock_token_notoken(
 
 
 @pytest.mark.parametrize(
-    "repo", ["GITHUB_TOKEN", "${GITHUB_TOKEN}", "GH_TOKEN", "${GH_TOKEN}"]
+    "repo", ["$GITHUB_TOKEN", "${GITHUB_TOKEN}", "$GH_TOKEN", "${GH_TOKEN}"]
 )
 @mock.patch("conda_smithy.feedstock_tokens.secrets")
 @mock.patch("conda_smithy.feedstock_tokens.os.urandom")
@@ -332,7 +334,7 @@ def test_register_feedstock_token_exists_already(
     user = "foo"
     project = "bar"
     os.makedirs(os.path.join(tmpdir, "tokens"), exist_ok=True)
-    pth = os.path.expanduser("~/.conda-smithy/foo_bar_feedstock.token")
+    pth = os.path.expanduser("~/.conda-smithy/foo_bar.token")
     token_json_pth = os.path.join(tmpdir, "tokens", "bar.json")
     with open(token_json_pth, "w") as fp:
         fp.write("blarg")
@@ -347,7 +349,7 @@ def test_register_feedstock_token_exists_already(
         if os.path.exists(pth):
             os.remove(pth)
 
-    assert git_mock.Repo.clone_from.called_with(
+    git_mock.Repo.clone_from.assert_called_once_with(
         "abc123", str(tmpdir), depth=1,
     )
 
@@ -383,7 +385,7 @@ def test_register_feedstock_token_with_proviers(
     user = "foo"
     project = "bar"
 
-    pth = os.path.expanduser("~/.conda-smithy/foo_bar_feedstock.token")
+    pth = os.path.expanduser("~/.conda-smithy/foo_bar.token")
 
     try:
         generate_and_write_feedstock_token(user, project)
@@ -400,28 +402,28 @@ def test_register_feedstock_token_with_proviers(
         )
 
         if drone:
-            assert drone_mock.called_with(
+            drone_mock.assert_called_once_with(
                 user, project, feedstock_token, clobber
             )
         else:
             drone_mock.assert_not_called()
 
         if circle:
-            assert circle_mock.called_with(
+            circle_mock.assert_called_once_with(
                 user, project, feedstock_token, clobber
             )
         else:
             circle_mock.assert_not_called()
 
         if travis:
-            assert travis_mock.called_with(
+            travis_mock.assert_called_once_with(
                 user, project, feedstock_token, clobber
             )
         else:
             travis_mock.assert_not_called()
 
         if azure:
-            assert azure_mock.called_with(
+            azure_mock.assert_called_once_with(
                 user, project, feedstock_token, clobber
             )
         else:
@@ -484,7 +486,7 @@ def test_register_feedstock_token_with_proviers_error(
     user = "foo"
     project = "bar-feedstock"
 
-    pth = os.path.expanduser("~/.conda-smithy/foo_bar_feedstock.token")
+    pth = os.path.expanduser("~/.conda-smithy/foo_bar-feedstock.token")
 
     if provider == "drone":
         drone_mock.side_effect = ValueError("blah")

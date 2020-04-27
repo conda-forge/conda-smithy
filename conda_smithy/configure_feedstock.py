@@ -699,6 +699,22 @@ def _render_ci_provider(
         else:
             forge_config["upload_script"] = "upload_or_check_non_existence"
 
+        # if the recipe has its own conda_forge_ci_setup package, then
+        # install that
+        if os.path.exists(
+            os.path.join(
+                forge_dir,
+                forge_config["recipe_dir"],
+                "conda_forge_ci_setup",
+                "__init__.py",
+            )
+        ) and os.path.exists(
+            os.path.join(forge_dir, forge_config["recipe_dir"], "setup.py",)
+        ):
+            forge_config["local_ci_setup"] = True
+        else:
+            forge_config["local_ci_setup"] = False
+
         # hook for extending with whatever platform specific junk we need.
         #     Function passed in as argument
         for platform, enable in zip(platforms, enable_platform):
@@ -1382,7 +1398,8 @@ def _load_forge_config(forge_dir, exclusive_config_file):
         },
         "recipe_dir": "recipe",
         "skip_render": [],
-        "bot": {"automerge": False,},
+        "bot": {"automerge": False},
+        "conda_forge_output_validation": False,
     }
 
     forge_yml = os.path.join(forge_dir, "conda-forge.yml")
@@ -1731,7 +1748,6 @@ def main(
     check_version_uptodate(r, "conda-smithy", __version__, error_on_warn)
 
     forge_dir = os.path.abspath(forge_file_directory)
-
     if exclusive_config_file is not None:
         exclusive_config_file = os.path.join(forge_dir, exclusive_config_file)
         if not os.path.exists(exclusive_config_file):
@@ -1743,6 +1759,7 @@ def main(
         )
 
     config = _load_forge_config(forge_dir, exclusive_config_file)
+    config["feedstock_name"] = os.path.basename(forge_dir)
 
     for each_ci in ["travis", "circle", "appveyor", "drone"]:
         if config[each_ci].pop("enabled", None):

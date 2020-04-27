@@ -47,7 +47,11 @@ install:
 
     # Configure the VM.
     # Tell conda we want an updated version of conda-forge-ci-setup and conda-build
-    - cmd: conda.exe install -n root -c conda-forge --quiet --yes conda-forge-ci-setup=2 conda-build
+    - cmd: conda.exe install -n root -c conda-forge --quiet --yes conda-forge-ci-setup=3 conda-build pip
+    {%- if local_ci_setup %}
+    - cmd: conda.exe uninstall --quiet --yes --force conda-forge-ci-setup
+    - cmd: pip install --no-deps .\{{ recipe_dir }}\.
+    {%- endif %}
     - cmd: setup_conda_rc .\ .\{{ recipe_dir }} .\.ci_support\%CONFIG%.yaml
     {% if build_setup -%}
     {{ build_setup }}{%- endif %}
@@ -56,10 +60,13 @@ install:
 build: off
 
 test_script:
-    - conda.exe build {{ recipe_dir }} -m .ci_support\%CONFIG%.yaml
+    - cmd: conda.exe build {{ recipe_dir }} -m .ci_support\%CONFIG%.yaml
+{%- if conda_forge_output_validation %}
+    - cmd: validate_recipe_outputs "{{ feedstock_name }}"
+{%- endif %}
 deploy_script:
     - set "GIT_BRANCH=%APPVEYOR_REPO_BRANCH%"
 {%- if upload_on_branch %}
     - set "UPLOAD_ON_BRANCH={{ upload_on_branch }}"
 {%- endif %}
-    - cmd: upload_package .\ .\{{ recipe_dir }} .ci_support\%CONFIG%.yaml
+    - cmd: upload_package {% if conda_forge_output_validation %}--validate --feedstock-name="{{ feedstock_name }}"{% endif %} .\ .\{{ recipe_dir }} .ci_support\%CONFIG%.yaml

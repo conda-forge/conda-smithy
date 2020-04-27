@@ -69,6 +69,10 @@ export UPLOAD_PACKAGES="${UPLOAD_PACKAGES:-True}"
            -e GIT_BRANCH \
            -e UPLOAD_ON_BRANCH \
            -e CI \
+{%- if conda_forge_output_validation %}
+           -e FEEDSTOCK_TOKEN \
+           -e STAGING_BINSTAR_TOKEN \
+{%- endif %}
            $DOCKER_IMAGE \
            {{ docker.command }} \
            /home/conda/feedstock_root/${PROVIDER_DIR}/build_steps.sh

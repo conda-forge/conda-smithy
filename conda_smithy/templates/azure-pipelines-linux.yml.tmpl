@@ -37,3 +37,7 @@ jobs:
     displayName: Run docker build
     env:
       BINSTAR_TOKEN: $(BINSTAR_TOKEN)
+{%- if conda_forge_output_validation %}
+      FEEDSTOCK_TOKEN: $(FEEDSTOCK_TOKEN)
+      STAGING_BINSTAR_TOKEN: $(STAGING_BINSTAR_TOKEN)
+{%- endif %}
