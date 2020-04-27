@@ -1,6 +1,6 @@
 **Added:**
 
-* Support self-hosted Azure agents in Linux
+* Support self-hosted Azure agents
 
 **Changed:**
 

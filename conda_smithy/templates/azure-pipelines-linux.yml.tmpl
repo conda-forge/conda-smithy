@@ -6,7 +6,7 @@ jobs:
 - job: linux
   pool:
   {%- if azure.pool is defined %}
-  # self-hosted agent
+    # self-hosted agent
     {%- if azure.pool.name is defined %}
     name: {{ azure.pool.name }}
     {%- else %}
@@ -23,7 +23,7 @@ jobs:
     clean: {{ azure.workspace.clean }}
   {%- endif %}
   {%- else %}
-  # MS-hosted agent
+    # MS-hosted agent
     vmImage: ubuntu-16.04
   {%- endif %}
   timeoutInMinutes: {{ azure.timeout_minutes }}

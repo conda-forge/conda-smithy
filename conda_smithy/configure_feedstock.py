@@ -1429,6 +1429,10 @@ def _load_forge_config(forge_dir, exclusive_config_file):
             else:
                 config[key] = value
 
+        # overwrite the default on Win
+        if config["win"]["enabled"]:
+            config["azure"]["strategy"]["maxParallel"] = 4
+
         # check for conda-smithy 2.x matrix which we can't auto-migrate
         # to conda_build_config
         if file_config.get("matrix") and not os.path.exists(
