@@ -5,10 +5,30 @@
 jobs:
 - job: linux
   pool:
+  {%- if azure.pool is defined %}
+  # self-hosted agent
+    name: {{ azure.pool.name }}
+  {%- if azure.pool.demands is defined %}
+    demands:
+    {%- for requirement in azure.pool.demands %}
+    - {{ requirement }}
+    {%- endfor %}
+  {%- endif %}
+  {%- if azure.workspace is defined %}
+  workspace:
+    clean: {{ azure.workspace.clean }}
+  {%- endif %}
+  {%- else %}
+  # MS-hosted agent
     vmImage: ubuntu-16.04
+  {%- endif %}
   timeoutInMinutes: {{ azure.timeout_minutes }}
   strategy:
+    {%- if azure.strategy is defined and azure.strategy.maxParallel is defined %}
+    maxParallel: {{ azure.strategy.maxParallel }}
+    {%- else %}
     maxParallel: 8
+    {%- endif %}
     matrix:
     {%- for data in configs %}
     {%- if data.platform.startswith('linux') %}
@@ -32,6 +52,9 @@ jobs:
         export GIT_BRANCH=$BUILD_SOURCEBRANCHNAME
 {%- if upload_on_branch %}
         export UPLOAD_ON_BRANCH="{{ upload_on_branch }}"
+{%- endif %}
+{%- if docker.run_args is defined %}
+        export CONDA_FORGE_DOCKER_RUN_ARGS="{{ docker.run_args }}"
 {%- endif %}
         .scripts/run_docker_build.sh
     displayName: Run docker build
