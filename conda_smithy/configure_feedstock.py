@@ -1368,7 +1368,6 @@ def _load_forge_config(forge_dir, exclusive_config_file):
         "appveyor": {"image": "Visual Studio 2017"},
         "azure": {
             # default choices for MS-hosted agents
-            # for self-hosted agents, "vmImage" is replaced by "name" (of the pool)
             "settings_linux": {
                 "pool": {
                     "vmImage": "ubuntu-16.04",
@@ -1398,8 +1397,6 @@ def _load_forge_config(forge_dir, exclusive_config_file):
             # name and id of azure project that the build pipeline is in
             "project_name": "feedstock-builds",
             "project_id": "84710dde-1620-425b-80d0-4cf5baca359d",
-            # valid only when using self-hosted agents
-            "workspace": {"clean": None},
         },
         "provider": {
             "linux": "azure",
