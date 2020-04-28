@@ -4,33 +4,7 @@
 
 jobs:
 - job: linux
-  pool:
-  {%- for spec in azure.pool_linux %}
-    {%- if azure.pool_linux[spec] is string %}
-    {{ spec }}: {{ azure.pool_linux[spec] }}
-    {%- else %}
-    {{ spec }}:
-    {%- for item in azure.pool_linux[spec] %}
-    - {{ item }}
-    {%- endfor %}
-    {%- endif %}
-  {%- endfor %}
-  {%- if azure.workspace is defined %}
-  workspace:
-    clean: {{ azure.workspace.clean }}
-  {%- endif %}
-  timeoutInMinutes: {{ azure.timeout_minutes }}
-  strategy:
-    maxParallel: {{ azure.strategy.maxParallel }}
-    matrix:
-    {%- for data in configs %}
-    {%- if data.platform.startswith('linux') %}
-      {{ data.config_name }}:
-        CONFIG: {{ data.config_name }}
-        UPLOAD_PACKAGES: {{ data.upload }}
-        DOCKER_IMAGE: {{ data.config["docker_image"][-1] }}
-    {%- endif %}
-    {%- endfor %}
+  {{ azure_yaml|indent(2) }}
   steps:
   # configure qemu binfmt-misc running.  This allows us to run docker containers
   # embedded qemu-static

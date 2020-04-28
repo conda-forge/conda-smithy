@@ -1114,6 +1114,7 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
         if yum_build_setup:
             forge_config["yum_build_setup"] = yum_build_setup
 
+    forge_config = deepcopy(forge_config)
     forge_config["build_setup"] = build_setup
 
     platform_templates = {
@@ -1130,6 +1131,20 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
     }
     template_files = platform_templates.get(platform, [])
 
+    azure_settings = deepcopy(forge_config["azure"][f"settings_{platform}"])
+    azure_settings["strategy"]["matrix"] = {}
+    for data in forge_config["configs"]:
+        if not data["platform"].startswith(platform):
+            continue
+        config_rendered = OrderedDict({
+            "CONFIG": data["config_name"],
+            "UPLOAD_PACKAGES": str(data["upload"]),
+        })
+        if "docker_image" in data["config"]:
+            config_rendered["DOCKER_IMAGE"] = data["config"]["docker_image"][-1]
+        azure_settings["strategy"]["matrix"][data["config_name"]] = config_rendered
+
+    forge_config["azure_yaml"] = yaml.dump(azure_settings)
     _render_template_exe_files(
         forge_config=forge_config,
         jinja_env=jinja_env,
@@ -1354,9 +1369,28 @@ def _load_forge_config(forge_dir, exclusive_config_file):
         "azure": {
             # default choices for MS-hosted agents
             # for self-hosted agents, "vmImage" is replaced by "name" (of the pool)
-            "pool_linux": {"vmImage": "ubuntu-16.04"},
-            "pool_osx": {"vmImage": "macOS-10.14"},
-            "pool_win": {"vmImage": "vs2017-win2016"},
+            "settings_linux": {
+                "pool": {
+                    "vmImage": "ubuntu-16.04",
+                },
+                "timeoutInMinutes": 360,
+                "strategy": { "maxParallel": 8 }
+            },
+            "settings_osx": {
+                "pool": {
+                    "vmImage": "macOS-10.14",
+                },
+                "timeoutInMinutes": 360,
+                "strategy": { "maxParallel": 8 }
+            },
+            "settings_win": {
+                "pool": {
+                    "vmImage": "vs2017-win2016",
+                },
+                "timeoutInMinutes": 360,
+                "strategy": { "maxParallel": 4 },
+                "variables": { "CONDA_BLD_PATH": r"D:\\bld\\" }
+            },
             # disallow publication of azure artifacts for now.
             "upload_packages": False,
             # Force building all supported providers.
@@ -1364,10 +1398,6 @@ def _load_forge_config(forge_dir, exclusive_config_file):
             # name and id of azure project that the build pipeline is in
             "project_name": "feedstock-builds",
             "project_id": "84710dde-1620-425b-80d0-4cf5baca359d",
-            # Default to a timeout of 6 hours.  This is the maximum for azure by default
-            "timeout_minutes": 360,
-            # Could be overwritten for self-hosted agents; used when "matrix" is set.
-            "strategy": {"maxParallel": 8},
             # valid only when using self-hosted agents
             "workspace": {"clean": None},
         },
@@ -1433,15 +1463,6 @@ def _load_forge_config(forge_dir, exclusive_config_file):
                 config_item.update(value)
             else:
                 config[key] = value
-
-        # overwrite the default on Win for MS-hosted Azure agents
-        if config["win"]["enabled"]:
-            if "vmImage" in config["azure"]["pool_win"]:
-                config["azure"]["strategy"]["maxParallel"] = 4
-
-        # value not specified in conda-forge.yml, remove the key
-        if config["azure"]["workspace"]["clean"] is None:
-            del config["azure"]["workspace"]
 
         # check for conda-smithy 2.x matrix which we can't auto-migrate
         # to conda_build_config

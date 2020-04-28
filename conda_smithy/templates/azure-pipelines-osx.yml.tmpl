@@ -4,33 +4,7 @@
 
 jobs:
 - job: osx
-  pool:
-  {%- for spec in azure.pool_osx %}
-    {%- if azure.pool_osx[spec] is string %}
-    {{ spec }}: {{ azure.pool_osx[spec] }}
-    {%- else %}
-    {{ spec }}:
-    {%- for item in azure.pool_osx[spec] %}
-    - {{ item }}
-    {%- endfor %}
-    {%- endif %}
-  {%- endfor %}
-  {%- if azure.workspace is defined %}
-  workspace:
-    clean: {{ azure.workspace.clean }}
-  {%- endif %}
-  timeoutInMinutes: {{ azure.timeout_minutes }}
-  strategy:
-    maxParallel: {{ azure.strategy.maxParallel }}
-    matrix:
-    {%- for data in configs %}
-    {%- if data.platform.startswith('osx') %}
-      {{ data.config_name }}:
-        CONFIG: {{ data.config_name }}
-        UPLOAD_PACKAGES: {{ data.upload }}
-    {%- endif %}
-    {%- endfor %}
-
+  {{ azure_yaml|indent(2) }}
   steps:
   # TODO: Fast finish on azure pipelines?
   - script: |
