@@ -1397,6 +1397,8 @@ def _load_forge_config(forge_dir, exclusive_config_file):
             # name and id of azure project that the build pipeline is in
             "project_name": "feedstock-builds",
             "project_id": "84710dde-1620-425b-80d0-4cf5baca359d",
+            # Set timeout for all platforms at once.
+            "timeout_minutes": None,
         },
         "provider": {
             "linux": "azure",
@@ -1482,6 +1484,10 @@ def _load_forge_config(forge_dir, exclusive_config_file):
                 "Setting docker image in conda-forge.yml is removed now."
                 " Use conda_build_config.yaml instead"
             )
+
+        if config["azure"]["timeout_minutes"] is not None:
+            for plat in ["linux", "osx", "win"]:
+                config["azure"][f"settings_{plat}"]["timeoutInMinutes"] = config["azure"]["timeout_minutes"]
 
     # An older conda-smithy used to have some files which should no longer exist,
     # remove those now.
