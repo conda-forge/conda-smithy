@@ -5,7 +5,7 @@
 jobs:
 - job: win
   pool:
-    vmImage: vs2017-win2016
+    vmImage: vs2015-win2012r2
   timeoutInMinutes: {{ azure.timeout_minutes }}
   strategy:
     maxParallel: 4
