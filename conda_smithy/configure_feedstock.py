@@ -1353,6 +1353,7 @@ def _load_forge_config(forge_dir, exclusive_config_file):
         "appveyor": {"image": "Visual Studio 2017"},
         "azure": {
             # default choices for MS-hosted agents
+            # for self-hosted agents, "vmImage" is replaced by "name" (of the pool)
             "pool_linux": {"vmImage": "ubuntu-16.04"},
             "pool_osx": {"vmImage": "macOS-10.14"},
             "pool_win": {"vmImage": "vs2017-win2016"},
@@ -1433,15 +1434,12 @@ def _load_forge_config(forge_dir, exclusive_config_file):
             else:
                 config[key] = value
 
-        # for self-hosted Azure agents
-        use_self_hosted_agent = False
-        for pool in ("pool_linux", "pool_osx", "pool_win"):
-            if "name" in config["azure"][pool]:
-                use_self_hosted_agent = True
-        if not use_self_hosted_agent:
-            # overwrite the default on Win
-            if config["win"]["enabled"]:
+        # overwrite the default on Win for MS-hosted Azure agents
+        if config["win"]["enabled"]:
+            if "vmImage" in config["azure"]["pool_win"]:
                 config["azure"]["strategy"]["maxParallel"] = 4
+
+        # value not specified in conda-forge.yml, remove the key
         if config["azure"]["workspace"]["clean"] is None:
             del config["azure"]["workspace"]
 
