@@ -667,8 +667,9 @@ class Test_linter(unittest.TestCase):
             "about": {
                 "home": "a URL",
                 "summary": "A test summary",
-                "license": "MIT",
-                "license_file": "",
+                "license": "LicenseRef-Something",
+                "license_family": "LGPL",
+                "license_file": None,
             }
         }
         lints, hints = linter.lintify(meta)
