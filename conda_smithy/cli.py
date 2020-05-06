@@ -4,6 +4,7 @@ import sys
 import time
 import argparse
 import io
+import tempfile
 
 from textwrap import dedent
 
@@ -368,14 +369,27 @@ class Regenerate(Subcommand):
             default=False,
             help="Check if regenerate can be performed",
         )
+        scp.add_argument(
+            "--temporary-directory",
+            default=None,
+            help="Temporary directory to download and extract conda-forge-pinning to",
+        )
 
     def __call__(self, args):
+        if args.temporary_directory is None:
+            with tempfile.TemporaryDirectory() as tmpdir:
+                self._call(args, tmpdir)
+        else:
+            self._call(args, args.temporary_directory)
+
+    def _call(self, args, temporary_directory):
         configure_feedstock.main(
             args.feedstock_directory,
             no_check_uptodate=args.no_check_uptodate,
             commit=args.commit,
             exclusive_config_file=args.exclusive_config_file,
             check=args.check,
+            temporary_directory=temporary_directory,
         )
 
 
