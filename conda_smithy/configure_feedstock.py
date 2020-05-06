@@ -1507,12 +1507,17 @@ def _load_forge_config(forge_dir, exclusive_config_file):
 
 def get_most_recent_version(resolve, name):
     from conda_build.conda_interface import VersionOrder, MatchSpec
-    available_versions = sorted(resolve.get_pkgs(MatchSpec(name)), key=lambda x: VersionOrder(x.version))
+
+    available_versions = sorted(
+        resolve.get_pkgs(MatchSpec(name)),
+        key=lambda x: VersionOrder(x.version),
+    )
     return available_versions[-1]
 
 
 def check_version_uptodate(resolve, name, installed_version, error_on_warn):
     from conda_build.conda_interface import VersionOrder
+
     most_recent_version = get_most_recent_version(resolve, name).version
     if installed_version is None:
         msg = "{} is not installed in conda-smithy's environment.".format(name)
@@ -1570,15 +1575,17 @@ def get_cfp_file_path(temporary_directory, resolve=None):
         resolve = conda_build.conda_interface.Resolve(index)
 
     pkg = get_most_recent_version(resolve, "conda-forge-pinning")
-    dest = os.path.join(temporary_directory,
-                        f"conda-forge-pinning-{ pkg.version }.tar.bz2")
+    dest = os.path.join(
+        temporary_directory, f"conda-forge-pinning-{ pkg.version }.tar.bz2"
+    )
 
     logger.info(f"Downloading conda-forge-pinning-{ pkg.version }")
 
     import requests
+
     response = requests.get(pkg.url)
     response.raise_for_status()
-    with open(dest, 'wb') as f:
+    with open(dest, "wb") as f:
         f.write(response.content)
 
     logger.info(f"Extracing conda-forge-pinning to { temporary_directory }")
@@ -1586,7 +1593,9 @@ def get_cfp_file_path(temporary_directory, resolve=None):
 
     logger.debug(os.listdir(temporary_directory))
 
-    cf_pinning_file = os.path.join(temporary_directory, "conda_build_config.yaml")
+    cf_pinning_file = os.path.join(
+        temporary_directory, "conda_build_config.yaml"
+    )
     cf_pinning_ver = pkg.version
 
     assert os.path.exists(cf_pinning_file)
