@@ -1138,7 +1138,7 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
             continue
         config_rendered = OrderedDict({
             "CONFIG": data["config_name"],
-            "UPLOAD_PACKAGES": str(data["upload"]),
+            "UPLOAD_PACKAGES": data["upload"],
         })
         if "docker_image" in data["config"]:
             config_rendered["DOCKER_IMAGE"] = data["config"]["docker_image"][-1]
@@ -1354,6 +1354,16 @@ def copy_feedstock_content(forge_config, forge_dir):
     copytree(feedstock_content, forge_dir, skip_files)
 
 
+def _update_dict_within_dict(items, config):
+    ''' recursively update dict within dict, if any '''
+    for key, value in items:
+        if isinstance(value, dict):
+            config[key] = _update_dict_within_dict(value.items(), config.get(key, {}))
+        else:
+            config[key] = value
+    return config
+
+
 def _load_forge_config(forge_dir, exclusive_config_file):
     config = {
         "docker": {
@@ -1455,13 +1465,7 @@ def _load_forge_config(forge_dir, exclusive_config_file):
 
         # The config is just the union of the defaults, and the overriden
         # values.
-        for key, value in file_config.items():
-            # Deal with dicts within dicts.
-            if isinstance(value, dict):
-                config_item = config.setdefault(key, value)
-                config_item.update(value)
-            else:
-                config[key] = value
+        config = _update_dict_within_dict(file_config.items(), config)
 
         # check for conda-smithy 2.x matrix which we can't auto-migrate
         # to conda_build_config
@@ -1485,9 +1489,11 @@ def _load_forge_config(forge_dir, exclusive_config_file):
                 " Use conda_build_config.yaml instead"
             )
 
-        if config["azure"]["timeout_minutes"] is not None:
-            for plat in ["linux", "osx", "win"]:
+        for plat in ["linux", "osx", "win"]:
+            if config["azure"]["timeout_minutes"] is not None:
                 config["azure"][f"settings_{plat}"]["timeoutInMinutes"] = config["azure"]["timeout_minutes"]
+            if "name" in config["azure"][f"settings_{plat}"]["pool"]:
+                del config["azure"][f"settings_{plat}"]["pool"]["vmImage"]
 
     # An older conda-smithy used to have some files which should no longer exist,
     # remove those now.
