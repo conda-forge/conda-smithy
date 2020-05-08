@@ -11,7 +11,8 @@ from conda_smithy import cli
 _thisdir = os.path.abspath(os.path.dirname(__file__))
 
 InitArgs = collections.namedtuple(
-    "ArgsObject", ("recipe_directory", "feedstock_directory", "temporary_directory")
+    "ArgsObject",
+    ("recipe_directory", "feedstock_directory", "temporary_directory"),
 )
 
 RegenerateArgs = collections.namedtuple(
