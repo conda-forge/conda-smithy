@@ -11,7 +11,7 @@ from conda_smithy import cli
 _thisdir = os.path.abspath(os.path.dirname(__file__))
 
 InitArgs = collections.namedtuple(
-    "ArgsObject", ("recipe_directory", "feedstock_directory")
+    "ArgsObject", ("recipe_directory", "feedstock_directory", "temporary_directory")
 )
 
 RegenerateArgs = collections.namedtuple(
@@ -38,6 +38,7 @@ def test_init(py_recipe):
     args = InitArgs(
         recipe_directory=os.path.join(recipe, "recipe"),
         feedstock_directory=os.path.join(recipe, "{package.name}-feedstock"),
+        temporary_directory=os.path.join(recipe, "temp"),
     )
     init_obj(args)
     destination = os.path.join(recipe, "py-test-feedstock")
@@ -53,7 +54,11 @@ def test_init_multiple_output_matrix(testing_workdir):
     feedstock_dir = os.path.join(
         testing_workdir, "multiple-outputs-test-feedstock"
     )
-    args = InitArgs(recipe_directory=recipe, feedstock_directory=feedstock_dir)
+    args = InitArgs(
+        recipe_directory=recipe,
+        feedstock_directory=feedstock_dir,
+        temporary_directory=os.path.join(recipe, "temp"),
+    )
     init_obj(args)
     # Ignore conda-forge-pinning for this test, as the test relies on conda-forge-pinning
     # not being present
@@ -98,7 +103,11 @@ def test_init_cuda_docker_images(testing_workdir):
     feedstock_dir = os.path.join(
         testing_workdir, "cuda_docker_images-feedstock"
     )
-    args = InitArgs(recipe_directory=recipe, feedstock_directory=feedstock_dir)
+    args = InitArgs(
+        recipe_directory=recipe,
+        feedstock_directory=feedstock_dir,
+        temporary_directory=os.path.join(recipe, "temp"),
+    )
     init_obj(args)
     # Ignore conda-forge-pinning for this test, as the test relies on
     # conda-forge-pinning not being present
@@ -140,7 +149,11 @@ def test_init_multiple_docker_images(testing_workdir):
     feedstock_dir = os.path.join(
         testing_workdir, "multiple_docker_images-feedstock"
     )
-    args = InitArgs(recipe_directory=recipe, feedstock_directory=feedstock_dir)
+    args = InitArgs(
+        recipe_directory=recipe,
+        feedstock_directory=feedstock_dir,
+        temporary_directory=os.path.join(recipe, "temp"),
+    )
     init_obj(args)
     # Ignore conda-forge-pinning for this test, as the test relies on
     # conda-forge-pinning not being present
