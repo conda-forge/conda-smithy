@@ -22,6 +22,7 @@ RegenerateArgs = collections.namedtuple(
         "no_check_uptodate",
         "exclusive_config_file",
         "check",
+        "temporary_directory",
     ),
 )
 
@@ -68,6 +69,7 @@ def test_init_multiple_output_matrix(testing_workdir):
         no_check_uptodate=True,
         exclusive_config_file="recipe/conda_build_config.yaml",
         check=False,
+        temporary_directory=os.path.join(recipe, "temp"),
     )
     regen_obj(args)
     matrix_dir = os.path.join(feedstock_dir, ".ci_support")
@@ -117,6 +119,7 @@ def test_init_cuda_docker_images(testing_workdir):
         no_check_uptodate=True,
         exclusive_config_file="recipe/conda_build_config.yaml",
         check=False,
+        temporary_directory=os.path.join(recipe, "temp"),
     )
     regen_obj(args)
     matrix_dir = os.path.join(feedstock_dir, ".ci_support")
@@ -163,6 +166,7 @@ def test_init_multiple_docker_images(testing_workdir):
         no_check_uptodate=True,
         exclusive_config_file="recipe/conda_build_config.yaml",
         check=False,
+        temporary_directory=os.path.join(recipe, "temp"),
     )
     regen_obj(args)
     matrix_dir = os.path.join(feedstock_dir, ".ci_support")
@@ -205,6 +209,7 @@ def test_regenerate(py_recipe, testing_workdir):
             recipe, "recipe", "default_config.yaml"
         ),
         check=False,
+        temporary_directory=os.path.join(dest_dir, "temp"),
     )
 
     regen_obj(args)
@@ -221,6 +226,7 @@ def test_regenerate(py_recipe, testing_workdir):
             recipe, "recipe", "short_config.yaml"
         ),
         check=False,
+        temporary_directory=os.path.join(dest_dir, "temp"),
     )
     regen_obj(args)
 
