@@ -34,7 +34,7 @@ requirements:
     - shellcheck
     - scrypt
     - license-expression
-    - tar
+    - libarchive
 
 test:
   requires:

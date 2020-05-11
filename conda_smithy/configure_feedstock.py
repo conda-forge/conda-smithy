@@ -1589,7 +1589,7 @@ def get_cfp_file_path(temporary_directory, resolve=None):
         f.write(response.content)
 
     logger.info(f"Extracing conda-forge-pinning to { temporary_directory }")
-    subprocess.check_call(["tar", "-xf", dest], cwd=temporary_directory)
+    subprocess.check_call(["bsdtar", "-xf", dest], cwd=temporary_directory)
 
     logger.debug(os.listdir(temporary_directory))
 
