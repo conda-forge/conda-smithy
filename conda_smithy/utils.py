@@ -12,6 +12,15 @@ from contextlib import contextmanager
 import ruamel.yaml
 
 
+def get_feedstock_name_from_meta(meta):
+    """Resolve the feedtstock name from the parsed meta.yaml."""
+    if "parent_recipe" in meta.meta["extra"]:
+        return meta.meta["extra"]["parent_recipe"]["name"]
+    elif "feedstock_name" in meta.meta["extra"]:
+        return meta.meta["extra"]["feedstock_name"]
+    else:
+        return meta.name()
+
 def get_yaml():
     # define global yaml API
     # roundrip-loader and allowing duplicate keys

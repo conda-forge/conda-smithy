@@ -365,6 +365,9 @@ requirements:
         - python
 about:
     home: home
+
+extra:
+    feedstock_name: skip-test-meta
     """
         )
     return RecipeConfigPair(
