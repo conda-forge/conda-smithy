@@ -32,7 +32,7 @@ if "extra" not in FIELDS.keys():
     FIELDS["extra"] = set()
 
 FIELDS["extra"].add("recipe-maintainers")
-FIELDS["extra"].add("feedstock_name")
+FIELDS["extra"].add("feedstock-name")
 
 EXPECTED_SECTION_ORDER = [
     "package",
