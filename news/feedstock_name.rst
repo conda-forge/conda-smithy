@@ -1,6 +1,6 @@
 **Added:**
 
-* Option to specify the generated feedstock name via ``extra.feedstock_name``.
+* Option to specify the generated feedstock name via ``extra.feedstock-name``.
 
 **Changed:**
 

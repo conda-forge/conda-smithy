@@ -367,7 +367,7 @@ about:
     home: home
 
 extra:
-    feedstock_name: skip-test-meta
+    feedstock-name: skip-test-meta
     """
         )
     return RecipeConfigPair(
