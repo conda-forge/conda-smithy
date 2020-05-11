@@ -29,6 +29,7 @@ from conda_smithy.feedstock_io import (
     copy_file,
     remove_file_or_dir,
 )
+from conda_smithy.utils import get_feedstock_name_from_meta
 from . import __version__
 
 conda_forge_content = os.path.abspath(os.path.dirname(__file__))
@@ -1264,10 +1265,7 @@ def render_README(jinja_env, forge_config, forge_dir, render_info=None):
             " builds."
         )
 
-    if "parent_recipe" in metas[0].meta["extra"]:
-        package_name = metas[0].meta["extra"]["parent_recipe"]["name"]
-    else:
-        package_name = metas[0].name()
+    package_name = get_feedstock_name_from_meta(metas[0])
 
     ci_support_path = os.path.join(forge_dir, ".ci_support")
     variants = []

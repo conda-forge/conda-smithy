@@ -399,6 +399,11 @@ def test_render_with_all_skipped_generates_readme(skipped_recipe, jinja_env):
         forge_config=skipped_recipe.config,
         forge_dir=skipped_recipe.recipe,
     )
+    readme_path = os.path.join(skipped_recipe.recipe, "README.md")
+    assert os.path.exists(readme_path)
+    with open(readme_path, "rb") as readme_file:
+        content = readme_file.read()
+    assert b"skip-test-meta" in content
 
 
 def test_render_windows_with_skipped_python(python_skipped_recipe, jinja_env):
