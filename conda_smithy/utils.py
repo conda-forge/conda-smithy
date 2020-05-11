@@ -21,6 +21,7 @@ def get_feedstock_name_from_meta(meta):
     else:
         return meta.name()
 
+
 def get_yaml():
     # define global yaml API
     # roundrip-loader and allowing duplicate keys
