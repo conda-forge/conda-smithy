@@ -302,7 +302,10 @@ def register_feedstock_token(user, project, token_repo):
 
             # push
             repo.index.add(token_file)
-            repo.index.commit("[ci skip] [skip ci] [cf admin skip] added token for %s/%s" % (user, project))
+            repo.index.commit(
+                "[ci skip] [skip ci] [cf admin skip] ***NO_CI*** added token for %s/%s"
+                % (user, project)
+            )
             repo.remote().pull(rebase=True)
             repo.remote().push()
         except Exception as e:
