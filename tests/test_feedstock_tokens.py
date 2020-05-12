@@ -254,7 +254,8 @@ def test_register_feedstock_token_works(
     repo = git_mock.Repo.clone_from.return_value
     repo.index.add.assert_called_once_with(token_json_pth)
     repo.index.commit.assert_called_once_with(
-        "added token for %s/%s" % (user, project)
+        "[ci skip] [skip ci] [cf admin skip] ***NO_CI*** added token for %s/%s"
+        % (user, project)
     )
     repo.remote.return_value.pull.assert_called_once_with(rebase=True)
     repo.remote.return_value.push.assert_called_once_with()
