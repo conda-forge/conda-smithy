@@ -4,6 +4,40 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.7.1
+====================
+
+**Added:**
+
+* Added ci skip statements during token registration to reduce loads.
+* Added tar as a dependency
+* Option to specify the generated feedstock name via ``extra.feedstock-name``.
+* Support self-hosted Azure agents
+
+**Changed:**
+
+* Changed the docker mount to the recipe directory to have read-write permissions instead
+  of read-only.
+* conda-forge-pinning package is now downloaded on the fly
+
+**Fixed:**
+
+* Fix folding scripts file in GH PRs
+* Error when linting recipes with ``license_file: `` (i.e. no file specified)
+* PSF-2.0 is not a deprecated license
+* Fixed whitespace additions
+
+**Authors:**
+
+* Isuru Fernando
+* Matthew R Becker
+* Matthew R. Becker
+* Chris Burr
+* Leo Fang
+* Uwe L. Korn
+
+
+
 v3.7.0
 ====================
 
