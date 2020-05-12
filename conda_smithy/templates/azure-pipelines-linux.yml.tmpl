@@ -4,20 +4,7 @@
 
 jobs:
 - job: linux
-  pool:
-    vmImage: ubuntu-16.04
-  timeoutInMinutes: {{ azure.timeout_minutes }}
-  strategy:
-    maxParallel: 8
-    matrix:
-    {%- for data in configs %}
-    {%- if data.platform.startswith('linux') %}
-      {{ data.config_name }}:
-        CONFIG: {{ data.config_name }}
-        UPLOAD_PACKAGES: {{ data.upload }}
-        DOCKER_IMAGE: {{ data.config["docker_image"][-1] }}
-    {%- endif %}
-    {%- endfor %}
+  {{ azure_yaml|indent(2) }}
   steps:
   # configure qemu binfmt-misc running.  This allows us to run docker containers
   # embedded qemu-static
@@ -32,6 +19,9 @@ jobs:
         export GIT_BRANCH=$BUILD_SOURCEBRANCHNAME
 {%- if upload_on_branch %}
         export UPLOAD_ON_BRANCH="{{ upload_on_branch }}"
+{%- endif %}
+{%- if docker.run_args is defined %}
+        export CONDA_FORGE_DOCKER_RUN_ARGS="{{ docker.run_args }}"
 {%- endif %}
         .scripts/run_docker_build.sh
     displayName: Run docker build

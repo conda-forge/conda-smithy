@@ -1115,6 +1115,7 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
         if yum_build_setup:
             forge_config["yum_build_setup"] = yum_build_setup
 
+    forge_config = deepcopy(forge_config)
     forge_config["build_setup"] = build_setup
 
     platform_templates = {
@@ -1131,6 +1132,24 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
     }
     template_files = platform_templates.get(platform, [])
 
+    azure_settings = deepcopy(forge_config["azure"][f"settings_{platform}"])
+    azure_settings["strategy"]["matrix"] = {}
+    for data in forge_config["configs"]:
+        if not data["platform"].startswith(platform):
+            continue
+        config_rendered = OrderedDict(
+            {
+                "CONFIG": data["config_name"],
+                "UPLOAD_PACKAGES": str(data["upload"]),
+            }
+        )
+        # fmt: off
+        if "docker_image" in data["config"]:
+            config_rendered["DOCKER_IMAGE"] = data["config"]["docker_image"][-1]
+        azure_settings["strategy"]["matrix"][data["config_name"]] = config_rendered
+        # fmt: on
+
+    forge_config["azure_yaml"] = yaml.dump(azure_settings)
     _render_template_exe_files(
         forge_config=forge_config,
         jinja_env=jinja_env,
@@ -1337,6 +1356,18 @@ def copy_feedstock_content(forge_config, forge_dir):
     copytree(feedstock_content, forge_dir, skip_files)
 
 
+def _update_dict_within_dict(items, config):
+    """ recursively update dict within dict, if any """
+    for key, value in items:
+        if isinstance(value, dict):
+            config[key] = _update_dict_within_dict(
+                value.items(), config.get(key, {})
+            )
+        else:
+            config[key] = value
+    return config
+
+
 def _load_forge_config(forge_dir, exclusive_config_file):
     config = {
         "docker": {
@@ -1350,6 +1381,23 @@ def _load_forge_config(forge_dir, exclusive_config_file):
         "circle": {},
         "appveyor": {"image": "Visual Studio 2017"},
         "azure": {
+            # default choices for MS-hosted agents
+            "settings_linux": {
+                "pool": {"vmImage": "ubuntu-16.04",},
+                "timeoutInMinutes": 360,
+                "strategy": {"maxParallel": 8},
+            },
+            "settings_osx": {
+                "pool": {"vmImage": "macOS-10.14",},
+                "timeoutInMinutes": 360,
+                "strategy": {"maxParallel": 8},
+            },
+            "settings_win": {
+                "pool": {"vmImage": "vs2017-win2016",},
+                "timeoutInMinutes": 360,
+                "strategy": {"maxParallel": 4},
+                "variables": {"CONDA_BLD_PATH": r"D:\\bld\\"},
+            },
             # disallow publication of azure artifacts for now.
             "upload_packages": False,
             # Force building all supported providers.
@@ -1357,8 +1405,8 @@ def _load_forge_config(forge_dir, exclusive_config_file):
             # name and id of azure project that the build pipeline is in
             "project_name": "feedstock-builds",
             "project_id": "84710dde-1620-425b-80d0-4cf5baca359d",
-            # Default to a timeout of 6 hours.  This is the maximum for azure by default
-            "timeout_minutes": 360,
+            # Set timeout for all platforms at once.
+            "timeout_minutes": None,
         },
         "provider": {
             "linux": "azure",
@@ -1415,13 +1463,7 @@ def _load_forge_config(forge_dir, exclusive_config_file):
 
         # The config is just the union of the defaults, and the overriden
         # values.
-        for key, value in file_config.items():
-            # Deal with dicts within dicts.
-            if isinstance(value, dict):
-                config_item = config.setdefault(key, value)
-                config_item.update(value)
-            else:
-                config[key] = value
+        config = _update_dict_within_dict(file_config.items(), config)
 
         # check for conda-smithy 2.x matrix which we can't auto-migrate
         # to conda_build_config
@@ -1444,6 +1486,14 @@ def _load_forge_config(forge_dir, exclusive_config_file):
                 "Setting docker image in conda-forge.yml is removed now."
                 " Use conda_build_config.yaml instead"
             )
+
+        for plat in ["linux", "osx", "win"]:
+            if config["azure"]["timeout_minutes"] is not None:
+                # fmt: off
+                config["azure"][f"settings_{plat}"]["timeoutInMinutes"] = config["azure"]["timeout_minutes"]
+                # fmt: on
+            if "name" in config["azure"][f"settings_{plat}"]["pool"]:
+                del config["azure"][f"settings_{plat}"]["pool"]["vmImage"]
 
     # An older conda-smithy used to have some files which should no longer exist,
     # remove those now.

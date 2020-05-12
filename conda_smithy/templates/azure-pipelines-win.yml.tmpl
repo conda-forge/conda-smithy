@@ -4,26 +4,8 @@
 
 jobs:
 - job: win
-  pool:
-    vmImage: vs2017-win2016
-  timeoutInMinutes: {{ azure.timeout_minutes }}
-  strategy:
-    maxParallel: 4
-    matrix:
-    {%- for data in configs %}
-    {%- if data.platform.startswith('win') %}
-      {{ data.config_name }}:
-        CONFIG: {{ data.config_name }}
-        CONDA_BLD_PATH: D:\\bld\\
-        UPLOAD_PACKAGES: {{ data.upload }}
-    {%- endif %}
-    {%- endfor %}
+  {{ azure_yaml|indent(2) }}
   steps:
-    # TODO: Fast finish on azure pipelines?
-    - script: |
-        ECHO ON
-        {{ fast_finish }}
-
     - script: |
         choco install vcpython27 -fdv -y --debug
       condition: contains(variables['CONFIG'], 'vs2008')
