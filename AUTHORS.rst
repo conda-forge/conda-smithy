@@ -15,6 +15,7 @@ Authors are sorted by number of commits.
 * Mark Harfouche
 * Eric Dill
 * Natasha Pavlovikj
+* Chris Burr
 * Jan Schulz
 * Josh Reichardt
 * Justin Calamari
@@ -24,12 +25,13 @@ Authors are sorted by number of commits.
 * C.A.M. Gerlach
 * Julian Rüth
 * refraction-ray
+* Leo Fang
 * John Kirkham
 * Leopold Talirz
 * Gonzalo Pena-Castellanos
 * Daniel Bast
+* Uwe L. Korn
 * Tim Snyder
-* Chris Burr
 * Carlo
 * Marcel Bargull
 * Matthew Craig
@@ -55,7 +57,6 @@ Authors are sorted by number of commits.
 * gouarin
 * Nicholas Bollweg
 * Alex Goodman
-* Uwe L. Korn
 * Lion Krischer
 * ap--
 * Peter Killick

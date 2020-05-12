@@ -63,7 +63,7 @@
   email: christopher.burr@cern.ch
   alternate_emails:
   - chrisburr@users.noreply.github.com
-  num_commits: 6
+  num_commits: 12
   first_commit: 2019-03-20 05:10:33
   github: chrisburr
 - name: Thomas Robitaille
@@ -235,7 +235,7 @@
   email: uwe.korn@quantco.com
   alternate_emails:
   - xhochy@users.noreply.github.com
-  num_commits: 2
+  num_commits: 7
   first_commit: 2019-06-27 08:26:49
   github: xhochy
 - name: C.A.M. Gerlach
@@ -246,7 +246,7 @@
   email: isuru.11@cse.mrt.ac.lk
   alternate_emails:
   - isuruf@gmail.com
-  num_commits: 302
+  num_commits: 315
   first_commit: 2017-01-08 22:03:03
   github: isuruf
 - name: Julian Rüth
@@ -391,12 +391,12 @@
   github: shadowwalkersb
 - name: Matthew R Becker
   email: becker.mr@gmail.com
-  num_commits: 129
+  num_commits: 133
   first_commit: 2020-01-07 17:44:33
   github: beckermr
 - name: Matthew R. Becker
   email: beckermr@users.noreply.github.com
-  num_commits: 22
+  num_commits: 24
   first_commit: 2020-01-19 19:32:30
   github: beckermr
 - name: Natasha Pavlovikj
@@ -422,3 +422,8 @@
   num_commits: 1
   first_commit: 2020-03-21 12:23:42
   github: Wentzell
+- name: Leo Fang
+  email: leofang@bnl.gov
+  num_commits: 9
+  first_commit: 2020-04-26 22:07:18
+  github: leofang
