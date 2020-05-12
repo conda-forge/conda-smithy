@@ -1136,13 +1136,17 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
     for data in forge_config["configs"]:
         if not data["platform"].startswith(platform):
             continue
-        config_rendered = OrderedDict({
-            "CONFIG": data["config_name"],
-            "UPLOAD_PACKAGES": data["upload"],
-        })
+        config_rendered = OrderedDict(
+            {
+                "CONFIG": data["config_name"],
+                "UPLOAD_PACKAGES": str(data["upload"]),
+            }
+        )
+        # fmt: off
         if "docker_image" in data["config"]:
             config_rendered["DOCKER_IMAGE"] = data["config"]["docker_image"][-1]
         azure_settings["strategy"]["matrix"][data["config_name"]] = config_rendered
+        # fmt: on
 
     forge_config["azure_yaml"] = yaml.dump(azure_settings)
     _render_template_exe_files(
@@ -1355,10 +1359,12 @@ def copy_feedstock_content(forge_config, forge_dir):
 
 
 def _update_dict_within_dict(items, config):
-    ''' recursively update dict within dict, if any '''
+    """ recursively update dict within dict, if any """
     for key, value in items:
         if isinstance(value, dict):
-            config[key] = _update_dict_within_dict(value.items(), config.get(key, {}))
+            config[key] = _update_dict_within_dict(
+                value.items(), config.get(key, {})
+            )
         else:
             config[key] = value
     return config
@@ -1379,26 +1385,20 @@ def _load_forge_config(forge_dir, exclusive_config_file):
         "azure": {
             # default choices for MS-hosted agents
             "settings_linux": {
-                "pool": {
-                    "vmImage": "ubuntu-16.04",
-                },
+                "pool": {"vmImage": "ubuntu-16.04",},
                 "timeoutInMinutes": 360,
-                "strategy": { "maxParallel": 8 }
+                "strategy": {"maxParallel": 8},
             },
             "settings_osx": {
-                "pool": {
-                    "vmImage": "macOS-10.14",
-                },
+                "pool": {"vmImage": "macOS-10.14",},
                 "timeoutInMinutes": 360,
-                "strategy": { "maxParallel": 8 }
+                "strategy": {"maxParallel": 8},
             },
             "settings_win": {
-                "pool": {
-                    "vmImage": "vs2017-win2016",
-                },
+                "pool": {"vmImage": "vs2017-win2016",},
                 "timeoutInMinutes": 360,
-                "strategy": { "maxParallel": 4 },
-                "variables": { "CONDA_BLD_PATH": r"D:\\bld\\" }
+                "strategy": {"maxParallel": 4},
+                "variables": {"CONDA_BLD_PATH": r"D:\\bld\\"},
             },
             # disallow publication of azure artifacts for now.
             "upload_packages": False,
@@ -1491,7 +1491,9 @@ def _load_forge_config(forge_dir, exclusive_config_file):
 
         for plat in ["linux", "osx", "win"]:
             if config["azure"]["timeout_minutes"] is not None:
+                # fmt: off
                 config["azure"][f"settings_{plat}"]["timeoutInMinutes"] = config["azure"]["timeout_minutes"]
+                # fmt: on
             if "name" in config["azure"][f"settings_{plat}"]["pool"]:
                 del config["azure"][f"settings_{plat}"]["pool"]["vmImage"]
 
