@@ -1341,7 +1341,11 @@ def render_README(jinja_env, forge_config, forge_dir, render_info=None):
         with write_file(code_owners_file) as fh:
             line = "*"
             for maintainer in forge_config["maintainers"]:
-                line = line + " @" + maintainer
+                if "/" in maintainer:
+                    _maintainer = maintainer.lower()
+                else:
+                    _maintainer = maintainer
+                line = line + " @" + _maintainer
             fh.write(line)
     else:
         remove_file_or_dir(code_owners_file)
