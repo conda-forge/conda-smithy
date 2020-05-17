@@ -1510,6 +1510,7 @@ def _load_forge_config(forge_dir, exclusive_config_file):
         os.path.join(".github", "CONTRIBUTING.md"),
         os.path.join(".github", "ISSUE_TEMPLATE.md"),
         os.path.join(".github", "PULL_REQUEST_TEMPLATE.md"),
+        os.path.join(".github", "workflows", "main.yml"),
     ]
 
     for old_file in old_files:
@@ -1684,11 +1685,6 @@ def clear_scripts(forge_dir):
             remove_file(os.path.join(forge_dir, folder, old_file))
 
 
-def clear_workflows(forge_dir):
-    for fname in ["main.yml", "webservices.yml", "automerge.yml"]:
-        remove_file(os.path.join(forge_dir, ".github", "workflows", fname))
-
-
 def make_jinja_env(feedstock_directory):
     """Creates a Jinja environment usable for rendering templates"""
     forge_dir = os.path.abspath(feedstock_directory)
@@ -1840,7 +1836,6 @@ def main(
     env = make_jinja_env(forge_dir)
     logger.debug("env rendered")
 
-    clear_workflows(forge_dir)
     copy_feedstock_content(config, forge_dir)
     if os.path.exists(os.path.join(forge_dir, "build-locally.py")):
         set_exe_file(os.path.join(forge_dir, "build-locally.py"))
