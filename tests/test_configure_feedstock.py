@@ -637,11 +637,11 @@ def test_automerge_action_exists(py_recipe, jinja_env):
     cfg = copy.deepcopy(py_recipe.config)
     cnfgr_fdstk.copy_feedstock_content(cfg, py_recipe.recipe)
     assert os.path.exists(
-        os.path.join(py_recipe.recipe, ".github/workflows/main.yml")
+        os.path.join(py_recipe.recipe, ".github/workflows/automerge.yml")
     )
     with open(
-        os.path.join(py_recipe.recipe, ".github/workflows/main.yml")
+        os.path.join(py_recipe.recipe, ".github/workflows/automerge.yml")
     ) as f:
         action_config = yaml.safe_load(f)
     assert "jobs" in action_config
-    assert "regro-cf-autotick-bot-action" in action_config["jobs"]
+    assert "automerge-action" in action_config["jobs"]
