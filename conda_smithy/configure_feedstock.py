@@ -1510,6 +1510,7 @@ def _load_forge_config(forge_dir, exclusive_config_file):
         os.path.join(".github", "CONTRIBUTING.md"),
         os.path.join(".github", "ISSUE_TEMPLATE.md"),
         os.path.join(".github", "PULL_REQUEST_TEMPLATE.md"),
+        os.path.join(".github", "workflows", "main.yml"),
     ]
 
     for old_file in old_files:
