@@ -4,6 +4,19 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.7.2
+====================
+
+**Changed:**
+
+* Changed the automerge configuration to use conda-forge/automerge-action.
+
+**Authors:**
+
+* Matthew R Becker
+
+
+
 v3.7.1
 ====================
 
