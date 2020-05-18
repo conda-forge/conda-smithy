@@ -4,6 +4,21 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.7.3
+====================
+
+**Fixed:**
+
+* Get feedstock name from meta when registering with CI services.
+* CODEOWNERS file no longer treats GitHub team names as case-sensitive.
+
+**Authors:**
+
+* Matthew R Becker
+* Uwe L. Korn
+
+
+
 v3.7.2
 ====================
 
