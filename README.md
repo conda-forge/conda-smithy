@@ -106,6 +106,9 @@ When everything is configured you can trigger a build with a push to the feedsto
 
 Releasing conda-smithy
 ----------------------
+
+Before making a release, consult `@conda-forge/core` and wait some time for objections.
+
 To release a new version of conda-smithy, you can use the
 [rever](https://regro.github.io/rever-docs/index.html) release managment tool.
 Run `rever` in the root repo directory with the version number you want to release.
