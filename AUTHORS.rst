@@ -22,6 +22,7 @@ Authors are sorted by number of commits.
 * Jason Furmanek
 * Patrick Sodré
 * Maksim Rakitin
+* Uwe L. Korn
 * C.A.M. Gerlach
 * Julian Rüth
 * refraction-ray
@@ -30,7 +31,6 @@ Authors are sorted by number of commits.
 * Leopold Talirz
 * Gonzalo Pena-Castellanos
 * Daniel Bast
-* Uwe L. Korn
 * Tim Snyder
 * Carlo
 * Marcel Bargull

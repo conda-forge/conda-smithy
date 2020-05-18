@@ -235,7 +235,7 @@
   email: uwe.korn@quantco.com
   alternate_emails:
   - xhochy@users.noreply.github.com
-  num_commits: 7
+  num_commits: 9
   first_commit: 2019-06-27 08:26:49
   github: xhochy
 - name: C.A.M. Gerlach
@@ -391,7 +391,7 @@
   github: shadowwalkersb
 - name: Matthew R Becker
   email: becker.mr@gmail.com
-  num_commits: 138
+  num_commits: 141
   first_commit: 2020-01-07 17:44:33
   github: beckermr
 - name: Matthew R. Becker

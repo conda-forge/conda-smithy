@@ -353,7 +353,7 @@ def travis_get_repo_info(user, project, show_error=False):
         content = response.json()
         return content
     except requests.HTTPError as e:
-        if show_error:
+        if show_error or True:
             print(e)
     return {}
 
