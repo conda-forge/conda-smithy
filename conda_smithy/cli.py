@@ -9,6 +9,7 @@ import tempfile
 from textwrap import dedent
 
 import conda
+import conda_build.api
 from distutils.version import LooseVersion
 from conda_build.metadata import MetaData
 
@@ -214,24 +215,31 @@ class RegisterCI(Subcommand):
         from conda_smithy import ci_register
 
         owner = args.user or args.organization
-        repo = os.path.basename(os.path.abspath(args.feedstock_directory))
+        meta = conda_build.api.render(
+            args.feedstock_directory,
+            permit_undefined_jinja=True,
+            finalize=False,
+            bypass_env_check=True,
+            trim_skip=False,
+        )[0][0]
+        feedstock_name = get_feedstock_name_from_meta(meta)
 
-        print("CI Summary for {}/{} (can take ~30s):".format(owner, repo))
+        print("CI Summary for {}/{} (can take ~30s):".format(owner, feedstock_name))
         if args.travis:
             # Assume that the user has enabled travis-ci.com service
             # user-wide or org-wide for all repos
             # ci_register.add_project_to_travis(owner, repo)
             time.sleep(1)
-            ci_register.travis_configure(owner, repo)
-            ci_register.add_token_to_travis(owner, repo)
+            ci_register.travis_configure(owner, feedstock_name)
+            ci_register.add_token_to_travis(owner, feedstock_name)
             # Assume that the user has enabled travis-ci.com service
             # user-wide or org-wide for all repos
-            # ci_register.travis_cleanup(owner, repo)
+            # ci_register.travis_cleanup(owner, feedstock_name)
         else:
             print("Travis registration disabled.")
         if args.circle:
-            ci_register.add_project_to_circle(owner, repo)
-            ci_register.add_token_to_circle(owner, repo)
+            ci_register.add_project_to_circle(owner, feedstock_name)
+            ci_register.add_token_to_circle(owner, feedstock_name)
         else:
             print("Circle registration disabled.")
         if args.azure:
@@ -243,26 +251,26 @@ class RegisterCI(Subcommand):
                     "conda-forge/_usersSettings/tokens and\n"
                     "put it in ~/.conda-smithy/azure.token"
                 )
-            ci_register.add_project_to_azure(owner, repo)
+            ci_register.add_project_to_azure(owner, feedstock_name)
         else:
             print("Azure registration disabled.")
         if args.appveyor:
-            ci_register.add_project_to_appveyor(owner, repo)
+            ci_register.add_project_to_appveyor(owner, feedstock_name)
             ci_register.appveyor_encrypt_binstar_token(
-                args.feedstock_directory, owner, repo
+                args.feedstock_directory, owner, feedstock_name
             )
-            ci_register.appveyor_configure(owner, repo)
+            ci_register.appveyor_configure(owner, feedstock_name)
         else:
             print("Appveyor registration disabled.")
 
         if args.drone:
-            ci_register.add_project_to_drone(owner, repo)
-            ci_register.add_token_to_drone(owner, repo)
+            ci_register.add_project_to_drone(owner, feedstock_name)
+            ci_register.add_token_to_drone(owner, feedstock_name)
         else:
             print("Drone registration disabled.")
 
         if args.webservice:
-            ci_register.add_conda_forge_webservice_hooks(owner, repo)
+            ci_register.add_conda_forge_webservice_hooks(owner, feedstock_name)
         else:
             print("Heroku webservice registration disabled.")
         print(
