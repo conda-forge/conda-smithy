@@ -9,8 +9,10 @@ import tempfile
 from textwrap import dedent
 
 import conda
+import conda_build.api
 from distutils.version import LooseVersion
 from conda_build.metadata import MetaData
+from conda_smithy.utils import get_feedstock_name_from_meta
 
 from . import configure_feedstock
 from . import feedstock_io
@@ -214,7 +216,15 @@ class RegisterCI(Subcommand):
         from conda_smithy import ci_register
 
         owner = args.user or args.organization
-        repo = os.path.basename(os.path.abspath(args.feedstock_directory))
+        meta = conda_build.api.render(
+            args.feedstock_directory,
+            permit_undefined_jinja=True,
+            finalize=False,
+            bypass_env_check=True,
+            trim_skip=False,
+        )[0][0]
+        feedstock_name = get_feedstock_name_from_meta(meta)
+        repo = "{}-feedstock".format(feedstock_name)
 
         print("CI Summary for {}/{} (can take ~30s):".format(owner, repo))
         if args.travis:
