@@ -12,6 +12,7 @@ import conda
 import conda_build.api
 from distutils.version import LooseVersion
 from conda_build.metadata import MetaData
+from conda_smithy.utils import get_feedstock_name_from_meta
 
 from . import configure_feedstock
 from . import feedstock_io
@@ -223,23 +224,24 @@ class RegisterCI(Subcommand):
             trim_skip=False,
         )[0][0]
         feedstock_name = get_feedstock_name_from_meta(meta)
+        repo = "{}-feedstock".format(feedstock_name)
 
-        print("CI Summary for {}/{} (can take ~30s):".format(owner, feedstock_name))
+        print("CI Summary for {}/{} (can take ~30s):".format(owner, repo))
         if args.travis:
             # Assume that the user has enabled travis-ci.com service
             # user-wide or org-wide for all repos
             # ci_register.add_project_to_travis(owner, repo)
             time.sleep(1)
-            ci_register.travis_configure(owner, feedstock_name)
-            ci_register.add_token_to_travis(owner, feedstock_name)
+            ci_register.travis_configure(owner, repo)
+            ci_register.add_token_to_travis(owner, repo)
             # Assume that the user has enabled travis-ci.com service
             # user-wide or org-wide for all repos
-            # ci_register.travis_cleanup(owner, feedstock_name)
+            # ci_register.travis_cleanup(owner, repo)
         else:
             print("Travis registration disabled.")
         if args.circle:
-            ci_register.add_project_to_circle(owner, feedstock_name)
-            ci_register.add_token_to_circle(owner, feedstock_name)
+            ci_register.add_project_to_circle(owner, repo)
+            ci_register.add_token_to_circle(owner, repo)
         else:
             print("Circle registration disabled.")
         if args.azure:
@@ -251,26 +253,26 @@ class RegisterCI(Subcommand):
                     "conda-forge/_usersSettings/tokens and\n"
                     "put it in ~/.conda-smithy/azure.token"
                 )
-            ci_register.add_project_to_azure(owner, feedstock_name)
+            ci_register.add_project_to_azure(owner, repo)
         else:
             print("Azure registration disabled.")
         if args.appveyor:
-            ci_register.add_project_to_appveyor(owner, feedstock_name)
+            ci_register.add_project_to_appveyor(owner, repo)
             ci_register.appveyor_encrypt_binstar_token(
-                args.feedstock_directory, owner, feedstock_name
+                args.feedstock_directory, owner, repo
             )
-            ci_register.appveyor_configure(owner, feedstock_name)
+            ci_register.appveyor_configure(owner, repo)
         else:
             print("Appveyor registration disabled.")
 
         if args.drone:
-            ci_register.add_project_to_drone(owner, feedstock_name)
-            ci_register.add_token_to_drone(owner, feedstock_name)
+            ci_register.add_project_to_drone(owner, repo)
+            ci_register.add_token_to_drone(owner, repo)
         else:
             print("Drone registration disabled.")
 
         if args.webservice:
-            ci_register.add_conda_forge_webservice_hooks(owner, feedstock_name)
+            ci_register.add_conda_forge_webservice_hooks(owner, repo)
         else:
             print("Heroku webservice registration disabled.")
         print(
