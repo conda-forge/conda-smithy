@@ -29,6 +29,7 @@ from conda_smithy.feedstock_io import (
     copy_file,
     remove_file_or_dir,
 )
+from conda_smithy.mamba_wrapper import ResolveFallback
 from conda_smithy.utils import get_feedstock_name_from_meta
 from . import __version__
 
@@ -1622,10 +1623,7 @@ def commit_changes(forge_file_directory, commit, cs_ver, cfp_ver, cb_ver):
 
 def get_cfp_file_path(temporary_directory, resolve=None):
     if resolve is None:
-        index = conda_build.conda_interface.get_index(
-            channel_urls=["conda-forge"]
-        )
-        resolve = conda_build.conda_interface.Resolve(index)
+        resolve = ResolveFallback()
 
     pkg = get_most_recent_version(resolve, "conda-forge-pinning")
     dest = os.path.join(
@@ -1795,20 +1793,14 @@ def main(
     logger.setLevel(loglevel)
 
     if check:
-        index = conda_build.conda_interface.get_index(
-            channel_urls=["conda-forge"]
-        )
-        r = conda_build.conda_interface.Resolve(index)
+        r = ResolveFallback()
 
         # Check that conda-smithy is up-to-date
         check_version_uptodate(r, "conda-smithy", __version__, True)
         return True
 
     error_on_warn = False if no_check_uptodate else True
-    index = conda_build.conda_interface.get_index(channel_urls=["conda-forge"])
-    logger.debug("Beginning Resolving Index")
-    r = conda_build.conda_interface.Resolve(index)
-    logger.debug("Index rendered")
+    r = ResolveFallback()
 
     # Check that conda-smithy is up-to-date
     check_version_uptodate(r, "conda-smithy", __version__, error_on_warn)

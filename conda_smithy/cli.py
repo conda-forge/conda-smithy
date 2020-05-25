@@ -1,4 +1,5 @@
 import os
+import logging
 import subprocess
 import sys
 import time
@@ -547,7 +548,9 @@ class UpdateCB3(Subcommand):
 
 
 def main():
-
+    # If we use the conda_build.conda_interface, this gets set to INFO anyways.
+    # If only mamba is used, set it so we get the same logs.
+    logging.basicConfig(level=logging.INFO)
     parser = argparse.ArgumentParser(
         prog="conda smithy",
         description="a tool to help create, administer and manage feedstocks.",
