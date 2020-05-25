@@ -18,6 +18,7 @@ skip_render:
 
 META_YAML = """{% set name = "my-package" %}
 {% set version = environ.get('GIT_DESCRIBE_TAG', 'untagged')|string|replace('-','_') %}
+{% set build_number = environ.get('GIT_DESCRIBE_NUMBER', '0') %}
 
 package:
   name: {{ name|lower }}
@@ -34,7 +35,7 @@ build:
   # for more details.
   # noarch: python
 
-  number: {{ environ.get('GIT_DESCRIBE_NUMBER', '0') }}
+  number: {{ build_number }}
   string: {{ [build_number, ('h' + PKG_HASH), environ.get('GIT_DESCRIBE_HASH', '')]|join('_') }}
 
   # If the installation is complex, or different between Unix and Windows,
