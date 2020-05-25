@@ -6,9 +6,10 @@ import subprocess
 import textwrap
 import yaml
 import warnings
-from collections import OrderedDict
+from collections import OrderedDict, namedtuple
 import copy
 import hashlib
+import requests
 import time
 
 import conda_build.api
@@ -1315,8 +1316,6 @@ def render_README(jinja_env, forge_config, forge_dir, render_info=None):
     if forge_config["azure"].get("build_id") is None:
         # Try to retrieve the build_id from the interwebs
         try:
-            import requests
-
             resp = requests.get(
                 "https://dev.azure.com/{org}/{project_name}/_apis/build/definitions?name={repo}".format(
                     org=forge_config["azure"]["user_or_org"],
@@ -1558,20 +1557,26 @@ def _load_forge_config(forge_dir, exclusive_config_file):
     return config
 
 
-def get_most_recent_version(resolve, name):
-    from conda_build.conda_interface import VersionOrder, MatchSpec
-
-    available_versions = sorted(
-        resolve.get_pkgs(MatchSpec(name)),
-        key=lambda x: VersionOrder(x.version),
-    )
-    return available_versions[-1]
-
-
-def check_version_uptodate(resolve, name, installed_version, error_on_warn):
+def get_most_recent_version(name):
     from conda_build.conda_interface import VersionOrder
 
-    most_recent_version = get_most_recent_version(resolve, name).version
+    request = requests.get(
+        "https://api.anaconda.org/package/conda-forge/" + name
+    )
+    request.raise_for_status()
+
+    pkg = max(
+        request.json()["files"], key=lambda x: VersionOrder(x["version"])
+    )
+
+    PackageRecord = namedtuple("PackageRecord", ["name", "version", "url"])
+    return PackageRecord(name, pkg["version"], "https:" + pkg["download_url"])
+
+
+def check_version_uptodate(name, installed_version, error_on_warn):
+    from conda_build.conda_interface import VersionOrder
+
+    most_recent_version = get_most_recent_version(name).version
     if installed_version is None:
         msg = "{} is not installed in conda-smithy's environment.".format(name)
     elif VersionOrder(installed_version) < VersionOrder(most_recent_version):
@@ -1620,21 +1625,13 @@ def commit_changes(forge_file_directory, commit, cs_ver, cfp_ver, cb_ver):
             logger.info("No changes made. This feedstock is up-to-date.\n")
 
 
-def get_cfp_file_path(temporary_directory, resolve=None):
-    if resolve is None:
-        index = conda_build.conda_interface.get_index(
-            channel_urls=["conda-forge"]
-        )
-        resolve = conda_build.conda_interface.Resolve(index)
-
-    pkg = get_most_recent_version(resolve, "conda-forge-pinning")
+def get_cfp_file_path(temporary_directory):
+    pkg = get_most_recent_version("conda-forge-pinning")
     dest = os.path.join(
         temporary_directory, f"conda-forge-pinning-{ pkg.version }.tar.bz2"
     )
 
     logger.info(f"Downloading conda-forge-pinning-{ pkg.version }")
-
-    import requests
 
     response = requests.get(pkg.url)
     response.raise_for_status()
@@ -1795,23 +1792,13 @@ def main(
     logger.setLevel(loglevel)
 
     if check:
-        index = conda_build.conda_interface.get_index(
-            channel_urls=["conda-forge"]
-        )
-        r = conda_build.conda_interface.Resolve(index)
-
         # Check that conda-smithy is up-to-date
-        check_version_uptodate(r, "conda-smithy", __version__, True)
+        check_version_uptodate("conda-smithy", __version__, True)
         return True
 
     error_on_warn = False if no_check_uptodate else True
-    index = conda_build.conda_interface.get_index(channel_urls=["conda-forge"])
-    logger.debug("Beginning Resolving Index")
-    r = conda_build.conda_interface.Resolve(index)
-    logger.debug("Index rendered")
-
     # Check that conda-smithy is up-to-date
-    check_version_uptodate(r, "conda-smithy", __version__, error_on_warn)
+    check_version_uptodate("conda-smithy", __version__, error_on_warn)
 
     forge_dir = os.path.abspath(forge_file_directory)
     if exclusive_config_file is not None:
@@ -1821,7 +1808,7 @@ def main(
         cf_pinning_ver = None
     else:
         exclusive_config_file, cf_pinning_ver = get_cfp_file_path(
-            temporary_directory, r
+            temporary_directory
         )
 
     config = _load_forge_config(forge_dir, exclusive_config_file)

@@ -1,4 +1,5 @@
 import os
+import logging
 import subprocess
 import sys
 import time
@@ -547,6 +548,7 @@ class UpdateCB3(Subcommand):
 
 
 def main():
+    logging.basicConfig(level=logging.INFO)
 
     parser = argparse.ArgumentParser(
         prog="conda smithy",
