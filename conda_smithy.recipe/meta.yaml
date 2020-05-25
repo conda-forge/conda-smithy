@@ -35,6 +35,8 @@ requirements:
     - scrypt
     - license-expression
     - libarchive
+  run_constrained:
+    - mamba 0.2.*
 
 test:
   requires:
