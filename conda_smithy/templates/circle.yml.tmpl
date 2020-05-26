@@ -42,10 +42,12 @@ jobs:
 {%- if data.platform.startswith('linux') %}
           command: |
             export CI=circle
+            export FEEDSTOCK_NAME=`basename ${CIRCLE_PROJECT_REPONAME}`
             ./.scripts/run_docker_build.sh
 {%- else %}
           command: |
             export CI=circle
+            export FEEDSTOCK_NAME=`basename ${CIRCLE_PROJECT_REPONAME}`
             ./.scripts/run_osx_build.sh
 {%- endif %}
 {%- if idle_timeout_minutes %}
