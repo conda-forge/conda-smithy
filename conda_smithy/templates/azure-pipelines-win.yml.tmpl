@@ -89,7 +89,8 @@ jobs:
 
 {%- if conda_forge_output_validation %}
     - script: |
-        set "FEEDSTOCK_NAME=%BUILD_REPOSITORYNAME%"
+        $fn = Split-Path "%BUILD_REPOSITORYNAME%" -Leaf
+        set "FEEDSTOCK_NAME=$fn"
         call activate base
         validate_recipe_outputs "%FEEDSTOCK_NAME%"
       displayName: Validate Recipe Outputs
@@ -97,7 +98,8 @@ jobs:
 
     - script: |
         set "GIT_BRANCH=%BUILD_SOURCEBRANCHNAME%"
-        set "FEEDSTOCK_NAME=%BUILD_REPOSITORYNAME%"
+        $fn = Split-Path "%BUILD_REPOSITORYNAME%" -Leaf
+        set "FEEDSTOCK_NAME=$fn"
 {%- if upload_on_branch %}
         set "UPLOAD_ON_BRANCH={{ upload_on_branch }}"
 {%- endif %}
