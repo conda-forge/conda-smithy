@@ -31,6 +31,7 @@ from conda_smithy.feedstock_io import (
     remove_file_or_dir,
 )
 from conda_smithy.utils import get_feedstock_name_from_meta
+from conda_smithy import azure_ci_utils
 from . import __version__
 
 conda_forge_content = os.path.abspath(os.path.dirname(__file__))
@@ -1314,20 +1315,14 @@ def render_README(jinja_env, forge_config, forge_dir, render_info=None):
     )
 
     if forge_config["azure"].get("build_id") is None:
-        # Try to retrieve the build_id from the interwebs
-        try:
-            resp = requests.get(
-                "https://dev.azure.com/{org}/{project_name}/_apis/build/definitions?name={repo}".format(
-                    org=forge_config["azure"]["user_or_org"],
-                    project_name=forge_config["azure"]["project_name"],
-                    repo=forge_config["github"]["repo_name"],
-                )
-            )
-            resp.raise_for_status()
-            build_def = resp.json()["value"][0]
-            forge_config["azure"]["build_id"] = build_def["id"]
-        except (IndexError, IOError):
-            pass
+
+        config = azure_ci_utils.AzureConfig(
+            org_or_user=forge_config["azure"]["user_or_org"],
+            project_name=forge_config["azure"]["project_name"]
+        )
+        repo = forge_config["github"]["repo_name"]
+        build_info = azure_ci_utils.get_build_id(repo, config)
+        forge_config["azure"]["build_id"] = build_info["build_id"]
 
     logger.debug("README")
     logger.debug(yaml.dump(forge_config))
