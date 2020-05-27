@@ -100,7 +100,7 @@ jobs:
         set "UPLOAD_ON_BRANCH={{ upload_on_branch }}"
 {%- endif %}
         call activate base
-        upload_package {% if conda_forge_output_validation %}--validate {% if conda_forge_private_upload %}--private --feedstock-name="{{ feedstock_name }}"{% endif %} .\ ".\{{ recipe_dir }}" .ci_support\%CONFIG%.yaml
+        upload_package {% if conda_forge_output_validation %}--validate --feedstock-name="{{ feedstock_name }}"{% endif %} {% if conda_forge_private_upload %}--private {% endif %} .\ ".\{{ recipe_dir }}" .ci_support\%CONFIG%.yaml
       displayName: Upload package
       env:
         BINSTAR_TOKEN: $(BINSTAR_TOKEN)
