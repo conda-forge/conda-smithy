@@ -1336,7 +1336,7 @@ def render_README(jinja_env, forge_config, forge_dir, render_info=None):
                 # If it fails then we switch to a request using an Azure token.
                 config = azure_ci_utils.AzureConfig(
                     org_or_user=forge_config["azure"]["user_or_org"],
-                    project_name=forge_config["azure"]["project_name"]
+                    project_name=forge_config["azure"]["project_name"],
                 )
                 repo = forge_config["github"]["repo_name"]
                 build_info = azure_ci_utils.get_build_id(repo, config)
