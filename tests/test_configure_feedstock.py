@@ -266,7 +266,7 @@ def test_upload_on_branch_appveyor(upload_on_branch_recipe, jinja_env):
     ) as fp:
         content = yaml.load(fp)
     assert "%APPVEYOR_REPO_BRANCH%" in content["deploy_script"][0]
-    assert "UPLOAD_ON_BRANCH=foo-branch" in content["deploy_script"][1]
+    assert "UPLOAD_ON_BRANCH=foo-branch" in content["deploy_script"][-2]
 
 
 def test_circle_with_yum_reqs(py_recipe, jinja_env):
