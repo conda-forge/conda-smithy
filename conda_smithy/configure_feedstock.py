@@ -376,6 +376,11 @@ def finalize_config(config, platform, forge_config):
             config["docker_image"] = [config["docker_image"][0]]
         else:
             config["docker_image"] = [forge_config["docker"]["fallback_image"]]
+
+    if "private_upload" in config:
+        config["private_upload"] = config["private_upload"]
+    elif "private_upload" in forge_config:
+        config["private_upload"] = forge_config["private_upload"]
     return config
 
 
