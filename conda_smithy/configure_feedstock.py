@@ -1341,9 +1341,9 @@ def render_README(jinja_env, forge_config, forge_dir, render_info=None):
                 repo = forge_config["github"]["repo_name"]
                 build_info = azure_ci_utils.get_build_id(repo, config)
                 forge_config["azure"]["build_id"] = build_info["build_id"]
-            except:
+            except IOError:
                 # We don't want to command to fail if requesting the build_id fails.
-                pass
+                logger.warning("Azure build_id can't be retrieved using the Azure token.")
 
     logger.debug("README")
     logger.debug(yaml.dump(forge_config))
