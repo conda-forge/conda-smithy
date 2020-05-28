@@ -43,7 +43,7 @@ validate_recipe_outputs "{{ feedstock_name }}"
 {%- endif %}
 
 if [[ "${UPLOAD_PACKAGES}" != "False" ]]; then
-    upload_package {% if conda_forge_output_validation %}--validate --feedstock-name="{{ feedstock_name }}" {% endif %}{% if conda_forge_private_upload %}--private{% endif %} "${FEEDSTOCK_ROOT}" "${RECIPE_ROOT}" "${CONFIG_FILE}"
+    upload_package {% if conda_forge_output_validation %}--validate --feedstock-name="{{ feedstock_name }}" {% endif %}{% if conda_forge_private_upload %} --private{% endif %} "${FEEDSTOCK_ROOT}" "${RECIPE_ROOT}" "${CONFIG_FILE}"
 fi
 
 touch "${FEEDSTOCK_ROOT}/build_artifacts/conda-forge-build-done-${CONFIG}"
