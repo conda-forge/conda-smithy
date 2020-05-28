@@ -31,7 +31,6 @@ from conda_smithy.feedstock_io import (
     remove_file_or_dir,
 )
 from conda_smithy.utils import get_feedstock_name_from_meta
-from conda_smithy import azure_ci_utils
 from . import __version__
 
 conda_forge_content = os.path.abspath(os.path.dirname(__file__))
@@ -1334,6 +1333,7 @@ def render_README(jinja_env, forge_config, forge_dir, render_info=None):
         except json.decoder.JSONDecodeError:
             try:
                 # If it fails then we switch to a request using an Azure token.
+                from conda_smithy import azure_ci_utils
                 config = azure_ci_utils.AzureConfig(
                     org_or_user=forge_config["azure"]["user_or_org"],
                     project_name=forge_config["azure"]["project_name"],
