@@ -69,4 +69,4 @@ deploy_script:
 {%- if upload_on_branch %}
     - set "UPLOAD_ON_BRANCH={{ upload_on_branch }}"
 {%- endif %}
-    - cmd: upload_package {% if conda_forge_output_validation %}--validate --feedstock-name="{{ feedstock_name }}"{% endif %}{% if conda_forge_private_upload %} --private{% endif %} .\ .\{{ recipe_dir }} .ci_support\%CONFIG%.yaml
+    - cmd: upload_package {% if conda_forge_output_validation %}--validate --feedstock-name="{{ feedstock_name }}"{% endif %}{% if private_upload %} --private{% endif %} .\ .\{{ recipe_dir }} .ci_support\%CONFIG%.yaml
