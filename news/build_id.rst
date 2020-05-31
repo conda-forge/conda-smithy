@@ -16,7 +16,7 @@
 
 **Fixed:**
 
-* Use `AzureConfig` in `render_README` instead of calling a raw requests. It allows rendering on a private Azure CI organization.
+* Use ``AzureConfig`` in ``render_README`` instead of calling a raw requests. It allows rendering on a private Azure CI organization.
 
 **Security:**
 

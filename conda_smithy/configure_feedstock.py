@@ -1245,6 +1245,40 @@ def render_drone(jinja_env, forge_config, forge_dir, return_metadata=False):
     )
 
 
+def azure_build_id_from_token(forge_config):
+    try:
+        # If it fails then we switch to a request using an Azure token.
+        from conda_smithy import azure_ci_utils
+
+        config = azure_ci_utils.AzureConfig(
+            org_or_user=forge_config["azure"]["user_or_org"],
+            project_name=forge_config["azure"]["project_name"],
+        )
+        repo = forge_config["github"]["repo_name"]
+        build_info = azure_ci_utils.get_build_id(repo, config)
+        forge_config["azure"]["build_id"] = build_info["build_id"]
+    except IOError as err:
+        # We don't want to command to fail if requesting the build_id fails.
+        logger.warning(
+            "Azure build_id can't be retrieved using the Azure token. Exception: {}".format(
+                err
+            )
+        )
+
+
+def azure_build_id_from_public(forge_config):
+    resp = requests.get(
+        "https://dev.azure.com/{org}/{project_name}/_apis/build/definitions?name={repo}".format(
+            org=forge_config["azure"]["user_or_org"],
+            project_name=forge_config["azure"]["project_name"],
+            repo=forge_config["github"]["repo_name"],
+        )
+    )
+    resp.raise_for_status()
+    build_def = resp.json()["value"][0]
+    forge_config["azure"]["build_id"] = build_def["id"]
+
+
 def render_README(jinja_env, forge_config, forge_dir, render_info=None):
     if "README.md" in forge_config["skip_render"]:
         logger.info("README.md rendering is skipped")
@@ -1318,37 +1352,11 @@ def render_README(jinja_env, forge_config, forge_dir, render_info=None):
         # Try to retrieve the build_id from the interwebs.
         # Works if the Azure CI is public
         try:
-            resp = requests.get(
-                "https://dev.azure.com/{org}/{project_name}/_apis/build/definitions?name={repo}".format(
-                    org=forge_config["azure"]["user_or_org"],
-                    project_name=forge_config["azure"]["project_name"],
-                    repo=forge_config["github"]["repo_name"],
-                )
-            )
-            resp.raise_for_status()
-            build_def = resp.json()["value"][0]
-            forge_config["azure"]["build_id"] = build_def["id"]
+            azure_build_id_from_public(forge_config)
         except (IndexError, IOError):
             pass
         except json.decoder.JSONDecodeError:
-            try:
-                # If it fails then we switch to a request using an Azure token.
-                from conda_smithy import azure_ci_utils
-
-                config = azure_ci_utils.AzureConfig(
-                    org_or_user=forge_config["azure"]["user_or_org"],
-                    project_name=forge_config["azure"]["project_name"],
-                )
-                repo = forge_config["github"]["repo_name"]
-                build_info = azure_ci_utils.get_build_id(repo, config)
-                forge_config["azure"]["build_id"] = build_info["build_id"]
-            except IOError as err:
-                # We don't want to command to fail if requesting the build_id fails.
-                logger.warning(
-                    "Azure build_id can't be retrieved using the Azure token. Exception: {}".format(
-                        err
-                    )
-                )
+            azure_build_id_from_token(forge_config)
 
     logger.debug("README")
     logger.debug(yaml.dump(forge_config))
