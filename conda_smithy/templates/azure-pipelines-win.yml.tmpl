@@ -89,18 +89,20 @@ jobs:
 
 {%- if conda_forge_output_validation %}
     - script: |
+        set "FEEDSTOCK_NAME=%BUILD_REPOSITORY_NAME:*/=%"
         call activate base
-        validate_recipe_outputs "{{ feedstock_name }}"
+        validate_recipe_outputs "%FEEDSTOCK_NAME%"
       displayName: Validate Recipe Outputs
 {%- endif %}
 
     - script: |
         set "GIT_BRANCH=%BUILD_SOURCEBRANCHNAME%"
+        set "FEEDSTOCK_NAME=%BUILD_REPOSITORY_NAME:*/=%"
 {%- if upload_on_branch %}
         set "UPLOAD_ON_BRANCH={{ upload_on_branch }}"
 {%- endif %}
         call activate base
-        upload_package {% if conda_forge_output_validation %}--validate --feedstock-name="{{ feedstock_name }}"{% endif %}{% if private_upload %} --private{% endif %} .\ ".\{{ recipe_dir }}" .ci_support\%CONFIG%.yaml
+        upload_package {% if conda_forge_output_validation %}--validate --feedstock-name="%FEEDSTOCK_NAME%"{% endif %}{% if private_upload %} --private{% endif %} .\ ".\{{ recipe_dir }}" .ci_support\%CONFIG%.yaml
       displayName: Upload package
       env:
         BINSTAR_TOKEN: $(BINSTAR_TOKEN)

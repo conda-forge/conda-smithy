@@ -30,6 +30,7 @@ steps:
     - export RECIPE_ROOT="$FEEDSTOCK_ROOT/{{ recipe_dir }}"
     - export CI=drone
     - export GIT_BRANCH="$DRONE_BRANCH"
+    - export FEEDSTOCK_NAME=$(basename ${DRONE_REPO_NAME})
 {%- if upload_on_branch %}
     - export UPLOAD_ON_BRANCH="{{ upload_on_branch }}"
 {%- endif %}
