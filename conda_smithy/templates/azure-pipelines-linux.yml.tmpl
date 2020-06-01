@@ -17,7 +17,8 @@ jobs:
   - script: |
         export CI=azure
         export GIT_BRANCH=$BUILD_SOURCEBRANCHNAME
-        export FEEDSTOCK_NAME=`basename ${BUILD_REPOSITORYNAME}`
+        fn=`basename ${BUILD_REPOSITORYURI}`
+        export FEEDSTOCK_NAME=${fn%".git"}
 {%- if upload_on_branch %}
         export UPLOAD_ON_BRANCH="{{ upload_on_branch }}"
 {%- endif %}
