@@ -129,6 +129,7 @@ def create_github_repo(args):
         gh_repo = user_or_org.create_repo(
             repo_name,
             has_wiki=False,
+            private=args.private,
             description="A conda-smithy repository for {}.".format(
                 feedstock_name
             ),
