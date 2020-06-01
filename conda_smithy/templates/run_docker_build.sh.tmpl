@@ -14,7 +14,7 @@ FEEDSTOCK_ROOT=$(cd "$(dirname "$0")/.."; pwd;)
 RECIPE_ROOT="${FEEDSTOCK_ROOT}/{{ recipe_dir }}"
 
 if [ -z ${FEEDSTOCK_NAME} ]; then
-    export FEEDSTOCK_NAME=$(basename ${FEEDSTOCK_ROOT)
+    export FEEDSTOCK_NAME=$(basename ${FEEDSTOCK_ROOT})
 fi
 
 docker info
