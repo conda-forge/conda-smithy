@@ -62,14 +62,12 @@ build: off
 test_script:
     - cmd: conda.exe build {{ recipe_dir }} -m .ci_support\%CONFIG%.yaml
 {%- if conda_forge_output_validation %}
-    - $fn = Split-Path "%APPVEYOR_REPO_NAME%" -Leaf
-    - set "FEEDSTOCK_NAME=$fn"
+    - set "FEEDSTOCK_NAME=%APPVEYOR_REPO_NAME:*/=%"
     - cmd: validate_recipe_outputs "%FEEDSTOCK_NAME%"
 {%- endif %}
 deploy_script:
     - set "GIT_BRANCH=%APPVEYOR_REPO_BRANCH%"
-    - $fn = Split-Path "%APPVEYOR_REPO_NAME%" -Leaf
-    - set "FEEDSTOCK_NAME=$fn"
+    - set "FEEDSTOCK_NAME=%APPVEYOR_REPO_NAME:*/=%"
 {%- if upload_on_branch %}
     - set "UPLOAD_ON_BRANCH={{ upload_on_branch }}"
 {%- endif %}
