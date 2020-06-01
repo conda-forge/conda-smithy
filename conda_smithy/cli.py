@@ -162,6 +162,12 @@ class RegisterGithub(Subcommand):
             nargs="*",
             help="Extra users to be added as admins",
         )
+        scp.add_argument(
+            "--private",
+            action="store_true",
+            default=False,
+            help="Create a private repository.",
+        )
 
     def __call__(self, args):
         from . import github
