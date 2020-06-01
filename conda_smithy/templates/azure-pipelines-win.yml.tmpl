@@ -88,20 +88,16 @@ jobs:
       condition: not(contains(variables['CONFIG'], 'vs2008'))
 
 {%- if conda_forge_output_validation %}
-    # using this trick to get basename
-    # https://gist.github.com/Ciantic/092ec71fa76429cebd666bb6c789d089
     - script: |
-        for /F "delims=" %%i in (%BUILD_REPOSITORY_NAME%) do set FEEDSTOCK_NAME="%%~ni"
+        set "FEEDSTOCK_NAME=%BUILD_REPOSITORY_NAME:*/=%"
         call activate base
         validate_recipe_outputs "%FEEDSTOCK_NAME%"
       displayName: Validate Recipe Outputs
 {%- endif %}
 
-    # using this trick to get basename
-    # https://gist.github.com/Ciantic/092ec71fa76429cebd666bb6c789d089
     - script: |
         set "GIT_BRANCH=%BUILD_SOURCEBRANCHNAME%"
-        for /F "delims=" %%i in (%BUILD_REPOSITORY_NAME%) do set FEEDSTOCK_NAME="%%~ni"
+        set "FEEDSTOCK_NAME=%BUILD_REPOSITORY_NAME:*/=%"
 {%- if upload_on_branch %}
         set "UPLOAD_ON_BRANCH={{ upload_on_branch }}"
 {%- endif %}
