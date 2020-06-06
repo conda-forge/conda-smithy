@@ -17,6 +17,7 @@
 **Fixed:**
 
 * CI skeleton properly sets the build number
+* use SPDX identifier for feedstock license
 
 **Security:**
 
