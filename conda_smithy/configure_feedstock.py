@@ -1351,7 +1351,7 @@ def render_README(jinja_env, forge_config, forge_dir, render_info=None):
         # Works if the Azure CI is public
         try:
             azure_build_id_from_public(forge_config)
-        except IOError as err:
+        except (IndexError, IOError) as err:
             # We don't want to command to fail if requesting the build_id fails.
             logger.warning(
                 "Azure build_id can't be retrieved using the Azure token. Exception: {}".format(
