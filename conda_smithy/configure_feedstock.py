@@ -1246,27 +1246,25 @@ def render_drone(jinja_env, forge_config, forge_dir, return_metadata=False):
 
 
 def azure_build_id_from_token(forge_config):
-    try:
-        # If it fails then we switch to a request using an Azure token.
-        from conda_smithy import azure_ci_utils
+    """Retrieve Azure `build_id` from a `forge_config` using an Azure token.
+    This function allows the `build_id` to be retrieved when the Azure org is private.
+    """
+    # If it fails then we switch to a request using an Azure token.
+    from conda_smithy import azure_ci_utils
 
-        config = azure_ci_utils.AzureConfig(
-            org_or_user=forge_config["azure"]["user_or_org"],
-            project_name=forge_config["azure"]["project_name"],
-        )
-        repo = forge_config["github"]["repo_name"]
-        build_info = azure_ci_utils.get_build_id(repo, config)
-        forge_config["azure"]["build_id"] = build_info["build_id"]
-    except IOError as err:
-        # We don't want to command to fail if requesting the build_id fails.
-        logger.warning(
-            "Azure build_id can't be retrieved using the Azure token. Exception: {}".format(
-                err
-            )
-        )
+    config = azure_ci_utils.AzureConfig(
+        org_or_user=forge_config["azure"]["user_or_org"],
+        project_name=forge_config["azure"]["project_name"],
+    )
+    repo = forge_config["github"]["repo_name"]
+    build_info = azure_ci_utils.get_build_id(repo, config)
+    forge_config["azure"]["build_id"] = build_info["build_id"]
 
 
 def azure_build_id_from_public(forge_config):
+    """Retrieve Azure `build_id` from a `forge_config`. This function only works
+    when the Azure org is public.
+    """
     resp = requests.get(
         "https://dev.azure.com/{org}/{project_name}/_apis/build/definitions?name={repo}".format(
             org=forge_config["azure"]["user_or_org"],
@@ -1353,8 +1351,13 @@ def render_README(jinja_env, forge_config, forge_dir, render_info=None):
         # Works if the Azure CI is public
         try:
             azure_build_id_from_public(forge_config)
-        except (IndexError, IOError):
-            pass
+        except IOError as err:
+            # We don't want to command to fail if requesting the build_id fails.
+            logger.warning(
+                "Azure build_id can't be retrieved using the Azure token. Exception: {}".format(
+                    err
+                )
+            )
         except json.decoder.JSONDecodeError:
             azure_build_id_from_token(forge_config)
 
