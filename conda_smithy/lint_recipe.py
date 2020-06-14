@@ -520,8 +520,7 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
     host_reqs = requirements_section.get("host") or []
     run_reqs = requirements_section.get("run") or []
     test_reqs = test_section.get("requires") or []
-    outputs_reqs = outputs_section.get("requirements") or []
-    for reqs in [build_reqs, host_reqs, run_reqs, test_reqs, outputs_reqs]:
+    for reqs in [build_reqs, host_reqs, run_reqs, test_reqs]:
         pkg = re.split("=|>|<|#", str(reqs))[0]
         if pkg.islower():
             continue
