@@ -516,9 +516,10 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
             )
 
     # 25: requirements should be all in lower-case
+    build_reqs = requirements_section.get("build") or []
     host_reqs = requirements_section.get("host") or []
     run_reqs = requirements_section.get("run") or []
-    for reqs in [host_reqs, run_reqs]:
+    for reqs in [build_reqs, host_reqs, run_reqs]:
         pkg = str(reqs).partition(" ")[0]
         if pkg.islower():
             continue
