@@ -645,3 +645,26 @@ def test_automerge_action_exists(py_recipe, jinja_env):
         action_config = yaml.safe_load(f)
     assert "jobs" in action_config
     assert "automerge-action" in action_config["jobs"]
+
+
+def test_conda_forge_yaml_empty(config_yaml):
+    load_forge_config = lambda: cnfgr_fdstk._load_forge_config(
+        config_yaml,
+        exclusive_config_file=os.path.join(
+            config_yaml, "recipe", "default_config.yaml"
+        ),
+    )
+
+    assert ["conda-forge", "main"] in load_forge_config()["channels"][
+        "targets"
+    ]
+
+    os.unlink(os.path.join(config_yaml, "conda-forge.yml"))
+    with pytest.raises(RuntimeError):
+        load_forge_config()
+
+    with open(os.path.join(config_yaml, "conda-forge.yml"), "w"):
+        pass
+    assert ["conda-forge", "main"] in load_forge_config()["channels"][
+        "targets"
+    ]

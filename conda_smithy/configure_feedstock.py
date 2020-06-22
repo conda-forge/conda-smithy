@@ -1495,7 +1495,8 @@ def _load_forge_config(forge_dir, exclusive_config_file):
         )
     else:
         with open(forge_yml, "r") as fh:
-            file_config = list(yaml.safe_load_all(fh))[0] or {}
+            documents = list(yaml.safe_load_all(fh))
+            file_config = (documents or [None])[0] or {}
 
         # The config is just the union of the defaults, and the overriden
         # values.
