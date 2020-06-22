@@ -4,26 +4,8 @@
 
 jobs:
 - job: win
-  pool:
-    vmImage: vs2017-win2016
-  timeoutInMinutes: {{ azure.timeout_minutes }}
-  strategy:
-    maxParallel: 4
-    matrix:
-    {%- for data in configs %}
-    {%- if data.platform.startswith('win') %}
-      {{ data.config_name }}:
-        CONFIG: {{ data.config_name }}
-        CONDA_BLD_PATH: D:\\bld\\
-        UPLOAD_PACKAGES: {{ data.upload }}
-    {%- endif %}
-    {%- endfor %}
+  {{ azure_yaml|indent(2) }}
   steps:
-    # TODO: Fast finish on azure pipelines?
-    - script: |
-        ECHO ON
-        {{ fast_finish }}
-
     - script: |
         choco install vcpython27 -fdv -y --debug
       condition: contains(variables['CONFIG'], 'vs2008')
@@ -60,32 +42,37 @@ jobs:
 
     - task: CondaEnvironment@1
       inputs:
-        packageSpecs: 'python=3.6 conda-build conda conda-forge::conda-forge-ci-setup=2' # Optional
+        packageSpecs: 'python=3.6 conda-build conda conda-forge::conda-forge-ci-setup=3 pip' # Optional
         installOptions: "-c conda-forge"
-        updateConda: false
+        updateConda: true
       displayName: Install conda-build and activate environment
 
     - script: set PYTHONUNBUFFERED=1
+      displayName: Set PYTHONUNBUFFERED
 
     # Configure the VM
-    - script: setup_conda_rc .\ .\{{ recipe_dir }} .\.ci_support\%CONFIG%.yaml
+    - script: |
+        call activate base
+        {%- if local_ci_setup %}
+        conda.exe uninstall --quiet --yes --force conda-forge-ci-setup
+        pip install --no-deps ".\{{ recipe_dir }}\."
+        {%- endif %}
+        setup_conda_rc .\ ".\{{ recipe_dir }}" .\.ci_support\%CONFIG%.yaml
+      displayName: conda-forge CI setup
 
     {% if build_setup -%}
     # Configure the VM.
     - script: |
         set "CI=azure"
+        call activate base
         {{ build_setup.replace("\n", "\n        ").rstrip() }}
       displayName: conda-forge build setup
     {% endif %}
 
-    - script: |
-        rmdir C:\strawberry /s /q
-      continueOnError: true
-      displayName: remove strawberryperl
-
     # Special cased version setting some more things!
     - script: |
-        conda.exe build recipe -m .ci_support\%CONFIG%.yaml
+        call activate base
+        conda.exe build "{{ recipe_dir }}" -m .ci_support\%CONFIG%.yaml
       displayName: Build recipe (vs2008)
       env:
         VS90COMNTOOLS: "C:\\Program Files (x86)\\Common Files\\Microsoft\\Visual C++ for Python\\9.0\\VC\\bin"
@@ -93,19 +80,34 @@ jobs:
       condition: contains(variables['CONFIG'], 'vs2008')
 
     - script: |
-        conda.exe build recipe -m .ci_support\%CONFIG%.yaml
+        call activate base
+        conda.exe build "{{ recipe_dir }}" -m .ci_support\%CONFIG%.yaml
       displayName: Build recipe
       env:
         PYTHONUNBUFFERED: 1
       condition: not(contains(variables['CONFIG'], 'vs2008'))
 
+{%- if conda_forge_output_validation %}
+    - script: |
+        set "FEEDSTOCK_NAME=%BUILD_REPOSITORY_NAME:*/=%"
+        call activate base
+        validate_recipe_outputs "%FEEDSTOCK_NAME%"
+      displayName: Validate Recipe Outputs
+{%- endif %}
+
     - script: |
         set "GIT_BRANCH=%BUILD_SOURCEBRANCHNAME%"
+        set "FEEDSTOCK_NAME=%BUILD_REPOSITORY_NAME:*/=%"
 {%- if upload_on_branch %}
         set "UPLOAD_ON_BRANCH={{ upload_on_branch }}"
 {%- endif %}
-        upload_package .\ .\{{ recipe_dir }} .ci_support\%CONFIG%.yaml
+        call activate base
+        upload_package {% if conda_forge_output_validation %}--validate --feedstock-name="%FEEDSTOCK_NAME%"{% endif %}{% if private_upload %} --private{% endif %} .\ ".\{{ recipe_dir }}" .ci_support\%CONFIG%.yaml
       displayName: Upload package
       env:
         BINSTAR_TOKEN: $(BINSTAR_TOKEN)
+{%- if conda_forge_output_validation %}
+        FEEDSTOCK_TOKEN: $(FEEDSTOCK_TOKEN)
+        STAGING_BINSTAR_TOKEN: $(STAGING_BINSTAR_TOKEN)
+{%- endif %}
       condition: and(succeeded(), not(eq(variables['UPLOAD_PACKAGES'], 'False')))

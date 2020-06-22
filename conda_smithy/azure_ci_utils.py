@@ -47,6 +47,10 @@ class AzureConfig:
             if not self.token:
                 raise ValueError()
         except (IOError, ValueError):
+            print(
+                "No azure token. Create a token and\n"
+                "put it in ~/.conda-smithy/azure.token"
+            )
             self.token = None
 
         # By default for now don't report on the build information back to github
@@ -123,16 +127,16 @@ def get_repo_reference(config: AzureConfig, github_org, repo_name):
     return repo
 
 
-def register_repo(github_org, repo_name, config: AzureConfig = default_config):
+def get_default_build_definition(
+    github_org, repo_name, config: AzureConfig = default_config, **kwargs,
+):
     from vsts.build.v4_1.models import (
         BuildDefinition,
-        BuildDefinitionReference,
         BuildRepository,
     )
     from vsts.task_agent.v4_0.task_agent_client import TaskAgentClient
     import inspect
 
-    bclient = build_client()
     aclient = TaskAgentClient(config.instance_base_url, config.credentials)
 
     source_repo = get_repo_reference(config, github_org, repo_name)
@@ -200,6 +204,18 @@ def register_repo(github_org, repo_name, config: AzureConfig = default_config):
             project=config.project_name, group_name="anaconda-org"
         ),
         type="build",
+        **kwargs,
+    )
+
+    return build_definition
+
+
+def register_repo(github_org, repo_name, config: AzureConfig = default_config):
+    from vsts.build.v4_1.models import BuildDefinitionReference
+
+    bclient = build_client()
+    build_definition = get_default_build_definition(
+        github_org, repo_name, config=config,
     )
 
     # clean up existing builds for the same feedstock if present

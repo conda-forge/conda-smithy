@@ -10,6 +10,7 @@ from github.Team import Team
 import github
 
 import conda_build.api
+from conda_smithy.utils import get_feedstock_name_from_meta
 
 
 def gh_token():
@@ -111,10 +112,7 @@ def create_github_repo(args):
         trim_skip=False,
     )[0][0]
 
-    if "parent_recipe" in meta.meta["extra"]:
-        feedstock_name = meta.meta["extra"]["parent_recipe"]["name"]
-    else:
-        feedstock_name = meta.name()
+    feedstock_name = get_feedstock_name_from_meta(meta)
 
     gh = Github(token)
     user_or_org = None
@@ -131,6 +129,7 @@ def create_github_repo(args):
         gh_repo = user_or_org.create_repo(
             repo_name,
             has_wiki=False,
+            private=args.private,
             description="A conda-smithy repository for {}.".format(
                 feedstock_name
             ),

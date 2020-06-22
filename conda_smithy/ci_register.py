@@ -353,7 +353,7 @@ def travis_get_repo_info(user, project, show_error=False):
         content = response.json()
         return content
     except requests.HTTPError as e:
-        if show_error:
+        if show_error or True:
             print(e)
     return {}
 
@@ -486,6 +486,55 @@ def travis_configure(user, project):
         response = requests.patch(url, json=data, headers=headers)
         if response.status_code != 204:
             response.raise_for_status()
+
+
+def add_token_to_travis(user, project):
+    """Add the BINSTAR_TOKEN to travis."""
+
+    headers = travis_headers()
+
+    repo_info = travis_get_repo_info(user, project)
+    repo_id = repo_info["id"]
+
+    r = requests.get(
+        "{}/repo/{repo_id}/env_vars".format(travis_endpoint, repo_id=repo_id),
+        headers=headers,
+    )
+    if r.status_code != 200:
+        r.raise_for_status()
+
+    have_token = False
+    ev_id = None
+    for ev in r.json()["env_vars"]:
+        if ev["name"] == "BINSTAR_TOKEN":
+            have_token = True
+            ev_id = ev["id"]
+
+    data = {
+        "env_var.name": "BINSTAR_TOKEN",
+        "env_var.value": anaconda_token,
+        "env_var.public": "false",
+    }
+
+    if have_token:
+        r = requests.patch(
+            "{}/repo/{repo_id}/env_var/{ev_id}".format(
+                travis_endpoint, repo_id=repo_id, ev_id=ev_id,
+            ),
+            headers=headers,
+            json=data,
+        )
+        r.raise_for_status()
+    else:
+        r = requests.post(
+            "{}/repo/{repo_id}/env_vars".format(
+                travis_endpoint, repo_id=repo_id
+            ),
+            headers=headers,
+            json=data,
+        )
+        if r.status_code != 201:
+            r.raise_for_status()
 
 
 def travis_cleanup(org, project):

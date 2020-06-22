@@ -180,6 +180,35 @@ class Test_linter(unittest.TestCase):
             lints, hints = linter.lintify({}, recipe_dir)
             self.assertNotIn(expected_message, lints)
 
+    def test_jinja2_vars(self):
+        expected_message = (
+            "Jinja2 variable references are suggested to take a ``{{<one space>"
+            "<variable name><one space>}}`` form. See lines %s."
+            % ([6, 8, 10, 11, 12])
+        )
+
+        with tmp_directory() as recipe_dir:
+            with io.open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
+                fh.write(
+                    """
+                    package:
+                       name: foo
+                    requirements:
+                      run:
+                        - {{name}}
+                        - {{ x.update({4:5}) }}
+                        - {{ name}}
+                        - {{ name }}
+                        - {{name|lower}}
+                        - {{ name|lower}}
+                        - {{name|lower }}
+                        - {{ name|lower }}
+                    """
+                )
+
+            _, hints = linter.lintify({}, recipe_dir)
+            self.assertTrue(any(h.startswith(expected_message) for h in hints))
+
     def test_selectors(self):
         expected_message = (
             "Selectors are suggested to take a "
@@ -584,12 +613,63 @@ class Test_linter(unittest.TestCase):
         )
         self.assertIn(expected_message, lints)
 
+    def test_spdx_license(self):
+        msg = "License is not an SPDX identifier (or a custom LicenseRef) nor an SPDX license expression."
+        licenses = {
+            "BSD-100": False,
+            "GPL-2.0": False,
+            "GPL-2.0-only": True,
+            "Other": False,
+            "GPL-2.0-or-later or MIT": True,
+            "LGPL-2.0-only | MIT": False,
+            "LLVM-exception": False,
+            "LicenseRef-kebab-case-2--with.dots OR MIT": True,
+            "LicenseRef-HDF5": True,
+            "LicenseRef-@HDF5": False,
+        }
+        for license, good in licenses.items():
+            meta = {"about": {"license": license}}
+            lints, hints = linter.lintify(meta)
+            print(license, good)
+            if good:
+                self.assertNotIn(msg, hints)
+            else:
+                self.assertIn(msg, hints)
+
+    def test_spdx_license_exception(self):
+        msg = "License exception is not an SPDX exception."
+        licenses = {
+            "Apache 2.0 WITH LLVM-exception": True,
+            "Apache 2.0 WITH LLVM2-exception": False,
+        }
+        for license, good in licenses.items():
+            meta = {"about": {"license": license}}
+            lints, hints = linter.lintify(meta)
+            if good:
+                self.assertNotIn(msg, hints)
+            else:
+                self.assertIn(msg, hints)
+
     def test_license_file_required(self):
         meta = {
             "about": {
                 "home": "a URL",
                 "summary": "A test summary",
                 "license": "MIT",
+            }
+        }
+        lints, hints = linter.lintify(meta)
+        expected_message = "license_file entry is missing, but is required."
+        self.assertIn(expected_message, lints)
+
+    def test_license_file_empty(self):
+        meta = {
+            "about": {
+                "home": "a URL",
+                "summary": "A test summary",
+                "license": "LicenseRef-Something",
+                "license_family": "LGPL",
+                "license_file": None,
             }
         }
         lints, hints = linter.lintify(meta)
@@ -907,24 +987,67 @@ class Test_linter(unittest.TestCase):
         meta = {"requirements": {"host": ["python >=3", "python"]}}
         lints, hints = linter.lintify(meta)
         self.assertNotIn(
-            "Non noarch: python packages should have a python requirement without any version constraints.",
+            "Non noarch packages should have python requirement without any version constraints.",
             lints,
         )
 
         meta = {"requirements": {"host": ["python >=3"]}}
         lints, hints = linter.lintify(meta)
         self.assertIn(
-            "Non noarch: python packages should have a python requirement without any version constraints.",
+            "Non noarch packages should have python requirement without any version constraints.",
             lints,
         )
 
+        meta = {
+            "requirements": {"host": ["python"], "run": ["python-dateutil"]}
+        }
+        # Test that this doesn't crash
+        lints, hints = linter.lintify(meta)
+
+    def test_r_base_requirements(self):
+        meta = {"requirements": {"host": ["r-base >=3.5"]}}
+        lints, hints = linter.lintify(meta)
+        self.assertIn(
+            "If r-base is a host requirement, it should be a run requirement.",
+            lints,
+        )
+
+        meta = {
+            "requirements": {"host": ["r-base >=3.5"]},
+            "outputs": [{"name": "foo"}],
+        }
+        lints, hints = linter.lintify(meta)
+        self.assertNotIn(
+            "If r-base is a host requirement, it should be a run requirement.",
+            lints,
+        )
+
+        meta = {"requirements": {"host": ["r-base >=3.5", "r-base"]}}
+        lints, hints = linter.lintify(meta)
+        self.assertNotIn(
+            "Non noarch packages should have r-base requirement without any version constraints.",
+            lints,
+        )
+
+        meta = {"requirements": {"host": ["r-base >=3.5"]}}
+        lints, hints = linter.lintify(meta)
+        self.assertIn(
+            "Non noarch packages should have r-base requirement without any version constraints.",
+            lints,
+        )
+
+    @pytest.mark.skipif(
+        shutil.which("shellcheck") is None, reason="shellcheck not found"
+    )
     def test_build_sh_with_shellcheck_findings(self):
         lints, hints = linter.main(
             os.path.join(_thisdir, "recipes", "build_script_with_findings"),
             return_hints=True,
         )
-        assert "Whenever possible fix all shellcheck findings" in hints[0]
-        assert len(hints) == (50 + 2)
+        assert any(
+            "Whenever possible fix all shellcheck findings" in h for h in hints
+        )
+        assert len(hints) < 100
 
 
 @pytest.mark.cli

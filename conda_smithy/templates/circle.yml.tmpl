@@ -26,6 +26,7 @@ jobs:
 {%- endif %}
     environment:
       - CONFIG: "{{ data.config_name }}"
+      - UPLOAD_PACKAGES: "{{ data.upload }}"
 {%- if data.platform.startswith('linux') %}
         DOCKER_IMAGE: "{{ data.config["docker_image"][-1] }}"
 {%- endif %}
@@ -41,11 +42,13 @@ jobs:
 {%- if data.platform.startswith('linux') %}
           command: |
             export CI=circle
+            export FEEDSTOCK_NAME=$(basename ${CIRCLE_PROJECT_REPONAME})
             ./.scripts/run_docker_build.sh
 {%- else %}
           command: |
             export CI=circle
-            ./.circleci/run_osx_build.sh
+            export FEEDSTOCK_NAME=$(basename ${CIRCLE_PROJECT_REPONAME})
+            ./.scripts/run_osx_build.sh
 {%- endif %}
 {%- if idle_timeout_minutes %}
           no_output_timeout: {{ idle_timeout_minutes }}m

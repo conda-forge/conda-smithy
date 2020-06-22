@@ -4,6 +4,346 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.7.3
+====================
+
+**Fixed:**
+
+* Get feedstock name from meta when registering with CI services.
+* CODEOWNERS file no longer treats GitHub team names as case-sensitive.
+
+**Authors:**
+
+* Matthew R Becker
+* Uwe L. Korn
+
+
+
+v3.7.2
+====================
+
+**Changed:**
+
+* Changed the automerge configuration to use conda-forge/automerge-action.
+
+**Authors:**
+
+* Matthew R Becker
+
+
+
+v3.7.1
+====================
+
+**Added:**
+
+* Added ci skip statements during token registration to reduce loads.
+* Added tar as a dependency
+* Option to specify the generated feedstock name via ``extra.feedstock-name``.
+* Support self-hosted Azure agents
+
+**Changed:**
+
+* Changed the docker mount to the recipe directory to have read-write permissions instead
+  of read-only.
+* conda-forge-pinning package is now downloaded on the fly
+
+**Fixed:**
+
+* Fix folding scripts file in GH PRs
+* Error when linting recipes with ``license_file: `` (i.e. no file specified)
+* PSF-2.0 is not a deprecated license
+* Fixed whitespace additions
+
+**Authors:**
+
+* Isuru Fernando
+* Matthew R Becker
+* Matthew R. Becker
+* Chris Burr
+* Leo Fang
+* Uwe L. Korn
+
+
+
+v3.7.0
+====================
+
+**Added:**
+
+Added a linter check for already existing feedstocks that are not exact match, but may have underscore instead of dash, and vice versa.
+* Added code to rotate anaconda tokens.
+* Added new `pip-install`-based hooks for using a local copy of the
+  `conda-forge-ci-setup` package.
+
+**Changed:**
+
+* Refactored OSX CI scripts to be based off of a single global script on all CI platforms.
+* Renamed the feedstock token output files to not munge "-feedstock" from
+  the names.
+
+* Bumped the default version of the `conda-forge-ci-setup` package to 3 to
+  support the new output validation service.
+
+**Fixed:**
+
+* Fixed bug in feedstock token registration that deleted other secrets from azure.
+* Fixed bugs in tests for feedstock tokens.
+
+**Security:**
+
+* Added code to call the feedstock output validation service. You must have
+  `conda_forge_output_validation` set to true in the `conda-forge.yml` to use
+  this feature.
+
+**Authors:**
+
+* Matthew R Becker
+* Matthew R. Becker
+* Natasha Pavlovikj
+
+
+
+v3.6.17
+====================
+
+**Added:**
+
+* Added a linter check for jinja2 variables to be of the form ``{{<one space><variable name><one space>}}``.
+
+**Changed:**
+
+* Change azure.force default to False in conda-forge.yml (#1252)
+* Use a faster script for removing homebrew on osx.
+
+**Removed:**
+
+* Removed No azure token warning when rerendering
+* Deleting strawberry perl was removed as conda-forge-ci-setup now filters the PATH
+* Removed fast finish script for travis as we now set the setting on travis
+
+**Fixed:**
+
+* Re-rendering now cleans old contents in ``.azure-pipelines``
+* Fixed the drone CI badge
+* Made yaml loading in conda_smithy thread safe
+
+**Authors:**
+
+* Isuru Fernando
+* Matthew R Becker
+* Matthew R. Becker
+* John Kirkham
+* Tim Snyder
+* Peter Williams
+
+
+
+**Changed:**
+
+* Allow people to pass extra arguments to ``docker run`` by setting
+  ``$CONDA_FORGE_DOCKER_RUN_ARGS``.
+
+**Authors:**
+
+* Peter K. G. Williams
+
+
+
+v3.6.16
+====================
+
+**Changed:**
+
+* Windows conda environment is activated before conda calls
+* Moved the appveyor image to Visual Studio 2017.
+
+**Fixed:**
+
+* Linter now properly allows ``LicenseRef`` and ``-License`` in the license section.
+
+**Authors:**
+
+* Isuru Fernando
+* Matthew R Becker
+* Matthew R. Becker
+
+
+
+v3.6.15
+====================
+
+**Added:**
+
+* Linter allows LicenseRef custom licenses.
+
+**Removed:**
+
+* Other is not a recognized license anymore.
+
+* Deprecated SPDX license are not recognized anymore.
+
+**Authors:**
+
+* Isuru Fernando
+* Matthew R Becker
+* Filipe Fernandes
+* Matthew R. Becker
+* Tim Snyder
+* Dave Hirschfeld
+* Nils Wentzell
+
+
+
+v3.6.14
+====================
+
+**Fixed:**
+
+* Package MANIFEST did not include the ``license_exceptions.txt`` file properly.
+
+**Authors:**
+
+* Matthew R. Becker
+
+
+
+v3.6.13
+====================
+
+**Added:**
+
+* Added code to validate feedstock tokens
+* Added code to register FEEDSTOCK_TOKENS per CFEP-13
+* Linter will now recommend SPDX expression for license entry
+
+**Fixed:**
+
+* Rerender use forge_config["recipe_dir"] instead of hardcoding "recipe" (#1254 & #1257)
+* Fixed bug where BINSTAR_TOKEN's were not properly patched if they already
+  existed for TravisCI.
+
+**Authors:**
+
+* Isuru Fernando
+* Matthew R Becker
+* Tim Snyder
+
+
+
+v3.6.12
+====================
+
+**Fixed:**
+
+* Fix bug with conda 4.6.14 on Windows
+
+**Authors:**
+
+* Filipe Fernandes
+* Dave Hirschfeld
+
+
+
+v3.6.11
+====================
+
+**Added:**
+
+* Added feature to upload the BINSTAR_TOKEN for travis-ci.com directly
+  through the API
+
+**Changed:**
+
+* Updated the version of macOS image to 10.14 for Azure Pipelines.
+* If conda-forge-pinning package has migrations installed, use those
+  migration yaml files instead of the ones from the feedstock if the
+  timestamp field match and remove if the migration yaml has a
+  timestamp and there's no corresponding one in conda-forge-pinning
+  which indicates that the migration is over.
+
+**Deprecated:**
+
+* Deprecated storing BINSTAR_TOKENs in the conda-forge.yml for travis
+
+**Authors:**
+
+* Isuru Fernando
+* Matthew R Becker
+* Maksim Rakitin
+
+
+
+v3.6.10
+====================
+
+**Fixed:**
+
+* Fixed variant comparisons when the variant has a space
+
+**Authors:**
+
+* Isuru Fernando
+
+
+
+v3.6.9
+====================
+
+**Added:**
+
+* Add automerge github actions when rerendering
+* Added the configuration file for the webservices github action
+
+**Fixed:**
+
+* Fix crash of linter when requirements contains packages that start with python in name
+
+**Authors:**
+
+* Isuru Fernando
+* Matthew R Becker
+* Matthew R. Becker
+* Tim Werner
+
+
+
+v3.6.8
+====================
+
+**Changed:**
+
+* Changed the config name to remove * and space characters
+
+**Authors:**
+
+* Isuru Fernando
+* Min RK
+
+
+
+v3.6.7
+====================
+
+**Added:**
+
+Non-noarch recipes shouldn't use version constraints on python and r-base. 
+The linter only checked for python, this PR addes the check for r-base.
+* Added an option to skip adding webhooks
+
+**Fixed:**
+
+* Azure builds for OSX and Windows only attempt to upload if builds succeeded
+  and the BINSTAR_TOKEN is available.
+
+**Authors:**
+
+* Isuru Fernando
+* Mark Harfouche
+* Natasha Pavlovikj
+
+
+
 v3.6.6
 ====================
 

@@ -12,11 +12,25 @@ from contextlib import contextmanager
 import ruamel.yaml
 
 
-# define global yaml API
-# roundrip-loader and allowing duplicate keys
-# for handling # [filter] / # [not filter]
-yaml = ruamel.yaml.YAML(typ="rt")
-yaml.allow_duplicate_keys = True
+def get_feedstock_name_from_meta(meta):
+    """Resolve the feedtstock name from the parsed meta.yaml."""
+    if "feedstock-name" in meta.meta["extra"]:
+        return meta.meta["extra"]["feedstock-name"]
+    elif "parent_recipe" in meta.meta["extra"]:
+        return meta.meta["extra"]["parent_recipe"]["name"]
+    else:
+        return meta.name()
+
+
+def get_yaml():
+    # define global yaml API
+    # roundrip-loader and allowing duplicate keys
+    # for handling # [filter] / # [not filter]
+    # Don't use a global variable for this as a global
+    # variable will make conda-smithy thread unsafe.
+    yaml = ruamel.yaml.YAML(typ="rt")
+    yaml.allow_duplicate_keys = True
+    return yaml
 
 
 @contextmanager
@@ -80,7 +94,7 @@ def update_conda_forge_config(feedstock_directory):
     forge_yaml = os.path.join(feedstock_directory, "conda-forge.yml")
     if os.path.exists(forge_yaml):
         with open(forge_yaml, "r") as fh:
-            code = yaml.load(fh)
+            code = get_yaml().load(fh)
     else:
         code = {}
 
@@ -90,4 +104,4 @@ def update_conda_forge_config(feedstock_directory):
 
     yield code
 
-    yaml.dump(code, Path(forge_yaml))
+    get_yaml().dump(code, Path(forge_yaml))

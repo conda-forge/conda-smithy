@@ -2,39 +2,61 @@
 
 set -x
 
-{{ fast_finish }}
+echo -e "\n\nInstalling a fresh version of Miniforge."
+if [[ ${CI} == "travis" ]]; then
+  echo -en 'travis_fold:start:install_miniforge\\r'
+fi
+MINIFORGE_URL="https://github.com/conda-forge/miniforge/releases/latest/download"
+MINIFORGE_FILE="Miniforge3-MacOSX-x86_64.sh"
+curl -L -O "${MINIFORGE_URL}/${MINIFORGE_FILE}"
+bash $MINIFORGE_FILE -b
+if [[ ${CI} == "travis" ]]; then
+  echo -en 'travis_fold:end:install_miniforge\\r'
+fi
 
-echo "Removing homebrew from CI to avoid conflicts." && echo -en 'travis_fold:start:remove_homebrew\\r'
-curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/uninstall > ~/uninstall_homebrew
-chmod +x ~/uninstall_homebrew
-~/uninstall_homebrew -fq
-rm ~/uninstall_homebrew
-echo -en 'travis_fold:end:remove_homebrew\\r'
+echo -e "\n\nConfiguring conda."
+if [[ ${CI} == "travis" ]]; then
+  echo -en 'travis_fold:start:configure_conda\\r'
+fi
 
-echo "Installing a fresh version of Miniconda." && echo -en 'travis_fold:start:install_miniconda\\r'
-MINICONDA_URL="https://repo.continuum.io/miniconda"
-MINICONDA_FILE="Miniconda3-latest-MacOSX-x86_64.sh"
-curl -L -O "${MINICONDA_URL}/${MINICONDA_FILE}"
-bash $MINICONDA_FILE -b
-echo -en 'travis_fold:end:install_miniconda\\r'
+source ${HOME}/miniforge3/etc/profile.d/conda.sh
+conda activate base
 
-echo "Configuring conda." && echo -en 'travis_fold:start:configure_conda\\r'
-source ~/miniconda3/bin/activate root
+echo -e "\n\nInstalling conda-forge-ci-setup=3 and conda-build."
+conda install -n base --quiet --yes conda-forge-ci-setup=3 conda-build pip
 
-conda install -n root -c conda-forge --quiet --yes conda-forge-ci-setup=2 conda-build
-mangle_compiler ./ ./{{ recipe_dir }} .ci_support/${CONFIG}.yaml
+{% if local_ci_setup %}
+conda uninstall --quiet --yes --force conda-forge-ci-setup
+pip install --no-deps {{ recipe_dir }}/.
+{%- endif %}
+
+echo -e "\n\nSetting up the condarc and mangling the compiler."
 setup_conda_rc ./ ./{{ recipe_dir }} ./.ci_support/${CONFIG}.yaml
+mangle_compiler ./ ./{{ recipe_dir }} .ci_support/${CONFIG}.yaml
 
+echo -e "\n\nMangling homebrew in the CI to avoid conflicts."
+/usr/bin/sudo mangle_homebrew
+/usr/bin/sudo -k
 
 {% if build_setup -%}
+echo -e "\n\nRunning the build setup script."
 {{ build_setup }}
 {%- endif %}
-echo -en 'travis_fold:end:configure_conda\\r'
+if [[ ${CI} == "travis" ]]; then
+  echo -en 'travis_fold:end:configure_conda\\r'
+fi
 
 set -e
 
+echo -e "\n\nMaking the build clobber file and running the build."
 make_build_number ./ ./{{ recipe_dir }} ./.ci_support/${CONFIG}.yaml
-
 conda build ./{{ recipe_dir }} -m ./.ci_support/${CONFIG}.yaml --clobber-file ./.ci_support/clobber_${CONFIG}.yaml
 
-upload_package ./ ./{{ recipe_dir }} ./.ci_support/${CONFIG}.yaml
+{%- if conda_forge_output_validation %}
+validate_recipe_outputs "${FEEDSTOCK_NAME}"
+{%- endif %}
+
+if [[ "${UPLOAD_PACKAGES}" != "False" ]]; then
+  echo -e "\n\nUploading the packages."
+  upload_package {% if conda_forge_output_validation %}--validate --feedstock-name="${FEEDSTOCK_NAME}"{% endif %}{% if private_upload %} --private{% endif %} ./ ./{{ recipe_dir }} ./.ci_support/${CONFIG}.yaml
+fi

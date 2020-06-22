@@ -47,11 +47,12 @@ matrix:
 script:
   - export CI=travis
   - export GIT_BRANCH="$TRAVIS_BRANCH"
+  - export FEEDSTOCK_NAME=$(basename ${TRAVIS_REPO_SLUG})
 {%- if upload_on_branch %}
   - export UPLOAD_ON_BRANCH="{{ upload_on_branch }}"
 {%- endif %}
 {% if 'osx' in platformset %}
-  - if [[ ${PLATFORM} =~ .*osx.* ]]; then ./.travis/run_osx_build.sh; fi
+  - if [[ ${PLATFORM} =~ .*osx.* ]]; then ./.scripts/run_osx_build.sh; fi
 {%- endif %}
 {% if 'linux' in platformset %}
   - if [[ ${PLATFORM} =~ .*linux.* ]]; then ./.scripts/run_docker_build.sh; fi

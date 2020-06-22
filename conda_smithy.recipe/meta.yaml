@@ -32,6 +32,9 @@ requirements:
     - vsts-python-api
     - toolz
     - shellcheck
+    - scrypt
+    - license-expression
+    - libarchive
 
 test:
   requires:

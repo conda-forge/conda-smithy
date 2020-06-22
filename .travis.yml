@@ -9,7 +9,7 @@ env:
     - CONDA_INSTALL_LOCN="${HOME}/conda"
 
     matrix:
-        - PYTHON=3 CHANNEL="-c conda-forge"
+        - PYTHON=3 CHANNEL="--channel=conda-forge"
 
 install:
     - mkdir -p ${HOME}/cache/pkgs

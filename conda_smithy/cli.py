@@ -1,21 +1,23 @@
 import os
+import logging
 import subprocess
 import sys
 import time
 import argparse
 import io
+import tempfile
 
 from textwrap import dedent
 
 import conda
+import conda_build.api
 from distutils.version import LooseVersion
 from conda_build.metadata import MetaData
-from conda_build.utils import ensure_list
+from conda_smithy.utils import get_feedstock_name_from_meta
 
 from . import configure_feedstock
 from . import feedstock_io
 from . import lint_recipe
-from . import azure_ci_utils
 from . import __version__
 
 
@@ -44,7 +46,7 @@ def generate_feedstock_content(target_directory, source_recipe_dir):
     forge_yml = os.path.join(target_directory, "conda-forge.yml")
     if not os.path.exists(forge_yml):
         with feedstock_io.write_file(forge_yml) as fh:
-            fh.write(u"[]")
+            fh.write(u"{}")
 
 
 class Subcommand(object):
@@ -54,7 +56,7 @@ class Subcommand(object):
 
     def __init__(self, parser, help=None):
         subcommand_parser = parser.add_parser(
-            self.subcommand, help=help, aliases=self.aliases
+            self.subcommand, help=help, description=help, aliases=self.aliases
         )
         subcommand_parser.set_defaults(subcommand_func=self)
         self.subcommand_parser = subcommand_parser
@@ -160,6 +162,12 @@ class RegisterGithub(Subcommand):
             nargs="*",
             help="Extra users to be added as admins",
         )
+        scp.add_argument(
+            "--private",
+            action="store_true",
+            default=False,
+            help="Create a private repository.",
+        )
 
     def __call__(self, args):
         from . import github
@@ -194,7 +202,14 @@ class RegisterCI(Subcommand):
             default="conda-forge",
             help="github organisation under which to register this repo",
         )
-        for ci in ["Azure", "Travis", "Circle", "Appveyor", "Drone"]:
+        for ci in [
+            "Azure",
+            "Travis",
+            "Circle",
+            "Appveyor",
+            "Drone",
+            "Webservice",
+        ]:
             scp.add_argument(
                 "--without-{}".format(ci.lower()),
                 dest=ci.lower(),
@@ -208,18 +223,24 @@ class RegisterCI(Subcommand):
         from conda_smithy import ci_register
 
         owner = args.user or args.organization
-        repo = os.path.basename(os.path.abspath(args.feedstock_directory))
+        meta = conda_build.api.render(
+            args.feedstock_directory,
+            permit_undefined_jinja=True,
+            finalize=False,
+            bypass_env_check=True,
+            trim_skip=False,
+        )[0][0]
+        feedstock_name = get_feedstock_name_from_meta(meta)
+        repo = "{}-feedstock".format(feedstock_name)
 
         print("CI Summary for {}/{} (can take ~30s):".format(owner, repo))
         if args.travis:
             # Assume that the user has enabled travis-ci.com service
             # user-wide or org-wide for all repos
             # ci_register.add_project_to_travis(owner, repo)
-            ci_register.travis_token_update_conda_forge_config(
-                args.feedstock_directory, owner, repo
-            )
             time.sleep(1)
             ci_register.travis_configure(owner, repo)
+            ci_register.add_token_to_travis(owner, repo)
             # Assume that the user has enabled travis-ci.com service
             # user-wide or org-wide for all repos
             # ci_register.travis_cleanup(owner, repo)
@@ -231,9 +252,12 @@ class RegisterCI(Subcommand):
         else:
             print("Circle registration disabled.")
         if args.azure:
+            from conda_smithy import azure_ci_utils
+
             if azure_ci_utils.default_config.token is None:
                 print(
-                    "No azure token.  Create a token at https://dev.azure.com/conda-forge/_usersSettings/tokens and\n"
+                    "No azure token. Create a token at https://dev.azure.com/"
+                    "conda-forge/_usersSettings/tokens and\n"
                     "put it in ~/.conda-smithy/azure.token"
                 )
             ci_register.add_project_to_azure(owner, repo)
@@ -254,7 +278,10 @@ class RegisterCI(Subcommand):
         else:
             print("Drone registration disabled.")
 
-        ci_register.add_conda_forge_webservice_hooks(owner, repo)
+        if args.webservice:
+            ci_register.add_conda_forge_webservice_hooks(owner, repo)
+        else:
+            print("Heroku webservice registration disabled.")
         print(
             "\nCI services have been enabled. You may wish to regenerate the feedstock.\n"
             "Any changes will need commiting to the repo."
@@ -266,6 +293,8 @@ class AddAzureBuildId(Subcommand):
 
     def __init__(self, parser):
         # conda-smithy azure-buildid ./
+        from conda_smithy import azure_ci_utils
+
         super(AddAzureBuildId, self).__init__(
             parser,
             dedent(
@@ -295,6 +324,8 @@ class AddAzureBuildId(Subcommand):
         )
 
     def __call__(self, args):
+        from conda_smithy import azure_ci_utils
+
         owner = args.user or args.organization
         repo = os.path.basename(os.path.abspath(args.feedstock_directory))
 
@@ -355,14 +386,27 @@ class Regenerate(Subcommand):
             default=False,
             help="Check if regenerate can be performed",
         )
+        scp.add_argument(
+            "--temporary-directory",
+            default=None,
+            help="Temporary directory to download and extract conda-forge-pinning to",
+        )
 
     def __call__(self, args):
+        if args.temporary_directory is None:
+            with tempfile.TemporaryDirectory() as tmpdir:
+                self._call(args, tmpdir)
+        else:
+            self._call(args, args.temporary_directory)
+
+    def _call(self, args, temporary_directory):
         configure_feedstock.main(
             args.feedstock_directory,
             no_check_uptodate=args.no_check_uptodate,
             commit=args.commit,
             exclusive_config_file=args.exclusive_config_file,
             check=args.check,
+            temporary_directory=temporary_directory,
         )
 
 
@@ -510,9 +554,11 @@ class UpdateCB3(Subcommand):
 
 
 def main():
+    logging.basicConfig(level=logging.INFO)
 
     parser = argparse.ArgumentParser(
-        "a tool to help create, administer and manage feedstocks."
+        prog="conda smithy",
+        description="a tool to help create, administer and manage feedstocks.",
     )
     subparser = parser.add_subparsers()
     # TODO: Consider allowing plugins/extensions using entry_points.
@@ -544,6 +590,222 @@ def main():
         sys.exit(2)
 
     args.subcommand_func(args)
+
+
+class GenerateFeedstockToken(Subcommand):
+    subcommand = "generate-feedstock-token"
+
+    def __init__(self, parser):
+        super(GenerateFeedstockToken, self).__init__(
+            parser,
+            "Generate a feedstock token at ~/.conda-smithy/{user or org}_{project}.token",
+        )
+        scp = self.subcommand_parser
+        scp.add_argument(
+            "--feedstock_directory",
+            default=os.getcwd(),
+            help="The directory of the feedstock git repository.",
+        )
+        group = scp.add_mutually_exclusive_group()
+        group.add_argument(
+            "--user", help="github username under which to register this repo"
+        )
+        group.add_argument(
+            "--organization",
+            default="conda-forge",
+            help="github organisation under which to register this repo",
+        )
+
+    def __call__(self, args):
+        from conda_smithy.feedstock_tokens import (
+            generate_and_write_feedstock_token,
+        )
+
+        owner = args.user or args.organization
+        repo = os.path.basename(os.path.abspath(args.feedstock_directory))
+
+        generate_and_write_feedstock_token(owner, repo)
+        print(
+            "Your feedstock token has been generated at ~/.conda-smithy/%s_%s.token\n"
+            "This token is stored in plaintext so be careful!" % (owner, repo)
+        )
+
+
+class RegisterFeedstockToken(Subcommand):
+    subcommand = "register-feedstock-token"
+
+    def __init__(self, parser):
+        # conda-smithy register-ci ./
+        super(RegisterFeedstockToken, self).__init__(
+            parser,
+            "Register the feedstock token w/ the CI services for builds and "
+            "with the token registry. \n\n"
+            "All exceptions are swallowed and stdout/stderr from this function is"
+            "redirected to `/dev/null`. Sanitized error messages are"
+            "displayed at the end.\n\n"
+            "If you need to debug this function, define `DEBUG_ANACONDA_TOKENS` in"
+            "your environment before calling this function.",
+        )
+        scp = self.subcommand_parser
+        scp.add_argument(
+            "--feedstock_directory",
+            default=os.getcwd(),
+            help="The directory of the feedstock git repository.",
+        )
+        scp.add_argument(
+            "--token_repo",
+            default=None,
+            help=(
+                "The GitHub repo that stores feedstock tokens. The default is "
+                "{user or org}/feedstock-tokens on GitHub."
+            ),
+        )
+        group = scp.add_mutually_exclusive_group()
+        group.add_argument(
+            "--user", help="github username under which to register this repo"
+        )
+        group.add_argument(
+            "--organization",
+            default="conda-forge",
+            help="github organisation under which to register this repo",
+        )
+        for ci in [
+            "Azure",
+            "Travis",
+            "Circle",
+            "Drone",
+        ]:
+            scp.add_argument(
+                "--without-{}".format(ci.lower()),
+                dest=ci.lower(),
+                action="store_false",
+                help="If set, {} will be not registered".format(ci),
+            )
+            default = {ci.lower(): True}
+            scp.set_defaults(**default)
+
+    def __call__(self, args):
+        from conda_smithy.feedstock_tokens import (
+            register_feedstock_token_with_proviers,
+            register_feedstock_token,
+            feedstock_token_exists,
+        )
+
+        owner = args.user or args.organization
+        repo = os.path.basename(os.path.abspath(args.feedstock_directory))
+
+        if args.token_repo is None:
+            token_repo = (
+                "https://${GITHUB_TOKEN}@github.com/%s/feedstock-tokens"
+                % owner
+            )
+        else:
+            token_repo = args.token_repo
+
+        if feedstock_token_exists(owner, repo, token_repo):
+            raise RuntimeError(
+                "Token for repo %s/%s already exists!" % (owner, repo)
+            )
+
+        print("Registering the feedstock tokens. Can take up to ~30 seconds.")
+
+        # do all providers first
+        register_feedstock_token_with_proviers(
+            owner,
+            repo,
+            drone=args.drone,
+            circle=args.circle,
+            travis=args.travis,
+            azure=args.azure,
+        )
+
+        # then if that works do the github repo
+        register_feedstock_token(owner, repo, token_repo)
+
+        print("Successfully registered the feedstock token!")
+
+
+class UpdateAnacondaToken(Subcommand):
+    subcommand = "update-anaconda-token"
+    aliases = [
+        "rotate-anaconda-token",
+        "update-binstar-token",
+        "rotate-binstar-token",
+    ]
+
+    def __init__(self, parser):
+        super(UpdateAnacondaToken, self).__init__(
+            parser,
+            "Update the anaconda/binstar token used for package uploads.\n\n"
+            "All exceptions are swallowed and stdout/stderr from this function is"
+            "redirected to `/dev/null`. Sanitized error messages are"
+            "displayed at the end.\n\n"
+            "If you need to debug this function, define `DEBUG_ANACONDA_TOKENS` in"
+            "your environment before calling this function.",
+        )
+        scp = self.subcommand_parser
+        scp.add_argument(
+            "--feedstock_directory",
+            default=os.getcwd(),
+            help="The directory of the feedstock git repository.",
+        )
+        scp.add_argument(
+            "--token_name",
+            default="BINSTAR_TOKEN",
+            help="The name of the environment variable you'd like to hold the token.",
+        )
+        group = scp.add_mutually_exclusive_group()
+        group.add_argument("--user", help="github username of the repo")
+        group.add_argument(
+            "--organization",
+            default="conda-forge",
+            help="github organization of the repo",
+        )
+        for ci in [
+            "Azure",
+            "Travis",
+            "Circle",
+            "Drone",
+            "Appveyor",
+        ]:
+            scp.add_argument(
+                "--without-{}".format(ci.lower()),
+                dest=ci.lower(),
+                action="store_false",
+                help="If set, the token on {} will be not changed.".format(ci),
+            )
+            default = {ci.lower(): True}
+            scp.set_defaults(**default)
+
+    def __call__(self, args):
+        from conda_smithy.anaconda_token_rotation import rotate_anaconda_token
+
+        owner = args.user or args.organization
+        repo = os.path.basename(os.path.abspath(args.feedstock_directory))
+
+        print(
+            "Updating the anaconda/binstar token. Can take up to ~30 seconds."
+        )
+
+        # do all providers first
+        rotate_anaconda_token(
+            owner,
+            repo,
+            args.feedstock_directory,
+            drone=args.drone,
+            circle=args.circle,
+            travis=args.travis,
+            azure=args.azure,
+            appveyor=args.appveyor,
+            token_name=args.token_name,
+        )
+
+        print("Successfully updated the anaconda/binstar token!")
+        if args.appveyor:
+            print(
+                "Appveyor tokens are stored in the repo so you must commit the "
+                "local changes and push them before the new token will be used!"
+            )
 
 
 if __name__ == "__main__":

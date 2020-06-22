@@ -22,7 +22,7 @@ from conda_build.metadata import (
 )
 import conda_build.conda_interface
 
-from .utils import render_meta_yaml, yaml
+from .utils import render_meta_yaml, get_yaml
 
 
 FIELDS = copy.deepcopy(cbfields)
@@ -32,6 +32,7 @@ if "extra" not in FIELDS.keys():
     FIELDS["extra"] = set()
 
 FIELDS["extra"].add("recipe-maintainers")
+FIELDS["extra"].add("feedstock-name")
 
 EXPECTED_SECTION_ORDER = [
     "package",
@@ -55,6 +56,7 @@ NEEDED_FAMILIES = ["gpl", "bsd", "mit", "apache", "psf"]
 
 sel_pat = re.compile(r"(.+?)\s*(#.*)?\[([^\[\]]+)\](?(2).*)$")
 jinja_pat = re.compile(r"\s*\{%\s*(set)\s+[^\s]+\s*=\s*[^\s]+\s*%\}")
+JINJA_VAR_PAT = re.compile(r"{{(.*?)}}")
 
 
 def get_section(parent, name, lints):
@@ -252,7 +254,12 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
 
     # 10: License should not include the word 'license'.
     license = about_section.get("license", "").lower()
-    if "license" in license.lower() and "unlicense" not in license.lower():
+    if (
+        "license" in license.lower()
+        and "unlicense" not in license.lower()
+        and "licenseref" not in license.lower()
+        and "-license" not in license.lower()
+    ):
         lints.append(
             "The recipe `license` should not include the word " '"License".'
         )
@@ -284,8 +291,8 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
 
     # 12a: License family must be valid (conda-build checks for that)
     license_family = about_section.get("license_family", license).lower()
-    license_file = about_section.get("license_file", "")
-    if license_file == "" and any(
+    license_file = about_section.get("license_file", None)
+    if not license_file and any(
         f for f in NEEDED_FAMILIES if f in license_family
     ):
         lints.append("license_file entry is missing, but is required.")
@@ -453,33 +460,60 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
                 )
                 continue
 
-    # 23: non noarch builds shouldn't use version constraints on python
+    # 23: non noarch builds shouldn't use version constraints on python and r-base
+    check_languages = ["python", "r-base"]
     host_reqs = requirements_section.get("host") or []
     run_reqs = requirements_section.get("run") or []
-    if build_section.get("noarch") is None and not outputs_section:
-        filtered_host_reqs = [
-            req
-            for req in host_reqs
-            if req == "python" or req.startswith("python ")
-        ]
-        filtered_run_reqs = [
-            req
-            for req in run_reqs
-            if req == "python" or req.startswith("python ")
-        ]
-        if filtered_host_reqs and not filtered_run_reqs:
-            lints.append(
-                "If python is a host requirement, it should be a run requirement."
-            )
-        for reqs in [filtered_host_reqs, filtered_run_reqs]:
-            if "python" in reqs:
-                continue
-            for req in reqs:
-                constraint = req.split(" ", 1)[1]
-                if constraint.startswith(">") or constraint.startswith("<"):
-                    lints.append(
-                        "Non noarch: python packages should have a python requirement without any version constraints."
+    for language in check_languages:
+        if build_section.get("noarch") is None and not outputs_section:
+            filtered_host_reqs = [
+                req
+                for req in host_reqs
+                if req.partition(" ")[0] == str(language)
+            ]
+            filtered_run_reqs = [
+                req
+                for req in run_reqs
+                if req.partition(" ")[0] == str(language)
+            ]
+            if filtered_host_reqs and not filtered_run_reqs:
+                lints.append(
+                    "If {0} is a host requirement, it should be a run requirement.".format(
+                        str(language)
                     )
+                )
+            for reqs in [filtered_host_reqs, filtered_run_reqs]:
+                if str(language) in reqs:
+                    continue
+                for req in reqs:
+                    constraint = req.split(" ", 1)[1]
+                    if constraint.startswith(">") or constraint.startswith(
+                        "<"
+                    ):
+                        lints.append(
+                            "Non noarch packages should have {0} requirement without any version constraints.".format(
+                                str(language)
+                            )
+                        )
+
+    # 24: jinja2 variable references should be {{<one space>var<one space>}}
+    if recipe_dir is not None and os.path.exists(meta_fname):
+        bad_vars = []
+        bad_lines = []
+        with io.open(meta_fname, "rt") as fh:
+            for i, line in enumerate(fh.readlines()):
+                for m in JINJA_VAR_PAT.finditer(line):
+                    if m.group(1) is not None:
+                        var = m.group(1)
+                        if var != " %s " % var.strip():
+                            bad_vars.append(m.group(1).strip())
+                            bad_lines.append(i + 1)
+        if bad_vars:
+            hints.append(
+                "Jinja2 variable references are suggested to "
+                "take a ``{{<one space><variable name><one space>}}``"
+                " form. See lines %s." % (bad_lines,)
+            )
 
     # hints
     # 1: suggest pip
@@ -538,7 +572,7 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
         ) or glob(os.path.join(recipe_dir, "..", "..", "conda-forge.yml"),)
         if shell_scripts and forge_yaml:
             with open(forge_yaml[0], "r") as fh:
-                code = yaml.load(fh)
+                code = get_yaml().load(fh)
                 shellcheck_enabled = code.get("shellcheck", {}).get(
                     "enabled", shellcheck_enabled
                 )
@@ -588,6 +622,49 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
                 "There have been errors while scanning with shellcheck."
             )
 
+    # 4: Check for SPDX
+    import license_expression
+
+    license = about_section.get("license", "")
+    licensing = license_expression.Licensing()
+    parsed_exceptions = []
+    try:
+        parsed_licenses = []
+        parsed_licenses_with_exception = licensing.license_symbols(
+            license.strip(), decompose=False
+        )
+        for l in parsed_licenses_with_exception:
+            if isinstance(l, license_expression.LicenseWithExceptionSymbol):
+                parsed_licenses.append(l.license_symbol.key)
+                parsed_exceptions.append(l.exception_symbol.key)
+            else:
+                parsed_licenses.append(l.key)
+    except license_expression.ExpressionError:
+        parsed_licenses = [license]
+
+    licenseref_regex = re.compile("^LicenseRef[a-zA-Z0-9\-.]*$")
+    filtered_licenses = []
+    for license in parsed_licenses:
+        if not licenseref_regex.match(license):
+            filtered_licenses.append(license)
+
+    with open(
+        os.path.join(os.path.dirname(__file__), "licenses.txt"), "r"
+    ) as f:
+        expected_licenses = f.readlines()
+        expected_licenses = set([l.strip() for l in expected_licenses])
+    with open(
+        os.path.join(os.path.dirname(__file__), "license_exceptions.txt"), "r"
+    ) as f:
+        expected_exceptions = f.readlines()
+        expected_exceptions = set([l.strip() for l in expected_exceptions])
+    if set(filtered_licenses) - expected_licenses:
+        hints.append(
+            "License is not an SPDX identifier (or a custom LicenseRef) nor an SPDX license expression."
+        )
+    if set(parsed_exceptions) - expected_exceptions:
+        hints.append("License exception is not an SPDX exception.")
+
     return lints, hints
 
 
@@ -603,13 +680,30 @@ def run_conda_forge_specific(meta, recipe_dir, lints, hints):
     if is_staged_recipes and recipe_name:
         cf = gh.get_user(os.getenv("GH_ORG", "conda-forge"))
         try:
-            cf.get_repo("{}-feedstock".format(recipe_name))
-            feedstock_exists = True
+            for name in set(
+                [
+                    recipe_name,
+                    recipe_name.replace("-", "_"),
+                    recipe_name.replace("_", "-"),
+                ]
+            ):
+                if cf.get_repo("{}-feedstock".format(name)):
+                    existing_recipe_name = name
+                    feedstock_exists = True
+                    break
+            else:
+                feedstock_exists = False
         except github.UnknownObjectException as e:
             feedstock_exists = False
 
-        if feedstock_exists:
-            lints.append("Feedstock with the same name exists in conda-forge")
+        if feedstock_exists and existing_recipe_name == recipe_name:
+            lints.append("Feedstock with the same name exists in conda-forge.")
+        elif feedstock_exists:
+            hints.append(
+                "Feedstock with the name {} exists in conda-forge. Is it the same as this package ({})?".format(
+                    existing_recipe_name, recipe_name,
+                )
+            )
 
         bio = gh.get_user("bioconda").get_repo("bioconda-recipes")
         try:
@@ -685,7 +779,7 @@ def main(recipe_dir, conda_forge=False, return_hints=False):
 
     with io.open(recipe_meta, "rt") as fh:
         content = render_meta_yaml("".join(fh))
-        meta = yaml.load(content)
+        meta = get_yaml().load(content)
     results, hints = lintify(meta, recipe_dir, conda_forge)
     if return_hints:
         return results, hints
