@@ -660,10 +660,13 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
         expected_exceptions = set([l.strip() for l in expected_exceptions])
     if set(filtered_licenses) - expected_licenses:
         hints.append(
-            "License is not an SPDX identifier (or a custom LicenseRef) nor an SPDX license expression."
+            "License is not an SPDX identifier (or a custom LicenseRef) nor an [SPDX license expression]"
+            "(https://spdx.org/licenses/)."
         )
     if set(parsed_exceptions) - expected_exceptions:
-        hints.append("License exception is not an SPDX exception.")
+        hints.append(
+            "License exception is not an [SPDX exception]"
+            "(https://spdx.org/licenses/exceptions-index.html).")
 
     return lints, hints
 
