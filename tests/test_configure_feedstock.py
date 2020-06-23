@@ -438,6 +438,29 @@ def test_readme_has_terminating_newline(noarch_recipe, jinja_env):
         assert readme_file.read() == b"\n"
 
 
+def test_secrets(py_recipe, jinja_env):
+    cnfgr_fdstk.render_azure(jinja_env=jinja_env, forge_config=py_recipe.config, forge_dir=py_recipe.recipe)
+
+    run_docker_build = os.path.join(py_recipe.recipe, ".scripts", "run_docker_build.sh")
+    with open(run_docker_build, "rb") as run_docker_build_file:
+        content = run_docker_build_file.read()
+    assert b"-e BINSTAR_TOKEN" in content
+
+    for config_yaml in os.listdir(os.path.join(py_recipe.recipe, ".azure-pipelines")):
+        if config_yaml.endswith(".yaml"):
+            with open(config_yaml) as fo:
+                config = yaml.safe_load(fo)
+                if "jobs" in config:
+                    assert any(any(step.get('env', {}).get('BINSTAR_TOKEN', None) == '$(BINSTAR_TOKEN)' for step in job['steps']) for job in config['jobs'])
+
+    py_recipe.config["provider"]["linux_aarch64"] = "drone"
+    cnfgr_fdstk.render_drone(jinja_env=jinja_env, forge_config=py_recipe.config, forge_dir=py_recipe.recipe)
+
+    with open(os.path.join(py_recipe.recipe, '.drone.yml')) as fo:
+        config = list(yaml.safe_load_all(fo))[-1]
+        assert any(step.get('environment', {}).get('BINSTAR_TOKEN', {}).get('from_secret', None) == 'BINSTAR_TOKEN' for step in config['steps'])
+
+
 def test_migrator_recipe(recipe_migration_cfep9, jinja_env):
     cnfgr_fdstk.render_azure(
         jinja_env=jinja_env,

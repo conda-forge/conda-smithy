@@ -18,8 +18,6 @@ jobs:
       ./.scripts/run_osx_build.sh
     displayName: Run OSX build
     env:
-      BINSTAR_TOKEN: $(BINSTAR_TOKEN)
-{%- if conda_forge_output_validation %}
-      FEEDSTOCK_TOKEN: $(FEEDSTOCK_TOKEN)
-      STAGING_BINSTAR_TOKEN: $(STAGING_BINSTAR_TOKEN)
-{%- endif %}
+{%- for secret in secrets %}
+      {{ secret }}: $({{ secret }})
+{%- endfor %}
