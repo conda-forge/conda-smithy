@@ -1482,7 +1482,7 @@ def _load_forge_config(forge_dir, exclusive_config_file):
         "bot": {"automerge": False},
         "conda_forge_output_validation": False,
         "private_upload": False,
-        "secrets": ["BINSTAR_TOKEN"],
+        "secrets": [],
     }
 
     forge_yml = os.path.join(forge_dir, "conda-forge.yml")
@@ -1534,6 +1534,8 @@ def _load_forge_config(forge_dir, exclusive_config_file):
 
     if config["conda_forge_output_validation"]:
         config["secrets"] = list(set(config["secrets"] + ["FEEDSTOCK_TOKEN", "STAGING_BINSTAR_TOKEN"]))
+
+    config["secrets"] = list(set(config["secrets"] + ["BINSTAR_TOKEN"]))
 
     # An older conda-smithy used to have some files which should no longer exist,
     # remove those now.
