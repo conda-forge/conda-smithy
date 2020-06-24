@@ -1,6 +1,6 @@
 **Added:**
 
-* <news item>
+* Removes ``/opt/ghc`` on Azure Linux images to free up space
 
 **Changed:**
 
@@ -16,7 +16,7 @@
 
 **Fixed:**
 
-* Removes ``/opt/ghc`` on Azure Linux images to free up space
+* <news item>
 
 **Security:**
 
