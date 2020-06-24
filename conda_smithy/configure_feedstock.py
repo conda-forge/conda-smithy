@@ -1533,14 +1533,14 @@ def _load_forge_config(forge_dir, exclusive_config_file):
                 del config["azure"][f"settings_{plat}"]["pool"]["vmImage"]
 
     if config["conda_forge_output_validation"]:
-        config["secrets"] = list(
+        config["secrets"] = sorted(
             set(
                 config["secrets"]
                 + ["FEEDSTOCK_TOKEN", "STAGING_BINSTAR_TOKEN"]
             )
         )
 
-    config["secrets"] = list(set(config["secrets"] + ["BINSTAR_TOKEN"]))
+    config["secrets"] = sorted(set(config["secrets"] + ["BINSTAR_TOKEN"]))
 
     # An older conda-smithy used to have some files which should no longer exist,
     # remove those now.
