@@ -74,7 +74,7 @@ export UPLOAD_PACKAGES="${UPLOAD_PACKAGES:-True}"
            -e CI \
            -e FEEDSTOCK_NAME \
 {%- for secret in secrets %}
-           -e {{ secret }}
+           -e {{ secret }} \
 {%- endfor %}
            $DOCKER_IMAGE \
            {{ docker.command }} \
