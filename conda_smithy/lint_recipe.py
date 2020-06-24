@@ -723,7 +723,7 @@ def run_conda_forge_specific(meta, recipe_dir, lints, hints):
             # It's a team. Checking for existence is expensive. Skip for now
             continue
         try:
-            gh.get_user(maintainer)
+            gh.get_user({0}.format(maintainer))
         except github.UnknownObjectException as e:
             lints.append(
                 'Recipe maintainer "{}" does not exist'.format(maintainer)
