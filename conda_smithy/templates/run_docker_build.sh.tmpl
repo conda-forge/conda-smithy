@@ -67,17 +67,15 @@ export UPLOAD_PACKAGES="${UPLOAD_PACKAGES:-True}"
            -v "${RECIPE_ROOT}":/home/conda/recipe_root:rw,z \
            -v "${FEEDSTOCK_ROOT}":/home/conda/feedstock_root:rw,z \
            -e CONFIG \
-           -e BINSTAR_TOKEN \
            -e HOST_USER_ID \
            -e UPLOAD_PACKAGES \
            -e GIT_BRANCH \
            -e UPLOAD_ON_BRANCH \
            -e CI \
-{%- if conda_forge_output_validation %}
            -e FEEDSTOCK_NAME \
-           -e FEEDSTOCK_TOKEN \
-           -e STAGING_BINSTAR_TOKEN \
-{%- endif %}
+{%- for secret in secrets %}
+           -e {{ secret }} \
+{%- endfor %}
            $DOCKER_IMAGE \
            {{ docker.command }} \
            /home/conda/feedstock_root/${PROVIDER_DIR}/build_steps.sh

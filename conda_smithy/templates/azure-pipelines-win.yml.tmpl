@@ -105,9 +105,7 @@ jobs:
         upload_package {% if conda_forge_output_validation %}--validate --feedstock-name="%FEEDSTOCK_NAME%"{% endif %}{% if private_upload %} --private{% endif %} .\ ".\{{ recipe_dir }}" .ci_support\%CONFIG%.yaml
       displayName: Upload package
       env:
-        BINSTAR_TOKEN: $(BINSTAR_TOKEN)
-{%- if conda_forge_output_validation %}
-        FEEDSTOCK_TOKEN: $(FEEDSTOCK_TOKEN)
-        STAGING_BINSTAR_TOKEN: $(STAGING_BINSTAR_TOKEN)
-{%- endif %}
+{%- for secret in secrets %}
+        {{ secret }}: $({{ secret }})
+{%- endfor %}
       condition: and(succeeded(), not(eq(variables['UPLOAD_PACKAGES'], 'False')))
