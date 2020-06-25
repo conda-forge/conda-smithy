@@ -6,6 +6,11 @@ jobs:
 - job: linux
   {{ azure_yaml|indent(2) }}
   steps:
+  - script: |
+         rm -rf /opt/ghc
+         df -h
+    displayName: Manage disk space
+
   # configure qemu binfmt-misc running.  This allows us to run docker containers
   # embedded qemu-static
   - script: |
