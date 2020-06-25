@@ -106,9 +106,13 @@ class Init(Subcommand):
         feedstock_directory = args.feedstock_directory.format(
             package=argparse.Namespace(name=meta.name())
         )
-        msg = "Initial feedstock commit with conda-smithy {}.".format(
-            __version__
-        )
+        msg = dedent(
+            """\
+            Initial feedstock commit
+
+            * conda-smithy {}
+            """
+        ).format(__version__)
 
         os.makedirs(feedstock_directory)
         subprocess.check_call(["git", "init"], cwd=feedstock_directory)

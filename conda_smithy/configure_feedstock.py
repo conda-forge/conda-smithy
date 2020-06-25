@@ -1637,14 +1637,20 @@ def check_version_uptodate(name, installed_version, error_on_warn):
 
 
 def commit_changes(forge_file_directory, commit, cs_ver, cfp_ver, cb_ver):
+    msg = textwrap.dedent(
+        """\
+        MNT: Re-rendered
+
+        * conda-build {}
+        * conda-smithy {}
+        """
+    ).format(cb_ver, cs_ver)
     if cfp_ver:
-        msg = "Re-rendered with conda-build {}, conda-smithy {}, and conda-forge-pinning {}".format(
-            cb_ver, cs_ver, cfp_ver
-        )
-    else:
-        msg = "Re-rendered with conda-build {} and conda-smithy {}".format(
-            cb_ver, cs_ver
-        )
+        msg += textwrap.dedent(
+            """\
+            * conda-forge-pinning {}
+            """
+        ).format(cfp_ver)
     logger.info(msg)
 
     is_git_repo = os.path.exists(os.path.join(forge_file_directory, ".git"))
@@ -1655,7 +1661,7 @@ def commit_changes(forge_file_directory, commit, cs_ver, cfp_ver, cb_ver):
         )
         if has_staged_changes:
             if commit:
-                git_args = ["git", "commit", "-m", "MNT: {}".format(msg)]
+                git_args = ["git", "commit", "-m", msg]
                 if commit == "edit":
                     git_args += ["--edit", "--status", "--verbose"]
                 subprocess.check_call(git_args, cwd=forge_file_directory)
@@ -1663,7 +1669,7 @@ def commit_changes(forge_file_directory, commit, cs_ver, cfp_ver, cb_ver):
             else:
                 logger.info(
                     "You can commit the changes with:\n\n"
-                    '    git commit -m "MNT: {}"\n'.format(msg)
+                    '    git commit -m "MNT: Re-rendered"\n'
                 )
             logger.info("These changes need to be pushed to github!\n")
         else:
