@@ -614,7 +614,11 @@ class Test_linter(unittest.TestCase):
         self.assertIn(expected_message, lints)
 
     def test_spdx_license(self):
-        msg = "License is not an SPDX identifier (or a custom LicenseRef) nor an SPDX license expression."
+        msg = (
+            "License is not an SPDX identifier (or a custom LicenseRef) nor an SPDX license expression.\n\n"
+            "Documentation on acceptable licenses can be found "
+            "[here]( https://conda-forge.org/docs/maintainer/adding_pkgs.html#spdx-identifiers-and-expressions )."
+        )
         licenses = {
             "BSD-100": False,
             "GPL-2.0": False,
@@ -637,7 +641,11 @@ class Test_linter(unittest.TestCase):
                 self.assertIn(msg, hints)
 
     def test_spdx_license_exception(self):
-        msg = "License exception is not an SPDX exception."
+        msg = (
+            "License exception is not an SPDX exception.\n\n"
+            "Documentation on acceptable licenses can be found "
+            "[here]( https://conda-forge.org/docs/maintainer/adding_pkgs.html#spdx-identifiers-and-expressions )."
+        )
         licenses = {
             "Apache 2.0 WITH LLVM-exception": True,
             "Apache 2.0 WITH LLVM2-exception": False,
