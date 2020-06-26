@@ -1,3 +1,4 @@
+import re
 import glob
 from itertools import product, chain
 import logging
@@ -38,22 +39,23 @@ logger = logging.getLogger(__name__)
 
 
 def package_key(config, used_loop_vars, subdir):
-    # get the build string from whatever conda-build makes of the configuration
-    build_vars = "".join(
-        [k + str(config[k][0]) for k in sorted(list(used_loop_vars))]
-    )
-    key = []
-    # kind of a special case.  Target platform determines a lot of output behavior, but may not be
-    #    explicitly listed in the recipe.
+    build_vars = {key: str(config[key][0]) for key in used_loop_vars}
+
+    # Target platform determines a lot of output behavior, but may not be explicitly listed in the recipe.
     tp = config.get("target_platform")
-    if tp and isinstance(tp, list):
-        tp = tp[0]
-    if tp and tp != subdir and "target_platform" not in build_vars:
-        build_vars += "target-" + tp
-    if build_vars:
-        key.append(build_vars)
-    key = "-".join(key)
-    return key.replace("*", "_").replace(" ", "_")
+    if tp:
+        if isinstance(tp, list):
+            tp = tp[0]
+        if tp != subdir and "target_platform" not in build_vars:
+            build_vars["target_platform"] = tp
+
+    # Sort values by keys and simplify them
+    build_vars = [
+        build_vars[key].replace(".*", "") for key in sorted(build_vars)
+    ]
+
+    # Remove strange characters
+    return re.sub("[^a-zA-Z0-9_.]", "", "_".join(sorted(build_vars)))
 
 
 def copytree(src, dst, ignore=(), root_dst=None):
@@ -392,6 +394,26 @@ def dump_subspace_config_files(
     configs, top_level_loop_vars = _collapse_subpackage_variants(
         metas, root_path
     )
+
+    # Ignore top_level_loop_vars that always depend on another variable, e.g.,
+    # the value of python_impl can usually be determined by looking at the
+    # value of python, so we can shorten some file names by dropping the former.
+    for var in sorted(
+        top_level_loop_vars,
+        # Prefer short values
+        key=lambda v: (-len(max([str(config[v]) for config in configs])), v),
+    ):
+        if len(
+            set(
+                package_key(
+                    config,
+                    [v for v in top_level_loop_vars if v != var],
+                    metas[0].config.subdir,
+                )
+                for config in configs
+            )
+        ) == len(configs):
+            top_level_loop_vars.remove(var)
 
     # get rid of the special object notation in the yaml file for objects that we dump
     yaml.add_representer(set, yaml.representer.SafeRepresenter.represent_list)
@@ -1138,6 +1160,11 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
     for data in forge_config["configs"]:
         if not data["platform"].startswith(platform):
             continue
+
+        config_name_without_job_name = re.sub(
+            "^{0}_".format(re.escape(platform)), "", data["config_name"]
+        )
+
         config_rendered = OrderedDict(
             {
                 "CONFIG": data["config_name"],
@@ -1147,7 +1174,7 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
         # fmt: off
         if "docker_image" in data["config"]:
             config_rendered["DOCKER_IMAGE"] = data["config"]["docker_image"][-1]
-        azure_settings["strategy"]["matrix"][data["config_name"]] = config_rendered
+        azure_settings["strategy"]["matrix"][config_name_without_job_name] = config_rendered
         # fmt: on
 
     forge_config["azure_yaml"] = yaml.dump(azure_settings)
