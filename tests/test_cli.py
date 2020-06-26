@@ -79,7 +79,7 @@ def test_init_multiple_output_matrix(testing_workdir):
     # though - loops within outputs are contained in those top-level configs.
     matrix_dir_len = len(os.listdir(matrix_dir))
     assert matrix_dir_len == 13
-    linux_libpng16 = os.path.join(matrix_dir, "linux_libpng1.6libpq9.5.yaml")
+    linux_libpng16 = os.path.join(matrix_dir, "linux_1.6_9.5.yaml")
     assert os.path.isfile(linux_libpng16)
     with open(linux_libpng16) as f:
         config = yaml.load(f)
@@ -131,7 +131,7 @@ def test_init_cuda_docker_images(testing_workdir):
     matrix_dir_len = len(os.listdir(matrix_dir))
     assert matrix_dir_len == 5
     for v in [None, "9.2", "10.0", "10.1"]:
-        fn = os.path.join(matrix_dir, f"linux_cuda_compiler_version{v}.yaml")
+        fn = os.path.join(matrix_dir, f"linux_{v}.yaml")
         assert os.path.isfile(fn)
         with open(fn) as fh:
             config = yaml.load(fh)

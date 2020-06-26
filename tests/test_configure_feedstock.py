@@ -495,9 +495,7 @@ def test_migrator_recipe(recipe_migration_cfep9, jinja_env):
 
     with open(
         os.path.join(
-            recipe_migration_cfep9.recipe,
-            ".ci_support",
-            "linux_python2.7.yaml",
+            recipe_migration_cfep9.recipe, ".ci_support", "linux_2.7.yaml",
         )
     ) as fo:
         variant = yaml.safe_load(fo)
@@ -528,9 +526,7 @@ def test_migrator_cfp_override(recipe_migration_cfep9, jinja_env):
 
     with open(
         os.path.join(
-            recipe_migration_cfep9.recipe,
-            ".ci_support",
-            "linux_python2.7.yaml",
+            recipe_migration_cfep9.recipe, ".ci_support", "linux_2.7.yaml",
         )
     ) as fo:
         variant = yaml.safe_load(fo)
@@ -594,7 +590,7 @@ def test_migrator_downgrade_recipe(
         os.path.join(
             recipe_migration_cfep9_downgrade.recipe,
             ".ci_support",
-            "linux_python2.7.yaml",
+            "linux_2.7.yaml",
         )
     ) as fo:
         variant = yaml.safe_load(fo)
@@ -628,23 +624,12 @@ def test_migrator_compiler_version_recipe(
     rendered_variants = os.listdir(
         os.path.join(recipe_migration_win_compiled.recipe, ".ci_support")
     )
+    print(rendered_variants)
 
-    assert (
-        "win_c_compilervs2008python2.7target_platformwin-32.yaml"
-        in rendered_variants
-    )
-    assert (
-        "win_c_compilervs2008python2.7target_platformwin-64.yaml"
-        in rendered_variants
-    )
-    assert (
-        "win_c_compilervs2017python3.5target_platformwin-32.yaml"
-        in rendered_variants
-    )
-    assert (
-        "win_c_compilervs2017python3.5target_platformwin-64.yaml"
-        in rendered_variants
-    )
+    assert "win_2.7_win32.yaml" in rendered_variants
+    assert "win_2.7_win64.yaml" in rendered_variants
+    assert "win_3.5_win32.yaml" in rendered_variants
+    assert "win_3.5_win64.yaml" in rendered_variants
 
 
 def test_files_skip_render(render_skipped_recipe, jinja_env):

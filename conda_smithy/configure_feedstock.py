@@ -41,14 +41,6 @@ logger = logging.getLogger(__name__)
 def package_key(config, used_loop_vars, subdir):
     build_vars = {key: str(config[key][0]) for key in used_loop_vars}
 
-    # Target platform determines a lot of output behavior, but may not be explicitly listed in the recipe.
-    tp = config.get("target_platform")
-    if tp:
-        if isinstance(tp, list):
-            tp = tp[0]
-        if tp != subdir and "target_platform" not in build_vars:
-            build_vars["target_platform"] = tp
-
     # Sort values by keys and simplify them
     build_vars = [
         build_vars[key].replace(".*", "") for key in sorted(build_vars)
