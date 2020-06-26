@@ -391,7 +391,7 @@ def dump_subspace_config_files(
     # the value of python_impl can usually be determined by looking at the
     # value of python, so we can shorten some file names by dropping the former.
     for var in sorted(
-        top_level_loop_vars,
+        set(top_level_loop_vars).intersection(forge_config["silenced_vars"]),
         # Prefer short values
         key=lambda v: (-len(max([str(config[v]) for config in configs])), v),
     ):
@@ -1505,6 +1505,7 @@ def _load_forge_config(forge_dir, exclusive_config_file):
         "conda_forge_output_validation": False,
         "private_upload": False,
         "secrets": [],
+        "silenced_vars": ["python_impl"],
     }
 
     forge_yml = os.path.join(forge_dir, "conda-forge.yml")

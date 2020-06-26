@@ -624,12 +624,11 @@ def test_migrator_compiler_version_recipe(
     rendered_variants = os.listdir(
         os.path.join(recipe_migration_win_compiled.recipe, ".ci_support")
     )
-    print(rendered_variants)
 
-    assert "win_2.7_win32.yaml" in rendered_variants
-    assert "win_2.7_win64.yaml" in rendered_variants
-    assert "win_3.5_win32.yaml" in rendered_variants
-    assert "win_3.5_win64.yaml" in rendered_variants
+    assert "win_2.7_vs2008_win32.yaml" in rendered_variants
+    assert "win_2.7_vs2008_win64.yaml" in rendered_variants
+    assert "win_3.5_vs2017_win32.yaml" in rendered_variants
+    assert "win_3.5_vs2017_win64.yaml" in rendered_variants
 
 
 def test_files_skip_render(render_skipped_recipe, jinja_env):
