@@ -1153,8 +1153,11 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
         if not data["platform"].startswith(platform):
             continue
 
-        config_name_without_job_name = re.sub(
-            "^{0}_".format(re.escape(platform)), "", data["config_name"]
+        config_name_without_job_name = (
+            re.sub(
+                "^{0}_".format(re.escape(platform)), "", data["config_name"]
+            )
+            or "build"
         )
 
         config_rendered = OrderedDict(
