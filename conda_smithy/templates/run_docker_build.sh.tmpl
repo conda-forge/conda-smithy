@@ -73,6 +73,7 @@ export UPLOAD_PACKAGES="${UPLOAD_PACKAGES:-True}"
            -e UPLOAD_ON_BRANCH \
            -e CI \
            -e FEEDSTOCK_NAME \
+           -e CPU_COUNT \
 {%- for secret in secrets %}
            -e {{ secret }} \
 {%- endfor %}
