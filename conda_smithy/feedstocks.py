@@ -107,10 +107,11 @@ def clone_all(gh_org, feedstocks_dir):
         pool.apply_async(clone_feedstock, args=(repo, feedstocks_dir))
     pool.close()
     pool.join()
+    return feedstocks
 
 
 def feedstocks_clone_all_handle_args(args):
-    return clone_all(args.organization, args.feedstocks_directory)
+    clone_all(args.organization, args.feedstocks_directory)
 
 
 def feedstocks_list_cloned_handle_args(args):
