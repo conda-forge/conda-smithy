@@ -4,6 +4,58 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.7.4
+====================
+
+**Added:**
+
+* Use the anaconda API to retrieve the latest version number of ``conda-smithy`` and ``conda-forge-pinning``.
+* Pass ``CPU_COUNT`` from the host environment to the docker build.
+  (Convenient when building locally.)
+* Add a flag to `register-github` to create a private repository.
+* Add a `private_upload` key in conda config file. If set to True Anaconda upload will use the `--private` flag.
+* Removes ``/opt/ghc`` on Azure Linux images to free up space
+* Additional secrets can be passed to the build by setting `secrets: ["BINSTAR_TOKEN", "ANOTHER_SECRET"]`
+  in `conda-forge.yml`. These secrets are read from the CI configuration and
+  then exposed as environment variables. To make them visible to build scripts,
+  they need to be whitelisted in `build.script_env` of `meta.yaml`.
+  This can, e.g., be used to collect coverage statistics during a build or test
+  and upload them to sites such as coveralls.
+
+**Changed:**
+
+* Return type of ``feedstocks.clone_all()`` from ``None`` to list of repositories
+* Link to list of SPDX licenses in lint message.
+
+**Fixed:**
+
+* Use ``AzureConfig`` in ``render_README`` instead of calling a raw requests. It allows rendering on a private Azure CI organization.
+* CI skeleton properly sets the build number
+* use SPDX identifier for feedstock license
+* Allow an empty conda-forge.yml.
+* The repo name for output validation is now extracted in the CI services to avoid
+  issues with bad rerenders for clones to non-standard locations.
+
+**Security:**
+
+* Added --suppress-variables so that CI secrets cannot be leaked by conda-build into CI logs.
+
+**Authors:**
+
+* Matthew R Becker
+* Christopher J. Wright
+* Matthew R. Becker
+* Hadrien Mary
+* Julian Rüth
+* Uwe L. Korn
+* John Kirkham
+* Duncan Macleod
+* Axel Huebl
+* Thomas Hopkins
+* Stuart Berg
+
+
+
 v3.7.3
 ====================
 
