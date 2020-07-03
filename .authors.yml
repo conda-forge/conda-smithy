@@ -427,3 +427,13 @@
   num_commits: 9
   first_commit: 2020-04-26 22:07:18
   github: leofang
+- name: Stuart Berg
+  email: bergs@janelia.hhmi.org
+- name: Axel Huebl
+  email: axel.huebl@plasma.ninja
+- name: Hadrien Mary
+  email: hadrien.mary@gmail.com
+  alternate_emails:
+  - hadim@users.noreply.github.com
+- name: Thomas Hopkins
+  email: thomashopkins000@gmail.com
