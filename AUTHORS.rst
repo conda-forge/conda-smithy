@@ -12,8 +12,11 @@ Authors are sorted by number of commits.
 * Michael Sarahan
 * Min RK
 * Matthew R. Becker
+* Hadrien Mary
+* Julian Rüth
 * Mark Harfouche
 * Eric Dill
+* Uwe L. Korn
 * Natasha Pavlovikj
 * Chris Burr
 * Jan Schulz
@@ -22,12 +25,10 @@ Authors are sorted by number of commits.
 * Jason Furmanek
 * Patrick Sodré
 * Maksim Rakitin
-* Uwe L. Korn
+* John Kirkham
 * C.A.M. Gerlach
-* Julian Rüth
 * refraction-ray
 * Leo Fang
-* John Kirkham
 * Leopold Talirz
 * Gonzalo Pena-Castellanos
 * Daniel Bast
@@ -59,9 +60,12 @@ Authors are sorted by number of commits.
 * Alex Goodman
 * Lion Krischer
 * ap--
+* Duncan Macleod
 * Peter Killick
 * Henry Schreiner
 * hajapy
+* Axel Huebl
+* Thomas Hopkins
 * lorenz
 * Tom Augspurger
 * Ryan May
@@ -76,8 +80,8 @@ Authors are sorted by number of commits.
 * cshaley
 * David Brochart
 * Julien Schueller
-* Duncan Macleod
 * Jason Grout
 * Tim Werner
 * Dave Hirschfeld
 * Nils Wentzell
+* Stuart Berg

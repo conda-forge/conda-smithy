@@ -27,7 +27,7 @@
   aliases:
   - John Kirkham
   - jakirkham
-  num_commits: 8
+  num_commits: 9
   first_commit: 2016-03-17 21:05:53
   github: jakirkham
 - name: Daniel Bast
@@ -235,7 +235,7 @@
   email: uwe.korn@quantco.com
   alternate_emails:
   - xhochy@users.noreply.github.com
-  num_commits: 9
+  num_commits: 13
   first_commit: 2019-06-27 08:26:49
   github: xhochy
 - name: C.A.M. Gerlach
@@ -251,7 +251,7 @@
   github: isuruf
 - name: Julian Rüth
   email: julian.rueth@fsfe.org
-  num_commits: 9
+  num_commits: 18
   first_commit: 2019-01-14 22:53:11
   github: saraedum
 - name: cshaley
@@ -298,7 +298,7 @@
   github: jschueller
 - name: Duncan Macleod
   email: duncan.macleod@ligo.org
-  num_commits: 1
+  num_commits: 2
   first_commit: 2018-12-21 09:06:21
   github: duncanmmacleod
 - name: Peter Killick
@@ -357,7 +357,7 @@
   - cjwright4242@gmail.com
   aliases:
   - christopher
-  num_commits: 99
+  num_commits: 101
   first_commit: 2017-01-05 19:25:16
   github: CJ-Wright
 - name: Jason Grout
@@ -391,12 +391,12 @@
   github: shadowwalkersb
 - name: Matthew R Becker
   email: becker.mr@gmail.com
-  num_commits: 141
+  num_commits: 156
   first_commit: 2020-01-07 17:44:33
   github: beckermr
 - name: Matthew R. Becker
   email: beckermr@users.noreply.github.com
-  num_commits: 24
+  num_commits: 25
   first_commit: 2020-01-19 19:32:30
   github: beckermr
 - name: Natasha Pavlovikj
@@ -429,11 +429,22 @@
   github: leofang
 - name: Stuart Berg
   email: bergs@janelia.hhmi.org
+  num_commits: 1
+  first_commit: 2020-06-28 13:24:33
+  github: stuarteberg
 - name: Axel Huebl
   email: axel.huebl@plasma.ninja
+  num_commits: 2
+  first_commit: 2020-06-06 15:29:37
+  github: ax3l
 - name: Hadrien Mary
   email: hadrien.mary@gmail.com
   alternate_emails:
   - hadim@users.noreply.github.com
+  num_commits: 21
+  first_commit: 2020-05-27 07:53:50
+  github: hadim
 - name: Thomas Hopkins
   email: thomashopkins000@gmail.com
+  num_commits: 2
+  first_commit: 2020-07-01 10:33:54

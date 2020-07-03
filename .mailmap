@@ -21,9 +21,12 @@ shadow_walker <shadowwalkersb@gmail.com>
 Michael Sarahan <msarahan@gmail.com> Mike Sarahan <msarahan@gmail.com>
 Min RK <benjaminrk@gmail.com>
 Matthew R. Becker <beckermr@users.noreply.github.com>
+Hadrien Mary <hadrien.mary@gmail.com> Hadrien Mary <hadim@users.noreply.github.com>
+Julian Rüth <julian.rueth@fsfe.org>
 Mark Harfouche <mark.harfouche@gmail.com>
 Eric Dill <edill@anaconda.com> Eric Dill <edill@bnl.gov>
 Eric Dill <edill@anaconda.com> Eric Dill <thedizzle@gmail.com>
+Uwe L. Korn <uwe.korn@quantco.com> Uwe L. Korn <xhochy@users.noreply.github.com>
 Natasha Pavlovikj <npavlovikj2@unl.edu>
 Chris Burr <christopher.burr@cern.ch> Chris Burr <chrisburr@users.noreply.github.com>
 Jan Schulz <jasc@gmx.net>
@@ -32,13 +35,11 @@ Justin Calamari <justin.calamari@gmail.com>
 Jason Furmanek <furmanek@us.ibm.com>
 Patrick Sodré <psodre@gmail.com>
 Maksim Rakitin <mrakitin@bnl.gov> Maksim Rakitin <mrakitin@users.noreply.github.com>
-Uwe L. Korn <uwe.korn@quantco.com> Uwe L. Korn <xhochy@users.noreply.github.com>
-C.A.M. Gerlach <widenetservices@gmail.com>
-Julian Rüth <julian.rueth@fsfe.org>
-refraction-ray <kcanamgal@foxmail.com>
-Leo Fang <leofang@bnl.gov>
 John Kirkham <jakirkham@gmail.com> John Kirkham <kirkhamj@janelia.hhmi.org>
 John Kirkham <jakirkham@gmail.com> jakirkham <kirkhamj@janelia.hhmi.org>
+C.A.M. Gerlach <widenetservices@gmail.com>
+refraction-ray <kcanamgal@foxmail.com>
+Leo Fang <leofang@bnl.gov>
 Leopold Talirz <leopold.talirz@gmail.com>
 Gonzalo Pena-Castellanos <goanpeca@gmail.com>
 Daniel Bast <2790401+dbast@users.noreply.github.com>
@@ -71,9 +72,12 @@ Nicholas Bollweg <nick.bollweg@gmail.com>
 Alex Goodman <agoodm@users.noreply.github.com>
 Lion Krischer <krischer@geophysik.uni-muenchen.de>
 ap-- <andreas@poehlmann.io>
+Duncan Macleod <duncan.macleod@ligo.org>
 Peter Killick <peter.killick@metoffice.gov.uk>
 Henry Schreiner <HenrySchreinerIII@gmail.com>
 hajapy <hajapy@users.noreply.github.com>
+Axel Huebl <axel.huebl@plasma.ninja>
+Thomas Hopkins <thomashopkins000@gmail.com>
 lorenz <looooo@users.noreply.github.com>
 Tom Augspurger <tom.augspurger88@gmail.com>
 Ryan May <rmay31@gmail.com>
@@ -88,8 +92,8 @@ Nathan Goldbaum <ngoldbau@illinois.edu>
 cshaley <6740446+cshaley@users.noreply.github.com>
 David Brochart <david.brochart@gmail.com>
 Julien Schueller <schueller@phimeca.com>
-Duncan Macleod <duncan.macleod@ligo.org>
 Jason Grout <jasongrout@users.noreply.github.com>
 Tim Werner <werner@inoviga.com>
 Dave Hirschfeld <dave.hirschfeld@gmail.com>
 Nils Wentzell <nwentzell@flatironinstitute.org>
+Stuart Berg <bergs@janelia.hhmi.org>
