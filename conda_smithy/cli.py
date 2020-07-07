@@ -800,7 +800,8 @@ class UpdateAnacondaToken(Subcommand):
             token_name=args.token_name,
         )
 
-        print("Successfully updated the anaconda/binstar token!")
+        print(f"Successfully updated the anaconda/binstar token for "
+              f"{args.feedstock_directory}!")
         if args.appveyor:
             print(
                 "Appveyor tokens are stored in the repo so you must commit the "
