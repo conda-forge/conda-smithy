@@ -46,7 +46,7 @@ def generate_feedstock_content(target_directory, source_recipe_dir):
     forge_yml = os.path.join(target_directory, "conda-forge.yml")
     if not os.path.exists(forge_yml):
         with feedstock_io.write_file(forge_yml) as fh:
-            fh.write(u"{}")
+            fh.write("{}")
 
 
 class Subcommand(object):
@@ -800,7 +800,10 @@ class UpdateAnacondaToken(Subcommand):
             token_name=args.token_name,
         )
 
-        print("Successfully updated the anaconda/binstar token!")
+        print(
+            f"Successfully updated the anaconda/binstar token for "
+            f"{args.feedstock_directory}!"
+        )
         if args.appveyor:
             print(
                 "Appveyor tokens are stored in the repo so you must commit the "
