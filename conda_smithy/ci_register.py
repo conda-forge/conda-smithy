@@ -465,6 +465,14 @@ def travis_configure(user, project):
     headers = travis_headers()
 
     repo_info = travis_get_repo_info(user, project)
+
+    if not repo_info:
+        msg = (
+            "Unable to retrieve repo info from Travis\n"
+            '(Is it down? Is the "{}/{}" name spelt correctly? [note: case sensitive])'
+        )
+        raise RuntimeError(msg.format(user, project))
+
     repo_id = repo_info["id"]
 
     if repo_info["active"] is not True:
@@ -494,6 +502,14 @@ def add_token_to_travis(user, project):
     headers = travis_headers()
 
     repo_info = travis_get_repo_info(user, project)
+
+    if not repo_info:
+        msg = (
+            "Unable to retrieve repo info from Travis\n"
+            '(Is it down? Is the "{}/{}" name spelt correctly? [note: case sensitive])'
+        )
+        raise RuntimeError(msg.format(user, project))
+
     repo_id = repo_info["id"]
 
     r = requests.get(
