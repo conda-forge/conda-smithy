@@ -4,11 +4,11 @@
 
 **Changed:**
 
-* <news item>
+* linux-64 configs were changed from prefix `linux` to `linux-64`
 
 **Deprecated:**
 
-* <news item>
+* Setting `provider: linux` is deprecated in favor of `provider: linux_64`
 
 **Removed:**
 
