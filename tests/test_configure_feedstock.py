@@ -497,7 +497,7 @@ def test_migrator_recipe(recipe_migration_cfep9, jinja_env):
         os.path.join(
             recipe_migration_cfep9.recipe,
             ".ci_support",
-            "linux_python2.7.yaml",
+            "linux_64_python2.7.yaml",
         )
     ) as fo:
         variant = yaml.safe_load(fo)
