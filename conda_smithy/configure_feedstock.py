@@ -919,7 +919,7 @@ def _get_platforms_of_provider(provider, forge_config):
             build_platform_arch = forge_config["build_platform"][platform_arch]
             build_platform, build_arch = build_platform_arch.split("_")
             if (
-                arch == "64"
+                build_arch == "64"
                 and build_platform in forge_config["provider"]
                 and forge_config["provider"][build_platform] is not None
             ):
