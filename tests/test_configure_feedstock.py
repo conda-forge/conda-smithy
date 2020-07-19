@@ -530,7 +530,7 @@ def test_migrator_cfp_override(recipe_migration_cfep9, jinja_env):
         os.path.join(
             recipe_migration_cfep9.recipe,
             ".ci_support",
-            "linux_python2.7.yaml",
+            "linux_64_python2.7.yaml",
         )
     ) as fo:
         variant = yaml.safe_load(fo)
@@ -594,7 +594,7 @@ def test_migrator_downgrade_recipe(
         os.path.join(
             recipe_migration_cfep9_downgrade.recipe,
             ".ci_support",
-            "linux_python2.7.yaml",
+            "linux_64_python2.7.yaml",
         )
     ) as fo:
         variant = yaml.safe_load(fo)
@@ -630,19 +630,19 @@ def test_migrator_compiler_version_recipe(
     )
 
     assert (
-        "win_c_compilervs2008python2.7target_platformwin-32.yaml"
+        "win_64_c_compilervs2008python2.7target_platformwin-32.yaml"
         in rendered_variants
     )
     assert (
-        "win_c_compilervs2008python2.7target_platformwin-64.yaml"
+        "win_64_c_compilervs2008python2.7target_platformwin-64.yaml"
         in rendered_variants
     )
     assert (
-        "win_c_compilervs2017python3.5target_platformwin-32.yaml"
+        "win_64_c_compilervs2017python3.5target_platformwin-32.yaml"
         in rendered_variants
     )
     assert (
-        "win_c_compilervs2017python3.5target_platformwin-64.yaml"
+        "win_64_c_compilervs2017python3.5target_platformwin-64.yaml"
         in rendered_variants
     )
 
