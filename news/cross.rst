@@ -1,6 +1,6 @@
 **Added:**
 
-* Added partial support for cross compiling
+* Added partial support for cross compiling (Unixes can compile for other unixes only)
 
 **Changed:**
 
@@ -21,4 +21,3 @@
 **Security:**
 
 * <news item>
-
