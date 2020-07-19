@@ -249,7 +249,9 @@ def _trim_unused_pin_run_as_build(all_used_vars):
         del all_used_vars["pin_run_as_build"]
 
 
-def _collapse_subpackage_variants(list_of_metas, root_path):
+def _collapse_subpackage_variants(
+    list_of_metas, root_path, platform, arch, forge_config
+):
     """Collapse all subpackage node variants into one aggregate collection of used variables
 
     We get one node per output, but a given recipe can have multiple outputs.  Each output
@@ -309,6 +311,14 @@ def _collapse_subpackage_variants(list_of_metas, root_path):
         "cdt_name",
         "BUILD",
     }
+
+    target_platform = f"{platform}-{arch}"
+    build_platform = forge_config["build_platform"][
+        f"{platform}_{arch}"
+    ].replace("_", "-")
+    if build_platform != target_platform:
+        always_keep_keys.add("target_platform")
+
     all_used_vars.update(always_keep_keys)
     all_used_vars.update(top_level_vars)
 
@@ -367,11 +377,12 @@ def _yaml_represent_ordereddict(yaml_representer, data):
     )
 
 
-def finalize_config(config, platform, forge_config):
+def finalize_config(config, platform, arch, forge_config):
     """For configs without essential parameters like docker_image
     add fallback value.
     """
-    if platform.startswith("linux"):
+    build_platform = forge_config["build_platform"][f"{platform}_{arch}"]
+    if build_platform.startswith("linux"):
         if "docker_image" in config:
             config["docker_image"] = [config["docker_image"][0]]
         else:
@@ -390,7 +401,7 @@ def dump_subspace_config_files(
     #     "top-level" should be broken up into a separate CI job.
 
     configs, top_level_loop_vars = _collapse_subpackage_variants(
-        metas, root_path
+        metas, root_path, platform, arch, forge_config,
     )
 
     # get rid of the special object notation in the yaml file for objects that we dump
@@ -401,17 +412,11 @@ def dump_subspace_config_files(
     yaml.add_representer(OrderedDict, _yaml_represent_ordereddict)
 
     platform_arch = "{}-{}".format(platform, arch)
-    if arch == "64":
-        filename_arch = platform
-    else:
-        filename_arch = f"{platform}_{arch}"
-
-    output_name = platform if arch == "64" else platform_arch
 
     result = []
     for config in configs:
         config_name = "{}_{}".format(
-            filename_arch,
+            f"{platform}_{arch}",
             package_key(config, top_level_loop_vars, metas[0].config.subdir),
         )
         out_folder = os.path.join(root_path, ".ci_support")
@@ -419,7 +424,7 @@ def dump_subspace_config_files(
         if not os.path.isdir(out_folder):
             os.makedirs(out_folder)
 
-        config = finalize_config(config, platform, forge_config)
+        config = finalize_config(config, platform, arch, forge_config)
 
         short_config_name = config_name
         if len(short_config_name) >= 49:
@@ -437,6 +442,9 @@ def dump_subspace_config_files(
                 "upload": upload,
                 "config": config,
                 "short_config_name": short_config_name,
+                "build_platform": forge_config["build_platform"][
+                    f"{platform}_{arch}"
+                ].replace("_", "-"),
             }
         )
     return sorted(result, key=lambda x: x["config_name"])
@@ -555,6 +563,11 @@ def _render_ci_provider(
     for i, (platform, arch, keep_noarch) in enumerate(
         zip(platforms, archs, keep_noarchs)
     ):
+        os.environ["CONFIG_VERSION"] = forge_config["config_version"]
+        os.environ["BUILD_PLATFORM"] = forge_config["build_platform"][
+            f"{platform}_{arch}"
+        ].replace("_", "-")
+
         config = conda_build.config.get_or_merge_config(
             None,
             exclusive_config_file=forge_config["exclusive_config_file"],
@@ -617,11 +630,13 @@ def _render_ci_provider(
     else:
         forge_config[provider_name]["enabled"] = True
         fancy_name = {
-            "linux": "Linux",
-            "osx": "OSX",
-            "win": "Windows",
-            "linux_aarch64": "aarch64",
+            "linux_64": "Linux",
+            "osx_64": "OSX",
+            "win_64": "Windows",
+            "linux_aarch64": "Arm64",
+            "linux_ppc64le": "PowerPC64",
             "linux_armv7l": "armv7l",
+            "linux_s390x": "s390x",
         }
         fancy_platforms = []
         unfancy_platforms = set()
@@ -641,14 +656,9 @@ def _render_ci_provider(
                     )
                 )
 
-                plat_arch = (
-                    platform
-                    if arch == "64"
-                    else "{}_{}".format(platform, arch)
-                )
+                plat_arch = f"{platform}_{arch}"
                 forge_config[plat_arch]["enabled"] = True
-
-                fancy_platforms.append(fancy_name[platform])
+                fancy_platforms.append(fancy_name.get(plat_arch, plat_arch))
                 unfancy_platforms.add(plat_arch)
             elif platform in extra_platform_files:
                 for each_target_fname in extra_platform_files[platform]:
@@ -719,14 +729,21 @@ def _render_ci_provider(
 
         # hook for extending with whatever platform specific junk we need.
         #     Function passed in as argument
-        for platform, enable in zip(platforms, enable_platform):
+        build_platforms = OrderedDict()
+        for platform, arch, enable in zip(platforms, archs, enable_platform):
             if enable:
-                platform_specific_setup(
-                    jinja_env=jinja_env,
-                    forge_dir=forge_dir,
-                    forge_config=forge_config,
-                    platform=platform,
-                )
+                build_platform = forge_config["build_platform"][
+                    f"{platform}_{arch}"
+                ].split("_")[0]
+                build_platforms[build_platform] = True
+
+        for platform in build_platforms.keys():
+            platform_specific_setup(
+                jinja_env=jinja_env,
+                forge_dir=forge_dir,
+                forge_config=forge_config,
+                platform=platform,
+            )
 
         template = jinja_env.get_template(platform_template_file)
         with write_file(platform_target_path) as fh:
@@ -894,13 +911,23 @@ def _get_platforms_of_provider(provider, forge_config):
     archs = []
     upload_packages = []
     for platform in ["linux", "osx", "win"]:
-        for arch in ["64", "aarch64", "ppc64le", "armv7l"]:
-            platform_arch = (
-                platform if arch == "64" else "{}_{}".format(platform, arch)
-            )
-            if platform_arch not in forge_config["provider"]:
+        for arch in ["64", "aarch64", "ppc64le", "armv7l", "s390x"]:
+            platform_arch = f"{platform}_{arch}"
+            if platform_arch not in forge_config["build_platform"]:
                 continue
-            if forge_config["provider"][platform_arch] == provider:
+
+            build_platform_arch = forge_config["build_platform"][platform_arch]
+            build_platform, build_arch = build_platform_arch.split("_")
+            if (
+                arch == "64"
+                and build_platform in forge_config["provider"]
+                and forge_config["provider"][build_platform] is not None
+            ):
+                build_platform_arch = build_platform
+
+            if build_platform_arch not in forge_config["provider"]:
+                continue
+            if forge_config["provider"][build_platform_arch] == provider:
                 platforms.append(platform)
                 archs.append(arch)
                 if platform == "linux" and arch == "64":
@@ -1136,7 +1163,7 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
     azure_settings = deepcopy(forge_config["azure"][f"settings_{platform}"])
     azure_settings["strategy"]["matrix"] = {}
     for data in forge_config["configs"]:
-        if not data["platform"].startswith(platform):
+        if not data["build_platform"].startswith(platform):
             continue
         config_rendered = OrderedDict(
             {
@@ -1145,7 +1172,7 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
             }
         )
         # fmt: off
-        if "docker_image" in data["config"]:
+        if "docker_image" in data["config"] and platform == "linux":
             config_rendered["DOCKER_IMAGE"] = data["config"]["docker_image"][-1]
         azure_settings["strategy"]["matrix"][data["config_name"]] = config_rendered
         # fmt: on
@@ -1414,6 +1441,7 @@ def _load_forge_config(forge_dir, exclusive_config_file):
         "drone": {},
         "travis": {},
         "circle": {},
+        "config_version": "2",
         "appveyor": {"image": "Visual Studio 2017"},
         "azure": {
             # default choices for MS-hosted agents
@@ -1444,20 +1472,35 @@ def _load_forge_config(forge_dir, exclusive_config_file):
             "timeout_minutes": None,
         },
         "provider": {
-            "linux": "azure",
-            "osx": "azure",
-            "win": "azure",
+            "linux_64": "azure",
+            "osx_64": "azure",
+            "win_64": "azure",
             # Following platforms are disabled by default
             "linux_aarch64": None,
             "linux_ppc64le": None,
             "linux_armv7l": None,
+            "linux_s390x": None,
+            # Following platforms are aliases of x86_64,
+            "linux": None,
+            "osx": None,
+            "win": None,
         },
-        "win": {"enabled": False},
-        "osx": {"enabled": False},
-        "linux": {"enabled": False},
+        "build_platform": {
+            "linux_64": "linux_64",
+            "linux_aarch64": "linux_aarch64",
+            "linux_ppc64le": "linux_ppc64le",
+            "linux_s390x": "linux_s390x",
+            "linux_armv7l": "linux_armv7l",
+            "win_64": "win_64",
+            "osx_64": "osx_64",
+        },
+        "win_64": {"enabled": False},
+        "osx_64": {"enabled": False},
+        "linux_64": {"enabled": False},
         "linux_aarch64": {"enabled": False},
         "linux_ppc64le": {"enabled": False},
         "linux_armv7l": {"enabled": False},
+        "linux_s390x": {"enabled": False},
         # Configurable idle timeout.  Used for packages that don't have chatty enough builds
         # Applicable only to circleci and travis
         "idle_timeout_minutes": None,

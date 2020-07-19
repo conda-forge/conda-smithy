@@ -1,12 +1,14 @@
+{%- set arch_map = {'64': 'amd64', 'aarch64': 'arm64'} -%}
 {% if configs[0] -%}
 {%- for data in configs -%}
+{%- if 'linux' in data.build_platform -%}
 ---
 kind: pipeline
 name: {{ data.short_config_name }}
 
 platform:
   os: linux
-  arch: arm64
+  arch: {{ arch_map[data.build_platform.split("-")[1]] }}
 
 steps:
 - name: Install and build
@@ -20,7 +22,7 @@ steps:
       from_secret: {{ secret }}
 {%- endfor %}
 
-  {%- if 'linux' in data.platform %}
+  {%- if 'linux' in data.build_platform %}
   commands:
     - export FEEDSTOCK_ROOT="$DRONE_WORKSPACE"
     - export RECIPE_ROOT="$FEEDSTOCK_ROOT/{{ recipe_dir }}"
@@ -34,6 +36,6 @@ steps:
     - /opt/docker/bin/entrypoint $FEEDSTOCK_ROOT/.scripts/build_steps.sh
     - echo "Done building"
   {%- endif %}
-
+{% endif %}
 {% endfor %}
 {%- endif %}

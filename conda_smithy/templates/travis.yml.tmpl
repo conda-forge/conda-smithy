@@ -5,7 +5,7 @@
 #}
 {%- set platformset = [] %}
 {%- for data in configs %}
-  {%- set pfarchless = data.platform.split('-')[0] %}
+  {%- set pfarchless = data.build_platform.split('-')[0] %}
   {%- if pfarchless not in platformset %}
     {%- do platformset.append(pfarchless) %}
   {%- endif %}
@@ -21,26 +21,21 @@ env:
     {%- endfor %}
 {%- endif %}
 
+{%- set arch_map = {'64': 'amd64', 'ppc64le': 'ppc64le', 'aarch64': 'arm64', 's390x': 's390x'}  %}
+
 {% if configs[0] -%}
 matrix:
   include:
     {%- for data in configs %}
-    {%- if data.platform.startswith("osx") %}
-    - env: CONFIG={{ data.config_name }} UPLOAD_PACKAGES={{ data.upload }} PLATFORM={{ data.platform }}
+    {%- if data.build_platform.startswith("osx") %}
+    - env: CONFIG={{ data.config_name }} UPLOAD_PACKAGES={{ data.upload }} PLATFORM={{ data.build_platform }}
       os: osx
       osx_image: {{ travis.get('osx_image', 'xcode9.4') }}
-    {%- elif data.platform.startswith("linux-ppc64le") %}
-    - env: CONFIG={{ data.config_name }} UPLOAD_PACKAGES={{ data.upload }} PLATFORM={{ data.platform }} DOCKER_IMAGE={{ data.config["docker_image"][-1] }}
+      arch: {{ arch_map[data.build_platform.split("-")[1]] }}
+    {%- elif data.build_platform.startswith("linux") %}
+    - env: CONFIG={{ data.config_name }} UPLOAD_PACKAGES={{ data.upload }} PLATFORM={{ data.build_platform }} DOCKER_IMAGE={{ data.config["docker_image"][-1] }}
       os: linux
-      arch: ppc64le
-    {%- elif data.platform.startswith("linux-aarch64") %}
-    - env: CONFIG={{ data.config_name }} UPLOAD_PACKAGES={{ data.upload }} PLATFORM={{ data.platform }} DOCKER_IMAGE={{ data.config["docker_image"][-1] }}
-      os: linux
-      arch: arm64
-    {%- elif data.platform.startswith("linux-64") %}
-    - env: CONFIG={{ data.config_name }} UPLOAD_PACKAGES={{ data.upload }} PLATFORM={{ data.platform }} DOCKER_IMAGE={{ data.config["docker_image"][-1] }}
-      os: linux
-      arch: amd64
+      arch: {{ arch_map[data.build_platform.split("-")[1]] }}
     {%- endif %}
 {% endfor %}
 {%- endif %}
