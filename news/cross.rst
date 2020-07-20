@@ -4,11 +4,11 @@
 
 **Changed:**
 
-* linux-64 configs were changed from prefix `linux` to `linux-64`
+* linux-64 configs were changed from prefix ``linux`` to ``linux-64``
 
 **Deprecated:**
 
-* Setting `provider: linux` is deprecated in favor of `provider: linux_64`
+* Setting ``provider: linux`` is deprecated in favor of ``provider: linux_64``
 
 **Removed:**
 
