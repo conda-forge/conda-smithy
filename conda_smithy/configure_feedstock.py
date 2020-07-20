@@ -635,8 +635,6 @@ def _render_ci_provider(
             "win_64": "Windows",
             "linux_aarch64": "Arm64",
             "linux_ppc64le": "PowerPC64",
-            "linux_armv7l": "armv7l",
-            "linux_s390x": "s390x",
         }
         fancy_platforms = []
         unfancy_platforms = set()
@@ -910,43 +908,39 @@ def _get_platforms_of_provider(provider, forge_config):
     keep_noarchs = []
     archs = []
     upload_packages = []
-    for platform in ["linux", "osx", "win"]:
-        for arch in ["64", "aarch64", "ppc64le", "armv7l", "s390x"]:
-            platform_arch = f"{platform}_{arch}"
-            if platform_arch not in forge_config["build_platform"]:
-                continue
+    for platform_arch in forge_config["build_platform"].keys():
+        platform, arch = platform_arch.split("_")
+        build_platform_arch = forge_config["build_platform"][platform_arch]
+        build_platform, build_arch = build_platform_arch.split("_")
+        if (
+            build_arch == "64"
+            and build_platform in forge_config["provider"]
+            and forge_config["provider"][build_platform] is not None
+        ):
+            build_platform_arch = build_platform
 
-            build_platform_arch = forge_config["build_platform"][platform_arch]
-            build_platform, build_arch = build_platform_arch.split("_")
-            if (
-                build_arch == "64"
-                and build_platform in forge_config["provider"]
-                and forge_config["provider"][build_platform] is not None
-            ):
-                build_platform_arch = build_platform
-
-            if build_platform_arch not in forge_config["provider"]:
-                continue
-            if forge_config["provider"][build_platform_arch] == provider:
-                platforms.append(platform)
-                archs.append(arch)
-                if platform == "linux" and arch == "64":
-                    keep_noarchs.append(True)
-                else:
-                    keep_noarchs.append(False)
-                upload_packages.append(True)
-            elif (
-                provider == "azure"
-                and forge_config["azure"]["force"]
-                and arch == "64"
-            ):
-                platforms.append(platform)
-                archs.append(arch)
-                if platform == "linux" and arch == "64":
-                    keep_noarchs.append(True)
-                else:
-                    keep_noarchs.append(False)
-                upload_packages.append(False)
+        if build_platform_arch not in forge_config["provider"]:
+            continue
+        if forge_config["provider"][build_platform_arch] == provider:
+            platforms.append(platform)
+            archs.append(arch)
+            if platform == "linux" and arch == "64":
+                keep_noarchs.append(True)
+            else:
+                keep_noarchs.append(False)
+            upload_packages.append(True)
+        elif (
+            provider == "azure"
+            and forge_config["azure"]["force"]
+            and arch == "64"
+        ):
+            platforms.append(platform)
+            archs.append(arch)
+            if platform == "linux" and arch == "64":
+                keep_noarchs.append(True)
+            else:
+                keep_noarchs.append(False)
+            upload_packages.append(False)
     return platforms, archs, keep_noarchs, upload_packages
 
 
@@ -1494,13 +1488,6 @@ def _load_forge_config(forge_dir, exclusive_config_file):
             "win_64": "win_64",
             "osx_64": "osx_64",
         },
-        "win_64": {"enabled": False},
-        "osx_64": {"enabled": False},
-        "linux_64": {"enabled": False},
-        "linux_aarch64": {"enabled": False},
-        "linux_ppc64le": {"enabled": False},
-        "linux_armv7l": {"enabled": False},
-        "linux_s390x": {"enabled": False},
         # Configurable idle timeout.  Used for packages that don't have chatty enough builds
         # Applicable only to circleci and travis
         "idle_timeout_minutes": None,
@@ -1584,6 +1571,11 @@ def _load_forge_config(forge_dir, exclusive_config_file):
             )
         )
 
+    for platform_arch in config["build_platform"].keys():
+        config[platform_arch] = {"enabled": "True"}
+        if platform_arch not in config["provider"]:
+            config["provider"][platform_arch] = None
+
     config["secrets"] = sorted(set(config["secrets"] + ["BINSTAR_TOKEN"]))
 
     # An older conda-smithy used to have some files which should no longer exist,
@@ -1622,6 +1614,9 @@ def _load_forge_config(forge_dir, exclusive_config_file):
 
     if config["provider"]["linux_ppc64le"] in {"default", "native"}:
         config["provider"]["linux_ppc64le"] = "travis"
+
+    if config["provider"]["linux_s390x"] in {"default", "native"}:
+        config["provider"]["linux_s390x"] = "travis"
 
     # Fallback handling set to azure, for platforms that are not fully specified by this time
     for platform in config["provider"]:
