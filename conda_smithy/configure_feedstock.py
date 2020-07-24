@@ -265,6 +265,8 @@ def _collapse_subpackage_variants(
     all_used_vars = set()
     all_variants = set()
 
+    is_noarch = True
+
     for meta in list_of_metas:
         all_used_vars.update(meta.get_used_vars())
         all_variants.update(
@@ -272,6 +274,9 @@ def _collapse_subpackage_variants(
         )
 
         all_variants.add(conda_build.utils.HashableDict(meta.config.variant))
+
+        if not meta.noarch:
+            is_noarch = False
 
     top_level_loop_vars = list_of_metas[0].get_used_loop_vars(
         force_top_level=True
@@ -313,10 +318,7 @@ def _collapse_subpackage_variants(
     }
 
     target_platform = f"{platform}-{arch}"
-    build_platform = forge_config["build_platform"][
-        f"{platform}_{arch}"
-    ].replace("_", "-")
-    if build_platform != target_platform:
+    if not is_noarch:
         always_keep_keys.add("target_platform")
 
     all_used_vars.update(always_keep_keys)
