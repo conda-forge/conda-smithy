@@ -5,6 +5,7 @@
 **Changed:**
 
 * linux-64 configs were changed from prefix ``linux`` to ``linux-64``
+* ``target_platform`` is now always defined for non-noarch  recipes
 
 **Deprecated:**
 
