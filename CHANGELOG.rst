@@ -4,6 +4,33 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.7.5
+====================
+
+**Added:**
+
+* Added partial support for cross compiling (Unixes can compile for other unixes only)
+
+**Changed:**
+
+* linux-64 configs were changed from prefix ``linux`` to ``linux-64``
+* ``target_platform`` is now always defined for non-noarch  recipes
+* Raise RuntimeError on empty travis repo_info requests, to guard against later KeyErrors
+* Provide the name of the feedstock for which the update-anaconda-token command
+  was performed.
+
+**Deprecated:**
+
+* Setting ``provider: linux`` is deprecated in favor of ``provider: linux_64``
+
+**Authors:**
+
+* Isuru Fernando
+* Maksim Rakitin
+* Tom Pollard
+
+
+
 v3.7.4
 ====================
 
