@@ -10,7 +10,11 @@ from collections import OrderedDict, namedtuple
 import copy
 import hashlib
 import requests
-import json
+
+try:
+    import simplejson as json
+except:
+    import json
 
 import conda_build.api
 import conda_build.utils
