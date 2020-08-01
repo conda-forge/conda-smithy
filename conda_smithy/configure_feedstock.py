@@ -11,6 +11,10 @@ import copy
 import hashlib
 import requests
 
+# The `requests` lib uses `simplejson` instead of `json` when available.
+# In consequence the same JSON library must be used of the `JSONDecodeError`
+# used when catching an exception won't be the same as the one raised
+# by `requests`.
 try:
     import simplejson as json
 except:
