@@ -10,7 +10,15 @@ from collections import OrderedDict, namedtuple
 import copy
 import hashlib
 import requests
-import json
+
+# The `requests` lib uses `simplejson` instead of `json` when available.
+# In consequence the same JSON library must be used or the `JSONDecodeError`
+# used when catching an exception won't be the same as the one raised
+# by `requests`.
+try:
+    import simplejson as json
+except:
+    import json
 
 import conda_build.api
 import conda_build.utils
