@@ -12,7 +12,7 @@ import hashlib
 import requests
 
 # The `requests` lib uses `simplejson` instead of `json` when available.
-# In consequence the same JSON library must be used of the `JSONDecodeError`
+# In consequence the same JSON library must be used or the `JSONDecodeError`
 # used when catching an exception won't be the same as the one raised
 # by `requests`.
 try:
