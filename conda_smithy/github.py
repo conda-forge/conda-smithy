@@ -248,22 +248,12 @@ def configure_github_team(meta, gh_repo, org, feedstock_name):
         add_membership(fs_team, new_maintainer)
 
         if not has_in_members(all_members_team, new_maintainer):
-            print(
-                "Adding a new member ({}) to {}. Welcome! :)".format(
-                    new_maintainer, org.login
-                )
-            )
             add_membership(all_members_team, new_maintainer)
             new_org_members.add(new_maintainer)
 
     # Mention any maintainers that need to be removed (unlikely here).
     for old_maintainer in current_maintainers - maintainers:
-        print(
-            "AN OLD MEMBER ({}) NEEDS TO BE REMOVED FROM {}".format(
-                old_maintainer, gh_repo
-            )
-        )
-        # remove_membership(fs_team, old_maintainer)
+        remove_membership(fs_team, old_maintainer)
 
     # Add any new maintainer team
     maintainer_teams = set(
@@ -271,32 +261,23 @@ def configure_github_team(meta, gh_repo, org, feedstock_name):
         for m in maintainer_teams
         if m.startswith(str(org.login))
     )
-    # current_maintainer_team_objs = {
-    #     team.slug: team for team in current_maintainer_teams
-    # }
+    current_maintainer_team_objs = {
+        team.slug: team for team in current_maintainer_teams
+    }
     current_maintainer_teams = set(
         [team.slug for team in current_maintainer_teams]
     )
     for new_team in maintainer_teams - current_maintainer_teams:
-        print(
-            "Adding a new team ({}) to {}. Welcome! :)".format(
-                new_team, org.login
-            )
-        )
-
         team = org.get_team_by_slug(new_team)
         team.add_to_repos(gh_repo)
 
     # remove any old ones
     for old_team in current_maintainer_teams - maintainer_teams:
-        print(
-            "AN OLD TEAM ({}) NEEDS TO BE REMOVED FROM {}".format(
-                old_team, gh_repo
-            )
+        team = current_maintainer_team_objs.get(
+            old_team, org.get_team_by_slug(old_team)
         )
-        # team = current_maintainer_team_objs.get(
-        #     old_team, org.get_team_by_slug(old_team)
-        # )
-        # team.remove_from_repos(gh_repo)
+        if team.name == fs_team.name:
+            continue
+        team.remove_from_repos(gh_repo)
 
     return maintainers, current_maintainers, new_org_members
