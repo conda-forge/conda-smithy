@@ -187,7 +187,7 @@ def remove_from_project(gh, org, project):
     repo.remove_from_collaborators(user.login)
 
 
-def configure_github_team(meta, gh_repo, org, feedstock_name):
+def configure_github_team(meta, gh_repo, org, feedstock_name, remove=True):
 
     # Add a team for this repo and add the maintainers to it.
     superlative = [
@@ -220,21 +220,21 @@ def configure_github_team(meta, gh_repo, org, feedstock_name):
     # Try to get team or create it if it doesn't exist.
     team_name = feedstock_name
     current_maintainer_teams = list(gh_repo.get_teams())
-    team = next(
+    fs_team = next(
         (team for team in current_maintainer_teams if team.name == team_name),
         None,
     )
     current_maintainers = set()
-    if not team:
-        team = create_team(
+    if not fs_team:
+        fs_team = create_team(
             org,
             team_name,
             "The {} {} contributors!".format(choice(superlative), team_name),
         )
-        team.add_to_repos(gh_repo)
+        fs_team.add_to_repos(gh_repo)
     else:
         current_maintainers = set(
-            [e.login.lower() for e in team.get_members()]
+            [e.login.lower() for e in fs_team.get_members()]
         )
 
     # Get the all-members team
@@ -245,40 +245,41 @@ def configure_github_team(meta, gh_repo, org, feedstock_name):
     # Add only the new maintainers to the team.
     # Also add the new maintainers to all-members if not already included.
     for new_maintainer in maintainers - current_maintainers:
-        add_membership(team, new_maintainer)
+        add_membership(fs_team, new_maintainer)
 
         if not has_in_members(all_members_team, new_maintainer):
-            print(
-                "Adding a new member ({}) to {}. Welcome! :)".format(
-                    new_maintainer, org.login
-                )
-            )
             add_membership(all_members_team, new_maintainer)
             new_org_members.add(new_maintainer)
 
-    # Mention any maintainers that need to be removed (unlikely here).
-    for old_maintainer in current_maintainers - maintainers:
-        print(
-            "AN OLD MEMBER ({}) NEEDS TO BE REMOVED FROM {}".format(
-                old_maintainer, gh_repo
-            )
-        )
+    # Remove any maintainers that need to be removed (unlikely here).
+    if remove:
+        for old_maintainer in current_maintainers - maintainers:
+            remove_membership(fs_team, old_maintainer)
 
-    # Add any new maintainer team
+    # Add any new maintainer teams
     maintainer_teams = set(
         m.split("/")[1]
         for m in maintainer_teams
         if m.startswith(str(org.login))
     )
-    current_maintainer_teams = [team.name for team in current_maintainer_teams]
-    for maintainer_team in maintainer_teams - set(current_maintainer_teams):
-        print(
-            "Adding a new team ({}) to {}. Welcome! :)".format(
-                maintainer_team, org.login
-            )
-        )
-
-        team = get_cached_team(org, maintainer_team)
+    current_maintainer_team_objs = {
+        team.slug: team for team in current_maintainer_teams
+    }
+    current_maintainer_teams = set(
+        [team.slug for team in current_maintainer_teams]
+    )
+    for new_team in maintainer_teams - current_maintainer_teams:
+        team = org.get_team_by_slug(new_team)
         team.add_to_repos(gh_repo)
+
+    # remove any old teams
+    if remove:
+        for old_team in current_maintainer_teams - maintainer_teams:
+            team = current_maintainer_team_objs.get(
+                old_team, org.get_team_by_slug(old_team)
+            )
+            if team.name == fs_team.name:
+                continue
+            team.remove_from_repos(gh_repo)
 
     return maintainers, current_maintainers, new_org_members
