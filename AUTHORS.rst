@@ -18,13 +18,13 @@ Authors are sorted by number of commits.
 * Eric Dill
 * Uwe L. Korn
 * Natasha Pavlovikj
+* Maksim Rakitin
 * Chris Burr
 * Jan Schulz
 * Josh Reichardt
 * Justin Calamari
 * Jason Furmanek
 * Patrick Sodré
-* Maksim Rakitin
 * John Kirkham
 * C.A.M. Gerlach
 * refraction-ray
@@ -85,3 +85,4 @@ Authors are sorted by number of commits.
 * Dave Hirschfeld
 * Nils Wentzell
 * Stuart Berg
+* Tom Pollard

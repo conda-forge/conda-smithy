@@ -7,7 +7,7 @@
   email: mrakitin@bnl.gov
   alternate_emails:
   - mrakitin@users.noreply.github.com
-  num_commits: 9
+  num_commits: 12
   first_commit: 2019-07-19 17:37:24
   github: mrakitin
 - name: Gonzalo Pena-Castellanos
@@ -246,7 +246,7 @@
   email: isuru.11@cse.mrt.ac.lk
   alternate_emails:
   - isuruf@gmail.com
-  num_commits: 315
+  num_commits: 327
   first_commit: 2017-01-08 22:03:03
   github: isuruf
 - name: Julian Rüth
@@ -391,12 +391,12 @@
   github: shadowwalkersb
 - name: Matthew R Becker
   email: becker.mr@gmail.com
-  num_commits: 156
+  num_commits: 162
   first_commit: 2020-01-07 17:44:33
   github: beckermr
 - name: Matthew R. Becker
   email: beckermr@users.noreply.github.com
-  num_commits: 25
+  num_commits: 26
   first_commit: 2020-01-19 19:32:30
   github: beckermr
 - name: Natasha Pavlovikj
@@ -441,10 +441,14 @@
   email: hadrien.mary@gmail.com
   alternate_emails:
   - hadim@users.noreply.github.com
-  num_commits: 21
+  num_commits: 25
   first_commit: 2020-05-27 07:53:50
   github: hadim
 - name: Thomas Hopkins
   email: thomashopkins000@gmail.com
   num_commits: 2
   first_commit: 2020-07-01 10:33:54
+- name: Tom Pollard
+  email: tom.pollard@codethink.co.uk
+  num_commits: 1
+  first_commit: 2020-07-09 05:47:39
