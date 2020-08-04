@@ -4,6 +4,47 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.7.6
+====================
+
+**Added:**
+
+* Added partial support for cross compiling (Unixes can compile for other unixes only)
+
+**Changed:**
+
+* linux-64 configs were changed from prefix ``linux`` to ``linux-64``
+* ``target_platform`` is now always defined for non-noarch  recipes
+* Raise RuntimeError on empty travis repo_info requests, to guard against later KeyErrors
+* Provide the name of the feedstock for which the update-anaconda-token command
+  was performed.
+* GitHub Teams are now added to feedstocks by their ``slug`` (i.e., the name
+  used to ``@``-mention them on ``github.com``) as opposed to their names.
+
+**Deprecated:**
+
+* Setting ``provider: linux`` is deprecated in favor of ``provider: linux_64``
+
+**Fixed:**
+
+* Use `simplejson` to catch `JSONDecodeError` when available. Fix #1368.
+
+**Security:**
+
+* Members and teams are now properly removed from feedstocks and feedstock
+  maintenance teams.
+
+**Authors:**
+
+* Isuru Fernando
+* Matthew R Becker
+* Matthew R. Becker
+* Hadrien Mary
+* Maksim Rakitin
+* Tom Pollard
+
+
+
 v3.7.4
 ====================
 
