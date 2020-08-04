@@ -1455,7 +1455,7 @@ def _load_forge_config(forge_dir, exclusive_config_file):
                 "strategy": {"maxParallel": 8},
             },
             "settings_osx": {
-                "pool": {"vmImage": "macOS-10.14",},
+                "pool": {"vmImage": "macOS-10.15",},
                 "timeoutInMinutes": 360,
                 "strategy": {"maxParallel": 8},
             },
