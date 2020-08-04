@@ -187,7 +187,7 @@ def remove_from_project(gh, org, project):
     repo.remove_from_collaborators(user.login)
 
 
-def configure_github_team(meta, gh_repo, org, feedstock_name):
+def configure_github_team(meta, gh_repo, org, feedstock_name, remove=True):
 
     # Add a team for this repo and add the maintainers to it.
     superlative = [
@@ -251,11 +251,12 @@ def configure_github_team(meta, gh_repo, org, feedstock_name):
             add_membership(all_members_team, new_maintainer)
             new_org_members.add(new_maintainer)
 
-    # Mention any maintainers that need to be removed (unlikely here).
-    for old_maintainer in current_maintainers - maintainers:
-        remove_membership(fs_team, old_maintainer)
+    # Remove any maintainers that need to be removed (unlikely here).
+    if remove:
+        for old_maintainer in current_maintainers - maintainers:
+            remove_membership(fs_team, old_maintainer)
 
-    # Add any new maintainer team
+    # Add any new maintainer teams
     maintainer_teams = set(
         m.split("/")[1]
         for m in maintainer_teams
@@ -271,13 +272,14 @@ def configure_github_team(meta, gh_repo, org, feedstock_name):
         team = org.get_team_by_slug(new_team)
         team.add_to_repos(gh_repo)
 
-    # remove any old ones
-    for old_team in current_maintainer_teams - maintainer_teams:
-        team = current_maintainer_team_objs.get(
-            old_team, org.get_team_by_slug(old_team)
-        )
-        if team.name == fs_team.name:
-            continue
-        team.remove_from_repos(gh_repo)
+    # remove any old teams
+    if remove:
+        for old_team in current_maintainer_teams - maintainer_teams:
+            team = current_maintainer_team_objs.get(
+                old_team, org.get_team_by_slug(old_team)
+            )
+            if team.name == fs_team.name:
+                continue
+            team.remove_from_repos(gh_repo)
 
     return maintainers, current_maintainers, new_org_members
