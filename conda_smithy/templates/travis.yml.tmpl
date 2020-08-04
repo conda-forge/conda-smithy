@@ -30,7 +30,7 @@ matrix:
     {%- if data.build_platform.startswith("osx") %}
     - env: CONFIG={{ data.config_name }} UPLOAD_PACKAGES={{ data.upload }} PLATFORM={{ data.build_platform }}
       os: osx
-      osx_image: {{ travis.get('osx_image', 'xcode9.4') }}
+      osx_image: {{ travis.get('osx_image', 'xcode12u') }}
       arch: {{ arch_map[data.build_platform.split("-")[1]] }}
     {%- elif data.build_platform.startswith("linux") %}
     - env: CONFIG={{ data.config_name }} UPLOAD_PACKAGES={{ data.upload }} PLATFORM={{ data.build_platform }} DOCKER_IMAGE={{ data.config["docker_image"][-1] }}
