@@ -30,5 +30,5 @@ jobs:
     condition: succeededOrFailed()
 
   - publish: /Users/runner/miniforge3/conda-bld/
-    artifact: conda_artifacts_$(CONFIG)
+    artifact: conda_artifacts_$(CONFIG)_$(system.JobId)
     condition: eq(variables.CONDA_BLD_DIR_EXISTS, 'true')

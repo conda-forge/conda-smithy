@@ -95,7 +95,7 @@ jobs:
       condition: succeededOrFailed()
 
     - publish: $(CONDA_BLD_PATH)\\
-      artifact: conda_artifacts_$(CONFIG)
+      artifact: conda_artifacts_$(CONFIG)_$(system.JobId)
       condition: eq(variables.CONDA_BLD_DIR_EXISTS, 'true')
 
 {%- if conda_forge_output_validation %}
