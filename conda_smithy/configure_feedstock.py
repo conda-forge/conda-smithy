@@ -1442,6 +1442,8 @@ def _load_forge_config(forge_dir, exclusive_config_file):
             "project_id": "84710dde-1620-425b-80d0-4cf5baca359d",
             # Set timeout for all platforms at once.
             "timeout_minutes": None,
+            # Toggle creating pipeline artifacts for conda build_artifacts dir
+            "store_build_artifacts": False,
         },
         "provider": {
             "linux": "azure",
