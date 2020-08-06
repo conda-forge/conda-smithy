@@ -119,6 +119,7 @@ def travis_headers():
 
 
 def add_token_to_circle(user, project):
+    anaconda_token = _get_anaconda_token()
     url_template = (
         "https://circleci.com/api/v1.1/project/github/{user}/{project}/envvar?"
         "circle-token={token}"
@@ -137,6 +138,7 @@ def drone_session():
 
 
 def add_token_to_drone(user, project):
+    anaconda_token = _get_anaconda_token()
     session = drone_session()
     response = session.post(
         f"/api/repos/{user}/{project}/secrets",
@@ -264,6 +266,7 @@ def add_project_to_appveyor(user, project):
 
 
 def appveyor_encrypt_binstar_token(feedstock_directory, user, project):
+    anaconda_token = _get_anaconda_token()
     headers = {"Authorization": "Bearer {}".format(appveyor_token)}
     url = "https://ci.appveyor.com/api/account/encrypt"
     response = requests.post(
@@ -419,6 +422,7 @@ def add_project_to_travis(user, project):
 
 
 def travis_token_update_conda_forge_config(feedstock_directory, user, project):
+    anaconda_token = _get_anaconda_token()
     item = 'BINSTAR_TOKEN="{}"'.format(anaconda_token)
     slug = "{}%2F{}".format(user, project)
 
@@ -498,6 +502,8 @@ def travis_configure(user, project):
 
 def add_token_to_travis(user, project):
     """Add the BINSTAR_TOKEN to travis."""
+
+    anaconda_token = _get_anaconda_token()
 
     headers = travis_headers()
 
@@ -621,6 +627,15 @@ def add_conda_forge_webservice_hooks(user, repo):
             response = requests.post(url, json=payload, headers=headers)
             if response.status_code != 200:
                 response.raise_for_status()
+
+
+def _get_anaconda_token():
+    try:
+        return anaconda_token
+    except NameError:
+        raise RuntimeError(
+            "You must have the anaconda token defined to do CI registration"
+        )
 
 
 if __name__ == "__main__":
