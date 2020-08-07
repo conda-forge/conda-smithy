@@ -35,3 +35,16 @@ jobs:
 {%- for secret in secrets %}
       {{ secret }}: $({{ secret }})
 {%- endfor %}
+
+{%- if azure.store_build_artifacts %}
+  - script: |
+        if [ -d build_artifacts ]; then
+          echo "##vso[task.setVariable variable=CONDA_BLD_DIR_EXISTS]true"
+        fi
+    displayName: Check for conda build artifacts
+    condition: succeededOrFailed()
+
+  - publish: build_artifacts/
+    artifact: conda_artifacts_$(CONFIG)_$(system.JobId)
+    condition: eq(variables.CONDA_BLD_DIR_EXISTS, 'true')
+{%- endif %}

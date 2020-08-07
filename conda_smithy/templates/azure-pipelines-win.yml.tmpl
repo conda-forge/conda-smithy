@@ -87,6 +87,19 @@ jobs:
         PYTHONUNBUFFERED: 1
       condition: not(contains(variables['CONFIG'], 'vs2008'))
 
+{%- if azure.store_build_artifacts %}
+    - script: |
+        if exist $(CONDA_BLD_PATH)\\ (
+          echo ##vso[task.setVariable variable=CONDA_BLD_DIR_EXISTS]true
+        )
+      displayName: Check for conda build artifacts
+      condition: succeededOrFailed()
+
+    - publish: $(CONDA_BLD_PATH)\\
+      artifact: conda_artifacts_$(CONFIG)_$(system.JobId)
+      condition: eq(variables.CONDA_BLD_DIR_EXISTS, 'true')
+{%- endif %}
+
 {%- if conda_forge_output_validation %}
     - script: |
         set "FEEDSTOCK_NAME=%BUILD_REPOSITORY_NAME:*/=%"
