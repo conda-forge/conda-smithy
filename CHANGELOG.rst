@@ -4,6 +4,31 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.7.7
+====================
+
+**Added:**
+
+* Publish conda build artifacts on Azure as pipeline artifacts when azure.store_build_artifacts flag is True in conda-forge.yml. The default is False.
+* Add an option ``test_on_native_only`` to not run tests when cross compiling
+
+**Changed:**
+
+* Handle NameError when anaconda_token isn't defined in ci_register.py, inline with rotate_anaconda_token()
+* MacOS image in CI is bumped to macOS 10.15
+
+**Fixed:**
+
+* Re add travis_wait support via idle_timeout_minutes
+
+**Authors:**
+
+* Isuru Fernando
+* Ryan Volz
+* Tom Pollard
+
+
+
 v3.7.6
 ====================
 
