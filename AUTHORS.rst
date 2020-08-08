@@ -39,6 +39,7 @@ Authors are sorted by number of commits.
 * Marius van Niekerk
 * Peter Williams
 * Johannes Köster
+* Ryan Volz
 * Matt McCormick
 * John Blischak
 * Jan Janßen
@@ -51,6 +52,7 @@ Authors are sorted by number of commits.
 * Florian Rathgeber
 * Bruno Oliveira
 * Tony Kelman
+* Tom Pollard
 * Guilherme Quentel Melo
 * santi
 * buijennifer
@@ -85,4 +87,3 @@ Authors are sorted by number of commits.
 * Dave Hirschfeld
 * Nils Wentzell
 * Stuart Berg
-* Tom Pollard

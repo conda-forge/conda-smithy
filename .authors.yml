@@ -246,7 +246,7 @@
   email: isuru.11@cse.mrt.ac.lk
   alternate_emails:
   - isuruf@gmail.com
-  num_commits: 327
+  num_commits: 330
   first_commit: 2017-01-08 22:03:03
   github: isuruf
 - name: Julian Rüth
@@ -391,7 +391,7 @@
   github: shadowwalkersb
 - name: Matthew R Becker
   email: becker.mr@gmail.com
-  num_commits: 162
+  num_commits: 164
   first_commit: 2020-01-07 17:44:33
   github: beckermr
 - name: Matthew R. Becker
@@ -450,5 +450,10 @@
   first_commit: 2020-07-01 10:33:54
 - name: Tom Pollard
   email: tom.pollard@codethink.co.uk
-  num_commits: 1
+  num_commits: 3
   first_commit: 2020-07-09 05:47:39
+- name: Ryan Volz
+  email: rvolz@mit.edu
+  num_commits: 5
+  first_commit: 2020-07-02 12:02:36
+  github: ryanvolz
