@@ -312,6 +312,7 @@ def _collapse_subpackage_variants(
         "zip_keys",
         "pin_run_as_build",
         "MACOSX_DEPLOYMENT_TARGET",
+        "MACOSX_SDK_VERSION",
         "macos_min_version",
         "macos_machine",
         "channel_sources",
