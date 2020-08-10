@@ -4,6 +4,19 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.7.8
+====================
+
+**Added:**
+
+* ``MACOSX_SDK_VERSION`` is added as an always used key
+
+**Authors:**
+
+* Isuru Fernando
+
+
+
 v3.7.7
 ====================
 
