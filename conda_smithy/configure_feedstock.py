@@ -939,7 +939,11 @@ def _get_platforms_of_provider(provider, forge_config):
                 keep_noarchs.append(True)
             else:
                 keep_noarchs.append(False)
-            upload_packages.append(True)
+            # Allow config to disable package uploads on a per provider basis,
+            # default to True if not set explicitly set to False by config entry.
+            upload_packages.append(
+                (forge_config.get(provider, {}).get("upload_packages", True))
+            )
         elif (
             provider == "azure"
             and forge_config["azure"]["force"]
@@ -1466,8 +1470,6 @@ def _load_forge_config(forge_dir, exclusive_config_file):
                 "strategy": {"maxParallel": 4},
                 "variables": {"CONDA_BLD_PATH": r"D:\\bld\\"},
             },
-            # disallow publication of azure artifacts for now.
-            "upload_packages": False,
             # Force building all supported providers.
             "force": False,
             # name and id of azure project that the build pipeline is in
