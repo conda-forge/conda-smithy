@@ -46,13 +46,13 @@ Authors are sorted by number of commits.
 * xoviat
 * Elmar Pruesse
 * Patrick Sodré
+* Tom Pollard
 * Josh Barnes
 * Tobias Megies
 * Jonathan Helmus
 * Florian Rathgeber
 * Bruno Oliveira
 * Tony Kelman
-* Tom Pollard
 * Guilherme Quentel Melo
 * santi
 * buijennifer
@@ -87,3 +87,4 @@ Authors are sorted by number of commits.
 * Dave Hirschfeld
 * Nils Wentzell
 * Stuart Berg
+* Joshua L. Adelman
