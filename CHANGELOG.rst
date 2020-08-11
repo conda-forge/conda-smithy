@@ -4,6 +4,29 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.7.9
+====================
+
+**Added:**
+
+* ``test_on_native_only`` is now supported on osx too.
+
+**Deprecated:**
+
+* Unparsed `"upload_packages": False` from default conda-forge.yml, as not parsed & no longer reflective of defaults
+
+**Fixed:**
+
+* re-enabled `upload_packages` per provider to conda-forge.yml, which when set to False overrides default upload logic
+
+**Authors:**
+
+* Isuru Fernando
+* Tom Pollard
+* Joshua L. Adelman
+
+
+
 v3.7.8
 ====================
 
