@@ -19,9 +19,8 @@ conda-build:
 
 CONDARC
 
-conda install --yes --quiet conda-forge-ci-setup=3 conda-build pip -c conda-forge
+conda install --yes --quiet {%- if not local_ci_setup %} conda-forge-ci-setup=3{% endif %} conda-build -c conda-forge
 {% if local_ci_setup %}
-conda uninstall --quiet --yes --force conda-forge-ci-setup
 pip install --no-deps ${RECIPE_ROOT}/.
 {%- endif %}
 # set up the condarc

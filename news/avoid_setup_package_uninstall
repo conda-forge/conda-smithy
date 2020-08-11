@@ -1,0 +1,24 @@
+**Added:**
+
+* <news item>
+
+**Changed:**
+
+* Build templates no longer install & then uninstall `conda-forge-ci-setup` package if configured for local_ci_setup
+
+**Deprecated:**
+
+* <news item>
+
+**Removed:**
+
+* Removed pip from `conda install` list in build templates as already a transient dependency from conda-build
+
+**Fixed:**
+
+* <news item>
+
+**Security:**
+
+* <news item>
+
