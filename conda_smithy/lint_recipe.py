@@ -742,6 +742,13 @@ def run_conda_forge_specific(meta, recipe_dir, lints, hints):
             "into its own dir."
         )
 
+    # 4: Do not delete example recipe
+    if is_staged_recipes and not os.path.exists("recipes/example/meta.yaml"):
+        lints.append(
+            "Please do not delete the example recipe found in "
+            "(recipes/example/meta.yaml)"
+        )
+
 
 def is_selector_line(line):
     # Using the same pattern defined in conda-build (metadata.py),
