@@ -216,8 +216,6 @@ class RegisterCI(Subcommand):
                 action="store_false",
                 help="If set, {} will be not registered".format(ci),
             )
-            default = {ci.lower(): True}
-            scp.set_defaults(**default)
 
     def __call__(self, args):
         from conda_smithy import ci_register
@@ -681,8 +679,6 @@ class RegisterFeedstockToken(Subcommand):
                 action="store_false",
                 help="If set, {} will be not registered".format(ci),
             )
-            default = {ci.lower(): True}
-            scp.set_defaults(**default)
 
     def __call__(self, args):
         from conda_smithy.feedstock_tokens import (
@@ -774,8 +770,6 @@ class UpdateAnacondaToken(Subcommand):
                 action="store_false",
                 help="If set, the token on {} will be not changed.".format(ci),
             )
-            default = {ci.lower(): True}
-            scp.set_defaults(**default)
 
     def __call__(self, args):
         from conda_smithy.anaconda_token_rotation import rotate_anaconda_token
