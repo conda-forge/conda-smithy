@@ -219,6 +219,13 @@ class RegisterCI(Subcommand):
             default = {ci.lower(): True}
             scp.set_defaults(**default)
 
+        scp.add_argument(
+            "--without-anaconda-token",
+            dest="anaconda_token",
+            action="store_false",
+            help="If set, no anaconda token will be registered with the CI providers.",
+        )
+
     def __call__(self, args):
         from conda_smithy import ci_register
 
@@ -234,13 +241,23 @@ class RegisterCI(Subcommand):
         repo = "{}-feedstock".format(feedstock_name)
 
         print("CI Summary for {}/{} (can take ~30s):".format(owner, repo))
+
+        if not args.anaconda_token:
+            print(
+                "Warning: By not registering an Anaconda/Binstar token"
+                "your feedstock CI may not be able to upload packages"
+                "to anaconda.org by default. It is recommended to set"
+                "`upload_packages: False` per provider field in"
+                "conda-forge.yml to disable package uploads."
+            )
         if args.travis:
             # Assume that the user has enabled travis-ci.com service
             # user-wide or org-wide for all repos
             # ci_register.add_project_to_travis(owner, repo)
             time.sleep(1)
             ci_register.travis_configure(owner, repo)
-            ci_register.add_token_to_travis(owner, repo)
+            if args.anaconda_token:
+                ci_register.add_token_to_travis(owner, repo)
             # Assume that the user has enabled travis-ci.com service
             # user-wide or org-wide for all repos
             # ci_register.travis_cleanup(owner, repo)
@@ -248,7 +265,8 @@ class RegisterCI(Subcommand):
             print("Travis registration disabled.")
         if args.circle:
             ci_register.add_project_to_circle(owner, repo)
-            ci_register.add_token_to_circle(owner, repo)
+            if args.anaconda_token:
+                ci_register.add_token_to_circle(owner, repo)
         else:
             print("Circle registration disabled.")
         if args.azure:
@@ -265,16 +283,18 @@ class RegisterCI(Subcommand):
             print("Azure registration disabled.")
         if args.appveyor:
             ci_register.add_project_to_appveyor(owner, repo)
-            ci_register.appveyor_encrypt_binstar_token(
-                args.feedstock_directory, owner, repo
-            )
+            if args.anaconda_token:
+                ci_register.appveyor_encrypt_binstar_token(
+                    args.feedstock_directory, owner, repo
+                )
             ci_register.appveyor_configure(owner, repo)
         else:
             print("Appveyor registration disabled.")
 
         if args.drone:
             ci_register.add_project_to_drone(owner, repo)
-            ci_register.add_token_to_drone(owner, repo)
+            if args.anaconda_token:
+                ci_register.add_token_to_drone(owner, repo)
         else:
             print("Drone registration disabled.")
 
