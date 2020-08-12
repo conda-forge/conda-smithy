@@ -750,10 +750,11 @@ def run_conda_forge_specific(meta, recipe_dir, lints, hints):
         )
 
         if not os.path.exists(example_meta_fname):
-            lints.append(
-                "Please do not delete the example recipe found in "
-                "`recipes/example/meta.yaml`"
-            )
+            msg = "Please do not delete the example recipe found in " \
+                "`recipes/example/meta.yaml`."
+
+            if msg not in lints:
+                lints.append(msg)
 
 
 def is_selector_line(line):
