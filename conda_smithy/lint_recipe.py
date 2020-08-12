@@ -750,8 +750,10 @@ def run_conda_forge_specific(meta, recipe_dir, lints, hints):
         )
 
         if not os.path.exists(example_meta_fname):
-            msg = "Please do not delete the example recipe found in " \
+            msg = (
+                "Please do not delete the example recipe found in "
                 "`recipes/example/meta.yaml`."
+            )
 
             if msg not in lints:
                 lints.append(msg)
