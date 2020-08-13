@@ -16,7 +16,7 @@
 
 **Fixed:**
 
-* Error with linting check for deletion of `recipes/example/meta.yaml` in `staged-recipes`
+* Error with linting check for deletion of ``recipes/example/meta.yaml`` in staged-recipes
 
 **Security:**
 
