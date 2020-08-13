@@ -743,11 +743,20 @@ def run_conda_forge_specific(meta, recipe_dir, lints, hints):
         )
 
     # 4: Do not delete example recipe
-    if is_staged_recipes and not os.path.exists("recipes/example/meta.yaml"):
-        lints.append(
-            "Please do not delete the example recipe found in "
-            "(recipes/example/meta.yaml)"
+    if is_staged_recipes and recipe_dir is not None:
+
+        example_meta_fname = os.path.abspath(
+            os.path.join(recipe_dir, "..", "example", "meta.yaml")
         )
+
+        if not os.path.exists(example_meta_fname):
+            msg = (
+                "Please do not delete the example recipe found in "
+                "`recipes/example/meta.yaml`."
+            )
+
+            if msg not in lints:
+                lints.append(msg)
 
 
 def is_selector_line(line):
