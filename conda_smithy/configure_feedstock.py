@@ -693,34 +693,7 @@ def _render_ci_provider(
             fast_finish_text=fast_finish_text,
         )
 
-        # If the recipe supplies its own upload_or_check_non_existence.py upload script,
-        # we use it instead of the global one.
-        upload_fpath = os.path.join(
-            forge_dir,
-            forge_config["recipe_dir"],
-            "upload_or_check_non_existence.py",
-        )
-        if os.path.exists(upload_fpath):
-            if provider_name == "circle":
-                forge_config[
-                    "upload_script"
-                ] = "/home/conda/recipe_root/upload_or_check_non_existence.py"
-            elif provider_name == "travis":
-                forge_config[
-                    "upload_script"
-                ] = "{}/upload_or_check_non_existence.py".format(
-                    forge_config["recipe_dir"]
-                )
-            else:
-                forge_config[
-                    "upload_script"
-                ] = "{}\\upload_or_check_non_existence.py".format(
-                    forge_config["recipe_dir"]
-                )
-        else:
-            forge_config["upload_script"] = "upload_or_check_non_existence"
-
-        # if the recipe has its own conda_forge_ci_setup package, then
+        # If the recipe has its own conda_forge_ci_setup package, then
         # install that
         if os.path.exists(
             os.path.join(
