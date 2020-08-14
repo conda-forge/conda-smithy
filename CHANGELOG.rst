@@ -4,6 +4,24 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.7.10
+====================
+
+**Removed:**
+
+* Remove unused ``forge_config["upload_script"]`` logic
+
+**Fixed:**
+
+* Error with linting check for deletion of ``recipes/example/meta.yaml`` in staged-recipes
+
+**Authors:**
+
+* Joshua L. Adelman
+* Tom Pollard
+
+
+
 v3.7.9
 ====================
 
