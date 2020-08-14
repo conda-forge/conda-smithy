@@ -36,9 +36,11 @@ Authors are sorted by number of commits.
 * Carlo
 * Marcel Bargull
 * Matthew Craig
+* Joshua L. Adelman
 * Marius van Niekerk
 * Peter Williams
 * Johannes Köster
+* Tom Pollard
 * Ryan Volz
 * Matt McCormick
 * John Blischak
@@ -46,7 +48,6 @@ Authors are sorted by number of commits.
 * xoviat
 * Elmar Pruesse
 * Patrick Sodré
-* Tom Pollard
 * Josh Barnes
 * Tobias Megies
 * Jonathan Helmus
@@ -87,4 +88,3 @@ Authors are sorted by number of commits.
 * Dave Hirschfeld
 * Nils Wentzell
 * Stuart Berg
-* Joshua L. Adelman

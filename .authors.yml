@@ -246,7 +246,7 @@
   email: isuru.11@cse.mrt.ac.lk
   alternate_emails:
   - isuruf@gmail.com
-  num_commits: 336
+  num_commits: 338
   first_commit: 2017-01-08 22:03:03
   github: isuruf
 - name: Julian Rüth
@@ -450,7 +450,7 @@
   first_commit: 2020-07-01 10:33:54
 - name: Tom Pollard
   email: tom.pollard@codethink.co.uk
-  num_commits: 4
+  num_commits: 5
   first_commit: 2020-07-09 05:47:39
 - name: Ryan Volz
   email: rvolz@mit.edu
@@ -459,6 +459,6 @@
   github: ryanvolz
 - name: Joshua L. Adelman
   email: joshua.adelman@gmail.com
-  num_commits: 1
+  num_commits: 6
   first_commit: 2020-08-10 20:50:53
   github: synapticarbors
