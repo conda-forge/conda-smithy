@@ -46,10 +46,10 @@ install:
     - cmd: set PYTHONUNBUFFERED=1
 
     # Configure the VM.
-    # Tell conda we want an updated version of conda-forge-ci-setup and conda-build
-    - cmd: conda.exe install -n root -c conda-forge --quiet --yes conda-forge-ci-setup=3 conda-build pip
+    # Tell conda we want an updated version of {{ remote_ci_setup }} and conda-build
+    - cmd: conda.exe install -n root -c conda-forge --quiet --yes "{{ remote_ci_setup }}" conda-build pip
     {%- if local_ci_setup %}
-    - cmd: conda.exe uninstall --quiet --yes --force conda-forge-ci-setup
+    - cmd: conda.exe uninstall --quiet --yes --force "{{ remote_ci_setup }}"
     - cmd: pip install --no-deps .\{{ recipe_dir }}\.
     {%- endif %}
     - cmd: setup_conda_rc .\ .\{{ recipe_dir }} .\.ci_support\%CONFIG%.yaml

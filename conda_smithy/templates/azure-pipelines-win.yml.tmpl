@@ -42,7 +42,7 @@ jobs:
 
     - task: CondaEnvironment@1
       inputs:
-        packageSpecs: 'python=3.6 conda-build conda conda-forge::conda-forge-ci-setup=3 pip' # Optional
+        packageSpecs: 'python=3.6 conda-build conda "{{ remote_ci_setup }}" pip' # Optional
         installOptions: "-c conda-forge"
         updateConda: true
       displayName: Install conda-build and activate environment
@@ -54,7 +54,7 @@ jobs:
     - script: |
         call activate base
         {%- if local_ci_setup %}
-        conda.exe uninstall --quiet --yes --force conda-forge-ci-setup
+        conda.exe uninstall --quiet --yes --force "{{ remote_ci_setup }}"
         pip install --no-deps ".\{{ recipe_dir }}\."
         {%- endif %}
         setup_conda_rc .\ ".\{{ recipe_dir }}" .\.ci_support\%CONFIG%.yaml
