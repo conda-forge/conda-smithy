@@ -71,7 +71,9 @@ the feedstock or after.
 3. **Register the feedstock with CI services:**
 `conda smithy register-ci --organization conda-forge --feedstock_directory ./foo-feedstock`.
 This requires tokens for the CI services. You can give the name of a user instead
-of organization with `--user github_user_name`.
+of organization with `--user github_user_name`. By default this command requires an Anaconda/Binstar token
+to be available in `~/.conda-smithy/anaconda.token`, or as BINSTAR_TOKEN in the environment. This can be opted
+out of by specifying `--without-anaconda-token`, as such execpted package uploads will not be attempted.
      * For Azure, you will have to create a service connection with the same name as your github user or org
         `https://dev.azure.com/YOUR_ORG/feedstock-builds/_settings/adminservices`
      * For Azure builds, you will have to export the environment variable `AZURE_ORG_OR_USER` to point to your Azure org

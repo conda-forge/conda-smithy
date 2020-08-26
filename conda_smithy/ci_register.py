@@ -635,6 +635,7 @@ def _get_anaconda_token():
     except NameError:
         raise RuntimeError(
             "You must have the anaconda token defined to do CI registration"
+            "This requirement can be overriden by specifying `--without-anaconda-token`"
         )
 
 
