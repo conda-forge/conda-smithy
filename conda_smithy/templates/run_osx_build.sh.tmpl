@@ -22,11 +22,11 @@ fi
 source ${HOME}/miniforge3/etc/profile.d/conda.sh
 conda activate base
 
-echo -e "\n\nInstalling conda-forge-ci-setup=3 and conda-build."
-conda install -n base --quiet --yes conda-forge-ci-setup=3 conda-build pip
+echo -e "\n\nInstalling {{ remote_ci_setup }} and conda-build."
+conda install -n base --quiet --yes "{{ remote_ci_setup }}" conda-build pip
 
 {% if local_ci_setup %}
-conda uninstall --quiet --yes --force conda-forge-ci-setup
+conda uninstall --quiet --yes --force "{{ remote_ci_setup }}"
 pip install --no-deps {{ recipe_dir }}/.
 {%- endif %}
 
