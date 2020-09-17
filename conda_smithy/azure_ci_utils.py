@@ -17,12 +17,13 @@ from vsts.service_endpoint.v4_1.service_endpoint_client import (
 from vsts.task_agent.v4_0.models import TaskAgentQueue
 from vsts.task_agent.v4_0.task_agent_client import TaskAgentClient
 from vsts.vss_connection import VssConnection
+from .azure_defaults import AZURE_DEFAULT_ORG, AZURE_DEFAULT_PROJECT_NAME
 
 
 class AzureConfig:
 
-    _default_org = "conda-forge"
-    _default_project_name = "feedstock-builds"
+    _default_org = AZURE_DEFAULT_ORG
+    _default_project_name = AZURE_DEFAULT_PROJECT_NAME
 
     def __init__(
         self, org_or_user=None, project_name=None, team_instance=None
@@ -128,7 +129,10 @@ def get_repo_reference(config: AzureConfig, github_org, repo_name):
 
 
 def get_default_build_definition(
-    github_org, repo_name, config: AzureConfig = default_config, **kwargs,
+    github_org,
+    repo_name,
+    config: AzureConfig = default_config,
+    **kwargs,
 ):
     from vsts.build.v4_1.models import (
         BuildDefinition,
@@ -215,7 +219,9 @@ def register_repo(github_org, repo_name, config: AzureConfig = default_config):
 
     bclient = build_client()
     build_definition = get_default_build_definition(
-        github_org, repo_name, config=config,
+        github_org,
+        repo_name,
+        config=config,
     )
 
     # clean up existing builds for the same feedstock if present

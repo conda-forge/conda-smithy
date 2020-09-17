@@ -541,7 +541,9 @@ def add_token_to_travis(user, project):
     if have_token:
         r = requests.patch(
             "{}/repo/{repo_id}/env_var/{ev_id}".format(
-                travis_endpoint, repo_id=repo_id, ev_id=ev_id,
+                travis_endpoint,
+                repo_id=repo_id,
+                ev_id=ev_id,
             ),
             headers=headers,
             json=data,
