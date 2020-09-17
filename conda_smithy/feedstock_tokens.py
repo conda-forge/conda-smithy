@@ -47,7 +47,9 @@ def generate_and_write_feedstock_token(user, project):
         try:
             token = secrets.token_hex(32)
             pth = os.path.join(
-                "~", ".conda-smithy", "%s_%s.token" % (user, project),
+                "~",
+                ".conda-smithy",
+                "%s_%s.token" % (user, project),
             )
             pth = os.path.expanduser(pth)
             if os.path.exists(pth):
@@ -97,7 +99,9 @@ def read_feedstock_token(user, project):
 
     # read the token
     user_token_pth = os.path.join(
-        "~", ".conda-smithy", "%s_%s.token" % (user, project),
+        "~",
+        ".conda-smithy",
+        "%s_%s.token" % (user, project),
     )
     user_token_pth = os.path.expanduser(user_token_pth)
 
@@ -146,7 +150,11 @@ def feedstock_token_exists(user, project, token_repo):
                 .replace("${GH_TOKEN}", github_token)
             )
             git.Repo.clone_from(_token_repo, tmpdir, depth=1)
-            token_file = os.path.join(tmpdir, "tokens", project + ".json",)
+            token_file = os.path.join(
+                tmpdir,
+                "tokens",
+                project + ".json",
+            )
 
             if os.path.exists(token_file):
                 exists = True
@@ -203,7 +211,11 @@ def is_valid_feedstock_token(user, project, feedstock_token, token_repo):
                 .replace("${GH_TOKEN}", github_token)
             )
             git.Repo.clone_from(_token_repo, tmpdir, depth=1)
-            token_file = os.path.join(tmpdir, "tokens", project + ".json",)
+            token_file = os.path.join(
+                tmpdir,
+                "tokens",
+                project + ".json",
+            )
 
             if os.path.exists(token_file):
                 with open(token_file, "r") as fp:
@@ -216,7 +228,8 @@ def is_valid_feedstock_token(user, project, feedstock_token, token_repo):
                 )
 
                 valid = hmac.compare_digest(
-                    salted_token, bytes.fromhex(token_data["hashed_token"]),
+                    salted_token,
+                    bytes.fromhex(token_data["hashed_token"]),
                 )
         except Exception as e:
             if "DEBUG_FEEDSTOCK_TOKENS" in os.environ:
@@ -278,7 +291,11 @@ def register_feedstock_token(user, project, token_repo):
                 .replace("${GH_TOKEN}", github_token)
             )
             repo = git.Repo.clone_from(_token_repo, tmpdir, depth=1)
-            token_file = os.path.join(tmpdir, "tokens", project + ".json",)
+            token_file = os.path.join(
+                tmpdir,
+                "tokens",
+                project + ".json",
+            )
 
             # don't overwrite existing tokens
             # check again since there might be a race condition
@@ -567,7 +584,9 @@ def add_feedstock_token_to_travis(user, project, feedstock_token, clobber):
     if have_feedstock_token and clobber:
         r = requests.patch(
             "{}/repo/{repo_id}/env_var/{ev_id}".format(
-                travis_endpoint, repo_id=repo_id, ev_id=ev_id,
+                travis_endpoint,
+                repo_id=repo_id,
+                ev_id=ev_id,
             ),
             headers=headers,
             json=data,
@@ -617,7 +636,9 @@ def add_feedstock_token_to_azure(user, project, feedstock_token, clobber):
 
     if not have_feedstock_token or (have_feedstock_token and clobber):
         variables["FEEDSTOCK_TOKEN"] = BuildDefinitionVariable(
-            allow_override=False, is_secret=True, value=feedstock_token,
+            allow_override=False,
+            is_secret=True,
+            value=feedstock_token,
         )
 
         build_definition = get_default_build_definition(

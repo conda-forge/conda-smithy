@@ -179,7 +179,9 @@ def test_feedstock_token_exists(
     assert feedstock_token_exists(user, project, repo) is retval
 
     git_mock.Repo.clone_from.assert_called_once_with(
-        "abc123", str(tmpdir), depth=1,
+        "abc123",
+        str(tmpdir),
+        depth=1,
     )
 
 
@@ -210,7 +212,9 @@ def test_feedstock_token_raises(
     assert "Testing for the feedstock token for" in str(e.value)
 
     git_mock.Repo.clone_from.assert_called_once_with(
-        "abc123", str(tmpdir), depth=1,
+        "abc123",
+        str(tmpdir),
+        depth=1,
     )
 
 
@@ -248,7 +252,9 @@ def test_register_feedstock_token_works(
             os.remove(pth)
 
     git_mock.Repo.clone_from.assert_called_once_with(
-        "abc123", str(tmpdir), depth=1,
+        "abc123",
+        str(tmpdir),
+        depth=1,
     )
 
     repo = git_mock.Repo.clone_from.return_value
@@ -351,7 +357,9 @@ def test_register_feedstock_token_exists_already(
             os.remove(pth)
 
     git_mock.Repo.clone_from.assert_called_once_with(
-        "abc123", str(tmpdir), depth=1,
+        "abc123",
+        str(tmpdir),
+        depth=1,
     )
 
     repo = git_mock.Repo.clone_from.return_value
@@ -482,7 +490,11 @@ def test_register_feedstock_token_with_proviers_notoken(
 @mock.patch("conda_smithy.feedstock_tokens.add_feedstock_token_to_travis")
 @mock.patch("conda_smithy.feedstock_tokens.add_feedstock_token_to_azure")
 def test_register_feedstock_token_with_proviers_error(
-    azure_mock, travis_mock, circle_mock, drone_mock, provider,
+    azure_mock,
+    travis_mock,
+    circle_mock,
+    drone_mock,
+    provider,
 ):
     user = "foo"
     project = "bar-feedstock"
@@ -504,7 +516,8 @@ def test_register_feedstock_token_with_proviers_error(
 
         with pytest.raises(RuntimeError) as e:
             register_feedstock_token_with_proviers(
-                user, project,
+                user,
+                project,
             )
 
         assert "on %s" % provider in str(e.value)

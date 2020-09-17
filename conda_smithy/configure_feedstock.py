@@ -296,11 +296,13 @@ def _collapse_subpackage_variants(
     # this is the initial collection of all variants before we discard any.  "Squishing"
     #     them is necessary because the input form is already broken out into one matrix
     #     configuration per item, and we want a single dict, with each key representing many values
-    squished_input_variants = conda_build.variants.list_of_dicts_to_dict_of_lists(
-        list_of_metas[0].config.input_variants
+    squished_input_variants = (
+        conda_build.variants.list_of_dicts_to_dict_of_lists(
+            list_of_metas[0].config.input_variants
+        )
     )
-    squished_used_variants = conda_build.variants.list_of_dicts_to_dict_of_lists(
-        list(all_variants)
+    squished_used_variants = (
+        conda_build.variants.list_of_dicts_to_dict_of_lists(list(all_variants))
     )
 
     # these are variables that only occur in the top level, and thus won't show up as loops in the
@@ -412,7 +414,11 @@ def dump_subspace_config_files(
     #     "top-level" should be broken up into a separate CI job.
 
     configs, top_level_loop_vars = _collapse_subpackage_variants(
-        metas, root_path, platform, arch, forge_config,
+        metas,
+        root_path,
+        platform,
+        arch,
+        forge_config,
     )
 
     # get rid of the special object notation in the yaml file for objects that we dump
@@ -494,8 +500,10 @@ def _get_fast_finish_script(
         # If the recipe supplies its own ff_ci_pr_build.py script,
         # we use it instead of the global one.
         if os.path.exists(cfbs_fpath):
-            get_fast_finish_script += "cat {recipe_dir}/ff_ci_pr_build.py".format(
-                recipe_dir=forge_config["recipe_dir"]
+            get_fast_finish_script += (
+                "cat {recipe_dir}/ff_ci_pr_build.py".format(
+                    recipe_dir=forge_config["recipe_dir"]
+                )
             )
         else:
             get_fast_finish_script += "curl https://raw.githubusercontent.com/conda-forge/conda-forge-ci-setup-feedstock/{branch}/recipe/conda_forge_ci_setup/ff_ci_pr_build.py"  # NOQA
@@ -595,7 +603,10 @@ def _render_ci_provider(
         )
 
         migrated_combined_variant_spec = migrate_combined_spec(
-            combined_variant_spec, forge_dir, config, forge_config,
+            combined_variant_spec,
+            forge_dir,
+            config,
+            forge_config,
         )
 
         metas = conda_build.api.render(
@@ -703,7 +714,11 @@ def _render_ci_provider(
                 "__init__.py",
             )
         ) and os.path.exists(
-            os.path.join(forge_dir, forge_config["recipe_dir"], "setup.py",)
+            os.path.join(
+                forge_dir,
+                forge_config["recipe_dir"],
+                "setup.py",
+            )
         ):
             forge_config["local_ci_setup"] = True
         else:
@@ -1428,17 +1443,23 @@ def _load_forge_config(forge_dir, exclusive_config_file):
         "azure": {
             # default choices for MS-hosted agents
             "settings_linux": {
-                "pool": {"vmImage": "ubuntu-16.04",},
+                "pool": {
+                    "vmImage": "ubuntu-16.04",
+                },
                 "timeoutInMinutes": 360,
                 "strategy": {"maxParallel": 8},
             },
             "settings_osx": {
-                "pool": {"vmImage": "macOS-10.15",},
+                "pool": {
+                    "vmImage": "macOS-10.15",
+                },
                 "timeoutInMinutes": 360,
                 "strategy": {"maxParallel": 8},
             },
             "settings_win": {
-                "pool": {"vmImage": "vs2017-win2016",},
+                "pool": {
+                    "vmImage": "vs2017-win2016",
+                },
                 "timeoutInMinutes": 360,
                 "strategy": {"maxParallel": 4},
                 "variables": {"CONDA_BLD_PATH": r"D:\\bld\\"},

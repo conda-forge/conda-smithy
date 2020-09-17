@@ -284,7 +284,9 @@ def rotate_token_in_travis(
     if have_binstar_token:
         r = requests.patch(
             "{}/repo/{repo_id}/env_var/{ev_id}".format(
-                travis_endpoint, repo_id=repo_id, ev_id=ev_id,
+                travis_endpoint,
+                repo_id=repo_id,
+                ev_id=ev_id,
             ),
             headers=headers,
             json=data,
@@ -352,7 +354,9 @@ def rotate_token_in_azure(user, project, binstar_token, token_name):
         variables = ed.variables
 
     variables[token_name] = BuildDefinitionVariable(
-        allow_override=False, is_secret=True, value=binstar_token,
+        allow_override=False,
+        is_secret=True,
+        value=binstar_token,
     )
 
     build_definition = get_default_build_definition(

@@ -569,7 +569,9 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
         # support feedstocks and staged-recipes
         forge_yaml = glob(
             os.path.join(recipe_dir, "..", "conda-forge.yml")
-        ) or glob(os.path.join(recipe_dir, "..", "..", "conda-forge.yml"),)
+        ) or glob(
+            os.path.join(recipe_dir, "..", "..", "conda-forge.yml"),
+        )
         if shell_scripts and forge_yaml:
             with open(forge_yaml[0], "r") as fh:
                 code = get_yaml().load(fh)
@@ -707,7 +709,8 @@ def run_conda_forge_specific(meta, recipe_dir, lints, hints):
         elif feedstock_exists:
             hints.append(
                 "Feedstock with the name {} exists in conda-forge. Is it the same as this package ({})?".format(
-                    existing_recipe_name, recipe_name,
+                    existing_recipe_name,
+                    recipe_name,
                 )
             )
 

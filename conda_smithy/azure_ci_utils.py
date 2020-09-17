@@ -129,7 +129,10 @@ def get_repo_reference(config: AzureConfig, github_org, repo_name):
 
 
 def get_default_build_definition(
-    github_org, repo_name, config: AzureConfig = default_config, **kwargs,
+    github_org,
+    repo_name,
+    config: AzureConfig = default_config,
+    **kwargs,
 ):
     from vsts.build.v4_1.models import (
         BuildDefinition,
@@ -216,7 +219,9 @@ def register_repo(github_org, repo_name, config: AzureConfig = default_config):
 
     bclient = build_client()
     build_definition = get_default_build_definition(
-        github_org, repo_name, config=config,
+        github_org,
+        repo_name,
+        config=config,
     )
 
     # clean up existing builds for the same feedstock if present
