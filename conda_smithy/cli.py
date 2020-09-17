@@ -311,7 +311,7 @@ class AddAzureBuildId(Subcommand):
 
     def __init__(self, parser):
         # conda-smithy azure-buildid ./
-        from conda_smithy import azure_ci_utils
+        from conda_smithy.azure_defaults import AZURE_DEFAULT_ORG, AZURE_DEFAULT_PROJECT_NAME
 
         super(AddAzureBuildId, self).__init__(
             parser,
@@ -332,12 +332,12 @@ class AddAzureBuildId(Subcommand):
         )
         group.add_argument(
             "--organization",
-            default=azure_ci_utils.AzureConfig._default_org,
+            default=AZURE_DEFAULT_ORG,
             help="azure organisation for which this repo is enabled already",
         )
         scp.add_argument(
             "--project_name",
-            default=azure_ci_utils.AzureConfig._default_project_name,
+            default=AZURE_DEFAULT_PROJECT_NAME,
             help="project name that feedstocks are registered under",
         )
 
