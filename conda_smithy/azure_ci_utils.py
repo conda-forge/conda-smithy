@@ -19,6 +19,7 @@ from vsts.task_agent.v4_0.task_agent_client import TaskAgentClient
 from vsts.vss_connection import VssConnection
 from .azure_defaults import AZURE_DEFAULT_ORG, AZURE_DEFAULT_PROJECT_NAME
 
+
 class AzureConfig:
 
     _default_org = AZURE_DEFAULT_ORG

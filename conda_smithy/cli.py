@@ -311,7 +311,10 @@ class AddAzureBuildId(Subcommand):
 
     def __init__(self, parser):
         # conda-smithy azure-buildid ./
-        from conda_smithy.azure_defaults import AZURE_DEFAULT_ORG, AZURE_DEFAULT_PROJECT_NAME
+        from conda_smithy.azure_defaults import (
+            AZURE_DEFAULT_ORG,
+            AZURE_DEFAULT_PROJECT_NAME,
+        )
 
         super(AddAzureBuildId, self).__init__(
             parser,
