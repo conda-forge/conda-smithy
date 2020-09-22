@@ -74,6 +74,8 @@ export UPLOAD_PACKAGES="${UPLOAD_PACKAGES:-True}"
            -e CI \
            -e FEEDSTOCK_NAME \
            -e CPU_COUNT \
+           -e BUILD_WITH_CONDA_DEBUG \
+           -e BUILD_OUTPUT_ID \
 {%- for secret in secrets %}
            -e {{ secret }} \
 {%- endfor %}

@@ -16,7 +16,14 @@ def setup_environment(ns):
 
 def run_docker_build(ns):
     script = ".scripts/run_docker_build.sh"
-    subprocess.check_call([script])
+    if ns.debug:
+        env = os.environ.copy()
+        env["BUILD_WITH_CONDA_DEBUG"] = "1"
+        if ns.output_id:
+            env["BUILD_OUTPUT_ID"] = ns.output_id
+    else:
+        env = os.environ
+    subprocess.check_call([script], env=env)
 
 
 def verify_config(ns):
@@ -51,6 +58,8 @@ def verify_config(ns):
 def main(args=None):
     p = ArgumentParser("build-locally")
     p.add_argument("config", default=None, nargs="?")
+    p.add_argument("--debug", action='store_true', help="Setup debug environment using `conda debug`")
+    p.add_argument("--output-id", help="If running debug, specifiy the output to setup.")
 
     ns = p.parse_args(args=args)
     verify_config(ns)
