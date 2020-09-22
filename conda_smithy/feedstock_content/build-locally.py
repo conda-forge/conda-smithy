@@ -58,8 +58,14 @@ def verify_config(ns):
 def main(args=None):
     p = ArgumentParser("build-locally")
     p.add_argument("config", default=None, nargs="?")
-    p.add_argument("--debug", action='store_true', help="Setup debug environment using `conda debug`")
-    p.add_argument("--output-id", help="If running debug, specifiy the output to setup.")
+    p.add_argument(
+        "--debug",
+        action="store_true",
+        help="Setup debug environment using `conda debug`",
+    )
+    p.add_argument(
+        "--output-id", help="If running debug, specifiy the output to setup."
+    )
 
     ns = p.parse_args(args=args)
     verify_config(ns)
