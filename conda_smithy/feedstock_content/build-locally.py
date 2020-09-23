@@ -12,18 +12,15 @@ from argparse import ArgumentParser
 def setup_environment(ns):
     os.environ["CONFIG"] = ns.config
     os.environ["UPLOAD_PACKAGES"] = "False"
+    if ns.debug:
+        os.environ["BUILD_WITH_CONDA_DEBUG"] = "1"
+        if ns.output_id:
+            os.environ["BUILD_OUTPUT_ID"] = ns.output_id
 
 
 def run_docker_build(ns):
     script = ".scripts/run_docker_build.sh"
-    if ns.debug:
-        env = os.environ.copy()
-        env["BUILD_WITH_CONDA_DEBUG"] = "1"
-        if ns.output_id:
-            env["BUILD_OUTPUT_ID"] = ns.output_id
-    else:
-        env = os.environ
-    subprocess.check_call([script], env=env)
+    subprocess.check_call([script])
 
 
 def verify_config(ns):
