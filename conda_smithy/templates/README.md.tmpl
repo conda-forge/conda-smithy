@@ -8,7 +8,7 @@ About {{ package_name }}
 
 Home: {{ package.meta.about.home }}
 
-Package license: {{ package.meta.about.license }}
+Package license: {% if package.meta.about.license_url %}[{% endif %}{{ package.meta.about.license }}{% if package.meta.about.license_url %}]({{ package.meta.about.license_url }}){% endif %}
 
 Feedstock license: BSD-3-Clause
 
