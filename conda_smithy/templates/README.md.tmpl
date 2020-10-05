@@ -15,6 +15,10 @@ Feedstock license: BSD-3-Clause
 
 Summary: {{ package.meta.about.summary }}
 
+{% if package.meta.about.dev_url %}Development: {{ package.meta.about.dev_url }}{% endif %}
+
+{% if package.meta.about.doc_url %}Documentation: {{ package.meta.about.doc_url }}{% endif %}
+
 {% if package.meta.about.description %}{{ package.meta.about.description }}{% endif %}
 
 Current build status
