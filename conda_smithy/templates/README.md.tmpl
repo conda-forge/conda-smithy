@@ -2,17 +2,22 @@
 {#-
 # -*- mode: jinja -*-
 -#}
+{%- set license_url = package.meta.about.license_url -%}
 
 About {{ package_name }}
 ======{{ '=' * package_name|length }}
 
 Home: {{ package.meta.about.home }}
 
-Package license: {{ package.meta.about.license }}
+Package license: {% if license_url %}[{% endif %}{{ package.meta.about.license }}{% if license_url %}]({{ license_url }}){% endif %}
 
 Feedstock license: [BSD-3-Clause](LICENSE.txt)
 
 Summary: {{ package.meta.about.summary }}
+
+{% if package.meta.about.dev_url %}Development: {{ package.meta.about.dev_url }}{% endif %}
+
+{% if package.meta.about.doc_url %}Documentation: {{ package.meta.about.doc_url }}{% endif %}
 
 {% if package.meta.about.description %}{{ package.meta.about.description }}{% endif %}
 

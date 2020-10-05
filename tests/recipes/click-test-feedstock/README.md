@@ -9,6 +9,10 @@ Feedstock license: [BSD-3-Clause](LICENSE.txt)
 
 Summary: A simple wrapper around optparse for powerful command line utilities.
 
+Development: https://github.com/pallets/click
+
+Documentation: http://click.pocoo.org/
+
 Click is a Python package for creating beautiful command line interfaces
 in a composable way with as little code as necessary.
 
