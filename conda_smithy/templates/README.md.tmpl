@@ -2,13 +2,14 @@
 {#-
 # -*- mode: jinja -*-
 -#}
+{%- set license_url = package.meta.about.license_url -%}
 
 About {{ package_name }}
 ======{{ '=' * package_name|length }}
 
 Home: {{ package.meta.about.home }}
 
-Package license: {% if package.meta.about.license_url %}[{% endif %}{{ package.meta.about.license }}{% if package.meta.about.license_url %}]({{ package.meta.about.license_url }}){% endif %}
+Package license: {% if license_url %}[{% endif %}{{ package.meta.about.license }}{% if license_url %}]({{ license_url }}){% endif %}
 
 Feedstock license: BSD-3-Clause
 
