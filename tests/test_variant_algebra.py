@@ -520,6 +520,19 @@ def test_variant_remove_add(platform, arch):
         config=config,
     )
 
+    remove2 = parse_variant(
+        dedent(
+            """
+            __migrator:
+                operation: key_remove
+                primary_key: python
+            python:
+              - 3.8.* *_cpython  # [(osx and arm64)]
+            """
+        ),
+        config=config,
+    )
+
     add = parse_variant(
         dedent(
             """
@@ -529,7 +542,7 @@ def test_variant_remove_add(platform, arch):
             python:
               - 3.8.* *_cpython  # [not (osx and arm64)]
             numpy:
-              - 1.100            # [not (osx and arm64)]
+              - 1.16            # [not (osx and arm64)]
             python_impl:
               - cpython          # [not (osx and arm64)]
             """
@@ -559,6 +572,11 @@ def test_variant_remove_add(platform, arch):
     res = variant_add(res, add_py39)
     print(res["python"])
     print(res["numpy"])
+
+    # alternatively we could just remove py38_osx-arm64 and then add py39
+    res2 = variant_add(base, remove2)
+    res2 = variant_add(res2, add_py39)
+    assert res2 == res
 
     if (platform, arch) == ("osx", "arm64"):
         assert res["python"] == ["3.9.* *_cpython"]
