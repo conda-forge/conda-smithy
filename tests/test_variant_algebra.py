@@ -448,19 +448,19 @@ def test_variant_key_remove():
     removal = parse_variant(
         dedent(
             """
-        __migrator:
-            operation: key_remove
-            primary_key: python
-            ordering:
-                python:
-                    - 3.6.* *_73_pypy
-                    - 3.6.* *_cpython
-                    - 3.7.* *_cpython
-                    - 3.8.* *_cpython
-                    - 3.9.* *_cpython
-        python:
-          - 3.6.* *_cpython
-        """
+            __migrator:
+                operation: key_remove
+                primary_key: python
+                ordering:
+                    python:
+                        - 3.6.* *_73_pypy
+                        - 3.6.* *_cpython
+                        - 3.7.* *_cpython
+                        - 3.8.* *_cpython
+                        - 3.9.* *_cpython
+            python:
+              - 3.6.* *_cpython
+            """
         )
     )
 
@@ -469,3 +469,105 @@ def test_variant_key_remove():
     assert res["python"] == ["3.6.* *_73_pypy", "3.8.* *_cpython"]
     assert res["numpy"] == ["1.18", "1.16"]
     assert res["python_impl"] == ["pypy", "cpython"]
+
+
+@pytest.mark.parametrize(
+    "platform,arch", [["osx", "64"], ["osx", "arm64"], ["linux", "64"]]
+)
+def test_variant_remove_add(platform, arch):
+    from conda_build.config import Config
+
+    config = Config(platform=platform, arch=arch)
+    base = parse_variant(
+        dedent(
+            """
+            python:
+              - 3.7.* *_cpython   # [not (osx and arm64)]
+              - 3.8.* *_cpython
+              - 3.6.* *_73_pypy   # [not (win64 or (osx and arm64))]
+
+            numpy:
+              - 1.16       # [not (osx and arm64)]
+              - 1.16
+              - 1.18       # [not (win64 or (osx and arm64))]
+
+            python_impl:
+              - cpython    # [not (osx and arm64)]
+              - cpython
+              - pypy       # [not (win64 or (osx and arm64))]
+
+
+            zip_keys:
+              -
+                - python
+                - numpy
+                - python_impl
+            """
+        ),
+        config=config,
+    )
+
+    remove = parse_variant(
+        dedent(
+            """
+            __migrator:
+                operation: key_remove
+                primary_key: python
+            python:
+              - 3.8.* *_cpython
+            """
+        ),
+        config=config,
+    )
+
+    add = parse_variant(
+        dedent(
+            """
+            __migrator:
+                operation: key_add
+                primary_key: python
+            python:
+              - 3.8.* *_cpython  # [not (osx and arm64)]
+            numpy:
+              - 1.100            # [not (osx and arm64)]
+            python_impl:
+              - cpython          # [not (osx and arm64)]
+            """
+        ),
+        config=config,
+    )
+
+    add_py39 = parse_variant(
+        dedent(
+            """
+        __migrator:
+            operation: key_add
+            primary_key: python
+        python:
+          - 3.9.* *_cpython
+        # additional entries to add for zip_keys
+        numpy:
+          - 1.100
+        python_impl:
+          - cpython
+        """
+        )
+    )
+
+    res = variant_add(base, remove)
+    res = variant_add(res, add)
+    res = variant_add(res, add_py39)
+    print(res["python"])
+    print(res["numpy"])
+
+    if (platform, arch) == ("osx", "arm64"):
+        assert res["python"] == ["3.9.* *_cpython"]
+    elif (platform, arch) in {("osx", "64"), ("linux", "64")}:
+        assert res["python"] == [
+            "3.6.* *_73_pypy",
+            "3.7.* *_cpython",
+            "3.8.* *_cpython",
+            "3.9.* *_cpython",
+        ]
+    else:
+        raise RuntimeError("Should have a check")

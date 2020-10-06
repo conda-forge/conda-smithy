@@ -117,6 +117,8 @@ def variant_key_set_union(k, v_left, v_right, ordering=None):
 def op_variant_key_add(v1: dict, v2: dict):
     primary_key = v2["__migrator"]["primary_key"]
     ordering = v2["__migrator"].get("ordering", {})
+    if primary_key not in v2:
+        return v1
     assert len(v2[primary_key]) == 1
     result = v1.copy()
     if primary_key in v1:
