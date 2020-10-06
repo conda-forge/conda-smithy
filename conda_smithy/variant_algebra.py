@@ -104,9 +104,117 @@ def variant_key_replace(k, v_left, v_right):
 
 
 def variant_key_set_merge(k, v_left, v_right, ordering=None):
-    """Merges two sets in order"""
+    """Merges two sets in order, preserving common keys"""
     out_v = set(v_left) & set(v_right)
     return sorted(out_v, key=partial(_version_order, ordering=ordering))
+
+
+def variant_key_set_union(k, v_left, v_right, ordering=None):
+    """Merges two sets in order, preserving all keys"""
+    out_v = set(v_left) | set(v_right)
+    return sorted(out_v, key=partial(_version_order, ordering=ordering))
+
+
+def op_variant_key_add(v1: dict, v2: dict):
+    """Operator for performing a key-add
+
+    key-add is additive so you will end up with more entries in the resulting dictionary
+    This will append a the version specied by the primary_key migrator field.
+
+    Additionally all dependencies specified by zip_keys will be updated with additional entries from v2.
+
+    If an ordering reorders the primary key all the zip_keys referring to that primary key will also
+    be reodered in the same manner.
+    """
+    primary_key = v2["__migrator"]["primary_key"]
+    ordering = v2["__migrator"].get("ordering", {})
+    if primary_key not in v2:
+        return v1
+    assert len(v2[primary_key]) == 1
+    result = v1.copy()
+    if primary_key in v1:
+        # object is present already, ignore everything
+        if v2[primary_key][0] in v1[primary_key]:
+            return v1
+        else:
+            new_keys = variant_key_set_union(
+                None,
+                v1[primary_key],
+                v2[primary_key],
+                ordering=ordering.get(primary_key),
+            )
+            position_map = {
+                i: new_keys.index(v) for i, v in enumerate(v1[primary_key])
+            }
+
+            result[primary_key] = new_keys
+            new_key_position = new_keys.index(v2[primary_key][0])
+
+            # handle zip_keys
+            for chunk in v1.get("zip_keys", []):
+                zip_keyset = frozenset(chunk)
+                if primary_key in zip_keyset:
+                    for key in zip_keyset:
+                        if key == primary_key:
+                            continue
+                        # Create a new version of the key from
+                        assert len(v2[key]) == 1
+                        new_value = [None] * len(new_keys)
+                        for i, j in position_map.items():
+                            new_value[j] = v1[key][i]
+                        new_value[new_key_position] = v2[key][0]
+                        result[key] = new_value
+
+            return result
+    else:
+        raise RuntimeError("unhandled")
+
+
+def op_variant_key_remove(v1: dict, v2: dict):
+    """Inverse of op_variant_key_add
+
+    Will remove a given value from the field identified by primary_key and associated
+    zip_keys
+    """
+    primary_key = v2["__migrator"]["primary_key"]
+    ordering = v2["__migrator"].get("ordering", {})
+    if primary_key not in v2:
+        return v1
+    assert len(v2[primary_key]) == 1
+    result = v1.copy()
+    if primary_key not in v1:
+        return v1
+    if v2[primary_key][0] not in v1[primary_key]:
+        return v1
+    new_keys = variant_key_set_union(
+        None, v1[primary_key], [], ordering=ordering.get(primary_key)
+    )
+    new_keys.remove(v2[primary_key][0])
+    position_map = {
+        i: v1[primary_key].index(v) for i, v in enumerate(new_keys)
+    }
+    result[primary_key] = new_keys
+
+    # handle zip_keys
+    for chunk in v1.get("zip_keys", []):
+        zip_keyset = frozenset(chunk)
+        if primary_key in zip_keyset:
+            for key in zip_keyset:
+                if key == primary_key:
+                    continue
+                # Create a new version of the key from, using the order from the primary key
+                new_value = [None] * len(new_keys)
+                for i, j in position_map.items():
+                    new_value[i] = v1[key][j]
+                result[key] = new_value
+
+    return result
+
+
+VARIANT_OP = {
+    "key_add": op_variant_key_add,
+    "key_remove": op_variant_key_remove,
+}
 
 
 def variant_add(v1: dict, v2: dict) -> Dict[str, Any]:
@@ -116,7 +224,6 @@ def variant_add(v1: dict, v2: dict) -> Dict[str, Any]:
 
     TODO:
         - Add support for special sums like replace
-        - Add delete_key support
     """
     left = set(v1.keys()).difference(v2.keys())
     right = set(v2.keys()).difference(v1.keys())
@@ -124,9 +231,11 @@ def variant_add(v1: dict, v2: dict) -> Dict[str, Any]:
 
     # deal with __migrator: ordering
     if "__migrator" in v2:
-        print(v2)
         ordering = v2["__migrator"].get("ordering", {})
-        print(ordering)
+        operation = v2["__migrator"].get("operation")
+        # handle special operations
+        if operation:
+            return VARIANT_OP[operation](v1, v2)
     else:
         ordering = {}
 
@@ -150,7 +259,7 @@ def variant_add(v1: dict, v2: dict) -> Dict[str, Any]:
         # a block.  Longer term having these be named blocks would make life WAY simpler
         # That does require changes to conda-build itself though
         #
-        # A zip_keys block is deemend mergeable if zkₛ,ᵢ ⊂ zkₘ,ᵢ
+        # A zip_keys block is deemed mergeable if zkₛ,ᵢ ⊂ zkₘ,ᵢ
         zk_out = []
         zk_l = {frozenset(e) for e in v1["zip_keys"]}
         zk_r = {frozenset(e) for e in v2["zip_keys"]}
