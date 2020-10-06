@@ -104,17 +104,28 @@ def variant_key_replace(k, v_left, v_right):
 
 
 def variant_key_set_merge(k, v_left, v_right, ordering=None):
-    """Merges two sets in order"""
+    """Merges two sets in order, preserving common keys"""
     out_v = set(v_left) & set(v_right)
     return sorted(out_v, key=partial(_version_order, ordering=ordering))
 
 
 def variant_key_set_union(k, v_left, v_right, ordering=None):
+    """Merges two sets in order, preserving all keys"""
     out_v = set(v_left) | set(v_right)
     return sorted(out_v, key=partial(_version_order, ordering=ordering))
 
 
 def op_variant_key_add(v1: dict, v2: dict):
+    """Operator for performing a key-add
+
+    key-add is additive so you will end up with more entries in the resulting dictionary
+    This will append a the version specied by the primary_key migrator field.
+
+    Additionally all dependencies specified by zip_keys will be updated with additional entries from v2.
+
+    If an ordering reorders the primary key all the zip_keys referring to that primary key will also
+    be reodered in the same manner.
+    """
     primary_key = v2["__migrator"]["primary_key"]
     ordering = v2["__migrator"].get("ordering", {})
     if primary_key not in v2:
@@ -160,6 +171,11 @@ def op_variant_key_add(v1: dict, v2: dict):
 
 
 def op_variant_key_remove(v1: dict, v2: dict):
+    """Inverse of op_variant_key_add
+
+    Will remove a given value from the field identified by primary_key and associated
+    zip_keys
+    """
     primary_key = v2["__migrator"]["primary_key"]
     ordering = v2["__migrator"].get("ordering", {})
     assert len(v2[primary_key]) == 1
@@ -206,7 +222,6 @@ def variant_add(v1: dict, v2: dict) -> Dict[str, Any]:
 
     TODO:
         - Add support for special sums like replace
-        - Add delete_key support
     """
     left = set(v1.keys()).difference(v2.keys())
     right = set(v2.keys()).difference(v1.keys())
