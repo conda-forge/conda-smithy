@@ -14,12 +14,18 @@ Package license: {% if license_url %}[{% endif %}{{ package.meta.about.license }
 Feedstock license: [BSD-3-Clause](https://github.com/{{ github.user_or_org }}/{{ github.repo_name }}/blob/{{ github.branch_name }}/LICENSE.txt)
 
 Summary: {{ package.meta.about.summary }}
+{%- if package.meta.about.dev_url %}
 
-{% if package.meta.about.dev_url %}Development: {{ package.meta.about.dev_url }}{% endif %}
+Development: {{ package.meta.about.dev_url }}
+{%- endif %}
+{%- if package.meta.about.doc_url %}
 
-{% if package.meta.about.doc_url %}Documentation: {{ package.meta.about.doc_url }}{% endif %}
+Documentation: {{ package.meta.about.doc_url }}
+{%- endif %}
+{%- if package.meta.about.description %}
 
-{% if package.meta.about.description %}{{ package.meta.about.description }}{% endif %}
+{{ package.meta.about.description }}
+{%- endif %}
 
 Current build status
 ====================
