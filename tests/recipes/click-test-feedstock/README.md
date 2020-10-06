@@ -5,7 +5,7 @@ Home: http://click.pocoo.org/
 
 Package license: BSD-3-Clause
 
-Feedstock license: BSD-3-Clause
+Feedstock license: [BSD-3-Clause](https://github.com/conda-forge/click-test-feedstock/blob/master/LICENSE.txt)
 
 Summary: A simple wrapper around optparse for powerful command line utilities.
 
