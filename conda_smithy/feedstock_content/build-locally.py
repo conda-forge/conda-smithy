@@ -61,7 +61,7 @@ def main(args=None):
         help="Setup debug environment using `conda debug`",
     )
     p.add_argument(
-        "--output-id", help="If running debug, specifiy the output to setup."
+        "--output-id", help="If running debug, specify the output to setup."
     )
 
     ns = p.parse_args(args=args)
