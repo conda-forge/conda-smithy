@@ -4,6 +4,44 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.8.0
+====================
+
+**Added:**
+
+* Generate Documentation and Development links into the README.md based on doc_url and dev_url
+* Add hyperlink to feedstock license file
+* Generate license_url as hyperlink in the README.md when it has been defined in the meta.yaml
+* Add ``--without-anaconda-token`` option to register-ci command, keep default behaviour of requiring the token
+* ``remote_ci_setup`` field in conda-forge.yml, which defaults to ``conda-forge-ci-setup=3`` allowing the user to override
+
+**Changed:**
+
+* Variant algebra now supports two new operations for adding/remove a key
+
+These new options allow for handling complex migrations cases needed for the python migrations.
+* Add support to ``build-locall.py`` to call ``conda debug``.
+* Added note about behaviour to README.md
+* CI templates now expand ``remote_ci_setup`` string from config for the ci setup package
+
+**Removed:**
+
+* Remove unneeded set_defaults() for --without-$CI args, ``action="store_false"`` already defaults to True if not given
+
+**Fixed:**
+
+* Removed the warning for azure token when rerendering
+
+**Authors:**
+
+* Isuru Fernando
+* Johnny Willemsen
+* Uwe L. Korn
+* Tom Pollard
+* Marius van Niekerk
+
+
+
 v3.7.10
 ====================
 
