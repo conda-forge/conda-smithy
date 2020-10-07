@@ -235,7 +235,7 @@
   email: uwe.korn@quantco.com
   alternate_emails:
   - xhochy@users.noreply.github.com
-  num_commits: 13
+  num_commits: 17
   first_commit: 2019-06-27 08:26:49
   github: xhochy
 - name: C.A.M. Gerlach
@@ -246,7 +246,7 @@
   email: isuru.11@cse.mrt.ac.lk
   alternate_emails:
   - isuruf@gmail.com
-  num_commits: 338
+  num_commits: 344
   first_commit: 2017-01-08 22:03:03
   github: isuruf
 - name: Julian Rüth
@@ -357,6 +357,7 @@
   - cjwright4242@gmail.com
   aliases:
   - christopher
+  - Christopher J. 'CJ' Wright
   num_commits: 101
   first_commit: 2017-01-05 19:25:16
   github: CJ-Wright
@@ -450,7 +451,7 @@
   first_commit: 2020-07-01 10:33:54
 - name: Tom Pollard
   email: tom.pollard@codethink.co.uk
-  num_commits: 5
+  num_commits: 8
   first_commit: 2020-07-09 05:47:39
 - name: Ryan Volz
   email: rvolz@mit.edu
@@ -462,3 +463,8 @@
   num_commits: 6
   first_commit: 2020-08-10 20:50:53
   github: synapticarbors
+- name: Johnny Willemsen
+  email: jwillemsen@remedy.nl
+  num_commits: 19
+  first_commit: 2020-10-05 09:50:12
+  github: jwillemsen

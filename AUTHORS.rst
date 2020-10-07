@@ -13,10 +13,11 @@ Authors are sorted by number of commits.
 * Min RK
 * Matthew R. Becker
 * Hadrien Mary
+* Johnny Willemsen
 * Julian Rüth
+* Uwe L. Korn
 * Mark Harfouche
 * Eric Dill
-* Uwe L. Korn
 * Natasha Pavlovikj
 * Maksim Rakitin
 * Chris Burr
@@ -30,6 +31,7 @@ Authors are sorted by number of commits.
 * refraction-ray
 * Leo Fang
 * Leopold Talirz
+* Tom Pollard
 * Gonzalo Pena-Castellanos
 * Daniel Bast
 * Tim Snyder
@@ -40,7 +42,6 @@ Authors are sorted by number of commits.
 * Marius van Niekerk
 * Peter Williams
 * Johannes Köster
-* Tom Pollard
 * Ryan Volz
 * Matt McCormick
 * John Blischak
