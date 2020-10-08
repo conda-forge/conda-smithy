@@ -1447,7 +1447,7 @@ def _load_forge_config(forge_dir, exclusive_config_file):
                     "vmImage": "ubuntu-16.04",
                 },
                 "timeoutInMinutes": 360,
-                "strategy": {"maxParallel": 8},
+                "strategy": {"maxParallel": 16},
             },
             "settings_osx": {
                 "pool": {
