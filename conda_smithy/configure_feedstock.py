@@ -1447,21 +1447,18 @@ def _load_forge_config(forge_dir, exclusive_config_file):
                     "vmImage": "ubuntu-16.04",
                 },
                 "timeoutInMinutes": 360,
-                "strategy": {"maxParallel": 16},
             },
             "settings_osx": {
                 "pool": {
                     "vmImage": "macOS-10.15",
                 },
                 "timeoutInMinutes": 360,
-                "strategy": {"maxParallel": 8},
             },
             "settings_win": {
                 "pool": {
                     "vmImage": "vs2017-win2016",
                 },
                 "timeoutInMinutes": 360,
-                "strategy": {"maxParallel": 4},
                 "variables": {"CONDA_BLD_PATH": r"D:\\bld\\"},
             },
             # Force building all supported providers.
