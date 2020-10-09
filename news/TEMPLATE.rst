@@ -16,9 +16,8 @@
 
 **Fixed:**
 
-* <news item>
+* Fixed rendering to make sure CI jobs are generated for each compiler version.
 
 **Security:**
 
 * <news item>
-

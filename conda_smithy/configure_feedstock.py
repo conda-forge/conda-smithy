@@ -290,8 +290,16 @@ def _collapse_subpackage_variants(
         force_top_level=True
     )
     top_level_vars = list_of_metas[0].get_used_vars(force_top_level=True)
-    if "target_platform" in all_used_vars:
-        top_level_loop_vars.add("target_platform")
+    for key in [
+        "target_platform",
+        "c_compiler_version",
+        "cxx_compiler_version",
+        "fortran_compiler_version",
+        "cuda_compiler_version",
+        ""
+    ]:
+        if key in all_used_vars:
+            top_level_loop_vars.add(key)
 
     # this is the initial collection of all variants before we discard any.  "Squishing"
     #     them is necessary because the input form is already broken out into one matrix
