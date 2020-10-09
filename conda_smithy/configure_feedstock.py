@@ -296,7 +296,6 @@ def _collapse_subpackage_variants(
         "cxx_compiler_version",
         "fortran_compiler_version",
         "cuda_compiler_version",
-        ""
     ]:
         if key in all_used_vars:
             top_level_loop_vars.add(key)
