@@ -1158,7 +1158,8 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
     template_files = platform_templates.get(platform, [])
 
     azure_settings = deepcopy(forge_config["azure"][f"settings_{platform}"])
-    azure_settings["strategy"]["matrix"] = {}
+    azure_settings.setdefault("strategy", {})
+    azure_settings["strategy"].setdefault("matrix", {})
     for data in forge_config["configs"]:
         if not data["build_platform"].startswith(platform):
             continue
@@ -1447,21 +1448,18 @@ def _load_forge_config(forge_dir, exclusive_config_file):
                     "vmImage": "ubuntu-16.04",
                 },
                 "timeoutInMinutes": 360,
-                "strategy": {"maxParallel": 8},
             },
             "settings_osx": {
                 "pool": {
                     "vmImage": "macOS-10.15",
                 },
                 "timeoutInMinutes": 360,
-                "strategy": {"maxParallel": 8},
             },
             "settings_win": {
                 "pool": {
                     "vmImage": "vs2017-win2016",
                 },
                 "timeoutInMinutes": 360,
-                "strategy": {"maxParallel": 4},
                 "variables": {"CONDA_BLD_PATH": r"D:\\bld\\"},
             },
             # Force building all supported providers.
