@@ -107,7 +107,7 @@
   aliases:
   - Filipe
   - ocefpaf
-  num_commits: 41
+  num_commits: 42
   first_commit: 2015-07-27 17:51:00
   github: ocefpaf
 - name: Jan Janßen
@@ -358,7 +358,7 @@
   aliases:
   - christopher
   - Christopher J. 'CJ' Wright
-  num_commits: 101
+  num_commits: 103
   first_commit: 2017-01-05 19:25:16
   github: CJ-Wright
 - name: Jason Grout
@@ -392,12 +392,12 @@
   github: shadowwalkersb
 - name: Matthew R Becker
   email: becker.mr@gmail.com
-  num_commits: 164
+  num_commits: 166
   first_commit: 2020-01-07 17:44:33
   github: beckermr
 - name: Matthew R. Becker
   email: beckermr@users.noreply.github.com
-  num_commits: 26
+  num_commits: 27
   first_commit: 2020-01-19 19:32:30
   github: beckermr
 - name: Natasha Pavlovikj
