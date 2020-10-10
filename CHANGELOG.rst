@@ -4,6 +4,26 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.8.1
+====================
+
+**Changed:**
+
+* Removed the default concurrency limits for azure
+
+**Fixed:**
+
+* Fixed rendering to make sure CI jobs are generated for each compiler version.
+
+**Authors:**
+
+* Matthew R Becker
+* Filipe Fernandes
+* Matthew R. Becker
+* Marius van Niekerk
+
+
+
 v3.8.0
 ====================
 
