@@ -10,8 +10,8 @@ Authors are sorted by number of commits.
 * Dougal J. Sutherland
 * shadow_walker
 * Michael Sarahan
-* Min RK
 * Matthew R. Becker
+* Min RK
 * Hadrien Mary
 * Johnny Willemsen
 * Julian Rüth
