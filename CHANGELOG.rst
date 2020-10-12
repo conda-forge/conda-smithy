@@ -4,6 +4,19 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.8.2
+====================
+
+**Changed:**
+
+* Reverted bugfix for each compiler getting a CI job.
+
+**Authors:**
+
+* Matthew R. Becker
+
+
+
 v3.8.1
 ====================
 
