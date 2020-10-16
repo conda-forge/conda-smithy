@@ -355,13 +355,7 @@ def _collapse_subpackage_variants(
     #     do a set operation, then collapse it again
 
     used_key_values = conda_build.variants.dict_of_lists_to_list_of_dicts(
-        used_key_values,
-        extend_keys={
-            "zip_keys",
-            "pin_run_as_build",
-            "ignore_version",
-            "ignore_build_only_deps",
-        },
+        used_key_values
     )
     used_key_values = {
         conda_build.utils.HashableDict(variant) for variant in used_key_values
