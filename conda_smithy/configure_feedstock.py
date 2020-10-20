@@ -1490,6 +1490,7 @@ def _load_forge_config(forge_dir, exclusive_config_file):
             "osx_64": "osx_64",
         },
         "test_on_native_only": False,
+        "choco": [],
         # Configurable idle timeout.  Used for packages that don't have chatty enough builds
         # Applicable only to circleci and travis
         "idle_timeout_minutes": None,

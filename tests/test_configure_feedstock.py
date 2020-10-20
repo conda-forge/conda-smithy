@@ -668,6 +668,30 @@ def test_files_skip_render(render_skipped_recipe, jinja_env):
         assert not os.path.exists(fpath)
 
 
+def test_choco_install(choco_recipe, jinja_env):
+    cnfgr_fdstk.render_azure(
+        jinja_env=jinja_env,
+        forge_config=choco_recipe.config,
+        forge_dir=choco_recipe.recipe,
+    )
+    azure_file = os.path.join(
+        os.path.join(choco_recipe.recipe, ".azure-pipelines", "azure-pipelines-win.yml")
+    )
+    assert os.path.isfile(azure_file)
+    with open(azure_file) as f:
+        contents = f.read()
+    exp = """
+    - script: |
+        choco install pkg0 -fdv -y --debug
+      displayName: Install Chocolatey Package: pkg0
+
+    - script: |
+        choco install pkg1 --version=X.Y.Z -fdv -y --debug
+      displayName: Install Chocolatey Package: pkg1 --version=X.Y.Z
+""".strip()
+    assert exp in contents
+
+
 def test_webservices_action_exists(py_recipe, jinja_env):
     cnfgr_fdstk.copy_feedstock_content(py_recipe.config, py_recipe.recipe)
     assert os.path.exists(
