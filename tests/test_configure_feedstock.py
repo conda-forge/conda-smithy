@@ -675,7 +675,9 @@ def test_choco_install(choco_recipe, jinja_env):
         forge_dir=choco_recipe.recipe,
     )
     azure_file = os.path.join(
-        os.path.join(choco_recipe.recipe, ".azure-pipelines", "azure-pipelines-win.yml")
+        os.path.join(
+            choco_recipe.recipe, ".azure-pipelines", "azure-pipelines-win.yml"
+        )
     )
     assert os.path.isfile(azure_file)
     with open(azure_file) as f:
