@@ -685,11 +685,11 @@ def test_choco_install(choco_recipe, jinja_env):
     exp = """
     - script: |
         choco install pkg0 -fdv -y --debug
-      displayName: Install Chocolatey Package: pkg0
+      displayName: "Install Chocolatey Package: pkg0"
 
     - script: |
         choco install pkg1 --version=X.Y.Z -fdv -y --debug
-      displayName: Install Chocolatey Package: pkg1 --version=X.Y.Z
+      displayName: "Install Chocolatey Package: pkg1 --version=X.Y.Z"
 """.strip()
     assert exp in contents
 

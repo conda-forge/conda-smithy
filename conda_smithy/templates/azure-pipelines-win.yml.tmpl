@@ -9,7 +9,7 @@ jobs:
 {%- for choco_pkg in choco %}
     - script: |
         choco install {{ choco_pkg }} -fdv -y --debug
-      displayName: Install Chocolatey Package: {{ choco_pkg }}
+      displayName: "Install Chocolatey Package: {{ choco_pkg }}"
 {% endfor %}
     - script: |
         choco install vcpython27 -fdv -y --debug
