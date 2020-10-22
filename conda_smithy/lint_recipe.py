@@ -515,6 +515,18 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
                 " form. See lines %s." % (bad_lines,)
             )
 
+    # 25: require a lower bound on python version
+    if build_section.get("noarch") == "python" and not outputs_section:
+        for req in run_reqs:
+            if req.startswith("python") and req != "python":
+                break
+        else:
+            lints.append(
+                "noarch: python recipes are recommended to have a lower bound "
+                "on minimum python bound. This recommendation will become "
+                "requirement in a future version."
+            )
+
     # hints
     # 1: suggest pip
     if "script" in build_section:

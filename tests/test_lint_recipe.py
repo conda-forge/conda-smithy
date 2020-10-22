@@ -580,6 +580,33 @@ class Test_linter(unittest.TestCase):
         lints, hints = linter.lintify(meta)
         self.assertNotIn(expected_message, lints)
 
+    def test_noarch_python_bound(self):
+        expected_message = (
+            "noarch: python recipes are recommended to have a lower bound "
+            "on minimum python bound. This recommendation will become "
+            "requirement in a future version."
+        )
+        meta = {
+            "build": {"noarch": "python"},
+            "requirements": {"host": ["python",], "run": ["python",]},
+        }
+        lints, hints = linter.lintify(meta)
+        self.assertIn(expected_message, lints)
+
+        meta = {
+            "build": {"noarch": "python"},
+            "requirements": {"host": ["python",], "run": ["python >=2.7",]},
+        }
+        lints, hints = linter.lintify(meta)
+        self.assertNotIn(expected_message, lints)
+
+        meta = {
+            "build": {"noarch": "generic"},
+            "requirements": {"host": ["python",], "run": ["python",]},
+        }
+        lints, hints = linter.lintify(meta)
+        self.assertNotIn(expected_message, lints)
+
     def test_no_sha_with_dl(self):
         expected_message = (
             "When defining a source/url please add a sha256, "
