@@ -92,6 +92,10 @@ GITIGNORE = """# conda smithy ci-skeleton start
 *.pyc
 
 build_artifacts
+
+# IDE config
+.vscode/
+
 # conda smithy ci-skeleton end
 """
 
