@@ -515,6 +515,20 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
                 " form. See lines %s." % (bad_lines,)
             )
 
+    # 25: requirements should be all in lower-case
+    build_reqs = requirements_section.get("build") or []
+    host_reqs = requirements_section.get("host") or []
+    run_reqs = requirements_section.get("run") or []
+    test_reqs = test_section.get("requires") or []
+    for reqs in [build_reqs, host_reqs, run_reqs, test_reqs]:
+        pkg = re.split("=|>|<|#", str(reqs))[0]
+        if pkg.islower():
+            continue
+        else:
+            lints.append(
+                "Package {0} should be in lower-case.".format(str(pkg))
+            )
+
     # hints
     # 1: suggest pip
     if "script" in build_section:
