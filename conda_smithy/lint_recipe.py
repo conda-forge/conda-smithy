@@ -518,7 +518,7 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
     # 25: require a lower bound on python version
     if build_section.get("noarch") == "python" and not outputs_section:
         for req in run_reqs:
-            if req.startswith("python") and req != "python":
+            if (req.strip().split()[0] == "python") and (req != "python"):
                 break
         else:
             lints.append(
