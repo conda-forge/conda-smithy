@@ -4,6 +4,19 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.8.4
+====================
+
+**Fixed:**
+
+* conda-build 3.20.5 compatibility for ``target_platform`` being always defined.
+
+**Authors:**
+
+* Isuru Fernando
+
+
+
 v3.8.3
 ====================
 
