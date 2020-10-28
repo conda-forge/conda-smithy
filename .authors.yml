@@ -246,7 +246,7 @@
   email: isuru.11@cse.mrt.ac.lk
   alternate_emails:
   - isuruf@gmail.com
-  num_commits: 344
+  num_commits: 348
   first_commit: 2017-01-08 22:03:03
   github: isuruf
 - name: Julian Rüth
@@ -338,7 +338,7 @@
   first_commit: 2017-09-13 18:29:41
 - name: Anthony Scopatz
   email: scopatz@gmail.com
-  num_commits: 98
+  num_commits: 101
   first_commit: 2015-07-22 22:51:27
   github: scopatz
 - name: Florian Rathgeber
