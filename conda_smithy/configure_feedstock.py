@@ -48,7 +48,11 @@ logger = logging.getLogger(__name__)
 def package_key(config, used_loop_vars, subdir):
     # get the build string from whatever conda-build makes of the configuration
     build_vars = "".join(
-        [k + str(config[k][0]) for k in sorted(list(used_loop_vars)) if k!='target_platform']
+        [
+            k + str(config[k][0])
+            for k in sorted(list(used_loop_vars))
+            if k != "target_platform"
+        ]
     )
     key = []
     # kind of a special case.  Target platform determines a lot of output behavior, but may not be
