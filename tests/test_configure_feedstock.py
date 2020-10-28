@@ -629,22 +629,17 @@ def test_migrator_compiler_version_recipe(
         os.path.join(recipe_migration_win_compiled.recipe, ".ci_support")
     )
 
+    # TODO: remove multiple target_platform entries
     assert (
         "win_64_c_compilervs2008python2.7target_platformwin-32.yaml"
         in rendered_variants
     )
-    assert (
-        "win_64_c_compilervs2008python2.7target_platformwin-64.yaml"
-        in rendered_variants
-    )
+    assert "win_64_c_compilervs2008python2.7.yaml" in rendered_variants
     assert (
         "win_64_c_compilervs2017python3.5target_platformwin-32.yaml"
         in rendered_variants
     )
-    assert (
-        "win_64_c_compilervs2017python3.5target_platformwin-64.yaml"
-        in rendered_variants
-    )
+    assert "win_64_c_compilervs2017python3.5.yaml" in rendered_variants
 
 
 def test_files_skip_render(render_skipped_recipe, jinja_env):
