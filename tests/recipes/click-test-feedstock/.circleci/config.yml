@@ -14,7 +14,7 @@ jobs:
             ./.circleci/fast_finish_ci_pr_build.sh
             ./.circleci/checkout_merge_commit.sh
       - run:
-          command: docker pull condaforge/linux-anvil
+          command: docker pull quay.io/condaforge/linux-anvil
       - run:
           # Run, test and (if we have a BINSTAR_TOKEN) upload the distributions.
           command: ./.circleci/run_docker_build.sh
@@ -31,7 +31,7 @@ jobs:
             ./.circleci/fast_finish_ci_pr_build.sh
             ./.circleci/checkout_merge_commit.sh
       - run:
-          command: docker pull condaforge/linux-anvil
+          command: docker pull quay.io/condaforge/linux-anvil
       - run:
           # Run, test and (if we have a BINSTAR_TOKEN) upload the distributions.
           command: ./.circleci/run_docker_build.sh

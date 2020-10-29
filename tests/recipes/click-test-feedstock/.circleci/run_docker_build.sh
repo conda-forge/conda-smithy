@@ -41,7 +41,7 @@ cat << EOF | docker run -i \
                         -v "${FEEDSTOCK_ROOT}":/feedstock_root \
                         -e CONFIG="$CONFIG" \
                         -a stdin -a stdout -a stderr \
-                        condaforge/linux-anvil \
+                        quay.io/condaforge/linux-anvil \
                         bash || exit 1
 
 set -e

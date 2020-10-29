@@ -142,9 +142,9 @@ def test_init_cuda_docker_images(testing_workdir):
         assert config["cuda_compiler"] == ["nvcc"]
         assert config["cuda_compiler_version"] == [f"{v}"]
         if v is None:
-            docker_image = "condaforge/linux-anvil-comp7"
+            docker_image = "quay.io/condaforge/linux-anvil-comp7"
         else:
-            docker_image = f"condaforge/linux-anvil-cuda:{v}"
+            docker_image = f"quay.io/condaforge/linux-anvil-cuda:{v}"
         assert config["docker_image"] == [docker_image]
 
 
