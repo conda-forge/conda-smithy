@@ -588,21 +588,42 @@ class Test_linter(unittest.TestCase):
         )
         meta = {
             "build": {"noarch": "python"},
-            "requirements": {"host": ["python",], "run": ["python",]},
+            "requirements": {
+                "host": [
+                    "python",
+                ],
+                "run": [
+                    "python",
+                ],
+            },
         }
         lints, hints = linter.lintify(meta)
         self.assertIn(expected_message, lints)
 
         meta = {
             "build": {"noarch": "python"},
-            "requirements": {"host": ["python",], "run": ["python >=2.7",]},
+            "requirements": {
+                "host": [
+                    "python",
+                ],
+                "run": [
+                    "python >=2.7",
+                ],
+            },
         }
         lints, hints = linter.lintify(meta)
         self.assertNotIn(expected_message, lints)
 
         meta = {
             "build": {"noarch": "generic"},
-            "requirements": {"host": ["python",], "run": ["python",]},
+            "requirements": {
+                "host": [
+                    "python",
+                ],
+                "run": [
+                    "python",
+                ],
+            },
         }
         lints, hints = linter.lintify(meta)
         self.assertNotIn(expected_message, lints)
