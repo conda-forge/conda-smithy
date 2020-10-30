@@ -584,7 +584,7 @@ class Test_linter(unittest.TestCase):
         expected_message = (
             "noarch: python recipes are recommended to have a lower bound "
             "on the python version. This recommendation will become a "
-            "requirement in a future version."
+            "requirement in the future."
         )
         meta = {
             "build": {"noarch": "python"},
