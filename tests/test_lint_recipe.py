@@ -598,7 +598,7 @@ class Test_linter(unittest.TestCase):
             },
         }
         lints, hints = linter.lintify(meta)
-        self.assertIn(expected_message, lints)
+        self.assertIn(expected_message, hints)
 
         meta = {
             "build": {"noarch": "python"},
@@ -612,7 +612,7 @@ class Test_linter(unittest.TestCase):
             },
         }
         lints, hints = linter.lintify(meta)
-        self.assertNotIn(expected_message, lints)
+        self.assertNotIn(expected_message, hints)
 
         meta = {
             "build": {"noarch": "generic"},
@@ -626,7 +626,7 @@ class Test_linter(unittest.TestCase):
             },
         }
         lints, hints = linter.lintify(meta)
-        self.assertNotIn(expected_message, lints)
+        self.assertNotIn(expected_message, hints)
 
     def test_no_sha_with_dl(self):
         expected_message = (
