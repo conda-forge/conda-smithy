@@ -523,7 +523,7 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
         else:
             lints.append(
                 "noarch: python recipes are recommended to have a lower bound "
-                "on the python version. This recommendation will become "
+                "on the python version. This recommendation will become a "
                 "requirement in a future version."
             )
 
