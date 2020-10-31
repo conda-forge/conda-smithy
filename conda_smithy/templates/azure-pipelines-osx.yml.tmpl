@@ -24,6 +24,9 @@ jobs:
 
 {%- if azure.store_build_artifacts %}
   - script: |
+        full_artifact_name="conda_artifacts_$(build.BuildId)_$(CONFIG)"
+        artifact_name=`echo "$full_artifact_name" | head -c 80`
+        echo "##vso[task.setVariable variable=ARTIFACT_NAME]$artifact_name"
         if [ -d /Users/runner/miniforge3/conda-bld/ ]; then
           echo "##vso[task.setVariable variable=CONDA_BLD_DIR_EXISTS]true"
         fi
@@ -31,6 +34,6 @@ jobs:
     condition: succeededOrFailed()
 
   - publish: /Users/runner/miniforge3/conda-bld/
-    artifact: conda_artifacts_$(CONFIG)_$(system.JobId)
+    artifact: $(ARTIFACT_NAME)
     condition: eq(variables.CONDA_BLD_DIR_EXISTS, 'true')
 {%- endif %}
