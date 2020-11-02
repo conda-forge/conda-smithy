@@ -28,7 +28,7 @@ jobs:
       - name: run tests
         shell: bash -l {0}
         run: |
-          py.test tests --cov conda_smithy
+          pytest tests --cov conda_smithy
           black --check --verbose --diff --config=pyproject.toml .
 
       - name: compute coverage
