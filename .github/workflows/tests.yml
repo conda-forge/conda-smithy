@@ -9,10 +9,8 @@ jobs:
     runs-on: "ubuntu-latest"
     steps:
       - uses: actions/checkout@v2
-        if: success() && ! env.CI_SKIP
 
       - uses: goanpeca/setup-miniconda@v1
-        if: success() && ! env.CI_SKIP
         with:
           python-version: 3.7
           channels: conda-forge,defaults
@@ -24,6 +22,8 @@ jobs:
         run: |
           conda install --file requirements.txt black coverage coveralls mock pytest pytest-cov pip ${CONDA_PKGS} --yes --quiet
           python -m pip install -e .
+          git config --global user.email "smithy@smithy.smithy"
+          git config --global user.name "smithy"
 
       - name: run tests
         shell: bash -l {0}
