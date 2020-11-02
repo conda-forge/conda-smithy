@@ -34,5 +34,5 @@ jobs:
       - name: compute coverage
         shell: bash -l {0}
         run: |
-          coverage combine
+          coverage combine || echo "no coverage data to combine maybe"
           coveralls
