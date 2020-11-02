@@ -1,0 +1,40 @@
+name: tests
+
+on:
+  push: null
+
+jobs:
+  tests:
+    name: tests
+    runs-on: "ubuntu-latest"
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: conda-incubator/setup-miniconda@v1
+        with:
+          python-version: 3.7
+          channels: conda-forge,defaults
+          channel-priority: strict
+          show-channel-urls: true
+
+      - name: install code and deps
+        shell: bash -l {0}
+        run: |
+          conda install --file requirements.txt black coverage coveralls mock pytest pytest-cov pip ${CONDA_PKGS} --yes --quiet
+          python -m pip install -e .
+          git config --global user.email "smithy@smithy.smithy"
+          git config --global user.name "smithy"
+
+      - name: run tests
+        shell: bash -l {0}
+        run: |
+          pytest tests --cov conda_smithy
+          black --check --verbose --diff --config=pyproject.toml .
+
+      - name: compute coverage
+        shell: bash -l {0}
+        run: |
+          coverage combine || echo "no coverage data to combine maybe"
+          coveralls
+        env: 
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
