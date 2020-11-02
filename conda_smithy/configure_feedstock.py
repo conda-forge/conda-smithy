@@ -1853,7 +1853,7 @@ def set_migration_fns(forge_dir, forge_config):
 
     result = []
     for ts, (fn, num) in migrations_in_feedstock.items():
-        if ts == object:
+        if not isinstance(ts, (int, str, float)):
             # This file doesn't have a timestamp. Use it as it is.
             result.append(fn)
         elif ts in migrations_in_cfp:
