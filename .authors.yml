@@ -455,6 +455,8 @@
   first_commit: 2020-07-09 05:47:39
 - name: Ryan Volz
   email: rvolz@mit.edu
+  alternate_emails:
+  - ryan.volz@gmail.com
   num_commits: 5
   first_commit: 2020-07-02 12:02:36
   github: ryanvolz
@@ -468,3 +470,5 @@
   num_commits: 19
   first_commit: 2020-10-05 09:50:12
   github: jwillemsen
+- name: Jaime Rodríguez-Guerra
+  email: jaimergp@users.noreply.github.com
