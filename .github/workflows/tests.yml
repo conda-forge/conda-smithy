@@ -2,6 +2,7 @@ name: tests
 
 on:
   push: null
+  pull_request: null
 
 jobs:
   tests:
