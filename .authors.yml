@@ -246,7 +246,7 @@
   email: isuru.11@cse.mrt.ac.lk
   alternate_emails:
   - isuruf@gmail.com
-  num_commits: 352
+  num_commits: 359
   first_commit: 2017-01-08 22:03:03
   github: isuruf
 - name: Julian Rüth
@@ -397,7 +397,7 @@
   github: beckermr
 - name: Matthew R. Becker
   email: beckermr@users.noreply.github.com
-  num_commits: 30
+  num_commits: 43
   first_commit: 2020-01-19 19:32:30
   github: beckermr
 - name: Natasha Pavlovikj
@@ -457,7 +457,7 @@
   email: rvolz@mit.edu
   alternate_emails:
   - ryan.volz@gmail.com
-  num_commits: 5
+  num_commits: 6
   first_commit: 2020-07-02 12:02:36
   github: ryanvolz
 - name: Joshua L. Adelman
@@ -472,3 +472,6 @@
   github: jwillemsen
 - name: Jaime Rodríguez-Guerra
   email: jaimergp@users.noreply.github.com
+  num_commits: 2
+  first_commit: 2020-11-01 14:18:08
+  github: jaimergp
