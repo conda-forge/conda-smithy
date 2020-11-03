@@ -4,6 +4,31 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.8.5
+====================
+
+**Changed:**
+
+* Moved CI to GitHub actions and removed travis-ci
+* Use the shorter build ID instead of job ID to name Azure artifacts when they are stored. This helps prevent the artifact name from being too long, which would result in being unable to download it.
+* Replaced travis-ci status badge w/ GitHub actions one.
+
+**Fixed:**
+
+* Faulty ``migrator_ts`` type check prevented manual migrations from happening (those that are not yet merged to ``conda-forge-pinning``).
+* Previous release accidentally included a commit that made noarch: python
+  recipes without a lower bound error. This was changed to a hint
+
+**Authors:**
+
+* Isuru Fernando
+* Matthew R. Becker
+* Ryan Volz
+* Marius van Niekerk
+* Jaime Rodríguez-Guerra
+
+
+
 v3.8.4
 ====================
 
