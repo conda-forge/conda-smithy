@@ -797,7 +797,7 @@ def _get_build_setup_line(forge_dir, platform, forge_config):
         elif platform == "win":
             build_setup += textwrap.dedent(
                 """\
-                # Overriding global run_conda_forge_build_setup_win with local copy.
+                :: Overriding global run_conda_forge_build_setup_win with local copy.
                 {recipe_dir}\\run_conda_forge_build_setup_win
             """.format(
                     recipe_dir=forge_config["recipe_dir"]
