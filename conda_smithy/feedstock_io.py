@@ -63,7 +63,7 @@ def remove_file_or_dir(filename):
         return remove_file(filename)
 
     repo = get_repo(filename)
-    if repo:
+    if repo and filename in repo.head.commit.tree:
         repo.index.remove([filename], r=True)
     shutil.rmtree(filename)
 

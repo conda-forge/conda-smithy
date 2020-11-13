@@ -1609,8 +1609,7 @@ def _load_forge_config(forge_dir, exclusive_config_file):
         if old_file.replace(os.sep, "/") in config["skip_render"]:
             continue
         file_with_path = os.path.join(forge_dir, old_file)
-        if os.path.exists(file_with_path):
-            remove_file_or_dir(file_with_path)
+        remove_file_or_dir(file_with_path)
 
     # Set some more azure defaults
     config["azure"].setdefault("user_or_org", config["github"]["user_or_org"])
