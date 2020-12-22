@@ -45,8 +45,12 @@ fi
 if [ -z "${DOCKER_IMAGE}" ]; then
     SHYAML_INSTALLED="$(shyaml -h || echo NO)"
     if [ "${SHYAML_INSTALLED}" == "NO" ]; then
-        echo "WARNING: DOCKER_IMAGE variable not set and shyaml not installed. Falling back to {{ docker.fallback_image }}"
-        DOCKER_IMAGE="{{ docker.fallback_image }}"
+        echo "WARNING: DOCKER_IMAGE variable not set and shyaml not installed. Trying to parse with coreutils"
+        DOCKER_IMAGE=$(cat .ci_support/${CONFIG}.yaml | grep "docker_image" -A 1 | tail -n 1 | cut -b 3-)
+        if [ "${DOCKER_IMAGE}" = 1 ]; then
+            echo "No docker_image entry found in ${CONFIG}. Falling back to {{ docker.fallback_image }}"
+            DOCKER_IMAGE="{{ docker.fallback_image }}"
+        fi
     else
         DOCKER_IMAGE="$(cat "${FEEDSTOCK_ROOT}/.ci_support/${CONFIG}.yaml" | shyaml get-value docker_image.0 {{ docker.fallback_image }} )"
     fi
