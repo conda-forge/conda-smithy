@@ -394,6 +394,10 @@ def finalize_config(config, platform, arch, forge_config):
     """
     build_platform = forge_config["build_platform"][f"{platform}_{arch}"]
     if build_platform.startswith("linux"):
+        if "cdt_name" in config:
+            config["cdt_name"] = [config["cdt_name"][0]]
+        else:
+            config["cdt_name"] = [forge_config["docker"]["fallback_cdt"]]
         if "docker_image" in config:
             config["docker_image"] = [config["docker_image"][0]]
         else:
@@ -1430,6 +1434,7 @@ def _load_forge_config(forge_dir, exclusive_config_file):
     config = {
         "docker": {
             "executable": "docker",
+            "fallback_cdt": "cos6",
             "fallback_image": "condaforge/linux-anvil-comp7",
             "command": "bash",
         },
