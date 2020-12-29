@@ -1,7 +1,6 @@
 import argparse
 import collections
 import os
-import pytest
 import subprocess
 import yaml
 import shutil
@@ -132,7 +131,7 @@ def test_init_cuda_docker_images(testing_workdir):
     # configs.
     matrix_dir_len = len(os.listdir(matrix_dir))
     assert matrix_dir_len == 5
-    for v in [None, "9.2", "10.0", "10.1"]:
+    for v in [None, "9.2", "10.0", "10.1", "10.2", "11.0"]:
         fn = os.path.join(
             matrix_dir, f"linux_64_cuda_compiler_version{v}.yaml"
         )
@@ -146,6 +145,10 @@ def test_init_cuda_docker_images(testing_workdir):
         else:
             docker_image = f"condaforge/linux-anvil-cuda:{v}"
         assert config["docker_image"] == [docker_image]
+        if v == "11.0":
+            assert config["cdt_name"] == ["cos7"]
+        else:
+            assert config["cdt_name"] == ["cos6"]
 
 
 def test_init_multiple_docker_images(testing_workdir):
@@ -186,6 +189,7 @@ def test_init_multiple_docker_images(testing_workdir):
     with open(fn) as fh:
         config = yaml.load(fh)
     assert config["docker_image"] == ["pickme_a"]
+    assert config["cdt_name"] == ["pickme_1"]
 
 
 def test_regenerate(py_recipe, testing_workdir):
