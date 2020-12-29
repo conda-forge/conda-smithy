@@ -14,8 +14,8 @@ Authors are sorted by number of commits.
 * Min RK
 * Hadrien Mary
 * Johnny Willemsen
-* Julian Rüth
 * Uwe L. Korn
+* Julian Rüth
 * Mark Harfouche
 * Eric Dill
 * Natasha Pavlovikj
@@ -43,6 +43,7 @@ Authors are sorted by number of commits.
 * Marius van Niekerk
 * Peter Williams
 * Johannes Köster
+* Jaime Rodríguez-Guerra
 * Matt McCormick
 * John Blischak
 * Jan Janßen
@@ -70,7 +71,6 @@ Authors are sorted by number of commits.
 * hajapy
 * Axel Huebl
 * Thomas Hopkins
-* Jaime Rodríguez-Guerra
 * lorenz
 * Tom Augspurger
 * Ryan May
