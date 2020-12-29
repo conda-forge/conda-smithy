@@ -1,4 +1,4 @@
-cuda_compiler_version:                  # [linux64]
+cdt_name:                               # [linux64]
   - cos6                                # [linux64]
   - cos6                                # [linux64]
   - cos6                                # [linux64]
