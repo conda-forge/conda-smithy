@@ -404,7 +404,7 @@ def finalize_config(config, platform, arch, forge_config):
                 if "docker_image" in ziplist:
                     for key in ziplist:
                         if key != "docker_image":
-                            config[key] = [config["docker_image"][0]]
+                            config[key] = [config[key][0]]
 
     return config
 

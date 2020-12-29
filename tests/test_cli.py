@@ -130,7 +130,7 @@ def test_init_cuda_docker_images(testing_workdir):
     # files, though - loops within outputs are contained in those top-level
     # configs.
     matrix_dir_len = len(os.listdir(matrix_dir))
-    assert matrix_dir_len == 5
+    assert matrix_dir_len == 7  # 6 docker images plus the README
     for v in [None, "9.2", "10.0", "10.1", "10.2", "11.0"]:
         fn = os.path.join(
             matrix_dir, f"linux_64_cuda_compiler_version{v}.yaml"
