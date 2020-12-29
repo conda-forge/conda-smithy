@@ -1,7 +1,9 @@
 name: tests
 
 on:
-  push: null
+  push:
+    branches:
+      - master
   pull_request: null
 
 jobs:
@@ -37,5 +39,5 @@ jobs:
         run: |
           coverage combine || echo "no coverage data to combine maybe"
           coveralls
-        env: 
+        env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

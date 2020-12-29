@@ -398,6 +398,14 @@ def finalize_config(config, platform, arch, forge_config):
             config["docker_image"] = [config["docker_image"][0]]
         else:
             config["docker_image"] = [forge_config["docker"]["fallback_image"]]
+
+        if "zip_keys" in config:
+            for ziplist in config["zip_keys"]:
+                if "docker_image" in ziplist:
+                    for key in ziplist:
+                        if key != "docker_image":
+                            config[key] = [config[key][0]]
+
     return config
 
 
