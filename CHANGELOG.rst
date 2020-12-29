@@ -4,6 +4,36 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.8.6
+====================
+
+**Changed:**
+
+* Run docker builds using ``delegated`` volume mounts.
+
+**Fixed:**
+
+* All keys zipped with ``docker_image`` are now handled properly.
+* Changed CI configuration to not run tests on ``push`` events to branches that
+  are not ``master``.
+* CI runs on PRs from forks now.
+* ``#`` is not a valid comment symbol on Windows and using it as part of a pipeline Batch step will cause a (harmless) error in the logs. It has been replaced by ``::`` instead.
+
+**Security:**
+
+* Use latest ``conda-incubator/setup-miniconda`` version to circumvent the GH Actions deprecations on Nov 16th
+
+**Authors:**
+
+* Isuru Fernando
+* Matthew R Becker
+* Matthew R. Becker
+* Uwe L. Korn
+* John Kirkham
+* Jaime Rodríguez-Guerra
+
+
+
 v3.8.5
 ====================
 
