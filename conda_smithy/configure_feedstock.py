@@ -1666,6 +1666,14 @@ def _load_forge_config(forge_dir, exclusive_config_file):
             feedstock_name += "-feedstock"
         config["github"]["repo_name"] = feedstock_name
     config["exclusive_config_file"] = exclusive_config_file
+
+    # Start and end group commands vary per provider
+    # We define a basic handler here.
+    # These functions can be redefined (if needed)
+    # on the provider specific functions
+    config["startgroup"] = lambda s: f'echo "{s}"'
+    config["endgroup"] = lambda s: None
+
     return config
 
 
@@ -1925,12 +1933,6 @@ def main(
 
     config = _load_forge_config(forge_dir, exclusive_config_file)
     config["feedstock_name"] = os.path.basename(forge_dir)
-    # Start and end group commands vary per provider
-    # We define a basic handler here.
-    # These functions can be redefined (if needed)
-    # on the provider specific functions
-    config["startgroup"] = lambda s: f'echo "{s}"'
-    config["endgroup"] = lambda s: None
 
     for each_ci in ["travis", "circle", "appveyor", "drone"]:
         if config[each_ci].pop("enabled", None):
