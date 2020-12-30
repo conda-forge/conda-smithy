@@ -1654,7 +1654,6 @@ def _load_forge_config(forge_dir, exclusive_config_file):
             feedstock_name += "-feedstock"
         config["github"]["repo_name"] = feedstock_name
     config["exclusive_config_file"] = exclusive_config_file
-
     return config
 
 
