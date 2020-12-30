@@ -1657,7 +1657,7 @@ def _load_forge_config(forge_dir, exclusive_config_file):
 
     # Start and end group commands vary per provider
     config["group_functions_bash"] = textwrap.dedent(
-        """
+        r"""
         function startgroup {
             # Pass a single argument, quoted
             case ${CI:-} in
