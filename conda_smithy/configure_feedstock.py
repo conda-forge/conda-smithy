@@ -1767,7 +1767,6 @@ def get_common_scripts(forge_dir):
         "run_docker_build.sh",
         "build_steps.sh",
         "run_osx_build.sh",
-        "utils.sh",
     ]:
         yield os.path.join(forge_dir, ".scripts", old_file)
 
@@ -1784,7 +1783,6 @@ def clear_scripts(forge_dir):
             "run_docker_build.sh",
             "build_steps.sh",
             "run_osx_build.sh",
-            "utils.sh",
         ]:
             remove_file(os.path.join(forge_dir, folder, old_file))
 
