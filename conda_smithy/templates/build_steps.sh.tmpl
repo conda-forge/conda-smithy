@@ -5,14 +5,14 @@
 # changes to this script, consider a proposal to conda-smithy so that other feedstocks can also
 # benefit from the improvement.
 
-source /home/conda/feedstock_root/.scripts/utils.sh
+set -xeuo pipefail
+export FEEDSTOCK_ROOT="${FEEDSTOCK_ROOT:-/home/conda/feedstock_root}"
+source ${FEEDSTOCK_ROOT}/.scripts/logging_utils.sh
 
 endgroup "Start Docker"
 
 startgroup"Configuring conda"
-set -xeuo pipefail
 export PYTHONUNBUFFERED=1
-export FEEDSTOCK_ROOT="${FEEDSTOCK_ROOT:-/home/conda/feedstock_root}"
 export RECIPE_ROOT="${RECIPE_ROOT:-/home/conda/recipe_root}"
 export CI_SUPPORT="${FEEDSTOCK_ROOT}/.ci_support"
 export CONFIG_FILE="${CI_SUPPORT}/${CONFIG}.yaml"

@@ -1655,33 +1655,6 @@ def _load_forge_config(forge_dir, exclusive_config_file):
         config["github"]["repo_name"] = feedstock_name
     config["exclusive_config_file"] = exclusive_config_file
 
-    # Start and end group commands vary per provider
-    config["group_functions_bash"] = textwrap.dedent(
-        r"""
-        function startgroup {
-            # Pass a single argument, quoted
-            case ${CI:-} in
-                azure )
-                    echo "##[group]$1";;
-                travis )
-                    echo "$1"
-                    echo -en 'travis_fold:start:'"${1// /}"'\\r';;
-                * )
-                    echo "$1";;
-            esac
-        }
-        function endgroup {
-            # Pass a single argument, quoted
-            case ${CI:-} in
-                azure )
-                    echo "##[endgroup]";;
-                travis )
-                    echo -en 'travis_fold:end:'"${1// /}"'\\r';;
-            esac
-        }
-        """
-    )
-
     return config
 
 
