@@ -8,7 +8,7 @@
 
 **Changed:**
 
-* `run_os_build.sh` had hardcoded handlers for Travis log folding. These have
+* `run_osx_build.sh` had hardcoded handlers for Travis log folding. These have
   been replaced with the now equivalent Bash functions.
 
 **Deprecated:**
