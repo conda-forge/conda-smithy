@@ -4,7 +4,8 @@
 # will be lost next time ``conda smithy rerender`` is run. If you would like to make permanent
 # changes to this script, consider a proposal to conda-smithy so that other feedstocks can also
 # benefit from the improvement.
-
+{{ endgroup("Start Docker") }}
+{{ startgroup("Configuring conda") }}
 set -xeuo pipefail
 export PYTHONUNBUFFERED=1
 export FEEDSTOCK_ROOT="${FEEDSTOCK_ROOT:-/home/conda/feedstock_root}"
@@ -39,27 +40,36 @@ if [[ "${HOST_PLATFORM}" != "${BUILD_PLATFORM}" ]]; then
      EXTRA_CB_OPTIONS="${EXTRA_CB_OPTIONS:-} --no-test"
 fi
 {% endif %}
+{{ endgroup("Configuring conda") }}
 
 if [[ "${BUILD_WITH_CONDA_DEBUG:-0}" == 1 ]]; then
+    {{ startgroup("Running conda debug") }}
     if [[ "x${BUILD_OUTPUT_ID:-}" != "x" ]]; then
         EXTRA_CB_OPTIONS="${EXTRA_CB_OPTIONS:-} --output-id ${BUILD_OUTPUT_ID}"
     fi
     conda debug "${RECIPE_ROOT}" -m "${CI_SUPPORT}/${CONFIG}.yaml" \
         ${EXTRA_CB_OPTIONS:-} \
         --clobber-file "${CI_SUPPORT}/clobber_${CONFIG}.yaml"
+    {{ endgroup("Running conda debug") }}
     # Drop into an interactive shell
     /bin/bash
 else
+    {{ startgroup("Running conda build") }}
     conda build "${RECIPE_ROOT}" -m "${CI_SUPPORT}/${CONFIG}.yaml" \
         --suppress-variables ${EXTRA_CB_OPTIONS:-} \
         --clobber-file "${CI_SUPPORT}/clobber_${CONFIG}.yaml"
+    {{ endgroup("Running conda build") }}
 
     {%- if conda_forge_output_validation %}
+    {{ startgroup("Validating outputs") }}
     validate_recipe_outputs "${FEEDSTOCK_NAME}"
+    {{ endgroup("Validating outputs") }}
     {%- endif %}
 
     if [[ "${UPLOAD_PACKAGES}" != "False" ]]; then
+        {{ startgroup("Uploading packages") }}
         upload_package {% if conda_forge_output_validation %}--validate --feedstock-name="${FEEDSTOCK_NAME}" {% endif %}{% if private_upload %} --private{% endif %} "${FEEDSTOCK_ROOT}" "${RECIPE_ROOT}" "${CONFIG_FILE}"
+        {{ endgroup("Uploading packages") }}
     fi
 fi
 
