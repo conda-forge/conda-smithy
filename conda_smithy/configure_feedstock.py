@@ -1010,14 +1010,6 @@ def _travis_specific_setup(jinja_env, forge_config, forge_dir, platform):
             forge_config["yum_build_setup"] = yum_build_setup
 
     forge_config["build_setup"] = build_setup
-    # Start and end group functions
-    forge_config["startgroup"] = (
-        lambda s: f"echo '\n\n{s}'\n"
-        fr"echo -en 'travis_fold:start:{s.replace(' ', '_')}\\r'"
-    )
-    forge_config[
-        "endgroup"
-    ] = lambda s: fr"echo -en 'travis_fold:end:{s.replace(' ', '_')}\\r'"
 
     _render_template_exe_files(
         forge_config=forge_config,
@@ -1156,10 +1148,6 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
 
     forge_config = deepcopy(forge_config)
     forge_config["build_setup"] = build_setup
-    # Start and end group functions
-    # From: https://docs.microsoft.com/en-us/azure/devops/pipelines/scripts/logging-commands#formatting-commands
-    forge_config["startgroup"] = lambda s: f'echo "##[group]{s}"'
-    forge_config["endgroup"] = lambda s: f'echo "##[endgroup]"'
 
     platform_templates = {
         "linux": [
@@ -1668,11 +1656,31 @@ def _load_forge_config(forge_dir, exclusive_config_file):
     config["exclusive_config_file"] = exclusive_config_file
 
     # Start and end group commands vary per provider
-    # We define a basic handler here.
-    # These functions can be redefined (if needed)
-    # on the provider specific functions
-    config["startgroup"] = lambda s: f'echo "{s}"'
-    config["endgroup"] = lambda s: None
+    config["group_functions_bash"] = textwrap.dedent(
+        """
+        function startgroup {
+            # Pass a single argument, quoted
+            case ${CI:-} in
+                azure )
+                    echo "##[group]$1";;
+                travis )
+                    echo "$1"
+                    echo -en 'travis_fold:start:'"${1// /}"'\\r';;
+                * )
+                    echo "$1";;
+            esac
+        }
+        function endgroup {
+            # Pass a single argument, quoted
+            case ${CI:-} in
+                azure )
+                    echo "##[endgroup]";;
+                travis )
+                    echo -en 'travis_fold:end:'"${1// /}"'\\r';;
+            esac
+        }
+        """
+    )
 
     return config
 

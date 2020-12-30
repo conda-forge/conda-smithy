@@ -5,7 +5,9 @@
 # changes to this script, consider a proposal to conda-smithy so that other feedstocks can also
 # benefit from the improvement.
 
-{{ startgroup("Configure Docker") }}
+{{ group_functions_bash }}
+
+startgroup "Configure Docker"
 
 set -xeo pipefail
 
@@ -67,9 +69,9 @@ DOCKER_RUN_ARGS="${CONDA_FORGE_DOCKER_RUN_ARGS}"
 if [ -z "${CI}" ]; then
     DOCKER_RUN_ARGS="-it ${DOCKER_RUN_ARGS}"
 fi
-{{ endgroup("Configure Docker") }}
+endgroup "Configure Docker"
 
-{{ startgroup("Start Docker") }}
+startgroup "Start Docker"
 export UPLOAD_PACKAGES="${UPLOAD_PACKAGES:-True}"
 {{ docker.executable }} run ${DOCKER_RUN_ARGS} \
            -v "${RECIPE_ROOT}":/home/conda/recipe_root:rw,z,delegated \

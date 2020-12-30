@@ -1,15 +1,17 @@
 #!/usr/bin/env bash
 
+{{ group_functions_bash }}
+
 set -x
 
-{{ startgroup("Installing a fresh version of Miniforge") }}
+startgroup "Installing a fresh version of Miniforge"
 MINIFORGE_URL="https://github.com/conda-forge/miniforge/releases/latest/download"
 MINIFORGE_FILE="Miniforge3-MacOSX-x86_64.sh"
 curl -L -O "${MINIFORGE_URL}/${MINIFORGE_FILE}"
 bash $MINIFORGE_FILE -b
-{{ endgroup("Installing a fresh version of Miniforge") }}
+endgroup "Installing a fresh version of Miniforge"
 
-{{ startgroup("Configuring conda") }}
+startgroup "Configuring conda"
 source ${HOME}/miniforge3/etc/profile.d/conda.sh
 conda activate base
 
@@ -33,11 +35,11 @@ echo -e "\n\nMangling homebrew in the CI to avoid conflicts."
 echo -e "\n\nRunning the build setup script."
 {{ build_setup }}
 {%- endif %}
-{{ endgroup("Configuring conda") }}
+endgroup "Configuring conda"
 
 set -e
 
-{{ startgroup("Running conda build") }}
+startgroup "Running conda build"
 echo -e "\n\nMaking the build clobber file"
 make_build_number ./ ./{{ recipe_dir }} ./.ci_support/${CONFIG}.yaml
 {% if test_on_native_only %}
@@ -46,16 +48,16 @@ if [[ "${HOST_PLATFORM}" != "${BUILD_PLATFORM}" ]]; then
 fi
 {% endif %}
 conda build ./{{ recipe_dir }} -m ./.ci_support/${CONFIG}.yaml --suppress-variables --clobber-file ./.ci_support/clobber_${CONFIG}.yaml ${EXTRA_CB_OPTIONS:-}
-{{ endgroup("Running conda build") }}
+endgroup "Running conda build"
 
 {%- if conda_forge_output_validation %}
-{{ startgroup("Validating outputs") }}
+startgroup "Validating outputs"
 validate_recipe_outputs "${FEEDSTOCK_NAME}"
-{{ endgroup("Validating outputs") }}
+endgroup "Validating outputs"
 {%- endif %}
 
 if [[ "${UPLOAD_PACKAGES}" != "False" ]]; then
-  {{ startgroup("Uploading packages") }}
+  startgroup "Uploading packages"
   upload_package {% if conda_forge_output_validation %}--validate --feedstock-name="${FEEDSTOCK_NAME}"{% endif %}{% if private_upload %} --private{% endif %} ./ ./{{ recipe_dir }} ./.ci_support/${CONFIG}.yaml
-  {{ endgroup("Uploading packages") }}
+  endgroup "Uploading packages"
 fi
