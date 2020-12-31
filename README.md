@@ -62,12 +62,14 @@ Making a new feedstock
 <directory_of_conda_recipe>`.     For a recipe called `foo`, this creates a
 directory called `foo-feedstock`, populates it with CI setup skeletons, adds the recipe under
 `recipe` and initializes it as a git repo.
+
 2. **Create a github repo:** `conda smithy register-github --organization conda-forge ./foo-feedstock`.
 This requires a github token. You can try it out with a github user account
 instead of an organization by replacing the organization argument with
 `--user github_user_name`. If you are interested in adding teams for your feedstocks,
 you can provide the `--add-teams` option to create them. This can be done when creating
 the feedstock or after.
+
 3. **Register the feedstock with CI services:**
 `conda smithy register-ci --organization conda-forge --feedstock_directory ./foo-feedstock`.
 This requires tokens for the CI services. You can give the name of a user instead
@@ -78,27 +80,30 @@ out of by specifying `--without-anaconda-token`, as such execpted package upload
         `https://dev.azure.com/YOUR_ORG/feedstock-builds/_settings/adminservices`
      * For Azure builds, you will have to export the environment variable `AZURE_ORG_OR_USER` to point to your Azure org
      * If this is your first build on Azure, make sure to add [Library Variable Group](https://docs.microsoft.com/en-us/azure/devops/pipelines/process/variables?view=azure-devops&tabs=yaml%2Cbatch#share-variables-across-pipelines) containing your BINSTAR_TOKEN for automated anaconda uploads.
+
 4. **Specify the feedstock channel and label:**
-Optionally, you can specify source channels and choose a channel to upload to in `recipe/conda_build_config.yaml`.
-  ```yaml
-  channel_sources:
-    - mysourcechannel1,mysourcechannel2,conda-forge,defaults
-  channel_targets:
-    - target_channel target_label
-  ```
-  Default source channels are `conda-forge,defaults`. Default for channel targets is `conda-forge main`.
+   Optionally, you can specify source channels and choose a channel to upload to in `recipe/conda_build_config.yaml`.
+     ```yaml
+     channel_sources:
+       - mysourcechannel1,mysourcechannel2,conda-forge,defaults
+     channel_targets:
+       - target_channel target_label
+     ```
+   Default source channels are `conda-forge,defaults`. Default for channel targets is `conda-forge main`.
+
 5. **Specify your branding in the README.md:**
-Optionally, you can specify the branding on the README.md file by adding the following the `conda-forge.yml` file:
-```
-github:
-  user_or_org: YOUR_GITHUB_USER_OR_ORG
-channels:
-  targets:
-  -
-    - YOUR_ANACONDA_CHANNEL
-```
+   Optionally, you can specify the branding on the README.md file by adding the following the `conda-forge.yml` file:
+   ```
+   github:
+     user_or_org: YOUR_GITHUB_USER_OR_ORG
+   channels:
+     targets:
+     -
+       - YOUR_ANACONDA_CHANNEL
+   ```
 
 6. **Re-render the feedstock:** ``conda smithy rerender --feedstock_directory ./foo-feedstock``
+
 7. **Commit the changes:** ``cd foo-feedstock && git commit``, then push ``git push upstream master``.
 
 Running a build
