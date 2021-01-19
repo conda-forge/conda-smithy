@@ -1528,6 +1528,7 @@ def _load_forge_config(forge_dir, exclusive_config_file):
         "conda_forge_output_validation": False,
         "private_upload": False,
         "secrets": [],
+        "build_with_mambabuild": False,
         # Specific channel for package can be given with `${url or channel_alias}::package_name`, defaults to conda-forge channel_alias
         "remote_ci_setup": "conda-forge-ci-setup=3",
     }
