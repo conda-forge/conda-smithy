@@ -38,6 +38,6 @@ jobs:
         shell: bash -l {0}
         run: |
           coverage combine || echo "no coverage data to combine maybe"
-          coveralls
+          coveralls --service=github
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
