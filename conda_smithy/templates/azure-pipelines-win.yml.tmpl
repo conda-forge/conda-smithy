@@ -47,7 +47,7 @@ jobs:
 
     - task: CondaEnvironment@1
       inputs:
-        packageSpecs: 'python=3.6 conda-build conda "{{ remote_ci_setup }}" pip' # Optional
+        packageSpecs: 'python=3.6 conda-build conda "{{ remote_ci_setup }}" pip {{ 'boa' if build_with_mambabuild else '' }}' # Optional
         installOptions: "-c conda-forge"
         updateConda: true
       displayName: Install conda-build and activate environment
@@ -86,7 +86,12 @@ jobs:
 
     - script: |
         call activate base
+        {%- if build_with_mambabuild %}
+        conda.exe mambabuild "{{ recipe_dir }}" -m .ci_support\%CONFIG%.yaml
+        exit 1
+        {% else %}
         conda.exe build "{{ recipe_dir }}" -m .ci_support\%CONFIG%.yaml
+        {%- endif %}
       displayName: Build recipe
       env:
         PYTHONUNBUFFERED: 1

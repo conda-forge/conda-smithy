@@ -69,7 +69,6 @@ DOCKER_RUN_ARGS="${CONDA_FORGE_DOCKER_RUN_ARGS}"
 if [ -z "${CI}" ]; then
     DOCKER_RUN_ARGS="-it ${DOCKER_RUN_ARGS}"
 fi
-export BUILD_WITH_MAMBABUILD="{{ 1 if build_with_mambabuild else 0 }}"
 endgroup "Configure Docker"
 
 startgroup "Start Docker"
@@ -86,7 +85,6 @@ export UPLOAD_PACKAGES="${UPLOAD_PACKAGES:-True}"
            -e FEEDSTOCK_NAME \
            -e CPU_COUNT \
            -e BUILD_WITH_CONDA_DEBUG \
-           -e BUILD_WITH_MAMBABUILD \
            -e BUILD_OUTPUT_ID \
 {%- for secret in secrets %}
            -e {{ secret }} \

@@ -25,13 +25,12 @@ conda-build:
 
 CONDARC
 
-if [[ "${BUILD_WITH_MAMBABUILD:-0}" == 1 ]]; then
-    export GET_BOA=boa
-    export BUILD_CMD=mambabuild
-    export UPLOAD_PACKAGES=False
-else
-    export BUILD_CMD=build
-fi
+{%- if build_with_mambabuild %}
+export GET_BOA=boa
+export BUILD_CMD=mambabuild
+{%- else %}
+export BUILD_CMD=build
+{%- endif %}
 
 conda install --yes --quiet "{{ remote_ci_setup }}" conda-build pip ${GET_BOA:-} -c conda-forge
 {% if local_ci_setup %}
@@ -77,6 +76,11 @@ else
     startgroup "Validating outputs"
     validate_recipe_outputs "${FEEDSTOCK_NAME}"
     endgroup "Validating outputs"
+    {%- endif %}
+
+    {%- if build_with_mambabuild %}
+    # we are building with mambabuild, so exit with an error code for now
+    exit 1
     {%- endif %}
 
     if [[ "${UPLOAD_PACKAGES}" != "False" ]]; then
