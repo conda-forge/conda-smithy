@@ -26,10 +26,14 @@ conda-build:
 CONDARC
 
 if [[ "${BUILD_WITH_MAMBABUILD:-0}" == 1 ]]; then
-    GET_BOA="boa";
+    export GET_BOA=boa
+    export BUILD_CMD=mambabuild
+    export UPLOAD_PACKAGES=False
+else
+    export BUILD_CMD=build
 fi
 
-conda install --yes --quiet "{{ remote_ci_setup }}" conda-build pip "${GET_BOA:-}" -c conda-forge
+conda install --yes --quiet "{{ remote_ci_setup }}" conda-build pip ${GET_BOA:-} -c conda-forge
 {% if local_ci_setup %}
 conda uninstall --quiet --yes --force "{{ remote_ci_setup }}"
 pip install --no-deps ${RECIPE_ROOT}/.
@@ -62,18 +66,9 @@ if [[ "${BUILD_WITH_CONDA_DEBUG:-0}" == 1 ]]; then
     endgroup "Running conda debug"
     # Drop into an interactive shell
     /bin/bash
-elif [[ "${BUILD_WITH_MAMBABUILD:-0}" == 1 ]]; then
-    startgroup "Running conda mambabuild"
-    if [[ "x${BUILD_OUTPUT_ID:-}" != "x" ]]; then
-        EXTRA_CB_OPTIONS="${EXTRA_CB_OPTIONS:-} --output-id ${BUILD_OUTPUT_ID}"
-    fi
-    conda mambabuild "${RECIPE_ROOT}" -m "${CI_SUPPORT}/${CONFIG}.yaml" \
-        ${EXTRA_CB_OPTIONS:-} \
-        --clobber-file "${CI_SUPPORT}/clobber_${CONFIG}.yaml"
-    endgroup "Running conda mambabuild"
 else
-    startgroup "Running conda build"
-    conda build "${RECIPE_ROOT}" -m "${CI_SUPPORT}/${CONFIG}.yaml" \
+    startgroup "Running conda $BUILD_CMD"
+    conda $BUILD_CMD "${RECIPE_ROOT}" -m "${CI_SUPPORT}/${CONFIG}.yaml" \
         --suppress-variables ${EXTRA_CB_OPTIONS:-} \
         --clobber-file "${CI_SUPPORT}/clobber_${CONFIG}.yaml"
     endgroup "Running conda build"
