@@ -12,12 +12,12 @@ bash $MINIFORGE_FILE -b
 endgroup "Installing a fresh version of Miniforge"
 
 startgroup "Configuring conda"
-{% if build_with_mambabuild %}
-export GET_BOA=boa
-export BUILD_CMD=mambabuild
-{% else %}
-export BUILD_CMD=build
-{% endif %}
+{% if build_with_mambabuild -%}
+GET_BOA=boa
+BUILD_CMD=mambabuild
+{%- else -%}
+BUILD_CMD=build
+{%- endif %}
 
 source ${HOME}/miniforge3/etc/profile.d/conda.sh
 conda activate base
@@ -62,14 +62,13 @@ startgroup "Validating outputs"
 validate_recipe_outputs "${FEEDSTOCK_NAME}"
 endgroup "Validating outputs"
 {%- endif %}
-
-{% if build_with_mambabuild %}
+{% if build_with_mambabuild -%}
 # we're building with mambabuild, so fail here and DO NOT UPLOAD packages
 exit 1
-{% else %}
+{%- else %}
 if [[ "${UPLOAD_PACKAGES}" != "False" ]]; then
   startgroup "Uploading packages"
   upload_package {% if conda_forge_output_validation %}--validate --feedstock-name="${FEEDSTOCK_NAME}"{% endif %}{% if private_upload %} --private{% endif %} ./ ./{{ recipe_dir }} ./.ci_support/${CONFIG}.yaml
   endgroup "Uploading packages"
 fi
-{% endif %}
+{%- endif %}

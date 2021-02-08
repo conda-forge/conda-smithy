@@ -26,10 +26,10 @@ conda-build:
 CONDARC
 
 {%- if build_with_mambabuild %}
-export GET_BOA=boa
-export BUILD_CMD=mambabuild
+GET_BOA=boa
+BUILD_CMD=mambabuild
 {%- else %}
-export BUILD_CMD=build
+BUILD_CMD=build
 {%- endif %}
 
 conda install --yes --quiet "{{ remote_ci_setup }}" conda-build pip ${GET_BOA:-} -c conda-forge
