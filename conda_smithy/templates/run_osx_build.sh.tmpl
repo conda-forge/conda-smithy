@@ -12,11 +12,18 @@ bash $MINIFORGE_FILE -b
 endgroup "Installing a fresh version of Miniforge"
 
 startgroup "Configuring conda"
+{% if build_with_mambabuild -%}
+GET_BOA=boa
+BUILD_CMD=mambabuild
+{%- else -%}
+BUILD_CMD=build
+{%- endif %}
+
 source ${HOME}/miniforge3/etc/profile.d/conda.sh
 conda activate base
 
 echo -e "\n\nInstalling {{ remote_ci_setup }} and conda-build."
-conda install -n base --quiet --yes "{{ remote_ci_setup }}" conda-build pip
+conda install -n base --quiet --yes "{{ remote_ci_setup }}" conda-build pip ${GET_BOA:-}
 
 {% if local_ci_setup %}
 conda uninstall --quiet --yes --force "{{ remote_ci_setup }}"
@@ -39,7 +46,7 @@ endgroup "Configuring conda"
 
 set -e
 
-startgroup "Running conda build"
+startgroup "Running conda $BUILD_CMD"
 echo -e "\n\nMaking the build clobber file"
 make_build_number ./ ./{{ recipe_dir }} ./.ci_support/${CONFIG}.yaml
 {% if test_on_native_only %}
@@ -47,7 +54,7 @@ if [[ "${HOST_PLATFORM}" != "${BUILD_PLATFORM}" ]]; then
     EXTRA_CB_OPTIONS="${EXTRA_CB_OPTIONS:-} --no-test"
 fi
 {% endif %}
-conda build ./{{ recipe_dir }} -m ./.ci_support/${CONFIG}.yaml --suppress-variables --clobber-file ./.ci_support/clobber_${CONFIG}.yaml ${EXTRA_CB_OPTIONS:-}
+conda $BUILD_CMD ./{{ recipe_dir }} -m ./.ci_support/${CONFIG}.yaml --suppress-variables --clobber-file ./.ci_support/clobber_${CONFIG}.yaml ${EXTRA_CB_OPTIONS:-}
 endgroup "Running conda build"
 
 {%- if conda_forge_output_validation %}
@@ -55,9 +62,13 @@ startgroup "Validating outputs"
 validate_recipe_outputs "${FEEDSTOCK_NAME}"
 endgroup "Validating outputs"
 {%- endif %}
-
+{% if build_with_mambabuild -%}
+# we're building with mambabuild, so fail here and DO NOT UPLOAD packages
+exit 1
+{%- else %}
 if [[ "${UPLOAD_PACKAGES}" != "False" ]]; then
   startgroup "Uploading packages"
   upload_package {% if conda_forge_output_validation %}--validate --feedstock-name="${FEEDSTOCK_NAME}"{% endif %}{% if private_upload %} --private{% endif %} ./ ./{{ recipe_dir }} ./.ci_support/${CONFIG}.yaml
   endgroup "Uploading packages"
 fi
+{%- endif %}
