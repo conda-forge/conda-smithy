@@ -521,10 +521,11 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
             if (req.strip().split()[0] == "python") and (req != "python"):
                 break
         else:
-            hints.append(
-                "noarch: python recipes are recommended to have a lower bound "
-                "on the python version. This recommendation will become a "
-                "requirement in the future."
+            lints.append(
+                "noarch: python recipes are required to have a lower bound "
+                "on the python version. Typically this means putting "
+                "`python >=3.6` in **both** `host` and `run` but you should check "
+                "upstream for the package's Python compatibility."
             )
 
     # hints
