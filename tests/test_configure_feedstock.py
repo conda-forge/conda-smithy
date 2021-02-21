@@ -514,7 +514,7 @@ def test_migrator_cfp_override(recipe_migration_cfep9, jinja_env):
         f.write(
             textwrap.dedent(
                 """
-                migrator_ts: 1
+                migration_ts: 1
                 zlib:
                    - 1001
                 """
