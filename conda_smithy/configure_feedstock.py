@@ -548,9 +548,7 @@ def migrate_combined_spec(combined_spec, forge_dir, config, forge_config):
         for fn in migrations
     ]
 
-    migration_variants.sort(
-        key=lambda fn_v: (fn_v[1]["migrator_ts"], fn_v[0])
-    )
+    migration_variants.sort(key=lambda fn_v: (fn_v[1]["migrator_ts"], fn_v[0]))
     if len(migration_variants):
         logger.info(
             f"Applying migrations: {','.join(k for k, v in migration_variants)}"
