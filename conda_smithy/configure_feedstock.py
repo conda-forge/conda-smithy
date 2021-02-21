@@ -1855,7 +1855,7 @@ def set_migration_fns(forge_dir, forge_config):
     migrations_in_feedstock = get_migrations_in_dir(migrations_root)
 
     if not os.path.exists(cfp_migrations_dir):
-        migration_fns = [fn for fn, _ in migrations_in_feedstock.values()]
+        migration_fns = [fn for fn, _, _ in migrations_in_feedstock.values()]
         forge_config["migration_fns"] = migration_fns
         return
 
