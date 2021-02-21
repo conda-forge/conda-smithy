@@ -1814,7 +1814,7 @@ def get_migrations_in_dir(migrations_root):
                 yaml.load(contents, Loader=yaml.loader.BaseLoader) or {}
             )
             # Use a object as timestamp to not delete it
-            ts = migration_yaml.get("migrator_ts", object())
+            ts = migration_yaml.get("migration_ts", object())
             migration_number = migration_yaml.get("__migrator", {}).get(
                 "migration_number", 1
             )
