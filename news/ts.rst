@@ -14,7 +14,7 @@
 
 **Fixed:**
 
-* migrator_ts and migration_ts were both used in conda-smithy and migrator_ts was removed in favour of migration_ts
+* migration_ts and migrator_ts were both used in conda-smithy and migration_ts was removed in favour of migrator_ts
 
 **Security:**
 

@@ -55,7 +55,7 @@ def parse_variant(
     content = yaml.load(contents, Loader=yaml.loader.BaseLoader) or {}
     variants.trim_empty_keys(content)
     # TODO: Base this default on mtime or something
-    content["migration_ts"] = float(content.get("migration_ts", -1.0))
+    content["migrator_ts"] = float(content.get("migrator_ts", -1.0))
     return content
 
 
