@@ -256,7 +256,7 @@ about:
     ) as fh:
         fh.write(
             """
-migration_ts: 1
+migrator_ts: 1
 zlib:
     - 1000
 """
@@ -288,7 +288,7 @@ def recipe_migration_cfep9_downgrade(config_yaml, recipe_migration_cfep9):
     ) as fh:
         fh.write(
             """
-migration_ts: 1.0
+migrator_ts: 1.0
 zlib:
     - 999
 """
@@ -319,7 +319,7 @@ def recipe_migration_win_compiled(config_yaml, py_recipe):
         fh.write(
             dedent(
                 """
-        migration_ts: 1.0
+        migrator_ts: 1.0
         c_compiler:    # [win]
             - vs2008   # [win]
             - vs2017   # [win]

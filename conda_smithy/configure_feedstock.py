@@ -549,7 +549,7 @@ def migrate_combined_spec(combined_spec, forge_dir, config, forge_config):
     ]
 
     migration_variants.sort(
-        key=lambda fn_v: (fn_v[1]["migration_ts"], fn_v[0])
+        key=lambda fn_v: (fn_v[1]["migrator_ts"], fn_v[0])
     )
     if len(migration_variants):
         logger.info(
@@ -557,8 +557,8 @@ def migrate_combined_spec(combined_spec, forge_dir, config, forge_config):
         )
 
     for migrator_file, migration in migration_variants:
-        if "migration_ts" in migration:
-            del migration["migration_ts"]
+        if "migrator_ts" in migration:
+            del migration["migrator_ts"]
         if len(migration):
             combined_spec = variant_add(combined_spec, migration)
     return combined_spec
@@ -1814,7 +1814,7 @@ def get_migrations_in_dir(migrations_root):
                 yaml.load(contents, Loader=yaml.loader.BaseLoader) or {}
             )
             # Use a object as timestamp to not delete it
-            ts = migration_yaml.get("migration_ts", object())
+            ts = migration_yaml.get("migrator_ts", object())
             migration_number = migration_yaml.get("__migrator", {}).get(
                 "migration_number", 1
             )
