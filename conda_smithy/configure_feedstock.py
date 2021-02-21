@@ -1816,7 +1816,10 @@ def get_migrations_in_dir(migrations_root):
             migration_number = migration_yaml.get("__migrator", {}).get(
                 "migration_number", 1
             )
-            res[ts] = (fn, migration_number)
+            use_local = migration_yaml.get("__migrator", {}).get(
+                "use_local", False
+            )
+            res[ts] = (fn, migration_number, use_local)
     return res
 
 
@@ -1859,19 +1862,24 @@ def set_migration_fns(forge_dir, forge_config):
     migrations_in_cfp = get_migrations_in_dir(cfp_migrations_dir)
 
     result = []
-    for ts, (fn, num) in migrations_in_feedstock.items():
-        if not isinstance(ts, (int, str, float)):
-            # This file doesn't have a timestamp. Use it as it is.
+    for ts, (fn, num, use_local) in migrations_in_feedstock.items():
+        if use_local or not isinstance(ts, (int, str, float)):
+            # This file has a setting to use the file in the feedstock
+            # or doesn't have a timestamp. Use it as it is.
             result.append(fn)
         elif ts in migrations_in_cfp:
             # Use the one from cfp if migration_numbers match
-            new_fn, new_num = migrations_in_cfp[ts]
+            new_fn, new_num, _ = migrations_in_cfp[ts]
             if num == new_num:
+                logger.info(
+                    f"{os.path.basename(fn)} from feedstock is ignored and upstream version is used"
+                )
                 result.append(new_fn)
             else:
                 result.append(fn)
         else:
             # Delete this as this migration is over.
+            logger.info(f"{os.path.basename(fn)} is closed now. Removing")
             remove_file(fn)
     forge_config["migration_fns"] = result
     return
