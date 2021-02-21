@@ -1816,8 +1816,11 @@ def get_migrations_in_dir(migrations_root):
             migration_number = migration_yaml.get("__migrator", {}).get(
                 "migration_number", 1
             )
-            use_local = migration_yaml.get("__migrator", {}).get(
-                "use_local", False
+            use_local = (
+                migration_yaml.get("__migrator", {})
+                .get("use_local", "false")
+                .lower()
+                == "false"
             )
             res[ts] = (fn, migration_number, use_local)
     return res
