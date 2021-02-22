@@ -69,7 +69,7 @@ def _version_order(
             v = v.replace(" ", ".").replace("*", "1")
         try:
             return VersionOrder(v)
-        except:
+        except Exception:
             return v
 
 
@@ -121,7 +121,8 @@ def op_variant_key_add(v1: dict, v2: dict):
     key-add is additive so you will end up with more entries in the resulting dictionary
     This will append a the version specied by the primary_key migrator field.
 
-    Additionally all dependencies specified by zip_keys will be updated with additional entries from v2.
+    Additionally all dependencies specified by zip_keys will be updated with additional
+    entries from v2.
 
     If an ordering reorders the primary key all the zip_keys referring to that primary key will also
     be reodered in the same manner.
@@ -130,44 +131,44 @@ def op_variant_key_add(v1: dict, v2: dict):
     ordering = v2["__migrator"].get("ordering", {})
     if primary_key not in v2:
         return v1
-    assert len(v2[primary_key]) == 1
-    result = v1.copy()
-    if primary_key in v1:
-        # object is present already, ignore everything
-        if v2[primary_key][0] in v1[primary_key]:
-            return v1
-        else:
-            new_keys = variant_key_set_union(
-                None,
-                v1[primary_key],
-                v2[primary_key],
-                ordering=ordering.get(primary_key),
-            )
-            position_map = {
-                i: new_keys.index(v) for i, v in enumerate(v1[primary_key])
-            }
-
-            result[primary_key] = new_keys
-            new_key_position = new_keys.index(v2[primary_key][0])
-
-            # handle zip_keys
-            for chunk in v1.get("zip_keys", []):
-                zip_keyset = frozenset(chunk)
-                if primary_key in zip_keyset:
-                    for key in zip_keyset:
-                        if key == primary_key:
-                            continue
-                        # Create a new version of the key from
-                        assert len(v2[key]) == 1
-                        new_value = [None] * len(new_keys)
-                        for i, j in position_map.items():
-                            new_value[j] = v1[key][i]
-                        new_value[new_key_position] = v2[key][0]
-                        result[key] = new_value
-
-            return result
-    else:
+    if primary_key not in v1:
         raise RuntimeError("unhandled")
+
+    result = v1.copy()
+    for pkey_ind, pkey_val in enumerate(v2[primary_key]):
+        # object is present already, ignore everything
+        if pkey_val in result[primary_key]:
+            continue
+
+        new_keys = variant_key_set_union(
+            None,
+            result[primary_key],
+            [pkey_val],
+            ordering=ordering.get(primary_key),
+        )
+        position_map = {
+            i: new_keys.index(v) for i, v in enumerate(result[primary_key])
+        }
+
+        result[primary_key] = new_keys
+        new_key_position = new_keys.index(pkey_val)
+
+        # handle zip_keys
+        for chunk in v1.get("zip_keys", []):
+            zip_keyset = frozenset(chunk)
+            if primary_key in zip_keyset:
+                for key in zip_keyset:
+                    if key == primary_key:
+                        continue
+                    # Create a new version of the key from
+                    # assert len(v2[key]) == 1
+                    new_value = [None] * len(new_keys)
+                    for i, j in position_map.items():
+                        new_value[j] = result[key][i]
+                    new_value[new_key_position] = v2[key][pkey_ind]
+                    result[key] = new_value
+
+    return result
 
 
 def op_variant_key_remove(v1: dict, v2: dict):
