@@ -1662,8 +1662,8 @@ def _load_forge_config(forge_dir, exclusive_config_file):
     # set the environment variable for OS version
     # currently we only care about cos6/cos7 for linux64, but it might be extended in the future
     for k, v in config["os_version"].items():
-        if v is not None:
-            os.environ[k] = v
+        if k in ('linux_64', 'linux') and v is not None:
+            os.environ['DEFAULT_LINUX_VERSION'] = v
 
     config["package"] = os.path.basename(forge_dir)
     if not config["github"]["repo_name"]:
