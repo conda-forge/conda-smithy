@@ -1499,6 +1499,20 @@ def _load_forge_config(forge_dir, exclusive_config_file):
             "win_64": "win_64",
             "osx_64": "osx_64",
         },
+        "os_version": {
+            "linux_64": "cos6",
+            "osx_64": None,
+            "win_64": None,
+            # Following platforms are disabled by default
+            "linux_aarch64": None,
+            "linux_ppc64le": None,
+            "linux_armv7l": None,
+            "linux_s390x": None,
+            # Following platforms are aliases of x86_64,
+            "linux": "cos6",
+            "osx": None,
+            "win": None,
+        },
         "test_on_native_only": False,
         "choco": [],
         # Configurable idle timeout.  Used for packages that don't have chatty enough builds
@@ -1645,6 +1659,11 @@ def _load_forge_config(forge_dir, exclusive_config_file):
     os.environ["CF_MAX_PY_VER"] = config["max_py_ver"]
     os.environ["CF_MIN_R_VER"] = config["min_r_ver"]
     os.environ["CF_MAX_R_VER"] = config["max_r_ver"]
+    # set the environment variable for OS version
+    # currently we only care about cos6/cos7 for linux64, but it might be extended in the future
+    for k, v in config["os_version"].items():
+        if v is not None:
+            os.environ[k] = v
 
     config["package"] = os.path.basename(forge_dir)
     if not config["github"]["repo_name"]:
