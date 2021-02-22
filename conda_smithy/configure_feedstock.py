@@ -615,8 +615,9 @@ def _render_ci_provider(
         )
 
         # AFAIK there is no way to get conda build to ignore the CBC yaml
-        # in the recipe. This one can mess up migrators applied to local
-        # CBC yaml files, so we move it out of the way.
+        # in the recipe. This one can mess up migrators applied with local
+        # CBC yaml files where variants in the migrators are not in the CBC.
+        # Thus we move it out of the way.
         try:
             _recipe_cbc = os.path.join(
                 forge_dir,
