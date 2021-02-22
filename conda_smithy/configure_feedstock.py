@@ -591,6 +591,13 @@ def _render_ci_provider(
             f"{platform}_{arch}"
         ].replace("_", "-")
 
+        # set the environment variable for OS version
+        # currently we only care about cos6/cos7 for linux64, but it might be extended in the future
+        if f"{platform}_{arch}" == "linux_64":
+            ver = forge_config["os_version"]["linux_64"]
+            if ver:
+                os.environ["DEFAULT_LINUX_VERSION"] = ver
+
         config = conda_build.config.get_or_merge_config(
             None,
             exclusive_config_file=forge_config["exclusive_config_file"],
@@ -1655,11 +1662,6 @@ def _load_forge_config(forge_dir, exclusive_config_file):
     os.environ["CF_MAX_PY_VER"] = config["max_py_ver"]
     os.environ["CF_MIN_R_VER"] = config["min_r_ver"]
     os.environ["CF_MAX_R_VER"] = config["max_r_ver"]
-    # set the environment variable for OS version
-    # currently we only care about cos6/cos7 for linux64, but it might be extended in the future
-    for k, v in config["os_version"].items():
-        if k == "linux_64" and v is not None:
-            os.environ["DEFAULT_LINUX_VERSION"] = v
 
     config["package"] = os.path.basename(forge_dir)
     if not config["github"]["repo_name"]:
