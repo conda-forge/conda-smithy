@@ -1507,8 +1507,6 @@ def _load_forge_config(forge_dir, exclusive_config_file):
         },
         "os_version": {
             "linux_64": None,
-            "osx_64": None,
-            "win_64": None,
             "linux_aarch64": None,
             "linux_ppc64le": None,
             "linux_armv7l": None,
