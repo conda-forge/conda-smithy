@@ -370,8 +370,8 @@ def _collapse_subpackage_variants(
     _trim_unused_zip_keys(used_key_values)
     _trim_unused_pin_run_as_build(used_key_values)
 
-    logger.info("top_level_loop_vars {}".format(top_level_loop_vars))
-    logger.info("used_key_values {}".format(used_key_values))
+    logger.debug("top_level_loop_vars {}".format(top_level_loop_vars))
+    logger.debug("used_key_values {}".format(used_key_values))
 
     return (
         break_up_top_level_values(top_level_loop_vars, used_key_values),
