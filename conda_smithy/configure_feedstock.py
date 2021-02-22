@@ -626,7 +626,7 @@ def _render_ci_provider(
                 "conda_build_config.yaml",
             )
             if os.path.exists(_recipe_cbc):
-                os.rename(_recipe_cbc, _recipe_cbc+".conda.smithy.bak")
+                os.rename(_recipe_cbc, _recipe_cbc + ".conda.smithy.bak")
 
             metas = conda_build.api.render(
                 os.path.join(forge_dir, forge_config["recipe_dir"]),
@@ -637,11 +637,13 @@ def _render_ci_provider(
                 permit_undefined_jinja=True,
                 finalize=False,
                 bypass_env_check=True,
-                channel_urls=forge_config.get("channels", {}).get("sources", []),
+                channel_urls=forge_config.get("channels", {}).get(
+                    "sources", []
+                ),
             )
         finally:
-            if os.path.exists(_recipe_cbc+".conda.smithy.bak"):
-                os.rename(_recipe_cbc+".conda.smithy.bak", _recipe_cbc)
+            if os.path.exists(_recipe_cbc + ".conda.smithy.bak"):
+                os.rename(_recipe_cbc + ".conda.smithy.bak", _recipe_cbc)
 
         # render returns some download & reparsing info that we don't care about
         metas = [m for m, _, _ in metas]
