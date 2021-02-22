@@ -618,6 +618,7 @@ def _render_ci_provider(
         # in the recipe. This one can mess up migrators applied with local
         # CBC yaml files where variants in the migrators are not in the CBC.
         # Thus we move it out of the way.
+        # TODO: upstream this as a flag in conda-build
         try:
             _recipe_cbc = os.path.join(
                 forge_dir,
