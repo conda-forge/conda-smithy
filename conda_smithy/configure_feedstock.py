@@ -1820,7 +1820,7 @@ def get_migrations_in_dir(migrations_root):
                 migration_yaml.get("__migrator", {})
                 .get("use_local", "false")
                 .lower()
-                == "false"
+                == "true"
             )
             res[ts] = (fn, migration_number, use_local)
     return res
