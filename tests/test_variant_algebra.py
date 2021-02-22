@@ -421,6 +421,117 @@ def test_py39_migration():
     assert "numpy" not in res3
 
 
+def test_multiple_key_add_migration():
+    """Test that running the python 3.9 keyadd migrator has the desired effect."""
+    base = parse_variant(
+        dedent(
+            """
+            python:
+              - 3.6.* *_cpython    # [not (osx and arm64)]
+              - 3.7.* *_cpython    # [not (osx and arm64)]
+              - 3.8.* *_cpython
+            python_impl:
+              - cpython
+            zip_keys:
+              -
+                - python
+              -                             # ["linux-64"]
+                - cuda_compiler_version     # ["linux-64"]
+                - docker_image              # ["linux-64"]
+
+            """
+        )
+    )
+
+    migration_pypy = parse_variant(
+        dedent(
+            """
+    python:
+      - 3.6.* *_cpython   # [not (osx and arm64)]
+      - 3.7.* *_cpython   # [not (osx and arm64)]
+      - 3.8.* *_cpython
+      - 3.6.* *_73_pypy   # [not (win64 or (osx and arm64))]
+
+    numpy:
+      - 1.16       # [not (osx and arm64)]
+      - 1.16       # [not (osx and arm64)]
+      - 1.16
+      - 1.18       # [not (win64 or (osx and arm64))]
+
+    python_impl:
+      - cpython    # [not (osx and arm64)]
+      - cpython    # [not (osx and arm64)]
+      - cpython
+      - pypy       # [not (win64 or (osx and arm64))]
+
+
+    zip_keys:
+      -
+        - python
+        - numpy
+        - python_impl
+    """
+        )
+    )
+
+    migration_py39 = parse_variant(
+        dedent(
+            """
+        __migrator:
+            operation: key_add
+            primary_key: python
+            ordering:
+                python:
+                    - 3.6.* *_cpython
+                    - 3.9.* *_cpython   # new entry
+                    - 3.10.* *_cpython  # new entry
+                    - 3.7.* *_cpython
+                    - 3.8.* *_cpython
+                    - 3.6.* *_73_pypy
+        python:
+          - 3.9.* *_cpython
+          - 3.10.* *_cpython
+        # additional entries to add for zip_keys
+        numpy:
+          - 1.100
+          - 1.200
+        python_impl:
+          - cpython
+          - cpython
+        """
+        )
+    )
+
+    res = variant_add(base, migration_pypy)
+    res2 = variant_add(res, migration_py39)
+
+    print(res)
+    print(res2)
+
+    assert res2["python"] == migration_py39["__migrator"]["ordering"]["python"]
+    # assert that we've ordered the numpy bits properly
+    assert res2["numpy"] == [
+        "1.16",
+        "1.100",
+        "1.200",
+        "1.16",
+        "1.16",
+        "1.18",
+    ]
+
+    res3 = variant_add(base, migration_py39)
+    print(res3)
+    assert res3["python"] == [
+        "3.6.* *_cpython",
+        "3.9.* *_cpython",  # newly added
+        "3.10.* *_cpython",
+        "3.7.* *_cpython",
+        "3.8.* *_cpython",
+    ]
+    # The base doesn't have an entry for numpy
+    assert "numpy" not in res3
+
+
 def test_variant_key_remove():
     base = parse_variant(
         dedent(

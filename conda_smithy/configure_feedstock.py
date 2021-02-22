@@ -17,7 +17,7 @@ import requests
 # by `requests`.
 try:
     import simplejson as json
-except:
+except ImportError:
     import json
 
 import conda_build.api
@@ -332,7 +332,6 @@ def _collapse_subpackage_variants(
         "BUILD",
     }
 
-    target_platform = f"{platform}-{arch}"
     if not is_noarch:
         always_keep_keys.add("target_platform")
 
@@ -613,17 +612,36 @@ def _render_ci_provider(
             forge_config,
         )
 
-        metas = conda_build.api.render(
-            os.path.join(forge_dir, forge_config["recipe_dir"]),
-            platform=platform,
-            arch=arch,
-            ignore_system_variants=True,
-            variants=migrated_combined_variant_spec,
-            permit_undefined_jinja=True,
-            finalize=False,
-            bypass_env_check=True,
-            channel_urls=forge_config.get("channels", {}).get("sources", []),
-        )
+        # AFAIK there is no way to get conda build to ignore the CBC yaml
+        # in the recipe. This one can mess up migrators applied with local
+        # CBC yaml files where variants in the migrators are not in the CBC.
+        # Thus we move it out of the way.
+        # TODO: upstream this as a flag in conda-build
+        try:
+            _recipe_cbc = os.path.join(
+                forge_dir,
+                forge_config["recipe_dir"],
+                "conda_build_config.yaml",
+            )
+            if os.path.exists(_recipe_cbc):
+                os.rename(_recipe_cbc, _recipe_cbc + ".conda.smithy.bak")
+
+            metas = conda_build.api.render(
+                os.path.join(forge_dir, forge_config["recipe_dir"]),
+                platform=platform,
+                arch=arch,
+                ignore_system_variants=True,
+                variants=migrated_combined_variant_spec,
+                permit_undefined_jinja=True,
+                finalize=False,
+                bypass_env_check=True,
+                channel_urls=forge_config.get("channels", {}).get(
+                    "sources", []
+                ),
+            )
+        finally:
+            if os.path.exists(_recipe_cbc + ".conda.smithy.bak"):
+                os.rename(_recipe_cbc + ".conda.smithy.bak", _recipe_cbc)
 
         # render returns some download & reparsing info that we don't care about
         metas = [m for m, _, _ in metas]
@@ -958,8 +976,8 @@ def render_circle(jinja_env, forge_config, forge_dir, return_metadata=False):
         """\
             {get_fast_finish_script} | \\
                  python - -v --ci "circle" "${{CIRCLE_PROJECT_USERNAME}}/${{CIRCLE_PROJECT_REPONAME}}" "${{CIRCLE_BUILD_NUM}}" "${{CIRCLE_PR_NUMBER}}"
-        """
-    )  # NOQA
+        """  # noqa
+    )
     extra_platform_files = {
         "common": [
             os.path.join(forge_dir, ".circleci", "checkout_merge_commit.sh"),
@@ -1107,7 +1125,7 @@ def render_appveyor(jinja_env, forge_config, forge_dir, return_metadata=False):
         """\
             {get_fast_finish_script}
             "%CONDA_INSTALL_LOCN%\\python.exe" {fast_finish_script}.py -v --ci "appveyor" "%APPVEYOR_ACCOUNT_NAME%/%APPVEYOR_PROJECT_SLUG%" "%APPVEYOR_BUILD_NUMBER%" "%APPVEYOR_PULL_REQUEST_NUMBER%"
-        """
+        """  # noqa
     )
     template_filename = "appveyor.yml.tmpl"
 
@@ -1527,7 +1545,8 @@ def _load_forge_config(forge_dir, exclusive_config_file):
         "private_upload": False,
         "secrets": [],
         "build_with_mambabuild": False,
-        # Specific channel for package can be given with `${url or channel_alias}::package_name`, defaults to conda-forge channel_alias
+        # Specific channel for package can be given with
+        # `${url or channel_alias}::package_name`, defaults to conda-forge channel_alias
         "remote_ci_setup": "conda-forge-ci-setup=3",
     }
 
@@ -1574,7 +1593,8 @@ def _load_forge_config(forge_dir, exclusive_config_file):
         for plat in ["linux", "osx", "win"]:
             if config["azure"]["timeout_minutes"] is not None:
                 # fmt: off
-                config["azure"][f"settings_{plat}"]["timeoutInMinutes"] = config["azure"]["timeout_minutes"]
+                config["azure"][f"settings_{plat}"]["timeoutInMinutes"] \
+                    = config["azure"]["timeout_minutes"]
                 # fmt: on
             if "name" in config["azure"][f"settings_{plat}"]["pool"]:
                 del config["azure"][f"settings_{plat}"]["pool"]["vmImage"]
@@ -1896,7 +1916,6 @@ def main(
     check=False,
     temporary_directory=None,
 ):
-    import logging
 
     loglevel = os.environ.get("CONDA_SMITHY_LOGLEVEL", "INFO").upper()
     logger.setLevel(loglevel)
