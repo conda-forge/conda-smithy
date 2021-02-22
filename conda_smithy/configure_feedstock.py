@@ -592,9 +592,8 @@ def _render_ci_provider(
         ].replace("_", "-")
 
         # set the environment variable for OS version
-        # currently we only care about cos6/cos7 for linux64, but it might be extended in the future
-        if f"{platform}_{arch}" == "linux_64":
-            ver = forge_config["os_version"]["linux_64"]
+        if platform == "linux":
+            ver = forge_config["os_version"][f"{platform}_{arch}"]
             if ver:
                 os.environ["DEFAULT_LINUX_VERSION"] = ver
 
@@ -1507,10 +1506,9 @@ def _load_forge_config(forge_dir, exclusive_config_file):
             "osx_64": "osx_64",
         },
         "os_version": {
-            "linux_64": "cos6",
+            "linux_64": None,
             "osx_64": None,
             "win_64": None,
-            # Following platforms are disabled by default
             "linux_aarch64": None,
             "linux_ppc64le": None,
             "linux_armv7l": None,
