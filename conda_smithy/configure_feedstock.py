@@ -47,24 +47,13 @@ logger = logging.getLogger(__name__)
 
 def package_key(config, used_loop_vars, subdir):
     # get the build string from whatever conda-build makes of the configuration
-    build_vars = "".join(
+    key = "".join(
         [
             k + str(config[k][0])
             for k in sorted(list(used_loop_vars))
             if k != "target_platform"
         ]
     )
-    key = []
-    # kind of a special case.  Target platform determines a lot of output behavior, but may not be
-    #    explicitly listed in the recipe.
-    tp = config.get("target_platform")
-    if tp and isinstance(tp, list):
-        tp = tp[0]
-    if tp and tp != subdir:
-        build_vars += "target_platform" + tp
-    if build_vars:
-        key.append(build_vars)
-    key = "-".join(key)
     return key.replace("*", "_").replace(" ", "_")
 
 
@@ -441,17 +430,20 @@ def dump_subspace_config_files(
             f"{platform}_{arch}",
             package_key(config, top_level_loop_vars, metas[0].config.subdir),
         )
+        short_config_name = config_name
+        if len(short_config_name) >= 49:
+            h = hashlib.sha256(config_name.encode("utf-8")).hexdigest()[:10]
+            short_config_name = config_name[:35] + "_h" + h
+        if len(config_name + ".yaml") >= 250:
+            # Shorten file name length to avoid hitting maximum filename limits.
+            config_name = short_config_name
+
         out_folder = os.path.join(root_path, ".ci_support")
         out_path = os.path.join(out_folder, config_name) + ".yaml"
         if not os.path.isdir(out_folder):
             os.makedirs(out_folder)
 
         config = finalize_config(config, platform, arch, forge_config)
-
-        short_config_name = config_name
-        if len(short_config_name) >= 49:
-            h = hashlib.sha256(config_name.encode("utf-8")).hexdigest()[:10]
-            short_config_name = config_name[:35] + "_h" + h
 
         with write_file(out_path) as f:
             yaml.dump(config, f, default_flow_style=False)

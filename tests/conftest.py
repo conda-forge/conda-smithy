@@ -69,9 +69,6 @@ def config_yaml(testing_workdir, recipe_dirname):
         f.write(
             dedent(
                 """\
-        target_platform:
-        - win-64        # [win]
-        - win-32        # [win]
         c_compiler:     # [win]
         - vs2008        # [win]
         - vs2015        # [win]
