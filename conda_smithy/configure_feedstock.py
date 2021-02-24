@@ -590,6 +590,12 @@ def _render_ci_provider(
             f"{platform}_{arch}"
         ].replace("_", "-")
 
+        # set the environment variable for OS version
+        if platform == "linux":
+            ver = forge_config["os_version"][f"{platform}_{arch}"]
+            if ver:
+                os.environ["DEFAULT_LINUX_VERSION"] = ver
+
         config = conda_build.config.get_or_merge_config(
             None,
             exclusive_config_file=forge_config["exclusive_config_file"],
@@ -1516,6 +1522,13 @@ def _load_forge_config(forge_dir, exclusive_config_file):
             "linux_armv7l": "linux_armv7l",
             "win_64": "win_64",
             "osx_64": "osx_64",
+        },
+        "os_version": {
+            "linux_64": None,
+            "linux_aarch64": None,
+            "linux_ppc64le": None,
+            "linux_armv7l": None,
+            "linux_s390x": None,
         },
         "test_on_native_only": False,
         "choco": [],

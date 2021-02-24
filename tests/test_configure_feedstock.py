@@ -717,7 +717,7 @@ def test_automerge_action_exists(py_recipe, jinja_env):
 
 
 def test_conda_forge_yaml_empty(config_yaml):
-    load_forge_config = lambda: cnfgr_fdstk._load_forge_config(
+    load_forge_config = lambda: cnfgr_fdstk._load_forge_config(  # noqa
         config_yaml,
         exclusive_config_file=os.path.join(
             config_yaml, "recipe", "default_config.yaml"
@@ -737,3 +737,35 @@ def test_conda_forge_yaml_empty(config_yaml):
     assert ["conda-forge", "main"] in load_forge_config()["channels"][
         "targets"
     ]
+
+
+def test_cos7_env_render(py_recipe, jinja_env):
+    forge_config = copy.deepcopy(py_recipe.config)
+    forge_config["os_version"] = {"linux_64": "cos7"}
+    has_env = "DEFAULT_LINUX_VERSION" in os.environ
+    if has_env:
+        old_val = os.environ["DEFAULT_LINUX_VERSION"]
+        del os.environ["DEFAULT_LINUX_VERSION"]
+
+    try:
+        assert "DEFAULT_LINUX_VERSION" not in os.environ
+        cnfgr_fdstk.render_azure(
+            jinja_env=jinja_env,
+            forge_config=forge_config,
+            forge_dir=py_recipe.recipe,
+        )
+        assert os.environ["DEFAULT_LINUX_VERSION"] == "cos7"
+
+        # this configuration should be run
+        assert forge_config["azure"]["enabled"]
+        matrix_dir = os.path.join(py_recipe.recipe, ".ci_support")
+        assert os.path.isdir(matrix_dir)
+        # single matrix entry - readme is generated later in main function
+        assert len(os.listdir(matrix_dir)) == 8
+
+    finally:
+        if has_env:
+            os.environ["DEFAULT_LINUX_VERSION"] = old_val
+        else:
+            if "DEFAULT_LINUX_VERSION" in os.environ:
+                del os.environ["DEFAULT_LINUX_VERSION"]
