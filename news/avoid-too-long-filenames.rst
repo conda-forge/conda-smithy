@@ -4,7 +4,8 @@
 
 **Changed:**
 
-* <news item>
+* To cross compile for  ``win-32`` from ``win-64``, using ``target_platform``
+  is no longer supported. Use ``build_platform: win_32: win64`` in ``conda-forge.yml``.
 
 **Deprecated:**
 

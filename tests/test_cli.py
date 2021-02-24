@@ -208,24 +208,6 @@ def test_regenerate(py_recipe, testing_workdir):
     # original rendering was with py27, 36, no target_platform
     assert len(os.listdir(matrix_folder)) == 7
 
-    # Ignore conda-forge-pinning for this test, as the test relies on conda-forge-pinning
-    # not being present
-    args = RegenerateArgs(
-        feedstock_directory=dest_dir,
-        commit=False,
-        no_check_uptodate=True,
-        exclusive_config_file=os.path.join(
-            recipe, "recipe", "default_config.yaml"
-        ),
-        check=False,
-        temporary_directory=os.path.join(dest_dir, "temp"),
-    )
-
-    regen_obj(args)
-
-    # should add 2, as the config.yaml adds in target_platform
-    assert len(os.listdir(matrix_folder)) == 9
-
     # reduce the python matrix and make sure the matrix files reflect the change
     args = RegenerateArgs(
         feedstock_directory=dest_dir,

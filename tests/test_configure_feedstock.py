@@ -134,9 +134,9 @@ def test_py_matrix_appveyor(py_recipe, jinja_env):
     assert py_recipe.config["appveyor"]["enabled"]
     matrix_dir = os.path.join(py_recipe.recipe, ".ci_support")
     assert os.path.isdir(matrix_dir)
-    # 2 python versions, 2 target_platforms.  Recipe uses c_compiler, but this is a zipped key
+    # 2 python versions. Recipe uses c_compiler, but this is a zipped key
     #     and shouldn't add extra configurations
-    assert len(os.listdir(matrix_dir)) == 4
+    assert len(os.listdir(matrix_dir)) == 2
 
 
 @pytest.mark.legacy_travis
@@ -184,7 +184,7 @@ def test_py_matrix_on_azure(py_recipe, jinja_env):
     matrix_dir = os.path.join(py_recipe.recipe, ".ci_support")
     assert os.path.isdir(matrix_dir)
     # single matrix entry - readme is generated later in main function
-    assert len(os.listdir(matrix_dir)) == 8
+    assert len(os.listdir(matrix_dir)) == 6
 
 
 def test_upload_on_branch_azure(upload_on_branch_recipe, jinja_env):
@@ -629,16 +629,7 @@ def test_migrator_compiler_version_recipe(
         os.path.join(recipe_migration_win_compiled.recipe, ".ci_support")
     )
 
-    # TODO: remove multiple target_platform entries
-    assert (
-        "win_64_c_compilervs2008python2.7target_platformwin-32.yaml"
-        in rendered_variants
-    )
     assert "win_64_c_compilervs2008python2.7.yaml" in rendered_variants
-    assert (
-        "win_64_c_compilervs2017python3.5target_platformwin-32.yaml"
-        in rendered_variants
-    )
     assert "win_64_c_compilervs2017python3.5.yaml" in rendered_variants
 
 
