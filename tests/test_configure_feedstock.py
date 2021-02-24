@@ -752,7 +752,7 @@ def test_cos7_env_render(py_recipe, jinja_env):
         matrix_dir = os.path.join(py_recipe.recipe, ".ci_support")
         assert os.path.isdir(matrix_dir)
         # single matrix entry - readme is generated later in main function
-        assert len(os.listdir(matrix_dir)) == 8
+        assert len(os.listdir(matrix_dir)) == 6
 
     finally:
         if has_env:
