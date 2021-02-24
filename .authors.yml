@@ -63,7 +63,7 @@
   email: christopher.burr@cern.ch
   alternate_emails:
   - chrisburr@users.noreply.github.com
-  num_commits: 12
+  num_commits: 16
   first_commit: 2019-03-20 05:10:33
   github: chrisburr
 - name: Thomas Robitaille
@@ -181,7 +181,7 @@
   email: marcel.bargull@udo.edu
   alternate_emails:
   - mbargull@users.noreply.github.com
-  num_commits: 6
+  num_commits: 7
   first_commit: 2018-07-30 05:17:51
   github: mbargull
 - name: xoviat
@@ -246,7 +246,7 @@
   email: isuru.11@cse.mrt.ac.lk
   alternate_emails:
   - isuruf@gmail.com
-  num_commits: 364
+  num_commits: 378
   first_commit: 2017-01-08 22:03:03
   github: isuruf
 - name: Julian Rüth
@@ -392,14 +392,13 @@
   github: shadowwalkersb
 - name: Matthew R. Becker
   email: becker.mr@gmail.com
-  num_commits: 173
+  num_commits: 232
   first_commit: 2020-01-07 17:44:33
   github: beckermr
-- name: Matthew R. Becker
-  email: beckermr@users.noreply.github.com
-  num_commits: 45
-  first_commit: 2020-01-19 19:32:30
-  github: beckermr
+  alternate_emails:
+  - beckermr@users.noreply.github.com
+  aliases:
+  - Matthew R Becker
 - name: Natasha Pavlovikj
   email: npavlovikj2@unl.edu
   num_commits: 13
@@ -425,7 +424,7 @@
   github: Wentzell
 - name: Leo Fang
   email: leofang@bnl.gov
-  num_commits: 9
+  num_commits: 14
   first_commit: 2020-04-26 22:07:18
   github: leofang
 - name: Stuart Berg
@@ -472,6 +471,22 @@
   github: jwillemsen
 - name: Jaime Rodríguez-Guerra
   email: jaimergp@users.noreply.github.com
-  num_commits: 5
+  num_commits: 19
   first_commit: 2020-11-01 14:18:08
   github: jaimergp
+- name: Bastian Zimmermann
+  email: 10774221+BastianZim@users.noreply.github.com
+  aliases:
+  - BastianZim
+  num_commits: 1
+  first_commit: 2021-01-27 15:01:39
+  github: BastianZim
+- name: Wolf Vollprecht
+  email: w.vollprecht@gmail.com
+  num_commits: 4
+  first_commit: 2021-01-19 04:39:35
+- name: Hugo Slepicka
+  email: slepicka@slac.stanford.edu
+  num_commits: 2
+  first_commit: 2021-02-22 17:34:54
+  github: hhslepicka

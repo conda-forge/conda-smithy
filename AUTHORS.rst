@@ -2,11 +2,10 @@ All of the people who have made at least one contribution to conda-smithy.
 Authors are sorted by number of commits.
 
 * Isuru Fernando
-* Matthew R Becker
+* Matthew R. Becker
 * Christopher J. Wright
 * Anthony Scopatz
 * Phil Elson
-* Matthew R. Becker
 * Filipe Fernandes
 * Dougal J. Sutherland
 * shadow_walker
@@ -14,13 +13,15 @@ Authors are sorted by number of commits.
 * Min RK
 * Hadrien Mary
 * Johnny Willemsen
+* Jaime Rodríguez-Guerra
 * Uwe L. Korn
 * Julian Rüth
 * Mark Harfouche
+* Chris Burr
+* Leo Fang
 * Eric Dill
 * Natasha Pavlovikj
 * Maksim Rakitin
-* Chris Burr
 * Jan Schulz
 * Josh Reichardt
 * Justin Calamari
@@ -29,27 +30,26 @@ Authors are sorted by number of commits.
 * John Kirkham
 * C.A.M. Gerlach
 * refraction-ray
-* Leo Fang
 * Leopold Talirz
 * Tom Pollard
 * Gonzalo Pena-Castellanos
 * Daniel Bast
+* Marcel Bargull
 * Tim Snyder
 * Carlo
-* Marcel Bargull
 * Matthew Craig
 * Ryan Volz
 * Joshua L. Adelman
 * Marius van Niekerk
 * Peter Williams
 * Johannes Köster
-* Jaime Rodríguez-Guerra
 * Matt McCormick
 * John Blischak
 * Jan Janßen
 * xoviat
 * Elmar Pruesse
 * Patrick Sodré
+* Wolf Vollprecht
 * Josh Barnes
 * Tobias Megies
 * Jonathan Helmus
@@ -71,6 +71,7 @@ Authors are sorted by number of commits.
 * hajapy
 * Axel Huebl
 * Thomas Hopkins
+* Hugo Slepicka
 * lorenz
 * Tom Augspurger
 * Ryan May
@@ -90,3 +91,4 @@ Authors are sorted by number of commits.
 * Dave Hirschfeld
 * Nils Wentzell
 * Stuart Berg
+* Bastian Zimmermann
