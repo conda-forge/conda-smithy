@@ -4,6 +4,54 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.9.0
+====================
+
+**Added:**
+
+* Enabled multiple entries for ``key_add`` operations.
+* Define Bash functions ``startgroup()`` and ``endgroup()`` that provide a
+  provider-agnostic way to group or fold log lines for quicker visual inspection.
+  In principle, this only affects Linux and MacOS, since Windows pipelines
+  use CI native steps. So far, only Azure and Travis support this. In the other
+  providers a fallback ``echo "<group name>"`` statement is supplied.
+* Support `os_version` in `conda-forge.yml`
+* Add use_local option to use the migrator from the feedstock
+
+**Changed:**
+
+* To cross compile for  ``win-32`` from ``win-64``, using ``target_platform``
+  is no longer supported. Use ``build_platform: win_32: win64`` in ``conda-forge.yml``.
+* `run_osx_build.sh` had hardcoded handlers for Travis log folding. These have
+  been replaced with the now equivalent Bash functions.
+* A lower bound on python version for noarch python is now required
+
+**Fixed:**
+
+* Fix "File name too long" error for many zip keys
+  Replace config filenames by their short versions if filesystem limits
+  are approached.
+* Fix running ``./build-locally.py --debug`` with cross-compilation
+* Fixed dead conda-docs link to the ``build/number`` explanation in the README template.
+* Fixed rendering error where the recipe's ``conda_build_config.yaml`` is
+  applied again, removing some variants.
+* Fixed list formatting in the README.
+* migration_ts and migrator_ts were both used in conda-smithy and migration_ts was removed in favour of migrator_ts
+
+**Authors:**
+
+* Isuru Fernando
+* Matthew R. Becker
+* Jaime Rodríguez-Guerra
+* Chris Burr
+* Leo Fang
+* Marcel Bargull
+* Wolf Vollprecht
+* Hugo Slepicka
+* Bastian Zimmermann
+
+
+
 v3.8.6
 ====================
 
