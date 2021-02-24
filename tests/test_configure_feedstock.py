@@ -748,6 +748,7 @@ def test_cos7_env_render(py_recipe, jinja_env):
         del os.environ["DEFAULT_LINUX_VERSION"]
 
     try:
+        assert "DEFAULT_LINUX_VERSION" not in os.environ
         cnfgr_fdstk.render_azure(
             jinja_env=jinja_env,
             forge_config=forge_config,
