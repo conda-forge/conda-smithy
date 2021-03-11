@@ -615,7 +615,7 @@ def _render_ci_provider(
             ):
                 raise RuntimeError(
                     "Using github_actions as the CI provider inside "
-                    "conda-forge github org is not allowed as github actions "
+                    "conda-forge github org is not allowed in order "
                     "to avoid a denial of service for other infrastructure."
                 )
 
