@@ -187,7 +187,12 @@ def test_py_matrix_on_github(py_recipe, jinja_env):
     assert os.path.isdir(matrix_dir)
     # single matrix entry - readme is generated later in main function
     assert len(os.listdir(matrix_dir)) == 2
-    assert os.path.exists(os.path.join(py_recipe.recipe, ".github", "workflows", "conda-build.yml"))
+    assert os.path.exists(
+        os.path.join(
+            py_recipe.recipe, ".github", "workflows", "conda-build.yml"
+        )
+    )
+
 
 def test_py_matrix_on_azure(py_recipe, jinja_env):
     cnfgr_fdstk.render_azure(

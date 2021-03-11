@@ -604,16 +604,20 @@ def _render_ci_provider(
         )
 
         migrated_combined_variant_spec = migrate_combined_spec(
-            combined_variant_spec,
-            forge_dir,
-            config,
-            forge_config,
+            combined_variant_spec, forge_dir, config, forge_config,
         )
-        for channel_target in migrated_combined_variant_spec.get("channel_targets", []):
-            if channel_target.startswith("conda-forge ") and provider_name == "github_actions":
-                raise RuntimeError("Using github_actions as the CI provider inside "
-                                   "conda-forge github org is not allowed as github actions "
-                                   "to avoid a denial of service for other infrastructure.")
+        for channel_target in migrated_combined_variant_spec.get(
+            "channel_targets", []
+        ):
+            if (
+                channel_target.startswith("conda-forge ")
+                and provider_name == "github_actions"
+            ):
+                raise RuntimeError(
+                    "Using github_actions as the CI provider inside "
+                    "conda-forge github org is not allowed as github actions "
+                    "to avoid a denial of service for other infrastructure."
+                )
 
         # AFAIK there is no way to get conda build to ignore the CBC yaml
         # in the recipe. This one can mess up migrators applied with local
@@ -1156,7 +1160,9 @@ def render_appveyor(jinja_env, forge_config, forge_dir, return_metadata=False):
     )
 
 
-def _github_actions_specific_setup(jinja_env, forge_config, forge_dir, platform):
+def _github_actions_specific_setup(
+    jinja_env, forge_config, forge_dir, platform
+):
 
     build_setup = _get_build_setup_line(forge_dir, platform, forge_config)
 
@@ -1169,13 +1175,8 @@ def _github_actions_specific_setup(jinja_env, forge_config, forge_dir, platform)
     forge_config["build_setup"] = build_setup
 
     platform_templates = {
-        "linux": [
-            ".scripts/run_docker_build.sh",
-            ".scripts/build_steps.sh",
-        ],
-        "osx": [
-            ".scripts/run_osx_build.sh",
-        ],
+        "linux": [".scripts/run_docker_build.sh", ".scripts/build_steps.sh",],
+        "osx": [".scripts/run_osx_build.sh",],
     }
     template_files = platform_templates.get(platform, [])
 
@@ -1187,8 +1188,12 @@ def _github_actions_specific_setup(jinja_env, forge_config, forge_dir, platform)
     )
 
 
-def render_github_actions(jinja_env, forge_config, forge_dir, return_metadata=False):
-    target_path = os.path.join(forge_dir, ".github", "workflows", "conda-build.yml")
+def render_github_actions(
+    jinja_env, forge_config, forge_dir, return_metadata=False
+):
+    target_path = os.path.join(
+        forge_dir, ".github", "workflows", "conda-build.yml"
+    )
     template_filename = "github-actions.tmpl"
     fast_finish_text = ""
 
@@ -1302,6 +1307,8 @@ def render_azure(jinja_env, forge_config, forge_dir, return_metadata=False):
         upload_packages=upload_packages,
         return_metadata=return_metadata,
     )
+
+
 def _drone_specific_setup(jinja_env, forge_config, forge_dir, platform):
     platform_templates = {
         "linux": [".scripts/build_steps.sh"],
@@ -2015,7 +2022,14 @@ def main(
     config = _load_forge_config(forge_dir, exclusive_config_file)
     config["feedstock_name"] = os.path.basename(forge_dir)
 
-    for each_ci in ["travis", "circle", "appveyor", "drone", "azure", "github_actions"]:
+    for each_ci in [
+        "travis",
+        "circle",
+        "appveyor",
+        "drone",
+        "azure",
+        "github_actions",
+    ]:
         if config[each_ci].pop("enabled", None):
             warnings.warn(
                 "It is not allowed to set the `enabled` parameter for `%s`."
