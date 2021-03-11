@@ -609,6 +609,11 @@ def _render_ci_provider(
             config,
             forge_config,
         )
+        for channel_target in migrated_combined_variant_spec.get("channel_targets", []):
+            if channel_target.startswith("conda-forge ") and provider_name == "github_actions":
+                raise RuntimeError("Using github_actions as the CI provider inside "
+                                   "conda-forge github org is not allowed as github actions "
+                                   "to avoid a denial of service for other infrastructure.")
 
         # AFAIK there is no way to get conda build to ignore the CBC yaml
         # in the recipe. This one can mess up migrators applied with local
@@ -1151,6 +1156,69 @@ def render_appveyor(jinja_env, forge_config, forge_dir, return_metadata=False):
     )
 
 
+def _github_actions_specific_setup(jinja_env, forge_config, forge_dir, platform):
+
+    build_setup = _get_build_setup_line(forge_dir, platform, forge_config)
+
+    if platform == "linux":
+        yum_build_setup = generate_yum_requirements(forge_config, forge_dir)
+        if yum_build_setup:
+            forge_config["yum_build_setup"] = yum_build_setup
+
+    forge_config = deepcopy(forge_config)
+    forge_config["build_setup"] = build_setup
+
+    platform_templates = {
+        "linux": [
+            ".scripts/run_docker_build.sh",
+            ".scripts/build_steps.sh",
+        ],
+        "osx": [
+            ".scripts/run_osx_build.sh",
+        ],
+    }
+    template_files = platform_templates.get(platform, [])
+
+    _render_template_exe_files(
+        forge_config=forge_config,
+        jinja_env=jinja_env,
+        template_files=template_files,
+        forge_dir=forge_dir,
+    )
+
+
+def render_github_actions(jinja_env, forge_config, forge_dir, return_metadata=False):
+    target_path = os.path.join(forge_dir, ".github", "workflows", "conda-build.yml")
+    template_filename = "github-actions.tmpl"
+    fast_finish_text = ""
+
+    (
+        platforms,
+        archs,
+        keep_noarchs,
+        upload_packages,
+    ) = _get_platforms_of_provider("github_actions", forge_config)
+
+    logger.debug("github platforms retreived")
+
+    remove_file_or_dir(target_path)
+    return _render_ci_provider(
+        "github_actions",
+        jinja_env=jinja_env,
+        forge_config=forge_config,
+        forge_dir=forge_dir,
+        platforms=platforms,
+        archs=archs,
+        fast_finish_text=fast_finish_text,
+        platform_target_path=target_path,
+        platform_template_file=template_filename,
+        platform_specific_setup=_github_actions_specific_setup,
+        keep_noarchs=keep_noarchs,
+        upload_packages=upload_packages,
+        return_metadata=return_metadata,
+    )
+
+
 def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
 
     build_setup = _get_build_setup_line(forge_dir, platform, forge_config)
@@ -1234,8 +1302,6 @@ def render_azure(jinja_env, forge_config, forge_dir, return_metadata=False):
         upload_packages=upload_packages,
         return_metadata=return_metadata,
     )
-
-
 def _drone_specific_setup(jinja_env, forge_config, forge_dir, platform):
     platform_templates = {
         "linux": [".scripts/build_steps.sh"],
@@ -1459,6 +1525,7 @@ def _load_forge_config(forge_dir, exclusive_config_file):
         "drone": {},
         "travis": {},
         "circle": {},
+        "github_actions": {},
         "config_version": "2",
         "appveyor": {"image": "Visual Studio 2017"},
         "azure": {
@@ -1948,7 +2015,7 @@ def main(
     config = _load_forge_config(forge_dir, exclusive_config_file)
     config["feedstock_name"] = os.path.basename(forge_dir)
 
-    for each_ci in ["travis", "circle", "appveyor", "drone"]:
+    for each_ci in ["travis", "circle", "appveyor", "drone", "azure", "github_actions"]:
         if config[each_ci].pop("enabled", None):
             warnings.warn(
                 "It is not allowed to set the `enabled` parameter for `%s`."
@@ -1991,6 +2058,10 @@ def main(
         render_drone(env, config, forge_dir, return_metadata=True)
     )
     logger.debug("drone rendered")
+    render_info.append(
+        render_github_actions(env, config, forge_dir, return_metadata=True)
+    )
+    logger.debug("github_actions rendered")
     # put azure first just in case
     tmp = render_info[0]
     render_info[0] = render_info[-2]

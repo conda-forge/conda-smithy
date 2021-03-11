@@ -173,6 +173,22 @@ def test_py_matrix_on_circle(py_recipe, jinja_env):
     assert len(os.listdir(matrix_dir)) == 2
 
 
+def test_py_matrix_on_github(py_recipe, jinja_env):
+    py_recipe.config["provider"]["linux"] = "github_actions"
+
+    cnfgr_fdstk.render_github_actions(
+        jinja_env=jinja_env,
+        forge_config=py_recipe.config,
+        forge_dir=py_recipe.recipe,
+    )
+    # this configuration should be run
+    assert py_recipe.config["github_actions"]["enabled"]
+    matrix_dir = os.path.join(py_recipe.recipe, ".ci_support")
+    assert os.path.isdir(matrix_dir)
+    # single matrix entry - readme is generated later in main function
+    assert len(os.listdir(matrix_dir)) == 2
+    assert os.path.exists(os.path.join(py_recipe.recipe, ".github", "workflows", "conda-build.yml"))
+
 def test_py_matrix_on_azure(py_recipe, jinja_env):
     cnfgr_fdstk.render_azure(
         jinja_env=jinja_env,
