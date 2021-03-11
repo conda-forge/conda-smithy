@@ -604,7 +604,10 @@ def _render_ci_provider(
         )
 
         migrated_combined_variant_spec = migrate_combined_spec(
-            combined_variant_spec, forge_dir, config, forge_config,
+            combined_variant_spec,
+            forge_dir,
+            config,
+            forge_config,
         )
         for channel_target in migrated_combined_variant_spec.get(
             "channel_targets", []
@@ -1175,8 +1178,13 @@ def _github_actions_specific_setup(
     forge_config["build_setup"] = build_setup
 
     platform_templates = {
-        "linux": [".scripts/run_docker_build.sh", ".scripts/build_steps.sh",],
-        "osx": [".scripts/run_osx_build.sh",],
+        "linux": [
+            ".scripts/run_docker_build.sh",
+            ".scripts/build_steps.sh",
+        ],
+        "osx": [
+            ".scripts/run_osx_build.sh",
+        ],
     }
     template_files = platform_templates.get(platform, [])
 
