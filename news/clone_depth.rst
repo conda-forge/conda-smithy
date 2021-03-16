@@ -4,7 +4,7 @@
 
 **Changed:**
 
-* <news item>
+* The `ci-skeleton` command now creates a default conda-forge.yml that sets `clone_depth: 0` for full depth clones on all providers. This default supports expected behavior when using `GIT_DESCRIBE_*` to set version and build numbers in the recipe by ensuring that tags are present. This effectively changes the default clone behavior for the Github Action and Travis providers, as all other providers do a full clone by default.
 
 **Deprecated:**
 
