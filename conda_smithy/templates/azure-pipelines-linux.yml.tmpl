@@ -6,6 +6,10 @@ jobs:
 - job: linux
   {{ azure_yaml|indent(2) }}
   steps:
+{%- if clone_depth is not none %}
+  - checkout: self
+    fetchDepth: {{ clone_depth }}
+{%- endif %}
   - script: |
          rm -rf /opt/ghc
          df -h

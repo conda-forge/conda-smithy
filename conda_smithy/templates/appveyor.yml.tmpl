@@ -30,6 +30,12 @@ environment:
 platform:
     - x64
 
+{%- if clone_depth %}
+clone_depth: {{ clone_depth }}
+{%- elif clone_depth is not none %}
+shallow_clone: false
+{%- endif %}
+
 install:
     - cmd: set "CI=appveyor"
     # If there is a newer build queued for the same PR, cancel this one.

@@ -36,6 +36,10 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
+{%- if clone_depth is not none %}
+      with:
+        fetch-depth: {{ clone_depth }}
+{%- endif %}
 
     - name: Build on Linux
       if: matrix.os == 'ubuntu'
