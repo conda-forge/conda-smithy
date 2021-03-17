@@ -55,9 +55,11 @@ jobs:
 {%- endfor %}
       shell: bash
       run: |
+        echo "::group::Configure binfmt_misc"
         docker run --rm --privileged multiarch/qemu-user-static:register --reset --credential yes
         export FEEDSTOCK_NAME="$(basename $GITHUB_REPOSITORY)"
         export GIT_BRANCH="$(basename $GITHUB_REF)"
+        echo "::endgroup::"
         ./.scripts/run_docker_build.sh
 
     - name: Build on macOS

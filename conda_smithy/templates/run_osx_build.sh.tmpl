@@ -4,14 +4,17 @@ source .scripts/logging_utils.sh
 
 set -x
 
-startgroup "Installing a fresh version of Miniforge"
+{ set +x; startgroup "Installing a fresh version of Miniforge" } 2> /dev/null
+
 MINIFORGE_URL="https://github.com/conda-forge/miniforge/releases/latest/download"
 MINIFORGE_FILE="Miniforge3-MacOSX-x86_64.sh"
 curl -L -O "${MINIFORGE_URL}/${MINIFORGE_FILE}"
 bash $MINIFORGE_FILE -b
-endgroup "Installing a fresh version of Miniforge"
 
-startgroup "Configuring conda"
+{ set +x; endgroup "Installing a fresh version of Miniforge" } 2> /dev/null
+
+{ set +x; startgroup "Configuring conda" } 2> /dev/null
+
 {% if build_with_mambabuild -%}
 GET_BOA=boa
 BUILD_CMD=mambabuild
@@ -42,11 +45,13 @@ echo -e "\n\nMangling homebrew in the CI to avoid conflicts."
 echo -e "\n\nRunning the build setup script."
 {{ build_setup }}
 {%- endif %}
-endgroup "Configuring conda"
+
+{ set +x; endgroup "Configuring conda" } 2> /dev/null
 
 set -e
 
-startgroup "Running conda $BUILD_CMD"
+{ set +x; startgroup "Running conda $BUILD_CMD" } 2> /dev/null
+
 echo -e "\n\nMaking the build clobber file"
 make_build_number ./ ./{{ recipe_dir }} ./.ci_support/${CONFIG}.yaml
 {% if test_on_native_only %}
@@ -55,20 +60,25 @@ if [[ "${HOST_PLATFORM}" != "${BUILD_PLATFORM}" ]]; then
 fi
 {% endif %}
 conda $BUILD_CMD ./{{ recipe_dir }} -m ./.ci_support/${CONFIG}.yaml --suppress-variables --clobber-file ./.ci_support/clobber_${CONFIG}.yaml ${EXTRA_CB_OPTIONS:-}
-endgroup "Running conda build"
+
+{ set +x; endgroup "Running conda $BUILD_CMD" } 2> /dev/null
 
 {%- if conda_forge_output_validation %}
-startgroup "Validating outputs"
+{ set +x; startgroup "Validating outputs" } 2> /dev/null
+
 validate_recipe_outputs "${FEEDSTOCK_NAME}"
-endgroup "Validating outputs"
+
+{ set +x; endgroup "Validating outputs" } 2> /dev/null
 {%- endif %}
 {% if build_with_mambabuild -%}
 # we're building with mambabuild, so fail here and DO NOT UPLOAD packages
 exit 1
 {%- else %}
+{ set +x; startgroup "Uploading packages" } 2> /dev/null
+
 if [[ "${UPLOAD_PACKAGES}" != "False" ]]; then
-  startgroup "Uploading packages"
   upload_package {% if conda_forge_output_validation %}--validate --feedstock-name="${FEEDSTOCK_NAME}"{% endif %}{% if private_upload %} --private{% endif %} ./ ./{{ recipe_dir }} ./.ci_support/${CONFIG}.yaml
-  endgroup "Uploading packages"
 fi
+
+{ set +x; endgroup "Uploading packages" } 2> /dev/null
 {%- endif %}

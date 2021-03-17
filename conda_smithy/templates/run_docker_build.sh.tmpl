@@ -7,7 +7,7 @@
 
 source .scripts/logging_utils.sh
 
-startgroup "Configure Docker"
+( { set +x; startgroup "Configure Docker"; } 2> /dev/null )
 
 set -xeo pipefail
 
@@ -69,9 +69,11 @@ DOCKER_RUN_ARGS="${CONDA_FORGE_DOCKER_RUN_ARGS}"
 if [ -z "${CI}" ]; then
     DOCKER_RUN_ARGS="-it ${DOCKER_RUN_ARGS}"
 fi
-endgroup "Configure Docker"
 
-startgroup "Start Docker"
+( { set +x; endgroup "Configure Docker"; } 2> /dev/null )
+
+( { set +x; startgroup "Start Docker"; } 2> /dev/null )
+
 export UPLOAD_PACKAGES="${UPLOAD_PACKAGES:-True}"
 {{ docker.executable }} run ${DOCKER_RUN_ARGS} \
            -v "${RECIPE_ROOT}":/home/conda/recipe_root:rw,z,delegated \
@@ -95,3 +97,6 @@ export UPLOAD_PACKAGES="${UPLOAD_PACKAGES:-True}"
 
 # verify that the end of the script was reached
 test -f "$DONE_CANARY"
+
+# This closes the last group opened in `build_steps.sh`
+( { set +x; endgroup "Final checks"; } 2> /dev/null )
