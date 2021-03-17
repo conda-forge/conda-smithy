@@ -1,6 +1,6 @@
 **Added:**
 
-* <news item>
+* Log groups support for GitHub Actions
 
 **Changed:**
 
