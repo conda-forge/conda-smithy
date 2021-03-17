@@ -117,12 +117,12 @@ jobs:
         if errorlevel 1 exit 1
         {%- endif %}
         set "FEEDSTOCK_NAME=%GITHUB_REPOSITORY:*/=%"
-        set "GIT_BRANCH=%GITHUB_REF:*/=%"
+        set "GIT_BRANCH=%GITHUB_REF:refs/heads/=%"
         {%- if conda_forge_output_validation %}
         validate_recipe_outputs "%FEEDSTOCK_NAME%"
         if errorlevel 1 exit 1
         {%- endif %}
-        if %UPLOAD_PACKAGES% == "True" (
+        if /i "%UPLOAD_PACKAGES%" == "true" (
           upload_package {% if conda_forge_output_validation %}--validate --feedstock-name="%FEEDSTOCK_NAME%"{% endif %}{% if private_upload %} --private{% endif %} .\ ".\{{ recipe_dir }}" .ci_support\%CONFIG%.yaml
         )
       env:
