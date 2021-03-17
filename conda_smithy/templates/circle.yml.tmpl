@@ -31,11 +31,7 @@ jobs:
         DOCKER_IMAGE: "{{ data.config["docker_image"][-1] }}"
 {%- endif %}
     steps:
-{%- if clone_depth %}
-      - run: git clone --depth {{ clone_depth }} "$CIRCLE_REPOSITORY_URL" --branch "$CIRCLE_BRANCH"
-{%- else %}
       - checkout
-{%- endif %}
       - run:
           name: Fast finish outdated PRs and merge PRs
           command: |
