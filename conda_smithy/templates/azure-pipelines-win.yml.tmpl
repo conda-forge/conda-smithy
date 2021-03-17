@@ -6,6 +6,10 @@ jobs:
 - job: win
   {{ azure_yaml|indent(2) }}
   steps:
+{%- if clone_depth is not none %}
+    - checkout: self
+      fetchDepth: {{ clone_depth }}
+{%- endif %}
 {%- for choco_pkg in choco %}
     - script: |
         choco install {{ choco_pkg }} -fdv -y --debug

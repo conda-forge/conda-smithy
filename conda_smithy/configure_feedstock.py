@@ -1632,6 +1632,8 @@ def _load_forge_config(forge_dir, exclusive_config_file):
         "private_upload": False,
         "secrets": [],
         "build_with_mambabuild": False,
+        # feedstock checkout git clone depth, None means keep default, 0 means no limit
+        "clone_depth": None,
         # Specific channel for package can be given with
         # `${url or channel_alias}::package_name`, defaults to conda-forge channel_alias
         "remote_ci_setup": "conda-forge-ci-setup=3",

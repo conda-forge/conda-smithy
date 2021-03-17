@@ -23,6 +23,14 @@ env:
 
 {%- set arch_map = {'64': 'amd64', 'ppc64le': 'ppc64le', 'aarch64': 'arm64', 's390x': 's390x'}  %}
 
+{%- if clone_depth %}
+git:
+  depth: {{ clone_depth }}
+{%- elif clone_depth is not none %}
+git:
+  depth: false
+{%- endif %}
+
 {% if configs[0] -%}
 matrix:
   include:

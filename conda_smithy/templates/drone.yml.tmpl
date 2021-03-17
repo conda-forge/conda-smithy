@@ -10,6 +10,11 @@ platform:
   os: linux
   arch: {{ arch_map[data.build_platform.split("-")[1]] }}
 
+{%- if clone_depth is not none %}
+clone:
+  depth: {{ clone_depth }}
+{%- endif %}
+
 steps:
 - name: Install and build
   image: {{ data.config["docker_image"][-1] }}
