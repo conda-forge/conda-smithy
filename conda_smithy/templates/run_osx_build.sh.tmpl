@@ -50,7 +50,6 @@ echo -e "\n\nRunning the build setup script."
 
 set -e
 
-{ set +x; startgroup "Running conda $BUILD_CMD" } 2> /dev/null
 
 echo -e "\n\nMaking the build clobber file"
 make_build_number ./ ./{{ recipe_dir }} ./.ci_support/${CONFIG}.yaml
@@ -61,7 +60,6 @@ fi
 {% endif %}
 conda $BUILD_CMD ./{{ recipe_dir }} -m ./.ci_support/${CONFIG}.yaml --suppress-variables --clobber-file ./.ci_support/clobber_${CONFIG}.yaml ${EXTRA_CB_OPTIONS:-}
 
-{ set +x; endgroup "Running conda $BUILD_CMD" } 2> /dev/null
 
 {%- if conda_forge_output_validation %}
 { set +x; startgroup "Validating outputs" } 2> /dev/null
