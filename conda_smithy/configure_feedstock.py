@@ -434,7 +434,7 @@ def dump_subspace_config_files(
         if len(short_config_name) >= 49:
             h = hashlib.sha256(config_name.encode("utf-8")).hexdigest()[:10]
             short_config_name = config_name[:35] + "_h" + h
-        if len(config_name + ".yaml") >= 250:
+        if len("conda-forge-build-done-" + config_name) >= 250:
             # Shorten file name length to avoid hitting maximum filename limits.
             config_name = short_config_name
 
