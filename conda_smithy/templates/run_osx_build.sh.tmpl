@@ -2,7 +2,7 @@
 
 source .scripts/logging_utils.sh
 
-set -x
+set -xe
 
 ( startgroup "Installing a fresh version of Miniforge" ) 2> /dev/null
 
@@ -47,8 +47,6 @@ echo -e "\n\nRunning the build setup script."
 {%- endif %}
 
 ( endgroup "Configuring conda" ) 2> /dev/null
-
-set -e
 
 
 echo -e "\n\nMaking the build clobber file"
