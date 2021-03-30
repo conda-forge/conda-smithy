@@ -194,6 +194,7 @@ Installing `{{ package_name }}` from the `{{ channel_name }}` channel can be ach
 
 ```
 conda config --add channels {{ channel_name }}
+conda config --set channel_priority strict
 ```
 
 Once the `{{ channel_name }}` channel has been enabled, `{{ ', '.join(outputs) }}` can be installed with:
