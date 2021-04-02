@@ -265,7 +265,7 @@ def add_project_to_appveyor(user, project):
         print(" * {}/{} has been enabled on appveyor".format(user, project))
 
 
-def appveyor_encrypt_binstar_token(feedstock_directory, user, project):
+def appveyor_encrypt_binstar_token(feedstock_config_path, user, project):
     anaconda_token = _get_anaconda_token()
     headers = {"Authorization": "Bearer {}".format(appveyor_token)}
     url = "https://ci.appveyor.com/api/account/encrypt"
@@ -275,7 +275,7 @@ def appveyor_encrypt_binstar_token(feedstock_directory, user, project):
     if response.status_code != 200:
         raise ValueError(response)
 
-    with update_conda_forge_config(feedstock_directory) as code:
+    with update_conda_forge_config(feedstock_config_path) as code:
         code.setdefault("appveyor", {}).setdefault("secure", {})[
             "BINSTAR_TOKEN"
         ] = response.content.decode("utf-8")
@@ -421,12 +421,14 @@ def add_project_to_travis(user, project):
         print(" * {}/{} registered on travis-ci".format(user, project))
 
 
-def travis_token_update_conda_forge_config(feedstock_directory, user, project):
+def travis_token_update_conda_forge_config(
+    feedstock_config_path, user, project
+):
     anaconda_token = _get_anaconda_token()
     item = 'BINSTAR_TOKEN="{}"'.format(anaconda_token)
     slug = "{}%2F{}".format(user, project)
 
-    with update_conda_forge_config(feedstock_directory) as code:
+    with update_conda_forge_config(feedstock_config_path) as code:
         code.setdefault("travis", {}).setdefault("secure", {})[
             "BINSTAR_TOKEN"
         ] = travis_encrypt_binstar_token(slug, item)
@@ -652,8 +654,8 @@ if __name__ == "__main__":
     #    add_project_to_circle(args.user, args.project)
     #    add_project_to_appveyor(args.user, args.project)
     #    add_project_to_travis(args.user, args.project)
-    #    appveyor_encrypt_binstar_token('../udunits-delme-feedstock', args.user, args.project)
+    #    appveyor_encrypt_binstar_token('../udunits-delme-feedstock/conda-forge.yml', args.user, args.project)
     #    appveyor_configure('conda-forge', 'glpk-feedstock')
-    #    travis_token_update_conda_forge_config('../udunits-delme-feedstock', args.user, args.project)
+    #    travis_token_update_conda_forge_config('../udunits-delme-feedstock/conda-forge.yml', args.user, args.project)
     add_conda_forge_webservice_hooks(args.user, args.project)
     print("Done")

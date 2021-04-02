@@ -19,6 +19,7 @@ RegenerateArgs = collections.namedtuple(
     (
         "commit",
         "feedstock_directory",
+        "feedstock_config",
         "no_check_uptodate",
         "exclusive_config_file",
         "check",
@@ -65,6 +66,7 @@ def test_init_multiple_output_matrix(testing_workdir):
     # not being present
     args = RegenerateArgs(
         feedstock_directory=feedstock_dir,
+        feedstock_config=None,
         commit=False,
         no_check_uptodate=True,
         exclusive_config_file="recipe/conda_build_config.yaml",
@@ -117,6 +119,7 @@ def test_init_cuda_docker_images(testing_workdir):
     # conda-forge-pinning not being present
     args = RegenerateArgs(
         feedstock_directory=feedstock_dir,
+        feedstock_config=None,
         commit=False,
         no_check_uptodate=True,
         exclusive_config_file="recipe/conda_build_config.yaml",
@@ -170,6 +173,7 @@ def test_init_multiple_docker_images(testing_workdir):
     # conda-forge-pinning not being present
     args = RegenerateArgs(
         feedstock_directory=feedstock_dir,
+        feedstock_config=None,
         commit=False,
         no_check_uptodate=True,
         exclusive_config_file="recipe/conda_build_config.yaml",
@@ -211,6 +215,7 @@ def test_regenerate(py_recipe, testing_workdir):
     # reduce the python matrix and make sure the matrix files reflect the change
     args = RegenerateArgs(
         feedstock_directory=dest_dir,
+        feedstock_config=None,
         commit=False,
         no_check_uptodate=True,
         exclusive_config_file=os.path.join(

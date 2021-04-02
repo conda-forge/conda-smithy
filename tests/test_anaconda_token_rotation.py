@@ -35,10 +35,12 @@ def test_rotate_anaconda_token(
     anaconda_token = "abc123"
     get_ac_token.return_value = anaconda_token
 
+    feedstock_config_path = "abc/conda-forge.yml"
+
     rotate_anaconda_token(
         user,
         project,
-        "abc",
+        feedstock_config_path,
         drone=drone,
         circle=circle,
         travis=travis,
@@ -63,7 +65,11 @@ def test_rotate_anaconda_token(
 
     if travis:
         travis_mock.assert_called_once_with(
-            user, project, "abc", anaconda_token, "MY_FANCY_TOKEN"
+            user,
+            project,
+            feedstock_config_path,
+            anaconda_token,
+            "MY_FANCY_TOKEN",
         )
     else:
         travis_mock.assert_not_called()
@@ -77,7 +83,7 @@ def test_rotate_anaconda_token(
 
     if appveyor:
         appveyor_mock.assert_called_once_with(
-            "abc", anaconda_token, "MY_FANCY_TOKEN"
+            feedstock_config_path, anaconda_token, "MY_FANCY_TOKEN"
         )
     else:
         appveyor_mock.assert_not_called()

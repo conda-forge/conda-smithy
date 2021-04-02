@@ -25,6 +25,10 @@ if sys.version_info[0] == 2:
     raise Exception("Conda-smithy does not support python 2!")
 
 
+def default_feedstock_config_path(feedstock_directory):
+    return os.path.join(feedstock_directory, "conda-forge.yml")
+
+
 def generate_feedstock_content(target_directory, source_recipe_dir):
     target_directory = os.path.abspath(target_directory)
     recipe_dir = "recipe"
@@ -43,7 +47,7 @@ def generate_feedstock_content(target_directory, source_recipe_dir):
                 str(e) + " while copying file %s" % source_recipe_dir
             ).with_traceback(sys.exc_info()[2])
 
-    forge_yml = os.path.join(target_directory, "conda-forge.yml")
+    forge_yml = default_feedstock_config_path(target_directory)
     if not os.path.exists(forge_yml):
         with feedstock_io.write_file(forge_yml) as fh:
             fh.write("{}")
@@ -193,6 +197,12 @@ class RegisterCI(Subcommand):
             default=os.getcwd(),
             help="The directory of the feedstock git repository.",
         )
+        scp.add_argument(
+            "--feedstock_config",
+            default=None,
+            help="The feedstock configuration file. By default, "
+            + default_feedstock_config_path("{FEEDSTOCK_DIRECTORY}"),
+        )
         group = scp.add_mutually_exclusive_group()
         group.add_argument(
             "--user", help="github username under which to register this repo"
@@ -237,6 +247,11 @@ class RegisterCI(Subcommand):
         )[0][0]
         feedstock_name = get_feedstock_name_from_meta(meta)
         repo = "{}-feedstock".format(feedstock_name)
+
+        if args.feedstock_config is None:
+            args.feedstock_config = default_feedstock_config_path(
+                args.feedstock_directory
+            )
 
         print("CI Summary for {}/{} (can take ~30s):".format(owner, repo))
 
@@ -283,7 +298,7 @@ class RegisterCI(Subcommand):
             ci_register.add_project_to_appveyor(owner, repo)
             if args.anaconda_token:
                 ci_register.appveyor_encrypt_binstar_token(
-                    args.feedstock_directory, owner, repo
+                    args.feedstock_config, owner, repo
                 )
             ci_register.appveyor_configure(owner, repo)
         else:
@@ -328,6 +343,12 @@ class AddAzureBuildId(Subcommand):
             default=os.getcwd(),
             help="The directory of the feedstock git repository.",
         )
+        scp.add_argument(
+            "--feedstock_config",
+            default=None,
+            help="The feedstock configuration file. By default, "
+            + default_feedstock_config_path("{FEEDSTOCK_DIRECTORY}"),
+        )
         group = scp.add_mutually_exclusive_group()
         group.add_argument(
             "--user",
@@ -356,9 +377,14 @@ class AddAzureBuildId(Subcommand):
 
         build_info = azure_ci_utils.get_build_id(repo, config)
 
+        if args.feedstock_config is None:
+            args.feedstock_config = default_feedstock_config_path(
+                args.feedstock_directory
+            )
+
         from .utils import update_conda_forge_config
 
-        with update_conda_forge_config(args.feedstock_directory) as config:
+        with update_conda_forge_config(args.feedstock_config) as config:
             config.setdefault("azure", {})
             config["azure"]["build_id"] = build_info["build_id"]
             config["azure"]["user_or_org"] = build_info["user_or_org"]
@@ -380,6 +406,12 @@ class Regenerate(Subcommand):
             "--feedstock_directory",
             default=os.getcwd(),
             help="The directory of the feedstock git repository.",
+        )
+        scp.add_argument(
+            "--feedstock_config",
+            default=None,
+            help="The feedstock configuration file. By default, "
+            + default_feedstock_config_path("{FEEDSTOCK_DIRECTORY}"),
         )
         scp.add_argument(
             "-c",
@@ -423,6 +455,7 @@ class Regenerate(Subcommand):
     def _call(self, args, temporary_directory):
         configure_feedstock.main(
             args.feedstock_directory,
+            forge_yml=args.feedstock_config,
             no_check_uptodate=args.no_check_uptodate,
             commit=args.commit,
             exclusive_config_file=args.exclusive_config_file,
@@ -769,6 +802,12 @@ class UpdateAnacondaToken(Subcommand):
             help="The directory of the feedstock git repository.",
         )
         scp.add_argument(
+            "--feedstock_config",
+            default=None,
+            help="The feedstock configuration file. By default, "
+            + default_feedstock_config_path("{FEEDSTOCK_DIRECTORY}"),
+        )
+        scp.add_argument(
             "--token_name",
             default="BINSTAR_TOKEN",
             help="The name of the environment variable you'd like to hold the token.",
@@ -800,6 +839,11 @@ class UpdateAnacondaToken(Subcommand):
         owner = args.user or args.organization
         repo = os.path.basename(os.path.abspath(args.feedstock_directory))
 
+        if args.feedstock_config is None:
+            args.feedstock_config = default_feedstock_config_path(
+                args.feedstock_directory
+            )
+
         print(
             "Updating the anaconda/binstar token. Can take up to ~30 seconds."
         )
@@ -808,7 +852,7 @@ class UpdateAnacondaToken(Subcommand):
         rotate_anaconda_token(
             owner,
             repo,
-            args.feedstock_directory,
+            args.feedstock_config,
             drone=args.drone,
             circle=args.circle,
             travis=args.travis,
