@@ -181,7 +181,7 @@
   email: marcel.bargull@udo.edu
   alternate_emails:
   - mbargull@users.noreply.github.com
-  num_commits: 11
+  num_commits: 13
   first_commit: 2018-07-30 05:17:51
   github: mbargull
 - name: xoviat
@@ -392,7 +392,7 @@
   github: shadowwalkersb
 - name: Matthew R. Becker
   email: becker.mr@gmail.com
-  num_commits: 190
+  num_commits: 191
   first_commit: 2020-01-07 17:44:33
   github: beckermr
   alternate_emails:

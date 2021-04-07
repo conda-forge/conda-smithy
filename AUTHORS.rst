@@ -19,11 +19,11 @@ Authors are sorted by number of commits.
 * Mark Harfouche
 * Chris Burr
 * Leo Fang
+* Marcel Bargull
 * Eric Dill
 * Natasha Pavlovikj
 * Maksim Rakitin
 * Jan Schulz
-* Marcel Bargull
 * Josh Reichardt
 * Justin Calamari
 * Jason Furmanek
