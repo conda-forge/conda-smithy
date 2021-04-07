@@ -23,13 +23,13 @@ Authors are sorted by number of commits.
 * Natasha Pavlovikj
 * Maksim Rakitin
 * Jan Schulz
+* Marcel Bargull
 * Josh Reichardt
 * Justin Calamari
 * Jason Furmanek
 * Patrick Sodré
 * Ryan Volz
 * John Kirkham
-* Marcel Bargull
 * C.A.M. Gerlach
 * refraction-ray
 * Leopold Talirz
