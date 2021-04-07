@@ -35,6 +35,8 @@ v3.10.0
 * Ryan Volz
 * Marcel Bargull
 * Philippe Blain
+* Matthew R. Becker
+* Marcel Bargull
 
 
 
@@ -83,8 +85,6 @@ v3.9.0
 * Wolf Vollprecht
 * Hugo Slepicka
 * Bastian Zimmermann
-* Matthew R. Becker
-* Marcel Bargull
 
 
 
