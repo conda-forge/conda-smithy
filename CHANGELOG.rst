@@ -4,6 +4,16 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.10.0
+====================
+
+**Authors:**
+
+* Matthew R. Becker
+* Marcel Bargull
+
+
+
 
 
 v3.10.0
