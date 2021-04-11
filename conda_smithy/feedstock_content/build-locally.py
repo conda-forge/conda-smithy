@@ -62,8 +62,8 @@ def verify_config(ns):
     elif ns.config.startswith("osx") and platform.system() == "Darwin":
         if "OSX_SDK_DIR" not in os.environ:
             raise RuntimeError(
-                "Need OSX_SDK_DIR env variable set. Run `export OSX_SDK_DIR=/opt`
-                to download the SDK automatically to `/opt/MacOSX<ver>.sdk`")
+                "Need OSX_SDK_DIR env variable set. Run 'export OSX_SDK_DIR=/opt'"
+                "to download the SDK automatically to '/opt/MacOSX<ver>.sdk'")
 
 
 def main(args=None):
