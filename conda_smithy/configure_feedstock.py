@@ -1533,7 +1533,7 @@ def _load_forge_config(forge_dir, exclusive_config_file):
     config = {
         "docker": {
             "executable": "docker",
-            "fallback_image": "condaforge/linux-anvil-comp7",
+            "fallback_image": "quay.io/condaforge/linux-anvil-comp7",
             "command": "bash",
         },
         "templates": {},
