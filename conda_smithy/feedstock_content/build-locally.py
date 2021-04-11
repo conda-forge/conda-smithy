@@ -17,6 +17,9 @@ def setup_environment(ns):
         os.environ["BUILD_WITH_CONDA_DEBUG"] = "1"
         if ns.output_id:
             os.environ["BUILD_OUTPUT_ID"] = ns.output_id
+    if "MINIFORGE_HOME" not in os.environ:
+        os.environ["MINIFORGE_HOME"] = os.path.join(
+            os.path.dirname(__file__), "miniforge")
 
 
 def run_docker_build(ns):
@@ -61,7 +64,6 @@ def verify_config(ns):
             raise RuntimeError(
                 "Need OSX_SDK_DIR env variable set. Run `export OSX_SDK_DIR=/opt`
                 to download the SDK automatically to `/opt/MacOSX<ver>.sdk`")
-
 
 
 def main(args=None):
