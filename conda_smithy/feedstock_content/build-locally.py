@@ -19,7 +19,8 @@ def setup_environment(ns):
             os.environ["BUILD_OUTPUT_ID"] = ns.output_id
     if "MINIFORGE_HOME" not in os.environ:
         os.environ["MINIFORGE_HOME"] = os.path.join(
-            os.path.dirname(__file__), "miniforge")
+            os.path.dirname(__file__), "miniforge"
+        )
 
 
 def run_docker_build(ns):
@@ -63,7 +64,8 @@ def verify_config(ns):
         if "OSX_SDK_DIR" not in os.environ:
             raise RuntimeError(
                 "Need OSX_SDK_DIR env variable set. Run 'export OSX_SDK_DIR=/opt'"
-                "to download the SDK automatically to '/opt/MacOSX<ver>.sdk'")
+                "to download the SDK automatically to '/opt/MacOSX<ver>.sdk'"
+            )
 
 
 def main(args=None):
@@ -82,8 +84,9 @@ def main(args=None):
     verify_config(ns)
     setup_environment(ns)
 
-    if ns.config.startswith("linux") or \
-            (ns.config.startswith("osx") and platform.system() == "Linux"):
+    if ns.config.startswith("linux") or (
+        ns.config.startswith("osx") and platform.system() == "Linux"
+    ):
         run_docker_build(ns)
     elif ns.config.startswith("osx"):
         run_osx_build(ns)
