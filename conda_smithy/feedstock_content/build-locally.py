@@ -18,7 +18,9 @@ def setup_environment(ns):
         if ns.output_id:
             os.environ["BUILD_OUTPUT_ID"] = ns.output_id
     if "MINIFORGE_HOME" not in os.environ:
-        os.environ["MINIFORGE_HOME"] = os.path.join(os.path.dirname(__file__))
+        os.environ["MINIFORGE_HOME"] = os.path.join(
+            os.path.dirname(__file__), "miniforge3"
+        )
 
 
 def run_docker_build(ns):
