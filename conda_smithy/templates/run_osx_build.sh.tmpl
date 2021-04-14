@@ -4,7 +4,7 @@ source .scripts/logging_utils.sh
 
 set -xe
 
-MINIFORGE_HOME=${MINIFORGE_HOME:-${HOME}}
+MINIFORGE_HOME=${MINIFORGE_HOME:-${HOME}/miniforge3}
 
 ( startgroup "Installing a fresh version of Miniforge" ) 2> /dev/null
 
@@ -24,7 +24,7 @@ BUILD_CMD=mambabuild
 BUILD_CMD=build
 {%- endif %}
 
-source ${MINIFORGE_HOME}/miniforge3/etc/profile.d/conda.sh
+source ${MINIFORGE_HOME}/etc/profile.d/conda.sh
 conda activate base
 
 echo -e "\n\nInstalling {{ remote_ci_setup }} and conda-build."
