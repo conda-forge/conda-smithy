@@ -4,6 +4,25 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.10.1
+====================
+
+**Added:**
+
+* Allow osx builds in build-locally.py
+
+**Changed:**
+
+* Focal is now used for Linux builds on Travis CI
+
+**Authors:**
+
+* Isuru Fernando
+* Matthew R. Becker
+* Chris Burr
+
+
+
 
 
 v3.10.0
