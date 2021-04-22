@@ -44,6 +44,7 @@ matrix:
     - env: CONFIG={{ data.config_name }} UPLOAD_PACKAGES={{ data.upload }} PLATFORM={{ data.build_platform }} DOCKER_IMAGE={{ data.config["docker_image"][-1] }}
       os: linux
       arch: {{ arch_map[data.build_platform.split("-")[1]] }}
+      dist: focal
     {%- endif %}
 {% endfor %}
 {%- endif %}
