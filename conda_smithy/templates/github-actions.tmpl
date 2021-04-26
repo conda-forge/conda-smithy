@@ -31,6 +31,9 @@ jobs:
         include:
         {%- for data in configs %}
           - CONFIG: {{ data.config_name }}
+        {%- if github_actions.store_build_artifacts %}
+            SHORT_CONFIG: {{ data.short_config_name }}
+        {%- endif %}
             UPLOAD_PACKAGES: {{ data.upload }}
         {%- if data.build_platform.startswith("osx-64") %}
             os: macos
@@ -191,3 +194,63 @@ jobs:
         {{ secret }}: {% raw %}${{{% endraw %} secrets.{{ secret }} {% raw %}}}{% endraw %}
 {%- endfor %}
       if: matrix.os == 'windows'
+
+{%- if github_actions.store_build_artifacts %}
+    - name: Prepare conda build artifacts
+      id: prepare-artifacts
+      shell: bash
+      if: {% raw %}${{ always() }}{% endraw %}
+      env:
+        CONFIG: {% raw %}${{ matrix.CONFIG }}{% endraw %}
+        SHORT_CONFIG: {% raw %}${{ matrix.SHORT_CONFIG }}{% endraw %}
+        OS: {% raw %}${{ matrix.os }}{% endraw %}
+      run: |
+        set -x
+
+        # Use different prefix for successful and failed build artifacts
+        # so random failures don't prevent rebuilds from creating artifacts.
+        JOB_STATUS="{% raw %}${{ job.status }}{% endraw %}"
+        if [ $JOB_STATUS == "failure" ]; then
+          ARTIFACT_PREFIX="conda_artifacts"
+        else
+          ARTIFACT_PREFIX="conda_pkgs"
+        fi
+
+        # Set the artifact name, specialized for this particular job run.
+        ARTIFACT_NAME="${ARTIFACT_PREFIX}_${GITHUB_RUN_ID}_${CONFIG}"
+        if [[ {% raw %}${#ARTIFACT_NAME}{% endraw %} -gt 80 ]]; then
+          ARTIFACT_NAME="${ARTIFACT_PREFIX}_${GITHUB_RUN_ID}_${SHORT_CONFIG}"
+        fi
+        echo "::set-output name=ARTIFACT_NAME::$ARTIFACT_NAME"
+
+        # Check that the conda-build directory exists for archiving.
+        if [ $OS == "macos" ]; then
+          ARTIFACT_DIR="${MINIFORGE_HOME:-${HOME}/miniforge3}/conda-bld"
+        elif [ $OS == "windows" ]; then
+          ARTIFACT_DIR="${CONDA//\\//}/conda-bld"
+        else
+          ARTIFACT_DIR="build_artifacts"
+        fi
+        if [ -d "$ARTIFACT_DIR" ]; then
+          # remove caches to save some artifact space
+          rm -rf "${ARTIFACT_DIR}/git_cache"
+          rm -rf "${ARTIFACT_DIR}/pip_cache"
+          rm -rf "${ARTIFACT_DIR}/src_cache"
+          # delete broken symlinks so that artifact publishing doesn't fail
+          find "${ARTIFACT_DIR}" -type l -exec test ! -e {} \; -delete
+        else
+          echo "conda-build directory does not exist" 1>&2
+          exit 1
+        fi
+        echo "::set-output name=ARTIFACT_PATH::$ARTIFACT_DIR"
+      continue-on-error: true
+
+    - name: Store conda build artifacts
+      uses: actions/upload-artifact@v2
+      if: {% raw %}${{ always() && steps.prepare-artifacts.outcome == 'success' }}{% endraw %}
+      with:
+        name: {% raw %}${{ steps.prepare-artifacts.outputs.ARTIFACT_NAME }}{% endraw %}
+        path: {% raw %}${{ steps.prepare-artifacts.outputs.ARTIFACT_PATH }}{% endraw %}
+        retention-days: {{ github_actions.artifact_retention_days }}
+      continue-on-error: true
+{%- endif %}
