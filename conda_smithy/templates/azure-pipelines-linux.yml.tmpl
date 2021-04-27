@@ -54,11 +54,20 @@ jobs:
         echo "##vso[task.setVariable variable=ARTIFACT_NAME]$artifact_name"
         if [ -d build_artifacts ]; then
           echo "##vso[task.setVariable variable=CONDA_BLD_DIR_EXISTS]true"
+          # remove caches to save some artifact space
+          rm -rf build_artifacts/git_cache
+          rm -rf build_artifacts/pip_cache
+          rm -rf build_artifacts/src_cache
+          # delete broken symlinks so that artifact publishing doesn't fail
+          find build_artifacts -type l -exec test ! -e {} \; -delete
         fi
     displayName: Check for conda build artifacts
     condition: succeededOrFailed()
 
-  - publish: build_artifacts/
-    artifact: $(ARTIFACT_NAME)
+  - task: PublishPipelineArtifact@1
+    displayName: Store conda build artifacts
     condition: eq(variables.CONDA_BLD_DIR_EXISTS, 'true')
+    inputs:
+      targetPath: build_artifacts/
+      artifactName: $(ARTIFACT_NAME)
 {%- endif %}

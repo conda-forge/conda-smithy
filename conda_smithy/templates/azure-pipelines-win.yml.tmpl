@@ -110,13 +110,19 @@ jobs:
         echo ##vso[task.setVariable variable=ARTIFACT_NAME]%artifact_name%
         if exist $(CONDA_BLD_PATH)\\ (
           echo ##vso[task.setVariable variable=CONDA_BLD_DIR_EXISTS]true
+          if exist $(CONDA_BLD_PATH)\\git_cache ( rmdir /s /q $(CONDA_BLD_PATH)\\git_cache )
+          if exist $(CONDA_BLD_PATH)\\pip_cache ( rmdir /s /q $(CONDA_BLD_PATH)\\pip_cache )
+          if exist $(CONDA_BLD_PATH)\\src_cache ( rmdir /s /q $(CONDA_BLD_PATH)\\src_cache )
         )
       displayName: Check for conda build artifacts
       condition: succeededOrFailed()
 
-    - publish: $(CONDA_BLD_PATH)\\
-      artifact: $(ARTIFACT_NAME)
+    - task: PublishPipelineArtifact@1
+      displayName: Store conda build artifacts
       condition: eq(variables.CONDA_BLD_DIR_EXISTS, 'true')
+      inputs:
+        targetPath: $(CONDA_BLD_PATH)/
+        artifactName: $(ARTIFACT_NAME)
 {%- endif %}
 
 {%- if conda_forge_output_validation %}
