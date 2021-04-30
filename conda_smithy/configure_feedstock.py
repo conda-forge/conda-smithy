@@ -1273,6 +1273,8 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
         # fmt: off
         if "docker_image" in data["config"] and platform == "linux":
             config_rendered["DOCKER_IMAGE"] = data["config"]["docker_image"][-1]
+        if forge_config["azure"]["store_build_artifacts"]:
+            config_rendered["SHORT_CONFIG_NAME"] = data["short_config_name"]
         azure_settings["strategy"]["matrix"][data["config_name"]] = config_rendered
         # fmt: on
 
