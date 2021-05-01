@@ -1520,7 +1520,7 @@ def copy_feedstock_content(forge_config, forge_dir):
 
 
 def _update_dict_within_dict(items, config):
-    """ recursively update dict within dict, if any """
+    """recursively update dict within dict, if any"""
     for key, value in items:
         if isinstance(value, dict):
             config[key] = _update_dict_within_dict(
