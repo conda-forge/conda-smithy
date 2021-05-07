@@ -123,6 +123,13 @@ jobs:
         )
         echo ##vso[task.setVariable variable=ARTIFACT_PATH]%ARTIFACT_DIR%
         echo ARTIFACT_DIR: %ARTIFACT_DIR%
+
+        if "%AGENT_JOBSTATUS%" == "Failed" (
+          set ARTIFACT_ZIP=$(Build.ArtifactStagingDirectory)\%ARTIFACT_NAME%.zip
+          7z a "!ARTIFACT_ZIP!" "%ARTIFACT_DIR%" '-xr!.git/' '-xr!_*_env*/' '-xr!*_cache/'
+          echo ##vso[task.setVariable variable=ARTIFACT_PATH]!ARTIFACT_ZIP!
+          echo ARTIFACT_ZIP: !ARTIFACT_ZIP!
+        )
       displayName: Prepare conda build artifacts
       condition: succeededOrFailed()
 

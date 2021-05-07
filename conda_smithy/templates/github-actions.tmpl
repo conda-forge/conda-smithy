@@ -243,6 +243,20 @@ jobs:
           exit 1
         fi
         echo "::set-output name=ARTIFACT_PATH::$ARTIFACT_DIR"
+
+        if [ $JOB_STATUS == "failure" ]; then
+          # Create a zip archive to use as the artifact.
+          # (zip is not available on Windows container)
+          # (7z is not present on macOS, mangled as part of Homebrew)
+          ARTIFACT_ZIP="${ARTIFACT_NAME}.zip"
+          if [ $OS == "windows" ]; then
+            7z a "$ARTIFACT_ZIP" "$ARTIFACT_DIR" '-xr!.git/' '-xr!_*_env*/' '-xr!*_cache/'
+          else
+            cd "$ARTIFACT_DIR"
+            zip -r -y -q "$GITHUB_WORKSPACE/$ARTIFACT_ZIP" . -x '*.git/*' '*_*_env*/*' '*_cache/*'
+          fi
+          echo "::set-output name=ARTIFACT_PATH::$ARTIFACT_ZIP"
+        fi
       continue-on-error: true
 
     - name: Store conda build artifacts

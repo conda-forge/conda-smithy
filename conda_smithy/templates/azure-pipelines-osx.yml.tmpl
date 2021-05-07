@@ -56,6 +56,15 @@ jobs:
         fi
         echo "##vso[task.setVariable variable=ARTIFACT_PATH]$ARTIFACT_DIR"
         echo "ARTIFACT_DIR: $ARTIFACT_DIR"
+
+        if [ $AGENT_JOBSTATUS == "Failed" ]; then
+          # Create a zip archive to use as the artifact.
+          ARTIFACT_ZIP="$(Build.ArtifactStagingDirectory)/${ARTIFACT_NAME}.zip"
+          cd "$ARTIFACT_DIR"
+          zip -r -y -q "$ARTIFACT_ZIP" . -x '*.git/*' '*_*_env*/*' '*_cache/*'
+          echo "##vso[task.setVariable variable=ARTIFACT_PATH]$ARTIFACT_ZIP"
+          echo "ARTIFACT_ZIP: $ARTIFACT_ZIP"
+        fi
     displayName: Prepare conda build artifacts
     condition: succeededOrFailed()
 
