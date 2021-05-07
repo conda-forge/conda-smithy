@@ -231,32 +231,22 @@ jobs:
         else
           ARTIFACT_DIR="build_artifacts"
         fi
-        if [ -d "$ARTIFACT_DIR" ]; then
-          # remove caches to save some artifact space
-          rm -rf "${ARTIFACT_DIR}/git_cache"
-          rm -rf "${ARTIFACT_DIR}/pip_cache"
-          rm -rf "${ARTIFACT_DIR}/src_cache"
-          # delete broken symlinks so that artifact publishing doesn't fail
-          find "${ARTIFACT_DIR}" -type l -exec test ! -e {} \; -delete
-        else
+        if [ ! -d "$ARTIFACT_DIR" ]; then
           echo "conda-build directory does not exist" 1>&2
           exit 1
         fi
-        echo "::set-output name=ARTIFACT_PATH::$ARTIFACT_DIR"
 
-        if [ $JOB_STATUS == "failure" ]; then
-          # Create a zip archive to use as the artifact.
-          # (zip is not available on Windows container)
-          # (7z is not present on macOS, mangled as part of Homebrew)
-          ARTIFACT_ZIP="${ARTIFACT_NAME}.zip"
-          if [ $OS == "windows" ]; then
-            7z a "$ARTIFACT_ZIP" "$ARTIFACT_DIR" '-xr!.git/' '-xr!_*_env*/' '-xr!*_cache/'
-          else
-            cd "$ARTIFACT_DIR"
-            zip -r -y -q "$GITHUB_WORKSPACE/$ARTIFACT_ZIP" . -x '*.git/*' '*_*_env*/*' '*_cache/*'
-          fi
-          echo "::set-output name=ARTIFACT_PATH::$ARTIFACT_ZIP"
+        # Create a zip archive to use as the artifact.
+        # (zip is not available on Windows container)
+        # (7z is not present on macOS, mangled as part of Homebrew)
+        ARTIFACT_ZIP="${ARTIFACT_NAME}.zip"
+        if [ $OS == "windows" ]; then
+          7z a "$ARTIFACT_ZIP" "$ARTIFACT_DIR" '-xr!.git/' '-xr!_*_env*/' '-xr!*_cache/'
+        else
+          cd "$ARTIFACT_DIR"
+          zip -r -y -q "$GITHUB_WORKSPACE/$ARTIFACT_ZIP" . -x '*.git/*' '*_*_env*/*' '*_cache/*'
         fi
+        echo "::set-output name=ARTIFACT_PATH::$ARTIFACT_ZIP"
       continue-on-error: true
 
     - name: Store conda build artifacts
