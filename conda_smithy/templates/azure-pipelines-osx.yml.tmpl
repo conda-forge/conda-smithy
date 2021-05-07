@@ -33,27 +33,36 @@ jobs:
 
 {%- if azure.store_build_artifacts %}
   - script: |
-        artifact_name="conda_artifacts_$(build.BuildId)_$(CONFIG)"
-        if [[ {% raw %}${#artifact_name}{% endraw %} -gt 80 ]]; then
-          artifact_name="conda_artifacts_$(build.BuildId)_$(SHORT_CONFIG)"
+        # Set the artifact name, specialized for this particular job run.
+        ARTIFACT_NAME="conda_artifacts_$(build.BuildNumber).$(system.JobAttempt)_$(CONFIG)"
+        if [[ {% raw %}${#ARTIFACT_NAME}{% endraw %} -gt 80 ]]; then
+          ARTIFACT_NAME="conda_artifacts_$(build.BuildNumber).$(system.JobAttempt)_$(SHORT_CONFIG)"
         fi
-        echo "##vso[task.setVariable variable=ARTIFACT_NAME]$artifact_name"
-        if [ -d /Users/runner/miniforge3/conda-bld/ ]; then
-          echo "##vso[task.setVariable variable=CONDA_BLD_DIR_EXISTS]true"
+        echo "##vso[task.setVariable variable=ARTIFACT_NAME]$ARTIFACT_NAME"
+        echo "ARTIFACT_NAME: $ARTIFACT_NAME"
+
+        # Check that the conda-build directory exists for archiving.
+        ARTIFACT_DIR=/Users/runner/miniforge3/conda-bld/
+        if [ -d "$ARTIFACT_DIR" ]; then
           # remove caches to save some artifact space
-          rm -rf /Users/runner/miniforge3/conda-bld/git_cache
-          rm -rf /Users/runner/miniforge3/conda-bld/pip_cache
-          rm -rf /Users/runner/miniforge3/conda-bld/src_cache
+          rm -rf $ARTIFACT_DIR/git_cache
+          rm -rf $ARTIFACT_DIR/pip_cache
+          rm -rf $ARTIFACT_DIR/src_cache
           # delete broken symlinks so that artifact publishing doesn't fail
-          find /Users/runner/miniforge3/conda-bld -type l -exec test ! -e {} \; -delete
+          find $ARTIFACT_DIR -type l -exec test ! -e {} \; -delete
+        else
+          echo "##vso[task.logissue type=error]conda-build directory does not exist"
+          exit 1
         fi
-    displayName: Check for conda build artifacts
+        echo "##vso[task.setVariable variable=ARTIFACT_PATH]$ARTIFACT_DIR"
+        echo "ARTIFACT_DIR: $ARTIFACT_DIR"
+    displayName: Prepare conda build artifacts
     condition: succeededOrFailed()
 
   - task: PublishPipelineArtifact@1
     displayName: Store conda build artifacts
-    condition: eq(variables.CONDA_BLD_DIR_EXISTS, 'true')
+    condition: not(eq(variables.ARTIFACT_PATH, ''))
     inputs:
-      targetPath: /Users/runner/miniforge3/conda-bld/
+      targetPath: $(ARTIFACT_PATH)
       artifactName: $(ARTIFACT_NAME)
 {%- endif %}
