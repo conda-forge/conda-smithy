@@ -98,6 +98,12 @@ class Test_linter(unittest.TestCase):
         expected_message = "The summary item is expected in the about section."
         self.assertIn(expected_message, lints)
 
+    def test_noarch_value(self):
+        meta = {"build": {"noarch": "true"}}
+        expected = "Invalid `noarch` value `true`. Should be one of"
+        lints, hints = linter.lintify(meta)
+        self.assertTrue(any(lint.startswith(expected) for lint in lints))
+
     def test_maintainers_section(self):
         expected_message = (
             "The recipe could do with some maintainers listed "
