@@ -342,9 +342,20 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
                             "subsection name. {} is not a valid subsection"
                             " name.".format(section, source_subsection)
                         )
+    # 17: Validate noarch
+    noarch_value = build_section.get("noarch")
+    if noarch_value is not None:
+        valid_noarch_values = ["python", "generic"]
+        if noarch_value not in valid_noarch_values:
+            valid_noarch_str = "`, `".join(valid_noarch_values)
+            lints.append(
+                "Invalid `noarch` value `{}`. Should be one of `{}`.".format(
+                    noarch_value, valid_noarch_str
+                )
+            )
 
-    # 17: noarch doesn't work with selectors for runtime dependencies
-    if build_section.get("noarch") is not None and os.path.exists(meta_fname):
+    # 18: noarch doesn't work with selectors for runtime dependencies
+    if noarch_value is not None and os.path.exists(meta_fname):
         with io.open(meta_fname, "rt") as fh:
             in_runreqs = False
             for line in fh:
@@ -357,7 +368,7 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
                     lints.append(
                         "`noarch` packages can't have selectors. If "
                         "the selectors are necessary, please remove "
-                        "`noarch: {}`.".format(build_section["noarch"])
+                        "`noarch: {}`.".format(noarch_value)
                     )
                     break
                 if in_runreqs:
@@ -368,7 +379,7 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
                         lints.append(
                             "`noarch` packages can't have selectors. If "
                             "the selectors are necessary, please remove "
-                            "`noarch: {}`.".format(build_section["noarch"])
+                            "`noarch: {}`.".format(noarch_value)
                         )
                         break
 
@@ -465,7 +476,7 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
     host_reqs = requirements_section.get("host") or []
     run_reqs = requirements_section.get("run") or []
     for language in check_languages:
-        if build_section.get("noarch") is None and not outputs_section:
+        if noarch_value is None and not outputs_section:
             filtered_host_reqs = [
                 req
                 for req in host_reqs
@@ -516,7 +527,7 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
             )
 
     # 25: require a lower bound on python version
-    if build_section.get("noarch") == "python" and not outputs_section:
+    if noarch_value == "python" and not outputs_section:
         for req in run_reqs:
             if (req.strip().split()[0] == "python") and (req != "python"):
                 break
@@ -543,7 +554,7 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
 
     # 2: suggest python noarch (skip on feedstocks)
     if (
-        build_section.get("noarch") is None
+        noarch_value is None
         and build_reqs
         and not any(["_compiler_stub" in b for b in build_reqs])
         and ("pip" in build_reqs)
