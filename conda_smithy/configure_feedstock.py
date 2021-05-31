@@ -1549,7 +1549,7 @@ def _load_forge_config(forge_dir, exclusive_config_file):
             # default choices for MS-hosted agents
             "settings_linux": {
                 "pool": {
-                    "vmImage": "ubuntu-16.04",
+                    "vmImage": "ubuntu-latest",
                 },
                 "timeoutInMinutes": 360,
             },
