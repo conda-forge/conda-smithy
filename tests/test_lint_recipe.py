@@ -171,6 +171,19 @@ class Test_linter(unittest.TestCase):
             "It looks like the 'foobar' output doesn't have any tests.", hints
         )
 
+        lints, hints = linter.lintify(
+            {
+                "outputs": [
+                    {"name": "foo", "test": {"script": "test-foo.sh"}},
+                    {"name": "foobar", "test": {"script": "test-foobar.pl"}},
+                ]
+            }
+        )
+        self.assertNotIn(expected_message, lints)
+        self.assertIn(
+            "It looks like the 'foobar' output doesn't have any tests.", hints
+        )
+
     def test_test_section_with_recipe(self):
         # If we have a run_test.py file, we shouldn't need to provide
         # other tests.
