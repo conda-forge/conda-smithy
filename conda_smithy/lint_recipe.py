@@ -187,6 +187,8 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
                     test_out = get_section(out, "test", lints)
                     if any(key in TEST_KEYS for key in test_out):
                         has_outputs_test = True
+                    elif test_out.get("script", "").endswith((".bat", ".sh")):
+                        has_outputs_test = True
                     else:
                         no_test_hints.append(
                             "It looks like the '{}' output doesn't "
