@@ -84,14 +84,13 @@ def render_meta_yaml(text):
 
 
 @contextmanager
-def update_conda_forge_config(feedstock_directory):
+def update_conda_forge_config(forge_yaml):
     """Utility method used to update conda forge configuration files
 
     Uage:
     >>> with update_conda_forge_config(somepath) as cfg:
     ...     cfg['foo'] = 'bar'
     """
-    forge_yaml = os.path.join(feedstock_directory, "conda-forge.yml")
     if os.path.exists(forge_yaml):
         with open(forge_yaml, "r") as fh:
             code = get_yaml().load(fh)

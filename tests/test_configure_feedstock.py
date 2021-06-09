@@ -751,6 +751,33 @@ def test_conda_forge_yaml_empty(config_yaml):
     ]
 
 
+def test_forge_yml_alt_path(config_yaml):
+    load_forge_config = (
+        lambda forge_yml: cnfgr_fdstk._load_forge_config(  # noqa
+            config_yaml,
+            exclusive_config_file=os.path.join(
+                config_yaml, "recipe", "default_config.yaml"
+            ),
+            forge_yml=forge_yml,
+        )
+    )
+
+    forge_yml = os.path.join(config_yaml, "conda-forge.yml")
+    forge_yml_alt = os.path.join(
+        config_yaml, ".config", "feedstock-config.yml"
+    )
+
+    os.mkdir(os.path.dirname(forge_yml_alt))
+    os.rename(forge_yml, forge_yml_alt)
+
+    with pytest.raises(RuntimeError):
+        load_forge_config(None)
+
+    assert ["conda-forge", "main"] in load_forge_config(forge_yml_alt)[
+        "channels"
+    ]["targets"]
+
+
 def test_cos7_env_render(py_recipe, jinja_env):
     forge_config = copy.deepcopy(py_recipe.config)
     forge_config["os_version"] = {"linux_64": "cos7"}

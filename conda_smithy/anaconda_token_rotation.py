@@ -32,7 +32,7 @@ def _get_anaconda_token():
 def rotate_anaconda_token(
     user,
     project,
-    feedstock_directory,
+    feedstock_config_path,
     drone=True,
     circle=True,
     travis=True,
@@ -107,7 +107,7 @@ def rotate_anaconda_token(
                         rotate_token_in_travis(
                             user,
                             project,
-                            feedstock_directory,
+                            feedstock_config_path,
                             anaconda_token,
                             token_name,
                         )
@@ -140,7 +140,7 @@ def rotate_anaconda_token(
                 if appveyor:
                     try:
                         rotate_token_in_appveyor(
-                            feedstock_directory, anaconda_token, token_name
+                            feedstock_config_path, anaconda_token, token_name
                         )
                     except Exception as e:
                         if "DEBUG_ANACONDA_TOKENS" in os.environ:
@@ -247,7 +247,7 @@ def rotate_token_in_drone(user, project, binstar_token, token_name):
 
 
 def rotate_token_in_travis(
-    user, project, feedstock_directory, binstar_token, token_name
+    user, project, feedstock_config_path, binstar_token, token_name
 ):
     """update the binstar token in travis."""
     from .ci_register import (
@@ -305,7 +305,7 @@ def rotate_token_in_travis(
 
     # we remove the token in the conda-forge.yml since on travis the
     # encrypted values override any value we put in the API
-    with update_conda_forge_config(feedstock_directory) as code:
+    with update_conda_forge_config(feedstock_config_path) as code:
         if (
             "travis" in code
             and "secure" in code["travis"]
@@ -375,7 +375,7 @@ def rotate_token_in_azure(user, project, binstar_token, token_name):
     )
 
 
-def rotate_token_in_appveyor(feedstock_directory, binstar_token, token_name):
+def rotate_token_in_appveyor(feedstock_config_path, binstar_token, token_name):
     from .ci_register import appveyor_token
 
     headers = {"Authorization": "Bearer {}".format(appveyor_token)}
@@ -386,7 +386,7 @@ def rotate_token_in_appveyor(feedstock_directory, binstar_token, token_name):
     if response.status_code != 200:
         raise ValueError(response)
 
-    with update_conda_forge_config(feedstock_directory) as code:
+    with update_conda_forge_config(feedstock_config_path) as code:
         code.setdefault("appveyor", {}).setdefault("secure", {})[
             token_name
         ] = response.content.decode("utf-8")

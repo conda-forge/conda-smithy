@@ -1531,7 +1531,7 @@ def _update_dict_within_dict(items, config):
     return config
 
 
-def _load_forge_config(forge_dir, exclusive_config_file):
+def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
     config = {
         "docker": {
             "executable": "docker",
@@ -1641,10 +1641,12 @@ def _load_forge_config(forge_dir, exclusive_config_file):
         "remote_ci_setup": "conda-forge-ci-setup=3",
     }
 
-    forge_yml = os.path.join(forge_dir, "conda-forge.yml")
+    if forge_yml is None:
+        forge_yml = os.path.join(forge_dir, "conda-forge.yml")
+
     if not os.path.exists(forge_yml):
         raise RuntimeError(
-            f"Could not find `conda-forge.yml` in {forge_dir}."
+            f"Could not find config file {forge_yml}."
             " Either you are not rerendering inside the feedstock root (likely)"
             " or there's no `conda-forge.yml` in the feedstock root (unlikely)."
             " Add an empty `conda-forge.yml` file in"
@@ -2001,6 +2003,7 @@ def set_migration_fns(forge_dir, forge_config):
 
 def main(
     forge_file_directory,
+    forge_yml=None,
     no_check_uptodate=False,
     commit=False,
     exclusive_config_file=None,
@@ -2031,7 +2034,7 @@ def main(
             temporary_directory
         )
 
-    config = _load_forge_config(forge_dir, exclusive_config_file)
+    config = _load_forge_config(forge_dir, exclusive_config_file, forge_yml)
     config["feedstock_name"] = os.path.basename(forge_dir)
 
     for each_ci in [
