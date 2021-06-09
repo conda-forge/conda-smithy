@@ -209,29 +209,31 @@ jobs:
 
         # Use different prefix for successful and failed build artifacts
         # so random failures don't prevent rebuilds from creating artifacts.
+        # prefix should be < 20 characters so the artifact name doesn't exceed 100
         JOB_STATUS="{% raw %}${{ job.status }}{% endraw %}"
         if [ $JOB_STATUS == "failure" ]; then
-          ARTIFACT_PREFIX="conda_artifacts"
+          BLD_ARTIFACT_PREFIX="conda_artifacts"
         else
-          ARTIFACT_PREFIX="conda_pkgs"
+          BLD_ARTIFACT_PREFIX="conda_pkgs"
         fi
 
         # Set the artifact name, specialized for this particular job run.
-        ARTIFACT_NAME="${ARTIFACT_PREFIX}_${GITHUB_RUN_ID}_${CONFIG}"
-        if [[ {% raw %}${#ARTIFACT_NAME}{% endraw %} -gt 80 ]]; then
-          ARTIFACT_NAME="${ARTIFACT_PREFIX}_${GITHUB_RUN_ID}_${SHORT_CONFIG}"
+        ARTIFACT_UNIQUE_ID="${GITHUB_RUN_ID}_${CONFIG}"
+        if [[ {% raw %}${#ARTIFACT_UNIQUE_ID}{% endraw %} -gt 80 ]]; then
+          ARTIFACT_UNIQUE_ID="${GITHUB_RUN_ID}_${SHORT_CONFIG}"
         fi
-        echo "::set-output name=ARTIFACT_NAME::$ARTIFACT_NAME"
+        BLD_ARTIFACT_NAME="${BLD_ARTIFACT_PREFIX}_${ARTIFACT_UNIQUE_ID}"
+        echo "::set-output name=BLD_ARTIFACT_NAME::$BLD_ARTIFACT_NAME"
 
         # Check that the conda-build directory exists for archiving.
         if [ $OS == "macos" ]; then
-          ARTIFACT_DIR="${MINIFORGE_HOME:-${HOME}/miniforge3}/conda-bld"
+          BLD_ARTIFACT_DIR="${MINIFORGE_HOME:-${HOME}/miniforge3}/conda-bld"
         elif [ $OS == "windows" ]; then
-          ARTIFACT_DIR="${CONDA//\\//}/conda-bld"
+          BLD_ARTIFACT_DIR="${CONDA//\\//}/conda-bld"
         else
-          ARTIFACT_DIR="build_artifacts"
+          BLD_ARTIFACT_DIR="build_artifacts"
         fi
-        if [ ! -d "$ARTIFACT_DIR" ]; then
+        if [ ! -d "$BLD_ARTIFACT_DIR" ]; then
           echo "conda-build directory does not exist" 1>&2
           exit 1
         fi
@@ -239,22 +241,48 @@ jobs:
         # Create a zip archive to use as the artifact.
         # (zip is not available on Windows container)
         # (7z is not present on macOS, mangled as part of Homebrew)
-        ARTIFACT_ZIP="${ARTIFACT_NAME}.zip"
+        BLD_ARTIFACT_ZIP="${BLD_ARTIFACT_NAME}.zip"
         if [ $OS == "windows" ]; then
-          7z a "$ARTIFACT_ZIP" "$ARTIFACT_DIR" '-xr!.git/' '-xr!_*_env*/' '-xr!*_cache/'
+          7z a "$BLD_ARTIFACT_ZIP" "$BLD_ARTIFACT_DIR" '-xr!.git/' '-xr!_*_env*/' '-xr!*_cache/'
         else
-          cd "$ARTIFACT_DIR"
-          zip -r -y -q "$GITHUB_WORKSPACE/$ARTIFACT_ZIP" . -x '*.git/*' '*_*_env*/*' '*_cache/*'
+          pushd "$BLD_ARTIFACT_DIR"
+          zip -r -y -q "$GITHUB_WORKSPACE/$BLD_ARTIFACT_ZIP" . -x '*.git/*' '*_*_env*/*' '*_cache/*'
+          popd
         fi
-        echo "::set-output name=ARTIFACT_PATH::$ARTIFACT_ZIP"
+        echo "::set-output name=BLD_ARTIFACT_PATH::$BLD_ARTIFACT_ZIP"
+
+        # If the build failed, create a second zip archive of the conda environments.
+        if [ $JOB_STATUS == "failure" ]; then
+          ENV_ARTIFACT_PREFIX="conda_envs"
+          ENV_ARTIFACT_NAME="${ENV_ARTIFACT_PREFIX}_${ARTIFACT_UNIQUE_ID}"
+          echo "::set-output name=ENV_ARTIFACT_NAME::$ENV_ARTIFACT_NAME"
+          ENV_ARTIFACT_ZIP="${ENV_ARTIFACT_NAME}.zip"
+          if [ $OS == "windows" ]; then
+            7z a "$ENV_ARTIFACT_ZIP" -r "$BLD_ARTIFACT_DIR"/'_*_env*/'
+          else
+            pushd "$BLD_ARTIFACT_DIR"
+            zip -r -y -q "$GITHUB_WORKSPACE/$ENV_ARTIFACT_ZIP" . -i '*_*_env*/*'
+            popd
+          fi
+          echo "::set-output name=ENV_ARTIFACT_PATH::$ENV_ARTIFACT_ZIP"
+        fi
       continue-on-error: true
 
     - name: Store conda build artifacts
       uses: actions/upload-artifact@v2
       if: {% raw %}${{ always() && steps.prepare-artifacts.outcome == 'success' }}{% endraw %}
       with:
-        name: {% raw %}${{ steps.prepare-artifacts.outputs.ARTIFACT_NAME }}{% endraw %}
-        path: {% raw %}${{ steps.prepare-artifacts.outputs.ARTIFACT_PATH }}{% endraw %}
+        name: {% raw %}${{ steps.prepare-artifacts.outputs.BLD_ARTIFACT_NAME }}{% endraw %}
+        path: {% raw %}${{ steps.prepare-artifacts.outputs.BLD_ARTIFACT_PATH }}{% endraw %}
+        retention-days: {{ github_actions.artifact_retention_days }}
+      continue-on-error: true
+
+    - name: Store conda build environment artifacts
+      uses: actions/upload-artifact@v2
+      if: {% raw %}${{ failure() && steps.prepare-artifacts.outcome == 'success' }}{% endraw %}
+      with:
+        name: {% raw %}${{ steps.prepare-artifacts.outputs.ENV_ARTIFACT_NAME }}{% endraw %}
+        path: {% raw %}${{ steps.prepare-artifacts.outputs.ENV_ARTIFACT_PATH }}{% endraw %}
         retention-days: {{ github_actions.artifact_retention_days }}
       continue-on-error: true
 {%- endif %}

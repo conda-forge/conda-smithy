@@ -105,40 +105,58 @@ jobs:
     - script: |
         setlocal EnableDelayedExpansion
 
-        set ARTIFACT_NAME=conda_artifacts_$(build.BuildNumber).$(system.JobAttempt)_$(CONFIG)
-        if not "%ARTIFACT_NAME%" == "%ARTIFACT_NAME:~0,80%" (
-          set ARTIFACT_NAME=conda_artifacts_$(build.BuildNumber).$(system.JobAttempt)_$(SHORT_CONFIG)
+        set ARTIFACT_UNIQUE_ID=$(build.BuildNumber).$(system.JobAttempt)_$(CONFIG)
+        if not "%ARTIFACT_UNIQUE_ID%" == "%ARTIFACT_UNIQUE_ID:~0,80%" (
+          set ARTIFACT_UNIQUE_ID=$(build.BuildNumber).$(system.JobAttempt)_$(SHORT_CONFIG)
         )
-        echo ##vso[task.setVariable variable=ARTIFACT_NAME]%ARTIFACT_NAME%
-        echo ARTIFACT_NAME: %ARTIFACT_NAME%
+        set BLD_ARTIFACT_PREFIX=conda_artifacts
+        set BLD_ARTIFACT_NAME=%BLD_ARTIFACT_PREFIX%_%ARTIFACT_UNIQUE_ID%
+        echo ##vso[task.setVariable variable=BLD_ARTIFACT_NAME]%BLD_ARTIFACT_NAME%
+        echo BLD_ARTIFACT_NAME: %BLD_ARTIFACT_NAME%
 
-        set ARTIFACT_DIR=$(CONDA_BLD_PATH)
-        if exist %ARTIFACT_DIR% (
-          if exist %ARTIFACT_DIR%\\git_cache ( rmdir /s /q %ARTIFACT_DIR%\\git_cache )
-          if exist %ARTIFACT_DIR%\\pip_cache ( rmdir /s /q %ARTIFACT_DIR%\\pip_cache )
-          if exist %ARTIFACT_DIR%\\src_cache ( rmdir /s /q %ARTIFACT_DIR%\\src_cache )
+        set BLD_ARTIFACT_DIR=$(CONDA_BLD_PATH)
+        if exist %BLD_ARTIFACT_DIR% (
+          if exist %BLD_ARTIFACT_DIR%\\git_cache ( rmdir /s /q %BLD_ARTIFACT_DIR%\\git_cache )
+          if exist %BLD_ARTIFACT_DIR%\\pip_cache ( rmdir /s /q %BLD_ARTIFACT_DIR%\\pip_cache )
+          if exist %BLD_ARTIFACT_DIR%\\src_cache ( rmdir /s /q %BLD_ARTIFACT_DIR%\\src_cache )
         ) else (
           echo ##vso[task.logissue type=error]conda-build directory does not exist
           exit 1
         )
-        echo ##vso[task.setVariable variable=ARTIFACT_PATH]%ARTIFACT_DIR%
-        echo ARTIFACT_DIR: %ARTIFACT_DIR%
+        echo ##vso[task.setVariable variable=BLD_ARTIFACT_PATH]%BLD_ARTIFACT_DIR%
+        echo BLD_ARTIFACT_DIR: %BLD_ARTIFACT_DIR%
 
         if "%AGENT_JOBSTATUS%" == "Failed" (
-          set ARTIFACT_ZIP=$(Build.ArtifactStagingDirectory)\%ARTIFACT_NAME%.zip
-          7z a "!ARTIFACT_ZIP!" "%ARTIFACT_DIR%" '-xr!.git/' '-xr!_*_env*/' '-xr!*_cache/'
-          echo ##vso[task.setVariable variable=ARTIFACT_PATH]!ARTIFACT_ZIP!
-          echo ARTIFACT_ZIP: !ARTIFACT_ZIP!
+          set BLD_ARTIFACT_ZIP=$(Build.ArtifactStagingDirectory)\%BLD_ARTIFACT_NAME%.zip
+          7z a "!BLD_ARTIFACT_ZIP!" "%BLD_ARTIFACT_DIR%" -xr^^!.git/ -xr^^!_*_env*/ -xr^^!*_cache/
+          echo ##vso[task.setVariable variable=BLD_ARTIFACT_PATH]!BLD_ARTIFACT_ZIP!
+          echo BLD_ARTIFACT_ZIP: !BLD_ARTIFACT_ZIP!
+
+          set ENV_ARTIFACT_PREFIX=conda_envs
+          set ENV_ARTIFACT_NAME=!ENV_ARTIFACT_PREFIX!_%ARTIFACT_UNIQUE_ID%
+          echo ##vso[task.setVariable variable=ENV_ARTIFACT_NAME]!ENV_ARTIFACT_NAME!
+          echo ENV_ARTIFACT_NAME: !ENV_ARTIFACT_NAME!
+          set ENV_ARTIFACT_ZIP=$(Build.ArtifactStagingDirectory)\!ENV_ARTIFACT_NAME!.zip
+          7z a "!ENV_ARTIFACT_ZIP!" -r "%BLD_ARTIFACT_DIR%"/_*_env*/
+          echo ##vso[task.setVariable variable=ENV_ARTIFACT_PATH]!ENV_ARTIFACT_ZIP!
+          echo ENV_ARTIFACT_ZIP: !ENV_ARTIFACT_ZIP!
         )
       displayName: Prepare conda build artifacts
       condition: succeededOrFailed()
 
     - task: PublishPipelineArtifact@1
       displayName: Store conda build artifacts
-      condition: not(eq(variables.ARTIFACT_PATH, ''))
+      condition: not(eq(variables.BLD_ARTIFACT_PATH, ''))
       inputs:
-        targetPath: $(ARTIFACT_PATH)
-        artifactName: $(ARTIFACT_NAME)
+        targetPath: $(BLD_ARTIFACT_PATH)
+        artifactName: $(BLD_ARTIFACT_NAME)
+
+    - task: PublishPipelineArtifact@1
+      displayName: Store conda build environment artifacts
+      condition: not(eq(variables.ENV_ARTIFACT_PATH, ''))
+      inputs:
+        targetPath: $(ENV_ARTIFACT_PATH)
+        artifactName: $(ENV_ARTIFACT_NAME)
 {%- endif %}
 
 {%- if conda_forge_output_validation %}
