@@ -824,28 +824,28 @@ class Test_linter(unittest.TestCase):
         expected_message = 'Recipe maintainer "isuruf" does not exist'
         self.assertNotIn(expected_message, lints)
 
-        expected_message = "Feedstock with the same name exists in conda-forge"
+        expected_message = "Feedstock with the same name exists in conda-forge."
         # Check that feedstock exists if staged_recipes
-        lints = linter.lintify(
+        lints, _ = linter.lintify(
             {"package": {"name": "python"}},
             recipe_dir="python",
             conda_forge=True,
         )
         self.assertIn(expected_message, lints)
-        lints = linter.lintify(
+        lints, _ = linter.lintify(
             {"package": {"name": "python"}},
             recipe_dir="python",
             conda_forge=False,
         )
         self.assertNotIn(expected_message, lints)
         # No lint if in a feedstock
-        lints = linter.lintify(
+        lints, _ = linter.lintify(
             {"package": {"name": "python"}},
             recipe_dir="recipe",
             conda_forge=True,
         )
         self.assertNotIn(expected_message, lints)
-        lints = linter.lintify(
+        lints, _ = linter.lintify(
             {"package": {"name": "python"}},
             recipe_dir="recipe",
             conda_forge=False,
@@ -866,7 +866,7 @@ class Test_linter(unittest.TestCase):
                 "There's a feedstock named python1, but tests assume that there isn't"
             )
         else:
-            lints = linter.lintify(
+            lints, _ = linter.lintify(
                 {"package": {"name": "python1"}},
                 recipe_dir="python",
                 conda_forge=True,
@@ -890,34 +890,34 @@ class Test_linter(unittest.TestCase):
             )
         else:
             # Check that feedstock exists if staged_recipes
-            lints = linter.lintify(
+            lints, _ = linter.lintify(
                 {"package": {"name": r}}, recipe_dir=r, conda_forge=True
             )
             self.assertIn(expected_message, lints)
-            lints = linter.lintify(
+            lints, _ = linter.lintify(
                 {"package": {"name": r}}, recipe_dir=r, conda_forge=False
             )
             self.assertNotIn(expected_message, lints)
             # No lint if in a feedstock
-            lints = linter.lintify(
+            lints, _ = linter.lintify(
                 {"package": {"name": r}}, recipe_dir="recipe", conda_forge=True
             )
             self.assertNotIn(expected_message, lints)
-            lints = linter.lintify(
+            lints, _ = linter.lintify(
                 {"package": {"name": r}},
                 recipe_dir="recipe",
                 conda_forge=False,
             )
             self.assertNotIn(expected_message, lints)
             # No lint if the name isn't specified
-            lints = linter.lintify({}, recipe_dir=r, conda_forge=True)
+            lints, _ = linter.lintify({}, recipe_dir=r, conda_forge=True)
             self.assertNotIn(expected_message, lints)
 
         r = "this-will-never-exist"
         try:
             bio.get_dir_contents("recipes/{}".format(r))
         except github.UnknownObjectException as e:
-            lints = linter.lintify(
+            lints, _ = linter.lintify(
                 {"package": {"name": r}}, recipe_dir=r, conda_forge=True
             )
             self.assertNotIn(expected_message, lints)
@@ -927,6 +927,21 @@ class Test_linter(unittest.TestCase):
                     r
                 )
             )
+
+        expected_message = (
+            "A conda package with same name (simplejson) already exists."
+        )
+        lints, hints = linter.lintify(
+            {
+                "package": {"name": "this-will-never-exist"},
+                "source": {
+                    "url": "https://pypi.io/packages/source/s/simplejson/simplejson-3.17.2.tar.gz"
+                },
+            },
+            recipe_dir="recipes/foo",
+            conda_forge=True,
+        )
+        self.assertIn(expected_message, hints)
 
     def test_bad_subheader(self):
         expected_message = (
