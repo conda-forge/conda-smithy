@@ -824,7 +824,9 @@ class Test_linter(unittest.TestCase):
         expected_message = 'Recipe maintainer "isuruf" does not exist'
         self.assertNotIn(expected_message, lints)
 
-        expected_message = "Feedstock with the same name exists in conda-forge."
+        expected_message = (
+            "Feedstock with the same name exists in conda-forge."
+        )
         # Check that feedstock exists if staged_recipes
         lints, _ = linter.lintify(
             {"package": {"name": "python"}},
