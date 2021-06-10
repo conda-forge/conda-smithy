@@ -713,22 +713,22 @@ def run_conda_forge_specific(meta, recipe_dir, lints, hints):
     # 1: Check that the recipe does not exist in conda-forge or bioconda
     if is_staged_recipes and recipe_name:
         cf = gh.get_user(os.getenv("GH_ORG", "conda-forge"))
-        try:
-            for name in set(
-                [
-                    recipe_name,
-                    recipe_name.replace("-", "_"),
-                    recipe_name.replace("_", "-"),
-                ]
-            ):
+        for name in set(
+            [
+                recipe_name,
+                recipe_name.replace("-", "_"),
+                recipe_name.replace("_", "-"),
+            ]
+        ):
+            try:
                 if cf.get_repo("{}-feedstock".format(name)):
                     existing_recipe_name = name
                     feedstock_exists = True
                     break
-            else:
+                else:
+                    feedstock_exists = False
+            except github.UnknownObjectException as e:
                 feedstock_exists = False
-        except github.UnknownObjectException as e:
-            feedstock_exists = False
 
         if feedstock_exists and existing_recipe_name == recipe_name:
             lints.append("Feedstock with the same name exists in conda-forge.")
