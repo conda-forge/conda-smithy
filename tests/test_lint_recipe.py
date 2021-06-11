@@ -812,13 +812,13 @@ class Test_linter(unittest.TestCase):
 
     @unittest.skipUnless(is_gh_token_set(), "GH_TOKEN not set")
     def test_maintainer_exists(self):
-        lints, hints = linter.lintify(
+        lints, _ = linter.lintify(
             {"extra": {"recipe-maintainers": ["support"]}}, conda_forge=True
         )
         expected_message = 'Recipe maintainer "support" does not exist'
         self.assertIn(expected_message, lints)
 
-        lints = linter.lintify(
+        lints, _ = linter.lintify(
             {"extra": {"recipe-maintainers": ["isuruf"]}}, conda_forge=True
         )
         expected_message = 'Recipe maintainer "isuruf" does not exist'
