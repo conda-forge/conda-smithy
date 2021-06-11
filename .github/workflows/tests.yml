@@ -33,6 +33,8 @@ jobs:
         run: |
           pytest tests --cov conda_smithy
           black --check --verbose --diff --config=pyproject.toml .
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: compute coverage
         shell: bash -l {0}

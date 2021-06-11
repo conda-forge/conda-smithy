@@ -13,6 +13,7 @@ import re
 import shutil
 import subprocess
 import sys
+import requests
 
 import github
 
@@ -706,6 +707,7 @@ def run_conda_forge_specific(meta, recipe_dir, lints, hints):
     gh = github.Github(os.environ["GH_TOKEN"])
     package_section = get_section(meta, "package", lints)
     extra_section = get_section(meta, "extra", lints)
+    sources_section = get_section(meta, "source", lints)
     recipe_dirname = os.path.basename(recipe_dir) if recipe_dir else "recipe"
     recipe_name = package_section.get("name", "").strip()
     is_staged_recipes = recipe_dirname != "recipe"
@@ -713,6 +715,7 @@ def run_conda_forge_specific(meta, recipe_dir, lints, hints):
     # 1: Check that the recipe does not exist in conda-forge or bioconda
     if is_staged_recipes and recipe_name:
         cf = gh.get_user(os.getenv("GH_ORG", "conda-forge"))
+
         for name in set(
             [
                 recipe_name,
@@ -750,6 +753,28 @@ def run_conda_forge_specific(meta, recipe_dir, lints, hints):
                 "Recipe with the same name exists in bioconda: "
                 "please discuss with @conda-forge/bioconda-recipes."
             )
+
+        url = None
+        for source_section in sources_section:
+            if "url" in source_section and source_section["url"].startswith(
+                "https://pypi.io/packages/source/"
+            ):
+                url = source_section["url"]
+        if url:
+            # get pypi name from  urls like "https://pypi.io/packages/source/b/build/build-0.4.0.tar.gz"
+            pypi_name = url.split("/")[6]
+            mapping_request = requests.get(
+                "https://raw.githubusercontent.com/regro/cf-graph-countyfair/master/mappings/pypi/name_mapping.yaml"
+            )
+            if mapping_request.status_code == 200:
+                mapping_raw_yaml = mapping_request.content
+                mapping = get_yaml().load(mapping_raw_yaml)
+                for pkg in mapping:
+                    if pkg.get("pypi_name", "") == pypi_name:
+                        conda_name = pkg["conda_name"]
+                        hints.append(
+                            f"A conda package with same name ({conda_name}) already exists."
+                        )
 
     # 2: Check that the recipe maintainers exists:
     maintainers = extra_section.get("recipe-maintainers", [])
