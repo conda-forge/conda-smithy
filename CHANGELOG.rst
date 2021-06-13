@@ -4,6 +4,36 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.10.2
+====================
+
+**Added:**
+
+* Add a "--feedstock_config" option to the regenerate/rerender, update-anaconda-token, azure-buildid subcommands for providing an alternative path to the feedstock configuration file (normally "conda-forge.yml"). This allows different names or to put the configuration outside the feedstock root.
+* Linter will now check for duplicates of conda packages using pypi name
+* Validate the value of ``noarch``. (Should be ``python`` or ``generic``.)
+
+**Changed:**
+
+* Use ``ubuntu-latest`` instead of ``ubuntu-16`` in the Azure pipeline template.
+
+**Fixed:**
+
+* `short_config_name` is used at azure pipelines artifact publishing step.
+* Duplicate feedstocks with only '-' vs '_' difference is now correctly checked.
+* correctly detect use of `test/script` in outputs
+
+**Authors:**
+
+* Isuru Fernando
+* Uwe L. Korn
+* Ryan Volz
+* Duncan Macleod
+* fhoehle
+* Ben Mares
+
+
+
 v3.10.1
 ====================
 
