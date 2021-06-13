@@ -235,7 +235,7 @@
   email: uwe.korn@quantco.com
   alternate_emails:
   - xhochy@users.noreply.github.com
-  num_commits: 18
+  num_commits: 19
   first_commit: 2019-06-27 08:26:49
   github: xhochy
 - name: C.A.M. Gerlach
@@ -246,7 +246,7 @@
   email: isuru.11@cse.mrt.ac.lk
   alternate_emails:
   - isuruf@gmail.com
-  num_commits: 392
+  num_commits: 399
   first_commit: 2017-01-08 22:03:03
   github: isuruf
 - name: Julian Rüth
@@ -298,7 +298,7 @@
   github: jschueller
 - name: Duncan Macleod
   email: duncan.macleod@ligo.org
-  num_commits: 2
+  num_commits: 3
   first_commit: 2018-12-21 09:06:21
   github: duncanmmacleod
 - name: Peter Killick
@@ -456,7 +456,7 @@
   email: rvolz@mit.edu
   alternate_emails:
   - ryan.volz@gmail.com
-  num_commits: 10
+  num_commits: 11
   first_commit: 2020-07-02 12:02:36
   github: ryanvolz
 - name: Joshua L. Adelman
@@ -494,3 +494,13 @@
   email: levraiphilippeblain@gmail.com
   num_commits: 1
   first_commit: 2020-06-28 18:56:49
+- name: fhoehle
+  email: fhoehle@users.noreply.github.com
+  num_commits: 2
+  first_commit: 2021-04-30 13:12:22
+  github: fhoehle
+- name: Ben Mares
+  email: 15216687+maresb@users.noreply.github.com
+  num_commits: 2
+  first_commit: 2021-05-15 08:16:11
+  github: maresb

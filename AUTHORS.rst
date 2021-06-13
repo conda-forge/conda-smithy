@@ -13,8 +13,8 @@ Authors are sorted by number of commits.
 * Min RK
 * Jaime Rodríguez-Guerra
 * Hadrien Mary
-* Johnny Willemsen
 * Uwe L. Korn
+* Johnny Willemsen
 * Julian Rüth
 * Chris Burr
 * Mark Harfouche
@@ -25,10 +25,10 @@ Authors are sorted by number of commits.
 * Maksim Rakitin
 * Jan Schulz
 * Josh Reichardt
+* Ryan Volz
 * Justin Calamari
 * Jason Furmanek
 * Patrick Sodré
-* Ryan Volz
 * John Kirkham
 * C.A.M. Gerlach
 * refraction-ray
@@ -54,6 +54,7 @@ Authors are sorted by number of commits.
 * Josh Barnes
 * Tobias Megies
 * Jonathan Helmus
+* Duncan Macleod
 * Florian Rathgeber
 * Bruno Oliveira
 * Tony Kelman
@@ -66,13 +67,14 @@ Authors are sorted by number of commits.
 * Alex Goodman
 * Lion Krischer
 * ap--
-* Duncan Macleod
 * Peter Killick
 * Henry Schreiner
 * hajapy
 * Axel Huebl
 * Thomas Hopkins
 * Hugo Slepicka
+* fhoehle
+* Ben Mares
 * lorenz
 * Tom Augspurger
 * Ryan May
