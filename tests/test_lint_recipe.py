@@ -945,6 +945,20 @@ class Test_linter(unittest.TestCase):
         )
         self.assertIn(expected_message, hints)
 
+        # check that this doesn't choke
+        lints, hints = linter.lintify(
+            {
+                "package": {"name": "this-will-never-exist"},
+                "source": {
+                    "url": [
+                        "https://pypi.io/packages/source/s/simplejson/simplejson-3.17.2.tar.gz"
+                    ]
+                },
+            },
+            recipe_dir="recipes/foo",
+            conda_forge=True,
+        )
+
     def test_bad_subheader(self):
         expected_message = (
             "The {} section contained an unexpected "
