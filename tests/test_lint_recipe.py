@@ -950,7 +950,9 @@ class Test_linter(unittest.TestCase):
             {
                 "package": {"name": "this-will-never-exist"},
                 "source": {
-                    "url": ["https://pypi.io/packages/source/s/simplejson/simplejson-3.17.2.tar.gz"]
+                    "url": [
+                        "https://pypi.io/packages/source/s/simplejson/simplejson-3.17.2.tar.gz"
+                    ]
                 },
             },
             recipe_dir="recipes/foo",
