@@ -756,8 +756,12 @@ def run_conda_forge_specific(meta, recipe_dir, lints, hints):
 
         url = None
         for source_section in sources_section:
-            if "url" in source_section and source_section["url"].startswith(
-                "https://pypi.io/packages/source/"
+            if (
+                "url" in source_section
+                and isinstance(source_section["url"], str)
+                and source_section["url"].startswith(
+                    "https://pypi.io/packages/source/"
+                )
             ):
                 url = source_section["url"]
         if url:
