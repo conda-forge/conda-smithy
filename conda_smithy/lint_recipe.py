@@ -756,7 +756,9 @@ def run_conda_forge_specific(meta, recipe_dir, lints, hints):
 
         url = None
         for source_section in sources_section:
-            if str(source_section.get("url")).startswith("https://pypi.io/packages/source/"):
+            if str(source_section.get("url")).startswith(
+                "https://pypi.io/packages/source/"
+            ):
                 url = source_section["url"]
         if url:
             # get pypi name from  urls like "https://pypi.io/packages/source/b/build/build-0.4.0.tar.gz"
