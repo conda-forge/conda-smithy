@@ -4,6 +4,19 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.10.3
+====================
+
+**Fixed:**
+
+* Linting of recipes with multiple URLs was broken in last release and is fixed now
+
+**Authors:**
+
+* Isuru Fernando
+
+
+
 v3.10.2
 ====================
 
