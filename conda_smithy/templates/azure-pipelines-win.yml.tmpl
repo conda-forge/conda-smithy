@@ -91,10 +91,10 @@ jobs:
     - script: |
         call activate base
         {%- if build_with_mambabuild %}
-        conda.exe mambabuild "{{ recipe_dir }}" -m .ci_support\%CONFIG%.yaml
+        conda.exe mambabuild "{{ recipe_dir }}" -m .ci_support\%CONFIG%.yaml --suppress-variables
         exit 1
         {%- else %}
-        conda.exe build "{{ recipe_dir }}" -m .ci_support\%CONFIG%.yaml
+        conda.exe build "{{ recipe_dir }}" -m .ci_support\%CONFIG%.yaml --suppress-variables
         {%- endif %}
       displayName: Build recipe
       env:
