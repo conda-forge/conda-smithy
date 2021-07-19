@@ -6,7 +6,7 @@ import subprocess
 import textwrap
 import yaml
 import warnings
-from collections import OrderedDict, namedtuple
+from collections import OrderedDict, namedtuple, Counter
 import copy
 import hashlib
 import requests
@@ -1261,6 +1261,24 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
     azure_settings = deepcopy(forge_config["azure"][f"settings_{platform}"])
     azure_settings.setdefault("strategy", {})
     azure_settings["strategy"].setdefault("matrix", {})
+
+
+    # Limit the amount of parallel jobs running at the same time
+    # weighted by platform population
+    max_parallel = forge_config["azure"]["max_parallel"]
+    if len(forge_config["configs"]) > max_parallel:
+        n_configs = len(forge_config["configs"])
+        platform_counts = Counter(
+            [
+                k["build_platform"].split("-")[0]
+                for k in forge_config["configs"]
+            ]
+        )
+        ratio = platform_counts[platform.split("-")[0]] / n_configs
+        azure_settings["strategy"]["maxParallel"] = \
+            max(1, round(max_parallel * ratio))
+
+
     for data in forge_config["configs"]:
         if not data["build_platform"].startswith(platform):
             continue
@@ -1575,6 +1593,8 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
             "timeout_minutes": None,
             # Toggle creating pipeline artifacts for conda build_artifacts dir
             "store_build_artifacts": False,
+            # Maximum number of parallel jobs allowed across platforms
+            "max_parallel": 50,
         },
         "provider": {
             "linux_64": "azure",
