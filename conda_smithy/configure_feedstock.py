@@ -1262,7 +1262,6 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
     azure_settings.setdefault("strategy", {})
     azure_settings["strategy"].setdefault("matrix", {})
 
-
     # Limit the amount of parallel jobs running at the same time
     # weighted by platform population
     max_parallel = forge_config["azure"]["max_parallel"]
@@ -1275,9 +1274,9 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
             ]
         )
         ratio = platform_counts[platform.split("-")[0]] / n_configs
-        azure_settings["strategy"]["maxParallel"] = \
-            max(1, round(max_parallel * ratio))
-
+        azure_settings["strategy"]["maxParallel"] = max(
+            1, round(max_parallel * ratio)
+        )
 
     for data in forge_config["configs"]:
         if not data["build_platform"].startswith(platform):
