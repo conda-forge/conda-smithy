@@ -10,8 +10,8 @@ Authors are sorted by number of commits.
 * Dougal J. Sutherland
 * shadow_walker
 * Michael Sarahan
-* Min RK
 * Jaime Rodríguez-Guerra
+* Min RK
 * Hadrien Mary
 * Uwe L. Korn
 * Johnny Willemsen
@@ -95,3 +95,4 @@ Authors are sorted by number of commits.
 * Nils Wentzell
 * Stuart Berg
 * Philippe Blain
+* Billy K. Poon

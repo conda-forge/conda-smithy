@@ -246,7 +246,7 @@
   email: isuru.11@cse.mrt.ac.lk
   alternate_emails:
   - isuruf@gmail.com
-  num_commits: 405
+  num_commits: 407
   first_commit: 2017-01-08 22:03:03
   github: isuruf
 - name: Julian Rüth
@@ -471,7 +471,7 @@
   github: jwillemsen
 - name: Jaime Rodríguez-Guerra
   email: jaimergp@users.noreply.github.com
-  num_commits: 26
+  num_commits: 29
   first_commit: 2020-11-01 14:18:08
   github: jaimergp
 - name: Bastian Zimmermann
@@ -504,3 +504,8 @@
   num_commits: 2
   first_commit: 2021-05-15 08:16:11
   github: maresb
+- name: Billy K. Poon
+  email: bkpoon@lbl.gov
+  num_commits: 1
+  first_commit: 2021-06-18 18:57:21
+  github: bkpoon
