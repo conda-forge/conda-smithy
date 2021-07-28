@@ -4,6 +4,26 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.11.0
+====================
+
+**Added:**
+
+* The maximum number of parallel jobs a feedstock can run at once will be limited
+  to ``50``. This will ensure that all projects have a fair access to CI resources
+  without job-hungry feedstocks hogging the build queue.
+
+**Fixed:**
+
+* Add --suppress-variables flag to conda-build command in Windows template
+
+**Authors:**
+
+* Jaime Rodríguez-Guerra
+* Billy K. Poon
+
+
+
 v3.10.3
 ====================
 
