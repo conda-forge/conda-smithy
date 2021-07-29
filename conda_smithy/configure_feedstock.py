@@ -953,7 +953,8 @@ def _get_platforms_of_provider(provider, forge_config):
 
         if build_platform_arch not in forge_config["provider"]:
             continue
-        if forge_config["provider"][build_platform_arch] == provider:
+        providers = conda_build.utils.ensure_list(forge_config["provider"][build_platform_arch])
+        if provider in providers:
             platforms.append(platform)
             archs.append(arch)
             if platform == "linux" and arch == "64":
@@ -1597,9 +1598,9 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
             "max_parallel": 50,
         },
         "provider": {
-            "linux_64": "azure",
-            "osx_64": "azure",
-            "win_64": "azure",
+            "linux_64": ["azure"],
+            "osx_64": ["azure"],
+            "win_64": ["azure"],
             # Following platforms are disabled by default
             "linux_aarch64": None,
             "linux_ppc64le": None,
@@ -1762,13 +1763,13 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
     logger.debug("## END CONFIGURATION\n")
 
     if config["provider"]["linux_aarch64"] in {"default", "native"}:
-        config["provider"]["linux_aarch64"] = "drone"
+        config["provider"]["linux_aarch64"] = ["drone"]
 
     if config["provider"]["linux_ppc64le"] in {"default", "native"}:
-        config["provider"]["linux_ppc64le"] = "travis"
+        config["provider"]["linux_ppc64le"] = ["travis"]
 
     if config["provider"]["linux_s390x"] in {"default", "native"}:
-        config["provider"]["linux_s390x"] = "travis"
+        config["provider"]["linux_s390x"] = ["travis"]
 
     # Fallback handling set to azure, for platforms that are not fully specified by this time
     for platform in config["provider"]:
