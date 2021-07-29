@@ -20,7 +20,11 @@ on: [push, pull_request]
 jobs:
   build:
     name: {% raw %}${{ matrix.CONFIG }}{% endraw %}
+    {%- if github_actions.self_hosted %}
+    runs-on {% raw %}${{ matrix.labels }}{% endraw %}
+    {%- else %}
     runs-on: {% raw %}${{ matrix.os }}{% endraw %}-latest
+    {%- endif %}
     strategy:
       fail-fast: false
       matrix:
@@ -30,11 +34,29 @@ jobs:
             UPLOAD_PACKAGES: {{ data.upload }}
         {%- if data.build_platform.startswith("osx") %}
             os: macos
+        {%- if github_actions.self_hosted %}
+            labels: ['macOS', 'self-hosted', 'x64']
+        {%- endif %}
+        {%- elif data.build_platform.startswith("linux-64") %}
+            DOCKER_IMAGE: {{ data.config["docker_image"][-1] }}
+            os: ubuntu
+        {%- if github_actions.self_hosted %}
+            labels: ['linux', 'self-hosted', 'x64']
+        {%- endif %}
+        {%- elif data.build_platform.startswith("linux-aarch64") %}
+            DOCKER_IMAGE: {{ data.config["docker_image"][-1] }}
+            os: ubuntu
+        {%- if github_actions.self_hosted %}
+            labels: ['linux', 'self-hosted', 'ARM64']
+        {%- endif %}
         {%- elif data.build_platform.startswith("linux") %}
             DOCKER_IMAGE: {{ data.config["docker_image"][-1] }}
             os: ubuntu
         {%- elif data.build_platform.startswith("win") %}
             os: windows
+        {%- if github_actions.self_hosted %}
+            labels: ['windows', 'self-hosted', 'x64']
+        {%- endif %}
         {%- endif %}
         {%- endfor %}
     steps:
