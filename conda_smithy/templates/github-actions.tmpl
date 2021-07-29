@@ -167,5 +167,5 @@ jobs:
 {%- endif %}
 {%- for secret in secrets %}
         {{ secret }}: {% raw %}${{{% endraw %} secrets.{{ secret }} {% raw %}}}{% endraw %}
-      if: matrix.os == 'windows'
 {%- endfor %}
+      if: matrix.os == 'windows'
