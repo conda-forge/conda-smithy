@@ -11,7 +11,11 @@
 {%- endfor %}
 
 name: Build conda package
+{%- if github_actions.self_hosted %}
+on: [push]
+{%- else %}
 on: [push, pull_request]
+{%- endif %}
 
 jobs:
   build:
