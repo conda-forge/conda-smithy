@@ -615,6 +615,7 @@ def _render_ci_provider(
             if (
                 channel_target.startswith("conda-forge ")
                 and provider_name == "github_actions"
+                and not forge_config["github_actions"]["self_hosted"]
             ):
                 raise RuntimeError(
                     "Using github_actions as the CI provider inside "
@@ -1646,6 +1647,9 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
             "repo_name": "",
             "branch_name": "master",
         },
+        "github_actions": {
+            "self_hosted": False,
+        }
         "recipe_dir": "recipe",
         "skip_render": [],
         "bot": {"automerge": False},
