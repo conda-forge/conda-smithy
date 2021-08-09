@@ -1650,7 +1650,7 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
         },
         "github_actions": {
             "self_hosted": False,
-        }
+        },
         "recipe_dir": "recipe",
         "skip_render": [],
         "bot": {"automerge": False},
