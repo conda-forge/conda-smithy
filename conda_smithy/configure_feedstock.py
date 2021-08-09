@@ -1772,9 +1772,11 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
         config["provider"]["linux_s390x"] = ["travis"]
 
     # Fallback handling set to azure, for platforms that are not fully specified by this time
-    for platform in config["provider"]:
-        if config["provider"][platform] in {"default", "emulated"}:
-            config["provider"][platform] = "azure"
+    for platform, providers in config["provider"].items():
+        for i, provider in enumerate(providers):
+            if provider in {"default", "emulated"}:
+                providers[i] = "azure"
+
     # Set the environment variable for the compiler stack
     os.environ["CF_COMPILER_STACK"] = config["compiler_stack"]
     # Set valid ranger for the supported platforms
