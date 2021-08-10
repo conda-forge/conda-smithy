@@ -14,6 +14,7 @@ import conda_build.api
 from distutils.version import LooseVersion
 from conda_build.metadata import MetaData
 from conda_smithy.utils import get_feedstock_name_from_meta
+from ruamel.yaml import YAML
 
 from . import configure_feedstock
 from . import feedstock_io
@@ -51,6 +52,23 @@ def generate_feedstock_content(target_directory, source_recipe_dir):
     if not os.path.exists(forge_yml):
         with feedstock_io.write_file(forge_yml) as fh:
             fh.write("{}")
+
+    # merge in the existing configuration in the source recipe directory
+    forge_yml_recipe = os.path.join(source_recipe_dir, "conda-forge.yml")
+    yaml = YAML()
+    if os.path.exists(forge_yml_recipe):
+        os.unlink(os.path.join(target_recipe_dir, "conda-forge.yml"))
+        try:
+            with open(forge_yml_recipe, 'r') as fp:
+                _cfg = yaml.load(fp.read())
+        except:
+            _cfg = {}
+
+        with open(forge_yml, 'r') as fp:
+            _cfg_feedstock = yaml.load(fp.read())
+            _cfg_feedstock.update(_cfg)
+        with open(forge_yml, 'w') as fp:
+            yaml.dump(_cfg_feedstock, fp)
 
 
 class Subcommand(object):
