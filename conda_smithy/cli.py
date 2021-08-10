@@ -59,15 +59,15 @@ def generate_feedstock_content(target_directory, source_recipe_dir):
     if os.path.exists(forge_yml_recipe):
         os.unlink(os.path.join(target_recipe_dir, "conda-forge.yml"))
         try:
-            with open(forge_yml_recipe, 'r') as fp:
+            with open(forge_yml_recipe, "r") as fp:
                 _cfg = yaml.load(fp.read())
         except:
             _cfg = {}
 
-        with open(forge_yml, 'r') as fp:
+        with open(forge_yml, "r") as fp:
             _cfg_feedstock = yaml.load(fp.read())
             merge_dict(_cfg, _cfg_feedstock)
-        with open(forge_yml, 'w') as fp:
+        with open(forge_yml, "w") as fp:
             yaml.dump(_cfg_feedstock, fp)
 
 
