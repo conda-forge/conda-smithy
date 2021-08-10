@@ -107,7 +107,7 @@ def update_conda_forge_config(forge_yaml):
 
 
 def merge_dict(src, dest):
-    """Recursive merge dictionary """
+    """Recursive merge dictionary"""
     for key, value in src.items():
         if isinstance(value, dict):
             # get node or create one
