@@ -13,7 +13,7 @@ import conda
 import conda_build.api
 from distutils.version import LooseVersion
 from conda_build.metadata import MetaData
-from conda_smithy.utils import get_feedstock_name_from_meta
+from conda_smithy.utils import get_feedstock_name_from_meta, merge_dict
 from ruamel.yaml import YAML
 
 from . import configure_feedstock
@@ -66,7 +66,7 @@ def generate_feedstock_content(target_directory, source_recipe_dir):
 
         with open(forge_yml, 'r') as fp:
             _cfg_feedstock = yaml.load(fp.read())
-            _cfg_feedstock.update(_cfg)
+            merge_dict(_cfg, _cfg_feedstock)
         with open(forge_yml, 'w') as fp:
             yaml.dump(_cfg_feedstock, fp)
 
