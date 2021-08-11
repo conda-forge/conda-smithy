@@ -2,6 +2,8 @@ import argparse
 import collections
 import os
 import subprocess
+from textwrap import dedent
+
 import yaml
 import shutil
 
@@ -45,6 +47,43 @@ def test_init(py_recipe):
     init_obj(args)
     destination = os.path.join(recipe, "py-test-feedstock")
     assert os.path.isdir(destination)
+
+
+def test_init_with_custom_config(py_recipe):
+    """This is the command that takes the initial staged-recipe folder and turns it into a
+    feedstock"""
+    # actual parser doesn't matter.  It's used for initialization only
+    parser = argparse.ArgumentParser()
+    subparser = parser.add_subparsers()
+    init_obj = cli.Init(subparser)
+    recipe = py_recipe.recipe
+    # expected args object has
+
+    with open(os.path.join(recipe, "recipe", "conda-forge.yml"), "w") as fp:
+        fp.write(
+            dedent(
+                """\
+            bot:
+              automerge: true
+              run_deps_from_wheel: true
+            """
+            )
+        )
+
+    args = InitArgs(
+        recipe_directory=os.path.join(recipe, "recipe"),
+        feedstock_directory=os.path.join(recipe, "{package.name}-feedstock"),
+        temporary_directory=os.path.join(recipe, "temp"),
+    )
+    init_obj(args)
+    destination = os.path.join(recipe, "py-test-feedstock")
+    assert os.path.isdir(destination)
+    data = yaml.safe_load(
+        open(os.path.join(destination, "conda-forge.yml"), "r").read()
+    )
+    assert data.get("bot") != None
+    assert data["bot"]["automerge"] == True
+    assert data["bot"]["run_deps_from_wheel"] == True
 
 
 def test_init_multiple_output_matrix(testing_workdir):
