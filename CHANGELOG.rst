@@ -4,6 +4,28 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.12
+====================
+
+**Authors:**
+
+* Marius van Niekerk
+
+
+
+v3.12
+====================
+
+**Changed:**
+
+* conda smithy init will now copy over the conda-forge.yml from the source recipe directory (if present)
+
+**Authors:**
+
+* Marius van Niekerk
+
+
+
 v3.11.0
 ====================
 
@@ -821,7 +843,7 @@ v3.6.7
 
 **Added:**
 
-Non-noarch recipes shouldn't use version constraints on python and r-base. 
+Non-noarch recipes shouldn't use version constraints on python and r-base.
 The linter only checked for python, this PR addes the check for r-base.
 * Added an option to skip adding webhooks
 
@@ -1148,7 +1170,7 @@ v3.3.5
 * Added native aarch64 support for builds using Drone.io. This can be enabled by
   either using `provider: {linux_aarch64: drone}` or `provider: {linux_aarch64:
   native}` in the conda-forge.yml.
-  
+
   Currently, drone has to be enabled manually as there is no automatic CI
   registration for repos.
 * export CI env variable with CI provider name
@@ -1181,7 +1203,7 @@ v3.3.3
 
 * Added native ppc64le support to for travis-ci.  This can be enabled by either using
   `provider: {linux_ppc64le: travis}` or `provider: {linux_ppc64le: native}` in the conda-forge.yml.
-  These will be the new default behavior going forward for ppc64le builds.  If native builds are not needed the 
+  These will be the new default behavior going forward for ppc64le builds.  If native builds are not needed the
   qemu based builds on azure will continue to function as before.
 * Added `DOCKER_IMAGE` variable to `run_docker_build.sh`
 
@@ -1571,7 +1593,3 @@ None
 None
 
 * Included package badges in a table
-
-
-
-
