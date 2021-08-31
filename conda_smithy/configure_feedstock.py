@@ -947,7 +947,7 @@ def _get_platforms_of_provider(provider, forge_config):
         if (
             build_arch == "64"
             and build_platform in forge_config["provider"]
-            and forge_config["provider"][build_platform] is not None
+            and forge_config["provider"][build_platform]
         ):
             build_platform_arch = build_platform
 
