@@ -32,10 +32,15 @@ jobs:
         {%- for data in configs %}
           - CONFIG: {{ data.config_name }}
             UPLOAD_PACKAGES: {{ data.upload }}
-        {%- if data.build_platform.startswith("osx") %}
+        {%- if data.build_platform.startswith("osx-64") %}
             os: macos
         {%- if github_actions.self_hosted %}
             labels: ['macOS', 'self-hosted', 'x64']
+        {%- endif %}
+        {%- if data.build_platform.startswith("osx-arm64") %}
+            os: macos
+        {%- if github_actions.self_hosted %}
+            labels: ['macOS', 'self-hosted', 'ARM64']
         {%- endif %}
         {%- elif data.build_platform.startswith("linux-64") %}
             DOCKER_IMAGE: {{ data.config["docker_image"][-1] }}
