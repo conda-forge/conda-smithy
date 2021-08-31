@@ -953,7 +953,7 @@ def _get_platforms_of_provider(provider, forge_config):
 
         if build_platform_arch not in forge_config["provider"]:
             continue
-        providers = conda_build.utils.ensure_list(forge_config["provider"][build_platform_arch])
+        providers = forge_config["provider"][build_platform_arch]
         if provider in providers:
             platforms.append(platform)
             archs.append(arch)
@@ -1770,6 +1770,13 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
 
     if config["provider"]["linux_s390x"] in {"default", "native"}:
         config["provider"]["linux_s390x"] = ["travis"]
+
+    # Older conda-smithy versions supported this with only one
+    # entry. To avoid breakage, we are converting single elements
+    # to a list of length one.
+    for platform, providers in config["provider"].items():
+        providers = conda_build.utils.ensure_list(providers)
+        config["provider"][platform] = providers
 
     # Fallback handling set to azure, for platforms that are not fully specified by this time
     for platform, providers in config["provider"].items():
