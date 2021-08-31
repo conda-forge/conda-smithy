@@ -37,7 +37,7 @@ jobs:
         {%- if github_actions.self_hosted %}
             labels: ['macOS', 'self-hosted', 'x64']
         {%- endif %}
-        {%- if data.build_platform.startswith("osx-arm64") %}
+        {%- elif data.build_platform.startswith("osx-arm64") %}
             os: macos
         {%- if github_actions.self_hosted %}
             labels: ['macOS', 'self-hosted', 'ARM64']
