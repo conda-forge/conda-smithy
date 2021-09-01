@@ -615,6 +615,7 @@ def _render_ci_provider(
             if (
                 channel_target.startswith("conda-forge ")
                 and provider_name == "github_actions"
+                and not forge_config["github_actions"]["self_hosted"]
             ):
                 raise RuntimeError(
                     "Using github_actions as the CI provider inside "
@@ -946,13 +947,14 @@ def _get_platforms_of_provider(provider, forge_config):
         if (
             build_arch == "64"
             and build_platform in forge_config["provider"]
-            and forge_config["provider"][build_platform] is not None
+            and forge_config["provider"][build_platform]
         ):
             build_platform_arch = build_platform
 
         if build_platform_arch not in forge_config["provider"]:
             continue
-        if forge_config["provider"][build_platform_arch] == provider:
+        providers = forge_config["provider"][build_platform_arch]
+        if provider in providers:
             platforms.append(platform)
             archs.append(arch)
             if platform == "linux" and arch == "64":
@@ -1596,9 +1598,9 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
             "max_parallel": 50,
         },
         "provider": {
-            "linux_64": "azure",
-            "osx_64": "azure",
-            "win_64": "azure",
+            "linux_64": ["azure"],
+            "osx_64": ["azure"],
+            "win_64": ["azure"],
             # Following platforms are disabled by default
             "linux_aarch64": None,
             "linux_ppc64le": None,
@@ -1645,6 +1647,9 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
             "user_or_org": "conda-forge",
             "repo_name": "",
             "branch_name": "master",
+        },
+        "github_actions": {
+            "self_hosted": False,
         },
         "recipe_dir": "recipe",
         "skip_render": [],
@@ -1758,18 +1763,27 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
     logger.debug("## END CONFIGURATION\n")
 
     if config["provider"]["linux_aarch64"] in {"default", "native"}:
-        config["provider"]["linux_aarch64"] = "drone"
+        config["provider"]["linux_aarch64"] = ["drone"]
 
     if config["provider"]["linux_ppc64le"] in {"default", "native"}:
-        config["provider"]["linux_ppc64le"] = "travis"
+        config["provider"]["linux_ppc64le"] = ["travis"]
 
     if config["provider"]["linux_s390x"] in {"default", "native"}:
-        config["provider"]["linux_s390x"] = "travis"
+        config["provider"]["linux_s390x"] = ["travis"]
+
+    # Older conda-smithy versions supported this with only one
+    # entry. To avoid breakage, we are converting single elements
+    # to a list of length one.
+    for platform, providers in config["provider"].items():
+        providers = conda_build.utils.ensure_list(providers)
+        config["provider"][platform] = providers
 
     # Fallback handling set to azure, for platforms that are not fully specified by this time
-    for platform in config["provider"]:
-        if config["provider"][platform] in {"default", "emulated"}:
-            config["provider"][platform] = "azure"
+    for platform, providers in config["provider"].items():
+        for i, provider in enumerate(providers):
+            if provider in {"default", "emulated"}:
+                providers[i] = "azure"
+
     # Set the environment variable for the compiler stack
     os.environ["CF_COMPILER_STACK"] = config["compiler_stack"]
     # Set valid ranger for the supported platforms
