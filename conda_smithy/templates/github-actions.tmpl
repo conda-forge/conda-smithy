@@ -21,7 +21,7 @@ jobs:
   build:
     name: {% raw %}${{ matrix.CONFIG }}{% endraw %}
     {%- if github_actions.self_hosted %}
-    runs-on {% raw %}${{ matrix.labels }}{% endraw %}
+    runs-on: {% raw %}${{ matrix.labels }}{% endraw %}
     {%- else %}
     runs-on: {% raw %}${{ matrix.os }}{% endraw %}-latest
     {%- endif %}
