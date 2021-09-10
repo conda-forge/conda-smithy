@@ -175,7 +175,7 @@ def git_versions_from_keywords(keywords, tag_prefix, verbose):
         # refs/heads/ and refs/tags/ prefixes that would let us distinguish
         # between branches and tags. By ignoring refnames without digits, we
         # filter out many common branch names like "release" and
-        # "stabilization", as well as "HEAD" and "master".
+        # "stabilization", as well as "HEAD" and "main".
         tags = set([r for r in refs if re.search(r"\d", r)])
         if verbose:
             print("discarding '%s', no digits" % ",".join(set(refs) - tags))
@@ -261,8 +261,8 @@ def git_pieces_from_vcs(tag_prefix, root, verbose, run_command=run_command):
             "\n"
         )
         branches = [branch[2:] for branch in branches if branch[4:5] != "("]
-        if "master" in branches:
-            branch_name = "master"
+        if "main" in branches:
+            branch_name = "main"
         elif not branches:
             branch_name = None
         else:
@@ -500,7 +500,7 @@ def render_pep440_branch_based(pieces):
     # exceptions:
     # 1: no tags. 0.0.0.devDISTANCE[+gHEX]
 
-    master = pieces.get("branch") == "master"
+    main = pieces.get("branch") == "main"
     maint = re.match(default_maint_branch_regexp, pieces.get("branch") or "")
 
     # If we are on a tag, just pep440-pre it.
@@ -520,11 +520,11 @@ def render_pep440_branch_based(pieces):
                 rendered = add_one_to_version(pieces["closest-tag"])
                 if pieces["distance"]:
                     rendered += ".dev%d" % pieces["distance"]
-                # Put the branch name in if it isn't master nor a
+                # Put the branch name in if it isn't main nor a
                 # maintenance branch.
 
             plus = "+"
-            if not (master or maint):
+            if not (main or maint):
                 rendered += "%s%s" % (
                     plus,
                     pieces.get("branch") or "unknown_branch",
