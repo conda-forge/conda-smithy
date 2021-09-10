@@ -11,7 +11,7 @@ Overview
   (For travis-ci.com, configure your org or user to enable the service for all repos)
 
 [![tests](https://github.com/conda-forge/conda-smithy/workflows/tests/badge.svg)](https://github.com/conda-forge/conda-smithy/actions?query=workflow%3Atests)
-[![Coverage Status](https://coveralls.io/repos/github/conda-forge/conda-smithy/badge.svg?branch=master)](https://coveralls.io/github/conda-forge/conda-smithy?branch=master)
+[![Coverage Status](https://coveralls.io/repos/github/conda-forge/conda-smithy/badge.svg?branch=main)](https://coveralls.io/github/conda-forge/conda-smithy?branch=main)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
 
 Installation
