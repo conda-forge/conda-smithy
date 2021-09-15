@@ -469,7 +469,7 @@ def _get_fast_finish_script(
 ):
     get_fast_finish_script = ""
     fast_finish_script = ""
-    tooling_branch = "master"
+    tooling_branch = forge_config["github"]["tooling_branch_name"]
 
     cfbs_fpath = os.path.join(
         forge_dir, forge_config["recipe_dir"], "ff_ci_pr_build.py"
@@ -792,6 +792,7 @@ def _render_ci_provider(
             platforms=platforms,
             archs=archs,
             enable_platform=enable_platform,
+            provider_name=provider_name,
         )
     else:
         return forge_config
@@ -1529,6 +1530,16 @@ def render_README(jinja_env, forge_config, forge_dir, render_info=None):
         remove_file_or_dir(code_owners_file)
 
 
+def render_github_actions_services(jinja_env, forge_config, forge_dir):
+    # render github actions files for automerge and rerendering services
+    for template_file in ["automerge.yml", "webservices.yml"]:
+        template = jinja_env.get_template(template_file + ".tmpl")
+        target_fname = os.path.join(forge_dir, ".github", "workflows", template_file)
+        new_file_contents = template.render(**forge_config)
+        with write_file(target_fname) as fh:
+            fh.write(new_file_contents)
+
+
 def copy_feedstock_content(forge_config, forge_dir):
     feedstock_content = os.path.join(conda_forge_content, "feedstock_content")
     skip_files = ["README", "__pycache__"]
@@ -1561,7 +1572,6 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
         "drone": {},
         "travis": {},
         "circle": {},
-        "github_actions": {},
         "config_version": "2",
         "appveyor": {"image": "Visual Studio 2017"},
         "azure": {
@@ -1647,6 +1657,7 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
             "user_or_org": "conda-forge",
             "repo_name": "",
             "branch_name": "master",
+            "tooling_branch_name": "master",
         },
         "github_actions": {
             "self_hosted": False,
@@ -2124,11 +2135,15 @@ def main(
         render_github_actions(env, config, forge_dir, return_metadata=True)
     )
     logger.debug("github_actions rendered")
+    render_github_actions_services(env, config, forge_dir)
+    logger.debug("github_actions services rendered")
     # put azure first just in case
+    azure_ind = ([ri["provider_name"] for ri in render_info]).index("azure")
     tmp = render_info[0]
-    render_info[0] = render_info[-2]
-    render_info[-2] = tmp
+    render_info[0] = render_info[azure_ind]
+    render_info[azure_ind] = tmp
     render_README(env, config, forge_dir, render_info)
+    logger.debug("README rendered")
 
     if os.path.isdir(os.path.join(forge_dir, ".ci_support")):
         with write_file(os.path.join(forge_dir, ".ci_support", "README")) as f:
