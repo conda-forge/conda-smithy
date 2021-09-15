@@ -1534,7 +1534,9 @@ def render_github_actions_services(jinja_env, forge_config, forge_dir):
     # render github actions files for automerge and rerendering services
     for template_file in ["automerge.yml", "webservices.yml"]:
         template = jinja_env.get_template(template_file + ".tmpl")
-        target_fname = os.path.join(forge_dir, ".github", "workflows", template_file)
+        target_fname = os.path.join(
+            forge_dir, ".github", "workflows", template_file
+        )
         new_file_contents = template.render(**forge_config)
         with write_file(target_fname) as fh:
             fh.write(new_file_contents)
