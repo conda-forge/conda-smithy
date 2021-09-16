@@ -702,7 +702,11 @@ def test_choco_install(choco_recipe, jinja_env):
 
 
 def test_webservices_action_exists(py_recipe, jinja_env):
-    cnfgr_fdstk.copy_feedstock_content(py_recipe.config, py_recipe.recipe)
+    cnfgr_fdstk.render_github_actions_services(
+        jinja_env=jinja_env,
+        forge_config=py_recipe.config,
+        forge_dir=py_recipe.recipe,
+    )
     assert os.path.exists(
         os.path.join(py_recipe.recipe, ".github/workflows/webservices.yml")
     )
@@ -715,8 +719,11 @@ def test_webservices_action_exists(py_recipe, jinja_env):
 
 
 def test_automerge_action_exists(py_recipe, jinja_env):
-    cfg = copy.deepcopy(py_recipe.config)
-    cnfgr_fdstk.copy_feedstock_content(cfg, py_recipe.recipe)
+    cnfgr_fdstk.render_github_actions_services(
+        jinja_env=jinja_env,
+        forge_config=py_recipe.config,
+        forge_dir=py_recipe.recipe,
+    )
     assert os.path.exists(
         os.path.join(py_recipe.recipe, ".github/workflows/automerge.yml")
     )
