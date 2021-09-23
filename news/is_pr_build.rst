@@ -4,7 +4,7 @@
 
 **Changed:**
 
-* <news item>
+* Updated CircleCI xcode version to 13.0.0 to prevent failures.
 
 **Deprecated:**
 

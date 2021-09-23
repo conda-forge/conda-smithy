@@ -22,7 +22,7 @@ jobs:
     machine: true
 {%- else %}
     macos:
-      xcode: "9.0"
+      xcode: "13.0.0"
 {%- endif %}
     environment:
       - CONFIG: "{{ data.config_name }}"
