@@ -137,4 +137,4 @@ jobs:
 {%- for secret in secrets %}
         {{ secret }}: $({{ secret }})
 {%- endfor %}
-      condition: and(succeeded(), not(eq(variables['UPLOAD_PACKAGES'], 'False')))
+      condition: and(succeeded(), not(eq(variables['UPLOAD_PACKAGES'], 'False')), not(eq(variables['Build.Reason'], 'PullRequest')))

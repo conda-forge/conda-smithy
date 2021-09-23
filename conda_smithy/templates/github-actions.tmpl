@@ -94,6 +94,11 @@ jobs:
         docker run --rm --privileged multiarch/qemu-user-static:register --reset --credential yes
         export FEEDSTOCK_NAME="$(basename $GITHUB_REPOSITORY)"
         export GIT_BRANCH="$(basename $GITHUB_REF)"
+        if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
+          export IS_PR_BUILD="True"
+        else
+          export IS_PR_BUILD="False"
+        fi
         echo "::endgroup::"
         ./.scripts/run_docker_build.sh
 
@@ -113,6 +118,11 @@ jobs:
       run: |
         export FEEDSTOCK_NAME="$(basename $GITHUB_REPOSITORY)"
         export GIT_BRANCH="$(basename $GITHUB_REF)"
+        if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
+          export IS_PR_BUILD="True"
+        else
+          export IS_PR_BUILD="False"
+        fi
         ./.scripts/run_osx_build.sh
 
 {%- for choco_pkg in choco %}
@@ -155,12 +165,19 @@ jobs:
         {%- endif %}
         set "FEEDSTOCK_NAME=%GITHUB_REPOSITORY:*/=%"
         set "GIT_BRANCH=%GITHUB_REF:refs/heads/=%"
+        if /i "%GITHUB_EVENT_NAME%" == "pull_request" (
+          set "IS_PR_BUILD=True"
+        ) else (
+          set "IS_PR_BUILD=False"
+        )
         {%- if conda_forge_output_validation %}
         validate_recipe_outputs "%FEEDSTOCK_NAME%"
         if errorlevel 1 exit 1
         {%- endif %}
         if /i "%UPLOAD_PACKAGES%" == "true" (
-          upload_package {% if conda_forge_output_validation %}--validate --feedstock-name="%FEEDSTOCK_NAME%"{% endif %}{% if private_upload %} --private{% endif %} .\ ".\{{ recipe_dir }}" .ci_support\%CONFIG%.yaml
+          if /i "%IS_PR_BUILD%" == "false" (
+            upload_package {% if conda_forge_output_validation %}--validate --feedstock-name="%FEEDSTOCK_NAME%"{% endif %}{% if private_upload %} --private{% endif %} .\ ".\{{ recipe_dir }}" .ci_support\%CONFIG%.yaml
+          )
         )
       env:
         PYTHONUNBUFFERED: 1

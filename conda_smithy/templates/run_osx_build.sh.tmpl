@@ -81,7 +81,7 @@ exit 1
 {%- else %}
 ( startgroup "Uploading packages" ) 2> /dev/null
 
-if [[ "${UPLOAD_PACKAGES}" != "False" ]]; then
+if [[ "${UPLOAD_PACKAGES}" != "False" ]] && [[ "${IS_PR_BUILD}" == "False" ]]; then
   upload_package {% if conda_forge_output_validation %}--validate --feedstock-name="${FEEDSTOCK_NAME}"{% endif %}{% if private_upload %} --private{% endif %} ./ ./{{ recipe_dir }} ./.ci_support/${CONFIG}.yaml
 fi
 

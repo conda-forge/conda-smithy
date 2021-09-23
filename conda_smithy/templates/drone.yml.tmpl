@@ -37,6 +37,7 @@ steps:
 {%- if upload_on_branch %}
     - export UPLOAD_ON_BRANCH="{{ upload_on_branch }}"
 {%- endif %}
+    - if [[ "${DRONE_PULL_REQUEST:-}" == "" ]]; then export IS_PR_BUILD="False"; else export IS_PR_BUILD="True"; fi
     - sed -i '$ichown -R conda:conda "$FEEDSTOCK_ROOT"' /opt/docker/bin/entrypoint
     - /opt/docker/bin/entrypoint $FEEDSTOCK_ROOT/.scripts/build_steps.sh
     - echo "Done building"

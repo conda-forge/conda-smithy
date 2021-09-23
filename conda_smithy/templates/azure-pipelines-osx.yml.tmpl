@@ -19,6 +19,11 @@ jobs:
 {%- if upload_on_branch %}
       export UPLOAD_ON_BRANCH="{{ upload_on_branch }}"
 {%- endif %}
+      if [[ "${BUILD_REASON:-}" == "PullRequest" ]]; then
+        export IS_PR_BUILD="True"
+      else
+        export IS_PR_BUILD="False"
+      fi
       ./.scripts/run_osx_build.sh
     displayName: Run OSX build
     env:
