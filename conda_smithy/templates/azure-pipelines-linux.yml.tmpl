@@ -33,6 +33,11 @@ jobs:
 {%- if docker.run_args is defined %}
         export CONDA_FORGE_DOCKER_RUN_ARGS="{{ docker.run_args }}"
 {%- endif %}
+        if [[ "${BUILD_REASON:-}" == "PullRequest" ]]; then
+          export IS_PR_BUILD="True"
+        else
+          export IS_PR_BUILD="False"
+        fi
         .scripts/run_docker_build.sh
     displayName: Run docker build
     env:
