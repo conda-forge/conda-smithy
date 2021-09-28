@@ -5,7 +5,8 @@
 
 **Changed:**
 
-* Azure build artifacts for failed builds are now zipped before being uploaded, with some cache directories and the conda build/host/test environments removed, to make user download smaller and faster.
+* Azure build artifacts are now zipped before being uploaded, with some cache directories and the conda build/host/test environments removed, to make user download smaller and faster.
+* A separate Azure build artifact, including only the conda build/host/test environments, is additionally created for failed builds.
 * Azure artifact names are now only shortened (uniquely) when necessary to keep the name below 80 characters.
 
 **Deprecated:**

@@ -33,51 +33,18 @@ jobs:
 
 {%- if azure.store_build_artifacts %}
   - script: |
-        # Set the artifact name, specialized for this particular job run.
-        ARTIFACT_UNIQUE_ID="$(build.BuildNumber).$(system.JobAttempt)_$(CONFIG)"
-        if [[ {% raw %}${#ARTIFACT_UNIQUE_ID}{% endraw %} -gt 80 ]]; then
-          ARTIFACT_UNIQUE_ID="$(build.BuildNumber).$(system.JobAttempt)_$(SHORT_CONFIG)"
-        fi
-        # prefix should be < 20 characters so the artifact name doesn't exceed 100
-        BLD_ARTIFACT_PREFIX="conda_artifacts"
-        BLD_ARTIFACT_NAME="${BLD_ARTIFACT_PREFIX}_${ARTIFACT_UNIQUE_ID}"
-        echo "##vso[task.setVariable variable=BLD_ARTIFACT_NAME]$BLD_ARTIFACT_NAME"
-        echo "BLD_ARTIFACT_NAME: $BLD_ARTIFACT_NAME"
-
-        # Check that the conda-build directory exists for archiving.
-        BLD_ARTIFACT_DIR=/Users/runner/miniforge3/conda-bld/
-        if [ -d "$BLD_ARTIFACT_DIR" ]; then
-          # remove caches to save some artifact space
-          rm -rf $BLD_ARTIFACT_DIR/git_cache
-          rm -rf $BLD_ARTIFACT_DIR/pip_cache
-          rm -rf $BLD_ARTIFACT_DIR/src_cache
-          # delete broken symlinks so that artifact publishing doesn't fail
-          find $BLD_ARTIFACT_DIR -type l -exec test ! -e {} \; -delete
-        else
-          echo "##vso[task.logissue type=error]conda-build directory does not exist"
-          exit 1
-        fi
-        echo "##vso[task.setVariable variable=BLD_ARTIFACT_PATH]$BLD_ARTIFACT_DIR"
-        echo "BLD_ARTIFACT_DIR: $BLD_ARTIFACT_DIR"
-
-        if [ $AGENT_JOBSTATUS == "Failed" ]; then
-          # Create a zip archive to use as the conda build artifact.
-          BLD_ARTIFACT_ZIP="$(Build.ArtifactStagingDirectory)/${BLD_ARTIFACT_NAME}.zip"
-          cd "$BLD_ARTIFACT_DIR"
-          zip -r -y -q "$BLD_ARTIFACT_ZIP" . -x '*.git/*' '*_*_env*/*' '*_cache/*'
-          echo "##vso[task.setVariable variable=BLD_ARTIFACT_PATH]$BLD_ARTIFACT_ZIP"
-          echo "BLD_ARTIFACT_ZIP: $BLD_ARTIFACT_ZIP"
-
-          # Create a zip archive to use as the conda env artifact
-          ENV_ARTIFACT_PREFIX="conda_envs"
-          ENV_ARTIFACT_NAME="${ENV_ARTIFACT_PREFIX}_${ARTIFACT_UNIQUE_ID}"
-          echo "##vso[task.setVariable variable=ENV_ARTIFACT_NAME]$ENV_ARTIFACT_NAME"
-          echo "ENV_ARTIFACT_NAME: $ENV_ARTIFACT_NAME"
-          ENV_ARTIFACT_ZIP="$(Build.ArtifactStagingDirectory)/${ENV_ARTIFACT_NAME}.zip"
-          zip -r -y -q "$ENV_ARTIFACT_ZIP" . -i '*_*_env*/*'
-          echo "##vso[task.setVariable variable=ENV_ARTIFACT_PATH]$ENV_ARTIFACT_ZIP"
-          echo "ENV_ARTIFACT_ZIP: $ENV_ARTIFACT_ZIP"
-        fi
+      export CI=azure
+      export CI_RUN_ID=$(build.BuildNumber).$(system.JobAttempt)
+      export FEEDSTOCK_NAME=$(basename ${BUILD_REPOSITORY_NAME})
+      export CONDA_BLD_DIR=/Users/runner/miniforge3/conda-bld
+      export ARTIFACT_STAGING_DIR="$(Build.ArtifactStagingDirectory)"
+      # Archive everything in CONDA_BLD_DIR except environments
+      export BLD_ARTIFACT_PREFIX=conda_artifacts
+      if [[ "$AGENT_JOBSTATUS" == "Failed" ]]; then
+        # Archive the CONDA_BLD_DIR environments only when the job fails
+        export ENV_ARTIFACT_PREFIX=conda_envs
+      fi
+      ./.scripts/create_conda_build_artifacts.sh
     displayName: Prepare conda build artifacts
     condition: succeededOrFailed()
 

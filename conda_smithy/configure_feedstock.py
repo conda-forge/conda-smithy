@@ -1188,7 +1188,11 @@ def _github_actions_specific_setup(
         "osx": [
             ".scripts/run_osx_build.sh",
         ],
+        "win": [],
     }
+    if forge_config["github_actions"]["store_build_artifacts"]:
+        for tmpls in platform_templates.values():
+            tmpls.append(".scripts/create_conda_build_artifacts.sh")
     template_files = platform_templates.get(platform, [])
 
     _render_template_exe_files(
@@ -1259,6 +1263,16 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
         ],
         "win": [".azure-pipelines/azure-pipelines-win.yml"],
     }
+    if forge_config["azure"]["store_build_artifacts"]:
+        platform_templates["linux"].append(
+            ".scripts/create_conda_build_artifacts.sh"
+        )
+        platform_templates["osx"].append(
+            ".scripts/create_conda_build_artifacts.sh"
+        )
+        platform_templates["win"].append(
+            ".scripts/create_conda_build_artifacts.bat"
+        )
     template_files = platform_templates.get(platform, [])
 
     azure_settings = deepcopy(forge_config["azure"][f"settings_{platform}"])
@@ -1927,6 +1941,8 @@ def get_common_scripts(forge_dir):
         "run_docker_build.sh",
         "build_steps.sh",
         "run_osx_build.sh",
+        "create_conda_build_artifacts.bat",
+        "create_conda_build_artifacts.sh",
     ]:
         yield os.path.join(forge_dir, ".scripts", old_file)
 
@@ -1943,6 +1959,8 @@ def clear_scripts(forge_dir):
             "run_docker_build.sh",
             "build_steps.sh",
             "run_osx_build.sh",
+            "create_conda_build_artifacts.bat",
+            "create_conda_build_artifacts.sh",
         ]:
             remove_file(os.path.join(forge_dir, folder, old_file))
 
