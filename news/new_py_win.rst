@@ -1,3 +1,3 @@
 **Changed:**
 
-* Bump Windows ``base`` environment Python version to 3.8
+* Bump Windows ``base`` environment Python version to 3.9
