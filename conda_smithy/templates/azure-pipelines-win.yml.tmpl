@@ -103,17 +103,32 @@ jobs:
 
 {%- if azure.store_build_artifacts %}
     - script: |
-        set artifact_name=conda_artifacts_$(build.BuildID)_$(SHORT_CONFIG_NAME)
-        echo ##vso[task.setVariable variable=ARTIFACT_NAME]%artifact_name%
-        if exist $(CONDA_BLD_PATH)\\ (
-          echo ##vso[task.setVariable variable=CONDA_BLD_DIR_EXISTS]true
+        set CI=azure
+        set CI_RUN_ID=$(build.BuildNumber).$(system.JobAttempt)
+        set FEEDSTOCK_NAME=$(build.Repository.Name)
+        set ARTIFACT_STAGING_DIR=$(Build.ArtifactStagingDirectory)
+        set CONDA_BLD_DIR=$(CONDA_BLD_PATH)
+        set BLD_ARTIFACT_PREFIX=conda_artifacts
+        if "%AGENT_JOBSTATUS%" == "Failed" (
+            set ENV_ARTIFACT_PREFIX=conda_envs
         )
-      displayName: Check for conda build artifacts
+        call ".scripts\create_conda_build_artifacts.bat"
+      displayName: Prepare conda build artifacts
       condition: succeededOrFailed()
 
-    - publish: $(CONDA_BLD_PATH)\\
-      artifact: $(ARTIFACT_NAME)
-      condition: eq(variables.CONDA_BLD_DIR_EXISTS, 'true')
+    - task: PublishPipelineArtifact@1
+      displayName: Store conda build artifacts
+      condition: not(eq(variables.BLD_ARTIFACT_PATH, ''))
+      inputs:
+        targetPath: $(BLD_ARTIFACT_PATH)
+        artifactName: $(BLD_ARTIFACT_NAME)
+
+    - task: PublishPipelineArtifact@1
+      displayName: Store conda build environment artifacts
+      condition: not(eq(variables.ENV_ARTIFACT_PATH, ''))
+      inputs:
+        targetPath: $(ENV_ARTIFACT_PATH)
+        artifactName: $(ENV_ARTIFACT_NAME)
 {%- endif %}
 
 {%- if conda_forge_output_validation %}

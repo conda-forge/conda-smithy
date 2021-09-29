@@ -31,6 +31,9 @@ jobs:
         include:
         {%- for data in configs %}
           - CONFIG: {{ data.config_name }}
+        {%- if github_actions.store_build_artifacts %}
+            SHORT_CONFIG: {{ data.short_config_name }}
+        {%- endif %}
             UPLOAD_PACKAGES: {{ data.upload }}
         {%- if data.build_platform.startswith("osx-64") %}
             os: macos
@@ -191,3 +194,57 @@ jobs:
         {{ secret }}: {% raw %}${{{% endraw %} secrets.{{ secret }} {% raw %}}}{% endraw %}
 {%- endfor %}
       if: matrix.os == 'windows'
+
+{%- if github_actions.store_build_artifacts %}
+    - name: Prepare conda build artifacts
+      id: prepare-artifacts
+      shell: bash
+      if: {% raw %}${{ always() }}{% endraw %}
+      env:
+        CONFIG: {% raw %}${{ matrix.CONFIG }}{% endraw %}
+        SHORT_CONFIG: {% raw %}${{ matrix.SHORT_CONFIG }}{% endraw %}
+        OS: {% raw %}${{ matrix.os }}{% endraw %}
+      run: |
+        export CI=github_actions
+        export CI_RUN_ID=$GITHUB_RUN_ID
+        export FEEDSTOCK_NAME="$(basename $GITHUB_REPOSITORY)"
+        export ARTIFACT_STAGING_DIR="$GITHUB_WORKSPACE"
+        if [ $OS == "macos" ]; then
+          export CONDA_BLD_DIR="${MINIFORGE_HOME:-${HOME}/miniforge3}/conda-bld"
+        elif [ $OS == "windows" ]; then
+          export CONDA_BLD_DIR="${CONDA//\\//}/conda-bld"
+        else
+          export CONDA_BLD_DIR="build_artifacts"
+        fi
+        # Archive everything in CONDA_BLD_DIR except environments
+        # Archive the CONDA_BLD_DIR environments only when the job fails
+        # Use different prefix for successful and failed build artifacts
+        # so random failures don't prevent rebuilds from creating artifacts.
+        JOB_STATUS="{% raw %}${{ job.status }}{% endraw %}"
+        if [ $JOB_STATUS == "failure" ]; then
+          export BLD_ARTIFACT_PREFIX="conda_artifacts"
+          export ENV_ARTIFACT_PREFIX="conda_envs"
+        else
+          export BLD_ARTIFACT_PREFIX="conda_pkgs"
+        fi
+        ./.scripts/create_conda_build_artifacts.sh
+      continue-on-error: true
+
+    - name: Store conda build artifacts
+      uses: actions/upload-artifact@v2
+      if: {% raw %}${{ always() && steps.prepare-artifacts.outcome == 'success' }}{% endraw %}
+      with:
+        name: {% raw %}${{ steps.prepare-artifacts.outputs.BLD_ARTIFACT_NAME }}{% endraw %}
+        path: {% raw %}${{ steps.prepare-artifacts.outputs.BLD_ARTIFACT_PATH }}{% endraw %}
+        retention-days: {{ github_actions.artifact_retention_days }}
+      continue-on-error: true
+
+    - name: Store conda build environment artifacts
+      uses: actions/upload-artifact@v2
+      if: {% raw %}${{ failure() && steps.prepare-artifacts.outcome == 'success' }}{% endraw %}
+      with:
+        name: {% raw %}${{ steps.prepare-artifacts.outputs.ENV_ARTIFACT_NAME }}{% endraw %}
+        path: {% raw %}${{ steps.prepare-artifacts.outputs.ENV_ARTIFACT_PATH }}{% endraw %}
+        retention-days: {{ github_actions.artifact_retention_days }}
+      continue-on-error: true
+{%- endif %}
