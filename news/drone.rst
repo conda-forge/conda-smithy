@@ -1,6 +1,6 @@
 **Added:**
 
-* Added support for registering at a custom drone server by setting DRONE_SERVER env variable
+* Added support for registering at a custom drone server by adding --drone-endpoint cli argument
 
 **Changed:**
 
