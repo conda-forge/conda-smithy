@@ -104,8 +104,8 @@ def rotate_anaconda_token(
                             else:
                                 err_msg = (
                                     "Failed to rotate token for %s/%s"
-                                    " on drone!"
-                                ) % (user, project)
+                                    " on drone endpoint %s!"
+                                ) % (user, project, drone_endpoint)
                                 failed = True
                                 raise RuntimeError(err_msg)
 
