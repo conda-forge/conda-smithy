@@ -47,6 +47,7 @@ def test_rotate_anaconda_token(
         azure=azure,
         appveyor=appveyor,
         token_name="MY_FANCY_TOKEN",
+        drone_endpoints=["https://cloud.drone.io"],
     )
 
     if drone:
@@ -125,6 +126,7 @@ def test_rotate_anaconda_token_notoken(
             travis=travis,
             azure=azure,
             appveyor=appveyor,
+            drone_endpoints=["https://cloud.drone.io"],
         )
 
     assert "anaconda token" in str(e.value)
@@ -175,6 +177,7 @@ def test_rotate_anaconda_token_provider_error(
         appveyor_mock.side_effect = ValueError("blah")
 
     with pytest.raises(RuntimeError) as e:
-        rotate_anaconda_token(user, project, None)
+        rotate_anaconda_token(user, project, None,
+            drone_endpoints=["https://cloud.drone.io"])
 
     assert "on %s" % provider in str(e.value)

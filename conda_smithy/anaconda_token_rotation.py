@@ -39,6 +39,7 @@ def rotate_anaconda_token(
     azure=True,
     appveyor=True,
     token_name="BINSTAR_TOKEN",
+    drone_endpoints=(),
 ):
     """Rotate the anaconda (binstar) token used by the CI providers
 
@@ -88,19 +89,21 @@ def rotate_anaconda_token(
                             raise RuntimeError(err_msg)
 
                 if drone:
-                    try:
-                        rotate_token_in_drone(
-                            user, project, anaconda_token, token_name
-                        )
-                    except Exception as e:
-                        if "DEBUG_ANACONDA_TOKENS" in os.environ:
-                            raise e
-                        else:
-                            err_msg = (
-                                "Failed to rotate token for %s/%s" " on drone!"
-                            ) % (user, project)
-                            failed = True
-                            raise RuntimeError(err_msg)
+                    for drone_endpoint in drone_endpoints:
+                        try:
+                            rotate_token_in_drone(
+                                user, project, anaconda_token, token_name,
+                                drone_endpoint
+                            )
+                        except Exception as e:
+                            if "DEBUG_ANACONDA_TOKENS" in os.environ:
+                                raise e
+                            else:
+                                err_msg = (
+                                    "Failed to rotate token for %s/%s" " on drone!"
+                                ) % (user, project)
+                                failed = True
+                                raise RuntimeError(err_msg)
 
                 if travis:
                     try:
@@ -215,10 +218,10 @@ def rotate_token_in_circle(user, project, binstar_token, token_name):
         raise ValueError(response)
 
 
-def rotate_token_in_drone(user, project, binstar_token, token_name):
+def rotate_token_in_drone(user, project, binstar_token, token_name, drone_endpoint):
     from .ci_register import drone_session
 
-    session = drone_session()
+    session = drone_session(drone_endpoint)
 
     r = session.get(f"/api/repos/{user}/{project}/secrets")
     r.raise_for_status()

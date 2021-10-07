@@ -408,6 +408,7 @@ def test_register_feedstock_token_with_proviers(
             travis=travis,
             azure=azure,
             clobber=clobber,
+            drone_endpoints=["https://cloud.drone.io"],
         )
 
         if drone:

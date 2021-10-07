@@ -233,6 +233,8 @@ class RegisterCI(Subcommand):
             action="store_false",
             help="If set, no anaconda token will be registered with the CI providers.",
         )
+        scp.add_argument("--drone-endpoints", action="append",
+            help="drone server URL to register this repo. multiple values allowed")
 
     def __call__(self, args):
         from conda_smithy import ci_register
@@ -305,9 +307,16 @@ class RegisterCI(Subcommand):
             print("Appveyor registration disabled.")
 
         if args.drone:
-            ci_register.add_project_to_drone(owner, repo)
-            if args.anaconda_token:
-                ci_register.add_token_to_drone(owner, repo)
+            from conda_smithy.ci_register import drone_default_endpoint
+            drone_endpoints = args.drone_endpoints
+            if drone_endpoints is None:
+                drone_endpoints = [drone_default_endpoint]
+            for drone_endpoint in drone_endpoints:
+                ci_register.add_project_to_drone(owner, repo,
+                                                 drone_endpoint=drone_endpoint)
+                if args.anaconda_token:
+                    ci_register.add_token_to_drone(owner, repo,
+                                                   drone_endpoint=drone_endpoint)
         else:
             print("Drone registration disabled.")
 
@@ -735,6 +744,8 @@ class RegisterFeedstockToken(Subcommand):
                 action="store_false",
                 help="If set, {} will be not registered".format(ci),
             )
+        scp.add_argument("--drone-endpoints", action="append",
+            help="drone server URL to register this repo. multiple values allowed")
 
     def __call__(self, args):
         from conda_smithy.feedstock_tokens import (
@@ -742,6 +753,10 @@ class RegisterFeedstockToken(Subcommand):
             register_feedstock_token,
             feedstock_token_exists,
         )
+        from conda_smithy.ci_register import drone_default_endpoint
+        drone_endpoints = args.drone_endpoints
+        if drone_endpoints is None:
+            drone_endpoints = [drone_default_endpoint]
 
         owner = args.user or args.organization
         repo = os.path.basename(os.path.abspath(args.feedstock_directory))
@@ -769,6 +784,7 @@ class RegisterFeedstockToken(Subcommand):
             circle=args.circle,
             travis=args.travis,
             azure=args.azure,
+            drone_endpoints=drone_endpoints,
         )
 
         # then if that works do the github repo
@@ -832,6 +848,8 @@ class UpdateAnacondaToken(Subcommand):
                 action="store_false",
                 help="If set, the token on {} will be not changed.".format(ci),
             )
+        scp.add_argument("--drone-endpoints", action="append",
+            help="drone server URL to register this repo. multiple values allowed")
 
     def __call__(self, args):
         from conda_smithy.anaconda_token_rotation import rotate_anaconda_token
@@ -847,6 +865,10 @@ class UpdateAnacondaToken(Subcommand):
         print(
             "Updating the anaconda/binstar token. Can take up to ~30 seconds."
         )
+        from conda_smithy.ci_register import drone_default_endpoint
+        drone_endpoints = args.drone_endpoints
+        if drone_endpoints is None:
+            drone_endpoints = [drone_default_endpoint]
 
         # do all providers first
         rotate_anaconda_token(
@@ -859,6 +881,7 @@ class UpdateAnacondaToken(Subcommand):
             azure=args.azure,
             appveyor=args.appveyor,
             token_name=args.token_name,
+            drone_endpoints=drone_endpoints,
         )
 
         print(
