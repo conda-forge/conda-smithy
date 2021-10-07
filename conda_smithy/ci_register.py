@@ -64,7 +64,7 @@ except KeyError:
         )
 
 travis_endpoint = "https://api.travis-ci.com"
-drone_endpoint_default = "https://cloud.drone.io"
+drone_default_endpoint = "https://cloud.drone.io"
 
 
 class LiveServerSession(requests.Session):
