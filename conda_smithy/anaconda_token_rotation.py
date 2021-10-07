@@ -92,15 +92,19 @@ def rotate_anaconda_token(
                     for drone_endpoint in drone_endpoints:
                         try:
                             rotate_token_in_drone(
-                                user, project, anaconda_token, token_name,
-                                drone_endpoint
+                                user,
+                                project,
+                                anaconda_token,
+                                token_name,
+                                drone_endpoint,
                             )
                         except Exception as e:
                             if "DEBUG_ANACONDA_TOKENS" in os.environ:
                                 raise e
                             else:
                                 err_msg = (
-                                    "Failed to rotate token for %s/%s" " on drone!"
+                                    "Failed to rotate token for %s/%s"
+                                    " on drone!"
                                 ) % (user, project)
                                 failed = True
                                 raise RuntimeError(err_msg)
@@ -218,7 +222,9 @@ def rotate_token_in_circle(user, project, binstar_token, token_name):
         raise ValueError(response)
 
 
-def rotate_token_in_drone(user, project, binstar_token, token_name, drone_endpoint):
+def rotate_token_in_drone(
+    user, project, binstar_token, token_name, drone_endpoint
+):
     from .ci_register import drone_session
 
     session = drone_session(drone_endpoint)

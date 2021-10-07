@@ -54,8 +54,11 @@ def test_rotate_anaconda_token(
 
     if drone:
         drone_mock.assert_called_once_with(
-            user, project, anaconda_token, "MY_FANCY_TOKEN",
-            drone_default_endpoint
+            user,
+            project,
+            anaconda_token,
+            "MY_FANCY_TOKEN",
+            drone_default_endpoint,
         )
     else:
         drone_mock.assert_not_called()
@@ -180,7 +183,8 @@ def test_rotate_anaconda_token_provider_error(
         appveyor_mock.side_effect = ValueError("blah")
 
     with pytest.raises(RuntimeError) as e:
-        rotate_anaconda_token(user, project, None,
-            drone_endpoints=[drone_default_endpoint])
+        rotate_anaconda_token(
+            user, project, None, drone_endpoints=[drone_default_endpoint]
+        )
 
     assert "on %s" % provider in str(e.value)

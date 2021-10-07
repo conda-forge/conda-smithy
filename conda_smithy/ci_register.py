@@ -175,7 +175,9 @@ def add_project_to_drone(user, project, drone_endpoint=drone_default_endpoint):
         response.raise_for_status()
 
 
-def regenerate_drone_webhooks(user, project, drone_endpoint=drone_default_endpoint):
+def regenerate_drone_webhooks(
+    user, project, drone_endpoint=drone_default_endpoint
+):
     session = drone_session(drone_endpoint)
     response = session.post(f"/api/repos/{user}/{project}/repair")
     response.raise_for_status()

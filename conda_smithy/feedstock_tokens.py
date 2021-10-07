@@ -411,8 +411,11 @@ def register_feedstock_token_with_proviers(
                     for drone_endpoint in drone_endpoints:
                         try:
                             add_feedstock_token_to_drone(
-                                user, project, feedstock_token, clobber,
-                                drone_endpoint
+                                user,
+                                project,
+                                feedstock_token,
+                                clobber,
+                                drone_endpoint,
                             )
                         except Exception as e:
                             if "DEBUG_FEEDSTOCK_TOKENS" in os.environ:
@@ -520,8 +523,9 @@ def add_feedstock_token_to_circle(user, project, feedstock_token, clobber):
             raise ValueError(response)
 
 
-def add_feedstock_token_to_drone(user, project, feedstock_token, clobber,
-                                 drone_endpoint):
+def add_feedstock_token_to_drone(
+    user, project, feedstock_token, clobber, drone_endpoint
+):
     from .ci_register import drone_session
 
     session = drone_session(drone_endpoint)

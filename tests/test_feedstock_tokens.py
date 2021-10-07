@@ -415,7 +415,10 @@ def test_register_feedstock_token_with_proviers(
 
         if drone:
             drone_mock.assert_called_once_with(
-                user, project, feedstock_token, clobber,
+                user,
+                project,
+                feedstock_token,
+                clobber,
                 drone_default_endpoint,
             )
         else:
@@ -520,9 +523,7 @@ def test_register_feedstock_token_with_proviers_error(
 
         with pytest.raises(RuntimeError) as e:
             register_feedstock_token_with_proviers(
-                user,
-                project,
-                drone_endpoints=[drone_default_endpoint]
+                user, project, drone_endpoints=[drone_default_endpoint]
             )
 
         assert "on %s" % provider in str(e.value)
