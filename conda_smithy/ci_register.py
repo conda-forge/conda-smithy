@@ -64,7 +64,9 @@ except KeyError:
         )
 
 travis_endpoint = "https://api.travis-ci.com"
-drone_endpoint = "https://cloud.drone.io"
+
+def get_drone_endpoint():
+    return os.getenv("DRONE_SERVER", "https://cloud.drone.io")
 
 
 class LiveServerSession(requests.Session):
@@ -132,7 +134,7 @@ def add_token_to_circle(user, project):
 
 
 def drone_session():
-    s = LiveServerSession(prefix_url=drone_endpoint)
+    s = LiveServerSession(prefix_url=get_drone_endpoint())
     s.headers.update({"Authorization": f"Bearer {drone_token}"})
     return s
 
