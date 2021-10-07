@@ -423,8 +423,8 @@ def register_feedstock_token_with_proviers(
                             else:
                                 err_msg = (
                                     "Failed to register feedstock token for %s/%s"
-                                    " on drone!"
-                                ) % (user, project)
+                                    " on drone endpoint %s!"
+                                ) % (user, project, drone_endpoint)
                                 failed = True
                                 raise RuntimeError(err_msg)
 
