@@ -79,11 +79,6 @@ else
     ( endgroup "Validating outputs" ) 2> /dev/null
     {%- endif %}
 
-    {%- if build_with_mambabuild %}
-    # we are building with mambabuild, so exit with an error code for now
-    exit 1
-    {%- endif %}
-
     ( startgroup "Uploading packages" ) 2> /dev/null
 
     if [[ "${UPLOAD_PACKAGES}" != "False" ]] && [[ "${IS_PR_BUILD}" == "False" ]]; then
