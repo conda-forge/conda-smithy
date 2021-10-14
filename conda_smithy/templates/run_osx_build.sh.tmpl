@@ -76,10 +76,7 @@ validate_recipe_outputs "${FEEDSTOCK_NAME}"
 
 ( endgroup "Validating outputs" ) 2> /dev/null
 {%- endif %}
-{% if build_with_mambabuild -%}
-# we're building with mambabuild, so fail here and DO NOT UPLOAD packages
-exit 1
-{%- else %}
+
 ( startgroup "Uploading packages" ) 2> /dev/null
 
 if [[ "${UPLOAD_PACKAGES}" != "False" ]] && [[ "${IS_PR_BUILD}" == "False" ]]; then
@@ -87,4 +84,3 @@ if [[ "${UPLOAD_PACKAGES}" != "False" ]] && [[ "${IS_PR_BUILD}" == "False" ]]; t
 fi
 
 ( endgroup "Uploading packages" ) 2> /dev/null
-{%- endif %}
