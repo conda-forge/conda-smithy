@@ -2,13 +2,15 @@
 {% if configs[0] -%}
 {%- for data in configs -%}
 {%- if 'linux' in data.build_platform -%}
+{%- set arch_conda = data.build_platform.split("-")[1] -%}
+{%- set arch_drone = arch_map.get(arch_conda, arch_conda) -%}
 ---
 kind: pipeline
 name: {{ data.short_config_name }}
 
 platform:
   os: linux
-  arch: {{ arch_map[data.build_platform.split("-")[1]] }}
+  arch: {{ arch_drone }}
 
 {%- if clone_depth is not none %}
 clone:
