@@ -225,7 +225,7 @@ def test_upload_on_branch_azure(upload_on_branch_recipe, jinja_env):
             "azure-pipelines-osx.yml",
         )
     ) as fp:
-        content_osx = yaml.load(fp)
+        content_osx = yaml.safe_load(fp)
     assert (
         'UPLOAD_ON_BRANCH="foo-branch"'
         in content_osx["jobs"][0]["steps"][0]["script"]
@@ -242,7 +242,7 @@ def test_upload_on_branch_azure(upload_on_branch_recipe, jinja_env):
             "azure-pipelines-win.yml",
         )
     ) as fp:
-        content_win = yaml.load(fp)
+        content_win = yaml.safe_load(fp)
     assert (
         "UPLOAD_ON_BRANCH=foo-branch"
         in content_win["jobs"][0]["steps"][-1]["script"]
@@ -259,7 +259,7 @@ def test_upload_on_branch_azure(upload_on_branch_recipe, jinja_env):
             "azure-pipelines-linux.yml",
         )
     ) as fp:
-        content_lin = yaml.load(fp)
+        content_lin = yaml.safe_load(fp)
     assert (
         'UPLOAD_ON_BRANCH="foo-branch"'
         in content_lin["jobs"][0]["steps"][2]["script"]
@@ -285,7 +285,7 @@ def test_upload_on_branch_appveyor(upload_on_branch_recipe, jinja_env):
     with open(
         os.path.join(upload_on_branch_recipe.recipe, ".appveyor.yml")
     ) as fp:
-        content = yaml.load(fp)
+        content = yaml.safe_load(fp)
     assert "%APPVEYOR_REPO_BRANCH%" in content["deploy_script"][0]
     assert "UPLOAD_ON_BRANCH=foo-branch" in content["deploy_script"][-2]
 
