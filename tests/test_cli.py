@@ -124,7 +124,7 @@ def test_init_multiple_output_matrix(testing_workdir):
     )
     assert os.path.isfile(linux_libpng16)
     with open(linux_libpng16) as f:
-        config = yaml.load(f)
+        config = yaml.safe_load(f)
     assert config["libpng"] == ["1.6"]
     assert config["libpq"] == ["9.5"]
     # this is a zipped key, but it's not used, so it shouldn't show up
@@ -179,7 +179,7 @@ def test_init_cuda_docker_images(testing_workdir):
         )
         assert os.path.isfile(fn)
         with open(fn) as fh:
-            config = yaml.load(fh)
+            config = yaml.safe_load(fh)
         assert config["cuda_compiler"] == ["nvcc"]
         assert config["cuda_compiler_version"] == [f"{v}"]
         if v is None:
@@ -230,7 +230,7 @@ def test_init_multiple_docker_images(testing_workdir):
     fn = os.path.join(matrix_dir, "linux_64_.yaml")
     assert os.path.isfile(fn)
     with open(fn) as fh:
-        config = yaml.load(fh)
+        config = yaml.safe_load(fh)
     assert config["docker_image"] == ["pickme_a"]
     assert config["cdt_name"] == ["pickme_1"]
 
