@@ -245,8 +245,9 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
         if pyXY_selectors_lint:
             lints.append(
                 "Old-style Python selectors (py27, py35, etc) are only available "
-                "for Python 2.7, 3.4, 3.5, and 3.6. Please use the int ``py``. For "
-                "example: ``# [py>=37]``. See lines {}".format(pyXY_lines_lint)
+                "for Python 2.7, 3.4, 3.5, and 3.6. Please use explicit comparisons "
+                "with the integer ``py``, e.g. ``# [py==37]`` or ``# [py>=37]``. "
+                "See lines {}".format(pyXY_lines_lint)
             )
 
     # 7: The build section should have a build number.
