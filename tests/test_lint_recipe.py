@@ -294,7 +294,10 @@ class Test_linter(unittest.TestCase):
                 problems = lints if kind == "lint" else hints
                 self.assertEqual(
                     not is_good,
-                    any(problem.startswith(expected_start) for problem in problems),
+                    any(
+                        problem.startswith(expected_start)
+                        for problem in problems
+                    ),
                     message,
                 )
 
@@ -305,7 +308,7 @@ class Test_linter(unittest.TestCase):
                               script:
                                 - echo "hello" # [py27]
                             """,
-                kind="hint"
+                kind="hint",
             )
             assert_pyXY_selector(
                 """
@@ -314,7 +317,7 @@ class Test_linter(unittest.TestCase):
                               script:
                                 - echo "hello" # [py310]
                             """,
-                kind="lint"
+                kind="lint",
             )
             assert_pyXY_selector(
                 """
@@ -323,7 +326,7 @@ class Test_linter(unittest.TestCase):
                               script:
                                 - echo "hello" # [py38]
                             """,
-                kind="lint"
+                kind="lint",
             )
             assert_pyXY_selector(
                 """
@@ -332,7 +335,7 @@ class Test_linter(unittest.TestCase):
                               script:
                                 - echo "hello"   #   [py36]
                             """,
-                kind="hint"
+                kind="hint",
             )
             assert_pyXY_selector(
                 """
@@ -341,7 +344,7 @@ class Test_linter(unittest.TestCase):
                               script:
                                 - echo "hello"  # [win or py37]
                             """,
-                kind="lint"
+                kind="lint",
             )
             assert_pyXY_selector(
                 """
@@ -350,7 +353,7 @@ class Test_linter(unittest.TestCase):
                               script:
                                 - echo "hello"  # [py37 or win]
                             """,
-                kind="lint"
+                kind="lint",
             )
             assert_pyXY_selector(
                 """
@@ -359,7 +362,7 @@ class Test_linter(unittest.TestCase):
                               script:
                                 - echo "hello"  # [unix or py37 or win]
                             """,
-                kind="lint"
+                kind="lint",
             )
             assert_pyXY_selector(
                 """
@@ -368,7 +371,7 @@ class Test_linter(unittest.TestCase):
                               script:
                                 - echo "hello"  # [unix or py37 or py27]
                             """,
-                kind="lint"
+                kind="lint",
             )
             assert_pyXY_selector(
                 """
@@ -377,7 +380,7 @@ class Test_linter(unittest.TestCase):
                               script:
                                 - echo "hello"  # [py==37]
                             """,
-                is_good=True
+                is_good=True,
             )
 
     def test_noarch_selectors(self):
