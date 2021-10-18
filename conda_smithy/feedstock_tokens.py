@@ -353,6 +353,7 @@ def register_feedstock_token_with_proviers(
     travis=True,
     azure=True,
     clobber=True,
+    drone_endpoints=(),
 ):
     """Register the feedstock token with provider CI services.
 
@@ -407,20 +408,25 @@ def register_feedstock_token_with_proviers(
                             raise RuntimeError(err_msg)
 
                 if drone:
-                    try:
-                        add_feedstock_token_to_drone(
-                            user, project, feedstock_token, clobber
-                        )
-                    except Exception as e:
-                        if "DEBUG_FEEDSTOCK_TOKENS" in os.environ:
-                            raise e
-                        else:
-                            err_msg = (
-                                "Failed to register feedstock token for %s/%s"
-                                " on drone!"
-                            ) % (user, project)
-                            failed = True
-                            raise RuntimeError(err_msg)
+                    for drone_endpoint in drone_endpoints:
+                        try:
+                            add_feedstock_token_to_drone(
+                                user,
+                                project,
+                                feedstock_token,
+                                clobber,
+                                drone_endpoint,
+                            )
+                        except Exception as e:
+                            if "DEBUG_FEEDSTOCK_TOKENS" in os.environ:
+                                raise e
+                            else:
+                                err_msg = (
+                                    "Failed to register feedstock token for %s/%s"
+                                    " on drone endpoint %s!"
+                                ) % (user, project, drone_endpoint)
+                                failed = True
+                                raise RuntimeError(err_msg)
 
                 if travis:
                     try:
@@ -517,10 +523,12 @@ def add_feedstock_token_to_circle(user, project, feedstock_token, clobber):
             raise ValueError(response)
 
 
-def add_feedstock_token_to_drone(user, project, feedstock_token, clobber):
+def add_feedstock_token_to_drone(
+    user, project, feedstock_token, clobber, drone_endpoint
+):
     from .ci_register import drone_session
 
-    session = drone_session()
+    session = drone_session(drone_endpoint)
 
     r = session.get(f"/api/repos/{user}/{project}/secrets")
     r.raise_for_status()

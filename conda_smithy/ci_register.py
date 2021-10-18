@@ -64,7 +64,7 @@ except KeyError:
         )
 
 travis_endpoint = "https://api.travis-ci.com"
-drone_endpoint = "https://cloud.drone.io"
+drone_default_endpoint = "https://cloud.drone.io"
 
 
 class LiveServerSession(requests.Session):
@@ -131,15 +131,15 @@ def add_token_to_circle(user, project):
         raise ValueError(response)
 
 
-def drone_session():
+def drone_session(drone_endpoint=drone_default_endpoint):
     s = LiveServerSession(prefix_url=drone_endpoint)
     s.headers.update({"Authorization": f"Bearer {drone_token}"})
     return s
 
 
-def add_token_to_drone(user, project):
+def add_token_to_drone(user, project, drone_endpoint=drone_default_endpoint):
     anaconda_token = _get_anaconda_token()
-    session = drone_session()
+    session = drone_session(drone_endpoint=drone_endpoint)
     response = session.post(
         f"/api/repos/{user}/{project}/secrets",
         json={
@@ -150,7 +150,7 @@ def add_token_to_drone(user, project):
     )
     if response.status_code != 200:
         # Check that the token is in secrets already
-        session = drone_session()
+        session = drone_session(drone_endpoint=drone_endpoint)
         response2 = session.get(f"/api/repos/{user}/{project}/secrets")
         response2.raise_for_status()
         for secret in response2.json():
@@ -159,24 +159,26 @@ def add_token_to_drone(user, project):
     response.raise_for_status()
 
 
-def drone_sync():
-    session = drone_session()
+def drone_sync(drone_endpoint=drone_default_endpoint):
+    session = drone_session(drone_endpoint)
     response = session.post("/api/user/repos?async=true")
     response.raise_for_status()
 
 
-def add_project_to_drone(user, project):
-    session = drone_session()
+def add_project_to_drone(user, project, drone_endpoint=drone_default_endpoint):
+    session = drone_session(drone_endpoint)
     response = session.post(f"/api/repos/{user}/{project}")
     if response.status_code != 200:
         # Check that the project is registered already
-        session = drone_session()
+        session = drone_session(drone_endpoint)
         response = session.get(f"/api/repos/{user}/{project}")
         response.raise_for_status()
 
 
-def regenerate_drone_webhooks(user, project):
-    session = drone_session()
+def regenerate_drone_webhooks(
+    user, project, drone_endpoint=drone_default_endpoint
+):
+    session = drone_session(drone_endpoint)
     response = session.post(f"/api/repos/{user}/{project}/repair")
     response.raise_for_status()
 

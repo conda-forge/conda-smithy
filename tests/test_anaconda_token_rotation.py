@@ -4,6 +4,8 @@ import pytest
 
 from conda_smithy.anaconda_token_rotation import rotate_anaconda_token
 
+from conda_smithy.ci_register import drone_default_endpoint
+
 
 @pytest.mark.parametrize("appveyor", [True, False])
 @pytest.mark.parametrize("drone", [True, False])
@@ -47,11 +49,16 @@ def test_rotate_anaconda_token(
         azure=azure,
         appveyor=appveyor,
         token_name="MY_FANCY_TOKEN",
+        drone_endpoints=[drone_default_endpoint],
     )
 
     if drone:
         drone_mock.assert_called_once_with(
-            user, project, anaconda_token, "MY_FANCY_TOKEN"
+            user,
+            project,
+            anaconda_token,
+            "MY_FANCY_TOKEN",
+            drone_default_endpoint,
         )
     else:
         drone_mock.assert_not_called()
@@ -125,6 +132,7 @@ def test_rotate_anaconda_token_notoken(
             travis=travis,
             azure=azure,
             appveyor=appveyor,
+            drone_endpoints=[drone_default_endpoint],
         )
 
     assert "anaconda token" in str(e.value)
@@ -175,6 +183,8 @@ def test_rotate_anaconda_token_provider_error(
         appveyor_mock.side_effect = ValueError("blah")
 
     with pytest.raises(RuntimeError) as e:
-        rotate_anaconda_token(user, project, None)
+        rotate_anaconda_token(
+            user, project, None, drone_endpoints=[drone_default_endpoint]
+        )
 
     assert "on %s" % provider in str(e.value)

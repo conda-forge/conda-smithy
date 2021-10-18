@@ -14,6 +14,8 @@ from conda_smithy.feedstock_tokens import (
     is_valid_feedstock_token,
 )
 
+from conda_smithy.ci_register import drone_default_endpoint
+
 
 @pytest.mark.parametrize("project", ["bar", "bar-feedstock"])
 @pytest.mark.parametrize(
@@ -408,11 +410,16 @@ def test_register_feedstock_token_with_proviers(
             travis=travis,
             azure=azure,
             clobber=clobber,
+            drone_endpoints=[drone_default_endpoint],
         )
 
         if drone:
             drone_mock.assert_called_once_with(
-                user, project, feedstock_token, clobber
+                user,
+                project,
+                feedstock_token,
+                clobber,
+                drone_default_endpoint,
             )
         else:
             drone_mock.assert_not_called()
@@ -516,8 +523,7 @@ def test_register_feedstock_token_with_proviers_error(
 
         with pytest.raises(RuntimeError) as e:
             register_feedstock_token_with_proviers(
-                user,
-                project,
+                user, project, drone_endpoints=[drone_default_endpoint]
             )
 
         assert "on %s" % provider in str(e.value)
