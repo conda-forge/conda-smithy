@@ -208,20 +208,45 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
 
     # 6: Selectors should be in a tidy form.
     if recipe_dir is not None and os.path.exists(meta_fname):
-        bad_selectors = []
-        bad_lines = []
+        bad_selectors, bad_lines = [], []
+        deprecated_pyXY_selectors_lint, deprecated_pyXY_lines_lint = [], []
+        deprecated_pyXY_selectors_hint, deprecated_pyXY_lines_hint = [], []
         # Good selectors look like ".*\s\s#\s[...]"
         good_selectors_pat = re.compile(r"(.+?)\s{2,}#\s\[(.+)\](?(2).*)$")
+        # Look out for py27, py35 selectors; we prefer py==35
+        deprecated_pyXY_selectors_pat = re.compile(r".+#\s*\[.*?(py\d{2,3}).*\]")
         with io.open(meta_fname, "rt") as fh:
             for selector_line, line_number in selector_lines(fh):
                 if not good_selectors_pat.match(selector_line):
                     bad_selectors.append(selector_line)
                     bad_lines.append(line_number)
+                deprecated_pyXY_matches = deprecated_pyXY_selectors_pat.match(selector_line)
+                if deprecated_pyXY_matches:
+                    for pyXY in deprecated_pyXY_matches.groups():
+                        if int(pyXY[2:]) in (27, 34, 35, 36):
+                            # py27, py35 and so on are ok up to py36 (included); only warn
+                            deprecated_pyXY_selectors_hint.append(selector_line)
+                            deprecated_pyXY_lines_hint.append(line_number)
+                        else:
+                            deprecated_pyXY_selectors_lint.append(selector_line)
+                            deprecated_pyXY_lines_lint.append(line_number)
         if bad_selectors:
             lints.append(
                 "Selectors are suggested to take a "
                 "``<two spaces>#<one space>[<expression>]`` form."
                 " See lines {}".format(bad_lines)
+            )
+        if deprecated_pyXY_selectors_hint:
+            hints.append(
+                "Old-style Python selectors (py27, py34, py35, py36) are "
+                "deprecated. Instead, consider using the int ``py``. For "
+                "example: ``# [py>=36]``. See lines {}".format(deprecated_pyXY_lines_hint)
+            )
+        if deprecated_pyXY_selectors_lint:
+            lints.append(
+                "Old-style Python selectors (py27, py35, etc) are only available "
+                "for Python 2.7, 3.4, 3.5, and 3.6. Please use the int ``py``. For "
+                "example: ``# [py>=37]``. See lines {}".format(deprecated_pyXY_lines_lint)
             )
 
     # 7: The build section should have a build number.
@@ -302,7 +327,7 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
 
     # 13: Check that the recipe name is valid
     recipe_name = package_section.get("name", "").strip()
-    if re.match("^[a-z0-9_\-.]+$", recipe_name) is None:
+    if re.match(r"^[a-z0-9_\-.]+$", recipe_name) is None:
         lints.append(
             "Recipe name has invalid characters. only lowercase alpha, numeric, "
             "underscores, hyphens and dots allowed"
@@ -671,7 +696,7 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
     except license_expression.ExpressionError:
         parsed_licenses = [license]
 
-    licenseref_regex = re.compile("^LicenseRef[a-zA-Z0-9\-.]*$")
+    licenseref_regex = re.compile(r"^LicenseRef[a-zA-Z0-9\-.]*$")
     filtered_licenses = []
     for license in parsed_licenses:
         if not licenseref_regex.match(license):
