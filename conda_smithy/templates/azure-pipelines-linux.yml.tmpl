@@ -5,7 +5,16 @@
 jobs:
 - job: linux
   {{ azure_yaml|indent(2) }}
+  variables:
+    CCACHE_DIR: $(Pipeline.Workspace)/ccache
   steps:
+  - task: Cache@2
+    inputs:
+      key: 'ccache | "$(Agent.OS)"'
+      path: $(CCACHE_DIR)
+      restoreKeys: |
+        ccache | "$(Agent.OS)"
+    displayName: Cache ccache directory
 {%- if clone_depth is not none %}
   - checkout: self
     fetchDepth: {{ clone_depth }}
