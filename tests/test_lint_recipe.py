@@ -270,6 +270,119 @@ class Test_linter(unittest.TestCase):
             assert_selector("name: foo_py3  #[py3k]", is_good=False)
             assert_selector("name: foo_py3 # [py3k]", is_good=False)
 
+    def test_pyXY_selectors(self):
+        with tmp_directory() as recipe_dir:
+
+            def assert_pyXY_selector(meta_string, is_good=False, kind="lint"):
+                assert kind in ("lint", "hint")
+                if kind == "hint":
+                    expected_start = "Old-style Python selectors (py27, py34, py35, py36) are deprecated"
+                else:
+                    expected_start = "Old-style Python selectors (py27, py35, etc) are only available"
+                with io.open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
+                    fh.write(meta_string)
+                lints, hints = linter.main(recipe_dir, return_hints=True)
+                if is_good:
+                    message = (
+                        "Found lints or hints when there shouldn't have "
+                        "been for '{}'."
+                    ).format(meta_string)
+                else:
+                    message = (
+                        "Expected lints or hints for '{}', but didn't get any."
+                    ).format(meta_string)
+                problems = lints if kind == "lint" else hints
+                self.assertEqual(
+                    not is_good,
+                    any(
+                        problem.startswith(expected_start)
+                        for problem in problems
+                    ),
+                    message,
+                )
+
+            assert_pyXY_selector(
+                """
+                            build:
+                              noarch: python
+                              script:
+                                - echo "hello" # [py27]
+                            """,
+                kind="hint",
+            )
+            assert_pyXY_selector(
+                """
+                            build:
+                              noarch: python
+                              script:
+                                - echo "hello" # [py310]
+                            """,
+                kind="lint",
+            )
+            assert_pyXY_selector(
+                """
+                            build:
+                              noarch: python
+                              script:
+                                - echo "hello" # [py38]
+                            """,
+                kind="lint",
+            )
+            assert_pyXY_selector(
+                """
+                            build:
+                              noarch: python
+                              script:
+                                - echo "hello"   #   [py36]
+                            """,
+                kind="hint",
+            )
+            assert_pyXY_selector(
+                """
+                            build:
+                              noarch: python
+                              script:
+                                - echo "hello"  # [win or py37]
+                            """,
+                kind="lint",
+            )
+            assert_pyXY_selector(
+                """
+                            build:
+                              noarch: python
+                              script:
+                                - echo "hello"  # [py37 or win]
+                            """,
+                kind="lint",
+            )
+            assert_pyXY_selector(
+                """
+                            build:
+                              noarch: python
+                              script:
+                                - echo "hello"  # [unix or py37 or win]
+                            """,
+                kind="lint",
+            )
+            assert_pyXY_selector(
+                """
+                            build:
+                              noarch: python
+                              script:
+                                - echo "hello"  # [unix or py37 or py27]
+                            """,
+                kind="lint",
+            )
+            assert_pyXY_selector(
+                """
+                            build:
+                              noarch: python
+                              script:
+                                - echo "hello"  # [py==37]
+                            """,
+                is_good=True,
+            )
+
     def test_noarch_selectors(self):
         expected_start = "`noarch` packages can't have selectors."
 
