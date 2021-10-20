@@ -4,6 +4,65 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.13.0
+====================
+
+**Added:**
+
+* Added the ability to store conda build artifacts using the Github Actions provider. To enable, set `github_actions: {store_build_artifacts: true}` in conda-forge.yml.
+* It is possible to set the lifetime of the Github Actions artifacts by setting the the `github_actions: {artifact_retention_days: 14}` setting in conda-forge.yml to the desired value. The default is 14 days.
+* Support for ppc64le on drone CI has been added
+* Added support for registering at a custom drone server by adding --drone-endpoint cli argument
+* Added explicit check to not upload packages on PR builds.
+* Added key ``github:tooling_branch_name`` to ``conda-forge.yml`` to enable
+  setting the default branch for tooling repos.
+* The linter will now warn if allowed ``pyXY`` selectors are used (e.g. ``py27``, ``py34``, ``py35``, ``py36``). For other versions (e.g. Python 3.8 would be ``py38``), these selectors are *silently ignored*  by ``conda-build``, so the linter will throw an error to prevent situations that might be tricky to debug. We recommend using ``py`` and integer comparison instead. Note that ``py2k`` and ``py3k`` are still allowed.
+* Added support for self-hosted github actions runners
+
+  In conda-forge.yml, add ``github_actions: self_hosted: true`` to
+  enable self-hosted github actions runner. Note that self-hosted
+  runners are currently configured to run only on push events
+  and pull requests will not be built.
+
+* Allow multiple providers per platform
+
+  In conda-forge.yml, add ``provider: <platform>: ['ci_1', 'ci_2']``
+  to configure multiple providers per platform.
+
+**Changed:**
+
+* Uploads are now allowed when building with ``mambabuild``!
+* Azure build artifacts are now zipped before being uploaded, with some cache directories and the conda build/host/test environments removed, to make user download smaller and faster.
+* A separate Azure build artifact, including only the conda build/host/test environments, is additionally created for failed builds.
+* Azure artifact names are now only shortened (uniquely) when necessary to keep the name below 80 characters.
+* Updated CircleCI xcode version to 13.0.0 to prevent failures.
+* The conda-smithy git repo now uses ``main`` as the default branch.
+* conda mambabuild is now the default build mode.  To opt out of this change set ``build_with_mambabuild`` to false in your ``conda-forge.yml``.
+* Bump Windows ``base`` environment Python version to 3.9
+* Support using ``build-locally.py`` natively on ``osx-arm64``.
+
+**Fixed:**
+
+* Azure artifact names are now unique when a job needs to be restarted (#1430).
+* Azure artifact uploads for failed builds that failed because of broken symbolic links have now been fixed.
+* Test suite now runs correctly on pyyaml 6
+* Remove the miniforge installation before building with ``./build-locally.py`` on MacOS so that 
+  ``./build-locally.py`` can be run more than once without an error regarding an exisiting miniforge installation.
+
+**Authors:**
+
+* Isuru Fernando
+* Matthew R. Becker
+* Jaime Rodríguez-Guerra
+* Uwe L. Korn
+* Ryan Volz
+* John Kirkham
+* Wolf Vollprecht
+* Marius van Niekerk
+* Matthias Diener
+
+
+
 v3.12
 ====================
 
