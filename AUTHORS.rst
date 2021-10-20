@@ -9,11 +9,12 @@ Authors are sorted by number of commits.
 * Filipe Fernandes
 * Dougal J. Sutherland
 * shadow_walker
-* Michael Sarahan
 * Jaime Rodríguez-Guerra
+* Michael Sarahan
 * Min RK
 * Hadrien Mary
 * Uwe L. Korn
+* Ryan Volz
 * Johnny Willemsen
 * Julian Rüth
 * Chris Burr
@@ -25,7 +26,6 @@ Authors are sorted by number of commits.
 * Maksim Rakitin
 * Jan Schulz
 * Josh Reichardt
-* Ryan Volz
 * Justin Calamari
 * Jason Furmanek
 * Patrick Sodré
@@ -40,6 +40,7 @@ Authors are sorted by number of commits.
 * Carlo
 * Matthew Craig
 * Joshua L. Adelman
+* Wolf Vollprecht
 * Marius van Niekerk
 * Peter Williams
 * Johannes Köster
@@ -50,7 +51,6 @@ Authors are sorted by number of commits.
 * Elmar Pruesse
 * Patrick Sodré
 * Bastian Zimmermann
-* Wolf Vollprecht
 * Josh Barnes
 * Tobias Megies
 * Jonathan Helmus
@@ -75,6 +75,7 @@ Authors are sorted by number of commits.
 * Hugo Slepicka
 * fhoehle
 * Ben Mares
+* Matthias Diener
 * lorenz
 * Tom Augspurger
 * Ryan May
