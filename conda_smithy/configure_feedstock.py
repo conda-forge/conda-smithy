@@ -1653,6 +1653,8 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
             "linux_armv7l": None,
             "linux_s390x": None,
         },
+        "test": None,
+        # Following is deprecated
         "test_on_native_only": False,
         "choco": [],
         # Configurable idle timeout.  Used for packages that don't have chatty enough builds
@@ -1760,6 +1762,12 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
             config["provider"][platform_arch] = None
 
     config["secrets"] = sorted(set(config["secrets"] + ["BINSTAR_TOKEN"]))
+
+    if config["test_on_native_only"]:
+        config["test"] = "native_and_emulated"
+
+    if config["test"] is None:
+        config["test"] = "all"
 
     # An older conda-smithy used to have some files which should no longer exist,
     # remove those now.
