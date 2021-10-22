@@ -19,8 +19,8 @@ Authors are sorted by number of commits.
 * Julian Rüth
 * Chris Burr
 * Mark Harfouche
-* Leo Fang
 * Marcel Bargull
+* Leo Fang
 * Eric Dill
 * Natasha Pavlovikj
 * Maksim Rakitin
@@ -76,6 +76,7 @@ Authors are sorted by number of commits.
 * fhoehle
 * Ben Mares
 * Matthias Diener
+* Matthew W. Thompson
 * lorenz
 * Tom Augspurger
 * Ryan May

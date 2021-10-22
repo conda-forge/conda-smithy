@@ -87,6 +87,7 @@
   - Marius Van Niekerk
   alternate_emails:
   - marius.vanniekerk@maxpoint.com
+  - mvanniekerk@flatiron.com
   num_commits: 5
   first_commit: 2017-09-15 13:37:30
   github: mariusvniekerk
@@ -181,7 +182,7 @@
   email: marcel.bargull@udo.edu
   alternate_emails:
   - mbargull@users.noreply.github.com
-  num_commits: 13
+  num_commits: 14
   first_commit: 2018-07-30 05:17:51
   github: mbargull
 - name: xoviat
@@ -246,7 +247,7 @@
   email: isuru.11@cse.mrt.ac.lk
   alternate_emails:
   - isuruf@gmail.com
-  num_commits: 430
+  num_commits: 431
   first_commit: 2017-01-08 22:03:03
   github: isuruf
 - name: Julian Rüth
@@ -515,3 +516,8 @@
   num_commits: 2
   first_commit: 2021-09-27 17:26:18
   github: matthiasdiener
+- name: Matthew W. Thompson
+  email: mattwthompson@protonmail.com
+  num_commits: 2
+  first_commit: 2021-10-21 09:39:13
+  github: mattwthompson
