@@ -129,8 +129,9 @@ $ rever 0.1.2
 Conda-smithy in a nutshell
 --------------------------
 
-#### xkcd 1629: Tools (modified)
+#### xkcd 1629: Tools
 ![xkcd 1629: Tools](https://user-images.githubusercontent.com/45469701/138193336-4ec6d34b-c0a6-4517-8f7c-877727db3947.png)
+<sub>(modified from [original](https://xkcd.com/1629/) under [CC BY-NC 2.5](https://xkcd.com/license.html))</sub>
 
 **Titletext**: *I make tools for managing job-hunting sites for people who make*
 *tools for managing job-hunting sites for people who make tools for ...*
