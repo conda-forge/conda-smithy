@@ -4,6 +4,34 @@ conda-smithy Change Log
 
 .. current developments
 
+vv3.14.0
+====================
+
+**Added:**
+
+* ``test`` option in ``conda-forge.yml`` can now be used to configure testing.
+  By default testing is done for all platforms. ``native_and_emulated`` value
+  will do testing only if native or if there is an emulator. ``native`` value
+  will do testing only if native.
+
+**Deprecated:**
+
+* ``test_on_native_only`` is deprecated. This is mapped to
+  ``test: native_and_emulated``.
+
+**Fixed:**
+
+* Always pull a new version of the image used in a build
+* Add workaround for Travis CI network issues (courtesy of @pkgw)
+
+**Authors:**
+
+* Isuru Fernando
+* Marcel Bargull
+* Matthew W. Thompson
+
+
+
 v3.13.0
 ====================
 
