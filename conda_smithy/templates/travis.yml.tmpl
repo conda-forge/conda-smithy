@@ -60,5 +60,5 @@ script:
   - if [[ ${PLATFORM} =~ .*osx.* ]]; then {%- if idle_timeout_minutes %} travis_wait {{ idle_timeout_minutes }}{% endif %} ./.scripts/run_osx_build.sh; fi
 {%- endif %}
 {% if 'linux' in platformset %}
-  - if [[ ${PLATFORM} =~ .*linux.* ]]; then {%- if idle_timeout_minutes %} travis_wait {{ idle_timeout_minutes }}{% endif %} ./.scripts/run_docker_build.sh; fi
+  - if [[ ${PLATFORM} =~ .*linux.* ]]; then {%- if idle_timeout_minutes %} travis_wait {{ idle_timeout_minutes }}{% endif %} CONDA_FORGE_DOCKER_RUN_ARGS=--network=host ./.scripts/run_docker_build.sh; fi
 {%- endif %}
