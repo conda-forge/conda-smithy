@@ -7,14 +7,6 @@ conda-smithy Change Log
 v3.14.0
 ====================
 
-**Authors:**
-
-
-
-
-vv3.14.0
-====================
-
 **Added:**
 
 * ``test`` option in ``conda-forge.yml`` can now be used to configure testing.
