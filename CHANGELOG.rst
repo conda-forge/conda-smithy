@@ -4,6 +4,20 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.14.1
+====================
+
+**Fixed:**
+
+* Call ``docker pull`` then ``docker run`` (sometimes ``--pull`` is unavailable)
+
+**Authors:**
+
+* Matthew R. Becker
+* John Kirkham
+
+
+
 v3.14.0
 ====================
 
