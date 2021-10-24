@@ -1,0 +1,36 @@
+{%- set arch_map = {'64': 'amd64', 'aarch64': 'arm64'} -%}
+clone:
+{%- if clone_depth is not none -%}
+  depth: {{ clone_depth }}
+{%- endif %}
+  git:
+    image: quay.io/condaforge/drone-git:${OS}-${ARCH}
+
+platform: ${OS}/${ARCH}
+
+pipeline:
+  build:
+    image: ${DOCKER_IMAGE}
+    commands:
+      - export FEEDSTOCK_ROOT="$CI_WORKSPACE"
+      - export RECIPE_ROOT="$FEEDSTOCK_ROOT/recipe"
+      - export CI=drone
+      - export GIT_BRANCH="$DRONE_BRANCH"
+      - export FEEDSTOCK_NAME=$(basename ${DRONE_REPO_NAME})
+      - export IS_PR_BUILD=$(if [[ "$${DRONE_PULL_REQUEST:-}" == "" ]]; then echo "False"; else echo "True"; fi)
+      - sed -i '$ichown -R conda:conda "$FEEDSTOCK_ROOT"' /opt/docker/bin/entrypoint
+      - /opt/docker/bin/entrypoint $FEEDSTOCK_ROOT/.scripts/build_steps.sh
+      - echo "Done building"
+    secrets: [ {{", ".join(secrets)}} ]
+
+matrix:
+  include:
+{%- for data in configs -%}
+{%- set arch_conda = data.build_platform.split("-")[1] -%}
+{%- set arch_woodpecker = arch_map.get(arch_conda, arch_conda) %}
+    - CONFIG: {{ data.config_name }}
+      DOCKER_IMAGE: {{ data.config["docker_image"][-1] }}
+      UPLOAD_PACKAGES: {{ data.upload }}
+      OS: {{ data.platform.split("-")[0] }}
+      ARCH: {{ arch_woodpecker }}
+{% endfor %}
