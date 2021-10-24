@@ -1410,7 +1410,9 @@ def render_drone(jinja_env, forge_config, forge_dir, return_metadata=False):
 _woodpecker_specific_setup = _drone_specific_setup
 
 
-def render_woodpecker(jinja_env, forge_config, forge_dir, return_metadata=False):
+def render_woodpecker(
+    jinja_env, forge_config, forge_dir, return_metadata=False
+):
     target_path = os.path.join(forge_dir, ".woodpecker.yml")
     template_filename = "woodpecker.yml.tmpl"
     fast_finish_text = ""
