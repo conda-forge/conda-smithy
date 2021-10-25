@@ -1407,6 +1407,40 @@ def render_drone(jinja_env, forge_config, forge_dir, return_metadata=False):
     )
 
 
+_woodpecker_specific_setup = _drone_specific_setup
+
+
+def render_woodpecker(
+    jinja_env, forge_config, forge_dir, return_metadata=False
+):
+    target_path = os.path.join(forge_dir, ".woodpecker.yml")
+    template_filename = "woodpecker.yml.tmpl"
+    fast_finish_text = ""
+
+    (
+        platforms,
+        archs,
+        keep_noarchs,
+        upload_packages,
+    ) = _get_platforms_of_provider("woodpecker", forge_config)
+
+    return _render_ci_provider(
+        "woodpecker",
+        jinja_env=jinja_env,
+        forge_config=forge_config,
+        forge_dir=forge_dir,
+        platforms=platforms,
+        archs=archs,
+        fast_finish_text=fast_finish_text,
+        platform_target_path=target_path,
+        platform_template_file=template_filename,
+        platform_specific_setup=_woodpecker_specific_setup,
+        keep_noarchs=keep_noarchs,
+        upload_packages=upload_packages,
+        return_metadata=return_metadata,
+    )
+
+
 def azure_build_id_from_token(forge_config):
     """Retrieve Azure `build_id` from a `forge_config` using an Azure token.
     This function allows the `build_id` to be retrieved when the Azure org is private.
@@ -1586,6 +1620,7 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
         },
         "templates": {},
         "drone": {},
+        "woodpecker": {},
         "travis": {},
         "circle": {},
         "config_version": "2",
@@ -2162,6 +2197,10 @@ def main(
         render_drone(env, config, forge_dir, return_metadata=True)
     )
     logger.debug("drone rendered")
+    render_info.append(
+        render_woodpecker(env, config, forge_dir, return_metadata=True)
+    )
+    logger.debug("woodpecker rendered")
     render_info.append(
         render_github_actions(env, config, forge_dir, return_metadata=True)
     )
