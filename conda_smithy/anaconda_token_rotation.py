@@ -168,7 +168,7 @@ def rotate_anaconda_token(
 
                 if github_actions:
                     try:
-                        rotate_token_in_github(
+                        rotate_token_in_github_actions(
                             user, project, anaconda_token, token_name, gh
                         )
                     except Exception as e:
@@ -193,7 +193,7 @@ def rotate_anaconda_token(
         else:
             raise RuntimeError(
                 (
-                    "Rotating the feedstock token in proviers for %s/%s failed!"
+                    "Rotating the feedstock token in providers for %s/%s failed!"
                     " Try the command locally with DEBUG_ANACONDA_TOKENS"
                     " defined in the environment to investigate!"
                 )
@@ -424,6 +424,6 @@ def rotate_token_in_appveyor(feedstock_config_path, binstar_token, token_name):
         ] = response.content.decode("utf-8")
 
 
-def rotate_token_in_github(user, project, binstar_token, token_name, gh):
+def rotate_token_in_github_actions(user, project, binstar_token, token_name, gh):
     repo = gh.get_repo(user, project)
     assert repo.create_secret(token_name, binstar_token)
