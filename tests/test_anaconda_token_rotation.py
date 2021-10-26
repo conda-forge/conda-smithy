@@ -13,6 +13,7 @@ from conda_smithy.ci_register import drone_default_endpoint
 @pytest.mark.parametrize("azure", [True, False])
 @pytest.mark.parametrize("travis", [True, False])
 @pytest.mark.parametrize("github_actions", [True, False])
+@mock.patch("conda_smithy.github.gh_token")
 @mock.patch("conda_smithy.anaconda_token_rotation._get_anaconda_token")
 @mock.patch("conda_smithy.anaconda_token_rotation.rotate_token_in_appveyor")
 @mock.patch("conda_smithy.anaconda_token_rotation.rotate_token_in_drone")
@@ -28,6 +29,7 @@ def test_rotate_anaconda_token(
     drone_mock,
     appveyor_mock,
     get_ac_token,
+    get_gh_token,
     appveyor,
     drone,
     circle,
@@ -40,6 +42,7 @@ def test_rotate_anaconda_token(
 
     anaconda_token = "abc123"
     get_ac_token.return_value = anaconda_token
+    get_gh_token.return_value = None
 
     feedstock_config_path = "abc/conda-forge.yml"
 
@@ -165,6 +168,7 @@ def test_rotate_anaconda_token_notoken(
 @pytest.mark.parametrize(
     "provider", ["drone", "circle", "travis", "azure", "appveyor", "github_actions"]
 )
+@mock.patch("conda_smithy.github.gh_token")
 @mock.patch("conda_smithy.anaconda_token_rotation._get_anaconda_token")
 @mock.patch("conda_smithy.anaconda_token_rotation.rotate_token_in_appveyor")
 @mock.patch("conda_smithy.anaconda_token_rotation.rotate_token_in_drone")
@@ -180,6 +184,7 @@ def test_rotate_anaconda_token_provider_error(
     drone_mock,
     appveyor_mock,
     get_ac_token,
+    get_gh_token,
     provider,
 ):
     user = "foo"
@@ -187,6 +192,7 @@ def test_rotate_anaconda_token_provider_error(
 
     anaconda_token = "abc123"
     get_ac_token.return_value = anaconda_token
+    get_gh_token.return_value = None
 
     user = "foo"
     project = "bar-feedstock"
