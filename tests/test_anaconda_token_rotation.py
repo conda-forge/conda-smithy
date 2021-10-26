@@ -107,7 +107,11 @@ def test_rotate_anaconda_token(
 
     if github_actions:
         github_actions_mock.assert_called_once_with(
-            user, project, anaconda_token, "MY_FANCY_TOKEN", mock.ANY,
+            user,
+            project,
+            anaconda_token,
+            "MY_FANCY_TOKEN",
+            mock.ANY,
         )
     else:
         github_actions_mock.assert_not_called()
