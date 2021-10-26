@@ -20,7 +20,9 @@ from conda_smithy.ci_register import drone_default_endpoint
 @mock.patch("conda_smithy.anaconda_token_rotation.rotate_token_in_circle")
 @mock.patch("conda_smithy.anaconda_token_rotation.rotate_token_in_travis")
 @mock.patch("conda_smithy.anaconda_token_rotation.rotate_token_in_azure")
-@mock.patch("conda_smithy.anaconda_token_rotation.rotate_token_in_github_actions")
+@mock.patch(
+    "conda_smithy.anaconda_token_rotation.rotate_token_in_github_actions"
+)
 def test_rotate_anaconda_token(
     github_actions_mock,
     azure_mock,
@@ -122,7 +124,9 @@ def test_rotate_anaconda_token(
 @mock.patch("conda_smithy.anaconda_token_rotation.rotate_token_in_circle")
 @mock.patch("conda_smithy.anaconda_token_rotation.rotate_token_in_travis")
 @mock.patch("conda_smithy.anaconda_token_rotation.rotate_token_in_azure")
-@mock.patch("conda_smithy.anaconda_token_rotation.rotate_token_in_github_actions")
+@mock.patch(
+    "conda_smithy.anaconda_token_rotation.rotate_token_in_github_actions"
+)
 def test_rotate_anaconda_token_notoken(
     github_actions_mock,
     azure_mock,
@@ -166,7 +170,8 @@ def test_rotate_anaconda_token_notoken(
 
 
 @pytest.mark.parametrize(
-    "provider", ["drone", "circle", "travis", "azure", "appveyor", "github_actions"]
+    "provider",
+    ["drone", "circle", "travis", "azure", "appveyor", "github_actions"],
 )
 @mock.patch("conda_smithy.github.gh_token")
 @mock.patch("conda_smithy.anaconda_token_rotation._get_anaconda_token")
@@ -175,7 +180,9 @@ def test_rotate_anaconda_token_notoken(
 @mock.patch("conda_smithy.anaconda_token_rotation.rotate_token_in_circle")
 @mock.patch("conda_smithy.anaconda_token_rotation.rotate_token_in_travis")
 @mock.patch("conda_smithy.anaconda_token_rotation.rotate_token_in_azure")
-@mock.patch("conda_smithy.anaconda_token_rotation.rotate_token_in_github_actions")
+@mock.patch(
+    "conda_smithy.anaconda_token_rotation.rotate_token_in_github_actions"
+)
 def test_rotate_anaconda_token_provider_error(
     github_actions_mock,
     azure_mock,

@@ -383,7 +383,9 @@ def test_register_feedstock_token_exists_already(
 @mock.patch("conda_smithy.feedstock_tokens.add_feedstock_token_to_circle")
 @mock.patch("conda_smithy.feedstock_tokens.add_feedstock_token_to_travis")
 @mock.patch("conda_smithy.feedstock_tokens.add_feedstock_token_to_azure")
-@mock.patch("conda_smithy.feedstock_tokens.add_feedstock_token_to_github_actions")
+@mock.patch(
+    "conda_smithy.feedstock_tokens.add_feedstock_token_to_github_actions"
+)
 def test_register_feedstock_token_with_providers(
     github_actions_mock,
     azure_mock,
@@ -471,7 +473,9 @@ def test_register_feedstock_token_with_providers(
 @mock.patch("conda_smithy.feedstock_tokens.add_feedstock_token_to_circle")
 @mock.patch("conda_smithy.feedstock_tokens.add_feedstock_token_to_travis")
 @mock.patch("conda_smithy.feedstock_tokens.add_feedstock_token_to_azure")
-@mock.patch("conda_smithy.feedstock_tokens.add_feedstock_token_to_github_actions")
+@mock.patch(
+    "conda_smithy.feedstock_tokens.add_feedstock_token_to_github_actions"
+)
 def test_register_feedstock_token_with_proviers_notoken(
     github_actions_mock,
     azure_mock,
@@ -509,13 +513,16 @@ def test_register_feedstock_token_with_proviers_notoken(
     github_actions_mock.assert_not_called()
 
 
-@pytest.mark.parametrize("provider", ["drone", "circle", "travis", "azure",
-                                      "github actions"])
+@pytest.mark.parametrize(
+    "provider", ["drone", "circle", "travis", "azure", "github actions"]
+)
 @mock.patch("conda_smithy.feedstock_tokens.add_feedstock_token_to_drone")
 @mock.patch("conda_smithy.feedstock_tokens.add_feedstock_token_to_circle")
 @mock.patch("conda_smithy.feedstock_tokens.add_feedstock_token_to_travis")
 @mock.patch("conda_smithy.feedstock_tokens.add_feedstock_token_to_azure")
-@mock.patch("conda_smithy.feedstock_tokens.add_feedstock_token_to_github_actions")
+@mock.patch(
+    "conda_smithy.feedstock_tokens.add_feedstock_token_to_github_actions"
+)
 def test_register_feedstock_token_with_proviers_error(
     github_actions_mock,
     azure_mock,

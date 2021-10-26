@@ -424,6 +424,8 @@ def rotate_token_in_appveyor(feedstock_config_path, binstar_token, token_name):
         ] = response.content.decode("utf-8")
 
 
-def rotate_token_in_github_actions(user, project, binstar_token, token_name, gh):
+def rotate_token_in_github_actions(
+    user, project, binstar_token, token_name, gh
+):
     repo = gh.get_repo(user, project)
     assert repo.create_secret(token_name, binstar_token)

@@ -682,7 +682,10 @@ def add_feedstock_token_to_azure(user, project, feedstock_token, clobber):
             project=ed.project.name,
         )
 
-def add_feedstock_token_to_github_actions(user, project, feedstock_token, clobber):
+
+def add_feedstock_token_to_github_actions(
+    user, project, feedstock_token, clobber
+):
     from .github import gh_token
     from github import Github
 
@@ -691,7 +694,8 @@ def add_feedstock_token_to_github_actions(user, project, feedstock_token, clobbe
 
     if not clobber:
         status, headers, data = repo._requester.requestJson(
-            "GET", f"{repo.url}/actions/secrets")
+            "GET", f"{repo.url}/actions/secrets"
+        )
         assert status == 200
         data = json.loads(data)
         for secret_data in data["secrets"]:
