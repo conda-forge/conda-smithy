@@ -763,6 +763,7 @@ class RegisterFeedstockToken(Subcommand):
             "Travis",
             "Circle",
             "Drone",
+            "Github-Actions",
         ]:
             scp.add_argument(
                 "--without-{}".format(ci.lower()),
@@ -814,6 +815,7 @@ class RegisterFeedstockToken(Subcommand):
             circle=args.circle,
             travis=args.travis,
             azure=args.azure,
+            github_actions=args.github_actions,
             drone_endpoints=drone_endpoints,
         )
 
@@ -871,6 +873,7 @@ class UpdateAnacondaToken(Subcommand):
             "Circle",
             "Drone",
             "Appveyor",
+            "Github-Actions",
         ]:
             scp.add_argument(
                 "--without-{}".format(ci.lower()),
@@ -914,6 +917,7 @@ class UpdateAnacondaToken(Subcommand):
             travis=args.travis,
             azure=args.azure,
             appveyor=args.appveyor,
+            github_actions=args.github_actions,
             token_name=args.token_name,
             drone_endpoints=drone_endpoints,
         )
