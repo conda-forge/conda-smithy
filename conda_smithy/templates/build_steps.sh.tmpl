@@ -5,6 +5,8 @@
 # changes to this script, consider a proposal to conda-smithy so that other feedstocks can also
 # benefit from the improvement.
 
+# -*- mode: jinja-shell -*-
+
 set -xeuo pipefail
 export FEEDSTOCK_ROOT="${FEEDSTOCK_ROOT:-/home/conda/feedstock_root}"
 source ${FEEDSTOCK_ROOT}/.scripts/logging_utils.sh
@@ -29,11 +31,13 @@ CONDARC
 {%- if build_with_mambabuild %}
 GET_BOA=boa
 BUILD_CMD=mambabuild
+CONDA_INSTALL_CMD=mamba
 {%- else %}
 BUILD_CMD=build
+CONDA_INSTALL_CMD=conda
 {%- endif %}
 
-conda install --yes --quiet "{{ remote_ci_setup }}" conda-build pip ${GET_BOA:-} -c conda-forge
+${CONDA_INSTALL_CMD} install --yes --quiet "{{ remote_ci_setup }}" conda-build pip ${GET_BOA:-} -c conda-forge
 {% if local_ci_setup %}
 conda uninstall --quiet --yes --force "{{ remote_ci_setup }}"
 pip install --no-deps ${RECIPE_ROOT}/.
