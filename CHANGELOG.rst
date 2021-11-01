@@ -4,6 +4,29 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.14.2
+====================
+
+**Authors:**
+
+* Isuru Fernando
+
+
+
+v3.14.2
+====================
+
+**Added:**
+
+* Download SDK to local folder when build-locally.py instead of to the system dir
+* Added support for woodpecker CI support
+
+**Authors:**
+
+* Isuru Fernando
+
+
+
 v3.14.1
 ====================
 
@@ -88,7 +111,7 @@ v3.13.0
 * Azure artifact names are now unique when a job needs to be restarted (#1430).
 * Azure artifact uploads for failed builds that failed because of broken symbolic links have now been fixed.
 * Test suite now runs correctly on pyyaml 6
-* Remove the miniforge installation before building with ``./build-locally.py`` on MacOS so that 
+* Remove the miniforge installation before building with ``./build-locally.py`` on MacOS so that
   ``./build-locally.py`` can be run more than once without an error regarding an exisiting miniforge installation.
 
 **Authors:**
