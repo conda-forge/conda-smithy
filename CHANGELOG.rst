@@ -4,6 +4,20 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.14.3
+====================
+
+**Changed:**
+
+* linux-aarch64 builds default is changed from native (drone) to emulated (azure).
+
+**Authors:**
+
+* Isuru Fernando
+* Mike Taves
+
+
+
 v3.14.2
 ====================
 
