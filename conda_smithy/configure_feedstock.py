@@ -1835,8 +1835,11 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
     logger.debug(log)
     logger.debug("## END CONFIGURATION\n")
 
-    if config["provider"]["linux_aarch64"] in {"default", "native"}:
-        config["provider"]["linux_aarch64"] = ["drone"]
+    if config["provider"]["linux_aarch64"] == "default":
+        config["provider"]["linux_aarch64"] = ["azure"]
+
+    if config["provider"]["linux_aarch64"] == "native":
+        config["provider"]["linux_aarch64"] = ["travis"]
 
     if config["provider"]["linux_ppc64le"] in {"default", "native"}:
         config["provider"]["linux_ppc64le"] = ["travis"]
