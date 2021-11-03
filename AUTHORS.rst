@@ -98,3 +98,4 @@ Authors are sorted by number of commits.
 * Stuart Berg
 * Philippe Blain
 * Billy K. Poon
+* Mike Taves
