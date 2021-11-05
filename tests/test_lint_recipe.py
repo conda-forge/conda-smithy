@@ -1269,6 +1269,25 @@ class Test_linter(unittest.TestCase):
         )
         assert len(hints) < 100
 
+    def test_no_licenses(self):
+        meta = {"about": {"url": "http://example.com"}}
+        lints, hints = linter.lintify(meta)
+        self.assertIn(
+            "The license item is expected in the about section.", lints,
+        )
+        self.assertIn(
+            "license_family entry is missing, but is recommended.", hints
+        )
+
+        meta["about"]["license"] = "BSD-3-Clause"
+        lints, hints = linter.lintify(meta)
+        self.assertIn(
+            "license_file entry is missing, but is required.", lints,
+        )
+        self.assertIn(
+            "license_family entry is missing, but is recommended.", hints
+        )
+
 
 @pytest.mark.cli
 class TestCLI_recipe_lint(unittest.TestCase):

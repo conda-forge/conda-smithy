@@ -726,6 +726,10 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
             "[here]( https://conda-forge.org/docs/maintainer/adding_pkgs.html#spdx-identifiers-and-expressions )."
         )
 
+    # 5: recommend license_family
+    if "license_family" not in about_section:
+        hints.append("license_family entry is missing, but is recommended.")
+
     return lints, hints
 
 
