@@ -80,7 +80,7 @@ jobs:
       env:
         CONFIG: {% raw %}${{ matrix.CONFIG }}{% endraw %}
         UPLOAD_PACKAGES: {% raw %}${{ matrix.UPLOAD_PACKAGES }}{% endraw %}
-        DOCKERIMAGE: {% raw %}${{ matrix.DOCKERIMAGE }}{% endraw %}
+        DOCKER_IMAGE: {% raw %}${{ matrix.DOCKER_IMAGE }}{% endraw %}
         CI: github_actions
 {%- if upload_on_branch %}
         UPLOAD_ON_BRANCH: {{ upload_on_branch }}
