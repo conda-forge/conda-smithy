@@ -21,6 +21,13 @@ def get_repo(path, search_parent_directories=True):
     return repo
 
 
+def get_repo_root(path):
+    try:
+        return get_repo(path).working_tree_dir
+    except AttributeError:
+        return None
+
+
 def set_exe_file(filename, set_exe=True):
     IXALL = stat.S_IXOTH | stat.S_IXGRP | stat.S_IXUSR
 
