@@ -669,6 +669,8 @@ def _render_ci_provider(
         for meta in metas:
             if not meta.skip():
                 enable_platform[i] = True
+            if any(x.startswith("nvcc") for x in meta.meta["requirements"].get("build", [])):
+                os.environ["CF_CUDA_ENABLED"] = "True"
         metas_list_of_lists.append(metas)
 
     if not any(enable_platform):
