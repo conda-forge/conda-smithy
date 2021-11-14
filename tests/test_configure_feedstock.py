@@ -815,3 +815,26 @@ def test_cos7_env_render(py_recipe, jinja_env):
         else:
             if "DEFAULT_LINUX_VERSION" in os.environ:
                 del os.environ["DEFAULT_LINUX_VERSION"]
+
+
+def test_cuda_enabled_render(cuda_enabled_recipe, jinja_env):
+    has_env = "CF_CUDA_ENABLED" in os.environ
+    if has_env:
+        old_val = os.environ["CF_CUDA_ENABLED"]
+        del os.environ["CF_CUDA_ENABLED"]
+
+    try:
+        assert "CF_CUDA_ENABLED" not in os.environ
+        cnfgr_fdstk.render_azure(
+            jinja_env=jinja_env,
+            forge_config=cuda_enabled_recipe.config,
+            forge_dir=cuda_enabled_recipe.recipe,
+        )
+        assert os.environ["CF_CUDA_ENABLED"] == "True"
+
+    finally:
+        if has_env:
+            os.environ["CF_CUDA_ENABLED"] = old_val
+        else:
+            if "CF_CUDA_ENABLED" in os.environ:
+                del os.environ["CF_CUDA_ENABLED"]
