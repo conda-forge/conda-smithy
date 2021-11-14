@@ -2,6 +2,7 @@ import glob
 from itertools import product, chain
 import logging
 import os
+import re
 import subprocess
 import textwrap
 import yaml
@@ -588,6 +589,17 @@ def _render_ci_provider(
             if ver:
                 os.environ["DEFAULT_LINUX_VERSION"] = ver
 
+        # detect if `compiler('cuda')` is used in meta.yaml,
+        # and set appropriate environment variable
+        with open(
+            os.path.join(forge_dir, forge_config["recipe_dir"], "meta.yaml")
+        ) as f:
+            meta_lines = f.readlines()
+        for ml in meta_lines:
+            # looking for `compiler('cuda')` with both quote variants
+            if re.match(r"compiler\((\"cuda\"|\'cuda\')\)", ml):
+                os.environ["CF_CUDA_ENABLED"] = "True"
+
         config = conda_build.config.get_or_merge_config(
             None,
             exclusive_config_file=forge_config["exclusive_config_file"],
@@ -669,11 +681,6 @@ def _render_ci_provider(
         for meta in metas:
             if not meta.skip():
                 enable_platform[i] = True
-            if any(
-                x.startswith("nvcc")
-                for x in meta.meta["requirements"].get("build", [])
-            ):
-                os.environ["CF_CUDA_ENABLED"] = "True"
         metas_list_of_lists.append(metas)
 
     if not any(enable_platform):
