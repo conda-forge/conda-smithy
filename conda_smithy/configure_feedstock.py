@@ -594,11 +594,10 @@ def _render_ci_provider(
         with open(
             os.path.join(forge_dir, forge_config["recipe_dir"], "meta.yaml")
         ) as f:
-            meta_lines = f.readlines()
-        for ml in meta_lines:
-            # looking for `compiler('cuda')` with both quote variants
-            if re.match(r"compiler\((\"cuda\"|\'cuda\')\)", ml):
-                os.environ["CF_CUDA_ENABLED"] = "True"
+            meta_full_text = f.read()
+        # looking for `compiler('cuda')` with both quote variants
+        if re.match(r"compiler\((\"cuda\"|\'cuda\')\)", meta_full_text):
+            os.environ["CF_CUDA_ENABLED"] = "True"
 
         config = conda_build.config.get_or_merge_config(
             None,
