@@ -516,6 +516,39 @@ choco:
 
 
 @pytest.fixture(scope="function")
+def cuda_enabled_recipe(config_yaml, request):
+    with open(os.path.join(config_yaml, "recipe", "meta.yaml"), "w") as fh:
+        fh.write(
+            """
+package:
+    name: py-test
+    version: 1.0.0
+build:
+    skip: True   # [os.environ.get("CF_CUDA_ENABLED") != "True"]
+requirements:
+    build:
+        - {{ compiler('c') }}
+        - {{ compiler('cuda') }}
+    host:
+        - python
+    run:
+        - python
+about:
+    home: home
+    """
+        )
+    return RecipeConfigPair(
+        str(config_yaml),
+        _load_forge_config(
+            config_yaml,
+            exclusive_config_file=os.path.join(
+                config_yaml, "recipe", "default_config.yaml"
+            ),
+        ),
+    )
+
+
+@pytest.fixture(scope="function")
 def jinja_env(request):
     tmplt_dir = os.path.join(conda_forge_content, "templates")
     # Load templates from the feedstock in preference to the smithy's templates.

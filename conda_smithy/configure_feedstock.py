@@ -2,6 +2,7 @@ import glob
 from itertools import product, chain
 import logging
 import os
+import re
 import subprocess
 import textwrap
 import yaml
@@ -587,6 +588,19 @@ def _render_ci_provider(
             ver = forge_config["os_version"][f"{platform}_{arch}"]
             if ver:
                 os.environ["DEFAULT_LINUX_VERSION"] = ver
+
+        # detect if `compiler('cuda')` is used in meta.yaml,
+        # and set appropriate environment variable
+        with open(
+            os.path.join(forge_dir, forge_config["recipe_dir"], "meta.yaml")
+        ) as f:
+            meta_lines = f.readlines()
+        # looking for `compiler('cuda')` with both quote variants;
+        # do not match if there is a `#` somewhere before on the line
+        pat = re.compile(r"^[^\#]*compiler\((\"cuda\"|\'cuda\')\).*")
+        for ml in meta_lines:
+            if pat.match(ml):
+                os.environ["CF_CUDA_ENABLED"] = "True"
 
         config = conda_build.config.get_or_merge_config(
             None,
