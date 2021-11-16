@@ -523,6 +523,8 @@ def cuda_enabled_recipe(config_yaml, request):
 package:
     name: py-test
     version: 1.0.0
+build:
+    skip: True   # [os.environ.get("CF_CUDA_ENABLED") != "True"]
 requirements:
     build:
         - {{ compiler('c') }}
