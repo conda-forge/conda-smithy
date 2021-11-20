@@ -45,6 +45,8 @@ matrix:
       os: linux
       arch: {{ arch_map[data.build_platform.split("-")[1]] }}
       dist: focal
+      services:
+        - docker
     {%- endif %}
 {% endfor %}
 {%- endif %}
