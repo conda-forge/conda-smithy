@@ -4,6 +4,31 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.15.0
+====================
+
+**Added:**
+
+* Conda smithy will now detect if a recipe uses ``compiler('cuda')``
+and set the ``CF_CUDA_ENABLED`` environment variable to ``True`` if
+so. This can for example be useful to distinguish different options
+for builds with or without GPUs in ``conda_build_config.yaml``.
+* Introduce utility function to facilitate the use case of running conda smithy
+  commands from any sub-directory in the git repo checkout of a feedstock.
+
+**Fixed:**
+
+* Fixed typo in GitHub Actions template, where ``DOCKERIMAGE`` was wrongly specified in the matrix configuration. The CI step and its corresponding script expect ``DOCKER_IMAGE``.
+
+**Authors:**
+
+* Isuru Fernando
+* Jaime Rodríguez-Guerra
+* H. Vetinari
+* Nehal J Wani
+
+
+
 v3.14.3
 ====================
 
