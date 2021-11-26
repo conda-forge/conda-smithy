@@ -247,7 +247,7 @@
   email: isuru.11@cse.mrt.ac.lk
   alternate_emails:
   - isuruf@gmail.com
-  num_commits: 438
+  num_commits: 439
   first_commit: 2017-01-08 22:03:03
   github: isuruf
 - name: Julian Rüth
@@ -393,7 +393,7 @@
   github: shadowwalkersb
 - name: Matthew R. Becker
   email: becker.mr@gmail.com
-  num_commits: 210
+  num_commits: 212
   first_commit: 2020-01-07 17:44:33
   github: beckermr
   alternate_emails:
@@ -472,7 +472,7 @@
   github: jwillemsen
 - name: Jaime Rodríguez-Guerra
   email: jaimergp@users.noreply.github.com
-  num_commits: 33
+  num_commits: 35
   first_commit: 2020-11-01 14:18:08
   github: jaimergp
 - name: Bastian Zimmermann
@@ -526,3 +526,12 @@
   num_commits: 1
   first_commit: 2021-11-02 19:52:55
   github: mwtoews
+- name: Nehal J Wani
+  email: nehaljw.kkd1@gmail.com
+  num_commits: 1
+  first_commit: 2021-11-13 10:51:42
+  github: nehaljwani
+- name: H. Vetinari
+  email: h.vetinari@gmx.com
+  num_commits: 7
+  first_commit: 2021-11-14 02:53:10

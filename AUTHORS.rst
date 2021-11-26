@@ -8,8 +8,8 @@ Authors are sorted by number of commits.
 * Phil Elson
 * Filipe Fernandes
 * Dougal J. Sutherland
-* shadow_walker
 * Jaime Rodríguez-Guerra
+* shadow_walker
 * Michael Sarahan
 * Min RK
 * Hadrien Mary
@@ -37,6 +37,7 @@ Authors are sorted by number of commits.
 * Gonzalo Pena-Castellanos
 * Daniel Bast
 * Tim Snyder
+* H. Vetinari
 * Carlo
 * Matthew Craig
 * Joshua L. Adelman
@@ -99,3 +100,4 @@ Authors are sorted by number of commits.
 * Philippe Blain
 * Billy K. Poon
 * Mike Taves
+* Nehal J Wani
