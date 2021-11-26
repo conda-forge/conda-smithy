@@ -2,7 +2,9 @@ import functools
 import io
 import operator as op
 import os
+import random
 import stat
+import string
 import shutil
 import tempfile
 import unittest
@@ -65,6 +67,16 @@ class TestFeedstockIO(unittest.TestCase):
                 self.assertIsInstance(
                     fio.get_repo(pathfunc(tmp_dir)), git.Repo
                 )
+                possible_repo_subdir = os.path.join(
+                    tmp_dir,
+                    "".join(
+                        "%s%s"
+                        % (x, os.path.sep if random.random() > 0.5 else "")
+                        for x in string.ascii_lowercase
+                    ),
+                )
+                os.makedirs(possible_repo_subdir)
+                assert fio.get_repo_root(possible_repo_subdir) == tmp_dir
 
     def test_set_exe_file(self):
         perms = [stat.S_IXUSR, stat.S_IXGRP, stat.S_IXOTH]
