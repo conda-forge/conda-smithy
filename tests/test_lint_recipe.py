@@ -1275,7 +1275,7 @@ class Test_linter(unittest.TestCase):
                 "run": ["matplotlib >=2.3"],
             },
         }
-        lints, hints = linter.lintify(meta)
+        lints, hints = linter.lintify(meta, conda_forge=True)
         expected = "Recipes should usually depend on `matplotlib-base`"
         self.assertTrue(any(hint.startswith(expected) for hint in hints))
 
@@ -1289,7 +1289,7 @@ class Test_linter(unittest.TestCase):
                 },
             ],
         }
-        lints, hints = linter.lintify(meta)
+        lints, hints = linter.lintify(meta, conda_forge=True)
         expected = "Recipes should usually depend on `matplotlib-base`"
         self.assertTrue(any(hint.startswith(expected) for hint in hints))
 
