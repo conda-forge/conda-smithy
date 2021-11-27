@@ -1,6 +1,6 @@
 **Added:**
 
-* Added a hint for recipes in conda-forge to depend on matplot-base as opposed to
+* Added a hint for recipes in conda-forge to depend on matplotlib-base as opposed to
   matplotlib.
 
 **Changed:**
