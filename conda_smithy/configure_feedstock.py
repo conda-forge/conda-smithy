@@ -1655,7 +1655,7 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
             },
             "settings_win": {
                 "pool": {
-                    "vmImage": "vs2017-win2016",
+                    "vmImage": "windows-2019",
                 },
                 "timeoutInMinutes": 360,
                 "variables": {"CONDA_BLD_PATH": r"D:\\bld\\"},
