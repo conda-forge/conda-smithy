@@ -38,7 +38,7 @@ CONDA_INSTALL_CMD=conda
 {%- endif %}
 
 {%- if build_with_mambabuild %}
-${CONDA_INSTALL_CMD} update --all --yes --quiet
+${CONDA_INSTALL_CMD} update --all --yes --quiet -c conda-forge
 {%- endif %}
 ${CONDA_INSTALL_CMD} install --yes --quiet "{{ remote_ci_setup }}" conda-build pip ${GET_BOA:-} -c conda-forge
 {% if local_ci_setup %}
