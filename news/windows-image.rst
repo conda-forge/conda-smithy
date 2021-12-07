@@ -4,7 +4,7 @@
 
 **Changed:**
 
-* For azure pipelines, the default windows image is changed to windows-2016
+* For azure pipelines, the default windows image is changed to windows-2019
 
 **Deprecated:**
 
