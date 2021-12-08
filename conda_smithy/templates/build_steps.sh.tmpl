@@ -27,19 +27,19 @@ conda-build:
  root-dir: ${FEEDSTOCK_ROOT}/build_artifacts
 
 CONDARC
-
-{%- if build_with_mambabuild %}
-GET_BOA=boa
-BUILD_CMD=mambabuild
-CONDA_INSTALL_CMD=mamba
+{% if build_with_mambabuild %}
+{%- set CONDA_INSTALL_CMD="mamba" %}
+{%- set GET_BOA="boa " %}
+{%- set BUILD_CMD="mambabuild" %}
 {%- else %}
-BUILD_CMD=build
-CONDA_INSTALL_CMD=conda
+{%- set CONDA_INSTALL_CMD="conda" %}
+{%- set GET_BOA=" " %}
+{%- set BUILD_CMD="build" %}
 {%- endif %}
 
-${CONDA_INSTALL_CMD} install --yes --quiet "{{ remote_ci_setup }}" conda-build pip ${GET_BOA:-} -c conda-forge
+{{ CONDA_INSTALL_CMD }} install --yes --quiet "{{ remote_ci_setup }}" conda-build pip {{ GET_BOA }}-c conda-forge
 {%- if build_with_mambabuild %}
-${CONDA_INSTALL_CMD} update --yes --quiet "{{ remote_ci_setup }}" conda-build pip ${GET_BOA:-} -c conda-forge
+{{ CONDA_INSTALL_CMD }} update --yes --quiet "{{ remote_ci_setup }}" conda-build pip {{ GET_BOA }}-c conda-forge
 {%- endif %}
 {% if local_ci_setup %}
 conda uninstall --quiet --yes --force "{{ remote_ci_setup }}"
@@ -79,7 +79,7 @@ if [[ "${BUILD_WITH_CONDA_DEBUG:-0}" == 1 ]]; then
     # Drop into an interactive shell
     /bin/bash
 else
-    conda $BUILD_CMD "${RECIPE_ROOT}" -m "${CI_SUPPORT}/${CONFIG}.yaml" \
+    conda {{ BUILD_CMD }} "${RECIPE_ROOT}" -m "${CI_SUPPORT}/${CONFIG}.yaml" \
         --suppress-variables ${EXTRA_CB_OPTIONS:-} \
         --clobber-file "${CI_SUPPORT}/clobber_${CONFIG}.yaml"
 
