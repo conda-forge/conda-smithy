@@ -37,10 +37,10 @@ BUILD_CMD=build
 CONDA_INSTALL_CMD=conda
 {%- endif %}
 
-{%- if build_with_mambabuild %}
-${CONDA_INSTALL_CMD} update --all --yes --quiet -c conda-forge
-{%- endif %}
 ${CONDA_INSTALL_CMD} install --yes --quiet "{{ remote_ci_setup }}" conda-build pip ${GET_BOA:-} -c conda-forge
+{%- if build_with_mambabuild %}
+${CONDA_INSTALL_CMD} update --yes --quiet "{{ remote_ci_setup }}" conda-build pip ${GET_BOA:-} -c conda-forge
+{%- endif %}
 {% if local_ci_setup %}
 conda uninstall --quiet --yes --force "{{ remote_ci_setup }}"
 pip install --no-deps ${RECIPE_ROOT}/.
