@@ -2,6 +2,7 @@ import glob
 from itertools import product, chain
 import logging
 import os
+import re
 import subprocess
 import textwrap
 import yaml
@@ -587,6 +588,19 @@ def _render_ci_provider(
             ver = forge_config["os_version"][f"{platform}_{arch}"]
             if ver:
                 os.environ["DEFAULT_LINUX_VERSION"] = ver
+
+        # detect if `compiler('cuda')` is used in meta.yaml,
+        # and set appropriate environment variable
+        with open(
+            os.path.join(forge_dir, forge_config["recipe_dir"], "meta.yaml")
+        ) as f:
+            meta_lines = f.readlines()
+        # looking for `compiler('cuda')` with both quote variants;
+        # do not match if there is a `#` somewhere before on the line
+        pat = re.compile(r"^[^\#]*compiler\((\"cuda\"|\'cuda\')\).*")
+        for ml in meta_lines:
+            if pat.match(ml):
+                os.environ["CF_CUDA_ENABLED"] = "True"
 
         config = conda_build.config.get_or_merge_config(
             None,
@@ -1641,7 +1655,7 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
             },
             "settings_win": {
                 "pool": {
-                    "vmImage": "vs2017-win2016",
+                    "vmImage": "windows-2019",
                 },
                 "timeoutInMinutes": 360,
                 "variables": {"CONDA_BLD_PATH": r"D:\\bld\\"},
@@ -1835,8 +1849,11 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
     logger.debug(log)
     logger.debug("## END CONFIGURATION\n")
 
-    if config["provider"]["linux_aarch64"] in {"default", "native"}:
-        config["provider"]["linux_aarch64"] = ["drone"]
+    if config["provider"]["linux_aarch64"] == "default":
+        config["provider"]["linux_aarch64"] = ["azure"]
+
+    if config["provider"]["linux_aarch64"] == "native":
+        config["provider"]["linux_aarch64"] = ["travis"]
 
     if config["provider"]["linux_ppc64le"] in {"default", "native"}:
         config["provider"]["linux_ppc64le"] = ["travis"]

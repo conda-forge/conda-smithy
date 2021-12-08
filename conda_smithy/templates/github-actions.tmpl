@@ -80,7 +80,7 @@ jobs:
       env:
         CONFIG: {% raw %}${{ matrix.CONFIG }}{% endraw %}
         UPLOAD_PACKAGES: {% raw %}${{ matrix.UPLOAD_PACKAGES }}{% endraw %}
-        DOCKERIMAGE: {% raw %}${{ matrix.DOCKERIMAGE }}{% endraw %}
+        DOCKER_IMAGE: {% raw %}${{ matrix.DOCKER_IMAGE }}{% endraw %}
         CI: github_actions
 {%- if upload_on_branch %}
         UPLOAD_ON_BRANCH: {{ upload_on_branch }}
@@ -138,14 +138,15 @@ jobs:
     - name: Install Miniconda for windows
       uses: conda-incubator/setup-miniconda@v2
       with:
-        miniconda-version: latest
+        miniforge-version: latest
+        miniforge-variant: Mambaforge
       if: matrix.os == 'windows'
 
     - name: Build on windows
       shell: cmd
       run: |
         call activate base
-        conda.exe install -c conda-forge 'python=3.6' conda-build conda "{{ remote_ci_setup }}" pip {{- ' boa' if build_with_mambabuild else '' }}
+        mamba.exe install -c conda-forge 'python=3.9' conda-build conda "{{ remote_ci_setup }}" pip {{- ' boa' if build_with_mambabuild else '' }}
         if errorlevel 1 exit 1
         {%- if local_ci_setup %}
         conda.exe uninstall --quiet --yes --force "{{ remote_ci_setup }}"

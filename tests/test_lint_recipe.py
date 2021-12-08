@@ -1269,6 +1269,30 @@ class Test_linter(unittest.TestCase):
         )
         assert len(hints) < 100
 
+    def test_mpl_base_hint(self):
+        meta = {
+            "requirements": {
+                "run": ["matplotlib >=2.3"],
+            },
+        }
+        lints, hints = linter.lintify(meta, conda_forge=True)
+        expected = "Recipes should usually depend on `matplotlib-base`"
+        self.assertTrue(any(hint.startswith(expected) for hint in hints))
+
+    def test_mpl_base_hint_outputs(self):
+        meta = {
+            "outputs": [
+                {
+                    "requirements": {
+                        "run": ["matplotlib >=2.3"],
+                    },
+                },
+            ],
+        }
+        lints, hints = linter.lintify(meta, conda_forge=True)
+        expected = "Recipes should usually depend on `matplotlib-base`"
+        self.assertTrue(any(hint.startswith(expected) for hint in hints))
+
 
 @pytest.mark.cli
 class TestCLI_recipe_lint(unittest.TestCase):

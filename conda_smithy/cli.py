@@ -214,7 +214,7 @@ class RegisterCI(Subcommand):
         scp = self.subcommand_parser
         scp.add_argument(
             "--feedstock_directory",
-            default=os.getcwd(),
+            default=feedstock_io.get_repo_root(os.getcwd()) or os.getcwd(),
             help="The directory of the feedstock git repository.",
         )
         scp.add_argument(
@@ -375,7 +375,7 @@ class AddAzureBuildId(Subcommand):
         scp = self.subcommand_parser
         scp.add_argument(
             "--feedstock_directory",
-            default=os.getcwd(),
+            default=feedstock_io.get_repo_root(os.getcwd()) or os.getcwd(),
             help="The directory of the feedstock git repository.",
         )
         scp.add_argument(
@@ -439,7 +439,7 @@ class Regenerate(Subcommand):
         scp = self.subcommand_parser
         scp.add_argument(
             "--feedstock_directory",
-            default=os.getcwd(),
+            default=feedstock_io.get_repo_root(os.getcwd()) or os.getcwd(),
             help="The directory of the feedstock git repository.",
         )
         scp.add_argument(
@@ -692,7 +692,7 @@ class GenerateFeedstockToken(Subcommand):
         scp = self.subcommand_parser
         scp.add_argument(
             "--feedstock_directory",
-            default=os.getcwd(),
+            default=feedstock_io.get_repo_root(os.getcwd()) or os.getcwd(),
             help="The directory of the feedstock git repository.",
         )
         group = scp.add_mutually_exclusive_group()
@@ -738,7 +738,7 @@ class RegisterFeedstockToken(Subcommand):
         scp = self.subcommand_parser
         scp.add_argument(
             "--feedstock_directory",
-            default=os.getcwd(),
+            default=feedstock_io.get_repo_root(os.getcwd()) or os.getcwd(),
             help="The directory of the feedstock git repository.",
         )
         scp.add_argument(
@@ -844,7 +844,7 @@ class UpdateAnacondaToken(Subcommand):
         scp = self.subcommand_parser
         scp.add_argument(
             "--feedstock_directory",
-            default=os.getcwd(),
+            default=feedstock_io.get_repo_root(os.getcwd()) or os.getcwd(),
             help="The directory of the feedstock git repository.",
         )
         scp.add_argument(

@@ -1,10 +1,10 @@
 **Added:**
 
-* Download SDK to local folder when build-locally.py instead of to the system dir
+* <news item>
 
 **Changed:**
 
-* <news item>
+* For azure pipelines, the default windows image is changed to windows-2019
 
 **Deprecated:**
 

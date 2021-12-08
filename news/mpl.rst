@@ -1,6 +1,7 @@
 **Added:**
 
-* Added support for woodpecker CI support
+* Added a hint for recipes in conda-forge to depend on matplotlib-base as opposed to
+  matplotlib.
 
 **Changed:**
 

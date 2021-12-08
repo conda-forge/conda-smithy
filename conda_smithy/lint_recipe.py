@@ -734,6 +734,9 @@ def run_conda_forge_specific(meta, recipe_dir, lints, hints):
     package_section = get_section(meta, "package", lints)
     extra_section = get_section(meta, "extra", lints)
     sources_section = get_section(meta, "source", lints)
+    requirements_section = get_section(meta, "requirements", lints)
+    outputs_section = get_section(meta, "outputs", lints)
+
     recipe_dirname = os.path.basename(recipe_dir) if recipe_dir else "recipe"
     recipe_name = package_section.get("name", "").strip()
     is_staged_recipes = recipe_dirname != "recipe"
@@ -837,6 +840,21 @@ def run_conda_forge_specific(meta, recipe_dir, lints, hints):
 
             if msg not in lints:
                 lints.append(msg)
+
+    # 5: Do not depend on matplotlib, only matplotlib-base
+    run_reqs = requirements_section.get("run") or []
+    for out in outputs_section:
+        run_reqs += (out.get("requirements") or {}).get("run") or []
+    for rq in run_reqs:
+        nm = rq.split(" ")[0].strip()
+        if nm == "matplotlib":
+            msg = (
+                "Recipes should usually depend on `matplotlib-base` as opposed to "
+                "`matplotlib` so that runtime environments do not require large "
+                "packages like `qt`."
+            )
+            if msg not in hints:
+                hints.append(msg)
 
 
 def is_selector_line(line):

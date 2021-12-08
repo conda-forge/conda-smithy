@@ -4,6 +4,68 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.15.0
+====================
+
+**Added:**
+
+* Conda smithy will now detect if a recipe uses ``compiler('cuda')``
+and set the ``CF_CUDA_ENABLED`` environment variable to ``True`` if
+so. This can for example be useful to distinguish different options
+for builds with or without GPUs in ``conda_build_config.yaml``.
+* Introduce utility function to facilitate the use case of running conda smithy
+  commands from any sub-directory in the git repo checkout of a feedstock.
+
+**Fixed:**
+
+* Fixed typo in GitHub Actions template, where ``DOCKERIMAGE`` was wrongly specified in the matrix configuration. The CI step and its corresponding script expect ``DOCKER_IMAGE``.
+
+**Authors:**
+
+* Isuru Fernando
+* Jaime Rodríguez-Guerra
+* H. Vetinari
+* Nehal J Wani
+
+
+
+v3.14.3
+====================
+
+**Changed:**
+
+* linux-aarch64 builds default is changed from native (drone) to emulated (azure).
+
+**Authors:**
+
+* Isuru Fernando
+* Mike Taves
+
+
+
+v3.14.2
+====================
+
+**Authors:**
+
+* Isuru Fernando
+
+
+
+v3.14.2
+====================
+
+**Added:**
+
+* Download SDK to local folder when build-locally.py instead of to the system dir
+* Added support for woodpecker CI support
+
+**Authors:**
+
+* Isuru Fernando
+
+
+
 v3.14.1
 ====================
 
@@ -88,7 +150,7 @@ v3.13.0
 * Azure artifact names are now unique when a job needs to be restarted (#1430).
 * Azure artifact uploads for failed builds that failed because of broken symbolic links have now been fixed.
 * Test suite now runs correctly on pyyaml 6
-* Remove the miniforge installation before building with ``./build-locally.py`` on MacOS so that 
+* Remove the miniforge installation before building with ``./build-locally.py`` on MacOS so that
   ``./build-locally.py`` can be run more than once without an error regarding an exisiting miniforge installation.
 
 **Authors:**
