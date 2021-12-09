@@ -32,9 +32,9 @@ source ${MINIFORGE_HOME}/etc/profile.d/conda.sh
 conda activate base
 
 echo -e "\n\nInstalling {{ remote_ci_setup }} and conda-build."
-{{ CONDA_INSTALL_CMD }} install -n base --quiet --yes "{{ remote_ci_setup }}" conda-build pip{{ GET_BOA }}
+{{ CONDA_INSTALL_CMD }} install -n base --update-specs --quiet --yes "{{ remote_ci_setup }}" conda-build pip{{ GET_BOA }}
 {%- if build_with_mambabuild %}
-{{ CONDA_INSTALL_CMD }} update -n base --quiet --yes "{{ remote_ci_setup }}" conda-build pip{{ GET_BOA }}
+{{ CONDA_INSTALL_CMD }} update -n base --update-specs --quiet --yes "{{ remote_ci_setup }}" conda-build pip{{ GET_BOA }}
 {%- endif %}
 
 {% if local_ci_setup %}
