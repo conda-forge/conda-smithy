@@ -4,6 +4,29 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.15.1
+====================
+
+**Added:**
+
+* Added a hint for recipes in conda-forge to depend on matplotlib-base as opposed to
+  matplotlib.
+
+**Changed:**
+
+* use python 3.9 on github actions and use mambaforge
+* When building with boa, use mamba to install conda-build, etc.  This assumes that
+  we are using a Mambaforge based docker image / runtime environment.
+* For azure pipelines, the default windows image is changed to windows-2019
+
+**Authors:**
+
+* Isuru Fernando
+* Matthew R. Becker
+* Marius van Niekerk
+
+
+
 v3.15.0
 ====================
 
