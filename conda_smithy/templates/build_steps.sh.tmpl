@@ -5,6 +5,8 @@
 # changes to this script, consider a proposal to conda-smithy so that other feedstocks can also
 # benefit from the improvement.
 
+# -*- mode: jinja-shell -*-
+
 set -xeuo pipefail
 export FEEDSTOCK_ROOT="${FEEDSTOCK_ROOT:-/home/conda/feedstock_root}"
 source ${FEEDSTOCK_ROOT}/.scripts/logging_utils.sh
@@ -25,15 +27,20 @@ conda-build:
  root-dir: ${FEEDSTOCK_ROOT}/build_artifacts
 
 CONDARC
-
-{%- if build_with_mambabuild %}
-GET_BOA=boa
-BUILD_CMD=mambabuild
+{% if build_with_mambabuild %}
+{%- set CONDA_INSTALL_CMD="mamba" %}
+{%- set GET_BOA="boa " %}
+{%- set BUILD_CMD="mambabuild" %}
 {%- else %}
-BUILD_CMD=build
+{%- set CONDA_INSTALL_CMD="mamba" %}
+{%- set GET_BOA="" %}
+{%- set BUILD_CMD="build" %}
 {%- endif %}
 
-conda install --yes --quiet "{{ remote_ci_setup }}" conda-build pip ${GET_BOA:-} -c conda-forge
+{{ CONDA_INSTALL_CMD }} install --update-specs --yes --quiet "{{ remote_ci_setup }}" conda-build pip {{ GET_BOA }}-c conda-forge
+{%- if build_with_mambabuild %}
+{{ CONDA_INSTALL_CMD }} update --update-specs --yes --quiet "{{ remote_ci_setup }}" conda-build pip {{ GET_BOA }}-c conda-forge
+{%- endif %}
 {% if local_ci_setup %}
 conda uninstall --quiet --yes --force "{{ remote_ci_setup }}"
 pip install --no-deps ${RECIPE_ROOT}/.
@@ -72,7 +79,7 @@ if [[ "${BUILD_WITH_CONDA_DEBUG:-0}" == 1 ]]; then
     # Drop into an interactive shell
     /bin/bash
 else
-    conda $BUILD_CMD "${RECIPE_ROOT}" -m "${CI_SUPPORT}/${CONFIG}.yaml" \
+    conda {{ BUILD_CMD }} "${RECIPE_ROOT}" -m "${CI_SUPPORT}/${CONFIG}.yaml" \
         --suppress-variables ${EXTRA_CB_OPTIONS:-} \
         --clobber-file "${CI_SUPPORT}/clobber_${CONFIG}.yaml"
 
