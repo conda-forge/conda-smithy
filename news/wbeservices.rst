@@ -1,6 +1,6 @@
 **Added:**
 
-* Added rerendering token input to webservices github action.
+* Added rerendering token input to webservices github action and automerge github action.
 
 **Changed:**
 
