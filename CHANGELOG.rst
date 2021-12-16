@@ -4,6 +4,19 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.16.0
+====================
+
+**Added:**
+
+* Added rerendering token input to webservices github action and automerge github action.
+
+**Authors:**
+
+* Matthew R. Becker
+
+
+
 v3.15.1
 ====================
 
