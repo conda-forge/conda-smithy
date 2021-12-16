@@ -9,5 +9,6 @@ jobs:
         id: webservices
         uses: conda-forge/webservices-dispatch-action@{{ github.tooling_branch_name }}
         with:
-          github_token: {% raw %}${{ secrets.GITHUB_TOKEN }}
+          github_token: {% raw %}${{ secrets.GITHUB_TOKEN }}{% endraw %}
+          rerendering_github_token: {% raw %}${{ secrets.RERENDERING_GITHUB_TOKEN }}
 {% endraw %}
