@@ -846,7 +846,7 @@ def run_conda_forge_specific(meta, recipe_dir, lints, hints):
     for out in outputs_section:
         _req = out.get("requirements") or {}
         if isinstance(_req, Mapping):
-            run_reqs += (_req.get("run") or [])
+            run_reqs += _req.get("run") or []
         else:
             run_reqs += _req
     for rq in run_reqs:
