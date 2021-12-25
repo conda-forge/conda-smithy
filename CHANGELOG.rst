@@ -4,6 +4,19 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.16.1
+====================
+
+**Fixed:**
+
+* Fixed error in linter for ``matplotlib-base`` for multioutput recipes where the requirements are a list.
+
+**Authors:**
+
+* Matthew R. Becker
+
+
+
 v3.16.0
 ====================
 
