@@ -844,7 +844,11 @@ def run_conda_forge_specific(meta, recipe_dir, lints, hints):
     # 5: Do not depend on matplotlib, only matplotlib-base
     run_reqs = requirements_section.get("run") or []
     for out in outputs_section:
-        run_reqs += (out.get("requirements") or {}).get("run") or []
+        _req = out.get("requirements") or {}
+        if isinstance(_req, Mapping):
+            run_reqs += (_req.get("run") or [])
+        else:
+            run_reqs += _req
     for rq in run_reqs:
         nm = rq.split(" ")[0].strip()
         if nm == "matplotlib":
