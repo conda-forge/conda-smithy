@@ -1855,7 +1855,10 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
     if config["provider"]["linux_aarch64"] == "native":
         config["provider"]["linux_aarch64"] = ["travis"]
 
-    if config["provider"]["linux_ppc64le"] in {"default", "native"}:
+    if config["provider"]["linux_ppc64le"] == "default":
+        config["provider"]["linux_ppc64le"] = ["azure"]
+
+    if config["provider"]["linux_ppc64le"] == "native":
         config["provider"]["linux_ppc64le"] = ["travis"]
 
     if config["provider"]["linux_s390x"] in {"default", "native"}:
