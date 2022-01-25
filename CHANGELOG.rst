@@ -4,6 +4,21 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.16.2
+====================
+
+**Changed:**
+
+* Happy New Year! The license now includes 2022.
+* Default provider for ppc64le was changed to azure with emulation using qemu.
+
+**Authors:**
+
+* Isuru Fernando
+* Bastian Zimmermann
+
+
+
 v3.16.1
 ====================
 
