@@ -37,6 +37,7 @@ Authors are sorted by number of commits.
 * Gonzalo Pena-Castellanos
 * Daniel Bast
 * Tim Snyder
+* Bastian Zimmermann
 * H. Vetinari
 * Carlo
 * Matthew Craig
@@ -51,7 +52,6 @@ Authors are sorted by number of commits.
 * xoviat
 * Elmar Pruesse
 * Patrick Sodré
-* Bastian Zimmermann
 * Josh Barnes
 * Tobias Megies
 * Jonathan Helmus
