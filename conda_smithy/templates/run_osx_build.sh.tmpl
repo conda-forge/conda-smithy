@@ -72,7 +72,9 @@ fi
 
 ( endgroup "Configuring conda" ) 2> /dev/null
 
-conda {{ BUILD_CMD }} ./{{ recipe_dir }} -m ./.ci_support/${CONFIG}.yaml --suppress-variables --clobber-file ./.ci_support/clobber_${CONFIG}.yaml ${EXTRA_CB_OPTIONS:-}
+conda {{ BUILD_CMD }} ./{{ recipe_dir }} -m ./.ci_support/${CONFIG}.yaml \
+    --suppress-variables ${EXTRA_CB_OPTIONS:-} \
+    --clobber-file ./.ci_support/clobber_${CONFIG}.yaml
 
 
 {%- if conda_forge_output_validation %}
