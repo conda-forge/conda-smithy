@@ -41,6 +41,9 @@ CONDARC
 {%- if build_with_mambabuild %}
 {{ CONDA_INSTALL_CMD }} update --update-specs --yes --quiet "{{ remote_ci_setup }}" conda-build pip {{ GET_BOA }}-c conda-forge
 {%- endif %}
+{%- if use_lief_dev_202202 %}
+{{ CONDA_INSTALL_CMD }} update -n base --update-specs --quiet --yes -c conda-forge/label/lief_dev -c conda-forge py-lief
+{%- endif %}
 {% if local_ci_setup %}
 conda uninstall --quiet --yes --force "{{ remote_ci_setup }}"
 pip install --no-deps ${RECIPE_ROOT}/.

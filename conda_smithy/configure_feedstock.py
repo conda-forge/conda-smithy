@@ -1739,6 +1739,7 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
         "private_upload": False,
         "secrets": [],
         "build_with_mambabuild": True,
+        "use_lief_dev_202202": False,
         # feedstock checkout git clone depth, None means keep default, 0 means no limit
         "clone_depth": None,
         # Specific channel for package can be given with
