@@ -23,16 +23,20 @@ jobs:
       - name: install code and deps
         shell: bash -l {0}
         run: |
-          conda install --file requirements.txt black coverage coveralls mock pytest pytest-cov pip ${CONDA_PKGS} --yes --quiet
+          conda install --file requirements.txt pre-commit coverage coveralls mock pytest pytest-cov pip ${CONDA_PKGS} --yes --quiet
           python -m pip install -e .
           git config --global user.email "smithy@smithy.smithy"
           git config --global user.name "smithy"
+
+      - name: run pre-commit hooks
+        shell: bash -l {0}
+        run: |
+          pre-commit run -a
 
       - name: run tests
         shell: bash -l {0}
         run: |
           pytest tests --cov conda_smithy
-          black --check --verbose --diff --config=pyproject.toml .
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
