@@ -111,4 +111,3 @@ In order to produce a uniquely identifiable distribution:
 
    the [``build/number``](https://conda.pydata.org/docs/building/meta-yaml.html#build-number-and-string)
    back to 0.
-
