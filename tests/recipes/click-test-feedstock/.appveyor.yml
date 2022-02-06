@@ -4,13 +4,13 @@
 
 environment:
 
-  
+
 
   matrix:
     - CONFIG: python2.7
-  
+
     - CONFIG: python3.6
-  
+
 
 # We always use a 64-bit machine, but can build x86 distributions
 # with the TARGET_ARCH variable.
