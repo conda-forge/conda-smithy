@@ -138,7 +138,7 @@ def create_github_repo(args):
     except GithubException as gh_except:
         if (
             gh_except.data.get("errors", [{}])[0].get("message", "")
-            != u"name already exists on this account"
+            != "name already exists on this account"
         ):
             raise
         gh_repo = user_or_org.get_repo(repo_name)
