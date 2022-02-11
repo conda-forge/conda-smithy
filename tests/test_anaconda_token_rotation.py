@@ -3,7 +3,6 @@ from unittest import mock
 import pytest
 
 from conda_smithy.anaconda_token_rotation import rotate_anaconda_token
-
 from conda_smithy.ci_register import drone_default_endpoint
 
 

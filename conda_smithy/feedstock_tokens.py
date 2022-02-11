@@ -19,12 +19,12 @@ as a secret variable on the CI services. It is also hashed using `scrypt` and
 then uploaded to the token registry (a repo on GitHub).
 """
 
-import tempfile
-import os
-import json
-import sys
-import secrets
 import hmac
+import json
+import os
+import secrets
+import sys
+import tempfile
 from contextlib import redirect_stderr, redirect_stdout
 
 import git
@@ -369,8 +369,8 @@ def register_feedstock_token_with_proviers(
     """
     # we are swallong all of the logs below, so we do a test import here
     # to generate the proper errors for missing tokens
-    from .ci_register import travis_endpoint  # noqa
     from .azure_ci_utils import default_config  # noqa
+    from .ci_register import travis_endpoint  # noqa
 
     # capture stdout, stderr and suppress all exceptions so we don't
     # spill tokens
@@ -560,8 +560,8 @@ def add_feedstock_token_to_travis(user, project, feedstock_token, clobber):
     """Add the FEEDSTOCK_TOKEN to travis."""
     from .ci_register import (
         travis_endpoint,
-        travis_headers,
         travis_get_repo_info,
+        travis_headers,
     )
 
     headers = travis_headers()
@@ -613,9 +613,11 @@ def add_feedstock_token_to_travis(user, project, feedstock_token, clobber):
 
 
 def add_feedstock_token_to_azure(user, project, feedstock_token, clobber):
-    from .azure_ci_utils import build_client, get_default_build_definition
-    from .azure_ci_utils import default_config as config
     from vsts.build.v4_1.models import BuildDefinitionVariable
+
+    from .azure_ci_utils import build_client
+    from .azure_ci_utils import default_config as config
+    from .azure_ci_utils import get_default_build_definition
 
     bclient = build_client()
 

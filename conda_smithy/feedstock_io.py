@@ -1,8 +1,8 @@
-from contextlib import contextmanager
 import io
 import os
 import shutil
 import stat
+from contextlib import contextmanager
 
 
 def get_repo(path, search_parent_directories=True):

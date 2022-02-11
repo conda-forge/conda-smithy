@@ -53,8 +53,8 @@ def rotate_anaconda_token(
     # we are swallong all of the logs below, so we do a test import here
     # to generate the proper errors for missing tokens
     # note that these imports cover all providers
-    from .ci_register import travis_endpoint  # noqa
     from .azure_ci_utils import default_config  # noqa
+    from .ci_register import travis_endpoint  # noqa
 
     anaconda_token = _get_anaconda_token()
 
@@ -261,8 +261,8 @@ def rotate_token_in_travis(
     """update the binstar token in travis."""
     from .ci_register import (
         travis_endpoint,
-        travis_headers,
         travis_get_repo_info,
+        travis_headers,
     )
 
     headers = travis_headers()
@@ -337,9 +337,11 @@ def rotate_token_in_travis(
 
 
 def rotate_token_in_azure(user, project, binstar_token, token_name):
-    from .azure_ci_utils import build_client, get_default_build_definition
-    from .azure_ci_utils import default_config as config
     from vsts.build.v4_1.models import BuildDefinitionVariable
+
+    from .azure_ci_utils import build_client
+    from .azure_ci_utils import default_config as config
+    from .azure_ci_utils import get_default_build_definition
 
     bclient = build_client()
 

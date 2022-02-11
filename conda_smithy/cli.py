@@ -1,26 +1,22 @@
-import os
-import logging
-import subprocess
-import sys
-import time
 import argparse
 import io
+import logging
+import os
+import subprocess
+import sys
 import tempfile
-
+import time
+from distutils.version import LooseVersion
 from textwrap import dedent
 
 import conda
 import conda_build.api
-from distutils.version import LooseVersion
 from conda_build.metadata import MetaData
-from conda_smithy.utils import get_feedstock_name_from_meta, merge_dict
 from ruamel.yaml import YAML
 
-from . import configure_feedstock
-from . import feedstock_io
-from . import lint_recipe
-from . import __version__
+from conda_smithy.utils import get_feedstock_name_from_meta, merge_dict
 
+from . import __version__, configure_feedstock, feedstock_io, lint_recipe
 
 if sys.version_info[0] == 2:
     raise Exception("Conda-smithy does not support python 2!")
@@ -624,8 +620,8 @@ class UpdateCB3(Subcommand):
         )
 
     def __call__(self, args):
-        from conda_smithy.update_cb3 import update_cb3
         from conda_smithy.configure_feedstock import get_cfp_file_path
+        from conda_smithy.update_cb3 import update_cb3
 
         recipe_file = os.path.join(args.recipe_directory, "meta.yaml")
         output_file = args.output
@@ -777,12 +773,12 @@ class RegisterFeedstockToken(Subcommand):
         )
 
     def __call__(self, args):
-        from conda_smithy.feedstock_tokens import (
-            register_feedstock_token_with_proviers,
-            register_feedstock_token,
-            feedstock_token_exists,
-        )
         from conda_smithy.ci_register import drone_default_endpoint
+        from conda_smithy.feedstock_tokens import (
+            feedstock_token_exists,
+            register_feedstock_token,
+            register_feedstock_token_with_proviers,
+        )
 
         drone_endpoints = args.drone_endpoints
         if drone_endpoints is None:

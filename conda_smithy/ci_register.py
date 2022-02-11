@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 import os
-import requests
-import time
 import sys
+import time
+
+import requests
 
 from . import github
 from .utils import update_conda_forge_config
-
 
 # https://circleci.com/docs/api#add-environment-variable
 
@@ -451,9 +451,10 @@ def travis_encrypt_binstar_token(repo, string_to_encrypt):
     #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
     #    License for the specific language governing permissions and limitations
     #    under the License.
-    from Crypto.PublicKey import RSA
-    from Crypto.Cipher import PKCS1_v1_5
     import base64
+
+    from Crypto.Cipher import PKCS1_v1_5
+    from Crypto.PublicKey import RSA
 
     keyurl = "https://api.travis-ci.com/repo/{0}/key_pair/generated".format(
         repo

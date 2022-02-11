@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from collections import OrderedDict
-from contextlib import contextmanager
 import io
 import os
 import shutil
@@ -10,6 +8,8 @@ import tempfile
 import textwrap
 import unittest
 import warnings
+from collections import OrderedDict
+from contextlib import contextmanager
 
 import github
 import pytest

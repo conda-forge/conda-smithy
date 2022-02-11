@@ -1,14 +1,14 @@
-import shutil
-import tempfile
-import jinja2
 import datetime
-import time
 import os
+import shutil
 import sys
-from pathlib import Path
+import tempfile
+import time
 from collections import defaultdict
 from contextlib import contextmanager
+from pathlib import Path
 
+import jinja2
 import ruamel.yaml
 
 

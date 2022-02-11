@@ -2,7 +2,6 @@ import pytest
 
 from conda_smithy.ci_skeleton import generate
 
-
 CONDA_FORGE_YML = """clone_depth: 0
 recipe_dir: myrecipe
 skip_render:

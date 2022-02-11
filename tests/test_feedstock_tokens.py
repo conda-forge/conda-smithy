@@ -1,20 +1,19 @@
-import os
 import json
+import os
 from unittest import mock
 
 import pytest
 import scrypt
 
+from conda_smithy.ci_register import drone_default_endpoint
 from conda_smithy.feedstock_tokens import (
-    generate_and_write_feedstock_token,
-    read_feedstock_token,
     feedstock_token_exists,
+    generate_and_write_feedstock_token,
+    is_valid_feedstock_token,
+    read_feedstock_token,
     register_feedstock_token,
     register_feedstock_token_with_proviers,
-    is_valid_feedstock_token,
 )
-
-from conda_smithy.ci_register import drone_default_endpoint
 
 
 @pytest.mark.parametrize("project", ["bar", "bar-feedstock"])

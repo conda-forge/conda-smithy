@@ -3,9 +3,9 @@ import io
 import operator as op
 import os
 import random
+import shutil
 import stat
 import string
-import shutil
 import tempfile
 import unittest
 

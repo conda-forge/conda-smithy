@@ -1,14 +1,16 @@
-import io
-import re
-import jinja2
-import os
-import ruamel.yaml
 import collections
-import requests
-import tempfile
+import io
+import os
+import re
 import tarfile
+import tempfile
 import zipfile
-from .utils import tmp_directory, render_meta_yaml
+
+import jinja2
+import requests
+import ruamel.yaml
+
+from .utils import render_meta_yaml, tmp_directory
 
 
 class Str(ruamel.yaml.scalarstring.ScalarString):

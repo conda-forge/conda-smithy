@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
 
-from collections.abc import Sequence, Mapping
+from collections.abc import Mapping, Sequence
 
 str_type = str
 
 import copy
-from glob import glob
 import io
 import itertools
 import os
@@ -13,18 +12,15 @@ import re
 import shutil
 import subprocess
 import sys
-import requests
+from glob import glob
 
-import github
-
-from conda_build.metadata import (
-    ensure_valid_license_family,
-    FIELDS as cbfields,
-)
 import conda_build.conda_interface
+import github
+import requests
+from conda_build.metadata import FIELDS as cbfields
+from conda_build.metadata import ensure_valid_license_family
 
-from .utils import render_meta_yaml, get_yaml
-
+from .utils import get_yaml, render_meta_yaml
 
 FIELDS = copy.deepcopy(cbfields)
 

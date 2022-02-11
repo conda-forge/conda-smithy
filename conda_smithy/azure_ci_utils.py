@@ -17,6 +17,7 @@ from vsts.service_endpoint.v4_1.service_endpoint_client import (
 from vsts.task_agent.v4_0.models import TaskAgentQueue
 from vsts.task_agent.v4_0.task_agent_client import TaskAgentClient
 from vsts.vss_connection import VssConnection
+
 from .azure_defaults import AZURE_DEFAULT_ORG, AZURE_DEFAULT_PROJECT_NAME
 
 
@@ -134,12 +135,10 @@ def get_default_build_definition(
     config: AzureConfig = default_config,
     **kwargs,
 ):
-    from vsts.build.v4_1.models import (
-        BuildDefinition,
-        BuildRepository,
-    )
-    from vsts.task_agent.v4_0.task_agent_client import TaskAgentClient
     import inspect
+
+    from vsts.build.v4_1.models import BuildDefinition, BuildRepository
+    from vsts.task_agent.v4_0.task_agent_client import TaskAgentClient
 
     aclient = TaskAgentClient(config.instance_base_url, config.credentials)
 

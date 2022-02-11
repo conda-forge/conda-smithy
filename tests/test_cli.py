@@ -1,11 +1,11 @@
 import argparse
 import collections
 import os
+import shutil
 import subprocess
 from textwrap import dedent
 
 import yaml
-import shutil
 
 from conda_smithy import cli
 

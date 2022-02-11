@@ -1,15 +1,14 @@
 import os
 from random import choice
 
+import conda_build.api
+import github
 from git import Repo
-
 from github import Github
 from github.GithubException import GithubException
 from github.Organization import Organization
 from github.Team import Team
-import github
 
-import conda_build.api
 from conda_smithy.utils import get_feedstock_name_from_meta
 
 

@@ -1,10 +1,11 @@
+import copy
 import os
-import conda_smithy.configure_feedstock as cnfgr_fdstk
+import textwrap
 
 import pytest
-import copy
 import yaml
-import textwrap
+
+import conda_smithy.configure_feedstock as cnfgr_fdstk
 
 
 def test_noarch_skips_appveyor(noarch_recipe, jinja_env):

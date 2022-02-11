@@ -1,16 +1,17 @@
+import copy
 import glob
-from itertools import product, chain
+import hashlib
 import logging
 import os
 import re
 import subprocess
 import textwrap
-import yaml
 import warnings
-from collections import OrderedDict, namedtuple, Counter
-import copy
-import hashlib
+from collections import Counter, OrderedDict, namedtuple
+from itertools import chain, product
+
 import requests
+import yaml
 
 # The `requests` lib uses `simplejson` instead of `json` when available.
 # In consequence the same JSON library must be used or the `JSONDecodeError`
@@ -21,25 +22,25 @@ try:
 except ImportError:
     import json
 
-import conda_build.api
-import conda_build.utils
-import conda_build.variants
-import conda_build.conda_interface
-import conda_build.render
-
 from copy import deepcopy
 
+import conda_build.api
+import conda_build.conda_interface
+import conda_build.render
+import conda_build.utils
+import conda_build.variants
 from conda_build import __version__ as conda_build_version
 from jinja2 import Environment, FileSystemLoader
 
 from conda_smithy.feedstock_io import (
+    copy_file,
+    remove_file,
+    remove_file_or_dir,
     set_exe_file,
     write_file,
-    remove_file,
-    copy_file,
-    remove_file_or_dir,
 )
 from conda_smithy.utils import get_feedstock_name_from_meta
+
 from . import __version__
 
 conda_forge_content = os.path.abspath(os.path.dirname(__file__))

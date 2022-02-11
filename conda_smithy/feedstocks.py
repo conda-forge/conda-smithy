@@ -4,11 +4,11 @@ import multiprocessing
 import os
 
 import git
-from git import Repo, GitCommandError
+from git import GitCommandError, Repo
 from github import Github
 
 from . import github as smithy_github
-from .utils import render_meta_yaml, get_yaml
+from .utils import get_yaml, render_meta_yaml
 
 
 def feedstock_repos(gh_organization="conda-forge"):
