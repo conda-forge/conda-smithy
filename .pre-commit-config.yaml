@@ -6,6 +6,10 @@ repos:
         exclude: (tests/recipes|conda_smithy.recipe)
     -   id: end-of-file-fixer
     -   id: trailing-whitespace
+-   repo: https://github.com/PyCQA/isort
+    rev: 5.10.1
+    hooks:
+      - id: isort
 -   repo: https://github.com/psf/black
     rev: 22.1.0
     hooks:
