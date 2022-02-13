@@ -1741,9 +1741,10 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
         "build_with_mambabuild": True,
         # feedstock checkout git clone depth, None means keep default, 0 means no limit
         "clone_depth": None,
-        # Specific channel for package can be given with
-        # `${url or channel_alias}::package_name`, defaults to conda-forge channel_alias
         "remote_ci_setup": "conda-forge-ci-setup=3",
+        # Specific channel for packages for conda-forge-ci-setup,
+        # defaults to conda-forge
+        "remote_ci_setup_channels": ["conda-forge"],
     }
 
     if forge_yml is None:

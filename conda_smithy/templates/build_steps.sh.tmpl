@@ -29,7 +29,7 @@ conda-build:
 CONDARC
 {% if build_with_mambabuild %}
 {%- set CONDA_INSTALL_CMD="mamba" %}
-{%- set GET_BOA="boa " %}
+{%- set GET_BOA=" boa" %}
 {%- set BUILD_CMD="mambabuild" %}
 {%- else %}
 {%- set CONDA_INSTALL_CMD="mamba" %}
@@ -37,9 +37,9 @@ CONDARC
 {%- set BUILD_CMD="build" %}
 {%- endif %}
 
-{{ CONDA_INSTALL_CMD }} install --update-specs --yes --quiet "{{ remote_ci_setup }}" conda-build pip {{ GET_BOA }}-c conda-forge
+{{ CONDA_INSTALL_CMD }} install --update-specs --yes --quiet "{{ remote_ci_setup }}" conda-build pip{{ GET_BOA }}{{ " -c ".join([""] + remote_ci_setup_channels)  }}
 {%- if build_with_mambabuild %}
-{{ CONDA_INSTALL_CMD }} update --update-specs --yes --quiet "{{ remote_ci_setup }}" conda-build pip {{ GET_BOA }}-c conda-forge
+{{ CONDA_INSTALL_CMD }} update --update-specs --yes --quiet "{{ remote_ci_setup }}" conda-build pip{{ GET_BOA }}{{ " -c ".join([""] + remote_ci_setup_channels) }}
 {%- endif %}
 {% if local_ci_setup %}
 conda uninstall --quiet --yes --force "{{ remote_ci_setup }}"
