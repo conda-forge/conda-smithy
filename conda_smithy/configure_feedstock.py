@@ -1745,6 +1745,9 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
         # Specific channel for packages for conda-forge-ci-setup,
         # defaults to conda-forge
         "remote_ci_setup_channels": ["conda-forge"],
+        # Extra packages that need installation or updating
+        # During the setup phase
+        "remote_ci_setup_extra_packages": [],
     }
 
     if forge_yml is None:
