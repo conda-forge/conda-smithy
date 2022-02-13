@@ -377,6 +377,18 @@ def _yaml_represent_ordereddict(yaml_representer, data):
     )
 
 
+def _santize_remote_ci_setup(remote_ci_setup):
+    remote_ci_setup_ = conda_build.utils.ensure_list(remote_ci_setup)
+    remote_ci_setup = []
+    for package in remote_ci_setup_:
+        if package.startswith(("'", '"')):
+            pass
+        elif ("<" in package) or (">" in package) or ("|" in package):
+            package = '"' + package + '"'
+        remote_ci_setup.append(package)
+    return remote_ci_setup
+
+
 def finalize_config(config, platform, arch, forge_config):
     """For configs without essential parameters like docker_image
     add fallback value.
@@ -1742,8 +1754,9 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
         # feedstock checkout git clone depth, None means keep default, 0 means no limit
         "clone_depth": None,
         # Specific channel for package can be given with
-        # `${url or channel_alias}::package_name`, defaults to conda-forge channel_alias
-        "remote_ci_setup": "conda-forge-ci-setup=3",
+        #     ${url or channel_alias}::package_name
+        # defaults to conda-forge channel_alias
+        "remote_ci_setup": ["conda-forge-ci-setup=3"],
     }
 
     if forge_yml is None:
@@ -1863,6 +1876,10 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
 
     if config["provider"]["linux_s390x"] in {"default", "native"}:
         config["provider"]["linux_s390x"] = ["travis"]
+
+    config["remote_ci_setup"] = _santize_remote_ci_setup(
+        config["remote_ci_setup"]
+    )
 
     # Older conda-smithy versions supported this with only one
     # entry. To avoid breakage, we are converting single elements

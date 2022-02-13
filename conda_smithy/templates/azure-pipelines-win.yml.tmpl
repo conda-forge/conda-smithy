@@ -49,9 +49,12 @@ jobs:
       condition: contains(variables['CONFIG'], 'vs2008')
       displayName: Patch vs2008 (if needed)
 
+{%- if build_with_mambabuild %}
+{%- set remote_ci_setup = ["boa"] + remote_ci_setup %}
+{%- endif %}
     - task: CondaEnvironment@1
       inputs:
-        packageSpecs: 'python=3.9 conda-build conda "{{ remote_ci_setup }}" pip {{- ' boa' if build_with_mambabuild else '' }}' # Optional
+        packageSpecs: 'python=3.9 conda-build conda pip "{{ " ".join(remote_ci_setup) }}"' # Optional
         installOptions: "-c conda-forge"
         updateConda: true
       displayName: Install conda-build and activate environment
