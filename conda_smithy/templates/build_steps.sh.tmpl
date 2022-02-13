@@ -43,7 +43,7 @@ CONDARC
     conda-build pip {{ " ".join(remote_ci_setup) }}
 {%- endif %}
 {% if local_ci_setup %}
-conda uninstall --quiet --yes --force "{{ remote_ci_setup }}"
+conda uninstall --quiet --yes --force {{ " ".join(remote_ci_setup) }}
 pip install --no-deps ${RECIPE_ROOT}/.
 {%- endif %}
 # set up the condarc

@@ -39,7 +39,7 @@ echo -e "\n\nInstalling {{ remote_ci_setup }} and conda-build."
 {%- endif %}
 
 {% if local_ci_setup %}
-conda uninstall --quiet --yes --force "{{ remote_ci_setup }}"
+conda uninstall --quiet --yes --force {{ " ".join(remote_ci_setup) }}
 pip install --no-deps {{ recipe_dir }}/.
 {%- endif %}
 
