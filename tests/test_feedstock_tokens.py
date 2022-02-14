@@ -377,20 +377,26 @@ def test_register_feedstock_token_exists_already(
 @pytest.mark.parametrize("circle", [True, False])
 @pytest.mark.parametrize("azure", [True, False])
 @pytest.mark.parametrize("travis", [True, False])
+@pytest.mark.parametrize("github_actions", [True, False])
 @pytest.mark.parametrize("clobber", [True, False])
 @mock.patch("conda_smithy.feedstock_tokens.add_feedstock_token_to_drone")
 @mock.patch("conda_smithy.feedstock_tokens.add_feedstock_token_to_circle")
 @mock.patch("conda_smithy.feedstock_tokens.add_feedstock_token_to_travis")
 @mock.patch("conda_smithy.feedstock_tokens.add_feedstock_token_to_azure")
-def test_register_feedstock_token_with_proviers(
+@mock.patch(
+    "conda_smithy.feedstock_tokens.add_feedstock_token_to_github_actions"
+)
+def test_register_feedstock_token_with_providers(
+    github_actions_mock,
     azure_mock,
     travis_mock,
     circle_mock,
     drone_mock,
     drone,
     circle,
-    travis,
     azure,
+    travis,
+    github_actions,
     clobber,
 ):
     user = "foo"
@@ -409,6 +415,7 @@ def test_register_feedstock_token_with_proviers(
             circle=circle,
             travis=travis,
             azure=azure,
+            github_actions=github_actions,
             clobber=clobber,
             drone_endpoints=[drone_default_endpoint],
         )
@@ -444,6 +451,13 @@ def test_register_feedstock_token_with_proviers(
             )
         else:
             azure_mock.assert_not_called()
+
+        if github_actions:
+            github_actions_mock.assert_called_once_with(
+                user, project, feedstock_token, clobber
+            )
+        else:
+            github_actions_mock.assert_not_called()
     finally:
         if os.path.exists(pth):
             os.remove(pth)
@@ -453,20 +467,26 @@ def test_register_feedstock_token_with_proviers(
 @pytest.mark.parametrize("circle", [True, False])
 @pytest.mark.parametrize("azure", [True, False])
 @pytest.mark.parametrize("travis", [True, False])
+@pytest.mark.parametrize("github_actions", [True, False])
 @pytest.mark.parametrize("clobber", [True, False])
 @mock.patch("conda_smithy.feedstock_tokens.add_feedstock_token_to_drone")
 @mock.patch("conda_smithy.feedstock_tokens.add_feedstock_token_to_circle")
 @mock.patch("conda_smithy.feedstock_tokens.add_feedstock_token_to_travis")
 @mock.patch("conda_smithy.feedstock_tokens.add_feedstock_token_to_azure")
+@mock.patch(
+    "conda_smithy.feedstock_tokens.add_feedstock_token_to_github_actions"
+)
 def test_register_feedstock_token_with_proviers_notoken(
+    github_actions_mock,
     azure_mock,
     travis_mock,
     circle_mock,
     drone_mock,
     drone,
     circle,
-    travis,
     azure,
+    travis,
+    github_actions,
     clobber,
 ):
     user = "foo"
@@ -480,6 +500,7 @@ def test_register_feedstock_token_with_proviers_notoken(
             circle=circle,
             travis=travis,
             azure=azure,
+            github_actions=github_actions,
             clobber=clobber,
         )
 
@@ -489,14 +510,21 @@ def test_register_feedstock_token_with_proviers_notoken(
     circle_mock.assert_not_called()
     travis_mock.assert_not_called()
     azure_mock.assert_not_called()
+    github_actions_mock.assert_not_called()
 
 
-@pytest.mark.parametrize("provider", ["drone", "circle", "travis", "azure"])
+@pytest.mark.parametrize(
+    "provider", ["drone", "circle", "travis", "azure", "github actions"]
+)
 @mock.patch("conda_smithy.feedstock_tokens.add_feedstock_token_to_drone")
 @mock.patch("conda_smithy.feedstock_tokens.add_feedstock_token_to_circle")
 @mock.patch("conda_smithy.feedstock_tokens.add_feedstock_token_to_travis")
 @mock.patch("conda_smithy.feedstock_tokens.add_feedstock_token_to_azure")
+@mock.patch(
+    "conda_smithy.feedstock_tokens.add_feedstock_token_to_github_actions"
+)
 def test_register_feedstock_token_with_proviers_error(
+    github_actions_mock,
     azure_mock,
     travis_mock,
     circle_mock,
@@ -516,6 +544,8 @@ def test_register_feedstock_token_with_proviers_error(
         travis_mock.side_effect = ValueError("blah")
     if provider == "azure":
         azure_mock.side_effect = ValueError("blah")
+    if provider == "github actions":
+        github_actions_mock.side_effect = ValueError("blah")
 
     try:
         generate_and_write_feedstock_token(user, project)

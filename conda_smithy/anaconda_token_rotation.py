@@ -11,6 +11,7 @@ conda-forge.yml in your feedstock to GitHub.
 import os
 import sys
 from contextlib import redirect_stderr, redirect_stdout
+from github import Github
 
 import requests
 
@@ -38,6 +39,7 @@ def rotate_anaconda_token(
     travis=True,
     azure=True,
     appveyor=True,
+    github_actions=True,
     token_name="BINSTAR_TOKEN",
     drone_endpoints=(),
 ):
@@ -55,8 +57,12 @@ def rotate_anaconda_token(
     # note that these imports cover all providers
     from .ci_register import travis_endpoint  # noqa
     from .azure_ci_utils import default_config  # noqa
+    from .github import gh_token
 
     anaconda_token = _get_anaconda_token()
+
+    if github_actions:
+        gh = Github(gh_token())
 
     # capture stdout, stderr and suppress all exceptions so we don't
     # spill tokens
@@ -160,17 +166,34 @@ def rotate_anaconda_token(
                             failed = True
                             raise RuntimeError(err_msg)
 
+                if github_actions:
+                    try:
+                        rotate_token_in_github_actions(
+                            user, project, anaconda_token, token_name, gh
+                        )
+                    except Exception as e:
+                        if "DEBUG_ANACONDA_TOKENS" in os.environ:
+                            raise e
+                        else:
+                            err_msg = (
+                                "Failed to rotate token for %s/%s"
+                                " on github actions!"
+                            ) % (user, project)
+                            failed = True
+                            raise RuntimeError(err_msg)
+
             except Exception as e:
                 if "DEBUG_ANACONDA_TOKENS" in os.environ:
                     raise e
                 failed = True
+
     if failed:
         if err_msg:
             raise RuntimeError(err_msg)
         else:
             raise RuntimeError(
                 (
-                    "Rotating the feedstock token in proviers for %s/%s failed!"
+                    "Rotating the feedstock token in providers for %s/%s failed!"
                     " Try the command locally with DEBUG_ANACONDA_TOKENS"
                     " defined in the environment to investigate!"
                 )
@@ -399,3 +422,10 @@ def rotate_token_in_appveyor(feedstock_config_path, binstar_token, token_name):
         code.setdefault("appveyor", {}).setdefault("secure", {})[
             token_name
         ] = response.content.decode("utf-8")
+
+
+def rotate_token_in_github_actions(
+    user, project, binstar_token, token_name, gh
+):
+    repo = gh.get_repo(user, project)
+    assert repo.create_secret(token_name, binstar_token)

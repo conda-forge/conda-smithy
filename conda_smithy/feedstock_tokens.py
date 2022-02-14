@@ -348,10 +348,12 @@ def register_feedstock_token(user, project, token_repo):
 def register_feedstock_token_with_proviers(
     user,
     project,
+    *,
     drone=True,
     circle=True,
     travis=True,
     azure=True,
+    github_actions=True,
     clobber=True,
     drone_endpoints=(),
 ):
@@ -456,6 +458,22 @@ def register_feedstock_token_with_proviers(
                             err_msg = (
                                 "Failed to register feedstock token for %s/%s"
                                 " on azure!"
+                            ) % (user, project)
+                            failed = True
+                            raise RuntimeError(err_msg)
+
+                if github_actions:
+                    try:
+                        add_feedstock_token_to_github_actions(
+                            user, project, feedstock_token, clobber
+                        )
+                    except Exception as e:
+                        if "DEBUG_FEEDSTOCK_TOKENS" in os.environ:
+                            raise e
+                        else:
+                            err_msg = (
+                                "Failed to register feedstock token for %s/%s"
+                                " on github actions!"
                             ) % (user, project)
                             failed = True
                             raise RuntimeError(err_msg)
@@ -663,3 +681,25 @@ def add_feedstock_token_to_azure(user, project, feedstock_token, clobber):
             definition_id=ed.id,
             project=ed.project.name,
         )
+
+
+def add_feedstock_token_to_github_actions(
+    user, project, feedstock_token, clobber
+):
+    from .github import gh_token
+    from github import Github
+
+    gh = Github(gh_token())
+    repo = gh.get_repo(f"{user}/{project}")
+
+    if not clobber:
+        status, headers, data = repo._requester.requestJson(
+            "GET", f"{repo.url}/actions/secrets"
+        )
+        assert status == 200
+        data = json.loads(data)
+        for secret_data in data["secrets"]:
+            if secret_data["name"] == "FEEDSTOCK_TOKEN":
+                return
+
+    assert repo.create_secret("FEEDSTOCK_TOKEN", feedstock_token)
