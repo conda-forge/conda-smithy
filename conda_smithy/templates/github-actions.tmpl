@@ -146,10 +146,10 @@ jobs:
       shell: cmd
       run: |
         call activate base
-        mamba.exe install -c conda-forge 'python=3.9' conda-build conda "{{ remote_ci_setup }}" pip {{- ' boa' if build_with_mambabuild else '' }}
+        mamba.exe install -c conda-forge 'python=3.9' conda-build conda pip {{ " ".join(remote_ci_setup) }}
         if errorlevel 1 exit 1
         {%- if local_ci_setup %}
-        conda.exe uninstall --quiet --yes --force "{{ remote_ci_setup }}"
+        conda.exe uninstall --quiet --yes --force {{ " ".join(remote_ci_setup) }}"
         if errorlevel 1 exit 1
         pip install --no-deps ".\{{ recipe_dir }}\."
         if errorlevel 1 exit 1

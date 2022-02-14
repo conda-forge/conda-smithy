@@ -21,24 +21,25 @@ bash $MINIFORGE_FILE -b -p ${MINIFORGE_HOME}
 ( startgroup "Configuring conda" ) 2> /dev/null
 {% if build_with_mambabuild %}
 {%- set CONDA_INSTALL_CMD="mamba" %}
-{%- set GET_BOA=" boa" %}
+{%- set remote_ci_setup = ["boa"] + remote_ci_setup %}
 {%- set BUILD_CMD="mambabuild" %}
 {%- else %}
 {%- set CONDA_INSTALL_CMD="mamba" %}
-{%- set GET_BOA="" %}
 {%- set BUILD_CMD="build" %}
 {%- endif %}
 source ${MINIFORGE_HOME}/etc/profile.d/conda.sh
 conda activate base
 
 echo -e "\n\nInstalling {{ remote_ci_setup }} and conda-build."
-{{ CONDA_INSTALL_CMD }} install -n base --update-specs --quiet --yes "{{ remote_ci_setup }}" conda-build pip{{ GET_BOA }}
+{{ CONDA_INSTALL_CMD }} install --update-specs --quiet --yes --channel conda-forge \
+    conda-build pip {{ " ".join(remote_ci_setup) }}
 {%- if build_with_mambabuild %}
-{{ CONDA_INSTALL_CMD }} update -n base --update-specs --quiet --yes "{{ remote_ci_setup }}" conda-build pip{{ GET_BOA }}
+{{ CONDA_INSTALL_CMD }} update --update-specs --yes --quiet --channel conda-forge \
+    conda-build pip {{ " ".join(remote_ci_setup) }}
 {%- endif %}
 
 {% if local_ci_setup %}
-conda uninstall --quiet --yes --force "{{ remote_ci_setup }}"
+conda uninstall --quiet --yes --force {{ " ".join(remote_ci_setup) }}
 pip install --no-deps {{ recipe_dir }}/.
 {%- endif %}
 
