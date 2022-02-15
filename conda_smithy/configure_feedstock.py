@@ -1729,7 +1729,7 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
         "min_r_ver": "34",
         "max_r_ver": "34",
         "channels": {
-            "sources": ["conda-forge", "defaults"],
+            "sources": ["conda-forge"],
             "targets": [["conda-forge", "main"]],
         },
         "github": {
