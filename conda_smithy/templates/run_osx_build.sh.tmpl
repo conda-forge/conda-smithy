@@ -43,6 +43,10 @@ conda uninstall --quiet --yes --force {{ " ".join(remote_ci_setup) }}
 pip install --no-deps {{ recipe_dir }}/.
 {%- endif %}
 
+mamba remove boa -y -q
+mamba install boa=0.8.2 -y -q --only-deps
+pip install --no-deps "git+https://github.com/wolfv/boa.git@improve_compat_with_conda_smithy_boa_0.8.2"
+
 echo -e "\n\nSetting up the condarc and mangling the compiler."
 setup_conda_rc ./ ./{{ recipe_dir }} ./.ci_support/${CONFIG}.yaml
 
@@ -84,7 +88,7 @@ if [[ "${BUILD_WITH_CONDA_DEBUG:-0}" == 1 ]]; then
     # Drop into an interactive shell
     /bin/bash
 else
-    conda {{ BUILD_CMD }} ./{{ recipe_dir }} -m ./.ci_support/${CONFIG}.yaml \
+    boa build ./{{ recipe_dir }} -m ./.ci_support/${CONFIG}.yaml \
         --suppress-variables ${EXTRA_CB_OPTIONS:-} \
         --clobber-file ./.ci_support/clobber_${CONFIG}.yaml
 

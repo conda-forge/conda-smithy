@@ -67,6 +67,10 @@ if [[ "${HOST_PLATFORM}" != "${BUILD_PLATFORM}" ]] && [[ "${HOST_PLATFORM}" != l
 fi
 {% endif %}
 
+mamba remove boa -y -q
+mamba install boa=0.8.2 -y -q --only-deps
+pip install --no-deps "git+https://github.com/wolfv/boa.git@improve_compat_with_conda_smithy_boa_0.8.2"
+
 ( endgroup "Configuring conda" ) 2> /dev/null
 
 if [[ "${BUILD_WITH_CONDA_DEBUG:-0}" == 1 ]]; then
@@ -80,7 +84,7 @@ if [[ "${BUILD_WITH_CONDA_DEBUG:-0}" == 1 ]]; then
     # Drop into an interactive shell
     /bin/bash
 else
-    conda {{ BUILD_CMD }} "${RECIPE_ROOT}" -m "${CI_SUPPORT}/${CONFIG}.yaml" \
+    boa build "${RECIPE_ROOT}" -m "${CI_SUPPORT}/${CONFIG}.yaml" \
         --suppress-variables ${EXTRA_CB_OPTIONS:-} \
         --clobber-file "${CI_SUPPORT}/clobber_${CONFIG}.yaml"
 

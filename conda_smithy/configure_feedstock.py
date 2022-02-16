@@ -21,6 +21,13 @@ try:
 except ImportError:
     import json
 
+try:
+    import boa.api
+
+    boa_available = True
+except ImportError:
+    boa_available = False
+
 import conda_build.api
 import conda_build.utils
 import conda_build.variants
@@ -290,11 +297,14 @@ def _collapse_subpackage_variants(
     # this is the initial collection of all variants before we discard any.  "Squishing"
     #     them is necessary because the input form is already broken out into one matrix
     #     configuration per item, and we want a single dict, with each key representing many values
-    squished_input_variants = (
-        conda_build.variants.list_of_dicts_to_dict_of_lists(
-            list_of_metas[0].config.input_variants
+    if not isinstance(list_of_metas[0].config.input_variants, dict):
+        squished_input_variants = (
+            conda_build.variants.list_of_dicts_to_dict_of_lists(
+                list_of_metas[0].config.input_variants
+            )
         )
-    )
+    else:
+        squished_input_variants = list_of_metas[0].config.input_variants
     squished_used_variants = (
         conda_build.variants.list_of_dicts_to_dict_of_lists(list(all_variants))
     )
@@ -601,12 +611,32 @@ def _render_ci_provider(
             if ver:
                 os.environ["DEFAULT_LINUX_VERSION"] = ver
 
+        if os.path.exists(
+            os.path.join(forge_dir, forge_config["recipe_dir"], "meta.yaml")
+        ):
+            build_tool = "conda-build"
+            fn = "meta.yaml"
+        elif os.path.exists(
+            os.path.join(forge_dir, forge_config["recipe_dir"], "recipe.yaml")
+        ):
+            if not boa_available:
+                logger.error(
+                    "Found only 'recipe.yaml' but boa is not installed"
+                )
+                exit(1)
+            build_tool = "boa"
+            fn = "recipe.yaml"
+        else:
+            logger.warning("No recipe found in ", forge_config["recipe_dir"])
+            exit(1)
+
         # detect if `compiler('cuda')` is used in meta.yaml,
         # and set appropriate environment variable
         with open(
-            os.path.join(forge_dir, forge_config["recipe_dir"], "meta.yaml")
+            os.path.join(forge_dir, forge_config["recipe_dir"], fn)
         ) as f:
             meta_lines = f.readlines()
+
         # looking for `compiler('cuda')` with both quote variants;
         # do not match if there is a `#` somewhere before on the line
         pat = re.compile(r"^[^\#]*compiler\((\"cuda\"|\'cuda\')\).*")
@@ -663,7 +693,12 @@ def _render_ci_provider(
             if os.path.exists(_recipe_cbc):
                 os.rename(_recipe_cbc, _recipe_cbc + ".conda.smithy.bak")
 
-            metas = conda_build.api.render(
+            render_fun = (
+                conda_build.api.render
+                if build_tool == "conda-build"
+                else boa.api.render
+            )
+            metas = render_fun(
                 os.path.join(forge_dir, forge_config["recipe_dir"]),
                 platform=platform,
                 arch=arch,
@@ -676,6 +711,7 @@ def _render_ci_provider(
                     "sources", []
                 ),
             )
+
         finally:
             if os.path.exists(_recipe_cbc + ".conda.smithy.bak"):
                 os.rename(_recipe_cbc + ".conda.smithy.bak", _recipe_cbc)
