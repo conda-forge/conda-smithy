@@ -21,7 +21,7 @@ bash $MINIFORGE_FILE -b -p ${MINIFORGE_HOME}
 ( startgroup "Configuring conda" ) 2> /dev/null
 {% if build_with_mambabuild %}
 {%- set CONDA_INSTALL_CMD="mamba" %}
-{%- set remote_ci_setup = ["boa"] + remote_ci_setup %}
+{%- set remote_ci_setup = ["boa", "mamba"] + remote_ci_setup %}
 {%- set BUILD_CMD="mambabuild" %}
 {%- else %}
 {%- set CONDA_INSTALL_CMD="mamba" %}
