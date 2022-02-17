@@ -236,7 +236,7 @@
   email: uwe.korn@quantco.com
   alternate_emails:
   - xhochy@users.noreply.github.com
-  num_commits: 20
+  num_commits: 22
   first_commit: 2019-06-27 08:26:49
   github: xhochy
 - name: C.A.M. Gerlach
@@ -247,7 +247,7 @@
   email: isuru.11@cse.mrt.ac.lk
   alternate_emails:
   - isuruf@gmail.com
-  num_commits: 448
+  num_commits: 460
   first_commit: 2017-01-08 22:03:03
   github: isuruf
 - name: Julian Rüth
@@ -329,7 +329,7 @@
   github: sodre
 - name: Mark Harfouche
   email: mark.harfouche@gmail.com
-  num_commits: 17
+  num_commits: 19
   first_commit: 2018-06-12 01:15:09
   github: hmaarrfk
 - name: Dougal J. Sutherland
@@ -393,7 +393,7 @@
   github: shadowwalkersb
 - name: Matthew R. Becker
   email: becker.mr@gmail.com
-  num_commits: 234
+  num_commits: 236
   first_commit: 2020-01-07 17:44:33
   github: beckermr
   alternate_emails:
@@ -479,7 +479,7 @@
   email: 10774221+BastianZim@users.noreply.github.com
   aliases:
   - BastianZim
-  num_commits: 7
+  num_commits: 9
   first_commit: 2021-01-27 15:01:39
   github: BastianZim
 - name: Wolf Vollprecht
@@ -494,7 +494,7 @@
   github: hhslepicka
 - name: Philippe Blain
   email: levraiphilippeblain@gmail.com
-  num_commits: 1
+  num_commits: 5
   first_commit: 2020-06-28 18:56:49
 - name: fhoehle
   email: fhoehle@users.noreply.github.com
@@ -513,7 +513,7 @@
   github: bkpoon
 - name: Matthias Diener
   email: mdiener@illinois.edu
-  num_commits: 2
+  num_commits: 6
   first_commit: 2021-09-27 17:26:18
   github: matthiasdiener
 - name: Matthew W. Thompson
@@ -535,3 +535,8 @@
   email: h.vetinari@gmx.com
   num_commits: 7
   first_commit: 2021-11-14 02:53:10
+- name: Benjamin Tovar
+  email: btovar@nd.edu
+  num_commits: 1
+  first_commit: 2021-12-15 12:02:28
+  github: btovar

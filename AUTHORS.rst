@@ -15,10 +15,10 @@ Authors are sorted by number of commits.
 * Hadrien Mary
 * Uwe L. Korn
 * Ryan Volz
+* Mark Harfouche
 * Johnny Willemsen
 * Julian Rüth
 * Chris Burr
-* Mark Harfouche
 * Marcel Bargull
 * Leo Fang
 * Eric Dill
@@ -32,20 +32,22 @@ Authors are sorted by number of commits.
 * John Kirkham
 * C.A.M. Gerlach
 * refraction-ray
+* Bastian Zimmermann
 * Leopold Talirz
 * Tom Pollard
 * Gonzalo Pena-Castellanos
 * Daniel Bast
 * Tim Snyder
-* Bastian Zimmermann
 * H. Vetinari
 * Carlo
 * Matthew Craig
 * Joshua L. Adelman
 * Wolf Vollprecht
+* Matthias Diener
 * Marius van Niekerk
 * Peter Williams
 * Johannes Köster
+* Philippe Blain
 * Matt McCormick
 * John Blischak
 * Jan Janßen
@@ -76,7 +78,6 @@ Authors are sorted by number of commits.
 * Hugo Slepicka
 * fhoehle
 * Ben Mares
-* Matthias Diener
 * Matthew W. Thompson
 * lorenz
 * Tom Augspurger
@@ -97,7 +98,7 @@ Authors are sorted by number of commits.
 * Dave Hirschfeld
 * Nils Wentzell
 * Stuart Berg
-* Philippe Blain
 * Billy K. Poon
 * Mike Taves
 * Nehal J Wani
+* Benjamin Tovar
