@@ -16,7 +16,7 @@
 
 **Fixed:**
 
-* Do not stop build-locally.py when OSX_SDK_DIR is not set. It will be set automatically in setup_environment if not already set.
+*Clarify in build-locally.py that setting OSX_SDK_DIR implies agreement to the SDK license.
 
 **Security:**
 
