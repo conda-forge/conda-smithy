@@ -4,6 +4,45 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.17.0
+====================
+
+**Added:**
+
+* When rotating tokens, update the token in GHA too
+* The variable 'BUILD_WITH_CONDA_DEBUG' (and thus build-locally.py's '--debug' flag) is now honored on macOS.
+* Users may now specify a list of packages as part of the ``remote_ci_setup``
+  entry in ``conda-forge.yml`` to install more packages as part of the setup
+  phase.
+
+**Changed:**
+
+* Drop ``defaults`` from ``channel_sources``
+* The SPDX identifier list has been updated.
+* Updated ``.ci_support/README`` for improved clarity.
+
+**Fixed:**
+
+Fixed a bug in run_docker_build.sh when finding the value of FEEDSTOCK_ROOT.
+In some cases the cd command had output to stdout which was included in
+FEEDSTOCK_ROOT. Now the value is computed as for THISDIR in the same script,
+with the output of cd redirected to /dev/null.
+*Clarify in build-locally.py that setting OSX_SDK_DIR implies agreement to the SDK license.
+* Added .ci_support/README to generated file list
+
+**Authors:**
+
+* Isuru Fernando
+* Uwe L. Korn
+* Mark Harfouche
+* John Kirkham
+* Bastian Zimmermann
+* Matthias Diener
+* Philippe Blain
+* Benjamin Tovar
+
+
+
 v3.16.2
 ====================
 
