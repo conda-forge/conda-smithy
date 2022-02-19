@@ -767,7 +767,7 @@ class RegisterFeedstockToken(Subcommand):
         ]:
             scp.add_argument(
                 "--without-{}".format(ci.lower()),
-                dest=ci.lower(),
+                dest=ci.lower().replace("-", "_"),
                 action="store_false",
                 help="If set, {} will be not registered".format(ci),
             )
