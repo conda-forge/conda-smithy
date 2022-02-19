@@ -16,7 +16,7 @@
 
 **Fixed:**
 
-* <news item>
+* Fixed issue with CLI argument for feedstock token commands.
 
 **Security:**
 
