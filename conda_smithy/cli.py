@@ -242,7 +242,7 @@ class RegisterCI(Subcommand):
         ]:
             scp.add_argument(
                 "--without-{}".format(ci.lower()),
-                dest=ci.lower().replace("-","_"),
+                dest=ci.lower().replace("-", "_"),
                 action="store_false",
                 help="If set, {} will be not registered".format(ci),
             )
@@ -767,7 +767,7 @@ class RegisterFeedstockToken(Subcommand):
         ]:
             scp.add_argument(
                 "--without-{}".format(ci.lower()),
-                dest=ci.lower().replace("-","_"),
+                dest=ci.lower().replace("-", "_"),
                 action="store_false",
                 help="If set, {} will be not registered".format(ci),
             )
@@ -877,7 +877,7 @@ class UpdateAnacondaToken(Subcommand):
         ]:
             scp.add_argument(
                 "--without-{}".format(ci.lower()),
-                dest=ci.lower().replace("-","_"),
+                dest=ci.lower().replace("-", "_"),
                 action="store_false",
                 help="If set, the token on {} will be not changed.".format(ci),
             )
