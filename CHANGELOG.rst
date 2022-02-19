@@ -4,6 +4,19 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.17.1
+====================
+
+**Fixed:**
+
+* Fixed issue with CLI argument for feedstock token commands.
+
+**Authors:**
+
+* Mervin Fansler
+
+
+
 v3.17.0
 ====================
 
