@@ -61,6 +61,7 @@ Authors are sorted by number of commits.
 * Florian Rathgeber
 * Bruno Oliveira
 * Tony Kelman
+* Mervin Fansler
 * Guilherme Quentel Melo
 * santi
 * buijennifer

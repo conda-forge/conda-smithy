@@ -247,7 +247,7 @@
   email: isuru.11@cse.mrt.ac.lk
   alternate_emails:
   - isuruf@gmail.com
-  num_commits: 460
+  num_commits: 462
   first_commit: 2017-01-08 22:03:03
   github: isuruf
 - name: Julian Rüth
@@ -540,3 +540,8 @@
   num_commits: 1
   first_commit: 2021-12-15 12:02:28
   github: btovar
+- name: Mervin Fansler
+  email: mmfansler@gmail.com
+  num_commits: 3
+  first_commit: 2022-02-19 13:45:48
+  github: mfansler
