@@ -65,6 +65,9 @@ jobs:
     # Configure the VM
     - script: |
         call activate base
+        conda.exe remove boa -y -q
+        conda.exe install boa=0.8.2 -y -q --only-deps
+        pip install --no-deps "git+https://github.com/wolfv/boa.git@improve_compat_with_conda_smithy_boa_0.8.2"
         {%- if local_ci_setup %}
         conda.exe uninstall --quiet --yes --force {{ " ".join(remote_ci_setup) }}
         pip install --no-deps ".\{{ recipe_dir }}\."
@@ -94,7 +97,7 @@ jobs:
     - script: |
         call activate base
         {%- if build_with_mambabuild %}
-        conda.exe mambabuild "{{ recipe_dir }}" -m .ci_support\%CONFIG%.yaml --suppress-variables
+        boa build "{{ recipe_dir }}" -m .ci_support\%CONFIG%.yaml --suppress-variables
         {%- else %}
         conda.exe build "{{ recipe_dir }}" -m .ci_support\%CONFIG%.yaml --suppress-variables
         {%- endif %}
