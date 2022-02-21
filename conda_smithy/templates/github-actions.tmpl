@@ -154,7 +154,7 @@ jobs:
         mamba.exe install -c conda-forge 'python=3.9' conda-build conda pip {{ BOA }}{{ " ".join(remote_ci_setup) }}
         if errorlevel 1 exit 1
         {%- if local_ci_setup %}
-        conda.exe uninstall --quiet --yes --force {{ " ".join(remote_ci_setup) }}"
+        conda.exe uninstall --quiet --yes --force conda-forge-ci-setup
         if errorlevel 1 exit 1
         pip install --no-deps ".\{{ recipe_dir }}\."
         if errorlevel 1 exit 1

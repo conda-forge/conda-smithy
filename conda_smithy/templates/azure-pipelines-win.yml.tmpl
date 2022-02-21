@@ -68,7 +68,7 @@ jobs:
     - script: |
         call activate base
         {%- if local_ci_setup %}
-        conda.exe uninstall --quiet --yes --force {{ " ".join(remote_ci_setup) }}
+        conda.exe uninstall --quiet --yes --force conda-forge-ci-setup
         pip install --no-deps ".\{{ recipe_dir }}\."
         {%- endif %}
         setup_conda_rc .\ ".\{{ recipe_dir }}" .\.ci_support\%CONFIG%.yaml

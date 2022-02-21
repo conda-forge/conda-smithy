@@ -55,7 +55,9 @@ install:
     # Tell conda we want an updated version of conda-build and {{ " ".join(remote_ci_setup) }}
     - cmd: conda.exe install -n root -c conda-forge --quiet --yes conda-build pip {{ " ".join(remote_ci_setup) }}
     {%- if local_ci_setup %}
-    - cmd: conda.exe uninstall --quiet --yes --force {{ " ".join(remote_ci_setup) }}
+    # Uninstall the conda-forge-ci-setup package but leave its dependencies
+    # so that we may bootstrap the installation process
+    - cmd: conda.exe uninstall --quiet --yes --force conda-forge-ci-setup
     - cmd: pip install --no-deps .\{{ recipe_dir }}\.
     {%- endif %}
     - cmd: setup_conda_rc .\ .\{{ recipe_dir }} .\.ci_support\%CONFIG%.yaml
