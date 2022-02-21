@@ -4,6 +4,20 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.17.2
+====================
+
+**Fixed:**
+
+* Fixed bug where remote ci setup removed boa too.
+
+**Authors:**
+
+* Isuru Fernando
+* Matthew R. Becker
+
+
+
 v3.17.1
 ====================
 
