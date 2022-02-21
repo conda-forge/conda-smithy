@@ -142,11 +142,16 @@ jobs:
         miniforge-variant: Mambaforge
       if: matrix.os == 'windows'
 
+{%- if build_with_mambabuild %}
+{%- set BOA="boa " %}
+{%- else %}
+{%- set BOA="" %}
+{%- endif %}
     - name: Build on windows
       shell: cmd
       run: |
         call activate base
-        mamba.exe install -c conda-forge 'python=3.9' conda-build conda pip {{ " ".join(remote_ci_setup) }}
+        mamba.exe install -c conda-forge 'python=3.9' conda-build conda pip {{ BOA }}{{ " ".join(remote_ci_setup) }}
         if errorlevel 1 exit 1
         {%- if local_ci_setup %}
         conda.exe uninstall --quiet --yes --force {{ " ".join(remote_ci_setup) }}"
