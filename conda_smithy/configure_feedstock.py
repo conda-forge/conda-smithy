@@ -271,6 +271,13 @@ def _collapse_subpackage_variants(
 
     for meta in list_of_metas:
         all_used_vars.update(meta.get_used_vars())
+        # this is a hack to work around the fact that we specify mpi variants
+        # via an `mpi` variable in the CBC but we do not parse our recipes
+        # twice to ensure the pins given by the variant also show up in the
+        # smithy CI support scripts
+        # future MPI variants have to be added here
+        if "mpi" in all_used_vars:
+            all_used_vars.update(["mpich", "openmpi"])
         all_variants.update(
             conda_build.utils.HashableDict(v) for v in meta.config.variants
         )
