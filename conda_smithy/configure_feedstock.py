@@ -649,6 +649,19 @@ def _render_ci_provider(
                     "to avoid a denial of service for other infrastructure."
                 )
 
+            # we skip travis builds for anything but aarch64, ppc64le and s390x
+            # due to their current open-source policies around usage
+            if (
+                channel_target.startswith("conda-forge ")
+                and provider_name == "travis"
+                and (platform != "linux" or arch not in ["aarch64", "ppc64le", "s390x"])
+            ):
+                raise RuntimeError(
+                    "Travis CI can only be used for 'linux_aarch64', "
+                    "'linux_ppc64le' or 'linux_s390x' native builds"
+                    ", not '%s_%s', to avoid using open-source build minutes!" % (platform, arch)
+                )
+
         # AFAIK there is no way to get conda build to ignore the CBC yaml
         # in the recipe. This one can mess up migrators applied with local
         # CBC yaml files where variants in the migrators are not in the CBC.
@@ -982,19 +995,6 @@ def _get_platforms_of_provider(provider, forge_config):
             continue
         providers = forge_config["provider"][build_platform_arch]
         if provider in providers:
-            # we skip travis builds for anything but aarch64, ppc64le and s390x
-            # due to their current open-source policies around usage
-            if provider == "travis" and (
-                build_arch not in ["aarch64", "ppc64le", "s390x"]
-                or build_platform != "linux"
-            ):
-                logger.warning(
-                    "Travis CI can only be used for 'linux_aarch64', "
-                    "'linux_ppc64le' or 'linux_s390x'"
-                    ", not '%s'!" % (build_platform_arch)
-                )
-                continue
-
             platforms.append(platform)
             archs.append(arch)
             if platform == "linux" and arch == "64":
