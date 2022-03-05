@@ -75,6 +75,7 @@ def test_r_skips_appveyor(r_recipe, jinja_env):
     assert not os.path.isdir(os.path.join(r_recipe.recipe, ".ci_support"))
 
 
+@pytest.mark.xfail(reason="Travis CI is not enabled for OSX", strict=True)
 @pytest.mark.legacy_travis
 def test_r_matrix_travis(r_recipe, jinja_env):
     r_recipe.config["provider"]["osx"] = "travis"
@@ -139,6 +140,7 @@ def test_py_matrix_appveyor(py_recipe, jinja_env):
     assert len(os.listdir(matrix_dir)) == 2
 
 
+@pytest.mark.xfail(reason="Travis CI is not enabled for OSX", strict=True)
 @pytest.mark.legacy_travis
 def test_py_matrix_travis(py_recipe, jinja_env):
     py_recipe.config["provider"]["osx"] = "travis"
@@ -331,6 +333,7 @@ def test_azure_with_empty_yum_reqs_raises(py_recipe, jinja_env):
         )
 
 
+@pytest.mark.xfail(reason="Travis CI is not enabled for OSX", strict=True)
 @pytest.mark.legacy_circle
 @pytest.mark.legacy_travis
 def test_circle_osx(py_recipe, jinja_env):
@@ -371,6 +374,49 @@ def test_circle_osx(py_recipe, jinja_env):
         jinja_env=jinja_env, forge_config=config, forge_dir=forge_dir
     )
     assert not os.path.exists(travis_yml_file)
+
+    cnfgr_fdstk.clear_scripts(forge_dir)
+    config = copy.deepcopy(py_recipe.config)
+    config["provider"]["linux"] = "dummy"
+    config["provider"]["osx"] = "circle"
+    cnfgr_fdstk.render_circle(
+        jinja_env=jinja_env, forge_config=config, forge_dir=forge_dir
+    )
+    assert os.path.exists(circle_osx_file)
+    assert not os.path.exists(circle_linux_file)
+    assert os.path.exists(circle_config_file)
+
+
+@pytest.mark.legacy_circle
+def test_circle_only_osx(py_recipe, jinja_env):
+    # Set legacy providers
+    py_recipe.config["provider"]["osx"] = "azure"
+    py_recipe.config["provider"]["linux"] = "circle"
+
+    forge_dir = py_recipe.recipe
+    circle_osx_file = os.path.join(forge_dir, ".scripts", "run_osx_build.sh")
+    circle_linux_file = os.path.join(
+        forge_dir, ".scripts", "run_docker_build.sh"
+    )
+    circle_config_file = os.path.join(forge_dir, ".circleci", "config.yml")
+
+    cnfgr_fdstk.clear_scripts(forge_dir)
+    cnfgr_fdstk.render_circle(
+        jinja_env=jinja_env, forge_config=py_recipe.config, forge_dir=forge_dir
+    )
+    assert not os.path.exists(circle_osx_file)
+    assert os.path.exists(circle_linux_file)
+    assert os.path.exists(circle_config_file)
+
+    cnfgr_fdstk.clear_scripts(forge_dir)
+    config = copy.deepcopy(py_recipe.config)
+    config["provider"]["osx"] = "circle"
+    cnfgr_fdstk.render_circle(
+        jinja_env=jinja_env, forge_config=config, forge_dir=forge_dir
+    )
+    assert os.path.exists(circle_osx_file)
+    assert os.path.exists(circle_linux_file)
+    assert os.path.exists(circle_config_file)
 
     cnfgr_fdstk.clear_scripts(forge_dir)
     config = copy.deepcopy(py_recipe.config)
