@@ -654,12 +654,16 @@ def _render_ci_provider(
             if (
                 channel_target.startswith("conda-forge ")
                 and provider_name == "travis"
-                and (platform != "linux" or arch not in ["aarch64", "ppc64le", "s390x"])
+                and (
+                    platform != "linux"
+                    or arch not in ["aarch64", "ppc64le", "s390x"]
+                )
             ):
                 raise RuntimeError(
                     "Travis CI can only be used for 'linux_aarch64', "
                     "'linux_ppc64le' or 'linux_s390x' native builds"
-                    ", not '%s_%s', to avoid using open-source build minutes!" % (platform, arch)
+                    ", not '%s_%s', to avoid using open-source build minutes!"
+                    % (platform, arch)
                 )
 
         # AFAIK there is no way to get conda build to ignore the CBC yaml
