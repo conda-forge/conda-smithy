@@ -1008,7 +1008,7 @@ def _get_platforms_of_provider(provider, forge_config):
         if provider in providers:
             platforms.append(platform)
             archs.append(arch)
-            if platform == "linux" and arch == "64":
+            if platform_arch in forge_config["noarch_platform"]:
                 keep_noarchs.append(True)
             else:
                 keep_noarchs.append(False)
@@ -1731,6 +1731,7 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
             "win_64": "win_64",
             "osx_64": "osx_64",
         },
+        "noarch_platform": "linux_64",
         "os_version": {
             "linux_64": None,
             "linux_aarch64": None,
@@ -1842,10 +1843,22 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
             )
         )
 
-    for platform_arch in config["build_platform"].keys():
+    build_platforms = sorted(config["build_platform"].keys())
+
+    for platform_arch in build_platforms:
         config[platform_arch] = {"enabled": "True"}
         if platform_arch not in config["provider"]:
             config["provider"][platform_arch] = None
+
+    if isinstance(config["noarch_platform"], str):
+        config["noarch_platform"] = [config["noarch_platform"]]
+
+    for noarch_platform in sorted(config["noarch_platform"]):
+        if noarch_platform not in build_platforms:
+            raise ValueError(
+                f"Unknown noarch platform {noarch_platform}. Expected one of: "
+                f"{build_platforms}"
+            )
 
     config["secrets"] = sorted(set(config["secrets"] + ["BINSTAR_TOKEN"]))
 
