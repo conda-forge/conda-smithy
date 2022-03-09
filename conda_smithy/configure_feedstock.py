@@ -1850,8 +1850,7 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
         if platform_arch not in config["provider"]:
             config["provider"][platform_arch] = None
 
-    if isinstance(config["noarch_platform"], str):
-        config["noarch_platform"] = [config["noarch_platform"]]
+    config["noarch_platform"] = conda_build.utils.ensure_list(config["noarch_platform"])
 
     for noarch_platform in sorted(config["noarch_platform"]):
         if noarch_platform not in build_platforms:
