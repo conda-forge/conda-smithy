@@ -1024,7 +1024,7 @@ def _get_platforms_of_provider(provider, forge_config):
         ):
             platforms.append(platform)
             archs.append(arch)
-            if platform == "linux" and arch == "64":
+            if platform_arch in forge_config["noarch_platform"]:
                 keep_noarchs.append(True)
             else:
                 keep_noarchs.append(False)
