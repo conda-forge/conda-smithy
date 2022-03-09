@@ -4,6 +4,26 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.18.0
+====================
+
+**Deprecated:**
+
+* We have deprecated the usage of Travis CI for any platforms but linux_aarch64, linux_ppc64le, or
+  linux_s390x. Conda-smithy will raise a RuntimeError if one attempts to render a recipe for a different platform.
+
+**Fixed:**
+
+* Fixed rotation token for gha
+* Fixed a bug where mpich and openmpi pins were not appearing properly due non-recursive parsing in smithy.
+
+**Authors:**
+
+* Isuru Fernando
+* Matthew R. Becker
+
+
+
 v3.17.2
 ====================
 
