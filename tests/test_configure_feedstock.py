@@ -758,6 +758,23 @@ def test_conda_forge_yaml_empty(config_yaml):
     ]
 
 
+def test_noarch_platforms_bad_yaml(config_yaml):
+    load_forge_config = lambda: cnfgr_fdstk._load_forge_config(  # noqa
+        config_yaml,
+        exclusive_config_file=os.path.join(
+            config_yaml, "recipe", "default_config.yaml"
+        ),
+    )
+
+    with open(os.path.join(config_yaml, "conda-forge.yml"), "a+") as fp:
+        fp.write("noarch_platforms: [eniac, zx80]")
+
+    with pytest.raises(ValueError) as excinfo:
+        load_forge_config()
+
+    assert "eniac" in str(excinfo.value)
+
+
 def test_forge_yml_alt_path(config_yaml):
     load_forge_config = (
         lambda forge_yml: cnfgr_fdstk._load_forge_config(  # noqa

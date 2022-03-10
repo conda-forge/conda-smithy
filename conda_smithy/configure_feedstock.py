@@ -1008,7 +1008,7 @@ def _get_platforms_of_provider(provider, forge_config):
         if provider in providers:
             platforms.append(platform)
             archs.append(arch)
-            if platform == "linux" and arch == "64":
+            if platform_arch in forge_config["noarch_platforms"]:
                 keep_noarchs.append(True)
             else:
                 keep_noarchs.append(False)
@@ -1024,7 +1024,7 @@ def _get_platforms_of_provider(provider, forge_config):
         ):
             platforms.append(platform)
             archs.append(arch)
-            if platform == "linux" and arch == "64":
+            if platform_arch in forge_config["noarch_platforms"]:
                 keep_noarchs.append(True)
             else:
                 keep_noarchs.append(False)
@@ -1722,6 +1722,7 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
             "osx": None,
             "win": None,
         },
+        # value is the build_platform, key is the target_platform
         "build_platform": {
             "linux_64": "linux_64",
             "linux_aarch64": "linux_aarch64",
@@ -1731,6 +1732,7 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
             "win_64": "win_64",
             "osx_64": "osx_64",
         },
+        "noarch_platforms": ["linux_64"],
         "os_version": {
             "linux_64": None,
             "linux_aarch64": None,
@@ -1842,10 +1844,23 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
             )
         )
 
-    for platform_arch in config["build_platform"].keys():
+    target_platforms = sorted(config["build_platform"].keys())
+
+    for platform_arch in target_platforms:
         config[platform_arch] = {"enabled": "True"}
         if platform_arch not in config["provider"]:
             config["provider"][platform_arch] = None
+
+    config["noarch_platforms"] = conda_build.utils.ensure_list(
+        config["noarch_platforms"]
+    )
+
+    for noarch_platform in sorted(config["noarch_platforms"]):
+        if noarch_platform not in target_platforms:
+            raise ValueError(
+                f"Unknown noarch platform {noarch_platform}. Expected one of: "
+                f"{target_platforms}"
+            )
 
     config["secrets"] = sorted(set(config["secrets"] + ["BINSTAR_TOKEN"]))
 
