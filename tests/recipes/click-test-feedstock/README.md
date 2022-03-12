@@ -21,7 +21,7 @@ Current build status
 ====================
 
 Linux: [![Circle CI](https://circleci.com/gh/conda-forge/click-test-feedstock.svg?style=shield)](https://circleci.com/gh/conda-forge/click-test-feedstock)
-OSX: [![TravisCI](https://travis-ci.com/conda-forge/click-test-feedstock.svg?branch=master)](https://travis-ci.com/conda-forge/click-test-feedstock)
+OSX: [![TravisCI](https://app.travis-ci.com/conda-forge/click-test-feedstock.svg?branch=master)](https://travis-ci.com/conda-forge/click-test-feedstock)
 Windows: [![AppVeyor](https://ci.appveyor.com/api/projects/status/github/conda-forge/click-test-feedstock?svg=True)](https://ci.appveyor.com/project/conda-forge/click-test-feedstock/branch/master)
 
 Current release info
