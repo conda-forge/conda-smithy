@@ -197,16 +197,41 @@ conda config --add channels {{ channel_name }}
 conda config --set channel_priority strict
 ```
 
-Once the `{{ channel_name }}` channel has been enabled, `{{ ', '.join(outputs) }}` can be installed with:
+Once the `{{ channel_name }}` channel has been enabled, `{{ ', '.join(outputs) }}` can be installed with `conda`:
 
 ```
 conda install {{ ' '.join(outputs) }}
 ```
 
-It is possible to list all of the versions of `{{ outputs[0] }}` available on your platform with:
+or with `mamba`:
+
+```
+mamba install {{ ' '.join(outputs) }}
+```
+
+It is possible to list all of the versions of `{{ outputs[0] }}` available on your platform with `conda`:
 
 ```
 conda search {{ outputs[0] }} --channel {{ channel_name }}
+```
+
+or with `mamba`:
+
+```
+mamba search {{ outputs[0] }} --channel {{ channel_name }}
+```
+
+Alternatively, `mamba repoquery` may provide more information:
+
+```
+# Search all versions available on your platform:
+mamba repoquery search {{ outputs[0] }} --channel {{ channel_name }}
+
+# List packages depending on `{{ outputs[0] }}`:
+mamba repoquery whoneeds {{ outputs[0] }} --channel {{ channel_name }}
+
+# List dependencies of `{{ outputs[0] }}`:
+mamba repoquery depends {{ outputs[0] }} --channel {{ channel_name }}
 ```
 
 {% if channel_name == 'conda-forge' %}
