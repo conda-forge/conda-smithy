@@ -1902,13 +1902,13 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
     logger.debug("## END CONFIGURATION\n")
 
     if config["provider"]["linux_aarch64"] == "default":
-        config["provider"]["linux_aarch64"] = ["azure"]
+        config["provider"]["linux_aarch64"] = ["travis"]
 
     if config["provider"]["linux_aarch64"] == "native":
         config["provider"]["linux_aarch64"] = ["travis"]
 
     if config["provider"]["linux_ppc64le"] == "default":
-        config["provider"]["linux_ppc64le"] = ["azure"]
+        config["provider"]["linux_ppc64le"] = ["travis"]
 
     if config["provider"]["linux_ppc64le"] == "native":
         config["provider"]["linux_ppc64le"] = ["travis"]
