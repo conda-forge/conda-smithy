@@ -4,6 +4,31 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.19.0
+====================
+
+**Added:**
+
+* noarch packages that cannot be built on ``linux_64`` can be configured to build
+  on one or more ``noarch_platforms`` in ``conda-forge.yml``
+
+**Changed:**
+
+* Default provider for aarch64 and pcp64le is now Travis-CI
+
+**Fixed:**
+
+* Travis CI badge in readme uses correct url and linux image
+
+**Authors:**
+
+* Isuru Fernando
+* Matthew R. Becker
+* Nicholas Bollweg
+* Sylvain Corlay
+
+
+
 v3.18.0
 ====================
 
