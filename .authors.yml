@@ -196,7 +196,7 @@
   first_commit: 2017-02-12 15:31:00
 - name: Nicholas Bollweg
   email: nick.bollweg@gmail.com
-  num_commits: 2
+  num_commits: 7
   first_commit: 2019-05-20 20:03:12
   github: bollwyvl
 - name: Leopold Talirz
@@ -247,7 +247,7 @@
   email: isuru.11@cse.mrt.ac.lk
   alternate_emails:
   - isuruf@gmail.com
-  num_commits: 467
+  num_commits: 470
   first_commit: 2017-01-08 22:03:03
   github: isuruf
 - name: Julian Rüth
@@ -393,7 +393,7 @@
   github: shadowwalkersb
 - name: Matthew R. Becker
   email: becker.mr@gmail.com
-  num_commits: 249
+  num_commits: 252
   first_commit: 2020-01-07 17:44:33
   github: beckermr
   alternate_emails:
@@ -545,3 +545,8 @@
   num_commits: 3
   first_commit: 2022-02-19 13:45:48
   github: mfansler
+- name: Sylvain Corlay
+  email: sylvain.corlay@gmail.com
+  num_commits: 1
+  first_commit: 2022-03-16 16:30:25
+  github: SylvainCorlay

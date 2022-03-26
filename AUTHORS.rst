@@ -37,6 +37,7 @@ Authors are sorted by number of commits.
 * Tom Pollard
 * Gonzalo Pena-Castellanos
 * Daniel Bast
+* Nicholas Bollweg
 * Tim Snyder
 * H. Vetinari
 * Carlo
@@ -67,7 +68,6 @@ Authors are sorted by number of commits.
 * buijennifer
 * melsyt
 * gouarin
-* Nicholas Bollweg
 * Alex Goodman
 * Lion Krischer
 * ap--
@@ -103,3 +103,4 @@ Authors are sorted by number of commits.
 * Mike Taves
 * Nehal J Wani
 * Benjamin Tovar
+* Sylvain Corlay
