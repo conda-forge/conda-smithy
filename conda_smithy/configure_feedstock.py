@@ -2,6 +2,7 @@ import glob
 from itertools import product, chain
 import logging
 import os
+from os import fspath
 import re
 import subprocess
 import textwrap
@@ -11,6 +12,7 @@ from collections import OrderedDict, namedtuple, Counter
 import copy
 import hashlib
 import requests
+from pathlib import PurePath
 
 # The `requests` lib uses `simplejson` instead of `json` when available.
 # In consequence the same JSON library must be used or the `JSONDecodeError`
@@ -57,6 +59,22 @@ def package_key(config, used_loop_vars, subdir):
     )
     return key.replace("*", "_").replace(" ", "_")
 
+def _ignore_match(ignore, rel):
+    """Return true if rel or any of it's PurePath().parents are in ignore
+    
+    i.e. putting .github in skip_render will prevent rendering of anything
+    named .github in the toplevel of the feedstock and anything below that as well
+    """
+    srch = {rel}
+    srch.update(map(fspath, PurePath(rel).parents))
+    logger.debug(f"srch:{srch}")
+    logger.debug(f"ignore:{ignore}")
+    if srch.intersection(ignore):
+        logger.info(f"{rel} rendering is skipped")
+        return True
+    else:
+        return False
+
 
 def copytree(src, dst, ignore=(), root_dst=None):
     """This emulates shutil.copytree, but does so with our git file tracking, so that the new files
@@ -66,7 +84,8 @@ def copytree(src, dst, ignore=(), root_dst=None):
     for item in os.listdir(src):
         s = os.path.join(src, item)
         d = os.path.join(dst, item)
-        if os.path.relpath(d, root_dst) in ignore:
+        rel = os.path.relpath(d, root_dst)
+        if _ignore_match(ignore, rel):
             continue
         elif os.path.isdir(s):
             if not os.path.exists(d):
@@ -1628,12 +1647,25 @@ def render_README(jinja_env, forge_config, forge_dir, render_info=None):
         remove_file_or_dir(code_owners_file)
 
 
+def _get_skip_files(forge_config):
+    skip_files = {"README", "__pycache__"}
+    for f in forge_config["skip_render"]:
+        skip_files.add(f)
+    return skip_files
+
+
 def render_github_actions_services(jinja_env, forge_config, forge_dir):
     # render github actions files for automerge and rerendering services
+    skip_files = _get_skip_files(forge_config)
     for template_file in ["automerge.yml", "webservices.yml"]:
         template = jinja_env.get_template(template_file + ".tmpl")
+        rel_target_fname = os.path.join(
+            ".github", "workflows", template_file
+        )
+        if _ignore_match(skip_files, rel_target_fname):
+            continue
         target_fname = os.path.join(
-            forge_dir, ".github", "workflows", template_file
+            forge_dir, rel_target_fname
         )
         new_file_contents = template.render(**forge_config)
         with write_file(target_fname) as fh:
@@ -1642,10 +1674,7 @@ def render_github_actions_services(jinja_env, forge_config, forge_dir):
 
 def copy_feedstock_content(forge_config, forge_dir):
     feedstock_content = os.path.join(conda_forge_content, "feedstock_content")
-    skip_files = ["README", "__pycache__"]
-    for f in forge_config["skip_render"]:
-        skip_files.append(f)
-        logger.info("%s rendering is skipped" % f)
+    skip_files = _get_skip_files(forge_config)
     copytree(feedstock_content, forge_dir, skip_files)
 
 
