@@ -9,7 +9,8 @@ jobs:
 {%- if not configs %}
   build:
     working_directory: ~/test
-    machine: true
+    machine:
+      - image: ubuntu-2004:current
     steps:
       - run:
           # The Circle-CI build should not be active, but if this is not true for some reason, do a fast finish.
@@ -19,7 +20,8 @@ jobs:
   build_{{ data.config_name }}:
     working_directory: ~/test
 {%- if data.platform.startswith('linux') %}
-    machine: true
+    machine:
+      - image: ubuntu-2004:current
 {%- else %}
     macos:
       xcode: "13.0.0"
