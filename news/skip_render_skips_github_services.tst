@@ -8,4 +8,3 @@
 **Fixed:**
 
 * skip_render can prevent github webservices from rendering
-
