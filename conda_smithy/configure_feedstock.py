@@ -59,9 +59,10 @@ def package_key(config, used_loop_vars, subdir):
     )
     return key.replace("*", "_").replace(" ", "_")
 
+
 def _ignore_match(ignore, rel):
     """Return true if rel or any of it's PurePath().parents are in ignore
-    
+
     i.e. putting .github in skip_render will prevent rendering of anything
     named .github in the toplevel of the feedstock and anything below that as well
     """
@@ -1659,14 +1660,10 @@ def render_github_actions_services(jinja_env, forge_config, forge_dir):
     skip_files = _get_skip_files(forge_config)
     for template_file in ["automerge.yml", "webservices.yml"]:
         template = jinja_env.get_template(template_file + ".tmpl")
-        rel_target_fname = os.path.join(
-            ".github", "workflows", template_file
-        )
+        rel_target_fname = os.path.join(".github", "workflows", template_file)
         if _ignore_match(skip_files, rel_target_fname):
             continue
-        target_fname = os.path.join(
-            forge_dir, rel_target_fname
-        )
+        target_fname = os.path.join(forge_dir, rel_target_fname)
         new_file_contents = template.render(**forge_config)
         with write_file(target_fname) as fh:
             fh.write(new_file_contents)
