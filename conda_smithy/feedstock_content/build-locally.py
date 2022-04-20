@@ -94,7 +94,9 @@ def main(args=None):
         elif ns.config.startswith("osx"):
             run_osx_build(ns)
     finally:
-        recipe_license_file = os.path.join("recipe", "recipe-scripts-license.txt")
+        recipe_license_file = os.path.join(
+            "recipe", "recipe-scripts-license.txt"
+        )
         if os.path.exists(recipe_license_file):
             os.remove(recipe_license_file)
 
