@@ -165,6 +165,9 @@ jobs:
         {{ build_setup.replace("\n", "\n        ").rstrip() }}
         {%- endif %}
 
+        if EXIST LICENSE.txt (
+          copy LICENSE.txt "{{ recipe_dir }}\\recipe-scripts-license.txt"
+        )
         {%- if build_with_mambabuild %}
         conda.exe mambabuild "{{ recipe_dir }}" -m .ci_support\%CONFIG%.yaml
         {%- else %}

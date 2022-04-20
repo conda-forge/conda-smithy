@@ -67,6 +67,9 @@ jobs:
 
     - script: |
         call activate base
+        if EXIST LICENSE.txt (
+          copy LICENSE.txt "{{ recipe_dir }}\\recipe-scripts-license.txt"
+        )
         {%- if build_with_mambabuild %}
         conda.exe mambabuild "{{ recipe_dir }}" -m .ci_support\%CONFIG%.yaml --suppress-variables
         {%- else %}
