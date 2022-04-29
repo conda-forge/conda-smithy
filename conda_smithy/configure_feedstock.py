@@ -1691,7 +1691,7 @@ def _read_forge_config(forge_dir, forge_yml=None):
     # The config is just the union of the defaults, and the overriden
     # values.
     config = _update_dict_within_dict(
-        file_config.items(), conda_forge_defaults
+        file_config.items(), deepcopy(conda_forge_defaults)
     )
     return config, file_config
 
