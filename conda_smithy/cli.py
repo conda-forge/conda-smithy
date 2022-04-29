@@ -19,6 +19,7 @@ from ruamel.yaml import YAML
 from . import configure_feedstock
 from . import feedstock_io
 from . import lint_recipe
+from . import lint_conda_forge
 from . import __version__
 
 
@@ -503,8 +504,11 @@ class RecipeLint(Subcommand):
     subcommand = "recipe-lint"
 
     def __init__(self, parser):
-        super(RecipeLint, self).__init__(parser, "Lint a single conda recipe.")
+        super(RecipeLint, self).__init__(
+            parser, "Lint the `meta.yaml` in one or more conda recipes."
+        )
         scp = self.subcommand_parser
+        scp.add_argument("--quiet", action="store_true")
         scp.add_argument("--conda-forge", action="store_true")
         scp.add_argument("recipe_directory", default=[os.getcwd()], nargs="*")
 
@@ -535,8 +539,107 @@ class RecipeLint(Subcommand):
                         recipe, "\n  ".join(hints)
                     )
                 )
-            else:
+            elif not args.quiet:
                 print("{} is in fine form".format(recipe))
+        # Exit code 1 for some lint, 0 for no lint.
+        sys.exit(int(not all_good))
+
+
+class ConfigLint(Subcommand):
+    subcommand = "config-lint"
+
+    def __init__(self, parser):
+        super(ConfigLint, self).__init__(
+            parser,
+            f"Lint the `{configure_feedstock.conda_forge_file}` in one or more feedstocks.",
+        )
+        scp = self.subcommand_parser
+        scp.add_argument("--quiet", action="store_true")
+        scp.add_argument("forge_directory", default=[os.getcwd()], nargs="*")
+
+    def __call__(self, args):
+        all_good = True
+        for forge_dir in args.forge_directory:
+            forge_file = os.path.join(
+                forge_dir, configure_feedstock.conda_forge_file
+            )
+            lints = lint_conda_forge.main(os.path.join(forge_dir))
+            if lints:
+                all_good = False
+                print(
+                    "{} has some lint:\n  {}".format(
+                        forge_file, "\n  ".join(lints)
+                    )
+                )
+            elif not args.quiet:
+                print("{} is in fine form".format(forge_file))
+        # Exit code 1 for some lint, 0 for no lint.
+        sys.exit(int(not all_good))
+
+
+class FeedstockLint(Subcommand):
+    subcommand = "feedstock-lint"
+
+    def __init__(self, parser):
+        super(FeedstockLint, self).__init__(
+            parser,
+            f"Lint the `{configure_feedstock.conda_forge_file}` and `meta.yaml` in one or more feedstocks.",
+        )
+        scp = self.subcommand_parser
+        scp.add_argument("--quiet", action="store_true")
+        scp.add_argument("--conda-forge", action="store_true")
+        scp.add_argument("forge_directory", default=[os.getcwd()], nargs="*")
+
+    def __call__(self, args):
+        all_good = True
+        for forge_dir in args.forge_directory:
+            forge_file = os.path.join(
+                forge_dir, configure_feedstock.conda_forge_file
+            )
+            lints = lint_conda_forge.main(os.path.join(forge_dir))
+            config, file_config = configure_feedstock._read_forge_config(
+                forge_dir
+            )
+            lints = lint_conda_forge.main(os.path.join(forge_dir))
+            if lints:
+                all_good = False
+                print(
+                    "{} has some lint:\n  {}".format(
+                        forge_file, "\n  ".join(lints)
+                    )
+                )
+            elif not args.quiet:
+                print("{} is in fine form".format(forge_file))
+
+            recipe = os.path.join(forge_dir, config["recipe_dir"])
+
+            lints, hints = lint_recipe.main(
+                os.path.join(recipe),
+                conda_forge=args.conda_forge,
+                return_hints=True,
+            )
+
+            if lints:
+                all_good = False
+                print(
+                    "  {} has some lint:\n    {}".format(
+                        recipe, "\n  ".join(lints)
+                    )
+                )
+                if hints:
+                    print(
+                        "  {} also has some suggestions:\n    {}".format(
+                            recipe, "\n  ".join(hints)
+                        )
+                    )
+            elif hints:
+                print(
+                    "  {} has some suggestions:\n  {}".format(
+                        recipe, "\n  ".join(hints)
+                    )
+                )
+            elif not args.quiet:
+                print("  {} is in fine form".format(recipe))
         # Exit code 1 for some lint, 0 for no lint.
         sys.exit(int(not all_good))
 

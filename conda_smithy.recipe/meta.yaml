@@ -19,22 +19,24 @@ requirements:
     - python >=3.6
     - pip
   run:
-    - python >=3.6
     - conda >=4.2
     - conda-build >=3.18.3
-    - jinja2
-    - requests
-    - pycryptodome
-    - gitpython
-    - pygithub <2
-    - ruamel.yaml
     - conda-forge-pinning
-    - vsts-python-api
-    - toolz
-    - shellcheck
-    - scrypt
-    - license-expression
+    - gitpython
+    - jinja2
+    - jsonschema
     - libarchive
+    - license-expression
+    - pycryptodome
+    - pygithub <2
+    - python >=3.6
+    - requests
+    - ruamel.yaml
+    - scrypt
+    - shellcheck
+    - toolz
+    - vsts-python-api
+    - yamllint
 
 test:
   requires:

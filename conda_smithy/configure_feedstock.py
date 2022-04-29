@@ -42,7 +42,17 @@ from conda_smithy.feedstock_io import (
 from conda_smithy.utils import get_feedstock_name_from_meta
 from . import __version__
 
+conda_forge_file = "conda-forge.yml"
 conda_forge_content = os.path.abspath(os.path.dirname(__file__))
+conda_forge_defaults_path = os.path.abspath(
+    os.path.join(
+        os.path.dirname(__file__), "schema", "conda-forge.defaults.yml"
+    )
+)
+
+with open(conda_forge_defaults_path, encoding="utf-8") as _dfp:
+    conda_forge_defaults = yaml.safe_load(_dfp)
+
 logger = logging.getLogger(__name__)
 
 
@@ -1661,180 +1671,62 @@ def _update_dict_within_dict(items, config):
     return config
 
 
-def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
-    config = {
-        "docker": {
-            "executable": "docker",
-            "fallback_image": "quay.io/condaforge/linux-anvil-comp7",
-            "command": "bash",
-        },
-        "templates": {},
-        "drone": {},
-        "woodpecker": {},
-        "travis": {},
-        "circle": {},
-        "config_version": "2",
-        "appveyor": {"image": "Visual Studio 2017"},
-        "azure": {
-            # default choices for MS-hosted agents
-            "settings_linux": {
-                "pool": {
-                    "vmImage": "ubuntu-latest",
-                },
-                "timeoutInMinutes": 360,
-            },
-            "settings_osx": {
-                "pool": {
-                    "vmImage": "macOS-10.15",
-                },
-                "timeoutInMinutes": 360,
-            },
-            "settings_win": {
-                "pool": {
-                    "vmImage": "windows-2019",
-                },
-                "timeoutInMinutes": 360,
-                "variables": {"CONDA_BLD_PATH": r"D:\\bld\\"},
-            },
-            # Force building all supported providers.
-            "force": False,
-            # name and id of azure project that the build pipeline is in
-            "project_name": "feedstock-builds",
-            "project_id": "84710dde-1620-425b-80d0-4cf5baca359d",
-            # Set timeout for all platforms at once.
-            "timeout_minutes": None,
-            # Toggle creating pipeline artifacts for conda build_artifacts dir
-            "store_build_artifacts": False,
-            # Maximum number of parallel jobs allowed across platforms
-            "max_parallel": 50,
-        },
-        "provider": {
-            "linux_64": ["azure"],
-            "osx_64": ["azure"],
-            "win_64": ["azure"],
-            # Following platforms are disabled by default
-            "linux_aarch64": None,
-            "linux_ppc64le": None,
-            "linux_armv7l": None,
-            "linux_s390x": None,
-            # Following platforms are aliases of x86_64,
-            "linux": None,
-            "osx": None,
-            "win": None,
-        },
-        # value is the build_platform, key is the target_platform
-        "build_platform": {
-            "linux_64": "linux_64",
-            "linux_aarch64": "linux_aarch64",
-            "linux_ppc64le": "linux_ppc64le",
-            "linux_s390x": "linux_s390x",
-            "linux_armv7l": "linux_armv7l",
-            "win_64": "win_64",
-            "osx_64": "osx_64",
-        },
-        "noarch_platforms": ["linux_64"],
-        "os_version": {
-            "linux_64": None,
-            "linux_aarch64": None,
-            "linux_ppc64le": None,
-            "linux_armv7l": None,
-            "linux_s390x": None,
-        },
-        "test": None,
-        # Following is deprecated
-        "test_on_native_only": False,
-        "choco": [],
-        # Configurable idle timeout.  Used for packages that don't have chatty enough builds
-        # Applicable only to circleci and travis
-        "idle_timeout_minutes": None,
-        # Compiler stack environment variable
-        "compiler_stack": "comp7",
-        # Stack variables,  These can be used to impose global defaults for how far we build out
-        "min_py_ver": "27",
-        "max_py_ver": "37",
-        "min_r_ver": "34",
-        "max_r_ver": "34",
-        "channels": {
-            "sources": ["conda-forge"],
-            "targets": [["conda-forge", "main"]],
-        },
-        "github": {
-            "user_or_org": "conda-forge",
-            "repo_name": "",
-            "branch_name": "master",
-            "tooling_branch_name": "master",
-        },
-        "github_actions": {
-            "self_hosted": False,
-            # Toggle creating artifacts for conda build_artifacts dir
-            "store_build_artifacts": False,
-            "artifact_retention_days": 14,
-        },
-        "recipe_dir": "recipe",
-        "skip_render": [],
-        "bot": {"automerge": False},
-        "conda_forge_output_validation": False,
-        "private_upload": False,
-        "secrets": [],
-        "build_with_mambabuild": True,
-        # feedstock checkout git clone depth, None means keep default, 0 means no limit
-        "clone_depth": None,
-        # Specific channel for package can be given with
-        #     ${url or channel_alias}::package_name
-        # defaults to conda-forge channel_alias
-        "remote_ci_setup": ["conda-forge-ci-setup=3"],
-    }
-
+def _read_forge_config(forge_dir, forge_yml=None):
     if forge_yml is None:
-        forge_yml = os.path.join(forge_dir, "conda-forge.yml")
+        forge_yml = os.path.join(forge_dir, conda_forge_file)
 
     if not os.path.exists(forge_yml):
         raise RuntimeError(
             f"Could not find config file {forge_yml}."
             " Either you are not rerendering inside the feedstock root (likely)"
-            " or there's no `conda-forge.yml` in the feedstock root (unlikely)."
-            " Add an empty `conda-forge.yml` file in"
+            f" or there's no `{conda_forge_file}` in the feedstock root (unlikely)."
+            f" Add an empty `{conda_forge_file}` file in"
             " feedstock root if it's the latter."
         )
-    else:
-        with open(forge_yml, "r") as fh:
-            documents = list(yaml.safe_load_all(fh))
-            file_config = (documents or [None])[0] or {}
 
-        # The config is just the union of the defaults, and the overriden
-        # values.
-        config = _update_dict_within_dict(file_config.items(), config)
+    with open(forge_yml, "r") as fh:
+        documents = list(yaml.safe_load_all(fh))
+        file_config = (documents or [None])[0] or {}
 
-        # check for conda-smithy 2.x matrix which we can't auto-migrate
-        # to conda_build_config
-        if file_config.get("matrix") and not os.path.exists(
-            os.path.join(
-                forge_dir, config["recipe_dir"], "conda_build_config.yaml"
-            )
-        ):
-            raise ValueError(
-                "Cannot rerender with matrix in conda-forge.yml."
-                " Please migrate matrix to conda_build_config.yaml and try again."
-                " See https://github.com/conda-forge/conda-smithy/wiki/Release-Notes-3.0.0.rc1"
-                " for more info."
-            )
+    # The config is just the union of the defaults, and the overriden
+    # values.
+    config = _update_dict_within_dict(
+        file_config.items(), conda_forge_defaults
+    )
+    return config, file_config
 
-        if file_config.get("docker") and file_config.get("docker").get(
-            "image"
-        ):
-            raise ValueError(
-                "Setting docker image in conda-forge.yml is removed now."
-                " Use conda_build_config.yaml instead"
-            )
 
-        for plat in ["linux", "osx", "win"]:
-            if config["azure"]["timeout_minutes"] is not None:
-                # fmt: off
-                config["azure"][f"settings_{plat}"]["timeoutInMinutes"] \
-                    = config["azure"]["timeout_minutes"]
-                # fmt: on
-            if "name" in config["azure"][f"settings_{plat}"]["pool"]:
-                del config["azure"][f"settings_{plat}"]["pool"]["vmImage"]
+def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
+    config, file_config = _read_forge_config(forge_dir, forge_yml)
+
+    # check for conda-smithy 2.x matrix which we can't auto-migrate
+    # to conda_build_config
+    if file_config.get("matrix") and not os.path.exists(
+        os.path.join(
+            forge_dir, config["recipe_dir"], "conda_build_config.yaml"
+        )
+    ):
+        raise ValueError(
+            f"Cannot rerender with matrix in `{conda_forge_file}`."
+            " Please migrate matrix to conda_build_config.yaml and try again."
+            " See https://github.com/conda-forge/conda-smithy/wiki/Release-Notes-3.0.0.rc1"
+            " for more info."
+        )
+
+    if file_config.get("docker") and file_config.get("docker").get("image"):
+        raise ValueError(
+            f"Setting docker image in `{conda_forge_file}` is removed now."
+            " Use conda_build_config.yaml instead"
+        )
+
+    for plat in ["linux", "osx", "win"]:
+        if config["azure"]["timeout_minutes"] is not None:
+            # fmt: off
+            config["azure"][f"settings_{plat}"]["timeoutInMinutes"] \
+                = config["azure"]["timeout_minutes"]
+            # fmt: on
+        if "name" in config["azure"][f"settings_{plat}"]["pool"]:
+            del config["azure"][f"settings_{plat}"]["pool"]["vmImage"]
 
     if config["conda_forge_output_validation"]:
         config["secrets"] = sorted(
@@ -2320,12 +2212,14 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(
-        description=("Configure a feedstock given " "a conda-forge.yml file.")
+        description=(
+            "Configure a feedstock given " f"a `{conda_forge_file}` file."
+        )
     )
     parser.add_argument(
         "forge_file_directory",
         help=(
-            "the directory containing the conda-forge.yml file "
+            f"the directory containing the {conda_forge_file} file "
             "used to configure the feedstock"
         ),
     )

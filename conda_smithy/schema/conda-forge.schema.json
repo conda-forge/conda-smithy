@@ -1,0 +1,500 @@
+{
+  "title": "conda-forge.yml schema",
+  "description": "a schema for `conda-forge.yml`",
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$ref": "#/definitions/conda-forge.yml",
+  "definitions": {
+    "conda-forge.yml": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "remote_ci_setup": {
+          "$ref": "#/definitions/remote_ci_setup"
+        },
+        "clone_depth": {
+          "$ref": "#/definitions/clone_depth"
+        },
+        "build_with_mambabuild": {
+          "$ref": "#/definitions/build_with_mambabuild"
+        },
+        "secrets": {
+          "$ref": "#/definitions/secrets"
+        },
+        "docker": {
+          "$ref": "#/definitions/docker"
+        },
+        "templates": {
+          "type": "object",
+          "description": "TBD"
+        },
+        "drone": {
+          "type": "object",
+          "description": "TBD"
+        },
+        "woodpecker": {
+          "type": "object",
+          "description": "TBD"
+        },
+        "travis": {
+          "type": "object",
+          "description": "TBD"
+        },
+        "circle": {
+          "type": "object",
+          "description": "TBD"
+        },
+        "config_version": {
+          "$ref": "#/definitions/config_version"
+        },
+        "appveyor": {
+          "$ref": "#/definitions/appveyor"
+        },
+        "azure": {
+          "$ref": "#/definitions/azure"
+        },
+        "provider": {
+          "$ref": "#/definitions/provider"
+        },
+        "build_platform": {
+          "$ref": "#/definitions/build_platform"
+        },
+        "noarch_platforms": {
+          "$ref": "#/definitions/noarch_platforms"
+        },
+        "os_version": {
+          "$ref": "#/definitions/os_version"
+        },
+        "test": {
+          "$ref": "#/definitions/test"
+        },
+        "test_on_native_only": {
+          "type": "boolean"
+        },
+        "choco": {
+          "description": "TBD",
+          "type": "array"
+        },
+        "idle_timeout_minutes": {
+          "$ref": "#/definitions/idle_timeout_minutes"
+        },
+        "compiler_stack": {
+          "$ref": "#/definitions/compiler_stack"
+        },
+        "min_py_ver": {
+          "$ref": "#/definitions/python_version"
+        },
+        "max_py_ver": {
+          "$ref": "#/definitions/python_version"
+        },
+        "min_r_ver": {
+          "$ref": "#/definitions/r_version"
+        },
+        "max_r_ver": {
+          "$ref": "#/definitions/r_version"
+        },
+        "channels": {
+          "$ref": "#/definitions/channels"
+        },
+        "github": {
+          "$ref": "#/definitions/github"
+        },
+        "github_actions": {
+          "$ref": "#/definitions/github_actions"
+        },
+        "recipe_dir": {
+          "$ref": "#/definitions/recipe_dir"
+        },
+        "skip_render": {
+          "$ref": "#/definitions/skip_render"
+        },
+        "bot": {
+          "$ref": "#/definitions/bot"
+        },
+        "conda_forge_output_validation": {
+          "$ref": "#/definitions/conda_forge_output_validation"
+        },
+        "private_upload": {
+          "$ref": "#/definitions/private_upload"
+        }
+      }
+    },
+    "config_version": {
+      "type": "string",
+      "enum": [
+        "2"
+      ]
+    },
+    "appveyor": {
+      "additionalProperties": false,
+      "type": "object",
+      "properties": {
+        "image": {
+          "type": "string"
+        },
+        "secure": {
+          "$ref": "#/definitions/__environment_variables"
+        }
+      }
+    },
+    "azure": {
+      "additionalProperties": false,
+      "properties": {
+        "settings_linux": {
+          "$ref": "#/definitions/azure__settings"
+        },
+        "settings_osx": {
+          "$ref": "#/definitions/azure__settings"
+        },
+        "settings_win": {
+          "$ref": "#/definitions/azure__settings"
+        },
+        "force": {
+          "type": "boolean"
+        },
+        "project_name": {
+          "type": "string"
+        },
+        "project_id": {
+          "type": "string"
+        },
+        "timeout_minutes": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "number"
+            }
+          ]
+        },
+        "store_build_artifacts": {
+          "type": "boolean"
+        },
+        "max_parallel": {
+          "type": "number",
+          "format": "int"
+        }
+      }
+    },
+    "azure__settings": {
+      "additionalProperties": false,
+      "type": "object",
+      "properties": {
+        "pool": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "vmImage": {
+              "type": "string"
+            }
+          }
+        },
+        "timeoutInMinutes": {
+          "type": "number",
+          "format": "int"
+        },
+        "variables": {
+          "$ref": "#/definitions/__environment_variables"
+        }
+      }
+    },
+    "__environment_variables": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "provider": {
+      "patternProperties": {
+        "^linux(|_(64|aarch64|ppc64le|arm7l|s390x))|osx(|_64)|win(|_64)$": {
+          "$ref": "#/definitions/provider__platform"
+        }
+      }
+    },
+    "provider__enum": {
+      "type": "string",
+      "enum": [
+        "appveyor",
+        "azure",
+        "circle",
+        "github_actions",
+        "travis"
+      ]
+    },
+    "provider__platform": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string",
+          "enum": [
+            "default"
+          ]
+        },
+        {
+          "$ref": "#/definitions/provider__enum"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/provider__enum"
+          }
+        }
+      ]
+    },
+    "build_platform": {
+      "patternProperties": {
+        "^linux_(64|aarch64|ppc64le|arm7l|s390x)|osx_64|win_64$": {
+          "$ref": "#/definitions/build_platform__enum"
+        }
+      }
+    },
+    "build_platform__enum": {
+      "type": "string",
+      "enum": [
+        "linux_64",
+        "linux_aarch64",
+        "linux_ppc64le",
+        "linux_s390x",
+        "linux_armv7l",
+        "win_64",
+        "osx_64"
+      ]
+    },
+    "noarch_platforms": {
+      "oneOf": [
+        {
+          "$ref": "#/definitions/build_platform__enum"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/build_platform__enum"
+          }
+        }
+      ]
+    },
+    "os_version": {
+      "^linux_(64|aarch64|ppc64le|arm7l|s390x)|osx_64|win_64)$": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "string"
+          }
+        ]
+      }
+    },
+    "test": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string",
+          "enum": [
+            "all",
+            "native",
+            "native_and_emulated"
+          ]
+        }
+      ]
+    },
+    "idle_timeout_minutes": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "number"
+        }
+      ]
+    },
+    "compiler_stack": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "string",
+          "enum": [
+            "comp7"
+          ]
+        }
+      ]
+    },
+    "python_version": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "string",
+          "enum": [
+            "27",
+            "36",
+            "37",
+            "38",
+            "39",
+            "310"
+          ]
+        }
+      ]
+    },
+    "r_version": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "string",
+          "enum": [
+            "34"
+          ]
+        }
+      ]
+    },
+    "channels": {
+      "additionalProperties": false,
+      "type": "object",
+      "properties": {
+        "sources": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "targets": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxItems": 2,
+              "minItems": 2
+            }
+          }
+        }
+      }
+    },
+    "github": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "user_or_org": {
+          "type": "string"
+        },
+        "repo_name": {
+          "type": "string"
+        },
+        "branch_name": {
+          "type": "string"
+        },
+        "tooling_branch_name": {
+          "type": "string"
+        }
+      }
+    },
+    "github_actions": {
+      "additionalProperties": false,
+      "type": "object",
+      "properties": {
+        "self_hosted": {
+          "type": "boolean"
+        },
+        "store_build_artifacts": {
+          "type": "boolean"
+        },
+        "artifact_retention_days": {
+          "type": "number"
+        }
+      }
+    },
+    "recipe_dir": {
+      "type": "string"
+    },
+    "bot": {
+      "additionalProperties": false,
+      "type": "object",
+      "properties": {
+        "inspection": {
+          "type": "boolean"
+        },
+        "automerge": {
+          "type": "boolean"
+        },
+        "run_deps_from_wheel": {
+          "type": "boolean"
+        },
+        "abi_migration_branches": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "skip_render": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "conda_forge_output_validation": {
+      "type": "boolean"
+    },
+    "private_upload": {
+      "type": "boolean"
+    },
+    "clone_depth": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "number",
+          "format": "int"
+        }
+      ]
+    },
+    "docker": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "executable": {
+          "type": "string"
+        },
+        "fallback_image": {
+          "type": "string"
+        },
+        "command": {
+          "type": "string"
+        }
+      }
+    },
+    "remote_ci_setup": {
+      "oneOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      ]
+    },
+    "build_with_mambabuild": {
+      "type": "boolean"
+    },
+    "secrets": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}
