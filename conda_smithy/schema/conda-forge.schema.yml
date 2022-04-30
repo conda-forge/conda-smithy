@@ -1,0 +1,673 @@
+$schema: http://json-schema.org/draft-07/schema
+additionalProperties: false
+definitions:
+  __environment_variables:
+    additionalProperties:
+      type: string
+    type: object
+  appveyor:
+    additionalProperties: false
+    description: |-
+      The top-level ``appveyor`` key specifies configurations for the Appveyor
+      CI service.  This is usually **read-only** and should not normally be manually
+      modified.  Tools like conda-smithy may modify this, as need.  It has a single
+      ``secure`` field which contains the binstar token.  For example:
+
+      .. code-block:: yaml
+
+          appveyor:
+            secure:
+              BINSTAR_TOKEN: <some big hash>
+    properties:
+      image:
+        type: string
+      secure:
+        $ref: "#/definitions/__environment_variables"
+    type: object
+  azure:
+    additionalProperties: false
+    description: |-
+      This dictates the behavior of the Azure Pipelines CI service. It is a
+      mapping for Azure-specific configuration options. For example:
+
+      .. code-block:: yaml
+
+          azure:
+            # flag for forcing the building all supported providers
+            force: False
+            # toggle for storing the conda build_artifacts directory (including the
+            # built packages) as an Azure pipeline artifact that can be downloaded
+            store_build_artifacts: False
+
+
+      Below is an example configuration for setting up a self-hosted Azure agent for Linux:
+
+      .. code-block:: yaml
+
+            azure:
+              settings_linux:
+                pool:
+                  name: your_local_pool_name
+                  demands:
+                    - some_key -equals some_value
+                workspace:
+                  clean: all
+                strategy:
+                  maxParallel: 1
+    properties:
+      force:
+        type: boolean
+      max_parallel:
+        format: int
+        type: number
+      project_id:
+        type: string
+      project_name:
+        type: string
+      settings_linux:
+        $ref: "#/definitions/azure__settings"
+      settings_osx:
+        $ref: "#/definitions/azure__settings"
+      settings_win:
+        $ref: "#/definitions/azure__settings"
+      store_build_artifacts:
+        type: boolean
+      timeout_minutes:
+        oneOf:
+        - type: 'null'
+        - type: number
+  azure__settings:
+    additionalProperties: false
+    properties:
+      pool:
+        additionalProperties: false
+        properties:
+          vmImage:
+            type: string
+        type: object
+      timeoutInMinutes:
+        format: int
+        type: number
+      variables:
+        $ref: "#/definitions/__environment_variables"
+    type: object
+  bot:
+    additionalProperties: false
+    description: |-
+      This field controls the behavior of the ``auto-tick`` bot which issues
+      automatic version updates/migrations for feedstocks. The current options are
+
+      .. code-block:: yaml
+
+          bot:
+            # can the bot automerge PRs it makes on this feedstock
+            automerge: true
+            # only automerge on successful version PRs, migrations are not automerged
+            automerge: 'version'
+            # only automerge on successful migration PRs, versions are not automerged
+            automerge: 'migration'
+
+            # only open PRs if resulting environment is solvable, useful for tightly coupled packages
+            check_solvable: true
+
+            # any branches listed in this section will get bot migration PRs in addition
+            # to the default branch
+            abi_migration_branches:
+              - v1.10.x
+
+      The ``abi_migration_branches`` feature is useful to, for example, add a
+      long-term support (LTS) branch for a package.
+    properties:
+      abi_migration_branches:
+        items:
+          type: string
+        type: array
+      automerge:
+        type: boolean
+      inspection:
+        type: boolean
+      run_deps_from_wheel:
+        type: boolean
+    type: object
+  build_platform:
+    description: |-
+      This is a mapping from the target platform to the build platform for the package
+      to be built. e.g. the following builds a ``osx-64`` package on the ``linux-64``
+      build platform using cross-compiling.
+
+      .. code-block:: yaml
+
+          build_platform:
+            osx_64: linux_64
+
+      Leaving this field empty implicitly requests to build a package natively. i.e.
+
+      .. code-block:: yaml
+
+          build_platform:
+            linux_64: linux_64
+            linux_ppc64le: linux_ppc64le
+            linux_aarch64: linux_aarch64
+            osx_64: osx_64
+            osx_arm64: osx_arm64
+            win_64: win_64
+    patternProperties:
+      ^linux_(64|aarch64|ppc64le|arm7l|s390x)|osx_64|win_64$:
+        $ref: "#/definitions/build_platform__enum"
+  build_platform__enum:
+    enum:
+    - linux_64
+    - linux_aarch64
+    - linux_ppc64le
+    - linux_s390x
+    - linux_armv7l
+    - win_64
+    - osx_64
+    type: string
+  build_with_mambabuild:
+    description: |-
+      This option, when enabled, configures the conda-forge CI to run a debug build using the ``mamba`` solver. Check `this <https://conda-forge.org/docs/maintainer/maintainer_faq.html#mfaq-mamba-local>`__ to know more.
+
+      .. code-block:: yaml
+
+          build_with_mambabuild:
+            True
+    type: boolean
+  channel_priority:
+    description: |-
+      This value sets the ``conda`` solver channel priority for feedstock builds.
+      The default is ``strict``. Any valid value for the same setting in the ``.condarc`` is
+      allowed here.
+    oneOf:
+    - type: boolean
+    - enum:
+      - flexible
+      - strict
+      type: string
+  channels:
+    additionalProperties: false
+    description: |-
+      This represents the channels to grab packages from during builds and
+      which channels/labels to push to on anaconda.org after a package
+      has been built.  The ``channels`` variable is a mapping with
+      ``sources`` and ``targets``, as follows:
+
+      .. code-block:: yaml
+
+          channels:
+            # sources selects the channels to pull packages from, in order.
+            sources:
+              - conda-forge
+              - defaults
+            # targets is a list of 2-lists, where the first element is the
+            # channel to push to and the second element is the label on that channel
+            targets:
+              - ["conda-forge", "main"]
+    properties:
+      sources:
+        items:
+          type: string
+        type: array
+      targets:
+        items:
+          items:
+            maxItems: 2
+            minItems: 2
+            type: string
+          type: array
+        type: array
+    type: object
+  choco:
+    description: |-
+      This parameter allows for conda-smithy to run chocoloatey installs on Windows
+      when additional system packages are needed. This is a list of strings that
+      represent package names and any additional parameters. For example,
+
+      .. code-block:: yaml
+
+          choco:
+            # install a package
+            - nvidia-display-driver
+
+            # install a package with a specific version
+            - cuda --version=11.0.3
+
+      This is currently only implemented for Azure Pipelines. The command that is run is
+      ``choco install {entry} -fdv -y --debug``.  That is, ``choco install`` is executed
+      with a standard set of additional flags that are useful on CI.
+    items:
+      type: string
+    type: array
+  circle:
+    additionalProperties: false
+    description: |-
+      The top-level ``circle`` key specifies configurations for the Circle
+      CI service.  This is usually **read-only** and should not normally be manually
+      modified.  Tools like conda-smithy may modify this, as needed.  It has a single
+      ``secure`` field which contains the binstar token.  For example:
+
+      .. code-block:: yaml
+
+          appveyor:
+            secure:
+              BINSTAR_TOKEN: <some big hash>
+    properties:
+      secure:
+        $ref: "#/definitions/__environment_variables"
+    type: object
+  clone_depth:
+    oneOf:
+    - type: 'null'
+    - format: int
+      type: number
+  compiler_stack:
+    anyOf:
+    - type: string
+    - enum:
+      - comp7
+      type: string
+  conda_forge_output_validation:
+    description: |-
+      This field must be set to ``True`` for feedstocks in the ``conda-forge`` GitHub
+      organization. It enables the required feedstock artifact validation as described
+      in :ref:`output_validation`.
+    type: boolean
+  config_version:
+    enum:
+    - "2"
+    type: string
+  docker:
+    additionalProperties: false
+    description: |-
+      This is a mapping to docker configuration options. These are relatively
+      self-explanatory. The defaults are as follows:
+
+      .. code-block:: yaml
+
+          docker:
+            executable: docker
+            image: "condaforge/linux-anvil-comp7"
+            command: "bash"
+            interactive: True
+    properties:
+      command:
+        type: string
+      executable:
+        type: string
+      fallback_image:
+        type: string
+    type: object
+  drone:
+    additionalProperties: false
+    properties:
+      secure:
+        $ref: "#/definitions/__environment_variables"
+    type: object
+  github:
+    additionalProperties: false
+    description: |-
+      This is mapping of configuration variables for GitHub. The
+      defaults are as follows:
+
+      .. code-block:: yaml
+
+          github:
+            # name of the github organization
+            user_or_org: conda-forge
+            # repository name, usually filled in automatically
+            repo_name: ""
+            # branch name to execute on
+            branch_name: master
+            # branch name to use for rerender+webservices github actions and
+            # conda-forge-ci-setup-feedstock references
+            tooling_branch_name: master
+    properties:
+      branch_name:
+        type: string
+      repo_name:
+        type: string
+      tooling_branch_name:
+        type: string
+      user_or_org:
+        type: string
+    type: object
+  github_actions:
+    additionalProperties: false
+    properties:
+      artifact_retention_days:
+        type: number
+      self_hosted:
+        type: boolean
+      store_build_artifacts:
+        type: boolean
+    type: object
+  idle_timeout_minutes:
+    description: |-
+      Configurable idle timeout that is either an int or None.  Used for packages that
+      don't have chatty enough builds. Currently only implemented in Travis and Circle.
+
+      .. code-block:: yaml
+
+          idle_timeout_minutes: 60
+    oneOf:
+    - type: 'null'
+    - type: number
+  noarch_platforms:
+    description: |-
+      Platforms on which to build noarch packages. The preferred default is a
+      single build on ``linux_64``.
+
+      .. code-block:: yaml
+
+          noarch_platforms: linux_64
+
+      To build on multiple platforms, e.g. for simple packages with platform-specific
+      dependencies, provide a list.
+
+      .. code-block:: yaml
+
+          noarch_platforms:
+            - linux_64
+            - win_64
+    oneOf:
+    - $ref: "#/definitions/build_platform__enum"
+    - items:
+        $ref: "#/definitions/build_platform__enum"
+      type: array
+  os_version:
+    ^linux_(64|aarch64|ppc64le|arm7l|s390x)|osx_64|win_64)$:
+      oneOf:
+      - type: 'null'
+      - type: string
+    description: |-
+      This key is used to set the OS versions for ``linux_*`` platforms. Valid entries map a linux platform and arch to either ``cos6``
+      or ``cos7``. Currently ``cos6`` is the default for ``linux-64``. All other linux architectures use CentOS 7. Here is an example that enables CentOS 7 on ``linux-64`` builds
+
+      .. code-block:: yaml
+
+          os_version:
+            linux_64: cos7
+  private_upload:
+    type: boolean
+  provider:
+    description: |-
+      The ``provider`` field is a mapping from build platform (not target platform) to CI service.
+      It determines which service handles each build platform. The following are available as
+      build platforms:
+
+      * ``linux_64``
+      * ``osx_64``
+      * ``win_64``
+      * ``linux_aarch64``
+      * ``linux_ppc64le``
+
+      The following CI services are available:
+
+      * ``azure``
+      * ``circle``
+      * ``travis``
+      * ``appveyor``
+      * ``None`` or ``False`` to disable a build platform.
+      * ``default`` to choose an appropriate CI (only if available)
+
+      For example, switching linux_64 & osx_64 to build on Travis CI, with win_64 on Appveyor:
+
+      .. code-block:: yaml
+
+          provider:
+            linux_64: travis
+            osx_64: travis
+            win_64: appveyor
+
+      Currently, x86_64 platforms are enabled, but other build platforms are disabled by default. i.e. an empty
+      provider entry is equivalent to the following:
+
+      .. code-block:: yaml
+
+          provider:
+            linux_64: azure
+            osx_64: azure
+            win_64: azure
+            linux_ppc64le: None
+            linux_aarch64: None
+
+      To enable ``linux_ppc64le`` and ``linux_aarch64`` add the following:
+
+      .. code-block:: yaml
+
+          provider:
+            linux_ppc64le: default
+            linux_aarch64: default
+
+      If a desired build platform is not available with a selected provider
+      (either natively or with emulation), the build will be disabled. Use the ``build_platform``
+      field to manually specify cross-compilation when no providers offer a desired build platform.
+    patternProperties:
+      ^linux(|_(64|aarch64|ppc64le|arm7l|s390x))|osx(|_64)|win(|_64)$:
+        $ref: "#/definitions/provider__platform"
+  provider__enum:
+    enum:
+    - appveyor
+    - azure
+    - circle
+    - github_actions
+    - travis
+    type: string
+  provider__platform:
+    oneOf:
+    - type: 'null'
+    - enum:
+      - default
+      type: string
+    - $ref: "#/definitions/provider__enum"
+    - items:
+        $ref: "#/definitions/provider__enum"
+      type: array
+  python_version:
+    anyOf:
+    - type: string
+    - enum:
+      - "27"
+      - "36"
+      - "37"
+      - "38"
+      - "39"
+      - "310"
+      type: string
+  r_version:
+    anyOf:
+    - type: string
+    - enum:
+      - "34"
+      type: string
+  recipe_dir:
+    description: |-
+      The relative path to the recipe directory. The default is:
+
+      .. code-block:: yaml
+
+          recipe_dir: recipe
+    type: string
+  remote_ci_setup:
+    description: |-
+      This option can be used to override the default ``conda-forge-ci-setup`` package.
+      Can be given with ``${url or channel_alias}::package_name``, defaults to conda-forge
+      channel_alias if no prefix is given.
+
+      .. code-block:: yaml
+
+          remote_ci_setup: "conda-forge-ci-setup=3"
+    oneOf:
+    - type: string
+    - items:
+        type: string
+      type: array
+  secrets:
+    items:
+      type: string
+    type: array
+  skip_render:
+    description: |-
+      This option specifies a list of files which conda smithy will skip rendering.
+      The possible values can be a subset of ``.gitignore``, ``.gitattributes``, ``README.md``, ``LICENSE.txt``.
+      The default value is an empty list [ ], i.e. all these four files will be generated by conda smithy.
+      For example, if you want to customize .gitignore and LICENSE.txt files on your own, you should have the following configuration.
+
+      .. code-block:: yaml
+
+          skip_render:
+            - .gitignore
+            - LICENSE.txt
+    items:
+      type: string
+    type: array
+  templates:
+    description: |-
+      This is mostly an internal field for specifying where templates files live.
+      You shouldn't need it.
+    type: object
+  test:
+    description: |-
+      This is used to configure on which platforms a recipe is tested. Default is ``all``.
+
+      .. code-block:: yaml
+
+          test: native_and_emulated
+
+      Will do testing only if the platform is native or if there is an emulator.
+
+      .. code-block:: yaml
+
+          test: native
+
+      Will do testing only if the platform is native.
+    oneOf:
+    - type: 'null'
+    - enum:
+      - all
+      - native
+      - native_and_emulated
+      type: string
+  test_on_native_only:
+    description: |-
+      This is used for disabling testing for cross compiling. Default is ``false``
+
+      .. code-block:: yaml
+
+          test_on_native_only: True
+
+      .. note::
+
+        This has been deprecated in favor of the :ref:`test` top-level field. It is now mapped to ``test: native_and_emulated``.
+    type: boolean
+  travis:
+    additionalProperties: false
+    description: |-
+      The top-level ``travis`` key specifies configurations for the Travis
+      CI service.  This is usually **read-only** and should not normally be manually
+      modified.  Tools like conda-smithy may modify this, as needed.  It has a single
+      ``secure`` field which contains the binstar token.  For example:
+
+      .. code-block:: yaml
+
+          travis:
+            secure:
+              BINSTAR_TOKEN: <some big hash>
+    properties:
+      secure:
+        $ref: "#/definitions/__environment_variables"
+    type: object
+  upload_on_branch:
+    description: |-
+      This parameter restricts uploading access on work from certain branches of the
+      same repo. Only the branch listed in ``upload_on_branch`` will trigger uploading
+      of packages to the target channel. The default is to skip this check if the key
+      ``upload_on_branch`` is not in ``conda-forge.yml``. To restrict uploads to the
+      master branch:
+
+      .. code-block:: yaml
+
+          upload_on_branch: master
+    type: string
+  woodpecker:
+    additionalProperties: false
+    properties:
+      secure:
+        $ref: "#/definitions/__environment_variables"
+    type: object
+description: a schema for ``conda-forge.yml``
+properties:
+  appveyor:
+    $ref: "#/definitions/appveyor"
+  azure:
+    $ref: "#/definitions/azure"
+  bot:
+    $ref: "#/definitions/bot"
+  build_platform:
+    $ref: "#/definitions/build_platform"
+  build_with_mambabuild:
+    $ref: "#/definitions/build_with_mambabuild"
+  channel_priority:
+    $ref: "#/definitions/channel_priority"
+  channels:
+    $ref: "#/definitions/channels"
+  choco:
+    $ref: "#/definitions/choco"
+  circle:
+    $ref: "#/definitions/circle"
+  clone_depth:
+    $ref: "#/definitions/clone_depth"
+  compiler_stack:
+    $ref: "#/definitions/compiler_stack"
+  conda_forge_output_validation:
+    $ref: "#/definitions/conda_forge_output_validation"
+  config_version:
+    $ref: "#/definitions/config_version"
+  docker:
+    $ref: "#/definitions/docker"
+  drone:
+    $ref: "#/definitions/drone"
+  github:
+    $ref: "#/definitions/github"
+  github_actions:
+    $ref: "#/definitions/github_actions"
+  idle_timeout_minutes:
+    $ref: "#/definitions/idle_timeout_minutes"
+  max_py_ver:
+    $ref: "#/definitions/python_version"
+  max_r_ver:
+    $ref: "#/definitions/r_version"
+  min_py_ver:
+    $ref: "#/definitions/python_version"
+  min_r_ver:
+    $ref: "#/definitions/r_version"
+  noarch_platforms:
+    $ref: "#/definitions/noarch_platforms"
+  os_version:
+    $ref: "#/definitions/os_version"
+  private_upload:
+    $ref: "#/definitions/private_upload"
+  provider:
+    $ref: "#/definitions/provider"
+  recipe_dir:
+    $ref: "#/definitions/recipe_dir"
+  remote_ci_setup:
+    $ref: "#/definitions/remote_ci_setup"
+  secrets:
+    $ref: "#/definitions/secrets"
+  skip_render:
+    $ref: "#/definitions/skip_render"
+  templates:
+    $ref: "#/definitions/templates"
+  test:
+    $ref: "#/definitions/test"
+  test_on_native_only:
+    $ref: "#/definitions/test_on_native_only"
+  travis:
+    $ref: "#/definitions/travis"
+  upload_on_branch:
+    $ref: "#/definitions/upload_on_branch"
+  woodpecker:
+    $ref: "#/definitions/woodpecker"
+title: conda-forge config
+type: object

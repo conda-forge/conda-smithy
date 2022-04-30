@@ -1,6 +1,6 @@
 {
-  "title": "conda-forge.yml schema",
-  "description": "a schema for `conda-forge.yml`",
+  "title": "conda-forge config",
+  "description": "a schema for ``conda-forge.yml``",
   "$schema": "http://json-schema.org/draft-07/schema",
   "$ref": "#/definitions/conda-forge.yml",
   "definitions": {
@@ -24,24 +24,19 @@
           "$ref": "#/definitions/docker"
         },
         "templates": {
-          "type": "object",
-          "description": "TBD"
+          "$ref": "#/definitions/templates"
         },
         "drone": {
-          "type": "object",
-          "description": "TBD"
+          "$ref": "#/definitions/drone"
         },
         "woodpecker": {
-          "type": "object",
-          "description": "TBD"
+          "$ref": "#/definitions/woodpecker"
         },
         "travis": {
-          "type": "object",
-          "description": "TBD"
+          "$ref": "#/definitions/travis"
         },
         "circle": {
-          "type": "object",
-          "description": "TBD"
+          "$ref": "#/definitions/circle"
         },
         "config_version": {
           "$ref": "#/definitions/config_version"
@@ -68,11 +63,13 @@
           "$ref": "#/definitions/test"
         },
         "test_on_native_only": {
-          "type": "boolean"
+          "$ref": "#/definitions/test_on_native_only"
+        },
+        "upload_on_branch": {
+          "$ref": "#/definitions/upload_on_branch"
         },
         "choco": {
-          "description": "TBD",
-          "type": "array"
+          "$ref": "#/definitions/choco"
         },
         "idle_timeout_minutes": {
           "$ref": "#/definitions/idle_timeout_minutes"
@@ -115,6 +112,9 @@
         },
         "private_upload": {
           "$ref": "#/definitions/private_upload"
+        },
+        "channel_priority": {
+          "$ref": "#/definitions/channel_priority"
         }
       }
     },
@@ -123,6 +123,48 @@
       "enum": [
         "2"
       ]
+    },
+    "circle": {
+      "additionalProperties": false,
+      "type": "object",
+      "properties": {
+        "secure": {
+          "$ref": "#/definitions/__environment_variables"
+        }
+      }
+    },
+    "travis": {
+      "additionalProperties": false,
+      "type": "object",
+      "properties": {
+        "secure": {
+          "$ref": "#/definitions/__environment_variables"
+        }
+      }
+    },
+    "drone": {
+      "additionalProperties": false,
+      "type": "object",
+      "properties": {
+        "secure": {
+          "$ref": "#/definitions/__environment_variables"
+        }
+      }
+    },
+    "woodpecker": {
+      "additionalProperties": false,
+      "type": "object",
+      "properties": {
+        "secure": {
+          "$ref": "#/definitions/__environment_variables"
+        }
+      }
+    },
+    "test_on_native_only": {
+      "type": "boolean"
+    },
+    "upload_on_branch": {
+      "type": "string"
     },
     "appveyor": {
       "additionalProperties": false,
@@ -203,6 +245,9 @@
       "additionalProperties": {
         "type": "string"
       }
+    },
+    "templates": {
+      "type": "object"
     },
     "provider": {
       "patternProperties": {
@@ -489,6 +534,26 @@
     },
     "build_with_mambabuild": {
       "type": "boolean"
+    },
+    "choco": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "channel_priority": {
+      "oneOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "string",
+          "enum": [
+            "flexible",
+            "strict"
+          ]
+        }
+      ]
     },
     "secrets": {
       "type": "array",

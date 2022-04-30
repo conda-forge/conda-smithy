@@ -1,20 +1,18 @@
-import json
 import os
 
 import jsonschema
+import yaml
 import yamllint.linter
 import yamllint.config
 
 from .configure_feedstock import conda_forge_file, _read_forge_config
 
 conda_forge_schema_path = os.path.abspath(
-    os.path.join(
-        os.path.dirname(__file__), "schema", "conda-forge.schema.json"
-    )
+    os.path.join(os.path.dirname(__file__), "schema", "conda-forge.schema.yml")
 )
 
 with open(conda_forge_schema_path, encoding="utf-8") as _sfp:
-    conda_forge_schema = json.load(_sfp)
+    conda_forge_schema = yaml.safe_load(_sfp)
 
 conda_forge_validator = jsonschema.Draft7Validator(conda_forge_schema)
 
