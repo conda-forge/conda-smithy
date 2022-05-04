@@ -15,39 +15,6 @@ jobs:
         choco install {{ choco_pkg }} -fdv -y --debug
       displayName: "Install Chocolatey Package: {{ choco_pkg }}"
 {% endfor %}
-    - script: |
-        choco install vcpython27 -fdv -y --debug
-      condition: contains(variables['CONFIG'], 'vs2008')
-      displayName: Install vcpython27.msi (if needed)
-
-    # Cygwin's git breaks conda-build. (See https://github.com/conda-forge/conda-smithy-feedstock/pull/2.)
-    # - script: rmdir C:\cygwin /s /q
-    #   continueOnError: true
-
-    - powershell: |
-        Set-PSDebug -Trace 1
-
-        $batchcontent = @"
-        ECHO ON
-        SET vcpython=C:\Program Files (x86)\Common Files\Microsoft\Visual C++ for Python\9.0
-
-        DIR "%vcpython%"
-
-        CALL "%vcpython%\vcvarsall.bat" %*
-        "@
-
-        $batchDir = "C:\Program Files (x86)\Common Files\Microsoft\Visual C++ for Python\9.0\VC"
-        $batchPath = "$batchDir" + "\vcvarsall.bat"
-        New-Item -Path $batchPath -ItemType "file" -Force
-
-        Set-Content -Value $batchcontent -Path $batchPath
-
-        Get-ChildItem -Path $batchDir
-
-        Get-ChildItem -Path ($batchDir + '\..')
-
-      condition: contains(variables['CONFIG'], 'vs2008')
-      displayName: Patch vs2008 (if needed)
 
 {%- if build_with_mambabuild %}
 {%- set BOA="boa " %}
@@ -83,16 +50,6 @@ jobs:
       displayName: conda-forge build setup
     {% endif %}
 
-    # Special cased version setting some more things!
-    - script: |
-        call activate base
-        conda.exe build "{{ recipe_dir }}" -m .ci_support\%CONFIG%.yaml
-      displayName: Build recipe (vs2008)
-      env:
-        VS90COMNTOOLS: "C:\\Program Files (x86)\\Common Files\\Microsoft\\Visual C++ for Python\\9.0\\VC\\bin"
-        PYTHONUNBUFFERED: 1
-      condition: contains(variables['CONFIG'], 'vs2008')
-
     - script: |
         call activate base
         {%- if build_with_mambabuild %}
@@ -103,7 +60,6 @@ jobs:
       displayName: Build recipe
       env:
         PYTHONUNBUFFERED: 1
-      condition: not(contains(variables['CONFIG'], 'vs2008'))
 
 {%- if azure.store_build_artifacts %}
     - script: |

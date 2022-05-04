@@ -1,0 +1,23 @@
+**Added:**
+
+* <news item>
+
+**Changed:**
+
+* <news item>
+
+**Deprecated:**
+
+* <news item>
+
+**Removed:**
+
+* Removed vs2008 support in azure
+
+**Fixed:**
+
+* <news item>
+
+**Security:**
+
+* <news item>
