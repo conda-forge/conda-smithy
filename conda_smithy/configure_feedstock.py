@@ -932,6 +932,8 @@ def _circle_specific_setup(jinja_env, forge_config, forge_dir, platform):
     if platform == "linux":
         template_files.append(".scripts/run_docker_build.sh")
         template_files.append(".scripts/build_steps.sh")
+        template_files.append(".scripts/run_singularity_build.sh")
+        template_files.append(".scripts/build_singularity_steps.sh")
     else:
         template_files.append(".scripts/run_osx_build.sh")
 
@@ -1077,7 +1079,7 @@ def _travis_specific_setup(jinja_env, forge_config, forge_dir, platform):
     build_setup = _get_build_setup_line(forge_dir, platform, forge_config)
 
     platform_templates = {
-        "linux": [".scripts/run_docker_build.sh", ".scripts/build_steps.sh"],
+        "linux": [".scripts/run_docker_build.sh", ".scripts/build_steps.sh", ".scripts/run_singularity_build.sh", ".scripts/build_singularity_steps.sh"],
         "osx": [".scripts/run_osx_build.sh"],
         "win": [],
     }
@@ -1233,7 +1235,9 @@ def _github_actions_specific_setup(
     platform_templates = {
         "linux": [
             ".scripts/run_docker_build.sh",
+            ".scripts/run_singularity_build.sh",
             ".scripts/build_steps.sh",
+            ".scripts/build_singularity_steps.sh",
         ],
         "osx": [
             ".scripts/run_osx_build.sh",
@@ -1405,7 +1409,7 @@ def render_azure(jinja_env, forge_config, forge_dir, return_metadata=False):
 
 def _drone_specific_setup(jinja_env, forge_config, forge_dir, platform):
     platform_templates = {
-        "linux": [".scripts/build_steps.sh"],
+        "linux": [".scripts/build_steps.sh", ".scripts/build_singularity_steps.sh"],
         "osx": [],
         "win": [],
     }
@@ -1885,6 +1889,7 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
         os.path.join("ci_support", "checkout_merge_commit.sh"),
         os.path.join("ci_support", "fast_finish_ci_pr_build.sh"),
         os.path.join("ci_support", "run_docker_build.sh"),
+        os.path.join("ci_support", "run_singularity_build.sh"),
         "LICENSE",
         "__pycache__",
         os.path.join(".github", "CONTRIBUTING.md"),
@@ -2064,6 +2069,8 @@ def get_common_scripts(forge_dir):
     for old_file in [
         "run_docker_build.sh",
         "build_steps.sh",
+        "run_singularity_build.sh",
+        "build_singularity_steps.sh",
         "run_osx_build.sh",
         "create_conda_build_artifacts.bat",
         "create_conda_build_artifacts.sh",
@@ -2082,6 +2089,8 @@ def clear_scripts(forge_dir):
         for old_file in [
             "run_docker_build.sh",
             "build_steps.sh",
+            "run_singularity_build.sh",
+            "build_singularity_steps.sh",
             "run_osx_build.sh",
             "create_conda_build_artifacts.bat",
             "create_conda_build_artifacts.sh",
