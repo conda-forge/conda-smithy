@@ -99,7 +99,7 @@ export IS_PR_BUILD="${IS_PR_BUILD:-False}"
 {%- endfor %}
            singularity_image.sif \
            {{ singularity.command }} \
-           "/home/conda/feedstock_root/${PROVIDER_DIR}/build_steps.sh"
+           "/home/conda/feedstock_root/${PROVIDER_DIR}/build_singularity_steps.sh"
 
 # verify that the end of the script was reached
 test -f "$DONE_CANARY"

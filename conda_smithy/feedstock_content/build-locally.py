@@ -14,6 +14,7 @@ def setup_environment(ns):
     os.environ["CONFIG"] = ns.config
     os.environ["UPLOAD_PACKAGES"] = "False"
     os.environ["IS_PR_BUILD"] = "True"
+    os.environ["SINGULARITY_BUILD"] = ns.singularity
     if ns.debug:
         os.environ["BUILD_WITH_CONDA_DEBUG"] = "1"
         if ns.output_id:
@@ -28,6 +29,9 @@ def run_docker_build(ns):
     script = ".scripts/run_docker_build.sh"
     subprocess.check_call([script])
 
+def run_singularity_build(ns):
+    script = ".scripts/run_singularity_build.sh"
+    subprocess.check_call([script])
 
 def run_osx_build(ns):
     script = ".scripts/run_osx_build.sh"
@@ -79,6 +83,9 @@ def main(args=None):
         help="Setup debug environment using `conda debug`",
     )
     p.add_argument(
+        "--singularity", default=False, help="Singulairty build (not Docker)"
+    )
+    p.add_argument(
         "--output-id", help="If running debug, specify the output to setup."
     )
 
@@ -89,7 +96,10 @@ def main(args=None):
     if ns.config.startswith("linux") or (
         ns.config.startswith("osx") and platform.system() == "Linux"
     ):
-        run_docker_build(ns)
+        if ns.singularity:
+            run_singularity_build(ns)
+        else:
+            run_docker_build(ns)
     elif ns.config.startswith("osx"):
         run_osx_build(ns)
 
