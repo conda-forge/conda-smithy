@@ -32,7 +32,7 @@ CONDARC
 ### read-only defaults:
 {% if build_with_singularity %}
 export PATH="$PATH":/opt/conda/condabin
-env > envvar 
+env > envvar
 mamba init
 source ~/.bashrc
 mamba create --prefix=/tmp/building --yes --quiet
