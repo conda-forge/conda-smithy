@@ -30,7 +30,6 @@ CONDARC
 
 ### rough workaround to avoid singularity
 ### read-only defaults:
-{% if build_with_singularity %}
 export PATH="$PATH":/opt/conda/condabin
 env > envvar
 mamba init
@@ -41,7 +40,6 @@ mamba activate /tmp/building
 sed 's/^/"/;s/$/"/' envvar > envvarmod
 sed 's/^/export /' envvarmod > envvarmodmod
 source ./envvarmodmod
-{%- endif %}
 
 
 {% if build_with_mambabuild %}
