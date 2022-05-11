@@ -1079,7 +1079,12 @@ def _travis_specific_setup(jinja_env, forge_config, forge_dir, platform):
     build_setup = _get_build_setup_line(forge_dir, platform, forge_config)
 
     platform_templates = {
-        "linux": [".scripts/run_docker_build.sh", ".scripts/build_steps.sh", ".scripts/run_singularity_build.sh", ".scripts/build_singularity_steps.sh"],
+        "linux": [
+            ".scripts/run_docker_build.sh",
+            ".scripts/build_steps.sh",
+            ".scripts/run_singularity_build.sh",
+            ".scripts/build_singularity_steps.sh",
+        ],
         "osx": [".scripts/run_osx_build.sh"],
         "win": [],
     }
@@ -1409,7 +1414,10 @@ def render_azure(jinja_env, forge_config, forge_dir, return_metadata=False):
 
 def _drone_specific_setup(jinja_env, forge_config, forge_dir, platform):
     platform_templates = {
-        "linux": [".scripts/build_steps.sh", ".scripts/build_singularity_steps.sh"],
+        "linux": [
+            ".scripts/build_steps.sh",
+            ".scripts/build_singularity_steps.sh",
+        ],
         "osx": [],
         "win": [],
     }
