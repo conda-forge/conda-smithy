@@ -28,10 +28,7 @@ conda-build:
 
 CONDARC
 
-DEFAULT_SING_VALUE="nonsense"
-SING_VARIABLE="${1:-$DEFAULT_SING_VALUE}"
-
-if [ ${SING_VARIABLE} == "sing" ]; then
+if [ ${SINGULARITY_BUILD} == "True" ]; then
     ### rough workaround to avoid singularity
     ### read-only defaults:
     export PATH="$PATH":/opt/conda/condabin

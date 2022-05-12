@@ -30,11 +30,6 @@ def run_docker_build(ns):
     subprocess.check_call([script])
 
 
-def run_singularity_build(ns):
-    script = ".scripts/run_docker_build.sh"
-    subprocess.check_call([script, "sing"])
-
-
 def run_osx_build(ns):
     script = ".scripts/run_osx_build.sh"
     subprocess.check_call([script])
@@ -98,10 +93,7 @@ def main(args=None):
     if ns.config.startswith("linux") or (
         ns.config.startswith("osx") and platform.system() == "Linux"
     ):
-        if ns.singularity == "True":
-            run_singularity_build(ns)
-        else:
-            run_docker_build(ns)
+        run_docker_build(ns)
     elif ns.config.startswith("osx"):
         run_osx_build(ns)
 

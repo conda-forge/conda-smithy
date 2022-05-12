@@ -21,10 +21,7 @@ if [ -z ${FEEDSTOCK_NAME} ]; then
     export FEEDSTOCK_NAME=$(basename ${FEEDSTOCK_ROOT})
 fi
 
-DEFAULT_SING_VALUE="nonsense"
-SING_VARIABLE="${1:-$DEFAULT_SING_VALUE}"
-
-if [ ${SING_VARIABLE} == "sing" ]; then
+if [ ${SINGULARITY_BUILD} == "True" ]; then
     echo "We are using Singularity!"
 else
     docker info
@@ -72,7 +69,7 @@ DONE_CANARY="$ARTIFACTS/conda-forge-build-done-${CONFIG}"
 rm -f "$DONE_CANARY"
 
 
-if [ ${SING_VARIABLE} == "sing" ]; then
+if [ ${SINGULARITY_BUILD} == "True" ]; then
     DOCKER_RUN_ARGS="${CONDA_FORGE_DOCKER_RUN_ARGS}"
 
     # ( endgroup "Configure Singularity" ) 2> /dev/null
@@ -104,7 +101,7 @@ if [ ${SING_VARIABLE} == "sing" ]; then
     {%- endfor %}
             singularity_image.sif \
             {{ singularity.command }} \
-            "/home/conda/feedstock_root/${PROVIDER_DIR}/build_steps.sh" "sing"
+            "/home/conda/feedstock_root/${PROVIDER_DIR}/build_steps.sh"
 else
     # Allow people to specify extra default arguments to `docker run` (e.g. `--rm`)
     DOCKER_RUN_ARGS="${CONDA_FORGE_DOCKER_RUN_ARGS}"
