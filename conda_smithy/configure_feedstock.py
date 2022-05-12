@@ -1405,9 +1405,7 @@ def render_azure(jinja_env, forge_config, forge_dir, return_metadata=False):
 
 def _drone_specific_setup(jinja_env, forge_config, forge_dir, platform):
     platform_templates = {
-        "linux": [
-            ".scripts/build_steps.sh",
-        ],
+        "linux": [".scripts/build_steps.sh"],
         "osx": [],
         "win": [],
     }

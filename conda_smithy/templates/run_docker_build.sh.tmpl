@@ -69,7 +69,7 @@ DONE_CANARY="$ARTIFACTS/conda-forge-build-done-${CONFIG}"
 rm -f "$DONE_CANARY"
 
 
-if [ ${SINGULARITY_BUILD} == "True" ]; then
+if [ ${SINGULARITY_BUILD:-"False"} == "True" ]; then
     DOCKER_RUN_ARGS="${CONDA_FORGE_DOCKER_RUN_ARGS}"
 
     # ( endgroup "Configure Singularity" ) 2> /dev/null

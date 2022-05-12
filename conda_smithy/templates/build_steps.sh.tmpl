@@ -28,7 +28,7 @@ conda-build:
 
 CONDARC
 
-if [ ${SINGULARITY_BUILD} == "True" ]; then
+if [ ${SINGULARITY_BUILD:-"False"} == "True" ]; then
     ### rough workaround to avoid singularity
     ### read-only defaults:
     export PATH="$PATH":/opt/conda/condabin
