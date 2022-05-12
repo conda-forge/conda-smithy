@@ -28,6 +28,23 @@ conda-build:
 
 CONDARC
 
+DEFAULT_SING_VALUE="nonsense"
+SING_VARIABLE="${1:-$DEFAULT_SING_VALUE}"
+
+if [ ${SING_VARIABLE} == "sing" ]; then
+    ### rough workaround to avoid singularity
+    ### read-only defaults:
+    export PATH="$PATH":/opt/conda/condabin
+    env > envvar
+    mamba init
+    source ~/.bashrc
+    mamba create --prefix=/tmp/building --yes --quiet
+    mamba activate /tmp/building
+    # conda clean --packages --yes --quiet
+    sed 's/^/"/;s/$/"/' envvar > envvarmod
+    sed 's/^/export /' envvarmod > envvarmodmod
+    source ./envvarmodmod
+fi
 
 {% if build_with_mambabuild %}
 {%- set CONDA_INSTALL_CMD="mamba" %}
