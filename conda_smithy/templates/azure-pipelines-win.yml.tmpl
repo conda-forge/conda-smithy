@@ -56,8 +56,8 @@ jobs:
 {%- endif %}
     - task: CondaEnvironment@1
       inputs:
-        packageSpecs: 'python=3.9 conda-build conda=4.12 pip {{ BOA }}{{ " ".join(remote_ci_setup) }}' # Optional
-        installOptions: "-c conda-forge --strict-channel-priority"
+        packageSpecs: 'python=3.9 conda-build conda pip {{ BOA }}{{ " ".join(remote_ci_setup) }}' # Optional
+        installOptions: "-c conda-forge --override-channels"
         updateConda: false
       displayName: Install conda-build and activate environment
 
