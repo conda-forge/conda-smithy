@@ -196,7 +196,7 @@
   first_commit: 2017-02-12 15:31:00
 - name: Nicholas Bollweg
   email: nick.bollweg@gmail.com
-  num_commits: 7
+  num_commits: 8
   first_commit: 2019-05-20 20:03:12
   github: bollwyvl
 - name: Leopold Talirz
@@ -247,7 +247,7 @@
   email: isuru.11@cse.mrt.ac.lk
   alternate_emails:
   - isuruf@gmail.com
-  num_commits: 470
+  num_commits: 475
   first_commit: 2017-01-08 22:03:03
   github: isuruf
 - name: Julian Rüth
@@ -415,7 +415,7 @@
   first_commit: 2020-03-11 10:12:57
 - name: Tim Snyder
   email: snyder.tim@gmail.com
-  num_commits: 7
+  num_commits: 10
   first_commit: 2020-03-12 12:51:58
   github: timsnyder
 - name: Nils Wentzell

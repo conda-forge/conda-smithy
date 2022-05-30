@@ -29,16 +29,16 @@ Authors are sorted by number of commits.
 * Justin Calamari
 * Jason Furmanek
 * Patrick Sodré
+* Tim Snyder
 * John Kirkham
 * C.A.M. Gerlach
 * refraction-ray
 * Bastian Zimmermann
+* Nicholas Bollweg
 * Leopold Talirz
 * Tom Pollard
 * Gonzalo Pena-Castellanos
 * Daniel Bast
-* Nicholas Bollweg
-* Tim Snyder
 * H. Vetinari
 * Carlo
 * Matthew Craig
