@@ -4,6 +4,31 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.20.0
+====================
+
+**Changed:**
+
+* circleci linux image to latest ubuntu for
+  https://circleci.com/blog/ubuntu-14-16-image-deprecation/
+* Switched to using Miniforge to setup CI environment in Azure
+
+**Removed:**
+
+* Removed vs2008 support in azure
+
+**Fixed:**
+
+* Fixed an error with downgrading conda
+
+**Authors:**
+
+* Isuru Fernando
+* Tim Snyder
+* Nicholas Bollweg
+
+
+
 v3.19.0
 ====================
 
