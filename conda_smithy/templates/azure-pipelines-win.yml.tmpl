@@ -63,7 +63,7 @@ jobs:
         call activate base
         {{ build_setup.replace("\n", "\n        ").rstrip() }}
       displayName: conda-forge build setup
-    {% endif %}
+    {%- endif %}
 
     - script: |
         call activate base
