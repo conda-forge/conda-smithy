@@ -25,6 +25,8 @@ cat >~/.condarc <<CONDARC
 
 conda-build:
  root-dir: ${FEEDSTOCK_ROOT}/build_artifacts
+pkgs_dirs:
+    - ${FEEDSTOCK_ROOT}/build_artifacts/pkg_cache
 
 CONDARC
 {% if build_with_mambabuild %}
