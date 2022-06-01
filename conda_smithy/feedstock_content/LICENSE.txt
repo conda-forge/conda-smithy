@@ -1,4 +1,4 @@
-BSD 3-clause license
+BSD-3-Clause license
 Copyright (c) 2015-2022, conda-forge contributors
 All rights reserved.
 
