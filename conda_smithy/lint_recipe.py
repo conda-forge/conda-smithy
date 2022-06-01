@@ -571,7 +571,10 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
 
     # 26: pin_subpackage is for subpackages and pin_compatible is for
     # non-subpackages of the recipe
-    subpackage_names = [out["name"] for out in outputs_section]  # explicit
+    subpackage_names = []
+    for out in outputs_section:
+        if "name" in out:
+            subpackage_names.append(out["name"])  # explicit
     if "name" in package_section:
         subpackage_names.append(package_section["name"])  # implicit
 
