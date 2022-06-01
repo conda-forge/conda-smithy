@@ -27,6 +27,21 @@ conda-build:
  root-dir: ${FEEDSTOCK_ROOT}/build_artifacts
 
 CONDARC
+
+if [ ${SINGULARITY_BUILD:-"False"} == "True" ]; then
+    export PATH="$PATH":/opt/conda/condabin
+    env > envvar
+    mamba init
+    source ~/.bashrc
+    mamba create --prefix=/tmp/building --yes --quiet
+    mamba activate /tmp/building
+    # conda clean --packages --yes --quiet
+    sed 's/^/"/;s/$/"/' envvar > envvarmod
+    sed 's/^/export /' envvarmod > envvarmodmod
+    source ./envvarmodmod
+fi
+
+
 {% if build_with_mambabuild %}
 {%- set CONDA_INSTALL_CMD="mamba" %}
 {%- set BOA="boa " %}

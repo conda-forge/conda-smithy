@@ -1668,6 +1668,11 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
             "fallback_image": "quay.io/condaforge/linux-anvil-comp7",
             "command": "bash",
         },
+        "singularity": {
+             "executable": "singularity",
+             "fallback_image": "quay.io/condaforge/linux-anvil-comp7",
+             "command": "bash",
+         },
         "templates": {},
         "drone": {},
         "woodpecker": {},
