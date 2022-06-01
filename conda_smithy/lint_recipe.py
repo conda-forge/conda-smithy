@@ -573,7 +573,7 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
     # non-subpackages of the recipe
     subpackage_names = [out["name"] for out in outputs_section]  # explicit
     if "name" in package_section:
-        subpackage_names.append(package_section["name"] )  # implicit
+        subpackage_names.append(package_section["name"])  # implicit
 
     def check_pins(pinning_section):
         if pinning_section is None:
@@ -594,20 +594,11 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
                 )
 
     def check_pins_build_and_requirements(top_level):
-        if (
-            "build" in top_level
-            and "run_exports" in top_level["build"]
-        ):
+        if "build" in top_level and "run_exports" in top_level["build"]:
             check_pins(top_level["build"]["run_exports"])
-        if (
-            "requirements" in top_level
-            and "run" in top_level["requirements"]
-        ):
+        if "requirements" in top_level and "run" in top_level["requirements"]:
             check_pins(top_level["requirements"]["run"])
-        if (
-            "requirements" in top_level
-            and "host" in top_level["requirements"]
-        ):
+        if "requirements" in top_level and "host" in top_level["requirements"]:
             check_pins(top_level["requirements"]["host"])
 
     check_pins_build_and_requirements(meta)
