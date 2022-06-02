@@ -570,7 +570,8 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
             )
 
     # 26: pin_subpackage is for subpackages and pin_compatible is for
-    # non-subpackages of the recipe
+    # non-subpackages of the recipe. Contact @carterbox for troubleshooting
+    # this lint.
     subpackage_names = []
     for out in outputs_section:
         if "name" in out:
@@ -585,15 +586,17 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
             if pin.split()[-1] in subpackage_names:
                 lints.append(
                     "pin_subpackage should be used instead of"
-                    f" pin_compatible for `{pin.split()[-1]}`,"
-                    " an output of this recipe."
+                    f" pin_compatible for `{pin.split()[1]}`"
+                    " because it is one of the known outputs of this recipe:"
+                    f" {subpackage_names}."
                 )
         for pin in fnmatch.filter(pinning_section, "subpackage_pin*"):
             if pin.split()[-1] not in subpackage_names:
                 lints.append(
                     "pin_compatible should be used instead of"
-                    f" pin_subpackage for `{pin.split()[-1]}`,"
-                    " a non-output of this recipe."
+                    f" pin_subpackage for `{pin.split()[1]}`"
+                    " because it is not a known output of this recipe:"
+                    f" {subpackage_names}."
                 )
 
     def check_pins_build_and_requirements(top_level):
