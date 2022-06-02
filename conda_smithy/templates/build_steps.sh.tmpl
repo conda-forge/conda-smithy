@@ -24,10 +24,10 @@ export CONFIG_FILE="${CI_SUPPORT}/${CONFIG}.yaml"
 cat >~/.condarc <<CONDARC
 
 conda-build:
- root-dir: ${FEEDSTOCK_ROOT}/build_artifacts
+  root-dir: ${FEEDSTOCK_ROOT}/build_artifacts
 pkgs_dirs:
-    - ${FEEDSTOCK_ROOT}/build_artifacts/pkg_cache
-    - /opt/conda/pkgs
+  - ${FEEDSTOCK_ROOT}/build_artifacts/pkg_cache
+  - /opt/conda/pkgs
 
 CONDARC
 {% if build_with_mambabuild %}
