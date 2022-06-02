@@ -27,6 +27,7 @@ conda-build:
  root-dir: ${FEEDSTOCK_ROOT}/build_artifacts
 pkgs_dirs:
     - ${FEEDSTOCK_ROOT}/build_artifacts/pkg_cache
+    - /opt/conda/pkgs
 
 CONDARC
 {% if build_with_mambabuild %}
