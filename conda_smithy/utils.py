@@ -57,6 +57,14 @@ class MockOS(dict):
         self.sep = "/"
 
 
+def stub_compatible_pin(*args, **kwargs):
+    return f"compatible_pin {args[0]}"
+
+
+def stub_subpackage_pin(*args, **kwargs):
+    return f"subpackage_pin {args[0]}"
+
+
 def render_meta_yaml(text):
     env = jinja2.Environment(undefined=NullUndefined)
 
@@ -66,8 +74,8 @@ def render_meta_yaml(text):
     env.globals.update(
         dict(
             compiler=lambda x: x + "_compiler_stub",
-            pin_subpackage=lambda *args, **kwargs: "subpackage_stub",
-            pin_compatible=lambda *args, **kwargs: "compatible_pin_stub",
+            pin_subpackage=stub_subpackage_pin,
+            pin_compatible=stub_compatible_pin,
             cdt=lambda *args, **kwargs: "cdt_stub",
             load_file_regex=lambda *args, **kwargs: defaultdict(lambda: ""),
             datetime=datetime,

@@ -5,15 +5,16 @@ from collections.abc import Sequence, Mapping
 str_type = str
 
 import copy
+import fnmatch
 from glob import glob
 import io
 import itertools
 import os
 import re
+import requests
 import shutil
 import subprocess
 import sys
-import requests
 
 import github
 
@@ -567,6 +568,48 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
                 "`python >=3.6` in **both** `host` and `run` but you should check "
                 "upstream for the package's Python compatibility."
             )
+
+    # 26: pin_subpackage is for subpackages and pin_compatible is for
+    # non-subpackages of the recipe. Contact @carterbox for troubleshooting
+    # this lint.
+    subpackage_names = []
+    for out in outputs_section:
+        if "name" in out:
+            subpackage_names.append(out["name"])  # explicit
+    if "name" in package_section:
+        subpackage_names.append(package_section["name"])  # implicit
+
+    def check_pins(pinning_section):
+        if pinning_section is None:
+            return
+        for pin in fnmatch.filter(pinning_section, "compatible_pin*"):
+            if pin.split()[-1] in subpackage_names:
+                lints.append(
+                    "pin_subpackage should be used instead of"
+                    f" pin_compatible for `{pin.split()[1]}`"
+                    " because it is one of the known outputs of this recipe:"
+                    f" {subpackage_names}."
+                )
+        for pin in fnmatch.filter(pinning_section, "subpackage_pin*"):
+            if pin.split()[-1] not in subpackage_names:
+                lints.append(
+                    "pin_compatible should be used instead of"
+                    f" pin_subpackage for `{pin.split()[1]}`"
+                    " because it is not a known output of this recipe:"
+                    f" {subpackage_names}."
+                )
+
+    def check_pins_build_and_requirements(top_level):
+        if "build" in top_level and "run_exports" in top_level["build"]:
+            check_pins(top_level["build"]["run_exports"])
+        if "requirements" in top_level and "run" in top_level["requirements"]:
+            check_pins(top_level["requirements"]["run"])
+        if "requirements" in top_level and "host" in top_level["requirements"]:
+            check_pins(top_level["requirements"]["host"])
+
+    check_pins_build_and_requirements(meta)
+    for out in outputs_section:
+        check_pins_build_and_requirements(out)
 
     # hints
     # 1: suggest pip
