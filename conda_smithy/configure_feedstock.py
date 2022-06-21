@@ -1538,11 +1538,22 @@ def render_README(jinja_env, forge_config, forge_dir, render_info=None):
                 metas.extend(_metas)
 
     if len(metas) == 0:
-        raise RuntimeError(
-            "Could not create any metadata for rendering the README.md!"
-            " This likely indicates a serious bug or a feedstock with no actual"
-            " builds."
-        )
+        try:
+            metas = conda_build.api.render(
+                os.path.join(forge_dir, forge_config["recipe_dir"]),
+                exclusive_config_file=forge_config["exclusive_config_file"],
+                permit_undefined_jinja=True,
+                finalize=False,
+                bypass_env_check=True,
+                trim_skip=False,
+            )
+            metas = [m[0] for m in metas]        
+        except Exception:
+            raise RuntimeError(
+                "Could not create any metadata for rendering the README.md!"
+                " This likely indicates a serious bug or a feedstock with no actual"
+                " builds."
+            )
 
     package_name = get_feedstock_name_from_meta(metas[0])
 
