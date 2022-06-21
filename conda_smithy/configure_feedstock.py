@@ -1547,7 +1547,7 @@ def render_README(jinja_env, forge_config, forge_dir, render_info=None):
                 bypass_env_check=True,
                 trim_skip=False,
             )
-            metas = [m[0] for m in metas]        
+            metas = [m[0] for m in metas]
         except Exception:
             raise RuntimeError(
                 "Could not create any metadata for rendering the README.md!"
