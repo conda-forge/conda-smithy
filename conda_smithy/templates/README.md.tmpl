@@ -2,29 +2,29 @@
 {#-
 # -*- mode: jinja -*-
 -#}
-{%- set license_url = package.meta.about.license_url -%}
+{%- set license_url = package_about.license_url -%}
 
 About {{ package_name }}
 ======{{ '=' * package_name|length }}
 
-Home: {{ package.meta.about.home }}
+Home: {{ package_about.home }}
 
-Package license: {% if license_url %}[{% endif %}{{ package.meta.about.license }}{% if license_url %}]({{ license_url }}){% endif %}
+Package license: {% if license_url %}[{% endif %}{{ package_about.license }}{% if license_url %}]({{ license_url }}){% endif %}
 
 Feedstock license: [BSD-3-Clause](https://github.com/{{ github.user_or_org }}/{{ github.repo_name }}/blob/{{ github.branch_name }}/LICENSE.txt)
 
-Summary: {{ package.meta.about.summary }}
-{%- if package.meta.about.dev_url %}
+Summary: {{ package_about.summary }}
+{%- if package_about.dev_url %}
 
-Development: {{ package.meta.about.dev_url }}
+Development: {{ package_about.dev_url }}
 {%- endif %}
-{%- if package.meta.about.doc_url %}
+{%- if package_about.doc_url %}
 
-Documentation: {{ package.meta.about.doc_url }}
+Documentation: {{ package_about.doc_url }}
 {%- endif %}
-{%- if package.meta.about.description %}
+{%- if package_about.description %}
 
-{{ package.meta.about.description }}
+{{ package_about.description }}
 {%- endif %}
 
 Current build status
