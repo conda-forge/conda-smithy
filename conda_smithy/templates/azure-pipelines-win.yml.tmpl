@@ -66,6 +66,7 @@ jobs:
     {%- endif %}
 
     - script: |
+        echo on
         set CI_RUN_ID=$(build.BuildNumber).$(system.JobAttempt)
         set GIT_URL=$(Build.Repository.Uri)
         FOR /F "tokens=* USEBACKQ" %%g IN (`git rev-parse HEAD`) do (set "GIT_SHA1=%%g")
