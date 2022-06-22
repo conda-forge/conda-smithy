@@ -19,8 +19,8 @@ Authors are sorted by number of commits.
 * Johnny Willemsen
 * Julian Rüth
 * Chris Burr
-* Marcel Bargull
 * Leo Fang
+* Marcel Bargull
 * Eric Dill
 * Natasha Pavlovikj
 * Maksim Rakitin
@@ -34,6 +34,7 @@ Authors are sorted by number of commits.
 * C.A.M. Gerlach
 * refraction-ray
 * Bastian Zimmermann
+* Daniel Ching
 * Nicholas Bollweg
 * Leopold Talirz
 * Tom Pollard

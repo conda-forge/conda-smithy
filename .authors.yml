@@ -247,7 +247,7 @@
   email: isuru.11@cse.mrt.ac.lk
   alternate_emails:
   - isuruf@gmail.com
-  num_commits: 475
+  num_commits: 482
   first_commit: 2017-01-08 22:03:03
   github: isuruf
 - name: Julian Rüth
@@ -393,7 +393,7 @@
   github: shadowwalkersb
 - name: Matthew R. Becker
   email: becker.mr@gmail.com
-  num_commits: 252
+  num_commits: 256
   first_commit: 2020-01-07 17:44:33
   github: beckermr
   alternate_emails:
@@ -425,9 +425,11 @@
   github: Wentzell
 - name: Leo Fang
   email: leofang@bnl.gov
-  num_commits: 14
+  num_commits: 16
   first_commit: 2020-04-26 22:07:18
   github: leofang
+  alternate_emails:
+  - leo80042@gmail.com
 - name: Stuart Berg
   email: bergs@janelia.hhmi.org
   num_commits: 1
@@ -550,3 +552,8 @@
   num_commits: 1
   first_commit: 2022-03-16 16:30:25
   github: SylvainCorlay
+- name: Daniel Ching
+  email: carterbox@users.noreply.github.com
+  num_commits: 9
+  first_commit: 2022-05-11 16:57:15
+  github: carterbox
