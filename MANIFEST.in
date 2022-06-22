@@ -2,6 +2,7 @@ include requirements.txt
 
 recursive-include conda_smithy/feedstock_content *
 recursive-include conda_smithy/templates *.tmpl
+recursive-include conda_smithy/schema *.json *.yml *.yaml
 recursive-include tests/ *
 
 include versioneer.py

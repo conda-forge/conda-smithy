@@ -1,17 +1,19 @@
 # This list is duplicated in the conda_smithy.recipe/meta.yaml.
 
-setuptools
 conda
 conda-build >=3.4.2
-jinja2
-requests
-pycryptodome
-gitpython
-pygithub <2
-ruamel.yaml
 conda-forge-pinning
-vsts-python-api
-toolz
-shellcheck
-scrypt
+gitpython
+jinja2
+jsonschema
 license-expression
+pycryptodome
+pygithub <2
+requests
+ruamel.yaml
+scrypt
+setuptools
+shellcheck
+toolz
+vsts-python-api
+yamllint
