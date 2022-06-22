@@ -91,7 +91,7 @@ else
     conda {{ BUILD_CMD }} "${RECIPE_ROOT}" -m "${CI_SUPPORT}/${CONFIG}.yaml" \
         --suppress-variables ${EXTRA_CB_OPTIONS:-} \
         --clobber-file "${CI_SUPPORT}/clobber_${CONFIG}.yaml" \
-        --extra-meta CI_RUN_ID="$CI_RUN_ID" GIT_URL="$GIT_URL" GIT_SHA1="$GIT_SHA1"
+        --extra-meta CI_RUN_ID="${CI_RUN_ID:-}" GIT_URL="${GIT_URL:-}" GIT_SHA1="${GIT_SHA1:-}"
 
     {%- if conda_forge_output_validation %}
     ( startgroup "Validating outputs" ) 2> /dev/null
