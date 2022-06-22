@@ -51,6 +51,9 @@ matrix:
 script:
   - export CI=travis
   - export GIT_BRANCH="$TRAVIS_BRANCH"
+  - export CI_RUN_ID="travis_$TRAVIS_JOB_ID"
+  - export GIT_SHA1="$TRAVIS_COMMIT"
+  - export GIT_URL="https://github.com/$TRAVIS_REPO_SLUG"
   - export FEEDSTOCK_NAME=$(basename ${TRAVIS_REPO_SLUG})
 {%- if upload_on_branch %}
   - export UPLOAD_ON_BRANCH="{{ upload_on_branch }}"

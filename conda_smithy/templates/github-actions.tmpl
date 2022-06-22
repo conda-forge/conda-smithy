@@ -95,6 +95,9 @@ jobs:
       run: |
         echo "::group::Configure binfmt_misc"
         docker run --rm --privileged multiarch/qemu-user-static:register --reset --credential yes
+        export CI_RUN_ID="github_$GITHUB_RUN_ID"
+        export GIT_URL="https://github.com/$GITHUB_REPOSITORY"
+        export GIT_SHA1="$GITHUB_SHA"
         export FEEDSTOCK_NAME="$(basename $GITHUB_REPOSITORY)"
         export GIT_BRANCH="$(basename $GITHUB_REF)"
         if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
@@ -119,6 +122,9 @@ jobs:
 {%- endfor %}
       shell: bash
       run: |
+        export CI_RUN_ID="github_$GITHUB_RUN_ID"
+        export GIT_URL="https://github.com/$GITHUB_REPOSITORY"
+        export GIT_SHA1="$GITHUB_SHA"
         export FEEDSTOCK_NAME="$(basename $GITHUB_REPOSITORY)"
         export GIT_BRANCH="$(basename $GITHUB_REF)"
         if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
@@ -168,6 +174,11 @@ jobs:
         if EXIST LICENSE.txt (
           copy LICENSE.txt "{{ recipe_dir }}\\recipe-scripts-license.txt"
         )
+
+        set "CI_RUN_ID=github_%GITHUB_RUN_ID%"
+        set "GIT_URL=https://github.com/%GITHUB_REPOSITORY%"
+        set "GIT_SHA1=%GITHUB_SHA%"
+
         {%- if build_with_mambabuild %}
         conda.exe mambabuild "{{ recipe_dir }}" -m .ci_support\%CONFIG%.yaml
         {%- else %}

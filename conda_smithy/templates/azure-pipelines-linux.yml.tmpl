@@ -25,6 +25,9 @@ jobs:
 
   - script: |
         export CI=azure
+        export CI_RUN_ID=azure_$(build.BuildNumber).$(system.JobAttempt)
+        export GIT_URL=$(Build.Repository.Uri)
+        export GIT_SHA1=$(git rev-parse HEAD)
         export GIT_BRANCH=$BUILD_SOURCEBRANCHNAME
         export FEEDSTOCK_NAME=$(basename ${BUILD_REPOSITORY_NAME})
 {%- if upload_on_branch %}
