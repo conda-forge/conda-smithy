@@ -27,9 +27,22 @@ jobs:
         scriptSource: inline
         script: |
           import urllib.request
+          import time
           url = 'https://github.com/conda-forge/miniforge/releases/latest/download/Mambaforge-Windows-x86_64.exe'
           path = r"$(Build.ArtifactStagingDirectory)/Miniforge.exe"
-          urllib.request.urlretrieve(url, path)
+          retry_time = 2
+          retries = 5
+          while retries >= 0:
+              retries -= 1
+              try:
+                  urllib.request.urlretrieve(url, path)
+              except urllib.error.URLError as e:
+                  if retries >= 0:
+                      print(f"Encountered error: '{e}'. Retry in {retry_time} seconds.")
+                      time.sleep(retry_time)
+                      retry_time *= 2
+                  else:
+                      raise e
 
     - script: |
         start /wait "" %BUILD_ARTIFACTSTAGINGDIRECTORY%\Miniforge.exe /InstallationType=JustMe /RegisterPython=0 /S /D=C:\Miniforge
