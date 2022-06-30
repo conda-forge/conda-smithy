@@ -583,7 +583,7 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
         if pinning_section is None:
             return
         for pin in fnmatch.filter(pinning_section, "compatible_pin*"):
-            if pin.split()[-1] in subpackage_names:
+            if pin.split()[1] in subpackage_names:
                 lints.append(
                     "pin_subpackage should be used instead of"
                     f" pin_compatible for `{pin.split()[1]}`"
@@ -591,7 +591,7 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
                     f" {subpackage_names}."
                 )
         for pin in fnmatch.filter(pinning_section, "subpackage_pin*"):
-            if pin.split()[-1] not in subpackage_names:
+            if pin.split()[1] not in subpackage_names:
                 lints.append(
                     "pin_compatible should be used instead of"
                     f" pin_subpackage for `{pin.split()[1]}`"
