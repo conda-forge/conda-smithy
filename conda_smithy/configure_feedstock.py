@@ -1677,7 +1677,7 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
             },
             "settings_osx": {
                 "pool": {
-                    "vmImage": "macOS-10.15",
+                    "vmImage": "macOS-11",
                 },
                 "timeoutInMinutes": 360,
             },
