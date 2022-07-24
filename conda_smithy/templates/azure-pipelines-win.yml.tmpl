@@ -28,6 +28,7 @@ jobs:
         script: |
           import urllib.request
           import time
+          import ssl
           url = 'https://github.com/conda-forge/miniforge/releases/latest/download/Mambaforge-Windows-x86_64.exe'
           path = r"$(Build.ArtifactStagingDirectory)/Miniforge.exe"
           retry_time = 2
@@ -36,7 +37,7 @@ jobs:
               retries -= 1
               try:
                   urllib.request.urlretrieve(url, path)
-              except urllib.error.URLError as e:
+              except (urllib.error.URLError, ssl.SSLError) as e:
                   if retries >= 0:
                       print(f"Encountered error: '{e}'. Retry in {retry_time} seconds.")
                       time.sleep(retry_time)
