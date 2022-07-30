@@ -22,6 +22,9 @@ jobs:
 {%- if data.platform.startswith('linux') %}
     machine:
       - image: ubuntu-2004:current
+{- if data.platform == 'linux-aarch64' %}
+    resource_class: arm.large
+{%- endif %}
 {%- else %}
     macos:
       xcode: "13.0.0"
