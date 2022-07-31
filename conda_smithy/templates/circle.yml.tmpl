@@ -1,6 +1,6 @@
 # This file was generated automatically from conda-smithy. To update this configuration,
 # update the conda-forge.yml and/or the recipe/meta.yaml.
-# -*- mode: yaml -*-
+# -*- mode: jinja-yaml -*-
 
 version: 2
 
@@ -22,12 +22,12 @@ jobs:
 {%- if data.platform.startswith('linux') %}
     machine:
       - image: ubuntu-2004:current
-{- if data.platform == 'linux-aarch64' %}
-    resource_class: arm.large
-{%- endif %}
 {%- else %}
     macos:
       xcode: "13.0.0"
+{%- endif %}
+{- if data.platform == 'linux-aarch64' %}
+    resource_class: arm.large
 {%- endif %}
     environment:
       - CONFIG: "{{ data.config_name }}"
