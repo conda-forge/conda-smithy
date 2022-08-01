@@ -7,8 +7,8 @@ Authors are sorted by number of commits.
 * Anthony Scopatz
 * Phil Elson
 * Filipe Fernandes
-* Dougal J. Sutherland
 * Jaime Rodríguez-Guerra
+* Dougal J. Sutherland
 * shadow_walker
 * Michael Sarahan
 * Min RK
@@ -81,6 +81,7 @@ Authors are sorted by number of commits.
 * fhoehle
 * Ben Mares
 * Matthew W. Thompson
+* conda-forge-admin
 * lorenz
 * Tom Augspurger
 * Ryan May
