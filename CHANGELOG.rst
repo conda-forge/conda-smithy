@@ -4,6 +4,24 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.21.1
+====================
+
+**Changed:**
+
+* macOS jobs provided by Azure Pipelines will now use the ``macOS-11`` VM image (#1645).
+
+**Fixed:**
+
+* Fix spurious lint when using pin_subpackage or pin_compatible with a build string
+
+**Authors:**
+
+* Jaime Rodríguez-Guerra
+* Min RK
+
+
+
 v3.21.0
 ====================
 
