@@ -4,6 +4,55 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.21.1
+====================
+
+**Changed:**
+
+* macOS jobs provided by Azure Pipelines will now use the ``macOS-11`` VM image (#1645).
+
+**Fixed:**
+
+* Fix spurious lint when using pin_subpackage or pin_compatible with a build string
+
+**Authors:**
+
+* Jaime Rodríguez-Guerra
+* Min RK
+
+
+
+v3.21.0
+====================
+
+**Added:**
+
+* All conda packages will have the license file included alongside
+  the rendered recipe.
+* conda-smithy now reports lint if pin_compatible or pin_subpackage are used
+  with the wrong package type.
+
+**Changed:**
+
+* build_locally now creates conda's shared package cache outside the container,
+  so repeated builds of the same recipe do not need to redownload packages.
+* ``mamba`` is now used in the CI tests for conda-smithy
+
+**Fixed:**
+
+* Fix the support of `idle_timeout_minutes` for Travis CI
+
+**Authors:**
+
+* Isuru Fernando
+* Matthew R. Becker
+* Leo Fang
+* Tim Snyder
+* Daniel Ching
+* Nicholas Bollweg
+
+
+
 v3.20.0
 ====================
 

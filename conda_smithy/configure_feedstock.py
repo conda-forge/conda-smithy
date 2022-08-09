@@ -1529,39 +1529,31 @@ def render_README(jinja_env, forge_config, forge_dir, render_info=None):
         return
 
     render_info = render_info or []
-
-    # pull out relevant metadata from rendering
-    try:
-        metas = conda_build.api.render(
-            os.path.join(forge_dir, forge_config["recipe_dir"]),
-            exclusive_config_file=forge_config["exclusive_config_file"],
-            permit_undefined_jinja=True,
-            finalize=False,
-            bypass_env_check=True,
-            trim_skip=False,
-        )
-        metas = [m[0] for m in metas]
-    except Exception:
-        # sometimes the above fails so we grab actual metadata
-        done = False
-        metas = []
-        for md in render_info:
-            for _metas, enabled in zip(
-                md["metas_list_of_lists"], md["enable_platform"]
-            ):
-                if enabled and len(_metas) > 0:
-                    metas = _metas
-                    done = True
-                    break
-            if done:
-                break
+    metas = []
+    for md in render_info:
+        for _metas, enabled in zip(
+            md["metas_list_of_lists"], md["enable_platform"]
+        ):
+            if enabled and len(_metas) > 0:
+                metas.extend(_metas)
 
     if len(metas) == 0:
-        raise RuntimeError(
-            "Could not create any metadata for rendering the README.md!"
-            " This likely indicates a serious bug or a feedstock with no actual"
-            " builds."
-        )
+        try:
+            metas = conda_build.api.render(
+                os.path.join(forge_dir, forge_config["recipe_dir"]),
+                exclusive_config_file=forge_config["exclusive_config_file"],
+                permit_undefined_jinja=True,
+                finalize=False,
+                bypass_env_check=True,
+                trim_skip=False,
+            )
+            metas = [m[0] for m in metas]
+        except Exception:
+            raise RuntimeError(
+                "Could not create any metadata for rendering the README.md!"
+                " This likely indicates a serious bug or a feedstock with no actual"
+                " builds."
+            )
 
     package_name = get_feedstock_name_from_meta(metas[0])
 
@@ -1576,7 +1568,7 @@ def render_README(jinja_env, forge_config, forge_dir, render_info=None):
     template = jinja_env.get_template("README.md.tmpl")
     target_fname = os.path.join(forge_dir, "README.md")
     forge_config["noarch_python"] = all(meta.noarch for meta in metas)
-    forge_config["package"] = metas[0]
+    forge_config["package_about"] = metas[0].meta["about"]
     forge_config["package_name"] = package_name
     forge_config["variants"] = sorted(variants)
     forge_config["outputs"] = sorted(
@@ -1690,7 +1682,7 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
             },
             "settings_osx": {
                 "pool": {
-                    "vmImage": "macOS-10.15",
+                    "vmImage": "macOS-11",
                 },
                 "timeoutInMinutes": 360,
             },

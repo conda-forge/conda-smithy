@@ -31,6 +31,37 @@ def tmp_directory():
 
 
 class Test_linter(unittest.TestCase):
+    def test_pin_compatible_in_run_exports(self):
+        meta = {
+            "package": {
+                "name": "apackage",
+            },
+            "build": {
+                "run_exports": ["compatible_pin apackage"],
+            },
+        }
+        lints, hints = linter.lintify(meta)
+        expected = "pin_subpackage should be used instead"
+        self.assertTrue(any(lint.startswith(expected) for lint in lints))
+
+    def test_pin_compatible_in_run_exports_output(self):
+        meta = {
+            "package": {
+                "name": "apackage",
+            },
+            "outputs": [
+                {
+                    "name": "anoutput",
+                    "build": {
+                        "run_exports": ["subpackage_pin notanoutput"],
+                    },
+                }
+            ],
+        }
+        lints, hints = linter.lintify(meta)
+        expected = "pin_compatible should be used instead"
+        self.assertTrue(any(lint.startswith(expected) for lint in lints))
+
     def test_bad_top_level(self):
         meta = OrderedDict([["package", {}], ["build", {}], ["sources", {}]])
         lints, hints = linter.lintify(meta)
