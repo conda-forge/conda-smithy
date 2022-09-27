@@ -26,8 +26,11 @@ jobs:
         shell: bash -l {0}
         run: |
           mamba install --file requirements.txt pre-commit coverage coveralls mock pytest pytest-cov pip ${CONDA_PKGS} --yes --quiet
+          # get pyproject.toml out of the way so setuptools doesn't complain
           mv pyproject.toml pyproject.toml.bak
           python -m pip install -vv -e .
+          # restore so pre-commit's black get its config 
+          mv pyproject.toml.bak pyproject.toml
           git config --global user.email "smithy@smithy.smithy"
           git config --global user.name "smithy"
 
