@@ -27,7 +27,7 @@ jobs:
         run: |
           mamba install --file requirements.txt pre-commit coverage coveralls mock pytest pytest-cov pip ${CONDA_PKGS} --yes --quiet
           mv pyproject.toml pyproject.toml.bak
-          python -m pip install -e -vv .
+          python -m pip install -vv -e .
           git config --global user.email "smithy@smithy.smithy"
           git config --global user.name "smithy"
 
