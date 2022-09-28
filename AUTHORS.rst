@@ -2,12 +2,12 @@ All of the people who have made at least one contribution to conda-smithy.
 Authors are sorted by number of commits.
 
 * Isuru Fernando
-* Matthew R. Becker
 * Christopher J. Wright
 * Anthony Scopatz
 * Phil Elson
-* Filipe Fernandes
+* Matthew R. Becker
 * Jaime Rodríguez-Guerra
+* Filipe Fernandes
 * Dougal J. Sutherland
 * shadow_walker
 * Michael Sarahan
