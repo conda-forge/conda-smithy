@@ -667,17 +667,6 @@ def main():
     else:
         args = parser.parse_args()
 
-    # Check conda version for compatibility
-    CONDA_VERSION_MAX = "5.0"
-    if LooseVersion(conda.__version__) >= LooseVersion(CONDA_VERSION_MAX):
-        print(
-            "You appear to be using conda {}, but conda-smithy {}\n"
-            "is currently only compatible with conda versions < {}.\n".format(
-                conda.__version__, __version__, CONDA_VERSION_MAX
-            )
-        )
-        sys.exit(2)
-
     args.subcommand_func(args)
 
 
