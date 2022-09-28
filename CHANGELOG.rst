@@ -4,6 +4,25 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.21.2
+====================
+
+**Changed:**
+
+* ``conda-smithy`` will not check which ``conda`` version is installed anymore.
+  ``conda`` follows CalVer now, which does not provide information about API guarantees,
+  thus rendering this check moot.
+
+**Fixed:**
+
+* Fix ``pyproject.toml`` derived issues with CI tests
+
+**Authors:**
+
+* Jaime Rodríguez-Guerra
+
+
+
 v3.21.1
 ====================
 
