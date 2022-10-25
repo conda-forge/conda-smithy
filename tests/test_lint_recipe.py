@@ -415,7 +415,7 @@ class Test_linter(unittest.TestCase):
             )
 
     def test_noarch_selectors(self):
-        expected_start = "`noarch` packages can't have selectors."
+        expected_start = "`noarch` packages can't have"
 
         with tmp_directory() as recipe_dir:
 
