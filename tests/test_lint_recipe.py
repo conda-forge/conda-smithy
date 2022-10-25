@@ -1179,6 +1179,12 @@ class Test_linter(unittest.TestCase):
         )
         assert not lints
 
+    def test_noarch_platforms(self):
+        lints = linter.main(
+            os.path.join(_thisdir, "recipes", "noarch_platforms", "recipe")
+        )
+        assert not lints
+
     def test_string_source(self):
         url = "http://mistake.com/v1.0.tar.gz"
         lints, hints = linter.lintify({"source": url})
