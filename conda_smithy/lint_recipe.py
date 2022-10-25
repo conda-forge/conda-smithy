@@ -385,12 +385,14 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
             )
 
     if recipe_dir:
-        forge_yaml_filename = glob(
-            os.path.join(recipe_dir, "..", "conda-forge.yml")
-        ) or glob(
-            os.path.join(recipe_dir, "conda-forge.yml"),
-        ) or glob(
-            os.path.join(recipe_dir, "..", "..", "conda-forge.yml"),
+        forge_yaml_filename = (
+            glob(os.path.join(recipe_dir, "..", "conda-forge.yml"))
+            or glob(
+                os.path.join(recipe_dir, "conda-forge.yml"),
+            )
+            or glob(
+                os.path.join(recipe_dir, "..", "..", "conda-forge.yml"),
+            )
         )
         if forge_yaml_filename:
             with open(forge_yaml_filename[0], "r") as fh:
@@ -422,7 +424,9 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
                     if runreqs_spacing == line[: -len(line.lstrip())]:
                         in_runreqs = False
                         continue
-                    if is_selector_line(line, allow_platforms=noarch_platforms):
+                    if is_selector_line(
+                        line, allow_platforms=noarch_platforms
+                    ):
                         lints.append(
                             "`noarch` packages can't have selectors. If "
                             "the selectors are necessary, please remove "
@@ -683,12 +687,14 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
         # 1. feedstocks
         # 2. staged-recipes with custom conda-forge.yaml in recipe
         # 3. staged-recipes
-        forge_yaml = glob(
-            os.path.join(recipe_dir, "..", "conda-forge.yml")
-        ) or glob(
-            os.path.join(recipe_dir, "conda-forge.yml"),
-        ) or glob(
-            os.path.join(recipe_dir, "..", "..", "conda-forge.yml"),
+        forge_yaml = (
+            glob(os.path.join(recipe_dir, "..", "conda-forge.yml"))
+            or glob(
+                os.path.join(recipe_dir, "conda-forge.yml"),
+            )
+            or glob(
+                os.path.join(recipe_dir, "..", "..", "conda-forge.yml"),
+            )
         )
         if shell_scripts and forge_yaml:
             with open(forge_yaml[0], "r") as fh:
