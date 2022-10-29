@@ -26,7 +26,7 @@ jobs:
     macos:
       xcode: "13.0.0"
 {%- endif %}
-{- if data.platform == 'linux-aarch64' %}
+{%- if data.platform == 'linux-aarch64' %}
     resource_class: arm.large
 {%- endif %}
     environment:
