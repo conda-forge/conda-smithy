@@ -31,7 +31,6 @@ bash $MINIFORGE_FILE -b -p ${MINIFORGE_HOME}
 source ${MINIFORGE_HOME}/etc/profile.d/conda.sh
 conda activate base
 
-echo -e "\n\nInstalling {{ remote_ci_setup }} and conda-build."
 {{ CONDA_INSTALL_CMD }} install --update-specs --quiet --yes --channel conda-forge \
     conda-build pip {{ BOA }}{{ " ".join(remote_ci_setup) }}
 {%- if build_with_mambabuild %}
