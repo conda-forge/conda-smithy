@@ -384,8 +384,27 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
                 )
             )
 
+    if recipe_dir:
+        forge_yaml_filename = (
+            glob(os.path.join(recipe_dir, "..", "conda-forge.yml"))
+            or glob(
+                os.path.join(recipe_dir, "conda-forge.yml"),
+            )
+            or glob(
+                os.path.join(recipe_dir, "..", "..", "conda-forge.yml"),
+            )
+        )
+        if forge_yaml_filename:
+            with open(forge_yaml_filename[0], "r") as fh:
+                forge_yaml = get_yaml().load(fh)
+        else:
+            forge_yaml = {}
+    else:
+        forge_yaml = {}
+
     # 18: noarch doesn't work with selectors for runtime dependencies
     if noarch_value is not None and os.path.exists(meta_fname):
+        noarch_platforms = len(forge_yaml.get("noarch_platforms", [])) > 1
         with io.open(meta_fname, "rt") as fh:
             in_runreqs = False
             for line in fh:
@@ -396,7 +415,7 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
                     continue
                 if line_s.startswith("skip:") and is_selector_line(line):
                     lints.append(
-                        "`noarch` packages can't have selectors. If "
+                        "`noarch` packages can't have skips with selectors. If "
                         "the selectors are necessary, please remove "
                         "`noarch: {}`.".format(noarch_value)
                     )
@@ -405,7 +424,9 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
                     if runreqs_spacing == line[: -len(line.lstrip())]:
                         in_runreqs = False
                         continue
-                    if is_selector_line(line):
+                    if is_selector_line(
+                        line, allow_platforms=noarch_platforms
+                    ):
                         lints.append(
                             "`noarch` packages can't have selectors. If "
                             "the selectors are necessary, please remove "
@@ -662,11 +683,18 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
     shell_scripts = []
     if recipe_dir:
         shell_scripts = glob(os.path.join(recipe_dir, "*.sh"))
-        # support feedstocks and staged-recipes
-        forge_yaml = glob(
-            os.path.join(recipe_dir, "..", "conda-forge.yml")
-        ) or glob(
-            os.path.join(recipe_dir, "..", "..", "conda-forge.yml"),
+        # support
+        # 1. feedstocks
+        # 2. staged-recipes with custom conda-forge.yaml in recipe
+        # 3. staged-recipes
+        forge_yaml = (
+            glob(os.path.join(recipe_dir, "..", "conda-forge.yml"))
+            or glob(
+                os.path.join(recipe_dir, "conda-forge.yml"),
+            )
+            or glob(
+                os.path.join(recipe_dir, "..", "..", "conda-forge.yml"),
+            )
         )
         if shell_scripts and forge_yaml:
             with open(forge_yaml[0], "r") as fh:
@@ -904,7 +932,7 @@ def run_conda_forge_specific(meta, recipe_dir, lints, hints):
                 hints.append(msg)
 
 
-def is_selector_line(line):
+def is_selector_line(line, allow_platforms=False):
     # Using the same pattern defined in conda-build (metadata.py),
     # we identify selectors.
     line = line.rstrip()
@@ -913,8 +941,10 @@ def is_selector_line(line):
         return False
     m = sel_pat.match(line)
     if m:
-        m.group(3)
-        return True
+        if allow_platforms and m.group(3) in ["win", "linux", "osx", "unix"]:
+            return False
+        else:
+            return True
     return False
 
 
