@@ -13,14 +13,14 @@ Authors are sorted by number of commits.
 * Michael Sarahan
 * Min RK
 * Hadrien Mary
+* Johnny Willemsen
 * Uwe L. Korn
 * Ryan Volz
 * Mark Harfouche
-* Johnny Willemsen
 * Julian Rüth
 * Chris Burr
-* Leo Fang
 * Marcel Bargull
+* Leo Fang
 * Eric Dill
 * Natasha Pavlovikj
 * Maksim Rakitin
@@ -106,3 +106,4 @@ Authors are sorted by number of commits.
 * Nehal J Wani
 * Benjamin Tovar
 * Sylvain Corlay
+* Brandon Andersen

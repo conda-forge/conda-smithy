@@ -182,7 +182,7 @@
   email: marcel.bargull@udo.edu
   alternate_emails:
   - mbargull@users.noreply.github.com
-  num_commits: 14
+  num_commits: 17
   first_commit: 2018-07-30 05:17:51
   github: mbargull
 - name: xoviat
@@ -247,7 +247,7 @@
   email: isuru.11@cse.mrt.ac.lk
   alternate_emails:
   - isuruf@gmail.com
-  num_commits: 482
+  num_commits: 489
   first_commit: 2017-01-08 22:03:03
   github: isuruf
 - name: Julian Rüth
@@ -393,7 +393,7 @@
   github: shadowwalkersb
 - name: Matthew R. Becker
   email: becker.mr@gmail.com
-  num_commits: 72
+  num_commits: 74
   first_commit: 2020-01-07 17:44:33
   github: beckermr
   alternate_emails:
@@ -470,7 +470,7 @@
   github: synapticarbors
 - name: Johnny Willemsen
   email: jwillemsen@remedy.nl
-  num_commits: 19
+  num_commits: 23
   first_commit: 2020-10-05 09:50:12
   github: jwillemsen
 - name: Jaime Rodríguez-Guerra
@@ -562,3 +562,8 @@
   email: pelson.pub+conda-forge@gmail.com
   num_commits: 2
   first_commit: 2022-06-22 05:31:02
+- name: Brandon Andersen
+  email: 31670449+bandersen23@users.noreply.github.com
+  num_commits: 1
+  first_commit: 2022-07-03 13:55:55
+  github: bandersen23
