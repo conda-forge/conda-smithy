@@ -14,7 +14,13 @@ name: Build conda package
 {%- if github_actions.self_hosted %}
 on: [push]
 {%- else %}
-on: [push, pull_request]
+on:
+  push:
+{%- if upload_on_branch %}
+    branches:
+      - {{ upload_on_branch }}
+{%- endif %}
+  pull_request:
 {%- endif %}
 
 jobs:
