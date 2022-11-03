@@ -4,6 +4,36 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.21.3
+====================
+
+**Added:**
+
+* Added support for aarch64 native runners on circle CI
+
+**Changed:**
+
+* Upgrade to actions/checkout@v3
+* Upgrade to actions/upload-artifact@v3
+* Add ``py-lief<0.12`` to ``remote_ci_setup`` for now
+  due to current ``osx-*`` segfault issues, ref:
+  https://github.com/conda-forge/conda-forge.github.io/issues/1823
+* recipes with ``noarch_platforms`` will no longer give a lint when selectors are used.
+
+**Fixed:**
+
+* Fix Azure urls in details
+
+**Authors:**
+
+* Isuru Fernando
+* Johnny Willemsen
+* Marcel Bargull
+* Marius van Niekerk
+* Brandon Andersen
+
+
+
 v3.21.2
 ====================
 
