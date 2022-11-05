@@ -1779,7 +1779,9 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
         # Specific channel for package can be given with
         #     ${url or channel_alias}::package_name
         # defaults to conda-forge channel_alias
-        "remote_ci_setup": ["conda-forge-ci-setup=3"],
+        # Added py-lief constraint due to current osx-* segfault issues, ref:
+        #     https://github.com/conda-forge/conda-forge.github.io/issues/1823
+        "remote_ci_setup": ["conda-forge-ci-setup=3", "py-lief<0.12"],
     }
 
     if forge_yml is None:

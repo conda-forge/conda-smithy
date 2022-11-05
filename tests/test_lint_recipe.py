@@ -415,7 +415,7 @@ class Test_linter(unittest.TestCase):
             )
 
     def test_noarch_selectors(self):
-        expected_start = "`noarch` packages can't have selectors."
+        expected_start = "`noarch` packages can't have"
 
         with tmp_directory() as recipe_dir:
 
@@ -1176,6 +1176,12 @@ class Test_linter(unittest.TestCase):
     def test_multiple_sources(self):
         lints = linter.main(
             os.path.join(_thisdir, "recipes", "multiple_sources")
+        )
+        assert not lints
+
+    def test_noarch_platforms(self):
+        lints = linter.main(
+            os.path.join(_thisdir, "recipes", "noarch_platforms", "recipe")
         )
         assert not lints
 

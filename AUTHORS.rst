@@ -2,25 +2,25 @@ All of the people who have made at least one contribution to conda-smithy.
 Authors are sorted by number of commits.
 
 * Isuru Fernando
-* Matthew R. Becker
 * Christopher J. Wright
 * Anthony Scopatz
 * Phil Elson
-* Filipe Fernandes
+* Matthew R. Becker
 * Jaime Rodríguez-Guerra
+* Filipe Fernandes
 * Dougal J. Sutherland
 * shadow_walker
 * Michael Sarahan
 * Min RK
 * Hadrien Mary
+* Johnny Willemsen
 * Uwe L. Korn
 * Ryan Volz
 * Mark Harfouche
-* Johnny Willemsen
 * Julian Rüth
 * Chris Burr
-* Leo Fang
 * Marcel Bargull
+* Leo Fang
 * Eric Dill
 * Natasha Pavlovikj
 * Maksim Rakitin
@@ -106,3 +106,4 @@ Authors are sorted by number of commits.
 * Nehal J Wani
 * Benjamin Tovar
 * Sylvain Corlay
+* Brandon Andersen
