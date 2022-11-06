@@ -34,14 +34,16 @@ CONDARC
 if [ ${SINGULARITY_BUILD:-"False"} == "True" ]; then
     export PATH="$PATH":/opt/conda/condabin
     env > envvar
-    mamba init
-    source ~/.bashrc
-    mamba create --prefix=/tmp/building --yes --quiet
-    mamba activate /tmp/building
+    # mamba init
+    # source ~/.bashrc
+    eval "$(/opt/conda/bin/conda shell.bash hook)"
+    conda create --prefix=/tmp/building --yes --quiet
+    conda activate /tmp/building
     # conda clean --packages --yes --quiet
     sed 's/^/"/;s/$/"/' envvar > envvarmod
     sed 's/^/export /' envvarmod > envvarmodmod
     source ./envvarmodmod
+    conda activate /tmp/building
 fi
 
 
