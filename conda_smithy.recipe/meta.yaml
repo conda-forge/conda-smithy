@@ -22,6 +22,7 @@ requirements:
     - python >=3.6
     - conda >=4.2
     - conda-build >=3.18.3
+    - conda-package-handling
     - jinja2
     - requests
     - pycryptodome
