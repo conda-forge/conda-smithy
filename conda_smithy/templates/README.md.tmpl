@@ -2,30 +2,40 @@
 {#-
 # -*- mode: jinja -*-
 -#}
-{%- set license_url = package_about.license_url -%}
-
-About {{ package_name }}
-======{{ '=' * package_name|length }}
-
-Home: {{ package_about.home }}
-
-Package license: {% if license_url %}[{% endif %}{{ package_about.license }}{% if license_url %}]({{ license_url }}){% endif %}
 
 Feedstock license: [BSD-3-Clause](https://github.com/{{ github.user_or_org }}/{{ github.repo_name }}/blob/{{ github.branch_name }}/LICENSE.txt)
 
-Summary: {{ package_about.summary }}
-{%- if package_about.dev_url %}
+{% for output_name, about in package_about %}
+{%- set license_url = about.license_url -%}
 
-Development: {{ package_about.dev_url }}
-{%- endif %}
-{%- if package_about.doc_url %}
+About {{ output_name }}
+======{{ '=' * output_name|length }}
 
-Documentation: {{ package_about.doc_url }}
-{%- endif %}
-{%- if package_about.description %}
+{%- if about.home %}
 
-{{ package_about.description }}
+Home: {{ about.home }}
 {%- endif %}
+
+Package license: {% if license_url %}[{% endif %}{{ about.license }}{% if license_url %}]({{ license_url }}){% endif -%}
+
+{%- if about.summary %}
+
+Summary: {{ about.summary }}
+{%- endif %}
+{%- if about.dev_url %}
+
+Development: {{ about.dev_url }}
+{%- endif %}
+{%- if about.doc_url %}
+
+Documentation: {{ about.doc_url }}
+{%- endif %}
+{%- if about.description %}
+
+{{ about.description }}
+{%- endif %}
+
+{% endfor %}
 
 Current build status
 ====================

@@ -1565,10 +1565,24 @@ def render_README(jinja_env, forge_config, forge_dir, render_info=None):
                 variant_name, _ = os.path.splitext(filename)
                 variants.append(variant_name)
 
+    unique_metas = OrderedDict((meta.name(), meta) for meta in metas)
+    top_package_about = unique_metas[package_name].meta["about"]
+    package_about = []
+    for name, m in unique_metas.items():
+        # use the top-level about if the subpackages' fields are undefined
+        if name == package_name:
+            package_about.append((package_name, top_package_about))
+        else:
+            about = m.meta["about"].copy()
+            for k, v in top_package_about.items():
+                if k not in about:
+                    about[k] = v
+            package_about.append((name, about))
+
     template = jinja_env.get_template("README.md.tmpl")
     target_fname = os.path.join(forge_dir, "README.md")
     forge_config["noarch_python"] = all(meta.noarch for meta in metas)
-    forge_config["package_about"] = metas[0].meta["about"]
+    forge_config["package_about"] = package_about
     forge_config["package_name"] = package_name
     forge_config["variants"] = sorted(variants)
     forge_config["outputs"] = sorted(
