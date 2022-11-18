@@ -3,13 +3,16 @@
 # -*- mode: jinja -*-
 -#}
 
+About {{ package_name }}-feedstock
+======{{ '=' * package_name|length }}==========
+
 Feedstock license: [BSD-3-Clause](https://github.com/{{ github.user_or_org }}/{{ github.repo_name }}/blob/{{ github.branch_name }}/LICENSE.txt)
 
 {% for output_name, about in package_about %}
 {%- set license_url = about.license_url -%}
 
 About {{ output_name }}
-======{{ '=' * output_name|length }}
+------{{ '-' * output_name|length }}
 
 {%- if about.home %}
 
