@@ -140,9 +140,7 @@ def test_init_multiple_output_matrix(testing_workdir):
     assert "zlib" not in config
 
 
-@pytest.mark.parametrize(
-    "dirname", ["multiple_outputs", "multiple_outputs2"]
-)
+@pytest.mark.parametrize("dirname", ["multiple_outputs", "multiple_outputs2"])
 def test_render_readme_with_multiple_outputs(testing_workdir, dirname):
     parser = argparse.ArgumentParser()
     subparser = parser.add_subparsers()

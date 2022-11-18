@@ -39,8 +39,10 @@ from conda_smithy.feedstock_io import (
     copy_file,
     remove_file_or_dir,
 )
-from conda_smithy.utils import (get_feedstock_name_from_meta,
-                                get_feedstock_about_from_meta)
+from conda_smithy.utils import (
+    get_feedstock_name_from_meta,
+    get_feedstock_about_from_meta,
+)
 from . import __version__
 
 conda_forge_content = os.path.abspath(os.path.dirname(__file__))
