@@ -2015,8 +2015,17 @@ def commit_changes(forge_file_directory, commit, cs_ver, cfp_ver, cb_ver):
 
 def get_cfp_file_path(temporary_directory):
     pkg = get_most_recent_version("conda-forge-pinning")
+    if pkg.url.endswith(".conda"):
+        ext = ".conda"
+    elif pkg.url.endswith(".tar.bz2"):
+        ext = ".tar.bz2"
+    else:
+        raise RuntimeError(
+            "Could not determine proper conda package extension for "
+            "pinning package '%s'!" % pkg.url
+        )
     dest = os.path.join(
-        temporary_directory, f"conda-forge-pinning-{ pkg.version }.tar.bz2"
+        temporary_directory, f"conda-forge-pinning-{ pkg.version }{ext}"
     )
 
     logger.info(f"Downloading conda-forge-pinning-{ pkg.version }")
@@ -2027,7 +2036,7 @@ def get_cfp_file_path(temporary_directory):
         f.write(response.content)
 
     logger.info(f"Extracting conda-forge-pinning to { temporary_directory }")
-    subprocess.check_call(["bsdtar", "-xf", dest], cwd=temporary_directory)
+    subprocess.check_call(["cph", "x", "--dest", temporary_directory, dest])
 
     logger.debug(os.listdir(temporary_directory))
 
