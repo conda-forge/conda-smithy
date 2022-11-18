@@ -39,7 +39,8 @@ from conda_smithy.feedstock_io import (
     copy_file,
     remove_file_or_dir,
 )
-from conda_smithy.utils import get_feedstock_name_from_meta
+from conda_smithy.utils import (get_feedstock_name_from_meta,
+                                get_feedstock_about_from_meta)
 from . import __version__
 
 conda_forge_content = os.path.abspath(os.path.dirname(__file__))
@@ -1556,6 +1557,7 @@ def render_README(jinja_env, forge_config, forge_dir, render_info=None):
             )
 
     package_name = get_feedstock_name_from_meta(metas[0])
+    package_about = get_feedstock_about_from_meta(metas[0])
 
     ci_support_path = os.path.join(forge_dir, ".ci_support")
     variants = []
@@ -1565,24 +1567,24 @@ def render_README(jinja_env, forge_config, forge_dir, render_info=None):
                 variant_name, _ = os.path.splitext(filename)
                 variants.append(variant_name)
 
-    unique_metas = OrderedDict((meta.name(), meta) for meta in metas)
-    top_package_about = unique_metas[package_name].meta["about"]
-    package_about = []
-    for name, m in unique_metas.items():
-        # use the top-level about if the subpackages' fields are undefined
-        if name == package_name:
-            package_about.append((package_name, top_package_about))
-        else:
-            about = m.meta["about"].copy()
-            for k, v in top_package_about.items():
-                if k not in about:
-                    about[k] = v
-            package_about.append((name, about))
+    subpackages_metas = OrderedDict((meta.name(), meta) for meta in metas)
+    subpackages_about = []
+    for name, m in subpackages_metas.items():
+        # use the top-level (feedstock) about entries if the subpackages' are undefined
+        # (it doesn't matter if conda-build synthesizes an implicit package or not)
+        about = m.meta["about"]
+        if isinstance(about, list):
+            about = about[0]
+        about = about.copy()
+        for k, v in package_about.items():
+            if k not in about:
+                about[k] = v
+        subpackages_about.append((name, about))
 
     template = jinja_env.get_template("README.md.tmpl")
     target_fname = os.path.join(forge_dir, "README.md")
     forge_config["noarch_python"] = all(meta.noarch for meta in metas)
-    forge_config["package_about"] = package_about
+    forge_config["package_about"] = subpackages_about
     forge_config["package_name"] = package_name
     forge_config["variants"] = sorted(variants)
     forge_config["outputs"] = sorted(
