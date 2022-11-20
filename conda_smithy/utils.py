@@ -38,8 +38,8 @@ def get_feedstock_about_from_meta(meta) -> dict:
             meta = get_yaml().load(content)
         return dict(meta["about"])
     else:
-        # no parent recipe for any reason
-        return {}
+        # no parent recipe for any reason, use self's about
+        return dict(meta.meta["about"])
 
 
 def get_yaml():
