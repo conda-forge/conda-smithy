@@ -1570,18 +1570,17 @@ def render_README(jinja_env, forge_config, forge_dir, render_info=None):
                 variants.append(variant_name)
 
     subpackages_metas = OrderedDict((meta.name(), meta) for meta in metas)
-    subpackages_about = []
+    subpackages_about = [(package_name, package_about)]
     for name, m in subpackages_metas.items():
-        # use the top-level (feedstock) about entries if the subpackages' are undefined
-        # (it doesn't matter if conda-build synthesizes an implicit package or not)
         about = m.meta["about"]
         if isinstance(about, list):
             about = about[0]
         about = about.copy()
-        for k, v in package_about.items():
-            if k not in about:
-                about[k] = v
-        subpackages_about.append((name, about))
+        # if subpackages do not have about, conda-build would copy the top-level about;
+        # if subpackages have their own about, conda-build would use them as is;
+        # we discussed in PR #1691 and decided to not show repetitve entries
+        if about != package_about:
+            subpackages_about.append((name, about))
 
     template = jinja_env.get_template("README.md.tmpl")
     target_fname = os.path.join(forge_dir, "README.md")

@@ -175,13 +175,29 @@ def test_render_readme_with_multiple_outputs(testing_workdir, dirname):
     assert os.path.exists(readme_path)
     with open(readme_path, "r") as readme_file:
         readme = readme_file.read()
-    assert "About test_output_1" in readme
-    assert "About test_output_2" in readme
-    assert "BSD" in readme
     if dirname == "multiple_outputs":
+        # case 1: implicit subpackage, no individual subpackage about
+        assert "About test_multiple_outputs" in readme
+        assert "BSD" in readme
+        assert "About test_output_1" not in readme
+        assert "About test_output_2" not in readme
         assert "Apache" not in readme
-    else:
+    elif dirname == "multiple_outputs2":
+        # case 2: implicit subpackage, has individual subpackage about
+        assert "About test_multiple_outputs2" in readme
+        assert "BSD" in readme
+        assert "About test_output_1" in readme
         assert "Apache" in readme
+        assert "About test_output_2" not in readme
+    elif dirname == "multiple_outputs3":
+        # case 3: explicit subpackage, has individual subpackage about
+        assert "About test_multiple_outputs3" in readme
+        assert "BSD" in readme
+        assert "About test_output_1" in readme
+        assert "Apache" in readme
+        assert "About test_output_2" not in readme
+    else:
+        assert False
 
 
 def test_init_cuda_docker_images(testing_workdir):
