@@ -4,6 +4,20 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.22.0
+====================
+
+**Changed:**
+
+* Changed the pinning package extraction code to account for ``.conda`` files
+  and to use ``conda-package-handling``.
+
+**Authors:**
+
+* Matthew R. Becker
+
+
+
 v3.21.3
 ====================
 
