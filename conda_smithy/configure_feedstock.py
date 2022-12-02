@@ -1686,7 +1686,12 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
                     "vmImage": "windows-2019",
                 },
                 "timeoutInMinutes": 360,
-                "variables": {"CONDA_BLD_PATH": r"D:\\bld\\"},
+                "variables": {
+                    "CONDA_BLD_PATH": r"D:\\bld\\",
+                    # Custom %TEMP% for upload to avoid permission errors.
+                    # See https://github.com/conda-forge/kubo-feedstock/issues/5#issuecomment-1335504503
+                    "UPLOAD_TEMP": r"D:\\tmp",
+                },
             },
             # Force building all supported providers.
             "force": False,
