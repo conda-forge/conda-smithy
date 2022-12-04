@@ -9,6 +9,19 @@ v3.22.0
 
 **Changed:**
 
+* Use a custom %TEMP% directory to avoid upload permission errors on Windows.
+
+**Authors:**
+
+* Marcel Bargull
+
+
+
+v3.22.0
+====================
+
+**Changed:**
+
 * Changed the pinning package extraction code to account for ``.conda`` files
   and to use ``conda-package-handling``.
 
