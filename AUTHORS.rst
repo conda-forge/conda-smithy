@@ -17,9 +17,9 @@ Authors are sorted by number of commits.
 * Uwe L. Korn
 * Ryan Volz
 * Mark Harfouche
+* Marcel Bargull
 * Julian Rüth
 * Chris Burr
-* Marcel Bargull
 * Leo Fang
 * Eric Dill
 * Natasha Pavlovikj
