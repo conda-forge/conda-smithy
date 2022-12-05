@@ -15,9 +15,9 @@ Authors are sorted by number of commits.
 * Hadrien Mary
 * Johnny Willemsen
 * Uwe L. Korn
+* Marcel Bargull
 * Ryan Volz
 * Mark Harfouche
-* Marcel Bargull
 * Julian Rüth
 * Chris Burr
 * Leo Fang
