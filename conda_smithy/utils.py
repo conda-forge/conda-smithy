@@ -82,6 +82,7 @@ def render_meta_yaml(text):
             time=time,
             target_platform="linux-64",
             mpi="mpi",
+            blas_impl="openblas",
         )
     )
     mockos = MockOS()

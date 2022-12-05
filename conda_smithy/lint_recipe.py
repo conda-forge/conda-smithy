@@ -475,6 +475,8 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
     # 22: Single space in pinned requirements
     for section, requirements in requirements_section.items():
         for requirement in requirements or []:
+            # rather than adding to utils.render_meta_yaml() we could
+            # handle requirement is None by ignoring it
             req, _, _ = requirement.partition("#")
             if "{{" in req:
                 continue
