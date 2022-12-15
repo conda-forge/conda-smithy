@@ -38,6 +38,8 @@ conda activate base
     conda-build pip {{ BOA }}{{ " ".join(remote_ci_setup) }}
 {%- endif %}
 
+pip install git+https://github.com/mamba-org/conda_oci_mirror@main
+
 {% if local_ci_setup %}
 conda uninstall --quiet --yes --force {{ " ".join(remote_ci_setup) }}
 pip install --no-deps {{ recipe_dir }}/.

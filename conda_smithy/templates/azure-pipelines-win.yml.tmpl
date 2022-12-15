@@ -41,6 +41,7 @@ jobs:
     - script: |
         call activate base
         mamba.exe install "python=3.9" conda-build conda pip {{ BOA }}{{ " ".join(remote_ci_setup) }} -c conda-forge --strict-channel-priority --yes
+        pip install git+https://github.com/mamba-org/conda_oci_mirror@main
       displayName: Install conda-build
 
     - script: set PYTHONUNBUFFERED=1
