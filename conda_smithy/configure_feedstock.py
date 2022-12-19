@@ -1243,9 +1243,9 @@ def _github_actions_specific_setup(
     if forge_config["github_actions"]["store_build_artifacts"]:
         for tmpls in platform_templates.values():
             tmpls.append(".scripts/create_conda_build_artifacts.sh")
-    if (
-        forge_config["github_actions"]["self_hosted"] and 
-        any(label.startswith("cirun-") for label in forge_config["github_actions"]["self_hosted_labels"])
+    if forge_config["github_actions"]["self_hosted"] and any(
+        label.startswith("cirun-")
+        for label in forge_config["github_actions"]["self_hosted_labels"]
     ):
         platform_templates["linux"].append("cirun.yml")
 
