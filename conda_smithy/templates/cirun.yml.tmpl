@@ -1,0 +1,9 @@
+{%- if github_actions.self_hosted -%}
+runners:
+{%- for runner in cirun_runners %}
+  - # Custom runner {{ loop.index }}
+{%- for key, value in runner.items() %}
+    {{ key }}: {{ value }}
+{%- endfor -%}
+{%- endfor -%}
+{%- endif -%}

@@ -1243,6 +1243,12 @@ def _github_actions_specific_setup(
     if forge_config["github_actions"]["store_build_artifacts"]:
         for tmpls in platform_templates.values():
             tmpls.append(".scripts/create_conda_build_artifacts.sh")
+    if (
+        forge_config["github_actions"]["self_hosted"] and 
+        any(label.startswith("cirun-") for label in forge_config["github_actions"]["self_hosted_labels"])
+    ):
+        platform_templates["linux"].append("cirun.yml")
+
     template_files = platform_templates.get(platform, [])
 
     _render_template_exe_files(
@@ -1259,7 +1265,7 @@ def render_github_actions(
     target_path = os.path.join(
         forge_dir, ".github", "workflows", "conda-build.yml"
     )
-    template_filename = "github-actions.tmpl"
+    template_filename = "github-actions.yml.tmpl"
     fast_finish_text = ""
 
     (
@@ -1269,7 +1275,7 @@ def render_github_actions(
         upload_packages,
     ) = _get_platforms_of_provider("github_actions", forge_config)
 
-    logger.debug("github platforms retreived")
+    logger.debug("github platforms retrieved")
 
     remove_file_or_dir(target_path)
     return _render_ci_provider(
@@ -1763,10 +1769,22 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
         },
         "github_actions": {
             "self_hosted": False,
+            "self_hosted_labels": [],
+            "self_hosted_triggers": ["push"],
             # Toggle creating artifacts for conda build_artifacts dir
             "store_build_artifacts": False,
             "artifact_retention_days": 14,
         },
+        "cirun_runners": [
+            {
+                "name": "cirun-openstack-gpu",
+                "labels": ["cirun-openstack-gpu"],
+                "cloud": "openstack",
+                "instance_type": "gpu_tiny",
+                "machine_image": "ubuntu-focal-nvidia-14112022",
+                "region": "RegionOne",
+            }
+        ],
         "recipe_dir": "recipe",
         "skip_render": [],
         "bot": {"automerge": False},
