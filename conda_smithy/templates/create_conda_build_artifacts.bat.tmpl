@@ -46,7 +46,7 @@ if defined BLD_ARTIFACT_PREFIX (
 
     set "BLD_ARTIFACT_PATH=%ARTIFACT_STAGING_DIR%\%FEEDSTOCK_NAME%_%BLD_ARTIFACT_PREFIX%_%ARCHIVE_UNIQUE_ID%.zip"
     7z a "!BLD_ARTIFACT_PATH!" "%CONDA_BLD_DIR%" -xr^^!.git/ -xr^^!_*_env*/ -xr^^!*_cache/ -bb
-    if errorlevel 1 exit 1
+    if %errorlevel% NEQ 0 exit %errorlevel%
     echo BLD_ARTIFACT_PATH: !BLD_ARTIFACT_PATH!
 
     if "%CI%" == "azure" (
@@ -66,7 +66,7 @@ if defined ENV_ARTIFACT_PREFIX (
 
     set "ENV_ARTIFACT_PATH=%ARTIFACT_STAGING_DIR%\%FEEDSTOCK_NAME%_%ENV_ARTIFACT_PREFIX%_%ARCHIVE_UNIQUE_ID%.zip"
     7z a "!ENV_ARTIFACT_PATH!" -r "%CONDA_BLD_DIR%"/_*_env*/ -bb
-    if errorlevel 1 exit 1
+    if %errorlevel% NEQ 0 exit %errorlevel%
     echo ENV_ARTIFACT_PATH: !ENV_ARTIFACT_PATH!
 
     if "%CI%" == "azure" (
