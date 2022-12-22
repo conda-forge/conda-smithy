@@ -4,6 +4,19 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.22.1
+====================
+
+**Changed:**
+
+* Use a custom %TEMP% directory to avoid upload permission errors on Windows.
+
+**Authors:**
+
+* Marcel Bargull
+
+
+
 v3.22.0
 ====================
 

@@ -1703,7 +1703,12 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
                     "vmImage": "windows-2019",
                 },
                 "timeoutInMinutes": 360,
-                "variables": {"CONDA_BLD_PATH": r"D:\\bld\\"},
+                "variables": {
+                    "CONDA_BLD_PATH": r"D:\\bld\\",
+                    # Custom %TEMP% for upload to avoid permission errors.
+                    # See https://github.com/conda-forge/kubo-feedstock/issues/5#issuecomment-1335504503
+                    "UPLOAD_TEMP": r"D:\\tmp",
+                },
             },
             # Force building all supported providers.
             "force": False,
@@ -1791,9 +1796,7 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
         # Specific channel for package can be given with
         #     ${url or channel_alias}::package_name
         # defaults to conda-forge channel_alias
-        # Added py-lief constraint due to current osx-* segfault issues, ref:
-        #     https://github.com/conda-forge/conda-forge.github.io/issues/1823
-        "remote_ci_setup": ["conda-forge-ci-setup=3", "py-lief<0.12"],
+        "remote_ci_setup": ["conda-forge-ci-setup=3"],
     }
 
     if forge_yml is None:

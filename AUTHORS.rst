@@ -15,11 +15,11 @@ Authors are sorted by number of commits.
 * Hadrien Mary
 * Johnny Willemsen
 * Uwe L. Korn
+* Marcel Bargull
 * Ryan Volz
 * Mark Harfouche
 * Julian Rüth
 * Chris Burr
-* Marcel Bargull
 * Leo Fang
 * Eric Dill
 * Natasha Pavlovikj
