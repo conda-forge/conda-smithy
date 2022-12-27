@@ -1778,10 +1778,28 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
         "cirun_runners": [
             {
                 "name": "cirun-openstack-gpu",
-                "labels": ["cirun-openstack-gpu"],
+                "labels": [
+                    "linux", 
+                    "x64",
+                    "self-hosted",
+                    "cirun-openstack-gpu"
+                ],
                 "cloud": "openstack",
                 "instance_type": "gpu_tiny",
                 "machine_image": "ubuntu-focal-nvidia-14112022",
+                "region": "RegionOne",
+            },
+            {
+                "name": "cirun-openstack-cpu",
+                "labels": [
+                    "linux", 
+                    "x64",
+                    "self-hosted",
+                    "cirun-openstack-cpu",
+                ],
+                "cloud": "openstack",
+                "instance_type": "ci_medium",
+                "machine_image": "ubuntu-2204-cloud-jammy-20221104",
                 "region": "RegionOne",
             }
         ],
