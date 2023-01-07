@@ -232,10 +232,10 @@ def configure_github_team(meta, gh_repo, org, feedstock_name, remove=True):
             "The {} {} contributors!".format(choice(superlative), team_name),
         )
         fs_team.add_to_repos(gh_repo)
-    else:
-        current_maintainers = set(
-            [e.login.lower() for e in fs_team.get_members()]
-        )
+
+    current_maintainers = set(
+        [e.login.lower() for e in fs_team.get_members()]
+    )
 
     # Get the all-members team
     description = "All of the awesome {} contributors!".format(org.login)
