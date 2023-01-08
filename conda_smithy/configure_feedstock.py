@@ -1758,8 +1758,8 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
         "github": {
             "user_or_org": "conda-forge",
             "repo_name": "",
-            "branch_name": "master",
-            "tooling_branch_name": "master",
+            "branch_name": "main",
+            "tooling_branch_name": "main",
         },
         "github_actions": {
             "self_hosted": False,
