@@ -17,6 +17,40 @@ on: {{ github_actions.self_hosted_triggers }}
 on: [push, pull_request]
 {%- endif %}
 
+{%- set platform_vars = {
+  'osx-64': {
+    'os': 'macos',
+    'self_hosted_label_os': 'macOS',
+    'self_hosted_label_arch': 'x64',
+  },
+  'osx-arm64': {
+    'os': 'macos',
+    'self_hosted_label_os': 'macOS',
+    'self_hosted_label_arch': 'arm64',
+  },
+  'linux-64': {
+    'os': 'ubuntu',
+    'self_hosted_label_os': 'linux',
+    'self_hosted_label_arch': 'x64',
+  },
+  'linux-aarch64': {
+    'os': 'ubuntu',
+    'self_hosted_label_os': 'linux',
+    'self_hosted_label_arch': '',
+  },
+  'linux-ppcle64': {
+    'os': 'ubuntu',
+    'self_hosted_label_os': 'linux',
+    'self_hosted_label_arch': '',
+  },
+  'win-64': {
+    'os': 'windows',
+    'self_hosted_label_os': 'windows',
+    'self_hosted_label_arch': 'x64',
+  },
+} 
+%}
+
 jobs:
   build:
     name: {% raw %}${{ matrix.CONFIG }}{% endraw %}
@@ -35,82 +69,31 @@ jobs:
             SHORT_CONFIG: {{ data.short_config_name }}
         {%- endif %}
             UPLOAD_PACKAGES: {{ data.upload }}
-        {%- if data.build_platform.startswith("osx-64") %}
-            os: macos
+            os: {{ platform_vars[data.build_platform]['os'] }}
+        {#- namespace needed to handle jinja scoping rules #}
+        {%- set ns = namespace(gpu=False) %}
         {%- if github_actions.self_hosted %}
             labels:
-              - macOS
-              - x64
               - self-hosted
+              - {{ platform_vars[data.build_platform]['self_hosted_label_os'] }}
+              {%- if platform_vars[data.build_platform]['self_hosted_label_arch'] %}
+              - {{ platform_vars[data.build_platform]['self_hosted_label_arch'] }}
+              {%- endif %}
               {%- for label in github_actions.self_hosted_labels %}
-                {%- if label.startswith('cirun-') %}
-                {# See https://docs.cirun.io/reference/unique-runner-labels #}
-                {%- set label = label ~ "--${{ github.run_id }}-" ~ data.short_config_name %}
+                {%- if 'gpu' in label %}
+                  {%- set ns.gpu = True %}
                 {%- endif %}
-              - '{{ label }}'
+                {%- if label.startswith('cirun-') %}
+                  {%- set label = label ~ "--${{ github.run_id }}-" ~ data.short_config_name %}
+                {%- endif %}
+              - {{ label }}
               {%- endfor %}
         {%- endif %}
-        {%- elif data.build_platform.startswith("osx-arm64") %}
-            os: macos
-        {%- if github_actions.self_hosted %}
-            labels:
-              - macOS
-              - ARM64
-              - self-hosted
-              {%- for label in github_actions.self_hosted_labels %}
-                {%- if label.startswith('cirun-') %}
-                {%- set label = label ~ "--${{ github.run_id }}" ~ data.short_config_name %}
-                {%- endif %}
-              - '{{ label }}'
-              {%- endfor %}
-        {%- endif %}
-        {%- elif data.build_platform.startswith("linux-64") %}
+        {%- if data.build_platform.startswith("linux") %}
             DOCKER_IMAGE: {{ data.config["docker_image"][-1] }}
-            os: ubuntu
-        {%- if github_actions.self_hosted %}
-            labels:
-              - linux
-              - x64
-              - self-hosted
-              {%- for label in github_actions.self_hosted_labels %}
-                {%- if label.startswith('cirun-') %}
-                {%- set label = label ~ "--${{ github.run_id }}" ~ data.short_config_name %}
-                {%- endif %}
-              - '{{ label }}'
-              {%- endfor %}
-        {%- endif %}
-        {%- elif data.build_platform.startswith("linux-aarch64") %}
-            DOCKER_IMAGE: {{ data.config["docker_image"][-1] }}
-            os: ubuntu
-        {%- if github_actions.self_hosted %}
-            labels:
-              - linux
-              - ARM64
-              - self-hosted
-              {%- for label in github_actions.self_hosted_labels %}
-                {%- if label.startswith('cirun-') %}
-                {%- set label = label ~ "--${{ github.run_id }}" ~ data.short_config_name %}
-                {%- endif %}
-              - '{{ label }}'
-              {%- endfor %}
-        {%- endif %}
-        {%- elif data.build_platform.startswith("linux") %}
-            DOCKER_IMAGE: {{ data.config["docker_image"][-1] }}
-            os: ubuntu
-        {%- elif data.build_platform.startswith("win") %}
-            os: windows
-        {%- if github_actions.self_hosted %}
-            labels:
-              - windows
-              - x64
-              - self-hosted
-              {%- for label in github_actions.self_hosted_labels %}
-                {%- if label.startswith('cirun-') %}
-                {%- set label = label ~ "--${{ github.run_id }}" ~ data.short_config_name %}
-                {%- endif %}
-              - '{{ label }}'
-              {%- endfor %}
-        {%- endif %}
+          {%- if ns.gpu %}
+            CONDA_FORGE_DOCKER_RUN_ARGS: "--gpus all"
+          {%- endif %}
         {%- endif %}
         {%- endfor %}
     steps:
@@ -132,7 +115,9 @@ jobs:
         UPLOAD_ON_BRANCH: {{ upload_on_branch }}
 {%- endif %}
 {%- if docker.run_args is defined %}
-        CONDA_FORGE_DOCKER_RUN_ARGS: "{{ docker.run_args }}"
+        CONDA_FORGE_DOCKER_RUN_ARGS: "{{ docker.run_args }} {% raw %}${{ matrix.CONDA_FORGE_DOCKER_RUN_ARGS }}{% endraw %}"
+{%- else %}
+        CONDA_FORGE_DOCKER_RUN_ARGS: "{% raw %}${{ matrix.CONDA_FORGE_DOCKER_RUN_ARGS }}{% endraw %}"
 {%- endif %}
 {%- for secret in secrets %}
         {{ secret }}: {% raw %}${{{% endraw %} secrets.{{ secret }} {% raw %}}}{% endraw %}
