@@ -1781,20 +1781,20 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
             {
                 "name": "cirun-openstack-gpu",
                 "labels": [
-                    "linux", 
+                    "linux",
                     "x64",
                     "self-hosted",
                     "cirun-openstack-gpu"
                 ],
                 "cloud": "openstack",
-                "instance_type": "gpu_tiny",
-                "machine_image": "ubuntu-focal-nvidia-14112022",
+                "instance_type": "gpu_medium",
+                "machine_image": "ubuntu-2204-nvidia-docker-20221229",
                 "region": "RegionOne",
             },
             {
                 "name": "cirun-openstack-cpu",
                 "labels": [
-                    "linux", 
+                    "linux",
                     "x64",
                     "self-hosted",
                     "cirun-openstack-cpu",
