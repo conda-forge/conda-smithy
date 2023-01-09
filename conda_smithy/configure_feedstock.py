@@ -1240,16 +1240,18 @@ def _github_actions_specific_setup(
         ],
         "win": [],
     }
-    if forge_config["github_actions"]["store_build_artifacts"]:
-        for tmpls in platform_templates.values():
-            tmpls.append(".scripts/create_conda_build_artifacts.sh")
-    if forge_config["github_actions"]["self_hosted"] and any(
-        label.startswith("cirun-")
-        for label in forge_config["github_actions"]["self_hosted_labels"]
-    ):
-        platform_templates["linux"].append("cirun.yml")
 
     template_files = platform_templates.get(platform, [])
+
+    # Templates for all platforms
+    if forge_config["github_actions"]["store_build_artifacts"]:
+        template_files.append(".scripts/create_conda_build_artifacts.sh")
+
+    if forge_config["github_actions"]["self_hosted"]:
+        for label in forge_config["github_actions"]["self_hosted_labels"]:
+            if label.startswith("cirun-"):
+                template_files.append(".cirun.yml")
+                break
 
     _render_template_exe_files(
         forge_config=forge_config,
