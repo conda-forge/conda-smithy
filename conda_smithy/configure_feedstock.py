@@ -1788,7 +1788,7 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
                 ],
                 "cloud": "openstack",
                 "instance_type": "gpu_medium",
-                "machine_image": "ubuntu-2204-nvidia-docker-20221229",
+                "machine_image": "ubuntu-2204-nvidia-container-runtime-20230107",
                 "region": "RegionOne",
             },
             {
