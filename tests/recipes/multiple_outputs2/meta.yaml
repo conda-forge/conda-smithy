@@ -1,0 +1,29 @@
+{% set version='1.2.3' %}
+
+package:
+  name: test_multiple_outputs2
+  version: {{ version }}
+
+build:
+  number: 0
+
+requirements:
+  build:
+  host:
+  run:
+
+outputs:
+  - name: test_output_1
+    about:
+      - license: Apache
+
+  - name: test_output_2
+
+about:
+  home: home
+  summary: summary
+  license: BSD
+
+extra:
+  recipe-maintainers:
+    - mickey_mouse

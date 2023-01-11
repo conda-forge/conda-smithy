@@ -39,7 +39,10 @@ from conda_smithy.feedstock_io import (
     copy_file,
     remove_file_or_dir,
 )
-from conda_smithy.utils import get_feedstock_name_from_meta
+from conda_smithy.utils import (
+    get_feedstock_name_from_meta,
+    get_feedstock_about_from_meta,
+)
 from . import __version__
 
 conda_forge_content = os.path.abspath(os.path.dirname(__file__))
@@ -1556,6 +1559,7 @@ def render_README(jinja_env, forge_config, forge_dir, render_info=None):
             )
 
     package_name = get_feedstock_name_from_meta(metas[0])
+    package_about = get_feedstock_about_from_meta(metas[0])
 
     ci_support_path = os.path.join(forge_dir, ".ci_support")
     variants = []
@@ -1565,10 +1569,23 @@ def render_README(jinja_env, forge_config, forge_dir, render_info=None):
                 variant_name, _ = os.path.splitext(filename)
                 variants.append(variant_name)
 
+    subpackages_metas = OrderedDict((meta.name(), meta) for meta in metas)
+    subpackages_about = [(package_name, package_about)]
+    for name, m in subpackages_metas.items():
+        about = m.meta["about"]
+        if isinstance(about, list):
+            about = about[0]
+        about = about.copy()
+        # if subpackages do not have about, conda-build would copy the top-level about;
+        # if subpackages have their own about, conda-build would use them as is;
+        # we discussed in PR #1691 and decided to not show repetitve entries
+        if about != package_about:
+            subpackages_about.append((name, about))
+
     template = jinja_env.get_template("README.md.tmpl")
     target_fname = os.path.join(forge_dir, "README.md")
     forge_config["noarch_python"] = all(meta.noarch for meta in metas)
-    forge_config["package_about"] = metas[0].meta["about"]
+    forge_config["package_about"] = subpackages_about
     forge_config["package_name"] = package_name
     forge_config["variants"] = sorted(variants)
     forge_config["outputs"] = sorted(
