@@ -9,9 +9,8 @@ import tempfile
 
 from textwrap import dedent
 
-import conda
+import conda  # noqa
 import conda_build.api
-from distutils.version import LooseVersion
 from conda_build.metadata import MetaData
 from conda_smithy.utils import get_feedstock_name_from_meta, merge_dict
 from ruamel.yaml import YAML
@@ -63,7 +62,7 @@ def generate_feedstock_content(target_directory, source_recipe_dir):
         try:
             with open(forge_yml_recipe, "r") as fp:
                 _cfg = yaml.load(fp.read())
-        except:
+        except Exception:
             _cfg = {}
 
         with open(forge_yml, "r") as fp:
@@ -684,6 +683,11 @@ class GenerateFeedstockToken(Subcommand):
             default=feedstock_io.get_repo_root(os.getcwd()) or os.getcwd(),
             help="The directory of the feedstock git repository.",
         )
+        scp.add_argument(
+            "--unique-token-per-provider",
+            action="store_true",
+            help="If set, use a unique token per CI provider.",
+        )
         group = scp.add_mutually_exclusive_group()
         group.add_argument(
             "--user", help="github username under which to register this repo"
@@ -697,16 +701,33 @@ class GenerateFeedstockToken(Subcommand):
     def __call__(self, args):
         from conda_smithy.feedstock_tokens import (
             generate_and_write_feedstock_token,
+            feedstock_token_local_path,
         )
 
         owner = args.user or args.organization
         repo = os.path.basename(os.path.abspath(args.feedstock_directory))
 
-        generate_and_write_feedstock_token(owner, repo)
-        print(
-            "Your feedstock token has been generated at ~/.conda-smithy/%s_%s.token\n"
-            "This token is stored in plaintext so be careful!" % (owner, repo)
-        )
+        if not args.unique_token_per_provider:
+            generate_and_write_feedstock_token(owner, repo)
+            print(
+                "Your feedstock token has been generated at %s\n"
+                "This token is stored in plaintext so be careful!"
+                % (feedstock_token_local_path(owner, repo))
+            )
+        else:
+            for ci in [
+                "azure",
+                "travis",
+                "circle",
+                "drone",
+                "github_actions",
+            ]:
+                generate_and_write_feedstock_token(owner, repo, ci=ci)
+                print(
+                    "Your feedstock token has been generated at %s\n"
+                    "This token is stored in plaintext so be careful!"
+                    % (feedstock_token_local_path(owner, repo, ci=ci))
+                )
 
 
 class RegisterFeedstockToken(Subcommand):
@@ -737,6 +758,16 @@ class RegisterFeedstockToken(Subcommand):
                 "The GitHub repo that stores feedstock tokens. The default is "
                 "{user or org}/feedstock-tokens on GitHub."
             ),
+        )
+        scp.add_argument(
+            "--unique-token-per-provider",
+            action="store_true",
+            help="If set, use a unique token per CI provider.",
+        )
+        scp.add_argument(
+            "--append-token",
+            action="store_true",
+            help="If set, append the token instead of erroring if token exists.",
         )
         group = scp.add_mutually_exclusive_group()
         group.add_argument(
@@ -770,7 +801,6 @@ class RegisterFeedstockToken(Subcommand):
         from conda_smithy.feedstock_tokens import (
             register_feedstock_token_with_proviers,
             register_feedstock_token,
-            feedstock_token_exists,
         )
         from conda_smithy.ci_register import drone_default_endpoint
 
@@ -789,11 +819,6 @@ class RegisterFeedstockToken(Subcommand):
         else:
             token_repo = args.token_repo
 
-        if feedstock_token_exists(owner, repo, token_repo):
-            raise RuntimeError(
-                "Token for repo %s/%s already exists!" % (owner, repo)
-            )
-
         print("Registering the feedstock tokens. Can take up to ~30 seconds.")
 
         # do all providers first
@@ -806,10 +831,30 @@ class RegisterFeedstockToken(Subcommand):
             azure=args.azure,
             github_actions=args.github_actions,
             drone_endpoints=drone_endpoints,
+            unique_token_per_provider=args.unique_token_per_provider,
         )
 
         # then if that works do the github repo
-        register_feedstock_token(owner, repo, token_repo)
+        if args.unique_token_per_provider:
+            for ci in [
+                "azure",
+                "travis",
+                "circle",
+                "drone",
+                "github_actions",
+            ]:
+                if getattr(args, ci):
+                    register_feedstock_token(
+                        owner,
+                        repo,
+                        token_repo,
+                        ci=ci,
+                        append=args.append_token,
+                    )
+        else:
+            register_feedstock_token(
+                owner, repo, token_repo, append=args.append_token
+            )
 
         print("Successfully registered the feedstock token!")
 
