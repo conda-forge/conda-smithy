@@ -259,15 +259,24 @@ def is_valid_feedstock_token(
                 token_data = json.loads(
                     base64.standard_b64decode(data["content"]).decode("utf-8")
                 )
-                salted_token = scrypt.hash(
-                    feedstock_token,
-                    bytes.fromhex(token_data["salt"]),
-                    buflen=256,
-                )
-                valid = hmac.compare_digest(
-                    salted_token,
-                    bytes.fromhex(token_data["hashed_token"]),
-                )
+                # handle new vs old format
+                if "tokens" in token_data:
+                    possible_td = token_data["tokens"]
+                else:
+                    possible_td = [token_data]
+
+                for td in possible_td:
+                    salted_token = scrypt.hash(
+                        feedstock_token,
+                        bytes.fromhex(td["salt"]),
+                        buflen=256,
+                    )
+                    valid = hmac.compare_digest(
+                        salted_token,
+                        bytes.fromhex(td["hashed_token"]),
+                    )
+                    if valid:
+                        break
             elif r.status_code == 404:
                 valid = False
             else:
