@@ -193,7 +193,7 @@ def _fetch_feedstock_token(user, project, token_repo, ci=None):
         try:
             r = requests.get(
                 "https://api.github.com/repos/%s/"
-                "%s/contents/tokens/%s" % (user, token_repo, token_file),
+                "%s/contents/%s" % (user, token_repo, token_file),
                 headers=_gh_token_api_headers(),
             )
             if r.status_code == 200:
@@ -227,7 +227,7 @@ def _fetch_feedstock_token(user, project, token_repo, ci=None):
         ) % (user, project, "" if ci is None else " " + ci)
         if err_msg:
             final_err_msg += " - error: %s" % err_msg
-        raise FeedstockTokenError(err_msg)
+        raise FeedstockTokenError(final_err_msg)
 
     return token_data, r
 
@@ -342,7 +342,7 @@ def _push_feedstock_token(
                 json_data["sha"] = blob_sha
             r = requests.put(
                 "https://api.github.com/repos/%s/"
-                "%s/contents/tokens/%s" % (user, token_repo, token_file),
+                "%s/contents/%s" % (user, token_repo, token_file),
                 headers=_gh_token_api_headers(),
                 json=json_data,
             )

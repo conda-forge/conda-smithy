@@ -6,6 +6,8 @@ import pytest
 import scrypt
 
 from conda_smithy.feedstock_tokens import (
+    feedstock_token_local_path,
+    feedstock_token_repo_path,
     generate_and_write_feedstock_token,
     read_feedstock_token,
     feedstock_token_exists,
@@ -17,42 +19,60 @@ from conda_smithy.feedstock_tokens import (
 from conda_smithy.ci_register import drone_default_endpoint
 
 
+@pytest.mark.parametrize("ci", [None, "azure"])
 @pytest.mark.parametrize("project", ["bar", "bar-feedstock"])
 @pytest.mark.parametrize(
-    "repo", ["GITHUB_TOKEN", "${GITHUB_TOKEN}", "GH_TOKEN", "${GH_TOKEN}"]
+    "repo", [
+      "https://${GITHUB_TOKEN}@github.com/foo/feedstock-tokens/",
+      "https://${GITHUB_TOKEN}@github.com/foo/feedstock-tokens.git/",
+      "https://${GITHUB_TOKEN}@github.com/foo/feedstock-tokens.git",
+      "https://${GITHUB_TOKEN}@github.com/foo/feedstock-tokens",
+    ],
 )
-@mock.patch("conda_smithy.feedstock_tokens.tempfile")
-@mock.patch("conda_smithy.feedstock_tokens.git")
 @mock.patch("conda_smithy.github.gh_token")
 def test_feedstock_tokens_roundtrip(
-    gh_mock, git_mock, tmp_mock, tmpdir, repo, project
+    gh_mock, repo, project, requests_mock, ci,
 ):
     gh_mock.return_value = "abc123"
-    tmp_mock.TemporaryDirectory.return_value.__enter__.return_value = str(
-        tmpdir
-    )
 
     user = "foo"
-    pth = os.path.expanduser("~/.conda-smithy/foo_%s.token" % project)
-    token_json_pth = os.path.join(tmpdir, "tokens", "%s.json" % project)
-    os.makedirs(os.path.join(tmpdir, "tokens"), exist_ok=True)
-
+    pth = feedstock_token_local_path(user, project, ci=ci)
+    reg_pth = feedstock_token_repo_path(project, ci=ci)
     try:
-        generate_and_write_feedstock_token(user, project)
+        generate_and_write_feedstock_token(user, project, ci=ci)
         assert os.path.exists(pth)
-
-        register_feedstock_token(user, project, repo)
-        assert os.path.exists(token_json_pth)
-
         with open(pth, "r") as fp:
             feedstock_token = fp.read().strip()
 
-        retval = is_valid_feedstock_token(user, project, feedstock_token, repo)
+        requests_mock.get(
+            "https://api.github.com/repos/foo/feedstock-tokens/contents/%s" % reg_pth,
+            status_code=404,
+        )
+        requests_mock.put(
+            "https://api.github.com/repos/foo/feedstock-tokens/contents/%s" % reg_pth,
+            status_code=201,
+        )
+
+        register_feedstock_token(user, project, repo, ci=ci)
+        assert requests_mock.call_count == 2
+        assert requests_mock.request_history[-1].headers["Authorization"] == "Bearer abc123"
+        assert requests_mock.request_history[-2].headers["Authorization"] == "Bearer abc123"
+
+        data = {}
+        data.update(requests_mock.request_history[-1].json())
+        data["encoding"] = "base64"
+        requests_mock.get(
+            "https://api.github.com/repos/foo/feedstock-tokens/contents/%s" % reg_pth,
+            status_code=200,
+            json=data,
+        )
+
+        assert is_valid_feedstock_token(user, project, feedstock_token, repo, ci=ci)
+        assert requests_mock.call_count == 3
+        assert requests_mock.request_history[-1].headers["Authorization"] == "Bearer abc123"
     finally:
         if os.path.exists(pth):
             os.remove(pth)
-
-    assert retval
 
 
 @pytest.mark.parametrize("project", ["bar", "bar-feedstock"])

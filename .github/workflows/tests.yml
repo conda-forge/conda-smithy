@@ -31,7 +31,7 @@ jobs:
           mamba install --file requirements.txt \
             pre-commit coverage coveralls mock pytest \
             pytest-cov pip setuptools wheel ${CONDA_PKGS} \
-            python-build \
+            python-build requests-mock \
             --yes
           python -m pip install -v -e .
           git config --global user.email "smithy@smithy.smithy"
