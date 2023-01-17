@@ -45,20 +45,20 @@ jobs:
       - name: test versions
         shell: bash -l {0}
         run: |
-          pip uninstall conda-smithy
+          pip uninstall conda-smithy --yes
           [[ $(python setup.py --version) != "0.0.0" ]] || exit 1
 
           rm -rf dist/*
           python setup.py sdist
           pip install dist/*.tar.gz
           python -c "import conda_smithy; assert conda_smithy.__version__ != '0.0.0'"
-          pip uninstall conda-smithy
+          pip uninstall conda-smithy --yes
 
           rm -rf dist/*
           python -m build --sdist . --outdir dist
           pip install dist/*.tar.gz
           python -c "import conda_smithy; assert conda_smithy.__version__ != '0.0.0'"
-          pip uninstall conda-smithy
+          pip uninstall conda-smithy --yes
 
           python -m pip install -v -e .
 
