@@ -1,3 +1,31 @@
+[build-system]
+requires = ["setuptools>=45", "setuptools_scm[toml]>=7"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "conda-smithy"
+authors = [
+    {name = "Phil Elson", email = "pelson.pub@gmail.com"},
+]
+description = "A package to create repositories for conda recipes, and automate their building with CI tools on Linux, OSX and Windows."
+dynamic = ["version"]
+
+[project.urls]
+home = "https://github.com/conda-forge/conda-smithy"
+
+[project.scripts]
+feedstocks = "conda_smithy.feedstocks:main"
+conda-smithy = "conda_smithy.cli:main"
+
+[tool.setuptools]
+packages = ["conda_smithy"]
+zip-safe = true
+include-package-data = true
+
+[tool.setuptools_scm]
+write_to = "conda_smithy/_version.py"
+write_to_template = "__version__ = '{version}'"
+
 [tool.black]
 line-length = 79
 
