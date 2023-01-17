@@ -17,12 +17,13 @@ jobs:
 
       - uses: conda-incubator/setup-miniconda@v2
         with:
-          python-version: 3.7
+          python-version: 3.8
           channels: conda-forge,defaults
           channel-priority: strict
           show-channel-urls: true
           miniforge-version: latest
           miniforge-variant: Mambaforge
+          use-mamba: true
 
       - name: install code and deps
         shell: bash -l {0}
