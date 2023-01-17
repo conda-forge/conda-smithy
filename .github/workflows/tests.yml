@@ -49,10 +49,10 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Coveralls
-          uses: coverallsapp/github-action@master
-          with:
-            github-token: ${{ secrets.GITHUB_TOKEN }}
-            path-to-lcov: ./coverage.lcov
+        uses: coverallsapp/github-action@master
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path-to-lcov: ./coverage.lcov
 
       # - name: compute coverage
       #   shell: bash -l {0}
