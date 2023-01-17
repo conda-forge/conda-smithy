@@ -30,8 +30,8 @@ jobs:
         run: |
           mamba install --file requirements.txt \
             pre-commit coverage coveralls mock pytest pytest-cov pip ${CONDA_PKGS} \
-            --yes --quiet
-          python -m pip install -v --no-deps -e .
+            --yes
+          python -m pip install -v -e .
           git config --global user.email "smithy@smithy.smithy"
           git config --global user.name "smithy"
 
