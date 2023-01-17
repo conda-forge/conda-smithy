@@ -51,13 +51,17 @@ jobs:
           rm -rf dist/*
           python setup.py sdist
           pip install dist/*.tar.gz
+          pushd ..
           python -c "import conda_smithy; assert conda_smithy.__version__ != '0.0.0'"
+          popd
           pip uninstall conda-smithy --yes
 
           rm -rf dist/*
           python -m build --sdist . --outdir dist
           pip install dist/*.tar.gz
+          pushd ..
           python -c "import conda_smithy; assert conda_smithy.__version__ != '0.0.0'"
+          popd
           pip uninstall conda-smithy --yes
 
           python -m pip install -v -e .
