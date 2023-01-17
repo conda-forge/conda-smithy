@@ -22,7 +22,7 @@ def main():
         # not zip-safe.
         zip_safe=False,
         use_scm_version=True,
-        setup_requires=["setuptools_scm"],
+        setup_requires=["setuptools_scm>=7"],
     )
     setup(**skw)
 

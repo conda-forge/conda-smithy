@@ -15,4 +15,4 @@ toolz
 shellcheck
 scrypt
 license-expression
-setuptools_scm
+setuptools_scm >=7
