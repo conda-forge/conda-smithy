@@ -43,7 +43,7 @@ jobs:
       - name: run tests
         shell: bash -l {0}
         run: |
-          pytest tests --cov conda_smithy
+          pytest tests --cov conda_smithy --cov-report lcov --cov-report term-missing
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -51,7 +51,7 @@ jobs:
         shell: bash -l {0}
         run: |
           coverage combine || echo "no coverage data to combine maybe"
-          ls -lah
+          cat .coverage
           coveralls --service=github
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
