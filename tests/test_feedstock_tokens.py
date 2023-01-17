@@ -94,24 +94,38 @@ def test_feedstock_tokens_roundtrip(
             os.remove(pth)
 
 
+@pytest.mark.parametrize("ci", [None, "azure"])
 @pytest.mark.parametrize("project", ["bar", "bar-feedstock"])
 @pytest.mark.parametrize(
-    "repo", ["GITHUB_TOKEN", "${GITHUB_TOKEN}", "GH_TOKEN", "${GH_TOKEN}"]
+    "repo",
+    [
+        "https://${GITHUB_TOKEN}@github.com/foo/feedstock-tokens/",
+        "https://${GITHUB_TOKEN}@github.com/foo/feedstock-tokens.git/",
+        "https://${GITHUB_TOKEN}@github.com/foo/feedstock-tokens.git",
+        "https://${GITHUB_TOKEN}@github.com/foo/feedstock-tokens",
+    ],
 )
-@mock.patch("conda_smithy.feedstock_tokens.tempfile")
-@mock.patch("conda_smithy.feedstock_tokens.git")
 @mock.patch("conda_smithy.github.gh_token")
 def test_is_valid_feedstock_token_nofile(
-    gh_mock, git_mock, tmp_mock, tmpdir, repo, project
+    gh_mock,
+    repo,
+    project,
+    ci,
+    requests_mock,
 ):
     gh_mock.return_value = "abc123"
-    tmp_mock.TemporaryDirectory.return_value.__enter__.return_value = str(
-        tmpdir
-    )
 
-    user = "conda-forge"
+    user = "foo"
     feedstock_token = "akdjhfl"
-    retval = is_valid_feedstock_token(user, project, feedstock_token, repo)
+    reg_pth = feedstock_token_repo_path(project, ci=ci)
+    requests_mock.get(
+        "https://api.github.com/repos/foo/feedstock-tokens/contents/%s"
+        % reg_pth,
+        status_code=404,
+    )
+    retval = is_valid_feedstock_token(
+        user, project, feedstock_token, repo, ci=ci
+    )
     assert not retval
 
 
