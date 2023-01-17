@@ -1,12 +1,10 @@
 #!/usr/bin/env python
-from setuptools import setup, find_packages
-import versioneer
+from setuptools import setup
 
 
 def main():
     skw = dict(
         name="conda-smithy",
-        version=versioneer.get_version(),
         description="A package to create repositories for conda recipes, and automate "
         "their building with CI tools on Linux, OSX and Windows.",
         author="Phil Elson",
@@ -23,7 +21,8 @@ def main():
         # As conda-smithy has resources as part of the codebase, it is
         # not zip-safe.
         zip_safe=False,
-        cmdclass=versioneer.get_cmdclass(),
+        use_scm_version=True,
+        setup_requires=['setuptools_scm'],
     )
     setup(**skw)
 

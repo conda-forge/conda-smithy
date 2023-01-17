@@ -1,2 +1,19 @@
 [tool.black]
 line-length = 79
+
+[tool.pytest.ini_options]
+norecursedirs = [
+    "tests/recipes",
+    ".*",
+    "*.egg*",
+    "build",
+    "dist",
+    "conda-smithy.recipe",
+]
+addopts = "--ignore setup.py --ignore conda_smithy --tb native --strict --durations=20"
+markers = [
+    "legacy_circle: Test designed to run as if prior to the azure migration",
+    "legacy_travis: Test designed to run as if prior to the azure migration",
+    "legacy_appveyor: Test designed to run as if prior to the azure migration",
+    "cli: CLI tests outside of test/test_cli.py",
+]
