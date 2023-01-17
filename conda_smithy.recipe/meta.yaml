@@ -37,7 +37,6 @@ requirements:
     - scrypt
     - license-expression
     - libarchive
-    - importlib_metadata
 
 test:
   requires:

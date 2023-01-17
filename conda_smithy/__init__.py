@@ -1,10 +1,4 @@
 try:
-    from importlib.metadata import version, PackageNotFoundError
+    from ._version import __version__
 except ImportError:
-    from importlib_metadata import version, PackageNotFoundError
-
-try:
-    __version__ = version("conda_smithy")
-except PackageNotFoundError:
-    # package is not installed
-    pass
+    __version__ = "unknown"

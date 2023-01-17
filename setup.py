@@ -21,7 +21,11 @@ def main():
         # As conda-smithy has resources as part of the codebase, it is
         # not zip-safe.
         zip_safe=False,
-        use_scm_version=True,
+        use_scm_version={
+            "write_to": "conda_smithy/_version.py",
+            "write_to_template": '__version__ = "{version}"',
+            "tag_regex": r"^(?P<prefix>v)?(?P<version>[^\+]+)(?P<suffix>.*)?$",
+        },
     )
     setup(**skw)
 
