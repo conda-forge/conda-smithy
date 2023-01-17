@@ -29,7 +29,8 @@ jobs:
         shell: bash -l {0}
         run: |
           mamba install --file requirements.txt \
-            pre-commit coverage coveralls mock pytest pytest-cov pip ${CONDA_PKGS} \
+            pre-commit coverage coveralls mock pytest \
+            pytest-cov pip setuptools wheel ${CONDA_PKGS} \
             --yes
           python -m pip install -v -e .
           git config --global user.email "smithy@smithy.smithy"
