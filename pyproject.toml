@@ -19,7 +19,7 @@ conda-smithy = "conda_smithy.cli:main"
 
 [tool.setuptools]
 packages = ["conda_smithy"]
-zip-safe = true
+zip-safe = false
 include-package-data = true
 
 [tool.setuptools_scm]
