@@ -4,7 +4,7 @@ except ImportError:
     from importlib_metadata import version, PackageNotFoundError
 
 try:
-    __version__ = version("pizza_cutter")
+    __version__ = version("conda_smithy")
 except PackageNotFoundError:
     # package is not installed
     pass
