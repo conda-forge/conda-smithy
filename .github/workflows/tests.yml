@@ -47,10 +47,15 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: compute coverage
-        shell: bash -l {0}
-        run: |
-          coverage combine || echo "no coverage data to combine maybe"
-          coveralls --service=github
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: coveralls
+        uses: coverallsapp/github-action@master
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      # - name: compute coverage
+      #   shell: bash -l {0}
+      #   run: |
+      #     coverage combine || echo "no coverage data to combine maybe"
+      #     coveralls --service=github
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
