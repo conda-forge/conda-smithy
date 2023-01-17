@@ -48,18 +48,8 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Coveralls
+      - name: coveralls
         uses: coverallsapp/github-action@master
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           path-to-lcov: ./coverage.lcov
-
-      # - name: compute coverage
-      #   shell: bash -l {0}
-      #   run: |
-      #     coverage combine || echo "no coverage data to combine maybe"
-      #     la -lah
-      #     coveralls --service=github
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #     COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
