@@ -33,7 +33,7 @@ jobs:
             pytest-cov pip setuptools wheel ${CONDA_PKGS} \
             python-build requests-mock \
             --yes
-          python -m pip install -v -e .
+          python -m pip install -v --no-build-isolation -e .
           git config --global user.email "smithy@smithy.smithy"
           git config --global user.name "smithy"
 
