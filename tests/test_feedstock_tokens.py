@@ -491,55 +491,119 @@ def test_register_feedstock_token_notoken(
     assert "No token found in" in str(e.value)
 
 
+@pytest.mark.parametrize("append", [True, False])
+@pytest.mark.parametrize("ci", [None, "azure"])
+@pytest.mark.parametrize("project", ["bar", "bar-feedstock"])
 @pytest.mark.parametrize(
-    "repo", ["$GITHUB_TOKEN", "${GITHUB_TOKEN}", "$GH_TOKEN", "${GH_TOKEN}"]
+    "repo",
+    [
+        "https://${GITHUB_TOKEN}@github.com/foo/feedstock-tokens/",
+        "https://${GITHUB_TOKEN}@github.com/foo/feedstock-tokens.git/",
+        "https://${GITHUB_TOKEN}@github.com/foo/feedstock-tokens.git",
+        "https://${GITHUB_TOKEN}@github.com/foo/feedstock-tokens",
+    ],
 )
 @mock.patch("conda_smithy.feedstock_tokens.secrets")
 @mock.patch("conda_smithy.feedstock_tokens.os.urandom")
-@mock.patch("conda_smithy.feedstock_tokens.tempfile")
-@mock.patch("conda_smithy.feedstock_tokens.git")
 @mock.patch("conda_smithy.github.gh_token")
 def test_register_feedstock_token_exists_already(
-    gh_mock, git_mock, tmp_mock, osuran_mock, secrets_mock, tmpdir, repo
+    gh_mock,
+    osuran_mock,
+    secrets_mock,
+    repo,
+    project,
+    ci,
+    requests_mock,
+    append,
 ):
     gh_mock.return_value = "abc123"
-    tmp_mock.TemporaryDirectory.return_value.__enter__.return_value = str(
-        tmpdir
-    )
     secrets_mock.token_hex.return_value = "fgh"
     osuran_mock.return_value = b"\x80SA"
 
+    old_salted_token = scrypt.hash("fghk", b"\x80SA", buflen=256)
+    old_token_data = {
+        "tokens": [
+            {
+                "salt": b"\x80SA".hex(),
+                "hashed_token": old_salted_token.hex(),
+            }
+        ],
+    }
+    old_content = base64.standard_b64encode(
+        json.dumps(old_token_data).encode("utf-8")
+    ).decode("ascii")
+
     user = "foo"
-    project = "bar"
-    os.makedirs(os.path.join(tmpdir, "tokens"), exist_ok=True)
-    pth = os.path.expanduser("~/.conda-smithy/foo_bar.token")
-    token_json_pth = os.path.join(tmpdir, "tokens", "bar.json")
-    with open(token_json_pth, "w") as fp:
-        fp.write("blarg")
-
+    pth = feedstock_token_local_path(user, project, ci=ci)
+    reg_pth = feedstock_token_repo_path(project, ci=ci)
     try:
-        generate_and_write_feedstock_token(user, project)
+        generate_and_write_feedstock_token(user, project, ci=ci)
 
-        with pytest.raises(RuntimeError) as e:
-            register_feedstock_token(user, project, repo)
+        requests_mock.get(
+            "https://api.github.com/repos/foo/feedstock-tokens/contents/%s"
+            % reg_pth,
+            status_code=200,
+            json={
+                "encoding": "base64",
+                "content": old_content,
+                "sha": "blah",
+            },
+        )
+        requests_mock.put(
+            "https://api.github.com/repos/foo/feedstock-tokens/contents/%s"
+            % reg_pth,
+            status_code=201,
+        )
 
+        if not append:
+            with pytest.raises(FeedstockTokenError) as e:
+                register_feedstock_token(
+                    user, project, repo, ci=ci, append=append
+                )
+        else:
+            register_feedstock_token(user, project, repo, ci=ci, append=append)
     finally:
         if os.path.exists(pth):
             os.remove(pth)
 
-    git_mock.Repo.clone_from.assert_called_once_with(
-        "abc123",
-        str(tmpdir),
-        depth=1,
-    )
+    if append:
+        assert requests_mock.call_count == 2
+        assert (
+            requests_mock.request_history[-2].headers["Authorization"]
+            == "Bearer abc123"
+        )
+        assert (
+            requests_mock.request_history[-1].headers["Authorization"]
+            == "Bearer abc123"
+        )
 
-    repo = git_mock.Repo.clone_from.return_value
-    repo.index.add.assert_not_called()
-    repo.index.commit.assert_not_called()
-    repo.remote.return_value.pull.assert_not_called()
-    repo.remote.return_value.push.assert_not_called()
+        assert requests_mock.request_history[-1].json()["message"] == (
+            "[ci skip] [skip ci] [cf admin skip] ***NO_CI*** "
+            "added token for %s/%s on CI%s"
+            % (user, project, "" if ci is None else " " + ci)
+        )
 
-    assert "Token for repo foo/bar already exists!" in str(e.value)
+        salted_token = scrypt.hash("fgh", b"\x80SA", buflen=256)
+        token_data = {
+            "tokens": [
+                old_token_data["tokens"][0],
+                {
+                    "salt": b"\x80SA".hex(),
+                    "hashed_token": salted_token.hex(),
+                },
+            ],
+        }
+        content = base64.standard_b64encode(
+            json.dumps(token_data).encode("utf-8")
+        ).decode("ascii")
+        assert requests_mock.request_history[-1].json()["content"] == content
+    else:
+        assert requests_mock.call_count == 1
+        assert (
+            requests_mock.request_history[-1].headers["Authorization"]
+            == "Bearer abc123"
+        )
+        assert "Token for repo foo/%s on CI" % project in str(e.value)
 
 
 @pytest.mark.parametrize("drone", [True, False])
@@ -661,7 +725,7 @@ def test_register_feedstock_token_with_proviers_notoken(
     user = "foo"
     project = "bar"
 
-    with pytest.raises(RuntimeError) as e:
+    with pytest.raises(FeedstockTokenError) as e:
         register_feedstock_token_with_proviers(
             user,
             project,
@@ -720,7 +784,7 @@ def test_register_feedstock_token_with_proviers_error(
         generate_and_write_feedstock_token(user, project)
         feedstock_token, _ = read_feedstock_token(user, project)
 
-        with pytest.raises(RuntimeError) as e:
+        with pytest.raises(FeedstockTokenError) as e:
             register_feedstock_token_with_proviers(
                 user, project, drone_endpoints=[drone_default_endpoint]
             )
