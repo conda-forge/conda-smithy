@@ -435,47 +435,59 @@ def test_register_feedstock_token_works(
     assert requests_mock.request_history[-1].json()["content"] == content
 
 
+@pytest.mark.parametrize("ci", [None, "azure"])
+@pytest.mark.parametrize("project", ["bar", "bar-feedstock"])
 @pytest.mark.parametrize(
-    "repo", ["$GITHUB_TOKEN", "${GITHUB_TOKEN}", "$GH_TOKEN", "${GH_TOKEN}"]
+    "repo",
+    [
+        "https://${GITHUB_TOKEN}@github.com/foo/feedstock-tokens/",
+        "https://${GITHUB_TOKEN}@github.com/foo/feedstock-tokens.git/",
+        "https://${GITHUB_TOKEN}@github.com/foo/feedstock-tokens.git",
+        "https://${GITHUB_TOKEN}@github.com/foo/feedstock-tokens",
+    ],
 )
 @mock.patch("conda_smithy.feedstock_tokens.secrets")
 @mock.patch("conda_smithy.feedstock_tokens.os.urandom")
-@mock.patch("conda_smithy.feedstock_tokens.tempfile")
-@mock.patch("conda_smithy.feedstock_tokens.git")
 @mock.patch("conda_smithy.github.gh_token")
 def test_register_feedstock_token_notoken(
-    gh_mock, git_mock, tmp_mock, osuran_mock, secrets_mock, tmpdir, repo
+    gh_mock,
+    osuran_mock,
+    secrets_mock,
+    repo,
+    project,
+    ci,
+    requests_mock,
 ):
     gh_mock.return_value = "abc123"
-    tmp_mock.TemporaryDirectory.return_value.__enter__.return_value = str(
-        tmpdir
-    )
     secrets_mock.token_hex.return_value = "fgh"
     osuran_mock.return_value = b"\x80SA"
 
     user = "foo"
-    project = "bar"
-    os.makedirs(os.path.join(tmpdir, "tokens"), exist_ok=True)
-    pth = os.path.expanduser("~/.conda-smithy/foo_bar.token")
-    token_json_pth = os.path.join(tmpdir, "tokens", "bar.json")
-
+    pth = feedstock_token_local_path(user, project, ci=ci)
+    reg_pth = feedstock_token_repo_path(project, ci=ci)
     try:
-        with pytest.raises(RuntimeError) as e:
-            register_feedstock_token(user, project, repo)
+        requests_mock.get(
+            "https://api.github.com/repos/foo/feedstock-tokens/contents/%s"
+            % reg_pth,
+            status_code=404,
+        )
+        requests_mock.put(
+            "https://api.github.com/repos/foo/feedstock-tokens/contents/%s"
+            % reg_pth,
+            status_code=201,
+        )
+
+        with pytest.raises(FeedstockTokenError) as e:
+            register_feedstock_token(user, project, repo, ci=ci)
     finally:
         if os.path.exists(pth):
             os.remove(pth)
 
-    git_mock.Repo.clone_from.assert_not_called()
-
-    repo = git_mock.Repo.clone_from.return_value
-    repo.index.add.assert_not_called()
-    repo.index.commit.assert_not_called()
-    repo.remote.return_value.pull.assert_not_called()
-    repo.remote.return_value.push.assert_not_called()
-
-    assert not os.path.exists(token_json_pth)
-
+    assert requests_mock.call_count == 1
+    assert (
+        requests_mock.request_history[-1].headers["Authorization"]
+        == "Bearer abc123"
+    )
     assert "No token found in" in str(e.value)
 
 
