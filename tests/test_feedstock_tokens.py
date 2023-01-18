@@ -261,69 +261,98 @@ def test_read_feedstock_token(ci):
             os.remove(pth)
 
 
-@pytest.mark.parametrize("retval", [True, False])
+@pytest.mark.parametrize("status_code", [200, 404])
+@pytest.mark.parametrize(
+    "token_data", [{"tokens": ["blah"]}, {}, {"tokens": []}]
+)
+@pytest.mark.parametrize("ci", [None, "azure"])
 @pytest.mark.parametrize("project", ["bar", "bar-feedstock"])
 @pytest.mark.parametrize(
-    "repo", ["$GITHUB_TOKEN", "${GITHUB_TOKEN}", "$GH_TOKEN", "${GH_TOKEN}"]
+    "repo",
+    [
+        "https://${GITHUB_TOKEN}@github.com/foo/feedstock-tokens/",
+        "https://${GITHUB_TOKEN}@github.com/foo/feedstock-tokens.git/",
+        "https://${GITHUB_TOKEN}@github.com/foo/feedstock-tokens.git",
+        "https://${GITHUB_TOKEN}@github.com/foo/feedstock-tokens",
+    ],
 )
-@mock.patch("conda_smithy.feedstock_tokens.tempfile")
-@mock.patch("conda_smithy.feedstock_tokens.git")
 @mock.patch("conda_smithy.github.gh_token")
 def test_feedstock_token_exists(
-    gh_mock, git_mock, tmp_mock, tmpdir, repo, project, retval
+    gh_mock,
+    repo,
+    project,
+    ci,
+    requests_mock,
+    token_data,
+    status_code,
 ):
     gh_mock.return_value = "abc123"
-    tmp_mock.TemporaryDirectory.return_value.__enter__.return_value = str(
-        tmpdir
-    )
 
     user = "foo"
-    os.makedirs(os.path.join(tmpdir, "tokens"), exist_ok=True)
-    if retval:
-        with open(
-            os.path.join(tmpdir, "tokens", "%s.json" % project), "w"
-        ) as fp:
-            fp.write("blarg")
+    reg_pth = feedstock_token_repo_path(project, ci=ci)
+    if status_code == 200 and (
+        len(token_data) == 0
+        or ("tokens" in token_data and len(token_data["tokens"]) > 0)
+    ):
+        retval = True
+    else:
+        retval = False
+    requests_mock.get(
+        "https://api.github.com/repos/foo/feedstock-tokens/contents/%s"
+        % reg_pth,
+        status_code=status_code,
+        json={
+            "encoding": "base64",
+            "content": base64.standard_b64encode(
+                json.dumps(token_data).encode("utf-8")
+            ).decode("ascii"),
+        },
+    )
 
-    assert feedstock_token_exists(user, project, repo) is retval
-
-    git_mock.Repo.clone_from.assert_called_once_with(
-        "abc123",
-        str(tmpdir),
-        depth=1,
+    assert feedstock_token_exists(user, project, repo, ci=ci) is retval
+    assert requests_mock.call_count == 1
+    assert (
+        requests_mock.request_history[-1].headers["Authorization"]
+        == "Bearer abc123"
     )
 
 
+@pytest.mark.parametrize("ci", [None, "azure"])
 @pytest.mark.parametrize("project", ["bar", "bar-feedstock"])
 @pytest.mark.parametrize(
-    "repo", ["$GITHUB_TOKEN", "${GITHUB_TOKEN}", "$GH_TOKEN", "${GH_TOKEN}"]
+    "repo",
+    [
+        "https://${GITHUB_TOKEN}@github.com/foo/feedstock-tokens/",
+        "https://${GITHUB_TOKEN}@github.com/foo/feedstock-tokens.git/",
+        "https://${GITHUB_TOKEN}@github.com/foo/feedstock-tokens.git",
+        "https://${GITHUB_TOKEN}@github.com/foo/feedstock-tokens",
+    ],
 )
-@mock.patch("conda_smithy.feedstock_tokens.tempfile")
-@mock.patch("conda_smithy.feedstock_tokens.git")
 @mock.patch("conda_smithy.github.gh_token")
 def test_feedstock_token_raises(
-    gh_mock, git_mock, tmp_mock, tmpdir, repo, project
+    gh_mock,
+    repo,
+    project,
+    ci,
+    requests_mock,
 ):
     gh_mock.return_value = "abc123"
-    tmp_mock.TemporaryDirectory.return_value.__enter__.return_value = str(
-        tmpdir
+    user = "foo"
+    reg_pth = feedstock_token_repo_path(project, ci=ci)
+    requests_mock.get(
+        "https://api.github.com/repos/foo/feedstock-tokens/contents/%s"
+        % reg_pth,
+        status_code=500,
     )
 
-    git_mock.Repo.clone_from.side_effect = ValueError("blarg")
-    user = "foo"
-    os.makedirs(os.path.join(tmpdir, "tokens"), exist_ok=True)
-    with open(os.path.join(tmpdir, "tokens", "%s.json" % project), "w") as fp:
-        fp.write("blarg")
+    with pytest.raises(FeedstockTokenError) as e:
+        feedstock_token_exists(user, project, repo, ci=ci)
 
-    with pytest.raises(RuntimeError) as e:
-        feedstock_token_exists(user, project, repo)
-
-    assert "Testing for the feedstock token for" in str(e.value)
-
-    git_mock.Repo.clone_from.assert_called_once_with(
-        "abc123",
-        str(tmpdir),
-        depth=1,
+    assert "Fetching feedstock token" in str(e.value)
+    assert requests_mock.call_count == 1
+    assert (
+        requests_mock.request_history[-1].headers["Authorization"]
+        == "Bearer abc123"
     )
 
 
