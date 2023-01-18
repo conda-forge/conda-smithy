@@ -664,7 +664,9 @@ def test_register_feedstock_token_with_providers(
 
         if drone:
             if unique_token_per_provider:
-                feedstock_token, _ = read_feedstock_token(user, project, ci="drone")
+                feedstock_token, _ = read_feedstock_token(
+                    user, project, ci="drone"
+                )
             else:
                 feedstock_token, _ = read_feedstock_token(user, project)
 
@@ -680,7 +682,9 @@ def test_register_feedstock_token_with_providers(
 
         if circle:
             if unique_token_per_provider:
-                feedstock_token, _ = read_feedstock_token(user, project, ci="circle")
+                feedstock_token, _ = read_feedstock_token(
+                    user, project, ci="circle"
+                )
             else:
                 feedstock_token, _ = read_feedstock_token(user, project)
 
@@ -692,7 +696,9 @@ def test_register_feedstock_token_with_providers(
 
         if travis:
             if unique_token_per_provider:
-                feedstock_token, _ = read_feedstock_token(user, project, ci="travis")
+                feedstock_token, _ = read_feedstock_token(
+                    user, project, ci="travis"
+                )
             else:
                 feedstock_token, _ = read_feedstock_token(user, project)
 
@@ -704,7 +710,9 @@ def test_register_feedstock_token_with_providers(
 
         if azure:
             if unique_token_per_provider:
-                feedstock_token, _ = read_feedstock_token(user, project, ci="azure")
+                feedstock_token, _ = read_feedstock_token(
+                    user, project, ci="azure"
+                )
             else:
                 feedstock_token, _ = read_feedstock_token(user, project)
 
@@ -716,7 +724,9 @@ def test_register_feedstock_token_with_providers(
 
         if github_actions:
             if unique_token_per_provider:
-                feedstock_token, _ = read_feedstock_token(user, project, ci="github_actions")
+                feedstock_token, _ = read_feedstock_token(
+                    user, project, ci="github_actions"
+                )
             else:
                 feedstock_token, _ = read_feedstock_token(user, project)
 
@@ -763,7 +773,10 @@ def test_register_feedstock_token_with_proviers_notoken(
     user = "foo"
     project = "bar"
 
-    if not any([drone, circle, travis, azure, github_actions]) and unique_token_per_provider:
+    if (
+        not any([drone, circle, travis, azure, github_actions])
+        and unique_token_per_provider
+    ):
         # we do not attempt to read or do any thing here so no error is raised
         pass
     else:
@@ -837,7 +850,9 @@ def test_register_feedstock_token_with_proviers_error(
 
         with pytest.raises(FeedstockTokenError) as e:
             register_feedstock_token_with_proviers(
-                user, project, drone_endpoints=[drone_default_endpoint],
+                user,
+                project,
+                drone_endpoints=[drone_default_endpoint],
                 unique_token_per_provider=unique_token_per_provider,
             )
 
