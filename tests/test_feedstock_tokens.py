@@ -16,6 +16,7 @@ from conda_smithy.feedstock_tokens import (
     register_feedstock_token_with_proviers,
     is_valid_feedstock_token,
     FeedstockTokenError,
+    remove_feedstock_token,
 )
 
 from conda_smithy.ci_register import drone_default_endpoint
@@ -862,3 +863,107 @@ def test_register_feedstock_token_with_proviers_error(
             pth = feedstock_token_local_path(user, project, ci=provier)
             if os.path.exists(pth):
                 os.remove(pth)
+
+
+@pytest.mark.parametrize(
+    "indices",
+    [
+        (0,),
+        (
+            0,
+            1,
+        ),
+        (1,),
+    ],
+)
+@pytest.mark.parametrize("ci", [None, "azure"])
+@pytest.mark.parametrize("project", ["bar", "bar-feedstock"])
+@pytest.mark.parametrize(
+    "repo",
+    [
+        "https://${GITHUB_TOKEN}@github.com/foo/feedstock-tokens/",
+        "https://${GITHUB_TOKEN}@github.com/foo/feedstock-tokens.git/",
+        "https://${GITHUB_TOKEN}@github.com/foo/feedstock-tokens.git",
+        "https://${GITHUB_TOKEN}@github.com/foo/feedstock-tokens",
+    ],
+)
+@mock.patch("conda_smithy.github.gh_token")
+def test_remove_feedstock_token(
+    gh_mock,
+    repo,
+    project,
+    ci,
+    requests_mock,
+    indices,
+):
+    gh_mock.return_value = "abc123"
+
+    user = "foo"
+    reg_pth = feedstock_token_repo_path(project, ci=ci)
+
+    token_data = {"tokens": ["a", "b", "c"]}
+    content = base64.standard_b64encode(
+        json.dumps(token_data).encode("utf-8")
+    ).decode("ascii")
+
+    requests_mock.get(
+        "https://api.github.com/repos/foo/feedstock-tokens/contents/%s"
+        % reg_pth,
+        status_code=404,
+        json={
+            "encoding": "base64",
+            "content": content,
+            "sha": "blarg",
+        },
+    )
+    with pytest.raises(FeedstockTokenError) as e:
+        remove_feedstock_token(user, project, repo, indices=indices, ci=ci)
+
+    assert requests_mock.call_count == 1
+    assert "No token file found to remove" in str(e.value)
+
+    requests_mock.get(
+        "https://api.github.com/repos/foo/feedstock-tokens/contents/%s"
+        % reg_pth,
+        status_code=200,
+        json={
+            "encoding": "base64",
+            "content": content,
+            "sha": "blarg",
+        },
+    )
+
+    requests_mock.put(
+        "https://api.github.com/repos/foo/feedstock-tokens/contents/%s"
+        % reg_pth,
+        status_code=201,
+    )
+
+    remove_feedstock_token(user, project, repo, indices=indices, ci=ci)
+
+    assert requests_mock.call_count == 3
+    assert (
+        requests_mock.request_history[-2].headers["Authorization"]
+        == "Bearer abc123"
+    )
+    assert (
+        requests_mock.request_history[-1].headers["Authorization"]
+        == "Bearer abc123"
+    )
+
+    assert requests_mock.request_history[-1].json()["message"] == (
+        "[ci skip] [skip ci] [cf admin skip] ***NO_CI*** "
+        "added token for %s/%s on CI%s"
+        % (user, project, "" if ci is None else " " + ci)
+    )
+
+    data = requests_mock.request_history[-1].json()
+    new_token_data = json.loads(
+        base64.standard_b64decode(data["content"]).decode("utf-8")
+    )
+    true_new_token_data = {
+        "tokens": [
+            t for i, t in enumerate(token_data["tokens"]) if i not in indices
+        ]
+    }
+    assert new_token_data["tokens"] == true_new_token_data["tokens"]

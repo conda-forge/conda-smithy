@@ -447,7 +447,7 @@ def register_feedstock_token(user, project, token_repo, ci=None, append=False):
         raise FeedstockTokenError(err_msg)
 
 
-def remove_feedstock_token(user, project, token_repo, index=0, ci=None):
+def remove_feedstock_token(user, project, token_repo, indices=(0,), ci=None):
     """Remove the feedstock token from the repo at index.
 
     All exceptions are swallowed and stdout/stderr from this function is
@@ -465,15 +465,29 @@ def remove_feedstock_token(user, project, token_repo, index=0, ci=None):
             )
             if r.status_code == 200:
                 blob_sha = r.json()["sha"]
+            elif r.status_code == 404:
+                raise FeedstockTokenError(
+                    "No token file found to remove for %s/%s for CI%s at indices %r!"
+                    % (user, project, "" if ci is None else " " + ci, indices)
+                )
             else:
                 blob_sha = None
 
-            if index < len(token_data["tokens"]):
-                token_data["tokens"] = token_data["tokens"].pop(index)
-
-            _push_feedstock_token(
-                user, project, token_repo, token_data, blob_sha=blob_sha, ci=ci
-            )
+            new_tokens = [
+                td
+                for i, td in enumerate(token_data["tokens"])
+                if i not in indices
+            ]
+            if new_tokens != token_data["tokens"]:
+                token_data["tokens"] = new_tokens
+                _push_feedstock_token(
+                    user,
+                    project,
+                    token_repo,
+                    token_data,
+                    blob_sha=blob_sha,
+                    ci=ci,
+                )
         except FeedstockTokenError as e:
             raise e
         except Exception as e:
@@ -484,10 +498,10 @@ def remove_feedstock_token(user, project, token_repo, index=0, ci=None):
 
     if failed:
         err_msg = (
-            "Removing feedstock token for %s/%s for CI%s at index %d failed!"
+            "Removing feedstock token for %s/%s for CI%s at indices %r failed!"
             " Try the command locally with DEBUG_FEEDSTOCK_TOKENS"
             " defined in the environment to investigate!"
-        ) % (user, project, "" if ci is None else " " + ci, index)
+        ) % (user, project, "" if ci is None else " " + ci, indices)
         raise FeedstockTokenError(err_msg)
 
 
