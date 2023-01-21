@@ -374,15 +374,18 @@ def register_feedstock_token(
             else:
                 token_data = {"tokens": []}
 
+            # clean out old tokens
+            now = time.time()
+            token_data["tokens"] = [
+                td
+                for td in token_data["tokens"]
+                if td.get("expires_at", now) >= now
+            ]
+
             if existing_tokens_time_to_expiration is not None:
-                # set expiration times and clean out old tokens
-                now = time.time()
+                # expire current tokens if needed
                 now_plus_expire = now + existing_tokens_time_to_expiration
-                token_data["tokens"] = [
-                    td
-                    for td in token_data["tokens"]
-                    if td.get("expires_at", now) >= now
-                ]
+
                 for i in range(len(token_data["tokens"])):
                     tokens_provider = token_data["tokens"][i].get(
                         "provider", None

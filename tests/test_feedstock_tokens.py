@@ -510,7 +510,7 @@ def test_register_feedstock_token_notoken(
 @mock.patch("conda_smithy.feedstock_tokens.tempfile")
 @mock.patch("conda_smithy.feedstock_tokens.git")
 @mock.patch("conda_smithy.github.gh_token")
-def test_register_feedstock_token_append(
+def test_register_feedstock_token_append_expire(
     gh_mock,
     git_mock,
     tmp_mock,
@@ -536,8 +536,18 @@ def test_register_feedstock_token_append(
         provider=ci,
     )
     token_json_pth = os.path.join(tmpdir, "tokens", "bar.json")
+    now = time.time()
     with open(token_json_pth, "w") as fp:
-        fp.write('{"tokens": [1]}')
+        fp.write(
+            json.dumps(
+                {
+                    "tokens": [
+                        {"expires_at": now - 1e4},
+                        {"expires_at": now + 1e4},
+                    ]
+                }
+            )
+        )
 
     try:
         generate_and_write_feedstock_token(user, project, provider=ci)
@@ -570,7 +580,7 @@ def test_register_feedstock_token_append(
         data["provider"] = ci
 
     with open(token_json_pth, "r") as fp:
-        assert json.load(fp) == {"tokens": [1, data]}
+        assert json.load(fp) == {"tokens": [{"expires_at": now + 1e4}, data]}
 
 
 @pytest.mark.parametrize("unique_token_per_provider", [False, True])
