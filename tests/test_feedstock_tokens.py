@@ -573,6 +573,7 @@ def test_register_feedstock_token_append(
         assert json.load(fp) == {"tokens": [1, data]}
 
 
+@pytest.mark.parametrize("unique_token_per_provider", [False, True])
 @pytest.mark.parametrize("drone", [True, False])
 @pytest.mark.parametrize("circle", [True, False])
 @pytest.mark.parametrize("azure", [True, False])
@@ -598,15 +599,22 @@ def test_register_feedstock_token_with_providers(
     travis,
     github_actions,
     clobber,
+    unique_token_per_provider,
 ):
     user = "foo"
     project = "bar"
-
-    pth = os.path.expanduser("~/.conda-smithy/foo_bar.token")
+    providers = [
+        None,
+        "azure",
+        "travis",
+        "circle",
+        "drone",
+        "github_actions",
+    ]
 
     try:
-        generate_and_write_feedstock_token(user, project)
-        feedstock_token, _ = read_feedstock_token(user, project)
+        for provier in providers:
+            generate_and_write_feedstock_token(user, project, provider=provier)
 
         register_feedstock_token_with_proviers(
             user,
@@ -618,9 +626,17 @@ def test_register_feedstock_token_with_providers(
             github_actions=github_actions,
             clobber=clobber,
             drone_endpoints=[drone_default_endpoint],
+            unique_token_per_provider=unique_token_per_provider,
         )
 
         if drone:
+            if unique_token_per_provider:
+                feedstock_token, _ = read_feedstock_token(
+                    user, project, provider="drone"
+                )
+            else:
+                feedstock_token, _ = read_feedstock_token(user, project)
+
             drone_mock.assert_called_once_with(
                 user,
                 project,
@@ -632,6 +648,13 @@ def test_register_feedstock_token_with_providers(
             drone_mock.assert_not_called()
 
         if circle:
+            if unique_token_per_provider:
+                feedstock_token, _ = read_feedstock_token(
+                    user, project, provider="circle"
+                )
+            else:
+                feedstock_token, _ = read_feedstock_token(user, project)
+
             circle_mock.assert_called_once_with(
                 user, project, feedstock_token, clobber
             )
@@ -639,6 +662,13 @@ def test_register_feedstock_token_with_providers(
             circle_mock.assert_not_called()
 
         if travis:
+            if unique_token_per_provider:
+                feedstock_token, _ = read_feedstock_token(
+                    user, project, provider="travis"
+                )
+            else:
+                feedstock_token, _ = read_feedstock_token(user, project)
+
             travis_mock.assert_called_once_with(
                 user, project, feedstock_token, clobber
             )
@@ -646,6 +676,13 @@ def test_register_feedstock_token_with_providers(
             travis_mock.assert_not_called()
 
         if azure:
+            if unique_token_per_provider:
+                feedstock_token, _ = read_feedstock_token(
+                    user, project, provider="azure"
+                )
+            else:
+                feedstock_token, _ = read_feedstock_token(user, project)
+
             azure_mock.assert_called_once_with(
                 user, project, feedstock_token, clobber
             )
@@ -653,16 +690,26 @@ def test_register_feedstock_token_with_providers(
             azure_mock.assert_not_called()
 
         if github_actions:
+            if unique_token_per_provider:
+                feedstock_token, _ = read_feedstock_token(
+                    user, project, provider="github_actions"
+                )
+            else:
+                feedstock_token, _ = read_feedstock_token(user, project)
+
             github_actions_mock.assert_called_once_with(
                 user, project, feedstock_token, clobber
             )
         else:
             github_actions_mock.assert_not_called()
     finally:
-        if os.path.exists(pth):
-            os.remove(pth)
+        for provier in providers:
+            pth = feedstock_token_local_path(user, project, provider=provier)
+            if os.path.exists(pth):
+                os.remove(pth)
 
 
+@pytest.mark.parametrize("unique_token_per_provider", [False, True])
 @pytest.mark.parametrize("drone", [True, False])
 @pytest.mark.parametrize("circle", [True, False])
 @pytest.mark.parametrize("azure", [True, False])
@@ -688,23 +735,26 @@ def test_register_feedstock_token_with_proviers_notoken(
     travis,
     github_actions,
     clobber,
+    unique_token_per_provider,
 ):
     user = "foo"
     project = "bar"
 
-    with pytest.raises(RuntimeError) as e:
-        register_feedstock_token_with_proviers(
-            user,
-            project,
-            drone=drone,
-            circle=circle,
-            travis=travis,
-            azure=azure,
-            github_actions=github_actions,
-            clobber=clobber,
-        )
+    if any([drone, circle, travis, azure, github_actions]):
+        with pytest.raises(FeedstockTokenError) as e:
+            register_feedstock_token_with_proviers(
+                user,
+                project,
+                drone=drone,
+                circle=circle,
+                travis=travis,
+                azure=azure,
+                github_actions=github_actions,
+                clobber=clobber,
+                unique_token_per_provider=unique_token_per_provider,
+            )
 
-    assert "No token" in str(e.value)
+        assert "No token" in str(e.value)
 
     drone_mock.assert_not_called()
     circle_mock.assert_not_called()
@@ -713,8 +763,9 @@ def test_register_feedstock_token_with_proviers_notoken(
     github_actions_mock.assert_not_called()
 
 
+@pytest.mark.parametrize("unique_token_per_provider", [False, True])
 @pytest.mark.parametrize(
-    "provider", ["drone", "circle", "travis", "azure", "github actions"]
+    "provider", ["drone", "circle", "travis", "azure", "github_actions"]
 )
 @mock.patch("conda_smithy.feedstock_tokens.add_feedstock_token_to_drone")
 @mock.patch("conda_smithy.feedstock_tokens.add_feedstock_token_to_circle")
@@ -730,11 +781,18 @@ def test_register_feedstock_token_with_proviers_error(
     circle_mock,
     drone_mock,
     provider,
+    unique_token_per_provider,
 ):
     user = "foo"
     project = "bar-feedstock"
-
-    pth = os.path.expanduser("~/.conda-smithy/foo_bar-feedstock.token")
+    providers = [
+        None,
+        "azure",
+        "travis",
+        "circle",
+        "drone",
+        "github_actions",
+    ]
 
     if provider == "drone":
         drone_mock.side_effect = ValueError("blah")
@@ -744,19 +802,24 @@ def test_register_feedstock_token_with_proviers_error(
         travis_mock.side_effect = ValueError("blah")
     if provider == "azure":
         azure_mock.side_effect = ValueError("blah")
-    if provider == "github actions":
+    if provider == "github_actions":
         github_actions_mock.side_effect = ValueError("blah")
 
     try:
-        generate_and_write_feedstock_token(user, project)
-        feedstock_token, _ = read_feedstock_token(user, project)
+        for provier in providers:
+            generate_and_write_feedstock_token(user, project, provider=provier)
 
-        with pytest.raises(RuntimeError) as e:
+        with pytest.raises(FeedstockTokenError) as e:
             register_feedstock_token_with_proviers(
-                user, project, drone_endpoints=[drone_default_endpoint]
+                user,
+                project,
+                drone_endpoints=[drone_default_endpoint],
+                unique_token_per_provider=unique_token_per_provider,
             )
 
         assert "on %s" % provider in str(e.value)
     finally:
-        if os.path.exists(pth):
-            os.remove(pth)
+        for provier in providers:
+            pth = feedstock_token_local_path(user, project, provider=provier)
+            if os.path.exists(pth):
+                os.remove(pth)
