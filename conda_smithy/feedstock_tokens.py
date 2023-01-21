@@ -177,42 +177,41 @@ def feedstock_token_exists(user, project, token_repo, provider=None):
     exists = False
     failed = False
     err_msg = None
-    with _secure_io():
-        with tempfile.TemporaryDirectory() as tmpdir:
-            try:
-                # clone the repo
-                _token_repo = (
-                    token_repo.replace("$GITHUB_TOKEN", github_token)
-                    .replace("${GITHUB_TOKEN}", github_token)
-                    .replace("$GH_TOKEN", github_token)
-                    .replace("${GH_TOKEN}", github_token)
-                )
-                git.Repo.clone_from(_token_repo, tmpdir, depth=1)
-                token_file = os.path.join(
-                    tmpdir,
-                    "tokens",
-                    project + ".json",
-                )
+    with _secure_io(), tempfile.TemporaryDirectory() as tmpdir:
+        try:
+            # clone the repo
+            _token_repo = (
+                token_repo.replace("$GITHUB_TOKEN", github_token)
+                .replace("${GITHUB_TOKEN}", github_token)
+                .replace("$GH_TOKEN", github_token)
+                .replace("${GH_TOKEN}", github_token)
+            )
+            git.Repo.clone_from(_token_repo, tmpdir, depth=1)
+            token_file = os.path.join(
+                tmpdir,
+                "tokens",
+                project + ".json",
+            )
 
-                if os.path.exists(token_file):
-                    with open(token_file, "r") as fp:
-                        token_data = json.load(fp)
+            if os.path.exists(token_file):
+                with open(token_file, "r") as fp:
+                    token_data = json.load(fp)
 
-                    if "tokens" not in token_data:
-                        token_data = {"tokens": [token_data]}
+                if "tokens" not in token_data:
+                    token_data = {"tokens": [token_data]}
 
-                    now = time.time()
-                    for td in token_data["tokens"]:
-                        _provider = td.get("provider", None)
-                        _expires_at = td.get("expires_at", None)
-                        if (
-                            (_provider is None) or (_provider == provider)
-                        ) and ((_expires_at is None) or (_expires_at > now)):
-                            exists = True
-            except Exception as e:
-                if "DEBUG_FEEDSTOCK_TOKENS" in os.environ:
-                    raise e
-                failed = True
+                now = time.time()
+                for td in token_data["tokens"]:
+                    _provider = td.get("provider", None)
+                    _expires_at = td.get("expires_at", None)
+                    if (
+                        (_provider is None) or (_provider == provider)
+                    ) and ((_expires_at is None) or (_expires_at > now)):
+                        exists = True
+        except Exception as e:
+            if "DEBUG_FEEDSTOCK_TOKENS" in os.environ:
+                raise e
+            failed = True
 
     if failed:
         if err_msg:
@@ -252,51 +251,50 @@ def is_valid_feedstock_token(
 
     # capture stdout, stderr and suppress all exceptions so we don't
     # spill tokens
-    with _secure_io():
-        with tempfile.TemporaryDirectory() as tmpdir:
-            try:
-                # clone the repo
-                _token_repo = (
-                    token_repo.replace("$GITHUB_TOKEN", github_token)
-                    .replace("${GITHUB_TOKEN}", github_token)
-                    .replace("$GH_TOKEN", github_token)
-                    .replace("${GH_TOKEN}", github_token)
-                )
-                git.Repo.clone_from(_token_repo, tmpdir, depth=1)
-                token_file = os.path.join(
-                    tmpdir,
-                    "tokens",
-                    project + ".json",
-                )
+    with _secure_io(), tempfile.TemporaryDirectory() as tmpdir:
+        try:
+            # clone the repo
+            _token_repo = (
+                token_repo.replace("$GITHUB_TOKEN", github_token)
+                .replace("${GITHUB_TOKEN}", github_token)
+                .replace("$GH_TOKEN", github_token)
+                .replace("${GH_TOKEN}", github_token)
+            )
+            git.Repo.clone_from(_token_repo, tmpdir, depth=1)
+            token_file = os.path.join(
+                tmpdir,
+                "tokens",
+                project + ".json",
+            )
 
-                if os.path.exists(token_file):
-                    with open(token_file, "r") as fp:
-                        token_data = json.load(fp)
+            if os.path.exists(token_file):
+                with open(token_file, "r") as fp:
+                    token_data = json.load(fp)
 
-                    if "tokens" not in token_data:
-                        token_data = {"tokens": [token_data]}
+                if "tokens" not in token_data:
+                    token_data = {"tokens": [token_data]}
 
-                    now = time.time()
-                    for td in token_data["tokens"]:
-                        _provider = td.get("provider", None)
-                        _expires_at = td.get("expires_at", None)
-                        if (
-                            (_provider is None) or (_provider == provider)
-                        ) and ((_expires_at is None) or (_expires_at > now)):
-                            salted_token = scrypt.hash(
-                                feedstock_token,
-                                bytes.fromhex(td["salt"]),
-                                buflen=256,
-                            )
+                now = time.time()
+                for td in token_data["tokens"]:
+                    _provider = td.get("provider", None)
+                    _expires_at = td.get("expires_at", None)
+                    if (
+                        (_provider is None) or (_provider == provider)
+                    ) and ((_expires_at is None) or (_expires_at > now)):
+                        salted_token = scrypt.hash(
+                            feedstock_token,
+                            bytes.fromhex(td["salt"]),
+                            buflen=256,
+                        )
 
-                            valid = hmac.compare_digest(
-                                salted_token,
-                                bytes.fromhex(td["hashed_token"]),
-                            )
-            except Exception as e:
-                if "DEBUG_FEEDSTOCK_TOKENS" in os.environ:
-                    raise e
-                failed = True
+                        valid = hmac.compare_digest(
+                            salted_token,
+                            bytes.fromhex(td["hashed_token"]),
+                        )
+        except Exception as e:
+            if "DEBUG_FEEDSTOCK_TOKENS" in os.environ:
+                raise e
+            failed = True
 
     if failed:
         if err_msg:
@@ -337,68 +335,67 @@ def register_feedstock_token(user, project, token_repo, provider=None):
 
     # capture stdout, stderr and suppress all exceptions so we don't
     # spill tokens
-    with _secure_io():
-        with tempfile.TemporaryDirectory() as tmpdir:
-            try:
-                feedstock_token, err_msg = read_feedstock_token(
-                    user, project, provider=provider
-                )
-                if err_msg:
-                    failed = True
-                    raise FeedstockTokenError(err_msg)
-
-                # clone the repo
-                _token_repo = (
-                    token_repo.replace("$GITHUB_TOKEN", github_token)
-                    .replace("${GITHUB_TOKEN}", github_token)
-                    .replace("$GH_TOKEN", github_token)
-                    .replace("${GH_TOKEN}", github_token)
-                )
-                repo = git.Repo.clone_from(_token_repo, tmpdir, depth=1)
-                token_file = os.path.join(
-                    tmpdir,
-                    "tokens",
-                    project + ".json",
-                )
-
-                # don't overwrite existing tokens
-                # check again since there might be a race condition
-                if os.path.exists(token_file):
-                    with open(token_file, "r") as fp:
-                        token_data = json.load(fp)
-                else:
-                    token_data = {"tokens": []}
-
-                # salt, encrypt and write
-                salt = os.urandom(64)
-                salted_token = scrypt.hash(feedstock_token, salt, buflen=256)
-                data = {
-                    "salt": salt.hex(),
-                    "hashed_token": salted_token.hex(),
-                }
-                if provider is not None:
-                    data["provider"] = provider
-                token_data["tokens"].append(data)
-                with open(token_file, "w") as fp:
-                    json.dump(token_data, fp)
-
-                # push
-                repo.index.add(token_file)
-                repo.index.commit(
-                    "[ci skip] [skip ci] [cf admin skip] ***NO_CI*** "
-                    "added token for %s/%s on provider%s"
-                    % (
-                        user,
-                        project,
-                        "" if provider is None else " " + provider,
-                    )
-                )
-                repo.remote().pull(rebase=True)
-                repo.remote().push()
-            except Exception as e:
-                if "DEBUG_FEEDSTOCK_TOKENS" in os.environ:
-                    raise e
+    with _secure_io(), tempfile.TemporaryDirectory() as tmpdir:
+        try:
+            feedstock_token, err_msg = read_feedstock_token(
+                user, project, provider=provider
+            )
+            if err_msg:
                 failed = True
+                raise FeedstockTokenError(err_msg)
+
+            # clone the repo
+            _token_repo = (
+                token_repo.replace("$GITHUB_TOKEN", github_token)
+                .replace("${GITHUB_TOKEN}", github_token)
+                .replace("$GH_TOKEN", github_token)
+                .replace("${GH_TOKEN}", github_token)
+            )
+            repo = git.Repo.clone_from(_token_repo, tmpdir, depth=1)
+            token_file = os.path.join(
+                tmpdir,
+                "tokens",
+                project + ".json",
+            )
+
+            # don't overwrite existing tokens
+            # check again since there might be a race condition
+            if os.path.exists(token_file):
+                with open(token_file, "r") as fp:
+                    token_data = json.load(fp)
+            else:
+                token_data = {"tokens": []}
+
+            # salt, encrypt and write
+            salt = os.urandom(64)
+            salted_token = scrypt.hash(feedstock_token, salt, buflen=256)
+            data = {
+                "salt": salt.hex(),
+                "hashed_token": salted_token.hex(),
+            }
+            if provider is not None:
+                data["provider"] = provider
+            token_data["tokens"].append(data)
+            with open(token_file, "w") as fp:
+                json.dump(token_data, fp)
+
+            # push
+            repo.index.add(token_file)
+            repo.index.commit(
+                "[ci skip] [skip ci] [cf admin skip] ***NO_CI*** "
+                "added token for %s/%s on provider%s"
+                % (
+                    user,
+                    project,
+                    "" if provider is None else " " + provider,
+                )
+            )
+            repo.remote().pull(rebase=True)
+            repo.remote().push()
+        except Exception as e:
+            if "DEBUG_FEEDSTOCK_TOKENS" in os.environ:
+                raise e
+            failed = True
 
     if failed:
         if err_msg:
