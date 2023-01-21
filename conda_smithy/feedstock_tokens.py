@@ -357,8 +357,7 @@ def register_feedstock_token(user, project, token_repo, provider=None):
                 project + ".json",
             )
 
-            # don't overwrite existing tokens
-            # check again since there might be a race condition
+            # append the token if needed
             if os.path.exists(token_file):
                 with open(token_file, "r") as fp:
                     token_data = json.load(fp)
