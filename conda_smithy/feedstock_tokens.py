@@ -30,7 +30,7 @@ import time
 import sys
 import secrets
 import hmac
-from contextlib import redirect_stderr, redirect_stdout
+from contextlib import redirect_stderr, redirect_stdout, contextmanager
 
 import git
 import requests
@@ -41,6 +41,25 @@ class FeedstockTokenError(Exception):
     """Custom exception for sanitzed token errors."""
 
     pass
+
+
+@contextmanager
+def _secure_io():
+    """context manager that redirects stdout and
+    stderr to /dev/null to avoid spilling tokens"""
+    try:
+        with open(os.devnull, "w") as fp:
+            if "DEBUG_FEEDSTOCK_TOKENS" in os.environ:
+                fpo = sys.stdout
+                fpe = sys.stderr
+            else:
+                fpo = fp
+                fpe = fp
+
+            with redirect_stdout(fpo), redirect_stderr(fpe):
+                yield
+    finally:
+        pass
 
 
 def feedstock_token_local_path(user, project, provider=None):
@@ -72,40 +91,31 @@ def generate_and_write_feedstock_token(user, project, provider=None):
     # spill tokens
     failed = False
     err_msg = None
-    with open(os.devnull, "w") as fp:
-        if "DEBUG_FEEDSTOCK_TOKENS" in os.environ:
-            fpo = sys.stdout
-            fpe = sys.stderr
-        else:
-            fpo = fp
-            fpe = fp
-
-        with redirect_stdout(fpo), redirect_stderr(fpe):
-            try:
-                token = secrets.token_hex(32)
-                pth = feedstock_token_local_path(
-                    user, project, provider=provider
-                )
-                if os.path.exists(pth):
-                    failed = True
-                    err_msg = (
-                        "Token for %s/%s on provider%s is already written locally!"
-                        % (
-                            user,
-                            project,
-                            "" if provider is None else " " + provider,
-                        )
-                    )
-                    raise FeedstockTokenError(err_msg)
-
-                os.makedirs(os.path.dirname(pth), exist_ok=True)
-
-                with open(pth, "w") as fp:
-                    fp.write(token)
-            except Exception as e:
-                if "DEBUG_FEEDSTOCK_TOKENS" in os.environ:
-                    raise e
+    token = None
+    with _secure_io():
+        try:
+            token = secrets.token_hex(32)
+            pth = feedstock_token_local_path(user, project, provider=provider)
+            if os.path.exists(pth):
                 failed = True
+                err_msg = (
+                    "Token for %s/%s on provider%s is already written locally!"
+                    % (
+                        user,
+                        project,
+                        "" if provider is None else " " + provider,
+                    )
+                )
+                raise FeedstockTokenError(err_msg)
+
+            os.makedirs(os.path.dirname(pth), exist_ok=True)
+
+            with open(pth, "w") as fp:
+                fp.write(token)
+        except Exception as e:
+            if "DEBUG_FEEDSTOCK_TOKENS" in os.environ:
+                raise e
+            failed = True
 
     if failed:
         if err_msg:
@@ -167,17 +177,8 @@ def feedstock_token_exists(user, project, token_repo, provider=None):
     exists = False
     failed = False
     err_msg = None
-    with open(os.devnull, "w") as fp:
-        if "DEBUG_FEEDSTOCK_TOKENS" in os.environ:
-            fpo = sys.stdout
-            fpe = sys.stderr
-        else:
-            fpo = fp
-            fpe = fp
-
-        with tempfile.TemporaryDirectory() as tmpdir, redirect_stdout(
-            fpo
-        ), redirect_stderr(fpe):
+    with _secure_io():
+        with tempfile.TemporaryDirectory() as tmpdir:
             try:
                 # clone the repo
                 _token_repo = (
@@ -251,17 +252,8 @@ def is_valid_feedstock_token(
 
     # capture stdout, stderr and suppress all exceptions so we don't
     # spill tokens
-    with open(os.devnull, "w") as fp:
-        if "DEBUG_FEEDSTOCK_TOKENS" in os.environ:
-            fpo = sys.stdout
-            fpe = sys.stderr
-        else:
-            fpo = fp
-            fpe = fp
-
-        with tempfile.TemporaryDirectory() as tmpdir, redirect_stdout(
-            fpo
-        ), redirect_stderr(fpe):
+    with _secure_io():
+        with tempfile.TemporaryDirectory() as tmpdir:
             try:
                 # clone the repo
                 _token_repo = (
@@ -345,17 +337,8 @@ def register_feedstock_token(user, project, token_repo, provider=None):
 
     # capture stdout, stderr and suppress all exceptions so we don't
     # spill tokens
-    with open(os.devnull, "w") as fp:
-        if "DEBUG_FEEDSTOCK_TOKENS" in os.environ:
-            fpo = sys.stdout
-            fpe = sys.stderr
-        else:
-            fpo = fp
-            fpe = fp
-
-        with tempfile.TemporaryDirectory() as tmpdir, redirect_stdout(
-            fpo
-        ), redirect_stderr(fpe):
+    with _secure_io():
+        with tempfile.TemporaryDirectory() as tmpdir:
             try:
                 feedstock_token, err_msg = read_feedstock_token(
                     user, project, provider=provider
@@ -496,68 +479,60 @@ def register_feedstock_token_with_proviers(
     failed = False
     drone_endpoints = drone_endpoints or [drone_default_endpoint]
 
-    with open(os.devnull, "w") as fp:
-        if "DEBUG_FEEDSTOCK_TOKENS" in os.environ:
-            fpo = sys.stdout
-            fpe = sys.stderr
-        else:
-            fpo = fp
-            fpe = fp
+    with _secure_io():
+        try:
+            if circle:
+                _register_token(
+                    user,
+                    project,
+                    clobber,
+                    "circle",
+                    add_feedstock_token_to_circle,
+                )
 
-        with redirect_stdout(fpo), redirect_stderr(fpe):
-            try:
-                if circle:
+            if drone:
+                for drone_endpoint in drone_endpoints:
                     _register_token(
                         user,
                         project,
                         clobber,
-                        "circle",
-                        add_feedstock_token_to_circle,
+                        "drone",
+                        add_feedstock_token_to_drone,
+                        args=(drone_endpoint,),
                     )
 
-                if drone:
-                    for drone_endpoint in drone_endpoints:
-                        _register_token(
-                            user,
-                            project,
-                            clobber,
-                            "drone",
-                            add_feedstock_token_to_drone,
-                            args=(drone_endpoint,),
-                        )
+            if travis:
+                _register_token(
+                    user,
+                    project,
+                    clobber,
+                    "travis",
+                    add_feedstock_token_to_travis,
+                )
 
-                if travis:
-                    _register_token(
-                        user,
-                        project,
-                        clobber,
-                        "travis",
-                        add_feedstock_token_to_travis,
-                    )
+            if azure:
+                _register_token(
+                    user,
+                    project,
+                    clobber,
+                    "azure",
+                    add_feedstock_token_to_azure,
+                )
 
-                if azure:
-                    _register_token(
-                        user,
-                        project,
-                        clobber,
-                        "azure",
-                        add_feedstock_token_to_azure,
-                    )
-
-                if github_actions:
-                    _register_token(
-                        user,
-                        project,
-                        clobber,
-                        "github_actions",
-                        add_feedstock_token_to_github_actions,
-                    )
-            except FeedstockTokenError as e:
+            if github_actions:
+                _register_token(
+                    user,
+                    project,
+                    clobber,
+                    "github_actions",
+                    add_feedstock_token_to_github_actions,
+                )
+        except FeedstockTokenError as e:
+            raise e
+        except Exception as e:
+            if "DEBUG_FEEDSTOCK_TOKENS" in os.environ:
                 raise e
-            except Exception as e:
-                if "DEBUG_FEEDSTOCK_TOKENS" in os.environ:
-                    raise e
-                failed = True
+            failed = True
 
     if failed:
         raise FeedstockTokenError(
