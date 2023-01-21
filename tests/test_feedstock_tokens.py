@@ -12,6 +12,7 @@ from conda_smithy.feedstock_tokens import (
     register_feedstock_token,
     register_feedstock_token_with_proviers,
     is_valid_feedstock_token,
+    FeedstockTokenError,
 )
 
 from conda_smithy.ci_register import drone_default_endpoint
@@ -103,39 +104,57 @@ def test_is_valid_feedstock_token_badtoken(
     assert not retval
 
 
-def test_generate_and_write_feedstock_token():
+@pytest.mark.parametrize("ci", [None, "azure"])
+def test_generate_and_write_feedstock_token(ci):
     user = "bar"
     repo = "foo"
 
-    pth = os.path.expanduser("~/.conda-smithy/bar_foo.token")
+    if ci:
+        pth = os.path.expanduser("~/.conda-smithy/bar_foo_%s.token" % ci)
+        opth = os.path.expanduser("~/.conda-smithy/bar_foo.token")
+    else:
+        pth = os.path.expanduser("~/.conda-smithy/bar_foo.token")
+        opth = os.path.expanduser("~/.conda-smithy/bar_foo_azure.token")
 
     try:
-        generate_and_write_feedstock_token(user, repo)
+        generate_and_write_feedstock_token(user, repo, ci=ci)
 
+        assert not os.path.exists(opth)
         assert os.path.exists(pth)
 
+        if ci is not None:
+            generate_and_write_feedstock_token(user, repo, ci=None)
+        else:
+            generate_and_write_feedstock_token(user, repo, ci="azure")
+
         # we cannot do it twice
-        with pytest.raises(RuntimeError):
-            generate_and_write_feedstock_token(user, repo)
+        with pytest.raises(FeedstockTokenError):
+            generate_and_write_feedstock_token(user, repo, ci=ci)
     finally:
         if os.path.exists(pth):
             os.remove(pth)
+        if os.path.exists(opth):
+            os.remove(opth)
 
 
-def test_read_feedstock_token():
+@pytest.mark.parametrize("ci", [None, "azure"])
+def test_read_feedstock_token(ci):
     user = "bar"
     repo = "foo"
-    pth = os.path.expanduser("~/.conda-smithy/bar_foo.token")
+    if ci:
+        pth = os.path.expanduser("~/.conda-smithy/bar_foo_%s.token" % ci)
+    else:
+        pth = os.path.expanduser("~/.conda-smithy/bar_foo.token")
 
     # no token
-    token, err = read_feedstock_token(user, repo)
+    token, err = read_feedstock_token(user, repo, ci=ci)
     assert "No token found in" in err
     assert token is None
 
     # empty
     try:
         os.system("touch " + pth)
-        token, err = read_feedstock_token(user, repo)
+        token, err = read_feedstock_token(user, repo, ci=ci)
         assert "Empty token found in" in err
         assert token is None
     finally:
@@ -144,11 +163,17 @@ def test_read_feedstock_token():
 
     # token ok
     try:
-        generate_and_write_feedstock_token(user, repo)
-        token, err = read_feedstock_token(user, repo)
+        generate_and_write_feedstock_token(user, repo, ci=ci)
+        token, err = read_feedstock_token(user, repo, ci=ci)
         assert err is None
         assert token is not None
 
+        if ci is not None:
+            token, err = read_feedstock_token(user, repo, ci=None)
+        else:
+            token, err = read_feedstock_token(user, repo, ci="azure")
+        assert "No token found in" in err
+        assert token is None
     finally:
         if os.path.exists(pth):
             os.remove(pth)

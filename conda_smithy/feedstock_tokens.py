@@ -12,6 +12,10 @@ line utility. The relevant functions are
 The `generate-feedstock-token` command must be called before the `register-feedstock-token`
 command. It generates a random token and writes it to
 
+    ~/.conda-smithy/{user or org}_{repo}_{ci}.token
+
+or
+
     ~/.conda-smithy/{user or org}_{repo}.token
 
 Then when you call `register-feedstock-token`, the generated token is placed
@@ -32,10 +36,34 @@ import requests
 import scrypt
 
 
-def generate_and_write_feedstock_token(user, project):
-    """Generate a feedstock token and write it to
+class FeedstockTokenError(Exception):
+    """Custom exception for sanitzed token errors."""
 
-        ~/.conda-smithy/{user or org}_{repo}_feedstock.token
+    pass
+
+
+def feedstock_token_local_path(user, project, ci=None):
+    """Return the path locally where the feedstock
+    token is stored.
+    """
+    if ci is None:
+        pth = os.path.join(
+            "~",
+            ".conda-smithy",
+            "%s_%s.token" % (user, project),
+        )
+    else:
+        pth = os.path.join(
+            "~",
+            ".conda-smithy",
+            "%s_%s_%s.token" % (user, project, ci),
+        )
+    return os.path.expanduser(pth)
+
+
+def generate_and_write_feedstock_token(user, project, ci=None):
+    """Generate a feedstock token and write it to the file given by
+    ``feedstock_token_local_path(user, project, ci=ci)``.
 
     This function will fail if the token file already exists.
     """
@@ -46,19 +74,18 @@ def generate_and_write_feedstock_token(user, project):
     with open(os.devnull, "w") as fp, redirect_stdout(fp), redirect_stderr(fp):
         try:
             token = secrets.token_hex(32)
-            pth = os.path.join(
-                "~",
-                ".conda-smithy",
-                "%s_%s.token" % (user, project),
-            )
-            pth = os.path.expanduser(pth)
+            pth = feedstock_token_local_path(user, project, ci=ci)
             if os.path.exists(pth):
                 failed = True
-                err_msg = "Token for %s/%s is already written locally!" % (
-                    user,
-                    project,
+                err_msg = (
+                    "Token for %s/%s on CI%s is already written locally!"
+                    % (
+                        user,
+                        project,
+                        "" if ci is None else " " + ci,
+                    )
                 )
-                raise RuntimeError(err_msg)
+                raise FeedstockTokenError(err_msg)
 
             os.makedirs(os.path.dirname(pth), exist_ok=True)
 
@@ -71,24 +98,23 @@ def generate_and_write_feedstock_token(user, project):
 
     if failed:
         if err_msg:
-            raise RuntimeError(err_msg)
+            raise FeedstockTokenError(err_msg)
         else:
-            raise RuntimeError(
+            raise FeedstockTokenError(
                 (
-                    "Generating the feedstock token for %s/%s failed!"
+                    "Generating the feedstock token for %s/%s on CI%s failed!"
                     " Try the command locally with DEBUG_FEEDSTOCK_TOKENS"
                     " defined in the environment to investigate!"
                 )
-                % (user, project)
+                % (user, project, "" if ci is None else " " + ci)
             )
 
     return failed
 
 
-def read_feedstock_token(user, project):
-    """Read the feedstock token from
-
-        ~/.conda-smithy/{user or org}_{repo}.token
+def read_feedstock_token(user, project, ci=None):
+    """Read the feedstock token from the path given by
+    ``feedstock_token_local_path(user, project, ci=ci)``.
 
     In order to not spill any tokens to stdout/stderr, this function
     should be used in a `try...except` block with stdout/stderr redirected
@@ -98,25 +124,15 @@ def read_feedstock_token(user, project):
     feedstock_token = None
 
     # read the token
-    user_token_pth = os.path.join(
-        "~",
-        ".conda-smithy",
-        "%s_%s.token" % (user, project),
-    )
-    user_token_pth = os.path.expanduser(user_token_pth)
+    user_token_pth = feedstock_token_local_path(user, project, ci=ci)
 
     if not os.path.exists(user_token_pth):
-        err_msg = "No token found in '~/.conda-smithy/%s_%s.token'" % (
-            user,
-            project,
-        )
+        err_msg = "No token found in '%s'" % user_token_pth
     else:
         with open(user_token_pth, "r") as fp:
             feedstock_token = fp.read().strip()
         if not feedstock_token:
-            err_msg = (
-                "Empty token found in '~/.conda-smithy/" "%s_%s.token'"
-            ) % (user, project)
+            err_msg = "Empty token found in '%s'" % user_token_pth
             feedstock_token = None
     return feedstock_token, err_msg
 
