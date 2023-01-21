@@ -203,9 +203,9 @@ def feedstock_token_exists(user, project, token_repo, provider=None):
                 for td in token_data["tokens"]:
                     _provider = td.get("provider", None)
                     _expires_at = td.get("expires_at", None)
-                    if (
-                        (_provider is None) or (_provider == provider)
-                    ) and ((_expires_at is None) or (_expires_at > now)):
+                    if ((_provider is None) or (_provider == provider)) and (
+                        (_expires_at is None) or (_expires_at > now)
+                    ):
                         exists = True
         except Exception as e:
             if "DEBUG_FEEDSTOCK_TOKENS" in os.environ:
@@ -277,9 +277,9 @@ def is_valid_feedstock_token(
                 for td in token_data["tokens"]:
                     _provider = td.get("provider", None)
                     _expires_at = td.get("expires_at", None)
-                    if (
-                        (_provider is None) or (_provider == provider)
-                    ) and ((_expires_at is None) or (_expires_at > now)):
+                    if ((_provider is None) or (_provider == provider)) and (
+                        (_expires_at is None) or (_expires_at > now)
+                    ):
                         salted_token = scrypt.hash(
                             feedstock_token,
                             bytes.fromhex(td["salt"]),
