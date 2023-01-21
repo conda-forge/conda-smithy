@@ -91,7 +91,6 @@ def generate_and_write_feedstock_token(user, project, provider=None):
     # spill tokens
     failed = False
     err_msg = None
-    token = None
     with _secure_io():
         try:
             token = secrets.token_hex(32)
