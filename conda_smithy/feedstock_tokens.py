@@ -26,6 +26,7 @@ then uploaded to the token registry (a repo on GitHub).
 import tempfile
 import os
 import json
+import time
 import sys
 import secrets
 import hmac
@@ -137,7 +138,7 @@ def read_feedstock_token(user, project, ci=None):
     return feedstock_token, err_msg
 
 
-def feedstock_token_exists(user, project, token_repo):
+def feedstock_token_exists(user, project, token_repo, ci=None):
     """Test if the feedstock token exists for the given repo.
 
     All exceptions are swallowed and stdout/stderr from this function is
@@ -173,7 +174,20 @@ def feedstock_token_exists(user, project, token_repo):
             )
 
             if os.path.exists(token_file):
-                exists = True
+                with open(token_file, "r") as fp:
+                    token_data = json.load(fp)
+
+                if "tokens" not in token_data:
+                    token_data = {"tokens": [token_data]}
+
+                now = time.time()
+                for td in token_data["tokens"]:
+                    provider = td.get("provider", None)
+                    expires_at = td.get("expires_at", None)
+                    if ((provider is None) or (provider == ci)) and (
+                        (expires_at is None) or (expires_at > now)
+                    ):
+                        exists = True
         except Exception as e:
             if "DEBUG_FEEDSTOCK_TOKENS" in os.environ:
                 raise e
@@ -181,15 +195,15 @@ def feedstock_token_exists(user, project, token_repo):
 
     if failed:
         if err_msg:
-            raise RuntimeError(err_msg)
+            raise FeedstockTokenError(err_msg)
         else:
-            raise RuntimeError(
+            raise FeedstockTokenError(
                 (
-                    "Testing for the feedstock token for %s/%s failed!"
+                    "Testing for the feedstock token for %s/%s on CI%s failed!"
                     " Try the command locally with DEBUG_FEEDSTOCK_TOKENS"
                     " defined in the environment to investigate!"
                 )
-                % (user, project)
+                % (user, project, "" if ci is None else " " + ci)
             )
 
     return exists
