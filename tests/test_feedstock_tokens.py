@@ -14,11 +14,33 @@ from conda_smithy.feedstock_tokens import (
     register_feedstock_token_with_proviers,
     is_valid_feedstock_token,
     FeedstockTokenError,
+    feedstock_token_local_path,
 )
 
 from conda_smithy.ci_register import drone_default_endpoint
 
 
+@pytest.mark.parametrize(
+    "provider,ci,retval_ci",
+    [
+        (None, None, True),  # generic token so OK
+        (None, "azure", True),  # generic token w/ CI so OK
+        ("azure", None, False),  # provider-specific token w/o CI so not OK
+        ("azure", "azure", True),  # provier-specific token w/ correct CI so OK
+        (
+            "azure",
+            "blah",
+            False,
+        ),  # provier-specific token w/ wrong CI so not OK
+    ],
+)
+@pytest.mark.parametrize(
+    "expires_at,retval_time",
+    [
+        (time.time() + 1e4, True),  # expires in the future so OK
+        (time.time() - 1e4, False),  # expired in the past so not OK
+    ],
+)
 @pytest.mark.parametrize("project", ["bar", "bar-feedstock"])
 @pytest.mark.parametrize(
     "repo", ["GITHUB_TOKEN", "${GITHUB_TOKEN}", "GH_TOKEN", "${GH_TOKEN}"]
@@ -27,7 +49,17 @@ from conda_smithy.ci_register import drone_default_endpoint
 @mock.patch("conda_smithy.feedstock_tokens.git")
 @mock.patch("conda_smithy.github.gh_token")
 def test_feedstock_tokens_roundtrip(
-    gh_mock, git_mock, tmp_mock, tmpdir, repo, project
+    gh_mock,
+    git_mock,
+    tmp_mock,
+    tmpdir,
+    repo,
+    project,
+    provider,
+    ci,
+    retval_ci,
+    expires_at,
+    retval_time,
 ):
     gh_mock.return_value = "abc123"
     tmp_mock.TemporaryDirectory.return_value.__enter__.return_value = str(
@@ -35,28 +67,46 @@ def test_feedstock_tokens_roundtrip(
     )
 
     user = "foo"
-    pth = os.path.expanduser("~/.conda-smithy/foo_%s.token" % project)
+    pth = feedstock_token_local_path(
+        user,
+        project,
+        provider=ci,
+    )
     token_json_pth = os.path.join(tmpdir, "tokens", "%s.json" % project)
     os.makedirs(os.path.join(tmpdir, "tokens"), exist_ok=True)
 
     try:
-        generate_and_write_feedstock_token(user, project)
+        generate_and_write_feedstock_token(user, project, provider=ci)
         assert os.path.exists(pth)
 
-        register_feedstock_token(user, project, repo)
+        register_feedstock_token(user, project, repo, provider=ci)
         assert os.path.exists(token_json_pth)
+
+        with open(token_json_pth) as fp:
+            token_data = json.load(fp)
+        if provider is not None:
+            token_data["tokens"][0]["provider"] = provider
+        if expires_at is not None:
+            token_data["tokens"][0]["expires_at"] = expires_at
+        with open(token_json_pth, "w") as fp:
+            fp.write(json.dumps(token_data))
 
         with open(pth, "r") as fp:
             feedstock_token = fp.read().strip()
 
-        retval = is_valid_feedstock_token(user, project, feedstock_token, repo)
+        retval = is_valid_feedstock_token(
+            user, project, feedstock_token, repo, provider=ci
+        )
     finally:
         if os.path.exists(pth):
             os.remove(pth)
+        if os.path.exists(token_json_pth):
+            os.remove(token_json_pth)
 
-    assert retval
+    assert retval is (retval_ci and retval_time)
 
 
+@pytest.mark.parametrize("ci", [None, "azure"])
 @pytest.mark.parametrize("project", ["bar", "bar-feedstock"])
 @pytest.mark.parametrize(
     "repo", ["GITHUB_TOKEN", "${GITHUB_TOKEN}", "GH_TOKEN", "${GH_TOKEN}"]
@@ -65,7 +115,13 @@ def test_feedstock_tokens_roundtrip(
 @mock.patch("conda_smithy.feedstock_tokens.git")
 @mock.patch("conda_smithy.github.gh_token")
 def test_is_valid_feedstock_token_nofile(
-    gh_mock, git_mock, tmp_mock, tmpdir, repo, project
+    gh_mock,
+    git_mock,
+    tmp_mock,
+    tmpdir,
+    repo,
+    project,
+    ci,
 ):
     gh_mock.return_value = "abc123"
     tmp_mock.TemporaryDirectory.return_value.__enter__.return_value = str(
@@ -74,10 +130,26 @@ def test_is_valid_feedstock_token_nofile(
 
     user = "conda-forge"
     feedstock_token = "akdjhfl"
-    retval = is_valid_feedstock_token(user, project, feedstock_token, repo)
+    retval = is_valid_feedstock_token(
+        user, project, feedstock_token, repo, provider=ci
+    )
     assert not retval
 
 
+@pytest.mark.parametrize(
+    "provider,ci",
+    [
+        (None, None),
+        (None, "azure"),
+        ("azure", None),
+        ("azure", "azure"),
+        ("azure", "blah"),
+    ],
+)
+@pytest.mark.parametrize(
+    "expires_at",
+    [(time.time() + 1e4), (time.time() - 1e4)],
+)
 @pytest.mark.parametrize("project", ["bar", "bar-feedstock"])
 @pytest.mark.parametrize(
     "repo", ["GITHUB_TOKEN", "${GITHUB_TOKEN}", "GH_TOKEN", "${GH_TOKEN}"]
@@ -86,7 +158,15 @@ def test_is_valid_feedstock_token_nofile(
 @mock.patch("conda_smithy.feedstock_tokens.git")
 @mock.patch("conda_smithy.github.gh_token")
 def test_is_valid_feedstock_token_badtoken(
-    gh_mock, git_mock, tmp_mock, tmpdir, repo, project
+    gh_mock,
+    git_mock,
+    tmp_mock,
+    tmpdir,
+    repo,
+    project,
+    expires_at,
+    provider,
+    ci,
 ):
     gh_mock.return_value = "abc123"
     tmp_mock.TemporaryDirectory.return_value.__enter__.return_value = str(
@@ -99,9 +179,16 @@ def test_is_valid_feedstock_token_badtoken(
     token_pth = os.path.join(tmpdir, "tokens", "%s.json" % project)
     os.makedirs(os.path.dirname(token_pth), exist_ok=True)
     with open(token_pth, "w") as fp:
-        json.dump({"salt": b"adf".hex(), "hashed_token": b"fgh".hex()}, fp)
+        td = {"salt": b"adf".hex(), "hashed_token": b"fgh".hex()}
+        if provider is not None:
+            td["provider"] = provider
+        if expires_at is not None:
+            td["expires_at"] = expires_at
+        json.dump({"tokens": [td]}, fp)
 
-    retval = is_valid_feedstock_token(user, project, feedstock_token, repo)
+    retval = is_valid_feedstock_token(
+        user, project, feedstock_token, repo, provider=ci
+    )
     assert not retval
 
 
@@ -118,19 +205,19 @@ def test_generate_and_write_feedstock_token(ci):
         opth = os.path.expanduser("~/.conda-smithy/bar_foo_azure.token")
 
     try:
-        generate_and_write_feedstock_token(user, repo, ci=ci)
+        generate_and_write_feedstock_token(user, repo, provider=ci)
 
         assert not os.path.exists(opth)
         assert os.path.exists(pth)
 
         if ci is not None:
-            generate_and_write_feedstock_token(user, repo, ci=None)
+            generate_and_write_feedstock_token(user, repo, provider=None)
         else:
-            generate_and_write_feedstock_token(user, repo, ci="azure")
+            generate_and_write_feedstock_token(user, repo, provider="azure")
 
         # we cannot do it twice
         with pytest.raises(FeedstockTokenError):
-            generate_and_write_feedstock_token(user, repo, ci=ci)
+            generate_and_write_feedstock_token(user, repo, provider=ci)
     finally:
         if os.path.exists(pth):
             os.remove(pth)
@@ -148,14 +235,14 @@ def test_read_feedstock_token(ci):
         pth = os.path.expanduser("~/.conda-smithy/bar_foo.token")
 
     # no token
-    token, err = read_feedstock_token(user, repo, ci=ci)
+    token, err = read_feedstock_token(user, repo, provider=ci)
     assert "No token found in" in err
     assert token is None
 
     # empty
     try:
         os.system("touch " + pth)
-        token, err = read_feedstock_token(user, repo, ci=ci)
+        token, err = read_feedstock_token(user, repo, provider=ci)
         assert "Empty token found in" in err
         assert token is None
     finally:
@@ -164,15 +251,15 @@ def test_read_feedstock_token(ci):
 
     # token ok
     try:
-        generate_and_write_feedstock_token(user, repo, ci=ci)
-        token, err = read_feedstock_token(user, repo, ci=ci)
+        generate_and_write_feedstock_token(user, repo, provider=ci)
+        token, err = read_feedstock_token(user, repo, provider=ci)
         assert err is None
         assert token is not None
 
         if ci is not None:
-            token, err = read_feedstock_token(user, repo, ci=None)
+            token, err = read_feedstock_token(user, repo, provider=None)
         else:
-            token, err = read_feedstock_token(user, repo, ci="azure")
+            token, err = read_feedstock_token(user, repo, provider="azure")
         assert "No token found in" in err
         assert token is None
     finally:
@@ -243,7 +330,7 @@ def test_feedstock_token_exists(
 
     _retval = file_exists and retval_time and retval_ci
 
-    assert feedstock_token_exists(user, project, repo, ci=ci) is _retval
+    assert feedstock_token_exists(user, project, repo, provider=ci) is _retval
 
     git_mock.Repo.clone_from.assert_called_once_with(
         "abc123",
@@ -275,7 +362,7 @@ def test_feedstock_token_raises(
         fp.write("{}")
 
     with pytest.raises(FeedstockTokenError) as e:
-        feedstock_token_exists(user, project, repo, ci=ci)
+        feedstock_token_exists(user, project, repo, provider=ci)
 
     assert "Testing for the feedstock token for" in str(e.value)
 
@@ -286,6 +373,7 @@ def test_feedstock_token_raises(
     )
 
 
+@pytest.mark.parametrize("ci", [None, "azure"])
 @pytest.mark.parametrize(
     "repo", ["$GITHUB_TOKEN", "${GITHUB_TOKEN}", "$GH_TOKEN", "${GH_TOKEN}"]
 )
@@ -295,7 +383,14 @@ def test_feedstock_token_raises(
 @mock.patch("conda_smithy.feedstock_tokens.git")
 @mock.patch("conda_smithy.github.gh_token")
 def test_register_feedstock_token_works(
-    gh_mock, git_mock, tmp_mock, osuran_mock, secrets_mock, tmpdir, repo
+    gh_mock,
+    git_mock,
+    tmp_mock,
+    osuran_mock,
+    secrets_mock,
+    tmpdir,
+    repo,
+    ci,
 ):
     gh_mock.return_value = "abc123"
     tmp_mock.TemporaryDirectory.return_value.__enter__.return_value = str(
@@ -307,13 +402,17 @@ def test_register_feedstock_token_works(
     user = "foo"
     project = "bar"
     os.makedirs(os.path.join(tmpdir, "tokens"), exist_ok=True)
-    pth = os.path.expanduser("~/.conda-smithy/foo_%s.token" % project)
+    pth = feedstock_token_local_path(
+        user,
+        project,
+        provider=ci,
+    )
     token_json_pth = os.path.join(tmpdir, "tokens", "%s.json" % project)
 
     try:
-        generate_and_write_feedstock_token(user, project)
+        generate_and_write_feedstock_token(user, project, provider=ci)
 
-        register_feedstock_token(user, project, repo)
+        register_feedstock_token(user, project, repo, provider=ci)
 
     finally:
         if os.path.exists(pth):
@@ -328,8 +427,8 @@ def test_register_feedstock_token_works(
     repo = git_mock.Repo.clone_from.return_value
     repo.index.add.assert_called_once_with(token_json_pth)
     repo.index.commit.assert_called_once_with(
-        "[ci skip] [skip ci] [cf admin skip] ***NO_CI*** added token for %s/%s"
-        % (user, project)
+        "[ci skip] [skip ci] [cf admin skip] ***NO_CI*** added token for %s/%s on provider%s"
+        % (user, project, "" if ci is None else " " + ci)
     )
     repo.remote.return_value.pull.assert_called_once_with(rebase=True)
     repo.remote.return_value.push.assert_called_once_with()
@@ -339,11 +438,14 @@ def test_register_feedstock_token_works(
         "salt": b"\x80SA".hex(),
         "hashed_token": salted_token.hex(),
     }
+    if ci is not None:
+        data["provider"] = ci
 
     with open(token_json_pth, "r") as fp:
-        assert json.load(fp) == data
+        assert json.load(fp) == {"tokens": [data]}
 
 
+@pytest.mark.parametrize("ci", [None, "azure"])
 @pytest.mark.parametrize(
     "repo", ["$GITHUB_TOKEN", "${GITHUB_TOKEN}", "$GH_TOKEN", "${GH_TOKEN}"]
 )
@@ -353,7 +455,14 @@ def test_register_feedstock_token_works(
 @mock.patch("conda_smithy.feedstock_tokens.git")
 @mock.patch("conda_smithy.github.gh_token")
 def test_register_feedstock_token_notoken(
-    gh_mock, git_mock, tmp_mock, osuran_mock, secrets_mock, tmpdir, repo
+    gh_mock,
+    git_mock,
+    tmp_mock,
+    osuran_mock,
+    secrets_mock,
+    tmpdir,
+    repo,
+    ci,
 ):
     gh_mock.return_value = "abc123"
     tmp_mock.TemporaryDirectory.return_value.__enter__.return_value = str(
@@ -365,12 +474,16 @@ def test_register_feedstock_token_notoken(
     user = "foo"
     project = "bar"
     os.makedirs(os.path.join(tmpdir, "tokens"), exist_ok=True)
-    pth = os.path.expanduser("~/.conda-smithy/foo_bar.token")
+    pth = feedstock_token_local_path(
+        user,
+        project,
+        provider=ci,
+    )
     token_json_pth = os.path.join(tmpdir, "tokens", "bar.json")
 
     try:
-        with pytest.raises(RuntimeError) as e:
-            register_feedstock_token(user, project, repo)
+        with pytest.raises(FeedstockTokenError) as e:
+            register_feedstock_token(user, project, repo, provider=ci)
     finally:
         if os.path.exists(pth):
             os.remove(pth)
@@ -388,6 +501,7 @@ def test_register_feedstock_token_notoken(
     assert "No token found in" in str(e.value)
 
 
+@pytest.mark.parametrize("ci", [None, "azure"])
 @pytest.mark.parametrize(
     "repo", ["$GITHUB_TOKEN", "${GITHUB_TOKEN}", "$GH_TOKEN", "${GH_TOKEN}"]
 )
@@ -397,7 +511,14 @@ def test_register_feedstock_token_notoken(
 @mock.patch("conda_smithy.feedstock_tokens.git")
 @mock.patch("conda_smithy.github.gh_token")
 def test_register_feedstock_token_exists_already(
-    gh_mock, git_mock, tmp_mock, osuran_mock, secrets_mock, tmpdir, repo
+    gh_mock,
+    git_mock,
+    tmp_mock,
+    osuran_mock,
+    secrets_mock,
+    tmpdir,
+    repo,
+    ci,
 ):
     gh_mock.return_value = "abc123"
     tmp_mock.TemporaryDirectory.return_value.__enter__.return_value = str(
@@ -409,16 +530,20 @@ def test_register_feedstock_token_exists_already(
     user = "foo"
     project = "bar"
     os.makedirs(os.path.join(tmpdir, "tokens"), exist_ok=True)
-    pth = os.path.expanduser("~/.conda-smithy/foo_bar.token")
+    pth = feedstock_token_local_path(
+        user,
+        project,
+        provider=ci,
+    )
     token_json_pth = os.path.join(tmpdir, "tokens", "bar.json")
     with open(token_json_pth, "w") as fp:
         fp.write("blarg")
 
     try:
-        generate_and_write_feedstock_token(user, project)
+        generate_and_write_feedstock_token(user, project, provider=ci)
 
-        with pytest.raises(RuntimeError) as e:
-            register_feedstock_token(user, project, repo)
+        with pytest.raises(FeedstockTokenError) as e:
+            register_feedstock_token(user, project, repo, provider=ci)
 
     finally:
         if os.path.exists(pth):
@@ -436,7 +561,7 @@ def test_register_feedstock_token_exists_already(
     repo.remote.return_value.pull.assert_not_called()
     repo.remote.return_value.push.assert_not_called()
 
-    assert "Token for repo foo/bar already exists!" in str(e.value)
+    assert "Token for repo foo/bar" in str(e.value)
 
 
 @pytest.mark.parametrize("drone", [True, False])

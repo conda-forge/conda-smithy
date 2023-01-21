@@ -43,11 +43,11 @@ class FeedstockTokenError(Exception):
     pass
 
 
-def feedstock_token_local_path(user, project, ci=None):
+def feedstock_token_local_path(user, project, provider=None):
     """Return the path locally where the feedstock
     token is stored.
     """
-    if ci is None:
+    if provider is None:
         pth = os.path.join(
             "~",
             ".conda-smithy",
@@ -57,14 +57,14 @@ def feedstock_token_local_path(user, project, ci=None):
         pth = os.path.join(
             "~",
             ".conda-smithy",
-            "%s_%s_%s.token" % (user, project, ci),
+            "%s_%s_%s.token" % (user, project, provider),
         )
     return os.path.expanduser(pth)
 
 
-def generate_and_write_feedstock_token(user, project, ci=None):
+def generate_and_write_feedstock_token(user, project, provider=None):
     """Generate a feedstock token and write it to the file given by
-    ``feedstock_token_local_path(user, project, ci=ci)``.
+    ``feedstock_token_local_path(user, project, provider=provider)``.
 
     This function will fail if the token file already exists.
     """
@@ -75,15 +75,15 @@ def generate_and_write_feedstock_token(user, project, ci=None):
     with open(os.devnull, "w") as fp, redirect_stdout(fp), redirect_stderr(fp):
         try:
             token = secrets.token_hex(32)
-            pth = feedstock_token_local_path(user, project, ci=ci)
+            pth = feedstock_token_local_path(user, project, provider=provider)
             if os.path.exists(pth):
                 failed = True
                 err_msg = (
-                    "Token for %s/%s on CI%s is already written locally!"
+                    "Token for %s/%s on provider%s is already written locally!"
                     % (
                         user,
                         project,
-                        "" if ci is None else " " + ci,
+                        "" if provider is None else " " + provider,
                     )
                 )
                 raise FeedstockTokenError(err_msg)
@@ -103,19 +103,19 @@ def generate_and_write_feedstock_token(user, project, ci=None):
         else:
             raise FeedstockTokenError(
                 (
-                    "Generating the feedstock token for %s/%s on CI%s failed!"
+                    "Generating the feedstock token for %s/%s on provider%s failed!"
                     " Try the command locally with DEBUG_FEEDSTOCK_TOKENS"
                     " defined in the environment to investigate!"
                 )
-                % (user, project, "" if ci is None else " " + ci)
+                % (user, project, "" if provider is None else " " + provider)
             )
 
     return failed
 
 
-def read_feedstock_token(user, project, ci=None):
+def read_feedstock_token(user, project, provider=None):
     """Read the feedstock token from the path given by
-    ``feedstock_token_local_path(user, project, ci=ci)``.
+    ``feedstock_token_local_path(user, project, provider=provider)``.
 
     In order to not spill any tokens to stdout/stderr, this function
     should be used in a `try...except` block with stdout/stderr redirected
@@ -125,7 +125,9 @@ def read_feedstock_token(user, project, ci=None):
     feedstock_token = None
 
     # read the token
-    user_token_pth = feedstock_token_local_path(user, project, ci=ci)
+    user_token_pth = feedstock_token_local_path(
+        user, project, provider=provider
+    )
 
     if not os.path.exists(user_token_pth):
         err_msg = "No token found in '%s'" % user_token_pth
@@ -138,7 +140,7 @@ def read_feedstock_token(user, project, ci=None):
     return feedstock_token, err_msg
 
 
-def feedstock_token_exists(user, project, token_repo, ci=None):
+def feedstock_token_exists(user, project, token_repo, provider=None):
     """Test if the feedstock token exists for the given repo.
 
     All exceptions are swallowed and stdout/stderr from this function is
@@ -182,10 +184,10 @@ def feedstock_token_exists(user, project, token_repo, ci=None):
 
                 now = time.time()
                 for td in token_data["tokens"]:
-                    provider = td.get("provider", None)
-                    expires_at = td.get("expires_at", None)
-                    if ((provider is None) or (provider == ci)) and (
-                        (expires_at is None) or (expires_at > now)
+                    _provider = td.get("provider", None)
+                    _expires_at = td.get("expires_at", None)
+                    if ((_provider is None) or (_provider == provider)) and (
+                        (_expires_at is None) or (_expires_at > now)
                     ):
                         exists = True
         except Exception as e:
@@ -199,17 +201,19 @@ def feedstock_token_exists(user, project, token_repo, ci=None):
         else:
             raise FeedstockTokenError(
                 (
-                    "Testing for the feedstock token for %s/%s on CI%s failed!"
+                    "Testing for the feedstock token for %s/%s on provider%s failed!"
                     " Try the command locally with DEBUG_FEEDSTOCK_TOKENS"
                     " defined in the environment to investigate!"
                 )
-                % (user, project, "" if ci is None else " " + ci)
+                % (user, project, "" if provider is None else " " + provider)
             )
 
     return exists
 
 
-def is_valid_feedstock_token(user, project, feedstock_token, token_repo):
+def is_valid_feedstock_token(
+    user, project, feedstock_token, token_repo, provider=None
+):
     """Test if the input feedstock_token is valid.
 
     All exceptions are swallowed and stdout/stderr from this function is
@@ -251,37 +255,47 @@ def is_valid_feedstock_token(user, project, feedstock_token, token_repo):
                 with open(token_file, "r") as fp:
                     token_data = json.load(fp)
 
-                salted_token = scrypt.hash(
-                    feedstock_token,
-                    bytes.fromhex(token_data["salt"]),
-                    buflen=256,
-                )
+                if "tokens" not in token_data:
+                    token_data = {"tokens": [token_data]}
 
-                valid = hmac.compare_digest(
-                    salted_token,
-                    bytes.fromhex(token_data["hashed_token"]),
-                )
+                now = time.time()
+                for td in token_data["tokens"]:
+                    _provider = td.get("provider", None)
+                    _expires_at = td.get("expires_at", None)
+                    if ((_provider is None) or (_provider == provider)) and (
+                        (_expires_at is None) or (_expires_at > now)
+                    ):
+                        salted_token = scrypt.hash(
+                            feedstock_token,
+                            bytes.fromhex(td["salt"]),
+                            buflen=256,
+                        )
+
+                        valid = hmac.compare_digest(
+                            salted_token,
+                            bytes.fromhex(td["hashed_token"]),
+                        )
         except Exception as e:
             if "DEBUG_FEEDSTOCK_TOKENS" in os.environ:
                 raise e
             failed = True
     if failed:
         if err_msg:
-            raise RuntimeError(err_msg)
+            raise FeedstockTokenError(err_msg)
         else:
-            raise RuntimeError(
+            raise FeedstockTokenError(
                 (
-                    "Validating the feedstock token for %s/%s failed!"
+                    "Validating the feedstock token for %s/%s on provider%s failed!"
                     " Try the command locally with DEBUG_FEEDSTOCK_TOKENS"
                     " defined in the environment to investigate!"
                 )
-                % (user, project)
+                % (user, project, "" if provider is None else " " + provider)
             )
 
     return valid
 
 
-def register_feedstock_token(user, project, token_repo):
+def register_feedstock_token(user, project, token_repo, provider=None):
     """Register the feedstock token with the token repo.
 
     This function uses a random salt and scrypt to hash the feedstock
@@ -308,10 +322,12 @@ def register_feedstock_token(user, project, token_repo):
         os.devnull, "w"
     ) as fp, redirect_stdout(fp), redirect_stderr(fp):
         try:
-            feedstock_token, err_msg = read_feedstock_token(user, project)
+            feedstock_token, err_msg = read_feedstock_token(
+                user, project, provider=provider
+            )
             if err_msg:
                 failed = True
-                raise RuntimeError(err_msg)
+                raise FeedstockTokenError(err_msg)
 
             # clone the repo
             _token_repo = (
@@ -331,11 +347,15 @@ def register_feedstock_token(user, project, token_repo):
             # check again since there might be a race condition
             if os.path.exists(token_file):
                 failed = True
-                err_msg = "Token for repo %s/%s already exists!" % (
-                    user,
-                    project,
+                err_msg = (
+                    "Token for repo %s/%s on provider%s already exists!"
+                    % (
+                        user,
+                        project,
+                        "" if provider is None else " " + provider,
+                    )
                 )
-                raise RuntimeError(err_msg)
+                raise FeedstockTokenError(err_msg)
 
             # salt, encrypt and write
             salt = os.urandom(64)
@@ -344,14 +364,17 @@ def register_feedstock_token(user, project, token_repo):
                 "salt": salt.hex(),
                 "hashed_token": salted_token.hex(),
             }
+            if provider is not None:
+                data["provider"] = provider
             with open(token_file, "w") as fp:
-                json.dump(data, fp)
+                json.dump({"tokens": [data]}, fp)
 
             # push
             repo.index.add(token_file)
             repo.index.commit(
-                "[ci skip] [skip ci] [cf admin skip] ***NO_CI*** added token for %s/%s"
-                % (user, project)
+                "[ci skip] [skip ci] [cf admin skip] ***NO_CI*** "
+                "added token for %s/%s on provider%s"
+                % (user, project, "" if provider is None else " " + provider)
             )
             repo.remote().pull(rebase=True)
             repo.remote().push()
@@ -361,15 +384,15 @@ def register_feedstock_token(user, project, token_repo):
             failed = True
     if failed:
         if err_msg:
-            raise RuntimeError(err_msg)
+            raise FeedstockTokenError(err_msg)
         else:
-            raise RuntimeError(
+            raise FeedstockTokenError(
                 (
-                    "Registering the feedstock token for %s/%s failed!"
+                    "Registering the feedstock token for %s/%s on provider%s failed!"
                     " Try the command locally with DEBUG_FEEDSTOCK_TOKENS"
                     " defined in the environment to investigate!"
                 )
-                % (user, project)
+                % (user, project, "" if provider is None else " " + provider)
             )
 
     return failed

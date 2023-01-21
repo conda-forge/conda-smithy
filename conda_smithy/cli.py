@@ -715,18 +715,24 @@ class GenerateFeedstockToken(Subcommand):
                 % (feedstock_token_local_path(owner, repo))
             )
         else:
-            for ci in [
+            for provider in [
                 "azure",
                 "travis",
                 "circle",
                 "drone",
                 "github_actions",
             ]:
-                generate_and_write_feedstock_token(owner, repo, ci=ci)
+                generate_and_write_feedstock_token(
+                    owner, repo, provider=provider
+                )
                 print(
                     "Your feedstock token has been generated at %s\n"
                     "This token is stored in plaintext so be careful!"
-                    % (feedstock_token_local_path(owner, repo, ci=ci))
+                    % (
+                        feedstock_token_local_path(
+                            owner, repo, provider=provider
+                        )
+                    )
                 )
 
 
