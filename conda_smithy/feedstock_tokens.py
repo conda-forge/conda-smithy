@@ -346,16 +346,10 @@ def register_feedstock_token(user, project, token_repo, provider=None):
             # don't overwrite existing tokens
             # check again since there might be a race condition
             if os.path.exists(token_file):
-                failed = True
-                err_msg = (
-                    "Token for repo %s/%s on provider%s already exists!"
-                    % (
-                        user,
-                        project,
-                        "" if provider is None else " " + provider,
-                    )
-                )
-                raise FeedstockTokenError(err_msg)
+                with open(token_file, "r") as fp:
+                    token_data = json.load(fp)
+            else:
+                token_data = {"tokens": []}
 
             # salt, encrypt and write
             salt = os.urandom(64)
@@ -366,8 +360,9 @@ def register_feedstock_token(user, project, token_repo, provider=None):
             }
             if provider is not None:
                 data["provider"] = provider
+            token_data["tokens"].append(data)
             with open(token_file, "w") as fp:
-                json.dump({"tokens": [data]}, fp)
+                json.dump(token_data, fp)
 
             # push
             repo.index.add(token_file)

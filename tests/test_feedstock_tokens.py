@@ -510,7 +510,7 @@ def test_register_feedstock_token_notoken(
 @mock.patch("conda_smithy.feedstock_tokens.tempfile")
 @mock.patch("conda_smithy.feedstock_tokens.git")
 @mock.patch("conda_smithy.github.gh_token")
-def test_register_feedstock_token_exists_already(
+def test_register_feedstock_token_append(
     gh_mock,
     git_mock,
     tmp_mock,
@@ -537,14 +537,11 @@ def test_register_feedstock_token_exists_already(
     )
     token_json_pth = os.path.join(tmpdir, "tokens", "bar.json")
     with open(token_json_pth, "w") as fp:
-        fp.write("blarg")
+        fp.write('{"tokens": [1]}')
 
     try:
         generate_and_write_feedstock_token(user, project, provider=ci)
-
-        with pytest.raises(FeedstockTokenError) as e:
-            register_feedstock_token(user, project, repo, provider=ci)
-
+        register_feedstock_token(user, project, repo, provider=ci)
     finally:
         if os.path.exists(pth):
             os.remove(pth)
@@ -556,12 +553,24 @@ def test_register_feedstock_token_exists_already(
     )
 
     repo = git_mock.Repo.clone_from.return_value
-    repo.index.add.assert_not_called()
-    repo.index.commit.assert_not_called()
-    repo.remote.return_value.pull.assert_not_called()
-    repo.remote.return_value.push.assert_not_called()
+    repo.index.add.assert_called_once_with(token_json_pth)
+    repo.index.commit.assert_called_once_with(
+        "[ci skip] [skip ci] [cf admin skip] ***NO_CI*** added token for %s/%s on provider%s"
+        % (user, project, "" if ci is None else " " + ci)
+    )
+    repo.remote.return_value.pull.assert_called_once_with(rebase=True)
+    repo.remote.return_value.push.assert_called_once_with()
 
-    assert "Token for repo foo/bar" in str(e.value)
+    salted_token = scrypt.hash("fgh", b"\x80SA", buflen=256)
+    data = {
+        "salt": b"\x80SA".hex(),
+        "hashed_token": salted_token.hex(),
+    }
+    if ci is not None:
+        data["provider"] = ci
+
+    with open(token_json_pth, "r") as fp:
+        assert json.load(fp) == {"tokens": [1, data]}
 
 
 @pytest.mark.parametrize("drone", [True, False])
