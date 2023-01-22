@@ -361,6 +361,8 @@ def register_feedstock_token(user, project, token_repo, provider=None):
             if os.path.exists(token_file):
                 with open(token_file, "r") as fp:
                     token_data = json.load(fp)
+                if "tokens" not in token_data:
+                    token_data = {"tokens": [token_data]}
             else:
                 token_data = {"tokens": []}
 
