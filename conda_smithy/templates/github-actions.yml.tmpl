@@ -19,7 +19,7 @@ on: [push, pull_request]
 
 {%- if github_actions.cancel_in_progress or github_actions.self_hosted %}
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
+  group: {% raw %}${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}{% endraw %}
   cancel-in-progress: true
 {%- endif %}
 
