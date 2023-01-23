@@ -1787,7 +1787,7 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
                     "cirun-openstack-gpu"
                 ],
                 "cloud": "openstack",
-                "instance_type": "gpu_medium",
+                "instance_type": "gpu_large",
                 "machine_image": "ubuntu-2204-nvidia-container-runtime-20230107",
                 "region": "RegionOne",
             },
