@@ -17,6 +17,12 @@ on: {{ github_actions.self_hosted_triggers }}
 on: [push, pull_request]
 {%- endif %}
 
+{%- if github_actions.cancel_in_progress or github_actions.self_hosted %}
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+{%- endif %}
+
 {%- set platform_vars = {
   'osx-64': {
     'os': 'macos',

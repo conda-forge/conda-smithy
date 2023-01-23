@@ -1773,6 +1773,7 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
             "self_hosted": False,
             "self_hosted_labels": [],
             "self_hosted_triggers": ["push"],
+            "cancel_in_progress": False,
             # Toggle creating artifacts for conda build_artifacts dir
             "store_build_artifacts": False,
             "artifact_retention_days": 14,
