@@ -26,7 +26,11 @@ from conda_smithy.ci_register import drone_default_endpoint
         (None, None, True),  # generic token so OK
         (None, "azure", True),  # generic token w/ CI so OK
         ("azure", None, False),  # provider-specific token w/o CI so not OK
-        ("azure", "azure", True),  # provider-specific token w/ correct CI so OK
+        (
+            "azure",
+            "azure",
+            True,
+        ),  # provider-specific token w/ correct CI so OK
         (
             "azure",
             "blah",
@@ -273,7 +277,11 @@ def test_read_feedstock_token(ci):
         (None, None, True),  # generic token so OK
         (None, "azure", True),  # generic token w/ CI so OK
         ("azure", None, False),  # provider-specific token w/o CI so not OK
-        ("azure", "azure", True),  # provider-specific token w/ correct CI so OK
+        (
+            "azure",
+            "azure",
+            True,
+        ),  # provider-specific token w/ correct CI so OK
         (
             "azure",
             "blah",
@@ -614,7 +622,9 @@ def test_register_feedstock_token_with_providers(
 
     try:
         for provider in providers:
-            generate_and_write_feedstock_token(user, project, provider=provider)
+            generate_and_write_feedstock_token(
+                user, project, provider=provider
+            )
 
         register_feedstock_token_with_proviers(
             user,
@@ -807,7 +817,9 @@ def test_register_feedstock_token_with_proviers_error(
 
     try:
         for provider in providers:
-            generate_and_write_feedstock_token(user, project, provider=provider)
+            generate_and_write_feedstock_token(
+                user, project, provider=provider
+            )
 
         with pytest.raises(FeedstockTokenError) as e:
             register_feedstock_token_with_proviers(
