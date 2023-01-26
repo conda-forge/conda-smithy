@@ -849,7 +849,7 @@ class RegisterFeedstockToken(Subcommand):
                         owner,
                         repo,
                         token_repo,
-                        provier=ci,
+                        provider=ci,
                     )
         else:
             register_feedstock_token(
