@@ -411,7 +411,7 @@ def register_feedstock_token(user, project, token_repo, provider=None):
     return failed
 
 
-def register_feedstock_token_with_proviers(
+def register_feedstock_token_with_providers(
     user,
     project,
     *,

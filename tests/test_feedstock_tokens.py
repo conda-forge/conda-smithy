@@ -11,7 +11,7 @@ from conda_smithy.feedstock_tokens import (
     read_feedstock_token,
     feedstock_token_exists,
     register_feedstock_token,
-    register_feedstock_token_with_proviers,
+    register_feedstock_token_with_providers,
     is_valid_feedstock_token,
     FeedstockTokenError,
     feedstock_token_local_path,
@@ -626,7 +626,7 @@ def test_register_feedstock_token_with_providers(
                 user, project, provider=provider
             )
 
-        register_feedstock_token_with_proviers(
+        register_feedstock_token_with_providers(
             user,
             project,
             drone=drone,
@@ -733,7 +733,7 @@ def test_register_feedstock_token_with_providers(
 @mock.patch(
     "conda_smithy.feedstock_tokens.add_feedstock_token_to_github_actions"
 )
-def test_register_feedstock_token_with_proviers_notoken(
+def test_register_feedstock_token_with_providers_notoken(
     github_actions_mock,
     azure_mock,
     travis_mock,
@@ -752,7 +752,7 @@ def test_register_feedstock_token_with_proviers_notoken(
 
     if any([drone, circle, travis, azure, github_actions]):
         with pytest.raises(FeedstockTokenError) as e:
-            register_feedstock_token_with_proviers(
+            register_feedstock_token_with_providers(
                 user,
                 project,
                 drone=drone,
@@ -784,7 +784,7 @@ def test_register_feedstock_token_with_proviers_notoken(
 @mock.patch(
     "conda_smithy.feedstock_tokens.add_feedstock_token_to_github_actions"
 )
-def test_register_feedstock_token_with_proviers_error(
+def test_register_feedstock_token_with_providers_error(
     github_actions_mock,
     azure_mock,
     travis_mock,
@@ -822,7 +822,7 @@ def test_register_feedstock_token_with_proviers_error(
             )
 
         with pytest.raises(FeedstockTokenError) as e:
-            register_feedstock_token_with_proviers(
+            register_feedstock_token_with_providers(
                 user,
                 project,
                 drone_endpoints=[drone_default_endpoint],
