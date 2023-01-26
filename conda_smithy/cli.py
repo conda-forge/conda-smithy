@@ -712,7 +712,7 @@ class GenerateFeedstockToken(Subcommand):
             print(
                 "Your feedstock token has been generated at %s\n"
                 "This token is stored in plaintext so be careful!"
-                % (feedstock_token_local_path(owner, repo))
+                % feedstock_token_local_path(owner, repo)
             )
         else:
             for provider in [
