@@ -38,9 +38,7 @@ import scrypt
 
 
 class FeedstockTokenError(Exception):
-    """Custom exception for sanitzed token errors."""
-
-    pass
+    """Custom exception for sanitized token errors."""
 
 
 @contextmanager
@@ -534,7 +532,7 @@ def register_feedstock_token_with_proviers(
     if failed:
         raise FeedstockTokenError(
             (
-                "Registering the feedstock token with proviers for %s/%s failed!"
+                "Registering the feedstock token with providers for %s/%s failed!"
                 " Try the command locally with DEBUG_FEEDSTOCK_TOKENS"
                 " defined in the environment to investigate!"
             )
