@@ -816,9 +816,9 @@ def test_register_feedstock_token_with_providers_error(
         github_actions_mock.side_effect = ValueError("blah")
 
     try:
-        for provider in providers:
+        for _provider in providers:
             generate_and_write_feedstock_token(
-                user, project, provider=provider
+                user, project, provider=_provider
             )
 
         with pytest.raises(FeedstockTokenError) as e:
@@ -831,7 +831,7 @@ def test_register_feedstock_token_with_providers_error(
 
         assert "on %s" % provider in str(e.value)
     finally:
-        for provider in providers:
-            pth = feedstock_token_local_path(user, project, provider=provider)
+        for _provider in providers:
+            pth = feedstock_token_local_path(user, project, provider=_provider)
             if os.path.exists(pth):
                 os.remove(pth)

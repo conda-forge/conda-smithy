@@ -800,7 +800,7 @@ class RegisterFeedstockToken(Subcommand):
 
     def __call__(self, args):
         from conda_smithy.feedstock_tokens import (
-            register_feedstock_token_with_proviers,
+            register_feedstock_token_with_providers,
             register_feedstock_token,
         )
         from conda_smithy.ci_register import drone_default_endpoint
@@ -823,7 +823,7 @@ class RegisterFeedstockToken(Subcommand):
         print("Registering the feedstock tokens. Can take up to ~30 seconds.")
 
         # do all providers first
-        register_feedstock_token_with_proviers(
+        register_feedstock_token_with_providers(
             owner,
             repo,
             drone=args.drone,
