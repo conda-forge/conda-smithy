@@ -27,7 +27,6 @@ import tempfile
 import os
 import json
 import time
-import sys
 import secrets
 import hmac
 from contextlib import redirect_stderr, redirect_stdout, contextmanager
@@ -45,19 +44,14 @@ class FeedstockTokenError(Exception):
 def _secure_io():
     """context manager that redirects stdout and
     stderr to /dev/null to avoid spilling tokens"""
-    try:
-        with open(os.devnull, "w") as fp:
-            if "DEBUG_FEEDSTOCK_TOKENS" in os.environ:
-                fpo = sys.stdout
-                fpe = sys.stderr
-            else:
-                fpo = fp
-                fpe = fp
 
-            with redirect_stdout(fpo), redirect_stderr(fpe):
+    if "DEBUG_FEEDSTOCK_TOKENS" in os.environ:
+        yield
+    else:
+        # the redirect business
+        with open(os.devnull, "w") as fp:
+            with redirect_stdout(fp), redirect_stderr(fp):
                 yield
-    finally:
-        pass
 
 
 def feedstock_token_local_path(user, project, provider=None):
