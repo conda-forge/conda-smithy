@@ -27,7 +27,6 @@ import tempfile
 import os
 import json
 import time
-import sys
 import secrets
 import hmac
 from contextlib import redirect_stderr, redirect_stdout, contextmanager
@@ -38,28 +37,21 @@ import scrypt
 
 
 class FeedstockTokenError(Exception):
-    """Custom exception for sanitzed token errors."""
-
-    pass
+    """Custom exception for sanitized token errors."""
 
 
 @contextmanager
 def _secure_io():
     """context manager that redirects stdout and
     stderr to /dev/null to avoid spilling tokens"""
-    try:
-        with open(os.devnull, "w") as fp:
-            if "DEBUG_FEEDSTOCK_TOKENS" in os.environ:
-                fpo = sys.stdout
-                fpe = sys.stderr
-            else:
-                fpo = fp
-                fpe = fp
 
-            with redirect_stdout(fpo), redirect_stderr(fpe):
+    if "DEBUG_FEEDSTOCK_TOKENS" in os.environ:
+        yield
+    else:
+        # the redirect business
+        with open(os.devnull, "w") as fp:
+            with redirect_stdout(fp), redirect_stderr(fp):
                 yield
-    finally:
-        pass
 
 
 def feedstock_token_local_path(user, project, provider=None):
@@ -366,11 +358,12 @@ def register_feedstock_token(
                 project + ".json",
             )
 
-            # don't overwrite existing tokens
-            # check again since there might be a race condition
+            # append the token if needed
             if os.path.exists(token_file):
                 with open(token_file, "r") as fp:
                     token_data = json.load(fp)
+                if "tokens" not in token_data:
+                    token_data = {"tokens": [token_data]}
             else:
                 token_data = {"tokens": []}
 
@@ -453,7 +446,7 @@ def register_feedstock_token(
     return failed
 
 
-def register_feedstock_token_with_proviers(
+def register_feedstock_token_with_providers(
     user,
     project,
     *,
@@ -574,7 +567,7 @@ def register_feedstock_token_with_proviers(
     if failed:
         raise FeedstockTokenError(
             (
-                "Registering the feedstock token with proviers for %s/%s failed!"
+                "Registering the feedstock token with providers for %s/%s failed!"
                 " Try the command locally with DEBUG_FEEDSTOCK_TOKENS"
                 " defined in the environment to investigate!"
             )

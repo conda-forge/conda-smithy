@@ -11,7 +11,7 @@ from conda_smithy.feedstock_tokens import (
     read_feedstock_token,
     feedstock_token_exists,
     register_feedstock_token,
-    register_feedstock_token_with_proviers,
+    register_feedstock_token_with_providers,
     is_valid_feedstock_token,
     FeedstockTokenError,
     feedstock_token_local_path,
@@ -26,12 +26,16 @@ from conda_smithy.ci_register import drone_default_endpoint
         (None, None, True),  # generic token so OK
         (None, "azure", True),  # generic token w/ CI so OK
         ("azure", None, False),  # provider-specific token w/o CI so not OK
-        ("azure", "azure", True),  # provier-specific token w/ correct CI so OK
+        (
+            "azure",
+            "azure",
+            True,
+        ),  # provider-specific token w/ correct CI so OK
         (
             "azure",
             "blah",
             False,
-        ),  # provier-specific token w/ wrong CI so not OK
+        ),  # provider-specific token w/ wrong CI so not OK
     ],
 )
 @pytest.mark.parametrize(
@@ -273,12 +277,16 @@ def test_read_feedstock_token(ci):
         (None, None, True),  # generic token so OK
         (None, "azure", True),  # generic token w/ CI so OK
         ("azure", None, False),  # provider-specific token w/o CI so not OK
-        ("azure", "azure", True),  # provier-specific token w/ correct CI so OK
+        (
+            "azure",
+            "azure",
+            True,
+        ),  # provider-specific token w/ correct CI so OK
         (
             "azure",
             "blah",
             False,
-        ),  # provier-specific token w/ wrong CI so not OK
+        ),  # provider-specific token w/ wrong CI so not OK
     ],
 )
 @pytest.mark.parametrize(
@@ -669,10 +677,12 @@ def test_register_feedstock_token_with_providers(
     ]
 
     try:
-        for provier in providers:
-            generate_and_write_feedstock_token(user, project, provider=provier)
+        for provider in providers:
+            generate_and_write_feedstock_token(
+                user, project, provider=provider
+            )
 
-        register_feedstock_token_with_proviers(
+        register_feedstock_token_with_providers(
             user,
             project,
             drone=drone,
@@ -759,8 +769,8 @@ def test_register_feedstock_token_with_providers(
         else:
             github_actions_mock.assert_not_called()
     finally:
-        for provier in providers:
-            pth = feedstock_token_local_path(user, project, provider=provier)
+        for provider in providers:
+            pth = feedstock_token_local_path(user, project, provider=provider)
             if os.path.exists(pth):
                 os.remove(pth)
 
@@ -779,7 +789,7 @@ def test_register_feedstock_token_with_providers(
 @mock.patch(
     "conda_smithy.feedstock_tokens.add_feedstock_token_to_github_actions"
 )
-def test_register_feedstock_token_with_proviers_notoken(
+def test_register_feedstock_token_with_providers_notoken(
     github_actions_mock,
     azure_mock,
     travis_mock,
@@ -798,7 +808,7 @@ def test_register_feedstock_token_with_proviers_notoken(
 
     if any([drone, circle, travis, azure, github_actions]):
         with pytest.raises(FeedstockTokenError) as e:
-            register_feedstock_token_with_proviers(
+            register_feedstock_token_with_providers(
                 user,
                 project,
                 drone=drone,
@@ -830,7 +840,7 @@ def test_register_feedstock_token_with_proviers_notoken(
 @mock.patch(
     "conda_smithy.feedstock_tokens.add_feedstock_token_to_github_actions"
 )
-def test_register_feedstock_token_with_proviers_error(
+def test_register_feedstock_token_with_providers_error(
     github_actions_mock,
     azure_mock,
     travis_mock,
@@ -862,11 +872,13 @@ def test_register_feedstock_token_with_proviers_error(
         github_actions_mock.side_effect = ValueError("blah")
 
     try:
-        for provier in providers:
-            generate_and_write_feedstock_token(user, project, provider=provier)
+        for _provider in providers:
+            generate_and_write_feedstock_token(
+                user, project, provider=_provider
+            )
 
         with pytest.raises(FeedstockTokenError) as e:
-            register_feedstock_token_with_proviers(
+            register_feedstock_token_with_providers(
                 user,
                 project,
                 drone_endpoints=[drone_default_endpoint],
@@ -875,7 +887,7 @@ def test_register_feedstock_token_with_proviers_error(
 
         assert "on %s" % provider in str(e.value)
     finally:
-        for provier in providers:
-            pth = feedstock_token_local_path(user, project, provider=provier)
+        for _provider in providers:
+            pth = feedstock_token_local_path(user, project, provider=_provider)
             if os.path.exists(pth):
                 os.remove(pth)
