@@ -770,6 +770,15 @@ class RegisterFeedstockToken(Subcommand):
             action="store_true",
             help="If set, use a unique token per CI provider.",
         )
+        scp.add_argument(
+            "--existing-tokens-time-to-expiration",
+            default=None,
+            help=(
+                "If set to a number of seconds, all existing generic tokens "
+                "(and any that match the provider if --unique-token-per-provider "
+                "is set) will be marked to expire in that number of seconds from now."
+            ),
+        )
         group = scp.add_mutually_exclusive_group()
         group.add_argument(
             "--user", help="github username under which to register this repo"
@@ -850,6 +859,9 @@ class RegisterFeedstockToken(Subcommand):
                         repo,
                         token_repo,
                         provider=ci,
+                        existing_tokens_time_to_expiration=int(
+                            args.existing_tokens_time_to_expiration
+                        ),
                     )
         else:
             register_feedstock_token(
@@ -857,6 +869,9 @@ class RegisterFeedstockToken(Subcommand):
                 repo,
                 token_repo,
                 provider=None,
+                existing_tokens_time_to_expiration=int(
+                    args.existing_tokens_time_to_expiration
+                ),
             )
 
         print("Successfully registered the feedstock token!")
