@@ -12,6 +12,10 @@ line utility. The relevant functions are
 The `generate-feedstock-token` command must be called before the `register-feedstock-token`
 command. It generates a random token and writes it to
 
+    ~/.conda-smithy/{user or org}_{repo}_{ci}.token
+
+or
+
     ~/.conda-smithy/{user or org}_{repo}.token
 
 Then when you call `register-feedstock-token`, the generated token is placed
@@ -22,20 +26,56 @@ then uploaded to the token registry (a repo on GitHub).
 import tempfile
 import os
 import json
-import sys
+import time
 import secrets
 import hmac
-from contextlib import redirect_stderr, redirect_stdout
+from contextlib import redirect_stderr, redirect_stdout, contextmanager
 
 import git
 import requests
 import scrypt
 
 
-def generate_and_write_feedstock_token(user, project):
-    """Generate a feedstock token and write it to
+class FeedstockTokenError(Exception):
+    """Custom exception for sanitized token errors."""
 
-        ~/.conda-smithy/{user or org}_{repo}_feedstock.token
+
+@contextmanager
+def _secure_io():
+    """context manager that redirects stdout and
+    stderr to /dev/null to avoid spilling tokens"""
+
+    if "DEBUG_FEEDSTOCK_TOKENS" in os.environ:
+        yield
+    else:
+        # the redirect business
+        with open(os.devnull, "w") as fp:
+            with redirect_stdout(fp), redirect_stderr(fp):
+                yield
+
+
+def feedstock_token_local_path(user, project, provider=None):
+    """Return the path locally where the feedstock
+    token is stored.
+    """
+    if provider is None:
+        pth = os.path.join(
+            "~",
+            ".conda-smithy",
+            "%s_%s.token" % (user, project),
+        )
+    else:
+        pth = os.path.join(
+            "~",
+            ".conda-smithy",
+            "%s_%s_%s.token" % (user, project, provider),
+        )
+    return os.path.expanduser(pth)
+
+
+def generate_and_write_feedstock_token(user, project, provider=None):
+    """Generate a feedstock token and write it to the file given by
+    ``feedstock_token_local_path(user, project, provider=provider)``.
 
     This function will fail if the token file already exists.
     """
@@ -43,22 +83,21 @@ def generate_and_write_feedstock_token(user, project):
     # spill tokens
     failed = False
     err_msg = None
-    with open(os.devnull, "w") as fp, redirect_stdout(fp), redirect_stderr(fp):
+    with _secure_io():
         try:
             token = secrets.token_hex(32)
-            pth = os.path.join(
-                "~",
-                ".conda-smithy",
-                "%s_%s.token" % (user, project),
-            )
-            pth = os.path.expanduser(pth)
+            pth = feedstock_token_local_path(user, project, provider=provider)
             if os.path.exists(pth):
                 failed = True
-                err_msg = "Token for %s/%s is already written locally!" % (
-                    user,
-                    project,
+                err_msg = (
+                    "Token for %s/%s on provider%s is already written locally!"
+                    % (
+                        user,
+                        project,
+                        "" if provider is None else " " + provider,
+                    )
                 )
-                raise RuntimeError(err_msg)
+                raise FeedstockTokenError(err_msg)
 
             os.makedirs(os.path.dirname(pth), exist_ok=True)
 
@@ -71,24 +110,23 @@ def generate_and_write_feedstock_token(user, project):
 
     if failed:
         if err_msg:
-            raise RuntimeError(err_msg)
+            raise FeedstockTokenError(err_msg)
         else:
-            raise RuntimeError(
+            raise FeedstockTokenError(
                 (
-                    "Generating the feedstock token for %s/%s failed!"
+                    "Generating the feedstock token for %s/%s on provider%s failed!"
                     " Try the command locally with DEBUG_FEEDSTOCK_TOKENS"
                     " defined in the environment to investigate!"
                 )
-                % (user, project)
+                % (user, project, "" if provider is None else " " + provider)
             )
 
     return failed
 
 
-def read_feedstock_token(user, project):
-    """Read the feedstock token from
-
-        ~/.conda-smithy/{user or org}_{repo}.token
+def read_feedstock_token(user, project, provider=None):
+    """Read the feedstock token from the path given by
+    ``feedstock_token_local_path(user, project, provider=provider)``.
 
     In order to not spill any tokens to stdout/stderr, this function
     should be used in a `try...except` block with stdout/stderr redirected
@@ -98,30 +136,22 @@ def read_feedstock_token(user, project):
     feedstock_token = None
 
     # read the token
-    user_token_pth = os.path.join(
-        "~",
-        ".conda-smithy",
-        "%s_%s.token" % (user, project),
+    user_token_pth = feedstock_token_local_path(
+        user, project, provider=provider
     )
-    user_token_pth = os.path.expanduser(user_token_pth)
 
     if not os.path.exists(user_token_pth):
-        err_msg = "No token found in '~/.conda-smithy/%s_%s.token'" % (
-            user,
-            project,
-        )
+        err_msg = "No token found in '%s'" % user_token_pth
     else:
         with open(user_token_pth, "r") as fp:
             feedstock_token = fp.read().strip()
         if not feedstock_token:
-            err_msg = (
-                "Empty token found in '~/.conda-smithy/" "%s_%s.token'"
-            ) % (user, project)
+            err_msg = "Empty token found in '%s'" % user_token_pth
             feedstock_token = None
     return feedstock_token, err_msg
 
 
-def feedstock_token_exists(user, project, token_repo):
+def feedstock_token_exists(user, project, token_repo, provider=None):
     """Test if the feedstock token exists for the given repo.
 
     All exceptions are swallowed and stdout/stderr from this function is
@@ -138,70 +168,7 @@ def feedstock_token_exists(user, project, token_repo):
     exists = False
     failed = False
     err_msg = None
-    with tempfile.TemporaryDirectory() as tmpdir, open(
-        os.devnull, "w"
-    ) as fp, redirect_stdout(fp), redirect_stderr(fp):
-        try:
-            # clone the repo
-            _token_repo = (
-                token_repo.replace("$GITHUB_TOKEN", github_token)
-                .replace("${GITHUB_TOKEN}", github_token)
-                .replace("$GH_TOKEN", github_token)
-                .replace("${GH_TOKEN}", github_token)
-            )
-            git.Repo.clone_from(_token_repo, tmpdir, depth=1)
-            token_file = os.path.join(
-                tmpdir,
-                "tokens",
-                project + ".json",
-            )
-
-            if os.path.exists(token_file):
-                exists = True
-        except Exception as e:
-            if "DEBUG_FEEDSTOCK_TOKENS" in os.environ:
-                raise e
-            failed = True
-
-    if failed:
-        if err_msg:
-            raise RuntimeError(err_msg)
-        else:
-            raise RuntimeError(
-                (
-                    "Testing for the feedstock token for %s/%s failed!"
-                    " Try the command locally with DEBUG_FEEDSTOCK_TOKENS"
-                    " defined in the environment to investigate!"
-                )
-                % (user, project)
-            )
-
-    return exists
-
-
-def is_valid_feedstock_token(user, project, feedstock_token, token_repo):
-    """Test if the input feedstock_token is valid.
-
-    All exceptions are swallowed and stdout/stderr from this function is
-    redirected to `/dev/null`. Sanitized error messages are
-    displayed at the end.
-
-    If you need to debug this function, define `DEBUG_FEEDSTOCK_TOKENS` in
-    your environment before calling this function.
-    """
-    from .github import gh_token
-
-    github_token = gh_token()
-
-    failed = False
-    err_msg = None
-    valid = False
-
-    # capture stdout, stderr and suppress all exceptions so we don't
-    # spill tokens
-    with tempfile.TemporaryDirectory() as tmpdir, open(
-        os.devnull, "w"
-    ) as fp, redirect_stdout(fp), redirect_stderr(fp):
+    with _secure_io(), tempfile.TemporaryDirectory() as tmpdir:
         try:
             # clone the repo
             _token_repo = (
@@ -221,38 +188,132 @@ def is_valid_feedstock_token(user, project, feedstock_token, token_repo):
                 with open(token_file, "r") as fp:
                     token_data = json.load(fp)
 
-                salted_token = scrypt.hash(
-                    feedstock_token,
-                    bytes.fromhex(token_data["salt"]),
-                    buflen=256,
-                )
+                if "tokens" not in token_data:
+                    token_data = {"tokens": [token_data]}
 
-                valid = hmac.compare_digest(
-                    salted_token,
-                    bytes.fromhex(token_data["hashed_token"]),
-                )
+                now = time.time()
+                for td in token_data["tokens"]:
+                    _provider = td.get("provider", None)
+                    _expires_at = td.get("expires_at", None)
+                    if ((_provider is None) or (_provider == provider)) and (
+                        (_expires_at is None) or (_expires_at > now)
+                    ):
+                        exists = True
         except Exception as e:
             if "DEBUG_FEEDSTOCK_TOKENS" in os.environ:
                 raise e
             failed = True
+
     if failed:
         if err_msg:
-            raise RuntimeError(err_msg)
+            raise FeedstockTokenError(err_msg)
         else:
-            raise RuntimeError(
+            raise FeedstockTokenError(
                 (
-                    "Validating the feedstock token for %s/%s failed!"
+                    "Testing for the feedstock token for %s/%s on provider%s failed!"
                     " Try the command locally with DEBUG_FEEDSTOCK_TOKENS"
                     " defined in the environment to investigate!"
                 )
-                % (user, project)
+                % (user, project, "" if provider is None else " " + provider)
+            )
+
+    return exists
+
+
+def is_valid_feedstock_token(
+    user, project, feedstock_token, token_repo, provider=None
+):
+    """Test if the input feedstock_token is valid.
+
+    All exceptions are swallowed and stdout/stderr from this function is
+    redirected to `/dev/null`. Sanitized error messages are
+    displayed at the end.
+
+    If you need to debug this function, define `DEBUG_FEEDSTOCK_TOKENS` in
+    your environment before calling this function.
+    """
+    from .github import gh_token
+
+    github_token = gh_token()
+
+    failed = False
+    err_msg = None
+    valid = False
+
+    # capture stdout, stderr and suppress all exceptions so we don't
+    # spill tokens
+    with _secure_io(), tempfile.TemporaryDirectory() as tmpdir:
+        try:
+            # clone the repo
+            _token_repo = (
+                token_repo.replace("$GITHUB_TOKEN", github_token)
+                .replace("${GITHUB_TOKEN}", github_token)
+                .replace("$GH_TOKEN", github_token)
+                .replace("${GH_TOKEN}", github_token)
+            )
+            git.Repo.clone_from(_token_repo, tmpdir, depth=1)
+            token_file = os.path.join(
+                tmpdir,
+                "tokens",
+                project + ".json",
+            )
+
+            if os.path.exists(token_file):
+                with open(token_file, "r") as fp:
+                    token_data = json.load(fp)
+
+                if "tokens" not in token_data:
+                    token_data = {"tokens": [token_data]}
+
+                now = time.time()
+                for td in token_data["tokens"]:
+                    _provider = td.get("provider", None)
+                    _expires_at = td.get("expires_at", None)
+                    if ((_provider is None) or (_provider == provider)) and (
+                        (_expires_at is None) or (_expires_at > now)
+                    ):
+                        salted_token = scrypt.hash(
+                            feedstock_token,
+                            bytes.fromhex(td["salt"]),
+                            buflen=256,
+                        )
+
+                        valid = hmac.compare_digest(
+                            salted_token,
+                            bytes.fromhex(td["hashed_token"]),
+                        )
+        except Exception as e:
+            if "DEBUG_FEEDSTOCK_TOKENS" in os.environ:
+                raise e
+            failed = True
+
+    if failed:
+        if err_msg:
+            raise FeedstockTokenError(err_msg)
+        else:
+            raise FeedstockTokenError(
+                (
+                    "Validating the feedstock token for %s/%s on provider%s failed!"
+                    " Try the command locally with DEBUG_FEEDSTOCK_TOKENS"
+                    " defined in the environment to investigate!"
+                )
+                % (user, project, "" if provider is None else " " + provider)
             )
 
     return valid
 
 
-def register_feedstock_token(user, project, token_repo):
+def register_feedstock_token(
+    user,
+    project,
+    token_repo,
+    provider=None,
+    existing_tokens_time_to_expiration=None,
+):
     """Register the feedstock token with the token repo.
+
+    If `existing_tokens_time_to_expiration` is not None,
+    mark old tokens to expire at `time.time() + existing_tokens_time_to_expiration`.
 
     This function uses a random salt and scrypt to hash the feedstock
     token before writing it to the token repo. NEVER STORE THESE TOKENS
@@ -274,14 +335,14 @@ def register_feedstock_token(user, project, token_repo):
 
     # capture stdout, stderr and suppress all exceptions so we don't
     # spill tokens
-    with tempfile.TemporaryDirectory() as tmpdir, open(
-        os.devnull, "w"
-    ) as fp, redirect_stdout(fp), redirect_stderr(fp):
+    with _secure_io(), tempfile.TemporaryDirectory() as tmpdir:
         try:
-            feedstock_token, err_msg = read_feedstock_token(user, project)
+            feedstock_token, err_msg = read_feedstock_token(
+                user, project, provider=provider
+            )
             if err_msg:
                 failed = True
-                raise RuntimeError(err_msg)
+                raise FeedstockTokenError(err_msg)
 
             # clone the repo
             _token_repo = (
@@ -297,15 +358,46 @@ def register_feedstock_token(user, project, token_repo):
                 project + ".json",
             )
 
-            # don't overwrite existing tokens
-            # check again since there might be a race condition
+            # append the token if needed
             if os.path.exists(token_file):
-                failed = True
-                err_msg = "Token for repo %s/%s already exists!" % (
-                    user,
-                    project,
-                )
-                raise RuntimeError(err_msg)
+                with open(token_file, "r") as fp:
+                    token_data = json.load(fp)
+                if "tokens" not in token_data:
+                    token_data = {"tokens": [token_data]}
+            else:
+                token_data = {"tokens": []}
+
+            # clean out old tokens
+            now = time.time()
+            token_data["tokens"] = [
+                td
+                for td in token_data["tokens"]
+                if td.get("expires_at", now) >= now
+            ]
+
+            if existing_tokens_time_to_expiration is not None:
+                # expire current tokens if needed
+                now_plus_expire = now + existing_tokens_time_to_expiration
+
+                for i in range(len(token_data["tokens"])):
+                    tokens_provider = token_data["tokens"][i].get(
+                        "provider", None
+                    )
+                    if (
+                        # doesn't have an expiration time currently
+                        "expires_at" not in token_data["tokens"][i]
+                        and (
+                            # if token is generic, it always expires
+                            tokens_provider is None
+                            or (
+                                # if token is not generic, it has to match providers
+                                tokens_provider is not None
+                                and provider is not None
+                                and tokens_provider == provider
+                            )
+                        )
+                    ):
+                        token_data["tokens"][i]["expires_at"] = now_plus_expire
 
             # salt, encrypt and write
             salt = os.urandom(64)
@@ -314,14 +406,22 @@ def register_feedstock_token(user, project, token_repo):
                 "salt": salt.hex(),
                 "hashed_token": salted_token.hex(),
             }
+            if provider is not None:
+                data["provider"] = provider
+            token_data["tokens"].append(data)
             with open(token_file, "w") as fp:
-                json.dump(data, fp)
+                json.dump(token_data, fp)
 
             # push
             repo.index.add(token_file)
             repo.index.commit(
-                "[ci skip] [skip ci] [cf admin skip] ***NO_CI*** added token for %s/%s"
-                % (user, project)
+                "[ci skip] [skip ci] [cf admin skip] ***NO_CI*** "
+                "added token for %s/%s on provider%s"
+                % (
+                    user,
+                    project,
+                    "" if provider is None else " " + provider,
+                )
             )
             repo.remote().pull(rebase=True)
             repo.remote().push()
@@ -329,23 +429,24 @@ def register_feedstock_token(user, project, token_repo):
             if "DEBUG_FEEDSTOCK_TOKENS" in os.environ:
                 raise e
             failed = True
+
     if failed:
         if err_msg:
-            raise RuntimeError(err_msg)
+            raise FeedstockTokenError(err_msg)
         else:
-            raise RuntimeError(
+            raise FeedstockTokenError(
                 (
-                    "Registering the feedstock token for %s/%s failed!"
+                    "Registering the feedstock token for %s/%s on provider%s failed!"
                     " Try the command locally with DEBUG_FEEDSTOCK_TOKENS"
                     " defined in the environment to investigate!"
                 )
-                % (user, project)
+                % (user, project, "" if provider is None else " " + provider)
             )
 
     return failed
 
 
-def register_feedstock_token_with_proviers(
+def register_feedstock_token_with_providers(
     user,
     project,
     *,
@@ -356,6 +457,7 @@ def register_feedstock_token_with_proviers(
     github_actions=True,
     clobber=True,
     drone_endpoints=(),
+    unique_token_per_provider=False,
 ):
     """Register the feedstock token with provider CI services.
 
@@ -373,127 +475,104 @@ def register_feedstock_token_with_proviers(
     # to generate the proper errors for missing tokens
     from .ci_register import travis_endpoint  # noqa
     from .azure_ci_utils import default_config  # noqa
+    from .ci_register import drone_default_endpoint
+
+    def _register_token(user, project, clobber, provider, func, args=None):
+        args = args or tuple()
+
+        if unique_token_per_provider:
+            feedstock_token, err_msg = read_feedstock_token(
+                user, project, provider=provider
+            )
+        else:
+            feedstock_token, err_msg = read_feedstock_token(
+                user, project, provider=None
+            )
+
+        if err_msg:
+            raise FeedstockTokenError(err_msg)
+
+        try:
+            func(user, project, feedstock_token, clobber, *args)
+        except Exception as e:
+            if "DEBUG_FEEDSTOCK_TOKENS" in os.environ:
+                raise e
+            else:
+                err_msg = (
+                    "Failed to register feedstock token for %s/%s"
+                    " on %s for args %r!"
+                ) % (user, project, provider, args)
+                raise FeedstockTokenError(err_msg)
 
     # capture stdout, stderr and suppress all exceptions so we don't
     # spill tokens
     failed = False
-    err_msg = None
-    with open(os.devnull, "w") as fp:
-        if "DEBUG_FEEDSTOCK_TOKENS" in os.environ:
-            fpo = sys.stdout
-            fpe = sys.stdout
-        else:
-            fpo = fp
-            fpe = fp
+    drone_endpoints = drone_endpoints or [drone_default_endpoint]
 
-        with redirect_stdout(fpo), redirect_stderr(fpe):
-            try:
-                feedstock_token, err_msg = read_feedstock_token(user, project)
-                if err_msg:
-                    failed = True
-                    raise RuntimeError(err_msg)
-
-                if circle:
-                    try:
-                        add_feedstock_token_to_circle(
-                            user, project, feedstock_token, clobber
-                        )
-                    except Exception as e:
-                        if "DEBUG_FEEDSTOCK_TOKENS" in os.environ:
-                            raise e
-                        else:
-                            err_msg = (
-                                "Failed to register feedstock token for %s/%s"
-                                " on circle!"
-                            ) % (user, project)
-                            failed = True
-                            raise RuntimeError(err_msg)
-
-                if drone:
-                    for drone_endpoint in drone_endpoints:
-                        try:
-                            add_feedstock_token_to_drone(
-                                user,
-                                project,
-                                feedstock_token,
-                                clobber,
-                                drone_endpoint,
-                            )
-                        except Exception as e:
-                            if "DEBUG_FEEDSTOCK_TOKENS" in os.environ:
-                                raise e
-                            else:
-                                err_msg = (
-                                    "Failed to register feedstock token for %s/%s"
-                                    " on drone endpoint %s!"
-                                ) % (user, project, drone_endpoint)
-                                failed = True
-                                raise RuntimeError(err_msg)
-
-                if travis:
-                    try:
-                        add_feedstock_token_to_travis(
-                            user, project, feedstock_token, clobber
-                        )
-                    except Exception as e:
-                        if "DEBUG_FEEDSTOCK_TOKENS" in os.environ:
-                            raise e
-                        else:
-                            err_msg = (
-                                "Failed to register feedstock token for %s/%s"
-                                " on travis!"
-                            ) % (user, project)
-                            failed = True
-                            raise RuntimeError(err_msg)
-
-                if azure:
-                    try:
-                        add_feedstock_token_to_azure(
-                            user, project, feedstock_token, clobber
-                        )
-                    except Exception as e:
-                        if "DEBUG_FEEDSTOCK_TOKENS" in os.environ:
-                            raise e
-                        else:
-                            err_msg = (
-                                "Failed to register feedstock token for %s/%s"
-                                " on azure!"
-                            ) % (user, project)
-                            failed = True
-                            raise RuntimeError(err_msg)
-
-                if github_actions:
-                    try:
-                        add_feedstock_token_to_github_actions(
-                            user, project, feedstock_token, clobber
-                        )
-                    except Exception as e:
-                        if "DEBUG_FEEDSTOCK_TOKENS" in os.environ:
-                            raise e
-                        else:
-                            err_msg = (
-                                "Failed to register feedstock token for %s/%s"
-                                " on github actions!"
-                            ) % (user, project)
-                            failed = True
-                            raise RuntimeError(err_msg)
-
-            except Exception as e:
-                if "DEBUG_FEEDSTOCK_TOKENS" in os.environ:
-                    raise e
-                failed = True
-    if failed:
-        if err_msg:
-            raise RuntimeError(err_msg)
-        else:
-            raise RuntimeError(
-                (
-                    "Registering the feedstock token with proviers for %s/%s failed!"
-                    " Try the command locally with DEBUG_FEEDSTOCK_TOKENS"
-                    " defined in the environment to investigate!"
+    with _secure_io():
+        try:
+            if circle:
+                _register_token(
+                    user,
+                    project,
+                    clobber,
+                    "circle",
+                    add_feedstock_token_to_circle,
                 )
-                % (user, project)
+
+            if drone:
+                for drone_endpoint in drone_endpoints:
+                    _register_token(
+                        user,
+                        project,
+                        clobber,
+                        "drone",
+                        add_feedstock_token_to_drone,
+                        args=(drone_endpoint,),
+                    )
+
+            if travis:
+                _register_token(
+                    user,
+                    project,
+                    clobber,
+                    "travis",
+                    add_feedstock_token_to_travis,
+                )
+
+            if azure:
+                _register_token(
+                    user,
+                    project,
+                    clobber,
+                    "azure",
+                    add_feedstock_token_to_azure,
+                )
+
+            if github_actions:
+                _register_token(
+                    user,
+                    project,
+                    clobber,
+                    "github_actions",
+                    add_feedstock_token_to_github_actions,
+                )
+        except FeedstockTokenError as e:
+            raise e
+        except Exception as e:
+            if "DEBUG_FEEDSTOCK_TOKENS" in os.environ:
+                raise e
+            failed = True
+
+    if failed:
+        raise FeedstockTokenError(
+            (
+                "Registering the feedstock token with providers for %s/%s failed!"
+                " Try the command locally with DEBUG_FEEDSTOCK_TOKENS"
+                " defined in the environment to investigate!"
             )
+            % (user, project)
+        )
 
 
 def add_feedstock_token_to_circle(user, project, feedstock_token, clobber):

@@ -2,6 +2,7 @@ import glob
 from itertools import product, chain
 import logging
 import os
+from os import fspath
 import re
 import subprocess
 import textwrap
@@ -11,6 +12,7 @@ from collections import OrderedDict, namedtuple, Counter
 import copy
 import hashlib
 import requests
+from pathlib import PurePath
 
 # The `requests` lib uses `simplejson` instead of `json` when available.
 # In consequence the same JSON library must be used or the `JSONDecodeError`
@@ -39,7 +41,10 @@ from conda_smithy.feedstock_io import (
     copy_file,
     remove_file_or_dir,
 )
-from conda_smithy.utils import get_feedstock_name_from_meta
+from conda_smithy.utils import (
+    get_feedstock_name_from_meta,
+    get_feedstock_about_from_meta,
+)
 from . import __version__
 
 conda_forge_content = os.path.abspath(os.path.dirname(__file__))
@@ -58,6 +63,23 @@ def package_key(config, used_loop_vars, subdir):
     return key.replace("*", "_").replace(" ", "_")
 
 
+def _ignore_match(ignore, rel):
+    """Return true if rel or any of it's PurePath().parents are in ignore
+
+    i.e. putting .github in skip_render will prevent rendering of anything
+    named .github in the toplevel of the feedstock and anything below that as well
+    """
+    srch = {rel}
+    srch.update(map(fspath, PurePath(rel).parents))
+    logger.debug(f"srch:{srch}")
+    logger.debug(f"ignore:{ignore}")
+    if srch.intersection(ignore):
+        logger.info(f"{rel} rendering is skipped")
+        return True
+    else:
+        return False
+
+
 def copytree(src, dst, ignore=(), root_dst=None):
     """This emulates shutil.copytree, but does so with our git file tracking, so that the new files
     are added to the repo"""
@@ -66,7 +88,8 @@ def copytree(src, dst, ignore=(), root_dst=None):
     for item in os.listdir(src):
         s = os.path.join(src, item)
         d = os.path.join(dst, item)
-        if os.path.relpath(d, root_dst) in ignore:
+        rel = os.path.relpath(d, root_dst)
+        if _ignore_match(ignore, rel):
             continue
         elif os.path.isdir(s):
             if not os.path.exists(d):
@@ -1564,6 +1587,7 @@ def render_README(jinja_env, forge_config, forge_dir, render_info=None):
             )
 
     package_name = get_feedstock_name_from_meta(metas[0])
+    package_about = get_feedstock_about_from_meta(metas[0])
 
     ci_support_path = os.path.join(forge_dir, ".ci_support")
     variants = []
@@ -1573,10 +1597,23 @@ def render_README(jinja_env, forge_config, forge_dir, render_info=None):
                 variant_name, _ = os.path.splitext(filename)
                 variants.append(variant_name)
 
+    subpackages_metas = OrderedDict((meta.name(), meta) for meta in metas)
+    subpackages_about = [(package_name, package_about)]
+    for name, m in subpackages_metas.items():
+        about = m.meta["about"]
+        if isinstance(about, list):
+            about = about[0]
+        about = about.copy()
+        # if subpackages do not have about, conda-build would copy the top-level about;
+        # if subpackages have their own about, conda-build would use them as is;
+        # we discussed in PR #1691 and decided to not show repetitve entries
+        if about != package_about:
+            subpackages_about.append((name, about))
+
     template = jinja_env.get_template("README.md.tmpl")
     target_fname = os.path.join(forge_dir, "README.md")
     forge_config["noarch_python"] = all(meta.noarch for meta in metas)
-    forge_config["package_about"] = metas[0].meta["about"]
+    forge_config["package_about"] = subpackages_about
     forge_config["package_name"] = package_name
     forge_config["variants"] = sorted(variants)
     forge_config["outputs"] = sorted(
@@ -1628,13 +1665,22 @@ def render_README(jinja_env, forge_config, forge_dir, render_info=None):
         remove_file_or_dir(code_owners_file)
 
 
+def _get_skip_files(forge_config):
+    skip_files = {"README", "__pycache__"}
+    for f in forge_config["skip_render"]:
+        skip_files.add(f)
+    return skip_files
+
+
 def render_github_actions_services(jinja_env, forge_config, forge_dir):
     # render github actions files for automerge and rerendering services
+    skip_files = _get_skip_files(forge_config)
     for template_file in ["automerge.yml", "webservices.yml"]:
         template = jinja_env.get_template(template_file + ".tmpl")
-        target_fname = os.path.join(
-            forge_dir, ".github", "workflows", template_file
-        )
+        rel_target_fname = os.path.join(".github", "workflows", template_file)
+        if _ignore_match(skip_files, rel_target_fname):
+            continue
+        target_fname = os.path.join(forge_dir, rel_target_fname)
         new_file_contents = template.render(**forge_config)
         with write_file(target_fname) as fh:
             fh.write(new_file_contents)
@@ -1642,10 +1688,7 @@ def render_github_actions_services(jinja_env, forge_config, forge_dir):
 
 def copy_feedstock_content(forge_config, forge_dir):
     feedstock_content = os.path.join(conda_forge_content, "feedstock_content")
-    skip_files = ["README", "__pycache__"]
-    for f in forge_config["skip_render"]:
-        skip_files.append(f)
-        logger.info("%s rendering is skipped" % f)
+    skip_files = _get_skip_files(forge_config)
     copytree(feedstock_content, forge_dir, skip_files)
 
 
@@ -1766,8 +1809,8 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
         "github": {
             "user_or_org": "conda-forge",
             "repo_name": "",
-            "branch_name": "master",
-            "tooling_branch_name": "master",
+            "branch_name": "main",
+            "tooling_branch_name": "main",
         },
         "github_actions": {
             "self_hosted": False,

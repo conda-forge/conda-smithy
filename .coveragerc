@@ -1,7 +1,6 @@
 [run]
 branch = True
 source = conda_smithy
-parallel = True
 omit =
     *feedstock_content/*
     *static/*
