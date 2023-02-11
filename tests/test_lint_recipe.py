@@ -1330,6 +1330,25 @@ class Test_linter(unittest.TestCase):
         expected = "Recipes should usually depend on `matplotlib-base`"
         self.assertTrue(any(hint.startswith(expected) for hint in hints))
 
+    def test_libjpeg_turbo_hint(self):
+        meta = {
+            "requirements": {
+                "host": ["jpeg"],
+            },
+        }
+        lints, hints = linter.lintify(meta, conda_forge=True)
+        expected = "Recipes should usually depend on `libjpeg-turbo`"
+        self.assertTrue(any(hint.startswith(expected) for hint in hints))
+
+        meta = {
+            "requirements": {
+                "host": ["jpeg >=8"],
+            },
+        }
+        lints, hints = linter.lintify(meta, conda_forge=True)
+        expected = "Recipes should usually depend on `libjpeg-turbo`"
+        self.assertTrue(any(hint.startswith(expected) for hint in hints))
+
 
 @pytest.mark.cli
 class TestCLI_recipe_lint(unittest.TestCase):

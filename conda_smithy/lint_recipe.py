@@ -931,6 +931,17 @@ def run_conda_forge_specific(meta, recipe_dir, lints, hints):
             if msg not in hints:
                 hints.append(msg)
 
+    host_reqs = requirements_section.get("host", [])
+    for req in host_reqs:
+        if req == "jpeg" or req.startswith("jpeg "):
+            msg = (
+                "Recipes should usually depend on `libjpeg-turbo` as opposed to "
+                "`jpeg` for improved performance. For more information please see"
+                "https://github.com/conda-forge/conda-forge.github.io/issues/673"
+            )
+            if msg not in hints:
+                hints.append(msg)
+
 
 def is_selector_line(line, allow_platforms=False):
     # Using the same pattern defined in conda-build (metadata.py),
