@@ -1726,7 +1726,7 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
             },
             "settings_win": {
                 "pool": {
-                    "vmImage": "windows-2019",
+                    "vmImage": "windows-2022",
                 },
                 "timeoutInMinutes": 360,
                 "variables": {

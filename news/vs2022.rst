@@ -1,0 +1,3 @@
+**Changed:**
+
+* Changed default image for windows to `windows-2022`.
