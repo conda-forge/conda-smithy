@@ -955,12 +955,9 @@ def run_conda_forge_specific(meta, recipe_dir, lints, hints):
         if isinstance(requirements, list):
             hint_jpeg(requirements)
             continue
-        if "build" in requirements:
-            hint_jpeg(requirements["build"])
-        if "host" in requirements:
-            hint_jpeg(requirements["host"])
-        if "run" in requirements:
-            hint_jpeg(requirements["run"])
+        hint_jpeg(requirements.get("build", []))
+        hint_jpeg(requirements.get("host", []))
+        hint_jpeg(requirements.get("run", []))
 
 
 def is_selector_line(line, allow_platforms=False):
