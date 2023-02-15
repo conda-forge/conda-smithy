@@ -949,12 +949,18 @@ def run_conda_forge_specific(meta, recipe_dir, lints, hints):
     hint_jpeg(requirements_section.get("host", []))
     hint_jpeg(requirements_section.get("run", []))
     for out in outputs_section:
-        if "requirements" in out and "build" in out["requirements"]:
-            hint_jpeg(out["requirements"]["build"])
-        if "requirements" in out and "host" in out["requirements"]:
-            hint_jpeg(out["requirements"]["host"])
-        if "requirements" in out and "run" in out["requirements"]:
-            hint_jpeg(out["requirements"]["run"])
+        if "requirements" not in out:
+            continue
+        requirements = out["requirements"]
+        if isinstance(requirements, list):
+            hint_jpeg(requirements)
+            continue
+        if "build" in requirements:
+            hint_jpeg(requirements["build"])
+        if "host" in requirements:
+            hint_jpeg(requirements["host"])
+        if "run" in requirements:
+            hint_jpeg(requirements["run"])
 
 
 def is_selector_line(line, allow_platforms=False):
