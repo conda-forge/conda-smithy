@@ -931,16 +931,30 @@ def run_conda_forge_specific(meta, recipe_dir, lints, hints):
             if msg not in hints:
                 hints.append(msg)
 
-    host_reqs = requirements_section.get("host", [])
-    for req in host_reqs:
-        if req == "jpeg" or req.startswith("jpeg "):
-            msg = (
-                "Recipes should usually depend on `libjpeg-turbo` as opposed to "
-                "`jpeg` for improved performance. For more information please see"
-                "https://github.com/conda-forge/conda-forge.github.io/issues/673"
-            )
-            if msg not in hints:
-                hints.append(msg)
+    # 6: Build against on libjpeg-turbo instead of jpeg
+    def hint_jpeg(requirements):
+        if requirements is None:
+            return
+        for req in requirements:
+            if req == "jpeg" or req.startswith("jpeg "):
+                msg = (
+                    "Recipes should usually depend on `libjpeg-turbo` as opposed to "
+                    "`jpeg` for improved performance. For more information please see"
+                    "https://github.com/conda-forge/conda-forge.github.io/issues/673"
+                )
+                if msg not in hints:
+                    hints.append(msg)
+
+    hint_jpeg(requirements_section.get("build", []))
+    hint_jpeg(requirements_section.get("host", []))
+    hint_jpeg(requirements_section.get("run", []))
+    for out in outputs_section:
+        if "requirements" in out and "build" in out["requirements"]:
+            hint_jpeg(out["requirements"]["build"])
+        if "requirements" in out and "host" in out["requirements"]:
+            hint_jpeg(out["requirements"]["host"])
+        if "requirements" in out and "run" in out["requirements"]:
+            hint_jpeg(out["requirements"]["run"])
 
 
 def is_selector_line(line, allow_platforms=False):
