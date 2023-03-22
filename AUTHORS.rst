@@ -14,8 +14,8 @@ Authors are sorted by number of commits.
 * Min RK
 * Leo Fang
 * Hadrien Mary
-* Marcel Bargull
 * Ryan Volz
+* Marcel Bargull
 * Johnny Willemsen
 * Uwe L. Korn
 * Mark Harfouche

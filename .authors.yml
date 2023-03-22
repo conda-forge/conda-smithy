@@ -247,7 +247,7 @@
   email: isuru.11@cse.mrt.ac.lk
   alternate_emails:
   - isuruf@gmail.com
-  num_commits: 493
+  num_commits: 495
   first_commit: 2017-01-08 22:03:03
   github: isuruf
 - name: Julian Rüth
@@ -461,7 +461,7 @@
   email: rvolz@mit.edu
   alternate_emails:
   - ryan.volz@gmail.com
-  num_commits: 23
+  num_commits: 25
   first_commit: 2020-07-02 12:02:36
   github: ryanvolz
 - name: Joshua L. Adelman
