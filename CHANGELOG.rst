@@ -4,6 +4,19 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.23.1
+====================
+
+**Fixed:**
+
+* Fix "prepare conda build artifacts" step failing on Azure + Windows with the error "The syntax of the command is incorrect" (#1723).
+
+**Authors:**
+
+* Ryan Volz
+
+
+
 v3.23.0
 ====================
 
