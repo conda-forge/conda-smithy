@@ -64,6 +64,8 @@ class NullUndefined(jinja2.Undefined):
     def __unicode__(self):
         return self._undefined_name
 
+    __str__ = __unicode__
+
     def __getattr__(self, name):
         return "{}.{}".format(self, name)
 
