@@ -144,7 +144,6 @@ jobs:
 
 {%- if conda_build_tool == "mambabuild" %}
 {%- set conda_build_tool_deps="boa " %}
-{%- else %}
 {%- elif conda_build_tool == "conda-build+conda-libmamba-solver" %}
 {%- set conda_build_tool_deps="conda-libmamba-solver " %}
 {%- else %}
