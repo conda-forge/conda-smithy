@@ -142,16 +142,19 @@ jobs:
         miniforge-variant: Mambaforge
       if: matrix.os == 'windows'
 
-{%- if build_with_mambabuild %}
-{%- set BOA="boa " %}
+{%- if conda_build_tool == "mambabuild" %}
+{%- set conda_build_tool_deps="boa " %}
 {%- else %}
-{%- set BOA="" %}
+{%- elif conda_build_tool == "conda-build+conda-libmamba-solver" %}
+{%- set conda_build_tool_deps="conda-libmamba-solver " %}
+{%- else %}
+{%- set conda_build_tool_deps="" %}
 {%- endif %}
     - name: Build on windows
       shell: cmd
       run: |
         call activate base
-        mamba.exe install -c conda-forge 'python=3.9' conda-build conda pip {{ BOA }}{{ " ".join(remote_ci_setup) }}
+        mamba.exe install -c conda-forge 'python=3.9' conda-build conda pip {{ conda_build_tool_deps }}{{ " ".join(remote_ci_setup) }}
         if errorlevel 1 exit 1
         {%- if local_ci_setup %}
         conda.exe uninstall --quiet --yes --force {{ " ".join(remote_ci_setup) }}"
@@ -168,8 +171,14 @@ jobs:
         if EXIST LICENSE.txt (
           copy LICENSE.txt "{{ recipe_dir }}\\recipe-scripts-license.txt"
         )
-        {%- if build_with_mambabuild %}
+        {%- if conda_build_tool == "mambabuild" %}
         conda.exe mambabuild "{{ recipe_dir }}" -m .ci_support\%CONFIG%.yaml
+        {%- elif conda_build_tool == "conda-build+conda-libmamba-solver" %}
+        set "CONDA_SOLVER=libmamba"
+        conda.exe build "{{ recipe_dir }}" -m .ci_support\%CONFIG%.yaml
+        {%- elif conda_build_tool == "conda-build+classic" %}
+        set "CONDA_SOLVER=classic"
+        conda.exe build "{{ recipe_dir }}" -m .ci_support\%CONFIG%.yaml
         {%- else %}
         conda.exe build "{{ recipe_dir }}" -m .ci_support\%CONFIG%.yaml
         {%- endif %}
