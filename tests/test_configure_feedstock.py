@@ -874,7 +874,9 @@ def test_conda_build_tools(config_yaml):
     )
 
     cfg = load_forge_config()
-    assert "build_with_mambabuild" not in cfg  # superseded by conda_build_tool=mambabuild
+    assert (
+        "build_with_mambabuild" not in cfg
+    )  # superseded by conda_build_tool=mambabuild
     assert cfg["conda_build_tool"] == "mambabuild"  # current default
 
     # legacy compatibility config
@@ -884,17 +886,17 @@ def test_conda_build_tools(config_yaml):
         fp.write("build_with_mambabuild: true")
     with pytest.deprecated_call(match="build_with_mambabuild is deprecated"):
         assert load_forge_config()["conda_build_tool"] == "mambabuild"
-    
+
     with open(os.path.join(config_yaml, "conda-forge.yml"), "w") as fp:
         fp.write(unmodified)
         fp.write("build_with_mambabuild: false")
-    
+
     with pytest.deprecated_call(match="build_with_mambabuild is deprecated"):
         assert load_forge_config()["conda_build_tool"] == "conda-build"
 
     with open(os.path.join(config_yaml, "conda-forge.yml"), "w") as fp:
         fp.write(unmodified)
         fp.write("conda_build_tool: does-not-exist")
-    
+
     with pytest.raises(AssertionError):
         assert load_forge_config()

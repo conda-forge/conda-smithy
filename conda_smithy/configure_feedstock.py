@@ -1902,7 +1902,10 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
                 f"{target_platforms}"
             )
 
-    if "build_with_mambabuild" in file_config and "conda_build_tool" not in file_config:
+    if (
+        "build_with_mambabuild" in file_config
+        and "conda_build_tool" not in file_config
+    ):
         warnings.warn(
             "build_with_mambabuild is deprecated, use conda_build_tool instead",
             DeprecationWarning,
@@ -1911,7 +1914,7 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
             "mambabuild" if config["build_with_mambabuild"] else "conda-build"
         )
     valid_build_tools = (
-        "mambabuild", # will run 'conda mambabuild', as provided by boa 
+        "mambabuild",  # will run 'conda mambabuild', as provided by boa
         "conda-build",  # will run vanilla conda-build, with system configured / default solver
         "conda-build+conda-libmamba-solver",  # will run vanilla conda-build, with libmamba solver
         "conda-build+classic",  # will run vanilla conda-build, with the classic solver
