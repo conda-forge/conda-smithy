@@ -21,7 +21,7 @@ env:
     {%- endfor %}
 {%- endif %}
 
-{%- set arch_map = {'64': 'amd64', 'ppc64le': 'ppc64le', 'aarch64': 'arm64', 's390x': 's390x'}  %}
+{%- set arch_map = {'64': 'amd64', 'ppc64le': 'ppc64le', 'aarch64': 'arm64', 's390x': 's390x'} %}
 
 {%- if clone_depth %}
 git:
@@ -35,15 +35,24 @@ git:
 matrix:
   include:
     {%- for data in configs %}
+    {%- set arch = arch_map[data.build_platform.split("-")[1]] %}
     {%- if data.build_platform.startswith("osx") %}
     - env: CONFIG={{ data.config_name }} UPLOAD_PACKAGES={{ data.upload }} PLATFORM={{ data.build_platform }}
       os: osx
       osx_image: {{ travis.get('osx_image', 'xcode12u') }}
-      arch: {{ arch_map[data.build_platform.split("-")[1]] }}
+      arch: {{ arch }}
     {%- elif data.build_platform.startswith("linux") %}
     - env: CONFIG={{ data.config_name }} UPLOAD_PACKAGES={{ data.upload }} PLATFORM={{ data.build_platform }} DOCKER_IMAGE={{ data.config["docker_image"][-1] }}
       os: linux
-      arch: {{ arch_map[data.build_platform.split("-")[1]] }}
+    {%- if arch == "arm64" %}
+      arch: arm64-graviton2
+      virt: vm
+      group: edge
+      vm:
+        size: large
+    {%- else %}
+      arch: {{ arch }}
+    {%- endif %}
       dist: focal
     {%- endif %}
 {% endfor %}
