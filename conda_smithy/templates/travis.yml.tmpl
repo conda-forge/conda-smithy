@@ -45,9 +45,9 @@ matrix:
     - env: CONFIG={{ data.config_name }} UPLOAD_PACKAGES={{ data.upload }} PLATFORM={{ data.build_platform }} DOCKER_IMAGE={{ data.config["docker_image"][-1] }}
       os: linux
     {%- if arch == "arm64" %}
-      {%- set instance = travis_linux_aarch64_instance %}
-      arch: {{ instance["name"] }}
-      {%- if instance["name"] == "arm64-graviton2" %}
+      {%- set instance = travis["linux_aarch64"] %}
+      arch: {{ instance["type"] }}
+      {%- if instance["type"] == "arm64-graviton2" %}
       virt: vm
       group: edge
       {%- if instance["size"] != "medium" %}
