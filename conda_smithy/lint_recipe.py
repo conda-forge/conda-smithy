@@ -912,24 +912,33 @@ def run_conda_forge_specific(meta, recipe_dir, lints, hints):
             if msg not in lints:
                 lints.append(msg)
 
-    # 5: Do not depend on matplotlib, only matplotlib-base
+    # 5: Package-specific hints
+    # (e.g. do not depend on matplotlib, only matplotlib-base)
     run_reqs = requirements_section.get("run") or []
+    host_reqs = requirements_section.get("host") or []
     for out in outputs_section:
         _req = out.get("requirements") or {}
         if isinstance(_req, Mapping):
             run_reqs += _req.get("run") or []
+            host_reqs += _req.get("host") or []
         else:
             run_reqs += _req
-    for rq in run_reqs:
-        nm = rq.split(" ")[0].strip()
-        if nm == "matplotlib":
-            msg = (
-                "Recipes should usually depend on `matplotlib-base` as opposed to "
-                "`matplotlib` so that runtime environments do not require large "
-                "packages like `qt`."
-            )
-            if msg not in hints:
-                hints.append(msg)
+            host_reqs += _req
+
+    specific_hints = {
+        "matplotlib": (
+            "Recipes should usually depend on `matplotlib-base` as opposed to "
+            "`matplotlib` so that runtime environments do not require large "
+            "packages like `qt`."
+        ),
+        "abseil-cpp": "The `abseil-cpp` output has been superseded by `libabseil`",
+        "grpc-cpp": "The `grpc-cpp` output has been superseded by `libgrpc`",
+    }
+
+    for rq in run_reqs + host_reqs:
+        dep = rq.split(" ")[0].strip()
+        if dep in specific_hints and specific_hints[dep] not in hints:
+            hints.append(specific_hints[dep])
 
 
 def is_selector_line(line, allow_platforms=False):
