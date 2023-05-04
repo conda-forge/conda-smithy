@@ -1707,6 +1707,10 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
         "drone": {},
         "woodpecker": {},
         "travis": {},
+        "travis_linux_aarch64_instance": {
+            "name" : "arm64",
+            "size" : "medium",
+        },
         "circle": {},
         "config_version": "2",
         "appveyor": {"image": "Visual Studio 2017"},
