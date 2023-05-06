@@ -931,6 +931,14 @@ def run_conda_forge_specific(meta, recipe_dir, lints, hints):
             "`matplotlib` so that runtime environments do not require large "
             "packages like `qt`."
         ),
+        "pytorch-cpu": (
+            "Please depend on `pytorch` directly, in order to avoid forcing "
+            "CUDA users to downgrade to the CPU version for no reason."
+        ),
+        "pytorch-gpu": (
+            "Please depend on `pytorch` directly. If your package definitely "
+            "requires the CUDA version, please depend on `pytorch =*=cuda*`."
+        ),
         "abseil-cpp": "The `abseil-cpp` output has been superseded by `libabseil`",
         "grpc-cpp": "The `grpc-cpp` output has been superseded by `libgrpc`",
     }
