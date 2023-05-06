@@ -931,6 +931,11 @@ def run_conda_forge_specific(meta, recipe_dir, lints, hints):
             "`matplotlib` so that runtime environments do not require large "
             "packages like `qt`."
         ),
+        "jpeg": (
+            "Recipes should usually depend on `libjpeg-turbo` as opposed to "
+            "`jpeg` for improved performance. For more information please see"
+            "https://github.com/conda-forge/conda-forge.github.io/issues/673"
+        ),
         "pytorch-cpu": (
             "Please depend on `pytorch` directly, in order to avoid forcing "
             "CUDA users to downgrade to the CPU version for no reason."
