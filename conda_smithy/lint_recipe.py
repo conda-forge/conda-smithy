@@ -914,16 +914,17 @@ def run_conda_forge_specific(meta, recipe_dir, lints, hints):
 
     # 5: Package-specific hints
     # (e.g. do not depend on matplotlib, only matplotlib-base)
-    run_reqs = requirements_section.get("run") or []
+    build_reqs = requirements_section.get("build") or []
     host_reqs = requirements_section.get("host") or []
+    run_reqs = requirements_section.get("run") or []
     for out in outputs_section:
         _req = out.get("requirements") or {}
         if isinstance(_req, Mapping):
-            run_reqs += _req.get("run") or []
+            build_reqs += _req.get("build") or []
             host_reqs += _req.get("host") or []
+            run_reqs += _req.get("run") or []
         else:
             run_reqs += _req
-            host_reqs += _req
 
     specific_hints = {
         "matplotlib": (
@@ -948,7 +949,7 @@ def run_conda_forge_specific(meta, recipe_dir, lints, hints):
         "grpc-cpp": "The `grpc-cpp` output has been superseded by `libgrpc`",
     }
 
-    for rq in run_reqs + host_reqs:
+    for rq in build_reqs + host_reqs + run_reqs:
         dep = rq.split(" ")[0].strip()
         if dep in specific_hints and specific_hints[dep] not in hints:
             hints.append(specific_hints[dep])
