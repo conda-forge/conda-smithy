@@ -942,7 +942,9 @@ def is_selector_line(line, allow_platforms=False):
     m = sel_pat.match(line)
     if m:
         if allow_platforms:
-            nouns = {w for w in m.group(3).split() if w not in ("not", "and", "or")}
+            nouns = {
+                w for w in m.group(3).split() if w not in ("not", "and", "or")
+            }
             if nouns.issubset({"win", "linux", "osx", "unix"}):
                 # the selector only contains (a boolean chain of) platform selectors
                 return False
