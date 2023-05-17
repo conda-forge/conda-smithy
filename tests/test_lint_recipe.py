@@ -415,7 +415,7 @@ class Test_linter(unittest.TestCase):
             )
 
     def test_noarch_selectors(self):
-        expected_start = "`noarch` packages can't have selectors."
+        expected_start = "`noarch` packages can't have"
 
         with tmp_directory() as recipe_dir:
 
@@ -1075,13 +1075,13 @@ class Test_linter(unittest.TestCase):
             )
 
         expected_message = (
-            "A conda package with same name (simplejson) already exists."
+            "A conda package with same name (fitsio) already exists."
         )
         lints, hints = linter.lintify(
             {
                 "package": {"name": "this-will-never-exist"},
                 "source": {
-                    "url": "https://pypi.io/packages/source/s/simplejson/simplejson-3.17.2.tar.gz"
+                    "url": "https://pypi.io/packages/source/f/fitsio/fitsio-v0.9.2.tar.gz"
                 },
             },
             recipe_dir="recipes/foo",
@@ -1095,7 +1095,7 @@ class Test_linter(unittest.TestCase):
                 "package": {"name": "this-will-never-exist"},
                 "source": {
                     "url": [
-                        "https://pypi.io/packages/source/s/simplejson/simplejson-3.17.2.tar.gz"
+                        "https://pypi.io/packages/source/f/fitsio/fitsio-v0.9.2.tar.gz"
                     ]
                 },
             },
@@ -1176,6 +1176,12 @@ class Test_linter(unittest.TestCase):
     def test_multiple_sources(self):
         lints = linter.main(
             os.path.join(_thisdir, "recipes", "multiple_sources")
+        )
+        assert not lints
+
+    def test_noarch_platforms(self):
+        lints = linter.main(
+            os.path.join(_thisdir, "recipes", "noarch_platforms", "recipe")
         )
         assert not lints
 

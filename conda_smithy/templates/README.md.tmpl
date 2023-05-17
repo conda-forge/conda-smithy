@@ -2,31 +2,43 @@
 {#-
 # -*- mode: jinja -*-
 -#}
-{%- set license_url = package_about.license_url -%}
 
-About {{ package_name }}
-======{{ '=' * package_name|length }}
-
-Home: {{ package_about.home }}
-
-Package license: {% if license_url %}[{% endif %}{{ package_about.license }}{% if license_url %}]({{ license_url }}){% endif %}
+About {{ package_name }}-feedstock
+======{{ '=' * package_name|length }}==========
 
 Feedstock license: [BSD-3-Clause](https://github.com/{{ github.user_or_org }}/{{ github.repo_name }}/blob/{{ github.branch_name }}/LICENSE.txt)
 
-Summary: {{ package_about.summary }}
-{%- if package_about.dev_url %}
+{% for output_name, about in package_about -%}
+{%- set license_url = about.license_url -%}
+{%- if package_about|length > 1 -%}
+About {{ output_name }}
+------{{ '-' * output_name|length }}
 
-Development: {{ package_about.dev_url }}
-{%- endif %}
-{%- if package_about.doc_url %}
+{% endif -%}
 
-Documentation: {{ package_about.doc_url }}
-{%- endif %}
-{%- if package_about.description %}
-
-{{ package_about.description }}
+{%- if about.home -%}
+Home: {{ about.home }}
 {%- endif %}
 
+Package license: {% if license_url %}[{% endif %}{{ about.license }}{% if license_url %}]({{ license_url }}){% endif -%}
+
+{%- if about.summary %}
+
+Summary: {{ about.summary }}
+{%- endif %}
+{%- if about.dev_url %}
+
+Development: {{ about.dev_url }}
+{%- endif %}
+{%- if about.doc_url %}
+
+Documentation: {{ about.doc_url }}
+{%- endif %}
+{%- if about.description %}
+
+{{ about.description }}
+{%- endif %}
+{% endfor %}
 Current build status
 ====================
 {%- set appveyor_url_name = github.repo_name.replace('_', '-').replace('.', '-') %}
@@ -132,7 +144,7 @@ Current build status
               <td>{{ variant.strip('_') }}</td>
               <td>
                 <a href="{{ azure_url }}">
-                  <img src="{{ azure_image_url }}&jobName={{ variant_os }}&configuration={{ variant }}" alt="variant">
+                  <img src="{{ azure_image_url }}&jobName={{ variant_os }}&configuration={{ variant_os }}%20{{ variant }}" alt="variant">
                 </a>
               </td>
             </tr>

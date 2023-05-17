@@ -40,7 +40,7 @@ jobs:
 
     - script: |
         call activate base
-        mamba.exe install 'python=3.9' conda-build conda pip {{ BOA }}'{{ " ".join(remote_ci_setup) }}' -c conda-forge --strict-channel-priority --yes
+        mamba.exe install "python=3.10" conda-build conda pip {{ BOA }}{{ " ".join(remote_ci_setup) }} -c conda-forge --strict-channel-priority --yes
       displayName: Install conda-build
 
     - script: set PYTHONUNBUFFERED=1
@@ -124,6 +124,9 @@ jobs:
     - script: |
         set "GIT_BRANCH=%BUILD_SOURCEBRANCHNAME%"
         set "FEEDSTOCK_NAME=%BUILD_REPOSITORY_NAME:*/=%"
+        set "TEMP=$(UPLOAD_TEMP)"
+        if not exist "%TEMP%\" md "%TEMP%"
+        set "TMP=%TEMP%"
 {%- if upload_on_branch %}
         set "UPLOAD_ON_BRANCH={{ upload_on_branch }}"
 {%- endif %}

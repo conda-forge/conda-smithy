@@ -69,7 +69,7 @@ jobs:
         {%- endfor %}
     steps:
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 {%- if clone_depth is not none %}
       with:
         fetch-depth: {{ clone_depth }}
@@ -250,7 +250,7 @@ jobs:
       continue-on-error: true
 
     - name: Store conda build artifacts
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       if: {% raw %}${{ always() && steps.prepare-artifacts.outcome == 'success' }}{% endraw %}
       with:
         name: {% raw %}${{ steps.prepare-artifacts.outputs.BLD_ARTIFACT_NAME }}{% endraw %}
@@ -259,7 +259,7 @@ jobs:
       continue-on-error: true
 
     - name: Store conda build environment artifacts
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       if: {% raw %}${{ failure() && steps.prepare-artifacts.outcome == 'success' }}{% endraw %}
       with:
         name: {% raw %}${{ steps.prepare-artifacts.outputs.ENV_ARTIFACT_NAME }}{% endraw %}

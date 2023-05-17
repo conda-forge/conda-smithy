@@ -11,41 +11,65 @@ jobs:
     name: tests
     runs-on: "ubuntu-latest"
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
       - uses: conda-incubator/setup-miniconda@v2
         with:
-          python-version: 3.7
+          python-version: 3.8
           channels: conda-forge,defaults
           channel-priority: strict
           show-channel-urls: true
           miniforge-version: latest
           miniforge-variant: Mambaforge
+          use-mamba: true
 
       - name: install code and deps
         shell: bash -l {0}
         run: |
-          mamba install --file requirements.txt pre-commit coverage coveralls mock pytest pytest-cov pip ${CONDA_PKGS} --yes --quiet
-          python -m pip install -e .
+          mamba install --file requirements.txt \
+            pre-commit coverage coveralls mock pytest \
+            pytest-cov pip setuptools wheel ${CONDA_PKGS} \
+            python-build \
+            --yes
+          python -m pip install -v --no-build-isolation -e .
           git config --global user.email "smithy@smithy.smithy"
           git config --global user.name "smithy"
 
-      - name: run pre-commit hooks
+      - name: test versions
         shell: bash -l {0}
         run: |
-          pre-commit run -a
+          pip uninstall conda-smithy --yes
+          [[ $(python setup.py --version) != "0.0.0" ]] || exit 1
+
+          rm -rf dist/*
+          python setup.py sdist
+          pip install --no-build-isolation dist/*.tar.gz
+          pushd ..
+          python -c "import conda_smithy; assert conda_smithy.__version__ != '0.0.0'"
+          popd
+          pip uninstall conda-smithy --yes
+
+          rm -rf dist/*
+          python -m build --sdist . --outdir dist
+          pip install --no-build-isolation dist/*.tar.gz
+          pushd ..
+          python -c "import conda_smithy; assert conda_smithy.__version__ != '0.0.0'"
+          popd
+          pip uninstall conda-smithy --yes
+
+          python -m pip install -v --no-build-isolation -e .
 
       - name: run tests
         shell: bash -l {0}
         run: |
-          pytest tests --cov conda_smithy
+          pytest tests --cov conda_smithy --cov-report lcov --cov-report term-missing
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: compute coverage
-        shell: bash -l {0}
-        run: |
-          coverage combine || echo "no coverage data to combine maybe"
-          coveralls --service=github
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: coveralls
+        uses: coverallsapp/github-action@master
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path-to-lcov: ./coverage.lcov

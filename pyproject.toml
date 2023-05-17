@@ -1,2 +1,51 @@
+[build-system]
+requires = [
+    "setuptools>=45",
+    "setuptools_scm>=7",
+    "tomli>=1.0.0; python_version < '3.11'",
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "conda-smithy"
+authors = [
+    {name = "Phil Elson", email = "pelson.pub@gmail.com"},
+]
+description = "A package to create repositories for conda recipes, and automate their building with CI tools on Linux, OSX and Windows."
+dynamic = ["version"]
+
+[project.urls]
+home = "https://github.com/conda-forge/conda-smithy"
+
+[project.scripts]
+feedstocks = "conda_smithy.feedstocks:main"
+conda-smithy = "conda_smithy.cli:main"
+
+[tool.setuptools]
+packages = ["conda_smithy"]
+zip-safe = false
+include-package-data = true
+
+[tool.setuptools_scm]
+write_to = "conda_smithy/_version.py"
+write_to_template = "__version__ = '{version}'"
+
 [tool.black]
 line-length = 79
+
+[tool.pytest.ini_options]
+norecursedirs = [
+    "tests/recipes",
+    ".*",
+    "*.egg*",
+    "build",
+    "dist",
+    "conda-smithy.recipe",
+]
+addopts = "--ignore setup.py --ignore conda_smithy --tb native --strict-markers --durations=20"
+markers = [
+    "legacy_circle: Test designed to run as if prior to the azure migration",
+    "legacy_travis: Test designed to run as if prior to the azure migration",
+    "legacy_appveyor: Test designed to run as if prior to the azure migration",
+    "cli: CLI tests outside of test/test_cli.py",
+]

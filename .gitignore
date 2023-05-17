@@ -21,3 +21,5 @@ nppBackup/
 
 .vscode/
 .mypy_cache/
+
+conda_smithy/_version.py

@@ -119,7 +119,7 @@
   first_commit: 2019-02-17 13:35:45
 - name: Min RK
   email: benjaminrk@gmail.com
-  num_commits: 28
+  num_commits: 29
   first_commit: 2016-09-15 09:07:34
   github: minrk
 - name: Phil Elson
@@ -182,7 +182,7 @@
   email: marcel.bargull@udo.edu
   alternate_emails:
   - mbargull@users.noreply.github.com
-  num_commits: 14
+  num_commits: 24
   first_commit: 2018-07-30 05:17:51
   github: mbargull
 - name: xoviat
@@ -247,7 +247,7 @@
   email: isuru.11@cse.mrt.ac.lk
   alternate_emails:
   - isuruf@gmail.com
-  num_commits: 482
+  num_commits: 495
   first_commit: 2017-01-08 22:03:03
   github: isuruf
 - name: Julian Rüth
@@ -329,7 +329,7 @@
   github: sodre
 - name: Mark Harfouche
   email: mark.harfouche@gmail.com
-  num_commits: 19
+  num_commits: 21
   first_commit: 2018-06-12 01:15:09
   github: hmaarrfk
 - name: Dougal J. Sutherland
@@ -393,13 +393,14 @@
   github: shadowwalkersb
 - name: Matthew R. Becker
   email: becker.mr@gmail.com
-  num_commits: 256
+  num_commits: 142
   first_commit: 2020-01-07 17:44:33
   github: beckermr
   alternate_emails:
   - beckermr@users.noreply.github.com
   aliases:
   - Matthew R Becker
+  - beckermr
 - name: Natasha Pavlovikj
   email: npavlovikj2@unl.edu
   num_commits: 13
@@ -415,7 +416,7 @@
   first_commit: 2020-03-11 10:12:57
 - name: Tim Snyder
   email: snyder.tim@gmail.com
-  num_commits: 10
+  num_commits: 14
   first_commit: 2020-03-12 12:51:58
   github: timsnyder
 - name: Nils Wentzell
@@ -425,11 +426,12 @@
   github: Wentzell
 - name: Leo Fang
   email: leofang@bnl.gov
-  num_commits: 16
+  num_commits: 25
   first_commit: 2020-04-26 22:07:18
   github: leofang
   alternate_emails:
   - leo80042@gmail.com
+  - leof@nvidia.com
 - name: Stuart Berg
   email: bergs@janelia.hhmi.org
   num_commits: 1
@@ -459,7 +461,7 @@
   email: rvolz@mit.edu
   alternate_emails:
   - ryan.volz@gmail.com
-  num_commits: 20
+  num_commits: 25
   first_commit: 2020-07-02 12:02:36
   github: ryanvolz
 - name: Joshua L. Adelman
@@ -469,12 +471,12 @@
   github: synapticarbors
 - name: Johnny Willemsen
   email: jwillemsen@remedy.nl
-  num_commits: 19
+  num_commits: 23
   first_commit: 2020-10-05 09:50:12
   github: jwillemsen
 - name: Jaime Rodríguez-Guerra
   email: jaimergp@users.noreply.github.com
-  num_commits: 35
+  num_commits: 46
   first_commit: 2020-11-01 14:18:08
   github: jaimergp
 - name: Bastian Zimmermann
@@ -535,7 +537,7 @@
   github: nehaljwani
 - name: H. Vetinari
   email: h.vetinari@gmx.com
-  num_commits: 7
+  num_commits: 8
   first_commit: 2021-11-14 02:53:10
 - name: Benjamin Tovar
   email: btovar@nd.edu
@@ -557,3 +559,12 @@
   num_commits: 9
   first_commit: 2022-05-11 16:57:15
   github: carterbox
+- name: conda-forge-admin
+  email: pelson.pub+conda-forge@gmail.com
+  num_commits: 2
+  first_commit: 2022-06-22 05:31:02
+- name: Brandon Andersen
+  email: 31670449+bandersen23@users.noreply.github.com
+  num_commits: 1
+  first_commit: 2022-07-03 13:55:55
+  github: bandersen23

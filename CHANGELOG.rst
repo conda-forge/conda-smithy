@@ -4,6 +4,155 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.23.1
+====================
+
+**Fixed:**
+
+* Fix "prepare conda build artifacts" step failing on Azure + Windows with the error "The syntax of the command is incorrect" (#1723).
+
+**Authors:**
+
+* Ryan Volz
+
+
+
+v3.23.0
+====================
+
+**Added:**
+
+* Added capability to generate feedstock tokens per CI provider.
+* Added token expiration timestamps.
+
+**Changed:**
+
+* Move pre-commit to its own CI test file.
+* Added ``--no-build-isolation`` to pip commands for install.
+* Remove ``py-lief<0.12`` from ``remote_ci_setup`` after LIEF 0.12.3 release
+* Windows CI on azure uses python 3.10 in the base environment.
+* Replaced deprecated use of ::set-output during conda artifact storage on GitHub Actions with the recommended redirect to $GITHUB_OUTPUT. See https://github.blog/changelog/2022-10-11-github-actions-deprecating-save-state-and-set-output-commands/.
+* Default branch for github is now ``main`` instead of ``master``.
+* Changed python packaging to use setuptools-scm instead of versioneer.
+* Moved build system to only use ``pyproject.toml``.
+* skip_render can match Path().parents of files being rendered
+  i.e. '.github' in list prevents rendering .github in toplevel
+  and any files below .github/
+* Changed default image for windows to `windows-2022`.
+
+**Fixed:**
+
+* `README.md` of feedstocks with multiple outputs is now correctly rendered with all outputs's (about) information shown, unless they are a plain copy of the top-level about.
+* skip_render can prevent github webservices from rendering
+* Always check team membership even when making teams.
+
+**Authors:**
+
+* Isuru Fernando
+* Matthew R. Becker
+* Leo Fang
+* Marcel Bargull
+* Ryan Volz
+* Mark Harfouche
+* Tim Snyder
+* H. Vetinari
+
+
+
+v3.22.1
+====================
+
+**Changed:**
+
+* Use a custom %TEMP% directory to avoid upload permission errors on Windows.
+
+**Authors:**
+
+* Marcel Bargull
+
+
+
+v3.22.0
+====================
+
+**Changed:**
+
+* Changed the pinning package extraction code to account for ``.conda`` files
+  and to use ``conda-package-handling``.
+
+**Authors:**
+
+* Matthew R. Becker
+
+
+
+v3.21.3
+====================
+
+**Added:**
+
+* Added support for aarch64 native runners on circle CI
+
+**Changed:**
+
+* Upgrade to actions/checkout@v3
+* Upgrade to actions/upload-artifact@v3
+* Add ``py-lief<0.12`` to ``remote_ci_setup`` for now
+  due to current ``osx-*`` segfault issues, ref:
+  https://github.com/conda-forge/conda-forge.github.io/issues/1823
+* recipes with ``noarch_platforms`` will no longer give a lint when selectors are used.
+
+**Fixed:**
+
+* Fix Azure urls in details
+
+**Authors:**
+
+* Isuru Fernando
+* Johnny Willemsen
+* Marcel Bargull
+* Marius van Niekerk
+* Brandon Andersen
+
+
+
+v3.21.2
+====================
+
+**Changed:**
+
+* ``conda-smithy`` will not check which ``conda`` version is installed anymore.
+  ``conda`` follows CalVer now, which does not provide information about API guarantees,
+  thus rendering this check moot.
+
+**Fixed:**
+
+* Fix ``pyproject.toml`` derived issues with CI tests
+
+**Authors:**
+
+* Jaime Rodríguez-Guerra
+
+
+
+v3.21.1
+====================
+
+**Changed:**
+
+* macOS jobs provided by Azure Pipelines will now use the ``macOS-11`` VM image (#1645).
+
+**Fixed:**
+
+* Fix spurious lint when using pin_subpackage or pin_compatible with a build string
+
+**Authors:**
+
+* Jaime Rodríguez-Guerra
+* Min RK
+
+
+
 v3.21.0
 ====================
 
