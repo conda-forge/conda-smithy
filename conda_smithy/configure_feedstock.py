@@ -1822,7 +1822,7 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
         # Specific channel for package can be given with
         #     ${url or channel_alias}::package_name
         # defaults to conda-forge channel_alias
-        "remote_ci_setup": ["conda-forge-ci-setup=3"],
+        "remote_ci_setup": ["conda-forge-ci-setup=3", "boa=0.14.0"],
     }
 
     if forge_yml is None:
