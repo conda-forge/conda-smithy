@@ -947,6 +947,7 @@ def run_conda_forge_specific(meta, recipe_dir, lints, hints):
         ),
         "abseil-cpp": "The `abseil-cpp` output has been superseded by `libabseil`",
         "grpc-cpp": "The `grpc-cpp` output has been superseded by `libgrpc`",
+        "build": "The pypa `build` package has been renamed to `python-build`",
     }
 
     for rq in build_reqs + host_reqs + run_reqs:
