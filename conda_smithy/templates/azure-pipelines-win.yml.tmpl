@@ -70,10 +70,15 @@ jobs:
         if EXIST LICENSE.txt (
           copy LICENSE.txt "{{ recipe_dir }}\\recipe-scripts-license.txt"
         )
+        {%- if test in ["native", "native_and_emulated"] %}
+        if NOT [%HOST_PLATFORM%] == [%BUILD_PLATFORM%] (
+          set "EXTRA_CB_OPTIONS=%EXTRA_CB_OPTIONS% --no-test"
+        )
+        {%- endif %}
         {%- if build_with_mambabuild %}
-        conda.exe mambabuild "{{ recipe_dir }}" -m .ci_support\%CONFIG%.yaml --suppress-variables
+        conda.exe mambabuild "{{ recipe_dir }}" -m .ci_support\%CONFIG%.yaml --suppress-variables %EXTRA_CB_OPTIONS%
         {%- else %}
-        conda.exe build "{{ recipe_dir }}" -m .ci_support\%CONFIG%.yaml --suppress-variables
+        conda.exe build "{{ recipe_dir }}" -m .ci_support\%CONFIG%.yaml --suppress-variables %EXTRA_CB_OPTIONS%
         {%- endif %}
       displayName: Build recipe
       env:
