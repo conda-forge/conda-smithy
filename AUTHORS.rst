@@ -22,6 +22,7 @@ Authors are sorted by number of commits.
 * Julian Rüth
 * Chris Burr
 * Tim Snyder
+* H. Vetinari
 * Eric Dill
 * Natasha Pavlovikj
 * Maksim Rakitin
@@ -38,7 +39,6 @@ Authors are sorted by number of commits.
 * Nicholas Bollweg
 * Leopold Talirz
 * Tom Pollard
-* H. Vetinari
 * Gonzalo Pena-Castellanos
 * Daniel Bast
 * Carlo
@@ -46,12 +46,12 @@ Authors are sorted by number of commits.
 * Joshua L. Adelman
 * Wolf Vollprecht
 * Matthias Diener
+* John Blischak
 * Marius van Niekerk
 * Peter Williams
 * Johannes Köster
 * Philippe Blain
 * Matt McCormick
-* John Blischak
 * Jan Janßen
 * xoviat
 * Elmar Pruesse
