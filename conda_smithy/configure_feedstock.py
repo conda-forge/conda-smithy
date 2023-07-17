@@ -1806,6 +1806,8 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
         },
         "github_actions": {
             "self_hosted": False,
+            # Set maximum parallel jobs
+            "max_parallel": None,
             # Toggle creating artifacts for conda build_artifacts dir
             "store_build_artifacts": False,
             "artifact_retention_days": 14,
