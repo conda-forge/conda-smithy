@@ -20,7 +20,7 @@ jobs:
                   /usr/share/dotnet \
                   /usr/share/swift \
                   ; do
-           sudo rsync -a --delete /opt/empty_dir/ $d
+           sudo rsync --stats -a --delete /opt/empty_dir/ $d
          done
 
          df -h
