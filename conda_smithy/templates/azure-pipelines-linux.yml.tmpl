@@ -19,6 +19,7 @@ jobs:
                   /usr/local/powershell \
                   /usr/share/dotnet \
                   /usr/share/swift \
+                  /opt/ghc \
                   ; do
            sudo rsync --stats -a --delete /opt/empty_dir/ $d || true
          done
