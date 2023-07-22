@@ -11,7 +11,7 @@ jobs:
     fetchDepth: {{ clone_depth }}
 {%- endif %}
   - script: |
-         sudo mkdir -p /opt/empty_dir
+         sudo mkdir -p /opt/empty_dir || true
          for d in \
                   /opt/ghc \
                   /opt/hostedtoolcache \
