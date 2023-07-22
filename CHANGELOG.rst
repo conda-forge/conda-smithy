@@ -4,6 +4,83 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.24.0
+====================
+
+**Added:**
+
+* Added linting for obsoleted outputs, e.g. those who have been renamed conda-forge-wide.
+*  Support not running tests when cross compiling in win - #1742
+
+**Fixed:**
+
+* Fixed bug in codepath to allow debugging of cross compiled OSX configuratons using ``build-locally.py``.
+* Fixed README headers for recipes with multiple outputs
+
+**Authors:**
+
+* Isuru Fernando
+* Mark Harfouche
+* H. Vetinari
+* John Blischak
+
+
+
+v3.23.1
+====================
+
+**Fixed:**
+
+* Fix "prepare conda build artifacts" step failing on Azure + Windows with the error "The syntax of the command is incorrect" (#1723).
+
+**Authors:**
+
+* Ryan Volz
+
+
+
+v3.23.0
+====================
+
+**Added:**
+
+* Added capability to generate feedstock tokens per CI provider.
+* Added token expiration timestamps.
+
+**Changed:**
+
+* Move pre-commit to its own CI test file.
+* Added ``--no-build-isolation`` to pip commands for install.
+* Remove ``py-lief<0.12`` from ``remote_ci_setup`` after LIEF 0.12.3 release
+* Windows CI on azure uses python 3.10 in the base environment.
+* Replaced deprecated use of ::set-output during conda artifact storage on GitHub Actions with the recommended redirect to $GITHUB_OUTPUT. See https://github.blog/changelog/2022-10-11-github-actions-deprecating-save-state-and-set-output-commands/.
+* Default branch for github is now ``main`` instead of ``master``.
+* Changed python packaging to use setuptools-scm instead of versioneer.
+* Moved build system to only use ``pyproject.toml``.
+* skip_render can match Path().parents of files being rendered
+  i.e. '.github' in list prevents rendering .github in toplevel
+  and any files below .github/
+* Changed default image for windows to `windows-2022`.
+
+**Fixed:**
+
+* `README.md` of feedstocks with multiple outputs is now correctly rendered with all outputs's (about) information shown, unless they are a plain copy of the top-level about.
+* skip_render can prevent github webservices from rendering
+* Always check team membership even when making teams.
+
+**Authors:**
+
+* Isuru Fernando
+* Matthew R. Becker
+* Leo Fang
+* Marcel Bargull
+* Ryan Volz
+* Mark Harfouche
+* Tim Snyder
+* H. Vetinari
+
+
+
 v3.22.1
 ====================
 

@@ -5,6 +5,7 @@ import subprocess
 from textwrap import dedent
 
 import yaml
+import pytest
 import shutil
 
 from conda_smithy import cli
@@ -137,6 +138,66 @@ def test_init_multiple_output_matrix(testing_workdir):
     # this is in conda_build_config.yaml, but is a transitive dependency.  It should
     #     not show up in the final configs.
     assert "zlib" not in config
+
+
+@pytest.mark.parametrize(
+    "dirname", ["multiple_outputs", "multiple_outputs2", "multiple_outputs3"]
+)
+def test_render_readme_with_multiple_outputs(testing_workdir, dirname):
+    parser = argparse.ArgumentParser()
+    subparser = parser.add_subparsers()
+    init_obj = cli.Init(subparser)
+    regen_obj = cli.Regenerate(subparser)
+    _thisdir = os.path.abspath(os.path.dirname(__file__))
+    recipe = os.path.join(_thisdir, "recipes", dirname)
+    feedstock_dir = os.path.join(
+        testing_workdir, "multiple-outputs-test-feedstock"
+    )
+    args = InitArgs(
+        recipe_directory=recipe,
+        feedstock_directory=feedstock_dir,
+        temporary_directory=os.path.join(recipe, "temp"),
+    )
+    init_obj(args)
+    # Ignore conda-forge-pinning for this test, as the test relies on conda-forge-pinning
+    # not being present
+    args = RegenerateArgs(
+        feedstock_directory=feedstock_dir,
+        feedstock_config=None,
+        commit=False,
+        no_check_uptodate=True,
+        exclusive_config_file="recipe/conda_build_config.yaml",
+        check=False,
+        temporary_directory=os.path.join(recipe, "temp"),
+    )
+    regen_obj(args)
+    readme_path = os.path.join(feedstock_dir, "README.md")
+    assert os.path.exists(readme_path)
+    with open(readme_path, "r") as readme_file:
+        readme = readme_file.read()
+    if dirname == "multiple_outputs":
+        # case 1: implicit subpackage, no individual subpackage about
+        assert "About test_multiple_outputs" in readme
+        assert "BSD" in readme
+        assert "About test_output_1" not in readme
+        assert "About test_output_2" not in readme
+        assert "Apache" not in readme
+    elif dirname == "multiple_outputs2":
+        # case 2: implicit subpackage, has individual subpackage about
+        assert "About test_multiple_outputs2" in readme
+        assert "BSD" in readme
+        assert "\n\nAbout test_output_1" in readme
+        assert "Apache" in readme
+        assert "\n\nAbout test_output_2" not in readme
+    elif dirname == "multiple_outputs3":
+        # case 3: explicit subpackage, has individual subpackage about
+        assert "About test_multiple_outputs3" in readme
+        assert "BSD" in readme
+        assert "\n\nAbout test_output_1" in readme
+        assert "Apache" in readme
+        assert "\n\nAbout test_output_2" not in readme
+    else:
+        assert False
 
 
 def test_init_cuda_docker_images(testing_workdir):
