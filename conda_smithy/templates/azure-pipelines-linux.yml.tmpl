@@ -25,7 +25,12 @@ jobs:
                   ; do
            sudo rsync --stats -a --delete /opt/empty_dir/ $d || true
          done
-
+         sudo aptitude purge -y -f firefox \
+                                   google-chrome-stable \
+                                   microsoft-edge-stable
+         sudo apt-get autoremove -y >& /dev/null
+         sudo apt-get autoclean -y >& /dev/null
+         sudo docker image prune --all --force
          df -h
     displayName: Manage disk space
 {%- endif %}
