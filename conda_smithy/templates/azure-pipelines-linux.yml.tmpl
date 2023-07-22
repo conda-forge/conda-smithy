@@ -10,6 +10,7 @@ jobs:
   - checkout: self
     fetchDepth: {{ clone_depth }}
 {%- endif %}
+{%- if azure.free_disk_space %}
   - script: |
          sudo mkdir -p /opt/empty_dir || true
          for d in \
@@ -27,7 +28,7 @@ jobs:
 
          df -h
     displayName: Manage disk space
-
+{%- endif %}
   # configure qemu binfmt-misc running.  This allows us to run docker containers
   # embedded qemu-static
   - script: |
