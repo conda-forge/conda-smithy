@@ -18,16 +18,16 @@ jobs:
                   /opt/hostedtoolcache \
                   /usr/lib/jvm \
                   /usr/local/.ghcup \
-                  /usr/local/android \
-                  /usr/local/powershell \
+                  /usr/local/lib/android \
+                  /usr/local/share/powershell \
                   /usr/share/dotnet \
                   /usr/share/swift \
                   ; do
            sudo rsync --stats -a --delete /opt/empty_dir/ $d || true
          done
-         sudo aptitude purge -y -f firefox \
-                                   google-chrome-stable \
-                                   microsoft-edge-stable
+         sudo apt-get purge -y -f firefox \
+                                  google-chrome-stable \
+                                  microsoft-edge-stable
          sudo apt-get autoremove -y >& /dev/null
          sudo apt-get autoclean -y >& /dev/null
          sudo docker image prune --all --force
