@@ -33,6 +33,7 @@ jobs:
          sudo docker image prune --all --force
          df -h
     displayName: Manage disk space
+    continueOnError: true
 {%- endif %}
   # configure qemu binfmt-misc running.  This allows us to run docker containers
   # embedded qemu-static
