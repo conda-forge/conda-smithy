@@ -10,8 +10,8 @@ jobs:
   - checkout: self
     fetchDepth: {{ clone_depth }}
 {%- endif %}
-{%- if azure.free_disk_space %}
   - script: |
+{%- if azure.free_disk_space %}
          sudo mkdir -p /opt/empty_dir || true
          for d in \
                   /opt/ghc \
@@ -31,9 +31,12 @@ jobs:
          sudo apt-get autoremove -y >& /dev/null
          sudo apt-get autoclean -y >& /dev/null
          sudo docker image prune --all --force
+{%- else %}
+         rm -rf /opt/ghc
+{%- endif %}
          df -h
     displayName: Manage disk space
-{%- endif %}
+
   # configure qemu binfmt-misc running.  This allows us to run docker containers
   # embedded qemu-static
   - script: |
