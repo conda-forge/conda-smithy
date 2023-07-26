@@ -34,13 +34,13 @@ jobs:
          df -h
     displayName: Manage disk space
 {%- endif %}
-{%- if azure.make_10G_swap %}
+{%- if azure.linux_swap_size is defined %}
   - script: |
-         sudo fallocate -l 10G /swapfile || true
+         sudo fallocate -l {{ azure.linux_swap_size }} /swapfile || true
          sudo chmod 600 /swapfile || true
          sudo mkswap /swapfile || true
          sudo swapon /swapfile
-    displayName: Create 10G swap file
+    displayName: Create swap file
 {%- endif %}
   # configure qemu binfmt-misc running.  This allows us to run docker containers
   # embedded qemu-static
