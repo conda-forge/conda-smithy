@@ -1595,7 +1595,7 @@ def render_README(jinja_env, forge_config, forge_dir, render_info=None):
                     data = yaml.safe_load(fh)
                     for channel in data.get("channel_targets", ()):
                         # channel_targets are in the form of "channel_name label"
-                        channel_targets.append(channel.split()[0])
+                        channel_targets.append(channel.split(" "))
     if not channel_targets:
         # default to conda-forge if no channel_targets are specified (shouldn't happen)
         channel_targets = ["conda-forge main"]
