@@ -423,6 +423,11 @@ def add_project_to_travis(user, project):
         print(" * {}/{} registered on travis-ci".format(user, project))
 
 
+def remove_project_from_travis(user, repo):
+    "TODO: Revoke access to the repo for travis."
+    pass
+
+
 def travis_token_update_conda_forge_config(
     feedstock_config_path, user, project
 ):
@@ -569,6 +574,36 @@ def travis_cleanup(org, project):
     if os.getenv("GH_TRAVIS_TOKEN"):
         gh = github.Github(os.getenv("GH_TRAVIS_TOKEN"))
         github.remove_from_project(gh, org, project)
+
+
+def ensure_cirun_app_installed(owner):
+    "Install the cirun.io app for this owner (user or org). Only the first time."
+    pass
+
+
+def enable_cirun_for_project(owner, project):
+    "Enable the cirun.io app for a particular repository."
+    pass
+
+
+def disable_cirun_for_project(owner, project):
+    "Disable the cirun.io app for a particular repository."
+    pass
+
+
+def add_project_to_cirun_resource(owner, project, resource):
+    "Grant access to a cirun resource to a particular repository, with a particular policy."
+    pass
+
+
+def revoke_access_to_cirun_resource(owner, project, resource):
+    "Revoke access to a cirun resource to a particular repository, with a particular policy."
+    pass
+
+
+def enabled_cirun_resources(owner, project):
+    "Which resources are currently enabled for this project"
+    pass
 
 
 def get_conda_hook_info(hook_url, events):

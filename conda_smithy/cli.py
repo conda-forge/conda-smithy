@@ -208,7 +208,7 @@ class RegisterCI(Subcommand):
         # conda-smithy register-ci ./
         super(RegisterCI, self).__init__(
             parser,
-            "Register a feedstock at the CI " "services which do the builds.",
+            "Register a feedstock at the CI services which do the builds.",
         )
         scp = self.subcommand_parser
         scp.add_argument(
@@ -238,6 +238,7 @@ class RegisterCI(Subcommand):
             "Appveyor",
             "Drone",
             "Webservice",
+            "Cirun",
         ]:
             scp.add_argument(
                 "--without-{}".format(ci.lower()),
@@ -256,6 +257,17 @@ class RegisterCI(Subcommand):
             "--drone-endpoints",
             action="append",
             help="drone server URL to register this repo. multiple values allowed",
+        )
+        scp.add_argument(
+            "--cirun-resources",
+            action="append",
+            help="cirun resources to enable for this repo. multiple values allowed",
+        )
+        scp.add_argument(
+            "--remove",
+            action="store_true",
+            help="Revoke access to the configured CI services. "
+            "Only available for Travis and Cirun for now",
         )
 
     def __call__(self, args):
@@ -278,7 +290,17 @@ class RegisterCI(Subcommand):
             )
 
         print("CI Summary for {}/{} (can take ~30s):".format(owner, repo))
-
+        if args.remove and any([
+            args.azure,
+            args.circle,
+            args.appveyor,
+            args.drone,
+            args.webservice,
+            args.anaconda_token,
+        ]):
+            raise RuntimeError(
+            "The --remove flag is only supported for Cirun for now"
+            )
         if not args.anaconda_token:
             print(
                 "Warning: By not registering an Anaconda/Binstar token"
@@ -344,6 +366,27 @@ class RegisterCI(Subcommand):
                     )
         else:
             print("Drone registration disabled.")
+
+        if args.cirun:
+            if args.remove:
+                if args.cirun_resources:
+                    to_remove = args.cirun_resources
+                else:
+                    to_remove = ci_register.enabled_cirun_resources(owner, repo)
+                for resource in to_remove:
+                    ci_register.remove_project_from_cirun_resource(
+                        owner, repo, resource
+                    )
+                current_resources = ci_register.enabled_cirun_resources(owner, repo)
+                if not current_resources:
+                    ci_register.remove_project_from_cirun(owner, repo)
+            else:
+                ci_register.ensure_cirun_app_installed(owner)
+                ci_register.enable_cirun_for_project(owner, repo)
+                for resource in args.cirun_resources:
+                    ci_register.add_project_to_cirun_resource(owner, repo, resource)
+        else:
+            print("Cirun registration disabled.")
 
         if args.webservice:
             ci_register.add_conda_forge_webservice_hooks(owner, repo)
