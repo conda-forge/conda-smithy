@@ -4,7 +4,7 @@
 
 **Changed:**
 
-* Create toggle to make a 10G swap file on the default linux image on Azure Pipelines
+* Created option to create a swap file on the default linux image on Azure Pipelines
 
 **Deprecated:**
 
