@@ -141,7 +141,7 @@ class Init(Subcommand):
         )
 
         print(
-            "\nRepository created, please edit conda-forge.yml to configure the upload channels\n"
+            "\nRepository created, please edit recipe/conda_build_config.yaml to configure the upload channels\n"
             "and afterwards call 'conda smithy register-github'"
         )
 
