@@ -4,6 +4,7 @@ import logging
 import os
 from os import fspath
 import re
+import sys
 import subprocess
 import textwrap
 import yaml
@@ -1734,7 +1735,7 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
             },
             "settings_win": {
                 "pool": {
-                    "vmImage": "windows-2019",
+                    "vmImage": "windows-2022",
                 },
                 "timeoutInMinutes": 360,
                 "variables": {
@@ -1817,6 +1818,8 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
             "self_hosted_labels": [],
             "self_hosted_triggers": ["push"],
             "cancel_in_progress": False,
+            # Set maximum parallel jobs
+            "max_parallel": None,
             # Toggle creating artifacts for conda build_artifacts dir
             "store_build_artifacts": False,
             "artifact_retention_days": 14,
@@ -2121,7 +2124,12 @@ def get_cfp_file_path(temporary_directory):
         f.write(response.content)
 
     logger.info(f"Extracting conda-forge-pinning to { temporary_directory }")
-    subprocess.check_call(["cph", "x", "--dest", temporary_directory, dest])
+    cmd = ["cph"]
+    # If possible, avoid needing to activate the environment to access cph
+    if sys.executable:
+        cmd = [sys.executable, "-m", "conda_package_handling.cli"]
+    cmd += ["x", "--dest", temporary_directory, dest]
+    subprocess.check_call(cmd)
 
     logger.debug(os.listdir(temporary_directory))
 

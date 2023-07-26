@@ -509,7 +509,6 @@ def test_register_feedstock_token_notoken(
     assert "No token found in" in str(e.value)
 
 
-@pytest.mark.parametrize("existing_tokens_time_to_expiration", [None, 10])
 @pytest.mark.parametrize("ci", [None, "azure"])
 @pytest.mark.parametrize(
     "repo", ["$GITHUB_TOKEN", "${GITHUB_TOKEN}", "$GH_TOKEN", "${GH_TOKEN}"]
@@ -519,7 +518,7 @@ def test_register_feedstock_token_notoken(
 @mock.patch("conda_smithy.feedstock_tokens.tempfile")
 @mock.patch("conda_smithy.feedstock_tokens.git")
 @mock.patch("conda_smithy.github.gh_token")
-def test_register_feedstock_token_append_expire(
+def test_register_feedstock_token_append(
     gh_mock,
     git_mock,
     tmp_mock,
@@ -528,7 +527,6 @@ def test_register_feedstock_token_append_expire(
     tmpdir,
     repo,
     ci,
-    existing_tokens_time_to_expiration,
 ):
     gh_mock.return_value = "abc123"
     tmp_mock.TemporaryDirectory.return_value.__enter__.return_value = str(
@@ -546,31 +544,12 @@ def test_register_feedstock_token_append_expire(
         provider=ci,
     )
     token_json_pth = os.path.join(tmpdir, "tokens", "bar.json")
-    now = time.time()
     with open(token_json_pth, "w") as fp:
-        fp.write(
-            json.dumps(
-                {
-                    "tokens": [
-                        {},
-                        {"provider": "azure"},
-                        {"provider": "blarg"},
-                        {"expires_at": now - 1e4},
-                        {"expires_at": now + 1e4},
-                    ]
-                }
-            )
-        )
+        fp.write('{"tokens": [1]}')
 
     try:
         generate_and_write_feedstock_token(user, project, provider=ci)
-        register_feedstock_token(
-            user,
-            project,
-            repo,
-            provider=ci,
-            existing_tokens_time_to_expiration=existing_tokens_time_to_expiration,
-        )
+        register_feedstock_token(user, project, repo, provider=ci)
     finally:
         if os.path.exists(pth):
             os.remove(pth)
@@ -599,42 +578,7 @@ def test_register_feedstock_token_append_expire(
         data["provider"] = ci
 
     with open(token_json_pth, "r") as fp:
-        final_tokens = json.load(fp)
-
-    if existing_tokens_time_to_expiration is None:
-        assert final_tokens == {
-            "tokens": [
-                {},
-                {"provider": "azure"},
-                {"provider": "blarg"},
-                {"expires_at": now + 1e4},
-                data,
-            ]
-        }
-    else:
-        exp_time = final_tokens["tokens"][0]["expires_at"]
-        assert exp_time >= now + 10
-        assert exp_time <= now + 12
-        if ci is None:
-            assert final_tokens == {
-                "tokens": [
-                    {"expires_at": exp_time},
-                    {"provider": "azure"},
-                    {"provider": "blarg"},
-                    {"expires_at": now + 1e4},
-                    data,
-                ]
-            }
-        else:
-            assert final_tokens == {
-                "tokens": [
-                    {"expires_at": exp_time},
-                    {"provider": "azure", "expires_at": exp_time},
-                    {"provider": "blarg"},
-                    {"expires_at": now + 1e4},
-                    data,
-                ]
-            }
+        assert json.load(fp) == {"tokens": [1, data]}
 
 
 @pytest.mark.parametrize("unique_token_per_provider", [False, True])

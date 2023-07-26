@@ -67,6 +67,9 @@ jobs:
     {%- endif %}
     strategy:
       fail-fast: false
+      {%- if github_actions.max_parallel %}
+      max-parallel: {{ github_actions.max_parallel }}
+      {%- endif %}
       matrix:
         include:
         {%- for data in configs %}
