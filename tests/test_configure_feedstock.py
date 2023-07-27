@@ -754,7 +754,6 @@ def test_conda_forge_yaml_empty(config_yaml):
     assert load_forge_config()["recipe_dir"] == "recipe"
 
 
-
 def test_noarch_platforms_bad_yaml(config_yaml):
     load_forge_config = lambda: cnfgr_fdstk._load_forge_config(  # noqa
         config_yaml,

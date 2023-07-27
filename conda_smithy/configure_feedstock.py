@@ -1599,7 +1599,7 @@ def render_README(jinja_env, forge_config, forge_dir, render_info=None):
     if not channel_targets:
         # default to conda-forge if no channel_targets are specified (shouldn't happen)
         channel_targets = ["conda-forge main"]
-    else:  
+    else:
         # de-duplicate in-order
         channel_targets = list(dict.fromkeys(channel_targets))
 
