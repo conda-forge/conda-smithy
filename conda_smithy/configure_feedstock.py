@@ -1716,6 +1716,7 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
             "settings_linux": {
                 "pool": {
                     "vmImage": "ubuntu-latest",
+                    "linux_swap_size": "0GiB",
                 },
                 "timeoutInMinutes": 360,
             },
