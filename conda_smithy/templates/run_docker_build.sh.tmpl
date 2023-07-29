@@ -64,8 +64,8 @@ mkdir -p "$ARTIFACTS"
 DONE_CANARY="$ARTIFACTS/conda-forge-build-done-${CONFIG}"
 rm -f "$DONE_CANARY"
 
-# Allow people to specify extra default arguments to `docker run` (e.g. `--rm`)
-DOCKER_RUN_ARGS="${CONDA_FORGE_DOCKER_RUN_ARGS}"
+# Allow people to specify extra default arguments to `docker run` (e.g. `--memory-swappiness=0`)
+DOCKER_RUN_ARGS="${CONDA_FORGE_DOCKER_RUN_ARGS:---rm}"
 if [ -z "${CI}" ]; then
     DOCKER_RUN_ARGS="-it ${DOCKER_RUN_ARGS}"
 fi
@@ -78,7 +78,6 @@ export UPLOAD_PACKAGES="${UPLOAD_PACKAGES:-True}"
 export IS_PR_BUILD="${IS_PR_BUILD:-False}"
 {{ docker.executable }} pull "${DOCKER_IMAGE}"
 {{ docker.executable }} run ${DOCKER_RUN_ARGS} \
-           --rm \
            -v "${RECIPE_ROOT}":/home/conda/recipe_root:rw,z,delegated \
            -v "${FEEDSTOCK_ROOT}":/home/conda/feedstock_root:rw,z,delegated \
            -e CONFIG \

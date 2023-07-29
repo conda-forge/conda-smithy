@@ -1,10 +1,10 @@
 **Added:**
 
-* Now --rm is added to docker run by default in run_docker_build.sh
+* <news item>
 
 **Changed:**
 
-* <news item>
+* If `CONDA_FORGE_DOCKER_RUN_ARGS` is not set, `--rm` is added to `docker run ...` in run_docker_build.sh
 
 **Deprecated:**
 
