@@ -191,7 +191,7 @@ jobs:
         {%- endif %}
         setup_conda_rc .\ ".\{{ recipe_dir }}" .\.ci_support\%CONFIG%.yaml
         if errorlevel 1 exit 1
-        {% if build_setup -%}
+        {%- if build_setup %}
         {{ build_setup.replace("\n", "\n        ").rstrip() }}
         {%- endif %}
 
