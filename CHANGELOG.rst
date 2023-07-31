@@ -4,6 +4,31 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.24.1
+====================
+
+**Added:**
+
+* Add GHA option to limit number of parallel jobs - #1744
+
+**Changed:**
+
+* Free up more space on the default linux image on Azure Pipelines
+
+**Fixed:**
+
+* Avoid needing to activate environment to use conda-smithy
+
+**Authors:**
+
+* Matthew R. Becker
+* Mark Harfouche
+* Chris Burr
+* Billy K. Poon
+* John Kirkham
+
+
+
 v3.24.0
 ====================
 

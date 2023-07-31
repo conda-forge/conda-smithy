@@ -4,7 +4,7 @@
 
 **Changed:**
 
-* Free up more space on the default linux image on Azure Pipelines
+* Add option to cleanup GHA images - #1754
 
 **Deprecated:**
 
