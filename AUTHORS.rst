@@ -16,21 +16,23 @@ Authors are sorted by number of commits.
 * Hadrien Mary
 * Ryan Volz
 * Marcel Bargull
+* Mark Harfouche
 * Johnny Willemsen
 * Uwe L. Korn
-* Mark Harfouche
-* Julian Rüth
 * Chris Burr
+* Julian Rüth
+* Billy K. Poon
 * Tim Snyder
+* H. Vetinari
 * Eric Dill
 * Natasha Pavlovikj
 * Maksim Rakitin
 * Jan Schulz
 * Josh Reichardt
+* John Kirkham
 * Justin Calamari
 * Jason Furmanek
 * Patrick Sodré
-* John Kirkham
 * C.A.M. Gerlach
 * refraction-ray
 * Bastian Zimmermann
@@ -38,7 +40,6 @@ Authors are sorted by number of commits.
 * Nicholas Bollweg
 * Leopold Talirz
 * Tom Pollard
-* H. Vetinari
 * Gonzalo Pena-Castellanos
 * Daniel Bast
 * Carlo
@@ -46,12 +47,12 @@ Authors are sorted by number of commits.
 * Joshua L. Adelman
 * Wolf Vollprecht
 * Matthias Diener
+* John Blischak
 * Marius van Niekerk
 * Peter Williams
 * Johannes Köster
 * Philippe Blain
 * Matt McCormick
-* John Blischak
 * Jan Janßen
 * xoviat
 * Elmar Pruesse
@@ -101,7 +102,6 @@ Authors are sorted by number of commits.
 * Dave Hirschfeld
 * Nils Wentzell
 * Stuart Berg
-* Billy K. Poon
 * Mike Taves
 * Nehal J Wani
 * Benjamin Tovar

@@ -912,24 +912,48 @@ def run_conda_forge_specific(meta, recipe_dir, lints, hints):
             if msg not in lints:
                 lints.append(msg)
 
-    # 5: Do not depend on matplotlib, only matplotlib-base
+    # 5: Package-specific hints
+    # (e.g. do not depend on matplotlib, only matplotlib-base)
+    build_reqs = requirements_section.get("build") or []
+    host_reqs = requirements_section.get("host") or []
     run_reqs = requirements_section.get("run") or []
     for out in outputs_section:
         _req = out.get("requirements") or {}
         if isinstance(_req, Mapping):
+            build_reqs += _req.get("build") or []
+            host_reqs += _req.get("host") or []
             run_reqs += _req.get("run") or []
         else:
             run_reqs += _req
-    for rq in run_reqs:
-        nm = rq.split(" ")[0].strip()
-        if nm == "matplotlib":
-            msg = (
-                "Recipes should usually depend on `matplotlib-base` as opposed to "
-                "`matplotlib` so that runtime environments do not require large "
-                "packages like `qt`."
-            )
-            if msg not in hints:
-                hints.append(msg)
+
+    specific_hints = {
+        "matplotlib": (
+            "Recipes should usually depend on `matplotlib-base` as opposed to "
+            "`matplotlib` so that runtime environments do not require large "
+            "packages like `qt`."
+        ),
+        "jpeg": (
+            "Recipes should usually depend on `libjpeg-turbo` as opposed to "
+            "`jpeg` for improved performance. For more information please see"
+            "https://github.com/conda-forge/conda-forge.github.io/issues/673"
+        ),
+        "pytorch-cpu": (
+            "Please depend on `pytorch` directly, in order to avoid forcing "
+            "CUDA users to downgrade to the CPU version for no reason."
+        ),
+        "pytorch-gpu": (
+            "Please depend on `pytorch` directly. If your package definitely "
+            "requires the CUDA version, please depend on `pytorch =*=cuda*`."
+        ),
+        "abseil-cpp": "The `abseil-cpp` output has been superseded by `libabseil`",
+        "grpc-cpp": "The `grpc-cpp` output has been superseded by `libgrpc`",
+        "build": "The pypa `build` package has been renamed to `python-build`",
+    }
+
+    for rq in build_reqs + host_reqs + run_reqs:
+        dep = rq.split(" ")[0].strip()
+        if dep in specific_hints and specific_hints[dep] not in hints:
+            hints.append(specific_hints[dep])
 
 
 def is_selector_line(line, allow_platforms=False):

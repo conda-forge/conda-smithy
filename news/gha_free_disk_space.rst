@@ -4,7 +4,7 @@
 
 **Changed:**
 
-* <news item>
+* Add option to cleanup GHA images - #1754
 
 **Deprecated:**
 
@@ -16,7 +16,7 @@
 
 **Fixed:**
 
-* Fixed bug in codepath to allow debugging of cross compiled OSX configuratons using ``build-locally.py``.
+* <news item>
 
 **Security:**
 

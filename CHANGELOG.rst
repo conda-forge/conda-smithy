@@ -4,6 +4,53 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.24.1
+====================
+
+**Added:**
+
+* Add GHA option to limit number of parallel jobs - #1744
+
+**Changed:**
+
+* Free up more space on the default linux image on Azure Pipelines
+
+**Fixed:**
+
+* Avoid needing to activate environment to use conda-smithy
+
+**Authors:**
+
+* Matthew R. Becker
+* Mark Harfouche
+* Chris Burr
+* Billy K. Poon
+* John Kirkham
+
+
+
+v3.24.0
+====================
+
+**Added:**
+
+* Added linting for obsoleted outputs, e.g. those who have been renamed conda-forge-wide.
+*  Support not running tests when cross compiling in win - #1742
+
+**Fixed:**
+
+* Fixed bug in codepath to allow debugging of cross compiled OSX configuratons using ``build-locally.py``.
+* Fixed README headers for recipes with multiple outputs
+
+**Authors:**
+
+* Isuru Fernando
+* Mark Harfouche
+* H. Vetinari
+* John Blischak
+
+
+
 v3.23.1
 ====================
 
