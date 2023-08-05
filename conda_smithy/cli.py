@@ -373,6 +373,7 @@ class RegisterCI(Subcommand):
                     to_remove = args.cirun_resources
                 else:
                     to_remove = ci_register.enabled_cirun_resources(owner, repo)
+
                 for resource in to_remove:
                     ci_register.remove_project_from_cirun_resource(
                         owner, repo, resource
@@ -381,7 +382,7 @@ class RegisterCI(Subcommand):
                 if not current_resources:
                     ci_register.remove_project_from_cirun(owner, repo)
             else:
-                ci_register.ensure_cirun_app_installed(owner)
+                # ci_register.ensure_cirun_app_installed(owner, repo)
                 ci_register.enable_cirun_for_project(owner, repo)
                 for resource in args.cirun_resources:
                     ci_register.add_project_to_cirun_resource(owner, repo, resource)

@@ -16,3 +16,4 @@ shellcheck
 scrypt
 license-expression
 setuptools_scm >=7
+cirun
