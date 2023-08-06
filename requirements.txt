@@ -2,7 +2,7 @@
 
 setuptools
 conda
-conda-build >=3.4.2
+conda-build==2.1.5
 jinja2
 requests
 pycryptodome
