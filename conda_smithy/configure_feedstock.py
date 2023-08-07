@@ -61,7 +61,9 @@ SERVICE_FEEDSTOCKS = [
     "conda-smithy-feedstock",
 ]
 if "CONDA_SMITHY_SERVICE_FEEDSTOCKS" in os.environ:
-    SERVICE_FEEDSTOCKS += os.environ["CONDA_SMITHY_SERVICE_FEEDSTOCKS"].split(",")
+    SERVICE_FEEDSTOCKS += os.environ["CONDA_SMITHY_SERVICE_FEEDSTOCKS"].split(
+        ","
+    )
 
 
 def package_key(config, used_loop_vars, subdir):
