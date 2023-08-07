@@ -36,10 +36,10 @@ source ${MINIFORGE_HOME}/etc/profile.d/conda.sh
 conda activate base
 
 {{ CONDA_INSTALL_CMD }} install --update-specs --quiet --yes --channel conda-forge \
-    conda-build pip {{ conda_build_tool_deps }}{{ " ".join(remote_ci_setup) }}
+    conda-build pip {{ conda_build_tool_deps }} {{ " ".join(remote_ci_setup) }}
 {%- if conda_build_tool_deps != "" %}
 {{ CONDA_INSTALL_CMD }} update --update-specs --yes --quiet --channel conda-forge \
-    conda-build pip {{ conda_build_tool_deps }}{{ " ".join(remote_ci_setup) }}
+    conda-build pip {{ conda_build_tool_deps }} {{ " ".join(remote_ci_setup) }}
 {%- endif %}
 
 {% if local_ci_setup %}
