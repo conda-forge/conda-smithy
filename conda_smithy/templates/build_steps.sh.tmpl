@@ -30,13 +30,13 @@ pkgs_dirs:
   - /opt/conda/pkgs
 
 CONDARC
-{% if conda_build_tool == "mambabuild" %}
+{%- if conda_build_tool == "mambabuild" %}
 {%- set CONDA_INSTALL_CMD="mamba" %}
 {%- set BUILD_CMD="conda mambabuild" %}
-{% elif conda_build_tool == "conda-build+conda-libmamba-solver" %}
+{%- elif conda_build_tool == "conda-build+conda-libmamba-solver" %}
 {%- set CONDA_INSTALL_CMD="mamba" %}
 {%- set BUILD_CMD="CONDA_SOLVER=libmamba conda build" %}
-{% elif conda_build_tool == "conda-build+classic" %}
+{%- elif conda_build_tool == "conda-build+classic" %}
 {%- set CONDA_INSTALL_CMD="mamba" %}
 {%- set BUILD_CMD="CONDA_SOLVER=classic conda build" %}
 {%- else %}

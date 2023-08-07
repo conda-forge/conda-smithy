@@ -19,19 +19,20 @@ bash $MINIFORGE_FILE -b -p ${MINIFORGE_HOME}
 ( endgroup "Installing a fresh version of Miniforge" ) 2> /dev/null
 
 ( startgroup "Configuring conda" ) 2> /dev/null
-{% if conda_build_tool == "mambabuild" %}
+{%- if conda_build_tool == "mambabuild" %}
 {%- set CONDA_INSTALL_CMD="mamba" %}
 {%- set BUILD_CMD="conda mambabuild" %}
-{% elif conda_build_tool == "conda-build+conda-libmamba-solver" %}
+{%- elif conda_build_tool == "conda-build+conda-libmamba-solver" %}
 {%- set CONDA_INSTALL_CMD="mamba" %}
 {%- set BUILD_CMD="CONDA_SOLVER=libmamba conda build" %}
-{% elif conda_build_tool == "conda-build+classic" %}
+{%- elif conda_build_tool == "conda-build+classic" %}
 {%- set CONDA_INSTALL_CMD="mamba" %}
 {%- set BUILD_CMD="CONDA_SOLVER=classic conda build" %}
 {%- else %}
 {%- set CONDA_INSTALL_CMD="mamba" %}
 {%- set BUILD_CMD="conda build" %}
 {%- endif %}
+
 source ${MINIFORGE_HOME}/etc/profile.d/conda.sh
 conda activate base
 
