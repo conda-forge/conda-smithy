@@ -1820,6 +1820,7 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
         "private_upload": False,
         "secrets": [],
         "conda_build_tool": "mambabuild",
+        "conda_build_tool_deps": "boa",
         # feedstock checkout git clone depth, None means keep default, 0 means no limit
         "clone_depth": None,
         # Specific channel for package can be given with
@@ -1916,6 +1917,11 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
         config["conda_build_tool"] = (
             "mambabuild" if config["build_with_mambabuild"] else "conda-build"
         )
+    if file_config.get("conda_build_tool_deps"):
+        raise ValueError(
+            "Cannot set 'conda_build_tool_deps' directly. "
+            "Use 'conda_build_tool' instead."
+        )
     valid_build_tools = (
         "mambabuild",  # will run 'conda mambabuild', as provided by boa
         "conda-build",  # will run vanilla conda-build, with system configured / default solver
@@ -1926,6 +1932,12 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
         f"Invalid conda_build_tool: {config['conda_build_tool']}. "
         f"Valid values are: {valid_build_tools}."
     )
+    if config["conda_build_tool"] == "mambabuild":
+        config["conda_build_tool_deps"] = "boa"
+    elif config["conda_build_tool"] == "conda-build+conda-libmamba-solver":
+        config["conda_build_tool_deps"] = "conda-libmamba-solver"
+    elif config["conda_build_tool"] in ("conda-build", "conda-build+classic"):
+        config["conda_build_tool_deps"] = ""
 
     config["secrets"] = sorted(set(config["secrets"] + ["BINSTAR_TOKEN"]))
 

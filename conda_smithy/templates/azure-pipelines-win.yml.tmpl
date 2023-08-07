@@ -16,13 +16,6 @@ jobs:
       displayName: "Install Chocolatey Package: {{ choco_pkg }}"
 {% endfor %}
 
-{%- if conda_build_tool == "mambabuild" %}
-{%- set conda_build_tool_deps="boa " %}
-{%- elif conda_build_tool == "conda-build+conda-libmamba-solver" %}
-{%- set conda_build_tool_deps="conda-libmamba-solver " %}
-{%- else %}
-{%- set conda_build_tool_deps="" %}
-{%- endif %}
     - task: PythonScript@0
       displayName: 'Download Miniforge'
       inputs:

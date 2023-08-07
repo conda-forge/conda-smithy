@@ -172,13 +172,6 @@ jobs:
         miniforge-variant: Mambaforge
       if: matrix.os == 'windows'
 
-{%- if conda_build_tool == "mambabuild" %}
-{%- set conda_build_tool_deps="boa " %}
-{%- elif conda_build_tool == "conda-build+conda-libmamba-solver" %}
-{%- set conda_build_tool_deps="conda-libmamba-solver " %}
-{%- else %}
-{%- set conda_build_tool_deps="" %}
-{%- endif %}
     - name: Build on windows
       shell: cmd
       run: |
