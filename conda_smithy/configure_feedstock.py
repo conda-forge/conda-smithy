@@ -51,6 +51,18 @@ from . import __version__
 conda_forge_content = os.path.abspath(os.path.dirname(__file__))
 logger = logging.getLogger(__name__)
 
+# feedstocks listed here are allowed to use GHA on
+# conda-forge
+# this should solve issues where other CI proviers have too many
+# jobs and we need to change something via CI
+SERVICE_FEEDSTOCKS = [
+    "conda-forge-pinning-feedstock",
+    "conda-forge-repodata-patches-feedstock",
+    "conda-smithy-feedstock",
+]
+if "CONDA_SMITHY_SERVICE_FEEDSTOCKS" in os.environ:
+    SERVICE_FEEDSTOCKS += os.environ["CONDA_SMITHY_SERVICE_FEEDSTOCKS"].split(",")
+
 
 def package_key(config, used_loop_vars, subdir):
     # get the build string from whatever conda-build makes of the configuration
@@ -673,6 +685,7 @@ def _render_ci_provider(
                 channel_target.startswith("conda-forge ")
                 and provider_name == "github_actions"
                 and not forge_config["github_actions"]["self_hosted"]
+                and os.path.basename(forge_dir) not in SERVICE_FEEDSTOCKS
             ):
                 raise RuntimeError(
                     "Using github_actions as the CI provider inside "
