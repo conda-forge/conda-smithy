@@ -27,7 +27,7 @@
   aliases:
   - John Kirkham
   - jakirkham
-  num_commits: 9
+  num_commits: 10
   first_commit: 2016-03-17 21:05:53
   github: jakirkham
 - name: Daniel Bast
@@ -63,7 +63,7 @@
   email: christopher.burr@cern.ch
   alternate_emails:
   - chrisburr@users.noreply.github.com
-  num_commits: 17
+  num_commits: 18
   first_commit: 2019-03-20 05:10:33
   github: chrisburr
 - name: Thomas Robitaille
@@ -72,7 +72,7 @@
   first_commit: 2018-11-21 04:54:55
 - name: John Blischak
   email: jdblischak@gmail.com
-  num_commits: 4
+  num_commits: 5
   first_commit: 2017-11-06 16:48:18
   github: jdblischak
 - name: roryk
@@ -247,7 +247,7 @@
   email: isuru.11@cse.mrt.ac.lk
   alternate_emails:
   - isuruf@gmail.com
-  num_commits: 495
+  num_commits: 500
   first_commit: 2017-01-08 22:03:03
   github: isuruf
 - name: Julian Rüth
@@ -329,7 +329,7 @@
   github: sodre
 - name: Mark Harfouche
   email: mark.harfouche@gmail.com
-  num_commits: 21
+  num_commits: 23
   first_commit: 2018-06-12 01:15:09
   github: hmaarrfk
 - name: Dougal J. Sutherland
@@ -393,7 +393,7 @@
   github: shadowwalkersb
 - name: Matthew R. Becker
   email: becker.mr@gmail.com
-  num_commits: 142
+  num_commits: 148
   first_commit: 2020-01-07 17:44:33
   github: beckermr
   alternate_emails:
@@ -512,7 +512,7 @@
   github: maresb
 - name: Billy K. Poon
   email: bkpoon@lbl.gov
-  num_commits: 1
+  num_commits: 15
   first_commit: 2021-06-18 18:57:21
   github: bkpoon
 - name: Matthias Diener
@@ -537,7 +537,7 @@
   github: nehaljwani
 - name: H. Vetinari
   email: h.vetinari@gmx.com
-  num_commits: 8
+  num_commits: 14
   first_commit: 2021-11-14 02:53:10
 - name: Benjamin Tovar
   email: btovar@nd.edu
