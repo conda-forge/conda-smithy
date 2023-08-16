@@ -1716,7 +1716,6 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
             "settings_linux": {
                 "pool": {
                     "vmImage": "ubuntu-latest",
-                    "linux_swap_size": "0GiB",
                 },
                 "timeoutInMinutes": 360,
             },
@@ -1749,6 +1748,8 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
             "store_build_artifacts": False,
             # Maximum number of parallel jobs allowed across platforms
             "max_parallel": 50,
+            # Size of swapfile for linux and windows
+            "swapfile_size": "0GiB",
         },
         "provider": {
             "linux_64": ["azure"],
