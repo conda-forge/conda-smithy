@@ -10,7 +10,7 @@ Feedstock license: [BSD-3-Clause](https://github.com/{{ github.user_or_org }}/{{
 
 {% for output_name, about in package_about -%}
 {%- set license_url = about.license_url -%}
-{%- if package_about|length > 1 -%}
+{%- if package_about|length > 1 %}
 About {{ output_name }}
 ------{{ '-' * output_name|length }}
 

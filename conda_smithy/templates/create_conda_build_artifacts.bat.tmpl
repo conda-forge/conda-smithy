@@ -54,8 +54,8 @@ if defined BLD_ARTIFACT_PREFIX (
         echo ##vso[task.setVariable variable=BLD_ARTIFACT_PATH]!BLD_ARTIFACT_PATH!
     )
     if "%CI%" == "github_actions" (
-        echo BLD_ARTIFACT_NAME=!BLD_ARTIFACT_NAME!>> %GITHUB_OUTPUT%
-        echo BLD_ARTIFACT_PATH=!BLD_ARTIFACT_PATH!>> %GITHUB_OUTPUT%
+        echo BLD_ARTIFACT_NAME=!BLD_ARTIFACT_NAME!>> !GITHUB_OUTPUT!
+        echo BLD_ARTIFACT_PATH=!BLD_ARTIFACT_PATH!>> !GITHUB_OUTPUT!
     )
 )
 
@@ -74,7 +74,7 @@ if defined ENV_ARTIFACT_PREFIX (
         echo ##vso[task.setVariable variable=ENV_ARTIFACT_PATH]!ENV_ARTIFACT_PATH!
     )
     if "%CI%" == "github_actions" (
-        echo ENV_ARTIFACT_NAME=!ENV_ARTIFACT_NAME!>> %GITHUB_OUTPUT%
-        echo ENV_ARTIFACT_PATH=!ENV_ARTIFACT_PATH!>> %GITHUB_OUTPUT%
+        echo ENV_ARTIFACT_NAME=!ENV_ARTIFACT_NAME!>> !GITHUB_OUTPUT!
+        echo ENV_ARTIFACT_PATH=!ENV_ARTIFACT_PATH!>> !GITHUB_OUTPUT!
     )
 )

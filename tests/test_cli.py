@@ -186,16 +186,16 @@ def test_render_readme_with_multiple_outputs(testing_workdir, dirname):
         # case 2: implicit subpackage, has individual subpackage about
         assert "About test_multiple_outputs2" in readme
         assert "BSD" in readme
-        assert "About test_output_1" in readme
+        assert "\n\nAbout test_output_1" in readme
         assert "Apache" in readme
-        assert "About test_output_2" not in readme
+        assert "\n\nAbout test_output_2" not in readme
     elif dirname == "multiple_outputs3":
         # case 3: explicit subpackage, has individual subpackage about
         assert "About test_multiple_outputs3" in readme
         assert "BSD" in readme
-        assert "About test_output_1" in readme
+        assert "\n\nAbout test_output_1" in readme
         assert "Apache" in readme
-        assert "About test_output_2" not in readme
+        assert "\n\nAbout test_output_2" not in readme
     else:
         assert False
 

@@ -4,7 +4,7 @@
 
 **Changed:**
 
-* Windows CI on azure uses python 3.10 in the base environment.
+* Add option to cleanup GHA images - #1754
 
 **Deprecated:**
 

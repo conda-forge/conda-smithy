@@ -4,6 +4,7 @@ import logging
 import os
 from os import fspath
 import re
+import sys
 import subprocess
 import textwrap
 import yaml
@@ -49,6 +50,20 @@ from . import __version__
 
 conda_forge_content = os.path.abspath(os.path.dirname(__file__))
 logger = logging.getLogger(__name__)
+
+# feedstocks listed here are allowed to use GHA on
+# conda-forge
+# this should solve issues where other CI proviers have too many
+# jobs and we need to change something via CI
+SERVICE_FEEDSTOCKS = [
+    "conda-forge-pinning-feedstock",
+    "conda-forge-repodata-patches-feedstock",
+    "conda-smithy-feedstock",
+]
+if "CONDA_SMITHY_SERVICE_FEEDSTOCKS" in os.environ:
+    SERVICE_FEEDSTOCKS += os.environ["CONDA_SMITHY_SERVICE_FEEDSTOCKS"].split(
+        ","
+    )
 
 
 def package_key(config, used_loop_vars, subdir):
@@ -672,6 +687,7 @@ def _render_ci_provider(
                 channel_target.startswith("conda-forge ")
                 and provider_name == "github_actions"
                 and not forge_config["github_actions"]["self_hosted"]
+                and os.path.basename(forge_dir) not in SERVICE_FEEDSTOCKS
             ):
                 raise RuntimeError(
                     "Using github_actions as the CI provider inside "
@@ -1806,6 +1822,8 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
         },
         "github_actions": {
             "self_hosted": False,
+            # Set maximum parallel jobs
+            "max_parallel": None,
             # Toggle creating artifacts for conda build_artifacts dir
             "store_build_artifacts": False,
             "artifact_retention_days": 14,
@@ -2082,7 +2100,12 @@ def get_cfp_file_path(temporary_directory):
         f.write(response.content)
 
     logger.info(f"Extracting conda-forge-pinning to { temporary_directory }")
-    subprocess.check_call(["cph", "x", "--dest", temporary_directory, dest])
+    cmd = ["cph"]
+    # If possible, avoid needing to activate the environment to access cph
+    if sys.executable:
+        cmd = [sys.executable, "-m", "conda_package_handling.cli"]
+    cmd += ["x", "--dest", temporary_directory, dest]
+    subprocess.check_call(cmd)
 
     logger.debug(os.listdir(temporary_directory))
 
