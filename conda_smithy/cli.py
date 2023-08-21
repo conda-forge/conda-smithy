@@ -23,6 +23,7 @@ from . import lint_recipe
 from . import __version__
 
 
+
 if sys.version_info[0] == 2:
     raise Exception("Conda-smithy does not support python 2!")
 
@@ -379,8 +380,8 @@ class RegisterCI(Subcommand):
                     to_remove = ["*"]
 
                 for resource in to_remove:
-                    conda_smithy.cirun_utils.remove_project_from_cirun_resource(
-                        owner, repo, resource
+                    conda_smithy.cirun_utils.remove_repo_from_cirun_resource(
+                        repo, resource
                     )
                 # current_resources = ci_register.enabled_cirun_resources(owner, repo)
                 # if not current_resources:
@@ -389,7 +390,7 @@ class RegisterCI(Subcommand):
                 # ci_register.ensure_cirun_app_installed(owner, repo)
                 conda_smithy.cirun_utils.enable_cirun_for_project(owner, repo)
                 for resource in args.cirun_resources:
-                    conda_smithy.cirun_utils.add_project_to_cirun_resource(owner, repo, resource)
+                    conda_smithy.cirun_utils.add_repo_to_cirun_resource(repo, resource)
         else:
             print("Cirun registration disabled.")
 
