@@ -23,7 +23,6 @@ from . import lint_recipe
 from . import __version__
 
 
-
 if sys.version_info[0] == 2:
     raise Exception("Conda-smithy does not support python 2!")
 
@@ -293,14 +292,16 @@ class RegisterCI(Subcommand):
             )
 
         print("CI Summary for {}/{} (can take ~30s):".format(owner, repo))
-        if args.remove and any([
-            args.azure,
-            args.circle,
-            args.appveyor,
-            args.drone,
-            args.webservice,
-            args.anaconda_token,
-        ]):
+        if args.remove and any(
+            [
+                args.azure,
+                args.circle,
+                args.appveyor,
+                args.drone,
+                args.webservice,
+                args.anaconda_token,
+            ]
+        ):
             raise RuntimeError(
                 "The --remove flag is only supported for Cirun for now"
             )
@@ -390,7 +391,9 @@ class RegisterCI(Subcommand):
                 # ci_register.ensure_cirun_app_installed(owner, repo)
                 conda_smithy.cirun_utils.enable_cirun_for_project(owner, repo)
                 for resource in args.cirun_resources:
-                    conda_smithy.cirun_utils.add_repo_to_cirun_resource(repo, resource)
+                    conda_smithy.cirun_utils.add_repo_to_cirun_resource(
+                        repo, resource
+                    )
         else:
             print("Cirun registration disabled.")
 
