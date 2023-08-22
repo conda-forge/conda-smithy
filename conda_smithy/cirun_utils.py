@@ -1,10 +1,14 @@
 from cirun import Cirun
 
+CONDA_FORGE_CIRUN_INSTALLATION_ID = 18453316
+
 
 def enable_cirun_for_project(owner, repo):
     """Enable the cirun.io Github Application for a particular repository."""
     cirun = _get_cirun_client()
-    return cirun.set_repo(f"{owner}/{repo}", installation_id=123)
+    return cirun.set_repo(
+        f"{owner}/{repo}", installation_id=CONDA_FORGE_CIRUN_INSTALLATION_ID
+    )
 
 
 def disable_cirun_for_project(owner, repo):
