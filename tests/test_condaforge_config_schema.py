@@ -4,7 +4,7 @@ from conda_smithy.schema.models import ConfigModel
 
 
 @pytest.fixture
-def valid_config_data():
+def default_config_data():
     return {
         "docker": {
             "executable": "docker",
@@ -19,35 +19,106 @@ def valid_config_data():
         "config_version": "2",
         "appveyor": {"image": "Visual Studio 2017"},
         "azure": {
-            # ... (Azure configuration data) ...
+            # default choices for MS-hosted agents
+            "settings_linux": {
+                "pool": {
+                    "vmImage": "ubuntu-latest",
+                },
+                "timeoutInMinutes": 360,
+            },
+            "settings_osx": {
+                "pool": {
+                    "vmImage": "macOS-11",
+                },
+                "timeoutInMinutes": 360,
+            },
+            "settings_win": {
+                "pool": {
+                    "vmImage": "windows-2022",
+                },
+                "timeoutInMinutes": 360,
+                "variables": {
+                    "CONDA_BLD_PATH": r"D:\\bld\\",
+                    # Custom %TEMP% for upload to avoid permission errors.
+                    # See https://github.com/conda-forge/kubo-feedstock/issues/5#issuecomment-1335504503
+                    "UPLOAD_TEMP": r"D:\\tmp",
+                },
+            },
+            # Force building all supported providers.
+            "force": False,
+            # name and id of azure project that the build pipeline is in
+            "project_name": "feedstock-builds",
+            "project_id": "84710dde-1620-425b-80d0-4cf5baca359d",
+            # Set timeout for all platforms at once.
+            # "timeout_minutes": None, TODO: Update any mention to this key to check for existence instead of value
+            # Toggle creating pipeline artifacts for conda build_artifacts dir
+            "store_build_artifacts": False,
+            # Maximum number of parallel jobs allowed across platforms
+            "max_parallel": 50,
         },
         "provider": {
-            # ... (Provider configuration data) ...
+            "linux_64": ["azure"],
+            "osx_64": ["azure"],
+            "win_64": ["azure"],
+            # Following platforms are disabled by default
+            "linux_aarch64": None,
+            "linux_ppc64le": None,
+            "linux_armv7l": None,
+            "linux_s390x": None,
+            # Following platforms are aliases of x86_64,
+            "linux": None,
+            "osx": None,
+            "win": None,
         },
+        # value is the build_platform, key is the target_platform
         "build_platform": {
-            # ... (Build platform configuration data) ...
+            "linux_64": "linux_64",
+            "linux_aarch64": "linux_aarch64",
+            "linux_ppc64le": "linux_ppc64le",
+            "linux_s390x": "linux_s390x",
+            "linux_armv7l": "linux_armv7l",
+            "win_64": "win_64",
+            "osx_64": "osx_64",
         },
         "noarch_platforms": ["linux_64"],
         "os_version": {
-            # ... (OS version configuration data) ...
+            "linux_64": None,
+            "linux_aarch64": None,
+            "linux_ppc64le": None,
+            "linux_armv7l": None,
+            "linux_s390x": None,
         },
-        "test": None,
+        # "test": None, # TODO: Update any mention to this key to check for existence instead of value
+        # Following is deprecated
         "test_on_native_only": False,
         "choco": [],
-        "idle_timeout_minutes": None,
+        # Configurable idle timeout.  Used for packages that don't have chatty enough builds
+        # Applicable only to circleci and travis
+        # "idle_timeout_minutes": None, TODO: Update any mention to this key to check for existence instead of value
+        # Compiler stack environment variable
         "compiler_stack": "comp7",
+        # Stack variables,  These can be used to impose global defaults for how far we build out
         "min_py_ver": "27",
         "max_py_ver": "37",
         "min_r_ver": "34",
         "max_r_ver": "34",
         "channels": {
-            # ... (Channels configuration data) ...
+            "sources": ["conda-forge"],
+            "targets": [["conda-forge", "main"]],
         },
         "github": {
-            # ... (GitHub configuration data) ...
+            "user_or_org": "conda-forge",
+            "repo_name": "",
+            "branch_name": "main",
+            "tooling_branch_name": "main",
         },
         "github_actions": {
-            # ... (GitHub Actions configuration data) ...
+            "self_hosted": False,
+            # Set maximum parallel jobs
+            "max_parallel": None,
+            # Toggle creating artifacts for conda build_artifacts dir
+            "store_build_artifacts": False,
+            "artifact_retention_days": 14,
         },
         "recipe_dir": "recipe",
         "skip_render": [],
@@ -56,17 +127,42 @@ def valid_config_data():
         "private_upload": False,
         "secrets": [],
         "build_with_mambabuild": True,
-        "clone_depth": None,
+        # feedstock checkout git clone depth, None means keep default, 0 means no limit
+        # "clone_depth": None, TODO: Update any mention to this key to check for existence instead of value
+        # Specific channel for package can be given with
+        #     ${url or channel_alias}::package_name
+        # defaults to conda-forge channel_alias
         "remote_ci_setup": ["conda-forge-ci-setup=3"],
     }
 
 
-# def test_valid_config(valid_config_data):
-#     config = ConfigModel(**valid_config_data)
-#     assert isinstance(config, ConfigModel)
+def test_valid_config(default_config_data):
+    config = ConfigModel()
+    # for each key in both the default config and the valid config, check that the
+    # default config has the same value as the valid config
+    _dump_config = config.model_dump(exclude_none=True)
+    # first assert that all keys are the same
+    assert set(_dump_config.keys()) == set(default_config_data.keys())
+
+    # then assert that all values are the same
+    for key in _dump_config.keys():
+        if isinstance(_dump_config[key], dict):
+            # if the value is a dict, assert that all keys are the same
+            assert set(_dump_config[key].keys()) == set(
+                default_config_data[key].keys()
+            )
+            # then assert that all values are the same
+            for subkey in _dump_config[key].keys():
+                assert (
+                    _dump_config[key][subkey]
+                    == default_config_data[key][subkey]
+                )
+        else:
+            print(f"type: {type(_dump_config[key])}")
+            print(key, _dump_config[key], default_config_data[key])
+            assert _dump_config[key] == default_config_data[key]
 
 
-@pytest.mark.xfail(raises=ValidationError)
 def test_invalid_config():
     invalid_data = {
         "docker": {
@@ -76,5 +172,8 @@ def test_invalid_config():
         },
         # Add other fields with invalid data here...
     }
-
-    ConfigModel(**invalid_data)
+    try:
+        c = ConfigModel(**invalid_data)
+        raise AssertionError("Should have raised a ValidationError")
+    except ValidationError as e:
+        pass
