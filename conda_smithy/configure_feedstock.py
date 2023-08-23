@@ -1733,7 +1733,7 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
                     "vmImage": "ubuntu-latest",
                 },
                 "timeoutInMinutes": 360,
-            "swapfile_size": "0GiB",
+                "swapfile_size": "0GiB",
             },
             "settings_osx": {
                 "pool": {
