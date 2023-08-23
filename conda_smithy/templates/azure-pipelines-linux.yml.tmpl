@@ -36,7 +36,7 @@ jobs:
 {%- endif %}
 {%- if not (azure.swapfile_size|string).startswith("0") %}
   - script: |
-         sudo fallocate -l {{ azure.swapfile_size }} /swapfile || true
+         sudo fallocate -l {{ azure.settings_linux.swapfile_size }} /swapfile || true
          sudo chmod 600 /swapfile || true
          sudo mkswap /swapfile || true
          sudo swapon /swapfile || true
