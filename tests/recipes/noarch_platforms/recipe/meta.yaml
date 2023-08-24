@@ -38,7 +38,7 @@ requirements:
     - tomli >=1.0.0
     - colorama  # [win]
     - __win     # [win]
-    - __unix    # [unix]
+    - __unix    # [not win]
 
   run_constrained:
     # pytest-faulthandler 2 is a dummy package.
