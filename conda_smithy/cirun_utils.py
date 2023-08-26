@@ -23,10 +23,14 @@ def enabled_cirun_resources(owner, repo):
     return cirun.get_repo_resources("conda-forge", repo)
 
 
-def add_repo_to_cirun_resource(repo, resource):
+def add_repo_to_cirun_resource(repo, resource, cirun_policy_args):
     """Grant access to a cirun resource to a particular repository, with a particular policy."""
     cirun = _get_cirun_client()
-    cirun.add_repo_to_resources("conda-forge", repo, resource)
+    policy_args = {}
+    if cirun_policy_args:
+        if "pull_request" in cirun_policy_args:
+            policy_args.update({"pull_request": True})
+    cirun.add_repo_to_resources("conda-forge", repo, resource, policy_args)
 
 
 def remove_repo_from_cirun_resource(repo, resource):

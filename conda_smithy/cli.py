@@ -266,6 +266,11 @@ class RegisterCI(Subcommand):
             help="cirun resources to enable for this repo. multiple values allowed",
         )
         scp.add_argument(
+            "--cirun-policy-args",
+            action="append",
+            help="extra arguments for cirun policy to create for this repo. multiple values allowed",
+        )
+        scp.add_argument(
             "--remove",
             action="store_true",
             help="Revoke access to the configured CI services. "
@@ -372,6 +377,7 @@ class RegisterCI(Subcommand):
             print("Drone registration disabled.")
 
         if args.cirun:
+            print("Cirun Registration")
             if args.remove:
                 if args.cirun_resources:
                     to_remove = args.cirun_resources
@@ -380,6 +386,7 @@ class RegisterCI(Subcommand):
                     # This will remove everything
                     to_remove = ["*"]
 
+                print(f"Cirun Registration: resources to remove: {to_remove}")
                 for resource in to_remove:
                     conda_smithy.cirun_utils.remove_repo_from_cirun_resource(
                         repo, resource
@@ -389,10 +396,11 @@ class RegisterCI(Subcommand):
                 #     ci_register.remove_project_from_cirun(owner, repo)
             else:
                 # ci_register.ensure_cirun_app_installed(owner, repo)
+                print(f"Cirun Registration: resources to add to: {owner}/{repo}")
                 conda_smithy.cirun_utils.enable_cirun_for_project(owner, repo)
                 for resource in args.cirun_resources:
                     conda_smithy.cirun_utils.add_repo_to_cirun_resource(
-                        repo, resource
+                        repo, resource, args.cirun_policy_args
                     )
         else:
             print("Cirun registration disabled.")
