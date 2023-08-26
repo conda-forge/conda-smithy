@@ -3,7 +3,6 @@ import os
 from cirun import Cirun
 
 CIRUN_INSTALLATION_ID = os.environ.get("CIRUN_INSTALLATION_ID", 18453316)
-GH_ORG = os.environ.get("GH_ORG", "conda-forge")
 
 
 def enable_cirun_for_project(owner, repo):
@@ -23,23 +22,23 @@ def disable_cirun_for_project(owner, repo):
 def enabled_cirun_resources(owner, repo):
     """Which resources are currently enabled for this project"""
     cirun = _get_cirun_client()
-    return cirun.get_repo_resources(GH_ORG, repo)
+    return cirun.get_repo_resources(owner, repo)
 
 
-def add_repo_to_cirun_resource(repo, resource, cirun_policy_args):
+def add_repo_to_cirun_resource(owner, repo, resource, cirun_policy_args):
     """Grant access to a cirun resource to a particular repository, with a particular policy."""
     cirun = _get_cirun_client()
     policy_args = {}
     if cirun_policy_args:
         if "pull_request" in cirun_policy_args:
             policy_args.update({"pull_request": True})
-    cirun.add_repo_to_resources(GH_ORG, repo, resource, policy_args)
+    cirun.add_repo_to_resources(owner, repo, resource, policy_args)
 
 
-def remove_repo_from_cirun_resource(repo, resource):
+def remove_repo_from_cirun_resource(owner, repo, resource):
     """Revoke access to a cirun resource to a particular repository, with a particular policy."""
     cirun = _get_cirun_client()
-    cirun.remove_repo_from_resources(GH_ORG, repo, [resource])
+    cirun.remove_repo_from_resources(owner, repo, [resource])
 
 
 def _get_cirun_client():

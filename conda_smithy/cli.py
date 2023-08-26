@@ -389,7 +389,7 @@ class RegisterCI(Subcommand):
                 print(f"Cirun Registration: resources to remove: {to_remove}")
                 for resource in to_remove:
                     conda_smithy.cirun_utils.remove_repo_from_cirun_resource(
-                        repo, resource
+                        owner, repo, resource
                     )
                 # current_resources = ci_register.enabled_cirun_resources(owner, repo)
                 # if not current_resources:
@@ -400,7 +400,7 @@ class RegisterCI(Subcommand):
                 conda_smithy.cirun_utils.enable_cirun_for_project(owner, repo)
                 for resource in args.cirun_resources:
                     conda_smithy.cirun_utils.add_repo_to_cirun_resource(
-                        repo, resource, args.cirun_policy_args
+                        owner, repo, resource, args.cirun_policy_args
                     )
         else:
             print("Cirun registration disabled.")
