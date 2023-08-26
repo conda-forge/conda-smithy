@@ -1,13 +1,15 @@
+import os
+
 from cirun import Cirun
 
-CONDA_FORGE_CIRUN_INSTALLATION_ID = 18453316
+CIRUN_INSTALLATION_ID = os.environ.get("CIRUN_INSTALLATION_ID", 18453316)
 
 
 def enable_cirun_for_project(owner, repo):
     """Enable the cirun.io Github Application for a particular repository."""
     cirun = _get_cirun_client()
     return cirun.set_repo(
-        f"{owner}/{repo}", installation_id=CONDA_FORGE_CIRUN_INSTALLATION_ID
+        f"{owner}/{repo}", installation_id=CIRUN_INSTALLATION_ID
     )
 
 
