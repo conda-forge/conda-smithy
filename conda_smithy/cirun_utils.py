@@ -7,6 +7,7 @@ CIRUN_INSTALLATION_ID = os.environ.get("CIRUN_INSTALLATION_ID", 18453316)
 
 def enable_cirun_for_project(owner, repo):
     """Enable the cirun.io Github Application for a particular repository."""
+    print(f"Enabling cirun for {owner}/{repo} ...")
     cirun = _get_cirun_client()
     return cirun.set_repo(
         f"{owner}/{repo}", installation_id=CIRUN_INSTALLATION_ID
@@ -28,11 +29,12 @@ def enabled_cirun_resources(owner, repo):
 def add_repo_to_cirun_resource(owner, repo, resource, cirun_policy_args):
     """Grant access to a cirun resource to a particular repository, with a particular policy."""
     cirun = _get_cirun_client()
-    policy_args = {}
+    policy_args = {"pull_request": False}
     if cirun_policy_args:
         if "pull_request" in cirun_policy_args:
-            policy_args.update({"pull_request": True})
-    cirun.add_repo_to_resources(owner, repo, resource, policy_args)
+            policy_args["pull_request"] = True
+
+    cirun.add_repo_to_resources(owner, repo, resources=[resource], teams=[repo], policy_args=policy_args)
 
 
 def remove_repo_from_cirun_resource(owner, repo, resource):
