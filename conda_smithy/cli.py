@@ -382,8 +382,6 @@ class RegisterCI(Subcommand):
                 if args.cirun_resources:
                     to_remove = args.cirun_resources
                 else:
-                    # to_remove = ci_register.enabled_cirun_resources(owner, repo)
-                    # This will remove everything
                     to_remove = ["*"]
 
                 print(f"Cirun Registration: resources to remove: {to_remove}")
@@ -391,11 +389,7 @@ class RegisterCI(Subcommand):
                     conda_smithy.cirun_utils.remove_repo_from_cirun_resource(
                         owner, repo, resource
                     )
-                # current_resources = ci_register.enabled_cirun_resources(owner, repo)
-                # if not current_resources:
-                #     ci_register.remove_project_from_cirun(owner, repo)
             else:
-                # ci_register.ensure_cirun_app_installed(owner, repo)
                 print(f"Cirun Registration: resources to add to: {owner}/{repo}")
                 conda_smithy.cirun_utils.enable_cirun_for_project(owner, repo)
                 for resource in args.cirun_resources:
