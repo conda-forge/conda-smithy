@@ -9,6 +9,7 @@ def enable_cirun_for_project(owner, repo):
     """Enable the cirun.io Github Application for a particular repository."""
     print(f"Enabling cirun for {owner}/{repo} ...")
     cirun = _get_cirun_client()
+    assert CIRUN_INSTALLATION_ID
     return cirun.set_repo(
         f"{owner}/{repo}", installation_id=CIRUN_INSTALLATION_ID
     )
