@@ -1286,12 +1286,6 @@ def _github_actions_specific_setup(
     if forge_config["github_actions"]["store_build_artifacts"]:
         template_files.append(".scripts/create_conda_build_artifacts.sh")
 
-    if forge_config["github_actions"]["self_hosted"]:
-        for label in forge_config["github_actions"]["self_hosted_labels"]:
-            if label.startswith("cirun-"):
-                template_files.append(".cirun.yml")
-                break
-
     _render_template_exe_files(
         forge_config=forge_config,
         jinja_env=jinja_env,
