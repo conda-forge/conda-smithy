@@ -34,7 +34,7 @@ jobs:
          df -h
     displayName: Manage disk space
 {%- endif %}
-{%- if not (azure.swapfile_size|string).startswith("0") %}
+{%- if not (azure.settings_linux.swapfile_size|string).startswith("0") %}
   - script: |
          sudo fallocate -l {{ azure.settings_linux.swapfile_size }} /swapfile || true
          sudo chmod 600 /swapfile || true
