@@ -1279,12 +1279,10 @@ def _github_actions_specific_setup(
         ],
         "win": [],
     }
-
-    template_files = platform_templates.get(platform, [])
-
-    # Templates for all platforms
     if forge_config["github_actions"]["store_build_artifacts"]:
-        template_files.append(".scripts/create_conda_build_artifacts.sh")
+        for tmpls in platform_templates.values():
+            tmpls.append(".scripts/create_conda_build_artifacts.sh")
+    template_files = platform_templates.get(platform, [])
 
     _render_template_exe_files(
         forge_config=forge_config,
@@ -1300,7 +1298,7 @@ def render_github_actions(
     target_path = os.path.join(
         forge_dir, ".github", "workflows", "conda-build.yml"
     )
-    template_filename = "github-actions.yml.tmpl"
+    template_filename = "github-actions.tmpl"
     fast_finish_text = ""
 
     (
@@ -1310,7 +1308,7 @@ def render_github_actions(
         upload_packages,
     ) = _get_platforms_of_provider("github_actions", forge_config)
 
-    logger.debug("github platforms retrieved")
+    logger.debug("github platforms retreived")
 
     remove_file_or_dir(target_path)
     return _render_ci_provider(
@@ -1824,9 +1822,6 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
         },
         "github_actions": {
             "self_hosted": False,
-            "self_hosted_labels": [],
-            "self_hosted_triggers": ["push"],
-            "cancel_in_progress": False,
             # Set maximum parallel jobs
             "max_parallel": None,
             # Toggle creating artifacts for conda build_artifacts dir
