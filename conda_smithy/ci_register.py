@@ -423,11 +423,6 @@ def add_project_to_travis(user, project):
         print(" * {}/{} registered on travis-ci".format(user, project))
 
 
-def remove_project_from_travis(user, repo):
-    "TODO: Revoke access to the repo for travis."
-    pass
-
-
 def travis_token_update_conda_forge_config(
     feedstock_config_path, user, project
 ):
