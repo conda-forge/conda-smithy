@@ -22,9 +22,15 @@ def add_repo_to_cirun_resource(owner, repo, resource, cirun_policy_args):
     if cirun_policy_args:
         if "pull_request" in cirun_policy_args:
             policy_args["pull_request"] = True
-    print(f"Adding repo {owner}/{repo} to resource {resource} with policy_args: {policy_args}")
+    print(
+        f"Adding repo {owner}/{repo} to resource {resource} with policy_args: {policy_args}"
+    )
     response = cirun.add_repo_to_resources(
-        owner, repo, resources=[resource], teams=[repo], policy_args=policy_args
+        owner,
+        repo,
+        resources=[resource],
+        teams=[repo],
+        policy_args=policy_args,
     )
     print(f"response: {response} | {response.json().keys()}")
     return response

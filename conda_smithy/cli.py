@@ -390,7 +390,9 @@ class RegisterCI(Subcommand):
                         owner, repo, resource
                     )
             else:
-                print(f"Cirun Registration: resources to add to: {owner}/{repo}")
+                print(
+                    f"Cirun Registration: resources to add to: {owner}/{repo}"
+                )
                 conda_smithy.cirun_utils.enable_cirun_for_project(owner, repo)
                 for resource in args.cirun_resources:
                     conda_smithy.cirun_utils.add_repo_to_cirun_resource(
