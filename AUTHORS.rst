@@ -24,12 +24,13 @@ Authors are sorted by number of commits.
 * Billy K. Poon
 * Tim Snyder
 * H. Vetinari
+* Mike Henry
 * Eric Dill
 * Natasha Pavlovikj
 * Maksim Rakitin
+* John Kirkham
 * Jan Schulz
 * Josh Reichardt
-* John Kirkham
 * Justin Calamari
 * Jason Furmanek
 * Patrick Sodré
