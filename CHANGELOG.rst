@@ -4,6 +4,19 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.25.1
+====================
+
+**Fixed:**
+
+* Ensure ``swapfile_size`` is not added to the Azure job settings #1759
+
+**Authors:**
+
+* John Kirkham
+
+
+
 v3.25.0
 ====================
 
