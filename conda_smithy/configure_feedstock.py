@@ -1935,9 +1935,9 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
     if config["conda_build_tool"] == "mambabuild":
         config["conda_build_tool_deps"] = "boa"
     elif config["conda_build_tool"] == "conda-build+conda-libmamba-solver":
-        config["conda_build_tool_deps"] = "conda-libmamba-solver"
-    elif config["conda_build_tool"] in ("conda-build", "conda-build+classic"):
-        config["conda_build_tool_deps"] = ""
+        config["conda_build_tool_deps"] = "conda-build conda-libmamba-solver"
+    else:
+        config["conda_build_tool_deps"] = "conda-build"
 
     config["secrets"] = sorted(set(config["secrets"] + ["BINSTAR_TOKEN"]))
 

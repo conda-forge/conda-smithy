@@ -30,25 +30,22 @@ pkgs_dirs:
   - /opt/conda/pkgs
 
 CONDARC
-{%- if conda_build_tool == "mambabuild" %}
 {%- set CONDA_INSTALL_CMD="mamba" %}
+{%- if conda_build_tool == "mambabuild" %}
 {%- set BUILD_CMD="conda mambabuild" %}
 {%- elif conda_build_tool == "conda-build+conda-libmamba-solver" %}
-{%- set CONDA_INSTALL_CMD="mamba" %}
 {%- set BUILD_CMD="CONDA_SOLVER=libmamba conda build" %}
 {%- elif conda_build_tool == "conda-build+classic" %}
-{%- set CONDA_INSTALL_CMD="mamba" %}
 {%- set BUILD_CMD="CONDA_SOLVER=classic conda build" %}
 {%- else %}
-{%- set CONDA_INSTALL_CMD="mamba" %}
 {%- set BUILD_CMD="conda build" %}
 {%- endif %}
 
 {{ CONDA_INSTALL_CMD }} install --update-specs --yes --quiet --channel conda-forge \
-    conda-build pip {{ conda_build_tool_deps }} {{ " ".join(remote_ci_setup) }}
+    pip {{ conda_build_tool_deps }} {{ " ".join(remote_ci_setup) }}
 {%- if conda_build_tool_deps != "" %}
 {{ CONDA_INSTALL_CMD }} update --update-specs --yes --quiet --channel conda-forge \
-    conda-build pip {{ conda_build_tool_deps }} {{ " ".join(remote_ci_setup) }}
+    pip {{ conda_build_tool_deps }} {{ " ".join(remote_ci_setup) }}
 {%- endif %}
 {% if local_ci_setup %}
 conda uninstall --quiet --yes --force {{ " ".join(remote_ci_setup) }}
