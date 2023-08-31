@@ -92,9 +92,12 @@ class CondaBuildConfig(BaseModel):
         default="2",
     )
 
-    zstd_compression_level: int = Field(
-        default=16,
+    zstd_compression_level: Optional[int] = Field(
         description="The compression level for the zstd compression algorithm for .conda artifacts. conda-forge uses a default value of 16 for a good compromise of performance and compression.",
+    )
+
+    error_overlinking: Optional[bool] = Field(
+        description="Enable error when shared libraries from transitive  dependencies are  directly  linked  to any executables or shared libraries in  built packages. This is disabled by default. For more details, see the [conda build documentation](https://docs.conda.io/projects/conda-build/en/stable/resources/commands/conda-build.html).",
     )
 
 
@@ -126,61 +129,90 @@ class ShellCheck(BaseModel):
     )
 
 
-class ConfigModel(BaseModel):
-    appveyor: Dict[str, Any] = Field(
-        default={"image": "Visual Studio 2017"},
+class RefreshConfig(BaseModel):
+    def update(self, data: dict):
+        """
+        This method updates a given model with a dictionary of data. It is
+        intended to be used for updating the model with data from a config
+        file. Validation is performed on the updated model to ensure consistency.
+        """
+        update = self.model_dump()
+        update.update(data)
+
+        for k, v in (
+            self.model_validate(update)
+            .model_dump(exclude_defaults=True)
+            .items()
+        ):
+            setattr(self, k, v)
+
+
+class ConfigModel(RefreshConfig):
+    # Required fields
+
+    conda_build: CondaBuildConfig = Field(
+        description="Settings in this block are used to control how conda build runs and produces artifacts.",
+    )
+
+    conda_forge_output_validation: bool = Field(
+        default=True,
+        description="This field must be set to True for feedstocks in the conda-forge GitHub organization. It enables the required feedstock artifact validation as described in [Output Validation and Feedstock Tokens](https://conda-forge.org/docs/maintainer/infrastructure.html#output-validation).",
+    )
+
+    github: GithubConfig = Field(
+        description="Mapping for GitHub-specific configuration options",
+    )
+
+    # Optional fields
+
+    appveyor: Optional[Dict[str, Any]] = Field(
+        default_factory=dict,
         description="AppVeyor CI settings. This is usually read-only and should not normally be manually modified. Tools like conda-smithy may modify this, as needed.",
     )
 
-    azure: AzureConfig
+    azure: Optional[AzureConfig] = Field(
+        default_factory=dict,
+        description="Azure Pipelines CI settings. This is usually read-only and should not normally be manually modified. Tools like conda-smithy may modify this, as needed.",
+    )
 
-    bot: BotConfig
+    bot: Optional[BotConfig] = Field(
+        default_factory=dict,
+        description="This dictates the behavior of the conda-forge auto-tick bot which issues automatic version updates/migrations for feedstocks.",
+    )
 
-    build_platform: Union[Dict[Platforms, Platforms], None] = Field(
-        ...,
+    build_platform: Optional[Dict[Platforms, Platforms]] = Field(
+        default_factory=dict,
         description="This is a mapping from the target platform to the build platform for the package to be built.",
     )
 
-    build_with_mambabuild: bool = Field(
+    build_with_mambabuild: Optional[bool] = Field(
         default=True,
         description="configures the conda-forge CI to run a debug build using the mamba solver. More information can be in the [mamba docs](https://conda-forge.org/docs/maintainer/maintainer_faq.html#mfaq-mamba-local).",
     )
 
     channel_priority: Optional[ChannelPriorityConfig] = Field(
-        default=None,
+        default="strict",
         description="The channel priority level for the conda solver during feedstock builds. This can be one of `strict`, `flexible`, or `disabled`. For more information, see the [Strict channel priority](https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-channels.html#strict-channel-priority) section on conda documentation.",
     )
 
-    channels: CondaForgeChannels()
+    channels: Optional[CondaForgeChannels] = Field(
+        default_factory=dict,
+        description="This represents the channels to grab packages from during builds and which channels/labels to push to on anaconda.org after a package has been built. The channels variable is a mapping with sources and targets.",
+    )
 
-    choco: List[str] = Field(
+    choco: Optional[List[str]] = Field(
         default_factory=list,
         description="This parameter allows for conda-smithy to run chocoloatey installs on Windows when additional system packages are needed. This is a list of strings that represent package names and any additional parameters.",
     )
 
-    circle: Dict[str, Any] = Field(
+    circle: Optional[Dict[str, Any]] = Field(
         default_factory=dict,
         description="Circle CI settings. This is usually read-only and should not normally be manually modified. Tools like conda-smithy may modify this, as needed.",
     )
 
-    conda_build: Optional[CondaBuildConfig] = Field(
-        default=None,
-        description="Settings in this block are used to control how conda build runs and produces artifacts.",
-    )
-
-    conda_forge_output_validation: bool = Field(
-        default=False,
-        description="This field must be set to True for feedstocks in the conda-forge GitHub organization. It enables the required feedstock artifact validation as described in [Output Validation and Feedstock Tokens](https://conda-forge.org/docs/maintainer/infrastructure.html#output-validation).",
-    )
-
     docker: Optional[CondaForgeDocker] = Field(
-        ...,
+        default_factory=dict,
         description="This is a mapping for Docker-specific configuration options.",
-    )
-
-    github: Optional[GithubConfig] = Field(
-        ...,
-        description="Mapping for GitHub-specific configuration options",
     )
 
     idle_timeout_minutes: Optional[int] = Field(
@@ -213,12 +245,12 @@ class ConfigModel(BaseModel):
         description="PPC-specific configuration options. This is largely an internal setting and should not normally be manually modified.",
     )
 
-    noarch_platforms: List[Platforms] = Field(
+    noarch_platforms: Optional[List[Platforms]] = Field(
         default_factory=lambda: ["linux_64"],
         description="Platforms on which to build noarch packages. The preferred default is a single build on linux_64.",
     )
 
-    os_version: Dict[Platforms, Optional[str]] = Field(
+    os_version: Optional[Dict[Platforms, Optional[str]]] = Field(
         default_factory=lambda: {
             p: None
             for p in Platforms().model_dump().keys()
@@ -227,19 +259,19 @@ class ConfigModel(BaseModel):
         description="This key is used to set the OS versions for linux_* platforms. Valid entries map a linux platform and arch to either cos6 or cos7. Currently cos6 is the default for linux-64. All other linux architectures use CentOS 7.",
     )
 
-    provider: Dict[
-        Platforms, Union[List[CIservices], CIservices, bool, None]
+    provider: Optional[
+        Dict[Platforms, Union[List[CIservices], CIservices, bool]]
     ] = Field(
-        ...,
+        default_factory={},
         description="The provider field is a mapping from build platform (not target platform) to CI service. It determines which service handles each build platform. If a desired build platform is not available with a selected provider (either natively or with emulation), the build will be disabled. Use the build_platform field to manually specify cross-compilation when no providers offer a desired build platform.",
     )
 
-    recipe_dir: str = Field(
+    recipe_dir: Optional[str] = Field(
         default="recipe",
         description="The relative path to the recipe directory",
     )
 
-    remote_ci_setup: List[str] = Field(
+    remote_ci_setup: Optional[List[str]] = Field(
         default_factory=lambda: ["conda-forge-ci-setup=3"],
         description="This option can be used to override the default conda-forge-ci-setup package. Can be given with ${url or channel_alias}::package_name, defaults to conda-forge channel_alias if no prefix is given.",
     )
@@ -249,17 +281,17 @@ class ConfigModel(BaseModel):
         description="Shell scripts used for builds or activation scripts can be linted with shellcheck. This option can be used to enable shellcheck and configure its behavior.",
     )
 
-    skip_render: List[BotConfigSkipRenderChoices] = Field(
+    skip_render: Optional[List[BotConfigSkipRenderChoices]] = Field(
         default_factory=list,
         description="This option specifies a list of files which conda smithy will skip rendering.",
     )
 
-    templates: Dict[str, str] = Field(
+    templates: Optional[Dict[str, str]] = Field(
         default_factory=dict,
         description="This is mostly an internal field for specifying where templates files live. You shouldn't need it.",
     )
 
-    test_on_native_only: bool = Field(
+    test_on_native_only: Optional[bool] = Field(
         default=False,
         description="This is used for disabling testing for cross compiling. Default is false. This has been deprecated in favor of the test top-level field. It is now mapped to test: native_and_emulated.",
     )
@@ -271,7 +303,7 @@ class ConfigModel(BaseModel):
         description="This is used to configure on which platforms a recipe is tested. Default is all. ",
     )
 
-    travis: Dict[str, Any] = Field(
+    travis: Optional[Dict[str, Any]] = Field(
         default_factory=dict,
         description="Travis CI settings. This is usually read-only and should not normally be manually modified. Tools like conda-smithy may modify this, as needed.",
     )
@@ -281,65 +313,58 @@ class ConfigModel(BaseModel):
         description="This parameter restricts uploading access on work from certain branches of the same repo. Only the branch listed in upload_on_branch will trigger uploading of packages to the target channel. The default is to skip this check if the key upload_on_branch is not in conda-forge.yml",
     )
 
-    drone: Dict[str, str] = Field(
-        default={},
+    drone: Optional[Dict[str, str]] = Field(
+        default_factory=dict,
         description="Drone CI settings. This is usually read-only and should not normally be manually modified. Tools like conda-smithy may modify this, as needed.",
     )
 
-    woodpecker: Dict[str, str] = Field(
-        default={},
+    woodpecker: Optional[Dict[str, str]] = Field(
+        default_factory=dict,
         description="Woodpecker CI settings. This is usually read-only and should not normally be manually modified. Tools like conda-smithy may modify this, as needed.",
     )
 
-    config_version: str = Field(
+    config_version: Optional[str] = Field(
         default="2",
         description="The version of the conda-forge.yml specification. This should not be manually modified.",
     )
 
-    compiler_stack: str = Field(
+    compiler_stack: Optional[str] = Field(
         default="comp7",
         description="Compiler stack environment variable",
     )
 
-    min_py_ver: str = Field(
+    min_py_ver: Optional[str] = Field(
         default="27",
         description="Minimum Python version",
     )
 
-    max_py_ver: str = Field(
+    max_py_ver: Optional[str] = Field(
         default="37",
         description="Maximum Python version",
     )
 
-    min_r_ver: str = Field(
+    min_r_ver: Optional[str] = Field(
         default="34",
         description="Minimum R version",
     )
 
-    max_r_ver: str = Field(
+    max_r_ver: Optional[str] = Field(
         default="34",
         description="Maximum R version",
     )
 
-    github_actions: Dict[str, Any] = Field(
+    github_actions: Optional[Dict[str, Any]] = Field(
         description="GitHub Actions CI settings. This is usually read-only and should not normally be manually modified. Tools like conda-smithy may modify this, as needed.",
-        default={
-            "self_hosted": False,
-            # Set maximum parallel jobs
-            "max_parallel": None,
-            # Toggle creating artifacts for conda build_artifacts dir
-            "store_build_artifacts": False,
-            "artifact_retention_days": 14,
-        },
+        default_factory=dict,
     )
 
-    private_upload: bool = Field(
+    private_upload: Optional[bool] = Field(
         default=False,
         description="Whether to upload to a private channel",
     )
 
-    secrets: List[str] = Field(
-        default=[],
+    secrets: Optional[List[str]] = Field(
+        default_factory=list,
         description="List of secrets to be used in GitHub Actions",
     )
 
@@ -348,12 +373,12 @@ class ConfigModel(BaseModel):
         description="The depth of the git clone",
     )
 
-    remote_ci_setup: List[str] = Field(
-        default=["conda-forge-ci-setup=3"],
+    remote_ci_setup: Optional[List[str]] = Field(
+        default_factory=lambda: ["conda-forge-ci-setup=3"],
         description="This option can be used to override the default conda-forge-ci-setup package. Can be given with ${url or channel_alias}::package_name, defaults to conda-forge channel_alias if no prefix is given.",
     )
 
-    timeout_minutes: int = Field(
+    timeout_minutes: Optional[int] = Field(
         default=None,
         description="The timeout in minutes for all platforms",
     )

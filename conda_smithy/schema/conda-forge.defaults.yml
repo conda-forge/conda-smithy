@@ -1,0 +1,117 @@
+docker:
+  executable: docker
+  fallback_image: quay.io/condaforge/linux-anvil-comp7
+  command: bash
+templates: {}
+drone: {}
+woodpecker: {}
+travis: {}
+circle: {}
+config_version: "2"
+appveyor:
+  image: Visual Studio 2017
+azure:
+  # default choices for MS-hosted agents
+  settings_linux:
+    pool:
+      vmImage: ubuntu-latest
+    timeoutInMinutes: 360
+  settings_osx:
+    pool:
+      vmImage: macOS-10.15
+    timeoutInMinutes: 360
+  settings_win:
+    pool:
+      vmImage: windows-2019
+    timeoutInMinutes: 360
+    variables:
+      CONDA_BLD_PATH: D:\bld\
+  # Force building all supported providers.
+  force: false
+  # name and id of azure project that the build pipeline is in
+  project_name: feedstock-builds
+  project_id: 84710dde-1620-425b-80d0-4cf5baca359d
+  # Set timeout for all platforms at once.
+  timeout_minutes: null
+  # Toggle creating pipeline artifacts for conda build_artifacts dir
+  store_build_artifacts: false
+  # Maximum number of parallel jobs allowed across platforms
+  max_parallel: 50
+provider:
+  linux_64:
+    - azure
+  osx_64:
+    - azure
+  win_64:
+    - azure
+  # Following platforms are disabled by default
+  linux_aarch64: null
+  linux_ppc64le: null
+  linux_armv7l: null
+  linux_s390x: null
+  # Following platforms are aliases of x86_64,
+  linux: null
+  osx: null
+  win: null
+# value is the build_platform, key is the target_platform
+build_platform:
+  linux_64: linux_64
+  linux_aarch64: linux_aarch64
+  linux_ppc64le: linux_ppc64le
+  linux_s390x: linux_s390x
+  linux_armv7l: linux_armv7l
+  win_64: win_64
+  osx_64: osx_64
+noarch_platforms:
+  - linux_64
+os_version:
+  linux_64: null
+  linux_aarch64: null
+  linux_ppc64le: null
+  linux_armv7l: null
+  linux_s390x: null
+test: null
+# Following is deprecated
+test_on_native_only: False
+choco: []
+# Configurable idle timeout.  Used for packages that don't have chatty enough builds
+# Applicable only to circleci and travis
+idle_timeout_minutes: null
+# Compiler stack environment variable
+compiler_stack: comp7
+# Stack variables,  These can be used to impose global defaults for how far we build out
+min_py_ver: "27"
+max_py_ver: "37"
+min_r_ver: "34"
+max_r_ver: "34"
+channels:
+  sources:
+    - conda-forge
+  targets:
+    - - conda-forge
+      - main
+github:
+  user_or_org: conda-forge
+  repo_name: ""
+  branch_name: master
+  tooling_branch_name: master
+github_actions:
+  self_hosted: false
+  # Toggle creating artifacts for conda build_artifacts dir
+  store_build_artifacts: false
+  artifact_retention_days: 14
+recipe_dir: recipe
+skip_render: []
+bot:
+  automerge: false
+conda_forge_output_validation: false
+private_upload: false
+secrets: []
+build_with_mambabuild: true
+# feedstock checkout git clone depth, None means keep default, 0 means no limit
+clone_depth: null
+# Specific channel for package can be given with
+#     ${url or channel_alias}::package_name
+# defaults to conda-forge channel_alias
+remote_ci_setup:
+  - conda-forge-ci-setup=3
