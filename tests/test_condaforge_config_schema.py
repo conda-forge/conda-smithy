@@ -3,8 +3,13 @@ from pydantic import ValidationError
 from conda_smithy.schema.models import ConfigModel
 
 
+# To be removed in future release
 @pytest.fixture
 def default_config_data():
+    """
+    As part of a legacy code overhaul, this fixture is used to compare the
+    previous default config data with the current default config data that;s generated from the pydantic ConfigModel.
+    """
     return {
         "docker": {
             "executable": "docker",
@@ -50,7 +55,7 @@ def default_config_data():
             "project_name": "feedstock-builds",
             "project_id": "84710dde-1620-425b-80d0-4cf5baca359d",
             # Set timeout for all platforms at once.
-            # "timeout_minutes": None, TODO: Update any mention to this key to check for existence instead of value
+            "timeout_minutes": None,
             # Toggle creating pipeline artifacts for conda build_artifacts dir
             "store_build_artifacts": False,
             # Maximum number of parallel jobs allowed across platforms
@@ -88,13 +93,13 @@ def default_config_data():
             "linux_armv7l": None,
             "linux_s390x": None,
         },
-        # "test": None, # TODO: Update any mention to this key to check for existence instead of value
+        "test": None,
         # Following is deprecated
         "test_on_native_only": False,
         "choco": [],
         # Configurable idle timeout.  Used for packages that don't have chatty enough builds
         # Applicable only to circleci and travis
-        # "idle_timeout_minutes": None, TODO: Update any mention to this key to check for existence instead of value
+        "idle_timeout_minutes": None,
         # Compiler stack environment variable
         "compiler_stack": "comp7",
         # Stack variables,  These can be used to impose global defaults for how far we build out
@@ -128,7 +133,7 @@ def default_config_data():
         "secrets": [],
         "build_with_mambabuild": True,
         # feedstock checkout git clone depth, None means keep default, 0 means no limit
-        # "clone_depth": None, TODO: Update any mention to this key to check for existence instead of value
+        "clone_depth": None,
         # Specific channel for package can be given with
         #     ${url or channel_alias}::package_name
         # defaults to conda-forge channel_alias

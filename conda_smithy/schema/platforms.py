@@ -1,21 +1,34 @@
-from enum import Enum
-from pydantic import (
-    BaseModel,
-    Field,
-    model_validator,
-)
+from pydantic import BaseModel, Field, model_validator
 
 
-class Platforms(str, Enum):
-    linux_64 = "linux_64"
-    linux_aarch64 = "linux_aarch64"
-    linux_ppc64le = "linux_ppc64le"
-    linux_armv7l = "linux_armv7l"
-    linux_s390x = "linux_s390x"
-    win_64 = "win_64"
-    osx_64 = "osx_64"
-    # win = "win"  # should this be added as a platform? or should I consider it as an alias of win_64? if so, how to address cases like win = win for the platform field? (e.g r-rebus-feedstock)
-    # osx_arm64 = "osx_arm64"
+class Platforms(BaseModel):
+    linux_64: str = Field(
+        alias="linux",
+        default="linux-64",
+    )
+    linux_aarch64: str = Field(
+        default="linux-aarch64",
+    )
+    linux_ppc64le: str = Field(
+        default="linux-ppc64le",
+    )
+    linux_armv7l: str = Field(
+        default="linux-armv7l",
+    )
+    linux_s390x: str = Field(
+        default="linux-s390x",
+    )
+    win_64: str = Field(
+        alias="win",
+        default="win-64",
+    )
+    osx_64: str = Field(
+        alias="osx",
+        default="osx-64",
+    )
+    osx_arm64: str = Field(
+        default="osx-arm64",
+    )
 
     @classmethod
     @model_validator(mode="before")

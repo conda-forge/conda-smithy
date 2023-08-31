@@ -1,0 +1,139 @@
+{
+    "appveyor": {
+        "image": "Visual Studio 2017"
+    },
+    "azure": {
+        "project_name": "feedstock-builds",
+        "project_id": "84710dde-1620-425b-80d0-4cf5baca359d",
+        "timeout_minutes": null,
+        "force": false,
+        "store_build_artifacts": false,
+        "free_disk_space": null,
+        "max_parallel": 50,
+        "settings_linux": {
+            "pool": {
+                "vmImage": "ubuntu-latest"
+            },
+            "timeoutInMinutes": 360,
+            "variables": null
+        },
+        "settings_osx": {
+            "pool": {
+                "vmImage": "macOS-11"
+            },
+            "timeoutInMinutes": 360,
+            "variables": null
+        },
+        "settings_win": {
+            "pool": {
+                "vmImage": "windows-2022"
+            },
+            "timeoutInMinutes": 360,
+            "variables": {
+                "CONDA_BLD_PATH": "D:\\\\\\\\bld\\\\\\\\",
+                "UPLOAD_TEMP": "D:\\\\\\\\tmp"
+            }
+        }
+    },
+    "bot": {
+        "automerge": false,
+        "check_solvable": null,
+        "inspection": null,
+        "abi_migration_branches": null,
+        "version_updates_random_fraction_to_keep": null
+    },
+    "build_platforms": {
+        "linux_64": "linux_64",
+        "linux_aarch64": "linux_aarch64",
+        "linux_ppc64le": "linux_ppc64le",
+        "linux_armv7l": "linux_armv7l",
+        "linux_s390x": "linux_s390x",
+        "win_64": "win_64",
+        "osx_64": "osx_64",
+        "osx_arm64": "osx_arm64"
+    },
+    "build_with_mambabuild": true,
+    "channel_priority": "strict",
+    "channels": {
+        "sources": [
+            "conda-forge"
+        ],
+        "targets": [
+            [
+                "conda-forge",
+                "main"
+            ]
+        ]
+    },
+    "choco": [],
+    "circle": {},
+    "conda_build": null,
+    "conda_forge_output_validation": false,
+    "docker": {
+        "executable": "docker",
+        "fallback_image": "quay.io/condaforge/linux-anvil-comp7",
+        "command": "bash",
+        "interactive": null,
+        "image": null
+    },
+    "github": null,
+    "idle_timeout_minutes": null,
+    "win": null,
+    "osx": null,
+    "linux": null,
+    "linux_aarch64": null,
+    "linux_ppc64le": null,
+    "noarch_platforms": [
+        "linux_64"
+    ],
+    "os_version": {
+        "linux_64": null,
+        "linux_aarch64": null,
+        "linux_ppc64le": null,
+        "linux_armv7l": null,
+        "linux_s390x": null
+    },
+    "provider": [
+        {
+            "linux_64": [
+                "azure"
+            ],
+            "osx_64": [
+                "azure"
+            ],
+            "win_64": [
+                "azure"
+            ],
+            "linux_aarch64": null,
+            "linux_ppc64le": null,
+            "linux_armv7l": null,
+            "linux_s390x": null,
+            "linux": null,
+            "osx": null,
+            "win": null
+        }
+    ],
+    "recipe_dir": "recipe",
+    "remote_ci_setup": [
+        "conda-forge-ci-setup=3"
+    ],
+    "shellcheck": null,
+    "skip_render": [],
+    "templates": {},
+    "test_on_native_only": null,
+    "test": null,
+    "travis": {},
+    "upload_on_branch": null,
+    "drone": {},
+    "woodpecker": {},
+    "config_version": "2",
+    "compiler_stack": "comp7",
+    "min_py_ver": "27",
+    "max_py_ver": "37",
+    "min_r_ver": "34",
+    "max_r_ver": "34",
+    "github_actions": {},
+    "private_upload": false,
+    "secrets": [],
+    "clone_depth": null
+}
