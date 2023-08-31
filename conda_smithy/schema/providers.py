@@ -1,11 +1,7 @@
 from enum import Enum
-from typing import Dict, Optional, Union
+from typing import Dict, Optional
 
-from pydantic import (
-    BaseModel,
-    Field,
-)
-from typing_extensions import Annotated
+from pydantic import BaseModel, Field
 
 
 class AzureSelfHostedRunnerSettings(BaseModel):
@@ -37,39 +33,36 @@ class AzureConfig(BaseModel):
         description="The ID of the Azure Pipelines project",
     )
 
-    timeout_minutes: Annotated[
-        Union[int, None],
-        Field(
-            description="The maximum amount of time (in minutes) that a job can run before it is automatically canceled"
-        ),
-    ] = None
+    timeout_minutes: int = Field(
+        default=None,
+        description="The maximum amount of time (in minutes) that a job can run before it is automatically canceled",
+    )
 
-    # flag for forcing the building all supported providers
-    force: Annotated[
-        Union[bool, None],
-        Field(description="Force building all supported providers"),
-    ] = False
+    force: bool = Field(
+        default=False,
+        description="Force building all supported providers",
+    )
 
     # toggle for storing the conda build_artifacts directory (including the
     # built packages) as an Azure pipeline artifact that can be downloaded
-    store_build_artifacts: Annotated[
-        Union[bool, None],
-        Field(
-            description="Store the conda build_artifacts directory as an Azure pipeline artifact"
-        ),
-    ] = False
+    store_build_artifacts: bool = Field(
+        default=False,
+        description="Store the conda build_artifacts directory as an Azure pipeline artifact",
+    )
 
     # toggle for freeing up some extra space on the default Azure Pipelines
     # linux image before running the Docker container for building
-    free_disk_space: Annotated[
-        Union[bool, None], Field(description="Free up disk space")
-    ] = None
+    free_disk_space: bool = Field(
+        default=False,
+        description="Free up disk space",
+    )
 
     # limit the amount of CI jobs running concurrently at a given time
     # each OS will get its proportional share of the configured value
-    max_parallel: Annotated[
-        Union[int, None], Field(description="Maximum number of parallel jobs")
-    ] = 50
+    max_parallel: int = Field(
+        default=50,
+        description="Limit the amount of CI jobs running concurrently at a given time",
+    )
 
     # Self-hosted runners specific configuration
     settings_linux: AzureSelfHostedRunnerSettings = Field(

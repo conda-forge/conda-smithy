@@ -1,28 +1,30 @@
 from enum import Enum
-from typing import Dict, List, Optional, Union, Any
+from typing import Any, Dict, List, Literal, Optional, Union
 
-from pydantic import (
-    BaseModel,
-    ConfigDict,
-    Field,
-    field_validator,
-)
-from typing_extensions import Annotated
+from pydantic import BaseModel, Field
 
 from conda_smithy.schema.platforms import (
-    Platforms,
-    WinConfig,
-    MacOsxConfig,
-    LinuxConfig,
     Aarch64Config,
+    LinuxConfig,
+    MacOsxConfig,
+    Platforms,
     Ppc64leConfig,
+    WinConfig,
 )
-from conda_smithy.schema.providers import CIservices, AzureConfig, GithubConfig
+from conda_smithy.schema.providers import AzureConfig, CIservices, GithubConfig
 
 
 class BotConfigAutoMergeChoice(str, Enum):
     VERSION = "version"
     MIGRATION = "migration"
+
+
+class BotConfigSkipRenderChoices(str, Enum):
+    GITIGNORE = ".gitignore"
+    GITATTRIBUTES = ".gitattributes"
+    README = "README.md"
+    LICENSE = "LICENSE.txt"
+    GITHUB_WORKFLOWS = ".github/workflows"
 
 
 class BotConfigInspectionChoice(str, Enum):
@@ -38,36 +40,30 @@ class BotConfigInspectionChoice(str, Enum):
 class BotConfig(BaseModel):
     """This dictates the behavior of the conda-forge auto-tick bot which issues automatic version updates/migrations for feedstocks."""
 
-    automerge: Annotated[
-        Union[bool, BotConfigAutoMergeChoice],
-        Field(description="Automatically merge PRs if possible"),
-    ] = False
+    automerge: Union[bool, BotConfigAutoMergeChoice] = Field(
+        False,
+        description="Automatically merge PRs if possible",
+    )
 
-    check_solvable: Annotated[
-        Union[bool, None],
-        Field(
-            description="Open PRs only if resulting environment is solvable."
-        ),
-    ] = None
+    check_solvable: bool = Field(
+        False,
+        description="Open PRs only if resulting environment is solvable.",
+    )
 
-    inspection: Annotated[
-        Union[BotConfigInspectionChoice, None],
-        Field(
-            description="Method for generating hints or updating recipe",
-        ),
-    ] = None
+    inspection: Union[BotConfigInspectionChoice, None] = Field(
+        None,
+        description="Method for generating hints or updating recipe",
+    )
 
-    abi_migration_branches: Annotated[
-        Union[List[str], None],
-        Field(description="List of branches for additional bot migration PRs"),
-    ] = None
+    abi_migration_branches: Union[List[str], None] = Field(
+        None,
+        description="List of branches for additional bot migration PRs",
+    )
 
-    version_updates_random_fraction_to_keep: Annotated[
-        Union[float, None],
-        Field(
-            description="Fraction of versions to keep for frequently updated packages"
-        ),
-    ] = None
+    version_updates_random_fraction_to_keep: Union[float, None] = Field(
+        None,
+        description="Fraction of versions to keep for frequently updated packages",
+    )
 
 
 class ChannelPriorityConfig(str, Enum):
@@ -91,32 +87,18 @@ class CondaForgeChannels(BaseModel):
 
 
 class CondaBuildConfig(BaseModel):
-    pkg_format: Union[int, str, None] = Field(
-        description="The package format for conda build. This can be one of 1, 2, or tar. The default is 2.",
+    pkg_format: Literal["1", "2", "tar"] = Field(
+        description="The package version format for conda build. This can be either '1', '2', or 'tar'. The default is '2'.",
         default="2",
     )
 
     zstd_compression_level: int = Field(
         default=16,
-        description="The compression level for the zstd compression algorithm for .conda artifacts. conda-forge uses a default value of 16 since its artifacts can be large.",
+        description="The compression level for the zstd compression algorithm for .conda artifacts. conda-forge uses a default value of 16 for a good compromise of performance and compression.",
     )
-
-    @field_validator("pkg_format")
-    def pkg_format_validator(cls, v):
-        if not v:
-            return v
-
-        valid_values = ["2", None]
-        if v not in valid_values:
-            raise ValueError(
-                f"Invalid value {v} for pkg_format. Valid values are {valid_values}"
-            )
-        return v
 
 
 class CondaForgeDocker(BaseModel):
-    model_config = ConfigDict(extra="allow")
-
     executable: str = Field(
         description="The executable for Docker", default="docker"
     )
@@ -131,7 +113,7 @@ class CondaForgeDocker(BaseModel):
     )
 
     interactive: bool = Field(
-        description="Whether to run Docker in interactive mode", default=None
+        description="Whether to run Docker in interactive mode", default=False
     )
 
     image: str = Field(description="The image for Docker", default=None)
@@ -150,253 +132,154 @@ class ConfigModel(BaseModel):
         description="AppVeyor CI settings. This is usually read-only and should not normally be manually modified. Tools like conda-smithy may modify this, as needed.",
     )
 
-    azure: AzureConfig = AzureConfig()
+    azure: AzureConfig
 
-    bot: BotConfig = BotConfig()
+    bot: BotConfig
 
-    build_platform: Annotated[
-        Union[Dict[Platforms, Platforms], None],
-        Field(
-            description="This is a mapping from the target platform to the build platform for the package to be built."
-        ),
-    ] = {p.value: p.value for p in Platforms}
+    build_platform: Union[Dict[Platforms, Platforms], None] = Field(
+        ...,
+        description="This is a mapping from the target platform to the build platform for the package to be built.",
+    )
 
-    build_with_mambabuild: Annotated[
-        Union[bool, None],
-        Field(
-            description="configures the conda-forge CI to run a debug build using the mamba solver. More information can be in the [mamba docs](https://conda-forge.org/docs/maintainer/maintainer_faq.html#mfaq-mamba-local)."
-        ),
-    ] = True
+    build_with_mambabuild: bool = Field(
+        default=True,
+        description="configures the conda-forge CI to run a debug build using the mamba solver. More information can be in the [mamba docs](https://conda-forge.org/docs/maintainer/maintainer_faq.html#mfaq-mamba-local).",
+    )
 
-    channel_priority: Annotated[
-        Union[ChannelPriorityConfig, None],
-        Field(
-            description="The channel priority level for the conda solver during feedstock builds. This can be one of `strict`, `flexible`, or `disabled`. For more information, see the [Strict channel priority](https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-channels.html#strict-channel-priority) section on conda documentation."
-        ),
-    ] = None
+    channel_priority: Optional[ChannelPriorityConfig] = Field(
+        default=None,
+        description="The channel priority level for the conda solver during feedstock builds. This can be one of `strict`, `flexible`, or `disabled`. For more information, see the [Strict channel priority](https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-channels.html#strict-channel-priority) section on conda documentation.",
+    )
 
-    channels: CondaForgeChannels = CondaForgeChannels()
+    channels: CondaForgeChannels()
 
-    choco: Annotated[
-        Union[List[str], None],
-        Field(
-            description="This parameter allows for conda-smithy to run chocoloatey installs on Windows when additional system packages are needed. This is a list of strings that represent package names and any additional parameters."
-        ),
-    ] = []
+    choco: List[str] = Field(
+        default_factory=list,
+        description="This parameter allows for conda-smithy to run chocoloatey installs on Windows when additional system packages are needed. This is a list of strings that represent package names and any additional parameters.",
+    )
 
-    circle: Dict[str, str] = Field(
-        default={},
+    circle: Dict[str, Any] = Field(
+        default_factory=dict,
         description="Circle CI settings. This is usually read-only and should not normally be manually modified. Tools like conda-smithy may modify this, as needed.",
     )
 
-    conda_build: Annotated[
-        Union[CondaBuildConfig, None],
-        Field(
-            description="Settings in this block are used to control how conda build runs and produces artifacts."
-        ),
-    ] = None
-
-    conda_forge_output_validation: Annotated[
-        Union[bool, None],
-        Field(
-            description="This field must be set to True for feedstocks in the conda-forge GitHub organization. It enables the required feedstock artifact validation as described in [Output Validation and Feedstock Tokens](https://conda-forge.org/docs/maintainer/infrastructure.html#output-validation)."
-        ),
-    ] = False
-
-    docker: Annotated[
-        Union[CondaForgeDocker, None],
-        Field(
-            description="This is a mapping for Docker-specific configuration options."
-        ),
-    ] = CondaForgeDocker()
-
-    github: Annotated[
-        Union[GithubConfig, None],
-        Field(
-            description="Mapping for GitHub-specific configuration options",
-        ),
-    ] = GithubConfig(
-        user_or_org="conda-forge",
-        repo_name="",
-        branch_name="main",
-        tooling_branch_name="main",
+    conda_build: Optional[CondaBuildConfig] = Field(
+        default=None,
+        description="Settings in this block are used to control how conda build runs and produces artifacts.",
     )
 
-    idle_timeout_minutes: Annotated[
-        Union[int, None],
-        Field(
-            description="Configurable idle timeout.  Used for packages that don't have chatty enough builds. Applicable only to circleci and travis"
-        ),
-    ] = None
+    conda_forge_output_validation: bool = Field(
+        default=False,
+        description="This field must be set to True for feedstocks in the conda-forge GitHub organization. It enables the required feedstock artifact validation as described in [Output Validation and Feedstock Tokens](https://conda-forge.org/docs/maintainer/infrastructure.html#output-validation).",
+    )
 
-    win: Annotated[
-        Union[WinConfig, None],
-        Field(
-            description="Windows-specific configuration options. This is largely an internal setting and should not normally be manually modified."
-        ),
-    ] = None
+    docker: Optional[CondaForgeDocker] = Field(
+        ...,
+        description="This is a mapping for Docker-specific configuration options.",
+    )
 
-    osx: Annotated[
-        Union[MacOsxConfig, None],
-        Field(
-            description="OSX-specific configuration options. This is largely an internal setting and should not normally be manually modified."
-        ),
-    ] = None
+    github: Optional[GithubConfig] = Field(
+        ...,
+        description="Mapping for GitHub-specific configuration options",
+    )
 
-    linux: Annotated[
-        Union[LinuxConfig, None],
-        Field(
-            description="Linux-specific configuration options. This is largely an internal setting and should not normally be manually modified."
-        ),
-    ] = None
+    idle_timeout_minutes: Optional[int] = Field(
+        default=None,
+        description="Configurable idle timeout.  Used for packages that don't have chatty enough builds. Applicable only to circleci and travis",
+    )
 
-    linux_aarch64: Annotated[
-        Union[Aarch64Config, None],
-        Field(
-            description="ARM-specific configuration options. This is largely an internal setting and should not normally be manually modified."
-        ),
-    ] = None
+    win: Optional[WinConfig] = Field(
+        default=None,
+        description="Windows-specific configuration options. This is largely an internal setting and should not normally be manually modified.",
+    )
 
-    linux_ppc64le: Annotated[
-        Union[Ppc64leConfig, None],
-        Field(
-            description="PPC-specific configuration options. This is largely an internal setting and should not normally be manually modified."
-        ),
-    ] = None
+    osx: Optional[MacOsxConfig] = Field(
+        default=None,
+        description="OSX-specific configuration options. This is largely an internal setting and should not normally be manually modified.",
+    )
 
-    noarch_platforms: Annotated[
-        Union[List[Platforms], None],
-        Field(
-            description="Platforms on which to build noarch packages. The preferred default is a single build on linux_64."
-        ),
-    ] = [Platforms.linux_64.value]
+    linux: Optional[LinuxConfig] = Field(
+        default=None,
+        description="Linux-specific configuration options. This is largely an internal setting and should not normally be manually modified.",
+    )
 
-    os_version: Annotated[
-        Union[Dict[Platforms, str], None],
-        Field(
-            description="This key is used to set the OS versions for linux_* platforms. Valid entries map a linux platform and arch to either cos6 or cos7. Currently cos6 is the default for linux-64. All other linux architectures use CentOS 7."
-        ),
-    ] = {p.value: None for p in Platforms if p.value.startswith("linux")}
+    linux_aarch64: Optional[Aarch64Config] = Field(
+        default=None,
+        description="ARM-specific configuration options. This is largely an internal setting and should not normally be manually modified.",
+    )
 
-    provider: Annotated[
-        Union[
-            Dict[Platforms, Union[List[CIservices], CIservices, bool, None]],
-            None,
-        ],
-        Field(
-            description="The provider field is a mapping from build platform (not target platform) to CI service. It determines which service handles each build platform. If a desired build platform is not available with a selected provider (either natively or with emulation), the build will be disabled. Use the build_platform field to manually specify cross-compilation when no providers offer a desired build platform."
-        ),
-    ] = {
-        "linux_64": ["azure"],
-        "osx_64": ["azure"],
-        "win_64": ["azure"],
-        # Following platforms are disabled by default
-        "linux_aarch64": None,
-        "linux_ppc64le": None,
-        "linux_armv7l": None,
-        "linux_s390x": None,
-        # Following platforms are aliases of x86_64,
-        "linux": None,
-        "osx": None,
-        "win": None,
-    }
+    linux_ppc64le: Optional[Ppc64leConfig] = Field(
+        default=None,
+        description="PPC-specific configuration options. This is largely an internal setting and should not normally be manually modified.",
+    )
+
+    noarch_platforms: List[Platforms] = Field(
+        default_factory=lambda: ["linux_64"],
+        description="Platforms on which to build noarch packages. The preferred default is a single build on linux_64.",
+    )
+
+    os_version: Dict[Platforms, Optional[str]] = Field(
+        default_factory=lambda: {
+            p: None
+            for p in Platforms().model_dump().keys()
+            if p.startswith("linux")
+        },
+        description="This key is used to set the OS versions for linux_* platforms. Valid entries map a linux platform and arch to either cos6 or cos7. Currently cos6 is the default for linux-64. All other linux architectures use CentOS 7.",
+    )
+
+    provider: Dict[
+        Platforms, Union[List[CIservices], CIservices, bool, None]
+    ] = Field(
+        ...,
+        description="The provider field is a mapping from build platform (not target platform) to CI service. It determines which service handles each build platform. If a desired build platform is not available with a selected provider (either natively or with emulation), the build will be disabled. Use the build_platform field to manually specify cross-compilation when no providers offer a desired build platform.",
+    )
 
     recipe_dir: str = Field(
-        description="The relative path to the recipe directory",
         default="recipe",
+        description="The relative path to the recipe directory",
     )
 
-    remote_ci_setup: Annotated[
-        Union[List[str], None],
-        Field(
-            description="This option can be used to override the default conda-forge-ci-setup package. Can be given with ${url or channel_alias}::package_name, defaults to conda-forge channel_alias if no prefix is given."
-        ),
-    ] = ["conda-forge-ci-setup=3"]
+    remote_ci_setup: List[str] = Field(
+        default_factory=lambda: ["conda-forge-ci-setup=3"],
+        description="This option can be used to override the default conda-forge-ci-setup package. Can be given with ${url or channel_alias}::package_name, defaults to conda-forge channel_alias if no prefix is given.",
+    )
 
-    shellcheck: Annotated[
-        Union[ShellCheck, None],
-        Field(
-            description="Shell scripts used for builds or activation scripts can be linted with shellcheck. This option can be used to enable shellcheck and configure its behavior."
-        ),
-    ] = None
+    shellcheck: Optional[ShellCheck] = Field(
+        default=None,
+        description="Shell scripts used for builds or activation scripts can be linted with shellcheck. This option can be used to enable shellcheck and configure its behavior.",
+    )
 
-    skip_render: Annotated[
-        Union[List[str], None],
-        Field(
-            description="This option specifies a list of files which conda smithy will skip rendering. The possible values can be a subset of .gitignore, .gitattributes, README.md, LICENSE.txt. The default value is an empty list [ ]"
-        ),
-    ] = []
+    skip_render: List[BotConfigSkipRenderChoices] = Field(
+        default_factory=list,
+        description="This option specifies a list of files which conda smithy will skip rendering.",
+    )
 
-    @field_validator("skip_render")
-    def skip_render_validator(cls, v):
-        if not v:
-            return v
+    templates: Dict[str, str] = Field(
+        default_factory=dict,
+        description="This is mostly an internal field for specifying where templates files live. You shouldn't need it.",
+    )
 
-        valid_values = [
-            ".gitignore",
-            ".gitattributes",
-            "README.md",
-            "LICENSE.txt",
-            ".github/workflows",
-        ]
-        for i in v:
-            if i not in valid_values:
-                raise ValueError(
-                    f"Invalid value {i} for skip_render. Valid values are {valid_values}"
-                )
-        return v
+    test_on_native_only: bool = Field(
+        default=False,
+        description="This is used for disabling testing for cross compiling. Default is false. This has been deprecated in favor of the test top-level field. It is now mapped to test: native_and_emulated.",
+    )
 
-    templates: Annotated[
-        Union[Dict[str, str], None],
-        Field(
-            description="This is mostly an internal field for specifying where templates files live. You shouldn't need it."
-        ),
-    ] = {}
+    test: Optional[
+        Literal["all", "native_only", "native_and_emulated", "emulated_only"]
+    ] = Field(
+        default=None,
+        description="This is used to configure on which platforms a recipe is tested. Default is all. ",
+    )
 
-    test_on_native_only: Annotated[
-        Union[bool, None],
-        Field(
-            description="This is used for disabling testing for cross compiling. Default is false. This has been deprecated in favor of the test top-level field. It is now mapped to test: native_and_emulated."
-        ),
-    ] = False
+    travis: Dict[str, Any] = Field(
+        default_factory=dict,
+        description="Travis CI settings. This is usually read-only and should not normally be manually modified. Tools like conda-smithy may modify this, as needed.",
+    )
 
-    test: Annotated[
-        Union[str, None],
-        Field(
-            description="This is used to configure on which platforms a recipe is tested. Default is all. Valid values are all, native_only, native_and_emulated, and emulated_only."
-        ),
-    ] = None
-
-    @field_validator("test")
-    def test_validator(cls, v):
-        if not v:
-            return v
-
-        valid_values = [
-            "all",
-            "native_only",
-            "native_and_emulated",
-            "emulated_only",
-        ]
-        if v not in valid_values:
-            raise ValueError(
-                f"Invalid value {v} for test. Valid values are {valid_values}"
-            )
-        return v
-
-    travis: Annotated[
-        Union[Dict[str, Any], None],
-        Field(
-            description="Travis CI settings. This is usually read-only and should not normally be manually modified. Tools like conda-smithy may modify this, as needed."
-        ),
-    ] = {}
-
-    upload_on_branch: Annotated[
-        Union[str, None],
-        Field(
-            description="This parameter restricts uploading access on work from certain branches of the same repo. Only the branch listed in upload_on_branch will trigger uploading of packages to the target channel. The default is to skip this check if the key upload_on_branch is not in conda-forge.yml"
-        ),
-    ] = None
+    upload_on_branch: Optional[str] = Field(
+        default=None,
+        description="This parameter restricts uploading access on work from certain branches of the same repo. Only the branch listed in upload_on_branch will trigger uploading of packages to the target channel. The default is to skip this check if the key upload_on_branch is not in conda-forge.yml",
+    )
 
     drone: Dict[str, str] = Field(
         default={},
