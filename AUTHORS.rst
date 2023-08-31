@@ -16,19 +16,19 @@ Authors are sorted by number of commits.
 * Hadrien Mary
 * Ryan Volz
 * Marcel Bargull
+* Uwe L. Korn
 * Mark Harfouche
 * Johnny Willemsen
-* Uwe L. Korn
 * Chris Burr
 * Julian Rüth
 * Billy K. Poon
 * Tim Snyder
 * H. Vetinari
 * Mike Henry
+* John Kirkham
 * Eric Dill
 * Natasha Pavlovikj
 * Maksim Rakitin
-* John Kirkham
 * Jan Schulz
 * Josh Reichardt
 * Justin Calamari
