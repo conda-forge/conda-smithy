@@ -11,7 +11,7 @@ import warnings
 from collections import Counter, OrderedDict, namedtuple
 from itertools import chain, product
 from os import fspath
-from pathlib import PurePath
+from pathlib import Path, PurePath
 
 import requests
 import yaml
@@ -51,6 +51,7 @@ from conda_smithy.utils import (
 from . import __version__
 
 conda_forge_content = os.path.abspath(os.path.dirname(__file__))
+
 logger = logging.getLogger(__name__)
 
 # feedstocks listed here are allowed to use GHA on
@@ -1711,11 +1712,19 @@ def _update_dict_within_dict(items, config):
     return config
 
 
-def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
-    if forge_yml is None:
-        forge_yml = os.path.join(forge_dir, "conda-forge.yml")
+def _read_forge_config(forge_dir, forge_yml=None):
 
-    if not os.path.exists(forge_yml):
+    conda_forge_defaults_path = (
+        Path(__file__).resolve().parent / "schema" / "conda-forge.defaults.yml"
+    )
+
+    with open(conda_forge_defaults_path, encoding="utf-8") as _dfp:
+        conda_forge_defaults = yaml.safe_load(_dfp)
+
+    if forge_yml is None:
+        forge_yml = Path(forge_dir) / "conda-forge.yml"
+
+    if not forge_yml.exists():
         raise RuntimeError(
             f"Could not find config file {forge_yml}."
             " Either you are not rerendering inside the feedstock root (likely)"
@@ -1723,46 +1732,57 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
             " Add an empty `conda-forge.yml` file in"
             " feedstock root if it's the latter."
         )
-    else:
-        with open(forge_yml, "r") as fh:
-            documents = list(yaml.safe_load_all(fh))
-            file_config = (documents or [None])[0] or {}
 
-        # The config is just the union of the defaults, and the overridden
-        # values.
-        config = ConfigModel(**file_config).model_dump(exclude_none=True)
+    with open(forge_yml, "r") as fh:
+        documents = list(yaml.safe_load_all(fh))
+        file_config = (documents or [None])[0] or {}
 
-        # check for conda-smithy 2.x matrix which we can't auto-migrate
-        # to conda_build_config
-        if file_config.get("matrix") and not os.path.exists(
-            os.path.join(
-                forge_dir, config["recipe_dir"], "conda_build_config.yaml"
-            )
-        ):
-            raise ValueError(
-                "Cannot rerender with matrix in conda-forge.yml."
-                " Please migrate matrix to conda_build_config.yaml and try again."
-                " See https://github.com/conda-forge/conda-smithy/wiki/Release-Notes-3.0.0.rc1"
-                " for more info."
-            )
+    # The config is just the base model populated with conda-forge base defaults, and updated with the values in the file_config
+    config = _update_dict_within_dict(
+        file_config.items(), deepcopy(conda_forge_defaults)
+    )
 
-        if file_config.get("docker") and file_config.get("docker").get(
-            "image"
-        ):
-            raise ValueError(
-                "Setting docker image in conda-forge.yml is removed now."
-                " Use conda_build_config.yaml instead"
-            )
+    # Validate the config file against the schema
+    file_config = ConfigModel(**file_config)
 
-        for plat in ["linux", "osx", "win"]:
-            # if config["azure"]["timeout_minutes"] is not None: # TODO: check if this is needed
-            if config["azure"].get("timeout_minutes") is not None:
-                # fmt: off
-                config["azure"][f"settings_{plat}"]["timeoutInMinutes"] \
-                    = config["azure"]["timeout_minutes"]
-                # fmt: on
-            if "name" in config["azure"][f"settings_{plat}"]["pool"]:
-                del config["azure"][f"settings_{plat}"]["pool"]["vmImage"]
+    config = ConfigModel(**config)
+
+    return config, file_config
+
+
+def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
+
+    config, file_config = _read_forge_config(forge_dir, forge_yml)
+
+    # check for conda-smithy 2.x matrix which we can't auto-migrate
+    # to conda_build_config
+    if file_config.get("matrix") and not os.path.exists(
+        os.path.join(
+            forge_dir, config["recipe_dir"], "conda_build_config.yaml"
+        )
+    ):
+        raise ValueError(
+            "Cannot rerender with matrix in conda-forge.yml."
+            " Please migrate matrix to conda_build_config.yaml and try again."
+            " See https://github.com/conda-forge/conda-smithy/wiki/Release-Notes-3.0.0.rc1"
+            " for more info."
+        )
+
+    if file_config.get("docker") and file_config.get("docker").get("image"):
+        raise ValueError(
+            "Setting docker image in conda-forge.yml is removed now."
+            " Use conda_build_config.yaml instead"
+        )
+
+    for plat in ["linux", "osx", "win"]:
+        # if config["azure"]["timeout_minutes"] is not None: # TODO: check if this is needed
+        if config["azure"].get("timeout_minutes") is not None:
+            # fmt: off
+            config["azure"][f"settings_{plat}"]["timeoutInMinutes"] \
+                = config["azure"]["timeout_minutes"]
+            # fmt: on
+        if "name" in config["azure"][f"settings_{plat}"]["pool"]:
+            del config["azure"][f"settings_{plat}"]["pool"]["vmImage"]
 
     if config["conda_forge_output_validation"]:
         config["secrets"] = sorted(

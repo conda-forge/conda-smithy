@@ -143,6 +143,7 @@ def default_config_data():
 
 def test_valid_config(default_config_data):
     config = ConfigModel()
+
     # for each key in both the default config and the valid config, check that the
     # default config has the same value as the valid config
     _dump_config = config.model_dump(exclude_none=True)
