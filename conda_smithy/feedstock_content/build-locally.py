@@ -14,6 +14,7 @@ def setup_environment(ns):
     os.environ["CONFIG"] = ns.config
     os.environ["UPLOAD_PACKAGES"] = "False"
     os.environ["IS_PR_BUILD"] = "True"
+    os.environ["SINGULARITY_BUILD"] = ns.singularity
     if ns.debug:
         os.environ["BUILD_WITH_CONDA_DEBUG"] = "1"
         if ns.output_id:
@@ -79,7 +80,10 @@ def main(args=None):
         help="Setup debug environment using `conda debug`",
     )
     p.add_argument(
-        "--output-id", help="If running debug, specify the output to setup."
+         "--singularity", default="False", help="Singulairty build (not Docker)"
+    )
+    p.add_argument(
+         "--output-id", help="If running debug, specify the output to setup."
     )
 
     ns = p.parse_args(args=args)
