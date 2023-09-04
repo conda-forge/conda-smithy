@@ -1,17 +1,18 @@
 from enum import Enum
 from typing import Any, Dict, List, Literal, Optional, Union
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
-from conda_smithy.schema.platforms import (
-    Aarch64Config,
-    LinuxConfig,
-    MacOsxConfig,
-    Platforms,
-    Ppc64leConfig,
-    WinConfig,
-)
+from conda_smithy.schema.platforms import Platforms, PlatformUniqueConfig
 from conda_smithy.schema.providers import AzureConfig, CIservices, GithubConfig
+
+
+def sanitize_remote_ci_setup(package: str) -> str:
+    if package.startswith(("'", '"')):
+        return package
+    elif ("<" in package) or (">" in package) or ("|" in package):
+        return '"' + package + '"'
+    return package
 
 
 class BotConfigAutoMergeChoice(str, Enum):
@@ -40,27 +41,27 @@ class BotConfigInspectionChoice(str, Enum):
 class BotConfig(BaseModel):
     """This dictates the behavior of the conda-forge auto-tick bot which issues automatic version updates/migrations for feedstocks."""
 
-    automerge: Union[bool, BotConfigAutoMergeChoice] = Field(
+    automerge: Optional[Union[bool, BotConfigAutoMergeChoice]] = Field(
         False,
         description="Automatically merge PRs if possible",
     )
 
-    check_solvable: bool = Field(
+    check_solvable: Optional[bool] = Field(
         False,
         description="Open PRs only if resulting environment is solvable.",
     )
 
-    inspection: Union[BotConfigInspectionChoice, None] = Field(
+    inspection: Optional[BotConfigInspectionChoice] = Field(
         None,
         description="Method for generating hints or updating recipe",
     )
 
-    abi_migration_branches: Union[List[str], None] = Field(
+    abi_migration_branches: Optional[List[str]] = Field(
         None,
         description="List of branches for additional bot migration PRs",
     )
 
-    version_updates_random_fraction_to_keep: Union[float, None] = Field(
+    version_updates_random_fraction_to_keep: Optional[float] = Field(
         None,
         description="Fraction of versions to keep for frequently updated packages",
     )
@@ -75,51 +76,66 @@ class ChannelPriorityConfig(str, Enum):
 class CondaForgeChannels(BaseModel):
     """This represents the channels to grab packages from during builds and which channels/labels to push to on anaconda.org after a package has been built. The channels variable is a mapping with sources and targets."""
 
-    sources: List[str] = Field(
+    sources: Optional[List[str]] = Field(
         default=["conda-forge"],
         description="sources selects the channels to pull packages from, in order",
     )
 
-    targets: List[List[str]] = Field(
+    targets: Optional[List[List[str]]] = Field(
         default=[["conda-forge", "main"]],
         description="targets is a list of 2-lists, where the first element is the channel to push to and the second element is the label on that channel",
     )
 
 
 class CondaBuildConfig(BaseModel):
-    pkg_format: Literal["1", "2", "tar"] = Field(
+    pkg_format: Optional[Literal["1", "2", "tar"]] = Field(
         description="The package version format for conda build. This can be either '1', '2', or 'tar'. The default is '2'.",
         default="2",
     )
 
     zstd_compression_level: Optional[int] = Field(
+        default=16,
         description="The compression level for the zstd compression algorithm for .conda artifacts. conda-forge uses a default value of 16 for a good compromise of performance and compression.",
     )
 
     error_overlinking: Optional[bool] = Field(
+        default=False,
         description="Enable error when shared libraries from transitive  dependencies are  directly  linked  to any executables or shared libraries in  built packages. This is disabled by default. For more details, see the [conda build documentation](https://docs.conda.io/projects/conda-build/en/stable/resources/commands/conda-build.html).",
     )
 
 
 class CondaForgeDocker(BaseModel):
-    executable: str = Field(
+    executable: Optional[str] = Field(
         description="The executable for Docker", default="docker"
     )
 
-    fallback_image: str = Field(
+    fallback_image: Optional[str] = Field(
         description="The fallback image for Docker",
         default="quay.io/condaforge/linux-anvil-comp7",
     )
 
-    command: str = Field(
+    command: Optional[str] = Field(
         description="The command to run in Docker", default="bash"
     )
 
-    interactive: bool = Field(
+    interactive: Optional[bool] = Field(
         description="Whether to run Docker in interactive mode", default=False
     )
 
-    image: str = Field(description="The image for Docker", default=None)
+    # Deprecated values, if passed should raise errors
+    image: Optional[Union[str, None]] = Field(
+        description="Setting the Docker image in conda-forge.yml is no longer supported, use conda_build_config.yaml to specify Docker images.",
+        default=None,
+    )
+
+    @field_validator("image", mode="before")
+    def image_deprecated(cls, v):
+        if v is not None:
+            raise ValueError(
+                "Setting the Docker image in conda-forge.yml is no longer supported."
+                " Please use conda_build_config.yaml to specify Docker images."
+            )
+        return v
 
 
 class ShellCheck(BaseModel):
@@ -129,41 +145,21 @@ class ShellCheck(BaseModel):
     )
 
 
-class RefreshConfig(BaseModel):
-    def update(self, data: dict):
-        """
-        This method updates a given model with a dictionary of data. It is
-        intended to be used for updating the model with data from a config
-        file. Validation is performed on the updated model to ensure consistency.
-        """
-        update = self.model_dump()
-        update.update(data)
-
-        for k, v in (
-            self.model_validate(update)
-            .model_dump(exclude_defaults=True)
-            .items()
-        ):
-            setattr(self, k, v)
-
-
-class ConfigModel(RefreshConfig):
-    # Required fields
-
-    conda_build: CondaBuildConfig = Field(
+class ConfigModel(BaseModel):
+    conda_build: Optional[CondaBuildConfig] = Field(
+        default_factory=lambda: CondaBuildConfig(),
         description="Settings in this block are used to control how conda build runs and produces artifacts.",
     )
 
-    conda_forge_output_validation: bool = Field(
+    conda_forge_output_validation: Optional[bool] = Field(
         default=True,
         description="This field must be set to True for feedstocks in the conda-forge GitHub organization. It enables the required feedstock artifact validation as described in [Output Validation and Feedstock Tokens](https://conda-forge.org/docs/maintainer/infrastructure.html#output-validation).",
     )
 
-    github: GithubConfig = Field(
+    github: Optional[GithubConfig] = Field(
+        default_factory=lambda: GithubConfig(),
         description="Mapping for GitHub-specific configuration options",
     )
-
-    # Optional fields
 
     appveyor: Optional[Dict[str, Any]] = Field(
         default_factory=dict,
@@ -171,12 +167,12 @@ class ConfigModel(RefreshConfig):
     )
 
     azure: Optional[AzureConfig] = Field(
-        default_factory=dict,
+        default_factory=lambda: AzureConfig(),
         description="Azure Pipelines CI settings. This is usually read-only and should not normally be manually modified. Tools like conda-smithy may modify this, as needed.",
     )
 
     bot: Optional[BotConfig] = Field(
-        default_factory=dict,
+        default_factory=lambda: BotConfig(),
         description="This dictates the behavior of the conda-forge auto-tick bot which issues automatic version updates/migrations for feedstocks.",
     )
 
@@ -196,7 +192,7 @@ class ConfigModel(RefreshConfig):
     )
 
     channels: Optional[CondaForgeChannels] = Field(
-        default_factory=dict,
+        default_factory=lambda: CondaForgeChannels(),
         description="This represents the channels to grab packages from during builds and which channels/labels to push to on anaconda.org after a package has been built. The channels variable is a mapping with sources and targets.",
     )
 
@@ -211,7 +207,7 @@ class ConfigModel(RefreshConfig):
     )
 
     docker: Optional[CondaForgeDocker] = Field(
-        default_factory=dict,
+        default_factory=lambda: CondaForgeDocker(),
         description="This is a mapping for Docker-specific configuration options.",
     )
 
@@ -220,49 +216,58 @@ class ConfigModel(RefreshConfig):
         description="Configurable idle timeout.  Used for packages that don't have chatty enough builds. Applicable only to circleci and travis",
     )
 
-    win: Optional[WinConfig] = Field(
+    win_64: Optional[PlatformUniqueConfig] = Field(
         default=None,
         description="Windows-specific configuration options. This is largely an internal setting and should not normally be manually modified.",
+        alias="win",
     )
 
-    osx: Optional[MacOsxConfig] = Field(
+    osx_64: Optional[PlatformUniqueConfig] = Field(
         default=None,
         description="OSX-specific configuration options. This is largely an internal setting and should not normally be manually modified.",
+        alias="osx",
     )
 
-    linux: Optional[LinuxConfig] = Field(
+    linux_64: Optional[PlatformUniqueConfig] = Field(
         default=None,
         description="Linux-specific configuration options. This is largely an internal setting and should not normally be manually modified.",
+        alias="linux",
     )
 
-    linux_aarch64: Optional[Aarch64Config] = Field(
+    linux_aarch64: Optional[PlatformUniqueConfig] = Field(
         default=None,
         description="ARM-specific configuration options. This is largely an internal setting and should not normally be manually modified.",
     )
 
-    linux_ppc64le: Optional[Ppc64leConfig] = Field(
+    linux_ppc64le: Optional[PlatformUniqueConfig] = Field(
         default=None,
         description="PPC-specific configuration options. This is largely an internal setting and should not normally be manually modified.",
     )
 
-    noarch_platforms: Optional[List[Platforms]] = Field(
+    linux_s390x: Optional[PlatformUniqueConfig] = Field(
+        default=None,
+        description="s390x-specific configuration options. This is largely an internal setting and should not normally be manually modified.",
+    )
+
+    linux_armv7l: Optional[PlatformUniqueConfig] = Field(
+        default=None,
+        description="ARM-specific configuration options. This is largely an internal setting and should not normally be manually modified.",
+    )
+
+    noarch_Platforms: Optional[List[Platforms]] = Field(
         default_factory=lambda: ["linux_64"],
         description="Platforms on which to build noarch packages. The preferred default is a single build on linux_64.",
     )
 
     os_version: Optional[Dict[Platforms, Optional[str]]] = Field(
-        default_factory=lambda: {
-            p: None
-            for p in Platforms().model_dump().keys()
-            if p.startswith("linux")
-        },
+        default_factory=dict,
         description="This key is used to set the OS versions for linux_* platforms. Valid entries map a linux platform and arch to either cos6 or cos7. Currently cos6 is the default for linux-64. All other linux architectures use CentOS 7.",
     )
 
     provider: Optional[
-        Dict[Platforms, Union[List[CIservices], CIservices, bool]]
+        Dict[Platforms, Union[List[CIservices], CIservices, bool, None]]
     ] = Field(
-        default_factory={},
+        default_factory=dict,
         description="The provider field is a mapping from build platform (not target platform) to CI service. It determines which service handles each build platform. If a desired build platform is not available with a selected provider (either natively or with emulation), the build will be disabled. Use the build_platform field to manually specify cross-compilation when no providers offer a desired build platform.",
     )
 
@@ -275,6 +280,15 @@ class ConfigModel(RefreshConfig):
         default_factory=lambda: ["conda-forge-ci-setup=3"],
         description="This option can be used to override the default conda-forge-ci-setup package. Can be given with ${url or channel_alias}::package_name, defaults to conda-forge channel_alias if no prefix is given.",
     )
+
+    @field_validator("remote_ci_setup", mode="before")
+    def validate_remote_ci_setup(cls, remote_ci_setup):
+        _sanitized_remote_ci_setup = []
+        for package in remote_ci_setup:
+            _sanitized_remote_ci_setup.append(
+                sanitize_remote_ci_setup(package)
+            )
+        return _sanitized_remote_ci_setup
 
     shellcheck: Optional[ShellCheck] = Field(
         default=None,
@@ -380,5 +394,23 @@ class ConfigModel(RefreshConfig):
 
     timeout_minutes: Optional[int] = Field(
         default=None,
-        description="The timeout in minutes for all platforms",
+        description="The timeout in minutes for all platforms CI jobs",
     )
+
+    # Deprecated values, if passed should raise errors
+
+    matrix: Optional[Dict[str, Any]] = Field(
+        default_factory=dict,
+        description="Build matrices were used to specify a set of build configurations to run for each package pinned dependency. This has been deprecated in favor of the provider field. More information can be found in the [conda-forge docs](https://conda-forge.org/docs/maintainer/knowledge_base.html#build-matrices).",
+    )
+
+    @field_validator("matrix", mode="before")
+    def matrix_deprecated(cls, v):
+        if v is not None:
+            raise ValueError(
+                "Cannot rerender with matrix in conda-forge.yml."
+                " Please migrate matrix to conda_build_config.yaml and try again."
+                " See https://github.com/conda-forge/conda-smithy/wiki/Release-Notes-3.0.0.rc1"
+                " for more info."
+            )
+        return v
