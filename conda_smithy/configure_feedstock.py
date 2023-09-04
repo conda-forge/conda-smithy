@@ -1752,87 +1752,7 @@ def _read_forge_config(forge_dir, forge_yml=None):
     return config, file_config
 
 
-def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
-    config, file_config = _read_forge_config(forge_dir, forge_yml)
-
-    # NOTE: Moved check to pydantic model instead
-
-    # # check for conda-smithy 2.x matrix which we can't auto-migrate
-    # # to conda_build_config
-    # if file_config.get("matrix") and not os.path.exists(
-    #     os.path.join(
-    #         forge_dir, config["recipe_dir"], "conda_build_config.yaml"
-    #     )
-    # ):
-    #     raise ValueError(
-    #         "Cannot rerender with matrix in conda-forge.yml."
-    #         " Please migrate matrix to conda_build_config.yaml and try again."
-    #         " See https://github.com/conda-forge/conda-smithy/wiki/Release-Notes-3.0.0.rc1"
-    #         " for more info."
-    #     )
-
-    # NOTE: Moved check to pydantic model instead
-
-    # if file_config.get("docker") and file_config.get("docker").get("image"):
-    #     raise ValueError(
-    #         "Setting docker image in conda-forge.yml is removed now."
-    #         " Use conda_build_config.yaml instead"
-    #     )
-
-    # NOTE: Withe the control over the mode, should't we raise a warning to the user
-    # if those fields are set? suggesting to properly move then as part of the schema validation?
-
-    for azure_plat in [
-        config.azure.settings_linux,
-        config.azure.settings_osx,
-        config.azure.settings_win,
-    ]:
-        if "name" in azure_plat.pool:
-            del azure_plat.pool["vmImage"]
-        if config.azure.timeout_minutes is not None:
-            azure_plat.timeoutInMinutes = config.azure.timeout_minutes
-
-    if config.conda_forge_output_validation:
-        config.secrets = sorted(
-            set(config.secrets + ["FEEDSTOCK_TOKEN", "STAGING_BINSTAR_TOKEN"])
-        )
-
-    target_platforms = sorted(config.build_platform.keys())
-
-    for platform_arch in target_platforms:
-        try:
-            getattr(config, platform_arch).enabled = True
-        except AttributeError as e:
-            print(e)
-            print(platform_arch)
-            print(config.model_dump())
-            raise e
-
-        if platform_arch not in config.provider:
-            config.provider[platform_arch] = None
-
-    # NOTE: This check is not needed anymore, since we are using the same
-    # Literal choices for both the noarch_platforms and the build_platforms
-
-    # config["noarch_platforms"] = conda_build.utils.ensure_list(
-    #     config["noarch_platforms"]
-    # )
-
-    # for noarch_platform in sorted(config["noarch_platforms"]):
-    #     if noarch_platform not in target_platforms:
-    #         raise ValueError(
-    #             f"Unknown noarch platform {noarch_platform}. Expected one of: "
-    #             f"{target_platforms}"
-    #         )
-
-    config.secrets = sorted(set(config.secrets + ["BINSTAR_TOKEN"]))
-
-    if config.test is None:
-        config.test = "all"
-
-    if config.test_on_native_only:
-        config.test = "native_and_emulated"
-
+def _legacy_compatibility_checks(config: ConfigModel, forge_dir):
     # An older conda-smithy used to have some files which should no longer exist,
     # remove those now.
     old_files = [
@@ -1856,10 +1776,50 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
             continue
         remove_file_or_dir(os.path.join(forge_dir, old_file))
 
+    # Older conda-smithy versions supported this with only one
+    # entry. To avoid breakage, we are converting single elements
+    # to a list of length one.
+    for platform, providers in config.provider.items():
+        providers = conda_build.utils.ensure_list(providers)
+        config.provider[platform] = providers
+
+    return config
+
+
+def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
+    config, file_config = _read_forge_config(forge_dir, forge_yml)
+
+    for azure_plat in [
+        config.azure.settings_linux,
+        config.azure.settings_osx,
+        config.azure.settings_win,
+    ]:
+        if "name" in azure_plat.pool:
+            del azure_plat.pool["vmImage"]
+        if config.azure.timeout_minutes is not None:
+            azure_plat.timeoutInMinutes = config.azure.timeout_minutes
+
+    if config.conda_forge_output_validation:
+        config.secrets = sorted(
+            set(config.secrets + ["FEEDSTOCK_TOKEN", "STAGING_BINSTAR_TOKEN"])
+        )
+
+    for platform_arch in config.build_platform.keys():
+        if platform_arch not in config.provider:
+            config.provider[platform_arch] = None
+
+    config.secrets = sorted(set(config.secrets + ["BINSTAR_TOKEN"]))
+
+    if config.test is None:
+        config.test = "all"
+
+    if config.test_on_native_only:
+        config.test = "native_and_emulated"
+
     # Set some more azure defaults
     config.azure.user_or_org = config.github.user_or_org
 
-    log = yaml.safe_dump(config)
+    log = yaml.safe_dump(config.model_dump_json())
     logger.debug("## CONFIGURATION USED\n")
     logger.debug(log)
     logger.debug("## END CONFIGURATION\n")
@@ -1881,40 +1841,37 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
     if config.provider["linux_s390x"] in {"default", "native"}:
         config.provider["linux_s390x"] = ["travis"]
 
-    # NOTE: Replaced by the pydantic model validation
-    # config["remote_ci_setup"] = _santize_remote_ci_setup(
-    #     config["remote_ci_setup"]
-    # )
-
-    # Older conda-smithy versions supported this with only one
-    # entry. To avoid breakage, we are converting single elements
-    # to a list of length one.
-    for platform, providers in config["provider"].items():
-        providers = conda_build.utils.ensure_list(providers)
-        config["provider"][platform] = providers
+    config = _legacy_compatibility_checks(config, forge_dir)
 
     # Fallback handling set to azure, for platforms that are not fully specified by this time
-    for platform, providers in config["provider"].items():
+    for platform, providers in config.provider.items():
         for i, provider in enumerate(providers):
             if provider in {"default", "emulated"}:
+                # TODO: Should't this be a default class value for the model?
                 providers[i] = "azure"
 
     # Set the environment variable for the compiler stack
-    os.environ["CF_COMPILER_STACK"] = config["compiler_stack"]
-    # Set valid ranger for the supported platforms
-    os.environ["CF_MIN_PY_VER"] = config["min_py_ver"]
-    os.environ["CF_MAX_PY_VER"] = config["max_py_ver"]
-    os.environ["CF_MIN_R_VER"] = config["min_r_ver"]
-    os.environ["CF_MAX_R_VER"] = config["max_r_ver"]
+    os.environ["CF_COMPILER_STACK"] = config.compiler_stack
 
-    config["package"] = os.path.basename(forge_dir)
-    if not config["github"]["repo_name"]:
-        feedstock_name = os.path.basename(forge_dir)
+    # Set valid ranger for the supported platforms Python and R versions
+    os.environ["CF_MIN_PY_VER"] = config.min_py_ver
+    os.environ["CF_MAX_PY_VER"] = config.max_py_ver
+    os.environ["CF_MIN_R_VER"] = config.min_r_ver
+    os.environ["CF_MAX_R_VER"] = config.max_r_ver
+
+    config.package = os.path.basename(forge_dir)
+
+    if not config.github.repo_name:
+        feedstock_name = config.package
         if not feedstock_name.endswith("-feedstock"):
             feedstock_name += "-feedstock"
-        config["github"]["repo_name"] = feedstock_name
-    config["exclusive_config_file"] = exclusive_config_file
-    return config
+        config.github.repo_name = feedstock_name
+
+    config.exclusive_config_file = exclusive_config_file
+
+    # Returning dict representation of the config to avoid conflicts with
+    # the main execution. This should be replaced in a near release.
+    return config.model_dump()
 
 
 def get_most_recent_version(name):
@@ -2185,15 +2142,18 @@ def main(
         return True
 
     error_on_warn = False if no_check_uptodate else True
+
     # Check that conda-smithy is up-to-date
     check_version_uptodate("conda-smithy", __version__, error_on_warn)
 
     forge_dir = os.path.abspath(forge_file_directory)
+
     if exclusive_config_file is not None:
         exclusive_config_file = os.path.join(forge_dir, exclusive_config_file)
         if not os.path.exists(exclusive_config_file):
             raise RuntimeError("Given exclusive-config-file not found.")
         cf_pinning_ver = None
+
     else:
         exclusive_config_file, cf_pinning_ver = get_cfp_file_path(
             temporary_directory
@@ -2223,11 +2183,14 @@ def main(
     logger.debug("env rendered")
 
     copy_feedstock_content(config, forge_dir)
+
     if os.path.exists(os.path.join(forge_dir, "build-locally.py")):
         set_exe_file(os.path.join(forge_dir, "build-locally.py"))
+
     clear_variants(forge_dir)
     clear_scripts(forge_dir)
     set_migration_fns(forge_dir, config)
+
     logger.debug("migration fns set")
 
     # the order of these calls appears to matter
@@ -2235,39 +2198,49 @@ def main(
     render_info.append(
         render_circle(env, config, forge_dir, return_metadata=True)
     )
+
     logger.debug("circle rendered")
     render_info.append(
         render_travis(env, config, forge_dir, return_metadata=True)
     )
+
     logger.debug("travis rendered")
     render_info.append(
         render_appveyor(env, config, forge_dir, return_metadata=True)
     )
+
     logger.debug("appveyor rendered")
     render_info.append(
         render_azure(env, config, forge_dir, return_metadata=True)
     )
+
     logger.debug("azure rendered")
     render_info.append(
         render_drone(env, config, forge_dir, return_metadata=True)
     )
+
     logger.debug("drone rendered")
     render_info.append(
         render_woodpecker(env, config, forge_dir, return_metadata=True)
     )
+
     logger.debug("woodpecker rendered")
     render_info.append(
         render_github_actions(env, config, forge_dir, return_metadata=True)
     )
+
     logger.debug("github_actions rendered")
     render_github_actions_services(env, config, forge_dir)
+
     logger.debug("github_actions services rendered")
+
     # put azure first just in case
     azure_ind = ([ri["provider_name"] for ri in render_info]).index("azure")
     tmp = render_info[0]
     render_info[0] = render_info[azure_ind]
     render_info[azure_ind] = tmp
     render_README(env, config, forge_dir, render_info)
+
     logger.debug("README rendered")
 
     if os.path.isdir(os.path.join(forge_dir, ".ci_support")):

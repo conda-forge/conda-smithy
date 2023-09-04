@@ -1,7 +1,13 @@
 from enum import Enum
 from typing import Any, Dict, List, Literal, Optional, Union
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import (
+    AliasChoices,
+    BaseModel,
+    Field,
+    FieldValidationInfo,
+    field_validator,
+)
 
 from conda_smithy.schema.platforms import Platforms, PlatformUniqueConfig
 from conda_smithy.schema.providers import AzureConfig, CIservices, GithubConfig
@@ -119,13 +125,16 @@ class CondaForgeDocker(BaseModel):
     )
 
     interactive: Optional[bool] = Field(
-        description="Whether to run Docker in interactive mode", default=False
+        description="Whether to run Docker in interactive mode",
+        default=False,
+        exclude=True,
     )
 
     # Deprecated values, if passed should raise errors
     image: Optional[Union[str, None]] = Field(
         description="Setting the Docker image in conda-forge.yml is no longer supported, use conda_build_config.yaml to specify Docker images.",
         default=None,
+        exclude=True,
     )
 
     @field_validator("image", mode="before")
@@ -146,6 +155,8 @@ class ShellCheck(BaseModel):
 
 
 class ConfigModel(BaseModel):
+    # Values which are not expected to be present in the model dump, are flagged with exclude=True. This is to avoid confusion when comparing the model dump with the default conda-forge.yml file used for smithy or to avoid deprecated values been rendered.
+
     conda_build: Optional[CondaBuildConfig] = Field(
         default_factory=lambda: CondaBuildConfig(),
         description="Settings in this block are used to control how conda build runs and produces artifacts.",
@@ -217,44 +228,75 @@ class ConfigModel(BaseModel):
     )
 
     win_64: Optional[PlatformUniqueConfig] = Field(
-        default=None,
+        default_factory=lambda: PlatformUniqueConfig(),
         description="Windows-specific configuration options. This is largely an internal setting and should not normally be manually modified.",
-        alias="win",
+        validation_alias=AliasChoices("win_64", "win"),
     )
 
     osx_64: Optional[PlatformUniqueConfig] = Field(
-        default=None,
+        default_factory=lambda: PlatformUniqueConfig(),
         description="OSX-specific configuration options. This is largely an internal setting and should not normally be manually modified.",
-        alias="osx",
+        validation_alias=AliasChoices("osx_64", "osx"),
+    )
+
+    osx_arm64: Optional[PlatformUniqueConfig] = Field(
+        default_factory=lambda: PlatformUniqueConfig(),
+        description="OSX-specific configuration options. This is largely an internal setting and should not normally be manually modified.",
     )
 
     linux_64: Optional[PlatformUniqueConfig] = Field(
-        default=None,
+        default_factory=lambda: PlatformUniqueConfig(),
         description="Linux-specific configuration options. This is largely an internal setting and should not normally be manually modified.",
-        alias="linux",
+        validation_alias=AliasChoices("linux_64", "linux"),
     )
 
     linux_aarch64: Optional[PlatformUniqueConfig] = Field(
-        default=None,
+        default_factory=lambda: PlatformUniqueConfig(),
         description="ARM-specific configuration options. This is largely an internal setting and should not normally be manually modified.",
     )
 
     linux_ppc64le: Optional[PlatformUniqueConfig] = Field(
-        default=None,
+        default_factory=lambda: PlatformUniqueConfig(),
         description="PPC-specific configuration options. This is largely an internal setting and should not normally be manually modified.",
     )
 
     linux_s390x: Optional[PlatformUniqueConfig] = Field(
-        default=None,
+        default_factory=lambda: PlatformUniqueConfig(),
         description="s390x-specific configuration options. This is largely an internal setting and should not normally be manually modified.",
     )
 
     linux_armv7l: Optional[PlatformUniqueConfig] = Field(
-        default=None,
+        default_factory=lambda: PlatformUniqueConfig(),
         description="ARM-specific configuration options. This is largely an internal setting and should not normally be manually modified.",
     )
 
-    noarch_Platforms: Optional[List[Platforms]] = Field(
+    @field_validator(
+        "win_64",
+        "osx_64",
+        "linux_64",
+        "linux_aarch64",
+        "linux_ppc64le",
+        "linux_s390x",
+        "linux_armv7l",
+    )
+    @classmethod
+    def validate_platform(
+        cls,
+        field_value,
+        _info: FieldValidationInfo,
+    ):
+        print(f"{cls}: Field value {field_value}")
+        if (
+            field_value.enabled is False
+            and _info.field_name in _info.data["build_platform"]
+        ):
+            raise ValueError(
+                f"Platform {field_value} is disabled but is also a build platform."
+                " Please enable the platform or remove it from build_platform."
+            )
+        return field_value
+
+    noarch_platforms: Optional[List[Platforms]] = Field(
         default_factory=lambda: ["linux_64"],
         description="Platforms on which to build noarch packages. The preferred default is a single build on linux_64.",
     )
@@ -269,6 +311,11 @@ class ConfigModel(BaseModel):
     ] = Field(
         default_factory=dict,
         description="The provider field is a mapping from build platform (not target platform) to CI service. It determines which service handles each build platform. If a desired build platform is not available with a selected provider (either natively or with emulation), the build will be disabled. Use the build_platform field to manually specify cross-compilation when no providers offer a desired build platform.",
+    )
+
+    package: Optional[str] = Field(
+        default=None,
+        description="Default location for a package feedstock directory basename.",
     )
 
     recipe_dir: Optional[str] = Field(
@@ -342,6 +389,11 @@ class ConfigModel(BaseModel):
         description="The version of the conda-forge.yml specification. This should not be manually modified.",
     )
 
+    exclusive_config_file: Optional[str] = Field(
+        default=None,
+        description="Exclusive conda-build config file to replace conda-forge-pinning. For advanced usage only",
+    )
+
     compiler_stack: Optional[str] = Field(
         default="comp7",
         description="Compiler stack environment variable",
@@ -397,10 +449,12 @@ class ConfigModel(BaseModel):
         description="The timeout in minutes for all platforms CI jobs",
     )
 
-    # Deprecated values, if passed should raise errors
+    # Deprecated values, if passed should raise errors, only present for validation
+    # Will not show up in the model dump, due to exclude=True
 
     matrix: Optional[Dict[str, Any]] = Field(
         default_factory=dict,
+        exclude=True,
         description="Build matrices were used to specify a set of build configurations to run for each package pinned dependency. This has been deprecated in favor of the provider field. More information can be found in the [conda-forge docs](https://conda-forge.org/docs/maintainer/knowledge_base.html#build-matrices).",
     )
 
