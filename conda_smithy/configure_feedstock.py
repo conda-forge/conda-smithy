@@ -425,16 +425,17 @@ def _yaml_represent_ordereddict(yaml_representer, data):
     )
 
 
-def _santize_remote_ci_setup(remote_ci_setup):
-    remote_ci_setup_ = conda_build.utils.ensure_list(remote_ci_setup)
-    remote_ci_setup = []
-    for package in remote_ci_setup_:
-        if package.startswith(("'", '"')):
-            pass
-        elif ("<" in package) or (">" in package) or ("|" in package):
-            package = '"' + package + '"'
-        remote_ci_setup.append(package)
-    return remote_ci_setup
+# NOTE: Moved as part of the remote_ci_setup schema validation
+# def _santize_remote_ci_setup(remote_ci_setup):
+#     remote_ci_setup_ = conda_build.utils.ensure_list(remote_ci_setup)
+#     remote_ci_setup = []
+#     for package in remote_ci_setup_:
+#         if package.startswith(("'", '"')):
+#             pass
+#         elif ("<" in package) or (">" in package) or ("|" in package):
+#             package = '"' + package + '"'
+#         remote_ci_setup.append(package)
+#     return remote_ci_setup
 
 
 def finalize_config(config, platform, arch, forge_config):
@@ -1714,7 +1715,6 @@ def _update_dict_within_dict(items, config):
 
 
 def _read_forge_config(forge_dir, forge_yml=None):
-
     conda_forge_defaults_path = (
         Path(__file__).resolve().parent / "schema" / "conda-forge.defaults.yml"
     )
@@ -1724,6 +1724,8 @@ def _read_forge_config(forge_dir, forge_yml=None):
 
     if forge_yml is None:
         forge_yml = Path(forge_dir) / "conda-forge.yml"
+    else:
+        forge_yml = Path(forge_yml)
 
     if not forge_yml.exists():
         raise RuntimeError(
@@ -1752,78 +1754,85 @@ def _read_forge_config(forge_dir, forge_yml=None):
 
 
 def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
-
     config, file_config = _read_forge_config(forge_dir, forge_yml)
 
-    # check for conda-smithy 2.x matrix which we can't auto-migrate
-    # to conda_build_config
-    if file_config.get("matrix") and not os.path.exists(
-        os.path.join(
-            forge_dir, config["recipe_dir"], "conda_build_config.yaml"
-        )
-    ):
-        raise ValueError(
-            "Cannot rerender with matrix in conda-forge.yml."
-            " Please migrate matrix to conda_build_config.yaml and try again."
-            " See https://github.com/conda-forge/conda-smithy/wiki/Release-Notes-3.0.0.rc1"
-            " for more info."
+    # NOTE: Moved check to pydantic model instead
+
+    # # check for conda-smithy 2.x matrix which we can't auto-migrate
+    # # to conda_build_config
+    # if file_config.get("matrix") and not os.path.exists(
+    #     os.path.join(
+    #         forge_dir, config["recipe_dir"], "conda_build_config.yaml"
+    #     )
+    # ):
+    #     raise ValueError(
+    #         "Cannot rerender with matrix in conda-forge.yml."
+    #         " Please migrate matrix to conda_build_config.yaml and try again."
+    #         " See https://github.com/conda-forge/conda-smithy/wiki/Release-Notes-3.0.0.rc1"
+    #         " for more info."
+    #     )
+
+    # NOTE: Moved check to pydantic model instead
+
+    # if file_config.get("docker") and file_config.get("docker").get("image"):
+    #     raise ValueError(
+    #         "Setting docker image in conda-forge.yml is removed now."
+    #         " Use conda_build_config.yaml instead"
+    #     )
+
+    # NOTE: Withe the control over the mode, should't we raise a warning to the user
+    # if those fields are set? suggesting to properly move then as part of the schema validation?
+
+    for azure_plat in [
+        config.azure.settings_linux,
+        config.azure.settings_osx,
+        config.azure.settings_win,
+    ]:
+        if "name" in azure_plat.pool:
+            del azure_plat.pool["vmImage"]
+        if config.azure.timeout_minutes is not None:
+            azure_plat.timeoutInMinutes = config.azure.timeout_minutes
+
+    if config.conda_forge_output_validation:
+        config.secrets = sorted(
+            set(config.secrets + ["FEEDSTOCK_TOKEN", "STAGING_BINSTAR_TOKEN"])
         )
 
-    if file_config.get("docker") and file_config.get("docker").get("image"):
-        raise ValueError(
-            "Setting docker image in conda-forge.yml is removed now."
-            " Use conda_build_config.yaml instead"
-        )
-
-    for plat in ["linux", "osx", "win"]:
-        # if config["azure"]["timeout_minutes"] is not None: # TODO: check if this is needed
-        if config["azure"].get("timeout_minutes") is not None:
-            # fmt: off
-            config["azure"][f"settings_{plat}"]["timeoutInMinutes"] \
-                = config["azure"]["timeout_minutes"]
-            # fmt: on
-        if "name" in config["azure"][f"settings_{plat}"]["pool"]:
-            del config["azure"][f"settings_{plat}"]["pool"]["vmImage"]
-
-    if config["conda_forge_output_validation"]:
-        config["secrets"] = sorted(
-            set(
-                config["secrets"]
-                + ["FEEDSTOCK_TOKEN", "STAGING_BINSTAR_TOKEN"]
-            )
-        )
-
-    target_platforms = sorted(config["build_platform"].keys())
+    target_platforms = sorted(config.build_platform.keys())
 
     for platform_arch in target_platforms:
-        config[platform_arch] = {"enabled": "True"}
-        if platform_arch not in config["provider"]:
-            config["provider"][platform_arch] = None
+        try:
+            getattr(config, platform_arch).enabled = True
+        except AttributeError as e:
+            print(e)
+            print(platform_arch)
+            print(config.model_dump())
+            raise e
 
-    config["noarch_platforms"] = conda_build.utils.ensure_list(
-        config["noarch_platforms"]
-    )
+        if platform_arch not in config.provider:
+            config.provider[platform_arch] = None
 
-    for noarch_platform in sorted(config["noarch_platforms"]):
-        if noarch_platform not in target_platforms:
-            raise ValueError(
-                f"Unknown noarch platform {noarch_platform}. Expected one of: "
-                f"{target_platforms}"
-            )
+    # NOTE: This check is not needed anymore, since we are using the same
+    # Literal choices for both the noarch_platforms and the build_platforms
 
-    config["secrets"] = sorted(set(config["secrets"] + ["BINSTAR_TOKEN"]))
+    # config["noarch_platforms"] = conda_build.utils.ensure_list(
+    #     config["noarch_platforms"]
+    # )
 
-    # if config["test_on_native_only"]:
-    #     config["test"] = "native_and_emulated"
+    # for noarch_platform in sorted(config["noarch_platforms"]):
+    #     if noarch_platform not in target_platforms:
+    #         raise ValueError(
+    #             f"Unknown noarch platform {noarch_platform}. Expected one of: "
+    #             f"{target_platforms}"
+    #         )
 
-    # if config["test"] is None:
-    #     config["test"] = "all" TODO: if the default behavior is to test all, should we set this as default? # noqa
+    config.secrets = sorted(set(config.secrets + ["BINSTAR_TOKEN"]))
 
-    if config.get("test_on_native_only"):
-        config["test"] = "native_and_emulated"
+    if config.test is None:
+        config.test = "all"
 
-    if config.get("test") is None:
-        config["test"] = "all"
+    if config.test_on_native_only:
+        config.test = "native_and_emulated"
 
     # An older conda-smithy used to have some files which should no longer exist,
     # remove those now.
@@ -1844,36 +1853,39 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
     ]
 
     for old_file in old_files:
-        if old_file.replace(os.sep, "/") in config["skip_render"]:
+        if old_file.replace(os.sep, "/") in config.skip_render:
             continue
         remove_file_or_dir(os.path.join(forge_dir, old_file))
 
     # Set some more azure defaults
-    config["azure"].setdefault("user_or_org", config["github"]["user_or_org"])
+    config.azure.user_or_org = config.github.user_or_org
 
     log = yaml.safe_dump(config)
     logger.debug("## CONFIGURATION USED\n")
     logger.debug(log)
     logger.debug("## END CONFIGURATION\n")
 
-    if config["provider"]["linux_aarch64"] == "default":
-        config["provider"]["linux_aarch64"] = ["travis"]
+    # Explicitly set the supported provider for each linux platform.
 
-    if config["provider"]["linux_aarch64"] == "native":
-        config["provider"]["linux_aarch64"] = ["travis"]
+    if config.provider["linux_aarch64"] == "default":
+        config.provider["linux_aarch64"] = ["travis"]
 
-    if config["provider"]["linux_ppc64le"] == "default":
-        config["provider"]["linux_ppc64le"] = ["travis"]
+    if config.provider["linux_aarch64"] == "native":
+        config.provider["linux_aarch64"] = ["travis"]
 
-    if config["provider"]["linux_ppc64le"] == "native":
-        config["provider"]["linux_ppc64le"] = ["travis"]
+    if config.provider["linux_ppc64le"] == "default":
+        config.provider["linux_ppc64le"] = ["travis"]
 
-    if config["provider"]["linux_s390x"] in {"default", "native"}:
-        config["provider"]["linux_s390x"] = ["travis"]
+    if config.provider["linux_ppc64le"] == "native":
+        config.provider["linux_ppc64le"] = ["travis"]
 
-    config["remote_ci_setup"] = _santize_remote_ci_setup(
-        config["remote_ci_setup"]
-    )
+    if config.provider["linux_s390x"] in {"default", "native"}:
+        config.provider["linux_s390x"] = ["travis"]
+
+    # NOTE: Replaced by the pydantic model validation
+    # config["remote_ci_setup"] = _santize_remote_ci_setup(
+    #     config["remote_ci_setup"]
+    # )
 
     # Older conda-smithy versions supported this with only one
     # entry. To avoid breakage, we are converting single elements
