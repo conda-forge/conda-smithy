@@ -88,7 +88,7 @@ if /i "%CI%" == "azure" (
     ) else (
         set "IS_PR_BUILD=False"
     )
-    set "TEMP=$(UPLOAD_TEMP)"
+    set "TEMP=%UPLOAD_TEMP%"
 )
 {%- if upload_on_branch %}
 set "UPLOAD_ON_BRANCH={{ upload_on_branch }}"

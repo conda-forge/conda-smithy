@@ -46,6 +46,7 @@ jobs:
         CONFIG: $(CONFIG)
         CI: azure
         UPLOAD_PACKAGES: $(UPLOAD_PACKAGES)
+        UPLOAD_TEMP: $(UPLOAD_TEMP)
 {%- if upload_on_branch %}
         UPLOAD_ON_BRANCH: {{ upload_on_branch }}
 {%- endif %}
