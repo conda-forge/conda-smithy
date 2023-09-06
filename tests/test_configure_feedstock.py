@@ -870,3 +870,40 @@ def test_cuda_enabled_render(cuda_enabled_recipe, jinja_env):
         else:
             if "CF_CUDA_ENABLED" in os.environ:
                 del os.environ["CF_CUDA_ENABLED"]
+
+
+def test_conda_build_tools(config_yaml):
+    load_forge_config = lambda: cnfgr_fdstk._load_forge_config(  # noqa
+        config_yaml,
+        exclusive_config_file=os.path.join(
+            config_yaml, "recipe", "default_config.yaml"
+        ),
+    )
+
+    cfg = load_forge_config()
+    assert (
+        "build_with_mambabuild" not in cfg
+    )  # superseded by conda_build_tool=mambabuild
+    assert cfg["conda_build_tool"] == "mambabuild"  # current default
+
+    # legacy compatibility config
+    with open(os.path.join(config_yaml, "conda-forge.yml")) as fp:
+        unmodified = fp.read()
+    with open(os.path.join(config_yaml, "conda-forge.yml"), "a+") as fp:
+        fp.write("build_with_mambabuild: true")
+    with pytest.deprecated_call(match="build_with_mambabuild is deprecated"):
+        assert load_forge_config()["conda_build_tool"] == "mambabuild"
+
+    with open(os.path.join(config_yaml, "conda-forge.yml"), "w") as fp:
+        fp.write(unmodified)
+        fp.write("build_with_mambabuild: false")
+
+    with pytest.deprecated_call(match="build_with_mambabuild is deprecated"):
+        assert load_forge_config()["conda_build_tool"] == "conda-build"
+
+    with open(os.path.join(config_yaml, "conda-forge.yml"), "w") as fp:
+        fp.write(unmodified)
+        fp.write("conda_build_tool: does-not-exist")
+
+    with pytest.raises(AssertionError):
+        assert load_forge_config()

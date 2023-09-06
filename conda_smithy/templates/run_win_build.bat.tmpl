@@ -19,13 +19,8 @@ call :start_group "Configuring conda"
 call activate base
 
 :: Provision the necessary dependencies to build the recipe later
-{%- if build_with_mambabuild %}
-{%- set BOA="boa " %}
-{%- else %}
-{%- set BOA="" %}
-{%- endif %}
 echo Installing dependencies
-mamba.exe install "python=3.10" conda-build conda pip {{ BOA }}{{ " ".join(remote_ci_setup) }} -c conda-forge --strict-channel-priority --yes
+mamba.exe install "python=3.10" conda pip {{ conda_build_tool_deps }} {{ " ".join(remote_ci_setup) }} -c conda-forge --strict-channel-priority --yes
 if errorlevel 1 exit 1
 
 {%- if local_ci_setup %}
@@ -62,9 +57,15 @@ call :end_group
 
 :: Build the recipe
 echo Building recipe
-{%- if build_with_mambabuild %}
+{%- if conda_build_tool == "mambabuild" %}
 conda.exe mambabuild "{{ recipe_dir }}" -m .ci_support\%CONFIG%.yaml --suppress-variables %EXTRA_CB_OPTIONS%
-{%- else %}
+{%- elif conda_build_tool == "conda-build+conda-libmamba-solver" %}
+set "CONDA_SOLVER=libmamba"
+conda.exe build "{{ recipe_dir }}" -m .ci_support\%CONFIG%.yaml --suppress-variables %EXTRA_CB_OPTIONS%
+{%- elif conda_build_tool == "conda-build+classic" %}
+set "CONDA_SOLVER=classic"
+conda.exe build "{{ recipe_dir }}" -m .ci_support\%CONFIG%.yaml --suppress-variables %EXTRA_CB_OPTIONS%
+{%- elif conda_build_tool == "conda-build" %}
 conda.exe build "{{ recipe_dir }}" -m .ci_support\%CONFIG%.yaml --suppress-variables %EXTRA_CB_OPTIONS%
 {%- endif %}
 if errorlevel 1 exit 1
