@@ -42,7 +42,8 @@ if errorlevel 1 exit 1
 
 {%- if build_setup %}
 echo "Running build setup"
-{{ build_setup }}
+CALL {{ build_setup }}
+if errorlevel 1 exit 1
 {%- endif %}
 
 if EXIST LICENSE.txt (
