@@ -70,7 +70,7 @@ if /i "%CI%" == "github_actions" (
         set "IS_PR_BUILD=False"
     )
     set "TEMP=%RUNNER_TEMP%"
-) 
+)
 if /i "%CI%" == "azure" (
     set "FEEDSTOCK_NAME=%BUILD_REPOSITORY_NAME%"
     set "GIT_BRANCH=%BUILD_SOURCEBRANCHNAME%"

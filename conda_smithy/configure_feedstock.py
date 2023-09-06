@@ -1279,7 +1279,7 @@ def _github_actions_specific_setup(
         ],
         "win": [
             ".scripts/run_win_build.bat",
-        ],  
+        ],
     }
     if forge_config["github_actions"]["store_build_artifacts"]:
         for tmpls in platform_templates.values():
