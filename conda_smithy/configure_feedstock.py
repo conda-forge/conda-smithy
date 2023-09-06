@@ -923,7 +923,7 @@ def _get_build_setup_line(forge_dir, platform, forge_config):
             build_setup += textwrap.dedent(
                 """\
                 :: Overriding global run_conda_forge_build_setup_win with local copy.
-                {recipe_dir}\\run_conda_forge_build_setup_win
+                CALL {recipe_dir}\\run_conda_forge_build_setup_win
             """.format(
                     recipe_dir=forge_config["recipe_dir"]
                 )
@@ -941,7 +941,7 @@ def _get_build_setup_line(forge_dir, platform, forge_config):
         if platform == "win":
             build_setup += textwrap.dedent(
                 """\
-                run_conda_forge_build_setup
+                CALL run_conda_forge_build_setup
 
             """
             )
