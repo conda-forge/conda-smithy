@@ -244,8 +244,8 @@ def test_upload_on_branch_azure(upload_on_branch_recipe, jinja_env):
     ) as fp:
         content_win = yaml.safe_load(fp)
     win_build_step = next(
-        step 
-        for step in content_win["jobs"][0]["steps"] 
+        step
+        for step in content_win["jobs"][0]["steps"]
         if step["displayName"] == "Run Windows build"
     )
     assert win_build_step["env"]["UPLOAD_ON_BRANCH"] == "foo-branch"
