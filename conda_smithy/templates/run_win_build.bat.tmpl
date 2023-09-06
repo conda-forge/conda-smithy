@@ -13,6 +13,8 @@
 
 setlocal enableextensions enabledelayedexpansion
 
+call :start_group "Configuring conda"
+
 :: Activate the base conda environment
 call activate base
 
@@ -56,6 +58,8 @@ if NOT [%HOST_PLATFORM%] == [%BUILD_PLATFORM%] (
 )
 {%- endif %}
 
+call :end_group
+
 :: Build the recipe
 echo Building recipe
 {%- if build_with_mambabuild %}
@@ -93,17 +97,46 @@ set "UPLOAD_ON_BRANCH={{ upload_on_branch }}"
 
 :: Validate
 {%- if conda_forge_output_validation %}
-echo Validating recipe outputs
+call :start_group "Validating outputs"
 validate_recipe_outputs "%FEEDSTOCK_NAME%"
 if errorlevel 1 exit 1
+call :end_group
 {%- endif %}
 
 if /i "%UPLOAD_PACKAGES%" == "true" (
     if /i "%IS_PR_BUILD%" == "false" (
+        call :start_group "Uploading packages"
         if not exist "%TEMP%\" md "%TEMP%"
         set "TMP=%TEMP%"
-        echo Uploading packages
         upload_package {% if conda_forge_output_validation %}--validate --feedstock-name="%FEEDSTOCK_NAME%"{% endif %}{% if private_upload %} --private{% endif %} .\ ".\{{ recipe_dir }}" .ci_support\%CONFIG%.yaml
         if errorlevel 1 exit 1
+        call :end_group
     )
 )
+
+exit
+
+:: Logging subroutines
+
+:start_group
+if /i "%CI%" == "github_actions" (
+    echo ::group::%~1
+    exit /b
+)
+if /i "%CI%" == "azure" (
+    echo ##[group]%~1
+    exit /b
+)
+echo %~1
+exit /b
+
+:end_group
+if /i "%CI%" == "github_actions" (
+    echo ::endgroup::
+    exit /b
+)
+if /i "%CI%" == "azure" (
+    echo ##[endgroup]
+    exit /b
+)
+exit /b
