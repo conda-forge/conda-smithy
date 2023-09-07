@@ -1843,6 +1843,8 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
         "secrets": [],
         "conda_build_tool": "mambabuild",
         "conda_build_tool_deps": "boa",
+        "conda_install_tool": "mamba",
+        "conda_install_tool_deps": "mamba",
         # feedstock checkout git clone depth, None means keep default, 0 means no limit
         "clone_depth": None,
         # Specific channel for package can be given with
@@ -1960,6 +1962,18 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
         config["conda_build_tool_deps"] = "conda-build conda-libmamba-solver"
     else:
         config["conda_build_tool_deps"] = "conda-build"
+
+    valid_install_tools = ("conda", "mamba")
+    assert config["conda_install_tool"] in valid_install_tools, (
+        f"Invalid conda_install_tool: {config['conda_install_tool']}. "
+        f"Valid values are: {valid_install_tools}."
+    )
+    if config["conda_install_tool"] == "mamba":
+        config["conda_install_tool_deps"] = "mamba"
+    elif config["conda_install_tool"] in "conda":
+        config["conda_install_tool_deps"] = "conda"
+        if config.get("conda_solver", "libmamba"):
+            config["conda_install_tool_deps"] += " conda-libmamba-solver"
 
     config["secrets"] = sorted(set(config["secrets"] + ["BINSTAR_TOKEN"]))
 
