@@ -2,6 +2,10 @@ import os
 
 from cirun import Cirun
 
+# To get this id, got to https://github.com/organizations/<ORG-NAME>/settings/installations
+# and then click on the Configure button next to Cirun Application, then copy
+# the installation id from the URL, it would look something like:
+# https://github.com/organizations/conda-forge/settings/installations/18453316
 CIRUN_INSTALLATION_ID = os.environ.get("CIRUN_INSTALLATION_ID", 18453316)
 
 
