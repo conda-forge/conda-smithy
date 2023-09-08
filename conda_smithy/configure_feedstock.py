@@ -923,7 +923,7 @@ def _get_build_setup_line(forge_dir, platform, forge_config):
             build_setup += textwrap.dedent(
                 """\
                 :: Overriding global run_conda_forge_build_setup_win with local copy.
-                {recipe_dir}\\run_conda_forge_build_setup_win
+                CALL {recipe_dir}\\run_conda_forge_build_setup_win
             """.format(
                     recipe_dir=forge_config["recipe_dir"]
                 )
@@ -941,7 +941,7 @@ def _get_build_setup_line(forge_dir, platform, forge_config):
         if platform == "win":
             build_setup += textwrap.dedent(
                 """\
-                run_conda_forge_build_setup
+                CALL run_conda_forge_build_setup
 
             """
             )
@@ -1277,7 +1277,9 @@ def _github_actions_specific_setup(
         "osx": [
             ".scripts/run_osx_build.sh",
         ],
-        "win": [],
+        "win": [
+            ".scripts/run_win_build.bat",
+        ],
     }
     if forge_config["github_actions"]["store_build_artifacts"]:
         for tmpls in platform_templates.values():
@@ -1350,7 +1352,10 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
             ".azure-pipelines/azure-pipelines-osx.yml",
             ".scripts/run_osx_build.sh",
         ],
-        "win": [".azure-pipelines/azure-pipelines-win.yml"],
+        "win": [
+            ".azure-pipelines/azure-pipelines-win.yml",
+            ".scripts/run_win_build.bat",
+        ],
     }
     if forge_config["azure"]["store_build_artifacts"]:
         platform_templates["linux"].append(
