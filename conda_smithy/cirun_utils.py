@@ -61,6 +61,6 @@ def _get_cirun_client() -> Cirun:
         return Cirun()
     except KeyError:
         raise RuntimeError(
-            "You must have CIRUN_API_KEY defined to do Cirun CI registration"
+            "You must have CIRUN_API_KEY defined to do Cirun CI registration. "
             "This requirement can be overriden by specifying `--without-cirun`"
         )
