@@ -262,6 +262,7 @@ class RegisterCI(Subcommand):
         )
         scp.add_argument(
             "--cirun-resources",
+            default=[],
             action="append",
             help="cirun resources to enable for this repo. multiple values allowed",
         )
