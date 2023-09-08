@@ -1833,7 +1833,7 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
                     "linux",
                     "x64",
                     "self-hosted",
-                    "cirun-openstack-gpu"
+                    "cirun-openstack-gpu",
                 ],
                 "cloud": "openstack",
                 "instance_type": "gpu_large",
@@ -1852,7 +1852,7 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
                 "instance_type": "ci_medium",
                 "machine_image": "ubuntu-2204-cloud-jammy-20221104",
                 "region": "RegionOne",
-            }
+            },
         ],
         "recipe_dir": "recipe",
         "skip_render": [],
