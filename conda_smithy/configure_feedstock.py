@@ -51,20 +51,6 @@ from . import __version__
 conda_forge_content = os.path.abspath(os.path.dirname(__file__))
 logger = logging.getLogger(__name__)
 
-# feedstocks listed here are allowed to use GHA on
-# conda-forge
-# this should solve issues where other CI proviers have too many
-# jobs and we need to change something via CI
-SERVICE_FEEDSTOCKS = [
-    "conda-forge-pinning-feedstock",
-    "conda-forge-repodata-patches-feedstock",
-    "conda-smithy-feedstock",
-]
-if "CONDA_SMITHY_SERVICE_FEEDSTOCKS" in os.environ:
-    SERVICE_FEEDSTOCKS += os.environ["CONDA_SMITHY_SERVICE_FEEDSTOCKS"].split(
-        ","
-    )
-
 
 def package_key(config, used_loop_vars, subdir):
     # get the build string from whatever conda-build makes of the configuration
@@ -687,7 +673,6 @@ def _render_ci_provider(
                 channel_target.startswith("conda-forge ")
                 and provider_name == "github_actions"
                 and not forge_config["github_actions"]["self_hosted"]
-                and os.path.basename(forge_dir) not in SERVICE_FEEDSTOCKS
             ):
                 raise RuntimeError(
                     "Using github_actions as the CI provider inside "
@@ -1279,10 +1264,18 @@ def _github_actions_specific_setup(
         ],
         "win": [],
     }
-    if forge_config["github_actions"]["store_build_artifacts"]:
-        for tmpls in platform_templates.values():
-            tmpls.append(".scripts/create_conda_build_artifacts.sh")
+
     template_files = platform_templates.get(platform, [])
+
+    # Templates for all platforms
+    if forge_config["github_actions"]["store_build_artifacts"]:
+        template_files.append(".scripts/create_conda_build_artifacts.sh")
+
+    if forge_config["github_actions"]["self_hosted"]:
+        for label in forge_config["github_actions"]["self_hosted_labels"]:
+            if label.startswith("cirun-"):
+                template_files.append(".cirun.yml")
+                break
 
     _render_template_exe_files(
         forge_config=forge_config,
@@ -1298,7 +1291,7 @@ def render_github_actions(
     target_path = os.path.join(
         forge_dir, ".github", "workflows", "conda-build.yml"
     )
-    template_filename = "github-actions.tmpl"
+    template_filename = "github-actions.yml.tmpl"
     fast_finish_text = ""
 
     (
@@ -1308,7 +1301,7 @@ def render_github_actions(
         upload_packages,
     ) = _get_platforms_of_provider("github_actions", forge_config)
 
-    logger.debug("github platforms retreived")
+    logger.debug("github platforms retrieved")
 
     remove_file_or_dir(target_path)
     return _render_ci_provider(
@@ -1822,12 +1815,43 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
         },
         "github_actions": {
             "self_hosted": False,
+            "self_hosted_labels": [],
+            "self_hosted_triggers": ["push"],
+            "cancel_in_progress": False,
             # Set maximum parallel jobs
             "max_parallel": None,
             # Toggle creating artifacts for conda build_artifacts dir
             "store_build_artifacts": False,
             "artifact_retention_days": 14,
         },
+        "cirun_runners": [
+            {
+                "name": "cirun-openstack-gpu",
+                "labels": [
+                    "linux",
+                    "x64",
+                    "self-hosted",
+                    "cirun-openstack-gpu"
+                ],
+                "cloud": "openstack",
+                "instance_type": "gpu_large",
+                "machine_image": "ubuntu-2204-nvidia-container-runtime-20230107",
+                "region": "RegionOne",
+            },
+            {
+                "name": "cirun-openstack-cpu",
+                "labels": [
+                    "linux",
+                    "x64",
+                    "self-hosted",
+                    "cirun-openstack-cpu",
+                ],
+                "cloud": "openstack",
+                "instance_type": "ci_medium",
+                "machine_image": "ubuntu-2204-cloud-jammy-20221104",
+                "region": "RegionOne",
+            }
+        ],
         "recipe_dir": "recipe",
         "skip_render": [],
         "bot": {"automerge": False},
