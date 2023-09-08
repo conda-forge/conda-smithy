@@ -1,4 +1,5 @@
 import os
+from functools import cache
 
 from cirun import Cirun
 
@@ -49,6 +50,7 @@ def remove_repo_from_cirun_resource(owner, repo, resource):
     return response
 
 
+@cache
 def _get_cirun_client():
     try:
         return Cirun()
