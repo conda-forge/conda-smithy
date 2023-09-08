@@ -22,7 +22,10 @@ def enable_cirun_for_project(owner: str, repo: str) -> Dict[str, Any]:
 
 
 def add_repo_to_cirun_resource(
-        owner: str, repo: str, resource: str, cirun_policy_args: Optional[List[str]] = None
+    owner: str,
+    repo: str,
+    resource: str,
+    cirun_policy_args: Optional[List[str]] = None,
 ) -> Dict[str, Any]:
     """Grant access to a cirun resource to a particular repository, with a particular policy."""
     cirun = _get_cirun_client()
