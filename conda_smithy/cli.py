@@ -274,7 +274,7 @@ class RegisterCI(Subcommand):
             "--remove",
             action="store_true",
             help="Revoke access to the configured CI services. "
-            "Only available for Travis and Cirun for now",
+            "Only available for Cirun for now",
         )
 
     def __call__(self, args):
