@@ -4,7 +4,7 @@
 
 **Changed:**
 
-* Add option to cleanup GHA images - #1754
+* <news item>
 
 **Deprecated:**
 
@@ -16,7 +16,7 @@
 
 **Fixed:**
 
-* <news item>
+* Fixed bug in the display of grouping commands in the Travis CI logging utilities. (#1730)
 
 **Security:**
 

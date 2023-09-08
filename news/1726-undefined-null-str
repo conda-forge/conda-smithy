@@ -16,7 +16,7 @@
 
 **Fixed:**
 
-* Allow operators in noarch platform selectors
+* Ensure undefined Jinja variables are rendered as the variable name, restoring Python 2-like behaviour. (#1726 via #1727)
 
 **Security:**
 

@@ -1358,6 +1358,7 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
     template_files = platform_templates.get(platform, [])
 
     azure_settings = deepcopy(forge_config["azure"][f"settings_{platform}"])
+    azure_settings.pop("swapfile_size", None)
     azure_settings.setdefault("strategy", {})
     azure_settings["strategy"].setdefault("matrix", {})
 
@@ -1726,6 +1727,7 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
                     "vmImage": "ubuntu-latest",
                 },
                 "timeoutInMinutes": 360,
+                "swapfile_size": "0GiB",
             },
             "settings_osx": {
                 "pool": {
@@ -1858,7 +1860,8 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
         "conda_forge_output_validation": False,
         "private_upload": False,
         "secrets": [],
-        "build_with_mambabuild": True,
+        "conda_build_tool": "mambabuild",
+        "conda_build_tool_deps": "boa",
         # feedstock checkout git clone depth, None means keep default, 0 means no limit
         "clone_depth": None,
         # Specific channel for package can be given with
@@ -1943,6 +1946,39 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
                 f"Unknown noarch platform {noarch_platform}. Expected one of: "
                 f"{target_platforms}"
             )
+
+    if (
+        "build_with_mambabuild" in file_config
+        and "conda_build_tool" not in file_config
+    ):
+        warnings.warn(
+            "build_with_mambabuild is deprecated, use conda_build_tool instead",
+            DeprecationWarning,
+        )
+        config["conda_build_tool"] = (
+            "mambabuild" if config["build_with_mambabuild"] else "conda-build"
+        )
+    if file_config.get("conda_build_tool_deps"):
+        raise ValueError(
+            "Cannot set 'conda_build_tool_deps' directly. "
+            "Use 'conda_build_tool' instead."
+        )
+    valid_build_tools = (
+        "mambabuild",  # will run 'conda mambabuild', as provided by boa
+        "conda-build",  # will run vanilla conda-build, with system configured / default solver
+        "conda-build+conda-libmamba-solver",  # will run vanilla conda-build, with libmamba solver
+        "conda-build+classic",  # will run vanilla conda-build, with the classic solver
+    )
+    assert config["conda_build_tool"] in valid_build_tools, (
+        f"Invalid conda_build_tool: {config['conda_build_tool']}. "
+        f"Valid values are: {valid_build_tools}."
+    )
+    if config["conda_build_tool"] == "mambabuild":
+        config["conda_build_tool_deps"] = "boa"
+    elif config["conda_build_tool"] == "conda-build+conda-libmamba-solver":
+        config["conda_build_tool_deps"] = "conda-build conda-libmamba-solver"
+    else:
+        config["conda_build_tool_deps"] = "conda-build"
 
     config["secrets"] = sorted(set(config["secrets"] + ["BINSTAR_TOKEN"]))
 

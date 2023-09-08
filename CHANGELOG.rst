@@ -4,6 +4,46 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.25.1
+====================
+
+**Fixed:**
+
+* Ensure ``swapfile_size`` is not added to the Azure job settings #1759
+
+**Authors:**
+
+* John Kirkham
+
+
+
+v3.25.0
+====================
+
+**Added:**
+
+* Added ability for select feedstocks (pinnings, smithy, repodata patches) to use GHA in conda-forge.
+  Items can be added by setting the ``CONDA_SMITHY_SERVICE_FEEDSTOCKS`` environment variable to a
+  comma-separated list of additional feedstocks.
+
+**Changed:**
+
+* Add option to cleanup GHA images - #1754
+* Created option to create a swap file on the default linux image on Azure Pipelines
+
+**Fixed:**
+
+* Allow operators in noarch platform selectors
+
+**Authors:**
+
+* Matthew R. Becker
+* Jaime Rodríguez-Guerra
+* Mike Henry
+* John Kirkham
+
+
+
 v3.24.1
 ====================
 

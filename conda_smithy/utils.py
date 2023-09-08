@@ -60,7 +60,7 @@ def tmp_directory():
 
 
 class NullUndefined(jinja2.Undefined):
-    def __unicode__(self):
+    def __str__(self):
         return self._undefined_name
 
     def __getattr__(self, name):
