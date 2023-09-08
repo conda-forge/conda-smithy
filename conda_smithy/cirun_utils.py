@@ -1,6 +1,6 @@
 import os
 from functools import lru_cache
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 
 from cirun import Cirun
 
@@ -26,10 +26,9 @@ def add_repo_to_cirun_resource(
 ) -> Dict[str, Any]:
     """Grant access to a cirun resource to a particular repository, with a particular policy."""
     cirun = _get_cirun_client()
-    policy_args: Dict[str, Any] = {"pull_request": False}
-    if cirun_policy_args:
-        if "pull_request" in cirun_policy_args:
-            policy_args["pull_request"] = True
+    policy_args: Optional[Dict[str, Any]] = None
+    if cirun_policy_args and "pull_request" in cirun_policy_args:
+        policy_args = {"pull_request": True}
     print(
         f"Adding repo {owner}/{repo} to resource {resource} with policy_args: {policy_args}"
     )
