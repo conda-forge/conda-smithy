@@ -106,6 +106,13 @@ class GithubConfig(BaseModel):
     )
 
 
+class CondaBuildTools(str, Enum):
+    conda_build = "conda-build"
+    conda_build_classic = "conda-build+classic"
+    conda_build_mamba = "conda-build+conda-libmamba-solver"
+    mambabuild = "mambabuild"
+
+
 class CIservices(str, Enum):
     azure = "azure"
     circle = "circle"

@@ -1,3 +1,4 @@
+import warnings
 from enum import Enum
 from typing import Any, Dict, List, Literal, Optional, Union
 
@@ -9,8 +10,20 @@ from pydantic import (
     field_validator,
 )
 
-from conda_smithy.schema.platforms import Platforms, PlatformUniqueConfig
-from conda_smithy.schema.providers import AzureConfig, CIservices, GithubConfig
+from conda_smithy.schema.choices import (
+    DefaultTestPlatforms,
+    Platforms,
+    BotConfigAutoMergeChoice,
+    BotConfigInspectionChoice,
+    BotConfigSkipRenderChoices,
+    ChannelPriorityConfig,
+)
+from conda_smithy.schema.providers import (
+    AzureConfig,
+    CIservices,
+    CondaBuildTools,
+    GithubConfig,
+)
 
 
 def sanitize_remote_ci_setup(package: str) -> str:
@@ -21,27 +34,11 @@ def sanitize_remote_ci_setup(package: str) -> str:
     return package
 
 
-class BotConfigAutoMergeChoice(str, Enum):
-    VERSION = "version"
-    MIGRATION = "migration"
-
-
-class BotConfigSkipRenderChoices(str, Enum):
-    GITIGNORE = ".gitignore"
-    GITATTRIBUTES = ".gitattributes"
-    README = "README.md"
-    LICENSE = "LICENSE.txt"
-    GITHUB_WORKFLOWS = ".github/workflows"
-
-
-class BotConfigInspectionChoice(str, Enum):
-    HINT = "hint"
-    HINT_ALL = "hint-all"
-    HINT_SOURCE = "hint-source"
-    HINT_GRAYSKULL = "hint-grayskull"
-    UPDATE_ALL = "update-all"
-    UPDATE_SOURCE = "update-source"
-    UPDATE_GRAYSKULL = "update-grayskull"
+class PlatformUniqueConfig(BaseModel):
+    enabled: bool = Field(
+        description="Whether to use extra platform-specific configuration options",
+        default=False,
+    )
 
 
 class BotConfig(BaseModel):
@@ -71,12 +68,6 @@ class BotConfig(BaseModel):
         None,
         description="Fraction of versions to keep for frequently updated packages",
     )
-
-
-class ChannelPriorityConfig(str, Enum):
-    STRICT = "strict"
-    FLEXIBLE = "flexible"
-    DISABLED = "disabled"
 
 
 class CondaForgeChannels(BaseModel):
@@ -162,6 +153,21 @@ class ConfigModel(BaseModel):
         description="Settings in this block are used to control how conda build runs and produces artifacts.",
     )
 
+    conda_build_tool: Optional[CondaBuildTools] = Field(
+        default="conda-build",
+        description="Use this option to choose which tool is used to build your recipe.",
+    )
+
+    conda_solver: Optional[Literal["libmamba", "classic"]] = Field(
+        default="libmamba",
+        description="Choose which ``conda`` solver plugin to use for feedstock builds.",
+    )
+
+    conda_install_tool: Optional[Literal["conda", "mamba"]] = Field(
+        default="mamba",
+        description="Use this option to choose which tool is used to provision the tooling in your feedstock.",
+    )
+
     conda_forge_output_validation: Optional[bool] = Field(
         default=True,
         description="This field must be set to True for feedstocks in the conda-forge GitHub organization. It enables the required feedstock artifact validation as described in [Output Validation and Feedstock Tokens](https://conda-forge.org/docs/maintainer/infrastructure.html#output-validation).",
@@ -170,16 +176,6 @@ class ConfigModel(BaseModel):
     github: Optional[GithubConfig] = Field(
         default_factory=lambda: GithubConfig(),
         description="Mapping for GitHub-specific configuration options",
-    )
-
-    appveyor: Optional[Dict[str, Any]] = Field(
-        default_factory=dict,
-        description="AppVeyor CI settings. This is usually read-only and should not normally be manually modified. Tools like conda-smithy may modify this, as needed.",
-    )
-
-    azure: Optional[AzureConfig] = Field(
-        default_factory=lambda: AzureConfig(),
-        description="Azure Pipelines CI settings. This is usually read-only and should not normally be manually modified. Tools like conda-smithy may modify this, as needed.",
     )
 
     bot: Optional[BotConfig] = Field(
@@ -210,11 +206,6 @@ class ConfigModel(BaseModel):
     choco: Optional[List[str]] = Field(
         default_factory=list,
         description="This parameter allows for conda-smithy to run chocoloatey installs on Windows when additional system packages are needed. This is a list of strings that represent package names and any additional parameters.",
-    )
-
-    circle: Optional[Dict[str, Any]] = Field(
-        default_factory=dict,
-        description="Circle CI settings. This is usually read-only and should not normally be manually modified. Tools like conda-smithy may modify this, as needed.",
     )
 
     docker: Optional[CondaForgeDocker] = Field(
@@ -278,6 +269,7 @@ class ConfigModel(BaseModel):
         "linux_ppc64le",
         "linux_s390x",
         "linux_armv7l",
+        mode="before",
     )
     @classmethod
     def validate_platform(
@@ -286,14 +278,22 @@ class ConfigModel(BaseModel):
         _info: FieldValidationInfo,
     ):
         print(f"{cls}: Field value {field_value}")
-        if (
-            field_value.enabled is False
-            and _info.field_name in _info.data["build_platform"]
+        # Check if field_value is a dictionary and extract the 'enabled' key if present
+        if isinstance(field_value, dict):
+            _field_value = field_value.get("enabled", None)
+        else:
+            _field_value = getattr(field_value, "enabled", None)
+
+        # Check if the platform is disabled but also in the build_platform list
+        if _field_value is False and _info.field_name in _info.data.get(
+            "build_platform", []
         ):
-            raise ValueError(
+            error_message = (
                 f"Platform {field_value} is disabled but is also a build platform."
                 " Please enable the platform or remove it from build_platform."
             )
+            raise ValueError(error_message)
+
         return field_value
 
     noarch_platforms: Optional[List[Platforms]] = Field(
@@ -301,7 +301,7 @@ class ConfigModel(BaseModel):
         description="Platforms on which to build noarch packages. The preferred default is a single build on linux_64.",
     )
 
-    os_version: Optional[Dict[Platforms, Optional[str]]] = Field(
+    os_version: Optional[Dict[Platforms, Union[str, None]]] = Field(
         default_factory=dict,
         description="This key is used to set the OS versions for linux_* platforms. Valid entries map a linux platform and arch to either cos6 or cos7. Currently cos6 is the default for linux-64. All other linux architectures use CentOS 7.",
     )
@@ -357,31 +357,14 @@ class ConfigModel(BaseModel):
         description="This is used for disabling testing for cross compiling. Default is false. This has been deprecated in favor of the test top-level field. It is now mapped to test: native_and_emulated.",
     )
 
-    test: Optional[
-        Literal["all", "native_only", "native_and_emulated", "emulated_only"]
-    ] = Field(
+    test: Optional[DefaultTestPlatforms] = Field(
         default=None,
         description="This is used to configure on which platforms a recipe is tested. Default is all. ",
-    )
-
-    travis: Optional[Dict[str, Any]] = Field(
-        default_factory=dict,
-        description="Travis CI settings. This is usually read-only and should not normally be manually modified. Tools like conda-smithy may modify this, as needed.",
     )
 
     upload_on_branch: Optional[str] = Field(
         default=None,
         description="This parameter restricts uploading access on work from certain branches of the same repo. Only the branch listed in upload_on_branch will trigger uploading of packages to the target channel. The default is to skip this check if the key upload_on_branch is not in conda-forge.yml",
-    )
-
-    drone: Optional[Dict[str, str]] = Field(
-        default_factory=dict,
-        description="Drone CI settings. This is usually read-only and should not normally be manually modified. Tools like conda-smithy may modify this, as needed.",
-    )
-
-    woodpecker: Optional[Dict[str, str]] = Field(
-        default_factory=dict,
-        description="Woodpecker CI settings. This is usually read-only and should not normally be manually modified. Tools like conda-smithy may modify this, as needed.",
     )
 
     config_version: Optional[str] = Field(
@@ -419,11 +402,6 @@ class ConfigModel(BaseModel):
         description="Maximum R version",
     )
 
-    github_actions: Optional[Dict[str, Any]] = Field(
-        description="GitHub Actions CI settings. This is usually read-only and should not normally be manually modified. Tools like conda-smithy may modify this, as needed.",
-        default_factory=dict,
-    )
-
     private_upload: Optional[bool] = Field(
         default=False,
         description="Whether to upload to a private channel",
@@ -448,6 +426,72 @@ class ConfigModel(BaseModel):
         default=None,
         description="The timeout in minutes for all platforms CI jobs",
     )
+
+    ###################################
+    ####       CI Providers        ####
+    ###################################
+    travis: Optional[Dict[str, Any]] = Field(
+        default_factory=dict,
+        description="Travis CI settings. This is usually read-only and should not normally be manually modified. Tools like conda-smithy may modify this, as needed.",
+    )
+
+    circle: Optional[Dict[str, Any]] = Field(
+        default_factory=dict,
+        description="Circle CI settings. This is usually read-only and should not normally be manually modified. Tools like conda-smithy may modify this, as needed.",
+    )
+
+    appveyor: Optional[Dict[str, Any]] = Field(
+        default_factory=dict,
+        description="AppVeyor CI settings. This is usually read-only and should not normally be manually modified. Tools like conda-smithy may modify this, as needed.",
+    )
+
+    azure: Optional[AzureConfig] = Field(
+        default_factory=lambda: AzureConfig(),
+        description="Azure Pipelines CI settings. This is usually read-only and should not normally be manually modified. Tools like conda-smithy may modify this, as needed.",
+    )
+
+    drone: Optional[Dict[str, str]] = Field(
+        default_factory=dict,
+        description="Drone CI settings. This is usually read-only and should not normally be manually modified. Tools like conda-smithy may modify this, as needed.",
+    )
+
+    github_actions: Optional[Dict[str, Any]] = Field(
+        description="GitHub Actions CI settings. This is usually read-only and should not normally be manually modified. Tools like conda-smithy may modify this, as needed.",
+        default_factory=dict,
+    )
+
+    woodpecker: Optional[Dict[str, str]] = Field(
+        default_factory=dict,
+        description="Woodpecker CI settings. This is usually read-only and should not normally be manually modified. Tools like conda-smithy may modify this, as needed.",
+    )
+
+    @field_validator(
+        "travis",
+        "circle",
+        "appveyor",
+        "drone",
+        "azure",
+        "github_actions",
+        "woodpecker",
+        mode="before",
+    )
+    def validate_providers(
+        cls,
+        providers,
+        _info: FieldValidationInfo,
+    ):
+        if providers.get("enabled", None):
+            warnings.warn(
+                f"It is not allowed to set the `enabled` parameter for {_info.field_name}."
+                " All CIs are enabled by default. To disable a CI, please"
+                " add `skip: true` to the `build` section of `meta.yaml`"
+                " and an appropriate selector so as to disable the build."
+            )
+        return providers
+
+    ###################################
+    ####       Deprecated          ####
+    ###################################
 
     # Deprecated values, if passed should raise errors, only present for validation
     # Will not show up in the model dump, due to exclude=True

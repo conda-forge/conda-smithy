@@ -1819,7 +1819,6 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
 
     # Set some more azure defaults
     config.azure.user_or_org = config.github.user_or_org
-
     log = yaml.safe_dump(config.model_dump_json())
     logger.debug("## CONFIGURATION USED\n")
     logger.debug(log)
@@ -2162,23 +2161,6 @@ def main(
 
     config = _load_forge_config(forge_dir, exclusive_config_file, forge_yml)
     config["feedstock_name"] = os.path.basename(forge_dir)
-
-    for each_ci in [
-        "travis",
-        "circle",
-        "appveyor",
-        "drone",
-        "azure",
-        "github_actions",
-    ]:
-        if config[each_ci].pop("enabled", None):
-            warnings.warn(
-                "It is not allowed to set the `enabled` parameter for `%s`."
-                " All CIs are enabled by default. To disable a CI, please"
-                " add `skip: true` to the `build` section of `meta.yaml`"
-                " and an appropriate selector so as to disable the build."
-                % each_ci
-            )
 
     env = make_jinja_env(forge_dir)
     logger.debug("env rendered")
