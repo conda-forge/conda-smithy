@@ -1957,7 +1957,7 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
         f"Valid values are: {valid_build_tools}."
     )
     if config["conda_build_tool"] == "mambabuild":
-        config["conda_build_tool_deps"] = "boa"
+        config["conda_build_tool_deps"] = "conda-build boa"
     elif config["conda_build_tool"] == "conda-build+conda-libmamba-solver":
         config["conda_build_tool_deps"] = "conda-build conda-libmamba-solver"
     else:
