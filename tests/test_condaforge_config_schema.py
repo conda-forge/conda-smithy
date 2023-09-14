@@ -120,3 +120,14 @@ def test_invalid_config():
 
     with pytest.raises(ValidationError):
         ConfigModel(**invalid_data)
+
+
+if __name__ == "__main__":
+    pytest.main(
+        [
+            f"{__file__}::test_validate_win_64_enabled",
+            "-vv",
+            "--full-trace",
+            "-W error:UserWarning",
+        ]
+    )
