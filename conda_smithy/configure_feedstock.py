@@ -2033,8 +2033,12 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
     if config["provider"]["linux_s390x"] in {"default", "native"}:
         config["provider"]["linux_s390x"] = ["travis"]
 
-    config["remote_ci_setup"] = _santize_remote_ci_setup(config["remote_ci_setup"])
-    config["remote_ci_setup_names"] = [MatchSpec(pkg).name for pkg in config["remote_ci_setup"]]
+    config["remote_ci_setup"] = _santize_remote_ci_setup(
+        config["remote_ci_setup"]
+    )
+    config["remote_ci_setup_names"] = [
+        MatchSpec(pkg).name for pkg in config["remote_ci_setup"]
+    ]
 
     # Older conda-smithy versions supported this with only one
     # entry. To avoid breakage, we are converting single elements
