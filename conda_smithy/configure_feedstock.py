@@ -29,6 +29,7 @@ import conda_build.utils
 import conda_build.variants
 import conda_build.conda_interface
 import conda_build.render
+from conda.models.match_spec import MatchSpec
 
 from copy import deepcopy
 
@@ -1956,6 +1957,7 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
         f"Invalid conda_build_tool: {config['conda_build_tool']}. "
         f"Valid values are: {valid_build_tools}."
     )
+    # NOTE: Currently assuming these dependencies are name-only (no version constraints)
     if config["conda_build_tool"] == "mambabuild":
         config["conda_build_tool_deps"] = "conda-build boa"
     elif config["conda_build_tool"] == "conda-build+conda-libmamba-solver":
@@ -1968,6 +1970,7 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
         f"Invalid conda_install_tool: {config['conda_install_tool']}. "
         f"Valid values are: {valid_install_tools}."
     )
+    # NOTE: Currently assuming these dependencies are name-only (no version constraints)
     if config["conda_install_tool"] == "mamba":
         config["conda_install_tool_deps"] = "mamba"
     elif config["conda_install_tool"] in "conda":
@@ -2029,9 +2032,8 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
     if config["provider"]["linux_s390x"] in {"default", "native"}:
         config["provider"]["linux_s390x"] = ["travis"]
 
-    config["remote_ci_setup"] = _santize_remote_ci_setup(
-        config["remote_ci_setup"]
-    )
+    config["remote_ci_setup"] = _santize_remote_ci_setup(config["remote_ci_setup"])
+    config["remote_ci_setup_names"] = [MatchSpec(pkg).name for pkg in config["remote_ci_setup"]]
 
     # Older conda-smithy versions supported this with only one
     # entry. To avoid breakage, we are converting single elements
