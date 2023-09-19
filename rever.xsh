@@ -12,7 +12,7 @@ $CHANGELOG_TEMPLATE = 'TEMPLATE.rst'
 def sdist_asset():
     fname = os.path.join('dist', 'conda-smithy-' + $VERSION + '.tar.gz')
     print('Creating sdist tarball ' + fname)
-    ![python setup.py sdist]
+    ![python -m build --sdist]
     return fname
 
 $TAG_TEMPLATE = $GHRELEASE_NAME = 'v$VERSION'
