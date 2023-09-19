@@ -1,7 +1,7 @@
 **Added:**
 
 * Add ``conda_install_tool`` configuration option to allow choosing between
-  ``conda`` and ``mamba`` as the dependency handling tool. (#1762)
+  ``conda`` and ``mamba`` as the dependency handling tool. (#1762, #1768)
 
 **Changed:**
 
