@@ -23,6 +23,9 @@ call activate base
 set "CONDA_SOLVER={{ conda_solver }}"
 if !errorlevel! neq 0 exit /b !errorlevel!
 {%- endif %}
+{%- if conda_solver == "libmamba" %}
+set "CONDA_LIBMAMBA_SOLVER_NO_CHANNELS_FROM_INSTALLED=1"
+{%- endif %}
 
 :: Provision the necessary dependencies to build the recipe later
 echo Installing dependencies
