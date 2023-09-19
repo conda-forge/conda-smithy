@@ -4,6 +4,46 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.26.0
+====================
+
+**Added:**
+
+* ``conda_build_tool`` setting with four different options: ``conda-build``, ``mambabuild`` (default),
+  ``conda-build+conda-libmamba-solver`` and ``conda-build+classic``. - #1732
+* Add ``conda_install_tool`` and ``conda_solver`` configuration options to allow choosing between
+  ``mamba`` and ``conda`` (with ``classic`` or ``libmamba`` solvers) as the dependency
+  handling tools. (#1762, #1768)
+* Add ``additional_zip_keys`` configuration option for migrations (#1764)
+
+**Changed:**
+
+* Unified Windows build scripts to avoid duplication of template logic in Github Actions and Azure Pipelines. (#1761)
+* Use strict channel priority on Linux and macOS. (#1768)
+* Use ``python-build`` to create ``sdist`` #1760
+
+**Deprecated:**
+
+* ``build_with_mambabuild`` boolean option is deprecated. Use ``conda_build_tool: mambabuild`` instead. - #1732
+
+**Fixed:**
+
+* Ensure undefined Jinja variables are rendered as the variable name, restoring Python 2-like behaviour. (#1726 via #1727)
+* Use name-only specs in ``conda update`` and ``conda uninstall`` subcommands. (#1768)
+* Catch negative exit codes on Windows. (#1763)
+* Fixed bug in the display of grouping commands in the Travis CI logging utilities. (#1730)
+
+**Authors:**
+
+* Jaime Rodríguez-Guerra
+* Uwe L. Korn
+* John Kirkham
+* Peter Williams
+* Bela Stoyan
+* Klaus Zimmermann
+
+
+
 v3.25.1
 ====================
 
