@@ -1,7 +1,8 @@
 **Added:**
 
-* Add ``conda_install_tool`` configuration option to allow choosing between
-  ``conda`` and ``mamba`` as the dependency handling tool. (#1762, #1768)
+* Add ``conda_install_tool`` and ``conda_solver`` configuration options to allow choosing between
+  ``mamba`` and ``conda`` (with ``classic`` or ``libmamba`` solvers) as the dependency 
+  handling tools. (#1762, #1768)
 
 **Changed:**
 
@@ -17,7 +18,7 @@
 
 **Fixed:**
 
-* <news item>
+* Use name-only specs in ``conda update`` and ``conda uninstall`` subcommands. (#1768)
 
 **Security:**
 
