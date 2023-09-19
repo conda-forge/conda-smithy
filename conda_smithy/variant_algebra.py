@@ -148,7 +148,8 @@ def op_variant_key_add(v1: dict, v2: dict):
                         newly_added_zip_keys.add(additional_key)
                 break
         else:
-            # The primary is not part of any zip_key, create a new one including the primary key
+            # The for loop didn't break thus the primary is not part of any zip_key,
+            # create a new one including the primary key
             result.setdefault("zip_keys", []).append(
                 [primary_key] + additional_zip_keys
             )
