@@ -6,45 +6,44 @@ on:
       - main
   pull_request: null
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+defaults:
+  run:
+    shell: bash -el {0}
+
 jobs:
   tests:
     name: tests
     runs-on: "ubuntu-latest"
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      - uses: conda-incubator/setup-miniconda@v2
+      - name: Set up Conda env
+        uses: mamba-org/setup-micromamba@2b72821d5ad7f6da3c003a3684ce341bf187b46f
         with:
-          python-version: 3.8
-          channels: conda-forge,defaults
-          channel-priority: strict
-          show-channel-urls: true
-          miniforge-version: latest
-          miniforge-variant: Mambaforge
-          use-mamba: true
+          environment-file: environment.yml
+          cache-environment: true
+          create-args: >-
+            python=3.8
+            coverage
+            coveralls
 
-      - name: install code and deps
-        shell: bash -l {0}
+      - name: install conda-smithy
         run: |
-          mamba install --file requirements.txt \
-            pre-commit coverage coveralls mock pytest \
-            pytest-cov pip setuptools wheel ${CONDA_PKGS} \
-            python-build \
-            --yes
           python -m pip install -v --no-build-isolation -e .
           git config --global user.email "smithy@smithy.smithy"
           git config --global user.name "smithy"
 
       - name: test versions
-        shell: bash -l {0}
         run: |
           pip uninstall conda-smithy --yes
           [[ $(python setup.py --version) != "0.0.0" ]] || exit 1
 
           rm -rf dist/*
-          python setup.py sdist
+          python -m build --sdist
           pip install --no-build-isolation dist/*.tar.gz
           pushd ..
           python -c "import conda_smithy; assert conda_smithy.__version__ != '0.0.0'"
@@ -62,7 +61,6 @@ jobs:
           python -m pip install -v --no-build-isolation -e .
 
       - name: run tests
-        shell: bash -l {0}
         run: |
           pytest tests --cov conda_smithy --cov-report lcov --cov-report term-missing
         env:
