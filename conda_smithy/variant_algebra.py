@@ -155,6 +155,14 @@ def op_variant_key_add(v1: dict, v2: dict):
             )
             newly_added_zip_keys.update([primary_key] + additional_zip_keys)
 
+    for key in newly_added_zip_keys:
+        # store the default value for the key, so that subsequent
+        # key additions don't need to specify them and continue to use the default value
+        # assert len(v1[key]) == 1
+        result.setdefault("__additional_zip_keys_default_values", {})[
+            additional_key
+        ] = result[additional_key][0]
+
     ordering = v2["__migrator"].get("ordering", {})
     if primary_key not in v2:
         return v1
@@ -188,16 +196,27 @@ def op_variant_key_add(v1: dict, v2: dict):
                         continue
 
                     # Transform key to zip_key if required
-                    # assert len(v1[key]) == 1
                     if key in newly_added_zip_keys:
-                        result[key] = [result[key][0]] * len(new_keys)
+                        default_value = result[
+                            "__additional_zip_keys_default_values"
+                        ][key]
+                        result[key] = [default_value] * len(new_keys)
 
                     # Create a new version of the key from
                     # assert len(v2[key]) == 1
                     new_value = [None] * len(new_keys)
                     for i, j in position_map.items():
                         new_value[j] = result[key][i]
-                    new_value[new_key_position] = v2[key][pkey_ind]
+
+                    if key in v2:
+                        new_value[new_key_position] = v2[key][pkey_ind]
+                    elif key in result.get(
+                        "__additional_zip_keys_default_values", {}
+                    ):
+                        new_value[new_key_position] = result[
+                            "__additional_zip_keys_default_values"
+                        ][key]
+
                     result[key] = new_value
 
     return result
