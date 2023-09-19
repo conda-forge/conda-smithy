@@ -31,6 +31,9 @@ bash $MINIFORGE_FILE -b -p ${MINIFORGE_HOME}
 
 source ${MINIFORGE_HOME}/etc/profile.d/conda.sh
 conda activate base
+{%- if conda_solver %}
+export CONDA_SOLVER="{{ conda_solver }}"
+{%- endif %}
 
 {{ conda_install_tool }} install --update-specs --quiet --yes --channel conda-forge \
     pip {{ conda_install_tool_deps }} {{ conda_build_tool_deps }} {{ " ".join(remote_ci_setup) }}

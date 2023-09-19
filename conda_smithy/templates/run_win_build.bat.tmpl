@@ -18,6 +18,12 @@ call :start_group "Configuring conda"
 :: Activate the base conda environment
 call activate base
 
+{%- if conda_solver %}
+:: Configure the solver
+set "CONDA_SOLVER={{ conda_solver }}"
+if !errorlevel! neq 0 exit /b !errorlevel!
+{%- endif %}
+
 :: Provision the necessary dependencies to build the recipe later
 echo Installing dependencies
 {{ conda_install_tool }}.exe install "python=3.10" pip {{ conda_install_tool_deps }} {{ conda_build_tool_deps }} {{ " ".join(remote_ci_setup) }} -c conda-forge --strict-channel-priority --yes

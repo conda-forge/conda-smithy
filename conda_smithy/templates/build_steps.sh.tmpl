@@ -28,6 +28,9 @@ conda-build:
 pkgs_dirs:
   - ${FEEDSTOCK_ROOT}/build_artifacts/pkg_cache
   - /opt/conda/pkgs
+{%- if conda_solver %}
+solver: {{ conda_solver }}
+{%- endif %}
 
 CONDARC
 {%- if conda_build_tool == "mambabuild" %}
