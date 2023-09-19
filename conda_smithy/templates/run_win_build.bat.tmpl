@@ -18,6 +18,15 @@ call :start_group "Configuring conda"
 :: Activate the base conda environment
 call activate base
 
+{%- if conda_solver %}
+:: Configure the solver
+set "CONDA_SOLVER={{ conda_solver }}"
+if !errorlevel! neq 0 exit /b !errorlevel!
+{%- endif %}
+{%- if conda_solver == "libmamba" %}
+set "CONDA_LIBMAMBA_SOLVER_NO_CHANNELS_FROM_INSTALLED=1"
+{%- endif %}
+
 :: Provision the necessary dependencies to build the recipe later
 echo Installing dependencies
 {{ conda_install_tool }}.exe install "python=3.10" pip {{ conda_install_tool_deps }} {{ conda_build_tool_deps }} {{ " ".join(remote_ci_setup) }} -c conda-forge --strict-channel-priority --yes
@@ -25,7 +34,7 @@ if !errorlevel! neq 0 exit /b !errorlevel!
 
 {%- if local_ci_setup %}
 echo Overriding conda-forge-ci-setup with local version
-{{ conda_install_tool }}.exe uninstall --quiet --yes --force {{ " ".join(remote_ci_setup) }}"
+{{ conda_install_tool }}.exe uninstall --quiet --yes --force {{ " ".join(remote_ci_setup_names) }}
 if !errorlevel! neq 0 exit /b !errorlevel!
 pip install --no-deps ".\{{ recipe_dir }}\."
 if !errorlevel! neq 0 exit /b !errorlevel!
