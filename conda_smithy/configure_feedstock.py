@@ -1846,6 +1846,7 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
         "conda_build_tool_deps": "boa",
         "conda_install_tool": "mamba",
         "conda_install_tool_deps": "mamba",
+        # Default value matches logic in conda-forge-ci-setup
         "conda_solver": "libmamba",
         # feedstock checkout git clone depth, None means keep default, 0 means no limit
         "clone_depth": None,
