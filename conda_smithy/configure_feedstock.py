@@ -1846,6 +1846,7 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
         "conda_build_tool_deps": "boa",
         "conda_install_tool": "mamba",
         "conda_install_tool_deps": "mamba",
+        "conda_solver": "libmamba",
         # feedstock checkout git clone depth, None means keep default, 0 means no limit
         "clone_depth": None,
         # Specific channel for package can be given with
@@ -1975,7 +1976,7 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
         config["conda_install_tool_deps"] = "mamba"
     elif config["conda_install_tool"] in "conda":
         config["conda_install_tool_deps"] = "conda"
-        if config.get("conda_solver", "libmamba"):
+        if config.get("conda_solver") == "libmamba":
             config["conda_install_tool_deps"] += " conda-libmamba-solver"
 
     config["secrets"] = sorted(set(config["secrets"] + ["BINSTAR_TOKEN"]))
