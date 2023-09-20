@@ -46,7 +46,7 @@ export CONDA_LIBMAMBA_SOLVER_NO_CHANNELS_FROM_INSTALLED=1
 {%- endif %}
 
 {% if local_ci_setup %}
-{{ conda_install_tool }} uninstall --quiet --yes --force {{ " ".join(remote_ci_setup_names) }}
+conda uninstall --quiet --yes --force {{ " ".join(remote_ci_setup_names) }}
 pip install --no-deps {{ recipe_dir }}/.
 {%- endif %}
 
