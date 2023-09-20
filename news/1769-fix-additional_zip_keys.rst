@@ -16,7 +16,7 @@
 
 **Fixed:**
 
-* Fixed additional_zip_keys, so that subsequent migrations don't break
+* Fixed additional_zip_keys, so that subsequent migrations don't break.
 
 **Security:**
 
