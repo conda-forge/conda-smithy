@@ -34,7 +34,7 @@ if !errorlevel! neq 0 exit /b !errorlevel!
 
 {%- if local_ci_setup %}
 echo Overriding conda-forge-ci-setup with local version
-{{ conda_install_tool }}.exe uninstall --quiet --yes --force {{ " ".join(remote_ci_setup_names) }}
+conda.exe uninstall --quiet --yes --force {{ " ".join(remote_ci_setup_names) }}
 if !errorlevel! neq 0 exit /b !errorlevel!
 pip install --no-deps ".\{{ recipe_dir }}\."
 if !errorlevel! neq 0 exit /b !errorlevel!
