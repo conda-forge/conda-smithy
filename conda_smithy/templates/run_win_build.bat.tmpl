@@ -91,7 +91,7 @@ if /i "%CI%" == "github_actions" (
     set "TEMP=%RUNNER_TEMP%"
 )
 if /i "%CI%" == "azure" (
-    set "FEEDSTOCK_NAME=%BUILD_REPOSITORY_NAME%"
+    set "FEEDSTOCK_NAME=%BUILD_REPOSITORY_NAME:*/=%"
     set "GIT_BRANCH=%BUILD_SOURCEBRANCHNAME%"
     if /i "%BUILD_REASON%" == "PullRequest" (
         set "IS_PR_BUILD=True"
