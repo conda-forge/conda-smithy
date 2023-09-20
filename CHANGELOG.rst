@@ -4,6 +4,20 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.26.1
+====================
+
+**Fixed:**
+
+* Set ``FEEDSTOCK_NAME`` correctly on Windows in Azure Pipelines. (#1770)
+* Always use ``conda`` to ``uninstall --force``. (#1771)
+
+**Authors:**
+
+* Jaime Rodríguez-Guerra
+
+
+
 v3.26.0
 ====================
 
