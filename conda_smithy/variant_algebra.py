@@ -133,6 +133,12 @@ def op_variant_key_add(v1: dict, v2: dict):
     primary_key = v2["__migrator"]["primary_key"]
     additional_zip_keys = v2["__migrator"].get("additional_zip_keys", [])
 
+    ordering = v2["__migrator"].get("ordering", {})
+    if primary_key not in v2:
+        return v1
+    if primary_key not in v1:
+        raise RuntimeError("unhandled")
+
     newly_added_zip_keys = set()
 
     result = v1.copy()
@@ -162,12 +168,6 @@ def op_variant_key_add(v1: dict, v2: dict):
         result.setdefault("__additional_zip_keys_default_values", {})[
             additional_key
         ] = result[additional_key][0]
-
-    ordering = v2["__migrator"].get("ordering", {})
-    if primary_key not in v2:
-        return v1
-    if primary_key not in v1:
-        raise RuntimeError("unhandled")
 
     for pkey_ind, pkey_val in enumerate(v2[primary_key]):
         # object is present already, ignore everything
