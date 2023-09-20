@@ -1,0 +1,23 @@
+**Added:**
+
+* <news item>
+
+**Changed:**
+
+* <news item>
+
+**Deprecated:**
+
+* <news item>
+
+**Removed:**
+
+* <news item>
+
+**Fixed:**
+
+* Set ``FEEDSTOCK_NAME`` correctly on Windows in Azure Pipelines. (#1770)
+
+**Security:**
+
+* <news item>
