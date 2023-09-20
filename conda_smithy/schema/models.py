@@ -44,7 +44,10 @@ class PlatformUniqueConfig(BaseModel):
 
 
 class BotConfig(BaseModel):
-    """This dictates the behavior of the conda-forge auto-tick bot which issues automatic version updates/migrations for feedstocks."""
+    """
+    This dictates the behavior of the conda-forge auto-tick bot which issues
+    automatic version updates/migrations for feedstocks.
+    """
 
     automerge: Optional[Union[bool, BotConfigAutoMergeChoice]] = Field(
         False,
@@ -73,7 +76,11 @@ class BotConfig(BaseModel):
 
 
 class CondaForgeChannels(BaseModel):
-    """This represents the channels to grab packages from during builds and which channels/labels to push to on anaconda.org after a package has been built. The channels variable is a mapping with sources and targets."""
+    """
+    This represents the channels to grab packages from during builds and which
+    channels/labels to push to on anaconda.org after a package has been built.
+    The channels variable is a mapping with sources and targets.
+    """
 
     sources: Optional[List[str]] = Field(
         default=["conda-forge"],
@@ -82,24 +89,32 @@ class CondaForgeChannels(BaseModel):
 
     targets: Optional[List[List[str]]] = Field(
         default=[["conda-forge", "main"]],
-        description="targets is a list of 2-lists, where the first element is the channel to push to and the second element is the label on that channel",
+        description="targets is a list of 2-lists, where the first element is the \
+        channel to push to and the second element is the label on that channel",
     )
 
 
 class CondaBuildConfig(BaseModel):
     pkg_format: Optional[Literal["1", "2", "tar"]] = Field(
-        description="The package version format for conda build. This can be either '1', '2', or 'tar'. The default is '2'.",
+        description="The package version format for conda build.",
         default="2",
     )
 
     zstd_compression_level: Optional[int] = Field(
         default=16,
-        description="The compression level for the zstd compression algorithm for .conda artifacts. conda-forge uses a default value of 16 for a good compromise of performance and compression.",
+        description="""The compression level for the zstd compression algorithm for
+            .conda artifacts. conda-forge uses a default value of 16 for a good
+            compromise of performance and compression.""",
     )
 
     error_overlinking: Optional[bool] = Field(
         default=False,
-        description="Enable error when shared libraries from transitive  dependencies are  directly  linked  to any executables or shared libraries in  built packages. This is disabled by default. For more details, see the [conda build documentation](https://docs.conda.io/projects/conda-build/en/stable/resources/commands/conda-build.html).",
+        description="""
+            Enable error when shared libraries from transitive dependencies are
+            directly  linked  to any executables or shared libraries in  built
+            packages. For more details, see the
+            [conda build documentation](https://docs.conda.io/projects/conda-build/en/stable/resources/commands/conda-build.html).
+            """,
     )
 
 
@@ -125,7 +140,8 @@ class CondaForgeDocker(BaseModel):
 
     # Deprecated values, if passed should raise errors
     image: Optional[Union[str, None]] = Field(
-        description="Setting the Docker image in conda-forge.yml is no longer supported, use conda_build_config.yaml to specify Docker images.",
+        description="""Setting the Docker image in conda-forge.yml is no longer
+        supported, use conda_build_config.yaml to specify Docker images.""",
         default=None,
         exclude=True,
     )
@@ -149,29 +165,32 @@ class ShellCheck(BaseModel):
 
 class ConfigModel(BaseModel):
     """
-
-    This model describes in detail the top-level fields in  ``conda-forge.yml``. General configuration options are described below within the ``Fields`` specifications. Additional examples are provided as part of the object description. Values and options are subject to change, and will be flagged as Deprecated as appropriate.
+    This model describes in detail the top-level fields in  ``conda-forge.yml``.
+    General configuration options are described below within the ``Fields``
+    specifications. Additional examples are provided as part of the object
+    description. Values and options are subject to change, and will be
+    flagged as Deprecated as appropriate.
 
     """
 
-    # Values which are not expected to be present in the model dump, are flagged with exclude=True. This is to avoid confusion when comparing the model dump with the default conda-forge.yml file used for smithy or to avoid deprecated values been rendered.
+    # Values which are not expected to be present in the model dump, are
+    # flagged with exclude=True. This is to avoid confusion when comparing
+    # the model dump with the default conda-forge.yml file used for smithy
+    # or to avoid deprecated values been rendered.
 
     conda_build: Optional[CondaBuildConfig] = Field(
-        default_factory=lambda: CondaBuildConfig(),
+        default_factory=CondaBuildConfig,
     )
     """
-    Settings in this block are used to control how `conda build` runs and produces artifacts. The currently supported options are
+    Settings in this block are used to control how ``conda build``
+    runs and produces artifacts. An example of the such configuration is:
 
     .. code-block:: yaml
 
         conda_build:
-        pkg_format: 2    # makes .conda artifacts
-        pkg_format: None # makes .tar.bz2 artifacts
-        # controls the compression level for .conda artifacts
-        # conda-forge uses a default value of 16 since its artifacts
-        # can be large. conda-build has a default of 22.
-        zstd_compression_level: 16
-        error_overlinking: False # enable error when shared libraries from transitive dependencies are directly linked to any executables or shared libraries in built packages
+            pkg_format: 2
+            zstd_compression_level: 16
+            error_overlinking: False
 
     """
 
@@ -179,21 +198,22 @@ class ConfigModel(BaseModel):
         default="conda-build",
     )
     """
-    Use this option to choose which tool is used to build your recipe. The default is ``conda-build``. Other available options are ``conda-build+classic``,``conda-build+conda-libmamba-solver`` and ``mambabuild``.
+    Use this option to choose which tool is used to build your recipe.
     """
 
     conda_solver: Optional[Literal["libmamba", "classic"]] = Field(
         default="libmamba",
     )
     """
-    Choose which ``conda`` solver plugin to use for feedstock builds. The default is ``libmamba``. The other option is ``classic``.
+    Choose which ``conda`` solver plugin to use for feedstock builds.
     """
 
     conda_install_tool: Optional[Literal["conda", "mamba"]] = Field(
         default="mamba",
     )
     """
-    Use this option to choose which tool is used to provision the tooling in your feedstock.
+    Use this option to choose which tool is used to provision the tooling in your
+    feedstock.
     """
 
     conda_forge_output_validation: Optional[bool] = Field(
@@ -201,66 +221,53 @@ class ConfigModel(BaseModel):
     )
     """
     This field must be set to ``True`` for feedstocks in the ``conda-forge`` GitHub
-    organization. It enables the required feedstock artifact validation as described in `Output Validation and Feedstock Tokens <https://conda-forge.org/docs/maintainer/infrastructure.html#output-validation>`_.
+    organization. It enables the required feedstock artifact validation as described
+    in :ref: Output Validation and Feedstock Tokens </maintainer/infrastructure#output-validation>.
     """
 
     github: Optional[GithubConfig] = Field(
-        default_factory=lambda: GithubConfig(),
+        default_factory=GithubConfig,
     )
     """
-    Mapping for GitHub-specific configuration options. The
-    defaults are as follows:
+    Mapping for GitHub-specific configuration options. The defaults are as follows:
 
     .. code-block:: yaml
 
         github:
-        # name of the github organization
-        user_or_org: conda-forge
-        # repository name, usually filled in automatically
-        repo_name: ""
-        # branch name to execute on
-        branch_name: main
-        # branch name to use for rerender+webservices github actions and
-        # conda-forge-ci-setup-feedstock references
-        tooling_branch_name: main
+            user_or_org: conda-forge
+            repo_name: "my_repo"
+            branch_name: main
+            tooling_branch_name: main
     """
 
     bot: Optional[BotConfig] = Field(
-        default_factory=lambda: BotConfig(),
+        default_factory=BotConfig,
     )
     """
-    This dictates the behavior of the conda-forge auto-tick bot which issues automatic version updates/migrations for feedstocks. The current options are
+    This dictates the behavior of the conda-forge auto-tick bot which issues
+    automatic version updates/migrations for feedstocks.
+    A valid example is:
 
     .. code-block:: yaml
 
         bot:
-        # can the bot automerge PRs it makes on this feedstock
-        automerge: true
-        # only automerge on successful version PRs, migrations are not automerged
-        automerge: 'version'
-        # only automerge on successful migration PRs, versions are not automerged
-        automerge: 'migration'
+            # can the bot automerge PRs it makes on this feedstock
+            automerge: true
 
-        # only open PRs if resulting environment is solvable, useful for tightly coupled packages
-        check_solvable: true
+            # only open PRs if resulting environment is solvable, useful for tightly coupled packages
+            check_solvable: true
 
-        # The bot.inspection key in the conda-forge.yml can have one of six possible values:
-        inspection: hint  # generate hints using source code (backwards compatible)
-        inspection: hint-all  # generate hints using all methods
-        inspection: hint-source  # generate hints using only source code
-        inspection: hint-grayskull  # generate hints using only grayskull
-        inspection: update-all  # update recipe using all methods
-        inspection: update-source  # update recipe using only source code
-        inspection: update-grayskull  # update recipe using only grayskull
+            # The bot.inspection key in the conda-forge.yml can have one of six possible values:
+            inspection: hint-all  # generate hints using all methods
 
-        # any branches listed in this section will get bot migration PRs in addition
-        # to the default branch
-        abi_migration_branches:
-            - v1.10.x
+            # any branches listed in this section will get bot migration PRs in addition
+            # to the default branch
+            abi_migration_branches:
+                - v1.10.x
 
-        version_updates:
-            # use this for packages that are updated too frequently
-            random_fraction_to_keep: 0.1  # keeps 10% of versions at random
+            version_updates:
+                # use this for packages that are updated too frequently
+                random_fraction_to_keep: 0.1  # keeps 10% of versions at random
 
     The ``abi_migration_branches`` feature is useful to, for example, add a
     long-term support (LTS) branch for a package.
@@ -270,33 +277,35 @@ class ConfigModel(BaseModel):
         default_factory=dict,
     )
     """
-    This is a mapping from the target platform to the build platform for the package to be built.
-    For example, the following builds a ``osx-64`` package on the ``linux-64``
-    build platform using cross-compiling.
+    This is a mapping from the target platform to the build platform for the
+    package to be built. For example, the following builds a ``osx-64`` package
+    on the ``linux-64`` build platform using cross-compiling.
 
     .. code-block:: yaml
 
         build_platform:
-        osx_64: linux_64
+            osx_64: linux_64
 
     Leaving this field empty implicitly requests to build a package natively. i.e.
 
     .. code-block:: yaml
 
         build_platform:
-        linux_64: linux_64
-        linux_ppc64le: linux_ppc64le
-        linux_aarch64: linux_aarch64
-        osx_64: osx_64
-        osx_arm64: osx_arm64
-        win_64: win_64
+            linux_64: linux_64
+            linux_ppc64le: linux_ppc64le
+            linux_aarch64: linux_aarch64
+            osx_64: osx_64
+            osx_arm64: osx_arm64
+            win_64: win_64
     """
 
     build_with_mambabuild: Optional[bool] = Field(
         default=True,
     )
     """
-    Configures the conda-forge CI to run a debug build using the ``mamba`` solver. More information can be found in the `mamba docs <https://conda-forge.org/docs/maintainer/maintainer_faq.html#mfaq-mamba-local>`_.
+    Configures the conda-forge CI to run a debug build using the ``mamba`` solver.
+    More information can be found in the
+    `mamba docs <https://conda-forge.org/docs/maintainer/maintainer_faq.html#mfaq-mamba-local>`__.
 
     .. code-block:: yaml
 
@@ -308,42 +317,50 @@ class ConfigModel(BaseModel):
         default="strict",
     )
     """
-    The channel priority level for the conda solver during feedstock builds. This can be one of `strict`, `flexible`, or `disabled`. For more information, see the `Strict channel priority <https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-channels.html#strict-channel-priority>`_ section on conda documentation.
+    The channel priority level for the conda solver during feedstock builds.
+    For extra information, see the
+    `Strict channel priority <https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-channels.html#strict-channel-priority>`__
+    section on conda documentation.
     """
 
     channels: Optional[CondaForgeChannels] = Field(
-        default_factory=lambda: CondaForgeChannels(),
+        default_factory=CondaForgeChannels,
     )
     """
-    This represents the channels to grab packages from during builds and which channels/labels to push to on anaconda.org after a package has been built. The ``channels`` variable is a mapping with ``sources`` and ``targets``, as follows:
+    This represents the channels to grab packages from during builds and which
+    channels/labels to push to on anaconda.org after a package has been built.
+    The ``channels`` variable is a mapping with ``sources`` and ``targets``,
+    as follows:
 
     .. code-block:: yaml
 
         channels:
-        # sources selects the channels to pull packages from, in order.
-        sources:
-            - conda-forge
-            - defaults
-        # targets is a list of 2-lists, where the first element is the
-        # channel to push to and the second element is the label on that channel
-        targets:
-            - ["conda-forge", "main"]
+            # sources selects the channels to pull packages from, in order.
+            sources:
+                - conda-forge
+                - defaults
+            # targets is a list of 2-lists, where the first element is the
+            # channel to push to and the second element is the label on that channel
+            targets:
+                - ["conda-forge", "main"]
     """
 
     choco: Optional[List[str]] = Field(
         default_factory=list,
     )
     """
-    This parameter allows for conda-smithy to run chocoloatey installs on Windows when additional system packages are needed. This is a list of strings that represent package names and any additional parameters. For example,
+    This parameter allows for conda-smithy to run chocoloatey installs on Windows
+    when additional system packages are needed. This is a list of strings that
+    represent package names and any additional parameters. For example,
 
     .. code-block:: yaml
 
         choco:
-        # install a package
-        - nvidia-display-driver
+            # install a package
+            - nvidia-display-driver
 
-        # install a package with a specific version
-        - cuda --version=11.0.3
+            # install a package with a specific version
+            - cuda --version=11.0.3
 
     This is currently only implemented for Azure Pipelines. The command that is run is
     ``choco install {entry} -fdv -y --debug``.  That is, ``choco install`` is executed
@@ -351,25 +368,27 @@ class ConfigModel(BaseModel):
     """
 
     docker: Optional[CondaForgeDocker] = Field(
-        default_factory=lambda: CondaForgeDocker(),
+        default_factory=CondaForgeDocker,
     )
     """
-    This is a mapping for Docker-specific configuration options. The defaults are as follows:
+    This is a mapping for Docker-specific configuration options.
+    Some options are
 
     .. code-block:: yaml
 
         docker:
-        executable: docker
-        image: "condaforge/linux-anvil-comp7"
-        command: "bash"
-        interactive: True
+            executable: docker
+            image: "condaforge/linux-anvil-comp7"
+            command: "bash"
+            interactive: True
     """
 
     idle_timeout_minutes: Optional[int] = Field(
         default=None,
     )
     """
-    Configurable idle timeout.  Used for packages that don't have chatty enough builds. Applicable only to circleci and travis
+    Configurable idle timeout. Used for packages that don't have chatty enough
+    builds. Applicable only to circleci and travis.
 
     .. code-block:: yaml
 
@@ -377,62 +396,70 @@ class ConfigModel(BaseModel):
     """
 
     win_64: Optional[PlatformUniqueConfig] = Field(
-        default_factory=lambda: PlatformUniqueConfig(),
+        default_factory=PlatformUniqueConfig,
         validation_alias=AliasChoices("win_64", "win"),
     )
     """
-    Windows-specific configuration options. This is largely an internal setting and should not normally be manually modified.
+    Windows-specific configuration options. This is largely an internal setting and
+    should not normally be manually modified.
 
     .. code-block:: yaml
 
         win:
             enabled: False
 
-    As show above by the example, aliasing is supported for the win platform and will be converted to the appropriate platform name (win_64) during build.
+    As show above by the example, aliasing is supported for the win platform and
+    will be converted to the appropriate platform name (win_64) during build.
     """
 
     osx_64: Optional[PlatformUniqueConfig] = Field(
-        default_factory=lambda: PlatformUniqueConfig(),
+        default_factory=PlatformUniqueConfig,
         validation_alias=AliasChoices("osx_64", "osx"),
     )
     """
-    OSX-specific configuration options. This is largely an internal setting and should not normally be manually modified.
+    OSX-specific configuration options. This is largely an internal setting and
+    should not normally be manually modified.
 
     .. code-block:: yaml
 
         osx:
             enabled: False
 
-    As show above by the example, aliasing is supported for the osx platform and will be converted to the appropriate platform name (osx_64) during build.
+    As show above by the example, aliasing is supported for the osx platform and
+    will be converted to the appropriate platform name (osx_64) during build.
     """
 
     osx_arm64: Optional[PlatformUniqueConfig] = Field(
-        default_factory=lambda: PlatformUniqueConfig(),
+        default_factory=PlatformUniqueConfig,
     )
     """
-    OSX-specific (ARM) configuration options. This is largely an internal setting and should not normally be manually modified.
+    OSX-specific (ARM) configuration options. This is largely an internal setting
+    and should not normally be manually modified.
     """
 
     linux_64: Optional[PlatformUniqueConfig] = Field(
-        default_factory=lambda: PlatformUniqueConfig(),
+        default_factory=PlatformUniqueConfig,
         validation_alias=AliasChoices("linux_64", "linux"),
     )
     """
-    Linux-specific configuration options. This is largely an internal setting and should not normally be manually modified.
+    Linux-specific configuration options. This is largely an internal setting
+    and should not normally be manually modified.
 
     .. code-block:: yaml
 
         linux:
             enabled: False
 
-    As show above by the example, aliasing is supported for the linux platform and will be converted to the appropriate platform name (linux_64) during build.
+    As show above by the example, aliasing is supported for the linux platform
+    and will be converted to the appropriate platform name (linux_64) during build.
     """
 
     linux_aarch64: Optional[PlatformUniqueConfig] = Field(
-        default_factory=lambda: PlatformUniqueConfig(),
+        default_factory=PlatformUniqueConfig,
     )
     """
-    ARM-specific configuration options. This is largely an internal setting and should not normally be manually modified.
+    ARM-specific configuration options. This is largely an internal setting
+    and should not normally be manually modified.
 
     .. code-block:: yaml
 
@@ -441,10 +468,11 @@ class ConfigModel(BaseModel):
     """
 
     linux_ppc64le: Optional[PlatformUniqueConfig] = Field(
-        default_factory=lambda: PlatformUniqueConfig(),
+        default_factory=PlatformUniqueConfig,
     )
     """
-    PPC-specific configuration options. This is largely an internal setting and should not normally be manually modified.
+    PPC-specific configuration options. This is largely an internal setting and
+    should not normally be manually modified.
 
     .. code-block:: yaml
 
@@ -453,10 +481,11 @@ class ConfigModel(BaseModel):
     """
 
     linux_s390x: Optional[PlatformUniqueConfig] = Field(
-        default_factory=lambda: PlatformUniqueConfig(),
+        default_factory=PlatformUniqueConfig,
     )
     """
-    s390x-specific configuration options. This is largely an internal setting and should not normally be manually modified.
+    s390x-specific configuration options. This is largely an internal setting and
+    should not normally be manually modified.
 
     .. code-block:: yaml
 
@@ -465,10 +494,11 @@ class ConfigModel(BaseModel):
     """
 
     linux_armv7l: Optional[PlatformUniqueConfig] = Field(
-        default_factory=lambda: PlatformUniqueConfig(),
+        default_factory=PlatformUniqueConfig,
     )
     """
-    ARM-specific configuration options. This is largely an internal setting and should not normally be manually modified.
+    ARM-specific configuration options. This is largely an internal setting and
+    should not normally be manually modified.
 
     .. code-block:: yaml
 
@@ -495,8 +525,9 @@ class ConfigModel(BaseModel):
         """
         Validator function for platform settings.
 
-        This function checks if the platform is disabled but also in the build_platform list,
-        and raises a ValueError with an appropriate error message if that's the case.
+        This function checks if the platform is disabled but also in
+        the build_platform list, and raises a ValueError with an
+        appropriate error message if that's the case.
 
         :param cls: The class where the validator is defined.
         :param field_value: The value of the platform field.
@@ -547,7 +578,11 @@ class ConfigModel(BaseModel):
         default_factory=dict,
     )
     """
-    This key is used to set the OS versions for `linux_*` platforms. Valid entries map a linux platform and arch to either `cos6` or `cos7`. Currently `cos6` is the default for `linux-64`. All other linux architectures use CentOS 7. Here is an example that enables CentOS 7 on ``linux-64`` builds
+    This key is used to set the OS versions for `linux_*` platforms. Valid entries
+    map a linux platform and arch to either `cos6` or `cos7`.
+    Currently `cos6` is the default for `linux-64`.
+    All other linux architectures use CentOS 7.
+    Here is an example that enables CentOS 7 on ``linux-64`` builds
 
     .. code-block:: yaml
 
@@ -561,9 +596,14 @@ class ConfigModel(BaseModel):
         default_factory=dict,
     )
     """
-    The ``provider`` field is a mapping from build platform (not target platform) to CI service. It determines which service handles each build platform. If a desired build platform is not available with a selected provider (either natively or with emulation), the build will be disabled. Use the ``build_platform`` field to manually specify cross-compilation when no providers offer a desired build platform.
+    The ``provider`` field is a mapping from build platform (not target platform)
+    to CI service. It determines which service handles each build platform.
+    If a desired build platform is not available with a selected provider
+    (either natively or with emulation), the build will be disabled.
+    Use the ``build_platform`` field to manually specify cross-compilation when
+    no providers offer a desired build platform.
 
-    The following are available as supoprted build platforms:
+    The following are available as supported build platforms:
 
     * ``linux_64``
     * ``osx_64``
@@ -580,7 +620,8 @@ class ConfigModel(BaseModel):
     * ``None`` or ``False`` to disable a build platform.
     * ``default`` to choose an appropriate CI (only if available)
 
-    For example, switching linux_64 & osx_64 to build on Travis CI, with win_64 on Appveyor:
+    For example, switching linux_64 & osx_64 to build on Travis CI, with win_64 on
+    Appveyor:
 
     .. code-block:: yaml
 
@@ -589,25 +630,26 @@ class ConfigModel(BaseModel):
         osx_64: travis
         win_64: appveyor
 
-    Currently, x86_64 platforms are enabled, but other build platforms are disabled by default. i.e. an empty
-    provider entry is equivalent to the following:
+    Currently, x86_64 platforms are enabled, but other build platforms are
+    disabled by default. i.e. an empty provider entry is equivalent to the
+    following:
 
     .. code-block:: yaml
 
         provider:
-        linux_64: azure
-        osx_64: azure
-        win_64: azure
-        linux_ppc64le: None
-        linux_aarch64: None
+            linux_64: azure
+            osx_64: azure
+            win_64: azure
+            linux_ppc64le: None
+            linux_aarch64: None
 
     To enable ``linux_ppc64le`` and ``linux_aarch64`` add the following:
 
     .. code-block:: yaml
 
         provider:
-        linux_ppc64le: default
-        linux_aarch64: default
+            linux_ppc64le: default
+            linux_aarch64: default
     """
 
     package: Optional[str] = Field(
@@ -630,8 +672,9 @@ class ConfigModel(BaseModel):
         default_factory=lambda: ["conda-forge-ci-setup=3"],
     )
     """
-    This option can be used to override the default `conda-forge-ci-setup` package. Can be given with ``${url or channel_alias}::package_name``, defaults to conda-forge channel_alias if no prefix is given. defaults to conda-forge
-    channel_alias if no prefix is given.
+    This option can be used to override the default ``conda-forge-ci-setup`` package.
+    Can be given with ``${url or channel_alias}::package_name``,
+    defaults to conda-forge channel_alias if no prefix is given.
 
     .. code-block:: yaml
 
@@ -643,7 +686,8 @@ class ConfigModel(BaseModel):
         """
         Validator function for remote_ci_setup field.
 
-        This function sanitizes the remote_ci_setup packages and returns the sanitized list.
+        This function sanitizes the remote_ci_setup packages and returns the
+        sanitized list.
 
         :param cls: The class where the validator is defined.
         :param remote_ci_setup: The list of remote_ci_setup packages.
@@ -660,35 +704,40 @@ class ConfigModel(BaseModel):
         default=None,
     )
     """
-    Shell scripts used for builds or activation scripts can be linted with shellcheck. This option can be used to enable shellcheck and configure its behavior. This is not enabled by default, but can be enabled like so:
+    Shell scripts used for builds or activation scripts can be linted with
+    shellcheck. This option can be used to enable shellcheck and configure
+    its behavior. This is not enabled by default, but can be enabled like so:
 
     .. code-block:: yaml
 
         shellcheck:
-        enabled: True
+            enabled: True
 
     """
 
     skip_render: Optional[List[BotConfigSkipRenderChoices]] = Field(
         default_factory=list,
-        description="This option specifies a list of files which `conda smithy` will skip rendering.",
     )
     """
-    This option specifies a list of files which `conda smithy` will skip rendering. This is useful for files that are not templates, but are still in the recipe directory. The default value is an empty list [ ], i.e. all these four files will be generated by conda smithy.
-    For example, if you want to skip rendering the .gitignore and LICENSE.txt files, you can add the following:
+    This option specifies a list of files which ``conda smithy`` will skip rendering.
+    This is useful for files that are not templates, but are still in the recipe
+    directory. The default value is an empty list [ ], which will consider that
+    all files can be rendered. For example, if you want to skip rendering
+    the .gitignore and LICENSE.txt files, you can add the following:
 
     .. code-block:: yaml
 
         skip_render:
-        - .gitignore
-        - LICENSE.txt
+            - .gitignore
+            - LICENSE.txt
     """
 
     templates: Optional[Dict[str, str]] = Field(
         default_factory=dict,
     )
     """
-    This is mostly an internal field for specifying where template files reside. You shouldn't need to modify it.
+    This is mostly an internal field for specifying where template files reside.
+    You shouldn't need to modify it.
     """
 
     test_on_native_only: Optional[bool] = Field(
@@ -698,14 +747,15 @@ class ConfigModel(BaseModel):
     This was used for disabling testing for cross-compiling.
 
     .. note::
-        This has been deprecated in favor of the top-level `test` field. It is now mapped to `test: native_and_emulated`.
+        This has been deprecated in favor of the top-level ``test`` field.
+        It is now mapped to ``test: native_and_emulated``.
     """
 
     test: Optional[DefaultTestPlatforms] = Field(
         default=None,
     )
     """
-    This is used to configure on which platforms a recipe is tested. The default is ``all``.
+    This is used to configure on which platforms a recipe is tested.
 
     .. code-block:: yaml
 
@@ -739,21 +789,24 @@ class ConfigModel(BaseModel):
         default="2",
     )
     """
-    The version of the `conda-forge.yml` specification. This should not be manually modified.
+    The version of the ``conda-forge.yml`` specification.
+    This should not be manually modified.
     """
 
     exclusive_config_file: Optional[str] = Field(
         default=None,
     )
     """
-    Exclusive conda-build config file to replace `conda-forge-pinning`. For advanced usage only.
+    Exclusive conda-build config file to replace ``conda-forge-pinning``.
+    For advanced usage only.
     """
 
     compiler_stack: Optional[str] = Field(
         default="comp7",
     )
     """
-    Compiler stack environment variable. This is used to specify the compiler stack to use for builds. The default is ``comp7``.
+    Compiler stack environment variable. This is used to specify the compiler
+    stack to use for builds.
 
     .. code-block:: yaml
 
@@ -764,7 +817,8 @@ class ConfigModel(BaseModel):
         default="27",
     )
     """
-    Minimum Python version. This is used to specify the minimum Python version to use for builds. The default is ``27``.
+    Minimum Python version. This is used to specify the minimum Python version
+    to use for builds.
 
     .. code-block:: yaml
 
@@ -775,7 +829,8 @@ class ConfigModel(BaseModel):
         default="37",
     )
     """
-    Maximum Python version. This is used to specify the maximum Python version to use for builds. The default is ``37``.
+    Maximum Python version. This is used to specify the maximum Python version
+    to use for builds.
 
     .. code-block:: yaml
 
@@ -786,7 +841,8 @@ class ConfigModel(BaseModel):
         default="34",
     )
     """
-    Minimum R version. This is used to specify the minimum R version to use for builds. The default is ``34``.
+    Minimum R version. This is used to specify the minimum R version to
+    use for builds.
 
     .. code-block:: yaml
 
@@ -795,10 +851,10 @@ class ConfigModel(BaseModel):
 
     max_r_ver: Optional[str] = Field(
         default="34",
-        description="Maximum R version.",
     )
     """
-    Maximum R version. This is used to specify the maximum R version to use for builds. The default is ``34``.
+    Maximum R version. This is used to specify the maximum R version to use
+    for builds.
 
     .. code-block:: yaml
 
@@ -807,10 +863,9 @@ class ConfigModel(BaseModel):
 
     private_upload: Optional[bool] = Field(
         default=False,
-        description="Whether to upload to a private channel.",
     )
     """
-    Whether to upload to a private channel. The default is ``False``.
+    Whether to upload to a private channel.
 
     .. code-block:: yaml
 
@@ -821,21 +876,24 @@ class ConfigModel(BaseModel):
         default_factory=list,
     )
     """
-    List of secrets to be used in GitHub Actions. The default is an empty list and will not be used.
+    List of secrets to be used in GitHub Actions.
+    The default is an empty list and will not be used.
     """
 
     clone_depth: Optional[int] = Field(
         default=None,
     )
     """
-    The depth of the git clone. The default is ``None``.
+    The depth of the git clone.
     """
 
     timeout_minutes: Optional[int] = Field(
         default=None,
     )
     """
-    The timeout in minutes for all platforms CI jobs. The default is ``None``. If passed alongside with Azure, it will be used as the default timeout for Azure Pipelines jobs.
+    The timeout in minutes for all platforms CI jobs.
+    If passed alongside with Azure, it will be used as the default
+    timeout for Azure Pipelines jobs.
     """
 
     ###################################
@@ -845,43 +903,48 @@ class ConfigModel(BaseModel):
         default_factory=dict,
     )
     """
-    Travis CI settings. This is usually read-only and should not normally be manually modified. Tools like conda-smithy may modify this, as needed.
+    Travis CI settings. This is usually read-only and should not normally be
+    manually modified. Tools like conda-smithy may modify this, as needed.
     """
 
     circle: Optional[Dict[str, Any]] = Field(
         default_factory=dict,
     )
     """
-    Circle CI settings. This is usually read-only and should not normally be manually modified. Tools like conda-smithy may modify this, as needed.
+    Circle CI settings. This is usually read-only and should not normally be
+    manually modified. Tools like conda-smithy may modify this, as needed.
     """
 
     appveyor: Optional[Dict[str, Any]] = Field(
         default_factory=dict,
     )
     """
-    AppVeyor CI settings. This is usually read-only and should not normally be manually modified. Tools like conda-smithy may modify this, as needed.
+    AppVeyor CI settings. This is usually read-only and should not normally be
+    manually modified. Tools like conda-smithy may modify this, as needed.
     """
 
     azure: Optional[AzureConfig] = Field(
-        default_factory=lambda: AzureConfig(),
+        default_factory=AzureConfig,
     )
     """
-    Azure Pipelines CI settings. This is usually read-only and should not normally be manually modified. Tools like conda-smithy may modify this, as needed. For example:
+    Azure Pipelines CI settings. This is usually read-only and should not
+    normally be manually modified. Tools like conda-smithy may modify this, as needed.
+    For example:
 
     .. code-block:: yaml
 
         azure:
-        # flag for forcing the building all supported providers
-        force: False
-        # toggle for storing the conda build_artifacts directory (including the
-        # built packages) as an Azure pipeline artifact that can be downloaded
-        store_build_artifacts: False
-        # toggle for freeing up some extra space on the default Azure Pipelines
-        # linux image before running the Docker container for building
-        free_disk_space: False
-        # limit the amount of CI jobs running concurrently at a given time
-        # each OS will get its proportional share of the configured value
-        max_parallel: 25
+            # flag for forcing the building all supported providers
+            force: False
+            # toggle for storing the conda build_artifacts directory (including the
+            # built packages) as an Azure pipeline artifact that can be downloaded
+            store_build_artifacts: False
+            # toggle for freeing up some extra space on the default Azure Pipelines
+            # linux image before running the Docker container for building
+            free_disk_space: False
+            # limit the amount of CI jobs running concurrently at a given time
+            # each OS will get its proportional share of the configured value
+            max_parallel: 25
 
 
     .. _self-hosted_azure-config:
@@ -914,21 +977,24 @@ class ConfigModel(BaseModel):
         default_factory=dict,
     )
     """
-    Drone CI settings. This is usually read-only and should not normally be manually modified. Tools like conda-smithy may modify this, as needed.
+    Drone CI settings. This is usually read-only and should not normally be
+    manually modified. Tools like conda-smithy may modify this, as needed.
     """
 
     github_actions: Optional[Dict[str, Any]] = Field(
         default_factory=dict,
     )
     """
-    GitHub Actions CI settings. This is usually read-only and should not normally be manually modified. Tools like conda-smithy may modify this, as needed.
+    GitHub Actions CI settings. This is usually read-only and should not normally be
+    manually modified. Tools like conda-smithy may modify this, as needed.
     """
 
     woodpecker: Optional[Dict[str, str]] = Field(
         default_factory=dict,
     )
     """
-    Woodpecker CI settings. This is usually read-only and should not normally be manually modified. Tools like conda-smithy may modify this, as needed.
+    Woodpecker CI settings. This is usually read-only and should not normally be
+    manually modified. Tools like conda-smithy may modify this, as needed.
     """
 
     @field_validator(
@@ -949,7 +1015,8 @@ class ConfigModel(BaseModel):
         """
         Validator function for CI provider settings.
 
-        This function checks if the 'enabled' parameter is set for CI providers and raises a warning if it is set.
+        This function checks if the 'enabled' parameter is set for
+        CI providers and raises a warning if it is set.
 
         :param cls: The class where the validator is defined.
         :param providers: The CI provider settings.
@@ -958,10 +1025,11 @@ class ConfigModel(BaseModel):
         """
         if providers.get("enabled", None):
             warnings.warn(
-                f"It is not allowed to set the `enabled` parameter for {_info.field_name}."
-                " All CIs are enabled by default. To disable a CI, please"
-                " add `skip: true` to the `build` section of `meta.yaml`"
-                " and an appropriate selector so as to disable the build."
+                "It is not allowed to set the `enabled` parameter"
+                f"for {_info.field_name}. All CIs are enabled by default."
+                "To disable a CI, please add `skip: true` to the `build`"
+                "section of `meta.yaml` and an appropriate selector so "
+                "as to disable the build."
             )
         return providers
 
@@ -977,7 +1045,11 @@ class ConfigModel(BaseModel):
         exclude=True,
     )
     """
-    Build matrices were used to specify a set of build configurations to run for each package pinned dependency. This has been deprecated in favor of the provider field. More information can be found in the `conda-forge docs <https://conda-forge.org/docs/maintainer/knowledge_base.html#build-matrices>`_.
+    Build matrices were used to specify a set of build configurations to run for each
+    package pinned dependency. This has been deprecated in favor of the provider field.
+    More information can be found in the
+    :ref:`Build Matrices </maintainer/knowledge_base#build-matrices>` section of the
+    conda-forge docs.
     """
 
     @field_validator("matrix", mode="before")
@@ -996,6 +1068,7 @@ class ConfigModel(BaseModel):
             raise ValueError(
                 "Cannot rerender with matrix in conda-forge.yml."
                 " Please migrate matrix to conda_build_config.yaml and try again."
-                " See `here <https://github.com/conda-forge/conda-smithy/wiki/Release-Notes-3.0.0.rc1>`_ for more info."
+                " See `here <https://github.com/conda-forge/conda-smithy/wiki/Release-Notes-3.0.0.rc1>`__"
+                "for more info."
             )
         return v
