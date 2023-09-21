@@ -236,7 +236,7 @@
   email: uwe.korn@quantco.com
   alternate_emails:
   - xhochy@users.noreply.github.com
-  num_commits: 28
+  num_commits: 30
   first_commit: 2019-06-27 08:26:49
   github: xhochy
 - name: C.A.M. Gerlach
@@ -575,7 +575,7 @@
   github: mikemhenry
 - name: Bela Stoyan
   email: bela.stoyan@gmail.com
-  num_commits: 3
+  num_commits: 8
   first_commit: 2023-09-19 09:24:51
   github: '0xbe7a'
 - name: Klaus Zimmermann

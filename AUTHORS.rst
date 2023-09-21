@@ -11,8 +11,8 @@ Authors are sorted by number of commits.
 * Dougal J. Sutherland
 * shadow_walker
 * Michael Sarahan
-* Min RK
 * Uwe L. Korn
+* Min RK
 * Leo Fang
 * Hadrien Mary
 * Ryan Volz
@@ -41,6 +41,7 @@ Authors are sorted by number of commits.
 * Nicholas Bollweg
 * Leopold Talirz
 * Tom Pollard
+* Bela Stoyan
 * Gonzalo Pena-Castellanos
 * Daniel Bast
 * Carlo
@@ -66,7 +67,6 @@ Authors are sorted by number of commits.
 * Bruno Oliveira
 * Tony Kelman
 * Mervin Fansler
-* Bela Stoyan
 * Guilherme Quentel Melo
 * santi
 * buijennifer
