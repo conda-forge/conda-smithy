@@ -15,9 +15,9 @@ import requests
 import shutil
 import subprocess
 import sys
-import tomllib
 
 import github
+import tomli
 
 from conda_build.metadata import (
     ensure_valid_license_family,
@@ -934,7 +934,7 @@ def run_conda_forge_specific(meta, recipe_dir, lints, hints):
         # linter will rerun on the next commit anyway
         return
     hints_toml_str = hints_toml_req.content.decode("utf-8")
-    specific_hints = tomllib.loads(hints_toml_str)["hints"]
+    specific_hints = tomli.loads(hints_toml_str)["hints"]
 
     for rq in build_reqs + host_reqs + run_reqs:
         dep = rq.split(" ")[0].strip()
