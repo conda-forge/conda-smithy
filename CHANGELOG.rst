@@ -4,6 +4,19 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.26.2
+====================
+
+**Fixed:**
+
+* Fixed additional_zip_keys, so that subsequent migrations don't break.
+
+**Authors:**
+
+* Bela Stoyan
+
+
+
 v3.26.1
 ====================
 
