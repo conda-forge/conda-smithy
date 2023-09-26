@@ -918,8 +918,8 @@ def test_remote_ci_setup(config_yaml):
     )
     cfg = load_forge_config()
     with open(os.path.join(config_yaml, "conda-forge.yml"), "a+") as fp:
-        fp.write("remote_ci_setup: ['remote-ci-setup=3', 'pylief<0.12']")
+        fp.write("remote_ci_setup: ['conda-forge-ci-setup=3', 'py-lief<0.12']")
     cfg = load_forge_config()
     # pylief was quoted due to <
-    assert cfg["remote_ci_setup"] == ["remote-ci-setup=3", '"pylief<0.12"']
-    assert cfg["remote_ci_setup_names"] == ["remote-ci-setup", "pylief"]
+    assert cfg["remote_ci_setup"] == ["conda-forge-ci-setup=3", '"pylief<0.12"']
+    assert cfg["remote_ci_setup_names"] == ["conda-forge-ci-setup", "py-lief"]
