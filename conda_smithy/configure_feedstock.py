@@ -2036,9 +2036,12 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
     config["remote_ci_setup"] = _santize_remote_ci_setup(
         config["remote_ci_setup"]
     )
-    config["remote_ci_setup_names"] = [
-        MatchSpec(pkg).name for pkg in config["remote_ci_setup"]
-    ]
+    if config["conda_install_tool"] == "conda":
+        config["remote_ci_setup_update"] = [
+            MatchSpec(pkg).name for pkg in config["remote_ci_setup"]
+        ]
+    else:
+        config["remote_ci_setup_update"] = config["remote_ci_setup"]
 
     # Older conda-smithy versions supported this with only one
     # entry. To avoid breakage, we are converting single elements

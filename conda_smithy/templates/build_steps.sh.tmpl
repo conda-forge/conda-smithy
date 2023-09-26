@@ -50,10 +50,10 @@ export CONDA_LIBMAMBA_SOLVER_NO_CHANNELS_FROM_INSTALLED=1
     pip {{ conda_install_tool_deps }} {{ conda_build_tool_deps }} {{ " ".join(remote_ci_setup) }}
 {%- if conda_build_tool_deps != "" or conda_install_tool_deps != "" %}
 {{ conda_install_tool }} update --update-specs --yes --quiet --channel conda-forge --strict-channel-priority \
-    pip {{ conda_install_tool_deps }} {{ conda_build_tool_deps }} {{ " ".join(remote_ci_setup_names) }}
+    pip {{ conda_install_tool_deps }} {{ conda_build_tool_deps }} {{ " ".join(remote_ci_setup_update) }}
 {%- endif %}
 {% if local_ci_setup %}
-conda uninstall --quiet --yes --force {{ " ".join(remote_ci_setup_names)}}
+conda uninstall --quiet --yes --force {{ " ".join(remote_ci_setup)}}
 pip install --no-deps ${RECIPE_ROOT}/.
 {%- endif %}
 # set up the condarc
