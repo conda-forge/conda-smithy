@@ -1,0 +1,23 @@
+**Added:**
+
+* <news item>
+
+**Changed:**
+
+* Fix ``MatchSpec`` parsing when ``remote_ci_setup`` specs are quoted. (#1773 via #1775)
+
+**Deprecated:**
+
+* <news item>
+
+**Removed:**
+
+* <news item>
+
+**Fixed:**
+
+* <news item>
+
+**Security:**
+
+* <news item>
