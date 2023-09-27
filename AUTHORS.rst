@@ -5,13 +5,13 @@ Authors are sorted by number of commits.
 * Matthew R. Becker
 * Christopher J. Wright
 * Anthony Scopatz
-* Phil Elson
 * Jaime Rodríguez-Guerra
+* Phil Elson
 * Filipe Fernandes
 * Dougal J. Sutherland
 * shadow_walker
-* Michael Sarahan
 * Uwe L. Korn
+* Michael Sarahan
 * Min RK
 * Leo Fang
 * Hadrien Mary
@@ -21,10 +21,10 @@ Authors are sorted by number of commits.
 * Johnny Willemsen
 * Chris Burr
 * Julian Rüth
+* H. Vetinari
 * Billy K. Poon
 * John Kirkham
 * Tim Snyder
-* H. Vetinari
 * Mike Henry
 * Eric Dill
 * Natasha Pavlovikj
