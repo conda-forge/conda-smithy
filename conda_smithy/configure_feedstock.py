@@ -1853,6 +1853,8 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
         #     ${url or channel_alias}::package_name
         # defaults to conda-forge channel_alias
         "remote_ci_setup": ["conda-forge-ci-setup=3"],
+        # Add constraints to the base environment
+        "pinned_packages": [],
     }
 
     if forge_yml is None:
@@ -2040,6 +2042,9 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
         MatchSpec(pkg.strip('"').strip("'")).name
         for pkg in config["remote_ci_setup"]
     ]
+    config["pinned_packages"] = conda_build.utils.ensure_list(
+        config["pinned_packages"]
+    )
 
     # Older conda-smithy versions supported this with only one
     # entry. To avoid breakage, we are converting single elements
