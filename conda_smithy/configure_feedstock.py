@@ -2335,14 +2335,11 @@ def main(
     loglevel = os.environ.get("CONDA_SMITHY_LOGLEVEL", "INFO").upper()
     logger.setLevel(loglevel)
 
-    if check:
+    if check or not no_check_uptodate:
         # Check that conda-smithy is up-to-date
         check_version_uptodate("conda-smithy", __version__, True)
-        return True
-
-    error_on_warn = False if no_check_uptodate else True
-    # Check that conda-smithy is up-to-date
-    check_version_uptodate("conda-smithy", __version__, error_on_warn)
+        if check:
+            return True
 
     forge_dir = os.path.abspath(forge_file_directory)
     if exclusive_config_file is not None:
