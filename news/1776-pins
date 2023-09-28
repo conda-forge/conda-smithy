@@ -1,0 +1,23 @@
+**Added:**
+
+* New ``pinned_packages`` setting in ``conda-forge.yml`` to constrain the dependencies in the ``base`` environment that provides ``conda-build`` and other tooling. (#1776)
+
+**Changed:**
+
+* <news item>
+
+**Deprecated:**
+
+* <news item>
+
+**Removed:**
+
+* <news item>
+
+**Fixed:**
+
+* <news item>
+
+**Security:**
+
+* <news item>
