@@ -4,6 +4,21 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.26.3
+====================
+
+**Changed:**
+
+* The package hints of the linter are now taken from a location that doesn't require new smithy releases to change.
+* Fix ``MatchSpec`` parsing when ``remote_ci_setup`` specs are quoted. (#1773 via #1775)
+
+**Authors:**
+
+* Jaime Rodríguez-Guerra
+* H. Vetinari
+
+
+
 v3.26.2
 ====================
 

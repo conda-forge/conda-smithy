@@ -2038,7 +2038,8 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
     )
     if config["conda_install_tool"] == "conda":
         config["remote_ci_setup_update"] = [
-            MatchSpec(pkg).name for pkg in config["remote_ci_setup"]
+            MatchSpec(pkg.strip('"').strip("'")).name
+            for pkg in config["remote_ci_setup"]
         ]
     else:
         config["remote_ci_setup_update"] = config["remote_ci_setup"]

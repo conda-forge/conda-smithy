@@ -907,3 +907,22 @@ def test_conda_build_tools(config_yaml):
 
     with pytest.raises(AssertionError):
         assert load_forge_config()
+
+
+def test_remote_ci_setup(config_yaml):
+    load_forge_config = lambda: cnfgr_fdstk._load_forge_config(  # noqa
+        config_yaml,
+        exclusive_config_file=os.path.join(
+            config_yaml, "recipe", "default_config.yaml"
+        ),
+    )
+    cfg = load_forge_config()
+    with open(os.path.join(config_yaml, "conda-forge.yml"), "a+") as fp:
+        fp.write("remote_ci_setup: ['conda-forge-ci-setup=3', 'py-lief<0.12']")
+    cfg = load_forge_config()
+    # pylief was quoted due to <
+    assert cfg["remote_ci_setup"] == [
+        "conda-forge-ci-setup=3",
+        '"py-lief<0.12"',
+    ]
+    assert cfg["remote_ci_setup_names"] == ["conda-forge-ci-setup", "py-lief"]
