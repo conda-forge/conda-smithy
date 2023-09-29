@@ -7,13 +7,14 @@ import re
 import sys
 import subprocess
 import textwrap
+import time
 import yaml
 import warnings
 from collections import OrderedDict, namedtuple, Counter
 import copy
 import hashlib
 import requests
-from pathlib import PurePath
+from pathlib import Path, PurePath
 
 # The `requests` lib uses `simplejson` instead of `json` when available.
 # In consequence the same JSON library must be used or the `JSONDecodeError`
@@ -65,6 +66,11 @@ if "CONDA_SMITHY_SERVICE_FEEDSTOCKS" in os.environ:
     SERVICE_FEEDSTOCKS += os.environ["CONDA_SMITHY_SERVICE_FEEDSTOCKS"].split(
         ","
     )
+
+# Cache lifetime in seconds, default 15min
+CONDA_FORGE_PINNING_LIFETIME = int(
+    os.environ.get("CONDA_FORGE_PINNING_LIFETIME", 15 * 60)
+)
 
 
 def package_key(config, used_loop_vars, subdir):
@@ -2182,6 +2188,52 @@ def get_cfp_file_path(temporary_directory):
     return cf_pinning_file, cf_pinning_ver
 
 
+def get_cache_dir():
+    if sys.platform.startswith("win"):
+        return Path(os.environ.get("TEMP"))
+    else:
+        return os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache")
+
+
+def get_cached_cfp_file_path(temporary_directory):
+    if cache_dir := get_cache_dir():
+        smithy_cache = cache_dir / "conda-smithy"
+        smithy_cache.mkdir(parents=True, exist_ok=True)
+        pinning_version = None
+        # Do we already have the pinning cached?
+        if (smithy_cache / "conda-forge-pinng-version").exists():
+            pinning_version = (
+                smithy_cache / "conda-forge-pinng-version"
+            ).read_text()
+
+        # Check whether we have recently already updated the cache
+        current_ts = int(time.time())
+        if (smithy_cache / "conda-forge-pinng-version-ts").exists():
+            last_ts = int(
+                (smithy_cache / "conda-forge-pinng-version-ts").read_text()
+            )
+        else:
+            last_ts = 0
+
+        if current_ts - last_ts > CONDA_FORGE_PINNING_LIFETIME:
+            current_pinning_version = get_most_recent_version(
+                "conda-forge-pinning"
+            ).version
+            (smithy_cache / "conda-forge-pinng-version-ts").write_text(
+                str(current_ts)
+            )
+            if current_pinning_version != pinning_version:
+                get_cfp_file_path(smithy_cache)
+                (smithy_cache / "conda-forge-pinng-version").write_text(
+                    current_pinning_version
+                )
+                pinning_version = current_pinning_version
+
+        return str(smithy_cache / "conda_build_config.yaml"), pinning_version
+    else:
+        return get_cfp_file_path(temporary_directory)
+
+
 def clear_variants(forge_dir):
     "Remove all variant files placed in the .ci_support path"
     if os.path.isdir(os.path.join(forge_dir, ".ci_support")):
@@ -2348,7 +2400,7 @@ def main(
             raise RuntimeError("Given exclusive-config-file not found.")
         cf_pinning_ver = None
     else:
-        exclusive_config_file, cf_pinning_ver = get_cfp_file_path(
+        exclusive_config_file, cf_pinning_ver = get_cached_cfp_file_path(
             temporary_directory
         )
 
