@@ -7,6 +7,11 @@ import re
 import subprocess
 import sys
 import textwrap
+<<<<<<< HEAD
+=======
+import time
+import yaml
+>>>>>>> main
 import warnings
 from collections import Counter, OrderedDict, namedtuple
 from itertools import chain, product
@@ -14,7 +19,11 @@ from os import fspath
 from pathlib import Path, PurePath
 
 import requests
+<<<<<<< HEAD
 import yaml
+=======
+from pathlib import Path, PurePath
+>>>>>>> main
 
 # The `requests` lib uses `simplejson` instead of `json` when available.
 # In consequence the same JSON library must be used or the `JSONDecodeError`
@@ -25,6 +34,16 @@ try:
 except ImportError:
     import json
 
+<<<<<<< HEAD
+=======
+import conda_build.api
+import conda_build.utils
+import conda_build.variants
+import conda_build.conda_interface
+import conda_build.render
+from conda.models.match_spec import MatchSpec
+
+>>>>>>> main
 from copy import deepcopy
 
 import conda_build.api
@@ -67,6 +86,11 @@ if "CONDA_SMITHY_SERVICE_FEEDSTOCKS" in os.environ:
     SERVICE_FEEDSTOCKS += os.environ["CONDA_SMITHY_SERVICE_FEEDSTOCKS"].split(
         ","
     )
+
+# Cache lifetime in seconds, default 15min
+CONDA_FORGE_PINNING_LIFETIME = int(
+    os.environ.get("CONDA_FORGE_PINNING_LIFETIME", 15 * 60)
+)
 
 
 def package_key(config, used_loop_vars, subdir):
@@ -928,7 +952,7 @@ def _get_build_setup_line(forge_dir, platform, forge_config):
             build_setup += textwrap.dedent(
                 """\
                 :: Overriding global run_conda_forge_build_setup_win with local copy.
-                {recipe_dir}\\run_conda_forge_build_setup_win
+                CALL {recipe_dir}\\run_conda_forge_build_setup_win
             """.format(
                     recipe_dir=forge_config["recipe_dir"]
                 )
@@ -946,7 +970,7 @@ def _get_build_setup_line(forge_dir, platform, forge_config):
         if platform == "win":
             build_setup += textwrap.dedent(
                 """\
-                run_conda_forge_build_setup
+                CALL run_conda_forge_build_setup
 
             """
             )
@@ -1280,7 +1304,9 @@ def _github_actions_specific_setup(
         "osx": [
             ".scripts/run_osx_build.sh",
         ],
-        "win": [],
+        "win": [
+            ".scripts/run_win_build.bat",
+        ],
     }
     if forge_config["github_actions"]["store_build_artifacts"]:
         for tmpls in platform_templates.values():
@@ -1352,7 +1378,10 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
             ".azure-pipelines/azure-pipelines-osx.yml",
             ".scripts/run_osx_build.sh",
         ],
-        "win": [".azure-pipelines/azure-pipelines-win.yml"],
+        "win": [
+            ".azure-pipelines/azure-pipelines-win.yml",
+            ".scripts/run_win_build.bat",
+        ],
     }
     if forge_config["azure"]["store_build_artifacts"]:
         platform_templates["linux"].append(
@@ -1984,6 +2013,52 @@ def get_cfp_file_path(temporary_directory):
     return cf_pinning_file, cf_pinning_ver
 
 
+def get_cache_dir():
+    if sys.platform.startswith("win"):
+        return Path(os.environ.get("TEMP"))
+    else:
+        return os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache")
+
+
+def get_cached_cfp_file_path(temporary_directory):
+    if cache_dir := get_cache_dir():
+        smithy_cache = cache_dir / "conda-smithy"
+        smithy_cache.mkdir(parents=True, exist_ok=True)
+        pinning_version = None
+        # Do we already have the pinning cached?
+        if (smithy_cache / "conda-forge-pinng-version").exists():
+            pinning_version = (
+                smithy_cache / "conda-forge-pinng-version"
+            ).read_text()
+
+        # Check whether we have recently already updated the cache
+        current_ts = int(time.time())
+        if (smithy_cache / "conda-forge-pinng-version-ts").exists():
+            last_ts = int(
+                (smithy_cache / "conda-forge-pinng-version-ts").read_text()
+            )
+        else:
+            last_ts = 0
+
+        if current_ts - last_ts > CONDA_FORGE_PINNING_LIFETIME:
+            current_pinning_version = get_most_recent_version(
+                "conda-forge-pinning"
+            ).version
+            (smithy_cache / "conda-forge-pinng-version-ts").write_text(
+                str(current_ts)
+            )
+            if current_pinning_version != pinning_version:
+                get_cfp_file_path(smithy_cache)
+                (smithy_cache / "conda-forge-pinng-version").write_text(
+                    current_pinning_version
+                )
+                pinning_version = current_pinning_version
+
+        return str(smithy_cache / "conda_build_config.yaml"), pinning_version
+    else:
+        return get_cfp_file_path(temporary_directory)
+
+
 def clear_variants(forge_dir):
     "Remove all variant files placed in the .ci_support path"
     if os.path.isdir(os.path.join(forge_dir, ".ci_support")):
@@ -2136,15 +2211,20 @@ def main(
     loglevel = os.environ.get("CONDA_SMITHY_LOGLEVEL", "INFO").upper()
     logger.setLevel(loglevel)
 
-    if check:
+    if check or not no_check_uptodate:
         # Check that conda-smithy is up-to-date
         check_version_uptodate("conda-smithy", __version__, True)
+<<<<<<< HEAD
         return True
 
     error_on_warn = False if no_check_uptodate else True
 
     # Check that conda-smithy is up-to-date
     check_version_uptodate("conda-smithy", __version__, error_on_warn)
+=======
+        if check:
+            return True
+>>>>>>> main
 
     forge_dir = os.path.abspath(forge_file_directory)
 
@@ -2155,7 +2235,7 @@ def main(
         cf_pinning_ver = None
 
     else:
-        exclusive_config_file, cf_pinning_ver = get_cfp_file_path(
+        exclusive_config_file, cf_pinning_ver = get_cached_cfp_file_path(
             temporary_directory
         )
 

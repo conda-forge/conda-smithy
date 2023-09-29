@@ -111,6 +111,15 @@ Running a build
 
 When everything is configured you can trigger a build with a push to the feedstock repo on github.
 
+Developing conda-smithy
+-----------------------
+
+To develop conda smithy, use your favortite conda-based environment manager and create an environment based on the `environment.yml`.
+
+```
+$ conda env create
+```
+
 Releasing conda-smithy
 ----------------------
 

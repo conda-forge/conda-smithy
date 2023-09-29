@@ -18,6 +18,11 @@ import sys
 
 import github
 
+if sys.version_info[:2] < (3, 11):
+    import tomli as tomllib
+else:
+    import tomllib
+
 from conda_build.metadata import (
     ensure_valid_license_family,
     FIELDS as cbfields,
@@ -926,29 +931,14 @@ def run_conda_forge_specific(meta, recipe_dir, lints, hints):
         else:
             run_reqs += _req
 
-    specific_hints = {
-        "matplotlib": (
-            "Recipes should usually depend on `matplotlib-base` as opposed to "
-            "`matplotlib` so that runtime environments do not require large "
-            "packages like `qt`."
-        ),
-        "jpeg": (
-            "Recipes should usually depend on `libjpeg-turbo` as opposed to "
-            "`jpeg` for improved performance. For more information please see"
-            "https://github.com/conda-forge/conda-forge.github.io/issues/673"
-        ),
-        "pytorch-cpu": (
-            "Please depend on `pytorch` directly, in order to avoid forcing "
-            "CUDA users to downgrade to the CPU version for no reason."
-        ),
-        "pytorch-gpu": (
-            "Please depend on `pytorch` directly. If your package definitely "
-            "requires the CUDA version, please depend on `pytorch =*=cuda*`."
-        ),
-        "abseil-cpp": "The `abseil-cpp` output has been superseded by `libabseil`",
-        "grpc-cpp": "The `grpc-cpp` output has been superseded by `libgrpc`",
-        "build": "The pypa `build` package has been renamed to `python-build`",
-    }
+    hints_toml_url = "https://raw.githubusercontent.com/conda-forge/conda-forge-pinning-feedstock/main/recipe/linter_hints/hints.toml"
+    hints_toml_req = requests.get(hints_toml_url)
+    if hints_toml_req.status_code != 200:
+        # too bad, but not important enough to throw an error;
+        # linter will rerun on the next commit anyway
+        return
+    hints_toml_str = hints_toml_req.content.decode("utf-8")
+    specific_hints = tomllib.loads(hints_toml_str)["hints"]
 
     for rq in build_reqs + host_reqs + run_reqs:
         dep = rq.split(" ")[0].strip()
