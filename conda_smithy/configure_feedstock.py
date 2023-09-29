@@ -67,6 +67,7 @@ if "CONDA_SMITHY_SERVICE_FEEDSTOCKS" in os.environ:
         ","
     )
 
+# Cache lifetime in seconds, default 15min
 CONDA_FORGE_PINNING_LIFETIME = int(
     os.environ.get("CONDA_FORGE_PINNING_LIFETIME", 15 * 60)
 )
