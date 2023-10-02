@@ -7,11 +7,8 @@ import re
 import subprocess
 import sys
 import textwrap
-<<<<<<< HEAD
-=======
 import time
 import yaml
->>>>>>> main
 import warnings
 from collections import Counter, OrderedDict, namedtuple
 from itertools import chain, product
@@ -19,11 +16,7 @@ from os import fspath
 from pathlib import Path, PurePath
 
 import requests
-<<<<<<< HEAD
-import yaml
-=======
 from pathlib import Path, PurePath
->>>>>>> main
 
 # The `requests` lib uses `simplejson` instead of `json` when available.
 # In consequence the same JSON library must be used or the `JSONDecodeError`
@@ -34,8 +27,6 @@ try:
 except ImportError:
     import json
 
-<<<<<<< HEAD
-=======
 import conda_build.api
 import conda_build.utils
 import conda_build.variants
@@ -43,7 +34,6 @@ import conda_build.conda_interface
 import conda_build.render
 from conda.models.match_spec import MatchSpec
 
->>>>>>> main
 from copy import deepcopy
 
 import conda_build.api
@@ -61,7 +51,7 @@ from conda_smithy.feedstock_io import (
     set_exe_file,
     write_file,
 )
-from conda_smithy.schema.models import ConfigModel
+from conda_smithy.schema import ConfigModel
 from conda_smithy.utils import (
     get_feedstock_about_from_meta,
     get_feedstock_name_from_meta,
@@ -1744,13 +1734,6 @@ def _update_dict_within_dict(items, config):
 
 
 def _read_forge_config(forge_dir, forge_yml=None):
-    conda_forge_defaults_path = (
-        Path(__file__).resolve().parent / "schema" / "conda-forge.defaults.yml"
-    )
-
-    with open(conda_forge_defaults_path, encoding="utf-8") as _dfp:
-        conda_forge_defaults = yaml.safe_load(_dfp)
-
     if forge_yml is None:
         forge_yml = Path(forge_dir) / "conda-forge.yml"
     else:
@@ -1769,11 +1752,12 @@ def _read_forge_config(forge_dir, forge_yml=None):
         documents = list(yaml.safe_load_all(fh))
         file_config = (documents or [None])[0] or {}
 
-    # The config is just the base model populated with conda-forge base defaults, and updated with the values in the file_config
-    config = _update_dict_within_dict(
-        file_config.items(), deepcopy(conda_forge_defaults)
-    )
+    _base_config = ConfigModel().dict()
 
+    # The config is just the base model populated with conda-forge base defaults, and updated with the values in the file_config
+    config = _update_dict_within_dict(file_config.items(), _base_config)
+
+    # This will be removed, as all validations will be reverted back to JSON Schema checks
     # Validate the config file against the schema
     file_config = ConfigModel(**file_config)
 
@@ -1848,7 +1832,7 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
 
     # Set some more azure defaults
     config.azure.user_or_org = config.github.user_or_org
-    log = yaml.safe_dump(config.model_dump_json())
+    log = yaml.safe_dump(config.json())
     logger.debug("## CONFIGURATION USED\n")
     logger.debug(log)
     logger.debug("## END CONFIGURATION\n")
@@ -1900,7 +1884,7 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
 
     # Returning dict representation of the config to avoid conflicts with
     # the main execution. This should be replaced in a near release.
-    return config.model_dump()
+    return config.dict()
 
 
 def get_most_recent_version(name):
@@ -2214,17 +2198,8 @@ def main(
     if check or not no_check_uptodate:
         # Check that conda-smithy is up-to-date
         check_version_uptodate("conda-smithy", __version__, True)
-<<<<<<< HEAD
-        return True
-
-    error_on_warn = False if no_check_uptodate else True
-
-    # Check that conda-smithy is up-to-date
-    check_version_uptodate("conda-smithy", __version__, error_on_warn)
-=======
         if check:
             return True
->>>>>>> main
 
     forge_dir = os.path.abspath(forge_file_directory)
 

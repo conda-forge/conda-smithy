@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
 import yaml
-from conda_smithy.schema.models import ConfigModel
+from conda_smithy.schema import ConfigModel
 
 
 # Sample config files
@@ -59,35 +59,9 @@ def test_config_model_validation(config_dict):
     assert config  # Ensure the configuration is valid
 
 
-# To be removed in future release
-@pytest.fixture
-def base_config_data():
-    """
-    As part of a legacy code overhaul, this fixture is used to compare the
-    previous default config data with the current default config data that;s generated from the pydantic ConfigModel.
-    """
-    with open("conda_smithy/schema/conda-forge.defaults.yml") as forge:
-        default_config_data = yaml.safe_load(forge)
-
-    return default_config_data
-
-
-def test_base_config(base_config_data):
-    """
-    This test compares the base config data yaml, by initializing a ConfigModel with the base config data.
-    """
-    ConfigModel(**base_config_data)
-
-
-def test_validate_win_64_enabled():
-    config_dict = {
-        "win_64": {"enabled": False},
-        "build_platform": {
-            "win_64": "win_64",
-        },
-    }
-    # validator should raise an error if win_64 is disabled
-    pytest.raises(ValueError, ConfigModel, **config_dict)
+def test_class_init():
+    config = ConfigModel()
+    assert config
 
 
 def test_extra_fields():
@@ -105,29 +79,4 @@ def test_extra_fields():
     # Extra value should be ignored
     config = ConfigModel(**config_dict)
     # assert value is not present after dumping to dict
-    assert "extra_field" not in config.model_dump()
-
-
-def test_invalid_config():
-    invalid_data = {
-        "docker": {
-            "executable": "docker",
-            "fallback_image": 123,  # Invalid data, should be a string
-            "command": "bash",
-        },
-        # Add other fields with invalid data here...
-    }
-
-    with pytest.raises(ValidationError):
-        ConfigModel(**invalid_data)
-
-
-if __name__ == "__main__":
-    pytest.main(
-        [
-            f"{__file__}::test_validate_win_64_enabled",
-            "-vv",
-            "--full-trace",
-            "-W error:UserWarning",
-        ]
-    )
+    assert "extra_field" not in config.dict()

@@ -3,7 +3,7 @@
 from enum import Enum
 from typing import Any, Dict, List, Literal, Optional, Union
 
-from pydantic import AliasChoices, BaseModel, Field
+from pydantic import BaseModel, Field
 
 
 class AzureSelfHostedRunnerSettings(BaseModel):
@@ -577,7 +577,7 @@ class ConfigModel(BaseModel):
 
     win_64: Optional[PlatformUniqueConfig] = Field(
         default_factory=PlatformUniqueConfig,
-        validation_alias=AliasChoices("win_64", "win"),
+        alias="win",
     )
     """
     Windows-specific configuration options. This is largely an internal setting and
@@ -594,7 +594,7 @@ class ConfigModel(BaseModel):
 
     osx_64: Optional[PlatformUniqueConfig] = Field(
         default_factory=PlatformUniqueConfig,
-        validation_alias=AliasChoices("osx_64", "osx"),
+        alias="osx",
     )
     """
     OSX-specific configuration options. This is largely an internal setting and
@@ -619,7 +619,7 @@ class ConfigModel(BaseModel):
 
     linux_64: Optional[PlatformUniqueConfig] = Field(
         default_factory=PlatformUniqueConfig,
-        validation_alias=AliasChoices("linux_64", "linux"),
+        alias="linux",
     )
     """
     Linux-specific configuration options. This is largely an internal setting
@@ -709,7 +709,7 @@ class ConfigModel(BaseModel):
 
     os_version: Optional[Dict[Platforms, Union[str, None]]] = Field(
         default_factory=lambda: {
-            platform: None for platform in Platforms.values()
+            platform.value: None for platform in Platforms
         },
     )
     """
@@ -731,7 +731,7 @@ class ConfigModel(BaseModel):
             Union[List[CIservices], CIservices, bool, None],
         ]
     ] = Field(
-        default_factory={
+        default_factory=lambda: {
             "linux": None,
             "linux_64": ["azure"],
             "linux_aarch64": None,
