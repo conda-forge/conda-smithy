@@ -1,39 +1,160 @@
 # This model is also used for generating and automatic documentation for the conda-forge.yml file. The documentation is generated using sphinx and "pydantic-autodoc" extension. For an upstream preview of the documentation, see https://conda-forge.org/docs/maintainer/conda_forge_yml.html.
 
-import warnings
 from enum import Enum
 from typing import Any, Dict, List, Literal, Optional, Union
 
-from pydantic import (
-    AliasChoices,
-    BaseModel,
-    Field,
-    FieldValidationInfo,
-    field_validator,
-)
-
-from conda_smithy.schema.choices import (
-    DefaultTestPlatforms,
-    Platforms,
-    BotConfigAutoMergeChoice,
-    BotConfigInspectionChoice,
-    BotConfigSkipRenderChoices,
-    ChannelPriorityConfig,
-)
-from conda_smithy.schema.providers import (
-    AzureConfig,
-    CIservices,
-    CondaBuildTools,
-    GithubConfig,
-)
+from pydantic import AliasChoices, BaseModel, Field
 
 
-def sanitize_remote_ci_setup(package: str) -> str:
-    if package.startswith(("'", '"')):
-        return package
-    elif ("<" in package) or (">" in package) or ("|" in package):
-        return '"' + package + '"'
-    return package
+class AzureSelfHostedRunnerSettings(BaseModel):
+    """This is the settings for self-hosted runners."""
+
+    pool: Optional[Dict[str, str]] = Field(
+        default_factory=lambda: {"vmImage": "ubuntu-latest"},
+        description="The pool of self-hosted runners, e.g. 'vmImage': 'ubuntu-latest'",
+    )
+
+    swapfile_size: Optional[str] = Field(
+        default=None, description="Swapfile size in GiB"
+    )
+
+    timeoutInMinutes: Optional[int] = Field(
+        default=360, description="Timeout in minutes for the job"
+    )
+
+    variables: Optional[Dict[str, str]] = Field(
+        default_factory=dict, description="Variables"
+    )
+
+
+class AzureConfig(BaseModel):
+    """
+    This dictates the behavior of the Azure Pipelines CI service. It is a sub-mapping for Azure-specific configuration options. For more information and some variables specifications, see the [Azure Pipelines schema reference documentation](https://learn.microsoft.com/en-us/azure/devops/pipelines/yaml-schema/?view=azure-pipelines).
+    """
+
+    force: Optional[bool] = Field(
+        default=False,
+        description="Force building all supported providers",
+    )
+
+    free_disk_space: Optional[bool] = Field(
+        default=None,
+        description="Free up disk space before running the Docker container for building on Linux",
+    )
+
+    max_parallel: Optional[int] = Field(
+        default=50,
+        description="Limit the amount of CI jobs running concurrently at a given time",
+    )
+
+    project_id: Optional[str] = Field(
+        default="84710dde-1620-425b-80d0-4cf5baca359d",
+        description="The ID of the Azure Pipelines project",
+    )
+
+    project_name: Optional[str] = Field(
+        default="feedstock-builds",
+        description="The name of the Azure Pipelines project",
+    )
+
+    #########################################
+    ##### Self-hosted runners settings ######
+    #########################################
+    settings_linux: AzureSelfHostedRunnerSettings = Field(
+        default_factory=lambda: AzureSelfHostedRunnerSettings(
+            swapfile_size="0GiB"
+        ),
+        description="Linux-specific settings for self-hosted runners",
+    )
+
+    settings_osx: AzureSelfHostedRunnerSettings = Field(
+        default_factory=lambda: AzureSelfHostedRunnerSettings(
+            pool={"vmImage": "macOS-11"}
+        ),
+        description="OSX-specific settings for self-hosted runners",
+    )
+
+    settings_win: AzureSelfHostedRunnerSettings = Field(
+        default_factory=lambda: AzureSelfHostedRunnerSettings(
+            pool={"vmImage": "windows-2022"},
+            variables={
+                "CONDA_BLD_PATH": "D:\\bld\\",
+                "UPLOAD_TEMP": "D:\\tmp",
+            },
+        ),
+        description="Windows-specific settings for self-hosted runners",
+    )
+
+    user_or_org: Optional[str] = Field(
+        default=None,
+        description="The name of the GitHub user or organization, if passed with the GithubConfig provider, must comply with the value of the user_or_org field",
+    )
+
+    store_build_artifacts: Optional[bool] = Field(
+        default=False,
+        description="Store the conda build_artifacts directory as an Azure pipeline artifact",
+    )
+
+    timeout_minutes: Optional[Union[int, None]] = Field(
+        default=None,
+        description="The maximum amount of time (in minutes) that a job can run before it is automatically canceled",
+    )
+
+
+class GithubConfig(BaseModel):
+    user_or_org: Optional[str] = Field(
+        description="The name of the GitHub user or organization, if passed with the AzureConfig provider, must comply with the value of the user_or_org field",
+        default="conda-forge",
+    )
+    repo_name: Optional[str] = Field(
+        description="The name of the repository",
+        default="",
+    )
+    branch_name: Optional[str] = Field(
+        description="The name of the branch to execute on",
+        default="main",
+    )
+    tooling_branch_name: Optional[str] = Field(
+        description="The name of the branch to use for rerender+webservices github actions and conda-forge-ci-setup-feedstock references",
+        default="main",
+    )
+
+
+class GitHubActionsConfig(BaseModel):
+    artifact_retention_days: Optional[int] = Field(
+        description="The number of days to retain artifacts",
+        default=14,
+    )
+
+    max_parallel: Optional[int] = Field(
+        description="The maximum number of jobs to run in parallel",
+        default=None,
+    )
+
+    self_hosted: Optional[bool] = Field(
+        description="Whether to use self-hosted runners",
+        default=False,
+    )
+
+    store_build_artifacts: Optional[bool] = Field(
+        description="Whether to store build artifacts",
+        default=False,
+    )
+
+
+class CondaBuildTools(str, Enum):
+    conda_build = "conda-build"
+    conda_build_classic = "conda-build+classic"
+    conda_build_mamba = "conda-build+conda-libmamba-solver"
+    mambabuild = "mambabuild"
+
+
+class CIservices(str, Enum):
+    azure = "azure"
+    circle = "circle"
+    travis = "travis"
+    appveyor = "appveyor"
+    default = "default"
 
 
 class PlatformUniqueConfig(BaseModel):
@@ -41,6 +162,29 @@ class PlatformUniqueConfig(BaseModel):
         description="Whether to use extra platform-specific configuration options",
         default=False,
     )
+
+
+class BotConfigAutoMergeChoice(str, Enum):
+    VERSION = "version"
+    MIGRATION = "migration"
+
+
+class BotConfigSkipRenderChoices(str, Enum):
+    GITIGNORE = ".gitignore"
+    GITATTRIBUTES = ".gitattributes"
+    README = "README.md"
+    LICENSE = "LICENSE.txt"
+    GITHUB_WORKFLOWS = ".github/workflows"
+
+
+class BotConfigInspectionChoice(str, Enum):
+    HINT = "hint"
+    HINT_ALL = "hint-all"
+    HINT_SOURCE = "hint-source"
+    HINT_GRAYSKULL = "hint-grayskull"
+    UPDATE_ALL = "update-all"
+    UPDATE_SOURCE = "update-source"
+    UPDATE_GRAYSKULL = "update-grayskull"
 
 
 class BotConfig(BaseModel):
@@ -55,7 +199,7 @@ class BotConfig(BaseModel):
     )
 
     check_solvable: Optional[bool] = Field(
-        False,
+        None,
         description="Open PRs only if resulting environment is solvable.",
     )
 
@@ -134,26 +278,18 @@ class CondaForgeDocker(BaseModel):
 
     interactive: Optional[bool] = Field(
         description="Whether to run Docker in interactive mode",
-        default=False,
-        exclude=True,
+        default=None,
     )
 
-    # Deprecated values, if passed should raise errors
+    #########################################
+    #### Deprecated Docker configuration ####
+    #########################################
     image: Optional[Union[str, None]] = Field(
         description="""Setting the Docker image in conda-forge.yml is no longer
         supported, use conda_build_config.yaml to specify Docker images.""",
         default=None,
-        exclude=True,
+        exclude=True,  # Will not be rendered in the model dump
     )
-
-    @field_validator("image", mode="before")
-    def image_deprecated(cls, v):
-        if v is not None:
-            raise ValueError(
-                "Setting the Docker image in conda-forge.yml is no longer supported."
-                " Please use conda_build_config.yaml to specify Docker images."
-            )
-        return v
 
 
 class ShellCheck(BaseModel):
@@ -161,6 +297,36 @@ class ShellCheck(BaseModel):
         description="Whether to use shellcheck to lint shell scripts",
         default=False,
     )
+
+
+class PlatformsAliases(str, Enum):
+    linux = "linux"
+    win = "win"
+    osx = "osx"
+
+
+class Platforms(str, Enum):
+    linux_64 = "linux_64"
+    linux_aarch64 = "linux_aarch64"
+    linux_armv7l = "linux_armv7l"
+    linux_ppc64le = "linux_ppc64le"
+    linux_s390x = "linux_s390x"
+    win_64 = "win_64"
+    osx_64 = "osx_64"
+    osx_arm64 = "osx_arm64"
+
+
+class ChannelPriorityConfig(str, Enum):
+    STRICT = "strict"
+    FLEXIBLE = "flexible"
+    DISABLED = "disabled"
+
+
+class DefaultTestPlatforms(str, Enum):
+    all = "all"
+    native_only = "native_only"
+    native_and_emulated = "native_and_emulated"
+    emulated_only = "emulated_only"
 
 
 class ConfigModel(BaseModel):
@@ -195,17 +361,17 @@ class ConfigModel(BaseModel):
     """
 
     conda_build_tool: Optional[CondaBuildTools] = Field(
-        default="conda-build",
+        default="mambabuild",
     )
     """
     Use this option to choose which tool is used to build your recipe.
     """
 
-    conda_solver: Optional[Literal["libmamba", "classic"]] = Field(
-        default="libmamba",
+    conda_build_tool_deps: Optional[Union[str, list]] = Field(
+        default="boa",
     )
     """
-    Choose which ``conda`` solver plugin to use for feedstock builds.
+    Add additional dependencies to the conda build environment based on the selected tool.
     """
 
     conda_install_tool: Optional[Literal["conda", "mamba"]] = Field(
@@ -216,13 +382,27 @@ class ConfigModel(BaseModel):
     feedstock.
     """
 
+    conda_install_tool_deps: Optional[Union[str, list]] = Field(
+        default="mamba",
+    )
+    """
+    Add additional dependencies to the conda install environment based on the selected tool.
+    """
+
     conda_forge_output_validation: Optional[bool] = Field(
-        default=True,
+        default=False,
     )
     """
     This field must be set to ``True`` for feedstocks in the ``conda-forge`` GitHub
     organization. It enables the required feedstock artifact validation as described
     in :ref: Output Validation and Feedstock Tokens </maintainer/infrastructure#output-validation>.
+    """
+
+    conda_solver: Optional[Literal["libmamba", "classic"]] = Field(
+        default=None,
+    )
+    """
+    Choose which ``conda`` solver plugin to use for feedstock builds.
     """
 
     github: Optional[GithubConfig] = Field(
@@ -506,53 +686,6 @@ class ConfigModel(BaseModel):
             enabled: False
     """
 
-    @field_validator(
-        "win_64",
-        "osx_64",
-        "linux_64",
-        "linux_aarch64",
-        "linux_ppc64le",
-        "linux_s390x",
-        "linux_armv7l",
-        mode="before",
-    )
-    @classmethod
-    def validate_platform(
-        cls,
-        field_value,
-        _info: FieldValidationInfo,
-    ):
-        """
-        Validator function for platform settings.
-
-        This function checks if the platform is disabled but also in
-        the build_platform list, and raises a ValueError with an
-        appropriate error message if that's the case.
-
-        :param cls: The class where the validator is defined.
-        :param field_value: The value of the platform field.
-        :param _info: Information about the field being validated.
-        :return: The original field_value.
-        """
-        print(f"{cls}: Field value {field_value}")
-        # Check if field_value is a dictionary and extract the 'enabled' key if present
-        if isinstance(field_value, dict):
-            _field_value = field_value.get("enabled", None)
-        else:
-            _field_value = getattr(field_value, "enabled", None)
-
-        # Check if the platform is disabled but also in the build_platform list
-        if _field_value is False and _info.field_name in _info.data.get(
-            "build_platform", []
-        ):
-            error_message = (
-                f"Platform {field_value} is disabled but is also a build platform."
-                " Please enable the platform or remove it from build_platform."
-            )
-            raise ValueError(error_message)
-
-        return field_value
-
     noarch_platforms: Optional[List[Platforms]] = Field(
         default_factory=lambda: ["linux_64"],
     )
@@ -575,7 +708,9 @@ class ConfigModel(BaseModel):
     """
 
     os_version: Optional[Dict[Platforms, Union[str, None]]] = Field(
-        default_factory=dict,
+        default_factory=lambda: {
+            platform: None for platform in Platforms.values()
+        },
     )
     """
     This key is used to set the OS versions for `linux_*` platforms. Valid entries
@@ -591,9 +726,23 @@ class ConfigModel(BaseModel):
     """
 
     provider: Optional[
-        Dict[Platforms, Union[List[CIservices], CIservices, bool, None]]
+        Dict[
+            Union[Platforms, PlatformsAliases],
+            Union[List[CIservices], CIservices, bool, None],
+        ]
     ] = Field(
-        default_factory=dict,
+        default_factory={
+            "linux": None,
+            "linux_64": ["azure"],
+            "linux_aarch64": None,
+            "linux_armv7l": None,
+            "linux_ppc64le": None,
+            "linux_s390x": None,
+            "osx": None,
+            "osx_64": ["azure"],
+            "win": None,
+            "win_64": ["azure"],
+        }
     )
     """
     The ``provider`` field is a mapping from build platform (not target platform)
@@ -680,25 +829,6 @@ class ConfigModel(BaseModel):
 
         remote_ci_setup: "conda-forge-ci-setup=3"
     """
-
-    @field_validator("remote_ci_setup", mode="before")
-    def validate_remote_ci_setup(cls, remote_ci_setup):
-        """
-        Validator function for remote_ci_setup field.
-
-        This function sanitizes the remote_ci_setup packages and returns the
-        sanitized list.
-
-        :param cls: The class where the validator is defined.
-        :param remote_ci_setup: The list of remote_ci_setup packages.
-        :return: The sanitized list of remote_ci_setup packages.
-        """
-        _sanitized_remote_ci_setup = []
-        for package in remote_ci_setup:
-            _sanitized_remote_ci_setup.append(
-                sanitize_remote_ci_setup(package)
-            )
-        return _sanitized_remote_ci_setup
 
     shellcheck: Optional[ShellCheck] = Field(
         default=None,
@@ -916,7 +1046,7 @@ class ConfigModel(BaseModel):
     """
 
     appveyor: Optional[Dict[str, Any]] = Field(
-        default_factory=dict,
+        default_factory=lambda: {"image": "Visual Studio 2017"},
     )
     """
     AppVeyor CI settings. This is usually read-only and should not normally be
@@ -981,8 +1111,8 @@ class ConfigModel(BaseModel):
     manually modified. Tools like conda-smithy may modify this, as needed.
     """
 
-    github_actions: Optional[Dict[str, Any]] = Field(
-        default_factory=dict,
+    github_actions: Optional[GitHubActionsConfig] = Field(
+        default_factory=GitHubActionsConfig,
     )
     """
     GitHub Actions CI settings. This is usually read-only and should not normally be
@@ -996,42 +1126,6 @@ class ConfigModel(BaseModel):
     Woodpecker CI settings. This is usually read-only and should not normally be
     manually modified. Tools like conda-smithy may modify this, as needed.
     """
-
-    @field_validator(
-        "travis",
-        "circle",
-        "appveyor",
-        "drone",
-        "azure",
-        "github_actions",
-        "woodpecker",
-        mode="before",
-    )
-    def validate_providers(
-        cls,
-        providers,
-        _info: FieldValidationInfo,
-    ):
-        """
-        Validator function for CI provider settings.
-
-        This function checks if the 'enabled' parameter is set for
-        CI providers and raises a warning if it is set.
-
-        :param cls: The class where the validator is defined.
-        :param providers: The CI provider settings.
-        :param _info: Information about the field being validated.
-        :return: The original providers dictionary.
-        """
-        if providers.get("enabled", None):
-            warnings.warn(
-                "It is not allowed to set the `enabled` parameter"
-                f"for {_info.field_name}. All CIs are enabled by default."
-                "To disable a CI, please add `skip: true` to the `build`"
-                "section of `meta.yaml` and an appropriate selector so "
-                "as to disable the build."
-            )
-        return providers
 
     ###################################
     ####       Deprecated          ####
@@ -1051,24 +1145,3 @@ class ConfigModel(BaseModel):
     :ref:`Build Matrices </maintainer/knowledge_base#build-matrices>` section of the
     conda-forge docs.
     """
-
-    @field_validator("matrix", mode="before")
-    def matrix_deprecated(cls, v):
-        """
-        Validator function for 'matrix' field.
-
-        This function checks if the 'matrix' field is not None, and if it's not None,
-        it raises a ValueError with migration instructions.
-
-        :param cls: The class where the validator is defined.
-        :param v: The value of the 'matrix' field.
-        :return: The original value 'v' if it's None.
-        """
-        if v is not None:
-            raise ValueError(
-                "Cannot rerender with matrix in conda-forge.yml."
-                " Please migrate matrix to conda_build_config.yaml and try again."
-                " See `here <https://github.com/conda-forge/conda-smithy/wiki/Release-Notes-3.0.0.rc1>`__"
-                "for more info."
-            )
-        return v
