@@ -1156,3 +1156,19 @@ class ConfigModel(BaseModel):
         conda-forge docs.
         """,
     )
+
+
+if __name__ == "__main__":
+    from pathlib import Path
+
+    # This is used to generate the model dump for conda-smithy internal use
+    # and for documentation purposes.
+
+    # This is the path to the conda-forge.yml file
+
+    CONDA_FORGE_YML = Path(__file__).parent / "data"
+    CONDA_FORGE_YML.mkdir(parents=True, exist_ok=True)
+    CONDA_FORGE_YML = CONDA_FORGE_YML / "conda-forge.json"
+
+    with CONDA_FORGE_YML.open(mode="w+") as f:
+        f.write(ConfigModel().schema_json(indent=2))

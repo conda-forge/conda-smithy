@@ -1752,14 +1752,15 @@ def _read_forge_config(forge_dir, forge_yml=None):
         documents = list(yaml.safe_load_all(fh))
         file_config = (documents or [None])[0] or {}
 
-    _base_config = ConfigModel().dict()
+
+    with open(Path(__name__) / "data" / "conda-forge.json", "r") as fh:
+        _base_config = json.loads(fh.read())
 
     # The config is just the base model populated with conda-forge base defaults, and updated with the values in the file_config
     config = _update_dict_within_dict(file_config.items(), _base_config)
 
-    # This will be removed, as all validations will be reverted back to JSON Schema checks
     # Validate the config file against the schema
-    file_config = ConfigModel(**file_config)
+    # TODO: Implement this
 
     config = ConfigModel(**config)
 

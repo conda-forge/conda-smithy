@@ -1,0 +1,874 @@
+{
+  "title": "ConfigModel",
+  "description": "This model describes in detail the top-level fields in  ``conda-forge.yml``.\nGeneral configuration options are described below within the ``Fields``\nspecifications. Additional examples are provided as part of the object\ndescription. Values and options are subject to change, and will be\nflagged as Deprecated as appropriate.",
+  "type": "object",
+  "properties": {
+    "conda_build": {
+      "title": "Conda Build",
+      "description": "\n        Settings in this block are used to control how ``conda build``\n        runs and produces artifacts. An example of the such configuration is:\n\n        .. code-block:: yaml\n\n            conda_build:\n                pkg_format: 2\n                zstd_compression_level: 16\n                error_overlinking: False\n\n        ",
+      "allOf": [
+        {
+          "$ref": "#/definitions/CondaBuildConfig"
+        }
+      ]
+    },
+    "conda_build_tool": {
+      "description": "\n        Use this option to choose which tool is used to build your recipe.\n        ",
+      "default": "mambabuild",
+      "allOf": [
+        {
+          "$ref": "#/definitions/CondaBuildTools"
+        }
+      ]
+    },
+    "conda_build_tool_deps": {
+      "title": "Conda Build Tool Deps",
+      "description": "\n        Add additional dependencies to the conda build environment based on the selected tool.\n        ",
+      "default": "boa",
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "array",
+          "items": {}
+        }
+      ]
+    },
+    "conda_install_tool": {
+      "title": "Conda Install Tool",
+      "description": "\n        Use this option to choose which tool is used to provision the tooling in your\n        feedstock.\n        ",
+      "default": "mamba",
+      "enum": [
+        "conda",
+        "mamba"
+      ],
+      "type": "string"
+    },
+    "conda_install_tool_deps": {
+      "title": "Conda Install Tool Deps",
+      "description": "\n        Add additional dependencies to the conda install environment based on the selected tool.\n        ",
+      "default": "mamba",
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "array",
+          "items": {}
+        }
+      ]
+    },
+    "conda_forge_output_validation": {
+      "title": "Conda Forge Output Validation",
+      "description": "\n        This field must be set to ``True`` for feedstocks in the ``conda-forge`` GitHub\n        organization. It enables the required feedstock artifact validation as described\n        in :ref: Output Validation and Feedstock Tokens </maintainer/infrastructure#output-validation>.\n        ",
+      "default": false,
+      "type": "boolean"
+    },
+    "conda_solver": {
+      "title": "Conda Solver",
+      "description": "\n        Choose which ``conda`` solver plugin to use for feedstock builds.\n        ",
+      "enum": [
+        "libmamba",
+        "classic"
+      ],
+      "type": "string"
+    },
+    "github": {
+      "title": "Github",
+      "description": "\n        Mapping for GitHub-specific configuration options. The defaults are as follows:\n\n        .. code-block:: yaml\n\n            github:\n                user_or_org: conda-forge\n                repo_name: \"my_repo\"\n                branch_name: main\n                tooling_branch_name: main\n        ",
+      "allOf": [
+        {
+          "$ref": "#/definitions/GithubConfig"
+        }
+      ]
+    },
+    "bot": {
+      "title": "Bot",
+      "description": "\n        This dictates the behavior of the conda-forge auto-tick bot which issues\n        automatic version updates/migrations for feedstocks.\n        A valid example is:\n\n        .. code-block:: yaml\n\n            bot:\n                # can the bot automerge PRs it makes on this feedstock\n                automerge: true\n\n                # only open PRs if resulting environment is solvable, useful for tightly coupled packages\n                check_solvable: true\n\n                # The bot.inspection key in the conda-forge.yml can have one of six possible values:\n                inspection: hint-all  # generate hints using all methods\n\n                # any branches listed in this section will get bot migration PRs in addition\n                # to the default branch\n                abi_migration_branches:\n                    - v1.10.x\n\n                version_updates:\n                    # use this for packages that are updated too frequently\n                    random_fraction_to_keep: 0.1  # keeps 10% of versions at random\n\n        The ``abi_migration_branches`` feature is useful to, for example, add a\n        long-term support (LTS) branch for a package.\n        ",
+      "allOf": [
+        {
+          "$ref": "#/definitions/BotConfig"
+        }
+      ]
+    },
+    "build_platform": {
+      "description": "\n        This is a mapping from the target platform to the build platform for the\n        package to be built. For example, the following builds a ``osx-64`` package\n        on the ``linux-64`` build platform using cross-compiling.\n\n        .. code-block:: yaml\n\n            build_platform:\n                osx_64: linux_64\n\n        Leaving this field empty implicitly requests to build a package natively. i.e.\n\n        .. code-block:: yaml\n\n            build_platform:\n                linux_64: linux_64\n                linux_ppc64le: linux_ppc64le\n                linux_aarch64: linux_aarch64\n                osx_64: osx_64\n                osx_arm64: osx_arm64\n                win_64: win_64\n        ",
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/Platforms"
+      }
+    },
+    "build_with_mambabuild": {
+      "title": "Build With Mambabuild",
+      "description": "\n        Configures the conda-forge CI to run a debug build using the ``mamba`` solver.\n        More information can be found in the\n        `mamba docs <https://conda-forge.org/docs/maintainer/maintainer_faq.html#mfaq-mamba-local>`__.\n\n        .. code-block:: yaml\n\n            build_with_mambabuild:\n            True\n        ",
+      "default": true,
+      "type": "boolean"
+    },
+    "channel_priority": {
+      "description": "\n        The channel priority level for the conda solver during feedstock builds.\n        For extra information, see the\n        `Strict channel priority <https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-channels.html#strict-channel-priority>`__\n        section on conda documentation.\n        ",
+      "default": "strict",
+      "allOf": [
+        {
+          "$ref": "#/definitions/ChannelPriorityConfig"
+        }
+      ]
+    },
+    "channels": {
+      "title": "Channels",
+      "description": "\n        This represents the channels to grab packages from during builds and which\n        channels/labels to push to on anaconda.org after a package has been built.\n        The ``channels`` variable is a mapping with ``sources`` and ``targets``,\n        as follows:\n\n        .. code-block:: yaml\n\n            channels:\n                # sources selects the channels to pull packages from, in order.\n                sources:\n                    - conda-forge\n                    - defaults\n                # targets is a list of 2-lists, where the first element is the\n                # channel to push to and the second element is the label on that channel\n                targets:\n                    - [\"conda-forge\", \"main\"]\n        ",
+      "allOf": [
+        {
+          "$ref": "#/definitions/CondaForgeChannels"
+        }
+      ]
+    },
+    "choco": {
+      "title": "Choco",
+      "description": "\n        This parameter allows for conda-smithy to run chocoloatey installs on Windows\n        when additional system packages are needed. This is a list of strings that\n        represent package names and any additional parameters. For example,\n\n        .. code-block:: yaml\n\n            choco:\n                # install a package\n                - nvidia-display-driver\n\n                # install a package with a specific version\n                - cuda --version=11.0.3\n\n        This is currently only implemented for Azure Pipelines. The command that is run is\n        ``choco install {entry} -fdv -y --debug``.  That is, ``choco install`` is executed\n        with a standard set of additional flags that are useful on CI.\n        ",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "docker": {
+      "title": "Docker",
+      "description": "\n        This is a mapping for Docker-specific configuration options.\n        Some options are\n\n        .. code-block:: yaml\n\n            docker:\n                executable: docker\n                image: \"condaforge/linux-anvil-comp7\"\n                command: \"bash\"\n                interactive: True\n        ",
+      "allOf": [
+        {
+          "$ref": "#/definitions/CondaForgeDocker"
+        }
+      ]
+    },
+    "idle_timeout_minutes": {
+      "title": "Idle Timeout Minutes",
+      "description": "\n        Configurable idle timeout. Used for packages that don't have chatty enough\n        builds. Applicable only to circleci and travis.\n\n        .. code-block:: yaml\n\n            idle_timeout_minutes: 60\n        ",
+      "type": "integer"
+    },
+    "win": {
+      "title": "Win",
+      "description": "\n        Windows-specific configuration options. This is largely an internal setting and\n        should not normally be manually modified.\n\n        .. code-block:: yaml\n\n            win:\n                enabled: False\n\n        As show above by the example, aliasing is supported for the win platform and\n        will be converted to the appropriate platform name (win_64) during build.\n        ",
+      "allOf": [
+        {
+          "$ref": "#/definitions/PlatformUniqueConfig"
+        }
+      ]
+    },
+    "osx": {
+      "title": "Osx",
+      "description": "\n        OSX-specific configuration options. This is largely an internal setting and\n        should not normally be manually modified.\n\n        .. code-block:: yaml\n\n            osx:\n                enabled: False\n\n        As show above by the example, aliasing is supported for the osx platform and\n        will be converted to the appropriate platform name (osx_64) during build.\n        ",
+      "allOf": [
+        {
+          "$ref": "#/definitions/PlatformUniqueConfig"
+        }
+      ]
+    },
+    "osx_arm64": {
+      "title": "Osx Arm64",
+      "description": "\n        OSX-specific (ARM) configuration options. This is largely an internal setting\n        and should not normally be manually modified.\n        ",
+      "allOf": [
+        {
+          "$ref": "#/definitions/PlatformUniqueConfig"
+        }
+      ]
+    },
+    "linux": {
+      "title": "Linux",
+      "description": "\n        Linux-specific configuration options. This is largely an internal setting\n        and should not normally be manually modified.\n\n        .. code-block:: yaml\n\n            linux:\n                enabled: False\n\n        As show above by the example, aliasing is supported for the linux platform\n        and will be converted to the appropriate platform name (linux_64) during build.\n        ",
+      "allOf": [
+        {
+          "$ref": "#/definitions/PlatformUniqueConfig"
+        }
+      ]
+    },
+    "linux_aarch64": {
+      "title": "Linux Aarch64",
+      "description": "\n        ARM-specific configuration options. This is largely an internal setting\n        and should not normally be manually modified.\n\n        .. code-block:: yaml\n\n            linux_aarch64:\n                enabled: False\n        ",
+      "allOf": [
+        {
+          "$ref": "#/definitions/PlatformUniqueConfig"
+        }
+      ]
+    },
+    "linux_ppc64le": {
+      "title": "Linux Ppc64Le",
+      "description": "\n        PPC-specific configuration options. This is largely an internal setting and\n        should not normally be manually modified.\n\n        .. code-block:: yaml\n\n            linux_ppc64le:\n                enabled: False\n        ",
+      "allOf": [
+        {
+          "$ref": "#/definitions/PlatformUniqueConfig"
+        }
+      ]
+    },
+    "linux_s390x": {
+      "title": "Linux S390X",
+      "description": "\n        s390x-specific configuration options. This is largely an internal setting and\n        should not normally be manually modified.\n\n        .. code-block:: yaml\n\n            linux_s390x:\n                enabled: False\n        ",
+      "allOf": [
+        {
+          "$ref": "#/definitions/PlatformUniqueConfig"
+        }
+      ]
+    },
+    "linux_armv7l": {
+      "title": "Linux Armv7L",
+      "description": "\n        ARM-specific configuration options. This is largely an internal setting and\n        should not normally be manually modified.\n\n        .. code-block:: yaml\n\n            linux_armv7l:\n                enabled: False\n        ",
+      "allOf": [
+        {
+          "$ref": "#/definitions/PlatformUniqueConfig"
+        }
+      ]
+    },
+    "noarch_platforms": {
+      "description": "\n        Platforms on which to build noarch packages. The preferred default is a\n        single build on ``linux_64``.\n\n        .. code-block:: yaml\n\n            noarch_platforms: linux_64\n\n        To build on multiple platforms, e.g. for simple packages with platform-specific\n        dependencies, provide a list.\n\n        .. code-block:: yaml\n\n            noarch_platforms:\n            - linux_64\n            - win_64\n        ",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Platforms"
+      }
+    },
+    "os_version": {
+      "title": "Os Version",
+      "description": "\n        This key is used to set the OS versions for `linux_*` platforms. Valid entries\n        map a linux platform and arch to either `cos6` or `cos7`.\n        Currently `cos6` is the default for `linux-64`.\n        All other linux architectures use CentOS 7.\n        Here is an example that enables CentOS 7 on ``linux-64`` builds\n\n        .. code-block:: yaml\n\n            os_version:\n                linux_64: cos7\n        ",
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "provider": {
+      "title": "Provider",
+      "description": "\n        The ``provider`` field is a mapping from build platform (not target platform)\n        to CI service. It determines which service handles each build platform.\n        If a desired build platform is not available with a selected provider\n        (either natively or with emulation), the build will be disabled.\n        Use the ``build_platform`` field to manually specify cross-compilation when\n        no providers offer a desired build platform.\n\n        The following are available as supported build platforms:\n\n        * ``linux_64``\n        * ``osx_64``\n        * ``win_64``\n        * ``linux_aarch64``\n        * ``linux_ppc64le``\n        * ``linux_s390x``\n        * ``linux_armv7l``\n\n        The following CI services are available:\n\n        * ``azure``\n        * ``circle``\n        * ``travis``\n        * ``appveyor``\n        * ``None`` or ``False`` to disable a build platform.\n        * ``default`` to choose an appropriate CI (only if available)\n\n        For example, switching linux_64 & osx_64 to build on Travis CI, with win_64 on\n        Appveyor:\n\n        .. code-block:: yaml\n\n            provider:\n                linux_64: travis\n                osx_64: travis\n                win_64: appveyor\n\n        Currently, x86_64 platforms are enabled, but other build platforms are\n        disabled by default. i.e. an empty provider entry is equivalent to the\n        following:\n\n        .. code-block:: yaml\n\n            provider:\n                linux_64: azure\n                osx_64: azure\n                win_64: azure\n                linux_ppc64le: None\n                linux_aarch64: None\n\n        To enable ``linux_ppc64le`` and ``linux_aarch64`` add the following:\n\n        .. code-block:: yaml\n\n            provider:\n                linux_ppc64le: default\n                linux_aarch64: default\n        ",
+      "type": "object",
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/CIservices"
+            }
+          },
+          {
+            "$ref": "#/definitions/CIservices"
+          },
+          {
+            "type": "boolean"
+          }
+        ]
+      }
+    },
+    "package": {
+      "title": "Package",
+      "description": "Default location for a package feedstock directory basename.",
+      "type": "string"
+    },
+    "recipe_dir": {
+      "title": "Recipe Dir",
+      "description": "\n        The relative path to the recipe directory. The default is:\n\n        .. code-block:: yaml\n\n            recipe_dir: recipe\n        ",
+      "default": "recipe",
+      "type": "string"
+    },
+    "remote_ci_setup": {
+      "title": "Remote Ci Setup",
+      "description": "\n        This option can be used to override the default ``conda-forge-ci-setup`` package.\n        Can be given with ``${url or channel_alias}::package_name``,\n        defaults to conda-forge channel_alias if no prefix is given.\n\n        .. code-block:: yaml\n\n            remote_ci_setup: \"conda-forge-ci-setup=3\"\n        ",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "shellcheck": {
+      "title": "Shellcheck",
+      "description": "\n        Shell scripts used for builds or activation scripts can be linted with\n        shellcheck. This option can be used to enable shellcheck and configure\n        its behavior. This is not enabled by default, but can be enabled like so:\n\n        .. code-block:: yaml\n\n            shellcheck:\n                enabled: True\n\n        ",
+      "allOf": [
+        {
+          "$ref": "#/definitions/ShellCheck"
+        }
+      ]
+    },
+    "skip_render": {
+      "description": "\n        This option specifies a list of files which ``conda smithy`` will skip rendering.\n        This is useful for files that are not templates, but are still in the recipe\n        directory. The default value is an empty list [ ], which will consider that\n        all files can be rendered. For example, if you want to skip rendering\n        the .gitignore and LICENSE.txt files, you can add the following:\n\n        .. code-block:: yaml\n\n            skip_render:\n                - .gitignore\n                - LICENSE.txt\n        ",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/BotConfigSkipRenderChoices"
+      }
+    },
+    "templates": {
+      "title": "Templates",
+      "description": "\n        This is mostly an internal field for specifying where template files reside.\n        You shouldn't need to modify it.\n        ",
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "test_on_native_only": {
+      "title": "Test On Native Only",
+      "description": "\n        This was used for disabling testing for cross-compiling.\n\n        .. note::\n            This has been deprecated in favor of the top-level ``test`` field.\n            It is now mapped to ``test: native_and_emulated``.\n        ",
+      "default": false,
+      "type": "boolean"
+    },
+    "test": {
+      "description": "\n        This is used to configure on which platforms a recipe is tested.\n\n        .. code-block:: yaml\n\n            test: native_and_emulated\n\n        Will do testing only if the platform is native or if there is an emulator.\n\n        .. code-block:: yaml\n\n            test: native\n\n        Will do testing only if the platform is native.\n        ",
+      "allOf": [
+        {
+          "$ref": "#/definitions/DefaultTestPlatforms"
+        }
+      ]
+    },
+    "upload_on_branch": {
+      "title": "Upload On Branch",
+      "description": "\n        This parameter restricts uploading access on work from certain branches of the\n        same repo. Only the branch listed in ``upload_on_branch`` will trigger uploading\n        of packages to the target channel. The default is to skip this check if the key\n        ``upload_on_branch`` is not in ``conda-forge.yml``. To restrict uploads to the\n        main branch:\n\n        .. code-block:: yaml\n\n            upload_on_branch: main\n        ",
+      "type": "string"
+    },
+    "config_version": {
+      "title": "Config Version",
+      "description": "\n        The version of the ``conda-forge.yml`` specification.\n        This should not be manually modified.\n        ",
+      "default": "2",
+      "type": "string"
+    },
+    "exclusive_config_file": {
+      "title": "Exclusive Config File",
+      "description": "\n        Exclusive conda-build config file to replace ``conda-forge-pinning``.\n        For advanced usage only.\n        ",
+      "type": "string"
+    },
+    "compiler_stack": {
+      "title": "Compiler Stack",
+      "description": "\n        Compiler stack environment variable. This is used to specify the compiler\n        stack to use for builds.\n\n        .. code-block:: yaml\n\n            compiler_stack: comp7\n        ",
+      "default": "comp7",
+      "type": "string"
+    },
+    "min_py_ver": {
+      "title": "Min Py Ver",
+      "description": "\n        Minimum Python version. This is used to specify the minimum Python version\n        to use for builds.\n\n        .. code-block:: yaml\n\n            min_py_ver: 27\n        ",
+      "default": "27",
+      "type": "string"
+    },
+    "max_py_ver": {
+      "title": "Max Py Ver",
+      "description": "\n        Maximum Python version. This is used to specify the maximum Python version\n        to use for builds.\n\n        .. code-block:: yaml\n\n            max_py_ver: 37\n        ",
+      "default": "37",
+      "type": "string"
+    },
+    "min_r_ver": {
+      "title": "Min R Ver",
+      "description": "\n        Minimum R version. This is used to specify the minimum R version to\n        use for builds.\n\n        .. code-block:: yaml\n\n            min_r_ver: 34\n        ",
+      "default": "34",
+      "type": "string"
+    },
+    "max_r_ver": {
+      "title": "Max R Ver",
+      "description": "\n        Maximum R version. This is used to specify the maximum R version to use\n        for builds.\n\n        .. code-block:: yaml\n\n            max_r_ver: 34\n        ",
+      "default": "34",
+      "type": "string"
+    },
+    "private_upload": {
+      "title": "Private Upload",
+      "description": "\n        Whether to upload to a private channel.\n\n        .. code-block:: yaml\n\n            private_upload: False\n        ",
+      "default": false,
+      "type": "boolean"
+    },
+    "secrets": {
+      "title": "Secrets",
+      "description": "\n        List of secrets to be used in GitHub Actions.\n        The default is an empty list and will not be used.\n        ",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "clone_depth": {
+      "title": "Clone Depth",
+      "description": "\n        The depth of the git clone.\n        ",
+      "type": "integer"
+    },
+    "timeout_minutes": {
+      "title": "Timeout Minutes",
+      "description": "\n        The timeout in minutes for all platforms CI jobs.\n        If passed alongside with Azure, it will be used as the default\n        timeout for Azure Pipelines jobs.\n        ",
+      "type": "integer"
+    },
+    "travis": {
+      "title": "Travis",
+      "description": "\n        Travis CI settings. This is usually read-only and should not normally be\n        manually modified. Tools like conda-smithy may modify this, as needed.\n        ",
+      "type": "object"
+    },
+    "circle": {
+      "title": "Circle",
+      "description": "\n        Circle CI settings. This is usually read-only and should not normally be\n        manually modified. Tools like conda-smithy may modify this, as needed.\n        ",
+      "type": "object"
+    },
+    "appveyor": {
+      "title": "Appveyor",
+      "description": "\n        AppVeyor CI settings. This is usually read-only and should not normally be\n        manually modified. Tools like conda-smithy may modify this, as needed.\n        ",
+      "type": "object"
+    },
+    "azure": {
+      "title": "Azure",
+      "description": "\n        Azure Pipelines CI settings. This is usually read-only and should not\n        normally be manually modified. Tools like conda-smithy may modify this, as needed.\n        For example:\n\n        .. code-block:: yaml\n\n            azure:\n                # flag for forcing the building all supported providers\n                force: False\n                # toggle for storing the conda build_artifacts directory (including the\n                # built packages) as an Azure pipeline artifact that can be downloaded\n                store_build_artifacts: False\n                # toggle for freeing up some extra space on the default Azure Pipelines\n                # linux image before running the Docker container for building\n                free_disk_space: False\n                # limit the amount of CI jobs running concurrently at a given time\n                # each OS will get its proportional share of the configured value\n                max_parallel: 25\n\n\n        .. _self-hosted_azure-config:\n\n        Below is an example configuration for setting up a self-hosted Azure agent for Linux:\n\n        .. code-block:: yaml\n\n            azure:\n                settings_linux:\n                pool:\n                    name: your_local_pool_name\n                    demands:\n                    - some_key -equals some_value\n                workspace:\n                    clean: all\n                strategy:\n                    maxParallel: 1\n\n        Below is an example configuration for adding a swapfile on an Azure agent for Linux:\n\n        .. code-block:: yaml\n\n            azure:\n                settings_linux:\n                    swapfile_size: 10GiB\n        ",
+      "allOf": [
+        {
+          "$ref": "#/definitions/AzureConfig"
+        }
+      ]
+    },
+    "drone": {
+      "title": "Drone",
+      "description": "\n        Drone CI settings. This is usually read-only and should not normally be\n        manually modified. Tools like conda-smithy may modify this, as needed.\n        ",
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "github_actions": {
+      "title": "Github Actions",
+      "description": "\n        GitHub Actions CI settings. This is usually read-only and should not normally be\n        manually modified. Tools like conda-smithy may modify this, as needed.\n        ",
+      "allOf": [
+        {
+          "$ref": "#/definitions/GitHubActionsConfig"
+        }
+      ]
+    },
+    "woodpecker": {
+      "title": "Woodpecker",
+      "description": "\n        Woodpecker CI settings. This is usually read-only and should not normally be\n        manually modified. Tools like conda-smithy may modify this, as needed.\n        ",
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "matrix": {
+      "title": "Matrix",
+      "description": "\n        Build matrices were used to specify a set of build configurations to run for each\n        package pinned dependency. This has been deprecated in favor of the provider field.\n        More information can be found in the\n        :ref:`Build Matrices </maintainer/knowledge_base#build-matrices>` section of the\n        conda-forge docs.\n        ",
+      "type": "object"
+    }
+  },
+  "definitions": {
+    "CondaBuildConfig": {
+      "title": "CondaBuildConfig",
+      "type": "object",
+      "properties": {
+        "pkg_format": {
+          "title": "Pkg Format",
+          "description": "The package version format for conda build.",
+          "default": "2",
+          "enum": [
+            "1",
+            "2",
+            "tar"
+          ],
+          "type": "string"
+        },
+        "zstd_compression_level": {
+          "title": "Zstd Compression Level",
+          "description": "The compression level for the zstd compression algorithm for\n            .conda artifacts. conda-forge uses a default value of 16 for a good\n            compromise of performance and compression.",
+          "default": 16,
+          "type": "integer"
+        },
+        "error_overlinking": {
+          "title": "Error Overlinking",
+          "description": "\n            Enable error when shared libraries from transitive dependencies are\n            directly  linked  to any executables or shared libraries in  built\n            packages. For more details, see the\n            [conda build documentation](https://docs.conda.io/projects/conda-build/en/stable/resources/commands/conda-build.html).\n            ",
+          "default": false,
+          "type": "boolean"
+        }
+      }
+    },
+    "CondaBuildTools": {
+      "title": "CondaBuildTools",
+      "description": "An enumeration.",
+      "enum": [
+        "conda-build",
+        "conda-build+classic",
+        "conda-build+conda-libmamba-solver",
+        "mambabuild"
+      ],
+      "type": "string"
+    },
+    "GithubConfig": {
+      "title": "GithubConfig",
+      "type": "object",
+      "properties": {
+        "user_or_org": {
+          "title": "User Or Org",
+          "description": "The name of the GitHub user or organization, if passed with the AzureConfig provider, must comply with the value of the user_or_org field",
+          "default": "conda-forge",
+          "type": "string"
+        },
+        "repo_name": {
+          "title": "Repo Name",
+          "description": "The name of the repository",
+          "default": "",
+          "type": "string"
+        },
+        "branch_name": {
+          "title": "Branch Name",
+          "description": "The name of the branch to execute on",
+          "default": "main",
+          "type": "string"
+        },
+        "tooling_branch_name": {
+          "title": "Tooling Branch Name",
+          "description": "The name of the branch to use for rerender+webservices github actions and conda-forge-ci-setup-feedstock references",
+          "default": "main",
+          "type": "string"
+        }
+      }
+    },
+    "BotConfigAutoMergeChoice": {
+      "title": "BotConfigAutoMergeChoice",
+      "description": "An enumeration.",
+      "enum": [
+        "version",
+        "migration"
+      ],
+      "type": "string"
+    },
+    "BotConfigInspectionChoice": {
+      "title": "BotConfigInspectionChoice",
+      "description": "An enumeration.",
+      "enum": [
+        "hint",
+        "hint-all",
+        "hint-source",
+        "hint-grayskull",
+        "update-all",
+        "update-source",
+        "update-grayskull"
+      ],
+      "type": "string"
+    },
+    "BotConfig": {
+      "title": "BotConfig",
+      "description": "This dictates the behavior of the conda-forge auto-tick bot which issues\nautomatic version updates/migrations for feedstocks.",
+      "type": "object",
+      "properties": {
+        "automerge": {
+          "title": "Automerge",
+          "description": "Automatically merge PRs if possible",
+          "default": false,
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/definitions/BotConfigAutoMergeChoice"
+            }
+          ]
+        },
+        "check_solvable": {
+          "title": "Check Solvable",
+          "description": "Open PRs only if resulting environment is solvable.",
+          "type": "boolean"
+        },
+        "inspection": {
+          "description": "Method for generating hints or updating recipe",
+          "allOf": [
+            {
+              "$ref": "#/definitions/BotConfigInspectionChoice"
+            }
+          ]
+        },
+        "abi_migration_branches": {
+          "title": "Abi Migration Branches",
+          "description": "List of branches for additional bot migration PRs",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "version_updates_random_fraction_to_keep": {
+          "title": "Version Updates Random Fraction To Keep",
+          "description": "Fraction of versions to keep for frequently updated packages",
+          "type": "number"
+        }
+      }
+    },
+    "Platforms": {
+      "title": "Platforms",
+      "description": "An enumeration.",
+      "enum": [
+        "linux_64",
+        "linux_aarch64",
+        "linux_armv7l",
+        "linux_ppc64le",
+        "linux_s390x",
+        "win_64",
+        "osx_64",
+        "osx_arm64"
+      ],
+      "type": "string"
+    },
+    "ChannelPriorityConfig": {
+      "title": "ChannelPriorityConfig",
+      "description": "An enumeration.",
+      "enum": [
+        "strict",
+        "flexible",
+        "disabled"
+      ],
+      "type": "string"
+    },
+    "CondaForgeChannels": {
+      "title": "CondaForgeChannels",
+      "description": "This represents the channels to grab packages from during builds and which\nchannels/labels to push to on anaconda.org after a package has been built.\nThe channels variable is a mapping with sources and targets.",
+      "type": "object",
+      "properties": {
+        "sources": {
+          "title": "Sources",
+          "description": "sources selects the channels to pull packages from, in order",
+          "default": [
+            "conda-forge"
+          ],
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "targets": {
+          "title": "Targets",
+          "description": "targets is a list of 2-lists, where the first element is the         channel to push to and the second element is the label on that channel",
+          "default": [
+            [
+              "conda-forge",
+              "main"
+            ]
+          ],
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "CondaForgeDocker": {
+      "title": "CondaForgeDocker",
+      "type": "object",
+      "properties": {
+        "executable": {
+          "title": "Executable",
+          "description": "The executable for Docker",
+          "default": "docker",
+          "type": "string"
+        },
+        "fallback_image": {
+          "title": "Fallback Image",
+          "description": "The fallback image for Docker",
+          "default": "quay.io/condaforge/linux-anvil-comp7",
+          "type": "string"
+        },
+        "command": {
+          "title": "Command",
+          "description": "The command to run in Docker",
+          "default": "bash",
+          "type": "string"
+        },
+        "interactive": {
+          "title": "Interactive",
+          "description": "Whether to run Docker in interactive mode",
+          "type": "boolean"
+        },
+        "image": {
+          "title": "Image",
+          "description": "Setting the Docker image in conda-forge.yml is no longer\n        supported, use conda_build_config.yaml to specify Docker images.",
+          "type": "string"
+        }
+      }
+    },
+    "PlatformUniqueConfig": {
+      "title": "PlatformUniqueConfig",
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "title": "Enabled",
+          "description": "Whether to use extra platform-specific configuration options",
+          "default": false,
+          "type": "boolean"
+        }
+      }
+    },
+    "CIservices": {
+      "title": "CIservices",
+      "description": "An enumeration.",
+      "enum": [
+        "azure",
+        "circle",
+        "travis",
+        "appveyor",
+        "default"
+      ],
+      "type": "string"
+    },
+    "ShellCheck": {
+      "title": "ShellCheck",
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "title": "Enabled",
+          "description": "Whether to use shellcheck to lint shell scripts",
+          "default": false,
+          "type": "boolean"
+        }
+      }
+    },
+    "BotConfigSkipRenderChoices": {
+      "title": "BotConfigSkipRenderChoices",
+      "description": "An enumeration.",
+      "enum": [
+        ".gitignore",
+        ".gitattributes",
+        "README.md",
+        "LICENSE.txt",
+        ".github/workflows"
+      ],
+      "type": "string"
+    },
+    "DefaultTestPlatforms": {
+      "title": "DefaultTestPlatforms",
+      "description": "An enumeration.",
+      "enum": [
+        "all",
+        "native_only",
+        "native_and_emulated",
+        "emulated_only"
+      ],
+      "type": "string"
+    },
+    "AzureSelfHostedRunnerSettings": {
+      "title": "AzureSelfHostedRunnerSettings",
+      "description": "This is the settings for self-hosted runners.",
+      "type": "object",
+      "properties": {
+        "pool": {
+          "title": "Pool",
+          "description": "The pool of self-hosted runners, e.g. 'vmImage': 'ubuntu-latest'",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "swapfile_size": {
+          "title": "Swapfile Size",
+          "description": "Swapfile size in GiB",
+          "type": "string"
+        },
+        "timeoutInMinutes": {
+          "title": "Timeoutinminutes",
+          "description": "Timeout in minutes for the job",
+          "default": 360,
+          "type": "integer"
+        },
+        "variables": {
+          "title": "Variables",
+          "description": "Variables",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "AzureConfig": {
+      "title": "AzureConfig",
+      "description": "This dictates the behavior of the Azure Pipelines CI service. It is a sub-mapping for Azure-specific configuration options. For more information and some variables specifications, see the [Azure Pipelines schema reference documentation](https://learn.microsoft.com/en-us/azure/devops/pipelines/yaml-schema/?view=azure-pipelines).",
+      "type": "object",
+      "properties": {
+        "force": {
+          "title": "Force",
+          "description": "Force building all supported providers",
+          "default": false,
+          "type": "boolean"
+        },
+        "free_disk_space": {
+          "title": "Free Disk Space",
+          "description": "Free up disk space before running the Docker container for building on Linux",
+          "type": "boolean"
+        },
+        "max_parallel": {
+          "title": "Max Parallel",
+          "description": "Limit the amount of CI jobs running concurrently at a given time",
+          "default": 50,
+          "type": "integer"
+        },
+        "project_id": {
+          "title": "Project Id",
+          "description": "The ID of the Azure Pipelines project",
+          "default": "84710dde-1620-425b-80d0-4cf5baca359d",
+          "type": "string"
+        },
+        "project_name": {
+          "title": "Project Name",
+          "description": "The name of the Azure Pipelines project",
+          "default": "feedstock-builds",
+          "type": "string"
+        },
+        "settings_linux": {
+          "title": "Settings Linux",
+          "description": "Linux-specific settings for self-hosted runners",
+          "allOf": [
+            {
+              "$ref": "#/definitions/AzureSelfHostedRunnerSettings"
+            }
+          ]
+        },
+        "settings_osx": {
+          "title": "Settings Osx",
+          "description": "OSX-specific settings for self-hosted runners",
+          "allOf": [
+            {
+              "$ref": "#/definitions/AzureSelfHostedRunnerSettings"
+            }
+          ]
+        },
+        "settings_win": {
+          "title": "Settings Win",
+          "description": "Windows-specific settings for self-hosted runners",
+          "allOf": [
+            {
+              "$ref": "#/definitions/AzureSelfHostedRunnerSettings"
+            }
+          ]
+        },
+        "user_or_org": {
+          "title": "User Or Org",
+          "description": "The name of the GitHub user or organization, if passed with the GithubConfig provider, must comply with the value of the user_or_org field",
+          "type": "string"
+        },
+        "store_build_artifacts": {
+          "title": "Store Build Artifacts",
+          "description": "Store the conda build_artifacts directory as an Azure pipeline artifact",
+          "default": false,
+          "type": "boolean"
+        },
+        "timeout_minutes": {
+          "title": "Timeout Minutes",
+          "description": "The maximum amount of time (in minutes) that a job can run before it is automatically canceled",
+          "type": "integer"
+        }
+      }
+    },
+    "GitHubActionsConfig": {
+      "title": "GitHubActionsConfig",
+      "type": "object",
+      "properties": {
+        "artifact_retention_days": {
+          "title": "Artifact Retention Days",
+          "description": "The number of days to retain artifacts",
+          "default": 14,
+          "type": "integer"
+        },
+        "max_parallel": {
+          "title": "Max Parallel",
+          "description": "The maximum number of jobs to run in parallel",
+          "type": "integer"
+        },
+        "self_hosted": {
+          "title": "Self Hosted",
+          "description": "Whether to use self-hosted runners",
+          "default": false,
+          "type": "boolean"
+        },
+        "store_build_artifacts": {
+          "title": "Store Build Artifacts",
+          "description": "Whether to store build artifacts",
+          "default": false,
+          "type": "boolean"
+        }
+      }
+    }
+  }
+}
