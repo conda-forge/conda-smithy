@@ -243,14 +243,21 @@ def test_upload_on_branch_azure(upload_on_branch_recipe, jinja_env):
         )
     ) as fp:
         content_win = yaml.safe_load(fp)
-    assert (
-        "UPLOAD_ON_BRANCH=foo-branch"
-        in content_win["jobs"][0]["steps"][-1]["script"]
+    win_build_step = next(
+        step
+        for step in content_win["jobs"][0]["steps"]
+        if step["displayName"] == "Run Windows build"
     )
-    assert (
-        "BUILD_SOURCEBRANCHNAME"
-        in content_win["jobs"][0]["steps"][-1]["script"]
-    )
+    assert win_build_step["env"]["UPLOAD_ON_BRANCH"] == "foo-branch"
+    with open(
+        os.path.join(
+            upload_on_branch_recipe.recipe,
+            ".scripts",
+            "run_win_build.bat",
+        )
+    ) as fp:
+        build_script_win = fp.read()
+    assert "BUILD_SOURCEBRANCHNAME" in build_script_win
 
     with open(
         os.path.join(
@@ -900,3 +907,22 @@ def test_conda_build_tools(config_yaml):
 
     with pytest.raises(AssertionError):
         assert load_forge_config()
+
+
+def test_remote_ci_setup(config_yaml):
+    load_forge_config = lambda: cnfgr_fdstk._load_forge_config(  # noqa
+        config_yaml,
+        exclusive_config_file=os.path.join(
+            config_yaml, "recipe", "default_config.yaml"
+        ),
+    )
+    cfg = load_forge_config()
+    with open(os.path.join(config_yaml, "conda-forge.yml"), "a+") as fp:
+        fp.write("remote_ci_setup: ['conda-forge-ci-setup=3', 'py-lief<0.12']")
+    cfg = load_forge_config()
+    # pylief was quoted due to <
+    assert cfg["remote_ci_setup"] == [
+        "conda-forge-ci-setup=3",
+        '"py-lief<0.12"',
+    ]
+    assert cfg["remote_ci_setup_names"] == ["conda-forge-ci-setup", "py-lief"]

@@ -7,13 +7,14 @@ import re
 import sys
 import subprocess
 import textwrap
+import time
 import yaml
 import warnings
 from collections import OrderedDict, namedtuple, Counter
 import copy
 import hashlib
 import requests
-from pathlib import PurePath
+from pathlib import Path, PurePath
 
 # The `requests` lib uses `simplejson` instead of `json` when available.
 # In consequence the same JSON library must be used or the `JSONDecodeError`
@@ -29,6 +30,7 @@ import conda_build.utils
 import conda_build.variants
 import conda_build.conda_interface
 import conda_build.render
+from conda.models.match_spec import MatchSpec
 
 from copy import deepcopy
 
@@ -50,6 +52,25 @@ from . import __version__
 
 conda_forge_content = os.path.abspath(os.path.dirname(__file__))
 logger = logging.getLogger(__name__)
+
+# feedstocks listed here are allowed to use GHA on
+# conda-forge
+# this should solve issues where other CI proviers have too many
+# jobs and we need to change something via CI
+SERVICE_FEEDSTOCKS = [
+    "conda-forge-pinning-feedstock",
+    "conda-forge-repodata-patches-feedstock",
+    "conda-smithy-feedstock",
+]
+if "CONDA_SMITHY_SERVICE_FEEDSTOCKS" in os.environ:
+    SERVICE_FEEDSTOCKS += os.environ["CONDA_SMITHY_SERVICE_FEEDSTOCKS"].split(
+        ","
+    )
+
+# Cache lifetime in seconds, default 15min
+CONDA_FORGE_PINNING_LIFETIME = int(
+    os.environ.get("CONDA_FORGE_PINNING_LIFETIME", 15 * 60)
+)
 
 
 def package_key(config, used_loop_vars, subdir):
@@ -908,7 +929,7 @@ def _get_build_setup_line(forge_dir, platform, forge_config):
             build_setup += textwrap.dedent(
                 """\
                 :: Overriding global run_conda_forge_build_setup_win with local copy.
-                {recipe_dir}\\run_conda_forge_build_setup_win
+                CALL {recipe_dir}\\run_conda_forge_build_setup_win
             """.format(
                     recipe_dir=forge_config["recipe_dir"]
                 )
@@ -926,7 +947,7 @@ def _get_build_setup_line(forge_dir, platform, forge_config):
         if platform == "win":
             build_setup += textwrap.dedent(
                 """\
-                run_conda_forge_build_setup
+                CALL run_conda_forge_build_setup
 
             """
             )
@@ -1262,7 +1283,9 @@ def _github_actions_specific_setup(
         "osx": [
             ".scripts/run_osx_build.sh",
         ],
-        "win": [],
+        "win": [
+            ".scripts/run_win_build.bat",
+        ],
     }
 
     template_files = platform_templates.get(platform, [])
@@ -1337,7 +1360,10 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
             ".azure-pipelines/azure-pipelines-osx.yml",
             ".scripts/run_osx_build.sh",
         ],
-        "win": [".azure-pipelines/azure-pipelines-win.yml"],
+        "win": [
+            ".azure-pipelines/azure-pipelines-win.yml",
+            ".scripts/run_win_build.bat",
+        ],
     }
     if forge_config["azure"]["store_build_artifacts"]:
         platform_templates["linux"].append(
@@ -1828,6 +1854,9 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
         "secrets": [],
         "conda_build_tool": "mambabuild",
         "conda_build_tool_deps": "boa",
+        "conda_install_tool": "mamba",
+        "conda_install_tool_deps": "mamba",
+        "conda_solver": None,
         # feedstock checkout git clone depth, None means keep default, 0 means no limit
         "clone_depth": None,
         # Specific channel for package can be given with
@@ -1939,12 +1968,26 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
         f"Invalid conda_build_tool: {config['conda_build_tool']}. "
         f"Valid values are: {valid_build_tools}."
     )
+    # NOTE: Currently assuming these dependencies are name-only (no version constraints)
     if config["conda_build_tool"] == "mambabuild":
-        config["conda_build_tool_deps"] = "boa"
+        config["conda_build_tool_deps"] = "conda-build boa"
     elif config["conda_build_tool"] == "conda-build+conda-libmamba-solver":
         config["conda_build_tool_deps"] = "conda-build conda-libmamba-solver"
     else:
         config["conda_build_tool_deps"] = "conda-build"
+
+    valid_install_tools = ("conda", "mamba")
+    assert config["conda_install_tool"] in valid_install_tools, (
+        f"Invalid conda_install_tool: {config['conda_install_tool']}. "
+        f"Valid values are: {valid_install_tools}."
+    )
+    # NOTE: Currently assuming these dependencies are name-only (no version constraints)
+    if config["conda_install_tool"] == "mamba":
+        config["conda_install_tool_deps"] = "mamba"
+    elif config["conda_install_tool"] in "conda":
+        config["conda_install_tool_deps"] = "conda"
+        if config.get("conda_solver") == "libmamba":
+            config["conda_install_tool_deps"] += " conda-libmamba-solver"
 
     config["secrets"] = sorted(set(config["secrets"] + ["BINSTAR_TOKEN"]))
 
@@ -2003,6 +2046,10 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
     config["remote_ci_setup"] = _santize_remote_ci_setup(
         config["remote_ci_setup"]
     )
+    config["remote_ci_setup_names"] = [
+        MatchSpec(pkg.strip('"').strip("'")).name
+        for pkg in config["remote_ci_setup"]
+    ]
 
     # Older conda-smithy versions supported this with only one
     # entry. To avoid breakage, we are converting single elements
@@ -2143,6 +2190,52 @@ def get_cfp_file_path(temporary_directory):
     assert os.path.exists(cf_pinning_file)
 
     return cf_pinning_file, cf_pinning_ver
+
+
+def get_cache_dir():
+    if sys.platform.startswith("win"):
+        return Path(os.environ.get("TEMP"))
+    else:
+        return os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache")
+
+
+def get_cached_cfp_file_path(temporary_directory):
+    if cache_dir := get_cache_dir():
+        smithy_cache = cache_dir / "conda-smithy"
+        smithy_cache.mkdir(parents=True, exist_ok=True)
+        pinning_version = None
+        # Do we already have the pinning cached?
+        if (smithy_cache / "conda-forge-pinng-version").exists():
+            pinning_version = (
+                smithy_cache / "conda-forge-pinng-version"
+            ).read_text()
+
+        # Check whether we have recently already updated the cache
+        current_ts = int(time.time())
+        if (smithy_cache / "conda-forge-pinng-version-ts").exists():
+            last_ts = int(
+                (smithy_cache / "conda-forge-pinng-version-ts").read_text()
+            )
+        else:
+            last_ts = 0
+
+        if current_ts - last_ts > CONDA_FORGE_PINNING_LIFETIME:
+            current_pinning_version = get_most_recent_version(
+                "conda-forge-pinning"
+            ).version
+            (smithy_cache / "conda-forge-pinng-version-ts").write_text(
+                str(current_ts)
+            )
+            if current_pinning_version != pinning_version:
+                get_cfp_file_path(smithy_cache)
+                (smithy_cache / "conda-forge-pinng-version").write_text(
+                    current_pinning_version
+                )
+                pinning_version = current_pinning_version
+
+        return str(smithy_cache / "conda_build_config.yaml"), pinning_version
+    else:
+        return get_cfp_file_path(temporary_directory)
 
 
 def clear_variants(forge_dir):
@@ -2298,14 +2391,11 @@ def main(
     loglevel = os.environ.get("CONDA_SMITHY_LOGLEVEL", "INFO").upper()
     logger.setLevel(loglevel)
 
-    if check:
+    if check or not no_check_uptodate:
         # Check that conda-smithy is up-to-date
         check_version_uptodate("conda-smithy", __version__, True)
-        return True
-
-    error_on_warn = False if no_check_uptodate else True
-    # Check that conda-smithy is up-to-date
-    check_version_uptodate("conda-smithy", __version__, error_on_warn)
+        if check:
+            return True
 
     forge_dir = os.path.abspath(forge_file_directory)
     if exclusive_config_file is not None:
@@ -2314,7 +2404,7 @@ def main(
             raise RuntimeError("Given exclusive-config-file not found.")
         cf_pinning_ver = None
     else:
-        exclusive_config_file, cf_pinning_ver = get_cfp_file_path(
+        exclusive_config_file, cf_pinning_ver = get_cached_cfp_file_path(
             temporary_directory
         )
 

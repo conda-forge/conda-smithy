@@ -185,52 +185,7 @@ jobs:
     - name: Build on windows
       shell: cmd
       run: |
-        call activate base
-        mamba.exe install -c conda-forge 'python=3.9' conda pip {{ conda_build_tool_deps }} {{ " ".join(remote_ci_setup) }}
-        if errorlevel 1 exit 1
-        {%- if local_ci_setup %}
-        conda.exe uninstall --quiet --yes --force {{ " ".join(remote_ci_setup) }}"
-        if errorlevel 1 exit 1
-        pip install --no-deps ".\{{ recipe_dir }}\."
-        if errorlevel 1 exit 1
-        {%- endif %}
-        setup_conda_rc .\ ".\{{ recipe_dir }}" .\.ci_support\%CONFIG%.yaml
-        if errorlevel 1 exit 1
-        {% if build_setup -%}
-        {{ build_setup.replace("\n", "\n        ").rstrip() }}
-        {%- endif %}
-
-        if EXIST LICENSE.txt (
-          copy LICENSE.txt "{{ recipe_dir }}\\recipe-scripts-license.txt"
-        )
-        {%- if conda_build_tool == "mambabuild" %}
-        conda.exe mambabuild "{{ recipe_dir }}" -m .ci_support\%CONFIG%.yaml
-        {%- elif conda_build_tool == "conda-build+conda-libmamba-solver" %}
-        set "CONDA_SOLVER=libmamba"
-        conda.exe build "{{ recipe_dir }}" -m .ci_support\%CONFIG%.yaml
-        {%- elif conda_build_tool == "conda-build+classic" %}
-        set "CONDA_SOLVER=classic"
-        conda.exe build "{{ recipe_dir }}" -m .ci_support\%CONFIG%.yaml
-        {%- else %}
-        conda.exe build "{{ recipe_dir }}" -m .ci_support\%CONFIG%.yaml
-        {%- endif %}
-        if errorlevel 1 exit 1
-        set "FEEDSTOCK_NAME=%GITHUB_REPOSITORY:*/=%"
-        set "GIT_BRANCH=%GITHUB_REF:refs/heads/=%"
-        if /i "%GITHUB_EVENT_NAME%" == "pull_request" (
-          set "IS_PR_BUILD=True"
-        ) else (
-          set "IS_PR_BUILD=False"
-        )
-        {%- if conda_forge_output_validation %}
-        validate_recipe_outputs "%FEEDSTOCK_NAME%"
-        if errorlevel 1 exit 1
-        {%- endif %}
-        if /i "%UPLOAD_PACKAGES%" == "true" (
-          if /i "%IS_PR_BUILD%" == "false" (
-            upload_package {% if conda_forge_output_validation %}--validate --feedstock-name="%FEEDSTOCK_NAME%"{% endif %}{% if private_upload %} --private{% endif %} .\ ".\{{ recipe_dir }}" .ci_support\%CONFIG%.yaml
-          )
-        )
+        call ".scripts\run_win_build.bat"
       env:
         PYTHONUNBUFFERED: 1
         CONFIG: {% raw %}${{ matrix.CONFIG }}{% endraw %}
