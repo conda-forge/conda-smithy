@@ -62,6 +62,9 @@ jobs:
     name: {% raw %}${{ matrix.CONFIG }}{% endraw %}
     {%- if github_actions.self_hosted %}
     runs-on: {% raw %}${{ matrix.labels }}{% endraw %}
+      {%- if github_actions.self_hosted_timeout_minutes %}
+    timeout-minutes: {{ github_actions.self_hosted_timeout_minutes }}
+      {%- endif %}
     {%- else %}
     runs-on: {% raw %}${{ matrix.os }}{% endraw %}-latest
     {%- endif %}

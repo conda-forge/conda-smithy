@@ -1839,6 +1839,7 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
             "self_hosted": False,
             "self_hosted_labels": [],
             "self_hosted_triggers": ["push"],
+            "self_hosted_timeout_minutes": 360,
             "cancel_in_progress": False,
             # Set maximum parallel jobs
             "max_parallel": None,
