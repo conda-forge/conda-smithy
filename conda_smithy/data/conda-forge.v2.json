@@ -68,11 +68,18 @@
     "conda_solver": {
       "title": "Conda Solver",
       "description": "\n        Choose which ``conda`` solver plugin to use for feedstock builds.\n        ",
-      "enum": [
-        "libmamba",
-        "classic"
-      ],
-      "type": "string"
+      "anyOf": [
+        {
+          "enum": [
+            "libmamba",
+            "classic"
+          ],
+          "type": "string"
+        },
+        {
+          "$ref": "#/definitions/Nullable"
+        }
+      ]
     },
     "github": {
       "title": "Github",
@@ -93,17 +100,13 @@
       ]
     },
     "build_platform": {
+      "title": "Build Platform",
       "description": "\n        This is a mapping from the target platform to the build platform for the\n        package to be built. For example, the following builds a ``osx-64`` package\n        on the ``linux-64`` build platform using cross-compiling.\n\n        .. code-block:: yaml\n\n            build_platform:\n                osx_64: linux_64\n\n        Leaving this field empty implicitly requests to build a package natively. i.e.\n\n        .. code-block:: yaml\n\n            build_platform:\n                linux_64: linux_64\n                linux_ppc64le: linux_ppc64le\n                linux_aarch64: linux_aarch64\n                osx_64: osx_64\n                osx_arm64: osx_arm64\n                win_64: win_64\n        ",
-      "type": "object",
-      "additionalProperties": {
-        "$ref": "#/definitions/Platforms"
-      }
-    },
-    "build_with_mambabuild": {
-      "title": "Build With Mambabuild",
-      "description": "\n        Configures the conda-forge CI to run a debug build using the ``mamba`` solver.\n        More information can be found in the\n        `mamba docs <https://conda-forge.org/docs/maintainer/maintainer_faq.html#mfaq-mamba-local>`__.\n\n        .. code-block:: yaml\n\n            build_with_mambabuild:\n            True\n        ",
-      "default": true,
-      "type": "boolean"
+      "allOf": [
+        {
+          "$ref": "#/definitions/build_platform"
+        }
+      ]
     },
     "channel_priority": {
       "description": "\n        The channel priority level for the conda solver during feedstock builds.\n        For extra information, see the\n        `Strict channel priority <https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-channels.html#strict-channel-priority>`__\n        section on conda documentation.\n        ",
@@ -143,7 +146,14 @@
     "idle_timeout_minutes": {
       "title": "Idle Timeout Minutes",
       "description": "\n        Configurable idle timeout. Used for packages that don't have chatty enough\n        builds. Applicable only to circleci and travis.\n\n        .. code-block:: yaml\n\n            idle_timeout_minutes: 60\n        ",
-      "type": "integer"
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "$ref": "#/definitions/Nullable"
+        }
+      ]
     },
     "win": {
       "title": "Win",
@@ -227,36 +237,32 @@
     "os_version": {
       "title": "Os Version",
       "description": "\n        This key is used to set the OS versions for `linux_*` platforms. Valid entries\n        map a linux platform and arch to either `cos6` or `cos7`.\n        Currently `cos6` is the default for `linux-64`.\n        All other linux architectures use CentOS 7.\n        Here is an example that enables CentOS 7 on ``linux-64`` builds\n\n        .. code-block:: yaml\n\n            os_version:\n                linux_64: cos7\n        ",
-      "type": "object",
-      "additionalProperties": {
-        "type": "string"
-      }
+      "allOf": [
+        {
+          "$ref": "#/definitions/os_version"
+        }
+      ]
     },
     "provider": {
       "title": "Provider",
       "description": "\n        The ``provider`` field is a mapping from build platform (not target platform)\n        to CI service. It determines which service handles each build platform.\n        If a desired build platform is not available with a selected provider\n        (either natively or with emulation), the build will be disabled.\n        Use the ``build_platform`` field to manually specify cross-compilation when\n        no providers offer a desired build platform.\n\n        The following are available as supported build platforms:\n\n        * ``linux_64``\n        * ``osx_64``\n        * ``win_64``\n        * ``linux_aarch64``\n        * ``linux_ppc64le``\n        * ``linux_s390x``\n        * ``linux_armv7l``\n\n        The following CI services are available:\n\n        * ``azure``\n        * ``circle``\n        * ``travis``\n        * ``appveyor``\n        * ``None`` or ``False`` to disable a build platform.\n        * ``default`` to choose an appropriate CI (only if available)\n\n        For example, switching linux_64 & osx_64 to build on Travis CI, with win_64 on\n        Appveyor:\n\n        .. code-block:: yaml\n\n            provider:\n                linux_64: travis\n                osx_64: travis\n                win_64: appveyor\n\n        Currently, x86_64 platforms are enabled, but other build platforms are\n        disabled by default. i.e. an empty provider entry is equivalent to the\n        following:\n\n        .. code-block:: yaml\n\n            provider:\n                linux_64: azure\n                osx_64: azure\n                win_64: azure\n                linux_ppc64le: None\n                linux_aarch64: None\n\n        To enable ``linux_ppc64le`` and ``linux_aarch64`` add the following:\n\n        .. code-block:: yaml\n\n            provider:\n                linux_ppc64le: default\n                linux_aarch64: default\n        ",
-      "type": "object",
-      "additionalProperties": {
-        "anyOf": [
-          {
-            "type": "array",
-            "items": {
-              "$ref": "#/definitions/CIservices"
-            }
-          },
-          {
-            "$ref": "#/definitions/CIservices"
-          },
-          {
-            "type": "boolean"
-          }
-        ]
-      }
+      "allOf": [
+        {
+          "$ref": "#/definitions/provider"
+        }
+      ]
     },
     "package": {
       "title": "Package",
       "description": "Default location for a package feedstock directory basename.",
-      "type": "string"
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "$ref": "#/definitions/Nullable"
+        }
+      ]
     },
     "recipe_dir": {
       "title": "Recipe Dir",
@@ -275,9 +281,12 @@
     "shellcheck": {
       "title": "Shellcheck",
       "description": "\n        Shell scripts used for builds or activation scripts can be linted with\n        shellcheck. This option can be used to enable shellcheck and configure\n        its behavior. This is not enabled by default, but can be enabled like so:\n\n        .. code-block:: yaml\n\n            shellcheck:\n                enabled: True\n\n        ",
-      "allOf": [
+      "anyOf": [
         {
           "$ref": "#/definitions/ShellCheck"
+        },
+        {
+          "$ref": "#/definitions/Nullable"
         }
       ]
     },
@@ -303,17 +312,28 @@
       "type": "boolean"
     },
     "test": {
+      "title": "Test",
       "description": "\n        This is used to configure on which platforms a recipe is tested.\n\n        .. code-block:: yaml\n\n            test: native_and_emulated\n\n        Will do testing only if the platform is native or if there is an emulator.\n\n        .. code-block:: yaml\n\n            test: native\n\n        Will do testing only if the platform is native.\n        ",
-      "allOf": [
+      "anyOf": [
         {
           "$ref": "#/definitions/DefaultTestPlatforms"
+        },
+        {
+          "$ref": "#/definitions/Nullable"
         }
       ]
     },
     "upload_on_branch": {
       "title": "Upload On Branch",
       "description": "\n        This parameter restricts uploading access on work from certain branches of the\n        same repo. Only the branch listed in ``upload_on_branch`` will trigger uploading\n        of packages to the target channel. The default is to skip this check if the key\n        ``upload_on_branch`` is not in ``conda-forge.yml``. To restrict uploads to the\n        main branch:\n\n        .. code-block:: yaml\n\n            upload_on_branch: main\n        ",
-      "type": "string"
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "$ref": "#/definitions/Nullable"
+        }
+      ]
     },
     "config_version": {
       "title": "Config Version",
@@ -324,7 +344,14 @@
     "exclusive_config_file": {
       "title": "Exclusive Config File",
       "description": "\n        Exclusive conda-build config file to replace ``conda-forge-pinning``.\n        For advanced usage only.\n        ",
-      "type": "string"
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "$ref": "#/definitions/Nullable"
+        }
+      ]
     },
     "compiler_stack": {
       "title": "Compiler Stack",
@@ -373,12 +400,26 @@
     "clone_depth": {
       "title": "Clone Depth",
       "description": "\n        The depth of the git clone.\n        ",
-      "type": "integer"
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "$ref": "#/definitions/Nullable"
+        }
+      ]
     },
     "timeout_minutes": {
       "title": "Timeout Minutes",
       "description": "\n        The timeout in minutes for all platforms CI jobs.\n        If passed alongside with Azure, it will be used as the default\n        timeout for Azure Pipelines jobs.\n        ",
-      "type": "integer"
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "$ref": "#/definitions/Nullable"
+        }
+      ]
     },
     "travis": {
       "title": "Travis",
@@ -429,6 +470,12 @@
         "type": "string"
       }
     },
+    "build_with_mambabuild": {
+      "title": "Build With Mambabuild",
+      "description": "\n        build_with_mambabuild is deprecated, use conda_build_tool instead. Configures the conda-forge CI to run a debug build using the ``mamba`` solver.\n        More information can be found in the\n        `mamba docs <https://conda-forge.org/docs/maintainer/maintainer_faq.html#mfaq-mamba-local>`__.\n\n        .. code-block:: yaml\n\n            build_with_mambabuild:\n            True\n        ",
+      "default": true,
+      "type": "boolean"
+    },
     "matrix": {
       "title": "Matrix",
       "description": "\n        Build matrices were used to specify a set of build configurations to run for each\n        package pinned dependency. This has been deprecated in favor of the provider field.\n        More information can be found in the\n        :ref:`Build Matrices </maintainer/knowledge_base#build-matrices>` section of the\n        conda-forge docs.\n        ",
@@ -476,13 +523,20 @@
       ],
       "type": "string"
     },
+    "Nullable": {
+      "title": "Nullable",
+      "description": "Created to avoid issue with schema validation of null values in lists or dicts.",
+      "enum": [
+        null
+      ]
+    },
     "GithubConfig": {
       "title": "GithubConfig",
       "type": "object",
       "properties": {
         "user_or_org": {
           "title": "User Or Org",
-          "description": "The name of the GitHub user or organization, if passed with the AzureConfig provider, must comply with the value of the user_or_org field",
+          "description": "The name of the GitHub user or organization,         if passed with the AzureConfig provider, must comply with the value of the user_or_org field",
           "default": "conda-forge",
           "type": "string"
         },
@@ -500,7 +554,7 @@
         },
         "tooling_branch_name": {
           "title": "Tooling Branch Name",
-          "description": "The name of the branch to use for rerender+webservices github actions and conda-forge-ci-setup-feedstock references",
+          "description": "The name of the branch to use for rerender+webservices             github actions and conda-forge-ci-setup-feedstock references",
           "default": "main",
           "type": "string"
         }
@@ -590,6 +644,92 @@
       ],
       "type": "string"
     },
+    "build_platform": {
+      "title": "build_platform",
+      "type": "object",
+      "properties": {
+        "linux_64": {
+          "default": {
+            "description": "The linux_64 value"
+          },
+          "allOf": [
+            {
+              "$ref": "#/definitions/Platforms"
+            }
+          ]
+        },
+        "linux_aarch64": {
+          "default": {
+            "description": "The linux_aarch64 value"
+          },
+          "allOf": [
+            {
+              "$ref": "#/definitions/Platforms"
+            }
+          ]
+        },
+        "linux_armv7l": {
+          "default": {
+            "description": "The linux_armv7l value"
+          },
+          "allOf": [
+            {
+              "$ref": "#/definitions/Platforms"
+            }
+          ]
+        },
+        "linux_ppc64le": {
+          "default": {
+            "description": "The linux_ppc64le value"
+          },
+          "allOf": [
+            {
+              "$ref": "#/definitions/Platforms"
+            }
+          ]
+        },
+        "linux_s390x": {
+          "default": {
+            "description": "The linux_s390x value"
+          },
+          "allOf": [
+            {
+              "$ref": "#/definitions/Platforms"
+            }
+          ]
+        },
+        "win_64": {
+          "default": {
+            "description": "The win_64 value"
+          },
+          "allOf": [
+            {
+              "$ref": "#/definitions/Platforms"
+            }
+          ]
+        },
+        "osx_64": {
+          "default": {
+            "description": "The osx_64 value"
+          },
+          "allOf": [
+            {
+              "$ref": "#/definitions/Platforms"
+            }
+          ]
+        },
+        "osx_arm64": {
+          "default": {
+            "description": "The osx_arm64 value"
+          },
+          "allOf": [
+            {
+              "$ref": "#/definitions/Platforms"
+            }
+          ]
+        }
+      }
+    },
     "ChannelPriorityConfig": {
       "title": "ChannelPriorityConfig",
       "description": "An enumeration.",
@@ -660,12 +800,26 @@
         "interactive": {
           "title": "Interactive",
           "description": "Whether to run Docker in interactive mode",
-          "type": "boolean"
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/definitions/Nullable"
+            }
+          ]
         },
         "image": {
           "title": "Image",
           "description": "Setting the Docker image in conda-forge.yml is no longer\n        supported, use conda_build_config.yaml to specify Docker images.",
-          "type": "string"
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "$ref": "#/definitions/Nullable"
+            }
+          ]
         }
       }
     },
@@ -681,6 +835,124 @@
         }
       }
     },
+    "os_version": {
+      "title": "os_version",
+      "type": "object",
+      "properties": {
+        "linux_64": {
+          "title": "Linux 64",
+          "default": {
+            "description": "The linux_64 value"
+          },
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "$ref": "#/definitions/Nullable"
+            }
+          ]
+        },
+        "linux_aarch64": {
+          "title": "Linux Aarch64",
+          "default": {
+            "description": "The linux_aarch64 value"
+          },
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "$ref": "#/definitions/Nullable"
+            }
+          ]
+        },
+        "linux_armv7l": {
+          "title": "Linux Armv7L",
+          "default": {
+            "description": "The linux_armv7l value"
+          },
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "$ref": "#/definitions/Nullable"
+            }
+          ]
+        },
+        "linux_ppc64le": {
+          "title": "Linux Ppc64Le",
+          "default": {
+            "description": "The linux_ppc64le value"
+          },
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "$ref": "#/definitions/Nullable"
+            }
+          ]
+        },
+        "linux_s390x": {
+          "title": "Linux S390X",
+          "default": {
+            "description": "The linux_s390x value"
+          },
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "$ref": "#/definitions/Nullable"
+            }
+          ]
+        },
+        "win_64": {
+          "title": "Win 64",
+          "default": {
+            "description": "The win_64 value"
+          },
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "$ref": "#/definitions/Nullable"
+            }
+          ]
+        },
+        "osx_64": {
+          "title": "Osx 64",
+          "default": {
+            "description": "The osx_64 value"
+          },
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "$ref": "#/definitions/Nullable"
+            }
+          ]
+        },
+        "osx_arm64": {
+          "title": "Osx Arm64",
+          "default": {
+            "description": "The osx_arm64 value"
+          },
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "$ref": "#/definitions/Nullable"
+            }
+          ]
+        }
+      }
+    },
     "CIservices": {
       "title": "CIservices",
       "description": "An enumeration.",
@@ -692,6 +964,265 @@
         "default"
       ],
       "type": "string"
+    },
+    "provider": {
+      "title": "provider",
+      "type": "object",
+      "properties": {
+        "linux_64": {
+          "title": "Linux 64",
+          "default": {
+            "description": "The linux_64 value"
+          },
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/CIservices"
+              }
+            },
+            {
+              "$ref": "#/definitions/CIservices"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/definitions/Nullable"
+            }
+          ]
+        },
+        "linux_aarch64": {
+          "title": "Linux Aarch64",
+          "default": {
+            "description": "The linux_aarch64 value"
+          },
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/CIservices"
+              }
+            },
+            {
+              "$ref": "#/definitions/CIservices"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/definitions/Nullable"
+            }
+          ]
+        },
+        "linux_armv7l": {
+          "title": "Linux Armv7L",
+          "default": {
+            "description": "The linux_armv7l value"
+          },
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/CIservices"
+              }
+            },
+            {
+              "$ref": "#/definitions/CIservices"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/definitions/Nullable"
+            }
+          ]
+        },
+        "linux_ppc64le": {
+          "title": "Linux Ppc64Le",
+          "default": {
+            "description": "The linux_ppc64le value"
+          },
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/CIservices"
+              }
+            },
+            {
+              "$ref": "#/definitions/CIservices"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/definitions/Nullable"
+            }
+          ]
+        },
+        "linux_s390x": {
+          "title": "Linux S390X",
+          "default": {
+            "description": "The linux_s390x value"
+          },
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/CIservices"
+              }
+            },
+            {
+              "$ref": "#/definitions/CIservices"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/definitions/Nullable"
+            }
+          ]
+        },
+        "win_64": {
+          "title": "Win 64",
+          "default": {
+            "description": "The win_64 value"
+          },
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/CIservices"
+              }
+            },
+            {
+              "$ref": "#/definitions/CIservices"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/definitions/Nullable"
+            }
+          ]
+        },
+        "osx_64": {
+          "title": "Osx 64",
+          "default": {
+            "description": "The osx_64 value"
+          },
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/CIservices"
+              }
+            },
+            {
+              "$ref": "#/definitions/CIservices"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/definitions/Nullable"
+            }
+          ]
+        },
+        "osx_arm64": {
+          "title": "Osx Arm64",
+          "default": {
+            "description": "The osx_arm64 value"
+          },
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/CIservices"
+              }
+            },
+            {
+              "$ref": "#/definitions/CIservices"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/definitions/Nullable"
+            }
+          ]
+        },
+        "linux": {
+          "title": "Linux",
+          "default": {
+            "description": "The linux value"
+          },
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/CIservices"
+              }
+            },
+            {
+              "$ref": "#/definitions/CIservices"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/definitions/Nullable"
+            }
+          ]
+        },
+        "win": {
+          "title": "Win",
+          "default": {
+            "description": "The win value"
+          },
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/CIservices"
+              }
+            },
+            {
+              "$ref": "#/definitions/CIservices"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/definitions/Nullable"
+            }
+          ]
+        },
+        "osx": {
+          "title": "Osx",
+          "default": {
+            "description": "The osx value"
+          },
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/CIservices"
+              }
+            },
+            {
+              "$ref": "#/definitions/CIservices"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/definitions/Nullable"
+            }
+          ]
+        }
+      }
     },
     "ShellCheck": {
       "title": "ShellCheck",
@@ -744,7 +1275,14 @@
         "swapfile_size": {
           "title": "Swapfile Size",
           "description": "Swapfile size in GiB",
-          "type": "string"
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "$ref": "#/definitions/Nullable"
+            }
+          ]
         },
         "timeoutInMinutes": {
           "title": "Timeoutinminutes",
@@ -776,7 +1314,14 @@
         "free_disk_space": {
           "title": "Free Disk Space",
           "description": "Free up disk space before running the Docker container for building on Linux",
-          "type": "boolean"
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/definitions/Nullable"
+            }
+          ]
         },
         "max_parallel": {
           "title": "Max Parallel",
@@ -825,19 +1370,33 @@
         },
         "user_or_org": {
           "title": "User Or Org",
-          "description": "The name of the GitHub user or organization, if passed with the GithubConfig provider, must comply with the value of the user_or_org field",
-          "type": "string"
+          "description": "The name of the GitHub user or organization, if passed with         the GithubConfig provider, must comply with the value of the user_or_org field",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "$ref": "#/definitions/Nullable"
+            }
+          ]
         },
         "store_build_artifacts": {
           "title": "Store Build Artifacts",
-          "description": "Store the conda build_artifacts directory as an Azure pipeline artifact",
+          "description": "Store the conda build_artifacts directory as an         Azure pipeline artifact",
           "default": false,
           "type": "boolean"
         },
         "timeout_minutes": {
           "title": "Timeout Minutes",
-          "description": "The maximum amount of time (in minutes) that a job can run before it is automatically canceled",
-          "type": "integer"
+          "description": "The maximum amount of time (in minutes) that a             job can run before it is automatically canceled",
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "$ref": "#/definitions/Nullable"
+            }
+          ]
         }
       }
     },
@@ -854,7 +1413,14 @@
         "max_parallel": {
           "title": "Max Parallel",
           "description": "The maximum number of jobs to run in parallel",
-          "type": "integer"
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "$ref": "#/definitions/Nullable"
+            }
+          ]
         },
         "self_hosted": {
           "title": "Self Hosted",

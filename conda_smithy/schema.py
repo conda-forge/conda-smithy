@@ -1,9 +1,93 @@
 # This model is also used for generating and automatic documentation for the conda-forge.yml file. The documentation is generated using sphinx and "pydantic-autodoc" extension. For an upstream preview of the documentation, see https://conda-forge.org/docs/maintainer/conda_forge_yml.html.
 
-from enum import Enum
-from typing import Any, Dict, List, Literal, Optional, Union
+from enum import Enum, EnumMeta
+from typing import Any, Dict, List, Literal, Optional, Type, Union
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, create_model
+import yaml
+
+
+class Nullable(Enum):
+    """Created to avoid issue with schema validation of null values in lists or dicts."""
+
+    null = None
+
+
+class PydanticModelGenerator:
+    """
+    A utility class for generating Pydantic models based on an Enum for keys and a Pydantic model for values.
+
+    This class is designed to help mitigate an issue when working with JSON Schema and Pydantic where Enumerators
+    and Dicts do not work well with the generated model. It allows you to dynamically create Pydantic models for
+    cases where you need to map enum values to corresponding data structures.
+
+    Args:
+        enum_class (Union[Type[Enum], Type[EnumMeta]]): A single Enum class or a Union of Enum classes representing the keys for the generated model.
+        value_model (BaseModel): A Pydantic model representing the structure of the values.
+        model_name (str): The name of the generated Pydantic model.
+
+    Example usage:
+
+    ```python
+    class MyEnum1(str, Enum):
+        key1 = "key1"
+        key2 = "key2"
+
+    class MyEnum2(str, Enum):
+        key3 = "key3"
+        key4 = "key4"
+
+    class ValueModel(BaseModel):
+        value_field: int
+
+    # Create an instance of PydanticModelGenerator with a single Enum
+    model_generator1 = PydanticModelGenerator(MyEnum1, ValueModel, "MyGeneratedModel1")
+
+    # Create an instance of PydanticModelGenerator with a Union of Enums
+    model_generator2 = PydanticModelGenerator(Union[MyEnum1, MyEnum2], ValueModel, "MyGeneratedModel2")
+
+    # Retrieve the generated models using the __call__ method
+    GeneratedModel1 = model_generator1()
+    GeneratedModel2 = model_generator2()
+    ```
+    """
+
+    def __init__(
+        self,
+        enum_class: Union[Type[Enum], Type[EnumMeta]],
+        value_model: BaseModel,
+        model_name: str,
+    ):
+        self.enum_class = enum_class
+        self.value_model = value_model
+        self.model_name = model_name
+        self.generated_model = self._generate_model()
+
+    def _generate_model(self) -> BaseModel:
+        field_definitions = {}
+
+        if hasattr(self.enum_class, "__args__"):
+            # Handle Union types
+            for enum_type in self.enum_class.__args__:
+                if isinstance(enum_type, type) and issubclass(enum_type, Enum):
+                    for enum_item in enum_type:
+                        field_definitions[enum_item.value] = (
+                            Optional[self.value_model],
+                            {"description": f"The {enum_item.value} value"},
+                        )
+        else:
+            # Handle single Enum
+            for enum_item in self.enum_class:
+                field_definitions[enum_item.value] = (
+                    Optional[self.value_model],
+                    {"description": f"The {enum_item.value} value"},
+                )
+
+        return create_model(self.model_name, **field_definitions)
+
+    def __call__(self) -> BaseModel:
+        return self.generated_model
+
 
 #############################################
 ######## Choices (Enum) definitions #########
@@ -61,7 +145,7 @@ class AzureSelfHostedRunnerSettings(BaseModel):
         description="The pool of self-hosted runners, e.g. 'vmImage': 'ubuntu-latest'",
     )
 
-    swapfile_size: Optional[str] = Field(
+    swapfile_size: Optional[Union[str, Nullable]] = Field(
         default=None, description="Swapfile size in GiB"
     )
 
@@ -84,9 +168,10 @@ class AzureConfig(BaseModel):
         description="Force building all supported providers",
     )
 
-    free_disk_space: Optional[bool] = Field(
+    free_disk_space: Optional[Union[bool, Nullable]] = Field(
         default=None,
         description="Free up disk space before running the Docker container for building on Linux",
+        exclude=True,  # Will not be rendered in the model dump
     )
 
     max_parallel: Optional[int] = Field(
@@ -132,25 +217,31 @@ class AzureConfig(BaseModel):
         description="Windows-specific settings for self-hosted runners",
     )
 
-    user_or_org: Optional[str] = Field(
+    user_or_org: Optional[Union[str, Nullable]] = Field(
         default=None,
-        description="The name of the GitHub user or organization, if passed with the GithubConfig provider, must comply with the value of the user_or_org field",
+        description="The name of the GitHub user or organization, if passed with \
+        the GithubConfig provider, must comply with the value of the user_or_org field",
+        exclude=True,  # Will not be rendered in the model dump
     )
 
     store_build_artifacts: Optional[bool] = Field(
         default=False,
-        description="Store the conda build_artifacts directory as an Azure pipeline artifact",
+        description="Store the conda build_artifacts directory as an \
+        Azure pipeline artifact",
+        exclude=True,  # Will not be rendered in the model dump
     )
 
-    timeout_minutes: Optional[Union[int, None]] = Field(
+    timeout_minutes: Optional[Union[int, Nullable]] = Field(
         default=None,
-        description="The maximum amount of time (in minutes) that a job can run before it is automatically canceled",
+        description="The maximum amount of time (in minutes) that a \
+            job can run before it is automatically canceled",
     )
 
 
 class GithubConfig(BaseModel):
     user_or_org: Optional[str] = Field(
-        description="The name of the GitHub user or organization, if passed with the AzureConfig provider, must comply with the value of the user_or_org field",
+        description="The name of the GitHub user or organization, \
+        if passed with the AzureConfig provider, must comply with the value of the user_or_org field",
         default="conda-forge",
     )
     repo_name: Optional[str] = Field(
@@ -162,7 +253,8 @@ class GithubConfig(BaseModel):
         default="main",
     )
     tooling_branch_name: Optional[str] = Field(
-        description="The name of the branch to use for rerender+webservices github actions and conda-forge-ci-setup-feedstock references",
+        description="The name of the branch to use for rerender+webservices \
+            github actions and conda-forge-ci-setup-feedstock references",
         default="main",
     )
 
@@ -173,7 +265,7 @@ class GitHubActionsConfig(BaseModel):
         default=14,
     )
 
-    max_parallel: Optional[int] = Field(
+    max_parallel: Optional[Union[int, Nullable]] = Field(
         description="The maximum number of jobs to run in parallel",
         default=None,
     )
@@ -210,21 +302,25 @@ class BotConfig(BaseModel):
     check_solvable: Optional[bool] = Field(
         None,
         description="Open PRs only if resulting environment is solvable.",
+        exclude=True,  # Will not be rendered in the model dump
     )
 
     inspection: Optional[BotConfigInspectionChoice] = Field(
         None,
         description="Method for generating hints or updating recipe",
+        exclude=True,  # Will not be rendered in the model dump
     )
 
     abi_migration_branches: Optional[List[str]] = Field(
         None,
         description="List of branches for additional bot migration PRs",
+        exclude=True,  # Will not be rendered in the model dump
     )
 
     version_updates_random_fraction_to_keep: Optional[float] = Field(
         None,
         description="Fraction of versions to keep for frequently updated packages",
+        exclude=True,  # Will not be rendered in the model dump
     )
 
 
@@ -285,15 +381,16 @@ class CondaForgeDocker(BaseModel):
         description="The command to run in Docker", default="bash"
     )
 
-    interactive: Optional[bool] = Field(
+    interactive: Optional[Union[bool, Nullable]] = Field(
         description="Whether to run Docker in interactive mode",
         default=None,
+        exclude=True,  # Will not be rendered in the model dump
     )
 
     #########################################
     #### Deprecated Docker configuration ####
     #########################################
-    image: Optional[Union[str, None]] = Field(
+    image: Optional[Union[str, Nullable]] = Field(
         description="""Setting the Docker image in conda-forge.yml is no longer
         supported, use conda_build_config.yaml to specify Docker images.""",
         default=None,
@@ -355,6 +452,7 @@ class ConfigModel(BaseModel):
 
     conda_build: Optional[CondaBuildConfig] = Field(
         default_factory=CondaBuildConfig,
+        exclude=True,  # Will not be rendered in the model dump
         description="""
         Settings in this block are used to control how ``conda build``
         runs and produces artifacts. An example of the such configuration is:
@@ -407,7 +505,9 @@ class ConfigModel(BaseModel):
         """,
     )
 
-    conda_solver: Optional[Literal["libmamba", "classic"]] = Field(
+    conda_solver: Optional[
+        Union[Literal["libmamba", "classic"], Nullable]
+    ] = Field(
         default=None,
         description="""
         Choose which ``conda`` solver plugin to use for feedstock builds.
@@ -462,8 +562,14 @@ class ConfigModel(BaseModel):
         """,
     )
 
-    build_platform: Optional[Dict[Platforms, Platforms]] = Field(
-        default_factory=dict,
+    build_platform: Optional[
+        PydanticModelGenerator(Platforms, Platforms, "build_platform")()
+    ] = Field(
+        default_factory=lambda: {
+            platform.value: platform.value
+            for platform in Platforms
+            if not platform.value == "osx_arm64"
+        },
         description="""
         This is a mapping from the target platform to the build platform for the
         package to be built. For example, the following builds a ``osx-64`` package
@@ -488,22 +594,9 @@ class ConfigModel(BaseModel):
         """,
     )
 
-    build_with_mambabuild: Optional[bool] = Field(
-        default=True,
-        description="""
-        Configures the conda-forge CI to run a debug build using the ``mamba`` solver.
-        More information can be found in the
-        `mamba docs <https://conda-forge.org/docs/maintainer/maintainer_faq.html#mfaq-mamba-local>`__.
-
-        .. code-block:: yaml
-
-            build_with_mambabuild:
-            True
-        """,
-    )
-
     channel_priority: Optional[ChannelPriorityConfig] = Field(
         default="strict",
+        exclude=True,  # Will not be rendered in the model dump
         description="""
         The channel priority level for the conda solver during feedstock builds.
         For extra information, see the
@@ -572,7 +665,7 @@ class ConfigModel(BaseModel):
         """,
     )
 
-    idle_timeout_minutes: Optional[int] = Field(
+    idle_timeout_minutes: Optional[Union[int, Nullable]] = Field(
         default=None,
         description="""
         Configurable idle timeout. Used for packages that don't have chatty enough
@@ -587,6 +680,7 @@ class ConfigModel(BaseModel):
     win_64: Optional[PlatformUniqueConfig] = Field(
         default_factory=PlatformUniqueConfig,
         alias="win",
+        exclude=True,  # Will not be rendered in the model dump
         description="""
         Windows-specific configuration options. This is largely an internal setting and
         should not normally be manually modified.
@@ -604,6 +698,7 @@ class ConfigModel(BaseModel):
     osx_64: Optional[PlatformUniqueConfig] = Field(
         default_factory=PlatformUniqueConfig,
         alias="osx",
+        exclude=True,  # Will not be rendered in the model dump
         description="""
         OSX-specific configuration options. This is largely an internal setting and
         should not normally be manually modified.
@@ -620,6 +715,7 @@ class ConfigModel(BaseModel):
 
     osx_arm64: Optional[PlatformUniqueConfig] = Field(
         default_factory=PlatformUniqueConfig,
+        exclude=True,  # Will not be rendered in the model dump
         description="""
         OSX-specific (ARM) configuration options. This is largely an internal setting
         and should not normally be manually modified.
@@ -629,6 +725,7 @@ class ConfigModel(BaseModel):
     linux_64: Optional[PlatformUniqueConfig] = Field(
         default_factory=PlatformUniqueConfig,
         alias="linux",
+        exclude=True,  # Will not be rendered in the model dump
         description="""
         Linux-specific configuration options. This is largely an internal setting
         and should not normally be manually modified.
@@ -645,6 +742,7 @@ class ConfigModel(BaseModel):
 
     linux_aarch64: Optional[PlatformUniqueConfig] = Field(
         default_factory=PlatformUniqueConfig,
+        exclude=True,  # Will not be rendered in the model dump
         description="""
         ARM-specific configuration options. This is largely an internal setting
         and should not normally be manually modified.
@@ -658,6 +756,7 @@ class ConfigModel(BaseModel):
 
     linux_ppc64le: Optional[PlatformUniqueConfig] = Field(
         default_factory=PlatformUniqueConfig,
+        exclude=True,  # Will not be rendered in the model dump
         description="""
         PPC-specific configuration options. This is largely an internal setting and
         should not normally be manually modified.
@@ -671,6 +770,7 @@ class ConfigModel(BaseModel):
 
     linux_s390x: Optional[PlatformUniqueConfig] = Field(
         default_factory=PlatformUniqueConfig,
+        exclude=True,  # Will not be rendered in the model dump
         description="""
         s390x-specific configuration options. This is largely an internal setting and
         should not normally be manually modified.
@@ -684,6 +784,7 @@ class ConfigModel(BaseModel):
 
     linux_armv7l: Optional[PlatformUniqueConfig] = Field(
         default_factory=PlatformUniqueConfig,
+        exclude=True,  # Will not be rendered in the model dump
         description="""
         ARM-specific configuration options. This is largely an internal setting and
         should not normally be manually modified.
@@ -716,9 +817,16 @@ class ConfigModel(BaseModel):
         """,
     )
 
-    os_version: Optional[Dict[Platforms, Union[str, None]]] = Field(
+    os_version: Optional[
+        PydanticModelGenerator(Platforms, Union[str, Nullable], "os_version")()
+    ] = Field(
         default_factory=lambda: {
-            platform.value: None for platform in Platforms
+            platform.value: None
+            for platform in Platforms
+            if not (
+                platform.value.startswith("osx")
+                or platform.value.startswith("win")
+            )
         },
         description="""
         This key is used to set the OS versions for `linux_*` platforms. Valid entries
@@ -735,10 +843,11 @@ class ConfigModel(BaseModel):
     )
 
     provider: Optional[
-        Dict[
+        PydanticModelGenerator(
             Union[Platforms, PlatformsAliases],
-            Union[List[CIservices], CIservices, bool, None],
-        ]
+            Union[List[CIservices], CIservices, bool, Nullable],
+            "provider",
+        )()
     ] = Field(
         default_factory=lambda: {
             "linux": None,
@@ -812,8 +921,9 @@ class ConfigModel(BaseModel):
         """,
     )
 
-    package: Optional[str] = Field(
+    package: Optional[Union[str, Nullable]] = Field(
         default=None,
+        exclude=True,  # Will not be rendered in the model dump
         description="Default location for a package feedstock directory basename.",
     )
 
@@ -841,8 +951,9 @@ class ConfigModel(BaseModel):
         """,
     )
 
-    shellcheck: Optional[ShellCheck] = Field(
+    shellcheck: Optional[Union[ShellCheck, Nullable]] = Field(
         default=None,
+        exclude=True,  # Will not be rendered in the model dump
         description="""
         Shell scripts used for builds or activation scripts can be linted with
         shellcheck. This option can be used to enable shellcheck and configure
@@ -892,7 +1003,7 @@ class ConfigModel(BaseModel):
         """,
     )
 
-    test: Optional[DefaultTestPlatforms] = Field(
+    test: Optional[Union[DefaultTestPlatforms, Nullable]] = Field(
         default=None,
         description="""
         This is used to configure on which platforms a recipe is tested.
@@ -911,8 +1022,9 @@ class ConfigModel(BaseModel):
         """,
     )
 
-    upload_on_branch: Optional[str] = Field(
+    upload_on_branch: Optional[Union[str, Nullable]] = Field(
         default=None,
+        exclude=True,  # Will not be rendered in the model dump
         description="""
         This parameter restricts uploading access on work from certain branches of the
         same repo. Only the branch listed in ``upload_on_branch`` will trigger uploading
@@ -934,8 +1046,9 @@ class ConfigModel(BaseModel):
         """,
     )
 
-    exclusive_config_file: Optional[str] = Field(
+    exclusive_config_file: Optional[Union[str, Nullable]] = Field(
         default=None,
+        exclude=True,  # Will not be rendered in the model dump
         description="""
         Exclusive conda-build config file to replace ``conda-forge-pinning``.
         For advanced usage only.
@@ -1021,15 +1134,16 @@ class ConfigModel(BaseModel):
         """,
     )
 
-    clone_depth: Optional[int] = Field(
+    clone_depth: Optional[Union[int, Nullable]] = Field(
         default=None,
         description="""
         The depth of the git clone.
         """,
     )
 
-    timeout_minutes: Optional[int] = Field(
+    timeout_minutes: Optional[Union[int, Nullable]] = Field(
         default=None,
+        exclude=True,  # Will not be rendered in the model dump
         description="""
         The timeout in minutes for all platforms CI jobs.
         If passed alongside with Azure, it will be used as the default
@@ -1145,6 +1259,21 @@ class ConfigModel(BaseModel):
     # Deprecated values, only present for validation will not show up in
     # the model dump, due to exclude=True
 
+    build_with_mambabuild: Optional[bool] = Field(
+        default=True,
+        exclude=True,
+        description="""
+        build_with_mambabuild is deprecated, use conda_build_tool instead. Configures the conda-forge CI to run a debug build using the ``mamba`` solver.
+        More information can be found in the
+        `mamba docs <https://conda-forge.org/docs/maintainer/maintainer_faq.html#mfaq-mamba-local>`__.
+
+        .. code-block:: yaml
+
+            build_with_mambabuild:
+            True
+        """,
+    )
+
     matrix: Optional[Dict[str, Any]] = Field(
         default_factory=dict,
         exclude=True,
@@ -1164,11 +1293,19 @@ if __name__ == "__main__":
     # This is used to generate the model dump for conda-smithy internal use
     # and for documentation purposes.
 
-    # This is the path to the conda-forge.yml file
+    model = ConfigModel()
 
-    CONDA_FORGE_YML = Path(__file__).parent / "data"
-    CONDA_FORGE_YML.mkdir(parents=True, exist_ok=True)
-    CONDA_FORGE_YML = CONDA_FORGE_YML / "conda-forge.json"
+    CONDA_FORGE_DATA = Path(__file__).parent / "data"
+    CONDA_FORGE_DATA.mkdir(parents=True, exist_ok=True)
+    CONDA_FORGE_JSON = (
+        CONDA_FORGE_DATA / f"conda-forge.v{model.config_version}.json"
+    )
 
+    with CONDA_FORGE_JSON.open(mode="w+") as f:
+        f.write(model.schema_json(indent=2))
+
+    CONDA_FORGE_YML = (
+        CONDA_FORGE_DATA / f"conda-forge.v{model.config_version}.yml"
+    )
     with CONDA_FORGE_YML.open(mode="w+") as f:
-        f.write(ConfigModel().schema_json(indent=2))
+        f.write(yaml.dump(model.dict(), indent=2))

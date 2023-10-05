@@ -1,0 +1,108 @@
+appveyor:
+  image: Visual Studio 2017
+azure:
+  force: false
+  max_parallel: 50
+  project_id: 84710dde-1620-425b-80d0-4cf5baca359d
+  project_name: feedstock-builds
+  settings_linux:
+    pool:
+      vmImage: ubuntu-latest
+    swapfile_size: 0GiB
+    timeoutInMinutes: 360
+    variables: {}
+  settings_osx:
+    pool:
+      vmImage: macOS-11
+    swapfile_size: null
+    timeoutInMinutes: 360
+    variables: {}
+  settings_win:
+    pool:
+      vmImage: windows-2022
+    swapfile_size: null
+    timeoutInMinutes: 360
+    variables:
+      CONDA_BLD_PATH: D:\bld\
+      UPLOAD_TEMP: D:\tmp
+  timeout_minutes: null
+bot:
+  automerge: false
+build_platform:
+  linux_64: linux_64
+  linux_aarch64: linux_aarch64
+  linux_armv7l: linux_armv7l
+  linux_ppc64le: linux_ppc64le
+  linux_s390x: linux_s390x
+  osx_64: osx_64
+  win_64: win_64
+channels:
+  sources:
+  - conda-forge
+  targets:
+  - - conda-forge
+    - main
+choco: []
+circle: {}
+clone_depth: null
+compiler_stack: comp7
+conda_build_tool: mambabuild
+conda_build_tool_deps: boa
+conda_forge_output_validation: false
+conda_install_tool: mamba
+conda_install_tool_deps: mamba
+conda_solver: null
+config_version: '2'
+docker:
+  command: bash
+  executable: docker
+  fallback_image: quay.io/condaforge/linux-anvil-comp7
+drone: {}
+github:
+  branch_name: main
+  repo_name: ''
+  tooling_branch_name: main
+  user_or_org: conda-forge
+github_actions:
+  artifact_retention_days: 14
+  max_parallel: null
+  self_hosted: false
+  store_build_artifacts: false
+idle_timeout_minutes: null
+max_py_ver: '37'
+max_r_ver: '34'
+min_py_ver: '27'
+min_r_ver: '34'
+noarch_platforms:
+- linux_64
+os_version:
+  linux_64: null
+  linux_aarch64: null
+  linux_armv7l: null
+  linux_ppc64le: null
+  linux_s390x: null
+private_upload: false
+provider:
+  linux: null
+  linux_64:
+  - azure
+  linux_aarch64: null
+  linux_armv7l: null
+  linux_ppc64le: null
+  linux_s390x: null
+  osx: null
+  osx_64:
+  - azure
+  win: null
+  win_64:
+  - azure
+recipe_dir: recipe
+remote_ci_setup:
+- conda-forge-ci-setup=3
+secrets: []
+skip_render: []
+templates: {}
+test: null
+test_on_native_only: false
+travis: {}
+woodpecker: {}
