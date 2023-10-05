@@ -1,6 +1,7 @@
 **Added:**
 
 * New conda-forge pydantic schema for ``conda-forge.yaml``, includes a generate default forge yaml and json schema dynamically from the pydantic model
+* Included ``jsonschema``and ``pydantic`` as dependencies into the ``environment.yml``
 
 **Changed:**
 
