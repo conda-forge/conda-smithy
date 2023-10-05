@@ -1838,7 +1838,10 @@ def _legacy_compatibility_checks(config: dict, forge_dir):
     # to a list of length one.
     for platform, providers in config["provider"].items():
         providers = conda_build.utils.ensure_list(providers)
-        config["provider"][platform] = providers
+        if config["provider"][platform]:
+            # Only assign a list if it's not a None object,
+            # otherwise we will get non hashable entity errors
+            config["provider"][platform] = providers
 
     return config
 
