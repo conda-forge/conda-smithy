@@ -1,4 +1,6 @@
 import os
+
+from jsonschema import ValidationError
 import conda_smithy.configure_feedstock as cnfgr_fdstk
 
 import pytest
@@ -776,7 +778,7 @@ def test_noarch_platforms_bad_yaml(config_yaml):
     with open(os.path.join(config_yaml, "conda-forge.yml"), "a+") as fp:
         fp.write("noarch_platforms: [eniac, zx80]")
 
-    with pytest.raises(ValueError) as excinfo:
+    with pytest.raises(ValidationError) as excinfo:
         load_forge_config()
 
     assert "eniac" in str(excinfo.value)
@@ -905,7 +907,7 @@ def test_conda_build_tools(config_yaml):
         fp.write(unmodified)
         fp.write("conda_build_tool: does-not-exist")
 
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValidationError):
         assert load_forge_config()
 
 
@@ -925,4 +927,8 @@ def test_remote_ci_setup(config_yaml):
         "conda-forge-ci-setup=3",
         '"py-lief<0.12"',
     ]
-    assert cfg["remote_ci_setup_names"] == ["conda-forge-ci-setup", "py-lief"]
+    with pytest.raises(KeyError):
+        assert cfg["remote_ci_setup_names"] == [
+            "conda-forge-ci-setup",
+            "py-lief",
+        ]

@@ -25,6 +25,7 @@ azure:
     variables:
       CONDA_BLD_PATH: D:\bld\
       UPLOAD_TEMP: D:\tmp
+  store_build_artifacts: false
   timeout_minutes: null
 bot:
   automerge: false

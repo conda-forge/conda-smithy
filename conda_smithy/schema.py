@@ -228,7 +228,6 @@ class AzureConfig(BaseModel):
         default=False,
         description="Store the conda build_artifacts directory as an \
         Azure pipeline artifact",
-        exclude=True,  # Will not be rendered in the model dump
     )
 
     timeout_minutes: Optional[Union[int, Nullable]] = Field(

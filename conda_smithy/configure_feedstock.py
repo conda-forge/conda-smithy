@@ -58,6 +58,8 @@ from conda_smithy.utils import (
     get_feedstock_name_from_meta,
 )
 
+from . import __version__
+
 
 conda_forge_content = os.path.abspath(os.path.dirname(__file__))
 
@@ -1838,10 +1840,7 @@ def _legacy_compatibility_checks(config: dict, forge_dir):
     # to a list of length one.
     for platform, providers in config["provider"].items():
         providers = conda_build.utils.ensure_list(providers)
-        if config["provider"][platform]:
-            # Only assign a list if it's not a None object,
-            # otherwise we will get non hashable entity errors
-            config["provider"][platform] = providers
+        config["provider"][platform] = providers
 
     return config
 
@@ -1923,8 +1922,6 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
     if config["test"] is None:
         config["test"] = "all"
 
-    config = _legacy_compatibility_checks(config, forge_dir)
-
     # Set some more azure defaults
     config["azure"].setdefault("user_or_org", config["github"]["user_or_org"])
 
@@ -1945,8 +1942,6 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
     if config["provider"]["linux_ppc64le"] == "native":
         config["provider"]["linux_ppc64le"] = ["travis"]
 
-    print(config["provider"]["linux_s390x"])
-
     if config["provider"]["linux_s390x"] in {"default", "native"}:
         config["provider"]["linux_s390x"] = ["travis"]
 
@@ -1960,6 +1955,9 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
         ]
     else:
         config["remote_ci_setup_update"] = config["remote_ci_setup"]
+
+    # Run the legacy checks for backwards compatibility
+    config = _legacy_compatibility_checks(config, forge_dir)
 
     # Fallback handling set to azure, for platforms that are not fully specified by this time
     for platform, providers in config["provider"].items():
