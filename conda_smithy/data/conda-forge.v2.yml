@@ -39,10 +39,10 @@ build_platform:
   win_64: win_64
 channels:
   sources:
-  - conda-forge
+    - conda-forge
   targets:
-  - - conda-forge
-    - main
+    - - conda-forge
+      - main
 choco: []
 circle: {}
 clone_depth: null
@@ -53,7 +53,7 @@ conda_forge_output_validation: false
 conda_install_tool: mamba
 conda_install_tool_deps: mamba
 conda_solver: null
-config_version: '2'
+config_version: "2"
 docker:
   command: bash
   executable: docker
@@ -61,7 +61,7 @@ docker:
 drone: {}
 github:
   branch_name: main
-  repo_name: ''
+  repo_name: ""
   tooling_branch_name: main
   user_or_org: conda-forge
 github_actions:
@@ -70,12 +70,12 @@ github_actions:
   self_hosted: false
   store_build_artifacts: false
 idle_timeout_minutes: null
-max_py_ver: '37'
-max_r_ver: '34'
-min_py_ver: '27'
-min_r_ver: '34'
+max_py_ver: "37"
+max_r_ver: "34"
+min_py_ver: "27"
+min_r_ver: "34"
 noarch_platforms:
-- linux_64
+  - linux_64
 os_version:
   linux_64: null
   linux_aarch64: null
@@ -86,20 +86,20 @@ private_upload: false
 provider:
   linux: null
   linux_64:
-  - azure
+    - azure
   linux_aarch64: null
   linux_armv7l: null
   linux_ppc64le: null
   linux_s390x: null
   osx: null
   osx_64:
-  - azure
+    - azure
   win: null
   win_64:
-  - azure
+    - azure
 recipe_dir: recipe
 remote_ci_setup:
-- conda-forge-ci-setup=3
+  - conda-forge-ci-setup=3
 secrets: []
 skip_render: []
 templates: {}
