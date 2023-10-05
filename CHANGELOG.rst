@@ -4,6 +4,19 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.27.1
+====================
+
+**Fixed:**
+
+* Crash when XDG_CACHE_DIR is defined
+
+**Authors:**
+
+* Min RK
+
+
+
 v3.27.0
 ====================
 
