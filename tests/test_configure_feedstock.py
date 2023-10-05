@@ -934,12 +934,10 @@ def test_remote_ci_setup(config_yaml):
         '"py-lief<0.12"',
     ]
 
-    with pytest.raises(KeyError):
-        # This fails now, as the schema does not allow extra keys without updating the model
-        assert cfg["remote_ci_setup_update"] == [
-            "conda-forge-ci-setup",
-            "py-lief",
-        ]
+    assert cfg["remote_ci_setup_update"] == [
+        "conda-forge-ci-setup",
+        "py-lief",
+    ]
 
     with open(os.path.join(config_yaml, "conda-forge.yml"), "w") as fp:
         fp.write(unmodified + "\n")
@@ -949,7 +947,11 @@ def test_remote_ci_setup(config_yaml):
         fp.write("conda_install_tool: mamba\n")
     cfg = load_forge_config()
     # with conda_install_tool = mamba, we don't strip constraints
-    assert cfg["remote_ci_setup"] == [
-        "conda-forge-ci-setup=3",
-        '"py-lief<0.12"',
-    ]
+    assert (
+        cfg["remote_ci_setup"]
+        == cfg["remote_ci_setup_update"]
+        == [
+            "conda-forge-ci-setup=3",
+            '"py-lief<0.12"',
+        ]
+    )
