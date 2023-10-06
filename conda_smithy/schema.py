@@ -97,7 +97,7 @@ class PydanticModelGenerator:
 class CondaBuildTools(str, Enum):
     conda_build = "conda-build"
     conda_build_classic = "conda-build+classic"
-    conda_build_mamba = "conda-build+conda-libmamba-solver"
+    conda_build_libmamba = "conda-build+conda-libmamba-solver"
     mambabuild = "mambabuild"
 
 
