@@ -107,7 +107,7 @@ class PydanticModelGenerator:
 ######## Choices (Enum/Literals) definitions #########
 #############################################
 
-condaBuildTools = Literal(
+conda_build_tools = Literal[
     # will run vanilla conda-build, with system configured / default solver
     "conda-build",
     # will run vanilla conda-build, with the classic solver
@@ -116,7 +116,7 @@ condaBuildTools = Literal(
     "conda-build+conda-libmamba-solver",
     # will run 'conda mambabuild', as provided by boa
     "mambabuild",
-)
+]
 
 
 class CIservices(str, Enum):
@@ -484,7 +484,7 @@ class ConfigModel(BaseModel):
         """,
     )
 
-    conda_build_tool: Optional[condaBuildTools] = Field(
+    conda_build_tool: Optional[conda_build_tools] = Field(
         default="mambabuild",
         description="""
         Use this option to choose which tool is used to build your recipe.
