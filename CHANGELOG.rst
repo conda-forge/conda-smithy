@@ -4,6 +4,10 @@ conda-smithy Change Log
 
 .. current developments
 
+**Added:**
+
+* Disk cleanup on Azure feedstocks can now be more finely controlled using keys `docker`, `cache`, and `apt` to enumerate which cleanup steps are desired. The previous behavior of doing all steps is preserved.
+
 v3.27.1
 ====================
 
