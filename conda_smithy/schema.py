@@ -5,6 +5,24 @@ from typing import Any, Dict, List, Literal, Optional, Type, Union
 
 from pydantic import BaseModel, Field, create_model
 import yaml
+import json
+import jsonschema
+from pathlib import Path
+
+
+def validate_json_schema(config, schema_file: str = None):
+    # Validate the merged configuration against a JSON schema
+    json_schema_file = (
+        Path(__file__).resolve().parent / "data" / "conda-forge.v2.json"
+    )
+
+    if schema_file:
+        json_schema_file = schema_file
+
+    with open(json_schema_file, "r") as fh:
+        _json_schema = json.loads(fh.read())
+
+    jsonschema.validate(config, _json_schema)
 
 
 class Nullable(Enum):
@@ -61,9 +79,8 @@ class PydanticModelGenerator:
         self.enum_class = enum_class
         self.value_model = value_model
         self.model_name = model_name
-        self.generated_model = self._generate_model()
 
-    def _generate_model(self) -> BaseModel:
+    def __call__(self) -> BaseModel:
         field_definitions = {}
 
         if hasattr(self.enum_class, "__args__"):
@@ -85,9 +102,6 @@ class PydanticModelGenerator:
 
         return create_model(self.model_name, **field_definitions)
 
-    def __call__(self) -> BaseModel:
-        return self.generated_model
-
 
 #############################################
 ######## Choices (Enum) definitions #########
@@ -95,9 +109,13 @@ class PydanticModelGenerator:
 
 
 class CondaBuildTools(str, Enum):
+    # will run vanilla conda-build, with system configured / default solver
     conda_build = "conda-build"
+    # will run vanilla conda-build, with the classic solver
     conda_build_classic = "conda-build+classic"
+    # will run vanilla conda-build, with libmamba solver
     conda_build_libmamba = "conda-build+conda-libmamba-solver"
+    # will run 'conda mambabuild', as provided by boa
     mambabuild = "mambabuild"
 
 

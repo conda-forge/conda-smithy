@@ -52,7 +52,7 @@ from conda_smithy.feedstock_io import (
     set_exe_file,
     write_file,
 )
-from conda_smithy.schema import ConfigModel
+from conda_smithy.schema import validate_json_schema
 from conda_smithy.utils import (
     get_feedstock_about_from_meta,
     get_feedstock_name_from_meta,
@@ -1758,6 +1758,9 @@ def _read_forge_config(forge_dir, forge_yml=None):
         documents = list(yaml.safe_load_all(fh))
         file_config = (documents or [None])[0] or {}
 
+    # Validate loaded configuration against a JSON schema.
+    validate_json_schema(file_config)
+
     # The config is just the union of the defaults, and the overridden
     # values.
     config = _update_dict_within_dict(file_config.items(), config)
@@ -1798,16 +1801,6 @@ def _read_forge_config(forge_dir, forge_yml=None):
             "Cannot set 'conda_build_tool_deps' directly. "
             "Use 'conda_build_tool' instead."
         )
-
-    # Validate the merged configuration against a JSON schema
-    json_schema_file = (
-        Path(__file__).resolve().parent / "data" / "conda-forge.v2.json"
-    )
-    with open(json_schema_file, "r") as fh:
-        _json_schema = json.loads(fh.read())
-
-    jsonschema.validate(config, _json_schema)
-
     return config
 
 
@@ -1876,23 +1869,6 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
         config["noarch_platforms"]
     )
 
-    for noarch_platform in sorted(config["noarch_platforms"]):
-        if noarch_platform not in target_platforms:
-            raise ValueError(
-                f"Unknown noarch platform {noarch_platform}. Expected one of: "
-                f"{target_platforms}"
-            )
-
-    valid_build_tools = (
-        "mambabuild",  # will run 'conda mambabuild', as provided by boa
-        "conda-build",  # will run vanilla conda-build, with system configured / default solver
-        "conda-build+conda-libmamba-solver",  # will run vanilla conda-build, with libmamba solver
-        "conda-build+classic",  # will run vanilla conda-build, with the classic solver
-    )
-    assert config["conda_build_tool"] in valid_build_tools, (
-        f"Invalid conda_build_tool: {config['conda_build_tool']}. "
-        f"Valid values are: {valid_build_tools}."
-    )
     # NOTE: Currently assuming these dependencies are name-only (no version constraints)
     if config["conda_build_tool"] == "mambabuild":
         config["conda_build_tool_deps"] = "conda-build boa"
@@ -1901,11 +1877,6 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
     else:
         config["conda_build_tool_deps"] = "conda-build"
 
-    valid_install_tools = ("conda", "mamba")
-    assert config["conda_install_tool"] in valid_install_tools, (
-        f"Invalid conda_install_tool: {config['conda_install_tool']}. "
-        f"Valid values are: {valid_install_tools}."
-    )
     # NOTE: Currently assuming these dependencies are name-only (no version constraints)
     if config["conda_install_tool"] == "mamba":
         config["conda_install_tool_deps"] = "mamba"
