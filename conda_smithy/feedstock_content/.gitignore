@@ -1,10 +1,8 @@
+*
+!conda-forge.yml
+
+!*/
+!recipe/**
+!.ci_support/**
+
 *.pyc
-
-build_artifacts
-
-# IDE config
-.vscode/
-# Pycharm
-.idea/
-# Notepad++ files
-nppBackup/
