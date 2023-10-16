@@ -30,6 +30,7 @@ GITIGNORE_ADDITIONAL = """*.pyc
 build_artifacts
 """
 
+
 def _insert_into_gitignore(
     feedstock_directory=".",
     prefix="# conda smithy ci-skeleton start\n",
