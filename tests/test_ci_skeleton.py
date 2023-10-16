@@ -89,14 +89,8 @@ test:
 #    - LisaSimpson"""
 
 GITIGNORE = """# conda smithy ci-skeleton start
-*
-!conda-forge.yml
-
-!*/
-!recipe/**
-!.ci_support/**
-
 *.pyc
+build_artifacts
 # conda smithy ci-skeleton end
 """
 
