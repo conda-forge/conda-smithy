@@ -24,6 +24,11 @@ def validate_json_schema(config, schema_file: str = None):
 
     jsonschema.validate(config, _json_schema)
 
+    CUSTOM_VALIDATORS = {}
+
+    for validator in CUSTOM_VALIDATORS:
+        _results = validator.validate(config, _json_schema)
+
 
 class Nullable(Enum):
     """Created to avoid issue with schema validation of null values in lists or dicts."""

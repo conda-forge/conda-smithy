@@ -125,7 +125,39 @@ def lint_about_contents(about_section, lints):
             )
 
 
-def lintify(meta, recipe_dir=None, conda_forge=False):
+def lintify_forge_yaml(recipe_dir=None) -> (list, list):
+    lints = []
+    hints = []
+
+    if recipe_dir:
+        forge_yaml_filename = (
+            glob(os.path.join(recipe_dir, "..", "conda-forge.yml"))
+            or glob(
+                os.path.join(recipe_dir, "conda-forge.yml"),
+            )
+            or glob(
+                os.path.join(recipe_dir, "..", "..", "conda-forge.yml"),
+            )
+        )
+        if forge_yaml_filename:
+            with open(forge_yaml_filename[0], "r") as fh:
+                forge_yaml = get_yaml().load(fh)
+        else:
+            forge_yaml = {}
+    else:
+        forge_yaml = {}
+
+    # This is where we validate against the jsonschema and execute our custom validators...
+    print(forge_yaml)
+
+    from conda_smithy.schema import validate_json_schema
+
+    return lints, hints
+
+
+def lintify_meta_yaml(
+    meta, recipe_dir=None, conda_forge=False
+) -> (list, list):
     lints = []
     hints = []
     major_sections = list(meta.keys())
@@ -903,7 +935,6 @@ def run_conda_forge_specific(meta, recipe_dir, lints, hints):
 
     # 4: Do not delete example recipe
     if is_staged_recipes and recipe_dir is not None:
-
         example_meta_fname = os.path.abspath(
             os.path.join(recipe_dir, "..", "example", "meta.yaml")
         )
@@ -996,7 +1027,14 @@ def main(recipe_dir, conda_forge=False, return_hints=False):
     with io.open(recipe_meta, "rt") as fh:
         content = render_meta_yaml("".join(fh))
         meta = get_yaml().load(content)
-    results, hints = lintify(meta, recipe_dir, conda_forge)
+
+    results, hints = lintify_meta_yaml(meta, recipe_dir, conda_forge)
+
+    _results, _hints = lintify_forge_yaml(recipe_dir=recipe_dir)
+
+    results.update(_results)
+    hints.update(_hints)
+
     if return_hints:
         return results, hints
     else:
