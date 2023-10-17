@@ -11,11 +11,7 @@
 {%- endfor %}
 
 name: Build conda package
-{%- if github_actions.self_hosted %}
-on: {{ github_actions.self_hosted_triggers }}
-{%- else %}
-on: [push, pull_request]
-{%- endif %}
+on: {{ github_actions.triggers }}
 
 {%- if github_actions.cancel_in_progress or github_actions.self_hosted %}
 concurrency:
@@ -23,55 +19,12 @@ concurrency:
   cancel-in-progress: true
 {%- endif %}
 
-{%- set platform_vars = {
-  'osx-64': {
-    'os': 'macos',
-    'self_hosted_label_os': 'macOS',
-    'self_hosted_label_arch': 'x64',
-  },
-  'osx-arm64': {
-    'os': 'macos',
-    'self_hosted_label_os': 'macOS',
-    'self_hosted_label_arch': 'arm64',
-  },
-  'linux-64': {
-    'os': 'ubuntu',
-    'self_hosted_label_os': 'linux',
-    'self_hosted_label_arch': 'x64',
-  },
-  'linux-aarch64': {
-    'os': 'ubuntu',
-    'self_hosted_label_os': 'linux',
-    'self_hosted_label_arch': 'ARM64',
-  },
-  'linux-ppc64le': {
-    'os': 'ubuntu',
-    'self_hosted_label_os': 'linux',
-    'self_hosted_label_arch': '',
-  },
-  'win-64': {
-    'os': 'windows',
-    'self_hosted_label_os': 'windows',
-    'self_hosted_label_arch': 'x64',
-  },
-  'win-arm64': {
-    'os': 'windows',
-    'self_hosted_label_os': 'windows',
-    'self_hosted_label_arch': 'ARM64',
-  },
-}
-%}
-
 jobs:
   build:
     name: {% raw %}${{ matrix.CONFIG }}{% endraw %}
-    {%- if github_actions.self_hosted %}
-    runs-on: {% raw %}${{ matrix.labels }}{% endraw %}
-      {%- if github_actions.self_hosted_timeout_minutes %}
+    runs-on: {% raw %}${{ matrix.runs_on }}{% endraw %}
+    {%- if github_actions.self_hosted and github_actions.self_hosted_timeout_minutes %}
     timeout-minutes: {{ github_actions.self_hosted_timeout_minutes }}
-      {%- endif %}
-    {%- else %}
-    runs-on: {% raw %}${{ matrix.os }}{% endraw %}-latest
     {%- endif %}
     strategy:
       fail-fast: false
@@ -86,29 +39,11 @@ jobs:
             SHORT_CONFIG: {{ data.short_config_name }}
         {%- endif %}
             UPLOAD_PACKAGES: {{ data.upload }}
-            os: {{ platform_vars[data.build_platform]['os'] }}
-        {#- namespace needed to handle jinja scoping rules #}
-        {%- set ns = namespace(gpu=False) %}
-        {%- if github_actions.self_hosted %}
-            labels:
-              - self-hosted
-              - {{ platform_vars[data.build_platform]['self_hosted_label_os'] }}
-              {%- if platform_vars[data.build_platform]['self_hosted_label_arch'] %}
-              - {{ platform_vars[data.build_platform]['self_hosted_label_arch'] }}
-              {%- endif %}
-              {%- for label in github_actions.self_hosted_labels %}
-                {%- if 'gpu' in label %}
-                  {%- set ns.gpu = True %}
-                {%- endif %}
-                {%- if label.startswith('cirun-') %}
-                  {%- set label = label ~ "--${{ github.run_id }}-" ~ data.short_config_name %}
-                {%- endif %}
-              - {{ label }}
-              {%- endfor %}
-        {%- endif %}
+            os: {{ data.gha_os }}
+            runs_on: {{ data.gha_runs_on }}
         {%- if data.build_platform.startswith("linux") %}
             DOCKER_IMAGE: {{ data.config["docker_image"][-1] }}
-          {%- if ns.gpu %}
+          {%- if data.gha_with_gpu %}
             CONDA_FORGE_DOCKER_RUN_ARGS: "--gpus all"
           {%- endif %}
         {%- endif %}

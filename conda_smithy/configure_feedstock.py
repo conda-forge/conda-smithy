@@ -1265,6 +1265,64 @@ def _github_actions_specific_setup(
     jinja_env, forge_config, forge_dir, platform
 ):
 
+    # Handle GH-hosted and self-hosted runners runs-on config
+    # Do it before the deepcopy below so these changes can be used by the
+    # .github/worfkflows/conda-build.yml template
+    runs_on = {
+        'osx-64': {
+            'os': 'macos',
+            'self_hosted_labels': ('macOS', 'x64'),
+        },
+        'osx-arm64': {
+            'os': 'macos',
+            'self_hosted_labels': ('macOS', 'arm64'),
+        },
+        'linux-64': {
+            'os': 'ubuntu',
+            'self_hosted_labels': ('linux', 'x64'),
+        },
+        'linux-aarch64': {
+            'os': 'ubuntu',
+            'self_hosted_labels': ('linux', 'ARM64'),
+        },
+        'linux-ppc64le': {
+            'os': 'ubuntu',
+            'self_hosted_labels': ('linux', ''),
+        },
+        'win-64': {
+            'os': 'windows',
+            'self_hosted_labels': ('windows', 'x64'),
+        },
+        'win-arm64': {
+            'os': 'windows',
+            'self_hosted_labels': ('windows', 'ARM64'),
+        },
+    }
+    for data in forge_config["configs"]:
+        if not data["build_platform"].startswith(platform):
+            continue
+        # This Github Actions specific configs are prefixed with "gha_"
+        # because we are not deepcopying the data dict intentionally
+        # so it can be used in the general "render_github_actions" function
+        # This avoid potential collisions with other CI providers :crossed_fingers:
+        data["gha_os"] = runs_on[data["build_platform"]]["os"]
+        data["gha_with_gpu"] = False
+        if forge_config["github_actions"]["self_hosted"]:
+            data["gha_runs_on"] = [
+                "self-hosted",
+                # default, per-platform labels
+                *runs_on[data["build_platform"]]["self_hosted_labels"],
+            ]
+            # labels provided in conda-forge.yml
+            for label in forge_config["github_actions"]["self_hosted_labels"]:
+                if label.startswith("cirun-"):
+                    label += "--${{ github.run_id }}-" + data["short_config_name"]
+                if "gpu" in label.lower():
+                    data["gha_with_gpu"] = True
+                data["gha_runs_on"].append(label)
+        else:
+            data["gha_runs_on"] = data["gha_os"] + "-latest"
+
     build_setup = _get_build_setup_line(forge_dir, platform, forge_config)
 
     if platform == "linux":
@@ -1319,6 +1377,12 @@ def render_github_actions(
     ) = _get_platforms_of_provider("github_actions", forge_config)
 
     logger.debug("github platforms retrieved")
+
+    if forge_config["github_actions"]["self_hosted"]:
+        forge_config["github_actions"]["triggers"] = \
+            forge_config["github_actions"]["self_hosted_triggers"]
+    else:
+        forge_config["github_actions"]["triggers"] = ["push", "pull_request"]
 
     remove_file_or_dir(target_path)
     return _render_ci_provider(
