@@ -28,6 +28,7 @@ from conda_build.metadata import (
     FIELDS as cbfields,
 )
 import conda_build.conda_interface
+from conda_smithy.schema import validate_json_schema
 
 from .utils import render_meta_yaml, get_yaml
 
@@ -147,10 +148,8 @@ def lintify_forge_yaml(recipe_dir=None) -> (list, list):
     else:
         forge_yaml = {}
 
-    # This is where we validate against the jsonschema and execute our custom validators...
-    print(forge_yaml)
-
-    from conda_smithy.schema import validate_json_schema
+    # This is where we validate against the jsonschema and execute our custom validators..
+    lints = validate_json_schema(forge_yaml, forge_yaml_filename)
 
     return lints, hints
 

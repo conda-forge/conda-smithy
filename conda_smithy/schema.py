@@ -1,16 +1,37 @@
 # This model is also used for generating and automatic documentation for the conda-forge.yml file. The documentation is generated using sphinx and "pydantic-autodoc" extension. For an upstream preview of the documentation, see https://conda-forge.org/docs/maintainer/conda_forge_yml.html.
 
+import json
 from enum import Enum, EnumMeta
+from pathlib import Path
 from typing import Any, Dict, List, Literal, Optional, Type, Union
 
-from pydantic import BaseModel, Field, create_model
-import yaml
-import json
 import jsonschema
-from pathlib import Path
+import yaml
+from jsonschema import Draft7Validator, validators
+from jsonschema.exceptions import ValidationError
+from pydantic import BaseModel, Field, create_model
+
+
+def deprecated_validator(validator, value, instance, schema):
+    if value and instance is not None:
+        raise ValidationError(
+            f"'{schema['title']}' is deprecated. {schema['description']}"
+        )
+
+
+def _register_custom_validators(validator_name, validator_func):
+    # Register the custom validator
+
+    all_validators = dict(Draft7Validator.VALIDATORS)
+    all_validators[validator_name] = validator_func
+
+    return validators.create(
+        meta_schema=Draft7Validator.META_SCHEMA, validators=all_validators
+    )
 
 
 def validate_json_schema(config, schema_file: str = None):
+    _results = []
     # Validate the merged configuration against a JSON schema
     json_schema_file = (
         Path(__file__).resolve().parent / "data" / "conda-forge.v2.json"
@@ -24,10 +45,17 @@ def validate_json_schema(config, schema_file: str = None):
 
     jsonschema.validate(config, _json_schema)
 
-    CUSTOM_VALIDATORS = {}
+    CUSTOM_VALIDATORS = {
+        "deprecated": deprecated_validator,
+    }
 
-    for validator in CUSTOM_VALIDATORS:
-        _results = validator.validate(config, _json_schema)
+    for validator_name, validator_definition in CUSTOM_VALIDATORS.items():
+        validator = _register_custom_validators(
+            validator_name, validator_definition
+        )
+        _results.append(validator.validate(config, _json_schema))
+
+    return _results
 
 
 class Nullable(Enum):
