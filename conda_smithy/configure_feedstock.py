@@ -1269,33 +1269,33 @@ def _github_actions_specific_setup(
     # Do it before the deepcopy below so these changes can be used by the
     # .github/worfkflows/conda-build.yml template
     runs_on = {
-        'osx-64': {
-            'os': 'macos',
-            'self_hosted_labels': ('macOS', 'x64'),
+        "osx-64": {
+            "os": "macos",
+            "self_hosted_labels": ("macOS", "x64"),
         },
-        'osx-arm64': {
-            'os': 'macos',
-            'self_hosted_labels': ('macOS', 'arm64'),
+        "osx-arm64": {
+            "os": "macos",
+            "self_hosted_labels": ("macOS", "arm64"),
         },
-        'linux-64': {
-            'os': 'ubuntu',
-            'self_hosted_labels': ('linux', 'x64'),
+        "linux-64": {
+            "os": "ubuntu",
+            "self_hosted_labels": ("linux", "x64"),
         },
-        'linux-aarch64': {
-            'os': 'ubuntu',
-            'self_hosted_labels': ('linux', 'ARM64'),
+        "linux-aarch64": {
+            "os": "ubuntu",
+            "self_hosted_labels": ("linux", "ARM64"),
         },
-        'linux-ppc64le': {
-            'os': 'ubuntu',
-            'self_hosted_labels': ('linux', ''),
+        "linux-ppc64le": {
+            "os": "ubuntu",
+            "self_hosted_labels": ("linux", ""),
         },
-        'win-64': {
-            'os': 'windows',
-            'self_hosted_labels': ('windows', 'x64'),
+        "win-64": {
+            "os": "windows",
+            "self_hosted_labels": ("windows", "x64"),
         },
-        'win-arm64': {
-            'os': 'windows',
-            'self_hosted_labels': ('windows', 'ARM64'),
+        "win-arm64": {
+            "os": "windows",
+            "self_hosted_labels": ("windows", "ARM64"),
         },
     }
     for data in forge_config["configs"]:
@@ -1316,7 +1316,9 @@ def _github_actions_specific_setup(
             # labels provided in conda-forge.yml
             for label in forge_config["github_actions"]["self_hosted_labels"]:
                 if label.startswith("cirun-"):
-                    label += "--${{ github.run_id }}-" + data["short_config_name"]
+                    label += (
+                        "--${{ github.run_id }}-" + data["short_config_name"]
+                    )
                 if "gpu" in label.lower():
                     data["gha_with_gpu"] = True
                 data["gha_runs_on"].append(label)
@@ -1379,8 +1381,9 @@ def render_github_actions(
     logger.debug("github platforms retrieved")
 
     if forge_config["github_actions"]["self_hosted"]:
-        forge_config["github_actions"]["triggers"] = \
-            forge_config["github_actions"]["self_hosted_triggers"]
+        forge_config["github_actions"]["triggers"] = forge_config[
+            "github_actions"
+        ]["self_hosted_triggers"]
     else:
         forge_config["github_actions"]["triggers"] = ["push", "pull_request"]
 
