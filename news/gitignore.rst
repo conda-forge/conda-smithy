@@ -4,7 +4,7 @@
 
 **Changed:**
 
-* Updated `.gitignore` to include IDE/editor config
+* Updated `.gitignore` to exclude everything except recipe/ and conda-forge.yml (#1413)
 
 **Deprecated:**
 
