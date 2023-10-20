@@ -367,6 +367,7 @@ def _collapse_subpackage_variants(
         "channel_targets",
         "docker_image",
         "build_number_decrement",
+        "github_actions_labels",
         # The following keys are required for some of our aarch64 builds
         # Added in https://github.com/conda-forge/conda-forge-pinning-feedstock/pull/180
         "cdt_arch",
@@ -1285,10 +1286,6 @@ def _github_actions_specific_setup(
             "os": "ubuntu",
             "self_hosted_labels": ("linux", "ARM64"),
         },
-        "linux-ppc64le": {
-            "os": "ubuntu",
-            "self_hosted_labels": ("linux", ""),
-        },
         "win-64": {
             "os": "windows",
             "self_hosted_labels": ("windows", "x64"),
@@ -1307,14 +1304,34 @@ def _github_actions_specific_setup(
         # This avoid potential collisions with other CI providers :crossed_fingers:
         data["gha_os"] = runs_on[data["build_platform"]]["os"]
         data["gha_with_gpu"] = False
+
+        self_hosted_default = list(
+            runs_on[data["build_platform"]]["self_hosted_labels"]
+        )
+        self_hosted_default += ["self-hosted"]
+        hosted_default = [data["gha_os"] + "-latest"]
+
+        labels_default = (
+            ["hosted"]
+            if forge_config["github_actions"]["self_hosted"]
+            else ["self-hosted"]
+        )
+        labels = list(
+            data["config"].get("github_actions_labels", labels_default)
+        )
+
+        if len(labels) == 1 and labels[0] == "hosted":
+            labels = hosted_default
+        elif len(labels) == 1 and labels[0] in "self-hosted":
+            labels = self_hosted_default
+        else:
+            # Prepend the required ones
+            labels += self_hosted_default
+
         if forge_config["github_actions"]["self_hosted"]:
-            data["gha_runs_on"] = [
-                "self-hosted",
-                # default, per-platform labels
-                *runs_on[data["build_platform"]]["self_hosted_labels"],
-            ]
+            data["gha_runs_on"] = []
             # labels provided in conda-forge.yml
-            for label in forge_config["github_actions"]["self_hosted_labels"]:
+            for label in labels:
                 if label.startswith("cirun-"):
                     label += (
                         "--${{ github.run_id }}-" + data["short_config_name"]
@@ -1323,7 +1340,7 @@ def _github_actions_specific_setup(
                     data["gha_with_gpu"] = True
                 data["gha_runs_on"].append(label)
         else:
-            data["gha_runs_on"] = data["gha_os"] + "-latest"
+            data["gha_runs_on"] = hosted_default
 
     build_setup = _get_build_setup_line(forge_dir, platform, forge_config)
 
@@ -1379,13 +1396,6 @@ def render_github_actions(
     ) = _get_platforms_of_provider("github_actions", forge_config)
 
     logger.debug("github platforms retrieved")
-
-    if forge_config["github_actions"]["self_hosted"]:
-        forge_config["github_actions"]["triggers"] = forge_config[
-            "github_actions"
-        ]["self_hosted_triggers"]
-    else:
-        forge_config["github_actions"]["triggers"] = ["push", "pull_request"]
 
     remove_file_or_dir(target_path)
     return _render_ci_provider(
@@ -1904,10 +1914,9 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
         },
         "github_actions": {
             "self_hosted": False,
-            "self_hosted_labels": [],
-            "self_hosted_triggers": ["push"],
-            "self_hosted_timeout_minutes": 360,
-            "cancel_in_progress": False,
+            "triggers": "default",
+            "timeout_minutes": 360,
+            "cancel_in_progress": "default",
             # Set maximum parallel jobs
             "max_parallel": None,
             # Toggle creating artifacts for conda build_artifacts dir
@@ -2064,6 +2073,17 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
 
     if config["test"] is None:
         config["test"] = "all"
+
+    if config["github_actions"]["cancel_in_progress"] == "default":
+        config["github_actions"]["cancel_in_progress"] = config[
+            "github_actions"
+        ]["self_hosted"]
+
+    if config["github_actions"]["triggers"] == "default":
+        self_hosted = config["github_actions"]["self_hosted"]
+        config["github_actions"]["triggers"] = (
+            ["push"] if self_hosted else ["push", "pull_request"]
+        )
 
     # An older conda-smithy used to have some files which should no longer exist,
     # remove those now.

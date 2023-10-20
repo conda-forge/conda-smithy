@@ -13,7 +13,7 @@
 name: Build conda package
 on: {{ github_actions.triggers }}
 
-{%- if github_actions.cancel_in_progress or github_actions.self_hosted %}
+{%- if github_actions.cancel_in_progress %}
 concurrency:
   group: {% raw %}${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}{% endraw %}
   cancel-in-progress: true
@@ -23,9 +23,7 @@ jobs:
   build:
     name: {% raw %}${{ matrix.CONFIG }}{% endraw %}
     runs-on: {% raw %}${{ matrix.runs_on }}{% endraw %}
-    {%- if github_actions.self_hosted and github_actions.self_hosted_timeout_minutes %}
-    timeout-minutes: {{ github_actions.self_hosted_timeout_minutes }}
-    {%- endif %}
+    timeout-minutes: {{ github_actions.timeout_minutes }}
     strategy:
       fail-fast: false
       {%- if github_actions.max_parallel %}
