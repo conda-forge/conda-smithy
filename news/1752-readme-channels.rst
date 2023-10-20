@@ -4,7 +4,7 @@
 
 **Changed:**
 
-* If one supplies ``--no-check-uptodate`` on the commandline, we will no longer check and print a warning if conda-smithy is outdated.
+* Use the channels defined in `conda_build_config.yaml` (instead of those in `conda-forge.yml`) to render `README.md`. (#897 via #752)
 
 **Deprecated:**
 
