@@ -4,6 +4,43 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.27.1
+====================
+
+**Fixed:**
+
+* Crash when XDG_CACHE_DIR is defined
+
+**Authors:**
+
+* Min RK
+
+
+
+v3.27.0
+====================
+
+**Added:**
+
+* Cache the contents of ``conda-forge-pinning`` and only check every 15min for an updated version.
+  The re-check interval can be configured via the ``CONDA_FORGE_PINNING_LIFETIME`` environment variable.
+
+**Changed:**
+
+* Do not strip version constraints for ``mamba update``. (#1773 via #1774)
+* If one supplies ``--no-check-uptodate`` on the commandline, we will no longer check and print a warning if conda-smithy is outdated.
+
+**Removed:**
+
+* Removed the ``updatecb3`` command. It is advised to do this update manually if you still encounter a recipe using the old compiler ``toolchain``.
+
+**Authors:**
+
+* Jaime Rodríguez-Guerra
+* Uwe L. Korn
+
+
+
 v3.26.3
 ====================
 

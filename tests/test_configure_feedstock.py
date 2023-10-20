@@ -750,9 +750,7 @@ def test_conda_forge_yaml_empty(config_yaml):
         ),
     )
 
-    assert ["conda-forge", "main"] in load_forge_config()["channels"][
-        "targets"
-    ]
+    assert load_forge_config()["recipe_dir"] == "recipe"
 
     os.unlink(os.path.join(config_yaml, "conda-forge.yml"))
     with pytest.raises(RuntimeError):
@@ -760,9 +758,7 @@ def test_conda_forge_yaml_empty(config_yaml):
 
     with open(os.path.join(config_yaml, "conda-forge.yml"), "w"):
         pass
-    assert ["conda-forge", "main"] in load_forge_config()["channels"][
-        "targets"
-    ]
+    assert load_forge_config()["recipe_dir"] == "recipe"
 
 
 def test_noarch_platforms_bad_yaml(config_yaml):
@@ -804,9 +800,7 @@ def test_forge_yml_alt_path(config_yaml):
     with pytest.raises(RuntimeError):
         load_forge_config(None)
 
-    assert ["conda-forge", "main"] in load_forge_config(forge_yml_alt)[
-        "channels"
-    ]["targets"]
+    assert load_forge_config(forge_yml_alt)["recipe_dir"] == "recipe"
 
 
 def test_cos7_env_render(py_recipe, jinja_env):
@@ -917,12 +911,35 @@ def test_remote_ci_setup(config_yaml):
         ),
     )
     cfg = load_forge_config()
+    with open(os.path.join(config_yaml, "conda-forge.yml")) as fp:
+        unmodified = fp.read()
+
     with open(os.path.join(config_yaml, "conda-forge.yml"), "a+") as fp:
-        fp.write("remote_ci_setup: ['conda-forge-ci-setup=3', 'py-lief<0.12']")
+        fp.write(
+            "remote_ci_setup: ['conda-forge-ci-setup=3', 'py-lief<0.12']\n"
+        )
+        fp.write("conda_install_tool: conda\n")
     cfg = load_forge_config()
     # pylief was quoted due to <
     assert cfg["remote_ci_setup"] == [
         "conda-forge-ci-setup=3",
         '"py-lief<0.12"',
     ]
-    assert cfg["remote_ci_setup_names"] == ["conda-forge-ci-setup", "py-lief"]
+    assert cfg["remote_ci_setup_update"] == ["conda-forge-ci-setup", "py-lief"]
+
+    with open(os.path.join(config_yaml, "conda-forge.yml"), "w") as fp:
+        fp.write(unmodified + "\n")
+        fp.write(
+            "remote_ci_setup: ['conda-forge-ci-setup=3', 'py-lief<0.12']\n"
+        )
+        fp.write("conda_install_tool: mamba\n")
+    cfg = load_forge_config()
+    # with conda_install_tool = mamba, we don't strip constraints
+    assert (
+        cfg["remote_ci_setup"]
+        == cfg["remote_ci_setup_update"]
+        == [
+            "conda-forge-ci-setup=3",
+            '"py-lief<0.12"',
+        ]
+    )

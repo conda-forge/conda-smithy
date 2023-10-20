@@ -7,13 +7,14 @@ import re
 import sys
 import subprocess
 import textwrap
+import time
 import yaml
 import warnings
 from collections import OrderedDict, namedtuple, Counter
 import copy
 import hashlib
 import requests
-from pathlib import PurePath
+from pathlib import Path, PurePath
 
 # The `requests` lib uses `simplejson` instead of `json` when available.
 # In consequence the same JSON library must be used or the `JSONDecodeError`
@@ -65,6 +66,11 @@ if "CONDA_SMITHY_SERVICE_FEEDSTOCKS" in os.environ:
     SERVICE_FEEDSTOCKS += os.environ["CONDA_SMITHY_SERVICE_FEEDSTOCKS"].split(
         ","
     )
+
+# Cache lifetime in seconds, default 15min
+CONDA_FORGE_PINNING_LIFETIME = int(
+    os.environ.get("CONDA_FORGE_PINNING_LIFETIME", 15 * 60)
+)
 
 
 def package_key(config, used_loop_vars, subdir):
@@ -727,6 +733,9 @@ def _render_ci_provider(
             if os.path.exists(_recipe_cbc):
                 os.rename(_recipe_cbc, _recipe_cbc + ".conda.smithy.bak")
 
+            channel_sources = migrated_combined_variant_spec.get(
+                "channel_sources", [""]
+            )[0].split(",")
             metas = conda_build.api.render(
                 os.path.join(forge_dir, forge_config["recipe_dir"]),
                 platform=platform,
@@ -736,9 +745,7 @@ def _render_ci_provider(
                 permit_undefined_jinja=True,
                 finalize=False,
                 bypass_env_check=True,
-                channel_urls=forge_config.get("channels", {}).get(
-                    "sources", []
-                ),
+                channel_urls=channel_sources,
             )
         finally:
             if os.path.exists(_recipe_cbc + ".conda.smithy.bak"):
@@ -1606,11 +1613,23 @@ def render_README(jinja_env, forge_config, forge_dir, render_info=None):
 
     ci_support_path = os.path.join(forge_dir, ".ci_support")
     variants = []
+    channel_targets = []
     if os.path.exists(ci_support_path):
         for filename in os.listdir(ci_support_path):
             if filename.endswith(".yaml"):
                 variant_name, _ = os.path.splitext(filename)
                 variants.append(variant_name)
+                with open(os.path.join(ci_support_path, filename)) as fh:
+                    data = yaml.safe_load(fh)
+                    for channel in data.get("channel_targets", ()):
+                        # channel_targets are in the form of "channel_name label"
+                        channel_targets.append(channel.split(" "))
+    if not channel_targets:
+        # default to conda-forge if no channel_targets are specified (shouldn't happen)
+        channel_targets = ["conda-forge main"]
+    else:
+        # de-duplicate in-order
+        channel_targets = list(dict.fromkeys(channel_targets))
 
     subpackages_metas = OrderedDict((meta.name(), meta) for meta in metas)
     subpackages_about = [(package_name, package_about)]
@@ -1642,6 +1661,7 @@ def render_README(jinja_env, forge_config, forge_dir, render_info=None):
             )
         )
     )
+    forge_config["channel_targets"] = channel_targets
 
     if forge_config["azure"].get("build_id") is None:
 
@@ -1818,10 +1838,6 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
         "max_py_ver": "37",
         "min_r_ver": "34",
         "max_r_ver": "34",
-        "channels": {
-            "sources": ["conda-forge"],
-            "targets": [["conda-forge", "main"]],
-        },
         "github": {
             "user_or_org": "conda-forge",
             "repo_name": "",
@@ -1896,6 +1912,11 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
         ):
             raise ValueError(
                 "Setting docker image in conda-forge.yml is removed now."
+                " Use conda_build_config.yaml instead"
+            )
+        if file_config.get("channels"):
+            raise ValueError(
+                "Setting channels in conda-forge.yml is removed now."
                 " Use conda_build_config.yaml instead"
             )
 
@@ -2034,17 +2055,20 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
 
     if config["provider"]["linux_s390x"] in {"default", "native"}:
         config["provider"]["linux_s390x"] = ["travis"]
-
-    config["remote_ci_setup"] = _santize_remote_ci_setup(
-        config["remote_ci_setup"]
-    )
-    config["remote_ci_setup_names"] = [
-        MatchSpec(pkg.strip('"').strip("'")).name
-        for pkg in config["remote_ci_setup"]
-    ]
+    
     config["pinned_packages"] = conda_build.utils.ensure_list(
         config["pinned_packages"]
     )
+    config["remote_ci_setup"] = _santize_remote_ci_setup(
+        config["remote_ci_setup"]
+    )
+    if config["conda_install_tool"] == "conda":
+        config["remote_ci_setup_update"] = [
+            MatchSpec(pkg.strip('"').strip("'")).name
+            for pkg in config["remote_ci_setup"]
+        ]
+    else:
+        config["remote_ci_setup_update"] = config["remote_ci_setup"]
 
     # Older conda-smithy versions supported this with only one
     # entry. To avoid breakage, we are converting single elements
@@ -2185,6 +2209,52 @@ def get_cfp_file_path(temporary_directory):
     assert os.path.exists(cf_pinning_file)
 
     return cf_pinning_file, cf_pinning_ver
+
+
+def get_cache_dir():
+    if sys.platform.startswith("win"):
+        return Path(os.environ.get("TEMP"))
+    else:
+        return Path(os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache"))
+
+
+def get_cached_cfp_file_path(temporary_directory):
+    if cache_dir := get_cache_dir():
+        smithy_cache = cache_dir / "conda-smithy"
+        smithy_cache.mkdir(parents=True, exist_ok=True)
+        pinning_version = None
+        # Do we already have the pinning cached?
+        if (smithy_cache / "conda-forge-pinng-version").exists():
+            pinning_version = (
+                smithy_cache / "conda-forge-pinng-version"
+            ).read_text()
+
+        # Check whether we have recently already updated the cache
+        current_ts = int(time.time())
+        if (smithy_cache / "conda-forge-pinng-version-ts").exists():
+            last_ts = int(
+                (smithy_cache / "conda-forge-pinng-version-ts").read_text()
+            )
+        else:
+            last_ts = 0
+
+        if current_ts - last_ts > CONDA_FORGE_PINNING_LIFETIME:
+            current_pinning_version = get_most_recent_version(
+                "conda-forge-pinning"
+            ).version
+            (smithy_cache / "conda-forge-pinng-version-ts").write_text(
+                str(current_ts)
+            )
+            if current_pinning_version != pinning_version:
+                get_cfp_file_path(smithy_cache)
+                (smithy_cache / "conda-forge-pinng-version").write_text(
+                    current_pinning_version
+                )
+                pinning_version = current_pinning_version
+
+        return str(smithy_cache / "conda_build_config.yaml"), pinning_version
+    else:
+        return get_cfp_file_path(temporary_directory)
 
 
 def clear_variants(forge_dir):
@@ -2340,14 +2410,11 @@ def main(
     loglevel = os.environ.get("CONDA_SMITHY_LOGLEVEL", "INFO").upper()
     logger.setLevel(loglevel)
 
-    if check:
+    if check or not no_check_uptodate:
         # Check that conda-smithy is up-to-date
         check_version_uptodate("conda-smithy", __version__, True)
-        return True
-
-    error_on_warn = False if no_check_uptodate else True
-    # Check that conda-smithy is up-to-date
-    check_version_uptodate("conda-smithy", __version__, error_on_warn)
+        if check:
+            return True
 
     forge_dir = os.path.abspath(forge_file_directory)
     if exclusive_config_file is not None:
@@ -2356,7 +2423,7 @@ def main(
             raise RuntimeError("Given exclusive-config-file not found.")
         cf_pinning_ver = None
     else:
-        exclusive_config_file, cf_pinning_ver = get_cfp_file_path(
+        exclusive_config_file, cf_pinning_ver = get_cached_cfp_file_path(
             temporary_directory
         )
 

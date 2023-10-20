@@ -3,14 +3,14 @@ Authors are sorted by number of commits.
 
 * Isuru Fernando
 * Matthew R. Becker
+* Jaime Rodríguez-Guerra
 * Christopher J. Wright
 * Anthony Scopatz
-* Jaime Rodríguez-Guerra
 * Phil Elson
 * Filipe Fernandes
+* Uwe L. Korn
 * Dougal J. Sutherland
 * shadow_walker
-* Uwe L. Korn
 * Michael Sarahan
 * Min RK
 * Leo Fang
