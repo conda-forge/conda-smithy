@@ -367,7 +367,6 @@ def _collapse_subpackage_variants(
         "channel_targets",
         "docker_image",
         "build_number_decrement",
-        "github_actions_labels",
         # The following keys are required for some of our aarch64 builds
         # Added in https://github.com/conda-forge/conda-forge-pinning-feedstock/pull/180
         "cdt_arch",
@@ -377,6 +376,9 @@ def _collapse_subpackage_variants(
 
     if not is_noarch:
         always_keep_keys.add("target_platform")
+
+    if forge_config["github_actions"]["self_hosted"]:
+        always_keep_keys.add("github_actions_labels")
 
     all_used_vars.update(always_keep_keys)
     all_used_vars.update(top_level_vars)
