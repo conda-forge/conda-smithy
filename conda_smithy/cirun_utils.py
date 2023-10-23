@@ -16,9 +16,10 @@ def get_cirun_installation_id(owner: str) -> int:
         return 18453316
     else:
         from .github import gh_token, Github
+
         gh = Github(gh_token)
         user = gh.get_user()
-        if (user.login == owner):
+        if user.login == owner:
             user_or_org = user
         else:
             user_or_org = gh.get_organization(owner)
