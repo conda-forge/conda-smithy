@@ -2055,7 +2055,7 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
 
     if config["provider"]["linux_s390x"] in {"default", "native"}:
         config["provider"]["linux_s390x"] = ["travis"]
-    
+
     config["pinned_packages"] = conda_build.utils.ensure_list(
         config["pinned_packages"]
     )
