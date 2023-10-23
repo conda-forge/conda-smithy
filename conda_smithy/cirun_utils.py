@@ -7,11 +7,25 @@ from typing import List, Dict, Any, Optional
 
 from cirun import Cirun
 
-# To get this id, got to https://github.com/organizations/<ORG-NAME>/settings/installations
-# and then click on the Configure button next to Cirun Application, then copy
-# the installation id from the URL, it would look something like:
-# https://github.com/organizations/conda-forge/settings/installations/18453316
-CIRUN_INSTALLATION_ID = os.environ.get("CIRUN_INSTALLATION_ID", 18453316)
+
+@lru_cache
+def get_cirun_installation_id(owner: str) -> int:
+    # This ID needs a token with admin: org privileges.
+    # Hard-code instead for easier use
+    if owner == "conda-forge":
+        return 18453316
+    else:
+        from .github import gh_token, Github
+        gh = Github(gh_token)
+        user = gh.get_user()
+        if (user.login == owner):
+            user_or_org = user
+        else:
+            user_or_org = gh.get_organization(owner)
+        for inst in user_or_org.get_installations:
+            if inst.raw_data["app_slug"] == "cirun-application":
+                return inst.app_id
+        raise ValueError(f"cirun not found for owner {owner}")
 
 
 def enable_cirun_for_project(owner: str, repo: str) -> Dict[str, Any]:
