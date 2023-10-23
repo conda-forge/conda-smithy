@@ -1621,7 +1621,9 @@ def render_README(jinja_env, forge_config, forge_dir, render_info=None):
                 variants.append(variant_name)
                 with open(os.path.join(ci_support_path, filename)) as fh:
                     data = yaml.safe_load(fh)
-                    channel_targets.append(data.get("channel_targets", ["conda-forge main"])[0])
+                    channel_targets.append(
+                        data.get("channel_targets", ["conda-forge main"])[0]
+                    )
 
     if not channel_targets:
         # default to conda-forge if no channel_targets are specified (shouldn't happen)
