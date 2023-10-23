@@ -1,4 +1,4 @@
-{%- set channel = channel_targets.split(" ")[0] -%}
+{%- set channel = channel_targets[0].split(" ") -%}
 {%- set channel_name = channel[0] -%}
 {%- set channel_label = channel[1] -%}
 {%- if channel_label == "main" -%}
