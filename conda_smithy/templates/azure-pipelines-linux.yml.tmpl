@@ -34,7 +34,7 @@ jobs:
          sudo apt-get autoremove -y >& /dev/null
          sudo apt-get autoclean -y >& /dev/null
 {%- endif %}
-{%- if (azure.free_disk_space == true) or ('docker' in azure.free_disk_space) %}
+{%- if (azure.free_disk_space is iterable) and ('docker' in azure.free_disk_space) %}
          sudo docker image prune --all --force
 {%- endif %}
          df -h
