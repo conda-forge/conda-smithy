@@ -879,7 +879,7 @@ def test_conda_build_tools(config_yaml):
         "build_with_mambabuild" not in cfg
     )  # superseded by conda_build_tool=mambabuild
     assert (
-        cfg["conda_build_tool"] == "conda-build+conda-libmamba-solver"
+        cfg["conda_build_tool"] == "conda-build"
     )  # current default
 
     # legacy compatibility config
