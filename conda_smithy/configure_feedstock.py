@@ -883,14 +883,7 @@ def _render_ci_provider(
             fh.write(template.render(**forge_config))
     # TODO: azure-pipelines might need the same as circle
     if return_metadata:
-        return dict(
-            forge_config=forge_config,
-            metas_list_of_lists=metas_list_of_lists,
-            platforms=platforms,
-            archs=archs,
-            enable_platform=enable_platform,
-            provider_name=provider_name,
-        )
+        return dict(forge_config=forge_config, metas_list_of_lists=metas_list_of_lists, platforms=platforms, archs=archs, enable_platform=enable_platform, provider_name=provider_name)
     else:
         return forge_config
 
