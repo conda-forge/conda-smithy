@@ -733,6 +733,9 @@ def _render_ci_provider(
             if os.path.exists(_recipe_cbc):
                 os.rename(_recipe_cbc, _recipe_cbc + ".conda.smithy.bak")
 
+            channel_sources = migrated_combined_variant_spec.get(
+                "channel_sources", [""]
+            )[0].split(",")
             metas = conda_build.api.render(
                 os.path.join(forge_dir, forge_config["recipe_dir"]),
                 platform=platform,
@@ -742,9 +745,7 @@ def _render_ci_provider(
                 permit_undefined_jinja=True,
                 finalize=False,
                 bypass_env_check=True,
-                channel_urls=forge_config.get("channels", {}).get(
-                    "sources", []
-                ),
+                channel_urls=channel_sources,
             )
         finally:
             if os.path.exists(_recipe_cbc + ".conda.smithy.bak"):
@@ -1612,11 +1613,21 @@ def render_README(jinja_env, forge_config, forge_dir, render_info=None):
 
     ci_support_path = os.path.join(forge_dir, ".ci_support")
     variants = []
+    channel_targets = []
     if os.path.exists(ci_support_path):
         for filename in os.listdir(ci_support_path):
             if filename.endswith(".yaml"):
                 variant_name, _ = os.path.splitext(filename)
                 variants.append(variant_name)
+                with open(os.path.join(ci_support_path, filename)) as fh:
+                    data = yaml.safe_load(fh)
+                    channel_targets.append(
+                        data.get("channel_targets", ["conda-forge main"])[0]
+                    )
+
+    if not channel_targets:
+        # default to conda-forge if no channel_targets are specified (shouldn't happen)
+        channel_targets = ["conda-forge main"]
 
     subpackages_metas = OrderedDict((meta.name(), meta) for meta in metas)
     subpackages_about = [(package_name, package_about)]
@@ -1648,6 +1659,7 @@ def render_README(jinja_env, forge_config, forge_dir, render_info=None):
             )
         )
     )
+    forge_config["channel_targets"] = channel_targets
 
     if forge_config["azure"].get("build_id") is None:
 
@@ -1824,10 +1836,6 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
         "max_py_ver": "37",
         "min_r_ver": "34",
         "max_r_ver": "34",
-        "channels": {
-            "sources": ["conda-forge"],
-            "targets": [["conda-forge", "main"]],
-        },
         "github": {
             "user_or_org": "conda-forge",
             "repo_name": "",
@@ -1848,17 +1856,15 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
         "conda_forge_output_validation": False,
         "private_upload": False,
         "secrets": [],
-        "conda_build_tool": "mambabuild",
-        "conda_build_tool_deps": "boa",
+        "conda_build_tool": "conda-build",
         "conda_install_tool": "mamba",
-        "conda_install_tool_deps": "mamba",
-        "conda_solver": None,
+        "conda_solver": "libmamba",
         # feedstock checkout git clone depth, None means keep default, 0 means no limit
         "clone_depth": None,
         # Specific channel for package can be given with
         #     ${url or channel_alias}::package_name
         # defaults to conda-forge channel_alias
-        "remote_ci_setup": ["conda-forge-ci-setup=3"],
+        "remote_ci_setup": ["conda-forge-ci-setup=4"],
     }
 
     if forge_yml is None:
@@ -1900,6 +1906,11 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
         ):
             raise ValueError(
                 "Setting docker image in conda-forge.yml is removed now."
+                " Use conda_build_config.yaml instead"
+            )
+        if file_config.get("channels"):
+            raise ValueError(
+                "Setting channels in conda-forge.yml is removed now."
                 " Use conda_build_config.yaml instead"
             )
 
