@@ -4,16 +4,6 @@ conda-smithy Change Log
 
 .. current developments
 
-**Changed:**
-
-* Disk cleanup on Azure feedstocks can now be more finely controlled using keys `docker`, `cache`, and `apt` to enumerate which cleanup steps are desired. Pruning the Docker cache now must be explicitly added by enumerating cleanup steps. Setting `azure.free_disk_space = True` now only includes `cache` and `apt` steps.
-
-**Authors:**
-
-* Daniel J. Ching
-
-
-
 v3.27.1
 ====================
 
