@@ -27,6 +27,14 @@ if !errorlevel! neq 0 exit /b !errorlevel!
 set "CONDA_LIBMAMBA_SOLVER_NO_CHANNELS_FROM_INSTALLED=1"
 {%- endif %}
 
+{%- if pinned_packages %}
+echo Configuring pins
+{%- for pin in pinned_packages %}
+{# CMD echo doesn't take quotes; escape special chars with with ^ #}
+echo {{ pin.replace(">", "^>").replace("<", "^<").replace("|", "^|") }} >> %CONDA_PREFIX%\conda-meta\pinned
+{%- endfor %}
+{%- endif %}
+
 :: Provision the necessary dependencies to build the recipe later
 echo Installing dependencies
 {{ conda_install_tool }}.exe install "python=3.10" pip {{ conda_install_tool_deps }} {{ conda_build_tool_deps }} {{ " ".join(remote_ci_setup) }} -c conda-forge --strict-channel-priority --yes

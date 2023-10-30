@@ -1867,6 +1867,8 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
         #     ${url or channel_alias}::package_name
         # defaults to conda-forge channel_alias
         "remote_ci_setup": ["conda-forge-ci-setup=3"],
+        # Add constraints to the base environment
+        "pinned_packages": [],
     }
 
     if forge_yml is None:
@@ -2052,6 +2054,9 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
     if config["provider"]["linux_s390x"] in {"default", "native"}:
         config["provider"]["linux_s390x"] = ["travis"]
 
+    config["pinned_packages"] = conda_build.utils.ensure_list(
+        config["pinned_packages"]
+    )
     config["remote_ci_setup"] = _santize_remote_ci_setup(
         config["remote_ci_setup"]
     )
