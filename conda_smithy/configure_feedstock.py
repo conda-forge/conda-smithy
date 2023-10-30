@@ -1856,17 +1856,15 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
         "conda_forge_output_validation": False,
         "private_upload": False,
         "secrets": [],
-        "conda_build_tool": "mambabuild",
-        "conda_build_tool_deps": "boa",
+        "conda_build_tool": "conda-build",
         "conda_install_tool": "mamba",
-        "conda_install_tool_deps": "mamba",
-        "conda_solver": None,
+        "conda_solver": "libmamba",
         # feedstock checkout git clone depth, None means keep default, 0 means no limit
         "clone_depth": None,
         # Specific channel for package can be given with
         #     ${url or channel_alias}::package_name
         # defaults to conda-forge channel_alias
-        "remote_ci_setup": ["conda-forge-ci-setup=3"],
+        "remote_ci_setup": ["conda-forge-ci-setup=4"],
     }
 
     if forge_yml is None:
