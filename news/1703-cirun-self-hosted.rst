@@ -22,8 +22,8 @@
 * Added support for `cirun` by generating a unique label when the self-hosted
   label starts with `cirun`.
 
-* When a label is added that starts with `gpu` for a self-hosted runner, the docker
-  build will pass the GPUs to the docker instance.
+* When a label is added that has the string with `gpu` or `GPU` for a self-hosted
+  runner, the docker build will pass the GPUs to the docker instance.
 
 **Changed:**
 
