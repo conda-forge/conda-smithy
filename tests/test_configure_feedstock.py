@@ -878,9 +878,7 @@ def test_conda_build_tools(config_yaml):
     assert (
         "build_with_mambabuild" not in cfg
     )  # superseded by conda_build_tool=mambabuild
-    assert (
-        cfg["conda_build_tool"] == "conda-build"
-    )  # current default
+    assert cfg["conda_build_tool"] == "conda-build"  # current default
 
     # legacy compatibility config
     with open(os.path.join(config_yaml, "conda-forge.yml")) as fp:
