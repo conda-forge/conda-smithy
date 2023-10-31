@@ -6,6 +6,7 @@ from functools import lru_cache
 from typing import List, Dict, Any, Optional
 
 from cirun import Cirun
+from .github import gh_token, Github
 
 
 @lru_cache
@@ -15,7 +16,6 @@ def get_cirun_installation_id(owner: str) -> int:
     if owner == "conda-forge":
         return 18453316
     else:
-        from .github import gh_token, Github
 
         gh = Github(gh_token)
         user = gh.get_user()
