@@ -1926,9 +1926,9 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
         },
         "github_actions": {
             "self_hosted": False,
-            "triggers": "default",
+            "triggers": [],
             "timeout_minutes": 360,
-            "cancel_in_progress": "default",
+            "cancel_in_progress": None,
             # Set maximum parallel jobs
             "max_parallel": None,
             # Toggle creating artifacts for conda build_artifacts dir
@@ -2091,12 +2091,12 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
     if config["test"] is None:
         config["test"] = "all"
 
-    if config["github_actions"]["cancel_in_progress"] == "default":
+    if config["github_actions"]["cancel_in_progress"] is None:
         config["github_actions"]["cancel_in_progress"] = config[
             "github_actions"
         ]["self_hosted"]
 
-    if config["github_actions"]["triggers"] == "default":
+    if not config["github_actions"]["triggers"]:
         self_hosted = config["github_actions"]["self_hosted"]
         config["github_actions"]["triggers"] = (
             ["push"] if self_hosted else ["push", "pull_request"]
