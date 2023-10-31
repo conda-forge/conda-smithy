@@ -12,11 +12,10 @@ from .github import gh_token, Github
 @lru_cache
 def get_cirun_installation_id(owner: str) -> int:
     # This ID needs a token with admin: org privileges.
-    # Hard-code instead for easier use
+    # Hard-code instead for easier use.
     if owner == "conda-forge":
         return 18453316
     else:
-
         gh = Github(gh_token)
         user = gh.get_user()
         if user.login == owner:
