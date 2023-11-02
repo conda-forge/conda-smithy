@@ -12,6 +12,7 @@ jobs:
 {%- endif %}
 {%- if azure.free_disk_space %}
   - script: |
+{%- if (azure.free_disk_space == true) or ('cache' in azure.free_disk_space) %}
          sudo mkdir -p /opt/empty_dir || true
          for d in \
                   /opt/ghc \
@@ -25,14 +26,27 @@ jobs:
                   ; do
            sudo rsync --stats -a --delete /opt/empty_dir/ $d || true
          done
+{%- endif %}
+{%- if (azure.free_disk_space == true) or ('apt' in azure.free_disk_space) %}
          sudo apt-get purge -y -f firefox \
                                   google-chrome-stable \
                                   microsoft-edge-stable
          sudo apt-get autoremove -y >& /dev/null
          sudo apt-get autoclean -y >& /dev/null
+{%- endif %}
+{%- if (azure.free_disk_space is iterable) and ('docker' in azure.free_disk_space) %}
          sudo docker image prune --all --force
+{%- endif %}
          df -h
     displayName: Manage disk space
+{%- endif %}
+{%- if not (azure.settings_linux.swapfile_size|string).startswith("0") %}
+  - script: |
+         sudo fallocate -l {{ azure.settings_linux.swapfile_size }} /swapfile || true
+         sudo chmod 600 /swapfile || true
+         sudo mkswap /swapfile || true
+         sudo swapon /swapfile || true
+    displayName: Create swap file
 {%- endif %}
   # configure qemu binfmt-misc running.  This allows us to run docker containers
   # embedded qemu-static

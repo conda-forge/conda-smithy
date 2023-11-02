@@ -3,11 +3,12 @@ Authors are sorted by number of commits.
 
 * Isuru Fernando
 * Matthew R. Becker
+* Jaime Rodríguez-Guerra
 * Christopher J. Wright
 * Anthony Scopatz
 * Phil Elson
-* Jaime Rodríguez-Guerra
 * Filipe Fernandes
+* Uwe L. Korn
 * Dougal J. Sutherland
 * shadow_walker
 * Michael Sarahan
@@ -18,18 +19,18 @@ Authors are sorted by number of commits.
 * Marcel Bargull
 * Mark Harfouche
 * Johnny Willemsen
-* Uwe L. Korn
 * Chris Burr
 * Julian Rüth
-* Billy K. Poon
-* Tim Snyder
 * H. Vetinari
+* Billy K. Poon
+* John Kirkham
+* Tim Snyder
+* Mike Henry
 * Eric Dill
 * Natasha Pavlovikj
 * Maksim Rakitin
 * Jan Schulz
 * Josh Reichardt
-* John Kirkham
 * Justin Calamari
 * Jason Furmanek
 * Patrick Sodré
@@ -40,16 +41,17 @@ Authors are sorted by number of commits.
 * Nicholas Bollweg
 * Leopold Talirz
 * Tom Pollard
+* Bela Stoyan
 * Gonzalo Pena-Castellanos
 * Daniel Bast
 * Carlo
 * Matthew Craig
+* Peter Williams
 * Joshua L. Adelman
 * Wolf Vollprecht
 * Matthias Diener
 * John Blischak
 * Marius van Niekerk
-* Peter Williams
 * Johannes Köster
 * Philippe Blain
 * Matt McCormick
@@ -83,6 +85,7 @@ Authors are sorted by number of commits.
 * Ben Mares
 * Matthew W. Thompson
 * conda-forge-admin
+* Klaus Zimmermann
 * lorenz
 * Tom Augspurger
 * Ryan May

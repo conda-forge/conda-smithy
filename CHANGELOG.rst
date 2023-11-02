@@ -4,6 +4,165 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.27.1
+====================
+
+**Fixed:**
+
+* Crash when XDG_CACHE_DIR is defined
+
+**Authors:**
+
+* Min RK
+
+
+
+v3.27.0
+====================
+
+**Added:**
+
+* Cache the contents of ``conda-forge-pinning`` and only check every 15min for an updated version.
+  The re-check interval can be configured via the ``CONDA_FORGE_PINNING_LIFETIME`` environment variable.
+
+**Changed:**
+
+* Do not strip version constraints for ``mamba update``. (#1773 via #1774)
+* If one supplies ``--no-check-uptodate`` on the commandline, we will no longer check and print a warning if conda-smithy is outdated.
+
+**Removed:**
+
+* Removed the ``updatecb3`` command. It is advised to do this update manually if you still encounter a recipe using the old compiler ``toolchain``.
+
+**Authors:**
+
+* Jaime Rodríguez-Guerra
+* Uwe L. Korn
+
+
+
+v3.26.3
+====================
+
+**Changed:**
+
+* The package hints of the linter are now taken from a location that doesn't require new smithy releases to change.
+* Fix ``MatchSpec`` parsing when ``remote_ci_setup`` specs are quoted. (#1773 via #1775)
+
+**Authors:**
+
+* Jaime Rodríguez-Guerra
+* H. Vetinari
+
+
+
+v3.26.2
+====================
+
+**Fixed:**
+
+* Fixed additional_zip_keys, so that subsequent migrations don't break.
+
+**Authors:**
+
+* Bela Stoyan
+
+
+
+v3.26.1
+====================
+
+**Fixed:**
+
+* Set ``FEEDSTOCK_NAME`` correctly on Windows in Azure Pipelines. (#1770)
+* Always use ``conda`` to ``uninstall --force``. (#1771)
+
+**Authors:**
+
+* Jaime Rodríguez-Guerra
+
+
+
+v3.26.0
+====================
+
+**Added:**
+
+* ``conda_build_tool`` setting with four different options: ``conda-build``, ``mambabuild`` (default),
+  ``conda-build+conda-libmamba-solver`` and ``conda-build+classic``. - #1732
+* Add ``conda_install_tool`` and ``conda_solver`` configuration options to allow choosing between
+  ``mamba`` and ``conda`` (with ``classic`` or ``libmamba`` solvers) as the dependency
+  handling tools. (#1762, #1768)
+* Add ``additional_zip_keys`` configuration option for migrations (#1764)
+
+**Changed:**
+
+* Unified Windows build scripts to avoid duplication of template logic in Github Actions and Azure Pipelines. (#1761)
+* Use strict channel priority on Linux and macOS. (#1768)
+* Use ``python-build`` to create ``sdist`` #1760
+
+**Deprecated:**
+
+* ``build_with_mambabuild`` boolean option is deprecated. Use ``conda_build_tool: mambabuild`` instead. - #1732
+
+**Fixed:**
+
+* Ensure undefined Jinja variables are rendered as the variable name, restoring Python 2-like behaviour. (#1726 via #1727)
+* Use name-only specs in ``conda update`` and ``conda uninstall`` subcommands. (#1768)
+* Catch negative exit codes on Windows. (#1763)
+* Fixed bug in the display of grouping commands in the Travis CI logging utilities. (#1730)
+
+**Authors:**
+
+* Jaime Rodríguez-Guerra
+* Uwe L. Korn
+* John Kirkham
+* Peter Williams
+* Bela Stoyan
+* Klaus Zimmermann
+
+
+
+v3.25.1
+====================
+
+**Fixed:**
+
+* Ensure ``swapfile_size`` is not added to the Azure job settings #1759
+
+**Authors:**
+
+* John Kirkham
+
+
+
+v3.25.0
+====================
+
+**Added:**
+
+* Added ability for select feedstocks (pinnings, smithy, repodata patches) to use GHA in conda-forge.
+  Items can be added by setting the ``CONDA_SMITHY_SERVICE_FEEDSTOCKS`` environment variable to a
+  comma-separated list of additional feedstocks.
+
+**Changed:**
+
+* Add option to cleanup GHA images - #1754
+* Created option to create a swap file on the default linux image on Azure Pipelines
+
+**Fixed:**
+
+* Allow operators in noarch platform selectors
+
+**Authors:**
+
+* Matthew R. Becker
+* Jaime Rodríguez-Guerra
+* Mike Henry
+* John Kirkham
+
+
+
 v3.24.1
 ====================
 

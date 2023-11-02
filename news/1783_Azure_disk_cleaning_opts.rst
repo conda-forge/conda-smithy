@@ -4,7 +4,7 @@
 
 **Changed:**
 
-* Add option to cleanup GHA images - #1754
+*  Allow finer control over Azure disk cleaning ( #1783 )
 
 **Deprecated:**
 
