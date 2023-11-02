@@ -65,6 +65,10 @@ else
   echo -e "\n\nNot mangling homebrew as we are not running in CI"
 fi
 
+if [[ "${GIT_SHA1:-}" == "" ]]; then
+  GIT_SHA1=$(git rev-parse HEAD)
+fi
+
 {% if build_setup -%}
 echo -e "\n\nRunning the build setup script."
 {{ build_setup }}
