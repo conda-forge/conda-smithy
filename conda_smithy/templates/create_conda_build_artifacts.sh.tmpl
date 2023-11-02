@@ -3,7 +3,7 @@
 # INPUTS (environment variables that need to be set before calling this script):
 #
 # CI (azure/github_actions/UNSET)
-# CI_RUN_ID (unique identifier for the CI job run)
+# flow_run_id (unique identifier for the CI job run)
 # FEEDSTOCK_NAME
 # CONFIG (build matrix configuration string)
 # SHORT_CONFIG (uniquely-shortened configuration string)
@@ -47,14 +47,14 @@ if [ -z ${FEEDSTOCK_NAME} ]; then
 fi
 
 # Set a unique ID for the artifact(s), specialized for this particular job run
-ARTIFACT_UNIQUE_ID="${CI_RUN_ID}_${CONFIG}"
+ARTIFACT_UNIQUE_ID="${flow_run_id}_${CONFIG}"
 if [[ {% raw %}${#ARTIFACT_UNIQUE_ID}{% endraw %} -gt 80 ]]; then
-    ARTIFACT_UNIQUE_ID="${CI_RUN_ID}_${SHORT_CONFIG}"
+    ARTIFACT_UNIQUE_ID="${flow_run_id}_${SHORT_CONFIG}"
 fi
 echo "ARTIFACT_UNIQUE_ID: $ARTIFACT_UNIQUE_ID"
 
 # Set a descriptive ID for the archive(s), specialized for this particular job run
-ARCHIVE_UNIQUE_ID="${CI_RUN_ID}_${CONFIG}"
+ARCHIVE_UNIQUE_ID="${flow_run_id}_${CONFIG}"
 
 # Make the build artifact zip
 if [[ ! -z "$BLD_ARTIFACT_PREFIX" ]]; then

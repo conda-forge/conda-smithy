@@ -58,9 +58,9 @@ jobs:
 
   - script: |
         export CI=azure
-        export CI_RUN_ID=azure_$(Build.BuildNumber).$(System.JobAttempt)
-        export GIT_URL=$(Build.Repository.Uri)
-        export GIT_SHA1=$(Build.SourceVersion)
+        export flow_run_id=azure_$(Build.BuildNumber).$(System.JobAttempt)
+        export remote_url=$(Build.Repository.Uri)
+        export sha=$(Build.SourceVersion)
         export GIT_BRANCH=$BUILD_SOURCEBRANCHNAME
         export FEEDSTOCK_NAME=$(basename ${BUILD_REPOSITORY_NAME})
 {%- if upload_on_branch %}
@@ -84,7 +84,7 @@ jobs:
 {%- if azure.store_build_artifacts %}
   - script: |
         export CI=azure
-        export CI_RUN_ID=$(build.BuildNumber).$(system.JobAttempt)
+        export flow_run_id=$(build.BuildNumber).$(system.JobAttempt)
         export FEEDSTOCK_NAME=$(basename ${BUILD_REPOSITORY_NAME})
         export CONDA_BLD_DIR=build_artifacts
         export ARTIFACT_STAGING_DIR="$(Build.ArtifactStagingDirectory)"

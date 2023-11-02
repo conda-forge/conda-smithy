@@ -125,9 +125,9 @@ jobs:
       run: |
         echo "::group::Configure binfmt_misc"
         docker run --rm --privileged multiarch/qemu-user-static:register --reset --credential yes
-        export CI_RUN_ID="github_$GITHUB_RUN_ID"
-        export GIT_URL="https://github.com/$GITHUB_REPOSITORY"
-        export GIT_SHA1="$GITHUB_SHA"
+        export flow_run_id="github_$GITHUB_RUN_ID"
+        export remote_url="https://github.com/$GITHUB_REPOSITORY"
+        export sha="$GITHUB_SHA"
         export FEEDSTOCK_NAME="$(basename $GITHUB_REPOSITORY)"
         export GIT_BRANCH="$(basename $GITHUB_REF)"
         if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
@@ -152,9 +152,9 @@ jobs:
 {%- endfor %}
       shell: bash
       run: |
-        export CI_RUN_ID="github_$GITHUB_RUN_ID"
-        export GIT_URL="https://github.com/$GITHUB_REPOSITORY"
-        export GIT_SHA1="$GITHUB_SHA"
+        export flow_run_id="github_$GITHUB_RUN_ID"
+        export remote_url="https://github.com/$GITHUB_REPOSITORY"
+        export sha="$GITHUB_SHA"
         export FEEDSTOCK_NAME="$(basename $GITHUB_REPOSITORY)"
         export GIT_BRANCH="$(basename $GITHUB_REF)"
         if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
@@ -181,9 +181,9 @@ jobs:
     - name: Build on windows
       shell: cmd
       run: |
-        set "CI_RUN_ID=github_%GITHUB_RUN_ID%"
-        set "GIT_URL=https://github.com/%GITHUB_REPOSITORY%"
-        set "GIT_SHA1=%GITHUB_SHA%"
+        set "flow_run_id=github_%GITHUB_RUN_ID%"
+        set "remote_url=https://github.com/%GITHUB_REPOSITORY%"
+        set "sha=%GITHUB_SHA%"
         call ".scripts\run_win_build.bat"
       env:
         PYTHONUNBUFFERED: 1
@@ -209,7 +209,7 @@ jobs:
         OS: {% raw %}${{ matrix.os }}{% endraw %}
       run: |
         export CI=github_actions
-        export CI_RUN_ID=$GITHUB_RUN_ID
+        export flow_run_id=$GITHUB_RUN_ID
         export FEEDSTOCK_NAME="$(basename $GITHUB_REPOSITORY)"
         export ARTIFACT_STAGING_DIR="$GITHUB_WORKSPACE"
         if [ $OS == "macos" ]; then

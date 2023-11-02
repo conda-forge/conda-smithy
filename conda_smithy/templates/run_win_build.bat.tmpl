@@ -62,8 +62,8 @@ if NOT [%HOST_PLATFORM%] == [%BUILD_PLATFORM%] (
 )
 {%- endif %}
 
-if NOT [%CI_RUN_ID%] == [] (
-    set "EXTRA_CB_OPTIONS=%EXTRA_CB_OPTIONS% --extra-meta CI_RUN_ID=%CI_RUN_ID% GIT_URL=%GIT_URL% GIT_SHA1=%GIT_SHA1%"
+if NOT [%flow_run_id%] == [] (
+    set "EXTRA_CB_OPTIONS=%EXTRA_CB_OPTIONS% --extra-meta flow_run_id=%flow_run_id% remote_url=%remote_url% sha=%sha%"
 )
 
 call :end_group

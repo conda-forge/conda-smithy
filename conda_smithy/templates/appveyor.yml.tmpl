@@ -66,10 +66,10 @@ install:
 build: off
 
 test_script:
-    - set "CI_RUN_ID=appveyor_%APPVEYOR_BUILD_ID%"
-    - set "GIT_URL=https://github.com/%APPVEYOR_REPO_NAME%"
-    - set "GIT_SHA1=%APPVEYOR_REPO_COMMIT%"
-    - cmd: conda.exe build {{ recipe_dir }} -m .ci_support\%CONFIG%.yaml --extra-meta CI_RUN_ID=%CI_RUN_ID% GIT_URL=%GIT_URL% GIT_SHA1=%GIT_SHA1%
+    - set "flow_run_id=appveyor_%APPVEYOR_BUILD_ID%"
+    - set "remote_url=https://github.com/%APPVEYOR_REPO_NAME%"
+    - set "sha=%APPVEYOR_REPO_COMMIT%"
+    - cmd: conda.exe build {{ recipe_dir }} -m .ci_support\%CONFIG%.yaml --extra-meta flow_run_id=%flow_run_id% remote_url=%remote_url% sha=%sha%
 {%- if conda_forge_output_validation %}
     - set "FEEDSTOCK_NAME=%APPVEYOR_REPO_NAME:*/=%"
     - cmd: validate_recipe_outputs "%FEEDSTOCK_NAME%"

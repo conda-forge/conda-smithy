@@ -1,6 +1,6 @@
 **Added:**
 
-* Add CI_RUN_ID (CI provider specific), GIT_URL and GIT_SHA1 as extra-meta data to packages.
+* Add flow_run_id (CI provider specific), remote_url and sha as extra-meta data to packages.
   Enables tracing back packages to a specific commit in a feedstocks and to a specifc CI run.
   When packages are built using build-locally.py only GIT_SHA1 will have a non-empty value.
   Requires conda-build >=3.21.8.

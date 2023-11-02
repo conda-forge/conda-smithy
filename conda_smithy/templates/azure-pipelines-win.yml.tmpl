@@ -40,9 +40,9 @@ jobs:
         PYTHONUNBUFFERED: 1
         CONFIG: $(CONFIG)
         CI: azure
-        CI_RUN_ID: $(Build.BuildNumber).$(System.JobAttempt)
-        GIT_URL: $(Build.Repository.Uri)
-        GIT_SHA1: $(Build.SourceVersion)
+        flow_run_id: $(Build.BuildNumber).$(System.JobAttempt)
+        remote_url: $(Build.Repository.Uri)
+        sha: $(Build.SourceVersion)
         UPLOAD_PACKAGES: $(UPLOAD_PACKAGES)
         UPLOAD_TEMP: $(UPLOAD_TEMP)
 {%- if upload_on_branch %}
@@ -55,7 +55,7 @@ jobs:
 {%- if azure.store_build_artifacts %}
     - script: |
         set CI=azure
-        set CI_RUN_ID=$(build.BuildNumber).$(system.JobAttempt)
+        set flow_run_id=$(build.BuildNumber).$(system.JobAttempt)
         set FEEDSTOCK_NAME=$(build.Repository.Name)
         set ARTIFACT_STAGING_DIR=$(Build.ArtifactStagingDirectory)
         set CONDA_BLD_DIR=$(CONDA_BLD_PATH)
