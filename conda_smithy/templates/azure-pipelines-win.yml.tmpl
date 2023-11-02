@@ -34,15 +34,15 @@ jobs:
       displayName: Add conda to PATH
 
     - script: |
-        set CI_RUN_ID=$(build.BuildNumber).$(system.JobAttempt)
-        set GIT_URL=$(Build.Repository.Uri)
-        FOR /F "tokens=* USEBACKQ" %%g IN (`git rev-parse HEAD`) do (set "GIT_SHA1=%%g")
         call ".scripts\run_win_build.bat"
       displayName: Run Windows build
       env:
         PYTHONUNBUFFERED: 1
         CONFIG: $(CONFIG)
         CI: azure
+        CI_RUN_ID: $(Build.BuildNumber).$(System.JobAttempt)
+        GIT_URL: $(Build.Repository.Uri)
+        GIT_SHA1: $(Build.SourceVersion)
         UPLOAD_PACKAGES: $(UPLOAD_PACKAGES)
         UPLOAD_TEMP: $(UPLOAD_TEMP)
 {%- if upload_on_branch %}
