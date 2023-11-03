@@ -55,7 +55,7 @@ jobs:
 {%- if azure.store_build_artifacts %}
     - script: |
         set CI=azure
-        set flow_run_id=$(build.BuildNumber).$(system.JobAttempt)
+        set flow_run_id=azure_$(build.BuildNumber).$(system.JobAttempt)
         set FEEDSTOCK_NAME=$(build.Repository.Name)
         set ARTIFACT_STAGING_DIR=$(Build.ArtifactStagingDirectory)
         set CONDA_BLD_DIR=$(CONDA_BLD_PATH)
