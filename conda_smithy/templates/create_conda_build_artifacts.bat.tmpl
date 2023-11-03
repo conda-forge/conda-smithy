@@ -3,7 +3,7 @@ setlocal enableextensions enabledelayedexpansion
 rem INPUTS (environment variables that need to be set before calling this script):
 rem
 rem CI (azure/github_actions/UNSET)
-rem flow_run_id (unique identifier for the CI job run)
+rem CI_RUN_ID (unique identifier for the CI job run)
 rem FEEDSTOCK_NAME
 rem CONFIG (build matrix configuration string)
 rem SHORT_CONFIG (uniquely-shortened configuration string)
@@ -31,13 +31,13 @@ if not defined ARTIFACT_STAGING_DIR (
 )
 
 rem Set a unique ID for the artifact(s), specialized for this particular job run
-set ARTIFACT_UNIQUE_ID=%flow_run_id%_%CONFIG%
+set ARTIFACT_UNIQUE_ID=%CI_RUN_ID%_%CONFIG%
 if not "%ARTIFACT_UNIQUE_ID%" == "%ARTIFACT_UNIQUE_ID:~0,80%" (
-    set ARTIFACT_UNIQUE_ID=%flow_run_id%_%SHORT_CONFIG%
+    set ARTIFACT_UNIQUE_ID=%CI_RUN_ID%_%SHORT_CONFIG%
 )
 
 rem Set a descriptive ID for the archive(s), specialized for this particular job run
-set ARCHIVE_UNIQUE_ID=%flow_run_id%_%CONFIG%
+set ARCHIVE_UNIQUE_ID=%CI_RUN_ID%_%CONFIG%
 
 rem Make the build artifact zip
 if defined BLD_ARTIFACT_PREFIX (

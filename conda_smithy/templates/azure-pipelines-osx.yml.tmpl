@@ -37,7 +37,7 @@ jobs:
 {%- if azure.store_build_artifacts %}
   - script: |
       export CI=azure
-      export flow_run_id=$(build.BuildNumber).$(system.JobAttempt)
+      export CI_RUN_ID=$(build.BuildNumber).$(system.JobAttempt)
       export FEEDSTOCK_NAME=$(basename ${BUILD_REPOSITORY_NAME})
       export CONDA_BLD_DIR=/Users/runner/miniforge3/conda-bld
       export ARTIFACT_STAGING_DIR="$(Build.ArtifactStagingDirectory)"

@@ -209,7 +209,7 @@ jobs:
         OS: {% raw %}${{ matrix.os }}{% endraw %}
       run: |
         export CI=github_actions
-        export flow_run_id=$GITHUB_RUN_ID
+        export CI_RUN_ID=$GITHUB_RUN_ID
         export FEEDSTOCK_NAME="$(basename $GITHUB_REPOSITORY)"
         export ARTIFACT_STAGING_DIR="$GITHUB_WORKSPACE"
         if [ $OS == "macos" ]; then
