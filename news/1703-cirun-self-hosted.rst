@@ -8,10 +8,6 @@
 * `github_actions: timeout_minutes` option added to change the timeout in minutes.
   The default value is `360`.
 
-* `github_actions: cancel_in_progress` option added to cancel in progress runs.
-  The default value is the value of `github_actions: self-hosted` which in turn
-  defaults to `false`.
-
 * `github_actions: triggers` is a list of triggers which defaults to
   `push, pull_request` when not self-hosted and `push` when self-hosted.
 
@@ -27,7 +23,8 @@
 
 **Changed:**
 
-* <news item>
+* `github_actions: cancel_in_progress` option added to cancel in progress runs.
+  The default value was changed to `true`.
 
 **Deprecated:**
 
