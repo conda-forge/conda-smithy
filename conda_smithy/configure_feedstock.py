@@ -377,6 +377,9 @@ def _collapse_subpackage_variants(
     if not is_noarch:
         always_keep_keys.add("target_platform")
 
+    if forge_config["github_actions"]["self_hosted"]:
+        always_keep_keys.add("github_actions_labels")
+
     all_used_vars.update(always_keep_keys)
     all_used_vars.update(top_level_vars)
 
@@ -695,7 +698,6 @@ def _render_ci_provider(
                 channel_target.startswith("conda-forge ")
                 and provider_name == "github_actions"
                 and not forge_config["github_actions"]["self_hosted"]
-                and os.path.basename(forge_dir) not in SERVICE_FEEDSTOCKS
             ):
                 raise RuntimeError(
                     "Using github_actions as the CI provider inside "
@@ -1266,6 +1268,82 @@ def render_appveyor(jinja_env, forge_config, forge_dir, return_metadata=False):
 def _github_actions_specific_setup(
     jinja_env, forge_config, forge_dir, platform
 ):
+    # Handle GH-hosted and self-hosted runners runs-on config
+    # Do it before the deepcopy below so these changes can be used by the
+    # .github/worfkflows/conda-build.yml template
+    runs_on = {
+        "osx-64": {
+            "os": "macos",
+            "self_hosted_labels": ("macOS", "x64"),
+        },
+        "osx-arm64": {
+            "os": "macos",
+            "self_hosted_labels": ("macOS", "arm64"),
+        },
+        "linux-64": {
+            "os": "ubuntu",
+            "self_hosted_labels": ("linux", "x64"),
+        },
+        "linux-aarch64": {
+            "os": "ubuntu",
+            "self_hosted_labels": ("linux", "ARM64"),
+        },
+        "win-64": {
+            "os": "windows",
+            "self_hosted_labels": ("windows", "x64"),
+        },
+        "win-arm64": {
+            "os": "windows",
+            "self_hosted_labels": ("windows", "ARM64"),
+        },
+    }
+    for data in forge_config["configs"]:
+        if not data["build_platform"].startswith(platform):
+            continue
+        # This Github Actions specific configs are prefixed with "gha_"
+        # because we are not deepcopying the data dict intentionally
+        # so it can be used in the general "render_github_actions" function
+        # This avoid potential collisions with other CI providers :crossed_fingers:
+        data["gha_os"] = runs_on[data["build_platform"]]["os"]
+        data["gha_with_gpu"] = False
+
+        self_hosted_default = list(
+            runs_on[data["build_platform"]]["self_hosted_labels"]
+        )
+        self_hosted_default += ["self-hosted"]
+        hosted_default = [data["gha_os"] + "-latest"]
+
+        labels_default = (
+            ["hosted"]
+            if forge_config["github_actions"]["self_hosted"]
+            else ["self-hosted"]
+        )
+        labels = conda_build.utils.ensure_list(
+            data["config"].get("github_actions_labels", [labels_default])[0]
+        )
+
+        if len(labels) == 1 and labels[0] == "hosted":
+            labels = hosted_default
+        elif len(labels) == 1 and labels[0] in "self-hosted":
+            labels = self_hosted_default
+        else:
+            # Prepend the required ones
+            labels += self_hosted_default
+
+        if forge_config["github_actions"]["self_hosted"]:
+            data["gha_runs_on"] = []
+            # labels provided in conda-forge.yml
+            for label in labels:
+                if label.startswith("cirun-"):
+                    label += (
+                        "--${{ github.run_id }}-" + data["short_config_name"]
+                    )
+                if "gpu" in label.lower():
+                    data["gha_with_gpu"] = True
+                data["gha_runs_on"].append(label)
+        else:
+            data["gha_runs_on"] = hosted_default
+
     build_setup = _get_build_setup_line(forge_dir, platform, forge_config)
 
     if platform == "linux":
@@ -1288,10 +1366,12 @@ def _github_actions_specific_setup(
             ".scripts/run_win_build.bat",
         ],
     }
-    if forge_config["github_actions"]["store_build_artifacts"]:
-        for tmpls in platform_templates.values():
-            tmpls.append(".scripts/create_conda_build_artifacts.sh")
+
     template_files = platform_templates.get(platform, [])
+
+    # Templates for all platforms
+    if forge_config["github_actions"]["store_build_artifacts"]:
+        template_files.append(".scripts/create_conda_build_artifacts.sh")
 
     _render_template_exe_files(
         forge_config=forge_config,
@@ -1307,7 +1387,7 @@ def render_github_actions(
     target_path = os.path.join(
         forge_dir, ".github", "workflows", "conda-build.yml"
     )
-    template_filename = "github-actions.tmpl"
+    template_filename = "github-actions.yml.tmpl"
     fast_finish_text = ""
 
     (
@@ -1317,7 +1397,7 @@ def render_github_actions(
         upload_packages,
     ) = _get_platforms_of_provider("github_actions", forge_config)
 
-    logger.debug("github platforms retreived")
+    logger.debug("github platforms retrieved")
 
     remove_file_or_dir(target_path)
     return _render_ci_provider(
@@ -1841,6 +1921,9 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
         },
         "github_actions": {
             "self_hosted": False,
+            "triggers": [],
+            "timeout_minutes": 360,
+            "cancel_in_progress": True,
             # Set maximum parallel jobs
             "max_parallel": None,
             # Toggle creating artifacts for conda build_artifacts dir
@@ -2000,6 +2083,12 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
 
     if config["test"] is None:
         config["test"] = "all"
+
+    if not config["github_actions"]["triggers"]:
+        self_hosted = config["github_actions"]["self_hosted"]
+        config["github_actions"]["triggers"] = (
+            ["push"] if self_hosted else ["push", "pull_request"]
+        )
 
     # An older conda-smithy used to have some files which should no longer exist,
     # remove those now.

@@ -14,7 +14,7 @@ dependencies:
   - mock
   - pytest
   - pytest-cov
-  # Runtime dependencies, duplicated in conda_smithy.recipe/meta.yaml
+  # Runtime dependencies
   - conda >=4.2
   - conda-build >=3.21.8
   - conda-package-handling >=1.9.0
@@ -31,3 +31,4 @@ dependencies:
   - scrypt
   - license-expression
   - libarchive
+  - cirun
