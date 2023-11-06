@@ -1,4 +1,11 @@
-{%- set channel_name = channel_targets[0] -%}
+{%- set channel = channel_targets[0].split(" ") -%}
+{%- set channel_name = channel[0] -%}
+{%- set channel_label = channel[1] -%}
+{%- if channel_label == "main" -%}
+{%- set channel_with_label = channel_name -%}
+{%- else -%}
+{%- set channel_with_label = channel_name ~ "/label/" ~ channel_label -%}
+{%- endif -%}
 {#-
 # -*- mode: jinja -*-
 -#}
@@ -202,14 +209,14 @@ Current release info
 Installing {{ package_name }}
 ==========={{ '=' * package_name|length }}
 
-Installing `{{ package_name }}` from the `{{ channel_name }}` channel can be achieved by adding `{{ channel_name }}` to your channels with:
+Installing `{{ package_name }}` from the `{{ channel_with_label }}` channel can be achieved by adding `{{ channel_with_label }}` to your channels with:
 
 ```
-conda config --add channels {{ channel_name }}
+conda config --add channels {{ channel_with_label }}
 conda config --set channel_priority strict
 ```
 
-Once the `{{ channel_name }}` channel has been enabled, `{{ ', '.join(outputs) }}` can be installed with `conda`:
+Once the `{{ channel_with_label }}` channel has been enabled, `{{ ', '.join(outputs) }}` can be installed with `conda`:
 
 ```
 conda install {{ ' '.join(outputs) }}
@@ -224,26 +231,26 @@ mamba install {{ ' '.join(outputs) }}
 It is possible to list all of the versions of `{{ outputs[0] }}` available on your platform with `conda`:
 
 ```
-conda search {{ outputs[0] }} --channel {{ channel_name }}
+conda search {{ outputs[0] }} --channel {{ channel_with_label }}
 ```
 
 or with `mamba`:
 
 ```
-mamba search {{ outputs[0] }} --channel {{ channel_name }}
+mamba search {{ outputs[0] }} --channel {{ channel_with_label }}
 ```
 
 Alternatively, `mamba repoquery` may provide more information:
 
 ```
 # Search all versions available on your platform:
-mamba repoquery search {{ outputs[0] }} --channel {{ channel_name }}
+mamba repoquery search {{ outputs[0] }} --channel {{ channel_with_label }}
 
 # List packages depending on `{{ outputs[0] }}`:
-mamba repoquery whoneeds {{ outputs[0] }} --channel {{ channel_name }}
+mamba repoquery whoneeds {{ outputs[0] }} --channel {{ channel_with_label }}
 
 # List dependencies of `{{ outputs[0] }}`:
-mamba repoquery depends {{ outputs[0] }} --channel {{ channel_name }}
+mamba repoquery depends {{ outputs[0] }} --channel {{ channel_with_label }}
 ```
 
 {% if channel_name == 'conda-forge' %}

@@ -470,7 +470,8 @@ def dump_subspace_config_files(
 ):
     """With conda-build 3, it handles the build matrix.  We take what it spits out, and write a
     config.yaml file for each matrix entry that it spits out.  References to a specific file
-    replace all of the old environment variables that specified a matrix entry."""
+    replace all of the old environment variables that specified a matrix entry.
+    """
 
     # identify how to break up the complete set of used variables.  Anything considered
     #     "top-level" should be broken up into a separate CI job.
@@ -966,7 +967,6 @@ def _get_build_setup_line(forge_dir, platform, forge_config):
 
 
 def _circle_specific_setup(jinja_env, forge_config, forge_dir, platform):
-
     if platform == "linux":
         yum_build_setup = generate_yum_requirements(forge_config, forge_dir)
         if yum_build_setup:
@@ -1419,7 +1419,6 @@ def render_github_actions(
 
 
 def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
-
     build_setup = _get_build_setup_line(forge_dir, platform, forge_config)
 
     if platform == "linux":
@@ -1701,15 +1700,13 @@ def render_README(jinja_env, forge_config, forge_dir, render_info=None):
                 variants.append(variant_name)
                 with open(os.path.join(ci_support_path, filename)) as fh:
                     data = yaml.safe_load(fh)
-                    for channel in data.get("channel_targets", ()):
-                        # channel_targets are in the form of "channel_name label"
-                        channel_targets.append(channel.split(" "))
+                    channel_targets.append(
+                        data.get("channel_targets", ["conda-forge main"])[0]
+                    )
+
     if not channel_targets:
         # default to conda-forge if no channel_targets are specified (shouldn't happen)
         channel_targets = ["conda-forge main"]
-    else:
-        # de-duplicate in-order
-        channel_targets = list(dict.fromkeys(channel_targets))
 
     subpackages_metas = OrderedDict((meta.name(), meta) for meta in metas)
     subpackages_about = [(package_name, package_about)]
@@ -1744,7 +1741,6 @@ def render_README(jinja_env, forge_config, forge_dir, render_info=None):
     forge_config["channel_targets"] = channel_targets
 
     if forge_config["azure"].get("build_id") is None:
-
         # Try to retrieve the build_id from the interwebs.
         # Works if the Azure CI is public
         try:
@@ -1941,17 +1937,15 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
         "conda_forge_output_validation": False,
         "private_upload": False,
         "secrets": [],
-        "conda_build_tool": "mambabuild",
-        "conda_build_tool_deps": "boa",
+        "conda_build_tool": "conda-build",
         "conda_install_tool": "mamba",
-        "conda_install_tool_deps": "mamba",
-        "conda_solver": None,
+        "conda_solver": "libmamba",
         # feedstock checkout git clone depth, None means keep default, 0 means no limit
         "clone_depth": None,
         # Specific channel for package can be given with
         #     ${url or channel_alias}::package_name
         # defaults to conda-forge channel_alias
-        "remote_ci_setup": ["conda-forge-ci-setup=3"],
+        "remote_ci_setup": ["conda-forge-ci-setup=4"],
     }
 
     if forge_yml is None:
@@ -2495,7 +2489,6 @@ def main(
     check=False,
     temporary_directory=None,
 ):
-
     loglevel = os.environ.get("CONDA_SMITHY_LOGLEVEL", "INFO").upper()
     logger.setLevel(loglevel)
 

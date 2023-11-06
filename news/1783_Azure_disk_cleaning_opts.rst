@@ -4,7 +4,7 @@
 
 **Changed:**
 
-* Use the channels defined in `conda_build_config.yaml` (instead of those in `conda-forge.yml`) to render `README.md`. (#897 via #1752, #1785)
+*  Allow finer control over Azure disk cleaning ( #1783 )
 
 **Deprecated:**
 
