@@ -1268,7 +1268,6 @@ def render_appveyor(jinja_env, forge_config, forge_dir, return_metadata=False):
 def _github_actions_specific_setup(
     jinja_env, forge_config, forge_dir, platform
 ):
-
     # Handle GH-hosted and self-hosted runners runs-on config
     # Do it before the deepcopy below so these changes can be used by the
     # .github/worfkflows/conda-build.yml template
