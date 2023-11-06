@@ -21,7 +21,6 @@ from .azure_defaults import AZURE_DEFAULT_ORG, AZURE_DEFAULT_PROJECT_NAME
 
 
 class AzureConfig:
-
     _default_org = AZURE_DEFAULT_ORG
     _default_project_name = AZURE_DEFAULT_PROJECT_NAME
 

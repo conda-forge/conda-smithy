@@ -467,7 +467,8 @@ def dump_subspace_config_files(
 ):
     """With conda-build 3, it handles the build matrix.  We take what it spits out, and write a
     config.yaml file for each matrix entry that it spits out.  References to a specific file
-    replace all of the old environment variables that specified a matrix entry."""
+    replace all of the old environment variables that specified a matrix entry.
+    """
 
     # identify how to break up the complete set of used variables.  Anything considered
     #     "top-level" should be broken up into a separate CI job.
@@ -964,7 +965,6 @@ def _get_build_setup_line(forge_dir, platform, forge_config):
 
 
 def _circle_specific_setup(jinja_env, forge_config, forge_dir, platform):
-
     if platform == "linux":
         yum_build_setup = generate_yum_requirements(forge_config, forge_dir)
         if yum_build_setup:
@@ -1266,7 +1266,6 @@ def render_appveyor(jinja_env, forge_config, forge_dir, return_metadata=False):
 def _github_actions_specific_setup(
     jinja_env, forge_config, forge_dir, platform
 ):
-
     build_setup = _get_build_setup_line(forge_dir, platform, forge_config)
 
     if platform == "linux":
@@ -1339,7 +1338,6 @@ def render_github_actions(
 
 
 def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
-
     build_setup = _get_build_setup_line(forge_dir, platform, forge_config)
 
     if platform == "linux":
@@ -1662,7 +1660,6 @@ def render_README(jinja_env, forge_config, forge_dir, render_info=None):
     forge_config["channel_targets"] = channel_targets
 
     if forge_config["azure"].get("build_id") is None:
-
         # Try to retrieve the build_id from the interwebs.
         # Works if the Azure CI is public
         try:
@@ -2397,7 +2394,6 @@ def main(
     check=False,
     temporary_directory=None,
 ):
-
     loglevel = os.environ.get("CONDA_SMITHY_LOGLEVEL", "INFO").upper()
     logger.setLevel(loglevel)
 
