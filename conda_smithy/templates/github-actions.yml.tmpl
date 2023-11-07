@@ -11,7 +11,16 @@
 {%- endfor %}
 
 name: Build conda package
-on: {{ github_actions.triggers }}
+on:
+{%- for trigger in github_actions.triggers %}
+{%- if trigger == "push" and upload_on_branch %}
+  push:
+    branches:
+      - {{ upload_on_branch }}
+{%- else %}
+  {{ trigger }}:
+{%- endif %}
+{% endfor %}
 
 {%- if github_actions.cancel_in_progress %}
 concurrency:
