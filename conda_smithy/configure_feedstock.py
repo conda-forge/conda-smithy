@@ -2,15 +2,19 @@ import glob
 from itertools import product, chain
 import logging
 import os
+from os import fspath
 import re
+import sys
 import subprocess
 import textwrap
+import time
 import yaml
 import warnings
 from collections import OrderedDict, namedtuple, Counter
 import copy
 import hashlib
 import requests
+from pathlib import Path, PurePath
 
 # The `requests` lib uses `simplejson` instead of `json` when available.
 # In consequence the same JSON library must be used or the `JSONDecodeError`
@@ -26,6 +30,7 @@ import conda_build.utils
 import conda_build.variants
 import conda_build.conda_interface
 import conda_build.render
+from conda.models.match_spec import MatchSpec
 
 from copy import deepcopy
 
@@ -39,11 +44,33 @@ from conda_smithy.feedstock_io import (
     copy_file,
     remove_file_or_dir,
 )
-from conda_smithy.utils import get_feedstock_name_from_meta
+from conda_smithy.utils import (
+    get_feedstock_name_from_meta,
+    get_feedstock_about_from_meta,
+)
 from . import __version__
 
 conda_forge_content = os.path.abspath(os.path.dirname(__file__))
 logger = logging.getLogger(__name__)
+
+# feedstocks listed here are allowed to use GHA on
+# conda-forge
+# this should solve issues where other CI proviers have too many
+# jobs and we need to change something via CI
+SERVICE_FEEDSTOCKS = [
+    "conda-forge-pinning-feedstock",
+    "conda-forge-repodata-patches-feedstock",
+    "conda-smithy-feedstock",
+]
+if "CONDA_SMITHY_SERVICE_FEEDSTOCKS" in os.environ:
+    SERVICE_FEEDSTOCKS += os.environ["CONDA_SMITHY_SERVICE_FEEDSTOCKS"].split(
+        ","
+    )
+
+# Cache lifetime in seconds, default 15min
+CONDA_FORGE_PINNING_LIFETIME = int(
+    os.environ.get("CONDA_FORGE_PINNING_LIFETIME", 15 * 60)
+)
 
 
 def package_key(config, used_loop_vars, subdir):
@@ -58,6 +85,23 @@ def package_key(config, used_loop_vars, subdir):
     return key.replace("*", "_").replace(" ", "_")
 
 
+def _ignore_match(ignore, rel):
+    """Return true if rel or any of it's PurePath().parents are in ignore
+
+    i.e. putting .github in skip_render will prevent rendering of anything
+    named .github in the toplevel of the feedstock and anything below that as well
+    """
+    srch = {rel}
+    srch.update(map(fspath, PurePath(rel).parents))
+    logger.debug(f"srch:{srch}")
+    logger.debug(f"ignore:{ignore}")
+    if srch.intersection(ignore):
+        logger.info(f"{rel} rendering is skipped")
+        return True
+    else:
+        return False
+
+
 def copytree(src, dst, ignore=(), root_dst=None):
     """This emulates shutil.copytree, but does so with our git file tracking, so that the new files
     are added to the repo"""
@@ -66,7 +110,8 @@ def copytree(src, dst, ignore=(), root_dst=None):
     for item in os.listdir(src):
         s = os.path.join(src, item)
         d = os.path.join(dst, item)
-        if os.path.relpath(d, root_dst) in ignore:
+        rel = os.path.relpath(d, root_dst)
+        if _ignore_match(ignore, rel):
             continue
         elif os.path.isdir(s):
             if not os.path.exists(d):
@@ -332,6 +377,9 @@ def _collapse_subpackage_variants(
     if not is_noarch:
         always_keep_keys.add("target_platform")
 
+    if forge_config["github_actions"]["self_hosted"]:
+        always_keep_keys.add("github_actions_labels")
+
     all_used_vars.update(always_keep_keys)
     all_used_vars.update(top_level_vars)
 
@@ -422,7 +470,8 @@ def dump_subspace_config_files(
 ):
     """With conda-build 3, it handles the build matrix.  We take what it spits out, and write a
     config.yaml file for each matrix entry that it spits out.  References to a specific file
-    replace all of the old environment variables that specified a matrix entry."""
+    replace all of the old environment variables that specified a matrix entry.
+    """
 
     # identify how to break up the complete set of used variables.  Anything considered
     #     "top-level" should be broken up into a separate CI job.
@@ -687,6 +736,9 @@ def _render_ci_provider(
             if os.path.exists(_recipe_cbc):
                 os.rename(_recipe_cbc, _recipe_cbc + ".conda.smithy.bak")
 
+            channel_sources = migrated_combined_variant_spec.get(
+                "channel_sources", [""]
+            )[0].split(",")
             metas = conda_build.api.render(
                 os.path.join(forge_dir, forge_config["recipe_dir"]),
                 platform=platform,
@@ -696,9 +748,7 @@ def _render_ci_provider(
                 permit_undefined_jinja=True,
                 finalize=False,
                 bypass_env_check=True,
-                channel_urls=forge_config.get("channels", {}).get(
-                    "sources", []
-                ),
+                channel_urls=channel_sources,
             )
         finally:
             if os.path.exists(_recipe_cbc + ".conda.smithy.bak"):
@@ -884,7 +934,7 @@ def _get_build_setup_line(forge_dir, platform, forge_config):
             build_setup += textwrap.dedent(
                 """\
                 :: Overriding global run_conda_forge_build_setup_win with local copy.
-                {recipe_dir}\\run_conda_forge_build_setup_win
+                CALL {recipe_dir}\\run_conda_forge_build_setup_win
             """.format(
                     recipe_dir=forge_config["recipe_dir"]
                 )
@@ -902,7 +952,7 @@ def _get_build_setup_line(forge_dir, platform, forge_config):
         if platform == "win":
             build_setup += textwrap.dedent(
                 """\
-                run_conda_forge_build_setup
+                CALL run_conda_forge_build_setup
 
             """
             )
@@ -917,7 +967,6 @@ def _get_build_setup_line(forge_dir, platform, forge_config):
 
 
 def _circle_specific_setup(jinja_env, forge_config, forge_dir, platform):
-
     if platform == "linux":
         yum_build_setup = generate_yum_requirements(forge_config, forge_dir)
         if yum_build_setup:
@@ -1219,6 +1268,81 @@ def render_appveyor(jinja_env, forge_config, forge_dir, return_metadata=False):
 def _github_actions_specific_setup(
     jinja_env, forge_config, forge_dir, platform
 ):
+    # Handle GH-hosted and self-hosted runners runs-on config
+    # Do it before the deepcopy below so these changes can be used by the
+    # .github/worfkflows/conda-build.yml template
+    runs_on = {
+        "osx-64": {
+            "os": "macos",
+            "self_hosted_labels": ("macOS", "x64"),
+        },
+        "osx-arm64": {
+            "os": "macos",
+            "self_hosted_labels": ("macOS", "arm64"),
+        },
+        "linux-64": {
+            "os": "ubuntu",
+            "self_hosted_labels": ("linux", "x64"),
+        },
+        "linux-aarch64": {
+            "os": "ubuntu",
+            "self_hosted_labels": ("linux", "ARM64"),
+        },
+        "win-64": {
+            "os": "windows",
+            "self_hosted_labels": ("windows", "x64"),
+        },
+        "win-arm64": {
+            "os": "windows",
+            "self_hosted_labels": ("windows", "ARM64"),
+        },
+    }
+    for data in forge_config["configs"]:
+        if not data["build_platform"].startswith(platform):
+            continue
+        # This Github Actions specific configs are prefixed with "gha_"
+        # because we are not deepcopying the data dict intentionally
+        # so it can be used in the general "render_github_actions" function
+        # This avoid potential collisions with other CI providers :crossed_fingers:
+        data["gha_os"] = runs_on[data["build_platform"]]["os"]
+        data["gha_with_gpu"] = False
+
+        self_hosted_default = list(
+            runs_on[data["build_platform"]]["self_hosted_labels"]
+        )
+        self_hosted_default += ["self-hosted"]
+        hosted_default = [data["gha_os"] + "-latest"]
+
+        labels_default = (
+            ["hosted"]
+            if forge_config["github_actions"]["self_hosted"]
+            else ["self-hosted"]
+        )
+        labels = conda_build.utils.ensure_list(
+            data["config"].get("github_actions_labels", [labels_default])[0]
+        )
+
+        if len(labels) == 1 and labels[0] == "hosted":
+            labels = hosted_default
+        elif len(labels) == 1 and labels[0] in "self-hosted":
+            labels = self_hosted_default
+        else:
+            # Prepend the required ones
+            labels += self_hosted_default
+
+        if forge_config["github_actions"]["self_hosted"]:
+            data["gha_runs_on"] = []
+            # labels provided in conda-forge.yml
+            for label in labels:
+                if label.startswith("cirun-"):
+                    label += (
+                        "--${{ github.run_id }}-" + data["short_config_name"]
+                    )
+                if "gpu" in label.lower():
+                    data["gha_with_gpu"] = True
+                data["gha_runs_on"].append(label)
+        else:
+            data["gha_runs_on"] = hosted_default
 
     build_setup = _get_build_setup_line(forge_dir, platform, forge_config)
 
@@ -1238,12 +1362,16 @@ def _github_actions_specific_setup(
         "osx": [
             ".scripts/run_osx_build.sh",
         ],
-        "win": [],
+        "win": [
+            ".scripts/run_win_build.bat",
+        ],
     }
-    if forge_config["github_actions"]["store_build_artifacts"]:
-        for tmpls in platform_templates.values():
-            tmpls.append(".scripts/create_conda_build_artifacts.sh")
+
     template_files = platform_templates.get(platform, [])
+
+    # Templates for all platforms
+    if forge_config["github_actions"]["store_build_artifacts"]:
+        template_files.append(".scripts/create_conda_build_artifacts.sh")
 
     _render_template_exe_files(
         forge_config=forge_config,
@@ -1259,7 +1387,7 @@ def render_github_actions(
     target_path = os.path.join(
         forge_dir, ".github", "workflows", "conda-build.yml"
     )
-    template_filename = "github-actions.tmpl"
+    template_filename = "github-actions.yml.tmpl"
     fast_finish_text = ""
 
     (
@@ -1269,7 +1397,7 @@ def render_github_actions(
         upload_packages,
     ) = _get_platforms_of_provider("github_actions", forge_config)
 
-    logger.debug("github platforms retreived")
+    logger.debug("github platforms retrieved")
 
     remove_file_or_dir(target_path)
     return _render_ci_provider(
@@ -1290,7 +1418,6 @@ def render_github_actions(
 
 
 def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
-
     build_setup = _get_build_setup_line(forge_dir, platform, forge_config)
 
     if platform == "linux":
@@ -1311,7 +1438,10 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
             ".azure-pipelines/azure-pipelines-osx.yml",
             ".scripts/run_osx_build.sh",
         ],
-        "win": [".azure-pipelines/azure-pipelines-win.yml"],
+        "win": [
+            ".azure-pipelines/azure-pipelines-win.yml",
+            ".scripts/run_win_build.bat",
+        ],
     }
     if forge_config["azure"]["store_build_artifacts"]:
         platform_templates["linux"].append(
@@ -1326,6 +1456,7 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
     template_files = platform_templates.get(platform, [])
 
     azure_settings = deepcopy(forge_config["azure"][f"settings_{platform}"])
+    azure_settings.pop("swapfile_size", None)
     azure_settings.setdefault("strategy", {})
     azure_settings["strategy"].setdefault("matrix", {})
 
@@ -1556,19 +1687,43 @@ def render_README(jinja_env, forge_config, forge_dir, render_info=None):
             )
 
     package_name = get_feedstock_name_from_meta(metas[0])
+    package_about = get_feedstock_about_from_meta(metas[0])
 
     ci_support_path = os.path.join(forge_dir, ".ci_support")
     variants = []
+    channel_targets = []
     if os.path.exists(ci_support_path):
         for filename in os.listdir(ci_support_path):
             if filename.endswith(".yaml"):
                 variant_name, _ = os.path.splitext(filename)
                 variants.append(variant_name)
+                with open(os.path.join(ci_support_path, filename)) as fh:
+                    data = yaml.safe_load(fh)
+                    channel_targets.append(
+                        data.get("channel_targets", ["conda-forge main"])[0]
+                    )
+
+    if not channel_targets:
+        # default to conda-forge if no channel_targets are specified (shouldn't happen)
+        channel_targets = ["conda-forge main"]
+
+    subpackages_metas = OrderedDict((meta.name(), meta) for meta in metas)
+    subpackages_about = [(package_name, package_about)]
+    for name, m in subpackages_metas.items():
+        about = m.meta["about"]
+        if isinstance(about, list):
+            about = about[0]
+        about = about.copy()
+        # if subpackages do not have about, conda-build would copy the top-level about;
+        # if subpackages have their own about, conda-build would use them as is;
+        # we discussed in PR #1691 and decided to not show repetitve entries
+        if about != package_about:
+            subpackages_about.append((name, about))
 
     template = jinja_env.get_template("README.md.tmpl")
     target_fname = os.path.join(forge_dir, "README.md")
     forge_config["noarch_python"] = all(meta.noarch for meta in metas)
-    forge_config["package_about"] = metas[0].meta["about"]
+    forge_config["package_about"] = subpackages_about
     forge_config["package_name"] = package_name
     forge_config["variants"] = sorted(variants)
     forge_config["outputs"] = sorted(
@@ -1582,9 +1737,9 @@ def render_README(jinja_env, forge_config, forge_dir, render_info=None):
             )
         )
     )
+    forge_config["channel_targets"] = channel_targets
 
     if forge_config["azure"].get("build_id") is None:
-
         # Try to retrieve the build_id from the interwebs.
         # Works if the Azure CI is public
         try:
@@ -1620,13 +1775,22 @@ def render_README(jinja_env, forge_config, forge_dir, render_info=None):
         remove_file_or_dir(code_owners_file)
 
 
+def _get_skip_files(forge_config):
+    skip_files = {"README", "__pycache__"}
+    for f in forge_config["skip_render"]:
+        skip_files.add(f)
+    return skip_files
+
+
 def render_github_actions_services(jinja_env, forge_config, forge_dir):
     # render github actions files for automerge and rerendering services
+    skip_files = _get_skip_files(forge_config)
     for template_file in ["automerge.yml", "webservices.yml"]:
         template = jinja_env.get_template(template_file + ".tmpl")
-        target_fname = os.path.join(
-            forge_dir, ".github", "workflows", template_file
-        )
+        rel_target_fname = os.path.join(".github", "workflows", template_file)
+        if _ignore_match(skip_files, rel_target_fname):
+            continue
+        target_fname = os.path.join(forge_dir, rel_target_fname)
         new_file_contents = template.render(**forge_config)
         with write_file(target_fname) as fh:
             fh.write(new_file_contents)
@@ -1634,10 +1798,7 @@ def render_github_actions_services(jinja_env, forge_config, forge_dir):
 
 def copy_feedstock_content(forge_config, forge_dir):
     feedstock_content = os.path.join(conda_forge_content, "feedstock_content")
-    skip_files = ["README", "__pycache__"]
-    for f in forge_config["skip_render"]:
-        skip_files.append(f)
-        logger.info("%s rendering is skipped" % f)
+    skip_files = _get_skip_files(forge_config)
     copytree(feedstock_content, forge_dir, skip_files)
 
 
@@ -1674,6 +1835,7 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
                     "vmImage": "ubuntu-latest",
                 },
                 "timeoutInMinutes": 360,
+                "swapfile_size": "0GiB",
             },
             "settings_osx": {
                 "pool": {
@@ -1683,10 +1845,15 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
             },
             "settings_win": {
                 "pool": {
-                    "vmImage": "windows-2019",
+                    "vmImage": "windows-2022",
                 },
                 "timeoutInMinutes": 360,
-                "variables": {"CONDA_BLD_PATH": r"D:\\bld\\"},
+                "variables": {
+                    "CONDA_BLD_PATH": r"D:\\bld\\",
+                    # Custom %TEMP% for upload to avoid permission errors.
+                    # See https://github.com/conda-forge/kubo-feedstock/issues/5#issuecomment-1335504503
+                    "UPLOAD_TEMP": r"D:\\tmp",
+                },
             },
             # Force building all supported providers.
             "force": False,
@@ -1746,18 +1913,19 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
         "max_py_ver": "37",
         "min_r_ver": "34",
         "max_r_ver": "34",
-        "channels": {
-            "sources": ["conda-forge"],
-            "targets": [["conda-forge", "main"]],
-        },
         "github": {
             "user_or_org": "conda-forge",
             "repo_name": "",
-            "branch_name": "master",
-            "tooling_branch_name": "master",
+            "branch_name": "main",
+            "tooling_branch_name": "main",
         },
         "github_actions": {
             "self_hosted": False,
+            "triggers": [],
+            "timeout_minutes": 360,
+            "cancel_in_progress": True,
+            # Set maximum parallel jobs
+            "max_parallel": None,
             # Toggle creating artifacts for conda build_artifacts dir
             "store_build_artifacts": False,
             "artifact_retention_days": 14,
@@ -1768,15 +1936,15 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
         "conda_forge_output_validation": False,
         "private_upload": False,
         "secrets": [],
-        "build_with_mambabuild": True,
+        "conda_build_tool": "conda-build",
+        "conda_install_tool": "mamba",
+        "conda_solver": "libmamba",
         # feedstock checkout git clone depth, None means keep default, 0 means no limit
         "clone_depth": None,
         # Specific channel for package can be given with
         #     ${url or channel_alias}::package_name
         # defaults to conda-forge channel_alias
-        # Added py-lief constraint due to current osx-* segfault issues, ref:
-        #     https://github.com/conda-forge/conda-forge.github.io/issues/1823
-        "remote_ci_setup": ["conda-forge-ci-setup=3", "py-lief<0.12"],
+        "remote_ci_setup": ["conda-forge-ci-setup=4"],
     }
 
     if forge_yml is None:
@@ -1820,6 +1988,11 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
                 "Setting docker image in conda-forge.yml is removed now."
                 " Use conda_build_config.yaml instead"
             )
+        if file_config.get("channels"):
+            raise ValueError(
+                "Setting channels in conda-forge.yml is removed now."
+                " Use conda_build_config.yaml instead"
+            )
 
         for plat in ["linux", "osx", "win"]:
             if config["azure"]["timeout_minutes"] is not None:
@@ -1856,6 +2029,53 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
                 f"{target_platforms}"
             )
 
+    if (
+        "build_with_mambabuild" in file_config
+        and "conda_build_tool" not in file_config
+    ):
+        warnings.warn(
+            "build_with_mambabuild is deprecated, use conda_build_tool instead",
+            DeprecationWarning,
+        )
+        config["conda_build_tool"] = (
+            "mambabuild" if config["build_with_mambabuild"] else "conda-build"
+        )
+    if file_config.get("conda_build_tool_deps"):
+        raise ValueError(
+            "Cannot set 'conda_build_tool_deps' directly. "
+            "Use 'conda_build_tool' instead."
+        )
+    valid_build_tools = (
+        "mambabuild",  # will run 'conda mambabuild', as provided by boa
+        "conda-build",  # will run vanilla conda-build, with system configured / default solver
+        "conda-build+conda-libmamba-solver",  # will run vanilla conda-build, with libmamba solver
+        "conda-build+classic",  # will run vanilla conda-build, with the classic solver
+    )
+    assert config["conda_build_tool"] in valid_build_tools, (
+        f"Invalid conda_build_tool: {config['conda_build_tool']}. "
+        f"Valid values are: {valid_build_tools}."
+    )
+    # NOTE: Currently assuming these dependencies are name-only (no version constraints)
+    if config["conda_build_tool"] == "mambabuild":
+        config["conda_build_tool_deps"] = "conda-build boa"
+    elif config["conda_build_tool"] == "conda-build+conda-libmamba-solver":
+        config["conda_build_tool_deps"] = "conda-build conda-libmamba-solver"
+    else:
+        config["conda_build_tool_deps"] = "conda-build"
+
+    valid_install_tools = ("conda", "mamba")
+    assert config["conda_install_tool"] in valid_install_tools, (
+        f"Invalid conda_install_tool: {config['conda_install_tool']}. "
+        f"Valid values are: {valid_install_tools}."
+    )
+    # NOTE: Currently assuming these dependencies are name-only (no version constraints)
+    if config["conda_install_tool"] == "mamba":
+        config["conda_install_tool_deps"] = "mamba"
+    elif config["conda_install_tool"] in "conda":
+        config["conda_install_tool_deps"] = "conda"
+        if config.get("conda_solver") == "libmamba":
+            config["conda_install_tool_deps"] += " conda-libmamba-solver"
+
     config["secrets"] = sorted(set(config["secrets"] + ["BINSTAR_TOKEN"]))
 
     if config["test_on_native_only"]:
@@ -1863,6 +2083,12 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
 
     if config["test"] is None:
         config["test"] = "all"
+
+    if not config["github_actions"]["triggers"]:
+        self_hosted = config["github_actions"]["self_hosted"]
+        config["github_actions"]["triggers"] = (
+            ["push"] if self_hosted else ["push", "pull_request"]
+        )
 
     # An older conda-smithy used to have some files which should no longer exist,
     # remove those now.
@@ -1913,6 +2139,13 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
     config["remote_ci_setup"] = _santize_remote_ci_setup(
         config["remote_ci_setup"]
     )
+    if config["conda_install_tool"] == "conda":
+        config["remote_ci_setup_update"] = [
+            MatchSpec(pkg.strip('"').strip("'")).name
+            for pkg in config["remote_ci_setup"]
+        ]
+    else:
+        config["remote_ci_setup_update"] = config["remote_ci_setup"]
 
     # Older conda-smithy versions supported this with only one
     # entry. To avoid breakage, we are converting single elements
@@ -2015,8 +2248,17 @@ def commit_changes(forge_file_directory, commit, cs_ver, cfp_ver, cb_ver):
 
 def get_cfp_file_path(temporary_directory):
     pkg = get_most_recent_version("conda-forge-pinning")
+    if pkg.url.endswith(".conda"):
+        ext = ".conda"
+    elif pkg.url.endswith(".tar.bz2"):
+        ext = ".tar.bz2"
+    else:
+        raise RuntimeError(
+            "Could not determine proper conda package extension for "
+            "pinning package '%s'!" % pkg.url
+        )
     dest = os.path.join(
-        temporary_directory, f"conda-forge-pinning-{ pkg.version }.tar.bz2"
+        temporary_directory, f"conda-forge-pinning-{ pkg.version }{ext}"
     )
 
     logger.info(f"Downloading conda-forge-pinning-{ pkg.version }")
@@ -2027,7 +2269,12 @@ def get_cfp_file_path(temporary_directory):
         f.write(response.content)
 
     logger.info(f"Extracting conda-forge-pinning to { temporary_directory }")
-    subprocess.check_call(["bsdtar", "-xf", dest], cwd=temporary_directory)
+    cmd = ["cph"]
+    # If possible, avoid needing to activate the environment to access cph
+    if sys.executable:
+        cmd = [sys.executable, "-m", "conda_package_handling.cli"]
+    cmd += ["x", "--dest", temporary_directory, dest]
+    subprocess.check_call(cmd)
 
     logger.debug(os.listdir(temporary_directory))
 
@@ -2039,6 +2286,52 @@ def get_cfp_file_path(temporary_directory):
     assert os.path.exists(cf_pinning_file)
 
     return cf_pinning_file, cf_pinning_ver
+
+
+def get_cache_dir():
+    if sys.platform.startswith("win"):
+        return Path(os.environ.get("TEMP"))
+    else:
+        return Path(os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache"))
+
+
+def get_cached_cfp_file_path(temporary_directory):
+    if cache_dir := get_cache_dir():
+        smithy_cache = cache_dir / "conda-smithy"
+        smithy_cache.mkdir(parents=True, exist_ok=True)
+        pinning_version = None
+        # Do we already have the pinning cached?
+        if (smithy_cache / "conda-forge-pinng-version").exists():
+            pinning_version = (
+                smithy_cache / "conda-forge-pinng-version"
+            ).read_text()
+
+        # Check whether we have recently already updated the cache
+        current_ts = int(time.time())
+        if (smithy_cache / "conda-forge-pinng-version-ts").exists():
+            last_ts = int(
+                (smithy_cache / "conda-forge-pinng-version-ts").read_text()
+            )
+        else:
+            last_ts = 0
+
+        if current_ts - last_ts > CONDA_FORGE_PINNING_LIFETIME:
+            current_pinning_version = get_most_recent_version(
+                "conda-forge-pinning"
+            ).version
+            (smithy_cache / "conda-forge-pinng-version-ts").write_text(
+                str(current_ts)
+            )
+            if current_pinning_version != pinning_version:
+                get_cfp_file_path(smithy_cache)
+                (smithy_cache / "conda-forge-pinng-version").write_text(
+                    current_pinning_version
+                )
+                pinning_version = current_pinning_version
+
+        return str(smithy_cache / "conda_build_config.yaml"), pinning_version
+    else:
+        return get_cfp_file_path(temporary_directory)
 
 
 def clear_variants(forge_dir):
@@ -2190,18 +2483,14 @@ def main(
     check=False,
     temporary_directory=None,
 ):
-
     loglevel = os.environ.get("CONDA_SMITHY_LOGLEVEL", "INFO").upper()
     logger.setLevel(loglevel)
 
-    if check:
+    if check or not no_check_uptodate:
         # Check that conda-smithy is up-to-date
         check_version_uptodate("conda-smithy", __version__, True)
-        return True
-
-    error_on_warn = False if no_check_uptodate else True
-    # Check that conda-smithy is up-to-date
-    check_version_uptodate("conda-smithy", __version__, error_on_warn)
+        if check:
+            return True
 
     forge_dir = os.path.abspath(forge_file_directory)
     if exclusive_config_file is not None:
@@ -2210,7 +2499,7 @@ def main(
             raise RuntimeError("Given exclusive-config-file not found.")
         cf_pinning_ver = None
     else:
-        exclusive_config_file, cf_pinning_ver = get_cfp_file_path(
+        exclusive_config_file, cf_pinning_ver = get_cached_cfp_file_path(
             temporary_directory
         )
 

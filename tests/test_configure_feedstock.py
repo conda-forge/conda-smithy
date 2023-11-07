@@ -243,14 +243,21 @@ def test_upload_on_branch_azure(upload_on_branch_recipe, jinja_env):
         )
     ) as fp:
         content_win = yaml.safe_load(fp)
-    assert (
-        "UPLOAD_ON_BRANCH=foo-branch"
-        in content_win["jobs"][0]["steps"][-1]["script"]
+    win_build_step = next(
+        step
+        for step in content_win["jobs"][0]["steps"]
+        if step["displayName"] == "Run Windows build"
     )
-    assert (
-        "BUILD_SOURCEBRANCHNAME"
-        in content_win["jobs"][0]["steps"][-1]["script"]
-    )
+    assert win_build_step["env"]["UPLOAD_ON_BRANCH"] == "foo-branch"
+    with open(
+        os.path.join(
+            upload_on_branch_recipe.recipe,
+            ".scripts",
+            "run_win_build.bat",
+        )
+    ) as fp:
+        build_script_win = fp.read()
+    assert "BUILD_SOURCEBRANCHNAME" in build_script_win
 
     with open(
         os.path.join(
@@ -262,11 +269,11 @@ def test_upload_on_branch_azure(upload_on_branch_recipe, jinja_env):
         content_lin = yaml.safe_load(fp)
     assert (
         'UPLOAD_ON_BRANCH="foo-branch"'
-        in content_lin["jobs"][0]["steps"][2]["script"]
+        in content_lin["jobs"][0]["steps"][1]["script"]
     )
     assert (
         "BUILD_SOURCEBRANCHNAME"
-        in content_lin["jobs"][0]["steps"][2]["script"]
+        in content_lin["jobs"][0]["steps"][1]["script"]
     )
 
 
@@ -743,9 +750,7 @@ def test_conda_forge_yaml_empty(config_yaml):
         ),
     )
 
-    assert ["conda-forge", "main"] in load_forge_config()["channels"][
-        "targets"
-    ]
+    assert load_forge_config()["recipe_dir"] == "recipe"
 
     os.unlink(os.path.join(config_yaml, "conda-forge.yml"))
     with pytest.raises(RuntimeError):
@@ -753,9 +758,7 @@ def test_conda_forge_yaml_empty(config_yaml):
 
     with open(os.path.join(config_yaml, "conda-forge.yml"), "w"):
         pass
-    assert ["conda-forge", "main"] in load_forge_config()["channels"][
-        "targets"
-    ]
+    assert load_forge_config()["recipe_dir"] == "recipe"
 
 
 def test_noarch_platforms_bad_yaml(config_yaml):
@@ -797,9 +800,7 @@ def test_forge_yml_alt_path(config_yaml):
     with pytest.raises(RuntimeError):
         load_forge_config(None)
 
-    assert ["conda-forge", "main"] in load_forge_config(forge_yml_alt)[
-        "channels"
-    ]["targets"]
+    assert load_forge_config(forge_yml_alt)["recipe_dir"] == "recipe"
 
 
 def test_cos7_env_render(py_recipe, jinja_env):
@@ -863,3 +864,82 @@ def test_cuda_enabled_render(cuda_enabled_recipe, jinja_env):
         else:
             if "CF_CUDA_ENABLED" in os.environ:
                 del os.environ["CF_CUDA_ENABLED"]
+
+
+def test_conda_build_tools(config_yaml):
+    load_forge_config = lambda: cnfgr_fdstk._load_forge_config(  # noqa
+        config_yaml,
+        exclusive_config_file=os.path.join(
+            config_yaml, "recipe", "default_config.yaml"
+        ),
+    )
+
+    cfg = load_forge_config()
+    assert (
+        "build_with_mambabuild" not in cfg
+    )  # superseded by conda_build_tool=mambabuild
+    assert cfg["conda_build_tool"] == "conda-build"  # current default
+
+    # legacy compatibility config
+    with open(os.path.join(config_yaml, "conda-forge.yml")) as fp:
+        unmodified = fp.read()
+    with open(os.path.join(config_yaml, "conda-forge.yml"), "a+") as fp:
+        fp.write("build_with_mambabuild: true")
+    with pytest.deprecated_call(match="build_with_mambabuild is deprecated"):
+        assert load_forge_config()["conda_build_tool"] == "mambabuild"
+
+    with open(os.path.join(config_yaml, "conda-forge.yml"), "w") as fp:
+        fp.write(unmodified)
+        fp.write("build_with_mambabuild: false")
+
+    with pytest.deprecated_call(match="build_with_mambabuild is deprecated"):
+        assert load_forge_config()["conda_build_tool"] == "conda-build"
+
+    with open(os.path.join(config_yaml, "conda-forge.yml"), "w") as fp:
+        fp.write(unmodified)
+        fp.write("conda_build_tool: does-not-exist")
+
+    with pytest.raises(AssertionError):
+        assert load_forge_config()
+
+
+def test_remote_ci_setup(config_yaml):
+    load_forge_config = lambda: cnfgr_fdstk._load_forge_config(  # noqa
+        config_yaml,
+        exclusive_config_file=os.path.join(
+            config_yaml, "recipe", "default_config.yaml"
+        ),
+    )
+    cfg = load_forge_config()
+    with open(os.path.join(config_yaml, "conda-forge.yml")) as fp:
+        unmodified = fp.read()
+
+    with open(os.path.join(config_yaml, "conda-forge.yml"), "a+") as fp:
+        fp.write(
+            "remote_ci_setup: ['conda-forge-ci-setup=3', 'py-lief<0.12']\n"
+        )
+        fp.write("conda_install_tool: conda\n")
+    cfg = load_forge_config()
+    # pylief was quoted due to <
+    assert cfg["remote_ci_setup"] == [
+        "conda-forge-ci-setup=3",
+        '"py-lief<0.12"',
+    ]
+    assert cfg["remote_ci_setup_update"] == ["conda-forge-ci-setup", "py-lief"]
+
+    with open(os.path.join(config_yaml, "conda-forge.yml"), "w") as fp:
+        fp.write(unmodified + "\n")
+        fp.write(
+            "remote_ci_setup: ['conda-forge-ci-setup=3', 'py-lief<0.12']\n"
+        )
+        fp.write("conda_install_tool: mamba\n")
+    cfg = load_forge_config()
+    # with conda_install_tool = mamba, we don't strip constraints
+    assert (
+        cfg["remote_ci_setup"]
+        == cfg["remote_ci_setup_update"]
+        == [
+            "conda-forge-ci-setup=3",
+            '"py-lief<0.12"',
+        ]
+    )

@@ -1,32 +1,51 @@
-{%- set channel_name = channels.targets[0][0] -%}
+{%- set channel = channel_targets[0].split(" ") -%}
+{%- set channel_name = channel[0] -%}
+{%- set channel_label = channel[1] -%}
+{%- if channel_label == "main" -%}
+{%- set channel_with_label = channel_name -%}
+{%- else -%}
+{%- set channel_with_label = channel_name ~ "/label/" ~ channel_label -%}
+{%- endif -%}
 {#-
 # -*- mode: jinja -*-
 -#}
-{%- set license_url = package_about.license_url -%}
 
-About {{ package_name }}
-======{{ '=' * package_name|length }}
-
-Home: {{ package_about.home }}
-
-Package license: {% if license_url %}[{% endif %}{{ package_about.license }}{% if license_url %}]({{ license_url }}){% endif %}
+About {{ package_name }}-feedstock
+======{{ '=' * package_name|length }}==========
 
 Feedstock license: [BSD-3-Clause](https://github.com/{{ github.user_or_org }}/{{ github.repo_name }}/blob/{{ github.branch_name }}/LICENSE.txt)
 
-Summary: {{ package_about.summary }}
-{%- if package_about.dev_url %}
+{% for output_name, about in package_about -%}
+{%- set license_url = about.license_url -%}
+{%- if package_about|length > 1 %}
+About {{ output_name }}
+------{{ '-' * output_name|length }}
 
-Development: {{ package_about.dev_url }}
-{%- endif %}
-{%- if package_about.doc_url %}
+{% endif -%}
 
-Documentation: {{ package_about.doc_url }}
-{%- endif %}
-{%- if package_about.description %}
-
-{{ package_about.description }}
+{%- if about.home -%}
+Home: {{ about.home }}
 {%- endif %}
 
+Package license: {% if license_url %}[{% endif %}{{ about.license }}{% if license_url %}]({{ license_url }}){% endif -%}
+
+{%- if about.summary %}
+
+Summary: {{ about.summary }}
+{%- endif %}
+{%- if about.dev_url %}
+
+Development: {{ about.dev_url }}
+{%- endif %}
+{%- if about.doc_url %}
+
+Documentation: {{ about.doc_url }}
+{%- endif %}
+{%- if about.description %}
+
+{{ about.description }}
+{%- endif %}
+{% endfor %}
 Current build status
 ====================
 {%- set appveyor_url_name = github.repo_name.replace('_', '-').replace('.', '-') %}
@@ -190,14 +209,14 @@ Current release info
 Installing {{ package_name }}
 ==========={{ '=' * package_name|length }}
 
-Installing `{{ package_name }}` from the `{{ channel_name }}` channel can be achieved by adding `{{ channel_name }}` to your channels with:
+Installing `{{ package_name }}` from the `{{ channel_with_label }}` channel can be achieved by adding `{{ channel_with_label }}` to your channels with:
 
 ```
-conda config --add channels {{ channel_name }}
+conda config --add channels {{ channel_with_label }}
 conda config --set channel_priority strict
 ```
 
-Once the `{{ channel_name }}` channel has been enabled, `{{ ', '.join(outputs) }}` can be installed with `conda`:
+Once the `{{ channel_with_label }}` channel has been enabled, `{{ ', '.join(outputs) }}` can be installed with `conda`:
 
 ```
 conda install {{ ' '.join(outputs) }}
@@ -212,26 +231,26 @@ mamba install {{ ' '.join(outputs) }}
 It is possible to list all of the versions of `{{ outputs[0] }}` available on your platform with `conda`:
 
 ```
-conda search {{ outputs[0] }} --channel {{ channel_name }}
+conda search {{ outputs[0] }} --channel {{ channel_with_label }}
 ```
 
 or with `mamba`:
 
 ```
-mamba search {{ outputs[0] }} --channel {{ channel_name }}
+mamba search {{ outputs[0] }} --channel {{ channel_with_label }}
 ```
 
 Alternatively, `mamba repoquery` may provide more information:
 
 ```
 # Search all versions available on your platform:
-mamba repoquery search {{ outputs[0] }} --channel {{ channel_name }}
+mamba repoquery search {{ outputs[0] }} --channel {{ channel_with_label }}
 
 # List packages depending on `{{ outputs[0] }}`:
-mamba repoquery whoneeds {{ outputs[0] }} --channel {{ channel_name }}
+mamba repoquery whoneeds {{ outputs[0] }} --channel {{ channel_with_label }}
 
 # List dependencies of `{{ outputs[0] }}`:
-mamba repoquery depends {{ outputs[0] }} --channel {{ channel_name }}
+mamba repoquery depends {{ outputs[0] }} --channel {{ channel_with_label }}
 ```
 
 {% if channel_name == 'conda-forge' %}

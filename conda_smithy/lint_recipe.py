@@ -18,6 +18,11 @@ import sys
 
 import github
 
+if sys.version_info[:2] < (3, 11):
+    import tomli as tomllib
+else:
+    import tomllib
+
 from conda_build.metadata import (
     ensure_valid_license_family,
     FIELDS as cbfields,
@@ -898,7 +903,6 @@ def run_conda_forge_specific(meta, recipe_dir, lints, hints):
 
     # 4: Do not delete example recipe
     if is_staged_recipes and recipe_dir is not None:
-
         example_meta_fname = os.path.abspath(
             os.path.join(recipe_dir, "..", "example", "meta.yaml")
         )
@@ -912,24 +916,33 @@ def run_conda_forge_specific(meta, recipe_dir, lints, hints):
             if msg not in lints:
                 lints.append(msg)
 
-    # 5: Do not depend on matplotlib, only matplotlib-base
+    # 5: Package-specific hints
+    # (e.g. do not depend on matplotlib, only matplotlib-base)
+    build_reqs = requirements_section.get("build") or []
+    host_reqs = requirements_section.get("host") or []
     run_reqs = requirements_section.get("run") or []
     for out in outputs_section:
         _req = out.get("requirements") or {}
         if isinstance(_req, Mapping):
+            build_reqs += _req.get("build") or []
+            host_reqs += _req.get("host") or []
             run_reqs += _req.get("run") or []
         else:
             run_reqs += _req
-    for rq in run_reqs:
-        nm = rq.split(" ")[0].strip()
-        if nm == "matplotlib":
-            msg = (
-                "Recipes should usually depend on `matplotlib-base` as opposed to "
-                "`matplotlib` so that runtime environments do not require large "
-                "packages like `qt`."
-            )
-            if msg not in hints:
-                hints.append(msg)
+
+    hints_toml_url = "https://raw.githubusercontent.com/conda-forge/conda-forge-pinning-feedstock/main/recipe/linter_hints/hints.toml"
+    hints_toml_req = requests.get(hints_toml_url)
+    if hints_toml_req.status_code != 200:
+        # too bad, but not important enough to throw an error;
+        # linter will rerun on the next commit anyway
+        return
+    hints_toml_str = hints_toml_req.content.decode("utf-8")
+    specific_hints = tomllib.loads(hints_toml_str)["hints"]
+
+    for rq in build_reqs + host_reqs + run_reqs:
+        dep = rq.split(" ")[0].strip()
+        if dep in specific_hints and specific_hints[dep] not in hints:
+            hints.append(specific_hints[dep])
 
 
 def is_selector_line(line, allow_platforms=False):
@@ -941,8 +954,13 @@ def is_selector_line(line, allow_platforms=False):
         return False
     m = sel_pat.match(line)
     if m:
-        if allow_platforms and m.group(3) in ["win", "linux", "osx", "unix"]:
-            return False
+        if allow_platforms:
+            nouns = {
+                w for w in m.group(3).split() if w not in ("not", "and", "or")
+            }
+            if nouns.issubset({"win", "linux", "osx", "unix"}):
+                # the selector only contains (a boolean chain of) platform selectors
+                return False
         else:
             return True
     return False

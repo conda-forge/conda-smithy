@@ -4,6 +4,345 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.28.0
+====================
+
+**Added:**
+
+* For self-hosted github actions runs, a user can add custom labels
+  by adding `github_actions_labels` yaml key in `recipe/conda_build_config.yaml`.
+  The value `hosted` can be used for Microsoft hosted free runners
+  and the value `self-hosted` can be used for the default self-hosted labels.
+
+* `github_actions: timeout_minutes` option added to change the timeout in minutes.
+  The default value is `360`.
+
+* `github_actions: triggers` is a list of triggers which defaults to
+  `push, pull_request` when not self-hosted and `push` when self-hosted.
+
+* Added a `--cirun` argument to `conda-smithy ci-register` command to register
+  `cirun` as a CI service. This makes `cirun` conda package a dependency of
+  conda-smithy.
+
+* Added support for `cirun` by generating a unique label when the self-hosted
+  label starts with `cirun`.
+
+* When a label is added that has the string with `gpu` or `GPU` for a self-hosted
+  runner, the docker build will pass the GPUs to the docker instance.
+* Add ``flow_run_id`` (CI provider specific), ``remote_url`` and ``sha`` as extra-meta data to packages.
+  Enables tracing back packages to a specific commit in a feedstock and to a specific CI run.
+  When packages are built using ``build-locally.py`` only ``sha`` will have a non-empty value.
+  Requires ``conda-build >=3.21.8``. (#1577)
+
+**Changed:**
+
+* `github_actions: cancel_in_progress` option added to cancel in progress runs.
+  The default value was changed to `true`.
+* Use the channels defined in `conda_build_config.yaml` (instead of those in `conda-forge.yml`) to render `README.md`. (#897 via #1752, #1785)
+*  Allow finer control over Azure disk cleaning ( #1783 )
+* The default build tool changed from conda-mambabuild to conda-build with
+  libmamba solver.
+
+**Authors:**
+
+* Isuru Fernando
+* Jaime Rodríguez-Guerra
+* Amit Kumar
+* John Kirkham
+* Daniel Bast
+* Daniel Ching
+* pre-commit-ci[bot]
+
+
+
+v3.27.1
+====================
+
+**Fixed:**
+
+* Crash when XDG_CACHE_DIR is defined
+
+**Authors:**
+
+* Min RK
+
+
+
+v3.27.0
+====================
+
+**Added:**
+
+* Cache the contents of ``conda-forge-pinning`` and only check every 15min for an updated version.
+  The re-check interval can be configured via the ``CONDA_FORGE_PINNING_LIFETIME`` environment variable.
+
+**Changed:**
+
+* Do not strip version constraints for ``mamba update``. (#1773 via #1774)
+* If one supplies ``--no-check-uptodate`` on the commandline, we will no longer check and print a warning if conda-smithy is outdated.
+
+**Removed:**
+
+* Removed the ``updatecb3`` command. It is advised to do this update manually if you still encounter a recipe using the old compiler ``toolchain``.
+
+**Authors:**
+
+* Jaime Rodríguez-Guerra
+* Uwe L. Korn
+
+
+
+v3.26.3
+====================
+
+**Changed:**
+
+* The package hints of the linter are now taken from a location that doesn't require new smithy releases to change.
+* Fix ``MatchSpec`` parsing when ``remote_ci_setup`` specs are quoted. (#1773 via #1775)
+
+**Authors:**
+
+* Jaime Rodríguez-Guerra
+* H. Vetinari
+
+
+
+v3.26.2
+====================
+
+**Fixed:**
+
+* Fixed additional_zip_keys, so that subsequent migrations don't break.
+
+**Authors:**
+
+* Bela Stoyan
+
+
+
+v3.26.1
+====================
+
+**Fixed:**
+
+* Set ``FEEDSTOCK_NAME`` correctly on Windows in Azure Pipelines. (#1770)
+* Always use ``conda`` to ``uninstall --force``. (#1771)
+
+**Authors:**
+
+* Jaime Rodríguez-Guerra
+
+
+
+v3.26.0
+====================
+
+**Added:**
+
+* ``conda_build_tool`` setting with four different options: ``conda-build``, ``mambabuild`` (default),
+  ``conda-build+conda-libmamba-solver`` and ``conda-build+classic``. - #1732
+* Add ``conda_install_tool`` and ``conda_solver`` configuration options to allow choosing between
+  ``mamba`` and ``conda`` (with ``classic`` or ``libmamba`` solvers) as the dependency
+  handling tools. (#1762, #1768)
+* Add ``additional_zip_keys`` configuration option for migrations (#1764)
+
+**Changed:**
+
+* Unified Windows build scripts to avoid duplication of template logic in Github Actions and Azure Pipelines. (#1761)
+* Use strict channel priority on Linux and macOS. (#1768)
+* Use ``python-build`` to create ``sdist`` #1760
+
+**Deprecated:**
+
+* ``build_with_mambabuild`` boolean option is deprecated. Use ``conda_build_tool: mambabuild`` instead. - #1732
+
+**Fixed:**
+
+* Ensure undefined Jinja variables are rendered as the variable name, restoring Python 2-like behaviour. (#1726 via #1727)
+* Use name-only specs in ``conda update`` and ``conda uninstall`` subcommands. (#1768)
+* Catch negative exit codes on Windows. (#1763)
+* Fixed bug in the display of grouping commands in the Travis CI logging utilities. (#1730)
+
+**Authors:**
+
+* Jaime Rodríguez-Guerra
+* Uwe L. Korn
+* John Kirkham
+* Peter Williams
+* Bela Stoyan
+* Klaus Zimmermann
+
+
+
+v3.25.1
+====================
+
+**Fixed:**
+
+* Ensure ``swapfile_size`` is not added to the Azure job settings #1759
+
+**Authors:**
+
+* John Kirkham
+
+
+
+v3.25.0
+====================
+
+**Added:**
+
+* Added ability for select feedstocks (pinnings, smithy, repodata patches) to use GHA in conda-forge.
+  Items can be added by setting the ``CONDA_SMITHY_SERVICE_FEEDSTOCKS`` environment variable to a
+  comma-separated list of additional feedstocks.
+
+**Changed:**
+
+* Add option to cleanup GHA images - #1754
+* Created option to create a swap file on the default linux image on Azure Pipelines
+
+**Fixed:**
+
+* Allow operators in noarch platform selectors
+
+**Authors:**
+
+* Matthew R. Becker
+* Jaime Rodríguez-Guerra
+* Mike Henry
+* John Kirkham
+
+
+
+v3.24.1
+====================
+
+**Added:**
+
+* Add GHA option to limit number of parallel jobs - #1744
+
+**Changed:**
+
+* Free up more space on the default linux image on Azure Pipelines
+
+**Fixed:**
+
+* Avoid needing to activate environment to use conda-smithy
+
+**Authors:**
+
+* Matthew R. Becker
+* Mark Harfouche
+* Chris Burr
+* Billy K. Poon
+* John Kirkham
+
+
+
+v3.24.0
+====================
+
+**Added:**
+
+* Added linting for obsoleted outputs, e.g. those who have been renamed conda-forge-wide.
+*  Support not running tests when cross compiling in win - #1742
+
+**Fixed:**
+
+* Fixed bug in codepath to allow debugging of cross compiled OSX configuratons using ``build-locally.py``.
+* Fixed README headers for recipes with multiple outputs
+
+**Authors:**
+
+* Isuru Fernando
+* Mark Harfouche
+* H. Vetinari
+* John Blischak
+
+
+
+v3.23.1
+====================
+
+**Fixed:**
+
+* Fix "prepare conda build artifacts" step failing on Azure + Windows with the error "The syntax of the command is incorrect" (#1723).
+
+**Authors:**
+
+* Ryan Volz
+
+
+
+v3.23.0
+====================
+
+**Added:**
+
+* Added capability to generate feedstock tokens per CI provider.
+* Added token expiration timestamps.
+
+**Changed:**
+
+* Move pre-commit to its own CI test file.
+* Added ``--no-build-isolation`` to pip commands for install.
+* Remove ``py-lief<0.12`` from ``remote_ci_setup`` after LIEF 0.12.3 release
+* Windows CI on azure uses python 3.10 in the base environment.
+* Replaced deprecated use of ::set-output during conda artifact storage on GitHub Actions with the recommended redirect to $GITHUB_OUTPUT. See https://github.blog/changelog/2022-10-11-github-actions-deprecating-save-state-and-set-output-commands/.
+* Default branch for github is now ``main`` instead of ``master``.
+* Changed python packaging to use setuptools-scm instead of versioneer.
+* Moved build system to only use ``pyproject.toml``.
+* skip_render can match Path().parents of files being rendered
+  i.e. '.github' in list prevents rendering .github in toplevel
+  and any files below .github/
+* Changed default image for windows to `windows-2022`.
+
+**Fixed:**
+
+* `README.md` of feedstocks with multiple outputs is now correctly rendered with all outputs's (about) information shown, unless they are a plain copy of the top-level about.
+* skip_render can prevent github webservices from rendering
+* Always check team membership even when making teams.
+
+**Authors:**
+
+* Isuru Fernando
+* Matthew R. Becker
+* Leo Fang
+* Marcel Bargull
+* Ryan Volz
+* Mark Harfouche
+* Tim Snyder
+* H. Vetinari
+
+
+
+v3.22.1
+====================
+
+**Changed:**
+
+* Use a custom %TEMP% directory to avoid upload permission errors on Windows.
+
+**Authors:**
+
+* Marcel Bargull
+
+
+
+v3.22.0
+====================
+
+**Changed:**
+
+* Changed the pinning package extraction code to account for ``.conda`` files
+  and to use ``conda-package-handling``.
+
+**Authors:**
+
+* Matthew R. Becker
+
+
+
 v3.21.3
 ====================
 

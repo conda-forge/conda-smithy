@@ -9,10 +9,11 @@ import tempfile
 
 from textwrap import dedent
 
-import conda
+import conda  # noqa
 import conda_build.api
-from distutils.version import LooseVersion
 from conda_build.metadata import MetaData
+
+import conda_smithy.cirun_utils
 from conda_smithy.utils import get_feedstock_name_from_meta, merge_dict
 from ruamel.yaml import YAML
 
@@ -63,7 +64,7 @@ def generate_feedstock_content(target_directory, source_recipe_dir):
         try:
             with open(forge_yml_recipe, "r") as fp:
                 _cfg = yaml.load(fp.read())
-        except:
+        except Exception:
             _cfg = {}
 
         with open(forge_yml, "r") as fp:
@@ -142,7 +143,7 @@ class Init(Subcommand):
         )
 
         print(
-            "\nRepository created, please edit conda-forge.yml to configure the upload channels\n"
+            "\nRepository created, please edit recipe/conda_build_config.yaml to configure the upload channels\n"
             "and afterwards call 'conda smithy register-github'"
         )
 
@@ -209,7 +210,7 @@ class RegisterCI(Subcommand):
         # conda-smithy register-ci ./
         super(RegisterCI, self).__init__(
             parser,
-            "Register a feedstock at the CI " "services which do the builds.",
+            "Register a feedstock at the CI services which do the builds.",
         )
         scp = self.subcommand_parser
         scp.add_argument(
@@ -239,6 +240,7 @@ class RegisterCI(Subcommand):
             "Appveyor",
             "Drone",
             "Webservice",
+            "Cirun",
         ]:
             scp.add_argument(
                 "--without-{}".format(ci.lower()),
@@ -257,6 +259,23 @@ class RegisterCI(Subcommand):
             "--drone-endpoints",
             action="append",
             help="drone server URL to register this repo. multiple values allowed",
+        )
+        scp.add_argument(
+            "--cirun-resources",
+            default=[],
+            action="append",
+            help="cirun resources to enable for this repo. multiple values allowed",
+        )
+        scp.add_argument(
+            "--cirun-policy-args",
+            action="append",
+            help="extra arguments for cirun policy to create for this repo. multiple values allowed",
+        )
+        scp.add_argument(
+            "--remove",
+            action="store_true",
+            help="Revoke access to the configured CI services. "
+            "Only available for Cirun for now",
         )
 
     def __call__(self, args):
@@ -279,7 +298,19 @@ class RegisterCI(Subcommand):
             )
 
         print("CI Summary for {}/{} (can take ~30s):".format(owner, repo))
-
+        if args.remove and any(
+            [
+                args.azure,
+                args.circle,
+                args.appveyor,
+                args.drone,
+                args.webservice,
+                args.anaconda_token,
+            ]
+        ):
+            raise RuntimeError(
+                "The --remove flag is only supported for Cirun for now"
+            )
         if not args.anaconda_token:
             print(
                 "Warning: By not registering an Anaconda/Binstar token"
@@ -345,6 +376,31 @@ class RegisterCI(Subcommand):
                     )
         else:
             print("Drone registration disabled.")
+
+        if args.cirun:
+            print("Cirun Registration")
+            if args.remove:
+                if args.cirun_resources:
+                    to_remove = args.cirun_resources
+                else:
+                    to_remove = ["*"]
+
+                print(f"Cirun Registration: resources to remove: {to_remove}")
+                for resource in to_remove:
+                    conda_smithy.cirun_utils.remove_repo_from_cirun_resource(
+                        owner, repo, resource
+                    )
+            else:
+                print(
+                    f"Cirun Registration: resources to add to: {owner}/{repo}"
+                )
+                conda_smithy.cirun_utils.enable_cirun_for_project(owner, repo)
+                for resource in args.cirun_resources:
+                    conda_smithy.cirun_utils.add_repo_to_cirun_resource(
+                        owner, repo, resource, args.cirun_policy_args
+                    )
+        else:
+            print("Cirun registration disabled.")
 
         if args.webservice:
             ci_register.add_conda_forge_webservice_hooks(owner, repo)
@@ -598,50 +654,6 @@ class CISkeleton(Subcommand):
         print(POST_SKELETON_MESSAGE.format(args=args).strip())
 
 
-class UpdateCB3(Subcommand):
-    subcommand = "update-cb3"
-
-    def __init__(self, parser):
-        # conda-smithy update-cb3 ./
-        super(UpdateCB3, self).__init__(
-            parser, "Update a feedstock for conda-build=3"
-        )
-        scp = self.subcommand_parser
-        scp.add_argument(
-            "--recipe_directory",
-            default=os.path.join(os.getcwd(), "recipe"),
-            help="The path to the source recipe directory.",
-        )
-        scp.add_argument(
-            "--output",
-            default=None,
-            help="Filename for the output. No output edits the recipe inplace",
-        )
-        scp.add_argument(
-            "--cbc",
-            default=None,
-            help="Path to conda_build_config.yaml. No path will use conda-forge-pinning",
-        )
-
-    def __call__(self, args):
-        from conda_smithy.update_cb3 import update_cb3
-        from conda_smithy.configure_feedstock import get_cfp_file_path
-
-        recipe_file = os.path.join(args.recipe_directory, "meta.yaml")
-        output_file = args.output
-        if output_file is None:
-            output_file = recipe_file
-        if args.cbc is None:
-            cbc, _ = get_cfp_file_path()
-        else:
-            cbc = os.path.join(os.getcwd(), args.cbc)
-        output_content, messages = update_cb3(recipe_file, cbc)
-        with io.open(output_file, "w") as fh:
-            fh.write(output_content)
-        print("List of changes done to the recipe:")
-        print(messages)
-
-
 def main():
     logging.basicConfig(level=logging.INFO)
 
@@ -676,13 +688,18 @@ class GenerateFeedstockToken(Subcommand):
     def __init__(self, parser):
         super(GenerateFeedstockToken, self).__init__(
             parser,
-            "Generate a feedstock token at ~/.conda-smithy/{user or org}_{project}.token",
+            "Generate a feedstock token.",
         )
         scp = self.subcommand_parser
         scp.add_argument(
             "--feedstock_directory",
             default=feedstock_io.get_repo_root(os.getcwd()) or os.getcwd(),
             help="The directory of the feedstock git repository.",
+        )
+        scp.add_argument(
+            "--unique-token-per-provider",
+            action="store_true",
+            help="If set, use a unique token per CI provider.",
         )
         group = scp.add_mutually_exclusive_group()
         group.add_argument(
@@ -697,16 +714,39 @@ class GenerateFeedstockToken(Subcommand):
     def __call__(self, args):
         from conda_smithy.feedstock_tokens import (
             generate_and_write_feedstock_token,
+            feedstock_token_local_path,
         )
 
         owner = args.user or args.organization
         repo = os.path.basename(os.path.abspath(args.feedstock_directory))
 
-        generate_and_write_feedstock_token(owner, repo)
-        print(
-            "Your feedstock token has been generated at ~/.conda-smithy/%s_%s.token\n"
-            "This token is stored in plaintext so be careful!" % (owner, repo)
-        )
+        if not args.unique_token_per_provider:
+            generate_and_write_feedstock_token(owner, repo)
+            print(
+                "Your feedstock token has been generated at %s\n"
+                "This token is stored in plaintext so be careful!"
+                % feedstock_token_local_path(owner, repo)
+            )
+        else:
+            for provider in [
+                "azure",
+                "travis",
+                "circle",
+                "drone",
+                "github_actions",
+            ]:
+                generate_and_write_feedstock_token(
+                    owner, repo, provider=provider
+                )
+                print(
+                    "Your feedstock token has been generated at %s\n"
+                    "This token is stored in plaintext so be careful!"
+                    % (
+                        feedstock_token_local_path(
+                            owner, repo, provider=provider
+                        )
+                    )
+                )
 
 
 class RegisterFeedstockToken(Subcommand):
@@ -738,6 +778,11 @@ class RegisterFeedstockToken(Subcommand):
                 "{user or org}/feedstock-tokens on GitHub."
             ),
         )
+        scp.add_argument(
+            "--unique-token-per-provider",
+            action="store_true",
+            help="If set, use a unique token per CI provider.",
+        )
         group = scp.add_mutually_exclusive_group()
         group.add_argument(
             "--user", help="github username under which to register this repo"
@@ -768,9 +813,8 @@ class RegisterFeedstockToken(Subcommand):
 
     def __call__(self, args):
         from conda_smithy.feedstock_tokens import (
-            register_feedstock_token_with_proviers,
+            register_feedstock_token_with_providers,
             register_feedstock_token,
-            feedstock_token_exists,
         )
         from conda_smithy.ci_register import drone_default_endpoint
 
@@ -789,15 +833,10 @@ class RegisterFeedstockToken(Subcommand):
         else:
             token_repo = args.token_repo
 
-        if feedstock_token_exists(owner, repo, token_repo):
-            raise RuntimeError(
-                "Token for repo %s/%s already exists!" % (owner, repo)
-            )
-
         print("Registering the feedstock tokens. Can take up to ~30 seconds.")
 
         # do all providers first
-        register_feedstock_token_with_proviers(
+        register_feedstock_token_with_providers(
             owner,
             repo,
             drone=args.drone,
@@ -806,10 +845,32 @@ class RegisterFeedstockToken(Subcommand):
             azure=args.azure,
             github_actions=args.github_actions,
             drone_endpoints=drone_endpoints,
+            unique_token_per_provider=args.unique_token_per_provider,
         )
 
         # then if that works do the github repo
-        register_feedstock_token(owner, repo, token_repo)
+        if args.unique_token_per_provider:
+            for ci in [
+                "azure",
+                "travis",
+                "circle",
+                "drone",
+                "github_actions",
+            ]:
+                if getattr(args, ci):
+                    register_feedstock_token(
+                        owner,
+                        repo,
+                        token_repo,
+                        provider=ci,
+                    )
+        else:
+            register_feedstock_token(
+                owner,
+                repo,
+                token_repo,
+                provider=None,
+            )
 
         print("Successfully registered the feedstock token!")
 

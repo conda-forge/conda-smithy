@@ -2,56 +2,60 @@ All of the people who have made at least one contribution to conda-smithy.
 Authors are sorted by number of commits.
 
 * Isuru Fernando
+* Matthew R. Becker
+* Jaime Rodríguez-Guerra
 * Christopher J. Wright
 * Anthony Scopatz
 * Phil Elson
-* Matthew R. Becker
-* Jaime Rodríguez-Guerra
 * Filipe Fernandes
+* Uwe L. Korn
 * Dougal J. Sutherland
+* Amit Kumar
 * shadow_walker
 * Michael Sarahan
 * Min RK
-* Hadrien Mary
-* Johnny Willemsen
-* Uwe L. Korn
-* Ryan Volz
-* Mark Harfouche
-* Julian Rüth
-* Chris Burr
-* Marcel Bargull
 * Leo Fang
+* Hadrien Mary
+* Ryan Volz
+* Marcel Bargull
+* Mark Harfouche
+* Johnny Willemsen
+* Chris Burr
+* Julian Rüth
+* H. Vetinari
+* John Kirkham
+* Daniel Bast
+* Billy K. Poon
+* Tim Snyder
+* Mike Henry
 * Eric Dill
 * Natasha Pavlovikj
+* Daniel Ching
 * Maksim Rakitin
 * Jan Schulz
 * Josh Reichardt
 * Justin Calamari
 * Jason Furmanek
 * Patrick Sodré
-* Tim Snyder
-* John Kirkham
 * C.A.M. Gerlach
 * refraction-ray
 * Bastian Zimmermann
-* Daniel Ching
 * Nicholas Bollweg
 * Leopold Talirz
 * Tom Pollard
+* Bela Stoyan
 * Gonzalo Pena-Castellanos
-* Daniel Bast
-* H. Vetinari
 * Carlo
 * Matthew Craig
+* Peter Williams
 * Joshua L. Adelman
 * Wolf Vollprecht
 * Matthias Diener
+* John Blischak
 * Marius van Niekerk
-* Peter Williams
 * Johannes Köster
 * Philippe Blain
 * Matt McCormick
-* John Blischak
 * Jan Janßen
 * xoviat
 * Elmar Pruesse
@@ -64,6 +68,7 @@ Authors are sorted by number of commits.
 * Bruno Oliveira
 * Tony Kelman
 * Mervin Fansler
+* pre-commit-ci[bot]
 * Guilherme Quentel Melo
 * santi
 * buijennifer
@@ -82,6 +87,7 @@ Authors are sorted by number of commits.
 * Ben Mares
 * Matthew W. Thompson
 * conda-forge-admin
+* Klaus Zimmermann
 * lorenz
 * Tom Augspurger
 * Ryan May
@@ -101,7 +107,6 @@ Authors are sorted by number of commits.
 * Dave Hirschfeld
 * Nils Wentzell
 * Stuart Berg
-* Billy K. Poon
 * Mike Taves
 * Nehal J Wani
 * Benjamin Tovar

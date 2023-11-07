@@ -1,10 +1,10 @@
 import shutil
 import tempfile
+import io
 import jinja2
 import datetime
 import time
 import os
-import sys
 from pathlib import Path
 from collections import defaultdict
 from contextlib import contextmanager
@@ -20,6 +20,25 @@ def get_feedstock_name_from_meta(meta):
         return meta.meta["extra"]["parent_recipe"]["name"]
     else:
         return meta.name()
+
+
+def get_feedstock_about_from_meta(meta) -> dict:
+    """Fetch the feedtstock about from the parsed meta.yaml."""
+    # it turns out that conda_build would not preserve the feedstock about:
+    #   - if a subpackage does not have about, it uses the feedstock's
+    #   - if a subpackage has about, it's used as is
+    # therefore we need to parse the yaml again just to get the about section...
+    if "parent_recipe" in meta.meta["extra"]:
+        recipe_meta = os.path.join(
+            meta.meta["extra"]["parent_recipe"]["path"], "meta.yaml"
+        )
+        with io.open(recipe_meta, "rt") as fh:
+            content = render_meta_yaml("".join(fh))
+            meta = get_yaml().load(content)
+        return dict(meta["about"])
+    else:
+        # no parent recipe for any reason, use self's about
+        return dict(meta.meta["about"])
 
 
 def get_yaml():
@@ -41,7 +60,7 @@ def tmp_directory():
 
 
 class NullUndefined(jinja2.Undefined):
-    def __unicode__(self):
+    def __str__(self):
         return self._undefined_name
 
     def __getattr__(self, name):

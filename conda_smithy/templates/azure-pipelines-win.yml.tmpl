@@ -16,11 +16,6 @@ jobs:
       displayName: "Install Chocolatey Package: {{ choco_pkg }}"
 {% endfor %}
 
-{%- if build_with_mambabuild %}
-{%- set BOA="boa " %}
-{%- else %}
-{%- set BOA="" %}
-{%- endif %}
     - task: PythonScript@0
       displayName: 'Download Miniforge'
       inputs:
@@ -39,45 +34,23 @@ jobs:
       displayName: Add conda to PATH
 
     - script: |
-        call activate base
-        mamba.exe install "python=3.9" conda-build conda pip {{ BOA }}{{ " ".join(remote_ci_setup) }} -c conda-forge --strict-channel-priority --yes
-      displayName: Install conda-build
-
-    - script: set PYTHONUNBUFFERED=1
-      displayName: Set PYTHONUNBUFFERED
-
-    # Configure the VM
-    - script: |
-        call activate base
-        {%- if local_ci_setup %}
-        conda.exe uninstall --quiet --yes --force {{ " ".join(remote_ci_setup) }}
-        pip install --no-deps ".\{{ recipe_dir }}\."
-        {%- endif %}
-        setup_conda_rc .\ ".\{{ recipe_dir }}" .\.ci_support\%CONFIG%.yaml
-      displayName: conda-forge CI setup
-
-    {% if build_setup -%}
-    # Configure the VM.
-    - script: |
-        set "CI=azure"
-        call activate base
-        {{ build_setup.replace("\n", "\n        ").rstrip() }}
-      displayName: conda-forge build setup
-    {%- endif %}
-
-    - script: |
-        call activate base
-        if EXIST LICENSE.txt (
-          copy LICENSE.txt "{{ recipe_dir }}\\recipe-scripts-license.txt"
-        )
-        {%- if build_with_mambabuild %}
-        conda.exe mambabuild "{{ recipe_dir }}" -m .ci_support\%CONFIG%.yaml --suppress-variables
-        {%- else %}
-        conda.exe build "{{ recipe_dir }}" -m .ci_support\%CONFIG%.yaml --suppress-variables
-        {%- endif %}
-      displayName: Build recipe
+        call ".scripts\run_win_build.bat"
+      displayName: Run Windows build
       env:
         PYTHONUNBUFFERED: 1
+        CONFIG: $(CONFIG)
+        CI: azure
+        flow_run_id: azure_$(Build.BuildNumber).$(System.JobAttempt)
+        remote_url: $(Build.Repository.Uri)
+        sha: $(Build.SourceVersion)
+        UPLOAD_PACKAGES: $(UPLOAD_PACKAGES)
+        UPLOAD_TEMP: $(UPLOAD_TEMP)
+{%- if upload_on_branch %}
+        UPLOAD_ON_BRANCH: {{ upload_on_branch }}
+{%- endif %}
+{%- for secret in secrets %}
+        {{ secret }}: $({{ secret }})
+{%- endfor %}
 
 {%- if azure.store_build_artifacts %}
     - script: |
@@ -108,26 +81,3 @@ jobs:
         targetPath: $(ENV_ARTIFACT_PATH)
         artifactName: $(ENV_ARTIFACT_NAME)
 {%- endif %}
-
-{%- if conda_forge_output_validation %}
-    - script: |
-        set "FEEDSTOCK_NAME=%BUILD_REPOSITORY_NAME:*/=%"
-        call activate base
-        validate_recipe_outputs "%FEEDSTOCK_NAME%"
-      displayName: Validate Recipe Outputs
-{%- endif %}
-
-    - script: |
-        set "GIT_BRANCH=%BUILD_SOURCEBRANCHNAME%"
-        set "FEEDSTOCK_NAME=%BUILD_REPOSITORY_NAME:*/=%"
-{%- if upload_on_branch %}
-        set "UPLOAD_ON_BRANCH={{ upload_on_branch }}"
-{%- endif %}
-        call activate base
-        upload_package {% if conda_forge_output_validation %}--validate --feedstock-name="%FEEDSTOCK_NAME%"{% endif %}{% if private_upload %} --private{% endif %} .\ ".\{{ recipe_dir }}" .ci_support\%CONFIG%.yaml
-      displayName: Upload package
-      env:
-{%- for secret in secrets %}
-        {{ secret }}: $({{ secret }})
-{%- endfor %}
-      condition: and(succeeded(), not(eq(variables['UPLOAD_PACKAGES'], 'False')), not(eq(variables['Build.Reason'], 'PullRequest')))
