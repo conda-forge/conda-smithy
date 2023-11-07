@@ -20,7 +20,7 @@ on:
 {%- else %}
   {{ trigger }}:
 {%- endif %}
-{%- endfor %}
+{% endfor %}
 
 {%- if github_actions.cancel_in_progress %}
 concurrency:
