@@ -21,6 +21,7 @@ Filipe Fernandes <ocefpaf@gmail.com> Filipe <ocefpaf@gmail.com>
 Filipe Fernandes <ocefpaf@gmail.com> ocefpaf <ocefpaf@gmail.com>
 Uwe L. Korn <uwe.korn@quantco.com> Uwe L. Korn <xhochy@users.noreply.github.com>
 Dougal J. Sutherland <dougal@gmail.com>
+Amit Kumar <dtu.amit@gmail.com>
 shadow_walker <shadowwalkersb@gmail.com>
 Michael Sarahan <msarahan@gmail.com> Mike Sarahan <msarahan@gmail.com>
 Min RK <benjaminrk@gmail.com>
@@ -34,14 +35,16 @@ Johnny Willemsen <jwillemsen@remedy.nl>
 Chris Burr <christopher.burr@cern.ch> Chris Burr <chrisburr@users.noreply.github.com>
 Julian Rüth <julian.rueth@fsfe.org>
 H. Vetinari <h.vetinari@gmx.com>
-Billy K. Poon <bkpoon@lbl.gov>
 John Kirkham <jakirkham@gmail.com> John Kirkham <kirkhamj@janelia.hhmi.org>
 John Kirkham <jakirkham@gmail.com> jakirkham <kirkhamj@janelia.hhmi.org>
+Daniel Bast <2790401+dbast@users.noreply.github.com>
+Billy K. Poon <bkpoon@lbl.gov>
 Tim Snyder <snyder.tim@gmail.com>
 Mike Henry <11765982+mikemhenry@users.noreply.github.com>
 Eric Dill <edill@anaconda.com> Eric Dill <edill@bnl.gov>
 Eric Dill <edill@anaconda.com> Eric Dill <thedizzle@gmail.com>
 Natasha Pavlovikj <npavlovikj2@unl.edu>
+Daniel Ching <carterbox@users.noreply.github.com>
 Maksim Rakitin <mrakitin@bnl.gov> Maksim Rakitin <mrakitin@users.noreply.github.com>
 Jan Schulz <jasc@gmx.net>
 Josh Reichardt <josh.reichardt@gmail.com>
@@ -51,13 +54,11 @@ Patrick Sodré <psodre@gmail.com>
 C.A.M. Gerlach <widenetservices@gmail.com>
 refraction-ray <kcanamgal@foxmail.com>
 Bastian Zimmermann <10774221+BastianZim@users.noreply.github.com> BastianZim <10774221+BastianZim@users.noreply.github.com>
-Daniel Ching <carterbox@users.noreply.github.com>
 Nicholas Bollweg <nick.bollweg@gmail.com>
 Leopold Talirz <leopold.talirz@gmail.com>
 Tom Pollard <tom.pollard@codethink.co.uk>
 Bela Stoyan <bela.stoyan@gmail.com>
 Gonzalo Pena-Castellanos <goanpeca@gmail.com>
-Daniel Bast <2790401+dbast@users.noreply.github.com>
 Carlo <carlo.dri@gmail.com> Carlo <carlodri@users.noreply.github.com>
 Matthew Craig <mattwcraig@gmail.com> Matt Craig <mattwcraig@gmail.com>
 Peter Williams <peter@newton.cx>
@@ -84,6 +85,7 @@ Florian Rathgeber <florian.rathgeber@gmail.com>
 Bruno Oliveira <nicoddemus@gmail.com>
 Tony Kelman <tony@kelman.net>
 Mervin Fansler <mmfansler@gmail.com>
+pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>
 Guilherme Quentel Melo <gqmelo@gmail.com>
 santi <sdvillal@gmail.com>
 buijennifer <bui.jennifert@gmail.com>

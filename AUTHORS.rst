@@ -10,6 +10,7 @@ Authors are sorted by number of commits.
 * Filipe Fernandes
 * Uwe L. Korn
 * Dougal J. Sutherland
+* Amit Kumar
 * shadow_walker
 * Michael Sarahan
 * Min RK
@@ -22,12 +23,14 @@ Authors are sorted by number of commits.
 * Chris Burr
 * Julian Rüth
 * H. Vetinari
-* Billy K. Poon
 * John Kirkham
+* Daniel Bast
+* Billy K. Poon
 * Tim Snyder
 * Mike Henry
 * Eric Dill
 * Natasha Pavlovikj
+* Daniel Ching
 * Maksim Rakitin
 * Jan Schulz
 * Josh Reichardt
@@ -37,13 +40,11 @@ Authors are sorted by number of commits.
 * C.A.M. Gerlach
 * refraction-ray
 * Bastian Zimmermann
-* Daniel Ching
 * Nicholas Bollweg
 * Leopold Talirz
 * Tom Pollard
 * Bela Stoyan
 * Gonzalo Pena-Castellanos
-* Daniel Bast
 * Carlo
 * Matthew Craig
 * Peter Williams
@@ -67,6 +68,7 @@ Authors are sorted by number of commits.
 * Bruno Oliveira
 * Tony Kelman
 * Mervin Fansler
+* pre-commit-ci[bot]
 * Guilherme Quentel Melo
 * santi
 * buijennifer

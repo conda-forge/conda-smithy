@@ -27,12 +27,12 @@
   aliases:
   - John Kirkham
   - jakirkham
-  num_commits: 14
+  num_commits: 17
   first_commit: 2016-03-17 21:05:53
   github: jakirkham
 - name: Daniel Bast
   email: 2790401+dbast@users.noreply.github.com
-  num_commits: 7
+  num_commits: 16
   first_commit: 2019-08-06 12:19:03
   github: dbast
 - name: Justin Calamari
@@ -236,7 +236,7 @@
   email: uwe.korn@quantco.com
   alternate_emails:
   - xhochy@users.noreply.github.com
-  num_commits: 39
+  num_commits: 41
   first_commit: 2019-06-27 08:26:49
   github: xhochy
 - name: C.A.M. Gerlach
@@ -247,7 +247,7 @@
   email: isuru.11@cse.mrt.ac.lk
   alternate_emails:
   - isuruf@gmail.com
-  num_commits: 500
+  num_commits: 532
   first_commit: 2017-01-08 22:03:03
   github: isuruf
 - name: Julian Rüth
@@ -476,7 +476,7 @@
   github: jwillemsen
 - name: Jaime Rodríguez-Guerra
   email: jaimergp@users.noreply.github.com
-  num_commits: 104
+  num_commits: 125
   first_commit: 2020-11-01 14:18:08
   github: jaimergp
 - name: Bastian Zimmermann
@@ -556,7 +556,7 @@
   github: SylvainCorlay
 - name: Daniel Ching
   email: carterbox@users.noreply.github.com
-  num_commits: 9
+  num_commits: 13
   first_commit: 2022-05-11 16:57:15
   github: carterbox
 - name: conda-forge-admin
@@ -583,3 +583,12 @@
   num_commits: 2
   first_commit: 2023-03-24 15:34:56
   github: zklaus
+- name: pre-commit-ci[bot]
+  email: 66853113+pre-commit-ci[bot]@users.noreply.github.com
+  num_commits: 3
+  first_commit: 2023-10-30 15:49:50
+  github: carterbox
+- name: Amit Kumar
+  email: dtu.amit@gmail.com
+  num_commits: 35
+  first_commit: 2023-08-05 09:06:04
