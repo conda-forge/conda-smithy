@@ -905,7 +905,9 @@ def run_conda_forge_specific(meta, recipe_dir, lints, hints):
     if is_staged_recipes:
         if maintainers:
             # Get PR details using GitHub API
-            current_pr = gh.get_repo("conda-forge/staged-recipes").get_pull(int(pr_number))
+            current_pr = gh.get_repo("conda-forge/staged-recipes").get_pull(
+                int(pr_number)
+            )
 
             # Get PR author, issue comments, and review comments
             pr_author = current_pr.user.login
@@ -914,7 +916,9 @@ def run_conda_forge_specific(meta, recipe_dir, lints, hints):
 
             # Combine commenters from both issue comments and review comments
             commenters = {comment.user.login for comment in issue_comments}
-            commenters.update({review.user.login for review in review_comments})
+            commenters.update(
+                {review.user.login for review in review_comments}
+            )
 
             # Check if all maintainers have either commented or are the PR author
             non_participating_maintainers = set()
@@ -924,10 +928,14 @@ def run_conda_forge_specific(meta, recipe_dir, lints, hints):
 
             # Add a lint message if there are any non-participating maintainers
             if non_participating_maintainers:
-                lints.append(f"The following maintainers have not yet confirmed that they are willing to be listed here: "
-                            "{', '.join(non_participating_maintainers)}. Please ask them to comment on this PR if they are.")
+                lints.append(
+                    f"The following maintainers have not yet confirmed that they are willing to be listed here: "
+                    "{', '.join(non_participating_maintainers)}. Please ask them to comment on this PR if they are."
+                )
         else:
-            lints.append("There are no maintainers listed in the recipe. Please add some.")
+            lints.append(
+                "There are no maintainers listed in the recipe. Please add some."
+            )
 
     # 4: if the recipe dir is inside the example dir
     if recipe_dir is not None and "recipes/example/" in recipe_dir:
