@@ -807,11 +807,19 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
 
 def run_conda_forge_specific(meta, recipe_dir, lints, hints):
     gh = github.Github(os.environ["GH_TOKEN"])
+    
+    # Placeholder
+    pr_number = os.environ["PR_NUMBER"]
+
+    # Retrieve sections from meta
     package_section = get_section(meta, "package", lints)
     extra_section = get_section(meta, "extra", lints)
     sources_section = get_section(meta, "source", lints)
     requirements_section = get_section(meta, "requirements", lints)
     outputs_section = get_section(meta, "outputs", lints)
+
+    # Fetch list of recipe maintainers
+    maintainers = extra_section.get("recipe-maintainers", [])
 
     recipe_dirname = os.path.basename(recipe_dir) if recipe_dir else "recipe"
     recipe_name = package_section.get("name", "").strip()
@@ -882,7 +890,6 @@ def run_conda_forge_specific(meta, recipe_dir, lints, hints):
                         )
 
     # 2: Check that the recipe maintainers exists:
-    maintainers = extra_section.get("recipe-maintainers", [])
     for maintainer in maintainers:
         if "/" in maintainer:
             # It's a team. Checking for existence is expensive. Skip for now
@@ -893,15 +900,40 @@ def run_conda_forge_specific(meta, recipe_dir, lints, hints):
             lints.append(
                 'Recipe maintainer "{}" does not exist'.format(maintainer)
             )
+    
+    # 3: Check if all listed maintainers have commented:
+    if is_staged_recipes
+      # Get PR details using GitHub API
+      current_pr = gh.get_repo("conda-forge/staged-recipes").get_pull(int(pr_number))
 
-    # 3: if the recipe dir is inside the example dir
+      # Get PR author, issue comments, and review comments
+      pr_author = current_pr.user.login
+      issue_comments = current_pr.get_issue_comments()
+      review_comments = current_pr.get_reviews()
+
+      # Combine commenters from both issue comments and review comments
+      commenters = {comment.user.login for comment in issue_comments}
+      commenters.update({review.user.login for review in review_comments})
+
+      # Check if all maintainers have either commented or are the PR author
+      non_participating_maintainers = set()
+      for maintainer in maintainers:
+          if maintainer not in commenters and maintainer != pr_author:
+              non_participating_maintainers.add(maintainer)
+
+      # Add a lint message if there are any non-participating maintainers
+      if non_participating_maintainers:
+          lints.append(f"The following maintainers have not yet confirmed that they are willing to be listed here: "
+                      "{', '.join(non_participating_maintainers)}. Please ask them to comment on this PR if they are.")
+
+    # 4: if the recipe dir is inside the example dir
     if recipe_dir is not None and "recipes/example/" in recipe_dir:
         lints.append(
             "Please move the recipe out of the example dir and "
             "into its own dir."
         )
 
-    # 4: Do not delete example recipe
+    # 5: Do not delete example recipe
     if is_staged_recipes and recipe_dir is not None:
         example_meta_fname = os.path.abspath(
             os.path.join(recipe_dir, "..", "example", "meta.yaml")
@@ -916,7 +948,7 @@ def run_conda_forge_specific(meta, recipe_dir, lints, hints):
             if msg not in lints:
                 lints.append(msg)
 
-    # 5: Package-specific hints
+    # 6: Package-specific hints
     # (e.g. do not depend on matplotlib, only matplotlib-base)
     build_reqs = requirements_section.get("build") or []
     host_reqs = requirements_section.get("host") or []
