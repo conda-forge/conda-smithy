@@ -807,7 +807,7 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
 
 def run_conda_forge_specific(meta, recipe_dir, lints, hints):
     gh = github.Github(os.environ["GH_TOKEN"])
-    
+
     # Placeholder
     pr_number = os.environ["PR_NUMBER"]
 
@@ -900,7 +900,7 @@ def run_conda_forge_specific(meta, recipe_dir, lints, hints):
             lints.append(
                 'Recipe maintainer "{}" does not exist'.format(maintainer)
             )
-    
+
     # 3: Check if all listed maintainers have commented:
     if is_staged_recipes
       # Get PR details using GitHub API
