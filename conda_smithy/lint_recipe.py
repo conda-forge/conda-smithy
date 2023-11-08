@@ -915,9 +915,7 @@ def run_conda_forge_specific(meta, recipe_dir, lints, hints):
 
         # Combine commenters from both issue comments and review comments
         commenters = {comment.user.login for comment in issue_comments}
-        commenters.update(
-            {review.user.login for review in review_comments}
-        )
+        commenters.update({review.user.login for review in review_comments})
 
         # Check if all maintainers have either commented or are the PR author
         non_participating_maintainers = set()
