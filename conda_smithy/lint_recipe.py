@@ -902,7 +902,7 @@ def run_conda_forge_specific(meta, recipe_dir, lints, hints):
             )
 
     # 3: Check if all listed maintainers have commented:
-    if is_staged_recipes
+    if is_staged_recipes:
       # Get PR details using GitHub API
       current_pr = gh.get_repo("conda-forge/staged-recipes").get_pull(int(pr_number))
 
