@@ -927,7 +927,7 @@ def run_conda_forge_specific(meta, recipe_dir, lints, hints):
         if non_participating_maintainers:
             lints.append(
                 f"The following maintainers have not yet confirmed that they are willing to be listed here: "
-                "{', '.join(non_participating_maintainers)}. Please ask them to comment on this PR if they are."
+                f"{', '.join(non_participating_maintainers)}. Please ask them to comment on this PR if they are."
             )
 
     # 4: if the recipe dir is inside the example dir
