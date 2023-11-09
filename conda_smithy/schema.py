@@ -188,7 +188,7 @@ class BotConfigInspectionChoice(str, Enum):
 ##############################################
 
 
-class AzureSelfHostedRunnerSettings(BaseModel):
+class AzureRunnerSettings(BaseModel):
     """This is the settings for self-hosted runners."""
 
     pool: Optional[Dict[str, str]] = Field(
@@ -243,22 +243,22 @@ class AzureConfig(BaseModel):
     #########################################
     ##### Self-hosted runners settings ######
     #########################################
-    settings_linux: AzureSelfHostedRunnerSettings = Field(
-        default_factory=lambda: AzureSelfHostedRunnerSettings(
+    settings_linux: AzureRunnerSettings = Field(
+        default_factory=lambda: AzureRunnerSettings(
             swapfile_size="0GiB"
         ),
         description="Linux-specific settings for self-hosted runners",
     )
 
-    settings_osx: AzureSelfHostedRunnerSettings = Field(
-        default_factory=lambda: AzureSelfHostedRunnerSettings(
+    settings_osx: AzureRunnerSettings = Field(
+        default_factory=lambda: AzureRunnerSettings(
             pool={"vmImage": "macOS-11"}
         ),
         description="OSX-specific settings for self-hosted runners",
     )
 
-    settings_win: AzureSelfHostedRunnerSettings = Field(
-        default_factory=lambda: AzureSelfHostedRunnerSettings(
+    settings_win: AzureRunnerSettings = Field(
+        default_factory=lambda: AzureRunnerSettings(
             pool={"vmImage": "windows-2022"},
             variables={
                 "CONDA_BLD_PATH": "D:\\bld\\",
@@ -309,7 +309,7 @@ class GithubConfig(BaseModel):
     )
 
 
-class GitHubActionsConfig(BaseModel):
+class GithubActionsConfig(BaseModel):
     artifact_retention_days: Optional[int] = Field(
         description="The number of days to retain artifacts",
         default=14,
@@ -1286,8 +1286,8 @@ class ConfigModel(BaseModel):
         """,
     )
 
-    github_actions: Optional[GitHubActionsConfig] = Field(
-        default_factory=GitHubActionsConfig,
+    github_actions: Optional[GithubActionsConfig] = Field(
+        default_factory=GithubActionsConfig,
         description="""
         GitHub Actions CI settings. This is usually read-only and should not normally be
         manually modified. Tools like conda-smithy may modify this, as needed.

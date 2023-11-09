@@ -458,7 +458,7 @@
       "description": "\n        GitHub Actions CI settings. This is usually read-only and should not normally be\n        manually modified. Tools like conda-smithy may modify this, as needed.\n        ",
       "allOf": [
         {
-          "$ref": "#/definitions/GitHubActionsConfig"
+          "$ref": "#/definitions/GithubActionsConfig"
         }
       ]
     },
@@ -1259,8 +1259,8 @@
       ],
       "type": "string"
     },
-    "AzureSelfHostedRunnerSettings": {
-      "title": "AzureSelfHostedRunnerSettings",
+    "AzureRunnerSettings": {
+      "title": "AzureRunnerSettings",
       "description": "This is the settings for self-hosted runners.",
       "type": "object",
       "properties": {
@@ -1346,7 +1346,7 @@
           "description": "Linux-specific settings for self-hosted runners",
           "allOf": [
             {
-              "$ref": "#/definitions/AzureSelfHostedRunnerSettings"
+              "$ref": "#/definitions/AzureRunnerSettings"
             }
           ]
         },
@@ -1355,7 +1355,7 @@
           "description": "OSX-specific settings for self-hosted runners",
           "allOf": [
             {
-              "$ref": "#/definitions/AzureSelfHostedRunnerSettings"
+              "$ref": "#/definitions/AzureRunnerSettings"
             }
           ]
         },
@@ -1364,7 +1364,7 @@
           "description": "Windows-specific settings for self-hosted runners",
           "allOf": [
             {
-              "$ref": "#/definitions/AzureSelfHostedRunnerSettings"
+              "$ref": "#/definitions/AzureRunnerSettings"
             }
           ]
         },
@@ -1400,8 +1400,8 @@
         }
       }
     },
-    "GitHubActionsConfig": {
-      "title": "GitHubActionsConfig",
+    "GithubActionsConfig": {
+      "title": "GithubActionsConfig",
       "type": "object",
       "properties": {
         "artifact_retention_days": {
