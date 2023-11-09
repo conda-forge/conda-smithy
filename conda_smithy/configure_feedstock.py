@@ -1832,7 +1832,7 @@ def _read_forge_config(forge_dir, forge_yml=None):
         Path(__file__).resolve().parent / "data" / "conda-forge.v2.yml"
     )
     with open(yaml_defaults_file, "r") as fh:
-        config = yaml.safe_load(fh.read())
+        default_config = yaml.safe_load(fh.read())
 
     if forge_yml is None:
         forge_yml = os.path.join(forge_dir, "conda-forge.yml")
@@ -1855,7 +1855,7 @@ def _read_forge_config(forge_dir, forge_yml=None):
 
     # The config is just the union of the defaults, and the overridden
     # values.
-    config = _update_dict_within_dict(file_config.items(), config)
+    config = _update_dict_within_dict(file_config.items(), default_config)
 
     # check for conda-smithy 2.x matrix which we can't auto-migrate
     # to conda_build_config
@@ -1893,7 +1893,7 @@ def _read_forge_config(forge_dir, forge_yml=None):
             "Cannot set 'conda_build_tool_deps' directly. "
             "Use 'conda_build_tool' instead."
         )
-    
+
     return config
 
 
