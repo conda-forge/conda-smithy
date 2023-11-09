@@ -141,21 +141,27 @@ class Test_linter(unittest.TestCase):
             "in the `extra/recipe-maintainers` section."
         )
 
-        lints, hints = linter.lintify_meta_yaml({"extra": {"recipe-maintainers": []}})
+        lints, hints = linter.lintify_meta_yaml(
+            {"extra": {"recipe-maintainers": []}}
+        )
         self.assertIn(expected_message, lints)
 
         # No extra section at all.
         lints, hints = linter.lintify_meta_yaml({})
         self.assertIn(expected_message, lints)
 
-        lints, hints = linter.lintify_meta_yaml({"extra": {"recipe-maintainers": ["a"]}})
+        lints, hints = linter.lintify_meta_yaml(
+            {"extra": {"recipe-maintainers": ["a"]}}
+        )
         self.assertNotIn(expected_message, lints)
 
         expected_message = (
             'The "extra" section was expected to be a '
             "dictionary, but got a list."
         )
-        lints, hints = linter.lintify_meta_yaml({"extra": ["recipe-maintainers"]})
+        lints, hints = linter.lintify_meta_yaml(
+            {"extra": ["recipe-maintainers"]}
+        )
         self.assertIn(expected_message, lints)
 
         lints, hints = linter.lintify_meta_yaml(
@@ -800,7 +806,9 @@ class Test_linter(unittest.TestCase):
         lints, hints = linter.lintify_meta_yaml({"source": {"url": None}})
         self.assertIn(expected_message, lints)
 
-        lints, hints = linter.lintify_meta_yaml({"source": {"url": None, "sha1": None}})
+        lints, hints = linter.lintify_meta_yaml(
+            {"source": {"url": None, "sha1": None}}
+        )
         self.assertNotIn(expected_message, lints)
 
         lints, hints = linter.lintify_meta_yaml(
@@ -929,7 +937,9 @@ class Test_linter(unittest.TestCase):
             with tmp_directory() as recipe_dir:
                 with io.open(os.path.join(recipe_dir, "meta.yaml"), "w") as f:
                     f.write(content)
-                lints, hints = linter.lintify_meta_yaml({}, recipe_dir=recipe_dir)
+                lints, hints = linter.lintify_meta_yaml(
+                    {}, recipe_dir=recipe_dir
+                )
                 if lines > 1:
                     expected_message = (
                         "There are {} too many lines.  "
@@ -1056,7 +1066,9 @@ class Test_linter(unittest.TestCase):
             )
             self.assertNotIn(expected_message, lints)
             # No lint if the name isn't specified
-            lints, _ = linter.lintify_meta_yaml({}, recipe_dir=r, conda_forge=True)
+            lints, _ = linter.lintify_meta_yaml(
+                {}, recipe_dir=r, conda_forge=True
+            )
             self.assertNotIn(expected_message, lints)
 
         r = "this-will-never-exist"

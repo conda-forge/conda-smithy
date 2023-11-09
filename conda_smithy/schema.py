@@ -213,9 +213,7 @@ class AzureConfig(BaseModel):
     ##### Self-hosted runners settings ######
     #########################################
     settings_linux: AzureRunnerSettings = Field(
-        default_factory=lambda: AzureRunnerSettings(
-            swapfile_size="0GiB"
-        ),
+        default_factory=lambda: AzureRunnerSettings(swapfile_size="0GiB"),
         description="Linux-specific settings for self-hosted runners",
     )
 
