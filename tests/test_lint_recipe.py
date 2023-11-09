@@ -1113,7 +1113,7 @@ class Test_linter(unittest.TestCase):
         lints, _ = linter.lintify(
             {"extra": {"recipe-maintainers": maintainers}},
             recipe_dir="python",
-            conda_forge=True
+            conda_forge=True,
         )
 
         # Expected message if a maintainer has not participated
