@@ -315,6 +315,11 @@ class GithubActionsConfig(BaseModel):
         default=14,
     )
 
+    cancel_in_progress: Optional[bool] = Field(
+        description="Whether to cancel jobs in the same build if one fails.",
+        default=True,
+    )
+
     max_parallel: Optional[Union[int, Nullable]] = Field(
         description="The maximum number of jobs to run in parallel",
         default=None,
@@ -328,6 +333,18 @@ class GithubActionsConfig(BaseModel):
     store_build_artifacts: Optional[bool] = Field(
         description="Whether to store build artifacts",
         default=False,
+    )
+
+    timeout_minutes: Optional[int] = Field(
+        default=360,
+        description="The maximum amount of time (in minutes) that a \
+            job can run before it is automatically canceled",
+    )
+
+    triggers: Optional[list] = Field(
+        default=[],
+        description="Triggers for Github Actions. Defaults to push, pull_request, \
+            when not self-hosted and push when self-hosted",
     )
 
 
@@ -371,25 +388,6 @@ class BotConfig(BaseModel):
         None,
         description="Fraction of versions to keep for frequently updated packages",
         exclude=True,  # Will not be rendered in the model dump
-    )
-
-
-class CondaForgeChannels(BaseModel):
-    """
-    This represents the channels to grab packages from during builds and which
-    channels/labels to push to on anaconda.org after a package has been built.
-    The channels variable is a mapping with sources and targets.
-    """
-
-    sources: Optional[List[str]] = Field(
-        default=["conda-forge"],
-        description="sources selects the channels to pull packages from, in order",
-    )
-
-    targets: Optional[List[List[str]]] = Field(
-        default=[["conda-forge", "main"]],
-        description="targets is a list of 2-lists, where the first element is the \
-        channel to push to and the second element is the label on that channel",
     )
 
 
@@ -518,16 +516,9 @@ class ConfigModel(BaseModel):
     )
 
     conda_build_tool: Optional[conda_build_tools] = Field(
-        default="mambabuild",
+        default="conda-build",
         description="""
         Use this option to choose which tool is used to build your recipe.
-        """,
-    )
-
-    conda_build_tool_deps: Optional[Union[str, list]] = Field(
-        default="boa",
-        description="""
-        Add additional dependencies to the conda build environment based on the selected tool.
         """,
     )
 
@@ -536,13 +527,6 @@ class ConfigModel(BaseModel):
         description="""
         Use this option to choose which tool is used to provision the tooling in your
         feedstock.
-        """,
-    )
-
-    conda_install_tool_deps: Optional[Union[str, list]] = Field(
-        default="mamba",
-        description="""
-        Add additional dependencies to the conda install environment based on the selected tool.
         """,
     )
 
@@ -558,7 +542,7 @@ class ConfigModel(BaseModel):
     conda_solver: Optional[
         Union[Literal["libmamba", "classic"], Nullable]
     ] = Field(
-        default=None,
+        default="libmamba",
         description="""
         Choose which ``conda`` solver plugin to use for feedstock builds.
         """,
@@ -652,28 +636,6 @@ class ConfigModel(BaseModel):
         For extra information, see the
         `Strict channel priority <https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-channels.html#strict-channel-priority>`__
         section on conda documentation.
-        """,
-    )
-
-    channels: Optional[CondaForgeChannels] = Field(
-        default_factory=CondaForgeChannels,
-        description="""
-        This represents the channels to grab packages from during builds and which
-        channels/labels to push to on anaconda.org after a package has been built.
-        The ``channels`` variable is a mapping with ``sources`` and ``targets``,
-        as follows:
-
-        .. code-block:: yaml
-
-            channels:
-                # sources selects the channels to pull packages from, in order.
-                sources:
-                    - conda-forge
-                    - defaults
-                # targets is a list of 2-lists, where the first element is the
-                # channel to push to and the second element is the label on that channel
-                targets:
-                    - ["conda-forge", "main"]
         """,
     )
 
@@ -989,7 +951,7 @@ class ConfigModel(BaseModel):
     )
 
     remote_ci_setup: Optional[List[str]] = Field(
-        default_factory=lambda: ["conda-forge-ci-setup=3"],
+        default_factory=lambda: ["conda-forge-ci-setup=4"],
         description="""
         This option can be used to override the default ``conda-forge-ci-setup`` package.
         Can be given with ``${url or channel_alias}::package_name``,
@@ -997,7 +959,7 @@ class ConfigModel(BaseModel):
 
         .. code-block:: yaml
 
-            remote_ci_setup: "conda-forge-ci-setup=3"
+            remote_ci_setup: "conda-forge-ci-setup=4"
         """,
     )
 
