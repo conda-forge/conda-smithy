@@ -12,6 +12,7 @@ jobs:
 {%- endif %}
 {%- if azure.free_disk_space %}
   - script: |
+{%- if (azure.free_disk_space == true) or ('cache' in azure.free_disk_space) %}
          sudo mkdir -p /opt/empty_dir || true
          for d in \
                   /opt/ghc \
@@ -25,12 +26,17 @@ jobs:
                   ; do
            sudo rsync --stats -a --delete /opt/empty_dir/ $d || true
          done
+{%- endif %}
+{%- if (azure.free_disk_space == true) or ('apt' in azure.free_disk_space) %}
          sudo apt-get purge -y -f firefox \
                                   google-chrome-stable \
                                   microsoft-edge-stable
          sudo apt-get autoremove -y >& /dev/null
          sudo apt-get autoclean -y >& /dev/null
+{%- endif %}
+{%- if (azure.free_disk_space is iterable) and ('docker' in azure.free_disk_space) %}
          sudo docker image prune --all --force
+{%- endif %}
          df -h
     displayName: Manage disk space
 {%- endif %}
@@ -52,6 +58,9 @@ jobs:
 
   - script: |
         export CI=azure
+        export flow_run_id=azure_$(Build.BuildNumber).$(System.JobAttempt)
+        export remote_url=$(Build.Repository.Uri)
+        export sha=$(Build.SourceVersion)
         export GIT_BRANCH=$BUILD_SOURCEBRANCHNAME
         export FEEDSTOCK_NAME=$(basename ${BUILD_REPOSITORY_NAME})
 {%- if upload_on_branch %}

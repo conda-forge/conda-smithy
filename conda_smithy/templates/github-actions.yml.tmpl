@@ -11,20 +11,28 @@
 {%- endfor %}
 
 name: Build conda package
-{%- if github_actions.self_hosted %}
-on: [push]
+on:
+{%- for trigger in github_actions.triggers %}
+{%- if trigger == "push" and upload_on_branch %}
+  push:
+    branches:
+      - {{ upload_on_branch }}
 {%- else %}
-on: [push, pull_request]
+  {{ trigger }}:
+{%- endif %}
+{% endfor %}
+
+{%- if github_actions.cancel_in_progress %}
+concurrency:
+  group: {% raw %}${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}{% endraw %}
+  cancel-in-progress: true
 {%- endif %}
 
 jobs:
   build:
     name: {% raw %}${{ matrix.CONFIG }}{% endraw %}
-    {%- if github_actions.self_hosted %}
-    runs-on: {% raw %}${{ matrix.labels }}{% endraw %}
-    {%- else %}
-    runs-on: {% raw %}${{ matrix.os }}{% endraw %}-latest
-    {%- endif %}
+    runs-on: {% raw %}${{ matrix.runs_on }}{% endraw %}
+    timeout-minutes: {{ github_actions.timeout_minutes }}
     strategy:
       fail-fast: false
       {%- if github_actions.max_parallel %}
@@ -38,36 +46,13 @@ jobs:
             SHORT_CONFIG: {{ data.short_config_name }}
         {%- endif %}
             UPLOAD_PACKAGES: {{ data.upload }}
-        {%- if data.build_platform.startswith("osx-64") %}
-            os: macos
-        {%- if github_actions.self_hosted %}
-            labels: ['macOS', 'self-hosted', 'x64']
-        {%- endif %}
-        {%- elif data.build_platform.startswith("osx-arm64") %}
-            os: macos
-        {%- if github_actions.self_hosted %}
-            labels: ['macOS', 'self-hosted', 'ARM64']
-        {%- endif %}
-        {%- elif data.build_platform.startswith("linux-64") %}
+            os: {{ data.gha_os }}
+            runs_on: {{ data.gha_runs_on }}
+        {%- if data.build_platform.startswith("linux") %}
             DOCKER_IMAGE: {{ data.config["docker_image"][-1] }}
-            os: ubuntu
-        {%- if github_actions.self_hosted %}
-            labels: ['linux', 'self-hosted', 'x64']
-        {%- endif %}
-        {%- elif data.build_platform.startswith("linux-aarch64") %}
-            DOCKER_IMAGE: {{ data.config["docker_image"][-1] }}
-            os: ubuntu
-        {%- if github_actions.self_hosted %}
-            labels: ['linux', 'self-hosted', 'ARM64']
-        {%- endif %}
-        {%- elif data.build_platform.startswith("linux") %}
-            DOCKER_IMAGE: {{ data.config["docker_image"][-1] }}
-            os: ubuntu
-        {%- elif data.build_platform.startswith("win") %}
-            os: windows
-        {%- if github_actions.self_hosted %}
-            labels: ['windows', 'self-hosted', 'x64']
-        {%- endif %}
+          {%- if data.gha_with_gpu %}
+            CONDA_FORGE_DOCKER_RUN_ARGS: "--gpus all"
+          {%- endif %}
         {%- endif %}
         {%- endfor %}
     steps:
@@ -116,7 +101,9 @@ jobs:
         UPLOAD_ON_BRANCH: {{ upload_on_branch }}
 {%- endif %}
 {%- if docker.run_args is defined %}
-        CONDA_FORGE_DOCKER_RUN_ARGS: "{{ docker.run_args }}"
+        CONDA_FORGE_DOCKER_RUN_ARGS: "{{ docker.run_args }} {% raw %}${{ matrix.CONDA_FORGE_DOCKER_RUN_ARGS }}{% endraw %}"
+{%- else %}
+        CONDA_FORGE_DOCKER_RUN_ARGS: "{% raw %}${{ matrix.CONDA_FORGE_DOCKER_RUN_ARGS }}{% endraw %}"
 {%- endif %}
 {%- for secret in secrets %}
         {{ secret }}: {% raw %}${{{% endraw %} secrets.{{ secret }} {% raw %}}}{% endraw %}
@@ -125,6 +112,9 @@ jobs:
       run: |
         echo "::group::Configure binfmt_misc"
         docker run --rm --privileged multiarch/qemu-user-static:register --reset --credential yes
+        export flow_run_id="github_$GITHUB_RUN_ID"
+        export remote_url="https://github.com/$GITHUB_REPOSITORY"
+        export sha="$GITHUB_SHA"
         export FEEDSTOCK_NAME="$(basename $GITHUB_REPOSITORY)"
         export GIT_BRANCH="$(basename $GITHUB_REF)"
         if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
@@ -149,6 +139,9 @@ jobs:
 {%- endfor %}
       shell: bash
       run: |
+        export flow_run_id="github_$GITHUB_RUN_ID"
+        export remote_url="https://github.com/$GITHUB_REPOSITORY"
+        export sha="$GITHUB_SHA"
         export FEEDSTOCK_NAME="$(basename $GITHUB_REPOSITORY)"
         export GIT_BRANCH="$(basename $GITHUB_REF)"
         if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
@@ -175,6 +168,9 @@ jobs:
     - name: Build on windows
       shell: cmd
       run: |
+        set "flow_run_id=github_%GITHUB_RUN_ID%"
+        set "remote_url=https://github.com/%GITHUB_REPOSITORY%"
+        set "sha=%GITHUB_SHA%"
         call ".scripts\run_win_build.bat"
       env:
         PYTHONUNBUFFERED: 1

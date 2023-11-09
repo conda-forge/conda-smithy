@@ -96,10 +96,6 @@ out of by specifying `--without-anaconda-token`, as such execpted package upload
    ```
    github:
      user_or_org: YOUR_GITHUB_USER_OR_ORG
-   channels:
-     targets:
-     -
-       - YOUR_ANACONDA_CHANNEL
    ```
 
 6. **Re-render the feedstock:** ``conda smithy rerender --feedstock_directory ./foo-feedstock``

@@ -43,7 +43,6 @@ bar:
 
 
 def test_add():
-
     variant_add(tv1, tv2)
 
     # %%

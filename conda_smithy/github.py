@@ -188,7 +188,6 @@ def remove_from_project(gh, org, project):
 
 
 def configure_github_team(meta, gh_repo, org, feedstock_name, remove=True):
-
     # Add a team for this repo and add the maintainers to it.
     superlative = [
         "awesome",

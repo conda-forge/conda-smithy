@@ -37,21 +37,13 @@ build_platform:
   linux_s390x: linux_s390x
   osx_64: osx_64
   win_64: win_64
-channels:
-  sources:
-    - conda-forge
-  targets:
-    - - conda-forge
-      - main
 choco: []
 circle: {}
 clone_depth: null
 compiler_stack: comp7
-conda_build_tool: mambabuild
-conda_build_tool_deps: boa
+conda_build_tool: conda-build
 conda_forge_output_validation: false
 conda_install_tool: mamba
-conda_install_tool_deps: mamba
 conda_solver: null
 config_version: "2"
 docker:
@@ -66,9 +58,12 @@ github:
   user_or_org: conda-forge
 github_actions:
   artifact_retention_days: 14
+  cancel_in_progress: True
   max_parallel: null
   self_hosted: false
   store_build_artifacts: false
+  timeout_minutes: 360
+  triggers: []
 idle_timeout_minutes: null
 max_py_ver: "37"
 max_r_ver: "34"
@@ -99,7 +94,7 @@ provider:
     - azure
 recipe_dir: recipe
 remote_ci_setup:
-  - conda-forge-ci-setup=3
+  - conda-forge-ci-setup=4
 secrets: []
 skip_render: []
 templates: {}

@@ -5,7 +5,6 @@ import jinja2
 import datetime
 import time
 import os
-import sys
 from pathlib import Path
 from collections import defaultdict
 from contextlib import contextmanager

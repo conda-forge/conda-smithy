@@ -4,6 +4,57 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.28.0
+====================
+
+**Added:**
+
+* For self-hosted github actions runs, a user can add custom labels
+  by adding `github_actions_labels` yaml key in `recipe/conda_build_config.yaml`.
+  The value `hosted` can be used for Microsoft hosted free runners
+  and the value `self-hosted` can be used for the default self-hosted labels.
+
+* `github_actions: timeout_minutes` option added to change the timeout in minutes.
+  The default value is `360`.
+
+* `github_actions: triggers` is a list of triggers which defaults to
+  `push, pull_request` when not self-hosted and `push` when self-hosted.
+
+* Added a `--cirun` argument to `conda-smithy ci-register` command to register
+  `cirun` as a CI service. This makes `cirun` conda package a dependency of
+  conda-smithy.
+
+* Added support for `cirun` by generating a unique label when the self-hosted
+  label starts with `cirun`.
+
+* When a label is added that has the string with `gpu` or `GPU` for a self-hosted
+  runner, the docker build will pass the GPUs to the docker instance.
+* Add ``flow_run_id`` (CI provider specific), ``remote_url`` and ``sha`` as extra-meta data to packages.
+  Enables tracing back packages to a specific commit in a feedstock and to a specific CI run.
+  When packages are built using ``build-locally.py`` only ``sha`` will have a non-empty value.
+  Requires ``conda-build >=3.21.8``. (#1577)
+
+**Changed:**
+
+* `github_actions: cancel_in_progress` option added to cancel in progress runs.
+  The default value was changed to `true`.
+* Use the channels defined in `conda_build_config.yaml` (instead of those in `conda-forge.yml`) to render `README.md`. (#897 via #1752, #1785)
+*  Allow finer control over Azure disk cleaning ( #1783 )
+* The default build tool changed from conda-mambabuild to conda-build with
+  libmamba solver.
+
+**Authors:**
+
+* Isuru Fernando
+* Jaime Rodríguez-Guerra
+* Amit Kumar
+* John Kirkham
+* Daniel Bast
+* Daniel Ching
+* pre-commit-ci[bot]
+
+
+
 v3.27.1
 ====================
 

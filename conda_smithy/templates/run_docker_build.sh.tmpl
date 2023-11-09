@@ -91,6 +91,9 @@ export IS_PR_BUILD="${IS_PR_BUILD:-False}"
            -e CPU_COUNT \
            -e BUILD_WITH_CONDA_DEBUG \
            -e BUILD_OUTPUT_ID \
+           -e flow_run_id \
+           -e remote_url \
+           -e sha \
 {%- for secret in secrets %}
            -e {{ secret }} \
 {%- endfor %}
