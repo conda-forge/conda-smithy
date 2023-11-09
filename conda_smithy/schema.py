@@ -311,7 +311,7 @@ class GithubActionsConfig(BaseModel):
     )
 
     triggers: Optional[list] = Field(
-        default=[],
+        default=lambda: list(),
         description="Triggers for Github Actions. Defaults to push, pull_request, \
             when not self-hosted and push when self-hosted",
     )
