@@ -51,11 +51,14 @@ def add_repo_to_cirun_resource(
     print(
         f"Adding repo {owner}/{repo} to resource {resource} with policy_args: {policy_args}"
     )
+    gh = Github(gh_token())
+    gh_owner = gh.get_user(owner)
+    gh_repo = gh_owner.get_repo(repo)
     response = cirun.add_repo_to_resources(
         owner,
         repo,
         resources=[resource],
-        teams=[repo],
+        teams=[team.name for team in gh_repo.get_teams()],
         policy_args=policy_args,
     )
     print(f"response: {response} | {response.json().keys()}")
