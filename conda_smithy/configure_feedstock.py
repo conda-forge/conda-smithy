@@ -1894,12 +1894,6 @@ def _read_forge_config(forge_dir, forge_yml=None):
             "Use 'conda_build_tool' instead."
         )
     
-    if not config["github_actions"]["triggers"]:
-        self_hosted = config["github_actions"]["self_hosted"]
-        config["github_actions"]["triggers"] = (
-            ["push"] if self_hosted else ["push", "pull_request"]
-        )
-
     return config
 
 
@@ -2025,6 +2019,12 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
         ]
     else:
         config["remote_ci_setup_update"] = config["remote_ci_setup"]
+
+    if not config["github_actions"]["triggers"]:
+        self_hosted = config["github_actions"]["self_hosted"]
+        config["github_actions"]["triggers"] = (
+            ["push"] if self_hosted else ["push", "pull_request"]
+        )
 
     # Run the legacy checks for backwards compatibility
     config = _legacy_compatibility_checks(config, forge_dir)
