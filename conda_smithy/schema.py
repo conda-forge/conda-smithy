@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Literal, Optional, Type, Union
 
 import jsonschema
 import yaml
-from jsonschema import Draft202012Validator, validators
+from jsonschema import Draft7Validator, validators
 from jsonschema.exceptions import ValidationError
 from pydantic import BaseModel, Field, create_model
 
@@ -24,7 +24,8 @@ def validate_json_schema(config, schema_file: str = None):
     with open(json_schema_file, "r") as fh:
         _json_schema = json.loads(fh.read())
 
-    jsonschema.validate(config, _json_schema)
+    validator = Draft7Validator(_json_schema)
+    return list(validator.iter_errors(config))
 
 
 class Nullable(Enum):

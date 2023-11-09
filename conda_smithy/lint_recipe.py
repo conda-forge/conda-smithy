@@ -126,10 +126,7 @@ def lint_about_contents(about_section, lints):
             )
 
 
-def lintify_forge_yaml(recipe_dir=None) -> (list, list):
-    lints = []
-    hints = []
-
+def lintify_forge_yaml(recipe_dir=None) -> list:
     if recipe_dir:
         forge_yaml_filename = (
             glob(os.path.join(recipe_dir, "..", "conda-forge.yml"))
@@ -148,10 +145,10 @@ def lintify_forge_yaml(recipe_dir=None) -> (list, list):
     else:
         forge_yaml = {}
 
-    # This is where we validate against the jsonschema and execute our custom validators..
-    lints = validate_json_schema(forge_yaml, forge_yaml_filename)
+    # This is where we validate against the jsonschema and execute our custom validators.
+    lints = validate_json_schema(forge_yaml)
 
-    return lints, hints
+    return lints
 
 
 def lintify_meta_yaml(
@@ -1028,11 +1025,7 @@ def main(recipe_dir, conda_forge=False, return_hints=False):
         meta = get_yaml().load(content)
 
     results, hints = lintify_meta_yaml(meta, recipe_dir, conda_forge)
-
-    _results, _hints = lintify_forge_yaml(recipe_dir=recipe_dir)
-
-    results.update(_results)
-    hints.update(_hints)
+    results.extend(lintify_forge_yaml(recipe_dir=recipe_dir))
 
     if return_hints:
         return results, hints

@@ -1851,7 +1851,10 @@ def _read_forge_config(forge_dir, forge_yml=None):
         file_config = (documents or [None])[0] or {}
 
     # Validate loaded configuration against a JSON schema.
-    validate_json_schema(file_config)
+    validate_errors = validate_json_schema(file_config)
+    if validate_errors:
+        for err in validate_errors:
+            raise err
 
     # The config is just the union of the defaults, and the overridden
     # values.

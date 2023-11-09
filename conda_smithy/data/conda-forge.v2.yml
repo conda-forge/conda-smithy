@@ -23,8 +23,8 @@ azure:
     swapfile_size: null
     timeoutInMinutes: 360
     variables:
-      CONDA_BLD_PATH: D:\bld\
-      UPLOAD_TEMP: D:\tmp
+      CONDA_BLD_PATH: D:\\bld\\
+      UPLOAD_TEMP: D:\\tmp
   store_build_artifacts: false
   timeout_minutes: null
 bot:
