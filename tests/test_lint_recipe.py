@@ -1108,9 +1108,6 @@ class Test_linter(unittest.TestCase):
         # Mocking PR and maintainer data
         pr_number = "1"  # Example PR number
         maintainers = ["pelson", "maintainer2"]
-            
-        # Setting environment variable
-        os.environ["PR_NUMBER"] = pr_number
 
         # Running the linter function
         lints, _ = linter.lintify(
@@ -1125,7 +1122,7 @@ class Test_linter(unittest.TestCase):
             "maintainer2. Please ask them to comment on this PR if they are."
         )
         self.assertIn(expected_message, lints)
-        
+
         expected_message = (
             "The following maintainers have not yet confirmed that they are willing to be listed here: "
             "pelson, maintainer2. Please ask them to comment on this PR if they are."
