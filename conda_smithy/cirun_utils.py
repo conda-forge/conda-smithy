@@ -17,8 +17,12 @@ def get_cirun_installation_id(owner: str) -> int:
         return 18453316
     else:
         gh = Github(gh_token)
-        gh_owner = gh.get_user(owner)
-        for inst in gh_owner.get_installations:
+        user = gh.get_user()
+        if user.login == owner:
+            user_or_org = user
+        else:
+            user_or_org = gh.get_organization(owner)
+        for inst in user_or_org.get_installations:
             if inst.raw_data["app_slug"] == "cirun-application":
                 return inst.app_id
         raise ValueError(f"cirun not found for owner {owner}")
@@ -47,9 +51,9 @@ def add_repo_to_cirun_resource(
     print(
         f"Adding repo {owner}/{repo} to resource {resource} with policy_args: {policy_args}"
     )
-    gh = Github(gh_token)
+    gh = Github(gh_token())
     gh_owner = gh.get_user(owner)
-    gh_repo = gh_owner.get(repo)
+    gh_repo = gh_owner.get_repo(repo)
     response = cirun.add_repo_to_resources(
         owner,
         repo,
