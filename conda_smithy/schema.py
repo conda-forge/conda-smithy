@@ -7,31 +7,12 @@ from typing import Any, Dict, List, Literal, Optional, Type, Union
 
 import jsonschema
 import yaml
-from jsonschema import Draft7Validator, validators
+from jsonschema import Draft202012Validator, validators
 from jsonschema.exceptions import ValidationError
 from pydantic import BaseModel, Field, create_model
 
 
-def deprecated_validator(validator, value, instance, schema):
-    if value and instance is not None:
-        raise ValidationError(
-            f"'{schema['title']}' is deprecated. {schema['description']}"
-        )
-
-
-def _register_custom_validators(validator_name, validator_func):
-    # Register the custom validator
-
-    all_validators = dict(Draft7Validator.VALIDATORS)
-    all_validators[validator_name] = validator_func
-
-    return validators.create(
-        meta_schema=Draft7Validator.META_SCHEMA, validators=all_validators
-    )
-
-
 def validate_json_schema(config, schema_file: str = None):
-    _results = []
     # Validate the merged configuration against a JSON schema
     json_schema_file = (
         Path(__file__).resolve().parent / "data" / "conda-forge.v2.json"
@@ -44,18 +25,6 @@ def validate_json_schema(config, schema_file: str = None):
         _json_schema = json.loads(fh.read())
 
     jsonschema.validate(config, _json_schema)
-
-    CUSTOM_VALIDATORS = {
-        "deprecated": deprecated_validator,
-    }
-
-    for validator_name, validator_definition in CUSTOM_VALIDATORS.items():
-        validator = _register_custom_validators(
-            validator_name, validator_definition
-        )
-        _results.append(validator.validate(config, _json_schema))
-
-    return _results
 
 
 class Nullable(Enum):
