@@ -1107,7 +1107,7 @@ class Test_linter(unittest.TestCase):
     def test_maintainer_participation(self):
         # Mocking PR and maintainer data
         pr_number = "1"  # Example PR number
-        maintainers = ["pelson", "maintainer2"]
+        maintainers = ["pelson", "isuruf"]
 
         # Running the linter function
         lints, _ = linter.lintify(
@@ -1119,13 +1119,13 @@ class Test_linter(unittest.TestCase):
         # Expected message if a maintainer has not participated
         expected_message = (
             "The following maintainers have not yet confirmed that they are willing to be listed here: "
-            "maintainer2. Please ask them to comment on this PR if they are."
+            "isuruf. Please ask them to comment on this PR if they are."
         )
         self.assertIn(expected_message, lints)
 
         expected_message = (
             "The following maintainers have not yet confirmed that they are willing to be listed here: "
-            "pelson, maintainer2. Please ask them to comment on this PR if they are."
+            "pelson, isuruf. Please ask them to comment on this PR if they are."
         )
         self.assertNotIn(expected_message, lints)
 
