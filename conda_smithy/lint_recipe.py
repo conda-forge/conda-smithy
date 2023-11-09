@@ -809,7 +809,7 @@ def run_conda_forge_specific(meta, recipe_dir, lints, hints):
     gh = github.Github(os.environ["GH_TOKEN"])
 
     # Placeholder
-    pr_number = os.environ["PR_NUMBER"]
+    pr_number = 1
 
     # Retrieve sections from meta
     package_section = get_section(meta, "package", lints)
