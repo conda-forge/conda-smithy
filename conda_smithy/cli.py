@@ -205,7 +205,7 @@ class RegisterGithub(Subcommand):
 
 class RegisterCI(Subcommand):
     subcommand = "register-ci"
-    ci_names = [
+    ci_names = (
         "Azure",
         "Travis",
         "Circle",
@@ -213,7 +213,7 @@ class RegisterCI(Subcommand):
         "Drone",
         "Webservice",
         "Cirun",
-    ]
+    )
 
     def __init__(self, parser):
         # conda-smithy register-ci ./
@@ -704,13 +704,13 @@ def main():
 
 class GenerateFeedstockToken(Subcommand):
     subcommand = "generate-feedstock-token"
-    ci_names = [
+    ci_names = (
         "Azure",
         "Travis",
         "Circle",
         "Drone",
         "Github-Actions",
-    ]
+    )
 
     def __init__(self, parser):
         super(GenerateFeedstockToken, self).__init__(
@@ -773,13 +773,13 @@ class GenerateFeedstockToken(Subcommand):
 
 class RegisterFeedstockToken(Subcommand):
     subcommand = "register-feedstock-token"
-    ci_names = [
+    ci_names = (
         "Azure",
         "Travis",
         "Circle",
         "Drone",
         "Github-Actions",
-    ]
+    )
 
     def __init__(self, parser):
         # conda-smithy register-feedstock-token ./
@@ -920,14 +920,14 @@ class UpdateAnacondaToken(Subcommand):
         "update-binstar-token",
         "rotate-binstar-token",
     ]
-    ci_names = [
+    ci_names = (
         "Azure",
         "Travis",
         "Circle",
         "Drone",
         "Appveyor",
         "Github-Actions",
-    ]
+    )
 
     def __init__(self, parser):
         super(UpdateAnacondaToken, self).__init__(
