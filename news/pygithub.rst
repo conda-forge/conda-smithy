@@ -4,7 +4,7 @@
 
 **Changed:**
 
-* Increase pygithub lower bound. (#1797)
+* Require pygithub>=2 as github actions secrets need that version. (#1797)
 
 **Deprecated:**
 
