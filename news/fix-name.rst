@@ -16,7 +16,7 @@
 
 **Fixed:**
 
-* Fix name of anaconda.org in README template, to prevent confusion with anaconda.cloud (#1798). 
+* Fix name of anaconda.org in README template, to prevent confusion with anaconda.cloud (#1798).
 
 **Security:**
 
