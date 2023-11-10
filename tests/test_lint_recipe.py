@@ -1335,6 +1335,7 @@ class Test_linter(unittest.TestCase):
         )
         assert len(hints) < 100
 
+    @unittest.skipUnless(is_gh_token_set(), "GH_TOKEN not set")
     def test_mpl_base_hint(self):
         meta = {
             "requirements": {
@@ -1345,6 +1346,7 @@ class Test_linter(unittest.TestCase):
         expected = "Recipes should usually depend on `matplotlib-base`"
         self.assertTrue(any(hint.startswith(expected) for hint in hints))
 
+    @unittest.skipUnless(is_gh_token_set(), "GH_TOKEN not set")
     def test_mpl_base_hint_outputs(self):
         meta = {
             "outputs": [
