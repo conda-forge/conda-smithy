@@ -205,6 +205,15 @@ class RegisterGithub(Subcommand):
 
 class RegisterCI(Subcommand):
     subcommand = "register-ci"
+    ci_names = [
+        "Azure",
+        "Travis",
+        "Circle",
+        "Appveyor",
+        "Drone",
+        "Webservice",
+        "Cirun",
+    ]
 
     def __init__(self, parser):
         # conda-smithy register-ci ./
@@ -233,21 +242,28 @@ class RegisterCI(Subcommand):
             default="conda-forge",
             help="github organisation under which to register this repo",
         )
-        for ci in [
-            "Azure",
-            "Travis",
-            "Circle",
-            "Appveyor",
-            "Drone",
-            "Webservice",
-            "Cirun",
-        ]:
+        for ci in self.ci_names:
             scp.add_argument(
                 "--without-{}".format(ci.lower()),
                 dest=ci.lower().replace("-", "_"),
-                action="store_false",
+                action="store_const",
+                const=False,
                 help="If set, {} will be not registered".format(ci),
             )
+            scp.add_argument(
+                "--with-{}".format(ci.lower()),
+                dest=ci.lower().replace("-", "_"),
+                action="store_const",
+                const=True,
+                help="If set, {} will be registered".format(ci),
+            )
+
+        scp.add_argument(
+            "--without-all",
+            dest="enable_ci",
+            action="store_false",
+            help="If set, none of the CI providers are registered and need to be enabled individually.",
+        )
 
         scp.add_argument(
             "--without-anaconda-token",
@@ -296,6 +312,10 @@ class RegisterCI(Subcommand):
             args.feedstock_config = default_feedstock_config_path(
                 args.feedstock_directory
             )
+
+        for ci in self.ci_names:
+            if getattr(args, ci.lower()) is None:
+                setattr(args, ci.lower(), args.enable_ci)
 
         print("CI Summary for {}/{} (can take ~30s):".format(owner, repo))
         if args.remove and any(
