@@ -22,7 +22,7 @@ dependencies:
   - requests
   - pycryptodome
   - gitpython
-  - pygithub <3
+  - pygithub >=2,<3
   - ruamel.yaml
   - conda-forge-pinning
   - vsts-python-api
