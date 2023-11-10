@@ -4,7 +4,7 @@
 
 **Changed:**
 
-* Increase pygithub upper bound. (#1797)
+* Increase pygithub lower bound. (#1797)
 
 **Deprecated:**
 
