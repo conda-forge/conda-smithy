@@ -16,13 +16,13 @@ def get_cirun_installation_id(owner: str) -> int:
     if owner == "conda-forge":
         return 18453316
     else:
-        gh = Github(gh_token)
+        gh = Github(gh_token())
         user = gh.get_user()
         if user.login == owner:
             user_or_org = user
         else:
             user_or_org = gh.get_organization(owner)
-        for inst in user_or_org.get_installations:
+        for inst in user_or_org.get_installations():
             if inst.raw_data["app_slug"] == "cirun-application":
                 return inst.app_id
         raise ValueError(f"cirun not found for owner {owner}")
