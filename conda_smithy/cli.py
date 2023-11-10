@@ -825,7 +825,8 @@ class RegisterFeedstockToken(Subcommand):
             scp.add_argument(
                 "--without-{}".format(ci.lower()),
                 dest=ci.lower().replace("-", "_"),
-                action="store_false",
+                action="store_const",
+                const=False,
                 help="If set, {} will be not registered".format(ci),
             )
             scp.add_argument(
@@ -873,6 +874,11 @@ class RegisterFeedstockToken(Subcommand):
 
         print("Registering the feedstock tokens. Can take up to ~30 seconds.")
 
+        for ci_pretty in self.ci_names:
+            ci = ci_pretty.lower().replace("-", "_")
+            if getattr(args, ci) is None:
+                setattr(args, ci, args.enable_ci)
+
         # do all providers first
         register_feedstock_token_with_providers(
             owner,
@@ -885,11 +891,6 @@ class RegisterFeedstockToken(Subcommand):
             drone_endpoints=drone_endpoints,
             unique_token_per_provider=args.unique_token_per_provider,
         )
-
-        for ci_pretty in self.ci_names:
-            ci = ci_pretty.lower().replace("-", "_")
-            if getattr(args, ci) is None:
-                setattr(args, ci, args.enable_ci)
 
         # then if that works do the github repo
         if args.unique_token_per_provider:
@@ -967,7 +968,8 @@ class UpdateAnacondaToken(Subcommand):
             scp.add_argument(
                 "--without-{}".format(ci.lower()),
                 dest=ci.lower().replace("-", "_"),
-                action="store_false",
+                action="store_const",
+                const=False,
                 help="If set, the token on {} will be not changed.".format(ci),
             )
             scp.add_argument(
