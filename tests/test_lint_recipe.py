@@ -1103,6 +1103,35 @@ class Test_linter(unittest.TestCase):
             conda_forge=True,
         )
 
+    @unittest.skipUnless(is_gh_token_set(), "GH_TOKEN not set")
+    def test_maintainer_participation(self):
+        # Mocking PR and maintainer data
+        os.environ["STAGED_RECIPES_PR_NUMBER"] = "1"  # Example PR number
+        maintainers = ["pelson", "isuruf"]
+
+        try:
+            # Running the linter function
+            lints, _ = linter.lintify(
+                {"extra": {"recipe-maintainers": maintainers}},
+                recipe_dir="python",
+                conda_forge=True,
+            )
+
+            # Expected message if a maintainer has not participated
+            expected_message = (
+                "The following maintainers have not yet confirmed that they are willing to be listed here: "
+                "isuruf. Please ask them to comment on this PR if they are."
+            )
+            self.assertIn(expected_message, lints)
+
+            expected_message = (
+                "The following maintainers have not yet confirmed that they are willing to be listed here: "
+                "pelson, isuruf. Please ask them to comment on this PR if they are."
+            )
+            self.assertNotIn(expected_message, lints)
+        finally:
+            del os.environ["STAGED_RECIPES_PR_NUMBER"]
+
     def test_bad_subheader(self):
         expected_message = (
             "The {} section contained an unexpected "

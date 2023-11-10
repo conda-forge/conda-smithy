@@ -807,11 +807,16 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
 
 def run_conda_forge_specific(meta, recipe_dir, lints, hints):
     gh = github.Github(os.environ["GH_TOKEN"])
+
+    # Retrieve sections from meta
     package_section = get_section(meta, "package", lints)
     extra_section = get_section(meta, "extra", lints)
     sources_section = get_section(meta, "source", lints)
     requirements_section = get_section(meta, "requirements", lints)
     outputs_section = get_section(meta, "outputs", lints)
+
+    # Fetch list of recipe maintainers
+    maintainers = extra_section.get("recipe-maintainers", [])
 
     recipe_dirname = os.path.basename(recipe_dir) if recipe_dir else "recipe"
     recipe_name = package_section.get("name", "").strip()
@@ -882,7 +887,6 @@ def run_conda_forge_specific(meta, recipe_dir, lints, hints):
                         )
 
     # 2: Check that the recipe maintainers exists:
-    maintainers = extra_section.get("recipe-maintainers", [])
     for maintainer in maintainers:
         if "/" in maintainer:
             # It's a team. Checking for existence is expensive. Skip for now
@@ -943,6 +947,37 @@ def run_conda_forge_specific(meta, recipe_dir, lints, hints):
         dep = rq.split(" ")[0].strip()
         if dep in specific_hints and specific_hints[dep] not in hints:
             hints.append(specific_hints[dep])
+
+    # 6: Check if all listed maintainers have commented:
+    pr_number = os.environ.get("STAGED_RECIPES_PR_NUMBER")
+
+    if is_staged_recipes and maintainers and pr_number:
+        # Get PR details using GitHub API
+        current_pr = gh.get_repo("conda-forge/staged-recipes").get_pull(
+            int(pr_number)
+        )
+
+        # Get PR author, issue comments, and review comments
+        pr_author = current_pr.user.login
+        issue_comments = current_pr.get_issue_comments()
+        review_comments = current_pr.get_reviews()
+
+        # Combine commenters from both issue comments and review comments
+        commenters = {comment.user.login for comment in issue_comments}
+        commenters.update({review.user.login for review in review_comments})
+
+        # Check if all maintainers have either commented or are the PR author
+        non_participating_maintainers = set()
+        for maintainer in maintainers:
+            if maintainer not in commenters and maintainer != pr_author:
+                non_participating_maintainers.add(maintainer)
+
+        # Add a lint message if there are any non-participating maintainers
+        if non_participating_maintainers:
+            lints.append(
+                f"The following maintainers have not yet confirmed that they are willing to be listed here: "
+                f"{', '.join(non_participating_maintainers)}. Please ask them to comment on this PR if they are."
+            )
 
 
 def is_selector_line(line, allow_platforms=False):
