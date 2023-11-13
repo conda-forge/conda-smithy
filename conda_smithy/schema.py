@@ -127,6 +127,9 @@ class CIservices(str, Enum):
     circle = "circle"
     travis = "travis"
     appveyor = "appveyor"
+    github_actions = "github_actions"
+    drone = "drone"
+    woodpecker = "woodpecker"
     default = "default"
 
 
@@ -360,9 +363,9 @@ class BotConfig(BaseModel):
 
 
 class CondaBuildConfig(BaseModel):
-    pkg_format: Optional[Literal["1", "2", "tar"]] = Field(
+    pkg_format: Optional[Literal["tar", 1, 2]] = Field(
         description="The package version format for conda build.",
-        default="2",
+        default=2,
     )
 
     zstd_compression_level: Optional[int] = Field(

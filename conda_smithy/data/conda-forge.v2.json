@@ -325,6 +325,9 @@
         "circle",
         "travis",
         "appveyor",
+        "github_actions",
+        "drone",
+        "woodpecker",
         "default"
       ],
       "title": "CIservices",
@@ -345,17 +348,16 @@
           "anyOf": [
             {
               "enum": [
-                "1",
-                "2",
-                "tar"
-              ],
-              "type": "string"
+                "tar",
+                1,
+                2
+              ]
             },
             {
               "type": "null"
             }
           ],
-          "default": "2",
+          "default": 2,
           "description": "The package version format for conda build.",
           "title": "Pkg Format"
         },
