@@ -44,8 +44,8 @@ compiler_stack: comp7
 conda_build_tool: conda-build
 conda_forge_output_validation: false
 conda_install_tool: mamba
-conda_solver: null
-config_version: "2"
+conda_solver: libmamba
+config_version: '2'
 docker:
   command: bash
   executable: docker
@@ -53,24 +53,24 @@ docker:
 drone: {}
 github:
   branch_name: main
-  repo_name: ""
+  repo_name: ''
   tooling_branch_name: main
   user_or_org: conda-forge
 github_actions:
   artifact_retention_days: 14
-  cancel_in_progress: True
+  cancel_in_progress: true
   max_parallel: null
   self_hosted: false
   store_build_artifacts: false
   timeout_minutes: 360
   triggers: []
 idle_timeout_minutes: null
-max_py_ver: "37"
-max_r_ver: "34"
-min_py_ver: "27"
-min_r_ver: "34"
+max_py_ver: '37'
+max_r_ver: '34'
+min_py_ver: '27'
+min_r_ver: '34'
 noarch_platforms:
-  - linux_64
+- linux_64
 os_version:
   linux_64: null
   linux_aarch64: null
@@ -81,20 +81,20 @@ private_upload: false
 provider:
   linux: null
   linux_64:
-    - azure
+  - azure
   linux_aarch64: null
   linux_armv7l: null
   linux_ppc64le: null
   linux_s390x: null
   osx: null
   osx_64:
-    - azure
+  - azure
   win: null
   win_64:
-    - azure
+  - azure
 recipe_dir: recipe
 remote_ci_setup:
-  - conda-forge-ci-setup=4
+- conda-forge-ci-setup=4
 secrets: []
 skip_render: []
 templates: {}

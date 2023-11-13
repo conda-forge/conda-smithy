@@ -229,8 +229,8 @@ class AzureConfig(BaseModel):
         default_factory=lambda: AzureRunnerSettings(
             pool={"vmImage": "windows-2022"},
             variables={
-                "CONDA_BLD_PATH": "D:\\bld\\",
-                "UPLOAD_TEMP": "D:\\tmp",
+                "CONDA_BLD_PATH": "D:\\\\bld\\\\",
+                "UPLOAD_TEMP": "D:\\\\tmp",
             },
         ),
         description="Windows-specific settings for self-hosted runners",
@@ -310,7 +310,7 @@ class GithubActionsConfig(BaseModel):
     )
 
     triggers: Optional[list] = Field(
-        default=lambda: list(),
+        default=[],
         description="Triggers for Github Actions. Defaults to push, pull_request, \
             when not self-hosted and push when self-hosted",
     )
