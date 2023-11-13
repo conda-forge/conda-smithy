@@ -1123,7 +1123,7 @@ class Test_linter(unittest.TestCase):
 
         try:
             # Running the linter function
-            lints, _ = linter.lintify(
+            lints, _ = linter.lintify_meta_yaml(
                 {"extra": {"recipe-maintainers": maintainers}},
                 recipe_dir="python",
                 conda_forge=True,
