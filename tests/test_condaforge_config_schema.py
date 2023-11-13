@@ -13,7 +13,7 @@ SAMPLE_CONFIGS = [
         },
         "conda_forge_output_validation": True,
         "conda_build": {
-            "pkg_format": "2",
+            "pkg_format": 2,
         },
     },
     {
@@ -28,7 +28,7 @@ SAMPLE_CONFIGS = [
             "tooling_branch_name": "main",
         },
         "conda_build": {
-            "pkg_format": "2",
+            "pkg_format": 2,
         },
     },
     {
@@ -47,7 +47,7 @@ SAMPLE_CONFIGS = [
         },
         "idle_timeout_minutes": 60,
         "conda_build": {
-            "pkg_format": "2",
+            "pkg_format": 2,
         },
     },
 ]
@@ -73,7 +73,7 @@ def test_extra_fields():
         },
         "conda_forge_output_validation": True,
         "conda_build": {
-            "pkg_format": "2",
+            "pkg_format": 2,
         },
     }
     # Extra value should be ignored
