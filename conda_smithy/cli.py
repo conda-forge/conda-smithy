@@ -205,6 +205,15 @@ class RegisterGithub(Subcommand):
 
 class RegisterCI(Subcommand):
     subcommand = "register-ci"
+    ci_names = (
+        "Azure",
+        "Travis",
+        "Circle",
+        "Appveyor",
+        "Drone",
+        "Webservice",
+        "Cirun",
+    )
 
     def __init__(self, parser):
         # conda-smithy register-ci ./
@@ -233,21 +242,28 @@ class RegisterCI(Subcommand):
             default="conda-forge",
             help="github organisation under which to register this repo",
         )
-        for ci in [
-            "Azure",
-            "Travis",
-            "Circle",
-            "Appveyor",
-            "Drone",
-            "Webservice",
-            "Cirun",
-        ]:
+        for ci in self.ci_names:
             scp.add_argument(
                 "--without-{}".format(ci.lower()),
                 dest=ci.lower().replace("-", "_"),
-                action="store_false",
+                action="store_const",
+                const=False,
                 help="If set, {} will be not registered".format(ci),
             )
+            scp.add_argument(
+                "--with-{}".format(ci.lower()),
+                dest=ci.lower().replace("-", "_"),
+                action="store_const",
+                const=True,
+                help="If set, {} will be registered".format(ci),
+            )
+
+        scp.add_argument(
+            "--without-all",
+            dest="enable_ci",
+            action="store_false",
+            help="If set, none of the CI providers are registered and need to be enabled individually.",
+        )
 
         scp.add_argument(
             "--without-anaconda-token",
@@ -296,6 +312,10 @@ class RegisterCI(Subcommand):
             args.feedstock_config = default_feedstock_config_path(
                 args.feedstock_directory
             )
+
+        for ci in self.ci_names:
+            if getattr(args, ci.lower().replace("-", "_")) is None:
+                setattr(args, ci.lower().replace("-", "_"), args.enable_ci)
 
         print("CI Summary for {}/{} (can take ~30s):".format(owner, repo))
         if args.remove and any(
@@ -684,6 +704,13 @@ def main():
 
 class GenerateFeedstockToken(Subcommand):
     subcommand = "generate-feedstock-token"
+    ci_names = (
+        "Azure",
+        "Travis",
+        "Circle",
+        "Drone",
+        "Github-Actions",
+    )
 
     def __init__(self, parser):
         super(GenerateFeedstockToken, self).__init__(
@@ -728,13 +755,8 @@ class GenerateFeedstockToken(Subcommand):
                 % feedstock_token_local_path(owner, repo)
             )
         else:
-            for provider in [
-                "azure",
-                "travis",
-                "circle",
-                "drone",
-                "github_actions",
-            ]:
+            for ci in self.ci_names:
+                provider = ci.lower().replace("-", "_")
                 generate_and_write_feedstock_token(
                     owner, repo, provider=provider
                 )
@@ -751,9 +773,16 @@ class GenerateFeedstockToken(Subcommand):
 
 class RegisterFeedstockToken(Subcommand):
     subcommand = "register-feedstock-token"
+    ci_names = (
+        "Azure",
+        "Travis",
+        "Circle",
+        "Drone",
+        "Github-Actions",
+    )
 
     def __init__(self, parser):
-        # conda-smithy register-ci ./
+        # conda-smithy register-feedstock-token ./
         super(RegisterFeedstockToken, self).__init__(
             parser,
             "Register the feedstock token w/ the CI services for builds and "
@@ -792,19 +821,29 @@ class RegisterFeedstockToken(Subcommand):
             default="conda-forge",
             help="github organisation under which to register this repo",
         )
-        for ci in [
-            "Azure",
-            "Travis",
-            "Circle",
-            "Drone",
-            "Github-Actions",
-        ]:
+        for ci in self.ci_names:
             scp.add_argument(
                 "--without-{}".format(ci.lower()),
                 dest=ci.lower().replace("-", "_"),
-                action="store_false",
+                action="store_const",
+                const=False,
                 help="If set, {} will be not registered".format(ci),
             )
+            scp.add_argument(
+                "--with-{}".format(ci.lower()),
+                dest=ci.lower().replace("-", "_"),
+                action="store_const",
+                const=True,
+                help="If set, {} will be registered".format(ci),
+            )
+
+        scp.add_argument(
+            "--without-all",
+            dest="enable_ci",
+            action="store_false",
+            help="If set, none of the CI providers are registered and need to be enabled individually.",
+        )
+
         scp.add_argument(
             "--drone-endpoints",
             action="append",
@@ -835,6 +874,11 @@ class RegisterFeedstockToken(Subcommand):
 
         print("Registering the feedstock tokens. Can take up to ~30 seconds.")
 
+        for ci_pretty in self.ci_names:
+            ci = ci_pretty.lower().replace("-", "_")
+            if getattr(args, ci) is None:
+                setattr(args, ci, args.enable_ci)
+
         # do all providers first
         register_feedstock_token_with_providers(
             owner,
@@ -850,13 +894,8 @@ class RegisterFeedstockToken(Subcommand):
 
         # then if that works do the github repo
         if args.unique_token_per_provider:
-            for ci in [
-                "azure",
-                "travis",
-                "circle",
-                "drone",
-                "github_actions",
-            ]:
+            for ci_pretty in self.ci_names:
+                ci = ci_pretty.lower().replace("-", "_")
                 if getattr(args, ci):
                     register_feedstock_token(
                         owner,
@@ -882,6 +921,14 @@ class UpdateAnacondaToken(Subcommand):
         "update-binstar-token",
         "rotate-binstar-token",
     ]
+    ci_names = (
+        "Azure",
+        "Travis",
+        "Circle",
+        "Drone",
+        "Appveyor",
+        "Github-Actions",
+    )
 
     def __init__(self, parser):
         super(UpdateAnacondaToken, self).__init__(
@@ -917,20 +964,28 @@ class UpdateAnacondaToken(Subcommand):
             default="conda-forge",
             help="github organization of the repo",
         )
-        for ci in [
-            "Azure",
-            "Travis",
-            "Circle",
-            "Drone",
-            "Appveyor",
-            "Github-Actions",
-        ]:
+        for ci in self.ci_names:
             scp.add_argument(
                 "--without-{}".format(ci.lower()),
                 dest=ci.lower().replace("-", "_"),
-                action="store_false",
+                action="store_const",
+                const=False,
                 help="If set, the token on {} will be not changed.".format(ci),
             )
+            scp.add_argument(
+                "--with-{}".format(ci.lower()),
+                dest=ci.lower().replace("-", "_"),
+                action="store_const",
+                const=True,
+                help="If set, the token on {} will be changed".format(ci),
+            )
+
+        scp.add_argument(
+            "--without-all",
+            dest="enable_ci",
+            action="store_false",
+            help="If set, none of the CI providers are registered and need to be enabled individually.",
+        )
         scp.add_argument(
             "--drone-endpoints",
             action="append",
@@ -956,6 +1011,10 @@ class UpdateAnacondaToken(Subcommand):
         drone_endpoints = args.drone_endpoints
         if drone_endpoints is None:
             drone_endpoints = [drone_default_endpoint]
+
+        for ci in self.ci_names:
+            if getattr(args, ci.lower().replace("-", "_")) is None:
+                setattr(args, ci.lower().replace("-", "_"), args.enable_ci)
 
         # do all providers first
         rotate_anaconda_token(
