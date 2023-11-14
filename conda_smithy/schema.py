@@ -363,7 +363,7 @@ class BotConfig(BaseModel):
 
 
 class CondaBuildConfig(BaseModel):
-    pkg_format: Optional[Literal["tar", 1, 2]] = Field(
+    pkg_format: Optional[Literal["tar", 1, 2, "1", "2"]] = Field(
         description="The package version format for conda build.",
         default=2,
     )

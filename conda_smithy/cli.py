@@ -596,7 +596,7 @@ class RecipeLint(Subcommand):
                 all_good = False
                 print(
                     "{} has some lint:\n  {}".format(
-                        recipe, "\n  ".join(lints)
+                        recipe, "\n  ".join([lint.replace("\n", "\n    ") for lint in lints])
                     )
                 )
                 if hints:

@@ -1060,7 +1060,8 @@ def main(recipe_dir, conda_forge=False, return_hints=False):
         meta = get_yaml().load(content)
 
     results, hints = lintify_meta_yaml(meta, recipe_dir, conda_forge)
-    results.extend(lintify_forge_yaml(recipe_dir=recipe_dir))
+    validation_errors = lintify_forge_yaml(recipe_dir=recipe_dir)
+    results.extend([str(lint) for lint in validation_errors])
 
     if return_hints:
         return results, hints
