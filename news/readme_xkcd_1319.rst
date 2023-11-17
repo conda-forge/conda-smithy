@@ -4,7 +4,7 @@
 
 **Changed:**
 
-* Changes the xkcd comic in the README to 1319 ( #1802 )
+* Changes the xkcd comic in the README to 1319 ( #1802 ) ( #1803 )
 
 **Deprecated:**
 
