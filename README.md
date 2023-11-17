@@ -137,6 +137,3 @@ Conda-smithy in a nutshell
 #### xkcd 1319: Automation
 
 [![xkcd 1319: Automation](https://imgs.xkcd.com/comics/automation.png)](https://xkcd.com/1319/)
-
-**Titletext**: *I make tools for managing job-hunting sites for people who make*
-*tools for managing job-hunting sites for people who make tools for ...*
