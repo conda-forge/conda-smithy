@@ -605,7 +605,13 @@ class RecipeLint(Subcommand):
                 if hints:
                     print(
                         "{} also has some suggestions:\n  {}".format(
-                            recipe, "\n  ".join(hints)
+                            recipe,
+                            "\n  ".join(
+                                [
+                                    hint.replace("\n", "\n    ")
+                                    for hint in hints
+                                ]
+                            ),
                         )
                     )
             elif hints:
