@@ -245,6 +245,9 @@
         "inspection": {
           "anyOf": [
             {
+              "type": "boolean"
+            },
+            {
               "$ref": "#/$defs/BotConfigInspectionChoice"
             },
             {
@@ -252,13 +255,24 @@
             }
           ],
           "default": null,
-          "description": "Method for generating hints or updating recipe"
+          "description": "Method for generating hints or updating recipe",
+          "title": "Inspection"
         },
         "abi_migration_branches": {
           "anyOf": [
             {
               "items": {
-                "type": "string"
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
               },
               "type": "array"
             },
@@ -328,7 +342,10 @@
         "github_actions",
         "drone",
         "woodpecker",
-        "default"
+        "default",
+        "emulated",
+        "native",
+        "None"
       ],
       "title": "CIservices",
       "type": "string"

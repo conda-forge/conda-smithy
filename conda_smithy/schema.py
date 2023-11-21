@@ -131,6 +131,9 @@ class CIservices(str, Enum):
     drone = "drone"
     woodpecker = "woodpecker"
     default = "default"
+    emulated = "emulated"
+    native = "native"
+    disable = "None"
 
 
 class BotConfigAutoMergeChoice(str, Enum):
@@ -343,13 +346,13 @@ class BotConfig(BaseModel):
         exclude=True,  # Will not be rendered in the model dump
     )
 
-    inspection: Optional[BotConfigInspectionChoice] = Field(
+    inspection: Optional[Union[bool, BotConfigInspectionChoice]] = Field(
         None,
         description="Method for generating hints or updating recipe",
         exclude=True,  # Will not be rendered in the model dump
     )
 
-    abi_migration_branches: Optional[List[str]] = Field(
+    abi_migration_branches: Optional[List[Union[str, int, float]]] = Field(
         None,
         description="List of branches for additional bot migration PRs",
         exclude=True,  # Will not be rendered in the model dump
