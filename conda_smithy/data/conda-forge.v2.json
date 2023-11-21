@@ -1612,6 +1612,7 @@
         }
       ],
       "default": "comp7",
+      "deprecated": true,
       "description": "\n        Compiler stack environment variable. This is used to specify the compiler\n        stack to use for builds. Deprecated.\n\n        .. code-block:: yaml\n\n            compiler_stack: comp7\n        ",
       "title": "Compiler Stack"
     },
@@ -1625,6 +1626,7 @@
         }
       ],
       "default": "27",
+      "deprecated": true,
       "description": "\n        Minimum Python version. This is used to specify the minimum Python version\n        to use for builds. Deprecated.\n\n        .. code-block:: yaml\n\n            min_py_ver: 27\n        ",
       "title": "Min Py Ver"
     },
@@ -1638,6 +1640,7 @@
         }
       ],
       "default": "37",
+      "deprecated": true,
       "description": "\n        Maximum Python version. This is used to specify the maximum Python version\n        to use for builds. Deprecated.\n\n        .. code-block:: yaml\n\n            max_py_ver: 37\n        ",
       "title": "Max Py Ver"
     },
@@ -1651,6 +1654,7 @@
         }
       ],
       "default": "34",
+      "deprecated": true,
       "description": "\n        Minimum R version. This is used to specify the minimum R version to\n        use for builds. Deprecated.\n\n        .. code-block:: yaml\n\n            min_r_ver: 34\n        ",
       "title": "Min R Ver"
     },
@@ -1825,6 +1829,7 @@
         }
       ],
       "default": true,
+      "deprecated": true,
       "description": "\n        build_with_mambabuild is deprecated, use conda_build_tool instead. Configures the conda-forge CI to run a debug build using the ``mamba`` solver.\n        More information can be found in the\n        `mamba docs <https://conda-forge.org/docs/maintainer/maintainer_faq.html#mfaq-mamba-local>`__.\n\n        .. code-block:: yaml\n\n            build_with_mambabuild:\n            True\n        ",
       "title": "Build With Mambabuild"
     },

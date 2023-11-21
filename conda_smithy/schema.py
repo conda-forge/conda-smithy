@@ -12,6 +12,29 @@ from jsonschema.exceptions import ValidationError
 from pydantic import BaseModel, Field, create_model
 
 
+class DeprecatedFieldWarning(ValidationError):
+    pass
+
+
+def deprecated_validator(validator, value, instance, schema):
+    if value and instance is not None:
+        yield DeprecatedFieldWarning(
+            f"'{schema['title']}' is deprecated.\n" + schema["description"]
+        )
+
+
+def get_validator_class():
+    all_validators = dict(Draft7Validator.VALIDATORS)
+    all_validators["deprecated"] = deprecated_validator
+
+    return validators.create(
+        meta_schema=Draft7Validator.META_SCHEMA, validators=all_validators
+    )
+
+
+_VALIDATOR_CLASS = get_validator_class()
+
+
 def validate_json_schema(config, schema_file: str = None):
     # Validate the merged configuration against a JSON schema
     json_schema_file = (
@@ -24,8 +47,15 @@ def validate_json_schema(config, schema_file: str = None):
     with open(json_schema_file, "r") as fh:
         _json_schema = json.loads(fh.read())
 
-    validator = Draft7Validator(_json_schema)
-    return list(validator.iter_errors(config))
+    validator = _VALIDATOR_CLASS(_json_schema)
+    lints = []
+    hints = []
+    for error in validator.iter_errors(config):
+        if isinstance(error, DeprecatedFieldWarning):
+            hints.append(error)
+        else:
+            lints.append(error)
+    return lints, hints
 
 
 class Nullable(Enum):
@@ -925,6 +955,7 @@ class ConfigModel(BaseModel):
     compiler_stack: Optional[str] = Field(
         default="comp7",
         exclude=True,
+        deprecated=True,
         description="""
         Compiler stack environment variable. This is used to specify the compiler
         stack to use for builds. Deprecated.
@@ -938,6 +969,7 @@ class ConfigModel(BaseModel):
     min_py_ver: Optional[str] = Field(
         default="27",
         exclude=True,
+        deprecated=True,
         description="""
         Minimum Python version. This is used to specify the minimum Python version
         to use for builds. Deprecated.
@@ -951,6 +983,7 @@ class ConfigModel(BaseModel):
     max_py_ver: Optional[str] = Field(
         default="37",
         exclude=True,
+        deprecated=True,
         description="""
         Maximum Python version. This is used to specify the maximum Python version
         to use for builds. Deprecated.
@@ -964,6 +997,7 @@ class ConfigModel(BaseModel):
     min_r_ver: Optional[str] = Field(
         default="34",
         exclude=True,
+        deprecated=True,
         description="""
         Minimum R version. This is used to specify the minimum R version to
         use for builds. Deprecated.
@@ -1134,6 +1168,7 @@ class ConfigModel(BaseModel):
     build_with_mambabuild: Optional[bool] = Field(
         default=True,
         exclude=True,
+        deprecated=True,
         description="""
         build_with_mambabuild is deprecated, use conda_build_tool instead. Configures the conda-forge CI to run a debug build using the ``mamba`` solver.
         More information can be found in the
