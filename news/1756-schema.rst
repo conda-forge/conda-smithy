@@ -6,7 +6,7 @@
 **Changed:**
 
 * Included extra ``jsonschema`` validation for forge yaml, under ``configure_feedstock``
-* Moved legacy checks of old_file/skip_render and ensure_list of providers into a new  auxiliary ``_legacy_compatibility_checks`` function
+* Moved legacy checks of old_file and providers into a new  auxiliary ``_legacy_compatibility_checks`` function
 
 **Deprecated:**
 
