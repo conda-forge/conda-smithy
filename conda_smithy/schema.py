@@ -924,9 +924,10 @@ class ConfigModel(BaseModel):
 
     compiler_stack: Optional[str] = Field(
         default="comp7",
+        exclude=True,
         description="""
         Compiler stack environment variable. This is used to specify the compiler
-        stack to use for builds.
+        stack to use for builds. Deprecated.
 
         .. code-block:: yaml
 
@@ -936,9 +937,10 @@ class ConfigModel(BaseModel):
 
     min_py_ver: Optional[str] = Field(
         default="27",
+        exclude=True,
         description="""
         Minimum Python version. This is used to specify the minimum Python version
-        to use for builds.
+        to use for builds. Deprecated.
 
         .. code-block:: yaml
 
@@ -948,9 +950,10 @@ class ConfigModel(BaseModel):
 
     max_py_ver: Optional[str] = Field(
         default="37",
+        exclude=True,
         description="""
         Maximum Python version. This is used to specify the maximum Python version
-        to use for builds.
+        to use for builds. Deprecated.
 
         .. code-block:: yaml
 
@@ -960,9 +963,10 @@ class ConfigModel(BaseModel):
 
     min_r_ver: Optional[str] = Field(
         default="34",
+        exclude=True,
         description="""
         Minimum R version. This is used to specify the minimum R version to
-        use for builds.
+        use for builds. Deprecated.
 
         .. code-block:: yaml
 
@@ -972,9 +976,10 @@ class ConfigModel(BaseModel):
 
     max_r_ver: Optional[str] = Field(
         default="34",
+        exclude=True,
         description="""
         Maximum R version. This is used to specify the maximum R version to use
-        for builds.
+        for builds. Deprecated.
 
         .. code-block:: yaml
 

@@ -1612,7 +1612,7 @@
         }
       ],
       "default": "comp7",
-      "description": "\n        Compiler stack environment variable. This is used to specify the compiler\n        stack to use for builds.\n\n        .. code-block:: yaml\n\n            compiler_stack: comp7\n        ",
+      "description": "\n        Compiler stack environment variable. This is used to specify the compiler\n        stack to use for builds. Deprecated.\n\n        .. code-block:: yaml\n\n            compiler_stack: comp7\n        ",
       "title": "Compiler Stack"
     },
     "min_py_ver": {
@@ -1625,7 +1625,7 @@
         }
       ],
       "default": "27",
-      "description": "\n        Minimum Python version. This is used to specify the minimum Python version\n        to use for builds.\n\n        .. code-block:: yaml\n\n            min_py_ver: 27\n        ",
+      "description": "\n        Minimum Python version. This is used to specify the minimum Python version\n        to use for builds. Deprecated.\n\n        .. code-block:: yaml\n\n            min_py_ver: 27\n        ",
       "title": "Min Py Ver"
     },
     "max_py_ver": {
@@ -1638,7 +1638,7 @@
         }
       ],
       "default": "37",
-      "description": "\n        Maximum Python version. This is used to specify the maximum Python version\n        to use for builds.\n\n        .. code-block:: yaml\n\n            max_py_ver: 37\n        ",
+      "description": "\n        Maximum Python version. This is used to specify the maximum Python version\n        to use for builds. Deprecated.\n\n        .. code-block:: yaml\n\n            max_py_ver: 37\n        ",
       "title": "Max Py Ver"
     },
     "min_r_ver": {
@@ -1651,7 +1651,7 @@
         }
       ],
       "default": "34",
-      "description": "\n        Minimum R version. This is used to specify the minimum R version to\n        use for builds.\n\n        .. code-block:: yaml\n\n            min_r_ver: 34\n        ",
+      "description": "\n        Minimum R version. This is used to specify the minimum R version to\n        use for builds. Deprecated.\n\n        .. code-block:: yaml\n\n            min_r_ver: 34\n        ",
       "title": "Min R Ver"
     },
     "max_r_ver": {
@@ -1664,7 +1664,7 @@
         }
       ],
       "default": "34",
-      "description": "\n        Maximum R version. This is used to specify the maximum R version to use\n        for builds.\n\n        .. code-block:: yaml\n\n            max_r_ver: 34\n        ",
+      "description": "\n        Maximum R version. This is used to specify the maximum R version to use\n        for builds. Deprecated.\n\n        .. code-block:: yaml\n\n            max_r_ver: 34\n        ",
       "title": "Max R Ver"
     },
     "private_upload": {
