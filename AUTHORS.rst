@@ -22,6 +22,7 @@ Authors are sorted by number of commits.
 * Johnny Willemsen
 * Chris Burr
 * Julian Rüth
+* Bastian Zimmermann
 * H. Vetinari
 * John Kirkham
 * Daniel Bast
@@ -39,12 +40,12 @@ Authors are sorted by number of commits.
 * Patrick Sodré
 * C.A.M. Gerlach
 * refraction-ray
-* Bastian Zimmermann
 * Nicholas Bollweg
 * Leopold Talirz
 * Tom Pollard
 * Bela Stoyan
 * Gonzalo Pena-Castellanos
+* pre-commit-ci[bot]
 * Carlo
 * Matthew Craig
 * Peter Williams
@@ -68,7 +69,7 @@ Authors are sorted by number of commits.
 * Bruno Oliveira
 * Tony Kelman
 * Mervin Fansler
-* pre-commit-ci[bot]
+* Jannis Leidel
 * Guilherme Quentel Melo
 * santi
 * buijennifer

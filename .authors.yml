@@ -247,7 +247,7 @@
   email: isuru.11@cse.mrt.ac.lk
   alternate_emails:
   - isuruf@gmail.com
-  num_commits: 532
+  num_commits: 553
   first_commit: 2017-01-08 22:03:03
   github: isuruf
 - name: Julian Rüth
@@ -476,14 +476,14 @@
   github: jwillemsen
 - name: Jaime Rodríguez-Guerra
   email: jaimergp@users.noreply.github.com
-  num_commits: 125
+  num_commits: 126
   first_commit: 2020-11-01 14:18:08
   github: jaimergp
 - name: Bastian Zimmermann
   email: 10774221+BastianZim@users.noreply.github.com
   aliases:
   - BastianZim
-  num_commits: 9
+  num_commits: 18
   first_commit: 2021-01-27 15:01:39
   github: BastianZim
 - name: Wolf Vollprecht
@@ -585,10 +585,14 @@
   github: zklaus
 - name: pre-commit-ci[bot]
   email: 66853113+pre-commit-ci[bot]@users.noreply.github.com
-  num_commits: 3
+  num_commits: 7
   first_commit: 2023-10-30 15:49:50
   github: carterbox
 - name: Amit Kumar
   email: dtu.amit@gmail.com
   num_commits: 35
   first_commit: 2023-08-05 09:06:04
+- name: Jannis Leidel
+  email: jannis@leidel.info
+  num_commits: 3
+  first_commit: 2023-11-10 10:24:04
