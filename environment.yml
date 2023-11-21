@@ -34,3 +34,4 @@ dependencies:
   - cirun
   - pydantic >=1.8.1,<2
   - jsonschema
+  - backports.strenum

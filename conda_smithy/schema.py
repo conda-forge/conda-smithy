@@ -11,6 +11,13 @@ from jsonschema import Draft7Validator, validators
 from jsonschema.exceptions import ValidationError
 from pydantic import BaseModel, Field, create_model
 
+from conda.base.constants import KNOWN_SUBDIRS
+
+try:
+    from enum import StrEnum
+except ImportError:
+    from backports.strenum import StrEnum
+
 
 class DeprecatedFieldWarning(ValidationError):
     pass
@@ -457,21 +464,19 @@ class ShellCheck(BaseModel):
     )
 
 
-class PlatformsAliases(str, Enum):
+class PlatformsAliases(StrEnum):
     linux = "linux"
     win = "win"
     osx = "osx"
 
 
-class Platforms(str, Enum):
-    linux_64 = "linux_64"
-    linux_aarch64 = "linux_aarch64"
-    linux_armv7l = "linux_armv7l"
-    linux_ppc64le = "linux_ppc64le"
-    linux_s390x = "linux_s390x"
-    win_64 = "win_64"
-    osx_64 = "osx_64"
-    osx_arm64 = "osx_arm64"
+def get_subdirs():
+    return [
+        subdir.replace("-", "_") for subdir in KNOWN_SUBDIRS if "-" in subdir
+    ]
+
+
+Platforms = StrEnum("Platforms", get_subdirs())
 
 
 class ChannelPriorityConfig(str, Enum):
@@ -746,18 +751,16 @@ class ConfigModel(BaseModel):
             "provider",
         )()
     ] = Field(
-        default_factory=lambda: {
-            "linux": None,
-            "linux_64": ["azure"],
-            "linux_aarch64": None,
-            "linux_armv7l": None,
-            "linux_ppc64le": None,
-            "linux_s390x": None,
-            "osx": None,
-            "osx_64": ["azure"],
-            "win": None,
-            "win_64": ["azure"],
-        },
+        default_factory=lambda: dict(
+            [
+                (str(plat), None)
+                for plat in list(PlatformsAliases) + list(Platforms)
+            ]
+            + [
+                (str(plat), "azure")
+                for plat in ("linux_64", "osx_64", "win_64")
+            ]
+        ),
         description="""
         The ``provider`` field is a mapping from build platform (not target platform)
         to CI service. It determines which service handles each build platform.
