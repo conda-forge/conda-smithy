@@ -1936,7 +1936,7 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
         "conda_forge_output_validation": False,
         "private_upload": False,
         "secrets": [],
-        "conda_build_tool": "conda-build",
+        "conda_build_tool": "mambabuild",
         "conda_install_tool": "mamba",
         "conda_solver": "libmamba",
         # feedstock checkout git clone depth, None means keep default, 0 means no limit
