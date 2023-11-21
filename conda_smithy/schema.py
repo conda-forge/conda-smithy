@@ -1170,6 +1170,7 @@ if __name__ == "__main__":
 
     with CONDA_FORGE_JSON.open(mode="w+") as f:
         f.write(model.schema_json(indent=2))
+        f.write("\n")
 
     CONDA_FORGE_YML = (
         CONDA_FORGE_DATA / f"conda-forge.v{model.config_version}.yml"
