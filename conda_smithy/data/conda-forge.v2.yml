@@ -50,6 +50,7 @@ build_platform:
 choco: []
 circle: {}
 clone_depth: null
+compiler_stack: comp7
 conda_build_tool: conda-build
 conda_forge_output_validation: false
 conda_install_tool: mamba
@@ -74,6 +75,10 @@ github_actions:
   timeout_minutes: 360
   triggers: []
 idle_timeout_minutes: null
+max_py_ver: '37'
+max_r_ver: '34'
+min_py_ver: '27'
+min_r_ver: '34'
 noarch_platforms:
 - linux_64
 os_version:

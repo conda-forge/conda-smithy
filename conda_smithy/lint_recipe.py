@@ -126,7 +126,7 @@ def lint_about_contents(about_section, lints):
             )
 
 
-def lintify_forge_yaml(recipe_dir=None) -> Tuple[list, list]:
+def lintify_forge_yaml(recipe_dir=None) -> (list, list):
     if recipe_dir:
         forge_yaml_filename = (
             glob(os.path.join(recipe_dir, "..", "conda-forge.yml"))
