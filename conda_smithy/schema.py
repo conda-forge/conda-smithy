@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Literal, Optional, Type, Union
 
 import jsonschema
 import yaml
-from jsonschema import Draft7Validator, validators
+from jsonschema import Draft202012Validator, validators
 from jsonschema.exceptions import ValidationError
 from pydantic import BaseModel, Field, create_model
 
@@ -46,11 +46,11 @@ def deprecated_validator(validator, value, instance, schema):
 
 
 def get_validator_class():
-    all_validators = dict(Draft7Validator.VALIDATORS)
+    all_validators = dict(Draft202012Validator.VALIDATORS)
     all_validators["deprecated"] = deprecated_validator
 
     return validators.create(
-        meta_schema=Draft7Validator.META_SCHEMA, validators=all_validators
+        meta_schema=Draft202012Validator.META_SCHEMA, validators=all_validators
     )
 
 

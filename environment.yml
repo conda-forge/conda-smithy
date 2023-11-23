@@ -32,7 +32,7 @@ dependencies:
   - license-expression
   - libarchive
   - cirun
-  - pydantic >=1.8.1,<2
+  - pydantic >=2,<3
   - jsonschema
   - backports.strenum
   - exceptiongroup
