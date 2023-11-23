@@ -28,7 +28,7 @@ from conda_build.metadata import (
     FIELDS as cbfields,
 )
 import conda_build.conda_interface
-from conda_smithy.schema import validate_json_schema
+from conda_smithy.validate_schema import validate_json_schema
 
 from .utils import render_meta_yaml, get_yaml
 

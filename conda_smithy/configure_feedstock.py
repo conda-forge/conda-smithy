@@ -53,7 +53,10 @@ from conda_smithy.feedstock_io import (
     set_exe_file,
     write_file,
 )
-from conda_smithy.schema import validate_json_schema
+from conda_smithy.validate_schema import (
+    validate_json_schema,
+    CONDA_FORGE_YAML_DEFAULTS_FILE,
+)
 from conda_smithy.utils import (
     get_feedstock_about_from_meta,
     get_feedstock_name_from_meta,
@@ -83,10 +86,6 @@ if "CONDA_SMITHY_SERVICE_FEEDSTOCKS" in os.environ:
 # Cache lifetime in seconds, default 15min
 CONDA_FORGE_PINNING_LIFETIME = int(
     os.environ.get("CONDA_FORGE_PINNING_LIFETIME", 15 * 60)
-)
-
-CONDA_FORGE_YAML_DEFAULTS_FILE = (
-    Path(__file__).resolve().parent / "data" / "conda-forge.v2.yml"
 )
 
 
