@@ -5,15 +5,11 @@ from jsonschema import Draft202012Validator, validators
 from jsonschema.exceptions import ValidationError
 
 CONDA_FORGE_YAML_DEFAULTS_FILE = (
-    Path(__file__).resolve().parent
-    / "data"
-    / f"conda-forge.yml"
+    Path(__file__).resolve().parent / "data" / f"conda-forge.yml"
 )
 
 CONDA_FORGE_YAML_SCHEMA_FILE = (
-    Path(__file__).resolve().parent
-    / "data"
-    / f"conda-forge.json"
+    Path(__file__).resolve().parent / "data" / f"conda-forge.json"
 )
 
 
