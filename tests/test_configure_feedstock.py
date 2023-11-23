@@ -1,6 +1,5 @@
 import os
 
-from jsonschema import ValidationError
 import conda_smithy.configure_feedstock as configure_feedstock
 
 import pytest
@@ -774,10 +773,10 @@ def test_noarch_platforms_bad_yaml(config_yaml):
     with open(os.path.join(config_yaml, "conda-forge.yml"), "a+") as fp:
         fp.write("noarch_platforms: [eniac, zx80]")
 
-    with pytest.raises(ValidationError) as excinfo:
+    with pytest.raises(configure_feedstock.ExceptionGroup) as excinfo:
         load_forge_config()
 
-    assert "eniac" in str(excinfo.value)
+    assert "eniac" in repr(excinfo.value)
 
 
 def test_forge_yml_alt_path(config_yaml):
@@ -901,7 +900,7 @@ def test_conda_build_tools(config_yaml):
         fp.write(unmodified)
         fp.write("conda_build_tool: does-not-exist")
 
-    with pytest.raises(ValidationError):
+    with pytest.raises(configure_feedstock.ExceptionGroup):
         assert load_forge_config()
 
 

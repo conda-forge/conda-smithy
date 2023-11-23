@@ -17,7 +17,9 @@ from os import fspath
 from pathlib import Path, PurePath
 import requests
 
-if sys.version_info < (3, 11):
+try:
+    from builtins import ExceptionGroup
+except ImportError:
     from exceptiongroup import ExceptionGroup
 
 # The `requests` lib uses `simplejson` instead of `json` when available.
