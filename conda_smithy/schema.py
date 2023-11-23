@@ -19,6 +19,21 @@ except ImportError:
     from backports.strenum import StrEnum
 
 
+CONFIG_VERSION = 2
+
+CONDA_FORGE_YAML_DEFAULTS_FILE = (
+    Path(__file__).resolve().parent
+    / "data"
+    / f"conda-forge.v{CONFIG_VERSION}.yml"
+)
+
+CONDA_FORGE_YAML_SCHEMA_FILE = (
+    Path(__file__).resolve().parent
+    / "data"
+    / f"conda-forge.v{CONFIG_VERSION}.json"
+)
+
+
 class DeprecatedFieldWarning(ValidationError):
     pass
 
@@ -938,8 +953,8 @@ class ConfigModel(BaseModel):
         """,
     )
 
-    config_version: Optional[str] = Field(
-        default="2",
+    config_version: Optional[int] = Field(
+        default=CONFIG_VERSION,
         description="""
         The version of the ``conda-forge.yml`` specification.
         This should not be manually modified.
@@ -1200,18 +1215,9 @@ if __name__ == "__main__":
 
     model = ConfigModel()
 
-    CONDA_FORGE_DATA = Path(__file__).parent / "data"
-    CONDA_FORGE_DATA.mkdir(parents=True, exist_ok=True)
-    CONDA_FORGE_JSON = (
-        CONDA_FORGE_DATA / f"conda-forge.v{model.config_version}.json"
-    )
-
-    with CONDA_FORGE_JSON.open(mode="w+") as f:
+    with CONDA_FORGE_YAML_DEFAULTS_FILE.open(mode="w+") as f:
         f.write(model.schema_json(indent=2))
         f.write("\n")
 
-    CONDA_FORGE_YML = (
-        CONDA_FORGE_DATA / f"conda-forge.v{model.config_version}.yml"
-    )
-    with CONDA_FORGE_YML.open(mode="w+") as f:
+    with CONDA_FORGE_YAML_SCHEMA_FILE.open(mode="w+") as f:
         f.write(yaml.dump(model.dict(), indent=2))
