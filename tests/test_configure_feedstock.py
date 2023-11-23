@@ -1,7 +1,7 @@
 import os
 
 from jsonschema import ValidationError
-import conda_smithy.configure_feedstock as cnfgr_fdstk
+import conda_smithy.configure_feedstock as configure_feedstock
 
 import pytest
 import copy
@@ -11,7 +11,7 @@ import textwrap
 
 def test_noarch_skips_appveyor(noarch_recipe, jinja_env):
     noarch_recipe.config["provider"]["win"] = "appveyor"
-    cnfgr_fdstk.render_appveyor(
+    configure_feedstock.render_appveyor(
         jinja_env=jinja_env,
         forge_config=noarch_recipe.config,
         forge_dir=noarch_recipe.recipe,
@@ -22,7 +22,7 @@ def test_noarch_skips_appveyor(noarch_recipe, jinja_env):
 
 
 def test_noarch_skips_travis(noarch_recipe, jinja_env):
-    cnfgr_fdstk.render_travis(
+    configure_feedstock.render_travis(
         jinja_env=jinja_env,
         forge_config=noarch_recipe.config,
         forge_dir=noarch_recipe.recipe,
@@ -36,7 +36,7 @@ def test_noarch_skips_travis(noarch_recipe, jinja_env):
 def test_noarch_runs_on_circle(noarch_recipe, jinja_env):
     noarch_recipe.config["provider"]["linux"] = "circle"
 
-    cnfgr_fdstk.render_circle(
+    configure_feedstock.render_circle(
         jinja_env=jinja_env,
         forge_config=noarch_recipe.config,
         forge_dir=noarch_recipe.recipe,
@@ -52,7 +52,7 @@ def test_noarch_runs_on_circle(noarch_recipe, jinja_env):
 
 @pytest.mark.parametrize("recipe_dirname", ["recipe", "custom_recipe_dir"])
 def test_noarch_runs_on_azure(noarch_recipe, jinja_env):
-    cnfgr_fdstk.render_azure(
+    configure_feedstock.render_azure(
         jinja_env=jinja_env,
         forge_config=noarch_recipe.config,
         forge_dir=noarch_recipe.recipe,
@@ -67,7 +67,7 @@ def test_noarch_runs_on_azure(noarch_recipe, jinja_env):
 
 def test_r_skips_appveyor(r_recipe, jinja_env):
     r_recipe.config["provider"]["win"] = "appveyor"
-    cnfgr_fdstk.render_appveyor(
+    configure_feedstock.render_appveyor(
         jinja_env=jinja_env,
         forge_config=r_recipe.config,
         forge_dir=r_recipe.recipe,
@@ -81,7 +81,7 @@ def test_r_skips_appveyor(r_recipe, jinja_env):
 def test_r_matrix_travis(r_recipe, jinja_env):
     r_recipe.config["provider"]["osx"] = "travis"
 
-    cnfgr_fdstk.render_travis(
+    configure_feedstock.render_travis(
         jinja_env=jinja_env,
         forge_config=r_recipe.config,
         forge_dir=r_recipe.recipe,
@@ -98,7 +98,7 @@ def test_r_matrix_travis(r_recipe, jinja_env):
 def test_r_matrix_on_circle(r_recipe, jinja_env):
     r_recipe.config["provider"]["linux"] = "circle"
 
-    cnfgr_fdstk.render_circle(
+    configure_feedstock.render_circle(
         jinja_env=jinja_env,
         forge_config=r_recipe.config,
         forge_dir=r_recipe.recipe,
@@ -112,7 +112,7 @@ def test_r_matrix_on_circle(r_recipe, jinja_env):
 
 
 def test_r_matrix_azure(r_recipe, jinja_env):
-    cnfgr_fdstk.render_azure(
+    configure_feedstock.render_azure(
         jinja_env=jinja_env,
         forge_config=r_recipe.config,
         forge_dir=r_recipe.recipe,
@@ -127,7 +127,7 @@ def test_r_matrix_azure(r_recipe, jinja_env):
 
 def test_py_matrix_appveyor(py_recipe, jinja_env):
     py_recipe.config["provider"]["win"] = "appveyor"
-    cnfgr_fdstk.render_appveyor(
+    configure_feedstock.render_appveyor(
         jinja_env=jinja_env,
         forge_config=py_recipe.config,
         forge_dir=py_recipe.recipe,
@@ -145,7 +145,7 @@ def test_py_matrix_appveyor(py_recipe, jinja_env):
 def test_py_matrix_travis(py_recipe, jinja_env):
     py_recipe.config["provider"]["osx"] = "travis"
 
-    cnfgr_fdstk.render_travis(
+    configure_feedstock.render_travis(
         jinja_env=jinja_env,
         forge_config=py_recipe.config,
         forge_dir=py_recipe.recipe,
@@ -162,7 +162,7 @@ def test_py_matrix_travis(py_recipe, jinja_env):
 def test_py_matrix_on_circle(py_recipe, jinja_env):
     py_recipe.config["provider"]["linux"] = "circle"
 
-    cnfgr_fdstk.render_circle(
+    configure_feedstock.render_circle(
         jinja_env=jinja_env,
         forge_config=py_recipe.config,
         forge_dir=py_recipe.recipe,
@@ -178,7 +178,7 @@ def test_py_matrix_on_circle(py_recipe, jinja_env):
 def test_py_matrix_on_github(py_recipe, jinja_env):
     py_recipe.config["provider"]["linux"] = "github_actions"
 
-    cnfgr_fdstk.render_github_actions(
+    configure_feedstock.render_github_actions(
         jinja_env=jinja_env,
         forge_config=py_recipe.config,
         forge_dir=py_recipe.recipe,
@@ -197,7 +197,7 @@ def test_py_matrix_on_github(py_recipe, jinja_env):
 
 
 def test_py_matrix_on_azure(py_recipe, jinja_env):
-    cnfgr_fdstk.render_azure(
+    configure_feedstock.render_azure(
         jinja_env=jinja_env,
         forge_config=py_recipe.config,
         forge_dir=py_recipe.recipe,
@@ -211,7 +211,7 @@ def test_py_matrix_on_azure(py_recipe, jinja_env):
 
 
 def test_upload_on_branch_azure(upload_on_branch_recipe, jinja_env):
-    cnfgr_fdstk.render_azure(
+    configure_feedstock.render_azure(
         jinja_env=jinja_env,
         forge_config=upload_on_branch_recipe.config,
         forge_dir=upload_on_branch_recipe.recipe,
@@ -281,7 +281,7 @@ def test_upload_on_branch_azure(upload_on_branch_recipe, jinja_env):
 
 def test_upload_on_branch_appveyor(upload_on_branch_recipe, jinja_env):
     upload_on_branch_recipe.config["provider"]["win"] = "appveyor"
-    cnfgr_fdstk.render_appveyor(
+    configure_feedstock.render_appveyor(
         jinja_env=jinja_env,
         forge_config=upload_on_branch_recipe.config,
         forge_dir=upload_on_branch_recipe.recipe,
@@ -304,7 +304,7 @@ def test_circle_with_yum_reqs(py_recipe, jinja_env):
         os.path.join(py_recipe.recipe, "recipe", "yum_requirements.txt"), "w"
     ) as f:
         f.write("nano\n")
-    cnfgr_fdstk.render_circle(
+    configure_feedstock.render_circle(
         jinja_env=jinja_env,
         forge_config=py_recipe.config,
         forge_dir=py_recipe.recipe,
@@ -320,7 +320,7 @@ def test_circle_with_empty_yum_reqs_raises(py_recipe, jinja_env):
     ) as f:
         f.write("# effectively empty")
     with pytest.raises(ValueError):
-        cnfgr_fdstk.render_circle(
+        configure_feedstock.render_circle(
             jinja_env=jinja_env,
             forge_config=py_recipe.config,
             forge_dir=py_recipe.recipe,
@@ -333,7 +333,7 @@ def test_azure_with_empty_yum_reqs_raises(py_recipe, jinja_env):
     ) as f:
         f.write("# effectively empty")
     with pytest.raises(ValueError):
-        cnfgr_fdstk.render_azure(
+        configure_feedstock.render_azure(
             jinja_env=jinja_env,
             forge_config=py_recipe.config,
             forge_dir=py_recipe.recipe,
@@ -355,37 +355,37 @@ def test_circle_osx(py_recipe, jinja_env):
     )
     circle_config_file = os.path.join(forge_dir, ".circleci", "config.yml")
 
-    cnfgr_fdstk.clear_scripts(forge_dir)
-    cnfgr_fdstk.render_circle(
+    configure_feedstock.clear_scripts(forge_dir)
+    configure_feedstock.render_circle(
         jinja_env=jinja_env, forge_config=py_recipe.config, forge_dir=forge_dir
     )
     assert not os.path.exists(circle_osx_file)
     assert os.path.exists(circle_linux_file)
     assert os.path.exists(circle_config_file)
-    cnfgr_fdstk.render_travis(
+    configure_feedstock.render_travis(
         jinja_env=jinja_env, forge_config=py_recipe.config, forge_dir=forge_dir
     )
     assert os.path.exists(travis_yml_file)
 
-    cnfgr_fdstk.clear_scripts(forge_dir)
+    configure_feedstock.clear_scripts(forge_dir)
     config = copy.deepcopy(py_recipe.config)
     config["provider"]["osx"] = "circle"
-    cnfgr_fdstk.render_circle(
+    configure_feedstock.render_circle(
         jinja_env=jinja_env, forge_config=config, forge_dir=forge_dir
     )
     assert os.path.exists(circle_osx_file)
     assert os.path.exists(circle_linux_file)
     assert os.path.exists(circle_config_file)
-    cnfgr_fdstk.render_travis(
+    configure_feedstock.render_travis(
         jinja_env=jinja_env, forge_config=config, forge_dir=forge_dir
     )
     assert not os.path.exists(travis_yml_file)
 
-    cnfgr_fdstk.clear_scripts(forge_dir)
+    configure_feedstock.clear_scripts(forge_dir)
     config = copy.deepcopy(py_recipe.config)
     config["provider"]["linux"] = "dummy"
     config["provider"]["osx"] = "circle"
-    cnfgr_fdstk.render_circle(
+    configure_feedstock.render_circle(
         jinja_env=jinja_env, forge_config=config, forge_dir=forge_dir
     )
     assert os.path.exists(circle_osx_file)
@@ -402,8 +402,8 @@ def test_circle_skipped(linux_skipped_recipe, jinja_env):
     circle_config_file = os.path.join(forge_dir, ".circleci", "config.yml")
 
     config = copy.deepcopy(linux_skipped_recipe.config)
-    cnfgr_fdstk.copy_feedstock_content(config, forge_dir)
-    cnfgr_fdstk.render_circle(
+    configure_feedstock.copy_feedstock_content(config, forge_dir)
+    configure_feedstock.render_circle(
         jinja_env=jinja_env,
         forge_config=linux_skipped_recipe.config,
         forge_dir=forge_dir,
@@ -414,8 +414,8 @@ def test_circle_skipped(linux_skipped_recipe, jinja_env):
 
     config["provider"]["osx"] = "circle"
 
-    cnfgr_fdstk.copy_feedstock_content(config, forge_dir)
-    cnfgr_fdstk.render_circle(
+    configure_feedstock.copy_feedstock_content(config, forge_dir)
+    configure_feedstock.render_circle(
         jinja_env=jinja_env, forge_config=config, forge_dir=forge_dir
     )
     assert os.path.exists(circle_osx_file)
@@ -424,7 +424,7 @@ def test_circle_skipped(linux_skipped_recipe, jinja_env):
 
 
 def test_render_with_all_skipped_generates_readme(skipped_recipe, jinja_env):
-    cnfgr_fdstk.render_README(
+    configure_feedstock.render_README(
         jinja_env=jinja_env,
         forge_config=skipped_recipe.config,
         forge_dir=skipped_recipe.recipe,
@@ -442,7 +442,7 @@ def test_render_windows_with_skipped_python(python_skipped_recipe, jinja_env):
     config["exclusive_config_file"] = os.path.join(
         python_skipped_recipe.recipe, "recipe", "long_config.yaml"
     )
-    cnfgr_fdstk.render_appveyor(
+    configure_feedstock.render_appveyor(
         jinja_env=jinja_env,
         forge_config=config,
         forge_dir=python_skipped_recipe.recipe,
@@ -456,7 +456,7 @@ def test_render_windows_with_skipped_python(python_skipped_recipe, jinja_env):
 
 
 def test_readme_has_terminating_newline(noarch_recipe, jinja_env):
-    cnfgr_fdstk.render_README(
+    configure_feedstock.render_README(
         jinja_env=jinja_env,
         forge_config=noarch_recipe.config,
         forge_dir=noarch_recipe.recipe,
@@ -469,7 +469,7 @@ def test_readme_has_terminating_newline(noarch_recipe, jinja_env):
 
 
 def test_secrets(py_recipe, jinja_env):
-    cnfgr_fdstk.render_azure(
+    configure_feedstock.render_azure(
         jinja_env=jinja_env,
         forge_config=py_recipe.config,
         forge_dir=py_recipe.recipe,
@@ -499,7 +499,7 @@ def test_secrets(py_recipe, jinja_env):
                     )
 
     py_recipe.config["provider"]["linux_aarch64"] = "drone"
-    cnfgr_fdstk.render_drone(
+    configure_feedstock.render_drone(
         jinja_env=jinja_env,
         forge_config=py_recipe.config,
         forge_dir=py_recipe.recipe,
@@ -517,7 +517,7 @@ def test_secrets(py_recipe, jinja_env):
 
 
 def test_migrator_recipe(recipe_migration_cfep9, jinja_env):
-    cnfgr_fdstk.render_azure(
+    configure_feedstock.render_azure(
         jinja_env=jinja_env,
         forge_config=recipe_migration_cfep9.config,
         forge_dir=recipe_migration_cfep9.recipe,
@@ -550,7 +550,7 @@ def test_migrator_cfp_override(recipe_migration_cfep9, jinja_env):
                 """
             )
         )
-    cnfgr_fdstk.render_azure(
+    configure_feedstock.render_azure(
         jinja_env=jinja_env,
         forge_config=recipe_migration_cfep9.config,
         forge_dir=recipe_migration_cfep9.recipe,
@@ -581,7 +581,7 @@ def test_migrator_delete_old(recipe_migration_cfep9, jinja_env):
         )
     )
     os.makedirs(cfp_migration_dir, exist_ok=True)
-    cnfgr_fdstk.render_azure(
+    configure_feedstock.render_azure(
         jinja_env=jinja_env,
         forge_config=recipe_migration_cfep9.config,
         forge_dir=recipe_migration_cfep9.recipe,
@@ -602,7 +602,7 @@ def test_migrator_downgrade_recipe(
     """
     Assert that even when we have two migrations targeting the same file the correct one wins.
     """
-    cnfgr_fdstk.render_azure(
+    configure_feedstock.render_azure(
         jinja_env=jinja_env,
         forge_config=recipe_migration_cfep9_downgrade.config,
         forge_dir=recipe_migration_cfep9_downgrade.recipe,
@@ -637,7 +637,7 @@ def test_migrator_compiler_version_recipe(
     """
     Assert that even when we have two migrations targeting the same file the correct one wins.
     """
-    cnfgr_fdstk.render_azure(
+    configure_feedstock.render_azure(
         jinja_env=jinja_env,
         forge_config=recipe_migration_win_compiled.config,
         forge_dir=recipe_migration_win_compiled.recipe,
@@ -664,12 +664,12 @@ def test_migrator_compiler_version_recipe(
 
 
 def test_files_skip_render(render_skipped_recipe, jinja_env):
-    cnfgr_fdstk.render_README(
+    configure_feedstock.render_README(
         jinja_env=jinja_env,
         forge_config=render_skipped_recipe.config,
         forge_dir=render_skipped_recipe.recipe,
     )
-    cnfgr_fdstk.copy_feedstock_content(
+    configure_feedstock.copy_feedstock_content(
         render_skipped_recipe.config, render_skipped_recipe.recipe
     )
     skipped_files = [
@@ -685,7 +685,7 @@ def test_files_skip_render(render_skipped_recipe, jinja_env):
 
 
 def test_choco_install(choco_recipe, jinja_env):
-    cnfgr_fdstk.render_azure(
+    configure_feedstock.render_azure(
         jinja_env=jinja_env,
         forge_config=choco_recipe.config,
         forge_dir=choco_recipe.recipe,
@@ -711,7 +711,7 @@ def test_choco_install(choco_recipe, jinja_env):
 
 
 def test_webservices_action_exists(py_recipe, jinja_env):
-    cnfgr_fdstk.render_github_actions_services(
+    configure_feedstock.render_github_actions_services(
         jinja_env=jinja_env,
         forge_config=py_recipe.config,
         forge_dir=py_recipe.recipe,
@@ -728,7 +728,7 @@ def test_webservices_action_exists(py_recipe, jinja_env):
 
 
 def test_automerge_action_exists(py_recipe, jinja_env):
-    cnfgr_fdstk.render_github_actions_services(
+    configure_feedstock.render_github_actions_services(
         jinja_env=jinja_env,
         forge_config=py_recipe.config,
         forge_dir=py_recipe.recipe,
@@ -745,7 +745,7 @@ def test_automerge_action_exists(py_recipe, jinja_env):
 
 
 def test_conda_forge_yaml_empty(config_yaml):
-    load_forge_config = lambda: cnfgr_fdstk._load_forge_config(  # noqa
+    load_forge_config = lambda: configure_feedstock._load_forge_config(  # noqa
         config_yaml,
         exclusive_config_file=os.path.join(
             config_yaml, "recipe", "default_config.yaml"
@@ -764,7 +764,7 @@ def test_conda_forge_yaml_empty(config_yaml):
 
 
 def test_noarch_platforms_bad_yaml(config_yaml):
-    load_forge_config = lambda: cnfgr_fdstk._load_forge_config(  # noqa
+    load_forge_config = lambda: configure_feedstock._load_forge_config(  # noqa
         config_yaml,
         exclusive_config_file=os.path.join(
             config_yaml, "recipe", "default_config.yaml"
@@ -782,7 +782,7 @@ def test_noarch_platforms_bad_yaml(config_yaml):
 
 def test_forge_yml_alt_path(config_yaml):
     load_forge_config = (
-        lambda forge_yml: cnfgr_fdstk._load_forge_config(  # noqa
+        lambda forge_yml: configure_feedstock._load_forge_config(  # noqa
             config_yaml,
             exclusive_config_file=os.path.join(
                 config_yaml, "recipe", "default_config.yaml"
@@ -815,7 +815,7 @@ def test_cos7_env_render(py_recipe, jinja_env):
 
     try:
         assert "DEFAULT_LINUX_VERSION" not in os.environ
-        cnfgr_fdstk.render_azure(
+        configure_feedstock.render_azure(
             jinja_env=jinja_env,
             forge_config=forge_config,
             forge_dir=py_recipe.recipe,
@@ -846,7 +846,7 @@ def test_cuda_enabled_render(cuda_enabled_recipe, jinja_env):
 
     try:
         assert "CF_CUDA_ENABLED" not in os.environ
-        cnfgr_fdstk.render_azure(
+        configure_feedstock.render_azure(
             jinja_env=jinja_env,
             forge_config=forge_config,
             forge_dir=cuda_enabled_recipe.recipe,
@@ -869,7 +869,7 @@ def test_cuda_enabled_render(cuda_enabled_recipe, jinja_env):
 
 
 def test_conda_build_tools(config_yaml):
-    load_forge_config = lambda: cnfgr_fdstk._load_forge_config(  # noqa
+    load_forge_config = lambda: configure_feedstock._load_forge_config(  # noqa
         config_yaml,
         exclusive_config_file=os.path.join(
             config_yaml, "recipe", "default_config.yaml"
@@ -906,7 +906,7 @@ def test_conda_build_tools(config_yaml):
 
 
 def test_remote_ci_setup(config_yaml):
-    load_forge_config = lambda: cnfgr_fdstk._load_forge_config(  # noqa
+    load_forge_config = lambda: configure_feedstock._load_forge_config(  # noqa
         config_yaml,
         exclusive_config_file=os.path.join(
             config_yaml, "recipe", "default_config.yaml"
