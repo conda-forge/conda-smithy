@@ -1858,7 +1858,7 @@ def _read_forge_config(forge_dir, forge_yml=None):
         raise ExceptionGroup("lints", [*map(ValueError, validate_lints)])
 
     for hint in validate_hints:
-        print(hint.message)
+        logger.info(hint.message)
 
     # The config is just the union of the defaults, and the overridden
     # values.
