@@ -4,6 +4,22 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.30.0
+====================
+
+**Changed:**
+
+* Set ``conda_build_tool: mambabuild`` as default again until
+  https://github.com/conda/conda-libmamba-solver/issues/393 is fixed (#1807).
+* Changes the xkcd comic in the README to 1319 ( #1802 ) ( #1803 )
+
+**Authors:**
+
+* Marcel Bargull
+* John Kirkham
+
+
+
 v3.29.0
 ====================
 
