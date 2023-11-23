@@ -4,18 +4,16 @@ from pathlib import Path
 from jsonschema import Draft202012Validator, validators
 from jsonschema.exceptions import ValidationError
 
-CONFIG_VERSION = 2
-
 CONDA_FORGE_YAML_DEFAULTS_FILE = (
     Path(__file__).resolve().parent
     / "data"
-    / f"conda-forge.v{CONFIG_VERSION}.yml"
+    / f"conda-forge.yml"
 )
 
 CONDA_FORGE_YAML_SCHEMA_FILE = (
     Path(__file__).resolve().parent
     / "data"
-    / f"conda-forge.v{CONFIG_VERSION}.json"
+    / f"conda-forge.json"
 )
 
 

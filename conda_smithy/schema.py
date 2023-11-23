@@ -17,7 +17,6 @@ except ImportError:
 
 
 from conda_smithy.validate_schema import (
-    CONFIG_VERSION,
     CONDA_FORGE_YAML_DEFAULTS_FILE,
     CONDA_FORGE_YAML_SCHEMA_FILE,
 )
@@ -896,11 +895,12 @@ class ConfigModel(BaseModel):
         """,
     )
 
-    config_version: Optional[int] = Field(
-        default=CONFIG_VERSION,
+    config_version: Optional[str] = Field(
+        default="2",
+        exclude=True,  # Will not be rendered in the model dump
         description="""
-        The version of the ``conda-forge.yml`` specification.
-        This should not be manually modified.
+        The conda-smithy config version to be used for conda_build_config.yaml
+        files in recipe and conda-forge-pinning.
         """,
     )
 

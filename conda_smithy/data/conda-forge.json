@@ -2146,14 +2146,14 @@
     "config_version": {
       "anyOf": [
         {
-          "type": "integer"
+          "type": "string"
         },
         {
           "type": "null"
         }
       ],
-      "default": 2,
-      "description": "\n        The version of the ``conda-forge.yml`` specification.\n        This should not be manually modified.\n        ",
+      "default": "2",
+      "description": "\n        The conda-smithy config version to be used for conda_build_config.yaml\n        files in recipe and conda-forge-pinning.\n        ",
       "title": "Config Version"
     },
     "exclusive_config_file": {
