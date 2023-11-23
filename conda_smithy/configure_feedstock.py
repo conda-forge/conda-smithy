@@ -15,9 +15,10 @@ from collections import Counter, OrderedDict, namedtuple
 from itertools import chain, product
 from os import fspath
 from pathlib import Path, PurePath
-
 import requests
-from pathlib import Path, PurePath
+
+if sys.version_info < (3,11):
+    from exceptiongroup import ExceptionGroup
 
 # The `requests` lib uses `simplejson` instead of `json` when available.
 # In consequence the same JSON library must be used or the `JSONDecodeError`
@@ -1854,7 +1855,7 @@ def _read_forge_config(forge_dir, forge_yml=None):
     # Validate loaded configuration against a JSON schema.
     validate_lints, validate_hints = validate_json_schema(file_config)
     for err in validate_lints:
-        raise err
+        raise ExceptionGroup("lints", [*map(ValueError, validate_lints)])
 
     for hint in validate_hints:
         print(hint.message)
