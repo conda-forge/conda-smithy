@@ -1830,7 +1830,7 @@
           "type": "null"
         }
       ],
-      "default": "conda-build",
+      "default": "mambabuild",
       "description": "\n        Use this option to choose which tool is used to build your recipe.\n        ",
       "title": "Conda Build Tool"
     },

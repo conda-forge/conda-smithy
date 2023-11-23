@@ -4,6 +4,57 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.30.0
+====================
+
+**Changed:**
+
+* Set ``conda_build_tool: mambabuild`` as default again until
+  https://github.com/conda/conda-libmamba-solver/issues/393 is fixed (#1807).
+* Changes the xkcd comic in the README to 1319 ( #1802 ) ( #1803 )
+
+**Authors:**
+
+* Marcel Bargull
+* John Kirkham
+
+
+
+v3.29.0
+====================
+
+**Added:**
+
+* Added an --without-all option to ci-register/register-feedstock-token to disable all CI
+  and --with-<ci> would selectively enable the CI service (#1793, #1796).
+* Added a lint to check that staged-recipes maintainers have
+  commented on the PR that they are willing to maintain the recipe. (#1792)
+
+**Changed:**
+
+* Require pygithub>=2 as github actions secrets need that version. (#1797)
+* When upload_on_branch is set, GHA is triggered only for that branch (#1687).
+
+**Fixed:**
+
+* The team name for cirun was fixed. Previously the team name passed had
+  -feedstock in it and also did not support teams as maintainers.
+  For teams like conda-forge/r, if they are added to a feedstock after
+  Cirun is configured, the feedstock needs to be reconfigured (#1794).
+* Fixed getting cirun installation id for non conda-forge orgs (#1795).
+* Fix name of anaconda.org in README template, to prevent confusion with anaconda.cloud (#1798).
+* Skip running some tests locally when GH_TOKEN is not set (#1797).
+
+**Authors:**
+
+* Isuru Fernando
+* Jaime Rodríguez-Guerra
+* Bastian Zimmermann
+* pre-commit-ci[bot]
+* Jannis Leidel
+
+
+
 v3.28.0
 ====================
 

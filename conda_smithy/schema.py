@@ -483,7 +483,7 @@ class ConfigModel(BaseModel):
     )
 
     conda_build_tool: Optional[conda_build_tools] = Field(
-        default="conda-build",
+        default="mambabuild",
         description="""
         Use this option to choose which tool is used to build your recipe.
         """,
