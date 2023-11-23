@@ -27,7 +27,7 @@
   aliases:
   - John Kirkham
   - jakirkham
-  num_commits: 17
+  num_commits: 23
   first_commit: 2016-03-17 21:05:53
   github: jakirkham
 - name: Daniel Bast
@@ -182,7 +182,7 @@
   email: marcel.bargull@udo.edu
   alternate_emails:
   - mbargull@users.noreply.github.com
-  num_commits: 24
+  num_commits: 25
   first_commit: 2018-07-30 05:17:51
   github: mbargull
 - name: xoviat
@@ -247,7 +247,7 @@
   email: isuru.11@cse.mrt.ac.lk
   alternate_emails:
   - isuruf@gmail.com
-  num_commits: 553
+  num_commits: 555
   first_commit: 2017-01-08 22:03:03
   github: isuruf
 - name: Julian Rüth

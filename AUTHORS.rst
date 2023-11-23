@@ -14,17 +14,17 @@ Authors are sorted by number of commits.
 * shadow_walker
 * Michael Sarahan
 * Min RK
+* Marcel Bargull
 * Leo Fang
 * Hadrien Mary
 * Ryan Volz
-* Marcel Bargull
+* John Kirkham
 * Mark Harfouche
 * Johnny Willemsen
 * Chris Burr
 * Julian Rüth
 * Bastian Zimmermann
 * H. Vetinari
-* John Kirkham
 * Daniel Bast
 * Billy K. Poon
 * Tim Snyder
