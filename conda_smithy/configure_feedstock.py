@@ -84,6 +84,10 @@ CONDA_FORGE_PINNING_LIFETIME = int(
     os.environ.get("CONDA_FORGE_PINNING_LIFETIME", 15 * 60)
 )
 
+CONDA_FORGE_YAML_DEFAULTS_FILE = (
+    Path(__file__).resolve().parent / "data" / "conda-forge.v2.yml"
+)
+
 
 def package_key(config, used_loop_vars, subdir):
     # get the build string from whatever conda-build makes of the configuration
@@ -1828,10 +1832,7 @@ def _update_dict_within_dict(items, config):
 
 def _read_forge_config(forge_dir, forge_yml=None):
     # Load default values from the conda-forge.yml file
-    yaml_defaults_file = (
-        Path(__file__).resolve().parent / "data" / "conda-forge.v2.yml"
-    )
-    with open(yaml_defaults_file, "r") as fh:
+    with open(CONDA_FORGE_YAML_DEFAULTS_FILE, "r") as fh:
         default_config = yaml.safe_load(fh.read())
 
     if forge_yml is None:
