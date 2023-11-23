@@ -897,10 +897,9 @@ class ConfigModel(BaseModel):
 
     config_version: Optional[str] = Field(
         default="2",
-        exclude=True,  # Will not be rendered in the model dump
         description="""
         The conda-smithy config version to be used for conda_build_config.yaml
-        files in recipe and conda-forge-pinning.
+        files in recipe and conda-forge-pinning. This should not be manually modified.
         """,
     )
 

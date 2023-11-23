@@ -2153,7 +2153,7 @@
         }
       ],
       "default": "2",
-      "description": "\n        The conda-smithy config version to be used for conda_build_config.yaml\n        files in recipe and conda-forge-pinning.\n        ",
+      "description": "\n        The conda-smithy config version to be used for conda_build_config.yaml\n        files in recipe and conda-forge-pinning. This should not be manually modified.\n        ",
       "title": "Config Version"
     },
     "exclusive_config_file": {
