@@ -55,7 +55,7 @@ conda_build_tool: conda-build
 conda_forge_output_validation: false
 conda_install_tool: mamba
 conda_solver: libmamba
-config_version: '2'
+config_version: 2
 docker:
   command: bash
   executable: docker

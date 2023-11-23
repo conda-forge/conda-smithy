@@ -59,4 +59,3 @@ def validate_json_schema(config, schema_file: str = None):
         else:
             lints.append(error)
     return lints, hints
-

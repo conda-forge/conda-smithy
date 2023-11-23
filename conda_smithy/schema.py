@@ -16,7 +16,7 @@ except ImportError:
     from backports.strenum import StrEnum
 
 
-from .validate_schema import (
+from conda_smithy.validate_schema import (
     CONFIG_VERSION,
     CONDA_FORGE_YAML_DEFAULTS_FILE,
     CONDA_FORGE_YAML_SCHEMA_FILE,
@@ -1158,9 +1158,9 @@ if __name__ == "__main__":
 
     model = ConfigModel()
 
-    with CONDA_FORGE_YAML_DEFAULTS_FILE.open(mode="w+") as f:
+    with CONDA_FORGE_YAML_SCHEMA_FILE.open(mode="w+") as f:
         f.write(model.schema_json(indent=2))
         f.write("\n")
 
-    with CONDA_FORGE_YAML_SCHEMA_FILE.open(mode="w+") as f:
+    with CONDA_FORGE_YAML_DEFAULTS_FILE.open(mode="w+") as f:
         f.write(yaml.dump(model.dict(), indent=2))

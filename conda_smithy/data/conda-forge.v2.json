@@ -2146,13 +2146,13 @@
     "config_version": {
       "anyOf": [
         {
-          "type": "string"
+          "type": "integer"
         },
         {
           "type": "null"
         }
       ],
-      "default": "2",
+      "default": 2,
       "description": "\n        The version of the ``conda-forge.yml`` specification.\n        This should not be manually modified.\n        ",
       "title": "Config Version"
     },
