@@ -63,7 +63,7 @@ if NOT [%HOST_PLATFORM%] == [%BUILD_PLATFORM%] (
 {%- endif %}
 {%- if test == "native_and_emulated" %}
 if NOT [%HOST_PLATFORM%] == [%BUILD_PLATFORM%] (
-    if NOT [%CROSSCOMPILING_EMULATOR%] == [1] (
+    if [%CROSSCOMPILING_EMULATOR%] == [] (
         set "EXTRA_CB_OPTIONS=%EXTRA_CB_OPTIONS% --no-test"
     )
 )
