@@ -1,6 +1,6 @@
 **Added:**
 
-* Support setting teams, roles and users_from_json in cirun.
+* Support setting teams, roles and users_from_json in cirun (#1809).
 
 **Changed:**
 
