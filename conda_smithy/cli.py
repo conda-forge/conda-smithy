@@ -437,7 +437,7 @@ class RegisterCI(Subcommand):
                         owner,
                         repo,
                         resource,
-                        args.cirun_policy_args,
+                        cirun_policy_args=args.cirun_policy_args,
                         teams=args.cirun_teams,
                         roles=args.cirun_roles,
                         users_from_json=args.cirun_users_from_json,
