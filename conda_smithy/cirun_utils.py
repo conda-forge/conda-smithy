@@ -41,6 +41,9 @@ def add_repo_to_cirun_resource(
     owner: str,
     repo: str,
     resource: str,
+    teams: List,
+    roles: List,
+    users_from_json: Optional[str] = None,
     cirun_policy_args: Optional[List[str]] = None,
 ) -> Dict[str, Any]:
     """Grant access to a cirun resource to a particular repository, with a particular policy."""
@@ -54,12 +57,21 @@ def add_repo_to_cirun_resource(
     gh = Github(gh_token())
     gh_owner = gh.get_user(owner)
     gh_repo = gh_owner.get_repo(repo)
+
+    # Need to send None instead of an empty list
+    teams = teams or None
+    roles = roles or None
+    if not (teams or roles or users_from_json):
+        teams = [team.name for team in gh_repo.get_teams()]
+
     response = cirun.add_repo_to_resources(
         owner,
         repo,
         resources=[resource],
-        teams=[team.name for team in gh_repo.get_teams()],
         policy_args=policy_args,
+        teams=teams,
+        roles=roles,
+        users_from_json=users_from_json,
     )
     print(f"response: {response} | {response.json().keys()}")
     return response
