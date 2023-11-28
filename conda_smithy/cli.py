@@ -277,6 +277,23 @@ class RegisterCI(Subcommand):
             help="drone server URL to register this repo. multiple values allowed",
         )
         scp.add_argument(
+            "--cirun-teams",
+            default=[],
+            action="append",
+            help="github teams to enable in cirun for this repo. multiple values allowed",
+        )
+        scp.add_argument(
+            "--cirun-roles",
+            default=[],
+            action="append",
+            help="github roles to enable in cirun for this repo. multiple values allowed",
+        )
+        scp.add_argument(
+            "--cirun-users-from-json",
+            default=None,
+            help="A remote URL with a list of users to enable in cirun for this repo.",
+        )
+        scp.add_argument(
             "--cirun-resources",
             default=[],
             action="append",
@@ -417,7 +434,13 @@ class RegisterCI(Subcommand):
                 conda_smithy.cirun_utils.enable_cirun_for_project(owner, repo)
                 for resource in args.cirun_resources:
                     conda_smithy.cirun_utils.add_repo_to_cirun_resource(
-                        owner, repo, resource, args.cirun_policy_args
+                        owner,
+                        repo,
+                        resource,
+                        cirun_policy_args=args.cirun_policy_args,
+                        teams=args.cirun_teams,
+                        roles=args.cirun_roles,
+                        users_from_json=args.cirun_users_from_json,
                     )
         else:
             print("Cirun registration disabled.")
