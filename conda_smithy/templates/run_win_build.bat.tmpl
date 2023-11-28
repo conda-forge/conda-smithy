@@ -56,9 +56,16 @@ if EXIST LICENSE.txt (
     copy LICENSE.txt "{{ recipe_dir }}\\recipe-scripts-license.txt"
 )
 
-{%- if test in ["native", "native_and_emulated"] %}
+{%- if test == "native" %}
 if NOT [%HOST_PLATFORM%] == [%BUILD_PLATFORM%] (
     set "EXTRA_CB_OPTIONS=%EXTRA_CB_OPTIONS% --no-test"
+)
+{%- endif %}
+{%- if test == "native_and_emulated" %}
+if NOT [%HOST_PLATFORM%] == [%BUILD_PLATFORM%] (
+    if [%CROSSCOMPILING_EMULATOR%] == [] (
+        set "EXTRA_CB_OPTIONS=%EXTRA_CB_OPTIONS% --no-test"
+    )
 )
 {%- endif %}
 
