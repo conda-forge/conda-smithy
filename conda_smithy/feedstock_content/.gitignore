@@ -1,3 +1,6 @@
 *.pyc
 
 build_artifacts
+
+Mambaforge-MacOSX-*.sh
+MacOSX*.sdk.tar.xz
