@@ -31,4 +31,4 @@ dependencies:
   - scrypt
   - license-expression
   - libarchive
-  - cirun
+  - cirun >=0.30
