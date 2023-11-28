@@ -92,6 +92,9 @@ GITIGNORE = """# conda smithy ci-skeleton start
 *.pyc
 
 build_artifacts
+
+Mambaforge-MacOSX-*.sh
+MacOSX*.sdk.tar.xz
 # conda smithy ci-skeleton end
 """
 
