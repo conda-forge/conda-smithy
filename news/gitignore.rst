@@ -1,6 +1,6 @@
 **Added:**
 
-* Add Mambaforge and macos SDK files to feedstock gitignore file 
+* Add Mambaforge and macos SDK files to feedstock gitignore file
 
 **Changed:**
 
