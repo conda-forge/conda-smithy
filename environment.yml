@@ -31,7 +31,7 @@ dependencies:
   - scrypt
   - license-expression
   - libarchive
-  - cirun
+  - cirun >=0.30
   - pydantic >=2,<3
   - jsonschema
   - backports.strenum

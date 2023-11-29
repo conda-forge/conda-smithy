@@ -4,6 +4,20 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.30.1
+====================
+
+**Added:**
+
+* Support setting teams, roles and users_from_json in cirun (#1809).
+* Don't skip testing in win if there is an emulator.
+
+**Authors:**
+
+* Isuru Fernando
+
+
+
 v3.30.0
 ====================
 
