@@ -4,10 +4,10 @@
 # Please do not modify
 
 *
-!conda-forge.yml
+!/conda-forge.yml
 
-!*/
-!recipe/**
-!.ci_support/**
+!/*/
+!/recipe/**
+!/.ci_support/**
 
 *.pyc
