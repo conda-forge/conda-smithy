@@ -181,7 +181,10 @@ class AzureRunnerSettings(BaseModel):
 
 class AzureConfig(BaseModel):
     """
-    This dictates the behavior of the Azure Pipelines CI service. It is a sub-mapping for Azure-specific configuration options. For more information and some variables specifications, see the [Azure Pipelines schema reference documentation](https://learn.microsoft.com/en-us/azure/devops/pipelines/yaml-schema/?view=azure-pipelines).
+    This dictates the behavior of the Azure Pipelines CI service. It is a sub-mapping for
+    Azure-specific configuration options. For more information and some variables
+    specifications, see the [Azure Pipelines schema reference documentation](
+    https://learn.microsoft.com/en-us/azure/devops/pipelines/yaml-schema/?view=azure-pipelines).
     """
 
     force: Optional[bool] = Field(
