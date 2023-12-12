@@ -20,7 +20,7 @@ class DeprecatedFieldWarning(ValidationError):
 def deprecated_validator(validator, value, instance, schema):
     if value and instance is not None:
         yield DeprecatedFieldWarning(
-            f"'{schema['title']}' is deprecated.\n" + schema["description"]
+            f"'{schema['title']}' is deprecated.\n{schema['description']}"
         )
 
 
