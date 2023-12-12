@@ -44,11 +44,11 @@ class PydanticModelGenerator:
     Example usage:
 
     ```python
-    class MyEnum1(str, Enum):
+    class MyEnum1(StrEnum):
         key1 = "key1"
         key2 = "key2"
 
-    class MyEnum2(str, Enum):
+    class MyEnum2(StrEnum):
         key3 = "key3"
         key4 = "key4"
 
@@ -116,7 +116,7 @@ conda_build_tools = Literal[
 ]
 
 
-class CIservices(str, Enum):
+class CIservices(StrEnum):
     azure = "azure"
     circle = "circle"
     travis = "travis"
@@ -130,12 +130,12 @@ class CIservices(str, Enum):
     disable = "None"
 
 
-class BotConfigAutoMergeChoice(str, Enum):
+class BotConfigAutoMergeChoice(StrEnum):
     VERSION = "version"
     MIGRATION = "migration"
 
 
-class BotConfigSkipRenderChoices(str, Enum):
+class BotConfigSkipRenderChoices(StrEnum):
     GITIGNORE = ".gitignore"
     GITATTRIBUTES = ".gitattributes"
     README = "README.md"
@@ -143,7 +143,7 @@ class BotConfigSkipRenderChoices(str, Enum):
     GITHUB_WORKFLOWS = ".github/workflows"
 
 
-class BotConfigInspectionChoice(str, Enum):
+class BotConfigInspectionChoice(StrEnum):
     HINT = "hint"
     HINT_ALL = "hint-all"
     HINT_SOURCE = "hint-source"
@@ -439,13 +439,13 @@ def get_subdirs():
 Platforms = StrEnum("Platforms", get_subdirs())
 
 
-class ChannelPriorityConfig(str, Enum):
+class ChannelPriorityConfig(StrEnum):
     STRICT = "strict"
     FLEXIBLE = "flexible"
     DISABLED = "disabled"
 
 
-class DefaultTestPlatforms(str, Enum):
+class DefaultTestPlatforms(StrEnum):
     all = "all"
     native_only = "native_only"
     native_and_emulated = "native_and_emulated"
