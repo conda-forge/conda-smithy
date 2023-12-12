@@ -413,6 +413,7 @@ class CondaForgeDocker(BaseModel):
         description="""Setting the Docker image in conda-forge.yml is no longer
         supported, use conda_build_config.yaml to specify Docker images.""",
         default=None,
+        deprecated=True,
         exclude=True,  # Will not be rendered in the model dump
     )
 

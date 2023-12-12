@@ -1,7 +1,7 @@
 {
   "$defs": {
     "AzureConfig": {
-      "description": "This dictates the behavior of the Azure Pipelines CI service. It is a sub-mapping for Azure-specific configuration options. For more information and some variables specifications, see the [Azure Pipelines schema reference documentation](https://learn.microsoft.com/en-us/azure/devops/pipelines/yaml-schema/?view=azure-pipelines).",
+      "description": "This dictates the behavior of the Azure Pipelines CI service. It is a sub-mapping for\nAzure-specific configuration options. For more information and some variables\nspecifications, see the [Azure Pipelines schema reference documentation](\nhttps://learn.microsoft.com/en-us/azure/devops/pipelines/yaml-schema/?view=azure-pipelines).",
       "properties": {
         "force": {
           "anyOf": [
@@ -108,7 +108,7 @@
             }
           ],
           "default": null,
-          "description": "The name of the GitHub user or organization, if passed with         the GithubConfig provider, must comply with the value of the user_or_org field",
+          "description": "The name of the GitHub user or organization, if passed with the GithubConfig provider, must comply with the value of the user_or_org field",
           "title": "User Or Org"
         },
         "store_build_artifacts": {
@@ -480,6 +480,7 @@
             }
           ],
           "default": null,
+          "deprecated": true,
           "description": "Setting the Docker image in conda-forge.yml is no longer\n        supported, use conda_build_config.yaml to specify Docker images.",
           "title": "Image"
         }
