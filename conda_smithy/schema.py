@@ -241,8 +241,8 @@ class AzureConfig(BaseModel):
 
     user_or_org: Optional[Union[str, Nullable]] = Field(
         default=None,
-        description="The name of the GitHub user or organization, if passed with \
-        the GithubConfig provider, must comply with the value of the user_or_org field",
+        description="The name of the GitHub user or organization, if passed with "
+        "the GithubConfig provider, must comply with the value of the user_or_org field",
         exclude=True,  # Will not be rendered in the model dump
     )
 
