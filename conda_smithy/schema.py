@@ -359,6 +359,11 @@ class BotConfig(BaseModel):
         description="List of branches for additional bot migration PRs",
     )
 
+    run_deps_from_wheel: Optional[bool] = Field(
+        default=False,
+        description="Update run dependencies from the pip wheel",
+    )
+
 
 class CondaBuildConfig(BaseModel):
     model_config: ConfigDict = ConfigDict(extra='forbid')

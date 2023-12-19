@@ -33,6 +33,7 @@ bot:
   automerge: false
   check_solvable: true
   inspection: hint
+  run_deps_from_wheel: false
 build_platform:
   emscripten_wasm32: emscripten_wasm32
   freebsd_64: freebsd_64

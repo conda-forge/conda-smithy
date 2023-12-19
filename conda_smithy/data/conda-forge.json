@@ -286,6 +286,19 @@
           "default": [],
           "description": "List of branches for additional bot migration PRs",
           "title": "Abi Migration Branches"
+        },
+        "run_deps_from_wheel": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": false,
+          "description": "Update run dependencies from the pip wheel",
+          "title": "Run Deps From Wheel"
         }
       },
       "title": "BotConfig",
