@@ -401,19 +401,10 @@ class CondaForgeDocker(BaseModel):
     #########################################
     #### Deprecated Docker configuration ####
     #########################################
-    image: Optional[Union[str, Nullable]] = Field(
-        description="""Setting the Docker image in conda-forge.yml is no longer
-        supported, use conda_build_config.yaml to specify Docker images.""",
-        default=None,
-        deprecated=True,
-        exclude=True,  # Deprecated options are not rendered in the model dump
-    )
-
     interactive: Optional[Union[bool, Nullable]] = Field(
         description="Whether to run Docker in interactive mode",
         default=None,
         deprecated=True,
-        exclude=True,  # Deprecated options are not rendered in the model dump
     )
 
 
@@ -638,9 +629,7 @@ class ConfigModel(BaseModel):
 
             docker:
                 executable: docker
-                image: "condaforge/linux-anvil-comp7"
                 command: "bash"
-                interactive: True
         """,
     )
 
@@ -915,6 +904,7 @@ class ConfigModel(BaseModel):
     compiler_stack: Optional[str] = Field(
         default="comp7",
         deprecated=True,
+        exclude=True,
         description="""
         Compiler stack environment variable. This is used to specify the compiler
         stack to use for builds. Deprecated.
