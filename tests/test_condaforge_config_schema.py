@@ -76,7 +76,5 @@ def test_extra_fields():
             "pkg_format": 2,
         },
     }
-    # Extra value should be ignored
-    config = ConfigModel(**config_dict)
-    # assert value is not present after dumping to dict
-    assert "extra_field" not in dict(config)
+    with pytest.raises(ValidationError):
+        config = ConfigModel(**config_dict)
