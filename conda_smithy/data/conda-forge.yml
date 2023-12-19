@@ -2,6 +2,7 @@ appveyor:
   image: Visual Studio 2017
 azure:
   force: false
+  free_disk_space: false
   max_parallel: 50
   project_id: 84710dde-1620-425b-80d0-4cf5baca359d
   project_name: feedstock-builds
@@ -28,7 +29,10 @@ azure:
   store_build_artifacts: false
   timeout_minutes: null
 bot:
+  abi_migration_branches: []
   automerge: false
+  check_solvable: true
+  inspection: hint
 build_platform:
   emscripten_wasm32: emscripten_wasm32
   freebsd_64: freebsd_64
@@ -47,10 +51,14 @@ build_platform:
   win_64: win_64
   win_arm64: win_arm64
   zos_z: zos_z
+channel_priority: strict
 choco: []
 circle: {}
 clone_depth: null
-compiler_stack: comp7
+conda_build:
+  error_overlinking: false
+  pkg_format: 2
+  zstd_compression_level: 16
 conda_build_tool: mambabuild
 conda_forge_output_validation: false
 conda_install_tool: mamba
@@ -60,6 +68,7 @@ docker:
   command: bash
   executable: docker
   fallback_image: quay.io/condaforge/linux-anvil-comp7
+  interactive: null
 drone: {}
 github:
   branch_name: main
@@ -122,6 +131,8 @@ recipe_dir: recipe
 remote_ci_setup:
 - conda-forge-ci-setup=4
 secrets: []
+shellcheck:
+  enabled: false
 skip_render: []
 templates: {}
 test: null

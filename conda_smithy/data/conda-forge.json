@@ -1,6 +1,7 @@
 {
   "$defs": {
     "AzureConfig": {
+      "additionalProperties": false,
       "description": "This dictates the behavior of the Azure Pipelines CI service. It is a sub-mapping for\nAzure-specific configuration options. For more information and some variables\nspecifications, see the [Azure Pipelines schema reference documentation](\nhttps://learn.microsoft.com/en-us/azure/devops/pipelines/yaml-schema/?view=azure-pipelines).",
       "properties": {
         "force": {
@@ -28,7 +29,7 @@
               "type": "null"
             }
           ],
-          "default": null,
+          "default": false,
           "description": "Free up disk space before running the Docker container for building on Linux",
           "title": "Free Disk Space"
         },
@@ -77,7 +78,7 @@
               "$ref": "#/$defs/AzureRunnerSettings"
             }
           ],
-          "description": "Linux-specific settings for self-hosted runners"
+          "description": "Linux-specific settings for runners"
         },
         "settings_osx": {
           "allOf": [
@@ -85,7 +86,7 @@
               "$ref": "#/$defs/AzureRunnerSettings"
             }
           ],
-          "description": "OSX-specific settings for self-hosted runners"
+          "description": "OSX-specific settings for runners"
         },
         "settings_win": {
           "allOf": [
@@ -93,7 +94,7 @@
               "$ref": "#/$defs/AzureRunnerSettings"
             }
           ],
-          "description": "Windows-specific settings for self-hosted runners"
+          "description": "Windows-specific settings for runners"
         },
         "user_or_org": {
           "anyOf": [
@@ -145,7 +146,8 @@
       "type": "object"
     },
     "AzureRunnerSettings": {
-      "description": "This is the settings for self-hosted runners.",
+      "additionalProperties": true,
+      "description": "This is the settings for runners.",
       "properties": {
         "pool": {
           "anyOf": [
@@ -211,6 +213,7 @@
       "type": "object"
     },
     "BotConfig": {
+      "additionalProperties": false,
       "description": "This dictates the behavior of the conda-forge auto-tick bot which issues\nautomatic version updates/migrations for feedstocks.",
       "properties": {
         "automerge": {
@@ -238,7 +241,7 @@
               "type": "null"
             }
           ],
-          "default": null,
+          "default": true,
           "description": "Open PRs only if resulting environment is solvable.",
           "title": "Check Solvable"
         },
@@ -254,7 +257,7 @@
               "type": "null"
             }
           ],
-          "default": null,
+          "default": "hint",
           "description": "Method for generating hints or updating recipe",
           "title": "Inspection"
         },
@@ -280,22 +283,9 @@
               "type": "null"
             }
           ],
-          "default": null,
+          "default": [],
           "description": "List of branches for additional bot migration PRs",
           "title": "Abi Migration Branches"
-        },
-        "version_updates_random_fraction_to_keep": {
-          "anyOf": [
-            {
-              "type": "number"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "description": "Fraction of versions to keep for frequently updated packages",
-          "title": "Version Updates Random Fraction To Keep"
         }
       },
       "title": "BotConfig",
@@ -360,6 +350,7 @@
       "type": "string"
     },
     "CondaBuildConfig": {
+      "additionalProperties": false,
       "properties": {
         "pkg_format": {
           "anyOf": [
@@ -411,6 +402,7 @@
       "type": "object"
     },
     "CondaForgeDocker": {
+      "additionalProperties": false,
       "properties": {
         "executable": {
           "anyOf": [
@@ -464,25 +456,9 @@
             }
           ],
           "default": null,
+          "deprecated": true,
           "description": "Whether to run Docker in interactive mode",
           "title": "Interactive"
-        },
-        "image": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "$ref": "#/$defs/Nullable"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "deprecated": true,
-          "description": "Setting the Docker image in conda-forge.yml is no longer\n        supported, use conda_build_config.yaml to specify Docker images.",
-          "title": "Image"
         }
       },
       "title": "CondaForgeDocker",
@@ -499,6 +475,7 @@
       "type": "string"
     },
     "GithubActionsConfig": {
+      "additionalProperties": false,
       "properties": {
         "artifact_retention_days": {
           "anyOf": [
@@ -600,6 +577,7 @@
       "type": "object"
     },
     "GithubConfig": {
+      "additionalProperties": false,
       "properties": {
         "user_or_org": {
           "anyOf": [
@@ -687,6 +665,7 @@
       "type": "string"
     },
     "ShellCheck": {
+      "additionalProperties": false,
       "properties": {
         "enabled": {
           "default": false,
@@ -1803,6 +1782,7 @@
       "type": "object"
     }
   },
+  "additionalProperties": false,
   "description": "This model describes in detail the top-level fields in  ``conda-forge.yml``.\nGeneral configuration options are described below within the ``Fields``\nspecifications. Additional examples are provided as part of the object\ndescription. Values and options are subject to change, and will be\nflagged as Deprecated as appropriate.",
   "properties": {
     "conda_build": {
@@ -1954,7 +1934,7 @@
           "type": "null"
         }
       ],
-      "description": "\n        This is a mapping for Docker-specific configuration options.\n        Some options are\n\n        .. code-block:: yaml\n\n            docker:\n                executable: docker\n                image: \"condaforge/linux-anvil-comp7\"\n                command: \"bash\"\n                interactive: True\n        "
+      "description": "\n        This is a mapping for Docker-specific configuration options.\n        Some options are\n\n        .. code-block:: yaml\n\n            docker:\n                executable: docker\n                command: \"bash\"\n        "
     },
     "idle_timeout_minutes": {
       "anyOf": [
@@ -2065,7 +2045,6 @@
           "type": "null"
         }
       ],
-      "default": null,
       "description": "\n        Shell scripts used for builds or activation scripts can be linted with\n        shellcheck. This option can be used to enable shellcheck and configure\n        its behavior. This is not enabled by default, but can be enabled like so:\n\n        .. code-block:: yaml\n\n            shellcheck:\n                enabled: True\n\n        ",
       "title": "Shellcheck"
     },
@@ -2285,22 +2264,6 @@
       "default": null,
       "description": "\n        The depth of the git clone.\n        ",
       "title": "Clone Depth"
-    },
-    "timeout_minutes": {
-      "anyOf": [
-        {
-          "type": "integer"
-        },
-        {
-          "$ref": "#/$defs/Nullable"
-        },
-        {
-          "type": "null"
-        }
-      ],
-      "default": null,
-      "description": "\n        The timeout in minutes for all platforms CI jobs.\n        If passed alongside with Azure, it will be used as the default\n        timeout for Azure Pipelines jobs.\n        ",
-      "title": "Timeout Minutes"
     },
     "travis": {
       "anyOf": [
