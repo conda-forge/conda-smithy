@@ -153,6 +153,27 @@ class BotConfigInspectionChoice(StrEnum):
     UPDATE_GRAYSKULL = "update-grayskull"
 
 
+class BotConfigVersionUpdatesSourcesChoice(StrEnum):
+    CRAN = "cran"
+    GITHUB = "github"
+    INCREMENT_ALPHA_RAW_URL = "incrementalpharawurl"
+    LIBRARIES_IO = "librariesio"
+    NPM = "npm"
+    NVIDIA = "nvidia"
+    PYPI = "pypi"
+    RAW_URL = "rawurl"
+    ROS_DISTRO = "rosdistro"
+    # CRAN = "CRAN"
+    # GITHUB = "Github"
+    # INCREMENT_ALPHA_RAW_URL = "IncrementAlphaRawURL"
+    # LIBRARIES_IO = "LibrariesIO"
+    # NPM = "NPM"
+    # NVIDIA = "NVIDIA"
+    # PYPI = "PyPI"
+    # RAW_URL = "RawURL"
+    # ROS_DISTRO = "ROSDistro"
+
+
 ##############################################
 ########## Model definitions #################
 ##############################################
@@ -332,6 +353,29 @@ class GithubActionsConfig(BaseModel):
     )
 
 
+class BotConfigVersionUpdates(BaseModel):
+    """
+    This dictates the behavior of the conda-forge auto-tick bot for version
+    updates
+    """
+    model_config: ConfigDict = ConfigDict(extra='forbid')
+
+    random_fraction_to_keep: Optional[float] = Field(
+        None,
+        description="Fraction of versions to keep for frequently updated packages",
+    )
+    
+    exclude: Optional[List[Union[str, float]]] = Field(
+        default=[],
+        description="list of versions to exclude",
+    )
+
+    sources: Optional[List[BotConfigVersionUpdatesSourcesChoice]] = Field(
+        None,
+        description="List of sources to use for version updates",
+    )
+
+
 class BotConfig(BaseModel):
     """
     This dictates the behavior of the conda-forge auto-tick bot which issues
@@ -362,6 +406,11 @@ class BotConfig(BaseModel):
     run_deps_from_wheel: Optional[bool] = Field(
         default=False,
         description="Update run dependencies from the pip wheel",
+    )
+
+    version_updates: Optional[BotConfigVersionUpdates] = Field(
+        default_factory=BotConfigVersionUpdates,
+        description="Bot config for version update PRs",
     )
 
 

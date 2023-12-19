@@ -299,6 +299,17 @@
           "default": false,
           "description": "Update run dependencies from the pip wheel",
           "title": "Run Deps From Wheel"
+        },
+        "version_updates": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/BotConfigVersionUpdates"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Bot config for version update PRs"
         }
       },
       "title": "BotConfig",
@@ -334,6 +345,81 @@
         ".github/workflows"
       ],
       "title": "BotConfigSkipRenderChoices",
+      "type": "string"
+    },
+    "BotConfigVersionUpdates": {
+      "additionalProperties": false,
+      "description": "This dictates the behavior of the conda-forge auto-tick bot for version\nupdates",
+      "properties": {
+        "random_fraction_to_keep": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Fraction of versions to keep for frequently updated packages",
+          "title": "Random Fraction To Keep"
+        },
+        "exclude": {
+          "anyOf": [
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": [],
+          "description": "list of versions to exclude",
+          "title": "Exclude"
+        },
+        "sources": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/BotConfigVersionUpdatesSourcesChoice"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "List of sources to use for version updates",
+          "title": "Sources"
+        }
+      },
+      "title": "BotConfigVersionUpdates",
+      "type": "object"
+    },
+    "BotConfigVersionUpdatesSourcesChoice": {
+      "enum": [
+        "cran",
+        "github",
+        "incrementalpharawurl",
+        "librariesio",
+        "npm",
+        "nvidia",
+        "pypi",
+        "rawurl",
+        "rosdistro"
+      ],
+      "title": "BotConfigVersionUpdatesSourcesChoice",
       "type": "string"
     },
     "CIservices": {
