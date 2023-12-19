@@ -415,7 +415,7 @@ class BotConfig(BaseModel):
 
 
 class CondaBuildConfig(BaseModel):
-    model_config: ConfigDict = ConfigDict(extra='forbid')
+    model_config: ConfigDict = ConfigDict(extra='allow')
 
     pkg_format: Optional[Literal["tar", 1, 2, "1", "2"]] = Field(
         description="The package version format for conda build.",

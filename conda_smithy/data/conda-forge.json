@@ -449,7 +449,7 @@
       "type": "string"
     },
     "CondaBuildConfig": {
-      "additionalProperties": false,
+      "additionalProperties": true,
       "properties": {
         "pkg_format": {
           "anyOf": [
