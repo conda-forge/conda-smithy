@@ -480,9 +480,8 @@
     "DefaultTestPlatforms": {
       "enum": [
         "all",
-        "native_only",
-        "native_and_emulated",
-        "emulated_only"
+        "native",
+        "native_and_emulated"
       ],
       "title": "DefaultTestPlatforms",
       "type": "string"

@@ -449,9 +449,8 @@ class ChannelPriorityConfig(StrEnum):
 
 class DefaultTestPlatforms(StrEnum):
     all = "all"
-    native_only = "native_only"
+    native = "native"
     native_and_emulated = "native_and_emulated"
-    emulated_only = "emulated_only"
 
 
 class ConfigModel(BaseModel):
