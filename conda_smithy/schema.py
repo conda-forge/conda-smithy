@@ -179,6 +179,13 @@ class AzureRunnerSettings(BaseModel):
     )
 
 
+class AzureFreeDiskSpaceConfig(StrEnum):
+    CACHE = "cache"
+    APT = "apt"
+    DOCKER = "docker"
+
+
+
 class AzureConfig(BaseModel):
     """
     This dictates the behavior of the Azure Pipelines CI service. It is a sub-mapping for
@@ -193,9 +200,8 @@ class AzureConfig(BaseModel):
     )
 
     free_disk_space: Optional[Union[bool, Nullable]] = Field(
-        default=None,
+        default=False,
         description="Free up disk space before running the Docker container for building on Linux",
-        exclude=True,  # Will not be rendered in the model dump
     )
 
     max_parallel: Optional[int] = Field(
@@ -243,7 +249,8 @@ class AzureConfig(BaseModel):
         default=None,
         description="The name of the GitHub user or organization, if passed with "
         "the GithubConfig provider, must comply with the value of the user_or_org field",
-        exclude=True,  # Will not be rendered in the model dump
+        exclude=True,  # Will not be rendered in the model dump since we check if it was
+                       # set or not
     )
 
     store_build_artifacts: Optional[bool] = Field(
@@ -338,27 +345,18 @@ class BotConfig(BaseModel):
     )
 
     check_solvable: Optional[bool] = Field(
-        None,
+        default=True,
         description="Open PRs only if resulting environment is solvable.",
-        exclude=True,  # Will not be rendered in the model dump
     )
 
     inspection: Optional[Union[bool, BotConfigInspectionChoice]] = Field(
-        None,
+        default="hint",
         description="Method for generating hints or updating recipe",
-        exclude=True,  # Will not be rendered in the model dump
     )
 
     abi_migration_branches: Optional[List[Union[str, int, float]]] = Field(
-        None,
+        default=[],
         description="List of branches for additional bot migration PRs",
-        exclude=True,  # Will not be rendered in the model dump
-    )
-
-    version_updates_random_fraction_to_keep: Optional[float] = Field(
-        None,
-        description="Fraction of versions to keep for frequently updated packages",
-        exclude=True,  # Will not be rendered in the model dump
     )
 
 
@@ -400,12 +398,6 @@ class CondaForgeDocker(BaseModel):
         description="The command to run in Docker", default="bash"
     )
 
-    interactive: Optional[Union[bool, Nullable]] = Field(
-        description="Whether to run Docker in interactive mode",
-        default=None,
-        exclude=True,  # Will not be rendered in the model dump
-    )
-
     #########################################
     #### Deprecated Docker configuration ####
     #########################################
@@ -414,7 +406,14 @@ class CondaForgeDocker(BaseModel):
         supported, use conda_build_config.yaml to specify Docker images.""",
         default=None,
         deprecated=True,
-        exclude=True,  # Will not be rendered in the model dump
+        exclude=True,  # Deprecated options are not rendered in the model dump
+    )
+
+    interactive: Optional[Union[bool, Nullable]] = Field(
+        description="Whether to run Docker in interactive mode",
+        default=None,
+        deprecated=True,
+        exclude=True,  # Deprecated options are not rendered in the model dump
     )
 
 
@@ -470,7 +469,6 @@ class ConfigModel(BaseModel):
 
     conda_build: Optional[CondaBuildConfig] = Field(
         default_factory=CondaBuildConfig,
-        exclude=True,  # Will not be rendered in the model dump
         description="""
         Settings in this block are used to control how ``conda build``
         runs and produces artifacts. An example of the such configuration is:
@@ -600,7 +598,6 @@ class ConfigModel(BaseModel):
 
     channel_priority: Optional[ChannelPriorityConfig] = Field(
         default="strict",
-        exclude=True,  # Will not be rendered in the model dump
         description="""
         The channel priority level for the conda solver during feedstock builds.
         For extra information, see the
@@ -813,8 +810,7 @@ class ConfigModel(BaseModel):
     )
 
     shellcheck: Optional[Union[ShellCheck, Nullable]] = Field(
-        default=None,
-        exclude=True,  # Will not be rendered in the model dump
+        default_factory=lambda: {"enabled": False},
         description="""
         Shell scripts used for builds or activation scripts can be linted with
         shellcheck. This option can be used to enable shellcheck and configure
@@ -1003,16 +999,6 @@ class ConfigModel(BaseModel):
         default=None,
         description="""
         The depth of the git clone.
-        """,
-    )
-
-    timeout_minutes: Optional[Union[int, Nullable]] = Field(
-        default=None,
-        exclude=True,  # Will not be rendered in the model dump
-        description="""
-        The timeout in minutes for all platforms CI jobs.
-        If passed alongside with Azure, it will be used as the default
-        timeout for Azure Pipelines jobs.
         """,
     )
 
