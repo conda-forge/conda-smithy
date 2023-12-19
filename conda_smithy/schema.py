@@ -965,7 +965,6 @@ class ConfigModel(BaseModel):
     compiler_stack: Optional[str] = Field(
         default="comp7",
         deprecated=True,
-        exclude=True,
         description="""
         Compiler stack environment variable. This is used to specify the compiler
         stack to use for builds. Deprecated.

@@ -60,6 +60,7 @@ channel_priority: strict
 choco: []
 circle: {}
 clone_depth: null
+compiler_stack: comp7
 conda_build:
   error_overlinking: false
   pkg_format: 2
