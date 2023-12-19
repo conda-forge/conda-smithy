@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Literal, Optional, Type, Union
 
 import yaml
-from pydantic import BaseModel, Field, create_model
+from pydantic import BaseModel, Field, create_model, ConfigDict
 
 from conda.base.constants import KNOWN_SUBDIRS
 
@@ -159,7 +159,8 @@ class BotConfigInspectionChoice(StrEnum):
 
 
 class AzureRunnerSettings(BaseModel):
-    """This is the settings for self-hosted runners."""
+    """This is the settings for runners."""
+    model_config: ConfigDict = ConfigDict(extra='allow')
 
     pool: Optional[Dict[str, str]] = Field(
         default_factory=lambda: {"vmImage": "ubuntu-latest"},
@@ -193,6 +194,7 @@ class AzureConfig(BaseModel):
     specifications, see the [Azure Pipelines schema reference documentation](
     https://learn.microsoft.com/en-us/azure/devops/pipelines/yaml-schema/?view=azure-pipelines).
     """
+    model_config: ConfigDict = ConfigDict(extra='forbid')
 
     force: Optional[bool] = Field(
         default=False,
@@ -224,14 +226,14 @@ class AzureConfig(BaseModel):
     #########################################
     settings_linux: AzureRunnerSettings = Field(
         default_factory=lambda: AzureRunnerSettings(swapfile_size="0GiB"),
-        description="Linux-specific settings for self-hosted runners",
+        description="Linux-specific settings for runners",
     )
 
     settings_osx: AzureRunnerSettings = Field(
         default_factory=lambda: AzureRunnerSettings(
             pool={"vmImage": "macOS-11"}
         ),
-        description="OSX-specific settings for self-hosted runners",
+        description="OSX-specific settings for runners",
     )
 
     settings_win: AzureRunnerSettings = Field(
@@ -242,7 +244,7 @@ class AzureConfig(BaseModel):
                 "UPLOAD_TEMP": "D:\\\\tmp",
             },
         ),
-        description="Windows-specific settings for self-hosted runners",
+        description="Windows-specific settings for runners",
     )
 
     user_or_org: Optional[Union[str, Nullable]] = Field(
@@ -267,6 +269,8 @@ class AzureConfig(BaseModel):
 
 
 class GithubConfig(BaseModel):
+    model_config: ConfigDict = ConfigDict(extra='forbid')
+
     user_or_org: Optional[str] = Field(
         description="The name of the GitHub user or organization, \
         if passed with the AzureConfig provider, must comply with the value of the user_or_org field",
@@ -288,6 +292,8 @@ class GithubConfig(BaseModel):
 
 
 class GithubActionsConfig(BaseModel):
+    model_config: ConfigDict = ConfigDict(extra='forbid')
+
     artifact_retention_days: Optional[int] = Field(
         description="The number of days to retain artifacts",
         default=14,
@@ -326,18 +332,12 @@ class GithubActionsConfig(BaseModel):
     )
 
 
-class PlatformUniqueConfig(BaseModel):
-    enabled: bool = Field(
-        description="Whether to use extra platform-specific configuration options",
-        default=False,
-    )
-
-
 class BotConfig(BaseModel):
     """
     This dictates the behavior of the conda-forge auto-tick bot which issues
     automatic version updates/migrations for feedstocks.
     """
+    model_config: ConfigDict = ConfigDict(extra='forbid')
 
     automerge: Optional[Union[bool, BotConfigAutoMergeChoice]] = Field(
         False,
@@ -361,6 +361,8 @@ class BotConfig(BaseModel):
 
 
 class CondaBuildConfig(BaseModel):
+    model_config: ConfigDict = ConfigDict(extra='forbid')
+
     pkg_format: Optional[Literal["tar", 1, 2, "1", "2"]] = Field(
         description="The package version format for conda build.",
         default=2,
@@ -385,6 +387,8 @@ class CondaBuildConfig(BaseModel):
 
 
 class CondaForgeDocker(BaseModel):
+    model_config: ConfigDict = ConfigDict(extra='forbid')
+
     executable: Optional[str] = Field(
         description="The executable for Docker", default="docker"
     )
@@ -409,6 +413,8 @@ class CondaForgeDocker(BaseModel):
 
 
 class ShellCheck(BaseModel):
+    model_config: ConfigDict = ConfigDict(extra='forbid')
+
     enabled: bool = Field(
         description="Whether to use shellcheck to lint shell scripts",
         default=False,
@@ -452,6 +458,8 @@ class ConfigModel(BaseModel):
     flagged as Deprecated as appropriate.
 
     """
+
+    model_config: ConfigDict = ConfigDict(extra='forbid')
 
     # Values which are not expected to be present in the model dump, are
     # flagged with exclude=True. This is to avoid confusion when comparing
