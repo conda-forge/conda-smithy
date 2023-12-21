@@ -4,6 +4,30 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.30.2
+====================
+
+**Added:**
+
+*  <news item>
+
+**Changed:**
+
+* Updated `.gitignore` to exclude everything except recipe/ and conda-forge.yml (#1413)
+
+**Fixed:**
+
+* Fix linting with conda-build=3.28.2. (#1816)
+
+**Authors:**
+
+* Isuru Fernando
+* Marcel Bargull
+* pre-commit-ci[bot]
+* David Hirschfeld
+
+
+
 v3.30.1
 ====================
 
