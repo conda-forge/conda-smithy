@@ -182,7 +182,7 @@
   email: marcel.bargull@udo.edu
   alternate_emails:
   - mbargull@users.noreply.github.com
-  num_commits: 25
+  num_commits: 26
   first_commit: 2018-07-30 05:17:51
   github: mbargull
 - name: xoviat
@@ -247,7 +247,7 @@
   email: isuru.11@cse.mrt.ac.lk
   alternate_emails:
   - isuruf@gmail.com
-  num_commits: 563
+  num_commits: 573
   first_commit: 2017-01-08 22:03:03
   github: isuruf
 - name: Julian Rüth
@@ -585,7 +585,7 @@
   github: zklaus
 - name: pre-commit-ci[bot]
   email: 66853113+pre-commit-ci[bot]@users.noreply.github.com
-  num_commits: 7
+  num_commits: 8
   first_commit: 2023-10-30 15:49:50
   github: carterbox
 - name: Amit Kumar
@@ -596,3 +596,7 @@
   email: jannis@leidel.info
   num_commits: 3
   first_commit: 2023-11-10 10:24:04
+- name: David Hirschfeld
+  email: david.hirschfeld@stanwell.com
+  num_commits: 4
+  first_commit: 2020-10-24 23:53:21

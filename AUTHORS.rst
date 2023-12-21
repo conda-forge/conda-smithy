@@ -44,8 +44,8 @@ Authors are sorted by number of commits.
 * Leopold Talirz
 * Tom Pollard
 * Bela Stoyan
-* Gonzalo Pena-Castellanos
 * pre-commit-ci[bot]
+* Gonzalo Pena-Castellanos
 * Carlo
 * Matthew Craig
 * Peter Williams
@@ -61,6 +61,7 @@ Authors are sorted by number of commits.
 * xoviat
 * Elmar Pruesse
 * Patrick Sodré
+* David Hirschfeld
 * Josh Barnes
 * Tobias Megies
 * Jonathan Helmus
