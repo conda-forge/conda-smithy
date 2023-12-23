@@ -1,0 +1,3 @@
+**Fixed:**
+
+* Reverted changes to gitignore that excluded all contents from recipe
