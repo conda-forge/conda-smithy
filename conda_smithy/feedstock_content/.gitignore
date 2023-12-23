@@ -1,13 +1,3 @@
-# User content belongs under recipe/.
-# Feedstock configuration goes in `conda-forge.yml`
-# Everything else is managed by the conda-smithy rerender process.
-# Please do not modify
-
-*
-!/conda-forge.yml
-
-!/*/
-!/recipe/**
-!/.ci_support/**
-
 *.pyc
+
+build_artifacts

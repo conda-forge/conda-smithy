@@ -26,11 +26,6 @@ def _render_template(template_file, env, forge_dir, config):
         fh.write(new_file_contents)
 
 
-GITIGNORE_ADDITIONAL = """*.pyc
-build_artifacts
-"""
-
-
 def _insert_into_gitignore(
     feedstock_directory=".",
     prefix="# conda smithy ci-skeleton start\n",
@@ -50,7 +45,11 @@ def _insert_into_gitignore(
         dname = os.path.dirname(fname)
         if dname:
             os.makedirs(dname, exist_ok=True)
-    new = prefix + GITIGNORE_ADDITIONAL + suffix
+    # get new values
+    gi = os.path.join(conda_forge_content, "feedstock_content", ".gitignore")
+    with open(gi, "r") as f:
+        s = f.read()
+    new = prefix + s + suffix
     # write out the file
     with open(fname, "w") as f:
         f.write(before + new + after)

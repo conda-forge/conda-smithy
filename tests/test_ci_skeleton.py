@@ -90,6 +90,7 @@ test:
 
 GITIGNORE = """# conda smithy ci-skeleton start
 *.pyc
+
 build_artifacts
 # conda smithy ci-skeleton end
 """
