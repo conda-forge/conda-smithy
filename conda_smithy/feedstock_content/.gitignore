@@ -3,11 +3,21 @@
 # Everything else is managed by the conda-smithy rerender process.
 # Please do not modify
 
+# Ignore all files and folders in root
 *
 !/conda-forge.yml
 
+# Don't ignore any subfolders if the parent folder is 'un-ignored'
 !/*/
+# Don't ignore any files/folders recursively in the following folders
 !/recipe/**
 !/.ci_support/**
+
+# Since we ignore files/folders recursively, any folders inside
+# build_artifacts gets ignored which trips some build systems.
+# To avoid that we 'un-ignore' all files/folders recursively
+# and only ignore the root build_artifacts folder.
+!/build_artifacts/**
+/build_artifacts
 
 *.pyc
