@@ -4,7 +4,7 @@
 
 **Changed:**
 
-* Fixed a typo in gitignore
+* Fixed a typo in gitignore (#1822).
 
 **Deprecated:**
 
