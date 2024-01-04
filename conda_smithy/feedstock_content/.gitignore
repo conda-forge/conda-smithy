@@ -8,7 +8,7 @@
 !/conda-forge.yml
 
 # Don't ignore any subfolders if the parent folder is 'un-ignored'
-!/*/
+!/**/
 # Don't ignore any files/folders recursively in the following folders
 !/recipe/**
 !/.ci_support/**
