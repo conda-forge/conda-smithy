@@ -12,6 +12,7 @@
 # Don't ignore any files/folders recursively in the following folders
 !/recipe/**
 !/.ci_support/**
+!/.github/**
 
 # Since we ignore files/folders recursively, any folders inside
 # build_artifacts gets ignored which trips some build systems.
