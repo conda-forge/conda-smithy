@@ -40,11 +40,11 @@ Authors are sorted by number of commits.
 * Patrick Sodré
 * C.A.M. Gerlach
 * refraction-ray
+* pre-commit-ci[bot]
 * Nicholas Bollweg
 * Leopold Talirz
 * Tom Pollard
 * Bela Stoyan
-* pre-commit-ci[bot]
 * Gonzalo Pena-Castellanos
 * Carlo
 * Matthew Craig
