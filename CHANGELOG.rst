@@ -4,6 +4,29 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.30.3
+====================
+
+**Changed:**
+
+* Fixed gitignore so that maturin projects work.
+
+**Fixed:**
+
+* Fixed line endings of .ci_support/README on windows (#1824).
+* Fix local builds of feedstocks submodules ( #1826 ).
+
+**Authors:**
+
+* Isuru Fernando
+* Matthew R. Becker
+* Marcel Bargull
+* John Kirkham
+* pre-commit-ci[bot]
+* David Hirschfeld
+
+
+
 v3.30.2
 ====================
 
