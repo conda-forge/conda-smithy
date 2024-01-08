@@ -40,7 +40,7 @@ def enable_cirun_for_project(owner: str, repo: str) -> Dict[str, Any]:
 def add_repo_to_cirun_resource(
     owner: str,
     repo: str,
-    resource: str,
+    resources: List[str],
     teams: List,
     roles: List,
     users_from_json: Optional[str] = None,
@@ -52,7 +52,7 @@ def add_repo_to_cirun_resource(
     if cirun_policy_args and "pull_request" in cirun_policy_args:
         policy_args = {"pull_request": True}
     print(
-        f"Adding repo {owner}/{repo} to resource {resource} with policy_args: {policy_args}"
+        f"Adding repo {owner}/{repo} to resources {resources} with policy_args: {policy_args}"
     )
     gh = Github(gh_token())
     gh_owner = gh.get_user(owner)
@@ -67,7 +67,7 @@ def add_repo_to_cirun_resource(
     response = cirun.add_repo_to_resources(
         owner,
         repo,
-        resources=[resource],
+        resources=resources,
         policy_args=policy_args,
         teams=teams,
         roles=roles,

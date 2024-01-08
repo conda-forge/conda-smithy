@@ -432,16 +432,15 @@ class RegisterCI(Subcommand):
                     f"Cirun Registration: resources to add to: {owner}/{repo}"
                 )
                 conda_smithy.cirun_utils.enable_cirun_for_project(owner, repo)
-                for resource in args.cirun_resources:
-                    conda_smithy.cirun_utils.add_repo_to_cirun_resource(
-                        owner,
-                        repo,
-                        resource,
-                        cirun_policy_args=args.cirun_policy_args,
-                        teams=args.cirun_teams,
-                        roles=args.cirun_roles,
-                        users_from_json=args.cirun_users_from_json,
-                    )
+                conda_smithy.cirun_utils.add_repo_to_cirun_resource(
+                    owner,
+                    repo,
+                    args.cirun_resources,
+                    cirun_policy_args=args.cirun_policy_args,
+                    teams=args.cirun_teams,
+                    roles=args.cirun_roles,
+                    users_from_json=args.cirun_users_from_json,
+                )
         else:
             print("Cirun registration disabled.")
 
