@@ -676,9 +676,9 @@ class Test_linter(unittest.TestCase):
 
     def test_jinja_load_file_data(self):
         # Test that we can use load_file_data in a recipe. We don't care about
-        # the results here and/or the actual file data because the recipe linter 
-        # renders conda-build functions to just function stubs to pass the linting
-        # TODO: add *args and **kwargs for functions used to parse the file
+        # the results here and/or the actual file data because the recipe linter
+        # renders conda-build functions to just function stubs to pass the linting.
+        # TODO: add *args and **kwargs for functions used to parse the file.
         with tmp_directory() as recipe_dir:
             with io.open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
                 fh.write(
@@ -693,9 +693,9 @@ class Test_linter(unittest.TestCase):
 
     def test_jinja_load_setup_py_data(self):
         # Test that we can use load_file_data in a recipe. We don't care about
-        # the results here and/or the actual file data because the recipe linter 
-        # renders conda-build functions to just function stubs to pass the linting
-        # TODO: add *args and **kwargs for functions used to parse the file
+        # the results here and/or the actual file data because the recipe linter
+        # renders conda-build functions to just function stubs to pass the linting.
+        # TODO: add *args and **kwargs for functions used to parse the file.
         with tmp_directory() as recipe_dir:
             with io.open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
                 fh.write(
@@ -710,9 +710,9 @@ class Test_linter(unittest.TestCase):
 
     def test_jinja_load_str_data(self):
         # Test that we can use load_file_data in a recipe. We don't care about
-        # the results here and/or the actual file data because the recipe linter 
-        # renders conda-build functions to just function stubs to pass the linting
-        # TODO: add *args and **kwargs for functions used to parse the data
+        # the results here and/or the actual file data because the recipe linter
+        # renders conda-build functions to just function stubs to pass the linting.
+        # TODO: add *args and **kwargs for functions used to parse the data.
         with tmp_directory() as recipe_dir:
             with io.open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
                 fh.write(
