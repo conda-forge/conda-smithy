@@ -692,7 +692,7 @@ class Test_linter(unittest.TestCase):
             lints = linter.main(recipe_dir)
 
     def test_jinja_load_setup_py_data(self):
-        # Test that we can use load_file_data in a recipe. We don't care about
+        # Test that we can use load_setup_py_data in a recipe. We don't care about
         # the results here and/or the actual file data because the recipe linter
         # renders conda-build functions to just function stubs to pass the linting.
         # TODO: add *args and **kwargs for functions used to parse the file.
