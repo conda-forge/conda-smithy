@@ -4,6 +4,23 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.30.4
+====================
+
+**Changed:**
+
+* Fixed a typo in gitignore (#1822).
+
+**Fixed:**
+
+* Code refactoring for cirun. (#1812)
+
+**Authors:**
+
+* Isuru Fernando
+
+
+
 v3.30.3
 ====================
 
