@@ -15,11 +15,11 @@ Authors are sorted by number of commits.
 * Michael Sarahan
 * Min RK
 * Marcel Bargull
+* Mark Harfouche
 * Leo Fang
 * Hadrien Mary
 * Ryan Volz
 * John Kirkham
-* Mark Harfouche
 * Johnny Willemsen
 * Chris Burr
 * Julian Rüth
