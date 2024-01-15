@@ -786,8 +786,7 @@
               "type": "null"
             }
           ],
-          "default": "emscripten_wasm32",
-          "description": "The emscripten_wasm32 value"
+          "default": "emscripten_wasm32"
         },
         "wasi_wasm32": {
           "anyOf": [
@@ -798,8 +797,7 @@
               "type": "null"
             }
           ],
-          "default": "wasi_wasm32",
-          "description": "The wasi_wasm32 value"
+          "default": "wasi_wasm32"
         },
         "freebsd_64": {
           "anyOf": [
@@ -810,8 +808,7 @@
               "type": "null"
             }
           ],
-          "default": "freebsd_64",
-          "description": "The freebsd_64 value"
+          "default": "freebsd_64"
         },
         "linux_32": {
           "anyOf": [
@@ -822,8 +819,7 @@
               "type": "null"
             }
           ],
-          "default": "linux_32",
-          "description": "The linux_32 value"
+          "default": "linux_32"
         },
         "linux_64": {
           "anyOf": [
@@ -834,8 +830,7 @@
               "type": "null"
             }
           ],
-          "default": "linux_64",
-          "description": "The linux_64 value"
+          "default": "linux_64"
         },
         "linux_aarch64": {
           "anyOf": [
@@ -846,8 +841,7 @@
               "type": "null"
             }
           ],
-          "default": "linux_aarch64",
-          "description": "The linux_aarch64 value"
+          "default": "linux_aarch64"
         },
         "linux_armv6l": {
           "anyOf": [
@@ -858,8 +852,7 @@
               "type": "null"
             }
           ],
-          "default": "linux_armv6l",
-          "description": "The linux_armv6l value"
+          "default": "linux_armv6l"
         },
         "linux_armv7l": {
           "anyOf": [
@@ -870,8 +863,7 @@
               "type": "null"
             }
           ],
-          "default": "linux_armv7l",
-          "description": "The linux_armv7l value"
+          "default": "linux_armv7l"
         },
         "linux_ppc64": {
           "anyOf": [
@@ -882,8 +874,7 @@
               "type": "null"
             }
           ],
-          "default": "linux_ppc64",
-          "description": "The linux_ppc64 value"
+          "default": "linux_ppc64"
         },
         "linux_ppc64le": {
           "anyOf": [
@@ -894,8 +885,7 @@
               "type": "null"
             }
           ],
-          "default": "linux_ppc64le",
-          "description": "The linux_ppc64le value"
+          "default": "linux_ppc64le"
         },
         "linux_riscv64": {
           "anyOf": [
@@ -906,8 +896,7 @@
               "type": "null"
             }
           ],
-          "default": "linux_riscv64",
-          "description": "The linux_riscv64 value"
+          "default": "linux_riscv64"
         },
         "linux_s390x": {
           "anyOf": [
@@ -918,8 +907,7 @@
               "type": "null"
             }
           ],
-          "default": "linux_s390x",
-          "description": "The linux_s390x value"
+          "default": "linux_s390x"
         },
         "osx_64": {
           "anyOf": [
@@ -930,8 +918,7 @@
               "type": "null"
             }
           ],
-          "default": "osx_64",
-          "description": "The osx_64 value"
+          "default": "osx_64"
         },
         "osx_arm64": {
           "anyOf": [
@@ -942,8 +929,7 @@
               "type": "null"
             }
           ],
-          "default": "osx_arm64",
-          "description": "The osx_arm64 value"
+          "default": "osx_arm64"
         },
         "win_32": {
           "anyOf": [
@@ -954,8 +940,7 @@
               "type": "null"
             }
           ],
-          "default": "win_32",
-          "description": "The win_32 value"
+          "default": "win_32"
         },
         "win_64": {
           "anyOf": [
@@ -966,8 +951,7 @@
               "type": "null"
             }
           ],
-          "default": "win_64",
-          "description": "The win_64 value"
+          "default": "win_64"
         },
         "win_arm64": {
           "anyOf": [
@@ -978,8 +962,7 @@
               "type": "null"
             }
           ],
-          "default": "win_arm64",
-          "description": "The win_arm64 value"
+          "default": "win_arm64"
         },
         "zos_z": {
           "anyOf": [
@@ -990,8 +973,7 @@
               "type": "null"
             }
           ],
-          "default": "zos_z",
-          "description": "The zos_z value"
+          "default": "zos_z"
         }
       },
       "title": "build_platform",
@@ -999,54 +981,6 @@
     },
     "os_version": {
       "properties": {
-        "emscripten_wasm32": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "$ref": "#/$defs/Nullable"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "description": "The emscripten_wasm32 value",
-          "title": "Emscripten Wasm32"
-        },
-        "wasi_wasm32": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "$ref": "#/$defs/Nullable"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "description": "The wasi_wasm32 value",
-          "title": "Wasi Wasm32"
-        },
-        "freebsd_64": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "$ref": "#/$defs/Nullable"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "description": "The freebsd_64 value",
-          "title": "Freebsd 64"
-        },
         "linux_32": {
           "anyOf": [
             {
@@ -1060,7 +994,6 @@
             }
           ],
           "default": null,
-          "description": "The linux_32 value",
           "title": "Linux 32"
         },
         "linux_64": {
@@ -1076,7 +1009,6 @@
             }
           ],
           "default": null,
-          "description": "The linux_64 value",
           "title": "Linux 64"
         },
         "linux_aarch64": {
@@ -1092,7 +1024,6 @@
             }
           ],
           "default": null,
-          "description": "The linux_aarch64 value",
           "title": "Linux Aarch64"
         },
         "linux_armv6l": {
@@ -1108,7 +1039,6 @@
             }
           ],
           "default": null,
-          "description": "The linux_armv6l value",
           "title": "Linux Armv6L"
         },
         "linux_armv7l": {
@@ -1124,7 +1054,6 @@
             }
           ],
           "default": null,
-          "description": "The linux_armv7l value",
           "title": "Linux Armv7L"
         },
         "linux_ppc64": {
@@ -1140,7 +1069,6 @@
             }
           ],
           "default": null,
-          "description": "The linux_ppc64 value",
           "title": "Linux Ppc64"
         },
         "linux_ppc64le": {
@@ -1156,7 +1084,6 @@
             }
           ],
           "default": null,
-          "description": "The linux_ppc64le value",
           "title": "Linux Ppc64Le"
         },
         "linux_riscv64": {
@@ -1172,7 +1099,6 @@
             }
           ],
           "default": null,
-          "description": "The linux_riscv64 value",
           "title": "Linux Riscv64"
         },
         "linux_s390x": {
@@ -1188,104 +1114,7 @@
             }
           ],
           "default": null,
-          "description": "The linux_s390x value",
           "title": "Linux S390X"
-        },
-        "osx_64": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "$ref": "#/$defs/Nullable"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "description": "The osx_64 value",
-          "title": "Osx 64"
-        },
-        "osx_arm64": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "$ref": "#/$defs/Nullable"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "description": "The osx_arm64 value",
-          "title": "Osx Arm64"
-        },
-        "win_32": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "$ref": "#/$defs/Nullable"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "description": "The win_32 value",
-          "title": "Win 32"
-        },
-        "win_64": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "$ref": "#/$defs/Nullable"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "description": "The win_64 value",
-          "title": "Win 64"
-        },
-        "win_arm64": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "$ref": "#/$defs/Nullable"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "description": "The win_arm64 value",
-          "title": "Win Arm64"
-        },
-        "zos_z": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "$ref": "#/$defs/Nullable"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "description": "The zos_z value",
-          "title": "Zos Z"
         }
       },
       "title": "os_version",
@@ -1293,456 +1122,6 @@
     },
     "provider": {
       "properties": {
-        "emscripten_wasm32": {
-          "anyOf": [
-            {
-              "items": {
-                "$ref": "#/$defs/CIservices"
-              },
-              "type": "array"
-            },
-            {
-              "$ref": "#/$defs/CIservices"
-            },
-            {
-              "type": "boolean"
-            },
-            {
-              "$ref": "#/$defs/Nullable"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "description": "The emscripten_wasm32 value",
-          "title": "Emscripten Wasm32"
-        },
-        "wasi_wasm32": {
-          "anyOf": [
-            {
-              "items": {
-                "$ref": "#/$defs/CIservices"
-              },
-              "type": "array"
-            },
-            {
-              "$ref": "#/$defs/CIservices"
-            },
-            {
-              "type": "boolean"
-            },
-            {
-              "$ref": "#/$defs/Nullable"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "description": "The wasi_wasm32 value",
-          "title": "Wasi Wasm32"
-        },
-        "freebsd_64": {
-          "anyOf": [
-            {
-              "items": {
-                "$ref": "#/$defs/CIservices"
-              },
-              "type": "array"
-            },
-            {
-              "$ref": "#/$defs/CIservices"
-            },
-            {
-              "type": "boolean"
-            },
-            {
-              "$ref": "#/$defs/Nullable"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "description": "The freebsd_64 value",
-          "title": "Freebsd 64"
-        },
-        "linux_32": {
-          "anyOf": [
-            {
-              "items": {
-                "$ref": "#/$defs/CIservices"
-              },
-              "type": "array"
-            },
-            {
-              "$ref": "#/$defs/CIservices"
-            },
-            {
-              "type": "boolean"
-            },
-            {
-              "$ref": "#/$defs/Nullable"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "description": "The linux_32 value",
-          "title": "Linux 32"
-        },
-        "linux_64": {
-          "anyOf": [
-            {
-              "items": {
-                "$ref": "#/$defs/CIservices"
-              },
-              "type": "array"
-            },
-            {
-              "$ref": "#/$defs/CIservices"
-            },
-            {
-              "type": "boolean"
-            },
-            {
-              "$ref": "#/$defs/Nullable"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": "azure",
-          "description": "The linux_64 value",
-          "title": "Linux 64"
-        },
-        "linux_aarch64": {
-          "anyOf": [
-            {
-              "items": {
-                "$ref": "#/$defs/CIservices"
-              },
-              "type": "array"
-            },
-            {
-              "$ref": "#/$defs/CIservices"
-            },
-            {
-              "type": "boolean"
-            },
-            {
-              "$ref": "#/$defs/Nullable"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "description": "The linux_aarch64 value",
-          "title": "Linux Aarch64"
-        },
-        "linux_armv6l": {
-          "anyOf": [
-            {
-              "items": {
-                "$ref": "#/$defs/CIservices"
-              },
-              "type": "array"
-            },
-            {
-              "$ref": "#/$defs/CIservices"
-            },
-            {
-              "type": "boolean"
-            },
-            {
-              "$ref": "#/$defs/Nullable"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "description": "The linux_armv6l value",
-          "title": "Linux Armv6L"
-        },
-        "linux_armv7l": {
-          "anyOf": [
-            {
-              "items": {
-                "$ref": "#/$defs/CIservices"
-              },
-              "type": "array"
-            },
-            {
-              "$ref": "#/$defs/CIservices"
-            },
-            {
-              "type": "boolean"
-            },
-            {
-              "$ref": "#/$defs/Nullable"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "description": "The linux_armv7l value",
-          "title": "Linux Armv7L"
-        },
-        "linux_ppc64": {
-          "anyOf": [
-            {
-              "items": {
-                "$ref": "#/$defs/CIservices"
-              },
-              "type": "array"
-            },
-            {
-              "$ref": "#/$defs/CIservices"
-            },
-            {
-              "type": "boolean"
-            },
-            {
-              "$ref": "#/$defs/Nullable"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "description": "The linux_ppc64 value",
-          "title": "Linux Ppc64"
-        },
-        "linux_ppc64le": {
-          "anyOf": [
-            {
-              "items": {
-                "$ref": "#/$defs/CIservices"
-              },
-              "type": "array"
-            },
-            {
-              "$ref": "#/$defs/CIservices"
-            },
-            {
-              "type": "boolean"
-            },
-            {
-              "$ref": "#/$defs/Nullable"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "description": "The linux_ppc64le value",
-          "title": "Linux Ppc64Le"
-        },
-        "linux_riscv64": {
-          "anyOf": [
-            {
-              "items": {
-                "$ref": "#/$defs/CIservices"
-              },
-              "type": "array"
-            },
-            {
-              "$ref": "#/$defs/CIservices"
-            },
-            {
-              "type": "boolean"
-            },
-            {
-              "$ref": "#/$defs/Nullable"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "description": "The linux_riscv64 value",
-          "title": "Linux Riscv64"
-        },
-        "linux_s390x": {
-          "anyOf": [
-            {
-              "items": {
-                "$ref": "#/$defs/CIservices"
-              },
-              "type": "array"
-            },
-            {
-              "$ref": "#/$defs/CIservices"
-            },
-            {
-              "type": "boolean"
-            },
-            {
-              "$ref": "#/$defs/Nullable"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "description": "The linux_s390x value",
-          "title": "Linux S390X"
-        },
-        "osx_64": {
-          "anyOf": [
-            {
-              "items": {
-                "$ref": "#/$defs/CIservices"
-              },
-              "type": "array"
-            },
-            {
-              "$ref": "#/$defs/CIservices"
-            },
-            {
-              "type": "boolean"
-            },
-            {
-              "$ref": "#/$defs/Nullable"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": "azure",
-          "description": "The osx_64 value",
-          "title": "Osx 64"
-        },
-        "osx_arm64": {
-          "anyOf": [
-            {
-              "items": {
-                "$ref": "#/$defs/CIservices"
-              },
-              "type": "array"
-            },
-            {
-              "$ref": "#/$defs/CIservices"
-            },
-            {
-              "type": "boolean"
-            },
-            {
-              "$ref": "#/$defs/Nullable"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "description": "The osx_arm64 value",
-          "title": "Osx Arm64"
-        },
-        "win_32": {
-          "anyOf": [
-            {
-              "items": {
-                "$ref": "#/$defs/CIservices"
-              },
-              "type": "array"
-            },
-            {
-              "$ref": "#/$defs/CIservices"
-            },
-            {
-              "type": "boolean"
-            },
-            {
-              "$ref": "#/$defs/Nullable"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "description": "The win_32 value",
-          "title": "Win 32"
-        },
-        "win_64": {
-          "anyOf": [
-            {
-              "items": {
-                "$ref": "#/$defs/CIservices"
-              },
-              "type": "array"
-            },
-            {
-              "$ref": "#/$defs/CIservices"
-            },
-            {
-              "type": "boolean"
-            },
-            {
-              "$ref": "#/$defs/Nullable"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": "azure",
-          "description": "The win_64 value",
-          "title": "Win 64"
-        },
-        "win_arm64": {
-          "anyOf": [
-            {
-              "items": {
-                "$ref": "#/$defs/CIservices"
-              },
-              "type": "array"
-            },
-            {
-              "$ref": "#/$defs/CIservices"
-            },
-            {
-              "type": "boolean"
-            },
-            {
-              "$ref": "#/$defs/Nullable"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "description": "The win_arm64 value",
-          "title": "Win Arm64"
-        },
-        "zos_z": {
-          "anyOf": [
-            {
-              "items": {
-                "$ref": "#/$defs/CIservices"
-              },
-              "type": "array"
-            },
-            {
-              "$ref": "#/$defs/CIservices"
-            },
-            {
-              "type": "boolean"
-            },
-            {
-              "$ref": "#/$defs/Nullable"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "description": "The zos_z value",
-          "title": "Zos Z"
-        },
         "linux": {
           "anyOf": [
             {
@@ -1765,7 +1144,6 @@
             }
           ],
           "default": null,
-          "description": "The linux value",
           "title": "Linux"
         },
         "win": {
@@ -1790,7 +1168,6 @@
             }
           ],
           "default": null,
-          "description": "The win value",
           "title": "Win"
         },
         "osx": {
@@ -1815,8 +1192,439 @@
             }
           ],
           "default": null,
-          "description": "The osx value",
           "title": "Osx"
+        },
+        "emscripten_wasm32": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/CIservices"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/CIservices"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Emscripten Wasm32"
+        },
+        "wasi_wasm32": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/CIservices"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/CIservices"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Wasi Wasm32"
+        },
+        "freebsd_64": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/CIservices"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/CIservices"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Freebsd 64"
+        },
+        "linux_32": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/CIservices"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/CIservices"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Linux 32"
+        },
+        "linux_64": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/CIservices"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/CIservices"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "azure",
+          "title": "Linux 64"
+        },
+        "linux_aarch64": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/CIservices"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/CIservices"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Linux Aarch64"
+        },
+        "linux_armv6l": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/CIservices"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/CIservices"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Linux Armv6L"
+        },
+        "linux_armv7l": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/CIservices"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/CIservices"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Linux Armv7L"
+        },
+        "linux_ppc64": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/CIservices"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/CIservices"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Linux Ppc64"
+        },
+        "linux_ppc64le": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/CIservices"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/CIservices"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Linux Ppc64Le"
+        },
+        "linux_riscv64": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/CIservices"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/CIservices"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Linux Riscv64"
+        },
+        "linux_s390x": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/CIservices"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/CIservices"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Linux S390X"
+        },
+        "osx_64": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/CIservices"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/CIservices"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "azure",
+          "title": "Osx 64"
+        },
+        "osx_arm64": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/CIservices"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/CIservices"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Osx Arm64"
+        },
+        "win_32": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/CIservices"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/CIservices"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Win 32"
+        },
+        "win_64": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/CIservices"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/CIservices"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "azure",
+          "title": "Win 64"
+        },
+        "win_arm64": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/CIservices"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/CIservices"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Win Arm64"
+        },
+        "zos_z": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/CIservices"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/CIservices"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Zos Z"
         }
       },
       "title": "provider",

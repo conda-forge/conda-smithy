@@ -28,75 +28,6 @@ class Nullable(Enum):
     null = None
 
 
-def generate_pydantic_model(
-    enum_class: Union[Type[Enum], Type[EnumMeta]],
-    value_model: BaseModel,
-    model_name: str,
-    default_values: dict,
-) -> BaseModel:
-    """
-    A utility function for generating Pydantic models based on an Enum for keys and a Pydantic model for values.
-
-    This function is designed to help mitigate an issue when working with JSON Schema and Pydantic where Enumerators
-    and Dicts do not work well with the generated model. It allows you to dynamically create Pydantic models for
-    cases where you need to map enum values to corresponding data structures.
-
-    Args:
-        enum_class (Union[Type[Enum], Type[EnumMeta]]): A single Enum class or a Union of Enum classes representing the keys for the generated model.
-        value_model (BaseModel): A Pydantic model representing the structure of the values.
-        model_name (str): The name of the generated Pydantic model.
-
-    Example usage:
-
-    ```python
-    class MyEnum1(StrEnum):
-        key1 = "key1"
-        key2 = "key2"
-
-    class MyEnum2(StrEnum):
-        key3 = "key3"
-        key4 = "key4"
-
-    class ValueModel(BaseModel):
-        value_field: int
-
-    # Create a model with a single Enum
-    model1 = generate_pydantic_model(MyEnum1, ValueModel, "MyGeneratedModel1", {"key1": 2, "key2": 3})
-
-    # Create a model with a Union of Enums
-    model2 = generate_pydantic_model(Union[MyEnum1, MyEnum2], ValueModel, "MyGeneratedModel2", {"key1": 1, "key3": 4})
-
-    ```
-    """
-
-    field_definitions = {}
-
-    if hasattr(enum_class, "__args__"):
-        # Handle Union types
-        for enum_type in enum_class.__args__:
-            if isinstance(enum_type, type) and issubclass(enum_type, Enum):
-                for enum_item in enum_type:
-                    field_definitions[enum_item.value] = (
-                        Optional[value_model],
-                        Field(
-                            description=f"The {enum_item.value} value",
-                            default=default_values.get(enum_item.value, None),
-                        ),
-                    )
-    else:
-        # Handle single Enum
-        for enum_item in enum_class:
-            field_definitions[enum_item.value] = (
-                Optional[value_model],
-                Field(
-                    description=f"The {enum_item.value} value",
-                    default=default_values.get(enum_item.value, None),
-                ),
-            )
-
-    return create_model(model_name, **field_definitions)
-
-
 #############################################
 ######## Choices (Enum/Literals) definitions #########
 #############################################
@@ -502,36 +433,36 @@ class DefaultTestPlatforms(StrEnum):
     native_and_emulated = "native_and_emulated"
 
 
-BuildPlatform = generate_pydantic_model(
-    Platforms,
-    Platforms,
+BuildPlatform = create_model(
     "build_platform",
-    {platform.value: platform.value for platform in Platforms},
+    **{
+        platform.value: (Optional[Platforms], Field(default=platform.value))
+        for platform in Platforms
+    },
 )
 
-
-OSVersion = generate_pydantic_model(
-    Platforms,
-    Union[str, Nullable],
+OSVersion = create_model(
     "os_version",
-    {
-        platform.value: None
+    **{
+        platform.value: (Optional[Union[str, Nullable]], Field(default=None))
         for platform in Platforms
         if platform.value.startswith("linux")
     },
 )
 
+ProviderType = Union[List[CIservices], CIservices, bool, Nullable]
 
-Provider = generate_pydantic_model(
-    Union[Platforms, PlatformsAliases],
-    Union[List[CIservices], CIservices, bool, Nullable],
+Provider = create_model(
     "provider",
-    dict(
+    **dict(
         [
-            (str(plat), None)
+            (str(plat), (Optional[ProviderType], Field(default=None)))
             for plat in list(PlatformsAliases) + list(Platforms)
         ]
-        + [(str(plat), "azure") for plat in ("linux_64", "osx_64", "win_64")]
+        + [
+            (str(plat), (Optional[ProviderType], Field(default="azure")))
+            for plat in ("linux_64", "osx_64", "win_64")
+        ]
     ),
 )
 

@@ -98,8 +98,6 @@ min_r_ver: '34'
 noarch_platforms:
 - linux_64
 os_version:
-  emscripten_wasm32: null
-  freebsd_64: null
   linux_32: null
   linux_64: null
   linux_aarch64: null
@@ -109,13 +107,6 @@ os_version:
   linux_ppc64le: null
   linux_riscv64: null
   linux_s390x: null
-  osx_64: null
-  osx_arm64: null
-  wasi_wasm32: null
-  win_32: null
-  win_64: null
-  win_arm64: null
-  zos_z: null
 private_upload: false
 provider:
   emscripten_wasm32: null
