@@ -1201,8 +1201,9 @@ if __name__ == "__main__":
     model = ConfigModel()
 
     with CONDA_FORGE_YAML_SCHEMA_FILE.open(mode="w+") as f:
-        f.write(model.schema_json(indent=2))
+        obj = model.model_json_schema()
+        f.write(json.dumps(obj, indent=2))
         f.write("\n")
 
     with CONDA_FORGE_YAML_DEFAULTS_FILE.open(mode="w+") as f:
-        f.write(yaml.dump(model.dict(), indent=2))
+        f.write(yaml.dump(model.model_dump(), indent=2))
