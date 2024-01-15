@@ -15,11 +15,11 @@ Authors are sorted by number of commits.
 * Michael Sarahan
 * Min RK
 * Marcel Bargull
+* Mark Harfouche
 * Leo Fang
 * Hadrien Mary
 * Ryan Volz
 * John Kirkham
-* Mark Harfouche
 * Johnny Willemsen
 * Chris Burr
 * Julian Rüth
@@ -40,12 +40,12 @@ Authors are sorted by number of commits.
 * Patrick Sodré
 * C.A.M. Gerlach
 * refraction-ray
+* pre-commit-ci[bot]
 * Nicholas Bollweg
 * Leopold Talirz
 * Tom Pollard
 * Bela Stoyan
 * Gonzalo Pena-Castellanos
-* pre-commit-ci[bot]
 * Carlo
 * Matthew Craig
 * Peter Williams
@@ -61,6 +61,7 @@ Authors are sorted by number of commits.
 * xoviat
 * Elmar Pruesse
 * Patrick Sodré
+* David Hirschfeld
 * Josh Barnes
 * Tobias Megies
 * Jonathan Helmus

@@ -4,6 +4,70 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.30.4
+====================
+
+**Changed:**
+
+* Fixed a typo in gitignore (#1822).
+
+**Fixed:**
+
+* Code refactoring for cirun. (#1812)
+
+**Authors:**
+
+* Isuru Fernando
+
+
+
+v3.30.3
+====================
+
+**Changed:**
+
+* Fixed gitignore so that maturin projects work.
+
+**Fixed:**
+
+* Fixed line endings of .ci_support/README on windows (#1824).
+* Fix local builds of feedstocks submodules ( #1826 ).
+
+**Authors:**
+
+* Isuru Fernando
+* Matthew R. Becker
+* Marcel Bargull
+* John Kirkham
+* pre-commit-ci[bot]
+* David Hirschfeld
+
+
+
+v3.30.2
+====================
+
+**Added:**
+
+*  <news item>
+
+**Changed:**
+
+* Updated `.gitignore` to exclude everything except recipe/ and conda-forge.yml (#1413)
+
+**Fixed:**
+
+* Fix linting with conda-build=3.28.2. (#1816)
+
+**Authors:**
+
+* Isuru Fernando
+* Marcel Bargull
+* pre-commit-ci[bot]
+* David Hirschfeld
+
+
+
 v3.30.1
 ====================
 

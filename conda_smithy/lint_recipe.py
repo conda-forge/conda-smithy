@@ -37,10 +37,10 @@ FIELDS = copy.deepcopy(cbfields)
 
 # Just in case 'extra' moves into conda_build
 if "extra" not in FIELDS.keys():
-    FIELDS["extra"] = set()
+    FIELDS["extra"] = {}
 
-FIELDS["extra"].add("recipe-maintainers")
-FIELDS["extra"].add("feedstock-name")
+FIELDS["extra"]["recipe-maintainers"] = ()
+FIELDS["extra"]["feedstock-name"] = ""
 
 EXPECTED_SECTION_ORDER = [
     "package",
