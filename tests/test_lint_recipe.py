@@ -683,7 +683,7 @@ class Test_linter(unittest.TestCase):
             with io.open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
                 fh.write(
                     """
-                        {% set data = load_setup_py_data("IDONTNEED", from_recipe_dir=True, recipe_dir=".") %}
+                        {% set data = load_file_data("IDONTNEED", from_recipe_dir=True, recipe_dir=".") %}
                         package:
                           name: foo
                           version: {{ version }}
