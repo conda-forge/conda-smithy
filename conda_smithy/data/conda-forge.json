@@ -786,9 +786,8 @@
               "type": "null"
             }
           ],
-          "default": {
-            "description": "The emscripten_wasm32 value"
-          }
+          "default": "emscripten_wasm32",
+          "description": "The emscripten_wasm32 value"
         },
         "wasi_wasm32": {
           "anyOf": [
@@ -799,9 +798,8 @@
               "type": "null"
             }
           ],
-          "default": {
-            "description": "The wasi_wasm32 value"
-          }
+          "default": "wasi_wasm32",
+          "description": "The wasi_wasm32 value"
         },
         "freebsd_64": {
           "anyOf": [
@@ -812,9 +810,8 @@
               "type": "null"
             }
           ],
-          "default": {
-            "description": "The freebsd_64 value"
-          }
+          "default": "freebsd_64",
+          "description": "The freebsd_64 value"
         },
         "linux_32": {
           "anyOf": [
@@ -825,9 +822,8 @@
               "type": "null"
             }
           ],
-          "default": {
-            "description": "The linux_32 value"
-          }
+          "default": "linux_32",
+          "description": "The linux_32 value"
         },
         "linux_64": {
           "anyOf": [
@@ -838,9 +834,8 @@
               "type": "null"
             }
           ],
-          "default": {
-            "description": "The linux_64 value"
-          }
+          "default": "linux_64",
+          "description": "The linux_64 value"
         },
         "linux_aarch64": {
           "anyOf": [
@@ -851,9 +846,8 @@
               "type": "null"
             }
           ],
-          "default": {
-            "description": "The linux_aarch64 value"
-          }
+          "default": "linux_aarch64",
+          "description": "The linux_aarch64 value"
         },
         "linux_armv6l": {
           "anyOf": [
@@ -864,9 +858,8 @@
               "type": "null"
             }
           ],
-          "default": {
-            "description": "The linux_armv6l value"
-          }
+          "default": "linux_armv6l",
+          "description": "The linux_armv6l value"
         },
         "linux_armv7l": {
           "anyOf": [
@@ -877,9 +870,8 @@
               "type": "null"
             }
           ],
-          "default": {
-            "description": "The linux_armv7l value"
-          }
+          "default": "linux_armv7l",
+          "description": "The linux_armv7l value"
         },
         "linux_ppc64": {
           "anyOf": [
@@ -890,9 +882,8 @@
               "type": "null"
             }
           ],
-          "default": {
-            "description": "The linux_ppc64 value"
-          }
+          "default": "linux_ppc64",
+          "description": "The linux_ppc64 value"
         },
         "linux_ppc64le": {
           "anyOf": [
@@ -903,9 +894,8 @@
               "type": "null"
             }
           ],
-          "default": {
-            "description": "The linux_ppc64le value"
-          }
+          "default": "linux_ppc64le",
+          "description": "The linux_ppc64le value"
         },
         "linux_riscv64": {
           "anyOf": [
@@ -916,9 +906,8 @@
               "type": "null"
             }
           ],
-          "default": {
-            "description": "The linux_riscv64 value"
-          }
+          "default": "linux_riscv64",
+          "description": "The linux_riscv64 value"
         },
         "linux_s390x": {
           "anyOf": [
@@ -929,9 +918,8 @@
               "type": "null"
             }
           ],
-          "default": {
-            "description": "The linux_s390x value"
-          }
+          "default": "linux_s390x",
+          "description": "The linux_s390x value"
         },
         "osx_64": {
           "anyOf": [
@@ -942,9 +930,8 @@
               "type": "null"
             }
           ],
-          "default": {
-            "description": "The osx_64 value"
-          }
+          "default": "osx_64",
+          "description": "The osx_64 value"
         },
         "osx_arm64": {
           "anyOf": [
@@ -955,9 +942,8 @@
               "type": "null"
             }
           ],
-          "default": {
-            "description": "The osx_arm64 value"
-          }
+          "default": "osx_arm64",
+          "description": "The osx_arm64 value"
         },
         "win_32": {
           "anyOf": [
@@ -968,9 +954,8 @@
               "type": "null"
             }
           ],
-          "default": {
-            "description": "The win_32 value"
-          }
+          "default": "win_32",
+          "description": "The win_32 value"
         },
         "win_64": {
           "anyOf": [
@@ -981,9 +966,8 @@
               "type": "null"
             }
           ],
-          "default": {
-            "description": "The win_64 value"
-          }
+          "default": "win_64",
+          "description": "The win_64 value"
         },
         "win_arm64": {
           "anyOf": [
@@ -994,9 +978,8 @@
               "type": "null"
             }
           ],
-          "default": {
-            "description": "The win_arm64 value"
-          }
+          "default": "win_arm64",
+          "description": "The win_arm64 value"
         },
         "zos_z": {
           "anyOf": [
@@ -1007,9 +990,8 @@
               "type": "null"
             }
           ],
-          "default": {
-            "description": "The zos_z value"
-          }
+          "default": "zos_z",
+          "description": "The zos_z value"
         }
       },
       "title": "build_platform",
@@ -1029,9 +1011,8 @@
               "type": "null"
             }
           ],
-          "default": {
-            "description": "The emscripten_wasm32 value"
-          },
+          "default": null,
+          "description": "The emscripten_wasm32 value",
           "title": "Emscripten Wasm32"
         },
         "wasi_wasm32": {
@@ -1046,9 +1027,8 @@
               "type": "null"
             }
           ],
-          "default": {
-            "description": "The wasi_wasm32 value"
-          },
+          "default": null,
+          "description": "The wasi_wasm32 value",
           "title": "Wasi Wasm32"
         },
         "freebsd_64": {
@@ -1063,9 +1043,8 @@
               "type": "null"
             }
           ],
-          "default": {
-            "description": "The freebsd_64 value"
-          },
+          "default": null,
+          "description": "The freebsd_64 value",
           "title": "Freebsd 64"
         },
         "linux_32": {
@@ -1080,9 +1059,8 @@
               "type": "null"
             }
           ],
-          "default": {
-            "description": "The linux_32 value"
-          },
+          "default": null,
+          "description": "The linux_32 value",
           "title": "Linux 32"
         },
         "linux_64": {
@@ -1097,9 +1075,8 @@
               "type": "null"
             }
           ],
-          "default": {
-            "description": "The linux_64 value"
-          },
+          "default": null,
+          "description": "The linux_64 value",
           "title": "Linux 64"
         },
         "linux_aarch64": {
@@ -1114,9 +1091,8 @@
               "type": "null"
             }
           ],
-          "default": {
-            "description": "The linux_aarch64 value"
-          },
+          "default": null,
+          "description": "The linux_aarch64 value",
           "title": "Linux Aarch64"
         },
         "linux_armv6l": {
@@ -1131,9 +1107,8 @@
               "type": "null"
             }
           ],
-          "default": {
-            "description": "The linux_armv6l value"
-          },
+          "default": null,
+          "description": "The linux_armv6l value",
           "title": "Linux Armv6L"
         },
         "linux_armv7l": {
@@ -1148,9 +1123,8 @@
               "type": "null"
             }
           ],
-          "default": {
-            "description": "The linux_armv7l value"
-          },
+          "default": null,
+          "description": "The linux_armv7l value",
           "title": "Linux Armv7L"
         },
         "linux_ppc64": {
@@ -1165,9 +1139,8 @@
               "type": "null"
             }
           ],
-          "default": {
-            "description": "The linux_ppc64 value"
-          },
+          "default": null,
+          "description": "The linux_ppc64 value",
           "title": "Linux Ppc64"
         },
         "linux_ppc64le": {
@@ -1182,9 +1155,8 @@
               "type": "null"
             }
           ],
-          "default": {
-            "description": "The linux_ppc64le value"
-          },
+          "default": null,
+          "description": "The linux_ppc64le value",
           "title": "Linux Ppc64Le"
         },
         "linux_riscv64": {
@@ -1199,9 +1171,8 @@
               "type": "null"
             }
           ],
-          "default": {
-            "description": "The linux_riscv64 value"
-          },
+          "default": null,
+          "description": "The linux_riscv64 value",
           "title": "Linux Riscv64"
         },
         "linux_s390x": {
@@ -1216,9 +1187,8 @@
               "type": "null"
             }
           ],
-          "default": {
-            "description": "The linux_s390x value"
-          },
+          "default": null,
+          "description": "The linux_s390x value",
           "title": "Linux S390X"
         },
         "osx_64": {
@@ -1233,9 +1203,8 @@
               "type": "null"
             }
           ],
-          "default": {
-            "description": "The osx_64 value"
-          },
+          "default": null,
+          "description": "The osx_64 value",
           "title": "Osx 64"
         },
         "osx_arm64": {
@@ -1250,9 +1219,8 @@
               "type": "null"
             }
           ],
-          "default": {
-            "description": "The osx_arm64 value"
-          },
+          "default": null,
+          "description": "The osx_arm64 value",
           "title": "Osx Arm64"
         },
         "win_32": {
@@ -1267,9 +1235,8 @@
               "type": "null"
             }
           ],
-          "default": {
-            "description": "The win_32 value"
-          },
+          "default": null,
+          "description": "The win_32 value",
           "title": "Win 32"
         },
         "win_64": {
@@ -1284,9 +1251,8 @@
               "type": "null"
             }
           ],
-          "default": {
-            "description": "The win_64 value"
-          },
+          "default": null,
+          "description": "The win_64 value",
           "title": "Win 64"
         },
         "win_arm64": {
@@ -1301,9 +1267,8 @@
               "type": "null"
             }
           ],
-          "default": {
-            "description": "The win_arm64 value"
-          },
+          "default": null,
+          "description": "The win_arm64 value",
           "title": "Win Arm64"
         },
         "zos_z": {
@@ -1318,9 +1283,8 @@
               "type": "null"
             }
           ],
-          "default": {
-            "description": "The zos_z value"
-          },
+          "default": null,
+          "description": "The zos_z value",
           "title": "Zos Z"
         }
       },
@@ -1350,9 +1314,8 @@
               "type": "null"
             }
           ],
-          "default": {
-            "description": "The emscripten_wasm32 value"
-          },
+          "default": null,
+          "description": "The emscripten_wasm32 value",
           "title": "Emscripten Wasm32"
         },
         "wasi_wasm32": {
@@ -1376,9 +1339,8 @@
               "type": "null"
             }
           ],
-          "default": {
-            "description": "The wasi_wasm32 value"
-          },
+          "default": null,
+          "description": "The wasi_wasm32 value",
           "title": "Wasi Wasm32"
         },
         "freebsd_64": {
@@ -1402,9 +1364,8 @@
               "type": "null"
             }
           ],
-          "default": {
-            "description": "The freebsd_64 value"
-          },
+          "default": null,
+          "description": "The freebsd_64 value",
           "title": "Freebsd 64"
         },
         "linux_32": {
@@ -1428,9 +1389,8 @@
               "type": "null"
             }
           ],
-          "default": {
-            "description": "The linux_32 value"
-          },
+          "default": null,
+          "description": "The linux_32 value",
           "title": "Linux 32"
         },
         "linux_64": {
@@ -1454,9 +1414,8 @@
               "type": "null"
             }
           ],
-          "default": {
-            "description": "The linux_64 value"
-          },
+          "default": "azure",
+          "description": "The linux_64 value",
           "title": "Linux 64"
         },
         "linux_aarch64": {
@@ -1480,9 +1439,8 @@
               "type": "null"
             }
           ],
-          "default": {
-            "description": "The linux_aarch64 value"
-          },
+          "default": null,
+          "description": "The linux_aarch64 value",
           "title": "Linux Aarch64"
         },
         "linux_armv6l": {
@@ -1506,9 +1464,8 @@
               "type": "null"
             }
           ],
-          "default": {
-            "description": "The linux_armv6l value"
-          },
+          "default": null,
+          "description": "The linux_armv6l value",
           "title": "Linux Armv6L"
         },
         "linux_armv7l": {
@@ -1532,9 +1489,8 @@
               "type": "null"
             }
           ],
-          "default": {
-            "description": "The linux_armv7l value"
-          },
+          "default": null,
+          "description": "The linux_armv7l value",
           "title": "Linux Armv7L"
         },
         "linux_ppc64": {
@@ -1558,9 +1514,8 @@
               "type": "null"
             }
           ],
-          "default": {
-            "description": "The linux_ppc64 value"
-          },
+          "default": null,
+          "description": "The linux_ppc64 value",
           "title": "Linux Ppc64"
         },
         "linux_ppc64le": {
@@ -1584,9 +1539,8 @@
               "type": "null"
             }
           ],
-          "default": {
-            "description": "The linux_ppc64le value"
-          },
+          "default": null,
+          "description": "The linux_ppc64le value",
           "title": "Linux Ppc64Le"
         },
         "linux_riscv64": {
@@ -1610,9 +1564,8 @@
               "type": "null"
             }
           ],
-          "default": {
-            "description": "The linux_riscv64 value"
-          },
+          "default": null,
+          "description": "The linux_riscv64 value",
           "title": "Linux Riscv64"
         },
         "linux_s390x": {
@@ -1636,9 +1589,8 @@
               "type": "null"
             }
           ],
-          "default": {
-            "description": "The linux_s390x value"
-          },
+          "default": null,
+          "description": "The linux_s390x value",
           "title": "Linux S390X"
         },
         "osx_64": {
@@ -1662,9 +1614,8 @@
               "type": "null"
             }
           ],
-          "default": {
-            "description": "The osx_64 value"
-          },
+          "default": "azure",
+          "description": "The osx_64 value",
           "title": "Osx 64"
         },
         "osx_arm64": {
@@ -1688,9 +1639,8 @@
               "type": "null"
             }
           ],
-          "default": {
-            "description": "The osx_arm64 value"
-          },
+          "default": null,
+          "description": "The osx_arm64 value",
           "title": "Osx Arm64"
         },
         "win_32": {
@@ -1714,9 +1664,8 @@
               "type": "null"
             }
           ],
-          "default": {
-            "description": "The win_32 value"
-          },
+          "default": null,
+          "description": "The win_32 value",
           "title": "Win 32"
         },
         "win_64": {
@@ -1740,9 +1689,8 @@
               "type": "null"
             }
           ],
-          "default": {
-            "description": "The win_64 value"
-          },
+          "default": "azure",
+          "description": "The win_64 value",
           "title": "Win 64"
         },
         "win_arm64": {
@@ -1766,9 +1714,8 @@
               "type": "null"
             }
           ],
-          "default": {
-            "description": "The win_arm64 value"
-          },
+          "default": null,
+          "description": "The win_arm64 value",
           "title": "Win Arm64"
         },
         "zos_z": {
@@ -1792,9 +1739,8 @@
               "type": "null"
             }
           ],
-          "default": {
-            "description": "The zos_z value"
-          },
+          "default": null,
+          "description": "The zos_z value",
           "title": "Zos Z"
         },
         "linux": {
@@ -1818,9 +1764,8 @@
               "type": "null"
             }
           ],
-          "default": {
-            "description": "The linux value"
-          },
+          "default": null,
+          "description": "The linux value",
           "title": "Linux"
         },
         "win": {
@@ -1844,9 +1789,8 @@
               "type": "null"
             }
           ],
-          "default": {
-            "description": "The win value"
-          },
+          "default": null,
+          "description": "The win value",
           "title": "Win"
         },
         "osx": {
@@ -1870,9 +1814,8 @@
               "type": "null"
             }
           ],
-          "default": {
-            "description": "The osx value"
-          },
+          "default": null,
+          "description": "The osx value",
           "title": "Osx"
         }
       },

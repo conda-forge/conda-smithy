@@ -28,11 +28,16 @@ class Nullable(Enum):
     null = None
 
 
-class PydanticModelGenerator:
+def generate_pydantic_model(
+    enum_class: Union[Type[Enum], Type[EnumMeta]],
+    value_model: BaseModel,
+    model_name: str,
+    default_values: dict,
+) -> BaseModel:
     """
-    A utility class for generating Pydantic models based on an Enum for keys and a Pydantic model for values.
+    A utility function for generating Pydantic models based on an Enum for keys and a Pydantic model for values.
 
-    This class is designed to help mitigate an issue when working with JSON Schema and Pydantic where Enumerators
+    This function is designed to help mitigate an issue when working with JSON Schema and Pydantic where Enumerators
     and Dicts do not work well with the generated model. It allows you to dynamically create Pydantic models for
     cases where you need to map enum values to corresponding data structures.
 
@@ -55,49 +60,41 @@ class PydanticModelGenerator:
     class ValueModel(BaseModel):
         value_field: int
 
-    # Create an instance of PydanticModelGenerator with a single Enum
-    model_generator1 = PydanticModelGenerator(MyEnum1, ValueModel, "MyGeneratedModel1")
+    # Create a model with a single Enum
+    model1 = generate_pydantic_model(MyEnum1, ValueModel, "MyGeneratedModel1", {"key1": 2, "key2": 3})
 
-    # Create an instance of PydanticModelGenerator with a Union of Enums
-    model_generator2 = PydanticModelGenerator(Union[MyEnum1, MyEnum2], ValueModel, "MyGeneratedModel2")
+    # Create a model with a Union of Enums
+    model2 = generate_pydantic_model(Union[MyEnum1, MyEnum2], ValueModel, "MyGeneratedModel2", {"key1": 1, "key3": 4})
 
-    # Retrieve the generated models using the __call__ method
-    GeneratedModel1 = model_generator1()
-    GeneratedModel2 = model_generator2()
     ```
     """
 
-    def __init__(
-        self,
-        enum_class: Union[Type[Enum], Type[EnumMeta]],
-        value_model: BaseModel,
-        model_name: str,
-    ):
-        self.enum_class = enum_class
-        self.value_model = value_model
-        self.model_name = model_name
+    field_definitions = {}
 
-    def __call__(self) -> BaseModel:
-        field_definitions = {}
+    if hasattr(enum_class, "__args__"):
+        # Handle Union types
+        for enum_type in enum_class.__args__:
+            if isinstance(enum_type, type) and issubclass(enum_type, Enum):
+                for enum_item in enum_type:
+                    field_definitions[enum_item.value] = (
+                        Optional[value_model],
+                        Field(
+                            description=f"The {enum_item.value} value",
+                            default=default_values.get(enum_item.value, None),
+                        ),
+                    )
+    else:
+        # Handle single Enum
+        for enum_item in enum_class:
+            field_definitions[enum_item.value] = (
+                Optional[value_model],
+                Field(
+                    description=f"The {enum_item.value} value",
+                    default=default_values.get(enum_item.value, None),
+                ),
+            )
 
-        if hasattr(self.enum_class, "__args__"):
-            # Handle Union types
-            for enum_type in self.enum_class.__args__:
-                if isinstance(enum_type, type) and issubclass(enum_type, Enum):
-                    for enum_item in enum_type:
-                        field_definitions[enum_item.value] = (
-                            Optional[self.value_model],
-                            {"description": f"The {enum_item.value} value"},
-                        )
-        else:
-            # Handle single Enum
-            for enum_item in self.enum_class:
-                field_definitions[enum_item.value] = (
-                    Optional[self.value_model],
-                    {"description": f"The {enum_item.value} value"},
-                )
-
-        return create_model(self.model_name, **field_definitions)
+    return create_model(model_name, **field_definitions)
 
 
 #############################################
@@ -505,6 +502,40 @@ class DefaultTestPlatforms(StrEnum):
     native_and_emulated = "native_and_emulated"
 
 
+BuildPlatform = generate_pydantic_model(
+    Platforms,
+    Platforms,
+    "build_platform",
+    {platform.value: platform.value for platform in Platforms},
+)
+
+
+OSVersion = generate_pydantic_model(
+    Platforms,
+    Union[str, Nullable],
+    "os_version",
+    {
+        platform.value: None
+        for platform in Platforms
+        if platform.value.startswith("linux")
+    },
+)
+
+
+Provider = generate_pydantic_model(
+    Union[Platforms, PlatformsAliases],
+    Union[List[CIservices], CIservices, bool, Nullable],
+    "provider",
+    dict(
+        [
+            (str(plat), None)
+            for plat in list(PlatformsAliases) + list(Platforms)
+        ]
+        + [(str(plat), "azure") for plat in ("linux_64", "osx_64", "win_64")]
+    ),
+)
+
+
 class ConfigModel(BaseModel):
     """
     This model describes in detail the top-level fields in  ``conda-forge.yml``.
@@ -619,13 +650,8 @@ class ConfigModel(BaseModel):
         """,
     )
 
-    build_platform: Optional[
-        PydanticModelGenerator(Platforms, Platforms, "build_platform")()
-    ] = Field(
-        default_factory=lambda: {
-            platform.value: platform.value
-            for platform in Platforms
-        },
+    build_platform: Optional[BuildPlatform] = Field(
+        default_factory=BuildPlatform,
         description="""
         This is a mapping from the target platform to the build platform for the
         package to be built. For example, the following builds a ``osx-64`` package
@@ -729,17 +755,8 @@ class ConfigModel(BaseModel):
         """,
     )
 
-    os_version: Optional[
-        PydanticModelGenerator(Platforms, Union[str, Nullable], "os_version")()
-    ] = Field(
-        default_factory=lambda: {
-            platform.value: None
-            for platform in Platforms
-            if not (
-                platform.value.startswith("osx")
-                or platform.value.startswith("win")
-            )
-        },
+    os_version: Optional[OSVersion] = Field(
+        default_factory=OSVersion,
         description="""
         This key is used to set the OS versions for `linux_*` platforms. Valid entries
         map a linux platform and arch to either `cos6` or `cos7`.
@@ -754,23 +771,8 @@ class ConfigModel(BaseModel):
         """,
     )
 
-    provider: Optional[
-        PydanticModelGenerator(
-            Union[Platforms, PlatformsAliases],
-            Union[List[CIservices], CIservices, bool, Nullable],
-            "provider",
-        )()
-    ] = Field(
-        default_factory=lambda: dict(
-            [
-                (str(plat), None)
-                for plat in list(PlatformsAliases) + list(Platforms)
-            ]
-            + [
-                (str(plat), "azure")
-                for plat in ("linux_64", "osx_64", "win_64")
-            ]
-        ),
+    provider: Optional[Provider] = Field(
+        default_factory=Provider,
         description="""
         The ``provider`` field is a mapping from build platform (not target platform)
         to CI service. It determines which service handles each build platform.

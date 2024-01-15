@@ -109,7 +109,12 @@ os_version:
   linux_ppc64le: null
   linux_riscv64: null
   linux_s390x: null
+  osx_64: null
+  osx_arm64: null
   wasi_wasm32: null
+  win_32: null
+  win_64: null
+  win_arm64: null
   zos_z: null
 private_upload: false
 provider:
