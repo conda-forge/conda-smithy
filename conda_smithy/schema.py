@@ -625,7 +625,6 @@ class ConfigModel(BaseModel):
         default_factory=lambda: {
             platform.value: platform.value
             for platform in Platforms
-            if not platform.value == "osx_arm64"
         },
         description="""
         This is a mapping from the target platform to the build platform for the
