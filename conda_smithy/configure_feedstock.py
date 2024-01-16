@@ -391,6 +391,16 @@ def _collapse_subpackage_variants(
 
     for k, v in squished_used_variants.items():
         if k in all_used_vars:
+            input_variant = squished_input_variants.get(k)
+            if input_variant and isinstance(input_variant, (tuple, list)):
+                # Ensure we retain the input order to avoid mismatched entries
+                # with the preserve_top_level_loops overrides below.
+                # NOTE: "pin_run_as_build" (dict of dict) order is not handled.
+                # "tuple" below only used for uniform list/tuple/str comparison.
+                v_set = set(map(tuple, v))
+                v = type(input_variant)(
+                    v_i for v_i in input_variant if tuple(v_i) in v_set
+                )
             used_key_values[k] = v
 
     for k in preserve_top_level_loops:
