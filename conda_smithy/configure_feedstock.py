@@ -2375,6 +2375,7 @@ def clear_scripts(forge_dir):
             "run_docker_build.sh",
             "build_steps.sh",
             "run_osx_build.sh",
+            "run_win_build.bat",
             "create_conda_build_artifacts.bat",
             "create_conda_build_artifacts.sh",
         ]:
