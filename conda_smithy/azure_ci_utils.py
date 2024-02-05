@@ -83,10 +83,10 @@ def get_service_endpoint(config: AzureConfig = default_config):
     service_endpoint_client = ServiceEndpointClient(
         base_url=config.instance_base_url, creds=config.credentials
     )
-    endpoints: typing.List[
-        ServiceEndpoint
-    ] = service_endpoint_client.get_service_endpoints(
-        project=config.project_name, type="GitHub"
+    endpoints: typing.List[ServiceEndpoint] = (
+        service_endpoint_client.get_service_endpoints(
+            project=config.project_name, type="GitHub"
+        )
     )
     for service_endpoint in endpoints:
         if service_endpoint.name == config.org_or_user:
@@ -224,9 +224,9 @@ def register_repo(github_org, repo_name, config: AzureConfig = default_config):
     )
 
     # clean up existing builds for the same feedstock if present
-    existing_definitions: typing.List[
-        BuildDefinitionReference
-    ] = bclient.get_definitions(project=config.project_name, name=repo_name)
+    existing_definitions: typing.List[BuildDefinitionReference] = (
+        bclient.get_definitions(project=config.project_name, name=repo_name)
+    )
     if existing_definitions:
         assert len(existing_definitions) == 1
         ed = existing_definitions[0]
