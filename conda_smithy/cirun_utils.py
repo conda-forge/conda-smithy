@@ -1,6 +1,7 @@
 """
 See http://py.cirun.io/api.html for cirun client docs
 """
+
 import os
 from functools import lru_cache
 from typing import List, Dict, Any, Optional
