@@ -93,6 +93,7 @@ def render_meta_yaml(text):
     env.globals.update(
         dict(
             compiler=lambda x: x + "_compiler_stub",
+            stdlib=lambda x: x + "_stdlib_stub",
             pin_subpackage=stub_subpackage_pin,
             pin_compatible=stub_compatible_pin,
             cdt=lambda *args, **kwargs: "cdt_stub",
