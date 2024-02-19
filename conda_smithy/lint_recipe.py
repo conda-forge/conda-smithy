@@ -716,7 +716,7 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
         shell_scripts = glob(os.path.join(recipe_dir, "*.sh"))
         forge_yaml = find_local_config_file(recipe_dir, "conda-forge.yml")
         if shell_scripts and forge_yaml:
-            with open(forge_yaml[0], "r") as fh:
+            with open(forge_yaml, "r") as fh:
                 code = get_yaml().load(fh)
                 shellcheck_enabled = code.get("shellcheck", {}).get(
                     "enabled", shellcheck_enabled
