@@ -125,6 +125,24 @@ def lint_about_contents(about_section, lints):
             )
 
 
+def find_local_config_file(recipe_dir, filename):
+    # support
+    # 1. feedstocks
+    # 2. staged-recipes with custom conda-forge.yaml in recipe
+    # 3. staged-recipes
+    found_filesname = (
+        glob(os.path.join(recipe_dir, filename))
+        or glob(
+            os.path.join(recipe_dir, "..", filename),
+        )
+        or glob(
+            os.path.join(recipe_dir, "..", "..", filename),
+        )
+    )
+
+    return found_filesname[0] if found_filesname else None
+
+
 def lintify(meta, recipe_dir=None, conda_forge=False):
     lints = []
     hints = []
@@ -390,21 +408,27 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
             )
 
     if recipe_dir:
-        forge_yaml_filename = (
-            glob(os.path.join(recipe_dir, "..", "conda-forge.yml"))
-            or glob(
-                os.path.join(recipe_dir, "conda-forge.yml"),
-            )
-            or glob(
-                os.path.join(recipe_dir, "..", "..", "conda-forge.yml"),
-            )
+        conda_build_config_filename = find_local_config_file(
+            recipe_dir, "conda_build_config.yaml"
         )
+
+        if conda_build_config_filename:
+            with open(conda_build_config_filename, "r") as fh:
+                conda_build_config_keys = set(get_yaml().load(fh).keys())
+        else:
+            conda_build_config_keys = set()
+
+        forge_yaml_filename = find_local_config_file(
+            recipe_dir, "conda-forge.yml"
+        )
+
         if forge_yaml_filename:
-            with open(forge_yaml_filename[0], "r") as fh:
+            with open(forge_yaml_filename, "r") as fh:
                 forge_yaml = get_yaml().load(fh)
         else:
             forge_yaml = {}
     else:
+        conda_build_config_keys = set()
         forge_yaml = {}
 
     # 18: noarch doesn't work with selectors for runtime dependencies
@@ -430,7 +454,9 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
                         in_runreqs = False
                         continue
                     if is_selector_line(
-                        line, allow_platforms=noarch_platforms
+                        line,
+                        allow_platforms=noarch_platforms,
+                        allow_keys=conda_build_config_keys,
                     ):
                         lints.append(
                             "`noarch` packages can't have selectors. If "
@@ -688,21 +714,9 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
     shell_scripts = []
     if recipe_dir:
         shell_scripts = glob(os.path.join(recipe_dir, "*.sh"))
-        # support
-        # 1. feedstocks
-        # 2. staged-recipes with custom conda-forge.yaml in recipe
-        # 3. staged-recipes
-        forge_yaml = (
-            glob(os.path.join(recipe_dir, "..", "conda-forge.yml"))
-            or glob(
-                os.path.join(recipe_dir, "conda-forge.yml"),
-            )
-            or glob(
-                os.path.join(recipe_dir, "..", "..", "conda-forge.yml"),
-            )
-        )
+        forge_yaml = find_local_config_file(recipe_dir, "conda-forge.yml")
         if shell_scripts and forge_yaml:
-            with open(forge_yaml[0], "r") as fh:
+            with open(forge_yaml, "r") as fh:
                 code = get_yaml().load(fh)
                 shellcheck_enabled = code.get("shellcheck", {}).get(
                     "enabled", shellcheck_enabled
@@ -980,7 +994,7 @@ def run_conda_forge_specific(meta, recipe_dir, lints, hints):
             )
 
 
-def is_selector_line(line, allow_platforms=False):
+def is_selector_line(line, allow_platforms=False, allow_keys=set()):
     # Using the same pattern defined in conda-build (metadata.py),
     # we identify selectors.
     line = line.rstrip()
@@ -989,13 +1003,17 @@ def is_selector_line(line, allow_platforms=False):
         return False
     m = sel_pat.match(line)
     if m:
-        if allow_platforms:
-            nouns = {
-                w for w in m.group(3).split() if w not in ("not", "and", "or")
-            }
-            if nouns.issubset({"win", "linux", "osx", "unix"}):
-                # the selector only contains (a boolean chain of) platform selectors
-                return False
+        nouns = {
+            w for w in m.group(3).split() if w not in ("not", "and", "or")
+        }
+        allowed_nouns = (
+            {"win", "linux", "osx", "unix"} if allow_platforms else set()
+        ) | allow_keys
+
+        if nouns.issubset(allowed_nouns):
+            # the selector only contains (a boolean chain of) platform selectors
+            # and/or keys from the conda_build_config.yaml
+            return False
         else:
             return True
     return False
