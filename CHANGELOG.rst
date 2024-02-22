@@ -4,6 +4,39 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.31.0
+====================
+
+**Added:**
+
+* Smithy now understand the new stdlib jinja function.
+* Complete conda-build load data functions stubs PR #1829
+* `noarch` packages can now include keys from their `conda_build_config.yaml` as selectors in their recipe.
+This allows for building multiple variants of a `noarch` packages, e.g., to use different dependencies depending on the Python version as runtime.
+
+**Changed:**
+
+* Default build tool changed from conda-mambabuild to conda-build again. (#1844)
+* Cleanup ``run_win_build.bat`` ( #1836 )
+
+**Fixed:**
+
+* Resolve warnings in Github Actions workflows by updating to ``actions/checkout@v4``. (#1839)
+* Fix randomly mismatched zipped variant keys. (#1459 and #1782 via #1815)
+
+**Authors:**
+
+* Jaime Rodríguez-Guerra
+* Marcel Bargull
+* John Kirkham
+* H. Vetinari
+* Bela Stoyan
+* pre-commit-ci[bot]
+* Matthias Diener
+* Antonio S. Cofiño
+
+
+
 v3.30.4
 ====================
 
