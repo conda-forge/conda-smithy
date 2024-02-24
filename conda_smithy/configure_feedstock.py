@@ -297,6 +297,119 @@ def _trim_unused_pin_run_as_build(all_used_vars):
         del all_used_vars["pin_run_as_build"]
 
 
+def _get_used_key_values_by_input_order(
+    squished_input_variants,
+    squished_used_variants,
+    all_used_vars,
+):
+    used_key_values = {
+        key: squished_input_variants[key]
+        for key in all_used_vars
+        if key in squished_input_variants
+    }
+    logger.debug(
+        "initial used_key_values {}".format(pprint.pformat(used_key_values))
+    )
+
+    # we want remove any used key values not in used variants and make sure they follow the
+    #   input order
+    # zipped keys are a special case since they are ordered by the list of tuple of zipped
+    #   key values
+    # so we do the zipped keys first and then do the rest
+    zipped_tuples = {}
+    zipped_keys = set()
+    for keyset in squished_input_variants["zip_keys"]:
+        zipped_tuples[tuple(keyset)] = list(
+            zip(*[squished_input_variants[k] for k in keyset])
+        )
+        zipped_keys |= set(keyset)
+    logger.debug("zipped_keys {}".format(pprint.pformat(zipped_keys)))
+    logger.debug("zipped_tuples {}".format(pprint.pformat(zipped_tuples)))
+
+    for keyset, tuples in zipped_tuples.items():
+        # for each set of zipped keys from squished_input_variants,
+        # we trim them down to what is in squished_used_variants
+        used_keyset = []
+        used_keyset_inds = []
+        for k in keyset:
+            if k in squished_used_variants:
+                used_keyset.append(k)
+                used_keyset_inds.append(keyset.index(k))
+        used_keyset = tuple(used_keyset)
+        used_keyset_inds = tuple(used_keyset_inds)
+
+        # if we find nothing, keep going
+        if not used_keyset:
+            continue
+
+        # this trims the zipped tuples down to the used keys
+        used_tuples = tuple(
+            [
+                tuple(
+                    [
+                        tup[used_keyset_ind]
+                        for used_keyset_ind in used_keyset_inds
+                    ]
+                )
+                for tup in tuples
+            ]
+        )
+        logger.debug("used_keyset {}".format(pprint.pformat(used_keyset)))
+        logger.debug(
+            "used_keyset_inds {}".format(pprint.pformat(used_keyset_inds))
+        )
+        logger.debug("used_tuples {}".format(pprint.pformat(used_tuples)))
+
+        # this is the set of tuples that we want to keep, but need to be reordered
+        used_tuples_to_be_reordered = set(
+            list(zip(*[squished_used_variants[k] for k in used_keyset]))
+        )
+        logger.debug(
+            "used_tuples_to_be_reordered {}".format(
+                pprint.pformat(used_tuples_to_be_reordered)
+            )
+        )
+
+        # we double check the logic above by looking to ensure everything in
+        #   the squished_used_variants
+        # is in the squished_input_variants
+        used_tuples_set = set(used_tuples)
+        logger.debug(
+            "are all used tuples in input tuples? %s",
+            all(
+                used_tuple in used_tuples_set
+                for used_tuple in used_tuples_to_be_reordered
+            ),
+        )
+
+        # now we do the final rdering
+        final_used_tuples = tuple(
+            [tup for tup in used_tuples if tup in used_tuples_to_be_reordered]
+        )
+        logger.debug(
+            "final_used_tuples {}".format(pprint.pformat(final_used_tuples))
+        )
+
+        # now we reconstruct the list of values per key and replace in used_key_values
+        # we keep only keys in all_used_vars
+        for i, k in enumerate(used_keyset):
+            if k in all_used_vars:
+                used_key_values[k] = [tup[i] for tup in final_used_tuples]
+
+    # finally, we handle the rest of the keys that are not zipped
+    for k, v in squished_used_variants.items():
+        if k in all_used_vars and k not in zipped_keys:
+            used_key_values[k] = v
+
+    logger.debug(
+        "post input reorder used_key_values {}".format(
+            pprint.pformat(used_key_values)
+        )
+    )
+
+    return used_key_values
+
+
 def _collapse_subpackage_variants(
     list_of_metas, root_path, platform, arch, forge_config
 ):
@@ -411,109 +524,10 @@ def _collapse_subpackage_variants(
         "top_level_loop_vars {}".format(pprint.pformat(top_level_loop_vars))
     )
 
-    used_key_values = {
-        key: squished_input_variants[key]
-        for key in all_used_vars
-        if key in squished_input_variants
-    }
-    logger.debug(
-        "initial used_key_values {}".format(pprint.pformat(used_key_values))
-    )
-
-    # we want remove any used key values not in used variants and make sure they follow the
-    #   input order
-    # zipped keys are a special case since they are ordered by the list of tuple of zipped
-    #   key values
-    # so we do the zipped keys first and then do the rest
-    zipped_tuples = {}
-    zipped_keys = set()
-    for keyset in squished_input_variants["zip_keys"]:
-        zipped_tuples[tuple(keyset)] = list(
-            zip(*[squished_input_variants[k] for k in keyset])
-        )
-        zipped_keys |= set(keyset)
-    logger.debug("zipped_keys {}".format(pprint.pformat(zipped_keys)))
-    logger.debug("zipped_tuples {}".format(pprint.pformat(zipped_tuples)))
-
-    for keyset, tuples in zipped_tuples.items():
-        # for each set of zipped keys from squished_input_variants,
-        # we trim them down to what is in squished_used_variants
-        used_keyset = []
-        used_keyset_inds = []
-        for k in keyset:
-            if k in squished_used_variants:
-                used_keyset.append(k)
-                used_keyset_inds.append(keyset.index(k))
-        used_keyset = tuple(used_keyset)
-        used_keyset_inds = tuple(used_keyset_inds)
-
-        # if we find nothing, keep going
-        if not used_keyset:
-            continue
-
-        # this trims the zipped tuples down to the used keys
-        used_tuples = tuple(
-            [
-                tuple(
-                    [
-                        tup[used_keyset_ind]
-                        for used_keyset_ind in used_keyset_inds
-                    ]
-                )
-                for tup in tuples
-            ]
-        )
-        logger.debug("used_keyset {}".format(pprint.pformat(used_keyset)))
-        logger.debug(
-            "used_keyset_inds {}".format(pprint.pformat(used_keyset_inds))
-        )
-        logger.debug("used_tuples {}".format(pprint.pformat(used_tuples)))
-
-        # this is the set of tuples that we want to keep, but need to be reordered
-        used_tuples_to_be_reordered = set(
-            list(zip(*[squished_used_variants[k] for k in used_keyset]))
-        )
-        logger.debug(
-            "used_tuples_to_be_reordered {}".format(
-                pprint.pformat(used_tuples_to_be_reordered)
-            )
-        )
-
-        # we double check the logic above by looking to ensure everything in
-        #   the squished_used_variants
-        # is in the squished_input_variants
-        used_tuples_set = set(used_tuples)
-        logger.debug(
-            "are all used tuples in input tuples? %s",
-            all(
-                used_tuple in used_tuples_set
-                for used_tuple in used_tuples_to_be_reordered
-            ),
-        )
-
-        # now we do the final rdering
-        final_used_tuples = tuple(
-            [tup for tup in used_tuples if tup in used_tuples_to_be_reordered]
-        )
-        logger.debug(
-            "final_used_tuples {}".format(pprint.pformat(final_used_tuples))
-        )
-
-        # now we reconstruct the list of values per key and replace in used_key_values
-        # we keep only keys in all_used_vars
-        for i, k in enumerate(used_keyset):
-            if k in all_used_vars:
-                used_key_values[k] = [tup[i] for tup in final_used_tuples]
-
-    # finally, we handle the rest of the keys that are not zipped
-    for k, v in squished_used_variants.items():
-        if k in all_used_vars and k not in zipped_keys:
-            used_key_values[k] = v
-
-    logger.debug(
-        "post input reorder used_key_values {}".format(
-            pprint.pformat(used_key_values)
-        )
+    used_key_values = _get_used_key_values_by_input_order(
+        squished_input_variants,
+        squished_used_variants,
+        all_used_vars,
     )
 
     for k in preserve_top_level_loops:
