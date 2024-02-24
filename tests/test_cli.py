@@ -364,7 +364,7 @@ def test_render_variant_mismatches(testing_workdir):
     assert len(cfgs) == 3  # readme + 2 configs
 
     for _cfg in cfgs:
-        if _cfg == "README.md":
+        if _cfg == "README":
             continue
         cfg = os.path.join(matrix_dir, _cfg)
         with open(cfg, "r") as f:
