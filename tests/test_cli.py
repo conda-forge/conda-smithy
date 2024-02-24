@@ -328,3 +328,45 @@ def test_regenerate(py_recipe, testing_workdir):
 
     # one py ver, no target_platform  (tests that older configs don't stick around)
     assert len(os.listdir(matrix_folder)) == 4
+
+
+def test_render_variant_mismatches(testing_workdir):
+    parser = argparse.ArgumentParser()
+    subparser = parser.add_subparsers()
+    init_obj = cli.Init(subparser)
+    regen_obj = cli.Regenerate(subparser)
+    _thisdir = os.path.abspath(os.path.dirname(__file__))
+    recipe = os.path.join(_thisdir, "recipes", "variant_mismatches")
+    feedstock_dir = os.path.join(
+        testing_workdir, "test-variant-mismatches-feedstock"
+    )
+    args = InitArgs(
+        recipe_directory=recipe,
+        feedstock_directory=feedstock_dir,
+        temporary_directory=os.path.join(recipe, "temp"),
+    )
+    init_obj(args)
+    # Ignore conda-forge-pinning for this test, as the test relies on conda-forge-pinning
+    # not being present
+    args = RegenerateArgs(
+        feedstock_directory=feedstock_dir,
+        feedstock_config=None,
+        commit=False,
+        no_check_uptodate=True,
+        exclusive_config_file="recipe/conda_build_config.yaml",
+        check=False,
+        temporary_directory=os.path.join(recipe, "temp"),
+    )
+    regen_obj(args)
+
+    matrix_dir = os.path.join(feedstock_dir, ".ci_support")
+    cfgs = os.listdir(matrix_dir)
+    assert len(cfgs) == 3  # readme + 2 configs
+
+    for _cfg in cfgs:
+        if _cfg == "README":
+            continue
+        cfg = os.path.join(matrix_dir, _cfg)
+        with open(cfg, "r") as f:
+            data = yaml.safe_load(f)
+        assert data["a"] == data["b"]
