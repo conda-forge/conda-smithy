@@ -4,6 +4,25 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.31.1
+====================
+
+**Changed:**
+
+* Do not consider broken releases when checking if local version is up to date. (#1848 via #1849)
+* Added rerendering support for additional mpi variants ``msmpi``, ``mpi_serial``, and ``impi``.
+
+**Fixed:**
+
+* Fixed regression where some variant keys were mismatched during rerendering.
+
+**Authors:**
+
+* Matthew R. Becker
+* Jaime Rodríguez-Guerra
+
+
+
 v3.31.0
 ====================
 
