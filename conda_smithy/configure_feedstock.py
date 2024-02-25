@@ -2322,17 +2322,17 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
     return config
 
 
-def get_most_recent_version(name):
+def get_most_recent_version(name, include_broken=False):
     from conda_build.conda_interface import VersionOrder
 
     request = requests.get(
         "https://api.anaconda.org/package/conda-forge/" + name
     )
     request.raise_for_status()
-
-    pkg = max(
-        request.json()["files"], key=lambda x: VersionOrder(x["version"])
-    )
+    files = request.json()["files"]
+    if not include_broken:
+        files = [f for f in files if "broken" not in f.get("labels", ())]
+    pkg = max(files, key=lambda x: VersionOrder(x["version"]))
 
     PackageRecord = namedtuple("PackageRecord", ["name", "version", "url"])
     return PackageRecord(name, pkg["version"], "https:" + pkg["download_url"])
