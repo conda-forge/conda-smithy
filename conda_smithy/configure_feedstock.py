@@ -2188,7 +2188,7 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
     return config
 
 
-def get_most_recent_version(name, only_not_broken=False):
+def get_most_recent_version(name, include_broken=False):
     from conda_build.conda_interface import VersionOrder
 
     request = requests.get(
@@ -2196,7 +2196,7 @@ def get_most_recent_version(name, only_not_broken=False):
     )
     request.raise_for_status()
     files = request.json()["files"]
-    if only_not_broken:
+    if not include_broken:
         files = [f for f in files if "broken" not in f.get("labels", ())]
     pkg = max(files, key=lambda x: VersionOrder(x["version"]))
 
@@ -2207,9 +2207,7 @@ def get_most_recent_version(name, only_not_broken=False):
 def check_version_uptodate(name, installed_version, error_on_warn):
     from conda_build.conda_interface import VersionOrder
 
-    most_recent_version = get_most_recent_version(
-        name, only_not_broken=True
-    ).version
+    most_recent_version = get_most_recent_version(name).version
     if installed_version is None:
         msg = "{} is not installed in conda-smithy's environment.".format(name)
     elif VersionOrder(installed_version) < VersionOrder(most_recent_version):
