@@ -133,7 +133,7 @@ provider:
 recipe_dir: recipe
 remote_ci_setup:
 - conda-forge-ci-setup=4
-- conda-build>=24.1 
+- conda-build>=24.1
 secrets: []
 shellcheck:
   enabled: false

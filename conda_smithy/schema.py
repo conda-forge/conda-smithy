@@ -524,13 +524,13 @@ class ConfigModel(BaseModel):
         """,
     )
 
-    conda_solver: Optional[
-        Union[Literal["libmamba", "classic"], Nullable]
-    ] = Field(
-        default="libmamba",
-        description="""
+    conda_solver: Optional[Union[Literal["libmamba", "classic"], Nullable]] = (
+        Field(
+            default="libmamba",
+            description="""
         Choose which ``conda`` solver plugin to use for feedstock builds.
         """,
+        )
     )
 
     github: Optional[GithubConfig] = Field(

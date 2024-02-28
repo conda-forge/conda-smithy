@@ -1082,9 +1082,11 @@ def main(recipe_dir, conda_forge=False, return_hints=False):
 
     validation_errors = [str(err) for err in validation_errors]
     validation_errors = [
-        err.split("\n")[0]
-        if err.startswith("Additional properties are not allowed")
-        else err
+        (
+            err.split("\n")[0]
+            if err.startswith("Additional properties are not allowed")
+            else err
+        )
         for err in validation_errors
     ]
     results.extend(validation_errors)
