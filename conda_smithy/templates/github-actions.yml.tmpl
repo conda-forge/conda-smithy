@@ -84,7 +84,7 @@ jobs:
 {%- endif %}
 
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 {%- if clone_depth is not none %}
       with:
         fetch-depth: {{ clone_depth }}

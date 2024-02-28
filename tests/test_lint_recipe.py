@@ -680,6 +680,57 @@ class Test_linter(unittest.TestCase):
                 )
             lints = linter.main(recipe_dir)
 
+    def test_jinja_load_file_data(self):
+        # Test that we can use load_file_data in a recipe. We don't care about
+        # the results here and/or the actual file data because the recipe linter
+        # renders conda-build functions to just function stubs to pass the linting.
+        # TODO: add *args and **kwargs for functions used to parse the file.
+        with tmp_directory() as recipe_dir:
+            with io.open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
+                fh.write(
+                    """
+                        {% set data = load_file_data("IDONTNEED", from_recipe_dir=True, recipe_dir=".") %}
+                        package:
+                          name: foo
+                          version: {{ version }}
+                        """
+                )
+            lints = linter.main(recipe_dir)
+
+    def test_jinja_load_setup_py_data(self):
+        # Test that we can use load_setup_py_data in a recipe. We don't care about
+        # the results here and/or the actual file data because the recipe linter
+        # renders conda-build functions to just function stubs to pass the linting.
+        # TODO: add *args and **kwargs for functions used to parse the file.
+        with tmp_directory() as recipe_dir:
+            with io.open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
+                fh.write(
+                    """
+                        {% set data = load_setup_py_data("IDONTNEED", from_recipe_dir=True, recipe_dir=".") %}
+                        package:
+                          name: foo
+                          version: {{ version }}
+                        """
+                )
+            lints = linter.main(recipe_dir)
+
+    def test_jinja_load_str_data(self):
+        # Test that we can use load_str_data in a recipe. We don't care about
+        # the results here and/or the actual file data because the recipe linter
+        # renders conda-build functions to just function stubs to pass the linting.
+        # TODO: add *args and **kwargs for functions used to parse the data.
+        with tmp_directory() as recipe_dir:
+            with io.open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
+                fh.write(
+                    """
+                        {% set data = load_str_data("IDONTNEED", "json") %}
+                        package:
+                          name: foo
+                          version: {{ version }}
+                        """
+                )
+            lints = linter.main(recipe_dir)
+
     def test_jinja_os_sep(self):
         # Test that we can use os.sep in a recipe.
         with tmp_directory() as recipe_dir:
@@ -1223,6 +1274,12 @@ class Test_linter(unittest.TestCase):
     def test_noarch_platforms(self):
         lints = linter.main(
             os.path.join(_thisdir, "recipes", "noarch_platforms", "recipe")
+        )
+        assert not lints
+
+    def test_noarch_selector_variants(self):
+        lints = linter.main(
+            os.path.join(_thisdir, "recipes", "noarch_selector_variants")
         )
         assert not lints
 

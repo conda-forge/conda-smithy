@@ -8,6 +8,7 @@ line utility. The relevant one is
 Note that if you are using appveyor, you will need to push the changes to the
 conda-forge.yml in your feedstock to GitHub.
 """
+
 import os
 import sys
 from contextlib import redirect_stderr, redirect_stdout

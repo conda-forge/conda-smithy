@@ -15,16 +15,16 @@ Authors are sorted by number of commits.
 * Michael Sarahan
 * Min RK
 * Marcel Bargull
+* John Kirkham
 * Mark Harfouche
 * Leo Fang
 * Hadrien Mary
 * Ryan Volz
-* John Kirkham
 * Johnny Willemsen
+* H. Vetinari
 * Chris Burr
 * Julian Rüth
 * Bastian Zimmermann
-* H. Vetinari
 * Daniel Bast
 * Billy K. Poon
 * Tim Snyder
@@ -35,23 +35,24 @@ Authors are sorted by number of commits.
 * Maksim Rakitin
 * Jan Schulz
 * Josh Reichardt
+* Bela Stoyan
+* pre-commit-ci[bot]
 * Justin Calamari
 * Jason Furmanek
 * Patrick Sodré
 * C.A.M. Gerlach
 * refraction-ray
-* pre-commit-ci[bot]
 * Nicholas Bollweg
 * Leopold Talirz
 * Tom Pollard
-* Bela Stoyan
 * Gonzalo Pena-Castellanos
+* Matthias Diener
+* Antonio S. Cofiño
 * Carlo
 * Matthew Craig
 * Peter Williams
 * Joshua L. Adelman
 * Wolf Vollprecht
-* Matthias Diener
 * John Blischak
 * Marius van Niekerk
 * Johannes Köster

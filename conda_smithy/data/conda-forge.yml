@@ -66,7 +66,7 @@ conda_build:
   error_overlinking: false
   pkg_format: 2
   zstd_compression_level: 16
-conda_build_tool: mambabuild
+conda_build_tool: conda-build
 conda_forge_output_validation: false
 conda_install_tool: mamba
 conda_solver: libmamba
@@ -133,6 +133,7 @@ provider:
 recipe_dir: recipe
 remote_ci_setup:
 - conda-forge-ci-setup=4
+- conda-build>=24.1 
 secrets: []
 shellcheck:
   enabled: false
