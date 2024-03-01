@@ -480,7 +480,7 @@
             }
           ],
           "default": 16,
-          "description": "The compression level for the zstd compression algorithm for\n            .conda artifacts. conda-forge uses a default value of 16 for a good\n            compromise of performance and compression.",
+          "description": "The compression level for the zstd compression algorithm for\n.conda artifacts. conda-forge uses a default value of 16 for a good\ncompromise of performance and compression.",
           "title": "Zstd Compression Level"
         },
         "error_overlinking": {
@@ -493,7 +493,7 @@
             }
           ],
           "default": false,
-          "description": "\n            Enable error when shared libraries from transitive dependencies are\n            directly  linked  to any executables or shared libraries in  built\n            packages. For more details, see the\n            [conda build documentation](https://docs.conda.io/projects/conda-build/en/stable/resources/commands/conda-build.html).\n            ",
+          "description": "Enable error when shared libraries from transitive dependencies are\ndirectly  linked  to any executables or shared libraries in  built\npackages. For more details, see the\n[conda build documentation](https://docs.conda.io/projects/conda-build/en/stable/resources/commands/conda-build.html).",
           "title": "Error Overlinking"
         }
       },
@@ -1632,7 +1632,7 @@
     }
   },
   "additionalProperties": false,
-  "description": "This model describes in detail the top-level fields in  ``conda-forge.yml``.\nGeneral configuration options are described below within the ``Fields``\nspecifications. Additional examples are provided as part of the object\ndescription. Values and options are subject to change, and will be\nflagged as Deprecated as appropriate.",
+  "description": "This model describes in detail the top-level fields in  `conda-forge.yml`.\nGeneral configuration options are described below within the `Fields`\nspecifications. Additional examples are provided as part of the object\ndescription. Values and options are subject to change, and will be\nflagged as Deprecated as appropriate.",
   "properties": {
     "conda_build": {
       "anyOf": [
@@ -1643,7 +1643,7 @@
           "type": "null"
         }
       ],
-      "description": "\n        Settings in this block are used to control how ``conda build``\n        runs and produces artifacts. An example of the such configuration is:\n\n        .. code-block:: yaml\n\n            conda_build:\n                pkg_format: 2\n                zstd_compression_level: 16\n                error_overlinking: False\n\n        "
+      "description": "Settings in this block are used to control how `conda build`\nruns and produces artifacts. An example of the such configuration is:\n\n```yaml\nconda_build:\n    pkg_format: 2\n    zstd_compression_level: 16\n    error_overlinking: False\n```"
     },
     "conda_build_tool": {
       "anyOf": [
@@ -1660,8 +1660,8 @@
           "type": "null"
         }
       ],
-      "default": "mambabuild",
-      "description": "\n        Use this option to choose which tool is used to build your recipe.\n        ",
+      "default": "conda-build",
+      "description": "Use this option to choose which tool is used to build your recipe.",
       "title": "Conda Build Tool"
     },
     "conda_install_tool": {
@@ -1678,7 +1678,7 @@
         }
       ],
       "default": "mamba",
-      "description": "\n        Use this option to choose which tool is used to provision the tooling in your\n        feedstock.\n        ",
+      "description": "Use this option to choose which tool is used to provision the tooling in your\nfeedstock.",
       "title": "Conda Install Tool"
     },
     "conda_forge_output_validation": {
@@ -1691,7 +1691,7 @@
         }
       ],
       "default": false,
-      "description": "\n        This field must be set to ``True`` for feedstocks in the ``conda-forge`` GitHub\n        organization. It enables the required feedstock artifact validation as described\n        in :ref: Output Validation and Feedstock Tokens </maintainer/infrastructure#output-validation>.\n        ",
+      "description": "This field must be set to `True` for feedstocks in the `conda-forge` GitHub\norganization. It enables the required feedstock artifact validation as described\nin [Output Validation and Feedstock Tokens](/docs/maintainer/infrastructure#output-validation).",
       "title": "Conda Forge Output Validation"
     },
     "conda_solver": {
@@ -1711,7 +1711,7 @@
         }
       ],
       "default": "libmamba",
-      "description": "\n        Choose which ``conda`` solver plugin to use for feedstock builds.\n        ",
+      "description": "Choose which `conda` solver plugin to use for feedstock builds.",
       "title": "Conda Solver"
     },
     "github": {
@@ -1723,7 +1723,7 @@
           "type": "null"
         }
       ],
-      "description": "\n        Mapping for GitHub-specific configuration options. The defaults are as follows:\n\n        .. code-block:: yaml\n\n            github:\n                user_or_org: conda-forge\n                repo_name: \"my_repo\"\n                branch_name: main\n                tooling_branch_name: main\n        "
+      "description": "Mapping for GitHub-specific configuration options. The defaults are as follows:\n\n```yaml\ngithub:\n    user_or_org: conda-forge\n    repo_name: \"my_repo\"\n    branch_name: main\n    tooling_branch_name: main\n```"
     },
     "bot": {
       "anyOf": [
@@ -1734,7 +1734,7 @@
           "type": "null"
         }
       ],
-      "description": "\n        This dictates the behavior of the conda-forge auto-tick bot which issues\n        automatic version updates/migrations for feedstocks.\n        A valid example is:\n\n        .. code-block:: yaml\n\n            bot:\n                # can the bot automerge PRs it makes on this feedstock\n                automerge: true\n\n                # only open PRs if resulting environment is solvable, useful for tightly coupled packages\n                check_solvable: true\n\n                # The bot.inspection key in the conda-forge.yml can have one of six possible values:\n                inspection: hint-all  # generate hints using all methods\n\n                # any branches listed in this section will get bot migration PRs in addition\n                # to the default branch\n                abi_migration_branches:\n                    - v1.10.x\n\n                version_updates:\n                    # use this for packages that are updated too frequently\n                    random_fraction_to_keep: 0.1  # keeps 10% of versions at random\n\n        The ``abi_migration_branches`` feature is useful to, for example, add a\n        long-term support (LTS) branch for a package.\n        "
+      "description": "This dictates the behavior of the conda-forge auto-tick bot which issues\nautomatic version updates/migrations for feedstocks.\nA valid example is:\n\n```yaml\nbot:\n    # can the bot automerge PRs it makes on this feedstock\n    automerge: true\n\n    # only open PRs if resulting environment is solvable, useful for tightly coupled packages\n    check_solvable: true\n\n    # The bot.inspection key in the conda-forge.yml can have one of six possible values:\n    inspection: hint-all  # generate hints using all methods\n\n    # any branches listed in this section will get bot migration PRs in addition\n    # to the default branch\n    abi_migration_branches:\n        - v1.10.x\n\n    version_updates:\n        # use this for packages that are updated too frequently\n        random_fraction_to_keep: 0.1  # keeps 10% of versions at random\n```\nThe `abi_migration_branches` feature is useful to, for example, add a\nlong-term support (LTS) branch for a package."
     },
     "build_platform": {
       "anyOf": [
@@ -1745,7 +1745,7 @@
           "type": "null"
         }
       ],
-      "description": "\n        This is a mapping from the target platform to the build platform for the\n        package to be built. For example, the following builds a ``osx-64`` package\n        on the ``linux-64`` build platform using cross-compiling.\n\n        .. code-block:: yaml\n\n            build_platform:\n                osx_64: linux_64\n\n        Leaving this field empty implicitly requests to build a package natively. i.e.\n\n        .. code-block:: yaml\n\n            build_platform:\n                linux_64: linux_64\n                linux_ppc64le: linux_ppc64le\n                linux_aarch64: linux_aarch64\n                osx_64: osx_64\n                osx_arm64: osx_arm64\n                win_64: win_64\n        "
+      "description": "This is a mapping from the target platform to the build platform for the\npackage to be built. For example, the following builds a `osx-64` package\non the `linux-64` build platform using cross-compiling.\n\n```yaml\nbuild_platform:\n    osx_64: linux_64\n```\n\nLeaving this field empty implicitly requests to build a package natively. i.e.\n\n```yaml\nbuild_platform:\n    linux_64: linux_64\n    linux_ppc64le: linux_ppc64le\n    linux_aarch64: linux_aarch64\n    osx_64: osx_64\n    osx_arm64: osx_arm64\n    win_64: win_64\n```"
     },
     "channel_priority": {
       "anyOf": [
@@ -1757,7 +1757,7 @@
         }
       ],
       "default": "strict",
-      "description": "\n        The channel priority level for the conda solver during feedstock builds.\n        For extra information, see the\n        `Strict channel priority <https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-channels.html#strict-channel-priority>`__\n        section on conda documentation.\n        "
+      "description": "The channel priority level for the conda solver during feedstock builds.\nFor extra information, see the\n[Strict channel priority](https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-channels.html#strict-channel-priority)\nsection on conda documentation."
     },
     "choco": {
       "anyOf": [
@@ -1771,7 +1771,7 @@
           "type": "null"
         }
       ],
-      "description": "\n        This parameter allows for conda-smithy to run chocoloatey installs on Windows\n        when additional system packages are needed. This is a list of strings that\n        represent package names and any additional parameters. For example,\n\n        .. code-block:: yaml\n\n            choco:\n                # install a package\n                - nvidia-display-driver\n\n                # install a package with a specific version\n                - cuda --version=11.0.3\n\n        This is currently only implemented for Azure Pipelines. The command that is run is\n        ``choco install {entry} -fdv -y --debug``.  That is, ``choco install`` is executed\n        with a standard set of additional flags that are useful on CI.\n        ",
+      "description": "This parameter allows for conda-smithy to run chocoloatey installs on Windows\nwhen additional system packages are needed. This is a list of strings that\nrepresent package names and any additional parameters. For example,\n\n```yaml\nchoco:\n    # install a package\n    - nvidia-display-driver\n\n    # install a package with a specific version\n    - cuda --version=11.0.3\n```\n\nThis is currently only implemented for Azure Pipelines. The command that is run is\n`choco install {entry} -fdv -y --debug`.  That is, `choco install` is executed\nwith a standard set of additional flags that are useful on CI.",
       "title": "Choco"
     },
     "docker": {
@@ -1783,7 +1783,7 @@
           "type": "null"
         }
       ],
-      "description": "\n        This is a mapping for Docker-specific configuration options.\n        Some options are\n\n        .. code-block:: yaml\n\n            docker:\n                executable: docker\n                command: \"bash\"\n        "
+      "description": "This is a mapping for Docker-specific configuration options.\nSome options are\n\n```yaml\ndocker:\n    executable: docker\n    command: \"bash\"\n```"
     },
     "idle_timeout_minutes": {
       "anyOf": [
@@ -1798,7 +1798,7 @@
         }
       ],
       "default": null,
-      "description": "\n        Configurable idle timeout. Used for packages that don't have chatty enough\n        builds. Applicable only to circleci and travis.\n\n        .. code-block:: yaml\n\n            idle_timeout_minutes: 60\n        ",
+      "description": "Configurable idle timeout. Used for packages that don't have chatty enough\nbuilds. Applicable only to circleci and travis.\n\n```yaml\nidle_timeout_minutes: 60\n```",
       "title": "Idle Timeout Minutes"
     },
     "noarch_platforms": {
@@ -1813,7 +1813,7 @@
           "type": "null"
         }
       ],
-      "description": "\n        Platforms on which to build noarch packages. The preferred default is a\n        single build on ``linux_64``.\n\n        .. code-block:: yaml\n\n            noarch_platforms: linux_64\n\n        To build on multiple platforms, e.g. for simple packages with platform-specific\n        dependencies, provide a list.\n\n        .. code-block:: yaml\n\n            noarch_platforms:\n            - linux_64\n            - win_64\n        ",
+      "description": "Platforms on which to build noarch packages. The preferred default is a\nsingle build on `linux_64`.\n\n```yaml\nnoarch_platforms: linux_64\n```\n\nTo build on multiple platforms, e.g. for simple packages with platform-specific\ndependencies, provide a list.\n\n```yaml\nnoarch_platforms:\n  - linux_64\n  - win_64\n```",
       "title": "Noarch Platforms"
     },
     "os_version": {
@@ -1825,7 +1825,7 @@
           "type": "null"
         }
       ],
-      "description": "\n        This key is used to set the OS versions for `linux_*` platforms. Valid entries\n        map a linux platform and arch to either `cos6` or `cos7`.\n        Currently `cos6` is the default for `linux-64`.\n        All other linux architectures use CentOS 7.\n        Here is an example that enables CentOS 7 on ``linux-64`` builds\n\n        .. code-block:: yaml\n\n            os_version:\n                linux_64: cos7\n        "
+      "description": "This key is used to set the OS versions for `linux_*` platforms. Valid entries\nmap a linux platform and arch to either `cos6` or `cos7`.\nCurrently `cos6` is the default for `linux-64`.\nAll other linux architectures use CentOS 7.\nHere is an example that enables CentOS 7 on `linux-64` builds\n\n```yaml\nos_version:\n    linux_64: cos7\n```"
     },
     "provider": {
       "anyOf": [
@@ -1836,7 +1836,7 @@
           "type": "null"
         }
       ],
-      "description": "\n        The ``provider`` field is a mapping from build platform (not target platform)\n        to CI service. It determines which service handles each build platform.\n        If a desired build platform is not available with a selected provider\n        (either natively or with emulation), the build will be disabled.\n        Use the ``build_platform`` field to manually specify cross-compilation when\n        no providers offer a desired build platform.\n\n        The following are available as supported build platforms:\n\n        * ``linux_64``\n        * ``osx_64``\n        * ``win_64``\n        * ``linux_aarch64``\n        * ``linux_ppc64le``\n        * ``linux_s390x``\n        * ``linux_armv7l``\n\n        The following CI services are available:\n\n        * ``azure``\n        * ``circle``\n        * ``travis``\n        * ``appveyor``\n        * ``None`` or ``False`` to disable a build platform.\n        * ``default`` to choose an appropriate CI (only if available)\n\n        For example, switching linux_64 & osx_64 to build on Travis CI, with win_64 on\n        Appveyor:\n\n        .. code-block:: yaml\n\n            provider:\n                linux_64: travis\n                osx_64: travis\n                win_64: appveyor\n\n        Currently, x86_64 platforms are enabled, but other build platforms are\n        disabled by default. i.e. an empty provider entry is equivalent to the\n        following:\n\n        .. code-block:: yaml\n\n            provider:\n                linux_64: azure\n                osx_64: azure\n                win_64: azure\n                linux_ppc64le: None\n                linux_aarch64: None\n\n        To enable ``linux_ppc64le`` and ``linux_aarch64`` add the following:\n\n        .. code-block:: yaml\n\n            provider:\n                linux_ppc64le: default\n                linux_aarch64: default\n        "
+      "description": "The `provider` field is a mapping from build platform (not target platform)\nto CI service. It determines which service handles each build platform.\nIf a desired build platform is not available with a selected provider\n(either natively or with emulation), the build will be disabled.\nUse the `build_platform` field to manually specify cross-compilation when\nno providers offer a desired build platform.\n\nThe following are available as supported build platforms:\n\n* `linux_64`\n* `osx_64`\n* `win_64`\n* `linux_aarch64`\n* `linux_ppc64le`\n* `linux_s390x`\n* `linux_armv7l`\n\nThe following CI services are available:\n\n* `azure`\n* `circle`\n* `travis`\n* `appveyor`\n* `None` or `False` to disable a build platform.\n* `default` to choose an appropriate CI (only if available)\n\nFor example, switching linux_64 & osx_64 to build on Travis CI, with win_64 on\nAppveyor:\n\n```yaml\nprovider:\n    linux_64: travis\n    osx_64: travis\n    win_64: appveyor\n```\n\nCurrently, x86_64 platforms are enabled, but other build platforms are\ndisabled by default. i.e. an empty provider entry is equivalent to the\nfollowing:\n\n```yaml\nprovider:\n    linux_64: azure\n    osx_64: azure\n    win_64: azure\n    linux_ppc64le: None\n    linux_aarch64: None\n```\n\nTo enable `linux_ppc64le` and `linux_aarch64` add the following:\n\n```yaml\nprovider:\n    linux_ppc64le: default\n    linux_aarch64: default\n```"
     },
     "package": {
       "anyOf": [
@@ -1864,7 +1864,7 @@
         }
       ],
       "default": "recipe",
-      "description": "\n        The relative path to the recipe directory. The default is:\n\n        .. code-block:: yaml\n\n            recipe_dir: recipe\n        ",
+      "description": "The relative path to the recipe directory. The default is:\n\n```yaml\nrecipe_dir: recipe\n```",
       "title": "Recipe Dir"
     },
     "remote_ci_setup": {
@@ -1879,7 +1879,7 @@
           "type": "null"
         }
       ],
-      "description": "\n        This option can be used to override the default ``conda-forge-ci-setup`` package.\n        Can be given with ``${url or channel_alias}::package_name``,\n        defaults to conda-forge channel_alias if no prefix is given.\n\n        .. code-block:: yaml\n\n            remote_ci_setup: \"conda-forge-ci-setup=4\"\n        ",
+      "description": "This option can be used to override the default `conda-forge-ci-setup` package.\nCan be given with `${url or channel_alias}::package_name`,\ndefaults to conda-forge channel_alias if no prefix is given.\n\n```yaml\nremote_ci_setup: [\"conda-forge-ci-setup=4\", \"conda-build>=24.1\"]\n```",
       "title": "Remote Ci Setup"
     },
     "shellcheck": {
@@ -1894,7 +1894,7 @@
           "type": "null"
         }
       ],
-      "description": "\n        Shell scripts used for builds or activation scripts can be linted with\n        shellcheck. This option can be used to enable shellcheck and configure\n        its behavior. This is not enabled by default, but can be enabled like so:\n\n        .. code-block:: yaml\n\n            shellcheck:\n                enabled: True\n\n        ",
+      "description": "Shell scripts used for builds or activation scripts can be linted with\nshellcheck. This option can be used to enable shellcheck and configure\nits behavior. This is not enabled by default, but can be enabled like so:\n\n```yaml\nshellcheck:\n    enabled: True\n```",
       "title": "Shellcheck"
     },
     "skip_render": {
@@ -1909,7 +1909,7 @@
           "type": "null"
         }
       ],
-      "description": "\n        This option specifies a list of files which ``conda smithy`` will skip rendering.\n        This is useful for files that are not templates, but are still in the recipe\n        directory. The default value is an empty list [ ], which will consider that\n        all files can be rendered. For example, if you want to skip rendering\n        the .gitignore and LICENSE.txt files, you can add the following:\n\n        .. code-block:: yaml\n\n            skip_render:\n                - .gitignore\n                - LICENSE.txt\n        ",
+      "description": "This option specifies a list of files which `conda smithy` will skip rendering.\nThis is useful for files that are not templates, but are still in the recipe\ndirectory. The default value is an empty list [ ], which will consider that\nall files can be rendered. For example, if you want to skip rendering\nthe .gitignore and LICENSE.txt files, you can add the following:\n\n```yaml\nskip_render:\n    - .gitignore\n    - LICENSE.txt\n```",
       "title": "Skip Render"
     },
     "templates": {
@@ -1924,7 +1924,7 @@
           "type": "null"
         }
       ],
-      "description": "\n        This is mostly an internal field for specifying where template files reside.\n        You shouldn't need to modify it.\n        ",
+      "description": "This is mostly an internal field for specifying where template files reside.\nYou shouldn't need to modify it.",
       "title": "Templates"
     },
     "test_on_native_only": {
@@ -1937,7 +1937,7 @@
         }
       ],
       "default": false,
-      "description": "\n        This was used for disabling testing for cross-compiling.\n\n        .. note::\n            This has been deprecated in favor of the top-level ``test`` field.\n            It is now mapped to ``test: native_and_emulated``.\n        ",
+      "description": "This was used for disabling testing for cross-compiling.\n\n```warning\nThis has been deprecated in favor of the top-level `test` field.\nIt is now mapped to `test: native_and_emulated`.\n```",
       "title": "Test On Native Only"
     },
     "test": {
@@ -1953,7 +1953,7 @@
         }
       ],
       "default": null,
-      "description": "\n        This is used to configure on which platforms a recipe is tested.\n\n        .. code-block:: yaml\n\n            test: native_and_emulated\n\n        Will do testing only if the platform is native or if there is an emulator.\n\n        .. code-block:: yaml\n\n            test: native\n\n        Will do testing only if the platform is native.\n        ",
+      "description": "This is used to configure on which platforms a recipe is tested.\n\n```yaml\ntest: native_and_emulated\n```\n\nWill do testing only if the platform is native or if there is an emulator.\n\n```yaml\ntest: native\n```\n\nWill do testing only if the platform is native.",
       "title": "Test"
     },
     "upload_on_branch": {
@@ -1969,7 +1969,7 @@
         }
       ],
       "default": null,
-      "description": "\n        This parameter restricts uploading access on work from certain branches of the\n        same repo. Only the branch listed in ``upload_on_branch`` will trigger uploading\n        of packages to the target channel. The default is to skip this check if the key\n        ``upload_on_branch`` is not in ``conda-forge.yml``. To restrict uploads to the\n        main branch:\n\n        .. code-block:: yaml\n\n            upload_on_branch: main\n        ",
+      "description": "This parameter restricts uploading access on work from certain branches of the\nsame repo. Only the branch listed in `upload_on_branch` will trigger uploading\nof packages to the target channel. The default is to skip this check if the key\n`upload_on_branch` is not in `conda-forge.yml`. To restrict uploads to the\nmain branch:\n\n```yaml\nupload_on_branch: main\n```",
       "title": "Upload On Branch"
     },
     "config_version": {
@@ -1982,7 +1982,7 @@
         }
       ],
       "default": "2",
-      "description": "\n        The conda-smithy config version to be used for conda_build_config.yaml\n        files in recipe and conda-forge-pinning. This should not be manually modified.\n        ",
+      "description": "The conda-smithy config version to be used for conda_build_config.yaml\nfiles in recipe and conda-forge-pinning. This should not be manually modified.",
       "title": "Config Version"
     },
     "exclusive_config_file": {
@@ -1998,7 +1998,7 @@
         }
       ],
       "default": null,
-      "description": "\n        Exclusive conda-build config file to replace ``conda-forge-pinning``.\n        For advanced usage only.\n        ",
+      "description": "Exclusive conda-build config file to replace `conda-forge-pinning`.\nFor advanced usage only.",
       "title": "Exclusive Config File"
     },
     "compiler_stack": {
@@ -2012,7 +2012,7 @@
       ],
       "default": "comp7",
       "deprecated": true,
-      "description": "\n        Compiler stack environment variable. This is used to specify the compiler\n        stack to use for builds. Deprecated.\n\n        .. code-block:: yaml\n\n            compiler_stack: comp7\n        ",
+      "description": "Compiler stack environment variable. This is used to specify the compiler\nstack to use for builds. Deprecated.\n\n```yaml\ncompiler_stack: comp7\n```",
       "title": "Compiler Stack"
     },
     "min_py_ver": {
@@ -2026,7 +2026,7 @@
       ],
       "default": "27",
       "deprecated": true,
-      "description": "\n        Minimum Python version. This is used to specify the minimum Python version\n        to use for builds. Deprecated.\n\n        .. code-block:: yaml\n\n            min_py_ver: 27\n        ",
+      "description": "Minimum Python version. This is used to specify the minimum Python version\nto use for builds. Deprecated.\n\n```yaml\nmin_py_ver: 27\n```",
       "title": "Min Py Ver"
     },
     "max_py_ver": {
@@ -2040,7 +2040,7 @@
       ],
       "default": "37",
       "deprecated": true,
-      "description": "\n        Maximum Python version. This is used to specify the maximum Python version\n        to use for builds. Deprecated.\n\n        .. code-block:: yaml\n\n            max_py_ver: 37\n        ",
+      "description": "Maximum Python version. This is used to specify the maximum Python version\nto use for builds. Deprecated.\n\n```yaml\nmax_py_ver: 37\n```",
       "title": "Max Py Ver"
     },
     "min_r_ver": {
@@ -2054,7 +2054,7 @@
       ],
       "default": "34",
       "deprecated": true,
-      "description": "\n        Minimum R version. This is used to specify the minimum R version to\n        use for builds. Deprecated.\n\n        .. code-block:: yaml\n\n            min_r_ver: 34\n        ",
+      "description": "Minimum R version. This is used to specify the minimum R version to\nuse for builds. Deprecated.\n\n```yaml\nmin_r_ver: 34\n```",
       "title": "Min R Ver"
     },
     "max_r_ver": {
@@ -2067,7 +2067,7 @@
         }
       ],
       "default": "34",
-      "description": "\n        Maximum R version. This is used to specify the maximum R version to use\n        for builds. Deprecated.\n\n        .. code-block:: yaml\n\n            max_r_ver: 34\n        ",
+      "description": "Maximum R version. This is used to specify the maximum R version to use\nfor builds. Deprecated.\n\n```yaml\nmax_r_ver: 34\n```",
       "title": "Max R Ver"
     },
     "private_upload": {
@@ -2080,7 +2080,7 @@
         }
       ],
       "default": false,
-      "description": "\n        Whether to upload to a private channel.\n\n        .. code-block:: yaml\n\n            private_upload: False\n        ",
+      "description": "Whether to upload to a private channel.\n\n```yaml\nprivate_upload: False\n```",
       "title": "Private Upload"
     },
     "secrets": {
@@ -2095,7 +2095,7 @@
           "type": "null"
         }
       ],
-      "description": "\n        List of secrets to be used in GitHub Actions.\n        The default is an empty list and will not be used.\n        ",
+      "description": "List of secrets to be used in GitHub Actions.\nThe default is an empty list and will not be used.",
       "title": "Secrets"
     },
     "clone_depth": {
@@ -2111,7 +2111,7 @@
         }
       ],
       "default": null,
-      "description": "\n        The depth of the git clone.\n        ",
+      "description": "The depth of the git clone.",
       "title": "Clone Depth"
     },
     "travis": {
@@ -2123,7 +2123,7 @@
           "type": "null"
         }
       ],
-      "description": "\n        Travis CI settings. This is usually read-only and should not normally be\n        manually modified. Tools like conda-smithy may modify this, as needed.\n        ",
+      "description": "Travis CI settings. This is usually read-only and should not normally be\nmanually modified. Tools like conda-smithy may modify this, as needed.",
       "title": "Travis"
     },
     "circle": {
@@ -2135,7 +2135,7 @@
           "type": "null"
         }
       ],
-      "description": "\n        Circle CI settings. This is usually read-only and should not normally be\n        manually modified. Tools like conda-smithy may modify this, as needed.\n        ",
+      "description": "Circle CI settings. This is usually read-only and should not normally be\nmanually modified. Tools like conda-smithy may modify this, as needed.",
       "title": "Circle"
     },
     "appveyor": {
@@ -2147,7 +2147,7 @@
           "type": "null"
         }
       ],
-      "description": "\n        AppVeyor CI settings. This is usually read-only and should not normally be\n        manually modified. Tools like conda-smithy may modify this, as needed.\n        ",
+      "description": "AppVeyor CI settings. This is usually read-only and should not normally be\nmanually modified. Tools like conda-smithy may modify this, as needed.",
       "title": "Appveyor"
     },
     "azure": {
@@ -2159,7 +2159,7 @@
           "type": "null"
         }
       ],
-      "description": "\n        Azure Pipelines CI settings. This is usually read-only and should not\n        normally be manually modified. Tools like conda-smithy may modify this, as needed.\n        For example:\n\n        .. code-block:: yaml\n\n            azure:\n                # flag for forcing the building all supported providers\n                force: False\n                # toggle for storing the conda build_artifacts directory (including the\n                # built packages) as an Azure pipeline artifact that can be downloaded\n                store_build_artifacts: False\n                # toggle for freeing up some extra space on the default Azure Pipelines\n                # linux image before running the Docker container for building\n                free_disk_space: False\n                # limit the amount of CI jobs running concurrently at a given time\n                # each OS will get its proportional share of the configured value\n                max_parallel: 25\n\n\n        .. _self-hosted_azure-config:\n\n        Below is an example configuration for setting up a self-hosted Azure agent for Linux:\n\n        .. code-block:: yaml\n\n            azure:\n                settings_linux:\n                pool:\n                    name: your_local_pool_name\n                    demands:\n                    - some_key -equals some_value\n                workspace:\n                    clean: all\n                strategy:\n                    maxParallel: 1\n\n        Below is an example configuration for adding a swapfile on an Azure agent for Linux:\n\n        .. code-block:: yaml\n\n            azure:\n                settings_linux:\n                    swapfile_size: 10GiB\n        "
+      "description": "Azure Pipelines CI settings. This is usually read-only and should not\nnormally be manually modified. Tools like conda-smithy may modify this, as needed.\nFor example:\n\n```yaml\nazure:\n    # flag for forcing the building all supported providers\n    force: False\n    # toggle for storing the conda build_artifacts directory (including the\n    # built packages) as an Azure pipeline artifact that can be downloaded\n    store_build_artifacts: False\n    # toggle for freeing up some extra space on the default Azure Pipelines\n    # linux image before running the Docker container for building\n    free_disk_space: False\n    # limit the amount of CI jobs running concurrently at a given time\n    # each OS will get its proportional share of the configured value\n    max_parallel: 25\n```\n\nBelow is an example configuration for setting up a self-hosted Azure agent for Linux:\n\n```yaml\nazure:\n    settings_linux:\n    pool:\n        name: your_local_pool_name\n        demands:\n        - some_key -equals some_value\n    workspace:\n        clean: all\n    strategy:\n        maxParallel: 1\n```\n\nBelow is an example configuration for adding a swapfile on an Azure agent for Linux:\n\n```yaml\nazure:\n    settings_linux:\n        swapfile_size: 10GiB\n```"
     },
     "drone": {
       "anyOf": [
@@ -2173,7 +2173,7 @@
           "type": "null"
         }
       ],
-      "description": "\n        Drone CI settings. This is usually read-only and should not normally be\n        manually modified. Tools like conda-smithy may modify this, as needed.\n        ",
+      "description": "Drone CI settings. This is usually read-only and should not normally be\nmanually modified. Tools like conda-smithy may modify this, as needed.",
       "title": "Drone"
     },
     "github_actions": {
@@ -2185,7 +2185,7 @@
           "type": "null"
         }
       ],
-      "description": "\n        GitHub Actions CI settings. This is usually read-only and should not normally be\n        manually modified. Tools like conda-smithy may modify this, as needed.\n        "
+      "description": "GitHub Actions CI settings. This is usually read-only and should not normally be\nmanually modified. Tools like conda-smithy may modify this, as needed."
     },
     "woodpecker": {
       "anyOf": [
@@ -2199,7 +2199,7 @@
           "type": "null"
         }
       ],
-      "description": "\n        Woodpecker CI settings. This is usually read-only and should not normally be\n        manually modified. Tools like conda-smithy may modify this, as needed.\n        ",
+      "description": "Woodpecker CI settings. This is usually read-only and should not normally be\nmanually modified. Tools like conda-smithy may modify this, as needed.",
       "title": "Woodpecker"
     },
     "build_with_mambabuild": {
@@ -2213,7 +2213,7 @@
       ],
       "default": true,
       "deprecated": true,
-      "description": "\n        build_with_mambabuild is deprecated, use conda_build_tool instead. Configures the conda-forge CI to run a debug build using the ``mamba`` solver.\n        More information can be found in the\n        `mamba docs <https://conda-forge.org/docs/maintainer/maintainer_faq.html#mfaq-mamba-local>`__.\n\n        .. code-block:: yaml\n\n            build_with_mambabuild:\n            True\n        ",
+      "description": "build_with_mambabuild is deprecated, use conda_build_tool instead. Configures the conda-forge CI to run a debug build using the `mamba` solver.\nMore information can be found in the\n[mamba docs](/docs/maintainer/maintainer_faq/#mfaq-mamba-local).\n\n```yaml\nbuild_with_mambabuild: true\n```",
       "title": "Build With Mambabuild"
     },
     "matrix": {
@@ -2225,7 +2225,7 @@
           "type": "null"
         }
       ],
-      "description": "\n        Build matrices were used to specify a set of build configurations to run for each\n        package pinned dependency. This has been deprecated in favor of the provider field.\n        More information can be found in the\n        :ref:`Build Matrices </maintainer/knowledge_base#build-matrices>` section of the\n        conda-forge docs.\n        ",
+      "description": "Build matrices were used to specify a set of build configurations to run for each\npackage pinned dependency. This has been deprecated in favor of the provider field.\nMore information can be found in the\n[Build Matrices](/docs/maintainer/knowledge_base/#build-matrices) section of the\nconda-forge docs.",
       "title": "Matrix"
     }
   },
