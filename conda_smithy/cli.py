@@ -381,7 +381,7 @@ class RegisterCI(Subcommand):
             if azure_ci_utils.default_config.token is None:
                 print(
                     "No azure token. Create a token at https://dev.azure.com/"
-                    "conda-forge/_usersSettings/tokens and\n"
+                    f"{owner}/_usersSettings/tokens and\n"
                     "put it in ~/.conda-smithy/azure.token"
                 )
             ci_register.add_project_to_azure(owner, repo)
