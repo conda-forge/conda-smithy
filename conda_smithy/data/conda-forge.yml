@@ -28,6 +28,7 @@ azure:
       UPLOAD_TEMP: D:\\tmp
   store_build_artifacts: false
   timeout_minutes: null
+  upload_packages: true
 bot:
   abi_migration_branches: []
   automerge: false
@@ -90,6 +91,7 @@ github_actions:
   store_build_artifacts: false
   timeout_minutes: 360
   triggers: []
+  upload_packages: true
 idle_timeout_minutes: null
 max_py_ver: '37'
 max_r_ver: '34'

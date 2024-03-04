@@ -172,6 +172,11 @@ class AzureConfig(BaseModel):
         description="The name of the Azure Pipelines project",
     )
 
+    upload_packages: Optional[bool] = Field(
+        default=True,
+        description="Whether to upload the packages to Anaconda.org. Useful for testing."
+    )
+
     #########################################
     ##### Self-hosted runners settings ######
     #########################################
@@ -280,6 +285,11 @@ class GithubActionsConfig(BaseModel):
         default=[],
         description="Triggers for Github Actions. Defaults to push, pull_request, \
             when not self-hosted and push when self-hosted",
+    )
+
+    upload_packages: Optional[bool] = Field(
+        default=True,
+        description="Whether to upload the packages to Anaconda.org. Useful for testing."
     )
 
 

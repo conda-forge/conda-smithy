@@ -72,6 +72,19 @@
           "description": "The name of the Azure Pipelines project",
           "title": "Project Name"
         },
+        "upload_packages": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": true,
+          "description": "Whether to upload the packages to Anaconda.org. Useful for testing.",
+          "title": "Upload Packages"
+        },
         "settings_linux": {
           "allOf": [
             {
@@ -669,6 +682,19 @@
           "default": [],
           "description": "Triggers for Github Actions. Defaults to push, pull_request,             when not self-hosted and push when self-hosted",
           "title": "Triggers"
+        },
+        "upload_packages": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": true,
+          "description": "Whether to upload the packages to Anaconda.org. Useful for testing.",
+          "title": "Upload Packages"
         }
       },
       "title": "GithubActionsConfig",
