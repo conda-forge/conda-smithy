@@ -1,6 +1,6 @@
 import os
 
-import conda_smithy.configure_feedstock as configure_feedstock
+from conda_smithy import configure_feedstock
 
 import pytest
 import copy
@@ -1873,7 +1873,7 @@ def test_get_used_key_values_by_input_order(
     used_key_values,
 ):
     assert (
-        cnfgr_fdstk._get_used_key_values_by_input_order(
+        configure_feedstock._get_used_key_values_by_input_order(
             squished_input_variants,
             squished_used_variants,
             all_used_vars,
