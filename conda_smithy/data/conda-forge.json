@@ -26,11 +26,22 @@
               "$ref": "#/$defs/Nullable"
             },
             {
+              "items": {
+                "enum": [
+                  "apt",
+                  "cache",
+                  "docker"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
               "type": "null"
             }
           ],
           "default": false,
-          "description": "Free up disk space before running the Docker container for building on Linux",
+          "description": "Free up disk space before running the Docker container for building on Linux.\nThe following components can be cleaned up: `apt`, `cache`, `docker`.\nWhen set to `true`, only `apt` and `cache` are cleaned up.\nSet it to the full list to clean up all components.",
           "title": "Free Disk Space"
         },
         "max_parallel": {
