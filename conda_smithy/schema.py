@@ -152,7 +152,9 @@ class AzureConfig(BaseModel):
         description="Force building all supported providers",
     )
 
-    free_disk_space: Optional[Union[bool, Nullable, List[Literal["apt", "cache", "docker"]]]] = Field(
+    free_disk_space: Optional[
+        Union[bool, Nullable, List[Literal["apt", "cache", "docker"]]]
+    ] = Field(
         default=False,
         description=cleandoc(
             """
@@ -181,7 +183,7 @@ class AzureConfig(BaseModel):
 
     upload_packages: Optional[bool] = Field(
         default=True,
-        description="Whether to upload the packages to Anaconda.org. Useful for testing."
+        description="Whether to upload the packages to Anaconda.org. Useful for testing.",
     )
 
     #########################################
@@ -296,7 +298,7 @@ class GithubActionsConfig(BaseModel):
 
     upload_packages: Optional[bool] = Field(
         default=True,
-        description="Whether to upload the packages to Anaconda.org. Useful for testing."
+        description="Whether to upload the packages to Anaconda.org. Useful for testing.",
     )
 
 
