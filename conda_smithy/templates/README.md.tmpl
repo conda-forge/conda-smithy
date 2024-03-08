@@ -228,10 +228,23 @@ or with `mamba`:
 mamba install {{ ' '.join(outputs) }}
 ```
 
+or with [`pixi`](https://pixi.sh):
+
+```
+pixi global install --channel {{ channel_with_label }} {{ ' '.join(outputs) }}
+```
+
+
 It is possible to list all of the versions of `{{ outputs[0] }}` available on your platform with `conda`:
 
 ```
 conda search {{ outputs[0] }} --channel {{ channel_with_label }}
+```
+
+or with [`pixi`](https://pixi.sh):
+
+```
+pixi search --channel {{ channel_with_label }} {{ outputs[0] }}
 ```
 
 or with `mamba`:
