@@ -234,6 +234,12 @@ or with [`pixi`](https://pixi.sh):
 pixi global install --channel {{ channel_with_label }} {{ ' '.join(outputs) }}
 ```
 
+if you are already using a [`pixi` project](https://pixi.sh/latest/basic_usage/):
+
+```
+pixi add {{ ' '.join(outputs) }}
+```
+
 
 It is possible to list all of the versions of `{{ outputs[0] }}` available on your platform with `conda`:
 
