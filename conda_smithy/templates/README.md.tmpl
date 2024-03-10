@@ -228,13 +228,7 @@ or with `mamba`:
 mamba install {{ ' '.join(outputs) }}
 ```
 
-or with [`pixi`](https://pixi.sh):
-
-```
-pixi global install --channel {{ channel_with_label }} {{ ' '.join(outputs) }}
-```
-
-if you are already using a [`pixi` project](https://pixi.sh/latest/basic_usage/):
+If you are using a [`pixi` project](https://pixi.sh/latest/basic_usage/):
 
 ```
 pixi add {{ ' '.join(outputs) }}
