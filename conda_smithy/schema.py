@@ -92,15 +92,6 @@ class BotConfigVersionUpdatesSourcesChoice(StrEnum):
     PYPI = "pypi"
     RAW_URL = "rawurl"
     ROS_DISTRO = "rosdistro"
-    # CRAN = "CRAN"
-    # GITHUB = "Github"
-    # INCREMENT_ALPHA_RAW_URL = "IncrementAlphaRawURL"
-    # LIBRARIES_IO = "LibrariesIO"
-    # NPM = "NPM"
-    # NVIDIA = "NVIDIA"
-    # PYPI = "PyPI"
-    # RAW_URL = "RawURL"
-    # ROS_DISTRO = "ROSDistro"
 
 
 ##############################################
@@ -315,9 +306,10 @@ class BotConfigVersionUpdates(BaseModel):
         description="Fraction of versions to keep for frequently updated packages",
     )
 
-    exclude: Optional[List[Union[str, float]]] = Field(
+    exclude: Optional[List[str]] = Field(
         default=[],
-        description="list of versions to exclude",
+        description="List of versions to exclude. "
+        "Make sure branch names are `str` by quoting the value.",
     )
 
     sources: Optional[List[BotConfigVersionUpdatesSourcesChoice]] = Field(
@@ -349,9 +341,10 @@ class BotConfig(BaseModel):
         description="Method for generating hints or updating recipe",
     )
 
-    abi_migration_branches: Optional[List[Union[str, int, float]]] = Field(
+    abi_migration_branches: Optional[List[str]] = Field(
         default=[],
-        description="List of branches for additional bot migration PRs",
+        description="List of branches for additional bot migration PRs. "
+        "Make sure branch names are `str` by quoting the value.",
     )
 
     run_deps_from_wheel: Optional[bool] = Field(
@@ -595,7 +588,8 @@ class ConfigModel(BaseModel):
             # can the bot automerge PRs it makes on this feedstock
             automerge: true
 
-            # only open PRs if resulting environment is solvable, useful for tightly coupled packages
+            # only open PRs if resulting environment is solvable, useful 
+            # for tightly coupled packages
             check_solvable: true
 
             # The bot.inspection key in the conda-forge.yml can have one of six possible values:
@@ -604,12 +598,15 @@ class ConfigModel(BaseModel):
             # any branches listed in this section will get bot migration PRs in addition
             # to the default branch
             abi_migration_branches:
-                - v1.10.x
+                - 'v1.10.x'
 
             version_updates:
                 # use this for packages that are updated too frequently
                 random_fraction_to_keep: 0.1  # keeps 10% of versions at random
+                exclude:
+                    - '08.14'
         ```
+
         The `abi_migration_branches` feature is useful to, for example, add a
         long-term support (LTS) branch for a package.
         """
