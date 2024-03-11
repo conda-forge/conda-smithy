@@ -289,17 +289,7 @@
           "anyOf": [
             {
               "items": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "integer"
-                  },
-                  {
-                    "type": "number"
-                  }
-                ]
+                "type": "string"
               },
               "type": "array"
             },
@@ -308,7 +298,7 @@
             }
           ],
           "default": [],
-          "description": "List of branches for additional bot migration PRs",
+          "description": "List of branches for additional bot migration PRs. Make sure branch names are `str` by quoting the value.",
           "title": "Abi Migration Branches"
         },
         "run_deps_from_wheel": {
@@ -392,14 +382,7 @@
           "anyOf": [
             {
               "items": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "number"
-                  }
-                ]
+                "type": "string"
               },
               "type": "array"
             },
@@ -408,7 +391,7 @@
             }
           ],
           "default": [],
-          "description": "list of versions to exclude",
+          "description": "List of versions to exclude. Make sure branch names are `str` by quoting the value.",
           "title": "Exclude"
         },
         "sources": {
@@ -1771,7 +1754,7 @@
           "type": "null"
         }
       ],
-      "description": "This dictates the behavior of the conda-forge auto-tick bot which issues\nautomatic version updates/migrations for feedstocks.\nA valid example is:\n\n```yaml\nbot:\n    # can the bot automerge PRs it makes on this feedstock\n    automerge: true\n\n    # only open PRs if resulting environment is solvable, useful for tightly coupled packages\n    check_solvable: true\n\n    # The bot.inspection key in the conda-forge.yml can have one of six possible values:\n    inspection: hint-all  # generate hints using all methods\n\n    # any branches listed in this section will get bot migration PRs in addition\n    # to the default branch\n    abi_migration_branches:\n        - v1.10.x\n\n    version_updates:\n        # use this for packages that are updated too frequently\n        random_fraction_to_keep: 0.1  # keeps 10% of versions at random\n```\nThe `abi_migration_branches` feature is useful to, for example, add a\nlong-term support (LTS) branch for a package."
+      "description": "This dictates the behavior of the conda-forge auto-tick bot which issues\nautomatic version updates/migrations for feedstocks.\nA valid example is:\n\n```yaml\nbot:\n    # can the bot automerge PRs it makes on this feedstock\n    automerge: true\n\n    # only open PRs if resulting environment is solvable, useful \n    # for tightly coupled packages\n    check_solvable: true\n\n    # The bot.inspection key in the conda-forge.yml can have one of six possible values:\n    inspection: hint-all  # generate hints using all methods\n\n    # any branches listed in this section will get bot migration PRs in addition\n    # to the default branch\n    abi_migration_branches:\n        - 'v1.10.x'\n\n    version_updates:\n        # use this for packages that are updated too frequently\n        random_fraction_to_keep: 0.1  # keeps 10% of versions at random\n        exclude:\n            - '08.14'\n```\n\nThe `abi_migration_branches` feature is useful to, for example, add a\nlong-term support (LTS) branch for a package."
     },
     "build_platform": {
       "anyOf": [
