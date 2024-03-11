@@ -777,6 +777,9 @@ class ConfigModel(BaseModel):
         * `appveyor`
         * `None` or `False` to disable a build platform.
         * `default` to choose an appropriate CI (only if available)
+        * `native` to choose an appropriate CI for native compiling (only if available)
+        * `emulated` to choose an appropriate CI for compiling inside an emulation 
+          of the target platform (only if available)
 
         For example, switching linux_64 & osx_64 to build on Travis CI, with win_64 on
         Appveyor:
