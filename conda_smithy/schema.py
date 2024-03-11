@@ -588,7 +588,7 @@ class ConfigModel(BaseModel):
             # can the bot automerge PRs it makes on this feedstock
             automerge: true
 
-            # only open PRs if resulting environment is solvable, useful 
+            # only open PRs if resulting environment is solvable, useful
             # for tightly coupled packages
             check_solvable: true
 
@@ -778,7 +778,7 @@ class ConfigModel(BaseModel):
         * `None` or `False` to disable a build platform.
         * `default` to choose an appropriate CI (only if available)
         * `native` to choose an appropriate CI for native compiling (only if available)
-        * `emulated` to choose an appropriate CI for compiling inside an emulation 
+        * `emulated` to choose an appropriate CI for compiling inside an emulation
           of the target platform (only if available)
 
         For example, switching linux_64 & osx_64 to build on Travis CI, with win_64 on
