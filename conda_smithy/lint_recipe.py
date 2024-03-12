@@ -28,6 +28,7 @@ from conda_build.metadata import (
     FIELDS as cbfields,
 )
 import conda_build.conda_interface
+from conda_smithy.validate_schema import validate_json_schema
 
 from .utils import render_meta_yaml, get_yaml
 
@@ -143,7 +144,32 @@ def find_local_config_file(recipe_dir, filename):
     return found_filesname[0] if found_filesname else None
 
 
-def lintify(meta, recipe_dir=None, conda_forge=False):
+def lintify_forge_yaml(recipe_dir=None) -> (list, list):
+    if recipe_dir:
+        forge_yaml_filename = (
+            glob(os.path.join(recipe_dir, "..", "conda-forge.yml"))
+            or glob(
+                os.path.join(recipe_dir, "conda-forge.yml"),
+            )
+            or glob(
+                os.path.join(recipe_dir, "..", "..", "conda-forge.yml"),
+            )
+        )
+        if forge_yaml_filename:
+            with open(forge_yaml_filename[0], "r") as fh:
+                forge_yaml = get_yaml().load(fh)
+        else:
+            forge_yaml = {}
+    else:
+        forge_yaml = {}
+
+    # This is where we validate against the jsonschema and execute our custom validators.
+    return validate_json_schema(forge_yaml)
+
+
+def lintify_meta_yaml(
+    meta, recipe_dir=None, conda_forge=False
+) -> (list, list):
     lints = []
     hints = []
     major_sections = list(meta.keys())
@@ -1048,7 +1074,24 @@ def main(recipe_dir, conda_forge=False, return_hints=False):
     with io.open(recipe_meta, "rt") as fh:
         content = render_meta_yaml("".join(fh))
         meta = get_yaml().load(content)
-    results, hints = lintify(meta, recipe_dir, conda_forge)
+
+    results, hints = lintify_meta_yaml(meta, recipe_dir, conda_forge)
+    validation_errors, validation_hints = lintify_forge_yaml(
+        recipe_dir=recipe_dir
+    )
+
+    validation_errors = [str(err) for err in validation_errors]
+    validation_errors = [
+        (
+            err.split("\n")[0]
+            if err.startswith("Additional properties are not allowed")
+            else err
+        )
+        for err in validation_errors
+    ]
+    results.extend(validation_errors)
+    hints.extend([str(lint) for lint in validation_hints])
+
     if return_hints:
         return results, hints
     else:

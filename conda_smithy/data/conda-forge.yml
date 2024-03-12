@@ -1,0 +1,147 @@
+appveyor:
+  image: Visual Studio 2017
+azure:
+  force: false
+  free_disk_space: false
+  max_parallel: 50
+  project_id: 84710dde-1620-425b-80d0-4cf5baca359d
+  project_name: feedstock-builds
+  settings_linux:
+    pool:
+      vmImage: ubuntu-latest
+    swapfile_size: 0GiB
+    timeoutInMinutes: 360
+    variables: {}
+  settings_osx:
+    pool:
+      vmImage: macOS-11
+    swapfile_size: null
+    timeoutInMinutes: 360
+    variables: {}
+  settings_win:
+    pool:
+      vmImage: windows-2022
+    swapfile_size: null
+    timeoutInMinutes: 360
+    variables:
+      CONDA_BLD_PATH: D:\\bld\\
+      UPLOAD_TEMP: D:\\tmp
+  store_build_artifacts: false
+  timeout_minutes: null
+  upload_packages: true
+bot:
+  abi_migration_branches: []
+  automerge: false
+  check_solvable: true
+  inspection: hint
+  run_deps_from_wheel: false
+  version_updates:
+    exclude: []
+    random_fraction_to_keep: null
+    sources: null
+build_platform:
+  emscripten_wasm32: emscripten_wasm32
+  freebsd_64: freebsd_64
+  linux_32: linux_32
+  linux_64: linux_64
+  linux_aarch64: linux_aarch64
+  linux_armv6l: linux_armv6l
+  linux_armv7l: linux_armv7l
+  linux_ppc64: linux_ppc64
+  linux_ppc64le: linux_ppc64le
+  linux_riscv64: linux_riscv64
+  linux_s390x: linux_s390x
+  osx_64: osx_64
+  osx_arm64: osx_arm64
+  wasi_wasm32: wasi_wasm32
+  win_32: win_32
+  win_64: win_64
+  win_arm64: win_arm64
+  zos_z: zos_z
+channel_priority: strict
+choco: []
+circle: {}
+clone_depth: null
+compiler_stack: comp7
+conda_build:
+  error_overlinking: false
+  pkg_format: 2
+  zstd_compression_level: 16
+conda_build_tool: conda-build
+conda_forge_output_validation: false
+conda_install_tool: mamba
+conda_solver: libmamba
+config_version: '2'
+docker:
+  command: bash
+  executable: docker
+  fallback_image: quay.io/condaforge/linux-anvil-comp7
+  interactive: null
+drone: {}
+github:
+  branch_name: main
+  repo_name: ''
+  tooling_branch_name: main
+  user_or_org: conda-forge
+github_actions:
+  artifact_retention_days: 14
+  cancel_in_progress: true
+  max_parallel: null
+  self_hosted: false
+  store_build_artifacts: false
+  timeout_minutes: 360
+  triggers: []
+  upload_packages: true
+idle_timeout_minutes: null
+max_py_ver: '37'
+max_r_ver: '34'
+min_py_ver: '27'
+min_r_ver: '34'
+noarch_platforms:
+- linux_64
+os_version:
+  linux_32: null
+  linux_64: null
+  linux_aarch64: null
+  linux_armv6l: null
+  linux_armv7l: null
+  linux_ppc64: null
+  linux_ppc64le: null
+  linux_riscv64: null
+  linux_s390x: null
+private_upload: false
+provider:
+  emscripten_wasm32: null
+  freebsd_64: null
+  linux: null
+  linux_32: null
+  linux_64: azure
+  linux_aarch64: null
+  linux_armv6l: null
+  linux_armv7l: null
+  linux_ppc64: null
+  linux_ppc64le: null
+  linux_riscv64: null
+  linux_s390x: null
+  osx: null
+  osx_64: azure
+  osx_arm64: null
+  wasi_wasm32: null
+  win: null
+  win_32: null
+  win_64: azure
+  win_arm64: null
+  zos_z: null
+recipe_dir: recipe
+remote_ci_setup:
+- conda-forge-ci-setup=4
+- conda-build>=24.1
+secrets: []
+shellcheck:
+  enabled: false
+skip_render: []
+templates: {}
+test: null
+test_on_native_only: false
+travis: {}
+woodpecker: {}

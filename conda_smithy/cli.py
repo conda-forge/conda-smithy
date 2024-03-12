@@ -618,13 +618,22 @@ class RecipeLint(Subcommand):
                 all_good = False
                 print(
                     "{} has some lint:\n  {}".format(
-                        recipe, "\n  ".join(lints)
+                        recipe,
+                        "\n  ".join(
+                            [lint.replace("\n", "\n    ") for lint in lints]
+                        ),
                     )
                 )
                 if hints:
                     print(
                         "{} also has some suggestions:\n  {}".format(
-                            recipe, "\n  ".join(hints)
+                            recipe,
+                            "\n  ".join(
+                                [
+                                    hint.replace("\n", "\n    ")
+                                    for hint in hints
+                                ]
+                            ),
                         )
                     )
             elif hints:

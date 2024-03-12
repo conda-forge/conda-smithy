@@ -1,21 +1,27 @@
+import copy
 import glob
-from itertools import product, chain
+import hashlib
 import logging
 import os
-from os import fspath
 import re
-import sys
 import subprocess
+import sys
 import pprint
 import textwrap
 import time
+import jsonschema
 import yaml
 import warnings
-from collections import OrderedDict, namedtuple, Counter
-import copy
-import hashlib
-import requests
+from collections import Counter, OrderedDict, namedtuple
+from itertools import chain, product
+from os import fspath
 from pathlib import Path, PurePath
+import requests
+
+try:
+    from builtins import ExceptionGroup
+except ImportError:
+    from exceptiongroup import ExceptionGroup
 
 # The `requests` lib uses `simplejson` instead of `json` when available.
 # In consequence the same JSON library must be used or the `JSONDecodeError`
@@ -35,23 +41,35 @@ from conda.models.match_spec import MatchSpec
 
 from copy import deepcopy
 
+import conda_build.api
+import conda_build.conda_interface
+import conda_build.render
+import conda_build.utils
+import conda_build.variants
 from conda_build import __version__ as conda_build_version
 from jinja2 import Environment, FileSystemLoader
 
 from conda_smithy.feedstock_io import (
+    copy_file,
+    remove_file,
+    remove_file_or_dir,
     set_exe_file,
     write_file,
-    remove_file,
-    copy_file,
-    remove_file_or_dir,
+)
+from conda_smithy.validate_schema import (
+    validate_json_schema,
+    CONDA_FORGE_YAML_DEFAULTS_FILE,
 )
 from conda_smithy.utils import (
-    get_feedstock_name_from_meta,
     get_feedstock_about_from_meta,
+    get_feedstock_name_from_meta,
 )
+
 from . import __version__
 
+
 conda_forge_content = os.path.abspath(os.path.dirname(__file__))
+
 logger = logging.getLogger(__name__)
 
 # feedstocks listed here are allowed to use GHA on
@@ -1958,138 +1976,10 @@ def _update_dict_within_dict(items, config):
     return config
 
 
-def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
-    config = {
-        "docker": {
-            "executable": "docker",
-            "fallback_image": "quay.io/condaforge/linux-anvil-comp7",
-            "command": "bash",
-        },
-        "templates": {},
-        "drone": {},
-        "woodpecker": {},
-        "travis": {},
-        "circle": {},
-        "config_version": "2",
-        "appveyor": {"image": "Visual Studio 2017"},
-        "azure": {
-            # default choices for MS-hosted agents
-            "settings_linux": {
-                "pool": {
-                    "vmImage": "ubuntu-latest",
-                },
-                "timeoutInMinutes": 360,
-                "swapfile_size": "0GiB",
-            },
-            "settings_osx": {
-                "pool": {
-                    "vmImage": "macOS-11",
-                },
-                "timeoutInMinutes": 360,
-            },
-            "settings_win": {
-                "pool": {
-                    "vmImage": "windows-2022",
-                },
-                "timeoutInMinutes": 360,
-                "variables": {
-                    "CONDA_BLD_PATH": r"D:\\bld\\",
-                    # Custom %TEMP% for upload to avoid permission errors.
-                    # See https://github.com/conda-forge/kubo-feedstock/issues/5#issuecomment-1335504503
-                    "UPLOAD_TEMP": r"D:\\tmp",
-                },
-            },
-            # Force building all supported providers.
-            "force": False,
-            # name and id of azure project that the build pipeline is in
-            "project_name": "feedstock-builds",
-            "project_id": "84710dde-1620-425b-80d0-4cf5baca359d",
-            # Set timeout for all platforms at once.
-            "timeout_minutes": None,
-            # Toggle creating pipeline artifacts for conda build_artifacts dir
-            "store_build_artifacts": False,
-            # Maximum number of parallel jobs allowed across platforms
-            "max_parallel": 50,
-        },
-        "provider": {
-            "linux_64": ["azure"],
-            "osx_64": ["azure"],
-            "win_64": ["azure"],
-            # Following platforms are disabled by default
-            "linux_aarch64": None,
-            "linux_ppc64le": None,
-            "linux_armv7l": None,
-            "linux_s390x": None,
-            # Following platforms are aliases of x86_64,
-            "linux": None,
-            "osx": None,
-            "win": None,
-        },
-        # value is the build_platform, key is the target_platform
-        "build_platform": {
-            "linux_64": "linux_64",
-            "linux_aarch64": "linux_aarch64",
-            "linux_ppc64le": "linux_ppc64le",
-            "linux_s390x": "linux_s390x",
-            "linux_armv7l": "linux_armv7l",
-            "win_64": "win_64",
-            "osx_64": "osx_64",
-        },
-        "noarch_platforms": ["linux_64"],
-        "os_version": {
-            "linux_64": None,
-            "linux_aarch64": None,
-            "linux_ppc64le": None,
-            "linux_armv7l": None,
-            "linux_s390x": None,
-        },
-        "test": None,
-        # Following is deprecated
-        "test_on_native_only": False,
-        "choco": [],
-        # Configurable idle timeout.  Used for packages that don't have chatty enough builds
-        # Applicable only to circleci and travis
-        "idle_timeout_minutes": None,
-        # Compiler stack environment variable
-        "compiler_stack": "comp7",
-        # Stack variables,  These can be used to impose global defaults for how far we build out
-        "min_py_ver": "27",
-        "max_py_ver": "37",
-        "min_r_ver": "34",
-        "max_r_ver": "34",
-        "github": {
-            "user_or_org": "conda-forge",
-            "repo_name": "",
-            "branch_name": "main",
-            "tooling_branch_name": "main",
-        },
-        "github_actions": {
-            "self_hosted": False,
-            "triggers": [],
-            "timeout_minutes": 360,
-            "cancel_in_progress": True,
-            # Set maximum parallel jobs
-            "max_parallel": None,
-            # Toggle creating artifacts for conda build_artifacts dir
-            "store_build_artifacts": False,
-            "artifact_retention_days": 14,
-        },
-        "recipe_dir": "recipe",
-        "skip_render": [],
-        "bot": {"automerge": False},
-        "conda_forge_output_validation": False,
-        "private_upload": False,
-        "secrets": [],
-        "conda_build_tool": "conda-build",
-        "conda_install_tool": "mamba",
-        "conda_solver": "libmamba",
-        # feedstock checkout git clone depth, None means keep default, 0 means no limit
-        "clone_depth": None,
-        # Specific channel for package can be given with
-        #     ${url or channel_alias}::package_name
-        # defaults to conda-forge channel_alias
-        "remote_ci_setup": ["conda-forge-ci-setup=4", "conda-build>=24.1"],
-    }
+def _read_forge_config(forge_dir, forge_yml=None):
+    # Load default values from the conda-forge.yml file
+    with open(CONDA_FORGE_YAML_DEFAULTS_FILE, "r") as fh:
+        default_config = yaml.safe_load(fh.read())
 
     if forge_yml is None:
         forge_yml = os.path.join(forge_dir, "conda-forge.yml")
@@ -2102,76 +1992,42 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
             " Add an empty `conda-forge.yml` file in"
             " feedstock root if it's the latter."
         )
-    else:
-        with open(forge_yml, "r") as fh:
-            documents = list(yaml.safe_load_all(fh))
-            file_config = (documents or [None])[0] or {}
 
-        # The config is just the union of the defaults, and the overriden
-        # values.
-        config = _update_dict_within_dict(file_config.items(), config)
+    with open(forge_yml, "r") as fh:
+        documents = list(yaml.safe_load_all(fh))
+        file_config = (documents or [None])[0] or {}
 
-        # check for conda-smithy 2.x matrix which we can't auto-migrate
-        # to conda_build_config
-        if file_config.get("matrix") and not os.path.exists(
-            os.path.join(
-                forge_dir, config["recipe_dir"], "conda_build_config.yaml"
-            )
-        ):
-            raise ValueError(
-                "Cannot rerender with matrix in conda-forge.yml."
-                " Please migrate matrix to conda_build_config.yaml and try again."
-                " See https://github.com/conda-forge/conda-smithy/wiki/Release-Notes-3.0.0.rc1"
-                " for more info."
-            )
+    # Validate loaded configuration against a JSON schema.
+    validate_lints, validate_hints = validate_json_schema(file_config)
+    for err in validate_lints:
+        raise ExceptionGroup("lints", [*map(ValueError, validate_lints)])
 
-        if file_config.get("docker") and file_config.get("docker").get(
-            "image"
-        ):
-            raise ValueError(
-                "Setting docker image in conda-forge.yml is removed now."
-                " Use conda_build_config.yaml instead"
-            )
-        if file_config.get("channels"):
-            raise ValueError(
-                "Setting channels in conda-forge.yml is removed now."
-                " Use conda_build_config.yaml instead"
-            )
+    for hint in validate_hints:
+        logger.info(hint.message)
 
-        for plat in ["linux", "osx", "win"]:
-            if config["azure"]["timeout_minutes"] is not None:
-                # fmt: off
-                config["azure"][f"settings_{plat}"]["timeoutInMinutes"] \
-                    = config["azure"]["timeout_minutes"]
-                # fmt: on
-            if "name" in config["azure"][f"settings_{plat}"]["pool"]:
-                del config["azure"][f"settings_{plat}"]["pool"]["vmImage"]
+    # The config is just the union of the defaults, and the overridden
+    # values.
+    config = _update_dict_within_dict(file_config.items(), default_config)
 
-    if config["conda_forge_output_validation"]:
-        config["secrets"] = sorted(
-            set(
-                config["secrets"]
-                + ["FEEDSTOCK_TOKEN", "STAGING_BINSTAR_TOKEN"]
-            )
+    # check for conda-smithy 2.x matrix which we can't auto-migrate
+    # to conda_build_config
+    if file_config.get("matrix") and not os.path.exists(
+        os.path.join(
+            forge_dir, config["recipe_dir"], "conda_build_config.yaml"
+        )
+    ):
+        raise ValueError(
+            "Cannot rerender with matrix in conda-forge.yml."
+            " Please migrate matrix to conda_build_config.yaml and try again."
+            " See https://github.com/conda-forge/conda-smithy/wiki/Release-Notes-3.0.0.rc1"
+            " for more info."
         )
 
-    target_platforms = sorted(config["build_platform"].keys())
-
-    for platform_arch in target_platforms:
-        config[platform_arch] = {"enabled": "True"}
-        if platform_arch not in config["provider"]:
-            config["provider"][platform_arch] = None
-
-    config["noarch_platforms"] = conda_build.utils.ensure_list(
-        config["noarch_platforms"]
-    )
-
-    for noarch_platform in sorted(config["noarch_platforms"]):
-        if noarch_platform not in target_platforms:
-            raise ValueError(
-                f"Unknown noarch platform {noarch_platform}. Expected one of: "
-                f"{target_platforms}"
-            )
+    if file_config.get("docker") and file_config.get("docker").get("image"):
+        raise ValueError(
+            "Setting docker image in conda-forge.yml is removed now."
+            " Use conda_build_config.yaml instead"
+        )
 
     if (
         "build_with_mambabuild" in file_config
@@ -2189,51 +2045,11 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
             "Cannot set 'conda_build_tool_deps' directly. "
             "Use 'conda_build_tool' instead."
         )
-    valid_build_tools = (
-        "mambabuild",  # will run 'conda mambabuild', as provided by boa
-        "conda-build",  # will run vanilla conda-build, with system configured / default solver
-        "conda-build+conda-libmamba-solver",  # will run vanilla conda-build, with libmamba solver
-        "conda-build+classic",  # will run vanilla conda-build, with the classic solver
-    )
-    assert config["conda_build_tool"] in valid_build_tools, (
-        f"Invalid conda_build_tool: {config['conda_build_tool']}. "
-        f"Valid values are: {valid_build_tools}."
-    )
-    # NOTE: Currently assuming these dependencies are name-only (no version constraints)
-    if config["conda_build_tool"] == "mambabuild":
-        config["conda_build_tool_deps"] = "conda-build boa"
-    elif config["conda_build_tool"] == "conda-build+conda-libmamba-solver":
-        config["conda_build_tool_deps"] = "conda-build conda-libmamba-solver"
-    else:
-        config["conda_build_tool_deps"] = "conda-build"
 
-    valid_install_tools = ("conda", "mamba")
-    assert config["conda_install_tool"] in valid_install_tools, (
-        f"Invalid conda_install_tool: {config['conda_install_tool']}. "
-        f"Valid values are: {valid_install_tools}."
-    )
-    # NOTE: Currently assuming these dependencies are name-only (no version constraints)
-    if config["conda_install_tool"] == "mamba":
-        config["conda_install_tool_deps"] = "mamba"
-    elif config["conda_install_tool"] in "conda":
-        config["conda_install_tool_deps"] = "conda"
-        if config.get("conda_solver") == "libmamba":
-            config["conda_install_tool_deps"] += " conda-libmamba-solver"
+    return config
 
-    config["secrets"] = sorted(set(config["secrets"] + ["BINSTAR_TOKEN"]))
 
-    if config["test_on_native_only"]:
-        config["test"] = "native_and_emulated"
-
-    if config["test"] is None:
-        config["test"] = "all"
-
-    if not config["github_actions"]["triggers"]:
-        self_hosted = config["github_actions"]["self_hosted"]
-        config["github_actions"]["triggers"] = (
-            ["push"] if self_hosted else ["push", "pull_request"]
-        )
-
+def _legacy_compatibility_checks(config: dict, forge_dir):
     # An older conda-smithy used to have some files which should no longer exist,
     # remove those now.
     old_files = [
@@ -2256,6 +2072,71 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
         if old_file.replace(os.sep, "/") in config["skip_render"]:
             continue
         remove_file_or_dir(os.path.join(forge_dir, old_file))
+
+    # Older conda-smithy versions supported this with only one
+    # entry. To avoid breakage, we are converting single elements
+    # to a list of length one.
+    for platform, providers in config["provider"].items():
+        providers = conda_build.utils.ensure_list(providers)
+        config["provider"][platform] = providers
+
+    return config
+
+
+def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
+    config = _read_forge_config(forge_dir, forge_yml=forge_yml)
+
+    for plat in ["linux", "osx", "win"]:
+        if config["azure"]["timeout_minutes"] is not None:
+            # fmt: off
+            config["azure"][f"settings_{plat}"]["timeoutInMinutes"] \
+                = config["azure"]["timeout_minutes"]
+            # fmt: on
+        if "name" in config["azure"][f"settings_{plat}"]["pool"]:
+            del config["azure"][f"settings_{plat}"]["pool"]["vmImage"]
+
+    if config["conda_forge_output_validation"]:
+        config["secrets"] = sorted(
+            set(
+                config["secrets"]
+                + ["FEEDSTOCK_TOKEN", "STAGING_BINSTAR_TOKEN"]
+            )
+        )
+
+    target_platforms = sorted(config["build_platform"].keys())
+
+    for platform_arch in target_platforms:
+        config[platform_arch] = {"enabled": "True"}
+        if platform_arch not in config["provider"]:
+            config["provider"][platform_arch] = None
+
+    config["noarch_platforms"] = conda_build.utils.ensure_list(
+        config["noarch_platforms"]
+    )
+
+    # NOTE: Currently assuming these dependencies are name-only (no version constraints)
+    if config["conda_build_tool"] == "mambabuild":
+        config["conda_build_tool_deps"] = "conda-build boa"
+    elif config["conda_build_tool"] == "conda-build+conda-libmamba-solver":
+        config["conda_build_tool_deps"] = "conda-build conda-libmamba-solver"
+    else:
+        config["conda_build_tool_deps"] = "conda-build"
+
+    # NOTE: Currently assuming these dependencies are name-only (no version constraints)
+    if config["conda_install_tool"] == "mamba":
+        config["conda_install_tool_deps"] = "mamba"
+    elif config["conda_install_tool"] in "conda":
+        config["conda_install_tool_deps"] = "conda"
+        if config.get("conda_solver") == "libmamba":
+            config["conda_install_tool_deps"] += " conda-libmamba-solver"
+
+    config["secrets"] = sorted(set(config["secrets"] + ["BINSTAR_TOKEN"]))
+
+    if config["test_on_native_only"]:
+        config["test"] = "native_and_emulated"
+
+    if config["test"] is None:
+        config["test"] = "all"
 
     # Set some more azure defaults
     config["azure"].setdefault("user_or_org", config["github"]["user_or_org"])
@@ -2291,12 +2172,14 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
     else:
         config["remote_ci_setup_update"] = config["remote_ci_setup"]
 
-    # Older conda-smithy versions supported this with only one
-    # entry. To avoid breakage, we are converting single elements
-    # to a list of length one.
-    for platform, providers in config["provider"].items():
-        providers = conda_build.utils.ensure_list(providers)
-        config["provider"][platform] = providers
+    if not config["github_actions"]["triggers"]:
+        self_hosted = config["github_actions"]["self_hosted"]
+        config["github_actions"]["triggers"] = (
+            ["push"] if self_hosted else ["push", "pull_request"]
+        )
+
+    # Run the legacy checks for backwards compatibility
+    config = _legacy_compatibility_checks(config, forge_dir)
 
     # Fallback handling set to azure, for platforms that are not fully specified by this time
     for platform, providers in config["provider"].items():
@@ -2319,6 +2202,7 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
             feedstock_name += "-feedstock"
         config["github"]["repo_name"] = feedstock_name
     config["exclusive_config_file"] = exclusive_config_file
+
     return config
 
 
@@ -2638,45 +2522,34 @@ def main(
             return True
 
     forge_dir = os.path.abspath(forge_file_directory)
+
     if exclusive_config_file is not None:
         exclusive_config_file = os.path.join(forge_dir, exclusive_config_file)
         if not os.path.exists(exclusive_config_file):
             raise RuntimeError("Given exclusive-config-file not found.")
         cf_pinning_ver = None
+
     else:
         exclusive_config_file, cf_pinning_ver = get_cached_cfp_file_path(
             temporary_directory
         )
 
     config = _load_forge_config(forge_dir, exclusive_config_file, forge_yml)
-    config["feedstock_name"] = os.path.basename(forge_dir)
 
-    for each_ci in [
-        "travis",
-        "circle",
-        "appveyor",
-        "drone",
-        "azure",
-        "github_actions",
-    ]:
-        if config[each_ci].pop("enabled", None):
-            warnings.warn(
-                "It is not allowed to set the `enabled` parameter for `%s`."
-                " All CIs are enabled by default. To disable a CI, please"
-                " add `skip: true` to the `build` section of `meta.yaml`"
-                " and an appropriate selector so as to disable the build."
-                % each_ci
-            )
+    config["feedstock_name"] = os.path.basename(forge_dir)
 
     env = make_jinja_env(forge_dir)
     logger.debug("env rendered")
 
     copy_feedstock_content(config, forge_dir)
+
     if os.path.exists(os.path.join(forge_dir, "build-locally.py")):
         set_exe_file(os.path.join(forge_dir, "build-locally.py"))
+
     clear_variants(forge_dir)
     clear_scripts(forge_dir)
     set_migration_fns(forge_dir, config)
+
     logger.debug("migration fns set")
 
     # the order of these calls appears to matter
@@ -2684,39 +2557,49 @@ def main(
     render_info.append(
         render_circle(env, config, forge_dir, return_metadata=True)
     )
+
     logger.debug("circle rendered")
     render_info.append(
         render_travis(env, config, forge_dir, return_metadata=True)
     )
+
     logger.debug("travis rendered")
     render_info.append(
         render_appveyor(env, config, forge_dir, return_metadata=True)
     )
+
     logger.debug("appveyor rendered")
     render_info.append(
         render_azure(env, config, forge_dir, return_metadata=True)
     )
+
     logger.debug("azure rendered")
     render_info.append(
         render_drone(env, config, forge_dir, return_metadata=True)
     )
+
     logger.debug("drone rendered")
     render_info.append(
         render_woodpecker(env, config, forge_dir, return_metadata=True)
     )
+
     logger.debug("woodpecker rendered")
     render_info.append(
         render_github_actions(env, config, forge_dir, return_metadata=True)
     )
+
     logger.debug("github_actions rendered")
     render_github_actions_services(env, config, forge_dir)
+
     logger.debug("github_actions services rendered")
+
     # put azure first just in case
     azure_ind = ([ri["provider_name"] for ri in render_info]).index("azure")
     tmp = render_info[0]
     render_info[0] = render_info[azure_ind]
     render_info[azure_ind] = tmp
     render_README(env, config, forge_dir, render_info)
+
     logger.debug("README rendered")
 
     commit_changes(
