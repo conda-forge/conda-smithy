@@ -605,3 +605,11 @@
   num_commits: 7
   first_commit: 2024-01-08 15:21:06
   github: cofinoa
+- name: vinicius douglas cerutti
+  email: vinivdc2009@hotmail.com
+  github: viniciusdc
+  alternate_emails:
+    - 51954708+viniciusdc@users.noreply.github.com
+  aliases:
+    - Vinicius D. Cerutti
+    - viniciusdc
