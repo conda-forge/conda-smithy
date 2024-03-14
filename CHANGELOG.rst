@@ -4,6 +4,33 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.32.0
+====================
+
+**Added:**
+
+* New JSON schema for ``conda-forge.yaml``. A Pydantic model is used to dynamically generate both a YAML document with the default values and the JSON schema itself. (#1756)
+* Included ``jsonschema`` and ``pydantic`` as dependencies into the ``environment.yml``. (#1756)
+
+**Changed:**
+
+* Included extra ``jsonschema`` validation for conda-forge.yaml, under ``configure_feedstock``. (#1756)
+* Moved legacy checks of old_file and providers into a new auxiliary ``_legacy_compatibility_checks`` function. (#1756)
+* Use Azure owner in URL for missing token error message. (#1854)
+* Invoke conda-{build,mambabuild} directly, not as conda subcommand. (#1859)
+
+**Authors:**
+
+* Isuru Fernando
+* Matthew R. Becker
+* Jaime Rodríguez-Guerra
+* Marcel Bargull
+* vinicius douglas cerutti
+* pre-commit-ci[bot]
+* John Blischak
+
+
+
 v3.31.1
 ====================
 
