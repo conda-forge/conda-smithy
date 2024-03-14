@@ -34,13 +34,13 @@ solver: {{ conda_solver }}
 
 CONDARC
 {%- if conda_build_tool == "mambabuild" %}
-{%- set BUILD_CMD="conda mambabuild" %}
+{%- set BUILD_CMD="conda-mambabuild" %}
 {%- elif conda_build_tool == "conda-build+conda-libmamba-solver" %}
-{%- set BUILD_CMD="CONDA_SOLVER=libmamba conda build" %}
+{%- set BUILD_CMD="CONDA_SOLVER=libmamba conda-build" %}
 {%- elif conda_build_tool == "conda-build+classic" %}
-{%- set BUILD_CMD="CONDA_SOLVER=classic conda build" %}
+{%- set BUILD_CMD="CONDA_SOLVER=classic conda-build" %}
 {%- else %}
-{%- set BUILD_CMD="conda build" %}
+{%- set BUILD_CMD="conda-build" %}
 {%- endif %}
 {%- if conda_solver == "libmamba" %}
 export CONDA_LIBMAMBA_SOLVER_NO_CHANNELS_FROM_INSTALLED=1
