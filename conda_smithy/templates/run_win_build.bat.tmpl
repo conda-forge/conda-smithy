@@ -78,15 +78,15 @@ call :end_group
 :: Build the recipe
 echo Building recipe
 {%- if conda_build_tool == "mambabuild" %}
-conda.exe mambabuild "{{ recipe_dir }}" -m .ci_support\%CONFIG%.yaml --suppress-variables %EXTRA_CB_OPTIONS%
+conda-mambabuild.exe "{{ recipe_dir }}" -m .ci_support\%CONFIG%.yaml --suppress-variables %EXTRA_CB_OPTIONS%
 {%- elif conda_build_tool == "conda-build+conda-libmamba-solver" %}
 set "CONDA_SOLVER=libmamba"
-conda.exe build "{{ recipe_dir }}" -m .ci_support\%CONFIG%.yaml --suppress-variables %EXTRA_CB_OPTIONS%
+conda-build.exe "{{ recipe_dir }}" -m .ci_support\%CONFIG%.yaml --suppress-variables %EXTRA_CB_OPTIONS%
 {%- elif conda_build_tool == "conda-build+classic" %}
 set "CONDA_SOLVER=classic"
-conda.exe build "{{ recipe_dir }}" -m .ci_support\%CONFIG%.yaml --suppress-variables %EXTRA_CB_OPTIONS%
+conda-build.exe "{{ recipe_dir }}" -m .ci_support\%CONFIG%.yaml --suppress-variables %EXTRA_CB_OPTIONS%
 {%- elif conda_build_tool == "conda-build" %}
-conda.exe build "{{ recipe_dir }}" -m .ci_support\%CONFIG%.yaml --suppress-variables %EXTRA_CB_OPTIONS%
+conda-build.exe "{{ recipe_dir }}" -m .ci_support\%CONFIG%.yaml --suppress-variables %EXTRA_CB_OPTIONS%
 {%- endif %}
 if !errorlevel! neq 0 exit /b !errorlevel!
 
