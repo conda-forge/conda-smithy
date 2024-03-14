@@ -12,9 +12,9 @@ Authors are sorted by number of commits.
 * Dougal J. Sutherland
 * Amit Kumar
 * shadow_walker
+* Marcel Bargull
 * Michael Sarahan
 * Min RK
-* Marcel Bargull
 * John Kirkham
 * Mark Harfouche
 * Leo Fang
@@ -25,6 +25,7 @@ Authors are sorted by number of commits.
 * Chris Burr
 * Julian Rüth
 * Bastian Zimmermann
+* vinicius douglas cerutti
 * Daniel Bast
 * Billy K. Poon
 * Tim Snyder
@@ -32,11 +33,11 @@ Authors are sorted by number of commits.
 * Eric Dill
 * Natasha Pavlovikj
 * Daniel Ching
+* pre-commit-ci[bot]
 * Maksim Rakitin
 * Jan Schulz
 * Josh Reichardt
 * Bela Stoyan
-* pre-commit-ci[bot]
 * Justin Calamari
 * Jason Furmanek
 * Patrick Sodré
@@ -46,6 +47,7 @@ Authors are sorted by number of commits.
 * Leopold Talirz
 * Tom Pollard
 * Gonzalo Pena-Castellanos
+* John Blischak
 * Matthias Diener
 * Antonio S. Cofiño
 * Carlo
@@ -53,7 +55,6 @@ Authors are sorted by number of commits.
 * Peter Williams
 * Joshua L. Adelman
 * Wolf Vollprecht
-* John Blischak
 * Marius van Niekerk
 * Johannes Köster
 * Philippe Blain

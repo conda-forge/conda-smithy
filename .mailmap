@@ -23,9 +23,9 @@ Uwe L. Korn <uwe.korn@quantco.com> Uwe L. Korn <xhochy@users.noreply.github.com>
 Dougal J. Sutherland <dougal@gmail.com>
 Amit Kumar <dtu.amit@gmail.com>
 shadow_walker <shadowwalkersb@gmail.com>
+Marcel Bargull <marcel.bargull@udo.edu> Marcel Bargull <mbargull@users.noreply.github.com>
 Michael Sarahan <msarahan@gmail.com> Mike Sarahan <msarahan@gmail.com>
 Min RK <benjaminrk@gmail.com>
-Marcel Bargull <marcel.bargull@udo.edu> Marcel Bargull <mbargull@users.noreply.github.com>
 John Kirkham <jakirkham@gmail.com> John Kirkham <kirkhamj@janelia.hhmi.org>
 John Kirkham <jakirkham@gmail.com> jakirkham <kirkhamj@janelia.hhmi.org>
 Mark Harfouche <mark.harfouche@gmail.com>
@@ -38,6 +38,8 @@ H. Vetinari <h.vetinari@gmx.com>
 Chris Burr <christopher.burr@cern.ch> Chris Burr <chrisburr@users.noreply.github.com>
 Julian Rüth <julian.rueth@fsfe.org>
 Bastian Zimmermann <10774221+BastianZim@users.noreply.github.com> BastianZim <10774221+BastianZim@users.noreply.github.com>
+vinicius douglas cerutti <vinivdc2009@hotmail.com> Vinicius D. Cerutti <51954708+viniciusdc@users.noreply.github.com>
+vinicius douglas cerutti <vinivdc2009@hotmail.com> viniciusdc <51954708+viniciusdc@users.noreply.github.com>
 Daniel Bast <2790401+dbast@users.noreply.github.com>
 Billy K. Poon <bkpoon@lbl.gov>
 Tim Snyder <snyder.tim@gmail.com>
@@ -46,11 +48,11 @@ Eric Dill <edill@anaconda.com> Eric Dill <edill@bnl.gov>
 Eric Dill <edill@anaconda.com> Eric Dill <thedizzle@gmail.com>
 Natasha Pavlovikj <npavlovikj2@unl.edu>
 Daniel Ching <carterbox@users.noreply.github.com>
+pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>
 Maksim Rakitin <mrakitin@bnl.gov> Maksim Rakitin <mrakitin@users.noreply.github.com>
 Jan Schulz <jasc@gmx.net>
 Josh Reichardt <josh.reichardt@gmail.com>
 Bela Stoyan <bela.stoyan@gmail.com>
-pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>
 Justin Calamari <justin.calamari@gmail.com>
 Jason Furmanek <furmanek@us.ibm.com>
 Patrick Sodré <psodre@gmail.com>
@@ -60,6 +62,7 @@ Nicholas Bollweg <nick.bollweg@gmail.com>
 Leopold Talirz <leopold.talirz@gmail.com>
 Tom Pollard <tom.pollard@codethink.co.uk>
 Gonzalo Pena-Castellanos <goanpeca@gmail.com>
+John Blischak <jdblischak@gmail.com>
 Matthias Diener <mdiener@illinois.edu>
 Antonio S. Cofiño <cofinoa@gmail.com>
 Carlo <carlo.dri@gmail.com> Carlo <carlodri@users.noreply.github.com>
@@ -67,7 +70,6 @@ Matthew Craig <mattwcraig@gmail.com> Matt Craig <mattwcraig@gmail.com>
 Peter Williams <peter@newton.cx>
 Joshua L. Adelman <joshua.adelman@gmail.com>
 Wolf Vollprecht <w.vollprecht@gmail.com>
-John Blischak <jdblischak@gmail.com>
 Marius van Niekerk <marius.v.niekerk@gmail.com> mariusvniekerk <marius.vanniekerk@maxpoint.com>
 Marius van Niekerk <marius.v.niekerk@gmail.com> mariusvniekerk <mvanniekerk@flatiron.com>
 Marius van Niekerk <marius.v.niekerk@gmail.com> Marius Van Niekerk <marius.vanniekerk@maxpoint.com>
