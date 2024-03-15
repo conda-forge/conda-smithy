@@ -474,6 +474,7 @@ BuildPlatform = create_model(
         platform.value: (Optional[Platforms], Field(default=platform.value))
         for platform in Platforms
     },
+    __config__=ConfigDict(extra="forbid"),
 )
 
 OSVersion = create_model(
@@ -483,6 +484,7 @@ OSVersion = create_model(
         for platform in Platforms
         if platform.value.startswith("linux")
     },
+    __config__=ConfigDict(extra="forbid"),
 )
 
 ProviderType = Union[List[CIservices], CIservices, bool, Nullable]
@@ -499,6 +501,7 @@ Provider = create_model(
             for plat in ("linux_64", "osx_64", "win_64")
         ]
     ),
+    __config__=ConfigDict(extra="forbid"),
 )
 
 
