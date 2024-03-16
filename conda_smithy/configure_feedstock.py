@@ -13,6 +13,7 @@ import jsonschema
 import yaml
 import warnings
 from collections import Counter, OrderedDict, namedtuple
+from copy import deepcopy
 from itertools import chain, product
 from os import fspath
 from pathlib import Path, PurePath
@@ -32,17 +33,10 @@ try:
 except ImportError:
     import json
 
-import conda_build.api
-import conda_build.utils
-import conda_build.variants
-import conda_build.conda_interface
-import conda_build.render
 from conda.models.match_spec import MatchSpec
-
-from copy import deepcopy
+from conda.models.version import VersionOrder
 
 import conda_build.api
-import conda_build.conda_interface
 import conda_build.render
 import conda_build.utils
 import conda_build.variants
@@ -2207,8 +2201,6 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
 
 
 def get_most_recent_version(name, include_broken=False):
-    from conda_build.conda_interface import VersionOrder
-
     request = requests.get(
         "https://api.anaconda.org/package/conda-forge/" + name
     )
@@ -2223,8 +2215,6 @@ def get_most_recent_version(name, include_broken=False):
 
 
 def check_version_uptodate(name, installed_version, error_on_warn):
-    from conda_build.conda_interface import VersionOrder
-
     most_recent_version = get_most_recent_version(name).version
     if installed_version is None:
         msg = "{} is not installed in conda-smithy's environment.".format(name)

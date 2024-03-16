@@ -23,11 +23,11 @@ if sys.version_info[:2] < (3, 11):
 else:
     import tomllib
 
+from conda.models.version import VersionOrder
 from conda_build.metadata import (
     ensure_valid_license_family,
     FIELDS as cbfields,
 )
-import conda_build.conda_interface
 from conda_smithy.validate_schema import validate_json_schema
 
 from .utils import render_meta_yaml, get_yaml
@@ -495,7 +495,7 @@ def lintify_meta_yaml(
     if package_section.get("version") is not None:
         ver = str(package_section.get("version"))
         try:
-            conda_build.conda_interface.VersionOrder(ver)
+            VersionOrder(ver)
         except:
             lints.append(
                 "Package version {} doesn't match conda spec".format(ver)
