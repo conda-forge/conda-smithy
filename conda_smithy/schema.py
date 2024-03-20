@@ -172,6 +172,11 @@ class AzureConfig(BaseModel):
         description="The name of the Azure Pipelines project",
     )
 
+    build_id: Optional[int] = Field(
+        default=None,
+        description="The Build ID for the specific feedstock",
+    )
+
     upload_packages: Optional[bool] = Field(
         default=True,
         description="Whether to upload the packages to Anaconda.org. Useful for testing.",

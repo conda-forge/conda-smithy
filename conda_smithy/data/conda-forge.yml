@@ -1,6 +1,7 @@
 appveyor:
   image: Visual Studio 2017
 azure:
+  build_id: null
   force: false
   free_disk_space: false
   max_parallel: 50
