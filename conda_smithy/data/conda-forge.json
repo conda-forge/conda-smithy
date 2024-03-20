@@ -146,7 +146,7 @@
             }
           ],
           "default": null,
-          "description": "The name of the GitHub user or organization, if passed with the GithubConfig provider, must comply with the value of the user_or_org field",
+          "description": "The name of the Azure user or organization. Defaults to the value of github: user_or_org.",
           "title": "User Or Org"
         },
         "store_build_artifacts": {
@@ -720,7 +720,7 @@
             }
           ],
           "default": "conda-forge",
-          "description": "The name of the GitHub user or organization,         if passed with the AzureConfig provider, must comply with the value of the user_or_org field",
+          "description": "The name of the GitHub user or organization",
           "title": "User Or Org"
         },
         "repo_name": {

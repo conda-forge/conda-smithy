@@ -217,8 +217,8 @@ class AzureConfig(BaseModel):
 
     user_or_org: Optional[Union[str, Nullable]] = Field(
         default=None,
-        description="The name of the GitHub user or organization, if passed with "
-        "the GithubConfig provider, must comply with the value of the user_or_org field",
+        description="The name of the Azure user or organization. Defaults to the "
+        "value of github: user_or_org.",
         exclude=True,  # Will not be rendered in the model dump since we check if it was
         # set or not
     )
@@ -240,8 +240,7 @@ class GithubConfig(BaseModel):
     model_config: ConfigDict = ConfigDict(extra="forbid")
 
     user_or_org: Optional[str] = Field(
-        description="The name of the GitHub user or organization, \
-        if passed with the AzureConfig provider, must comply with the value of the user_or_org field",
+        description="The name of the GitHub user or organization",
         default="conda-forge",
     )
     repo_name: Optional[str] = Field(
