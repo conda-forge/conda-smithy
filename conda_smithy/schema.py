@@ -176,11 +176,11 @@ class AzureConfig(BaseModel):
         default=None,
         description=cleandoc(
             """
-          The build ID for the specific feedstock used for rendering the badges in the
-          README file generated. When the value is None, conda-smithy will compute the
-          build ID by calling the Azure API which requires a token for private azure
-          projects.
-          """
+            The build ID for the specific feedstock used for rendering the badges in the
+            README file generated. When the value is None, conda-smithy will compute the
+            build ID by calling the Azure API which requires a token for private azure
+            projects.
+            """
         ),
     )
 
