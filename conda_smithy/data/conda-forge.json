@@ -83,6 +83,19 @@
           "description": "The name of the Azure Pipelines project",
           "title": "Project Name"
         },
+        "build_id": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The build ID for the specific feedstock used for rendering the badges in the\nREADME file generated. When the value is None, conda-smithy will compute the\nbuild ID by calling the Azure API which requires a token for private azure\nprojects.",
+          "title": "Build Id"
+        },
         "upload_packages": {
           "anyOf": [
             {
@@ -133,7 +146,7 @@
             }
           ],
           "default": null,
-          "description": "The name of the GitHub user or organization, if passed with the GithubConfig provider, must comply with the value of the user_or_org field",
+          "description": "The name of the Azure user or organization. Defaults to the value of github: user_or_org.",
           "title": "User Or Org"
         },
         "store_build_artifacts": {
@@ -707,7 +720,7 @@
             }
           ],
           "default": "conda-forge",
-          "description": "The name of the GitHub user or organization,         if passed with the AzureConfig provider, must comply with the value of the user_or_org field",
+          "description": "The name of the GitHub user or organization",
           "title": "User Or Org"
         },
         "repo_name": {
