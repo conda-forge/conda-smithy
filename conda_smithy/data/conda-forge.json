@@ -93,7 +93,7 @@
             }
           ],
           "default": null,
-          "description": "The Build ID for the specific feedstock",
+          "description": "The build ID for the specific feedstock used for rendering the badges in the\nREADME file generated. When the value is None, conda-smithy will compute the\nbuild ID by calling the Azure API which requires a token for private azure\nprojects.",
           "title": "Build Id"
         },
         "upload_packages": {
