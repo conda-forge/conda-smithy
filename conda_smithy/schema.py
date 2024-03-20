@@ -70,6 +70,8 @@ class BotConfigSkipRenderChoices(StrEnum):
     README = "README.md"
     LICENSE = "LICENSE.txt"
     GITHUB_WORKFLOWS = ".github/workflows"
+    GITHUB_WORKFLOWS_AUTOMERGE = ".github/workflows/automerge.yml"
+    GITHUB_WORKFLOWS_WEBSERVICES = ".github/workflows/webservices.yml"
 
 
 class BotConfigInspectionChoice(StrEnum):
