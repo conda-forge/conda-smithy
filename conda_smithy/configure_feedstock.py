@@ -1430,26 +1430,32 @@ def _github_actions_specific_setup(
     runs_on = {
         "osx-64": {
             "os": "macos",
+            "hosted_labels": ("macos-latest",),
             "self_hosted_labels": ("macOS", "x64"),
         },
         "osx-arm64": {
             "os": "macos",
+            "hosted_labels": ("macos-14",),
             "self_hosted_labels": ("macOS", "arm64"),
         },
         "linux-64": {
             "os": "ubuntu",
+            "hosted_labels": ("ubuntu-latest",),
             "self_hosted_labels": ("linux", "x64"),
         },
         "linux-aarch64": {
             "os": "ubuntu",
+            "hosted_labels": ("ubuntu-latest",),
             "self_hosted_labels": ("linux", "ARM64"),
         },
         "win-64": {
             "os": "windows",
+            "hosted_labels": ("windows-latest",),
             "self_hosted_labels": ("windows", "x64"),
         },
         "win-arm64": {
             "os": "windows",
+            "hosted_labels": ("windows-latest",),
             "self_hosted_labels": ("windows", "ARM64"),
         },
     }
@@ -1467,7 +1473,7 @@ def _github_actions_specific_setup(
             runs_on[data["build_platform"]]["self_hosted_labels"]
         )
         self_hosted_default += ["self-hosted"]
-        hosted_default = [data["gha_os"] + "-latest"]
+        hosted_default = runs_on[data["build_platform"]]["hosted_labels"]
 
         labels_default = (
             ["hosted"]
