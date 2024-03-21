@@ -1839,6 +1839,9 @@
     "noarch_platforms": {
       "anyOf": [
         {
+          "$ref": "#/$defs/Platforms"
+        },
+        {
           "items": {
             "$ref": "#/$defs/Platforms"
           },
@@ -1904,6 +1907,9 @@
     },
     "remote_ci_setup": {
       "anyOf": [
+        {
+          "type": "string"
+        },
         {
           "items": {
             "type": "string"
