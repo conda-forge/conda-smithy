@@ -729,7 +729,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    noarch_platforms: Optional[List[Platforms]] = Field(
+    noarch_platforms: Optional[Union[Platforms, List[Platforms]]] = Field(
         default_factory=lambda: ["linux_64"],
         description=cleandoc(
             """
@@ -856,7 +856,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    remote_ci_setup: Optional[List[str]] = Field(
+    remote_ci_setup: Optional[Union[str, List[str]]] = Field(
         default_factory=lambda: [
             "conda-forge-ci-setup=4",
             "conda-build>=24.1",
