@@ -8,10 +8,12 @@ import io
 import tempfile
 
 from textwrap import dedent
+from typing import Literal, Optional, Union
 
 import conda  # noqa
 import conda_build.api
 from conda_build.metadata import MetaData
+from .rattler_build import MetaData as RattlerMetaData
 
 import conda_smithy.cirun_utils
 from conda_smithy.utils import get_feedstock_name_from_meta, merge_dict
@@ -21,6 +23,7 @@ from . import configure_feedstock
 from . import feedstock_io
 from . import lint_recipe
 from . import __version__
+from .utils import RATTLER_BUILD
 
 
 if sys.version_info[0] == 2:
@@ -31,7 +34,7 @@ def default_feedstock_config_path(feedstock_directory):
     return os.path.join(feedstock_directory, "conda-forge.yml")
 
 
-def generate_feedstock_content(target_directory, source_recipe_dir):
+def generate_feedstock_content(target_directory, source_recipe_dir, conda_build_tool: Optional[str] = None):
     target_directory = os.path.abspath(target_directory)
     recipe_dir = "recipe"
     target_recipe_dir = os.path.join(target_directory, recipe_dir)
@@ -50,13 +53,16 @@ def generate_feedstock_content(target_directory, source_recipe_dir):
             ).with_traceback(sys.exc_info()[2])
 
     forge_yml = default_feedstock_config_path(target_directory)
+    yaml = YAML()
     if not os.path.exists(forge_yml):
         with feedstock_io.write_file(forge_yml) as fh:
-            fh.write("{}")
+            if conda_build_tool:
+                yaml.dump({"conda_build_tool": conda_build_tool}, fh)
+            else:
+                fh.write("{}")
 
     # merge in the existing configuration in the source recipe directory
     forge_yml_recipe = os.path.join(source_recipe_dir, "conda-forge.yml")
-    yaml = YAML()
     if os.path.exists(forge_yml_recipe):
         feedstock_io.remove_file(
             os.path.join(target_recipe_dir, "conda-forge.yml")
@@ -123,11 +129,19 @@ class Init(Subcommand):
             )
 
         # Get some information about the source recipe.
-        if args.recipe_directory:
+        # detect if it's old recipe or new one
+        meta: Union[MetaData, RattlerMetaData]
+        try:
             meta = MetaData(args.recipe_directory)
-        else:
-            meta = None
-
+        # find_recipe from MetaData raise OsError and empty results
+        # even if I use directly that method, or wrap around it
+        # I still need to catch OsError here 
+        except OSError:
+            # it may contain recipe.yaml;
+            meta = RattlerMetaData(args.recipe_directory)
+        
+        conda_build_tool: Optional[str] = RATTLER_BUILD if isinstance(meta, RattlerMetaData) else None
+    
         feedstock_directory = args.feedstock_directory.format(
             package=argparse.Namespace(name=meta.name())
         )
@@ -137,7 +151,7 @@ class Init(Subcommand):
 
         os.makedirs(feedstock_directory)
         subprocess.check_call(["git", "init"], cwd=feedstock_directory)
-        generate_feedstock_content(feedstock_directory, args.recipe_directory)
+        generate_feedstock_content(feedstock_directory, args.recipe_directory, conda_build_tool)
         subprocess.check_call(
             ["git", "commit", "-m", msg], cwd=feedstock_directory
         )
@@ -697,7 +711,7 @@ class CISkeleton(Subcommand):
 
 
 def main():
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(level=logging.DEBUG)
 
     parser = argparse.ArgumentParser(
         prog="conda smithy",

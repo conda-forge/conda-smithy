@@ -50,6 +50,9 @@ from conda_smithy.utils import (
     get_feedstock_about_from_meta,
 )
 from . import __version__
+from .rattler_build import MetaData as RattlerMetaData
+from .rattler_build import render as rattler_render
+from .utils import RATTLER_BUILD
 
 conda_forge_content = os.path.abspath(os.path.dirname(__file__))
 logger = logging.getLogger(__name__)
@@ -318,11 +321,12 @@ def _get_used_key_values_by_input_order(
     # so we do the zipped keys first and then do the rest
     zipped_tuples = {}
     zipped_keys = set()
-    for keyset in squished_input_variants["zip_keys"]:
-        zipped_tuples[tuple(keyset)] = list(
-            zip(*[squished_input_variants[k] for k in keyset])
-        )
-        zipped_keys |= set(keyset)
+    if "zip_keys" in squished_input_variants:
+        for keyset in squished_input_variants["zip_keys"]:
+            zipped_tuples[tuple(keyset)] = list(
+                zip(*[squished_input_variants[k] for k in keyset])
+            )
+            zipped_keys |= set(keyset)
     logger.debug("zipped_keys {}".format(pprint.pformat(zipped_keys)))
     logger.debug("zipped_tuples {}".format(pprint.pformat(zipped_tuples)))
 
@@ -429,7 +433,8 @@ def _collapse_subpackage_variants(
     is_noarch = True
 
     for meta in list_of_metas:
-        all_used_vars.update(meta.get_used_vars())
+        used_vars = meta.get_used_vars()
+        all_used_vars.update(used_vars)
         # this is a hack to work around the fact that we specify mpi variants
         # via an `mpi` variable in the CBC but we do not parse our recipes
         # twice to ensure the pins given by the variant also show up in the
@@ -444,7 +449,6 @@ def _collapse_subpackage_variants(
         )
 
         all_variants.add(conda_build.utils.HashableDict(meta.config.variant))
-
         if not meta.noarch:
             is_noarch = False
 
@@ -467,9 +471,15 @@ def _collapse_subpackage_variants(
             list_of_metas[0].config.input_variants
         )
     )
+    if squished_input_variants is None:
+        squished_input_variants = dict()
+
     squished_used_variants = (
         conda_build.variants.list_of_dicts_to_dict_of_lists(list(all_variants))
     )
+    if squished_used_variants is None:
+        squished_used_variants = dict()
+
     logger.debug(
         "squished_input_variants {}".format(
             pprint.pformat(squished_input_variants)
@@ -621,6 +631,13 @@ def dump_subspace_config_files(
         arch,
         forge_config,
     )
+
+    # so we have
+    # top_level_loop_vars: is used vars variants inside the recipe
+    # metas[0].get_used_vars() without channel_targets for some reason :)
+    #
+    # 
+
     logger.debug(
         "collapsed subspace config files: {}".format(pprint.pformat(configs))
     )
@@ -803,17 +820,27 @@ def _render_ci_provider(
 
         # detect if `compiler('cuda')` is used in meta.yaml,
         # and set appropriate environment variable
+        
+        # detect if it's rattler-build recipe
+        if forge_config["conda_build_tool"] == RATTLER_BUILD:
+            recipe_file = "recipe.yaml"
+        else:
+            recipe_file = "meta.yaml"
+        
         with open(
-            os.path.join(forge_dir, forge_config["recipe_dir"], "meta.yaml")
+            os.path.join(forge_dir, forge_config["recipe_dir"], recipe_file)
         ) as f:
             meta_lines = f.readlines()
+
         # looking for `compiler('cuda')` with both quote variants;
         # do not match if there is a `#` somewhere before on the line
+        # TODO: Ask directly from recipe.yaml if we have cuda compiler
         pat = re.compile(r"^[^\#]*compiler\((\"cuda\"|\'cuda\')\).*")
         for ml in meta_lines:
             if pat.match(ml):
                 os.environ["CF_CUDA_ENABLED"] = "True"
 
+        # TODO: 
         config = conda_build.config.get_or_merge_config(
             None,
             exclusive_config_file=forge_config["exclusive_config_file"],
@@ -822,13 +849,46 @@ def _render_ci_provider(
         )
 
         # Get the combined variants from normal variant locations prior to running migrations
+        # TODO: rewrite conda-smithy/conda_build_config.yaml which is used for pinning
+        # it should not contains # selectors but new if then format.
+        
+        # here we combine conda_build from our recipe, and the one that was 
+        # built on top calling conda_build.config.get_or_merge_config
+        # usually it will result in having the conda_build.yaml from cf-pinning
+        # or you can have your exclusive_config_file
+
+        # use also variants.yml as spec
         (
             combined_variant_spec,
             _,
         ) = conda_build.variants.get_package_combined_spec(
             os.path.join(forge_dir, forge_config["recipe_dir"]), config=config
-        )
+        )   
 
+
+        # here we should load our variants.yaml
+        # if present
+
+        if recipe_file == "recipe.yaml":
+            def parse_recipe_config_file(path):
+                with open(path) as f:
+                    contents = f.read()
+                content = yaml.load(contents, Loader=yaml.loader.BaseLoader) or {}
+                return content
+
+            variants_path = os.path.join(forge_dir, forge_config["recipe_dir"], 'variants.yaml')
+            new_spec = parse_recipe_config_file(variants_path)
+            specs = {
+                'combined_spec': combined_variant_spec,
+                'variants.yaml': new_spec
+            }
+            combined_variant_spec = conda_build.variants.combine_specs(specs)
+        
+
+        # TODO: think on how to handle migrations
+        # In my opinion we can apply old migrations to new variants.yaml
+        # because at this point they are already parsed
+        # and we will be integrated in conda-forge infrastructure
         migrated_combined_variant_spec = migrate_combined_spec(
             combined_variant_spec,
             forge_dir,
@@ -883,24 +943,41 @@ def _render_ci_provider(
             channel_sources = migrated_combined_variant_spec.get(
                 "channel_sources", [""]
             )[0].split(",")
-            metas = conda_build.api.render(
-                os.path.join(forge_dir, forge_config["recipe_dir"]),
-                platform=platform,
-                arch=arch,
-                ignore_system_variants=True,
-                variants=migrated_combined_variant_spec,
-                permit_undefined_jinja=True,
-                finalize=False,
-                bypass_env_check=True,
-                channel_urls=channel_sources,
-            )
+
+            #TODO: improve this
+            # this is hack to switch between new recipe and old recipe
+            if recipe_file == "recipe.yaml":
+                metas = rattler_render(
+                    os.path.join(forge_dir, forge_config["recipe_dir"]),
+                    platform=platform,
+                    arch=arch,
+                    ignore_system_variants=True,
+                    variants=migrated_combined_variant_spec,
+                    permit_undefined_jinja=True,
+                    finalize=False,
+                    bypass_env_check=True,
+                    channel_urls=channel_sources,
+                )
+            else:
+                metas = conda_build.api.render(
+                    os.path.join(forge_dir, forge_config["recipe_dir"]),
+                    platform=platform,
+                    arch=arch,
+                    ignore_system_variants=True,
+                    variants=migrated_combined_variant_spec,
+                    permit_undefined_jinja=True,
+                    finalize=False,
+                    bypass_env_check=True,
+                    channel_urls=channel_sources,
+                )
+        except Exception as e:
+            import pdb; pdb.set_trace()
         finally:
             if os.path.exists(_recipe_cbc + ".conda.smithy.bak"):
                 os.rename(_recipe_cbc + ".conda.smithy.bak", _recipe_cbc)
 
         # render returns some download & reparsing info that we don't care about
         metas = [m for m, _, _ in metas]
-
         if not keep_noarch:
             to_delete = []
             for idx, meta in enumerate(metas):
@@ -945,14 +1022,15 @@ def _render_ci_provider(
             archs,
             enable_platform,
             upload_packages,
-        ):
+        ):  
             if enable:
-                configs.extend(
-                    dump_subspace_config_files(
+                dumped_config = dump_subspace_config_files(
                         metas, forge_dir, platform, arch, upload, forge_config
                     )
+                configs.extend(
+                    dumped_config
                 )
-
+                import pdb; pdb.set_trace()
                 plat_arch = f"{platform}_{arch}"
                 forge_config[plat_arch]["enabled"] = True
                 fancy_platforms.append(fancy_name.get(plat_arch, plat_arch))
@@ -1587,6 +1665,22 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
             ".scripts/run_win_build.bat",
         ],
     }
+
+    if forge_config.get("recipe_type", "meta") == "recipe":
+        platform_templates["linux"] = [
+            ".scripts/run_docker_build_new_recipe.sh",
+            ".scripts/build_steps_new_recipe.sh",
+            ".azure-pipelines/azure-pipelines-new-recipe-linux.yml",
+        ]
+        platform_templates["osx"] = [
+            ".azure-pipelines/azure-pipelines-new-recipe-osx.yml",
+            ".scripts/run_osx_build_new_recipe.sh",
+        ]
+        platform_templates["win"] = [
+            ".azure-pipelines/azure-pipelines-new-recipe-win.yml",
+            ".scripts/run_win_build_new_recipe.bat",
+        ]
+
     if forge_config["azure"]["store_build_artifacts"]:
         platform_templates["linux"].append(
             ".scripts/create_conda_build_artifacts.sh"
@@ -1648,7 +1742,12 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
 
 def render_azure(jinja_env, forge_config, forge_dir, return_metadata=False):
     target_path = os.path.join(forge_dir, "azure-pipelines.yml")
-    template_filename = "azure-pipelines.yml.tmpl"
+    
+    if forge_config["conda_build_tool"] == RATTLER_BUILD:
+        template_filename = "azure-pipelines-new-recipe.yml.tmpl"
+    else:
+        template_filename = "azure-pipelines.yml.tmpl"
+
     fast_finish_text = ""
 
     (
@@ -2194,6 +2293,7 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
         "conda-build",  # will run vanilla conda-build, with system configured / default solver
         "conda-build+conda-libmamba-solver",  # will run vanilla conda-build, with libmamba solver
         "conda-build+classic",  # will run vanilla conda-build, with the classic solver
+        "rattler-build",  # will run 'rattler-build' which uses new recipe.yaml
     )
     assert config["conda_build_tool"] in valid_build_tools, (
         f"Invalid conda_build_tool: {config['conda_build_tool']}. "
@@ -2204,6 +2304,8 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
         config["conda_build_tool_deps"] = "conda-build boa"
     elif config["conda_build_tool"] == "conda-build+conda-libmamba-solver":
         config["conda_build_tool_deps"] = "conda-build conda-libmamba-solver"
+    elif config["conda_build_tool"] == "rattler-build":
+        config["conda_build_tool_deps"] = "rattler-build"
     else:
         config["conda_build_tool_deps"] = "conda-build"
 
@@ -2472,7 +2574,6 @@ def get_cached_cfp_file_path(temporary_directory):
                     current_pinning_version
                 )
                 pinning_version = current_pinning_version
-
         return str(smithy_cache / "conda_build_config.yaml"), pinning_version
     else:
         return get_cfp_file_path(temporary_directory)
@@ -2587,7 +2688,6 @@ def set_migration_fns(forge_dir, forge_config):
 
     migrations_root = os.path.join(forge_dir, ".ci_support", "migrations")
     migrations_in_feedstock = get_migrations_in_dir(migrations_root)
-
     if not os.path.exists(cfp_migrations_dir):
         migration_fns = [fn for fn, _, _ in migrations_in_feedstock.values()]
         forge_config["migration_fns"] = migration_fns
@@ -2638,6 +2738,10 @@ def main(
             return True
 
     forge_dir = os.path.abspath(forge_file_directory)
+    
+    # TODO: I think in rattler-build we don't use it
+    # so it would be appropriate to throw a exception here
+    # if it's used with new recipe
     if exclusive_config_file is not None:
         exclusive_config_file = os.path.join(forge_dir, exclusive_config_file)
         if not os.path.exists(exclusive_config_file):
