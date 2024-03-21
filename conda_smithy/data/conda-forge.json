@@ -363,19 +363,6 @@
       "title": "BotConfigInspectionChoice",
       "type": "string"
     },
-    "BotConfigSkipRenderChoices": {
-      "enum": [
-        ".gitignore",
-        ".gitattributes",
-        "README.md",
-        "LICENSE.txt",
-        ".github/workflows",
-        ".github/workflows/automerge.yml",
-        ".github/workflows/webservices.yml"
-      ],
-      "title": "BotConfigSkipRenderChoices",
-      "type": "string"
-    },
     "BotConfigVersionUpdates": {
       "additionalProperties": false,
       "description": "This dictates the behavior of the conda-forge auto-tick bot for version\nupdates",
@@ -1942,7 +1929,7 @@
       "anyOf": [
         {
           "items": {
-            "$ref": "#/$defs/BotConfigSkipRenderChoices"
+            "type": "string"
           },
           "type": "array"
         },
@@ -1950,7 +1937,7 @@
           "type": "null"
         }
       ],
-      "description": "This option specifies a list of files which `conda smithy` will skip rendering.\nThis is useful for files that are not templates, but are still in the recipe\ndirectory. The default value is an empty list [ ], which will consider that\nall files can be rendered. For example, if you want to skip rendering\nthe .gitignore and LICENSE.txt files, you can add the following:\n\n```yaml\nskip_render:\n    - .gitignore\n    - LICENSE.txt\n```",
+      "description": "This option specifies a list of files which `conda smithy` will skip rendering.\nThis is useful for files that are not templates, but are still in the recipe\ndirectory. The default value is an empty list `[]`, which will consider that\nall files can be rendered. For example, if you want to skip rendering\nthe `.gitignore` and `LICENSE.txt` files, you can add the following:\n\n```yaml\nskip_render:\n    - .gitignore\n    - LICENSE.txt\n```",
       "title": "Skip Render"
     },
     "templates": {

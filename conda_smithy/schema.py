@@ -64,16 +64,6 @@ class BotConfigAutoMergeChoice(StrEnum):
     MIGRATION = "migration"
 
 
-class BotConfigSkipRenderChoices(StrEnum):
-    GITIGNORE = ".gitignore"
-    GITATTRIBUTES = ".gitattributes"
-    README = "README.md"
-    LICENSE = "LICENSE.txt"
-    GITHUB_WORKFLOWS = ".github/workflows"
-    GITHUB_WORKFLOWS_AUTOMERGE = ".github/workflows/automerge.yml"
-    GITHUB_WORKFLOWS_WEBSERVICES = ".github/workflows/webservices.yml"
-
-
 class BotConfigInspectionChoice(StrEnum):
     HINT = "hint"
     HINT_ALL = "hint-all"
@@ -890,15 +880,15 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    skip_render: Optional[List[BotConfigSkipRenderChoices]] = Field(
+    skip_render: Optional[List[str]] = Field(
         default_factory=list,
         description=cleandoc(
             """
         This option specifies a list of files which `conda smithy` will skip rendering.
         This is useful for files that are not templates, but are still in the recipe
-        directory. The default value is an empty list [ ], which will consider that
+        directory. The default value is an empty list `[]`, which will consider that
         all files can be rendered. For example, if you want to skip rendering
-        the .gitignore and LICENSE.txt files, you can add the following:
+        the `.gitignore` and `LICENSE.txt` files, you can add the following:
 
         ```yaml
         skip_render:
