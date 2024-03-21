@@ -34,5 +34,5 @@ dependencies:
   - cirun >=0.30
   - pydantic >=2,<3
   - jsonschema
-  - backports.strenum
+  - backports.strenum  # [py<312]
   - exceptiongroup
