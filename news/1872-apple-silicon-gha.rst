@@ -1,6 +1,6 @@
 **Added:**
 
-* Support Apple silicon runners on GHA hosted (#1872).
+* Support Apple silicon runners on GHA hosted (#1872, #1874).
 
 **Changed:**
 

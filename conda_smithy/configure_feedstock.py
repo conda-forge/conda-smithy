@@ -1473,7 +1473,7 @@ def _github_actions_specific_setup(
             runs_on[data["build_platform"]]["self_hosted_labels"]
         )
         self_hosted_default += ["self-hosted"]
-        hosted_default = runs_on[data["build_platform"]]["hosted_labels"]
+        hosted_default = list(runs_on[data["build_platform"]]["hosted_labels"])
 
         labels_default = (
             ["hosted"]
