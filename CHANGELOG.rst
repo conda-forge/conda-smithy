@@ -4,6 +4,34 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.33.0
+====================
+
+**Added:**
+
+* Support Apple silicon runners on GHA hosted (#1872, #1874).
+
+**Changed:**
+
+* Stop using conda_build.conda_interface. (#1868)
+* Allow any ``str`` in ``conda-forge.yml``'s ``skip_render`` key. (#1875 via #1878)
+
+**Fixed:**
+
+* Update ``BotConfig`` schema description with examples of all possible values. (#1861 via #1862)
+* Added missing ``azure: build_id`` into the json schema. (#1871)
+* Add more skip render choices (#1873).
+* Allow ``str`` (in addition to list of ``str``) in ``conda-forge.yml``'s ``noarch_platforms`` and ``remote_ci_setup``. (#1869 via #1877)
+
+**Authors:**
+
+* Isuru Fernando
+* Jaime Rodríguez-Guerra
+* Marcel Bargull
+* pre-commit-ci[bot]
+
+
+
 v3.32.0
 ====================
 
