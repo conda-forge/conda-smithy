@@ -369,7 +369,9 @@
         ".gitattributes",
         "README.md",
         "LICENSE.txt",
-        ".github/workflows"
+        ".github/workflows",
+        ".github/workflows/automerge.yml",
+        ".github/workflows/webservices.yml"
       ],
       "title": "BotConfigSkipRenderChoices",
       "type": "string"
