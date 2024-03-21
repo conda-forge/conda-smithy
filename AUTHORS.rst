@@ -11,8 +11,8 @@ Authors are sorted by number of commits.
 * Uwe L. Korn
 * Dougal J. Sutherland
 * Amit Kumar
-* shadow_walker
 * Marcel Bargull
+* shadow_walker
 * Michael Sarahan
 * Min RK
 * John Kirkham
@@ -25,15 +25,15 @@ Authors are sorted by number of commits.
 * Chris Burr
 * Julian Rüth
 * Bastian Zimmermann
-* vinicius douglas cerutti
 * Daniel Bast
 * Billy K. Poon
+* vinicius douglas cerutti
 * Tim Snyder
 * Mike Henry
+* pre-commit-ci[bot]
 * Eric Dill
 * Natasha Pavlovikj
 * Daniel Ching
-* pre-commit-ci[bot]
 * Maksim Rakitin
 * Jan Schulz
 * Josh Reichardt

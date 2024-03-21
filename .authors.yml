@@ -182,7 +182,7 @@
   email: marcel.bargull@udo.edu
   alternate_emails:
   - mbargull@users.noreply.github.com
-  num_commits: 32
+  num_commits: 34
   first_commit: 2018-07-30 05:17:51
   github: mbargull
 - name: xoviat
@@ -247,7 +247,7 @@
   email: isuru.11@cse.mrt.ac.lk
   alternate_emails:
   - isuruf@gmail.com
-  num_commits: 644
+  num_commits: 656
   first_commit: 2017-01-08 22:03:03
   github: isuruf
 - name: Julian Rüth
@@ -393,7 +393,7 @@
   github: shadowwalkersb
 - name: Matthew R. Becker
   email: becker.mr@gmail.com
-  num_commits: 166
+  num_commits: 168
   first_commit: 2020-01-07 17:44:33
   github: beckermr
   alternate_emails:
@@ -476,7 +476,7 @@
   github: jwillemsen
 - name: Jaime Rodríguez-Guerra
   email: jaimergp@users.noreply.github.com
-  num_commits: 142
+  num_commits: 148
   first_commit: 2020-11-01 14:18:08
   github: jaimergp
 - name: Bastian Zimmermann
@@ -585,7 +585,7 @@
   github: zklaus
 - name: pre-commit-ci[bot]
   email: 66853113+pre-commit-ci[bot]@users.noreply.github.com
-  num_commits: 13
+  num_commits: 14
   first_commit: 2023-10-30 15:49:50
   github: carterbox
 - name: Amit Kumar
@@ -613,5 +613,5 @@
   aliases:
   - Vinicius D. Cerutti
   - viniciusdc
-  num_commits: 18
+  num_commits: 15
   first_commit: 2023-08-03 14:24:14
