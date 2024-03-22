@@ -868,7 +868,7 @@ def test_cuda_enabled_render(cuda_enabled_recipe, jinja_env):
                 del os.environ["CF_CUDA_ENABLED"]
 
 
-def test_conda_build_tools(config_yaml):
+def test_conda_build_tools(config_yaml, caplog):
     load_forge_config = lambda: configure_feedstock._load_forge_config(  # noqa
         config_yaml,
         exclusive_config_file=os.path.join(
@@ -901,8 +901,9 @@ def test_conda_build_tools(config_yaml):
         fp.write(unmodified)
         fp.write("conda_build_tool: does-not-exist")
 
-    with pytest.raises(configure_feedstock.ExceptionGroup):
+    with caplog.at_level(logging.WARNING):
         assert load_forge_config()
+    assert "does-not-exist" in caplog.text
 
 
 def test_remote_ci_setup(config_yaml):
