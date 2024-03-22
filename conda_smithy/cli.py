@@ -599,9 +599,13 @@ class Regenerate(Subcommand):
 
 class RecipeLint(Subcommand):
     subcommand = "recipe-lint"
+    aliases = ["lint"]
 
     def __init__(self, parser):
-        super(RecipeLint, self).__init__(parser, "Lint a single conda recipe.")
+        super(RecipeLint, self).__init__(
+            parser,
+            "Lint a single conda recipe and its configuration.",
+        )
         scp = self.subcommand_parser
         scp.add_argument("--conda-forge", action="store_true")
         scp.add_argument("recipe_directory", default=[os.getcwd()], nargs="*")

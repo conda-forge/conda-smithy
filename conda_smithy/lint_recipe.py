@@ -6,15 +6,18 @@ str_type = str
 
 import copy
 import fnmatch
-from glob import glob
 import io
 import itertools
+import json
 import os
 import re
 import requests
 import shutil
 import subprocess
 import sys
+from glob import glob
+from inspect import cleandoc
+from textwrap import indent
 
 import github
 
@@ -1065,6 +1068,34 @@ def jinja_lines(lines):
             yield line, i
 
 
+def _format_validation_msg(error: "jsonschema.ValidationError"):
+    if error.schema:
+        descriptionless_schema = {
+            k: v for (k, v) in error.schema.items() if k != "description"
+        }
+    else:
+        descriptionless_schema = {}
+    # We can get the help url from the first level on the JSON path ($.top_level_key.2nd_level_key)
+    top_level_key = (
+        error.json_path.split(".")[1].split("[")[0].replace("_", "-")
+    )
+    help_url = f"https://conda-forge.org/docs/maintainer/conda_forge_yml/#{top_level_key}"
+    return cleandoc(
+        f"""
+        In conda-forge.yml: [`{error.json_path}`]({help_url}) `=` `{error.instance}`.
+{indent(error.message, " " * 12 + "> ")}
+            <details>
+            <summary>Schema</summary>
+
+            ```json
+{indent(json.dumps(descriptionless_schema, indent=2), " " * 12)}
+            ```
+
+            </details>
+        """
+    )
+
+
 def main(recipe_dir, conda_forge=False, return_hints=False):
     recipe_dir = os.path.abspath(recipe_dir)
     recipe_meta = os.path.join(recipe_dir, "meta.yaml")
@@ -1080,19 +1111,34 @@ def main(recipe_dir, conda_forge=False, return_hints=False):
         recipe_dir=recipe_dir
     )
 
-    validation_errors = [str(err) for err in validation_errors]
-    validation_errors = [
-        (
-            err.split("\n")[0]
-            if err.startswith("Additional properties are not allowed")
-            else err
-        )
-        for err in validation_errors
-    ]
-    results.extend(validation_errors)
-    hints.extend([str(lint) for lint in validation_hints])
+    results.extend([_format_validation_msg(err) for err in validation_errors])
+    hints.extend([_format_validation_msg(hint) for hint in validation_hints])
 
     if return_hints:
         return results, hints
     else:
         return results
+
+
+if __name__ == "__main__":
+    # This block is supposed to help debug how the rendered version
+    # of the linter bot would look like in Github. Taken from
+    # https://github.com/conda-forge/conda-forge-webservices/blob/747f75659/conda_forge_webservices/linting.py#L138C1-L146C72
+    rel_path = sys.argv[1]
+    lints, hints = main(rel_path, False, True)
+    messages = []
+    if lints:
+        all_pass = False
+        messages.append(
+            "\nFor **{}**:\n\n{}".format(
+                rel_path, "\n".join("* {}".format(lint) for lint in lints)
+            )
+        )
+    if hints:
+        messages.append(
+            "\nFor **{}**:\n\n{}".format(
+                rel_path, "\n".join("* {}".format(hint) for hint in hints)
+            )
+        )
+
+    print(*messages, sep="\n")
