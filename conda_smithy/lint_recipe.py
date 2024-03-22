@@ -1069,15 +1069,22 @@ def jinja_lines(lines):
 
 
 def _format_validation_msg(error: "jsonschema.ValidationError"):
+    if error.schema:
+        descriptionless_schema = {k:v for (k, v) in error.schema.items() if k != "description"}
+    else:
+        descriptionless_schema = {}
+    # We can get the help url from the first level on the JSON path ($.top_level_key.2nd_level_key)
+    top_level_key = error.json_path.split(".")[1].split("[")[0].replace("_", "-")
+    help_url = f"https://conda-forge.org/docs/maintainer/conda_forge_yml/#{top_level_key}"
     return cleandoc(
         f"""
-        In conda-forge.yml: `{error.json_path} = {error.instance}`.
+        In conda-forge.yml: [`{error.json_path}`]({help_url}) `=` `{error.instance}`.
 {indent(error.message, " " * 12 + "> ")}
             <details>
             <summary>Schema</summary>
 
             ```json
-{indent(json.dumps(error.schema, indent=2), " " * 12)}
+{indent(json.dumps(descriptionless_schema, indent=2), " " * 12)}
             ```
 
             </details>
@@ -1116,7 +1123,6 @@ if __name__ == "__main__":
     lints, hints = main(rel_path, False, True)
     messages = []
     if lints:
-        print(lints, file=sys.stderr)
         all_pass = False
         messages.append("\nFor **{}**:\n\n{}".format(
             rel_path,
