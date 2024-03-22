@@ -1070,11 +1070,15 @@ def jinja_lines(lines):
 
 def _format_validation_msg(error: "jsonschema.ValidationError"):
     if error.schema:
-        descriptionless_schema = {k:v for (k, v) in error.schema.items() if k != "description"}
+        descriptionless_schema = {
+            k: v for (k, v) in error.schema.items() if k != "description"
+        }
     else:
         descriptionless_schema = {}
     # We can get the help url from the first level on the JSON path ($.top_level_key.2nd_level_key)
-    top_level_key = error.json_path.split(".")[1].split("[")[0].replace("_", "-")
+    top_level_key = (
+        error.json_path.split(".")[1].split("[")[0].replace("_", "-")
+    )
     help_url = f"https://conda-forge.org/docs/maintainer/conda_forge_yml/#{top_level_key}"
     return cleandoc(
         f"""
@@ -1090,6 +1094,7 @@ def _format_validation_msg(error: "jsonschema.ValidationError"):
             </details>
         """
     )
+
 
 def main(recipe_dir, conda_forge=False, return_hints=False):
     recipe_dir = os.path.abspath(recipe_dir)
@@ -1124,12 +1129,16 @@ if __name__ == "__main__":
     messages = []
     if lints:
         all_pass = False
-        messages.append("\nFor **{}**:\n\n{}".format(
-            rel_path,
-            '\n'.join('* {}'.format(lint) for lint in lints)))
+        messages.append(
+            "\nFor **{}**:\n\n{}".format(
+                rel_path, "\n".join("* {}".format(lint) for lint in lints)
+            )
+        )
     if hints:
-        messages.append("\nFor **{}**:\n\n{}".format(
-            rel_path,
-            '\n'.join('* {}'.format(hint) for hint in hints)))
+        messages.append(
+            "\nFor **{}**:\n\n{}".format(
+                rel_path, "\n".join("* {}".format(hint) for hint in hints)
+            )
+        )
 
     print(*messages, sep="\n")
