@@ -9,7 +9,6 @@ import sys
 import pprint
 import textwrap
 import time
-import jsonschema
 import yaml
 import warnings
 from collections import Counter, OrderedDict, namedtuple
@@ -1999,11 +1998,15 @@ def _read_forge_config(forge_dir, forge_yml=None):
 
     # Validate loaded configuration against a JSON schema.
     validate_lints, validate_hints = validate_json_schema(file_config)
-    for err in validate_lints:
-        raise ExceptionGroup("lints", [*map(ValueError, validate_lints)])
-
-    for hint in validate_hints:
-        logger.info(hint.message)
+    for err in chain(validate_lints, validate_hints):
+        logger.warn(
+            "%s: %s = %s -> %s",
+            os.path.relpath(forge_yml, forge_dir),
+            err.json_path,
+            err.instance,
+            err.message,
+        )
+        logger.debug("Relevant schema:\n%s", json.dumps(err.schema, indent=2))
 
     # The config is just the union of the defaults, and the overridden
     # values.

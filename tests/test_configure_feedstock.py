@@ -1,11 +1,12 @@
+import copy
+import logging
 import os
-
-from conda_smithy import configure_feedstock
+import textwrap
 
 import pytest
-import copy
 import yaml
-import textwrap
+
+from conda_smithy import configure_feedstock
 
 
 def test_noarch_skips_appveyor(noarch_recipe, jinja_env):
@@ -762,7 +763,7 @@ def test_conda_forge_yaml_empty(config_yaml):
     assert load_forge_config()["recipe_dir"] == "recipe"
 
 
-def test_noarch_platforms_bad_yaml(config_yaml):
+def test_noarch_platforms_bad_yaml(config_yaml, caplog):
     load_forge_config = lambda: configure_feedstock._load_forge_config(  # noqa
         config_yaml,
         exclusive_config_file=os.path.join(
@@ -773,10 +774,10 @@ def test_noarch_platforms_bad_yaml(config_yaml):
     with open(os.path.join(config_yaml, "conda-forge.yml"), "a+") as fp:
         fp.write("noarch_platforms: [eniac, zx80]")
 
-    with pytest.raises(configure_feedstock.ExceptionGroup) as excinfo:
+    with caplog.at_level(logging.WARNING):
         load_forge_config()
 
-    assert "eniac" in repr(excinfo.value)
+    assert "eniac" in caplog.text
 
 
 def test_forge_yml_alt_path(config_yaml):
