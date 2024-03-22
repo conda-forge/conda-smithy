@@ -263,6 +263,20 @@ class GithubActionsConfig(BaseModel):
         default=True,
     )
 
+    free_disk_space: Optional[
+        Union[bool, Nullable, List[Literal["apt", "cache", "docker"]]]
+    ] = Field(
+        default=False,
+        description=cleandoc(
+            """
+            Free up disk space before running the Docker container for building on Linux.
+            The following components can be cleaned up: `apt`, `cache`, `docker`.
+            When set to `true`, only `apt` and `cache` are cleaned up.
+            Set it to the full list to clean up all components.
+            """
+        ),
+    )
+
     max_parallel: Optional[Union[int, Nullable]] = Field(
         description="The maximum number of jobs to run in parallel",
         default=None,
