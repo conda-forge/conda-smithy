@@ -242,6 +242,30 @@ c_stdlib_version:               # [unix]
 
 
 @pytest.fixture(scope="function")
+def stdlib_deployment_target_recipe(config_yaml, stdlib_recipe):
+    # append to existing stdlib_config.yaml from stdlib_recipe
+    with open(
+        os.path.join(config_yaml, "recipe", "stdlib_config.yaml"), "a"
+    ) as f:
+        f.write(
+            """\
+MACOSX_DEPLOYMENT_TARGET:       # [osx]
+  - 10.14                       # [osx and x86_64]
+  - 12.0                        # [osx and arm64]
+"""
+        )
+    return RecipeConfigPair(
+        str(config_yaml),
+        _load_forge_config(
+            config_yaml,
+            exclusive_config_file=os.path.join(
+                config_yaml, "recipe", "stdlib_config.yaml"
+            ),
+        ),
+    )
+
+
+@pytest.fixture(scope="function")
 def upload_on_branch_recipe(config_yaml, request):
     with open(os.path.join(config_yaml, "recipe", "meta.yaml"), "w") as fh:
         fh.write(

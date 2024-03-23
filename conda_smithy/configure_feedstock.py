@@ -520,6 +520,40 @@ def _collapse_subpackage_variants(
         "BUILD",
     }
 
+    # on osx, merge MACOSX_DEPLOYMENT_TARGET & c_stdlib_version to max of either; see #1884
+    if squished_used_variants["target_platform"][0].startswith("osx"):
+        # in global pinning, but use fallback to avoid having to set it in all tests
+        v_stdlib = squished_used_variants.get("c_stdlib_version", ["0.0"])
+        # also in global pinning, but prepare for eventual disappearance
+        macdt = squished_used_variants.get("MACOSX_DEPLOYMENT_TARGET", [None])
+        # the merge logic only deals with one version
+        if (len(v_stdlib) > 1 and macdt[0] is not None) or len(macdt) > 1:
+            raise ValueError(
+                "Not prepared to deal with multiple c_stdlib_version that do not match "
+                "MACOSX_DEPLOYMENT_TARGET! Please delete MACOSX_DEPLOYMENT_TARGET and "
+                "set only c_stdlib_version in conda_build_config.yaml!"
+            )
+        # now that we ruled out multiple values, extract the single value
+        v_stdlib = v_stdlib[0]
+        macdt = macdt[0]
+        if macdt is not None and v_stdlib != macdt:
+            logger.warn(
+                "Duplicate specification of macosx deployment target!\n"
+                "If your conda_build_config.yaml sets `MACOSX_DEPLOYMENT_TARGET`, "
+                "please change the name of that key to `c_stdlib_version`!"
+            )
+            # determine maximum version and use it to populate both
+            cond = VersionOrder(v_stdlib) > VersionOrder(macdt)
+            new_val = v_stdlib if cond else macdt
+            squished_used_variants["c_stdlib_version"] = [new_val]
+
+        # in any case, we set MACOSX_DEPLOYMENT_TARGET to match c_stdlib_version
+        # (if it is set), for ease of use in conda-forge-ci-setup
+        if "c_stdlib_version" in squished_used_variants:
+            squished_used_variants["MACOSX_DEPLOYMENT_TARGET"] = (
+                squished_used_variants["c_stdlib_version"]
+            )
+
     if not is_noarch:
         always_keep_keys.add("target_platform")
 
