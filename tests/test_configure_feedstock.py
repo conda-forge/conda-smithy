@@ -221,7 +221,6 @@ def test_stdlib_on_azure(stdlib_recipe, jinja_env):
     assert stdlib_recipe.config["azure"]["enabled"]
     matrix_dir = os.path.join(stdlib_recipe.recipe, ".ci_support")
     assert os.path.isdir(matrix_dir)
-    print(os.listdir(matrix_dir))
     # find stdlib-config in generated yaml files (plus version, on unix)
     with open(os.path.join(matrix_dir, "linux_64_.yaml")) as f:
         linux_lines = f.readlines()
