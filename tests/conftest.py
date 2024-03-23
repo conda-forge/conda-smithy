@@ -214,7 +214,9 @@ about:
     home: home
     """
         )
-    with open(os.path.join(config_yaml, "recipe", "stdlib_config.yaml"), "w") as f:
+    with open(
+        os.path.join(config_yaml, "recipe", "stdlib_config.yaml"), "w"
+    ) as f:
         f.write(
             """\
 c_stdlib:

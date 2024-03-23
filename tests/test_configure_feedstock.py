@@ -228,12 +228,18 @@ def test_stdlib_on_azure(stdlib_recipe, jinja_env):
         linux_content = "".join(linux_lines)
     # multiline pattern to ensure we don't match other stuff accidentally
     assert bool(re.match(r"(?s).*c_stdlib:\s*- sysroot", linux_content))
-    assert bool(re.match(r"(?s).*c_stdlib_version:\s*- ['\"]?2\.\d+", linux_content))
+    assert bool(
+        re.match(r"(?s).*c_stdlib_version:\s*- ['\"]?2\.\d+", linux_content)
+    )
     with open(os.path.join(matrix_dir, "osx_64_.yaml")) as f:
         osx_lines = f.readlines()
         osx_content = "".join(osx_lines)
-    assert bool(re.match(r"(?s).*c_stdlib:\s*- macosx_deployment_target", osx_content))
-    assert bool(re.match(r"(?s).*c_stdlib_version:\s*- ['\"]?1\d\.\d+", osx_content))
+    assert bool(
+        re.match(r"(?s).*c_stdlib:\s*- macosx_deployment_target", osx_content)
+    )
+    assert bool(
+        re.match(r"(?s).*c_stdlib_version:\s*- ['\"]?1\d\.\d+", osx_content)
+    )
     with open(os.path.join(matrix_dir, "win_64_.yaml")) as f:
         win_lines = f.readlines()
         win_content = "".join(win_lines)
