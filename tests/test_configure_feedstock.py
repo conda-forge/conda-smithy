@@ -1,6 +1,7 @@
 import copy
 import logging
 import os
+import re
 import textwrap
 
 import pytest
@@ -208,6 +209,41 @@ def test_py_matrix_on_azure(py_recipe, jinja_env):
     assert os.path.isdir(matrix_dir)
     # single matrix entry - readme is generated later in main function
     assert len(os.listdir(matrix_dir)) == 6
+
+
+def test_stdlib_on_azure(stdlib_recipe, jinja_env):
+    configure_feedstock.render_azure(
+        jinja_env=jinja_env,
+        forge_config=stdlib_recipe.config,
+        forge_dir=stdlib_recipe.recipe,
+    )
+    # this configuration should be run
+    assert stdlib_recipe.config["azure"]["enabled"]
+    matrix_dir = os.path.join(stdlib_recipe.recipe, ".ci_support")
+    assert os.path.isdir(matrix_dir)
+    # find stdlib-config in generated yaml files (plus version, on unix)
+    with open(os.path.join(matrix_dir, "linux_64_.yaml")) as f:
+        linux_lines = f.readlines()
+        linux_content = "".join(linux_lines)
+    # multiline pattern to ensure we don't match other stuff accidentally
+    assert bool(re.match(r"(?s).*c_stdlib:\s*- sysroot", linux_content))
+    assert bool(
+        re.match(r"(?s).*c_stdlib_version:\s*- ['\"]?2\.\d+", linux_content)
+    )
+    with open(os.path.join(matrix_dir, "osx_64_.yaml")) as f:
+        osx_lines = f.readlines()
+        osx_content = "".join(osx_lines)
+    assert bool(
+        re.match(r"(?s).*c_stdlib:\s*- macosx_deployment_target", osx_content)
+    )
+    assert bool(
+        re.match(r"(?s).*c_stdlib_version:\s*- ['\"]?1\d\.\d+", osx_content)
+    )
+    with open(os.path.join(matrix_dir, "win_64_.yaml")) as f:
+        win_lines = f.readlines()
+        win_content = "".join(win_lines)
+    assert bool(re.match(r"(?s).*c_stdlib:\s*- vs", win_content))
+    # no stdlib-version expected on windows
 
 
 def test_upload_on_branch_azure(upload_on_branch_recipe, jinja_env):

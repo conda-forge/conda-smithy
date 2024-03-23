@@ -197,6 +197,51 @@ about:
 
 
 @pytest.fixture(scope="function")
+def stdlib_recipe(config_yaml, request):
+    with open(os.path.join(config_yaml, "recipe", "meta.yaml"), "w") as fh:
+        fh.write(
+            """
+package:
+    name: stdlib-test
+    version: 1.0.0
+requirements:
+    build:
+        - {{ compiler("c") }}
+        - {{ stdlib("c") }}
+    host:
+        - zlib
+about:
+    home: home
+    """
+        )
+    with open(
+        os.path.join(config_yaml, "recipe", "stdlib_config.yaml"), "w"
+    ) as f:
+        f.write(
+            """\
+c_stdlib:
+  - sysroot                     # [linux]
+  - macosx_deployment_target    # [osx]
+  - vs                          # [win]
+c_stdlib_version:               # [unix]
+  - 2.12                        # [linux64]
+  - 2.17                        # [aarch64 or ppc64le]
+  - 10.9                        # [osx and x86_64]
+  - 11.0                        # [osx and arm64]
+"""
+        )
+    return RecipeConfigPair(
+        str(config_yaml),
+        _load_forge_config(
+            config_yaml,
+            exclusive_config_file=os.path.join(
+                config_yaml, "recipe", "stdlib_config.yaml"
+            ),
+        ),
+    )
+
+
+@pytest.fixture(scope="function")
 def upload_on_branch_recipe(config_yaml, request):
     with open(os.path.join(config_yaml, "recipe", "meta.yaml"), "w") as fh:
         fh.write(
