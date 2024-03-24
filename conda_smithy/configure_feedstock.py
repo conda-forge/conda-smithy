@@ -459,31 +459,29 @@ def _collapse_subpackage_variants(
         if not meta.noarch:
             is_noarch = False
 
-    for var_dict in all_variants:
+   for var_dict in all_variants:
         # on osx, merge MACOSX_DEPLOYMENT_TARGET & c_stdlib_version to max of either; see #1884
-        if var_dict.get("target_platform", "dummy").startswith("osx"):
-            # in global pinning, but use fallback to avoid having to set it in all tests
-            v_stdlib = var_dict.get("c_stdlib_version", "0.0")
-            # also in global pinning, but prepare for eventual disappearance
-            macdt = var_dict.get("MACOSX_DEPLOYMENT_TARGET", None)
-            if macdt is not None and v_stdlib != macdt:
-                # determine maximum version and use it to populate both
-                cond = VersionOrder(v_stdlib) > VersionOrder(macdt)
-                new_val = v_stdlib if cond else macdt
-                var_dict["c_stdlib_version"] = new_val
-                logger.warn(
-                    "Conflicting specification for minimum macOS deployment target!\n"
-                    "If your conda_build_config.yaml sets `MACOSX_DEPLOYMENT_TARGET`, "
-                    "please change the name of that key to `c_stdlib_version`!\n"
-                    f"Using {new_val}=max(c_stdlib_version, MACOSX_DEPLOYMENT_TARGET)."
-                )
+        if not var_dict.get("target_platform", "dummy").startswith("osx"):
+            continue
+        if "c_stdlib_version" not in var_dict:
+            continue
+        v_stdlib = var_dict["c_stdlib_version"]
+        macdt = var_dict.get("MACOSX_DEPLOYMENT_TARGET", v_stdlib)
+        if v_stdlib != macdt:
+            # determine maximum version and use it to populate both
+            if VersionOrder(v_stdlib) < VersionOrder(macdt):
+                v_stdlib = macdt
+            logger.warning(
+                "Conflicting specification for minimum macOS deployment target!\n"
+                "If your conda_build_config.yaml sets `MACOSX_DEPLOYMENT_TARGET`, "
+                "please change the name of that key to `c_stdlib_version`!\n"
+                f"Using {v_stdlib}=max(c_stdlib_version, MACOSX_DEPLOYMENT_TARGET)."
+            )
 
-            # in any case, we set MACOSX_DEPLOYMENT_TARGET to match c_stdlib_version
-            # (if it is set), for ease of use in conda-forge-ci-setup
-            if "c_stdlib_version" in var_dict:
-                var_dict["MACOSX_DEPLOYMENT_TARGET"] = var_dict[
-                    "c_stdlib_version"
-                ]
+        # we set MACOSX_DEPLOYMENT_TARGET to match c_stdlib_version, 
+        # for ease of use in conda-forge-ci-setup
+        var_dict["c_stdlib_version"] = v_stdlib
+        var_dict["MACOSX_DEPLOYMENT_TARGET"] = v_stdlib
 
     top_level_loop_vars = list_of_metas[0].get_used_loop_vars(
         force_top_level=True
