@@ -34,6 +34,7 @@ except ImportError:
 
 from conda.models.match_spec import MatchSpec
 from conda.models.version import VersionOrder
+from conda.exceptions import InvalidVersionSpec
 
 import conda_build.api
 import conda_build.render
@@ -459,7 +460,7 @@ def _collapse_subpackage_variants(
         if not meta.noarch:
             is_noarch = False
 
-   for var_dict in all_variants:
+    for var_dict in all_variants:
         # on osx, merge MACOSX_DEPLOYMENT_TARGET & c_stdlib_version to max of either; see #1884
         if not var_dict.get("target_platform", "dummy").startswith("osx"):
             continue
@@ -467,10 +468,17 @@ def _collapse_subpackage_variants(
             continue
         v_stdlib = var_dict["c_stdlib_version"]
         macdt = var_dict.get("MACOSX_DEPLOYMENT_TARGET", v_stdlib)
+        # error out if someone puts in a range of versions; we need a single version
+        try:
+            cond_update = VersionOrder(v_stdlib) < VersionOrder(macdt)
+        except InvalidVersionSpec:
+            raise ValueError(
+                "both and c_stdlib_version/MACOSX_DEPLOYMENT_TARGET need to be a "
+                "single version, not a version range!"
+            )
         if v_stdlib != macdt:
             # determine maximum version and use it to populate both
-            if VersionOrder(v_stdlib) < VersionOrder(macdt):
-                v_stdlib = macdt
+            v_stdlib = macdt if cond_update else v_stdlib
             logger.warning(
                 "Conflicting specification for minimum macOS deployment target!\n"
                 "If your conda_build_config.yaml sets `MACOSX_DEPLOYMENT_TARGET`, "
@@ -478,7 +486,7 @@ def _collapse_subpackage_variants(
                 f"Using {v_stdlib}=max(c_stdlib_version, MACOSX_DEPLOYMENT_TARGET)."
             )
 
-        # we set MACOSX_DEPLOYMENT_TARGET to match c_stdlib_version, 
+        # we set MACOSX_DEPLOYMENT_TARGET to match c_stdlib_version,
         # for ease of use in conda-forge-ci-setup
         var_dict["c_stdlib_version"] = v_stdlib
         var_dict["MACOSX_DEPLOYMENT_TARGET"] = v_stdlib
