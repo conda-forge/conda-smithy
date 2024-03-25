@@ -13,6 +13,7 @@ Authors are sorted by number of commits.
 * Amit Kumar
 * Marcel Bargull
 * shadow_walker
+* H. Vetinari
 * Michael Sarahan
 * Min RK
 * John Kirkham
@@ -21,7 +22,6 @@ Authors are sorted by number of commits.
 * Hadrien Mary
 * Ryan Volz
 * Johnny Willemsen
-* H. Vetinari
 * Chris Burr
 * Julian Rüth
 * Bastian Zimmermann
@@ -92,6 +92,7 @@ Authors are sorted by number of commits.
 * Matthew W. Thompson
 * conda-forge-admin
 * Klaus Zimmermann
+* Yannik Tausch
 * lorenz
 * Tom Augspurger
 * Ryan May
