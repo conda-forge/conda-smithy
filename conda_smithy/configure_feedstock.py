@@ -13,6 +13,7 @@ import yaml
 import warnings
 from collections import Counter, OrderedDict, namedtuple
 from copy import deepcopy
+from functools import lru_cache
 from itertools import chain, product
 from os import fspath
 from pathlib import Path, PurePath
@@ -84,6 +85,13 @@ if "CONDA_SMITHY_SERVICE_FEEDSTOCKS" in os.environ:
 CONDA_FORGE_PINNING_LIFETIME = int(
     os.environ.get("CONDA_FORGE_PINNING_LIFETIME", 15 * 60)
 )
+
+
+# use lru_cache to avoid repeating warnings endlessly;
+# this keeps track of 10 different messages and then warns again
+@lru_cache(10)
+def warn_once(msg: str):
+    logger.warning(msg)
 
 
 def package_key(config, used_loop_vars, subdir):
@@ -479,7 +487,7 @@ def _collapse_subpackage_variants(
         if v_stdlib != macdt:
             # determine maximum version and use it to populate both
             v_stdlib = macdt if cond_update else v_stdlib
-            logger.warning(
+            warn_once(
                 "Conflicting specification for minimum macOS deployment target!\n"
                 "If your conda_build_config.yaml sets `MACOSX_DEPLOYMENT_TARGET`, "
                 "please change the name of that key to `c_stdlib_version`!\n"
