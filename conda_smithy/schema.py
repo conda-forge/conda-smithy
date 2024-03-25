@@ -72,6 +72,7 @@ class BotConfigInspectionChoice(StrEnum):
     UPDATE_ALL = "update-all"
     UPDATE_SOURCE = "update-source"
     UPDATE_GRAYSKULL = "update-grayskull"
+    DISABLED = "disabled"
 
 
 class BotConfigVersionUpdatesSourcesChoice(StrEnum):
@@ -353,9 +354,11 @@ class BotConfig(BaseModel):
         description="Open PRs only if resulting environment is solvable.",
     )
 
-    inspection: Optional[Union[bool, BotConfigInspectionChoice]] = Field(
-        default="hint",
-        description="Method for generating hints or updating recipe",
+    inspection: Optional[Union[Literal[False], BotConfigInspectionChoice]] = (
+        Field(
+            default="hint",
+            description="Method for generating hints or updating recipe",
+        )
     )
 
     abi_migration_branches: Optional[List[str]] = Field(
@@ -612,7 +615,8 @@ class ConfigModel(BaseModel):
             # only open PRs if resulting environment is solvable, useful for tightly coupled packages
             check_solvable: true
 
-            # The bot.inspection key in the conda-forge.yml can have one of six possible values:
+            # The bot.inspection key in the conda-forge.yml can have one of seven possible values and controls
+            # the bots behaviour for automatic dependency updates:
             inspection: hint  # generate hints using source code (backwards compatible)
             inspection: hint-all  # generate hints using all methods
             inspection: hint-source  # generate hints using only source code
@@ -620,6 +624,7 @@ class ConfigModel(BaseModel):
             inspection: update-all  # update recipe using all methods
             inspection: update-source  # update recipe using only source code
             inspection: update-grayskull  # update recipe using only grayskull
+            inspection: disabled # don't update recipe, don't generate hints
 
             # any branches listed in this section will get bot migration PRs in addition
             # to the default branch
