@@ -226,24 +226,50 @@ def test_stdlib_on_azure(stdlib_recipe, jinja_env):
         linux_lines = f.readlines()
         linux_content = "".join(linux_lines)
     # multiline pattern to ensure we don't match other stuff accidentally
-    assert bool(re.match(r"(?s).*c_stdlib:\s*- sysroot", linux_content))
-    assert bool(
-        re.match(r"(?s).*c_stdlib_version:\s*- ['\"]?2\.\d+", linux_content)
-    )
+    assert re.match(r"(?s).*c_stdlib:\s*- sysroot", linux_content)
+    assert re.match(r"(?s).*c_stdlib_version:\s*- ['\"]?2\.\d+", linux_content)
     with open(os.path.join(matrix_dir, "osx_64_.yaml")) as f:
         osx_lines = f.readlines()
         osx_content = "".join(osx_lines)
-    assert bool(
-        re.match(r"(?s).*c_stdlib:\s*- macosx_deployment_target", osx_content)
+    assert re.match(
+        r"(?s).*c_stdlib:\s*- macosx_deployment_target", osx_content
     )
-    assert bool(
-        re.match(r"(?s).*c_stdlib_version:\s*- ['\"]?1\d\.\d+", osx_content)
+    assert re.match(r"(?s).*c_stdlib_version:\s*- ['\"]?10\.9", osx_content)
+    # ensure MACOSX_DEPLOYMENT_TARGET _also_ gets set to the same value
+    assert re.match(
+        r"(?s).*MACOSX_DEPLOYMENT_TARGET:\s*- ['\"]?10\.9", osx_content
     )
     with open(os.path.join(matrix_dir, "win_64_.yaml")) as f:
         win_lines = f.readlines()
         win_content = "".join(win_lines)
-    assert bool(re.match(r"(?s).*c_stdlib:\s*- vs", win_content))
+    assert re.match(r"(?s).*c_stdlib:\s*- vs", win_content)
     # no stdlib-version expected on windows
+
+
+def test_stdlib_deployment_target(
+    stdlib_deployment_target_recipe, jinja_env, caplog
+):
+    with caplog.at_level(logging.WARNING):
+        configure_feedstock.render_azure(
+            jinja_env=jinja_env,
+            forge_config=stdlib_deployment_target_recipe.config,
+            forge_dir=stdlib_deployment_target_recipe.recipe,
+        )
+    # this configuration should be run
+    assert stdlib_deployment_target_recipe.config["azure"]["enabled"]
+    matrix_dir = os.path.join(
+        stdlib_deployment_target_recipe.recipe, ".ci_support"
+    )
+    assert os.path.isdir(matrix_dir)
+    with open(os.path.join(matrix_dir, "osx_64_.yaml")) as f:
+        lines = f.readlines()
+        content = "".join(lines)
+    # ensure both MACOSX_DEPLOYMENT_TARGET and c_stdlib_version match
+    # the maximum of either, c.f. stdlib_deployment_target_recipe fixture
+    assert re.match(r"(?s).*c_stdlib_version:\s*- ['\"]?10\.14", content)
+    assert re.match(
+        r"(?s).*MACOSX_DEPLOYMENT_TARGET:\s*- ['\"]?10\.14", content
+    )
 
 
 def test_upload_on_branch_azure(upload_on_branch_recipe, jinja_env):

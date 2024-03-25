@@ -13,6 +13,7 @@ import yaml
 import warnings
 from collections import Counter, OrderedDict, namedtuple
 from copy import deepcopy
+from functools import lru_cache
 from itertools import chain, product
 from os import fspath
 from pathlib import Path, PurePath
@@ -34,6 +35,7 @@ except ImportError:
 
 from conda.models.match_spec import MatchSpec
 from conda.models.version import VersionOrder
+from conda.exceptions import InvalidVersionSpec
 
 import conda_build.api
 import conda_build.render
@@ -83,6 +85,13 @@ if "CONDA_SMITHY_SERVICE_FEEDSTOCKS" in os.environ:
 CONDA_FORGE_PINNING_LIFETIME = int(
     os.environ.get("CONDA_FORGE_PINNING_LIFETIME", 15 * 60)
 )
+
+
+# use lru_cache to avoid repeating warnings endlessly;
+# this keeps track of 10 different messages and then warns again
+@lru_cache(10)
+def warn_once(msg: str):
+    logger.warning(msg)
 
 
 def package_key(config, used_loop_vars, subdir):
@@ -421,6 +430,64 @@ def _get_used_key_values_by_input_order(
     return used_key_values
 
 
+def _merge_deployment_target(container_of_dicts, has_macdt):
+    """
+    For a collection of variant dictionaries, merge deployment target specs.
+
+    - The "old" way is MACOSX_DEPLOYMENT_TARGET, the new way is c_stdlib_version;
+      For now, take the maximum to populate both.
+    - In any case, populate MACOSX_DEPLOYMENT_TARGET, as that is the key picked
+      up by https://github.com/conda-forge/conda-forge-ci-setup-feedstock
+    """
+    result = []
+    for var_dict in container_of_dicts:
+        # cases where no updates are necessary
+        if not var_dict.get("target_platform", "dummy").startswith("osx"):
+            result.append(var_dict)
+            continue
+        if "c_stdlib_version" not in var_dict:
+            result.append(var_dict)
+            continue
+        # case where we need to do processing
+        v_stdlib = var_dict["c_stdlib_version"]
+        macdt = var_dict.get("MACOSX_DEPLOYMENT_TARGET", v_stdlib)
+        # error out if someone puts in a range of versions; we need a single version
+        try:
+            cond_update = VersionOrder(v_stdlib) < VersionOrder(macdt)
+        except InvalidVersionSpec:
+            raise ValueError(
+                "both and c_stdlib_version/MACOSX_DEPLOYMENT_TARGET need to be a "
+                "single version, not a version range!"
+            )
+        if v_stdlib != macdt:
+            # determine maximum version and use it to populate both
+            v_stdlib = macdt if cond_update else v_stdlib
+            msg = (
+                "Conflicting specification for minimum macOS deployment target!\n"
+                "If your conda_build_config.yaml sets `MACOSX_DEPLOYMENT_TARGET`, "
+                "please change the name of that key to `c_stdlib_version`!\n"
+                f"Using {v_stdlib}=max(c_stdlib_version, MACOSX_DEPLOYMENT_TARGET)."
+            )
+            # we don't want to warn for recipes that do not use MACOSX_DEPLOYMENT_TARGET
+            # in the local CBC, but only inherit it from the global pinning
+            if has_macdt:
+                warn_once(msg)
+
+        # we set MACOSX_DEPLOYMENT_TARGET to match c_stdlib_version,
+        # for ease of use in conda-forge-ci-setup;
+        # use new dictionary to avoid mutating existing var_dict in place
+        new_dict = conda_build.utils.HashableDict(
+            {
+                **var_dict,
+                "c_stdlib_version": v_stdlib,
+                "MACOSX_DEPLOYMENT_TARGET": v_stdlib,
+            }
+        )
+        result.append(new_dict)
+    # ensure we keep type of wrapper container (set stays set, etc.)
+    return type(container_of_dicts)(result)
+
+
 def _collapse_subpackage_variants(
     list_of_metas, root_path, platform, arch, forge_config
 ):
@@ -459,6 +526,19 @@ def _collapse_subpackage_variants(
         if not meta.noarch:
             is_noarch = False
 
+    # determine if MACOSX_DEPLOYMENT_TARGET appears in recipe-local CBC;
+    # all metas in list_of_metas come from same recipe, so path is identical
+    cbc_path = os.path.join(list_of_metas[0].path, "conda_build_config.yaml")
+    has_macdt = False
+    if os.path.exists(cbc_path):
+        with open(cbc_path, "r") as f:
+            lines = f.readlines()
+        if any(re.match(r"^\s*MACOSX_DEPLOYMENT_TARGET:", x) for x in lines):
+            has_macdt = True
+
+    # on osx, merge MACOSX_DEPLOYMENT_TARGET & c_stdlib_version to max of either; see #1884
+    all_variants = _merge_deployment_target(all_variants, has_macdt)
+
     top_level_loop_vars = list_of_metas[0].get_used_loop_vars(
         force_top_level=True
     )
@@ -473,9 +553,10 @@ def _collapse_subpackage_variants(
     # this is the initial collection of all variants before we discard any.  "Squishing"
     #     them is necessary because the input form is already broken out into one matrix
     #     configuration per item, and we want a single dict, with each key representing many values
-    squished_input_variants = (
-        conda_build.variants.list_of_dicts_to_dict_of_lists(
-            list_of_metas[0].config.input_variants
+    squished_input_variants = conda_build.variants.list_of_dicts_to_dict_of_lists(
+        # ensure we update the input_variants in the same way as all_variants
+        _merge_deployment_target(
+            list_of_metas[0].config.input_variants, has_macdt
         )
     )
     squished_used_variants = (
