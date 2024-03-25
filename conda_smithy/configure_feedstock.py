@@ -468,6 +468,16 @@ def _collapse_subpackage_variants(
         if not meta.noarch:
             is_noarch = False
 
+    # determine if MACOSX_DEPLOYMENT_TARGET appears in recipe-local CBC;
+    # all metas in list_of_metas come from same recipe, so path is identical
+    cbc_path = os.path.join(list_of_metas[0].path, "conda_build_config.yaml")
+    has_macdt = False
+    if os.path.exists(cbc_path):
+        with open(cbc_path, "r") as f:
+            lines = f.readlines()
+        if any(re.match(r"^\s*MACOSX_DEPLOYMENT_TARGET:", x) for x in lines):
+            has_macdt = True
+
     for var_dict in all_variants:
         # on osx, merge MACOSX_DEPLOYMENT_TARGET & c_stdlib_version to max of either; see #1884
         if not var_dict.get("target_platform", "dummy").startswith("osx"):
@@ -487,12 +497,16 @@ def _collapse_subpackage_variants(
         if v_stdlib != macdt:
             # determine maximum version and use it to populate both
             v_stdlib = macdt if cond_update else v_stdlib
-            warn_once(
+            msg = (
                 "Conflicting specification for minimum macOS deployment target!\n"
                 "If your conda_build_config.yaml sets `MACOSX_DEPLOYMENT_TARGET`, "
                 "please change the name of that key to `c_stdlib_version`!\n"
                 f"Using {v_stdlib}=max(c_stdlib_version, MACOSX_DEPLOYMENT_TARGET)."
             )
+            # we don't want to warn for recipes that do not use MACOSX_DEPLOYMENT_TARGET
+            # in the local CBC, but only inherit it from the global pinning
+            if has_macdt:
+                warn_once(msg)
 
         # we set MACOSX_DEPLOYMENT_TARGET to match c_stdlib_version,
         # for ease of use in conda-forge-ci-setup
