@@ -4,6 +4,31 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.34.0
+====================
+
+**Added:**
+
+* ``disabled`` is now a supported option for ``bot.inspection`` in the ``conda-forge.yml`` file (previously: ``false``)
+* Add ``github_actions.free_disk_space`` to schema ( #1882 )
+
+**Changed:**
+
+* Do not raise on ``conda-forge.yml`` validation errors during rerender. A warning will be printed instead. (#1879 via #1885)
+* Adjust how the linter processes ``conda-forge.yml`` validation issues for prettier Markdown rendering. (#1860 via #1886)
+* Ensure new ``{{ stdlib("c") }}`` correctly populates CI config. (#1840 via #1888)
+* Ensure we populate MACOSX_DEPLOYMENT_TARGET for use in conda-forge-ci-setup also when using `c_stdlib_version` (#1884 via #1889)
+* Update ``github_actions.free_disk_space`` to match Azure's ( #1882 )
+
+**Authors:**
+
+* Jaime Rodríguez-Guerra
+* H. Vetinari
+* John Kirkham
+* Yannik Tausch
+
+
+
 v3.33.0
 ====================
 
