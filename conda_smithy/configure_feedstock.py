@@ -474,10 +474,16 @@ def _merge_deployment_target(container_of_dicts, has_macdt):
                 warn_once(msg)
 
         # we set MACOSX_DEPLOYMENT_TARGET to match c_stdlib_version,
-        # for ease of use in conda-forge-ci-setup
-        var_dict["c_stdlib_version"] = v_stdlib
-        var_dict["MACOSX_DEPLOYMENT_TARGET"] = v_stdlib
-        result.append(var_dict)
+        # for ease of use in conda-forge-ci-setup;
+        # use new dictionary to avoid mutating existing var_dict in place
+        new_dict = conda_build.utils.HashableDict(
+            {
+                **var_dict,
+                "c_stdlib_version": v_stdlib,
+                "MACOSX_DEPLOYMENT_TARGET": v_stdlib,
+            }
+        )
+        result.append(new_dict)
     # ensure we keep type of wrapper container (set stays set, etc.)
     return type(container_of_dicts)(result)
 
