@@ -285,9 +285,6 @@
         "inspection": {
           "anyOf": [
             {
-              "const": false
-            },
-            {
               "$ref": "#/$defs/BotConfigInspectionChoice"
             },
             {
@@ -295,8 +292,7 @@
             }
           ],
           "default": "hint",
-          "description": "Method for generating hints or updating recipe",
-          "title": "Inspection"
+          "description": "Method for generating hints or updating recipe"
         },
         "abi_migration_branches": {
           "anyOf": [
