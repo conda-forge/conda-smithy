@@ -354,11 +354,9 @@ class BotConfig(BaseModel):
         description="Open PRs only if resulting environment is solvable.",
     )
 
-    inspection: Optional[Union[Literal[False], BotConfigInspectionChoice]] = (
-        Field(
-            default="hint",
-            description="Method for generating hints or updating recipe",
-        )
+    inspection: Optional[BotConfigInspectionChoice] = Field(
+        default="hint",
+        description="Method for generating hints or updating recipe",
     )
 
     abi_migration_branches: Optional[List[str]] = Field(
