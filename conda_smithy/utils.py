@@ -5,7 +5,6 @@ import jinja2
 import datetime
 import time
 import os
-import sys
 from pathlib import Path
 from collections import defaultdict
 from contextlib import contextmanager
@@ -61,7 +60,7 @@ def tmp_directory():
 
 
 class NullUndefined(jinja2.Undefined):
-    def __unicode__(self):
+    def __str__(self):
         return self._undefined_name
 
     def __getattr__(self, name):
@@ -94,10 +93,14 @@ def render_meta_yaml(text):
     env.globals.update(
         dict(
             compiler=lambda x: x + "_compiler_stub",
+            stdlib=lambda x: x + "_stdlib_stub",
             pin_subpackage=stub_subpackage_pin,
             pin_compatible=stub_compatible_pin,
             cdt=lambda *args, **kwargs: "cdt_stub",
             load_file_regex=lambda *args, **kwargs: defaultdict(lambda: ""),
+            load_file_data=lambda *args, **kwargs: defaultdict(lambda: ""),
+            load_setup_py_data=lambda *args, **kwargs: defaultdict(lambda: ""),
+            load_str_data=lambda *args, **kwargs: defaultdict(lambda: ""),
             datetime=datetime,
             time=time,
             target_platform="linux-64",

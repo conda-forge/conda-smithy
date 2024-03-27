@@ -4,7 +4,7 @@
 
 **Changed:**
 
-* Add option to cleanup GHA images - #1754
+* <news item>
 
 **Deprecated:**
 
@@ -12,7 +12,7 @@
 
 **Removed:**
 
-* <news item>
+* ``false`` is no longer a valid value for ``bot.inspection`` in the ``conda-forge.yml`` file. Use ``disabled`` instead.
 
 **Fixed:**
 

@@ -6,23 +6,32 @@ str_type = str
 
 import copy
 import fnmatch
-from glob import glob
 import io
 import itertools
+import json
 import os
 import re
 import requests
 import shutil
 import subprocess
 import sys
+from glob import glob
+from inspect import cleandoc
+from textwrap import indent
 
 import github
 
+if sys.version_info[:2] < (3, 11):
+    import tomli as tomllib
+else:
+    import tomllib
+
+from conda.models.version import VersionOrder
 from conda_build.metadata import (
     ensure_valid_license_family,
     FIELDS as cbfields,
 )
-import conda_build.conda_interface
+from conda_smithy.validate_schema import validate_json_schema
 
 from .utils import render_meta_yaml, get_yaml
 
@@ -31,10 +40,10 @@ FIELDS = copy.deepcopy(cbfields)
 
 # Just in case 'extra' moves into conda_build
 if "extra" not in FIELDS.keys():
-    FIELDS["extra"] = set()
+    FIELDS["extra"] = {}
 
-FIELDS["extra"].add("recipe-maintainers")
-FIELDS["extra"].add("feedstock-name")
+FIELDS["extra"]["recipe-maintainers"] = ()
+FIELDS["extra"]["feedstock-name"] = ""
 
 EXPECTED_SECTION_ORDER = [
     "package",
@@ -120,7 +129,50 @@ def lint_about_contents(about_section, lints):
             )
 
 
-def lintify(meta, recipe_dir=None, conda_forge=False):
+def find_local_config_file(recipe_dir, filename):
+    # support
+    # 1. feedstocks
+    # 2. staged-recipes with custom conda-forge.yaml in recipe
+    # 3. staged-recipes
+    found_filesname = (
+        glob(os.path.join(recipe_dir, filename))
+        or glob(
+            os.path.join(recipe_dir, "..", filename),
+        )
+        or glob(
+            os.path.join(recipe_dir, "..", "..", filename),
+        )
+    )
+
+    return found_filesname[0] if found_filesname else None
+
+
+def lintify_forge_yaml(recipe_dir=None) -> (list, list):
+    if recipe_dir:
+        forge_yaml_filename = (
+            glob(os.path.join(recipe_dir, "..", "conda-forge.yml"))
+            or glob(
+                os.path.join(recipe_dir, "conda-forge.yml"),
+            )
+            or glob(
+                os.path.join(recipe_dir, "..", "..", "conda-forge.yml"),
+            )
+        )
+        if forge_yaml_filename:
+            with open(forge_yaml_filename[0], "r") as fh:
+                forge_yaml = get_yaml().load(fh)
+        else:
+            forge_yaml = {}
+    else:
+        forge_yaml = {}
+
+    # This is where we validate against the jsonschema and execute our custom validators.
+    return validate_json_schema(forge_yaml)
+
+
+def lintify_meta_yaml(
+    meta, recipe_dir=None, conda_forge=False
+) -> (list, list):
     lints = []
     hints = []
     major_sections = list(meta.keys())
@@ -385,21 +437,27 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
             )
 
     if recipe_dir:
-        forge_yaml_filename = (
-            glob(os.path.join(recipe_dir, "..", "conda-forge.yml"))
-            or glob(
-                os.path.join(recipe_dir, "conda-forge.yml"),
-            )
-            or glob(
-                os.path.join(recipe_dir, "..", "..", "conda-forge.yml"),
-            )
+        conda_build_config_filename = find_local_config_file(
+            recipe_dir, "conda_build_config.yaml"
         )
+
+        if conda_build_config_filename:
+            with open(conda_build_config_filename, "r") as fh:
+                conda_build_config_keys = set(get_yaml().load(fh).keys())
+        else:
+            conda_build_config_keys = set()
+
+        forge_yaml_filename = find_local_config_file(
+            recipe_dir, "conda-forge.yml"
+        )
+
         if forge_yaml_filename:
-            with open(forge_yaml_filename[0], "r") as fh:
+            with open(forge_yaml_filename, "r") as fh:
                 forge_yaml = get_yaml().load(fh)
         else:
             forge_yaml = {}
     else:
+        conda_build_config_keys = set()
         forge_yaml = {}
 
     # 18: noarch doesn't work with selectors for runtime dependencies
@@ -425,7 +483,9 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
                         in_runreqs = False
                         continue
                     if is_selector_line(
-                        line, allow_platforms=noarch_platforms
+                        line,
+                        allow_platforms=noarch_platforms,
+                        allow_keys=conda_build_config_keys,
                     ):
                         lints.append(
                             "`noarch` packages can't have selectors. If "
@@ -438,7 +498,7 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
     if package_section.get("version") is not None:
         ver = str(package_section.get("version"))
         try:
-            conda_build.conda_interface.VersionOrder(ver)
+            VersionOrder(ver)
         except:
             lints.append(
                 "Package version {} doesn't match conda spec".format(ver)
@@ -683,21 +743,9 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
     shell_scripts = []
     if recipe_dir:
         shell_scripts = glob(os.path.join(recipe_dir, "*.sh"))
-        # support
-        # 1. feedstocks
-        # 2. staged-recipes with custom conda-forge.yaml in recipe
-        # 3. staged-recipes
-        forge_yaml = (
-            glob(os.path.join(recipe_dir, "..", "conda-forge.yml"))
-            or glob(
-                os.path.join(recipe_dir, "conda-forge.yml"),
-            )
-            or glob(
-                os.path.join(recipe_dir, "..", "..", "conda-forge.yml"),
-            )
-        )
+        forge_yaml = find_local_config_file(recipe_dir, "conda-forge.yml")
         if shell_scripts and forge_yaml:
-            with open(forge_yaml[0], "r") as fh:
+            with open(forge_yaml, "r") as fh:
                 code = get_yaml().load(fh)
                 shellcheck_enabled = code.get("shellcheck", {}).get(
                     "enabled", shellcheck_enabled
@@ -802,11 +850,16 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
 
 def run_conda_forge_specific(meta, recipe_dir, lints, hints):
     gh = github.Github(os.environ["GH_TOKEN"])
+
+    # Retrieve sections from meta
     package_section = get_section(meta, "package", lints)
     extra_section = get_section(meta, "extra", lints)
     sources_section = get_section(meta, "source", lints)
     requirements_section = get_section(meta, "requirements", lints)
     outputs_section = get_section(meta, "outputs", lints)
+
+    # Fetch list of recipe maintainers
+    maintainers = extra_section.get("recipe-maintainers", [])
 
     recipe_dirname = os.path.basename(recipe_dir) if recipe_dir else "recipe"
     recipe_name = package_section.get("name", "").strip()
@@ -877,7 +930,6 @@ def run_conda_forge_specific(meta, recipe_dir, lints, hints):
                         )
 
     # 2: Check that the recipe maintainers exists:
-    maintainers = extra_section.get("recipe-maintainers", [])
     for maintainer in maintainers:
         if "/" in maintainer:
             # It's a team. Checking for existence is expensive. Skip for now
@@ -898,7 +950,6 @@ def run_conda_forge_specific(meta, recipe_dir, lints, hints):
 
     # 4: Do not delete example recipe
     if is_staged_recipes and recipe_dir is not None:
-
         example_meta_fname = os.path.abspath(
             os.path.join(recipe_dir, "..", "example", "meta.yaml")
         )
@@ -926,37 +977,53 @@ def run_conda_forge_specific(meta, recipe_dir, lints, hints):
         else:
             run_reqs += _req
 
-    specific_hints = {
-        "matplotlib": (
-            "Recipes should usually depend on `matplotlib-base` as opposed to "
-            "`matplotlib` so that runtime environments do not require large "
-            "packages like `qt`."
-        ),
-        "jpeg": (
-            "Recipes should usually depend on `libjpeg-turbo` as opposed to "
-            "`jpeg` for improved performance. For more information please see"
-            "https://github.com/conda-forge/conda-forge.github.io/issues/673"
-        ),
-        "pytorch-cpu": (
-            "Please depend on `pytorch` directly, in order to avoid forcing "
-            "CUDA users to downgrade to the CPU version for no reason."
-        ),
-        "pytorch-gpu": (
-            "Please depend on `pytorch` directly. If your package definitely "
-            "requires the CUDA version, please depend on `pytorch =*=cuda*`."
-        ),
-        "abseil-cpp": "The `abseil-cpp` output has been superseded by `libabseil`",
-        "grpc-cpp": "The `grpc-cpp` output has been superseded by `libgrpc`",
-        "build": "The pypa `build` package has been renamed to `python-build`",
-    }
+    hints_toml_url = "https://raw.githubusercontent.com/conda-forge/conda-forge-pinning-feedstock/main/recipe/linter_hints/hints.toml"
+    hints_toml_req = requests.get(hints_toml_url)
+    if hints_toml_req.status_code != 200:
+        # too bad, but not important enough to throw an error;
+        # linter will rerun on the next commit anyway
+        return
+    hints_toml_str = hints_toml_req.content.decode("utf-8")
+    specific_hints = tomllib.loads(hints_toml_str)["hints"]
 
     for rq in build_reqs + host_reqs + run_reqs:
         dep = rq.split(" ")[0].strip()
         if dep in specific_hints and specific_hints[dep] not in hints:
             hints.append(specific_hints[dep])
 
+    # 6: Check if all listed maintainers have commented:
+    pr_number = os.environ.get("STAGED_RECIPES_PR_NUMBER")
 
-def is_selector_line(line, allow_platforms=False):
+    if is_staged_recipes and maintainers and pr_number:
+        # Get PR details using GitHub API
+        current_pr = gh.get_repo("conda-forge/staged-recipes").get_pull(
+            int(pr_number)
+        )
+
+        # Get PR author, issue comments, and review comments
+        pr_author = current_pr.user.login
+        issue_comments = current_pr.get_issue_comments()
+        review_comments = current_pr.get_reviews()
+
+        # Combine commenters from both issue comments and review comments
+        commenters = {comment.user.login for comment in issue_comments}
+        commenters.update({review.user.login for review in review_comments})
+
+        # Check if all maintainers have either commented or are the PR author
+        non_participating_maintainers = set()
+        for maintainer in maintainers:
+            if maintainer not in commenters and maintainer != pr_author:
+                non_participating_maintainers.add(maintainer)
+
+        # Add a lint message if there are any non-participating maintainers
+        if non_participating_maintainers:
+            lints.append(
+                f"The following maintainers have not yet confirmed that they are willing to be listed here: "
+                f"{', '.join(non_participating_maintainers)}. Please ask them to comment on this PR if they are."
+            )
+
+
+def is_selector_line(line, allow_platforms=False, allow_keys=set()):
     # Using the same pattern defined in conda-build (metadata.py),
     # we identify selectors.
     line = line.rstrip()
@@ -965,7 +1032,16 @@ def is_selector_line(line, allow_platforms=False):
         return False
     m = sel_pat.match(line)
     if m:
-        if allow_platforms and m.group(3) in ["win", "linux", "osx", "unix"]:
+        nouns = {
+            w for w in m.group(3).split() if w not in ("not", "and", "or")
+        }
+        allowed_nouns = (
+            {"win", "linux", "osx", "unix"} if allow_platforms else set()
+        ) | allow_keys
+
+        if nouns.issubset(allowed_nouns):
+            # the selector only contains (a boolean chain of) platform selectors
+            # and/or keys from the conda_build_config.yaml
             return False
         else:
             return True
@@ -992,6 +1068,43 @@ def jinja_lines(lines):
             yield line, i
 
 
+def _format_validation_msg(error: "jsonschema.ValidationError"):
+    """Use the data on the validation error to generate improved reporting.
+
+    If available, get the help URL from the first level of the JSON path:
+
+        $(.top_level_key.2nd_level_key)
+    """
+    help_url = "https://conda-forge.org/docs/maintainer/conda_forge_yml"
+    path = error.json_path.split(".")
+    descriptionless_schema = {}
+    subschema_text = ""
+
+    if error.schema:
+        descriptionless_schema = {
+            k: v for (k, v) in error.schema.items() if k != "description"
+        }
+
+    if len(path) > 1:
+        help_url += f"""/#{path[1].split("[")[0].replace("_", "-")}"""
+        subschema_text = json.dumps(descriptionless_schema, indent=2)
+
+    return cleandoc(
+        f"""
+        In conda-forge.yml: [`{error.json_path}`]({help_url}) `=` `{error.instance}`.
+{indent(error.message, " " * 12 + "> ")}
+            <details>
+            <summary>Schema</summary>
+
+            ```json
+{indent(subschema_text, " " * 12)}
+            ```
+
+            </details>
+        """
+    )
+
+
 def main(recipe_dir, conda_forge=False, return_hints=False):
     recipe_dir = os.path.abspath(recipe_dir)
     recipe_meta = os.path.join(recipe_dir, "meta.yaml")
@@ -1001,8 +1114,40 @@ def main(recipe_dir, conda_forge=False, return_hints=False):
     with io.open(recipe_meta, "rt") as fh:
         content = render_meta_yaml("".join(fh))
         meta = get_yaml().load(content)
-    results, hints = lintify(meta, recipe_dir, conda_forge)
+
+    results, hints = lintify_meta_yaml(meta, recipe_dir, conda_forge)
+    validation_errors, validation_hints = lintify_forge_yaml(
+        recipe_dir=recipe_dir
+    )
+
+    results.extend([_format_validation_msg(err) for err in validation_errors])
+    hints.extend([_format_validation_msg(hint) for hint in validation_hints])
+
     if return_hints:
         return results, hints
     else:
         return results
+
+
+if __name__ == "__main__":
+    # This block is supposed to help debug how the rendered version
+    # of the linter bot would look like in Github. Taken from
+    # https://github.com/conda-forge/conda-forge-webservices/blob/747f75659/conda_forge_webservices/linting.py#L138C1-L146C72
+    rel_path = sys.argv[1]
+    lints, hints = main(rel_path, False, True)
+    messages = []
+    if lints:
+        all_pass = False
+        messages.append(
+            "\nFor **{}**:\n\n{}".format(
+                rel_path, "\n".join("* {}".format(lint) for lint in lints)
+            )
+        )
+    if hints:
+        messages.append(
+            "\nFor **{}**:\n\n{}".format(
+                rel_path, "\n".join("* {}".format(hint) for hint in hints)
+            )
+        )
+
+    print(*messages, sep="\n")

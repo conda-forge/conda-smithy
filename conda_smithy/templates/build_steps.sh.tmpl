@@ -28,26 +28,32 @@ conda-build:
 pkgs_dirs:
   - ${FEEDSTOCK_ROOT}/build_artifacts/pkg_cache
   - /opt/conda/pkgs
+{%- if conda_solver %}
+solver: {{ conda_solver }}
+{%- endif %}
 
 CONDARC
-{% if build_with_mambabuild %}
-{%- set CONDA_INSTALL_CMD="mamba" %}
-{%- set BOA="boa " %}
-{%- set BUILD_CMD="mambabuild" %}
+{%- if conda_build_tool == "mambabuild" %}
+{%- set BUILD_CMD="conda-mambabuild" %}
+{%- elif conda_build_tool == "conda-build+conda-libmamba-solver" %}
+{%- set BUILD_CMD="CONDA_SOLVER=libmamba conda-build" %}
+{%- elif conda_build_tool == "conda-build+classic" %}
+{%- set BUILD_CMD="CONDA_SOLVER=classic conda-build" %}
 {%- else %}
-{%- set CONDA_INSTALL_CMD="mamba" %}
-{%- set BOA="" %}
-{%- set BUILD_CMD="build" %}
+{%- set BUILD_CMD="conda-build" %}
+{%- endif %}
+{%- if conda_solver == "libmamba" %}
+export CONDA_LIBMAMBA_SOLVER_NO_CHANNELS_FROM_INSTALLED=1
 {%- endif %}
 
-{{ CONDA_INSTALL_CMD }} install --update-specs --yes --quiet --channel conda-forge \
-    conda-build pip {{ BOA }}{{ " ".join(remote_ci_setup) }}
-{%- if build_with_mambabuild %}
-{{ CONDA_INSTALL_CMD }} update --update-specs --yes --quiet --channel conda-forge \
-    conda-build pip {{ BOA }}{{ " ".join(remote_ci_setup) }}
+{{ conda_install_tool }} install --update-specs --yes --quiet --channel conda-forge --strict-channel-priority \
+    pip {{ conda_install_tool_deps }} {{ conda_build_tool_deps }} {{ " ".join(remote_ci_setup) }}
+{%- if conda_install_tool == "mamba" and (conda_build_tool_deps != "" or conda_install_tool_deps != "") %}
+{{ conda_install_tool }} update --update-specs --yes --quiet --channel conda-forge --strict-channel-priority \
+    pip {{ conda_install_tool_deps }} {{ conda_build_tool_deps }} {{ " ".join(remote_ci_setup_update) }}
 {%- endif %}
 {% if local_ci_setup %}
-conda uninstall --quiet --yes --force {{ " ".join(remote_ci_setup) }}
+conda uninstall --quiet --yes --force {{ " ".join(remote_ci_setup)}}
 pip install --no-deps ${RECIPE_ROOT}/.
 {%- endif %}
 # set up the condarc
@@ -88,9 +94,10 @@ if [[ "${BUILD_WITH_CONDA_DEBUG:-0}" == 1 ]]; then
     # Drop into an interactive shell
     /bin/bash
 else
-    conda {{ BUILD_CMD }} "${RECIPE_ROOT}" -m "${CI_SUPPORT}/${CONFIG}.yaml" \
+    {{ BUILD_CMD }} "${RECIPE_ROOT}" -m "${CI_SUPPORT}/${CONFIG}.yaml" \
         --suppress-variables ${EXTRA_CB_OPTIONS:-} \
-        --clobber-file "${CI_SUPPORT}/clobber_${CONFIG}.yaml"
+        --clobber-file "${CI_SUPPORT}/clobber_${CONFIG}.yaml" \
+        --extra-meta flow_run_id="${flow_run_id:-}" remote_url="${remote_url:-}" sha="${sha:-}"
 
     {%- if conda_forge_output_validation %}
     ( startgroup "Validating outputs" ) 2> /dev/null

@@ -4,6 +4,477 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.34.0
+====================
+
+**Added:**
+
+* ``disabled`` is now a supported option for ``bot.inspection`` in the ``conda-forge.yml`` file (previously: ``false``)
+* Add ``github_actions.free_disk_space`` to schema ( #1882 )
+
+**Changed:**
+
+* Do not raise on ``conda-forge.yml`` validation errors during rerender. A warning will be printed instead. (#1879 via #1885)
+* Adjust how the linter processes ``conda-forge.yml`` validation issues for prettier Markdown rendering. (#1860 via #1886)
+* Ensure new ``{{ stdlib("c") }}`` correctly populates CI config. (#1840 via #1888)
+* Ensure we populate MACOSX_DEPLOYMENT_TARGET for use in conda-forge-ci-setup also when using `c_stdlib_version` (#1884 via #1889)
+* Update ``github_actions.free_disk_space`` to match Azure's ( #1882 )
+
+**Authors:**
+
+* Jaime Rodríguez-Guerra
+* H. Vetinari
+* John Kirkham
+* Yannik Tausch
+
+
+
+v3.33.0
+====================
+
+**Added:**
+
+* Support Apple silicon runners on GHA hosted (#1872, #1874).
+
+**Changed:**
+
+* Stop using conda_build.conda_interface. (#1868)
+* Allow any ``str`` in ``conda-forge.yml``'s ``skip_render`` key. (#1875 via #1878)
+
+**Fixed:**
+
+* Update ``BotConfig`` schema description with examples of all possible values. (#1861 via #1862)
+* Added missing ``azure: build_id`` into the json schema. (#1871)
+* Add more skip render choices (#1873).
+* Allow ``str`` (in addition to list of ``str``) in ``conda-forge.yml``'s ``noarch_platforms`` and ``remote_ci_setup``. (#1869 via #1877)
+
+**Authors:**
+
+* Isuru Fernando
+* Jaime Rodríguez-Guerra
+* Marcel Bargull
+* pre-commit-ci[bot]
+
+
+
+v3.32.0
+====================
+
+**Added:**
+
+* New JSON schema for ``conda-forge.yaml``. A Pydantic model is used to dynamically generate both a YAML document with the default values and the JSON schema itself. (#1756)
+* Included ``jsonschema`` and ``pydantic`` as dependencies into the ``environment.yml``. (#1756)
+
+**Changed:**
+
+* Included extra ``jsonschema`` validation for conda-forge.yaml, under ``configure_feedstock``. (#1756)
+* Moved legacy checks of old_file and providers into a new auxiliary ``_legacy_compatibility_checks`` function. (#1756)
+* Use Azure owner in URL for missing token error message. (#1854)
+* Invoke conda-{build,mambabuild} directly, not as conda subcommand. (#1859)
+
+**Authors:**
+
+* Isuru Fernando
+* Matthew R. Becker
+* Jaime Rodríguez-Guerra
+* Marcel Bargull
+* vinicius douglas cerutti
+* pre-commit-ci[bot]
+* John Blischak
+
+
+
+v3.31.1
+====================
+
+**Changed:**
+
+* Do not consider broken releases when checking if local version is up to date. (#1848 via #1849)
+* Added rerendering support for additional mpi variants ``msmpi``, ``mpi_serial``, and ``impi``.
+
+**Fixed:**
+
+* Fixed regression where some variant keys were mismatched during rerendering.
+
+**Authors:**
+
+* Matthew R. Becker
+* Jaime Rodríguez-Guerra
+
+
+
+v3.31.0
+====================
+
+**Added:**
+
+* Smithy now understand the new stdlib jinja function.
+* Complete conda-build load data functions stubs PR #1829
+* `noarch` packages can now include keys from their `conda_build_config.yaml` as selectors in their recipe.
+This allows for building multiple variants of a `noarch` packages, e.g., to use different dependencies depending on the Python version as runtime.
+
+**Changed:**
+
+* Default build tool changed from conda-mambabuild to conda-build again. (#1844)
+* Cleanup ``run_win_build.bat`` ( #1836 )
+
+**Fixed:**
+
+* Resolve warnings in Github Actions workflows by updating to ``actions/checkout@v4``. (#1839)
+* Fix randomly mismatched zipped variant keys. (#1459 and #1782 via #1815)
+
+**Authors:**
+
+* Jaime Rodríguez-Guerra
+* Marcel Bargull
+* John Kirkham
+* H. Vetinari
+* Bela Stoyan
+* pre-commit-ci[bot]
+* Matthias Diener
+* Antonio S. Cofiño
+
+
+
+v3.30.4
+====================
+
+**Changed:**
+
+* Fixed a typo in gitignore (#1822).
+
+**Fixed:**
+
+* Code refactoring for cirun. (#1812)
+
+**Authors:**
+
+* Isuru Fernando
+
+
+
+v3.30.3
+====================
+
+**Changed:**
+
+* Fixed gitignore so that maturin projects work.
+
+**Fixed:**
+
+* Fixed line endings of .ci_support/README on windows (#1824).
+* Fix local builds of feedstocks submodules ( #1826 ).
+
+**Authors:**
+
+* Isuru Fernando
+* Matthew R. Becker
+* Marcel Bargull
+* John Kirkham
+* pre-commit-ci[bot]
+* David Hirschfeld
+
+
+
+v3.30.2
+====================
+
+**Added:**
+
+*  <news item>
+
+**Changed:**
+
+* Updated `.gitignore` to exclude everything except recipe/ and conda-forge.yml (#1413)
+
+**Fixed:**
+
+* Fix linting with conda-build=3.28.2. (#1816)
+
+**Authors:**
+
+* Isuru Fernando
+* Marcel Bargull
+* pre-commit-ci[bot]
+* David Hirschfeld
+
+
+
+v3.30.1
+====================
+
+**Added:**
+
+* Support setting teams, roles and users_from_json in cirun (#1809).
+* Don't skip testing in win if there is an emulator.
+
+**Authors:**
+
+* Isuru Fernando
+
+
+
+v3.30.0
+====================
+
+**Changed:**
+
+* Set ``conda_build_tool: mambabuild`` as default again until
+  https://github.com/conda/conda-libmamba-solver/issues/393 is fixed (#1807).
+* Changes the xkcd comic in the README to 1319 ( #1802 ) ( #1803 )
+
+**Authors:**
+
+* Marcel Bargull
+* John Kirkham
+
+
+
+v3.29.0
+====================
+
+**Added:**
+
+* Added an --without-all option to ci-register/register-feedstock-token to disable all CI
+  and --with-<ci> would selectively enable the CI service (#1793, #1796).
+* Added a lint to check that staged-recipes maintainers have
+  commented on the PR that they are willing to maintain the recipe. (#1792)
+
+**Changed:**
+
+* Require pygithub>=2 as github actions secrets need that version. (#1797)
+* When upload_on_branch is set, GHA is triggered only for that branch (#1687).
+
+**Fixed:**
+
+* The team name for cirun was fixed. Previously the team name passed had
+  -feedstock in it and also did not support teams as maintainers.
+  For teams like conda-forge/r, if they are added to a feedstock after
+  Cirun is configured, the feedstock needs to be reconfigured (#1794).
+* Fixed getting cirun installation id for non conda-forge orgs (#1795).
+* Fix name of anaconda.org in README template, to prevent confusion with anaconda.cloud (#1798).
+* Skip running some tests locally when GH_TOKEN is not set (#1797).
+
+**Authors:**
+
+* Isuru Fernando
+* Jaime Rodríguez-Guerra
+* Bastian Zimmermann
+* pre-commit-ci[bot]
+* Jannis Leidel
+
+
+
+v3.28.0
+====================
+
+**Added:**
+
+* For self-hosted github actions runs, a user can add custom labels
+  by adding `github_actions_labels` yaml key in `recipe/conda_build_config.yaml`.
+  The value `hosted` can be used for Microsoft hosted free runners
+  and the value `self-hosted` can be used for the default self-hosted labels.
+
+* `github_actions: timeout_minutes` option added to change the timeout in minutes.
+  The default value is `360`.
+
+* `github_actions: triggers` is a list of triggers which defaults to
+  `push, pull_request` when not self-hosted and `push` when self-hosted.
+
+* Added a `--cirun` argument to `conda-smithy ci-register` command to register
+  `cirun` as a CI service. This makes `cirun` conda package a dependency of
+  conda-smithy.
+
+* Added support for `cirun` by generating a unique label when the self-hosted
+  label starts with `cirun`.
+
+* When a label is added that has the string with `gpu` or `GPU` for a self-hosted
+  runner, the docker build will pass the GPUs to the docker instance.
+* Add ``flow_run_id`` (CI provider specific), ``remote_url`` and ``sha`` as extra-meta data to packages.
+  Enables tracing back packages to a specific commit in a feedstock and to a specific CI run.
+  When packages are built using ``build-locally.py`` only ``sha`` will have a non-empty value.
+  Requires ``conda-build >=3.21.8``. (#1577)
+
+**Changed:**
+
+* `github_actions: cancel_in_progress` option added to cancel in progress runs.
+  The default value was changed to `true`.
+* Use the channels defined in `conda_build_config.yaml` (instead of those in `conda-forge.yml`) to render `README.md`. (#897 via #1752, #1785)
+*  Allow finer control over Azure disk cleaning ( #1783 )
+* The default build tool changed from conda-mambabuild to conda-build with
+  libmamba solver.
+
+**Authors:**
+
+* Isuru Fernando
+* Jaime Rodríguez-Guerra
+* Amit Kumar
+* John Kirkham
+* Daniel Bast
+* Daniel Ching
+* pre-commit-ci[bot]
+
+
+
+v3.27.1
+====================
+
+**Fixed:**
+
+* Crash when XDG_CACHE_DIR is defined
+
+**Authors:**
+
+* Min RK
+
+
+
+v3.27.0
+====================
+
+**Added:**
+
+* Cache the contents of ``conda-forge-pinning`` and only check every 15min for an updated version.
+  The re-check interval can be configured via the ``CONDA_FORGE_PINNING_LIFETIME`` environment variable.
+
+**Changed:**
+
+* Do not strip version constraints for ``mamba update``. (#1773 via #1774)
+* If one supplies ``--no-check-uptodate`` on the commandline, we will no longer check and print a warning if conda-smithy is outdated.
+
+**Removed:**
+
+* Removed the ``updatecb3`` command. It is advised to do this update manually if you still encounter a recipe using the old compiler ``toolchain``.
+
+**Authors:**
+
+* Jaime Rodríguez-Guerra
+* Uwe L. Korn
+
+
+
+v3.26.3
+====================
+
+**Changed:**
+
+* The package hints of the linter are now taken from a location that doesn't require new smithy releases to change.
+* Fix ``MatchSpec`` parsing when ``remote_ci_setup`` specs are quoted. (#1773 via #1775)
+
+**Authors:**
+
+* Jaime Rodríguez-Guerra
+* H. Vetinari
+
+
+
+v3.26.2
+====================
+
+**Fixed:**
+
+* Fixed additional_zip_keys, so that subsequent migrations don't break.
+
+**Authors:**
+
+* Bela Stoyan
+
+
+
+v3.26.1
+====================
+
+**Fixed:**
+
+* Set ``FEEDSTOCK_NAME`` correctly on Windows in Azure Pipelines. (#1770)
+* Always use ``conda`` to ``uninstall --force``. (#1771)
+
+**Authors:**
+
+* Jaime Rodríguez-Guerra
+
+
+
+v3.26.0
+====================
+
+**Added:**
+
+* ``conda_build_tool`` setting with four different options: ``conda-build``, ``mambabuild`` (default),
+  ``conda-build+conda-libmamba-solver`` and ``conda-build+classic``. - #1732
+* Add ``conda_install_tool`` and ``conda_solver`` configuration options to allow choosing between
+  ``mamba`` and ``conda`` (with ``classic`` or ``libmamba`` solvers) as the dependency
+  handling tools. (#1762, #1768)
+* Add ``additional_zip_keys`` configuration option for migrations (#1764)
+
+**Changed:**
+
+* Unified Windows build scripts to avoid duplication of template logic in Github Actions and Azure Pipelines. (#1761)
+* Use strict channel priority on Linux and macOS. (#1768)
+* Use ``python-build`` to create ``sdist`` #1760
+
+**Deprecated:**
+
+* ``build_with_mambabuild`` boolean option is deprecated. Use ``conda_build_tool: mambabuild`` instead. - #1732
+
+**Fixed:**
+
+* Ensure undefined Jinja variables are rendered as the variable name, restoring Python 2-like behaviour. (#1726 via #1727)
+* Use name-only specs in ``conda update`` and ``conda uninstall`` subcommands. (#1768)
+* Catch negative exit codes on Windows. (#1763)
+* Fixed bug in the display of grouping commands in the Travis CI logging utilities. (#1730)
+
+**Authors:**
+
+* Jaime Rodríguez-Guerra
+* Uwe L. Korn
+* John Kirkham
+* Peter Williams
+* Bela Stoyan
+* Klaus Zimmermann
+
+
+
+v3.25.1
+====================
+
+**Fixed:**
+
+* Ensure ``swapfile_size`` is not added to the Azure job settings #1759
+
+**Authors:**
+
+* John Kirkham
+
+
+
+v3.25.0
+====================
+
+**Added:**
+
+* Added ability for select feedstocks (pinnings, smithy, repodata patches) to use GHA in conda-forge.
+  Items can be added by setting the ``CONDA_SMITHY_SERVICE_FEEDSTOCKS`` environment variable to a
+  comma-separated list of additional feedstocks.
+
+**Changed:**
+
+* Add option to cleanup GHA images - #1754
+* Created option to create a swap file on the default linux image on Azure Pipelines
+
+**Fixed:**
+
+* Allow operators in noarch platform selectors
+
+**Authors:**
+
+* Matthew R. Becker
+* Jaime Rodríguez-Guerra
+* Mike Henry
+* John Kirkham
+
+
+
 v3.24.1
 ====================
 

@@ -96,10 +96,6 @@ out of by specifying `--without-anaconda-token`, as such execpted package upload
    ```
    github:
      user_or_org: YOUR_GITHUB_USER_OR_ORG
-   channels:
-     targets:
-     -
-       - YOUR_ANACONDA_CHANNEL
    ```
 
 6. **Re-render the feedstock:** ``conda smithy rerender --feedstock_directory ./foo-feedstock``
@@ -110,6 +106,15 @@ Running a build
 ---------------
 
 When everything is configured you can trigger a build with a push to the feedstock repo on github.
+
+Developing conda-smithy
+-----------------------
+
+To develop conda smithy, use your favortite conda-based environment manager and create an environment based on the `environment.yml`.
+
+```
+$ conda env create
+```
 
 Releasing conda-smithy
 ----------------------
@@ -129,9 +134,6 @@ $ rever 0.1.2
 Conda-smithy in a nutshell
 --------------------------
 
-#### xkcd 1629: Tools
+#### xkcd 1319: Automation
 
-[![xkcd 1629: Tools](https://imgs.xkcd.com/comics/tools.png)](https://xkcd.com/1629/)
-
-**Titletext**: *I make tools for managing job-hunting sites for people who make*
-*tools for managing job-hunting sites for people who make tools for ...*
+[![xkcd 1319: Automation](https://imgs.xkcd.com/comics/automation.png)](https://xkcd.com/1319/)
