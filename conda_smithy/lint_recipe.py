@@ -1075,7 +1075,7 @@ def _format_validation_msg(error: "jsonschema.ValidationError"):
 
         $(.top_level_key.2nd_level_key)
     """
-    help_url = f"https://conda-forge.org/docs/maintainer/conda_forge_yml"
+    help_url = "https://conda-forge.org/docs/maintainer/conda_forge_yml"
     path = error.json_path.split(".")
     descriptionless_schema = {}
     subschema_text = ""
