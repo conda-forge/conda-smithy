@@ -1069,17 +1069,26 @@ def jinja_lines(lines):
 
 
 def _format_validation_msg(error: "jsonschema.ValidationError"):
+    """Use the data on the validation error to generate improved reporting.
+
+    If available, get the help URL from the first level of the JSON path:
+
+        $(.top_level_key.2nd_level_key)
+    """
+    help_url = "https://conda-forge.org/docs/maintainer/conda_forge_yml"
+    path = error.json_path.split(".")
+    descriptionless_schema = {}
+    subschema_text = ""
+
     if error.schema:
         descriptionless_schema = {
             k: v for (k, v) in error.schema.items() if k != "description"
         }
-    else:
-        descriptionless_schema = {}
-    # We can get the help url from the first level on the JSON path ($.top_level_key.2nd_level_key)
-    top_level_key = (
-        error.json_path.split(".")[1].split("[")[0].replace("_", "-")
-    )
-    help_url = f"https://conda-forge.org/docs/maintainer/conda_forge_yml/#{top_level_key}"
+
+    if len(path) > 1:
+        help_url += f"""/#{path[1].split("[")[0].replace("_", "-")}"""
+        subschema_text = json.dumps(descriptionless_schema, indent=2)
+
     return cleandoc(
         f"""
         In conda-forge.yml: [`{error.json_path}`]({help_url}) `=` `{error.instance}`.
@@ -1088,7 +1097,7 @@ def _format_validation_msg(error: "jsonschema.ValidationError"):
             <summary>Schema</summary>
 
             ```json
-{indent(json.dumps(descriptionless_schema, indent=2), " " * 12)}
+{indent(subschema_text, " " * 12)}
             ```
 
             </details>
