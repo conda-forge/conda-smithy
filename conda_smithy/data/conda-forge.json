@@ -250,183 +250,13 @@
       "type": "object"
     },
     "BotConfig": {
-      "additionalProperties": false,
+      "allOf": [
+        {
+          "$ref": "https://gist.githubusercontent.com/isuruf/7fbc5a6d53e6a3f5450b90a12c1ace5a/raw/ddb6054c8683ac302a567bd8b42e792a8d4bda30/conda-forge-bot-config.json"
+        }
+      ],
       "description": "This dictates the behavior of the conda-forge auto-tick bot which issues\nautomatic version updates/migrations for feedstocks.",
-      "properties": {
-        "automerge": {
-          "anyOf": [
-            {
-              "type": "boolean"
-            },
-            {
-              "$ref": "#/$defs/BotConfigAutoMergeChoice"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": false,
-          "description": "Automatically merge PRs if possible",
-          "title": "Automerge"
-        },
-        "check_solvable": {
-          "anyOf": [
-            {
-              "type": "boolean"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": true,
-          "description": "Open PRs only if resulting environment is solvable.",
-          "title": "Check Solvable"
-        },
-        "inspection": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/BotConfigInspectionChoice"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": "hint",
-          "description": "Method for generating hints or updating recipe"
-        },
-        "abi_migration_branches": {
-          "anyOf": [
-            {
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": [],
-          "description": "List of branches for additional bot migration PRs. Make sure branch names are `str` by quoting the value.",
-          "title": "Abi Migration Branches"
-        },
-        "run_deps_from_wheel": {
-          "anyOf": [
-            {
-              "type": "boolean"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": false,
-          "description": "Update run dependencies from the pip wheel",
-          "title": "Run Deps From Wheel"
-        },
-        "version_updates": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/BotConfigVersionUpdates"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "description": "Bot config for version update PRs"
-        }
-      },
-      "title": "BotConfig",
-      "type": "object"
-    },
-    "BotConfigAutoMergeChoice": {
-      "enum": [
-        "version",
-        "migration"
-      ],
-      "title": "BotConfigAutoMergeChoice",
-      "type": "string"
-    },
-    "BotConfigInspectionChoice": {
-      "enum": [
-        "hint",
-        "hint-all",
-        "hint-source",
-        "hint-grayskull",
-        "update-all",
-        "update-source",
-        "update-grayskull",
-        "disabled"
-      ],
-      "title": "BotConfigInspectionChoice",
-      "type": "string"
-    },
-    "BotConfigVersionUpdates": {
-      "additionalProperties": false,
-      "description": "This dictates the behavior of the conda-forge auto-tick bot for version\nupdates",
-      "properties": {
-        "random_fraction_to_keep": {
-          "anyOf": [
-            {
-              "type": "number"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "description": "Fraction of versions to keep for frequently updated packages",
-          "title": "Random Fraction To Keep"
-        },
-        "exclude": {
-          "anyOf": [
-            {
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": [],
-          "description": "List of versions to exclude. Make sure branch names are `str` by quoting the value.",
-          "title": "Exclude"
-        },
-        "sources": {
-          "anyOf": [
-            {
-              "items": {
-                "$ref": "#/$defs/BotConfigVersionUpdatesSourcesChoice"
-              },
-              "type": "array"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "description": "List of sources to use for version updates",
-          "title": "Sources"
-        }
-      },
-      "title": "BotConfigVersionUpdates",
-      "type": "object"
-    },
-    "BotConfigVersionUpdatesSourcesChoice": {
-      "enum": [
-        "cran",
-        "github",
-        "incrementalpharawurl",
-        "librariesio",
-        "npm",
-        "nvidia",
-        "pypi",
-        "rawurl",
-        "rosdistro"
-      ],
-      "title": "BotConfigVersionUpdatesSourcesChoice",
-      "type": "string"
+      "title": "BotConfig"
     },
     "CIservices": {
       "enum": [
@@ -1677,7 +1507,6 @@
       "type": "object"
     }
   },
-  "additionalProperties": false,
   "description": "This model describes in detail the top-level fields in  `conda-forge.yml`.\nGeneral configuration options are described below within the `Fields`\nspecifications. Additional examples are provided as part of the object\ndescription. Values and options are subject to change, and will be\nflagged as Deprecated as appropriate.",
   "properties": {
     "conda_build": {

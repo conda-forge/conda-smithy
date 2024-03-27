@@ -30,16 +30,7 @@ azure:
   store_build_artifacts: false
   timeout_minutes: null
   upload_packages: true
-bot:
-  abi_migration_branches: []
-  automerge: false
-  check_solvable: true
-  inspection: hint
-  run_deps_from_wheel: false
-  version_updates:
-    exclude: []
-    random_fraction_to_keep: null
-    sources: null
+bot: {}
 build_platform:
   emscripten_wasm32: emscripten_wasm32
   freebsd_64: freebsd_64
