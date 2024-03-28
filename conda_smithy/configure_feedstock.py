@@ -322,12 +322,11 @@ def _get_used_key_values_by_input_order(
     # so we do the zipped keys first and then do the rest
     zipped_tuples = {}
     zipped_keys = set()
-    if "zip_keys" in squished_input_variants:
-        for keyset in squished_input_variants["zip_keys"]:
-            zipped_tuples[tuple(keyset)] = list(
-                zip(*[squished_input_variants[k] for k in keyset])
-            )
-            zipped_keys |= set(keyset)
+    for keyset in squished_input_variants["zip_keys"]:
+        zipped_tuples[tuple(keyset)] = list(
+            zip(*[squished_input_variants[k] for k in keyset])
+        )
+        zipped_keys |= set(keyset)
     logger.debug("zipped_keys {}".format(pprint.pformat(zipped_keys)))
     logger.debug("zipped_tuples {}".format(pprint.pformat(zipped_tuples)))
 
