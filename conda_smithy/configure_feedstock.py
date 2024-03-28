@@ -1649,21 +1649,6 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
         ],
     }
 
-    # if forge_config.get("conda_build_tool", "conda-build") == "rattler-build":
-    #     platform_templates["linux"] = [
-    #         ".scripts/run_docker_build_new_recipe.sh",
-    #         ".scripts/build_steps_new_recipe.sh",
-    #         ".azure-pipelines/azure-pipelines-new-recipe-linux.yml",
-    #     ]
-    #     # platform_templates["osx"] = [
-    #     #     ".azure-pipelines/azure-pipelines-new-recipe-osx.yml",
-    #     #     ".scripts/run_osx_build_new_recipe.sh",
-    #     # ]
-    #     platform_templates["win"] = [
-    #         ".azure-pipelines/azure-pipelines-new-recipe-win.yml",
-    #         ".scripts/run_win_build_new_recipe.bat",
-    #     ]
-
     if forge_config["azure"]["store_build_artifacts"]:
         platform_templates["linux"].append(
             ".scripts/create_conda_build_artifacts.sh"
