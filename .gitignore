@@ -23,3 +23,7 @@ nppBackup/
 .mypy_cache/
 
 conda_smithy/_version.py
+# pixi environments
+.pixi
+
+test-folder-*/

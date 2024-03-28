@@ -11,6 +11,7 @@ from contextlib import contextmanager
 
 import ruamel.yaml
 
+RATTLER_BUILD = "rattler-build"
 
 def get_feedstock_name_from_meta(meta):
     """Resolve the feedtstock name from the parsed meta.yaml."""
