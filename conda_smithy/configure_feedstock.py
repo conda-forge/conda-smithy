@@ -2278,40 +2278,6 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
         config["noarch_platforms"]
     )
 
-    for noarch_platform in sorted(config["noarch_platforms"]):
-        if noarch_platform not in target_platforms:
-            raise ValueError(
-                f"Unknown noarch platform {noarch_platform}. Expected one of: "
-                f"{target_platforms}"
-            )
-
-    if (
-        "build_with_mambabuild" in file_config
-        and "conda_build_tool" not in file_config
-    ):
-        warnings.warn(
-            "build_with_mambabuild is deprecated, use conda_build_tool instead",
-            DeprecationWarning,
-        )
-        config["conda_build_tool"] = (
-            "mambabuild" if config["build_with_mambabuild"] else "conda-build"
-        )
-    if file_config.get("conda_build_tool_deps"):
-        raise ValueError(
-            "Cannot set 'conda_build_tool_deps' directly. "
-            "Use 'conda_build_tool' instead."
-        )
-    valid_build_tools = (
-        "mambabuild",  # will run 'conda mambabuild', as provided by boa
-        "conda-build",  # will run vanilla conda-build, with system configured / default solver
-        "conda-build+conda-libmamba-solver",  # will run vanilla conda-build, with libmamba solver
-        "conda-build+classic",  # will run vanilla conda-build, with the classic solver
-        "rattler-build",  # will run 'rattler-build' which uses new recipe.yaml
-    )
-    assert config["conda_build_tool"] in valid_build_tools, (
-        f"Invalid conda_build_tool: {config['conda_build_tool']}. "
-        f"Valid values are: {valid_build_tools}."
-    )
     # NOTE: Currently assuming these dependencies are name-only (no version constraints)
     if config["conda_build_tool"] == "mambabuild":
         config["conda_build_tool_deps"] = "conda-build boa"
