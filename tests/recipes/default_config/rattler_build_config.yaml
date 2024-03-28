@@ -1,0 +1,6 @@
+ruby:       # [win]
+  - 2.7        # [win]
+  - 3.1        # [win]
+zip_keys:         # [win]
+  - python        # [win]
+  - ruby            # [win]

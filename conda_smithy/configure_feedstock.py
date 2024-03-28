@@ -32,6 +32,7 @@ import conda_build.variants
 import conda_build.conda_interface
 import conda_build.render
 from conda.models.match_spec import MatchSpec
+from conda_build.metadata import get_selectors
 
 from copy import deepcopy
 
@@ -50,8 +51,8 @@ from conda_smithy.utils import (
     get_feedstock_about_from_meta,
 )
 from . import __version__
-from .rattler_build import MetaData as RattlerMetaData
-from .rattler_build import render as rattler_render
+from .rattler_build.build import render as rattler_render
+from .rattler_build.loader import parse_recipe_config_file
 from .utils import RATTLER_BUILD
 
 conda_forge_content = os.path.abspath(os.path.dirname(__file__))
@@ -849,8 +850,6 @@ def _render_ci_provider(
         )
 
         # Get the combined variants from normal variant locations prior to running migrations
-        # TODO: rewrite conda-smithy/conda_build_config.yaml which is used for pinning
-        # it should not contains # selectors but new if then format.
         
         # here we combine conda_build from our recipe, and the one that was 
         # built on top calling conda_build.config.get_or_merge_config
@@ -865,30 +864,21 @@ def _render_ci_provider(
             os.path.join(forge_dir, forge_config["recipe_dir"]), config=config
         )   
 
-
         # here we should load our variants.yaml
-        # if present
-
+        # if it's present present
         if recipe_file == "recipe.yaml":
-            def parse_recipe_config_file(path):
-                with open(path) as f:
-                    contents = f.read()
-                content = yaml.load(contents, Loader=yaml.loader.BaseLoader) or {}
-                return content
-
+            # in reality get_selectors return just the namespace
+            # so we can reuse it for our new recipe
+            namespace = get_selectors(config)
             variants_path = os.path.join(forge_dir, forge_config["recipe_dir"], 'variants.yaml')
-            new_spec = parse_recipe_config_file(variants_path)
-            specs = {
-                'combined_spec': combined_variant_spec,
-                'variants.yaml': new_spec
-            }
-            combined_variant_spec = conda_build.variants.combine_specs(specs)
-        
+            if os.path.exists(variants_path):
+                new_spec = parse_recipe_config_file(variants_path, namespace)
+                specs = {
+                    'combined_spec': combined_variant_spec,
+                    'variants.yaml': new_spec
+                }
+                combined_variant_spec = conda_build.variants.combine_specs(specs)
 
-        # TODO: think on how to handle migrations
-        # In my opinion we can apply old migrations to new variants.yaml
-        # because at this point they are already parsed
-        # and we will be integrated in conda-forge infrastructure
         migrated_combined_variant_spec = migrate_combined_spec(
             combined_variant_spec,
             forge_dir,
@@ -944,8 +934,6 @@ def _render_ci_provider(
                 "channel_sources", [""]
             )[0].split(",")
 
-            #TODO: improve this
-            # this is hack to switch between new recipe and old recipe
             if recipe_file == "recipe.yaml":
                 metas = rattler_render(
                     os.path.join(forge_dir, forge_config["recipe_dir"]),
@@ -953,9 +941,6 @@ def _render_ci_provider(
                     arch=arch,
                     ignore_system_variants=True,
                     variants=migrated_combined_variant_spec,
-                    permit_undefined_jinja=True,
-                    finalize=False,
-                    bypass_env_check=True,
                     channel_urls=channel_sources,
                 )
             else:
@@ -971,7 +956,7 @@ def _render_ci_provider(
                     channel_urls=channel_sources,
                 )
         except Exception as e:
-            import pdb; pdb.set_trace()
+            raise e
         finally:
             if os.path.exists(_recipe_cbc + ".conda.smithy.bak"):
                 os.rename(_recipe_cbc + ".conda.smithy.bak", _recipe_cbc)
@@ -1030,7 +1015,6 @@ def _render_ci_provider(
                 configs.extend(
                     dumped_config
                 )
-                import pdb; pdb.set_trace()
                 plat_arch = f"{platform}_{arch}"
                 forge_config[plat_arch]["enabled"] = True
                 fancy_platforms.append(fancy_name.get(plat_arch, plat_arch))
@@ -1666,20 +1650,20 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
         ],
     }
 
-    if forge_config.get("recipe_type", "meta") == "recipe":
-        platform_templates["linux"] = [
-            ".scripts/run_docker_build_new_recipe.sh",
-            ".scripts/build_steps_new_recipe.sh",
-            ".azure-pipelines/azure-pipelines-new-recipe-linux.yml",
-        ]
-        platform_templates["osx"] = [
-            ".azure-pipelines/azure-pipelines-new-recipe-osx.yml",
-            ".scripts/run_osx_build_new_recipe.sh",
-        ]
-        platform_templates["win"] = [
-            ".azure-pipelines/azure-pipelines-new-recipe-win.yml",
-            ".scripts/run_win_build_new_recipe.bat",
-        ]
+    # if forge_config.get("conda_build_tool", "conda-build") == "rattler-build":
+    #     platform_templates["linux"] = [
+    #         ".scripts/run_docker_build_new_recipe.sh",
+    #         ".scripts/build_steps_new_recipe.sh",
+    #         ".azure-pipelines/azure-pipelines-new-recipe-linux.yml",
+    #     ]
+    #     # platform_templates["osx"] = [
+    #     #     ".azure-pipelines/azure-pipelines-new-recipe-osx.yml",
+    #     #     ".scripts/run_osx_build_new_recipe.sh",
+    #     # ]
+    #     platform_templates["win"] = [
+    #         ".azure-pipelines/azure-pipelines-new-recipe-win.yml",
+    #         ".scripts/run_win_build_new_recipe.bat",
+    #     ]
 
     if forge_config["azure"]["store_build_artifacts"]:
         platform_templates["linux"].append(
@@ -1913,16 +1897,22 @@ def render_README(jinja_env, forge_config, forge_dir, render_info=None):
 
     if len(metas) == 0:
         try:
-            metas = conda_build.api.render(
-                os.path.join(forge_dir, forge_config["recipe_dir"]),
-                exclusive_config_file=forge_config["exclusive_config_file"],
-                permit_undefined_jinja=True,
-                finalize=False,
-                bypass_env_check=True,
-                trim_skip=False,
-            )
+            if forge_config["conda_build_tool"] == RATTLER_BUILD:
+                metas = rattler_render(
+                    os.path.join(forge_dir, forge_config["recipe_dir"]),
+                    exclusive_config_file=forge_config["exclusive_config_file"],
+                )
+            else:
+                metas = conda_build.api.render(
+                    os.path.join(forge_dir, forge_config["recipe_dir"]),
+                    exclusive_config_file=forge_config["exclusive_config_file"],
+                    permit_undefined_jinja=True,
+                    finalize=False,
+                    bypass_env_check=True,
+                    trim_skip=False,
+                )
             metas = [m[0] for m in metas]
-        except Exception:
+        except Exception as e:
             raise RuntimeError(
                 "Could not create any metadata for rendering the README.md!"
                 " This likely indicates a serious bug or a feedstock with no actual"

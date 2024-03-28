@@ -25,6 +25,8 @@ bash $MINIFORGE_FILE -b -p ${MINIFORGE_HOME}
 {%- set BUILD_CMD="CONDA_SOLVER=libmamba conda build" %}
 {%- elif conda_build_tool == "conda-build+classic" %}
 {%- set BUILD_CMD="CONDA_SOLVER=classic conda build" %}
+{%- elif conda_build_tool == "rattler-build" %}
+{%- set BUILD_CMD="rattler-build build" %}
 {%- else %}
 {%- set BUILD_CMD="conda build" %}
 {%- endif %}
@@ -76,34 +78,52 @@ echo -e "\n\nRunning the build setup script."
 
 ( endgroup "Configuring conda" ) 2> /dev/null
 
-echo -e "\n\nMaking the build clobber file"
-make_build_number ./ ./{{ recipe_dir }} ./.ci_support/${CONFIG}.yaml
+
+{%- if conda_build_tool != "rattler-build" %}
+
+  echo -e "\n\nMaking the build clobber file"
+  make_build_number ./ ./{{ recipe_dir }} ./.ci_support/${CONFIG}.yaml
+
+{%- endif %}
 
 if [[ -f LICENSE.txt ]]; then
   cp LICENSE.txt "{{ recipe_dir }}/recipe-scripts-license.txt"
 fi
 
 if [[ "${BUILD_WITH_CONDA_DEBUG:-0}" == 1 ]]; then
-    if [[ "x${BUILD_OUTPUT_ID:-}" != "x" ]]; then
-        EXTRA_CB_OPTIONS="${EXTRA_CB_OPTIONS:-} --output-id ${BUILD_OUTPUT_ID}"
-    fi
-    conda debug ./{{ recipe_dir }} -m ./.ci_support/${CONFIG}.yaml \
-        ${EXTRA_CB_OPTIONS:-} \
-        --clobber-file ./.ci_support/clobber_${CONFIG}.yaml
+    {%- if conda_build_tool != "rattler-build" %}
+    
+      if [[ "x${BUILD_OUTPUT_ID:-}" != "x" ]]; then
+          EXTRA_CB_OPTIONS="${EXTRA_CB_OPTIONS:-} --output-id ${BUILD_OUTPUT_ID}"
+      fi
+      conda debug ./{{ recipe_dir }} -m ./.ci_support/${CONFIG}.yaml \
+          ${EXTRA_CB_OPTIONS:-} \
+          --clobber-file ./.ci_support/clobber_${CONFIG}.yaml
 
-    # Drop into an interactive shell
-    /bin/bash
+      # Drop into an interactive shell
+      /bin/bash
+    {%- else %}
+      echo "rattler-build don't support debug mode right now"
+    {%- endif %}
 else
 {% if test in ["native", "native_and_emulated"] %}
     if [[ "${HOST_PLATFORM}" != "${BUILD_PLATFORM}" ]]; then
         EXTRA_CB_OPTIONS="${EXTRA_CB_OPTIONS:-} --no-test"
     fi
 {% endif %}
-    {{ BUILD_CMD }} ./{{ recipe_dir }} -m ./.ci_support/${CONFIG}.yaml \
-        --suppress-variables ${EXTRA_CB_OPTIONS:-} \
-        --clobber-file ./.ci_support/clobber_${CONFIG}.yaml \
-        --extra-meta flow_run_id="$flow_run_id" remote_url="$remote_url" sha="$sha"
-
+    {%- if conda_build_tool != "rattler-build" %}
+    
+      {{ BUILD_CMD }} ./{{ recipe_dir }} -m ./.ci_support/${CONFIG}.yaml \
+          --suppress-variables ${EXTRA_CB_OPTIONS:-} \
+          --clobber-file ./.ci_support/clobber_${CONFIG}.yaml \
+          --extra-meta flow_run_id="$flow_run_id" remote_url="$remote_url" sha="$sha"
+    
+    {%- else %}
+    
+      {{ BUILD_CMD }} --recipe ./{{ recipe_dir }} -m ./.ci_support/${CONFIG}.yaml
+    
+    {%- endif %}
+    
 
     {%- if conda_forge_output_validation %}
     ( startgroup "Validating outputs" ) 2> /dev/null

@@ -445,7 +445,7 @@ def test_render_windows_with_skipped_python(python_skipped_recipe, jinja_env):
         forge_config=config,
         forge_dir=python_skipped_recipe.recipe,
     )
-    # this configuration should be skipped
+    # this configuration should be enabled
     assert python_skipped_recipe.config["appveyor"]["enabled"]
 
     matrix_dir = os.path.join(python_skipped_recipe.recipe, ".ci_support")
@@ -514,37 +514,53 @@ def test_secrets(py_recipe, jinja_env):
         )
 
 
-def test_migrator_recipe(recipe_migration_cfep9, jinja_env):
+def test_migrator_recipe(recipe_migration_cfep9, jinja_env, request):
     cnfgr_fdstk.render_azure(
         jinja_env=jinja_env,
         forge_config=recipe_migration_cfep9.config,
         forge_dir=recipe_migration_cfep9.recipe,
     )
 
+    ci_support_filename = "linux_64_python2.7.yaml"
+    expected_value = "1000"
+    conda_build_param = request.node.callspec.params['config_yaml']
+    if conda_build_param == "rattler-build":
+        ci_support_filename = "linux_64_python3.8zlib1.2.12.yaml"
+        expected_value = "1.2.12"
+
     with open(
         os.path.join(
             recipe_migration_cfep9.recipe,
             ".ci_support",
-            "linux_64_python2.7.yaml",
+            ci_support_filename,
         )
     ) as fo:
         variant = yaml.safe_load(fo)
-        assert variant["zlib"] == ["1000"]
+        assert variant["zlib"] == [expected_value]
 
 
-def test_migrator_cfp_override(recipe_migration_cfep9, jinja_env):
+def test_migrator_cfp_override(recipe_migration_cfep9, jinja_env, request):
     cfp_file = recipe_migration_cfep9.config["exclusive_config_file"]
     cfp_migration_dir = os.path.join(
         os.path.dirname(cfp_file), "share", "conda-forge", "migrations"
     )
     os.makedirs(cfp_migration_dir, exist_ok=True)
+    
+    expected_value = "1001"
+    conda_build_param = request.node.callspec.params['config_yaml']
+    if conda_build_param == "rattler-build":
+        ci_support_filename = "linux_64_python3.8zlib1.2.13.yaml"
+        expected_value = "1.2.13"
+    else:
+        ci_support_filename = "linux_64_python2.7.yaml"
+    
     with open(os.path.join(cfp_migration_dir, "zlib2.yaml"), "w") as f:
         f.write(
             textwrap.dedent(
-                """
+                f"""
                 migrator_ts: 1
                 zlib:
-                   - 1001
+                   - {expected_value}
                 """
             )
         )
@@ -553,16 +569,16 @@ def test_migrator_cfp_override(recipe_migration_cfep9, jinja_env):
         forge_config=recipe_migration_cfep9.config,
         forge_dir=recipe_migration_cfep9.recipe,
     )
-
+    
     with open(
         os.path.join(
             recipe_migration_cfep9.recipe,
             ".ci_support",
-            "linux_64_python2.7.yaml",
+            ci_support_filename,
         )
     ) as fo:
         variant = yaml.safe_load(fo)
-        assert variant["zlib"] == ["1001"]
+        assert variant["zlib"] == [expected_value]
 
 
 def test_migrator_delete_old(recipe_migration_cfep9, jinja_env):
@@ -595,7 +611,7 @@ def test_migrator_delete_old(recipe_migration_cfep9, jinja_env):
 
 
 def test_migrator_downgrade_recipe(
-    recipe_migration_cfep9_downgrade, jinja_env
+    recipe_migration_cfep9_downgrade, jinja_env, request
 ):
     """
     Assert that even when we have two migrations targeting the same file the correct one wins.
@@ -618,19 +634,27 @@ def test_migrator_downgrade_recipe(
         == 2
     )
 
+    expected_value = "1000"
+    conda_build_param = request.node.callspec.params['config_yaml']
+    if conda_build_param == "rattler-build":
+        ci_support_filename = "linux_64_python3.8zlib1.2.12.yaml"
+        expected_value = "1.2.12"
+    else:
+        ci_support_filename = "linux_64_python2.7.yaml"
+
     with open(
         os.path.join(
             recipe_migration_cfep9_downgrade.recipe,
             ".ci_support",
-            "linux_64_python2.7.yaml",
+            ci_support_filename,
         )
     ) as fo:
         variant = yaml.safe_load(fo)
-        assert variant["zlib"] == ["1000"]
+        assert variant["zlib"] == [expected_value]
 
 
 def test_migrator_compiler_version_recipe(
-    recipe_migration_win_compiled, jinja_env
+    recipe_migration_win_compiled, jinja_env, request
 ):
     """
     Assert that even when we have two migrations targeting the same file the correct one wins.
@@ -657,8 +681,14 @@ def test_migrator_compiler_version_recipe(
         os.path.join(recipe_migration_win_compiled.recipe, ".ci_support")
     )
 
-    assert "win_64_c_compilervs2008python2.7.yaml" in rendered_variants
-    assert "win_64_c_compilervs2017python3.5.yaml" in rendered_variants
+    conda_build_param = request.node.callspec.params['config_yaml']
+    if conda_build_param == "conda-build":
+        assert "win_64_c_compilervs2008python2.7.yaml" in rendered_variants
+        assert "win_64_c_compilervs2017python3.5.yaml" in rendered_variants
+    else:
+        assert "win_64_python3.8ruby2.7.yaml" in rendered_variants
+        assert "win_64_python3.10ruby3.2.yaml" in rendered_variants
+
 
 
 def test_files_skip_render(render_skipped_recipe, jinja_env):
@@ -835,7 +865,11 @@ def test_cos7_env_render(py_recipe, jinja_env):
                 del os.environ["DEFAULT_LINUX_VERSION"]
 
 
-def test_cuda_enabled_render(cuda_enabled_recipe, jinja_env):
+def test_cuda_enabled_render(cuda_enabled_recipe, jinja_env, request):
+    conda_build_param = request.node.callspec.params['config_yaml']
+    if conda_build_param == "rattler-build":
+        pytest.skip('skipping test for rattler-build usecase')
+    
     forge_config = copy.deepcopy(cuda_enabled_recipe.config)
     has_env = "CF_CUDA_ENABLED" in os.environ
     if has_env:
@@ -865,8 +899,7 @@ def test_cuda_enabled_render(cuda_enabled_recipe, jinja_env):
             if "CF_CUDA_ENABLED" in os.environ:
                 del os.environ["CF_CUDA_ENABLED"]
 
-
-def test_conda_build_tools(config_yaml):
+def test_conda_build_tools(config_yaml, request):
     load_forge_config = lambda: cnfgr_fdstk._load_forge_config(  # noqa
         config_yaml,
         exclusive_config_file=os.path.join(
@@ -878,22 +911,25 @@ def test_conda_build_tools(config_yaml):
     assert (
         "build_with_mambabuild" not in cfg
     )  # superseded by conda_build_tool=mambabuild
-    assert cfg["conda_build_tool"] == "conda-build"  # current default
+    conda_build_param = request.node.callspec.params['config_yaml']
+
+    assert cfg["conda_build_tool"] == conda_build_param
 
     # legacy compatibility config
     with open(os.path.join(config_yaml, "conda-forge.yml")) as fp:
         unmodified = fp.read()
-    with open(os.path.join(config_yaml, "conda-forge.yml"), "a+") as fp:
-        fp.write("build_with_mambabuild: true")
-    with pytest.deprecated_call(match="build_with_mambabuild is deprecated"):
-        assert load_forge_config()["conda_build_tool"] == "mambabuild"
+    if conda_build_param == "conda-build":
+        with open(os.path.join(config_yaml, "conda-forge.yml"), "a+") as fp:
+            fp.write("build_with_mambabuild: true")
+        with pytest.deprecated_call(match="build_with_mambabuild is deprecated"):
+            assert load_forge_config()["conda_build_tool"] == "mambabuild"
 
-    with open(os.path.join(config_yaml, "conda-forge.yml"), "w") as fp:
-        fp.write(unmodified)
-        fp.write("build_with_mambabuild: false")
+        with open(os.path.join(config_yaml, "conda-forge.yml"), "w") as fp:
+            fp.write(unmodified)
+            fp.write("build_with_mambabuild: false")
 
-    with pytest.deprecated_call(match="build_with_mambabuild is deprecated"):
-        assert load_forge_config()["conda_build_tool"] == "conda-build"
+        with pytest.deprecated_call(match="build_with_mambabuild is deprecated"):
+            assert load_forge_config()["conda_build_tool"] == "conda-build"
 
     with open(os.path.join(config_yaml, "conda-forge.yml"), "w") as fp:
         fp.write(unmodified)

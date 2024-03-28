@@ -1,5 +1,6 @@
 import collections
 import os
+from pathlib import Path
 from textwrap import dedent
 
 import pytest
@@ -52,8 +53,8 @@ def recipe_dirname():
     return "recipe"
 
 
-@pytest.fixture(scope="function")
-def config_yaml(testing_workdir, recipe_dirname):
+@pytest.fixture(scope="function", params=["conda-build", "rattler-build"])
+def config_yaml(testing_workdir, recipe_dirname, request):
     config = {"python": ["2.7", "3.5"], "r_base": ["3.3.2", "3.4.2"]}
     os.makedirs(os.path.join(testing_workdir, recipe_dirname))
     with open(os.path.join(testing_workdir, "config.yaml"), "w") as f:
@@ -64,24 +65,22 @@ def config_yaml(testing_workdir, recipe_dirname):
         os.path.join(testing_workdir, recipe_dirname, "default_config.yaml"),
         "w",
     ) as f:
+        if request.param == "conda-build":
+            config_name = "conda_build_config.yaml"
+        else:
+            config_name = "rattler_build_config.yaml"
+            config["python"] = ["3.8", "3.10"]
+            config["r_base"] = ["4.2", "4.3"]
+
         yaml.dump(config, f, default_flow_style=False)
+        
+        config_path = os.path.abspath(os.path.join(__file__, '../', 'recipes', 'default_config', config_name))
+        config_text =  Path(config_path).read_text()
+
         # need selectors, so write these more manually
-        f.write(
-            dedent(
-                """\
-        c_compiler:     # [win]
-        - vs2008        # [win]
-        - vs2015        # [win]
-        vc:             # [win]
-        - '9'           # [win]
-        - '14'          # [win]
-        zip_keys:       # [win]
-        - c_compiler    # [win]
-        - python        # [win]
-        - vc            # [win]
-        """
-            )
-        )
+        f.write(config_text)
+    
+
     # dummy file that needs to be present for circle ci.  This is created by the init function
     os.makedirs(os.path.join(testing_workdir, ".circleci"))
     with open(
@@ -92,26 +91,43 @@ def config_yaml(testing_workdir, recipe_dirname):
     with open(
         os.path.join(testing_workdir, recipe_dirname, "short_config.yaml"), "w"
     ) as f:
-        config = {"python": ["2.7"]}
+        if request.param == "rattler-build":
+            config = {"python": ["3.8"]}
+        else:
+            config = {"python": ["2.7"]}
+
         yaml.dump(config, f, default_flow_style=False)
     with open(
         os.path.join(testing_workdir, recipe_dirname, "long_config.yaml"), "w"
     ) as f:
-        config = {"python": ["2.7", "3.5", "3.6"]}
+        if request.param == "rattler-build":
+            config = {"python": ["3.6", "3.8", "3.10"]}
+        else:
+            config = {"python": ["2.7", "3.5", "3.6"]}
+
         yaml.dump(config, f, default_flow_style=False)
     with open(os.path.join(testing_workdir, "conda-forge.yml"), "w") as f:
         config = {
             "upload_on_branch": "foo-branch",
             "recipe_dir": recipe_dirname,
         }
+        if request.param == "rattler-build":
+            config["conda_build_tool"] = "rattler-build"
         yaml.dump(config, f, default_flow_style=False)
-    return testing_workdir
+    yield testing_workdir
 
 
 @pytest.fixture(scope="function")
 def noarch_recipe(config_yaml, recipe_dirname, request):
+    # get the used params passed for config_yaml fixture
+    config_yaml_param_value = request.node.callspec.params['config_yaml']
+    if config_yaml_param_value == "rattler-build":
+        recipe_name = "recipe.yaml"
+    else:
+        recipe_name = "meta.yaml"
+
     with open(
-        os.path.join(config_yaml, recipe_dirname, "meta.yaml"), "w"
+        os.path.join(config_yaml, recipe_dirname, recipe_name), "w"
     ) as fh:
         fh.write(
             """
@@ -140,21 +156,20 @@ requirements:
 
 @pytest.fixture(scope="function")
 def r_recipe(config_yaml, request):
-    with open(os.path.join(config_yaml, "recipe", "meta.yaml"), "w") as fh:
-        fh.write(
-            """
-package:
-    name: r-test
-    version: 1.0.0
-build:
-    skip: True  # [win]
-requirements:
-    build:
-        - r-base
-    run:
-        - r-base
-    """
-        )
+    config_yaml_param_value = request.node.callspec.params['config_yaml']
+    if config_yaml_param_value == "rattler-build":
+        recipe_name = "recipe.yaml"
+    else:
+        recipe_name = "meta.yaml"
+
+
+    with open(os.path.join(config_yaml, "recipe", recipe_name), "w") as fh:
+        
+        r_recipe_template_path = os.path.abspath(os.path.join(__file__, "../", "recipes", "r_recipe", recipe_name))
+        recipe_template_text = Path(r_recipe_template_path).read_text()
+        
+        fh.write(recipe_template_text)
+
     return RecipeConfigPair(
         str(config_yaml),
         _load_forge_config(
@@ -168,23 +183,19 @@ requirements:
 
 @pytest.fixture(scope="function")
 def py_recipe(config_yaml, request):
-    with open(os.path.join(config_yaml, "recipe", "meta.yaml"), "w") as fh:
-        fh.write(
-            """
-package:
-    name: py-test
-    version: 1.0.0
-requirements:
-    build:                      # [win]
-        - {{ compiler('c') }}   # [win]
-    host:
-        - python
-    run:
-        - python
-about:
-    home: home
-    """
-        )
+    config_yaml_param_value = request.node.callspec.params['config_yaml']
+    
+    if config_yaml_param_value == "conda-build":
+        recipe_name = "meta.yaml"
+    else:
+        recipe_name = "recipe.yaml"
+
+    with open(os.path.join(config_yaml, "recipe", recipe_name), "w") as fh:
+        recipe_path = os.path.abspath(os.path.join(__file__, '../', 'recipes', 'py_recipe', recipe_name))
+
+        content = Path(recipe_path).read_text()
+        fh.write(content)
+
     return RecipeConfigPair(
         str(config_yaml),
         _load_forge_config(
@@ -198,23 +209,19 @@ about:
 
 @pytest.fixture(scope="function")
 def upload_on_branch_recipe(config_yaml, request):
-    with open(os.path.join(config_yaml, "recipe", "meta.yaml"), "w") as fh:
-        fh.write(
-            """
-package:
-    name: py-test
-    version: 1.0.0
-requirements:
-    build:                      # [win]
-        - {{ compiler('c') }}   # [win]
-    host:
-        - python
-    run:
-        - python
-about:
-    home: home
-    """
-        )
+    config_yaml_param_value = request.node.callspec.params['config_yaml']
+    if config_yaml_param_value == "conda-build":
+        recipe_name = "meta.yaml"
+    else:
+        recipe_name = "recipe.yaml"
+
+    with open(os.path.join(config_yaml, "recipe", recipe_name), "w") as fh:
+        recipe_path = os.path.abspath(os.path.join(__file__, '../', 'recipes', 'py_recipe', recipe_name))
+
+        content = Path(recipe_path).read_text()
+        fh.write(content)
+
+
     return RecipeConfigPair(
         str(config_yaml),
         _load_forge_config(
@@ -226,10 +233,27 @@ about:
 
 @pytest.fixture(scope="function")
 def recipe_migration_cfep9(config_yaml, request):
+    about_home = """
+about:
+    home: home
+"""
+    additional_requirement = ""
+    
+    config_yaml_param_value = request.node.callspec.params['config_yaml']
+    if config_yaml_param_value == "conda-build":
+        recipe_name = "meta.yaml"
+        zlib_value = "1000"
+    else:
+        recipe_name = "recipe.yaml"
+        about_home = ""
+        zlib_value = "1.2.12" 
+        additional_requirement = "- ruby"
+
+    
     # write a migrator
-    with open(os.path.join(config_yaml, "recipe", "meta.yaml"), "w") as fh:
+    with open(os.path.join(config_yaml, "recipe", recipe_name), "w") as fh:
         fh.write(
-            """
+            f"""
 package:
     name: py-test
     version: 1.0.0
@@ -237,10 +261,10 @@ requirements:
     host:
         - python
         - zlib
+        {additional_requirement}
     run:
         - python
-about:
-    home: home
+{about_home}
     """
         )
 
@@ -252,10 +276,10 @@ about:
         "w",
     ) as fh:
         fh.write(
-            """
+            f"""
 migrator_ts: 1
 zlib:
-    - 1000
+    - {zlib_value}
 """
         )
 
@@ -271,12 +295,17 @@ zlib:
 
 
 @pytest.fixture(scope="function")
-def recipe_migration_cfep9_downgrade(config_yaml, recipe_migration_cfep9):
+def recipe_migration_cfep9_downgrade(config_yaml, recipe_migration_cfep9, request):
     # write a downgrade migrator that lives next to the current migrator.
     # Only this, more recent migrator should apply.
     os.makedirs(
         os.path.join(config_yaml, ".ci_support", "migrations"), exist_ok=True
     )
+    config_yaml_param_value = request.node.callspec.params['config_yaml']
+    if config_yaml_param_value == "conda-build":
+        zlib_value = "999"
+    else:
+        zlib_value = "1.2.11" 
     with open(
         os.path.join(
             config_yaml, ".ci_support", "migrations", "zlib-downgrade.yaml"
@@ -284,10 +313,10 @@ def recipe_migration_cfep9_downgrade(config_yaml, recipe_migration_cfep9):
         "w",
     ) as fh:
         fh.write(
-            """
+            f"""
 migrator_ts: 1.0
 zlib:
-    - 999
+    - {zlib_value}
 """
         )
     # return recipe_migration_cfep9
@@ -303,37 +332,27 @@ zlib:
 
 
 @pytest.fixture(scope="function")
-def recipe_migration_win_compiled(config_yaml, py_recipe):
+def recipe_migration_win_compiled(config_yaml, py_recipe, request):
     os.makedirs(
         os.path.join(config_yaml, ".ci_support", "migrations"), exist_ok=True
     )
+    config_yaml_param_value = request.node.callspec.params['config_yaml']
+    if config_yaml_param_value == "conda-build":
+        migration_name = "vc-migrate.yaml"
+    else:
+        migration_name = "ruby-migrate.yaml"
+
     with open(
         os.path.join(
-            config_yaml, ".ci_support", "migrations", "vc-migrate.yaml"
+            config_yaml, ".ci_support", "migrations", migration_name
         ),
         "w",
     ) as fh:
-        fh.write(
-            dedent(
-                """
-        migrator_ts: 1.0
-        c_compiler:    # [win]
-            - vs2008   # [win]
-            - vs2017   # [win]
-        cxx_compiler:  # [win]
-            - vs2008   # [win]
-            - vs2017   # [win]
-        vc:            # [win]
-            - '9'      # [win]
-            - '14.1'   # [win]
-        zip_keys:
-            - - python          # [win]
-              - c_compiler      # [win]
-              - cxx_compiler    # [win]
-              - vc              # [win]
-        """
-            )
-        )
+        migration_path = os.path.abspath(os.path.join(__file__, '../', 'recipes', 'win_migrations', migration_name))
+        content = Path(migration_path).read_text()
+        fh.write(content)
+
+
     return RecipeConfigPair(
         str(config_yaml),
         _load_forge_config(
@@ -347,26 +366,18 @@ def recipe_migration_win_compiled(config_yaml, py_recipe):
 
 @pytest.fixture(scope="function")
 def skipped_recipe(config_yaml, request):
-    with open(os.path.join(config_yaml, "recipe", "meta.yaml"), "w") as fh:
-        fh.write(
-            """
-package:
-    name: skip-test
-    version: 1.0.0
-build:
-    skip: True
-requirements:
-    build:
-        - python
-    run:
-        - python
-about:
-    home: home
+    config_yaml_param_value = request.node.callspec.params['config_yaml']
+    if config_yaml_param_value == "rattler-build":
+        recipe_name = "recipe.yaml"
+    else:
+        recipe_name = "meta.yaml"
 
-extra:
-    feedstock-name: skip-test-meta
-    """
-        )
+    with open(os.path.join(config_yaml, "recipe", recipe_name), "w") as fh:        
+        recipe_path = os.path.abspath(os.path.join(__file__, '../', 'recipes', 'win_skipped_recipes', recipe_name))
+        content = Path(recipe_path).read_text()
+        fh.write(content)
+
+
     return RecipeConfigPair(
         str(config_yaml),
         _load_forge_config(
@@ -380,23 +391,18 @@ extra:
 
 @pytest.fixture(scope="function")
 def python_skipped_recipe(config_yaml, request):
-    with open(os.path.join(config_yaml, "recipe", "meta.yaml"), "w") as fh:
-        fh.write(
-            """
-package:
-    name: py-test
-    version: 1.0.0
-build:
-    skip: True   # [py36]
-requirements:
-    build:
-        - python
-    run:
-        - python
-about:
-    home: home
-    """
-        )
+    config_yaml_param_value = request.node.callspec.params['config_yaml']
+    if config_yaml_param_value == "rattler-build":
+        recipe_name = "recipe.yaml"
+    else:
+        recipe_name = "meta.yaml"
+    
+
+    with open(os.path.join(config_yaml, "recipe", recipe_name), "w") as fh:
+        recipe_path = os.path.abspath(os.path.join(__file__, '../', 'recipes', 'python_skipped_recipes', recipe_name))
+        content = Path(recipe_path).read_text()
+        fh.write(content)
+
     return RecipeConfigPair(
         str(config_yaml),
         _load_forge_config(
@@ -410,21 +416,20 @@ about:
 
 @pytest.fixture(scope="function")
 def linux_skipped_recipe(config_yaml, request):
-    with open(os.path.join(config_yaml, "recipe", "meta.yaml"), "w") as fh:
-        fh.write(
-            """
-package:
-    name: py-test
-    version: 1.0.0
-build:
-    skip: True   # [linux]
-requirements:
-    build:
-        - zlib
-about:
-    home: home
-    """
-        )
+    config_yaml_param_value = request.node.callspec.params['config_yaml']
+    if config_yaml_param_value == "rattler-build":
+        recipe_name = "recipe.yaml"
+    else:
+        recipe_name = "meta.yaml"
+    
+    
+    
+    with open(os.path.join(config_yaml, "recipe", recipe_name), "w") as fh:
+        linux_recipe = os.path.abspath(os.path.join(__file__, '../', 'recipes', 'linux_skipped_recipes', recipe_name))
+        content = Path(linux_recipe).read_text()
+        fh.write(content)
+
+    
     return RecipeConfigPair(
         str(config_yaml),
         _load_forge_config(
@@ -477,25 +482,17 @@ skip_render:
 
 @pytest.fixture(scope="function")
 def choco_recipe(config_yaml, request):
-    with open(os.path.join(config_yaml, "recipe", "meta.yaml"), "w") as fh:
-        fh.write(
-            """
-package:
-    name: py-test
-    version: 1.0.0
-build:
-    skip: true  # [not win]
-requirements:
-    build:
-        - {{ compiler('c') }}
-    host:
-        - python
-    run:
-        - python
-about:
-    home: home
-    """
-        )
+    config_yaml_param_value = request.node.callspec.params['config_yaml']
+    if config_yaml_param_value == "conda-build":
+        recipe_name = "meta.yaml"
+    else:
+        recipe_name = "recipe.yaml"
+    
+    with open(os.path.join(config_yaml, "recipe", recipe_name), "w") as fh:
+        choco_recipe_path = os.path.abspath(os.path.join(__file__, '../', 'recipes', 'choco_recipes', recipe_name))
+        content = Path(choco_recipe_path).read_text()
+        fh.write(content)
+
     with open(os.path.join(config_yaml, "conda-forge.yml"), "a+") as fh:
         fh.write(
             """

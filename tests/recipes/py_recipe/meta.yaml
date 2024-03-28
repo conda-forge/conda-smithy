@@ -1,0 +1,12 @@
+package:
+    name: py-test
+    version: 1.0.0
+requirements:
+    build:                      # [win]
+        - {{ compiler('c') }}   # [win]
+    host:
+        - python
+    run:
+        - python
+about:
+    home: home
