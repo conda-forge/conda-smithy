@@ -6,15 +6,18 @@ str_type = str
 
 import copy
 import fnmatch
-from glob import glob
 import io
 import itertools
+import json
 import os
 import re
 import requests
 import shutil
 import subprocess
 import sys
+from glob import glob
+from inspect import cleandoc
+from textwrap import indent
 
 import github
 
@@ -23,11 +26,12 @@ if sys.version_info[:2] < (3, 11):
 else:
     import tomllib
 
+from conda.models.version import VersionOrder
 from conda_build.metadata import (
     ensure_valid_license_family,
     FIELDS as cbfields,
 )
-import conda_build.conda_interface
+from conda_smithy.validate_schema import validate_json_schema
 
 from .utils import render_meta_yaml, get_yaml
 
@@ -143,7 +147,32 @@ def find_local_config_file(recipe_dir, filename):
     return found_filesname[0] if found_filesname else None
 
 
-def lintify(meta, recipe_dir=None, conda_forge=False):
+def lintify_forge_yaml(recipe_dir=None) -> (list, list):
+    if recipe_dir:
+        forge_yaml_filename = (
+            glob(os.path.join(recipe_dir, "..", "conda-forge.yml"))
+            or glob(
+                os.path.join(recipe_dir, "conda-forge.yml"),
+            )
+            or glob(
+                os.path.join(recipe_dir, "..", "..", "conda-forge.yml"),
+            )
+        )
+        if forge_yaml_filename:
+            with open(forge_yaml_filename[0], "r") as fh:
+                forge_yaml = get_yaml().load(fh)
+        else:
+            forge_yaml = {}
+    else:
+        forge_yaml = {}
+
+    # This is where we validate against the jsonschema and execute our custom validators.
+    return validate_json_schema(forge_yaml)
+
+
+def lintify_meta_yaml(
+    meta, recipe_dir=None, conda_forge=False
+) -> (list, list):
     lints = []
     hints = []
     major_sections = list(meta.keys())
@@ -469,7 +498,7 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
     if package_section.get("version") is not None:
         ver = str(package_section.get("version"))
         try:
-            conda_build.conda_interface.VersionOrder(ver)
+            VersionOrder(ver)
         except:
             lints.append(
                 "Package version {} doesn't match conda spec".format(ver)
@@ -1039,6 +1068,43 @@ def jinja_lines(lines):
             yield line, i
 
 
+def _format_validation_msg(error: "jsonschema.ValidationError"):
+    """Use the data on the validation error to generate improved reporting.
+
+    If available, get the help URL from the first level of the JSON path:
+
+        $(.top_level_key.2nd_level_key)
+    """
+    help_url = "https://conda-forge.org/docs/maintainer/conda_forge_yml"
+    path = error.json_path.split(".")
+    descriptionless_schema = {}
+    subschema_text = ""
+
+    if error.schema:
+        descriptionless_schema = {
+            k: v for (k, v) in error.schema.items() if k != "description"
+        }
+
+    if len(path) > 1:
+        help_url += f"""/#{path[1].split("[")[0].replace("_", "-")}"""
+        subschema_text = json.dumps(descriptionless_schema, indent=2)
+
+    return cleandoc(
+        f"""
+        In conda-forge.yml: [`{error.json_path}`]({help_url}) `=` `{error.instance}`.
+{indent(error.message, " " * 12 + "> ")}
+            <details>
+            <summary>Schema</summary>
+
+            ```json
+{indent(subschema_text, " " * 12)}
+            ```
+
+            </details>
+        """
+    )
+
+
 def main(recipe_dir, conda_forge=False, return_hints=False):
     recipe_dir = os.path.abspath(recipe_dir)
     recipe_meta = os.path.join(recipe_dir, "meta.yaml")
@@ -1048,8 +1114,40 @@ def main(recipe_dir, conda_forge=False, return_hints=False):
     with io.open(recipe_meta, "rt") as fh:
         content = render_meta_yaml("".join(fh))
         meta = get_yaml().load(content)
-    results, hints = lintify(meta, recipe_dir, conda_forge)
+
+    results, hints = lintify_meta_yaml(meta, recipe_dir, conda_forge)
+    validation_errors, validation_hints = lintify_forge_yaml(
+        recipe_dir=recipe_dir
+    )
+
+    results.extend([_format_validation_msg(err) for err in validation_errors])
+    hints.extend([_format_validation_msg(hint) for hint in validation_hints])
+
     if return_hints:
         return results, hints
     else:
         return results
+
+
+if __name__ == "__main__":
+    # This block is supposed to help debug how the rendered version
+    # of the linter bot would look like in Github. Taken from
+    # https://github.com/conda-forge/conda-forge-webservices/blob/747f75659/conda_forge_webservices/linting.py#L138C1-L146C72
+    rel_path = sys.argv[1]
+    lints, hints = main(rel_path, False, True)
+    messages = []
+    if lints:
+        all_pass = False
+        messages.append(
+            "\nFor **{}**:\n\n{}".format(
+                rel_path, "\n".join("* {}".format(lint) for lint in lints)
+            )
+        )
+    if hints:
+        messages.append(
+            "\nFor **{}**:\n\n{}".format(
+                rel_path, "\n".join("* {}".format(hint) for hint in hints)
+            )
+        )
+
+    print(*messages, sep="\n")

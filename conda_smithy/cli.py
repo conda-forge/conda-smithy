@@ -613,9 +613,13 @@ class Regenerate(Subcommand):
 
 class RecipeLint(Subcommand):
     subcommand = "recipe-lint"
+    aliases = ["lint"]
 
     def __init__(self, parser):
-        super(RecipeLint, self).__init__(parser, "Lint a single conda recipe.")
+        super(RecipeLint, self).__init__(
+            parser,
+            "Lint a single conda recipe and its configuration.",
+        )
         scp = self.subcommand_parser
         scp.add_argument("--conda-forge", action="store_true")
         scp.add_argument("recipe_directory", default=[os.getcwd()], nargs="*")
@@ -632,13 +636,22 @@ class RecipeLint(Subcommand):
                 all_good = False
                 print(
                     "{} has some lint:\n  {}".format(
-                        recipe, "\n  ".join(lints)
+                        recipe,
+                        "\n  ".join(
+                            [lint.replace("\n", "\n    ") for lint in lints]
+                        ),
                     )
                 )
                 if hints:
                     print(
                         "{} also has some suggestions:\n  {}".format(
-                            recipe, "\n  ".join(hints)
+                            recipe,
+                            "\n  ".join(
+                                [
+                                    hint.replace("\n", "\n    ")
+                                    for hint in hints
+                                ]
+                            ),
                         )
                     )
             elif hints:

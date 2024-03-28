@@ -4,6 +4,86 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.34.0
+====================
+
+**Added:**
+
+* ``disabled`` is now a supported option for ``bot.inspection`` in the ``conda-forge.yml`` file (previously: ``false``)
+* Add ``github_actions.free_disk_space`` to schema ( #1882 )
+
+**Changed:**
+
+* Do not raise on ``conda-forge.yml`` validation errors during rerender. A warning will be printed instead. (#1879 via #1885)
+* Adjust how the linter processes ``conda-forge.yml`` validation issues for prettier Markdown rendering. (#1860 via #1886)
+* Ensure new ``{{ stdlib("c") }}`` correctly populates CI config. (#1840 via #1888)
+* Ensure we populate MACOSX_DEPLOYMENT_TARGET for use in conda-forge-ci-setup also when using `c_stdlib_version` (#1884 via #1889)
+* Update ``github_actions.free_disk_space`` to match Azure's ( #1882 )
+
+**Authors:**
+
+* Jaime Rodríguez-Guerra
+* H. Vetinari
+* John Kirkham
+* Yannik Tausch
+
+
+
+v3.33.0
+====================
+
+**Added:**
+
+* Support Apple silicon runners on GHA hosted (#1872, #1874).
+
+**Changed:**
+
+* Stop using conda_build.conda_interface. (#1868)
+* Allow any ``str`` in ``conda-forge.yml``'s ``skip_render`` key. (#1875 via #1878)
+
+**Fixed:**
+
+* Update ``BotConfig`` schema description with examples of all possible values. (#1861 via #1862)
+* Added missing ``azure: build_id`` into the json schema. (#1871)
+* Add more skip render choices (#1873).
+* Allow ``str`` (in addition to list of ``str``) in ``conda-forge.yml``'s ``noarch_platforms`` and ``remote_ci_setup``. (#1869 via #1877)
+
+**Authors:**
+
+* Isuru Fernando
+* Jaime Rodríguez-Guerra
+* Marcel Bargull
+* pre-commit-ci[bot]
+
+
+
+v3.32.0
+====================
+
+**Added:**
+
+* New JSON schema for ``conda-forge.yaml``. A Pydantic model is used to dynamically generate both a YAML document with the default values and the JSON schema itself. (#1756)
+* Included ``jsonschema`` and ``pydantic`` as dependencies into the ``environment.yml``. (#1756)
+
+**Changed:**
+
+* Included extra ``jsonschema`` validation for conda-forge.yaml, under ``configure_feedstock``. (#1756)
+* Moved legacy checks of old_file and providers into a new auxiliary ``_legacy_compatibility_checks`` function. (#1756)
+* Use Azure owner in URL for missing token error message. (#1854)
+* Invoke conda-{build,mambabuild} directly, not as conda subcommand. (#1859)
+
+**Authors:**
+
+* Isuru Fernando
+* Matthew R. Becker
+* Jaime Rodríguez-Guerra
+* Marcel Bargull
+* vinicius douglas cerutti
+* pre-commit-ci[bot]
+* John Blischak
+
+
+
 v3.31.1
 ====================
 

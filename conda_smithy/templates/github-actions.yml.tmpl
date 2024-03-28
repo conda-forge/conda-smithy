@@ -61,6 +61,7 @@ jobs:
     - name: Manage disk space
       if: matrix.os == 'ubuntu'
       run: |
+{%- if (github_actions.free_disk_space == true) or ('cache' in github_actions.free_disk_space) %}
         sudo mkdir -p /opt/empty_dir || true
         for d in \
                  /opt/ghc \
@@ -74,12 +75,17 @@ jobs:
                  ; do
           sudo rsync --stats -a --delete /opt/empty_dir/ $d || true
         done
+{%- endif %}
+{%- if (github_actions.free_disk_space == true) or ('apt' in github_actions.free_disk_space) %}
         sudo apt-get purge -y -f firefox \
                                  google-chrome-stable \
                                  microsoft-edge-stable
         sudo apt-get autoremove -y >& /dev/null
         sudo apt-get autoclean -y >& /dev/null
+{%- endif %}
+{%- if (github_actions.free_disk_space is iterable) and ('docker' in github_actions.free_disk_space) %}
         sudo docker image prune --all --force
+{%- endif %}
         df -h
 {%- endif %}
 
