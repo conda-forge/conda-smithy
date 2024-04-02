@@ -1,8 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
-from collections import OrderedDict
-from contextlib import contextmanager
-import io
 import os
 import shutil
 import subprocess
@@ -10,6 +6,9 @@ import tempfile
 import textwrap
 import unittest
 import warnings
+from collections import OrderedDict
+from contextlib import contextmanager
+from pathlib import Path
 
 import github
 import pytest
@@ -24,13 +23,72 @@ def is_gh_token_set():
 
 
 @contextmanager
-def tmp_directory():
-    tmp_dir = tempfile.mkdtemp("recipe_")
-    yield tmp_dir
-    shutil.rmtree(tmp_dir)
+def tmp_directory() -> Path:
+    with tempfile.TemporaryDirectory(prefix="recipe_") as tmp_dir:
+        yield Path(tmp_dir)
 
 
-class Test_linter(unittest.TestCase):
+@contextmanager
+def nested_tmp_directory():
+    """
+    Create two nested directories within a temporary directory.
+    """
+    with tmp_directory() as tmp_dir:
+        child_dir = tmp_dir / "child1" / "child2"
+        child_dir.mkdir(parents=True)
+        yield child_dir
+
+
+class TestReadForgeYml(unittest.TestCase):
+    def test_empty_dir(self):
+        with nested_tmp_directory() as recipe_dir:
+            with self.assertRaises(FileNotFoundError):
+                linter.read_forge_yaml(recipe_dir)
+
+    def test_precedence_1(self):
+        with nested_tmp_directory() as recipe_dir:
+            with open(recipe_dir / ".." / "conda-forge.yml", "w") as fh:
+                fh.write("package:\n  name: foo")
+            with open(recipe_dir / "conda-forge.yml", "w") as fh:
+                fh.write("package:\n  name: DO_NOT_USE_1")
+            with open(recipe_dir / ".." / ".." / "conda-forge.yml", "w") as fh:
+                fh.write("package:\n  name: DO_NOT_USE_2")
+
+            forge_yml = linter.read_forge_yaml(recipe_dir)
+
+        self.assertEqual(forge_yml["package"]["name"], "foo")
+
+    def test_precedence_2(self):
+        with nested_tmp_directory() as recipe_dir:
+            with open(recipe_dir / "conda-forge.yml", "w") as fh:
+                fh.write("package:\n  name: foo")
+            with open(recipe_dir / ".." / ".." / "conda-forge.yml", "w") as fh:
+                fh.write("package:\n  name: DO_NOT_USE_2")
+
+            forge_yml = linter.read_forge_yaml(recipe_dir)
+
+        self.assertEqual(forge_yml["package"]["name"], "foo")
+
+    def test_precedence_3(self):
+        with nested_tmp_directory() as recipe_dir:
+            with open(recipe_dir / ".." / ".." / "conda-forge.yml", "w") as fh:
+                fh.write("package:\n  name: foo")
+
+            forge_yml = linter.read_forge_yaml(recipe_dir)
+
+        self.assertEqual(forge_yml["package"]["name"], "foo")
+
+    def test_no_dict(self):
+        with nested_tmp_directory() as recipe_dir:
+            with open(recipe_dir / "conda-forge.yml", "w") as fh:
+                fh.write("foo")
+
+            with self.assertRaises(ValueError) as e:
+                linter.read_forge_yaml(recipe_dir)
+            self.assertIn("does not represent a dict", str(e.exception))
+
+
+class TestLinter(unittest.TestCase):
     def test_pin_compatible_in_run_exports(self):
         meta = {
             "package": {
@@ -40,7 +98,7 @@ class Test_linter(unittest.TestCase):
                 "run_exports": ["compatible_pin apackage"],
             },
         }
-        lints, hints = linter.lintify_meta_yaml(meta)
+        lints, hints = linter.lint_meta_yaml(meta)
         expected = "pin_subpackage should be used instead"
         self.assertTrue(any(lint.startswith(expected) for lint in lints))
 
@@ -58,19 +116,19 @@ class Test_linter(unittest.TestCase):
                 }
             ],
         }
-        lints, hints = linter.lintify_meta_yaml(meta)
+        lints, hints = linter.lint_meta_yaml(meta)
         expected = "pin_compatible should be used instead"
         self.assertTrue(any(lint.startswith(expected) for lint in lints))
 
     def test_bad_top_level(self):
         meta = OrderedDict([["package", {}], ["build", {}], ["sources", {}]])
-        lints, hints = linter.lintify_meta_yaml(meta)
+        lints, hints = linter.lint_meta_yaml(meta)
         expected_msg = "The top level meta key sources is unexpected"
         self.assertIn(expected_msg, lints)
 
     def test_bad_order(self):
         meta = OrderedDict([["package", {}], ["build", {}], ["source", {}]])
-        lints, hints = linter.lintify_meta_yaml(meta)
+        lints, hints = linter.lint_meta_yaml(meta)
         expected_msg = (
             "The top level meta keys are in an unexpected "
             "order. Expecting ['package', 'source', 'build']."
@@ -79,7 +137,7 @@ class Test_linter(unittest.TestCase):
 
     def test_missing_about_license_and_summary(self):
         meta = {"about": {"home": "a URL"}}
-        lints, hints = linter.lintify_meta_yaml(meta)
+        lints, hints = linter.lint_meta_yaml(meta)
         expected_message = "The license item is expected in the about section."
         self.assertIn(expected_message, lints)
 
@@ -94,7 +152,7 @@ class Test_linter(unittest.TestCase):
                 "license": "unknown",
             }
         }
-        lints, hints = linter.lintify_meta_yaml(meta)
+        lints, hints = linter.lint_meta_yaml(meta)
         expected_message = "The recipe license cannot be unknown."
         self.assertIn(expected_message, lints)
 
@@ -107,19 +165,19 @@ class Test_linter(unittest.TestCase):
                 "license_family": "BSD3",
             }
         }
-        lints, hints = linter.lintify_meta_yaml(meta)
+        lints, hints = linter.lint_meta_yaml(meta)
         expected = "about/license_family 'BSD3' not allowed"
         self.assertTrue(any(lint.startswith(expected) for lint in lints))
 
     def test_missing_about_home(self):
         meta = {"about": {"license": "BSD", "summary": "A test summary"}}
-        lints, hints = linter.lintify_meta_yaml(meta)
+        lints, hints = linter.lint_meta_yaml(meta)
         expected_message = "The home item is expected in the about section."
         self.assertIn(expected_message, lints)
 
     def test_missing_about_home_empty(self):
         meta = {"about": {"home": "", "summary": "", "license": ""}}
-        lints, hints = linter.lintify_meta_yaml(meta)
+        lints, hints = linter.lint_meta_yaml(meta)
         expected_message = "The home item is expected in the about section."
         self.assertIn(expected_message, lints)
 
@@ -132,7 +190,7 @@ class Test_linter(unittest.TestCase):
     def test_noarch_value(self):
         meta = {"build": {"noarch": "true"}}
         expected = "Invalid `noarch` value `true`. Should be one of"
-        lints, hints = linter.lintify_meta_yaml(meta)
+        lints, hints = linter.lint_meta_yaml(meta)
         self.assertTrue(any(lint.startswith(expected) for lint in lints))
 
     def test_maintainers_section(self):
@@ -141,16 +199,16 @@ class Test_linter(unittest.TestCase):
             "in the `extra/recipe-maintainers` section."
         )
 
-        lints, hints = linter.lintify_meta_yaml(
+        lints, hints = linter.lint_meta_yaml(
             {"extra": {"recipe-maintainers": []}}
         )
         self.assertIn(expected_message, lints)
 
         # No extra section at all.
-        lints, hints = linter.lintify_meta_yaml({})
+        lints, hints = linter.lint_meta_yaml({})
         self.assertIn(expected_message, lints)
 
-        lints, hints = linter.lintify_meta_yaml(
+        lints, hints = linter.lint_meta_yaml(
             {"extra": {"recipe-maintainers": ["a"]}}
         )
         self.assertNotIn(expected_message, lints)
@@ -159,12 +217,10 @@ class Test_linter(unittest.TestCase):
             'The "extra" section was expected to be a '
             "dictionary, but got a list."
         )
-        lints, hints = linter.lintify_meta_yaml(
-            {"extra": ["recipe-maintainers"]}
-        )
+        lints, hints = linter.lint_meta_yaml({"extra": ["recipe-maintainers"]})
         self.assertIn(expected_message, lints)
 
-        lints, hints = linter.lintify_meta_yaml(
+        lints, hints = linter.lint_meta_yaml(
             {"extra": {"recipe-maintainers": "Luke"}}
         )
         expected_message = "Recipe maintainers should be a json list."
@@ -173,29 +229,29 @@ class Test_linter(unittest.TestCase):
     def test_test_section(self):
         expected_message = "The recipe must have some tests."
 
-        lints, hints = linter.lintify_meta_yaml({})
+        lints, hints = linter.lint_meta_yaml({})
         self.assertIn(expected_message, lints)
 
-        lints, hints = linter.lintify_meta_yaml({"test": {"files": "foo"}})
+        lints, hints = linter.lint_meta_yaml({"test": {"files": "foo"}})
         self.assertIn(expected_message, lints)
 
-        lints, hints = linter.lintify_meta_yaml({"test": {"imports": "sys"}})
+        lints, hints = linter.lint_meta_yaml({"test": {"imports": "sys"}})
         self.assertNotIn(expected_message, lints)
 
-        lints, hints = linter.lintify_meta_yaml({"outputs": [{"name": "foo"}]})
+        lints, hints = linter.lint_meta_yaml({"outputs": [{"name": "foo"}]})
         self.assertIn(expected_message, lints)
 
-        lints, hints = linter.lintify_meta_yaml(
+        lints, hints = linter.lint_meta_yaml(
             {"outputs": [{"name": "foo", "test": {"files": "foo"}}]}
         )
         self.assertIn(expected_message, lints)
 
-        lints, hints = linter.lintify_meta_yaml(
+        lints, hints = linter.lint_meta_yaml(
             {"outputs": [{"name": "foo", "test": {"imports": "sys"}}]}
         )
         self.assertNotIn(expected_message, lints)
 
-        lints, hints = linter.lintify_meta_yaml(
+        lints, hints = linter.lint_meta_yaml(
             {
                 "outputs": [
                     {"name": "foo", "test": {"imports": "sys"}},
@@ -208,7 +264,7 @@ class Test_linter(unittest.TestCase):
             "It looks like the 'foobar' output doesn't have any tests.", hints
         )
 
-        lints, hints = linter.lintify_meta_yaml(
+        lints, hints = linter.lint_meta_yaml(
             {
                 "outputs": [
                     {"name": "foo", "test": {"script": "test-foo.sh"}},
@@ -228,12 +284,12 @@ class Test_linter(unittest.TestCase):
         expected_message = "The recipe must have some tests."
 
         with tmp_directory() as recipe_dir:
-            lints, hints = linter.lintify_meta_yaml({}, recipe_dir)
+            lints, hints = linter.lint_meta_yaml({}, recipe_dir)
             self.assertIn(expected_message, lints)
 
-            with io.open(os.path.join(recipe_dir, "run_test.py"), "w") as fh:
+            with open(recipe_dir / "run_test.py", "w") as fh:
                 fh.write("# foo")
-            lints, hints = linter.lintify_meta_yaml({}, recipe_dir)
+            lints, hints = linter.lint_meta_yaml({}, recipe_dir)
             self.assertNotIn(expected_message, lints)
 
     def test_jinja2_vars(self):
@@ -244,7 +300,7 @@ class Test_linter(unittest.TestCase):
         )
 
         with tmp_directory() as recipe_dir:
-            with io.open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
+            with open(recipe_dir / "meta.yaml", "w") as fh:
                 fh.write(
                     """
                     package:
@@ -262,7 +318,7 @@ class Test_linter(unittest.TestCase):
                     """
                 )
 
-            _, hints = linter.lintify_meta_yaml({}, recipe_dir)
+            _, hints = linter.lint_meta_yaml({}, recipe_dir)
             self.assertTrue(any(h.startswith(expected_message) for h in hints))
 
     def test_selectors(self):
@@ -275,7 +331,7 @@ class Test_linter(unittest.TestCase):
         with tmp_directory() as recipe_dir:
 
             def assert_selector(selector, is_good=True):
-                with io.open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
+                with open(recipe_dir / "meta.yaml", "w") as fh:
                     fh.write(
                         """
                             package:
@@ -285,7 +341,7 @@ class Test_linter(unittest.TestCase):
                             selector
                         )
                     )
-                lints, hints = linter.lintify_meta_yaml({}, recipe_dir)
+                lints, hints = linter.lint_meta_yaml({}, recipe_dir)
                 if is_good:
                     message = (
                         "Found lints when there shouldn't have been a "
@@ -316,7 +372,7 @@ class Test_linter(unittest.TestCase):
                     expected_start = "Old-style Python selectors (py27, py34, py35, py36) are deprecated"
                 else:
                     expected_start = "Old-style Python selectors (py27, py35, etc) are only available"
-                with io.open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
+                with open(recipe_dir / "meta.yaml", "w") as fh:
                     fh.write(meta_string)
                 lints, hints = linter.main(recipe_dir, return_hints=True)
                 if is_good:
@@ -426,7 +482,7 @@ class Test_linter(unittest.TestCase):
         with tmp_directory() as recipe_dir:
 
             def assert_noarch_selector(meta_string, is_good=False):
-                with io.open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
+                with open(recipe_dir / "meta.yaml", "w") as fh:
                     fh.write(meta_string)
                 lints = linter.main(recipe_dir)
                 if is_good:
@@ -574,7 +630,7 @@ class Test_linter(unittest.TestCase):
         with tmp_directory() as recipe_dir:
 
             def assert_noarch_hint(meta_string, is_good=False):
-                with io.open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
+                with open(recipe_dir / "meta.yaml", "w") as fh:
                     fh.write(meta_string)
                 lints, hints = linter.main(recipe_dir, return_hints=True)
                 if is_good:
@@ -645,7 +701,7 @@ class Test_linter(unittest.TestCase):
         # Test that we can use os.environ in a recipe. We don't care about
         # the results here.
         with tmp_directory() as recipe_dir:
-            with io.open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
+            with open(recipe_dir / "meta.yaml", "w") as fh:
                 fh.write(
                     """
                         {% set version = os.environ.get('WIBBLE') %}
@@ -660,14 +716,14 @@ class Test_linter(unittest.TestCase):
         # Test that we can use load_file_regex in a recipe. We don't care about
         # the results here.
         with tmp_directory() as recipe_dir:
-            with io.open(os.path.join(recipe_dir, "sha256"), "w") as fh:
+            with open(recipe_dir / "sha256", "w") as fh:
                 fh.write(
                     """
                         d0e46ea5fca7d4c077245fe0b4195a828d9d4d69be8a0bd46233b2c12abd2098  iwftc_osx.zip
                         8ce4dc535b21484f65027be56263d8b0d9f58e57532614e1a8f6881f3b8fe260  iwftc_win.zip
                         """
                 )
-            with io.open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
+            with open(recipe_dir / "meta.yaml", "w") as fh:
                 fh.write(
                     """
                         {% set sha256_osx = load_file_regex(load_file="sha256",
@@ -686,7 +742,7 @@ class Test_linter(unittest.TestCase):
         # renders conda-build functions to just function stubs to pass the linting.
         # TODO: add *args and **kwargs for functions used to parse the file.
         with tmp_directory() as recipe_dir:
-            with io.open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
+            with open(recipe_dir / "meta.yaml", "w") as fh:
                 fh.write(
                     """
                         {% set data = load_file_data("IDONTNEED", from_recipe_dir=True, recipe_dir=".") %}
@@ -703,7 +759,7 @@ class Test_linter(unittest.TestCase):
         # renders conda-build functions to just function stubs to pass the linting.
         # TODO: add *args and **kwargs for functions used to parse the file.
         with tmp_directory() as recipe_dir:
-            with io.open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
+            with open(recipe_dir / "meta.yaml", "w") as fh:
                 fh.write(
                     """
                         {% set data = load_setup_py_data("IDONTNEED", from_recipe_dir=True, recipe_dir=".") %}
@@ -720,7 +776,7 @@ class Test_linter(unittest.TestCase):
         # renders conda-build functions to just function stubs to pass the linting.
         # TODO: add *args and **kwargs for functions used to parse the data.
         with tmp_directory() as recipe_dir:
-            with io.open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
+            with open(recipe_dir / "meta.yaml", "w") as fh:
                 fh.write(
                     """
                         {% set data = load_str_data("IDONTNEED", "json") %}
@@ -734,7 +790,7 @@ class Test_linter(unittest.TestCase):
     def test_jinja_os_sep(self):
         # Test that we can use os.sep in a recipe.
         with tmp_directory() as recipe_dir:
-            with io.open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
+            with open(recipe_dir / "meta.yaml", "w") as fh:
                 fh.write(
                     """
                         package:
@@ -750,7 +806,7 @@ class Test_linter(unittest.TestCase):
         # Test that we can use target_platform in a recipe. We don't care about
         # the results here.
         with tmp_directory() as recipe_dir:
-            with io.open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
+            with open(recipe_dir / "meta.yaml", "w") as fh:
                 fh.write(
                     """
                         package:
@@ -770,11 +826,11 @@ class Test_linter(unittest.TestCase):
                 "number": 0,
             }
         }
-        lints, hints = linter.lintify_meta_yaml(meta)
+        lints, hints = linter.lint_meta_yaml(meta)
         self.assertNotIn(expected_message, lints)
 
         meta = {"build": {"skip": "True", "script": "python setup.py install"}}
-        lints, hints = linter.lintify_meta_yaml(meta)
+        lints, hints = linter.lint_meta_yaml(meta)
         self.assertIn(expected_message, lints)
 
     def test_bad_requirements_order(self):
@@ -785,7 +841,7 @@ class Test_linter(unittest.TestCase):
         )
 
         meta = {"requirements": OrderedDict([["run", "a"], ["build", "a"]])}
-        lints, hints = linter.lintify_meta_yaml(meta)
+        lints, hints = linter.lint_meta_yaml(meta)
         self.assertIn(expected_message, lints)
 
         meta = {
@@ -793,11 +849,11 @@ class Test_linter(unittest.TestCase):
                 [["run", "a"], ["invalid", "a"], ["build", "a"]]
             )
         }
-        lints, hints = linter.lintify_meta_yaml(meta)
+        lints, hints = linter.lint_meta_yaml(meta)
         self.assertIn(expected_message, lints)
 
         meta = {"requirements": OrderedDict([["build", "a"], ["run", "a"]])}
-        lints, hints = linter.lintify_meta_yaml(meta)
+        lints, hints = linter.lint_meta_yaml(meta)
         self.assertNotIn(expected_message, lints)
 
     def test_noarch_python_bound(self):
@@ -818,7 +874,7 @@ class Test_linter(unittest.TestCase):
                 ],
             },
         }
-        lints, hints = linter.lintify_meta_yaml(meta)
+        lints, hints = linter.lint_meta_yaml(meta)
         self.assertIn(expected_message, lints)
 
         meta = {
@@ -832,7 +888,7 @@ class Test_linter(unittest.TestCase):
                 ],
             },
         }
-        lints, hints = linter.lintify_meta_yaml(meta)
+        lints, hints = linter.lint_meta_yaml(meta)
         self.assertNotIn(expected_message, lints)
 
         meta = {
@@ -846,7 +902,7 @@ class Test_linter(unittest.TestCase):
                 ],
             },
         }
-        lints, hints = linter.lintify_meta_yaml(meta)
+        lints, hints = linter.lint_meta_yaml(meta)
         self.assertNotIn(expected_message, lints)
 
     def test_no_sha_with_dl(self):
@@ -854,21 +910,21 @@ class Test_linter(unittest.TestCase):
             "When defining a source/url please add a sha256, "
             "sha1 or md5 checksum (sha256 preferably)."
         )
-        lints, hints = linter.lintify_meta_yaml({"source": {"url": None}})
+        lints, hints = linter.lint_meta_yaml({"source": {"url": None}})
         self.assertIn(expected_message, lints)
 
-        lints, hints = linter.lintify_meta_yaml(
+        lints, hints = linter.lint_meta_yaml(
             {"source": {"url": None, "sha1": None}}
         )
         self.assertNotIn(expected_message, lints)
 
-        lints, hints = linter.lintify_meta_yaml(
+        lints, hints = linter.lint_meta_yaml(
             {"source": {"url": None, "sha256": None}}
         )
         self.assertNotIn(expected_message, lints, hints)
 
         meta = {"source": {"url": None, "md5": None}}
-        self.assertNotIn(expected_message, linter.lintify_meta_yaml(meta))
+        self.assertNotIn(expected_message, linter.lint_meta_yaml(meta))
 
     def test_redundant_license(self):
         meta = {
@@ -878,7 +934,7 @@ class Test_linter(unittest.TestCase):
                 "license": "MIT License",
             }
         }
-        lints, hints = linter.lintify_meta_yaml(meta)
+        lints, hints = linter.lint_meta_yaml(meta)
         expected_message = (
             "The recipe `license` should not include " 'the word "License".'
         )
@@ -904,7 +960,7 @@ class Test_linter(unittest.TestCase):
         }
         for license, good in licenses.items():
             meta = {"about": {"license": license}}
-            lints, hints = linter.lintify_meta_yaml(meta)
+            lints, hints = linter.lint_meta_yaml(meta)
             print(license, good)
             if good:
                 self.assertNotIn(msg, hints)
@@ -923,7 +979,7 @@ class Test_linter(unittest.TestCase):
         }
         for license, good in licenses.items():
             meta = {"about": {"license": license}}
-            lints, hints = linter.lintify_meta_yaml(meta)
+            lints, hints = linter.lint_meta_yaml(meta)
             if good:
                 self.assertNotIn(msg, hints)
             else:
@@ -937,7 +993,7 @@ class Test_linter(unittest.TestCase):
                 "license": "MIT",
             }
         }
-        lints, hints = linter.lintify_meta_yaml(meta)
+        lints, hints = linter.lint_meta_yaml(meta)
         expected_message = "license_file entry is missing, but is required."
         self.assertIn(expected_message, lints)
 
@@ -951,13 +1007,13 @@ class Test_linter(unittest.TestCase):
                 "license_file": None,
             }
         }
-        lints, hints = linter.lintify_meta_yaml(meta)
+        lints, hints = linter.lint_meta_yaml(meta)
         expected_message = "license_file entry is missing, but is required."
         self.assertIn(expected_message, lints)
 
     def test_recipe_name(self):
         meta = {"package": {"name": "mp++"}}
-        lints, hints = linter.lintify_meta_yaml(meta)
+        lints, hints = linter.lint_meta_yaml(meta)
         expected_message = (
             "Recipe name has invalid characters. only lowercase alpha, "
             "numeric, underscores, hyphens and dots allowed"
@@ -986,11 +1042,9 @@ class Test_linter(unittest.TestCase):
             bad_contents + [valid_content], [0, 0, 0, 2, 2, 2, 3, 3, 3, 1]
         ):
             with tmp_directory() as recipe_dir:
-                with io.open(os.path.join(recipe_dir, "meta.yaml"), "w") as f:
+                with open(recipe_dir / "meta.yaml", "w") as f:
                     f.write(content)
-                lints, hints = linter.lintify_meta_yaml(
-                    {}, recipe_dir=recipe_dir
-                )
+                lints, hints = linter.lint_meta_yaml({}, recipe_dir=recipe_dir)
                 if lines > 1:
                     expected_message = (
                         "There are {} too many lines.  "
@@ -1017,13 +1071,13 @@ class Test_linter(unittest.TestCase):
 
     @unittest.skipUnless(is_gh_token_set(), "GH_TOKEN not set")
     def test_maintainer_exists(self):
-        lints, _ = linter.lintify_meta_yaml(
+        lints, _ = linter.lint_meta_yaml(
             {"extra": {"recipe-maintainers": ["support"]}}, conda_forge=True
         )
         expected_message = 'Recipe maintainer "support" does not exist'
         self.assertIn(expected_message, lints)
 
-        lints, _ = linter.lintify_meta_yaml(
+        lints, _ = linter.lint_meta_yaml(
             {"extra": {"recipe-maintainers": ["isuruf"]}}, conda_forge=True
         )
         expected_message = 'Recipe maintainer "isuruf" does not exist'
@@ -1033,26 +1087,26 @@ class Test_linter(unittest.TestCase):
             "Feedstock with the same name exists in conda-forge."
         )
         # Check that feedstock exists if staged_recipes
-        lints, _ = linter.lintify_meta_yaml(
+        lints, _ = linter.lint_meta_yaml(
             {"package": {"name": "python"}},
             recipe_dir="python",
             conda_forge=True,
         )
         self.assertIn(expected_message, lints)
-        lints, _ = linter.lintify_meta_yaml(
+        lints, _ = linter.lint_meta_yaml(
             {"package": {"name": "python"}},
             recipe_dir="python",
             conda_forge=False,
         )
         self.assertNotIn(expected_message, lints)
         # No lint if in a feedstock
-        lints, _ = linter.lintify_meta_yaml(
+        lints, _ = linter.lint_meta_yaml(
             {"package": {"name": "python"}},
             recipe_dir="recipe",
             conda_forge=True,
         )
         self.assertNotIn(expected_message, lints)
-        lints, _ = linter.lintify_meta_yaml(
+        lints, _ = linter.lint_meta_yaml(
             {"package": {"name": "python"}},
             recipe_dir="recipe",
             conda_forge=False,
@@ -1073,7 +1127,7 @@ class Test_linter(unittest.TestCase):
                 "There's a feedstock named python1, but tests assume that there isn't"
             )
         else:
-            lints, _ = linter.lintify_meta_yaml(
+            lints, _ = linter.lint_meta_yaml(
                 {"package": {"name": "python1"}},
                 recipe_dir="python",
                 conda_forge=True,
@@ -1097,27 +1151,27 @@ class Test_linter(unittest.TestCase):
             )
         else:
             # Check that feedstock exists if staged_recipes
-            lints, _ = linter.lintify_meta_yaml(
+            lints, _ = linter.lint_meta_yaml(
                 {"package": {"name": r}}, recipe_dir=r, conda_forge=True
             )
             self.assertIn(expected_message, lints)
-            lints, _ = linter.lintify_meta_yaml(
+            lints, _ = linter.lint_meta_yaml(
                 {"package": {"name": r}}, recipe_dir=r, conda_forge=False
             )
             self.assertNotIn(expected_message, lints)
             # No lint if in a feedstock
-            lints, _ = linter.lintify_meta_yaml(
+            lints, _ = linter.lint_meta_yaml(
                 {"package": {"name": r}}, recipe_dir="recipe", conda_forge=True
             )
             self.assertNotIn(expected_message, lints)
-            lints, _ = linter.lintify_meta_yaml(
+            lints, _ = linter.lint_meta_yaml(
                 {"package": {"name": r}},
                 recipe_dir="recipe",
                 conda_forge=False,
             )
             self.assertNotIn(expected_message, lints)
             # No lint if the name isn't specified
-            lints, _ = linter.lintify_meta_yaml(
+            lints, _ = linter.lint_meta_yaml(
                 {}, recipe_dir=r, conda_forge=True
             )
             self.assertNotIn(expected_message, lints)
@@ -1126,7 +1180,7 @@ class Test_linter(unittest.TestCase):
         try:
             bio.get_dir_contents("recipes/{}".format(r))
         except github.UnknownObjectException as e:
-            lints, _ = linter.lintify_meta_yaml(
+            lints, _ = linter.lint_meta_yaml(
                 {"package": {"name": r}}, recipe_dir=r, conda_forge=True
             )
             self.assertNotIn(expected_message, lints)
@@ -1140,7 +1194,7 @@ class Test_linter(unittest.TestCase):
         expected_message = (
             "A conda package with same name (fitsio) already exists."
         )
-        lints, hints = linter.lintify_meta_yaml(
+        lints, hints = linter.lint_meta_yaml(
             {
                 "package": {"name": "this-will-never-exist"},
                 "source": {
@@ -1153,7 +1207,7 @@ class Test_linter(unittest.TestCase):
         self.assertIn(expected_message, hints)
 
         # check that this doesn't choke
-        lints, hints = linter.lintify_meta_yaml(
+        lints, hints = linter.lint_meta_yaml(
             {
                 "package": {"name": "this-will-never-exist"},
                 "source": {
@@ -1174,7 +1228,7 @@ class Test_linter(unittest.TestCase):
 
         try:
             # Running the linter function
-            lints, _ = linter.lintify_meta_yaml(
+            lints, _ = linter.lint_meta_yaml(
                 {"extra": {"recipe-maintainers": maintainers}},
                 recipe_dir="python",
                 conda_forge=True,
@@ -1208,7 +1262,7 @@ class Test_linter(unittest.TestCase):
                 "number": 0,
             }
         }
-        lints, hints = linter.lintify_meta_yaml(meta)
+        lints, hints = linter.lint_meta_yaml(meta)
         self.assertNotIn(expected_message.format("build", "ski"), lints)
 
         meta = {
@@ -1218,32 +1272,32 @@ class Test_linter(unittest.TestCase):
                 "number": 0,
             }
         }
-        lints, hints = linter.lintify_meta_yaml(meta)
+        lints, hints = linter.lint_meta_yaml(meta)
         self.assertIn(expected_message.format("build", "ski"), lints)
 
         meta = {"source": {"urll": "http://test"}}
-        lints, hints = linter.lintify_meta_yaml(meta)
+        lints, hints = linter.lint_meta_yaml(meta)
         self.assertIn(expected_message.format("source", "urll"), lints)
 
         meta = {"source": [{"urll": "http://test"}, {"url": "https://test"}]}
-        lints, hints = linter.lintify_meta_yaml(meta)
+        lints, hints = linter.lint_meta_yaml(meta)
         self.assertIn(expected_message.format("source", "urll"), lints)
 
     def test_outputs(self):
         meta = OrderedDict([["outputs", [{"name": "asd"}]]])
-        lints, hints = linter.lintify_meta_yaml(meta)
+        lints, hints = linter.lint_meta_yaml(meta)
 
     def test_version(self):
         meta = {"package": {"name": "python", "version": "3.6.4"}}
         expected_message = "Package version 3.6.4 doesn't match conda spec"
-        lints, hints = linter.lintify_meta_yaml(meta)
+        lints, hints = linter.lint_meta_yaml(meta)
         self.assertNotIn(expected_message, lints)
 
         meta = {"package": {"name": "python", "version": "2.0.0~alpha0"}}
         expected_message = (
             "Package version 2.0.0~alpha0 doesn't match conda spec"
         )
-        lints, hints = linter.lintify_meta_yaml(meta)
+        lints, hints = linter.lint_meta_yaml(meta)
         self.assertIn(expected_message, lints)
 
     @unittest.skipUnless(is_gh_token_set(), "GH_TOKEN not set")
@@ -1252,13 +1306,13 @@ class Test_linter(unittest.TestCase):
             "Please move the recipe out of the example dir and into its "
             "own dir."
         )
-        lints, hints = linter.lintify_meta_yaml(
+        lints, hints = linter.lint_meta_yaml(
             {"extra": {"recipe-maintainers": ["support"]}},
             recipe_dir="recipes/example/",
             conda_forge=True,
         )
         self.assertIn(msg, lints)
-        lints = linter.lintify_meta_yaml(
+        lints = linter.lint_meta_yaml(
             {"extra": {"recipe-maintainers": ["support"]}},
             recipe_dir="python",
             conda_forge=True,
@@ -1285,7 +1339,7 @@ class Test_linter(unittest.TestCase):
 
     def test_string_source(self):
         url = "http://mistake.com/v1.0.tar.gz"
-        lints, hints = linter.lintify_meta_yaml({"source": url})
+        lints, hints = linter.lint_meta_yaml({"source": url})
         msg = (
             'The "source" section was expected to be a dictionary or a '
             "list, but got a {}.{}."
@@ -1300,7 +1354,7 @@ class Test_linter(unittest.TestCase):
                 "run": ["xonsh>1.0", "conda= 4.*", "conda-smithy<=54.*"],
             }
         }
-        lints, hints = linter.lintify_meta_yaml(meta)
+        lints, hints = linter.lint_meta_yaml(meta)
         filtered_lints = [
             lint for lint in lints if lint.startswith("``requirements: ")
         ]
@@ -1319,11 +1373,11 @@ class Test_linter(unittest.TestCase):
     def test_empty_host(self):
         meta = {"requirements": {"build": None, "host": None, "run": None}}
         # Test that this doesn't crash
-        lints, hints = linter.lintify_meta_yaml(meta)
+        lints, hints = linter.lint_meta_yaml(meta)
 
     def test_python_requirements(self):
         meta = {"requirements": {"host": ["python >=3"]}}
-        lints, hints = linter.lintify_meta_yaml(meta)
+        lints, hints = linter.lint_meta_yaml(meta)
         self.assertIn(
             "If python is a host requirement, it should be a run requirement.",
             lints,
@@ -1333,21 +1387,21 @@ class Test_linter(unittest.TestCase):
             "requirements": {"host": ["python >=3"]},
             "outputs": [{"name": "foo"}],
         }
-        lints, hints = linter.lintify_meta_yaml(meta)
+        lints, hints = linter.lint_meta_yaml(meta)
         self.assertNotIn(
             "If python is a host requirement, it should be a run requirement.",
             lints,
         )
 
         meta = {"requirements": {"host": ["python >=3", "python"]}}
-        lints, hints = linter.lintify_meta_yaml(meta)
+        lints, hints = linter.lint_meta_yaml(meta)
         self.assertNotIn(
             "Non noarch packages should have python requirement without any version constraints.",
             lints,
         )
 
         meta = {"requirements": {"host": ["python >=3"]}}
-        lints, hints = linter.lintify_meta_yaml(meta)
+        lints, hints = linter.lint_meta_yaml(meta)
         self.assertIn(
             "Non noarch packages should have python requirement without any version constraints.",
             lints,
@@ -1357,11 +1411,11 @@ class Test_linter(unittest.TestCase):
             "requirements": {"host": ["python"], "run": ["python-dateutil"]}
         }
         # Test that this doesn't crash
-        lints, hints = linter.lintify_meta_yaml(meta)
+        lints, hints = linter.lint_meta_yaml(meta)
 
     def test_r_base_requirements(self):
         meta = {"requirements": {"host": ["r-base >=3.5"]}}
-        lints, hints = linter.lintify_meta_yaml(meta)
+        lints, hints = linter.lint_meta_yaml(meta)
         self.assertIn(
             "If r-base is a host requirement, it should be a run requirement.",
             lints,
@@ -1371,21 +1425,21 @@ class Test_linter(unittest.TestCase):
             "requirements": {"host": ["r-base >=3.5"]},
             "outputs": [{"name": "foo"}],
         }
-        lints, hints = linter.lintify_meta_yaml(meta)
+        lints, hints = linter.lint_meta_yaml(meta)
         self.assertNotIn(
             "If r-base is a host requirement, it should be a run requirement.",
             lints,
         )
 
         meta = {"requirements": {"host": ["r-base >=3.5", "r-base"]}}
-        lints, hints = linter.lintify_meta_yaml(meta)
+        lints, hints = linter.lint_meta_yaml(meta)
         self.assertNotIn(
             "Non noarch packages should have r-base requirement without any version constraints.",
             lints,
         )
 
         meta = {"requirements": {"host": ["r-base >=3.5"]}}
-        lints, hints = linter.lintify_meta_yaml(meta)
+        lints, hints = linter.lint_meta_yaml(meta)
         self.assertIn(
             "Non noarch packages should have r-base requirement without any version constraints.",
             lints,
@@ -1411,7 +1465,7 @@ class Test_linter(unittest.TestCase):
                 "run": ["matplotlib >=2.3"],
             },
         }
-        lints, hints = linter.lintify_meta_yaml(meta, conda_forge=True)
+        lints, hints = linter.lint_meta_yaml(meta, conda_forge=True)
         expected = "Recipes should usually depend on `matplotlib-base`"
         self.assertTrue(any(hint.startswith(expected) for hint in hints))
 
@@ -1426,7 +1480,7 @@ class Test_linter(unittest.TestCase):
                 },
             ],
         }
-        lints, hints = linter.lintify_meta_yaml(meta, conda_forge=True)
+        lints, hints = linter.lint_meta_yaml(meta, conda_forge=True)
         expected = "Recipes should usually depend on `matplotlib-base`"
         self.assertTrue(any(hint.startswith(expected) for hint in hints))
 
@@ -1435,7 +1489,7 @@ class Test_linter(unittest.TestCase):
 class TestCLI_recipe_lint(unittest.TestCase):
     def test_cli_fail(self):
         with tmp_directory() as recipe_dir:
-            with io.open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
+            with open(recipe_dir / "meta.yaml", "w") as fh:
                 fh.write(
                     textwrap.dedent(
                         """
@@ -1455,7 +1509,7 @@ class TestCLI_recipe_lint(unittest.TestCase):
 
     def test_cli_success(self):
         with tmp_directory() as recipe_dir:
-            with io.open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
+            with open(recipe_dir / "meta.yaml", "w") as fh:
                 fh.write(
                     textwrap.dedent(
                         """
@@ -1486,7 +1540,7 @@ class TestCLI_recipe_lint(unittest.TestCase):
 
     def test_cli_environ(self):
         with tmp_directory() as recipe_dir:
-            with io.open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
+            with open(recipe_dir / "meta.yaml", "w") as fh:
                 fh.write(
                     textwrap.dedent(
                         """
@@ -1522,9 +1576,7 @@ class TestCLI_recipe_lint(unittest.TestCase):
         Tests that unicode does not confuse the linter.
         """
         with tmp_directory() as recipe_dir:
-            with io.open(
-                os.path.join(recipe_dir, "meta.yaml"), "wt", encoding="utf-8"
-            ) as fh:
+            with open(recipe_dir / "meta.yamL", "w", encoding="utf-8") as fh:
                 fh.write(
                     """
                     package:
@@ -1553,7 +1605,7 @@ class TestCLI_recipe_lint(unittest.TestCase):
         with tmp_directory() as recipe_dir:
 
             def assert_jinja(jinja_var, is_good=True):
-                with io.open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
+                with open(recipe_dir / "meta.yaml", "w") as fh:
                     fh.write(
                         """
                              {{% set name = "conda-smithy" %}}
@@ -1562,7 +1614,7 @@ class TestCLI_recipe_lint(unittest.TestCase):
                             jinja_var
                         )
                     )
-                lints, hints = linter.lintify_meta_yaml({}, recipe_dir)
+                lints, hints = linter.lint_meta_yaml({}, recipe_dir)
                 if is_good:
                     message = (
                         "Found lints when there shouldn't have been a "
