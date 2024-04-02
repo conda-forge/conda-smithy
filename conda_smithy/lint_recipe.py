@@ -249,7 +249,7 @@ def lintify_forge_yaml(
     return lint_result.lints, lint_result.hints
 
 
-def lint_meta_yaml(
+def lintify_meta_yaml(
     meta, recipe_dir=None, conda_forge=False
 ) -> tuple[list[str], list[str]]:
     """
@@ -1198,7 +1198,7 @@ def main(recipe_dir, conda_forge=False, return_hints=False):
         content = render_meta_yaml("".join(fh))
         meta = get_yaml().load(content)
 
-    results, hints = lint_meta_yaml(meta, recipe_dir, conda_forge)
+    results, hints = lintify_meta_yaml(meta, recipe_dir, conda_forge)
     forge_yaml_results = lint_forge_yaml(recipe_dir=Path(recipe_dir))
 
     results.extend(forge_yaml_results.lints)
