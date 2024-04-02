@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Callable
+from typing import Any, Callable, List
 
 
 @dataclass
 class LintsHints:
-    lints: list[str] = field(default_factory=list)
-    hints: list[str] = field(default_factory=list)
+    lints: List[str] = field(default_factory=list)
+    hints: List[str] = field(default_factory=list)
 
     def __add__(self, other: Any) -> LintsHints:
         if not isinstance(other, LintsHints):
