@@ -28,7 +28,9 @@ class RecipeLoader(yaml.BaseLoader):
                 for idx, (key_node, value_node) in enumerate(child_node.value):
                     if key_node.value == "if":
                         # we catch the first one, let's try to find next pair of (then | else)
-                        then_node_key, then_node_value = child_node.value[idx + 1]
+                        then_node_key, then_node_value = child_node.value[
+                            idx + 1
+                        ]
 
                         if not isinstance(then_node_key, yaml.ScalarNode):
                             raise ValueError("then can be only of Scalar type")
@@ -66,7 +68,9 @@ class RecipeLoader(yaml.BaseLoader):
                 node.start_mark,
             )
 
-        return [self.construct_object(child, deep=deep) for child in node.value]
+        return [
+            self.construct_object(child, deep=deep) for child in node.value
+        ]
 
 
 def remove_empty_keys(variant_dict):

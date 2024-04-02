@@ -73,13 +73,16 @@ def config_yaml(testing_workdir, recipe_dirname, request):
             config["r_base"] = ["4.2", "4.3"]
 
         yaml.dump(config, f, default_flow_style=False)
-        
-        config_path = os.path.abspath(os.path.join(__file__, '../', 'recipes', 'default_config', config_name))
-        config_text =  Path(config_path).read_text()
+
+        config_path = os.path.abspath(
+            os.path.join(
+                __file__, "../", "recipes", "default_config", config_name
+            )
+        )
+        config_text = Path(config_path).read_text()
 
         # need selectors, so write these more manually
         f.write(config_text)
-    
 
     # dummy file that needs to be present for circle ci.  This is created by the init function
     os.makedirs(os.path.join(testing_workdir, ".circleci"))
@@ -120,7 +123,7 @@ def config_yaml(testing_workdir, recipe_dirname, request):
 @pytest.fixture(scope="function")
 def noarch_recipe(config_yaml, recipe_dirname, request):
     # get the used params passed for config_yaml fixture
-    config_yaml_param_value = request.node.callspec.params['config_yaml']
+    config_yaml_param_value = request.node.callspec.params["config_yaml"]
     if config_yaml_param_value == "rattler-build":
         recipe_name = "recipe.yaml"
     else:
@@ -156,18 +159,19 @@ requirements:
 
 @pytest.fixture(scope="function")
 def r_recipe(config_yaml, request):
-    config_yaml_param_value = request.node.callspec.params['config_yaml']
+    config_yaml_param_value = request.node.callspec.params["config_yaml"]
     if config_yaml_param_value == "rattler-build":
         recipe_name = "recipe.yaml"
     else:
         recipe_name = "meta.yaml"
 
-
     with open(os.path.join(config_yaml, "recipe", recipe_name), "w") as fh:
-        
-        r_recipe_template_path = os.path.abspath(os.path.join(__file__, "../", "recipes", "r_recipe", recipe_name))
+
+        r_recipe_template_path = os.path.abspath(
+            os.path.join(__file__, "../", "recipes", "r_recipe", recipe_name)
+        )
         recipe_template_text = Path(r_recipe_template_path).read_text()
-        
+
         fh.write(recipe_template_text)
 
     return RecipeConfigPair(
@@ -183,15 +187,17 @@ def r_recipe(config_yaml, request):
 
 @pytest.fixture(scope="function")
 def py_recipe(config_yaml, request):
-    config_yaml_param_value = request.node.callspec.params['config_yaml']
-    
+    config_yaml_param_value = request.node.callspec.params["config_yaml"]
+
     if config_yaml_param_value == "conda-build":
         recipe_name = "meta.yaml"
     else:
         recipe_name = "recipe.yaml"
 
     with open(os.path.join(config_yaml, "recipe", recipe_name), "w") as fh:
-        recipe_path = os.path.abspath(os.path.join(__file__, '../', 'recipes', 'py_recipe', recipe_name))
+        recipe_path = os.path.abspath(
+            os.path.join(__file__, "../", "recipes", "py_recipe", recipe_name)
+        )
 
         content = Path(recipe_path).read_text()
         fh.write(content)
@@ -278,18 +284,19 @@ MACOSX_DEPLOYMENT_TARGET:       # [osx]
 
 @pytest.fixture(scope="function")
 def upload_on_branch_recipe(config_yaml, request):
-    config_yaml_param_value = request.node.callspec.params['config_yaml']
+    config_yaml_param_value = request.node.callspec.params["config_yaml"]
     if config_yaml_param_value == "conda-build":
         recipe_name = "meta.yaml"
     else:
         recipe_name = "recipe.yaml"
 
     with open(os.path.join(config_yaml, "recipe", recipe_name), "w") as fh:
-        recipe_path = os.path.abspath(os.path.join(__file__, '../', 'recipes', 'py_recipe', recipe_name))
+        recipe_path = os.path.abspath(
+            os.path.join(__file__, "../", "recipes", "py_recipe", recipe_name)
+        )
 
         content = Path(recipe_path).read_text()
         fh.write(content)
-
 
     return RecipeConfigPair(
         str(config_yaml),
@@ -307,18 +314,17 @@ about:
     home: home
 """
     additional_requirement = ""
-    
-    config_yaml_param_value = request.node.callspec.params['config_yaml']
+
+    config_yaml_param_value = request.node.callspec.params["config_yaml"]
     if config_yaml_param_value == "conda-build":
         recipe_name = "meta.yaml"
         zlib_value = "1000"
     else:
         recipe_name = "recipe.yaml"
         about_home = ""
-        zlib_value = "1.2.12" 
+        zlib_value = "1.2.12"
         additional_requirement = "- ruby"
 
-    
     # write a migrator
     with open(os.path.join(config_yaml, "recipe", recipe_name), "w") as fh:
         fh.write(
@@ -364,17 +370,19 @@ zlib:
 
 
 @pytest.fixture(scope="function")
-def recipe_migration_cfep9_downgrade(config_yaml, recipe_migration_cfep9, request):
+def recipe_migration_cfep9_downgrade(
+    config_yaml, recipe_migration_cfep9, request
+):
     # write a downgrade migrator that lives next to the current migrator.
     # Only this, more recent migrator should apply.
     os.makedirs(
         os.path.join(config_yaml, ".ci_support", "migrations"), exist_ok=True
     )
-    config_yaml_param_value = request.node.callspec.params['config_yaml']
+    config_yaml_param_value = request.node.callspec.params["config_yaml"]
     if config_yaml_param_value == "conda-build":
         zlib_value = "999"
     else:
-        zlib_value = "1.2.11" 
+        zlib_value = "1.2.11"
     with open(
         os.path.join(
             config_yaml, ".ci_support", "migrations", "zlib-downgrade.yaml"
@@ -405,22 +413,23 @@ def recipe_migration_win_compiled(config_yaml, py_recipe, request):
     os.makedirs(
         os.path.join(config_yaml, ".ci_support", "migrations"), exist_ok=True
     )
-    config_yaml_param_value = request.node.callspec.params['config_yaml']
+    config_yaml_param_value = request.node.callspec.params["config_yaml"]
     if config_yaml_param_value == "conda-build":
         migration_name = "vc-migrate.yaml"
     else:
         migration_name = "ruby-migrate.yaml"
 
     with open(
-        os.path.join(
-            config_yaml, ".ci_support", "migrations", migration_name
-        ),
+        os.path.join(config_yaml, ".ci_support", "migrations", migration_name),
         "w",
     ) as fh:
-        migration_path = os.path.abspath(os.path.join(__file__, '../', 'recipes', 'win_migrations', migration_name))
+        migration_path = os.path.abspath(
+            os.path.join(
+                __file__, "../", "recipes", "win_migrations", migration_name
+            )
+        )
         content = Path(migration_path).read_text()
         fh.write(content)
-
 
     return RecipeConfigPair(
         str(config_yaml),
@@ -435,17 +444,20 @@ def recipe_migration_win_compiled(config_yaml, py_recipe, request):
 
 @pytest.fixture(scope="function")
 def skipped_recipe(config_yaml, request):
-    config_yaml_param_value = request.node.callspec.params['config_yaml']
+    config_yaml_param_value = request.node.callspec.params["config_yaml"]
     if config_yaml_param_value == "rattler-build":
         recipe_name = "recipe.yaml"
     else:
         recipe_name = "meta.yaml"
 
-    with open(os.path.join(config_yaml, "recipe", recipe_name), "w") as fh:        
-        recipe_path = os.path.abspath(os.path.join(__file__, '../', 'recipes', 'win_skipped_recipes', recipe_name))
+    with open(os.path.join(config_yaml, "recipe", recipe_name), "w") as fh:
+        recipe_path = os.path.abspath(
+            os.path.join(
+                __file__, "../", "recipes", "win_skipped_recipes", recipe_name
+            )
+        )
         content = Path(recipe_path).read_text()
         fh.write(content)
-
 
     return RecipeConfigPair(
         str(config_yaml),
@@ -460,15 +472,22 @@ def skipped_recipe(config_yaml, request):
 
 @pytest.fixture(scope="function")
 def python_skipped_recipe(config_yaml, request):
-    config_yaml_param_value = request.node.callspec.params['config_yaml']
+    config_yaml_param_value = request.node.callspec.params["config_yaml"]
     if config_yaml_param_value == "rattler-build":
         recipe_name = "recipe.yaml"
     else:
         recipe_name = "meta.yaml"
-    
 
     with open(os.path.join(config_yaml, "recipe", recipe_name), "w") as fh:
-        recipe_path = os.path.abspath(os.path.join(__file__, '../', 'recipes', 'python_skipped_recipes', recipe_name))
+        recipe_path = os.path.abspath(
+            os.path.join(
+                __file__,
+                "../",
+                "recipes",
+                "python_skipped_recipes",
+                recipe_name,
+            )
+        )
         content = Path(recipe_path).read_text()
         fh.write(content)
 
@@ -485,20 +504,25 @@ def python_skipped_recipe(config_yaml, request):
 
 @pytest.fixture(scope="function")
 def linux_skipped_recipe(config_yaml, request):
-    config_yaml_param_value = request.node.callspec.params['config_yaml']
+    config_yaml_param_value = request.node.callspec.params["config_yaml"]
     if config_yaml_param_value == "rattler-build":
         recipe_name = "recipe.yaml"
     else:
         recipe_name = "meta.yaml"
-    
-    
-    
+
     with open(os.path.join(config_yaml, "recipe", recipe_name), "w") as fh:
-        linux_recipe = os.path.abspath(os.path.join(__file__, '../', 'recipes', 'linux_skipped_recipes', recipe_name))
+        linux_recipe = os.path.abspath(
+            os.path.join(
+                __file__,
+                "../",
+                "recipes",
+                "linux_skipped_recipes",
+                recipe_name,
+            )
+        )
         content = Path(linux_recipe).read_text()
         fh.write(content)
 
-    
     return RecipeConfigPair(
         str(config_yaml),
         _load_forge_config(
@@ -551,14 +575,18 @@ skip_render:
 
 @pytest.fixture(scope="function")
 def choco_recipe(config_yaml, request):
-    config_yaml_param_value = request.node.callspec.params['config_yaml']
+    config_yaml_param_value = request.node.callspec.params["config_yaml"]
     if config_yaml_param_value == "conda-build":
         recipe_name = "meta.yaml"
     else:
         recipe_name = "recipe.yaml"
-    
+
     with open(os.path.join(config_yaml, "recipe", recipe_name), "w") as fh:
-        choco_recipe_path = os.path.abspath(os.path.join(__file__, '../', 'recipes', 'choco_recipes', recipe_name))
+        choco_recipe_path = os.path.abspath(
+            os.path.join(
+                __file__, "../", "recipes", "choco_recipes", recipe_name
+            )
+        )
         content = Path(choco_recipe_path).read_text()
         fh.write(content)
 

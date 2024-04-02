@@ -7,7 +7,10 @@ import tempfile
 from typing import Dict, List, Optional
 import yaml
 from ruamel.yaml import YAML
-from conda_build.metadata import MetaData as CondaMetaData, OPTIONALLY_ITERABLE_FIELDS
+from conda_build.metadata import (
+    MetaData as CondaMetaData,
+    OPTIONALLY_ITERABLE_FIELDS,
+)
 from conda_build.config import get_or_merge_config
 from conda_build.variants import (
     filter_combined_spec_to_used_keys,
@@ -23,7 +26,11 @@ from conda_smithy.rattler_build.utils import find_recipe
 
 class MetaData(CondaMetaData):
     def __init__(
-        self, path, rendered_recipe: Optional[dict] = None, config=None, variant=None
+        self,
+        path,
+        rendered_recipe: Optional[dict] = None,
+        config=None,
+        variant=None,
     ):
         self.config = get_or_merge_config(config, variant=variant)
         if os.path.isfile(path):
@@ -52,7 +59,9 @@ class MetaData(CondaMetaData):
 
     def parse_recipe(self):
         yaml = YAML()
-        with open(os.path.join(self.path, self._meta_name), "r") as recipe_yaml:
+        with open(
+            os.path.join(self.path, self._meta_name), "r"
+        ) as recipe_yaml:
             return yaml.load(recipe_yaml)
 
     def render_recipes(self, variants) -> List[Dict]:
@@ -61,13 +70,17 @@ class MetaData(CondaMetaData):
         try:
             with tempfile.NamedTemporaryFile(
                 mode="w+"
-            ) as outfile, tempfile.NamedTemporaryFile(mode="w") as variants_file:
+            ) as outfile, tempfile.NamedTemporaryFile(
+                mode="w"
+            ) as variants_file:
                 # dump variants in our variants that will be used to generate recipe
                 if variants:
-                    yaml.dump(variants, variants_file, default_flow_style=False)
+                    yaml.dump(
+                        variants, variants_file, default_flow_style=False
+                    )
 
                 variants_path = variants_file.name
-                
+
                 # when rattler-build will be released, change the path to it
                 _tmp_file_to_rattler_build = (
                     Path(__file__) / ".." / ".." / ".." / "rattler-build"
@@ -213,7 +226,8 @@ def render(
     """Given path to a recipe, return the MetaData object(s) representing that recipe, with jinja2
        templates evaluated.
 
-    Returns a list of (metadata, needs_download, needs_reparse in env) tuples"""
+    Returns a list of (metadata, needs_download, needs_reparse in env) tuples
+    """
 
     config = get_or_merge_config(config, **kwargs)
 
@@ -243,7 +257,9 @@ def render(
                 ]
             # TODO: still need to do an evaluation of selectors
             elif os.path.isfile(os.path.join(m.path, "variants.yaml")):
-                m.config.variant_config_files = [os.path.join(m.path, "variants.yaml")]
+                m.config.variant_config_files = [
+                    os.path.join(m.path, "variants.yaml")
+                ]
 
             # import pdb; pdb.set_trace()
 
@@ -259,13 +275,18 @@ def render(
             #     if used_variant_key in passed_variant:
             #         passed_variant[used_variant_key] = [used_variant_value]
 
-            package_variants = rattler_get_package_variants(m, variants=variants)
+            package_variants = rattler_get_package_variants(
+                m, variants=variants
+            )
 
             m.config.variants = package_variants[:]
 
             # we need to discard variants that we don't use
             for pkg_variant in package_variants[:]:
-                for used_variant_key, used_variant_value in used_variant.items():
+                for (
+                    used_variant_key,
+                    used_variant_value,
+                ) in used_variant.items():
                     if used_variant_key in pkg_variant:
                         if pkg_variant[used_variant_key] != used_variant_value:
                             if pkg_variant in package_variants:
@@ -312,7 +333,9 @@ def get_package_combined_spec(recipedir_or_metadata, config, variants=None):
     return combined_spec, specs
 
 
-def rattler_get_package_variants(recipedir_or_metadata, config=None, variants=None):
+def rattler_get_package_variants(
+    recipedir_or_metadata, config=None, variants=None
+):
     combined_spec, specs = get_package_combined_spec(
         recipedir_or_metadata, config=config, variants=variants
     )

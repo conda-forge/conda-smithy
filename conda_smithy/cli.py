@@ -34,7 +34,9 @@ def default_feedstock_config_path(feedstock_directory):
     return os.path.join(feedstock_directory, "conda-forge.yml")
 
 
-def generate_feedstock_content(target_directory, source_recipe_dir, conda_build_tool: Optional[str] = None):
+def generate_feedstock_content(
+    target_directory, source_recipe_dir, conda_build_tool: Optional[str] = None
+):
     target_directory = os.path.abspath(target_directory)
     recipe_dir = "recipe"
     target_recipe_dir = os.path.join(target_directory, recipe_dir)
@@ -135,13 +137,15 @@ class Init(Subcommand):
             meta = MetaData(args.recipe_directory)
         # find_recipe from MetaData raise OsError and empty results
         # even if I use directly that method, or wrap around it
-        # I still need to catch OsError here 
+        # I still need to catch OsError here
         except OSError:
             # it may contain recipe.yaml;
             meta = RattlerMetaData(args.recipe_directory)
-        
-        conda_build_tool: Optional[str] = RATTLER_BUILD if isinstance(meta, RattlerMetaData) else None
-    
+
+        conda_build_tool: Optional[str] = (
+            RATTLER_BUILD if isinstance(meta, RattlerMetaData) else None
+        )
+
         feedstock_directory = args.feedstock_directory.format(
             package=argparse.Namespace(name=meta.name())
         )
@@ -151,7 +155,9 @@ class Init(Subcommand):
 
         os.makedirs(feedstock_directory)
         subprocess.check_call(["git", "init"], cwd=feedstock_directory)
-        generate_feedstock_content(feedstock_directory, args.recipe_directory, conda_build_tool)
+        generate_feedstock_content(
+            feedstock_directory, args.recipe_directory, conda_build_tool
+        )
         subprocess.check_call(
             ["git", "commit", "-m", msg], cwd=feedstock_directory
         )

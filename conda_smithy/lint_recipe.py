@@ -31,7 +31,10 @@ from conda_build.metadata import (
     ensure_valid_license_family,
     FIELDS as cbfields,
 )
-from conda_smithy.validate_schema import RATTLER_RECIPE_YAML_SCHEMA_FILE, validate_json_schema
+from conda_smithy.validate_schema import (
+    RATTLER_RECIPE_YAML_SCHEMA_FILE,
+    validate_json_schema,
+)
 
 from .utils import render_meta_yaml, get_yaml
 
@@ -1112,7 +1115,7 @@ def _format_rattler_validation_msg(error: "jsonschema.ValidationError"):
 
         $(.top_level_key.2nd_level_key)
     """
-    
+
     return cleandoc(
         f"""
         In recipe.yaml: `{error.instance}`.
@@ -1121,13 +1124,13 @@ def _format_rattler_validation_msg(error: "jsonschema.ValidationError"):
     )
 
 
-
 def _lint_recipe_yaml(recipe_path):
     with open(recipe_path) as fh:
         meta = get_yaml().load(fh)
-    
-    return validate_json_schema(meta, schema_file=RATTLER_RECIPE_YAML_SCHEMA_FILE)
-    
+
+    return validate_json_schema(
+        meta, schema_file=RATTLER_RECIPE_YAML_SCHEMA_FILE
+    )
 
 
 def main(recipe_dir, conda_forge=False, return_hints=False):
@@ -1137,7 +1140,9 @@ def main(recipe_dir, conda_forge=False, return_hints=False):
         # check if it's recipe.yaml
         recipe_meta = os.path.join(recipe_dir, "recipe.yaml")
         if not os.path.exists(recipe_meta):
-            raise IOError("Feedstock has no recipe/meta.yaml or recipe/recipe.yaml.")
+            raise IOError(
+                "Feedstock has no recipe/meta.yaml or recipe/recipe.yaml."
+            )
 
     if recipe_meta.endswith("meta.yaml"):
         with io.open(recipe_meta, "rt") as fh:
@@ -1149,7 +1154,6 @@ def main(recipe_dir, conda_forge=False, return_hints=False):
         results = [_format_rattler_validation_msg(err) for err in errors]
         hints = [_format_rattler_validation_msg(hint) for hint in hints]
 
-    
     validation_errors, validation_hints = lintify_forge_yaml(
         recipe_dir=recipe_dir
     )

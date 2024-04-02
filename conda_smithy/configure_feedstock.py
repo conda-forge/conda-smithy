@@ -914,13 +914,13 @@ def _render_ci_provider(
 
         # detect if `compiler('cuda')` is used in meta.yaml,
         # and set appropriate environment variable
-        
+
         # detect if it's rattler-build recipe
         if forge_config["conda_build_tool"] == RATTLER_BUILD:
             recipe_file = "recipe.yaml"
         else:
             recipe_file = "meta.yaml"
-        
+
         with open(
             os.path.join(forge_dir, forge_config["recipe_dir"], recipe_file)
         ) as f:
@@ -934,7 +934,7 @@ def _render_ci_provider(
             if pat.match(ml):
                 os.environ["CF_CUDA_ENABLED"] = "True"
 
-        # TODO: 
+        # TODO:
         config = conda_build.config.get_or_merge_config(
             None,
             exclusive_config_file=forge_config["exclusive_config_file"],
@@ -943,8 +943,8 @@ def _render_ci_provider(
         )
 
         # Get the combined variants from normal variant locations prior to running migrations
-        
-        # here we combine conda_build from our recipe, and the one that was 
+
+        # here we combine conda_build from our recipe, and the one that was
         # built on top calling conda_build.config.get_or_merge_config
         # usually it will result in having the conda_build.yaml from cf-pinning
         # or you can have your exclusive_config_file
@@ -955,7 +955,7 @@ def _render_ci_provider(
             _,
         ) = conda_build.variants.get_package_combined_spec(
             os.path.join(forge_dir, forge_config["recipe_dir"]), config=config
-        )   
+        )
 
         # here we should load our variants.yaml
         # if it's present present
@@ -963,14 +963,18 @@ def _render_ci_provider(
             # in reality get_selectors return just the namespace
             # so we can reuse it for our new recipe
             namespace = get_selectors(config)
-            variants_path = os.path.join(forge_dir, forge_config["recipe_dir"], 'variants.yaml')
+            variants_path = os.path.join(
+                forge_dir, forge_config["recipe_dir"], "variants.yaml"
+            )
             if os.path.exists(variants_path):
                 new_spec = parse_recipe_config_file(variants_path, namespace)
                 specs = {
-                    'combined_spec': combined_variant_spec,
-                    'variants.yaml': new_spec
+                    "combined_spec": combined_variant_spec,
+                    "variants.yaml": new_spec,
                 }
-                combined_variant_spec = conda_build.variants.combine_specs(specs)
+                combined_variant_spec = conda_build.variants.combine_specs(
+                    specs
+                )
 
         migrated_combined_variant_spec = migrate_combined_spec(
             combined_variant_spec,
@@ -1100,14 +1104,12 @@ def _render_ci_provider(
             archs,
             enable_platform,
             upload_packages,
-        ):  
+        ):
             if enable:
                 dumped_config = dump_subspace_config_files(
-                        metas, forge_dir, platform, arch, upload, forge_config
-                    )
-                configs.extend(
-                    dumped_config
+                    metas, forge_dir, platform, arch, upload, forge_config
                 )
+                configs.extend(dumped_config)
                 plat_arch = f"{platform}_{arch}"
                 forge_config[plat_arch]["enabled"] = True
                 fancy_platforms.append(fancy_name.get(plat_arch, plat_arch))
@@ -1810,7 +1812,7 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
 
 def render_azure(jinja_env, forge_config, forge_dir, return_metadata=False):
     target_path = os.path.join(forge_dir, "azure-pipelines.yml")
-    
+
     template_filename = "azure-pipelines.yml.tmpl"
 
     fast_finish_text = ""
@@ -1981,12 +1983,16 @@ def render_README(jinja_env, forge_config, forge_dir, render_info=None):
             if forge_config["conda_build_tool"] == RATTLER_BUILD:
                 metas = rattler_render(
                     os.path.join(forge_dir, forge_config["recipe_dir"]),
-                    exclusive_config_file=forge_config["exclusive_config_file"],
+                    exclusive_config_file=forge_config[
+                        "exclusive_config_file"
+                    ],
                 )
             else:
                 metas = conda_build.api.render(
                     os.path.join(forge_dir, forge_config["recipe_dir"]),
-                    exclusive_config_file=forge_config["exclusive_config_file"],
+                    exclusive_config_file=forge_config[
+                        "exclusive_config_file"
+                    ],
                     permit_undefined_jinja=True,
                     finalize=False,
                     bypass_env_check=True,
@@ -2674,7 +2680,7 @@ def main(
             return True
 
     forge_dir = os.path.abspath(forge_file_directory)
-    
+
     # TODO: I think in rattler-build we don't use it
     # so it would be appropriate to throw a exception here
     # if it's used with new recipe
