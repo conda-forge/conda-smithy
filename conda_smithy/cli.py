@@ -82,7 +82,7 @@ def generate_feedstock_content(
             yaml.dump(_cfg_feedstock, fp)
 
 
-class Subcommand(object):
+class Subcommand:
     #: The name of the subcommand
     subcommand = None
     aliases = []

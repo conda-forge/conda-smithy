@@ -120,7 +120,7 @@ def render_meta_yaml(text):
 def update_conda_forge_config(forge_yaml):
     """Utility method used to update conda forge configuration files
 
-    Uage:
+    Usage:
     >>> with update_conda_forge_config(somepath) as cfg:
     ...     cfg['foo'] = 'bar'
     """
