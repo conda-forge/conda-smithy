@@ -92,7 +92,7 @@ fi
 
 if [[ "${BUILD_WITH_CONDA_DEBUG:-0}" == 1 ]]; then
     {%- if conda_build_tool != "rattler-build" %}
-    
+
       if [[ "x${BUILD_OUTPUT_ID:-}" != "x" ]]; then
           EXTRA_CB_OPTIONS="${EXTRA_CB_OPTIONS:-} --output-id ${BUILD_OUTPUT_ID}"
       fi
@@ -112,18 +112,18 @@ else
     fi
 {% endif %}
     {%- if conda_build_tool != "rattler-build" %}
-    
+
       {{ BUILD_CMD }} ./{{ recipe_dir }} -m ./.ci_support/${CONFIG}.yaml \
           --suppress-variables ${EXTRA_CB_OPTIONS:-} \
           --clobber-file ./.ci_support/clobber_${CONFIG}.yaml \
           --extra-meta flow_run_id="$flow_run_id" remote_url="$remote_url" sha="$sha"
-    
+
     {%- else %}
-    
+
       {{ BUILD_CMD }} --recipe ./{{ recipe_dir }} -m ./.ci_support/${CONFIG}.yaml --output-dir ${MINIFORGE_HOME}/conda-bld
-    
+
     {%- endif %}
-    
+
 
     {%- if conda_forge_output_validation %}
     ( startgroup "Validating outputs" ) 2> /dev/null

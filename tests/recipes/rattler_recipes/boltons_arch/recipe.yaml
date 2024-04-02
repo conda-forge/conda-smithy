@@ -14,7 +14,7 @@ source:
 
 build:
   # noarch: python
-  script: 
+  script:
     - python -m pip install . --no-deps -vv
 
 requirements:
@@ -22,11 +22,11 @@ requirements:
     - python
     - pip
     - setuptools
-    
+
     - if: not win
       then:
         - ruby
-  
+
   run:
     - python >=3.7
 
