@@ -1,6 +1,7 @@
 import json
 from inspect import cleandoc
 from textwrap import indent
+from typing import List
 
 import jsonschema
 from pydantic import BaseModel
@@ -80,7 +81,7 @@ def lint_extra_fields(
     return LintsHints(hints=hints)
 
 
-FORGE_YAML_LINTERS: list[Linter] = [
+FORGE_YAML_LINTERS: List[Linter] = [
     lint_validate_json,
     lint_extra_fields,
 ]
