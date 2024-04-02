@@ -113,7 +113,7 @@ def rec_glob(path, patterns, ignores=None):
 
 def find_recipe(path):
     """
-    copied from conda_build.utils to persist same API flow
+    vendored from conda_build.utils to persist same API flow
 
     recurse through a folder, locating valid meta files (see VALID_METAS).  Raises error if more than one is found.
 

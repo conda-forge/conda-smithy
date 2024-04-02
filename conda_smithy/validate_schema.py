@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 from typing import Tuple, List
-from jsonschema import Draft202012Validator, validators, validate
+from jsonschema import Draft202012Validator, validators
 from jsonschema.exceptions import ValidationError
 
 CONDA_FORGE_YAML_DEFAULTS_FILE = (

@@ -516,8 +516,7 @@ def _collapse_subpackage_variants(
     is_noarch = True
 
     for meta in list_of_metas:
-        used_vars = meta.get_used_vars()
-        all_used_vars.update(used_vars)
+        all_used_vars.update(meta.get_used_vars())
         # this is a hack to work around the fact that we specify mpi variants
         # via an `mpi` variable in the CBC but we do not parse our recipes
         # twice to ensure the pins given by the variant also show up in the
@@ -568,8 +567,6 @@ def _collapse_subpackage_variants(
             list_of_metas[0].config.input_variants, has_macdt
         )
     )
-    if squished_input_variants is None:
-        squished_input_variants = dict()
 
     squished_used_variants = (
         conda_build.variants.list_of_dicts_to_dict_of_lists(list(all_variants))
@@ -729,9 +726,6 @@ def dump_subspace_config_files(
         forge_config,
     )
 
-    # so we have
-    # top_level_loop_vars: is used vars variants inside the recipe
-    # metas[0].get_used_vars() without channel_targets for some reason :)
     logger.debug(
         "collapsed subspace config files: {}".format(pprint.pformat(configs))
     )
@@ -928,13 +922,11 @@ def _render_ci_provider(
 
         # looking for `compiler('cuda')` with both quote variants;
         # do not match if there is a `#` somewhere before on the line
-        # TODO: Ask directly from recipe.yaml if we have cuda compiler
         pat = re.compile(r"^[^\#]*compiler\((\"cuda\"|\'cuda\')\).*")
         for ml in meta_lines:
             if pat.match(ml):
                 os.environ["CF_CUDA_ENABLED"] = "True"
 
-        # TODO:
         config = conda_build.config.get_or_merge_config(
             None,
             exclusive_config_file=forge_config["exclusive_config_file"],
@@ -943,13 +935,6 @@ def _render_ci_provider(
         )
 
         # Get the combined variants from normal variant locations prior to running migrations
-
-        # here we combine conda_build from our recipe, and the one that was
-        # built on top calling conda_build.config.get_or_merge_config
-        # usually it will result in having the conda_build.yaml from cf-pinning
-        # or you can have your exclusive_config_file
-
-        # use also variants.yml as spec
         (
             combined_variant_spec,
             _,
@@ -957,11 +942,11 @@ def _render_ci_provider(
             os.path.join(forge_dir, forge_config["recipe_dir"]), config=config
         )
 
-        # here we should load our variants.yaml
-        # if it's present present
+        # If we are using new recipe
+        # we also load rattler-build variants.yaml
         if recipe_file == "recipe.yaml":
-            # in reality get_selectors return just the namespace
-            # so we can reuse it for our new recipe
+            # get_selectors from conda-build return namespace
+            # so it is usefull to reuse it here
             namespace = get_selectors(config)
             variants_path = os.path.join(
                 forge_dir, forge_config["recipe_dir"], "variants.yaml"
@@ -1052,8 +1037,6 @@ def _render_ci_provider(
                     bypass_env_check=True,
                     channel_urls=channel_sources,
                 )
-        except Exception as e:
-            raise e
         finally:
             if os.path.exists(_recipe_cbc + ".conda.smithy.bak"):
                 os.rename(_recipe_cbc + ".conda.smithy.bak", _recipe_cbc)
@@ -1999,7 +1982,7 @@ def render_README(jinja_env, forge_config, forge_dir, render_info=None):
                     trim_skip=False,
                 )
             metas = [m[0] for m in metas]
-        except Exception as e:
+        except Exception:
             raise RuntimeError(
                 "Could not create any metadata for rendering the README.md!"
                 " This likely indicates a serious bug or a feedstock with no actual"
@@ -2681,9 +2664,6 @@ def main(
 
     forge_dir = os.path.abspath(forge_file_directory)
 
-    # TODO: I think in rattler-build we don't use it
-    # so it would be appropriate to throw a exception here
-    # if it's used with new recipe
     if exclusive_config_file is not None:
         exclusive_config_file = os.path.join(forge_dir, exclusive_config_file)
         if not os.path.exists(exclusive_config_file):

@@ -136,10 +136,11 @@ class Init(Subcommand):
         try:
             meta = MetaData(args.recipe_directory)
         # find_recipe from MetaData raise OsError and empty results
-        # even if I use directly that method, or wrap around it
-        # I still need to catch OsError here
+        # even if we use directly that method, or wrap around it
+        # We still need to catch OsError here
         except OSError:
             # it may contain recipe.yaml;
+            # if not it will raise OSError
             meta = RattlerMetaData(args.recipe_directory)
 
         conda_build_tool: Optional[str] = (
@@ -730,7 +731,7 @@ class CISkeleton(Subcommand):
 
 
 def main():
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logging.INFO)
 
     parser = argparse.ArgumentParser(
         prog="conda smithy",

@@ -17,6 +17,7 @@ from conda_build.variants import (
     get_default_variant,
     validate_spec,
     combine_specs,
+    get_package_variants,
 )
 from conda_build.metadata import get_selectors
 
@@ -249,31 +250,13 @@ def render(
     for m in metadata_tuples:
         if not hasattr(m.config, "variants") or not m.config.variant:
             m.config.ignore_system_variants = True
-            # TODO: should be variants.yml? or do we need to support both of them?
 
-            if os.path.isfile(os.path.join(m.path, "conda_build_config.yaml")):
-                m.config.variant_config_files = [
-                    os.path.join(m.path, "conda_build_config.yaml")
-                ]
-            # TODO: still need to do an evaluation of selectors
-            elif os.path.isfile(os.path.join(m.path, "variants.yaml")):
+            if os.path.isfile(os.path.join(m.path, "variants.yaml")):
                 m.config.variant_config_files = [
                     os.path.join(m.path, "variants.yaml")
                 ]
 
-            # import pdb; pdb.set_trace()
-
-            # we can't reuse get_package_variants from conda-build
-            # so we ask directly metadata to give us used variant
-            # and by iterate the variants itself, we remove unused keys
-
-            # passed_variant = dict(variants) if variants else {}
-
             used_variant = m.get_used_variant()
-
-            # for used_variant_key, used_variant_value in used_var.items():
-            #     if used_variant_key in passed_variant:
-            #         passed_variant[used_variant_key] = [used_variant_value]
 
             package_variants = rattler_get_package_variants(
                 m, variants=variants
@@ -288,15 +271,16 @@ def render(
                     used_variant_value,
                 ) in used_variant.items():
                     if used_variant_key in pkg_variant:
-                        if pkg_variant[used_variant_key] != used_variant_value:
-                            if pkg_variant in package_variants:
-                                package_variants.remove(pkg_variant)
+                        if (
+                            pkg_variant[used_variant_key] != used_variant_value
+                            and pkg_variant in package_variants
+                        ):
+                            package_variants.remove(pkg_variant)
 
             m.config.variant = package_variants[0]
 
             # These are always the full set.  just 'variants' is the one that gets
             #     used mostly, and can be reduced
-
             m.config.input_variants = m.config.variants
             m.config.variants = package_variants
 
@@ -304,9 +288,9 @@ def render(
 
 
 def get_package_combined_spec(recipedir_or_metadata, config, variants=None):
-    # outputs a tuple of (combined_spec_dict_of_lists, used_spec_file_dict)
-    #
-    # The output of this function is order preserving, unlike get_package_variants
+    # this function is *vendored* version of
+    # get_package_combined_spec from conda_build
+    # with few changes to support rattler-build
 
     config = recipedir_or_metadata.config
     namespace = get_selectors(config)
@@ -336,6 +320,9 @@ def get_package_combined_spec(recipedir_or_metadata, config, variants=None):
 def rattler_get_package_variants(
     recipedir_or_metadata, config=None, variants=None
 ):
+    # this function is *vendored* version of
+    # get_package_variants from conda_build
+    # with few changes to support rattler-build
     combined_spec, specs = get_package_combined_spec(
         recipedir_or_metadata, config=config, variants=variants
     )

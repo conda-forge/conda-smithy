@@ -32,9 +32,6 @@ class RecipeLoader(yaml.BaseLoader):
                             idx + 1
                         ]
 
-                        if not isinstance(then_node_key, yaml.ScalarNode):
-                            raise ValueError("then can be only of Scalar type")
-
                         if then_node_key.value != "then":
                             raise ValueError(
                                 "cannot have if without then, please reformat your variant file"
