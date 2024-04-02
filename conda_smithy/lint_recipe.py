@@ -1,3 +1,5 @@
+import tempfile
+import warnings
 from collections.abc import Sequence, Mapping, Iterable
 
 import copy
@@ -7,6 +9,7 @@ import itertools
 import os
 import re
 from pathlib import Path
+from typing import Optional
 
 import requests
 import shutil
@@ -65,6 +68,16 @@ NEEDED_FAMILIES = ["gpl", "bsd", "mit", "apache", "psf"]
 sel_pat = re.compile(r"(.+?)\s*(#.*)?\[([^\[\]]+)\](?(2).*)$")
 jinja_pat = re.compile(r"\s*\{%\s*(set)\s+[^\s]+\s*=\s*[^\s]+\s*%\}")
 JINJA_VAR_PAT = re.compile(r"{{(.*?)}}")
+
+
+def __getattr__(name):
+    if name == "str_type":
+        warnings.warn(
+            "str_type is deprecated and will be removed in v4, use builtin str instead",
+            DeprecationWarning,
+        )
+        return str
+    raise AttributeError(f"module {__name__} has no attribute {name}")
 
 
 def get_section(parent, name, lints):
@@ -140,7 +153,7 @@ def find_local_config_file(recipe_dir, filename):
     return found_filesname[0] if found_filesname else None
 
 
-def lint(contents: dict, linters: Iterable[Linter]) -> LintsHints:
+def _lint(contents: dict, linters: Iterable[Linter]) -> LintsHints:
     """
     Lint the contents of a file.
     :param contents: the contents of the file to lint
@@ -191,7 +204,7 @@ def lint_forge_yaml(recipe_dir: Path) -> LintsHints:
     Lint the conda-forge.yml file, relative to the recipe_dir.
     :returns: a LintsHints object, containing lints and hints
     """
-    result = LintsHints()
+    additional_lints = LintsHints()
     yaml: dict
 
     try:
@@ -199,13 +212,41 @@ def lint_forge_yaml(recipe_dir: Path) -> LintsHints:
     except ValueError as e:
         return LintsHints(lints=[str(e)])
     except FileNotFoundError:
-        result += LintsHints(
+        additional_lints += LintsHints(
             hints=[
                 "No conda-forge.yml file found. This is treated as an empty config mapping."
             ]
         )
         yaml = {}
-    return lint(yaml, FORGE_YAML_LINTERS)
+    return _lint(yaml, FORGE_YAML_LINTERS) + additional_lints
+
+
+def lintify_forge_yaml(
+    recipe_dir: Optional[str] = None,
+) -> tuple[list[str], list[str]]:
+    warnings.warn(
+        "lintify_forge_yaml is deprecated and will be removed in v4, use lint_forge_yaml instead. "
+        "Make sure to pass a Path object and expect a LintsHints object as return value. "
+        "recipe_dir becomes a required argument.",
+        DeprecationWarning,
+    )
+
+    lint_result: LintsHints
+
+    if recipe_dir:
+        lint_result = lint_forge_yaml(Path(recipe_dir))
+    else:
+        with tempfile.TemporaryDirectory() as tmp_dirname:
+            tmp_dir = Path(tmp_dirname)
+            child_dir = tmp_dir / "child"
+            child_dir.mkdir()
+
+            with open(tmp_dir / "conda-forge.yml", "w") as f:
+                f.write("{}")
+
+            lint_result = lint_forge_yaml(child_dir)
+
+    return lint_result.lints, lint_result.hints
 
 
 def lint_meta_yaml(

@@ -152,6 +152,32 @@ class TestReadForgeYml(unittest.TestCase):
             self.assertIn("does not represent a dict", str(e.exception))
 
 
+class TestLintifyForgeYaml(unittest.TestCase):
+    def test_no_recipe_dir(self):
+        lints, hints = linter.lintify_forge_yaml()
+        self.assertEquals(0, len(lints))
+        self.assertEquals(0, len(hints))
+
+
+class TestLintForgeYaml(unittest.TestCase):
+    def test_no_dict(self):
+        with nested_tmp_directory() as recipe_dir:
+            with open(recipe_dir / "conda-forge.yml", "w") as fh:
+                fh.write("foo")
+
+            res = linter.lint_forge_yaml(recipe_dir)
+            self.assertEqual(1, len(res.lints))
+            self.assertIn("does not represent a dict", res.lints[0])
+            self.assertEqual(0, len(res.hints))
+
+    def test_empty_dir(self):
+        with nested_tmp_directory() as recipe_dir:
+            res = linter.lint_forge_yaml(recipe_dir)
+            self.assertEqual(0, len(res.lints))
+            self.assertEqual(1, len(res.hints))
+            self.assertIn("No conda-forge.yml file found", res.hints[0])
+
+
 class TestLinter(unittest.TestCase):
     def test_pin_compatible_in_run_exports(self):
         meta = {
