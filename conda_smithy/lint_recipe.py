@@ -9,7 +9,7 @@ import itertools
 import os
 import re
 from pathlib import Path
-from typing import Optional, Dict, Iterable
+from typing import Optional, Dict, Iterable, Tuple, List
 
 import requests
 import shutil
@@ -223,7 +223,7 @@ def lint_forge_yaml(recipe_dir: Path) -> LintsHints:
 
 def lintify_forge_yaml(
     recipe_dir: Optional[str] = None,
-) -> tuple[list[str], list[str]]:
+) -> Tuple[List[str], List[str]]:
     warnings.warn(
         "lintify_forge_yaml is deprecated and will be removed in v4, use lint_forge_yaml instead. "
         "Make sure to pass a Path object and expect a LintsHints object as return value. "
@@ -251,7 +251,7 @@ def lintify_forge_yaml(
 
 def lintify_meta_yaml(
     meta, recipe_dir=None, conda_forge=False
-) -> tuple[list[str], list[str]]:
+) -> Tuple[List[str], List[str]]:
     """
     Lint the meta.yaml file, relative to the recipe_dir.
     :returns: a tuple (lints, hints)
