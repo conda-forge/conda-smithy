@@ -9,7 +9,8 @@
 
 **Deprecated:**
 
-* <news item>
+* ``lint_recipe.str_type`` (will be removed in v4), use builtin ``str`` instead
+* ``lint_recipe.lintify_forge_yaml`` (will be removed in v4), use ``lint_forge_yaml`` instead (signature changed)
 
 **Removed:**
 
@@ -17,7 +18,7 @@
 
 **Fixed:**
 
-* general cleanup of the ``conda-forge.yml`` linting logic
+* general refactoring of the ``conda-forge.yml`` linting logic
 
 **Security:**
 
