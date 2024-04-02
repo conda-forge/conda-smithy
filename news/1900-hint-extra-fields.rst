@@ -5,6 +5,7 @@
 **Changed:**
 
 * ``recipe-lint`` now hints about additional ``conda-forge.yml`` fields that are not part of the schema
+* ``recipe-lint`` now hints about a missing ``conda-forge.yml`` file
 
 **Deprecated:**
 
