@@ -1,25 +1,25 @@
-# -*- coding: utf-8 -*-
-
-from collections.abc import Sequence, Mapping
-
-str_type = str
+from collections.abc import Sequence, Mapping, Iterable
 
 import copy
 import fnmatch
 import io
 import itertools
-import json
 import os
 import re
+from pathlib import Path
+
 import requests
 import shutil
 import subprocess
 import sys
 from glob import glob
-from inspect import cleandoc
-from textwrap import indent
 
 import github
+
+from conda_smithy.linting_types import LintsHints, Linter
+from conda_smithy.linters_forge_yml import (
+    FORGE_YAML_LINTERS,
+)
 
 if sys.version_info[:2] < (3, 11):
     import tomli as tomllib
@@ -31,10 +31,8 @@ from conda_build.metadata import (
     ensure_valid_license_family,
     FIELDS as cbfields,
 )
-from conda_smithy.validate_schema import validate_json_schema
 
 from .utils import render_meta_yaml, get_yaml
-
 
 FIELDS = copy.deepcopy(cbfields)
 
@@ -61,7 +59,6 @@ REQUIREMENTS_ORDER = ["build", "host", "run"]
 
 TEST_KEYS = {"imports", "commands"}
 TEST_FILES = ["run_test.py", "run_test.sh", "run_test.bat", "run_test.pl"]
-
 
 NEEDED_FAMILIES = ["gpl", "bsd", "mit", "apache", "psf"]
 
@@ -90,7 +87,7 @@ def get_list_section(parent, name, lints, allow_single=False):
     section = parent.get(name, [])
     if allow_single and isinstance(section, Mapping):
         return [section]
-    elif isinstance(section, Sequence) and not isinstance(section, str_type):
+    elif isinstance(section, Sequence) and not isinstance(section, str):
         return section
     else:
         msg = 'The "{}" section was expected to be a {}list, but got a {}.{}.'.format(
@@ -136,43 +133,88 @@ def find_local_config_file(recipe_dir, filename):
     # 3. staged-recipes
     found_filesname = (
         glob(os.path.join(recipe_dir, filename))
-        or glob(
-            os.path.join(recipe_dir, "..", filename),
-        )
-        or glob(
-            os.path.join(recipe_dir, "..", "..", filename),
-        )
+        or glob(os.path.join(recipe_dir, "..", filename))
+        or glob(os.path.join(recipe_dir, "..", "..", filename))
     )
 
     return found_filesname[0] if found_filesname else None
 
 
-def lintify_forge_yaml(recipe_dir=None) -> (list, list):
-    if recipe_dir:
-        forge_yaml_filename = (
-            glob(os.path.join(recipe_dir, "..", "conda-forge.yml"))
-            or glob(
-                os.path.join(recipe_dir, "conda-forge.yml"),
+def lint(contents: dict, linters: Iterable[Linter]) -> LintsHints:
+    """
+    Lint the contents of a file.
+    :param contents: the contents of the file to lint
+    :param linters: an iterable of linters to apply to the contents
+    :returns: a LintsHints object, containing lints and hints
+    """
+    results = LintsHints()
+
+    for linter in linters:
+        results += linter(contents)
+
+    return results
+
+
+def read_forge_yaml(recipe_dir: Path) -> dict:
+    """
+    Read the conda-forge.yml file, relative to the recipe_dir.
+    :returns: a dict representing the conda-forge.yml file
+    :raises FileNotFoundError: if no conda-forge.yml file is found
+    :raises ValueError: if the conda-forge.yml file does not represent a dict
+    """
+
+    forge_yaml_candidates = [
+        recipe_dir / ".." / "conda-forge.yml",
+        recipe_dir / "conda-forge.yml",
+        recipe_dir / ".." / ".." / "conda-forge.yml",
+    ]
+
+    for file in forge_yaml_candidates:
+        try:
+            forge_yaml = get_yaml().load(file)
+            if isinstance(forge_yaml, dict):
+                return forge_yaml
+
+            raise ValueError(
+                f"YAML file {file.resolve()} does not represent a dict"
             )
-            or glob(
-                os.path.join(recipe_dir, "..", "..", "conda-forge.yml"),
-            )
-        )
-        if forge_yaml_filename:
-            with open(forge_yaml_filename[0], "r") as fh:
-                forge_yaml = get_yaml().load(fh)
-        else:
-            forge_yaml = {}
+        except FileNotFoundError:
+            continue
     else:
-        forge_yaml = {}
+        raise FileNotFoundError(
+            f"No conda-forge.yml file found in recipe directory {recipe_dir.resolve()}"
+        )
 
-    # This is where we validate against the jsonschema and execute our custom validators.
-    return validate_json_schema(forge_yaml)
+
+def lint_forge_yaml(recipe_dir: Path) -> LintsHints:
+    """
+    Lint the conda-forge.yml file, relative to the recipe_dir.
+    :returns: a LintsHints object, containing lints and hints
+    """
+    result = LintsHints()
+    yaml: dict
+
+    try:
+        yaml = read_forge_yaml(recipe_dir)
+    except ValueError as e:
+        return LintsHints(lints=[str(e)])
+    except FileNotFoundError:
+        result += LintsHints(
+            hints=[
+                "No conda-forge.yml file found. This is treated as an empty config mapping."
+            ]
+        )
+        yaml = {}
+    return lint(yaml, FORGE_YAML_LINTERS)
 
 
-def lintify_meta_yaml(
+def lint_meta_yaml(
     meta, recipe_dir=None, conda_forge=False
-) -> (list, list):
+) -> tuple[list[str], list[str]]:
+    """
+    Lint the meta.yaml file, relative to the recipe_dir.
+    :returns: a tuple (lints, hints)
+    """
     lints = []
     hints = []
     major_sections = list(meta.keys())
@@ -221,9 +263,7 @@ def lintify_meta_yaml(
     # 3b: Maintainers should be a list
     if not (
         isinstance(extra_section.get("recipe-maintainers", []), Sequence)
-        and not isinstance(
-            extra_section.get("recipe-maintainers", []), str_type
-        )
+        and not isinstance(extra_section.get("recipe-maintainers", []), str)
     ):
         lints.append("Recipe maintainers should be a json list.")
 
@@ -910,13 +950,11 @@ def run_conda_forge_specific(meta, recipe_dir, lints, hints):
     if is_staged_recipes and recipe_name:
         cf = gh.get_user(os.getenv("GH_ORG", "conda-forge"))
 
-        for name in set(
-            [
-                recipe_name,
-                recipe_name.replace("-", "_"),
-                recipe_name.replace("_", "-"),
-            ]
-        ):
+        for name in {
+            recipe_name,
+            recipe_name.replace("-", "_"),
+            recipe_name.replace("_", "-"),
+        }:
             try:
                 if cf.get_repo("{}-feedstock".format(name)):
                     existing_recipe_name = name
@@ -1109,43 +1147,6 @@ def jinja_lines(lines):
             yield line, i
 
 
-def _format_validation_msg(error: "jsonschema.ValidationError"):
-    """Use the data on the validation error to generate improved reporting.
-
-    If available, get the help URL from the first level of the JSON path:
-
-        $(.top_level_key.2nd_level_key)
-    """
-    help_url = "https://conda-forge.org/docs/maintainer/conda_forge_yml"
-    path = error.json_path.split(".")
-    descriptionless_schema = {}
-    subschema_text = ""
-
-    if error.schema:
-        descriptionless_schema = {
-            k: v for (k, v) in error.schema.items() if k != "description"
-        }
-
-    if len(path) > 1:
-        help_url += f"""/#{path[1].split("[")[0].replace("_", "-")}"""
-        subschema_text = json.dumps(descriptionless_schema, indent=2)
-
-    return cleandoc(
-        f"""
-        In conda-forge.yml: [`{error.json_path}`]({help_url}) `=` `{error.instance}`.
-{indent(error.message, " " * 12 + "> ")}
-            <details>
-            <summary>Schema</summary>
-
-            ```json
-{indent(subschema_text, " " * 12)}
-            ```
-
-            </details>
-        """
-    )
-
-
 def main(recipe_dir, conda_forge=False, return_hints=False):
     recipe_dir = os.path.abspath(recipe_dir)
     recipe_meta = os.path.join(recipe_dir, "meta.yaml")
@@ -1156,13 +1157,11 @@ def main(recipe_dir, conda_forge=False, return_hints=False):
         content = render_meta_yaml("".join(fh))
         meta = get_yaml().load(content)
 
-    results, hints = lintify_meta_yaml(meta, recipe_dir, conda_forge)
-    validation_errors, validation_hints = lintify_forge_yaml(
-        recipe_dir=recipe_dir
-    )
+    results, hints = lint_meta_yaml(meta, recipe_dir, conda_forge)
+    forge_yaml_results = lint_forge_yaml(recipe_dir=Path(recipe_dir))
 
-    results.extend([_format_validation_msg(err) for err in validation_errors])
-    hints.extend([_format_validation_msg(hint) for hint in validation_hints])
+    results.extend(forge_yaml_results.lints)
+    hints.extend(forge_yaml_results.hints)
 
     if return_hints:
         return results, hints
@@ -1170,9 +1169,9 @@ def main(recipe_dir, conda_forge=False, return_hints=False):
         return results
 
 
-if __name__ == "__main__":
-    # This block is supposed to help debug how the rendered version
-    # of the linter bot would look like in Github. Taken from
+def main_debug():
+    # This function is supposed to help debug how the rendered version
+    # of the linter bot would look like in GitHub. Taken from
     # https://github.com/conda-forge/conda-forge-webservices/blob/747f75659/conda_forge_webservices/linting.py#L138C1-L146C72
     rel_path = sys.argv[1]
     lints, hints = main(rel_path, False, True)
@@ -1192,3 +1191,7 @@ if __name__ == "__main__":
         )
 
     print(*messages, sep="\n")
+
+
+if __name__ == "__main__":
+    main_debug()

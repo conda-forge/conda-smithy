@@ -474,6 +474,7 @@ BuildPlatform = create_model(
         platform.value: (Optional[Platforms], Field(default=platform.value))
         for platform in Platforms
     },
+    __config__=ConfigDict(extra="allow"),
 )
 
 OSVersion = create_model(
@@ -483,6 +484,7 @@ OSVersion = create_model(
         for platform in Platforms
         if platform.value.startswith("linux")
     },
+    __config__=ConfigDict(extra="allow"),
 )
 
 ProviderType = Union[List[CIservices], CIservices, bool, Nullable]
@@ -499,6 +501,7 @@ Provider = create_model(
             for plat in ("linux_64", "osx_64", "win_64")
         ]
     ),
+    __config__=ConfigDict(extra="allow"),
 )
 
 
@@ -516,7 +519,7 @@ class ConfigModel(BaseModel):
     # Values which are not expected to be present in the model dump, are
     # flagged with exclude=True. This is to avoid confusion when comparing
     # the model dump with the default conda-forge.yml file used for smithy
-    # or to avoid deprecated values been rendered.
+    # or to avoid deprecated values being rendered.
 
     conda_build: Optional[CondaBuildConfig] = Field(
         default_factory=CondaBuildConfig,

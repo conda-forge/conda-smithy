@@ -4,7 +4,6 @@ import subprocess
 import sys
 import time
 import argparse
-import io
 import tempfile
 
 from textwrap import dedent
