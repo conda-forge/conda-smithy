@@ -1,7 +1,6 @@
 import inspect
 import unittest
-from collections.abc import Callable
-from typing import Any, Set
+from typing import Set, Callable
 
 from conda_smithy import linters_forge_yml
 from conda_smithy.linters_forge_yml import lint_extra_fields
@@ -61,7 +60,7 @@ class TestHintExtraFields(unittest.TestCase):
 
 
 def test_complete_linter_list():
-    module_linters: Set[Callable[Any, LintsHints]] = set()
+    module_linters: Set[Callable[..., LintsHints]] = set()
 
     for name, member in inspect.getmembers(linters_forge_yml):
         if (
