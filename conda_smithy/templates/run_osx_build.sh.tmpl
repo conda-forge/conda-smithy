@@ -120,7 +120,7 @@ else
     
     {%- else %}
     
-      {{ BUILD_CMD }} --recipe ./{{ recipe_dir }} -m ./.ci_support/${CONFIG}.yaml
+      {{ BUILD_CMD }} --recipe ./{{ recipe_dir }} -m ./.ci_support/${CONFIG}.yaml --output-dir ${MINIFORGE_HOME}/conda-bld
     
     {%- endif %}
     

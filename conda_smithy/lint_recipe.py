@@ -31,7 +31,7 @@ from conda_build.metadata import (
     ensure_valid_license_family,
     FIELDS as cbfields,
 )
-from conda_smithy.validate_schema import validate_json_schema
+from conda_smithy.validate_schema import RATTLER_RECIPE_YAML_SCHEMA_FILE, validate_json_schema
 
 from .utils import render_meta_yaml, get_yaml
 
@@ -1105,17 +1105,51 @@ def _format_validation_msg(error: "jsonschema.ValidationError"):
     )
 
 
+def _format_rattler_validation_msg(error: "jsonschema.ValidationError"):
+    """Use the data on the validation error to generate improved reporting.
+
+    If available, get the help URL from the first level of the JSON path:
+
+        $(.top_level_key.2nd_level_key)
+    """
+    
+    return cleandoc(
+        f"""
+        In recipe.yaml: `{error.instance}`.
+{indent(error.message, " " * 12 + "> ")}
+        """
+    )
+
+
+
+def _lint_recipe_yaml(recipe_path):
+    with open(recipe_path) as fh:
+        meta = get_yaml().load(fh)
+    
+    return validate_json_schema(meta, schema_file=RATTLER_RECIPE_YAML_SCHEMA_FILE)
+    
+
+
 def main(recipe_dir, conda_forge=False, return_hints=False):
     recipe_dir = os.path.abspath(recipe_dir)
     recipe_meta = os.path.join(recipe_dir, "meta.yaml")
-    if not os.path.exists(recipe_dir):
-        raise IOError("Feedstock has no recipe/meta.yaml.")
+    if not os.path.exists(recipe_meta):
+        # check if it's recipe.yaml
+        recipe_meta = os.path.join(recipe_dir, "recipe.yaml")
+        if not os.path.exists(recipe_meta):
+            raise IOError("Feedstock has no recipe/meta.yaml or recipe/recipe.yaml.")
 
-    with io.open(recipe_meta, "rt") as fh:
-        content = render_meta_yaml("".join(fh))
-        meta = get_yaml().load(content)
+    if recipe_meta.endswith("meta.yaml"):
+        with io.open(recipe_meta, "rt") as fh:
+            content = render_meta_yaml("".join(fh))
+            meta = get_yaml().load(content)
+        results, hints = lintify_meta_yaml(meta, recipe_dir, conda_forge)
+    else:
+        errors, hints = _lint_recipe_yaml(recipe_meta)
+        results = [_format_rattler_validation_msg(err) for err in errors]
+        hints = [_format_rattler_validation_msg(hint) for hint in hints]
 
-    results, hints = lintify_meta_yaml(meta, recipe_dir, conda_forge)
+    
     validation_errors, validation_hints = lintify_forge_yaml(
         recipe_dir=recipe_dir
     )

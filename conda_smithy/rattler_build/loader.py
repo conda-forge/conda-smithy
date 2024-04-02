@@ -31,16 +31,12 @@ class RecipeLoader(yaml.BaseLoader):
                         then_node_key, then_node_value = child_node.value[idx + 1]
 
                         if not isinstance(then_node_key, yaml.ScalarNode):
-                            raise ValueError(
-                                "then can be only of Scalar type"
-                            )
+                            raise ValueError("then can be only of Scalar type")
 
-                        
                         if then_node_key.value != "then":
                             raise ValueError(
                                 "cannot have if without then, please reformat your variant file"
                             )
-                        
 
                         try:
                             _, else_node_value = child_node.value[idx + 2]
@@ -82,8 +78,9 @@ def remove_empty_keys(variant_dict):
 
     return filtered_dict
 
+
 def parse_recipe_config_file(path, namespace):
     with open(path) as f:
         with RecipeLoader.with_namespace(namespace):
-            content = yaml.load(f, Loader=RecipeLoader)          
+            content = yaml.load(f, Loader=RecipeLoader)
     return remove_empty_keys(content)

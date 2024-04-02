@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 from typing import Tuple, List
-from jsonschema import Draft202012Validator, validators
+from jsonschema import Draft202012Validator, validators, validate
 from jsonschema.exceptions import ValidationError
 
 CONDA_FORGE_YAML_DEFAULTS_FILE = (
@@ -10,6 +10,10 @@ CONDA_FORGE_YAML_DEFAULTS_FILE = (
 
 CONDA_FORGE_YAML_SCHEMA_FILE = (
     Path(__file__).resolve().parent / "data" / "conda-forge.json"
+)
+
+RATTLER_RECIPE_YAML_SCHEMA_FILE = (
+    Path(__file__).resolve().parent / "data" / "schema.json"
 )
 
 

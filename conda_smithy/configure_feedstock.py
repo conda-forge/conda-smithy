@@ -574,8 +574,6 @@ def _collapse_subpackage_variants(
     squished_used_variants = (
         conda_build.variants.list_of_dicts_to_dict_of_lists(list(all_variants))
     )
-    if squished_used_variants is None:
-        squished_used_variants = dict()
 
     logger.debug(
         "squished_input_variants {}".format(
@@ -734,9 +732,6 @@ def dump_subspace_config_files(
     # so we have
     # top_level_loop_vars: is used vars variants inside the recipe
     # metas[0].get_used_vars() without channel_targets for some reason :)
-    #
-    # 
-
     logger.debug(
         "collapsed subspace config files: {}".format(pprint.pformat(configs))
     )
@@ -1816,10 +1811,7 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
 def render_azure(jinja_env, forge_config, forge_dir, return_metadata=False):
     target_path = os.path.join(forge_dir, "azure-pipelines.yml")
     
-    if forge_config["conda_build_tool"] == RATTLER_BUILD:
-        template_filename = "azure-pipelines-new-recipe.yml.tmpl"
-    else:
-        template_filename = "azure-pipelines.yml.tmpl"
+    template_filename = "azure-pipelines.yml.tmpl"
 
     fast_finish_text = ""
 

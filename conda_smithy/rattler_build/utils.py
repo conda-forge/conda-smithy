@@ -6,6 +6,7 @@ from typing import Iterable
 
 VALID_METAS = ("recipe.yaml",)
 
+
 def islist(arg, uniform=False, include_dict=True):
     """
     Check whether `arg` is a `list`. Optionally determine whether the list elements
@@ -66,6 +67,7 @@ def islist(arg, uniform=False, include_dict=True):
         # ValueError, TypeError: uniform function failed
         return False
 
+
 def ensure_list(arg, include_dict=True):
     """
     Ensure the object is a list. If not return it in a list.
@@ -108,10 +110,11 @@ def rec_glob(path, patterns, ignores=None):
             for f in fnmatch.filter(files, pattern):
                 yield os.path.join(path, f)
 
+
 def find_recipe(path):
     """
     copied from conda_build.utils to persist same API flow
-    
+
     recurse through a folder, locating valid meta files (see VALID_METAS).  Raises error if more than one is found.
 
     Returns full path to meta file to be built.

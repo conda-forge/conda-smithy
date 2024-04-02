@@ -211,7 +211,11 @@ def test_py_matrix_on_azure(py_recipe, jinja_env):
     assert len(os.listdir(matrix_dir)) == 6
 
 
-def test_stdlib_on_azure(stdlib_recipe, jinja_env):
+def test_stdlib_on_azure(stdlib_recipe, jinja_env, request):
+    conda_build_param = request.node.callspec.params['config_yaml']
+    if conda_build_param == "rattler-build":
+        pytest.skip("skipping test for rattler-build usecase as we currently we don't have stdlib")
+
     configure_feedstock.render_azure(
         jinja_env=jinja_env,
         forge_config=stdlib_recipe.config,
@@ -247,8 +251,12 @@ def test_stdlib_on_azure(stdlib_recipe, jinja_env):
 
 
 def test_stdlib_deployment_target(
-    stdlib_deployment_target_recipe, jinja_env, caplog
+    stdlib_deployment_target_recipe, jinja_env, caplog, request
 ):
+    conda_build_param = request.node.callspec.params['config_yaml']
+    if conda_build_param == "rattler-build":
+        pytest.skip('skipping test for rattler-build usecase')
+
     with caplog.at_level(logging.WARNING):
         configure_feedstock.render_azure(
             jinja_env=jinja_env,
@@ -933,7 +941,7 @@ def test_cuda_enabled_render(cuda_enabled_recipe, jinja_env, request):
     conda_build_param = request.node.callspec.params['config_yaml']
     if conda_build_param == "rattler-build":
         pytest.skip('skipping test for rattler-build usecase')
-    
+
     forge_config = copy.deepcopy(cuda_enabled_recipe.config)
     has_env = "CF_CUDA_ENABLED" in os.environ
     if has_env:
