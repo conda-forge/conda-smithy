@@ -1,6 +1,6 @@
 import tempfile
 import warnings
-from collections.abc import Sequence, Mapping, Iterable
+from collections.abc import Sequence, Mapping
 
 import copy
 import fnmatch
@@ -9,7 +9,7 @@ import itertools
 import os
 import re
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Dict, Iterable
 
 import requests
 import shutil
@@ -153,7 +153,7 @@ def find_local_config_file(recipe_dir, filename):
     return found_filesname[0] if found_filesname else None
 
 
-def _lint(contents: dict, linters: Iterable[Linter]) -> LintsHints:
+def _lint(contents: Dict, linters: Iterable[Linter]) -> LintsHints:
     """
     Lint the contents of a file.
     :param contents: the contents of the file to lint
