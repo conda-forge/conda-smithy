@@ -85,7 +85,7 @@ def stub_subpackage_pin(*args, **kwargs):
 
 
 def render_meta_yaml(text):
-    env = jinja2.SandboxedEnvironment(undefined=NullUndefined)
+    env = jinja2.sandbox.SandboxedEnvironment(undefined=NullUndefined)
 
     # stub out cb3 jinja2 functions - they are not important for linting
     #    if we don't stub them out, the ruamel.yaml load fails to interpret them
