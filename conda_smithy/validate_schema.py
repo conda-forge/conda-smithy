@@ -13,7 +13,7 @@ CONDA_FORGE_YAML_SCHEMA_FILE = (
 )
 
 RATTLER_RECIPE_YAML_SCHEMA_FILE = (
-    Path(__file__).resolve().parent / "data" / "schema.json"
+    Path(__file__).resolve().parent / "data" / "rattler-recipe-schema.json"
 )
 
 
