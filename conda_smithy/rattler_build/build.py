@@ -82,10 +82,6 @@ class MetaData(CondaMetaData):
 
                 variants_path = variants_file.name
 
-                # when rattler-build will be released, change the path to it
-                # _tmp_file_to_rattler_build = (
-                #     Path(__file__) / ".." / ".." / ".." / "rattler-build"
-                # )
                 run_args = [
                     "rattler-build",
                     "build",
