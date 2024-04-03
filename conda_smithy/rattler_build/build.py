@@ -108,12 +108,7 @@ class MetaData(CondaMetaData):
                 )
 
                 outfile.seek(0)
-                # because currently rattler-build output just 2 jsons in *NOT* a list format
-                # I need to preformat it
-
                 content = outfile.read()
-                # formatted_content = content.replace("}\n{", ",")
-                # formatted_content = f"[{formatted_content}]"
                 metadata = json.loads(content)
             return metadata if isinstance(metadata, list) else [metadata]
 

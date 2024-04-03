@@ -1137,8 +1137,7 @@ def main(recipe_dir, conda_forge=False, return_hints=False):
     recipe_dir = os.path.abspath(recipe_dir)
     recipe_meta = os.path.join(recipe_dir, "meta.yaml")
     recipe_rattler_build = os.path.join(recipe_dir, "recipe.yaml")
-
-    if not os.path.exists(recipe_meta) or not os.path.exists(
+    if not os.path.exists(recipe_meta) and not os.path.exists(
         recipe_rattler_build
     ):
         raise IOError(
