@@ -4,6 +4,33 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.34.1
+====================
+
+**Removed:**
+
+* ``false`` is no longer a valid value for ``bot.inspection`` in the ``conda-forge.yml`` file. Use ``disabled`` instead.
+
+**Fixed:**
+
+* ``object`` is no longer an explicit base class of ``Subcommand`` (Python 3 class style)
+* replace ``logger.warn`` (deprecated) with ``logger.warning``
+* typo: `Usage` in ``update_conda_forge_config``
+* Unexpected top-level ``conda-forge.yml`` keys should no longer fail with a traceback.
+
+**Security:**
+
+* Use sandboxed jinja2 environments. (#1902)
+
+**Authors:**
+
+* Matthew R. Becker
+* pre-commit-ci[bot]
+* Nicholas Bollweg
+* Yannik Tausch
+
+
+
 v3.34.0
 ====================
 
