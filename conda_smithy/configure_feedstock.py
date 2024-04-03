@@ -42,7 +42,8 @@ import conda_build.render
 import conda_build.utils
 import conda_build.variants
 from conda_build import __version__ as conda_build_version
-from jinja2 import Environment, FileSystemLoader
+from jinja2 import FileSystemLoader
+from jinja2.sandbox import SandboxedEnvironment
 
 from conda_smithy.feedstock_io import (
     copy_file,
@@ -2487,7 +2488,7 @@ def make_jinja_env(feedstock_directory):
     forge_dir = os.path.abspath(feedstock_directory)
     tmplt_dir = os.path.join(conda_forge_content, "templates")
     # Load templates from the feedstock in preference to the smithy's templates.
-    env = Environment(
+    env = SandboxedEnvironment(
         extensions=["jinja2.ext.do"],
         loader=FileSystemLoader(
             [os.path.join(forge_dir, "templates"), tmplt_dir]
