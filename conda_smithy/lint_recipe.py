@@ -1109,13 +1109,6 @@ def _format_validation_msg(error: "jsonschema.ValidationError"):
 
 
 def _format_rattler_validation_msg(error: "jsonschema.ValidationError"):
-    """Use the data on the validation error to generate improved reporting.
-
-    If available, get the help URL from the first level of the JSON path:
-
-        $(.top_level_key.2nd_level_key)
-    """
-
     return cleandoc(
         f"""
         In recipe.yaml: `{error.instance}`.
