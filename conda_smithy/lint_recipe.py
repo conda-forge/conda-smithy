@@ -1,40 +1,32 @@
-import tempfile
-import warnings
-from collections.abc import Sequence, Mapping
-
 import copy
 import fnmatch
 import io
-import itertools
 import os
 import re
-from pathlib import Path
-from typing import Optional, Dict, Iterable, Tuple, List
-
-import requests
 import shutil
 import subprocess
 import sys
+import tempfile
+import warnings
 from glob import glob
-
-import github
-
-from conda_smithy.linting_types import LintsHints, Linter
-from conda_smithy.linters_forge_yml import (
-    FORGE_YAML_LINTERS,
-)
-
-if sys.version_info[:2] < (3, 11):
-    import tomli as tomllib
-else:
-    import tomllib
+from pathlib import Path
+from typing import Optional, Dict, Iterable, Tuple, List, TypeVar
 
 from conda.models.version import VersionOrder
 from conda_build.metadata import (
-    ensure_valid_license_family,
     FIELDS as cbfields,
 )
 
+from conda_smithy import linters_meta_yaml
+from conda_smithy.linters_forge_yml import (
+    FORGE_YAML_LINTERS,
+)
+from conda_smithy.linters_meta_yaml import (
+    MetaYamlLintExtras,
+    get_section,
+    is_selector_line,
+)
+from conda_smithy.linting_types import LintsHints, Linter
 from .utils import render_meta_yaml, get_yaml
 
 FIELDS = copy.deepcopy(cbfields)
@@ -46,28 +38,12 @@ if "extra" not in FIELDS.keys():
 FIELDS["extra"]["recipe-maintainers"] = ()
 FIELDS["extra"]["feedstock-name"] = ""
 
-EXPECTED_SECTION_ORDER = [
-    "package",
-    "source",
-    "build",
-    "requirements",
-    "test",
-    "app",
-    "outputs",
-    "about",
-    "extra",
-]
-
 REQUIREMENTS_ORDER = ["build", "host", "run"]
 
-TEST_KEYS = {"imports", "commands"}
-TEST_FILES = ["run_test.py", "run_test.sh", "run_test.bat", "run_test.pl"]
-
-NEEDED_FAMILIES = ["gpl", "bsd", "mit", "apache", "psf"]
-
-sel_pat = re.compile(r"(.+?)\s*(#.*)?\[([^\[\]]+)\](?(2).*)$")
 jinja_pat = re.compile(r"\s*\{%\s*(set)\s+[^\s]+\s*=\s*[^\s]+\s*%\}")
 JINJA_VAR_PAT = re.compile(r"{{(.*?)}}")
+
+T = TypeVar("T")
 
 
 def __getattr__(name):
@@ -80,63 +56,19 @@ def __getattr__(name):
     raise AttributeError(f"module {__name__} has no attribute {name}")
 
 
-def get_section(parent, name, lints):
-    if name == "source":
-        return get_list_section(parent, name, lints, allow_single=True)
-    elif name == "outputs":
-        return get_list_section(parent, name, lints)
-
-    section = parent.get(name, {})
-    if not isinstance(section, Mapping):
-        lints.append(
-            'The "{}" section was expected to be a dictionary, but '
-            "got a {}.".format(name, type(section).__name__)
-        )
-        section = {}
-    return section
-
-
-def get_list_section(parent, name, lints, allow_single=False):
-    section = parent.get(name, [])
-    if allow_single and isinstance(section, Mapping):
-        return [section]
-    elif isinstance(section, Sequence) and not isinstance(section, str):
-        return section
-    else:
-        msg = 'The "{}" section was expected to be a {}list, but got a {}.{}.'.format(
-            name,
-            "dictionary or a " if allow_single else "",
-            type(section).__module__,
-            type(section).__name__,
-        )
-        lints.append(msg)
-        return [{}]
-
-
-def lint_section_order(major_sections, lints):
-    section_order_sorted = sorted(
-        major_sections, key=EXPECTED_SECTION_ORDER.index
+def lint_section_order(major_sections: Iterable[list], lints: List[str]):
+    warnings.warn(
+        "lint_recipe.lint_section_order is deprecated and will be removed in v4, use"
+        "linters_meta_yaml.lint_section_order instead (changed signature).",
+        DeprecationWarning,
     )
-    if major_sections != section_order_sorted:
-        section_order_sorted_str = map(
-            lambda s: "'%s'" % s, section_order_sorted
-        )
-        section_order_sorted_str = ", ".join(section_order_sorted_str)
-        section_order_sorted_str = "[" + section_order_sorted_str + "]"
-        lints.append(
-            "The top level meta keys are in an unexpected order. "
-            "Expecting {}.".format(section_order_sorted_str)
-        )
+    meta_yaml = {section: "dummy_value" for section in major_sections}
 
+    result = linters_meta_yaml.lint_section_order(
+        meta_yaml, MetaYamlLintExtras()
+    )
 
-def lint_about_contents(about_section, lints):
-    for about_item in ["home", "license", "summary"]:
-        # if the section doesn't exist, or is just empty, lint it.
-        if not about_section.get(about_item, ""):
-            lints.append(
-                "The {} item is expected in the about section."
-                "".format(about_item)
-            )
+    lints.extend(result.lints)
 
 
 def find_local_config_file(recipe_dir, filename):
@@ -153,17 +85,20 @@ def find_local_config_file(recipe_dir, filename):
     return found_filesname[0] if found_filesname else None
 
 
-def _lint(contents: Dict, linters: Iterable[Linter]) -> LintsHints:
+def _lint(
+    contents: Dict, linters: Iterable[Linter[T]], lint_extras: T = None
+) -> LintsHints:
     """
     Lint the contents of a file.
     :param contents: the contents of the file to lint
     :param linters: an iterable of linters to apply to the contents
+    :param lint_extras: static extra data to pass to the linters
     :returns: a LintsHints object, containing lints and hints
     """
     results = LintsHints()
 
     for linter in linters:
-        results += linter(contents)
+        results += linter(contents, lint_extras)
 
     return results
 
@@ -249,6 +184,14 @@ def lintify_forge_yaml(
     return lint_result.lints, lint_result.hints
 
 
+def lint_meta_yaml(meta_yaml: dict) -> LintsHints:
+    """
+    Lint the meta.yaml file, relative to the recipe_dir.
+    :returns: a LintsHints object, containing lints and hints
+    """
+    pass
+
+
 def lintify_meta_yaml(
     meta, recipe_dir=None, conda_forge=False
 ) -> Tuple[List[str], List[str]]:
@@ -264,213 +207,17 @@ def lintify_meta_yaml(
     # find the meta.yaml within it.
     meta_fname = os.path.join(recipe_dir or "", "meta.yaml")
 
-    sources_section = get_section(meta, "source", lints)
-    build_section = get_section(meta, "build", lints)
-    requirements_section = get_section(meta, "requirements", lints)
-    test_section = get_section(meta, "test", lints)
-    about_section = get_section(meta, "about", lints)
-    extra_section = get_section(meta, "extra", lints)
-    package_section = get_section(meta, "package", lints)
-    outputs_section = get_section(meta, "outputs", lints)
+    build_section = get_section(meta, "build")
+    requirements_section = get_section(meta, "requirements")
+    about_section = get_section(meta, "about")
+    package_section = get_section(meta, "package")
+    outputs_section = get_section(meta, "outputs")
 
     recipe_dirname = os.path.basename(recipe_dir) if recipe_dir else "recipe"
     is_staged_recipes = recipe_dirname != "recipe"
 
-    # 0: Top level keys should be expected
-    unexpected_sections = []
-    for section in major_sections:
-        if section not in EXPECTED_SECTION_ORDER:
-            lints.append(
-                "The top level meta key {} is unexpected".format(section)
-            )
-            unexpected_sections.append(section)
-
     for section in unexpected_sections:
         major_sections.remove(section)
-
-    # 1: Top level meta.yaml keys should have a specific order.
-    lint_section_order(major_sections, lints)
-
-    # 2: The about section should have a home, license and summary.
-    lint_about_contents(about_section, lints)
-
-    # 3a: The recipe should have some maintainers.
-    if not extra_section.get("recipe-maintainers", []):
-        lints.append(
-            "The recipe could do with some maintainers listed in "
-            "the `extra/recipe-maintainers` section."
-        )
-
-    # 3b: Maintainers should be a list
-    if not (
-        isinstance(extra_section.get("recipe-maintainers", []), Sequence)
-        and not isinstance(extra_section.get("recipe-maintainers", []), str)
-    ):
-        lints.append("Recipe maintainers should be a json list.")
-
-    # 4: The recipe should have some tests.
-    if not any(key in TEST_KEYS for key in test_section):
-        a_test_file_exists = recipe_dir is not None and any(
-            os.path.exists(os.path.join(recipe_dir, test_file))
-            for test_file in TEST_FILES
-        )
-        if not a_test_file_exists:
-            has_outputs_test = False
-            no_test_hints = []
-            if outputs_section:
-                for out in outputs_section:
-                    test_out = get_section(out, "test", lints)
-                    if any(key in TEST_KEYS for key in test_out):
-                        has_outputs_test = True
-                    elif test_out.get("script", "").endswith((".bat", ".sh")):
-                        has_outputs_test = True
-                    else:
-                        no_test_hints.append(
-                            "It looks like the '{}' output doesn't "
-                            "have any tests.".format(out.get("name", "???"))
-                        )
-
-            if has_outputs_test:
-                hints.extend(no_test_hints)
-            else:
-                lints.append("The recipe must have some tests.")
-
-    # 5: License cannot be 'unknown.'
-    license = about_section.get("license", "").lower()
-    if "unknown" == license.strip():
-        lints.append("The recipe license cannot be unknown.")
-
-    # 6: Selectors should be in a tidy form.
-    if recipe_dir is not None and os.path.exists(meta_fname):
-        bad_selectors, bad_lines = [], []
-        pyXY_selectors_lint, pyXY_lines_lint = [], []
-        pyXY_selectors_hint, pyXY_lines_hint = [], []
-        # Good selectors look like ".*\s\s#\s[...]"
-        good_selectors_pat = re.compile(r"(.+?)\s{2,}#\s\[(.+)\](?(2).*)$")
-        # Look out for py27, py35 selectors; we prefer py==35
-        pyXY_selectors_pat = re.compile(r".+#\s*\[.*?(py\d{2,3}).*\]")
-        with io.open(meta_fname, "rt") as fh:
-            for selector_line, line_number in selector_lines(fh):
-                if not good_selectors_pat.match(selector_line):
-                    bad_selectors.append(selector_line)
-                    bad_lines.append(line_number)
-                pyXY_matches = pyXY_selectors_pat.match(selector_line)
-                if pyXY_matches:
-                    for pyXY in pyXY_matches.groups():
-                        if int(pyXY[2:]) in (27, 34, 35, 36):
-                            # py27, py35 and so on are ok up to py36 (included); only warn
-                            pyXY_selectors_hint.append(selector_line)
-                            pyXY_lines_hint.append(line_number)
-                        else:
-                            pyXY_selectors_lint.append(selector_line)
-                            pyXY_lines_lint.append(line_number)
-        if bad_selectors:
-            lints.append(
-                "Selectors are suggested to take a "
-                "``<two spaces>#<one space>[<expression>]`` form."
-                " See lines {}".format(bad_lines)
-            )
-        if pyXY_selectors_hint:
-            hints.append(
-                "Old-style Python selectors (py27, py34, py35, py36) are "
-                "deprecated. Instead, consider using the int ``py``. For "
-                "example: ``# [py>=36]``. See lines {}".format(pyXY_lines_hint)
-            )
-        if pyXY_selectors_lint:
-            lints.append(
-                "Old-style Python selectors (py27, py35, etc) are only available "
-                "for Python 2.7, 3.4, 3.5, and 3.6. Please use explicit comparisons "
-                "with the integer ``py``, e.g. ``# [py==37]`` or ``# [py>=37]``. "
-                "See lines {}".format(pyXY_lines_lint)
-            )
-
-    # 7: The build section should have a build number.
-    if build_section.get("number", None) is None:
-        lints.append("The recipe must have a `build/number` section.")
-
-    # 8: The build section should be before the run section in requirements.
-    seen_requirements = [
-        k for k in requirements_section if k in REQUIREMENTS_ORDER
-    ]
-    requirements_order_sorted = sorted(
-        seen_requirements, key=REQUIREMENTS_ORDER.index
-    )
-    if seen_requirements != requirements_order_sorted:
-        lints.append(
-            "The `requirements/` sections should be defined "
-            "in the following order: "
-            + ", ".join(REQUIREMENTS_ORDER)
-            + "; instead saw: "
-            + ", ".join(seen_requirements)
-            + "."
-        )
-
-    # 9: Files downloaded should have a hash.
-    for source_section in sources_section:
-        if "url" in source_section and not (
-            {"sha1", "sha256", "md5"} & set(source_section.keys())
-        ):
-            lints.append(
-                "When defining a source/url please add a sha256, sha1 "
-                "or md5 checksum (sha256 preferably)."
-            )
-
-    # 10: License should not include the word 'license'.
-    license = about_section.get("license", "").lower()
-    if (
-        "license" in license.lower()
-        and "unlicense" not in license.lower()
-        and "licenseref" not in license.lower()
-        and "-license" not in license.lower()
-    ):
-        lints.append(
-            "The recipe `license` should not include the word " '"License".'
-        )
-
-    # 11: There should be one empty line at the end of the file.
-    if recipe_dir is not None and os.path.exists(meta_fname):
-        with io.open(meta_fname, "r") as f:
-            lines = f.read().split("\n")
-        # Count the number of empty lines from the end of the file
-        empty_lines = itertools.takewhile(lambda x: x == "", reversed(lines))
-        end_empty_lines_count = len(list(empty_lines))
-        if end_empty_lines_count > 1:
-            lints.append(
-                "There are {} too many lines.  "
-                "There should be one empty line at the end of the "
-                "file.".format(end_empty_lines_count - 1)
-            )
-        elif end_empty_lines_count < 1:
-            lints.append(
-                "There are too few lines.  There should be one empty "
-                "line at the end of the file."
-            )
-
-    # 12: License family must be valid (conda-build checks for that)
-    try:
-        ensure_valid_license_family(meta)
-    except RuntimeError as e:
-        lints.append(str(e))
-
-    # 12a: License family must be valid (conda-build checks for that)
-    license_family = about_section.get("license_family", license).lower()
-    license_file = about_section.get("license_file", None)
-    if not license_file and any(
-        f for f in NEEDED_FAMILIES if f in license_family
-    ):
-        lints.append("license_file entry is missing, but is required.")
-
-    # 13: Check that the recipe name is valid
-    recipe_name = package_section.get("name", "").strip()
-    if re.match(r"^[a-z0-9_\-.]+$", recipe_name) is None:
-        lints.append(
-            "Recipe name has invalid characters. only lowercase alpha, numeric, "
-            "underscores, hyphens and dots allowed"
-        )
-
-    # 14: Run conda-forge specific lints
-    if conda_forge:
-        run_conda_forge_specific(meta, recipe_dir, lints, hints)
 
     # 15: Check if we are using legacy patterns
     build_reqs = requirements_section.get("build", None)
@@ -486,7 +233,7 @@ def lintify_meta_yaml(
         expected_subsections = FIELDS.get(section, [])
         if not expected_subsections:
             continue
-        for subsection in get_section(meta, section, lints):
+        for subsection in get_section(meta, section):
             if (
                 section != "source"
                 and section != "outputs"
@@ -929,216 +676,12 @@ def lintify_meta_yaml(
     return lints, hints
 
 
-def run_conda_forge_specific(meta, recipe_dir, lints, hints):
-    gh = github.Github(os.environ["GH_TOKEN"])
-
-    # Retrieve sections from meta
-    package_section = get_section(meta, "package", lints)
-    extra_section = get_section(meta, "extra", lints)
-    sources_section = get_section(meta, "source", lints)
-    requirements_section = get_section(meta, "requirements", lints)
-    outputs_section = get_section(meta, "outputs", lints)
-
-    # Fetch list of recipe maintainers
-    maintainers = extra_section.get("recipe-maintainers", [])
-
-    recipe_dirname = os.path.basename(recipe_dir) if recipe_dir else "recipe"
-    recipe_name = package_section.get("name", "").strip()
-    is_staged_recipes = recipe_dirname != "recipe"
-
-    # 1: Check that the recipe does not exist in conda-forge or bioconda
-    if is_staged_recipes and recipe_name:
-        cf = gh.get_user(os.getenv("GH_ORG", "conda-forge"))
-
-        for name in {
-            recipe_name,
-            recipe_name.replace("-", "_"),
-            recipe_name.replace("_", "-"),
-        }:
-            try:
-                if cf.get_repo("{}-feedstock".format(name)):
-                    existing_recipe_name = name
-                    feedstock_exists = True
-                    break
-                else:
-                    feedstock_exists = False
-            except github.UnknownObjectException as e:
-                feedstock_exists = False
-
-        if feedstock_exists and existing_recipe_name == recipe_name:
-            lints.append("Feedstock with the same name exists in conda-forge.")
-        elif feedstock_exists:
-            hints.append(
-                "Feedstock with the name {} exists in conda-forge. Is it the same as this package ({})?".format(
-                    existing_recipe_name,
-                    recipe_name,
-                )
-            )
-
-        bio = gh.get_user("bioconda").get_repo("bioconda-recipes")
-        try:
-            bio.get_dir_contents("recipes/{}".format(recipe_name))
-        except github.UnknownObjectException as e:
-            pass
-        else:
-            hints.append(
-                "Recipe with the same name exists in bioconda: "
-                "please discuss with @conda-forge/bioconda-recipes."
-            )
-
-        url = None
-        for source_section in sources_section:
-            if str(source_section.get("url")).startswith(
-                "https://pypi.io/packages/source/"
-            ):
-                url = source_section["url"]
-        if url:
-            # get pypi name from  urls like "https://pypi.io/packages/source/b/build/build-0.4.0.tar.gz"
-            pypi_name = url.split("/")[6]
-            mapping_request = requests.get(
-                "https://raw.githubusercontent.com/regro/cf-graph-countyfair/master/mappings/pypi/name_mapping.yaml"
-            )
-            if mapping_request.status_code == 200:
-                mapping_raw_yaml = mapping_request.content
-                mapping = get_yaml().load(mapping_raw_yaml)
-                for pkg in mapping:
-                    if pkg.get("pypi_name", "") == pypi_name:
-                        conda_name = pkg["conda_name"]
-                        hints.append(
-                            f"A conda package with same name ({conda_name}) already exists."
-                        )
-
-    # 2: Check that the recipe maintainers exists:
-    for maintainer in maintainers:
-        if "/" in maintainer:
-            # It's a team. Checking for existence is expensive. Skip for now
-            continue
-        try:
-            gh.get_user(maintainer)
-        except github.UnknownObjectException as e:
-            lints.append(
-                'Recipe maintainer "{}" does not exist'.format(maintainer)
-            )
-
-    # 3: if the recipe dir is inside the example dir
-    if recipe_dir is not None and "recipes/example/" in recipe_dir:
-        lints.append(
-            "Please move the recipe out of the example dir and "
-            "into its own dir."
-        )
-
-    # 4: Do not delete example recipe
-    if is_staged_recipes and recipe_dir is not None:
-        example_meta_fname = os.path.abspath(
-            os.path.join(recipe_dir, "..", "example", "meta.yaml")
-        )
-
-        if not os.path.exists(example_meta_fname):
-            msg = (
-                "Please do not delete the example recipe found in "
-                "`recipes/example/meta.yaml`."
-            )
-
-            if msg not in lints:
-                lints.append(msg)
-
-    # 5: Package-specific hints
-    # (e.g. do not depend on matplotlib, only matplotlib-base)
-    build_reqs = requirements_section.get("build") or []
-    host_reqs = requirements_section.get("host") or []
-    run_reqs = requirements_section.get("run") or []
-    for out in outputs_section:
-        _req = out.get("requirements") or {}
-        if isinstance(_req, Mapping):
-            build_reqs += _req.get("build") or []
-            host_reqs += _req.get("host") or []
-            run_reqs += _req.get("run") or []
-        else:
-            run_reqs += _req
-
-    hints_toml_url = "https://raw.githubusercontent.com/conda-forge/conda-forge-pinning-feedstock/main/recipe/linter_hints/hints.toml"
-    hints_toml_req = requests.get(hints_toml_url)
-    if hints_toml_req.status_code != 200:
-        # too bad, but not important enough to throw an error;
-        # linter will rerun on the next commit anyway
-        return
-    hints_toml_str = hints_toml_req.content.decode("utf-8")
-    specific_hints = tomllib.loads(hints_toml_str)["hints"]
-
-    for rq in build_reqs + host_reqs + run_reqs:
-        dep = rq.split(" ")[0].strip()
-        if dep in specific_hints and specific_hints[dep] not in hints:
-            hints.append(specific_hints[dep])
-
-    # 6: Check if all listed maintainers have commented:
-    pr_number = os.environ.get("STAGED_RECIPES_PR_NUMBER")
-
-    if is_staged_recipes and maintainers and pr_number:
-        # Get PR details using GitHub API
-        current_pr = gh.get_repo("conda-forge/staged-recipes").get_pull(
-            int(pr_number)
-        )
-
-        # Get PR author, issue comments, and review comments
-        pr_author = current_pr.user.login
-        issue_comments = current_pr.get_issue_comments()
-        review_comments = current_pr.get_reviews()
-
-        # Combine commenters from both issue comments and review comments
-        commenters = {comment.user.login for comment in issue_comments}
-        commenters.update({review.user.login for review in review_comments})
-
-        # Check if all maintainers have either commented or are the PR author
-        non_participating_maintainers = set()
-        for maintainer in maintainers:
-            if maintainer not in commenters and maintainer != pr_author:
-                non_participating_maintainers.add(maintainer)
-
-        # Add a lint message if there are any non-participating maintainers
-        if non_participating_maintainers:
-            lints.append(
-                f"The following maintainers have not yet confirmed that they are willing to be listed here: "
-                f"{', '.join(non_participating_maintainers)}. Please ask them to comment on this PR if they are."
-            )
-
-
-def is_selector_line(line, allow_platforms=False, allow_keys=set()):
-    # Using the same pattern defined in conda-build (metadata.py),
-    # we identify selectors.
-    line = line.rstrip()
-    if line.lstrip().startswith("#"):
-        # Don't bother with comment only lines
-        return False
-    m = sel_pat.match(line)
-    if m:
-        nouns = {
-            w for w in m.group(3).split() if w not in ("not", "and", "or")
-        }
-        allowed_nouns = (
-            {"win", "linux", "osx", "unix"} if allow_platforms else set()
-        ) | allow_keys
-
-        if nouns.issubset(allowed_nouns):
-            # the selector only contains (a boolean chain of) platform selectors
-            # and/or keys from the conda_build_config.yaml
-            return False
-        else:
-            return True
-    return False
-
-
 def is_jinja_line(line):
     line = line.rstrip()
     m = jinja_pat.match(line)
     if m:
         return True
     return False
-
-
-def selector_lines(lines):
-    for i, line in enumerate(lines):
-        if is_selector_line(line):
-            yield line, i
 
 
 def jinja_lines(lines):

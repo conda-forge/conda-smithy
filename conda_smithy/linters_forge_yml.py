@@ -48,7 +48,7 @@ def _format_validation_msg(error: jsonschema.ValidationError):
     )
 
 
-def lint_validate_json(forge_yaml: dict) -> LintsHints:
+def lint_validate_json(forge_yaml: dict, _extras: None = None) -> LintsHints:
     validation_lints, validation_hints = validate_json_schema(forge_yaml)
 
     lints = [_format_validation_msg(lint) for lint in validation_lints]
@@ -57,9 +57,7 @@ def lint_validate_json(forge_yaml: dict) -> LintsHints:
     return LintsHints(lints, hints)
 
 
-def lint_extra_fields(
-    forge_yaml: dict,
-) -> LintsHints:
+def lint_extra_fields(forge_yaml: dict, _extras: None = None) -> LintsHints:
     """
     Identify unexpected keys in the conda-forge.yml file.
     This only works if extra="allow" is set in the Pydantic sub-model where the unexpected key is found.
@@ -81,7 +79,7 @@ def lint_extra_fields(
     return LintsHints(hints=hints)
 
 
-FORGE_YAML_LINTERS: List[Linter] = [
+FORGE_YAML_LINTERS: List[Linter[None]] = [
     lint_validate_json,
     lint_extra_fields,
 ]
