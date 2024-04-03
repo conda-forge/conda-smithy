@@ -1,3 +1,3 @@
 **Security:**
 
-* Linting now uses a sandboxed jinja2 environment. (#1902)
+* Use sandboxed jinja2 environments. (#1902)
