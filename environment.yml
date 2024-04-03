@@ -36,3 +36,4 @@ dependencies:
   - jsonschema
   - backports.strenum
   - exceptiongroup
+  - rattler-build
