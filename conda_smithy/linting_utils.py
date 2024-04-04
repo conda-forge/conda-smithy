@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Callable, List, TypeVar
+from functools import wraps
+from typing import Any, Callable, List, TypeVar, Type
 
 T = TypeVar("T")
 
@@ -52,3 +53,24 @@ A Linter is a function taking a dictionary (representing a conda-forge.yml or me
 and returns a LintsHints object.
 The generic type T of the Linter is the type of extra data that is passed to the linter.
 """
+
+
+def lint_exceptions(
+    *_exceptions: Type[Exception],
+) -> Callable[[Linter[T]], Linter[T]]:
+    """
+    A decorator factory to catch exceptions raised by a linter and return them as lints.
+    :param _exceptions: the exceptions to catch
+    """
+
+    def lint_exceptions_decorator(linter: Linter[T]) -> Linter[T]:
+        @wraps(linter)
+        def linter_wrapper(data: dict, extras: T) -> LintsHints:
+            try:
+                return linter(data, extras)
+            except _exceptions as e:
+                return LintsHints.lint(str(e))
+
+        return linter_wrapper
+
+    return lint_exceptions_decorator

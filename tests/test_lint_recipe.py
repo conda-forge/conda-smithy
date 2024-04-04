@@ -2,90 +2,22 @@
 import os
 import shutil
 import subprocess
-import tempfile
 import textwrap
 import unittest
 import warnings
 from collections import OrderedDict
-from contextlib import contextmanager
-from pathlib import Path
 
 import github
 import pytest
 
 import conda_smithy.lint_recipe as linter
+from tests.test_config_file_helpers import tmp_directory, nested_tmp_directory
 
 _thisdir = os.path.abspath(os.path.dirname(__file__))
 
 
 def is_gh_token_set():
     return "GH_TOKEN" in os.environ
-
-
-@contextmanager
-def tmp_directory() -> Path:
-    with tempfile.TemporaryDirectory(prefix="recipe_") as tmp_dir:
-        yield Path(tmp_dir)
-
-
-@contextmanager
-def nested_tmp_directory():
-    """
-    Create two nested directories within a temporary directory.
-    """
-    with tmp_directory() as tmp_dir:
-        child_dir = tmp_dir / "child1" / "child2"
-        child_dir.mkdir(parents=True)
-        yield child_dir
-
-
-class TestReadForgeYml(unittest.TestCase):
-    def test_empty_dir(self):
-        with nested_tmp_directory() as recipe_dir:
-            with self.assertRaises(FileNotFoundError):
-                linter.read_forge_yaml(recipe_dir)
-
-    def test_precedence_1(self):
-        with nested_tmp_directory() as recipe_dir:
-            with open(recipe_dir / ".." / "conda-forge.yml", "w") as fh:
-                fh.write("package:\n  name: foo")
-            with open(recipe_dir / "conda-forge.yml", "w") as fh:
-                fh.write("package:\n  name: DO_NOT_USE_1")
-            with open(recipe_dir / ".." / ".." / "conda-forge.yml", "w") as fh:
-                fh.write("package:\n  name: DO_NOT_USE_2")
-
-            forge_yml = linter.read_forge_yaml(recipe_dir)
-
-        self.assertEqual(forge_yml["package"]["name"], "foo")
-
-    def test_precedence_2(self):
-        with nested_tmp_directory() as recipe_dir:
-            with open(recipe_dir / "conda-forge.yml", "w") as fh:
-                fh.write("package:\n  name: foo")
-            with open(recipe_dir / ".." / ".." / "conda-forge.yml", "w") as fh:
-                fh.write("package:\n  name: DO_NOT_USE_2")
-
-            forge_yml = linter.read_forge_yaml(recipe_dir)
-
-        self.assertEqual(forge_yml["package"]["name"], "foo")
-
-    def test_precedence_3(self):
-        with nested_tmp_directory() as recipe_dir:
-            with open(recipe_dir / ".." / ".." / "conda-forge.yml", "w") as fh:
-                fh.write("package:\n  name: foo")
-
-            forge_yml = linter.read_forge_yaml(recipe_dir)
-
-        self.assertEqual(forge_yml["package"]["name"], "foo")
-
-    def test_no_dict(self):
-        with nested_tmp_directory() as recipe_dir:
-            with open(recipe_dir / "conda-forge.yml", "w") as fh:
-                fh.write("foo")
-
-            with self.assertRaises(ValueError) as e:
-                linter.read_forge_yaml(recipe_dir)
-            self.assertIn("does not represent a dict", str(e.exception))
 
 
 class TestLintifyForgeYaml(unittest.TestCase):
@@ -149,14 +81,14 @@ class TestLinter(unittest.TestCase):
     def test_bad_top_level(self):
         meta = OrderedDict([["package", {}], ["build", {}], ["sources", {}]])
         lints, hints = linter.lintify_meta_yaml(meta)
-        expected_msg = "The top level meta key sources is unexpected"
+        expected_msg = "The top-level meta key sources is unexpected"
         self.assertIn(expected_msg, lints)
 
     def test_bad_order(self):
         meta = OrderedDict([["package", {}], ["build", {}], ["source", {}]])
         lints, hints = linter.lintify_meta_yaml(meta)
         expected_msg = (
-            "The top level meta keys are in an unexpected "
+            "The top-level meta keys are in an unexpected "
             "order. Expecting ['package', 'source', 'build']."
         )
         self.assertIn(expected_msg, lints)
@@ -1077,14 +1009,14 @@ class TestLinter(unittest.TestCase):
                 )
                 if lines > 1:
                     expected_message = (
-                        "There are {} too many lines.  "
+                        "There are {} too many lines. "
                         "There should be one empty line "
                         "at the end of the "
                         "file.".format(lines - 1)
                     )
                 else:
                     expected_message = (
-                        "There are too few lines.  "
+                        "There are too few lines. "
                         "There should be one empty line at"
                         " the end of the file."
                     )
@@ -1328,7 +1260,8 @@ class TestLinter(unittest.TestCase):
             "Package version 2.0.0~alpha0 doesn't match conda spec"
         )
         lints, hints = linter.lintify_meta_yaml(meta)
-        self.assertIn(expected_message, lints)
+
+        assert any(expected_message in message for message in lints)
 
     @unittest.skipUnless(is_gh_token_set(), "GH_TOKEN not set")
     def test_examples(self):

@@ -4,7 +4,7 @@ from typing import Set, Callable
 
 from conda_smithy import linters_forge_yml
 from conda_smithy.linters_forge_yml import lint_extra_fields
-from conda_smithy.linting_types import LintsHints
+from conda_smithy.linting_utils import LintsHints
 
 
 class TestHintExtraFields(unittest.TestCase):

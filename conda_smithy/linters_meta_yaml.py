@@ -1,10 +1,13 @@
+import copy
+import fnmatch
 import functools
 import itertools
 import os
 import re
+import shutil
+import subprocess
 import sys
 from dataclasses import dataclass
-from enum import Enum
 from pathlib import Path
 from typing import (
     List,
@@ -14,13 +17,33 @@ from typing import (
     Union,
     get_args,
     Optional,
+    AbstractSet,
 )
+
+import license_expression
+from conda.exceptions import InvalidVersionSpec
+from conda.models.version import VersionOrder
+
+from conda_smithy.config_file_helpers import (
+    ConfigFileName,
+    read_local_config_file,
+    ConfigFileMustBeDictError,
+    MultipleConfigFilesError,
+)
+
+try:
+    from enum import StrEnum
+except ImportError:
+    from backports.strenum import StrEnum
 
 import github
 import requests
 from conda_build.license_family import ensure_valid_license_family
+from conda_build.metadata import (
+    FIELDS as _CONDA_BUILD_FIELDS,
+)
 
-from conda_smithy.linting_types import Linter, LintsHints
+from conda_smithy.linting_utils import Linter, LintsHints, lint_exceptions
 from conda_smithy.utils import get_yaml
 
 if sys.version_info[:2] < (3, 11):
@@ -28,8 +51,18 @@ if sys.version_info[:2] < (3, 11):
 else:
     import tomllib
 
+FIELDS = copy.deepcopy(_CONDA_BUILD_FIELDS)
 
-class Section(str, Enum):
+# Just in case 'extra' moves into conda_build
+if "extra" not in FIELDS.keys():
+    FIELDS["extra"] = {}
+
+# additions by conda-forge
+FIELDS["extra"]["recipe-maintainers"] = ()
+FIELDS["extra"]["feedstock-name"] = ""
+
+
+class Section(StrEnum):
     """
     The names of all top-level sections in a meta.yaml file.
     Note! The order of the sections dictates the order in the meta.yaml file (see lint_section_order).
@@ -51,13 +84,12 @@ ListSectionName = Union[Section.SOURCE, Section.OUTPUTS]
 The names of all top-level sections in a meta.yaml file that are expected to be lists.
 """
 
-
 """
 Note that the subsection key lists may not be complete.
 """
 
 
-class PackageSubsection(str, Enum):
+class PackageSubsection(StrEnum):
     """
     The names of all subsections in the PACKAGE section in a meta.yaml file.
     """
@@ -66,7 +98,7 @@ class PackageSubsection(str, Enum):
     VERSION = "version"
 
 
-class SourceSubsection(str, Enum):
+class SourceSubsection(StrEnum):
     """
     The names of all subsections in one element of the SOURCE section in a meta.yaml file.
     """
@@ -74,7 +106,17 @@ class SourceSubsection(str, Enum):
     URL = "url"
 
 
-class RequirementsSubsection(str, Enum):
+class BuildSubsection(StrEnum):
+    """
+    The names of all subsections in the BUILD section in a meta.yaml file.
+    """
+
+    NUMBER = "number"
+    NOARCH = "noarch"
+    SCRIPT = "script"
+
+
+class RequirementsSubsection(StrEnum):
     """
     The names of all subsections in the REQUIREMENTS section in a meta.yaml file.
     Note! The order of the subsections dictates the order in the meta.yaml file.
@@ -85,7 +127,7 @@ class RequirementsSubsection(str, Enum):
     RUN = "run"
 
 
-class TestSubsection(str, Enum):
+class TestSubsection(StrEnum):
     """
     The names of all subsections in the TEST section in a meta.yaml file.
     """
@@ -94,13 +136,14 @@ class TestSubsection(str, Enum):
     COMMANDS = "commands"
 
 
-class OutputSubsection(str, Enum):
+class OutputSubsection(StrEnum):
+    NAME = "name"
     TEST = "test"
     SCRIPT = "script"
     REQUIREMENTS = "requirements"
 
 
-class AboutSubsection(str, Enum):
+class AboutSubsection(StrEnum):
     """
     The names of all subsections in the ABOUT section in a meta.yaml file.
     """
@@ -112,7 +155,7 @@ class AboutSubsection(str, Enum):
     SUMMARY = "summary"
 
 
-class ExtraSubsection(str, Enum):
+class ExtraSubsection(StrEnum):
     """
     The names of all subsections in the EXTRA section in a meta.yaml file.
     """
@@ -131,7 +174,6 @@ SectionOrSubsection = Union[
     ExtraSubsection,
 ]
 
-
 TEST_KEYS = {TestSubsection.IMPORTS, TestSubsection.COMMANDS}
 """
 All TestSubsection keys that are recognized as valid tests.
@@ -143,6 +185,8 @@ All filenames that are recognized as valid test files (in the recipe directory).
 """
 
 _SELECTOR_PATTERN = re.compile(r"(.+?)\s*(#.*)?\[([^\[\]]+)](?(2).*)$")
+_JINJA_PATTERN = re.compile(r"\s*\{%\s*(set)\s+[^\s]+\s*=\s*[^\s]+\s*%}")
+_JINJA_VARIABLE_PATTERN = re.compile(r"{{(.*?)}}")
 
 _FAMILIES_NEEDING_LICENSE_FILE = ["gpl", "bsd", "mit", "apache", "psf"]
 
@@ -159,15 +203,32 @@ class MetaYamlLintExtras:
     This enables some additional linters that are only relevant for certain conda-forge CI checks.
     """
 
-    github_client: Optional[github.Github] = None
-    """
-    A GitHub client to use for additional checks.
-    This is only used if is_conda_forge is True.
-    """
-
     @property
     def is_staged_recipe(self) -> bool:
         return self.recipe_dir and self.recipe_dir.name != "recipe"
+
+    @property
+    def meta_yaml_file(self) -> Path:
+        """
+        If recipe_dir is None, this returns a path to meta.yaml in the current directory.
+        """
+        return (self.recipe_dir or Path()) / "meta.yaml"
+
+    def get_config_file_or_empty(self, name: ConfigFileName) -> dict:
+        """
+        Get the contents of a config file accompanying the recipe.
+        If recipe_dir is not set, or the file does not exist, an empty dictionary is returned.
+        :name: The name of the config file.
+        :raises ConfigFileMustBeDictError if the file read does not represent a dictionary
+        :raises MultipleConfigFilesError if multiple conda_build_config.yaml files are found
+        """
+        if not self.recipe_dir:
+            return {}
+
+        try:
+            return read_local_config_file(self.recipe_dir, name)
+        except FileNotFoundError:
+            return {}
 
 
 def conda_forge_only(
@@ -188,8 +249,12 @@ def conda_forge_only(
 
 def _remove_unexpected_major_sections(
     major_sections: Iterable[str],
-) -> List[str]:
-    return [section for section in major_sections if section in Section]
+) -> List[Section]:
+    return [
+        Section(section)
+        for section in major_sections
+        if section in iter(Section)
+    ]
 
 
 def get_dict_section(meta_yaml: dict, name: Section) -> dict:
@@ -276,7 +341,7 @@ def lint_no_unexpected_top_level_keys(
     """
     lints = []
     for section in meta_yaml.keys():
-        if section not in Section:
+        if section not in iter(Section):
             lints.append(f"The top-level meta key {section} is unexpected")
     return LintsHints(lints)
 
@@ -419,9 +484,17 @@ def lint_license_cannot_be_unknown(
     return LintsHints(["The recipe license cannot be unknown."])
 
 
-def is_selector_line(line, allow_platforms=False, allow_keys=set()):
-    # Using the same pattern defined in conda-build (metadata.py),
-    # we identify selectors.
+def is_selector_line(
+    line: str,
+    allow_platforms: bool = False,
+    allow_keys: Optional[AbstractSet] = None,
+):
+    """
+    Using the same pattern defined in conda-build (metadata.py),
+    we identify selectors.
+    """
+    allow_keys = allow_keys or set()
+
     line = line.rstrip()
     if line.lstrip().startswith("#"):
         # Don't bother with comment only lines
@@ -458,21 +531,19 @@ def lint_selectors_should_be_tidy(
     Lint #6: Selectors should be in a tidy form.
     Note that this linter reads the recipe from disk.
     """
-    recipe_dir = extras.recipe_dir
-
-    if not recipe_dir:
+    if not extras.recipe_dir:
         return LintsHints()
 
-    meta_yaml_file = recipe_dir / "meta.yaml"
+    meta_yaml_file = extras.meta_yaml_file
 
     bad_selectors, bad_lines = [], []
     pyXY_selectors_lint, pyXY_lines_lint = [], []
     pyXY_selectors_hint, pyXY_lines_hint = [], []
 
     # Good selectors look like ".*\s\s#\s[...]"
-    good_selectors_pattern = re.compile(r"(.+?)\s{2,}#\s\[(.+)\](?(2).*)$")
+    good_selectors_pattern = re.compile(r"(.+?)\s{2,}#\s\[(.+)](?(2).*)$")
     # Look out for py27, py35 selectors; we prefer py==35
-    pyXY_selectors_pattern = re.compile(r".+#\s*\[.*?(py\d{2,3}).*\]")
+    pyXY_selectors_pattern = re.compile(r".+#\s*\[.*?(py\d{2,3}).*]")
 
     try:
         with open(meta_yaml_file, "r") as f:
@@ -528,7 +599,7 @@ def lint_must_have_build_number(
     """
     build_section = get_dict_section(meta_yaml, Section.BUILD)
 
-    if build_section.get("number", None) is not None:
+    if build_section.get(BuildSubsection.NUMBER, None) is not None:
         return LintsHints()
     return LintsHints(["The recipe must have a `build/number` section."])
 
@@ -542,7 +613,7 @@ def lint_requirements_order(
     requirements_section = get_dict_section(meta_yaml, Section.REQUIREMENTS)
 
     seen_requirements = [
-        k for k in requirements_section if k in RequirementsSubsection
+        k for k in requirements_section if k in iter(RequirementsSubsection)
     ]
     requirements_order_sorted = sorted(
         seen_requirements,
@@ -609,12 +680,10 @@ def lint_empty_line_at_end_of_file(
     Lint #11: There should be one empty line at the end of the file.
     Note that this linter reads the recipe from disk.
     """
-    recipe_dir = extras.recipe_dir
-
-    if not recipe_dir:
+    if not extras.recipe_dir:
         return LintsHints()
 
-    meta_yaml_file = recipe_dir / "meta.yaml"
+    meta_yaml_file = extras.meta_yaml_file
 
     try:
         with open(meta_yaml_file, "r") as f:
@@ -631,7 +700,7 @@ def lint_empty_line_at_end_of_file(
     if end_empty_lines_count > 1:
         return LintsHints(
             [
-                f"There are {end_empty_lines_count - 1} too many lines.  "
+                f"There are {end_empty_lines_count - 1} too many lines. "
                 "There should be one empty line at the end of the "
                 "file."
             ]
@@ -655,6 +724,8 @@ def lint_valid_license_family(
         ensure_valid_license_family(meta_yaml)
     except RuntimeError as e:
         return LintsHints([str(e)])
+
+    return LintsHints()
 
 
 def lint_license_file_present(
@@ -789,7 +860,7 @@ def lint_recipe_is_new(
 
 @conda_forge_only
 def lint_recipe_maintainers_exist(
-    meta_yaml: dict, extras: MetaYamlLintExtras
+    meta_yaml: dict, _extras: MetaYamlLintExtras
 ) -> LintsHints:
     """
     Lint #14-2: Check that the recipe maintainers exist
@@ -943,6 +1014,679 @@ def lint_all_maintainers_have_commented(
     )
 
 
+def lint_legacy_patterns(
+    meta_yaml: dict, _extras: MetaYamlLintExtras
+) -> LintsHints:
+    """
+    Lint #15: Check if we are using legacy patterns (i.e. pinned numpy packages)
+    """
+    requirements_section = get_dict_section(meta_yaml, Section.REQUIREMENTS)
+
+    build_reqs = requirements_section.get(RequirementsSubsection.BUILD)
+    if not build_reqs or ("numpy x.x" not in build_reqs):
+        return LintsHints()
+
+    return LintsHints.lint(
+        "Using pinned numpy packages is a deprecated pattern.  Consider "
+        "using the method outlined "
+        "[here](https://conda-forge.org/docs/maintainer/knowledge_base.html#linking-numpy)."
+    )
+
+
+def _validate_subsections(
+    section_name: str, subsections: Iterable[str]
+) -> LintsHints:
+    expected_subsections = FIELDS.get(section_name, [])
+
+    if not expected_subsections:
+        # we don't know anything about this section, so we deem it valid
+        return LintsHints()
+
+    result = LintsHints()
+    for subsection in subsections:
+        if subsection not in expected_subsections:
+            result.append_lint(
+                f"The {section_name} section contained an unexpected "
+                f"subsection name. {subsection} is not a valid subsection name."
+            )
+
+    return result
+
+
+def lint_subheaders_in_allowed_subheadings(
+    meta_yaml: dict, _extras: MetaYamlLintExtras
+) -> LintsHints:
+    """
+    Lint #16: Subheaders should be in the allowed subheadings
+    """
+    results = LintsHints()
+    major_sections = _remove_unexpected_major_sections(meta_yaml.keys())
+
+    for section in major_sections:
+        expected_subsections = FIELDS.get(section, [])
+        if not expected_subsections:
+            continue
+        if section in get_args(ListSectionName):
+            for section_element in get_list_section(meta_yaml, section):
+                results += _validate_subsections(
+                    section, section_element.keys()
+                )
+            continue
+        subsections = get_dict_section(meta_yaml, section).keys()
+        results += _validate_subsections(section, subsections)
+
+    return results
+
+
+def lint_validate_noarch_value(
+    meta_yaml: dict, _extras: MetaYamlLintExtras
+) -> LintsHints:
+    """
+    Lint #17: Validate noarch value
+    """
+    build_section = get_dict_section(meta_yaml, Section.BUILD)
+    noarch_value = build_section.get(BuildSubsection.NOARCH)
+
+    valid_noarch_values = ["python", "generic"]
+
+    if noarch_value is None or noarch_value in valid_noarch_values:
+        return LintsHints()
+
+    valid_noarch_str = "`, `".join(valid_noarch_values)
+    return LintsHints.lint(
+        f"Invalid `noarch` value `{noarch_value}`. Should be one of `{valid_noarch_str}`."
+    )
+
+
+@lint_exceptions(ConfigFileMustBeDictError, MultipleConfigFilesError)
+def lint_no_noarch_for_runtime_selectors(
+    meta_yaml: dict, extras: MetaYamlLintExtras
+) -> LintsHints:
+    """
+    Lint #18: noarch doesn't work with selectors for runtime dependencies
+    """
+    build_section = get_dict_section(meta_yaml, Section.BUILD)
+    noarch_value = build_section.get(BuildSubsection.NOARCH)
+
+    meta_yaml_file = extras.meta_yaml_file
+
+    if noarch_value is None or not meta_yaml_file.exists():
+        return LintsHints()
+
+    # this can raise ConfigFileMustBeDictError or MultipleConfigFilesError
+    forge_yaml = extras.get_config_file_or_empty(
+        ConfigFileName.CONDA_FORGE_YML
+    )
+    conda_build_config_keys = extras.get_config_file_or_empty(
+        ConfigFileName.CONDA_BUILD_CONFIG
+    ).keys()
+
+    noarch_platforms = len(forge_yaml.get("noarch_platforms", [])) > 1
+
+    with open(meta_yaml_file, "r") as f:
+        in_run_requirements = False
+        for line in f:
+            line_s = line.strip()
+            if line_s == "host:" or line_s == "run:":
+                in_run_requirements = True
+                run_requirements_spacing = line[: -len(line.lstrip())]
+                continue
+            if line_s.startswith("skip:") and is_selector_line(line):
+                return LintsHints.lint(
+                    "`noarch` packages can't have skips with selectors. If "
+                    "the selectors are necessary, please remove "
+                    "`noarch: {}`.".format(noarch_value)
+                )
+            if in_run_requirements:
+                if run_requirements_spacing == line[: -len(line.lstrip())]:
+                    in_run_requirements = False
+                    continue
+                if is_selector_line(
+                    line,
+                    allow_platforms=noarch_platforms,
+                    allow_keys=conda_build_config_keys,
+                ):
+                    return LintsHints.lint(
+                        "`noarch` packages can't have selectors. If "
+                        "the selectors are necessary, please remove "
+                        "`noarch: {}`.".format(noarch_value)
+                    )
+
+    return LintsHints()
+
+
+def lint_check_version(
+    meta_yaml: dict, _extras: MetaYamlLintExtras
+) -> LintsHints:
+    """
+    Lint #19: check that the version is conforming to the conda specification
+    """
+    package_section = get_dict_section(meta_yaml, Section.PACKAGE)
+    version = package_section.get(PackageSubsection.VERSION)
+
+    if version is None:
+        return LintsHints()
+
+    if not isinstance(version, str):
+        return LintsHints.lint(f"Package version {version} is not a string")
+
+    try:
+        VersionOrder(version)
+    except InvalidVersionSpec as e:
+        return LintsHints.lint(
+            f"Package version {version} doesn't match conda spec: {e}"
+        )
+
+    return LintsHints()
+
+
+def is_jinja_line(line):
+    line = line.rstrip()
+    m = _JINJA_PATTERN.match(line)
+    if m:
+        return True
+    return False
+
+
+def jinja_lines(lines):
+    for i, line in enumerate(lines):
+        if is_jinja_line(line):
+            yield line, i
+
+
+def lint_nice_jinja2_variables(
+    _meta_yaml: dict, extras: MetaYamlLintExtras
+) -> LintsHints:
+    """
+    Lint #20: Jinja2 variable definitions should be nice.
+    """
+    meta_yaml_file = extras.meta_yaml_file
+
+    if extras.recipe_dir is None or not meta_yaml_file.exists():
+        return LintsHints()
+
+    bad_jinja = []
+    bad_lines = []
+    # Good Jinja2 variable definitions look like "{% set .+ = .+ %}"
+    good_jinja_pat = re.compile(r"\s*\{%\s(set)\s[^\s]+\s=\s[^\s]+\s%}")
+    with open(meta_yaml_file, "r") as f:
+        for jinja_line, line_number in jinja_lines(f):
+            if not good_jinja_pat.match(jinja_line):
+                bad_jinja.append(jinja_line)
+                bad_lines.append(line_number)
+
+    if not bad_jinja:
+        return LintsHints()
+
+    return LintsHints.lint(
+        "Jinja2 variable definitions are suggested to "
+        "take a ``{{%<one space>set<one space>"
+        "<variable name><one space>=<one space>"
+        "<expression><one space>%}}`` form. See lines "
+        f"{bad_lines}"
+    )
+
+
+def lint_legacy_compiler_usage(
+    meta_yaml: dict, _extras: MetaYamlLintExtras
+) -> LintsHints:
+    """
+    Lint #21: Legacy usage of compilers
+    """
+    requirements_section = get_dict_section(meta_yaml, Section.REQUIREMENTS)
+    build_reqs = requirements_section.get(RequirementsSubsection.BUILD, [])
+
+    if not build_reqs or "toolchain" not in build_reqs:
+        return LintsHints()
+
+    return LintsHints.lint(
+        "Using toolchain directly in this manner is deprecated. Consider "
+        "using the compilers outlined "
+        "[here](https://conda-forge.org/docs/maintainer/knowledge_base.html#compilers)."
+    )
+
+
+def lint_single_space_pinned_requirements(
+    meta_yaml: dict, _extras: MetaYamlLintExtras
+) -> LintsHints:
+    """
+    Lint #22: Single space in pinned requirements
+    """
+    requirements_section = get_dict_section(meta_yaml, Section.REQUIREMENTS)
+
+    results = LintsHints()
+
+    for section, requirements in requirements_section.items():
+        for requirement in requirements or []:
+            req, _, _ = requirement.partition("#")
+            if "{{" in req:
+                continue
+            parts = req.split()
+            if len(parts) > 2 and parts[1] in [
+                "!=",
+                "=",
+                "==",
+                ">",
+                "<",
+                "<=",
+                ">=",
+            ]:
+                # check for too many spaces
+                name = parts[0]
+                pin = "".join(parts[1:])
+                results.append_lint(
+                    (
+                        f"``requirements: {section}: {requirement}`` should not "
+                        f"contain a space between relational operator and the version, i.e. "
+                        f"``{name} {pin}``"
+                    )
+                )
+                continue
+            # check that there is a space if there is a pin
+            bad_char_idx = [(parts[0].find(c), c) for c in "><="]
+            bad_char_idx = [bci for bci in bad_char_idx if bci[0] >= 0]
+            if bad_char_idx:
+                bad_char_idx.sort()
+                i = bad_char_idx[0][0]
+
+                name = parts[0][:i]
+                pin = parts[0][i:] + "".join(parts[1:])
+
+                results.append_lint(
+                    f"``requirements: {section}: {requirement}`` must "
+                    "contain a space between the name and the pin, i.e. "
+                    f"``{name} {pin}``"
+                )
+                continue
+
+    return results
+
+
+def lint_language_version_constraints_noarch_only(
+    meta_yaml: dict, _extras: MetaYamlLintExtras
+) -> LintsHints:
+    """
+    Lint #23: non-noarch builds shouldn't use version constraints on python and r-base
+    """
+    requirements_section = get_dict_section(meta_yaml, Section.REQUIREMENTS)
+    outputs_section = get_list_section(meta_yaml, Section.OUTPUTS)
+    build_section = get_dict_section(meta_yaml, Section.BUILD)
+
+    noarch_value = build_section.get(BuildSubsection.NOARCH)
+
+    check_languages = ["python", "r-base"]
+    host_reqs = requirements_section.get(RequirementsSubsection.HOST, [])
+    run_reqs = requirements_section.get(RequirementsSubsection.RUN, [])
+
+    if noarch_value is not None or outputs_section:
+        return LintsHints()
+
+    results = LintsHints()
+
+    for language in check_languages:
+        filtered_host_reqs = [
+            req for req in host_reqs if req.partition(" ")[0] == language
+        ]
+        filtered_run_reqs = [
+            req for req in run_reqs if req.partition(" ")[0] == language
+        ]
+        if filtered_host_reqs and not filtered_run_reqs:
+            results.append_lint(
+                f"If {language} is a host requirement, it should be a run requirement."
+            )
+        for reqs in [filtered_host_reqs, filtered_run_reqs]:
+            if language in reqs:
+                # no version constraint
+                continue
+            for req in reqs:
+                constraint = req.split(" ", 1)[1]
+                if constraint.startswith(">") or constraint.startswith("<"):
+                    results.append_lint(
+                        f"Non-noarch packages should have {language} requirement without any version constraints."
+                    )
+
+    return results
+
+
+def lint_lint_jinja_variable_references(
+    _meta_yaml: dict, extras: MetaYamlLintExtras
+) -> LintsHints:
+    """
+    Lint #24: jinja2 variable references should be {{<one space>var<one space>}}
+    """
+    meta_yaml_file = extras.meta_yaml_file
+
+    if extras.recipe_dir is None or not meta_yaml_file.exists():
+        return LintsHints()
+
+    bad_vars = []
+    bad_lines = []
+    with open(meta_yaml_file, "r") as f:
+        for i, line in enumerate(f.readlines()):
+            for m in _JINJA_VARIABLE_PATTERN.finditer(line):
+                if m.group(1) is None:
+                    continue
+                var = m.group(1)
+                if var != " %s " % var.strip():
+                    bad_vars.append(m.group(1).strip())
+                    bad_lines.append(i + 1)
+
+    if not bad_vars:
+        return LintsHints()
+
+    # This is a hint, sic
+    return LintsHints.hint(
+        "Jinja2 variable references are suggested to "
+        "take a ``{{<one space><variable name><one space>}}``"
+        f" form. See lines {bad_lines}."
+    )
+
+
+def lint_require_python_lower_bound(
+    meta_yaml: dict, _extras: MetaYamlLintExtras
+) -> LintsHints:
+    """
+    Lint #25: require a lower bound on python version
+    """
+    build_section = get_dict_section(meta_yaml, Section.BUILD)
+    outputs_section = get_list_section(meta_yaml, Section.OUTPUTS)
+    noarch_value = build_section.get(BuildSubsection.NOARCH)
+
+    requirements_section = get_dict_section(meta_yaml, Section.REQUIREMENTS)
+    run_reqs = requirements_section.get(RequirementsSubsection.RUN, [])
+
+    if noarch_value != "python" or outputs_section:
+        return LintsHints()
+
+    for req in run_reqs:
+        if (req.strip().split()[0] == "python") and (req != "python"):
+            return LintsHints()
+
+    return LintsHints.lint(
+        "noarch: python recipes are required to have a lower bound "
+        "on the python version. Typically this means putting "
+        "`python >=3.6` in **both** `host` and `run` but you should check "
+        "upstream for the package's Python compatibility."
+    )
+
+
+def lint_pin_subpackage_pin_compatible(
+    meta_yaml: dict, _extras: MetaYamlLintExtras
+) -> LintsHints:
+    """
+    Lint #26: pin_subpackage is for subpackages and pin_compatible is for non-subpackages of the recipe.
+    Contact @carterbox for troubleshooting with this lint.
+    """
+    outputs_section = get_list_section(meta_yaml, Section.OUTPUTS)
+    package_section = get_dict_section(meta_yaml, Section.PACKAGE)
+
+    subpackage_names = []
+    for out in outputs_section:
+        if OutputSubsection.NAME in out:
+            subpackage_names.append(out[OutputSubsection.NAME])  # explicit
+    if PackageSubsection.NAME in package_section:
+        subpackage_names.append(
+            package_section[PackageSubsection.NAME]
+        )  # implicit
+
+    results = LintsHints()
+
+    def check_pins(pinning_section: Optional[Iterable[str]]):
+        if pinning_section is None:
+            return
+        for pin in fnmatch.filter(pinning_section, "compatible_pin*"):
+            if pin.split()[1] in subpackage_names:
+                results.append_lint(
+                    "pin_subpackage should be used instead of"
+                    f" pin_compatible for `{pin.split()[1]}`"
+                    " because it is one of the known outputs of this recipe:"
+                    f" {subpackage_names}."
+                )
+        for pin in fnmatch.filter(pinning_section, "subpackage_pin*"):
+            if pin.split()[1] not in subpackage_names:
+                results.append_lint(
+                    "pin_compatible should be used instead of"
+                    f" pin_subpackage for `{pin.split()[1]}`"
+                    " because it is not a known output of this recipe:"
+                    f" {subpackage_names}."
+                )
+
+    def check_pins_build_and_requirements(top_level: dict):
+        if "build" in top_level and "run_exports" in top_level["build"]:
+            check_pins(top_level["build"]["run_exports"])
+        if "requirements" in top_level and "run" in top_level["requirements"]:
+            check_pins(top_level["requirements"]["run"])
+        if "requirements" in top_level and "host" in top_level["requirements"]:
+            check_pins(top_level["requirements"]["host"])
+
+    check_pins_build_and_requirements(meta_yaml)
+    for out in outputs_section:
+        check_pins_build_and_requirements(out)
+
+    return results
+
+
+def lint_suggest_pip(
+    meta_yaml: dict, _extras: MetaYamlLintExtras
+) -> LintsHints:
+    """
+    Hint #1: suggest pip
+    """
+    build_section = get_dict_section(meta_yaml, Section.BUILD)
+
+    if BuildSubsection.SCRIPT not in build_section:
+        return LintsHints()
+
+    scripts = build_section[BuildSubsection.SCRIPT]
+    if isinstance(scripts, str):
+        scripts = [scripts]
+    for script in scripts:
+        if "python setup.py install" in script:
+            return LintsHints.hint(
+                "Whenever possible python packages should use pip. "
+                "See https://conda-forge.org/docs/maintainer/adding_pkgs.html#use-pip"
+            )
+
+    return LintsHints()
+
+
+def lint_suggest_python_noarch(
+    meta_yaml: dict, extras: MetaYamlLintExtras
+) -> LintsHints:
+    """
+    Hint #2: suggest python noarch (skip on feedstocks)
+    """
+    build_section = get_dict_section(meta_yaml, Section.BUILD)
+    requirements_section = get_dict_section(meta_yaml, Section.REQUIREMENTS)
+
+    noarch_value = build_section.get(BuildSubsection.NOARCH)
+    build_reqs = requirements_section.get(RequirementsSubsection.BUILD, [])
+
+    if (
+        noarch_value is not None
+        or not build_reqs
+        or any("_compiler_stub" in b for b in build_reqs)
+        or ("pip" not in build_reqs)
+        or (not extras.is_staged_recipe and extras.is_conda_forge)
+    ):
+        return LintsHints()
+
+    noarch_possible = True
+
+    # For some reason, we assume that meta.yaml is always present
+    with open(extras.meta_yaml_file, "r") as f:
+        in_run_reqs = False
+
+        for line in f:
+            line_s = line.strip()
+            if line_s == "host:" or line_s == "run:":
+                in_run_reqs = True
+                run_reqs_spacing = line[: -len(line.lstrip())]
+                continue
+            if line_s.startswith("skip:") and is_selector_line(line):
+                noarch_possible = False
+                break
+            if in_run_reqs:
+                if run_reqs_spacing == line[: -len(line.lstrip())]:
+                    in_run_reqs = False
+                    continue
+                if is_selector_line(line):
+                    noarch_possible = False
+                    break
+
+    if not noarch_possible:
+        return LintsHints()
+
+    return LintsHints.hint(
+        "Whenever possible python packages should use noarch. "
+        "See https://conda-forge.org/docs/maintainer/knowledge_base.html#noarch-builds"
+    )
+
+
+@lint_exceptions(ConfigFileMustBeDictError, MultipleConfigFilesError)
+def lint_suggest_fix_shellcheck(
+    meta_yaml: dict, extras: MetaYamlLintExtras
+) -> LintsHints:
+    """
+    Hint #3: suggest fixing all recipe/*.sh shellcheck findings
+    """
+    recipe_dir = extras.recipe_dir
+
+    if not recipe_dir:
+        return LintsHints()
+
+    shell_scripts = recipe_dir.glob("*.sh")
+
+    if not shell_scripts:
+        return LintsHints()
+
+    # can raise ConfigFileMustBeDictError or MultipleConfigFilesError
+    # can also be empty
+    forge_yaml = extras.get_config_file_or_empty(
+        ConfigFileName.CONDA_FORGE_YML
+    )
+
+    shellcheck_enabled = forge_yaml.get("shellcheck", {}).get("enabled", False)
+
+    if not shellcheck_enabled or not shutil.which("shellcheck"):
+        return LintsHints()
+
+    max_shellcheck_lines = 50
+    cmd = [
+        "shellcheck",
+        "--enable=all",
+        "--shell=bash",
+        # SC2154: var is referenced but not assigned,
+        #         see https://github.com/koalaman/shellcheck/wiki/SC2154
+        "--exclude=SC2154",
+    ]
+
+    shell_scripts_str = []
+    for script in shell_scripts:
+        shell_scripts_str.append(str(script.resolve()))
+
+    p = subprocess.Popen(
+        cmd + shell_scripts_str,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        env={
+            "PATH": os.getenv("PATH")
+        },  # exclude other env variables to protect against token leakage
+    )
+    shellcheck_stdout, _ = p.communicate()
+
+    if p.returncode == 0:
+        # All files successfully scanned without issues.
+        return LintsHints()
+
+    if p.returncode != 1:
+        # Something went wrong.
+        return LintsHints.hint(
+            "There have been errors while scanning with shellcheck."
+        )
+
+    # All files successfully scanned with some issues.
+    results = LintsHints()
+
+    findings = (
+        shellcheck_stdout.decode(sys.stdout.encoding)
+        .replace("\r\n", "\n")
+        .splitlines()
+    )
+    results.append_hint(
+        "Whenever possible fix all shellcheck findings ('"
+        + " ".join(cmd)
+        + " recipe/*.sh -f diff | git apply' helps)"
+    )
+    results.hints.extend(findings[:max_shellcheck_lines])
+
+    if len(findings) > max_shellcheck_lines:
+        results.append_hint(
+            "Output restricted, there are '%s' more lines."
+            % (len(findings) - max_shellcheck_lines)
+        )
+
+    return results
+
+
+def lint_spdx_license(
+    meta_yaml: dict, _extras: MetaYamlLintExtras
+) -> LintsHints:
+    """
+    Hint #4: Check for SPDX license identifiers
+    """
+    about_section = get_dict_section(meta_yaml, Section.ABOUT)
+
+    license_ = about_section.get(AboutSubsection.LICENSE, "")
+    licensing = license_expression.Licensing()
+    parsed_exceptions = []
+    try:
+        parsed_licenses = []
+        parsed_licenses_with_exception = licensing.license_symbols(
+            license_.strip(), decompose=False
+        )
+        for li in parsed_licenses_with_exception:
+            if isinstance(li, license_expression.LicenseWithExceptionSymbol):
+                parsed_licenses.append(li.license_symbol.key)
+                parsed_exceptions.append(li.exception_symbol.key)
+            else:
+                parsed_licenses.append(li.key)
+    except license_expression.ExpressionError:
+        parsed_licenses = [license_]
+
+    license_ref_regex = re.compile(r"^LicenseRef[a-zA-Z0-9\-.]*$")
+    filtered_licenses = []
+    for license_ in parsed_licenses:
+        if not license_ref_regex.match(license_):
+            filtered_licenses.append(license_)
+
+    licenses_file = Path(__file__).parent / "licenses.txt"
+    license_exceptions_file = Path(__file__).parent / "license_exceptions.txt"
+
+    with open(licenses_file, "r") as f:
+        expected_licenses = f.readlines()
+        expected_licenses = set([li.strip() for li in expected_licenses])
+    with open(license_exceptions_file, "r") as f:
+        expected_exceptions = f.readlines()
+        expected_exceptions = set([li.strip() for li in expected_exceptions])
+
+    results = LintsHints()
+    if set(filtered_licenses) - expected_licenses:
+        results.append_hint(
+            "License is not an SPDX identifier (or a custom LicenseRef) nor an SPDX license expression.\n\n"
+            "Documentation on acceptable licenses can be found "
+            "[here]( https://conda-forge.org/docs/maintainer/adding_pkgs.html#spdx-identifiers-and-expressions )."
+        )
+    if set(parsed_exceptions) - expected_exceptions:
+        results.append_hint(
+            "License exception is not an SPDX exception.\n\n"
+            "Documentation on acceptable licenses can be found "
+            "[here]( https://conda-forge.org/docs/maintainer/adding_pkgs.html#spdx-identifiers-and-expressions )."
+        )
+
+    return results
+
+
 _CONDA_FORGE_ONLY_LINTERS: List[Linter[MetaYamlLintExtras]] = [
     lint_recipe_is_new,
     lint_recipe_maintainers_exist,
@@ -951,7 +1695,6 @@ _CONDA_FORGE_ONLY_LINTERS: List[Linter[MetaYamlLintExtras]] = [
     lint_package_specific_requirements,
     lint_all_maintainers_have_commented,
 ]
-
 
 META_YAML_LINTERS: List[Linter[MetaYamlLintExtras]] = [
     lint_no_unexpected_top_level_keys,
@@ -970,6 +1713,22 @@ META_YAML_LINTERS: List[Linter[MetaYamlLintExtras]] = [
     lint_license_file_present,
     lint_recipe_name_valid,
     *_CONDA_FORGE_ONLY_LINTERS,
+    lint_legacy_patterns,
+    lint_subheaders_in_allowed_subheadings,
+    lint_validate_noarch_value,
+    lint_no_noarch_for_runtime_selectors,
+    lint_check_version,
+    lint_nice_jinja2_variables,
+    lint_legacy_compiler_usage,
+    lint_single_space_pinned_requirements,
+    lint_language_version_constraints_noarch_only,
+    lint_lint_jinja_variable_references,
+    lint_require_python_lower_bound,
+    lint_pin_subpackage_pin_compatible,
+    lint_suggest_pip,
+    lint_suggest_python_noarch,
+    lint_suggest_fix_shellcheck,
+    lint_spdx_license,
 ]
 
 # TODO: get section should raise lints, move enums to other module

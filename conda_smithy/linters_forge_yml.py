@@ -6,7 +6,7 @@ from typing import List
 import jsonschema
 from pydantic import BaseModel
 
-from conda_smithy.linting_types import Linter, LintsHints
+from conda_smithy.linting_utils import Linter, LintsHints
 from conda_smithy.schema import ConfigModel
 from conda_smithy.validate_schema import validate_json_schema
 
