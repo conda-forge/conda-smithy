@@ -844,7 +844,6 @@ def lint_recipe_is_new(
         )
 
     url = None
-    # TODO: this is flawed (open issue)
     for source_section in sources_section:
         if str(source_section.get("url")).startswith(
             "https://pypi.io/packages/source/"
