@@ -19,6 +19,7 @@ from typing import (
     Optional,
     AbstractSet,
     Literal,
+    Type,
 )
 
 import license_expression
@@ -882,7 +883,7 @@ def lint_recipe_maintainers_exist(
     Lint #14-2: Check that the recipe maintainers exist
     """
     extra_section = get_dict_section(meta_yaml, Section.EXTRA)
-    maintainers = extra_section.get(ExtraSubsection.RECIPE_MAINTAINERS, [])
+    maintainers = extra_section.get(ExtraSubsection.RECIPE_MAINTAINERS) or []
 
     gh = get_github_client()
     results = LintsHints()
@@ -949,18 +950,18 @@ def lint_package_specific_requirements(
     Lint #14-5: Package-specific hints (e.g. do not depend on matplotlib, only matplotlib-base)
     """
     requirements_section = get_dict_section(meta_yaml, Section.REQUIREMENTS)
-    build_reqs = requirements_section.get(RequirementsSubsection.BUILD, [])
-    host_reqs = requirements_section.get(RequirementsSubsection.HOST, [])
-    run_reqs = requirements_section.get(RequirementsSubsection.RUN, [])
+    build_reqs = requirements_section.get(RequirementsSubsection.BUILD) or []
+    host_reqs = requirements_section.get(RequirementsSubsection.HOST) or []
+    run_reqs = requirements_section.get(RequirementsSubsection.RUN) or []
 
     outputs_section = get_list_section(meta_yaml, Section.OUTPUTS)
 
     for out in outputs_section:
         _req = out.get(OutputSubsection.REQUIREMENTS, {})
         if isinstance(_req, Mapping):
-            build_reqs += _req.get(RequirementsSubsection.BUILD, [])
-            host_reqs += _req.get(RequirementsSubsection.HOST, [])
-            run_reqs += _req.get(RequirementsSubsection.RUN, [])
+            build_reqs += _req.get(RequirementsSubsection.BUILD) or []
+            host_reqs += _req.get(RequirementsSubsection.HOST) or []
+            run_reqs += _req.get(RequirementsSubsection.RUN) or []
         else:
             run_reqs += _req
 
@@ -992,7 +993,7 @@ def lint_all_maintainers_have_commented(
     Lint #14-6: Check if all listed maintainers have commented
     """
     extra_section = get_dict_section(meta_yaml, Section.EXTRA)
-    maintainers = extra_section.get(ExtraSubsection.RECIPE_MAINTAINERS, [])
+    maintainers = extra_section.get(ExtraSubsection.RECIPE_MAINTAINERS) or []
     pr_number = os.environ.get("STAGED_RECIPES_PR_NUMBER")
 
     if not extras.is_staged_recipe or not maintainers or not pr_number:
@@ -1247,7 +1248,7 @@ def lint_legacy_compiler_usage(
     Lint #21: Legacy usage of compilers
     """
     requirements_section = get_dict_section(meta_yaml, Section.REQUIREMENTS)
-    build_reqs = requirements_section.get(RequirementsSubsection.BUILD, [])
+    build_reqs = requirements_section.get(RequirementsSubsection.BUILD) or []
 
     if not build_reqs or "toolchain" not in build_reqs:
         return LintsHints()
@@ -1328,8 +1329,8 @@ def lint_language_version_constraints_noarch_only(
     noarch_value = build_section.get(BuildSubsection.NOARCH)
 
     check_languages = ["python", "r-base"]
-    host_reqs = requirements_section.get(RequirementsSubsection.HOST, [])
-    run_reqs = requirements_section.get(RequirementsSubsection.RUN, [])
+    host_reqs = requirements_section.get(RequirementsSubsection.HOST) or []
+    run_reqs = requirements_section.get(RequirementsSubsection.RUN) or []
 
     if noarch_value is not None or outputs_section:
         return LintsHints()
@@ -1406,7 +1407,7 @@ def lint_require_python_lower_bound(
     noarch_value = build_section.get(BuildSubsection.NOARCH)
 
     requirements_section = get_dict_section(meta_yaml, Section.REQUIREMENTS)
-    run_reqs = requirements_section.get(RequirementsSubsection.RUN, [])
+    run_reqs = requirements_section.get(RequirementsSubsection.RUN) or []
 
     if noarch_value != "python" or outputs_section:
         return LintsHints()
@@ -1513,7 +1514,7 @@ def lint_suggest_python_noarch(
     requirements_section = get_dict_section(meta_yaml, Section.REQUIREMENTS)
 
     noarch_value = build_section.get(BuildSubsection.NOARCH)
-    build_reqs = requirements_section.get(RequirementsSubsection.BUILD, [])
+    build_reqs = requirements_section.get(RequirementsSubsection.BUILD) or []
 
     if (
         noarch_value is not None
@@ -1746,3 +1747,4 @@ META_YAML_LINTERS: List[Linter[MetaYamlLintExtras]] = [
 
 # TODO: get section should raise lints, move enums to other module
 # TODO: check if lists are complete
+# TODO: LintsHints API usage
