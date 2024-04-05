@@ -419,6 +419,7 @@ def lint_about_contents(
         AboutSubsection.LICENSE,
         AboutSubsection.SUMMARY,
     ]:
+        # if the section doesn't exist, or is just empty, lint it.
         if not about_section.get(about_item):
             lints.append(
                 f"The {about_item} item is expected in the about section."
@@ -1201,12 +1202,10 @@ def lint_check_version(
     return LintsHints()
 
 
-def is_jinja_line(line):
+def is_jinja_line(line: str) -> bool:
     line = line.rstrip()
     m = _JINJA_PATTERN.match(line)
-    if m:
-        return True
-    return False
+    return bool(m)
 
 
 def jinja_lines(lines):

@@ -2,8 +2,18 @@ import os
 import sys
 import tempfile
 import warnings
+from glob import glob
 from pathlib import Path
-from typing import Optional, Dict, Iterable, Tuple, List, TypeVar
+from typing import (
+    Optional,
+    Dict,
+    Iterable,
+    Tuple,
+    List,
+    TypeVar,
+    Mapping,
+    Sequence,
+)
 
 from conda_smithy import linters_meta_yaml
 from conda_smithy.config_file_helpers import (
@@ -97,6 +107,50 @@ def __getattr__(name):
     raise AttributeError(f"module {__name__} has no attribute {name}")
 
 
+def get_section(parent: dict, name: str, lints: List[str]):
+    warnings.warn(
+        "get_section is deprecated and will be removed in v4.",
+        DeprecationWarning,
+    )
+    # note: this duplicates code from linters_meta_yaml.get_dict_section_or_subsection but should be removed anyway
+    if name == "source":
+        return get_list_section(parent, name, lints, allow_single=True)
+    elif name == "outputs":
+        return get_list_section(parent, name, lints)
+
+    section = parent.get(name, {})
+    if not isinstance(section, Mapping):
+        lints.append(
+            'The "{}" section was expected to be a dictionary, but '
+            "got a {}.".format(name, type(section).__name__)
+        )
+        section = {}
+    return section
+
+
+def get_list_section(
+    parent: dict, name: str, lints: List[str], allow_single: bool = False
+):
+    warnings.warn(
+        "get_list_section is deprecated and will be removed in v4.",
+        DeprecationWarning,
+    )
+    # note: this duplicates code from linters_meta_yaml._get_list_section_internal but should be removed anyway
+    section = parent.get(name, [])
+    if allow_single and isinstance(section, Mapping):
+        return [section]
+    if isinstance(section, Sequence) and not isinstance(section, str):
+        return section
+    msg = 'The "{}" section was expected to be a {}list, but got a {}.{}.'.format(
+        name,
+        "dictionary or a " if allow_single else "",
+        type(section).__module__,
+        type(section).__name__,
+    )
+    lints.append(msg)
+    return [{}]
+
+
 def lint_section_order(major_sections: Iterable[str], lints: List[str]):
     warnings.warn(
         "lint_recipe.lint_section_order is deprecated and will be removed in v4, use"
@@ -110,6 +164,44 @@ def lint_section_order(major_sections: Iterable[str], lints: List[str]):
     )
 
     lints.extend(result.lints)
+
+
+def lint_about_contents(about_section: dict, lints: List[str]):
+    warnings.warn(
+        "lint_recipe.lint_about_contents is deprecated and will be removed in v4, use"
+        "linters_meta_yaml.lint_about_contents instead.",
+        DeprecationWarning,
+    )
+
+    meta_yaml = {"about": about_section}
+    results = linters_meta_yaml.lint_about_contents(
+        meta_yaml, MetaYamlLintExtras()
+    )
+
+    lints.extend(results.lints)
+
+
+def find_local_config_file(recipe_dir: str, filename: str) -> Optional[str]:
+    warnings.warn(
+        "find_local_config_file is deprecated and will be removed in v4.",
+        DeprecationWarning,
+    )
+    # this duplicates the logic from config_file_helpers.read_local_config_file but should be removed anyway
+    # support
+    # 1. feedstocks
+    # 2. staged-recipes with custom conda-forge.yaml in recipe
+    # 3. staged-recipes
+    found_filename = (
+        glob(os.path.join(recipe_dir, filename))
+        or glob(
+            os.path.join(recipe_dir, "..", filename),
+        )
+        or glob(
+            os.path.join(recipe_dir, "..", "..", filename),
+        )
+    )
+
+    return found_filename[0] if found_filename else None
 
 
 def _lint(
@@ -217,7 +309,51 @@ def lintify_meta_yaml(
     return lint_result.lints, lint_result.hints
 
 
-def main(recipe_dir, conda_forge=False, return_hints=False):
+def is_selector_line(
+    line: str,
+    allow_platforms: bool = False,
+    allow_keys: Optional[AbstractSet] = None,
+):
+    warnings.warn(
+        "is_selector_line is deprecated and will be removed in v4, "
+        "use linters_meta_yaml.is_selector_line instead.",
+        DeprecationWarning,
+    )
+    return linters_meta_yaml.is_selector_line(
+        line, allow_platforms, allow_keys
+    )
+
+
+def is_jinja_line(line: str) -> bool:
+    warnings.warn(
+        "is_jinja_line is deprecated and will be removed in v4. "
+        "Use linters_meta_yaml.is_jinja_line instead.",
+        DeprecationWarning,
+    )
+    return linters_meta_yaml.is_jinja_line(line)
+
+
+def selector_lines(lines):
+    warnings.warn(
+        "selector_lines is deprecated and will be removed in v4. "
+        "Use linters_meta_yaml.selector_lines instead.",
+        DeprecationWarning,
+    )
+    return linters_meta_yaml.selector_lines(lines)
+
+
+def jinja_lines(lines):
+    warnings.warn(
+        "jinja_lines is deprecated and will be removed in v4. "
+        "Use linters_meta_yaml.jinja_lines instead.",
+        DeprecationWarning,
+    )
+    return linters_meta_yaml.jinja_lines(lines)
+
+
+def main(
+    recipe_dir: str, conda_forge: bool = False, return_hints: bool = False
+):
     recipe_dir = os.path.abspath(recipe_dir)
     recipe_meta = os.path.join(recipe_dir, "meta.yaml")
     if not os.path.exists(recipe_dir):
@@ -227,16 +363,18 @@ def main(recipe_dir, conda_forge=False, return_hints=False):
         content = render_meta_yaml("".join(fh))
         meta = get_yaml().load(content)
 
-    lints, hints = lintify_meta_yaml(meta, recipe_dir, conda_forge)
+    if not isinstance(meta, dict):
+        raise ValueError("The meta.yaml file does not represent a dictionary.")
+
+    results = lint_meta_yaml(meta, Path(recipe_dir), conda_forge)
     forge_yaml_results = lint_forge_yaml(recipe_dir=Path(recipe_dir))
 
-    lints.extend(forge_yaml_results.lints)
-    hints.extend(forge_yaml_results.hints)
+    results += forge_yaml_results
 
     if return_hints:
-        return lints, hints
+        return results.lints, results.hints
     else:
-        return lints
+        return results.lints
 
 
 def main_debug():
