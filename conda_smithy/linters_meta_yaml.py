@@ -920,7 +920,7 @@ def lint_recipe_dir_inside_example_dir(
     """
     recipe_dir = extras.recipe_dir
 
-    if recipe_dir and "recipes/example/" in str(recipe_dir):
+    if recipe_dir and "recipes/example/" in str(recipe_dir) + "/":
         return LintsHints.lint(
             "Please move the recipe out of the example dir and "
             "into its own dir."

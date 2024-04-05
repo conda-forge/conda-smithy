@@ -50,6 +50,11 @@ class LintsHints:
             hints=self.hints + other.hints,
         )
 
+    def __eq__(self, other: Any) -> bool:
+        if not isinstance(other, LintsHints):
+            return NotImplemented
+        return self.lints == other.lints and self.hints == other.hints
+
     def append_lint(self, lint: str) -> None:
         if lint in self.lints:
             return
