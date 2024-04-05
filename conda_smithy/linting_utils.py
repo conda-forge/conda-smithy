@@ -1,22 +1,46 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 from functools import wraps
-from typing import Any, Callable, List, TypeVar, Type
+from typing import Any, Callable, List, TypeVar, Type, Optional
 
 T = TypeVar("T")
 
 
-@dataclass
+def _deduplicate_or_empty(input_list: Optional[List[T]]) -> List[T]:
+    """
+    Deduplicate a list while preserving order. If None is passed, return an empty list.
+    """
+    if not input_list:
+        return []
+    return list(dict.fromkeys(input_list))
+
+
 class LintsHints:
-    lints: List[str] = field(default_factory=list)
     """
-    Lints are errors.
+    A container for lints and hints which are automatically deduplicated.
     """
-    hints: List[str] = field(default_factory=list)
-    """
-    Hints are suggestions.
-    """
+
+    def __init__(
+        self,
+        lints: Optional[List[str]] = None,
+        hints: Optional[List[str]] = None,
+    ):
+        self._lints = _deduplicate_or_empty(lints)
+        self._hints = _deduplicate_or_empty(hints)
+
+    @property
+    def lints(self) -> List[str]:
+        """
+        Lints are errors.
+        """
+        return self._lints
+
+    @property
+    def hints(self) -> List[str]:
+        """
+        Hints are suggestions.
+        """
+        return self._hints
 
     def __add__(self, other: Any) -> LintsHints:
         if not isinstance(other, LintsHints):
@@ -27,10 +51,20 @@ class LintsHints:
         )
 
     def append_lint(self, lint: str) -> None:
+        if lint in self.lints:
+            return
         self.lints.append(lint)
 
     def append_hint(self, hint: str) -> None:
+        if hint in self.hints:
+            return
         self.hints.append(hint)
+
+    def extend_lints(self, lints: List[str]) -> None:
+        self._lints = _deduplicate_or_empty(self.lints + lints)
+
+    def extend_hints(self, hints: List[str]) -> None:
+        self._hints = _deduplicate_or_empty(self.hints + hints)
 
     @classmethod
     def lint(cls, lint: str) -> LintsHints:

@@ -1639,7 +1639,7 @@ def lint_suggest_fix_shellcheck(
         + " ".join(cmd)
         + " recipe/*.sh -f diff | git apply' helps)"
     )
-    results.hints.extend(findings[:max_shellcheck_lines])
+    results.extend_hints(findings[:max_shellcheck_lines])
 
     if len(findings) > max_shellcheck_lines:
         results.append_hint(
@@ -1751,5 +1751,3 @@ META_YAML_LINTERS: List[Linter[MetaYamlLintExtras]] = [
     lint_suggest_fix_shellcheck,
     lint_spdx_license,
 ]
-
-# TODO: deduplication
