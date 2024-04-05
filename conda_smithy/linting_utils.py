@@ -55,7 +55,7 @@ The generic type T of the Linter is the type of extra data that is passed to the
 """
 
 
-def lint_exceptions(
+def exceptions_lint(
     *_exceptions: Type[Exception],
 ) -> Callable[[Linter[T]], Linter[T]]:
     """
@@ -79,7 +79,7 @@ def lint_exceptions(
 class AutoLintException(Exception):
     """
     An exception that is automatically converted to a lint by lint_recipe._lint.
-    Use this as an alternative to lint_exceptions for very common exceptions among linting functions.
+    Use this as an alternative to exceptions_lint for very common exceptions among linting functions.
     """
 
     pass

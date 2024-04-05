@@ -47,7 +47,7 @@ from conda_build.metadata import (
 from conda_smithy.linting_utils import (
     Linter,
     LintsHints,
-    lint_exceptions,
+    exceptions_lint,
     AutoLintException,
 )
 from conda_smithy.utils import get_yaml
@@ -1063,7 +1063,7 @@ def lint_legacy_patterns(
     )
 
 
-def _validate_subsections(
+def _helper_validate_subsections(
     section_name: str, subsections: Iterable[str]
 ) -> LintsHints:
     expected_subsections = FIELDS.get(section_name, [])
@@ -1098,12 +1098,12 @@ def lint_subheaders_in_allowed_subheadings(
             continue
         if section in LIST_SECTION_NAMES:
             for section_element in get_list_section(meta_yaml, section):
-                results += _validate_subsections(
+                results += _helper_validate_subsections(
                     section, section_element.keys()
                 )
             continue
         subsections = get_dict_section(meta_yaml, section).keys()
-        results += _validate_subsections(section, subsections)
+        results += _helper_validate_subsections(section, subsections)
 
     return results
 
@@ -1128,7 +1128,7 @@ def lint_validate_noarch_value(
     )
 
 
-@lint_exceptions(ConfigFileMustBeDictError, MultipleConfigFilesError)
+@exceptions_lint(ConfigFileMustBeDictError, MultipleConfigFilesError)
 def lint_no_noarch_for_runtime_selectors(
     meta_yaml: dict, extras: MetaYamlLintExtras
 ) -> LintsHints:
@@ -1570,7 +1570,7 @@ def lint_suggest_python_noarch(
     )
 
 
-@lint_exceptions(ConfigFileMustBeDictError, MultipleConfigFilesError)
+@exceptions_lint(ConfigFileMustBeDictError, MultipleConfigFilesError)
 def lint_suggest_fix_shellcheck(
     _meta_yaml: dict, extras: MetaYamlLintExtras
 ) -> LintsHints:
@@ -1758,7 +1758,5 @@ META_YAML_LINTERS: List[Linter[MetaYamlLintExtras]] = [
     lint_spdx_license,
 ]
 
-# TODO: move enums to other module
-# TODO: check if lists are complete
 # TODO: LintsHints API usage
 # TODO: deduplication
