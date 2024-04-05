@@ -19,7 +19,6 @@ from typing import (
     Optional,
     AbstractSet,
     Literal,
-    Type,
 )
 
 import license_expression
@@ -45,7 +44,12 @@ from conda_build.metadata import (
     FIELDS as _CONDA_BUILD_FIELDS,
 )
 
-from conda_smithy.linting_utils import Linter, LintsHints, lint_exceptions
+from conda_smithy.linting_utils import (
+    Linter,
+    LintsHints,
+    lint_exceptions,
+    AutoLintException,
+)
 from conda_smithy.utils import get_yaml
 
 if sys.version_info[:2] < (3, 11):
@@ -62,6 +66,16 @@ if "extra" not in FIELDS.keys():
 # additions by conda-forge
 FIELDS["extra"]["recipe-maintainers"] = ()
 FIELDS["extra"]["feedstock-name"] = ""
+
+
+class SectionTypeError(TypeError, AutoLintException):
+    """
+    Raised when a section or subsection in the meta.yaml file has an unexpected type.
+    This exception is automatically converted to a lint by lint_recipe._lint and therefore does not need
+    to be caught by linters.
+    """
+
+    pass
 
 
 class Section(StrEnum):
@@ -275,14 +289,14 @@ def get_dict_section(meta_yaml: dict, name: Section) -> dict:
     """
     Behaves like get_dict_section_or_subsection, but raises a ValueError if the section is expected to be a list.
     :raises ValueError: If you pass a section name that is expected to be a list.
-    :raises TypeError: if the section in the meta_yaml dict does not represent a dictionary
     You should not catch this exception, it is a programming error.
+    :raises SectionTypeError: if the section in the meta_yaml dict does not represent a dictionary
     """
     if name in LIST_SECTION_NAMES:
         raise ValueError(
             f"The section {name} is expected to be a list, not a dictionary. Use get_list_section instead."
         )
-    # can raise TypeError
+    # can raise SectionTypeError
     return get_dict_section_or_subsection(meta_yaml, name)
 
 
@@ -296,14 +310,14 @@ def get_dict_section_or_subsection(
     If the section is not present, an empty dictionary is returned.
     :param parent: The parent dictionary to extract from.
     :param name: The name of the (sub)section to extract.
-    :raises TypeError: if the (sub)section in the parent dict does not represent a dictionary
+    :raises SectionTypeError: if the (sub)section in the parent dict does not represent a dictionary
     (has a meaningful error message).
     """
     section = parent.get(name, {})
     if isinstance(section, Mapping):
         return section
 
-    raise TypeError(
+    raise SectionTypeError(
         f'The "{name}" section was expected to be a dictionary, but '
         f"got a {type(section).__name__}."
     )
@@ -317,8 +331,8 @@ def get_list_section(meta_yaml: dict, name: ListSectionName) -> list:
     If the section is not present, an empty list is returned.
     :param meta_yaml: The meta.yaml dictionary.
     :param name: The name of the section to extract.
-    :raises TypeError: if the section in the meta_yaml dict does not represent a list, or a dictionary (if allow_single)
-    (contains a meaningful error message).
+    :raises SectionTypeError: if the section in the meta_yaml dict does not represent a list, or a dictionary
+    (if allow_single) (contains a meaningful error message).
     """
     allow_single = name == Section.SOURCE
     return _get_list_section_internal(meta_yaml, name, allow_single)
@@ -334,8 +348,8 @@ def _get_list_section_internal(
     :param name: The name of the section to extract.
     :param allow_single: If True, allow a single dictionary (!) instead of a list, which is returned as a list with
     a single element.
-    :raises TypeError: if the section in the meta_yaml dict does not represent a list, or a dictionary (if allow_single)
-    (contains a meaningful error message).
+    :raises SectionTypeError: if the section in the meta_yaml dict does not represent a list, or a dictionary
+    (if allow_single) (contains a meaningful error message).
     """
     section = meta_yaml.get(name, [])
     if allow_single and isinstance(section, Mapping):
@@ -343,7 +357,7 @@ def _get_list_section_internal(
     if isinstance(section, Sequence) and not isinstance(section, str):
         return section
 
-    raise TypeError(
+    raise SectionTypeError(
         f'The "{name}" section was expected to be a {"dictionary or a " if allow_single else ""}list, but got a '
         f"{type(section).__module__}.{type(section).__name__}."
     )
@@ -894,7 +908,7 @@ def lint_recipe_maintainers_exist(
             continue
         try:
             gh.get_user(maintainer)
-        except github.UnknownObjectException as e:
+        except github.UnknownObjectException:
             results.append_lint(
                 f'Recipe maintainer "{maintainer}" does not exist'
             )
@@ -999,7 +1013,6 @@ def lint_all_maintainers_have_commented(
     if not extras.is_staged_recipe or not maintainers or not pr_number:
         return LintsHints()
 
-    results = LintsHints()
     gh = get_github_client()
 
     # Get PR details using GitHub API
@@ -1025,7 +1038,7 @@ def lint_all_maintainers_have_commented(
     if not non_participating_maintainers:
         return LintsHints()
 
-    LintsHints.lint(
+    return LintsHints.lint(
         f"The following maintainers have not yet confirmed that they are willing to be listed here: "
         f"{', '.join(non_participating_maintainers)}. Please ask them to comment on this PR if they are."
     )
@@ -1559,7 +1572,7 @@ def lint_suggest_python_noarch(
 
 @lint_exceptions(ConfigFileMustBeDictError, MultipleConfigFilesError)
 def lint_suggest_fix_shellcheck(
-    meta_yaml: dict, extras: MetaYamlLintExtras
+    _meta_yaml: dict, extras: MetaYamlLintExtras
 ) -> LintsHints:
     """
     Hint #3: suggest fixing all recipe/*.sh shellcheck findings
@@ -1745,6 +1758,7 @@ META_YAML_LINTERS: List[Linter[MetaYamlLintExtras]] = [
     lint_spdx_license,
 ]
 
-# TODO: get section should raise lints, move enums to other module
+# TODO: move enums to other module
 # TODO: check if lists are complete
 # TODO: LintsHints API usage
+# TODO: deduplication

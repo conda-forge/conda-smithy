@@ -74,3 +74,12 @@ def lint_exceptions(
         return linter_wrapper
 
     return lint_exceptions_decorator
+
+
+class AutoLintException(Exception):
+    """
+    An exception that is automatically converted to a lint by lint_recipe._lint.
+    Use this as an alternative to lint_exceptions for very common exceptions among linting functions.
+    """
+
+    pass

@@ -1,13 +1,8 @@
-import fnmatch
 import io
 import os
-import re
-import shutil
-import subprocess
 import sys
 import tempfile
 import warnings
-from glob import glob
 from pathlib import Path
 from typing import Optional, Dict, Iterable, Tuple, List, TypeVar
 
@@ -23,9 +18,8 @@ from conda_smithy.linters_forge_yml import (
 )
 from conda_smithy.linters_meta_yaml import (
     MetaYamlLintExtras,
-    is_selector_line,
 )
-from conda_smithy.linting_utils import LintsHints, Linter
+from conda_smithy.linting_utils import LintsHints, Linter, AutoLintException
 from .utils import render_meta_yaml, get_yaml
 
 REQUIREMENTS_ORDER = ["build", "host", "run"]
@@ -61,7 +55,7 @@ def _lint(
     contents: Dict, linters: Iterable[Linter[T]], lint_extras: T = None
 ) -> LintsHints:
     """
-    Lint the contents of a file.
+    Lint the contents of a file. Automatically catch AutoLintExceptions and convert them to lints.
     :param contents: the contents of the file to lint
     :param linters: an iterable of linters to apply to the contents
     :param lint_extras: static extra data to pass to the linters
@@ -70,7 +64,10 @@ def _lint(
     results = LintsHints()
 
     for linter in linters:
-        results += linter(contents, lint_extras)
+        try:
+            results += linter(contents, lint_extras)
+        except AutoLintException as e:
+            results.append_lint(str(e))
 
     return results
 
