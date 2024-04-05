@@ -1359,14 +1359,14 @@ class TestLinter(unittest.TestCase):
         meta = {"requirements": {"host": ["python >=3", "python"]}}
         lints, hints = linter.lintify_meta_yaml(meta)
         self.assertNotIn(
-            "Non noarch packages should have python requirement without any version constraints.",
+            "Non-noarch packages should have python requirement without any version constraints.",
             lints,
         )
 
         meta = {"requirements": {"host": ["python >=3"]}}
         lints, hints = linter.lintify_meta_yaml(meta)
         self.assertIn(
-            "Non noarch packages should have python requirement without any version constraints.",
+            "Non-noarch packages should have python requirement without any version constraints.",
             lints,
         )
 
@@ -1397,14 +1397,14 @@ class TestLinter(unittest.TestCase):
         meta = {"requirements": {"host": ["r-base >=3.5", "r-base"]}}
         lints, hints = linter.lintify_meta_yaml(meta)
         self.assertNotIn(
-            "Non noarch packages should have r-base requirement without any version constraints.",
+            "Non-noarch packages should have r-base requirement without any version constraints.",
             lints,
         )
 
         meta = {"requirements": {"host": ["r-base >=3.5"]}}
         lints, hints = linter.lintify_meta_yaml(meta)
         self.assertIn(
-            "Non noarch packages should have r-base requirement without any version constraints.",
+            "Non-noarch packages should have r-base requirement without any version constraints.",
             lints,
         )
 

@@ -18,6 +18,7 @@ from typing import (
     get_args,
     Optional,
     AbstractSet,
+    Literal,
 )
 
 import license_expression
@@ -79,7 +80,12 @@ class Section(StrEnum):
     EXTRA = "extra"
 
 
-ListSectionName = Union[Section.SOURCE, Section.OUTPUTS]
+ListSectionName = Literal[Section.SOURCE, Section.OUTPUTS]
+"""
+Element of LIST_SECTION_NAMES.
+"""
+
+LIST_SECTION_NAMES = get_args(ListSectionName)
 """
 The names of all top-level sections in a meta.yaml file that are expected to be lists.
 """
@@ -263,7 +269,7 @@ def get_dict_section(meta_yaml: dict, name: Section) -> dict:
     :raises ValueError: If you pass a section name that is expected to be a list.
     You should not catch this exception, it is a programming error.
     """
-    if name in get_args(ListSectionName):
+    if name in LIST_SECTION_NAMES:
         raise ValueError(
             f"The section {name} is expected to be a list, not a dictionary. Use get_list_section instead."
         )
@@ -1066,7 +1072,7 @@ def lint_subheaders_in_allowed_subheadings(
         expected_subsections = FIELDS.get(section, [])
         if not expected_subsections:
             continue
-        if section in get_args(ListSectionName):
+        if section in LIST_SECTION_NAMES:
             for section_element in get_list_section(meta_yaml, section):
                 results += _validate_subsections(
                     section, section_element.keys()
