@@ -1226,9 +1226,9 @@ def lint_nice_jinja2_variables(
 
     return LintsHints.lint(
         "Jinja2 variable definitions are suggested to "
-        "take a ``{{%<one space>set<one space>"
+        "take a ``{%<one space>set<one space>"
         "<variable name><one space>=<one space>"
-        "<expression><one space>%}}`` form. See lines "
+        "<expression><one space>%}`` form. See lines "
         f"{bad_lines}"
     )
 
