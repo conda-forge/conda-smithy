@@ -1173,11 +1173,8 @@ def lint_check_version(
     if version is None:
         return LintsHints()
 
-    if not isinstance(version, str):
-        return LintsHints.lint(f"Package version {version} is not a string")
-
     try:
-        VersionOrder(version)
+        VersionOrder(str(version))
     except InvalidVersionSpec as e:
         return LintsHints.lint(
             f"Package version {version} doesn't match conda spec: {e}"
