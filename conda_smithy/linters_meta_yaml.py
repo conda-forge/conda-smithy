@@ -190,8 +190,8 @@ TEST_FILES = ["run_test.py", "run_test.sh", "run_test.bat", "run_test.pl"]
 All filenames that are recognized as valid test files (in the recipe directory).
 """
 
-_SELECTOR_PATTERN = re.compile(r"(.+?)\s*(#.*)?\[([^\[\]]+)](?(2).*)$")
-_JINJA_PATTERN = re.compile(r"\s*\{%\s*(set)\s+[^\s]+\s*=\s*[^\s]+\s*%}")
+_SELECTOR_PATTERN = re.compile(r"(.+?)\s*(#.*)?\[([^\[\]]+)\](?(2).*)$")
+_JINJA_PATTERN = re.compile(r"\s*\{%\s*(set)\s+[^\s]+\s*=\s*[^\s]+\s*%\}")
 _JINJA_VARIABLE_PATTERN = re.compile(r"{{(.*?)}}")
 
 _FAMILIES_NEEDING_LICENSE_FILE = ["gpl", "bsd", "mit", "apache", "psf"]
@@ -547,9 +547,9 @@ def lint_selectors_should_be_tidy(
     pyXY_selectors_hint, pyXY_lines_hint = [], []
 
     # Good selectors look like ".*\s\s#\s[...]"
-    good_selectors_pattern = re.compile(r"(.+?)\s{2,}#\s\[(.+)](?(2).*)$")
+    good_selectors_pattern = re.compile(r"(.+?)\s{2,}#\s\[(.+)\](?(2).*)$")
     # Look out for py27, py35 selectors; we prefer py==35
-    pyXY_selectors_pattern = re.compile(r".+#\s*\[.*?(py\d{2,3}).*]")
+    pyXY_selectors_pattern = re.compile(r".+#\s*\[.*?(py\d{2,3}).*\]")
 
     try:
         with open(meta_yaml_file, "r") as f:
@@ -1214,7 +1214,7 @@ def lint_nice_jinja2_variables(
     bad_jinja = []
     bad_lines = []
     # Good Jinja2 variable definitions look like "{% set .+ = .+ %}"
-    good_jinja_pat = re.compile(r"\s*\{%\s(set)\s[^\s]+\s=\s[^\s]+\s%}")
+    good_jinja_pat = re.compile(r"\s*\{%\s(set)\s[^\s]+\s=\s[^\s]+\s%\}")
     with open(meta_yaml_file, "r") as f:
         for jinja_line, line_number in jinja_lines(f):
             if not good_jinja_pat.match(jinja_line):
