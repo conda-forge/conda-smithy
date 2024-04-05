@@ -34,7 +34,7 @@ def __getattr__(name):
     raise AttributeError(f"module {__name__} has no attribute {name}")
 
 
-def lint_section_order(major_sections: Iterable[list], lints: List[str]):
+def lint_section_order(major_sections: Iterable[str], lints: List[str]):
     warnings.warn(
         "lint_recipe.lint_section_order is deprecated and will be removed in v4, use"
         "linters_meta_yaml.lint_section_order instead (changed signature).",

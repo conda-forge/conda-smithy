@@ -93,6 +93,16 @@ class TestLinter(unittest.TestCase):
         )
         self.assertIn(expected_msg, lints)
 
+    def test_lint_section_order_bad_order(self):
+        major_sections = ["package", "build", "source"]
+        lints = []
+        linter.lint_section_order(major_sections, lints)
+        expected_msg = (
+            "The top-level meta keys are in an unexpected "
+            "order. Expecting ['package', 'source', 'build']."
+        )
+        self.assertIn(expected_msg, lints)
+
     def test_missing_about_license_and_summary(self):
         meta = {"about": {"home": "a URL"}}
         lints, hints = linter.lintify_meta_yaml(meta)
