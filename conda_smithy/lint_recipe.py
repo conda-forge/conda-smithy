@@ -359,7 +359,7 @@ def main(
     if not os.path.exists(recipe_dir):
         raise IOError("Feedstock has no recipe/meta.yaml.")
 
-    with open(recipe_meta, "rt") as fh:
+    with open(recipe_meta, "r") as fh:
         content = render_meta_yaml("".join(fh))
         meta = get_yaml().load(content)
 
