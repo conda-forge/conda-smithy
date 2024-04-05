@@ -5,6 +5,7 @@ import warnings
 from glob import glob
 from pathlib import Path
 from typing import (
+    AbstractSet,
     Optional,
     Dict,
     Iterable,
