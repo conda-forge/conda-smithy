@@ -145,8 +145,15 @@ class TestSubsection(StrEnum):
 class OutputSubsection(StrEnum):
     NAME = "name"
     TEST = "test"
-    SCRIPT = "script"
     REQUIREMENTS = "requirements"
+
+
+class OutputTestSubsection(StrEnum):
+    """
+    The names of all subsections in the TEST subsection of the OUTPUT section in a meta.yaml file.
+    """
+
+    SCRIPT = "script"
 
 
 class AboutSubsection(StrEnum):
@@ -267,12 +274,14 @@ def get_dict_section(meta_yaml: dict, name: Section) -> dict:
     """
     Behaves like get_dict_section_or_subsection, but raises a ValueError if the section is expected to be a list.
     :raises ValueError: If you pass a section name that is expected to be a list.
+    :raises TypeError: if the section in the meta_yaml dict does not represent a dictionary
     You should not catch this exception, it is a programming error.
     """
     if name in LIST_SECTION_NAMES:
         raise ValueError(
             f"The section {name} is expected to be a list, not a dictionary. Use get_list_section instead."
         )
+    # can raise TypeError
     return get_dict_section_or_subsection(meta_yaml, name)
 
 
@@ -462,7 +471,9 @@ def lint_recipe_should_have_tests(
         if any(key in TEST_KEYS for key in test_out):
             has_outputs_test = True
             continue
-        if test_out.get(OutputSubsection.SCRIPT, "").endswith((".bat", ".sh")):
+        if test_out.get(OutputTestSubsection.SCRIPT, "").endswith(
+            (".bat", ".sh")
+        ):
             has_outputs_test = True
             continue
         no_test_hints.append(
