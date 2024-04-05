@@ -64,11 +64,11 @@ def lint_extra_fields(forge_yaml: dict, _extras: None = None) -> LintsHints:
     """
 
     config = ConfigModel.model_validate(forge_yaml)
-    hints = []
+    result = LintsHints()
 
     def _find_extra_fields(model: BaseModel, prefix=""):
         for extra_field in (model.__pydantic_extra__ or {}).keys():
-            hints.append(f"Unexpected key {prefix + extra_field}")
+            result.append_hint(f"Unexpected key {prefix + extra_field}")
 
         for field, value in model:
             if isinstance(value, BaseModel):
@@ -76,7 +76,7 @@ def lint_extra_fields(forge_yaml: dict, _extras: None = None) -> LintsHints:
 
     _find_extra_fields(config)
 
-    return LintsHints(hints=hints)
+    return result
 
 
 FORGE_YAML_LINTERS: List[Linter[None]] = [

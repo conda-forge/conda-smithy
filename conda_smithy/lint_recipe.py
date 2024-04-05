@@ -85,12 +85,10 @@ def lint_forge_yaml(recipe_dir: Path) -> LintsHints:
             recipe_dir, ConfigFileName.CONDA_FORGE_YML
         )
     except (ConfigFileMustBeDictError, MultipleConfigFilesError) as e:
-        return LintsHints(lints=[str(e)])
+        return LintsHints.lint(str(e))
     except FileNotFoundError:
-        additional_lints += LintsHints(
-            hints=[
-                "No conda-forge.yml file found. This is treated as an empty config mapping."
-            ]
+        additional_lints.append_hint(
+            "No conda-forge.yml file found. This is treated as an empty config mapping."
         )
         yaml = {}
     return _lint(yaml, FORGE_YAML_LINTERS) + additional_lints

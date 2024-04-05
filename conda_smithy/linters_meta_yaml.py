@@ -498,7 +498,7 @@ def lint_recipe_should_have_tests(
     if has_outputs_test:
         return LintsHints(hints=no_test_hints)
 
-    return LintsHints(["The recipe must have some tests."])
+    return LintsHints.lint("The recipe must have some tests.")
 
 
 def lint_license_cannot_be_unknown(
@@ -513,7 +513,7 @@ def lint_license_cannot_be_unknown(
     if license_ != "unknown":
         return LintsHints()
 
-    return LintsHints(["The recipe license cannot be unknown."])
+    return LintsHints.lint("The recipe license cannot be unknown.")
 
 
 def is_selector_line(
@@ -633,7 +633,7 @@ def lint_must_have_build_number(
 
     if build_section.get(BuildSubsection.NUMBER, None) is not None:
         return LintsHints()
-    return LintsHints(["The recipe must have a `build/number` section."])
+    return LintsHints.lint("The recipe must have a `build/number` section.")
 
 
 def lint_requirements_order(
@@ -654,15 +654,13 @@ def lint_requirements_order(
     if seen_requirements == requirements_order_sorted:
         return LintsHints()
 
-    return LintsHints(
-        [
-            "The `requirements/` sections should be defined "
-            "in the following order: "
-            + ", ".join([e for e in RequirementsSubsection])
-            + "; instead saw: "
-            + ", ".join(seen_requirements)
-            + "."
-        ]
+    return LintsHints.lint(
+        "The `requirements/` sections should be defined "
+        "in the following order: "
+        + ", ".join([e for e in RequirementsSubsection])
+        + "; instead saw: "
+        + ", ".join(seen_requirements)
+        + "."
     )
 
 
@@ -673,14 +671,14 @@ def lint_files_hash(
     Lint #9: Files downloaded should have a hash.
     """
     sources_section = get_list_section(meta_yaml, Section.SOURCE)
-    lints = []
+    results = LintsHints()
     for source in sources_section:
         if "url" in source and not ({"sha1", "sha256", "md5"} & source.keys()):
-            lints.append(
+            results.append_lint(
                 "When defining a source/url please add a sha256, sha1 "
                 "or md5 checksum (sha256 preferably)."
             )
-    return LintsHints(lints)
+    return results
 
 
 def lint_license_should_not_include_license(
@@ -698,8 +696,8 @@ def lint_license_should_not_include_license(
         and "licenseref" not in license_.lower()
         and "-license" not in license_.lower()
     ):
-        return LintsHints(
-            ['The recipe `license` should not include the word "License".']
+        return LintsHints.lint(
+            'The recipe `license` should not include the word "License".'
         )
 
     return LintsHints()
@@ -730,19 +728,15 @@ def lint_empty_line_at_end_of_file(
         return LintsHints()
 
     if end_empty_lines_count > 1:
-        return LintsHints(
-            [
-                f"There are {end_empty_lines_count - 1} too many lines. "
-                "There should be one empty line at the end of the "
-                "file."
-            ]
+        return LintsHints.lint(
+            f"There are {end_empty_lines_count - 1} too many lines. "
+            "There should be one empty line at the end of the "
+            "file."
         )
 
-    return LintsHints(
-        [
-            "There are too few lines. There should be one empty "
-            "line at the end of the file."
-        ]
+    return LintsHints.lint(
+        "There are too few lines. There should be one empty "
+        "line at the end of the file."
     )
 
 
@@ -755,7 +749,7 @@ def lint_valid_license_family(
     try:
         ensure_valid_license_family(meta_yaml)
     except RuntimeError as e:
-        return LintsHints([str(e)])
+        return LintsHints.lint(str(e))
 
     return LintsHints()
 
@@ -776,7 +770,9 @@ def lint_license_file_present(
     if not license_file and any(
         f for f in _FAMILIES_NEEDING_LICENSE_FILE if f in license_family
     ):
-        return LintsHints(["license_file entry is missing, but is required."])
+        return LintsHints.lint(
+            "license_file entry is missing, but is required."
+        )
 
     return LintsHints()
 
@@ -791,11 +787,9 @@ def lint_recipe_name_valid(
 
     recipe_name = package_section.get(PackageSubsection.NAME, "").strip()
     if re.match(r"^[a-z0-9_\-.]+$", recipe_name) is None:
-        return LintsHints(
-            [
-                "Recipe name has invalid characters. only lowercase alpha, numeric, "
-                "underscores, hyphens and dots allowed"
-            ]
+        return LintsHints.lint(
+            "Recipe name has invalid characters. only lowercase alpha, numeric, "
+            "underscores, hyphens and dots allowed"
         )
 
     return LintsHints()
@@ -1758,5 +1752,4 @@ META_YAML_LINTERS: List[Linter[MetaYamlLintExtras]] = [
     lint_spdx_license,
 ]
 
-# TODO: LintsHints API usage
 # TODO: deduplication
