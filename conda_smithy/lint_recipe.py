@@ -21,7 +21,6 @@ from conda_smithy.linters_meta_yaml import (
 from conda_smithy.linting_utils import LintsHints, Linter, AutoLintException
 from .utils import render_meta_yaml, get_yaml
 
-REQUIREMENTS_ORDER = ["build", "host", "run"]
 T = TypeVar("T")
 
 
