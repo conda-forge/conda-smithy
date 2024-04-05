@@ -1,4 +1,3 @@
-import io
 import os
 import sys
 import tempfile
@@ -162,7 +161,7 @@ def main(recipe_dir, conda_forge=False, return_hints=False):
     if not os.path.exists(recipe_dir):
         raise IOError("Feedstock has no recipe/meta.yaml.")
 
-    with io.open(recipe_meta, "rt") as fh:
+    with open(recipe_meta, "rt") as fh:
         content = render_meta_yaml("".join(fh))
         meta = get_yaml().load(content)
 
