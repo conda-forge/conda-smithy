@@ -216,7 +216,7 @@ _SELECTOR_PATTERN = re.compile(r"(.+?)\s*(#.*)?\[([^\[\]]+)\](?(2).*)$")
 _JINJA_PATTERN = re.compile(r"\s*\{%\s*(set)\s+[^\s]+\s*=\s*[^\s]+\s*%\}")
 _JINJA_VARIABLE_PATTERN = re.compile(r"{{(.*?)}}")
 
-_FAMILIES_NEEDING_LICENSE_FILE = ["gpl", "bsd", "mit", "apache", "psf"]
+FAMILIES_NEEDING_LICENSE_FILE = ["gpl", "bsd", "mit", "apache", "psf"]
 
 
 @dataclass
@@ -768,7 +768,7 @@ def lint_license_file_present(
     license_file = about_section.get(AboutSubsection.LICENSE_FILE, None)
 
     if not license_file and any(
-        f for f in _FAMILIES_NEEDING_LICENSE_FILE if f in license_family
+        f for f in FAMILIES_NEEDING_LICENSE_FILE if f in license_family
     ):
         return LintsHints.lint(
             "license_file entry is missing, but is required."

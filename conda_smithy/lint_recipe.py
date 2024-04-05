@@ -25,12 +25,75 @@ T = TypeVar("T")
 
 
 def __getattr__(name):
+    # used for deprecated module members
     if name == "str_type":
         warnings.warn(
             "str_type is deprecated and will be removed in v4, use builtin str instead",
             DeprecationWarning,
         )
         return str
+    if name == "FIELDS":
+        warnings.warn(
+            "FIELDS is deprecated and will be removed in v4, use linters_meta_yaml.FIELDS instead",
+            DeprecationWarning,
+        )
+        return linters_meta_yaml.FIELDS
+    if name == "EXPECTED_SECTION_ORDER":
+        warnings.warn(
+            "EXPECTED_SECTION_ORDER is deprecated and will be removed in v4, use "
+            "the order of the linters_meta_yaml.Section enum instead.",
+            DeprecationWarning,
+        )
+        return [str(section) for section in linters_meta_yaml.Section]
+    if name == "REQUIREMENTS_ORDER":
+        warnings.warn(
+            "REQUIREMENTS_ORDER is deprecated and will be removed in v4, use "
+            "the order of the linters_meta_yaml.RequirementsSubsection enum instead.",
+            DeprecationWarning,
+        )
+        return [
+            str(subsection)
+            for subsection in linters_meta_yaml.RequirementsSubsection
+        ]
+    if name == "TEST_KEYS":
+        warnings.warn(
+            "TEST_KEYS is deprecated and will be removed in v4, use "
+            "linters_meta_yaml.TEST_KEYS instead.",
+            DeprecationWarning,
+        )
+        return linters_meta_yaml.TEST_KEYS
+    if name == "TEST_FILES":
+        warnings.warn(
+            "TEST_FILES is deprecated and will be removed in v4, use "
+            "linters_meta_yaml.TEST_FILES instead.",
+            DeprecationWarning,
+        )
+        return linters_meta_yaml.TEST_FILES
+    if name == "NEEDED_FAMILIES":
+        warnings.warn(
+            "NEEDED_FAMILIES is deprecated and will be removed in v4, use "
+            "linters_meta_yaml.FAMILIES_NEEDING_LICENSE_FILE instead.",
+            DeprecationWarning,
+        )
+        return linters_meta_yaml.FAMILIES_NEEDING_LICENSE_FILE
+    if name == "sel_pat":
+        warnings.warn(
+            "sel_pat is deprecated and will be removed in v4.",
+            DeprecationWarning,
+        )
+        return linters_meta_yaml._SELECTOR_PATTERN
+    if name == "jinja_pat":
+        warnings.warn(
+            "jinja_pat is deprecated and will be removed in v4.",
+            DeprecationWarning,
+        )
+        return linters_meta_yaml._JINJA_PATTERN
+    if name == "JINJA_VAR_PAT":
+        warnings.warn(
+            "JINJA_VAR_PAT is deprecated and will be removed in v4.",
+            DeprecationWarning,
+        )
+        return linters_meta_yaml._JINJA_VARIABLE_PATTERN
     raise AttributeError(f"module {__name__} has no attribute {name}")
 
 
