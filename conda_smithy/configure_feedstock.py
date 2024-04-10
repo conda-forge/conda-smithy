@@ -1091,6 +1091,7 @@ def _render_ci_provider(
                         metas, forge_dir, platform, arch, upload, forge_config
                     )
                 )
+
                 plat_arch = f"{platform}_{arch}"
                 forge_config[plat_arch]["enabled"] = True
                 fancy_platforms.append(fancy_name.get(plat_arch, plat_arch))
