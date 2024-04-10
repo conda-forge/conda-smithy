@@ -103,15 +103,14 @@ if [[ "${BUILD_WITH_CONDA_DEBUG:-0}" == 1 ]]; then
 else
     {%- if conda_build_tool != "rattler-build" %}
 
-        {{ BUILD_CMD }} "${RECIPE_ROOT}" -m "${CI_SUPPORT}/${CONFIG}.yaml" \
-            --suppress-variables ${EXTRA_CB_OPTIONS:-} \
-            --clobber-file "${CI_SUPPORT}/clobber_${CONFIG}.yaml" \
-            --extra-meta flow_run_id="${flow_run_id:-}" remote_url="${remote_url:-}" sha="${sha:-}"
+    {{ BUILD_CMD }} "${RECIPE_ROOT}" -m "${CI_SUPPORT}/${CONFIG}.yaml" \
+        --suppress-variables ${EXTRA_CB_OPTIONS:-} \
+        --clobber-file "${CI_SUPPORT}/clobber_${CONFIG}.yaml" \
+        --extra-meta flow_run_id="${flow_run_id:-}" remote_url="${remote_url:-}" sha="${sha:-}"
 
     {%- else %}
 
-      {{ BUILD_CMD }} --recipe "${RECIPE_ROOT}" -m "${CI_SUPPORT}/${CONFIG}.yaml"
-      ls -al $CONDA_BLD_PATH
+    {{ BUILD_CMD }} --recipe "${RECIPE_ROOT}" -m "${CI_SUPPORT}/${CONFIG}.yaml"
 
     {%- endif %}
 

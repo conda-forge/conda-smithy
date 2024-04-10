@@ -567,11 +567,9 @@ def _collapse_subpackage_variants(
             list_of_metas[0].config.input_variants, has_macdt
         )
     )
-
     squished_used_variants = (
         conda_build.variants.list_of_dicts_to_dict_of_lists(list(all_variants))
     )
-
     logger.debug(
         "squished_input_variants {}".format(
             pprint.pformat(squished_input_variants)
@@ -725,7 +723,6 @@ def dump_subspace_config_files(
         arch,
         forge_config,
     )
-
     logger.debug(
         "collapsed subspace config files: {}".format(pprint.pformat(configs))
     )
@@ -906,15 +903,14 @@ def _render_ci_provider(
             if ver:
                 os.environ["DEFAULT_LINUX_VERSION"] = ver
 
-        # detect if `compiler('cuda')` is used in meta.yaml,
-        # and set appropriate environment variable
-
         # detect if it's rattler-build recipe
         if forge_config["conda_build_tool"] == RATTLER_BUILD:
             recipe_file = "recipe.yaml"
         else:
             recipe_file = "meta.yaml"
 
+        # detect if `compiler('cuda')` is used in meta.yaml,
+        # and set appropriate environment variable
         with open(
             os.path.join(forge_dir, forge_config["recipe_dir"], recipe_file)
         ) as f:
@@ -1043,6 +1039,7 @@ def _render_ci_provider(
 
         # render returns some download & reparsing info that we don't care about
         metas = [m for m, _, _ in metas]
+
         if not keep_noarch:
             to_delete = []
             for idx, meta in enumerate(metas):
@@ -1089,10 +1086,11 @@ def _render_ci_provider(
             upload_packages,
         ):
             if enable:
-                dumped_config = dump_subspace_config_files(
-                    metas, forge_dir, platform, arch, upload, forge_config
+                configs.extend(
+                    dump_subspace_config_files(
+                        metas, forge_dir, platform, arch, upload, forge_config
+                    )
                 )
-                configs.extend(dumped_config)
                 plat_arch = f"{platform}_{arch}"
                 forge_config[plat_arch]["enabled"] = True
                 fancy_platforms.append(fancy_name.get(plat_arch, plat_arch))
@@ -1733,7 +1731,6 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
             ".scripts/run_win_build.bat",
         ],
     }
-
     if forge_config["azure"]["store_build_artifacts"]:
         platform_templates["linux"].append(
             ".scripts/create_conda_build_artifacts.sh"
@@ -1795,9 +1792,7 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
 
 def render_azure(jinja_env, forge_config, forge_dir, return_metadata=False):
     target_path = os.path.join(forge_dir, "azure-pipelines.yml")
-
     template_filename = "azure-pipelines.yml.tmpl"
-
     fast_finish_text = ""
 
     (
@@ -2499,6 +2494,7 @@ def get_cached_cfp_file_path(temporary_directory):
                     current_pinning_version
                 )
                 pinning_version = current_pinning_version
+
         return str(smithy_cache / "conda_build_config.yaml"), pinning_version
     else:
         return get_cfp_file_path(temporary_directory)
@@ -2613,6 +2609,7 @@ def set_migration_fns(forge_dir, forge_config):
 
     migrations_root = os.path.join(forge_dir, ".ci_support", "migrations")
     migrations_in_feedstock = get_migrations_in_dir(migrations_root)
+
     if not os.path.exists(cfp_migrations_dir):
         migration_fns = [fn for fn, _, _ in migrations_in_feedstock.values()]
         forge_config["migration_fns"] = migration_fns
