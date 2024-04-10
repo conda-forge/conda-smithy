@@ -68,8 +68,8 @@ from conda_smithy.utils import (
 )
 
 from . import __version__
-from .rattler_build.build import render as rattler_render
-from .rattler_build.loader import parse_recipe_config_file
+from rattler_build_conda_compat.render import render as rattler_render
+from rattler_build_conda_compat.loader import parse_recipe_config_file
 from .utils import RATTLER_BUILD
 
 conda_forge_content = os.path.abspath(os.path.dirname(__file__))

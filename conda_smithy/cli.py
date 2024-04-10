@@ -13,7 +13,7 @@ from typing import Literal, Optional, Union
 import conda  # noqa
 import conda_build.api
 from conda_build.metadata import MetaData
-from .rattler_build.build import MetaData as RattlerMetaData
+from rattler_build_conda_compat.render import MetaData as RattlerMetaData
 
 import conda_smithy.cirun_utils
 from conda_smithy.utils import get_feedstock_name_from_meta, merge_dict
