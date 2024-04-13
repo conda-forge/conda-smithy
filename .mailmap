@@ -40,17 +40,18 @@ Julian Rüth <julian.rueth@fsfe.org>
 Bastian Zimmermann <10774221+BastianZim@users.noreply.github.com> BastianZim <10774221+BastianZim@users.noreply.github.com>
 Daniel Bast <2790401+dbast@users.noreply.github.com>
 Billy K. Poon <bkpoon@lbl.gov>
+pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>
 vinicius douglas cerutti <vinivdc2009@hotmail.com> Vinicius D. Cerutti <51954708+viniciusdc@users.noreply.github.com>
 vinicius douglas cerutti <vinivdc2009@hotmail.com> viniciusdc <51954708+viniciusdc@users.noreply.github.com>
 Tim Snyder <snyder.tim@gmail.com>
 Mike Henry <11765982+mikemhenry@users.noreply.github.com>
-pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>
 Eric Dill <edill@anaconda.com> Eric Dill <edill@bnl.gov>
 Eric Dill <edill@anaconda.com> Eric Dill <thedizzle@gmail.com>
 Natasha Pavlovikj <npavlovikj2@unl.edu>
 Daniel Ching <carterbox@users.noreply.github.com>
 Maksim Rakitin <mrakitin@bnl.gov> Maksim Rakitin <mrakitin@users.noreply.github.com>
 Jan Schulz <jasc@gmx.net>
+Nicholas Bollweg <nick.bollweg@gmail.com>
 Josh Reichardt <josh.reichardt@gmail.com>
 Bela Stoyan <bela.stoyan@gmail.com>
 Justin Calamari <justin.calamari@gmail.com>
@@ -58,13 +59,13 @@ Jason Furmanek <furmanek@us.ibm.com>
 Patrick Sodré <psodre@gmail.com>
 C.A.M. Gerlach <widenetservices@gmail.com>
 refraction-ray <kcanamgal@foxmail.com>
-Nicholas Bollweg <nick.bollweg@gmail.com>
 Leopold Talirz <leopold.talirz@gmail.com>
 Tom Pollard <tom.pollard@codethink.co.uk>
 Gonzalo Pena-Castellanos <goanpeca@gmail.com>
 John Blischak <jdblischak@gmail.com>
 Matthias Diener <mdiener@illinois.edu>
 Antonio S. Cofiño <cofinoa@gmail.com>
+Yannik Tausch <yannik.tausch@quantco.com>
 Carlo <carlo.dri@gmail.com> Carlo <carlodri@users.noreply.github.com>
 Matthew Craig <mattwcraig@gmail.com> Matt Craig <mattwcraig@gmail.com>
 Peter Williams <peter@newton.cx>
@@ -110,7 +111,6 @@ Ben Mares <15216687+maresb@users.noreply.github.com>
 Matthew W. Thompson <mattwthompson@protonmail.com>
 conda-forge-admin <pelson.pub+conda-forge@gmail.com>
 Klaus Zimmermann <klaus.zimmermann@smhi.se>
-Yannik Tausch <yannik.tausch@quantco.com>
 lorenz <looooo@users.noreply.github.com>
 Tom Augspurger <tom.augspurger88@gmail.com>
 Ryan May <rmay31@gmail.com>

@@ -2,6 +2,7 @@ import shutil
 import tempfile
 import io
 import jinja2
+import jinja2.sandbox
 import datetime
 import time
 import os
@@ -85,7 +86,7 @@ def stub_subpackage_pin(*args, **kwargs):
 
 
 def render_meta_yaml(text):
-    env = jinja2.Environment(undefined=NullUndefined)
+    env = jinja2.sandbox.SandboxedEnvironment(undefined=NullUndefined)
 
     # stub out cb3 jinja2 functions - they are not important for linting
     #    if we don't stub them out, the ruamel.yaml load fails to interpret them
@@ -118,7 +119,7 @@ def render_meta_yaml(text):
 def update_conda_forge_config(forge_yaml):
     """Utility method used to update conda forge configuration files
 
-    Uage:
+    Usage:
     >>> with update_conda_forge_config(somepath) as cfg:
     ...     cfg['foo'] = 'bar'
     """

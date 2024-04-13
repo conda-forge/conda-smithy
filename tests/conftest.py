@@ -5,7 +5,8 @@ from textwrap import dedent
 import pytest
 import yaml
 
-from jinja2 import Environment, FileSystemLoader
+from jinja2 import FileSystemLoader
+from jinja2.sandbox import SandboxedEnvironment
 from conda_build.utils import copy_into
 
 from conda_smithy.configure_feedstock import (
@@ -621,6 +622,6 @@ about:
 def jinja_env(request):
     tmplt_dir = os.path.join(conda_forge_content, "templates")
     # Load templates from the feedstock in preference to the smithy's templates.
-    return Environment(
+    return SandboxedEnvironment(
         extensions=["jinja2.ext.do"], loader=FileSystemLoader([tmplt_dir])
     )
