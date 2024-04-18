@@ -848,19 +848,23 @@ class Test_linter(unittest.TestCase):
             "instead saw: run, build."
         )
 
-        meta = {"requirements": OrderedDict([["run", "a"], ["build", "a"]])}
+        meta = {
+            "requirements": OrderedDict([["run", ["a"]], ["build", ["a"]]])
+        }
         lints, hints = linter.lintify_meta_yaml(meta)
         self.assertIn(expected_message, lints)
 
         meta = {
             "requirements": OrderedDict(
-                [["run", "a"], ["invalid", "a"], ["build", "a"]]
+                [["run", ["a"]], ["invalid", ["a"]], ["build", ["a"]]]
             )
         }
         lints, hints = linter.lintify_meta_yaml(meta)
         self.assertIn(expected_message, lints)
 
-        meta = {"requirements": OrderedDict([["build", "a"], ["run", "a"]])}
+        meta = {
+            "requirements": OrderedDict([["build", ["a"]], ["run", ["a"]]])
+        }
         lints, hints = linter.lintify_meta_yaml(meta)
         self.assertNotIn(expected_message, lints)
 
