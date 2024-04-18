@@ -591,8 +591,6 @@ def _collapse_subpackage_variants(
         "macos_machine",
         "channel_sources",
         "channel_targets",
-        "c_stdlib",
-        "c_stdlib_version",
         "docker_image",
         "build_number_decrement",
         # The following keys are required for some of our aarch64 builds
