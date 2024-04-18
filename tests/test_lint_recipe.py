@@ -30,6 +30,70 @@ def tmp_directory():
     shutil.rmtree(tmp_dir)
 
 
+@pytest.mark.parametrize(
+    "comp_lang",
+    ["c", "cxx", "fortran", "rust", "m2w64_c", "m2w64_cxx", "m2w64_fortran"],
+)
+def test_stdlib_hint(comp_lang):
+    expected_message = "This recipe is using a compiler"
+
+    with tmp_directory() as recipe_dir:
+        with io.open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
+            fh.write(
+                f"""
+                package:
+                   name: foo
+                requirements:
+                  build:
+                    # since we're in an f-string: double up braces (2->4)
+                    - {{{{ compiler("{comp_lang}") }}}}
+                """
+            )
+
+        _, hints = linter.main(recipe_dir, return_hints=True)
+        assert any(h.startswith(expected_message) for h in hints)
+
+
+def test_sysroot_hint():
+    expected_message = "You're setting a requirement on sysroot"
+
+    with tmp_directory() as recipe_dir:
+        with io.open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
+            fh.write(
+                """
+                package:
+                   name: foo
+                requirements:
+                  build:
+                    - sysroot_{{ target_platform }} 2.17
+                """
+            )
+
+        _, hints = linter.main(recipe_dir, return_hints=True)
+        assert any(h.startswith(expected_message) for h in hints)
+
+
+@pytest.mark.parametrize("where", ["run", "run_constrained"])
+def test_osx_hint(where):
+    expected_message = "You're setting a constraint on the `__osx` virtual"
+
+    with tmp_directory() as recipe_dir:
+        with io.open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
+            fh.write(
+                f"""
+                package:
+                   name: foo
+                requirements:
+                  {where}:
+                    # since we're in an f-string: double up braces (2->4)
+                    - __osx >={{{{ MACOSX_DEPLOYMENT_TARGET|default("10.9") }}}}  # [osx and x86_64]
+                """
+            )
+
+        _, hints = linter.main(recipe_dir, return_hints=True)
+        assert any(h.startswith(expected_message) for h in hints)
+
+
 class Test_linter(unittest.TestCase):
     def test_pin_compatible_in_run_exports(self):
         meta = {
