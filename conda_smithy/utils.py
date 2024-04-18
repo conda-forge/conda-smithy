@@ -1,6 +1,7 @@
 import shutil
 import tempfile
 import io
+
 import jinja2
 import jinja2.sandbox
 import datetime
@@ -14,7 +15,7 @@ import ruamel.yaml
 
 
 def get_feedstock_name_from_meta(meta):
-    """Resolve the feedtstock name from the parsed meta.yaml."""
+    """Resolve the feedstock name from the parsed meta.yaml."""
     if "feedstock-name" in meta.meta["extra"]:
         return meta.meta["extra"]["feedstock-name"]
     elif "parent_recipe" in meta.meta["extra"]:
@@ -24,7 +25,7 @@ def get_feedstock_name_from_meta(meta):
 
 
 def get_feedstock_about_from_meta(meta) -> dict:
-    """Fetch the feedtstock about from the parsed meta.yaml."""
+    """Fetch the feedstock about from the parsed meta.yaml."""
     # it turns out that conda_build would not preserve the feedstock about:
     #   - if a subpackage does not have about, it uses the feedstock's
     #   - if a subpackage has about, it's used as is

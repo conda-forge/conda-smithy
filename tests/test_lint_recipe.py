@@ -1,20 +1,17 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
-from collections import OrderedDict
-from contextlib import contextmanager
-import io
 import os
 import shutil
 import subprocess
-import tempfile
 import textwrap
 import unittest
 import warnings
+from collections import OrderedDict
 
 import github
 import pytest
 
 import conda_smithy.lint_recipe as linter
+from tests.test_config_file_helpers import tmp_directory, nested_tmp_directory
 
 _thisdir = os.path.abspath(os.path.dirname(__file__))
 
@@ -23,14 +20,33 @@ def is_gh_token_set():
     return "GH_TOKEN" in os.environ
 
 
-@contextmanager
-def tmp_directory():
-    tmp_dir = tempfile.mkdtemp("recipe_")
-    yield tmp_dir
-    shutil.rmtree(tmp_dir)
+class TestLintifyForgeYaml(unittest.TestCase):
+    def test_no_recipe_dir(self):
+        lints, hints = linter.lintify_forge_yaml()
+        self.assertEquals(0, len(lints))
+        self.assertEquals(0, len(hints))
 
 
-class Test_linter(unittest.TestCase):
+class TestLintForgeYaml(unittest.TestCase):
+    def test_no_dict(self):
+        with nested_tmp_directory() as recipe_dir:
+            with open(recipe_dir / "conda-forge.yml", "w") as fh:
+                fh.write("foo")
+
+            res = linter.lint_forge_yaml(recipe_dir)
+            self.assertEqual(1, len(res.lints))
+            self.assertIn("does not represent a dict", res.lints[0])
+            self.assertEqual(0, len(res.hints))
+
+    def test_empty_dir(self):
+        with nested_tmp_directory() as recipe_dir:
+            res = linter.lint_forge_yaml(recipe_dir)
+            self.assertEqual(0, len(res.lints))
+            self.assertEqual(1, len(res.hints))
+            self.assertIn("No conda-forge.yml file found", res.hints[0])
+
+
+class TestLinter(unittest.TestCase):
     def test_pin_compatible_in_run_exports(self):
         meta = {
             "package": {
@@ -65,14 +81,24 @@ class Test_linter(unittest.TestCase):
     def test_bad_top_level(self):
         meta = OrderedDict([["package", {}], ["build", {}], ["sources", {}]])
         lints, hints = linter.lintify_meta_yaml(meta)
-        expected_msg = "The top level meta key sources is unexpected"
+        expected_msg = "The top-level meta key sources is unexpected"
         self.assertIn(expected_msg, lints)
 
     def test_bad_order(self):
         meta = OrderedDict([["package", {}], ["build", {}], ["source", {}]])
         lints, hints = linter.lintify_meta_yaml(meta)
         expected_msg = (
-            "The top level meta keys are in an unexpected "
+            "The top-level meta keys are in an unexpected "
+            "order. Expecting ['package', 'source', 'build']."
+        )
+        self.assertIn(expected_msg, lints)
+
+    def test_lint_section_order_bad_order(self):
+        major_sections = ["package", "build", "source"]
+        lints = []
+        linter.lint_section_order(major_sections, lints)
+        expected_msg = (
+            "The top-level meta keys are in an unexpected "
             "order. Expecting ['package', 'source', 'build']."
         )
         self.assertIn(expected_msg, lints)
@@ -231,7 +257,7 @@ class Test_linter(unittest.TestCase):
             lints, hints = linter.lintify_meta_yaml({}, recipe_dir)
             self.assertIn(expected_message, lints)
 
-            with io.open(os.path.join(recipe_dir, "run_test.py"), "w") as fh:
+            with open(recipe_dir / "run_test.py", "w") as fh:
                 fh.write("# foo")
             lints, hints = linter.lintify_meta_yaml({}, recipe_dir)
             self.assertNotIn(expected_message, lints)
@@ -244,7 +270,7 @@ class Test_linter(unittest.TestCase):
         )
 
         with tmp_directory() as recipe_dir:
-            with io.open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
+            with open(recipe_dir / "meta.yaml", "w") as fh:
                 fh.write(
                     """
                     package:
@@ -275,7 +301,7 @@ class Test_linter(unittest.TestCase):
         with tmp_directory() as recipe_dir:
 
             def assert_selector(selector, is_good=True):
-                with io.open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
+                with open(recipe_dir / "meta.yaml", "w") as fh:
                     fh.write(
                         """
                             package:
@@ -316,7 +342,7 @@ class Test_linter(unittest.TestCase):
                     expected_start = "Old-style Python selectors (py27, py34, py35, py36) are deprecated"
                 else:
                     expected_start = "Old-style Python selectors (py27, py35, etc) are only available"
-                with io.open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
+                with open(recipe_dir / "meta.yaml", "w") as fh:
                     fh.write(meta_string)
                 lints, hints = linter.main(recipe_dir, return_hints=True)
                 if is_good:
@@ -426,7 +452,7 @@ class Test_linter(unittest.TestCase):
         with tmp_directory() as recipe_dir:
 
             def assert_noarch_selector(meta_string, is_good=False):
-                with io.open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
+                with open(recipe_dir / "meta.yaml", "w") as fh:
                     fh.write(meta_string)
                 lints = linter.main(recipe_dir)
                 if is_good:
@@ -574,7 +600,7 @@ class Test_linter(unittest.TestCase):
         with tmp_directory() as recipe_dir:
 
             def assert_noarch_hint(meta_string, is_good=False):
-                with io.open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
+                with open(recipe_dir / "meta.yaml", "w") as fh:
                     fh.write(meta_string)
                 lints, hints = linter.main(recipe_dir, return_hints=True)
                 if is_good:
@@ -645,7 +671,7 @@ class Test_linter(unittest.TestCase):
         # Test that we can use os.environ in a recipe. We don't care about
         # the results here.
         with tmp_directory() as recipe_dir:
-            with io.open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
+            with open(recipe_dir / "meta.yaml", "w") as fh:
                 fh.write(
                     """
                         {% set version = os.environ.get('WIBBLE') %}
@@ -660,14 +686,14 @@ class Test_linter(unittest.TestCase):
         # Test that we can use load_file_regex in a recipe. We don't care about
         # the results here.
         with tmp_directory() as recipe_dir:
-            with io.open(os.path.join(recipe_dir, "sha256"), "w") as fh:
+            with open(recipe_dir / "sha256", "w") as fh:
                 fh.write(
                     """
                         d0e46ea5fca7d4c077245fe0b4195a828d9d4d69be8a0bd46233b2c12abd2098  iwftc_osx.zip
                         8ce4dc535b21484f65027be56263d8b0d9f58e57532614e1a8f6881f3b8fe260  iwftc_win.zip
                         """
                 )
-            with io.open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
+            with open(recipe_dir / "meta.yaml", "w") as fh:
                 fh.write(
                     """
                         {% set sha256_osx = load_file_regex(load_file="sha256",
@@ -686,7 +712,7 @@ class Test_linter(unittest.TestCase):
         # renders conda-build functions to just function stubs to pass the linting.
         # TODO: add *args and **kwargs for functions used to parse the file.
         with tmp_directory() as recipe_dir:
-            with io.open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
+            with open(recipe_dir / "meta.yaml", "w") as fh:
                 fh.write(
                     """
                         {% set data = load_file_data("IDONTNEED", from_recipe_dir=True, recipe_dir=".") %}
@@ -703,7 +729,7 @@ class Test_linter(unittest.TestCase):
         # renders conda-build functions to just function stubs to pass the linting.
         # TODO: add *args and **kwargs for functions used to parse the file.
         with tmp_directory() as recipe_dir:
-            with io.open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
+            with open(recipe_dir / "meta.yaml", "w") as fh:
                 fh.write(
                     """
                         {% set data = load_setup_py_data("IDONTNEED", from_recipe_dir=True, recipe_dir=".") %}
@@ -720,7 +746,7 @@ class Test_linter(unittest.TestCase):
         # renders conda-build functions to just function stubs to pass the linting.
         # TODO: add *args and **kwargs for functions used to parse the data.
         with tmp_directory() as recipe_dir:
-            with io.open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
+            with open(recipe_dir / "meta.yaml", "w") as fh:
                 fh.write(
                     """
                         {% set data = load_str_data("IDONTNEED", "json") %}
@@ -734,7 +760,7 @@ class Test_linter(unittest.TestCase):
     def test_jinja_os_sep(self):
         # Test that we can use os.sep in a recipe.
         with tmp_directory() as recipe_dir:
-            with io.open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
+            with open(recipe_dir / "meta.yaml", "w") as fh:
                 fh.write(
                     """
                         package:
@@ -750,7 +776,7 @@ class Test_linter(unittest.TestCase):
         # Test that we can use target_platform in a recipe. We don't care about
         # the results here.
         with tmp_directory() as recipe_dir:
-            with io.open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
+            with open(recipe_dir / "meta.yaml", "w") as fh:
                 fh.write(
                     """
                         package:
@@ -986,21 +1012,21 @@ class Test_linter(unittest.TestCase):
             bad_contents + [valid_content], [0, 0, 0, 2, 2, 2, 3, 3, 3, 1]
         ):
             with tmp_directory() as recipe_dir:
-                with io.open(os.path.join(recipe_dir, "meta.yaml"), "w") as f:
+                with open(recipe_dir / "meta.yaml", "w") as f:
                     f.write(content)
                 lints, hints = linter.lintify_meta_yaml(
                     {}, recipe_dir=recipe_dir
                 )
                 if lines > 1:
                     expected_message = (
-                        "There are {} too many lines.  "
+                        "There are {} too many lines. "
                         "There should be one empty line "
                         "at the end of the "
                         "file.".format(lines - 1)
                     )
                 else:
                     expected_message = (
-                        "There are too few lines.  "
+                        "There are too few lines. "
                         "There should be one empty line at"
                         " the end of the file."
                     )
@@ -1244,7 +1270,8 @@ class Test_linter(unittest.TestCase):
             "Package version 2.0.0~alpha0 doesn't match conda spec"
         )
         lints, hints = linter.lintify_meta_yaml(meta)
-        self.assertIn(expected_message, lints)
+
+        assert any(expected_message in message for message in lints)
 
     @unittest.skipUnless(is_gh_token_set(), "GH_TOKEN not set")
     def test_examples(self):
@@ -1342,14 +1369,14 @@ class Test_linter(unittest.TestCase):
         meta = {"requirements": {"host": ["python >=3", "python"]}}
         lints, hints = linter.lintify_meta_yaml(meta)
         self.assertNotIn(
-            "Non noarch packages should have python requirement without any version constraints.",
+            "Non-noarch packages should have python requirement without any version constraints.",
             lints,
         )
 
         meta = {"requirements": {"host": ["python >=3"]}}
         lints, hints = linter.lintify_meta_yaml(meta)
         self.assertIn(
-            "Non noarch packages should have python requirement without any version constraints.",
+            "Non-noarch packages should have python requirement without any version constraints.",
             lints,
         )
 
@@ -1380,14 +1407,14 @@ class Test_linter(unittest.TestCase):
         meta = {"requirements": {"host": ["r-base >=3.5", "r-base"]}}
         lints, hints = linter.lintify_meta_yaml(meta)
         self.assertNotIn(
-            "Non noarch packages should have r-base requirement without any version constraints.",
+            "Non-noarch packages should have r-base requirement without any version constraints.",
             lints,
         )
 
         meta = {"requirements": {"host": ["r-base >=3.5"]}}
         lints, hints = linter.lintify_meta_yaml(meta)
         self.assertIn(
-            "Non noarch packages should have r-base requirement without any version constraints.",
+            "Non-noarch packages should have r-base requirement without any version constraints.",
             lints,
         )
 
@@ -1435,7 +1462,7 @@ class Test_linter(unittest.TestCase):
 class TestCLI_recipe_lint(unittest.TestCase):
     def test_cli_fail(self):
         with tmp_directory() as recipe_dir:
-            with io.open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
+            with open(recipe_dir / "meta.yaml", "w") as fh:
                 fh.write(
                     textwrap.dedent(
                         """
@@ -1455,7 +1482,7 @@ class TestCLI_recipe_lint(unittest.TestCase):
 
     def test_cli_success(self):
         with tmp_directory() as recipe_dir:
-            with io.open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
+            with open(recipe_dir / "meta.yaml", "w") as fh:
                 fh.write(
                     textwrap.dedent(
                         """
@@ -1486,7 +1513,7 @@ class TestCLI_recipe_lint(unittest.TestCase):
 
     def test_cli_environ(self):
         with tmp_directory() as recipe_dir:
-            with io.open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
+            with open(recipe_dir / "meta.yaml", "w") as fh:
                 fh.write(
                     textwrap.dedent(
                         """
@@ -1522,9 +1549,7 @@ class TestCLI_recipe_lint(unittest.TestCase):
         Tests that unicode does not confuse the linter.
         """
         with tmp_directory() as recipe_dir:
-            with io.open(
-                os.path.join(recipe_dir, "meta.yaml"), "wt", encoding="utf-8"
-            ) as fh:
+            with open(recipe_dir / "meta.yaml", "w", encoding="utf-8") as fh:
                 fh.write(
                     """
                     package:
@@ -1553,7 +1578,7 @@ class TestCLI_recipe_lint(unittest.TestCase):
         with tmp_directory() as recipe_dir:
 
             def assert_jinja(jinja_var, is_good=True):
-                with io.open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
+                with open(recipe_dir / "meta.yaml", "w") as fh:
                     fh.write(
                         """
                              {{% set name = "conda-smithy" %}}
