@@ -19,7 +19,7 @@ from conda_build.utils import ensure_list
 import conda_build.variants as variants
 from conda.exports import VersionOrder
 from conda_build.config import Config
-from functools import partial
+from functools import partial, reduce
 
 
 from typing import Any, Dict, List, Optional, Union
@@ -168,6 +168,14 @@ def op_variant_key_add(v1: dict, v2: dict):
         result.setdefault("__additional_zip_keys_default_values", {})[
             additional_key
         ] = result[additional_key][0]
+
+    all_zips = result.get("zip_keys", [])
+    all_keys_in_zips = reduce(lambda x, y: set(x) | set(y), all_zips, set())
+    # update result with all other keys specified in the migrator,
+    # which aren't part of the migrator specs or zipped keys
+    already_handled = {"__migrator"} | all_keys_in_zips | newly_added_zip_keys
+    for key in set(v2.keys()) - already_handled:
+        result[key] = v2[key]
 
     for pkey_ind, pkey_val in enumerate(v2[primary_key]):
         # object is present already, ignore everything
