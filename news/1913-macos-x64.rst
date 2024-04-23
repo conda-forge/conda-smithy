@@ -4,7 +4,7 @@
 
 **Changed:**
 
-* Explicitly use ``macos-12`` for ``osx-64`` runners. (#1913)
+* Explicitly use ``macos-13`` for ``osx-64`` runners. (#1913)
 
 **Deprecated:**
 
