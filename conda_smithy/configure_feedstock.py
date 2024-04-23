@@ -1511,12 +1511,12 @@ def _github_actions_specific_setup(
     runs_on = {
         "osx-64": {
             "os": "macos",
-            "hosted_labels": ("macos-latest",),
+            "hosted_labels": ("macos-12",),
             "self_hosted_labels": ("macOS", "x64"),
         },
         "osx-arm64": {
             "os": "macos",
-            "hosted_labels": ("macos-14",),
+            "hosted_labels": ("macos-14",),  # FUTURE: Use -latest once GHA fully migrates
             "self_hosted_labels": ("macOS", "arm64"),
         },
         "linux-64": {
