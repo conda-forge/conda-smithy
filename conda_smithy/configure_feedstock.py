@@ -915,7 +915,6 @@ def _render_ci_provider(
             os.path.join(forge_dir, forge_config["recipe_dir"], recipe_file)
         ) as f:
             meta_lines = f.readlines()
-
         # looking for `compiler('cuda')` with both quote variants;
         # do not match if there is a `#` somewhere before on the line
         pat = re.compile(r"^[^\#]*compiler\((\"cuda\"|\'cuda\')\).*")
