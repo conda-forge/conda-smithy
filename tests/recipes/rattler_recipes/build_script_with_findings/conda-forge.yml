@@ -1,2 +1,3 @@
 shellcheck:
   enabled: True
+conda_build_tool: rattler-build

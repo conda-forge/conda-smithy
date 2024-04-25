@@ -224,16 +224,16 @@ class Test_linter(unittest.TestCase):
             "in the `extra/recipe-maintainers` section."
         )
 
-        lints, hints = linter.lintify_recipe(
+        lints, hints = linter.lintify_recipe_yaml(
             {"extra": {"recipe-maintainers": []}}
         )
         self.assertIn(expected_message, lints)
 
         # No extra section at all.
-        lints, hints = linter.lintify_recipe({})
+        lints, hints = linter.lintify_recipe_yaml({})
         self.assertIn(expected_message, lints)
 
-        lints, hints = linter.lintify_recipe(
+        lints, hints = linter.lintify_recipe_yaml(
             {"extra": {"recipe-maintainers": ["a"]}}
         )
         self.assertNotIn(expected_message, lints)
@@ -709,7 +709,13 @@ class Test_linter(unittest.TestCase):
                     os.path.join(recipe_dir, "recipe.yaml"), "w"
                 ) as fh:
                     fh.write(meta_string)
-                lints = linter.main(recipe_dir)
+
+                with io.open(
+                    os.path.join(recipe_dir, "conda-forge.yml"), "w"
+                ) as fh:
+                    fh.write("conda_build_tool: rattler-build")
+
+                lints = linter.main(recipe_dir, feedstock_dir=recipe_dir)
                 if is_good:
                     message = (
                         "Found lints when there shouldn't have "
@@ -873,7 +879,15 @@ class Test_linter(unittest.TestCase):
                     os.path.join(recipe_dir, "recipe.yaml"), "w"
                 ) as fh:
                     fh.write(meta_string)
-                lints, hints = linter.main(recipe_dir, return_hints=True)
+
+                with io.open(
+                    os.path.join(recipe_dir, "conda-forge.yml"), "w"
+                ) as fh:
+                    fh.write("conda_build_tool: rattler-build")
+
+                lints, hints = linter.main(
+                    recipe_dir, return_hints=True, feedstock_dir=recipe_dir
+                )
                 if is_good:
                     message = (
                         "Found hints when there shouldn't have "
@@ -2266,14 +2280,15 @@ class Test_linter(unittest.TestCase):
         shutil.which("shellcheck") is None, reason="shellcheck not found"
     )
     def test_rattler_build_sh_with_shellcheck_findings(self):
+        recipe_dir = os.path.join(
+            _thisdir,
+            "recipes",
+            "rattler_recipes",
+            "build_script_with_findings",
+        )
+
         lints, hints = linter.main(
-            os.path.join(
-                _thisdir,
-                "recipes",
-                "rattler_recipes",
-                "build_script_with_findings",
-            ),
-            return_hints=True,
+            recipe_dir, return_hints=True, feedstock_dir=recipe_dir
         )
 
         assert any(
