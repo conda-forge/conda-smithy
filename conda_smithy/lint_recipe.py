@@ -35,7 +35,6 @@ from conda_build.metadata import (
     FIELDS as cbfields,
 )
 from conda_smithy.validate_schema import (
-    RATTLER_RECIPE_YAML_SCHEMA_FILE,
     validate_json_schema,
 )
 
