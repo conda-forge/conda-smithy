@@ -629,6 +629,11 @@ class RecipeLint(Subcommand):
         )
         scp = self.subcommand_parser
         scp.add_argument("--conda-forge", action="store_true")
+        scp.add_argument(
+            "--feedstock-dir",
+            default=None,
+            help="feedstock directory",
+        )
         scp.add_argument("recipe_directory", default=[os.getcwd()], nargs="*")
 
     def __call__(self, args):
@@ -638,6 +643,7 @@ class RecipeLint(Subcommand):
                 os.path.join(recipe),
                 conda_forge=args.conda_forge,
                 return_hints=True,
+                feedstock_dir=args.feedstock_dir,
             )
             if lints:
                 all_good = False

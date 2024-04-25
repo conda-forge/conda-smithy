@@ -12,10 +12,6 @@ CONDA_FORGE_YAML_SCHEMA_FILE = (
     Path(__file__).resolve().parent / "data" / "conda-forge.json"
 )
 
-RATTLER_RECIPE_YAML_SCHEMA_FILE = (
-    Path(__file__).resolve().parent / "data" / "rattler-recipe-schema.json"
-)
-
 
 class DeprecatedFieldWarning(ValidationError):
     pass
