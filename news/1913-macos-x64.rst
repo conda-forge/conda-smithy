@@ -4,7 +4,8 @@
 
 **Changed:**
 
-* Explicitly use ``macos-13`` for ``osx-64`` runners. (#1913)
+* Github Actions: Explicitly use ``macos-13`` for ``osx-64`` runners. (#1913)
+* Github Actions: Bump to ``setup-miniconda@v3`` on Windows builds. (#1913)
 
 **Deprecated:**
 
