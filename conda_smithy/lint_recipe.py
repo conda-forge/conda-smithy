@@ -20,7 +20,7 @@ from glob import glob
 import github
 
 from conda_smithy.linting_types import LintsHints, Linter
-from conda_smithy.linters_forge_yml import (
+from conda_smithy.lint_forge_yml import (
     FORGE_YAML_LINTERS,
 )
 

@@ -2,8 +2,8 @@ import inspect
 import unittest
 from typing import Set, Callable
 
-from conda_smithy import linters_forge_yml
-from conda_smithy.linters_forge_yml import lint_extra_fields
+from conda_smithy import lint_forge_yml
+from conda_smithy.lint_forge_yml import lint_extra_fields
 from conda_smithy.linting_types import LintsHints
 
 
