@@ -12,6 +12,7 @@ from contextlib import contextmanager
 import ruamel.yaml
 
 RATTLER_BUILD = "rattler-build"
+CONDA_BUILD = "conda-build"
 
 
 def get_feedstock_name_from_meta(meta):

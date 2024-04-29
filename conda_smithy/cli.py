@@ -14,6 +14,7 @@ import conda  # noqa
 import conda_build.api
 from conda_build.metadata import MetaData
 from rattler_build_conda_compat.render import MetaData as RattlerMetaData
+from rattler_build_conda_compat.utils import has_recipe as has_rattler_recipe
 
 import conda_smithy.cirun_utils
 from conda_smithy.utils import get_feedstock_name_from_meta, merge_dict
@@ -23,7 +24,7 @@ from . import configure_feedstock
 from . import feedstock_io
 from . import lint_recipe
 from . import __version__
-from .utils import RATTLER_BUILD
+from .utils import CONDA_BUILD, RATTLER_BUILD
 
 
 if sys.version_info[0] == 2:
@@ -133,14 +134,16 @@ class Init(Subcommand):
         # Get some information about the source recipe.
         # detect if it's old recipe or new one
         meta: Union[MetaData, RattlerMetaData]
-        try:
+
+        build_tool = CONDA_BUILD
+
+        # detect what recipe ( meta.yaml or recipe.yaml ) we should render
+        if has_rattler_recipe(args.recipe_directory):
+            build_tool = RATTLER_BUILD
+
+        if build_tool == CONDA_BUILD:
             meta = MetaData(args.recipe_directory)
-        # find_recipe from MetaData raise OsError and empty results
-        # even if we use directly that method, or wrap around it
-        # We still need to catch OsError here
-        except OSError:
-            # it may contain recipe.yaml;
-            # if not it will raise OSError
+        else:
             meta = RattlerMetaData(args.recipe_directory)
 
         conda_build_tool: Optional[str] = (
