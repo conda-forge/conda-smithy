@@ -92,7 +92,7 @@ class Test_linter(unittest.TestCase):
                 }
             ],
         }
-        lints, hints = linter.lintify_recipe_yaml(meta)
+        lints, _ = linter.lintify_recipe_yaml(meta)
         expected = "pin_compatible should be used instead"
         self.assertTrue(any(lint.startswith(expected) for lint in lints))
 
