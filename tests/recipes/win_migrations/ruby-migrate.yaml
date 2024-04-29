@@ -1,7 +1,0 @@
-migrator_ts: 1.0
-ruby:       # [win]
-  - 2.7        # [win]
-  - 3.2        # [win]
-zip_keys:
-  - - python          # [win]
-    - ruby      # [win]

@@ -214,6 +214,8 @@ def test_py_matrix_on_azure(py_recipe, jinja_env):
 def test_stdlib_on_azure(stdlib_recipe, jinja_env, request):
     conda_build_param = request.node.callspec.params["config_yaml"]
     if conda_build_param == "rattler-build":
+        # stdlib is not yet implemented in rattler-build
+        # https://github.com/prefix-dev/rattler-build/issues/239
         pytest.skip(
             "skipping test for rattler-build usecase as we currently we don't have stdlib"
         )
@@ -257,6 +259,8 @@ def test_stdlib_deployment_target(
 ):
     conda_build_param = request.node.callspec.params["config_yaml"]
     if conda_build_param == "rattler-build":
+        # stdlib is not yet implemented in rattler-build
+        # https://github.com/prefix-dev/rattler-build/issues/239
         pytest.skip("skipping test for rattler-build usecase")
 
     with caplog.at_level(logging.WARNING):
@@ -708,13 +712,12 @@ def test_migrator_downgrade_recipe(
         == 2
     )
 
-    expected_value = "1000"
     conda_build_param = request.node.callspec.params["config_yaml"]
+    expected_value = "1000"
+
+    ci_support_filename = "linux_64_python2.7.yaml"
     if conda_build_param == "rattler-build":
-        ci_support_filename = "linux_64_python3.8zlib1.2.12.yaml"
-        expected_value = "1.2.12"
-    else:
-        ci_support_filename = "linux_64_python2.7.yaml"
+        ci_support_filename = "linux_64_python2.7zlib1000.yaml"
 
     with open(
         os.path.join(
@@ -755,13 +758,8 @@ def test_migrator_compiler_version_recipe(
         os.path.join(recipe_migration_win_compiled.recipe, ".ci_support")
     )
 
-    conda_build_param = request.node.callspec.params["config_yaml"]
-    if conda_build_param == "conda-build":
-        assert "win_64_c_compilervs2008python2.7.yaml" in rendered_variants
-        assert "win_64_c_compilervs2017python3.5.yaml" in rendered_variants
-    else:
-        assert "win_64_python3.8ruby2.7.yaml" in rendered_variants
-        assert "win_64_python3.10ruby3.2.yaml" in rendered_variants
+    assert "win_64_c_compilervs2008python2.7.yaml" in rendered_variants
+    assert "win_64_c_compilervs2017python3.5.yaml" in rendered_variants
 
 
 def test_files_skip_render(render_skipped_recipe, jinja_env):
@@ -940,8 +938,8 @@ def test_cos7_env_render(py_recipe, jinja_env):
 
 def test_cuda_enabled_render(cuda_enabled_recipe, jinja_env, request):
     conda_build_param = request.node.callspec.params["config_yaml"]
-    if conda_build_param == "rattler-build":
-        pytest.skip("skipping test for rattler-build usecase")
+    # if conda_build_param == "rattler-build":
+    #     pytest.skip("skipping test for rattler-build usecase")
 
     forge_config = copy.deepcopy(cuda_enabled_recipe.config)
     has_env = "CF_CUDA_ENABLED" in os.environ
@@ -956,6 +954,7 @@ def test_cuda_enabled_render(cuda_enabled_recipe, jinja_env, request):
             forge_config=forge_config,
             forge_dir=cuda_enabled_recipe.recipe,
         )
+
         assert os.environ["CF_CUDA_ENABLED"] == "True"
 
         # this configuration should be run

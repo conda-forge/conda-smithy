@@ -5,7 +5,7 @@ requirements:
     build:
       - if: win
         then:
-          - ruby
+          - ${{ compiler('c') }}
     host:
         - python
     run:

@@ -69,8 +69,8 @@ def config_yaml(testing_workdir, recipe_dirname, request):
             config_name = "conda_build_config.yaml"
         else:
             config_name = "rattler_build_config.yaml"
-            config["python"] = ["3.8", "3.10"]
-            config["r_base"] = ["4.2", "4.3"]
+            # config["python"] = ["3.8", "3.10"]
+            # config["r_base"] = ["4.2", "4.3"]
 
         yaml.dump(config, f, default_flow_style=False)
 
@@ -309,21 +309,14 @@ def upload_on_branch_recipe(config_yaml, request):
 
 @pytest.fixture(scope="function")
 def recipe_migration_cfep9(config_yaml, request):
-    about_home = """
-about:
-    home: home
-"""
     additional_requirement = ""
 
     config_yaml_param_value = request.node.callspec.params["config_yaml"]
+    zlib_value = "1000"
     if config_yaml_param_value == "conda-build":
         recipe_name = "meta.yaml"
-        zlib_value = "1000"
     else:
         recipe_name = "recipe.yaml"
-        about_home = ""
-        zlib_value = "1.2.12"
-        additional_requirement = "- ruby"
 
     # write a migrator
     with open(os.path.join(config_yaml, "recipe", recipe_name), "w") as fh:
@@ -339,7 +332,6 @@ requirements:
         {additional_requirement}
     run:
         - python
-{about_home}
     """
         )
 
@@ -378,11 +370,7 @@ def recipe_migration_cfep9_downgrade(
     os.makedirs(
         os.path.join(config_yaml, ".ci_support", "migrations"), exist_ok=True
     )
-    config_yaml_param_value = request.node.callspec.params["config_yaml"]
-    if config_yaml_param_value == "conda-build":
-        zlib_value = "999"
-    else:
-        zlib_value = "1.2.11"
+
     with open(
         os.path.join(
             config_yaml, ".ci_support", "migrations", "zlib-downgrade.yaml"
@@ -393,7 +381,7 @@ def recipe_migration_cfep9_downgrade(
             f"""
 migrator_ts: 1.0
 zlib:
-    - {zlib_value}
+    - 999
 """
         )
     # return recipe_migration_cfep9
@@ -413,11 +401,8 @@ def recipe_migration_win_compiled(config_yaml, py_recipe, request):
     os.makedirs(
         os.path.join(config_yaml, ".ci_support", "migrations"), exist_ok=True
     )
-    config_yaml_param_value = request.node.callspec.params["config_yaml"]
-    if config_yaml_param_value == "conda-build":
-        migration_name = "vc-migrate.yaml"
-    else:
-        migration_name = "ruby-migrate.yaml"
+    # config_yaml_param_value = request.node.callspec.params["config_yaml"]
+    migration_name = "vc-migrate.yaml"
 
     with open(
         os.path.join(config_yaml, ".ci_support", "migrations", migration_name),
@@ -611,26 +596,21 @@ choco:
 
 @pytest.fixture(scope="function")
 def cuda_enabled_recipe(config_yaml, request):
-    with open(os.path.join(config_yaml, "recipe", "meta.yaml"), "w") as fh:
-        fh.write(
-            """
-package:
-    name: py-test
-    version: 1.0.0
-build:
-    skip: True   # [os.environ.get("CF_CUDA_ENABLED") != "True"]
-requirements:
-    build:
-        - {{ compiler('c') }}
-        - {{ compiler('cuda') }}
-    host:
-        - python
-    run:
-        - python
-about:
-    home: home
-    """
+    config_yaml_param_value = request.node.callspec.params["config_yaml"]
+    if config_yaml_param_value == "conda-build":
+        recipe_name = "meta.yaml"
+    else:
+        recipe_name = "recipe.yaml"
+
+    with open(os.path.join(config_yaml, "recipe", recipe_name), "w") as fh:
+        cuda_recipe_path = os.path.abspath(
+            os.path.join(
+                __file__, "../", "recipes", "cuda_recipes", recipe_name
+            )
         )
+        content = Path(cuda_recipe_path).read_text()
+        fh.write(content)
+
     return RecipeConfigPair(
         str(config_yaml),
         _load_forge_config(
