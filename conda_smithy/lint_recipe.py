@@ -869,12 +869,11 @@ def lintify_recipe_yaml(
     major_sections = list(meta.keys())
 
     # If the recipe_dir exists (no guarantee within this function) , we can
-    # find the meta.yaml within it.
+    # find the recipe.yaml within it.
     recipe_fname = os.path.join(recipe_dir or "", "recipe.yaml")
 
     sources_section = meta.get("source", [])
     build_section = meta.get("build", {})
-    # requirements_section = dict(meta.get("requirements", {}))
     requirements_section = rattler_loader.load_all_requirements(meta)
     test_section = meta.get("tests", {})
     about_section = meta.get("about", {})
@@ -889,19 +888,9 @@ def lintify_recipe_yaml(
     recipe_dirname = os.path.basename(recipe_dir) if recipe_dir else "recipe"
     is_staged_recipes = recipe_dirname != "recipe"
 
-    # 0: Top level keys should be expected
-    # this can be avoided as schema fix it
-
-    # 1: Top level meta.yaml keys should have a specific order.
-    # this we don't do
-
-    # 2: The about section should have a home, license and summary.
-    # this we can do but should extend
-
     rattler_linter.lint_about_contents(about_section, lints)
 
     # 3a: The recipe should have some maintainers.
-    # this we can do
     if not extra_section.get("recipe-maintainers", []):
         lints.append(
             "The recipe could do with some maintainers listed in "
@@ -909,7 +898,6 @@ def lintify_recipe_yaml(
         )
 
     # 3b: Maintainers should be a list
-    # this we can do
     if not (
         isinstance(extra_section.get("recipe-maintainers", []), Sequence)
         and not isinstance(
@@ -919,7 +907,6 @@ def lintify_recipe_yaml(
         lints.append("Recipe maintainers should be a json list.")
 
     # 4: The recipe should have some tests.
-    # this we can do but need to extend
     test_lints, test_hints = rattler_linter.lint_recipe_tests(
         test_section, outputs_section
     )
@@ -927,25 +914,18 @@ def lintify_recipe_yaml(
     hints.extend(test_hints)
 
     # 5: License cannot be 'unknown.'
-    # this we can do
     license = about_section.get("license", "").lower()
     if "unknown" == license.strip():
         lints.append("The recipe license cannot be unknown.")
 
-    # 6: Selectors should be in a tidy form.
-    # this we avoid
-
     # 7: The build section should have a build number.
-    # this we can do but need to extend
     if build_section.get("number", None) is None:
         lints.append("The recipe must have a `build/number` section.")
 
     # 8: The build section should be before the run section in requirements.
-    # this we can do
     rattler_linter.lint_requirements_order(requirements_section, lints)
 
     # 9: Files downloaded should have a hash.
-    # this we can do
     for source_section in sources_section:
         if "url" in source_section and not (
             {"sha1", "sha256", "md5"} & set(sources_section.keys())
@@ -956,7 +936,6 @@ def lintify_recipe_yaml(
             )
 
     # 10: License should not include the word 'license'.
-    # this we can do
     license = about_section.get("license", "").lower()
     if (
         "license" in license.lower()
@@ -969,7 +948,6 @@ def lintify_recipe_yaml(
         )
 
     # 11: There should be one empty line at the end of the file.
-    # this we can do
     if recipe_dir is not None and os.path.exists(recipe_fname):
         with io.open(recipe_fname, "r") as f:
             lines = f.read().split("\n")
@@ -988,22 +966,15 @@ def lintify_recipe_yaml(
                 "line at the end of the file."
             )
 
-    # 12: License family must be valid (conda-build checks for that)
-    # this we dont't do cause is not schema valid
-
     # 12a: License family must be valid (conda-build checks for that)
-    # this we can do
-
     rattler_linter.lint_has_recipe_file(about_section, lints)
 
     # 13: Check that the recipe name is valid
-    # this we can do
     lints.append(
         rattler_linter.lint_package_name(package_section, context_section)
     )
 
     # 14: Run conda-forge specific lints
-    # this we can do
     if conda_forge:
         forge_lints, forge_hints = rattler_linter.run_conda_forge_specific(
             recipe_dir,
@@ -1018,43 +989,9 @@ def lintify_recipe_yaml(
         hints.extend(forge_hints)
 
     # 15: Check if we are using legacy patterns
-    # this we can do
-    # TODO: add this also for rattler-lint
     rattler_linter.lint_legacy_patterns(requirements_section)
 
-    # 16: Subheaders should be in the allowed subheadings
-    # this schema do
-
-    # 17: Validate noarch
-    # this we validate catch schema
-
-    if recipe_dir:
-        conda_build_config_filename = find_local_config_file(
-            recipe_dir, "conda_build_config.yaml"
-        )
-
-        if conda_build_config_filename:
-            with open(conda_build_config_filename, "r") as fh:
-                conda_build_config_keys = set(get_yaml().load(fh).keys())
-        else:
-            conda_build_config_keys = set()
-
-        forge_yaml_filename = find_local_config_file(
-            recipe_dir, "conda-forge.yml"
-        )
-
-        if forge_yaml_filename:
-            with open(forge_yaml_filename, "r") as fh:
-                forge_yaml = get_yaml().load(fh)
-        else:
-            forge_yaml = {}
-    else:
-        conda_build_config_keys = set()
-        forge_yaml = {}
-
     # 18: noarch doesn't work with selectors for runtime dependencies
-    # this we can do
-
     raw_requirements_section = meta.get("requirements", {})
     lints.extend(
         rattler_linter.lint_usage_of_selectors_for_noarch(
@@ -1063,24 +1000,15 @@ def lintify_recipe_yaml(
     )
 
     # 19: check version
-    # this we can do
-
     lints.append(
         rattler_linter.lint_package_version(package_section, context_section)
     )
 
-    # 20: Jinja2 variable definitions should be nice.
-    # this we dont need
-
     # 21: Legacy usage of compilers
-    # this we can do
-    # TODO: implement this
-
     build_reqs = requirements_section.get("build", None)
     lints.append(rattler_linter.lint_legacy_compilers(build_reqs))
 
     # 22: Single space in pinned requirements
-    # this we can do
     lints.extend(
         rattler_linter.lint_usage_of_single_space_in_pinned_requirements(
             requirements_section
@@ -1088,42 +1016,6 @@ def lintify_recipe_yaml(
     )
 
     # 23: non noarch builds shouldn't use version constraints on python and r-base
-    # this we can do
-    # TODO: implement this
-    # check_languages = ["python", "r-base"]
-    # host_reqs = requirements_section.get("host") or []
-    # run_reqs = requirements_section.get("run") or []
-    # for language in check_languages:
-    #     if noarch_value is None and not outputs_section:
-    #         filtered_host_reqs = [
-    #             req
-    #             for req in host_reqs
-    #             if req.partition(" ")[0] == str(language)
-    #         ]
-    #         filtered_run_reqs = [
-    #             req
-    #             for req in run_reqs
-    #             if req.partition(" ")[0] == str(language)
-    #         ]
-    #         if filtered_host_reqs and not filtered_run_reqs:
-    #             lints.append(
-    #                 "If {0} is a host requirement, it should be a run requirement.".format(
-    #                     str(language)
-    #                 )
-    #             )
-    #         for reqs in [filtered_host_reqs, filtered_run_reqs]:
-    #             if str(language) in reqs:
-    #                 continue
-    #             for req in reqs:
-    #                 constraint = req.split(" ", 1)[1]
-    #                 if constraint.startswith(">") or constraint.startswith(
-    #                     "<"
-    #                 ):
-    #                     lints.append(
-    #                         "Non noarch packages should have {0} requirement without any version constraints.".format(
-    #                             str(language)
-    #                         )
-    #                     )
     if noarch_value is None and not outputs_section:
         lints.extend(
             rattler_linter.lint_non_noarch_dont_constrain_python_and_rbase(
@@ -1132,16 +1024,12 @@ def lintify_recipe_yaml(
         )
 
     # 24: jinja2 variable references should be {{<one space>var<one space>}}
-    # this we can do
-    # TODO: implement this
     jinja_hints = rattler_linter.lint_variable_reference_should_have_space(
         recipe_dir=recipe_dir, recipe_file=recipe_fname
     )
     hints.extend(jinja_hints)
 
     # 25: require a lower bound on python version
-    # this we can do
-
     if noarch_value == "python" and not outputs_section:
         for req in run_reqs:
             if (req.strip().split()[0] == "python") and (req != "python"):
@@ -1156,9 +1044,6 @@ def lintify_recipe_yaml(
 
     # 26: pin_subpackage is for subpackages and pin_compatible is for
     # non-subpackages of the recipe. Contact @carterbox for troubleshooting
-    # this lint.
-    # this we can do???
-    # TODO: implement this
     subpackage_names = []
     for out in outputs_section:
         if "name" in out:
@@ -1169,15 +1054,29 @@ def lintify_recipe_yaml(
     def check_pins(pinning_section):
         if pinning_section is None:
             return
-        for pin in fnmatch.filter(pinning_section, "compatible_pin*"):
-            if pin.split()[1] in subpackage_names:
+        for pin in fnmatch.filter(pinning_section, "${{ pin_compatible(*"):
+            pin_func = pin.split()[1]
+            pin_name = (
+                pin_func.lstrip("pin_compatible")
+                .lstrip("(")
+                .rstrip(")")
+                .split(",")[0]
+            )
+            if pin_name in subpackage_names:
                 lints.append(
                     "pin_subpackage should be used instead of"
                     f" pin_compatible for `{pin.split()[1]}`"
                     " because it is one of the known outputs of this recipe:"
                     f" {subpackage_names}."
                 )
-        for pin in fnmatch.filter(pinning_section, "subpackage_pin*"):
+        for pin in fnmatch.filter(pinning_section, "${{ pin_subpackage*"):
+            pin_func = pin.split()[1]
+            pin_name = (
+                pin_func.lstrip("pin_subpackage")
+                .lstrip("(")
+                .rstrip(")")
+                .split(",")[0]
+            )
             if pin.split()[1] not in subpackage_names:
                 lints.append(
                     "pin_compatible should be used instead of"
@@ -1187,20 +1086,21 @@ def lintify_recipe_yaml(
                 )
 
     def check_pins_build_and_requirements(top_level):
-        if "build" in top_level and "run_exports" in top_level["build"]:
-            check_pins(top_level["build"]["run_exports"])
-        if "requirements" in top_level and "run" in top_level["requirements"]:
-            check_pins(top_level["requirements"]["run"])
-        if "requirements" in top_level and "host" in top_level["requirements"]:
-            check_pins(top_level["requirements"]["host"])
+        if (
+            "requirements" in top_level
+            and "run_exports" in top_level["requirements"]
+        ):
+            if "strong" in top_level["requirements"]["run_exports"]:
+                check_pins(top_level["requirements"]["run_exports"]["strong"])
+            else:
+                check_pins(top_level["requirements"]["run_exports"])
 
-    # check_pins_build_and_requirements(meta)
-    # for out in outputs_section:
-    #     check_pins_build_and_requirements(out)
+    check_pins_build_and_requirements(meta)
+    for out in outputs_section:
+        check_pins_build_and_requirements(out)
 
     # hints
     # 1: suggest pip
-    # can do
     if "script" in build_section:
         scripts = build_section["script"]
         if isinstance(scripts, str):
@@ -1213,38 +1113,6 @@ def lintify_recipe_yaml(
                 )
 
     # 2: suggest python noarch (skip on feedstocks)
-    # can do
-    # if (
-    #     noarch_value is None
-    #     and build_reqs
-    #     and not any(["_compiler_stub" in b for b in build_reqs])
-    #     and ("pip" in build_reqs)
-    #     and (is_staged_recipes or not conda_forge)
-    # ):
-    #     with io.open(recipe_fname, "rt") as fh:
-    #         in_runreqs = False
-    #         no_arch_possible = True
-    #         for line in fh:
-    #             line_s = line.strip()
-    #             if line_s == "host:" or line_s == "run:":
-    #                 in_runreqs = True
-    #                 runreqs_spacing = line[: -len(line.lstrip())]
-    #                 continue
-    #             if line_s.startswith("skip:") and is_selector_line(line):
-    #                 no_arch_possible = False
-    #                 break
-    #             if in_runreqs:
-    #                 if runreqs_spacing == line[: -len(line.lstrip())]:
-    #                     in_runreqs = False
-    #                     continue
-    #                 if is_selector_line(line):
-    #                     no_arch_possible = False
-    #                     break
-    #         if no_arch_possible:
-    #             hints.append(
-    #                 "Whenever possible python packages should use noarch. "
-    #                 "See https://conda-forge.org/docs/maintainer/knowledge_base.html#noarch-builds"
-    #             )
 
     if noarch_value is None and (is_staged_recipes or not conda_forge):
         noarch_hints = rattler_linter.hint_noarch_usage(
@@ -1253,7 +1121,6 @@ def lintify_recipe_yaml(
         hints.extend(noarch_hints)
 
     # 3: suggest fixing all recipe/*.sh shellcheck findings
-    # can do?
     shellcheck_enabled = False
     shell_scripts = []
     if recipe_dir:

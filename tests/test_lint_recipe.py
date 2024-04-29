@@ -65,6 +65,37 @@ class Test_linter(unittest.TestCase):
         expected = "pin_compatible should be used instead"
         self.assertTrue(any(lint.startswith(expected) for lint in lints))
 
+    def test_rattler_pin_compatible_in_run_exports(self):
+        meta = {
+            "package": {
+                "name": "apackage",
+            },
+            "requirements": {
+                "run_exports": ["${{ pin_compatible(apackage) }}"],
+            },
+        }
+        lints, hints = linter.lintify_recipe_yaml(meta)
+        expected = "pin_subpackage should be used instead"
+        self.assertTrue(any(lint.startswith(expected) for lint in lints))
+
+    def test_pin_compatible_in_run_exports_output(self):
+        meta = {
+            "package": {
+                "name": "apackage",
+            },
+            "outputs": [
+                {
+                    "name": "anoutput",
+                    "requirements": {
+                        "run_exports": ["${{ pin_subpackage(notanoutput) }}"],
+                    },
+                }
+            ],
+        }
+        lints, hints = linter.lintify_recipe_yaml(meta)
+        expected = "pin_compatible should be used instead"
+        self.assertTrue(any(lint.startswith(expected) for lint in lints))
+
     def test_bad_top_level(self):
         meta = OrderedDict([["package", {}], ["build", {}], ["sources", {}]])
         lints, hints = linter.lintify_meta_yaml(meta)

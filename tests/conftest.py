@@ -69,8 +69,6 @@ def config_yaml(testing_workdir, recipe_dirname, request):
             config_name = "conda_build_config.yaml"
         else:
             config_name = "rattler_build_config.yaml"
-            # config["python"] = ["3.8", "3.10"]
-            # config["r_base"] = ["4.2", "4.3"]
 
         yaml.dump(config, f, default_flow_style=False)
 
@@ -94,20 +92,12 @@ def config_yaml(testing_workdir, recipe_dirname, request):
     with open(
         os.path.join(testing_workdir, recipe_dirname, "short_config.yaml"), "w"
     ) as f:
-        if request.param == "rattler-build":
-            config = {"python": ["3.8"]}
-        else:
-            config = {"python": ["2.7"]}
-
+        config = {"python": ["2.7"]}
         yaml.dump(config, f, default_flow_style=False)
     with open(
         os.path.join(testing_workdir, recipe_dirname, "long_config.yaml"), "w"
     ) as f:
-        if request.param == "rattler-build":
-            config = {"python": ["3.6", "3.8", "3.10"]}
-        else:
-            config = {"python": ["2.7", "3.5", "3.6"]}
-
+        config = {"python": ["2.7", "3.5", "3.6"]}
         yaml.dump(config, f, default_flow_style=False)
     with open(os.path.join(testing_workdir, "conda-forge.yml"), "w") as f:
         config = {
@@ -309,10 +299,7 @@ def upload_on_branch_recipe(config_yaml, request):
 
 @pytest.fixture(scope="function")
 def recipe_migration_cfep9(config_yaml, request):
-    additional_requirement = ""
-
     config_yaml_param_value = request.node.callspec.params["config_yaml"]
-    zlib_value = "1000"
     if config_yaml_param_value == "conda-build":
         recipe_name = "meta.yaml"
     else:
@@ -321,7 +308,7 @@ def recipe_migration_cfep9(config_yaml, request):
     # write a migrator
     with open(os.path.join(config_yaml, "recipe", recipe_name), "w") as fh:
         fh.write(
-            f"""
+            """
 package:
     name: py-test
     version: 1.0.0
@@ -329,7 +316,6 @@ requirements:
     host:
         - python
         - zlib
-        {additional_requirement}
     run:
         - python
     """
@@ -343,10 +329,10 @@ requirements:
         "w",
     ) as fh:
         fh.write(
-            f"""
+            """
 migrator_ts: 1
 zlib:
-    - {zlib_value}
+    - 1000
 """
         )
 
@@ -378,7 +364,7 @@ def recipe_migration_cfep9_downgrade(
         "w",
     ) as fh:
         fh.write(
-            f"""
+            """
 migrator_ts: 1.0
 zlib:
     - 999
@@ -401,7 +387,6 @@ def recipe_migration_win_compiled(config_yaml, py_recipe, request):
     os.makedirs(
         os.path.join(config_yaml, ".ci_support", "migrations"), exist_ok=True
     )
-    # config_yaml_param_value = request.node.callspec.params["config_yaml"]
     migration_name = "vc-migrate.yaml"
 
     with open(

@@ -600,11 +600,9 @@ def test_migrator_recipe(recipe_migration_cfep9, jinja_env, request):
     )
 
     ci_support_filename = "linux_64_python2.7.yaml"
-    expected_value = "1000"
     conda_build_param = request.node.callspec.params["config_yaml"]
     if conda_build_param == "rattler-build":
-        ci_support_filename = "linux_64_python3.8zlib1.2.12.yaml"
-        expected_value = "1.2.12"
+        ci_support_filename = "linux_64_python2.7zlib1000.yaml"
 
     with open(
         os.path.join(
@@ -614,7 +612,7 @@ def test_migrator_recipe(recipe_migration_cfep9, jinja_env, request):
         )
     ) as fo:
         variant = yaml.safe_load(fo)
-        assert variant["zlib"] == [expected_value]
+        assert variant["zlib"] == ["1000"]
 
 
 def test_migrator_cfp_override(recipe_migration_cfep9, jinja_env, request):
@@ -624,21 +622,19 @@ def test_migrator_cfp_override(recipe_migration_cfep9, jinja_env, request):
     )
     os.makedirs(cfp_migration_dir, exist_ok=True)
 
-    expected_value = "1001"
     conda_build_param = request.node.callspec.params["config_yaml"]
     if conda_build_param == "rattler-build":
-        ci_support_filename = "linux_64_python3.8zlib1.2.13.yaml"
-        expected_value = "1.2.13"
+        ci_support_filename = "linux_64_python2.7zlib1001.yaml"
     else:
         ci_support_filename = "linux_64_python2.7.yaml"
 
     with open(os.path.join(cfp_migration_dir, "zlib2.yaml"), "w") as f:
         f.write(
             textwrap.dedent(
-                f"""
+                """
                 migrator_ts: 1
                 zlib:
-                   - {expected_value}
+                   - 1001
                 """
             )
         )
@@ -656,7 +652,7 @@ def test_migrator_cfp_override(recipe_migration_cfep9, jinja_env, request):
         )
     ) as fo:
         variant = yaml.safe_load(fo)
-        assert variant["zlib"] == [expected_value]
+        assert variant["zlib"] == ["1001"]
 
 
 def test_migrator_delete_old(recipe_migration_cfep9, jinja_env):
@@ -936,11 +932,7 @@ def test_cos7_env_render(py_recipe, jinja_env):
                 del os.environ["DEFAULT_LINUX_VERSION"]
 
 
-def test_cuda_enabled_render(cuda_enabled_recipe, jinja_env, request):
-    conda_build_param = request.node.callspec.params["config_yaml"]
-    # if conda_build_param == "rattler-build":
-    #     pytest.skip("skipping test for rattler-build usecase")
-
+def test_cuda_enabled_render(cuda_enabled_recipe, jinja_env):
     forge_config = copy.deepcopy(cuda_enabled_recipe.config)
     has_env = "CF_CUDA_ENABLED" in os.environ
     if has_env:
