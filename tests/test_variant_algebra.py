@@ -531,7 +531,7 @@ def test_multiple_key_add_migration():
     assert "numpy" not in res3
 
 
-def test_other_keys_in_additional_zip_migrator():
+def test_update_other_keys_not_in_zip_keys():
     """Test updating keys in migrators not related to zips still get updated."""
     # based on global pinning
     base = parse_variant(
