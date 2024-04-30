@@ -592,7 +592,7 @@ def test_secrets(py_recipe, jinja_env):
         )
 
 
-def test_migrator_recipe(recipe_migration_cfep9, jinja_env, request):
+def test_migrator_recipe(recipe_migration_cfep9, jinja_env):
     configure_feedstock.render_azure(
         jinja_env=jinja_env,
         forge_config=recipe_migration_cfep9.config,
@@ -600,9 +600,6 @@ def test_migrator_recipe(recipe_migration_cfep9, jinja_env, request):
     )
 
     ci_support_filename = "linux_64_python2.7.yaml"
-    conda_build_param = request.node.callspec.params["config_yaml"]
-    if conda_build_param == "rattler-build":
-        ci_support_filename = "linux_64_python2.7zlib1000.yaml"
 
     with open(
         os.path.join(
@@ -615,18 +612,14 @@ def test_migrator_recipe(recipe_migration_cfep9, jinja_env, request):
         assert variant["zlib"] == ["1000"]
 
 
-def test_migrator_cfp_override(recipe_migration_cfep9, jinja_env, request):
+def test_migrator_cfp_override(recipe_migration_cfep9, jinja_env):
     cfp_file = recipe_migration_cfep9.config["exclusive_config_file"]
     cfp_migration_dir = os.path.join(
         os.path.dirname(cfp_file), "share", "conda-forge", "migrations"
     )
     os.makedirs(cfp_migration_dir, exist_ok=True)
 
-    conda_build_param = request.node.callspec.params["config_yaml"]
-    if conda_build_param == "rattler-build":
-        ci_support_filename = "linux_64_python2.7zlib1001.yaml"
-    else:
-        ci_support_filename = "linux_64_python2.7.yaml"
+    ci_support_filename = "linux_64_python2.7.yaml"
 
     with open(os.path.join(cfp_migration_dir, "zlib2.yaml"), "w") as f:
         f.write(
@@ -712,8 +705,6 @@ def test_migrator_downgrade_recipe(
     expected_value = "1000"
 
     ci_support_filename = "linux_64_python2.7.yaml"
-    if conda_build_param == "rattler-build":
-        ci_support_filename = "linux_64_python2.7zlib1000.yaml"
 
     with open(
         os.path.join(

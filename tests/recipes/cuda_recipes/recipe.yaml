@@ -3,7 +3,7 @@ package:
     version: 1.0.0
 build:
     skip:
-      - env.get('CF_CUDA_ENABLED') != True
+      - env.get('CF_CUDA_ENABLED') != "True"
 
 requirements:
     build:
