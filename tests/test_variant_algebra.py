@@ -344,19 +344,19 @@ def test_py39_migration():
       - 3.6.* *_cpython   # [not (osx and arm64)]
       - 3.7.* *_cpython   # [not (osx and arm64)]
       - 3.8.* *_cpython
-      - 3.6.* *_73_pypy   # [not (win64 or (osx and arm64))]
+      - 3.6.* *_73_pypy   # [not (osx and arm64)]
 
     numpy:
       - 1.16       # [not (osx and arm64)]
       - 1.16       # [not (osx and arm64)]
       - 1.16
-      - 1.18       # [not (win64 or (osx and arm64))]
+      - 1.18       # [not (osx and arm64)]
 
     python_impl:
       - cpython    # [not (osx and arm64)]
       - cpython    # [not (osx and arm64)]
       - cpython
-      - pypy       # [not (win64 or (osx and arm64))]
+      - pypy       # [not (osx and arm64)]
 
 
     zip_keys:
@@ -449,19 +449,19 @@ def test_multiple_key_add_migration():
       - 3.6.* *_cpython   # [not (osx and arm64)]
       - 3.7.* *_cpython   # [not (osx and arm64)]
       - 3.8.* *_cpython
-      - 3.6.* *_73_pypy   # [not (win64 or (osx and arm64))]
+      - 3.6.* *_73_pypy   # [not (osx and arm64)]
 
     numpy:
       - 1.16       # [not (osx and arm64)]
       - 1.16       # [not (osx and arm64)]
       - 1.16
-      - 1.18       # [not (win64 or (osx and arm64))]
+      - 1.18       # [not (osx and arm64)]
 
     python_impl:
       - cpython    # [not (osx and arm64)]
       - cpython    # [not (osx and arm64)]
       - cpython
-      - pypy       # [not (win64 or (osx and arm64))]
+      - pypy       # [not (osx and arm64)]
 
 
     zip_keys:
