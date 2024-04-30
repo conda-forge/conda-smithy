@@ -174,7 +174,7 @@ def op_variant_key_add(v1: dict, v2: dict):
     # update result with all other keys specified in the migrator,
     # which aren't part of the migrator specs or zipped keys
     already_handled = {"__migrator"} | all_keys_in_zips | newly_added_zip_keys
-    for key in set(v2.keys()) - already_handled:
+    for key in (set(result.keys()) & set(v2.keys())) - already_handled:
         result[key] = v2[key]
 
     for pkey_ind, pkey_val in enumerate(v2[primary_key]):
