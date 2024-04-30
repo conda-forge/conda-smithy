@@ -531,6 +531,153 @@ def test_multiple_key_add_migration():
     assert "numpy" not in res3
 
 
+def test_other_keys_in_additional_zip_migrator():
+    """Test updating keys in migrators not related to zips still get updated."""
+    # based on global pinning
+    base = parse_variant(
+        dedent(
+            """
+            python:
+              - 3.8.* *_cpython
+              - 3.9.* *_cpython
+              - 3.10.* *_cpython
+              - 3.11.* *_cpython
+            python_impl:
+              - cpython
+              - cpython
+              - cpython
+              - cpython
+            numpy:
+              - 1.22
+              - 1.22
+              - 1.22
+              - 1.23
+            # not part of zip
+            channel_sources:
+              - conda-forge
+            zip_keys:
+              -
+                - python
+                - numpy
+                - python_impl
+            """
+        )
+    )
+
+    migration_pypy = parse_variant(
+        dedent(
+            """
+            __migrator:
+              operation: key_add
+              primary_key: python
+              ordering:
+                python:
+                  - 3.6.* *_cpython
+                  - 3.7.* *_cpython
+                  - 3.8.* *_cpython
+                  - 3.9.* *_cpython
+                  - 3.10.* *_cpython
+                  - 3.11.* *_cpython
+                  - 3.6.* *_73_pypy
+                  - 3.7.* *_73_pypy
+                  - 3.8.* *_73_pypy
+                  - 3.9.* *_73_pypy
+
+            python:
+              - 3.9.* *_73_pypy    # [not (osx and arm64)]
+            numpy:
+              # part of a zip_keys: python, python_impl, numpy
+              - 2.0                # [not (osx and arm64)]
+            python_impl:
+              - pypy               # [not (osx and arm64)]
+            channel_sources:
+              - conda-forge/label/numpy_dev,conda-forge  # [not (osx and arm64)]
+            """
+        )
+    )
+
+    migration_py312 = parse_variant(
+        dedent(
+            """
+            __migrator:
+              operation: key_add
+              primary_key: python
+              ordering:
+                python:
+                  - 3.6.* *_cpython
+                  - 3.7.* *_cpython
+                  - 3.8.* *_cpython
+                  - 3.9.* *_cpython
+                  - 3.10.* *_cpython
+                  - 3.11.* *_cpython
+                  - 3.12.* *_cpython  # new entry
+                  - 3.6.* *_73_pypy
+                  - 3.7.* *_73_pypy
+                  - 3.8.* *_73_pypy
+                  - 3.9.* *_73_pypy
+
+            python:
+              - 3.12.* *_cpython
+            numpy:
+              - 2.0
+            python_impl:
+              - cpython
+            channel_sources:
+              - conda-forge/label/numpy_dev,conda-forge
+            """
+        )
+    )
+
+    migration_numpy = parse_variant(
+        dedent(
+            """
+            __migrator:
+              kind: version
+
+            # needs to fully reproduce zip of {python, python_impl, numpy}
+            # in order to override it
+            numpy:
+              - 1.22  # no py38 support for numpy 2.0
+              - 2.0
+              - 2.0
+              - 2.0
+            python:
+              - 3.8.* *_cpython
+              - 3.9.* *_cpython
+              - 3.10.* *_cpython
+              - 3.11.* *_cpython
+            python_impl:
+              - cpython
+              - cpython
+              - cpython
+              - cpython
+            channel_sources:
+              - conda-forge/label/numpy_dev,conda-forge
+            """
+        )
+    )
+
+    res = variant_add(base, migration_pypy)
+    print(res)
+    res = variant_add(res, migration_py312)
+    print(res)
+    res = variant_add(res, migration_numpy)
+
+    # assert that we've ordered the numpy bits properly
+    assert res["numpy"] == [
+        "1.22",
+        "2.0",
+        "2.0",
+        "2.0",
+        "2.0",
+        "2.0",
+    ]
+    # assert that key not involved in zip_keys (i.e. channel_sources) got updated
+    assert res["channel_sources"] == [
+        "conda-forge/label/numpy_dev,conda-forge"
+    ]
+
+
 def test_variant_key_remove():
     base = parse_variant(
         dedent(
