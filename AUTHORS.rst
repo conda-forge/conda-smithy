@@ -9,11 +9,11 @@ Authors are sorted by number of commits.
 * Phil Elson
 * Filipe Fernandes
 * Uwe L. Korn
+* H. Vetinari
 * Dougal J. Sutherland
 * Amit Kumar
 * Marcel Bargull
 * shadow_walker
-* H. Vetinari
 * Michael Sarahan
 * Min RK
 * John Kirkham
