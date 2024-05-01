@@ -569,6 +569,10 @@ def test_update_other_keys_not_in_zip_keys():
             """
             __migrator:
               kind: version
+              ordering:
+                channel_sources:
+                  - conda-forge
+                  - conda-forge/label/numpy_dev,conda-forge
 
             # needs to fully reproduce zip of {python, python_impl, numpy}
             # in order to override it
