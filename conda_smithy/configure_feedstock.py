@@ -49,7 +49,8 @@ from conda_build.metadata import get_selectors
 from copy import deepcopy
 
 from conda_build import __version__ as conda_build_version
-from jinja2 import Environment, FileSystemLoader
+from jinja2 import FileSystemLoader
+from jinja2.sandbox import SandboxedEnvironment
 
 from conda_smithy.feedstock_io import (
     copy_file,
@@ -598,8 +599,6 @@ def _collapse_subpackage_variants(
         "macos_machine",
         "channel_sources",
         "channel_targets",
-        "c_stdlib",
-        "c_stdlib_version",
         "docker_image",
         "build_number_decrement",
         # The following keys are required for some of our aarch64 builds
@@ -1556,11 +1555,12 @@ def _github_actions_specific_setup(
     runs_on = {
         "osx-64": {
             "os": "macos",
-            "hosted_labels": ("macos-latest",),
+            "hosted_labels": ("macos-13",),
             "self_hosted_labels": ("macOS", "x64"),
         },
         "osx-arm64": {
             "os": "macos",
+            # FUTURE: Use -latest once GHA fully migrates
             "hosted_labels": ("macos-14",),
             "self_hosted_labels": ("macOS", "arm64"),
         },
@@ -2543,7 +2543,7 @@ def make_jinja_env(feedstock_directory):
     forge_dir = os.path.abspath(feedstock_directory)
     tmplt_dir = os.path.join(conda_forge_content, "templates")
     # Load templates from the feedstock in preference to the smithy's templates.
-    env = Environment(
+    env = SandboxedEnvironment(
         extensions=["jinja2.ext.do"],
         loader=FileSystemLoader(
             [os.path.join(forge_dir, "templates"), tmplt_dir]

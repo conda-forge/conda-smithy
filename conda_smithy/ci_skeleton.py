@@ -9,9 +9,7 @@ added to conda-forge's queue.
 import os
 import sys
 
-from jinja2 import Environment, FileSystemLoader
-
-from .configure_feedstock import make_jinja_env, conda_forge_content
+from .configure_feedstock import make_jinja_env
 
 
 def _render_template(template_file, env, forge_dir, config):

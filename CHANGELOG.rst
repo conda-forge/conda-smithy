@@ -4,6 +4,51 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.35.0
+====================
+
+**Changed:**
+
+* Do not populate `c_stdlib{,_version}` in CI configs that don't need them (#1908)
+* Added linter rules for providing hints about updating to new stdlib-functionality (#1909)
+* Github Actions: Explicitly use ``macos-13`` for ``osx-64`` runners. (#1913)
+* Github Actions: Bump to ``setup-miniconda@v3`` on Windows builds. (#1913)
+* Azure Pipelines: bump default macOS runners ``vmImage`` value to ``macos-12``. (#1914)
+
+**Authors:**
+
+* Jaime Rodríguez-Guerra
+* H. Vetinari
+
+
+
+v3.34.1
+====================
+
+**Removed:**
+
+* ``false`` is no longer a valid value for ``bot.inspection`` in the ``conda-forge.yml`` file. Use ``disabled`` instead.
+
+**Fixed:**
+
+* ``object`` is no longer an explicit base class of ``Subcommand`` (Python 3 class style)
+* replace ``logger.warn`` (deprecated) with ``logger.warning``
+* typo: `Usage` in ``update_conda_forge_config``
+* Unexpected top-level ``conda-forge.yml`` keys should no longer fail with a traceback.
+
+**Security:**
+
+* Use sandboxed jinja2 environments. (#1902)
+
+**Authors:**
+
+* Matthew R. Becker
+* pre-commit-ci[bot]
+* Nicholas Bollweg
+* Yannik Tausch
+
+
+
 v3.34.0
 ====================
 

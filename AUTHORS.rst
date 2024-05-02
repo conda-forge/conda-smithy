@@ -9,11 +9,11 @@ Authors are sorted by number of commits.
 * Phil Elson
 * Filipe Fernandes
 * Uwe L. Korn
+* H. Vetinari
 * Dougal J. Sutherland
 * Amit Kumar
 * Marcel Bargull
 * shadow_walker
-* H. Vetinari
 * Michael Sarahan
 * Min RK
 * John Kirkham
@@ -27,15 +27,16 @@ Authors are sorted by number of commits.
 * Bastian Zimmermann
 * Daniel Bast
 * Billy K. Poon
+* pre-commit-ci[bot]
 * vinicius douglas cerutti
 * Tim Snyder
 * Mike Henry
-* pre-commit-ci[bot]
 * Eric Dill
 * Natasha Pavlovikj
 * Daniel Ching
 * Maksim Rakitin
 * Jan Schulz
+* Nicholas Bollweg
 * Josh Reichardt
 * Bela Stoyan
 * Justin Calamari
@@ -43,13 +44,13 @@ Authors are sorted by number of commits.
 * Patrick Sodré
 * C.A.M. Gerlach
 * refraction-ray
-* Nicholas Bollweg
 * Leopold Talirz
 * Tom Pollard
 * Gonzalo Pena-Castellanos
 * John Blischak
 * Matthias Diener
 * Antonio S. Cofiño
+* Yannik Tausch
 * Carlo
 * Matthew Craig
 * Peter Williams
@@ -92,7 +93,6 @@ Authors are sorted by number of commits.
 * Matthew W. Thompson
 * conda-forge-admin
 * Klaus Zimmermann
-* Yannik Tausch
 * lorenz
 * Tom Augspurger
 * Ryan May

@@ -856,6 +856,47 @@ def lintify_meta_yaml(
             "[here]( https://conda-forge.org/docs/maintainer/adding_pkgs.html#spdx-identifiers-and-expressions )."
         )
 
+    # stdlib-related hints
+    build_reqs = requirements_section.get("build") or []
+    run_reqs = requirements_section.get("run") or []
+    constraints = requirements_section.get("run_constrained") or []
+
+    stdlib_hint = (
+        "This recipe is using a compiler, which now requires adding a build "
+        'dependence on `{{ stdlib("c") }}` as well. For further details, please '
+        "see https://github.com/conda-forge/conda-forge.github.io/issues/2102."
+    )
+    pat_compiler_stub = re.compile(
+        "(m2w64_)?(c|cxx|fortran|rust)_compiler_stub"
+    )
+    has_compiler = any(pat_compiler_stub.match(rq) for rq in build_reqs)
+    if has_compiler and "c_stdlib_stub" not in build_reqs:
+        if stdlib_hint not in hints:
+            hints.append(stdlib_hint)
+
+    sysroot_hint = (
+        "You're setting a requirement on sysroot_linux-<arch> directly; this should "
+        'now be done by adding a build dependence on `{{ stdlib("c") }}`, and '
+        "overriding `c_stdlib_version` in `recipe/conda_build_config.yaml` for the "
+        "respective platform as necessary. For further details, please see "
+        "https://github.com/conda-forge/conda-forge.github.io/issues/2102."
+    )
+    pat_sysroot = re.compile(r"sysroot_linux.*")
+    if any(pat_sysroot.match(req) for req in build_reqs):
+        if sysroot_hint not in hints:
+            hints.append(sysroot_hint)
+
+    osx_hint = (
+        "You're setting a constraint on the `__osx` virtual package directly; this "
+        'should now be done by adding a build dependence on `{{ stdlib("c") }}`, '
+        "and overriding `c_stdlib_version` in `recipe/conda_build_config.yaml` for "
+        "the respective platform as necessary. For further details, please see "
+        "https://github.com/conda-forge/conda-forge.github.io/issues/2102."
+    )
+    if any(req.startswith("__osx") for req in run_reqs + constraints):
+        if osx_hint not in hints:
+            hints.append(osx_hint)
+
     return lints, hints
 
 

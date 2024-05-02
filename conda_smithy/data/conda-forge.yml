@@ -15,7 +15,7 @@ azure:
     variables: {}
   settings_osx:
     pool:
-      vmImage: macOS-11
+      vmImage: macOS-12
     swapfile_size: null
     timeoutInMinutes: 360
     variables: {}
