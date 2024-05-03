@@ -106,6 +106,9 @@ def _log_debug_with_pprint(msg, obj):
             new_obj = obj
         logger.debug(msg + "\n" + pprint.pformat(new_obj))
 
+    # FIXME
+    print(msg + "\n" + pprint.pformat(new_obj))
+
 
 # use lru_cache to avoid repeating warnings endlessly;
 # this keeps track of 10 different messages and then warns again
