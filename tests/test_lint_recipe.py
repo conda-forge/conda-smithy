@@ -1997,5 +1997,50 @@ def test_lint_wheels(tmp_path, yaml_block, annotation):
         assert any(expected_message in hint for hint in hints)
 
 
+class TestLintifyForgeYamlHintExtraFields(unittest.TestCase):
+    def test_extra_build_platforms_platform(self):
+        forge_yml = {
+            "build_platform": {
+                "osx_64": "linux_64",
+                "UNKNOWN_PLATFORM": "linux_64",
+            }
+        }
+
+        hints = linter._forge_yaml_hint_extra_fields(forge_yml)
+
+        self.assertEquals(len(hints), 1)
+
+        self.assertIn(
+            "Unexpected key build_platform.UNKNOWN_PLATFORM", hints[0]
+        )
+
+    def test_extra_os_version_platform(self):
+        forge_yml = {
+            "os_version": {
+                "UNKNOWN_PLATFORM_2": "10.9",
+            }
+        }
+
+        hints = linter._forge_yaml_hint_extra_fields(forge_yml)
+
+        self.assertEquals(len(hints), 1)
+
+        self.assertIn("Unexpected key os_version.UNKNOWN_PLATFORM_2", hints[0])
+
+    def test_extra_provider_platform(self):
+        forge_yml = {
+            "provider": {
+                "osx_64": "travis",
+                "UNKNOWN_PLATFORM_3": "azure",
+            }
+        }
+
+        hints = linter._forge_yaml_hint_extra_fields(forge_yml)
+
+        self.assertEquals(len(hints), 1)
+
+        self.assertIn("Unexpected key provider.UNKNOWN_PLATFORM_3", hints[0])
+
+
 if __name__ == "__main__":
     unittest.main()
