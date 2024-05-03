@@ -1941,6 +1941,6 @@ def test_get_used_key_values_by_input_order(
             squished_input_variants,
             squished_used_variants,
             all_used_vars,
-        )
+        )[0]
         == used_key_values
     )
