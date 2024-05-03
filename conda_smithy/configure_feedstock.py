@@ -90,7 +90,10 @@ CONDA_FORGE_PINNING_LIFETIME = int(
 
 def _ordereddict_to_dict(od):
     """convert an ordereddict to a dict"""
-    return {k: _ordereddict_to_dict(v) if isinstance(v, OrderedDict) else v for k, v in od.items()}
+    return {
+        k: _ordereddict_to_dict(v) if isinstance(v, OrderedDict) else v
+        for k, v in od.items()
+    }
 
 
 def _log_debug_with_pprint(msg, obj):
@@ -102,6 +105,7 @@ def _log_debug_with_pprint(msg, obj):
         else:
             new_obj = obj
         logger.debug(msg + "\n" + pprint.pformat(new_obj))
+
 
 # use lru_cache to avoid repeating warnings endlessly;
 # this keeps track of 10 different messages and then warns again
@@ -418,7 +422,9 @@ def _get_used_key_values_by_input_order(
         final_used_tuples = tuple(
             [tup for tup in used_tuples if tup in used_tuples_to_be_reordered]
         )
-        _log_debug_with_pprint("reordered final_used_tuples:", final_used_tuples)
+        _log_debug_with_pprint(
+            "reordered final_used_tuples:", final_used_tuples
+        )
 
         # now we reconstruct the list of values per key and replace in used_key_values
         # we keep only keys in all_used_vars
@@ -568,10 +574,7 @@ def _collapse_subpackage_variants(
     squished_used_variants = (
         conda_build.variants.list_of_dicts_to_dict_of_lists(list(all_variants))
     )
-    _log_debug_with_pprint(
-        "squished_input_variants:",
-        squished_input_variants
-    )
+    _log_debug_with_pprint("squished_input_variants:", squished_input_variants)
     _log_debug_with_pprint(
         "squished_used_variants:",
         squished_used_variants,
@@ -583,7 +586,9 @@ def _collapse_subpackage_variants(
     _log_debug_with_pprint("initial all_used_vars:", all_used_vars)
     _log_debug_with_pprint("top_level_loop_vars:", top_level_loop_vars)
     _log_debug_with_pprint("top_level_vars:", top_level_vars)
-    _log_debug_with_pprint("preserve_top_level_loops:", preserve_top_level_loops)
+    _log_debug_with_pprint(
+        "preserve_top_level_loops:", preserve_top_level_loops
+    )
 
     # Add in some variables that should always be preserved
     always_keep_keys = {
