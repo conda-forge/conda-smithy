@@ -1,8 +1,10 @@
 import argparse
 import collections
 import os
+import pprint
 import subprocess
 from textwrap import dedent
+import logging
 
 import yaml
 import pytest
@@ -113,12 +115,26 @@ def test_init_multiple_output_matrix(testing_workdir):
         check=False,
         temporary_directory=os.path.join(recipe, "temp"),
     )
-    regen_obj(args)
+    try:
+        logger = logging.getLogger("conda_smithy")
+        old_env = os.environ.get("CONDA_SMITHY_LOGLEVEL", None)
+        os.environ["CONDA_SMITHY_LOGLEVEL"] = logging.getLevelName(
+            logger.getEffectiveLevel()
+        )
+        regen_obj(args)
+    finally:
+        if old_env is not None:
+            os.environ["CONDA_SMITHY_LOGLEVEL"] = old_env
+        else:
+            del os.environ["CONDA_SMITHY_LOGLEVEL"]
     matrix_dir = os.path.join(feedstock_dir, ".ci_support")
     # the matrix should be consolidated among all outputs, as well as the top-level
     # reqs. Only the top-level reqs should have indedependent config files,
     # though - loops within outputs are contained in those top-level configs.
     matrix_dir_len = len(os.listdir(matrix_dir))
+    print(
+        "final build matrix:", pprint.pformat(sorted(os.listdir(matrix_dir)))
+    )
     assert matrix_dir_len == 13
     linux_libpng16 = os.path.join(
         matrix_dir, "linux_64_libpng1.6libpq9.5.yaml"

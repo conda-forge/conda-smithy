@@ -106,9 +106,6 @@ def _log_debug_with_pprint(msg, obj):
             new_obj = obj
         logger.debug(msg + "\n" + pprint.pformat(new_obj))
 
-    # FIXME
-    print(msg + "\n" + pprint.pformat(new_obj))
-
 
 # use lru_cache to avoid repeating warnings endlessly;
 # this keeps track of 10 different messages and then warns again
@@ -414,7 +411,7 @@ def _get_used_key_values_by_input_order(
         # is in the squished_input_variants
         used_tuples_set = set(used_tuples)
         _log_debug_with_pprint(
-            "are all used tuples in input tuples? %s",
+            "are all used tuples in input tuples?",
             all(
                 used_tuple in used_tuples_set
                 for used_tuple in used_tuples_to_be_reordered
@@ -635,7 +632,12 @@ def _collapse_subpackage_variants(
         # however, if we assign it to used_key_values, the careful reordering
         # of the zipping in `_get_used_key_values_by_input_order` gets undone.
         # so we skip it here
-        if k not in used_zipped_vars:
+
+        # TODO - this is a hack and needs fixing
+        # it turns out sometimes conda-build just doesn't return some of the variants
+        # even if they are in the zipped vars. So we also keep any key which on output
+        # has a length of 1 but had length > 1 on input.
+        if k not in used_zipped_vars or len(used_key_values[k]) == 1:
             used_key_values[k] = squished_input_variants[k]
 
     _trim_unused_zip_keys(used_key_values)
