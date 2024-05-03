@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from collections.abc import Sequence, Mapping
+from typing import List
 
 from pydantic import BaseModel
 
@@ -152,7 +153,7 @@ def find_local_config_file(recipe_dir, filename):
     return found_filesname[0] if found_filesname else None
 
 
-def _forge_yaml_hint_extra_fields(forge_yaml: dict) -> list[str]:
+def _forge_yaml_hint_extra_fields(forge_yaml: dict) -> List[str]:
     """
     Identify unexpected keys in the conda-forge.yml file.
     This only works if extra="allow" is set in the Pydantic sub-model where the unexpected key is found.
