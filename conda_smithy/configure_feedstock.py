@@ -100,7 +100,7 @@ def _log_debug_with_pprint(msg, obj):
     """This helper avoids calling pprint.pformat when we don't plan to use the output."""
     if logger.isEnabledFor(logging.DEBUG):
         # ordered dicts are ugly when printed, so we convert them to regular dicts
-        if isinstance(obj, OrderedDict):
+        if isinstance(obj, OrderedDict) or isinstance(obj, dict):
             new_obj = _ordereddict_to_dict(obj)
         else:
             new_obj = obj
