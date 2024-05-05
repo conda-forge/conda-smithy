@@ -6,7 +6,6 @@ import os
 import re
 import subprocess
 import sys
-import pprint
 import textwrap
 import time
 import yaml
@@ -59,6 +58,7 @@ from conda_smithy.validate_schema import (
 from conda_smithy.utils import (
     get_feedstock_about_from_meta,
     get_feedstock_name_from_meta,
+    log_debug_with_pprint,
 )
 
 from . import __version__
@@ -86,25 +86,6 @@ if "CONDA_SMITHY_SERVICE_FEEDSTOCKS" in os.environ:
 CONDA_FORGE_PINNING_LIFETIME = int(
     os.environ.get("CONDA_FORGE_PINNING_LIFETIME", 15 * 60)
 )
-
-
-def _ordereddict_to_dict(od):
-    """convert an ordereddict to a dict"""
-    return {
-        k: _ordereddict_to_dict(v) if isinstance(v, OrderedDict) else v
-        for k, v in od.items()
-    }
-
-
-def _log_debug_with_pprint(msg, obj):
-    """This helper avoids calling pprint.pformat when we don't plan to use the output."""
-    if logger.isEnabledFor(logging.DEBUG):
-        # ordered dicts are ugly when printed, so we convert them to regular dicts
-        if isinstance(obj, OrderedDict) or isinstance(obj, dict):
-            new_obj = _ordereddict_to_dict(obj)
-        else:
-            new_obj = obj
-        logger.debug(msg + "\n" + pprint.pformat(new_obj))
 
 
 # use lru_cache to avoid repeating warnings endlessly;
@@ -348,7 +329,7 @@ def _get_used_key_values_by_input_order(
         if key in squished_input_variants
     }
 
-    _log_debug_with_pprint("initial/input used_key_values:", used_key_values)
+    log_debug_with_pprint(logger, "initial/input used_key_values:", used_key_values)
 
     # we want remove any used key values not in used variants and make sure they follow the
     #   input order
@@ -362,8 +343,8 @@ def _get_used_key_values_by_input_order(
             zip(*[squished_input_variants[k] for k in keyset])
         )
         zipped_keys |= set(keyset)
-    _log_debug_with_pprint("zipped_keys:", zipped_keys)
-    _log_debug_with_pprint("zipped_tuples:", zipped_tuples)
+    log_debug_with_pprint(logger, "zipped_keys:", zipped_keys)
+    log_debug_with_pprint(logger, "zipped_tuples:", zipped_tuples)
 
     for keyset, tuples in zipped_tuples.items():
         # for each set of zipped keys from squished_input_variants,
@@ -393,15 +374,16 @@ def _get_used_key_values_by_input_order(
                 for tup in tuples
             ]
         )
-        _log_debug_with_pprint("used_keyset:", used_keyset)
-        _log_debug_with_pprint("used_keyset_inds:", used_keyset_inds)
-        _log_debug_with_pprint("input used_tuples:", used_tuples)
+        log_debug_with_pprint(logger, "used_keyset:", used_keyset)
+        log_debug_with_pprint(logger, "used_keyset_inds:", used_keyset_inds)
+        log_debug_with_pprint(logger, "input used_tuples:", used_tuples)
 
         # this is the set of tuples that we want to keep, but need to be reordered
         used_tuples_to_be_reordered = set(
             list(zip(*[squished_used_variants[k] for k in used_keyset]))
         )
-        _log_debug_with_pprint(
+        log_debug_with_pprint(
+            logger,
             "used_tuples_to_be_reordered:",
             used_tuples_to_be_reordered,
         )
@@ -410,7 +392,8 @@ def _get_used_key_values_by_input_order(
         #   the squished_used_variants
         # is in the squished_input_variants
         used_tuples_set = set(used_tuples)
-        _log_debug_with_pprint(
+        log_debug_with_pprint(
+            logger,
             "are all used tuples in input tuples?",
             all(
                 used_tuple in used_tuples_set
@@ -422,8 +405,10 @@ def _get_used_key_values_by_input_order(
         final_used_tuples = tuple(
             [tup for tup in used_tuples if tup in used_tuples_to_be_reordered]
         )
-        _log_debug_with_pprint(
-            "reordered final_used_tuples:", final_used_tuples
+        log_debug_with_pprint(
+            logger,
+            "reordered final_used_tuples:",
+            final_used_tuples
         )
 
         # now we reconstruct the list of values per key and replace in used_key_values
@@ -437,7 +422,8 @@ def _get_used_key_values_by_input_order(
         if k in all_used_vars and k not in zipped_keys:
             used_key_values[k] = v
 
-    _log_debug_with_pprint(
+    log_debug_with_pprint(
+        logger,
         "post input reorder used_key_values:",
         used_key_values,
     )
@@ -574,8 +560,9 @@ def _collapse_subpackage_variants(
     squished_used_variants = (
         conda_build.variants.list_of_dicts_to_dict_of_lists(list(all_variants))
     )
-    _log_debug_with_pprint("squished_input_variants:", squished_input_variants)
-    _log_debug_with_pprint(
+    log_debug_with_pprint(logger, "squished_input_variants:", squished_input_variants)
+    log_debug_with_pprint(
+        logger,
         "squished_used_variants:",
         squished_used_variants,
     )
@@ -583,11 +570,13 @@ def _collapse_subpackage_variants(
     # these are variables that only occur in the top level, and thus won't show up as loops in the
     #     above collection of all variants.  We need to transfer them from the input_variants.
     preserve_top_level_loops = set(top_level_loop_vars) - set(all_used_vars)
-    _log_debug_with_pprint("initial all_used_vars:", all_used_vars)
-    _log_debug_with_pprint("top_level_loop_vars:", top_level_loop_vars)
-    _log_debug_with_pprint("top_level_vars:", top_level_vars)
-    _log_debug_with_pprint(
-        "preserve_top_level_loops:", preserve_top_level_loops
+    log_debug_with_pprint(logger, "initial all_used_vars:", all_used_vars)
+    log_debug_with_pprint(logger, "top_level_loop_vars:", top_level_loop_vars)
+    log_debug_with_pprint(logger, "top_level_vars:", top_level_vars)
+    log_debug_with_pprint(
+        logger,
+        "preserve_top_level_loops:",
+        preserve_top_level_loops
     )
 
     # Add in some variables that should always be preserved
@@ -618,7 +607,7 @@ def _collapse_subpackage_variants(
     all_used_vars.update(always_keep_keys)
     all_used_vars.update(top_level_vars)
 
-    _log_debug_with_pprint("final all_used_vars:", all_used_vars)
+    log_debug_with_pprint(logger, "final all_used_vars:", all_used_vars)
 
     used_key_values, used_zipped_vars = _get_used_key_values_by_input_order(
         squished_input_variants,
@@ -659,7 +648,7 @@ def _collapse_subpackage_variants(
     _trim_unused_zip_keys(used_key_values)
     _trim_unused_pin_run_as_build(used_key_values)
 
-    _log_debug_with_pprint("final used_key_values:", used_key_values)
+    log_debug_with_pprint(logger, "final used_key_values:", used_key_values)
 
     return (
         break_up_top_level_values(top_level_loop_vars, used_key_values),
@@ -726,7 +715,7 @@ def dump_subspace_config_files(
         arch,
         forge_config,
     )
-    _log_debug_with_pprint("collapsed subspace config files:", configs)
+    log_debug_with_pprint(logger, "collapsed subspace config files:", configs)
 
     # get rid of the special object notation in the yaml file for objects that we dump
     yaml.add_representer(set, yaml.representer.SafeRepresenter.represent_list)
@@ -757,7 +746,7 @@ def dump_subspace_config_files(
             os.makedirs(out_folder)
 
         config = finalize_config(config, platform, arch, forge_config)
-        _log_debug_with_pprint("finalized config file:", config)
+        log_debug_with_pprint(logger, "finalized config file:", config)
 
         with write_file(out_path) as f:
             yaml.dump(config, f, default_flow_style=False)
@@ -2603,7 +2592,8 @@ def main(
     temporary_directory=None,
 ):
     loglevel = os.environ.get("CONDA_SMITHY_LOGLEVEL", "INFO").upper()
-    logger.setLevel(loglevel)
+    _logger = logging.getLogger("conda_smithy")
+    _logger.setLevel(loglevel)
 
     if check or not no_check_uptodate:
         # Check that conda-smithy is up-to-date

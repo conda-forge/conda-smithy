@@ -1,3 +1,5 @@
+import logging
+import pprint
 import shutil
 import tempfile
 import io
@@ -7,7 +9,7 @@ import datetime
 import time
 import os
 from pathlib import Path
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 from contextlib import contextmanager
 
 import ruamel.yaml
@@ -149,3 +151,22 @@ def merge_dict(src, dest):
             dest[key] = value
 
     return dest
+
+
+def _ordereddict_to_dict(od):
+    """convert an ordereddict to a dict"""
+    return {
+        k: _ordereddict_to_dict(v) if isinstance(v, OrderedDict) else v
+        for k, v in od.items()
+    }
+
+
+def log_debug_with_pprint(logger, msg, obj):
+    """This helper avoids calling pprint.pformat when we don't plan to use the output."""
+    if logger.isEnabledFor(logging.DEBUG):
+        # ordered dicts are ugly when printed, so we convert them to regular dicts
+        if isinstance(obj, OrderedDict) or isinstance(obj, dict):
+            new_obj = _ordereddict_to_dict(obj)
+        else:
+            new_obj = obj
+        logger.debug(msg + "\n" + pprint.pformat(new_obj))
