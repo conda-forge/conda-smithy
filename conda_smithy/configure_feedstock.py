@@ -857,8 +857,17 @@ def _conda_build_api_render_for_smithy(
     **kwargs,
 ):
     """This function works just like conda_build.api.render, but it returns all of metadata objects
-    regardless of whether they produce a unique package hash / name. This is useful for
-    conda-smithy/conda-forge where we allow this to happen.
+    regardless of whether they produce a unique package hash / name.
+
+    When conda-build renders a recipe, it returns the metadata for each unique file generated. If a key
+    we use is zipped with a key we do not use, conda-build will ignore the variants involving all
+    but one of the values of the key we do not use.
+
+    This behavior is not what we do in conda-forge (i.e., we want all variants that are not explicitly
+    skipped even if some of the keys in the variants are not explicitly used).
+
+    The most robust way to handle this is to write a custom function that returns metadata for each of
+    the variants in the full exploded matrix except the ones that the recipe skips.
     """
 
     from conda.exceptions import NoPackagesFoundError
@@ -893,12 +902,17 @@ def _conda_build_api_render_for_smithy(
                                     om,
                                     permit_unsatisfiable_variants=permit_unsatisfiable_variants,
                                 )
-                            except (DependencyNeedsBuildingError, NoPackagesFoundError):
+                            except (
+                                DependencyNeedsBuildingError,
+                                NoPackagesFoundError,
+                            ):
                                 if not permit_unsatisfiable_variants:
                                     raise
 
                         # remove outputs section from output objects for simplicity
-                        if not om.path and (outputs := om.get_section("outputs")):
+                        if not om.path and (
+                            outputs := om.get_section("outputs")
+                        ):
                             om.parent_outputs = outputs
                             del om.meta["outputs"]
 
