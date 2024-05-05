@@ -875,7 +875,7 @@ def _conda_build_api_render_for_smithy(
 
     When conda-build renders a recipe, it returns the metadata for each unique file generated. If a key
     we use at the top-level in a multi-output recipe does not explicitly impact one of the recipe outputs
-    (i.e., an output's recipe does use that key), then conda-build will not return all of the variants
+    (i.e., an output's recipe doesn't use that key), then conda-build will not return all of the variants
     for that key.
 
     This behavior is not what we do in conda-forge (i.e., we want all variants that are not explicitly
