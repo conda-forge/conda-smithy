@@ -2592,8 +2592,7 @@ def main(
     temporary_directory=None,
 ):
     loglevel = os.environ.get("CONDA_SMITHY_LOGLEVEL", "INFO").upper()
-    _logger = logging.getLogger("conda_smithy")
-    _logger.setLevel(loglevel)
+    logging.getLogger("conda_smithy").setLevel(loglevel)
 
     if check or not no_check_uptodate:
         # Check that conda-smithy is up-to-date
