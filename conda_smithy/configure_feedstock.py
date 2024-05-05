@@ -329,7 +329,9 @@ def _get_used_key_values_by_input_order(
         if key in squished_input_variants
     }
 
-    log_debug_with_pprint(logger, "initial/input used_key_values:", used_key_values)
+    log_debug_with_pprint(
+        logger, "initial/input used_key_values:", used_key_values
+    )
 
     # we want remove any used key values not in used variants and make sure they follow the
     #   input order
@@ -406,9 +408,7 @@ def _get_used_key_values_by_input_order(
             [tup for tup in used_tuples if tup in used_tuples_to_be_reordered]
         )
         log_debug_with_pprint(
-            logger,
-            "reordered final_used_tuples:",
-            final_used_tuples
+            logger, "reordered final_used_tuples:", final_used_tuples
         )
 
         # now we reconstruct the list of values per key and replace in used_key_values
@@ -560,7 +560,9 @@ def _collapse_subpackage_variants(
     squished_used_variants = (
         conda_build.variants.list_of_dicts_to_dict_of_lists(list(all_variants))
     )
-    log_debug_with_pprint(logger, "squished_input_variants:", squished_input_variants)
+    log_debug_with_pprint(
+        logger, "squished_input_variants:", squished_input_variants
+    )
     log_debug_with_pprint(
         logger,
         "squished_used_variants:",
@@ -574,9 +576,7 @@ def _collapse_subpackage_variants(
     log_debug_with_pprint(logger, "top_level_loop_vars:", top_level_loop_vars)
     log_debug_with_pprint(logger, "top_level_vars:", top_level_vars)
     log_debug_with_pprint(
-        logger,
-        "preserve_top_level_loops:",
-        preserve_top_level_loops
+        logger, "preserve_top_level_loops:", preserve_top_level_loops
     )
 
     # Add in some variables that should always be preserved
