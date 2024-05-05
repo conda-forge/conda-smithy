@@ -616,17 +616,8 @@ def _collapse_subpackage_variants(
     )
 
     for k in preserve_top_level_loops:
-        # so sometimes a key in a zip will not be used in the recipe and so
-        # gets put into preserve_top_level_loops.
-        # however, if we assign it to used_key_values, the careful reordering
-        # of the zipping in `_get_used_key_values_by_input_order` gets undone.
-        # so we skip it here
-
-        # TODO - this is a hack and needs fixing
-        # it turns out sometimes conda-build just doesn't return some of the variants
-        # even if they are in the zipped vars. So we also keep any key which on output
-        # has a length of 1 but had length > 1 on input.
-        if k not in used_zipped_vars or len(used_key_values[k]) == 1:
+        # we do not stomp on keys in zips since their order matters
+        if k not in used_zipped_vars:
             used_key_values[k] = squished_input_variants[k]
 
     _trim_unused_zip_keys(used_key_values)
@@ -856,6 +847,68 @@ def migrate_combined_spec(combined_spec, forge_dir, config, forge_config):
     return combined_spec
 
 
+def _conda_build_api_render_for_smithy(
+    recipe_path,
+    config=None,
+    variants=None,
+    permit_unsatisfiable_variants=True,
+    finalize=True,
+    bypass_env_check=False,
+    **kwargs,
+):
+    """This function works just like conda_build.api.render, but it returns all of metadata objects
+    regardless of whether they produce a unique package hash / name. This is useful for
+    conda-smithy/conda-forge where we allow this to happen.
+    """
+
+    from conda.exceptions import NoPackagesFoundError
+
+    from conda_build.exceptions import DependencyNeedsBuildingError
+    from conda_build.render import finalize_metadata, render_recipe
+    from conda_build.config import get_or_merge_config
+
+    config = get_or_merge_config(config, **kwargs)
+
+    metadata_tuples = render_recipe(
+        recipe_path,
+        bypass_env_check=bypass_env_check,
+        no_download_source=config.no_download_source,
+        config=config,
+        variants=variants,
+        permit_unsatisfiable_variants=permit_unsatisfiable_variants,
+    )
+    output_metas = []
+    for meta, download, render_in_env in metadata_tuples:
+        if not meta.skip() or not config.trim_skip:
+            for od, om in meta.get_output_metadata_set(
+                permit_unsatisfiable_variants=permit_unsatisfiable_variants,
+                permit_undefined_jinja=not finalize,
+                bypass_env_check=bypass_env_check,
+            ):
+                if not om.skip() or not config.trim_skip:
+                    if "type" not in od or od["type"] == "conda":
+                        if finalize and not om.final:
+                            try:
+                                om = finalize_metadata(
+                                    om,
+                                    permit_unsatisfiable_variants=permit_unsatisfiable_variants,
+                                )
+                            except (DependencyNeedsBuildingError, NoPackagesFoundError):
+                                if not permit_unsatisfiable_variants:
+                                    raise
+
+                        # remove outputs section from output objects for simplicity
+                        if not om.path and (outputs := om.get_section("outputs")):
+                            om.parent_outputs = outputs
+                            del om.meta["outputs"]
+
+                        output_metas.append((om, download, render_in_env))
+                    else:
+                        output_metas.append((om, download, render_in_env))
+
+    return output_metas
+
+
 def _render_ci_provider(
     provider_name,
     jinja_env,
@@ -973,7 +1026,7 @@ def _render_ci_provider(
             channel_sources = migrated_combined_variant_spec.get(
                 "channel_sources", [""]
             )[0].split(",")
-            metas = conda_build.api.render(
+            metas = _conda_build_api_render_for_smithy(
                 os.path.join(forge_dir, forge_config["recipe_dir"]),
                 platform=platform,
                 arch=arch,
@@ -2592,7 +2645,7 @@ def main(
     temporary_directory=None,
 ):
     loglevel = os.environ.get("CONDA_SMITHY_LOGLEVEL", "INFO").upper()
-    logging.getLogger("conda_smithy").setLevel(loglevel)
+    logger.setLevel(loglevel)
 
     if check or not no_check_uptodate:
         # Check that conda-smithy is up-to-date
