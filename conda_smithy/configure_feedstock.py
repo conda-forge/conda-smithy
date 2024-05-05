@@ -872,12 +872,15 @@ def _conda_build_api_render_for_smithy(
 ):
     """This function works just like conda_build.api.render, but it returns all of metadata objects
     regardless of whether they produce a unique package hash / name.
+
     When conda-build renders a recipe, it returns the metadata for each unique file generated. If a key
     we use at the top-level in a multi-output recipe does not explicitly impact one of the recipe outputs
     (i.e., an output's recipe does use that key), then conda-build will not return all of the variants
     for that key.
+
     This behavior is not what we do in conda-forge (i.e., we want all variants that are not explicitly
     skipped even if some of the keys in the variants are not explicitly used in an output).
+
     The most robust way to handle this is to write a custom function that returns metadata for each of
     the variants in the full exploded matrix that involve a key used by the recipe anywhere,
     except the ones that the recipe skips.
