@@ -1,10 +1,8 @@
 import argparse
 import collections
 import os
-import pprint
 import subprocess
 from textwrap import dedent
-import logging
 
 import yaml
 import pytest
