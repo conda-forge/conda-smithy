@@ -115,18 +115,7 @@ def test_init_multiple_output_matrix(testing_workdir):
         check=False,
         temporary_directory=os.path.join(recipe, "temp"),
     )
-    try:
-        logger = logging.getLogger("conda_smithy")
-        old_env = os.environ.get("CONDA_SMITHY_LOGLEVEL", None)
-        os.environ["CONDA_SMITHY_LOGLEVEL"] = logging.getLevelName(
-            logger.getEffectiveLevel()
-        )
-        regen_obj(args)
-    finally:
-        if old_env is not None:
-            os.environ["CONDA_SMITHY_LOGLEVEL"] = old_env
-        else:
-            del os.environ["CONDA_SMITHY_LOGLEVEL"]
+    regen_obj(args)
     matrix_dir = os.path.join(feedstock_dir, ".ci_support")
     # the matrix should be consolidated among all outputs, as well as the top-level
     # reqs. Only the top-level reqs should have indedependent config files,
