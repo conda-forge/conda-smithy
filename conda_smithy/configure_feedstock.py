@@ -428,7 +428,7 @@ def _get_used_key_values_by_input_order(
         )
     )
 
-    return used_key_values
+    return used_key_values, zipped_keys
 
 
 def _merge_deployment_target(container_of_dicts, has_macdt):
@@ -617,14 +617,16 @@ def _collapse_subpackage_variants(
         "top_level_loop_vars {}".format(pprint.pformat(top_level_loop_vars))
     )
 
-    used_key_values = _get_used_key_values_by_input_order(
+    used_key_values, used_zipped_vars = _get_used_key_values_by_input_order(
         squished_input_variants,
         squished_used_variants,
         all_used_vars,
     )
 
     for k in preserve_top_level_loops:
-        used_key_values[k] = squished_input_variants[k]
+        # we do not stomp on keys in zips since their order matters
+        if k not in used_zipped_vars:
+            used_key_values[k] = squished_input_variants[k]
 
     _trim_unused_zip_keys(used_key_values)
     _trim_unused_pin_run_as_build(used_key_values)
