@@ -175,7 +175,7 @@ def _forge_yaml_hint_extra_fields(forge_yaml: dict) -> List[str]:
     return hints
 
 
-def lintify_forge_yaml(recipe_dir=None) -> (list, list):
+def lintify_forge_yaml(recipe_dir=None) -> (List[str], List[str]):
     if recipe_dir:
         forge_yaml_filename = (
             glob(os.path.join(recipe_dir, "..", "conda-forge.yml"))
@@ -1420,8 +1420,8 @@ def main(recipe_dir, conda_forge=False, return_hints=False):
         recipe_dir=recipe_dir
     )
 
-    results.extend([_format_validation_msg(err) for err in validation_errors])
-    hints.extend([_format_validation_msg(hint) for hint in validation_hints])
+    results.extend(validation_errors)
+    hints.extend(validation_hints)
 
     if return_hints:
         return results, hints
