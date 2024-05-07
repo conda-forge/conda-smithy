@@ -2026,5 +2026,5 @@ def test_conda_build_api_render_for_smithy(testing_workdir):
                 variant.get("libpq"),
             )
         )
-    assert len(top_level_builds) <= len(all_top_level_builds)
+    assert len(top_level_builds) < len(all_top_level_builds)
     assert top_level_builds.issubset(all_top_level_builds)
