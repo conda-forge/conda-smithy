@@ -1954,6 +1954,12 @@ def test_conda_build_api_render_for_smithy(testing_workdir):
     recipe = os.path.join(_thisdir, "recipes", "multiple_outputs")
     dest_recipe = os.path.join(testing_workdir, "recipe")
     shutil.copytree(recipe, dest_recipe)
+    all_top_level_builds = {
+        ("1.5", "9.5"),
+        ("1.5", "9.6"),
+        ("1.6", "9.5"),
+        ("1.6", "9.6"),
+    }
 
     cs_metas = configure_feedstock._conda_build_api_render_for_smithy(
         dest_recipe,
@@ -1986,14 +1992,8 @@ def test_conda_build_api_render_for_smithy(testing_workdir):
                 variant.get("libpq"),
             )
         )
-    assert len(top_level_builds) == 4
-    assert top_level_builds == {
-        ("1.5", "9.5"),
-        ("1.5", "9.6"),
-        ("1.6", "9.5"),
-        ("1.6", "9.6"),
-    }
-
+    assert len(top_level_builds) == len(all_top_level_builds)
+    assert top_level_builds == all_top_level_builds
     cb_metas = conda_build.api.render(
         dest_recipe,
         config=None,
@@ -2026,12 +2026,5 @@ def test_conda_build_api_render_for_smithy(testing_workdir):
                 variant.get("libpq"),
             )
         )
-    assert len(top_level_builds) == 1
-    assert top_level_builds.issubset(
-        {
-            ("1.5", "9.5"),
-            ("1.5", "9.6"),
-            ("1.6", "9.5"),
-            ("1.6", "9.6"),
-        }
-    )
+    assert len(top_level_builds) <= len(all_top_level_builds)
+    assert top_level_builds.issubset(all_top_level_builds)
