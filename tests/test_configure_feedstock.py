@@ -2,6 +2,7 @@ import copy
 import logging
 import os
 import re
+import shutil
 import textwrap
 
 import pytest
@@ -1943,4 +1944,94 @@ def test_get_used_key_values_by_input_order(
             all_used_vars,
         )[0]
         == used_key_values
+    )
+
+
+def test_conda_build_api_render_for_smithy(testing_workdir):
+    import conda_build.api
+
+    _thisdir = os.path.abspath(os.path.dirname(__file__))
+    recipe = os.path.join(_thisdir, "recipes", "multiple_outputs")
+    dest_recipe = os.path.join(testing_workdir, "recipe")
+    shutil.copytree(recipe, dest_recipe)
+
+    cs_metas = configure_feedstock._conda_build_api_render_for_smithy(
+        dest_recipe,
+        config=None,
+        variants=None,
+        permit_unsatisfiable_variants=True,
+        finalize=False,
+        bypass_env_check=True,
+        platform="linux",
+        arch="64",
+    )
+    # we have a build matrix with 4 combinations and we get two outputs
+    # plus a top-level build to give us 4 * (2 + 1) = 12 total
+    assert len(cs_metas) == 12
+
+    # we check that we get all combinations
+    top_level_builds = set()
+    for meta, _, _ in cs_metas:
+        for variant in meta.config.variants:
+            top_level_builds.add(
+                (
+                    variant.get("libpng"),
+                    variant.get("libpq"),
+                )
+            )
+        variant = meta.config.variant
+        top_level_builds.add(
+            (
+                variant.get("libpng"),
+                variant.get("libpq"),
+            )
+        )
+    assert len(top_level_builds) == 4
+    assert top_level_builds == {
+        ("1.5", "9.5"),
+        ("1.5", "9.6"),
+        ("1.6", "9.5"),
+        ("1.6", "9.6"),
+    }
+
+    cb_metas = conda_build.api.render(
+        dest_recipe,
+        config=None,
+        variants=None,
+        permit_unsatisfiable_variants=True,
+        finalize=False,
+        bypass_env_check=True,
+        platform="linux",
+        arch="64",
+    )
+    # conda build will only give us the builds for the unique file names
+    # and collapses the top-level build matrix expansion
+    # thus we only get 3 outputs
+    assert len(cb_metas) == 3
+
+    # we check that we get a subset of all combinations
+    top_level_builds = set()
+    for meta, _, _ in cb_metas:
+        for variant in meta.config.variants:
+            top_level_builds.add(
+                (
+                    variant.get("libpng"),
+                    variant.get("libpq"),
+                )
+            )
+        variant = meta.config.variant
+        top_level_builds.add(
+            (
+                variant.get("libpng"),
+                variant.get("libpq"),
+            )
+        )
+    assert len(top_level_builds) == 1
+    assert top_level_builds.issubset(
+        {
+            ("1.5", "9.5"),
+            ("1.5", "9.6"),
+            ("1.6", "9.5"),
+            ("1.6", "9.6"),
+        }
     )
