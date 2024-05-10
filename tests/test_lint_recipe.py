@@ -94,6 +94,28 @@ def test_osx_hint(where):
         assert any(h.startswith(expected_message) for h in hints)
 
 
+@pytest.mark.parametrize("where", ["run", "run_constrained"])
+def test_osx_noarch_hint(where):
+    # don't warn on packages that are using __osx as a noarch-marker, see
+    # https://conda-forge.org/docs/maintainer/knowledge_base/#noarch-packages-with-os-specific-dependencies
+    avoid_message = "You're setting a constraint on the `__osx` virtual"
+
+    with tmp_directory() as recipe_dir:
+        with io.open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
+            fh.write(
+                f"""
+                package:
+                   name: foo
+                requirements:
+                  {where}:
+                    - __osx  # [osx]
+                """
+            )
+
+        _, hints = linter.main(recipe_dir, return_hints=True)
+        assert not any(h.startswith(avoid_message) for h in hints)
+
+
 class Test_linter(unittest.TestCase):
     def test_pin_compatible_in_run_exports(self):
         meta = {

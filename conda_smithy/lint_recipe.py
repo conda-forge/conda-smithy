@@ -882,7 +882,7 @@ def lintify_meta_yaml(
         "the respective platform as necessary. For further details, please see "
         "https://github.com/conda-forge/conda-forge.github.io/issues/2102."
     )
-    if any(req.startswith("__osx") for req in run_reqs + constraints):
+    if any(req.startswith("__osx >") for req in run_reqs + constraints):
         if osx_hint not in hints:
             hints.append(osx_hint)
 
