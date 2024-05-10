@@ -1016,7 +1016,7 @@ def test_remote_ci_setup(config_yaml):
 
 
 @pytest.mark.parametrize(
-    "squished_input_variants,squished_used_variants,all_used_vars,used_key_values",
+    "squished_input_variants,squished_used_variants,all_used_vars,expected_used_key_values",
     [
         (
             dict(
