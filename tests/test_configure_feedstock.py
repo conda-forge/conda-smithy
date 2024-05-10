@@ -1935,16 +1935,16 @@ def test_get_used_key_values_by_input_order(
     squished_input_variants,
     squished_used_variants,
     all_used_vars,
-    used_key_values,
+    expected_used_key_values,
 ):
-    assert (
+    used_key_values, _ = (
         configure_feedstock._get_used_key_values_by_input_order(
             squished_input_variants,
             squished_used_variants,
             all_used_vars,
-        )[0]
-        == used_key_values
+        )
     )
+    assert used_key_values == expected_used_key_values
 
 
 def test_conda_build_api_render_for_smithy(testing_workdir):
