@@ -25,9 +25,9 @@ Authors are sorted by number of commits.
 * Chris Burr
 * Julian Rüth
 * Bastian Zimmermann
+* pre-commit-ci[bot]
 * Daniel Bast
 * Billy K. Poon
-* pre-commit-ci[bot]
 * vinicius douglas cerutti
 * Tim Snyder
 * Mike Henry
