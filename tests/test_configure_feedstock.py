@@ -271,6 +271,8 @@ def test_stdlib_deployment_target(
     assert re.match(
         r"(?s).*MACOSX_DEPLOYMENT_TARGET:\s*- ['\"]?10\.14", content
     )
+    # MACOSX_SDK_VERSION gets updated as well if it's below the other two
+    assert re.match(r"(?s).*MACOSX_SDK_VERSION:\s*- ['\"]?10\.14", content)
 
 
 def test_upload_on_branch_azure(upload_on_branch_recipe, jinja_env):
