@@ -144,6 +144,12 @@ def test_osx_noarch_hint(where):
         # handling below, repeat same test twice with different expected hints
         (["10.9", "11.0"], ["10.13", "11.0"], ["10.12"], "Conflicting spec"),
         (["10.9", "11.0"], ["10.13", "11.0"], ["10.12"], "You are"),
+        # only sdk -> no warning
+        (None, None, ["10.13"], None),
+        (None, None, ["10.14", "12.0"], None),
+        # only sdk, but below global baseline -> warning
+        (None, None, ["10.12"], "You are"),
+        (None, None, ["10.12", "11.0"], "You are"),
     ],
 )
 def test_cbc_osx_hints(with_linux, macdt, v_std, sdk, exp_hint):

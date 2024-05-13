@@ -903,7 +903,8 @@ def lintify_meta_yaml(
     cbc_content_osx = "\n".join(cbc_lines_osx)
     cbc_osx = get_yaml().load(cbc_content_osx) or {}
 
-    baseline_version = ["10.13"]
+    # for fallback, assume ordering [x64, arm64] which is used (almost) universally
+    baseline_version = ["10.13", "11.0"]
     v_stdlib = cbc_osx.get("c_stdlib_version", baseline_version)
     macdt = cbc_osx.get("MACOSX_DEPLOYMENT_TARGET", baseline_version)
     sdk = cbc_osx.get("MACOSX_SDK_VERSION", baseline_version)
@@ -953,7 +954,11 @@ def lintify_meta_yaml(
     sdk_hint = (
         "You are setting `MACOSX_SDK_VERSION` below `c_stdlib_version`, "
         "which is not possible! Please ensure `MACOSX_SDK_VERSION` is at "
-        "least `c_stdlib_version` (you can leave it out if it is equal)."
+        "least `c_stdlib_version` (you can leave it out if it is equal).\n"
+        "If you are not setting `c_stdlib_version` yourself, this means "
+        "you are requesting a version below the current global baseline in "
+        "conda-forge. In this case, you also need to override "
+        "`c_stdlib_version` and `MACOSX_DEPLOYMENT_TARGET`."
     )
     if len(sdk) == len(merged_dt):
         # if length matches, compare individually
