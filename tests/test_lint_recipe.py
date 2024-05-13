@@ -166,11 +166,7 @@ MACOSX_DEPLOYMENT_TARGET:   # [osx]
 """
                 )
             if v_std is not None or with_linux:
-                fh.write(
-                    f"""\
-c_stdlib_version:           # [unix]\
-"""
-                )
+                fh.write("c_stdlib_version:           # [unix]")
                 if v_std is not None:
                     fh.write(f"\n  - {v_std[0]}            # [osx and x86_64]")
                 if v_std is not None and len(v_std) > 1:
@@ -179,6 +175,7 @@ c_stdlib_version:           # [unix]\
                     # to check that other stdlib specifications don't mess us up
                     fh.write("\n  - 2.17                   # [linux]")
             if sdk is not None:
+                # often SDK is set uniformly for osx; test this as well
                 fh.write(
                     f"""
 MACOSX_SDK_VERSION:         # [osx]
