@@ -902,6 +902,13 @@ def lintify_meta_yaml(
     cbc_lines_osx = [pat.sub("", x) for x in cbc_lines]
     cbc_content_osx = "\n".join(cbc_lines_osx)
     cbc_osx = get_yaml().load(cbc_content_osx) or {}
+    # filter None values out of cbc_osx dict, can appear for example with
+    # ```
+    # c_stdlib_version:  # [unix]
+    #   - 2.17           # [linux]
+    #   # note lack of osx
+    # ```
+    cbc_osx = dict(filter(lambda item: item[1] is not None, cbc_osx.items()))
 
     # for fallback, assume ordering [x64, arm64] which is used (almost) universally
     baseline_version = ["10.13", "11.0"]

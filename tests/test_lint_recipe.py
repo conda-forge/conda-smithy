@@ -165,18 +165,19 @@ MACOSX_DEPLOYMENT_TARGET:   # [osx]
   - {macdt[1]}              # [osx and arm64]
 """
                 )
-            if v_std is not None:
+            if v_std is not None or with_linux:
                 fh.write(
                     f"""\
-c_stdlib_version:           # [unix]
-  - {v_std[0]}              # [osx and x86_64]
+c_stdlib_version:           # [unix]\
 """
                 )
-                if len(v_std) > 1:
-                    fh.write(f"  - {v_std[1]}              # [osx and arm64]")
+                if v_std is not None:
+                    fh.write(f"\n  - {v_std[0]}            # [osx and x86_64]")
+                if v_std is not None and len(v_std) > 1:
+                    fh.write(f"\n  - {v_std[1]}            # [osx and arm64]")
                 if with_linux:
                     # to check that other stdlib specifications don't mess us up
-                    fh.write("\n  - 2.17                    # [linux]")
+                    fh.write("\n  - 2.17                   # [linux]")
             if sdk is not None:
                 fh.write(
                     f"""
