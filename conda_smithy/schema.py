@@ -22,11 +22,29 @@ from conda_smithy.validate_schema import (
     CONDA_FORGE_YAML_SCHEMA_FILE,
 )
 
+"""
+Note: By default, we generate hints about additional fields the user added to the model
+if extra="allow" is set. This can be disabled by inheriting from the NoExtraFieldsHint class
+next to BaseModel.
+
+If adding new fields, you should decide between extra="forbid" and extra="allow", since
+extra="ignore" (the default) will not generate hints about additional fields.
+"""
+
 
 class Nullable(Enum):
     """Created to avoid issue with schema validation of null values in lists or dicts."""
 
     null = None
+
+
+class NoExtraFieldsHint:
+    """
+    Inherit from this class next to BaseModel to disable hinting about extra fields, even
+    if the model has `ConfigDict(extra="allow")`.
+    """
+
+    HINT_EXTRA_FIELDS = False
 
 
 #############################################
@@ -92,7 +110,7 @@ class BotConfigVersionUpdatesSourcesChoice(StrEnum):
 ##############################################
 
 
-class AzureRunnerSettings(BaseModel):
+class AzureRunnerSettings(BaseModel, NoExtraFieldsHint):
     """This is the settings for runners."""
 
     model_config: ConfigDict = ConfigDict(extra="allow")
@@ -383,7 +401,7 @@ class BotConfig(BaseModel):
     )
 
 
-class CondaBuildConfig(BaseModel):
+class CondaBuildConfig(BaseModel, NoExtraFieldsHint):
     model_config: ConfigDict = ConfigDict(extra="allow")
 
     pkg_format: Optional[Literal["tar", 1, 2, "1", "2"]] = Field(

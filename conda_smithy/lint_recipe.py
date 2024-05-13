@@ -5,7 +5,7 @@ from typing import List
 
 from pydantic import BaseModel
 
-from conda_smithy.schema import ConfigModel
+from conda_smithy.schema import ConfigModel, NoExtraFieldsHint
 
 str_type = str
 
@@ -163,8 +163,12 @@ def _forge_yaml_hint_extra_fields(forge_yaml: dict) -> List[str]:
     hints = []
 
     def _find_extra_fields(model: BaseModel, prefix=""):
-        for extra_field in (model.__pydantic_extra__ or {}).keys():
-            hints.append(f"Unexpected key {prefix + extra_field}")
+        if not (
+            isinstance(model, NoExtraFieldsHint)
+            and not model.HINT_EXTRA_FIELDS
+        ):
+            for extra_field in (model.__pydantic_extra__ or {}).keys():
+                hints.append(f"Unexpected key {prefix + extra_field}")
 
         for field, value in model:
             if isinstance(value, BaseModel):

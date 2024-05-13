@@ -838,6 +838,7 @@
       "type": "object"
     },
     "build_platform": {
+      "additionalProperties": true,
       "properties": {
         "emscripten_wasm32": {
           "anyOf": [
@@ -1042,6 +1043,7 @@
       "type": "object"
     },
     "os_version": {
+      "additionalProperties": true,
       "properties": {
         "linux_32": {
           "anyOf": [
@@ -1183,6 +1185,7 @@
       "type": "object"
     },
     "provider": {
+      "additionalProperties": true,
       "properties": {
         "linux": {
           "anyOf": [
