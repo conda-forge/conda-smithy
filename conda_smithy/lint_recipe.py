@@ -1439,7 +1439,6 @@ def main_debug():
     lints, hints = main(rel_path, False, True)
     messages = []
     if lints:
-        all_pass = False
         messages.append(
             "\nFor **{}**:\n\n{}".format(
                 rel_path, "\n".join("* {}".format(lint) for lint in lints)

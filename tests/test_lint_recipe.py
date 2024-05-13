@@ -1997,7 +1997,7 @@ def test_lint_wheels(tmp_path, yaml_block, annotation):
         assert any(expected_message in hint for hint in hints)
 
 
-class TestLintifyForgeYamlHintExtraFields(unittest.TestCase):
+class TestLintifyForgeYamlHintExtraFields:
     def test_extra_build_platforms_platform(self):
         forge_yml = {
             "build_platform": {
@@ -2008,11 +2008,9 @@ class TestLintifyForgeYamlHintExtraFields(unittest.TestCase):
 
         hints = linter._forge_yaml_hint_extra_fields(forge_yml)
 
-        self.assertEquals(len(hints), 1)
+        assert len(hints) == 1
 
-        self.assertIn(
-            "Unexpected key build_platform.UNKNOWN_PLATFORM", hints[0]
-        )
+        assert "Unexpected key build_platform.UNKNOWN_PLATFORM" in hints[0]
 
     def test_extra_os_version_platform(self):
         forge_yml = {
@@ -2023,9 +2021,9 @@ class TestLintifyForgeYamlHintExtraFields(unittest.TestCase):
 
         hints = linter._forge_yaml_hint_extra_fields(forge_yml)
 
-        self.assertEquals(len(hints), 1)
+        assert len(hints) == 1
 
-        self.assertIn("Unexpected key os_version.UNKNOWN_PLATFORM_2", hints[0])
+        assert "Unexpected key os_version.UNKNOWN_PLATFORM_2" in hints[0]
 
     def test_extra_provider_platform(self):
         forge_yml = {
@@ -2037,9 +2035,36 @@ class TestLintifyForgeYamlHintExtraFields(unittest.TestCase):
 
         hints = linter._forge_yaml_hint_extra_fields(forge_yml)
 
-        self.assertEquals(len(hints), 1)
+        assert len(hints) == 1
 
-        self.assertIn("Unexpected key provider.UNKNOWN_PLATFORM_3", hints[0])
+        assert "Unexpected key provider.UNKNOWN_PLATFORM_3" in hints[0]
+
+    @pytest.mark.parametrize(
+        "top_field", ["settings_linux", "settings_osx", "settings_win"]
+    )
+    def test_extra_azure_runner_settings_no_hint(self, top_field: str):
+        forge_yml = {
+            "azure": {
+                top_field: {
+                    "EXTRA_FIELD": "EXTRA_VALUE",
+                }
+            }
+        }
+
+        hints = linter._forge_yaml_hint_extra_fields(forge_yml)
+
+        assert len(hints) == 0
+
+    def test_extra_conda_build_config_no_hint(self):
+        forge_yml = {
+            "conda_build": {
+                "EXTRA_FIELD": "EXTRA_VALUE",
+            }
+        }
+
+        hints = linter._forge_yaml_hint_extra_fields(forge_yml)
+
+        assert len(hints) == 0
 
 
 if __name__ == "__main__":
