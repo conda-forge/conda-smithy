@@ -436,6 +436,7 @@ def lintify_meta_yaml(
                 )
             )
 
+    conda_build_config_filename = None
     if recipe_dir:
         conda_build_config_filename = find_local_config_file(
             recipe_dir, "conda_build_config.yaml"
@@ -885,6 +886,92 @@ def lintify_meta_yaml(
     if any(req.startswith("__osx >") for req in run_reqs + constraints):
         if osx_hint not in hints:
             hints.append(osx_hint)
+
+    # stdlib issues in CBC
+    cbc_lines = []
+    if conda_build_config_filename:
+        with open(conda_build_config_filename, "r") as fh:
+            cbc_lines = fh.readlines()
+
+    # filter on osx-relevant lines
+    pat = re.compile(
+        r"^([^\#]*?)\s+\#\s\[.*(not\s(osx|unix)|(?<!not\s)(linux|win)).*\]\s*$"
+    )
+    # remove lines with selectors that don't apply to osx, i.e. if they contain
+    # "not osx", "not unix", "linux" or "win"; this also removes trailing newlines
+    cbc_lines_osx = [pat.sub("", x) for x in cbc_lines]
+    cbc_content_osx = "\n".join(cbc_lines_osx)
+    cbc_osx = get_yaml().load(cbc_content_osx) or {}
+
+    baseline_version = ["10.13"]
+    v_stdlib = cbc_osx.get("c_stdlib_version", baseline_version)
+    macdt = cbc_osx.get("MACOSX_DEPLOYMENT_TARGET", baseline_version)
+    sdk = cbc_osx.get("MACOSX_SDK_VERSION", baseline_version)
+
+    if {"MACOSX_DEPLOYMENT_TARGET", "c_stdlib_version"} <= set(cbc_osx.keys()):
+        # both specified, check that they match
+        if len(v_stdlib) != len(macdt):
+            # if lengths aren't matching, assume it's a legal combination
+            # where one key is specified for less arches than the other and
+            # let the rerender deal with the details
+            pass
+        else:
+            mismatch_hint = (
+                "Conflicting specification for minimum macOS deployment target!\n"
+                "If your conda_build_config.yaml sets `MACOSX_DEPLOYMENT_TARGET`, "
+                "please change the name of that key to `c_stdlib_version`!\n"
+                f"Continuing with `max(c_stdlib_version, MACOSX_DEPLOYMENT_TARGET)`."
+            )
+            merged_dt = []
+            for v_std, v_mdt in zip(v_stdlib, macdt):
+                # versions with a single dot may have been read as floats
+                v_std, v_mdt = str(v_std), str(v_mdt)
+                if VersionOrder(v_std) != VersionOrder(v_mdt):
+                    if mismatch_hint not in hints:
+                        hints.append(mismatch_hint)
+                merged_dt.append(
+                    v_mdt
+                    if VersionOrder(v_std) < VersionOrder(v_mdt)
+                    else v_std
+                )
+            cbc_osx["merged"] = merged_dt
+    elif "MACOSX_DEPLOYMENT_TARGET" in cbc_osx.keys():
+        # only MACOSX_DEPLOYMENT_TARGET, should be renamed
+        deprecated_dt = (
+            "In your conda_build_config.yaml, please change the name of "
+            "`MACOSX_DEPLOYMENT_TARGET`, to `c_stdlib_version`!"
+        )
+        if deprecated_dt not in hints:
+            hints.append(deprecated_dt)
+        cbc_osx["merged"] = macdt
+    elif "c_stdlib_version" in cbc_osx.keys():
+        # no warning
+        cbc_osx["merged"] = v_stdlib
+
+    # warn if SDK is lower than merged v_stdlib/macdt
+    merged_dt = cbc_osx.get("merged", baseline_version)
+    sdk_hint = (
+        "You are setting `MACOSX_SDK_VERSION` below `c_stdlib_version`, "
+        "which is not possible! Please ensure `MACOSX_SDK_VERSION` is at "
+        "least `c_stdlib_version` (you can leave it out if it is equal)."
+    )
+    if len(sdk) == len(merged_dt):
+        # if length matches, compare individually
+        for v_sdk, v_mdt in zip(sdk, merged_dt):
+            # versions with a single dot may have been read as floats
+            v_sdk, v_mdt = str(v_sdk), str(v_mdt)
+            if VersionOrder(v_sdk) < VersionOrder(v_mdt):
+                if sdk_hint not in hints:
+                    hints.append(sdk_hint)
+    elif len(sdk) == 1 and "MACOSX_SDK_VERSION" in cbc_osx.keys():
+        # if length doesn't match, only warn if a single SDK version is lower
+        # than _all_ merged deployment targets
+        if all(
+            VersionOrder(str(sdk[0])) < VersionOrder(str(v_mdt))
+            for v_mdt in merged_dt
+        ):
+            if sdk_hint not in hints:
+                hints.append(sdk_hint)
 
     return lints, hints
 

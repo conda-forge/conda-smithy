@@ -116,6 +116,87 @@ def test_osx_noarch_hint(where):
         assert not any(h.startswith(avoid_message) for h in hints)
 
 
+@pytest.mark.parametrize("with_linux", [True, False])
+@pytest.mark.parametrize(
+    "macdt,v_std,sdk,exp_hint",
+    [
+        # matching -> no warning
+        (["10.9", "11.0"], ["10.9", "11.0"], None, None),
+        # mismatched length -> no warning (leave it to rerender)
+        (["10.9", "11.0"], ["10.9"], None, None),
+        # mismatch between stdlib and deployment target -> warn
+        (["10.9", "11.0"], ["10.13", "11.0"], None, "Conflicting spec"),
+        (["10.13", "11.0"], ["10.13", "12.3"], None, "Conflicting spec"),
+        # only deployment target -> warn
+        (["10.13", "11.0"], None, None, "In your conda_build_config.yaml"),
+        # only stdlib -> no warning
+        (None, ["10.13", "11.0"], None, None),
+        # sdk below stdlib / deployment target -> warn
+        (["10.13", "11.0"], ["10.13", "11.0"], ["10.12"], "You are"),
+        (["10.13", "11.0"], ["10.13", "11.0"], ["10.12", "12.0"], "You are"),
+        # sdk above stdlib / deployment target -> no warning
+        (["10.13", "11.0"], ["10.13", "11.0"], ["12.0", "12.0"], None),
+        # only one sdk version, not universally below deployment target
+        # -> no warning (because we don't know enough to diagnose)
+        (["10.13", "11.0"], ["10.13", "11.0"], ["10.15"], None),
+        # mismatched version + wrong sdk; requires merge logic to work before
+        # checking sdk version; to avoid unnecessary complexity in the exp_hint
+        # handling below, repeat same test twice with different expected hints
+        (["10.9", "11.0"], ["10.13", "11.0"], ["10.12"], "Conflicting spec"),
+        (["10.9", "11.0"], ["10.13", "11.0"], ["10.12"], "You are"),
+    ],
+)
+def test_cbc_osx_hints(with_linux, macdt, v_std, sdk, exp_hint):
+    with tmp_directory() as rdir:
+        with open(os.path.join(rdir, "meta.yaml"), "w") as fh:
+            fh.write("package:\n   name: foo")
+        with open(os.path.join(rdir, "conda_build_config.yaml"), "a") as fh:
+            if macdt is not None:
+                fh.write(
+                    f"""\
+MACOSX_DEPLOYMENT_TARGET:   # [osx]
+  - {macdt[0]}              # [osx and x86_64]
+  - {macdt[1]}              # [osx and arm64]
+"""
+                )
+            if v_std is not None:
+                fh.write(
+                    f"""\
+c_stdlib_version:           # [unix]
+  - {v_std[0]}              # [osx and x86_64]
+"""
+                )
+                if len(v_std) > 1:
+                    fh.write(f"  - {v_std[1]}              # [osx and arm64]")
+                if with_linux:
+                    # to check that other stdlib specifications don't mess us up
+                    fh.write("\n  - 2.17                    # [linux]")
+            if sdk is not None:
+                fh.write(
+                    f"""
+MACOSX_SDK_VERSION:         # [osx]
+  - {sdk[0]}                # [osx and x86_64]
+  - {sdk[1]}                # [osx and arm64]
+"""
+                    if len(sdk) == 2
+                    else f"""
+MACOSX_SDK_VERSION:         # [osx]
+  - {sdk[0]}                # [osx]
+"""
+                )
+        # run the linter
+        _, hints = linter.main(rdir, return_hints=True)
+        # show CBC/hints for debugging
+        with open(os.path.join(rdir, "conda_build_config.yaml"), "r") as fh:
+            print("".join(fh.readlines()))
+            print(hints)
+        # validate against expectations
+        if exp_hint is None:
+            assert not hints
+        else:
+            assert any(h.startswith(exp_hint) for h in hints)
+
+
 class Test_linter(unittest.TestCase):
     def test_pin_compatible_in_run_exports(self):
         meta = {
