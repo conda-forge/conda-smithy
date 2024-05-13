@@ -131,6 +131,10 @@ def test_osx_noarch_hint(where):
         (["10.13", "11.0"], None, None, "In your conda_build_config.yaml"),
         # only stdlib -> no warning
         (None, ["10.13", "11.0"], None, None),
+        (None, ["10.15"], None, None),
+        # only stdlib, but outdated -> warn
+        (None, ["10.9", "11.0"], None, "You are"),
+        (None, ["10.9"], None, "You are"),
         # sdk below stdlib / deployment target -> warn
         (["10.13", "11.0"], ["10.13", "11.0"], ["10.12"], "You are"),
         (["10.13", "11.0"], ["10.13", "11.0"], ["10.12", "12.0"], "You are"),

@@ -944,6 +944,7 @@ def lintify_meta_yaml(
                 )
             cbc_osx["merged"] = merged_dt
     elif "MACOSX_DEPLOYMENT_TARGET" in cbc_osx.keys():
+        cbc_osx["merged"] = macdt
         # only MACOSX_DEPLOYMENT_TARGET, should be renamed
         deprecated_dt = (
             "In your conda_build_config.yaml, please change the name of "
@@ -951,10 +952,29 @@ def lintify_meta_yaml(
         )
         if deprecated_dt not in hints:
             hints.append(deprecated_dt)
-        cbc_osx["merged"] = macdt
     elif "c_stdlib_version" in cbc_osx.keys():
-        # no warning
         cbc_osx["merged"] = v_stdlib
+        # only warn if version is below baseline
+        outdated_hint = (
+            "You are setting `c_stdlib_version` below the current global baseline "
+            "in conda-forge. If this is your intention, you also need to override "
+            "`MACOSX_DEPLOYMENT_TARGET` (with the same value) locally."
+        )
+        if len(v_stdlib) == len(macdt):
+            # if length matches, compare individually
+            for v_std, v_mdt in zip(v_stdlib, macdt):
+                if VersionOrder(str(v_std)) < VersionOrder(str(v_mdt)):
+                    if outdated_hint not in hints:
+                        hints.append(outdated_hint)
+        elif len(v_stdlib) == 1:
+            # if length doesn't match, only warn if a single stdlib version
+            # is lower than _all_ baseline deployment targets
+            if all(
+                VersionOrder(str(v_stdlib[0])) < VersionOrder(str(v_mdt))
+                for v_mdt in macdt
+            ):
+                if outdated_hint not in hints:
+                    hints.append(outdated_hint)
 
     # warn if SDK is lower than merged v_stdlib/macdt
     merged_dt = cbc_osx.get("merged", baseline_version)
@@ -976,9 +996,9 @@ def lintify_meta_yaml(
             if VersionOrder(v_sdk) < VersionOrder(v_mdt):
                 if sdk_hint not in hints:
                     hints.append(sdk_hint)
-    elif len(sdk) == 1 and "MACOSX_SDK_VERSION" in cbc_osx.keys():
-        # if length doesn't match, only warn if a single SDK version is lower
-        # than _all_ merged deployment targets
+    elif len(sdk) == 1:
+        # if length doesn't match, only warn if a single SDK version
+        # is lower than _all_ merged deployment targets
         if all(
             VersionOrder(str(sdk[0])) < VersionOrder(str(v_mdt))
             for v_mdt in merged_dt
