@@ -118,6 +118,11 @@ def test_osx_noarch_hint(where):
 
 @pytest.mark.parametrize("with_linux", [True, False])
 @pytest.mark.parametrize(
+    "reverse_arch",
+    # we reverse x64/arm64 separately per deployment target, stdlib & sdk
+    [(False, False, False), (True, True, True), (False, True, False)],
+)
+@pytest.mark.parametrize(
     "macdt,v_std,sdk,exp_hint",
     [
         # matching -> no warning
@@ -156,7 +161,7 @@ def test_osx_noarch_hint(where):
         (None, None, ["10.12", "11.0"], "You are"),
     ],
 )
-def test_cbc_osx_hints(with_linux, macdt, v_std, sdk, exp_hint):
+def test_cbc_osx_hints(with_linux, reverse_arch, macdt, v_std, sdk, exp_hint):
     with tmp_directory() as rdir:
         with open(os.path.join(rdir, "meta.yaml"), "w") as fh:
             fh.write("package:\n   name: foo")
@@ -165,26 +170,28 @@ def test_cbc_osx_hints(with_linux, macdt, v_std, sdk, exp_hint):
                 fh.write(
                     f"""\
 MACOSX_DEPLOYMENT_TARGET:   # [osx]
-  - {macdt[0]}              # [osx and x86_64]
-  - {macdt[1]}              # [osx and arm64]
+  - {macdt[0]}              # [osx and {"arm64" if reverse_arch[0] else "x86_64"}]
+  - {macdt[1]}              # [osx and {"x86_64" if reverse_arch[0] else "arm64"}]
 """
                 )
             if v_std is not None or with_linux:
+                arch1 = "arm64" if reverse_arch[1] else "x86_64"
+                arch2 = "x86_64" if reverse_arch[1] else "arm64"
                 fh.write("c_stdlib_version:           # [unix]")
                 if v_std is not None:
-                    fh.write(f"\n  - {v_std[0]}            # [osx and x86_64]")
+                    fh.write(f"\n  - {v_std[0]}       # [osx and {arch1}]")
                 if v_std is not None and len(v_std) > 1:
-                    fh.write(f"\n  - {v_std[1]}            # [osx and arm64]")
+                    fh.write(f"\n  - {v_std[1]}       # [osx and {arch2}]")
                 if with_linux:
                     # to check that other stdlib specifications don't mess us up
-                    fh.write("\n  - 2.17                   # [linux]")
+                    fh.write("\n  - 2.17              # [linux]")
             if sdk is not None:
                 # often SDK is set uniformly for osx; test this as well
                 fh.write(
                     f"""
 MACOSX_SDK_VERSION:         # [osx]
-  - {sdk[0]}                # [osx and x86_64]
-  - {sdk[1]}                # [osx and arm64]
+  - {sdk[0]}                # [osx and {"arm64" if reverse_arch[2] else "x86_64"}]
+  - {sdk[1]}                # [osx and {"x86_64" if reverse_arch[2] else "arm64"}]
 """
                     if len(sdk) == 2
                     else f"""

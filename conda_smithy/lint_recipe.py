@@ -910,11 +910,19 @@ def lintify_meta_yaml(
     # ```
     cbc_osx = dict(filter(lambda item: item[1] is not None, cbc_osx.items()))
 
-    # for fallback, assume ordering [x64, arm64] which is used (almost) universally
+    def sort_osx(versions):
+        # we need to have a known order for [x64, arm64]; in the absence of more
+        # complicated regex processing, we assume that if there are two versions
+        # being specified, the higher one is osx-arm64.
+        if len(versions) == 2:
+            if VersionOrder(str(versions[0])) > VersionOrder(str(versions[1])):
+                versions = versions[::-1]
+        return versions
+
     baseline_version = ["10.13", "11.0"]
-    v_stdlib = cbc_osx.get("c_stdlib_version", baseline_version)
-    macdt = cbc_osx.get("MACOSX_DEPLOYMENT_TARGET", baseline_version)
-    sdk = cbc_osx.get("MACOSX_SDK_VERSION", baseline_version)
+    v_stdlib = sort_osx(cbc_osx.get("c_stdlib_version", baseline_version))
+    macdt = sort_osx(cbc_osx.get("MACOSX_DEPLOYMENT_TARGET", baseline_version))
+    sdk = sort_osx(cbc_osx.get("MACOSX_SDK_VERSION", baseline_version))
 
     if {"MACOSX_DEPLOYMENT_TARGET", "c_stdlib_version"} <= set(cbc_osx.keys()):
         # both specified, check that they match
