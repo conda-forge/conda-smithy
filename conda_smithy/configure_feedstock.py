@@ -439,6 +439,8 @@ def _merge_deployment_target(container_of_dicts, has_macdt):
       For now, take the maximum to populate both.
     - In any case, populate MACOSX_DEPLOYMENT_TARGET, as that is the key picked
       up by https://github.com/conda-forge/conda-forge-ci-setup-feedstock
+    - If MACOSX_SDK_VERSION is lower than the merged value from the previous step,
+      update it to match the merged value.
     """
     result = []
     for var_dict in container_of_dicts:
@@ -452,17 +454,21 @@ def _merge_deployment_target(container_of_dicts, has_macdt):
         # case where we need to do processing
         v_stdlib = var_dict["c_stdlib_version"]
         macdt = var_dict.get("MACOSX_DEPLOYMENT_TARGET", v_stdlib)
+        sdk = var_dict.get("MACOSX_SDK_VERSION", v_stdlib)
         # error out if someone puts in a range of versions; we need a single version
         try:
-            cond_update = VersionOrder(v_stdlib) < VersionOrder(macdt)
+            stdlib_lt_macdt = VersionOrder(v_stdlib) < VersionOrder(macdt)
+            sdk_lt_stdlib = VersionOrder(sdk) < VersionOrder(v_stdlib)
+            sdk_lt_macdt = VersionOrder(sdk) < VersionOrder(macdt)
         except InvalidVersionSpec:
             raise ValueError(
-                "both and c_stdlib_version/MACOSX_DEPLOYMENT_TARGET need to be a "
-                "single version, not a version range!"
+                "all of c_stdlib_version/MACOSX_DEPLOYMENT_TARGET/"
+                "MACOSX_SDK_VERSION need to be a single version, "
+                "not a version range!"
             )
         if v_stdlib != macdt:
             # determine maximum version and use it to populate both
-            v_stdlib = macdt if cond_update else v_stdlib
+            v_stdlib = macdt if stdlib_lt_macdt else v_stdlib
             msg = (
                 "Conflicting specification for minimum macOS deployment target!\n"
                 "If your conda_build_config.yaml sets `MACOSX_DEPLOYMENT_TARGET`, "
@@ -474,6 +480,18 @@ def _merge_deployment_target(container_of_dicts, has_macdt):
             if has_macdt:
                 warn_once(msg)
 
+        if sdk_lt_stdlib or sdk_lt_macdt:
+            sdk_lt_merged = VersionOrder(sdk) < VersionOrder(v_stdlib)
+            sdk = v_stdlib if sdk_lt_merged else sdk
+            msg = (
+                "Conflicting specification for minimum macOS SDK version!\n"
+                "If your conda_build_config.yaml sets `MACOSX_SDK_VERSION`, "
+                "it must be larger or equal than `c_stdlib_version` "
+                "(which is also influenced by the global pinning)!\n"
+                f"Using {sdk}=max(c_stdlib_version, MACOSX_SDK_VERSION)."
+            )
+            warn_once(msg)
+
         # we set MACOSX_DEPLOYMENT_TARGET to match c_stdlib_version,
         # for ease of use in conda-forge-ci-setup;
         # use new dictionary to avoid mutating existing var_dict in place
@@ -482,6 +500,7 @@ def _merge_deployment_target(container_of_dicts, has_macdt):
                 **var_dict,
                 "c_stdlib_version": v_stdlib,
                 "MACOSX_DEPLOYMENT_TARGET": v_stdlib,
+                "MACOSX_SDK_VERSION": sdk,
             }
         )
         result.append(new_dict)
