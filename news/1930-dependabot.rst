@@ -1,6 +1,6 @@
 **Added:**
 
-* Enable Dependabot for Github Actions workflows. (#1930)
+* Enable Dependabot for Github Actions workflows and templates. (#1930)
 
 **Changed:**
 
