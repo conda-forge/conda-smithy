@@ -2040,17 +2040,26 @@ def test_github_actions_pins():
     a proxy file with the inventory of used actions.
 
     This test will check that the `uses: owner/repo@version` lines are the same in both files.
-    If Dependabot opens a PR against the proxy, just copy the new pins to the template to 
+    If Dependabot opens a PR against the proxy, just copy the new pins to the template to
     make this pass.
     """
     repo_root = Path(__file__).parents[1]
-    github_actions_template = repo_root / "conda_smithy" / "templates" / "github-actions.yml.tmpl"
-    dependabot_inventory = repo_root / ".github" / "workflows" / "_proxy-file-for-dependabot-tests.yml"
+    github_actions_template = (
+        repo_root / "conda_smithy" / "templates" / "github-actions.yml.tmpl"
+    )
+    dependabot_inventory = (
+        repo_root
+        / ".github"
+        / "workflows"
+        / "_proxy-file-for-dependabot-tests.yml"
+    )
 
     def get_uses(path):
         content = path.read_text()
         for line in content.splitlines():
             if " uses: " in line:
                 yield line.strip().lstrip("-").strip()
-    
-    assert sorted(set(get_uses(github_actions_template))) == sorted(set(get_uses(dependabot_inventory)))
+
+    assert sorted(set(get_uses(github_actions_template))) == sorted(
+        set(get_uses(dependabot_inventory))
+    )
