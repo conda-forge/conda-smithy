@@ -4,6 +4,29 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.35.1
+====================
+
+**Removed:**
+
+* ``automerge.yml`` workflow template no longer relies on ``actions/checkout``. (#1923)
+
+**Fixed:**
+
+* linter no longer mis-diagnoses constraint-less ``__osx`` as requiring change. (#1925)
+* Fixed a bug where some keys in zips were not being rendered correctly into the ``.ci_support`` files
+  under some hard-to-describe circumstances.
+* Fixed source URL for rever releases.
+
+**Authors:**
+
+* Matthew R. Becker
+* Jaime Rodríguez-Guerra
+* H. Vetinari
+* pre-commit-ci[bot]
+
+
+
 v3.35.0
 ====================
 

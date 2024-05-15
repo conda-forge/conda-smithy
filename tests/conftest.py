@@ -260,6 +260,9 @@ def stdlib_deployment_target_recipe(config_yaml, stdlib_recipe):
 MACOSX_DEPLOYMENT_TARGET:       # [osx]
   - 10.14                       # [osx and x86_64]
   - 12.0                        # [osx and arm64]
+MACOSX_SDK_VERSION:             # [osx]
+  - 10.12                       # [osx and x86_64]
+  - 12.0                        # [osx and arm64]
 """
         )
     return RecipeConfigPair(
