@@ -599,13 +599,11 @@ def test_migrator_recipe(recipe_migration_cfep9, jinja_env):
         forge_dir=recipe_migration_cfep9.recipe,
     )
 
-    ci_support_filename = "linux_64_python2.7.yaml"
-
     with open(
         os.path.join(
             recipe_migration_cfep9.recipe,
             ".ci_support",
-            ci_support_filename,
+            "linux_64_python2.7.yaml",
         )
     ) as fo:
         variant = yaml.safe_load(fo)
@@ -618,8 +616,6 @@ def test_migrator_cfp_override(recipe_migration_cfep9, jinja_env):
         os.path.dirname(cfp_file), "share", "conda-forge", "migrations"
     )
     os.makedirs(cfp_migration_dir, exist_ok=True)
-
-    ci_support_filename = "linux_64_python2.7.yaml"
 
     with open(os.path.join(cfp_migration_dir, "zlib2.yaml"), "w") as f:
         f.write(
@@ -641,7 +637,7 @@ def test_migrator_cfp_override(recipe_migration_cfep9, jinja_env):
         os.path.join(
             recipe_migration_cfep9.recipe,
             ".ci_support",
-            ci_support_filename,
+            "linux_64_python2.7.yaml",
         )
     ) as fo:
         variant = yaml.safe_load(fo)
@@ -678,7 +674,7 @@ def test_migrator_delete_old(recipe_migration_cfep9, jinja_env):
 
 
 def test_migrator_downgrade_recipe(
-    recipe_migration_cfep9_downgrade, jinja_env, request
+    recipe_migration_cfep9_downgrade, jinja_env
 ):
     """
     Assert that even when we have two migrations targeting the same file the correct one wins.
@@ -701,24 +697,19 @@ def test_migrator_downgrade_recipe(
         == 2
     )
 
-    conda_build_param = request.node.callspec.params["config_yaml"]
-    expected_value = "1000"
-
-    ci_support_filename = "linux_64_python2.7.yaml"
-
     with open(
         os.path.join(
             recipe_migration_cfep9_downgrade.recipe,
             ".ci_support",
-            ci_support_filename,
+            "linux_64_python2.7.yaml",
         )
     ) as fo:
         variant = yaml.safe_load(fo)
-        assert variant["zlib"] == [expected_value]
+        assert variant["zlib"] == ["1000"]
 
 
 def test_migrator_compiler_version_recipe(
-    recipe_migration_win_compiled, jinja_env, request
+    recipe_migration_win_compiled, jinja_env
 ):
     """
     Assert that even when we have two migrations targeting the same file the correct one wins.
@@ -937,7 +928,6 @@ def test_cuda_enabled_render(cuda_enabled_recipe, jinja_env):
             forge_config=forge_config,
             forge_dir=cuda_enabled_recipe.recipe,
         )
-
         assert os.environ["CF_CUDA_ENABLED"] == "True"
 
         # this configuration should be run

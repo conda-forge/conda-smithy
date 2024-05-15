@@ -1393,7 +1393,6 @@ def run_conda_forge_specific(
 
     # 5: Package-specific hints
     # (e.g. do not depend on matplotlib, only matplotlib-base)
-    # TODO: do the same for if selectors
     build_reqs = requirements_section.get("build") or []
     host_reqs = requirements_section.get("host") or []
     run_reqs = requirements_section.get("run") or []
