@@ -109,13 +109,21 @@ def variant_key_set_merge(k, v_left, v_right, ordering=None):
     return sorted(out_v, key=partial(_version_order, ordering=ordering))
 
 
-def variant_key_set_union(k, v_left, v_right, ordering=None):
+def variant_key_set_union(
+    k: None,
+    v_left: List[Union[Any, str]],
+    v_right: List[Union[Any, str]],
+    ordering: Optional[List[str]] = None
+) -> List[str]:
     """Merges two sets in order, preserving all keys"""
     out_v = set(v_left) | set(v_right)
     return sorted(out_v, key=partial(_version_order, ordering=ordering))
 
 
-def op_variant_key_add(v1: dict, v2: dict):
+def op_variant_key_add(
+    v1: dict,
+    v2: dict
+) -> Dict[str, Union[float, List[str], List[List[str]], List[Union[List[str], str, float]]]]:
     """Operator for performing a key-add
 
     key-add is additive so you will end up with more entries in the resulting dictionary
@@ -222,7 +230,7 @@ def op_variant_key_add(v1: dict, v2: dict):
     return result
 
 
-def op_variant_key_remove(v1: dict, v2: dict):
+def op_variant_key_remove(v1: dict, v2: dict) -> Dict[str, Union[float, List[str], List[List[str]]]]:
     """Inverse of op_variant_key_add
 
     Will remove a given value from the field identified by primary_key and associated

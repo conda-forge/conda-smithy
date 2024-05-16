@@ -3,9 +3,15 @@ import io
 import os
 import shutil
 import stat
+from io import TextIOWrapper
+from git.repo.base import Repo
+from typing import (
+    Iterator,
+    Optional,
+)
 
 
-def get_repo(path, search_parent_directories=True):
+def get_repo(path: str, search_parent_directories: bool = True) -> Optional[Repo]:
     repo = None
     try:
         import git
@@ -21,14 +27,14 @@ def get_repo(path, search_parent_directories=True):
     return repo
 
 
-def get_repo_root(path):
+def get_repo_root(path: str) -> str:
     try:
         return get_repo(path).working_tree_dir
     except AttributeError:
         return None
 
 
-def set_exe_file(filename, set_exe=True):
+def set_exe_file(filename: str, set_exe: bool = True):
     IXALL = stat.S_IXOTH | stat.S_IXGRP | stat.S_IXUSR
 
     repo = get_repo(filename)
@@ -47,7 +53,7 @@ def set_exe_file(filename, set_exe=True):
 
 
 @contextmanager
-def write_file(filename):
+def write_file(filename: str) -> Iterator[TextIOWrapper]:
     dirname = os.path.dirname(filename)
     if dirname and not os.path.exists(dirname):
         os.makedirs(dirname)
@@ -60,12 +66,12 @@ def write_file(filename):
         repo.index.add([filename])
 
 
-def touch_file(filename):
+def touch_file(filename: str):
     with write_file(filename) as fh:
         fh.write("")
 
 
-def remove_file_or_dir(filename):
+def remove_file_or_dir(filename: str) -> None:
     if not os.path.isdir(filename):
         return remove_file(filename)
 
@@ -75,7 +81,7 @@ def remove_file_or_dir(filename):
     shutil.rmtree(filename)
 
 
-def remove_file(filename):
+def remove_file(filename: str):
     touch_file(filename)
 
     repo = get_repo(filename)
@@ -89,7 +95,7 @@ def remove_file(filename):
         os.removedirs(dirname)
 
 
-def copy_file(src, dst):
+def copy_file(src: str, dst: str):
     """
     Tried to copy utf-8 text files line-by-line to avoid
     getting CRLF characters added on Windows.

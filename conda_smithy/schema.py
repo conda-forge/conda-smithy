@@ -447,7 +447,7 @@ class PlatformsAliases(StrEnum):
     osx = "osx"
 
 
-def get_subdirs():
+def get_subdirs() -> List[str]:
     return [
         subdir.replace("-", "_") for subdir in KNOWN_SUBDIRS if "-" in subdir
     ]

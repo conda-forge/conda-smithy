@@ -18,6 +18,17 @@ import sys
 from glob import glob
 from inspect import cleandoc
 from textwrap import indent
+from io import TextIOWrapper
+from typing import (
+    Any,
+    Dict,
+    Iterator,
+    List,
+    Optional,
+    Set,
+    Tuple,
+    Union,
+)
 
 import github
 
@@ -70,7 +81,7 @@ jinja_pat = re.compile(r"\s*\{%\s*(set)\s+[^\s]+\s*=\s*[^\s]+\s*%\}")
 JINJA_VAR_PAT = re.compile(r"{{(.*?)}}")
 
 
-def get_section(parent, name, lints):
+def get_section(parent: Any, name: str, lints: List[Union[Any, str]]) -> Any:
     if name == "source":
         return get_list_section(parent, name, lints, allow_single=True)
     elif name == "outputs":
@@ -86,7 +97,7 @@ def get_section(parent, name, lints):
     return section
 
 
-def get_list_section(parent, name, lints, allow_single=False):
+def get_list_section(parent: Any, name: str, lints: List[Union[Any, str]], allow_single: bool = False) -> Any:
     section = parent.get(name, [])
     if allow_single and isinstance(section, Mapping):
         return [section]
@@ -103,7 +114,7 @@ def get_list_section(parent, name, lints, allow_single=False):
         return [{}]
 
 
-def lint_section_order(major_sections, lints):
+def lint_section_order(major_sections: List[Union[Any, str]], lints: List[Union[Any, str]]):
     section_order_sorted = sorted(
         major_sections, key=EXPECTED_SECTION_ORDER.index
     )
@@ -129,7 +140,7 @@ def lint_about_contents(about_section, lints):
             )
 
 
-def find_local_config_file(recipe_dir, filename):
+def find_local_config_file(recipe_dir: str, filename: str) -> Optional[str]:
     # support
     # 1. feedstocks
     # 2. staged-recipes with custom conda-forge.yaml in recipe
@@ -147,7 +158,7 @@ def find_local_config_file(recipe_dir, filename):
     return found_filesname[0] if found_filesname else None
 
 
-def lintify_forge_yaml(recipe_dir=None) -> (list, list):
+def lintify_forge_yaml(recipe_dir: Optional[str] = None) -> (list, list):
     if recipe_dir:
         forge_yaml_filename = (
             glob(os.path.join(recipe_dir, "..", "conda-forge.yml"))
@@ -171,7 +182,9 @@ def lintify_forge_yaml(recipe_dir=None) -> (list, list):
 
 
 def lintify_meta_yaml(
-    meta, recipe_dir=None, conda_forge=False
+    meta: Any,
+    recipe_dir: Optional[str] = None,
+    conda_forge: bool = False
 ) -> (list, list):
     lints = []
     hints = []
@@ -1192,7 +1205,7 @@ def run_conda_forge_specific(meta, recipe_dir, lints, hints):
             )
 
 
-def is_selector_line(line, allow_platforms=False, allow_keys=set()):
+def is_selector_line(line: str, allow_platforms: bool = False, allow_keys: Set[str] = set()):
     # Using the same pattern defined in conda-build (metadata.py),
     # we identify selectors.
     line = line.rstrip()
@@ -1217,7 +1230,7 @@ def is_selector_line(line, allow_platforms=False, allow_keys=set()):
     return False
 
 
-def is_jinja_line(line):
+def is_jinja_line(line: str):
     line = line.rstrip()
     m = jinja_pat.match(line)
     if m:
@@ -1225,19 +1238,19 @@ def is_jinja_line(line):
     return False
 
 
-def selector_lines(lines):
+def selector_lines(lines: TextIOWrapper) -> Iterator[Tuple[str, int]]:
     for i, line in enumerate(lines):
         if is_selector_line(line):
             yield line, i
 
 
-def jinja_lines(lines):
+def jinja_lines(lines: TextIOWrapper) -> Iterator[Tuple[str, int]]:
     for i, line in enumerate(lines):
         if is_jinja_line(line):
             yield line, i
 
 
-def _format_validation_msg(error: "jsonschema.ValidationError"):
+def _format_validation_msg(error: "jsonschema.ValidationError") -> str:
     """Use the data on the validation error to generate improved reporting.
 
     If available, get the help URL from the first level of the JSON path:
@@ -1274,7 +1287,11 @@ def _format_validation_msg(error: "jsonschema.ValidationError"):
     )
 
 
-def main(recipe_dir, conda_forge=False, return_hints=False):
+def main(
+    recipe_dir: str,
+    conda_forge: bool = False,
+    return_hints: bool = False
+) -> Union[Tuple[List[str], List[str]], Tuple[List[str], List[Any]], List[str], Tuple[List[Any], List[str]]]:
     recipe_dir = os.path.abspath(recipe_dir)
     recipe_meta = os.path.join(recipe_dir, "meta.yaml")
     if not os.path.exists(recipe_dir):
