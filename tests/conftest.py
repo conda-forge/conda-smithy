@@ -246,7 +246,7 @@ c_stdlib_version:               # [unix]
 """
         )
     return RecipeConfigPair(
-        str(config_yaml),
+        str(config_yaml.workdir),
         _load_forge_config(
             config_yaml.workdir,
             exclusive_config_file=os.path.join(
