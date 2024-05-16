@@ -1148,17 +1148,9 @@ def lintify_recipe_yaml(
 
     # 14: Run conda-forge specific lints
     if conda_forge:
-        forge_lints, forge_hints = rattler_linter.run_conda_forge_specific(
-            recipe_dir,
-            package_section,
-            extra_section,
-            sources_section,
-            requirements_section,
-            outputs_section,
+        run_conda_forge_specific(
+            meta, recipe_dir, lints, hints, rattler_lint=True
         )
-
-        lints.extend(forge_lints)
-        hints.extend(forge_hints)
 
     # 15: Check if we are using legacy patterns
     rattler_linter.lint_legacy_patterns(requirements_section)
@@ -1410,12 +1402,20 @@ def run_conda_forge_specific(
 ):
     gh = github.Github(os.environ["GH_TOKEN"])
 
-    # Retrieve sections from meta
-    package_section = get_section(meta, "package", lints)
-    extra_section = get_section(meta, "extra", lints)
-    sources_section = get_section(meta, "source", lints)
-    requirements_section = get_section(meta, "requirements", lints)
-    outputs_section = get_section(meta, "outputs", lints)
+    if not rattler_lint:
+        # Retrieve sections from meta.yaml
+        package_section = get_section(meta, "package", lints)
+        extra_section = get_section(meta, "extra", lints)
+        sources_section = get_section(meta, "source", lints)
+        requirements_section = get_section(meta, "requirements", lints)
+        outputs_section = get_section(meta, "outputs", lints)
+    else:
+        # Retrieve sections from recipe.yaml
+        package_section = meta.get("package", {})
+        extra_section = meta.get("extra", {})
+        sources_section = meta.get("source", [])
+        requirements_section = rattler_loader.load_all_requirements(meta)
+        outputs_section = meta.get("outputs", {})
 
     # Fetch list of recipe maintainers
     maintainers = extra_section.get("recipe-maintainers", [])
