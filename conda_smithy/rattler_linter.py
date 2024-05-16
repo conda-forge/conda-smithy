@@ -42,18 +42,15 @@ EXPECTED_MUTIPLE_OUTPUT_SECTION_ORDER = [
 JINJA_VAR_PAT = re.compile(r"\${{(.*?)}}")
 
 
-def _is_keys_in_order(input_dict, expected_order):
+def _is_keys_in_order(input_keys, expected_order):
     # Filter the keys of the input dictionary based on the expected order
-    filtered_keys = [key for key in expected_order if key in input_dict]
-
-    # Create a list of the keys in the input dictionary in their actual order
-    actual_keys = list(input_dict.keys())
+    filtered_keys = [key for key in expected_order if key in input_keys]
 
     # Check if the filtered keys are in the same order as they appear in the actual keys
     index = 0
     for key in filtered_keys:
         try:
-            index = actual_keys.index(key, index)
+            index = input_keys.index(key, index)
         except ValueError:
             return False
         index += 1
@@ -562,8 +559,6 @@ def hint_noarch_usage(build_section, requirement_section: dict):
     build_reqs = requirement_section.get("build", None)
     hints = []
     if (
-        # move outside the call
-        # noarch_value is None
         build_reqs
         and not any(
             [
@@ -573,8 +568,6 @@ def hint_noarch_usage(build_section, requirement_section: dict):
             ]
         )
         and ("pip" in build_reqs)
-        # move outside the call
-        # and (is_staged_recipes or not conda_forge)
     ):
         no_arch_possible = True
         if "skip" in build_section:
