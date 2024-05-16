@@ -97,7 +97,7 @@ if [[ "${BUILD_WITH_CONDA_DEBUG:-0}" == 1 ]]; then
     # Drop into an interactive shell
     /bin/bash
     {%- else %}
-    echo "rattler-build currently don't support debug mode"
+    echo "rattler-build currently doesn't support debug mode"
     {%- endif %}
 else
     {%- if conda_build_tool != "rattler-build" %}

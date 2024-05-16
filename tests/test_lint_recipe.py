@@ -16,7 +16,6 @@ import pytest
 
 from conda_smithy.github import gh_token
 import conda_smithy.lint_recipe as linter
-from rattler_build_conda_compat import lint as rattler_linter
 
 
 _thisdir = os.path.abspath(os.path.dirname(__file__))

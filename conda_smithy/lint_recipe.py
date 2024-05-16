@@ -38,8 +38,9 @@ from conda_smithy.validate_schema import (
     validate_json_schema,
 )
 
-from rattler_build_conda_compat import lint as rattler_linter
+from . import rattler_linter
 from rattler_build_conda_compat import loader as rattler_loader
+from rattler_build_conda_compat.lint import lint_recipe_yaml_by_schema
 
 from .utils import render_meta_yaml, get_yaml
 
@@ -1057,6 +1058,8 @@ def lintify_recipe_yaml(
     recipe_dirname = os.path.basename(recipe_dir) if recipe_dir else "recipe"
     is_staged_recipes = recipe_dirname != "recipe"
 
+    rattler_linter.lint_section_order(major_sections, lints)
+
     rattler_linter.lint_about_contents(about_section, lints)
 
     # 3a: The recipe should have some maintainers.
@@ -1692,7 +1695,7 @@ def main(
         results = []
         hints = []
 
-        results.extend(rattler_linter.lint_recipe_yaml_by_schema(recipe_file))
+        results.extend(lint_recipe_yaml_by_schema(recipe_file))
         meta = get_yaml().load(Path(recipe_file))
 
         lint_results, lint_hints = lintify_recipe_yaml(
