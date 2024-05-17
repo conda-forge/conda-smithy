@@ -1,6 +1,11 @@
 # -*- coding: utf-8 -*-
 
 from collections.abc import Sequence, Mapping
+from typing import List
+
+from pydantic import BaseModel
+
+from conda_smithy.schema import ConfigModel, NoExtraFieldsHint
 
 str_type = str
 
@@ -147,7 +152,33 @@ def find_local_config_file(recipe_dir, filename):
     return found_filesname[0] if found_filesname else None
 
 
-def lintify_forge_yaml(recipe_dir=None) -> (list, list):
+def _forge_yaml_hint_extra_fields(forge_yaml: dict) -> List[str]:
+    """
+    Identify unexpected keys in the conda-forge.yml file.
+    This only works if extra="allow" is set in the Pydantic sub-model where the unexpected key is found.
+    """
+
+    config = ConfigModel.model_validate(forge_yaml)
+    hints = []
+
+    def _find_extra_fields(model: BaseModel, prefix=""):
+        if not (
+            isinstance(model, NoExtraFieldsHint)
+            and not model.HINT_EXTRA_FIELDS
+        ):
+            for extra_field in (model.__pydantic_extra__ or {}).keys():
+                hints.append(f"Unexpected key {prefix + extra_field}")
+
+        for field, value in model:
+            if isinstance(value, BaseModel):
+                _find_extra_fields(value, f"{prefix + field}.")
+
+    _find_extra_fields(config)
+
+    return hints
+
+
+def lintify_forge_yaml(recipe_dir=None) -> (List[str], List[str]):
     if recipe_dir:
         forge_yaml_filename = (
             glob(os.path.join(recipe_dir, "..", "conda-forge.yml"))
@@ -167,7 +198,14 @@ def lintify_forge_yaml(recipe_dir=None) -> (list, list):
         forge_yaml = {}
 
     # This is where we validate against the jsonschema and execute our custom validators.
-    return validate_json_schema(forge_yaml)
+    json_lints, json_hints = validate_json_schema(forge_yaml)
+
+    lints = [_format_validation_msg(err) for err in json_lints]
+    hints = [_format_validation_msg(hint) for hint in json_hints]
+
+    hints.extend(_forge_yaml_hint_extra_fields(forge_yaml))
+
+    return lints, hints
 
 
 def lintify_meta_yaml(
@@ -1289,8 +1327,8 @@ def main(recipe_dir, conda_forge=False, return_hints=False):
         recipe_dir=recipe_dir
     )
 
-    results.extend([_format_validation_msg(err) for err in validation_errors])
-    hints.extend([_format_validation_msg(hint) for hint in validation_hints])
+    results.extend(validation_errors)
+    hints.extend(validation_hints)
 
     if return_hints:
         return results, hints
@@ -1298,15 +1336,16 @@ def main(recipe_dir, conda_forge=False, return_hints=False):
         return results
 
 
-if __name__ == "__main__":
-    # This block is supposed to help debug how the rendered version
-    # of the linter bot would look like in Github. Taken from
-    # https://github.com/conda-forge/conda-forge-webservices/blob/747f75659/conda_forge_webservices/linting.py#L138C1-L146C72
+def main_debug():
+    """
+    This function is supposed to help debug how the rendered version
+    of the linter bot would look like in GitHub. Taken from
+    https://github.com/conda-forge/conda-forge-webservices/blob/747f75659/conda_forge_webservices/linting.py#L138C1-L146C72
+    """
     rel_path = sys.argv[1]
     lints, hints = main(rel_path, False, True)
     messages = []
     if lints:
-        all_pass = False
         messages.append(
             "\nFor **{}**:\n\n{}".format(
                 rel_path, "\n".join("* {}".format(lint) for lint in lints)
@@ -1320,3 +1359,7 @@ if __name__ == "__main__":
         )
 
     print(*messages, sep="\n")
+
+
+if __name__ == "__main__":
+    main_debug()

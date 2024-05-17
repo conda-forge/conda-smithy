@@ -1772,5 +1772,75 @@ class TestCLI_recipe_lint(unittest.TestCase):
             assert_jinja('{% set version= "0.27.3"%}', is_good=False)
 
 
+class TestLintifyForgeYamlHintExtraFields:
+    def test_extra_build_platforms_platform(self):
+        forge_yml = {
+            "build_platform": {
+                "osx_64": "linux_64",
+                "UNKNOWN_PLATFORM": "linux_64",
+            }
+        }
+
+        hints = linter._forge_yaml_hint_extra_fields(forge_yml)
+
+        assert len(hints) == 1
+
+        assert "Unexpected key build_platform.UNKNOWN_PLATFORM" in hints[0]
+
+    def test_extra_os_version_platform(self):
+        forge_yml = {
+            "os_version": {
+                "UNKNOWN_PLATFORM_2": "10.9",
+            }
+        }
+
+        hints = linter._forge_yaml_hint_extra_fields(forge_yml)
+
+        assert len(hints) == 1
+
+        assert "Unexpected key os_version.UNKNOWN_PLATFORM_2" in hints[0]
+
+    def test_extra_provider_platform(self):
+        forge_yml = {
+            "provider": {
+                "osx_64": "travis",
+                "UNKNOWN_PLATFORM_3": "azure",
+            }
+        }
+
+        hints = linter._forge_yaml_hint_extra_fields(forge_yml)
+
+        assert len(hints) == 1
+
+        assert "Unexpected key provider.UNKNOWN_PLATFORM_3" in hints[0]
+
+    @pytest.mark.parametrize(
+        "top_field", ["settings_linux", "settings_osx", "settings_win"]
+    )
+    def test_extra_azure_runner_settings_no_hint(self, top_field: str):
+        forge_yml = {
+            "azure": {
+                top_field: {
+                    "EXTRA_FIELD": "EXTRA_VALUE",
+                }
+            }
+        }
+
+        hints = linter._forge_yaml_hint_extra_fields(forge_yml)
+
+        assert len(hints) == 0
+
+    def test_extra_conda_build_config_no_hint(self):
+        forge_yml = {
+            "conda_build": {
+                "EXTRA_FIELD": "EXTRA_VALUE",
+            }
+        }
+
+        hints = linter._forge_yaml_hint_extra_fields(forge_yml)
+
+        assert len(hints) == 0
+
+
 if __name__ == "__main__":
     unittest.main()

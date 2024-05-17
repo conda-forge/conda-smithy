@@ -22,11 +22,29 @@ from conda_smithy.validate_schema import (
     CONDA_FORGE_YAML_SCHEMA_FILE,
 )
 
+"""
+Note: By default, we generate hints about additional fields the user added to the model
+if extra="allow" is set. This can be disabled by inheriting from the NoExtraFieldsHint class
+next to BaseModel.
+
+If adding new fields, you should decide between extra="forbid" and extra="allow", since
+extra="ignore" (the default) will not generate hints about additional fields.
+"""
+
 
 class Nullable(Enum):
     """Created to avoid issue with schema validation of null values in lists or dicts."""
 
     null = None
+
+
+class NoExtraFieldsHint:
+    """
+    Inherit from this class next to BaseModel to disable hinting about extra fields, even
+    if the model has `ConfigDict(extra="allow")`.
+    """
+
+    HINT_EXTRA_FIELDS = False
 
 
 #############################################
@@ -92,7 +110,7 @@ class BotConfigVersionUpdatesSourcesChoice(StrEnum):
 ##############################################
 
 
-class AzureRunnerSettings(BaseModel):
+class AzureRunnerSettings(BaseModel, NoExtraFieldsHint):
     """This is the settings for runners."""
 
     model_config: ConfigDict = ConfigDict(extra="allow")
@@ -376,7 +394,7 @@ class BotConfig(BaseModel):
     )
 
 
-class CondaBuildConfig(BaseModel):
+class CondaBuildConfig(BaseModel, NoExtraFieldsHint):
     model_config: ConfigDict = ConfigDict(extra="allow")
 
     pkg_format: Optional[Literal["tar", 1, 2, "1", "2"]] = Field(
@@ -474,6 +492,7 @@ BuildPlatform = create_model(
         platform.value: (Optional[Platforms], Field(default=platform.value))
         for platform in Platforms
     },
+    __config__=ConfigDict(extra="allow"),
 )
 
 OSVersion = create_model(
@@ -483,6 +502,7 @@ OSVersion = create_model(
         for platform in Platforms
         if platform.value.startswith("linux")
     },
+    __config__=ConfigDict(extra="allow"),
 )
 
 ProviderType = Union[List[CIservices], CIservices, bool, Nullable]
@@ -499,6 +519,7 @@ Provider = create_model(
             for plat in ("linux_64", "osx_64", "win_64")
         ]
     ),
+    __config__=ConfigDict(extra="allow"),
 )
 
 
@@ -516,7 +537,7 @@ class ConfigModel(BaseModel):
     # Values which are not expected to be present in the model dump, are
     # flagged with exclude=True. This is to avoid confusion when comparing
     # the model dump with the default conda-forge.yml file used for smithy
-    # or to avoid deprecated values been rendered.
+    # or to avoid deprecated values being rendered.
 
     conda_build: Optional[CondaBuildConfig] = Field(
         default_factory=CondaBuildConfig,
