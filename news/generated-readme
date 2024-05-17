@@ -1,0 +1,3 @@
+**Fixed:**
+
+* Only mark the toplevel LICENSE and README as generated files
