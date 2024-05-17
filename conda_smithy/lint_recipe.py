@@ -127,7 +127,9 @@ def get_rattler_section(meta, name):
     if name == "requirements":
         return rattler_loader.load_all_requirements(meta)
     elif name == "source":
-        return meta.get("source", [])
+        source = meta.get("source", [])
+        if isinstance(source, Mapping):
+            return [source]
 
     return meta.get(name, {})
 
