@@ -82,7 +82,14 @@ CONDA_BUILD_TOOL = "conda-build"
 RATTLER_BUILD_TOOL = "rattler-build"
 
 
-def get_section(parent, name, lints):
+def get_section(parent, name, lints, rattler=False):
+    if not rattler:
+        return get_meta_section(parent, name, lints)
+    else:
+        return get_rattler_section(parent, name)
+
+
+def get_meta_section(parent, name, lints):
     if name == "source":
         return get_list_section(parent, name, lints, allow_single=True)
     elif name == "outputs":
@@ -113,6 +120,16 @@ def get_list_section(parent, name, lints, allow_single=False):
         )
         lints.append(msg)
         return [{}]
+
+
+def get_rattler_section(meta, name):
+    # get rattler recipe.yaml section
+    if name == "requirements":
+        return rattler_loader.load_all_requirements(meta)
+    elif name == "source":
+        return meta.get("source", [])
+
+    return meta.get(name, {})
 
 
 def lint_section_order(major_sections, lints):
@@ -1402,20 +1419,14 @@ def run_conda_forge_specific(
 ):
     gh = github.Github(os.environ["GH_TOKEN"])
 
-    if not rattler_lint:
-        # Retrieve sections from meta.yaml
-        package_section = get_section(meta, "package", lints)
-        extra_section = get_section(meta, "extra", lints)
-        sources_section = get_section(meta, "source", lints)
-        requirements_section = get_section(meta, "requirements", lints)
-        outputs_section = get_section(meta, "outputs", lints)
-    else:
-        # Retrieve sections from recipe.yaml
-        package_section = meta.get("package", {})
-        extra_section = meta.get("extra", {})
-        sources_section = meta.get("source", [])
-        requirements_section = rattler_loader.load_all_requirements(meta)
-        outputs_section = meta.get("outputs", {})
+    # Retrieve sections from meta.yaml or recipe.yaml
+    package_section = get_section(meta, "package", lints, rattler=rattler_lint)
+    extra_section = get_section(meta, "extra", lints, rattler=rattler_lint)
+    sources_section = get_section(meta, "source", lints, rattler=rattler_lint)
+    requirements_section = get_section(
+        meta, "requirements", lints, rattler=rattler_lint
+    )
+    outputs_section = get_section(meta, "outputs", lints, rattler=rattler_lint)
 
     # Fetch list of recipe maintainers
     maintainers = extra_section.get("recipe-maintainers", [])
