@@ -1772,7 +1772,7 @@ class TestCLI_recipe_lint(unittest.TestCase):
             assert_jinja('{% set version= "0.27.3"%}', is_good=False)
 
 
-def test_lint_no_builds(comp_lang):
+def test_lint_no_builds():
     expected_message = "The feedstock has no `.ci_support` files and "
 
     with tmp_directory() as feedstock_dir:
