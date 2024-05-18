@@ -236,7 +236,7 @@
   email: uwe.korn@quantco.com
   alternate_emails:
   - xhochy@users.noreply.github.com
-  num_commits: 41
+  num_commits: 44
   first_commit: 2019-06-27 08:26:49
   github: xhochy
 - name: C.A.M. Gerlach
@@ -393,7 +393,7 @@
   github: shadowwalkersb
 - name: Matthew R. Becker
   email: becker.mr@gmail.com
-  num_commits: 195
+  num_commits: 205
   first_commit: 2020-01-07 17:44:33
   github: beckermr
   alternate_emails:
@@ -537,7 +537,7 @@
   github: nehaljwani
 - name: H. Vetinari
   email: h.vetinari@gmx.com
-  num_commits: 38
+  num_commits: 47
   first_commit: 2021-11-14 02:53:10
 - name: Benjamin Tovar
   email: btovar@nd.edu
