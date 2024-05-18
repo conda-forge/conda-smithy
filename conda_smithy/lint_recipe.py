@@ -1191,6 +1191,16 @@ def run_conda_forge_specific(meta, recipe_dir, lints, hints):
                 f"{', '.join(non_participating_maintainers)}. Please ask them to comment on this PR if they are."
             )
 
+    # 7: Ensure that the recipe has some .ci_support files
+    if not is_staged_recipes and recipe_dir is not None:
+        ci_support_files = glob(
+            os.path.join(recipe_dir, "..", ".ci_support", "*.yaml")
+        )
+        if not ci_support_files:
+            lints.append(
+                "The feedstock has no `.ci_support` files and thus will not build any packages."
+            )
+
 
 def is_selector_line(line, allow_platforms=False, allow_keys=set()):
     # Using the same pattern defined in conda-build (metadata.py),
