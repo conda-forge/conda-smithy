@@ -1199,7 +1199,6 @@ def run_conda_forge_specific(meta, recipe_dir, lints, hints):
         if not ci_support_files:
             lints.append(
                 "The feedstock has no `.ci_support` files and thus will not build any packages. "
-                "Please check that this is the intended behavior."
             )
 
 
