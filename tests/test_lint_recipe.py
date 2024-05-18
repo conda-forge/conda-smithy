@@ -1777,9 +1777,11 @@ def test_lint_no_builds():
 
     with tmp_directory() as feedstock_dir:
         ci_support_dir = os.path.join(feedstock_dir, ".ci_support")
+        os.makedirs(ci_support_dir, exist_ok=True)
         with io.open(os.path.join(ci_support_dir, "README"), "w") as fh:
             fh.write("blah")
         recipe_dir = os.path.join(feedstock_dir, "recipe")
+        os.makedirs(recipe_dir, exist_ok=True)
         with io.open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
             fh.write(
                 """
