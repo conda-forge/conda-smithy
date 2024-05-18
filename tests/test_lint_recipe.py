@@ -1772,5 +1772,25 @@ class TestCLI_recipe_lint(unittest.TestCase):
             assert_jinja('{% set version= "0.27.3"%}', is_good=False)
 
 
+def test_lint_no_builds(comp_lang):
+    expected_message = "The feedstock has no `.ci_support` files and "
+
+    with tmp_directory() as feedstock_dir:
+        ci_support_dir = os.path.join(feedstock_dir, "recipe")
+        with io.open(os.path.join(ci_support_dir, "README"), "w") as fh:
+            fh.write("blah")
+        recipe_dir = os.path.join(feedstock_dir, "recipe")
+        with io.open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
+            fh.write(
+                """
+                package:
+                   name: foo
+                """
+            )
+
+        lints = linter.main(recipe_dir)
+        assert any(lint.startswith(expected_message) for lint in lints)
+
+
 if __name__ == "__main__":
     unittest.main()
