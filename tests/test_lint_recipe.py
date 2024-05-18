@@ -1791,6 +1791,12 @@ def test_lint_no_builds():
         lints = linter.main(recipe_dir, conda_forge=True)
         assert any(lint.startswith(expected_message) for lint in lints)
 
+        with io.open(os.path.join(ci_support_dir, "blah.yaml"), "w") as fh:
+            fh.write("blah")
+
+        lints = linter.main(recipe_dir, conda_forge=True)
+        assert not any(lint.startswith(expected_message) for lint in lints)
+
 
 if __name__ == "__main__":
     unittest.main()
