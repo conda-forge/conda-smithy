@@ -1776,7 +1776,7 @@ def test_lint_no_builds():
     expected_message = "The feedstock has no `.ci_support` files and "
 
     with tmp_directory() as feedstock_dir:
-        ci_support_dir = os.path.join(feedstock_dir, "recipe")
+        ci_support_dir = os.path.join(feedstock_dir, ".ci_support")
         with io.open(os.path.join(ci_support_dir, "README"), "w") as fh:
             fh.write("blah")
         recipe_dir = os.path.join(feedstock_dir, "recipe")
