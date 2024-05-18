@@ -1788,7 +1788,7 @@ def test_lint_no_builds(comp_lang):
                 """
             )
 
-        lints = linter.main(recipe_dir)
+        lints = linter.main(recipe_dir, conda_forge=True)
         assert any(lint.startswith(expected_message) for lint in lints)
 
 
