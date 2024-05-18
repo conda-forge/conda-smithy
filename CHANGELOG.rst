@@ -4,6 +4,30 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.36.0
+====================
+
+**Added:**
+
+* Added new lint for no ``.ci_support`` files which indicates no packages being built.
+
+**Changed:**
+
+* Provide linter hints if macOS quantities are misconfigured in `conda_build_config.yaml` (#1929)
+
+**Fixed:**
+
+* Ensure MACOSX_SDK_VERSION does not end up lower than `c_stdlib_version` in variant configs (#1927 via #1928)
+* Only mark the toplevel LICENSE and README as generated files
+
+**Authors:**
+
+* Matthew R. Becker
+* H. Vetinari
+* Uwe L. Korn
+
+
+
 v3.35.1
 ====================
 
