@@ -696,24 +696,24 @@ def lintify_meta_yaml(
     # 27: Check usage of whl files as a source
     pure_python_wheel_urls = []
     compiled_wheel_urls = []
-    for source in sources_section:
-        urls = source.get("url")
-        if isinstance(urls, str):
-            urls = [urls]
-        for url in urls:
-            for field in url.split():
-                if field.endswith("-none-any.whl"):
-                    pure_python_wheel_urls.append(url)
-                elif field.endswith(".whl"):  # compiled wheel is always a lint
-                    compiled_wheel_urls.append(url)
+    # We could iterate on `sources_section`, but that might miss platform specific selector lines
+    # ... so raw meta.yaml and regex it is...
+    pure_python_wheel_re = re.compile(r".*[:-]\s+(http.*-none-any\.whl)\s+.*")
+    wheel_re = re.compile(r".*[:-]\s+(http.*\.whl)\s+.*")
+    with open(meta_fname, "rt") as f:
+        for line in f:
+            if (match := pure_python_wheel_re.search(line)):
+                pure_python_wheel_urls.append(match.group(1))
+            elif (match := wheel_re.search(line)):
+                compiled_wheel_urls.append(match.group(1))
     if compiled_wheel_urls:
-        formatted_urls = [f"`{url}`" for url in compiled_wheel_urls]
+        formatted_urls = ", ".join([f"`{url}`" for url in compiled_wheel_urls])
         lints.append(
             f"Detected compiled wheel(s) in source: {formatted_urls}. "
             "This is discouraged. Please consider using a source distribution (sdist) instead."
         )
     if pure_python_wheel_urls:
-        formatted_urls = [f"`{url}`" for url in pure_python_wheel_urls]
+        formatted_urls = ", ". join([f"`{url}`" for url in pure_python_wheel_urls])
         if noarch_value == "python":  # this is ok, just hint
             hints.append(
                 f"Detected pure Python wheel(s) in source: {formatted_urls}. "
