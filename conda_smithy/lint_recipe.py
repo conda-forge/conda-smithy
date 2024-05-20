@@ -700,12 +700,13 @@ def lintify_meta_yaml(
     # ... so raw meta.yaml and regex it is...
     pure_python_wheel_re = re.compile(r".*[:-]\s+(http.*-none-any\.whl)\s+.*")
     wheel_re = re.compile(r".*[:-]\s+(http.*\.whl)\s+.*")
-    with open(meta_fname, "rt") as f:
-        for line in f:
-            if match := pure_python_wheel_re.search(line):
-                pure_python_wheel_urls.append(match.group(1))
-            elif match := wheel_re.search(line):
-                compiled_wheel_urls.append(match.group(1))
+    if recipe_dir is not None and os.path.exists(meta_fname):
+        with open(meta_fname, "rt") as f:
+            for line in f:
+                if match := pure_python_wheel_re.search(line):
+                    pure_python_wheel_urls.append(match.group(1))
+                elif match := wheel_re.search(line):
+                    compiled_wheel_urls.append(match.group(1))
     if compiled_wheel_urls:
         formatted_urls = ", ".join([f"`{url}`" for url in compiled_wheel_urls])
         lints.append(
