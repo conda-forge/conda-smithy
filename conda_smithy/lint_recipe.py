@@ -702,9 +702,9 @@ def lintify_meta_yaml(
     wheel_re = re.compile(r".*[:-]\s+(http.*\.whl)\s+.*")
     with open(meta_fname, "rt") as f:
         for line in f:
-            if (match := pure_python_wheel_re.search(line)):
+            if match := pure_python_wheel_re.search(line):
                 pure_python_wheel_urls.append(match.group(1))
-            elif (match := wheel_re.search(line)):
+            elif match := wheel_re.search(line):
                 compiled_wheel_urls.append(match.group(1))
     if compiled_wheel_urls:
         formatted_urls = ", ".join([f"`{url}`" for url in compiled_wheel_urls])
@@ -713,19 +713,20 @@ def lintify_meta_yaml(
             "This is discouraged. Please consider using a source distribution (sdist) instead."
         )
     if pure_python_wheel_urls:
-        formatted_urls = ", ". join([f"`{url}`" for url in pure_python_wheel_urls])
+        formatted_urls = ", ".join(
+            [f"`{url}`" for url in pure_python_wheel_urls]
+        )
         if noarch_value == "python":  # this is ok, just hint
             hints.append(
                 f"Detected pure Python wheel(s) in source: {formatted_urls}. "
                 "This is generally ok for pure Python wheels and noarch=python "
                 "packages but it's preferred to use a source distribution (sdist) if possible."
-                )
+            )
         else:
             lints.append(
                 f"Detected pure Python wheel(s) in source: {formatted_urls}. "
                 "This is discouraged. Please consider using a source distribution (sdist) instead."
             )
-
 
     # hints
     # 1: suggest pip
