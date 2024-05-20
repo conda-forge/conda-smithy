@@ -693,6 +693,40 @@ def lintify_meta_yaml(
     for out in outputs_section:
         check_pins_build_and_requirements(out)
 
+    # 27: Check usage of whl files as a source
+    pure_python_wheel_urls = []
+    compiled_wheel_urls = []
+    for source in sources_section:
+        urls = source.get("url")
+        if isinstance(urls, str):
+            urls = [urls]
+        for url in urls:
+            for field in url.split():
+                if field.endswith("-none-any.whl"):
+                    pure_python_wheel_urls.append(url)
+                elif field.endswith(".whl"):  # compiled wheel is always a lint
+                    compiled_wheel_urls.append(url)
+    if compiled_wheel_urls:
+        formatted_urls = [f"`{url}`" for url in compiled_wheel_urls]
+        lints.append(
+            f"Detected compiled wheel(s) in source: {formatted_urls}. "
+            "This is discouraged. Please consider using a source distribution (sdist) instead."
+        )
+    if pure_python_wheel_urls:
+        formatted_urls = [f"`{url}`" for url in pure_python_wheel_urls]
+        if noarch_value == "python":  # this is ok, just hint
+            hints.append(
+                f"Detected pure Python wheel(s) in source: {formatted_urls}. "
+                "This is generally ok for pure Python wheels and noarch=python "
+                "packages but it's preferred to use a source distribution (sdist) if possible."
+                )
+        else:
+            lints.append(
+                f"Detected pure Python wheel(s) in source: {formatted_urls}. "
+                "This is discouraged. Please consider using a source distribution (sdist) instead."
+            )
+
+
     # hints
     # 1: suggest pip
     if "script" in build_section:
@@ -846,7 +880,7 @@ def lintify_meta_yaml(
             "[here]( https://conda-forge.org/docs/maintainer/adding_pkgs.html#spdx-identifiers-and-expressions )."
         )
 
-    # stdlib-related hints
+    # 5: stdlib-related hints
     build_reqs = requirements_section.get("build") or []
     run_reqs = requirements_section.get("run") or []
     constraints = requirements_section.get("run_constrained") or []
