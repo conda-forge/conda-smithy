@@ -1858,6 +1858,29 @@ def test_lint_no_builds():
         """,
         "hint",
         id="junit-xml",
+    ),
+    pytest.param(
+        """
+        {% set name = "WeasyPrint" %}
+        {% set version = "62.1" %}
+        
+        package:
+          name: {{ name|lower }}
+          version: {{ version }}
+        
+        source:
+          url: https://files.pythonhosted.org/packages/py3/{{ (name|lower)[0] }}/{{ name|lower }}/{{ name|lower }}-{{ version }}-py3-none-any.whl
+          sha256: 654d4c266336cbf9acc4da118c7778ef5839717e6055d5b8f995cf50be200c46
+        
+        build:
+          number: 0
+          noarch: python
+          entry_points:
+            - weasyprint = weasyprint.__main__:main
+          script: {{ PYTHON }} -m pip install {{ name|lower }}-{{ version }}-py3-none-any.whl -vv
+        """,
+        "hint",
+        id="weasyprint"
     )
 
 ])
