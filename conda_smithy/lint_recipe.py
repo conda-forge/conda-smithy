@@ -711,7 +711,8 @@ def lintify_meta_yaml(
         formatted_urls = ", ".join([f"`{url}`" for url in compiled_wheel_urls])
         lints.append(
             f"Detected compiled wheel(s) in source: {formatted_urls}. "
-            "This is discouraged. Please consider using a source distribution (sdist) instead."
+            "This is disallowed. All packages should be built from source except in "
+            "rare and exceptional cases."
         )
     if pure_python_wheel_urls:
         formatted_urls = ", ".join(
