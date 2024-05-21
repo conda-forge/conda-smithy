@@ -9,7 +9,7 @@ import sys
 import pprint
 import textwrap
 import time
-import yaml
+from ruamel.yaml import YAML
 import warnings
 from collections import Counter, OrderedDict, namedtuple
 from copy import deepcopy
@@ -679,7 +679,7 @@ def _collapse_subpackage_variants(
 def _yaml_represent_ordereddict(yaml_representer, data):
     # represent_dict processes dict-likes with a .sort() method or plain iterables of key-value
     #     pairs. Only for the latter it never sorts and retains the order of the OrderedDict.
-    return yaml.representer.SafeRepresenter.represent_dict(
+    return YAML().representer.SafeRepresenter.represent_dict(
         yaml_representer, data.items()
     )
 
@@ -740,6 +740,7 @@ def dump_subspace_config_files(
     )
 
     # get rid of the special object notation in the yaml file for objects that we dump
+    yaml = YAML()
     yaml.add_representer(set, yaml.representer.SafeRepresenter.represent_list)
     yaml.add_representer(
         tuple, yaml.representer.SafeRepresenter.represent_list
@@ -1836,7 +1837,7 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
         azure_settings["strategy"]["matrix"][data["config_name"]] = config_rendered
         # fmt: on
 
-    forge_config["azure_yaml"] = yaml.dump(azure_settings)
+    forge_config["azure_yaml"] = YAML().dump(azure_settings)
     _render_template_exe_files(
         forge_config=forge_config,
         jinja_env=jinja_env,
@@ -2041,7 +2042,7 @@ def render_README(jinja_env, forge_config, forge_dir, render_info=None):
                 variant_name, _ = os.path.splitext(filename)
                 variants.append(variant_name)
                 with open(os.path.join(ci_support_path, filename)) as fh:
-                    data = yaml.safe_load(fh)
+                    data = YAML(typ='safe').load(fh)
                     channel_targets.append(
                         data.get("channel_targets", ["conda-forge main"])[0]
                     )
@@ -2098,7 +2099,7 @@ def render_README(jinja_env, forge_config, forge_dir, render_info=None):
             azure_build_id_from_token(forge_config)
 
     logger.debug("README")
-    logger.debug(yaml.dump(forge_config))
+    logger.debug(YAML().dump(forge_config))
 
     with write_file(target_fname) as fh:
         fh.write(template.render(**forge_config))
@@ -2158,9 +2159,10 @@ def _update_dict_within_dict(items, config):
 
 
 def _read_forge_config(forge_dir, forge_yml=None):
+    yaml=YAML(typ='safe')
     # Load default values from the conda-forge.yml file
     with open(CONDA_FORGE_YAML_DEFAULTS_FILE, "r") as fh:
-        default_config = yaml.safe_load(fh.read())
+        default_config = yaml.load(fh.read())
 
     if forge_yml is None:
         forge_yml = os.path.join(forge_dir, "conda-forge.yml")
@@ -2175,7 +2177,7 @@ def _read_forge_config(forge_dir, forge_yml=None):
         )
 
     with open(forge_yml, "r") as fh:
-        documents = list(yaml.safe_load_all(fh))
+        documents = list(yaml.load_all(fh))
         file_config = (documents or [None])[0] or {}
 
     # Validate loaded configuration against a JSON schema.
@@ -2326,7 +2328,7 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
     # Set some more azure defaults
     config["azure"].setdefault("user_or_org", config["github"]["user_or_org"])
 
-    log = yaml.safe_dump(config)
+    log = YAML(typ='safe').dump(config)
     logger.debug("## CONFIGURATION USED\n")
     logger.debug(log)
     logger.debug("## END CONFIGURATION\n")
@@ -2605,7 +2607,7 @@ def get_migrations_in_dir(migrations_root):
         with open(fn, "r") as f:
             contents = f.read()
             migration_yaml = (
-                yaml.load(contents, Loader=yaml.loader.BaseLoader) or {}
+                YAML().load(contents) or {}
             )
             # Use a object as timestamp to not delete it
             ts = migration_yaml.get("migrator_ts", object())

@@ -13,7 +13,7 @@ https://github.com/conda-forge/conda-forge-enhancement-proposals/pull/13
 
 """
 
-import yaml
+from ruamel.yaml import YAML
 import toolz
 from conda_build.utils import ensure_list
 import conda_build.variants as variants
@@ -52,7 +52,7 @@ def parse_variant(
     contents = select_lines(
         variant_file_content, ns_cfg(config), variants_in_place=False
     )
-    content = yaml.load(contents, Loader=yaml.loader.BaseLoader) or {}
+    content = YAML().load(contents) or {}
     variants.trim_empty_keys(content)
     # TODO: Base this default on mtime or something
     content["migrator_ts"] = float(content.get("migrator_ts", -1.0))

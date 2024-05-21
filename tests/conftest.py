@@ -3,7 +3,7 @@ import os
 from textwrap import dedent
 
 import pytest
-import yaml
+from ruamel.yaml import YAML
 
 from jinja2 import FileSystemLoader
 from jinja2.sandbox import SandboxedEnvironment
@@ -55,6 +55,8 @@ def recipe_dirname():
 
 @pytest.fixture(scope="function")
 def config_yaml(testing_workdir, recipe_dirname):
+    yaml = YAML()
+    yaml.default_flow_style = False
     config = {"python": ["2.7", "3.5"], "r_base": ["3.3.2", "3.4.2"]}
     os.makedirs(os.path.join(testing_workdir, recipe_dirname))
     with open(os.path.join(testing_workdir, "config.yaml"), "w") as f:
@@ -65,7 +67,7 @@ def config_yaml(testing_workdir, recipe_dirname):
         os.path.join(testing_workdir, recipe_dirname, "default_config.yaml"),
         "w",
     ) as f:
-        yaml.dump(config, f, default_flow_style=False)
+        yaml.dump(config, f)
         # need selectors, so write these more manually
         f.write(
             dedent(
@@ -94,18 +96,18 @@ def config_yaml(testing_workdir, recipe_dirname):
         os.path.join(testing_workdir, recipe_dirname, "short_config.yaml"), "w"
     ) as f:
         config = {"python": ["2.7"]}
-        yaml.dump(config, f, default_flow_style=False)
+        yaml.dump(config, f)
     with open(
         os.path.join(testing_workdir, recipe_dirname, "long_config.yaml"), "w"
     ) as f:
         config = {"python": ["2.7", "3.5", "3.6"]}
-        yaml.dump(config, f, default_flow_style=False)
+        yaml.dump(config, f)
     with open(os.path.join(testing_workdir, "conda-forge.yml"), "w") as f:
         config = {
             "upload_on_branch": "foo-branch",
             "recipe_dir": recipe_dirname,
         }
-        yaml.dump(config, f, default_flow_style=False)
+        yaml.dump(config, f)
     return testing_workdir
 
 
