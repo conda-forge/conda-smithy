@@ -227,7 +227,7 @@ jobs:
       continue-on-error: true
 
     - name: Store conda build artifacts
-      uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # v3.1.3
+      uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
       if: {% raw %}${{ always() && steps.prepare-artifacts.outcome == 'success' }}{% endraw %}
       with:
         name: {% raw %}${{ steps.prepare-artifacts.outputs.BLD_ARTIFACT_NAME }}{% endraw %}
@@ -236,7 +236,7 @@ jobs:
       continue-on-error: true
 
     - name: Store conda build environment artifacts
-      uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # v3.1.3
+      uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
       if: {% raw %}${{ failure() && steps.prepare-artifacts.outcome == 'success' }}{% endraw %}
       with:
         name: {% raw %}${{ steps.prepare-artifacts.outputs.ENV_ARTIFACT_NAME }}{% endraw %}
