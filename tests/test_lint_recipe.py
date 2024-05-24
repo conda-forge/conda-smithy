@@ -116,12 +116,17 @@ def test_osx_noarch_hint(where):
         assert not any(h.startswith(avoid_message) for h in hints)
 
 
-@pytest.mark.parametrize("std_selector", ["unix", "linux or (osx and x86_64)"])
+@pytest.mark.parametrize(
+    "std_selector",
+    ["unix", "linux or (osx and x86_64)"],
+    ids=["plain", "or-conjunction"],
+)
 @pytest.mark.parametrize("with_linux", [True, False])
 @pytest.mark.parametrize(
     "reverse_arch",
     # we reverse x64/arm64 separately per deployment target, stdlib & sdk
     [(False, False, False), (True, True, True), (False, True, False)],
+    ids=["False", "True", "mixed"],
 )
 @pytest.mark.parametrize(
     "macdt,v_std,sdk,exp_hint",
