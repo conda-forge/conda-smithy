@@ -116,11 +116,17 @@ def test_osx_noarch_hint(where):
         assert not any(h.startswith(avoid_message) for h in hints)
 
 
+@pytest.mark.parametrize(
+    "std_selector",
+    ["unix", "linux or (osx and x86_64)"],
+    ids=["plain", "or-conjunction"],
+)
 @pytest.mark.parametrize("with_linux", [True, False])
 @pytest.mark.parametrize(
     "reverse_arch",
     # we reverse x64/arm64 separately per deployment target, stdlib & sdk
     [(False, False, False), (True, True, True), (False, True, False)],
+    ids=["False", "True", "mixed"],
 )
 @pytest.mark.parametrize(
     "macdt,v_std,sdk,exp_hint",
@@ -161,7 +167,9 @@ def test_osx_noarch_hint(where):
         (None, None, ["10.12", "11.0"], "You are"),
     ],
 )
-def test_cbc_osx_hints(with_linux, reverse_arch, macdt, v_std, sdk, exp_hint):
+def test_cbc_osx_hints(
+    std_selector, with_linux, reverse_arch, macdt, v_std, sdk, exp_hint
+):
     with tmp_directory() as rdir:
         with open(os.path.join(rdir, "meta.yaml"), "w") as fh:
             fh.write("package:\n   name: foo")
@@ -177,7 +185,7 @@ MACOSX_DEPLOYMENT_TARGET:   # [osx]
             if v_std is not None or with_linux:
                 arch1 = "arm64" if reverse_arch[1] else "x86_64"
                 arch2 = "x86_64" if reverse_arch[1] else "arm64"
-                fh.write("c_stdlib_version:           # [unix]")
+                fh.write(f"c_stdlib_version:          # [{std_selector}]")
                 if v_std is not None:
                     fh.write(f"\n  - {v_std[0]}       # [osx and {arch1}]")
                 if v_std is not None and len(v_std) > 1:
