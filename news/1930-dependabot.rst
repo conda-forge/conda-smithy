@@ -1,10 +1,10 @@
 **Added:**
 
-* <news item>
+* Enable Dependabot for Github Actions workflows and templates. (#1930)
 
 **Changed:**
 
-* Provide linter hints if macOS quantities are misconfigured in `conda_build_config.yaml` (#1929)
+* <news item>
 
 **Deprecated:**
 

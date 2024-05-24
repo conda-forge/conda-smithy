@@ -878,6 +878,43 @@ def lintify_meta_yaml(
     for out in outputs_section:
         check_pins_build_and_requirements(out)
 
+    # 27: Check usage of whl files as a source
+    pure_python_wheel_urls = []
+    compiled_wheel_urls = []
+    # We could iterate on `sources_section`, but that might miss platform specific selector lines
+    # ... so raw meta.yaml and regex it is...
+    pure_python_wheel_re = re.compile(r".*[:-]\s+(http.*-none-any\.whl)\s+.*")
+    wheel_re = re.compile(r".*[:-]\s+(http.*\.whl)\s+.*")
+    if recipe_dir is not None and os.path.exists(meta_fname):
+        with open(meta_fname, "rt") as f:
+            for line in f:
+                if match := pure_python_wheel_re.search(line):
+                    pure_python_wheel_urls.append(match.group(1))
+                elif match := wheel_re.search(line):
+                    compiled_wheel_urls.append(match.group(1))
+    if compiled_wheel_urls:
+        formatted_urls = ", ".join([f"`{url}`" for url in compiled_wheel_urls])
+        lints.append(
+            f"Detected compiled wheel(s) in source: {formatted_urls}. "
+            "This is disallowed. All packages should be built from source except in "
+            "rare and exceptional cases."
+        )
+    if pure_python_wheel_urls:
+        formatted_urls = ", ".join(
+            [f"`{url}`" for url in pure_python_wheel_urls]
+        )
+        if noarch_value == "python":  # this is ok, just hint
+            hints.append(
+                f"Detected pure Python wheel(s) in source: {formatted_urls}. "
+                "This is generally ok for pure Python wheels and noarch=python "
+                "packages but it's preferred to use a source distribution (sdist) if possible."
+            )
+        else:
+            lints.append(
+                f"Detected pure Python wheel(s) in source: {formatted_urls}. "
+                "This is discouraged. Please consider using a source distribution (sdist) instead."
+            )
+
     # hints
     # 1: suggest pip
     hint_pip_usage(build_section, hints)
@@ -921,7 +958,7 @@ def lintify_meta_yaml(
     # 4: Check for SPDX
     hint_spdx(about_section, hints)
 
-    # stdlib-related hints
+    # 5: stdlib-related hints
     build_reqs = requirements_section.get("build") or []
     run_reqs = requirements_section.get("run") or []
     constraints = requirements_section.get("run_constrained") or []
@@ -1470,6 +1507,16 @@ def run_conda_forge_specific(
             lints.append(
                 f"The following maintainers have not yet confirmed that they are willing to be listed here: "
                 f"{', '.join(non_participating_maintainers)}. Please ask them to comment on this PR if they are."
+            )
+
+    # 7: Ensure that the recipe has some .ci_support files
+    if not is_staged_recipes and recipe_dir is not None:
+        ci_support_files = glob(
+            os.path.join(recipe_dir, "..", ".ci_support", "*.yaml")
+        )
+        if not ci_support_files:
+            lints.append(
+                "The feedstock has no `.ci_support` files and thus will not build any packages."
             )
 
 

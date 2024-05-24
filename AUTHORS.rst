@@ -7,9 +7,9 @@ Authors are sorted by number of commits.
 * Christopher J. Wright
 * Anthony Scopatz
 * Phil Elson
+* H. Vetinari
 * Filipe Fernandes
 * Uwe L. Korn
-* H. Vetinari
 * Dougal J. Sutherland
 * Amit Kumar
 * Marcel Bargull

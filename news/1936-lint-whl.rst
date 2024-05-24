@@ -1,6 +1,6 @@
 **Added:**
 
-* <news item>
+* Lint / hint if a recipe uses Python wheels as its source. (#1935 via #1936)
 
 **Changed:**
 
@@ -16,7 +16,7 @@
 
 **Fixed:**
 
-* Ensure MACOSX_SDK_VERSION does not end up lower than `c_stdlib_version` in variant configs (#1927 via #1928)
+* <news item>
 
 **Security:**
 

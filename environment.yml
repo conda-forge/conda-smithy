@@ -8,7 +8,7 @@ dependencies:
   - pip
   - python-build
   - setuptools>=45
-  - setuptools_scm>=7
+  - setuptools_scm>=8.1
   - tomli>=1.0.0
   - pre-commit
   - mock

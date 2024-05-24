@@ -2720,5 +2720,131 @@ class TestCLI_recipe_lint(unittest.TestCase):
             assert_jinja('{% set version= "0.27.3"%}', is_good=False)
 
 
+def test_lint_no_builds():
+    expected_message = "The feedstock has no `.ci_support` files and "
+
+    with tmp_directory() as feedstock_dir:
+        ci_support_dir = os.path.join(feedstock_dir, ".ci_support")
+        os.makedirs(ci_support_dir, exist_ok=True)
+        with io.open(os.path.join(ci_support_dir, "README"), "w") as fh:
+            fh.write("blah")
+        recipe_dir = os.path.join(feedstock_dir, "recipe")
+        os.makedirs(recipe_dir, exist_ok=True)
+        with io.open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
+            fh.write(
+                """
+                package:
+                   name: foo
+                """
+            )
+
+        lints = linter.main(recipe_dir, conda_forge=True)
+        assert any(lint.startswith(expected_message) for lint in lints)
+
+        with io.open(os.path.join(ci_support_dir, "blah.yaml"), "w") as fh:
+            fh.write("blah")
+
+        lints = linter.main(recipe_dir, conda_forge=True)
+        assert not any(lint.startswith(expected_message) for lint in lints)
+
+
+@pytest.mark.parametrize(
+    "yaml_block,annotation",
+    [
+        pytest.param(
+            """
+            {% set name = "libconeangle" %}
+            {% set version = "0.1.1" %}
+
+            package:
+              name: {{ name|lower }}
+              version: {{ version }}
+
+            source:
+              url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/libconeangle-{{ version }}.tar.gz  # [unix]
+              sha256: bc828be92fdf2d2d353b5e8bb95644068220d92809276312ff2d7bca0aa8b2d1  # [unix]
+              url: https://pypi.org/packages/cp{{ CONDA_PY }}/{{ name[0] }}/{{ name }}/{{ name }}-{{ version }}-cp{{ CONDA_PY }}-cp{{ CONDA_PY }}-win_amd64.whl  # [win]
+              sha256: 467a444ca9a46675b12d43b00462052dc00a16bc322944df8053b1573a492dce  # [win and py==38]
+              sha256: b35c0643c9f1dd1c933c0a6d91b7368c32a3255e76594dea27d918b71c1166ed  # [win and py==39]
+              sha256: a32e28b3e321bdb802f28a5f04d1df65071ab42eef06a6dc15ed656780c0361e  # [win and py==310]
+            build:
+              skip: true  # [py<38 or python_impl == 'pypy' or (win and py==311)]
+              script: {{ PYTHON }} -m pip install . -vv  # [unix]
+              script_env:  # [osx and arm64]
+                - SKBUILD_CONFIGURE_OPTIONS=-DWITH_CBOOL_EXITCODE=0 -DWITH_CBOOL_EXITCODE__TRYRUN_OUTPUT='' -Df03real128_EXITCODE=1 -Df03real128_EXITCODE__TRYRUN_OUTPUT='' -Df18errorstop_EXITCODE=1 -Df18errorstop_EXITCODE__TRYRUN_OUTPUT=''  # [osx and arm64]
+              script: {{ PYTHON }} -m pip install {{ name }}-{{ version }}-cp{{ CONDA_PY }}-cp{{ CONDA_PY }}-win_amd64.whl -vv  # [win]
+              number: 3
+            """,
+            "lint",
+            id="libconeangle",
+        ),
+        pytest.param(
+            """
+            {% set name = "junit-xml" %}
+            {% set version = "1.9" %}
+            {% set python_tag = 'py2.py3' %}
+            {% set use_wheel = True %}
+
+            package:
+              name: {{ name|lower }}
+              version: {{ version }}
+
+            source:
+            {% if use_wheel %}
+            - url: https://pypi.org/packages/{{ python_tag }}/{{ name[0] }}/{{ name }}/{{ name | replace('-', '_') }}-{{ version }}-{{ python_tag }}-none-any.whl
+              sha256: "ec5ca1a55aefdd76d28fcc0b135251d156c7106fa979686a4b48d62b761b4732"
+            {% else %}
+            - url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name }}-{{ version }}.tar.gz
+              sha256: ""
+            {% endif %}
+
+            build:
+              noarch: python
+              number: 0
+              {% if use_wheel %}
+              script: "{{ PYTHON }} -m pip install --no-deps --ignore-installed --no-cache-dir -vvv *.whl"
+              {% else %}
+              script: "{{ PYTHON }} -m pip install --no-deps --ignore-installed --no-cache-dir -vvv ."
+              {% endif %}
+            """,
+            "hint",
+            id="junit-xml",
+        ),
+        pytest.param(
+            """
+            {% set name = "WeasyPrint" %}
+            {% set version = "62.1" %}
+
+            package:
+              name: {{ name|lower }}
+              version: {{ version }}
+
+            source:
+              url: https://files.pythonhosted.org/packages/py3/{{ (name|lower)[0] }}/{{ name|lower }}/{{ name|lower }}-{{ version }}-py3-none-any.whl
+              sha256: 654d4c266336cbf9acc4da118c7778ef5839717e6055d5b8f995cf50be200c46
+
+            build:
+              number: 0
+              noarch: python
+              entry_points:
+                - weasyprint = weasyprint.__main__:main
+              script: {{ PYTHON }} -m pip install {{ name|lower }}-{{ version }}-py3-none-any.whl -vv
+            """,
+            "hint",
+            id="weasyprint",
+        ),
+    ],
+)
+def test_lint_wheels(tmp_path, yaml_block, annotation):
+    (tmp_path / "meta.yaml").write_text(yaml_block)
+    expected_message = "wheel(s) in source"
+
+    lints, hints = linter.main(tmp_path, conda_forge=False, return_hints=True)
+    if annotation == "lint":
+        assert any(expected_message in lint for lint in lints)
+    else:
+        assert any(expected_message in hint for hint in hints)
+
+
 if __name__ == "__main__":
     unittest.main()
