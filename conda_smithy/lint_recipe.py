@@ -932,10 +932,14 @@ def lintify_meta_yaml(
 
     # filter on osx-relevant lines
     pat = re.compile(
-        r"^([^\#]*?)\s+\#\s\[.*(not\s(osx|unix)|(?<!not\s)(linux|win)).*\]\s*$"
+        r"^([^:\#]*?)\s+\#\s\[.*(not\s(osx|unix)|(?<!not\s)(linux|win)).*\]\s*$"
     )
     # remove lines with selectors that don't apply to osx, i.e. if they contain
-    # "not osx", "not unix", "linux" or "win"; this also removes trailing newlines
+    # "not osx", "not unix", "linux" or "win"; this also removes trailing newlines.
+    # the regex here doesn't handle `or`-conjunctions, but the important thing for
+    # having a valid yaml after filtering below is that we avoid filtering lines with
+    # a colon (`:`), meaning that all yaml keys "survive". As an example, keys like
+    # c_stdlib_version can have `or`'d selectors, even if all values are arch-specific.
     cbc_lines_osx = [pat.sub("", x) for x in cbc_lines]
     cbc_content_osx = "\n".join(cbc_lines_osx)
     cbc_osx = get_yaml().load(cbc_content_osx) or {}
