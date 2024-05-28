@@ -890,7 +890,8 @@ def lintify_meta_yaml(
 
     stdlib_hint = (
         "This recipe is using a compiler, which now requires adding a build "
-        'dependence on `{{ stdlib("c") }}` as well. For further details, please '
+        'dependence on `{{ stdlib("c") }}` as well. Note that this rule applies to '
+        "each output of the recipe using a compiler. For further details, please "
         "see https://github.com/conda-forge/conda-forge.github.io/issues/2102."
     )
     pat_compiler_stub = re.compile(
@@ -1028,8 +1029,8 @@ def lintify_meta_yaml(
         # only warn if version is below baseline
         outdated_hint = (
             "You are setting `c_stdlib_version` below the current global baseline "
-            "in conda-forge. If this is your intention, you also need to override "
-            "`MACOSX_DEPLOYMENT_TARGET` (with the same value) locally."
+            "in conda-forge (10.13). If this is your intention, you also need to "
+            "override `MACOSX_DEPLOYMENT_TARGET` (with the same value) locally."
         )
         if len(v_stdlib) == len(macdt):
             # if length matches, compare individually
@@ -1056,8 +1057,8 @@ def lintify_meta_yaml(
         "(you can leave it out if it is equal).\n"
         "If you are not setting `c_stdlib_version` yourself, this means "
         "you are requesting a version below the current global baseline in "
-        "conda-forge. In this case, you also need to override "
-        "`c_stdlib_version` and `MACOSX_DEPLOYMENT_TARGET` locally."
+        "conda-forge (10.13). If this is the intention, you also need to "
+        "override `c_stdlib_version` and `MACOSX_DEPLOYMENT_TARGET` locally."
     )
     if len(sdk) == len(merged_dt):
         # if length matches, compare individually
