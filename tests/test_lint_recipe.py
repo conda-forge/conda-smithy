@@ -94,6 +94,48 @@ def test_osx_hint(where):
         assert any(h.startswith(expected_message) for h in hints)
 
 
+def test_stdlib_hints_multi_output():
+    expected_message = "You're setting a requirement on sysroot"
+
+    with tmp_directory() as recipe_dir:
+        with io.open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
+            fh.write(
+                """
+                package:
+                   name: foo
+                requirements:
+                  build:
+                    - {{ compiler("c") }}
+                    # global build reqs intentionally correct; want to check outputs
+                    - {{ stdlib("c") }}
+                outputs:
+                  - name: bar
+                    requirements:
+                      build:
+                        # missing stdlib
+                        - {{ compiler("c") }}
+                  - name: baz
+                    requirements:
+                      build:
+                        - {{ compiler("c") }}
+                        - {{ stdlib("c") }}
+                        - sysroot_linux-64
+                  - name: quux
+                    requirements:
+                      run:
+                        - __osx >=10.13
+                """
+            )
+
+        _, hints = linter.main(recipe_dir, return_hints=True)
+        exp_stdlib = "This recipe is using a compiler"
+        exp_sysroot = "You're setting a requirement on sysroot"
+        exp_osx = "You're setting a constraint on the `__osx`"
+        assert any(h.startswith(exp_stdlib) for h in hints)
+        assert any(h.startswith(exp_sysroot) for h in hints)
+        assert any(h.startswith(exp_osx) for h in hints)
+
+
 @pytest.mark.parametrize("where", ["run", "run_constrained"])
 def test_osx_noarch_hint(where):
     # don't warn on packages that are using __osx as a noarch-marker, see

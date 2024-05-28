@@ -884,9 +884,9 @@ def lintify_meta_yaml(
         )
 
     # 5: stdlib-related hints
-    build_reqs = requirements_section.get("build") or []
-    run_reqs = requirements_section.get("run") or []
-    constraints = requirements_section.get("run_constrained") or []
+    global_build_reqs = requirements_section.get("build") or []
+    global_run_reqs = requirements_section.get("run") or []
+    global_constraints = requirements_section.get("run_constrained") or []
 
     stdlib_hint = (
         "This recipe is using a compiler, which now requires adding a build "
@@ -896,10 +896,31 @@ def lintify_meta_yaml(
     pat_compiler_stub = re.compile(
         "(m2w64_)?(c|cxx|fortran|rust)_compiler_stub"
     )
-    has_compiler = any(pat_compiler_stub.match(rq) for rq in build_reqs)
-    if has_compiler and "c_stdlib_stub" not in build_reqs:
-        if stdlib_hint not in hints:
-            hints.append(stdlib_hint)
+    outputs = get_section(meta, "outputs", lints)
+    output_reqs = [x.get("requirements", {}) for x in outputs]
+
+    # collect output requirements
+    output_build_reqs = [x.get("build", []) or [] for x in output_reqs]
+    output_run_reqs = [x.get("run", []) or [] for x in output_reqs]
+    output_contraints = [
+        x.get("run_constrained", []) or [] for x in output_reqs
+    ]
+
+    # aggregate as necessary
+    all_build_reqs = [global_build_reqs] + output_build_reqs
+    all_build_reqs_flat = global_build_reqs
+    all_run_reqs_flat = global_run_reqs
+    all_contraints_flat = global_constraints
+    [all_build_reqs_flat := all_build_reqs_flat + x for x in output_build_reqs]
+    [all_run_reqs_flat := all_run_reqs_flat + x for x in output_run_reqs]
+    [all_contraints_flat := all_contraints_flat + x for x in output_contraints]
+
+    # this check needs to be done per output --> use separate (unflattened) requirements
+    for build_reqs in all_build_reqs:
+        has_compiler = any(pat_compiler_stub.match(rq) for rq in build_reqs)
+        if has_compiler and "c_stdlib_stub" not in build_reqs:
+            if stdlib_hint not in hints:
+                hints.append(stdlib_hint)
 
     sysroot_hint = (
         "You're setting a requirement on sysroot_linux-<arch> directly; this should "
@@ -909,7 +930,7 @@ def lintify_meta_yaml(
         "https://github.com/conda-forge/conda-forge.github.io/issues/2102."
     )
     pat_sysroot = re.compile(r"sysroot_linux.*")
-    if any(pat_sysroot.match(req) for req in build_reqs):
+    if any(pat_sysroot.match(req) for req in all_build_reqs_flat):
         if sysroot_hint not in hints:
             hints.append(sysroot_hint)
 
@@ -920,7 +941,8 @@ def lintify_meta_yaml(
         "the respective platform as necessary. For further details, please see "
         "https://github.com/conda-forge/conda-forge.github.io/issues/2102."
     )
-    if any(req.startswith("__osx >") for req in run_reqs + constraints):
+    to_check = all_run_reqs_flat + all_contraints_flat
+    if any(req.startswith("__osx >") for req in to_check):
         if osx_hint not in hints:
             hints.append(osx_hint)
 
