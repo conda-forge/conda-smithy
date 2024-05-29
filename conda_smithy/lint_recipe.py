@@ -959,22 +959,44 @@ def lintify_meta_yaml(
     hint_spdx(about_section, hints)
 
     # 5: stdlib-related hints
-    build_reqs = requirements_section.get("build") or []
-    run_reqs = requirements_section.get("run") or []
-    constraints = requirements_section.get("run_constrained") or []
+    global_build_reqs = requirements_section.get("build") or []
+    global_run_reqs = requirements_section.get("run") or []
+    global_constraints = requirements_section.get("run_constrained") or []
 
     stdlib_hint = (
         "This recipe is using a compiler, which now requires adding a build "
-        'dependence on `{{ stdlib("c") }}` as well. For further details, please '
+        'dependence on `{{ stdlib("c") }}` as well. Note that this rule applies to '
+        "each output of the recipe using a compiler. For further details, please "
         "see https://github.com/conda-forge/conda-forge.github.io/issues/2102."
     )
     pat_compiler_stub = re.compile(
         "(m2w64_)?(c|cxx|fortran|rust)_compiler_stub"
     )
-    has_compiler = any(pat_compiler_stub.match(rq) for rq in build_reqs)
-    if has_compiler and "c_stdlib_stub" not in build_reqs:
-        if stdlib_hint not in hints:
-            hints.append(stdlib_hint)
+    outputs = get_section(meta, "outputs", lints)
+    output_reqs = [x.get("requirements", {}) for x in outputs]
+
+    # collect output requirements
+    output_build_reqs = [x.get("build", []) or [] for x in output_reqs]
+    output_run_reqs = [x.get("run", []) or [] for x in output_reqs]
+    output_contraints = [
+        x.get("run_constrained", []) or [] for x in output_reqs
+    ]
+
+    # aggregate as necessary
+    all_build_reqs = [global_build_reqs] + output_build_reqs
+    all_build_reqs_flat = global_build_reqs
+    all_run_reqs_flat = global_run_reqs
+    all_contraints_flat = global_constraints
+    [all_build_reqs_flat := all_build_reqs_flat + x for x in output_build_reqs]
+    [all_run_reqs_flat := all_run_reqs_flat + x for x in output_run_reqs]
+    [all_contraints_flat := all_contraints_flat + x for x in output_contraints]
+
+    # this check needs to be done per output --> use separate (unflattened) requirements
+    for build_reqs in all_build_reqs:
+        has_compiler = any(pat_compiler_stub.match(rq) for rq in build_reqs)
+        if has_compiler and "c_stdlib_stub" not in build_reqs:
+            if stdlib_hint not in hints:
+                hints.append(stdlib_hint)
 
     sysroot_hint = (
         "You're setting a requirement on sysroot_linux-<arch> directly; this should "
@@ -984,7 +1006,7 @@ def lintify_meta_yaml(
         "https://github.com/conda-forge/conda-forge.github.io/issues/2102."
     )
     pat_sysroot = re.compile(r"sysroot_linux.*")
-    if any(pat_sysroot.match(req) for req in build_reqs):
+    if any(pat_sysroot.match(req) for req in all_build_reqs_flat):
         if sysroot_hint not in hints:
             hints.append(sysroot_hint)
 
@@ -995,7 +1017,8 @@ def lintify_meta_yaml(
         "the respective platform as necessary. For further details, please see "
         "https://github.com/conda-forge/conda-forge.github.io/issues/2102."
     )
-    if any(req.startswith("__osx >") for req in run_reqs + constraints):
+    to_check = all_run_reqs_flat + all_contraints_flat
+    if any(req.startswith("__osx >") for req in to_check):
         if osx_hint not in hints:
             hints.append(osx_hint)
 
@@ -1007,10 +1030,14 @@ def lintify_meta_yaml(
 
     # filter on osx-relevant lines
     pat = re.compile(
-        r"^([^\#]*?)\s+\#\s\[.*(not\s(osx|unix)|(?<!not\s)(linux|win)).*\]\s*$"
+        r"^([^:\#]*?)\s+\#\s\[.*(not\s(osx|unix)|(?<!not\s)(linux|win)).*\]\s*$"
     )
     # remove lines with selectors that don't apply to osx, i.e. if they contain
-    # "not osx", "not unix", "linux" or "win"; this also removes trailing newlines
+    # "not osx", "not unix", "linux" or "win"; this also removes trailing newlines.
+    # the regex here doesn't handle `or`-conjunctions, but the important thing for
+    # having a valid yaml after filtering below is that we avoid filtering lines with
+    # a colon (`:`), meaning that all yaml keys "survive". As an example, keys like
+    # c_stdlib_version can have `or`'d selectors, even if all values are arch-specific.
     cbc_lines_osx = [pat.sub("", x) for x in cbc_lines]
     cbc_content_osx = "\n".join(cbc_lines_osx)
     cbc_osx = get_yaml().load(cbc_content_osx) or {}
@@ -1077,8 +1104,8 @@ def lintify_meta_yaml(
         # only warn if version is below baseline
         outdated_hint = (
             "You are setting `c_stdlib_version` below the current global baseline "
-            "in conda-forge. If this is your intention, you also need to override "
-            "`MACOSX_DEPLOYMENT_TARGET` (with the same value) locally."
+            "in conda-forge (10.13). If this is your intention, you also need to "
+            "override `MACOSX_DEPLOYMENT_TARGET` (with the same value) locally."
         )
         if len(v_stdlib) == len(macdt):
             # if length matches, compare individually
@@ -1105,8 +1132,8 @@ def lintify_meta_yaml(
         "(you can leave it out if it is equal).\n"
         "If you are not setting `c_stdlib_version` yourself, this means "
         "you are requesting a version below the current global baseline in "
-        "conda-forge. In this case, you also need to override "
-        "`c_stdlib_version` and `MACOSX_DEPLOYMENT_TARGET` locally."
+        "conda-forge (10.13). If this is the intention, you also need to "
+        "override `c_stdlib_version` and `MACOSX_DEPLOYMENT_TARGET` locally."
     )
     if len(sdk) == len(merged_dt):
         # if length matches, compare individually

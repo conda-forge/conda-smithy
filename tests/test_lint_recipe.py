@@ -96,6 +96,48 @@ def test_osx_hint(where):
         assert any(h.startswith(expected_message) for h in hints)
 
 
+def test_stdlib_hints_multi_output():
+    expected_message = "You're setting a requirement on sysroot"
+
+    with tmp_directory() as recipe_dir:
+        with io.open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
+            fh.write(
+                """
+                package:
+                   name: foo
+                requirements:
+                  build:
+                    - {{ compiler("c") }}
+                    # global build reqs intentionally correct; want to check outputs
+                    - {{ stdlib("c") }}
+                outputs:
+                  - name: bar
+                    requirements:
+                      build:
+                        # missing stdlib
+                        - {{ compiler("c") }}
+                  - name: baz
+                    requirements:
+                      build:
+                        - {{ compiler("c") }}
+                        - {{ stdlib("c") }}
+                        - sysroot_linux-64
+                  - name: quux
+                    requirements:
+                      run:
+                        - __osx >=10.13
+                """
+            )
+
+        _, hints = linter.main(recipe_dir, return_hints=True)
+        exp_stdlib = "This recipe is using a compiler"
+        exp_sysroot = "You're setting a requirement on sysroot"
+        exp_osx = "You're setting a constraint on the `__osx`"
+        assert any(h.startswith(exp_stdlib) for h in hints)
+        assert any(h.startswith(exp_sysroot) for h in hints)
+        assert any(h.startswith(exp_osx) for h in hints)
+
+
 @pytest.mark.parametrize("where", ["run", "run_constrained"])
 def test_osx_noarch_hint(where):
     # don't warn on packages that are using __osx as a noarch-marker, see
@@ -118,11 +160,17 @@ def test_osx_noarch_hint(where):
         assert not any(h.startswith(avoid_message) for h in hints)
 
 
+@pytest.mark.parametrize(
+    "std_selector",
+    ["unix", "linux or (osx and x86_64)"],
+    ids=["plain", "or-conjunction"],
+)
 @pytest.mark.parametrize("with_linux", [True, False])
 @pytest.mark.parametrize(
     "reverse_arch",
     # we reverse x64/arm64 separately per deployment target, stdlib & sdk
     [(False, False, False), (True, True, True), (False, True, False)],
+    ids=["False", "True", "mixed"],
 )
 @pytest.mark.parametrize(
     "macdt,v_std,sdk,exp_hint",
@@ -163,7 +211,9 @@ def test_osx_noarch_hint(where):
         (None, None, ["10.12", "11.0"], "You are"),
     ],
 )
-def test_cbc_osx_hints(with_linux, reverse_arch, macdt, v_std, sdk, exp_hint):
+def test_cbc_osx_hints(
+    std_selector, with_linux, reverse_arch, macdt, v_std, sdk, exp_hint
+):
     with tmp_directory() as rdir:
         with open(os.path.join(rdir, "meta.yaml"), "w") as fh:
             fh.write("package:\n   name: foo")
@@ -179,7 +229,7 @@ MACOSX_DEPLOYMENT_TARGET:   # [osx]
             if v_std is not None or with_linux:
                 arch1 = "arm64" if reverse_arch[1] else "x86_64"
                 arch2 = "x86_64" if reverse_arch[1] else "arm64"
-                fh.write("c_stdlib_version:           # [unix]")
+                fh.write(f"c_stdlib_version:          # [{std_selector}]")
                 if v_std is not None:
                     fh.write(f"\n  - {v_std[0]}       # [osx and {arch1}]")
                 if v_std is not None and len(v_std) > 1:

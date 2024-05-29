@@ -8,8 +8,8 @@ Authors are sorted by number of commits.
 * Anthony Scopatz
 * Phil Elson
 * H. Vetinari
-* Filipe Fernandes
 * Uwe L. Korn
+* Filipe Fernandes
 * Dougal J. Sutherland
 * Amit Kumar
 * Marcel Bargull
@@ -59,6 +59,7 @@ Authors are sorted by number of commits.
 * Marius van Niekerk
 * Johannes Köster
 * Philippe Blain
+* Mervin Fansler
 * Matt McCormick
 * Jan Janßen
 * xoviat
@@ -72,7 +73,6 @@ Authors are sorted by number of commits.
 * Florian Rathgeber
 * Bruno Oliveira
 * Tony Kelman
-* Mervin Fansler
 * Jannis Leidel
 * Guilherme Quentel Melo
 * santi
@@ -117,3 +117,4 @@ Authors are sorted by number of commits.
 * Benjamin Tovar
 * Sylvain Corlay
 * Brandon Andersen
+* dependabot[bot]
