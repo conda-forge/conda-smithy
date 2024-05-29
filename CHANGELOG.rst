@@ -4,6 +4,34 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.36.1
+====================
+
+**Added:**
+
+* Enable Dependabot for Github Actions workflows and templates. (#1930)
+* Lint / hint if a recipe uses Python wheels as its source. (#1935 via #1936)
+
+**Changed:**
+
+* Lint all outputs for required stdlib-fixes. (#1941)
+* Make recommended changes to Travis CI template. (#1942)
+
+**Fixed:**
+
+* Avoid linter failing on more complicated selector patterns in `conda_build_config.yaml`. (#1939)
+
+**Authors:**
+
+* Matthew R. Becker
+* Jaime Rodríguez-Guerra
+* H. Vetinari
+* Uwe L. Korn
+* Mervin Fansler
+* dependabot[bot]
+
+
+
 v3.36.0
 ====================
 
