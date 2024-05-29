@@ -546,6 +546,8 @@
   github: btovar
 - name: Mervin Fansler
   email: mmfansler@gmail.com
+  alternate_emails:
+    - fanslerm@mskcc.org
   num_commits: 3
   first_commit: 2022-02-19 13:45:48
   github: mfansler
@@ -620,3 +622,5 @@
   num_commits: 7
   first_commit: 2024-03-25 05:59:00
   github: ytausch
+- name: dependabot[bot]
+  email: 49699333+dependabot[bot]@users.noreply.github.com
