@@ -1,6 +1,7 @@
 from contextlib import contextmanager
 import io
 import os
+from pathlib import Path
 import shutil
 import stat
 
@@ -43,14 +44,13 @@ def set_exe_file(filename, set_exe=True):
         mode |= IXALL
     else:
         mode -= mode & IXALL
-    os.chmod(filename, mode)
+    Path(filename).chmod(mode)
 
 
 @contextmanager
 def write_file(filename):
-    dirname = os.path.dirname(filename)
-    if dirname and not os.path.exists(dirname):
-        os.makedirs(dirname)
+    dirname = Path(filename).parent
+    dirname.mkdir(parents=True, exist_ok=True)
 
     with io.open(filename, "w", encoding="utf-8", newline="\n") as fh:
         yield fh
@@ -66,7 +66,7 @@ def touch_file(filename):
 
 
 def remove_file_or_dir(filename):
-    if not os.path.isdir(filename):
+    if not Path(filename).is_dir():
         return remove_file(filename)
 
     repo = get_repo(filename)
@@ -82,11 +82,12 @@ def remove_file(filename):
     if repo:
         repo.index.remove([filename])
 
-    os.remove(filename)
+    Path(filename).unlink()
 
-    dirname = os.path.dirname(filename)
-    if dirname and not os.listdir(dirname):
-        os.removedirs(dirname)
+    dirname = Path(filename).parent
+    while dirname.exists() and not any(dirname.iterdir()):
+        dirname.rmdir()
+        dirname = dirname.parent
 
 
 def copy_file(src, dst):
