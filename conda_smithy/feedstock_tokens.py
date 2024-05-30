@@ -25,6 +25,7 @@ then uploaded to the token registry (a repo on GitHub).
 
 import tempfile
 import os
+from pathlib import Path
 import json
 import time
 import secrets
@@ -59,18 +60,11 @@ def feedstock_token_local_path(user, project, provider=None):
     token is stored.
     """
     if provider is None:
-        pth = os.path.join(
-            "~",
-            ".conda-smithy",
-            "%s_%s.token" % (user, project),
-        )
+        pth = Path("~", ".conda-smithy", f"{user}_{project}.token")
     else:
-        pth = os.path.join(
-            "~",
-            ".conda-smithy",
-            "%s_%s_%s.token" % (user, project, provider),
-        )
-    return os.path.expanduser(pth)
+        pth = Path("~", ".conda-smithy", f"{user}_{project}_{provider}.token")
+
+    return pth.expanduser()
 
 
 def generate_and_write_feedstock_token(user, project, provider=None):
@@ -87,7 +81,7 @@ def generate_and_write_feedstock_token(user, project, provider=None):
         try:
             token = secrets.token_hex(32)
             pth = feedstock_token_local_path(user, project, provider=provider)
-            if os.path.exists(pth):
+            if pth.exists():
                 failed = True
                 err_msg = (
                     "Token for %s/%s on provider%s is already written locally!"
@@ -98,8 +92,7 @@ def generate_and_write_feedstock_token(user, project, provider=None):
                     )
                 )
                 raise FeedstockTokenError(err_msg)
-
-            os.makedirs(os.path.dirname(pth), exist_ok=True)
+            pth.parent.mkdir(parents=True, exist_ok=True)
 
             with open(pth, "w") as fp:
                 fp.write(token)
@@ -140,7 +133,7 @@ def read_feedstock_token(user, project, provider=None):
         user, project, provider=provider
     )
 
-    if not os.path.exists(user_token_pth):
+    if not user_token_pth.exists():
         err_msg = "No token found in '%s'" % user_token_pth
     else:
         with open(user_token_pth, "r") as fp:
@@ -178,13 +171,9 @@ def feedstock_token_exists(user, project, token_repo, provider=None):
                 .replace("${GH_TOKEN}", github_token)
             )
             git.Repo.clone_from(_token_repo, tmpdir, depth=1)
-            token_file = os.path.join(
-                tmpdir,
-                "tokens",
-                project + ".json",
-            )
+            token_file = Path(tmpdir, "tokens", f"{project}.json")
 
-            if os.path.exists(token_file):
+            if token_file.exists():
                 with open(token_file, "r") as fp:
                     token_data = json.load(fp)
 
@@ -252,13 +241,9 @@ def is_valid_feedstock_token(
                 .replace("${GH_TOKEN}", github_token)
             )
             git.Repo.clone_from(_token_repo, tmpdir, depth=1)
-            token_file = os.path.join(
-                tmpdir,
-                "tokens",
-                project + ".json",
-            )
+            token_file = Path(tmpdir, "tokens", f"{project}.json")
 
-            if os.path.exists(token_file):
+            if token_file.exists():
                 with open(token_file, "r") as fp:
                     token_data = json.load(fp)
 
@@ -343,14 +328,10 @@ def register_feedstock_token(user, project, token_repo, provider=None):
                 .replace("${GH_TOKEN}", github_token)
             )
             repo = git.Repo.clone_from(_token_repo, tmpdir, depth=1)
-            token_file = os.path.join(
-                tmpdir,
-                "tokens",
-                project + ".json",
-            )
+            token_file = str(Path(tmpdir, "tokens", f"{project}.json"))
 
             # append the token if needed
-            if os.path.exists(token_file):
+            if Path(token_file).exists():
                 with open(token_file, "r") as fp:
                     token_data = json.load(fp)
                 if "tokens" not in token_data:
