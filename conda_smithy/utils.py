@@ -5,7 +5,7 @@ import jinja2
 import jinja2.sandbox
 import datetime
 import time
-import os
+
 from pathlib import Path
 from collections import defaultdict
 from contextlib import contextmanager
@@ -30,9 +30,8 @@ def get_feedstock_about_from_meta(meta) -> dict:
     #   - if a subpackage has about, it's used as is
     # therefore we need to parse the yaml again just to get the about section...
     if "parent_recipe" in meta.meta["extra"]:
-        recipe_meta = os.path.join(
-            meta.meta["extra"]["parent_recipe"]["path"], "meta.yaml"
-        )
+        recipe_meta = Path(meta.meta["extra"]["parent_recipe"]["path"], "meta.yaml")
+
         with io.open(recipe_meta, "rt") as fh:
             content = render_meta_yaml("".join(fh))
             meta = get_yaml().load(content)
@@ -123,7 +122,7 @@ def update_conda_forge_config(forge_yaml):
     >>> with update_conda_forge_config(somepath) as cfg:
     ...     cfg['foo'] = 'bar'
     """
-    if os.path.exists(forge_yaml):
+    if Path(forge_yaml).exists():
         with open(forge_yaml, "r") as fh:
             code = get_yaml().load(fh)
     else:
