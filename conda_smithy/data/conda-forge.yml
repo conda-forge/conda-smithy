@@ -4,7 +4,7 @@ azure:
   build_id: null
   force: false
   free_disk_space: false
-  max_parallel: 50
+  max_parallel: 10
   project_id: 84710dde-1620-425b-80d0-4cf5baca359d
   project_name: feedstock-builds
   settings_linux:
