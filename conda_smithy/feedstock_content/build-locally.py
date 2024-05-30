@@ -4,7 +4,7 @@
 # locally.
 #
 import os
-import glob
+from pathlib import Path
 import subprocess
 from argparse import ArgumentParser
 import platform
@@ -19,8 +19,8 @@ def setup_environment(ns):
         if ns.output_id:
             os.environ["BUILD_OUTPUT_ID"] = ns.output_id
     if "MINIFORGE_HOME" not in os.environ:
-        os.environ["MINIFORGE_HOME"] = os.path.join(
-            os.path.dirname(__file__), "miniforge3"
+        os.environ["MINIFORGE_HOME"] = str(
+            Path(__file__).parent.joinpath("miniforge3")
         )
 
 
@@ -36,7 +36,7 @@ def run_osx_build(ns):
 
 def verify_config(ns):
     valid_configs = {
-        os.path.basename(f)[:-5] for f in glob.glob(".ci_support/*.yaml")
+        f.stem for f in Path(".ci_support").glob("*.yaml")
     }
     print(f"valid configs are {valid_configs}")
     if ns.config in valid_configs:
@@ -95,11 +95,9 @@ def main(args=None):
         elif ns.config.startswith("osx"):
             run_osx_build(ns)
     finally:
-        recipe_license_file = os.path.join(
-            "recipe", "recipe-scripts-license.txt"
-        )
-        if os.path.exists(recipe_license_file):
-            os.remove(recipe_license_file)
+        recipe_license_file = Path("recipe", "recipe-scripts-license.txt")
+        if recipe_license_file.exists():
+            recipe_license_file.unlink()
 
 
 if __name__ == "__main__":
