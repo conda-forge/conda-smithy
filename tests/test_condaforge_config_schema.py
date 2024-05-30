@@ -1,6 +1,5 @@
 import pytest
 from pydantic import ValidationError
-import yaml
 from conda_smithy.schema import ConfigModel
 
 
