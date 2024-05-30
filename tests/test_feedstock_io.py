@@ -2,6 +2,7 @@ import functools
 import io
 import operator as op
 import os
+from pathlib import Path
 import random
 import stat
 import string
@@ -16,14 +17,14 @@ import conda_smithy.feedstock_io as fio
 
 
 def keep_dir(dirname):
-    keep_filename = os.path.join(dirname, ".keep")
+    keep_filename = Path(dirname, ".keep")
     with io.open(keep_filename, "w", encoding="utf-8", newline="\n") as fh:
         fh.write("")
 
 
 def parameterize():
     for pathfunc in [
-        lambda pth, tmp_dir: os.path.relpath(pth, tmp_dir),
+        lambda pth, tmp_dir: str(Path(pth).relative_to(tmp_dir)),
         lambda pth, tmp_dir: pth,
     ]:
         for get_repo in [
@@ -34,7 +35,7 @@ def parameterize():
                 tmp_dir = tempfile.mkdtemp()
                 keep_dir(tmp_dir)
 
-                old_dir = os.getcwd()
+                old_dir = Path.cwd()
                 os.chdir(tmp_dir)
 
                 yield (
@@ -49,13 +50,13 @@ def parameterize():
 
 class TestFeedstockIO(unittest.TestCase):
     def setUp(self):
-        self.old_dir = os.getcwd()
+        self.old_dir = Path.cwd()
 
         self.tmp_dir = tempfile.mkdtemp()
         os.chdir(self.tmp_dir)
 
         with io.open(
-            os.path.abspath(".keep"), "w", encoding="utf-8", newline="\n"
+            Path(".keep").resolve(), "w", encoding="utf-8", newline="\n"
         ) as fh:
             fh.write("")
 
@@ -67,15 +68,14 @@ class TestFeedstockIO(unittest.TestCase):
                 self.assertIsInstance(
                     fio.get_repo(pathfunc(tmp_dir)), git.Repo
                 )
-                possible_repo_subdir = os.path.join(
-                    tmp_dir,
-                    "".join(
-                        "%s%s"
-                        % (x, os.path.sep if random.random() > 0.5 else "")
-                        for x in string.ascii_lowercase
-                    ),
+
+                random_path = "".join(
+                    x + ("/" if random.random() > 0.5 else "")
+                    for x in string.ascii_lowercase
                 )
-                os.makedirs(possible_repo_subdir)
+
+                possible_repo_subdir = Path(tmp_dir, random_path)
+                possible_repo_subdir.mkdir(parents=True)
                 assert fio.get_repo_root(possible_repo_subdir) == tmp_dir
 
     def test_set_exe_file(self):
@@ -86,20 +86,20 @@ class TestFeedstockIO(unittest.TestCase):
         for set_exe in [True, False]:
             for tmp_dir, repo, pathfunc in parameterize():
                 filename = "test.txt"
-                filename = os.path.join(tmp_dir, filename)
+                filepath = Path(tmp_dir, filename)
                 with io.open(
-                    filename, "w", encoding="utf-8", newline="\n"
+                    filepath, "w", encoding="utf-8", newline="\n"
                 ) as fh:
                     fh.write("")
                 if repo is not None:
-                    repo.index.add([filename])
+                    repo.index.add([str(filepath)])
 
-                fio.set_exe_file(pathfunc(filename), set_exe)
+                fio.set_exe_file(pathfunc(str(filepath)), set_exe)
 
-                file_mode = os.stat(filename).st_mode
+                file_mode = filepath.stat().st_mode
                 self.assertEqual(file_mode & set_mode, int(set_exe) * set_mode)
                 if repo is not None:
-                    blob = next(repo.index.iter_blobs(BlobFilter(filename)))[1]
+                    blob = next(repo.index.iter_blobs(BlobFilter(str(filepath))))[1]
                     self.assertEqual(
                         blob.mode & set_mode, int(set_exe) * set_mode
                     )
@@ -107,14 +107,14 @@ class TestFeedstockIO(unittest.TestCase):
     def test_write_file(self):
         for tmp_dir, repo, pathfunc in parameterize():
             for filename in ["test.txt", "dir1/dir2/test.txt"]:
-                filename = os.path.join(tmp_dir, filename)
+                filename = Path(tmp_dir, filename)
 
                 write_text = "text"
 
-                with fio.write_file(pathfunc(filename)) as fh:
+                with fio.write_file(pathfunc(str(filename))) as fh:
                     fh.write(write_text)
                 if repo is not None:
-                    repo.index.add([filename])
+                    repo.index.add([str(filename)])
 
                 read_text = ""
                 with io.open(filename, "r", encoding="utf-8") as fh:
@@ -123,7 +123,7 @@ class TestFeedstockIO(unittest.TestCase):
                 self.assertEqual(write_text, read_text)
 
                 if repo is not None:
-                    blob = next(repo.index.iter_blobs(BlobFilter(filename)))[1]
+                    blob = next(repo.index.iter_blobs(BlobFilter(str(filename))))[1]
                     read_text = blob.data_stream[3].read().decode("utf-8")
 
                     self.assertEqual(write_text, read_text)
@@ -131,7 +131,7 @@ class TestFeedstockIO(unittest.TestCase):
     def test_touch_file(self):
         for tmp_dir, repo, pathfunc in parameterize():
             for filename in ["test.txt", "dir1/dir2/test.txt"]:
-                filename = os.path.join(tmp_dir, filename)
+                filename = Path(tmp_dir, filename)
 
                 fio.touch_file(pathfunc(filename))
 
@@ -142,7 +142,7 @@ class TestFeedstockIO(unittest.TestCase):
                 self.assertEqual("", read_text)
 
                 if repo is not None:
-                    blob = next(repo.index.iter_blobs(BlobFilter(filename)))[1]
+                    blob = next(repo.index.iter_blobs(BlobFilter(str(filename))))[1]
                     read_text = blob.data_stream[3].read().decode("utf-8")
 
                     self.assertEqual("", read_text)
@@ -150,11 +150,10 @@ class TestFeedstockIO(unittest.TestCase):
     def test_remove_file(self):
         for tmp_dir, repo, pathfunc in parameterize():
             for filename in ["test.txt", "dir1/dir2/test.txt"]:
-                dirname = os.path.dirname(filename)
-                if dirname and not os.path.exists(dirname):
-                    os.makedirs(dirname)
+                dirname = Path(filename).parent
+                Path(dirname).mkdir(parents=True, exist_ok=True)
 
-                filename = os.path.join(tmp_dir, filename)
+                filename = str(Path(tmp_dir, filename))
 
                 with io.open(
                     filename, "w", encoding="utf-8", newline="\n"
@@ -163,10 +162,10 @@ class TestFeedstockIO(unittest.TestCase):
                 if repo is not None:
                     repo.index.add([filename])
 
-                self.assertTrue(os.path.exists(filename))
-                if dirname:
-                    self.assertTrue(os.path.exists(dirname))
-                    self.assertTrue(os.path.exists(os.path.dirname(dirname)))
+                self.assertTrue(Path(filename).exists())
+                if dirname != Path("."):
+                    self.assertTrue(dirname.exists())
+                    self.assertTrue(dirname.parent.exists())
                 if repo is not None:
                     self.assertTrue(
                         list(repo.index.iter_blobs(BlobFilter(filename)))
@@ -174,10 +173,10 @@ class TestFeedstockIO(unittest.TestCase):
 
                 fio.remove_file(pathfunc(filename))
 
-                self.assertFalse(os.path.exists(filename))
-                if dirname:
-                    self.assertFalse(os.path.exists(dirname))
-                    self.assertFalse(os.path.exists(os.path.dirname(dirname)))
+                self.assertFalse(Path(filename).exists())
+                if dirname != Path("."):
+                    self.assertFalse(dirname.exists())
+                    self.assertFalse(dirname.parent.exists())
                 if repo is not None:
                     self.assertFalse(
                         list(repo.index.iter_blobs(BlobFilter(filename)))
@@ -188,27 +187,27 @@ class TestFeedstockIO(unittest.TestCase):
             filename1 = "test1.txt"
             filename2 = "test2.txt"
 
-            filename1 = os.path.join(tmp_dir, filename1)
-            filename2 = os.path.join(tmp_dir, filename2)
+            filename1 = Path(tmp_dir, filename1)
+            filename2 = Path(tmp_dir, filename2)
 
             write_text = "text"
             with io.open(filename1, "w", encoding="utf-8", newline="\n") as fh:
                 fh.write(write_text)
 
-            self.assertTrue(os.path.exists(filename1))
-            self.assertFalse(os.path.exists(filename2))
+            self.assertTrue(filename1.exists())
+            self.assertFalse(filename2.exists())
             if repo is not None:
                 self.assertFalse(
-                    list(repo.index.iter_blobs(BlobFilter(filename2)))
+                    list(repo.index.iter_blobs(BlobFilter(str(filename2))))
                 )
 
             fio.copy_file(pathfunc(filename1), pathfunc(filename2))
 
-            self.assertTrue(os.path.exists(filename1))
-            self.assertTrue(os.path.exists(filename2))
+            self.assertTrue(filename1.exists())
+            self.assertTrue(filename2.exists())
             if repo is not None:
                 self.assertTrue(
-                    list(repo.index.iter_blobs(BlobFilter(filename2)))
+                    list(repo.index.iter_blobs(BlobFilter(str(filename2))))
                 )
 
             read_text = ""
@@ -218,7 +217,7 @@ class TestFeedstockIO(unittest.TestCase):
             self.assertEqual(write_text, read_text)
 
             if repo is not None:
-                blob = next(repo.index.iter_blobs(BlobFilter(filename2)))[1]
+                blob = next(repo.index.iter_blobs(BlobFilter(str(filename2))))[1]
                 read_text = blob.data_stream[3].read().decode("utf-8")
 
                 self.assertEqual(write_text, read_text)
