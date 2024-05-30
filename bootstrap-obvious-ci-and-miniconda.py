@@ -7,10 +7,9 @@ designed to run on OSX, Linux and Windows.
 
 """
 import argparse
-import os
+from pathlib import Path
 import platform
 import subprocess
-import sys
 
 try:
     from urllib.request import urlretrieve
@@ -85,22 +84,22 @@ def main(
     else:
         raise ValueError("Unsupported operating system.")
 
-    if not os.path.exists(basename):
+    if not Path(basename).exists():
         print("Downloading from {}".format(URL))
         urlretrieve(URL, basename)
     else:
         print("Using cached version of {}".format(URL))
 
     # Install with powershell.
-    if os.path.exists(target_dir):
+    if Path(target_dir).exists():
         raise IOError("Installation directory already exists")
     subprocess.check_call(cmd)
 
-    if not os.path.isdir(target_dir):
+    if not Path(target_dir).is_dir():
         raise RuntimeError("Failed to install miniconda :(")
 
     if install_obvci:
-        conda_path = os.path.join(target_dir, bin_dir, "conda")
+        conda_path = Path(target_dir, bin_dir, "conda")
         subprocess.check_call(
             [
                 conda_path,
