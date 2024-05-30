@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import os
+from pathlib import Path
 import requests
 import time
 import sys
@@ -14,7 +15,7 @@ from .utils import update_conda_forge_config
 # https://circleci.com/api/v1/project/:username/:project/envvar?circle-token=:token
 
 try:
-    with open(os.path.expanduser("~/.conda-smithy/circle.token"), "r") as fh:
+    with open(Path("~/.conda-smithy/circle.token").expanduser(), "r") as fh:
         circle_token = fh.read().strip()
     if not circle_token:
         raise ValueError()
@@ -25,7 +26,7 @@ except (IOError, ValueError):
     )
 
 try:
-    with open(os.path.expanduser("~/.conda-smithy/appveyor.token"), "r") as fh:
+    with open(Path("~/.conda-smithy/appveyor.token").expanduser(), "r") as fh:
         appveyor_token = fh.read().strip()
     if not appveyor_token:
         raise ValueError()
@@ -36,7 +37,7 @@ except (IOError, ValueError):
     )
 
 try:
-    with open(os.path.expanduser("~/.conda-smithy/drone.token"), "r") as fh:
+    with open(Path("~/.conda-smithy/drone.token").expanduser(), "r") as fh:
         drone_token = fh.read().strip()
     if not drone_token:
         raise ValueError()
@@ -51,7 +52,7 @@ try:
 except KeyError:
     try:
         with open(
-            os.path.expanduser("~/.conda-smithy/anaconda.token"), "r"
+            Path("~/.conda-smithy/anaconda.token").expanduser(), "r"
         ) as fh:
             anaconda_token = fh.read().strip()
         if not anaconda_token:
@@ -91,7 +92,7 @@ def travis_headers():
         "Content-Type": "application/json",
         "Travis-API-Version": "3",
     }
-    travis_token = os.path.expanduser("~/.conda-smithy/travis.token")
+    travis_token = Path("~/.conda-smithy/travis.token").expanduser()
     try:
         with open(travis_token, "r") as fh:
             token = fh.read().strip()
