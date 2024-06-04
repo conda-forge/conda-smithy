@@ -32,6 +32,7 @@ from conda_build.metadata import (
     FIELDS as cbfields,
 )
 from conda_smithy.validate_schema import validate_json_schema
+from ruamel.yaml import CommentedSeq
 
 from .utils import render_meta_yaml, get_yaml
 
@@ -899,6 +900,12 @@ def lintify_meta_yaml(
     )
     outputs = get_section(meta, "outputs", lints)
     output_reqs = [x.get("requirements", {}) for x in outputs]
+
+    # deal with cb2 recipes (no build/host/run distinction)
+    output_reqs = [
+        {"host": x, "run": x} if isinstance(x, CommentedSeq) else x
+        for x in output_reqs
+    ]
 
     # collect output requirements
     output_build_reqs = [x.get("build", []) or [] for x in output_reqs]

@@ -124,6 +124,10 @@ def test_stdlib_hints_multi_output():
                     requirements:
                       run:
                         - __osx >=10.13
+                  # test that cb2-style requirements don't break linter
+                  - name: boing
+                    requirements:
+                      - bar
                 """
             )
 
