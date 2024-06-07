@@ -37,3 +37,4 @@ dependencies:
   - backports.strenum
   - exceptiongroup
   - rattler-build-conda-compat >=1.2.0,<2.0.0a0
+  - mypy
