@@ -40,7 +40,9 @@ def generate_feedstock_content(target_directory, source_recipe_dir):
     # If there is a source recipe, copy it now to the right dir
     if source_recipe_dir:
         try:
-            configure_feedstock.copytree(source_recipe_dir, str(target_recipe_dir))
+            configure_feedstock.copytree(
+                source_recipe_dir, str(target_recipe_dir)
+            )
         except Exception as e:
             import sys
 
@@ -57,9 +59,7 @@ def generate_feedstock_content(target_directory, source_recipe_dir):
     forge_yml_recipe = Path(source_recipe_dir, "conda-forge.yml")
     yaml = YAML()
     if forge_yml_recipe.exists():
-        feedstock_io.remove_file(
-            target_recipe_dir.joinpath("conda-forge.yml")
-        )
+        feedstock_io.remove_file(target_recipe_dir.joinpath("conda-forge.yml"))
         try:
             with open(forge_yml_recipe, "r") as fp:
                 _cfg = yaml.load(fp.read())

@@ -30,7 +30,9 @@ def get_feedstock_about_from_meta(meta) -> dict:
     #   - if a subpackage has about, it's used as is
     # therefore we need to parse the yaml again just to get the about section...
     if "parent_recipe" in meta.meta["extra"]:
-        recipe_meta = Path(meta.meta["extra"]["parent_recipe"]["path"], "meta.yaml")
+        recipe_meta = Path(
+            meta.meta["extra"]["parent_recipe"]["path"], "meta.yaml"
+        )
 
         with io.open(recipe_meta, "rt") as fh:
             content = render_meta_yaml("".join(fh))

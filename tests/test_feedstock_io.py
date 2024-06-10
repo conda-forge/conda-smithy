@@ -99,7 +99,9 @@ class TestFeedstockIO(unittest.TestCase):
                 file_mode = filepath.stat().st_mode
                 self.assertEqual(file_mode & set_mode, int(set_exe) * set_mode)
                 if repo is not None:
-                    blob = next(repo.index.iter_blobs(BlobFilter(str(filepath))))[1]
+                    blob = next(
+                        repo.index.iter_blobs(BlobFilter(str(filepath)))
+                    )[1]
                     self.assertEqual(
                         blob.mode & set_mode, int(set_exe) * set_mode
                     )
@@ -123,7 +125,9 @@ class TestFeedstockIO(unittest.TestCase):
                 self.assertEqual(write_text, read_text)
 
                 if repo is not None:
-                    blob = next(repo.index.iter_blobs(BlobFilter(str(filename))))[1]
+                    blob = next(
+                        repo.index.iter_blobs(BlobFilter(str(filename)))
+                    )[1]
                     read_text = blob.data_stream[3].read().decode("utf-8")
 
                     self.assertEqual(write_text, read_text)
@@ -142,7 +146,9 @@ class TestFeedstockIO(unittest.TestCase):
                 self.assertEqual("", read_text)
 
                 if repo is not None:
-                    blob = next(repo.index.iter_blobs(BlobFilter(str(filename))))[1]
+                    blob = next(
+                        repo.index.iter_blobs(BlobFilter(str(filename)))
+                    )[1]
                     read_text = blob.data_stream[3].read().decode("utf-8")
 
                     self.assertEqual("", read_text)
@@ -217,7 +223,9 @@ class TestFeedstockIO(unittest.TestCase):
             self.assertEqual(write_text, read_text)
 
             if repo is not None:
-                blob = next(repo.index.iter_blobs(BlobFilter(str(filename2))))[1]
+                blob = next(repo.index.iter_blobs(BlobFilter(str(filename2))))[
+                    1
+                ]
                 read_text = blob.data_stream[3].read().decode("utf-8")
 
                 self.assertEqual(write_text, read_text)

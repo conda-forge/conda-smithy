@@ -327,9 +327,7 @@ def test_feedstock_token_exists(
     user = "foo"
     Path(tmpdir, "tokens").mkdir(parents=True, exist_ok=True)
     if file_exists:
-        with open(
-            Path(tmpdir, "tokens", f"{project}.json"), "w"
-        ) as fp:
+        with open(Path(tmpdir, "tokens", f"{project}.json"), "w") as fp:
             data = {"tokens": [{}]}
             if provider is not None:
                 data["tokens"][0]["provider"] = provider

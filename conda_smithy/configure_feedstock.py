@@ -1175,16 +1175,19 @@ def _render_ci_provider(
 
         # If the recipe has its own conda_forge_ci_setup package, then
         # install that
-        if Path(
-            forge_dir,
-            forge_config["recipe_dir"],
-            "conda_forge_ci_setup",
-            "__init__.py",
-        ).exists() and Path(
-            forge_dir,
-            forge_config["recipe_dir"],
-            "setup.py",
-        ).exists():
+        if (
+            Path(
+                forge_dir,
+                forge_config["recipe_dir"],
+                "conda_forge_ci_setup",
+                "__init__.py",
+            ).exists()
+            and Path(
+                forge_dir,
+                forge_config["recipe_dir"],
+                "setup.py",
+            ).exists()
+        ):
             forge_config["local_ci_setup"] = True
         else:
             forge_config["local_ci_setup"] = False
@@ -1324,9 +1327,7 @@ def _circle_specific_setup(jinja_env, forge_config, forge_dir, platform):
     )
 
     # Fix permission of other shell files.
-    target_fnames = [
-        Path(forge_dir, ".circleci", "checkout_merge_commit.sh")
-    ]
+    target_fnames = [Path(forge_dir, ".circleci", "checkout_merge_commit.sh")]
     for target_fname in target_fnames:
         set_exe_file(target_fname, True)
 
@@ -1483,14 +1484,13 @@ def _render_template_exe_files(
     forge_config, jinja_env, template_files, forge_dir
 ):
     for template_file in template_files:
-        template = jinja_env.get_template(
-            Path(template_file).name + ".tmpl"
-        )
+        template = jinja_env.get_template(Path(template_file).name + ".tmpl")
         target_fname = str(Path(forge_dir, template_file))
         new_file_contents = template.render(**forge_config)
-        if target_fname in get_common_scripts(forge_dir) and Path(
-            target_fname
-        ).exists():
+        if (
+            target_fname in get_common_scripts(forge_dir)
+            and Path(target_fname).exists()
+        ):
             with open(target_fname, "r") as fh:
                 old_file_contents = fh.read()
                 if old_file_contents != new_file_contents:
@@ -1723,9 +1723,7 @@ def _github_actions_specific_setup(
 def render_github_actions(
     jinja_env, forge_config, forge_dir, return_metadata=False
 ):
-    target_path = Path(
-        forge_dir, ".github", "workflows", "conda-build.yml"
-    )
+    target_path = Path(forge_dir, ".github", "workflows", "conda-build.yml")
     template_filename = "github-actions.yml.tmpl"
     fast_finish_text = ""
 
@@ -2152,6 +2150,7 @@ def _update_dict_within_dict(items, config):
             config[key] = value
     return config
 
+
 def _read_forge_config(forge_dir, forge_yml=None):
     # Load default values from the conda-forge.yml file
     with open(CONDA_FORGE_YAML_DEFAULTS_FILE, "r") as fh:
@@ -2191,9 +2190,12 @@ def _read_forge_config(forge_dir, forge_yml=None):
 
     # check for conda-smithy 2.x matrix which we can't auto-migrate
     # to conda_build_config
-    if file_config.get("matrix") and not Path(
-        forge_dir, config["recipe_dir"], "conda_build_config.yaml"
-    ).exists():
+    if (
+        file_config.get("matrix")
+        and not Path(
+            forge_dir, config["recipe_dir"], "conda_build_config.yaml"
+        ).exists()
+    ):
         raise ValueError(
             "Cannot rerender with matrix in conda-forge.yml."
             " Please migrate matrix to conda_build_config.yaml and try again."
@@ -2480,9 +2482,7 @@ def get_cfp_file_path(temporary_directory):
 
     logger.debug(list(Path(temporary_directory).iterdir()))
 
-    cf_pinning_file = Path(
-        temporary_directory, "conda_build_config.yaml"
-    )
+    cf_pinning_file = Path(temporary_directory, "conda_build_config.yaml")
     cf_pinning_ver = pkg.version
 
     assert cf_pinning_file.exists()
@@ -2581,9 +2581,7 @@ def make_jinja_env(feedstock_directory):
     # Load templates from the feedstock in preference to the smithy's templates.
     env = SandboxedEnvironment(
         extensions=["jinja2.ext.do"],
-        loader=FileSystemLoader(
-            [Path(forge_dir, "templates"), tmplt_dir]
-        ),
+        loader=FileSystemLoader([Path(forge_dir, "templates"), tmplt_dir]),
     )
     return env
 

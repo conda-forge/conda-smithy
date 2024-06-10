@@ -224,8 +224,7 @@ def lintify_meta_yaml(
     # 4: The recipe should have some tests.
     if not any(key in TEST_KEYS for key in test_section):
         a_test_file_exists = recipe_dir is not None and any(
-            (Path(recipe_dir, test_file)).exists()
-            for test_file in TEST_FILES
+            (Path(recipe_dir, test_file)).exists() for test_file in TEST_FILES
         )
         if not a_test_file_exists:
             has_outputs_test = False
@@ -858,7 +857,7 @@ def lintify_meta_yaml(
     with open(Path(file_dir, "licenses.txt"), "r") as f:
         expected_licenses = f.readlines()
         expected_licenses = set([l.strip() for l in expected_licenses])
-    with open(Path(file_dir,"license_exceptions.txt"), "r") as f:
+    with open(Path(file_dir, "license_exceptions.txt"), "r") as f:
         expected_exceptions = f.readlines()
         expected_exceptions = set([l.strip() for l in expected_exceptions])
     if set(filtered_licenses) - expected_licenses:

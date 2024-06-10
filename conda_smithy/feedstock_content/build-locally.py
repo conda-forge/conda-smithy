@@ -35,9 +35,7 @@ def run_osx_build(ns):
 
 
 def verify_config(ns):
-    valid_configs = {
-        f.stem for f in Path(".ci_support").glob("*.yaml")
-    }
+    valid_configs = {f.stem for f in Path(".ci_support").glob("*.yaml")}
     print(f"valid configs are {valid_configs}")
     if ns.config in valid_configs:
         print("Using " + ns.config + " configuration")

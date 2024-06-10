@@ -193,7 +193,9 @@ def test_py_matrix_on_github(py_recipe, jinja_env):
     assert matrix_dir.is_dir()
     # single matrix entry - readme is generated later in main function
     assert len(list(matrix_dir.iterdir())) == 2
-    assert Path(py_recipe.recipe, ".github", "workflows", "conda-build.yml").exists()
+    assert Path(
+        py_recipe.recipe, ".github", "workflows", "conda-build.yml"
+    ).exists()
 
 
 def test_py_matrix_on_azure(py_recipe, jinja_env):
@@ -256,9 +258,7 @@ def test_stdlib_deployment_target(
         )
     # this configuration should be run
     assert stdlib_deployment_target_recipe.config["azure"]["enabled"]
-    matrix_dir = Path(
-        stdlib_deployment_target_recipe.recipe, ".ci_support"
-    )
+    matrix_dir = Path(stdlib_deployment_target_recipe.recipe, ".ci_support")
     assert matrix_dir.is_dir()
     with open(matrix_dir.joinpath("osx_64_.yaml")) as f:
         lines = f.readlines()
@@ -354,9 +354,7 @@ def test_upload_on_branch_appveyor(upload_on_branch_recipe, jinja_env):
     assert upload_on_branch_recipe.config["upload_on_branch"] == "foo-branch"
 
     # Check that the parameter is in the generated file.
-    with open(
-        Path(upload_on_branch_recipe.recipe, ".appveyor.yml")
-    ) as fp:
+    with open(Path(upload_on_branch_recipe.recipe, ".appveyor.yml")) as fp:
         content = yaml.safe_load(fp)
     assert "%APPVEYOR_REPO_BRANCH%" in content["deploy_script"][0]
     assert "UPLOAD_ON_BRANCH=foo-branch" in content["deploy_script"][-2]
@@ -498,9 +496,9 @@ def test_render_with_all_skipped_generates_readme(skipped_recipe, jinja_env):
 def test_render_windows_with_skipped_python(python_skipped_recipe, jinja_env):
     config = python_skipped_recipe.config
     config["provider"]["win"] = "appveyor"
-    config["exclusive_config_file"] = str(Path(
-        python_skipped_recipe.recipe, "recipe", "long_config.yaml"
-    ))
+    config["exclusive_config_file"] = str(
+        Path(python_skipped_recipe.recipe, "recipe", "long_config.yaml")
+    )
     configure_feedstock.render_appveyor(
         jinja_env=jinja_env,
         forge_config=config,
@@ -625,8 +623,12 @@ def test_migrator_cfp_override(recipe_migration_cfep9, jinja_env):
 
 def test_migrator_delete_old(recipe_migration_cfep9, jinja_env):
     cfp_file = recipe_migration_cfep9.config["exclusive_config_file"]
-    cfp_migration_dir = Path(cfp_file).parent.joinpath("share", "conda-forge", "migrations")
-    recipe_path = Path(recipe_migration_cfep9.recipe, ".ci_support", "migrations", "zlib.yaml")
+    cfp_migration_dir = Path(cfp_file).parent.joinpath(
+        "share", "conda-forge", "migrations"
+    )
+    recipe_path = Path(
+        recipe_migration_cfep9.recipe, ".ci_support", "migrations", "zlib.yaml"
+    )
     assert recipe_path.exists()
     cfp_migration_dir.mkdir(parents=True, exist_ok=True)
     configure_feedstock.render_azure(
@@ -653,7 +655,7 @@ def test_migrator_downgrade_recipe(
         ".ci_support",
         "migrations",
     )
-    assert (len(list(migrations_dir.iterdir())) == 2)
+    assert len(list(migrations_dir.iterdir())) == 2
 
     with open(
         Path(
@@ -678,8 +680,10 @@ def test_migrator_compiler_version_recipe(
         forge_dir=recipe_migration_win_compiled.recipe,
     )
 
-    migrations_dir = Path(recipe_migration_win_compiled.recipe, ".ci_support", "migrations")
-    assert (len(list(migrations_dir.iterdir())) == 1)
+    migrations_dir = Path(
+        recipe_migration_win_compiled.recipe, ".ci_support", "migrations"
+    )
+    assert len(list(migrations_dir.iterdir())) == 1
 
     dir = Path(recipe_migration_win_compiled.recipe, ".ci_support")
     rendered_variants = [item.name for item in dir.iterdir()]
@@ -784,9 +788,9 @@ def test_conda_forge_yaml_empty(config_yaml):
 def test_noarch_platforms_bad_yaml(config_yaml, caplog):
     load_forge_config = lambda: configure_feedstock._load_forge_config(  # noqa
         config_yaml,
-        exclusive_config_file=str(Path(
-            config_yaml, "recipe", "default_config.yaml"
-        )),
+        exclusive_config_file=str(
+            Path(config_yaml, "recipe", "default_config.yaml")
+        ),
     )
 
     with open(Path(config_yaml, "conda-forge.yml"), "a+") as fp:
@@ -811,7 +815,9 @@ def test_forge_yml_alt_path(config_yaml):
     )
 
     forge_yml = config_yaml_path.joinpath("conda-forge.yml")
-    forge_yml_alt = config_yaml_path.joinpath(".config", "feedstock-config.yml")
+    forge_yml_alt = config_yaml_path.joinpath(
+        ".config", "feedstock-config.yml"
+    )
 
     forge_yml_alt.parent.mkdir()
     forge_yml.rename(forge_yml_alt)

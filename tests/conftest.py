@@ -112,9 +112,7 @@ def config_yaml(testing_workdir, recipe_dirname):
 
 @pytest.fixture(scope="function")
 def noarch_recipe(config_yaml, recipe_dirname, request):
-    with open(
-        Path(config_yaml, recipe_dirname, "meta.yaml"), "w"
-    ) as fh:
+    with open(Path(config_yaml, recipe_dirname, "meta.yaml"), "w") as fh:
         fh.write(
             """
 package:
@@ -216,9 +214,7 @@ about:
     home: home
     """
         )
-    with open(
-        Path(config_yaml, "recipe", "stdlib_config.yaml"), "w"
-    ) as f:
+    with open(Path(config_yaml, "recipe", "stdlib_config.yaml"), "w") as f:
         f.write(
             """\
 c_stdlib:
@@ -246,9 +242,7 @@ c_stdlib_version:               # [unix]
 @pytest.fixture(scope="function")
 def stdlib_deployment_target_recipe(config_yaml, stdlib_recipe):
     # append to existing stdlib_config.yaml from stdlib_recipe
-    with open(
-        Path(config_yaml, "recipe", "stdlib_config.yaml"), "a"
-    ) as f:
+    with open(Path(config_yaml, "recipe", "stdlib_config.yaml"), "a") as f:
         f.write(
             """\
 MACOSX_DEPLOYMENT_TARGET:       # [osx]
@@ -318,7 +312,9 @@ about:
     """
         )
 
-    Path(config_yaml, ".ci_support", "migrations").mkdir(parents=True, exist_ok=True)
+    Path(config_yaml, ".ci_support", "migrations").mkdir(
+        parents=True, exist_ok=True
+    )
     with open(
         Path(config_yaml, ".ci_support", "migrations", "zlib.yaml"),
         "w",
@@ -346,7 +342,9 @@ zlib:
 def recipe_migration_cfep9_downgrade(config_yaml, recipe_migration_cfep9):
     # write a downgrade migrator that lives next to the current migrator.
     # Only this, more recent migrator should apply.
-    Path(config_yaml, ".ci_support", "migrations").mkdir(parents=True, exist_ok=True)
+    Path(config_yaml, ".ci_support", "migrations").mkdir(
+        parents=True, exist_ok=True
+    )
     with open(
         Path(config_yaml, ".ci_support", "migrations", "zlib-downgrade.yaml"),
         "w",
@@ -372,7 +370,9 @@ zlib:
 
 @pytest.fixture(scope="function")
 def recipe_migration_win_compiled(config_yaml, py_recipe):
-    Path(config_yaml, ".ci_support", "migrations").mkdir(parents=True, exist_ok=True)
+    Path(config_yaml, ".ci_support", "migrations").mkdir(
+        parents=True, exist_ok=True
+    )
     with open(
         Path(config_yaml, ".ci_support", "migrations", "vc-migrate.yaml"),
         "w",

@@ -1507,9 +1507,7 @@ class Test_linter(unittest.TestCase):
         self.assertNotIn(msg, lints)
 
     def test_multiple_sources(self):
-        lints = linter.main(
-            Path(_thisdir, "recipes", "multiple_sources")
-        )
+        lints = linter.main(Path(_thisdir, "recipes", "multiple_sources"))
         assert not lints
 
     def test_noarch_platforms(self):

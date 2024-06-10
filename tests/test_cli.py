@@ -306,9 +306,7 @@ def test_regenerate(py_recipe, testing_workdir):
         feedstock_config=None,
         commit=False,
         no_check_uptodate=True,
-        exclusive_config_file=str(
-            Path(recipe, "recipe", "short_config.yaml")
-        ),
+        exclusive_config_file=str(Path(recipe, "recipe", "short_config.yaml")),
         check=False,
         temporary_directory=str(dest_dir.joinpath("temp")),
     )
