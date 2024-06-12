@@ -93,6 +93,7 @@ Authors are sorted by number of commits.
 * Matthew W. Thompson
 * conda-forge-admin
 * Klaus Zimmermann
+* dependabot[bot]
 * lorenz
 * Tom Augspurger
 * Ryan May
@@ -117,4 +118,3 @@ Authors are sorted by number of commits.
 * Benjamin Tovar
 * Sylvain Corlay
 * Brandon Andersen
-* dependabot[bot]
