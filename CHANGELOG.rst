@@ -4,6 +4,25 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.36.2
+====================
+
+**Added:**
+
+* Report artifacts contents after building via ``cph list``. Requires ``conda-forge-ci-setup >=4.6.0``. (#1947)
+
+**Fixed:**
+
+* Avoid linter failing on recipes using requirements without build/host/run distinction. (#1946)
+
+**Authors:**
+
+* Jaime Rodríguez-Guerra
+* H. Vetinari
+* dependabot[bot]
+
+
+
 v3.36.1
 ====================
 
