@@ -7,7 +7,9 @@ from inspect import cleandoc
 from typing import Any, Dict, List, Literal, Optional, Union
 
 import yaml
+import orjson
 from pydantic import BaseModel, Field, create_model, ConfigDict
+from pydantic import HttpUrl
 
 from conda.base.constants import KNOWN_SUBDIRS
 
@@ -57,34 +59,6 @@ class CIservices(StrEnum):
     emulated = "emulated"
     native = "native"
     disable = "None"
-
-
-class BotConfigAutoMergeChoice(StrEnum):
-    VERSION = "version"
-    MIGRATION = "migration"
-
-
-class BotConfigInspectionChoice(StrEnum):
-    HINT = "hint"
-    HINT_ALL = "hint-all"
-    HINT_SOURCE = "hint-source"
-    HINT_GRAYSKULL = "hint-grayskull"
-    UPDATE_ALL = "update-all"
-    UPDATE_SOURCE = "update-source"
-    UPDATE_GRAYSKULL = "update-grayskull"
-    DISABLED = "disabled"
-
-
-class BotConfigVersionUpdatesSourcesChoice(StrEnum):
-    CRAN = "cran"
-    GITHUB = "github"
-    INCREMENT_ALPHA_RAW_URL = "incrementalpharawurl"
-    LIBRARIES_IO = "librariesio"
-    NPM = "npm"
-    NVIDIA = "nvidia"
-    PYPI = "pypi"
-    RAW_URL = "rawurl"
-    ROS_DISTRO = "rosdistro"
 
 
 ##############################################
@@ -311,29 +285,8 @@ class GithubActionsConfig(BaseModel):
     )
 
 
-class BotConfigVersionUpdates(BaseModel):
-    """
-    This dictates the behavior of the conda-forge auto-tick bot for version
-    updates
-    """
-
-    model_config: ConfigDict = ConfigDict(extra="forbid")
-
-    random_fraction_to_keep: Optional[float] = Field(
-        None,
-        description="Fraction of versions to keep for frequently updated packages",
-    )
-
-    exclude: Optional[List[str]] = Field(
-        default=[],
-        description="List of versions to exclude. "
-        "Make sure branch names are `str` by quoting the value.",
-    )
-
-    sources: Optional[List[BotConfigVersionUpdatesSourcesChoice]] = Field(
-        None,
-        description="List of sources to use for version updates",
-    )
+class Url(HttpUrl):
+    pass
 
 
 class BotConfig(BaseModel):
@@ -342,38 +295,12 @@ class BotConfig(BaseModel):
     automatic version updates/migrations for feedstocks.
     """
 
-    model_config: ConfigDict = ConfigDict(extra="forbid")
-
-    automerge: Optional[Union[bool, BotConfigAutoMergeChoice]] = Field(
-        False,
-        description="Automatically merge PRs if possible",
-    )
-
-    check_solvable: Optional[bool] = Field(
-        default=True,
-        description="Open PRs only if resulting environment is solvable.",
-    )
-
-    inspection: Optional[BotConfigInspectionChoice] = Field(
-        default="hint",
-        description="Method for generating hints or updating recipe",
-    )
-
-    abi_migration_branches: Optional[List[str]] = Field(
-        default=[],
-        description="List of branches for additional bot migration PRs. "
-        "Make sure branch names are `str` by quoting the value.",
-    )
-
-    run_deps_from_wheel: Optional[bool] = Field(
-        default=False,
-        description="Update run dependencies from the pip wheel",
-    )
-
-    version_updates: Optional[BotConfigVersionUpdates] = Field(
-        default_factory=BotConfigVersionUpdates,
-        description="Bot config for version update PRs",
-    )
+    class Config:
+        json_schema_extra = {
+            "$ref": Url(
+                "https://gist.githubusercontent.com/isuruf/7fbc5a6d53e6a3f5450b90a12c1ace5a/raw/ddb6054c8683ac302a567bd8b42e792a8d4bda30/conda-forge-bot-config.json"
+            )
+        }
 
 
 class CondaBuildConfig(BaseModel):
@@ -1260,9 +1187,19 @@ if __name__ == "__main__":
 
     model = ConfigModel()
 
+    def json_dumps_default(o):
+        if isinstance(o, Url):
+            return str(o)
+        raise TypeError
+
     with CONDA_FORGE_YAML_SCHEMA_FILE.open(mode="w+") as f:
         obj = model.model_json_schema()
-        f.write(json.dumps(obj, indent=2))
+
+        f.write(
+            orjson.dumps(
+                obj, default=json_dumps_default, option=orjson.OPT_INDENT_2
+            ).decode("utf-8")
+        )
         f.write("\n")
 
     with CONDA_FORGE_YAML_DEFAULTS_FILE.open(mode="w+") as f:
