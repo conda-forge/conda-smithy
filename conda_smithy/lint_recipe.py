@@ -745,6 +745,7 @@ def lintify_meta_yaml(
             lints.append(
                 "Go packages must include the licenses of the Go dependencies. "
                 "For more info, visit: https://conda-forge.org/docs/maintainer/adding_pkgs/#go"
+            )
 
     # hints
     # 1: suggest pip
