@@ -645,6 +645,14 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
                 "For more info, visit: https://conda-forge.org/docs/maintainer/adding_pkgs/#rust"
             )
 
+    # 27: Check that go licenses are bundled.
+    if build_reqs and ("{{ compiler('go') }}" in build_reqs):
+        if "go-licenses" not in build_reqs:
+            lints.append(
+                "Go packages must include the licenses of the Go dependencies. "
+                "For more info, visit: https://conda-forge.org/docs/maintainer/adding_pkgs/#go"
+            )
+
     # hints
     # 1: suggest pip
     if "script" in build_section:
