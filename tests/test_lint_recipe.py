@@ -1363,6 +1363,39 @@ class Test_linter(unittest.TestCase):
         lints, hints = linter.lintify(meta_with_license)
         self.assertNotIn(expected_msg, lints)
 
+    def test_go_license_bundling(self):
+        # Case where go-licenses is missing
+        meta_missing_license = {
+            "package": {
+                "name": "gopackage",
+            },
+            "build": {
+                "requirements": {
+                    "build": ["{{ compiler('go') }}"]
+                },
+            },
+        }
+        lints, hints = linter.lintify(meta_missing_license)
+        expected_msg = (
+            "Go packages must include the licenses of the Go dependencies. "
+            "For more info, visit: https://conda-forge.org/docs/maintainer/adding_pkgs/#go"
+        )
+        self.assertIn(expected_msg, lints)
+
+        # Case where go-licenses is present
+        meta_with_license = {
+            "package": {
+                "name": "gopackage",
+            },
+            "build": {
+                "requirements": {
+                    "build": ["{{ compiler('go') }}", "go-licenses"]
+                },
+            },
+        }
+        lints, hints = linter.lintify(meta_with_license)
+        self.assertNotIn(expected_msg, lints)
+
 @pytest.mark.cli
 class TestCLI_recipe_lint(unittest.TestCase):
     def test_cli_fail(self):
