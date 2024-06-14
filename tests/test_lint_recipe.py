@@ -1330,6 +1330,38 @@ class Test_linter(unittest.TestCase):
         expected = "Recipes should usually depend on `matplotlib-base`"
         self.assertTrue(any(hint.startswith(expected) for hint in hints))
 
+    def test_rust_license_bundling(self):
+        # Case where cargo-bundle-licenses is missing
+        meta_missing_license = {
+            "package": {
+                "name": "rustpackage",
+            },
+            "build": {
+                "requirements": {
+                    "build": ["{{ compiler('rust') }}"]
+                },
+            },
+        }
+        lints, hints = linter.lintify(meta_missing_license)
+        expected_msg = (
+            "Rust packages must include the licenses of the Rust dependencies. "
+            "For more info, visit: https://conda-forge.org/docs/maintainer/adding_pkgs/#rust"
+        )
+        self.assertIn(expected_msg, lints)
+
+        # Case where cargo-bundle-licenses is present
+        meta_with_license = {
+            "package": {
+                "name": "rustpackage",
+            },
+            "build": {
+                "requirements": {
+                    "build": ["{{ compiler('rust') }}", "cargo-bundle-licenses"]
+                },
+            },
+        }
+        lints, hints = linter.lintify(meta_with_license)
+        self.assertNotIn(expected_msg, lints)
 
 @pytest.mark.cli
 class TestCLI_recipe_lint(unittest.TestCase):
