@@ -20,13 +20,13 @@ bash $MINIFORGE_FILE -b -p ${MINIFORGE_HOME}
 
 ( startgroup "Configuring conda" ) 2> /dev/null
 {%- if conda_build_tool == "mambabuild" %}
-{%- set BUILD_CMD="conda mambabuild" %}
+{%- set BUILD_CMD="conda-mambabuild" %}
 {%- elif conda_build_tool == "conda-build+conda-libmamba-solver" %}
-{%- set BUILD_CMD="CONDA_SOLVER=libmamba conda build" %}
+{%- set BUILD_CMD="CONDA_SOLVER=libmamba conda-build" %}
 {%- elif conda_build_tool == "conda-build+classic" %}
-{%- set BUILD_CMD="CONDA_SOLVER=classic conda build" %}
+{%- set BUILD_CMD="CONDA_SOLVER=classic conda-build" %}
 {%- else %}
-{%- set BUILD_CMD="conda build" %}
+{%- set BUILD_CMD="conda-build" %}
 {%- endif %}
 
 source ${MINIFORGE_HOME}/etc/profile.d/conda.sh
@@ -104,6 +104,12 @@ else
         --clobber-file ./.ci_support/clobber_${CONFIG}.yaml \
         --extra-meta flow_run_id="$flow_run_id" remote_url="$remote_url" sha="$sha"
 
+    ( startgroup "Inspecting artifacts" ) 2> /dev/null
+
+    # inspect_artifacts was only added in conda-forge-ci-setup 4.6.0
+    command -v inspect_artifacts >/dev/null 2>&1 && inspect_artifacts || echo "inspect_artifacts needs conda-forge-ci-setup >=4.6.0"
+
+    ( endgroup "Inspecting artifacts" ) 2> /dev/null
 
     {%- if conda_forge_output_validation %}
     ( startgroup "Validating outputs" ) 2> /dev/null

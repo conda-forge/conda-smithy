@@ -1,0 +1,15 @@
+# This file is just a parsable YAML that collects all the actions used by
+# conda_smithy/templates/github-actions.yml.tmpl. It's here so dependabot
+# can pick it up and then we can test whether the actions are up-to-date in
+# the template.
+on:
+  workflow_dispatch:
+
+jobs:
+  inventory:
+    runs-on: ubuntu-latest
+    if: false
+    steps:
+      - uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
+      - uses: conda-incubator/setup-miniconda@a4260408e20b96e80095f42ff7f1a15b27dd94ca # v3.0.4
+      - uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3

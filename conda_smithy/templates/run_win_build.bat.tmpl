@@ -56,9 +56,16 @@ if EXIST LICENSE.txt (
     copy LICENSE.txt "{{ recipe_dir }}\\recipe-scripts-license.txt"
 )
 
-{%- if test in ["native", "native_and_emulated"] %}
+{%- if test == "native" %}
 if NOT [%HOST_PLATFORM%] == [%BUILD_PLATFORM%] (
     set "EXTRA_CB_OPTIONS=%EXTRA_CB_OPTIONS% --no-test"
+)
+{%- endif %}
+{%- if test == "native_and_emulated" %}
+if NOT [%HOST_PLATFORM%] == [%BUILD_PLATFORM%] (
+    if [%CROSSCOMPILING_EMULATOR%] == [] (
+        set "EXTRA_CB_OPTIONS=%EXTRA_CB_OPTIONS% --no-test"
+    )
 )
 {%- endif %}
 
@@ -71,17 +78,22 @@ call :end_group
 :: Build the recipe
 echo Building recipe
 {%- if conda_build_tool == "mambabuild" %}
-conda.exe mambabuild "{{ recipe_dir }}" -m .ci_support\%CONFIG%.yaml --suppress-variables %EXTRA_CB_OPTIONS%
+conda-mambabuild.exe "{{ recipe_dir }}" -m .ci_support\%CONFIG%.yaml --suppress-variables %EXTRA_CB_OPTIONS%
 {%- elif conda_build_tool == "conda-build+conda-libmamba-solver" %}
 set "CONDA_SOLVER=libmamba"
-conda.exe build "{{ recipe_dir }}" -m .ci_support\%CONFIG%.yaml --suppress-variables %EXTRA_CB_OPTIONS%
+conda-build.exe "{{ recipe_dir }}" -m .ci_support\%CONFIG%.yaml --suppress-variables %EXTRA_CB_OPTIONS%
 {%- elif conda_build_tool == "conda-build+classic" %}
 set "CONDA_SOLVER=classic"
-conda.exe build "{{ recipe_dir }}" -m .ci_support\%CONFIG%.yaml --suppress-variables %EXTRA_CB_OPTIONS%
+conda-build.exe "{{ recipe_dir }}" -m .ci_support\%CONFIG%.yaml --suppress-variables %EXTRA_CB_OPTIONS%
 {%- elif conda_build_tool == "conda-build" %}
-conda.exe build "{{ recipe_dir }}" -m .ci_support\%CONFIG%.yaml --suppress-variables %EXTRA_CB_OPTIONS%
+conda-build.exe "{{ recipe_dir }}" -m .ci_support\%CONFIG%.yaml --suppress-variables %EXTRA_CB_OPTIONS%
 {%- endif %}
 if !errorlevel! neq 0 exit /b !errorlevel!
+
+call :start_group "Inspecting artifacts"
+:: inspect_artifacts was only added in conda-forge-ci-setup 4.6.0
+WHERE inspect_artifacts >nul 2>nul && inspect_artifacts || echo "inspect_artifacts needs conda-forge-ci-setup >=4.6.0"
+call :end_group
 
 :: Prepare some environment variables for the upload step
 if /i "%CI%" == "github_actions" (

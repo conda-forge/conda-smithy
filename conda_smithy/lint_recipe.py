@@ -6,15 +6,18 @@ str_type = str
 
 import copy
 import fnmatch
-from glob import glob
 import io
 import itertools
+import json
 import os
 import re
 import requests
 import shutil
 import subprocess
 import sys
+from glob import glob
+from inspect import cleandoc
+from textwrap import indent
 
 import github
 
@@ -23,11 +26,13 @@ if sys.version_info[:2] < (3, 11):
 else:
     import tomllib
 
+from conda.models.version import VersionOrder
 from conda_build.metadata import (
     ensure_valid_license_family,
     FIELDS as cbfields,
 )
-import conda_build.conda_interface
+from conda_smithy.validate_schema import validate_json_schema
+from ruamel.yaml import CommentedSeq
 
 from .utils import render_meta_yaml, get_yaml
 
@@ -36,10 +41,10 @@ FIELDS = copy.deepcopy(cbfields)
 
 # Just in case 'extra' moves into conda_build
 if "extra" not in FIELDS.keys():
-    FIELDS["extra"] = set()
+    FIELDS["extra"] = {}
 
-FIELDS["extra"].add("recipe-maintainers")
-FIELDS["extra"].add("feedstock-name")
+FIELDS["extra"]["recipe-maintainers"] = ()
+FIELDS["extra"]["feedstock-name"] = ""
 
 EXPECTED_SECTION_ORDER = [
     "package",
@@ -125,7 +130,50 @@ def lint_about_contents(about_section, lints):
             )
 
 
-def lintify(meta, recipe_dir=None, conda_forge=False):
+def find_local_config_file(recipe_dir, filename):
+    # support
+    # 1. feedstocks
+    # 2. staged-recipes with custom conda-forge.yaml in recipe
+    # 3. staged-recipes
+    found_filesname = (
+        glob(os.path.join(recipe_dir, filename))
+        or glob(
+            os.path.join(recipe_dir, "..", filename),
+        )
+        or glob(
+            os.path.join(recipe_dir, "..", "..", filename),
+        )
+    )
+
+    return found_filesname[0] if found_filesname else None
+
+
+def lintify_forge_yaml(recipe_dir=None) -> (list, list):
+    if recipe_dir:
+        forge_yaml_filename = (
+            glob(os.path.join(recipe_dir, "..", "conda-forge.yml"))
+            or glob(
+                os.path.join(recipe_dir, "conda-forge.yml"),
+            )
+            or glob(
+                os.path.join(recipe_dir, "..", "..", "conda-forge.yml"),
+            )
+        )
+        if forge_yaml_filename:
+            with open(forge_yaml_filename[0], "r") as fh:
+                forge_yaml = get_yaml().load(fh)
+        else:
+            forge_yaml = {}
+    else:
+        forge_yaml = {}
+
+    # This is where we validate against the jsonschema and execute our custom validators.
+    return validate_json_schema(forge_yaml)
+
+
+def lintify_meta_yaml(
+    meta, recipe_dir=None, conda_forge=False
+) -> (list, list):
     lints = []
     hints = []
     major_sections = list(meta.keys())
@@ -389,22 +437,29 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
                 )
             )
 
+    conda_build_config_filename = None
     if recipe_dir:
-        forge_yaml_filename = (
-            glob(os.path.join(recipe_dir, "..", "conda-forge.yml"))
-            or glob(
-                os.path.join(recipe_dir, "conda-forge.yml"),
-            )
-            or glob(
-                os.path.join(recipe_dir, "..", "..", "conda-forge.yml"),
-            )
+        conda_build_config_filename = find_local_config_file(
+            recipe_dir, "conda_build_config.yaml"
         )
+
+        if conda_build_config_filename:
+            with open(conda_build_config_filename, "r") as fh:
+                conda_build_config_keys = set(get_yaml().load(fh).keys())
+        else:
+            conda_build_config_keys = set()
+
+        forge_yaml_filename = find_local_config_file(
+            recipe_dir, "conda-forge.yml"
+        )
+
         if forge_yaml_filename:
-            with open(forge_yaml_filename[0], "r") as fh:
+            with open(forge_yaml_filename, "r") as fh:
                 forge_yaml = get_yaml().load(fh)
         else:
             forge_yaml = {}
     else:
+        conda_build_config_keys = set()
         forge_yaml = {}
 
     # 18: noarch doesn't work with selectors for runtime dependencies
@@ -430,7 +485,9 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
                         in_runreqs = False
                         continue
                     if is_selector_line(
-                        line, allow_platforms=noarch_platforms
+                        line,
+                        allow_platforms=noarch_platforms,
+                        allow_keys=conda_build_config_keys,
                     ):
                         lints.append(
                             "`noarch` packages can't have selectors. If "
@@ -443,7 +500,7 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
     if package_section.get("version") is not None:
         ver = str(package_section.get("version"))
         try:
-            conda_build.conda_interface.VersionOrder(ver)
+            VersionOrder(ver)
         except:
             lints.append(
                 "Package version {} doesn't match conda spec".format(ver)
@@ -637,7 +694,44 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
     for out in outputs_section:
         check_pins_build_and_requirements(out)
 
-    # 27: Check that Rust licenses are bundled.
+    # 27: Check usage of whl files as a source
+    pure_python_wheel_urls = []
+    compiled_wheel_urls = []
+    # We could iterate on `sources_section`, but that might miss platform specific selector lines
+    # ... so raw meta.yaml and regex it is...
+    pure_python_wheel_re = re.compile(r".*[:-]\s+(http.*-none-any\.whl)\s+.*")
+    wheel_re = re.compile(r".*[:-]\s+(http.*\.whl)\s+.*")
+    if recipe_dir is not None and os.path.exists(meta_fname):
+        with open(meta_fname, "rt") as f:
+            for line in f:
+                if match := pure_python_wheel_re.search(line):
+                    pure_python_wheel_urls.append(match.group(1))
+                elif match := wheel_re.search(line):
+                    compiled_wheel_urls.append(match.group(1))
+    if compiled_wheel_urls:
+        formatted_urls = ", ".join([f"`{url}`" for url in compiled_wheel_urls])
+        lints.append(
+            f"Detected compiled wheel(s) in source: {formatted_urls}. "
+            "This is disallowed. All packages should be built from source except in "
+            "rare and exceptional cases."
+        )
+    if pure_python_wheel_urls:
+        formatted_urls = ", ".join(
+            [f"`{url}`" for url in pure_python_wheel_urls]
+        )
+        if noarch_value == "python":  # this is ok, just hint
+            hints.append(
+                f"Detected pure Python wheel(s) in source: {formatted_urls}. "
+                "This is generally ok for pure Python wheels and noarch=python "
+                "packages but it's preferred to use a source distribution (sdist) if possible."
+            )
+        else:
+            lints.append(
+                f"Detected pure Python wheel(s) in source: {formatted_urls}. "
+                "This is discouraged. Please consider using a source distribution (sdist) instead."
+            )
+
+    # 28: Check that Rust licenses are bundled.
     if build_reqs and ("{{ compiler('rust') }}" in build_reqs):
         if "cargo-bundle-licenses" not in build_reqs:
             lints.append(
@@ -645,13 +739,12 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
                 "For more info, visit: https://conda-forge.org/docs/maintainer/adding_pkgs/#rust"
             )
 
-    # 27: Check that go licenses are bundled.
+    # 29: Check that go licenses are bundled.
     if build_reqs and ("{{ compiler('go') }}" in build_reqs):
         if "go-licenses" not in build_reqs:
             lints.append(
                 "Go packages must include the licenses of the Go dependencies. "
                 "For more info, visit: https://conda-forge.org/docs/maintainer/adding_pkgs/#go"
-            )
 
     # hints
     # 1: suggest pip
@@ -704,21 +797,9 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
     shell_scripts = []
     if recipe_dir:
         shell_scripts = glob(os.path.join(recipe_dir, "*.sh"))
-        # support
-        # 1. feedstocks
-        # 2. staged-recipes with custom conda-forge.yaml in recipe
-        # 3. staged-recipes
-        forge_yaml = (
-            glob(os.path.join(recipe_dir, "..", "conda-forge.yml"))
-            or glob(
-                os.path.join(recipe_dir, "conda-forge.yml"),
-            )
-            or glob(
-                os.path.join(recipe_dir, "..", "..", "conda-forge.yml"),
-            )
-        )
+        forge_yaml = find_local_config_file(recipe_dir, "conda-forge.yml")
         if shell_scripts and forge_yaml:
-            with open(forge_yaml[0], "r") as fh:
+            with open(forge_yaml, "r") as fh:
                 code = get_yaml().load(fh)
                 shellcheck_enabled = code.get("shellcheck", {}).get(
                     "enabled", shellcheck_enabled
@@ -818,16 +899,222 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
             "[here]( https://conda-forge.org/docs/maintainer/adding_pkgs.html#spdx-identifiers-and-expressions )."
         )
 
+    # 5: stdlib-related hints
+    global_build_reqs = requirements_section.get("build") or []
+    global_run_reqs = requirements_section.get("run") or []
+    global_constraints = requirements_section.get("run_constrained") or []
+
+    stdlib_hint = (
+        "This recipe is using a compiler, which now requires adding a build "
+        'dependence on `{{ stdlib("c") }}` as well. Note that this rule applies to '
+        "each output of the recipe using a compiler. For further details, please "
+        "see https://github.com/conda-forge/conda-forge.github.io/issues/2102."
+    )
+    pat_compiler_stub = re.compile(
+        "(m2w64_)?(c|cxx|fortran|rust)_compiler_stub"
+    )
+    outputs = get_section(meta, "outputs", lints)
+    output_reqs = [x.get("requirements", {}) for x in outputs]
+
+    # deal with cb2 recipes (no build/host/run distinction)
+    output_reqs = [
+        {"host": x, "run": x} if isinstance(x, CommentedSeq) else x
+        for x in output_reqs
+    ]
+
+    # collect output requirements
+    output_build_reqs = [x.get("build", []) or [] for x in output_reqs]
+    output_run_reqs = [x.get("run", []) or [] for x in output_reqs]
+    output_contraints = [
+        x.get("run_constrained", []) or [] for x in output_reqs
+    ]
+
+    # aggregate as necessary
+    all_build_reqs = [global_build_reqs] + output_build_reqs
+    all_build_reqs_flat = global_build_reqs
+    all_run_reqs_flat = global_run_reqs
+    all_contraints_flat = global_constraints
+    [all_build_reqs_flat := all_build_reqs_flat + x for x in output_build_reqs]
+    [all_run_reqs_flat := all_run_reqs_flat + x for x in output_run_reqs]
+    [all_contraints_flat := all_contraints_flat + x for x in output_contraints]
+
+    # this check needs to be done per output --> use separate (unflattened) requirements
+    for build_reqs in all_build_reqs:
+        has_compiler = any(pat_compiler_stub.match(rq) for rq in build_reqs)
+        if has_compiler and "c_stdlib_stub" not in build_reqs:
+            if stdlib_hint not in hints:
+                hints.append(stdlib_hint)
+
+    sysroot_hint = (
+        "You're setting a requirement on sysroot_linux-<arch> directly; this should "
+        'now be done by adding a build dependence on `{{ stdlib("c") }}`, and '
+        "overriding `c_stdlib_version` in `recipe/conda_build_config.yaml` for the "
+        "respective platform as necessary. For further details, please see "
+        "https://github.com/conda-forge/conda-forge.github.io/issues/2102."
+    )
+    pat_sysroot = re.compile(r"sysroot_linux.*")
+    if any(pat_sysroot.match(req) for req in all_build_reqs_flat):
+        if sysroot_hint not in hints:
+            hints.append(sysroot_hint)
+
+    osx_hint = (
+        "You're setting a constraint on the `__osx` virtual package directly; this "
+        'should now be done by adding a build dependence on `{{ stdlib("c") }}`, '
+        "and overriding `c_stdlib_version` in `recipe/conda_build_config.yaml` for "
+        "the respective platform as necessary. For further details, please see "
+        "https://github.com/conda-forge/conda-forge.github.io/issues/2102."
+    )
+    to_check = all_run_reqs_flat + all_contraints_flat
+    if any(req.startswith("__osx >") for req in to_check):
+        if osx_hint not in hints:
+            hints.append(osx_hint)
+
+    # stdlib issues in CBC
+    cbc_lines = []
+    if conda_build_config_filename:
+        with open(conda_build_config_filename, "r") as fh:
+            cbc_lines = fh.readlines()
+
+    # filter on osx-relevant lines
+    pat = re.compile(
+        r"^([^:\#]*?)\s+\#\s\[.*(not\s(osx|unix)|(?<!not\s)(linux|win)).*\]\s*$"
+    )
+    # remove lines with selectors that don't apply to osx, i.e. if they contain
+    # "not osx", "not unix", "linux" or "win"; this also removes trailing newlines.
+    # the regex here doesn't handle `or`-conjunctions, but the important thing for
+    # having a valid yaml after filtering below is that we avoid filtering lines with
+    # a colon (`:`), meaning that all yaml keys "survive". As an example, keys like
+    # c_stdlib_version can have `or`'d selectors, even if all values are arch-specific.
+    cbc_lines_osx = [pat.sub("", x) for x in cbc_lines]
+    cbc_content_osx = "\n".join(cbc_lines_osx)
+    cbc_osx = get_yaml().load(cbc_content_osx) or {}
+    # filter None values out of cbc_osx dict, can appear for example with
+    # ```
+    # c_stdlib_version:  # [unix]
+    #   - 2.17           # [linux]
+    #   # note lack of osx
+    # ```
+    cbc_osx = dict(filter(lambda item: item[1] is not None, cbc_osx.items()))
+
+    def sort_osx(versions):
+        # we need to have a known order for [x64, arm64]; in the absence of more
+        # complicated regex processing, we assume that if there are two versions
+        # being specified, the higher one is osx-arm64.
+        if len(versions) == 2:
+            if VersionOrder(str(versions[0])) > VersionOrder(str(versions[1])):
+                versions = versions[::-1]
+        return versions
+
+    baseline_version = ["10.13", "11.0"]
+    v_stdlib = sort_osx(cbc_osx.get("c_stdlib_version", baseline_version))
+    macdt = sort_osx(cbc_osx.get("MACOSX_DEPLOYMENT_TARGET", baseline_version))
+    sdk = sort_osx(cbc_osx.get("MACOSX_SDK_VERSION", baseline_version))
+
+    if {"MACOSX_DEPLOYMENT_TARGET", "c_stdlib_version"} <= set(cbc_osx.keys()):
+        # both specified, check that they match
+        if len(v_stdlib) != len(macdt):
+            # if lengths aren't matching, assume it's a legal combination
+            # where one key is specified for less arches than the other and
+            # let the rerender deal with the details
+            pass
+        else:
+            mismatch_hint = (
+                "Conflicting specification for minimum macOS deployment target!\n"
+                "If your conda_build_config.yaml sets `MACOSX_DEPLOYMENT_TARGET`, "
+                "please change the name of that key to `c_stdlib_version`!\n"
+                f"Continuing with `max(c_stdlib_version, MACOSX_DEPLOYMENT_TARGET)`."
+            )
+            merged_dt = []
+            for v_std, v_mdt in zip(v_stdlib, macdt):
+                # versions with a single dot may have been read as floats
+                v_std, v_mdt = str(v_std), str(v_mdt)
+                if VersionOrder(v_std) != VersionOrder(v_mdt):
+                    if mismatch_hint not in hints:
+                        hints.append(mismatch_hint)
+                merged_dt.append(
+                    v_mdt
+                    if VersionOrder(v_std) < VersionOrder(v_mdt)
+                    else v_std
+                )
+            cbc_osx["merged"] = merged_dt
+    elif "MACOSX_DEPLOYMENT_TARGET" in cbc_osx.keys():
+        cbc_osx["merged"] = macdt
+        # only MACOSX_DEPLOYMENT_TARGET, should be renamed
+        deprecated_dt = (
+            "In your conda_build_config.yaml, please change the name of "
+            "`MACOSX_DEPLOYMENT_TARGET`, to `c_stdlib_version`!"
+        )
+        if deprecated_dt not in hints:
+            hints.append(deprecated_dt)
+    elif "c_stdlib_version" in cbc_osx.keys():
+        cbc_osx["merged"] = v_stdlib
+        # only warn if version is below baseline
+        outdated_hint = (
+            "You are setting `c_stdlib_version` below the current global baseline "
+            "in conda-forge (10.13). If this is your intention, you also need to "
+            "override `MACOSX_DEPLOYMENT_TARGET` (with the same value) locally."
+        )
+        if len(v_stdlib) == len(macdt):
+            # if length matches, compare individually
+            for v_std, v_mdt in zip(v_stdlib, macdt):
+                if VersionOrder(str(v_std)) < VersionOrder(str(v_mdt)):
+                    if outdated_hint not in hints:
+                        hints.append(outdated_hint)
+        elif len(v_stdlib) == 1:
+            # if length doesn't match, only warn if a single stdlib version
+            # is lower than _all_ baseline deployment targets
+            if all(
+                VersionOrder(str(v_stdlib[0])) < VersionOrder(str(v_mdt))
+                for v_mdt in macdt
+            ):
+                if outdated_hint not in hints:
+                    hints.append(outdated_hint)
+
+    # warn if SDK is lower than merged v_stdlib/macdt
+    merged_dt = cbc_osx.get("merged", baseline_version)
+    sdk_hint = (
+        "You are setting `MACOSX_SDK_VERSION` below `c_stdlib_version`, "
+        "in conda_build_config.yaml which is not possible! Please ensure "
+        "`MACOSX_SDK_VERSION` is at least `c_stdlib_version` "
+        "(you can leave it out if it is equal).\n"
+        "If you are not setting `c_stdlib_version` yourself, this means "
+        "you are requesting a version below the current global baseline in "
+        "conda-forge (10.13). If this is the intention, you also need to "
+        "override `c_stdlib_version` and `MACOSX_DEPLOYMENT_TARGET` locally."
+    )
+    if len(sdk) == len(merged_dt):
+        # if length matches, compare individually
+        for v_sdk, v_mdt in zip(sdk, merged_dt):
+            # versions with a single dot may have been read as floats
+            v_sdk, v_mdt = str(v_sdk), str(v_mdt)
+            if VersionOrder(v_sdk) < VersionOrder(v_mdt):
+                if sdk_hint not in hints:
+                    hints.append(sdk_hint)
+    elif len(sdk) == 1:
+        # if length doesn't match, only warn if a single SDK version
+        # is lower than _all_ merged deployment targets
+        if all(
+            VersionOrder(str(sdk[0])) < VersionOrder(str(v_mdt))
+            for v_mdt in merged_dt
+        ):
+            if sdk_hint not in hints:
+                hints.append(sdk_hint)
+
     return lints, hints
 
 
 def run_conda_forge_specific(meta, recipe_dir, lints, hints):
     gh = github.Github(os.environ["GH_TOKEN"])
+
+    # Retrieve sections from meta
     package_section = get_section(meta, "package", lints)
     extra_section = get_section(meta, "extra", lints)
     sources_section = get_section(meta, "source", lints)
     requirements_section = get_section(meta, "requirements", lints)
     outputs_section = get_section(meta, "outputs", lints)
+
+    # Fetch list of recipe maintainers
+    maintainers = extra_section.get("recipe-maintainers", [])
 
     recipe_dirname = os.path.basename(recipe_dir) if recipe_dir else "recipe"
     recipe_name = package_section.get("name", "").strip()
@@ -898,7 +1185,6 @@ def run_conda_forge_specific(meta, recipe_dir, lints, hints):
                         )
 
     # 2: Check that the recipe maintainers exists:
-    maintainers = extra_section.get("recipe-maintainers", [])
     for maintainer in maintainers:
         if "/" in maintainer:
             # It's a team. Checking for existence is expensive. Skip for now
@@ -960,8 +1246,49 @@ def run_conda_forge_specific(meta, recipe_dir, lints, hints):
         if dep in specific_hints and specific_hints[dep] not in hints:
             hints.append(specific_hints[dep])
 
+    # 6: Check if all listed maintainers have commented:
+    pr_number = os.environ.get("STAGED_RECIPES_PR_NUMBER")
 
-def is_selector_line(line, allow_platforms=False):
+    if is_staged_recipes and maintainers and pr_number:
+        # Get PR details using GitHub API
+        current_pr = gh.get_repo("conda-forge/staged-recipes").get_pull(
+            int(pr_number)
+        )
+
+        # Get PR author, issue comments, and review comments
+        pr_author = current_pr.user.login
+        issue_comments = current_pr.get_issue_comments()
+        review_comments = current_pr.get_reviews()
+
+        # Combine commenters from both issue comments and review comments
+        commenters = {comment.user.login for comment in issue_comments}
+        commenters.update({review.user.login for review in review_comments})
+
+        # Check if all maintainers have either commented or are the PR author
+        non_participating_maintainers = set()
+        for maintainer in maintainers:
+            if maintainer not in commenters and maintainer != pr_author:
+                non_participating_maintainers.add(maintainer)
+
+        # Add a lint message if there are any non-participating maintainers
+        if non_participating_maintainers:
+            lints.append(
+                f"The following maintainers have not yet confirmed that they are willing to be listed here: "
+                f"{', '.join(non_participating_maintainers)}. Please ask them to comment on this PR if they are."
+            )
+
+    # 7: Ensure that the recipe has some .ci_support files
+    if not is_staged_recipes and recipe_dir is not None:
+        ci_support_files = glob(
+            os.path.join(recipe_dir, "..", ".ci_support", "*.yaml")
+        )
+        if not ci_support_files:
+            lints.append(
+                "The feedstock has no `.ci_support` files and thus will not build any packages."
+            )
+
+
+def is_selector_line(line, allow_platforms=False, allow_keys=set()):
     # Using the same pattern defined in conda-build (metadata.py),
     # we identify selectors.
     line = line.rstrip()
@@ -970,13 +1297,17 @@ def is_selector_line(line, allow_platforms=False):
         return False
     m = sel_pat.match(line)
     if m:
-        if allow_platforms:
-            nouns = {
-                w for w in m.group(3).split() if w not in ("not", "and", "or")
-            }
-            if nouns.issubset({"win", "linux", "osx", "unix"}):
-                # the selector only contains (a boolean chain of) platform selectors
-                return False
+        nouns = {
+            w for w in m.group(3).split() if w not in ("not", "and", "or")
+        }
+        allowed_nouns = (
+            {"win", "linux", "osx", "unix"} if allow_platforms else set()
+        ) | allow_keys
+
+        if nouns.issubset(allowed_nouns):
+            # the selector only contains (a boolean chain of) platform selectors
+            # and/or keys from the conda_build_config.yaml
+            return False
         else:
             return True
     return False
@@ -1002,6 +1333,43 @@ def jinja_lines(lines):
             yield line, i
 
 
+def _format_validation_msg(error: "jsonschema.ValidationError"):
+    """Use the data on the validation error to generate improved reporting.
+
+    If available, get the help URL from the first level of the JSON path:
+
+        $(.top_level_key.2nd_level_key)
+    """
+    help_url = "https://conda-forge.org/docs/maintainer/conda_forge_yml"
+    path = error.json_path.split(".")
+    descriptionless_schema = {}
+    subschema_text = ""
+
+    if error.schema:
+        descriptionless_schema = {
+            k: v for (k, v) in error.schema.items() if k != "description"
+        }
+
+    if len(path) > 1:
+        help_url += f"""/#{path[1].split("[")[0].replace("_", "-")}"""
+        subschema_text = json.dumps(descriptionless_schema, indent=2)
+
+    return cleandoc(
+        f"""
+        In conda-forge.yml: [`{error.json_path}`]({help_url}) `=` `{error.instance}`.
+{indent(error.message, " " * 12 + "> ")}
+            <details>
+            <summary>Schema</summary>
+
+            ```json
+{indent(subschema_text, " " * 12)}
+            ```
+
+            </details>
+        """
+    )
+
+
 def main(recipe_dir, conda_forge=False, return_hints=False):
     recipe_dir = os.path.abspath(recipe_dir)
     recipe_meta = os.path.join(recipe_dir, "meta.yaml")
@@ -1011,8 +1379,40 @@ def main(recipe_dir, conda_forge=False, return_hints=False):
     with io.open(recipe_meta, "rt") as fh:
         content = render_meta_yaml("".join(fh))
         meta = get_yaml().load(content)
-    results, hints = lintify(meta, recipe_dir, conda_forge)
+
+    results, hints = lintify_meta_yaml(meta, recipe_dir, conda_forge)
+    validation_errors, validation_hints = lintify_forge_yaml(
+        recipe_dir=recipe_dir
+    )
+
+    results.extend([_format_validation_msg(err) for err in validation_errors])
+    hints.extend([_format_validation_msg(hint) for hint in validation_hints])
+
     if return_hints:
         return results, hints
     else:
         return results
+
+
+if __name__ == "__main__":
+    # This block is supposed to help debug how the rendered version
+    # of the linter bot would look like in Github. Taken from
+    # https://github.com/conda-forge/conda-forge-webservices/blob/747f75659/conda_forge_webservices/linting.py#L138C1-L146C72
+    rel_path = sys.argv[1]
+    lints, hints = main(rel_path, False, True)
+    messages = []
+    if lints:
+        all_pass = False
+        messages.append(
+            "\nFor **{}**:\n\n{}".format(
+                rel_path, "\n".join("* {}".format(lint) for lint in lints)
+            )
+        )
+    if hints:
+        messages.append(
+            "\nFor **{}**:\n\n{}".format(
+                rel_path, "\n".join("* {}".format(hint) for hint in hints)
+            )
+        )
+
+    print(*messages, sep="\n")

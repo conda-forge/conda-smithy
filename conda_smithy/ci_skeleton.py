@@ -5,12 +5,11 @@ by reusing the same tools that conda-forge uses for its infrastructure.
 Note that your CI jobs will still execute under your organization, and not be
 added to conda-forge's queue.
 """
+
 import os
 import sys
 
-from jinja2 import Environment, FileSystemLoader
-
-from .configure_feedstock import make_jinja_env, conda_forge_content
+from .configure_feedstock import make_jinja_env
 
 
 def _render_template(template_file, env, forge_dir, config):
@@ -24,6 +23,11 @@ def _render_template(template_file, env, forge_dir, config):
     os.makedirs(os.path.dirname(target_fname), exist_ok=True)
     with open(target_fname, "w") as fh:
         fh.write(new_file_contents)
+
+
+GITIGNORE_ADDITIONAL = """*.pyc
+build_artifacts
+"""
 
 
 def _insert_into_gitignore(
@@ -45,11 +49,7 @@ def _insert_into_gitignore(
         dname = os.path.dirname(fname)
         if dname:
             os.makedirs(dname, exist_ok=True)
-    # get new values
-    gi = os.path.join(conda_forge_content, "feedstock_content", ".gitignore")
-    with open(gi, "r") as f:
-        s = f.read()
-    new = prefix + s + suffix
+    new = prefix + GITIGNORE_ADDITIONAL + suffix
     # write out the file
     with open(fname, "w") as f:
         f.write(before + new + after)

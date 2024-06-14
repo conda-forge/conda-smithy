@@ -7,25 +7,28 @@ Authors are sorted by number of commits.
 * Christopher J. Wright
 * Anthony Scopatz
 * Phil Elson
-* Filipe Fernandes
+* H. Vetinari
 * Uwe L. Korn
+* Filipe Fernandes
 * Dougal J. Sutherland
 * Amit Kumar
+* Marcel Bargull
 * shadow_walker
 * Michael Sarahan
 * Min RK
+* John Kirkham
+* Mark Harfouche
 * Leo Fang
 * Hadrien Mary
 * Ryan Volz
-* Marcel Bargull
-* Mark Harfouche
 * Johnny Willemsen
 * Chris Burr
 * Julian Rüth
-* H. Vetinari
-* John Kirkham
+* Bastian Zimmermann
+* pre-commit-ci[bot]
 * Daniel Bast
 * Billy K. Poon
+* vinicius douglas cerutti
 * Tim Snyder
 * Mike Henry
 * Eric Dill
@@ -33,33 +36,36 @@ Authors are sorted by number of commits.
 * Daniel Ching
 * Maksim Rakitin
 * Jan Schulz
+* Nicholas Bollweg
 * Josh Reichardt
+* Bela Stoyan
 * Justin Calamari
 * Jason Furmanek
 * Patrick Sodré
 * C.A.M. Gerlach
 * refraction-ray
-* Bastian Zimmermann
-* Nicholas Bollweg
 * Leopold Talirz
 * Tom Pollard
-* Bela Stoyan
 * Gonzalo Pena-Castellanos
+* John Blischak
+* Matthias Diener
+* Antonio S. Cofiño
+* Yannik Tausch
 * Carlo
 * Matthew Craig
 * Peter Williams
 * Joshua L. Adelman
 * Wolf Vollprecht
-* Matthias Diener
-* John Blischak
 * Marius van Niekerk
 * Johannes Köster
 * Philippe Blain
+* Mervin Fansler
 * Matt McCormick
 * Jan Janßen
 * xoviat
 * Elmar Pruesse
 * Patrick Sodré
+* David Hirschfeld
 * Josh Barnes
 * Tobias Megies
 * Jonathan Helmus
@@ -67,8 +73,7 @@ Authors are sorted by number of commits.
 * Florian Rathgeber
 * Bruno Oliveira
 * Tony Kelman
-* Mervin Fansler
-* pre-commit-ci[bot]
+* Jannis Leidel
 * Guilherme Quentel Melo
 * santi
 * buijennifer
@@ -88,6 +93,7 @@ Authors are sorted by number of commits.
 * Matthew W. Thompson
 * conda-forge-admin
 * Klaus Zimmermann
+* dependabot[bot]
 * lorenz
 * Tom Augspurger
 * Ryan May

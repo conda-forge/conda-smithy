@@ -134,9 +134,6 @@ $ rever 0.1.2
 Conda-smithy in a nutshell
 --------------------------
 
-#### xkcd 1629: Tools
+#### xkcd 1319: Automation
 
-[![xkcd 1629: Tools](https://imgs.xkcd.com/comics/tools.png)](https://xkcd.com/1629/)
-
-**Titletext**: *I make tools for managing job-hunting sites for people who make*
-*tools for managing job-hunting sites for people who make tools for ...*
+[![xkcd 1319: Automation](https://imgs.xkcd.com/comics/automation.png)](https://xkcd.com/1319/)
