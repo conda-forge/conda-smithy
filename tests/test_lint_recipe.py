@@ -1378,13 +1378,13 @@ class Test_linter(unittest.TestCase):
             )
 
         expected_message = (
-            "A conda package with same name (fitsio) already exists."
+            "A conda package with same name (numpy) already exists."
         )
         lints, hints = linter.lintify_meta_yaml(
             {
                 "package": {"name": "this-will-never-exist"},
                 "source": {
-                    "url": "https://pypi.io/packages/source/f/fitsio/fitsio-v0.9.2.tar.gz"
+                    "url": "https://pypi.io/packages/source/n/numpy/numpy-1.26.4.tar.gz"
                 },
             },
             recipe_dir="recipes/foo",
@@ -1398,7 +1398,7 @@ class Test_linter(unittest.TestCase):
                 "package": {"name": "this-will-never-exist"},
                 "source": {
                     "url": [
-                        "https://pypi.io/packages/source/f/fitsio/fitsio-v0.9.2.tar.gz"
+                        "https://pypi.io/packages/source/n/numpy/numpy-1.26.4.tar.gz"
                     ]
                 },
             },
