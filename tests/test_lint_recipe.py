@@ -1685,7 +1685,9 @@ class Test_linter(unittest.TestCase):
 
         # Case where cargo-bundle-licenses is present
         meta_with_license = {
-            "requirements": {"build": ["{{ compiler('rust') }}", "cargo-bundle-licenses"]},
+            "requirements": {
+                "build": ["{{ compiler('rust') }}", "cargo-bundle-licenses"]
+            },
         }
 
         lints, hints = linter.lintify_meta_yaml(meta_with_license)
