@@ -731,6 +731,22 @@ def lintify_meta_yaml(
                 "This is discouraged. Please consider using a source distribution (sdist) instead."
             )
 
+    # 28: Check that Rust licenses are bundled.
+    if build_reqs and ("{{ compiler('rust') }}" in build_reqs):
+        if "cargo-bundle-licenses" not in build_reqs:
+            lints.append(
+                "Rust packages must include the licenses of the Rust dependencies. "
+                "For more info, visit: https://conda-forge.org/docs/maintainer/adding_pkgs/#rust"
+            )
+
+    # 29: Check that go licenses are bundled.
+    if build_reqs and ("{{ compiler('go') }}" in build_reqs):
+        if "go-licenses" not in build_reqs:
+            lints.append(
+                "Go packages must include the licenses of the Go dependencies. "
+                "For more info, visit: https://conda-forge.org/docs/maintainer/adding_pkgs/#go"
+            )
+
     # hints
     # 1: suggest pip
     if "script" in build_section:
