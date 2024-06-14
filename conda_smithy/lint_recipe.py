@@ -637,6 +637,14 @@ def lintify(meta, recipe_dir=None, conda_forge=False):
     for out in outputs_section:
         check_pins_build_and_requirements(out)
 
+    # 27: Check that Rust licenses are bundled.
+    if build_reqs and ("{{ compiler('rust') }}" in build_reqs):
+        if "cargo-bundle-licenses" not in build_reqs:
+            lints.append(
+                "Rust packages must include the licenses of the Rust dependencies. "
+                "For more info, visit: https://conda-forge.org/docs/maintainer/adding_pkgs/#rust"
+            )
+
     # hints
     # 1: suggest pip
     if "script" in build_section:
