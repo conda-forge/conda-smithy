@@ -1677,9 +1677,7 @@ class Test_linter(unittest.TestCase):
                 "name": "rustpackage",
             },
             "build": {
-                "requirements": {
-                    "build": ["{{ compiler('rust') }}"]
-                },
+                "requirements": {"build": ["{{ compiler('rust') }}"]},
             },
         }
         lints, hints = linter.lintify(meta_missing_license)
@@ -1696,7 +1694,10 @@ class Test_linter(unittest.TestCase):
             },
             "build": {
                 "requirements": {
-                    "build": ["{{ compiler('rust') }}", "cargo-bundle-licenses"]
+                    "build": [
+                        "{{ compiler('rust') }}",
+                        "cargo-bundle-licenses",
+                    ]
                 },
             },
         }
@@ -1710,9 +1711,7 @@ class Test_linter(unittest.TestCase):
                 "name": "gopackage",
             },
             "build": {
-                "requirements": {
-                    "build": ["{{ compiler('go') }}"]
-                },
+                "requirements": {"build": ["{{ compiler('go') }}"]},
             },
         }
         lints, hints = linter.lintify(meta_missing_license)
@@ -1735,6 +1734,7 @@ class Test_linter(unittest.TestCase):
         }
         lints, hints = linter.lintify(meta_with_license)
         self.assertNotIn(expected_msg, lints)
+
 
 @pytest.mark.cli
 class TestCLI_recipe_lint(unittest.TestCase):
