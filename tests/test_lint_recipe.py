@@ -1680,7 +1680,7 @@ class Test_linter(unittest.TestCase):
                 "requirements": {"build": ["{{ compiler('rust') }}"]},
             },
         }
-        lints, hints = linter.lintify(meta_missing_license)
+        lints, hints = linter.lintify_meta_yaml(meta_missing_license)
         expected_msg = (
             "Rust packages must include the licenses of the Rust dependencies. "
             "For more info, visit: https://conda-forge.org/docs/maintainer/adding_pkgs/#rust"
@@ -1701,7 +1701,7 @@ class Test_linter(unittest.TestCase):
                 },
             },
         }
-        lints, hints = linter.lintify(meta_with_license)
+        lints, hints = linter.lintify_meta_yaml(meta_with_license)
         self.assertNotIn(expected_msg, lints)
 
     def test_go_license_bundling(self):
@@ -1714,7 +1714,7 @@ class Test_linter(unittest.TestCase):
                 "requirements": {"build": ["{{ compiler('go') }}"]},
             },
         }
-        lints, hints = linter.lintify(meta_missing_license)
+        lints, hints = linter.lintify_meta_yaml(meta_missing_license)
         expected_msg = (
             "Go packages must include the licenses of the Go dependencies. "
             "For more info, visit: https://conda-forge.org/docs/maintainer/adding_pkgs/#go"
@@ -1732,7 +1732,7 @@ class Test_linter(unittest.TestCase):
                 },
             },
         }
-        lints, hints = linter.lintify(meta_with_license)
+        lints, hints = linter.lintify_meta_yaml(meta_with_license)
         self.assertNotIn(expected_msg, lints)
 
 
