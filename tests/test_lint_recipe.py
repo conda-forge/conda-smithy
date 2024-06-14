@@ -1673,13 +1673,9 @@ class Test_linter(unittest.TestCase):
     def test_rust_license_bundling(self):
         # Case where cargo-bundle-licenses is missing
         meta_missing_license = {
-            "package": {
-                "name": "rustpackage",
-            },
-            "build": {
-                "requirements": {"build": ["{{ compiler('rust') }}"]},
-            },
+            "requirements": {"build": ["{{ compiler('rust') }}"]},
         }
+
         lints, hints = linter.lintify_meta_yaml(meta_missing_license)
         expected_msg = (
             "Rust packages must include the licenses of the Rust dependencies. "
@@ -1689,31 +1685,18 @@ class Test_linter(unittest.TestCase):
 
         # Case where cargo-bundle-licenses is present
         meta_with_license = {
-            "package": {
-                "name": "rustpackage",
-            },
-            "build": {
-                "requirements": {
-                    "build": [
-                        "{{ compiler('rust') }}",
-                        "cargo-bundle-licenses",
-                    ]
-                },
-            },
+            "requirements": {"build": ["{{ compiler('rust') }}", "cargo-bundle-licenses"]},
         }
+
         lints, hints = linter.lintify_meta_yaml(meta_with_license)
         self.assertNotIn(expected_msg, lints)
 
     def test_go_license_bundling(self):
         # Case where go-licenses is missing
         meta_missing_license = {
-            "package": {
-                "name": "gopackage",
-            },
-            "build": {
-                "requirements": {"build": ["{{ compiler('go') }}"]},
-            },
+            "requirements": {"build": ["{{ compiler('go') }}"]},
         }
+
         lints, hints = linter.lintify_meta_yaml(meta_missing_license)
         expected_msg = (
             "Go packages must include the licenses of the Go dependencies. "
@@ -1723,15 +1706,9 @@ class Test_linter(unittest.TestCase):
 
         # Case where go-licenses is present
         meta_with_license = {
-            "package": {
-                "name": "gopackage",
-            },
-            "build": {
-                "requirements": {
-                    "build": ["{{ compiler('go') }}", "go-licenses"]
-                },
-            },
+            "requirements": {"build": ["{{ compiler('go') }}", "go-licenses"]},
         }
+
         lints, hints = linter.lintify_meta_yaml(meta_with_license)
         self.assertNotIn(expected_msg, lints)
 
