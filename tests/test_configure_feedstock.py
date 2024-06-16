@@ -2,7 +2,9 @@ import copy
 import logging
 import os
 import re
+import shutil
 import textwrap
+from pathlib import Path
 
 import pytest
 import yaml
@@ -270,6 +272,8 @@ def test_stdlib_deployment_target(
     assert re.match(
         r"(?s).*MACOSX_DEPLOYMENT_TARGET:\s*- ['\"]?10\.14", content
     )
+    # MACOSX_SDK_VERSION gets updated as well if it's below the other two
+    assert re.match(r"(?s).*MACOSX_SDK_VERSION:\s*- ['\"]?10\.14", content)
 
 
 def test_upload_on_branch_azure(upload_on_branch_recipe, jinja_env):
@@ -1015,7 +1019,7 @@ def test_remote_ci_setup(config_yaml):
 
 
 @pytest.mark.parametrize(
-    "squished_input_variants,squished_used_variants,all_used_vars,used_key_values",
+    "squished_input_variants,squished_used_variants,all_used_vars,expected_used_key_values",
     [
         (
             dict(
@@ -1934,13 +1938,128 @@ def test_get_used_key_values_by_input_order(
     squished_input_variants,
     squished_used_variants,
     all_used_vars,
-    used_key_values,
+    expected_used_key_values,
 ):
-    assert (
+    used_key_values, _ = (
         configure_feedstock._get_used_key_values_by_input_order(
             squished_input_variants,
             squished_used_variants,
             all_used_vars,
         )
-        == used_key_values
+    )
+    assert used_key_values == expected_used_key_values
+
+
+def test_conda_build_api_render_for_smithy(testing_workdir):
+    import conda_build.api
+
+    _thisdir = os.path.abspath(os.path.dirname(__file__))
+    recipe = os.path.join(_thisdir, "recipes", "multiple_outputs")
+    dest_recipe = os.path.join(testing_workdir, "recipe")
+    shutil.copytree(recipe, dest_recipe)
+    all_top_level_builds = {
+        ("1.5", "9.5"),
+        ("1.5", "9.6"),
+        ("1.6", "9.5"),
+        ("1.6", "9.6"),
+    }
+
+    cs_metas = configure_feedstock._conda_build_api_render_for_smithy(
+        dest_recipe,
+        config=None,
+        variants=None,
+        permit_unsatisfiable_variants=True,
+        finalize=False,
+        bypass_env_check=True,
+        platform="linux",
+        arch="64",
+    )
+    # we have a build matrix with 4 combinations and we get two outputs
+    # plus a top-level build to give us 4 * (2 + 1) = 12 total
+    assert len(cs_metas) == 12
+
+    # we check that we get all combinations
+    top_level_builds = set()
+    for meta, _, _ in cs_metas:
+        for variant in meta.config.variants:
+            top_level_builds.add(
+                (
+                    variant.get("libpng"),
+                    variant.get("libpq"),
+                )
+            )
+        variant = meta.config.variant
+        top_level_builds.add(
+            (
+                variant.get("libpng"),
+                variant.get("libpq"),
+            )
+        )
+    assert len(top_level_builds) == len(all_top_level_builds)
+    assert top_level_builds == all_top_level_builds
+    cb_metas = conda_build.api.render(
+        dest_recipe,
+        config=None,
+        variants=None,
+        permit_unsatisfiable_variants=True,
+        finalize=False,
+        bypass_env_check=True,
+        platform="linux",
+        arch="64",
+    )
+    # conda build will only give us the builds for the unique file names
+    # and collapses the top-level build matrix expansion
+    # thus we only get 3 outputs
+    assert len(cb_metas) == 3
+
+    # we check that we get a subset of all combinations
+    top_level_builds = set()
+    for meta, _, _ in cb_metas:
+        for variant in meta.config.variants:
+            top_level_builds.add(
+                (
+                    variant.get("libpng"),
+                    variant.get("libpq"),
+                )
+            )
+        variant = meta.config.variant
+        top_level_builds.add(
+            (
+                variant.get("libpng"),
+                variant.get("libpq"),
+            )
+        )
+    assert len(top_level_builds) < len(all_top_level_builds)
+    assert top_level_builds.issubset(all_top_level_builds)
+
+
+def test_github_actions_pins():
+    """
+    Ensure our Github Actions template respects the latest pins provided by Dependabot.
+    Since Dependabot cannot parse the template due to the Jinja expressions, we provide
+    a proxy file with the inventory of used actions.
+
+    This test will check that the `uses: owner/repo@version` lines are the same in both files.
+    If Dependabot opens a PR against the proxy, just copy the new pins to the template to
+    make this pass.
+    """
+    repo_root = Path(__file__).parents[1]
+    github_actions_template = (
+        repo_root / "conda_smithy" / "templates" / "github-actions.yml.tmpl"
+    )
+    dependabot_inventory = (
+        repo_root
+        / ".github"
+        / "workflows"
+        / "_proxy-file-for-dependabot-tests.yml"
+    )
+
+    def get_uses(path):
+        content = path.read_text()
+        for line in content.splitlines():
+            if " uses: " in line:
+                yield line.strip().lstrip("-").strip()
+
+    assert sorted(set(get_uses(github_actions_template))) == sorted(
+        set(get_uses(dependabot_inventory))
     )

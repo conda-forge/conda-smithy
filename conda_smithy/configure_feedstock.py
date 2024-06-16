@@ -428,7 +428,7 @@ def _get_used_key_values_by_input_order(
         )
     )
 
-    return used_key_values
+    return used_key_values, zipped_keys
 
 
 def _merge_deployment_target(container_of_dicts, has_macdt):
@@ -439,6 +439,8 @@ def _merge_deployment_target(container_of_dicts, has_macdt):
       For now, take the maximum to populate both.
     - In any case, populate MACOSX_DEPLOYMENT_TARGET, as that is the key picked
       up by https://github.com/conda-forge/conda-forge-ci-setup-feedstock
+    - If MACOSX_SDK_VERSION is lower than the merged value from the previous step,
+      update it to match the merged value.
     """
     result = []
     for var_dict in container_of_dicts:
@@ -452,17 +454,21 @@ def _merge_deployment_target(container_of_dicts, has_macdt):
         # case where we need to do processing
         v_stdlib = var_dict["c_stdlib_version"]
         macdt = var_dict.get("MACOSX_DEPLOYMENT_TARGET", v_stdlib)
+        sdk = var_dict.get("MACOSX_SDK_VERSION", v_stdlib)
         # error out if someone puts in a range of versions; we need a single version
         try:
-            cond_update = VersionOrder(v_stdlib) < VersionOrder(macdt)
+            stdlib_lt_macdt = VersionOrder(v_stdlib) < VersionOrder(macdt)
+            sdk_lt_stdlib = VersionOrder(sdk) < VersionOrder(v_stdlib)
+            sdk_lt_macdt = VersionOrder(sdk) < VersionOrder(macdt)
         except InvalidVersionSpec:
             raise ValueError(
-                "both and c_stdlib_version/MACOSX_DEPLOYMENT_TARGET need to be a "
-                "single version, not a version range!"
+                "all of c_stdlib_version/MACOSX_DEPLOYMENT_TARGET/"
+                "MACOSX_SDK_VERSION need to be a single version, "
+                "not a version range!"
             )
         if v_stdlib != macdt:
             # determine maximum version and use it to populate both
-            v_stdlib = macdt if cond_update else v_stdlib
+            v_stdlib = macdt if stdlib_lt_macdt else v_stdlib
             msg = (
                 "Conflicting specification for minimum macOS deployment target!\n"
                 "If your conda_build_config.yaml sets `MACOSX_DEPLOYMENT_TARGET`, "
@@ -474,6 +480,18 @@ def _merge_deployment_target(container_of_dicts, has_macdt):
             if has_macdt:
                 warn_once(msg)
 
+        if sdk_lt_stdlib or sdk_lt_macdt:
+            sdk_lt_merged = VersionOrder(sdk) < VersionOrder(v_stdlib)
+            sdk = v_stdlib if sdk_lt_merged else sdk
+            msg = (
+                "Conflicting specification for minimum macOS SDK version!\n"
+                "If your conda_build_config.yaml sets `MACOSX_SDK_VERSION`, "
+                "it must be larger or equal than `c_stdlib_version` "
+                "(which is also influenced by the global pinning)!\n"
+                f"Using {sdk}=max(c_stdlib_version, MACOSX_SDK_VERSION)."
+            )
+            warn_once(msg)
+
         # we set MACOSX_DEPLOYMENT_TARGET to match c_stdlib_version,
         # for ease of use in conda-forge-ci-setup;
         # use new dictionary to avoid mutating existing var_dict in place
@@ -482,6 +500,7 @@ def _merge_deployment_target(container_of_dicts, has_macdt):
                 **var_dict,
                 "c_stdlib_version": v_stdlib,
                 "MACOSX_DEPLOYMENT_TARGET": v_stdlib,
+                "MACOSX_SDK_VERSION": sdk,
             }
         )
         result.append(new_dict)
@@ -591,8 +610,6 @@ def _collapse_subpackage_variants(
         "macos_machine",
         "channel_sources",
         "channel_targets",
-        "c_stdlib",
-        "c_stdlib_version",
         "docker_image",
         "build_number_decrement",
         # The following keys are required for some of our aarch64 builds
@@ -619,14 +636,16 @@ def _collapse_subpackage_variants(
         "top_level_loop_vars {}".format(pprint.pformat(top_level_loop_vars))
     )
 
-    used_key_values = _get_used_key_values_by_input_order(
+    used_key_values, used_zipped_vars = _get_used_key_values_by_input_order(
         squished_input_variants,
         squished_used_variants,
         all_used_vars,
     )
 
     for k in preserve_top_level_loops:
-        used_key_values[k] = squished_input_variants[k]
+        # we do not stomp on keys in zips since their order matters
+        if k not in used_zipped_vars:
+            used_key_values[k] = squished_input_variants[k]
 
     _trim_unused_zip_keys(used_key_values)
     _trim_unused_pin_run_as_build(used_key_values)
@@ -861,6 +880,84 @@ def migrate_combined_spec(combined_spec, forge_dir, config, forge_config):
     return combined_spec
 
 
+def _conda_build_api_render_for_smithy(
+    recipe_path,
+    config=None,
+    variants=None,
+    permit_unsatisfiable_variants=True,
+    finalize=True,
+    bypass_env_check=False,
+    **kwargs,
+):
+    """This function works just like conda_build.api.render, but it returns all of metadata objects
+    regardless of whether they produce a unique package hash / name.
+
+    When conda-build renders a recipe, it returns the metadata for each unique file generated. If a key
+    we use at the top-level in a multi-output recipe does not explicitly impact one of the recipe outputs
+    (i.e., an output's recipe doesn't use that key), then conda-build will not return all of the variants
+    for that key.
+
+    This behavior is not what we do in conda-forge (i.e., we want all variants that are not explicitly
+    skipped even if some of the keys in the variants are not explicitly used in an output).
+
+    The most robust way to handle this is to write a custom function that returns metadata for each of
+    the variants in the full exploded matrix that involve a key used by the recipe anywhere,
+    except the ones that the recipe skips.
+    """
+
+    from conda.exceptions import NoPackagesFoundError
+
+    from conda_build.exceptions import DependencyNeedsBuildingError
+    from conda_build.render import finalize_metadata, render_recipe
+    from conda_build.config import get_or_merge_config
+
+    config = get_or_merge_config(config, **kwargs)
+
+    metadata_tuples = render_recipe(
+        recipe_path,
+        bypass_env_check=bypass_env_check,
+        no_download_source=config.no_download_source,
+        config=config,
+        variants=variants,
+        permit_unsatisfiable_variants=permit_unsatisfiable_variants,
+    )
+    output_metas = []
+    for meta, download, render_in_env in metadata_tuples:
+        if not meta.skip() or not config.trim_skip:
+            for od, om in meta.get_output_metadata_set(
+                permit_unsatisfiable_variants=permit_unsatisfiable_variants,
+                permit_undefined_jinja=not finalize,
+                bypass_env_check=bypass_env_check,
+            ):
+                if not om.skip() or not config.trim_skip:
+                    if "type" not in od or od["type"] == "conda":
+                        if finalize and not om.final:
+                            try:
+                                om = finalize_metadata(
+                                    om,
+                                    permit_unsatisfiable_variants=permit_unsatisfiable_variants,
+                                )
+                            except (
+                                DependencyNeedsBuildingError,
+                                NoPackagesFoundError,
+                            ):
+                                if not permit_unsatisfiable_variants:
+                                    raise
+
+                        # remove outputs section from output objects for simplicity
+                        if not om.path and (
+                            outputs := om.get_section("outputs")
+                        ):
+                            om.parent_outputs = outputs
+                            del om.meta["outputs"]
+
+                        output_metas.append((om, download, render_in_env))
+                    else:
+                        output_metas.append((om, download, render_in_env))
+
+    return output_metas
+
+
 def _render_ci_provider(
     provider_name,
     jinja_env,
@@ -978,7 +1075,7 @@ def _render_ci_provider(
             channel_sources = migrated_combined_variant_spec.get(
                 "channel_sources", [""]
             )[0].split(",")
-            metas = conda_build.api.render(
+            metas = _conda_build_api_render_for_smithy(
                 os.path.join(forge_dir, forge_config["recipe_dir"]),
                 platform=platform,
                 arch=arch,
@@ -1513,11 +1610,12 @@ def _github_actions_specific_setup(
     runs_on = {
         "osx-64": {
             "os": "macos",
-            "hosted_labels": ("macos-latest",),
+            "hosted_labels": ("macos-13",),
             "self_hosted_labels": ("macOS", "x64"),
         },
         "osx-arm64": {
             "os": "macos",
+            # FUTURE: Use -latest once GHA fully migrates
             "hosted_labels": ("macos-14",),
             "self_hosted_labels": ("macOS", "arm64"),
         },

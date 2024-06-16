@@ -30,6 +30,242 @@ def tmp_directory():
     shutil.rmtree(tmp_dir)
 
 
+@pytest.mark.parametrize(
+    "comp_lang",
+    ["c", "cxx", "fortran", "rust", "m2w64_c", "m2w64_cxx", "m2w64_fortran"],
+)
+def test_stdlib_hint(comp_lang):
+    expected_message = "This recipe is using a compiler"
+
+    with tmp_directory() as recipe_dir:
+        with io.open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
+            fh.write(
+                f"""
+                package:
+                   name: foo
+                requirements:
+                  build:
+                    # since we're in an f-string: double up braces (2->4)
+                    - {{{{ compiler("{comp_lang}") }}}}
+                """
+            )
+
+        _, hints = linter.main(recipe_dir, return_hints=True)
+        assert any(h.startswith(expected_message) for h in hints)
+
+
+def test_sysroot_hint():
+    expected_message = "You're setting a requirement on sysroot"
+
+    with tmp_directory() as recipe_dir:
+        with io.open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
+            fh.write(
+                """
+                package:
+                   name: foo
+                requirements:
+                  build:
+                    - sysroot_{{ target_platform }} 2.17
+                """
+            )
+
+        _, hints = linter.main(recipe_dir, return_hints=True)
+        assert any(h.startswith(expected_message) for h in hints)
+
+
+@pytest.mark.parametrize("where", ["run", "run_constrained"])
+def test_osx_hint(where):
+    expected_message = "You're setting a constraint on the `__osx` virtual"
+
+    with tmp_directory() as recipe_dir:
+        with io.open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
+            fh.write(
+                f"""
+                package:
+                   name: foo
+                requirements:
+                  {where}:
+                    # since we're in an f-string: double up braces (2->4)
+                    - __osx >={{{{ MACOSX_DEPLOYMENT_TARGET|default("10.9") }}}}  # [osx and x86_64]
+                """
+            )
+
+        _, hints = linter.main(recipe_dir, return_hints=True)
+        assert any(h.startswith(expected_message) for h in hints)
+
+
+def test_stdlib_hints_multi_output():
+    expected_message = "You're setting a requirement on sysroot"
+
+    with tmp_directory() as recipe_dir:
+        with io.open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
+            fh.write(
+                """
+                package:
+                   name: foo
+                requirements:
+                  build:
+                    - {{ compiler("c") }}
+                    # global build reqs intentionally correct; want to check outputs
+                    - {{ stdlib("c") }}
+                outputs:
+                  - name: bar
+                    requirements:
+                      build:
+                        # missing stdlib
+                        - {{ compiler("c") }}
+                  - name: baz
+                    requirements:
+                      build:
+                        - {{ compiler("c") }}
+                        - {{ stdlib("c") }}
+                        - sysroot_linux-64
+                  - name: quux
+                    requirements:
+                      run:
+                        - __osx >=10.13
+                  # test that cb2-style requirements don't break linter
+                  - name: boing
+                    requirements:
+                      - bar
+                """
+            )
+
+        _, hints = linter.main(recipe_dir, return_hints=True)
+        exp_stdlib = "This recipe is using a compiler"
+        exp_sysroot = "You're setting a requirement on sysroot"
+        exp_osx = "You're setting a constraint on the `__osx`"
+        assert any(h.startswith(exp_stdlib) for h in hints)
+        assert any(h.startswith(exp_sysroot) for h in hints)
+        assert any(h.startswith(exp_osx) for h in hints)
+
+
+@pytest.mark.parametrize("where", ["run", "run_constrained"])
+def test_osx_noarch_hint(where):
+    # don't warn on packages that are using __osx as a noarch-marker, see
+    # https://conda-forge.org/docs/maintainer/knowledge_base/#noarch-packages-with-os-specific-dependencies
+    avoid_message = "You're setting a constraint on the `__osx` virtual"
+
+    with tmp_directory() as recipe_dir:
+        with io.open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
+            fh.write(
+                f"""
+                package:
+                   name: foo
+                requirements:
+                  {where}:
+                    - __osx  # [osx]
+                """
+            )
+
+        _, hints = linter.main(recipe_dir, return_hints=True)
+        assert not any(h.startswith(avoid_message) for h in hints)
+
+
+@pytest.mark.parametrize(
+    "std_selector",
+    ["unix", "linux or (osx and x86_64)"],
+    ids=["plain", "or-conjunction"],
+)
+@pytest.mark.parametrize("with_linux", [True, False])
+@pytest.mark.parametrize(
+    "reverse_arch",
+    # we reverse x64/arm64 separately per deployment target, stdlib & sdk
+    [(False, False, False), (True, True, True), (False, True, False)],
+    ids=["False", "True", "mixed"],
+)
+@pytest.mark.parametrize(
+    "macdt,v_std,sdk,exp_hint",
+    [
+        # matching -> no warning
+        (["10.9", "11.0"], ["10.9", "11.0"], None, None),
+        # mismatched length -> no warning (leave it to rerender)
+        (["10.9", "11.0"], ["10.9"], None, None),
+        # mismatch between stdlib and deployment target -> warn
+        (["10.9", "11.0"], ["10.13", "11.0"], None, "Conflicting spec"),
+        (["10.13", "11.0"], ["10.13", "12.3"], None, "Conflicting spec"),
+        # only deployment target -> warn
+        (["10.13", "11.0"], None, None, "In your conda_build_config.yaml"),
+        # only stdlib -> no warning
+        (None, ["10.13", "11.0"], None, None),
+        (None, ["10.15"], None, None),
+        # only stdlib, but outdated -> warn
+        (None, ["10.9", "11.0"], None, "You are"),
+        (None, ["10.9"], None, "You are"),
+        # sdk below stdlib / deployment target -> warn
+        (["10.13", "11.0"], ["10.13", "11.0"], ["10.12"], "You are"),
+        (["10.13", "11.0"], ["10.13", "11.0"], ["10.12", "12.0"], "You are"),
+        # sdk above stdlib / deployment target -> no warning
+        (["10.13", "11.0"], ["10.13", "11.0"], ["12.0", "12.0"], None),
+        # only one sdk version, not universally below deployment target
+        # -> no warning (because we don't know enough to diagnose)
+        (["10.13", "11.0"], ["10.13", "11.0"], ["10.15"], None),
+        # mismatched version + wrong sdk; requires merge logic to work before
+        # checking sdk version; to avoid unnecessary complexity in the exp_hint
+        # handling below, repeat same test twice with different expected hints
+        (["10.9", "11.0"], ["10.13", "11.0"], ["10.12"], "Conflicting spec"),
+        (["10.9", "11.0"], ["10.13", "11.0"], ["10.12"], "You are"),
+        # only sdk -> no warning
+        (None, None, ["10.13"], None),
+        (None, None, ["10.14", "12.0"], None),
+        # only sdk, but below global baseline -> warning
+        (None, None, ["10.12"], "You are"),
+        (None, None, ["10.12", "11.0"], "You are"),
+    ],
+)
+def test_cbc_osx_hints(
+    std_selector, with_linux, reverse_arch, macdt, v_std, sdk, exp_hint
+):
+    with tmp_directory() as rdir:
+        with open(os.path.join(rdir, "meta.yaml"), "w") as fh:
+            fh.write("package:\n   name: foo")
+        with open(os.path.join(rdir, "conda_build_config.yaml"), "a") as fh:
+            if macdt is not None:
+                fh.write(
+                    f"""\
+MACOSX_DEPLOYMENT_TARGET:   # [osx]
+  - {macdt[0]}              # [osx and {"arm64" if reverse_arch[0] else "x86_64"}]
+  - {macdt[1]}              # [osx and {"x86_64" if reverse_arch[0] else "arm64"}]
+"""
+                )
+            if v_std is not None or with_linux:
+                arch1 = "arm64" if reverse_arch[1] else "x86_64"
+                arch2 = "x86_64" if reverse_arch[1] else "arm64"
+                fh.write(f"c_stdlib_version:          # [{std_selector}]")
+                if v_std is not None:
+                    fh.write(f"\n  - {v_std[0]}       # [osx and {arch1}]")
+                if v_std is not None and len(v_std) > 1:
+                    fh.write(f"\n  - {v_std[1]}       # [osx and {arch2}]")
+                if with_linux:
+                    # to check that other stdlib specifications don't mess us up
+                    fh.write("\n  - 2.17              # [linux]")
+            if sdk is not None:
+                # often SDK is set uniformly for osx; test this as well
+                fh.write(
+                    f"""
+MACOSX_SDK_VERSION:         # [osx]
+  - {sdk[0]}                # [osx and {"arm64" if reverse_arch[2] else "x86_64"}]
+  - {sdk[1]}                # [osx and {"x86_64" if reverse_arch[2] else "arm64"}]
+"""
+                    if len(sdk) == 2
+                    else f"""
+MACOSX_SDK_VERSION:         # [osx]
+  - {sdk[0]}                # [osx]
+"""
+                )
+        # run the linter
+        _, hints = linter.main(rdir, return_hints=True)
+        # show CBC/hints for debugging
+        with open(os.path.join(rdir, "conda_build_config.yaml"), "r") as fh:
+            print("".join(fh.readlines()))
+            print(hints)
+        # validate against expectations
+        if exp_hint is None:
+            assert not hints
+        else:
+            assert any(h.startswith(exp_hint) for h in hints)
+
+
 class Test_linter(unittest.TestCase):
     def test_pin_compatible_in_run_exports(self):
         meta = {
@@ -784,19 +1020,23 @@ class Test_linter(unittest.TestCase):
             "instead saw: run, build."
         )
 
-        meta = {"requirements": OrderedDict([["run", "a"], ["build", "a"]])}
+        meta = {
+            "requirements": OrderedDict([["run", ["a"]], ["build", ["a"]]])
+        }
         lints, hints = linter.lintify_meta_yaml(meta)
         self.assertIn(expected_message, lints)
 
         meta = {
             "requirements": OrderedDict(
-                [["run", "a"], ["invalid", "a"], ["build", "a"]]
+                [["run", ["a"]], ["invalid", ["a"]], ["build", ["a"]]]
             )
         }
         lints, hints = linter.lintify_meta_yaml(meta)
         self.assertIn(expected_message, lints)
 
-        meta = {"requirements": OrderedDict([["build", "a"], ["run", "a"]])}
+        meta = {
+            "requirements": OrderedDict([["build", ["a"]], ["run", ["a"]]])
+        }
         lints, hints = linter.lintify_meta_yaml(meta)
         self.assertNotIn(expected_message, lints)
 
@@ -1138,13 +1378,13 @@ class Test_linter(unittest.TestCase):
             )
 
         expected_message = (
-            "A conda package with same name (fitsio) already exists."
+            "A conda package with same name (numpy) already exists."
         )
         lints, hints = linter.lintify_meta_yaml(
             {
                 "package": {"name": "this-will-never-exist"},
                 "source": {
-                    "url": "https://pypi.io/packages/source/f/fitsio/fitsio-v0.9.2.tar.gz"
+                    "url": "https://pypi.io/packages/source/n/numpy/numpy-1.26.4.tar.gz"
                 },
             },
             recipe_dir="recipes/foo",
@@ -1158,7 +1398,7 @@ class Test_linter(unittest.TestCase):
                 "package": {"name": "this-will-never-exist"},
                 "source": {
                     "url": [
-                        "https://pypi.io/packages/source/f/fitsio/fitsio-v0.9.2.tar.gz"
+                        "https://pypi.io/packages/source/n/numpy/numpy-1.26.4.tar.gz"
                     ]
                 },
             },
@@ -1430,6 +1670,50 @@ class Test_linter(unittest.TestCase):
         expected = "Recipes should usually depend on `matplotlib-base`"
         self.assertTrue(any(hint.startswith(expected) for hint in hints))
 
+    def test_rust_license_bundling(self):
+        # Case where cargo-bundle-licenses is missing
+        meta_missing_license = {
+            "requirements": {"build": ["{{ compiler('rust') }}"]},
+        }
+
+        lints, hints = linter.lintify_meta_yaml(meta_missing_license)
+        expected_msg = (
+            "Rust packages must include the licenses of the Rust dependencies. "
+            "For more info, visit: https://conda-forge.org/docs/maintainer/adding_pkgs/#rust"
+        )
+        self.assertIn(expected_msg, lints)
+
+        # Case where cargo-bundle-licenses is present
+        meta_with_license = {
+            "requirements": {
+                "build": ["{{ compiler('rust') }}", "cargo-bundle-licenses"]
+            },
+        }
+
+        lints, hints = linter.lintify_meta_yaml(meta_with_license)
+        self.assertNotIn(expected_msg, lints)
+
+    def test_go_license_bundling(self):
+        # Case where go-licenses is missing
+        meta_missing_license = {
+            "requirements": {"build": ["{{ compiler('go') }}"]},
+        }
+
+        lints, hints = linter.lintify_meta_yaml(meta_missing_license)
+        expected_msg = (
+            "Go packages must include the licenses of the Go dependencies. "
+            "For more info, visit: https://conda-forge.org/docs/maintainer/adding_pkgs/#go"
+        )
+        self.assertIn(expected_msg, lints)
+
+        # Case where go-licenses is present
+        meta_with_license = {
+            "requirements": {"build": ["{{ compiler('go') }}", "go-licenses"]},
+        }
+
+        lints, hints = linter.lintify_meta_yaml(meta_with_license)
+        self.assertNotIn(expected_msg, lints)
+
 
 @pytest.mark.cli
 class TestCLI_recipe_lint(unittest.TestCase):
@@ -1584,6 +1868,132 @@ class TestCLI_recipe_lint(unittest.TestCase):
             assert_jinja('{%set version = "0.27.3" %}', is_good=False)
             assert_jinja('{% set version = "0.27.3"%}', is_good=False)
             assert_jinja('{% set version= "0.27.3"%}', is_good=False)
+
+
+def test_lint_no_builds():
+    expected_message = "The feedstock has no `.ci_support` files and "
+
+    with tmp_directory() as feedstock_dir:
+        ci_support_dir = os.path.join(feedstock_dir, ".ci_support")
+        os.makedirs(ci_support_dir, exist_ok=True)
+        with io.open(os.path.join(ci_support_dir, "README"), "w") as fh:
+            fh.write("blah")
+        recipe_dir = os.path.join(feedstock_dir, "recipe")
+        os.makedirs(recipe_dir, exist_ok=True)
+        with io.open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
+            fh.write(
+                """
+                package:
+                   name: foo
+                """
+            )
+
+        lints = linter.main(recipe_dir, conda_forge=True)
+        assert any(lint.startswith(expected_message) for lint in lints)
+
+        with io.open(os.path.join(ci_support_dir, "blah.yaml"), "w") as fh:
+            fh.write("blah")
+
+        lints = linter.main(recipe_dir, conda_forge=True)
+        assert not any(lint.startswith(expected_message) for lint in lints)
+
+
+@pytest.mark.parametrize(
+    "yaml_block,annotation",
+    [
+        pytest.param(
+            """
+            {% set name = "libconeangle" %}
+            {% set version = "0.1.1" %}
+
+            package:
+              name: {{ name|lower }}
+              version: {{ version }}
+
+            source:
+              url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/libconeangle-{{ version }}.tar.gz  # [unix]
+              sha256: bc828be92fdf2d2d353b5e8bb95644068220d92809276312ff2d7bca0aa8b2d1  # [unix]
+              url: https://pypi.org/packages/cp{{ CONDA_PY }}/{{ name[0] }}/{{ name }}/{{ name }}-{{ version }}-cp{{ CONDA_PY }}-cp{{ CONDA_PY }}-win_amd64.whl  # [win]
+              sha256: 467a444ca9a46675b12d43b00462052dc00a16bc322944df8053b1573a492dce  # [win and py==38]
+              sha256: b35c0643c9f1dd1c933c0a6d91b7368c32a3255e76594dea27d918b71c1166ed  # [win and py==39]
+              sha256: a32e28b3e321bdb802f28a5f04d1df65071ab42eef06a6dc15ed656780c0361e  # [win and py==310]
+            build:
+              skip: true  # [py<38 or python_impl == 'pypy' or (win and py==311)]
+              script: {{ PYTHON }} -m pip install . -vv  # [unix]
+              script_env:  # [osx and arm64]
+                - SKBUILD_CONFIGURE_OPTIONS=-DWITH_CBOOL_EXITCODE=0 -DWITH_CBOOL_EXITCODE__TRYRUN_OUTPUT='' -Df03real128_EXITCODE=1 -Df03real128_EXITCODE__TRYRUN_OUTPUT='' -Df18errorstop_EXITCODE=1 -Df18errorstop_EXITCODE__TRYRUN_OUTPUT=''  # [osx and arm64]
+              script: {{ PYTHON }} -m pip install {{ name }}-{{ version }}-cp{{ CONDA_PY }}-cp{{ CONDA_PY }}-win_amd64.whl -vv  # [win]
+              number: 3
+            """,
+            "lint",
+            id="libconeangle",
+        ),
+        pytest.param(
+            """
+            {% set name = "junit-xml" %}
+            {% set version = "1.9" %}
+            {% set python_tag = 'py2.py3' %}
+            {% set use_wheel = True %}
+
+            package:
+              name: {{ name|lower }}
+              version: {{ version }}
+
+            source:
+            {% if use_wheel %}
+            - url: https://pypi.org/packages/{{ python_tag }}/{{ name[0] }}/{{ name }}/{{ name | replace('-', '_') }}-{{ version }}-{{ python_tag }}-none-any.whl
+              sha256: "ec5ca1a55aefdd76d28fcc0b135251d156c7106fa979686a4b48d62b761b4732"
+            {% else %}
+            - url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name }}-{{ version }}.tar.gz
+              sha256: ""
+            {% endif %}
+
+            build:
+              noarch: python
+              number: 0
+              {% if use_wheel %}
+              script: "{{ PYTHON }} -m pip install --no-deps --ignore-installed --no-cache-dir -vvv *.whl"
+              {% else %}
+              script: "{{ PYTHON }} -m pip install --no-deps --ignore-installed --no-cache-dir -vvv ."
+              {% endif %}
+            """,
+            "hint",
+            id="junit-xml",
+        ),
+        pytest.param(
+            """
+            {% set name = "WeasyPrint" %}
+            {% set version = "62.1" %}
+
+            package:
+              name: {{ name|lower }}
+              version: {{ version }}
+
+            source:
+              url: https://files.pythonhosted.org/packages/py3/{{ (name|lower)[0] }}/{{ name|lower }}/{{ name|lower }}-{{ version }}-py3-none-any.whl
+              sha256: 654d4c266336cbf9acc4da118c7778ef5839717e6055d5b8f995cf50be200c46
+
+            build:
+              number: 0
+              noarch: python
+              entry_points:
+                - weasyprint = weasyprint.__main__:main
+              script: {{ PYTHON }} -m pip install {{ name|lower }}-{{ version }}-py3-none-any.whl -vv
+            """,
+            "hint",
+            id="weasyprint",
+        ),
+    ],
+)
+def test_lint_wheels(tmp_path, yaml_block, annotation):
+    (tmp_path / "meta.yaml").write_text(yaml_block)
+    expected_message = "wheel(s) in source"
+
+    lints, hints = linter.main(tmp_path, conda_forge=False, return_hints=True)
+    if annotation == "lint":
+        assert any(expected_message in lint for lint in lints)
+    else:
+        assert any(expected_message in hint for hint in hints)
 
 
 if __name__ == "__main__":

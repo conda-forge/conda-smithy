@@ -7,13 +7,13 @@ Authors are sorted by number of commits.
 * Christopher J. Wright
 * Anthony Scopatz
 * Phil Elson
-* Filipe Fernandes
+* H. Vetinari
 * Uwe L. Korn
+* Filipe Fernandes
 * Dougal J. Sutherland
 * Amit Kumar
 * Marcel Bargull
 * shadow_walker
-* H. Vetinari
 * Michael Sarahan
 * Min RK
 * John Kirkham
@@ -25,9 +25,9 @@ Authors are sorted by number of commits.
 * Chris Burr
 * Julian Rüth
 * Bastian Zimmermann
+* pre-commit-ci[bot]
 * Daniel Bast
 * Billy K. Poon
-* pre-commit-ci[bot]
 * vinicius douglas cerutti
 * Tim Snyder
 * Mike Henry
@@ -59,6 +59,7 @@ Authors are sorted by number of commits.
 * Marius van Niekerk
 * Johannes Köster
 * Philippe Blain
+* Mervin Fansler
 * Matt McCormick
 * Jan Janßen
 * xoviat
@@ -72,7 +73,6 @@ Authors are sorted by number of commits.
 * Florian Rathgeber
 * Bruno Oliveira
 * Tony Kelman
-* Mervin Fansler
 * Jannis Leidel
 * Guilherme Quentel Melo
 * santi
@@ -93,6 +93,7 @@ Authors are sorted by number of commits.
 * Matthew W. Thompson
 * conda-forge-admin
 * Klaus Zimmermann
+* dependabot[bot]
 * lorenz
 * Tom Augspurger
 * Ryan May

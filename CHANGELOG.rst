@@ -4,6 +4,118 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.36.2
+====================
+
+**Added:**
+
+* Report artifacts contents after building via ``cph list``. Requires ``conda-forge-ci-setup >=4.6.0``. (#1947)
+
+**Fixed:**
+
+* Avoid linter failing on recipes using requirements without build/host/run distinction. (#1946)
+
+**Authors:**
+
+* Jaime Rodríguez-Guerra
+* H. Vetinari
+* dependabot[bot]
+
+
+
+v3.36.1
+====================
+
+**Added:**
+
+* Enable Dependabot for Github Actions workflows and templates. (#1930)
+* Lint / hint if a recipe uses Python wheels as its source. (#1935 via #1936)
+
+**Changed:**
+
+* Lint all outputs for required stdlib-fixes. (#1941)
+* Make recommended changes to Travis CI template. (#1942)
+
+**Fixed:**
+
+* Avoid linter failing on more complicated selector patterns in `conda_build_config.yaml`. (#1939)
+
+**Authors:**
+
+* Matthew R. Becker
+* Jaime Rodríguez-Guerra
+* H. Vetinari
+* Uwe L. Korn
+* Mervin Fansler
+* dependabot[bot]
+
+
+
+v3.36.0
+====================
+
+**Added:**
+
+* Added new lint for no ``.ci_support`` files which indicates no packages being built.
+
+**Changed:**
+
+* Provide linter hints if macOS quantities are misconfigured in `conda_build_config.yaml` (#1929)
+
+**Fixed:**
+
+* Ensure MACOSX_SDK_VERSION does not end up lower than `c_stdlib_version` in variant configs (#1927 via #1928)
+* Only mark the toplevel LICENSE and README as generated files
+
+**Authors:**
+
+* Matthew R. Becker
+* H. Vetinari
+* Uwe L. Korn
+
+
+
+v3.35.1
+====================
+
+**Removed:**
+
+* ``automerge.yml`` workflow template no longer relies on ``actions/checkout``. (#1923)
+
+**Fixed:**
+
+* linter no longer mis-diagnoses constraint-less ``__osx`` as requiring change. (#1925)
+* Fixed a bug where some keys in zips were not being rendered correctly into the ``.ci_support`` files
+  under some hard-to-describe circumstances.
+* Fixed source URL for rever releases.
+
+**Authors:**
+
+* Matthew R. Becker
+* Jaime Rodríguez-Guerra
+* H. Vetinari
+* pre-commit-ci[bot]
+
+
+
+v3.35.0
+====================
+
+**Changed:**
+
+* Do not populate `c_stdlib{,_version}` in CI configs that don't need them (#1908)
+* Added linter rules for providing hints about updating to new stdlib-functionality (#1909)
+* Github Actions: Explicitly use ``macos-13`` for ``osx-64`` runners. (#1913)
+* Github Actions: Bump to ``setup-miniconda@v3`` on Windows builds. (#1913)
+* Azure Pipelines: bump default macOS runners ``vmImage`` value to ``macos-12``. (#1914)
+
+**Authors:**
+
+* Jaime Rodríguez-Guerra
+* H. Vetinari
+
+
+
 v3.34.1
 ====================
 

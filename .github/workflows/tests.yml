@@ -22,7 +22,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Set up Conda env
-        uses: mamba-org/setup-micromamba@2b72821d5ad7f6da3c003a3684ce341bf187b46f
+        uses: mamba-org/setup-micromamba@f8b8a1e23a26f60a44c853292711bacfd3eac822
         with:
           environment-file: environment.yml
           cache-environment: true

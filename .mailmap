@@ -17,14 +17,14 @@ Christopher J. Wright <cjwright4242gh@gmail.com> christopher <cjwright4242@gmail
 Christopher J. Wright <cjwright4242gh@gmail.com> Christopher J. 'CJ' Wright <cjwright4242@gmail.com>
 Anthony Scopatz <scopatz@gmail.com>
 Phil Elson <pelson.pub@gmail.com> pelson <pelson.pub@gmail.com>
+H. Vetinari <h.vetinari@gmx.com>
+Uwe L. Korn <uwe.korn@quantco.com> Uwe L. Korn <xhochy@users.noreply.github.com>
 Filipe Fernandes <ocefpaf@gmail.com> Filipe <ocefpaf@gmail.com>
 Filipe Fernandes <ocefpaf@gmail.com> ocefpaf <ocefpaf@gmail.com>
-Uwe L. Korn <uwe.korn@quantco.com> Uwe L. Korn <xhochy@users.noreply.github.com>
 Dougal J. Sutherland <dougal@gmail.com>
 Amit Kumar <dtu.amit@gmail.com>
 Marcel Bargull <marcel.bargull@udo.edu> Marcel Bargull <mbargull@users.noreply.github.com>
 shadow_walker <shadowwalkersb@gmail.com>
-H. Vetinari <h.vetinari@gmx.com>
 Michael Sarahan <msarahan@gmail.com> Mike Sarahan <msarahan@gmail.com>
 Min RK <benjaminrk@gmail.com>
 John Kirkham <jakirkham@gmail.com> John Kirkham <kirkhamj@janelia.hhmi.org>
@@ -38,9 +38,9 @@ Johnny Willemsen <jwillemsen@remedy.nl>
 Chris Burr <christopher.burr@cern.ch> Chris Burr <chrisburr@users.noreply.github.com>
 Julian Rüth <julian.rueth@fsfe.org>
 Bastian Zimmermann <10774221+BastianZim@users.noreply.github.com> BastianZim <10774221+BastianZim@users.noreply.github.com>
+pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>
 Daniel Bast <2790401+dbast@users.noreply.github.com>
 Billy K. Poon <bkpoon@lbl.gov>
-pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>
 vinicius douglas cerutti <vinivdc2009@hotmail.com> Vinicius D. Cerutti <51954708+viniciusdc@users.noreply.github.com>
 vinicius douglas cerutti <vinivdc2009@hotmail.com> viniciusdc <51954708+viniciusdc@users.noreply.github.com>
 Tim Snyder <snyder.tim@gmail.com>
@@ -77,6 +77,7 @@ Marius van Niekerk <marius.v.niekerk@gmail.com> Marius Van Niekerk <marius.vanni
 Marius van Niekerk <marius.v.niekerk@gmail.com> Marius Van Niekerk <mvanniekerk@flatiron.com>
 Johannes Köster <johannes.koester@tu-dortmund.de>
 Philippe Blain <levraiphilippeblain@gmail.com>
+Mervin Fansler <mmfansler@gmail.com> Mervin Fansler <fanslerm@mskcc.org>
 Matt McCormick <matt.mccormick@kitware.com>
 Jan Janßen <janssen@mpie.de> Jan Janßen <jan-janssen@users.noreply.github.com>
 xoviat <xoviat@users.noreply.github.com>
@@ -90,7 +91,6 @@ Duncan Macleod <duncan.macleod@ligo.org>
 Florian Rathgeber <florian.rathgeber@gmail.com>
 Bruno Oliveira <nicoddemus@gmail.com>
 Tony Kelman <tony@kelman.net>
-Mervin Fansler <mmfansler@gmail.com>
 Jannis Leidel <jannis@leidel.info>
 Guilherme Quentel Melo <gqmelo@gmail.com>
 santi <sdvillal@gmail.com>
@@ -111,6 +111,7 @@ Ben Mares <15216687+maresb@users.noreply.github.com>
 Matthew W. Thompson <mattwthompson@protonmail.com>
 conda-forge-admin <pelson.pub+conda-forge@gmail.com>
 Klaus Zimmermann <klaus.zimmermann@smhi.se>
+dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
 lorenz <looooo@users.noreply.github.com>
 Tom Augspurger <tom.augspurger88@gmail.com>
 Ryan May <rmay31@gmail.com>
