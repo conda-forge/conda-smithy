@@ -19,7 +19,7 @@ Installation
 
 The easiest way to install conda-smithy is to use conda and conda-forge:
 
-```
+```sh
 conda install -n root -c conda-forge conda-smithy
 ```
 
@@ -107,14 +107,77 @@ Running a build
 
 When everything is configured you can trigger a build with a push to the feedstock repo on github.
 
-Developing conda-smithy
+Developing `conda-smithy`
 -----------------------
 
-To develop conda smithy, use your favortite conda-based environment manager and create an environment based on the `environment.yml`.
+If you don’t already have a conda-based environment manager, install one. For example [Miniconda]((https://docs.anaconda.com/free/miniconda/miniconda-install/)).
 
-```
+To develop `conda-smithy`, use said environment manager and create an environment based on the `environment.yml`.
+
+```sh
 $ conda env create
 ```
+
+Then activate the environment, check that it works and install the dependencies:
+
+```sh
+$ conda activate conda-smithy
+$ which python
+# ☝️ should now point to an environment-specific python
+$ python -m pip install .
+```
+
+You might want to switch Python versions, for example if you wish to exactly replicate a CI issue locally. To do that:
+
+- Change the Python version in the `environment.yml`
+- Deactivate and delete old environment, if you have it: `conda deactivate && conda env delete -n conda-smithy`
+- (re-)run `conda env create` and activate the new environment with `conda activate conda-smithy`
+
+### Testing
+
+Run all tests with `pytest`.
+
+Run specific test file:
+```sh
+pytest tests/test_configure_feedstock.py
+```
+
+Run specific test within a file:
+```sh
+pytest tests/test_configure_feedstock.py -k test_cuda_enabled_render
+```
+
+Run with coverage (this is how the tests are run in CI):
+
+```sh
+pytest tests --cov conda_smithy --cov-report lcov --cov-report term-missing
+```
+
+#### Troubleshooting Tests
+
+If test coverage is reported as 0%, your `pytest` and `pytest-cov` plugin might be from different environments/Python instances. You can force the use the of the environment versions by prefixing the commands with `python -m`, so to run the tests with coverage:
+
+```sh
+python -m pytest tests --cov conda_smithy --cov-report lcov --cov-report term-missing
+```
+
+You may find that your latest changes aren’t reflected in a test run, in such cases, you can try rebuilding the project:
+
+```sh
+python -m pip install -v --no-build-isolation -e . && pytest tests
+```
+
+### Linting and Formatting
+
+This repo currently uses `flake8` for linting (but doesn’t enforce it) and `black` for auto-formatting. `black` is already configured in the pre-commit hook, but you can run it manually whenever you like with:
+
+```sh
+pre-commit run --all-files
+```
+
+To run flake, just type `flake8`. Note that `black` doesn’t auto-fix all errors found by `flake8`.
+
+**Note:** There is [an ongoing effort](https://github.com/conda-forge/conda-smithy/pull/1919) to replace `flake8` with `ruff`, which will then also be able to format away many of the issues it finds.
 
 Releasing conda-smithy
 ----------------------
