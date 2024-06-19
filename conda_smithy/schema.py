@@ -12,7 +12,7 @@ from pydantic import BaseModel, Field, create_model, ConfigDict
 from conda.base.constants import KNOWN_SUBDIRS
 
 try:
-    from enum import StrEnum
+    from enum import StrEnum # type: ignore
 except ImportError:
     from backports.strenum import StrEnum
 
@@ -371,7 +371,7 @@ class BotConfig(BaseModel):
     )
 
     version_updates: Optional[BotConfigVersionUpdates] = Field(
-        default_factory=BotConfigVersionUpdates,
+        default_factory=BotConfigVersionUpdates, # type: ignore
         description="Bot config for version update PRs",
     )
 
@@ -596,7 +596,7 @@ class ConfigModel(BaseModel):
     )
 
     bot: Optional[BotConfig] = Field(
-        default_factory=BotConfig,
+        default_factory=BotConfig, # type: ignore
         description=cleandoc(
             """
         This dictates the behavior of the conda-forge auto-tick bot which issues
@@ -644,7 +644,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    build_platform: Optional[BuildPlatform] = Field(
+    build_platform: Optional[BuildPlatform] = Field( # type: ignore
         default_factory=BuildPlatform,
         description=cleandoc(
             """
@@ -738,7 +738,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    noarch_platforms: Optional[Union[Platforms, List[Platforms]]] = Field(
+    noarch_platforms: Optional[Union[Platforms, List[Platforms]]] = Field( # type: ignore
         default_factory=lambda: ["linux_64"],
         description=cleandoc(
             """
@@ -761,7 +761,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    os_version: Optional[OSVersion] = Field(
+    os_version: Optional[OSVersion] = Field( # type: ignore
         default_factory=OSVersion,
         description=cleandoc(
             """
@@ -779,7 +779,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    provider: Optional[Provider] = Field(
+    provider: Optional[Provider] = Field( # type: ignore
         default_factory=Provider,
         description=cleandoc(
             """

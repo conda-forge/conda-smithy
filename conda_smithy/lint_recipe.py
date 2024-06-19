@@ -839,7 +839,7 @@ def lintify_meta_yaml(
             cmd + shell_scripts,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
-            env={
+            env={ # type: ignore
                 "PATH": os.getenv("PATH")
             },  # exclude other env variables to protect against token leakage
         )
@@ -1354,7 +1354,7 @@ def jinja_lines(lines: TextIOWrapper) -> Iterator[Tuple[str, int]]:
             yield line, i
 
 
-def _format_validation_msg(error: "jsonschema.ValidationError"):
+def _format_validation_msg(error: "jsonschema.ValidationError") -> str: # type: ignore
     """Use the data on the validation error to generate improved reporting.
 
     If available, get the help URL from the first level of the JSON path:

@@ -42,7 +42,7 @@ from typing import (
 try:
     import simplejson as json
 except ImportError:
-    import json
+    import json # type: ignore
 
 from conda.models.match_spec import MatchSpec
 from conda.models.version import VersionOrder
@@ -2261,7 +2261,7 @@ def render_README(
                     err
                 )
             )
-        except json.decoder.JSONDecodeError:
+        except json.decoder.JSONDecodeError: # type: ignore
             azure_build_id_from_token(forge_config)
 
     logger.debug("README")
