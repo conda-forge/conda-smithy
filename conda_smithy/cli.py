@@ -646,7 +646,6 @@ class RecipeLint(Subcommand):
                 os.path.join(recipe),
                 conda_forge=args.conda_forge,
                 return_hints=True,
-                feedstock_dir=args.feedstock_dir,
             )
             if lints:
                 all_good = False
