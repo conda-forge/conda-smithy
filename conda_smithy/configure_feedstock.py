@@ -2280,7 +2280,7 @@ def render_README(
                 "Azure build_id can't be retrieved using the Azure token. Exception: %s",
                 err,
             )
-        except json.decoder.JSONDecodeError:
+        except json.decoder.JSONDecodeError: # type: ignore
             azure_build_id_from_token(forge_config)
 
     logger.debug("README")
