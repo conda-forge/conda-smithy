@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 
 from collections.abc import Sequence, Mapping
-from pathlib import Path
-
-from conda_smithy.configure_feedstock import _read_forge_config
 
 str_type = str
 
@@ -34,13 +31,8 @@ from conda_build.metadata import (
     ensure_valid_license_family,
     FIELDS as cbfields,
 )
-from conda_smithy.validate_schema import (
-    validate_json_schema,
-)
-
-from . import rattler_linter
-from rattler_build_conda_compat import loader as rattler_loader
-from rattler_build_conda_compat.lint import lint_recipe_yaml_by_schema
+from conda_smithy.validate_schema import validate_json_schema
+from ruamel.yaml import CommentedSeq
 
 from .utils import render_meta_yaml, get_yaml
 
@@ -78,18 +70,8 @@ sel_pat = re.compile(r"(.+?)\s*(#.*)?\[([^\[\]]+)\](?(2).*)$")
 jinja_pat = re.compile(r"\s*\{%\s*(set)\s+[^\s]+\s*=\s*[^\s]+\s*%\}")
 JINJA_VAR_PAT = re.compile(r"{{(.*?)}}")
 
-CONDA_BUILD_TOOL = "conda-build"
-RATTLER_BUILD_TOOL = "rattler-build"
 
-
-def get_section(parent, name, lints, rattler=False):
-    if not rattler:
-        return get_meta_section(parent, name, lints)
-    else:
-        return get_rattler_section(parent, name)
-
-
-def get_meta_section(parent, name, lints):
+def get_section(parent, name, lints):
     if name == "source":
         return get_list_section(parent, name, lints, allow_single=True)
     elif name == "outputs":
@@ -120,18 +102,6 @@ def get_list_section(parent, name, lints, allow_single=False):
         )
         lints.append(msg)
         return [{}]
-
-
-def get_rattler_section(meta, name):
-    # get rattler recipe.yaml section
-    if name == "requirements":
-        return rattler_loader.load_all_requirements(meta)
-    elif name == "source":
-        source = meta.get("source", [])
-        if isinstance(source, Mapping):
-            return [source]
-
-    return meta.get(name, {})
 
 
 def lint_section_order(major_sections, lints):
@@ -201,214 +171,6 @@ def lintify_forge_yaml(recipe_dir=None) -> (list, list):
     return validate_json_schema(forge_yaml)
 
 
-def lint_maintainers_section(extra_section, lints):
-    if not extra_section.get("recipe-maintainers", []):
-        lints.append(
-            "The recipe could do with some maintainers listed in "
-            "the `extra/recipe-maintainers` section."
-        )
-
-    if not (
-        isinstance(extra_section.get("recipe-maintainers", []), Sequence)
-        and not isinstance(
-            extra_section.get("recipe-maintainers", []), str_type
-        )
-    ):
-        lints.append("Recipe maintainers should be a json list.")
-
-
-def lint_license(about_section, lints):
-    license = about_section.get("license", "").lower()
-    if "unknown" == license.strip():
-        lints.append("The recipe license cannot be unknown.")
-
-
-def lint_build_number(build_section, lints):
-    if build_section.get("number", None) is None:
-        lints.append("The recipe must have a `build/number` section.")
-
-
-def lint_files_have_hashes(sources_section, lints):
-    for source_section in sources_section:
-        if "url" in source_section and not (
-            {"sha1", "sha256", "md5"} & set(source_section.keys())
-        ):
-            lints.append(
-                "When defining a source/url please add a sha256, sha1 "
-                "or md5 checksum (sha256 preferably)."
-            )
-
-
-def lint_license_wording(about_section, lints):
-    license = about_section.get("license", "").lower()
-    if (
-        "license" in license.lower()
-        and "unlicense" not in license.lower()
-        and "licenseref" not in license.lower()
-        and "-license" not in license.lower()
-    ):
-        lints.append(
-            "The recipe `license` should not include the word " '"License".'
-        )
-
-
-def lint_empty_line_of_the_file(recipe_dir, recipe_name, lints):
-    if recipe_dir is not None and os.path.exists(recipe_name):
-        with io.open(recipe_name, "r") as f:
-            lines = f.read().split("\n")
-        # Count the number of empty lines from the end of the file
-        empty_lines = itertools.takewhile(lambda x: x == "", reversed(lines))
-        end_empty_lines_count = len(list(empty_lines))
-        if end_empty_lines_count > 1:
-            lints.append(
-                "There are {} too many lines.  "
-                "There should be one empty line at the end of the "
-                "file.".format(end_empty_lines_count - 1)
-            )
-        elif end_empty_lines_count < 1:
-            lints.append(
-                "There are too few lines.  There should be one empty "
-                "line at the end of the file."
-            )
-
-
-def lint_lower_bound_python_version(
-    noarch_value, run_reqs, outputs_section, lints
-):
-    if noarch_value == "python" and not outputs_section:
-        for req in run_reqs:
-            if (req.strip().split()[0] == "python") and (req != "python"):
-                break
-        else:
-            lints.append(
-                "noarch: python recipes are required to have a lower bound "
-                "on the python version. Typically this means putting "
-                "`python >=3.6` in **both** `host` and `run` but you should check "
-                "upstream for the package's Python compatibility."
-            )
-
-
-def hint_pip_usage(build_section, hints):
-    if "script" in build_section:
-        scripts = build_section["script"]
-        if isinstance(scripts, str):
-            scripts = [scripts]
-        for script in scripts:
-            if "python setup.py install" in script:
-                hints.append(
-                    "Whenever possible python packages should use pip. "
-                    "See https://conda-forge.org/docs/maintainer/adding_pkgs.html#use-pip"
-                )
-
-
-def hint_fixing_shellcheck_findings(recipe_dir, hints):
-    shellcheck_enabled = False
-    shell_scripts = []
-    if recipe_dir:
-        shell_scripts = glob(os.path.join(recipe_dir, "*.sh"))
-        forge_yaml = find_local_config_file(recipe_dir, "conda-forge.yml")
-        if shell_scripts and forge_yaml:
-            with open(forge_yaml, "r") as fh:
-                code = get_yaml().load(fh)
-                shellcheck_enabled = code.get("shellcheck", {}).get(
-                    "enabled", shellcheck_enabled
-                )
-    if shellcheck_enabled and shutil.which("shellcheck") and shell_scripts:
-        MAX_SHELLCHECK_LINES = 50
-        cmd = [
-            "shellcheck",
-            "--enable=all",
-            "--shell=bash",
-            # SC2154: var is referenced but not assigned,
-            #         see https://github.com/koalaman/shellcheck/wiki/SC2154
-            "--exclude=SC2154",
-        ]
-
-        p = subprocess.Popen(
-            cmd + shell_scripts,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            env={
-                "PATH": os.getenv("PATH")
-            },  # exclude other env variables to protect against token leakage
-        )
-        sc_stdout, _ = p.communicate()
-
-        if p.returncode == 1:
-            # All files successfully scanned with some issues.
-            findings = (
-                sc_stdout.decode(sys.stdout.encoding)
-                .replace("\r\n", "\n")
-                .splitlines()
-            )
-            hints.append(
-                "Whenever possible fix all shellcheck findings ('"
-                + " ".join(cmd)
-                + " recipe/*.sh -f diff | git apply' helps)"
-            )
-            hints.extend(findings[:50])
-            if len(findings) > MAX_SHELLCHECK_LINES:
-                hints.append(
-                    "Output restricted, there are '%s' more lines."
-                    % (len(findings) - MAX_SHELLCHECK_LINES)
-                )
-        elif p.returncode != 0:
-            # Something went wrong.
-            hints.append(
-                "There have been errors while scanning with shellcheck."
-            )
-
-
-def hint_spdx(about_section, hints):
-    import license_expression
-
-    license = about_section.get("license", "")
-    licensing = license_expression.Licensing()
-    parsed_exceptions = []
-    try:
-        parsed_licenses = []
-        parsed_licenses_with_exception = licensing.license_symbols(
-            license.strip(), decompose=False
-        )
-        for l in parsed_licenses_with_exception:
-            if isinstance(l, license_expression.LicenseWithExceptionSymbol):
-                parsed_licenses.append(l.license_symbol.key)
-                parsed_exceptions.append(l.exception_symbol.key)
-            else:
-                parsed_licenses.append(l.key)
-    except license_expression.ExpressionError:
-        parsed_licenses = [license]
-
-    licenseref_regex = re.compile(r"^LicenseRef[a-zA-Z0-9\-.]*$")
-    filtered_licenses = []
-    for license in parsed_licenses:
-        if not licenseref_regex.match(license):
-            filtered_licenses.append(license)
-
-    with open(
-        os.path.join(os.path.dirname(__file__), "licenses.txt"), "r"
-    ) as f:
-        expected_licenses = f.readlines()
-        expected_licenses = set([l.strip() for l in expected_licenses])
-    with open(
-        os.path.join(os.path.dirname(__file__), "license_exceptions.txt"), "r"
-    ) as f:
-        expected_exceptions = f.readlines()
-        expected_exceptions = set([l.strip() for l in expected_exceptions])
-    if set(filtered_licenses) - expected_licenses:
-        hints.append(
-            "License is not an SPDX identifier (or a custom LicenseRef) nor an SPDX license expression.\n\n"
-            "Documentation on acceptable licenses can be found "
-            "[here]( https://conda-forge.org/docs/maintainer/adding_pkgs.html#spdx-identifiers-and-expressions )."
-        )
-    if set(parsed_exceptions) - expected_exceptions:
-        hints.append(
-            "License exception is not an SPDX exception.\n\n"
-            "Documentation on acceptable licenses can be found "
-            "[here]( https://conda-forge.org/docs/maintainer/adding_pkgs.html#spdx-identifiers-and-expressions )."
-        )
-
-
 def lintify_meta_yaml(
     meta, recipe_dir=None, conda_forge=False
 ) -> (list, list):
@@ -451,8 +213,20 @@ def lintify_meta_yaml(
     lint_about_contents(about_section, lints)
 
     # 3a: The recipe should have some maintainers.
+    if not extra_section.get("recipe-maintainers", []):
+        lints.append(
+            "The recipe could do with some maintainers listed in "
+            "the `extra/recipe-maintainers` section."
+        )
+
     # 3b: Maintainers should be a list
-    lint_maintainers_section(extra_section, lints)
+    if not (
+        isinstance(extra_section.get("recipe-maintainers", []), Sequence)
+        and not isinstance(
+            extra_section.get("recipe-maintainers", []), str_type
+        )
+    ):
+        lints.append("Recipe maintainers should be a json list.")
 
     # 4: The recipe should have some tests.
     if not any(key in TEST_KEYS for key in test_section):
@@ -482,7 +256,9 @@ def lintify_meta_yaml(
                 lints.append("The recipe must have some tests.")
 
     # 5: License cannot be 'unknown.'
-    lint_license(about_section, lints)
+    license = about_section.get("license", "").lower()
+    if "unknown" == license.strip():
+        lints.append("The recipe license cannot be unknown.")
 
     # 6: Selectors should be in a tidy form.
     if recipe_dir is not None and os.path.exists(meta_fname):
@@ -529,7 +305,8 @@ def lintify_meta_yaml(
             )
 
     # 7: The build section should have a build number.
-    lint_build_number(build_section, lints)
+    if build_section.get("number", None) is None:
+        lints.append("The recipe must have a `build/number` section.")
 
     # 8: The build section should be before the run section in requirements.
     seen_requirements = [
@@ -549,13 +326,45 @@ def lintify_meta_yaml(
         )
 
     # 9: Files downloaded should have a hash.
-    lint_files_have_hashes(sources_section, lints)
+    for source_section in sources_section:
+        if "url" in source_section and not (
+            {"sha1", "sha256", "md5"} & set(source_section.keys())
+        ):
+            lints.append(
+                "When defining a source/url please add a sha256, sha1 "
+                "or md5 checksum (sha256 preferably)."
+            )
 
     # 10: License should not include the word 'license'.
-    lint_license_wording(about_section, lints)
+    license = about_section.get("license", "").lower()
+    if (
+        "license" in license.lower()
+        and "unlicense" not in license.lower()
+        and "licenseref" not in license.lower()
+        and "-license" not in license.lower()
+    ):
+        lints.append(
+            "The recipe `license` should not include the word " '"License".'
+        )
 
     # 11: There should be one empty line at the end of the file.
-    lint_empty_line_of_the_file(recipe_dir, meta_fname, lints)
+    if recipe_dir is not None and os.path.exists(meta_fname):
+        with io.open(meta_fname, "r") as f:
+            lines = f.read().split("\n")
+        # Count the number of empty lines from the end of the file
+        empty_lines = itertools.takewhile(lambda x: x == "", reversed(lines))
+        end_empty_lines_count = len(list(empty_lines))
+        if end_empty_lines_count > 1:
+            lints.append(
+                "There are {} too many lines.  "
+                "There should be one empty line at the end of the "
+                "file.".format(end_empty_lines_count - 1)
+            )
+        elif end_empty_lines_count < 1:
+            lints.append(
+                "There are too few lines.  There should be one empty "
+                "line at the end of the file."
+            )
 
     # 12: License family must be valid (conda-build checks for that)
     try:
@@ -564,7 +373,6 @@ def lintify_meta_yaml(
         lints.append(str(e))
 
     # 12a: License family must be valid (conda-build checks for that)
-    license = about_section.get("license", "").lower()
     license_family = about_section.get("license_family", license).lower()
     license_file = about_section.get("license_file", None)
     if not license_file and any(
@@ -832,9 +640,17 @@ def lintify_meta_yaml(
             )
 
     # 25: require a lower bound on python version
-    lint_lower_bound_python_version(
-        noarch_value, run_reqs, outputs_section, lints
-    )
+    if noarch_value == "python" and not outputs_section:
+        for req in run_reqs:
+            if (req.strip().split()[0] == "python") and (req != "python"):
+                break
+        else:
+            lints.append(
+                "noarch: python recipes are required to have a lower bound "
+                "on the python version. Typically this means putting "
+                "`python >=3.6` in **both** `host` and `run` but you should check "
+                "upstream for the package's Python compatibility."
+            )
 
     # 26: pin_subpackage is for subpackages and pin_compatible is for
     # non-subpackages of the recipe. Contact @carterbox for troubleshooting
@@ -915,9 +731,34 @@ def lintify_meta_yaml(
                 "This is discouraged. Please consider using a source distribution (sdist) instead."
             )
 
+    # 28: Check that Rust licenses are bundled.
+    if build_reqs and ("{{ compiler('rust') }}" in build_reqs):
+        if "cargo-bundle-licenses" not in build_reqs:
+            lints.append(
+                "Rust packages must include the licenses of the Rust dependencies. "
+                "For more info, visit: https://conda-forge.org/docs/maintainer/adding_pkgs/#rust"
+            )
+
+    # 29: Check that go licenses are bundled.
+    if build_reqs and ("{{ compiler('go') }}" in build_reqs):
+        if "go-licenses" not in build_reqs:
+            lints.append(
+                "Go packages must include the licenses of the Go dependencies. "
+                "For more info, visit: https://conda-forge.org/docs/maintainer/adding_pkgs/#go"
+            )
+
     # hints
     # 1: suggest pip
-    hint_pip_usage(build_section, hints)
+    if "script" in build_section:
+        scripts = build_section["script"]
+        if isinstance(scripts, str):
+            scripts = [scripts]
+        for script in scripts:
+            if "python setup.py install" in script:
+                hints.append(
+                    "Whenever possible python packages should use pip. "
+                    "See https://conda-forge.org/docs/maintainer/adding_pkgs.html#use-pip"
+                )
 
     # 2: suggest python noarch (skip on feedstocks)
     if (
@@ -953,10 +794,111 @@ def lintify_meta_yaml(
                 )
 
     # 3: suggest fixing all recipe/*.sh shellcheck findings
-    hint_fixing_shellcheck_findings(recipe_dir, hints)
+    shellcheck_enabled = False
+    shell_scripts = []
+    if recipe_dir:
+        shell_scripts = glob(os.path.join(recipe_dir, "*.sh"))
+        forge_yaml = find_local_config_file(recipe_dir, "conda-forge.yml")
+        if shell_scripts and forge_yaml:
+            with open(forge_yaml, "r") as fh:
+                code = get_yaml().load(fh)
+                shellcheck_enabled = code.get("shellcheck", {}).get(
+                    "enabled", shellcheck_enabled
+                )
+
+    if shellcheck_enabled and shutil.which("shellcheck") and shell_scripts:
+        MAX_SHELLCHECK_LINES = 50
+        cmd = [
+            "shellcheck",
+            "--enable=all",
+            "--shell=bash",
+            # SC2154: var is referenced but not assigned,
+            #         see https://github.com/koalaman/shellcheck/wiki/SC2154
+            "--exclude=SC2154",
+        ]
+
+        p = subprocess.Popen(
+            cmd + shell_scripts,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            env={
+                "PATH": os.getenv("PATH")
+            },  # exclude other env variables to protect against token leakage
+        )
+        sc_stdout, _ = p.communicate()
+
+        if p.returncode == 1:
+            # All files successfully scanned with some issues.
+            findings = (
+                sc_stdout.decode(sys.stdout.encoding)
+                .replace("\r\n", "\n")
+                .splitlines()
+            )
+            hints.append(
+                "Whenever possible fix all shellcheck findings ('"
+                + " ".join(cmd)
+                + " recipe/*.sh -f diff | git apply' helps)"
+            )
+            hints.extend(findings[:50])
+            if len(findings) > MAX_SHELLCHECK_LINES:
+                hints.append(
+                    "Output restricted, there are '%s' more lines."
+                    % (len(findings) - MAX_SHELLCHECK_LINES)
+                )
+        elif p.returncode != 0:
+            # Something went wrong.
+            hints.append(
+                "There have been errors while scanning with shellcheck."
+            )
 
     # 4: Check for SPDX
-    hint_spdx(about_section, hints)
+    import license_expression
+
+    license = about_section.get("license", "")
+    licensing = license_expression.Licensing()
+    parsed_exceptions = []
+    try:
+        parsed_licenses = []
+        parsed_licenses_with_exception = licensing.license_symbols(
+            license.strip(), decompose=False
+        )
+        for l in parsed_licenses_with_exception:
+            if isinstance(l, license_expression.LicenseWithExceptionSymbol):
+                parsed_licenses.append(l.license_symbol.key)
+                parsed_exceptions.append(l.exception_symbol.key)
+            else:
+                parsed_licenses.append(l.key)
+    except license_expression.ExpressionError:
+        parsed_licenses = [license]
+
+    licenseref_regex = re.compile(r"^LicenseRef[a-zA-Z0-9\-.]*$")
+    filtered_licenses = []
+    for license in parsed_licenses:
+        if not licenseref_regex.match(license):
+            filtered_licenses.append(license)
+
+    with open(
+        os.path.join(os.path.dirname(__file__), "licenses.txt"), "r"
+    ) as f:
+        expected_licenses = f.readlines()
+        expected_licenses = set([l.strip() for l in expected_licenses])
+    with open(
+        os.path.join(os.path.dirname(__file__), "license_exceptions.txt"), "r"
+    ) as f:
+        expected_exceptions = f.readlines()
+        expected_exceptions = set([l.strip() for l in expected_exceptions])
+    if set(filtered_licenses) - expected_licenses:
+        hints.append(
+            "License is not an SPDX identifier (or a custom LicenseRef) nor an SPDX license expression.\n\n"
+            "Documentation on acceptable licenses can be found "
+            "[here]( https://conda-forge.org/docs/maintainer/adding_pkgs.html#spdx-identifiers-and-expressions )."
+        )
+    if set(parsed_exceptions) - expected_exceptions:
+        hints.append(
+            "License exception is not an SPDX exception.\n\n"
+            "Documentation on acceptable licenses can be found "
+            "[here]( https://conda-forge.org/docs/maintainer/adding_pkgs.html#spdx-identifiers-and-expressions )."
+        )
 
     # 5: stdlib-related hints
     global_build_reqs = requirements_section.get("build") or []
@@ -974,6 +916,12 @@ def lintify_meta_yaml(
     )
     outputs = get_section(meta, "outputs", lints)
     output_reqs = [x.get("requirements", {}) for x in outputs]
+
+    # deal with cb2 recipes (no build/host/run distinction)
+    output_reqs = [
+        {"host": x, "run": x} if isinstance(x, CommentedSeq) else x
+        for x in output_reqs
+    ]
 
     # collect output requirements
     output_build_reqs = [x.get("build", []) or [] for x in output_reqs]
@@ -1075,7 +1023,7 @@ def lintify_meta_yaml(
                 "Conflicting specification for minimum macOS deployment target!\n"
                 "If your conda_build_config.yaml sets `MACOSX_DEPLOYMENT_TARGET`, "
                 "please change the name of that key to `c_stdlib_version`!\n"
-                "Continuing with `max(c_stdlib_version, MACOSX_DEPLOYMENT_TARGET)`."
+                f"Continuing with `max(c_stdlib_version, MACOSX_DEPLOYMENT_TARGET)`."
             )
             merged_dt = []
             for v_std, v_mdt in zip(v_stdlib, macdt):
@@ -1156,221 +1104,15 @@ def lintify_meta_yaml(
     return lints, hints
 
 
-def lintify_recipe_yaml(
-    meta,
-    recipe_dir=None,
-    conda_forge=False,
-) -> (list, list):
-    lints = []
-    hints = []
-    major_sections = list(meta.keys())
-
-    # If the recipe_dir exists (no guarantee within this function) , we can
-    # find the recipe.yaml within it.
-    recipe_fname = os.path.join(recipe_dir or "", "recipe.yaml")
-
-    sources_section = get_section(meta, "source", lints)
-    build_section = meta.get("build", {})
-    requirements_section = rattler_loader.load_all_requirements(meta)
-    test_section = meta.get("tests", {})
-    about_section = meta.get("about", {})
-    extra_section = meta.get("extra", {})
-    package_section = meta.get("package", {})
-    context_section = meta.get("context", {})
-    outputs_section = meta.get("outputs", {})
-
-    noarch_value = build_section.get("noarch")
-    run_reqs = requirements_section.get("run", [])
-
-    recipe_dirname = os.path.basename(recipe_dir) if recipe_dir else "recipe"
-    is_staged_recipes = recipe_dirname != "recipe"
-
-    rattler_linter.lint_section_order(major_sections, lints)
-
-    rattler_linter.lint_about_contents(about_section, lints)
-
-    # 3a: The recipe should have some maintainers.
-    # 3b: Maintainers should be a list
-    lint_maintainers_section(extra_section, lints)
-
-    # 4: The recipe should have some tests.
-    test_lints, test_hints = rattler_linter.lint_recipe_tests(
-        test_section, outputs_section
-    )
-    lints.extend(test_lints)
-    hints.extend(test_hints)
-
-    # 5: License cannot be 'unknown.'
-    lint_license(about_section, lints)
-
-    # 7: The build section should have a build number.
-    lint_build_number(build_section, lints)
-
-    # 8: The build section should be before the run section in requirements.
-    rattler_linter.lint_requirements_order(requirements_section, lints)
-
-    # 9: Files downloaded should have a hash.
-    lint_files_have_hashes(sources_section, lints)
-
-    # 10: License should not include the word 'license'.
-    lint_license_wording(about_section, lints)
-
-    # 11: There should be one empty line at the end of the file.
-    lint_empty_line_of_the_file(recipe_dir, recipe_fname, lints)
-
-    # 12a: License family must be valid (conda-build checks for that)
-    rattler_linter.lint_has_recipe_file(about_section, lints)
-
-    # 13: Check that the recipe name is valid
-    lints.append(
-        rattler_linter.lint_package_name(package_section, context_section)
-    )
-
-    # 14: Run conda-forge specific lints
-    if conda_forge:
-        run_conda_forge_specific(
-            meta, recipe_dir, lints, hints, rattler_lint=True
-        )
-
-    # 15: Check if we are using legacy patterns
-    rattler_linter.lint_legacy_patterns(requirements_section)
-
-    # 18: noarch doesn't work with selectors for runtime dependencies
-    raw_requirements_section = meta.get("requirements", {})
-    lints.extend(
-        rattler_linter.lint_usage_of_selectors_for_noarch(
-            noarch_value, build_section, raw_requirements_section
-        )
-    )
-
-    # 19: check version
-    lints.append(
-        rattler_linter.lint_package_version(package_section, context_section)
-    )
-
-    # 21: Legacy usage of compilers
-    build_reqs = requirements_section.get("build", None)
-    lints.append(rattler_linter.lint_legacy_compilers(build_reqs))
-
-    # 22: Single space in pinned requirements
-    lints.extend(
-        rattler_linter.lint_usage_of_single_space_in_pinned_requirements(
-            requirements_section
-        )
-    )
-
-    # 23: non noarch builds shouldn't use version constraints on python and r-base
-    if noarch_value is None and not outputs_section:
-        lints.extend(
-            rattler_linter.lint_non_noarch_dont_constrain_python_and_rbase(
-                requirements_section
-            )
-        )
-
-    # 24: jinja2 variable references should be {{<one space>var<one space>}}
-    jinja_hints = rattler_linter.lint_variable_reference_should_have_space(
-        recipe_dir=recipe_dir, recipe_file=recipe_fname
-    )
-    hints.extend(jinja_hints)
-
-    # 25: require a lower bound on python version
-    lint_lower_bound_python_version(
-        noarch_value, run_reqs, outputs_section, lints
-    )
-
-    # 26: pin_subpackage is for subpackages and pin_compatible is for
-    # non-subpackages of the recipe. Contact @carterbox for troubleshooting
-    subpackage_names = []
-    for out in outputs_section:
-        if "name" in out:
-            subpackage_names.append(out["name"])  # explicit
-    if "name" in package_section:
-        subpackage_names.append(package_section["name"])  # implicit
-
-    def check_pins(pinning_section):
-        if pinning_section is None:
-            return
-        for pin in fnmatch.filter(pinning_section, "${{ pin_compatible(*"):
-            pin_func = pin.split()[1]
-            pin_name = (
-                pin_func.lstrip("pin_compatible")
-                .lstrip("(")
-                .rstrip(")")
-                .split(",")[0]
-            )
-            if pin_name in subpackage_names:
-                lints.append(
-                    "pin_subpackage should be used instead of"
-                    f" pin_compatible for `{pin.split()[1]}`"
-                    " because it is one of the known outputs of this recipe:"
-                    f" {subpackage_names}."
-                )
-        for pin in fnmatch.filter(pinning_section, "${{ pin_subpackage*"):
-            pin_func = pin.split()[1]
-            pin_name = (
-                pin_func.lstrip("pin_subpackage")
-                .lstrip("(")
-                .rstrip(")")
-                .split(",")[0]
-            )
-            if pin.split()[1] not in subpackage_names:
-                lints.append(
-                    "pin_compatible should be used instead of"
-                    f" pin_subpackage for `{pin.split()[1]}`"
-                    " because it is not a known output of this recipe:"
-                    f" {subpackage_names}."
-                )
-
-    def check_pins_build_and_requirements(top_level):
-        if (
-            "requirements" in top_level
-            and "run_exports" in top_level["requirements"]
-        ):
-            if "strong" in top_level["requirements"]["run_exports"]:
-                check_pins(top_level["requirements"]["run_exports"]["strong"])
-            else:
-                check_pins(top_level["requirements"]["run_exports"])
-
-    check_pins_build_and_requirements(meta)
-    for out in outputs_section:
-        check_pins_build_and_requirements(out)
-
-    # hints
-    # 1: suggest pip
-    hint_pip_usage(build_section, hints)
-
-    # 2: suggest python noarch (skip on feedstocks)
-    if noarch_value is None and (is_staged_recipes or not conda_forge):
-        noarch_hints = rattler_linter.hint_noarch_usage(
-            build_section, raw_requirements_section
-        )
-        hints.extend(noarch_hints)
-
-    # 3: suggest fixing all recipe/*.sh shellcheck findings
-    hint_fixing_shellcheck_findings(recipe_dir, hints)
-
-    # 4: Check for SPDX
-    hint_spdx(about_section, hints)
-
-    lints = [lint for lint in lints if lint]
-    hints = [hint for hint in hints if hint]
-
-    return lints, hints
-
-
-def run_conda_forge_specific(
-    meta, recipe_dir, lints, hints, rattler_lint=False
-):
+def run_conda_forge_specific(meta, recipe_dir, lints, hints):
     gh = github.Github(os.environ["GH_TOKEN"])
 
-    # Retrieve sections from meta.yaml or recipe.yaml
-    package_section = get_section(meta, "package", lints, rattler=rattler_lint)
-    extra_section = get_section(meta, "extra", lints, rattler=rattler_lint)
-    sources_section = get_section(meta, "source", lints, rattler=rattler_lint)
-    requirements_section = get_section(
-        meta, "requirements", lints, rattler=rattler_lint
-    )
-    outputs_section = get_section(meta, "outputs", lints, rattler=rattler_lint)
+    # Retrieve sections from meta
+    package_section = get_section(meta, "package", lints)
+    extra_section = get_section(meta, "extra", lints)
+    sources_section = get_section(meta, "source", lints)
+    requirements_section = get_section(meta, "requirements", lints)
+    outputs_section = get_section(meta, "outputs", lints)
 
     # Fetch list of recipe maintainers
     maintainers = extra_section.get("recipe-maintainers", [])
@@ -1629,46 +1371,17 @@ def _format_validation_msg(error: "jsonschema.ValidationError"):
     )
 
 
-def main(
-    recipe_dir, conda_forge=False, return_hints=False, feedstock_dir=None
-):
+def main(recipe_dir, conda_forge=False, return_hints=False):
     recipe_dir = os.path.abspath(recipe_dir)
-    build_tool = CONDA_BUILD_TOOL
-    if feedstock_dir:
-        feedstock_dir = os.path.abspath(feedstock_dir)
-        forge_config = _read_forge_config(feedstock_dir)
-        if forge_config.get("conda_build_tool", "") == RATTLER_BUILD_TOOL:
-            build_tool = RATTLER_BUILD_TOOL
+    recipe_meta = os.path.join(recipe_dir, "meta.yaml")
+    if not os.path.exists(recipe_dir):
+        raise IOError("Feedstock has no recipe/meta.yaml.")
 
-    if build_tool == RATTLER_BUILD_TOOL:
-        recipe_file = os.path.join(recipe_dir, "recipe.yaml")
-    else:
-        recipe_file = os.path.join(recipe_dir, "meta.yaml")
+    with io.open(recipe_meta, "rt") as fh:
+        content = render_meta_yaml("".join(fh))
+        meta = get_yaml().load(content)
 
-    if not os.path.exists(recipe_file):
-        raise IOError(
-            f"Feedstock has no recipe/{os.path.basename(recipe_file)}"
-        )
-
-    if build_tool == CONDA_BUILD_TOOL:
-        with io.open(recipe_file, "rt") as fh:
-            content = render_meta_yaml("".join(fh))
-            meta = get_yaml().load(content)
-        results, hints = lintify_meta_yaml(meta, recipe_dir, conda_forge)
-
-    else:
-        results = []
-        hints = []
-
-        results.extend(lint_recipe_yaml_by_schema(recipe_file))
-        meta = get_yaml().load(Path(recipe_file))
-
-        lint_results, lint_hints = lintify_recipe_yaml(
-            meta, recipe_dir, conda_forge
-        )
-        results.extend(lint_results)
-        hints.extend(lint_hints)
-
+    results, hints = lintify_meta_yaml(meta, recipe_dir, conda_forge)
     validation_errors, validation_hints = lintify_forge_yaml(
         recipe_dir=recipe_dir
     )
