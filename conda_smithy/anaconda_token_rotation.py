@@ -12,6 +12,12 @@ conda-forge.yml in your feedstock to GitHub.
 import os
 import sys
 from contextlib import redirect_stderr, redirect_stdout
+from github import Github
+from typing import (
+    List,
+    Optional,
+    Union
+)
 
 import requests
 from github import Github
@@ -32,17 +38,17 @@ def _get_anaconda_token():
 
 
 def rotate_anaconda_token(
-    user,
-    project,
-    feedstock_config_path,
-    drone=True,
-    circle=True,
-    travis=True,
-    azure=True,
-    appveyor=True,
-    github_actions=True,
-    token_name="BINSTAR_TOKEN",
-    drone_endpoints=(),
+    user: str,
+    project: str,
+    feedstock_config_path: Optional[str],
+    drone: bool = True,
+    circle: bool = True,
+    travis: bool = True,
+    azure: bool = True,
+    appveyor: bool = True,
+    github_actions: bool = True,
+    token_name: str = "BINSTAR_TOKEN",
+    drone_endpoints: Union[list, tuple] = (),
 ):
     """Rotate the anaconda (binstar) token used by the CI providers
 

@@ -9,10 +9,17 @@ added to conda-forge's queue.
 import os
 import sys
 
-from conda_smithy.configure_feedstock import make_jinja_env
+from .configure_feedstock import make_jinja_env
+from jinja2.sandbox import SandboxedEnvironment
+from typing import Dict
 
 
-def _render_template(template_file, env, forge_dir, config):
+def _render_template(
+    template_file: str,
+    env: SandboxedEnvironment,
+    forge_dir: str,
+    config: Dict[str, str],
+):
     """Renders the template"""
     template = env.get_template(
         os.path.basename(template_file) + ".ci-skel.tmpl"
@@ -31,10 +38,10 @@ build_artifacts
 
 
 def _insert_into_gitignore(
-    feedstock_directory=".",
-    prefix="# conda smithy ci-skeleton start\n",
-    suffix="# conda smithy ci-skeleton end\n",
-):
+    feedstock_directory: str = ".",
+    prefix: str = "# conda smithy ci-skeleton start\n",
+    suffix: str = "# conda smithy ci-skeleton end\n",
+) -> str:
     """Places gitignore contents into gitignore."""
     # get current contents
     fname = os.path.join(feedstock_directory, ".gitignore")
@@ -57,7 +64,9 @@ def _insert_into_gitignore(
 
 
 def generate(
-    package_name="pkg", feedstock_directory=".", recipe_directory="recipe"
+    package_name: str = "pkg",
+    feedstock_directory: str = ".",
+    recipe_directory: str = "recipe",
 ):
     """Generates the CI skeleton."""
     forge_dir = os.path.abspath(feedstock_directory)
