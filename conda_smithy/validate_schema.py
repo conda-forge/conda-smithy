@@ -47,13 +47,16 @@ _VALIDATOR_CLASS = get_validator_class()
 def validate_json_schema(
     config: Union[
         CommentedMap,
-        Dict[str, Union[
-            bool,
+        Dict[
             str,
-            List[str],
-            Dict[str, bool],
-            Dict[str, Dict[str, str]]
-        ]]
+            Union[
+                bool,
+                str,
+                List[str],
+                Dict[str, bool],
+                Dict[str, Dict[str, str]],
+            ],
+        ],
     ],
     schema_file: Optional[Path],
 ) -> tuple:

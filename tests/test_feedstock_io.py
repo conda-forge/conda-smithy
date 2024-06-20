@@ -23,9 +23,7 @@ def keep_dir(dirname: str):
         fh.write("")
 
 
-def parameterize() -> (
-    Iterator[tuple]
-):
+def parameterize() -> Iterator[tuple]:
     for pathfunc in [
         lambda pth, tmp_dir: os.path.relpath(pth, tmp_dir),
         lambda pth, tmp_dir: pth,

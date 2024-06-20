@@ -4,12 +4,7 @@ import os
 import shutil
 import stat
 from io import TextIOWrapper
-from typing import (
-    Iterator,
-    Optional,
-    Any,
-    Union
-)
+from typing import Iterator, Optional, Any, Union
 
 def get_repo(
     path: str, search_parent_directories: bool = True

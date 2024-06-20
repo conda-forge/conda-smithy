@@ -77,7 +77,7 @@ def variant_key_add(
     v_left: Union[List[str], List[float]],
     v_right: Union[List[str], List[float]],
     ordering: Optional[List[str]] = None,
-) -> List[Union[str,float]]:
+) -> List[Union[str, float]]:
     """Version summation adder.
 
     This takes the higher version of the two things.

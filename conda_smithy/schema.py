@@ -11,7 +11,7 @@ from conda.base.constants import KNOWN_SUBDIRS
 from pydantic import BaseModel, ConfigDict, Field, create_model
 
 try:
-    from enum import StrEnum # type: ignore
+    from enum import StrEnum  # type: ignore
 except ImportError:
     from backports.strenum import StrEnum
 
@@ -411,7 +411,7 @@ class BotConfig(BaseModel):
     )
 
     version_updates: Optional[BotConfigVersionUpdates] = Field(
-        default_factory=BotConfigVersionUpdates, # type: ignore
+        default_factory=BotConfigVersionUpdates,  # type: ignore
         description="Bot config for version update PRs",
     )
 
@@ -507,20 +507,21 @@ class DefaultTestPlatforms(StrEnum):
     native = "native"
     native_and_emulated = "native_and_emulated"
 
+
 buildPlatform_fields: Dict[str, Any] = {
-        platform.value: (Optional[Platforms], Field(default=platform.value))
-        for platform in Platforms
-    }
+    platform.value: (Optional[Platforms], Field(default=platform.value))
+    for platform in Platforms
+}
 BuildPlatform = create_model(
     "build_platform",
     **buildPlatform_fields,
 )
 
 OSVersion_fields: Dict[str, Any] = {
-        platform.value: (Optional[Union[str, Nullable]], Field(default=None))
-        for platform in Platforms
-        if platform.value.startswith("linux")
-    }
+    platform.value: (Optional[Union[str, Nullable]], Field(default=None))
+    for platform in Platforms
+    if platform.value.startswith("linux")
+}
 OSVersion = create_model(
     "os_version",
     **OSVersion_fields,
@@ -529,15 +530,15 @@ OSVersion = create_model(
 ProviderType = Union[List[CIservices], CIservices, bool, Nullable]
 
 provider_fields: Dict[str, Any] = dict(
-        [
-            (str(plat), (Optional[ProviderType], Field(default=None)))
-            for plat in list(PlatformsAliases) + list(Platforms)
-        ]
-        + [
-            (str(plat), (Optional[ProviderType], Field(default="azure")))
-            for plat in ("linux_64", "osx_64", "win_64")
-        ]
-    )
+    [
+        (str(plat), (Optional[ProviderType], Field(default=None)))
+        for plat in list(PlatformsAliases) + list(Platforms)
+    ]
+    + [
+        (str(plat), (Optional[ProviderType], Field(default="azure")))
+        for plat in ("linux_64", "osx_64", "win_64")
+    ]
+)
 Provider = create_model(
     "provider",
     **provider_fields,
@@ -636,7 +637,7 @@ class ConfigModel(BaseModel):
     )
 
     bot: Optional[BotConfig] = Field(
-        default_factory=BotConfig, # type: ignore
+        default_factory=BotConfig,  # type: ignore
         description=cleandoc(
             """
         This dictates the behavior of the conda-forge auto-tick bot which issues
@@ -684,7 +685,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    build_platform: Optional[BuildPlatform] = Field( # type: ignore
+    build_platform: Optional[BuildPlatform] = Field(  # type: ignore
         default_factory=BuildPlatform,
         description=cleandoc(
             """
@@ -778,7 +779,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    noarch_platforms: Optional[Union[Platforms, List[Platforms]]] = Field( # type: ignore
+    noarch_platforms: Optional[Union[Platforms, List[Platforms]]] = Field(  # type: ignore
         default_factory=lambda: ["linux_64"],
         description=cleandoc(
             """
@@ -801,7 +802,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    os_version: Optional[OSVersion] = Field( # type: ignore
+    os_version: Optional[OSVersion] = Field(  # type: ignore
         default_factory=OSVersion,
         description=cleandoc(
             """
@@ -819,7 +820,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    provider: Optional[Provider] = Field( # type: ignore
+    provider: Optional[Provider] = Field(  # type: ignore
         default_factory=Provider,
         description=cleandoc(
             """
