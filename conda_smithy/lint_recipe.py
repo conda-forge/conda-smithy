@@ -131,7 +131,9 @@ def lint_section_order(
             lambda s: "'%s'" % s, section_order_sorted
         )
         section_order_sorted_str_joined = ", ".join(section_order_sorted_str)
-        section_order_sorted_str_with_brackets = "[" + section_order_sorted_str_joined + "]"
+        section_order_sorted_str_with_brackets = (
+            "[" + section_order_sorted_str_joined + "]"
+        )
         lints.append(
             "The top level meta keys are in an unexpected order. "
             "Expecting {}.".format(section_order_sorted_str_with_brackets)
@@ -839,7 +841,7 @@ def lintify_meta_yaml(
             cmd + shell_scripts,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
-            env={ # type: ignore
+            env={  # type: ignore
                 "PATH": os.getenv("PATH")
             },  # exclude other env variables to protect against token leakage
         )
@@ -1354,7 +1356,7 @@ def jinja_lines(lines: TextIOWrapper) -> Iterator[Tuple[str, int]]:
             yield line, i
 
 
-def _format_validation_msg(error: "jsonschema.ValidationError") -> str: # type: ignore
+def _format_validation_msg(error: "jsonschema.ValidationError") -> str:  # type: ignore
     """Use the data on the validation error to generate improved reporting.
 
     If available, get the help URL from the first level of the JSON path:

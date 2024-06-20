@@ -42,7 +42,7 @@ from typing import (
 try:
     import simplejson as json
 except ImportError:
-    import json # type: ignore
+    import json  # type: ignore
 
 from conda.models.match_spec import MatchSpec
 from conda.models.version import VersionOrder
@@ -107,10 +107,7 @@ def warn_once(msg: str):
 
 
 def package_key(
-    config: Dict[
-        str,
-        Union[List[str], List[List[str]], OrderedDict]
-    ],
+    config: Dict[str, Union[List[str], List[List[str]], OrderedDict]],
     used_loop_vars: Set[str],
     subdir: str,
 ) -> str:
@@ -178,9 +175,7 @@ def merge_list_of_dicts(
     return squished_dict
 
 
-def argsort(
-    seq: List[tuple]
-) -> List[int]:
+def argsort(seq: List[tuple]) -> List[int]:
     return sorted(range(len(seq)), key=seq.__getitem__)
 
 
@@ -346,9 +341,7 @@ def _trim_unused_zip_keys(all_used_vars):
         del all_used_vars["zip_keys"]
 
 
-def _trim_unused_pin_run_as_build(
-    all_used_vars: dict
-):
+def _trim_unused_pin_run_as_build(all_used_vars: dict):
     """Remove unused keys in pin_run_as_build sets"""
     pkgs = all_used_vars.get("pin_run_as_build", {})
     used_pkgs = {}
@@ -370,10 +363,7 @@ def _get_used_key_values_by_input_order(
             Union[set, dict, list, tuple],
         ],
     ],
-    squished_used_variants: Union[
-        OrderedDict,
-        dict
-    ],
+    squished_used_variants: Union[OrderedDict, dict],
     all_used_vars: Set[str],
 ) -> tuple:
     used_key_values = {
@@ -737,9 +727,7 @@ def _collapse_subpackage_variants(
     )
 
 
-def _yaml_represent_ordereddict(
-    yaml_representer, data: OrderedDict
-):
+def _yaml_represent_ordereddict(yaml_representer, data: OrderedDict):
     # represent_dict processes dict-likes with a .sort() method or plain iterables of key-value
     #     pairs. Only for the latter it never sorts and retains the order of the OrderedDict.
     return yaml.representer.SafeRepresenter.represent_dict(
@@ -969,9 +957,10 @@ def migrate_combined_spec(
 
 def _conda_build_api_render_for_smithy(
     recipe_path: str,
-    config = None,
-    variants: Optional[Dict[str, Union[List[str], List[List[str]], Dict[str, Dict[str, str]]]]]
-        = None,
+    config=None,
+    variants: Optional[
+        Dict[str, Union[List[str], List[List[str]], Dict[str, Dict[str, str]]]]
+    ] = None,
     permit_unsatisfiable_variants: bool = True,
     finalize: bool = True,
     bypass_env_check: bool = False,
@@ -2261,7 +2250,7 @@ def render_README(
                     err
                 )
             )
-        except json.decoder.JSONDecodeError: # type: ignore
+        except json.decoder.JSONDecodeError:  # type: ignore
             azure_build_id_from_token(forge_config)
 
     logger.debug("README")

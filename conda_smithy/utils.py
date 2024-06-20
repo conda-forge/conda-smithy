@@ -10,11 +10,7 @@ from pathlib import Path
 from collections import defaultdict
 from contextlib import contextmanager
 from conda_build.metadata import MetaData
-from typing import (
-    Dict,
-    Union,
-    Any
-)
+from typing import Dict, Union, Any
 
 import ruamel.yaml
 from ruamel.yaml.comments import CommentedMap
