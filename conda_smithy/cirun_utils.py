@@ -19,6 +19,7 @@ def get_cirun_installation_id(owner: str) -> int:
     else:
         gh = Github(gh_token())
         user = gh.get_user()
+        user_or_org: Any
         if user.login == owner:
             user_or_org = user
         else:
@@ -42,8 +43,8 @@ def add_repo_to_cirun_resource(
     owner: str,
     repo: str,
     resources: List[str],
-    teams: List,
-    roles: List,
+    teams: Optional[List],
+    roles: Optional[List],
     users_from_json: Optional[str] = None,
     cirun_policy_args: Optional[List[str]] = None,
 ) -> Dict[str, Any]:

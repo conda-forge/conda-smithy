@@ -16,6 +16,7 @@ from conda_build.metadata import MetaData
 import conda_smithy.cirun_utils
 from conda_smithy.utils import get_feedstock_name_from_meta, merge_dict
 from ruamel.yaml import YAML
+from typing import Optional, List
 
 from . import configure_feedstock
 from . import feedstock_io
@@ -27,11 +28,11 @@ if sys.version_info[0] == 2:
     raise Exception("Conda-smithy does not support python 2!")
 
 
-def default_feedstock_config_path(feedstock_directory):
+def default_feedstock_config_path(feedstock_directory: str) -> str:
     return os.path.join(feedstock_directory, "conda-forge.yml")
 
 
-def generate_feedstock_content(target_directory, source_recipe_dir):
+def generate_feedstock_content(target_directory: str, source_recipe_dir: str):
     target_directory = os.path.abspath(target_directory)
     recipe_dir = "recipe"
     target_recipe_dir = os.path.join(target_directory, recipe_dir)
@@ -76,10 +77,10 @@ def generate_feedstock_content(target_directory, source_recipe_dir):
 
 class Subcommand:
     #: The name of the subcommand
-    subcommand = None
-    aliases = []
+    subcommand: Optional[str] = None
+    aliases: List[str] = []
 
-    def __init__(self, parser, help=None):
+    def __init__(self, parser, help: Optional[str] = None):
         subcommand_parser = parser.add_parser(
             self.subcommand, help=help, description=help, aliases=self.aliases
         )

@@ -95,7 +95,7 @@ class BotConfigVersionUpdatesSourcesChoice(StrEnum):
 class AzureRunnerSettings(BaseModel):
     """This is the settings for runners."""
 
-    model_config: ConfigDict = ConfigDict(extra="allow")
+    model_config = ConfigDict(extra="allow")
 
     pool: Optional[Dict[str, str]] = Field(
         default_factory=lambda: {"vmImage": "ubuntu-latest"},
@@ -129,7 +129,7 @@ class AzureConfig(BaseModel):
     https://learn.microsoft.com/en-us/azure/devops/pipelines/yaml-schema/?view=azure-pipelines).
     """
 
-    model_config: ConfigDict = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="forbid")
 
     force: Optional[bool] = Field(
         default=False,
@@ -230,7 +230,7 @@ class AzureConfig(BaseModel):
 
 
 class GithubConfig(BaseModel):
-    model_config: ConfigDict = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="forbid")
 
     user_or_org: Optional[str] = Field(
         description="The name of the GitHub user or organization",
@@ -252,7 +252,7 @@ class GithubConfig(BaseModel):
 
 
 class GithubActionsConfig(BaseModel):
-    model_config: ConfigDict = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="forbid")
 
     artifact_retention_days: Optional[int] = Field(
         description="The number of days to retain artifacts",
@@ -317,7 +317,7 @@ class BotConfigVersionUpdates(BaseModel):
     updates
     """
 
-    model_config: ConfigDict = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="forbid")
 
     random_fraction_to_keep: Optional[float] = Field(
         None,
@@ -342,7 +342,7 @@ class BotConfig(BaseModel):
     automatic version updates/migrations for feedstocks.
     """
 
-    model_config: ConfigDict = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="forbid")
 
     automerge: Optional[Union[bool, BotConfigAutoMergeChoice]] = Field(
         False,
@@ -377,7 +377,7 @@ class BotConfig(BaseModel):
 
 
 class CondaBuildConfig(BaseModel):
-    model_config: ConfigDict = ConfigDict(extra="allow")
+    model_config = ConfigDict(extra="allow")
 
     pkg_format: Optional[Literal["tar", 1, 2, "1", "2"]] = Field(
         description="The package version format for conda build.",
@@ -407,7 +407,7 @@ class CondaBuildConfig(BaseModel):
 
 
 class CondaForgeDocker(BaseModel):
-    model_config: ConfigDict = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="forbid")
 
     executable: Optional[str] = Field(
         description="The executable for Docker", default="docker"
@@ -433,7 +433,7 @@ class CondaForgeDocker(BaseModel):
 
 
 class ShellCheck(BaseModel):
-    model_config: ConfigDict = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="forbid")
 
     enabled: bool = Field(
         description="Whether to use shellcheck to lint shell scripts",
@@ -447,7 +447,7 @@ class PlatformsAliases(StrEnum):
     osx = "osx"
 
 
-def get_subdirs():
+def get_subdirs() -> List[str]:
     return [
         subdir.replace("-", "_") for subdir in KNOWN_SUBDIRS if "-" in subdir
     ]
@@ -467,29 +467,28 @@ class DefaultTestPlatforms(StrEnum):
     native = "native"
     native_and_emulated = "native_and_emulated"
 
-
-BuildPlatform = create_model(
-    "build_platform",
-    **{
+buildPlatform_fields: Dict[str, Any] = {
         platform.value: (Optional[Platforms], Field(default=platform.value))
         for platform in Platforms
-    },
+    }
+BuildPlatform = create_model(
+    "build_platform",
+    **buildPlatform_fields,
 )
 
-OSVersion = create_model(
-    "os_version",
-    **{
+OSVersion_fields: Dict[str, Any] = {
         platform.value: (Optional[Union[str, Nullable]], Field(default=None))
         for platform in Platforms
         if platform.value.startswith("linux")
-    },
+    }
+OSVersion = create_model(
+    "os_version",
+    **OSVersion_fields,
 )
 
 ProviderType = Union[List[CIservices], CIservices, bool, Nullable]
 
-Provider = create_model(
-    "provider",
-    **dict(
+provider_fields: Dict[str, Any] = dict(
         [
             (str(plat), (Optional[ProviderType], Field(default=None)))
             for plat in list(PlatformsAliases) + list(Platforms)
@@ -498,7 +497,10 @@ Provider = create_model(
             (str(plat), (Optional[ProviderType], Field(default="azure")))
             for plat in ("linux_64", "osx_64", "win_64")
         ]
-    ),
+    )
+Provider = create_model(
+    "provider",
+    **provider_fields,
 )
 
 
@@ -511,7 +513,7 @@ class ConfigModel(BaseModel):
     flagged as Deprecated as appropriate.
     """
 
-    model_config: ConfigDict = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="forbid")
 
     # Values which are not expected to be present in the model dump, are
     # flagged with exclude=True. This is to avoid confusion when comparing
