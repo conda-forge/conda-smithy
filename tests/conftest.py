@@ -13,6 +13,8 @@ from conda_smithy.configure_feedstock import (
     _load_forge_config,
     conda_forge_content,
 )
+from _pytest._py.path import LocalPath
+from _pytest.fixtures import SubRequest
 
 RecipeConfigPair = collections.namedtuple(
     "RecipeConfigPair", ("recipe", "config")
@@ -26,7 +28,7 @@ class ConfigYAML(typing.NamedTuple):
 
 
 @pytest.fixture(scope="function")
-def testing_workdir(tmpdir, request):
+def testing_workdir(tmpdir: LocalPath, request: SubRequest) -> str:
     """Create a workdir in a safe temporary folder; cd into dir above before test, cd out after
 
     :param tmpdir: py.test fixture, will be injected
@@ -59,8 +61,8 @@ def recipe_dirname():
 
 
 @pytest.fixture(scope="function", params=["conda-build", "rattler-build"])
-def config_yaml(testing_workdir, recipe_dirname, request):
-    config = {"python": ["2.7", "3.5"], "r_base": ["3.3.2", "3.4.2"]}
+def config_yaml(testing_workdir: str, recipe_dirname: str, request) -> str:
+    config: dict = {"python": ["2.7", "3.5"], "r_base": ["3.3.2", "3.4.2"]}
     os.makedirs(os.path.join(testing_workdir, recipe_dirname))
     with open(os.path.join(testing_workdir, "config.yaml"), "w") as f:
         f.write("docker:\n")
@@ -118,7 +120,7 @@ def config_yaml(testing_workdir, recipe_dirname, request):
 
 
 @pytest.fixture(scope="function")
-def noarch_recipe(config_yaml: ConfigYAML, recipe_dirname):
+def noarch_recipe(config_yaml: ConfigYAML, recipe_dirname: str) -> RecipeConfigPair:
     # get the used params passed for config_yaml fixture
     with open(
         os.path.join(
@@ -256,7 +258,9 @@ c_stdlib_version:               # [unix]
 
 
 @pytest.fixture(scope="function")
-def stdlib_deployment_target_recipe(config_yaml: ConfigYAML, stdlib_recipe):
+def stdlib_deployment_target_recipe(
+    config_yaml: ConfigYAML, stdlib_recipe: RecipeConfigPair
+) -> RecipeConfigPair:
     # append to existing stdlib_config.yaml from stdlib_recipe
     with open(
         os.path.join(config_yaml.workdir, "recipe", "stdlib_config.yaml"), "a"
@@ -364,8 +368,8 @@ zlib:
 
 @pytest.fixture(scope="function")
 def recipe_migration_cfep9_downgrade(
-    config_yaml: ConfigYAML, recipe_migration_cfep9
-):
+    config_yaml: ConfigYAML, recipe_migration_cfep9: RecipeConfigPair
+)-> RecipeConfigPair:
     # write a downgrade migrator that lives next to the current migrator.
     # Only this, more recent migrator should apply.
     os.makedirs(
@@ -402,7 +406,7 @@ zlib:
 
 
 @pytest.fixture(scope="function")
-def recipe_migration_win_compiled(config_yaml: ConfigYAML, py_recipe):
+def recipe_migration_win_compiled(config_yaml: ConfigYAML, py_recipe: RecipeConfigPair) -> RecipeConfigPair:
     os.makedirs(
         os.path.join(config_yaml.workdir, ".ci_support", "migrations"),
         exist_ok=True,

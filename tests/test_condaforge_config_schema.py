@@ -2,6 +2,10 @@ import pytest
 from pydantic import ValidationError
 
 from conda_smithy.schema import ConfigModel
+from typing import (
+    Dict,
+    Union,
+)
 
 # Sample config files
 SAMPLE_CONFIGS = [

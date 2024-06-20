@@ -5,6 +5,9 @@ from unittest import mock
 
 import pytest
 import scrypt
+from _pytest._py.path import LocalPath
+from typing import Optional, Any
+from unittest.mock import MagicMock
 
 from conda_smithy.ci_register import drone_default_endpoint
 from conda_smithy.feedstock_tokens import (
@@ -52,17 +55,17 @@ from conda_smithy.feedstock_tokens import (
 @mock.patch("conda_smithy.feedstock_tokens.git")
 @mock.patch("conda_smithy.github.gh_token")
 def test_feedstock_tokens_roundtrip(
-    gh_mock,
-    git_mock,
-    tmp_mock,
-    tmpdir,
-    repo,
-    project,
-    provider,
-    ci,
-    retval_ci,
-    expires_at,
-    retval_time,
+    gh_mock: MagicMock,
+    git_mock: MagicMock,
+    tmp_mock: MagicMock,
+    tmpdir: LocalPath,
+    repo: str,
+    project: str,
+    provider: Optional[str],
+    ci: Optional[str],
+    retval_ci: bool,
+    expires_at: float,
+    retval_time: bool,
 ):
     gh_mock.return_value = "abc123"
     tmp_mock.TemporaryDirectory.return_value.__enter__.return_value = str(
@@ -118,13 +121,13 @@ def test_feedstock_tokens_roundtrip(
 @mock.patch("conda_smithy.feedstock_tokens.git")
 @mock.patch("conda_smithy.github.gh_token")
 def test_is_valid_feedstock_token_nofile(
-    gh_mock,
-    git_mock,
-    tmp_mock,
-    tmpdir,
-    repo,
-    project,
-    ci,
+    gh_mock: MagicMock,
+    git_mock: MagicMock,
+    tmp_mock: MagicMock,
+    tmpdir: LocalPath,
+    repo: str,
+    project: str,
+    ci: Optional[str],
 ):
     gh_mock.return_value = "abc123"
     tmp_mock.TemporaryDirectory.return_value.__enter__.return_value = str(
@@ -161,15 +164,15 @@ def test_is_valid_feedstock_token_nofile(
 @mock.patch("conda_smithy.feedstock_tokens.git")
 @mock.patch("conda_smithy.github.gh_token")
 def test_is_valid_feedstock_token_badtoken(
-    gh_mock,
-    git_mock,
-    tmp_mock,
-    tmpdir,
-    repo,
-    project,
-    expires_at,
-    provider,
-    ci,
+    gh_mock: MagicMock,
+    git_mock: MagicMock,
+    tmp_mock: MagicMock,
+    tmpdir: LocalPath,
+    repo: str,
+    project: str,
+    expires_at: str,
+    provider: Optional[str],
+    ci: Optional[str],
 ):
     gh_mock.return_value = "abc123"
     tmp_mock.TemporaryDirectory.return_value.__enter__.return_value = str(
@@ -196,7 +199,7 @@ def test_is_valid_feedstock_token_badtoken(
 
 
 @pytest.mark.parametrize("ci", [None, "azure"])
-def test_generate_and_write_feedstock_token(ci):
+def test_generate_and_write_feedstock_token(ci: Optional[str]):
     user = "bar"
     repo = "foo"
 
@@ -229,7 +232,7 @@ def test_generate_and_write_feedstock_token(ci):
 
 
 @pytest.mark.parametrize("ci", [None, "azure"])
-def test_read_feedstock_token(ci):
+def test_read_feedstock_token(ci: Optional[str]):
     user = "bar"
     repo = "foo"
     if ci:
@@ -238,6 +241,7 @@ def test_read_feedstock_token(ci):
         pth = os.path.expanduser("~/.conda-smithy/bar_foo.token")
 
     # no token
+    err: Any
     token, err = read_feedstock_token(user, repo, provider=ci)
     assert "No token found in" in err
     assert token is None
@@ -304,18 +308,18 @@ def test_read_feedstock_token(ci):
 @mock.patch("conda_smithy.feedstock_tokens.git")
 @mock.patch("conda_smithy.github.gh_token")
 def test_feedstock_token_exists(
-    gh_mock,
-    git_mock,
-    tmp_mock,
-    tmpdir,
-    repo,
-    project,
-    file_exists,
-    ci,
-    provider,
-    retval_ci,
-    expires_at,
-    retval_time,
+    gh_mock: MagicMock,
+    git_mock: MagicMock,
+    tmp_mock: MagicMock,
+    tmpdir: LocalPath,
+    repo: str,
+    project: str,
+    file_exists: bool,
+    ci: Optional[str],
+    provider: Optional[str],
+    retval_ci: bool,
+    expires_at: float,
+    retval_time: bool,
 ):
     gh_mock.return_value = "abc123"
     tmp_mock.TemporaryDirectory.return_value.__enter__.return_value = str(
@@ -328,7 +332,7 @@ def test_feedstock_token_exists(
         with open(
             os.path.join(tmpdir, "tokens", f"{project}.json"), "w"
         ) as fp:
-            data = {"tokens": [{}]}
+            data: dict = {"tokens": [{}]}
             if provider is not None:
                 data["tokens"][0]["provider"] = provider
             if expires_at is not None:
@@ -355,7 +359,13 @@ def test_feedstock_token_exists(
 @mock.patch("conda_smithy.feedstock_tokens.git")
 @mock.patch("conda_smithy.github.gh_token")
 def test_feedstock_token_raises(
-    gh_mock, git_mock, tmp_mock, tmpdir, repo, project, ci
+    gh_mock: MagicMock,
+    git_mock: MagicMock,
+    tmp_mock: MagicMock,
+    tmpdir: LocalPath,
+    repo: str,
+    project: str,
+    ci: Optional[str],
 ):
     gh_mock.return_value = "abc123"
     tmp_mock.TemporaryDirectory.return_value.__enter__.return_value = str(
@@ -390,14 +400,14 @@ def test_feedstock_token_raises(
 @mock.patch("conda_smithy.feedstock_tokens.git")
 @mock.patch("conda_smithy.github.gh_token")
 def test_register_feedstock_token_works(
-    gh_mock,
-    git_mock,
-    tmp_mock,
-    osuran_mock,
-    secrets_mock,
-    tmpdir,
+    gh_mock: MagicMock,
+    git_mock: MagicMock,
+    tmp_mock: MagicMock,
+    osuran_mock: MagicMock,
+    secrets_mock: MagicMock,
+    tmpdir: LocalPath,
     repo,
-    ci,
+    ci: Optional[str],
 ):
     gh_mock.return_value = "abc123"
     tmp_mock.TemporaryDirectory.return_value.__enter__.return_value = str(
@@ -463,14 +473,14 @@ def test_register_feedstock_token_works(
 @mock.patch("conda_smithy.feedstock_tokens.git")
 @mock.patch("conda_smithy.github.gh_token")
 def test_register_feedstock_token_notoken(
-    gh_mock,
-    git_mock,
-    tmp_mock,
-    osuran_mock,
-    secrets_mock,
-    tmpdir,
+    gh_mock: MagicMock,
+    git_mock: MagicMock,
+    tmp_mock: MagicMock,
+    osuran_mock: MagicMock,
+    secrets_mock: MagicMock,
+    tmpdir: LocalPath,
     repo,
-    ci,
+    ci: Optional[str],
 ):
     gh_mock.return_value = "abc123"
     tmp_mock.TemporaryDirectory.return_value.__enter__.return_value = str(
@@ -519,14 +529,14 @@ def test_register_feedstock_token_notoken(
 @mock.patch("conda_smithy.feedstock_tokens.git")
 @mock.patch("conda_smithy.github.gh_token")
 def test_register_feedstock_token_append(
-    gh_mock,
-    git_mock,
-    tmp_mock,
-    osuran_mock,
-    secrets_mock,
-    tmpdir,
+    gh_mock: MagicMock,
+    git_mock: MagicMock,
+    tmp_mock: MagicMock,
+    osuran_mock: MagicMock,
+    secrets_mock: MagicMock,
+    tmpdir: LocalPath,
     repo,
-    ci,
+    ci: Optional[str],
 ):
     gh_mock.return_value = "abc123"
     tmp_mock.TemporaryDirectory.return_value.__enter__.return_value = str(
@@ -597,18 +607,18 @@ def test_register_feedstock_token_append(
     "conda_smithy.feedstock_tokens.add_feedstock_token_to_github_actions"
 )
 def test_register_feedstock_token_with_providers(
-    github_actions_mock,
-    azure_mock,
-    travis_mock,
-    circle_mock,
-    drone_mock,
-    drone,
-    circle,
-    azure,
-    travis,
-    github_actions,
-    clobber,
-    unique_token_per_provider,
+    github_actions_mock: MagicMock,
+    azure_mock: MagicMock,
+    travis_mock: MagicMock,
+    circle_mock: MagicMock,
+    drone_mock: MagicMock,
+    drone: bool,
+    circle: bool,
+    azure: bool,
+    travis: bool,
+    github_actions: bool,
+    clobber: bool,
+    unique_token_per_provider: bool,
 ):
     user = "foo"
     project = "bar"
@@ -735,18 +745,18 @@ def test_register_feedstock_token_with_providers(
     "conda_smithy.feedstock_tokens.add_feedstock_token_to_github_actions"
 )
 def test_register_feedstock_token_with_providers_notoken(
-    github_actions_mock,
-    azure_mock,
-    travis_mock,
-    circle_mock,
-    drone_mock,
-    drone,
-    circle,
-    azure,
-    travis,
-    github_actions,
-    clobber,
-    unique_token_per_provider,
+    github_actions_mock: MagicMock,
+    azure_mock: MagicMock,
+    travis_mock: MagicMock,
+    circle_mock: MagicMock,
+    drone_mock: MagicMock,
+    drone: bool,
+    circle: bool,
+    azure: bool,
+    travis: bool,
+    github_actions: bool,
+    clobber: bool,
+    unique_token_per_provider: bool,
 ):
     user = "foo"
     project = "bar"
@@ -786,13 +796,13 @@ def test_register_feedstock_token_with_providers_notoken(
     "conda_smithy.feedstock_tokens.add_feedstock_token_to_github_actions"
 )
 def test_register_feedstock_token_with_providers_error(
-    github_actions_mock,
-    azure_mock,
-    travis_mock,
-    circle_mock,
-    drone_mock,
-    provider,
-    unique_token_per_provider,
+    github_actions_mock: MagicMock,
+    azure_mock: MagicMock,
+    travis_mock: MagicMock,
+    circle_mock: MagicMock,
+    drone_mock: MagicMock,
+    provider: str,
+    unique_token_per_provider: bool,
 ):
     user = "foo"
     project = "bar-feedstock"

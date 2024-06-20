@@ -7,18 +7,20 @@ from textwrap import dedent
 
 import pytest
 import yaml
+from typing import Union
 
 from conda_smithy import cli
+from conftest import RecipeConfigPair
 
 _thisdir = os.path.abspath(os.path.dirname(__file__))
 
 InitArgs = collections.namedtuple(
-    "ArgsObject",
+    "InitArgs",
     ("recipe_directory", "feedstock_directory", "temporary_directory"),
 )
 
 RegenerateArgs = collections.namedtuple(
-    "ArgsObject",
+    "RegenerateArgs",
     (
         "commit",
         "feedstock_directory",
@@ -31,7 +33,7 @@ RegenerateArgs = collections.namedtuple(
 )
 
 
-def test_init(py_recipe):
+def test_init(py_recipe: RecipeConfigPair):
     """This is the command that takes the initial staged-recipe folder and turns it into a
     feedstock"""
     # actual parser doesn't matter.  It's used for initialization only
@@ -50,7 +52,7 @@ def test_init(py_recipe):
     assert os.path.isdir(destination)
 
 
-def test_init_with_custom_config(py_recipe):
+def test_init_with_custom_config(py_recipe: RecipeConfigPair):
     """This is the command that takes the initial staged-recipe folder and turns it into a
     feedstock"""
     # actual parser doesn't matter.  It's used for initialization only
@@ -87,7 +89,7 @@ def test_init_with_custom_config(py_recipe):
     assert data["bot"]["run_deps_from_wheel"] is True
 
 
-def test_init_multiple_output_matrix(testing_workdir):
+def test_init_multiple_output_matrix(testing_workdir: str):
     parser = argparse.ArgumentParser()
     subparser = parser.add_subparsers()
     init_obj = cli.Init(subparser)
@@ -96,6 +98,7 @@ def test_init_multiple_output_matrix(testing_workdir):
     feedstock_dir = os.path.join(
         testing_workdir, "multiple-outputs-test-feedstock"
     )
+    args: Union[InitArgs, RegenerateArgs]
     args = InitArgs(
         recipe_directory=recipe,
         feedstock_directory=feedstock_dir,
@@ -143,7 +146,9 @@ def test_init_multiple_output_matrix(testing_workdir):
 @pytest.mark.parametrize(
     "dirname", ["multiple_outputs", "multiple_outputs2", "multiple_outputs3"]
 )
-def test_render_readme_with_multiple_outputs(testing_workdir, dirname):
+def test_render_readme_with_multiple_outputs(
+    testing_workdir: str, dirname: str
+):
     parser = argparse.ArgumentParser()
     subparser = parser.add_subparsers()
     init_obj = cli.Init(subparser)
@@ -153,6 +158,7 @@ def test_render_readme_with_multiple_outputs(testing_workdir, dirname):
     feedstock_dir = os.path.join(
         testing_workdir, "multiple-outputs-test-feedstock"
     )
+    args: Union[InitArgs, RegenerateArgs]
     args = InitArgs(
         recipe_directory=recipe,
         feedstock_directory=feedstock_dir,
@@ -200,7 +206,7 @@ def test_render_readme_with_multiple_outputs(testing_workdir, dirname):
         assert False
 
 
-def test_init_cuda_docker_images(testing_workdir):
+def test_init_cuda_docker_images(testing_workdir: str):
     parser = argparse.ArgumentParser()
     subparser = parser.add_subparsers()
     init_obj = cli.Init(subparser)
@@ -209,6 +215,7 @@ def test_init_cuda_docker_images(testing_workdir):
     feedstock_dir = os.path.join(
         testing_workdir, "cuda_docker_images-feedstock"
     )
+    args: Union[InitArgs, RegenerateArgs]
     args = InitArgs(
         recipe_directory=recipe,
         feedstock_directory=feedstock_dir,
@@ -254,7 +261,7 @@ def test_init_cuda_docker_images(testing_workdir):
             assert config["cdt_name"] == ["cos6"]
 
 
-def test_init_multiple_docker_images(testing_workdir):
+def test_init_multiple_docker_images(testing_workdir: str):
     parser = argparse.ArgumentParser()
     subparser = parser.add_subparsers()
     init_obj = cli.Init(subparser)
@@ -263,6 +270,7 @@ def test_init_multiple_docker_images(testing_workdir):
     feedstock_dir = os.path.join(
         testing_workdir, "multiple_docker_images-feedstock"
     )
+    args: Union[InitArgs, RegenerateArgs]
     args = InitArgs(
         recipe_directory=recipe,
         feedstock_directory=feedstock_dir,
@@ -296,7 +304,7 @@ def test_init_multiple_docker_images(testing_workdir):
     assert config["cdt_name"] == ["pickme_1"]
 
 
-def test_regenerate(py_recipe, testing_workdir):
+def test_regenerate(py_recipe: RecipeConfigPair, testing_workdir: str):
     parser = argparse.ArgumentParser()
     subparser = parser.add_subparsers()
     regen_obj = cli.Regenerate(subparser)
@@ -330,7 +338,7 @@ def test_regenerate(py_recipe, testing_workdir):
     assert len(os.listdir(matrix_folder)) == 4
 
 
-def test_render_variant_mismatches(testing_workdir):
+def test_render_variant_mismatches(testing_workdir: str):
     parser = argparse.ArgumentParser()
     subparser = parser.add_subparsers()
     init_obj = cli.Init(subparser)
@@ -340,6 +348,7 @@ def test_render_variant_mismatches(testing_workdir):
     feedstock_dir = os.path.join(
         testing_workdir, "test-variant-mismatches-feedstock"
     )
+    args: Union[InitArgs, RegenerateArgs]
     args = InitArgs(
         recipe_directory=recipe,
         feedstock_directory=feedstock_dir,

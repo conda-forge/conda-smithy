@@ -10,17 +10,22 @@ import unittest
 
 import git
 from git.index.typ import BlobFilter
+from typing import (
+    Iterator,
+)
 
 import conda_smithy.feedstock_io as fio
 
 
-def keep_dir(dirname):
+def keep_dir(dirname: str):
     keep_filename = os.path.join(dirname, ".keep")
     with open(keep_filename, "w", encoding="utf-8", newline="\n") as fh:
         fh.write("")
 
 
-def parameterize():
+def parameterize() -> (
+    Iterator[tuple]
+):
     for pathfunc in [
         lambda pth, tmp_dir: os.path.relpath(pth, tmp_dir),
         lambda pth, tmp_dir: pth,
