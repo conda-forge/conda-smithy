@@ -1,4 +1,5 @@
 import pytest
+from _pytest._py.path import LocalPath
 
 from conda_smithy.ci_skeleton import generate
 
@@ -95,7 +96,7 @@ build_artifacts
 """
 
 
-def test_generate(tmpdir):
+def test_generate(tmpdir: LocalPath):
     generate(
         package_name="my-package",
         feedstock_directory=str(tmpdir),

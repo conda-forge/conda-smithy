@@ -13,6 +13,8 @@ from conda_smithy.configure_feedstock import (
     conda_forge_content,
     _load_forge_config,
 )
+from _pytest._py.path import LocalPath
+from _pytest.fixtures import SubRequest
 
 
 RecipeConfigPair = collections.namedtuple(
@@ -21,7 +23,7 @@ RecipeConfigPair = collections.namedtuple(
 
 
 @pytest.fixture(scope="function")
-def testing_workdir(tmpdir, request):
+def testing_workdir(tmpdir: LocalPath, request: SubRequest) -> str:
     """Create a workdir in a safe temporary folder; cd into dir above before test, cd out after
 
     :param tmpdir: py.test fixture, will be injected
@@ -54,8 +56,8 @@ def recipe_dirname():
 
 
 @pytest.fixture(scope="function")
-def config_yaml(testing_workdir, recipe_dirname):
-    config = {"python": ["2.7", "3.5"], "r_base": ["3.3.2", "3.4.2"]}
+def config_yaml(testing_workdir: str, recipe_dirname: str) -> str:
+    config: dict = {"python": ["2.7", "3.5"], "r_base": ["3.3.2", "3.4.2"]}
     os.makedirs(os.path.join(testing_workdir, recipe_dirname))
     with open(os.path.join(testing_workdir, "config.yaml"), "w") as f:
         f.write("docker:\n")
@@ -110,7 +112,9 @@ def config_yaml(testing_workdir, recipe_dirname):
 
 
 @pytest.fixture(scope="function")
-def noarch_recipe(config_yaml, recipe_dirname, request):
+def noarch_recipe(
+    config_yaml: str, recipe_dirname: str, request: SubRequest
+) -> RecipeConfigPair:
     with open(
         os.path.join(config_yaml, recipe_dirname, "meta.yaml"), "w"
     ) as fh:
@@ -140,7 +144,7 @@ requirements:
 
 
 @pytest.fixture(scope="function")
-def r_recipe(config_yaml, request):
+def r_recipe(config_yaml: str, request: SubRequest) -> RecipeConfigPair:
     with open(os.path.join(config_yaml, "recipe", "meta.yaml"), "w") as fh:
         fh.write(
             """
@@ -168,7 +172,7 @@ requirements:
 
 
 @pytest.fixture(scope="function")
-def py_recipe(config_yaml, request):
+def py_recipe(config_yaml: str, request: SubRequest) -> RecipeConfigPair:
     with open(os.path.join(config_yaml, "recipe", "meta.yaml"), "w") as fh:
         fh.write(
             """
@@ -198,7 +202,7 @@ about:
 
 
 @pytest.fixture(scope="function")
-def stdlib_recipe(config_yaml, request):
+def stdlib_recipe(config_yaml: str, request: SubRequest) -> RecipeConfigPair:
     with open(os.path.join(config_yaml, "recipe", "meta.yaml"), "w") as fh:
         fh.write(
             """
@@ -243,7 +247,9 @@ c_stdlib_version:               # [unix]
 
 
 @pytest.fixture(scope="function")
-def stdlib_deployment_target_recipe(config_yaml, stdlib_recipe):
+def stdlib_deployment_target_recipe(
+    config_yaml: str, stdlib_recipe: RecipeConfigPair
+) -> RecipeConfigPair:
     # append to existing stdlib_config.yaml from stdlib_recipe
     with open(
         os.path.join(config_yaml, "recipe", "stdlib_config.yaml"), "a"
@@ -270,7 +276,9 @@ MACOSX_SDK_VERSION:             # [osx]
 
 
 @pytest.fixture(scope="function")
-def upload_on_branch_recipe(config_yaml, request):
+def upload_on_branch_recipe(
+    config_yaml: str, request: SubRequest
+) -> RecipeConfigPair:
     with open(os.path.join(config_yaml, "recipe", "meta.yaml"), "w") as fh:
         fh.write(
             """
@@ -298,7 +306,9 @@ about:
 
 
 @pytest.fixture(scope="function")
-def recipe_migration_cfep9(config_yaml, request):
+def recipe_migration_cfep9(
+    config_yaml: str, request: SubRequest
+) -> RecipeConfigPair:
     # write a migrator
     with open(os.path.join(config_yaml, "recipe", "meta.yaml"), "w") as fh:
         fh.write(
@@ -344,7 +354,9 @@ zlib:
 
 
 @pytest.fixture(scope="function")
-def recipe_migration_cfep9_downgrade(config_yaml, recipe_migration_cfep9):
+def recipe_migration_cfep9_downgrade(
+    config_yaml: str, recipe_migration_cfep9: RecipeConfigPair
+) -> RecipeConfigPair:
     # write a downgrade migrator that lives next to the current migrator.
     # Only this, more recent migrator should apply.
     os.makedirs(
@@ -376,7 +388,9 @@ zlib:
 
 
 @pytest.fixture(scope="function")
-def recipe_migration_win_compiled(config_yaml, py_recipe):
+def recipe_migration_win_compiled(
+    config_yaml: str, py_recipe: RecipeConfigPair
+) -> RecipeConfigPair:
     os.makedirs(
         os.path.join(config_yaml, ".ci_support", "migrations"), exist_ok=True
     )
@@ -419,7 +433,7 @@ def recipe_migration_win_compiled(config_yaml, py_recipe):
 
 
 @pytest.fixture(scope="function")
-def skipped_recipe(config_yaml, request):
+def skipped_recipe(config_yaml: str, request: SubRequest) -> RecipeConfigPair:
     with open(os.path.join(config_yaml, "recipe", "meta.yaml"), "w") as fh:
         fh.write(
             """
@@ -452,7 +466,9 @@ extra:
 
 
 @pytest.fixture(scope="function")
-def python_skipped_recipe(config_yaml, request):
+def python_skipped_recipe(
+    config_yaml: str, request: SubRequest
+) -> RecipeConfigPair:
     with open(os.path.join(config_yaml, "recipe", "meta.yaml"), "w") as fh:
         fh.write(
             """
@@ -482,7 +498,9 @@ about:
 
 
 @pytest.fixture(scope="function")
-def linux_skipped_recipe(config_yaml, request):
+def linux_skipped_recipe(
+    config_yaml: str, request: SubRequest
+) -> RecipeConfigPair:
     with open(os.path.join(config_yaml, "recipe", "meta.yaml"), "w") as fh:
         fh.write(
             """
@@ -510,7 +528,9 @@ about:
 
 
 @pytest.fixture(scope="function")
-def render_skipped_recipe(config_yaml, request):
+def render_skipped_recipe(
+    config_yaml: str, request: SubRequest
+) -> RecipeConfigPair:
     with open(os.path.join(config_yaml, "recipe", "meta.yaml"), "w") as fh:
         fh.write(
             """
@@ -549,7 +569,7 @@ skip_render:
 
 
 @pytest.fixture(scope="function")
-def choco_recipe(config_yaml, request):
+def choco_recipe(config_yaml: str, request: SubRequest) -> RecipeConfigPair:
     with open(os.path.join(config_yaml, "recipe", "meta.yaml"), "w") as fh:
         fh.write(
             """
@@ -589,7 +609,9 @@ choco:
 
 
 @pytest.fixture(scope="function")
-def cuda_enabled_recipe(config_yaml, request):
+def cuda_enabled_recipe(
+    config_yaml: str, request: SubRequest
+) -> RecipeConfigPair:
     with open(os.path.join(config_yaml, "recipe", "meta.yaml"), "w") as fh:
         fh.write(
             """
@@ -622,7 +644,7 @@ about:
 
 
 @pytest.fixture(scope="function")
-def jinja_env(request):
+def jinja_env(request: SubRequest) -> SandboxedEnvironment:
     tmplt_dir = os.path.join(conda_forge_content, "templates")
     # Load templates from the feedstock in preference to the smithy's templates.
     return SandboxedEnvironment(

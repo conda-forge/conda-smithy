@@ -13,18 +13,24 @@ import warnings
 
 import github
 import pytest
+from typing import (
+    Iterator,
+    List,
+    Optional,
+    Tuple,
+)
 
 import conda_smithy.lint_recipe as linter
 
 _thisdir = os.path.abspath(os.path.dirname(__file__))
 
 
-def is_gh_token_set():
+def is_gh_token_set() -> bool:
     return "GH_TOKEN" in os.environ
 
 
 @contextmanager
-def tmp_directory():
+def tmp_directory() -> Iterator[str]:
     tmp_dir = tempfile.mkdtemp("recipe_")
     yield tmp_dir
     shutil.rmtree(tmp_dir)
@@ -34,7 +40,7 @@ def tmp_directory():
     "comp_lang",
     ["c", "cxx", "fortran", "rust", "m2w64_c", "m2w64_cxx", "m2w64_fortran"],
 )
-def test_stdlib_hint(comp_lang):
+def test_stdlib_hint(comp_lang: str):
     expected_message = "This recipe is using a compiler"
 
     with tmp_directory() as recipe_dir:
@@ -74,7 +80,7 @@ def test_sysroot_hint():
 
 
 @pytest.mark.parametrize("where", ["run", "run_constrained"])
-def test_osx_hint(where):
+def test_osx_hint(where: str):
     expected_message = "You're setting a constraint on the `__osx` virtual"
 
     with tmp_directory() as recipe_dir:
@@ -141,7 +147,7 @@ def test_stdlib_hints_multi_output():
 
 
 @pytest.mark.parametrize("where", ["run", "run_constrained"])
-def test_osx_noarch_hint(where):
+def test_osx_noarch_hint(where: str):
     # don't warn on packages that are using __osx as a noarch-marker, see
     # https://conda-forge.org/docs/maintainer/knowledge_base/#noarch-packages-with-os-specific-dependencies
     avoid_message = "You're setting a constraint on the `__osx` virtual"
@@ -214,7 +220,13 @@ def test_osx_noarch_hint(where):
     ],
 )
 def test_cbc_osx_hints(
-    std_selector, with_linux, reverse_arch, macdt, v_std, sdk, exp_hint
+    std_selector,
+    with_linux: bool,
+    reverse_arch: Tuple[bool, bool, bool],
+    macdt: Optional[List[str]],
+    v_std: Optional[List[str]],
+    sdk: Optional[List[str]],
+    exp_hint: Optional[str],
 ):
     with tmp_directory() as rdir:
         with open(os.path.join(rdir, "meta.yaml"), "w") as fh:
