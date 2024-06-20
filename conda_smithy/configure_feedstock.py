@@ -1657,9 +1657,9 @@ def _github_actions_specific_setup(
         hosted_default = list(runs_on[data["build_platform"]]["hosted_labels"])
 
         labels_default = (
-            ["hosted"]
-            if not forge_config["github_actions"]["self_hosted"]
-            else ["self-hosted"]
+            ["self-hosted"]
+            if forge_config["github_actions"]["self_hosted"]
+            else ["hosted"]
         )
         labels = conda_build.utils.ensure_list(
             data["config"].get("github_actions_labels", [labels_default])[0]
