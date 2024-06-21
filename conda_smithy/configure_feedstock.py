@@ -1110,9 +1110,6 @@ def _render_ci_provider(
             )[0].split(",")
 
             if recipe_file == "recipe.yaml":
-                import pdb
-
-                pdb.set_trace()
                 metas = rattler_render(
                     os.path.join(forge_dir, forge_config["recipe_dir"]),
                     platform=platform,
