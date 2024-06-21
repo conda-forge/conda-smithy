@@ -12,7 +12,7 @@ from conda_smithy import cli
 
 _thisdir = os.path.abspath(os.path.dirname(__file__))
 
-yaml = YAML(typ='safe')
+yaml = YAML(typ="safe")
 
 InitArgs = collections.namedtuple(
     "ArgsObject",

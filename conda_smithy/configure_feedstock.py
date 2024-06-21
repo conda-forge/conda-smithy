@@ -713,7 +713,7 @@ def finalize_config(config, platform, arch, forge_config):
 
 
 def represent_ordereddict(dumper, data):
-    return dumper.represent_mapping(u'tag:yaml.org,2002:map', data)
+    return dumper.represent_mapping("tag:yaml.org,2002:map", data)
 
 
 def dump_subspace_config_files(
@@ -738,7 +738,7 @@ def dump_subspace_config_files(
         "collapsed subspace config files: {}".format(pprint.pformat(configs))
     )
 
-    ruamel = ruamel_yaml(typ='safe')
+    ruamel = ruamel_yaml(typ="safe")
     ruamel.default_flow_style = False
     ruamel.Representer.add_representer(OrderedDict, represent_ordereddict)
 
@@ -1833,7 +1833,7 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
         # fmt: on
 
     buffer = io.StringIO()
-    ruamel_yaml(typ='safe').dump(azure_settings, buffer)
+    ruamel_yaml(typ="safe").dump(azure_settings, buffer)
     forge_config["azure_yaml"] = buffer.getvalue()
     _render_template_exe_files(
         forge_config=forge_config,
@@ -2039,7 +2039,7 @@ def render_README(jinja_env, forge_config, forge_dir, render_info=None):
                 variant_name, _ = os.path.splitext(filename)
                 variants.append(variant_name)
                 with open(os.path.join(ci_support_path, filename)) as fh:
-                    data = ruamel_yaml(typ='safe').load(fh)
+                    data = ruamel_yaml(typ="safe").load(fh)
                     channel_targets.append(
                         data.get("channel_targets", ["conda-forge main"])[0]
                     )
@@ -2097,7 +2097,7 @@ def render_README(jinja_env, forge_config, forge_dir, render_info=None):
 
     logger.debug("README")
     buffer = io.StringIO()
-    ruamel_yaml(typ='safe').dump(forge_config, buffer)
+    ruamel_yaml(typ="safe").dump(forge_config, buffer)
     logger.debug(buffer.getvalue())
 
     with write_file(target_fname) as fh:
@@ -2160,7 +2160,7 @@ def _update_dict_within_dict(items, config):
 def _read_forge_config(forge_dir, forge_yml=None):
     # Load default values from the conda-forge.yml file
     with open(CONDA_FORGE_YAML_DEFAULTS_FILE, "r") as fh:
-        default_config = ruamel_yaml(typ='safe').load(fh.read())
+        default_config = ruamel_yaml(typ="safe").load(fh.read())
 
     if forge_yml is None:
         forge_yml = os.path.join(forge_dir, "conda-forge.yml")
@@ -2175,7 +2175,7 @@ def _read_forge_config(forge_dir, forge_yml=None):
         )
 
     with open(forge_yml, "r") as fh:
-        documents = list(ruamel_yaml(typ='safe').load_all(fh))
+        documents = list(ruamel_yaml(typ="safe").load_all(fh))
         file_config = (documents or [None])[0] or {}
 
     # Validate loaded configuration against a JSON schema.

@@ -11,7 +11,8 @@ from ruamel.yaml import YAML
 
 from conda_smithy import configure_feedstock
 
-yaml=YAML(typ='safe')
+yaml = YAML(typ="safe")
+
 
 def test_noarch_skips_appveyor(noarch_recipe, jinja_env):
     noarch_recipe.config["provider"]["win"] = "appveyor"
