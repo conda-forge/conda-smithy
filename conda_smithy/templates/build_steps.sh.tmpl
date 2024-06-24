@@ -66,8 +66,7 @@ setup_conda_rc "${FEEDSTOCK_ROOT}" "${RECIPE_ROOT}" "${CONFIG_FILE}"
 # are drastically slowed down when the number of file descriptors is very high.
 # This can be visible during a `yum install` step of a feedstock build.
 ulimit -n 1024
-{{ yum_build_setup }}
-{% endif -%}
+{{ yum_build_setup }}{% endif -%}
 
 # make the build number clobber
 make_build_number "${FEEDSTOCK_ROOT}" "${RECIPE_ROOT}" "${CONFIG_FILE}"
