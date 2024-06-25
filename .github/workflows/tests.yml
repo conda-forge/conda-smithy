@@ -25,7 +25,7 @@ jobs:
         uses: mamba-org/setup-micromamba@f8b8a1e23a26f60a44c853292711bacfd3eac822
         with:
           environment-file: environment.yml
-          # cache-environment: true
+          cache-environment: true
           create-args: >-
             python=3.8
             coverage
