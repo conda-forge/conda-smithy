@@ -1002,14 +1002,14 @@ class Test_linter(unittest.TestCase):
         meta = {
             "build": {
                 "skip": "True",
-                "script": "python -m pip install",
+                "script": "python setup.py install",
                 "number": 0,
             }
         }
         lints, hints = linter.lintify_meta_yaml(meta)
         self.assertNotIn(expected_message, lints)
 
-        meta = {"build": {"skip": "True", "script": "python -m pip install"}}
+        meta = {"build": {"skip": "True", "script": "python setup.py install"}}
         lints, hints = linter.lintify_meta_yaml(meta)
         self.assertIn(expected_message, lints)
 
@@ -1444,7 +1444,7 @@ class Test_linter(unittest.TestCase):
         meta = {
             "build": {
                 "skip": "True",
-                "script": "python -m pip install",
+                "script": "python setup.py install",
                 "number": 0,
             }
         }
@@ -1454,7 +1454,7 @@ class Test_linter(unittest.TestCase):
         meta = {
             "build": {
                 "ski": "True",
-                "script": "python -m pip install",
+                "script": "python setup.py install",
                 "number": 0,
             }
         }
