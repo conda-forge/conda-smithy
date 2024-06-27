@@ -10,7 +10,7 @@ source:
 
 build:
   number: 1
-  script: {{ PYTHON }} -m pip install .
+  script: {{ PYTHON }} setup.py install --single-version-externally-managed --record record.txt
   entry_points:
     - pytest = pytest:console_main
     - py.test = pytest:console_main
