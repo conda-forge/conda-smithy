@@ -39,6 +39,8 @@ CONDARC
 {%- set BUILD_CMD="CONDA_SOLVER=libmamba conda-build" %}
 {%- elif conda_build_tool == "conda-build+classic" %}
 {%- set BUILD_CMD="CONDA_SOLVER=classic conda-build" %}
+{%- elif conda_build_tool == "rattler-build" %}
+{%- set BUILD_CMD="rattler-build build" %}
 {%- else %}
 {%- set BUILD_CMD="conda-build" %}
 {%- endif %}
@@ -91,6 +93,7 @@ if [[ -f "${FEEDSTOCK_ROOT}/LICENSE.txt" ]]; then
 fi
 
 if [[ "${BUILD_WITH_CONDA_DEBUG:-0}" == 1 ]]; then
+    {%- if conda_build_tool != "rattler-build" %}
     if [[ "x${BUILD_OUTPUT_ID:-}" != "x" ]]; then
         EXTRA_CB_OPTIONS="${EXTRA_CB_OPTIONS:-} --output-id ${BUILD_OUTPUT_ID}"
     fi
@@ -100,12 +103,21 @@ if [[ "${BUILD_WITH_CONDA_DEBUG:-0}" == 1 ]]; then
 
     # Drop into an interactive shell
     /bin/bash
+    {%- else %}
+    echo "rattler-build currently doesn't support debug mode"
+    {%- endif %}
 else
+    {%- if conda_build_tool != "rattler-build" %}
     {{ BUILD_CMD }} "${RECIPE_ROOT}" -m "${CI_SUPPORT}/${CONFIG}.yaml" \
         --suppress-variables ${EXTRA_CB_OPTIONS:-} \
         --clobber-file "${CI_SUPPORT}/clobber_${CONFIG}.yaml" \
         --extra-meta flow_run_id="${flow_run_id:-}" remote_url="${remote_url:-}" sha="${sha:-}"
 
+    {%- else %}
+
+    {{ BUILD_CMD }} --recipe "${RECIPE_ROOT}" -m "${CI_SUPPORT}/${CONFIG}.yaml" ${EXTRA_CB_OPTIONS:-}
+
+    {%- endif %}
     ( startgroup "Inspecting artifacts" ) 2> /dev/null
 
     # inspect_artifacts was only added in conda-forge-ci-setup 4.6.0

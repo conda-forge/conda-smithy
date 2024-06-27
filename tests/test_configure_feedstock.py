@@ -9,6 +9,7 @@ from pathlib import Path
 import pytest
 import yaml
 
+from conftest import ConfigYAML
 from conda_smithy import configure_feedstock
 
 
@@ -213,7 +214,15 @@ def test_py_matrix_on_azure(py_recipe, jinja_env):
     assert len(os.listdir(matrix_dir)) == 6
 
 
-def test_stdlib_on_azure(stdlib_recipe, jinja_env):
+def test_stdlib_on_azure(stdlib_recipe, jinja_env, request):
+    conda_build_param = request.node.callspec.params["config_yaml"]
+    if conda_build_param == "rattler-build":
+        # stdlib is not yet implemented in rattler-build
+        # https://github.com/prefix-dev/rattler-build/issues/239
+        pytest.skip(
+            "skipping test for rattler-build usecase as we currently we don't have stdlib"
+        )
+
     configure_feedstock.render_azure(
         jinja_env=jinja_env,
         forge_config=stdlib_recipe.config,
@@ -249,8 +258,14 @@ def test_stdlib_on_azure(stdlib_recipe, jinja_env):
 
 
 def test_stdlib_deployment_target(
-    stdlib_deployment_target_recipe, jinja_env, caplog
+    stdlib_deployment_target_recipe, jinja_env, caplog, request
 ):
+    conda_build_param = request.node.callspec.params["config_yaml"]
+    if conda_build_param == "rattler-build":
+        # stdlib is not yet implemented in rattler-build
+        # https://github.com/prefix-dev/rattler-build/issues/239
+        pytest.skip("skipping test for rattler-build usecase")
+
     with caplog.at_level(logging.WARNING):
         configure_feedstock.render_azure(
             jinja_env=jinja_env,
@@ -513,7 +528,7 @@ def test_render_windows_with_skipped_python(python_skipped_recipe, jinja_env):
         forge_config=config,
         forge_dir=python_skipped_recipe.recipe,
     )
-    # this configuration should be skipped
+    # this configuration should be enabled
     assert python_skipped_recipe.config["appveyor"]["enabled"]
 
     matrix_dir = os.path.join(python_skipped_recipe.recipe, ".ci_support")
@@ -606,6 +621,7 @@ def test_migrator_cfp_override(recipe_migration_cfep9, jinja_env):
         os.path.dirname(cfp_file), "share", "conda-forge", "migrations"
     )
     os.makedirs(cfp_migration_dir, exist_ok=True)
+
     with open(os.path.join(cfp_migration_dir, "zlib2.yaml"), "w") as f:
         f.write(
             textwrap.dedent(
@@ -810,34 +826,36 @@ def test_automerge_action_exists(py_recipe, jinja_env):
     assert "automerge-action" in action_config["jobs"]
 
 
-def test_conda_forge_yaml_empty(config_yaml):
+def test_conda_forge_yaml_empty(config_yaml: ConfigYAML):
     load_forge_config = lambda: configure_feedstock._load_forge_config(  # noqa
-        config_yaml,
+        config_yaml.workdir,
         exclusive_config_file=os.path.join(
-            config_yaml, "recipe", "default_config.yaml"
+            config_yaml.workdir, "recipe", "default_config.yaml"
         ),
     )
 
     assert load_forge_config()["recipe_dir"] == "recipe"
 
-    os.unlink(os.path.join(config_yaml, "conda-forge.yml"))
+    os.unlink(os.path.join(config_yaml.workdir, "conda-forge.yml"))
     with pytest.raises(RuntimeError):
         load_forge_config()
 
-    with open(os.path.join(config_yaml, "conda-forge.yml"), "w"):
+    with open(os.path.join(config_yaml.workdir, "conda-forge.yml"), "w"):
         pass
     assert load_forge_config()["recipe_dir"] == "recipe"
 
 
-def test_noarch_platforms_bad_yaml(config_yaml, caplog):
+def test_noarch_platforms_bad_yaml(config_yaml: ConfigYAML, caplog):
     load_forge_config = lambda: configure_feedstock._load_forge_config(  # noqa
-        config_yaml,
+        config_yaml.workdir,
         exclusive_config_file=os.path.join(
-            config_yaml, "recipe", "default_config.yaml"
+            config_yaml.workdir, "recipe", "default_config.yaml"
         ),
     )
 
-    with open(os.path.join(config_yaml, "conda-forge.yml"), "a+") as fp:
+    with open(
+        os.path.join(config_yaml.workdir, "conda-forge.yml"), "a+"
+    ) as fp:
         fp.write("noarch_platforms: [eniac, zx80]")
 
     with caplog.at_level(logging.WARNING):
@@ -846,20 +864,20 @@ def test_noarch_platforms_bad_yaml(config_yaml, caplog):
     assert "eniac" in caplog.text
 
 
-def test_forge_yml_alt_path(config_yaml):
+def test_forge_yml_alt_path(config_yaml: ConfigYAML):
     load_forge_config = (
         lambda forge_yml: configure_feedstock._load_forge_config(  # noqa
-            config_yaml,
+            config_yaml.workdir,
             exclusive_config_file=os.path.join(
-                config_yaml, "recipe", "default_config.yaml"
+                config_yaml.workdir, "recipe", "default_config.yaml"
             ),
             forge_yml=forge_yml,
         )
     )
 
-    forge_yml = os.path.join(config_yaml, "conda-forge.yml")
+    forge_yml = os.path.join(config_yaml.workdir, "conda-forge.yml")
     forge_yml_alt = os.path.join(
-        config_yaml, ".config", "feedstock-config.yml"
+        config_yaml.workdir, ".config", "feedstock-config.yml"
     )
 
     os.mkdir(os.path.dirname(forge_yml_alt))
@@ -934,11 +952,11 @@ def test_cuda_enabled_render(cuda_enabled_recipe, jinja_env):
                 del os.environ["CF_CUDA_ENABLED"]
 
 
-def test_conda_build_tools(config_yaml, caplog):
+def test_conda_build_tools(config_yaml: ConfigYAML, caplog):
     load_forge_config = lambda: configure_feedstock._load_forge_config(  # noqa
-        config_yaml,
+        config_yaml.workdir,
         exclusive_config_file=os.path.join(
-            config_yaml, "recipe", "default_config.yaml"
+            config_yaml.workdir, "recipe", "default_config.yaml"
         ),
     )
 
@@ -946,24 +964,34 @@ def test_conda_build_tools(config_yaml, caplog):
     assert (
         "build_with_mambabuild" not in cfg
     )  # superseded by conda_build_tool=mambabuild
-    assert cfg["conda_build_tool"] == "conda-build"  # current default
+
+    assert cfg["conda_build_tool"] == config_yaml.type
 
     # legacy compatibility config
-    with open(os.path.join(config_yaml, "conda-forge.yml")) as fp:
+    with open(os.path.join(config_yaml.workdir, "conda-forge.yml")) as fp:
         unmodified = fp.read()
-    with open(os.path.join(config_yaml, "conda-forge.yml"), "a+") as fp:
-        fp.write("build_with_mambabuild: true")
-    with pytest.deprecated_call(match="build_with_mambabuild is deprecated"):
-        assert load_forge_config()["conda_build_tool"] == "mambabuild"
+    if config_yaml.type == "conda-build":
+        with open(
+            os.path.join(config_yaml.workdir, "conda-forge.yml"), "a+"
+        ) as fp:
+            fp.write("build_with_mambabuild: true")
+        with pytest.deprecated_call(
+            match="build_with_mambabuild is deprecated"
+        ):
+            assert load_forge_config()["conda_build_tool"] == "mambabuild"
 
-    with open(os.path.join(config_yaml, "conda-forge.yml"), "w") as fp:
-        fp.write(unmodified)
-        fp.write("build_with_mambabuild: false")
+        with open(
+            os.path.join(config_yaml.workdir, "conda-forge.yml"), "w"
+        ) as fp:
+            fp.write(unmodified)
+            fp.write("build_with_mambabuild: false")
 
-    with pytest.deprecated_call(match="build_with_mambabuild is deprecated"):
-        assert load_forge_config()["conda_build_tool"] == "conda-build"
+        with pytest.deprecated_call(
+            match="build_with_mambabuild is deprecated"
+        ):
+            assert load_forge_config()["conda_build_tool"] == "conda-build"
 
-    with open(os.path.join(config_yaml, "conda-forge.yml"), "w") as fp:
+    with open(os.path.join(config_yaml.workdir, "conda-forge.yml"), "w") as fp:
         fp.write(unmodified)
         fp.write("conda_build_tool: does-not-exist")
 
@@ -972,18 +1000,20 @@ def test_conda_build_tools(config_yaml, caplog):
     assert "does-not-exist" in caplog.text
 
 
-def test_remote_ci_setup(config_yaml):
+def test_remote_ci_setup(config_yaml: ConfigYAML):
     load_forge_config = lambda: configure_feedstock._load_forge_config(  # noqa
-        config_yaml,
+        config_yaml.workdir,
         exclusive_config_file=os.path.join(
-            config_yaml, "recipe", "default_config.yaml"
+            config_yaml.workdir, "recipe", "default_config.yaml"
         ),
     )
     cfg = load_forge_config()
-    with open(os.path.join(config_yaml, "conda-forge.yml")) as fp:
+    with open(os.path.join(config_yaml.workdir, "conda-forge.yml")) as fp:
         unmodified = fp.read()
 
-    with open(os.path.join(config_yaml, "conda-forge.yml"), "a+") as fp:
+    with open(
+        os.path.join(config_yaml.workdir, "conda-forge.yml"), "a+"
+    ) as fp:
         fp.write(
             "remote_ci_setup: ['conda-forge-ci-setup=3', 'py-lief<0.12']\n"
         )
@@ -1000,7 +1030,7 @@ def test_remote_ci_setup(config_yaml):
         "py-lief",
     ]
 
-    with open(os.path.join(config_yaml, "conda-forge.yml"), "w") as fp:
+    with open(os.path.join(config_yaml.workdir, "conda-forge.yml"), "w") as fp:
         fp.write(unmodified + "\n")
         fp.write(
             "remote_ci_setup: ['conda-forge-ci-setup=3', 'py-lief<0.12']\n"
