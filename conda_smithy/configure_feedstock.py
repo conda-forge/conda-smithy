@@ -17,7 +17,9 @@ from functools import lru_cache
 from itertools import chain, product
 from os import fspath
 from pathlib import Path, PurePath
+
 import requests
+from frozendict import deepfreeze
 
 try:
     from builtins import ExceptionGroup
@@ -495,7 +497,7 @@ def _merge_deployment_target(container_of_dicts, has_macdt):
         # we set MACOSX_DEPLOYMENT_TARGET to match c_stdlib_version,
         # for ease of use in conda-forge-ci-setup;
         # use new dictionary to avoid mutating existing var_dict in place
-        new_dict = conda_build.utils.HashableDict(
+        new_dict = deepfreeze(
             {
                 **var_dict,
                 "c_stdlib_version": v_stdlib,
@@ -537,11 +539,9 @@ def _collapse_subpackage_variants(
             all_used_vars.update(
                 ["mpich", "openmpi", "msmpi", "mpi_serial", "impi"]
             )
-        all_variants.update(
-            conda_build.utils.HashableDict(v) for v in meta.config.variants
-        )
+        all_variants.update(deepfreeze(v) for v in meta.config.variants)
 
-        all_variants.add(conda_build.utils.HashableDict(meta.config.variant))
+        all_variants.add(deepfreeze(meta.config.variant))
 
         if not meta.noarch:
             is_noarch = False
@@ -656,9 +656,7 @@ def _collapse_subpackage_variants(
     used_key_values = conda_build.variants.dict_of_lists_to_list_of_dicts(
         used_key_values
     )
-    used_key_values = {
-        conda_build.utils.HashableDict(variant) for variant in used_key_values
-    }
+    used_key_values = {deepfreeze(variant) for variant in used_key_values}
     used_key_values = conda_build.variants.list_of_dicts_to_dict_of_lists(
         list(used_key_values)
     )
