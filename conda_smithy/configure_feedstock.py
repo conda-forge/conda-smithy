@@ -879,7 +879,7 @@ def migrate_combined_spec(combined_spec, forge_dir, config, forge_config):
     return combined_spec
 
 
-def reduce_variants(recipe_path, config, variants):
+def reduce_variants(recipe_path, config, input_variants):
     """Subset of render_recipe to compute reduced variant matrix
 
     large numbers of unused variants greatly increase render time
@@ -892,31 +892,25 @@ def reduce_variants(recipe_path, config, variants):
     # from distribute_variants
     # explode variants dict to list of variants
     variants = initial_variants = conda_build.variants.get_package_variants(
-        metadata, variants=variants
+        metadata, variants=input_variants
     )
     logger.debug(f"Starting with {len(initial_variants)} variants")
-    if metadata.noarch or metadata.noarch_python:
-        # filter variants by the newest Python version
-        version = sorted(
-            {
-                version
-                for variant in variants
-                if (version := variant.get("python"))
-            },
-            key=lambda key: VersionOrder(key.split(" ")[0]),
-        )[-1]
-        variants = conda_build.variants.filter_by_key_value(
-            variants, "python", version, "noarch_python_reduction"
-        )
     metadata.config.variant = variants[0]
     metadata.config.variants = variants
     all_used = metadata.get_used_vars(force_global=True)
-    reduced_variants = metadata.get_reduced_variant_set(all_used)
-    logger.info(f"Rendering {len(reduced_variants)} variants")
-    # return reduced, exploded list of variant dict to input format
-    return conda_build.variants.list_of_dicts_to_dict_of_lists(
-        reduced_variants
-    )
+    new_input_variants = input_variants.copy()
+    # trim unused dimensions, these cost a lot in render_recipe!
+    for key, value in input_variants.items():
+        if len(value) > 1 and key not in all_used | {
+            "zip_keys",
+            "pin_run_as_build",
+            "ignore_build_only_deps",
+            "extend_keys",
+        }:
+            logger.debug(f"Trimming unused dimension: {key}")
+            new_input_variants.pop(key)
+    _trim_unused_zip_keys(new_input_variants)
+    return new_input_variants
 
 
 def _conda_build_api_render_for_smithy(
@@ -955,7 +949,7 @@ def _conda_build_api_render_for_smithy(
     # reduce unused variants first, they get very expensive in render_recipe
     if variants:
         variants = reduce_variants(
-            recipe_path, config=config, variants=variants
+            recipe_path, config=config, input_variants=variants
         )
 
     metadata_tuples = render_recipe(
