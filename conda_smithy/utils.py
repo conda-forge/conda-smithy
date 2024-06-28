@@ -1,3 +1,4 @@
+import json
 import shutil
 import tempfile
 import io
@@ -149,3 +150,18 @@ def merge_dict(src, dest):
             dest[key] = value
 
     return dest
+
+
+def _json_default(obj):
+    """Accept sets for JSON"""
+    if isinstance(obj, set):
+        return sorted(obj)
+    else:
+        return obj
+
+
+class HashableDict(dict):
+    """Hashable dict so it can be in sets"""
+
+    def __hash__(self):
+        return hash(json.dumps(self, sort_keys=True, default=_json_default))
