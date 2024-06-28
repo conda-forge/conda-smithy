@@ -17,6 +17,7 @@ from vsts.service_endpoint.v4_1.service_endpoint_client import (
 from vsts.task_agent.v4_0.models import TaskAgentQueue
 from vsts.task_agent.v4_0.task_agent_client import TaskAgentClient
 from vsts.vss_connection import VssConnection
+
 from .azure_defaults import AZURE_DEFAULT_ORG, AZURE_DEFAULT_PROJECT_NAME
 
 
@@ -40,13 +41,11 @@ class AzureConfig:
         )
 
         try:
-            with open(
-                os.path.expanduser("~/.conda-smithy/azure.token"), "r"
-            ) as fh:
+            with open(os.path.expanduser("~/.conda-smithy/azure.token")) as fh:
                 self.token = fh.read().strip()
             if not self.token:
                 raise ValueError()
-        except (IOError, ValueError):
+        except (OSError, ValueError):
             print(
                 "No azure token. Create a token and\n"
                 "put it in ~/.conda-smithy/azure.token"
@@ -133,12 +132,13 @@ def get_default_build_definition(
     config: AzureConfig = default_config,
     **kwargs,
 ):
+    import inspect
+
     from vsts.build.v4_1.models import (
         BuildDefinition,
         BuildRepository,
     )
     from vsts.task_agent.v4_0.task_agent_client import TaskAgentClient
-    import inspect
 
     aclient = TaskAgentClient(config.instance_base_url, config.credentials)
 

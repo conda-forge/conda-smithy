@@ -4,16 +4,14 @@ from textwrap import dedent
 
 import pytest
 import yaml
-
+from conda_build.utils import copy_into
 from jinja2 import FileSystemLoader
 from jinja2.sandbox import SandboxedEnvironment
-from conda_build.utils import copy_into
 
 from conda_smithy.configure_feedstock import (
-    conda_forge_content,
     _load_forge_config,
+    conda_forge_content,
 )
-
 
 RecipeConfigPair = collections.namedtuple(
     "RecipeConfigPair", ("recipe", "config")

@@ -1,8 +1,8 @@
-import pytest
 from textwrap import dedent
 
-from conda_smithy.variant_algebra import parse_variant, variant_add
+import pytest
 
+from conda_smithy.variant_algebra import parse_variant, variant_add
 
 tv1 = parse_variant(
     """\

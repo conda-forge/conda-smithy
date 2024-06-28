@@ -1,25 +1,21 @@
-# -*- coding: utf-8 -*-
-
-from collections.abc import Sequence, Mapping
-
-str_type = str
-
 import copy
 import fnmatch
-import io
 import itertools
 import json
 import os
 import re
-import requests
 import shutil
 import subprocess
 import sys
+from collections.abc import Mapping, Sequence
 from glob import glob
 from inspect import cleandoc
 from textwrap import indent
 
 import github
+import jsonschema
+import requests
+from conda.exceptions import InvalidVersionSpec
 
 if sys.version_info[:2] < (3, 11):
     import tomli as tomllib
@@ -28,16 +24,21 @@ else:
 
 from conda.models.version import VersionOrder
 from conda_build.metadata import (
-    ensure_valid_license_family,
-    FIELDS as cbfields,
+    FIELDS as _CONDA_BUILD_FIELDS,
 )
-from conda_smithy.validate_schema import validate_json_schema
+from conda_build.metadata import (
+    ensure_valid_license_family,
+)
 from ruamel.yaml import CommentedSeq
 
-from .utils import render_meta_yaml, get_yaml
+from conda_smithy.validate_schema import validate_json_schema
+
+from .utils import get_yaml, render_meta_yaml
+
+str_type = str
 
 
-FIELDS = copy.deepcopy(cbfields)
+FIELDS = copy.deepcopy(_CONDA_BUILD_FIELDS)
 
 # Just in case 'extra' moves into conda_build
 if "extra" not in FIELDS.keys():
@@ -63,7 +64,6 @@ REQUIREMENTS_ORDER = ["build", "host", "run"]
 TEST_KEYS = {"imports", "commands"}
 TEST_FILES = ["run_test.py", "run_test.sh", "run_test.bat", "run_test.pl"]
 
-
 NEEDED_FAMILIES = ["gpl", "bsd", "mit", "apache", "psf"]
 
 sel_pat = re.compile(r"(.+?)\s*(#.*)?\[([^\[\]]+)\](?(2).*)$")
@@ -80,8 +80,8 @@ def get_section(parent, name, lints):
     section = parent.get(name, {})
     if not isinstance(section, Mapping):
         lints.append(
-            'The "{}" section was expected to be a dictionary, but '
-            "got a {}.".format(name, type(section).__name__)
+            f'The "{name}" section was expected to be a dictionary, but '
+            f"got a {type(section).__name__}."
         )
         section = {}
     return section
@@ -110,13 +110,13 @@ def lint_section_order(major_sections, lints):
     )
     if major_sections != section_order_sorted:
         section_order_sorted_str = map(
-            lambda s: "'%s'" % s, section_order_sorted
+            lambda s: f"'{s}'", section_order_sorted
         )
         section_order_sorted_str = ", ".join(section_order_sorted_str)
         section_order_sorted_str = "[" + section_order_sorted_str + "]"
         lints.append(
             "The top level meta keys are in an unexpected order. "
-            "Expecting {}.".format(section_order_sorted_str)
+            f"Expecting {section_order_sorted_str}."
         )
 
 
@@ -125,8 +125,7 @@ def lint_about_contents(about_section, lints):
         # if the section doesn't exist, or is just empty, lint it.
         if not about_section.get(about_item, ""):
             lints.append(
-                "The {} item is expected in the about section."
-                "".format(about_item)
+                f"The {about_item} item is expected in the about section." ""
             )
 
 
@@ -160,7 +159,7 @@ def lintify_forge_yaml(recipe_dir=None) -> (list, list):
             )
         )
         if forge_yaml_filename:
-            with open(forge_yaml_filename[0], "r") as fh:
+            with open(forge_yaml_filename[0]) as fh:
                 forge_yaml = get_yaml().load(fh)
         else:
             forge_yaml = {}
@@ -198,9 +197,7 @@ def lintify_meta_yaml(
     unexpected_sections = []
     for section in major_sections:
         if section not in EXPECTED_SECTION_ORDER:
-            lints.append(
-                "The top level meta key {} is unexpected".format(section)
-            )
+            lints.append(f"The top level meta key {section} is unexpected")
             unexpected_sections.append(section)
 
     for section in unexpected_sections:
@@ -263,45 +260,46 @@ def lintify_meta_yaml(
     # 6: Selectors should be in a tidy form.
     if recipe_dir is not None and os.path.exists(meta_fname):
         bad_selectors, bad_lines = [], []
-        pyXY_selectors_lint, pyXY_lines_lint = [], []
-        pyXY_selectors_hint, pyXY_lines_hint = [], []
+        # pyXY selectors for python version X.Y
+        python_selectors_lint, python_lines_lint = [], []
+        python_selectors_hint, python_lines_hint = [], []
         # Good selectors look like ".*\s\s#\s[...]"
         good_selectors_pat = re.compile(r"(.+?)\s{2,}#\s\[(.+)\](?(2).*)$")
         # Look out for py27, py35 selectors; we prefer py==35
-        pyXY_selectors_pat = re.compile(r".+#\s*\[.*?(py\d{2,3}).*\]")
-        with io.open(meta_fname, "rt") as fh:
+        python_selectors_pat = re.compile(r".+#\s*\[.*?(py\d{2,3}).*\]")
+        with open(meta_fname) as fh:
             for selector_line, line_number in selector_lines(fh):
                 if not good_selectors_pat.match(selector_line):
                     bad_selectors.append(selector_line)
                     bad_lines.append(line_number)
-                pyXY_matches = pyXY_selectors_pat.match(selector_line)
-                if pyXY_matches:
-                    for pyXY in pyXY_matches.groups():
-                        if int(pyXY[2:]) in (27, 34, 35, 36):
+                python_matches = python_selectors_pat.match(selector_line)
+                if python_matches:
+                    for py_match in python_matches.groups():
+                        if int(py_match[2:]) in (27, 34, 35, 36):
                             # py27, py35 and so on are ok up to py36 (included); only warn
-                            pyXY_selectors_hint.append(selector_line)
-                            pyXY_lines_hint.append(line_number)
+                            python_selectors_hint.append(selector_line)
+                            python_lines_hint.append(line_number)
                         else:
-                            pyXY_selectors_lint.append(selector_line)
-                            pyXY_lines_lint.append(line_number)
+                            python_selectors_lint.append(selector_line)
+                            python_lines_lint.append(line_number)
         if bad_selectors:
             lints.append(
                 "Selectors are suggested to take a "
                 "``<two spaces>#<one space>[<expression>]`` form."
-                " See lines {}".format(bad_lines)
+                f" See lines {bad_lines}"
             )
-        if pyXY_selectors_hint:
+        if python_selectors_hint:
             hints.append(
                 "Old-style Python selectors (py27, py34, py35, py36) are "
                 "deprecated. Instead, consider using the int ``py``. For "
-                "example: ``# [py>=36]``. See lines {}".format(pyXY_lines_hint)
+                f"example: ``# [py>=36]``. See lines {python_lines_hint}"
             )
-        if pyXY_selectors_lint:
+        if python_selectors_lint:
             lints.append(
                 "Old-style Python selectors (py27, py35, etc) are only available "
                 "for Python 2.7, 3.4, 3.5, and 3.6. Please use explicit comparisons "
                 "with the integer ``py``, e.g. ``# [py==37]`` or ``# [py>=37]``. "
-                "See lines {}".format(pyXY_lines_lint)
+                f"See lines {python_lines_lint}"
             )
 
     # 7: The build section should have a build number.
@@ -349,16 +347,16 @@ def lintify_meta_yaml(
 
     # 11: There should be one empty line at the end of the file.
     if recipe_dir is not None and os.path.exists(meta_fname):
-        with io.open(meta_fname, "r") as f:
+        with open(meta_fname) as f:
             lines = f.read().split("\n")
         # Count the number of empty lines from the end of the file
         empty_lines = itertools.takewhile(lambda x: x == "", reversed(lines))
         end_empty_lines_count = len(list(empty_lines))
         if end_empty_lines_count > 1:
             lints.append(
-                "There are {} too many lines.  "
+                f"There are {end_empty_lines_count - 1} too many lines.  "
                 "There should be one empty line at the end of the "
-                "file.".format(end_empty_lines_count - 1)
+                "file."
             )
         elif end_empty_lines_count < 1:
             lints.append(
@@ -413,17 +411,17 @@ def lintify_meta_yaml(
                 and subsection not in expected_subsections
             ):
                 lints.append(
-                    "The {} section contained an unexpected "
-                    "subsection name. {} is not a valid subsection"
-                    " name.".format(section, subsection)
+                    f"The {section} section contained an unexpected "
+                    f"subsection name. {subsection} is not a valid subsection"
+                    " name."
                 )
             elif section == "source" or section == "outputs":
                 for source_subsection in subsection:
                     if source_subsection not in expected_subsections:
                         lints.append(
-                            "The {} section contained an unexpected "
-                            "subsection name. {} is not a valid subsection"
-                            " name.".format(section, source_subsection)
+                            f"The {section} section contained an unexpected "
+                            f"subsection name. {source_subsection} is not a valid subsection"
+                            " name."
                         )
     # 17: Validate noarch
     noarch_value = build_section.get("noarch")
@@ -432,9 +430,7 @@ def lintify_meta_yaml(
         if noarch_value not in valid_noarch_values:
             valid_noarch_str = "`, `".join(valid_noarch_values)
             lints.append(
-                "Invalid `noarch` value `{}`. Should be one of `{}`.".format(
-                    noarch_value, valid_noarch_str
-                )
+                f"Invalid `noarch` value `{noarch_value}`. Should be one of `{valid_noarch_str}`."
             )
 
     conda_build_config_filename = None
@@ -444,7 +440,7 @@ def lintify_meta_yaml(
         )
 
         if conda_build_config_filename:
-            with open(conda_build_config_filename, "r") as fh:
+            with open(conda_build_config_filename) as fh:
                 conda_build_config_keys = set(get_yaml().load(fh).keys())
         else:
             conda_build_config_keys = set()
@@ -454,7 +450,7 @@ def lintify_meta_yaml(
         )
 
         if forge_yaml_filename:
-            with open(forge_yaml_filename, "r") as fh:
+            with open(forge_yaml_filename) as fh:
                 forge_yaml = get_yaml().load(fh)
         else:
             forge_yaml = {}
@@ -465,7 +461,7 @@ def lintify_meta_yaml(
     # 18: noarch doesn't work with selectors for runtime dependencies
     if noarch_value is not None and os.path.exists(meta_fname):
         noarch_platforms = len(forge_yaml.get("noarch_platforms", [])) > 1
-        with io.open(meta_fname, "rt") as fh:
+        with open(meta_fname) as fh:
             in_runreqs = False
             for line in fh:
                 line_s = line.strip()
@@ -477,7 +473,7 @@ def lintify_meta_yaml(
                     lints.append(
                         "`noarch` packages can't have skips with selectors. If "
                         "the selectors are necessary, please remove "
-                        "`noarch: {}`.".format(noarch_value)
+                        f"`noarch: {noarch_value}`."
                     )
                     break
                 if in_runreqs:
@@ -492,18 +488,20 @@ def lintify_meta_yaml(
                         lints.append(
                             "`noarch` packages can't have selectors. If "
                             "the selectors are necessary, please remove "
-                            "`noarch: {}`.".format(noarch_value)
+                            f"`noarch: {noarch_value}`."
                         )
                         break
 
     # 19: check version
-    if package_section.get("version") is not None:
-        ver = str(package_section.get("version"))
+    version = package_section.get("version")
+    if not version:
+        lints.append("Package version is missing.")
+    else:
         try:
-            VersionOrder(ver)
-        except:
+            VersionOrder(str(version))
+        except InvalidVersionSpec as e:
             lints.append(
-                "Package version {} doesn't match conda spec".format(ver)
+                f"Package version {version} doesn't match conda spec: {e}"
             )
 
     # 20: Jinja2 variable definitions should be nice.
@@ -512,7 +510,7 @@ def lintify_meta_yaml(
         bad_lines = []
         # Good Jinja2 variable definitions look like "{% set .+ = .+ %}"
         good_jinja_pat = re.compile(r"\s*\{%\s(set)\s[^\s]+\s=\s[^\s]+\s%\}")
-        with io.open(meta_fname, "rt") as fh:
+        with open(meta_fname) as fh:
             for jinja_line, line_number in jinja_lines(fh):
                 if not good_jinja_pat.match(jinja_line):
                     bad_jinja.append(jinja_line)
@@ -520,10 +518,10 @@ def lintify_meta_yaml(
         if bad_jinja:
             lints.append(
                 "Jinja2 variable definitions are suggested to "
-                "take a ``{{%<one space>set<one space>"
+                "take a ``{%<one space>set<one space>"
                 "<variable name><one space>=<one space>"
-                "<expression><one space>%}}`` form. See lines "
-                "{}".format(bad_lines)
+                "<expression><one space>%}`` form. See lines "
+                f"{bad_lines}"
             )
 
     # 21: Legacy usage of compilers
@@ -602,9 +600,7 @@ def lintify_meta_yaml(
             ]
             if filtered_host_reqs and not filtered_run_reqs:
                 lints.append(
-                    "If {0} is a host requirement, it should be a run requirement.".format(
-                        str(language)
-                    )
+                    f"If {str(language)} is a host requirement, it should be a run requirement."
                 )
             for reqs in [filtered_host_reqs, filtered_run_reqs]:
                 if str(language) in reqs:
@@ -615,28 +611,26 @@ def lintify_meta_yaml(
                         "<"
                     ):
                         lints.append(
-                            "Non noarch packages should have {0} requirement without any version constraints.".format(
-                                str(language)
-                            )
+                            f"Non noarch packages should have {str(language)} requirement without any version constraints."
                         )
 
     # 24: jinja2 variable references should be {{<one space>var<one space>}}
     if recipe_dir is not None and os.path.exists(meta_fname):
         bad_vars = []
         bad_lines = []
-        with io.open(meta_fname, "rt") as fh:
+        with open(meta_fname) as fh:
             for i, line in enumerate(fh.readlines()):
                 for m in JINJA_VAR_PAT.finditer(line):
                     if m.group(1) is not None:
                         var = m.group(1)
-                        if var != " %s " % var.strip():
+                        if var != f" {var.strip()} ":
                             bad_vars.append(m.group(1).strip())
                             bad_lines.append(i + 1)
         if bad_vars:
             hints.append(
                 "Jinja2 variable references are suggested to "
                 "take a ``{{<one space><variable name><one space>}}``"
-                " form. See lines %s." % (bad_lines,)
+                f" form. See lines {bad_lines}."
             )
 
     # 25: require a lower bound on python version
@@ -702,7 +696,7 @@ def lintify_meta_yaml(
     pure_python_wheel_re = re.compile(r".*[:-]\s+(http.*-none-any\.whl)\s+.*")
     wheel_re = re.compile(r".*[:-]\s+(http.*\.whl)\s+.*")
     if recipe_dir is not None and os.path.exists(meta_fname):
-        with open(meta_fname, "rt") as f:
+        with open(meta_fname) as f:
             for line in f:
                 if match := pure_python_wheel_re.search(line):
                     pure_python_wheel_urls.append(match.group(1))
@@ -768,7 +762,7 @@ def lintify_meta_yaml(
         and ("pip" in build_reqs)
         and (is_staged_recipes or not conda_forge)
     ):
-        with io.open(meta_fname, "rt") as fh:
+        with open(meta_fname) as fh:
             in_runreqs = False
             no_arch_possible = True
             for line in fh:
@@ -800,14 +794,14 @@ def lintify_meta_yaml(
         shell_scripts = glob(os.path.join(recipe_dir, "*.sh"))
         forge_yaml = find_local_config_file(recipe_dir, "conda-forge.yml")
         if shell_scripts and forge_yaml:
-            with open(forge_yaml, "r") as fh:
+            with open(forge_yaml) as fh:
                 code = get_yaml().load(fh)
                 shellcheck_enabled = code.get("shellcheck", {}).get(
                     "enabled", shellcheck_enabled
                 )
 
     if shellcheck_enabled and shutil.which("shellcheck") and shell_scripts:
-        MAX_SHELLCHECK_LINES = 50
+        max_shellcheck_lines = 50
         cmd = [
             "shellcheck",
             "--enable=all",
@@ -840,10 +834,10 @@ def lintify_meta_yaml(
                 + " recipe/*.sh -f diff | git apply' helps)"
             )
             hints.extend(findings[:50])
-            if len(findings) > MAX_SHELLCHECK_LINES:
+            if len(findings) > max_shellcheck_lines:
                 hints.append(
                     "Output restricted, there are '%s' more lines."
-                    % (len(findings) - MAX_SHELLCHECK_LINES)
+                    % (len(findings) - max_shellcheck_lines)
                 )
         elif p.returncode != 0:
             # Something went wrong.
@@ -862,12 +856,12 @@ def lintify_meta_yaml(
         parsed_licenses_with_exception = licensing.license_symbols(
             license.strip(), decompose=False
         )
-        for l in parsed_licenses_with_exception:
-            if isinstance(l, license_expression.LicenseWithExceptionSymbol):
-                parsed_licenses.append(l.license_symbol.key)
-                parsed_exceptions.append(l.exception_symbol.key)
+        for li in parsed_licenses_with_exception:
+            if isinstance(li, license_expression.LicenseWithExceptionSymbol):
+                parsed_licenses.append(li.license_symbol.key)
+                parsed_exceptions.append(li.exception_symbol.key)
             else:
-                parsed_licenses.append(l.key)
+                parsed_licenses.append(li.key)
     except license_expression.ExpressionError:
         parsed_licenses = [license]
 
@@ -877,16 +871,14 @@ def lintify_meta_yaml(
         if not licenseref_regex.match(license):
             filtered_licenses.append(license)
 
-    with open(
-        os.path.join(os.path.dirname(__file__), "licenses.txt"), "r"
-    ) as f:
+    with open(os.path.join(os.path.dirname(__file__), "licenses.txt")) as f:
         expected_licenses = f.readlines()
-        expected_licenses = set([l.strip() for l in expected_licenses])
+        expected_licenses = set([li.strip() for li in expected_licenses])
     with open(
-        os.path.join(os.path.dirname(__file__), "license_exceptions.txt"), "r"
+        os.path.join(os.path.dirname(__file__), "license_exceptions.txt")
     ) as f:
         expected_exceptions = f.readlines()
-        expected_exceptions = set([l.strip() for l in expected_exceptions])
+        expected_exceptions = set([li.strip() for li in expected_exceptions])
     if set(filtered_licenses) - expected_licenses:
         hints.append(
             "License is not an SPDX identifier (or a custom LicenseRef) nor an SPDX license expression.\n\n"
@@ -973,7 +965,7 @@ def lintify_meta_yaml(
     # stdlib issues in CBC
     cbc_lines = []
     if conda_build_config_filename:
-        with open(conda_build_config_filename, "r") as fh:
+        with open(conda_build_config_filename) as fh:
             cbc_lines = fh.readlines()
 
     # filter on osx-relevant lines
@@ -1023,7 +1015,7 @@ def lintify_meta_yaml(
                 "Conflicting specification for minimum macOS deployment target!\n"
                 "If your conda_build_config.yaml sets `MACOSX_DEPLOYMENT_TARGET`, "
                 "please change the name of that key to `c_stdlib_version`!\n"
-                f"Continuing with `max(c_stdlib_version, MACOSX_DEPLOYMENT_TARGET)`."
+                "Continuing with `max(c_stdlib_version, MACOSX_DEPLOYMENT_TARGET)`."
             )
             merged_dt = []
             for v_std, v_mdt in zip(v_stdlib, macdt):
@@ -1133,29 +1125,26 @@ def run_conda_forge_specific(meta, recipe_dir, lints, hints):
             ]
         ):
             try:
-                if cf.get_repo("{}-feedstock".format(name)):
+                if cf.get_repo(f"{name}-feedstock"):
                     existing_recipe_name = name
                     feedstock_exists = True
                     break
                 else:
                     feedstock_exists = False
-            except github.UnknownObjectException as e:
+            except github.UnknownObjectException:
                 feedstock_exists = False
 
         if feedstock_exists and existing_recipe_name == recipe_name:
             lints.append("Feedstock with the same name exists in conda-forge.")
         elif feedstock_exists:
             hints.append(
-                "Feedstock with the name {} exists in conda-forge. Is it the same as this package ({})?".format(
-                    existing_recipe_name,
-                    recipe_name,
-                )
+                f"Feedstock with the name {existing_recipe_name} exists in conda-forge. Is it the same as this package ({recipe_name})?"
             )
 
         bio = gh.get_user("bioconda").get_repo("bioconda-recipes")
         try:
-            bio.get_dir_contents("recipes/{}".format(recipe_name))
-        except github.UnknownObjectException as e:
+            bio.get_dir_contents(f"recipes/{recipe_name}")
+        except github.UnknownObjectException:
             pass
         else:
             hints.append(
@@ -1192,10 +1181,8 @@ def run_conda_forge_specific(meta, recipe_dir, lints, hints):
             continue
         try:
             gh.get_user(maintainer)
-        except github.UnknownObjectException as e:
-            lints.append(
-                'Recipe maintainer "{}" does not exist'.format(maintainer)
-            )
+        except github.UnknownObjectException:
+            lints.append(f'Recipe maintainer "{maintainer}" does not exist')
 
     # 3: if the recipe dir is inside the example dir
     if recipe_dir is not None and "recipes/example/" in recipe_dir:
@@ -1334,7 +1321,7 @@ def jinja_lines(lines):
             yield line, i
 
 
-def _format_validation_msg(error: "jsonschema.ValidationError"):
+def _format_validation_msg(error: jsonschema.ValidationError):
     """Use the data on the validation error to generate improved reporting.
 
     If available, get the help URL from the first level of the JSON path:
@@ -1375,9 +1362,9 @@ def main(recipe_dir, conda_forge=False, return_hints=False):
     recipe_dir = os.path.abspath(recipe_dir)
     recipe_meta = os.path.join(recipe_dir, "meta.yaml")
     if not os.path.exists(recipe_dir):
-        raise IOError("Feedstock has no recipe/meta.yaml.")
+        raise OSError("Feedstock has no recipe/meta.yaml.")
 
-    with io.open(recipe_meta, "rt") as fh:
+    with open(recipe_meta) as fh:
         content = render_meta_yaml("".join(fh))
         meta = get_yaml().load(content)
 
@@ -1406,13 +1393,13 @@ if __name__ == "__main__":
         all_pass = False
         messages.append(
             "\nFor **{}**:\n\n{}".format(
-                rel_path, "\n".join("* {}".format(lint) for lint in lints)
+                rel_path, "\n".join(f"* {lint}" for lint in lints)
             )
         )
     if hints:
         messages.append(
             "\nFor **{}**:\n\n{}".format(
-                rel_path, "\n".join("* {}".format(hint) for hint in hints)
+                rel_path, "\n".join(f"* {hint}" for hint in hints)
             )
         )
 
