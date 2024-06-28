@@ -10,6 +10,27 @@ jobs:
     - checkout: self
       fetchDepth: {{ clone_depth }}
 {%- endif %}
+{%- if azure.free_disk_space %}
+    - script: |
+{%- if (azure.free_disk_space == true) or ('cache' in azure.free_disk_space) %}
+        set CLEANUP_DIRS=^
+        C:\hostedtoolcache\windows;^
+        ;
+
+        mkdir C:\empty
+        for %%f in (%CLEANUP_DIRS:;= %) do (
+            if not [%%f] == [] (
+                echo Removing %%f
+                dir %%f
+                robocopy /mir /mt /zb /ns /nc /nfl /ndl /np /njh /njs C:\empty %%f > nul 2>&1
+                rmdir /q %%f
+            )
+        )
+        rmdir /q C:\empty
+{%- endif %}
+        wmic logicaldisk get size,freespace,caption
+      displayName: Manage disk space
+{%- endif %}
 {%- for choco_pkg in choco %}
     - script: |
         choco install {{ choco_pkg }} -fdv -y --debug
