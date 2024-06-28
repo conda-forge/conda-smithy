@@ -16,15 +16,12 @@ jobs:
       displayName: "Install Chocolatey Package: {{ choco_pkg }}"
 {% endfor %}
 
-    - task: PythonScript@0
-      displayName: 'Download Miniforge'
-      inputs:
-        scriptSource: inline
-        script: |
-          import urllib.request
-          url = 'https://github.com/conda-forge/miniforge/releases/latest/download/Mambaforge-Windows-x86_64.exe'
-          path = r"$(Build.ArtifactStagingDirectory)/Miniforge.exe"
-          urllib.request.urlretrieve(url, path)
+    - powershell: |
+        Invoke-WebRequest $env:MINIFORGE_URL -OutFile $env:MINIFORGE_PATH
+      displayName: "Download Miniforge"
+      env:
+        MINIFORGE_URL: https://github.com/conda-forge/miniforge/releases/latest/download/Mambaforge-Windows-x86_64.exe
+        MINIFORGE_PATH: $(Build.ArtifactStagingDirectory)/Miniforge.exe
 
     - script: |
         start /wait "" %BUILD_ARTIFACTSTAGINGDIRECTORY%\Miniforge.exe /InstallationType=JustMe /RegisterPython=0 /S /D=C:\Miniforge
