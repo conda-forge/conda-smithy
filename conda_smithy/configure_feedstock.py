@@ -42,6 +42,7 @@ import conda_build.render
 import conda_build.utils
 import conda_build.variants
 from conda_build import __version__ as conda_build_version
+from conda_build.metadata import MetaData
 from jinja2 import FileSystemLoader
 from jinja2.sandbox import SandboxedEnvironment
 
@@ -880,6 +881,46 @@ def migrate_combined_spec(combined_spec, forge_dir, config, forge_config):
     return combined_spec
 
 
+def reduce_variants(recipe_path, config, variants):
+    """Subset of render_recipe to compute reduced variant matrix
+
+    large numbers of unused variants greatly increase render time
+    """
+
+    # from render_recipe
+    with conda_build.render.open_recipe(recipe_path) as recipe:
+        metadata = MetaData(str(recipe), config=config)
+
+    # from distribute_variants
+    # explode variants dict to list of variants
+    variants = initial_variants = conda_build.variants.get_package_variants(
+        metadata, variants=variants
+    )
+    logger.debug(f"Starting with {len(initial_variants)} variants")
+    if metadata.noarch or metadata.noarch_python:
+        # filter variants by the newest Python version
+        version = sorted(
+            {
+                version
+                for variant in variants
+                if (version := variant.get("python"))
+            },
+            key=lambda key: VersionOrder(key.split(" ")[0]),
+        )[-1]
+        variants = conda_build.variants.filter_by_key_value(
+            variants, "python", version, "noarch_python_reduction"
+        )
+    metadata.config.variant = variants[0]
+    metadata.config.variants = variants
+    all_used = metadata.get_used_vars(force_global=True)
+    reduced_variants = metadata.get_reduced_variant_set(all_used)
+    logger.info(f"Rendering {len(reduced_variants)} variants")
+    # return reduced, exploded list of variant dict to input format
+    return conda_build.variants.list_of_dicts_to_dict_of_lists(
+        reduced_variants
+    )
+
+
 def _conda_build_api_render_for_smithy(
     recipe_path,
     config=None,
@@ -913,6 +954,12 @@ def _conda_build_api_render_for_smithy(
 
     config = get_or_merge_config(config, **kwargs)
 
+    # reduce unused variants first, they get very expensive in render_recipe
+    if variants:
+        variants = reduce_variants(
+            recipe_path, config=config, variants=variants
+        )
+
     metadata_tuples = render_recipe(
         recipe_path,
         bypass_env_check=bypass_env_check,
@@ -923,11 +970,8 @@ def _conda_build_api_render_for_smithy(
     )
     output_metas = []
     # reduce input variant set to those that are actually used
-    input_variants = [meta.config.variant for meta, *_ in metadata_tuples]
     for meta, download, render_in_env in metadata_tuples:
         if not meta.skip() or not config.trim_skip:
-            # avoid computations on very large, redundant input_variants
-            meta.config.input_variants = input_variants
             for od, om in meta.get_output_metadata_set(
                 permit_unsatisfiable_variants=permit_unsatisfiable_variants,
                 permit_undefined_jinja=not finalize,
