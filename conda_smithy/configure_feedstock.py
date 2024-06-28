@@ -922,8 +922,12 @@ def _conda_build_api_render_for_smithy(
         permit_unsatisfiable_variants=permit_unsatisfiable_variants,
     )
     output_metas = []
+    # reduce input variant set to those that are actually used
+    input_variants = [meta.config.variant for meta, *_ in metadata_tuples]
     for meta, download, render_in_env in metadata_tuples:
         if not meta.skip() or not config.trim_skip:
+            # avoid computations on very large, redundant input_variants
+            meta.config.input_variants = input_variants
             for od, om in meta.get_output_metadata_set(
                 permit_unsatisfiable_variants=permit_unsatisfiable_variants,
                 permit_undefined_jinja=not finalize,
