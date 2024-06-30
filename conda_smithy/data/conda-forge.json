@@ -408,6 +408,19 @@
           "default": null,
           "description": "List of sources to use for version updates",
           "title": "Sources"
+        },
+        "skip": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": false,
+          "description": "Skip automatic version updates. Useful in cases where the source project's version numbers don't conform to PEP440.",
+          "title": "Skip"
         }
       },
       "title": "BotConfigVersionUpdates",
@@ -782,6 +795,9 @@
     "Nullable": {
       "const": null,
       "description": "Created to avoid issue with schema validation of null values in lists or dicts.",
+      "enum": [
+        null
+      ],
       "title": "Nullable"
     },
     "Platforms": {
