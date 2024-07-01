@@ -1,0 +1,184 @@
+# serializer version: 1
+# name: test_init_cuda_docker_images
+  dict({
+    'cdt_name': list([
+      'cos6',
+    ]),
+    'cuda_compiler': list([
+      'nvcc',
+    ]),
+    'cuda_compiler_version': list([
+      'None',
+    ]),
+    'docker_image': list([
+      'condaforge/linux-anvil-comp7',
+    ]),
+    'target_platform': list([
+      'linux-64',
+    ]),
+    'zip_keys': list([
+      list([
+        'cdt_name',
+        'cuda_compiler_version',
+        'docker_image',
+      ]),
+    ]),
+  })
+# ---
+# name: test_init_cuda_docker_images[10.0]
+  dict({
+    'cdt_name': list([
+      'cos6',
+    ]),
+    'cuda_compiler': list([
+      'nvcc',
+    ]),
+    'cuda_compiler_version': list([
+      '10.0',
+    ]),
+    'docker_image': list([
+      'condaforge/linux-anvil-cuda:10.0',
+    ]),
+    'target_platform': list([
+      'linux-64',
+    ]),
+    'zip_keys': list([
+      list([
+        'cdt_name',
+        'cuda_compiler_version',
+        'docker_image',
+      ]),
+    ]),
+  })
+# ---
+# name: test_init_cuda_docker_images[10.1]
+  dict({
+    'cdt_name': list([
+      'cos6',
+    ]),
+    'cuda_compiler': list([
+      'nvcc',
+    ]),
+    'cuda_compiler_version': list([
+      '10.1',
+    ]),
+    'docker_image': list([
+      'condaforge/linux-anvil-cuda:10.1',
+    ]),
+    'target_platform': list([
+      'linux-64',
+    ]),
+    'zip_keys': list([
+      list([
+        'cdt_name',
+        'cuda_compiler_version',
+        'docker_image',
+      ]),
+    ]),
+  })
+# ---
+# name: test_init_cuda_docker_images[10.2]
+  dict({
+    'cdt_name': list([
+      'cos6',
+    ]),
+    'cuda_compiler': list([
+      'nvcc',
+    ]),
+    'cuda_compiler_version': list([
+      '10.2',
+    ]),
+    'docker_image': list([
+      'condaforge/linux-anvil-cuda:10.2',
+    ]),
+    'target_platform': list([
+      'linux-64',
+    ]),
+    'zip_keys': list([
+      list([
+        'cdt_name',
+        'cuda_compiler_version',
+        'docker_image',
+      ]),
+    ]),
+  })
+# ---
+# name: test_init_cuda_docker_images[11.0]
+  dict({
+    'cdt_name': list([
+      'cos7',
+    ]),
+    'cuda_compiler': list([
+      'nvcc',
+    ]),
+    'cuda_compiler_version': list([
+      '11.0',
+    ]),
+    'docker_image': list([
+      'condaforge/linux-anvil-cuda:11.0',
+    ]),
+    'target_platform': list([
+      'linux-64',
+    ]),
+    'zip_keys': list([
+      list([
+        'cdt_name',
+        'cuda_compiler_version',
+        'docker_image',
+      ]),
+    ]),
+  })
+# ---
+# name: test_init_cuda_docker_images[9.2]
+  dict({
+    'cdt_name': list([
+      'cos6',
+    ]),
+    'cuda_compiler': list([
+      'nvcc',
+    ]),
+    'cuda_compiler_version': list([
+      '9.2',
+    ]),
+    'docker_image': list([
+      'condaforge/linux-anvil-cuda:9.2',
+    ]),
+    'target_platform': list([
+      'linux-64',
+    ]),
+    'zip_keys': list([
+      list([
+        'cdt_name',
+        'cuda_compiler_version',
+        'docker_image',
+      ]),
+    ]),
+  })
+# ---
+# name: test_init_multiple_docker_images
+  dict({
+    'cdt_name': list([
+      'pickme_1',
+    ]),
+    'docker_image': list([
+      'pickme_a',
+    ]),
+    'target_platform': list([
+      'linux-64',
+    ]),
+    'zip_keys': list([
+      list([
+        'docker_image',
+        'cdt_name',
+      ]),
+    ]),
+  })
+# ---
+# name: test_init_with_custom_config
+  dict({
+    'bot': dict({
+      'automerge': True,
+      'run_deps_from_wheel': True,
+    }),
+  })
+# ---

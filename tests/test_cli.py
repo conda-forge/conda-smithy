@@ -50,7 +50,7 @@ def test_init(py_recipe):
     assert os.path.isdir(destination)
 
 
-def test_init_with_custom_config(py_recipe):
+def test_init_with_custom_config(py_recipe, snapshot):
     """This is the command that takes the initial staged-recipe folder and turns it into a
     feedstock"""
     # actual parser doesn't matter.  It's used for initialization only
@@ -82,9 +82,7 @@ def test_init_with_custom_config(py_recipe):
     data = yaml.safe_load(
         open(os.path.join(destination, "conda-forge.yml"), "r").read()
     )
-    assert data.get("bot") != None
-    assert data["bot"]["automerge"] == True
-    assert data["bot"]["run_deps_from_wheel"] == True
+    assert data == snapshot
 
 
 def test_init_multiple_output_matrix(testing_workdir):
@@ -200,7 +198,7 @@ def test_render_readme_with_multiple_outputs(testing_workdir, dirname):
         assert False
 
 
-def test_init_cuda_docker_images(testing_workdir):
+def test_init_cuda_docker_images(testing_workdir, snapshot):
     parser = argparse.ArgumentParser()
     subparser = parser.add_subparsers()
     init_obj = cli.Init(subparser)
@@ -241,20 +239,11 @@ def test_init_cuda_docker_images(testing_workdir):
         assert os.path.isfile(fn)
         with open(fn) as fh:
             config = yaml.safe_load(fh)
-        assert config["cuda_compiler"] == ["nvcc"]
-        assert config["cuda_compiler_version"] == [f"{v}"]
-        if v is None:
-            docker_image = "condaforge/linux-anvil-comp7"
-        else:
-            docker_image = f"condaforge/linux-anvil-cuda:{v}"
-        assert config["docker_image"] == [docker_image]
-        if v == "11.0":
-            assert config["cdt_name"] == ["cos7"]
-        else:
-            assert config["cdt_name"] == ["cos6"]
+
+        assert config == snapshot(name=v)
 
 
-def test_init_multiple_docker_images(testing_workdir):
+def test_init_multiple_docker_images(testing_workdir, snapshot):
     parser = argparse.ArgumentParser()
     subparser = parser.add_subparsers()
     init_obj = cli.Init(subparser)
@@ -292,8 +281,7 @@ def test_init_multiple_docker_images(testing_workdir):
     assert os.path.isfile(fn)
     with open(fn) as fh:
         config = yaml.safe_load(fh)
-    assert config["docker_image"] == ["pickme_a"]
-    assert config["cdt_name"] == ["pickme_1"]
+    assert config == snapshot
 
 
 def test_regenerate(py_recipe, testing_workdir):
