@@ -1,5 +1,6 @@
 import os
 import json
+from pathlib import Path
 from unittest import mock
 import time
 
@@ -76,15 +77,15 @@ def test_feedstock_tokens_roundtrip(
         project,
         provider=ci,
     )
-    token_json_pth = os.path.join(tmpdir, "tokens", "%s.json" % project)
-    os.makedirs(os.path.join(tmpdir, "tokens"), exist_ok=True)
+    token_json_pth = Path(tmpdir, "tokens", f"{project}.json")
+    Path(tmpdir, "tokens").mkdir(parents=True, exist_ok=True)
 
     try:
         generate_and_write_feedstock_token(user, project, provider=ci)
-        assert os.path.exists(pth)
+        assert Path(pth).exists()
 
         register_feedstock_token(user, project, repo, provider=ci)
-        assert os.path.exists(token_json_pth)
+        assert token_json_pth.exists()
 
         with open(token_json_pth) as fp:
             token_data = json.load(fp)
@@ -102,10 +103,10 @@ def test_feedstock_tokens_roundtrip(
             user, project, feedstock_token, repo, provider=ci
         )
     finally:
-        if os.path.exists(pth):
-            os.remove(pth)
-        if os.path.exists(token_json_pth):
-            os.remove(token_json_pth)
+        if Path(pth).exists():
+            Path(pth).unlink()
+        if token_json_pth.exists():
+            token_json_pth.unlink()
 
     assert retval is (retval_ci and retval_time)
 
@@ -180,8 +181,8 @@ def test_is_valid_feedstock_token_badtoken(
     user = "conda-forge"
     feedstock_token = "akdjhfl"
 
-    token_pth = os.path.join(tmpdir, "tokens", "%s.json" % project)
-    os.makedirs(os.path.dirname(token_pth), exist_ok=True)
+    token_pth = Path(tmpdir, "tokens", f"{project}.json")
+    Path(token_pth.parent).mkdir(parents=True, exist_ok=True)
     with open(token_pth, "w") as fp:
         td = {"salt": b"adf".hex(), "hashed_token": b"fgh".hex()}
         if provider is not None:
@@ -202,17 +203,17 @@ def test_generate_and_write_feedstock_token(ci):
     repo = "foo"
 
     if ci:
-        pth = os.path.expanduser("~/.conda-smithy/bar_foo_%s.token" % ci)
-        opth = os.path.expanduser("~/.conda-smithy/bar_foo.token")
+        pth = Path(f"~/.conda-smithy/bar_foo_{ci}.token").expanduser()
+        opth = Path("~/.conda-smithy/bar_foo.token").expanduser()
     else:
-        pth = os.path.expanduser("~/.conda-smithy/bar_foo.token")
-        opth = os.path.expanduser("~/.conda-smithy/bar_foo_azure.token")
+        pth = Path("~/.conda-smithy/bar_foo.token").expanduser()
+        opth = Path("~/.conda-smithy/bar_foo_azure.token").expanduser()
 
     try:
         generate_and_write_feedstock_token(user, repo, provider=ci)
 
-        assert not os.path.exists(opth)
-        assert os.path.exists(pth)
+        assert not Path(opth).exists()
+        assert Path(pth).exists()
 
         if ci is not None:
             generate_and_write_feedstock_token(user, repo, provider=None)
@@ -223,10 +224,10 @@ def test_generate_and_write_feedstock_token(ci):
         with pytest.raises(FeedstockTokenError):
             generate_and_write_feedstock_token(user, repo, provider=ci)
     finally:
-        if os.path.exists(pth):
-            os.remove(pth)
-        if os.path.exists(opth):
-            os.remove(opth)
+        if Path(pth).exists():
+            Path(pth).unlink()
+        if Path(opth).exists():
+            Path(opth).unlink()
 
 
 @pytest.mark.parametrize("ci", [None, "azure"])
@@ -234,9 +235,9 @@ def test_read_feedstock_token(ci):
     user = "bar"
     repo = "foo"
     if ci:
-        pth = os.path.expanduser("~/.conda-smithy/bar_foo_%s.token" % ci)
+        pth = Path(f"~/.conda-smithy/bar_foo_{ci}.token").expanduser()
     else:
-        pth = os.path.expanduser("~/.conda-smithy/bar_foo.token")
+        pth = Path("~/.conda-smithy/bar_foo.token").expanduser()
 
     # no token
     token, err = read_feedstock_token(user, repo, provider=ci)
@@ -245,13 +246,13 @@ def test_read_feedstock_token(ci):
 
     # empty
     try:
-        os.system("touch " + pth)
+        os.system("touch " + str(pth))
         token, err = read_feedstock_token(user, repo, provider=ci)
         assert "Empty token found in" in err
         assert token is None
     finally:
-        if os.path.exists(pth):
-            os.remove(pth)
+        if Path(pth).exists():
+            Path(pth).unlink()
 
     # token ok
     try:
@@ -267,8 +268,8 @@ def test_read_feedstock_token(ci):
         assert "No token found in" in err
         assert token is None
     finally:
-        if os.path.exists(pth):
-            os.remove(pth)
+        if Path(pth).exists():
+            Path(pth).unlink()
 
 
 @pytest.mark.parametrize(
@@ -324,11 +325,9 @@ def test_feedstock_token_exists(
     )
 
     user = "foo"
-    os.makedirs(os.path.join(tmpdir, "tokens"), exist_ok=True)
+    Path(tmpdir, "tokens").mkdir(parents=True, exist_ok=True)
     if file_exists:
-        with open(
-            os.path.join(tmpdir, "tokens", "%s.json" % project), "w"
-        ) as fp:
+        with open(Path(tmpdir, "tokens", f"{project}.json"), "w") as fp:
             data = {"tokens": [{}]}
             if provider is not None:
                 data["tokens"][0]["provider"] = provider
@@ -365,8 +364,8 @@ def test_feedstock_token_raises(
 
     git_mock.Repo.clone_from.side_effect = ValueError("blarg")
     user = "foo"
-    os.makedirs(os.path.join(tmpdir, "tokens"), exist_ok=True)
-    with open(os.path.join(tmpdir, "tokens", "%s.json" % project), "w") as fp:
+    Path(tmpdir, "tokens").mkdir(parents=True, exist_ok=True)
+    with open(Path(tmpdir, "tokens", f"{project}.json"), "w") as fp:
         fp.write("{}")
 
     with pytest.raises(FeedstockTokenError) as e:
@@ -409,13 +408,13 @@ def test_register_feedstock_token_works(
 
     user = "foo"
     project = "bar"
-    os.makedirs(os.path.join(tmpdir, "tokens"), exist_ok=True)
+    Path(tmpdir, "tokens").mkdir(parents=True, exist_ok=True)
     pth = feedstock_token_local_path(
         user,
         project,
         provider=ci,
     )
-    token_json_pth = os.path.join(tmpdir, "tokens", "%s.json" % project)
+    token_json_pth = Path(tmpdir, "tokens", f"{project}.json")
 
     try:
         generate_and_write_feedstock_token(user, project, provider=ci)
@@ -423,8 +422,8 @@ def test_register_feedstock_token_works(
         register_feedstock_token(user, project, repo, provider=ci)
 
     finally:
-        if os.path.exists(pth):
-            os.remove(pth)
+        if Path(pth).exists():
+            Path(pth).unlink()
 
     git_mock.Repo.clone_from.assert_called_once_with(
         "abc123",
@@ -433,7 +432,7 @@ def test_register_feedstock_token_works(
     )
 
     repo = git_mock.Repo.clone_from.return_value
-    repo.index.add.assert_called_once_with(token_json_pth)
+    repo.index.add.assert_called_once_with(str(token_json_pth))
     repo.index.commit.assert_called_once_with(
         "[ci skip] [skip ci] [cf admin skip] ***NO_CI*** added token for %s/%s on provider%s"
         % (user, project, "" if ci is None else " " + ci)
@@ -481,20 +480,20 @@ def test_register_feedstock_token_notoken(
 
     user = "foo"
     project = "bar"
-    os.makedirs(os.path.join(tmpdir, "tokens"), exist_ok=True)
+    Path(tmpdir, "tokens").mkdir(parents=True, exist_ok=True)
     pth = feedstock_token_local_path(
         user,
         project,
         provider=ci,
     )
-    token_json_pth = os.path.join(tmpdir, "tokens", "bar.json")
+    token_json_pth = Path(tmpdir, "tokens", "bar.json")
 
     try:
         with pytest.raises(FeedstockTokenError) as e:
             register_feedstock_token(user, project, repo, provider=ci)
     finally:
-        if os.path.exists(pth):
-            os.remove(pth)
+        if Path(pth).exists():
+            Path(pth).unlink()
 
     git_mock.Repo.clone_from.assert_not_called()
 
@@ -504,7 +503,7 @@ def test_register_feedstock_token_notoken(
     repo.remote.return_value.pull.assert_not_called()
     repo.remote.return_value.push.assert_not_called()
 
-    assert not os.path.exists(token_json_pth)
+    assert not token_json_pth.exists()
 
     assert "No token found in" in str(e.value)
 
@@ -537,13 +536,13 @@ def test_register_feedstock_token_append(
 
     user = "foo"
     project = "bar"
-    os.makedirs(os.path.join(tmpdir, "tokens"), exist_ok=True)
+    Path(tmpdir, "tokens").mkdir(parents=True, exist_ok=True)
     pth = feedstock_token_local_path(
         user,
         project,
         provider=ci,
     )
-    token_json_pth = os.path.join(tmpdir, "tokens", "bar.json")
+    token_json_pth = Path(tmpdir, "tokens", "bar.json")
     with open(token_json_pth, "w") as fp:
         fp.write('{"tokens": [1]}')
 
@@ -551,8 +550,8 @@ def test_register_feedstock_token_append(
         generate_and_write_feedstock_token(user, project, provider=ci)
         register_feedstock_token(user, project, repo, provider=ci)
     finally:
-        if os.path.exists(pth):
-            os.remove(pth)
+        if Path(pth).exists():
+            Path(pth).unlink()
 
     git_mock.Repo.clone_from.assert_called_once_with(
         "abc123",
@@ -561,7 +560,7 @@ def test_register_feedstock_token_append(
     )
 
     repo = git_mock.Repo.clone_from.return_value
-    repo.index.add.assert_called_once_with(token_json_pth)
+    repo.index.add.assert_called_once_with(str(token_json_pth))
     repo.index.commit.assert_called_once_with(
         "[ci skip] [skip ci] [cf admin skip] ***NO_CI*** added token for %s/%s on provider%s"
         % (user, project, "" if ci is None else " " + ci)
@@ -715,8 +714,8 @@ def test_register_feedstock_token_with_providers(
     finally:
         for provider in providers:
             pth = feedstock_token_local_path(user, project, provider=provider)
-            if os.path.exists(pth):
-                os.remove(pth)
+            if Path(pth).exists():
+                Path(pth).unlink()
 
 
 @pytest.mark.parametrize("unique_token_per_provider", [False, True])
@@ -833,5 +832,5 @@ def test_register_feedstock_token_with_providers_error(
     finally:
         for _provider in providers:
             pth = feedstock_token_local_path(user, project, provider=_provider)
-            if os.path.exists(pth):
-                os.remove(pth)
+            if Path(pth).exists():
+                Path(pth).unlink()

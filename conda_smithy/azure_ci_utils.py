@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 import typing
 import warnings
 
@@ -41,7 +42,7 @@ class AzureConfig:
 
         try:
             with open(
-                os.path.expanduser("~/.conda-smithy/azure.token"), "r"
+                Path("~/.conda-smithy/azure.token").expanduser(), "r"
             ) as fh:
                 self.token = fh.read().strip()
             if not self.token:

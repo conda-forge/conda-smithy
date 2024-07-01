@@ -1,6 +1,7 @@
 import copy
 import logging
 import os
+from pathlib import Path
 import re
 import shutil
 import textwrap
@@ -21,7 +22,7 @@ def test_noarch_skips_appveyor(noarch_recipe, jinja_env):
     )
     # this configuration should be skipped
     assert not noarch_recipe.config["appveyor"]["enabled"]
-    assert not os.path.isdir(os.path.join(noarch_recipe.recipe, ".ci_support"))
+    assert not Path(noarch_recipe.recipe, ".ci_support").is_dir()
 
 
 def test_noarch_skips_travis(noarch_recipe, jinja_env):
@@ -32,7 +33,7 @@ def test_noarch_skips_travis(noarch_recipe, jinja_env):
     )
     # this configuration should be skipped
     assert not noarch_recipe.config["travis"]["enabled"]
-    assert not os.path.isdir(os.path.join(noarch_recipe.recipe, ".ci_support"))
+    assert not Path(noarch_recipe.recipe, ".ci_support").is_dir()
 
 
 @pytest.mark.legacy_circle
@@ -47,10 +48,10 @@ def test_noarch_runs_on_circle(noarch_recipe, jinja_env):
 
     # this configuration should be run
     assert noarch_recipe.config["circle"]["enabled"]
-    matrix_dir = os.path.join(noarch_recipe.recipe, ".ci_support")
-    assert os.path.isdir(matrix_dir)
+    matrix_dir = Path(noarch_recipe.recipe, ".ci_support")
+    assert matrix_dir.is_dir()
     # single matrix entry - readme is generated later in main function
-    assert len(os.listdir(matrix_dir)) == 1
+    assert len(list(matrix_dir.iterdir())) == 1
 
 
 @pytest.mark.parametrize("recipe_dirname", ["recipe", "custom_recipe_dir"])
@@ -62,10 +63,10 @@ def test_noarch_runs_on_azure(noarch_recipe, jinja_env):
     )
     # this configuration should be run
     assert noarch_recipe.config["azure"]["enabled"]
-    matrix_dir = os.path.join(noarch_recipe.recipe, ".ci_support")
-    assert os.path.isdir(matrix_dir)
+    matrix_dir = Path(noarch_recipe.recipe, ".ci_support")
+    assert matrix_dir.is_dir()
     # single matrix entry - readme is generated later in main function
-    assert len(os.listdir(matrix_dir)) == 1
+    assert len(list(matrix_dir.iterdir())) == 1
 
 
 def test_r_skips_appveyor(r_recipe, jinja_env):
@@ -77,7 +78,7 @@ def test_r_skips_appveyor(r_recipe, jinja_env):
     )
     # this configuration should be skipped
     assert not r_recipe.config["appveyor"]["enabled"]
-    assert not os.path.isdir(os.path.join(r_recipe.recipe, ".ci_support"))
+    assert not Path(r_recipe.recipe, ".ci_support").is_dir()
 
 
 @pytest.mark.legacy_travis
@@ -91,10 +92,10 @@ def test_r_matrix_travis(r_recipe, jinja_env):
     )
     # this configuration should be run
     assert r_recipe.config["travis"]["enabled"]
-    matrix_dir = os.path.join(r_recipe.recipe, ".ci_support")
-    assert os.path.isdir(matrix_dir)
+    matrix_dir = Path(r_recipe.recipe, ".ci_support")
+    assert matrix_dir.is_dir()
     # single matrix entry - readme is generated later in main function
-    assert len(os.listdir(matrix_dir)) == 2
+    assert len(list(matrix_dir.iterdir())) == 2
 
 
 @pytest.mark.legacy_circle
@@ -108,10 +109,10 @@ def test_r_matrix_on_circle(r_recipe, jinja_env):
     )
     # this configuration should be run
     assert r_recipe.config["circle"]["enabled"]
-    matrix_dir = os.path.join(r_recipe.recipe, ".ci_support")
-    assert os.path.isdir(matrix_dir)
+    matrix_dir = Path(r_recipe.recipe, ".ci_support")
+    assert matrix_dir.is_dir()
     # single matrix entry - readme is generated later in main function
-    assert len(os.listdir(matrix_dir)) == 2
+    assert len(list(matrix_dir.iterdir())) == 2
 
 
 def test_r_matrix_azure(r_recipe, jinja_env):
@@ -122,10 +123,10 @@ def test_r_matrix_azure(r_recipe, jinja_env):
     )
     # this configuration should be run
     assert r_recipe.config["azure"]["enabled"]
-    matrix_dir = os.path.join(r_recipe.recipe, ".ci_support")
-    assert os.path.isdir(matrix_dir)
+    matrix_dir = Path(r_recipe.recipe, ".ci_support")
+    assert matrix_dir.is_dir()
     # single matrix entry - readme is generated later in main function
-    assert len(os.listdir(matrix_dir)) == 4
+    assert len(list(matrix_dir.iterdir())) == 4
 
 
 def test_py_matrix_appveyor(py_recipe, jinja_env):
@@ -137,11 +138,11 @@ def test_py_matrix_appveyor(py_recipe, jinja_env):
     )
     # this configuration should be skipped
     assert py_recipe.config["appveyor"]["enabled"]
-    matrix_dir = os.path.join(py_recipe.recipe, ".ci_support")
-    assert os.path.isdir(matrix_dir)
+    matrix_dir = Path(py_recipe.recipe, ".ci_support")
+    assert matrix_dir.is_dir()
     # 2 python versions. Recipe uses c_compiler, but this is a zipped key
     #     and shouldn't add extra configurations
-    assert len(os.listdir(matrix_dir)) == 2
+    assert len(list(matrix_dir.iterdir())) == 2
 
 
 @pytest.mark.legacy_travis
@@ -155,10 +156,10 @@ def test_py_matrix_travis(py_recipe, jinja_env):
     )
     # this configuration should be run
     assert py_recipe.config["travis"]["enabled"]
-    matrix_dir = os.path.join(py_recipe.recipe, ".ci_support")
-    assert os.path.isdir(matrix_dir)
+    matrix_dir = Path(py_recipe.recipe, ".ci_support")
+    assert matrix_dir.is_dir()
     # two matrix enties - one per py ver
-    assert len(os.listdir(matrix_dir)) == 2
+    assert len(list(matrix_dir.iterdir())) == 2
 
 
 @pytest.mark.legacy_circle
@@ -172,10 +173,10 @@ def test_py_matrix_on_circle(py_recipe, jinja_env):
     )
     # this configuration should be run
     assert py_recipe.config["circle"]["enabled"]
-    matrix_dir = os.path.join(py_recipe.recipe, ".ci_support")
-    assert os.path.isdir(matrix_dir)
+    matrix_dir = Path(py_recipe.recipe, ".ci_support")
+    assert matrix_dir.is_dir()
     # single matrix entry - readme is generated later in main function
-    assert len(os.listdir(matrix_dir)) == 2
+    assert len(list(matrix_dir.iterdir())) == 2
 
 
 def test_py_matrix_on_github(py_recipe, jinja_env):
@@ -188,15 +189,13 @@ def test_py_matrix_on_github(py_recipe, jinja_env):
     )
     # this configuration should be run
     assert py_recipe.config["github_actions"]["enabled"]
-    matrix_dir = os.path.join(py_recipe.recipe, ".ci_support")
-    assert os.path.isdir(matrix_dir)
+    matrix_dir = Path(py_recipe.recipe, ".ci_support")
+    assert matrix_dir.is_dir()
     # single matrix entry - readme is generated later in main function
-    assert len(os.listdir(matrix_dir)) == 2
-    assert os.path.exists(
-        os.path.join(
-            py_recipe.recipe, ".github", "workflows", "conda-build.yml"
-        )
-    )
+    assert len(list(matrix_dir.iterdir())) == 2
+    assert Path(
+        py_recipe.recipe, ".github", "workflows", "conda-build.yml"
+    ).exists()
 
 
 def test_py_matrix_on_azure(py_recipe, jinja_env):
@@ -207,10 +206,10 @@ def test_py_matrix_on_azure(py_recipe, jinja_env):
     )
     # this configuration should be run
     assert py_recipe.config["azure"]["enabled"]
-    matrix_dir = os.path.join(py_recipe.recipe, ".ci_support")
-    assert os.path.isdir(matrix_dir)
+    matrix_dir = Path(py_recipe.recipe, ".ci_support")
+    assert matrix_dir.is_dir()
     # single matrix entry - readme is generated later in main function
-    assert len(os.listdir(matrix_dir)) == 6
+    assert len(list(matrix_dir.iterdir())) == 6
 
 
 def test_stdlib_on_azure(stdlib_recipe, jinja_env):
@@ -221,16 +220,16 @@ def test_stdlib_on_azure(stdlib_recipe, jinja_env):
     )
     # this configuration should be run
     assert stdlib_recipe.config["azure"]["enabled"]
-    matrix_dir = os.path.join(stdlib_recipe.recipe, ".ci_support")
-    assert os.path.isdir(matrix_dir)
+    matrix_dir = Path(stdlib_recipe.recipe, ".ci_support")
+    assert Path(matrix_dir).is_dir()
     # find stdlib-config in generated yaml files (plus version, on unix)
-    with open(os.path.join(matrix_dir, "linux_64_.yaml")) as f:
+    with open(matrix_dir.joinpath("linux_64_.yaml")) as f:
         linux_lines = f.readlines()
         linux_content = "".join(linux_lines)
     # multiline pattern to ensure we don't match other stuff accidentally
     assert re.match(r"(?s).*c_stdlib:\s*- sysroot", linux_content)
     assert re.match(r"(?s).*c_stdlib_version:\s*- ['\"]?2\.\d+", linux_content)
-    with open(os.path.join(matrix_dir, "osx_64_.yaml")) as f:
+    with open(matrix_dir.joinpath("osx_64_.yaml")) as f:
         osx_lines = f.readlines()
         osx_content = "".join(osx_lines)
     assert re.match(
@@ -241,7 +240,7 @@ def test_stdlib_on_azure(stdlib_recipe, jinja_env):
     assert re.match(
         r"(?s).*MACOSX_DEPLOYMENT_TARGET:\s*- ['\"]?10\.9", osx_content
     )
-    with open(os.path.join(matrix_dir, "win_64_.yaml")) as f:
+    with open(matrix_dir.joinpath("win_64_.yaml")) as f:
         win_lines = f.readlines()
         win_content = "".join(win_lines)
     assert re.match(r"(?s).*c_stdlib:\s*- vs", win_content)
@@ -259,11 +258,9 @@ def test_stdlib_deployment_target(
         )
     # this configuration should be run
     assert stdlib_deployment_target_recipe.config["azure"]["enabled"]
-    matrix_dir = os.path.join(
-        stdlib_deployment_target_recipe.recipe, ".ci_support"
-    )
-    assert os.path.isdir(matrix_dir)
-    with open(os.path.join(matrix_dir, "osx_64_.yaml")) as f:
+    matrix_dir = Path(stdlib_deployment_target_recipe.recipe, ".ci_support")
+    assert matrix_dir.is_dir()
+    with open(matrix_dir.joinpath("osx_64_.yaml")) as f:
         lines = f.readlines()
         content = "".join(lines)
     # ensure both MACOSX_DEPLOYMENT_TARGET and c_stdlib_version match
@@ -287,7 +284,7 @@ def test_upload_on_branch_azure(upload_on_branch_recipe, jinja_env):
     assert upload_on_branch_recipe.config["upload_on_branch"] == "foo-branch"
     # Check that the parameter is in the generated file.
     with open(
-        os.path.join(
+        Path(
             upload_on_branch_recipe.recipe,
             ".azure-pipelines",
             "azure-pipelines-osx.yml",
@@ -304,7 +301,7 @@ def test_upload_on_branch_azure(upload_on_branch_recipe, jinja_env):
     )
 
     with open(
-        os.path.join(
+        Path(
             upload_on_branch_recipe.recipe,
             ".azure-pipelines",
             "azure-pipelines-win.yml",
@@ -318,7 +315,7 @@ def test_upload_on_branch_azure(upload_on_branch_recipe, jinja_env):
     )
     assert win_build_step["env"]["UPLOAD_ON_BRANCH"] == "foo-branch"
     with open(
-        os.path.join(
+        Path(
             upload_on_branch_recipe.recipe,
             ".scripts",
             "run_win_build.bat",
@@ -328,7 +325,7 @@ def test_upload_on_branch_azure(upload_on_branch_recipe, jinja_env):
     assert "BUILD_SOURCEBRANCHNAME" in build_script_win
 
     with open(
-        os.path.join(
+        Path(
             upload_on_branch_recipe.recipe,
             ".azure-pipelines",
             "azure-pipelines-linux.yml",
@@ -357,9 +354,7 @@ def test_upload_on_branch_appveyor(upload_on_branch_recipe, jinja_env):
     assert upload_on_branch_recipe.config["upload_on_branch"] == "foo-branch"
 
     # Check that the parameter is in the generated file.
-    with open(
-        os.path.join(upload_on_branch_recipe.recipe, ".appveyor.yml")
-    ) as fp:
+    with open(Path(upload_on_branch_recipe.recipe, ".appveyor.yml")) as fp:
         content = yaml.safe_load(fp)
     assert "%APPVEYOR_REPO_BRANCH%" in content["deploy_script"][0]
     assert "UPLOAD_ON_BRANCH=foo-branch" in content["deploy_script"][-2]
@@ -367,7 +362,7 @@ def test_upload_on_branch_appveyor(upload_on_branch_recipe, jinja_env):
 
 def test_circle_with_yum_reqs(py_recipe, jinja_env):
     with open(
-        os.path.join(py_recipe.recipe, "recipe", "yum_requirements.txt"), "w"
+        Path(py_recipe.recipe, "recipe", "yum_requirements.txt"), "w"
     ) as f:
         f.write("nano\n")
     configure_feedstock.render_circle(
@@ -382,7 +377,7 @@ def test_circle_with_empty_yum_reqs_raises(py_recipe, jinja_env):
     py_recipe.config["provider"]["linux"] = "circle"
 
     with open(
-        os.path.join(py_recipe.recipe, "recipe", "yum_requirements.txt"), "w"
+        Path(py_recipe.recipe, "recipe", "yum_requirements.txt"), "w"
     ) as f:
         f.write("# effectively empty")
     with pytest.raises(ValueError):
@@ -395,7 +390,7 @@ def test_circle_with_empty_yum_reqs_raises(py_recipe, jinja_env):
 
 def test_azure_with_empty_yum_reqs_raises(py_recipe, jinja_env):
     with open(
-        os.path.join(py_recipe.recipe, "recipe", "yum_requirements.txt"), "w"
+        Path(py_recipe.recipe, "recipe", "yum_requirements.txt"), "w"
     ) as f:
         f.write("# effectively empty")
     with pytest.raises(ValueError):
@@ -414,24 +409,22 @@ def test_circle_osx(py_recipe, jinja_env):
     py_recipe.config["provider"]["linux"] = "circle"
 
     forge_dir = py_recipe.recipe
-    travis_yml_file = os.path.join(forge_dir, ".travis.yml")
-    circle_osx_file = os.path.join(forge_dir, ".scripts", "run_osx_build.sh")
-    circle_linux_file = os.path.join(
-        forge_dir, ".scripts", "run_docker_build.sh"
-    )
-    circle_config_file = os.path.join(forge_dir, ".circleci", "config.yml")
+    travis_yml_file = Path(forge_dir, ".travis.yml")
+    circle_osx_file = Path(forge_dir, ".scripts", "run_osx_build.sh")
+    circle_linux_file = Path(forge_dir, ".scripts", "run_docker_build.sh")
+    circle_config_file = Path(forge_dir, ".circleci", "config.yml")
 
     configure_feedstock.clear_scripts(forge_dir)
     configure_feedstock.render_circle(
         jinja_env=jinja_env, forge_config=py_recipe.config, forge_dir=forge_dir
     )
-    assert not os.path.exists(circle_osx_file)
-    assert os.path.exists(circle_linux_file)
-    assert os.path.exists(circle_config_file)
+    assert not circle_osx_file.exists()
+    assert circle_linux_file.exists()
+    assert circle_config_file.exists()
     configure_feedstock.render_travis(
         jinja_env=jinja_env, forge_config=py_recipe.config, forge_dir=forge_dir
     )
-    assert os.path.exists(travis_yml_file)
+    assert travis_yml_file.exists()
 
     configure_feedstock.clear_scripts(forge_dir)
     config = copy.deepcopy(py_recipe.config)
@@ -439,13 +432,13 @@ def test_circle_osx(py_recipe, jinja_env):
     configure_feedstock.render_circle(
         jinja_env=jinja_env, forge_config=config, forge_dir=forge_dir
     )
-    assert os.path.exists(circle_osx_file)
-    assert os.path.exists(circle_linux_file)
-    assert os.path.exists(circle_config_file)
+    assert circle_osx_file.exists()
+    assert circle_linux_file.exists()
+    assert circle_config_file.exists()
     configure_feedstock.render_travis(
         jinja_env=jinja_env, forge_config=config, forge_dir=forge_dir
     )
-    assert not os.path.exists(travis_yml_file)
+    assert not travis_yml_file.exists()
 
     configure_feedstock.clear_scripts(forge_dir)
     config = copy.deepcopy(py_recipe.config)
@@ -454,18 +447,16 @@ def test_circle_osx(py_recipe, jinja_env):
     configure_feedstock.render_circle(
         jinja_env=jinja_env, forge_config=config, forge_dir=forge_dir
     )
-    assert os.path.exists(circle_osx_file)
-    assert not os.path.exists(circle_linux_file)
-    assert os.path.exists(circle_config_file)
+    assert circle_osx_file.exists()
+    assert not circle_linux_file.exists()
+    assert circle_config_file.exists()
 
 
 def test_circle_skipped(linux_skipped_recipe, jinja_env):
     forge_dir = linux_skipped_recipe.recipe
-    circle_osx_file = os.path.join(forge_dir, ".scripts", "run_osx_build.sh")
-    circle_linux_file = os.path.join(
-        forge_dir, ".scripts", "run_docker_build.sh"
-    )
-    circle_config_file = os.path.join(forge_dir, ".circleci", "config.yml")
+    circle_osx_file = Path(forge_dir, ".scripts", "run_osx_build.sh")
+    circle_linux_file = Path(forge_dir, ".scripts", "run_docker_build.sh")
+    circle_config_file = Path(forge_dir, ".circleci", "config.yml")
 
     config = copy.deepcopy(linux_skipped_recipe.config)
     configure_feedstock.copy_feedstock_content(config, forge_dir)
@@ -474,9 +465,9 @@ def test_circle_skipped(linux_skipped_recipe, jinja_env):
         forge_config=linux_skipped_recipe.config,
         forge_dir=forge_dir,
     )
-    assert not os.path.exists(circle_osx_file)
-    assert not os.path.exists(circle_linux_file)
-    assert os.path.exists(circle_config_file)
+    assert not circle_osx_file.exists()
+    assert not circle_linux_file.exists()
+    assert circle_config_file.exists()
 
     config["provider"]["osx"] = "circle"
 
@@ -484,9 +475,9 @@ def test_circle_skipped(linux_skipped_recipe, jinja_env):
     configure_feedstock.render_circle(
         jinja_env=jinja_env, forge_config=config, forge_dir=forge_dir
     )
-    assert os.path.exists(circle_osx_file)
-    assert not os.path.exists(circle_linux_file)
-    assert os.path.exists(circle_config_file)
+    assert circle_osx_file.exists()
+    assert not circle_linux_file.exists()
+    assert circle_config_file.exists()
 
 
 def test_render_with_all_skipped_generates_readme(skipped_recipe, jinja_env):
@@ -495,8 +486,8 @@ def test_render_with_all_skipped_generates_readme(skipped_recipe, jinja_env):
         forge_config=skipped_recipe.config,
         forge_dir=skipped_recipe.recipe,
     )
-    readme_path = os.path.join(skipped_recipe.recipe, "README.md")
-    assert os.path.exists(readme_path)
+    readme_path = Path(skipped_recipe.recipe, "README.md")
+    assert readme_path.exists()
     with open(readme_path, "rb") as readme_file:
         content = readme_file.read()
     assert b"skip-test-meta" in content
@@ -505,8 +496,8 @@ def test_render_with_all_skipped_generates_readme(skipped_recipe, jinja_env):
 def test_render_windows_with_skipped_python(python_skipped_recipe, jinja_env):
     config = python_skipped_recipe.config
     config["provider"]["win"] = "appveyor"
-    config["exclusive_config_file"] = os.path.join(
-        python_skipped_recipe.recipe, "recipe", "long_config.yaml"
+    config["exclusive_config_file"] = str(
+        Path(python_skipped_recipe.recipe, "recipe", "long_config.yaml")
     )
     configure_feedstock.render_appveyor(
         jinja_env=jinja_env,
@@ -516,9 +507,9 @@ def test_render_windows_with_skipped_python(python_skipped_recipe, jinja_env):
     # this configuration should be skipped
     assert python_skipped_recipe.config["appveyor"]["enabled"]
 
-    matrix_dir = os.path.join(python_skipped_recipe.recipe, ".ci_support")
+    matrix_dir = Path(python_skipped_recipe.recipe, ".ci_support")
     # matrix has 2.7, 3.5, 3.6, but 3.6 is skipped.  Should be 2 entries.
-    assert len(os.listdir(matrix_dir)) == 2
+    assert len(list(matrix_dir.iterdir())) == 2
 
 
 def test_readme_has_terminating_newline(noarch_recipe, jinja_env):
@@ -527,8 +518,8 @@ def test_readme_has_terminating_newline(noarch_recipe, jinja_env):
         forge_config=noarch_recipe.config,
         forge_dir=noarch_recipe.recipe,
     )
-    readme_path = os.path.join(noarch_recipe.recipe, "README.md")
-    assert os.path.exists(readme_path)
+    readme_path = Path(noarch_recipe.recipe, "README.md")
+    assert readme_path.exists()
     with open(readme_path, "rb") as readme_file:
         readme_file.seek(-1, os.SEEK_END)
         assert readme_file.read() == b"\n"
@@ -541,17 +532,14 @@ def test_secrets(py_recipe, jinja_env):
         forge_dir=py_recipe.recipe,
     )
 
-    run_docker_build = os.path.join(
-        py_recipe.recipe, ".scripts", "run_docker_build.sh"
-    )
+    recipe_path = Path(py_recipe.recipe)
+    run_docker_build = recipe_path.joinpath(".scripts", "run_docker_build.sh")
     with open(run_docker_build, "rb") as run_docker_build_file:
         content = run_docker_build_file.read()
     assert b"-e BINSTAR_TOKEN" in content
 
-    for config_yaml in os.listdir(
-        os.path.join(py_recipe.recipe, ".azure-pipelines")
-    ):
-        if config_yaml.endswith(".yaml"):
+    for config_yaml in recipe_path.joinpath(".azure-pipelines").iterdir():
+        if config_yaml.suffix == ".yaml":
             with open(config_yaml) as fo:
                 config = yaml.safe_load(fo)
                 if "jobs" in config:
@@ -571,7 +559,7 @@ def test_secrets(py_recipe, jinja_env):
         forge_dir=py_recipe.recipe,
     )
 
-    with open(os.path.join(py_recipe.recipe, ".drone.yml")) as fo:
+    with open(recipe_path.joinpath(".drone.yml")) as fo:
         config = list(yaml.safe_load_all(fo))[-1]
         assert any(
             step.get("environment", {})
@@ -590,7 +578,7 @@ def test_migrator_recipe(recipe_migration_cfep9, jinja_env):
     )
 
     with open(
-        os.path.join(
+        Path(
             recipe_migration_cfep9.recipe,
             ".ci_support",
             "linux_64_python2.7.yaml",
@@ -602,11 +590,11 @@ def test_migrator_recipe(recipe_migration_cfep9, jinja_env):
 
 def test_migrator_cfp_override(recipe_migration_cfep9, jinja_env):
     cfp_file = recipe_migration_cfep9.config["exclusive_config_file"]
-    cfp_migration_dir = os.path.join(
-        os.path.dirname(cfp_file), "share", "conda-forge", "migrations"
+    cfp_migration_dir = Path(cfp_file).parent.joinpath(
+        "share", "conda-forge", "migrations"
     )
-    os.makedirs(cfp_migration_dir, exist_ok=True)
-    with open(os.path.join(cfp_migration_dir, "zlib2.yaml"), "w") as f:
+    cfp_migration_dir.mkdir(parents=True, exist_ok=True)
+    with open(cfp_migration_dir.joinpath("zlib2.yaml"), "w") as f:
         f.write(
             textwrap.dedent(
                 """
@@ -623,7 +611,7 @@ def test_migrator_cfp_override(recipe_migration_cfep9, jinja_env):
     )
 
     with open(
-        os.path.join(
+        Path(
             recipe_migration_cfep9.recipe,
             ".ci_support",
             "linux_64_python2.7.yaml",
@@ -635,31 +623,20 @@ def test_migrator_cfp_override(recipe_migration_cfep9, jinja_env):
 
 def test_migrator_delete_old(recipe_migration_cfep9, jinja_env):
     cfp_file = recipe_migration_cfep9.config["exclusive_config_file"]
-    cfp_migration_dir = os.path.join(
-        os.path.dirname(cfp_file), "share", "conda-forge", "migrations"
+    cfp_migration_dir = Path(cfp_file).parent.joinpath(
+        "share", "conda-forge", "migrations"
     )
-    assert os.path.exists(
-        os.path.join(
-            recipe_migration_cfep9.recipe,
-            ".ci_support",
-            "migrations",
-            "zlib.yaml",
-        )
+    recipe_path = Path(
+        recipe_migration_cfep9.recipe, ".ci_support", "migrations", "zlib.yaml"
     )
-    os.makedirs(cfp_migration_dir, exist_ok=True)
+    assert recipe_path.exists()
+    cfp_migration_dir.mkdir(parents=True, exist_ok=True)
     configure_feedstock.render_azure(
         jinja_env=jinja_env,
         forge_config=recipe_migration_cfep9.config,
         forge_dir=recipe_migration_cfep9.recipe,
     )
-    assert not os.path.exists(
-        os.path.join(
-            recipe_migration_cfep9.recipe,
-            ".ci_support",
-            "migrations",
-            "zlib.yaml",
-        )
-    )
+    assert not recipe_path.exists()
 
 
 def test_migrator_downgrade_recipe(
@@ -673,21 +650,15 @@ def test_migrator_downgrade_recipe(
         forge_config=recipe_migration_cfep9_downgrade.config,
         forge_dir=recipe_migration_cfep9_downgrade.recipe,
     )
-    assert (
-        len(
-            os.listdir(
-                os.path.join(
-                    recipe_migration_cfep9_downgrade.recipe,
-                    ".ci_support",
-                    "migrations",
-                )
-            )
-        )
-        == 2
+    migrations_dir = Path(
+        recipe_migration_cfep9_downgrade.recipe,
+        ".ci_support",
+        "migrations",
     )
+    assert len(list(migrations_dir.iterdir())) == 2
 
     with open(
-        os.path.join(
+        Path(
             recipe_migration_cfep9_downgrade.recipe,
             ".ci_support",
             "linux_64_python2.7.yaml",
@@ -708,22 +679,14 @@ def test_migrator_compiler_version_recipe(
         forge_config=recipe_migration_win_compiled.config,
         forge_dir=recipe_migration_win_compiled.recipe,
     )
-    assert (
-        len(
-            os.listdir(
-                os.path.join(
-                    recipe_migration_win_compiled.recipe,
-                    ".ci_support",
-                    "migrations",
-                )
-            )
-        )
-        == 1
-    )
 
-    rendered_variants = os.listdir(
-        os.path.join(recipe_migration_win_compiled.recipe, ".ci_support")
+    migrations_dir = Path(
+        recipe_migration_win_compiled.recipe, ".ci_support", "migrations"
     )
+    assert len(list(migrations_dir.iterdir())) == 1
+
+    dir = Path(recipe_migration_win_compiled.recipe, ".ci_support")
+    rendered_variants = [item.name for item in dir.iterdir()]
 
     assert "win_64_c_compilervs2008python2.7.yaml" in rendered_variants
     assert "win_64_c_compilervs2017python3.5.yaml" in rendered_variants
@@ -746,8 +709,8 @@ def test_files_skip_render(render_skipped_recipe, jinja_env):
         ".github/workflows/webservices.yml",
     ]
     for f in skipped_files:
-        fpath = os.path.join(render_skipped_recipe.recipe, f)
-        assert not os.path.exists(fpath)
+        fpath = Path(render_skipped_recipe.recipe, f)
+        assert not fpath.exists()
 
 
 def test_choco_install(choco_recipe, jinja_env):
@@ -756,12 +719,10 @@ def test_choco_install(choco_recipe, jinja_env):
         forge_config=choco_recipe.config,
         forge_dir=choco_recipe.recipe,
     )
-    azure_file = os.path.join(
-        os.path.join(
-            choco_recipe.recipe, ".azure-pipelines", "azure-pipelines-win.yml"
-        )
+    azure_file = Path(
+        choco_recipe.recipe, ".azure-pipelines", "azure-pipelines-win.yml"
     )
-    assert os.path.isfile(azure_file)
+    assert azure_file.is_file()
     with open(azure_file) as f:
         contents = f.read()
     exp = """
@@ -782,12 +743,9 @@ def test_webservices_action_exists(py_recipe, jinja_env):
         forge_config=py_recipe.config,
         forge_dir=py_recipe.recipe,
     )
-    assert os.path.exists(
-        os.path.join(py_recipe.recipe, ".github/workflows/webservices.yml")
-    )
-    with open(
-        os.path.join(py_recipe.recipe, ".github/workflows/webservices.yml")
-    ) as f:
+    filepath = Path(py_recipe.recipe, ".github/workflows/webservices.yml")
+    assert filepath.exists()
+    with open(filepath) as f:
         action_config = yaml.safe_load(f)
     assert "jobs" in action_config
     assert "webservices" in action_config["jobs"]
@@ -799,32 +757,30 @@ def test_automerge_action_exists(py_recipe, jinja_env):
         forge_config=py_recipe.config,
         forge_dir=py_recipe.recipe,
     )
-    assert os.path.exists(
-        os.path.join(py_recipe.recipe, ".github/workflows/automerge.yml")
-    )
-    with open(
-        os.path.join(py_recipe.recipe, ".github/workflows/automerge.yml")
-    ) as f:
+    filepath = Path(py_recipe.recipe, ".github/workflows/automerge.yml")
+    assert filepath.exists()
+    with open(filepath) as f:
         action_config = yaml.safe_load(f)
     assert "jobs" in action_config
     assert "automerge-action" in action_config["jobs"]
 
 
 def test_conda_forge_yaml_empty(config_yaml):
+    config_yaml_path = Path(config_yaml)
     load_forge_config = lambda: configure_feedstock._load_forge_config(  # noqa
         config_yaml,
-        exclusive_config_file=os.path.join(
-            config_yaml, "recipe", "default_config.yaml"
+        exclusive_config_file=str(
+            config_yaml_path.joinpath("recipe", "default_config.yaml")
         ),
     )
 
     assert load_forge_config()["recipe_dir"] == "recipe"
 
-    os.unlink(os.path.join(config_yaml, "conda-forge.yml"))
+    Path.unlink(config_yaml_path.joinpath("conda-forge.yml"))
     with pytest.raises(RuntimeError):
         load_forge_config()
 
-    with open(os.path.join(config_yaml, "conda-forge.yml"), "w"):
+    with open(config_yaml_path.joinpath("conda-forge.yml"), "w"):
         pass
     assert load_forge_config()["recipe_dir"] == "recipe"
 
@@ -832,12 +788,12 @@ def test_conda_forge_yaml_empty(config_yaml):
 def test_noarch_platforms_bad_yaml(config_yaml, caplog):
     load_forge_config = lambda: configure_feedstock._load_forge_config(  # noqa
         config_yaml,
-        exclusive_config_file=os.path.join(
-            config_yaml, "recipe", "default_config.yaml"
+        exclusive_config_file=str(
+            Path(config_yaml, "recipe", "default_config.yaml")
         ),
     )
 
-    with open(os.path.join(config_yaml, "conda-forge.yml"), "a+") as fp:
+    with open(Path(config_yaml, "conda-forge.yml"), "a+") as fp:
         fp.write("noarch_platforms: [eniac, zx80]")
 
     with caplog.at_level(logging.WARNING):
@@ -847,23 +803,24 @@ def test_noarch_platforms_bad_yaml(config_yaml, caplog):
 
 
 def test_forge_yml_alt_path(config_yaml):
+    config_yaml_path = Path(config_yaml)
     load_forge_config = (
         lambda forge_yml: configure_feedstock._load_forge_config(  # noqa
             config_yaml,
-            exclusive_config_file=os.path.join(
-                config_yaml, "recipe", "default_config.yaml"
+            exclusive_config_file=str(
+                config_yaml_path.joinpath("recipe", "default_config.yaml")
             ),
             forge_yml=forge_yml,
         )
     )
 
-    forge_yml = os.path.join(config_yaml, "conda-forge.yml")
-    forge_yml_alt = os.path.join(
-        config_yaml, ".config", "feedstock-config.yml"
+    forge_yml = config_yaml_path.joinpath("conda-forge.yml")
+    forge_yml_alt = config_yaml_path.joinpath(
+        ".config", "feedstock-config.yml"
     )
 
-    os.mkdir(os.path.dirname(forge_yml_alt))
-    os.rename(forge_yml, forge_yml_alt)
+    forge_yml_alt.parent.mkdir()
+    forge_yml.rename(forge_yml_alt)
 
     with pytest.raises(RuntimeError):
         load_forge_config(None)
@@ -890,10 +847,10 @@ def test_cos7_env_render(py_recipe, jinja_env):
 
         # this configuration should be run
         assert forge_config["azure"]["enabled"]
-        matrix_dir = os.path.join(py_recipe.recipe, ".ci_support")
-        assert os.path.isdir(matrix_dir)
+        matrix_dir = Path(py_recipe.recipe, ".ci_support")
+        assert matrix_dir.is_dir()
         # single matrix entry - readme is generated later in main function
-        assert len(os.listdir(matrix_dir)) == 6
+        assert len(list(matrix_dir.iterdir())) == 6
 
     finally:
         if has_env:
@@ -921,10 +878,10 @@ def test_cuda_enabled_render(cuda_enabled_recipe, jinja_env):
 
         # this configuration should be run
         assert forge_config["azure"]["enabled"]
-        matrix_dir = os.path.join(cuda_enabled_recipe.recipe, ".ci_support")
-        assert os.path.isdir(matrix_dir)
+        matrix_dir = Path(cuda_enabled_recipe.recipe, ".ci_support")
+        assert matrix_dir.is_dir()
         # single matrix entry - readme is generated later in main function
-        assert len(os.listdir(matrix_dir)) == 6
+        assert len(list(matrix_dir.iterdir())) == 6
 
     finally:
         if has_env:
@@ -935,10 +892,11 @@ def test_cuda_enabled_render(cuda_enabled_recipe, jinja_env):
 
 
 def test_conda_build_tools(config_yaml, caplog):
+    config_yaml_path = Path(config_yaml)
     load_forge_config = lambda: configure_feedstock._load_forge_config(  # noqa
         config_yaml,
-        exclusive_config_file=os.path.join(
-            config_yaml, "recipe", "default_config.yaml"
+        exclusive_config_file=str(
+            config_yaml_path.joinpath("recipe", "default_config.yaml")
         ),
     )
 
@@ -949,21 +907,21 @@ def test_conda_build_tools(config_yaml, caplog):
     assert cfg["conda_build_tool"] == "conda-build"  # current default
 
     # legacy compatibility config
-    with open(os.path.join(config_yaml, "conda-forge.yml")) as fp:
+    with open(config_yaml_path.joinpath("conda-forge.yml")) as fp:
         unmodified = fp.read()
-    with open(os.path.join(config_yaml, "conda-forge.yml"), "a+") as fp:
+    with open(config_yaml_path.joinpath("conda-forge.yml"), "a+") as fp:
         fp.write("build_with_mambabuild: true")
     with pytest.deprecated_call(match="build_with_mambabuild is deprecated"):
         assert load_forge_config()["conda_build_tool"] == "mambabuild"
 
-    with open(os.path.join(config_yaml, "conda-forge.yml"), "w") as fp:
+    with open(config_yaml_path.joinpath("conda-forge.yml"), "w") as fp:
         fp.write(unmodified)
         fp.write("build_with_mambabuild: false")
 
     with pytest.deprecated_call(match="build_with_mambabuild is deprecated"):
         assert load_forge_config()["conda_build_tool"] == "conda-build"
 
-    with open(os.path.join(config_yaml, "conda-forge.yml"), "w") as fp:
+    with open(config_yaml_path.joinpath("conda-forge.yml"), "w") as fp:
         fp.write(unmodified)
         fp.write("conda_build_tool: does-not-exist")
 
@@ -973,17 +931,18 @@ def test_conda_build_tools(config_yaml, caplog):
 
 
 def test_remote_ci_setup(config_yaml):
+    config_yaml_path = Path(config_yaml)
     load_forge_config = lambda: configure_feedstock._load_forge_config(  # noqa
         config_yaml,
-        exclusive_config_file=os.path.join(
-            config_yaml, "recipe", "default_config.yaml"
+        exclusive_config_file=str(
+            config_yaml_path.joinpath("recipe", "default_config.yaml")
         ),
     )
     cfg = load_forge_config()
-    with open(os.path.join(config_yaml, "conda-forge.yml")) as fp:
+    with open(config_yaml_path.joinpath("conda-forge.yml")) as fp:
         unmodified = fp.read()
 
-    with open(os.path.join(config_yaml, "conda-forge.yml"), "a+") as fp:
+    with open(config_yaml_path.joinpath("conda-forge.yml"), "a+") as fp:
         fp.write(
             "remote_ci_setup: ['conda-forge-ci-setup=3', 'py-lief<0.12']\n"
         )
@@ -1000,7 +959,7 @@ def test_remote_ci_setup(config_yaml):
         "py-lief",
     ]
 
-    with open(os.path.join(config_yaml, "conda-forge.yml"), "w") as fp:
+    with open(config_yaml_path.joinpath("conda-forge.yml"), "w") as fp:
         fp.write(unmodified + "\n")
         fp.write(
             "remote_ci_setup: ['conda-forge-ci-setup=3', 'py-lief<0.12']\n"
@@ -1953,9 +1912,9 @@ def test_get_used_key_values_by_input_order(
 def test_conda_build_api_render_for_smithy(testing_workdir):
     import conda_build.api
 
-    _thisdir = os.path.abspath(os.path.dirname(__file__))
-    recipe = os.path.join(_thisdir, "recipes", "multiple_outputs")
-    dest_recipe = os.path.join(testing_workdir, "recipe")
+    _thisdir = Path(__file__).resolve().parent
+    recipe = _thisdir.joinpath("recipes", "multiple_outputs")
+    dest_recipe = str(Path(testing_workdir, "recipe"))
     shutil.copytree(recipe, dest_recipe)
     all_top_level_builds = {
         ("1.5", "9.5"),

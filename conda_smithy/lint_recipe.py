@@ -15,6 +15,7 @@ import requests
 import shutil
 import subprocess
 import sys
+from pathlib import Path
 from glob import glob
 from inspect import cleandoc
 from textwrap import indent
@@ -136,13 +137,9 @@ def find_local_config_file(recipe_dir, filename):
     # 2. staged-recipes with custom conda-forge.yaml in recipe
     # 3. staged-recipes
     found_filesname = (
-        glob(os.path.join(recipe_dir, filename))
-        or glob(
-            os.path.join(recipe_dir, "..", filename),
-        )
-        or glob(
-            os.path.join(recipe_dir, "..", "..", filename),
-        )
+        list(Path(recipe_dir).glob(filename))
+        or list(Path(recipe_dir).parent.glob(filename))
+        or list(Path(recipe_dir).parent.parent.glob(filename))
     )
 
     return found_filesname[0] if found_filesname else None
@@ -151,13 +148,9 @@ def find_local_config_file(recipe_dir, filename):
 def lintify_forge_yaml(recipe_dir=None) -> (list, list):
     if recipe_dir:
         forge_yaml_filename = (
-            glob(os.path.join(recipe_dir, "..", "conda-forge.yml"))
-            or glob(
-                os.path.join(recipe_dir, "conda-forge.yml"),
-            )
-            or glob(
-                os.path.join(recipe_dir, "..", "..", "conda-forge.yml"),
-            )
+            list(Path(recipe_dir).glob("conda-forge.yml"))
+            or list(Path(recipe_dir).parent.glob("conda-forge.yml"))
+            or list(Path(recipe_dir).parent.parent.glob("conda-forge.yml"))
         )
         if forge_yaml_filename:
             with open(forge_yaml_filename[0], "r") as fh:
@@ -180,7 +173,7 @@ def lintify_meta_yaml(
 
     # If the recipe_dir exists (no guarantee within this function) , we can
     # find the meta.yaml within it.
-    meta_fname = os.path.join(recipe_dir or "", "meta.yaml")
+    meta_fname = Path((recipe_dir or ""), "meta.yaml")
 
     sources_section = get_section(meta, "source", lints)
     build_section = get_section(meta, "build", lints)
@@ -191,7 +184,7 @@ def lintify_meta_yaml(
     package_section = get_section(meta, "package", lints)
     outputs_section = get_section(meta, "outputs", lints)
 
-    recipe_dirname = os.path.basename(recipe_dir) if recipe_dir else "recipe"
+    recipe_dirname = Path(recipe_dir).name if recipe_dir else "recipe"
     is_staged_recipes = recipe_dirname != "recipe"
 
     # 0: Top level keys should be expected
@@ -231,8 +224,7 @@ def lintify_meta_yaml(
     # 4: The recipe should have some tests.
     if not any(key in TEST_KEYS for key in test_section):
         a_test_file_exists = recipe_dir is not None and any(
-            os.path.exists(os.path.join(recipe_dir, test_file))
-            for test_file in TEST_FILES
+            (Path(recipe_dir, test_file)).exists() for test_file in TEST_FILES
         )
         if not a_test_file_exists:
             has_outputs_test = False
@@ -261,7 +253,7 @@ def lintify_meta_yaml(
         lints.append("The recipe license cannot be unknown.")
 
     # 6: Selectors should be in a tidy form.
-    if recipe_dir is not None and os.path.exists(meta_fname):
+    if recipe_dir is not None and Path(meta_fname).exists():
         bad_selectors, bad_lines = [], []
         pyXY_selectors_lint, pyXY_lines_lint = [], []
         pyXY_selectors_hint, pyXY_lines_hint = [], []
@@ -348,7 +340,7 @@ def lintify_meta_yaml(
         )
 
     # 11: There should be one empty line at the end of the file.
-    if recipe_dir is not None and os.path.exists(meta_fname):
+    if recipe_dir is not None and Path(meta_fname).exists():
         with io.open(meta_fname, "r") as f:
             lines = f.read().split("\n")
         # Count the number of empty lines from the end of the file
@@ -463,7 +455,7 @@ def lintify_meta_yaml(
         forge_yaml = {}
 
     # 18: noarch doesn't work with selectors for runtime dependencies
-    if noarch_value is not None and os.path.exists(meta_fname):
+    if noarch_value is not None and Path(meta_fname).exists():
         noarch_platforms = len(forge_yaml.get("noarch_platforms", [])) > 1
         with io.open(meta_fname, "rt") as fh:
             in_runreqs = False
@@ -507,7 +499,7 @@ def lintify_meta_yaml(
             )
 
     # 20: Jinja2 variable definitions should be nice.
-    if recipe_dir is not None and os.path.exists(meta_fname):
+    if recipe_dir is not None and Path(meta_fname).exists():
         bad_jinja = []
         bad_lines = []
         # Good Jinja2 variable definitions look like "{% set .+ = .+ %}"
@@ -621,7 +613,7 @@ def lintify_meta_yaml(
                         )
 
     # 24: jinja2 variable references should be {{<one space>var<one space>}}
-    if recipe_dir is not None and os.path.exists(meta_fname):
+    if recipe_dir is not None and Path(meta_fname).exists():
         bad_vars = []
         bad_lines = []
         with io.open(meta_fname, "rt") as fh:
@@ -701,7 +693,7 @@ def lintify_meta_yaml(
     # ... so raw meta.yaml and regex it is...
     pure_python_wheel_re = re.compile(r".*[:-]\s+(http.*-none-any\.whl)\s+.*")
     wheel_re = re.compile(r".*[:-]\s+(http.*\.whl)\s+.*")
-    if recipe_dir is not None and os.path.exists(meta_fname):
+    if recipe_dir is not None and Path(meta_fname).exists():
         with open(meta_fname, "rt") as f:
             for line in f:
                 if match := pure_python_wheel_re.search(line):
@@ -797,7 +789,7 @@ def lintify_meta_yaml(
     shellcheck_enabled = False
     shell_scripts = []
     if recipe_dir:
-        shell_scripts = glob(os.path.join(recipe_dir, "*.sh"))
+        shell_scripts = list(Path(recipe_dir).glob("*.sh"))
         forge_yaml = find_local_config_file(recipe_dir, "conda-forge.yml")
         if shell_scripts and forge_yaml:
             with open(forge_yaml, "r") as fh:
@@ -877,14 +869,11 @@ def lintify_meta_yaml(
         if not licenseref_regex.match(license):
             filtered_licenses.append(license)
 
-    with open(
-        os.path.join(os.path.dirname(__file__), "licenses.txt"), "r"
-    ) as f:
+    file_dir = Path(__file__).parent
+    with open(Path(file_dir, "licenses.txt"), "r") as f:
         expected_licenses = f.readlines()
         expected_licenses = set([l.strip() for l in expected_licenses])
-    with open(
-        os.path.join(os.path.dirname(__file__), "license_exceptions.txt"), "r"
-    ) as f:
+    with open(Path(file_dir, "license_exceptions.txt"), "r") as f:
         expected_exceptions = f.readlines()
         expected_exceptions = set([l.strip() for l in expected_exceptions])
     if set(filtered_licenses) - expected_licenses:
@@ -1117,7 +1106,7 @@ def run_conda_forge_specific(meta, recipe_dir, lints, hints):
     # Fetch list of recipe maintainers
     maintainers = extra_section.get("recipe-maintainers", [])
 
-    recipe_dirname = os.path.basename(recipe_dir) if recipe_dir else "recipe"
+    recipe_dirname = Path(recipe_dir).name if recipe_dir else "recipe"
     recipe_name = package_section.get("name", "").strip()
     is_staged_recipes = recipe_dirname != "recipe"
 
@@ -1198,7 +1187,7 @@ def run_conda_forge_specific(meta, recipe_dir, lints, hints):
             )
 
     # 3: if the recipe dir is inside the example dir
-    if recipe_dir is not None and "recipes/example/" in recipe_dir:
+    if recipe_dir is not None and "recipes/example/" in str(recipe_dir):
         lints.append(
             "Please move the recipe out of the example dir and "
             "into its own dir."
@@ -1206,11 +1195,11 @@ def run_conda_forge_specific(meta, recipe_dir, lints, hints):
 
     # 4: Do not delete example recipe
     if is_staged_recipes and recipe_dir is not None:
-        example_meta_fname = os.path.abspath(
-            os.path.join(recipe_dir, "..", "example", "meta.yaml")
+        example_meta_fname = (
+            Path(recipe_dir).parent.joinpath("example", "meta.yaml").resolve()
         )
 
-        if not os.path.exists(example_meta_fname):
+        if not example_meta_fname.exists():
             msg = (
                 "Please do not delete the example recipe found in "
                 "`recipes/example/meta.yaml`."
@@ -1280,8 +1269,8 @@ def run_conda_forge_specific(meta, recipe_dir, lints, hints):
 
     # 7: Ensure that the recipe has some .ci_support files
     if not is_staged_recipes and recipe_dir is not None:
-        ci_support_files = glob(
-            os.path.join(recipe_dir, "..", ".ci_support", "*.yaml")
+        ci_support_files = list(
+            Path(recipe_dir).parent.joinpath(".ci_support").glob("*.yaml")
         )
         if not ci_support_files:
             lints.append(
@@ -1372,9 +1361,9 @@ def _format_validation_msg(error: "jsonschema.ValidationError"):
 
 
 def main(recipe_dir, conda_forge=False, return_hints=False):
-    recipe_dir = os.path.abspath(recipe_dir)
-    recipe_meta = os.path.join(recipe_dir, "meta.yaml")
-    if not os.path.exists(recipe_dir):
+    recipe_dir = Path(recipe_dir).resolve()
+    recipe_meta = recipe_dir.joinpath("meta.yaml")
+    if not recipe_dir.exists():
         raise IOError("Feedstock has no recipe/meta.yaml.")
 
     with io.open(recipe_meta, "rt") as fh:

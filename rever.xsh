@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 
 $PROJECT = $GITHUB_REPO = 'conda-smithy'
 $GITHUB_ORG = 'conda-forge'
@@ -10,7 +10,7 @@ $CHANGELOG_FILENAME = 'CHANGELOG.rst'
 $CHANGELOG_TEMPLATE = 'TEMPLATE.rst'
 
 def sdist_asset():
-    fname = os.path.join('dist', 'conda_smithy-' + $VERSION + '.tar.gz')
+    fname = str(Path('dist') / ('conda_smithy-' + $VERSION + '.tar.gz'))
     print('Creating sdist tarball ' + fname)
     ![python -m build --sdist]
     return fname

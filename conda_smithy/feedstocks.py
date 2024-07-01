@@ -1,7 +1,7 @@
 import argparse
-import glob
 import multiprocessing
 import os
+from pathlib import Path
 
 import git
 from git import Repo, GitCommandError
@@ -34,11 +34,11 @@ def cloned_feedstocks(feedstocks_directory):
             print(feedstock.directory)  # The absolute path to the repo
 
     """
-    pattern = os.path.abspath(
-        os.path.join(feedstocks_directory, "*-feedstock")
-    )
-    for feedstock_dir in sorted(glob.glob(pattern)):
-        feedstock_basename = os.path.basename(feedstock_dir)
+    feedstocks_path = Path(feedstocks_directory).resolve()
+    pattern = "*-feedstock"
+
+    for feedstock_dir in sorted(feedstocks_path.glob(pattern)):
+        feedstock_basename = Path(feedstock_dir).name
         feedstock_package = feedstock_basename.rsplit("-feedstock", 1)[0]
         feedstock = argparse.Namespace(
             name=feedstock_basename,
@@ -86,8 +86,8 @@ def feedstocks_list_handle_args(args):
 def clone_feedstock(feedstock_gh_repo, feedstocks_dir):
     repo = feedstock_gh_repo
 
-    clone_directory = os.path.join(feedstocks_dir, repo.name)
-    if not os.path.exists(clone_directory):
+    clone_directory = Path(feedstocks_dir, repo.name)
+    if not Path(clone_directory).exists():
         print("Cloning {}".format(repo.name))
         clone = Repo.clone_from(repo.clone_url, clone_directory)
         clone.delete_remote("origin")
@@ -116,7 +116,7 @@ def feedstocks_clone_all_handle_args(args):
 
 def feedstocks_list_cloned_handle_args(args):
     for feedstock in cloned_feedstocks(args.feedstocks_directory):
-        print(os.path.basename(feedstock.directory))
+        print(Path(feedstock.directory).name)
 
 
 def feedstocks_apply_cloned_handle_args(args):
@@ -255,9 +255,7 @@ def feedstocks_yaml(
             try:
                 if use_local:
                     with open(
-                        os.path.join(
-                            feedstock.directory, "recipe", "meta.yaml"
-                        ),
+                        Path(feedstock.directory, "recipe", "meta.yaml"),
                         "r",
                     ) as fh:
                         content = "".join(fh.readlines())

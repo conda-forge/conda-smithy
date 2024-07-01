@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 from random import choice
 
 from git import Repo
@@ -16,7 +16,7 @@ from conda_smithy.utils import get_feedstock_name_from_meta
 def gh_token():
     try:
         with open(
-            os.path.expanduser("~/.conda-smithy/github.token"), "r"
+            Path("~/.conda-smithy/github.token").expanduser(), "r"
         ) as fh:
             token = fh.read().strip()
         if not token:
@@ -67,9 +67,9 @@ def has_in_members(team, member):
 
 
 def get_cached_team(org, team_name, description=""):
-    cached_file = os.path.expanduser(
+    cached_file = Path(
         "~/.conda-smithy/{}-{}-team".format(org.login, team_name)
-    )
+    ).expanduser()
     try:
         with open(cached_file, "r") as fh:
             team_id = int(fh.read().strip())
