@@ -8,6 +8,17 @@ from pathlib import Path
 
 import pytest
 import yaml
+from _pytest.logging import LogCaptureFixture
+from conftest import RecipeConfigPair
+from jinja2.sandbox import SandboxedEnvironment
+from typing import (
+    Any,
+    Dict,
+    List,
+    Set,
+    Tuple,
+    Union,
+)
 
 from conda_smithy import configure_feedstock
 
@@ -365,7 +376,9 @@ def test_upload_on_branch_appveyor(upload_on_branch_recipe, jinja_env):
     assert "UPLOAD_ON_BRANCH=foo-branch" in content["deploy_script"][-2]
 
 
-def test_circle_with_yum_reqs(py_recipe, jinja_env):
+def test_circle_with_yum_reqs(
+    py_recipe: RecipeConfigPair, jinja_env: SandboxedEnvironment
+):
     with open(
         os.path.join(py_recipe.recipe, "recipe", "yum_requirements.txt"), "w"
     ) as f:
@@ -378,7 +391,9 @@ def test_circle_with_yum_reqs(py_recipe, jinja_env):
 
 
 @pytest.mark.legacy_circle
-def test_circle_with_empty_yum_reqs_raises(py_recipe, jinja_env):
+def test_circle_with_empty_yum_reqs_raises(
+    py_recipe: RecipeConfigPair, jinja_env: SandboxedEnvironment
+):
     py_recipe.config["provider"]["linux"] = "circle"
 
     with open(
@@ -393,7 +408,9 @@ def test_circle_with_empty_yum_reqs_raises(py_recipe, jinja_env):
         )
 
 
-def test_azure_with_empty_yum_reqs_raises(py_recipe, jinja_env):
+def test_azure_with_empty_yum_reqs_raises(
+    py_recipe: RecipeConfigPair, jinja_env: SandboxedEnvironment
+):
     with open(
         os.path.join(py_recipe.recipe, "recipe", "yum_requirements.txt"), "w"
     ) as f:
@@ -408,7 +425,9 @@ def test_azure_with_empty_yum_reqs_raises(py_recipe, jinja_env):
 
 @pytest.mark.legacy_circle
 @pytest.mark.legacy_travis
-def test_circle_osx(py_recipe, jinja_env):
+def test_circle_osx(
+    py_recipe: RecipeConfigPair, jinja_env: SandboxedEnvironment
+):
     # Set legacy providers
     py_recipe.config["provider"]["osx"] = "travis"
     py_recipe.config["provider"]["linux"] = "circle"
@@ -459,7 +478,9 @@ def test_circle_osx(py_recipe, jinja_env):
     assert os.path.exists(circle_config_file)
 
 
-def test_circle_skipped(linux_skipped_recipe, jinja_env):
+def test_circle_skipped(
+    linux_skipped_recipe: RecipeConfigPair, jinja_env: SandboxedEnvironment
+):
     forge_dir = linux_skipped_recipe.recipe
     circle_osx_file = os.path.join(forge_dir, ".scripts", "run_osx_build.sh")
     circle_linux_file = os.path.join(
@@ -729,7 +750,9 @@ def test_migrator_compiler_version_recipe(
     assert "win_64_c_compilervs2017python3.5.yaml" in rendered_variants
 
 
-def test_files_skip_render(render_skipped_recipe, jinja_env):
+def test_files_skip_render(
+    render_skipped_recipe: RecipeConfigPair, jinja_env: SandboxedEnvironment
+):
     configure_feedstock.render_README(
         jinja_env=jinja_env,
         forge_config=render_skipped_recipe.config,
@@ -750,7 +773,9 @@ def test_files_skip_render(render_skipped_recipe, jinja_env):
         assert not os.path.exists(fpath)
 
 
-def test_choco_install(choco_recipe, jinja_env):
+def test_choco_install(
+    choco_recipe: RecipeConfigPair, jinja_env: SandboxedEnvironment
+):
     configure_feedstock.render_azure(
         jinja_env=jinja_env,
         forge_config=choco_recipe.config,
@@ -793,7 +818,9 @@ def test_webservices_action_exists(py_recipe, jinja_env):
     assert "webservices" in action_config["jobs"]
 
 
-def test_automerge_action_exists(py_recipe, jinja_env):
+def test_automerge_action_exists(
+    py_recipe: RecipeConfigPair, jinja_env: SandboxedEnvironment
+):
     configure_feedstock.render_github_actions_services(
         jinja_env=jinja_env,
         forge_config=py_recipe.config,
@@ -810,7 +837,7 @@ def test_automerge_action_exists(py_recipe, jinja_env):
     assert "automerge-action" in action_config["jobs"]
 
 
-def test_conda_forge_yaml_empty(config_yaml):
+def test_conda_forge_yaml_empty(config_yaml: str):
     load_forge_config = lambda: configure_feedstock._load_forge_config(  # noqa
         config_yaml,
         exclusive_config_file=os.path.join(
@@ -846,7 +873,7 @@ def test_noarch_platforms_bad_yaml(config_yaml, caplog):
     assert "eniac" in caplog.text
 
 
-def test_forge_yml_alt_path(config_yaml):
+def test_forge_yml_alt_path(config_yaml: str):
     load_forge_config = (
         lambda forge_yml: configure_feedstock._load_forge_config(  # noqa
             config_yaml,
@@ -871,7 +898,9 @@ def test_forge_yml_alt_path(config_yaml):
     assert load_forge_config(forge_yml_alt)["recipe_dir"] == "recipe"
 
 
-def test_cos7_env_render(py_recipe, jinja_env):
+def test_cos7_env_render(
+    py_recipe: RecipeConfigPair, jinja_env: SandboxedEnvironment
+):
     forge_config = copy.deepcopy(py_recipe.config)
     forge_config["os_version"] = {"linux_64": "cos7"}
     has_env = "DEFAULT_LINUX_VERSION" in os.environ
@@ -903,7 +932,9 @@ def test_cos7_env_render(py_recipe, jinja_env):
                 del os.environ["DEFAULT_LINUX_VERSION"]
 
 
-def test_cuda_enabled_render(cuda_enabled_recipe, jinja_env):
+def test_cuda_enabled_render(
+    cuda_enabled_recipe: RecipeConfigPair, jinja_env: SandboxedEnvironment
+):
     forge_config = copy.deepcopy(cuda_enabled_recipe.config)
     has_env = "CF_CUDA_ENABLED" in os.environ
     if has_env:
@@ -934,7 +965,7 @@ def test_cuda_enabled_render(cuda_enabled_recipe, jinja_env):
                 del os.environ["CF_CUDA_ENABLED"]
 
 
-def test_conda_build_tools(config_yaml, caplog):
+def test_conda_build_tools(config_yaml: str, caplog: LogCaptureFixture):
     load_forge_config = lambda: configure_feedstock._load_forge_config(  # noqa
         config_yaml,
         exclusive_config_file=os.path.join(
@@ -1950,7 +1981,7 @@ def test_get_used_key_values_by_input_order(
     assert used_key_values == expected_used_key_values
 
 
-def test_conda_build_api_render_for_smithy(testing_workdir):
+def test_conda_build_api_render_for_smithy(testing_workdir: str):
     import conda_build.api
 
     _thisdir = os.path.abspath(os.path.dirname(__file__))

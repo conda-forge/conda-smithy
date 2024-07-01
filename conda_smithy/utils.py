@@ -10,11 +10,15 @@ import os
 from pathlib import Path
 from collections import defaultdict
 from contextlib import contextmanager
+from conda_build.metadata import MetaData
+from typing import Dict, Union, Any
 
 import ruamel.yaml
+from ruamel.yaml.comments import CommentedMap
+from ruamel.yaml.main import YAML
 
 
-def get_feedstock_name_from_meta(meta):
+def get_feedstock_name_from_meta(meta: MetaData) -> str:
     """Resolve the feedtstock name from the parsed meta.yaml."""
     if "feedstock-name" in meta.meta["extra"]:
         return meta.meta["extra"]["feedstock-name"]
@@ -24,7 +28,7 @@ def get_feedstock_name_from_meta(meta):
         return meta.name()
 
 
-def get_feedstock_about_from_meta(meta) -> dict:
+def get_feedstock_about_from_meta(meta: MetaData) -> dict:
     """Fetch the feedtstock about from the parsed meta.yaml."""
     # it turns out that conda_build would not preserve the feedstock about:
     #   - if a subpackage does not have about, it uses the feedstock's
@@ -43,7 +47,7 @@ def get_feedstock_about_from_meta(meta) -> dict:
         return dict(meta.meta["about"])
 
 
-def get_yaml():
+def get_yaml() -> YAML:
     # define global yaml API
     # roundrip-loader and allowing duplicate keys
     # for handling # [filter] / # [not filter]
@@ -78,7 +82,7 @@ class MockOS(dict):
         self.sep = "/"
 
 
-def stub_compatible_pin(*args, **kwargs):
+def stub_compatible_pin(*args, **kwargs) -> str:
     return f"compatible_pin {args[0]}"
 
 
@@ -86,7 +90,7 @@ def stub_subpackage_pin(*args, **kwargs):
     return f"subpackage_pin {args[0]}"
 
 
-def render_meta_yaml(text):
+def render_meta_yaml(text: str) -> str:
     env = jinja2.sandbox.SandboxedEnvironment(undefined=NullUndefined)
 
     # stub out cb3 jinja2 functions - they are not important for linting
@@ -139,7 +143,9 @@ def update_conda_forge_config(forge_yaml):
     get_yaml().dump(code, Path(forge_yaml))
 
 
-def merge_dict(src, dest):
+def merge_dict(
+    src: Dict[Any, Any], dest: CommentedMap
+) -> Union[CommentedMap, Dict[str, bool]]:
     """Recursive merge dictionary"""
     for key, value in src.items():
         if isinstance(value, dict):

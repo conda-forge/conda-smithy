@@ -584,7 +584,7 @@ def test_variant_key_remove():
 @pytest.mark.parametrize(
     "platform,arch", [["osx", "64"], ["osx", "arm64"], ["linux", "64"]]
 )
-def test_variant_remove_add(platform, arch):
+def test_variant_remove_add(platform: str, arch: str):
     from conda_build.config import Config
 
     config = Config(platform=platform, arch=arch)
