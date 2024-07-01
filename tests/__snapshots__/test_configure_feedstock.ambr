@@ -1,0 +1,348 @@
+# serializer version: 1
+# name: test_automerge_action_exists
+  dict({
+    'jobs': dict({
+      'automerge-action': dict({
+        'name': 'automerge',
+        'runs-on': 'ubuntu-latest',
+        'steps': list([
+          dict({
+            'id': 'automerge-action',
+            'name': 'automerge-action',
+            'uses': 'conda-forge/automerge-action@main',
+            'with': dict({
+              'github_token': '${{ secrets.GITHUB_TOKEN }}',
+              'rerendering_github_token': '${{ secrets.RERENDERING_GITHUB_TOKEN }}',
+            }),
+          }),
+        ]),
+      }),
+    }),
+    True: dict({
+      'check_suite': dict({
+        'types': list([
+          'completed',
+        ]),
+      }),
+      'status': dict({
+      }),
+    }),
+  })
+# ---
+# name: test_choco_install
+  '''
+  # This file was generated automatically from conda-smithy. To update this configuration,
+  # update the conda-forge.yml and/or the recipe/meta.yaml.
+  # -*- mode: yaml -*-
+  
+  jobs:
+  - job: win
+    pool:
+      vmImage: windows-2022
+    strategy:
+      matrix:
+        win_64_c_compilervs2008python2.7:
+          CONFIG: win_64_c_compilervs2008python2.7
+          UPLOAD_PACKAGES: 'True'
+        win_64_c_compilervs2015python3.5:
+          CONFIG: win_64_c_compilervs2015python3.5
+          UPLOAD_PACKAGES: 'True'
+    timeoutInMinutes: 360
+    variables:
+      CONDA_BLD_PATH: D:\\bld\\
+      UPLOAD_TEMP: D:\\tmp
+  
+    steps:
+      - script: |
+          choco install pkg0 -fdv -y --debug
+        displayName: "Install Chocolatey Package: pkg0"
+  
+      - script: |
+          choco install pkg1 --version=X.Y.Z -fdv -y --debug
+        displayName: "Install Chocolatey Package: pkg1 --version=X.Y.Z"
+  
+  
+      - task: PythonScript@0
+        displayName: 'Download Miniforge'
+        inputs:
+          scriptSource: inline
+          script: |
+            import urllib.request
+            url = 'https://github.com/conda-forge/miniforge/releases/latest/download/Mambaforge-Windows-x86_64.exe'
+            path = r"$(Build.ArtifactStagingDirectory)/Miniforge.exe"
+            urllib.request.urlretrieve(url, path)
+  
+      - script: |
+          start /wait "" %BUILD_ARTIFACTSTAGINGDIRECTORY%\Miniforge.exe /InstallationType=JustMe /RegisterPython=0 /S /D=C:\Miniforge
+        displayName: Install Miniforge
+  
+      - powershell: Write-Host "##vso[task.prependpath]C:\Miniforge\Scripts"
+        displayName: Add conda to PATH
+  
+      - script: |
+          call ".scripts\run_win_build.bat"
+        displayName: Run Windows build
+        env:
+          PYTHONUNBUFFERED: 1
+          CONFIG: $(CONFIG)
+          CI: azure
+          flow_run_id: azure_$(Build.BuildNumber).$(System.JobAttempt)
+          remote_url: $(Build.Repository.Uri)
+          sha: $(Build.SourceVersion)
+          UPLOAD_PACKAGES: $(UPLOAD_PACKAGES)
+          UPLOAD_TEMP: $(UPLOAD_TEMP)
+          UPLOAD_ON_BRANCH: foo-branch
+          BINSTAR_TOKEN: $(BINSTAR_TOKEN)
+  '''
+# ---
+# name: test_conda_build_tools
+  '''
+  WARNING  conda_smithy.configure_feedstock:configure_feedstock.py:2182 conda-forge.yml: $.build_with_mambabuild = True -> 'Build With Mambabuild' is deprecated.
+  build_with_mambabuild is deprecated, use `conda_build_tool` instead.
+  WARNING  conda_smithy.configure_feedstock:configure_feedstock.py:2182 conda-forge.yml: $.build_with_mambabuild = False -> 'Build With Mambabuild' is deprecated.
+  build_with_mambabuild is deprecated, use `conda_build_tool` instead.
+  WARNING  conda_smithy.configure_feedstock:configure_feedstock.py:2182 conda-forge.yml: $.conda_build_tool = does-not-exist -> 'does-not-exist' is not valid under any of the given schemas
+  
+  '''
+# ---
+# name: test_get_used_key_values_by_input_order[squished_input_variants0-squished_used_variants0-all_used_vars0][get_used_key_values_by_input_order]
+  dict({
+    'c_compiler': list([
+      'gcc',
+    ]),
+    'c_compiler_version': list([
+      '10',
+      '12',
+    ]),
+    'cdt_name': list([
+      'cos7',
+      'cos6',
+    ]),
+    'channel_sources': list([
+      'conda-forge',
+    ]),
+    'channel_targets': list([
+      'conda-forge main',
+    ]),
+    'cuda_compiler': list([
+      'nvcc',
+      'None',
+    ]),
+    'cuda_compiler_version': list([
+      '11.2',
+      'None',
+    ]),
+    'docker_image': list([
+      'quay.io/condaforge/linux-anvil-cuda:11.2',
+      'quay.io/condaforge/linux-anvil-cos7-x86_64',
+    ]),
+    'pin_run_as_build': dict({
+      'flann': dict({
+        'max_pin': 'x.x.x',
+      }),
+      'graphviz': dict({
+        'max_pin': 'x',
+      }),
+      'libsvm': dict({
+        'max_pin': 'x',
+      }),
+      'netcdf-cxx4': dict({
+        'max_pin': 'x.x',
+      }),
+      'occt': dict({
+        'max_pin': 'x.x',
+      }),
+      'poppler': dict({
+        'max_pin': 'x.x',
+      }),
+      'python': dict({
+        'max_pin': 'x.x',
+        'min_pin': 'x.x',
+      }),
+      'r-base': dict({
+        'max_pin': 'x.x',
+        'min_pin': 'x.x',
+      }),
+      'vlfeat': dict({
+        'max_pin': 'x.x.x',
+      }),
+    }),
+    'target_platform': list([
+      'linux-64',
+    ]),
+    'zip_keys': list([
+      tuple(
+        'arrow_cpp',
+        'libarrow',
+        'libarrow_all',
+      ),
+      tuple(
+        'c_compiler_version',
+        'cxx_compiler_version',
+        'fortran_compiler_version',
+        'cuda_compiler',
+        'cuda_compiler_version',
+        'cdt_name',
+        'docker_image',
+      ),
+      tuple(
+        'c_stdlib',
+        'c_stdlib_version',
+      ),
+      tuple(
+        'libgrpc',
+        'libprotobuf',
+      ),
+      tuple(
+        'python',
+        'numpy',
+        'python_impl',
+      ),
+    ]),
+  })
+# ---
+# name: test_noarch_platforms_bad_yaml
+  '''
+  WARNING  conda_smithy.configure_feedstock:configure_feedstock.py:2182 conda-forge.yml: $.noarch_platforms = ['eniac', 'zx80'] -> ['eniac', 'zx80'] is not valid under any of the given schemas
+  
+  '''
+# ---
+# name: test_stdlib_deployment_target
+  '''
+  MACOSX_DEPLOYMENT_TARGET:
+  - '10.14'
+  MACOSX_SDK_VERSION:
+  - '10.14'
+  c_compiler:
+  - clang
+  c_stdlib:
+  - macosx_deployment_target
+  c_stdlib_version:
+  - '10.14'
+  target_platform:
+  - osx-64
+  
+  '''
+# ---
+# name: test_stdlib_on_azure[linux content]
+  '''
+  c_compiler:
+  - gcc
+  c_stdlib:
+  - sysroot
+  c_stdlib_version:
+  - '2.12'
+  docker_image:
+  - quay.io/condaforge/linux-anvil-comp7
+  target_platform:
+  - linux-64
+  
+  '''
+# ---
+# name: test_stdlib_on_azure[osx content]
+  '''
+  MACOSX_DEPLOYMENT_TARGET:
+  - '10.9'
+  MACOSX_SDK_VERSION:
+  - '10.9'
+  c_compiler:
+  - clang
+  c_stdlib:
+  - macosx_deployment_target
+  c_stdlib_version:
+  - '10.9'
+  target_platform:
+  - osx-64
+  
+  '''
+# ---
+# name: test_stdlib_on_azure[win content]
+  '''
+  c_compiler:
+  - vs2017
+  c_stdlib:
+  - vs
+  target_platform:
+  - win-64
+  
+  '''
+# ---
+# name: test_upload_on_branch_appveyor[config]
+  dict({
+    'upload_on_branch': 'foo-branch',
+  })
+# ---
+# name: test_upload_on_branch_appveyor[deploy script]
+  list([
+    'set "GIT_BRANCH=%APPVEYOR_REPO_BRANCH%"',
+    'set "FEEDSTOCK_NAME=%APPVEYOR_REPO_NAME:*/=%"',
+    'set "UPLOAD_ON_BRANCH=foo-branch"',
+    dict({
+      'cmd': 'upload_package  .\\ .\\recipe .ci_support\\%CONFIG%.yaml',
+    }),
+  ])
+# ---
+# name: test_upload_on_branch_azure[config]
+  dict({
+    'upload_on_branch': 'foo-branch',
+  })
+# ---
+# name: test_upload_on_branch_azure[content linux]
+  '''
+  export CI=azure
+  export flow_run_id=azure_$(Build.BuildNumber).$(System.JobAttempt)
+  export remote_url=$(Build.Repository.Uri)
+  export sha=$(Build.SourceVersion)
+  export GIT_BRANCH=$BUILD_SOURCEBRANCHNAME
+  export FEEDSTOCK_NAME=$(basename ${BUILD_REPOSITORY_NAME})
+  export UPLOAD_ON_BRANCH="foo-branch"
+  if [[ "${BUILD_REASON:-}" == "PullRequest" ]]; then
+    export IS_PR_BUILD="True"
+  else
+    export IS_PR_BUILD="False"
+  fi
+  .scripts/run_docker_build.sh
+  
+  '''
+# ---
+# name: test_upload_on_branch_azure[content osx]
+  '''
+  export CI=azure
+  export flow_run_id=azure_$(Build.BuildNumber).$(System.JobAttempt)
+  export remote_url=$(Build.Repository.Uri)
+  export sha=$(Build.SourceVersion)
+  export OSX_FORCE_SDK_DOWNLOAD="1"
+  export GIT_BRANCH=$BUILD_SOURCEBRANCHNAME
+  export FEEDSTOCK_NAME=$(basename ${BUILD_REPOSITORY_NAME})
+  export UPLOAD_ON_BRANCH="foo-branch"
+  if [[ "${BUILD_REASON:-}" == "PullRequest" ]]; then
+    export IS_PR_BUILD="True"
+  else
+    export IS_PR_BUILD="False"
+  fi
+  ./.scripts/run_osx_build.sh
+  
+  '''
+# ---
+# name: test_webservices_action_exists
+  dict({
+    'jobs': dict({
+      'webservices': dict({
+        'name': 'webservices',
+        'runs-on': 'ubuntu-latest',
+        'steps': list([
+          dict({
+            'id': 'webservices',
+            'name': 'webservices',
+            'uses': 'conda-forge/webservices-dispatch-action@main',
+            'with': dict({
+              'github_token': '${{ secrets.GITHUB_TOKEN }}',
+              'rerendering_github_token': '${{ secrets.RERENDERING_GITHUB_TOKEN }}',
+            }),
+          }),
+        ]),
+      }),
+    }),
+    True: 'repository_dispatch',
+  })
+# ---
