@@ -1,6 +1,7 @@
 import copy
 import glob
 import hashlib
+import io
 import logging
 import os
 import re
@@ -19,6 +20,8 @@ from os import fspath
 from pathlib import Path, PurePath
 
 import requests
+from ruamel.yaml import YAML as ruamel_yaml
+from collections import OrderedDict
 
 try:
     from builtins import ExceptionGroup
@@ -674,14 +677,6 @@ def _collapse_subpackage_variants(
     )
 
 
-def _yaml_represent_ordereddict(yaml_representer, data):
-    # represent_dict processes dict-likes with a .sort() method or plain iterables of key-value
-    #     pairs. Only for the latter it never sorts and retains the order of the OrderedDict.
-    return yaml.representer.SafeRepresenter.represent_dict(
-        yaml_representer, data.items()
-    )
-
-
 def _santize_remote_ci_setup(remote_ci_setup):
     remote_ci_setup_ = conda_build.utils.ensure_list(remote_ci_setup)
     remote_ci_setup = []
@@ -715,6 +710,10 @@ def finalize_config(config, platform, arch, forge_config):
     return config
 
 
+def represent_ordereddict(dumper, data):
+    return dumper.represent_mapping("tag:yaml.org,2002:map", data)
+
+
 def dump_subspace_config_files(
     metas, root_path, platform, arch, upload, forge_config
 ):
@@ -737,12 +736,9 @@ def dump_subspace_config_files(
         "collapsed subspace config files: {}".format(pprint.pformat(configs))
     )
 
-    # get rid of the special object notation in the yaml file for objects that we dump
-    yaml.add_representer(set, yaml.representer.SafeRepresenter.represent_list)
-    yaml.add_representer(
-        tuple, yaml.representer.SafeRepresenter.represent_list
-    )
-    yaml.add_representer(OrderedDict, _yaml_represent_ordereddict)
+    ruamel = ruamel_yaml(typ="safe")
+    ruamel.default_flow_style = False
+    ruamel.Representer.add_representer(OrderedDict, represent_ordereddict)
 
     platform_arch = "{}-{}".format(platform, arch)
 
@@ -771,7 +767,7 @@ def dump_subspace_config_files(
         )
 
         with write_file(out_path) as f:
-            yaml.dump(config, f, default_flow_style=False)
+            ruamel.dump(config, f)
 
         target_platform = config.get("target_platform", [platform_arch])[0]
         result.append(
@@ -1834,7 +1830,9 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
         azure_settings["strategy"]["matrix"][data["config_name"]] = config_rendered
         # fmt: on
 
-    forge_config["azure_yaml"] = yaml.dump(azure_settings)
+    buffer = io.StringIO()
+    ruamel_yaml(typ="safe").dump(azure_settings, buffer)
+    forge_config["azure_yaml"] = buffer.getvalue()
     _render_template_exe_files(
         forge_config=forge_config,
         jinja_env=jinja_env,
@@ -2039,7 +2037,7 @@ def render_README(jinja_env, forge_config, forge_dir, render_info=None):
                 variant_name, _ = os.path.splitext(filename)
                 variants.append(variant_name)
                 with open(os.path.join(ci_support_path, filename)) as fh:
-                    data = yaml.safe_load(fh)
+                    data = ruamel_yaml(typ="safe").load(fh)
                     channel_targets.append(
                         data.get("channel_targets", ["conda-forge main"])[0]
                     )
@@ -2096,7 +2094,9 @@ def render_README(jinja_env, forge_config, forge_dir, render_info=None):
             azure_build_id_from_token(forge_config)
 
     logger.debug("README")
-    logger.debug(yaml.dump(forge_config))
+    buffer = io.StringIO()
+    ruamel_yaml(typ="safe").dump(forge_config, buffer)
+    logger.debug(buffer.getvalue())
 
     with write_file(target_fname) as fh:
         fh.write(template.render(**forge_config))
@@ -2158,7 +2158,7 @@ def _update_dict_within_dict(items, config):
 def _read_forge_config(forge_dir, forge_yml=None):
     # Load default values from the conda-forge.yml file
     with open(CONDA_FORGE_YAML_DEFAULTS_FILE, "r") as fh:
-        default_config = yaml.safe_load(fh.read())
+        default_config = ruamel_yaml(typ="safe").load(fh.read())
 
     if forge_yml is None:
         forge_yml = os.path.join(forge_dir, "conda-forge.yml")
@@ -2173,7 +2173,7 @@ def _read_forge_config(forge_dir, forge_yml=None):
         )
 
     with open(forge_yml, "r") as fh:
-        documents = list(yaml.safe_load_all(fh))
+        documents = list(ruamel_yaml(typ="safe").load_all(fh))
         file_config = (documents or [None])[0] or {}
 
     # Validate loaded configuration against a JSON schema.
@@ -2324,9 +2324,10 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
     # Set some more azure defaults
     config["azure"].setdefault("user_or_org", config["github"]["user_or_org"])
 
-    log = yaml.safe_dump(config)
     logger.debug("## CONFIGURATION USED\n")
-    logger.debug(log)
+    buffer = io.StringIO()
+    ruamel_yaml().dump(config, buffer)
+    logger.debug(buffer.getvalue())
     logger.debug("## END CONFIGURATION\n")
 
     if config["provider"]["linux_aarch64"] == "default":

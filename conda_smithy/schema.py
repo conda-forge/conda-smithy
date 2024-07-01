@@ -6,7 +6,7 @@ from enum import Enum
 from inspect import cleandoc
 from typing import Any, Dict, List, Literal, Optional, Union
 
-import yaml
+from ruamel.yaml import YAML
 from pydantic import BaseModel, Field, create_model, ConfigDict
 
 from conda.base.constants import KNOWN_SUBDIRS
@@ -1264,7 +1264,8 @@ class ConfigModel(BaseModel):
 if __name__ == "__main__":
     # This is used to generate the model dump for conda-smithy internal use
     # and for documentation purposes.
-
+    yaml = YAML()
+    yaml.indent(mapping=2, sequence=4, offset=2)
     model = ConfigModel()
 
     with CONDA_FORGE_YAML_SCHEMA_FILE.open(mode="w+") as f:
@@ -1273,4 +1274,4 @@ if __name__ == "__main__":
         f.write("\n")
 
     with CONDA_FORGE_YAML_DEFAULTS_FILE.open(mode="w+") as f:
-        f.write(yaml.dump(model.model_dump(), indent=2))
+        f.write(yaml.dump(model.model_dump()))

@@ -4,13 +4,15 @@ import os
 import subprocess
 from textwrap import dedent
 
-import yaml
+from ruamel.yaml import YAML
 import pytest
 import shutil
 
 from conda_smithy import cli
 
 _thisdir = os.path.abspath(os.path.dirname(__file__))
+
+yaml = YAML(typ="safe")
 
 InitArgs = collections.namedtuple(
     "ArgsObject",
@@ -79,7 +81,7 @@ def test_init_with_custom_config(py_recipe):
     init_obj(args)
     destination = os.path.join(recipe, "py-test-feedstock")
     assert os.path.isdir(destination)
-    data = yaml.safe_load(
+    data = yaml.load(
         open(os.path.join(destination, "conda-forge.yml"), "r").read()
     )
     assert data.get("bot") != None
@@ -125,7 +127,7 @@ def test_init_multiple_output_matrix(testing_workdir):
     )
     assert os.path.isfile(linux_libpng16)
     with open(linux_libpng16) as f:
-        config = yaml.safe_load(f)
+        config = yaml.load(f)
     assert config["libpng"] == ["1.6"]
     assert config["libpq"] == ["9.5"]
     # this is a zipped key, but it's not used, so it shouldn't show up
@@ -240,7 +242,7 @@ def test_init_cuda_docker_images(testing_workdir):
         )
         assert os.path.isfile(fn)
         with open(fn) as fh:
-            config = yaml.safe_load(fh)
+            config = yaml.load(fh)
         assert config["cuda_compiler"] == ["nvcc"]
         assert config["cuda_compiler_version"] == [f"{v}"]
         if v is None:
@@ -291,7 +293,7 @@ def test_init_multiple_docker_images(testing_workdir):
     fn = os.path.join(matrix_dir, "linux_64_.yaml")
     assert os.path.isfile(fn)
     with open(fn) as fh:
-        config = yaml.safe_load(fh)
+        config = yaml.load(fh)
     assert config["docker_image"] == ["pickme_a"]
     assert config["cdt_name"] == ["pickme_1"]
 
@@ -368,5 +370,5 @@ def test_render_variant_mismatches(testing_workdir):
             continue
         cfg = os.path.join(matrix_dir, _cfg)
         with open(cfg, "r") as f:
-            data = yaml.safe_load(f)
+            data = yaml.load(f)
         assert data["a"] == data["b"]

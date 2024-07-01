@@ -7,9 +7,11 @@ import textwrap
 from pathlib import Path
 
 import pytest
-import yaml
+from ruamel.yaml import YAML
 
 from conda_smithy import configure_feedstock
+
+yaml = YAML(typ="safe")
 
 
 def test_noarch_skips_appveyor(noarch_recipe, jinja_env):
@@ -293,7 +295,7 @@ def test_upload_on_branch_azure(upload_on_branch_recipe, jinja_env):
             "azure-pipelines-osx.yml",
         )
     ) as fp:
-        content_osx = yaml.safe_load(fp)
+        content_osx = yaml.load(fp)
     assert (
         'UPLOAD_ON_BRANCH="foo-branch"'
         in content_osx["jobs"][0]["steps"][0]["script"]
@@ -310,7 +312,7 @@ def test_upload_on_branch_azure(upload_on_branch_recipe, jinja_env):
             "azure-pipelines-win.yml",
         )
     ) as fp:
-        content_win = yaml.safe_load(fp)
+        content_win = yaml.load(fp)
     win_build_step = next(
         step
         for step in content_win["jobs"][0]["steps"]
@@ -334,7 +336,7 @@ def test_upload_on_branch_azure(upload_on_branch_recipe, jinja_env):
             "azure-pipelines-linux.yml",
         )
     ) as fp:
-        content_lin = yaml.safe_load(fp)
+        content_lin = yaml.load(fp)
     assert (
         'UPLOAD_ON_BRANCH="foo-branch"'
         in content_lin["jobs"][0]["steps"][1]["script"]
@@ -360,7 +362,7 @@ def test_upload_on_branch_appveyor(upload_on_branch_recipe, jinja_env):
     with open(
         os.path.join(upload_on_branch_recipe.recipe, ".appveyor.yml")
     ) as fp:
-        content = yaml.safe_load(fp)
+        content = yaml.load(fp)
     assert "%APPVEYOR_REPO_BRANCH%" in content["deploy_script"][0]
     assert "UPLOAD_ON_BRANCH=foo-branch" in content["deploy_script"][-2]
 
@@ -553,7 +555,7 @@ def test_secrets(py_recipe, jinja_env):
     ):
         if config_yaml.endswith(".yaml"):
             with open(config_yaml) as fo:
-                config = yaml.safe_load(fo)
+                config = yaml.load(fo)
                 if "jobs" in config:
                     assert any(
                         any(
@@ -572,7 +574,7 @@ def test_secrets(py_recipe, jinja_env):
     )
 
     with open(os.path.join(py_recipe.recipe, ".drone.yml")) as fo:
-        config = list(yaml.safe_load_all(fo))[-1]
+        config = list(yaml.load_all(fo))[-1]
         assert any(
             step.get("environment", {})
             .get("BINSTAR_TOKEN", {})
@@ -596,7 +598,7 @@ def test_migrator_recipe(recipe_migration_cfep9, jinja_env):
             "linux_64_python2.7.yaml",
         )
     ) as fo:
-        variant = yaml.safe_load(fo)
+        variant = yaml.load(fo)
         assert variant["zlib"] == ["1000"]
 
 
@@ -629,7 +631,7 @@ def test_migrator_cfp_override(recipe_migration_cfep9, jinja_env):
             "linux_64_python2.7.yaml",
         )
     ) as fo:
-        variant = yaml.safe_load(fo)
+        variant = yaml.load(fo)
         assert variant["zlib"] == ["1001"]
 
 
@@ -693,7 +695,7 @@ def test_migrator_downgrade_recipe(
             "linux_64_python2.7.yaml",
         )
     ) as fo:
-        variant = yaml.safe_load(fo)
+        variant = yaml.load(fo)
         assert variant["zlib"] == ["1000"]
 
 
@@ -788,7 +790,7 @@ def test_webservices_action_exists(py_recipe, jinja_env):
     with open(
         os.path.join(py_recipe.recipe, ".github/workflows/webservices.yml")
     ) as f:
-        action_config = yaml.safe_load(f)
+        action_config = yaml.load(f)
     assert "jobs" in action_config
     assert "webservices" in action_config["jobs"]
 
@@ -805,7 +807,7 @@ def test_automerge_action_exists(py_recipe, jinja_env):
     with open(
         os.path.join(py_recipe.recipe, ".github/workflows/automerge.yml")
     ) as f:
-        action_config = yaml.safe_load(f)
+        action_config = yaml.load(f)
     assert "jobs" in action_config
     assert "automerge-action" in action_config["jobs"]
 
