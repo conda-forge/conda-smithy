@@ -39,6 +39,7 @@ bot:
   version_updates:
     exclude: []
     random_fraction_to_keep: null
+    skip: false
     sources: null
 build_platform:
   emscripten_wasm32: emscripten_wasm32
