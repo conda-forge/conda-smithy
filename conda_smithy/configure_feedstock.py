@@ -90,6 +90,24 @@ CONDA_FORGE_PINNING_LIFETIME = int(
     os.environ.get("CONDA_FORGE_PINNING_LIFETIME", 15 * 60)
 )
 
+ALWAYS_KEEP_KEYS = {
+    "zip_keys",
+    "pin_run_as_build",
+    "MACOSX_DEPLOYMENT_TARGET",
+    "MACOSX_SDK_VERSION",
+    "macos_min_version",
+    "macos_machine",
+    "channel_sources",
+    "channel_targets",
+    "docker_image",
+    "build_number_decrement",
+    # The following keys are required for some of our aarch64 builds
+    # Added in https://github.com/conda-forge/conda-forge-pinning-feedstock/pull/180
+    "cdt_arch",
+    "cdt_name",
+    "BUILD",
+}
+
 
 # use lru_cache to avoid repeating warnings endlessly;
 # this keeps track of 10 different messages and then warns again
@@ -602,23 +620,7 @@ def _collapse_subpackage_variants(
     )
 
     # Add in some variables that should always be preserved
-    always_keep_keys = {
-        "zip_keys",
-        "pin_run_as_build",
-        "MACOSX_DEPLOYMENT_TARGET",
-        "MACOSX_SDK_VERSION",
-        "macos_min_version",
-        "macos_machine",
-        "channel_sources",
-        "channel_targets",
-        "docker_image",
-        "build_number_decrement",
-        # The following keys are required for some of our aarch64 builds
-        # Added in https://github.com/conda-forge/conda-forge-pinning-feedstock/pull/180
-        "cdt_arch",
-        "cdt_name",
-        "BUILD",
-    }
+    always_keep_keys = set() | ALWAYS_KEEP_KEYS
 
     if not is_noarch:
         always_keep_keys.add("target_platform")
@@ -898,15 +900,14 @@ def reduce_variants(recipe_path, config, input_variants):
     metadata.config.variant = variants[0]
     metadata.config.variants = variants
     all_used = metadata.get_used_vars(force_global=True)
-    new_input_variants = input_variants.copy()
     # trim unused dimensions, these cost a lot in render_recipe!
+    all_used.update(ALWAYS_KEEP_KEYS)
+    all_used.update(
+        {"target_platform", "extend_keys", "ignore_build_only_deps"}
+    )
+    new_input_variants = input_variants.copy()
     for key, value in input_variants.items():
-        if len(value) > 1 and key not in all_used | {
-            "zip_keys",
-            "pin_run_as_build",
-            "ignore_build_only_deps",
-            "extend_keys",
-        }:
+        if len(value) > 1 and key not in all_used:
             logger.debug(f"Trimming unused dimension: {key}")
             new_input_variants.pop(key)
     _trim_unused_zip_keys(new_input_variants)
@@ -1103,6 +1104,7 @@ def _render_ci_provider(
         # CBC yaml files where variants in the migrators are not in the CBC.
         # Thus we move it out of the way.
         # TODO: upstream this as a flag in conda-build
+        logger.info(f"Getting variants for {platform}-{arch}")
         try:
             _recipe_cbc = os.path.join(
                 forge_dir,
