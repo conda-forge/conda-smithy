@@ -21,10 +21,25 @@ jobs:
       inputs:
         scriptSource: inline
         script: |
+          import ssl
+          import time
+          import urllib.error
           import urllib.request
-          url = 'https://github.com/conda-forge/miniforge/releases/latest/download/Mambaforge-Windows-x86_64.exe'
-          path = r"$(Build.ArtifactStagingDirectory)/Miniforge.exe"
-          urllib.request.urlretrieve(url, path)
+          url = r"https://github.com/conda-forge/miniforge/releases/latest/download/Mambaforge-Windows-x86_64.exe"
+          destination_path = r"$(Build.ArtifactStagingDirectory)/Miniforge.exe"
+          retry_time = 2
+          tries_remaining = 5
+          while tries_remaining >= 0:
+              tries_remaining -= 1
+              try:
+                  urllib.request.urlretrieve(url, destination_path)
+              except (urllib.error.URLError, ssl.SSLError) as e:
+                  if tries_remaining >= 0:
+                      print(f"Encountered error: '{e}'. Retry in {retry_time} seconds.")
+                      time.sleep(retry_time)
+                      retry_time *= 2
+                  else:
+                      raise e
 
     - script: |
         start /wait "" %BUILD_ARTIFACTSTAGINGDIRECTORY%\Miniforge.exe /InstallationType=JustMe /RegisterPython=0 /S /D=C:\Miniforge
