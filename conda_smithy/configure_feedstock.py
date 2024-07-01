@@ -896,21 +896,31 @@ def reduce_variants(recipe_path, config, input_variants):
     variants = initial_variants = conda_build.variants.get_package_variants(
         metadata, variants=input_variants
     )
-    logger.debug(f"Starting with {len(initial_variants)} variants")
+    logger.debug(f"Starting with {len(initial_variants)} input variants")
     metadata.config.variant = variants[0]
     metadata.config.variants = variants
+
+    # force_global finds variables in the whole recipe, not just a single output.
+    # Without this, dependencies won't be found for multi-output recipes
+    # This may not be comprehensive!
     all_used = metadata.get_used_vars(force_global=True)
     # trim unused dimensions, these cost a lot in render_recipe!
+    # because `get_used_vars` above _may_ not catch all possible used variables,
+    # only trim unused variables that increase dimensionality.
     all_used.update(ALWAYS_KEEP_KEYS)
     all_used.update(
         {"target_platform", "extend_keys", "ignore_build_only_deps"}
     )
     new_input_variants = input_variants.copy()
     for key, value in input_variants.items():
+        # only consider keys that increase render dimensionality for trimming at this stage
+        # so we don't have to trust all_used to find _everything_
         if len(value) > 1 and key not in all_used:
             logger.debug(f"Trimming unused dimension: {key}")
             new_input_variants.pop(key)
     _trim_unused_zip_keys(new_input_variants)
+    # new_variants = metadata.get_reduced_variant_set(all_used)
+    # logger.info(f"Rendering with {len(new_variants)} input variants")
     return new_input_variants
 
 
