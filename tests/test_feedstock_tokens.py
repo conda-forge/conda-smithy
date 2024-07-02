@@ -1,6 +1,5 @@
 import os
 import json
-from unittest import mock
 import time
 
 import pytest
@@ -49,13 +48,8 @@ from conda_smithy.ci_register import drone_default_endpoint
 @pytest.mark.parametrize(
     "repo", ["GITHUB_TOKEN", "${GITHUB_TOKEN}", "GH_TOKEN", "${GH_TOKEN}"]
 )
-@mock.patch("conda_smithy.feedstock_tokens.tempfile")
-@mock.patch("conda_smithy.feedstock_tokens.git")
-@mock.patch("conda_smithy.github.gh_token")
 def test_feedstock_tokens_roundtrip(
-    gh_mock,
-    git_mock,
-    tmp_mock,
+    mocker,
     tmpdir,
     repo,
     project,
@@ -65,6 +59,10 @@ def test_feedstock_tokens_roundtrip(
     expires_at,
     retval_time,
 ):
+    gh_mock = mocker.patch("conda_smithy.github.gh_token")
+    tmp_mock = mocker.patch("conda_smithy.feedstock_tokens.tempfile")
+    git_mock = mocker.patch("conda_smithy.feedstock_tokens.git")
+
     gh_mock.return_value = "abc123"
     tmp_mock.TemporaryDirectory.return_value.__enter__.return_value = str(
         tmpdir
@@ -115,18 +113,17 @@ def test_feedstock_tokens_roundtrip(
 @pytest.mark.parametrize(
     "repo", ["GITHUB_TOKEN", "${GITHUB_TOKEN}", "GH_TOKEN", "${GH_TOKEN}"]
 )
-@mock.patch("conda_smithy.feedstock_tokens.tempfile")
-@mock.patch("conda_smithy.feedstock_tokens.git")
-@mock.patch("conda_smithy.github.gh_token")
 def test_is_valid_feedstock_token_nofile(
-    gh_mock,
-    git_mock,
-    tmp_mock,
+    mocker,
     tmpdir,
     repo,
     project,
     ci,
 ):
+    gh_mock = mocker.patch("conda_smithy.github.gh_token")
+    tmp_mock = mocker.patch("conda_smithy.feedstock_tokens.tempfile")
+    git_mock = mocker.patch("conda_smithy.feedstock_tokens.git")
+
     gh_mock.return_value = "abc123"
     tmp_mock.TemporaryDirectory.return_value.__enter__.return_value = str(
         tmpdir
@@ -158,13 +155,8 @@ def test_is_valid_feedstock_token_nofile(
 @pytest.mark.parametrize(
     "repo", ["GITHUB_TOKEN", "${GITHUB_TOKEN}", "GH_TOKEN", "${GH_TOKEN}"]
 )
-@mock.patch("conda_smithy.feedstock_tokens.tempfile")
-@mock.patch("conda_smithy.feedstock_tokens.git")
-@mock.patch("conda_smithy.github.gh_token")
 def test_is_valid_feedstock_token_badtoken(
-    gh_mock,
-    git_mock,
-    tmp_mock,
+    mocker,
     tmpdir,
     repo,
     project,
@@ -172,6 +164,9 @@ def test_is_valid_feedstock_token_badtoken(
     provider,
     ci,
 ):
+    gh_mock = mocker.patch("conda_smithy.github.gh_token")
+    tmp_mock = mocker.patch("conda_smithy.feedstock_tokens.tempfile")
+    git_mock = mocker.patch("conda_smithy.feedstock_tokens.git")
     gh_mock.return_value = "abc123"
     tmp_mock.TemporaryDirectory.return_value.__enter__.return_value = str(
         tmpdir
@@ -301,13 +296,8 @@ def test_read_feedstock_token(ci):
 @pytest.mark.parametrize(
     "repo", ["$GITHUB_TOKEN", "${GITHUB_TOKEN}", "$GH_TOKEN", "${GH_TOKEN}"]
 )
-@mock.patch("conda_smithy.feedstock_tokens.tempfile")
-@mock.patch("conda_smithy.feedstock_tokens.git")
-@mock.patch("conda_smithy.github.gh_token")
 def test_feedstock_token_exists(
-    gh_mock,
-    git_mock,
-    tmp_mock,
+    mocker,
     tmpdir,
     repo,
     project,
@@ -318,6 +308,10 @@ def test_feedstock_token_exists(
     expires_at,
     retval_time,
 ):
+    gh_mock = mocker.patch("conda_smithy.github.gh_token")
+    tmp_mock = mocker.patch("conda_smithy.feedstock_tokens.tempfile")
+    git_mock = mocker.patch("conda_smithy.feedstock_tokens.git")
+
     gh_mock.return_value = "abc123"
     tmp_mock.TemporaryDirectory.return_value.__enter__.return_value = str(
         tmpdir
@@ -352,12 +346,11 @@ def test_feedstock_token_exists(
 @pytest.mark.parametrize(
     "repo", ["$GITHUB_TOKEN", "${GITHUB_TOKEN}", "$GH_TOKEN", "${GH_TOKEN}"]
 )
-@mock.patch("conda_smithy.feedstock_tokens.tempfile")
-@mock.patch("conda_smithy.feedstock_tokens.git")
-@mock.patch("conda_smithy.github.gh_token")
-def test_feedstock_token_raises(
-    gh_mock, git_mock, tmp_mock, tmpdir, repo, project, ci
-):
+def test_feedstock_token_raises(mocker, tmpdir, repo, project, ci):
+    gh_mock = mocker.patch("conda_smithy.github.gh_token")
+    tmp_mock = mocker.patch("conda_smithy.feedstock_tokens.tempfile")
+    git_mock = mocker.patch("conda_smithy.feedstock_tokens.git")
+
     gh_mock.return_value = "abc123"
     tmp_mock.TemporaryDirectory.return_value.__enter__.return_value = str(
         tmpdir
@@ -385,21 +378,18 @@ def test_feedstock_token_raises(
 @pytest.mark.parametrize(
     "repo", ["$GITHUB_TOKEN", "${GITHUB_TOKEN}", "$GH_TOKEN", "${GH_TOKEN}"]
 )
-@mock.patch("conda_smithy.feedstock_tokens.secrets")
-@mock.patch("conda_smithy.feedstock_tokens.os.urandom")
-@mock.patch("conda_smithy.feedstock_tokens.tempfile")
-@mock.patch("conda_smithy.feedstock_tokens.git")
-@mock.patch("conda_smithy.github.gh_token")
 def test_register_feedstock_token_works(
-    gh_mock,
-    git_mock,
-    tmp_mock,
-    osuran_mock,
-    secrets_mock,
+    mocker,
     tmpdir,
     repo,
     ci,
 ):
+    gh_mock = mocker.patch("conda_smithy.github.gh_token")
+    tmp_mock = mocker.patch("conda_smithy.feedstock_tokens.tempfile")
+    git_mock = mocker.patch("conda_smithy.feedstock_tokens.git")
+    secrets_mock = mocker.patch("conda_smithy.feedstock_tokens.secrets")
+    osuran_mock = mocker.patch("conda_smithy.feedstock_tokens.os.urandom")
+
     gh_mock.return_value = "abc123"
     tmp_mock.TemporaryDirectory.return_value.__enter__.return_value = str(
         tmpdir
@@ -457,21 +447,18 @@ def test_register_feedstock_token_works(
 @pytest.mark.parametrize(
     "repo", ["$GITHUB_TOKEN", "${GITHUB_TOKEN}", "$GH_TOKEN", "${GH_TOKEN}"]
 )
-@mock.patch("conda_smithy.feedstock_tokens.secrets")
-@mock.patch("conda_smithy.feedstock_tokens.os.urandom")
-@mock.patch("conda_smithy.feedstock_tokens.tempfile")
-@mock.patch("conda_smithy.feedstock_tokens.git")
-@mock.patch("conda_smithy.github.gh_token")
 def test_register_feedstock_token_notoken(
-    gh_mock,
-    git_mock,
-    tmp_mock,
-    osuran_mock,
-    secrets_mock,
+    mocker,
     tmpdir,
     repo,
     ci,
 ):
+    gh_mock = mocker.patch("conda_smithy.github.gh_token")
+    tmp_mock = mocker.patch("conda_smithy.feedstock_tokens.tempfile")
+    git_mock = mocker.patch("conda_smithy.feedstock_tokens.git")
+    secrets_mock = mocker.patch("conda_smithy.feedstock_tokens.secrets")
+    osuran_mock = mocker.patch("conda_smithy.feedstock_tokens.os.urandom")
+
     gh_mock.return_value = "abc123"
     tmp_mock.TemporaryDirectory.return_value.__enter__.return_value = str(
         tmpdir
@@ -513,21 +500,18 @@ def test_register_feedstock_token_notoken(
 @pytest.mark.parametrize(
     "repo", ["$GITHUB_TOKEN", "${GITHUB_TOKEN}", "$GH_TOKEN", "${GH_TOKEN}"]
 )
-@mock.patch("conda_smithy.feedstock_tokens.secrets")
-@mock.patch("conda_smithy.feedstock_tokens.os.urandom")
-@mock.patch("conda_smithy.feedstock_tokens.tempfile")
-@mock.patch("conda_smithy.feedstock_tokens.git")
-@mock.patch("conda_smithy.github.gh_token")
 def test_register_feedstock_token_append(
-    gh_mock,
-    git_mock,
-    tmp_mock,
-    osuran_mock,
-    secrets_mock,
+    mocker,
     tmpdir,
     repo,
     ci,
 ):
+    gh_mock = mocker.patch("conda_smithy.github.gh_token")
+    tmp_mock = mocker.patch("conda_smithy.feedstock_tokens.tempfile")
+    git_mock = mocker.patch("conda_smithy.feedstock_tokens.git")
+    secrets_mock = mocker.patch("conda_smithy.feedstock_tokens.secrets")
+    osuran_mock = mocker.patch("conda_smithy.feedstock_tokens.os.urandom")
+
     gh_mock.return_value = "abc123"
     tmp_mock.TemporaryDirectory.return_value.__enter__.return_value = str(
         tmpdir
@@ -588,19 +572,8 @@ def test_register_feedstock_token_append(
 @pytest.mark.parametrize("travis", [True, False])
 @pytest.mark.parametrize("github_actions", [True, False])
 @pytest.mark.parametrize("clobber", [True, False])
-@mock.patch("conda_smithy.feedstock_tokens.add_feedstock_token_to_drone")
-@mock.patch("conda_smithy.feedstock_tokens.add_feedstock_token_to_circle")
-@mock.patch("conda_smithy.feedstock_tokens.add_feedstock_token_to_travis")
-@mock.patch("conda_smithy.feedstock_tokens.add_feedstock_token_to_azure")
-@mock.patch(
-    "conda_smithy.feedstock_tokens.add_feedstock_token_to_github_actions"
-)
 def test_register_feedstock_token_with_providers(
-    github_actions_mock,
-    azure_mock,
-    travis_mock,
-    circle_mock,
-    drone_mock,
+    mocker,
     drone,
     circle,
     azure,
@@ -609,6 +582,22 @@ def test_register_feedstock_token_with_providers(
     clobber,
     unique_token_per_provider,
 ):
+    github_actions_mock = mocker.patch(
+        "conda_smithy.feedstock_tokens.add_feedstock_token_to_github_actions"
+    )
+    azure_mock = mocker.patch(
+        "conda_smithy.feedstock_tokens.add_feedstock_token_to_azure"
+    )
+    travis_mock = mocker.patch(
+        "conda_smithy.feedstock_tokens.add_feedstock_token_to_travis"
+    )
+    circle_mock = mocker.patch(
+        "conda_smithy.feedstock_tokens.add_feedstock_token_to_circle"
+    )
+    drone_mock = mocker.patch(
+        "conda_smithy.feedstock_tokens.add_feedstock_token_to_drone"
+    )
+
     user = "foo"
     project = "bar"
     providers = [
@@ -726,19 +715,8 @@ def test_register_feedstock_token_with_providers(
 @pytest.mark.parametrize("travis", [True, False])
 @pytest.mark.parametrize("github_actions", [True, False])
 @pytest.mark.parametrize("clobber", [True, False])
-@mock.patch("conda_smithy.feedstock_tokens.add_feedstock_token_to_drone")
-@mock.patch("conda_smithy.feedstock_tokens.add_feedstock_token_to_circle")
-@mock.patch("conda_smithy.feedstock_tokens.add_feedstock_token_to_travis")
-@mock.patch("conda_smithy.feedstock_tokens.add_feedstock_token_to_azure")
-@mock.patch(
-    "conda_smithy.feedstock_tokens.add_feedstock_token_to_github_actions"
-)
 def test_register_feedstock_token_with_providers_notoken(
-    github_actions_mock,
-    azure_mock,
-    travis_mock,
-    circle_mock,
-    drone_mock,
+    mocker,
     drone,
     circle,
     azure,
@@ -747,6 +725,22 @@ def test_register_feedstock_token_with_providers_notoken(
     clobber,
     unique_token_per_provider,
 ):
+    github_actions_mock = mocker.patch(
+        "conda_smithy.feedstock_tokens.add_feedstock_token_to_github_actions"
+    )
+    azure_mock = mocker.patch(
+        "conda_smithy.feedstock_tokens.add_feedstock_token_to_azure"
+    )
+    travis_mock = mocker.patch(
+        "conda_smithy.feedstock_tokens.add_feedstock_token_to_travis"
+    )
+    circle_mock = mocker.patch(
+        "conda_smithy.feedstock_tokens.add_feedstock_token_to_circle"
+    )
+    drone_mock = mocker.patch(
+        "conda_smithy.feedstock_tokens.add_feedstock_token_to_drone"
+    )
+
     user = "foo"
     project = "bar"
 
@@ -777,22 +771,27 @@ def test_register_feedstock_token_with_providers_notoken(
 @pytest.mark.parametrize(
     "provider", ["drone", "circle", "travis", "azure", "github_actions"]
 )
-@mock.patch("conda_smithy.feedstock_tokens.add_feedstock_token_to_drone")
-@mock.patch("conda_smithy.feedstock_tokens.add_feedstock_token_to_circle")
-@mock.patch("conda_smithy.feedstock_tokens.add_feedstock_token_to_travis")
-@mock.patch("conda_smithy.feedstock_tokens.add_feedstock_token_to_azure")
-@mock.patch(
-    "conda_smithy.feedstock_tokens.add_feedstock_token_to_github_actions"
-)
 def test_register_feedstock_token_with_providers_error(
-    github_actions_mock,
-    azure_mock,
-    travis_mock,
-    circle_mock,
-    drone_mock,
+    mocker,
     provider,
     unique_token_per_provider,
 ):
+    github_actions_mock = mocker.patch(
+        "conda_smithy.feedstock_tokens.add_feedstock_token_to_github_actions"
+    )
+    azure_mock = mocker.patch(
+        "conda_smithy.feedstock_tokens.add_feedstock_token_to_azure"
+    )
+    travis_mock = mocker.patch(
+        "conda_smithy.feedstock_tokens.add_feedstock_token_to_travis"
+    )
+    circle_mock = mocker.patch(
+        "conda_smithy.feedstock_tokens.add_feedstock_token_to_circle"
+    )
+    drone_mock = mocker.patch(
+        "conda_smithy.feedstock_tokens.add_feedstock_token_to_drone"
+    )
+
     user = "foo"
     project = "bar-feedstock"
     providers = [
