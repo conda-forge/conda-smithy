@@ -135,6 +135,7 @@ def test_rotate_anaconda_token_notoken(
     azure,
     travis,
     github_actions,
+    snapshot,
 ):
     github_actions_mock = mocker.patch(
         "conda_smithy.anaconda_token_rotation.rotate_token_in_github_actions"
@@ -171,8 +172,7 @@ def test_rotate_anaconda_token_notoken(
             github_actions=github_actions,
             drone_endpoints=[drone_default_endpoint],
         )
-
-    assert "anaconda token" in str(e.value)
+    assert str(e.value) == snapshot
 
     drone_mock.assert_not_called()
     circle_mock.assert_not_called()
@@ -186,7 +186,7 @@ def test_rotate_anaconda_token_notoken(
     "provider",
     ["drone", "circle", "travis", "azure", "appveyor", "github_actions"],
 )
-def test_rotate_anaconda_token_provider_error(mocker, provider):
+def test_rotate_anaconda_token_provider_error(mocker, provider, snapshot):
     github_actions_mock = mocker.patch(
         "conda_smithy.anaconda_token_rotation.rotate_token_in_github_actions"
     )
@@ -237,5 +237,4 @@ def test_rotate_anaconda_token_provider_error(mocker, provider):
         rotate_anaconda_token(
             user, project, None, drone_endpoints=[drone_default_endpoint]
         )
-
-    assert "on %s" % provider.replace("_", " ") in str(e.value)
+    assert str(e.value) == snapshot
