@@ -346,7 +346,7 @@ def test_feedstock_token_exists(
 @pytest.mark.parametrize(
     "repo", ["$GITHUB_TOKEN", "${GITHUB_TOKEN}", "$GH_TOKEN", "${GH_TOKEN}"]
 )
-def test_feedstock_token_raises(mocker, tmpdir, repo, project, ci):
+def test_feedstock_token_raises(mocker, tmpdir, repo, project, ci, snapshot):
     gh_mock = mocker.patch("conda_smithy.github.gh_token")
     tmp_mock = mocker.patch("conda_smithy.feedstock_tokens.tempfile")
     git_mock = mocker.patch("conda_smithy.feedstock_tokens.git")
@@ -364,8 +364,7 @@ def test_feedstock_token_raises(mocker, tmpdir, repo, project, ci):
 
     with pytest.raises(FeedstockTokenError) as e:
         feedstock_token_exists(user, project, repo, provider=ci)
-
-    assert "Testing for the feedstock token for" in str(e.value)
+    assert e.value == snapshot
 
     git_mock.Repo.clone_from.assert_called_once_with(
         "abc123",
@@ -378,12 +377,7 @@ def test_feedstock_token_raises(mocker, tmpdir, repo, project, ci):
 @pytest.mark.parametrize(
     "repo", ["$GITHUB_TOKEN", "${GITHUB_TOKEN}", "$GH_TOKEN", "${GH_TOKEN}"]
 )
-def test_register_feedstock_token_works(
-    mocker,
-    tmpdir,
-    repo,
-    ci,
-):
+def test_register_feedstock_token_works(mocker, tmpdir, repo, ci):
     gh_mock = mocker.patch("conda_smithy.github.gh_token")
     tmp_mock = mocker.patch("conda_smithy.feedstock_tokens.tempfile")
     git_mock = mocker.patch("conda_smithy.feedstock_tokens.git")
@@ -492,7 +486,6 @@ def test_register_feedstock_token_notoken(
     repo.remote.return_value.push.assert_not_called()
 
     assert not os.path.exists(token_json_pth)
-
     assert "No token found in" in str(e.value)
 
 
