@@ -33,9 +33,7 @@ def tmp_directory():
     "comp_lang",
     ["c", "cxx", "fortran", "rust", "m2w64_c", "m2w64_cxx", "m2w64_fortran"],
 )
-def test_stdlib_hint(comp_lang):
-    expected_message = "This recipe is using a compiler"
-
+def test_stdlib_hint(comp_lang, snapshot):
     with tmp_directory() as recipe_dir:
         with io.open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
             fh.write(
@@ -50,12 +48,10 @@ def test_stdlib_hint(comp_lang):
             )
 
         _, hints = linter.main(recipe_dir, return_hints=True)
-        assert any(h.startswith(expected_message) for h in hints)
+        assert hints == snapshot()
 
 
-def test_sysroot_hint():
-    expected_message = "You're setting a requirement on sysroot"
-
+def test_sysroot_hint(snapshot):
     with tmp_directory() as recipe_dir:
         with io.open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
             fh.write(
@@ -69,13 +65,12 @@ def test_sysroot_hint():
             )
 
         _, hints = linter.main(recipe_dir, return_hints=True)
-        assert any(h.startswith(expected_message) for h in hints)
+        assert hints == snapshot
+
 
 
 @pytest.mark.parametrize("where", ["run", "run_constrained"])
-def test_osx_hint(where):
-    expected_message = "You're setting a constraint on the `__osx` virtual"
-
+def test_osx_hint(where, snapshot):
     with tmp_directory() as recipe_dir:
         with io.open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
             fh.write(
@@ -90,12 +85,11 @@ def test_osx_hint(where):
             )
 
         _, hints = linter.main(recipe_dir, return_hints=True)
-        assert any(h.startswith(expected_message) for h in hints)
+        assert hints == snapshot
 
 
-def test_stdlib_hints_multi_output():
-    expected_message = "You're setting a requirement on sysroot"
 
+def test_stdlib_hints_multi_output(snapshot):
     with tmp_directory() as recipe_dir:
         with io.open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
             fh.write(
@@ -131,20 +125,13 @@ def test_stdlib_hints_multi_output():
             )
 
         _, hints = linter.main(recipe_dir, return_hints=True)
-        exp_stdlib = "This recipe is using a compiler"
-        exp_sysroot = "You're setting a requirement on sysroot"
-        exp_osx = "You're setting a constraint on the `__osx`"
-        assert any(h.startswith(exp_stdlib) for h in hints)
-        assert any(h.startswith(exp_sysroot) for h in hints)
-        assert any(h.startswith(exp_osx) for h in hints)
+        assert hints == snapshot
 
 
 @pytest.mark.parametrize("where", ["run", "run_constrained"])
-def test_osx_noarch_hint(where):
+def test_osx_noarch_hint(where, snapshot):
     # don't warn on packages that are using __osx as a noarch-marker, see
     # https://conda-forge.org/docs/maintainer/knowledge_base/#noarch-packages-with-os-specific-dependencies
-    avoid_message = "You're setting a constraint on the `__osx` virtual"
-
     with tmp_directory() as recipe_dir:
         with io.open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
             fh.write(
@@ -158,7 +145,7 @@ def test_osx_noarch_hint(where):
             )
 
         _, hints = linter.main(recipe_dir, return_hints=True)
-        assert not any(h.startswith(avoid_message) for h in hints)
+        assert hints == snapshot
 
 
 @pytest.mark.parametrize(
@@ -275,7 +262,7 @@ class Test_linter():
                 "run_exports": ["compatible_pin apackage"],
             },
         }
-        lints, hints = linter.lintify_meta_yaml(meta)
+        lints, _ = linter.lintify_meta_yaml(meta)
         expected = "pin_subpackage should be used instead"
         assert any(lint.startswith(expected) for lint in lints)
 
@@ -293,7 +280,7 @@ class Test_linter():
                 }
             ],
         }
-        lints, hints = linter.lintify_meta_yaml(meta)
+        lints, _ = linter.lintify_meta_yaml(meta)
         expected = "pin_compatible should be used instead"
         assert any(lint.startswith(expected) for lint in lints)
 
