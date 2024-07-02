@@ -13,6 +13,7 @@ dependencies:
   - pre-commit
   - mock
   - pytest
+  - pytest-mock
   - pytest-cov
   # Runtime dependencies
   - conda >=4.2
