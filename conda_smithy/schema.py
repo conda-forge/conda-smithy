@@ -335,6 +335,13 @@ class BotConfigVersionUpdates(BaseModel):
         description="List of sources to use for version updates",
     )
 
+    skip: Optional[bool] = Field(
+        default=False,
+        description="Skip automatic version updates. "
+        "Useful in cases where the source project's version numbers don't conform to "
+        "PEP440.",
+    )
+
 
 class BotConfig(BaseModel):
     """
