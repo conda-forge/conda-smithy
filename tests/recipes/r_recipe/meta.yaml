@@ -1,0 +1,10 @@
+package:
+    name: r-test
+    version: 1.0.0
+build:
+    skip: True  # [win]
+requirements:
+    build:
+        - r-base
+    run:
+        - r-base

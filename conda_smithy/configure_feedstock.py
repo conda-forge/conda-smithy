@@ -42,6 +42,13 @@ import conda_build.api
 import conda_build.render
 import conda_build.utils
 import conda_build.variants
+import conda_build.conda_interface
+import conda_build.render
+from conda.models.match_spec import MatchSpec
+from conda_build.metadata import get_selectors
+
+from copy import deepcopy
+
 from conda_build import __version__ as conda_build_version
 from jinja2 import FileSystemLoader
 from jinja2.sandbox import SandboxedEnvironment
@@ -64,7 +71,9 @@ from conda_smithy.utils import (
 )
 
 from . import __version__
-
+from rattler_build_conda_compat.render import render as rattler_render
+from rattler_build_conda_compat.loader import parse_recipe_config_file
+from .utils import RATTLER_BUILD
 
 conda_forge_content = os.path.abspath(os.path.dirname(__file__))
 
@@ -542,7 +551,6 @@ def _collapse_subpackage_variants(
         all_variants.update(HashableDict(v) for v in meta.config.variants)
 
         all_variants.add(HashableDict(meta.config.variant))
-
         if not meta.noarch:
             is_noarch = False
 
@@ -991,10 +999,16 @@ def _render_ci_provider(
             if ver:
                 os.environ["DEFAULT_LINUX_VERSION"] = ver
 
+        # detect if it's rattler-build recipe
+        if forge_config["conda_build_tool"] == RATTLER_BUILD:
+            recipe_file = "recipe.yaml"
+        else:
+            recipe_file = "meta.yaml"
+
         # detect if `compiler('cuda')` is used in meta.yaml,
         # and set appropriate environment variable
         with open(
-            os.path.join(forge_dir, forge_config["recipe_dir"], "meta.yaml")
+            os.path.join(forge_dir, forge_config["recipe_dir"], recipe_file)
         ) as f:
             meta_lines = f.readlines()
         # looking for `compiler('cuda')` with both quote variants;
@@ -1018,6 +1032,25 @@ def _render_ci_provider(
         ) = conda_build.variants.get_package_combined_spec(
             os.path.join(forge_dir, forge_config["recipe_dir"]), config=config
         )
+
+        # If we are using new recipe
+        # we also load rattler-build variants.yaml
+        if recipe_file == "recipe.yaml":
+            # get_selectors from conda-build return namespace
+            # so it is usefull to reuse it here
+            namespace = get_selectors(config)
+            variants_path = os.path.join(
+                forge_dir, forge_config["recipe_dir"], "variants.yaml"
+            )
+            if os.path.exists(variants_path):
+                new_spec = parse_recipe_config_file(variants_path, namespace)
+                specs = {
+                    "combined_spec": combined_variant_spec,
+                    "variants.yaml": new_spec,
+                }
+                combined_variant_spec = conda_build.variants.combine_specs(
+                    specs
+                )
 
         migrated_combined_variant_spec = migrate_combined_spec(
             combined_variant_spec,
@@ -1073,17 +1106,28 @@ def _render_ci_provider(
             channel_sources = migrated_combined_variant_spec.get(
                 "channel_sources", [""]
             )[0].split(",")
-            metas = _conda_build_api_render_for_smithy(
-                os.path.join(forge_dir, forge_config["recipe_dir"]),
-                platform=platform,
-                arch=arch,
-                ignore_system_variants=True,
-                variants=migrated_combined_variant_spec,
-                permit_undefined_jinja=True,
-                finalize=False,
-                bypass_env_check=True,
-                channel_urls=channel_sources,
-            )
+
+            if recipe_file == "recipe.yaml":
+                metas = rattler_render(
+                    os.path.join(forge_dir, forge_config["recipe_dir"]),
+                    platform=platform,
+                    arch=arch,
+                    ignore_system_variants=True,
+                    variants=migrated_combined_variant_spec,
+                    channel_urls=channel_sources,
+                )
+            else:
+                metas = _conda_build_api_render_for_smithy(
+                    os.path.join(forge_dir, forge_config["recipe_dir"]),
+                    platform=platform,
+                    arch=arch,
+                    ignore_system_variants=True,
+                    variants=migrated_combined_variant_spec,
+                    permit_undefined_jinja=True,
+                    finalize=False,
+                    bypass_env_check=True,
+                    channel_urls=channel_sources,
+                )
         finally:
             if os.path.exists(_recipe_cbc + ".conda.smithy.bak"):
                 os.rename(_recipe_cbc + ".conda.smithy.bak", _recipe_cbc)
@@ -2011,14 +2055,24 @@ def render_README(jinja_env, forge_config, forge_dir, render_info=None):
 
     if len(metas) == 0:
         try:
-            metas = conda_build.api.render(
-                os.path.join(forge_dir, forge_config["recipe_dir"]),
-                exclusive_config_file=forge_config["exclusive_config_file"],
-                permit_undefined_jinja=True,
-                finalize=False,
-                bypass_env_check=True,
-                trim_skip=False,
-            )
+            if forge_config["conda_build_tool"] == RATTLER_BUILD:
+                metas = rattler_render(
+                    os.path.join(forge_dir, forge_config["recipe_dir"]),
+                    exclusive_config_file=forge_config[
+                        "exclusive_config_file"
+                    ],
+                )
+            else:
+                metas = conda_build.api.render(
+                    os.path.join(forge_dir, forge_config["recipe_dir"]),
+                    exclusive_config_file=forge_config[
+                        "exclusive_config_file"
+                    ],
+                    permit_undefined_jinja=True,
+                    finalize=False,
+                    bypass_env_check=True,
+                    trim_skip=False,
+                )
             metas = [m[0] for m in metas]
         except Exception:
             raise RuntimeError(
@@ -2302,6 +2356,8 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
         config["conda_build_tool_deps"] = "conda-build boa"
     elif config["conda_build_tool"] == "conda-build+conda-libmamba-solver":
         config["conda_build_tool_deps"] = "conda-build conda-libmamba-solver"
+    elif config["conda_build_tool"] == "rattler-build":
+        config["conda_build_tool_deps"] = "rattler-build"
     else:
         config["conda_build_tool_deps"] = "conda-build"
 

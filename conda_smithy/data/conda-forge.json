@@ -1714,7 +1714,8 @@
             "conda-build",
             "conda-build+classic",
             "conda-build+conda-libmamba-solver",
-            "mambabuild"
+            "mambabuild",
+            "rattler-build"
           ],
           "type": "string"
         },
