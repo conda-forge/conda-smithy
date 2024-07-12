@@ -174,11 +174,20 @@
     ]),
   })
 # ---
-# name: test_init_with_custom_config
+# name: test_init_with_custom_config[conda-build]
   dict({
     'bot': dict({
       'automerge': True,
       'run_deps_from_wheel': True,
     }),
+  })
+# ---
+# name: test_init_with_custom_config[rattler-build]
+  dict({
+    'bot': dict({
+      'automerge': True,
+      'run_deps_from_wheel': True,
+    }),
+    'conda_build_tool': 'rattler-build',
   })
 # ---

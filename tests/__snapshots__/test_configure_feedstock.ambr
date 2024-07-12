@@ -1,5 +1,5 @@
 # serializer version: 1
-# name: test_automerge_action_exists
+# name: test_automerge_action_exists[conda-build]
   dict({
     'jobs': dict({
       'automerge-action': dict({
@@ -29,7 +29,37 @@
     }),
   })
 # ---
-# name: test_choco_install
+# name: test_automerge_action_exists[rattler-build]
+  dict({
+    'jobs': dict({
+      'automerge-action': dict({
+        'name': 'automerge',
+        'runs-on': 'ubuntu-latest',
+        'steps': list([
+          dict({
+            'id': 'automerge-action',
+            'name': 'automerge-action',
+            'uses': 'conda-forge/automerge-action@main',
+            'with': dict({
+              'github_token': '${{ secrets.GITHUB_TOKEN }}',
+              'rerendering_github_token': '${{ secrets.RERENDERING_GITHUB_TOKEN }}',
+            }),
+          }),
+        ]),
+      }),
+    }),
+    True: dict({
+      'check_suite': dict({
+        'types': list([
+          'completed',
+        ]),
+      }),
+      'status': dict({
+      }),
+    }),
+  })
+# ---
+# name: test_choco_install[conda-build]
   '''
   # This file was generated automatically from conda-smithy. To update this configuration,
   # update the conda-forge.yml and/or the recipe/meta.yaml.
@@ -95,13 +125,85 @@
           BINSTAR_TOKEN: $(BINSTAR_TOKEN)
   '''
 # ---
-# name: test_conda_build_tools
+# name: test_choco_install[rattler-build]
   '''
-  WARNING  conda_smithy.configure_feedstock:configure_feedstock.py:2182 conda-forge.yml: $.build_with_mambabuild = True -> 'Build With Mambabuild' is deprecated.
+  # This file was generated automatically from conda-smithy. To update this configuration,
+  # update the conda-forge.yml and/or the recipe/meta.yaml.
+  # -*- mode: yaml -*-
+  
+  jobs:
+  - job: win
+    pool:
+      vmImage: windows-2022
+    strategy:
+      matrix:
+        win_64_python2.7:
+          CONFIG: win_64_python2.7
+          UPLOAD_PACKAGES: 'True'
+        win_64_python3.5:
+          CONFIG: win_64_python3.5
+          UPLOAD_PACKAGES: 'True'
+    timeoutInMinutes: 360
+    variables:
+      CONDA_BLD_PATH: D:\\bld\\
+      UPLOAD_TEMP: D:\\tmp
+  
+    steps:
+      - script: |
+          choco install pkg0 -fdv -y --debug
+        displayName: "Install Chocolatey Package: pkg0"
+  
+      - script: |
+          choco install pkg1 --version=X.Y.Z -fdv -y --debug
+        displayName: "Install Chocolatey Package: pkg1 --version=X.Y.Z"
+  
+  
+      - task: PythonScript@0
+        displayName: 'Download Miniforge'
+        inputs:
+          scriptSource: inline
+          script: |
+            import urllib.request
+            url = 'https://github.com/conda-forge/miniforge/releases/latest/download/Mambaforge-Windows-x86_64.exe'
+            path = r"$(Build.ArtifactStagingDirectory)/Miniforge.exe"
+            urllib.request.urlretrieve(url, path)
+  
+      - script: |
+          start /wait "" %BUILD_ARTIFACTSTAGINGDIRECTORY%\Miniforge.exe /InstallationType=JustMe /RegisterPython=0 /S /D=C:\Miniforge
+        displayName: Install Miniforge
+  
+      - powershell: Write-Host "##vso[task.prependpath]C:\Miniforge\Scripts"
+        displayName: Add conda to PATH
+  
+      - script: |
+          call ".scripts\run_win_build.bat"
+        displayName: Run Windows build
+        env:
+          PYTHONUNBUFFERED: 1
+          CONFIG: $(CONFIG)
+          CI: azure
+          flow_run_id: azure_$(Build.BuildNumber).$(System.JobAttempt)
+          remote_url: $(Build.Repository.Uri)
+          sha: $(Build.SourceVersion)
+          UPLOAD_PACKAGES: $(UPLOAD_PACKAGES)
+          UPLOAD_TEMP: $(UPLOAD_TEMP)
+          UPLOAD_ON_BRANCH: foo-branch
+          BINSTAR_TOKEN: $(BINSTAR_TOKEN)
+  '''
+# ---
+# name: test_conda_build_tools[conda-build]
+  '''
+  WARNING  conda_smithy.configure_feedstock:configure_feedstock.py:2236 conda-forge.yml: $.build_with_mambabuild = True -> 'Build With Mambabuild' is deprecated.
   build_with_mambabuild is deprecated, use `conda_build_tool` instead.
-  WARNING  conda_smithy.configure_feedstock:configure_feedstock.py:2182 conda-forge.yml: $.build_with_mambabuild = False -> 'Build With Mambabuild' is deprecated.
+  WARNING  conda_smithy.configure_feedstock:configure_feedstock.py:2236 conda-forge.yml: $.build_with_mambabuild = False -> 'Build With Mambabuild' is deprecated.
   build_with_mambabuild is deprecated, use `conda_build_tool` instead.
-  WARNING  conda_smithy.configure_feedstock:configure_feedstock.py:2182 conda-forge.yml: $.conda_build_tool = does-not-exist -> 'does-not-exist' is not valid under any of the given schemas
+  WARNING  conda_smithy.configure_feedstock:configure_feedstock.py:2236 conda-forge.yml: $.conda_build_tool = does-not-exist -> 'does-not-exist' is not valid under any of the given schemas
+  
+  '''
+# ---
+# name: test_conda_build_tools[rattler-build]
+  '''
+  WARNING  conda_smithy.configure_feedstock:configure_feedstock.py:2236 conda-forge.yml: $.conda_build_tool = does-not-exist -> 'does-not-exist' is not valid under any of the given schemas
   
   '''
 # ---
@@ -201,13 +303,19 @@
     ]),
   })
 # ---
-# name: test_noarch_platforms_bad_yaml
+# name: test_noarch_platforms_bad_yaml[conda-build]
   '''
-  WARNING  conda_smithy.configure_feedstock:configure_feedstock.py:2182 conda-forge.yml: $.noarch_platforms = ['eniac', 'zx80'] -> ['eniac', 'zx80'] is not valid under any of the given schemas
+  WARNING  conda_smithy.configure_feedstock:configure_feedstock.py:2236 conda-forge.yml: $.noarch_platforms = ['eniac', 'zx80'] -> ['eniac', 'zx80'] is not valid under any of the given schemas
   
   '''
 # ---
-# name: test_stdlib_deployment_target
+# name: test_noarch_platforms_bad_yaml[rattler-build]
+  '''
+  WARNING  conda_smithy.configure_feedstock:configure_feedstock.py:2236 conda-forge.yml: $.noarch_platforms = ['eniac', 'zx80'] -> ['eniac', 'zx80'] is not valid under any of the given schemas
+  
+  '''
+# ---
+# name: test_stdlib_deployment_target[conda-build]
   '''
   MACOSX_DEPLOYMENT_TARGET:
   - '10.14'
@@ -224,7 +332,7 @@
   
   '''
 # ---
-# name: test_stdlib_on_azure[linux content]
+# name: test_stdlib_on_azure[conda-build][linux content]
   '''
   c_compiler:
   - gcc
@@ -239,7 +347,7 @@
   
   '''
 # ---
-# name: test_stdlib_on_azure[osx content]
+# name: test_stdlib_on_azure[conda-build][osx content]
   '''
   MACOSX_DEPLOYMENT_TARGET:
   - '10.9'
@@ -256,7 +364,7 @@
   
   '''
 # ---
-# name: test_stdlib_on_azure[win content]
+# name: test_stdlib_on_azure[conda-build][win content]
   '''
   c_compiler:
   - vs2017
@@ -267,12 +375,12 @@
   
   '''
 # ---
-# name: test_upload_on_branch_appveyor[config]
+# name: test_upload_on_branch_appveyor[conda-build][config]
   dict({
     'upload_on_branch': 'foo-branch',
   })
 # ---
-# name: test_upload_on_branch_appveyor[deploy script]
+# name: test_upload_on_branch_appveyor[conda-build][deploy script]
   list([
     'set "GIT_BRANCH=%APPVEYOR_REPO_BRANCH%"',
     'set "FEEDSTOCK_NAME=%APPVEYOR_REPO_NAME:*/=%"',
@@ -282,12 +390,27 @@
     }),
   ])
 # ---
-# name: test_upload_on_branch_azure[config]
+# name: test_upload_on_branch_appveyor[rattler-build][config]
   dict({
     'upload_on_branch': 'foo-branch',
   })
 # ---
-# name: test_upload_on_branch_azure[content linux]
+# name: test_upload_on_branch_appveyor[rattler-build][deploy script]
+  list([
+    'set "GIT_BRANCH=%APPVEYOR_REPO_BRANCH%"',
+    'set "FEEDSTOCK_NAME=%APPVEYOR_REPO_NAME:*/=%"',
+    'set "UPLOAD_ON_BRANCH=foo-branch"',
+    dict({
+      'cmd': 'upload_package  .\\ .\\recipe .ci_support\\%CONFIG%.yaml',
+    }),
+  ])
+# ---
+# name: test_upload_on_branch_azure[conda-build][config]
+  dict({
+    'upload_on_branch': 'foo-branch',
+  })
+# ---
+# name: test_upload_on_branch_azure[conda-build][content linux]
   '''
   export CI=azure
   export flow_run_id=azure_$(Build.BuildNumber).$(System.JobAttempt)
@@ -305,7 +428,7 @@
   
   '''
 # ---
-# name: test_upload_on_branch_azure[content osx]
+# name: test_upload_on_branch_azure[conda-build][content osx]
   '''
   export CI=azure
   export flow_run_id=azure_$(Build.BuildNumber).$(System.JobAttempt)
@@ -324,7 +447,71 @@
   
   '''
 # ---
-# name: test_webservices_action_exists
+# name: test_upload_on_branch_azure[rattler-build][config]
+  dict({
+    'upload_on_branch': 'foo-branch',
+  })
+# ---
+# name: test_upload_on_branch_azure[rattler-build][content linux]
+  '''
+  export CI=azure
+  export flow_run_id=azure_$(Build.BuildNumber).$(System.JobAttempt)
+  export remote_url=$(Build.Repository.Uri)
+  export sha=$(Build.SourceVersion)
+  export GIT_BRANCH=$BUILD_SOURCEBRANCHNAME
+  export FEEDSTOCK_NAME=$(basename ${BUILD_REPOSITORY_NAME})
+  export UPLOAD_ON_BRANCH="foo-branch"
+  if [[ "${BUILD_REASON:-}" == "PullRequest" ]]; then
+    export IS_PR_BUILD="True"
+  else
+    export IS_PR_BUILD="False"
+  fi
+  .scripts/run_docker_build.sh
+  
+  '''
+# ---
+# name: test_upload_on_branch_azure[rattler-build][content osx]
+  '''
+  export CI=azure
+  export flow_run_id=azure_$(Build.BuildNumber).$(System.JobAttempt)
+  export remote_url=$(Build.Repository.Uri)
+  export sha=$(Build.SourceVersion)
+  export OSX_FORCE_SDK_DOWNLOAD="1"
+  export GIT_BRANCH=$BUILD_SOURCEBRANCHNAME
+  export FEEDSTOCK_NAME=$(basename ${BUILD_REPOSITORY_NAME})
+  export UPLOAD_ON_BRANCH="foo-branch"
+  if [[ "${BUILD_REASON:-}" == "PullRequest" ]]; then
+    export IS_PR_BUILD="True"
+  else
+    export IS_PR_BUILD="False"
+  fi
+  ./.scripts/run_osx_build.sh
+  
+  '''
+# ---
+# name: test_webservices_action_exists[conda-build]
+  dict({
+    'jobs': dict({
+      'webservices': dict({
+        'name': 'webservices',
+        'runs-on': 'ubuntu-latest',
+        'steps': list([
+          dict({
+            'id': 'webservices',
+            'name': 'webservices',
+            'uses': 'conda-forge/webservices-dispatch-action@main',
+            'with': dict({
+              'github_token': '${{ secrets.GITHUB_TOKEN }}',
+              'rerendering_github_token': '${{ secrets.RERENDERING_GITHUB_TOKEN }}',
+            }),
+          }),
+        ]),
+      }),
+    }),
+    True: 'repository_dispatch',
+  })
+# ---
+# name: test_webservices_action_exists[rattler-build]
   dict({
     'jobs': dict({
       'webservices': dict({
