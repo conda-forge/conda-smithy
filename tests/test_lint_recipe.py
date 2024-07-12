@@ -68,7 +68,6 @@ def test_sysroot_hint(snapshot):
         assert hints == snapshot
 
 
-
 @pytest.mark.parametrize("where", ["run", "run_constrained"])
 def test_osx_hint(where, snapshot):
     with tmp_directory() as recipe_dir:
@@ -86,7 +85,6 @@ def test_osx_hint(where, snapshot):
 
         _, hints = linter.main(recipe_dir, return_hints=True)
         assert hints == snapshot
-
 
 
 def test_stdlib_hints_multi_output(snapshot):
@@ -252,7 +250,7 @@ MACOSX_SDK_VERSION:         # [osx]
             assert any(h.startswith(exp_hint) for h in hints)
 
 
-class Test_linter():
+class Test_linter:
     def test_pin_compatible_in_run_exports(self):
         meta = {
             "package": {
@@ -306,7 +304,7 @@ class Test_linter():
         assert expected_message in lints
 
         expected_message = "The summary item is expected in the about section."
-        assert expected_message in  lints
+        assert expected_message in lints
 
     def test_bad_about_license(self):
         meta = {
@@ -426,7 +424,10 @@ class Test_linter():
             }
         )
         assert expected_message not in lints
-        assert "It looks like the 'foobar' output doesn't have any tests." in hints
+        assert (
+            "It looks like the 'foobar' output doesn't have any tests."
+            in hints
+        )
 
         lints, hints = linter.lintify_meta_yaml(
             {
@@ -437,7 +438,10 @@ class Test_linter():
             }
         )
         assert expected_message not in lints
-        assert "It looks like the 'foobar' output doesn't have any tests." in hints
+        assert (
+            "It looks like the 'foobar' output doesn't have any tests."
+            in hints
+        )
 
     def test_test_section_with_recipe(self):
         # If we have a run_test.py file, we shouldn't need to provide
@@ -514,7 +518,9 @@ class Test_linter():
                         "Expecting lints for '{}', but didn't get any."
                         "".format(selector)
                     )
-                assert (not is_good) == any(lint.startswith(expected_message) for lint in lints), message
+                assert (not is_good) == any(
+                    lint.startswith(expected_message) for lint in lints
+                ), message
 
             assert_selector("name: foo_py3      # [py3k]")
             assert_selector("name: foo_py3  [py3k]", is_good=False)
@@ -544,8 +550,8 @@ class Test_linter():
                     ).format(meta_string)
                 problems = lints if kind == "lint" else hints
                 assert (not is_good) == any(
-                        problem.startswith(expected_start) for problem in problems
-                    ), message
+                    problem.startswith(expected_start) for problem in problems
+                ), message
 
             assert_pyXY_selector(
                 """
@@ -649,8 +655,8 @@ class Test_linter():
                     ).format(meta_string)
 
                 assert (not is_good) == any(
-                        lint.startswith(expected_start) for lint in lints
-                    ), message
+                    lint.startswith(expected_start) for lint in lints
+                ), message
 
             assert_noarch_selector(
                 """
@@ -795,7 +801,9 @@ class Test_linter():
                         "Expected hints for '{}', but didn't " "get any."
                     ).format(meta_string)
 
-                assert (not is_good) == any(lint.startswith(expected_start) for lint in hints), message
+                assert (not is_good) == any(
+                    lint.startswith(expected_start) for lint in hints
+                ), message
 
             assert_noarch_hint(
                 """
@@ -1533,22 +1541,34 @@ class Test_linter():
     def test_python_requirements(self):
         meta = {"requirements": {"host": ["python >=3"]}}
         lints, hints = linter.lintify_meta_yaml(meta)
-        assert "If python is a host requirement, it should be a run requirement." in lints
+        assert (
+            "If python is a host requirement, it should be a run requirement."
+            in lints
+        )
 
         meta = {
             "requirements": {"host": ["python >=3"]},
             "outputs": [{"name": "foo"}],
         }
         lints, hints = linter.lintify_meta_yaml(meta)
-        assert "If python is a host requirement, it should be a run requirement." not in lints
+        assert (
+            "If python is a host requirement, it should be a run requirement."
+            not in lints
+        )
 
         meta = {"requirements": {"host": ["python >=3", "python"]}}
         lints, hints = linter.lintify_meta_yaml(meta)
-        assert "Non noarch packages should have python requirement without any version constraints." not in lints
+        assert (
+            "Non noarch packages should have python requirement without any version constraints."
+            not in lints
+        )
 
         meta = {"requirements": {"host": ["python >=3"]}}
         lints, hints = linter.lintify_meta_yaml(meta)
-        assert "Non noarch packages should have python requirement without any version constraints." in lints
+        assert (
+            "Non noarch packages should have python requirement without any version constraints."
+            in lints
+        )
 
         meta = {
             "requirements": {"host": ["python"], "run": ["python-dateutil"]}
@@ -1559,22 +1579,34 @@ class Test_linter():
     def test_r_base_requirements(self):
         meta = {"requirements": {"host": ["r-base >=3.5"]}}
         lints, hints = linter.lintify_meta_yaml(meta)
-        assert "If r-base is a host requirement, it should be a run requirement." in lints
+        assert (
+            "If r-base is a host requirement, it should be a run requirement."
+            in lints
+        )
 
         meta = {
             "requirements": {"host": ["r-base >=3.5"]},
             "outputs": [{"name": "foo"}],
         }
         lints, hints = linter.lintify_meta_yaml(meta)
-        assert "If r-base is a host requirement, it should be a run requirement." not in lints
+        assert (
+            "If r-base is a host requirement, it should be a run requirement."
+            not in lints
+        )
 
         meta = {"requirements": {"host": ["r-base >=3.5", "r-base"]}}
         lints, hints = linter.lintify_meta_yaml(meta)
-        assert "Non noarch packages should have r-base requirement without any version constraints." not in lints
+        assert (
+            "Non noarch packages should have r-base requirement without any version constraints."
+            not in lints
+        )
 
         meta = {"requirements": {"host": ["r-base >=3.5"]}}
         lints, hints = linter.lintify_meta_yaml(meta)
-        assert "Non noarch packages should have r-base requirement without any version constraints." in lints
+        assert (
+            "Non noarch packages should have r-base requirement without any version constraints."
+            in lints
+        )
 
     @pytest.mark.skipif(
         shutil.which("shellcheck") is None, reason="shellcheck not found"
@@ -1661,7 +1693,7 @@ class Test_linter():
 
 
 @pytest.mark.cli
-class TestCLI_recipe_lint():
+class TestCLI_recipe_lint:
     def test_cli_fail(self):
         with tmp_directory() as recipe_dir:
             with io.open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
@@ -1804,7 +1836,7 @@ class TestCLI_recipe_lint():
                     )
                 assert not is_good == any(
                     lint.startswith(expected_message) for lint in lints
-                    ), message
+                ), message
 
             assert_jinja('{% set version = "0.27.3" %}')
             assert_jinja('{% set version="0.27.3" %}', is_good=False)
