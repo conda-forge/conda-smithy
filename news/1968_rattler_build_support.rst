@@ -1,6 +1,6 @@
 **Added:**
 
-* Add support for rattler-build and the new recipe format.
+* Add support for rattler-build and the new recipe format. (#1876, #1977)
 
 **Changed:**
 
