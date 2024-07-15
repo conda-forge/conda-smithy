@@ -42,6 +42,8 @@ conda_build_tools = Literal[
     "conda-build+conda-libmamba-solver",
     # will run 'conda mambabuild', as provided by boa
     "mambabuild",
+    # will run 'rattler-build build'
+    "rattler-build",
 ]
 
 
