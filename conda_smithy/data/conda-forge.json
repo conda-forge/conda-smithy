@@ -795,9 +795,6 @@
     "Nullable": {
       "const": null,
       "description": "Created to avoid issue with schema validation of null values in lists or dicts.",
-      "enum": [
-        null
-      ],
       "title": "Nullable"
     },
     "Platforms": {
