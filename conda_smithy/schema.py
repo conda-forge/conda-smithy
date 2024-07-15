@@ -80,6 +80,7 @@ class BotConfigInspectionChoice(StrEnum):
 class BotConfigVersionUpdatesSourcesChoice(StrEnum):
     CRAN = "cran"
     GITHUB = "github"
+    GITHUB_RELEASES = "githubreleases"
     INCREMENT_ALPHA_RAW_URL = "incrementalpharawurl"
     LIBRARIES_IO = "librariesio"
     NPM = "npm"
