@@ -626,3 +626,15 @@
   email: 49699333+dependabot[bot]@users.noreply.github.com
   num_commits: 2
   first_commit: 2024-05-21 04:47:22
+- name: nichmor
+  email: nmorkotilo@gmail.com
+- name: Jan Lehnarsdt
+  email: jan@apache.org
+- name: Finn Womack
+  email: finnwomack@microsoft.com
+  alternate_emails:
+    - flan313@gmail.com
+- name: Vincenzo Eduardo Padulano
+  email: v.e.padulano@gmail.com
+- name: Matt Fisher
+  email: mfisher87@gmail.com
