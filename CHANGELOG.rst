@@ -4,6 +4,48 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.37.0
+====================
+
+**Added:**
+
+* Add support for rattler-build and the new recipe format. (#1876, #1977)
+* Support ``githubreleases`` version updates provider in the schema. (#1976)
+* Added new schema entries for the bot section of the ``conda-forge.yml``. (#1969)
+* Linter now warns if go licenses are not bundled.
+* Linter now warns if Rust licenses are not bundled.
+
+**Changed:**
+
+* Changed the build_steps.sh template so that it sets the number of maximum file
+  descriptors to 1024. This is done to mitigate a bug in old rpm versions (such
+  as the one shipped with the Centos7 container) that cause the yum install step
+  to take tremendously longer than necessary. See https://bugzilla.redhat.com/show_bug.cgi?id=1537564
+
+**Removed:**
+
+* Removed setup.py file and remaining references in tests and CI
+
+**Fixed:**
+
+* Bug causing rerender to incorrectly set the runs-on github actions option in the workflow yaml when self_hosted is set to true
+* Compatibility with conda-build 24.7, which removes HashableDict
+
+**Authors:**
+
+* Matthew R. Becker
+* Jaime Rodríguez-Guerra
+* nichmor
+* Min RK
+* Bastian Zimmermann
+* pre-commit-ci[bot]
+* Jan Lehnarsdt
+* Finn Womack
+* Matt Fisher
+* Vincenzo Eduardo Padulano
+
+
+
 v3.36.2
 ====================
 
