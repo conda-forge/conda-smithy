@@ -119,7 +119,7 @@
   first_commit: 2019-02-17 13:35:45
 - name: Min RK
   email: benjaminrk@gmail.com
-  num_commits: 30
+  num_commits: 33
   first_commit: 2016-09-15 09:07:34
   github: minrk
 - name: Phil Elson
@@ -393,7 +393,7 @@
   github: shadowwalkersb
 - name: Matthew R. Becker
   email: becker.mr@gmail.com
-  num_commits: 211
+  num_commits: 217
   first_commit: 2020-01-07 17:44:33
   github: beckermr
   alternate_emails:
@@ -476,14 +476,14 @@
   github: jwillemsen
 - name: Jaime Rodríguez-Guerra
   email: jaimergp@users.noreply.github.com
-  num_commits: 180
+  num_commits: 186
   first_commit: 2020-11-01 14:18:08
   github: jaimergp
 - name: Bastian Zimmermann
   email: 10774221+BastianZim@users.noreply.github.com
   aliases:
   - BastianZim
-  num_commits: 18
+  num_commits: 28
   first_commit: 2021-01-27 15:01:39
   github: BastianZim
 - name: Wolf Vollprecht
@@ -587,7 +587,7 @@
   github: zklaus
 - name: pre-commit-ci[bot]
   email: 66853113+pre-commit-ci[bot]@users.noreply.github.com
-  num_commits: 17
+  num_commits: 19
   first_commit: 2023-10-30 15:49:50
   github: carterbox
 - name: Amit Kumar
@@ -628,13 +628,27 @@
   first_commit: 2024-05-21 04:47:22
 - name: nichmor
   email: nmorkotilo@gmail.com
+  num_commits: 58
+  first_commit: 2024-03-21 10:10:04
+  github: nichmor
 - name: Jan Lehnarsdt
   email: jan@apache.org
+  num_commits: 10
+  first_commit: 2024-06-20 05:03:27
+  github: neighbourhoodie
 - name: Finn Womack
   email: finnwomack@microsoft.com
   alternate_emails:
-    - flan313@gmail.com
+  - flan313@gmail.com
+  num_commits: 4
+  first_commit: 2024-06-18 21:03:43
+  github: finnagin
 - name: Vincenzo Eduardo Padulano
   email: v.e.padulano@gmail.com
+  num_commits: 1
+  first_commit: 2024-06-24 02:38:13
 - name: Matt Fisher
   email: mfisher87@gmail.com
+  num_commits: 3
+  first_commit: 2024-06-30 13:54:12
+  github: mfisher87
