@@ -1,0 +1,49 @@
+# serializer version: 1
+# name: test_feedstock_token_raises[$GH_TOKEN-bar-None]
+  FeedstockTokenError('Testing for the feedstock token for foo/bar on provider failed! Try the command locally with DEBUG_FEEDSTOCK_TOKENS defined in the environment to investigate!')
+# ---
+# name: test_feedstock_token_raises[$GH_TOKEN-bar-azure]
+  FeedstockTokenError('Testing for the feedstock token for foo/bar on provider azure failed! Try the command locally with DEBUG_FEEDSTOCK_TOKENS defined in the environment to investigate!')
+# ---
+# name: test_feedstock_token_raises[$GH_TOKEN-bar-feedstock-None]
+  FeedstockTokenError('Testing for the feedstock token for foo/bar-feedstock on provider failed! Try the command locally with DEBUG_FEEDSTOCK_TOKENS defined in the environment to investigate!')
+# ---
+# name: test_feedstock_token_raises[$GH_TOKEN-bar-feedstock-azure]
+  FeedstockTokenError('Testing for the feedstock token for foo/bar-feedstock on provider azure failed! Try the command locally with DEBUG_FEEDSTOCK_TOKENS defined in the environment to investigate!')
+# ---
+# name: test_feedstock_token_raises[$GITHUB_TOKEN-bar-None]
+  FeedstockTokenError('Testing for the feedstock token for foo/bar on provider failed! Try the command locally with DEBUG_FEEDSTOCK_TOKENS defined in the environment to investigate!')
+# ---
+# name: test_feedstock_token_raises[$GITHUB_TOKEN-bar-azure]
+  FeedstockTokenError('Testing for the feedstock token for foo/bar on provider azure failed! Try the command locally with DEBUG_FEEDSTOCK_TOKENS defined in the environment to investigate!')
+# ---
+# name: test_feedstock_token_raises[$GITHUB_TOKEN-bar-feedstock-None]
+  FeedstockTokenError('Testing for the feedstock token for foo/bar-feedstock on provider failed! Try the command locally with DEBUG_FEEDSTOCK_TOKENS defined in the environment to investigate!')
+# ---
+# name: test_feedstock_token_raises[$GITHUB_TOKEN-bar-feedstock-azure]
+  FeedstockTokenError('Testing for the feedstock token for foo/bar-feedstock on provider azure failed! Try the command locally with DEBUG_FEEDSTOCK_TOKENS defined in the environment to investigate!')
+# ---
+# name: test_feedstock_token_raises[${GH_TOKEN}-bar-None]
+  FeedstockTokenError('Testing for the feedstock token for foo/bar on provider failed! Try the command locally with DEBUG_FEEDSTOCK_TOKENS defined in the environment to investigate!')
+# ---
+# name: test_feedstock_token_raises[${GH_TOKEN}-bar-azure]
+  FeedstockTokenError('Testing for the feedstock token for foo/bar on provider azure failed! Try the command locally with DEBUG_FEEDSTOCK_TOKENS defined in the environment to investigate!')
+# ---
+# name: test_feedstock_token_raises[${GH_TOKEN}-bar-feedstock-None]
+  FeedstockTokenError('Testing for the feedstock token for foo/bar-feedstock on provider failed! Try the command locally with DEBUG_FEEDSTOCK_TOKENS defined in the environment to investigate!')
+# ---
+# name: test_feedstock_token_raises[${GH_TOKEN}-bar-feedstock-azure]
+  FeedstockTokenError('Testing for the feedstock token for foo/bar-feedstock on provider azure failed! Try the command locally with DEBUG_FEEDSTOCK_TOKENS defined in the environment to investigate!')
+# ---
+# name: test_feedstock_token_raises[${GITHUB_TOKEN}-bar-None]
+  FeedstockTokenError('Testing for the feedstock token for foo/bar on provider failed! Try the command locally with DEBUG_FEEDSTOCK_TOKENS defined in the environment to investigate!')
+# ---
+# name: test_feedstock_token_raises[${GITHUB_TOKEN}-bar-azure]
+  FeedstockTokenError('Testing for the feedstock token for foo/bar on provider azure failed! Try the command locally with DEBUG_FEEDSTOCK_TOKENS defined in the environment to investigate!')
+# ---
+# name: test_feedstock_token_raises[${GITHUB_TOKEN}-bar-feedstock-None]
+  FeedstockTokenError('Testing for the feedstock token for foo/bar-feedstock on provider failed! Try the command locally with DEBUG_FEEDSTOCK_TOKENS defined in the environment to investigate!')
+# ---
+# name: test_feedstock_token_raises[${GITHUB_TOKEN}-bar-feedstock-azure]
+  FeedstockTokenError('Testing for the feedstock token for foo/bar-feedstock on provider azure failed! Try the command locally with DEBUG_FEEDSTOCK_TOKENS defined in the environment to investigate!')
+# ---

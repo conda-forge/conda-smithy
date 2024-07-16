@@ -1,0 +1,275 @@
+# serializer version: 1
+# name: test_migrate_windows_compilers
+  dict({
+    'c_compiler': list([
+      'vs2008',
+      'vs2017',
+    ]),
+    'migrator_ts': list([
+      -1.0,
+    ]),
+    'vc': list([
+      '9',
+      '14.1',
+    ]),
+    'zip_keys': list([
+      list([
+        'vc',
+        'c_compiler',
+      ]),
+    ]),
+  })
+# ---
+# name: test_multiple_key_add_migration[res2]
+  dict({
+    'migrator_ts': list([
+      -1.0,
+    ]),
+    'numpy': list([
+      '1.16',
+      '1.100',
+      '1.200',
+      '1.16',
+      '1.16',
+      '1.18',
+    ]),
+    'python': list([
+      '3.6.* *_cpython',
+      '3.9.* *_cpython',
+      '3.10.* *_cpython',
+      '3.7.* *_cpython',
+      '3.8.* *_cpython',
+      '3.6.* *_73_pypy',
+    ]),
+    'python_impl': list([
+      'cpython',
+      'cpython',
+      'cpython',
+      'cpython',
+      'cpython',
+      'pypy',
+    ]),
+    'zip_keys': list([
+      list([
+        'cuda_compiler_version',
+        'docker_image',
+      ]),
+      list([
+        'numpy',
+        'python',
+        'python_impl',
+      ]),
+    ]),
+  })
+# ---
+# name: test_multiple_key_add_migration[res3]
+  dict({
+    'migrator_ts': -1.0,
+    'python': list([
+      '3.6.* *_cpython',
+      '3.9.* *_cpython',
+      '3.10.* *_cpython',
+      '3.7.* *_cpython',
+      '3.8.* *_cpython',
+    ]),
+    'python_impl': list([
+      'cpython',
+    ]),
+    'zip_keys': list([
+      list([
+        'python',
+      ]),
+      list([
+        'cuda_compiler_version',
+        'docker_image',
+      ]),
+    ]),
+  })
+# ---
+# name: test_new_pinned_package
+  dict({
+    'gprc-cpp': list([
+      '1.23',
+    ]),
+    'jpeg': list([
+      '3.0',
+    ]),
+    'migrator_ts': list([
+      -1.0,
+    ]),
+    'pin_run_as_build': dict({
+      'gprc-cpp': dict({
+        'max_pin': 'x.x',
+      }),
+      'jpeg': dict({
+        'max_pin': 'x',
+      }),
+    }),
+  })
+# ---
+# name: test_no_ordering
+  dict({
+    'migrator_ts': list([
+      -1.0,
+    ]),
+    'xyz': list([
+      '2',
+    ]),
+  })
+# ---
+# name: test_ordering
+  dict({
+    'c_compiler': list([
+      'gcc',
+    ]),
+    'migrator_ts': list([
+      -1.0,
+    ]),
+  })
+# ---
+# name: test_ordering_downgrade
+  dict({
+    'jpeg': list([
+      '2.0',
+    ]),
+    'migrator_ts': list([
+      -1.0,
+    ]),
+  })
+# ---
+# name: test_ordering_space
+  dict({
+    'migrator_ts': list([
+      -1.0,
+    ]),
+    'python': list([
+      '2.7 *_cpython',
+    ]),
+  })
+# ---
+# name: test_pin_run_as_build
+  dict({
+    'migrator_ts': list([
+      -1.0,
+    ]),
+    'pin_run_as_build': dict({
+      'boost-cpp': dict({
+        'max_pin': 'x.x',
+      }),
+      'python': dict({
+        'max_pin': 'x.x',
+      }),
+      'rust': dict({
+        'max_pin': 'x',
+      }),
+    }),
+  })
+# ---
+# name: test_py39_migration[res2]
+  dict({
+    'migrator_ts': list([
+      -1.0,
+    ]),
+    'numpy': list([
+      '1.16',
+      '1.100',
+      '1.16',
+      '1.16',
+      '1.18',
+    ]),
+    'python': list([
+      '3.6.* *_cpython',
+      '3.9.* *_cpython',
+      '3.7.* *_cpython',
+      '3.8.* *_cpython',
+      '3.6.* *_73_pypy',
+    ]),
+    'python_impl': list([
+      'cpython',
+      'cpython',
+      'cpython',
+      'cpython',
+      'pypy',
+    ]),
+    'zip_keys': list([
+      list([
+        'cuda_compiler_version',
+        'docker_image',
+      ]),
+      list([
+        'numpy',
+        'python',
+        'python_impl',
+      ]),
+    ]),
+  })
+# ---
+# name: test_py39_migration[res3]
+  dict({
+    'migrator_ts': -1.0,
+    'python': list([
+      '3.6.* *_cpython',
+      '3.9.* *_cpython',
+      '3.7.* *_cpython',
+      '3.8.* *_cpython',
+    ]),
+    'python_impl': list([
+      'cpython',
+    ]),
+    'zip_keys': list([
+      list([
+        'python',
+      ]),
+      list([
+        'cuda_compiler_version',
+        'docker_image',
+      ]),
+    ]),
+  })
+# ---
+# name: test_variant_key_remove
+  dict({
+    'migrator_ts': -1.0,
+    'numpy': list([
+      '1.18',
+      '1.16',
+    ]),
+    'python': list([
+      '3.6.* *_73_pypy',
+      '3.8.* *_cpython',
+    ]),
+    'python_impl': list([
+      'pypy',
+      'cpython',
+    ]),
+    'zip_keys': list([
+      list([
+        'python',
+        'numpy',
+        'python_impl',
+      ]),
+    ]),
+  })
+# ---
+# name: test_zip_keys
+  dict({
+    'migrator_ts': list([
+      -1.0,
+    ]),
+    'zip_keys': list([
+      list([
+        'c_compiler',
+        'root',
+      ]),
+      list([
+        'pyqt',
+        'qt',
+      ]),
+      list([
+        'python',
+        'vc',
+        'vc_runtime',
+      ]),
+    ]),
+  })
+# ---

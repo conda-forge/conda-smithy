@@ -1,0 +1,211 @@
+# serializer version: 1
+# name: test_rotate_anaconda_token_notoken[False-False-False-False-False-False]
+  'You must have the anaconda token defined to do token rotation!'
+# ---
+# name: test_rotate_anaconda_token_notoken[False-False-False-False-False-True]
+  'You must have the anaconda token defined to do token rotation!'
+# ---
+# name: test_rotate_anaconda_token_notoken[False-False-False-False-True-False]
+  'You must have the anaconda token defined to do token rotation!'
+# ---
+# name: test_rotate_anaconda_token_notoken[False-False-False-False-True-True]
+  'You must have the anaconda token defined to do token rotation!'
+# ---
+# name: test_rotate_anaconda_token_notoken[False-False-False-True-False-False]
+  'You must have the anaconda token defined to do token rotation!'
+# ---
+# name: test_rotate_anaconda_token_notoken[False-False-False-True-False-True]
+  'You must have the anaconda token defined to do token rotation!'
+# ---
+# name: test_rotate_anaconda_token_notoken[False-False-False-True-True-False]
+  'You must have the anaconda token defined to do token rotation!'
+# ---
+# name: test_rotate_anaconda_token_notoken[False-False-False-True-True-True]
+  'You must have the anaconda token defined to do token rotation!'
+# ---
+# name: test_rotate_anaconda_token_notoken[False-False-True-False-False-False]
+  'You must have the anaconda token defined to do token rotation!'
+# ---
+# name: test_rotate_anaconda_token_notoken[False-False-True-False-False-True]
+  'You must have the anaconda token defined to do token rotation!'
+# ---
+# name: test_rotate_anaconda_token_notoken[False-False-True-False-True-False]
+  'You must have the anaconda token defined to do token rotation!'
+# ---
+# name: test_rotate_anaconda_token_notoken[False-False-True-False-True-True]
+  'You must have the anaconda token defined to do token rotation!'
+# ---
+# name: test_rotate_anaconda_token_notoken[False-False-True-True-False-False]
+  'You must have the anaconda token defined to do token rotation!'
+# ---
+# name: test_rotate_anaconda_token_notoken[False-False-True-True-False-True]
+  'You must have the anaconda token defined to do token rotation!'
+# ---
+# name: test_rotate_anaconda_token_notoken[False-False-True-True-True-False]
+  'You must have the anaconda token defined to do token rotation!'
+# ---
+# name: test_rotate_anaconda_token_notoken[False-False-True-True-True-True]
+  'You must have the anaconda token defined to do token rotation!'
+# ---
+# name: test_rotate_anaconda_token_notoken[False-True-False-False-False-False]
+  'You must have the anaconda token defined to do token rotation!'
+# ---
+# name: test_rotate_anaconda_token_notoken[False-True-False-False-False-True]
+  'You must have the anaconda token defined to do token rotation!'
+# ---
+# name: test_rotate_anaconda_token_notoken[False-True-False-False-True-False]
+  'You must have the anaconda token defined to do token rotation!'
+# ---
+# name: test_rotate_anaconda_token_notoken[False-True-False-False-True-True]
+  'You must have the anaconda token defined to do token rotation!'
+# ---
+# name: test_rotate_anaconda_token_notoken[False-True-False-True-False-False]
+  'You must have the anaconda token defined to do token rotation!'
+# ---
+# name: test_rotate_anaconda_token_notoken[False-True-False-True-False-True]
+  'You must have the anaconda token defined to do token rotation!'
+# ---
+# name: test_rotate_anaconda_token_notoken[False-True-False-True-True-False]
+  'You must have the anaconda token defined to do token rotation!'
+# ---
+# name: test_rotate_anaconda_token_notoken[False-True-False-True-True-True]
+  'You must have the anaconda token defined to do token rotation!'
+# ---
+# name: test_rotate_anaconda_token_notoken[False-True-True-False-False-False]
+  'You must have the anaconda token defined to do token rotation!'
+# ---
+# name: test_rotate_anaconda_token_notoken[False-True-True-False-False-True]
+  'You must have the anaconda token defined to do token rotation!'
+# ---
+# name: test_rotate_anaconda_token_notoken[False-True-True-False-True-False]
+  'You must have the anaconda token defined to do token rotation!'
+# ---
+# name: test_rotate_anaconda_token_notoken[False-True-True-False-True-True]
+  'You must have the anaconda token defined to do token rotation!'
+# ---
+# name: test_rotate_anaconda_token_notoken[False-True-True-True-False-False]
+  'You must have the anaconda token defined to do token rotation!'
+# ---
+# name: test_rotate_anaconda_token_notoken[False-True-True-True-False-True]
+  'You must have the anaconda token defined to do token rotation!'
+# ---
+# name: test_rotate_anaconda_token_notoken[False-True-True-True-True-False]
+  'You must have the anaconda token defined to do token rotation!'
+# ---
+# name: test_rotate_anaconda_token_notoken[False-True-True-True-True-True]
+  'You must have the anaconda token defined to do token rotation!'
+# ---
+# name: test_rotate_anaconda_token_notoken[True-False-False-False-False-False]
+  'You must have the anaconda token defined to do token rotation!'
+# ---
+# name: test_rotate_anaconda_token_notoken[True-False-False-False-False-True]
+  'You must have the anaconda token defined to do token rotation!'
+# ---
+# name: test_rotate_anaconda_token_notoken[True-False-False-False-True-False]
+  'You must have the anaconda token defined to do token rotation!'
+# ---
+# name: test_rotate_anaconda_token_notoken[True-False-False-False-True-True]
+  'You must have the anaconda token defined to do token rotation!'
+# ---
+# name: test_rotate_anaconda_token_notoken[True-False-False-True-False-False]
+  'You must have the anaconda token defined to do token rotation!'
+# ---
+# name: test_rotate_anaconda_token_notoken[True-False-False-True-False-True]
+  'You must have the anaconda token defined to do token rotation!'
+# ---
+# name: test_rotate_anaconda_token_notoken[True-False-False-True-True-False]
+  'You must have the anaconda token defined to do token rotation!'
+# ---
+# name: test_rotate_anaconda_token_notoken[True-False-False-True-True-True]
+  'You must have the anaconda token defined to do token rotation!'
+# ---
+# name: test_rotate_anaconda_token_notoken[True-False-True-False-False-False]
+  'You must have the anaconda token defined to do token rotation!'
+# ---
+# name: test_rotate_anaconda_token_notoken[True-False-True-False-False-True]
+  'You must have the anaconda token defined to do token rotation!'
+# ---
+# name: test_rotate_anaconda_token_notoken[True-False-True-False-True-False]
+  'You must have the anaconda token defined to do token rotation!'
+# ---
+# name: test_rotate_anaconda_token_notoken[True-False-True-False-True-True]
+  'You must have the anaconda token defined to do token rotation!'
+# ---
+# name: test_rotate_anaconda_token_notoken[True-False-True-True-False-False]
+  'You must have the anaconda token defined to do token rotation!'
+# ---
+# name: test_rotate_anaconda_token_notoken[True-False-True-True-False-True]
+  'You must have the anaconda token defined to do token rotation!'
+# ---
+# name: test_rotate_anaconda_token_notoken[True-False-True-True-True-False]
+  'You must have the anaconda token defined to do token rotation!'
+# ---
+# name: test_rotate_anaconda_token_notoken[True-False-True-True-True-True]
+  'You must have the anaconda token defined to do token rotation!'
+# ---
+# name: test_rotate_anaconda_token_notoken[True-True-False-False-False-False]
+  'You must have the anaconda token defined to do token rotation!'
+# ---
+# name: test_rotate_anaconda_token_notoken[True-True-False-False-False-True]
+  'You must have the anaconda token defined to do token rotation!'
+# ---
+# name: test_rotate_anaconda_token_notoken[True-True-False-False-True-False]
+  'You must have the anaconda token defined to do token rotation!'
+# ---
+# name: test_rotate_anaconda_token_notoken[True-True-False-False-True-True]
+  'You must have the anaconda token defined to do token rotation!'
+# ---
+# name: test_rotate_anaconda_token_notoken[True-True-False-True-False-False]
+  'You must have the anaconda token defined to do token rotation!'
+# ---
+# name: test_rotate_anaconda_token_notoken[True-True-False-True-False-True]
+  'You must have the anaconda token defined to do token rotation!'
+# ---
+# name: test_rotate_anaconda_token_notoken[True-True-False-True-True-False]
+  'You must have the anaconda token defined to do token rotation!'
+# ---
+# name: test_rotate_anaconda_token_notoken[True-True-False-True-True-True]
+  'You must have the anaconda token defined to do token rotation!'
+# ---
+# name: test_rotate_anaconda_token_notoken[True-True-True-False-False-False]
+  'You must have the anaconda token defined to do token rotation!'
+# ---
+# name: test_rotate_anaconda_token_notoken[True-True-True-False-False-True]
+  'You must have the anaconda token defined to do token rotation!'
+# ---
+# name: test_rotate_anaconda_token_notoken[True-True-True-False-True-False]
+  'You must have the anaconda token defined to do token rotation!'
+# ---
+# name: test_rotate_anaconda_token_notoken[True-True-True-False-True-True]
+  'You must have the anaconda token defined to do token rotation!'
+# ---
+# name: test_rotate_anaconda_token_notoken[True-True-True-True-False-False]
+  'You must have the anaconda token defined to do token rotation!'
+# ---
+# name: test_rotate_anaconda_token_notoken[True-True-True-True-False-True]
+  'You must have the anaconda token defined to do token rotation!'
+# ---
+# name: test_rotate_anaconda_token_notoken[True-True-True-True-True-False]
+  'You must have the anaconda token defined to do token rotation!'
+# ---
+# name: test_rotate_anaconda_token_notoken[True-True-True-True-True-True]
+  'You must have the anaconda token defined to do token rotation!'
+# ---
+# name: test_rotate_anaconda_token_provider_error[appveyor]
+  'Failed to rotate token for foo/bar-feedstock on appveyor!'
+# ---
+# name: test_rotate_anaconda_token_provider_error[azure]
+  'Failed to rotate token for foo/bar-feedstock on azure!'
+# ---
+# name: test_rotate_anaconda_token_provider_error[circle]
+  'Failed to rotate token for foo/bar-feedstock on circle!'
+# ---
+# name: test_rotate_anaconda_token_provider_error[drone]
+  'Failed to rotate token for foo/bar-feedstock on drone endpoint https://cloud.drone.io!'
+# ---
+# name: test_rotate_anaconda_token_provider_error[github_actions]
+  'Failed to rotate token for foo/bar-feedstock on github actions!'
+# ---
+# name: test_rotate_anaconda_token_provider_error[travis]
+  'Failed to rotate token for foo/bar-feedstock on travis!'
+# ---

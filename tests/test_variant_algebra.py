@@ -65,7 +65,7 @@ def test_add():
     variant_add(tv4, tv1)
 
 
-def test_ordering():
+def test_ordering(snapshot):
     start = parse_variant(
         dedent(
             """\
@@ -90,12 +90,12 @@ def test_ordering():
     )
 
     res = variant_add(start, mig_compiler)
-    assert res["c_compiler"] == ["gcc"]
-    print(res)
+    assert res == snapshot
+
     # raise Exception()
 
 
-def test_no_ordering():
+def test_no_ordering(snapshot):
     start = parse_variant(
         dedent(
             """\
@@ -120,12 +120,11 @@ def test_no_ordering():
     )
 
     res = variant_add(start, mig_compiler)
-    assert res["xyz"] == ["2"]
-    print(res)
+    assert res == snapshot
     # raise Exception()
 
 
-def test_ordering_downgrade():
+def test_ordering_downgrade(snapshot):
     start = parse_variant(
         dedent(
             """\
@@ -150,11 +149,10 @@ def test_ordering_downgrade():
     )
 
     res = variant_add(start, mig_compiler)
-    assert res["jpeg"] == ["2.0"]
-    print(res)
+    assert res == snapshot
 
 
-def test_ordering_space():
+def test_ordering_space(snapshot):
     start = parse_variant(
         dedent(
             """\
@@ -174,11 +172,10 @@ def test_ordering_space():
     )
 
     res = variant_add(start, mig_compiler)
-    assert res["python"] == ["2.7 *_cpython"]
-    print(res)
+    assert res == snapshot
 
 
-def test_new_pinned_package():
+def test_new_pinned_package(snapshot):
     start = parse_variant(
         dedent(
             """\
@@ -204,12 +201,10 @@ def test_new_pinned_package():
     )
 
     res = variant_add(start, mig_compiler)
-    assert res["gprc-cpp"] == ["1.23"]
-    assert res["pin_run_as_build"]["gprc-cpp"]["max_pin"] == "x.x"
-    print(res)
+    assert res == snapshot
 
 
-def test_zip_keys():
+def test_zip_keys(snapshot):
     start = parse_variant(
         dedent(
             """\
@@ -240,13 +235,10 @@ def test_zip_keys():
     )
 
     res = variant_add(start, mig_compiler)
-    print(res)
-
-    assert len(res["zip_keys"]) == 3
-    assert ["python", "vc", "vc_runtime"] in res["zip_keys"]
+    assert res == snapshot
 
 
-def test_migrate_windows_compilers():
+def test_migrate_windows_compilers(snapshot):
     start = parse_variant(
         dedent(
             """
@@ -277,14 +269,10 @@ def test_migrate_windows_compilers():
     )
 
     res = variant_add(start, mig)
-    print(res)
-
-    assert len(res["c_compiler"]) == 2
-    assert res["c_compiler"] == ["vs2008", "vs2017"]
-    assert len(res["zip_keys"][0]) == 2
+    assert res == snapshot
 
 
-def test_pin_run_as_build():
+def test_pin_run_as_build(snapshot):
     start = parse_variant(
         dedent(
             """\
@@ -310,12 +298,10 @@ def test_pin_run_as_build():
     )
 
     res = variant_add(start, mig_compiler)
-    print(res)
-
-    assert len(res["pin_run_as_build"]) == 3
+    assert res == snapshot
 
 
-def test_py39_migration():
+def test_py39_migration(snapshot):
     """Test that running the python 3.9 keyadd migrator has the desired effect."""
     base = parse_variant(
         dedent(
@@ -394,33 +380,14 @@ def test_py39_migration():
 
     res = variant_add(base, migration_pypy)
     res2 = variant_add(res, migration_py39)
+    res3 = variant_add(base, migration_py39)
 
     print(res)
-    print(res2)
-
-    assert res2["python"] == migration_py39["__migrator"]["ordering"]["python"]
-    # assert that we've ordered the numpy bits properly
-    assert res2["numpy"] == [
-        "1.16",
-        "1.100",
-        "1.16",
-        "1.16",
-        "1.18",
-    ]
-
-    res3 = variant_add(base, migration_py39)
-    print(res3)
-    assert res3["python"] == [
-        "3.6.* *_cpython",
-        "3.9.* *_cpython",  # newly added
-        "3.7.* *_cpython",
-        "3.8.* *_cpython",
-    ]
-    # The base doesn't have an entry for numpy
-    assert "numpy" not in res3
+    assert res2 == snapshot(name="res2")
+    assert res3 == snapshot(name="res3")
 
 
-def test_multiple_key_add_migration():
+def test_multiple_key_add_migration(snapshot):
     """Test that running the python 3.9 keyadd migrator has the desired effect."""
     base = parse_variant(
         dedent(
@@ -503,35 +470,14 @@ def test_multiple_key_add_migration():
 
     res = variant_add(base, migration_pypy)
     res2 = variant_add(res, migration_py39)
+    res3 = variant_add(base, migration_py39)
 
     print(res)
-    print(res2)
-
-    assert res2["python"] == migration_py39["__migrator"]["ordering"]["python"]
-    # assert that we've ordered the numpy bits properly
-    assert res2["numpy"] == [
-        "1.16",
-        "1.100",
-        "1.200",
-        "1.16",
-        "1.16",
-        "1.18",
-    ]
-
-    res3 = variant_add(base, migration_py39)
-    print(res3)
-    assert res3["python"] == [
-        "3.6.* *_cpython",
-        "3.9.* *_cpython",  # newly added
-        "3.10.* *_cpython",
-        "3.7.* *_cpython",
-        "3.8.* *_cpython",
-    ]
-    # The base doesn't have an entry for numpy
-    assert "numpy" not in res3
+    assert res2 == snapshot(name="res2")
+    assert res3 == snapshot(name="res3")
 
 
-def test_variant_key_remove():
+def test_variant_key_remove(snapshot):
     base = parse_variant(
         dedent(
             """
@@ -575,10 +521,7 @@ def test_variant_key_remove():
     )
 
     res = variant_add(base, removal)
-
-    assert res["python"] == ["3.6.* *_73_pypy", "3.8.* *_cpython"]
-    assert res["numpy"] == ["1.18", "1.16"]
-    assert res["python_impl"] == ["pypy", "cpython"]
+    assert res == snapshot
 
 
 @pytest.mark.parametrize(

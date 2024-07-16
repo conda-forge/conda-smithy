@@ -7,6 +7,7 @@ import textwrap
 from pathlib import Path
 
 import pytest
+from syrupy.filters import paths
 import yaml
 
 from conftest import ConfigYAML
@@ -214,7 +215,7 @@ def test_py_matrix_on_azure(py_recipe, jinja_env):
     assert len(os.listdir(matrix_dir)) == 6
 
 
-def test_stdlib_on_azure(stdlib_recipe, jinja_env, request):
+def test_stdlib_on_azure(stdlib_recipe, jinja_env, request, snapshot):
     conda_build_param = request.node.callspec.params["config_yaml"]
     if conda_build_param == "rattler-build":
         # stdlib is not yet implemented in rattler-build
@@ -236,29 +237,22 @@ def test_stdlib_on_azure(stdlib_recipe, jinja_env, request):
     with open(os.path.join(matrix_dir, "linux_64_.yaml")) as f:
         linux_lines = f.readlines()
         linux_content = "".join(linux_lines)
-    # multiline pattern to ensure we don't match other stuff accidentally
-    assert re.match(r"(?s).*c_stdlib:\s*- sysroot", linux_content)
-    assert re.match(r"(?s).*c_stdlib_version:\s*- ['\"]?2\.\d+", linux_content)
+    assert linux_content == snapshot(name="linux content")
+
     with open(os.path.join(matrix_dir, "osx_64_.yaml")) as f:
         osx_lines = f.readlines()
         osx_content = "".join(osx_lines)
-    assert re.match(
-        r"(?s).*c_stdlib:\s*- macosx_deployment_target", osx_content
-    )
-    assert re.match(r"(?s).*c_stdlib_version:\s*- ['\"]?10\.9", osx_content)
-    # ensure MACOSX_DEPLOYMENT_TARGET _also_ gets set to the same value
-    assert re.match(
-        r"(?s).*MACOSX_DEPLOYMENT_TARGET:\s*- ['\"]?10\.9", osx_content
-    )
+    assert osx_content == snapshot(name="osx content")
+
     with open(os.path.join(matrix_dir, "win_64_.yaml")) as f:
         win_lines = f.readlines()
         win_content = "".join(win_lines)
-    assert re.match(r"(?s).*c_stdlib:\s*- vs", win_content)
     # no stdlib-version expected on windows
+    assert win_content == snapshot(name="win content")
 
 
 def test_stdlib_deployment_target(
-    stdlib_deployment_target_recipe, jinja_env, caplog, request
+    stdlib_deployment_target_recipe, jinja_env, caplog, request, snapshot
 ):
     conda_build_param = request.node.callspec.params["config_yaml"]
     if conda_build_param == "rattler-build":
@@ -283,23 +277,20 @@ def test_stdlib_deployment_target(
         content = "".join(lines)
     # ensure both MACOSX_DEPLOYMENT_TARGET and c_stdlib_version match
     # the maximum of either, c.f. stdlib_deployment_target_recipe fixture
-    assert re.match(r"(?s).*c_stdlib_version:\s*- ['\"]?10\.14", content)
-    assert re.match(
-        r"(?s).*MACOSX_DEPLOYMENT_TARGET:\s*- ['\"]?10\.14", content
-    )
-    # MACOSX_SDK_VERSION gets updated as well if it's below the other two
-    assert re.match(r"(?s).*MACOSX_SDK_VERSION:\s*- ['\"]?10\.14", content)
+    assert content == snapshot
 
 
-def test_upload_on_branch_azure(upload_on_branch_recipe, jinja_env):
+def test_upload_on_branch_azure(upload_on_branch_recipe, jinja_env, snapshot):
     configure_feedstock.render_azure(
         jinja_env=jinja_env,
         forge_config=upload_on_branch_recipe.config,
         forge_dir=upload_on_branch_recipe.recipe,
     )
     # Check that the parameter is in the configuration.
-    assert "upload_on_branch" in upload_on_branch_recipe.config
-    assert upload_on_branch_recipe.config["upload_on_branch"] == "foo-branch"
+    assert upload_on_branch_recipe.config == snapshot(
+        include=paths("upload_on_branch"), name="config"
+    )
+
     # Check that the parameter is in the generated file.
     with open(
         os.path.join(
@@ -309,13 +300,8 @@ def test_upload_on_branch_azure(upload_on_branch_recipe, jinja_env):
         )
     ) as fp:
         content_osx = yaml.safe_load(fp)
-    assert (
-        'UPLOAD_ON_BRANCH="foo-branch"'
-        in content_osx["jobs"][0]["steps"][0]["script"]
-    )
-    assert (
-        "BUILD_SOURCEBRANCHNAME"
-        in content_osx["jobs"][0]["steps"][0]["script"]
+    assert content_osx["jobs"][0]["steps"][0]["script"] == snapshot(
+        name="content osx"
     )
 
     with open(
@@ -350,17 +336,14 @@ def test_upload_on_branch_azure(upload_on_branch_recipe, jinja_env):
         )
     ) as fp:
         content_lin = yaml.safe_load(fp)
-    assert (
-        'UPLOAD_ON_BRANCH="foo-branch"'
-        in content_lin["jobs"][0]["steps"][1]["script"]
-    )
-    assert (
-        "BUILD_SOURCEBRANCHNAME"
-        in content_lin["jobs"][0]["steps"][1]["script"]
+    assert content_lin["jobs"][0]["steps"][1]["script"] == snapshot(
+        name="content linux"
     )
 
 
-def test_upload_on_branch_appveyor(upload_on_branch_recipe, jinja_env):
+def test_upload_on_branch_appveyor(
+    upload_on_branch_recipe, jinja_env, snapshot
+):
     upload_on_branch_recipe.config["provider"]["win"] = "appveyor"
     configure_feedstock.render_appveyor(
         jinja_env=jinja_env,
@@ -368,16 +351,16 @@ def test_upload_on_branch_appveyor(upload_on_branch_recipe, jinja_env):
         forge_dir=upload_on_branch_recipe.recipe,
     )
     # Check that the parameter is in the configuration.
-    assert "upload_on_branch" in upload_on_branch_recipe.config
-    assert upload_on_branch_recipe.config["upload_on_branch"] == "foo-branch"
+    assert upload_on_branch_recipe.config == snapshot(
+        include=paths("upload_on_branch"), name="config"
+    )
 
     # Check that the parameter is in the generated file.
     with open(
         os.path.join(upload_on_branch_recipe.recipe, ".appveyor.yml")
     ) as fp:
         content = yaml.safe_load(fp)
-    assert "%APPVEYOR_REPO_BRANCH%" in content["deploy_script"][0]
-    assert "UPLOAD_ON_BRANCH=foo-branch" in content["deploy_script"][-2]
+    assert content["deploy_script"] == snapshot(name="deploy script")
 
 
 def test_circle_with_yum_reqs(py_recipe, jinja_env):
@@ -766,7 +749,7 @@ def test_files_skip_render(render_skipped_recipe, jinja_env):
         assert not os.path.exists(fpath)
 
 
-def test_choco_install(choco_recipe, jinja_env):
+def test_choco_install(choco_recipe, jinja_env, snapshot):
     configure_feedstock.render_azure(
         jinja_env=jinja_env,
         forge_config=choco_recipe.config,
@@ -780,19 +763,10 @@ def test_choco_install(choco_recipe, jinja_env):
     assert os.path.isfile(azure_file)
     with open(azure_file) as f:
         contents = f.read()
-    exp = """
-    - script: |
-        choco install pkg0 -fdv -y --debug
-      displayName: "Install Chocolatey Package: pkg0"
-
-    - script: |
-        choco install pkg1 --version=X.Y.Z -fdv -y --debug
-      displayName: "Install Chocolatey Package: pkg1 --version=X.Y.Z"
-""".strip()
-    assert exp in contents
+    assert contents == snapshot
 
 
-def test_webservices_action_exists(py_recipe, jinja_env):
+def test_webservices_action_exists(py_recipe, jinja_env, snapshot):
     configure_feedstock.render_github_actions_services(
         jinja_env=jinja_env,
         forge_config=py_recipe.config,
@@ -805,11 +779,10 @@ def test_webservices_action_exists(py_recipe, jinja_env):
         os.path.join(py_recipe.recipe, ".github/workflows/webservices.yml")
     ) as f:
         action_config = yaml.safe_load(f)
-    assert "jobs" in action_config
-    assert "webservices" in action_config["jobs"]
+    assert action_config == snapshot
 
 
-def test_automerge_action_exists(py_recipe, jinja_env):
+def test_automerge_action_exists(py_recipe, jinja_env, snapshot):
     configure_feedstock.render_github_actions_services(
         jinja_env=jinja_env,
         forge_config=py_recipe.config,
@@ -822,8 +795,7 @@ def test_automerge_action_exists(py_recipe, jinja_env):
         os.path.join(py_recipe.recipe, ".github/workflows/automerge.yml")
     ) as f:
         action_config = yaml.safe_load(f)
-    assert "jobs" in action_config
-    assert "automerge-action" in action_config["jobs"]
+    assert action_config == snapshot
 
 
 def test_conda_forge_yaml_empty(config_yaml: ConfigYAML):
@@ -845,7 +817,7 @@ def test_conda_forge_yaml_empty(config_yaml: ConfigYAML):
     assert load_forge_config()["recipe_dir"] == "recipe"
 
 
-def test_noarch_platforms_bad_yaml(config_yaml: ConfigYAML, caplog):
+def test_noarch_platforms_bad_yaml(config_yaml: ConfigYAML, caplog, snapshot):
     load_forge_config = lambda: configure_feedstock._load_forge_config(  # noqa
         config_yaml.workdir,
         exclusive_config_file=os.path.join(
@@ -860,8 +832,7 @@ def test_noarch_platforms_bad_yaml(config_yaml: ConfigYAML, caplog):
 
     with caplog.at_level(logging.WARNING):
         load_forge_config()
-
-    assert "eniac" in caplog.text
+    assert caplog.text == snapshot
 
 
 def test_forge_yml_alt_path(config_yaml: ConfigYAML):
@@ -952,7 +923,7 @@ def test_cuda_enabled_render(cuda_enabled_recipe, jinja_env):
                 del os.environ["CF_CUDA_ENABLED"]
 
 
-def test_conda_build_tools(config_yaml: ConfigYAML, caplog):
+def test_conda_build_tools(config_yaml: ConfigYAML, caplog, snapshot):
     load_forge_config = lambda: configure_feedstock._load_forge_config(  # noqa
         config_yaml.workdir,
         exclusive_config_file=os.path.join(
@@ -997,7 +968,7 @@ def test_conda_build_tools(config_yaml: ConfigYAML, caplog):
 
     with caplog.at_level(logging.WARNING):
         assert load_forge_config()
-    assert "does-not-exist" in caplog.text
+    assert caplog.text == snapshot
 
 
 def test_remote_ci_setup(config_yaml: ConfigYAML):
@@ -1019,7 +990,6 @@ def test_remote_ci_setup(config_yaml: ConfigYAML):
         )
         fp.write("conda_install_tool: conda\n")
     cfg = load_forge_config()
-    # pylief was quoted due to <
     assert cfg["remote_ci_setup"] == [
         "conda-forge-ci-setup=3",
         '"py-lief<0.12"',
@@ -1049,7 +1019,7 @@ def test_remote_ci_setup(config_yaml: ConfigYAML):
 
 
 @pytest.mark.parametrize(
-    "squished_input_variants,squished_used_variants,all_used_vars,expected_used_key_values",
+    "squished_input_variants,squished_used_variants,all_used_vars",
     [
         (
             dict(
@@ -1919,56 +1889,11 @@ def test_remote_ci_setup(config_yaml: ConfigYAML):
                 "target_platform",
                 "zip_keys",
             },
-            {
-                "c_compiler": ["gcc"],
-                "c_compiler_version": ["10", "12"],
-                "cdt_name": ["cos7", "cos6"],
-                "channel_sources": ["conda-forge"],
-                "channel_targets": ["conda-forge main"],
-                "cuda_compiler": ["nvcc", "None"],
-                "cuda_compiler_version": ["11.2", "None"],
-                "docker_image": [
-                    "quay.io/condaforge/linux-anvil-cuda:11.2",
-                    "quay.io/condaforge/linux-anvil-cos7-x86_64",
-                ],
-                "pin_run_as_build": dict(
-                    [
-                        ("python", {"max_pin": "x.x", "min_pin": "x.x"}),
-                        ("r-base", {"max_pin": "x.x", "min_pin": "x.x"}),
-                        ("flann", {"max_pin": "x.x.x"}),
-                        ("graphviz", {"max_pin": "x"}),
-                        ("libsvm", {"max_pin": "x"}),
-                        ("netcdf-cxx4", {"max_pin": "x.x"}),
-                        ("occt", {"max_pin": "x.x"}),
-                        ("poppler", {"max_pin": "x.x"}),
-                        ("vlfeat", {"max_pin": "x.x.x"}),
-                    ]
-                ),
-                "target_platform": ["linux-64"],
-                "zip_keys": [
-                    ("arrow_cpp", "libarrow", "libarrow_all"),
-                    (
-                        "c_compiler_version",
-                        "cxx_compiler_version",
-                        "fortran_compiler_version",
-                        "cuda_compiler",
-                        "cuda_compiler_version",
-                        "cdt_name",
-                        "docker_image",
-                    ),
-                    ("c_stdlib", "c_stdlib_version"),
-                    ("libgrpc", "libprotobuf"),
-                    ("python", "numpy", "python_impl"),
-                ],
-            },
         )
     ],
 )
 def test_get_used_key_values_by_input_order(
-    squished_input_variants,
-    squished_used_variants,
-    all_used_vars,
-    expected_used_key_values,
+    squished_input_variants, squished_used_variants, all_used_vars, snapshot
 ):
     used_key_values, _ = (
         configure_feedstock._get_used_key_values_by_input_order(
@@ -1977,7 +1902,9 @@ def test_get_used_key_values_by_input_order(
             all_used_vars,
         )
     )
-    assert used_key_values == expected_used_key_values
+    assert used_key_values == snapshot(
+        name="get_used_key_values_by_input_order"
+    )
 
 
 def test_conda_build_api_render_for_smithy(testing_workdir):

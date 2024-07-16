@@ -1,5 +1,3 @@
-from unittest import mock
-
 import pytest
 
 from conda_smithy.anaconda_token_rotation import rotate_anaconda_token
@@ -13,25 +11,8 @@ from conda_smithy.ci_register import drone_default_endpoint
 @pytest.mark.parametrize("azure", [True, False])
 @pytest.mark.parametrize("travis", [True, False])
 @pytest.mark.parametrize("github_actions", [True, False])
-@mock.patch("conda_smithy.github.gh_token")
-@mock.patch("conda_smithy.anaconda_token_rotation._get_anaconda_token")
-@mock.patch("conda_smithy.anaconda_token_rotation.rotate_token_in_appveyor")
-@mock.patch("conda_smithy.anaconda_token_rotation.rotate_token_in_drone")
-@mock.patch("conda_smithy.anaconda_token_rotation.rotate_token_in_circle")
-@mock.patch("conda_smithy.anaconda_token_rotation.rotate_token_in_travis")
-@mock.patch("conda_smithy.anaconda_token_rotation.rotate_token_in_azure")
-@mock.patch(
-    "conda_smithy.anaconda_token_rotation.rotate_token_in_github_actions"
-)
 def test_rotate_anaconda_token(
-    github_actions_mock,
-    azure_mock,
-    travis_mock,
-    circle_mock,
-    drone_mock,
-    appveyor_mock,
-    get_ac_token,
-    get_gh_token,
+    mocker,
     appveyor,
     drone,
     circle,
@@ -39,6 +20,29 @@ def test_rotate_anaconda_token(
     travis,
     github_actions,
 ):
+    github_actions_mock = mocker.patch(
+        "conda_smithy.anaconda_token_rotation.rotate_token_in_github_actions"
+    )
+    azure_mock = mocker.patch(
+        "conda_smithy.anaconda_token_rotation.rotate_token_in_azure"
+    )
+    travis_mock = mocker.patch(
+        "conda_smithy.anaconda_token_rotation.rotate_token_in_travis"
+    )
+    circle_mock = mocker.patch(
+        "conda_smithy.anaconda_token_rotation.rotate_token_in_circle"
+    )
+    drone_mock = mocker.patch(
+        "conda_smithy.anaconda_token_rotation.rotate_token_in_drone"
+    )
+    appveyor_mock = mocker.patch(
+        "conda_smithy.anaconda_token_rotation.rotate_token_in_appveyor"
+    )
+    get_ac_token = mocker.patch(
+        "conda_smithy.anaconda_token_rotation._get_anaconda_token"
+    )
+    get_gh_token = mocker.patch("conda_smithy.github.gh_token")
+
     user = "foo"
     project = "bar"
 
@@ -111,7 +115,7 @@ def test_rotate_anaconda_token(
             project,
             anaconda_token,
             "MY_FANCY_TOKEN",
-            mock.ANY,
+            mocker.ANY,
         )
     else:
         github_actions_mock.assert_not_called()
@@ -123,29 +127,35 @@ def test_rotate_anaconda_token(
 @pytest.mark.parametrize("azure", [True, False])
 @pytest.mark.parametrize("travis", [True, False])
 @pytest.mark.parametrize("github_actions", [True, False])
-@mock.patch("conda_smithy.anaconda_token_rotation.rotate_token_in_appveyor")
-@mock.patch("conda_smithy.anaconda_token_rotation.rotate_token_in_drone")
-@mock.patch("conda_smithy.anaconda_token_rotation.rotate_token_in_circle")
-@mock.patch("conda_smithy.anaconda_token_rotation.rotate_token_in_travis")
-@mock.patch("conda_smithy.anaconda_token_rotation.rotate_token_in_azure")
-@mock.patch(
-    "conda_smithy.anaconda_token_rotation.rotate_token_in_github_actions"
-)
 def test_rotate_anaconda_token_notoken(
-    github_actions_mock,
-    azure_mock,
-    travis_mock,
-    circle_mock,
-    drone_mock,
-    appveyor_mock,
+    mocker,
     appveyor,
     drone,
     circle,
     azure,
     travis,
     github_actions,
-    monkeypatch,
+    snapshot,
 ):
+    github_actions_mock = mocker.patch(
+        "conda_smithy.anaconda_token_rotation.rotate_token_in_github_actions"
+    )
+    azure_mock = mocker.patch(
+        "conda_smithy.anaconda_token_rotation.rotate_token_in_azure"
+    )
+    travis_mock = mocker.patch(
+        "conda_smithy.anaconda_token_rotation.rotate_token_in_travis"
+    )
+    circle_mock = mocker.patch(
+        "conda_smithy.anaconda_token_rotation.rotate_token_in_circle"
+    )
+    drone_mock = mocker.patch(
+        "conda_smithy.anaconda_token_rotation.rotate_token_in_drone"
+    )
+    appveyor_mock = mocker.patch(
+        "conda_smithy.anaconda_token_rotation.rotate_token_in_appveyor"
+    )
+
     user = "foo"
     project = "bar"
 
@@ -162,8 +172,7 @@ def test_rotate_anaconda_token_notoken(
             github_actions=github_actions,
             drone_endpoints=[drone_default_endpoint],
         )
-
-    assert "anaconda token" in str(e.value)
+    assert str(e.value) == snapshot
 
     drone_mock.assert_not_called()
     circle_mock.assert_not_called()
@@ -177,27 +186,30 @@ def test_rotate_anaconda_token_notoken(
     "provider",
     ["drone", "circle", "travis", "azure", "appveyor", "github_actions"],
 )
-@mock.patch("conda_smithy.github.gh_token")
-@mock.patch("conda_smithy.anaconda_token_rotation._get_anaconda_token")
-@mock.patch("conda_smithy.anaconda_token_rotation.rotate_token_in_appveyor")
-@mock.patch("conda_smithy.anaconda_token_rotation.rotate_token_in_drone")
-@mock.patch("conda_smithy.anaconda_token_rotation.rotate_token_in_circle")
-@mock.patch("conda_smithy.anaconda_token_rotation.rotate_token_in_travis")
-@mock.patch("conda_smithy.anaconda_token_rotation.rotate_token_in_azure")
-@mock.patch(
-    "conda_smithy.anaconda_token_rotation.rotate_token_in_github_actions"
-)
-def test_rotate_anaconda_token_provider_error(
-    github_actions_mock,
-    azure_mock,
-    travis_mock,
-    circle_mock,
-    drone_mock,
-    appveyor_mock,
-    get_ac_token,
-    get_gh_token,
-    provider,
-):
+def test_rotate_anaconda_token_provider_error(mocker, provider, snapshot):
+    github_actions_mock = mocker.patch(
+        "conda_smithy.anaconda_token_rotation.rotate_token_in_github_actions"
+    )
+    azure_mock = mocker.patch(
+        "conda_smithy.anaconda_token_rotation.rotate_token_in_azure"
+    )
+    travis_mock = mocker.patch(
+        "conda_smithy.anaconda_token_rotation.rotate_token_in_travis"
+    )
+    circle_mock = mocker.patch(
+        "conda_smithy.anaconda_token_rotation.rotate_token_in_circle"
+    )
+    drone_mock = mocker.patch(
+        "conda_smithy.anaconda_token_rotation.rotate_token_in_drone"
+    )
+    appveyor_mock = mocker.patch(
+        "conda_smithy.anaconda_token_rotation.rotate_token_in_appveyor"
+    )
+    get_ac_token = mocker.patch(
+        "conda_smithy.anaconda_token_rotation._get_anaconda_token"
+    )
+    get_gh_token = mocker.patch("conda_smithy.github.gh_token")
+
     user = "foo"
     project = "bar"
 
@@ -225,5 +237,4 @@ def test_rotate_anaconda_token_provider_error(
         rotate_anaconda_token(
             user, project, None, drone_endpoints=[drone_default_endpoint]
         )
-
-    assert "on %s" % provider.replace("_", " ") in str(e.value)
+    assert str(e.value) == snapshot

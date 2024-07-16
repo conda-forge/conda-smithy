@@ -1,0 +1,66 @@
+# serializer version: 1
+# name: test_osx_hint[run]
+  list([
+    'You\'re setting a constraint on the `__osx` virtual package directly; this should now be done by adding a build dependence on `{{ stdlib("c") }}`, and overriding `c_stdlib_version` in `recipe/conda_build_config.yaml` for the respective platform as necessary. For further details, please see https://github.com/conda-forge/conda-forge.github.io/issues/2102.',
+  ])
+# ---
+# name: test_osx_hint[run_constrained]
+  list([
+    'You\'re setting a constraint on the `__osx` virtual package directly; this should now be done by adding a build dependence on `{{ stdlib("c") }}`, and overriding `c_stdlib_version` in `recipe/conda_build_config.yaml` for the respective platform as necessary. For further details, please see https://github.com/conda-forge/conda-forge.github.io/issues/2102.',
+  ])
+# ---
+# name: test_osx_noarch_hint[run]
+  list([
+  ])
+# ---
+# name: test_osx_noarch_hint[run_constrained]
+  list([
+  ])
+# ---
+# name: test_stdlib_hint[c]
+  list([
+    'This recipe is using a compiler, which now requires adding a build dependence on `{{ stdlib("c") }}` as well. Note that this rule applies to each output of the recipe using a compiler. For further details, please see https://github.com/conda-forge/conda-forge.github.io/issues/2102.',
+  ])
+# ---
+# name: test_stdlib_hint[cxx]
+  list([
+    'This recipe is using a compiler, which now requires adding a build dependence on `{{ stdlib("c") }}` as well. Note that this rule applies to each output of the recipe using a compiler. For further details, please see https://github.com/conda-forge/conda-forge.github.io/issues/2102.',
+  ])
+# ---
+# name: test_stdlib_hint[fortran]
+  list([
+    'This recipe is using a compiler, which now requires adding a build dependence on `{{ stdlib("c") }}` as well. Note that this rule applies to each output of the recipe using a compiler. For further details, please see https://github.com/conda-forge/conda-forge.github.io/issues/2102.',
+  ])
+# ---
+# name: test_stdlib_hint[m2w64_c]
+  list([
+    'This recipe is using a compiler, which now requires adding a build dependence on `{{ stdlib("c") }}` as well. Note that this rule applies to each output of the recipe using a compiler. For further details, please see https://github.com/conda-forge/conda-forge.github.io/issues/2102.',
+  ])
+# ---
+# name: test_stdlib_hint[m2w64_cxx]
+  list([
+    'This recipe is using a compiler, which now requires adding a build dependence on `{{ stdlib("c") }}` as well. Note that this rule applies to each output of the recipe using a compiler. For further details, please see https://github.com/conda-forge/conda-forge.github.io/issues/2102.',
+  ])
+# ---
+# name: test_stdlib_hint[m2w64_fortran]
+  list([
+    'This recipe is using a compiler, which now requires adding a build dependence on `{{ stdlib("c") }}` as well. Note that this rule applies to each output of the recipe using a compiler. For further details, please see https://github.com/conda-forge/conda-forge.github.io/issues/2102.',
+  ])
+# ---
+# name: test_stdlib_hint[rust]
+  list([
+    'This recipe is using a compiler, which now requires adding a build dependence on `{{ stdlib("c") }}` as well. Note that this rule applies to each output of the recipe using a compiler. For further details, please see https://github.com/conda-forge/conda-forge.github.io/issues/2102.',
+  ])
+# ---
+# name: test_stdlib_hints_multi_output
+  list([
+    'This recipe is using a compiler, which now requires adding a build dependence on `{{ stdlib("c") }}` as well. Note that this rule applies to each output of the recipe using a compiler. For further details, please see https://github.com/conda-forge/conda-forge.github.io/issues/2102.',
+    'You\'re setting a requirement on sysroot_linux-<arch> directly; this should now be done by adding a build dependence on `{{ stdlib("c") }}`, and overriding `c_stdlib_version` in `recipe/conda_build_config.yaml` for the respective platform as necessary. For further details, please see https://github.com/conda-forge/conda-forge.github.io/issues/2102.',
+    'You\'re setting a constraint on the `__osx` virtual package directly; this should now be done by adding a build dependence on `{{ stdlib("c") }}`, and overriding `c_stdlib_version` in `recipe/conda_build_config.yaml` for the respective platform as necessary. For further details, please see https://github.com/conda-forge/conda-forge.github.io/issues/2102.',
+  ])
+# ---
+# name: test_sysroot_hint
+  list([
+    'You\'re setting a requirement on sysroot_linux-<arch> directly; this should now be done by adding a build dependence on `{{ stdlib("c") }}`, and overriding `c_stdlib_version` in `recipe/conda_build_config.yaml` for the respective platform as necessary. For further details, please see https://github.com/conda-forge/conda-forge.github.io/issues/2102.',
+  ])
+# ---
