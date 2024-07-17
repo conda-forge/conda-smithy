@@ -260,11 +260,11 @@ MACOSX_SDK_VERSION:         # [osx]
             print("".join(fh.readlines()))
             print(lints)
         # validate against expectations
-        has_lint = any(lint.startswith(exp_lint) for lint in lints)
         if exp_lint is None:
-            assert not has_lint
+            for slug in ["Conflicting spec", "You are", "In your conda_build_config.yaml"]:
+                assert not any(lint.startswith(slug) for lint in lints)
         else:
-            assert has_lint
+            assert any(lint.startswith(exp_lint) for lint in lints)
 
 
 class Test_linter(unittest.TestCase):
