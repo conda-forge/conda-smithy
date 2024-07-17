@@ -1102,20 +1102,21 @@ def lintify_recipe(
     # 4: Check for SPDX
     hint_spdx(about_section, hints)
 
-    # 5: stdlib-related hints
+    # 5: stdlib-related lints
     global_build_reqs = requirements_section.get("build") or []
     global_run_reqs = requirements_section.get("run") or []
     if not is_rattler_build:
         global_constraints = requirements_section.get("run_constrained") or []
 
-    build_hint = (
+    build_lint = (
         '`{{ stdlib("c") }}`'
         if not is_rattler_build
         else '`${{ stdlib("c") }}`'
     )
-    stdlib_hint = (
+
+    stdlib_lint = (
         "This recipe is using a compiler, which now requires adding a build "
-        f"dependence on {build_hint} as well. Note that this rule applies to "
+        f"dependence on {build_lint} as well. Note that this rule applies to "
         "each output of the recipe using a compiler. For further details, please "
         "see https://github.com/conda-forge/conda-forge.github.io/issues/2102."
     )
@@ -1166,27 +1167,28 @@ def lintify_recipe(
         has_compiler = any(pat_compiler_stub.match(rq) for rq in build_reqs)
         stdlib_stub = "c_stdlib_stub" if not is_rattler_build else "${{ stdlib"
         if has_compiler and stdlib_stub not in build_reqs:
-            if stdlib_hint not in hints:
-                hints.append(stdlib_hint)
+            if stdlib_lint not in lints:
+                lints.append(stdlib_lint)
 
-    sysroot_hint_build = (
+    sysroot_lint_build = (
         '`{{ stdlib("c") }}`'
         if not is_rattler_build
         else '`${{ stdlib("c") }}`'
     )
-    sysroot_hint = (
+
+    sysroot_lint = (
         "You're setting a requirement on sysroot_linux-<arch> directly; this should "
-        f"now be done by adding a build dependence on {sysroot_hint_build}, and "
+        f"now be done by adding a build dependence on {sysroot_lint_build}, and "
         "overriding `c_stdlib_version` in `recipe/conda_build_config.yaml` for the "
         "respective platform as necessary. For further details, please see "
         "https://github.com/conda-forge/conda-forge.github.io/issues/2102."
     )
     pat_sysroot = re.compile(r"sysroot_linux.*")
     if any(pat_sysroot.match(req) for req in all_build_reqs_flat):
-        if sysroot_hint not in hints:
-            hints.append(sysroot_hint)
+        if sysroot_lint not in lints:
+            lints.append(sysroot_lint)
 
-    osx_hint = (
+    osx_lint = (
         "You're setting a constraint on the `__osx` virtual package directly; this "
         f"should now be done by adding a build dependence on {sysroot_hint_build}, "
         "and overriding `c_stdlib_version` in `recipe/conda_build_config.yaml` for "
@@ -1199,8 +1201,8 @@ def lintify_recipe(
         to_check = all_run_reqs_flat
 
     if any(req.startswith("__osx >") for req in to_check):
-        if osx_hint not in hints:
-            hints.append(osx_hint)
+        if osx_lint not in lints:
+            lints.append(osx_lint)
 
     # stdlib issues in CBC ( conda-build-config )
     cbc_osx = {}
@@ -1267,10 +1269,11 @@ def lintify_recipe(
             # let the rerender deal with the details
             pass
         else:
-            mismatch_hint = (
+            mismatch_lint = (
                 "Conflicting specification for minimum macOS deployment target!\n"
                 "If your conda_build_config.yaml sets `MACOSX_DEPLOYMENT_TARGET`, "
                 "please change the name of that key to `c_stdlib_version`!\n"
+                "Continuing with `max(c_stdlib_version, MACOSX_DEPLOYMENT_TARGET)`."
                 "Continuing with `max(c_stdlib_version, MACOSX_DEPLOYMENT_TARGET)`."
             )
             merged_dt = []
@@ -1278,8 +1281,8 @@ def lintify_recipe(
                 # versions with a single dot may have been read as floats
                 v_std, v_mdt = str(v_std), str(v_mdt)
                 if VersionOrder(v_std) != VersionOrder(v_mdt):
-                    if mismatch_hint not in hints:
-                        hints.append(mismatch_hint)
+                    if mismatch_lint not in lints:
+                        lints.append(mismatch_lint)
                 merged_dt.append(
                     v_mdt
                     if VersionOrder(v_std) < VersionOrder(v_mdt)
@@ -1294,11 +1297,11 @@ def lintify_recipe(
             "`MACOSX_DEPLOYMENT_TARGET`, to `c_stdlib_version`!"
         )
         if deprecated_dt not in hints:
-            hints.append(deprecated_dt)
+            lints.append(deprecated_dt)
     elif "c_stdlib_version" in cbc_osx.keys():
         cbc_osx["merged"] = v_stdlib
         # only warn if version is below baseline
-        outdated_hint = (
+        outdated_lint = (
             "You are setting `c_stdlib_version` below the current global baseline "
             "in conda-forge (10.13). If this is your intention, you also need to "
             "override `MACOSX_DEPLOYMENT_TARGET` (with the same value) locally."
@@ -1307,8 +1310,8 @@ def lintify_recipe(
             # if length matches, compare individually
             for v_std, v_mdt in zip(v_stdlib, macdt):
                 if VersionOrder(str(v_std)) < VersionOrder(str(v_mdt)):
-                    if outdated_hint not in hints:
-                        hints.append(outdated_hint)
+                    if outdated_lint not in lints:
+                        lints.append(outdated_lint)
         elif len(v_stdlib) == 1:
             # if length doesn't match, only warn if a single stdlib version
             # is lower than _all_ baseline deployment targets
@@ -1316,12 +1319,12 @@ def lintify_recipe(
                 VersionOrder(str(v_stdlib[0])) < VersionOrder(str(v_mdt))
                 for v_mdt in macdt
             ):
-                if outdated_hint not in hints:
-                    hints.append(outdated_hint)
+                if outdated_lint not in lints:
+                    lints.append(outdated_lint)
 
     # warn if SDK is lower than merged v_stdlib/macdt
     merged_dt = cbc_osx.get("merged", baseline_version)
-    sdk_hint = (
+    sdk_lint = (
         "You are setting `MACOSX_SDK_VERSION` below `c_stdlib_version`, "
         "in conda_build_config.yaml which is not possible! Please ensure "
         "`MACOSX_SDK_VERSION` is at least `c_stdlib_version` "
@@ -1337,8 +1340,8 @@ def lintify_recipe(
             # versions with a single dot may have been read as floats
             v_sdk, v_mdt = str(v_sdk), str(v_mdt)
             if VersionOrder(v_sdk) < VersionOrder(v_mdt):
-                if sdk_hint not in hints:
-                    hints.append(sdk_hint)
+                if sdk_lint not in lints:
+                    lints.append(sdk_lint)
     elif len(sdk) == 1:
         # if length doesn't match, only warn if a single SDK version
         # is lower than _all_ merged deployment targets
@@ -1346,8 +1349,8 @@ def lintify_recipe(
             VersionOrder(str(sdk[0])) < VersionOrder(str(v_mdt))
             for v_mdt in merged_dt
         ):
-            if sdk_hint not in hints:
-                hints.append(sdk_hint)
+            if sdk_lint not in lints:
+                lints.append(sdk_lint)
 
     return lints, hints
 

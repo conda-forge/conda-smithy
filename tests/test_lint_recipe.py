@@ -35,7 +35,7 @@ def tmp_directory():
     "comp_lang",
     ["c", "cxx", "fortran", "rust", "m2w64_c", "m2w64_cxx", "m2w64_fortran"],
 )
-def test_stdlib_hint(comp_lang):
+def test_stdlib_lint(comp_lang):
     expected_message = "This recipe is using a compiler"
 
     with tmp_directory() as recipe_dir:
@@ -51,8 +51,8 @@ def test_stdlib_hint(comp_lang):
                 """
             )
 
-        _, hints = linter.main(recipe_dir, return_hints=True)
-        assert any(h.startswith(expected_message) for h in hints)
+        lints, _ = linter.main(recipe_dir, return_hints=True)
+        assert any(lint.startswith(expected_message) for lint in lints)
 
 
 @pytest.mark.parametrize(
@@ -86,7 +86,7 @@ def test_rattler_stdlib_hint(comp_lang):
         assert any(h.startswith(expected_message) for h in hints)
 
 
-def test_sysroot_hint():
+def test_sysroot_lint():
     expected_message = "You're setting a requirement on sysroot"
 
     with tmp_directory() as recipe_dir:
@@ -101,8 +101,8 @@ def test_sysroot_hint():
                 """
             )
 
-        _, hints = linter.main(recipe_dir, return_hints=True)
-        assert any(h.startswith(expected_message) for h in hints)
+        lints, _ = linter.main(recipe_dir, return_hints=True)
+        assert any(lint.startswith(expected_message) for lint in lints)
 
 
 def test_rattler_sysroot_hint():
@@ -130,7 +130,7 @@ def test_rattler_sysroot_hint():
 
 
 @pytest.mark.parametrize("where", ["run", "run_constrained"])
-def test_osx_hint(where):
+def test_osx_lint(where):
     expected_message = "You're setting a constraint on the `__osx` virtual"
 
     with tmp_directory() as recipe_dir:
@@ -146,8 +146,8 @@ def test_osx_hint(where):
                 """
             )
 
-        _, hints = linter.main(recipe_dir, return_hints=True)
-        assert any(h.startswith(expected_message) for h in hints)
+        lints, _ = linter.main(recipe_dir, return_hints=True)
+        assert any(lint.startswith(expected_message) for lint in lints)
 
 
 def test_rattler_osx_hint():
@@ -175,6 +175,52 @@ def test_rattler_osx_hint():
             recipe_dir, return_hints=True, feedstock_dir=recipe_dir
         )
         assert any(h.startswith(expected_message) for h in hints)
+
+
+def test_stdlib_lints_multi_output():
+    expected_message = "You're setting a requirement on sysroot"
+
+    with tmp_directory() as recipe_dir:
+        with io.open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
+            fh.write(
+                """
+                package:
+                   name: foo
+                requirements:
+                  build:
+                    - {{ compiler("c") }}
+                    # global build reqs intentionally correct; want to check outputs
+                    - {{ stdlib("c") }}
+                outputs:
+                  - name: bar
+                    requirements:
+                      build:
+                        # missing stdlib
+                        - {{ compiler("c") }}
+                  - name: baz
+                    requirements:
+                      build:
+                        - {{ compiler("c") }}
+                        - {{ stdlib("c") }}
+                        - sysroot_linux-64
+                  - name: quux
+                    requirements:
+                      run:
+                        - __osx >=10.13
+                  # test that cb2-style requirements don't break linter
+                  - name: boing
+                    requirements:
+                      - bar
+                """
+            )
+
+        lints, _ = linter.main(recipe_dir, return_hints=True)
+        exp_stdlib = "This recipe is using a compiler"
+        exp_sysroot = "You're setting a requirement on sysroot"
+        exp_osx = "You're setting a constraint on the `__osx`"
+        assert any(lint.startswith(exp_stdlib) for lint in lints)
+        assert any(lint.startswith(exp_sysroot) for lint in lints)
+        assert any(lint.startswith(exp_osx) for lint in lints)
 
 
 @pytest.mark.parametrize("where", ["run", "run_constrained"])
@@ -239,7 +285,7 @@ def test_rattler_osx_noarch_hint():
     ids=["False", "True", "mixed"],
 )
 @pytest.mark.parametrize(
-    "macdt,v_std,sdk,exp_hint",
+    "macdt,v_std,sdk,exp_lint",
     [
         # matching -> no warning
         (["10.9", "11.0"], ["10.9", "11.0"], None, None),
@@ -277,8 +323,8 @@ def test_rattler_osx_noarch_hint():
         (None, None, ["10.12", "11.0"], "You are"),
     ],
 )
-def test_cbc_osx_hints(
-    std_selector, with_linux, reverse_arch, macdt, v_std, sdk, exp_hint
+def test_cbc_osx_lints(
+    std_selector, with_linux, reverse_arch, macdt, v_std, sdk, exp_lint
 ):
     with tmp_directory() as rdir:
         with open(os.path.join(rdir, "meta.yaml"), "w") as fh:
@@ -318,16 +364,21 @@ MACOSX_SDK_VERSION:         # [osx]
 """
                 )
         # run the linter
-        _, hints = linter.main(rdir, return_hints=True)
+        lints, _ = linter.main(rdir, return_hints=True)
         # show CBC/hints for debugging
         with open(os.path.join(rdir, "conda_build_config.yaml"), "r") as fh:
             print("".join(fh.readlines()))
-            print(hints)
+            print(lints)
         # validate against expectations
-        if exp_hint is None:
-            assert not hints
+        if exp_lint is None:
+            for slug in [
+                "Conflicting spec",
+                "You are",
+                "In your conda_build_config.yaml",
+            ]:
+                assert not any(lint.startswith(slug) for lint in lints)
         else:
-            assert any(h.startswith(exp_hint) for h in hints)
+            assert any(lint.startswith(exp_lint) for lint in lints)
 
 
 @pytest.mark.parametrize(

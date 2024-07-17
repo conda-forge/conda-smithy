@@ -430,6 +430,7 @@
       "enum": [
         "cran",
         "github",
+        "githubreleases",
         "incrementalpharawurl",
         "librariesio",
         "npm",
@@ -795,9 +796,6 @@
     "Nullable": {
       "const": null,
       "description": "Created to avoid issue with schema validation of null values in lists or dicts.",
-      "enum": [
-        null
-      ],
       "title": "Nullable"
     },
     "Platforms": {
@@ -1714,8 +1712,7 @@
             "conda-build",
             "conda-build+classic",
             "conda-build+conda-libmamba-solver",
-            "mambabuild",
-            "rattler-build"
+            "mambabuild"
           ],
           "type": "string"
         },
