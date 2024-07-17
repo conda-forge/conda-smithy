@@ -261,7 +261,11 @@ MACOSX_SDK_VERSION:         # [osx]
             print(lints)
         # validate against expectations
         if exp_lint is None:
-            for slug in ["Conflicting spec", "You are", "In your conda_build_config.yaml"]:
+            for slug in [
+                "Conflicting spec",
+                "You are",
+                "In your conda_build_config.yaml",
+            ]:
                 assert not any(lint.startswith(slug) for lint in lints)
         else:
             assert any(lint.startswith(exp_lint) for lint in lints)
