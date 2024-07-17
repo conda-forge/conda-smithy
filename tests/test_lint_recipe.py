@@ -260,10 +260,11 @@ MACOSX_SDK_VERSION:         # [osx]
             print("".join(fh.readlines()))
             print(lints)
         # validate against expectations
+        has_lint = any(lint.startswith(exp_lint) for lint in lints)
         if exp_lint is None:
-            assert not lints
+            assert not has_lint
         else:
-            assert any(lint.startswith(exp_lint) for lint in lints)
+            assert has_lint
 
 
 class Test_linter(unittest.TestCase):
