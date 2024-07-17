@@ -175,7 +175,7 @@ def test_osx_noarch_hint(where):
     ids=["False", "True", "mixed"],
 )
 @pytest.mark.parametrize(
-    "macdt,v_std,sdk,exp_hint",
+    "macdt,v_std,sdk,exp_lint",
     [
         # matching -> no warning
         (["10.9", "11.0"], ["10.9", "11.0"], None, None),
@@ -213,8 +213,8 @@ def test_osx_noarch_hint(where):
         (None, None, ["10.12", "11.0"], "You are"),
     ],
 )
-def test_cbc_osx_hints(
-    std_selector, with_linux, reverse_arch, macdt, v_std, sdk, exp_hint
+def test_cbc_osx_lints(
+    std_selector, with_linux, reverse_arch, macdt, v_std, sdk, exp_lint
 ):
     with tmp_directory() as rdir:
         with open(os.path.join(rdir, "meta.yaml"), "w") as fh:
@@ -254,16 +254,16 @@ MACOSX_SDK_VERSION:         # [osx]
 """
                 )
         # run the linter
-        _, hints = linter.main(rdir, return_hints=True)
+        lints, _ = linter.main(rdir, return_hints=True)
         # show CBC/hints for debugging
         with open(os.path.join(rdir, "conda_build_config.yaml"), "r") as fh:
             print("".join(fh.readlines()))
-            print(hints)
+            print(lints)
         # validate against expectations
-        if exp_hint is None:
-            assert not hints
+        if exp_lint is None:
+            assert not lints
         else:
-            assert any(h.startswith(exp_hint) for h in hints)
+            assert any(lint.startswith(exp_lint) for lint in lints)
 
 
 class Test_linter(unittest.TestCase):
