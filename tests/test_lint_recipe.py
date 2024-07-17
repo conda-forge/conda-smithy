@@ -1258,6 +1258,14 @@ class Test_linter(unittest.TestCase):
         lints = linter.main(
             os.path.join(_thisdir, "recipes", "cb3_jinja2_functions", "recipe")
         )
+        # exclude stdlib lints
+        lints = [
+            lint
+            for lint in lints
+            if not lint.startswith(
+                "This recipe is using a compiler, which now requires adding a build dependence"
+            )
+        ]
         assert not lints
 
     @unittest.skipUnless(is_gh_token_set(), "GH_TOKEN not set")
