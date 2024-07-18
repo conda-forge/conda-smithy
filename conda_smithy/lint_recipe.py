@@ -483,18 +483,23 @@ def lintify_recipe(
     recipe_dirname = os.path.basename(recipe_dir) if recipe_dir else "recipe"
     is_staged_recipes = recipe_dirname != "recipe"
 
-    if not is_rattler_build:
-        # 0: Top level keys should be expected
-        unexpected_sections = []
-        for section in major_sections:
-            if section not in EXPECTED_SECTION_ORDER:
-                lints.append(
-                    "The top level meta key {} is unexpected".format(section)
-                )
-                unexpected_sections.append(section)
+    # 0: Top level keys should be expected
+    unexpected_sections = []
+    expected_keys = (
+        EXPECTED_SECTION_ORDER
+        if not is_rattler_build
+        else rattler_linter.EXPECTED_SINGLE_OUTPUT_SECTION_ORDER
+        + rattler_linter.EXPECTED_MUTIPLE_OUTPUT_SECTION_ORDER
+    )
+    for section in major_sections:
+        if section not in expected_keys:
+            lints.append(
+                "The top level meta key {} is unexpected".format(section)
+            )
+            unexpected_sections.append(section)
 
-        for section in unexpected_sections:
-            major_sections.remove(section)
+    for section in unexpected_sections:
+        major_sections.remove(section)
 
     # 1: Top level meta.yaml keys should have a specific order.
     lint_section_order(major_sections, lints, is_rattler_build)
@@ -1190,7 +1195,7 @@ def lintify_recipe(
 
     osx_lint = (
         "You're setting a constraint on the `__osx` virtual package directly; this "
-        f"should now be done by adding a build dependence on {sysroot_hint_build}, "
+        f"should now be done by adding a build dependence on {sysroot_lint_build}, "
         "and overriding `c_stdlib_version` in `recipe/conda_build_config.yaml` for "
         "the respective platform as necessary. For further details, please see "
         "https://github.com/conda-forge/conda-forge.github.io/issues/2102."

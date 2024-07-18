@@ -80,10 +80,10 @@ def test_rattler_stdlib_hint(comp_lang):
         with io.open(os.path.join(recipe_dir, "conda-forge.yml"), "w") as fh:
             fh.write("conda_build_tool: rattler-build")
 
-        _, hints = linter.main(
+        lints, _ = linter.main(
             recipe_dir, feedstock_dir=recipe_dir, return_hints=True
         )
-        assert any(h.startswith(expected_message) for h in hints)
+        assert any(lint.startswith(expected_message) for lint in lints)
 
 
 def test_sysroot_lint():
@@ -105,7 +105,7 @@ def test_sysroot_lint():
         assert any(lint.startswith(expected_message) for lint in lints)
 
 
-def test_rattler_sysroot_hint():
+def test_rattler_sysroot_lint():
     expected_message = "You're setting a requirement on sysroot"
 
     with tmp_directory() as recipe_dir:
@@ -123,10 +123,10 @@ def test_rattler_sysroot_hint():
         with io.open(os.path.join(recipe_dir, "conda-forge.yml"), "w") as fh:
             fh.write("conda_build_tool: rattler-build")
 
-        _, hints = linter.main(
+        lints, _ = linter.main(
             recipe_dir, return_hints=True, feedstock_dir=recipe_dir
         )
-        assert any(h.startswith(expected_message) for h in hints)
+        assert any(lint.startswith(expected_message) for lint in lints)
 
 
 @pytest.mark.parametrize("where", ["run", "run_constrained"])
@@ -171,10 +171,10 @@ def test_rattler_osx_hint():
         with io.open(os.path.join(recipe_dir, "conda-forge.yml"), "w") as fh:
             fh.write("conda_build_tool: rattler-build")
 
-        _, hints = linter.main(
+        lints, _ = linter.main(
             recipe_dir, return_hints=True, feedstock_dir=recipe_dir
         )
-        assert any(h.startswith(expected_message) for h in hints)
+        assert any(lint.startswith(expected_message) for lint in lints)
 
 
 def test_stdlib_lints_multi_output():
@@ -394,7 +394,7 @@ MACOSX_SDK_VERSION:         # [osx]
     ids=["False", "True", "mixed"],
 )
 @pytest.mark.parametrize(
-    "macdt,v_std,sdk,exp_hint",
+    "macdt,v_std,sdk,exp_lint",
     [
         # matching -> no warning
         (["10.9", "11.0"], ["10.9", "11.0"], None, None),
@@ -433,7 +433,7 @@ MACOSX_SDK_VERSION:         # [osx]
     ],
 )
 def test_rattler_cbc_osx_hints(
-    std_selector, with_linux, reverse_arch, macdt, v_std, sdk, exp_hint
+    std_selector, with_linux, reverse_arch, macdt, v_std, sdk, exp_lint
 ):
     with tmp_directory() as recipe_dir:
         with open(os.path.join(recipe_dir, "recipe.yaml"), "w") as fh:
@@ -498,18 +498,23 @@ MACOSX_SDK_VERSION:
 """
                 )
         # run the linter
-        _, hints = linter.main(
+        lints, _ = linter.main(
             recipe_dir, return_hints=True, feedstock_dir=recipe_dir
         )
         # show CBC/hints for debugging
         with open(os.path.join(recipe_dir, "variants.yaml"), "r") as fh:
             print("".join(fh.readlines()))
-            print(hints)
+            print(lints)
         # validate against expectations
-        if exp_hint is None:
-            assert not hints
+        if exp_lint is None:
+            for slug in [
+                "Conflicting spec",
+                "You are",
+                "In your conda_build_config.yaml",
+            ]:
+                assert not any(lint.startswith(slug) for lint in lints)
         else:
-            assert any(h.startswith(exp_hint) for h in hints)
+            assert any(lint.startswith(exp_lint) for lint in lints)
 
 
 class Test_linter(unittest.TestCase):
@@ -2230,14 +2235,18 @@ class Test_linter(unittest.TestCase):
 
     @unittest.skipUnless(is_gh_token_set(), "GH_TOKEN not set")
     def test_rattler_maintainer_exists(self):
-        lints, _ = linter.lintify_recipe, is_rattler_build = True(
-            {"extra": {"recipe-maintainers": ["support"]}}, conda_forge=True
+        lints, _ = linter.lintify_recipe(
+            {"extra": {"recipe-maintainers": ["support"]}},
+            conda_forge=True,
+            is_rattler_build=True,
         )
         expected_message = 'Recipe maintainer "support" does not exist'
         self.assertIn(expected_message, lints)
 
-        lints, _ = linter.lintify_recipe, is_rattler_build = True(
-            {"extra": {"recipe-maintainers": ["isuruf"]}}, conda_forge=True
+        lints, _ = linter.lintify_recipe(
+            {"extra": {"recipe-maintainers": ["isuruf"]}},
+            conda_forge=True,
+            is_rattler_build=True,
         )
         expected_message = 'Recipe maintainer "isuruf" does not exist'
         self.assertNotIn(expected_message, lints)
@@ -2246,29 +2255,33 @@ class Test_linter(unittest.TestCase):
             "Feedstock with the same name exists in conda-forge."
         )
         # Check that feedstock exists if staged_recipes
-        lints, _ = linter.lintify_recipe, is_rattler_build = True(
+        lints, _ = linter.lintify_recipe(
             {"package": {"name": "python"}},
             recipe_dir="python",
             conda_forge=True,
+            is_rattler_build=True,
         )
         self.assertIn(expected_message, lints)
-        lints, _ = linter.lintify_recipe, is_rattler_build = True(
+        lints, _ = linter.lintify_recipe(
             {"package": {"name": "python"}},
             recipe_dir="python",
             conda_forge=False,
+            is_rattler_build=True,
         )
         self.assertNotIn(expected_message, lints)
         # No lint if in a feedstock
-        lints, _ = linter.lintify_recipe, is_rattler_build = True(
+        lints, _ = linter.lintify_recipe(
             {"package": {"name": "python"}},
             recipe_dir="recipe",
             conda_forge=True,
+            is_rattler_build=True,
         )
         self.assertNotIn(expected_message, lints)
-        lints, _ = linter.lintify_recipe, is_rattler_build = True(
+        lints, _ = linter.lintify_recipe(
             {"package": {"name": "python"}},
             recipe_dir="recipe",
             conda_forge=False,
+            is_rattler_build=True,
         )
         self.assertNotIn(expected_message, lints)
 
@@ -2286,10 +2299,11 @@ class Test_linter(unittest.TestCase):
                 "There's a feedstock named python1, but tests assume that there isn't"
             )
         else:
-            lints, _ = linter.lintify_recipe, is_rattler_build = True(
+            lints, _ = linter.lintify_recipe(
                 {"package": {"name": "python1"}},
                 recipe_dir="python",
                 conda_forge=True,
+                is_rattler_build=True,
             )
             self.assertNotIn(expected_message, lints)
 
@@ -2310,28 +2324,38 @@ class Test_linter(unittest.TestCase):
             )
         else:
             # Check that feedstock exists if staged_recipes
-            lints, _ = linter.lintify_recipe, is_rattler_build = True(
-                {"package": {"name": r}}, recipe_dir=r, conda_forge=True
+            lints, _ = linter.lintify_recipe(
+                {"package": {"name": r}},
+                recipe_dir=r,
+                conda_forge=True,
+                is_rattler_build=True,
             )
             self.assertIn(expected_message, lints)
-            lints, _ = linter.lintify_recipe, is_rattler_build = True(
-                {"package": {"name": r}}, recipe_dir=r, conda_forge=False
+            lints, _ = linter.lintify_recipe(
+                {"package": {"name": r}},
+                recipe_dir=r,
+                conda_forge=False,
+                is_rattler_build=True,
             )
             self.assertNotIn(expected_message, lints)
             # No lint if in a feedstock
-            lints, _ = linter.lintify_recipe, is_rattler_build = True(
-                {"package": {"name": r}}, recipe_dir="recipe", conda_forge=True
+            lints, _ = linter.lintify_recipe(
+                {"package": {"name": r}},
+                recipe_dir="recipe",
+                conda_forge=True,
+                is_rattler_build=True,
             )
             self.assertNotIn(expected_message, lints)
-            lints, _ = linter.lintify_recipe, is_rattler_build = True(
+            lints, _ = linter.lintify_recipe(
                 {"package": {"name": r}},
                 recipe_dir="recipe",
                 conda_forge=False,
+                is_rattler_build=True,
             )
             self.assertNotIn(expected_message, lints)
             # No lint if the name isn't specified
-            lints, _ = linter.lintify_recipe, is_rattler_build = True(
-                {}, recipe_dir=r, conda_forge=True
+            lints, _ = linter.lintify_recipe(
+                {}, recipe_dir=r, conda_forge=True, is_rattler_build=True
             )
             self.assertNotIn(expected_message, lints)
 
@@ -2339,8 +2363,11 @@ class Test_linter(unittest.TestCase):
         try:
             bio.get_dir_contents("recipes/{}".format(r))
         except github.UnknownObjectException as e:
-            lints, _ = linter.lintify_recipe, is_rattler_build = True(
-                {"package": {"name": r}}, recipe_dir=r, conda_forge=True
+            lints, _ = linter.lintify_recipe(
+                {"package": {"name": r}},
+                recipe_dir=r,
+                conda_forge=True,
+                is_rattler_build=True,
             )
             self.assertNotIn(expected_message, lints)
         else:
@@ -2353,7 +2380,7 @@ class Test_linter(unittest.TestCase):
         expected_message = (
             "A conda package with same name (fitsio) already exists."
         )
-        lints, hints = linter.lintify_recipe, is_rattler_build = True(
+        lints, hints = linter.lintify_recipe(
             {
                 "package": {"name": "this-will-never-exist"},
                 "source": {
@@ -2362,11 +2389,12 @@ class Test_linter(unittest.TestCase):
             },
             recipe_dir="recipes/foo",
             conda_forge=True,
+            is_rattler_build=True,
         )
         self.assertIn(expected_message, hints)
 
         # check that this doesn't choke
-        lints, hints = linter.lintify_recipe, is_rattler_build = True(
+        lints, hints = linter.lintify_recipe(
             {
                 "package": {"name": "this-will-never-exist"},
                 "source": {
@@ -2377,6 +2405,7 @@ class Test_linter(unittest.TestCase):
             },
             recipe_dir="recipes/foo",
             conda_forge=True,
+            is_rattler_build=True,
         )
 
     @unittest.skipUnless(is_gh_token_set(), "GH_TOKEN not set")
@@ -2416,10 +2445,11 @@ class Test_linter(unittest.TestCase):
 
         try:
             # Running the linter function
-            lints, _ = linter.lintify_recipe, is_rattler_build = True(
+            lints, _ = linter.lintify_recipe(
                 {"extra": {"recipe-maintainers": maintainers}},
                 recipe_dir="python",
                 conda_forge=True,
+                is_rattler_build=True,
             )
 
             # Expected message if a maintainer has not participated
