@@ -1263,9 +1263,9 @@ class Test_linter(unittest.TestCase):
                               requirements:
                                 build:
                                   - python
-                                  - if win:
+                                  - if: win
                                     then:
-                                     - enum34
+                                      - enum34
                             """,
                 is_good=True,
             )
@@ -1276,7 +1276,7 @@ class Test_linter(unittest.TestCase):
                             requirements:
                                 run:
                                   - python
-                                  - if win:
+                                  - if: win
                                     then:
                                       - enum34
                             """
@@ -1288,9 +1288,9 @@ class Test_linter(unittest.TestCase):
                             requirements:
                               host:
                                 - python
-                                - if win:
+                                - if: win
                                   then:
-                                  - enum34
+                                    - enum34
                             """
             )
 
