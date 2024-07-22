@@ -460,8 +460,8 @@ def lintify_recipe(
 
     # If the recipe_dir exists (no guarantee within this function) , we can
     # find the meta.yaml within it.
-    recipe_fname = "meta.yaml" if not is_rattler_build else "recipe.yaml"
-    meta_fname = os.path.join(recipe_dir or "", recipe_fname)
+    recipe_name = "meta.yaml" if not is_rattler_build else "recipe.yaml"
+    recipe_fname = os.path.join(recipe_dir or "", recipe_name)
 
     sources_section = get_section(meta, "source", lints, is_rattler_build)
     build_section = get_section(meta, "build", lints, is_rattler_build)
@@ -528,7 +528,7 @@ def lintify_recipe(
 
     # 6: Selectors should be in a tidy form.
     if not is_rattler_build:
-        if recipe_dir is not None and os.path.exists(meta_fname):
+        if recipe_dir is not None and os.path.exists(recipe_fname):
             bad_selectors, bad_lines = [], []
             pyXY_selectors_lint, pyXY_lines_lint = [], []
             pyXY_selectors_hint, pyXY_lines_hint = [], []
@@ -536,7 +536,7 @@ def lintify_recipe(
             good_selectors_pat = re.compile(r"(.+?)\s{2,}#\s\[(.+)\](?(2).*)$")
             # Look out for py27, py35 selectors; we prefer py==35
             pyXY_selectors_pat = re.compile(r".+#\s*\[.*?(py\d{2,3}).*\]")
-            with io.open(meta_fname, "rt") as fh:
+            with io.open(recipe_fname, "rt") as fh:
                 for selector_line, line_number in selector_lines(fh):
                     if not good_selectors_pat.match(selector_line):
                         bad_selectors.append(selector_line)
@@ -600,7 +600,7 @@ def lintify_recipe(
     lint_license_wording(about_section, lints)
 
     # 11: There should be one empty line at the end of the file.
-    lint_empty_line_of_the_file(recipe_dir, meta_fname, lints)
+    lint_empty_line_of_the_file(recipe_dir, recipe_fname, lints)
 
     # 12: License family must be valid (conda-build checks for that)
     if not is_rattler_build:
@@ -716,9 +716,9 @@ def lintify_recipe(
 
     # 18: noarch doesn't work with selectors for runtime dependencies
     if not is_rattler_build:
-        if noarch_value is not None and os.path.exists(meta_fname):
+        if noarch_value is not None and os.path.exists(recipe_fname):
             noarch_platforms = len(forge_yaml.get("noarch_platforms", [])) > 1
-            with io.open(meta_fname, "rt") as fh:
+            with io.open(recipe_fname, "rt") as fh:
                 in_runreqs = False
                 for line in fh:
                     line_s = line.strip()
@@ -775,14 +775,14 @@ def lintify_recipe(
 
     if not is_rattler_build:
         # 20: Jinja2 variable definitions should be nice.
-        if recipe_dir is not None and os.path.exists(meta_fname):
+        if recipe_dir is not None and os.path.exists(recipe_fname):
             bad_jinja = []
             bad_lines = []
             # Good Jinja2 variable definitions look like "{% set .+ = .+ %}"
             good_jinja_pat = re.compile(
                 r"\s*\{%\s(set)\s[^\s]+\s=\s[^\s]+\s%\}"
             )
-            with io.open(meta_fname, "rt") as fh:
+            with io.open(recipe_fname, "rt") as fh:
                 for jinja_line, line_number in jinja_lines(fh):
                     if not good_jinja_pat.match(jinja_line):
                         bad_jinja.append(jinja_line)
@@ -897,7 +897,7 @@ def lintify_recipe(
                         )
 
     # 24: jinja2 variable references should be {{<one space>var<one space>}}
-    if recipe_dir is not None and os.path.exists(meta_fname):
+    if recipe_dir is not None and os.path.exists(recipe_fname):
         bad_vars = []
         bad_lines = []
         jinja_pattern = (
@@ -905,7 +905,7 @@ def lintify_recipe(
             if not is_rattler_build
             else rattler_linter.JINJA_VAR_PAT
         )
-        with io.open(meta_fname, "rt") as fh:
+        with io.open(recipe_fname, "rt") as fh:
             for i, line in enumerate(fh.readlines()):
                 for m in jinja_pattern.finditer(line):
                     if m.group(1) is not None:
@@ -1003,8 +1003,8 @@ def lintify_recipe(
     # ... so raw meta.yaml and regex it is...
     pure_python_wheel_re = re.compile(r".*[:-]\s+(http.*-none-any\.whl)\s+.*")
     wheel_re = re.compile(r".*[:-]\s+(http.*\.whl)\s+.*")
-    if recipe_dir is not None and os.path.exists(meta_fname):
-        with open(meta_fname, "rt") as f:
+    if recipe_dir is not None and os.path.exists(recipe_fname):
+        with open(recipe_fname, "rt") as f:
             for line in f:
                 if match := pure_python_wheel_re.search(line):
                     pure_python_wheel_urls.append(match.group(1))
@@ -1077,7 +1077,7 @@ def lintify_recipe(
             )
             hints.extend(noarch_hints)
         else:
-            with io.open(meta_fname, "rt") as fh:
+            with io.open(recipe_fname, "rt") as fh:
                 in_runreqs = False
                 no_arch_possible = True
                 for line in fh:
