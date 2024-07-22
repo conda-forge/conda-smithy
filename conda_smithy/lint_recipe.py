@@ -105,7 +105,6 @@ def get_meta_section(parent, name, lints):
 
 
 def get_rattler_section(meta, name):
-    # get rattler recipe.yaml section
     if name == "requirements":
         return rattler_loader.load_all_requirements(meta)
     elif name == "source":
@@ -620,7 +619,9 @@ def lintify_recipe(
         ):
             lints.append("license_file entry is missing, but is required.")
     else:
-        rattler_linter.lint_has_recipe_file(about_section, lints)
+        license_file = about_section.get("license_file", None)
+        if not license_file:
+            lints.append("license_file entry is missing, but is required.")
 
     # 13: Check that the recipe name is valid
     if not is_rattler_build:
