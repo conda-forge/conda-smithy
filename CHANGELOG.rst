@@ -4,6 +4,19 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.37.1
+====================
+
+**Changed:**
+
+* ``c_stdlib``- and ``MACOSX_DEPLOYMENT_TARGET``-related hints are now lints. (#1978)
+
+**Authors:**
+
+* Matthew R. Becker
+
+
+
 v3.37.0
 ====================
 
