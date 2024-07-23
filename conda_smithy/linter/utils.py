@@ -36,8 +36,6 @@ TEST_KEYS = {"imports", "commands"}
 TEST_FILES = ["run_test.py", "run_test.sh", "run_test.bat", "run_test.pl"]
 
 
-NEEDED_FAMILIES = ["gpl", "bsd", "mit", "apache", "psf"]
-
 sel_pat = re.compile(r"(.+?)\s*(#.*)?\[([^\[\]]+)\](?(2).*)$")
 jinja_pat = re.compile(r"\s*\{%\s*(set)\s+[^\s]+\s*=\s*[^\s]+\s*%\}")
 JINJA_VAR_PAT = re.compile(r"{{(.*?)}}")
