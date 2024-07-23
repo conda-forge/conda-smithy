@@ -16,7 +16,6 @@ from ruamel.yaml import CommentedSeq
 from conda_smithy.linter.utils import (
     FIELDS,
     JINJA_VAR_PAT,
-    NEEDED_FAMILIES,
     REQUIREMENTS_ORDER,
     TEST_FILES,
     TEST_KEYS,
