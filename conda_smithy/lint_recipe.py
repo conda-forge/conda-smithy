@@ -203,6 +203,8 @@ def lintify_meta_yaml(
     lint_should_be_empty_line(recipe_fname, lints)
 
     # 12: License family must be valid (conda-build checks for that)
+    # we skip it for rattler builds as it will validate it
+    # See more: https://prefix-dev.github.io/rattler-build/latest/reference/recipe_file/#about-section
     if not is_rattler_build:
         try:
             ensure_valid_license_family(meta)

@@ -161,7 +161,6 @@ def test_rattler_osx_hint():
                    name: foo
                 requirements:
                   run:
-                    # since we're in an f-string: double up braces (2->4)
                     - if: osx
                       then:
                         - __osx >=${{ MACOSX_DEPLOYMENT_TARGET|default("10.9") }}
