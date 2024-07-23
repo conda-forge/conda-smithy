@@ -105,7 +105,7 @@ def lintify_forge_yaml(recipe_dir=None) -> (list, list):
     return validate_json_schema(forge_yaml)
 
 
-def lintify_recipe(
+def lintify_meta_yaml(
     meta,
     recipe_dir=None,
     conda_forge=False,
@@ -618,7 +618,7 @@ def main(
     else:
         meta = get_yaml().load(Path(recipe_file))
 
-    results, hints = lintify_recipe(
+    results, hints = lintify_meta_yaml(
         meta,
         recipe_dir,
         conda_forge,
