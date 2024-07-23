@@ -2,7 +2,7 @@ import re
 
 
 import sys
-from typing import Dict
+from typing import Any, Dict, List
 
 
 from conda.models.version import VersionOrder
@@ -38,7 +38,12 @@ EXPECTED_MUTIPLE_OUTPUT_SECTION_ORDER = [
 JINJA_VAR_PAT = re.compile(r"\${{(.*?)}}")
 
 
-def lint_recipe_tests(test_section, outputs_section, lints, hints):
+def lint_recipe_tests(
+    test_section: Dict[str, Any],
+    outputs_section: Dict[str, Any],
+    lints: List[str],
+    hints: List[str],
+):
     TEST_KEYS = {"script", "python"}
     tests_lints = []
     tests_hints = []
@@ -68,7 +73,9 @@ def lint_recipe_tests(test_section, outputs_section, lints, hints):
 
 
 def lint_package_name(
-    package_section: Dict, context_section: Dict, lints: list[str]
+    package_section: Dict[str, Any],
+    context_section: Dict[str, Any],
+    lints: List[str],
 ):
     package_name = str(package_section.get("name"))
     context_name = str(context_section.get("name"))
@@ -86,7 +93,10 @@ def lint_package_name(
 
 
 def lint_usage_of_selectors_for_noarch(
-    noarch_value, build_section, requirements_section, lints
+    noarch_value: str,
+    build_section: Dict[str, Any],
+    requirements_section: Dict[str, Any],
+    lints: List[str],
 ):
     for section in requirements_section:
         section_requirements = requirements_section[section]
@@ -111,7 +121,9 @@ def lint_usage_of_selectors_for_noarch(
 
 
 def lint_package_version(
-    package_section: dict, context_section: dict, lints: list[str]
+    package_section: Dict[str, Any],
+    context_section: Dict[str, Any],
+    lints: List[str],
 ):
     package_ver = str(package_section.get("version"))
     context_ver = str(context_section.get("version"))
@@ -127,7 +139,11 @@ def lint_package_version(
         lints.append(f"Package version {ver} doesn't match conda spec")
 
 
-def hint_noarch_usage(build_section, requirement_section: dict, hints):
+def hint_noarch_usage(
+    build_section: Dict[str, Any],
+    requirement_section: Dict[str, Any],
+    hints: List[str],
+):
     build_reqs = requirement_section.get("build", None)
     if (
         build_reqs
