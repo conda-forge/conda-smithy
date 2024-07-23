@@ -38,10 +38,10 @@ EXPECTED_MUTIPLE_OUTPUT_SECTION_ORDER = [
 JINJA_VAR_PAT = re.compile(r"\${{(.*?)}}")
 
 
-def lint_recipe_tests(test_section=dict(), outputs_section=list()):
+def lint_recipe_tests(test_section, outputs_section, lints, hints):
     TEST_KEYS = {"script", "python"}
-    lints = []
-    hints = []
+    tests_lints = []
+    tests_hints = []
 
     if not any(key in TEST_KEYS for key in test_section):
         if not outputs_section:
@@ -63,10 +63,13 @@ def lint_recipe_tests(test_section=dict(), outputs_section=list()):
             else:
                 lints.append("The recipe must have some tests.")
 
-    return lints, hints
+    lints.extend(tests_lints)
+    hints.extend(tests_hints)
 
 
-def lint_package_name(package_section: Dict, context_section: Dict):
+def lint_package_name(
+    package_section: Dict, context_section: Dict, lints: list[str]
+):
     package_name = str(package_section.get("name"))
     context_name = str(context_section.get("name"))
     actual_name = (
@@ -77,13 +80,14 @@ def lint_package_name(package_section: Dict, context_section: Dict):
 
     actual_name = actual_name.strip()
     if re.match(r"^[a-z0-9_\-.]+$", actual_name) is None:
-        return """Recipe name has invalid characters. only lowercase alpha, numeric, underscores, hyphens and dots allowed"""
+        lints.append(
+            """Recipe name has invalid characters. only lowercase alpha, numeric, underscores, hyphens and dots allowed"""
+        )
 
 
 def lint_usage_of_selectors_for_noarch(
-    noarch_value, build_section, requirements_section
+    noarch_value, build_section, requirements_section, lints
 ):
-    lints = []
     for section in requirements_section:
         section_requirements = requirements_section[section]
 
@@ -105,10 +109,10 @@ def lint_usage_of_selectors_for_noarch(
             "`noarch: {}`.".format(noarch_value)
         )
 
-    return lints
 
-
-def lint_package_version(package_section: dict, context_section: dict):
+def lint_package_version(
+    package_section: dict, context_section: dict, lints: list[str]
+):
     package_ver = str(package_section.get("version"))
     context_ver = str(context_section.get("version"))
     ver = (
@@ -119,14 +123,12 @@ def lint_package_version(package_section: dict, context_section: dict):
 
     try:
         VersionOrder(ver)
-
     except Exception:
-        return "Package version {} doesn't match conda spec".format(ver)
+        lints.append(f"Package version {ver} doesn't match conda spec")
 
 
-def hint_noarch_usage(build_section, requirement_section: dict):
+def hint_noarch_usage(build_section, requirement_section: dict, hints):
     build_reqs = requirement_section.get("build", None)
-    hints = []
     if (
         build_reqs
         and not any(
@@ -155,5 +157,3 @@ def hint_noarch_usage(build_section, requirement_section: dict):
                 "Whenever possible python packages should use noarch. "
                 "See https://conda-forge.org/docs/maintainer/knowledge_base.html#noarch-builds"
             )
-
-    return hints

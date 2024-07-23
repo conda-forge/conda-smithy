@@ -22,7 +22,7 @@ from ruamel.yaml import YAML
 
 from . import configure_feedstock
 from . import feedstock_io
-from . import lint_recipe
+from . import lint_recipe as linter
 from . import __version__
 from .utils import CONDA_BUILD, RATTLER_BUILD
 
@@ -642,7 +642,7 @@ class RecipeLint(Subcommand):
     def __call__(self, args):
         all_good = True
         for recipe in args.recipe_directory:
-            lints, hints = lint_recipe.main(
+            lints, hints = linter.main(
                 os.path.join(recipe),
                 conda_forge=args.conda_forge,
                 return_hints=True,
