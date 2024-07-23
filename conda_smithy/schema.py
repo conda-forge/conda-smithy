@@ -42,6 +42,8 @@ conda_build_tools = Literal[
     "conda-build+conda-libmamba-solver",
     # will run 'conda mambabuild', as provided by boa
     "mambabuild",
+    # will run 'rattler-build build'
+    "rattler-build",
 ]
 
 
@@ -78,6 +80,7 @@ class BotConfigInspectionChoice(StrEnum):
 class BotConfigVersionUpdatesSourcesChoice(StrEnum):
     CRAN = "cran"
     GITHUB = "github"
+    GITHUB_RELEASES = "githubreleases"
     INCREMENT_ALPHA_RAW_URL = "incrementalpharawurl"
     LIBRARIES_IO = "librariesio"
     NPM = "npm"
@@ -333,6 +336,13 @@ class BotConfigVersionUpdates(BaseModel):
     sources: Optional[List[BotConfigVersionUpdatesSourcesChoice]] = Field(
         None,
         description="List of sources to use for version updates",
+    )
+
+    skip: Optional[bool] = Field(
+        default=False,
+        description="Skip automatic version updates. "
+        "Useful in cases where the source project's version numbers don't conform to "
+        "PEP440.",
     )
 
 

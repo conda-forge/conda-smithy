@@ -40,7 +40,7 @@ jobs:
       - name: test versions
         run: |
           pip uninstall conda-smithy --yes
-          [[ $(python setup.py --version) != "0.0.0" ]] || exit 1
+          [[ $(python -m setuptools_scm) != "0.0.0" ]] || exit 1
 
           rm -rf dist/*
           python -m build --sdist

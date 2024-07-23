@@ -1,6 +1,6 @@
 [build-system]
 requires = [
-    "setuptools>=45",
+    "setuptools>=70",
     "setuptools_scm>=7",
     "tomli>=1.0.0; python_version < '3.11'",
 ]
@@ -42,7 +42,7 @@ norecursedirs = [
     "dist",
     "conda-smithy.recipe",
 ]
-addopts = "--ignore setup.py --ignore conda_smithy --tb native --strict-markers --durations=20"
+addopts = "--ignore conda_smithy --tb native --strict-markers --durations=20"
 markers = [
     "legacy_circle: Test designed to run as if prior to the azure migration",
     "legacy_travis: Test designed to run as if prior to the azure migration",
