@@ -103,8 +103,6 @@ def lintify_meta_yaml(
     # If the recipe_dir exists (no guarantee within this function) , we can
     # find the meta.yaml within it.
     meta_fname = os.path.join(recipe_dir or "", "meta.yaml")
-    # if not os.path.exists(meta_fname):
-    #     raise FileNotFoundError(f"meta.yaml not found in {recipe_dir}.")
 
     sources_section = get_section(meta, "source", lints)
     build_section = get_section(meta, "build", lints)
