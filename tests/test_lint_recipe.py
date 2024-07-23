@@ -14,7 +14,7 @@ import warnings
 import github
 import pytest
 
-from conda_smithy.linter import linter
+import conda_smithy.lint_recipe as linter
 
 _thisdir = os.path.abspath(os.path.dirname(__file__))
 

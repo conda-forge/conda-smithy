@@ -45,7 +45,6 @@ from conda_smithy.linter.utils import (
     get_section,
 )
 
-str_type = str
 
 import io
 import json
