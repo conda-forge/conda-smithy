@@ -303,8 +303,17 @@ def is_valid_feedstock_token(
     return valid
 
 
-def register_feedstock_token(user, project, token_repo, provider=None):
+def register_feedstock_token(
+    user,
+    project,
+    token_repo,
+    provider=None,
+    existing_tokens_time_to_expiration=None,
+):
     """Register the feedstock token with the token repo.
+
+    If `existing_tokens_time_to_expiration` is not None,
+    mark old tokens to expire at `time.time() + existing_tokens_time_to_expiration`.
 
     This function uses a random salt and scrypt to hash the feedstock
     token before writing it to the token repo. NEVER STORE THESE TOKENS
@@ -357,6 +366,38 @@ def register_feedstock_token(user, project, token_repo, provider=None):
                     token_data = {"tokens": [token_data]}
             else:
                 token_data = {"tokens": []}
+
+            # clean out old tokens
+            now = time.time()
+            token_data["tokens"] = [
+                td
+                for td in token_data["tokens"]
+                if td.get("expires_at", now) >= now
+            ]
+
+            if existing_tokens_time_to_expiration is not None:
+                # expire current tokens if needed
+                now_plus_expire = now + existing_tokens_time_to_expiration
+
+                for i in range(len(token_data["tokens"])):
+                    tokens_provider = token_data["tokens"][i].get(
+                        "provider", None
+                    )
+                    if (
+                        # doesn't have an expiration time currently
+                        "expires_at" not in token_data["tokens"][i]
+                        and (
+                            # if token is generic, it always expires
+                            tokens_provider is None
+                            or (
+                                # if token is not generic, it has to match providers
+                                tokens_provider is not None
+                                and provider is not None
+                                and tokens_provider == provider
+                            )
+                        )
+                    ):
+                        token_data["tokens"][i]["expires_at"] = now_plus_expire
 
             # salt, encrypt and write
             salt = os.urandom(64)
