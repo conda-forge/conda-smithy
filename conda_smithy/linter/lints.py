@@ -8,11 +8,6 @@ import os
 import sys
 
 
-if sys.version_info[:2] < (3, 11):
-    pass
-else:
-    pass
-
 from typing import Optional
 
 from ruamel.yaml import CommentedSeq
