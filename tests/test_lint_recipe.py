@@ -14,7 +14,7 @@ import warnings
 import github
 import pytest
 
-import conda_smithy.lint_recipe as linter
+from conda_smithy.linter import linter
 
 _thisdir = os.path.abspath(os.path.dirname(__file__))
 
@@ -272,6 +272,7 @@ MACOSX_SDK_VERSION:         # [osx]
 
 
 class Test_linter(unittest.TestCase):
+
     def test_pin_compatible_in_run_exports(self):
         meta = {
             "package": {
