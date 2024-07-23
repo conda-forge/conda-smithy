@@ -22,7 +22,7 @@ from ruamel.yaml import YAML
 
 from . import configure_feedstock
 from . import feedstock_io
-from .linter import linter
+from . import lint_recipe as linter
 from . import __version__
 from .utils import CONDA_BUILD, RATTLER_BUILD
 
