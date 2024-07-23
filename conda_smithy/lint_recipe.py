@@ -69,6 +69,8 @@ from conda_smithy.validate_schema import validate_json_schema
 
 from conda_smithy.utils import render_meta_yaml, get_yaml
 
+NEEDED_FAMILIES = ["gpl", "bsd", "mit", "apache", "psf"]
+
 
 def lintify_forge_yaml(recipe_dir=None) -> (list, list):
     if recipe_dir:
@@ -174,7 +176,9 @@ def lintify_meta_yaml(
 
     # 12a: License family must be valid (conda-build checks for that)
     license = about_section.get("license", "").lower()
-    lint_license_family_should_be_valid(about_section, license, lints)
+    lint_license_family_should_be_valid(
+        about_section, license, NEEDED_FAMILIES, lints
+    )
 
     # 13: Check that the recipe name is valid
     lint_recipe_name(package_section, lints)

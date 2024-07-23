@@ -16,7 +16,6 @@ from ruamel.yaml import CommentedSeq
 from conda_smithy.linter.utils import (
     FIELDS,
     JINJA_VAR_PAT,
-    NEEDED_FAMILIES,
     REQUIREMENTS_ORDER,
     TEST_FILES,
     TEST_KEYS,
@@ -219,11 +218,13 @@ def lint_should_be_empty_line(meta_fname, lints):
             )
 
 
-def lint_license_family_should_be_valid(about_section, license, lints):
+def lint_license_family_should_be_valid(
+    about_section, license, needed_families, lints
+):
     license_family = about_section.get("license_family", license).lower()
     license_file = about_section.get("license_file", None)
     if not license_file and any(
-        f for f in NEEDED_FAMILIES if f in license_family
+        f for f in needed_families if f in license_family
     ):
         lints.append("license_file entry is missing, but is required.")
 
