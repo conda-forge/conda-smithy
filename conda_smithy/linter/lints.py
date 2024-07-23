@@ -327,7 +327,7 @@ def lint_noarch(noarch_value: Optional[str], lints):
 
 
 def lint_noarch_and_runtime_dependencies(
-    meta: dict[str, Any],
+    meta,
     meta_fname,
     noarch_value,
     build_section,
