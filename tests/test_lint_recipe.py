@@ -272,6 +272,7 @@ MACOSX_SDK_VERSION:         # [osx]
 
 
 class Test_linter(unittest.TestCase):
+
     def test_pin_compatible_in_run_exports(self):
         meta = {
             "package": {
