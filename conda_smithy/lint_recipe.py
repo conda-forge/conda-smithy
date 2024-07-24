@@ -40,11 +40,14 @@ from conda_smithy.linter.lints import (
     lint_usage_of_legacy_patterns,
 )
 from conda_smithy.linter.utils import (
+    CONDA_BUILD_TOOL,
     EXPECTED_SECTION_ORDER,
+    RATTLER_BUILD_TOOL,
     find_local_config_file,
     get_section,
 )
 
+from conda_smithy.linter import rattler_linter
 
 import io
 import json
@@ -96,7 +99,10 @@ def lintify_forge_yaml(recipe_dir=None) -> (list, list):
 
 
 def lintify_meta_yaml(
-    meta, recipe_dir=None, conda_forge=False
+    meta,
+    recipe_dir=None,
+    conda_forge=False,
+    is_rattler_build=False,
 ) -> (list, list):
     lints = []
     hints = []
@@ -104,26 +110,40 @@ def lintify_meta_yaml(
 
     # If the recipe_dir exists (no guarantee within this function) , we can
     # find the meta.yaml within it.
-    meta_fname = os.path.join(recipe_dir or "", "meta.yaml")
+    recipe_name = "meta.yaml" if not is_rattler_build else "recipe.yaml"
+    recipe_fname = os.path.join(recipe_dir or "", recipe_name)
 
-    sources_section = get_section(meta, "source", lints)
-    build_section = get_section(meta, "build", lints)
-    requirements_section = get_section(meta, "requirements", lints)
+    sources_section = get_section(meta, "source", lints, is_rattler_build)
+    build_section = get_section(meta, "build", lints, is_rattler_build)
+    requirements_section = get_section(
+        meta, "requirements", lints, is_rattler_build
+    )
     build_requirements = requirements_section.get("build", [])
     run_reqs = requirements_section.get("run", [])
-    test_section = get_section(meta, "test", lints)
-    about_section = get_section(meta, "about", lints)
-    extra_section = get_section(meta, "extra", lints)
-    package_section = get_section(meta, "package", lints)
-    outputs_section = get_section(meta, "outputs", lints)
+    if is_rattler_build:
+        test_section = get_section(meta, "tests", lints, is_rattler_build)
+    else:
+        test_section = get_section(meta, "test", lints, is_rattler_build)
+    about_section = get_section(meta, "about", lints, is_rattler_build)
+    extra_section = get_section(meta, "extra", lints, is_rattler_build)
+    package_section = get_section(meta, "package", lints, is_rattler_build)
+    outputs_section = get_section(meta, "outputs", lints, is_rattler_build)
 
     recipe_dirname = os.path.basename(recipe_dir) if recipe_dir else "recipe"
     is_staged_recipes = recipe_dirname != "recipe"
 
     # 0: Top level keys should be expected
     unexpected_sections = []
+    if not is_rattler_build:
+        expected_keys = EXPECTED_SECTION_ORDER
+    else:
+        expected_keys = (
+            rattler_linter.EXPECTED_SINGLE_OUTPUT_SECTION_ORDER
+            + rattler_linter.EXPECTED_MUTIPLE_OUTPUT_SECTION_ORDER
+        )
+
     for section in major_sections:
-        if section not in EXPECTED_SECTION_ORDER:
+        if section not in expected_keys:
             lints.append(
                 "The top level meta key {} is unexpected".format(section)
             )
@@ -151,7 +171,7 @@ def lintify_meta_yaml(
     lint_license_cannot_be_unknown(about_section, lints)
 
     # 6: Selectors should be in a tidy form.
-    lint_selectors_should_be_in_tidy_form(meta_fname, lints, hints)
+    lint_selectors_should_be_in_tidy_form(recipe_fname, lints, hints)
 
     # 7: The build section should have a build number.
     lint_build_section_should_have_a_number(build_section, lints)
@@ -166,7 +186,7 @@ def lintify_meta_yaml(
     lint_license_should_not_have_license(about_section, lints)
 
     # 11: There should be one empty line at the end of the file.
-    lint_should_be_empty_line(meta_fname, lints)
+    lint_should_be_empty_line(recipe_fname, lints)
 
     # 12: License family must be valid (conda-build checks for that)
     try:
@@ -224,14 +244,14 @@ def lintify_meta_yaml(
 
     # 18: noarch doesn't work with selectors for runtime dependencies
     lint_noarch_and_runtime_dependencies(
-        noarch_value, meta_fname, forge_yaml, conda_build_config_keys, lints
+        noarch_value, recipe_fname, forge_yaml, conda_build_config_keys, lints
     )
 
     # 19: check version
     lint_package_version(package_section, lints)
 
     # 20: Jinja2 variable definitions should be nice.
-    lint_jinja_variables_definitions(meta_fname, lints)
+    lint_jinja_variables_definitions(recipe_fname, lints)
 
     # 21: Legacy usage of compilers
     lint_legacy_usage_of_compilers(build_requirements, lints)
@@ -245,7 +265,7 @@ def lintify_meta_yaml(
     )
 
     # 24: jinja2 variable references should be {{<one space>var<one space>}}
-    lint_jinja_var_references(meta_fname, hints)
+    lint_jinja_var_references(recipe_fname, hints)
 
     # 25: require a lower bound on python version
     lint_require_lower_bound_on_python_version(
@@ -258,7 +278,7 @@ def lintify_meta_yaml(
     lint_pin_subpackages(meta, outputs_section, package_section, lints)
 
     # 27: Check usage of whl files as a source
-    lint_check_usage_of_whls(meta_fname, noarch_value, lints, hints)
+    lint_check_usage_of_whls(recipe_fname, noarch_value, lints, hints)
 
     # 28: Check that Rust licenses are bundled.
     lint_rust_licenses_are_bundled(build_requirements, lints)
@@ -276,7 +296,7 @@ def lintify_meta_yaml(
         build_requirements,
         is_staged_recipes,
         conda_forge,
-        meta_fname,
+        recipe_fname,
         hints,
     )
 

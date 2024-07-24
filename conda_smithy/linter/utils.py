@@ -8,6 +8,7 @@ from typing import Mapping
 from conda_build.metadata import (
     FIELDS as cbfields,
 )
+from rattler_build_conda_compat import loader as rattler_loader
 
 FIELDS = copy.deepcopy(cbfields)
 
@@ -40,8 +41,18 @@ sel_pat = re.compile(r"(.+?)\s*(#.*)?\[([^\[\]]+)\](?(2).*)$")
 jinja_pat = re.compile(r"\s*\{%\s*(set)\s+[^\s]+\s*=\s*[^\s]+\s*%\}")
 JINJA_VAR_PAT = re.compile(r"{{(.*?)}}")
 
+CONDA_BUILD_TOOL = "conda-build"
+RATTLER_BUILD_TOOL = "rattler-build"
 
-def get_section(parent, name, lints):
+
+def get_section(parent, name, lints, is_rattler_build=False):
+    if not is_rattler_build:
+        return get_meta_section(parent, name, lints)
+    else:
+        return get_rattler_section(parent, name)
+
+
+def get_meta_section(parent, name, lints):
     if name == "source":
         return get_list_section(parent, name, lints, allow_single=True)
     elif name == "outputs":
@@ -55,6 +66,17 @@ def get_section(parent, name, lints):
         )
         section = {}
     return section
+
+
+def get_rattler_section(meta, name):
+    if name == "requirements":
+        return rattler_loader.load_all_requirements(meta)
+    elif name == "source":
+        source = meta.get("source", [])
+        if isinstance(source, Mapping):
+            return [source]
+
+    return meta.get(name, {})
 
 
 def get_list_section(parent, name, lints, allow_single=False):
