@@ -57,6 +57,7 @@ import sys
 from glob import glob
 from inspect import cleandoc
 from textwrap import indent
+from pathlib import Path
 
 import github
 
@@ -69,6 +70,7 @@ from conda_build.metadata import (
     ensure_valid_license_family,
 )
 from conda_smithy.validate_schema import validate_json_schema
+from conda_smithy.configure_feedstock import _read_forge_config
 
 from conda_smithy.utils import render_meta_yaml, get_yaml
 
@@ -537,17 +539,38 @@ def _format_validation_msg(error: "jsonschema.ValidationError"):
     )
 
 
-def main(recipe_dir, conda_forge=False, return_hints=False):
+def main(recipe_dir, conda_forge=False, return_hints=False, feedstock_dir=None):
     recipe_dir = os.path.abspath(recipe_dir)
-    recipe_meta = os.path.join(recipe_dir, "meta.yaml")
-    if not os.path.exists(recipe_dir):
-        raise IOError("Feedstock has no recipe/meta.yaml.")
+    build_tool = CONDA_BUILD_TOOL
+    if feedstock_dir:
+        feedstock_dir = os.path.abspath(feedstock_dir)
+        forge_config = _read_forge_config(feedstock_dir)
+        if forge_config.get("conda_build_tool", "") == RATTLER_BUILD_TOOL:
+            build_tool = RATTLER_BUILD_TOOL
 
-    with io.open(recipe_meta, "rt") as fh:
-        content = render_meta_yaml("".join(fh))
-        meta = get_yaml().load(content)
+    if build_tool == RATTLER_BUILD_TOOL:
+        recipe_file = os.path.join(recipe_dir, "recipe.yaml")
+    else:
+        recipe_file = os.path.join(recipe_dir, "meta.yaml")
 
-    results, hints = lintify_meta_yaml(meta, recipe_dir, conda_forge)
+    if not os.path.exists(recipe_file):
+        raise IOError(
+            f"Feedstock has no recipe/{os.path.basename(recipe_file)}"
+        )
+
+    if build_tool == CONDA_BUILD_TOOL:
+        with io.open(recipe_file, "rt") as fh:
+            content = render_meta_yaml("".join(fh))
+            meta = get_yaml().load(content)
+    else:
+        meta = get_yaml().load(Path(recipe_file))
+
+    results, hints = lintify_meta_yaml(
+        meta,
+        recipe_dir,
+        conda_forge,
+        is_rattler_build=build_tool == RATTLER_BUILD_TOOL,
+    )
     validation_errors, validation_hints = lintify_forge_yaml(
         recipe_dir=recipe_dir
     )

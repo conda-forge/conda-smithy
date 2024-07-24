@@ -9,7 +9,7 @@ import sys
 from conda_smithy.linter.utils import find_local_config_file, is_selector_line
 from conda_smithy.utils import get_yaml
 
-from conda_smithy import rattler_linter
+from conda_smithy.linter import rattler_linter
 
 
 def hint_pip_usage(build_section, hints):
