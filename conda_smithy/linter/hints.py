@@ -9,6 +9,8 @@ import sys
 from conda_smithy.linter.utils import find_local_config_file, is_selector_line
 from conda_smithy.utils import get_yaml
 
+from conda_smithy import rattler_linter
+
 
 def hint_pip_usage(build_section, hints):
     if "script" in build_section:
@@ -24,7 +26,14 @@ def hint_pip_usage(build_section, hints):
 
 
 def hint_suggest_noarch(
-    noarch_value, build_reqs, is_staged_recipes, conda_forge, meta_fname, hints
+    noarch_value,
+    build_reqs,
+    raw_requirements_section,
+    is_staged_recipes,
+    conda_forge,
+    recipe_fname,
+    hints,
+    is_rattler_build: bool = False,
 ):
     if (
         noarch_value is None
@@ -33,30 +42,35 @@ def hint_suggest_noarch(
         and ("pip" in build_reqs)
         and (is_staged_recipes or not conda_forge)
     ):
-        with io.open(meta_fname, "rt") as fh:
-            in_runreqs = False
-            no_arch_possible = True
-            for line in fh:
-                line_s = line.strip()
-                if line_s == "host:" or line_s == "run:":
-                    in_runreqs = True
-                    runreqs_spacing = line[: -len(line.lstrip())]
-                    continue
-                if line_s.startswith("skip:") and is_selector_line(line):
-                    no_arch_possible = False
-                    break
-                if in_runreqs:
-                    if runreqs_spacing == line[: -len(line.lstrip())]:
-                        in_runreqs = False
+        if is_rattler_build:
+            rattler_linter.hint_noarch_usage(
+                build_reqs, raw_requirements_section, hints
+            )
+        else:
+            with io.open(recipe_fname, "rt") as fh:
+                in_runreqs = False
+                no_arch_possible = True
+                for line in fh:
+                    line_s = line.strip()
+                    if line_s == "host:" or line_s == "run:":
+                        in_runreqs = True
+                        runreqs_spacing = line[: -len(line.lstrip())]
                         continue
-                    if is_selector_line(line):
+                    if line_s.startswith("skip:") and is_selector_line(line):
                         no_arch_possible = False
                         break
-            if no_arch_possible:
-                hints.append(
-                    "Whenever possible python packages should use noarch. "
-                    "See https://conda-forge.org/docs/maintainer/knowledge_base.html#noarch-builds"
-                )
+                    if in_runreqs:
+                        if runreqs_spacing == line[: -len(line.lstrip())]:
+                            in_runreqs = False
+                            continue
+                        if is_selector_line(line):
+                            no_arch_possible = False
+                            break
+                if no_arch_possible:
+                    hints.append(
+                        "Whenever possible python packages should use noarch. "
+                        "See https://conda-forge.org/docs/maintainer/knowledge_base.html#noarch-builds"
+                    )
 
 
 def hint_shellcheck_usage(recipe_dir, hints):

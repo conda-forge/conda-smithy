@@ -162,6 +162,33 @@ def test_osx_noarch_hint(where):
         assert not any(h.startswith(avoid_message) for h in hints)
 
 
+def test_rattler_osx_noarch_hint():
+    # don't warn on packages that are using __osx as a noarch-marker, see
+    # https://conda-forge.org/docs/maintainer/knowledge_base/#noarch-packages-with-os-specific-dependencies
+    avoid_message = "You're setting a constraint on the `__osx` virtual"
+
+    with tmp_directory() as recipe_dir:
+        with io.open(os.path.join(recipe_dir, "recipe.yaml"), "w") as fh:
+            fh.write(
+                """
+                package:
+                   name: foo
+                requirements:
+                  run:
+                    - if: osx
+                      then: __osx
+                """
+            )
+
+        with io.open(os.path.join(recipe_dir, "conda-forge.yml"), "w") as fh:
+            fh.write("conda_build_tool: rattler-build")
+
+        _, hints = linter.main(
+            recipe_dir, return_hints=True, feedstock_dir=recipe_dir
+        )
+        assert not any(h.startswith(avoid_message) for h in hints)
+
+
 @pytest.mark.parametrize(
     "std_selector",
     ["unix", "linux or (osx and x86_64)"],
@@ -888,6 +915,89 @@ class Test_linter(unittest.TestCase):
                             """,
                 is_good=True,
             )
+
+    def test_suggest_rattler_noarch(self):
+        expected_start = "Whenever possible python packages should use noarch."
+        with tmp_directory() as recipe_dir:
+
+            def assert_noarch_hint(meta_string, is_good=False):
+                with io.open(
+                    os.path.join(recipe_dir, "recipe.yaml"), "w"
+                ) as fh:
+                    fh.write(meta_string)
+
+                with io.open(
+                    os.path.join(recipe_dir, "conda-forge.yml"), "w"
+                ) as fh:
+                    fh.write("conda_build_tool: rattler-build")
+
+                lints, hints = linter.main(
+                    recipe_dir, return_hints=True, feedstock_dir=recipe_dir
+                )
+                if is_good:
+                    message = (
+                        "Found hints when there shouldn't have "
+                        "been a hint for '{}'."
+                    ).format(meta_string)
+                else:
+                    message = (
+                        "Expected hints for '{}', but didn't " "get any."
+                    ).format(meta_string)
+                self.assertEqual(
+                    not is_good,
+                    any(lint.startswith(expected_start) for lint in hints),
+                    message,
+                )
+
+            assert_noarch_hint(
+                """
+                            build:
+                              noarch: python
+                              script:
+                                - echo "hello"
+                            requirements:
+                              build:
+                                - python
+                                - pip
+                            """,
+                is_good=True,
+            )
+            assert_noarch_hint(
+                """
+                            build:
+                              script:
+                                - echo "hello"
+                            requirements:
+                              build:
+                                - python
+                                - pip
+                            """
+            )
+            assert_noarch_hint(
+                """
+                            build:
+                              script:
+                                - echo "hello"
+                            requirements:
+                              build:
+                                - python
+                            """,
+                is_good=True,
+            )
+            assert_noarch_hint(
+                """
+                            build:
+                              script:
+                                - echo "hello"
+                            requirements:
+                              build:
+                                - python
+                                - ${{ compiler('c') }}
+                                - pip
+                            """,
+                is_good=True,
+            )
+
 
     def test_jinja_os_environ(self):
         # Test that we can use os.environ in a recipe. We don't care about

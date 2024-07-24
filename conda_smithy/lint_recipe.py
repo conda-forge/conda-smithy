@@ -298,6 +298,7 @@ def lintify_meta_yaml(
         conda_forge,
         recipe_fname,
         hints,
+        is_rattler_build,
     )
 
     # 3: suggest fixing all recipe/*.sh shellcheck findings
