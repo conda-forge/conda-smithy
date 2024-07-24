@@ -139,7 +139,7 @@ def lintify_meta_yaml(
     else:
         expected_keys = (
             rattler_linter.EXPECTED_SINGLE_OUTPUT_SECTION_ORDER
-            + rattler_linter.EXPECTED_MUTIPLE_OUTPUT_SECTION_ORDER
+            + rattler_linter.EXPECTED_MULTIPLE_OUTPUT_SECTION_ORDER
         )
 
     for section in major_sections:
