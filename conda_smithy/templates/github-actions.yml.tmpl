@@ -168,7 +168,6 @@ jobs:
       uses: conda-incubator/setup-miniconda@a4260408e20b96e80095f42ff7f1a15b27dd94ca # v3.0.4
       with:
         miniforge-version: latest
-        miniforge-variant: Mambaforge
       if: matrix.os == 'windows'
 
     - name: Build on windows
