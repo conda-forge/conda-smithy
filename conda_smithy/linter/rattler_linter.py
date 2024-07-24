@@ -23,6 +23,7 @@ EXPECTED_MULTIPLE_OUTPUT_SECTION_ORDER = [
     "extra",
 ]
 
+
 def hint_noarch_usage(
     build_section: dict[str, Any],
     requirement_section: dict[str, Any],

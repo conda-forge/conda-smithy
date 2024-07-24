@@ -539,7 +539,9 @@ def _format_validation_msg(error: "jsonschema.ValidationError"):
     )
 
 
-def main(recipe_dir, conda_forge=False, return_hints=False, feedstock_dir=None):
+def main(
+    recipe_dir, conda_forge=False, return_hints=False, feedstock_dir=None
+):
     recipe_dir = os.path.abspath(recipe_dir)
     build_tool = CONDA_BUILD_TOOL
     if feedstock_dir:
