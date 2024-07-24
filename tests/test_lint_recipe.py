@@ -310,6 +310,12 @@ class Test_linter(unittest.TestCase):
         expected_msg = "The top level meta key sources is unexpected"
         self.assertIn(expected_msg, lints)
 
+    def test_rattler_bad_top_level(self):
+        meta = OrderedDict([["package", {}], ["build", {}], ["sources", {}]])
+        lints, hints = linter.lintify_meta_yaml(meta, is_rattler_build=True)
+        expected_msg = "The top level meta key sources is unexpected"
+        self.assertIn(expected_msg, lints)
+
     def test_bad_order(self):
         meta = OrderedDict([["package", {}], ["build", {}], ["source", {}]])
         lints, hints = linter.lintify_meta_yaml(meta)
