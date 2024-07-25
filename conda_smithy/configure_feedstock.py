@@ -3,13 +3,12 @@ import glob
 import hashlib
 import logging
 import os
+import pprint
 import re
 import subprocess
 import sys
-import pprint
 import textwrap
 import time
-import yaml
 import warnings
 from collections import Counter, OrderedDict, namedtuple
 from copy import deepcopy
@@ -19,6 +18,7 @@ from os import fspath
 from pathlib import Path, PurePath
 
 import requests
+import yaml
 
 try:
     from builtins import ExceptionGroup
@@ -34,24 +34,22 @@ try:
 except ImportError:
     import json
 
-from conda.models.match_spec import MatchSpec
-from conda.models.version import VersionOrder
-from conda.exceptions import InvalidVersionSpec
+from copy import deepcopy
 
 import conda_build.api
+import conda_build.conda_interface
 import conda_build.render
 import conda_build.utils
 import conda_build.variants
-import conda_build.conda_interface
-import conda_build.render
+from conda.exceptions import InvalidVersionSpec
 from conda.models.match_spec import MatchSpec
-from conda_build.metadata import get_selectors
-
-from copy import deepcopy
-
+from conda.models.version import VersionOrder
 from conda_build import __version__ as conda_build_version
+from conda_build.metadata import get_selectors
 from jinja2 import FileSystemLoader
 from jinja2.sandbox import SandboxedEnvironment
+from rattler_build_conda_compat.loader import parse_recipe_config_file
+from rattler_build_conda_compat.render import render as rattler_render
 
 from conda_smithy.feedstock_io import (
     copy_file,
@@ -60,19 +58,17 @@ from conda_smithy.feedstock_io import (
     set_exe_file,
     write_file,
 )
-from conda_smithy.validate_schema import (
-    validate_json_schema,
-    CONDA_FORGE_YAML_DEFAULTS_FILE,
-)
 from conda_smithy.utils import (
+    HashableDict,
     get_feedstock_about_from_meta,
     get_feedstock_name_from_meta,
-    HashableDict,
+)
+from conda_smithy.validate_schema import (
+    CONDA_FORGE_YAML_DEFAULTS_FILE,
+    validate_json_schema,
 )
 
 from . import __version__
-from rattler_build_conda_compat.render import render as rattler_render
-from rattler_build_conda_compat.loader import parse_recipe_config_file
 from .utils import RATTLER_BUILD
 
 conda_forge_content = os.path.abspath(os.path.dirname(__file__))
@@ -912,10 +908,9 @@ def _conda_build_api_render_for_smithy(
     """
 
     from conda.exceptions import NoPackagesFoundError
-
+    from conda_build.config import get_or_merge_config
     from conda_build.exceptions import DependencyNeedsBuildingError
     from conda_build.render import finalize_metadata, render_recipe
-    from conda_build.config import get_or_merge_config
 
     config = get_or_merge_config(config, **kwargs)
 
@@ -2447,7 +2442,8 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
 
 def get_most_recent_version(name, include_broken=False):
     request = requests.get(
-        "https://api.anaconda.org/package/conda-forge/" + name
+        "https://api.anaconda.org/package/conda-forge/" + name,
+        timeout=60,
     )
     request.raise_for_status()
     files = request.json()["files"]
