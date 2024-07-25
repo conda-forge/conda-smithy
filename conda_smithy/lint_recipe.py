@@ -277,7 +277,9 @@ def lintify_meta_yaml(
     # 26: pin_subpackage is for subpackages and pin_compatible is for
     # non-subpackages of the recipe. Contact @carterbox for troubleshooting
     # this lint.
-    lint_pin_subpackages(meta, outputs_section, package_section, lints)
+    lint_pin_subpackages(
+        meta, outputs_section, package_section, lints, is_rattler_build
+    )
 
     # 27: Check usage of whl files as a source
     lint_check_usage_of_whls(recipe_fname, noarch_value, lints, hints)

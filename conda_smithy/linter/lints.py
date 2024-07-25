@@ -501,7 +501,13 @@ def lint_require_lower_bound_on_python_version(
             )
 
 
-def lint_pin_subpackages(meta, outputs_section, package_section, lints):
+def lint_pin_subpackages(
+    meta,
+    outputs_section,
+    package_section,
+    lints,
+    is_rattler_build: bool = False,
+):
     subpackage_names = []
     for out in outputs_section:
         if "name" in out:
@@ -512,7 +518,10 @@ def lint_pin_subpackages(meta, outputs_section, package_section, lints):
     def check_pins(pinning_section):
         if pinning_section is None:
             return
-        for pin in fnmatch.filter(pinning_section, "compatible_pin*"):
+        filter_pin = (
+            "pin_compatible*" if is_rattler_build else "compatible_pin*"
+        )
+        for pin in fnmatch.filter(pinning_section, filter_pin):
             if pin.split()[1] in subpackage_names:
                 lints.append(
                     "pin_subpackage should be used instead of"
@@ -520,7 +529,10 @@ def lint_pin_subpackages(meta, outputs_section, package_section, lints):
                     " because it is one of the known outputs of this recipe:"
                     f" {subpackage_names}."
                 )
-        for pin in fnmatch.filter(pinning_section, "subpackage_pin*"):
+        filter_pin = (
+            "pin_subpackage*" if is_rattler_build else "subpackage_pin*"
+        )
+        for pin in fnmatch.filter(pinning_section, filter_pin):
             if pin.split()[1] not in subpackage_names:
                 lints.append(
                     "pin_compatible should be used instead of"
@@ -530,12 +542,30 @@ def lint_pin_subpackages(meta, outputs_section, package_section, lints):
                 )
 
     def check_pins_build_and_requirements(top_level):
-        if "build" in top_level and "run_exports" in top_level["build"]:
-            check_pins(top_level["build"]["run_exports"])
-        if "requirements" in top_level and "run" in top_level["requirements"]:
-            check_pins(top_level["requirements"]["run"])
-        if "requirements" in top_level and "host" in top_level["requirements"]:
-            check_pins(top_level["requirements"]["host"])
+        if not is_rattler_build:
+            if "build" in top_level and "run_exports" in top_level["build"]:
+                check_pins(top_level["build"]["run_exports"])
+            if (
+                "requirements" in top_level
+                and "run" in top_level["requirements"]
+            ):
+                check_pins(top_level["requirements"]["run"])
+            if (
+                "requirements" in top_level
+                and "host" in top_level["requirements"]
+            ):
+                check_pins(top_level["requirements"]["host"])
+        else:
+            if (
+                "requirements" in top_level
+                and "run_exports" in top_level["requirements"]
+            ):
+                if "strong" in top_level["requirements"]["run_exports"]:
+                    check_pins(
+                        top_level["requirements"]["run_exports"]["strong"]
+                    )
+                else:
+                    check_pins(top_level["requirements"]["run_exports"])
 
     check_pins_build_and_requirements(meta)
     for out in outputs_section:
