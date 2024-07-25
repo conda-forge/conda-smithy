@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Dict, List
 
 from conda_smithy.linter.errors import HINT_NO_ARCH
 
@@ -27,9 +27,9 @@ EXPECTED_MULTIPLE_OUTPUT_SECTION_ORDER = [
 
 
 def hint_noarch_usage(
-    build_section: dict[str, Any],
-    requirement_section: dict[str, Any],
-    hints: list[str],
+    build_section: Dict[str, Any],
+    requirement_section: Dict[str, Any],
+    hints: List[str],
 ):
     build_reqs = requirement_section.get("build", None)
     if (
