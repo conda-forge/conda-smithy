@@ -1,5 +1,7 @@
 from typing import Any
 
+from conda_smithy.linter.errors import HINT_NO_ARCH
+
 REQUIREMENTS_ORDER = ["build", "host", "run"]
 
 EXPECTED_SINGLE_OUTPUT_SECTION_ORDER = [
@@ -54,7 +56,4 @@ def hint_noarch_usage(
                 break
 
         if no_arch_possible:
-            hints.append(
-                "Whenever possible python packages should use noarch. "
-                "See https://conda-forge.org/docs/maintainer/knowledge_base.html#noarch-builds"
-            )
+            hints.append(HINT_NO_ARCH)

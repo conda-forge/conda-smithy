@@ -8,6 +8,7 @@ import sys
 
 from conda_smithy.linter.utils import find_local_config_file, is_selector_line
 from conda_smithy.utils import get_yaml
+from conda_smithy.linter.errors import HINT_NO_ARCH
 
 from conda_smithy.linter import rattler_linter
 
@@ -67,10 +68,7 @@ def hint_suggest_noarch(
                             no_arch_possible = False
                             break
                 if no_arch_possible:
-                    hints.append(
-                        "Whenever possible python packages should use noarch. "
-                        "See https://conda-forge.org/docs/maintainer/knowledge_base.html#noarch-builds"
-                    )
+                    hints.append(HINT_NO_ARCH)
 
 
 def hint_shellcheck_usage(recipe_dir, hints):
