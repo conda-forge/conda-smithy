@@ -5,6 +5,7 @@ import re
 from collections.abc import Sequence
 from typing import List, Optional
 
+from conda.exceptions import InvalidVersionSpec
 from conda.models.version import VersionOrder
 from ruamel.yaml import CommentedSeq
 
@@ -113,46 +114,46 @@ def lint_license_cannot_be_unknown(about_section, lints):
 
 def lint_selectors_should_be_in_tidy_form(recipe_fname, lints, hints):
     bad_selectors, bad_lines = [], []
-    pyXY_selectors_lint, pyXY_lines_lint = [], []
-    pyXY_selectors_hint, pyXY_lines_hint = [], []
+    python_selectors_lint, py_selector_lines_lint = [], []
+    python_selectors_hint, py_selector_lines_hint = [], []
     # Good selectors look like ".*\s\s#\s[...]"
     good_selectors_pat = re.compile(r"(.+?)\s{2,}#\s\[(.+)\](?(2).*)$")
     # Look out for py27, py35 selectors; we prefer py==35
-    pyXY_selectors_pat = re.compile(r".+#\s*\[.*?(py\d{2,3}).*\]")
+    python_selectors_pat = re.compile(r".+#\s*\[.*?(py\d{2,3}).*\]")
     if os.path.exists(recipe_fname):
         with open(recipe_fname) as fh:
             for selector_line, line_number in selector_lines(fh):
                 if not good_selectors_pat.match(selector_line):
                     bad_selectors.append(selector_line)
                     bad_lines.append(line_number)
-                pyXY_matches = pyXY_selectors_pat.match(selector_line)
-                if pyXY_matches:
-                    for pyXY in pyXY_matches.groups():
-                        if int(pyXY[2:]) in (27, 34, 35, 36):
+                python_matches = python_selectors_pat.match(selector_line)
+                if python_matches:
+                    for py_selector in python_matches.groups():
+                        if int(py_selector[2:]) in (27, 34, 35, 36):
                             # py27, py35 and so on are ok up to py36 (included); only warn
-                            pyXY_selectors_hint.append(selector_line)
-                            pyXY_lines_hint.append(line_number)
+                            python_selectors_hint.append(selector_line)
+                            py_selector_lines_hint.append(line_number)
                         else:
-                            pyXY_selectors_lint.append(selector_line)
-                            pyXY_lines_lint.append(line_number)
+                            python_selectors_lint.append(selector_line)
+                            py_selector_lines_lint.append(line_number)
     if bad_selectors:
         lints.append(
             "Selectors are suggested to take a "
             "``<two spaces>#<one space>[<expression>]`` form."
             f" See lines {bad_lines}"
         )
-    if pyXY_selectors_hint:
+    if python_selectors_hint:
         hints.append(
             "Old-style Python selectors (py27, py34, py35, py36) are "
             "deprecated. Instead, consider using the int ``py``. For "
-            f"example: ``# [py>=36]``. See lines {pyXY_lines_hint}"
+            f"example: ``# [py>=36]``. See lines {py_selector_lines_hint}"
         )
-    if pyXY_selectors_lint:
+    if python_selectors_lint:
         lints.append(
             "Old-style Python selectors (py27, py35, etc) are only available "
             "for Python 2.7, 3.4, 3.5, and 3.6. Please use explicit comparisons "
             "with the integer ``py``, e.g. ``# [py==37]`` or ``# [py>=37]``. "
-            f"See lines {pyXY_lines_lint}"
+            f"See lines {py_selector_lines_lint}"
         )
 
 
@@ -331,8 +332,10 @@ def lint_package_version(package_section, lints):
         ver = str(package_section.get("version"))
         try:
             VersionOrder(ver)
-        except:
-            lints.append(f"Package version {ver} doesn't match conda spec")
+        except InvalidVersionSpec as e:
+            lints.append(
+                f"Package version {ver} doesn't match conda spec: {e}"
+            )
 
 
 def lint_jinja_variables_definitions(meta_fname, lints):

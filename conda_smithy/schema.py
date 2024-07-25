@@ -108,8 +108,10 @@ class AzureRunnerSettings(BaseModel):
         default=None, description="Swapfile size in GiB"
     )
 
-    timeoutInMinutes: Optional[int] = Field(
-        default=360, description="Timeout in minutes for the job"
+    timeout_in_minutes: Optional[int] = Field(
+        default=360,
+        description="Timeout in minutes for the job",
+        alias="timeoutInMinutes",
     )
 
     variables: Optional[Dict[str, str]] = Field(

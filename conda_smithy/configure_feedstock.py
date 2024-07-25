@@ -20,11 +20,6 @@ from pathlib import Path, PurePath
 import requests
 import yaml
 
-try:
-    from builtins import ExceptionGroup
-except ImportError:
-    pass
-
 # The `requests` lib uses `simplejson` instead of `json` when available.
 # In consequence the same JSON library must be used or the `JSONDecodeError`
 # used when catching an exception won't be the same as the one raised
@@ -119,10 +114,10 @@ def _ignore_match(ignore, rel):
     """
     srch = {rel}
     srch.update(map(fspath, PurePath(rel).parents))
-    logger.debug(f"srch:{srch}")
-    logger.debug(f"ignore:{ignore}")
+    logger.debug("srch:%s", srch)
+    logger.debug("ignore:%s", ignore)
     if srch.intersection(ignore):
-        logger.info(f"{rel} rendering is skipped")
+        logger.info("%s rendering is skipped", rel)
         return True
     else:
         return False
@@ -332,7 +327,7 @@ def _get_used_key_values_by_input_order(
         for key in all_used_vars
         if key in squished_input_variants
     }
-    logger.debug(f"initial used_key_values {pprint.pformat(used_key_values)}")
+    logger.debug("initial used_key_values %s", pprint.pformat(used_key_values))
 
     # we want remove any used key values not in used variants and make sure they follow the
     #   input order
@@ -346,8 +341,8 @@ def _get_used_key_values_by_input_order(
             zip(*[squished_input_variants[k] for k in keyset])
         )
         zipped_keys |= set(keyset)
-    logger.debug(f"zipped_keys {pprint.pformat(zipped_keys)}")
-    logger.debug(f"zipped_tuples {pprint.pformat(zipped_tuples)}")
+    logger.debug("zipped_keys %s", pprint.pformat(zipped_keys))
+    logger.debug("zipped_tuples %s", pprint.pformat(zipped_tuples))
 
     for keyset, tuples in zipped_tuples.items():
         # for each set of zipped keys from squished_input_variants,
@@ -377,16 +372,17 @@ def _get_used_key_values_by_input_order(
                 for tup in tuples
             ]
         )
-        logger.debug(f"used_keyset {pprint.pformat(used_keyset)}")
-        logger.debug(f"used_keyset_inds {pprint.pformat(used_keyset_inds)}")
-        logger.debug(f"used_tuples {pprint.pformat(used_tuples)}")
+        logger.debug("used_keyset %s", pprint.pformat(used_keyset))
+        logger.debug("used_keyset_inds %s", pprint.pformat(used_keyset_inds))
+        logger.debug("used_tuples %s", pprint.pformat(used_tuples))
 
         # this is the set of tuples that we want to keep, but need to be reordered
         used_tuples_to_be_reordered = set(
             list(zip(*[squished_used_variants[k] for k in used_keyset]))
         )
         logger.debug(
-            f"used_tuples_to_be_reordered {pprint.pformat(used_tuples_to_be_reordered)}"
+            "used_tuples_to_be_reordered %s",
+            pprint.pformat(used_tuples_to_be_reordered),
         )
 
         # we double check the logic above by looking to ensure everything in
@@ -405,7 +401,7 @@ def _get_used_key_values_by_input_order(
         final_used_tuples = tuple(
             [tup for tup in used_tuples if tup in used_tuples_to_be_reordered]
         )
-        logger.debug(f"final_used_tuples {pprint.pformat(final_used_tuples)}")
+        logger.debug("final_used_tuples %s", pprint.pformat(final_used_tuples))
 
         # now we reconstruct the list of values per key and replace in used_key_values
         # we keep only keys in all_used_vars
@@ -419,7 +415,8 @@ def _get_used_key_values_by_input_order(
             used_key_values[k] = v
 
     logger.debug(
-        f"post input reorder used_key_values {pprint.pformat(used_key_values)}"
+        "post input reorder used_key_values %s",
+        pprint.pformat(used_key_values),
     )
 
     return used_key_values, zipped_keys
@@ -557,7 +554,7 @@ def _collapse_subpackage_variants(
     if "target_platform" in all_used_vars:
         top_level_loop_vars.add("target_platform")
 
-    logger.debug(f"initial all_used_vars {pprint.pformat(all_used_vars)}")
+    logger.debug("initial all_used_vars %s", pprint.pformat(all_used_vars))
 
     # this is the initial collection of all variants before we discard any.  "Squishing"
     #     them is necessary because the input form is already broken out into one matrix
@@ -572,16 +569,16 @@ def _collapse_subpackage_variants(
         conda_build.variants.list_of_dicts_to_dict_of_lists(list(all_variants))
     )
     logger.debug(
-        f"squished_input_variants {pprint.pformat(squished_input_variants)}"
+        "squished_input_variants %s", pprint.pformat(squished_input_variants)
     )
     logger.debug(
-        f"squished_used_variants {pprint.pformat(squished_used_variants)}"
+        "squished_used_variants %s", pprint.pformat(squished_used_variants)
     )
 
     # these are variables that only occur in the top level, and thus won't show up as loops in the
     #     above collection of all variants.  We need to transfer them from the input_variants.
     preserve_top_level_loops = set(top_level_loop_vars) - set(all_used_vars)
-    logger.debug(f"preserve_top_level_loops {preserve_top_level_loops}")
+    logger.debug("preserve_top_level_loops %s", preserve_top_level_loops)
 
     # Add in some variables that should always be preserved
     always_keep_keys = {
@@ -611,9 +608,9 @@ def _collapse_subpackage_variants(
     all_used_vars.update(always_keep_keys)
     all_used_vars.update(top_level_vars)
 
-    logger.debug(f"final all_used_vars {pprint.pformat(all_used_vars)}")
-    logger.debug(f"top_level_vars {pprint.pformat(top_level_vars)}")
-    logger.debug(f"top_level_loop_vars {pprint.pformat(top_level_loop_vars)}")
+    logger.debug("final all_used_vars %s", pprint.pformat(all_used_vars))
+    logger.debug("top_level_vars %s", pprint.pformat(top_level_vars))
+    logger.debug("top_level_loop_vars %s", pprint.pformat(top_level_loop_vars))
 
     used_key_values, used_zipped_vars = _get_used_key_values_by_input_order(
         squished_input_variants,
@@ -643,7 +640,7 @@ def _collapse_subpackage_variants(
     _trim_unused_zip_keys(used_key_values)
     _trim_unused_pin_run_as_build(used_key_values)
 
-    logger.debug(f"final used_key_values {pprint.pformat(used_key_values)}")
+    logger.debug("final used_key_values %s", pprint.pformat(used_key_values))
 
     return (
         break_up_top_level_values(top_level_loop_vars, used_key_values),
@@ -710,7 +707,9 @@ def dump_subspace_config_files(
         arch,
         forge_config,
     )
-    logger.debug(f"collapsed subspace config files: {pprint.pformat(configs)}")
+    logger.debug(
+        "collapsed subspace config files: %s", pprint.pformat(configs)
+    )
 
     # get rid of the special object notation in the yaml file for objects that we dump
     yaml.add_representer(set, yaml.representer.SafeRepresenter.represent_list)
@@ -741,7 +740,7 @@ def dump_subspace_config_files(
             os.makedirs(out_folder)
 
         config = finalize_config(config, platform, arch, forge_config)
-        logger.debug(f"finalized config file: {pprint.pformat(config)}")
+        logger.debug("finalized config file: %s", pprint.pformat(config))
 
         with write_file(out_path) as f:
             yaml.dump(config, f, default_flow_style=False)
@@ -840,7 +839,8 @@ def migrate_combined_spec(combined_spec, forge_dir, config, forge_config):
     migration_variants.sort(key=lambda fn_v: (fn_v[1]["migrator_ts"], fn_v[0]))
     if len(migration_variants):
         logger.info(
-            f"Applying migrations: {','.join(k for k, v in migration_variants)}"
+            "Applying migrations: %s",
+            ",".join(k for k, v in migration_variants),
         )
 
     for migrator_file, migration in migration_variants:
@@ -1506,16 +1506,15 @@ def _render_template_exe_files(
                     import difflib
 
                     logger.debug(
-                        "diff:\n{}".format(
-                            "\n".join(
-                                difflib.unified_diff(
-                                    old_file_contents.splitlines(),
-                                    new_file_contents.splitlines(),
-                                    fromfile=target_fname,
-                                    tofile=target_fname,
-                                )
+                        "diff:\n%s",
+                        "\n".join(
+                            difflib.unified_diff(
+                                old_file_contents.splitlines(),
+                                new_file_contents.splitlines(),
+                                fromfile=target_fname,
+                                tofile=target_fname,
                             )
-                        )
+                        ),
                     )
                     raise RuntimeError(
                         f"Same file {target_fname} is rendered twice with different contents"
@@ -1999,7 +1998,7 @@ def azure_build_id_from_public(forge_config):
     forge_config["azure"]["build_id"] = build_def["id"]
 
 
-def render_README(jinja_env, forge_config, forge_dir, render_info=None):
+def render_readme(jinja_env, forge_config, forge_dir, render_info=None):
     if "README.md" in forge_config["skip_render"]:
         logger.info("README.md rendering is skipped")
         return
@@ -2102,7 +2101,8 @@ def render_README(jinja_env, forge_config, forge_dir, render_info=None):
         except (OSError, IndexError) as err:
             # We don't want to command to fail if requesting the build_id fails.
             logger.warning(
-                f"Azure build_id can't be retrieved using the Azure token. Exception: {err}"
+                "Azure build_id can't be retrieved using the Azure token. Exception: %s",
+                err,
             )
         except json.decoder.JSONDecodeError:
             azure_build_id_from_token(forge_config)
@@ -2456,7 +2456,8 @@ def commit_changes(forge_file_directory, commit, cs_ver, cfp_ver, cb_ver):
             else:
                 logger.info(
                     "You can commit the changes with:\n\n"
-                    f'    git commit -m "MNT: {msg}"\n'
+                    '    git commit -m "MNT: %s"\n',
+                    msg,
                 )
             logger.info("These changes need to be pushed to github!\n")
         else:
@@ -2478,14 +2479,14 @@ def get_cfp_file_path(temporary_directory):
         temporary_directory, f"conda-forge-pinning-{ pkg.version }{ext}"
     )
 
-    logger.info(f"Downloading conda-forge-pinning-{ pkg.version }")
+    logger.info("Downloading conda-forge-pinning-%s", pkg.version)
 
     response = requests.get(pkg.url)
     response.raise_for_status()
     with open(dest, "wb") as f:
         f.write(response.content)
 
-    logger.info(f"Extracting conda-forge-pinning to { temporary_directory }")
+    logger.info("Extracting conda-forge-pinning to %s", temporary_directory)
     cmd = ["cph"]
     # If possible, avoid needing to activate the environment to access cph
     if sys.executable:
@@ -2679,14 +2680,15 @@ def set_migration_fns(forge_dir, forge_config):
             new_fn, new_num, _ = migrations_in_cfp[ts]
             if num == new_num:
                 logger.info(
-                    f"{os.path.basename(fn)} from feedstock is ignored and upstream version is used"
+                    "%s from feedstock is ignored and upstream version is used",
+                    os.path.basename(fn),
                 )
                 result.append(new_fn)
             else:
                 result.append(fn)
         else:
             # Delete this as this migration is over.
-            logger.info(f"{os.path.basename(fn)} is closed now. Removing")
+            logger.info("%s is closed now. Removing", os.path.basename(fn))
             remove_file(fn)
     forge_config["migration_fns"] = result
     return
@@ -2787,7 +2789,7 @@ def main(
     tmp = render_info[0]
     render_info[0] = render_info[azure_ind]
     render_info[azure_ind] = tmp
-    render_README(env, config, forge_dir, render_info)
+    render_readme(env, config, forge_dir, render_info)
 
     logger.debug("README rendered")
 

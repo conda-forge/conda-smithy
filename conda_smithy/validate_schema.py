@@ -14,7 +14,8 @@ CONDA_FORGE_YAML_SCHEMA_FILE = (
 )
 
 
-class DeprecatedFieldWarning(ValidationError):
+# this is actually not an error, therefore the naming is okay
+class DeprecatedFieldWarning(ValidationError):  # noqa: N818
     pass
 
 

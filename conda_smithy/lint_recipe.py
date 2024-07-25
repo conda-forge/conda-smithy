@@ -7,6 +7,7 @@ from inspect import cleandoc
 from textwrap import indent
 
 import github
+import jsonschema
 import requests
 
 from conda_smithy.linter import rattler_linter
@@ -485,7 +486,7 @@ def run_conda_forge_specific(meta, recipe_dir, lints, hints):
             )
 
 
-def _format_validation_msg(error: "jsonschema.ValidationError"):
+def _format_validation_msg(error: jsonschema.ValidationError):
     """Use the data on the validation error to generate improved reporting.
 
     If available, get the help URL from the first level of the JSON path:

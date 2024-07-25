@@ -6,11 +6,11 @@ from glob import glob
 from typing import Mapping
 
 from conda_build.metadata import (
-    FIELDS as cbfields,
+    FIELDS as _CONDA_BUILD_FIELDS,
 )
 from rattler_build_conda_compat import loader as rattler_loader
 
-FIELDS = copy.deepcopy(cbfields)
+FIELDS = copy.deepcopy(_CONDA_BUILD_FIELDS)
 
 # Just in case 'extra' moves into conda_build
 if "extra" not in FIELDS.keys():

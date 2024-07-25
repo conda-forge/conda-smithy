@@ -268,7 +268,7 @@ MACOSX_SDK_VERSION:         # [osx]
             assert any(lint.startswith(exp_lint) for lint in lints)
 
 
-class Test_linter(unittest.TestCase):
+class TestLinter(unittest.TestCase):
 
     def test_pin_compatible_in_run_exports(self):
         meta = {
@@ -561,10 +561,12 @@ class Test_linter(unittest.TestCase):
             assert_selector("name: foo_py3  #[py3k]", is_good=False)
             assert_selector("name: foo_py3 # [py3k]", is_good=False)
 
-    def test_pyXY_selectors(self):
+    def test_python_selectors(self):
         with tmp_directory() as recipe_dir:
 
-            def assert_pyXY_selector(meta_string, is_good=False, kind="lint"):
+            def assert_python_selector(
+                meta_string, is_good=False, kind="lint"
+            ):
                 assert kind in ("lint", "hint")
                 if kind == "hint":
                     expected_start = "Old-style Python selectors (py27, py34, py35, py36) are deprecated"
@@ -590,7 +592,7 @@ class Test_linter(unittest.TestCase):
                     message,
                 )
 
-            assert_pyXY_selector(
+            assert_python_selector(
                 """
                             build:
                               noarch: python
@@ -599,7 +601,7 @@ class Test_linter(unittest.TestCase):
                             """,
                 kind="hint",
             )
-            assert_pyXY_selector(
+            assert_python_selector(
                 """
                             build:
                               noarch: python
@@ -608,7 +610,7 @@ class Test_linter(unittest.TestCase):
                             """,
                 kind="lint",
             )
-            assert_pyXY_selector(
+            assert_python_selector(
                 """
                             build:
                               noarch: python
@@ -617,7 +619,7 @@ class Test_linter(unittest.TestCase):
                             """,
                 kind="lint",
             )
-            assert_pyXY_selector(
+            assert_python_selector(
                 """
                             build:
                               noarch: python
@@ -626,7 +628,7 @@ class Test_linter(unittest.TestCase):
                             """,
                 kind="hint",
             )
-            assert_pyXY_selector(
+            assert_python_selector(
                 """
                             build:
                               noarch: python
@@ -635,7 +637,7 @@ class Test_linter(unittest.TestCase):
                             """,
                 kind="lint",
             )
-            assert_pyXY_selector(
+            assert_python_selector(
                 """
                             build:
                               noarch: python
@@ -644,7 +646,7 @@ class Test_linter(unittest.TestCase):
                             """,
                 kind="lint",
             )
-            assert_pyXY_selector(
+            assert_python_selector(
                 """
                             build:
                               noarch: python
@@ -653,7 +655,7 @@ class Test_linter(unittest.TestCase):
                             """,
                 kind="lint",
             )
-            assert_pyXY_selector(
+            assert_python_selector(
                 """
                             build:
                               noarch: python
@@ -662,7 +664,7 @@ class Test_linter(unittest.TestCase):
                             """,
                 kind="lint",
             )
-            assert_pyXY_selector(
+            assert_python_selector(
                 """
                             build:
                               noarch: python
@@ -1730,7 +1732,7 @@ class Test_linter(unittest.TestCase):
 
 
 @pytest.mark.cli
-class TestCLI_recipe_lint(unittest.TestCase):
+class TestCliRecipeLint(unittest.TestCase):
     def test_cli_fail(self):
         with tmp_directory() as recipe_dir:
             with open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:

@@ -63,10 +63,10 @@ def main(
     install_obvci=True,
 ):
     system = platform.system()
-    URL = miniconda_url(
+    url = miniconda_url(
         system, target_arch, major_py_version, miniconda_version
     )
-    basename = URL.rsplit("/", 1)[1]
+    basename = url.rsplit("/", 1)[1]
     if system in ["Linux", "Darwin"]:
         cmd = ["bash", basename, "-b", "-p", target_dir]
         bin_dir = "bin"
@@ -85,10 +85,10 @@ def main(
         raise ValueError("Unsupported operating system.")
 
     if not os.path.exists(basename):
-        print(f"Downloading from {URL}")
-        urlretrieve(URL, basename)
+        print(f"Downloading from {url}")
+        urlretrieve(url, basename)
     else:
-        print(f"Using cached version of {URL}")
+        print(f"Using cached version of {url}")
 
     # Install with powershell.
     if os.path.exists(target_dir):
