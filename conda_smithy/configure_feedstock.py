@@ -2093,12 +2093,16 @@ def render_readme(jinja_env, forge_config, forge_dir, render_info=None):
     )
     forge_config["maintainer_urls"] = [
         (
-            f"https://github.com/orgs/{split_name[0]}/teams/{split_name[1]}/"
-            if len(split_name) > 1
-            else f"https://github.com/{split_name[0]}/",
-            "/".join(split_name)
+            (
+                f"https://github.com/orgs/{split_name[0]}/teams/{split_name[1]}/"
+                if len(split_name) > 1
+                else f"https://github.com/{split_name[0]}/"
+            ),
+            "/".join(split_name),
         )
-        for split_name in [name.split("/") for name in forge_config["maintainers"]]
+        for split_name in [
+            name.split("/") for name in forge_config["maintainers"]
+        ]
     ]
 
     forge_config["channel_targets"] = channel_targets
