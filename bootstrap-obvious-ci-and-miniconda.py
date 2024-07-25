@@ -10,7 +10,6 @@ import argparse
 import os
 import platform
 import subprocess
-import sys
 
 try:
     from urllib.request import urlretrieve
@@ -41,7 +40,7 @@ def miniconda_url(
         "Windows": "Windows",
     }
     if target_system not in system_to_miniconda_os:
-        raise ValueError("Unexpected system {!r}.".format(target_system))
+        raise ValueError(f"Unexpected system {target_system!r}.")
     template_values["OS"] = system_to_miniconda_os[target_system]
 
     miniconda_os_ext = {"Linux": "sh", "MacOSX": "sh", "Windows": "exe"}
@@ -49,7 +48,7 @@ def miniconda_url(
 
     if major_py_version not in ["3"]:
         raise ValueError(
-            "Unexpected major Python version {!r}.".format(major_py_version)
+            f"Unexpected major Python version {major_py_version!r}."
         )
     template_values["major_py_version"] = major_py_version
 
@@ -86,14 +85,14 @@ def main(
         raise ValueError("Unsupported operating system.")
 
     if not os.path.exists(basename):
-        print("Downloading from {}".format(URL))
+        print(f"Downloading from {URL}")
         urlretrieve(URL, basename)
     else:
-        print("Using cached version of {}".format(URL))
+        print(f"Using cached version of {URL}")
 
     # Install with powershell.
     if os.path.exists(target_dir):
-        raise IOError("Installation directory already exists")
+        raise OSError("Installation directory already exists")
     subprocess.check_call(cmd)
 
     if not os.path.isdir(target_dir):

@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 import os
-import requests
-import time
 import sys
+import time
+
+import requests
 
 from . import github
 from .utils import update_conda_forge_config
-
 
 # https://circleci.com/docs/api#add-environment-variable
 
@@ -14,33 +14,33 @@ from .utils import update_conda_forge_config
 # https://circleci.com/api/v1/project/:username/:project/envvar?circle-token=:token
 
 try:
-    with open(os.path.expanduser("~/.conda-smithy/circle.token"), "r") as fh:
+    with open(os.path.expanduser("~/.conda-smithy/circle.token")) as fh:
         circle_token = fh.read().strip()
     if not circle_token:
         raise ValueError()
-except (IOError, ValueError):
+except (OSError, ValueError):
     print(
         "No circle token.  Create a token at https://circleci.com/account/api and\n"
         "put it in ~/.conda-smithy/circle.token"
     )
 
 try:
-    with open(os.path.expanduser("~/.conda-smithy/appveyor.token"), "r") as fh:
+    with open(os.path.expanduser("~/.conda-smithy/appveyor.token")) as fh:
         appveyor_token = fh.read().strip()
     if not appveyor_token:
         raise ValueError()
-except (IOError, ValueError):
+except (OSError, ValueError):
     print(
         "No appveyor token. Create a token at https://ci.appveyor.com/api-token and\n"
         "Put one in ~/.conda-smithy/appveyor.token"
     )
 
 try:
-    with open(os.path.expanduser("~/.conda-smithy/drone.token"), "r") as fh:
+    with open(os.path.expanduser("~/.conda-smithy/drone.token")) as fh:
         drone_token = fh.read().strip()
     if not drone_token:
         raise ValueError()
-except (IOError, ValueError):
+except (OSError, ValueError):
     print(
         "No drone token. Create a token at https://cloud.drone.io/account and\n"
         "Put one in ~/.conda-smithy/drone.token"
@@ -50,13 +50,11 @@ try:
     anaconda_token = os.environ["BINSTAR_TOKEN"]
 except KeyError:
     try:
-        with open(
-            os.path.expanduser("~/.conda-smithy/anaconda.token"), "r"
-        ) as fh:
+        with open(os.path.expanduser("~/.conda-smithy/anaconda.token")) as fh:
             anaconda_token = fh.read().strip()
         if not anaconda_token:
             raise ValueError()
-    except (IOError, ValueError):
+    except (OSError, ValueError):
         print(
             "No anaconda token. Create a token via\n"
             '  anaconda auth --create --name conda-smithy --scopes "repos conda api"\n'
@@ -93,18 +91,18 @@ def travis_headers():
     }
     travis_token = os.path.expanduser("~/.conda-smithy/travis.token")
     try:
-        with open(travis_token, "r") as fh:
+        with open(travis_token) as fh:
             token = fh.read().strip()
         if not token:
             raise ValueError
-    except (IOError, ValueError):
+    except (OSError, ValueError):
         # We generally want the V3 API, but can currently only auth with V2:
         # https://github.com/travis-ci/travis-ci/issues/9273#issuecomment-370474214
         v2_headers = headers.copy()
         v2_headers["Accept"] = "application/vnd.travis-ci.2+json"
         del v2_headers["Travis-API-Version"]
 
-        url = "{}/auth/github".format(travis_endpoint)
+        url = f"{travis_endpoint}/auth/github"
         data = {"github_token": github.gh_token()}
         response = requests.post(url, json=data, headers=v2_headers)
         if response.status_code != 201:
@@ -114,7 +112,7 @@ def travis_headers():
             fh.write(token)
         # TODO: Set the permissions on the file.
 
-    headers["Authorization"] = "token {}".format(token)
+    headers["Authorization"] = f"token {token}"
     return headers
 
 
@@ -197,7 +195,7 @@ def add_project_to_circle(user, project):
     # timing out once we had too many repos, so now the approach is simply "add it always".
 
     url = url_template.format(
-        component="{}/{}/follow".format(user, project).lower(),
+        component=f"{user}/{project}/follow".lower(),
         token=circle_token,
     )
     response = requests.post(url, headers={})
@@ -208,7 +206,7 @@ def add_project_to_circle(user, project):
     # Note, here we are using a non-public part of the API and may change
     # Enable building PRs from forks
     url = url_template.format(
-        component="{}/{}/settings".format(user, project).lower(),
+        component=f"{user}/{project}/settings".lower(),
         token=circle_token,
     )
     # Disable CircleCI secrets in builds of forked PRs explicitly.
@@ -226,27 +224,21 @@ def add_project_to_circle(user, project):
     if response.status_code != 200:
         response.raise_for_status()
 
-    print(" * {}/{} enabled on CircleCI".format(user, project))
+    print(f" * {user}/{project} enabled on CircleCI")
 
 
 def add_project_to_azure(user, project):
     from . import azure_ci_utils
 
     if azure_ci_utils.repo_registered(user, project):
-        print(
-            " * {}/{} already enabled on azure pipelines".format(user, project)
-        )
+        print(f" * {user}/{project} already enabled on azure pipelines")
     else:
         azure_ci_utils.register_repo(user, project)
-        print(
-            " * {}/{} has been enabled on azure pipelines".format(
-                user, project
-            )
-        )
+        print(f" * {user}/{project} has been enabled on azure pipelines")
 
 
 def add_project_to_appveyor(user, project):
-    headers = {"Authorization": "Bearer {}".format(appveyor_token)}
+    headers = {"Authorization": f"Bearer {appveyor_token}"}
     url = "https://ci.appveyor.com/api/projects"
 
     response = requests.get(url, headers=headers)
@@ -254,22 +246,22 @@ def add_project_to_appveyor(user, project):
         response.raise_for_status()
     repos = [repo["repositoryName"].lower() for repo in response.json()]
 
-    if "{}/{}".format(user, project).lower() in repos:
-        print(" * {}/{} already enabled on appveyor".format(user, project))
+    if f"{user}/{project}".lower() in repos:
+        print(f" * {user}/{project} already enabled on appveyor")
     else:
         data = {
             "repositoryProvider": "gitHub",
-            "repositoryName": "{}/{}".format(user, project),
+            "repositoryName": f"{user}/{project}",
         }
         response = requests.post(url, headers=headers, data=data)
         if response.status_code != 201:
             response.raise_for_status()
-        print(" * {}/{} has been enabled on appveyor".format(user, project))
+        print(f" * {user}/{project} has been enabled on appveyor")
 
 
 def appveyor_encrypt_binstar_token(feedstock_config_path, user, project):
     anaconda_token = _get_anaconda_token()
-    headers = {"Authorization": "Bearer {}".format(appveyor_token)}
+    headers = {"Authorization": f"Bearer {appveyor_token}"}
     url = "https://ci.appveyor.com/api/account/encrypt"
     response = requests.post(
         url, headers=headers, data={"plainValue": anaconda_token}
@@ -285,14 +277,12 @@ def appveyor_encrypt_binstar_token(feedstock_config_path, user, project):
 
 def appveyor_configure(user, project):
     """Configure appveyor so that it skips building if there is no appveyor.yml present."""
-    headers = {"Authorization": "Bearer {}".format(appveyor_token)}
+    headers = {"Authorization": f"Bearer {appveyor_token}"}
     # I have reasons to believe this is all AppVeyor is doing to the API URL.
     if project.startswith("_"):
         project = project[1:]
     project = project.replace("_", "-").replace(".", "-")
-    url = "https://ci.appveyor.com/api/projects/{}/{}/settings".format(
-        user, project
-    )
+    url = f"https://ci.appveyor.com/api/projects/{user}/{project}/settings"
     response = requests.get(url, headers=headers)
     if response.status_code != 200:
         raise ValueError(response)
@@ -305,10 +295,7 @@ def appveyor_configure(user, project):
     ):
         if not settings[required_setting]:
             print(
-                "{: <30}: Current setting for {} = {}."
-                "".format(
-                    project, required_setting, settings[required_setting]
-                )
+                f"{project: <30}: Current setting for {required_setting} = {settings[required_setting]}."
             )
         settings[required_setting] = True
 
@@ -320,7 +307,7 @@ def appveyor_configure(user, project):
 
 def travis_wait_until_synced(ignore=False):
     headers = travis_headers()
-    is_sync_url = "{}/user".format(travis_endpoint)
+    is_sync_url = f"{travis_endpoint}/user"
     for _ in range(20):
         response = requests.get(is_sync_url, headers=headers)
         content = response.json()
@@ -349,9 +336,7 @@ def travis_repo_writable(repo_info):
 
 def travis_get_repo_info(user, project, show_error=False):
     headers = travis_headers()
-    url = "{}/repo/{user}%2F{project}".format(
-        travis_endpoint, user=user, project=project
-    )
+    url = f"{travis_endpoint}/repo/{user}%2F{project}"
     response = requests.get(url, headers=headers)
     try:
         response.raise_for_status()
@@ -414,21 +399,21 @@ def add_project_to_travis(user, project):
         raise RuntimeError(msg.format(user, project))
 
     if repo_info["active"] is True:
-        print(" * {}/{} already enabled on travis-ci".format(user, project))
+        print(f" * {user}/{project} already enabled on travis-ci")
     else:
         repo_id = repo_info["id"]
-        url = "{}/repo/{}/activate".format(travis_endpoint, repo_id)
+        url = f"{travis_endpoint}/repo/{repo_id}/activate"
         response = requests.post(url, headers=headers)
         response.raise_for_status()
-        print(" * {}/{} registered on travis-ci".format(user, project))
+        print(f" * {user}/{project} registered on travis-ci")
 
 
 def travis_token_update_conda_forge_config(
     feedstock_config_path, user, project
 ):
     anaconda_token = _get_anaconda_token()
-    item = 'BINSTAR_TOKEN="{}"'.format(anaconda_token)
-    slug = "{}%2F{}".format(user, project)
+    item = f'BINSTAR_TOKEN="{anaconda_token}"'
+    slug = f"{user}%2F{project}"
 
     with update_conda_forge_config(feedstock_config_path) as code:
         code.setdefault("travis", {}).setdefault("secure", {})[
@@ -451,13 +436,12 @@ def travis_encrypt_binstar_token(repo, string_to_encrypt):
     #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
     #    License for the specific language governing permissions and limitations
     #    under the License.
-    from Crypto.PublicKey import RSA
-    from Crypto.Cipher import PKCS1_v1_5
     import base64
 
-    keyurl = "https://api.travis-ci.com/repo/{0}/key_pair/generated".format(
-        repo
-    )
+    from Crypto.Cipher import PKCS1_v1_5
+    from Crypto.PublicKey import RSA
+
+    keyurl = f"https://api.travis-ci.com/repo/{repo}/key_pair/generated"
     r = requests.get(keyurl, headers=travis_headers())
     r.raise_for_status()
     public_key = r.json()["public_key"]
@@ -484,20 +468,14 @@ def travis_configure(user, project):
     repo_id = repo_info["id"]
 
     if repo_info["active"] is not True:
-        raise ValueError(
-            "Repo {user}/{project} is not active on Travis CI".format(
-                user=user, project=project
-            )
-        )
+        raise ValueError(f"Repo {user}/{project} is not active on Travis CI")
 
     settings = [
         ("builds_only_with_travis_yml", True),
         ("auto_cancel_pull_requests", True),
     ]
     for name, value in settings:
-        url = "{}/repo/{repo_id}/setting/{name}".format(
-            travis_endpoint, repo_id=repo_id, name=name
-        )
+        url = f"{travis_endpoint}/repo/{repo_id}/setting/{name}"
         data = {"setting.value": value}
         response = requests.patch(url, json=data, headers=headers)
         if response.status_code != 204:
@@ -523,7 +501,7 @@ def add_token_to_travis(user, project):
     repo_id = repo_info["id"]
 
     r = requests.get(
-        "{}/repo/{repo_id}/env_vars".format(travis_endpoint, repo_id=repo_id),
+        f"{travis_endpoint}/repo/{repo_id}/env_vars",
         headers=headers,
     )
     if r.status_code != 200:
@@ -544,20 +522,14 @@ def add_token_to_travis(user, project):
 
     if have_token:
         r = requests.patch(
-            "{}/repo/{repo_id}/env_var/{ev_id}".format(
-                travis_endpoint,
-                repo_id=repo_id,
-                ev_id=ev_id,
-            ),
+            f"{travis_endpoint}/repo/{repo_id}/env_var/{ev_id}",
             headers=headers,
             json=data,
         )
         r.raise_for_status()
     else:
         r = requests.post(
-            "{}/repo/{repo_id}/env_vars".format(
-                travis_endpoint, repo_id=repo_id
-            ),
+            f"{travis_endpoint}/repo/{repo_id}/env_vars",
             headers=headers,
             json=data,
         )
@@ -585,12 +557,12 @@ def get_conda_hook_info(hook_url, events):
 def add_conda_forge_webservice_hooks(user, repo):
     if user != "conda-forge":
         print(
-            "Unable to register {}/{} for conda-linting at this time as only "
-            "conda-forge repos are supported.".format(user, repo)
+            f"Unable to register {user}/{repo} for conda-linting at this time as only "
+            "conda-forge repos are supported."
         )
 
-    headers = {"Authorization": "token {}".format(github.gh_token())}
-    url = "https://api.github.com/repos/{}/{}/hooks".format(user, repo)
+    headers = {"Authorization": f"token {github.gh_token()}"}
+    url = f"https://api.github.com/repos/{user}/{repo}/hooks"
 
     # Get the current hooks to determine if anything needs doing.
     response = requests.get(url, headers=headers)

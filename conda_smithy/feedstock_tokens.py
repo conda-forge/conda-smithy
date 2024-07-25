@@ -23,13 +23,13 @@ as a secret variable on the CI services. It is also hashed using `scrypt` and
 then uploaded to the token registry (a repo on GitHub).
 """
 
-import tempfile
-import os
-import json
-import time
-import secrets
 import hmac
-from contextlib import redirect_stderr, redirect_stdout, contextmanager
+import json
+import os
+import secrets
+import tempfile
+import time
+from contextlib import contextmanager, redirect_stderr, redirect_stdout
 
 import git
 import requests
@@ -143,7 +143,7 @@ def read_feedstock_token(user, project, provider=None):
     if not os.path.exists(user_token_pth):
         err_msg = "No token found in '%s'" % user_token_pth
     else:
-        with open(user_token_pth, "r") as fp:
+        with open(user_token_pth) as fp:
             feedstock_token = fp.read().strip()
         if not feedstock_token:
             err_msg = "Empty token found in '%s'" % user_token_pth
@@ -185,7 +185,7 @@ def feedstock_token_exists(user, project, token_repo, provider=None):
             )
 
             if os.path.exists(token_file):
-                with open(token_file, "r") as fp:
+                with open(token_file) as fp:
                     token_data = json.load(fp)
 
                 if "tokens" not in token_data:
@@ -259,7 +259,7 @@ def is_valid_feedstock_token(
             )
 
             if os.path.exists(token_file):
-                with open(token_file, "r") as fp:
+                with open(token_file) as fp:
                     token_data = json.load(fp)
 
                 if "tokens" not in token_data:
@@ -351,7 +351,7 @@ def register_feedstock_token(user, project, token_repo, provider=None):
 
             # append the token if needed
             if os.path.exists(token_file):
-                with open(token_file, "r") as fp:
+                with open(token_file) as fp:
                     token_data = json.load(fp)
                 if "tokens" not in token_data:
                     token_data = {"tokens": [token_data]}
@@ -616,8 +616,8 @@ def add_feedstock_token_to_travis(user, project, feedstock_token, clobber):
     """Add the FEEDSTOCK_TOKEN to travis."""
     from .ci_register import (
         travis_endpoint,
-        travis_headers,
         travis_get_repo_info,
+        travis_headers,
     )
 
     headers = travis_headers()
@@ -626,7 +626,7 @@ def add_feedstock_token_to_travis(user, project, feedstock_token, clobber):
     repo_id = repo_info["id"]
 
     r = requests.get(
-        "{}/repo/{repo_id}/env_vars".format(travis_endpoint, repo_id=repo_id),
+        f"{travis_endpoint}/repo/{repo_id}/env_vars",
         headers=headers,
     )
     if r.status_code != 200:
@@ -647,20 +647,14 @@ def add_feedstock_token_to_travis(user, project, feedstock_token, clobber):
 
     if have_feedstock_token and clobber:
         r = requests.patch(
-            "{}/repo/{repo_id}/env_var/{ev_id}".format(
-                travis_endpoint,
-                repo_id=repo_id,
-                ev_id=ev_id,
-            ),
+            f"{travis_endpoint}/repo/{repo_id}/env_var/{ev_id}",
             headers=headers,
             json=data,
         )
         r.raise_for_status()
     elif not have_feedstock_token:
         r = requests.post(
-            "{}/repo/{repo_id}/env_vars".format(
-                travis_endpoint, repo_id=repo_id
-            ),
+            f"{travis_endpoint}/repo/{repo_id}/env_vars",
             headers=headers,
             json=data,
         )
@@ -669,9 +663,10 @@ def add_feedstock_token_to_travis(user, project, feedstock_token, clobber):
 
 
 def add_feedstock_token_to_azure(user, project, feedstock_token, clobber):
+    from vsts.build.v4_1.models import BuildDefinitionVariable
+
     from .azure_ci_utils import build_client, get_default_build_definition
     from .azure_ci_utils import default_config as config
-    from vsts.build.v4_1.models import BuildDefinitionVariable
 
     bclient = build_client()
 
@@ -724,8 +719,9 @@ def add_feedstock_token_to_azure(user, project, feedstock_token, clobber):
 def add_feedstock_token_to_github_actions(
     user, project, feedstock_token, clobber
 ):
-    from .github import gh_token
     from github import Github
+
+    from .github import gh_token
 
     gh = Github(gh_token())
     repo = gh.get_repo(f"{user}/{project}")

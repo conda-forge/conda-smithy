@@ -4,11 +4,11 @@ import multiprocessing
 import os
 
 import git
-from git import Repo, GitCommandError
+from git import GitCommandError, Repo
 from github import Github
 
 from . import github as smithy_github
-from .utils import render_meta_yaml, get_yaml
+from .utils import get_yaml, render_meta_yaml
 
 
 def feedstock_repos(gh_organization="conda-forge"):
@@ -55,9 +55,7 @@ def fetch_feedstock(repo_dir):
         try:
             remote.fetch()
         except GitCommandError:
-            print(
-                "Failed to fetch {} from {}.".format(remote.name, remote.url)
-            )
+            print(f"Failed to fetch {remote.name} from {remote.url}.")
 
 
 def fetch_feedstocks(feedstock_directory):
@@ -88,7 +86,7 @@ def clone_feedstock(feedstock_gh_repo, feedstocks_dir):
 
     clone_directory = os.path.join(feedstocks_dir, repo.name)
     if not os.path.exists(clone_directory):
-        print("Cloning {}".format(repo.name))
+        print(f"Cloning {repo.name}")
         clone = Repo.clone_from(repo.clone_url, clone_directory)
         clone.delete_remote("origin")
     clone = Repo(clone_directory)
@@ -217,7 +215,7 @@ def feedstocks_yaml(
     organization,
     feedstocks_directory,
     use_local=False,
-    **feedstocks_repo_kwargs
+    **feedstocks_repo_kwargs,
 ):
     """
     Generator of (feedstock, ref, content, yaml) for each upstream git ref of each feedstock.
@@ -258,7 +256,6 @@ def feedstocks_yaml(
                         os.path.join(
                             feedstock.directory, "recipe", "meta.yaml"
                         ),
-                        "r",
                     ) as fh:
                         content = "".join(fh.readlines())
                 else:
@@ -268,7 +265,7 @@ def feedstocks_yaml(
                 yaml = yaml_meta(content)
             except:
                 # Add a helpful comment so we know what we are working with and reraise.
-                print("Failed on {}".format(feedstock.package))
+                print(f"Failed on {feedstock.package}")
                 raise
 
             yield (feedstock, ref, content, yaml)

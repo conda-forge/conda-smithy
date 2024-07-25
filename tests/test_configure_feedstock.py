@@ -8,8 +8,8 @@ from pathlib import Path
 
 import pytest
 import yaml
-
 from conftest import ConfigYAML
+
 from conda_smithy import configure_feedstock
 
 

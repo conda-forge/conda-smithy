@@ -1,10 +1,9 @@
-from glob import glob
-import io
 import os
 import re
 import shutil
 import subprocess
 import sys
+from glob import glob
 
 from conda_smithy.linter.utils import find_local_config_file, is_selector_line
 from conda_smithy.utils import get_yaml
@@ -33,7 +32,7 @@ def hint_suggest_noarch(
         and ("pip" in build_reqs)
         and (is_staged_recipes or not conda_forge)
     ):
-        with io.open(meta_fname, "rt") as fh:
+        with open(meta_fname) as fh:
             in_runreqs = False
             no_arch_possible = True
             for line in fh:
@@ -66,7 +65,7 @@ def hint_shellcheck_usage(recipe_dir, hints):
         shell_scripts = glob(os.path.join(recipe_dir, "*.sh"))
         forge_yaml = find_local_config_file(recipe_dir, "conda-forge.yml")
         if shell_scripts and forge_yaml:
-            with open(forge_yaml, "r") as fh:
+            with open(forge_yaml) as fh:
                 code = get_yaml().load(fh)
                 shellcheck_enabled = code.get("shellcheck", {}).get(
                     "enabled", shellcheck_enabled
@@ -144,13 +143,11 @@ def hint_check_spdx(about_section, hints):
         if not licenseref_regex.match(license):
             filtered_licenses.append(license)
 
-    with open(
-        os.path.join(os.path.dirname(__file__), "licenses.txt"), "r"
-    ) as f:
+    with open(os.path.join(os.path.dirname(__file__), "licenses.txt")) as f:
         expected_licenses = f.readlines()
         expected_licenses = set([l.strip() for l in expected_licenses])
     with open(
-        os.path.join(os.path.dirname(__file__), "license_exceptions.txt"), "r"
+        os.path.join(os.path.dirname(__file__), "license_exceptions.txt")
     ) as f:
         expected_exceptions = f.readlines()
         expected_exceptions = set([l.strip() for l in expected_exceptions])

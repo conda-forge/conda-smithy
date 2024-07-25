@@ -1,8 +1,7 @@
 import pytest
 from pydantic import ValidationError
-import yaml
-from conda_smithy.schema import ConfigModel
 
+from conda_smithy.schema import ConfigModel
 
 # Sample config files
 SAMPLE_CONFIGS = [

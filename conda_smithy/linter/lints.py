@@ -1,33 +1,27 @@
-from collections.abc import Sequence
-import re
-
 import fnmatch
-import io
 import itertools
 import os
+import re
+from collections.abc import Sequence
+from typing import List, Optional
 
-
-from typing import Optional, List
-
+from conda.models.version import VersionOrder
 from ruamel.yaml import CommentedSeq
 
-
+from conda_smithy.linter import rattler_linter
 from conda_smithy.linter.utils import (
+    EXPECTED_SECTION_ORDER,
     FIELDS,
     JINJA_VAR_PAT,
     REQUIREMENTS_ORDER,
     TEST_FILES,
     TEST_KEYS,
+    get_section,
     is_selector_line,
     jinja_lines,
-    EXPECTED_SECTION_ORDER,
-    get_section,
     selector_lines,
 )
 from conda_smithy.utils import get_yaml
-from conda_smithy.linter import rattler_linter
-
-from conda.models.version import VersionOrder
 
 
 def lint_section_order(
@@ -50,7 +44,7 @@ def lint_section_order(
         section_order_sorted_str = "[" + section_order_sorted_str + "]"
         lints.append(
             "The top level meta keys are in an unexpected order. "
-            "Expecting {}.".format(section_order_sorted_str)
+            f"Expecting {section_order_sorted_str}."
         )
 
 
@@ -126,7 +120,7 @@ def lint_selectors_should_be_in_tidy_form(recipe_fname, lints, hints):
     # Look out for py27, py35 selectors; we prefer py==35
     pyXY_selectors_pat = re.compile(r".+#\s*\[.*?(py\d{2,3}).*\]")
     if os.path.exists(recipe_fname):
-        with io.open(recipe_fname, "rt") as fh:
+        with open(recipe_fname) as fh:
             for selector_line, line_number in selector_lines(fh):
                 if not good_selectors_pat.match(selector_line):
                     bad_selectors.append(selector_line)
@@ -145,20 +139,20 @@ def lint_selectors_should_be_in_tidy_form(recipe_fname, lints, hints):
         lints.append(
             "Selectors are suggested to take a "
             "``<two spaces>#<one space>[<expression>]`` form."
-            " See lines {}".format(bad_lines)
+            f" See lines {bad_lines}"
         )
     if pyXY_selectors_hint:
         hints.append(
             "Old-style Python selectors (py27, py34, py35, py36) are "
             "deprecated. Instead, consider using the int ``py``. For "
-            "example: ``# [py>=36]``. See lines {}".format(pyXY_lines_hint)
+            f"example: ``# [py>=36]``. See lines {pyXY_lines_hint}"
         )
     if pyXY_selectors_lint:
         lints.append(
             "Old-style Python selectors (py27, py35, etc) are only available "
             "for Python 2.7, 3.4, 3.5, and 3.6. Please use explicit comparisons "
             "with the integer ``py``, e.g. ``# [py==37]`` or ``# [py>=37]``. "
-            "See lines {}".format(pyXY_lines_lint)
+            f"See lines {pyXY_lines_lint}"
         )
 
 
@@ -211,16 +205,16 @@ def lint_license_should_not_have_license(about_section, lints):
 
 def lint_should_be_empty_line(meta_fname, lints):
     if os.path.exists(meta_fname):
-        with io.open(meta_fname, "r") as f:
+        with open(meta_fname) as f:
             lines = f.read().split("\n")
         # Count the number of empty lines from the end of the file
         empty_lines = itertools.takewhile(lambda x: x == "", reversed(lines))
         end_empty_lines_count = len(list(empty_lines))
         if end_empty_lines_count > 1:
             lints.append(
-                "There are {} too many lines.  "
+                f"There are {end_empty_lines_count - 1} too many lines.  "
                 "There should be one empty line at the end of the "
-                "file.".format(end_empty_lines_count - 1)
+                "file."
             )
         elif end_empty_lines_count < 1:
             lints.append(
@@ -271,17 +265,17 @@ def lint_subheaders(major_sections, meta, lints):
                 and subsection not in expected_subsections
             ):
                 lints.append(
-                    "The {} section contained an unexpected "
-                    "subsection name. {} is not a valid subsection"
-                    " name.".format(section, subsection)
+                    f"The {section} section contained an unexpected "
+                    f"subsection name. {subsection} is not a valid subsection"
+                    " name."
                 )
             elif section == "source" or section == "outputs":
                 for source_subsection in subsection:
                     if source_subsection not in expected_subsections:
                         lints.append(
-                            "The {} section contained an unexpected "
-                            "subsection name. {} is not a valid subsection"
-                            " name.".format(section, source_subsection)
+                            f"The {section} section contained an unexpected "
+                            f"subsection name. {source_subsection} is not a valid subsection"
+                            " name."
                         )
 
 
@@ -291,9 +285,7 @@ def lint_noarch(noarch_value: Optional[str], lints):
         if noarch_value not in valid_noarch_values:
             valid_noarch_str = "`, `".join(valid_noarch_values)
             lints.append(
-                "Invalid `noarch` value `{}`. Should be one of `{}`.".format(
-                    noarch_value, valid_noarch_str
-                )
+                f"Invalid `noarch` value `{noarch_value}`. Should be one of `{valid_noarch_str}`."
             )
 
 
@@ -302,7 +294,7 @@ def lint_noarch_and_runtime_dependencies(
 ):
     if noarch_value is not None and os.path.exists(meta_fname):
         noarch_platforms = len(forge_yaml.get("noarch_platforms", [])) > 1
-        with io.open(meta_fname, "rt") as fh:
+        with open(meta_fname) as fh:
             in_runreqs = False
             for line in fh:
                 line_s = line.strip()
@@ -314,7 +306,7 @@ def lint_noarch_and_runtime_dependencies(
                     lints.append(
                         "`noarch` packages can't have skips with selectors. If "
                         "the selectors are necessary, please remove "
-                        "`noarch: {}`.".format(noarch_value)
+                        f"`noarch: {noarch_value}`."
                     )
                     break
                 if in_runreqs:
@@ -329,7 +321,7 @@ def lint_noarch_and_runtime_dependencies(
                         lints.append(
                             "`noarch` packages can't have selectors. If "
                             "the selectors are necessary, please remove "
-                            "`noarch: {}`.".format(noarch_value)
+                            f"`noarch: {noarch_value}`."
                         )
                         break
 
@@ -340,9 +332,7 @@ def lint_package_version(package_section, lints):
         try:
             VersionOrder(ver)
         except:
-            lints.append(
-                "Package version {} doesn't match conda spec".format(ver)
-            )
+            lints.append(f"Package version {ver} doesn't match conda spec")
 
 
 def lint_jinja_variables_definitions(meta_fname, lints):
@@ -351,7 +341,7 @@ def lint_jinja_variables_definitions(meta_fname, lints):
     # Good Jinja2 variable definitions look like "{% set .+ = .+ %}"
     good_jinja_pat = re.compile(r"\s*\{%\s(set)\s[^\s]+\s=\s[^\s]+\s%\}")
     if os.path.exists(meta_fname):
-        with io.open(meta_fname, "rt") as fh:
+        with open(meta_fname) as fh:
             for jinja_line, line_number in jinja_lines(fh):
                 if not good_jinja_pat.match(jinja_line):
                     bad_jinja.append(jinja_line)
@@ -359,10 +349,10 @@ def lint_jinja_variables_definitions(meta_fname, lints):
         if bad_jinja:
             lints.append(
                 "Jinja2 variable definitions are suggested to "
-                "take a ``{{%<one space>set<one space>"
+                "take a ``{%<one space>set<one space>"
                 "<variable name><one space>=<one space>"
-                "<expression><one space>%}}`` form. See lines "
-                "{}".format(bad_lines)
+                "<expression><one space>%}`` form. See lines "
+                f"{bad_lines}"
             )
 
 
@@ -446,9 +436,7 @@ def lint_non_noarch_builds(
             ]
             if filtered_host_reqs and not filtered_run_reqs:
                 lints.append(
-                    "If {0} is a host requirement, it should be a run requirement.".format(
-                        str(language)
-                    )
+                    f"If {str(language)} is a host requirement, it should be a run requirement."
                 )
             for reqs in [filtered_host_reqs, filtered_run_reqs]:
                 if str(language) in reqs:
@@ -459,9 +447,7 @@ def lint_non_noarch_builds(
                         "<"
                     ):
                         lints.append(
-                            "Non noarch packages should have {0} requirement without any version constraints.".format(
-                                str(language)
-                            )
+                            f"Non noarch packages should have {str(language)} requirement without any version constraints."
                         )
 
 
@@ -469,7 +455,7 @@ def lint_jinja_var_references(meta_fname, hints):
     bad_vars = []
     bad_lines = []
     if os.path.exists(meta_fname):
-        with io.open(meta_fname, "rt") as fh:
+        with open(meta_fname) as fh:
             for i, line in enumerate(fh.readlines()):
                 for m in JINJA_VAR_PAT.finditer(line):
                     if m.group(1) is not None:
@@ -550,7 +536,7 @@ def lint_check_usage_of_whls(meta_fname, noarch_value, lints, hints):
     pure_python_wheel_re = re.compile(r".*[:-]\s+(http.*-none-any\.whl)\s+.*")
     wheel_re = re.compile(r".*[:-]\s+(http.*\.whl)\s+.*")
     if os.path.exists(meta_fname):
-        with open(meta_fname, "rt") as f:
+        with open(meta_fname) as f:
             for line in f:
                 if match := pure_python_wheel_re.search(line):
                     pure_python_wheel_urls.append(match.group(1))
@@ -675,7 +661,7 @@ def lint_stdlib(
     # stdlib issues in CBC
     cbc_lines = []
     if conda_build_config_filename:
-        with open(conda_build_config_filename, "r") as fh:
+        with open(conda_build_config_filename) as fh:
             cbc_lines = fh.readlines()
 
     # filter on osx-relevant lines

@@ -1,8 +1,8 @@
-from collections.abc import Sequence
 import copy
-from glob import glob
 import os
 import re
+from collections.abc import Sequence
+from glob import glob
 from typing import Mapping
 
 from conda_build.metadata import (
@@ -61,8 +61,8 @@ def get_meta_section(parent, name, lints):
     section = parent.get(name, {})
     if not isinstance(section, Mapping):
         lints.append(
-            'The "{}" section was expected to be a dictionary, but '
-            "got a {}.".format(name, type(section).__name__)
+            f'The "{name}" section was expected to be a dictionary, but '
+            f"got a {type(section).__name__}."
         )
         section = {}
     return section

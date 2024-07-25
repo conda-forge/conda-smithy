@@ -12,9 +12,9 @@ conda-forge.yml in your feedstock to GitHub.
 import os
 import sys
 from contextlib import redirect_stderr, redirect_stdout
-from github import Github
 
 import requests
+from github import Github
 
 from .utils import update_conda_forge_config
 
@@ -285,8 +285,8 @@ def rotate_token_in_travis(
     """update the binstar token in travis."""
     from .ci_register import (
         travis_endpoint,
-        travis_headers,
         travis_get_repo_info,
+        travis_headers,
     )
 
     headers = travis_headers()
@@ -295,7 +295,7 @@ def rotate_token_in_travis(
     repo_id = repo_info["id"]
 
     r = requests.get(
-        "{}/repo/{repo_id}/env_vars".format(travis_endpoint, repo_id=repo_id),
+        f"{travis_endpoint}/repo/{repo_id}/env_vars",
         headers=headers,
     )
     if r.status_code != 200:
@@ -316,20 +316,14 @@ def rotate_token_in_travis(
 
     if have_binstar_token:
         r = requests.patch(
-            "{}/repo/{repo_id}/env_var/{ev_id}".format(
-                travis_endpoint,
-                repo_id=repo_id,
-                ev_id=ev_id,
-            ),
+            f"{travis_endpoint}/repo/{repo_id}/env_var/{ev_id}",
             headers=headers,
             json=data,
         )
         r.raise_for_status()
     else:
         r = requests.post(
-            "{}/repo/{repo_id}/env_vars".format(
-                travis_endpoint, repo_id=repo_id
-            ),
+            f"{travis_endpoint}/repo/{repo_id}/env_vars",
             headers=headers,
             json=data,
         )
@@ -361,9 +355,10 @@ def rotate_token_in_travis(
 
 
 def rotate_token_in_azure(user, project, binstar_token, token_name):
+    from vsts.build.v4_1.models import BuildDefinitionVariable
+
     from .azure_ci_utils import build_client, get_default_build_definition
     from .azure_ci_utils import default_config as config
-    from vsts.build.v4_1.models import BuildDefinitionVariable
 
     bclient = build_client()
 
@@ -411,7 +406,7 @@ def rotate_token_in_azure(user, project, binstar_token, token_name):
 def rotate_token_in_appveyor(feedstock_config_path, binstar_token, token_name):
     from .ci_register import appveyor_token
 
-    headers = {"Authorization": "Bearer {}".format(appveyor_token)}
+    headers = {"Authorization": f"Bearer {appveyor_token}"}
     url = "https://ci.appveyor.com/api/account/encrypt"
     response = requests.post(
         url, headers=headers, data={"plainValue": binstar_token}

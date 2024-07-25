@@ -1,12 +1,12 @@
 import argparse
 import collections
 import os
+import shutil
 import subprocess
 from textwrap import dedent
 
-import yaml
 import pytest
-import shutil
+import yaml
 
 from conda_smithy import cli
 
@@ -80,7 +80,7 @@ def test_init_with_custom_config(py_recipe):
     destination = os.path.join(recipe, "py-test-feedstock")
     assert os.path.isdir(destination)
     data = yaml.safe_load(
-        open(os.path.join(destination, "conda-forge.yml"), "r").read()
+        open(os.path.join(destination, "conda-forge.yml")).read()
     )
     assert data.get("bot") != None
     assert data["bot"]["automerge"] == True
@@ -173,7 +173,7 @@ def test_render_readme_with_multiple_outputs(testing_workdir, dirname):
     regen_obj(args)
     readme_path = os.path.join(feedstock_dir, "README.md")
     assert os.path.exists(readme_path)
-    with open(readme_path, "r") as readme_file:
+    with open(readme_path) as readme_file:
         readme = readme_file.read()
     if dirname == "multiple_outputs":
         # case 1: implicit subpackage, no individual subpackage about
@@ -367,6 +367,6 @@ def test_render_variant_mismatches(testing_workdir):
         if _cfg == "README":
             continue
         cfg = os.path.join(matrix_dir, _cfg)
-        with open(cfg, "r") as f:
+        with open(cfg) as f:
             data = yaml.safe_load(f)
         assert data["a"] == data["b"]

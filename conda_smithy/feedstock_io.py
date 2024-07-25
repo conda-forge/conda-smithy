@@ -1,8 +1,7 @@
-from contextlib import contextmanager
-import io
 import os
 import shutil
 import stat
+from contextlib import contextmanager
 
 
 def get_repo(path, search_parent_directories=True):
@@ -52,7 +51,7 @@ def write_file(filename):
     if dirname and not os.path.exists(dirname):
         os.makedirs(dirname)
 
-    with io.open(filename, "w", encoding="utf-8", newline="\n") as fh:
+    with open(filename, "w", encoding="utf-8", newline="\n") as fh:
         yield fh
 
     repo = get_repo(filename)
@@ -97,8 +96,8 @@ def copy_file(src, dst):
     If the file fails to be decoded with utf-8, we revert to a regular copy.
     """
     try:
-        with io.open(src, "r", encoding="utf-8") as fh_src:
-            with io.open(dst, "w", encoding="utf-8", newline="\n") as fh_dst:
+        with open(src, encoding="utf-8") as fh_src:
+            with open(dst, "w", encoding="utf-8", newline="\n") as fh_dst:
                 for line in fh_src:
                     fh_dst.write(line)
     except UnicodeDecodeError:

@@ -1,11 +1,10 @@
 import functools
-import io
 import operator as op
 import os
 import random
+import shutil
 import stat
 import string
-import shutil
 import tempfile
 import unittest
 
@@ -17,7 +16,7 @@ import conda_smithy.feedstock_io as fio
 
 def keep_dir(dirname):
     keep_filename = os.path.join(dirname, ".keep")
-    with io.open(keep_filename, "w", encoding="utf-8", newline="\n") as fh:
+    with open(keep_filename, "w", encoding="utf-8", newline="\n") as fh:
         fh.write("")
 
 
@@ -54,7 +53,7 @@ class TestFeedstockIO(unittest.TestCase):
         self.tmp_dir = tempfile.mkdtemp()
         os.chdir(self.tmp_dir)
 
-        with io.open(
+        with open(
             os.path.abspath(".keep"), "w", encoding="utf-8", newline="\n"
         ) as fh:
             fh.write("")
@@ -87,9 +86,7 @@ class TestFeedstockIO(unittest.TestCase):
             for tmp_dir, repo, pathfunc in parameterize():
                 filename = "test.txt"
                 filename = os.path.join(tmp_dir, filename)
-                with io.open(
-                    filename, "w", encoding="utf-8", newline="\n"
-                ) as fh:
+                with open(filename, "w", encoding="utf-8", newline="\n") as fh:
                     fh.write("")
                 if repo is not None:
                     repo.index.add([filename])
@@ -117,7 +114,7 @@ class TestFeedstockIO(unittest.TestCase):
                     repo.index.add([filename])
 
                 read_text = ""
-                with io.open(filename, "r", encoding="utf-8") as fh:
+                with open(filename, encoding="utf-8") as fh:
                     read_text = fh.read()
 
                 self.assertEqual(write_text, read_text)
@@ -136,7 +133,7 @@ class TestFeedstockIO(unittest.TestCase):
                 fio.touch_file(pathfunc(filename))
 
                 read_text = ""
-                with io.open(filename, "r", encoding="utf-8") as fh:
+                with open(filename, encoding="utf-8") as fh:
                     read_text = fh.read()
 
                 self.assertEqual("", read_text)
@@ -156,9 +153,7 @@ class TestFeedstockIO(unittest.TestCase):
 
                 filename = os.path.join(tmp_dir, filename)
 
-                with io.open(
-                    filename, "w", encoding="utf-8", newline="\n"
-                ) as fh:
+                with open(filename, "w", encoding="utf-8", newline="\n") as fh:
                     fh.write("")
                 if repo is not None:
                     repo.index.add([filename])
@@ -192,7 +187,7 @@ class TestFeedstockIO(unittest.TestCase):
             filename2 = os.path.join(tmp_dir, filename2)
 
             write_text = "text"
-            with io.open(filename1, "w", encoding="utf-8", newline="\n") as fh:
+            with open(filename1, "w", encoding="utf-8", newline="\n") as fh:
                 fh.write(write_text)
 
             self.assertTrue(os.path.exists(filename1))
@@ -212,7 +207,7 @@ class TestFeedstockIO(unittest.TestCase):
                 )
 
             read_text = ""
-            with io.open(filename2, "r", encoding="utf-8") as fh:
+            with open(filename2, encoding="utf-8") as fh:
                 read_text = fh.read()
 
             self.assertEqual(write_text, read_text)

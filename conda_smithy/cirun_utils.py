@@ -2,12 +2,12 @@
 See http://py.cirun.io/api.html for cirun client docs
 """
 
-import os
 from functools import lru_cache
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict, List, Optional
 
 from cirun import Cirun
-from .github import gh_token, Github
+
+from .github import Github, gh_token
 
 
 @lru_cache

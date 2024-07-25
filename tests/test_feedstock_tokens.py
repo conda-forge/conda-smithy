@@ -1,23 +1,22 @@
-import os
 import json
-from unittest import mock
+import os
 import time
+from unittest import mock
 
 import pytest
 import scrypt
 
+from conda_smithy.ci_register import drone_default_endpoint
 from conda_smithy.feedstock_tokens import (
-    generate_and_write_feedstock_token,
-    read_feedstock_token,
+    FeedstockTokenError,
     feedstock_token_exists,
+    feedstock_token_local_path,
+    generate_and_write_feedstock_token,
+    is_valid_feedstock_token,
+    read_feedstock_token,
     register_feedstock_token,
     register_feedstock_token_with_providers,
-    is_valid_feedstock_token,
-    FeedstockTokenError,
-    feedstock_token_local_path,
 )
-
-from conda_smithy.ci_register import drone_default_endpoint
 
 
 @pytest.mark.parametrize(
@@ -95,7 +94,7 @@ def test_feedstock_tokens_roundtrip(
         with open(token_json_pth, "w") as fp:
             fp.write(json.dumps(token_data))
 
-        with open(pth, "r") as fp:
+        with open(pth) as fp:
             feedstock_token = fp.read().strip()
 
         retval = is_valid_feedstock_token(
@@ -449,7 +448,7 @@ def test_register_feedstock_token_works(
     if ci is not None:
         data["provider"] = ci
 
-    with open(token_json_pth, "r") as fp:
+    with open(token_json_pth) as fp:
         assert json.load(fp) == {"tokens": [data]}
 
 
@@ -577,7 +576,7 @@ def test_register_feedstock_token_append(
     if ci is not None:
         data["provider"] = ci
 
-    with open(token_json_pth, "r") as fp:
+    with open(token_json_pth) as fp:
         assert json.load(fp) == {"tokens": [1, data]}
 
 
