@@ -1761,6 +1761,7 @@ class TestCliRecipeLint(unittest.TestCase):
                         """
                     package:
                         name: 'test_package'
+                        version: 1.0.0
                     build:
                         number: 0
                     test:
@@ -1768,7 +1769,8 @@ class TestCliRecipeLint(unittest.TestCase):
                             - foo
                     about:
                         home: something
-                        license: something else
+                        license: MIT
+                        license_file: LICENSE
                         summary: a test recipe
                     extra:
                         recipe-maintainers:
@@ -1792,6 +1794,7 @@ class TestCliRecipeLint(unittest.TestCase):
                         """
                     package:
                         name: 'test_package'
+                        version: 1.0.0
                     build:
                         number: 0
                     test:
@@ -1801,7 +1804,8 @@ class TestCliRecipeLint(unittest.TestCase):
                             - foo
                     about:
                         home: something
-                        license: something else
+                        license: MIT
+                        license_file: LICENSE
                         summary: a test recipe
                     extra:
                         recipe-maintainers:
