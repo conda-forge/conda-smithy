@@ -1,7 +1,16 @@
-# -*- coding: utf-8 -*-
-
+import json
+import os
+import sys
 from collections.abc import Mapping
+from glob import glob
+from inspect import cleandoc
+from textwrap import indent
 
+import github
+import jsonschema
+import requests
+
+from conda_smithy.linter import rattler_linter
 from conda_smithy.linter.hints import (
     hint_check_spdx,
     hint_pip_usage,
@@ -40,25 +49,10 @@ from conda_smithy.linter.lints import (
     lint_usage_of_legacy_patterns,
 )
 from conda_smithy.linter.utils import (
-    CONDA_BUILD_TOOL,
     EXPECTED_SECTION_ORDER,
-    RATTLER_BUILD_TOOL,
     find_local_config_file,
     get_section,
 )
-
-from conda_smithy.linter import rattler_linter
-
-import io
-import json
-import os
-import requests
-import sys
-from glob import glob
-from inspect import cleandoc
-from textwrap import indent
-
-import github
 
 if sys.version_info[:2] < (3, 11):
     import tomli as tomllib
@@ -68,9 +62,9 @@ else:
 from conda_build.metadata import (
     ensure_valid_license_family,
 )
-from conda_smithy.validate_schema import validate_json_schema
 
-from conda_smithy.utils import render_meta_yaml, get_yaml
+from conda_smithy.utils import get_yaml, render_meta_yaml
+from conda_smithy.validate_schema import validate_json_schema
 
 NEEDED_FAMILIES = ["gpl", "bsd", "mit", "apache", "psf"]
 
@@ -87,7 +81,7 @@ def lintify_forge_yaml(recipe_dir=None) -> (list, list):
             )
         )
         if forge_yaml_filename:
-            with open(forge_yaml_filename[0], "r") as fh:
+            with open(forge_yaml_filename[0]) as fh:
                 forge_yaml = get_yaml().load(fh)
         else:
             forge_yaml = {}
@@ -144,9 +138,7 @@ def lintify_meta_yaml(
 
     for section in major_sections:
         if section not in expected_keys:
-            lints.append(
-                "The top level meta key {} is unexpected".format(section)
-            )
+            lints.append(f"The top level meta key {section} is unexpected")
             unexpected_sections.append(section)
 
     for section in unexpected_sections:
@@ -224,7 +216,7 @@ def lintify_meta_yaml(
         )
 
         if conda_build_config_filename:
-            with open(conda_build_config_filename, "r") as fh:
+            with open(conda_build_config_filename) as fh:
                 conda_build_config_keys = set(get_yaml().load(fh).keys())
         else:
             conda_build_config_keys = set()
@@ -234,7 +226,7 @@ def lintify_meta_yaml(
         )
 
         if forge_yaml_filename:
-            with open(forge_yaml_filename, "r") as fh:
+            with open(forge_yaml_filename) as fh:
                 forge_yaml = get_yaml().load(fh)
         else:
             forge_yaml = {}
@@ -343,7 +335,7 @@ def run_conda_forge_specific(meta, recipe_dir, lints, hints):
             ]
         ):
             try:
-                if cf.get_repo("{}-feedstock".format(name)):
+                if cf.get_repo(f"{name}-feedstock"):
                     existing_recipe_name = name
                     feedstock_exists = True
                     break
@@ -356,15 +348,12 @@ def run_conda_forge_specific(meta, recipe_dir, lints, hints):
             lints.append("Feedstock with the same name exists in conda-forge.")
         elif feedstock_exists:
             hints.append(
-                "Feedstock with the name {} exists in conda-forge. Is it the same as this package ({})?".format(
-                    existing_recipe_name,
-                    recipe_name,
-                )
+                f"Feedstock with the name {existing_recipe_name} exists in conda-forge. Is it the same as this package ({recipe_name})?"
             )
 
         bio = gh.get_user("bioconda").get_repo("bioconda-recipes")
         try:
-            bio.get_dir_contents("recipes/{}".format(recipe_name))
+            bio.get_dir_contents(f"recipes/{recipe_name}")
         except github.UnknownObjectException:
             pass
         else:
@@ -403,9 +392,7 @@ def run_conda_forge_specific(meta, recipe_dir, lints, hints):
         try:
             gh.get_user(maintainer)
         except github.UnknownObjectException:
-            lints.append(
-                'Recipe maintainer "{}" does not exist'.format(maintainer)
-            )
+            lints.append(f'Recipe maintainer "{maintainer}" does not exist')
 
     # 3: if the recipe dir is inside the example dir
     if recipe_dir is not None and "recipes/example/" in recipe_dir:
@@ -499,7 +486,7 @@ def run_conda_forge_specific(meta, recipe_dir, lints, hints):
             )
 
 
-def _format_validation_msg(error: "jsonschema.ValidationError"):
+def _format_validation_msg(error: jsonschema.ValidationError):
     """Use the data on the validation error to generate improved reporting.
 
     If available, get the help URL from the first level of the JSON path:
@@ -540,9 +527,9 @@ def main(recipe_dir, conda_forge=False, return_hints=False):
     recipe_dir = os.path.abspath(recipe_dir)
     recipe_meta = os.path.join(recipe_dir, "meta.yaml")
     if not os.path.exists(recipe_dir):
-        raise IOError("Feedstock has no recipe/meta.yaml.")
+        raise OSError("Feedstock has no recipe/meta.yaml.")
 
-    with io.open(recipe_meta, "rt") as fh:
+    with open(recipe_meta) as fh:
         content = render_meta_yaml("".join(fh))
         meta = get_yaml().load(content)
 
@@ -571,13 +558,13 @@ if __name__ == "__main__":
         all_pass = False
         messages.append(
             "\nFor **{}**:\n\n{}".format(
-                rel_path, "\n".join("* {}".format(lint) for lint in lints)
+                rel_path, "\n".join(f"* {lint}" for lint in lints)
             )
         )
     if hints:
         messages.append(
             "\nFor **{}**:\n\n{}".format(
-                rel_path, "\n".join("* {}".format(hint) for hint in hints)
+                rel_path, "\n".join(f"* {hint}" for hint in hints)
             )
         )
 

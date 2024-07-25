@@ -1,34 +1,29 @@
-import os
+import argparse
 import logging
+import os
 import subprocess
 import sys
-import time
-import argparse
-import io
 import tempfile
-
+import time
 from textwrap import dedent
-from typing import Literal, Optional, Union
+from typing import Optional, Union
 
 import conda  # noqa
 import conda_build.api
 from conda_build.metadata import MetaData
 from rattler_build_conda_compat.render import MetaData as RattlerMetaData
 from rattler_build_conda_compat.utils import has_recipe as has_rattler_recipe
-
-import conda_smithy.cirun_utils
-from conda_smithy.utils import get_feedstock_name_from_meta, merge_dict
 from ruamel.yaml import YAML
 
-from . import configure_feedstock
-from . import feedstock_io
-from . import lint_recipe as linter
-from . import __version__
-from .utils import CONDA_BUILD, RATTLER_BUILD
-
-
-if sys.version_info[0] == 2:
-    raise Exception("Conda-smithy does not support python 2!")
+import conda_smithy.cirun_utils
+from conda_smithy import __version__, configure_feedstock, feedstock_io
+from conda_smithy import lint_recipe as linter
+from conda_smithy.utils import (
+    CONDA_BUILD,
+    RATTLER_BUILD,
+    get_feedstock_name_from_meta,
+    merge_dict,
+)
 
 
 def default_feedstock_config_path(feedstock_directory):
@@ -52,7 +47,7 @@ def generate_feedstock_content(
             import sys
 
             raise type(e)(
-                str(e) + " while copying file %s" % source_recipe_dir
+                str(e) + f" while copying file {source_recipe_dir}"
             ).with_traceback(sys.exc_info()[2])
 
     forge_yml = default_feedstock_config_path(target_directory)
@@ -71,12 +66,12 @@ def generate_feedstock_content(
             os.path.join(target_recipe_dir, "conda-forge.yml")
         )
         try:
-            with open(forge_yml_recipe, "r") as fp:
+            with open(forge_yml_recipe) as fp:
                 _cfg = yaml.load(fp.read())
         except Exception:
             _cfg = {}
 
-        with open(forge_yml, "r") as fp:
+        with open(forge_yml) as fp:
             _cfg_feedstock = yaml.load(fp.read())
             merge_dict(_cfg, _cfg_feedstock)
         with feedstock_io.write_file(forge_yml) as fp:
@@ -105,7 +100,7 @@ class Init(Subcommand):
     def __init__(self, parser):
         # conda-smithy init /path/to/udunits-recipe ./
 
-        super(Init, self).__init__(
+        super().__init__(
             parser,
             "Create a feedstock git repository, which can contain "
             "one conda recipes.",
@@ -124,11 +119,9 @@ class Init(Subcommand):
     def __call__(self, args):
         # check some error conditions
         if args.recipe_directory and not os.path.isdir(args.recipe_directory):
-            raise IOError(
+            raise OSError(
                 "The source recipe directory should be the directory of the "
-                "conda-recipe you want to build a feedstock for. Got {}".format(
-                    args.recipe_directory
-                )
+                f"conda-recipe you want to build a feedstock for. Got {args.recipe_directory}"
             )
 
         # Get some information about the source recipe.
@@ -153,9 +146,7 @@ class Init(Subcommand):
         feedstock_directory = args.feedstock_directory.format(
             package=argparse.Namespace(name=meta.name())
         )
-        msg = "Initial feedstock commit with conda-smithy {}.".format(
-            __version__
-        )
+        msg = f"Initial feedstock commit with conda-smithy {__version__}."
 
         os.makedirs(feedstock_directory)
         subprocess.check_call(["git", "init"], cwd=feedstock_directory)
@@ -177,9 +168,7 @@ class RegisterGithub(Subcommand):
 
     def __init__(self, parser):
         #  conda-smithy register-github ./ --organization=conda-forge
-        super(RegisterGithub, self).__init__(
-            parser, "Register a repo for a feedstock at github."
-        )
+        super().__init__(parser, "Register a repo for a feedstock at github.")
         scp = self.subcommand_parser
         scp.add_argument(
             "--add-teams",
@@ -219,7 +208,7 @@ class RegisterGithub(Subcommand):
         )
 
     def __call__(self, args):
-        from . import github
+        from conda_smithy import github
 
         github.create_github_repo(args)
         print(
@@ -241,7 +230,7 @@ class RegisterCI(Subcommand):
 
     def __init__(self, parser):
         # conda-smithy register-ci ./
-        super(RegisterCI, self).__init__(
+        super().__init__(
             parser,
             "Register a feedstock at the CI services which do the builds.",
         )
@@ -268,18 +257,18 @@ class RegisterCI(Subcommand):
         )
         for ci in self.ci_names:
             scp.add_argument(
-                "--without-{}".format(ci.lower()),
+                f"--without-{ci.lower()}",
                 dest=ci.lower().replace("-", "_"),
                 action="store_const",
                 const=False,
-                help="If set, {} will be not registered".format(ci),
+                help=f"If set, {ci} will be not registered",
             )
             scp.add_argument(
-                "--with-{}".format(ci.lower()),
+                f"--with-{ci.lower()}",
                 dest=ci.lower().replace("-", "_"),
                 action="store_const",
                 const=True,
-                help="If set, {} will be registered".format(ci),
+                help=f"If set, {ci} will be registered",
             )
 
         scp.add_argument(
@@ -347,7 +336,7 @@ class RegisterCI(Subcommand):
             trim_skip=False,
         )[0][0]
         feedstock_name = get_feedstock_name_from_meta(meta)
-        repo = "{}-feedstock".format(feedstock_name)
+        repo = f"{feedstock_name}-feedstock"
 
         if args.feedstock_config is None:
             args.feedstock_config = default_feedstock_config_path(
@@ -358,7 +347,7 @@ class RegisterCI(Subcommand):
             if getattr(args, ci.lower().replace("-", "_")) is None:
                 setattr(args, ci.lower().replace("-", "_"), args.enable_ci)
 
-        print("CI Summary for {}/{} (can take ~30s):".format(owner, repo))
+        print(f"CI Summary for {owner}/{repo} (can take ~30s):")
         if args.remove and any(
             [
                 args.azure,
@@ -488,7 +477,7 @@ class AddAzureBuildId(Subcommand):
             AZURE_DEFAULT_PROJECT_NAME,
         )
 
-        super(AddAzureBuildId, self).__init__(
+        super().__init__(
             parser,
             dedent(
                 "Update the azure configuration stored in the config file."
@@ -539,7 +528,7 @@ class AddAzureBuildId(Subcommand):
                 args.feedstock_directory
             )
 
-        from .utils import update_conda_forge_config
+        from conda_smithy.utils import update_conda_forge_config
 
         with update_conda_forge_config(args.feedstock_config) as config:
             config.setdefault("azure", {})
@@ -554,7 +543,7 @@ class Regenerate(Subcommand):
     aliases = ["rerender"]
 
     def __init__(self, parser):
-        super(Regenerate, self).__init__(
+        super().__init__(
             parser,
             "Regenerate / update the CI support files of the " "feedstock.",
         )
@@ -626,7 +615,7 @@ class RecipeLint(Subcommand):
     aliases = ["lint"]
 
     def __init__(self, parser):
-        super(RecipeLint, self).__init__(
+        super().__init__(
             parser,
             "Lint a single conda recipe and its configuration.",
         )
@@ -676,7 +665,7 @@ class RecipeLint(Subcommand):
                     )
                 )
             else:
-                print("{} is in fine form".format(recipe))
+                print(f"{recipe} is in fine form")
         # Exit code 1 for some lint, 0 for no lint.
         sys.exit(int(not all_good))
 
@@ -705,7 +694,7 @@ class CISkeleton(Subcommand):
     subcommand = "ci-skeleton"
 
     def __init__(self, parser):
-        super(CISkeleton, self).__init__(
+        super().__init__(
             parser, "Generate skeleton for using CI outside of a feedstock"
         )
         scp = self.subcommand_parser
@@ -777,7 +766,7 @@ class GenerateFeedstockToken(Subcommand):
     )
 
     def __init__(self, parser):
-        super(GenerateFeedstockToken, self).__init__(
+        super().__init__(
             parser,
             "Generate a feedstock token.",
         )
@@ -804,8 +793,8 @@ class GenerateFeedstockToken(Subcommand):
 
     def __call__(self, args):
         from conda_smithy.feedstock_tokens import (
-            generate_and_write_feedstock_token,
             feedstock_token_local_path,
+            generate_and_write_feedstock_token,
         )
 
         owner = args.user or args.organization
@@ -814,9 +803,8 @@ class GenerateFeedstockToken(Subcommand):
         if not args.unique_token_per_provider:
             generate_and_write_feedstock_token(owner, repo)
             print(
-                "Your feedstock token has been generated at %s\n"
+                f"Your feedstock token has been generated at {feedstock_token_local_path(owner, repo)}\n"
                 "This token is stored in plaintext so be careful!"
-                % feedstock_token_local_path(owner, repo)
             )
         else:
             for ci in self.ci_names:
@@ -825,9 +813,8 @@ class GenerateFeedstockToken(Subcommand):
                     owner, repo, provider=provider
                 )
                 print(
-                    "Your feedstock token has been generated at %s\n"
-                    "This token is stored in plaintext so be careful!"
-                    % (
+                    "Your feedstock token has been generated at {}\n"
+                    "This token is stored in plaintext so be careful!".format(
                         feedstock_token_local_path(
                             owner, repo, provider=provider
                         )
@@ -847,7 +834,7 @@ class RegisterFeedstockToken(Subcommand):
 
     def __init__(self, parser):
         # conda-smithy register-feedstock-token ./
-        super(RegisterFeedstockToken, self).__init__(
+        super().__init__(
             parser,
             "Register the feedstock token w/ the CI services for builds and "
             "with the token registry. \n\n"
@@ -887,18 +874,18 @@ class RegisterFeedstockToken(Subcommand):
         )
         for ci in self.ci_names:
             scp.add_argument(
-                "--without-{}".format(ci.lower()),
+                f"--without-{ci.lower()}",
                 dest=ci.lower().replace("-", "_"),
                 action="store_const",
                 const=False,
-                help="If set, {} will be not registered".format(ci),
+                help=f"If set, {ci} will be not registered",
             )
             scp.add_argument(
-                "--with-{}".format(ci.lower()),
+                f"--with-{ci.lower()}",
                 dest=ci.lower().replace("-", "_"),
                 action="store_const",
                 const=True,
-                help="If set, {} will be registered".format(ci),
+                help=f"If set, {ci} will be registered",
             )
 
         scp.add_argument(
@@ -915,11 +902,11 @@ class RegisterFeedstockToken(Subcommand):
         )
 
     def __call__(self, args):
-        from conda_smithy.feedstock_tokens import (
-            register_feedstock_token_with_providers,
-            register_feedstock_token,
-        )
         from conda_smithy.ci_register import drone_default_endpoint
+        from conda_smithy.feedstock_tokens import (
+            register_feedstock_token,
+            register_feedstock_token_with_providers,
+        )
 
         drone_endpoints = args.drone_endpoints
         if drone_endpoints is None:
@@ -929,10 +916,7 @@ class RegisterFeedstockToken(Subcommand):
         repo = os.path.basename(os.path.abspath(args.feedstock_directory))
 
         if args.token_repo is None:
-            token_repo = (
-                "https://${GITHUB_TOKEN}@github.com/%s/feedstock-tokens"
-                % owner
-            )
+            token_repo = f"https://${{GITHUB_TOKEN}}@github.com/{owner}/feedstock-tokens"
         else:
             token_repo = args.token_repo
 
@@ -995,7 +979,7 @@ class UpdateAnacondaToken(Subcommand):
     )
 
     def __init__(self, parser):
-        super(UpdateAnacondaToken, self).__init__(
+        super().__init__(
             parser,
             "Update the anaconda/binstar token used for package uploads.\n\n"
             "All exceptions are swallowed and stdout/stderr from this function is"
@@ -1030,18 +1014,18 @@ class UpdateAnacondaToken(Subcommand):
         )
         for ci in self.ci_names:
             scp.add_argument(
-                "--without-{}".format(ci.lower()),
+                f"--without-{ci.lower()}",
                 dest=ci.lower().replace("-", "_"),
                 action="store_const",
                 const=False,
-                help="If set, the token on {} will be not changed.".format(ci),
+                help=f"If set, the token on {ci} will be not changed.",
             )
             scp.add_argument(
-                "--with-{}".format(ci.lower()),
+                f"--with-{ci.lower()}",
                 dest=ci.lower().replace("-", "_"),
                 action="store_const",
                 const=True,
-                help="If set, the token on {} will be changed".format(ci),
+                help=f"If set, the token on {ci} will be changed",
             )
 
         scp.add_argument(

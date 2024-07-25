@@ -7,9 +7,8 @@ from inspect import cleandoc
 from typing import Any, Dict, List, Literal, Optional, Union
 
 import yaml
-from pydantic import BaseModel, Field, create_model, ConfigDict
-
 from conda.base.constants import KNOWN_SUBDIRS
+from pydantic import BaseModel, ConfigDict, Field, create_model
 
 try:
     from enum import StrEnum
@@ -109,8 +108,10 @@ class AzureRunnerSettings(BaseModel):
         default=None, description="Swapfile size in GiB"
     )
 
-    timeoutInMinutes: Optional[int] = Field(
-        default=360, description="Timeout in minutes for the job"
+    timeout_in_minutes: Optional[int] = Field(
+        default=360,
+        description="Timeout in minutes for the job",
+        alias="timeoutInMinutes",
     )
 
     variables: Optional[Dict[str, str]] = Field(

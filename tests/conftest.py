@@ -1,29 +1,28 @@
 import collections
 import os
-from pathlib import Path
-from textwrap import dedent
 import typing
+from pathlib import Path
 
 import pytest
 import yaml
-
+from conda_build.utils import copy_into
 from jinja2 import FileSystemLoader
 from jinja2.sandbox import SandboxedEnvironment
-from conda_build.utils import copy_into
 
 from conda_smithy.configure_feedstock import (
-    conda_forge_content,
     _load_forge_config,
+    conda_forge_content,
 )
-
 
 RecipeConfigPair = collections.namedtuple(
     "RecipeConfigPair", ("recipe", "config")
 )
 
-ConfigYAML = typing.NamedTuple(
-    "ConfigYAML", [("workdir", Path), ("recipe_name", str), ("type", str)]
-)
+
+class ConfigYAML(typing.NamedTuple):
+    workdir: Path
+    recipe_name: str
+    type: str
 
 
 @pytest.fixture(scope="function")

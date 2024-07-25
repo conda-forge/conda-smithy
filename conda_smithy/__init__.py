@@ -1,4 +1,4 @@
 try:
-    from ._version import __version__
+    from conda_smithy._version import __version__
 except ImportError:
     __version__ = "0.0.0"

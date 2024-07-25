@@ -1,16 +1,16 @@
-from collections.abc import Sequence
 import copy
-from glob import glob
 import os
 import re
+from collections.abc import Sequence
+from glob import glob
 from typing import Mapping
 
 from conda_build.metadata import (
-    FIELDS as cbfields,
+    FIELDS as _CONDA_BUILD_FIELDS,
 )
 from rattler_build_conda_compat import loader as rattler_loader
 
-FIELDS = copy.deepcopy(cbfields)
+FIELDS = copy.deepcopy(_CONDA_BUILD_FIELDS)
 
 # Just in case 'extra' moves into conda_build
 if "extra" not in FIELDS.keys():
@@ -61,8 +61,8 @@ def get_meta_section(parent, name, lints):
     section = parent.get(name, {})
     if not isinstance(section, Mapping):
         lints.append(
-            'The "{}" section was expected to be a dictionary, but '
-            "got a {}.".format(name, type(section).__name__)
+            f'The "{name}" section was expected to be a dictionary, but '
+            f"got a {type(section).__name__}."
         )
         section = {}
     return section

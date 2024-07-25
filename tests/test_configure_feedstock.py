@@ -8,8 +8,8 @@ from pathlib import Path
 
 import pytest
 import yaml
-
 from conftest import ConfigYAML
+
 from conda_smithy import configure_feedstock
 
 
@@ -505,7 +505,7 @@ def test_circle_skipped(linux_skipped_recipe, jinja_env):
 
 
 def test_render_with_all_skipped_generates_readme(skipped_recipe, jinja_env):
-    configure_feedstock.render_README(
+    configure_feedstock.render_readme(
         jinja_env=jinja_env,
         forge_config=skipped_recipe.config,
         forge_dir=skipped_recipe.recipe,
@@ -537,7 +537,7 @@ def test_render_windows_with_skipped_python(python_skipped_recipe, jinja_env):
 
 
 def test_readme_has_terminating_newline(noarch_recipe, jinja_env):
-    configure_feedstock.render_README(
+    configure_feedstock.render_readme(
         jinja_env=jinja_env,
         forge_config=noarch_recipe.config,
         forge_dir=noarch_recipe.recipe,
@@ -746,7 +746,7 @@ def test_migrator_compiler_version_recipe(
 
 
 def test_files_skip_render(render_skipped_recipe, jinja_env):
-    configure_feedstock.render_README(
+    configure_feedstock.render_readme(
         jinja_env=jinja_env,
         forge_config=render_skipped_recipe.config,
         forge_dir=render_skipped_recipe.recipe,
@@ -865,15 +865,14 @@ def test_noarch_platforms_bad_yaml(config_yaml: ConfigYAML, caplog):
 
 
 def test_forge_yml_alt_path(config_yaml: ConfigYAML):
-    load_forge_config = (
-        lambda forge_yml: configure_feedstock._load_forge_config(  # noqa
+    def load_forge_config(forge_yml):
+        return configure_feedstock._load_forge_config(
             config_yaml.workdir,
             exclusive_config_file=os.path.join(
                 config_yaml.workdir, "recipe", "default_config.yaml"
             ),
             forge_yml=forge_yml,
         )
-    )
 
     forge_yml = os.path.join(config_yaml.workdir, "conda-forge.yml")
     forge_yml_alt = os.path.join(
