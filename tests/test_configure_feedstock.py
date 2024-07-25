@@ -865,15 +865,14 @@ def test_noarch_platforms_bad_yaml(config_yaml: ConfigYAML, caplog):
 
 
 def test_forge_yml_alt_path(config_yaml: ConfigYAML):
-    load_forge_config = (
-        lambda forge_yml: configure_feedstock._load_forge_config(  # noqa
+    def load_forge_config(forge_yml):
+        return configure_feedstock._load_forge_config(
             config_yaml.workdir,
             exclusive_config_file=os.path.join(
                 config_yaml.workdir, "recipe", "default_config.yaml"
             ),
             forge_yml=forge_yml,
         )
-    )
 
     forge_yml = os.path.join(config_yaml.workdir, "conda-forge.yml")
     forge_yml_alt = os.path.join(

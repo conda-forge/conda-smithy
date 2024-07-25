@@ -16,13 +16,13 @@ from contextlib import redirect_stderr, redirect_stdout
 import requests
 from github import Github
 
-from .utils import update_conda_forge_config
+from conda_smithy.utils import update_conda_forge_config
 
 
 def _get_anaconda_token():
     """use this helper to enable easier patching for tests"""
     try:
-        from .ci_register import anaconda_token
+        from conda_smithy.ci_register import anaconda_token
 
         return anaconda_token
     except ImportError:
@@ -58,7 +58,7 @@ def rotate_anaconda_token(
     # note that these imports cover all providers
     from .ci_register import travis_endpoint  # noqa
     from .azure_ci_utils import default_config  # noqa
-    from .github import gh_token
+    from conda_smithy.github import gh_token
 
     anaconda_token = _get_anaconda_token()
 
@@ -89,9 +89,9 @@ def rotate_anaconda_token(
                             raise e
                         else:
                             err_msg = (
-                                "Failed to rotate token for %s/%s"
+                                f"Failed to rotate token for {user}/{project}"
                                 " on circle!"
-                            ) % (user, project)
+                            )
                             failed = True
                             raise RuntimeError(err_msg)
 
@@ -110,9 +110,9 @@ def rotate_anaconda_token(
                                 raise e
                             else:
                                 err_msg = (
-                                    "Failed to rotate token for %s/%s"
-                                    " on drone endpoint %s!"
-                                ) % (user, project, drone_endpoint)
+                                    f"Failed to rotate token for {user}/{project}"
+                                    f" on drone endpoint {drone_endpoint}!"
+                                )
                                 failed = True
                                 raise RuntimeError(err_msg)
 
@@ -130,9 +130,9 @@ def rotate_anaconda_token(
                             raise e
                         else:
                             err_msg = (
-                                "Failed to rotate token for %s/%s"
+                                f"Failed to rotate token for {user}/{project}"
                                 " on travis!"
-                            ) % (user, project)
+                            )
                             failed = True
                             raise RuntimeError(err_msg)
 
@@ -146,8 +146,9 @@ def rotate_anaconda_token(
                             raise e
                         else:
                             err_msg = (
-                                "Failed to rotate token for %s/%s" " on azure!"
-                            ) % (user, project)
+                                f"Failed to rotate token for {user}/{project}"
+                                " on azure!"
+                            )
                             failed = True
                             raise RuntimeError(err_msg)
 
@@ -161,9 +162,9 @@ def rotate_anaconda_token(
                             raise e
                         else:
                             err_msg = (
-                                "Failed to rotate token for %s/%s"
+                                f"Failed to rotate token for {user}/{project}"
                                 " on appveyor!"
-                            ) % (user, project)
+                            )
                             failed = True
                             raise RuntimeError(err_msg)
 
@@ -177,9 +178,9 @@ def rotate_anaconda_token(
                             raise e
                         else:
                             err_msg = (
-                                "Failed to rotate token for %s/%s"
+                                f"Failed to rotate token for {user}/{project}"
                                 " on github actions!"
-                            ) % (user, project)
+                            )
                             failed = True
                             raise RuntimeError(err_msg)
 
@@ -193,17 +194,14 @@ def rotate_anaconda_token(
             raise RuntimeError(err_msg)
         else:
             raise RuntimeError(
-                (
-                    "Rotating the feedstock token in providers for %s/%s failed!"
-                    " Try the command locally with DEBUG_ANACONDA_TOKENS"
-                    " defined in the environment to investigate!"
-                )
-                % (user, project)
+                f"Rotating the feedstock token in providers for {user}/{project} failed!"
+                " Try the command locally with DEBUG_ANACONDA_TOKENS"
+                " defined in the environment to investigate!"
             )
 
 
 def rotate_token_in_circle(user, project, binstar_token, token_name):
-    from .ci_register import circle_token
+    from conda_smithy.ci_register import circle_token
 
     url_template = (
         "https://circleci.com/api/v1.1/project/github/{user}/{project}/envvar{extra}?"
@@ -229,7 +227,7 @@ def rotate_token_in_circle(user, project, binstar_token, token_name):
                 token=circle_token,
                 user=user,
                 project=project,
-                extra="/%s" % token_name,
+                extra=f"/{token_name}",
             )
         )
         if r.status_code != 200:
@@ -249,7 +247,7 @@ def rotate_token_in_circle(user, project, binstar_token, token_name):
 def rotate_token_in_drone(
     user, project, binstar_token, token_name, drone_endpoint
 ):
-    from .ci_register import drone_session
+    from conda_smithy.ci_register import drone_session
 
     session = drone_session(drone_endpoint)
 
@@ -283,7 +281,7 @@ def rotate_token_in_travis(
     user, project, feedstock_config_path, binstar_token, token_name
 ):
     """update the binstar token in travis."""
-    from .ci_register import (
+    from conda_smithy.ci_register import (
         travis_endpoint,
         travis_get_repo_info,
         travis_headers,
@@ -357,8 +355,11 @@ def rotate_token_in_travis(
 def rotate_token_in_azure(user, project, binstar_token, token_name):
     from vsts.build.v4_1.models import BuildDefinitionVariable
 
-    from .azure_ci_utils import build_client, get_default_build_definition
-    from .azure_ci_utils import default_config as config
+    from conda_smithy.azure_ci_utils import (
+        build_client,
+        get_default_build_definition,
+    )
+    from conda_smithy.azure_ci_utils import default_config as config
 
     bclient = build_client()
 
@@ -370,8 +371,7 @@ def rotate_token_in_azure(user, project, binstar_token, token_name):
         ed = existing_definitions[0]
     else:
         raise RuntimeError(
-            "Cannot add %s to a repo that is not already registerd on azure CI!"
-            % token_name
+            f"Cannot add {token_name} to a repo that is not already registerd on azure CI!"
         )
 
     ed = bclient.get_definition(ed.id, project=config.project_name)
@@ -404,7 +404,7 @@ def rotate_token_in_azure(user, project, binstar_token, token_name):
 
 
 def rotate_token_in_appveyor(feedstock_config_path, binstar_token, token_name):
-    from .ci_register import appveyor_token
+    from conda_smithy.ci_register import appveyor_token
 
     headers = {"Authorization": f"Bearer {appveyor_token}"}
     url = "https://ci.appveyor.com/api/account/encrypt"

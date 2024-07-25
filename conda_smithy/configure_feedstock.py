@@ -49,6 +49,7 @@ from jinja2.sandbox import SandboxedEnvironment
 from rattler_build_conda_compat.loader import parse_recipe_config_file
 from rattler_build_conda_compat.render import render as rattler_render
 
+from conda_smithy import __version__
 from conda_smithy.feedstock_io import (
     copy_file,
     remove_file,
@@ -57,6 +58,7 @@ from conda_smithy.feedstock_io import (
     write_file,
 )
 from conda_smithy.utils import (
+    RATTLER_BUILD,
     HashableDict,
     get_feedstock_about_from_meta,
     get_feedstock_name_from_meta,
@@ -65,9 +67,6 @@ from conda_smithy.validate_schema import (
     CONDA_FORGE_YAML_DEFAULTS_FILE,
     validate_json_schema,
 )
-
-from . import __version__
-from .utils import RATTLER_BUILD
 
 conda_forge_content = os.path.abspath(os.path.dirname(__file__))
 
@@ -831,7 +830,7 @@ def migrate_combined_spec(combined_spec, forge_dir, config, forge_config):
         migrations = set_migration_fns(forge_dir, forge_config)
     migrations = forge_config["migration_fns"]
 
-    from .variant_algebra import parse_variant, variant_add
+    from conda_smithy.variant_algebra import parse_variant, variant_add
 
     migration_variants = [
         (fn, parse_variant(open(fn).read(), config=config))
@@ -1050,8 +1049,7 @@ def _render_ci_provider(
                 raise RuntimeError(
                     "Travis CI can only be used for 'linux_aarch64', "
                     "'linux_ppc64le' or 'linux_s390x' native builds"
-                    ", not '%s_%s', to avoid using open-source build minutes!"
-                    % (platform, arch)
+                    f", not '{platform}_{arch}', to avoid using open-source build minutes!"
                 )
 
         # AFAIK there is no way to get conda build to ignore the CBC yaml
@@ -1508,8 +1506,7 @@ def _render_template_exe_files(
                     import difflib
 
                     logger.debug(
-                        "diff:\n%s"
-                        % (
+                        "diff:\n{}".format(
                             "\n".join(
                                 difflib.unified_diff(
                                     old_file_contents.splitlines(),
@@ -2475,7 +2472,7 @@ def get_cfp_file_path(temporary_directory):
     else:
         raise RuntimeError(
             "Could not determine proper conda package extension for "
-            "pinning package '%s'!" % pkg.url
+            f"pinning package '{pkg.url}'!"
         )
     dest = os.path.join(
         temporary_directory, f"conda-forge-pinning-{ pkg.version }{ext}"

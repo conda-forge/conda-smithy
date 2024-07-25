@@ -33,9 +33,7 @@ def set_exe_file(filename, set_exe=True):
     repo = get_repo(filename)
     if repo:
         mode = "+x" if set_exe else "-x"
-        repo.git.execute(
-            ["git", "update-index", "--chmod=%s" % mode, filename]
-        )
+        repo.git.execute(["git", "update-index", f"--chmod={mode}", filename])
 
     mode = os.stat(filename).st_mode
     if set_exe:

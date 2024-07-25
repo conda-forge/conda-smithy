@@ -18,7 +18,10 @@ from vsts.task_agent.v4_0.models import TaskAgentQueue
 from vsts.task_agent.v4_0.task_agent_client import TaskAgentClient
 from vsts.vss_connection import VssConnection
 
-from .azure_defaults import AZURE_DEFAULT_ORG, AZURE_DEFAULT_PROJECT_NAME
+from conda_smithy.azure_defaults import (
+    AZURE_DEFAULT_ORG,
+    AZURE_DEFAULT_PROJECT_NAME,
+)
 
 
 class AzureConfig:

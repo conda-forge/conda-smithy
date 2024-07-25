@@ -82,9 +82,9 @@ def test_init_with_custom_config(py_recipe):
     data = yaml.safe_load(
         open(os.path.join(destination, "conda-forge.yml")).read()
     )
-    assert data.get("bot") != None
-    assert data["bot"]["automerge"] == True
-    assert data["bot"]["run_deps_from_wheel"] == True
+    assert data.get("bot") is not None
+    assert data["bot"]["automerge"] is True
+    assert data["bot"]["run_deps_from_wheel"] is True
 
 
 def test_init_multiple_output_matrix(testing_workdir):

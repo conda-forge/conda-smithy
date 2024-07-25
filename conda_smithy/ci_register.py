@@ -5,8 +5,8 @@ import time
 
 import requests
 
-from . import github
-from .utils import update_conda_forge_config
+from conda_smithy import github
+from conda_smithy.utils import update_conda_forge_config
 
 # https://circleci.com/docs/api#add-environment-variable
 
@@ -69,16 +69,14 @@ class LiveServerSession(requests.Session):
     """Utility class to avoid typing out urls all the time"""
 
     def __init__(self, prefix_url=None, *args, **kwargs):
-        super(LiveServerSession, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.prefix_url = prefix_url
 
     def request(self, method, url, *args, **kwargs):
         from urllib.parse import urljoin
 
         url = urljoin(self.prefix_url, url)
-        return super(LiveServerSession, self).request(
-            method, url, *args, **kwargs
-        )
+        return super().request(method, url, *args, **kwargs)
 
 
 def travis_headers():
@@ -228,7 +226,7 @@ def add_project_to_circle(user, project):
 
 
 def add_project_to_azure(user, project):
-    from . import azure_ci_utils
+    from conda_smithy import azure_ci_utils
 
     if azure_ci_utils.repo_registered(user, project):
         print(f" * {user}/{project} already enabled on azure pipelines")
@@ -313,7 +311,7 @@ def travis_wait_until_synced(ignore=False):
         content = response.json()
         print(".", end="")
         sys.stdout.flush()
-        if "is_syncing" in content and content["is_syncing"] == False:
+        if "is_syncing" in content and content["is_syncing"] is False:
             break
         time.sleep(6)
     else:

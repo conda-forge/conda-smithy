@@ -7,8 +7,8 @@ import git
 from git import GitCommandError, Repo
 from github import Github
 
-from . import github as smithy_github
-from .utils import get_yaml, render_meta_yaml
+from conda_smithy import github as smithy_github
+from conda_smithy.utils import get_yaml, render_meta_yaml
 
 
 def feedstock_repos(gh_organization="conda-forge"):

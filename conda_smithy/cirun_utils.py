@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Optional
 
 from cirun import Cirun
 
-from .github import Github, gh_token
+from conda_smithy.github import Github, gh_token
 
 
 @lru_cache

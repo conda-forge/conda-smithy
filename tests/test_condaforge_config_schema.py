@@ -76,4 +76,4 @@ def test_extra_fields():
         },
     }
     with pytest.raises(ValidationError):
-        config = ConfigModel(**config_dict)
+        ConfigModel(**config_dict)

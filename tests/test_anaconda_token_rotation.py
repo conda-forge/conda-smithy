@@ -225,4 +225,4 @@ def test_rotate_anaconda_token_provider_error(
             user, project, None, drone_endpoints=[drone_default_endpoint]
         )
 
-    assert "on %s" % provider.replace("_", " ") in str(e.value)
+    assert "on {}".format(provider.replace("_", " ")) in str(e.value)

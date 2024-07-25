@@ -38,7 +38,7 @@ def lint_section_order(
 
     if major_sections != section_order_sorted:
         section_order_sorted_str = map(
-            lambda s: "'%s'" % s, section_order_sorted
+            lambda s: f"'{s}'", section_order_sorted
         )
         section_order_sorted_str = ", ".join(section_order_sorted_str)
         section_order_sorted_str = "[" + section_order_sorted_str + "]"
@@ -460,14 +460,14 @@ def lint_jinja_var_references(meta_fname, hints):
                 for m in JINJA_VAR_PAT.finditer(line):
                     if m.group(1) is not None:
                         var = m.group(1)
-                        if var != " %s " % var.strip():
+                        if var != f" {var.strip()} ":
                             bad_vars.append(m.group(1).strip())
                             bad_lines.append(i + 1)
         if bad_vars:
             hints.append(
                 "Jinja2 variable references are suggested to "
                 "take a ``{{<one space><variable name><one space>}}``"
-                " form. See lines %s." % (bad_lines,)
+                f" form. See lines {bad_lines}."
             )
 
 

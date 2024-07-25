@@ -93,7 +93,6 @@ def test_osx_lint(where):
 
 
 def test_stdlib_lints_multi_output():
-    expected_message = "You're setting a requirement on sysroot"
 
     with tmp_directory() as recipe_dir:
         with open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
@@ -909,7 +908,7 @@ class Test_linter(unittest.TestCase):
                            version: {{ version }}
                          """
                 )
-            lints = linter.main(recipe_dir)
+            linter.main(recipe_dir)
 
     def test_jinja_load_file_regex(self):
         # Test that we can use load_file_regex in a recipe. We don't care about
@@ -933,7 +932,7 @@ class Test_linter(unittest.TestCase):
                           version: {{ version }}
                         """
                 )
-            lints = linter.main(recipe_dir)
+            linter.main(recipe_dir)
 
     def test_jinja_load_file_data(self):
         # Test that we can use load_file_data in a recipe. We don't care about
@@ -950,7 +949,7 @@ class Test_linter(unittest.TestCase):
                           version: {{ version }}
                         """
                 )
-            lints = linter.main(recipe_dir)
+            linter.main(recipe_dir)
 
     def test_jinja_load_setup_py_data(self):
         # Test that we can use load_setup_py_data in a recipe. We don't care about
@@ -967,7 +966,7 @@ class Test_linter(unittest.TestCase):
                           version: {{ version }}
                         """
                 )
-            lints = linter.main(recipe_dir)
+            linter.main(recipe_dir)
 
     def test_jinja_load_str_data(self):
         # Test that we can use load_str_data in a recipe. We don't care about
@@ -984,7 +983,7 @@ class Test_linter(unittest.TestCase):
                           version: {{ version }}
                         """
                 )
-            lints = linter.main(recipe_dir)
+            linter.main(recipe_dir)
 
     def test_jinja_os_sep(self):
         # Test that we can use os.sep in a recipe.
@@ -999,7 +998,7 @@ class Test_linter(unittest.TestCase):
                           script: {{ os.sep }}
                          """
                 )
-            lints = linter.main(recipe_dir)
+            linter.main(recipe_dir)
 
     def test_target_platform(self):
         # Test that we can use target_platform in a recipe. We don't care about
@@ -1013,7 +1012,7 @@ class Test_linter(unittest.TestCase):
                            version: 1.0
                          """
                 )
-            lints = linter.main(recipe_dir)
+            linter.main(recipe_dir)
 
     def test_missing_build_number(self):
         expected_message = "The recipe must have a `build/number` section."
