@@ -321,7 +321,7 @@ In order to produce a uniquely identifiable distribution:
 Feedstock Maintainers
 =====================
 {# this comment ensures a leading newline #}
-{%- for (maintainer, url) in maintainers|zip(maintainer_urls) %}
+{%- for (maintainer, url) in maintainer_urls %}
 * [@{{maintainer}}]({{maintainer_url}})
 {%- endfor %}
 {# this comment ensures a trailing newline #}
