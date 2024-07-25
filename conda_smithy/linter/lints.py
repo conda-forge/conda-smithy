@@ -328,6 +328,10 @@ def lint_noarch_and_runtime_dependencies(
 
 
 def lint_package_version(package_section, lints):
+    version = package_section.get("version")
+    if not version:
+        lints.append("Package version is missing.")
+        return
     if package_section.get("version") is not None:
         ver = str(package_section.get("version"))
         try:
