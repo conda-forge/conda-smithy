@@ -54,13 +54,17 @@ def lint_section_order(
         )
 
 
-def lint_about_contents(about_section, lints):
-    for about_item in ["home", "license", "summary"]:
+def lint_about_contents(about_section, lints, is_rattler_build: bool = False):
+    expected_section = [
+        "homepage" if is_rattler_build else "home",
+        "license",
+        "summary",
+    ]
+    for about_item in expected_section:
         # if the section doesn't exist, or is just empty, lint it.
         if not about_section.get(about_item, ""):
             lints.append(
-                "The {} item is expected in the about section."
-                "".format(about_item)
+                f"The {about_item} item is expected in the about section."
             )
 
 
