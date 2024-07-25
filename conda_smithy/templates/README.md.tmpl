@@ -320,8 +320,13 @@ In order to produce a uniquely identifiable distribution:
 
 Feedstock Maintainers
 =====================
-
-{% for maintainer in maintainers -%}
+{# this comment ensures a leading newline #}
+{%- for maintainer in maintainers %}
+  {%- if "/" in maintainer %}
+    {%- set team_parts = maintainer.split("/") %}
+* [@{{maintainer}}](https://github.com/orgs/{{team_parts[0]}}/teams/{{team_parts[1]}})
+  {%- else %}
 * [@{{maintainer}}](https://github.com/{{maintainer}}/)
-{% endfor %}
+  {%- endif %}
+{%- endfor %}
 {# this comment ensures a trailing newline #}
