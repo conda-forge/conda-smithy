@@ -392,6 +392,20 @@ class Test_linter(unittest.TestCase):
         expected_message = "The home item is expected in the about section."
         self.assertIn(expected_message, lints)
 
+    def test_missing_about_homepage_empty(self):
+        meta = {"about": {"homepage": "", "summary": "", "license": ""}}
+        lints, hints = linter.lintify_meta_yaml(meta, is_rattler_build=True)
+        expected_message = (
+            "The homepage item is expected in the about section."
+        )
+        self.assertIn(expected_message, lints)
+
+        expected_message = "The license item is expected in the about section."
+        self.assertIn(expected_message, lints)
+
+        expected_message = "The summary item is expected in the about section."
+        self.assertIn(expected_message, lints)
+
     def test_missing_about_home_empty(self):
         meta = {"about": {"home": "", "summary": "", "license": ""}}
         lints, hints = linter.lintify_meta_yaml(meta)

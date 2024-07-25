@@ -155,10 +155,10 @@ def lintify_meta_yaml(
         major_sections.remove(section)
 
     # 1: Top level meta.yaml keys should have a specific order.
-    lint_section_order(major_sections, lints)
+    lint_section_order(major_sections, lints, is_rattler_build)
 
     # 2: The about section should have a home, license and summary.
-    lint_about_contents(about_section, lints)
+    lint_about_contents(about_section, lints, is_rattler_build)
 
     # 3a: The recipe should have some maintainers.
     # 3b: Maintainers should be a list

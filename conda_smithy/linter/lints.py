@@ -5,10 +5,9 @@ import fnmatch
 import io
 import itertools
 import os
-import sys
 
 
-from typing import Optional
+from typing import Optional, List
 
 from ruamel.yaml import CommentedSeq
 
@@ -26,15 +25,23 @@ from conda_smithy.linter.utils import (
     selector_lines,
 )
 from conda_smithy.utils import get_yaml
-
+from conda_smithy.linter import rattler_linter
 
 from conda.models.version import VersionOrder
 
 
-def lint_section_order(major_sections, lints):
-    section_order_sorted = sorted(
-        major_sections, key=EXPECTED_SECTION_ORDER.index
-    )
+def lint_section_order(
+    major_sections: List[str], lints: List[str], is_rattler_build: bool = False
+):
+    if not is_rattler_build:
+        order = EXPECTED_SECTION_ORDER
+    else:
+        if "outputs" in major_sections:
+            order = rattler_linter.EXPECTED_MULTIPLE_OUTPUT_SECTION_ORDER
+        else:
+            order = rattler_linter.EXPECTED_SINGLE_OUTPUT_SECTION_ORDER
+    section_order_sorted = sorted(major_sections, key=order.index)
+
     if major_sections != section_order_sorted:
         section_order_sorted_str = map(
             lambda s: "'%s'" % s, section_order_sorted
@@ -47,13 +54,17 @@ def lint_section_order(major_sections, lints):
         )
 
 
-def lint_about_contents(about_section, lints):
-    for about_item in ["home", "license", "summary"]:
+def lint_about_contents(about_section, lints, is_rattler_build: bool = False):
+    expected_section = [
+        "homepage" if is_rattler_build else "home",
+        "license",
+        "summary",
+    ]
+    for about_item in expected_section:
         # if the section doesn't exist, or is just empty, lint it.
         if not about_section.get(about_item, ""):
             lints.append(
-                "The {} item is expected in the about section."
-                "".format(about_item)
+                f"The {about_item} item is expected in the about section."
             )
 
 
