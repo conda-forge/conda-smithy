@@ -295,9 +295,11 @@ def lintify_meta_yaml(
     hint_pip_usage(build_section, hints)
 
     # 2: suggest python noarch (skip on feedstocks)
+    raw_requirements_section = meta.get("requirements", {})
     hint_suggest_noarch(
         noarch_value,
         build_requirements,
+        raw_requirements_section,
         is_staged_recipes,
         conda_forge,
         recipe_fname,
