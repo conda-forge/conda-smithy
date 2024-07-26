@@ -77,8 +77,19 @@ def lint_recipe_maintainers(extra_section, lints):
 
 
 def lint_recipe_have_tests(
-    recipe_dir, test_section, outputs_section, lints, hints
+    recipe_dir,
+    test_section,
+    outputs_section,
+    lints,
+    hints,
+    is_rattler_build: bool = False,
 ):
+    if is_rattler_build:
+        rattler_linter.lint_recipe_tests(
+            recipe_dir, test_section, outputs_section, lints, hints
+        )
+        return
+
     if not any(key in TEST_KEYS for key in test_section):
         a_test_file_exists = recipe_dir is not None and any(
             os.path.exists(os.path.join(recipe_dir, test_file))

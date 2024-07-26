@@ -156,7 +156,12 @@ def lintify_meta_yaml(
 
     # 4: The recipe should have some tests.
     lint_recipe_have_tests(
-        recipe_dir, test_section, outputs_section, lints, hints
+        recipe_dir,
+        test_section,
+        outputs_section,
+        lints,
+        hints,
+        is_rattler_build,
     )
 
     # 5: License cannot be 'unknown.'

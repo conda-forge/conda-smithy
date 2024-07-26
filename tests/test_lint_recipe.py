@@ -480,6 +480,44 @@ class TestLinter(unittest.TestCase):
             "It looks like the 'foobar' output doesn't have any tests.", hints
         )
 
+    def test_rattler_test_section(self):
+        expected_message = "The recipe must have some tests."
+
+        lints, hints = linter.lintify_meta_yaml({}, is_rattler_build=True)
+        self.assertIn(expected_message, lints)
+
+        lints, hints = linter.lintify_meta_yaml(
+            {"tests": {"script": "sys"}}, is_rattler_build=True
+        )
+        self.assertNotIn(expected_message, lints)
+
+        lints, hints = linter.lintify_meta_yaml(
+            {"outputs": [{"name": "foo"}]}, is_rattler_build=True
+        )
+        self.assertIn(expected_message, lints)
+
+        lints, hints = linter.lintify_meta_yaml(
+            {"outputs": [{"name": "foo", "tests": {"python": "sys"}}]},
+            is_rattler_build=True,
+        )
+        self.assertNotIn(expected_message, lints)
+
+        lints, hints = linter.lintify_meta_yaml(
+            {
+                "outputs": [
+                    {"name": "foo", "tests": {"script": "sys"}},
+                    {
+                        "name": "foobar",
+                    },
+                ]
+            },
+            is_rattler_build=True,
+        )
+        self.assertNotIn(expected_message, lints)
+        self.assertIn(
+            "It looks like the 'foobar' output doesn't have any tests.", hints
+        )
+
     def test_test_section_with_recipe(self):
         # If we have a run_test.py file, we shouldn't need to provide
         # other tests.
@@ -493,6 +531,24 @@ class TestLinter(unittest.TestCase):
             with open(os.path.join(recipe_dir, "run_test.py"), "w") as fh:
                 fh.write("# foo")
             lints, hints = linter.lintify_meta_yaml({}, recipe_dir)
+            self.assertNotIn(expected_message, lints)
+
+    def test_rattler_test_section_with_recipe(self):
+        # rattler-build support legacy run_test.py, so we need to test it
+
+        expected_message = "The recipe must have some tests."
+
+        with tmp_directory() as recipe_dir:
+            lints, hints = linter.lintify_meta_yaml(
+                {}, recipe_dir, is_rattler_build=True
+            )
+            self.assertIn(expected_message, lints)
+
+            with open(os.path.join(recipe_dir, "run_test.py"), "w") as fh:
+                fh.write("# foo")
+            lints, hints = linter.lintify_meta_yaml(
+                {}, recipe_dir, is_rattler_build=True
+            )
             self.assertNotIn(expected_message, lints)
 
     def test_jinja2_vars(self):
