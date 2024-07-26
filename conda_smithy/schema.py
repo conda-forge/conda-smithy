@@ -1277,4 +1277,4 @@ if __name__ == "__main__":
         f.write("\n")
 
     with CONDA_FORGE_YAML_DEFAULTS_FILE.open(mode="w+") as f:
-        f.write(yaml.dump(model.model_dump(), indent=2))
+        f.write(yaml.dump(model.model_dump(by_alias=True), indent=2))

@@ -3,6 +3,7 @@ import logging
 import os
 import re
 import shutil
+import tempfile
 import textwrap
 from pathlib import Path
 
@@ -11,6 +12,7 @@ import yaml
 from conftest import ConfigYAML
 
 from conda_smithy import configure_feedstock
+from conda_smithy.configure_feedstock import _read_forge_config
 
 
 def test_noarch_skips_appveyor(noarch_recipe, jinja_env):
@@ -2092,3 +2094,26 @@ def test_github_actions_pins():
     assert sorted(set(get_uses(github_actions_template))) == sorted(
         set(get_uses(dependabot_inventory))
     )
+
+
+def test_read_forge_config_default_values_aliases():
+    with tempfile.TemporaryDirectory() as str_tmpdir:
+        tmpdir = Path(str_tmpdir)
+
+        # create empty conda-forge.yml file
+        forge_yml_file = tmpdir / "conda-forge.yml"
+        forge_yml_file.touch()
+
+        config = _read_forge_config(tmpdir)
+
+        # if this raises KeyError, it means that the default values stored in data/conda-forge.yml do not respect the
+        # aliases defined in the schema, which will lead to defaults being parsed incorrectly.
+        assert isinstance(
+            config["azure"]["settings_linux"]["timeoutInMinutes"], int
+        )
+        assert isinstance(
+            config["azure"]["settings_osx"]["timeoutInMinutes"], int
+        )
+        assert isinstance(
+            config["azure"]["settings_win"]["timeoutInMinutes"], int
+        )
