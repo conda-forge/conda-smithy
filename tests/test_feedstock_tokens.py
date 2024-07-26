@@ -1,23 +1,22 @@
-import os
 import json
-from unittest import mock
+import os
 import time
+from unittest import mock
 
 import pytest
 import scrypt
 
+from conda_smithy.ci_register import drone_default_endpoint
 from conda_smithy.feedstock_tokens import (
-    generate_and_write_feedstock_token,
-    read_feedstock_token,
+    FeedstockTokenError,
     feedstock_token_exists,
+    feedstock_token_local_path,
+    generate_and_write_feedstock_token,
+    is_valid_feedstock_token,
+    read_feedstock_token,
     register_feedstock_token,
     register_feedstock_token_with_providers,
-    is_valid_feedstock_token,
-    FeedstockTokenError,
-    feedstock_token_local_path,
 )
-
-from conda_smithy.ci_register import drone_default_endpoint
 
 
 @pytest.mark.parametrize(
@@ -76,7 +75,7 @@ def test_feedstock_tokens_roundtrip(
         project,
         provider=ci,
     )
-    token_json_pth = os.path.join(tmpdir, "tokens", "%s.json" % project)
+    token_json_pth = os.path.join(tmpdir, "tokens", f"{project}.json")
     os.makedirs(os.path.join(tmpdir, "tokens"), exist_ok=True)
 
     try:
@@ -95,7 +94,7 @@ def test_feedstock_tokens_roundtrip(
         with open(token_json_pth, "w") as fp:
             fp.write(json.dumps(token_data))
 
-        with open(pth, "r") as fp:
+        with open(pth) as fp:
             feedstock_token = fp.read().strip()
 
         retval = is_valid_feedstock_token(
@@ -180,7 +179,7 @@ def test_is_valid_feedstock_token_badtoken(
     user = "conda-forge"
     feedstock_token = "akdjhfl"
 
-    token_pth = os.path.join(tmpdir, "tokens", "%s.json" % project)
+    token_pth = os.path.join(tmpdir, "tokens", f"{project}.json")
     os.makedirs(os.path.dirname(token_pth), exist_ok=True)
     with open(token_pth, "w") as fp:
         td = {"salt": b"adf".hex(), "hashed_token": b"fgh".hex()}
@@ -202,7 +201,7 @@ def test_generate_and_write_feedstock_token(ci):
     repo = "foo"
 
     if ci:
-        pth = os.path.expanduser("~/.conda-smithy/bar_foo_%s.token" % ci)
+        pth = os.path.expanduser(f"~/.conda-smithy/bar_foo_{ci}.token")
         opth = os.path.expanduser("~/.conda-smithy/bar_foo.token")
     else:
         pth = os.path.expanduser("~/.conda-smithy/bar_foo.token")
@@ -234,7 +233,7 @@ def test_read_feedstock_token(ci):
     user = "bar"
     repo = "foo"
     if ci:
-        pth = os.path.expanduser("~/.conda-smithy/bar_foo_%s.token" % ci)
+        pth = os.path.expanduser(f"~/.conda-smithy/bar_foo_{ci}.token")
     else:
         pth = os.path.expanduser("~/.conda-smithy/bar_foo.token")
 
@@ -327,7 +326,7 @@ def test_feedstock_token_exists(
     os.makedirs(os.path.join(tmpdir, "tokens"), exist_ok=True)
     if file_exists:
         with open(
-            os.path.join(tmpdir, "tokens", "%s.json" % project), "w"
+            os.path.join(tmpdir, "tokens", f"{project}.json"), "w"
         ) as fp:
             data = {"tokens": [{}]}
             if provider is not None:
@@ -366,7 +365,7 @@ def test_feedstock_token_raises(
     git_mock.Repo.clone_from.side_effect = ValueError("blarg")
     user = "foo"
     os.makedirs(os.path.join(tmpdir, "tokens"), exist_ok=True)
-    with open(os.path.join(tmpdir, "tokens", "%s.json" % project), "w") as fp:
+    with open(os.path.join(tmpdir, "tokens", f"{project}.json"), "w") as fp:
         fp.write("{}")
 
     with pytest.raises(FeedstockTokenError) as e:
@@ -415,7 +414,7 @@ def test_register_feedstock_token_works(
         project,
         provider=ci,
     )
-    token_json_pth = os.path.join(tmpdir, "tokens", "%s.json" % project)
+    token_json_pth = os.path.join(tmpdir, "tokens", f"{project}.json")
 
     try:
         generate_and_write_feedstock_token(user, project, provider=ci)
@@ -435,8 +434,9 @@ def test_register_feedstock_token_works(
     repo = git_mock.Repo.clone_from.return_value
     repo.index.add.assert_called_once_with(token_json_pth)
     repo.index.commit.assert_called_once_with(
-        "[ci skip] [skip ci] [cf admin skip] ***NO_CI*** added token for %s/%s on provider%s"
-        % (user, project, "" if ci is None else " " + ci)
+        "[ci skip] [skip ci] [cf admin skip] ***NO_CI*** added token for {}/{} on provider{}".format(
+            user, project, "" if ci is None else " " + ci
+        )
     )
     repo.remote.return_value.pull.assert_called_once_with(rebase=True)
     repo.remote.return_value.push.assert_called_once_with()
@@ -449,7 +449,7 @@ def test_register_feedstock_token_works(
     if ci is not None:
         data["provider"] = ci
 
-    with open(token_json_pth, "r") as fp:
+    with open(token_json_pth) as fp:
         assert json.load(fp) == {"tokens": [data]}
 
 
@@ -563,8 +563,9 @@ def test_register_feedstock_token_append(
     repo = git_mock.Repo.clone_from.return_value
     repo.index.add.assert_called_once_with(token_json_pth)
     repo.index.commit.assert_called_once_with(
-        "[ci skip] [skip ci] [cf admin skip] ***NO_CI*** added token for %s/%s on provider%s"
-        % (user, project, "" if ci is None else " " + ci)
+        "[ci skip] [skip ci] [cf admin skip] ***NO_CI*** added token for {}/{} on provider{}".format(
+            user, project, "" if ci is None else " " + ci
+        )
     )
     repo.remote.return_value.pull.assert_called_once_with(rebase=True)
     repo.remote.return_value.push.assert_called_once_with()
@@ -577,7 +578,7 @@ def test_register_feedstock_token_append(
     if ci is not None:
         data["provider"] = ci
 
-    with open(token_json_pth, "r") as fp:
+    with open(token_json_pth) as fp:
         assert json.load(fp) == {"tokens": [1, data]}
 
 
@@ -829,7 +830,7 @@ def test_register_feedstock_token_with_providers_error(
                 unique_token_per_provider=unique_token_per_provider,
             )
 
-        assert "on %s" % provider in str(e.value)
+        assert f"on {provider}" in str(e.value)
     finally:
         for _provider in providers:
             pth = feedstock_token_local_path(user, project, provider=_provider)
