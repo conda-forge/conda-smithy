@@ -1998,6 +1998,14 @@ def azure_build_id_from_public(forge_config):
     forge_config["azure"]["build_id"] = build_def["id"]
 
 
+def get_maintainer_url(user_or_team):
+    if "/" in user_or_team:
+        org, team_name = user_or_team.split("/")
+        return f"https://github.com/orgs/{org}/teams/{team_name}/"
+    else:
+        return f"https://github.com/{user_or_team}/"
+
+
 def render_readme(jinja_env, forge_config, forge_dir, render_info=None):
     if "README.md" in forge_config["skip_render"]:
         logger.info("README.md rendering is skipped")
@@ -2091,18 +2099,10 @@ def render_readme(jinja_env, forge_config, forge_dir, render_info=None):
             )
         )
     )
+
     forge_config["maintainer_urls"] = [
-        (
-            (
-                f"https://github.com/orgs/{split_name[0]}/teams/{split_name[1]}/"
-                if len(split_name) > 1
-                else f"https://github.com/{split_name[0]}/"
-            ),
-            "/".join(split_name),
-        )
-        for split_name in [
-            name.split("/") for name in forge_config["maintainers"]
-        ]
+        (name, get_maintainer_url(name))
+        for name in forge_config["maintainers"]
     ]
 
     forge_config["channel_targets"] = channel_targets
