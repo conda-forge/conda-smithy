@@ -348,7 +348,12 @@ def lintify_meta_yaml(
 
     # 5: stdlib-related lints
     lint_stdlib(
-        meta, requirements_section, conda_build_config_filename, lints, hints
+        meta,
+        requirements_section,
+        conda_build_config_filename,
+        lints,
+        hints,
+        is_rattler_build,
     )
 
     return lints, hints

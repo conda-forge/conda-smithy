@@ -8,6 +8,7 @@ import unittest
 import warnings
 from collections import OrderedDict
 from contextlib import contextmanager
+from pathlib import Path
 
 import github
 import pytest
@@ -49,6 +50,34 @@ def test_stdlib_lint(comp_lang):
             )
 
         lints, _ = linter.main(recipe_dir, return_hints=True)
+        assert any(lint.startswith(expected_message) for lint in lints)
+
+
+@pytest.mark.parametrize(
+    "comp_lang",
+    ["c", "cxx", "fortran", "rust", "m2w64_c", "m2w64_cxx", "m2w64_fortran"],
+)
+def test_rattler_stdlib_hint(comp_lang):
+    expected_message = "This recipe is using a compiler"
+
+    with tmp_directory() as recipe_dir:
+        Path(recipe_dir).joinpath("recipe.yaml").write_text(
+            f"""
+                package:
+                   name: foo
+                requirements:
+                  build:
+                    # since we're in an f-string: double up braces (2->4)
+                    - ${{{{ compiler('{comp_lang}') }}}}
+                """
+        )
+        Path(recipe_dir).joinpath("conda-forge.yml").write_text(
+            "conda_build_tool: rattler-build"
+        )
+
+        lints, _ = linter.main(
+            recipe_dir, feedstock_dir=recipe_dir, return_hints=True
+        )
         assert any(lint.startswith(expected_message) for lint in lints)
 
 

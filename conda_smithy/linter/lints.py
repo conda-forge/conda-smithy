@@ -7,6 +7,7 @@ from typing import Any, Dict, List, Literal, Optional
 from conda.exceptions import InvalidVersionSpec
 from conda.models.version import VersionOrder
 from rattler_build_conda_compat.jinja.jinja import render_recipe_with_context
+from rattler_build_conda_compat.loader import parse_recipe_config_file
 from ruamel.yaml import CommentedSeq
 
 from conda_smithy.linter import rattler_linter
@@ -717,56 +718,88 @@ def lint_go_licenses_are_bundled(
 
 
 def lint_stdlib(
-    meta, requirements_section, conda_build_config_filename, lints, hints
+    meta,
+    recipe_dir,
+    requirements_section,
+    conda_build_config_filename,
+    lints,
+    hints,
+    is_rattler_build: bool = False,
 ):
     global_build_reqs = requirements_section.get("build") or []
     global_run_reqs = requirements_section.get("run") or []
     global_constraints = requirements_section.get("run_constrained") or []
+    if not is_rattler_build:
+        global_constraints = requirements_section.get("run_constrained") or []
+
+    build_lint = (
+        '`{{ stdlib("c") }}`'
+        if not is_rattler_build
+        else '`${{ stdlib("c") }}`'
+    )
 
     stdlib_lint = (
         "This recipe is using a compiler, which now requires adding a build "
-        'dependence on `{{ stdlib("c") }}` as well. Note that this rule applies to '
+        f"dependence on {build_lint} as well. Note that this rule applies to "
         "each output of the recipe using a compiler. For further details, please "
         "see https://github.com/conda-forge/conda-forge.github.io/issues/2102."
     )
-    pat_compiler_stub = re.compile(
-        "(m2w64_)?(c|cxx|fortran|rust)_compiler_stub"
-    )
-    outputs = get_section(meta, "outputs", lints)
+    if not is_rattler_build:
+        pat_compiler_stub = re.compile(
+            "(m2w64_)?(c|cxx|fortran|rust)_compiler_stub"
+        )
+    else:
+        pat_compiler_stub = re.compile(r"^\${{ compiler\(")
+
+    outputs = get_section(meta, "outputs", lints, is_rattler_build)
     output_reqs = [x.get("requirements", {}) for x in outputs]
 
     # deal with cb2 recipes (no build/host/run distinction)
-    output_reqs = [
-        {"host": x, "run": x} if isinstance(x, CommentedSeq) else x
-        for x in output_reqs
-    ]
+    if not is_rattler_build:
+        output_reqs = [
+            {"host": x, "run": x} if isinstance(x, CommentedSeq) else x
+            for x in output_reqs
+        ]
 
     # collect output requirements
     output_build_reqs = [x.get("build", []) or [] for x in output_reqs]
     output_run_reqs = [x.get("run", []) or [] for x in output_reqs]
-    output_contraints = [
-        x.get("run_constrained", []) or [] for x in output_reqs
-    ]
+    if not is_rattler_build:
+        output_contraints = [
+            x.get("run_constrained", []) or [] for x in output_reqs
+        ]
 
     # aggregate as necessary
     all_build_reqs = [global_build_reqs] + output_build_reqs
     all_build_reqs_flat = global_build_reqs
     all_run_reqs_flat = global_run_reqs
-    all_contraints_flat = global_constraints
+    if not is_rattler_build:
+        all_contraints_flat = global_constraints
     [all_build_reqs_flat := all_build_reqs_flat + x for x in output_build_reqs]
     [all_run_reqs_flat := all_run_reqs_flat + x for x in output_run_reqs]
-    [all_contraints_flat := all_contraints_flat + x for x in output_contraints]
+    if not is_rattler_build:
+        [
+            all_contraints_flat := all_contraints_flat + x
+            for x in output_contraints
+        ]
 
     # this check needs to be done per output --> use separate (unflattened) requirements
     for build_reqs in all_build_reqs:
         has_compiler = any(pat_compiler_stub.match(rq) for rq in build_reqs)
-        if has_compiler and "c_stdlib_stub" not in build_reqs:
+        stdlib_stub = "c_stdlib_stub" if not is_rattler_build else "${{ stdlib"
+        if has_compiler and stdlib_stub not in build_reqs:
             if stdlib_lint not in lints:
                 lints.append(stdlib_lint)
 
+    sysroot_lint_build = (
+        '`{{ stdlib("c") }}`'
+        if not is_rattler_build
+        else '`${{ stdlib("c") }}`'
+    )
+
     sysroot_lint = (
         "You're setting a requirement on sysroot_linux-<arch> directly; this should "
-        'now be done by adding a build dependence on `{{ stdlib("c") }}`, and '
+        f"now be done by adding a build dependence on {sysroot_lint_build}, and "
         "overriding `c_stdlib_version` in `recipe/conda_build_config.yaml` for the "
         "respective platform as necessary. For further details, please see "
         "https://github.com/conda-forge/conda-forge.github.io/issues/2102."
@@ -783,36 +816,55 @@ def lint_stdlib(
         "the respective platform as necessary. For further details, please see "
         "https://github.com/conda-forge/conda-forge.github.io/issues/2102."
     )
-    to_check = all_run_reqs_flat + all_contraints_flat
+    if not is_rattler_build:
+        to_check = all_run_reqs_flat + all_contraints_flat
+    else:
+        to_check = all_run_reqs_flat
     if any(req.startswith("__osx >") for req in to_check):
         if osx_lint not in lints:
             lints.append(osx_lint)
 
-    # stdlib issues in CBC
-    cbc_lines = []
-    if conda_build_config_filename:
-        with open(conda_build_config_filename) as fh:
-            cbc_lines = fh.readlines()
+    # stdlib issues in CBC ( conda-build-config )
+    cbc_osx = {}
+    if not is_rattler_build:
+        cbc_lines = []
+        if conda_build_config_filename:
+            with open(conda_build_config_filename) as fh:
+                cbc_lines = fh.readlines()
+    elif is_rattler_build and recipe_dir:
+        platform_namespace = {
+            "unix": True,
+            "osx": True,
+            "linux": False,
+            "win": False,
+        }
+        variants_path = os.path.join(recipe_dir, "variants.yaml")
+        if os.path.exists(variants_path):
+            cbc_osx = parse_recipe_config_file(
+                variants_path, platform_namespace, allow_missing_selector=True
+            )
 
     # filter on osx-relevant lines
-    pat = re.compile(
-        r"^([^:\#]*?)\s+\#\s\[.*(not\s(osx|unix)|(?<!not\s)(linux|win)).*\]\s*$"
-    )
-    # remove lines with selectors that don't apply to osx, i.e. if they contain
-    # "not osx", "not unix", "linux" or "win"; this also removes trailing newlines.
-    # the regex here doesn't handle `or`-conjunctions, but the important thing for
-    # having a valid yaml after filtering below is that we avoid filtering lines with
-    # a colon (`:`), meaning that all yaml keys "survive". As an example, keys like
-    # c_stdlib_version can have `or`'d selectors, even if all values are arch-specific.
-    cbc_lines_osx = [pat.sub("", x) for x in cbc_lines]
-    cbc_content_osx = "\n".join(cbc_lines_osx)
-    cbc_osx = get_yaml().load(cbc_content_osx) or {}
-    # filter None values out of cbc_osx dict, can appear for example with
-    # ```
-    # c_stdlib_version:  # [unix]
-    #   - 2.17           # [linux]
-    #   # note lack of osx
-    # ```
+    if not is_rattler_build:
+        pat = re.compile(
+            r"^([^:\#]*?)\s+\#\s\[.*(not\s(osx|unix)|(?<!not\s)(linux|win)).*\]\s*$"
+        )
+        # remove lines with selectors that don't apply to osx, i.e. if they contain
+        # "not osx", "not unix", "linux" or "win"; this also removes trailing newlines.
+        # the regex here doesn't handle `or`-conjunctions, but the important thing for
+        # having a valid yaml after filtering below is that we avoid filtering lines with
+        # a colon (`:`), meaning that all yaml keys "survive". As an example, keys like
+        # c_stdlib_version can have `or`'d selectors, even if all values are arch-specific.
+        cbc_lines_osx = [pat.sub("", x) for x in cbc_lines]
+        cbc_content_osx = "\n".join(cbc_lines_osx)
+        cbc_osx = get_yaml().load(cbc_content_osx) or {}
+        # filter None values out of cbc_osx dict, can appear for example with
+        # ```
+        # c_stdlib_version:  # [unix]
+        #   - 2.17           # [linux]
+        #   # note lack of osx
+        # ```
+
     cbc_osx = dict(filter(lambda item: item[1] is not None, cbc_osx.items()))
 
     def sort_osx(versions):
@@ -841,6 +893,7 @@ def lint_stdlib(
                 "Conflicting specification for minimum macOS deployment target!\n"
                 "If your conda_build_config.yaml sets `MACOSX_DEPLOYMENT_TARGET`, "
                 "please change the name of that key to `c_stdlib_version`!\n"
+                "Continuing with `max(c_stdlib_version, MACOSX_DEPLOYMENT_TARGET)`."
                 "Continuing with `max(c_stdlib_version, MACOSX_DEPLOYMENT_TARGET)`."
             )
             merged_dt = []
