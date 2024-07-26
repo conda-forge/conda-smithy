@@ -11,19 +11,19 @@ azure:
     pool:
       vmImage: ubuntu-latest
     swapfile_size: 0GiB
-    timeoutInMinutes: 360
+    timeout_in_minutes: 360
     variables: {}
   settings_osx:
     pool:
       vmImage: macOS-12
     swapfile_size: null
-    timeoutInMinutes: 360
+    timeout_in_minutes: 360
     variables: {}
   settings_win:
     pool:
       vmImage: windows-2022
     swapfile_size: null
-    timeoutInMinutes: 360
+    timeout_in_minutes: 360
     variables:
       CONDA_BLD_PATH: D:\\bld\\
       UPLOAD_TEMP: D:\\tmp
