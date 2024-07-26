@@ -2131,7 +2131,7 @@ def render_readme(jinja_env, forge_config, forge_dir, render_info=None):
     if len(forge_config["maintainers"]) > 0:
         with write_file(code_owners_file) as fh:
             line = "*"
-            for maintainer in forge_config["maintainers"]:
+            for maintainer, _ in forge_config["maintainers"]:
                 if "/" in maintainer:
                     _maintainer = maintainer.lower()
                 else:
