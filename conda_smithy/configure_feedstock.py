@@ -2091,7 +2091,8 @@ def render_readme(jinja_env, forge_config, forge_dir, render_info=None):
     forge_config["outputs"] = sorted(
         list(OrderedDict((meta.name(), None) for meta in metas))
     )
-    forge_config["maintainers"] = sorted(
+
+    maintainers = sorted(
         set(
             chain.from_iterable(
                 meta.meta["extra"].get("recipe-maintainers", [])
@@ -2100,9 +2101,9 @@ def render_readme(jinja_env, forge_config, forge_dir, render_info=None):
         )
     )
 
-    forge_config["maintainer_urls"] = [
+    forge_config["maintainers"] = [
         (name, get_maintainer_url(name))
-        for name in forge_config["maintainers"]
+        for name in mantainers
     ]
 
     forge_config["channel_targets"] = channel_targets
