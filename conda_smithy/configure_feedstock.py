@@ -2102,8 +2102,7 @@ def render_readme(jinja_env, forge_config, forge_dir, render_info=None):
     )
 
     forge_config["maintainers"] = [
-        (name, get_maintainer_url(name))
-        for name in mantainers
+        (name, get_maintainer_url(name)) for name in maintainers
     ]
 
     forge_config["channel_targets"] = channel_targets
