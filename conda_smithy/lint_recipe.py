@@ -349,6 +349,7 @@ def lintify_meta_yaml(
     # 5: stdlib-related lints
     lint_stdlib(
         meta,
+        recipe_dir,
         requirements_section,
         conda_build_config_filename,
         lints,
