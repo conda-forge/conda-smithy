@@ -16,7 +16,7 @@
 
 **Fixed:**
 
-* When linting build_platform has a default value now.
+* When linting build_platform has a default value now (#1996).
 
 **Security:**
 
