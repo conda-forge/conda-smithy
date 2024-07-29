@@ -60,7 +60,6 @@ def test_init_with_custom_config(py_recipe, request):
     init_obj = cli.Init(subparser)
     recipe = py_recipe.recipe
     # expected args object has
-    print("Type: ", py_recipe.config["conda_build_tool"])
     with open(os.path.join(recipe, "recipe", "conda-forge.yml"), "w") as fp:
         fp.write(
             dedent(
@@ -83,7 +82,7 @@ def test_init_with_custom_config(py_recipe, request):
     data = yaml.safe_load(
         open(os.path.join(destination, "conda-forge.yml")).read()
     )
-    print(data)
+
     if data.get("conda_build_tool") == "rattler-build":
         assert data == snapshot(
             {
