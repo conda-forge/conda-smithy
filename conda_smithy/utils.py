@@ -108,6 +108,7 @@ def render_meta_yaml(text):
             datetime=datetime,
             time=time,
             target_platform="linux-64",
+            build_platform="linux-64",
             mpi="mpi",
         )
     )

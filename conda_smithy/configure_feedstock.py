@@ -1998,6 +1998,14 @@ def azure_build_id_from_public(forge_config):
     forge_config["azure"]["build_id"] = build_def["id"]
 
 
+def get_maintainer_url(user_or_team):
+    if "/" in user_or_team:
+        org, team_name = user_or_team.split("/")
+        return f"https://github.com/orgs/{org}/teams/{team_name}/"
+    else:
+        return f"https://github.com/{user_or_team}/"
+
+
 def render_readme(jinja_env, forge_config, forge_dir, render_info=None):
     if "README.md" in forge_config["skip_render"]:
         logger.info("README.md rendering is skipped")
@@ -2083,7 +2091,8 @@ def render_readme(jinja_env, forge_config, forge_dir, render_info=None):
     forge_config["outputs"] = sorted(
         list(OrderedDict((meta.name(), None) for meta in metas))
     )
-    forge_config["maintainers"] = sorted(
+
+    maintainers = sorted(
         set(
             chain.from_iterable(
                 meta.meta["extra"].get("recipe-maintainers", [])
@@ -2091,6 +2100,11 @@ def render_readme(jinja_env, forge_config, forge_dir, render_info=None):
             )
         )
     )
+
+    forge_config["maintainers"] = [
+        (name, get_maintainer_url(name)) for name in maintainers
+    ]
+
     forge_config["channel_targets"] = channel_targets
 
     if forge_config["azure"].get("build_id") is None:
@@ -2117,7 +2131,7 @@ def render_readme(jinja_env, forge_config, forge_dir, render_info=None):
     if len(forge_config["maintainers"]) > 0:
         with write_file(code_owners_file) as fh:
             line = "*"
-            for maintainer in forge_config["maintainers"]:
+            for maintainer, _ in forge_config["maintainers"]:
                 if "/" in maintainer:
                     _maintainer = maintainer.lower()
                 else:

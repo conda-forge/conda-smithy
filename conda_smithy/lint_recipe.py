@@ -4,6 +4,7 @@ import sys
 from collections.abc import Mapping
 from glob import glob
 from inspect import cleandoc
+from pathlib import Path
 from textwrap import indent
 
 import github
@@ -49,7 +50,9 @@ from conda_smithy.linter.lints import (
     lint_usage_of_legacy_patterns,
 )
 from conda_smithy.linter.utils import (
+    CONDA_BUILD_TOOL,
     EXPECTED_SECTION_ORDER,
+    RATTLER_BUILD_TOOL,
     find_local_config_file,
     get_section,
 )
@@ -63,6 +66,7 @@ from conda_build.metadata import (
     ensure_valid_license_family,
 )
 
+from conda_smithy.configure_feedstock import _read_forge_config
 from conda_smithy.utils import get_yaml, render_meta_yaml
 from conda_smithy.validate_schema import validate_json_schema
 
@@ -272,7 +276,9 @@ def lintify_meta_yaml(
     # 26: pin_subpackage is for subpackages and pin_compatible is for
     # non-subpackages of the recipe. Contact @carterbox for troubleshooting
     # this lint.
-    lint_pin_subpackages(meta, outputs_section, package_section, lints)
+    lint_pin_subpackages(
+        meta, outputs_section, package_section, lints, is_rattler_build
+    )
 
     # 27: Check usage of whl files as a source
     lint_check_usage_of_whls(recipe_fname, noarch_value, lints, hints)
@@ -288,13 +294,16 @@ def lintify_meta_yaml(
     hint_pip_usage(build_section, hints)
 
     # 2: suggest python noarch (skip on feedstocks)
+    raw_requirements_section = meta.get("requirements", {})
     hint_suggest_noarch(
         noarch_value,
         build_requirements,
+        raw_requirements_section,
         is_staged_recipes,
         conda_forge,
         recipe_fname,
         hints,
+        is_rattler_build,
     )
 
     # 3: suggest fixing all recipe/*.sh shellcheck findings
@@ -528,17 +537,40 @@ def _format_validation_msg(error: jsonschema.ValidationError):
     )
 
 
-def main(recipe_dir, conda_forge=False, return_hints=False):
+def main(
+    recipe_dir, conda_forge=False, return_hints=False, feedstock_dir=None
+):
     recipe_dir = os.path.abspath(recipe_dir)
-    recipe_meta = os.path.join(recipe_dir, "meta.yaml")
-    if not os.path.exists(recipe_dir):
-        raise OSError("Feedstock has no recipe/meta.yaml.")
+    build_tool = CONDA_BUILD_TOOL
+    if feedstock_dir:
+        feedstock_dir = os.path.abspath(feedstock_dir)
+        forge_config = _read_forge_config(feedstock_dir)
+        if forge_config.get("conda_build_tool", "") == RATTLER_BUILD_TOOL:
+            build_tool = RATTLER_BUILD_TOOL
 
-    with open(recipe_meta) as fh:
-        content = render_meta_yaml("".join(fh))
-        meta = get_yaml().load(content)
+    if build_tool == RATTLER_BUILD_TOOL:
+        recipe_file = os.path.join(recipe_dir, "recipe.yaml")
+    else:
+        recipe_file = os.path.join(recipe_dir, "meta.yaml")
 
-    results, hints = lintify_meta_yaml(meta, recipe_dir, conda_forge)
+    if not os.path.exists(recipe_file):
+        raise OSError(
+            f"Feedstock has no recipe/{os.path.basename(recipe_file)}"
+        )
+
+    if build_tool == CONDA_BUILD_TOOL:
+        with open(recipe_file) as fh:
+            content = render_meta_yaml("".join(fh))
+            meta = get_yaml().load(content)
+    else:
+        meta = get_yaml().load(Path(recipe_file))
+
+    results, hints = lintify_meta_yaml(
+        meta,
+        recipe_dir,
+        conda_forge,
+        is_rattler_build=build_tool == RATTLER_BUILD_TOOL,
+    )
     validation_errors, validation_hints = lintify_forge_yaml(
         recipe_dir=recipe_dir
     )
