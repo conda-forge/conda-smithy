@@ -111,7 +111,7 @@ When everything is configured you can trigger a build with a push to the feedsto
 Developing `conda-smithy`
 -----------------------
 
-If you don’t already have a conda-based environment manager, install one. For example [Miniconda](https://docs.anaconda.com/free/miniconda/miniconda-install/).
+If you don’t already have a conda-based environment manager, install one. For example [Miniforge](https://github.com/conda-forge/miniforge).
 
 To develop `conda-smithy`, use said environment manager and create an environment based on the included `environment.yml` file.
 
