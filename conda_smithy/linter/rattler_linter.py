@@ -31,7 +31,7 @@ TEST_KEYS = {"script", "python"}
 
 def lint_recipe_tests(
     recipe_dir: Optional[str],
-    test_section: Dict[str, Any],
+    test_section: List[Dict[str, Any]],
     outputs_section: List[Dict[str, Any]],
     lints: List[str],
     hints: List[str],
