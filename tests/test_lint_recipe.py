@@ -295,6 +295,40 @@ MACOSX_SDK_VERSION:         # [osx]
             assert any(lint.startswith(exp_lint) for lint in lints)
 
 
+@pytest.mark.parametrize("is_rattler_build,", [(False,), (True,)])
+def test_license_file_required(is_rattler_build):
+    meta = {
+        "about": {
+            "home": "a URL",
+            "summary": "A test summary",
+            "license": "MIT",
+        }
+    }
+    lints, hints = linter.lintify_meta_yaml(
+        meta, is_rattler_build=is_rattler_build
+    )
+    expected_message = "license_file entry is missing, but is required."
+    assert expected_message in lints
+
+
+@pytest.mark.parametrize("is_rattler_build,", [(False,), (True,)])
+def test_license_file_empty(is_rattler_build):
+    meta = {
+        "about": {
+            "home": "a URL",
+            "summary": "A test summary",
+            "license": "LicenseRef-Something",
+            "license_family": "LGPL",
+            "license_file": None,
+        }
+    }
+    lints, hints = linter.lintify_meta_yaml(
+        meta, is_rattler_build=is_rattler_build
+    )
+    expected_message = "license_file entry is missing, but is required."
+    assert expected_message in lints
+
+
 class TestLinter(unittest.TestCase):
 
     def test_pin_compatible_in_run_exports(self):
@@ -1296,38 +1330,6 @@ class TestLinter(unittest.TestCase):
                 self.assertNotIn(msg, hints)
             else:
                 self.assertIn(msg, hints)
-
-    @pytest.mark.parametrize("is_rattler_build", [(False,), (True,)])
-    def test_license_file_required(self, is_rattler_build):
-        meta = {
-            "about": {
-                "home": "a URL",
-                "summary": "A test summary",
-                "license": "MIT",
-            }
-        }
-        lints, hints = linter.lintify_meta_yaml(
-            meta, is_rattler_build=is_rattler_build
-        )
-        expected_message = "license_file entry is missing, but is required."
-        self.assertIn(expected_message, lints)
-
-    @pytest.mark.parametrize("is_rattler_build", [(False,), (True,)])
-    def test_license_file_empty(self, is_rattler_build):
-        meta = {
-            "about": {
-                "home": "a URL",
-                "summary": "A test summary",
-                "license": "LicenseRef-Something",
-                "license_family": "LGPL",
-                "license_file": None,
-            }
-        }
-        lints, hints = linter.lintify_meta_yaml(
-            meta, is_rattler_build=is_rattler_build
-        )
-        expected_message = "license_file entry is missing, but is required."
-        self.assertIn(expected_message, lints)
 
     def test_recipe_name(self):
         meta = {"package": {"name": "mp++"}}

@@ -240,7 +240,7 @@ def lint_license_family_should_be_valid(
             license_family = about_section.get(
                 "license_family", license
             ).lower()
-            if not any(f for f in needed_families if f in license_family):
+            if any(f for f in needed_families if f in license_family):
                 lints.append(lint_msg)
 
 
