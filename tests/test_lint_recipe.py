@@ -1309,6 +1309,18 @@ class TestLinter(unittest.TestCase):
         expected_message = "license_file entry is missing, but is required."
         self.assertIn(expected_message, lints)
 
+    def test_rattler_license_file_required(self):
+        meta = {
+            "about": {
+                "home": "a URL",
+                "summary": "A test summary",
+                "license": "MIT",
+            }
+        }
+        lints, hints = linter.lintify_meta_yaml(meta, is_rattler_build=True)
+        expected_message = "license_file entry is missing, but is required."
+        self.assertIn(expected_message, lints)
+
     def test_license_file_empty(self):
         meta = {
             "about": {
@@ -1320,6 +1332,19 @@ class TestLinter(unittest.TestCase):
             }
         }
         lints, hints = linter.lintify_meta_yaml(meta)
+        expected_message = "license_file entry is missing, but is required."
+        self.assertIn(expected_message, lints)
+
+    def test_rattler_license_file_empty(self):
+        meta = {
+            "about": {
+                "home": "a URL",
+                "summary": "A test summary",
+                "license": "LicenseRef-Something",
+                "license_file": None,
+            }
+        }
+        lints, hints = linter.lintify_meta_yaml(meta, is_rattler_build=True)
         expected_message = "license_file entry is missing, but is required."
         self.assertIn(expected_message, lints)
 
