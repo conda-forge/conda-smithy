@@ -71,6 +71,8 @@ def get_meta_section(parent, name, lints):
 def get_rattler_section(meta, name):
     if name == "requirements":
         return rattler_loader.load_all_requirements(meta)
+    elif name == "tests":
+        return rattler_loader.load_all_tests(meta)
     elif name == "source":
         source = meta.get("source", [])
         if isinstance(source, Mapping):
