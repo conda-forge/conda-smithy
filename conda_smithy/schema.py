@@ -346,7 +346,7 @@ class BotConfigVersionUpdates(BaseModel):
             - `cran`: Update from CRAN
             - `github`: Update from the GitHub releases RSS feed (includes pre-releases)
             - `githubreleases`: Get the latest version by following the redirect of
-            https://github.com/{owner}/{repo}/releases/latest (excludes pre-releases)
+            `https://github.com/{owner}/{repo}/releases/latest` (excludes pre-releases)
             - `incrementalpharawurl`: If this source is run for a specific small selection of feedstocks, it acts like
             the `rawurl` source but also increments letters in the version string (e.g. 2024a -> 2024b). If the source
             is run for other feedstocks (even if selected manually), it does nothing.
