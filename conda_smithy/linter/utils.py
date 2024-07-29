@@ -3,7 +3,7 @@ import os
 import re
 from collections.abc import Sequence
 from glob import glob
-from typing import Mapping
+from typing import Dict, List, Mapping, Union
 
 from conda_build.metadata import (
     FIELDS as _CONDA_BUILD_FIELDS,
@@ -68,12 +68,12 @@ def get_meta_section(parent, name, lints):
     return section
 
 
-def get_rattler_section(meta, name):
+def get_rattler_section(meta, name) -> Union[Dict, List[Dict]]:
     if name == "requirements":
         return rattler_loader.load_all_requirements(meta)
     elif name == "source":
-        source = meta.get("source", [])
-        if isinstance(source, Mapping):
+        source: List[Dict] = meta.get("source", [])
+        if isinstance(source, Dict):
             return [source]
 
     return meta.get(name, {})

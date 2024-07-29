@@ -3,7 +3,7 @@ import itertools
 import os
 import re
 from collections.abc import Sequence
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from conda.exceptions import InvalidVersionSpec
 from conda.models.version import VersionOrder
@@ -235,7 +235,18 @@ def lint_license_family_should_be_valid(
         lints.append("license_file entry is missing, but is required.")
 
 
-def lint_recipe_name(package_section, lints):
+def lint_recipe_name(
+    package_section,
+    lints,
+    rattler_context_section: Optional[Dict[str, Any]] = None,
+    is_rattler_build: bool = False,
+):
+    if is_rattler_build:
+        if not rattler_context_section:
+            rattler_context_section = {}
+        rattler_linter.lint_package_name(
+            package_section, rattler_context_section, lints
+        )
     recipe_name = package_section.get("name", "").strip()
     if re.match(r"^[a-z0-9_\-.]+$", recipe_name) is None:
         lints.append(

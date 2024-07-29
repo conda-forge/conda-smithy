@@ -1332,6 +1332,15 @@ class TestLinter(unittest.TestCase):
         )
         self.assertIn(expected_message, lints)
 
+    def test_rattler_recipe_name(self):
+        meta = {"package": {"name": "mp++"}}
+        lints, _ = linter.lintify_meta_yaml(meta, is_rattler_build=True)
+        expected_message = (
+            "Recipe name has invalid characters. only lowercase alpha, "
+            "numeric, underscores, hyphens and dots allowed"
+        )
+        self.assertIn(expected_message, lints)
+
     def test_end_empty_line(self):
         bad_contents = [
             # No empty lines at the end of the file

@@ -1,3 +1,4 @@
+import re
 from typing import Any, Dict, List
 
 from conda_smithy.linter.errors import HINT_NO_ARCH
@@ -57,3 +58,23 @@ def hint_noarch_usage(
 
         if no_arch_possible:
             hints.append(HINT_NO_ARCH)
+
+
+def lint_package_name(
+    package_section: Dict[str, Any],
+    context_section: Dict[str, Any],
+    lints: List[str],
+) -> None:
+    package_name = str(package_section.get("name"))
+    context_name = str(context_section.get("name"))
+    actual_name = (
+        package_name
+        if package_name is not None and not package_name.startswith("$")
+        else context_name
+    )
+
+    actual_name = actual_name.strip()
+    if re.match(r"^[a-z0-9_\-.]+$", actual_name) is None:
+        lints.append(
+            """Recipe name has invalid characters. only lowercase alpha, numeric, underscores, hyphens and dots allowed"""
+        )
