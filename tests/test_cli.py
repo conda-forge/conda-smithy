@@ -7,6 +7,7 @@ from textwrap import dedent
 
 import pytest
 import yaml
+from inline_snapshot import snapshot
 
 from conda_smithy import cli
 
@@ -50,7 +51,7 @@ def test_init(py_recipe):
     assert os.path.isdir(destination)
 
 
-def test_init_with_custom_config(py_recipe):
+def test_init_with_custom_config(py_recipe, request):
     """This is the command that takes the initial staged-recipe folder and turns it into a
     feedstock"""
     # actual parser doesn't matter.  It's used for initialization only
@@ -59,7 +60,7 @@ def test_init_with_custom_config(py_recipe):
     init_obj = cli.Init(subparser)
     recipe = py_recipe.recipe
     # expected args object has
-
+    print("Type: ", py_recipe.config["conda_build_tool"])
     with open(os.path.join(recipe, "recipe", "conda-forge.yml"), "w") as fp:
         fp.write(
             dedent(
@@ -82,9 +83,18 @@ def test_init_with_custom_config(py_recipe):
     data = yaml.safe_load(
         open(os.path.join(destination, "conda-forge.yml")).read()
     )
-    assert data.get("bot") is not None
-    assert data["bot"]["automerge"] is True
-    assert data["bot"]["run_deps_from_wheel"] is True
+    print(data)
+    if data.get("conda_build_tool") == "rattler-build":
+        assert data == snapshot(
+            {
+                "conda_build_tool": "rattler-build",
+                "bot": {"automerge": True, "run_deps_from_wheel": True},
+            }
+        )
+    else:
+        assert data == snapshot(
+            {"bot": {"automerge": True, "run_deps_from_wheel": True}}
+        )
 
 
 def test_init_multiple_output_matrix(testing_workdir):
@@ -234,6 +244,7 @@ def test_init_cuda_docker_images(testing_workdir):
     # configs.
     matrix_dir_len = len(os.listdir(matrix_dir))
     assert matrix_dir_len == 7  # 6 docker images plus the README
+    result = {}
     for v in [None, "9.2", "10.0", "10.1", "10.2", "11.0"]:
         fn = os.path.join(
             matrix_dir, f"linux_64_cuda_compiler_version{v}.yaml"
@@ -241,17 +252,72 @@ def test_init_cuda_docker_images(testing_workdir):
         assert os.path.isfile(fn)
         with open(fn) as fh:
             config = yaml.safe_load(fh)
-        assert config["cuda_compiler"] == ["nvcc"]
-        assert config["cuda_compiler_version"] == [f"{v}"]
-        if v is None:
-            docker_image = "condaforge/linux-anvil-comp7"
-        else:
-            docker_image = f"condaforge/linux-anvil-cuda:{v}"
-        assert config["docker_image"] == [docker_image]
-        if v == "11.0":
-            assert config["cdt_name"] == ["cos7"]
-        else:
-            assert config["cdt_name"] == ["cos6"]
+        result[v] = config
+
+    assert result == snapshot(
+        {
+            None: {
+                "cdt_name": ["cos6"],
+                "cuda_compiler": ["nvcc"],
+                "cuda_compiler_version": ["None"],
+                "docker_image": ["condaforge/linux-anvil-comp7"],
+                "target_platform": ["linux-64"],
+                "zip_keys": [
+                    ["cdt_name", "cuda_compiler_version", "docker_image"]
+                ],
+            },
+            "9.2": {
+                "cdt_name": ["cos6"],
+                "cuda_compiler": ["nvcc"],
+                "cuda_compiler_version": ["9.2"],
+                "docker_image": ["condaforge/linux-anvil-cuda:9.2"],
+                "target_platform": ["linux-64"],
+                "zip_keys": [
+                    ["cdt_name", "cuda_compiler_version", "docker_image"]
+                ],
+            },
+            "10.0": {
+                "cdt_name": ["cos6"],
+                "cuda_compiler": ["nvcc"],
+                "cuda_compiler_version": ["10.0"],
+                "docker_image": ["condaforge/linux-anvil-cuda:10.0"],
+                "target_platform": ["linux-64"],
+                "zip_keys": [
+                    ["cdt_name", "cuda_compiler_version", "docker_image"]
+                ],
+            },
+            "10.1": {
+                "cdt_name": ["cos6"],
+                "cuda_compiler": ["nvcc"],
+                "cuda_compiler_version": ["10.1"],
+                "docker_image": ["condaforge/linux-anvil-cuda:10.1"],
+                "target_platform": ["linux-64"],
+                "zip_keys": [
+                    ["cdt_name", "cuda_compiler_version", "docker_image"]
+                ],
+            },
+            "10.2": {
+                "cdt_name": ["cos6"],
+                "cuda_compiler": ["nvcc"],
+                "cuda_compiler_version": ["10.2"],
+                "docker_image": ["condaforge/linux-anvil-cuda:10.2"],
+                "target_platform": ["linux-64"],
+                "zip_keys": [
+                    ["cdt_name", "cuda_compiler_version", "docker_image"]
+                ],
+            },
+            "11.0": {
+                "cdt_name": ["cos7"],
+                "cuda_compiler": ["nvcc"],
+                "cuda_compiler_version": ["11.0"],
+                "docker_image": ["condaforge/linux-anvil-cuda:11.0"],
+                "target_platform": ["linux-64"],
+                "zip_keys": [
+                    ["cdt_name", "cuda_compiler_version", "docker_image"]
+                ],
+            },
+        }
+    )
 
 
 def test_init_multiple_docker_images(testing_workdir):
@@ -292,8 +358,14 @@ def test_init_multiple_docker_images(testing_workdir):
     assert os.path.isfile(fn)
     with open(fn) as fh:
         config = yaml.safe_load(fh)
-    assert config["docker_image"] == ["pickme_a"]
-    assert config["cdt_name"] == ["pickme_1"]
+    assert config == snapshot(
+        {
+            "cdt_name": ["pickme_1"],
+            "docker_image": ["pickme_a"],
+            "target_platform": ["linux-64"],
+            "zip_keys": [["docker_image", "cdt_name"]],
+        }
+    )
 
 
 def test_regenerate(py_recipe, testing_workdir):
