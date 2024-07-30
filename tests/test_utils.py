@@ -10,7 +10,6 @@ from conda_smithy.utils import (
 
 def test_get_metadata_from_feedstock_dir(noarch_recipe):
     feedstock_dir = noarch_recipe[0]
-    # load rattler-build-metadata
 
     build_tool = noarch_recipe[1]["conda_build_tool"]
     metadata = _get_metadata_from_feedstock_dir(
