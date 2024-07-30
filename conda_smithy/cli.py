@@ -9,7 +9,6 @@ from textwrap import dedent
 from typing import Optional, Union
 
 import conda  # noqa
-import conda_build.api
 from conda_build.metadata import MetaData
 from rattler_build_conda_compat.render import MetaData as RattlerMetaData
 from rattler_build_conda_compat.utils import has_recipe as has_rattler_recipe
@@ -21,7 +20,8 @@ from conda_smithy import lint_recipe as linter
 from conda_smithy.utils import (
     CONDA_BUILD,
     RATTLER_BUILD,
-    get_feedstock_name_from_meta,
+    _get_metadata_from_feedstock_dir,
+    get_feedstock_name_from_metadata,
     merge_dict,
 )
 
@@ -328,14 +328,17 @@ class RegisterCI(Subcommand):
         from conda_smithy import ci_register
 
         owner = args.user or args.organization
-        meta = conda_build.api.render(
-            args.feedstock_directory,
-            permit_undefined_jinja=True,
-            finalize=False,
-            bypass_env_check=True,
-            trim_skip=False,
-        )[0][0]
-        feedstock_name = get_feedstock_name_from_meta(meta)
+
+        # Load the conda-forge config and read metadata from the feedstock recipe
+        forge_config = configure_feedstock._load_forge_config(
+            args.feedstock_directory, None
+        )
+        metadata = _get_metadata_from_feedstock_dir(
+            args.feedstock_directory, forge_config
+        )
+
+        feedstock_name = get_feedstock_name_from_metadata(metadata)
+
         repo = f"{feedstock_name}-feedstock"
 
         if args.feedstock_config is None:

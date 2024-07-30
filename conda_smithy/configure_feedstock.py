@@ -55,6 +55,7 @@ from conda_smithy.feedstock_io import (
 from conda_smithy.utils import (
     RATTLER_BUILD,
     HashableDict,
+    _update_dict_within_dict,
     get_feedstock_about_from_meta,
     get_feedstock_name_from_meta,
 )
@@ -2167,18 +2168,6 @@ def copy_feedstock_content(forge_config, forge_dir):
     feedstock_content = os.path.join(conda_forge_content, "feedstock_content")
     skip_files = _get_skip_files(forge_config)
     copytree(feedstock_content, forge_dir, skip_files)
-
-
-def _update_dict_within_dict(items, config):
-    """recursively update dict within dict, if any"""
-    for key, value in items:
-        if isinstance(value, dict):
-            config[key] = _update_dict_within_dict(
-                value.items(), config.get(key, {})
-            )
-        else:
-            config[key] = value
-    return config
 
 
 def _read_forge_config(forge_dir, forge_yml=None):
