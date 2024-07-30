@@ -21,6 +21,7 @@ from conda_smithy.utils import (
     CONDA_BUILD,
     RATTLER_BUILD,
     _get_metadata_from_feedstock_dir,
+    _load_forge_config,
     get_feedstock_name_from_metadata,
     merge_dict,
 )
@@ -330,9 +331,7 @@ class RegisterCI(Subcommand):
         owner = args.user or args.organization
 
         # Load the conda-forge config and read metadata from the feedstock recipe
-        forge_config = configure_feedstock._load_forge_config(
-            args.feedstock_directory, None
-        )
+        forge_config = _load_forge_config(args.feedstock_directory, None)
         metadata = _get_metadata_from_feedstock_dir(
             args.feedstock_directory, forge_config
         )

@@ -10,9 +10,9 @@ from jinja2 import FileSystemLoader
 from jinja2.sandbox import SandboxedEnvironment
 
 from conda_smithy.configure_feedstock import (
-    _load_forge_config,
     conda_forge_content,
 )
+from conda_smithy.utils import _load_forge_config
 
 RecipeConfigPair = collections.namedtuple(
     "RecipeConfigPair", ("recipe", "config")

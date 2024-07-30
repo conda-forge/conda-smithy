@@ -12,7 +12,7 @@ import yaml
 from conftest import ConfigYAML
 
 from conda_smithy import configure_feedstock
-from conda_smithy.configure_feedstock import _read_forge_config
+from conda_smithy.utils import _load_forge_config, _read_forge_config
 
 
 def test_noarch_skips_appveyor(noarch_recipe, jinja_env):
@@ -829,7 +829,7 @@ def test_automerge_action_exists(py_recipe, jinja_env):
 
 
 def test_conda_forge_yaml_empty(config_yaml: ConfigYAML):
-    load_forge_config = lambda: configure_feedstock._load_forge_config(  # noqa
+    load_forge_config = lambda: _load_forge_config(  # noqa
         config_yaml.workdir,
         exclusive_config_file=os.path.join(
             config_yaml.workdir, "recipe", "default_config.yaml"
@@ -848,7 +848,7 @@ def test_conda_forge_yaml_empty(config_yaml: ConfigYAML):
 
 
 def test_noarch_platforms_bad_yaml(config_yaml: ConfigYAML, caplog):
-    load_forge_config = lambda: configure_feedstock._load_forge_config(  # noqa
+    load_forge_config = lambda: _load_forge_config(  # noqa
         config_yaml.workdir,
         exclusive_config_file=os.path.join(
             config_yaml.workdir, "recipe", "default_config.yaml"
@@ -868,7 +868,7 @@ def test_noarch_platforms_bad_yaml(config_yaml: ConfigYAML, caplog):
 
 def test_forge_yml_alt_path(config_yaml: ConfigYAML):
     def load_forge_config(forge_yml):
-        return configure_feedstock._load_forge_config(
+        return _load_forge_config(
             config_yaml.workdir,
             exclusive_config_file=os.path.join(
                 config_yaml.workdir, "recipe", "default_config.yaml"
@@ -954,7 +954,7 @@ def test_cuda_enabled_render(cuda_enabled_recipe, jinja_env):
 
 
 def test_conda_build_tools(config_yaml: ConfigYAML, caplog):
-    load_forge_config = lambda: configure_feedstock._load_forge_config(  # noqa
+    load_forge_config = lambda: _load_forge_config(  # noqa
         config_yaml.workdir,
         exclusive_config_file=os.path.join(
             config_yaml.workdir, "recipe", "default_config.yaml"
@@ -1002,7 +1002,7 @@ def test_conda_build_tools(config_yaml: ConfigYAML, caplog):
 
 
 def test_remote_ci_setup(config_yaml: ConfigYAML):
-    load_forge_config = lambda: configure_feedstock._load_forge_config(  # noqa
+    load_forge_config = lambda: _load_forge_config(  # noqa
         config_yaml.workdir,
         exclusive_config_file=os.path.join(
             config_yaml.workdir, "recipe", "default_config.yaml"

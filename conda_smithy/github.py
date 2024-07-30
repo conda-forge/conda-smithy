@@ -8,9 +8,9 @@ from github.GithubException import GithubException
 from github.Organization import Organization
 from github.Team import Team
 
-from conda_smithy.configure_feedstock import _load_forge_config
 from conda_smithy.utils import (
     _get_metadata_from_feedstock_dir,
+    _load_forge_config,
     get_feedstock_name_from_metadata,
 )
 
