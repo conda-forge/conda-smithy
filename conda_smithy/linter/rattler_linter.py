@@ -147,3 +147,31 @@ def lint_package_version(
 
     if lint_msg:
         lints.append(lint_msg)
+
+
+def lint_usage_of_selectors_for_noarch(
+    noarch_value: str,
+    build_section: Dict[str, Any],
+    requirements_section: Dict[str, Any],
+    lints: List[str],
+):
+    for section in requirements_section:
+        section_requirements = requirements_section[section]
+
+        if not section_requirements:
+            continue
+
+        if any(isinstance(req, dict) for req in section_requirements):
+            lints.append(
+                "`noarch` packages can't have skips with selectors. If "
+                "the selectors are necessary, please remove "
+                f"`noarch: {noarch_value}`."
+            )
+            break
+
+    if "skip" in build_section:
+        lints.append(
+            "`noarch` packages can't have skips with selectors. If "
+            "the selectors are necessary, please remove "
+            f"`noarch: {noarch_value}`."
+        )

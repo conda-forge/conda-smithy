@@ -940,6 +940,105 @@ class TestLinter(unittest.TestCase):
                             """
             )
 
+    def test_rattler_noarch_selectors(self):
+        expected_start = "`noarch` packages can't have"
+
+        with tmp_directory() as recipe_dir:
+
+            def assert_noarch_selector(meta_string, is_good=False):
+                with open(os.path.join(recipe_dir, "recipe.yaml"), "w") as fh:
+                    fh.write(meta_string)
+
+                with open(
+                    os.path.join(recipe_dir, "conda-forge.yml"), "w"
+                ) as fh:
+                    fh.write("conda_build_tool: rattler-build")
+
+                lints = linter.main(recipe_dir, feedstock_dir=recipe_dir)
+                if is_good:
+                    message = (
+                        "Found lints when there shouldn't have "
+                        f"been a lint for '{meta_string}'."
+                    )
+                else:
+                    message = (
+                        f"Expected lints for '{meta_string}', but didn't "
+                        "get any."
+                    )
+                self.assertEqual(
+                    not is_good,
+                    any(lint.startswith(expected_start) for lint in lints),
+                    message,
+                )
+
+            assert_noarch_selector(
+                """
+                            build:
+                              noarch: python
+                              skip:
+                                - win
+                """
+            )
+            assert_noarch_selector(
+                """
+                            build:
+                              noarch: python
+                            """,
+                is_good=True,
+            )
+            assert_noarch_selector(
+                """
+                            build:
+                              noarch: python
+                              requirements:
+                                build:
+                                  - python
+                            """,
+                is_good=True,
+            )
+            assert_noarch_selector(
+                """
+                            build:
+                              noarch: python
+                              script:
+                                - if: unix
+                                  then: echo "hello"
+                                - if: win
+                                  then: echo "hello"
+                              requirements:
+                                build:
+                                  - python
+                                  - if: win
+                                    then:
+                                      - enum34
+                            """,
+                is_good=True,
+            )
+            assert_noarch_selector(
+                """
+                            build:
+                              noarch: python
+                            requirements:
+                                run:
+                                  - python
+                                  - if: win
+                                    then:
+                                      - enum34
+                            """
+            )
+            assert_noarch_selector(
+                """
+                            build:
+                              noarch: python
+                            requirements:
+                              host:
+                                - python
+                                - if: win
+                                  then:
+                                    - enum34
+                            """
+            )
+
     def test_suggest_noarch(self):
         expected_start = "Whenever possible python packages should use noarch."
 
