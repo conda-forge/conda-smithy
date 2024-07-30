@@ -300,6 +300,11 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
 def _get_metadata_from_feedstock_dir(
     feedstock_directory: Union[str, os.PathLike], forge_config: Dict[str, Any]
 ) -> Union[MetaData, RattlerBuildMetaData]:
+    """
+    Return either the conda-build metadata or rattler-build metadata from the feedstock directory
+    based on conda_build_tool value from forge_config.
+    Raises OsError if no meta.yaml or recipe.yaml is found in feedstock_directory.
+    """
     if forge_config and forge_config.get("conda_build_tool") == RATTLER_BUILD:
         meta = RattlerBuildMetaData(
             feedstock_directory,
@@ -319,7 +324,7 @@ def _get_metadata_from_feedstock_dir(
 def get_feedstock_name_from_metadata(
     meta: Union[MetaData, RattlerBuildMetaData],
 ) -> str:
-    """Get the feedstock name from a parsed meta.yaml or recipe.yaml."""
+    """Resolve the feedstock name from the parsed meta.yaml."""
     return get_feedstock_name_from_meta(meta)
 
 
