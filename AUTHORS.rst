@@ -7,25 +7,26 @@ Authors are sorted by number of commits.
 * Christopher J. Wright
 * Anthony Scopatz
 * Phil Elson
+* nichmor
 * H. Vetinari
 * Uwe L. Korn
 * Filipe Fernandes
 * Dougal J. Sutherland
 * Amit Kumar
 * Marcel Bargull
+* Min RK
 * shadow_walker
 * Michael Sarahan
-* Min RK
 * John Kirkham
+* Bastian Zimmermann
 * Mark Harfouche
 * Leo Fang
 * Hadrien Mary
 * Ryan Volz
 * Johnny Willemsen
+* pre-commit-ci[bot]
 * Chris Burr
 * Julian Rüth
-* Bastian Zimmermann
-* pre-commit-ci[bot]
 * Daniel Bast
 * Billy K. Poon
 * vinicius douglas cerutti
@@ -42,6 +43,7 @@ Authors are sorted by number of commits.
 * Justin Calamari
 * Jason Furmanek
 * Patrick Sodré
+* Jan Lehnarsdt
 * C.A.M. Gerlach
 * refraction-ray
 * Leopold Talirz
@@ -66,6 +68,7 @@ Authors are sorted by number of commits.
 * Elmar Pruesse
 * Patrick Sodré
 * David Hirschfeld
+* Finn Womack
 * Josh Barnes
 * Tobias Megies
 * Jonathan Helmus
@@ -74,6 +77,7 @@ Authors are sorted by number of commits.
 * Bruno Oliveira
 * Tony Kelman
 * Jannis Leidel
+* Matt Fisher
 * Guilherme Quentel Melo
 * santi
 * buijennifer
@@ -118,3 +122,4 @@ Authors are sorted by number of commits.
 * Benjamin Tovar
 * Sylvain Corlay
 * Brandon Andersen
+* Vincenzo Eduardo Padulano

@@ -1,17 +1,19 @@
+import datetime
 import json
+import os
 import shutil
 import tempfile
-import io
-import jinja2
-import jinja2.sandbox
-import datetime
 import time
-import os
-from pathlib import Path
 from collections import defaultdict
 from contextlib import contextmanager
+from pathlib import Path
 
+import jinja2
+import jinja2.sandbox
 import ruamel.yaml
+
+RATTLER_BUILD = "rattler-build"
+CONDA_BUILD = "conda-build"
 
 
 def get_feedstock_name_from_meta(meta):
@@ -34,7 +36,7 @@ def get_feedstock_about_from_meta(meta) -> dict:
         recipe_meta = os.path.join(
             meta.meta["extra"]["parent_recipe"]["path"], "meta.yaml"
         )
-        with io.open(recipe_meta, "rt") as fh:
+        with open(recipe_meta) as fh:
             content = render_meta_yaml("".join(fh))
             meta = get_yaml().load(content)
         return dict(meta["about"])
@@ -66,10 +68,10 @@ class NullUndefined(jinja2.Undefined):
         return self._undefined_name
 
     def __getattr__(self, name):
-        return "{}.{}".format(self, name)
+        return f"{self}.{name}"
 
     def __getitem__(self, name):
-        return '{}["{}"]'.format(self, name)
+        return f'{self}["{name}"]'
 
 
 class MockOS(dict):
@@ -106,6 +108,7 @@ def render_meta_yaml(text):
             datetime=datetime,
             time=time,
             target_platform="linux-64",
+            build_platform="linux-64",
             mpi="mpi",
         )
     )
@@ -125,7 +128,7 @@ def update_conda_forge_config(forge_yaml):
     ...     cfg['foo'] = 'bar'
     """
     if os.path.exists(forge_yaml):
-        with open(forge_yaml, "r") as fh:
+        with open(forge_yaml) as fh:
             code = get_yaml().load(fh)
     else:
         code = {}

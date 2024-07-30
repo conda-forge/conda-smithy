@@ -321,7 +321,7 @@ In order to produce a uniquely identifiable distribution:
 Feedstock Maintainers
 =====================
 
-{% for maintainer in maintainers -%}
-* [@{{maintainer}}](https://github.com/{{maintainer}}/)
+{% for (maintainer, url) in maintainers -%}
+* [@{{maintainer}}]({{url}})
 {% endfor %}
 {# this comment ensures a trailing newline #}

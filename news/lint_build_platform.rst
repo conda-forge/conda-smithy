@@ -1,6 +1,6 @@
 **Added:**
 
-* Linter now warns if go licenses are not bundled.
+* <news item>
 
 **Changed:**
 
@@ -16,7 +16,7 @@
 
 **Fixed:**
 
-* <news item>
+* When linting build_platform has a default value now (#1996).
 
 **Security:**
 

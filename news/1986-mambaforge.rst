@@ -1,10 +1,10 @@
 **Added:**
 
-* Linter now warns if Rust licenses are not bundled.
+* <news item>
 
 **Changed:**
 
-* <news item>
+* Make sure to use ``Miniforge`` everywhere instead of ``Mambaforge`` (they are equivalent). (#1986)
 
 **Deprecated:**
 

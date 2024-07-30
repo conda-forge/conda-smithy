@@ -1,6 +1,6 @@
 **Added:**
 
-* <news item>
+* extended documentation for the ``bot.version_updates.sources`` field in ``conda-forge.yml``
 
 **Changed:**
 
@@ -12,7 +12,7 @@
 
 **Removed:**
 
-* Removed setup.py file and remaining references in tests and CI
+* <news item>
 
 **Fixed:**
 

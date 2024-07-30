@@ -4,7 +4,7 @@
 
 **Changed:**
 
-* <news item>
+* Introduced ``ruff`` as pre-commit linter. (#1919)
 
 **Deprecated:**
 
@@ -16,7 +16,7 @@
 
 **Fixed:**
 
-* Bug causing rerender to incorrectly set the runs-on github actions option in the workflow yaml when self_hosted is set to true
+* <news item>
 
 **Security:**
 

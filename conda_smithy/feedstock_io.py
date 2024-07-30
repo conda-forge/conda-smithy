@@ -1,8 +1,7 @@
-from contextlib import contextmanager
-import io
 import os
 import shutil
 import stat
+from contextlib import contextmanager
 
 
 def get_repo(path, search_parent_directories=True):
@@ -29,20 +28,18 @@ def get_repo_root(path):
 
 
 def set_exe_file(filename, set_exe=True):
-    IXALL = stat.S_IXOTH | stat.S_IXGRP | stat.S_IXUSR
+    all_execute_permissions = stat.S_IXOTH | stat.S_IXGRP | stat.S_IXUSR
 
     repo = get_repo(filename)
     if repo:
         mode = "+x" if set_exe else "-x"
-        repo.git.execute(
-            ["git", "update-index", "--chmod=%s" % mode, filename]
-        )
+        repo.git.execute(["git", "update-index", f"--chmod={mode}", filename])
 
     mode = os.stat(filename).st_mode
     if set_exe:
-        mode |= IXALL
+        mode |= all_execute_permissions
     else:
-        mode -= mode & IXALL
+        mode -= mode & all_execute_permissions
     os.chmod(filename, mode)
 
 
@@ -52,7 +49,7 @@ def write_file(filename):
     if dirname and not os.path.exists(dirname):
         os.makedirs(dirname)
 
-    with io.open(filename, "w", encoding="utf-8", newline="\n") as fh:
+    with open(filename, "w", encoding="utf-8", newline="\n") as fh:
         yield fh
 
     repo = get_repo(filename)
@@ -97,8 +94,8 @@ def copy_file(src, dst):
     If the file fails to be decoded with utf-8, we revert to a regular copy.
     """
     try:
-        with io.open(src, "r", encoding="utf-8") as fh_src:
-            with io.open(dst, "w", encoding="utf-8", newline="\n") as fh_dst:
+        with open(src, encoding="utf-8") as fh_src:
+            with open(dst, "w", encoding="utf-8", newline="\n") as fh_dst:
                 for line in fh_src:
                     fh_dst.write(line)
     except UnicodeDecodeError:
