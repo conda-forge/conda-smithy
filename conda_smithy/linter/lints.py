@@ -313,9 +313,9 @@ def lint_noarch(noarch_value: Optional[str], lints):
 
 
 def lint_rattler_noarch_and_runtime_dependencies(
+    noarch_value: Optional[Literal["python", "generic"]],
     raw_requirements_section: Dict[str, Any],
     build_section: Dict[str, Any],
-    noarch_value: Optional[Literal["python", "generic"]],
     lints: List[str],
 ) -> None:
     if noarch_value:

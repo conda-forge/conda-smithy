@@ -151,8 +151,8 @@ def lint_package_version(
 
 def lint_usage_of_selectors_for_noarch(
     noarch_value: str,
-    build_section: Dict[str, Any],
     requirements_section: Dict[str, Any],
+    build_section: Dict[str, Any],
     lints: List[str],
 ):
     for section in requirements_section:

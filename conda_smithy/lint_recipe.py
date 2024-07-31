@@ -261,7 +261,7 @@ def lintify_meta_yaml(
     if is_rattler_build:
         raw_requirements_section = meta.get("requirements", {})
         lint_rattler_noarch_and_runtime_dependencies(
-            raw_requirements_section, build_section, noarch_value, lints
+            noarch_value, raw_requirements_section, build_section, lints
         )
     else:
         lint_noarch_and_runtime_dependencies(
