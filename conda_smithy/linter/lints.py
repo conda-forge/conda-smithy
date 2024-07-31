@@ -17,6 +17,7 @@ from conda_smithy.linter.utils import (
     REQUIREMENTS_ORDER,
     TEST_FILES,
     TEST_KEYS,
+    _lint_recipe_name,
     get_section,
     is_selector_line,
     jinja_lines,
@@ -247,23 +248,13 @@ def lint_license_family_should_be_valid(
 
 
 def lint_recipe_name(
-    package_section,
-    lints,
-    rattler_context_section: Optional[Dict[str, Any]] = None,
-    is_rattler_build: bool = False,
+    package_section: Dict[str, Any],
+    lints: List[str],
 ):
-    if is_rattler_build:
-        if not rattler_context_section:
-            rattler_context_section = {}
-        rattler_linter.lint_package_name(
-            package_section, rattler_context_section, lints
-        )
     recipe_name = package_section.get("name", "").strip()
-    if re.match(r"^[a-z0-9_\-.]+$", recipe_name) is None:
-        lints.append(
-            "Recipe name has invalid characters. only lowercase alpha, numeric, "
-            "underscores, hyphens and dots allowed"
-        )
+    lint_msg = _lint_recipe_name(recipe_name)
+    if lint_msg:
+        lints.append(lint_msg)
 
 
 def lint_usage_of_legacy_patterns(requirements_section, lints):

@@ -3,7 +3,7 @@ import os
 import re
 from collections.abc import Sequence
 from glob import glob
-from typing import Dict, List, Mapping, Union
+from typing import Dict, List, Mapping, Optional, Union
 
 from conda_build.metadata import (
     FIELDS as _CONDA_BUILD_FIELDS,
@@ -159,3 +159,12 @@ def jinja_lines(lines):
     for i, line in enumerate(lines):
         if is_jinja_line(line):
             yield line, i
+
+
+def _lint_recipe_name(recipe_name: str) -> Optional[str]:
+    wrong_recipe_name = "Recipe name has invalid characters. only lowercase alpha, numeric, underscores, hyphens and dots allowed"
+
+    if re.match(r"^[a-z0-9_\-.]+$", recipe_name) is None:
+        return wrong_recipe_name
+
+    return None

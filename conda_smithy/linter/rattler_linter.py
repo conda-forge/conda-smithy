@@ -1,9 +1,13 @@
 import os
-import re
 from typing import Any, Dict, List, Optional
 
+from rattler_build_conda_compat.jinja import (
+    RecipeWithContext,
+    render_recipe_with_context,
+)
+
 from conda_smithy.linter.errors import HINT_NO_ARCH
-from conda_smithy.linter.utils import TEST_FILES
+from conda_smithy.linter.utils import TEST_FILES, _lint_recipe_name
 
 REQUIREMENTS_ORDER = ["build", "host", "run"]
 
@@ -104,21 +108,15 @@ def hint_noarch_usage(
             hints.append(HINT_NO_ARCH)
 
 
-def lint_package_name(
-    package_section: Dict[str, Any],
-    context_section: Dict[str, Any],
+def lint_recipe_name(
+    recipe_content: RecipeWithContext,
     lints: List[str],
 ) -> None:
-    package_name = str(package_section.get("name"))
-    context_name = str(context_section.get("name"))
-    actual_name = (
-        package_name
-        if package_name is not None and not package_name.startswith("$")
-        else context_name
+    rendered_context_recipe = render_recipe_with_context(recipe_content)
+    package_name = (
+        rendered_context_recipe.get("package", {}).get("name", "").strip()
     )
 
-    actual_name = actual_name.strip()
-    if re.match(r"^[a-z0-9_\-.]+$", actual_name) is None:
-        lints.append(
-            """Recipe name has invalid characters. only lowercase alpha, numeric, underscores, hyphens and dots allowed"""
-        )
+    lint_msg = _lint_recipe_name(package_name)
+    if lint_msg:
+        lints.append(lint_msg)
