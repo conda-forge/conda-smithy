@@ -3,8 +3,9 @@ import os
 import re
 from collections.abc import Sequence
 from glob import glob
-from typing import Mapping
+from typing import Mapping, Optional
 
+from conda.models.version import InvalidVersionSpec, VersionOrder
 from conda_build.metadata import (
     FIELDS as _CONDA_BUILD_FIELDS,
 )
@@ -159,3 +160,17 @@ def jinja_lines(lines):
     for i, line in enumerate(lines):
         if is_jinja_line(line):
             yield line, i
+
+
+def _lint_package_version(version: Optional[str]) -> Optional[str]:
+    no_package_version = "Package version is missing."
+    invalid_version = "Package version {ver} doesn't match conda spec: {err}"
+
+    if not version:
+        return no_package_version
+
+    ver = str(version)
+    try:
+        VersionOrder(ver)
+    except InvalidVersionSpec as e:
+        return invalid_version.format(ver=ver, err=e)

@@ -254,7 +254,10 @@ def lintify_meta_yaml(
     )
 
     # 19: check version
-    lint_package_version(package_section, lints)
+    if is_rattler_build:
+        rattler_linter.lint_package_version(meta, lints)
+    else:
+        lint_package_version(package_section, lints)
 
     # 20: Jinja2 variable definitions should be nice.
     lint_jinja_variables_definitions(recipe_fname, lints)
