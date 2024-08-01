@@ -4,7 +4,7 @@
 
 **Changed:**
 
-* Add upper bound for rattler-build-conda-compat
+* <news item>
 
 **Deprecated:**
 
@@ -16,7 +16,7 @@
 
 **Fixed:**
 
-* <news item>
+* Add upper bound for rattler-build-conda-compat. (#2009)
 
 **Security:**
 
