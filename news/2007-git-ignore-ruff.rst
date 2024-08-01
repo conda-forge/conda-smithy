@@ -4,7 +4,7 @@
 
 **Changed:**
 
-* <news item>
+* Exclude ruff commits from git ( #2007 )
 
 **Deprecated:**
 
@@ -16,7 +16,7 @@
 
 **Fixed:**
 
-* When linting build_platform has a default value now (#1996).
+* <news item>
 
 **Security:**
 
