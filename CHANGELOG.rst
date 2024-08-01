@@ -4,6 +4,14 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.37.2ls
+====================
+
+**Authors:**
+
+
+
+
 v3.37.2
 ====================
 
