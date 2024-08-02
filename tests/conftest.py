@@ -639,3 +639,42 @@ def jinja_env():
     return SandboxedEnvironment(
         extensions=["jinja2.ext.do"], loader=FileSystemLoader([tmplt_dir])
     )
+
+
+@pytest.fixture(scope="function")
+def rattler_noarch_recipe_with_context(
+    config_yaml: ConfigYAML, recipe_dirname
+):
+    # get the used params passed for config_yaml fixture
+    with open(
+        os.path.join(
+            config_yaml.workdir, recipe_dirname, config_yaml.recipe_name
+        ),
+        "w",
+    ) as fh:
+        fh.write(
+            """
+context:
+    name: python-noarch-test-from-context
+    version: 9.0.0
+package:
+    name: ${{ context.name }}
+    version: ${{ context.version }}
+build:
+    noarch: python
+requirements:
+    build:
+        - python
+    run:
+        - python
+    """
+        )
+    return RecipeConfigPair(
+        str(config_yaml.workdir),
+        _load_forge_config(
+            config_yaml.workdir,
+            exclusive_config_file=os.path.join(
+                config_yaml.workdir, recipe_dirname, "default_config.yaml"
+            ),
+        ),
+    )

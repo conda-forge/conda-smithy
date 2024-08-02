@@ -32,3 +32,16 @@ def test_get_feedstock_name_from_metadata(noarch_recipe):
     feedstock_name = get_feedstock_name_from_metadata(metadata)
 
     assert feedstock_name == "python-noarch-test"
+
+
+def test_get_feedstock_name_from_rattler_metadata(
+    rattler_noarch_recipe_with_context,
+):
+    feedstock_dir = rattler_noarch_recipe_with_context[0]
+    metadata = _get_metadata_from_feedstock_dir(
+        feedstock_dir, rattler_noarch_recipe_with_context[1]
+    )
+
+    feedstock_name = get_feedstock_name_from_metadata(metadata)
+
+    assert feedstock_name == "python-noarch-test-from-context"

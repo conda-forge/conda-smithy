@@ -29,7 +29,6 @@ except ImportError:
     import json
 
 import conda_build.api
-import conda_build.conda_interface
 import conda_build.render
 import conda_build.utils
 import conda_build.variants
