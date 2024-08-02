@@ -45,3 +45,16 @@ def test_get_feedstock_name_from_rattler_metadata(
     feedstock_name = get_feedstock_name_from_metadata(metadata)
 
     assert feedstock_name == "python-noarch-test-from-context"
+
+
+def test_get_feedstock_name_from_rattler_metadata_multiple_outputs(
+    rattler_recipe_with_multiple_outputs,
+):
+    feedstock_dir = rattler_recipe_with_multiple_outputs[0]
+    metadata = _get_metadata_from_feedstock_dir(
+        feedstock_dir, rattler_recipe_with_multiple_outputs[1]
+    )
+
+    feedstock_name = get_feedstock_name_from_metadata(metadata)
+
+    assert feedstock_name == "mamba-split"
