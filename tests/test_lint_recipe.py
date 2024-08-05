@@ -1687,6 +1687,14 @@ class TestLinter(unittest.TestCase):
         lints, hints = linter.lintify_meta_yaml(meta, is_rattler_build=True)
         assert any(lint.startswith(expected_message) for lint in lints)
 
+        # when having multiple outputs it should use recipe keyword
+        meta = {"recipe": {"version": "2.0.0~alpha0"}, "outputs": []}
+        expected_message = (
+            "Package version 2.0.0~alpha0 doesn't match conda spec"
+        )
+        lints, hints = linter.lintify_meta_yaml(meta, is_rattler_build=True)
+        assert any(lint.startswith(expected_message) for lint in lints)
+
     def test_rattler_version_with_context(self):
         meta = {
             "context": {"version": "3.6.4"},

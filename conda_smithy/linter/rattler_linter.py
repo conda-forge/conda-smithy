@@ -116,7 +116,11 @@ def lint_package_version(
     package_version = (
         rendered_context_recipe.get("package", {}).get("version", "").strip()
     )
+    recipe_version = (
+        rendered_context_recipe.get("recipe", {}).get("version", "").strip()
+    )
+    version = package_version or recipe_version
 
-    lint_msg = _lint_package_version(package_version)
+    lint_msg = _lint_package_version(version)
     if lint_msg:
         lints.append(lint_msg)
