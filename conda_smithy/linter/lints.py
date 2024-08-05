@@ -480,22 +480,32 @@ def lint_non_noarch_builds(
                         )
 
 
-def lint_jinja_var_references(meta_fname, hints):
+def lint_jinja_var_references(
+    meta_fname, hints, is_rattler_build: bool = False
+):
     bad_vars = []
     bad_lines = []
+    jinja_pattern = (
+        JINJA_VAR_PAT if not is_rattler_build else rattler_linter.JINJA_VAR_PAT
+    )
     if os.path.exists(meta_fname):
         with open(meta_fname) as fh:
             for i, line in enumerate(fh.readlines()):
-                for m in JINJA_VAR_PAT.finditer(line):
+                for m in jinja_pattern.finditer(line):
                     if m.group(1) is not None:
                         var = m.group(1)
                         if var != f" {var.strip()} ":
                             bad_vars.append(m.group(1).strip())
                             bad_lines.append(i + 1)
         if bad_vars:
+            hint_message = (
+                "``{{<one space><variable name><one space>}}``"
+                if not is_rattler_build
+                else "``${{<one space><variable name><one space>}}``"
+            )
             hints.append(
                 "Jinja2 variable references are suggested to "
-                "take a ``{{<one space><variable name><one space>}}``"
+                f"take a {hint_message}"
                 f" form. See lines {bad_lines}."
             )
 
