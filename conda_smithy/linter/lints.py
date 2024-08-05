@@ -627,13 +627,24 @@ def lint_check_usage_of_whls(meta_fname, noarch_value, lints, hints):
                 )
 
 
-def lint_rust_licenses_are_bundled(build_reqs, lints):
-    if build_reqs and ("{{ compiler('rust') }}" in build_reqs):
-        if "cargo-bundle-licenses" not in build_reqs:
-            lints.append(
-                "Rust packages must include the licenses of the Rust dependencies. "
-                "For more info, visit: https://conda-forge.org/docs/maintainer/adding_pkgs/#rust"
-            )
+def lint_rust_licenses_are_bundled(
+    build_reqs: Optional[List[str]],
+    lints: List[str],
+    is_rattler_build: bool = False,
+):
+    if not build_reqs:
+        return
+
+    if is_rattler_build:
+        has_rust = "${{ compiler('rust') }}" in build_reqs
+    else:
+        has_rust = "{{ compiler('rust') }}" in build_reqs
+
+    if has_rust and "cargo-bundle-licenses" not in build_reqs:
+        lints.append(
+            "Rust packages must include the licenses of the Rust dependencies. "
+            "For more info, visit: https://conda-forge.org/docs/maintainer/adding_pkgs/#rust"
+        )
 
 
 def lint_go_licenses_are_bundled(
