@@ -1705,8 +1705,8 @@ class TestLinter(unittest.TestCase):
         self.assertNotIn(expected_message, lints)
 
         meta = {
-            "context": {"version": "2.0.0~alpha0"},
-            "package": {"name": "python", "version": "${{ version }}"},
+            "context": {"bar": "2.0.0~alpha0"},
+            "package": {"name": "python", "version": "${{ bar }}"},
         }
         expected_message = (
             "Package version 2.0.0~alpha0 doesn't match conda spec"
