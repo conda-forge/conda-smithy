@@ -116,7 +116,11 @@ def lint_recipe_name(
     package_name = (
         rendered_context_recipe.get("package", {}).get("name", "").strip()
     )
+    recipe_name = (
+        rendered_context_recipe.get("recipe", {}).get("name", "").strip()
+    )
+    name = package_name or recipe_name
 
-    lint_msg = _lint_recipe_name(package_name)
+    lint_msg = _lint_recipe_name(name)
     if lint_msg:
         lints.append(lint_msg)
