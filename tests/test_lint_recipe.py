@@ -1776,6 +1776,30 @@ class TestLinter(unittest.TestCase):
         ]
         self.assertEqual(expected_messages, filtered_lints)
 
+    def test_rattler_single_space_pins(self):
+        meta = {
+            "requirements": {
+                "build": ["${{ compiler('c') }}", "python >=3", "pip   19"],
+                "host": ["python >= 2", "libcblas 3.8.* *netlib"],
+                "run": ["xonsh>1.0", "conda= 4.*", "conda-smithy<=54.*"],
+            }
+        }
+        lints, hints = linter.lintify_meta_yaml(meta, is_rattler_build=True)
+        filtered_lints = [
+            lint for lint in lints if lint.startswith("``requirements: ")
+        ]
+        expected_messages = [
+            "``requirements: host: python >= 2`` should not contain a space between "
+            "relational operator and the version, i.e. ``python >=2``",
+            "``requirements: run: xonsh>1.0`` must contain a space between the "
+            "name and the pin, i.e. ``xonsh >1.0``",
+            "``requirements: run: conda= 4.*`` must contain a space between the "
+            "name and the pin, i.e. ``conda =4.*``",
+            "``requirements: run: conda-smithy<=54.*`` must contain a space "
+            "between the name and the pin, i.e. ``conda-smithy <=54.*``",
+        ]
+        self.assertEqual(expected_messages, filtered_lints)
+
     def test_empty_host(self):
         meta = {"requirements": {"build": None, "host": None, "run": None}}
         # Test that this doesn't crash
