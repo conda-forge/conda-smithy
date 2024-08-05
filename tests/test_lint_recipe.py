@@ -2250,12 +2250,6 @@ def test_pin_compatible_in_run_exports(is_rattler_build: bool):
 
 @pytest.mark.parametrize("is_rattler_build", [False, True])
 def test_pin_compatible_in_run_exports_output(is_rattler_build: bool):
-    meta = {
-        "package": {
-            "name": "apackage",
-        },
-    }
-
     if is_rattler_build:
         meta = {
             "recipe": {
