@@ -318,7 +318,7 @@ def lintify_meta_yaml(
     lint_check_usage_of_whls(recipe_fname, noarch_value, lints, hints)
 
     # 28: Check that Rust licenses are bundled.
-    lint_rust_licenses_are_bundled(build_requirements, lints)
+    lint_rust_licenses_are_bundled(build_requirements, lints, is_rattler_build)
 
     # 29: Check that go licenses are bundled.
     lint_go_licenses_are_bundled(build_requirements, lints, is_rattler_build)
