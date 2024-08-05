@@ -1,8 +1,13 @@
 import os
 from typing import Any, Dict, List, Optional
 
+from rattler_build_conda_compat.jinja.jinja import (
+    RecipeWithContext,
+    render_recipe_with_context,
+)
+
 from conda_smithy.linter.errors import HINT_NO_ARCH
-from conda_smithy.linter.utils import TEST_FILES
+from conda_smithy.linter.utils import TEST_FILES, _lint_recipe_name
 
 REQUIREMENTS_ORDER = ["build", "host", "run"]
 
@@ -101,3 +106,21 @@ def hint_noarch_usage(
 
         if no_arch_possible:
             hints.append(HINT_NO_ARCH)
+
+
+def lint_recipe_name(
+    recipe_content: RecipeWithContext,
+    lints: List[str],
+) -> None:
+    rendered_context_recipe = render_recipe_with_context(recipe_content)
+    package_name = (
+        rendered_context_recipe.get("package", {}).get("name", "").strip()
+    )
+    recipe_name = (
+        rendered_context_recipe.get("recipe", {}).get("name", "").strip()
+    )
+    name = package_name or recipe_name
+
+    lint_msg = _lint_recipe_name(name)
+    if lint_msg:
+        lints.append(lint_msg)
