@@ -330,38 +330,6 @@ def test_license_file_empty(is_rattler_build):
 
 
 class TestLinter(unittest.TestCase):
-
-    def test_pin_compatible_in_run_exports(self):
-        meta = {
-            "package": {
-                "name": "apackage",
-            },
-            "build": {
-                "run_exports": ["compatible_pin apackage"],
-            },
-        }
-        lints, hints = linter.lintify_meta_yaml(meta)
-        expected = "pin_subpackage should be used instead"
-        self.assertTrue(any(lint.startswith(expected) for lint in lints))
-
-    def test_pin_compatible_in_run_exports_output(self):
-        meta = {
-            "package": {
-                "name": "apackage",
-            },
-            "outputs": [
-                {
-                    "name": "anoutput",
-                    "build": {
-                        "run_exports": ["subpackage_pin notanoutput"],
-                    },
-                }
-            ],
-        }
-        lints, hints = linter.lintify_meta_yaml(meta)
-        expected = "pin_compatible should be used instead"
-        self.assertTrue(any(lint.startswith(expected) for lint in lints))
-
     def test_bad_top_level(self):
         meta = OrderedDict([["package", {}], ["build", {}], ["sources", {}]])
         lints, hints = linter.lintify_meta_yaml(meta)
@@ -1706,6 +1674,46 @@ class TestLinter(unittest.TestCase):
         lints, hints = linter.lintify_meta_yaml(meta)
         assert any(lint.startswith(expected_message) for lint in lints)
 
+    def test_rattler_version(self):
+        meta = {"package": {"name": "python", "version": "3.6.4"}}
+        expected_message = "Package version 3.6.4 doesn't match conda spec"
+        lints, hints = linter.lintify_meta_yaml(meta, is_rattler_build=True)
+        self.assertNotIn(expected_message, lints)
+
+        meta = {"package": {"name": "python", "version": "2.0.0~alpha0"}}
+        expected_message = (
+            "Package version 2.0.0~alpha0 doesn't match conda spec"
+        )
+        lints, hints = linter.lintify_meta_yaml(meta, is_rattler_build=True)
+        assert any(lint.startswith(expected_message) for lint in lints)
+
+        # when having multiple outputs it should use recipe keyword
+        meta = {"recipe": {"version": "2.0.0~alpha0"}, "outputs": []}
+        expected_message = (
+            "Package version 2.0.0~alpha0 doesn't match conda spec"
+        )
+        lints, hints = linter.lintify_meta_yaml(meta, is_rattler_build=True)
+        assert any(lint.startswith(expected_message) for lint in lints)
+
+    def test_rattler_version_with_context(self):
+        meta = {
+            "context": {"foo": "3.6.4"},
+            "package": {"name": "python", "version": "${{ foo }}"},
+        }
+        expected_message = "Package version 3.6.4 doesn't match conda spec"
+        lints, hints = linter.lintify_meta_yaml(meta, is_rattler_build=True)
+        self.assertNotIn(expected_message, lints)
+
+        meta = {
+            "context": {"bar": "2.0.0~alpha0"},
+            "package": {"name": "python", "version": "${{ bar }}"},
+        }
+        expected_message = (
+            "Package version 2.0.0~alpha0 doesn't match conda spec"
+        )
+        lints, hints = linter.lintify_meta_yaml(meta, is_rattler_build=True)
+        assert any(lint.startswith(expected_message) for lint in lints)
+
     @unittest.skipUnless(is_gh_token_set(), "GH_TOKEN not set")
     def test_examples(self):
         msg = (
@@ -1761,6 +1769,30 @@ class TestLinter(unittest.TestCase):
             }
         }
         lints, hints = linter.lintify_meta_yaml(meta)
+        filtered_lints = [
+            lint for lint in lints if lint.startswith("``requirements: ")
+        ]
+        expected_messages = [
+            "``requirements: host: python >= 2`` should not contain a space between "
+            "relational operator and the version, i.e. ``python >=2``",
+            "``requirements: run: xonsh>1.0`` must contain a space between the "
+            "name and the pin, i.e. ``xonsh >1.0``",
+            "``requirements: run: conda= 4.*`` must contain a space between the "
+            "name and the pin, i.e. ``conda =4.*``",
+            "``requirements: run: conda-smithy<=54.*`` must contain a space "
+            "between the name and the pin, i.e. ``conda-smithy <=54.*``",
+        ]
+        self.assertEqual(expected_messages, filtered_lints)
+
+    def test_rattler_single_space_pins(self):
+        meta = {
+            "requirements": {
+                "build": ["${{ compiler('c') }}", "python >=3", "pip   19"],
+                "host": ["python >= 2", "libcblas 3.8.* *netlib"],
+                "run": ["xonsh>1.0", "conda= 4.*", "conda-smithy<=54.*"],
+            }
+        }
+        lints, hints = linter.lintify_meta_yaml(meta, is_rattler_build=True)
         filtered_lints = [
             lint for lint in lints if lint.startswith("``requirements: ")
         ]
@@ -2232,6 +2264,70 @@ def test_lint_wheels(tmp_path, yaml_block, annotation):
         assert any(expected_message in lint for lint in lints)
     else:
         assert any(expected_message in hint for hint in hints)
+
+
+@pytest.mark.parametrize("is_rattler_build", [False, True])
+def test_pin_compatible_in_run_exports(is_rattler_build: bool):
+    meta = {
+        "package": {
+            "name": "apackage",
+        }
+    }
+
+    if is_rattler_build:
+        meta["requirements"] = {
+            "run_exports": ['${{ pin_compatible("apackage") }}'],
+        }
+    else:
+        meta["build"] = {
+            "run_exports": ["compatible_pin apackage"],
+        }
+
+    lints, hints = linter.lintify_meta_yaml(
+        meta, is_rattler_build=is_rattler_build
+    )
+    expected = "pin_subpackage should be used instead"
+    assert any(lint.startswith(expected) for lint in lints)
+
+
+@pytest.mark.parametrize("is_rattler_build", [False, True])
+def test_pin_compatible_in_run_exports_output(is_rattler_build: bool):
+    if is_rattler_build:
+        meta = {
+            "recipe": {
+                "name": "apackage",
+            },
+            "outputs": [
+                {
+                    "package": {"name": "anoutput", "version": "0.1.0"},
+                    "requirements": {
+                        "run_exports": [
+                            '${{ pin_subpackage("notanoutput") }}'
+                        ],
+                    },
+                }
+            ],
+        }
+    else:
+        meta = {
+            "package": {
+                "name": "apackage",
+            },
+            "outputs": [
+                {
+                    "name": "anoutput",
+                    "build": {
+                        "run_exports": ["subpackage_pin notanoutput"],
+                    },
+                }
+            ],
+        }
+
+    lints, hints = linter.lintify_meta_yaml(
+        meta, is_rattler_build=is_rattler_build
+    )
+    expected = "pin_compatible should be used instead"
+    assert any(lint.startswith(expected) for lint in lints)
 
 
 if __name__ == "__main__":
