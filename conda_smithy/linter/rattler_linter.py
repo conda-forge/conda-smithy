@@ -1,7 +1,7 @@
 import os
 from typing import Any, Dict, List, Optional
 
-from rattler_build_conda_compat.jinja import (
+from rattler_build_conda_compat.jinja.jinja import (
     RecipeWithContext,
     render_recipe_with_context,
 )
