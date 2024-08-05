@@ -237,14 +237,23 @@ def lint_should_be_empty_line(meta_fname, lints):
 
 
 def lint_license_family_should_be_valid(
-    about_section, license, needed_families, lints
-):
-    license_family = about_section.get("license_family", license).lower()
+    about_section: Dict[str, Any],
+    license: str,
+    needed_families: List[str],
+    lints: List[str],
+    is_rattler_build: bool = False,
+) -> None:
+    lint_msg = "license_file entry is missing, but is required."
     license_file = about_section.get("license_file", None)
-    if not license_file and any(
-        f for f in needed_families if f in license_family
-    ):
-        lints.append("license_file entry is missing, but is required.")
+    if not license_file:
+        if is_rattler_build:
+            lints.append(lint_msg)
+        else:
+            license_family = about_section.get(
+                "license_family", license
+            ).lower()
+            if any(f for f in needed_families if f in license_family):
+                lints.append(lint_msg)
 
 
 def lint_recipe_name(

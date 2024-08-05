@@ -4,6 +4,50 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.37.2ls
+====================
+
+**Authors:**
+
+
+
+
+v3.37.2
+====================
+
+**Added:**
+
+* extended documentation for the ``bot.version_updates.sources`` field in ``conda-forge.yml``
+* Added partial implementation of conda recipe format v2 linting. (#1984, #1985, #1987, #1988, #1988, #1991, #1999)
+
+**Changed:**
+
+* Introduced ``ruff`` as pre-commit linter. (#1919)
+* Make sure to use ``Miniforge`` everywhere instead of ``Mambaforge`` (they are equivalent). (#1986)
+* Use ``tlz`` namespace from ``toolz`` ( #2006 )
+* Refactor ``lint_recipe.py`` and split some functions into separate modules (``linter/lints.py`` and ``linter/hints.py``). (#1981)
+
+**Fixed:**
+
+* Remove import of deprecated ``conda_build.conda_interface``
+* When linting build_platform has a default value now (#1996).
+* Generate correct URL for feedstock maintainer teams in feedstock READMEs. (#1990)
+
+**Authors:**
+
+* Isuru Fernando
+* Matthew R. Becker
+* Jaime Rodríguez-Guerra
+* nichmor
+* Min RK
+* John Kirkham
+* pre-commit-ci[bot]
+* Wolf Vollprecht
+* Yannik Tausch
+* Daniel Ching
+
+
+
 v3.37.1
 ====================
 
