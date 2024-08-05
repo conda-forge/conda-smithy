@@ -66,7 +66,8 @@ from conda_build.metadata import (
     ensure_valid_license_family,
 )
 
-from conda_smithy.utils import _read_forge_config, get_yaml, render_meta_yaml
+from conda_smithy.configure_feedstock import _read_forge_config
+from conda_smithy.utils import get_yaml, render_meta_yaml
 from conda_smithy.validate_schema import validate_json_schema
 
 NEEDED_FAMILIES = ["gpl", "bsd", "mit", "apache", "psf"]

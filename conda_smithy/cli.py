@@ -17,11 +17,11 @@ from ruamel.yaml import YAML
 import conda_smithy.cirun_utils
 from conda_smithy import __version__, configure_feedstock, feedstock_io
 from conda_smithy import lint_recipe as linter
+from conda_smithy.configure_feedstock import _load_forge_config
 from conda_smithy.utils import (
     CONDA_BUILD,
     RATTLER_BUILD,
     _get_metadata_from_feedstock_dir,
-    _load_forge_config,
     get_feedstock_name_from_metadata,
     merge_dict,
 )
