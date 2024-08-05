@@ -641,6 +641,37 @@ class TestLinter(unittest.TestCase):
             _, hints = linter.lintify_meta_yaml({}, recipe_dir)
             self.assertTrue(any(h.startswith(expected_message) for h in hints))
 
+    def test_rattler_jinja2_vars(self):
+        expected_message = (
+            "Jinja2 variable references are suggested to take a ``${{<one space>"
+            "<variable name><one space>}}`` form. See lines %s."
+            % ([6, 8, 10, 11, 12])
+        )
+
+        with tmp_directory() as recipe_dir:
+            with open(os.path.join(recipe_dir, "recipe.yaml"), "w") as fh:
+                fh.write(
+                    """
+                    package:
+                       name: foo
+                    requirements:
+                      run:
+                        - ${{name}}
+                        - ${{ x.update({4:5}) }}
+                        - ${{ name}}
+                        - ${{ name }}
+                        - ${{name|lower}}
+                        - ${{ name|lower}}
+                        - ${{name|lower }}
+                        - ${{ name|lower }}
+                    """
+                )
+
+            _, hints = linter.lintify_meta_yaml(
+                {}, recipe_dir, is_rattler_build=True
+            )
+            self.assertTrue(any(h.startswith(expected_message) for h in hints))
+
     def test_selectors(self):
         expected_message = (
             "Selectors are suggested to take a "
