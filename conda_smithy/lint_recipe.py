@@ -258,10 +258,15 @@ def lintify_meta_yaml(
         forge_yaml = {}
 
     # 18: noarch doesn't work with selectors for runtime dependencies
+    noarch_platforms = len(forge_yaml.get("noarch_platforms", [])) > 1
     if is_rattler_build:
         raw_requirements_section = meta.get("requirements", {})
         lint_rattler_noarch_and_runtime_dependencies(
-            noarch_value, raw_requirements_section, build_section, lints
+            noarch_value,
+            raw_requirements_section,
+            build_section,
+            noarch_platforms,
+            lints,
         )
     else:
         lint_noarch_and_runtime_dependencies(

@@ -316,11 +316,16 @@ def lint_rattler_noarch_and_runtime_dependencies(
     noarch_value: Optional[Literal["python", "generic"]],
     raw_requirements_section: Dict[str, Any],
     build_section: Dict[str, Any],
+    noarch_platforms: bool,
     lints: List[str],
 ) -> None:
     if noarch_value:
         rattler_linter.lint_usage_of_selectors_for_noarch(
-            noarch_value, raw_requirements_section, build_section, lints
+            noarch_value,
+            raw_requirements_section,
+            build_section,
+            noarch_platforms,
+            lints,
         )
 
 

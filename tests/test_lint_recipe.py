@@ -945,14 +945,24 @@ class TestLinter(unittest.TestCase):
 
         with tmp_directory() as recipe_dir:
 
-            def assert_noarch_selector(meta_string, is_good=False):
+            def assert_noarch_selector(
+                meta_string, is_good=False, has_noarch=False
+            ):
                 with open(os.path.join(recipe_dir, "recipe.yaml"), "w") as fh:
                     fh.write(meta_string)
 
                 with open(
                     os.path.join(recipe_dir, "conda-forge.yml"), "w"
                 ) as fh:
-                    fh.write("conda_build_tool: rattler-build")
+                    fh.write("conda_build_tool: rattler-build\n")
+                    if has_noarch:
+                        fh.write(
+                            """
+noarch_platforms:
+  - win_64
+  - linux_64
+"""
+                        )
 
                 lints = linter.main(recipe_dir, feedstock_dir=recipe_dir)
                 if is_good:
@@ -1024,7 +1034,9 @@ class TestLinter(unittest.TestCase):
                                   - if: win
                                     then:
                                       - enum34
-                            """
+                            """,
+                is_good=True,
+                has_noarch=True,
             )
             assert_noarch_selector(
                 """
