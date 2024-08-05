@@ -1913,27 +1913,29 @@ class TestLinter(unittest.TestCase):
         lints, hints = linter.lintify_meta_yaml(meta_with_license)
         self.assertNotIn(expected_msg, lints)
 
-    def test_go_license_bundling(self):
-        # Case where go-licenses is missing
-        meta_missing_license = {
-            "requirements": {"build": ["{{ compiler('go') }}"]},
-        }
 
-        lints, hints = linter.lintify_meta_yaml(meta_missing_license)
-        expected_msg = (
-            "Go packages must include the licenses of the Go dependencies. "
-            "For more info, visit: https://conda-forge.org/docs/maintainer/adding_pkgs/#go"
-        )
-        self.assertIn(expected_msg, lints)
+@pytest.parametrize("is_rattler_build", [True, False])
+def test_go_license_bundling(is_rattler_build: bool):
+    # Case where go-licenses is missing
+    compiler = "${{ compiler('go') }}" if is_rattler_build else "{{ compiler('go') }}"
+    meta_missing_license = {
+        "requirements": {"build": [compiler]},
+    }
 
-        # Case where go-licenses is present
-        meta_with_license = {
-            "requirements": {"build": ["{{ compiler('go') }}", "go-licenses"]},
-        }
+    lints, hints = linter.lintify_meta_yaml(meta_missing_license, is_rattler_build=is_rattler_build)
+    expected_msg = (
+        "Go packages must include the licenses of the Go dependencies. "
+        "For more info, visit: https://conda-forge.org/docs/maintainer/adding_pkgs/#go"
+    )
+    assert expected_msg in lints
 
-        lints, hints = linter.lintify_meta_yaml(meta_with_license)
-        self.assertNotIn(expected_msg, lints)
+    # Case where go-licenses is present
+    meta_with_license = {
+        "requirements": {"build": [compiler, "go-licenses"]},
+    }
 
+    lints, hints = linter.lintify_meta_yaml(meta_with_license, is_rattler_build=is_rattler_build)
+    assert expected_msg not in lints
 
 @pytest.mark.cli
 class TestCliRecipeLint(unittest.TestCase):

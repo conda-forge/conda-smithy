@@ -636,8 +636,16 @@ def lint_rust_licenses_are_bundled(build_reqs, lints):
             )
 
 
-def lint_go_licenses_are_bundled(build_reqs, lints):
-    if build_reqs and ("{{ compiler('go') }}" in build_reqs):
+def lint_go_licenses_are_bundled(build_reqs: Optional[List[str]], lints: List[str], is_rattler_build: bool = False):
+    if not build_reqs:
+        return
+
+    if is_rattler_build:
+        has_go = "${{ compiler('go') }}" in build_reqs
+    else:
+        has_go = "{{ compiler('go') }}" in build_reqs
+
+    if has_go:
         if "go-licenses" not in build_reqs:
             lints.append(
                 "Go packages must include the licenses of the Go dependencies. "

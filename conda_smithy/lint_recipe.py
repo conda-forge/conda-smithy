@@ -299,7 +299,7 @@ def lintify_meta_yaml(
     lint_rust_licenses_are_bundled(build_requirements, lints)
 
     # 29: Check that go licenses are bundled.
-    lint_go_licenses_are_bundled(build_requirements, lints)
+    lint_go_licenses_are_bundled(build_requirements, lints, is_rattler_build)
 
     # hints
     # 1: suggest pip
