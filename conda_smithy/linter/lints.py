@@ -1,12 +1,12 @@
-import fnmatch
 import itertools
 import os
 import re
 from collections.abc import Sequence
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Literal, Optional
 
 from conda.exceptions import InvalidVersionSpec
 from conda.models.version import VersionOrder
+from rattler_build_conda_compat.jinja.jinja import render_recipe_with_context
 from ruamel.yaml import CommentedSeq
 
 from conda_smithy.linter import rattler_linter
@@ -312,6 +312,23 @@ def lint_noarch(noarch_value: Optional[str], lints):
             )
 
 
+def lint_rattler_noarch_and_runtime_dependencies(
+    noarch_value: Optional[Literal["python", "generic"]],
+    raw_requirements_section: Dict[str, Any],
+    build_section: Dict[str, Any],
+    noarch_platforms: bool,
+    lints: List[str],
+) -> None:
+    if noarch_value:
+        rattler_linter.lint_usage_of_selectors_for_noarch(
+            noarch_value,
+            raw_requirements_section,
+            build_section,
+            noarch_platforms,
+            lints,
+        )
+
+
 def lint_noarch_and_runtime_dependencies(
     noarch_value, meta_fname, forge_yaml, conda_build_config_keys, lints
 ):
@@ -488,22 +505,32 @@ def lint_non_noarch_builds(
                         )
 
 
-def lint_jinja_var_references(meta_fname, hints):
+def lint_jinja_var_references(
+    meta_fname, hints, is_rattler_build: bool = False
+):
     bad_vars = []
     bad_lines = []
+    jinja_pattern = (
+        JINJA_VAR_PAT if not is_rattler_build else rattler_linter.JINJA_VAR_PAT
+    )
     if os.path.exists(meta_fname):
         with open(meta_fname) as fh:
             for i, line in enumerate(fh.readlines()):
-                for m in JINJA_VAR_PAT.finditer(line):
+                for m in jinja_pattern.finditer(line):
                     if m.group(1) is not None:
                         var = m.group(1)
                         if var != f" {var.strip()} ":
                             bad_vars.append(m.group(1).strip())
                             bad_lines.append(i + 1)
         if bad_vars:
+            hint_message = (
+                "``{{<one space><variable name><one space>}}``"
+                if not is_rattler_build
+                else "``${{<one space><variable name><one space>}}``"
+            )
             hints.append(
                 "Jinja2 variable references are suggested to "
-                "take a ``{{<one space><variable name><one space>}}``"
+                f"take a {hint_message}"
                 f" form. See lines {bad_lines}."
             )
 
@@ -531,20 +558,30 @@ def lint_pin_subpackages(
     lints,
     is_rattler_build: bool = False,
 ):
+    if is_rattler_build:
+        meta = render_recipe_with_context(meta)
+        # use the rendered versions here
+        package_section = meta.get("package", {})
+        outputs_section = meta.get("outputs", [])
+
     subpackage_names = []
     for out in outputs_section:
-        if "name" in out:
+        if is_rattler_build:
+            if out.get("package", {}).get("name"):
+                subpackage_names.append(out["package"]["name"])
+        elif "name" in out:
             subpackage_names.append(out["name"])  # explicit
+
     if "name" in package_section:
         subpackage_names.append(package_section["name"])  # implicit
 
     def check_pins(pinning_section):
         if pinning_section is None:
             return
-        filter_pin = (
-            "pin_compatible*" if is_rattler_build else "compatible_pin*"
-        )
-        for pin in fnmatch.filter(pinning_section, filter_pin):
+        filter_pin = "compatible_pin "
+        for pin in (
+            pin for pin in pinning_section if pin.startswith(filter_pin)
+        ):
             if pin.split()[1] in subpackage_names:
                 lints.append(
                     "pin_subpackage should be used instead of"
@@ -552,10 +589,11 @@ def lint_pin_subpackages(
                     " because it is one of the known outputs of this recipe:"
                     f" {subpackage_names}."
                 )
-        filter_pin = (
-            "pin_subpackage*" if is_rattler_build else "subpackage_pin*"
-        )
-        for pin in fnmatch.filter(pinning_section, filter_pin):
+
+        filter_pin = "subpackage_pin "
+        for pin in (
+            pin for pin in pinning_section if pin.startswith(filter_pin)
+        ):
             if pin.split()[1] not in subpackage_names:
                 lints.append(
                     "pin_compatible should be used instead of"
@@ -583,12 +621,14 @@ def lint_pin_subpackages(
                 "requirements" in top_level
                 and "run_exports" in top_level["requirements"]
             ):
-                if "strong" in top_level["requirements"]["run_exports"]:
-                    check_pins(
-                        top_level["requirements"]["run_exports"]["strong"]
-                    )
+                run_export_section = top_level["requirements"]["run_exports"]
+                # the dictionary might have strong / weak / noarch etc. keys
+                if isinstance(run_export_section, dict):
+                    for key in run_export_section:
+                        check_pins(run_export_section[key])
+                # or it can be just a list
                 else:
-                    check_pins(top_level["requirements"]["run_exports"])
+                    check_pins(run_export_section)
 
     check_pins_build_and_requirements(meta)
     for out in outputs_section:
@@ -635,17 +675,40 @@ def lint_check_usage_of_whls(meta_fname, noarch_value, lints, hints):
                 )
 
 
-def lint_rust_licenses_are_bundled(build_reqs, lints):
-    if build_reqs and ("{{ compiler('rust') }}" in build_reqs):
-        if "cargo-bundle-licenses" not in build_reqs:
-            lints.append(
-                "Rust packages must include the licenses of the Rust dependencies. "
-                "For more info, visit: https://conda-forge.org/docs/maintainer/adding_pkgs/#rust"
-            )
+def lint_rust_licenses_are_bundled(
+    build_reqs: Optional[List[str]],
+    lints: List[str],
+    is_rattler_build: bool = False,
+):
+    if not build_reqs:
+        return
+
+    if is_rattler_build:
+        has_rust = "${{ compiler('rust') }}" in build_reqs
+    else:
+        has_rust = "{{ compiler('rust') }}" in build_reqs
+
+    if has_rust and "cargo-bundle-licenses" not in build_reqs:
+        lints.append(
+            "Rust packages must include the licenses of the Rust dependencies. "
+            "For more info, visit: https://conda-forge.org/docs/maintainer/adding_pkgs/#rust"
+        )
 
 
-def lint_go_licenses_are_bundled(build_reqs, lints):
-    if build_reqs and ("{{ compiler('go') }}" in build_reqs):
+def lint_go_licenses_are_bundled(
+    build_reqs: Optional[List[str]],
+    lints: List[str],
+    is_rattler_build: bool = False,
+):
+    if not build_reqs:
+        return
+
+    if is_rattler_build:
+        has_go = "${{ compiler('go') }}" in build_reqs
+    else:
+        has_go = "{{ compiler('go') }}" in build_reqs
+
+    if has_go:
         if "go-licenses" not in build_reqs:
             lints.append(
                 "Go packages must include the licenses of the Go dependencies. "

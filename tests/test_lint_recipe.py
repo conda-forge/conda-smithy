@@ -330,38 +330,6 @@ def test_license_file_empty(is_rattler_build):
 
 
 class TestLinter(unittest.TestCase):
-
-    def test_pin_compatible_in_run_exports(self):
-        meta = {
-            "package": {
-                "name": "apackage",
-            },
-            "build": {
-                "run_exports": ["compatible_pin apackage"],
-            },
-        }
-        lints, hints = linter.lintify_meta_yaml(meta)
-        expected = "pin_subpackage should be used instead"
-        self.assertTrue(any(lint.startswith(expected) for lint in lints))
-
-    def test_pin_compatible_in_run_exports_output(self):
-        meta = {
-            "package": {
-                "name": "apackage",
-            },
-            "outputs": [
-                {
-                    "name": "anoutput",
-                    "build": {
-                        "run_exports": ["subpackage_pin notanoutput"],
-                    },
-                }
-            ],
-        }
-        lints, hints = linter.lintify_meta_yaml(meta)
-        expected = "pin_compatible should be used instead"
-        self.assertTrue(any(lint.startswith(expected) for lint in lints))
-
     def test_bad_top_level(self):
         meta = OrderedDict([["package", {}], ["build", {}], ["sources", {}]])
         lints, hints = linter.lintify_meta_yaml(meta)
@@ -639,6 +607,37 @@ class TestLinter(unittest.TestCase):
                 )
 
             _, hints = linter.lintify_meta_yaml({}, recipe_dir)
+            self.assertTrue(any(h.startswith(expected_message) for h in hints))
+
+    def test_rattler_jinja2_vars(self):
+        expected_message = (
+            "Jinja2 variable references are suggested to take a ``${{<one space>"
+            "<variable name><one space>}}`` form. See lines %s."
+            % ([6, 8, 10, 11, 12])
+        )
+
+        with tmp_directory() as recipe_dir:
+            with open(os.path.join(recipe_dir, "recipe.yaml"), "w") as fh:
+                fh.write(
+                    """
+                    package:
+                       name: foo
+                    requirements:
+                      run:
+                        - ${{name}}
+                        - ${{ x.update({4:5}) }}
+                        - ${{ name}}
+                        - ${{ name }}
+                        - ${{name|lower}}
+                        - ${{ name|lower}}
+                        - ${{name|lower }}
+                        - ${{ name|lower }}
+                    """
+                )
+
+            _, hints = linter.lintify_meta_yaml(
+                {}, recipe_dir, is_rattler_build=True
+            )
             self.assertTrue(any(h.startswith(expected_message) for h in hints))
 
     def test_selectors(self):
@@ -937,6 +936,117 @@ class TestLinter(unittest.TestCase):
                                   - python
                                 run:
                                   - enum34     # [py2k]
+                            """
+            )
+
+    def test_rattler_noarch_selectors(self):
+        expected_start = "`noarch` packages can't have"
+
+        with tmp_directory() as recipe_dir:
+
+            def assert_noarch_selector(
+                meta_string, is_good=False, has_noarch=False
+            ):
+                with open(os.path.join(recipe_dir, "recipe.yaml"), "w") as fh:
+                    fh.write(meta_string)
+
+                with open(
+                    os.path.join(recipe_dir, "conda-forge.yml"), "w"
+                ) as fh:
+                    fh.write("conda_build_tool: rattler-build\n")
+                    if has_noarch:
+                        fh.write(
+                            """
+noarch_platforms:
+  - win_64
+  - linux_64
+"""
+                        )
+
+                lints = linter.main(recipe_dir, feedstock_dir=recipe_dir)
+                if is_good:
+                    message = (
+                        "Found lints when there shouldn't have "
+                        f"been a lint for '{meta_string}'."
+                    )
+                else:
+                    message = (
+                        f"Expected lints for '{meta_string}', but didn't "
+                        "get any."
+                    )
+                self.assertEqual(
+                    not is_good,
+                    any(lint.startswith(expected_start) for lint in lints),
+                    message,
+                )
+
+            assert_noarch_selector(
+                """
+                            build:
+                              noarch: python
+                              skip:
+                                - win
+                """
+            )
+            assert_noarch_selector(
+                """
+                            build:
+                              noarch: python
+                            """,
+                is_good=True,
+            )
+            assert_noarch_selector(
+                """
+                            build:
+                              noarch: python
+                              requirements:
+                                build:
+                                  - python
+                            """,
+                is_good=True,
+            )
+            assert_noarch_selector(
+                """
+                            build:
+                              noarch: python
+                              script:
+                                - if: unix
+                                  then: echo "hello"
+                                - if: win
+                                  then: echo "hello"
+                              requirements:
+                                build:
+                                  - python
+                                  - if: win
+                                    then:
+                                      - enum34
+                            """,
+                is_good=True,
+            )
+            assert_noarch_selector(
+                """
+                            build:
+                              noarch: python
+                            requirements:
+                                run:
+                                  - python
+                                  - if: win
+                                    then:
+                                      - enum34
+                            """,
+                is_good=True,
+                has_noarch=True,
+            )
+            assert_noarch_selector(
+                """
+                            build:
+                              noarch: python
+                            requirements:
+                              host:
+                                - python
+                                - if: win
+                                  then:
+                                    - enum34
                             """
             )
 
@@ -1954,49 +2064,67 @@ class TestLinter(unittest.TestCase):
         expected = "Recipes should usually depend on `matplotlib-base`"
         self.assertTrue(any(hint.startswith(expected) for hint in hints))
 
-    def test_rust_license_bundling(self):
-        # Case where cargo-bundle-licenses is missing
-        meta_missing_license = {
-            "requirements": {"build": ["{{ compiler('rust') }}"]},
-        }
 
-        lints, hints = linter.lintify_meta_yaml(meta_missing_license)
-        expected_msg = (
-            "Rust packages must include the licenses of the Rust dependencies. "
-            "For more info, visit: https://conda-forge.org/docs/maintainer/adding_pkgs/#rust"
-        )
-        self.assertIn(expected_msg, lints)
+@pytest.mark.parametrize("is_rattler_build", [True, False])
+def test_rust_license_bundling(is_rattler_build: bool):
+    # Case where go-licenses is missing
+    compiler = (
+        "${{ compiler('rust') }}"
+        if is_rattler_build
+        else "{{ compiler('rust') }}"
+    )
+    meta_missing_license = {
+        "requirements": {"build": [compiler]},
+    }
 
-        # Case where cargo-bundle-licenses is present
-        meta_with_license = {
-            "requirements": {
-                "build": ["{{ compiler('rust') }}", "cargo-bundle-licenses"]
-            },
-        }
+    lints, hints = linter.lintify_meta_yaml(
+        meta_missing_license, is_rattler_build=is_rattler_build
+    )
+    expected_msg = (
+        "Rust packages must include the licenses of the Rust dependencies. "
+        "For more info, visit: https://conda-forge.org/docs/maintainer/adding_pkgs/#rust"
+    )
+    assert expected_msg in lints
 
-        lints, hints = linter.lintify_meta_yaml(meta_with_license)
-        self.assertNotIn(expected_msg, lints)
+    # Case where go-licenses is present
+    meta_with_license = {
+        "requirements": {"build": [compiler, "cargo-bundle-licenses"]},
+    }
 
-    def test_go_license_bundling(self):
-        # Case where go-licenses is missing
-        meta_missing_license = {
-            "requirements": {"build": ["{{ compiler('go') }}"]},
-        }
+    lints, hints = linter.lintify_meta_yaml(
+        meta_with_license, is_rattler_build=is_rattler_build
+    )
+    assert expected_msg not in lints
 
-        lints, hints = linter.lintify_meta_yaml(meta_missing_license)
-        expected_msg = (
-            "Go packages must include the licenses of the Go dependencies. "
-            "For more info, visit: https://conda-forge.org/docs/maintainer/adding_pkgs/#go"
-        )
-        self.assertIn(expected_msg, lints)
 
-        # Case where go-licenses is present
-        meta_with_license = {
-            "requirements": {"build": ["{{ compiler('go') }}", "go-licenses"]},
-        }
+@pytest.mark.parametrize("is_rattler_build", [True, False])
+def test_go_license_bundling(is_rattler_build: bool):
+    # Case where go-licenses is missing
+    compiler = (
+        "${{ compiler('go') }}" if is_rattler_build else "{{ compiler('go') }}"
+    )
+    meta_missing_license = {
+        "requirements": {"build": [compiler]},
+    }
 
-        lints, hints = linter.lintify_meta_yaml(meta_with_license)
-        self.assertNotIn(expected_msg, lints)
+    lints, hints = linter.lintify_meta_yaml(
+        meta_missing_license, is_rattler_build=is_rattler_build
+    )
+    expected_msg = (
+        "Go packages must include the licenses of the Go dependencies. "
+        "For more info, visit: https://conda-forge.org/docs/maintainer/adding_pkgs/#go"
+    )
+    assert expected_msg in lints
+
+    # Case where go-licenses is present
+    meta_with_license = {
+        "requirements": {"build": [compiler, "go-licenses"]},
+    }
+
+    lints, hints = linter.lintify_meta_yaml(
+        meta_with_license, is_rattler_build=is_rattler_build
+    )
+    assert expected_msg not in lints
 
 
 @pytest.mark.cli
@@ -2278,6 +2406,70 @@ def test_lint_wheels(tmp_path, yaml_block, annotation):
         assert any(expected_message in lint for lint in lints)
     else:
         assert any(expected_message in hint for hint in hints)
+
+
+@pytest.mark.parametrize("is_rattler_build", [False, True])
+def test_pin_compatible_in_run_exports(is_rattler_build: bool):
+    meta = {
+        "package": {
+            "name": "apackage",
+        }
+    }
+
+    if is_rattler_build:
+        meta["requirements"] = {
+            "run_exports": ['${{ pin_compatible("apackage") }}'],
+        }
+    else:
+        meta["build"] = {
+            "run_exports": ["compatible_pin apackage"],
+        }
+
+    lints, hints = linter.lintify_meta_yaml(
+        meta, is_rattler_build=is_rattler_build
+    )
+    expected = "pin_subpackage should be used instead"
+    assert any(lint.startswith(expected) for lint in lints)
+
+
+@pytest.mark.parametrize("is_rattler_build", [False, True])
+def test_pin_compatible_in_run_exports_output(is_rattler_build: bool):
+    if is_rattler_build:
+        meta = {
+            "recipe": {
+                "name": "apackage",
+            },
+            "outputs": [
+                {
+                    "package": {"name": "anoutput", "version": "0.1.0"},
+                    "requirements": {
+                        "run_exports": [
+                            '${{ pin_subpackage("notanoutput") }}'
+                        ],
+                    },
+                }
+            ],
+        }
+    else:
+        meta = {
+            "package": {
+                "name": "apackage",
+            },
+            "outputs": [
+                {
+                    "name": "anoutput",
+                    "build": {
+                        "run_exports": ["subpackage_pin notanoutput"],
+                    },
+                }
+            ],
+        }
+
+    lints, hints = linter.lintify_meta_yaml(
+        meta, is_rattler_build=is_rattler_build
+    )
+    expected = "pin_compatible should be used instead"
+    assert any(lint.startswith(expected) for lint in lints)
 
 
 if __name__ == "__main__":
