@@ -7,7 +7,11 @@ from rattler_build_conda_compat.jinja.jinja import (
 )
 
 from conda_smithy.linter.errors import HINT_NO_ARCH
-from conda_smithy.linter.utils import TEST_FILES, _lint_recipe_name
+from conda_smithy.linter.utils import (
+    TEST_FILES,
+    _lint_package_version,
+    _lint_recipe_name,
+)
 
 REQUIREMENTS_ORDER = ["build", "host", "run"]
 
@@ -122,5 +126,24 @@ def lint_recipe_name(
     name = package_name or recipe_name
 
     lint_msg = _lint_recipe_name(name)
+    if lint_msg:
+        lints.append(lint_msg)
+
+
+def lint_package_version(
+    recipe_content: RecipeWithContext,
+    lints: List[str],
+) -> None:
+    rendered_context_recipe = render_recipe_with_context(recipe_content)
+    package_version = (
+        rendered_context_recipe.get("package", {}).get("version", "").strip()
+    )
+    recipe_version = (
+        rendered_context_recipe.get("recipe", {}).get("version", "").strip()
+    )
+    version = package_version or recipe_version
+
+    lint_msg = _lint_package_version(version)
+
     if lint_msg:
         lints.append(lint_msg)
