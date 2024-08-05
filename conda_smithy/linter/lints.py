@@ -636,7 +636,11 @@ def lint_rust_licenses_are_bundled(build_reqs, lints):
             )
 
 
-def lint_go_licenses_are_bundled(build_reqs: Optional[List[str]], lints: List[str], is_rattler_build: bool = False):
+def lint_go_licenses_are_bundled(
+    build_reqs: Optional[List[str]],
+    lints: List[str],
+    is_rattler_build: bool = False,
+):
     if not build_reqs:
         return
 
