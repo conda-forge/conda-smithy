@@ -330,38 +330,6 @@ def test_license_file_empty(is_rattler_build):
 
 
 class TestLinter(unittest.TestCase):
-
-    def test_pin_compatible_in_run_exports(self):
-        meta = {
-            "package": {
-                "name": "apackage",
-            },
-            "build": {
-                "run_exports": ["compatible_pin apackage"],
-            },
-        }
-        lints, hints = linter.lintify_meta_yaml(meta)
-        expected = "pin_subpackage should be used instead"
-        self.assertTrue(any(lint.startswith(expected) for lint in lints))
-
-    def test_pin_compatible_in_run_exports_output(self):
-        meta = {
-            "package": {
-                "name": "apackage",
-            },
-            "outputs": [
-                {
-                    "name": "anoutput",
-                    "build": {
-                        "run_exports": ["subpackage_pin notanoutput"],
-                    },
-                }
-            ],
-        }
-        lints, hints = linter.lintify_meta_yaml(meta)
-        expected = "pin_compatible should be used instead"
-        self.assertTrue(any(lint.startswith(expected) for lint in lints))
-
     def test_bad_top_level(self):
         meta = OrderedDict([["package", {}], ["build", {}], ["sources", {}]])
         lints, hints = linter.lintify_meta_yaml(meta)
@@ -2254,6 +2222,76 @@ def test_lint_wheels(tmp_path, yaml_block, annotation):
         assert any(expected_message in lint for lint in lints)
     else:
         assert any(expected_message in hint for hint in hints)
+
+
+@pytest.mark.parametrize("is_rattler_build", [False, True])
+def test_pin_compatible_in_run_exports(is_rattler_build: bool):
+    meta = {
+        "package": {
+            "name": "apackage",
+        }
+    }
+
+    if is_rattler_build:
+        meta["requirements"] = {
+            "run_exports": ['${{ pin_compatible("apackage") }}'],
+        }
+    else:
+        meta["build"] = {
+            "run_exports": ["compatible_pin apackage"],
+        }
+
+    lints, hints = linter.lintify_meta_yaml(
+        meta, is_rattler_build=is_rattler_build
+    )
+    expected = "pin_subpackage should be used instead"
+    assert any(lint.startswith(expected) for lint in lints)
+
+
+@pytest.mark.parametrize("is_rattler_build", [False, True])
+def test_pin_compatible_in_run_exports_output(is_rattler_build: bool):
+    meta = {
+        "package": {
+            "name": "apackage",
+        },
+    }
+
+    if is_rattler_build:
+        meta = {
+            "recipe": {
+                "name": "apackage",
+            },
+            "outputs": [
+                {
+                    "package": {"name": "anoutput", "version": "0.1.0"},
+                    "requirements": {
+                        "run_exports": [
+                            '${{ pin_subpackage("notanoutput") }}'
+                        ],
+                    },
+                }
+            ],
+        }
+    else:
+        meta = {
+            "package": {
+                "name": "apackage",
+            },
+            "outputs": [
+                {
+                    "name": "anoutput",
+                    "build": {
+                        "run_exports": ["subpackage_pin notanoutput"],
+                    },
+                }
+            ],
+        }
+
+    lints, hints = linter.lintify_meta_yaml(
+        meta, is_rattler_build=is_rattler_build
+    )
+    expected = "pin_compatible should be used instead"
+    assert any(lint.startswith(expected) for lint in lints)
 
 
 if __name__ == "__main__":
