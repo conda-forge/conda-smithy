@@ -329,22 +329,6 @@ def test_license_file_empty(is_rattler_build):
     assert expected_message in lints
 
 
-@pytest.mark.parametrize("is_rattler_build,", [(False,), (True,)])
-def test_version(is_rattler_build):
-    meta = {"package": {"name": "python", "version": "3.6.4"}}
-    expected_message = "Package version 3.6.4 doesn't match conda spec"
-    lints, hints = linter.lintify_meta_yaml(meta)
-    assert expected_message not in lints
-
-    meta = {"package": {"name": "python", "version": "2.0.0~alpha0"}}
-    expected_message = "Package version 2.0.0~alpha0 doesn't match conda spec"
-    lints, hints = linter.lintify_meta_yaml(
-        meta, is_rattler_build=is_rattler_build
-    )
-
-    assert any(lint.startswith(expected_message) for lint in lints)
-
-
 class TestLinter(unittest.TestCase):
 
     def test_pin_compatible_in_run_exports(self):
@@ -1676,6 +1660,51 @@ class TestLinter(unittest.TestCase):
     def test_outputs(self):
         meta = OrderedDict([["outputs", [{"name": "asd"}]]])
         lints, hints = linter.lintify_meta_yaml(meta)
+
+    def test_version(self):
+        meta = {"package": {"name": "python", "version": "3.6.4"}}
+        expected_message = "Package version 3.6.4 doesn't match conda spec"
+        lints, hints = linter.lintify_meta_yaml(meta)
+        self.assertNotIn(expected_message, lints)
+
+        meta = {"package": {"name": "python", "version": "2.0.0~alpha0"}}
+        expected_message = (
+            "Package version 2.0.0~alpha0 doesn't match conda spec"
+        )
+        lints, hints = linter.lintify_meta_yaml(meta)
+        assert any(lint.startswith(expected_message) for lint in lints)
+
+    def test_rattler_version(self):
+        meta = {"package": {"name": "python", "version": "3.6.4"}}
+        expected_message = "Package version 3.6.4 doesn't match conda spec"
+        lints, hints = linter.lintify_meta_yaml(meta, is_rattler_build=True)
+        self.assertNotIn(expected_message, lints)
+
+        meta = {"package": {"name": "python", "version": "2.0.0~alpha0"}}
+        expected_message = (
+            "Package version 2.0.0~alpha0 doesn't match conda spec"
+        )
+        lints, hints = linter.lintify_meta_yaml(meta, is_rattler_build=True)
+        assert any(lint.startswith(expected_message) for lint in lints)
+
+    def test_rattler_version_with_context(self):
+        meta = {
+            "context": {"version": "3.6.4"},
+            "package": {"name": "python", "version": "${{ version }}"},
+        }
+        expected_message = "Package version 3.6.4 doesn't match conda spec"
+        lints, hints = linter.lintify_meta_yaml(meta, is_rattler_build=True)
+        self.assertNotIn(expected_message, lints)
+
+        meta = {
+            "context": {"version": "2.0.0~alpha0"},
+            "package": {"name": "python", "version": "${{ version }}"},
+        }
+        expected_message = (
+            "Package version 2.0.0~alpha0 doesn't match conda spec"
+        )
+        lints, hints = linter.lintify_meta_yaml(meta, is_rattler_build=True)
+        assert any(lint.startswith(expected_message) for lint in lints)
 
     @unittest.skipUnless(is_gh_token_set(), "GH_TOKEN not set")
     def test_examples(self):
