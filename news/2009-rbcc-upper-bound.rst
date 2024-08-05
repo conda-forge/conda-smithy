@@ -16,7 +16,7 @@
 
 **Fixed:**
 
-* When linting build_platform has a default value now (#1996).
+* Add upper bound for rattler-build-conda-compat. (#2009)
 
 **Security:**
 
