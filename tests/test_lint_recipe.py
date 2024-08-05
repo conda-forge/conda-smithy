@@ -1697,8 +1697,8 @@ class TestLinter(unittest.TestCase):
 
     def test_rattler_version_with_context(self):
         meta = {
-            "context": {"version": "3.6.4"},
-            "package": {"name": "python", "version": "${{ version }}"},
+            "context": {"foo": "3.6.4"},
+            "package": {"name": "python", "version": "${{ foo }}"},
         }
         expected_message = "Package version 3.6.4 doesn't match conda spec"
         lints, hints = linter.lintify_meta_yaml(meta, is_rattler_build=True)
