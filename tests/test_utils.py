@@ -4,7 +4,7 @@ from rattler_build_conda_compat.render import MetaData as RatlerBuildMetadata
 from conda_smithy.utils import (
     RATTLER_BUILD,
     _get_metadata_from_feedstock_dir,
-    get_feedstock_name_from_metadata,
+    get_feedstock_name_from_meta,
 )
 
 
@@ -29,7 +29,7 @@ def test_get_feedstock_name_from_metadata(noarch_recipe):
         feedstock_dir, noarch_recipe[1]
     )
 
-    feedstock_name = get_feedstock_name_from_metadata(metadata)
+    feedstock_name = get_feedstock_name_from_meta(metadata)
 
     assert feedstock_name == "python-noarch-test"
 
@@ -42,7 +42,7 @@ def test_get_feedstock_name_from_rattler_metadata(
         feedstock_dir, rattler_noarch_recipe_with_context[1]
     )
 
-    feedstock_name = get_feedstock_name_from_metadata(metadata)
+    feedstock_name = get_feedstock_name_from_meta(metadata)
 
     assert feedstock_name == "python-noarch-test-from-context"
 
@@ -55,6 +55,6 @@ def test_get_feedstock_name_from_rattler_metadata_multiple_outputs(
         feedstock_dir, rattler_recipe_with_multiple_outputs[1]
     )
 
-    feedstock_name = get_feedstock_name_from_metadata(metadata)
+    feedstock_name = get_feedstock_name_from_meta(metadata)
 
     assert feedstock_name == "mamba-split"

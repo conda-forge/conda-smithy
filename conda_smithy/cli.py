@@ -22,7 +22,7 @@ from conda_smithy.utils import (
     CONDA_BUILD,
     RATTLER_BUILD,
     _get_metadata_from_feedstock_dir,
-    get_feedstock_name_from_metadata,
+    get_feedstock_name_from_meta,
     merge_dict,
 )
 
@@ -336,7 +336,7 @@ class RegisterCI(Subcommand):
             args.feedstock_directory, forge_config
         )
 
-        feedstock_name = get_feedstock_name_from_metadata(metadata)
+        feedstock_name = get_feedstock_name_from_meta(metadata)
 
         repo = f"{feedstock_name}-feedstock"
 

@@ -11,7 +11,7 @@ from github.Team import Team
 from conda_smithy.configure_feedstock import _load_forge_config
 from conda_smithy.utils import (
     _get_metadata_from_feedstock_dir,
-    get_feedstock_name_from_metadata,
+    get_feedstock_name_from_meta,
 )
 
 
@@ -111,7 +111,7 @@ def create_github_repo(args):
         args.feedstock_directory, forge_config
     )
 
-    feedstock_name = get_feedstock_name_from_metadata(metadata)
+    feedstock_name = get_feedstock_name_from_meta(metadata)
 
     gh = Github(token)
     user_or_org = None

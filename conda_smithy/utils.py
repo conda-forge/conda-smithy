@@ -44,14 +44,9 @@ def _get_metadata_from_feedstock_dir(
     return meta
 
 
-def get_feedstock_name_from_metadata(
-    meta: Union[MetaData, RattlerBuildMetaData],
+def get_feedstock_name_from_meta(
+    meta: Union[MetaData, RattlerBuildMetaData]
 ) -> str:
-    """Resolve the feedstock name from the parsed meta.yaml."""
-    return get_feedstock_name_from_meta(meta)
-
-
-def get_feedstock_name_from_meta(meta):
     """Resolve the feedtstock name from the parsed meta.yaml."""
     if "feedstock-name" in meta.meta["extra"]:
         return meta.meta["extra"]["feedstock-name"]
