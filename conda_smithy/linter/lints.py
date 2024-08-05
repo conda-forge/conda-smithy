@@ -2,7 +2,7 @@ import itertools
 import os
 import re
 from collections.abc import Sequence
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Literal, Optional
 
 from conda.exceptions import InvalidVersionSpec
 from conda.models.version import VersionOrder
@@ -310,6 +310,23 @@ def lint_noarch(noarch_value: Optional[str], lints):
             lints.append(
                 f"Invalid `noarch` value `{noarch_value}`. Should be one of `{valid_noarch_str}`."
             )
+
+
+def lint_rattler_noarch_and_runtime_dependencies(
+    noarch_value: Optional[Literal["python", "generic"]],
+    raw_requirements_section: Dict[str, Any],
+    build_section: Dict[str, Any],
+    noarch_platforms: bool,
+    lints: List[str],
+) -> None:
+    if noarch_value:
+        rattler_linter.lint_usage_of_selectors_for_noarch(
+            noarch_value,
+            raw_requirements_section,
+            build_section,
+            noarch_platforms,
+            lints,
+        )
 
 
 def lint_noarch_and_runtime_dependencies(

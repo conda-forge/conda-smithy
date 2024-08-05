@@ -36,6 +36,7 @@ from conda_smithy.linter.lints import (
     lint_non_noarch_builds,
     lint_package_version,
     lint_pin_subpackages,
+    lint_rattler_noarch_and_runtime_dependencies,
     lint_recipe_have_tests,
     lint_recipe_maintainers,
     lint_recipe_name,
@@ -224,7 +225,8 @@ def lintify_meta_yaml(
     lint_usage_of_legacy_patterns(requirements_section, lints)
 
     # 16: Subheaders should be in the allowed subheadings
-    lint_subheaders(major_sections, meta, lints)
+    if not is_rattler_build:
+        lint_subheaders(major_sections, meta, lints)
 
     # 17: Validate noarch
     noarch_value = build_section.get("noarch")
@@ -256,9 +258,24 @@ def lintify_meta_yaml(
         forge_yaml = {}
 
     # 18: noarch doesn't work with selectors for runtime dependencies
-    lint_noarch_and_runtime_dependencies(
-        noarch_value, recipe_fname, forge_yaml, conda_build_config_keys, lints
-    )
+    noarch_platforms = len(forge_yaml.get("noarch_platforms", [])) > 1
+    if is_rattler_build:
+        raw_requirements_section = meta.get("requirements", {})
+        lint_rattler_noarch_and_runtime_dependencies(
+            noarch_value,
+            raw_requirements_section,
+            build_section,
+            noarch_platforms,
+            lints,
+        )
+    else:
+        lint_noarch_and_runtime_dependencies(
+            noarch_value,
+            recipe_fname,
+            forge_yaml,
+            conda_build_config_keys,
+            lints,
+        )
 
     # 19: check version
     if is_rattler_build:
