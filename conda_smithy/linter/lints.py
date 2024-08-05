@@ -1,4 +1,3 @@
-import fnmatch
 import itertools
 import os
 import re
@@ -7,6 +6,7 @@ from typing import Any, Dict, List, Optional
 
 from conda.exceptions import InvalidVersionSpec
 from conda.models.version import VersionOrder
+from rattler_build_conda_compat.jinja.jinja import render_recipe_with_context
 from ruamel.yaml import CommentedSeq
 
 from conda_smithy.linter import rattler_linter
@@ -531,20 +531,30 @@ def lint_pin_subpackages(
     lints,
     is_rattler_build: bool = False,
 ):
+    if is_rattler_build:
+        meta = render_recipe_with_context(meta)
+        # use the rendered versions here
+        package_section = meta.get("package", {})
+        outputs_section = meta.get("outputs", [])
+
     subpackage_names = []
     for out in outputs_section:
-        if "name" in out:
+        if is_rattler_build:
+            if out.get("package", {}).get("name"):
+                subpackage_names.append(out["package"]["name"])
+        elif "name" in out:
             subpackage_names.append(out["name"])  # explicit
+
     if "name" in package_section:
         subpackage_names.append(package_section["name"])  # implicit
 
     def check_pins(pinning_section):
         if pinning_section is None:
             return
-        filter_pin = (
-            "pin_compatible*" if is_rattler_build else "compatible_pin*"
-        )
-        for pin in fnmatch.filter(pinning_section, filter_pin):
+        filter_pin = "compatible_pin "
+        for pin in (
+            pin for pin in pinning_section if pin.startswith(filter_pin)
+        ):
             if pin.split()[1] in subpackage_names:
                 lints.append(
                     "pin_subpackage should be used instead of"
@@ -552,10 +562,11 @@ def lint_pin_subpackages(
                     " because it is one of the known outputs of this recipe:"
                     f" {subpackage_names}."
                 )
-        filter_pin = (
-            "pin_subpackage*" if is_rattler_build else "subpackage_pin*"
-        )
-        for pin in fnmatch.filter(pinning_section, filter_pin):
+
+        filter_pin = "subpackage_pin "
+        for pin in (
+            pin for pin in pinning_section if pin.startswith(filter_pin)
+        ):
             if pin.split()[1] not in subpackage_names:
                 lints.append(
                     "pin_compatible should be used instead of"
@@ -583,12 +594,14 @@ def lint_pin_subpackages(
                 "requirements" in top_level
                 and "run_exports" in top_level["requirements"]
             ):
-                if "strong" in top_level["requirements"]["run_exports"]:
-                    check_pins(
-                        top_level["requirements"]["run_exports"]["strong"]
-                    )
+                run_export_section = top_level["requirements"]["run_exports"]
+                # the dictionary might have strong / weak / noarch etc. keys
+                if isinstance(run_export_section, dict):
+                    for key in run_export_section:
+                        check_pins(run_export_section[key])
+                # or it can be just a list
                 else:
-                    check_pins(top_level["requirements"]["run_exports"])
+                    check_pins(run_export_section)
 
     check_pins_build_and_requirements(meta)
     for out in outputs_section:
