@@ -281,7 +281,9 @@ def lintify_meta_yaml(
     )
 
     # 24: jinja2 variable references should be {{<one space>var<one space>}}
-    lint_jinja_var_references(recipe_fname, hints)
+    lint_jinja_var_references(
+        recipe_fname, hints, is_rattler_build=is_rattler_build
+    )
 
     # 25: require a lower bound on python version
     lint_require_lower_bound_on_python_version(

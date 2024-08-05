@@ -1,4 +1,5 @@
 import os
+import re
 from typing import Any, Dict, List, Optional
 
 from rattler_build_conda_compat.jinja.jinja import (
@@ -36,6 +37,7 @@ EXPECTED_MULTIPLE_OUTPUT_SECTION_ORDER = [
     "extra",
 ]
 TEST_KEYS = {"script", "python"}
+JINJA_VAR_PAT = re.compile(r"\${{(.*?)}}")
 
 
 def lint_recipe_tests(
