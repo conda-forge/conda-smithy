@@ -394,11 +394,19 @@ def lint_legacy_usage_of_compilers(build_reqs, lints):
         )
 
 
-def lint_single_space_in_pinned_requirements(requirements_section, lints):
+def lint_single_space_in_pinned_requirements(
+    requirements_section, lints, is_rattler_build: bool = False
+):
     for section, requirements in requirements_section.items():
         for requirement in requirements or []:
-            req, _, _ = requirement.partition("#")
-            if "{{" in req:
+            if is_rattler_build:
+                req = requirement
+                symbol_to_check = "${{"
+            else:
+                req, _, _ = requirement.partition("#")
+                symbol_to_check = "{{"
+
+            if symbol_to_check in req:
                 continue
             parts = req.split()
             if len(parts) > 2 and parts[1] in [
