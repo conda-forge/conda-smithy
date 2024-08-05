@@ -3,7 +3,7 @@ import os
 import re
 from collections.abc import Sequence
 from glob import glob
-from typing import Mapping
+from typing import Dict, List, Mapping, Optional, Union
 
 from conda_build.metadata import (
     FIELDS as _CONDA_BUILD_FIELDS,
@@ -68,14 +68,14 @@ def get_meta_section(parent, name, lints):
     return section
 
 
-def get_rattler_section(meta, name):
+def get_rattler_section(meta, name) -> Union[Dict, List[Dict]]:
     if name == "requirements":
         return rattler_loader.load_all_requirements(meta)
     elif name == "tests":
         return rattler_loader.load_all_tests(meta)
     elif name == "source":
-        source = meta.get("source", [])
-        if isinstance(source, Mapping):
+        source: List[Dict] = meta.get("source", [])
+        if isinstance(source, Dict):
             return [source]
 
     return meta.get(name, {})
@@ -159,3 +159,12 @@ def jinja_lines(lines):
     for i, line in enumerate(lines):
         if is_jinja_line(line):
             yield line, i
+
+
+def _lint_recipe_name(recipe_name: str) -> Optional[str]:
+    wrong_recipe_name = "Recipe name has invalid characters. only lowercase alpha, numeric, underscores, hyphens and dots allowed"
+
+    if re.match(r"^[a-z0-9_\-.]+$", recipe_name) is None:
+        return wrong_recipe_name
+
+    return None
