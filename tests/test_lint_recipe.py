@@ -1406,8 +1406,8 @@ class TestLinter(unittest.TestCase):
         self.assertIn(expected_message, lints)
 
         meta_with_context = {
-            "context": {"name": "mp++"},
-            "package": {"name": "${{ name }}"},
+            "context": {"blah": "mp++"},
+            "package": {"name": "${{ blah }}"},
         }  # noqa
         lints, _ = linter.lintify_meta_yaml(
             meta_with_context, is_rattler_build=True
