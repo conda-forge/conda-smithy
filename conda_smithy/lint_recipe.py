@@ -6,6 +6,7 @@ from glob import glob
 from inspect import cleandoc
 from pathlib import Path
 from textwrap import indent
+from typing import List, Tuple
 
 import github
 import jsonschema
@@ -101,7 +102,7 @@ def lintify_meta_yaml(
     recipe_dir=None,
     conda_forge=False,
     is_rattler_build=False,
-) -> (list, list):
+) -> Tuple[List[str], List[str]]:
     lints = []
     hints = []
     major_sections = list(meta.keys())
@@ -207,7 +208,13 @@ def lintify_meta_yaml(
     )
 
     # 13: Check that the recipe name is valid
-    lint_recipe_name(package_section, lints)
+    if is_rattler_build:
+        rattler_linter.lint_recipe_name(meta, lints)
+    else:
+        lint_recipe_name(
+            package_section,
+            lints,
+        )
 
     # 14: Run conda-forge specific lints
     if conda_forge:
