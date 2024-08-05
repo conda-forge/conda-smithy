@@ -4,7 +4,7 @@
 
 **Changed:**
 
-* Introduced ``ruff`` as pre-commit linter. (#1919)
+* Exclude ruff commits from git ( #2007 )
 
 **Deprecated:**
 

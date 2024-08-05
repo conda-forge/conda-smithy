@@ -406,7 +406,7 @@
             }
           ],
           "default": null,
-          "description": "List of sources to use for version updates",
+          "description": "List of sources to find new versions (i.e. the strings like 1.2.3) for the package.\n\nThe following sources are available:\n- `cran`: Update from CRAN\n- `github`: Update from the GitHub releases RSS feed (includes pre-releases)\n- `githubreleases`: Get the latest version by following the redirect of\n`https://github.com/{owner}/{repo}/releases/latest` (excludes pre-releases)\n- `incrementalpharawurl`: If this source is run for a specific small selection of feedstocks, it acts like\nthe `rawurl` source but also increments letters in the version string (e.g. 2024a -> 2024b). If the source\nis run for other feedstocks (even if selected manually), it does nothing.\n- `librariesio`: Update from Libraries.io RSS feed\n- `npm`: Update from the npm registry\n- `nvidia`: Update from the NVIDIA download page\n- `pypi`: Update from the PyPI registry\n- `rawurl`: Update from a raw URL by trying to bump the version number in different ways and\nchecking if the URL exists (e.g. 1.2.3 -> 1.2.4, 1.3.0, 2.0.0, etc.)\n- `rosdistro`: Update from a ROS distribution\n\nCommon issues:\n- If you are using a GitHub-based source in your recipe and the bot issues PRs for pre-releases, restrict\nthe sources to `githubreleases` to avoid pre-releases.\n- If you use source tarballs that are uploaded manually by the maintainers a significant time after a\nGitHub release, you may want to restrict the sources to `rawurl` to avoid the bot attempting to update\nthe recipe before the tarball is uploaded.",
           "title": "Sources"
         },
         "skip": {

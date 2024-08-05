@@ -172,7 +172,9 @@ def lintify_meta_yaml(
     lint_license_cannot_be_unknown(about_section, lints)
 
     # 6: Selectors should be in a tidy form.
-    lint_selectors_should_be_in_tidy_form(recipe_fname, lints, hints)
+    if not is_rattler_build:
+        # rattler-build does not have selectors in comments form
+        lint_selectors_should_be_in_tidy_form(recipe_fname, lints, hints)
 
     # 7: The build section should have a build number.
     lint_build_section_should_have_a_number(build_section, lints)
@@ -190,15 +192,18 @@ def lintify_meta_yaml(
     lint_should_be_empty_line(recipe_fname, lints)
 
     # 12: License family must be valid (conda-build checks for that)
-    try:
-        ensure_valid_license_family(meta)
-    except RuntimeError as e:
-        lints.append(str(e))
+    # we skip it for rattler builds as it will validate it
+    # See more: https://prefix-dev.github.io/rattler-build/latest/reference/recipe_file/#about-section
+    if not is_rattler_build:
+        try:
+            ensure_valid_license_family(meta)
+        except RuntimeError as e:
+            lints.append(str(e))
 
     # 12a: License family must be valid (conda-build checks for that)
     license = about_section.get("license", "").lower()
     lint_license_family_should_be_valid(
-        about_section, license, NEEDED_FAMILIES, lints
+        about_section, license, NEEDED_FAMILIES, lints, is_rattler_build
     )
 
     # 13: Check that the recipe name is valid
