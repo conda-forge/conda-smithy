@@ -36,6 +36,7 @@ from conda_smithy.linter.lints import (
     lint_non_noarch_builds,
     lint_package_version,
     lint_pin_subpackages,
+    lint_rattler_noarch_and_runtime_dependencies,
     lint_recipe_have_tests,
     lint_recipe_maintainers,
     lint_recipe_name,
@@ -224,7 +225,8 @@ def lintify_meta_yaml(
     lint_usage_of_legacy_patterns(requirements_section, lints)
 
     # 16: Subheaders should be in the allowed subheadings
-    lint_subheaders(major_sections, meta, lints)
+    if not is_rattler_build:
+        lint_subheaders(major_sections, meta, lints)
 
     # 17: Validate noarch
     noarch_value = build_section.get("noarch")
@@ -256,12 +258,30 @@ def lintify_meta_yaml(
         forge_yaml = {}
 
     # 18: noarch doesn't work with selectors for runtime dependencies
-    lint_noarch_and_runtime_dependencies(
-        noarch_value, recipe_fname, forge_yaml, conda_build_config_keys, lints
-    )
+    noarch_platforms = len(forge_yaml.get("noarch_platforms", [])) > 1
+    if is_rattler_build:
+        raw_requirements_section = meta.get("requirements", {})
+        lint_rattler_noarch_and_runtime_dependencies(
+            noarch_value,
+            raw_requirements_section,
+            build_section,
+            noarch_platforms,
+            lints,
+        )
+    else:
+        lint_noarch_and_runtime_dependencies(
+            noarch_value,
+            recipe_fname,
+            forge_yaml,
+            conda_build_config_keys,
+            lints,
+        )
 
     # 19: check version
-    lint_package_version(package_section, lints)
+    if is_rattler_build:
+        rattler_linter.lint_package_version(meta, lints)
+    else:
+        lint_package_version(package_section, lints)
 
     # 20: Jinja2 variable definitions should be nice.
     lint_jinja_variables_definitions(recipe_fname, lints)
@@ -278,7 +298,9 @@ def lintify_meta_yaml(
     )
 
     # 24: jinja2 variable references should be {{<one space>var<one space>}}
-    lint_jinja_var_references(recipe_fname, hints)
+    lint_jinja_var_references(
+        recipe_fname, hints, is_rattler_build=is_rattler_build
+    )
 
     # 25: require a lower bound on python version
     lint_require_lower_bound_on_python_version(
@@ -296,10 +318,10 @@ def lintify_meta_yaml(
     lint_check_usage_of_whls(recipe_fname, noarch_value, lints, hints)
 
     # 28: Check that Rust licenses are bundled.
-    lint_rust_licenses_are_bundled(build_requirements, lints)
+    lint_rust_licenses_are_bundled(build_requirements, lints, is_rattler_build)
 
     # 29: Check that go licenses are bundled.
-    lint_go_licenses_are_bundled(build_requirements, lints)
+    lint_go_licenses_are_bundled(build_requirements, lints, is_rattler_build)
 
     # hints
     # 1: suggest pip
