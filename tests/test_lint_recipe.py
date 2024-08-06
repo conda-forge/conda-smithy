@@ -8,6 +8,7 @@ import unittest
 import warnings
 from collections import OrderedDict
 from contextlib import contextmanager
+from pathlib import Path
 
 import github
 import pytest
@@ -49,6 +50,34 @@ def test_stdlib_lint(comp_lang):
             )
 
         lints, _ = linter.main(recipe_dir, return_hints=True)
+        assert any(lint.startswith(expected_message) for lint in lints)
+
+
+@pytest.mark.parametrize(
+    "comp_lang",
+    ["c", "cxx", "fortran", "rust", "m2w64_c", "m2w64_cxx", "m2w64_fortran"],
+)
+def test_rattler_stdlib_hint(comp_lang):
+    expected_message = "This recipe is using a compiler"
+
+    with tmp_directory() as recipe_dir:
+        Path(recipe_dir).joinpath("recipe.yaml").write_text(
+            f"""
+                package:
+                   name: foo
+                requirements:
+                  build:
+                    # since we're in an f-string: double up braces (2->4)
+                    - ${{{{ compiler('{comp_lang}') }}}}
+                """
+        )
+        Path(recipe_dir).joinpath("conda-forge.yml").write_text(
+            "conda_build_tool: rattler-build"
+        )
+
+        lints, _ = linter.main(
+            recipe_dir, feedstock_dir=recipe_dir, return_hints=True
+        )
         assert any(lint.startswith(expected_message) for lint in lints)
 
 
@@ -323,6 +352,159 @@ def test_license_file_empty(is_recipe_v2):
     lints, hints = linter.lintify_meta_yaml(meta, is_recipe_v2=is_recipe_v2)
     expected_message = "license_file entry is missing, but is required."
     assert expected_message in lints
+
+
+@pytest.mark.parametrize(
+    "std_selector",
+    ["unix", "linux or (osx and x86_64)"],
+    ids=["plain", "or-conjunction"],
+)
+@pytest.mark.parametrize("with_linux", [True, False])
+@pytest.mark.parametrize(
+    "reverse_arch",
+    # we reverse x64/arm64 separately per deployment target, stdlib & sdk
+    [(False, False, False), (True, True, True), (False, True, False)],
+    ids=["False", "True", "mixed"],
+)
+@pytest.mark.parametrize(
+    "macdt,v_std,sdk,exp_lint",
+    [
+        # matching -> no warning
+        (["10.9", "11.0"], ["10.9", "11.0"], None, None),
+        # mismatched length -> no warning (leave it to rerender)
+        (["10.9", "11.0"], ["10.9"], None, None),
+        # mismatch between stdlib and deployment target -> warn
+        (["10.9", "11.0"], ["10.13", "11.0"], None, "Conflicting spec"),
+        (["10.13", "11.0"], ["10.13", "12.3"], None, "Conflicting spec"),
+        # only deployment target -> warn
+        (["10.13", "11.0"], None, None, "In your conda_build_config.yaml"),
+        # only stdlib -> no warning
+        (None, ["10.13", "11.0"], None, None),
+        (None, ["10.15"], None, None),
+        # only stdlib, but outdated -> warn
+        (None, ["10.9", "11.0"], None, "You are"),
+        (None, ["10.9"], None, "You are"),
+        # sdk below stdlib / deployment target -> warn
+        (["10.13", "11.0"], ["10.13", "11.0"], ["10.12"], "You are"),
+        (["10.13", "11.0"], ["10.13", "11.0"], ["10.12", "12.0"], "You are"),
+        # sdk above stdlib / deployment target -> no warning
+        (["10.13", "11.0"], ["10.13", "11.0"], ["12.0", "12.0"], None),
+        # only one sdk version, not universally below deployment target
+        # -> no warning (because we don't know enough to diagnose)
+        (["10.13", "11.0"], ["10.13", "11.0"], ["10.15"], None),
+        # mismatched version + wrong sdk; requires merge logic to work before
+        # checking sdk version; to avoid unnecessary complexity in the exp_hint
+        # handling below, repeat same test twice with different expected hints
+        (["10.9", "11.0"], ["10.13", "11.0"], ["10.12"], "Conflicting spec"),
+        (["10.9", "11.0"], ["10.13", "11.0"], ["10.12"], "You are"),
+        # only sdk -> no warning
+        (None, None, ["10.13"], None),
+        (None, None, ["10.14", "12.0"], None),
+        # only sdk, but below global baseline -> warning
+        (None, None, ["10.12"], "You are"),
+        (None, None, ["10.12", "11.0"], "You are"),
+    ],
+)
+def test_rattler_cbc_osx_hints(
+    std_selector, with_linux, reverse_arch, macdt, v_std, sdk, exp_lint
+):
+    with tmp_directory() as recipe_dir:
+        recipe_dir = Path(recipe_dir)
+        recipe_dir.joinpath("recipe.yaml").write_text("package:\n  name: foo")
+
+        recipe_dir.joinpath("conda-forge.yml").write_text(
+            "conda_build_tool: rattler-build"
+        )
+
+        with open(recipe_dir / "variants.yaml", "a") as fh:
+            if macdt is not None:
+                fh.write(
+                    textwrap.dedent(
+                        f"""\
+                        MACOSX_DEPLOYMENT_TARGET:
+                          - if: osx
+                            then:
+                              - {macdt[0]}
+                              - {macdt[1]}
+                    """
+                    )
+                )
+            if v_std is not None or with_linux:
+                arch1 = "arm64" if reverse_arch[1] else "x86_64"
+                arch2 = "x86_64" if reverse_arch[1] else "arm64"
+
+                fh.write(textwrap.dedent("c_stdlib_version:\n"))
+
+                if v_std is not None:
+                    fh.write(
+                        textwrap.dedent(
+                            f"""\
+                            - if: {std_selector} and {arch1}
+                              then: {v_std[0]}
+                        """
+                        )
+                    )
+                if v_std is not None and len(v_std) > 1:
+                    fh.write(
+                        textwrap.dedent(
+                            f"""\
+                            - if: {std_selector} and {arch2}
+                              then: {v_std[1]}
+                        """
+                        )
+                    )
+                if with_linux:
+                    fh.write(
+                        textwrap.dedent(
+                            """\
+                            - if: linux
+                              then: 2.17
+                        """
+                        )
+                    )
+            if sdk is not None:
+                # often SDK is set uniformly for osx; test this as well
+                if len(sdk) == 2:
+                    fh.write(
+                        textwrap.dedent(
+                            f"""\
+                            MACOSX_SDK_VERSION:
+                              - if: osx and {"arm64" if reverse_arch[2] else "x86_64"}
+                                then: {sdk[0]}
+                              - if: osx and {"x86_64" if reverse_arch[2] else "arm64"}
+                                then: {sdk[1]}
+                        """
+                        )
+                    )
+                else:
+                    fh.write(
+                        textwrap.dedent(
+                            f"""\
+                            MACOSX_SDK_VERSION:
+                              - if: osx
+                                then: {sdk[0]}
+                        """
+                        )
+                    )
+        # run the linter
+        lints, _ = linter.main(
+            recipe_dir, return_hints=True, feedstock_dir=recipe_dir
+        )
+        # show CBC/hints for debugging
+        lines = recipe_dir.joinpath("variants.yaml").read_text().splitlines()
+        print("".join(lines))
+        print(lints)
+
+        # validate against expectations
+        if exp_lint is None:
+            for slug in [
+                "Conflicting spec",
+                "You are",
+                "In your conda_build_config.yaml",
+            ]:
+                assert not any(lint.startswith(slug) for lint in lints)
+        else:
+            assert any(lint.startswith(exp_lint) for lint in lints)
 
 
 class TestLinter(unittest.TestCase):

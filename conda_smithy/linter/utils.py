@@ -10,6 +10,7 @@ from conda_build.metadata import (
     FIELDS as _CONDA_BUILD_FIELDS,
 )
 from rattler_build_conda_compat import loader as rattler_loader
+from rattler_build_conda_compat.recipe_sources import get_all_url_sources
 
 FIELDS = copy.deepcopy(_CONDA_BUILD_FIELDS)
 
@@ -75,9 +76,8 @@ def get_recipe_v2_section(meta, name) -> Union[Dict, List[Dict]]:
     elif name == "tests":
         return rattler_loader.load_all_tests(meta)
     elif name == "source":
-        source: List[Dict] = meta.get("source", [])
-        if isinstance(source, Dict):
-            return [source]
+        sources = get_all_url_sources(meta)
+        return list(sources)
 
     return meta.get(name, {})
 
@@ -99,7 +99,7 @@ def get_list_section(parent, name, lints, allow_single=False):
         return [{}]
 
 
-def find_local_config_file(recipe_dir, filename):
+def find_local_config_file(recipe_dir: str, filename: str) -> Optional[str]:
     # support
     # 1. feedstocks
     # 2. staged-recipes with custom conda-forge.yaml in recipe

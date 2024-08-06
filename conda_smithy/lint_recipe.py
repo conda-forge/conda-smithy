@@ -36,10 +36,10 @@ from conda_smithy.linter.lints import (
     lint_non_noarch_builds,
     lint_package_version,
     lint_pin_subpackages,
-    lint_rattler_noarch_and_runtime_dependencies,
     lint_recipe_have_tests,
     lint_recipe_maintainers,
     lint_recipe_name,
+    lint_recipe_v2_noarch_and_runtime_dependencies,
     lint_require_lower_bound_on_python_version,
     lint_rust_licenses_are_bundled,
     lint_section_order,
@@ -67,6 +67,7 @@ else:
 from conda_build.metadata import (
     ensure_valid_license_family,
 )
+from rattler_build_conda_compat import loader as rattler_loader
 
 from conda_smithy.configure_feedstock import _read_forge_config
 from conda_smithy.utils import get_yaml, render_meta_yaml
@@ -219,7 +220,9 @@ def lintify_meta_yaml(
 
     # 14: Run conda-forge specific lints
     if conda_forge:
-        run_conda_forge_specific(meta, recipe_dir, lints, hints)
+        run_conda_forge_specific(
+            meta, recipe_dir, lints, hints, is_recipe_v2=is_recipe_v2
+        )
 
     # 15: Check if we are using legacy patterns
     lint_usage_of_legacy_patterns(requirements_section, lints)
@@ -234,8 +237,12 @@ def lintify_meta_yaml(
 
     conda_build_config_filename = None
     if recipe_dir:
+        cbc_file = "conda_build_config.yaml"
+        if is_recipe_v2:
+            cbc_file = "variants.yaml"
+
         conda_build_config_filename = find_local_config_file(
-            recipe_dir, "conda_build_config.yaml"
+            recipe_dir, cbc_file
         )
 
         if conda_build_config_filename:
@@ -261,7 +268,7 @@ def lintify_meta_yaml(
     noarch_platforms = len(forge_yaml.get("noarch_platforms", [])) > 1
     if is_recipe_v2:
         raw_requirements_section = meta.get("requirements", {})
-        lint_rattler_noarch_and_runtime_dependencies(
+        lint_recipe_v2_noarch_and_runtime_dependencies(
             noarch_value,
             raw_requirements_section,
             build_section,
@@ -354,27 +361,47 @@ def lintify_meta_yaml(
 
     # 5: stdlib-related lints
     lint_stdlib(
-        meta, requirements_section, conda_build_config_filename, lints, hints
+        meta,
+        requirements_section,
+        conda_build_config_filename,
+        lints,
+        hints,
+        is_recipe_v2,
     )
 
     return lints, hints
 
 
-def run_conda_forge_specific(meta, recipe_dir, lints, hints):
+def run_conda_forge_specific(
+    meta, recipe_dir, lints, hints, is_recipe_v2: bool = False
+):
     gh = github.Github(os.environ["GH_TOKEN"])
 
     # Retrieve sections from meta
-    package_section = get_section(meta, "package", lints)
-    extra_section = get_section(meta, "extra", lints)
-    sources_section = get_section(meta, "source", lints)
-    requirements_section = get_section(meta, "requirements", lints)
-    outputs_section = get_section(meta, "outputs", lints)
+    package_section = get_section(
+        meta, "package", lints, is_recipe_v2=is_recipe_v2
+    )
+    extra_section = get_section(
+        meta, "extra", lints, is_recipe_v2=is_recipe_v2
+    )
+    sources_section = get_section(
+        meta, "source", lints, is_recipe_v2=is_recipe_v2
+    )
+    requirements_section = get_section(
+        meta, "requirements", lints, is_recipe_v2=is_recipe_v2
+    )
+    outputs_section = get_section(
+        meta, "outputs", lints, is_recipe_v2=is_recipe_v2
+    )
 
     # Fetch list of recipe maintainers
     maintainers = extra_section.get("recipe-maintainers", [])
 
     recipe_dirname = os.path.basename(recipe_dir) if recipe_dir else "recipe"
-    recipe_name = package_section.get("name", "").strip()
+    if is_recipe_v2:
+        recipe_name = conda_recipe_v2_linter.get_recipe_name(meta)
+    else:
+        recipe_name = package_section.get("name", "").strip()
     is_staged_recipes = recipe_dirname != "recipe"
 
     # 1: Check that the recipe does not exist in conda-forge or bioconda
@@ -417,11 +444,16 @@ def run_conda_forge_specific(meta, recipe_dir, lints, hints):
             )
 
         url = None
-        for source_section in sources_section:
-            if str(source_section.get("url")).startswith(
-                "https://pypi.io/packages/source/"
-            ):
-                url = source_section["url"]
+        if is_recipe_v2:
+            for source_url in sources_section:
+                if source_url.startswith("https://pypi.io/packages/source/"):
+                    url = source_url
+        else:
+            for source_section in sources_section:
+                if str(source_section.get("url")).startswith(
+                    "https://pypi.io/packages/source/"
+                ):
+                    url = source_section["url"]
         if url:
             # get pypi name from  urls like "https://pypi.io/packages/source/b/build/build-0.4.0.tar.gz"
             pypi_name = url.split("/")[6]
@@ -457,18 +489,19 @@ def run_conda_forge_specific(meta, recipe_dir, lints, hints):
 
     # 4: Do not delete example recipe
     if is_staged_recipes and recipe_dir is not None:
-        example_meta_fname = os.path.abspath(
-            os.path.join(recipe_dir, "..", "example", "meta.yaml")
-        )
-
-        if not os.path.exists(example_meta_fname):
-            msg = (
-                "Please do not delete the example recipe found in "
-                "`recipes/example/meta.yaml`."
+        for recipe_name in ("meta.yaml", "recipe.yaml"):
+            example_fname = os.path.abspath(
+                os.path.join(recipe_dir, "..", "example", recipe_name)
             )
 
-            if msg not in lints:
-                lints.append(msg)
+            if not os.path.exists(example_fname):
+                msg = (
+                    "Please do not delete the example recipe found in "
+                    f"`recipes/example/{recipe_name}`."
+                )
+
+                if msg not in lints:
+                    lints.append(msg)
 
     # 5: Package-specific hints
     # (e.g. do not depend on matplotlib, only matplotlib-base)
@@ -476,13 +509,19 @@ def run_conda_forge_specific(meta, recipe_dir, lints, hints):
     host_reqs = requirements_section.get("host") or []
     run_reqs = requirements_section.get("run") or []
     for out in outputs_section:
-        _req = out.get("requirements") or {}
-        if isinstance(_req, Mapping):
-            build_reqs += _req.get("build") or []
-            host_reqs += _req.get("host") or []
-            run_reqs += _req.get("run") or []
+        if is_recipe_v2:
+            output_requirements = rattler_loader.load_all_requirements(out)
+            build_reqs += output_requirements.get("build") or []
+            host_reqs += output_requirements.get("host") or []
+            run_reqs += output_requirements.get("run") or []
         else:
-            run_reqs += _req
+            _req = out.get("requirements") or {}
+            if isinstance(_req, Mapping):
+                build_reqs += _req.get("build") or []
+                host_reqs += _req.get("host") or []
+                run_reqs += _req.get("run") or []
+            else:
+                run_reqs += _req
 
     hints_toml_url = "https://raw.githubusercontent.com/conda-forge/conda-forge-pinning-feedstock/main/recipe/linter_hints/hints.toml"
     hints_toml_req = requests.get(hints_toml_url)
