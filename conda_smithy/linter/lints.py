@@ -727,13 +727,15 @@ def lint_stdlib(
 ):
     global_build_reqs = requirements_section.get("build") or []
     global_run_reqs = requirements_section.get("run") or []
-    global_constraints = requirements_section.get("run_constrained") or []
     if is_rattler_build:
         global_constraints = requirements_section.get("run_constraints") or []
+    else:
+        global_constraints = requirements_section.get("run_constrained") or []
 
-    jinja_stdlib_c = '`{{ stdlib("c") }}`'
     if is_rattler_build:
         jinja_stdlib_c = '`${{ stdlib("c") }}`'
+    else:
+        jinja_stdlib_c = '`{{ stdlib("c") }}`'
 
     stdlib_lint = (
         "This recipe is using a compiler, which now requires adding a build "
