@@ -410,9 +410,7 @@ def run_conda_forge_specific(
         url = None
         if is_rattler_build:
             for source_url in sources_section:
-                if str(source_url).startswith(
-                    "https://pypi.io/packages/source/"
-                ):
+                if source_url.startswith("https://pypi.io/packages/source/"):
                     url = source_url
         else:
             for source_section in sources_section:
