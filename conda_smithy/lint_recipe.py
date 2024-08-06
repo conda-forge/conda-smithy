@@ -67,6 +67,7 @@ else:
 from conda_build.metadata import (
     ensure_valid_license_family,
 )
+from rattler_build_conda_compat import loader as rattler_loader
 
 from conda_smithy.configure_feedstock import _read_forge_config
 from conda_smithy.utils import get_yaml, render_meta_yaml
@@ -219,7 +220,9 @@ def lintify_meta_yaml(
 
     # 14: Run conda-forge specific lints
     if conda_forge:
-        run_conda_forge_specific(meta, recipe_dir, lints, hints)
+        run_conda_forge_specific(
+            meta, recipe_dir, lints, hints, is_rattler_build=is_rattler_build
+        )
 
     # 15: Check if we are using legacy patterns
     lint_usage_of_legacy_patterns(requirements_section, lints)
@@ -354,21 +357,36 @@ def lintify_meta_yaml(
     return lints, hints
 
 
-def run_conda_forge_specific(meta, recipe_dir, lints, hints):
+def run_conda_forge_specific(
+    meta, recipe_dir, lints, hints, is_rattler_build: bool = False
+):
     gh = github.Github(os.environ["GH_TOKEN"])
 
     # Retrieve sections from meta
-    package_section = get_section(meta, "package", lints)
-    extra_section = get_section(meta, "extra", lints)
-    sources_section = get_section(meta, "source", lints)
-    requirements_section = get_section(meta, "requirements", lints)
-    outputs_section = get_section(meta, "outputs", lints)
+    package_section = get_section(
+        meta, "package", lints, is_rattler_build=is_rattler_build
+    )
+    extra_section = get_section(
+        meta, "extra", lints, is_rattler_build=is_rattler_build
+    )
+    sources_section = get_section(
+        meta, "source", lints, is_rattler_build=is_rattler_build
+    )
+    requirements_section = get_section(
+        meta, "requirements", lints, is_rattler_build=is_rattler_build
+    )
+    outputs_section = get_section(
+        meta, "outputs", lints, is_rattler_build=is_rattler_build
+    )
 
     # Fetch list of recipe maintainers
     maintainers = extra_section.get("recipe-maintainers", [])
 
     recipe_dirname = os.path.basename(recipe_dir) if recipe_dir else "recipe"
-    recipe_name = package_section.get("name", "").strip()
+    if is_rattler_build:
+        recipe_name = rattler_linter.get_recipe_name(meta)
+    else:
+        recipe_name = package_section.get("name", "").strip()
     is_staged_recipes = recipe_dirname != "recipe"
 
     # 1: Check that the recipe does not exist in conda-forge or bioconda
@@ -411,11 +429,16 @@ def run_conda_forge_specific(meta, recipe_dir, lints, hints):
             )
 
         url = None
-        for source_section in sources_section:
-            if str(source_section.get("url")).startswith(
-                "https://pypi.io/packages/source/"
-            ):
-                url = source_section["url"]
+        if is_rattler_build:
+            for source_url in sources_section:
+                if source_url.startswith("https://pypi.io/packages/source/"):
+                    url = source_url
+        else:
+            for source_section in sources_section:
+                if str(source_section.get("url")).startswith(
+                    "https://pypi.io/packages/source/"
+                ):
+                    url = source_section["url"]
         if url:
             # get pypi name from  urls like "https://pypi.io/packages/source/b/build/build-0.4.0.tar.gz"
             pypi_name = url.split("/")[6]
@@ -451,18 +474,19 @@ def run_conda_forge_specific(meta, recipe_dir, lints, hints):
 
     # 4: Do not delete example recipe
     if is_staged_recipes and recipe_dir is not None:
-        example_meta_fname = os.path.abspath(
-            os.path.join(recipe_dir, "..", "example", "meta.yaml")
-        )
-
-        if not os.path.exists(example_meta_fname):
-            msg = (
-                "Please do not delete the example recipe found in "
-                "`recipes/example/meta.yaml`."
+        for recipe_name in ("meta.yaml", "recipe.yaml"):
+            example_fname = os.path.abspath(
+                os.path.join(recipe_dir, "..", "example", recipe_name)
             )
 
-            if msg not in lints:
-                lints.append(msg)
+            if not os.path.exists(example_fname):
+                msg = (
+                    "Please do not delete the example recipe found in "
+                    f"`recipes/example/{recipe_name}`."
+                )
+
+                if msg not in lints:
+                    lints.append(msg)
 
     # 5: Package-specific hints
     # (e.g. do not depend on matplotlib, only matplotlib-base)
@@ -470,13 +494,19 @@ def run_conda_forge_specific(meta, recipe_dir, lints, hints):
     host_reqs = requirements_section.get("host") or []
     run_reqs = requirements_section.get("run") or []
     for out in outputs_section:
-        _req = out.get("requirements") or {}
-        if isinstance(_req, Mapping):
-            build_reqs += _req.get("build") or []
-            host_reqs += _req.get("host") or []
-            run_reqs += _req.get("run") or []
+        if is_rattler_build:
+            output_requirements = rattler_loader.load_all_requirements(out)
+            build_reqs += output_requirements.get("build") or []
+            host_reqs += output_requirements.get("host") or []
+            run_reqs += output_requirements.get("run") or []
         else:
-            run_reqs += _req
+            _req = out.get("requirements") or {}
+            if isinstance(_req, Mapping):
+                build_reqs += _req.get("build") or []
+                host_reqs += _req.get("host") or []
+                run_reqs += _req.get("run") or []
+            else:
+                run_reqs += _req
 
     hints_toml_url = "https://raw.githubusercontent.com/conda-forge/conda-forge-pinning-feedstock/main/recipe/linter_hints/hints.toml"
     hints_toml_req = requests.get(hints_toml_url)

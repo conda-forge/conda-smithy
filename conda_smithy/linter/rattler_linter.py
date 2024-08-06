@@ -114,10 +114,7 @@ def hint_noarch_usage(
             hints.append(HINT_NO_ARCH)
 
 
-def lint_recipe_name(
-    recipe_content: RecipeWithContext,
-    lints: List[str],
-) -> None:
+def get_recipe_name(recipe_content: RecipeWithContext) -> str:
     rendered_context_recipe = render_recipe_with_context(recipe_content)
     package_name = (
         rendered_context_recipe.get("package", {}).get("name", "").strip()
@@ -125,7 +122,25 @@ def lint_recipe_name(
     recipe_name = (
         rendered_context_recipe.get("recipe", {}).get("name", "").strip()
     )
-    name = package_name or recipe_name
+    return package_name or recipe_name
+
+
+def get_recipe_version(recipe_content: RecipeWithContext) -> str:
+    rendered_context_recipe = render_recipe_with_context(recipe_content)
+    package_version = (
+        rendered_context_recipe.get("package", {}).get("version", "").strip()
+    )
+    recipe_version = (
+        rendered_context_recipe.get("recipe", {}).get("version", "").strip()
+    )
+    return package_version or recipe_version
+
+
+def lint_recipe_name(
+    recipe_content: RecipeWithContext,
+    lints: List[str],
+) -> None:
+    name = get_recipe_name(recipe_content)
 
     lint_msg = _lint_recipe_name(name)
     if lint_msg:
@@ -136,14 +151,7 @@ def lint_package_version(
     recipe_content: RecipeWithContext,
     lints: List[str],
 ) -> None:
-    rendered_context_recipe = render_recipe_with_context(recipe_content)
-    package_version = (
-        rendered_context_recipe.get("package", {}).get("version", "").strip()
-    )
-    recipe_version = (
-        rendered_context_recipe.get("recipe", {}).get("version", "").strip()
-    )
-    version = package_version or recipe_version
+    version = get_recipe_version(recipe_content)
 
     lint_msg = _lint_package_version(version)
 
