@@ -892,7 +892,6 @@ def lint_stdlib(
                 "If your conda_build_config.yaml sets `MACOSX_DEPLOYMENT_TARGET`, "
                 "please change the name of that key to `c_stdlib_version`!\n"
                 "Continuing with `max(c_stdlib_version, MACOSX_DEPLOYMENT_TARGET)`."
-                "Continuing with `max(c_stdlib_version, MACOSX_DEPLOYMENT_TARGET)`."
             )
             merged_dt = []
             for v_std, v_mdt in zip(v_stdlib, macdt):
