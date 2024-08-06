@@ -772,13 +772,14 @@ def lint_stdlib(
     all_run_reqs_flat = global_run_reqs
     if not is_rattler_build:
         all_contraints_flat = global_constraints
-    [all_build_reqs_flat := all_build_reqs_flat + x for x in output_build_reqs]
-    [all_run_reqs_flat := all_run_reqs_flat + x for x in output_run_reqs]
+
+    def flatten_reqs(reqs):
+        return itertools.chain.from_iterable(reqs)
+
+    all_build_reqs_flat += flatten_reqs(output_build_reqs)
+    all_run_reqs_flat += flatten_reqs(output_run_reqs)
     if not is_rattler_build:
-        [
-            all_contraints_flat := all_contraints_flat + x
-            for x in output_contraints
-        ]
+        all_contraints_flat += flatten_reqs(output_contraints)
 
     # this check needs to be done per output --> use separate (unflattened) requirements
     for build_reqs in all_build_reqs:
