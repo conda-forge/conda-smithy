@@ -219,7 +219,9 @@ def lintify_meta_yaml(
 
     # 14: Run conda-forge specific lints
     if conda_forge:
-        run_conda_forge_specific(meta, recipe_dir, lints, hints)
+        run_conda_forge_specific(
+            meta, recipe_dir, lints, hints, is_rattler_build=is_rattler_build
+        )
 
     # 15: Check if we are using legacy patterns
     lint_usage_of_legacy_patterns(requirements_section, lints)
@@ -453,19 +455,19 @@ def run_conda_forge_specific(
 
     # 4: Do not delete example recipe
     if is_staged_recipes and recipe_dir is not None:
-        recipe_name = "meta.yaml" if not is_rattler_build else "recipe.yaml"
-        example_meta_fname = os.path.abspath(
-            os.path.join(recipe_dir, "..", "example", recipe_name)
-        )
-
-        if not os.path.exists(example_meta_fname):
-            msg = (
-                "Please do not delete the example recipe found in "
-                f"`recipes/example/{recipe_name}`."
+        for recipe_name in ("meta.yaml", "recipe.yaml"):
+            example_fname = os.path.abspath(
+                os.path.join(recipe_dir, "..", "example", recipe_name)
             )
 
-            if msg not in lints:
-                lints.append(msg)
+            if not os.path.exists(example_fname):
+                msg = (
+                    "Please do not delete the example recipe found in "
+                    f"`recipes/example/{recipe_name}`."
+                )
+
+                if msg not in lints:
+                    lints.append(msg)
 
     # 5: Package-specific hints
     # (e.g. do not depend on matplotlib, only matplotlib-base)
