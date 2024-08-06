@@ -5,7 +5,7 @@ import subprocess
 import sys
 from glob import glob
 
-from conda_smithy.linter import rattler_linter
+from conda_smithy.linter import conda_recipe_v2_linter
 from conda_smithy.linter.errors import HINT_NO_ARCH
 from conda_smithy.linter.utils import find_local_config_file, is_selector_line
 from conda_smithy.utils import get_yaml
@@ -32,7 +32,7 @@ def hint_suggest_noarch(
     conda_forge,
     recipe_fname,
     hints,
-    is_rattler_build: bool = False,
+    is_recipe_v2: bool = False,
 ):
     if (
         noarch_value is None
@@ -41,8 +41,8 @@ def hint_suggest_noarch(
         and ("pip" in build_reqs)
         and (is_staged_recipes or not conda_forge)
     ):
-        if is_rattler_build:
-            rattler_linter.hint_noarch_usage(
+        if is_recipe_v2:
+            conda_recipe_v2_linter.hint_noarch_usage(
                 build_reqs, raw_requirements_section, hints
             )
         else:
