@@ -357,6 +357,7 @@ def test_license_file_empty(is_rattler_build):
     expected_message = "license_file entry is missing, but is required."
     assert expected_message in lints
 
+
 @pytest.mark.parametrize(
     "std_selector",
     ["unix", "linux or (osx and x86_64)"],

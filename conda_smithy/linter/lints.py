@@ -719,7 +719,6 @@ def lint_go_licenses_are_bundled(
 
 def lint_stdlib(
     meta,
-    recipe_dir,
     requirements_section,
     conda_build_config_filename,
     lints,
@@ -730,17 +729,15 @@ def lint_stdlib(
     global_run_reqs = requirements_section.get("run") or []
     global_constraints = requirements_section.get("run_constrained") or []
     if not is_rattler_build:
-        global_constraints = requirements_section.get("run_constrained") or []
+        global_constraints = requirements_section.get("run_constraints") or []
 
-    build_lint = (
-        '`{{ stdlib("c") }}`'
-        if not is_rattler_build
-        else '`${{ stdlib("c") }}`'
-    )
+    jinja_stdlib_c = '`{{ stdlib("c") }}`'
+    if is_rattler_build:
+        jinja_stdlib_c = '`${{ stdlib("c") }}`'
 
     stdlib_lint = (
         "This recipe is using a compiler, which now requires adding a build "
-        f"dependence on {build_lint} as well. Note that this rule applies to "
+        f"dependence on {jinja_stdlib_c} as well. Note that this rule applies to "
         "each output of the recipe using a compiler. For further details, please "
         "see https://github.com/conda-forge/conda-forge.github.io/issues/2102."
     )
@@ -791,15 +788,9 @@ def lint_stdlib(
             if stdlib_lint not in lints:
                 lints.append(stdlib_lint)
 
-    sysroot_lint_build = (
-        '`{{ stdlib("c") }}`'
-        if not is_rattler_build
-        else '`${{ stdlib("c") }}`'
-    )
-
     sysroot_lint = (
         "You're setting a requirement on sysroot_linux-<arch> directly; this should "
-        f"now be done by adding a build dependence on {sysroot_lint_build}, and "
+        f"now be done by adding a build dependence on {jinja_stdlib_c}, and "
         "overriding `c_stdlib_version` in `recipe/conda_build_config.yaml` for the "
         "respective platform as necessary. For further details, please see "
         "https://github.com/conda-forge/conda-forge.github.io/issues/2102."
@@ -811,7 +802,7 @@ def lint_stdlib(
 
     osx_lint = (
         "You're setting a constraint on the `__osx` virtual package directly; this "
-        'should now be done by adding a build dependence on `{{ stdlib("c") }}`, '
+        f"should now be done by adding a build dependence on {jinja_stdlib_c}, "
         "and overriding `c_stdlib_version` in `recipe/conda_build_config.yaml` for "
         "the respective platform as necessary. For further details, please see "
         "https://github.com/conda-forge/conda-forge.github.io/issues/2102."
@@ -826,26 +817,30 @@ def lint_stdlib(
 
     # stdlib issues in CBC ( conda-build-config )
     cbc_osx = {}
-    if not is_rattler_build:
-        cbc_lines = []
-        if conda_build_config_filename:
-            with open(conda_build_config_filename) as fh:
-                cbc_lines = fh.readlines()
-    elif is_rattler_build and recipe_dir:
+
+    if is_rattler_build:
         platform_namespace = {
             "unix": True,
             "osx": True,
             "linux": False,
             "win": False,
         }
-        variants_path = os.path.join(recipe_dir, "variants.yaml")
-        if os.path.exists(variants_path):
-            cbc_osx = parse_recipe_config_file(
-                variants_path, platform_namespace, allow_missing_selector=True
-            )
 
-    # filter on osx-relevant lines
-    if not is_rattler_build:
+        if conda_build_config_filename and os.path.exists(
+            conda_build_config_filename
+        ):
+            cbc_osx = parse_recipe_config_file(
+                conda_build_config_filename,
+                platform_namespace,
+                allow_missing_selector=True,
+            )
+    else:
+        cbc_lines = []
+        if conda_build_config_filename:
+            with open(conda_build_config_filename) as fh:
+                cbc_lines = fh.readlines()
+
+        # filter on osx-relevant lines
         pat = re.compile(
             r"^([^:\#]*?)\s+\#\s\[.*(not\s(osx|unix)|(?<!not\s)(linux|win)).*\]\s*$"
         )
