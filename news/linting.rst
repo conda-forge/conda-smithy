@@ -1,5 +1,5 @@
 **Added:**
-* Added more lints / hints for conda v2 recipes. (#2000, #2008, #2022)
+* Added more lints / hints for conda v2 recipes. (#2000, #2003, #2008, #2016, #2022)
 
 **Changed:**
 
