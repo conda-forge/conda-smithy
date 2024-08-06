@@ -237,8 +237,12 @@ def lintify_meta_yaml(
 
     conda_build_config_filename = None
     if recipe_dir:
+        cbc_file = "conda_build_config.yaml"
+        if is_rattler_build:
+            cbc_file = "variants.yaml"
+
         conda_build_config_filename = find_local_config_file(
-            recipe_dir, "conda_build_config.yaml"
+            recipe_dir, cbc_file
         )
 
         if conda_build_config_filename:
@@ -351,7 +355,12 @@ def lintify_meta_yaml(
 
     # 5: stdlib-related lints
     lint_stdlib(
-        meta, requirements_section, conda_build_config_filename, lints, hints
+        meta,
+        requirements_section,
+        conda_build_config_filename,
+        lints,
+        hints,
+        is_rattler_build,
     )
 
     return lints, hints

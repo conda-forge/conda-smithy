@@ -99,7 +99,7 @@ def get_list_section(parent, name, lints, allow_single=False):
         return [{}]
 
 
-def find_local_config_file(recipe_dir, filename):
+def find_local_config_file(recipe_dir: str, filename: str) -> Optional[str]:
     # support
     # 1. feedstocks
     # 2. staged-recipes with custom conda-forge.yaml in recipe
