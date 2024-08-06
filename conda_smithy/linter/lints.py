@@ -761,24 +761,26 @@ def lint_stdlib(
     # collect output requirements
     output_build_reqs = [x.get("build", []) or [] for x in output_reqs]
     output_run_reqs = [x.get("run", []) or [] for x in output_reqs]
-    output_contraints = [x.get("run_constrained", []) or [] for x in output_reqs]
+    output_contraints = [
+        x.get("run_constrained", []) or [] for x in output_reqs
+    ]
     if is_rattler_build:
-        output_contraints = [x.get("run_constraints", []) or [] for x in output_reqs]
+        output_contraints = [
+            x.get("run_constraints", []) or [] for x in output_reqs
+        ]
 
     # aggregate as necessary
     all_build_reqs = [global_build_reqs] + output_build_reqs
     all_build_reqs_flat = global_build_reqs
     all_run_reqs_flat = global_run_reqs
-    if not is_rattler_build:
-        all_contraints_flat = global_constraints
+    all_contraints_flat = global_constraints
 
     def flatten_reqs(reqs):
         return itertools.chain.from_iterable(reqs)
 
     all_build_reqs_flat += flatten_reqs(output_build_reqs)
     all_run_reqs_flat += flatten_reqs(output_run_reqs)
-    if not is_rattler_build:
-        all_contraints_flat += flatten_reqs(output_contraints)
+    all_contraints_flat += flatten_reqs(output_contraints)
 
     # this check needs to be done per output --> use separate (unflattened) requirements
     for build_reqs in all_build_reqs:
@@ -807,10 +809,8 @@ def lint_stdlib(
         "the respective platform as necessary. For further details, please see "
         "https://github.com/conda-forge/conda-forge.github.io/issues/2102."
     )
-    if not is_rattler_build:
-        to_check = all_run_reqs_flat + all_contraints_flat
-    else:
-        to_check = all_run_reqs_flat
+
+    to_check = all_run_reqs_flat + all_contraints_flat
     if any(req.startswith("__osx >") for req in to_check):
         if osx_lint not in lints:
             lints.append(osx_lint)
