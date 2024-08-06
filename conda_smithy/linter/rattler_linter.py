@@ -1,4 +1,5 @@
 import os
+import re
 from typing import Any, Dict, List, Optional
 
 from rattler_build_conda_compat.jinja.jinja import (
@@ -36,6 +37,7 @@ EXPECTED_MULTIPLE_OUTPUT_SECTION_ORDER = [
     "extra",
 ]
 TEST_KEYS = {"script", "python"}
+JINJA_VAR_PAT = re.compile(r"\${{(.*?)}}")
 
 
 def lint_recipe_tests(
@@ -155,3 +157,56 @@ def lint_package_version(
 
     if lint_msg:
         lints.append(lint_msg)
+
+
+def lint_usage_of_selectors_for_noarch(
+    noarch_value: str,
+    requirements_section: Dict[str, Any],
+    build_section: Dict[str, Any],
+    noarch_platforms: bool,
+    lints: List[str],
+):
+    for section in requirements_section:
+        section_requirements = requirements_section[section]
+
+        if not section_requirements:
+            continue
+
+        has_bad_selector = False
+
+        if any(isinstance(req, dict) for req in section_requirements):
+            if noarch_platforms and section in ("host", "run"):
+                for req in section_requirements:
+                    if isinstance(req, dict) and not has_bad_selector:
+                        for key in req:
+                            if key == "if":
+                                if_selectors = {
+                                    selector
+                                    for selector in req[key].split()
+                                    if selector not in ("not", "and", "or")
+                                }
+                                allowed_nouns = (
+                                    {"win", "linux", "osx", "unix"}
+                                    if noarch_platforms
+                                    else set()
+                                )
+                                if not if_selectors.issubset(allowed_nouns):
+                                    has_bad_selector = True
+                                    break
+            if not noarch_platforms:
+                has_bad_selector = True
+
+            if has_bad_selector:
+                lints.append(
+                    "`noarch` packages can't have selectors. If "
+                    "the selectors are necessary, please remove "
+                    f"`noarch: {noarch_value}`."
+                )
+                break
+
+    if "skip" in build_section:
+        lints.append(
+            "`noarch` packages can't have skips with selectors. If "
+            "the selectors are necessary, please remove "
+            f"`noarch: {noarch_value}`."
+        )
