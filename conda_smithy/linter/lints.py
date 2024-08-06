@@ -728,7 +728,7 @@ def lint_stdlib(
     global_build_reqs = requirements_section.get("build") or []
     global_run_reqs = requirements_section.get("run") or []
     global_constraints = requirements_section.get("run_constrained") or []
-    if not is_rattler_build:
+    if is_rattler_build:
         global_constraints = requirements_section.get("run_constraints") or []
 
     jinja_stdlib_c = '`{{ stdlib("c") }}`'
@@ -761,10 +761,9 @@ def lint_stdlib(
     # collect output requirements
     output_build_reqs = [x.get("build", []) or [] for x in output_reqs]
     output_run_reqs = [x.get("run", []) or [] for x in output_reqs]
-    if not is_rattler_build:
-        output_contraints = [
-            x.get("run_constrained", []) or [] for x in output_reqs
-        ]
+    output_contraints = [x.get("run_constrained", []) or [] for x in output_reqs]
+    if is_rattler_build:
+        output_contraints = [x.get("run_constraints", []) or [] for x in output_reqs]
 
     # aggregate as necessary
     all_build_reqs = [global_build_reqs] + output_build_reqs
