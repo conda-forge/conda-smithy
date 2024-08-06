@@ -414,7 +414,7 @@ def test_rattler_cbc_osx_hints(
 ):
     with tmp_directory() as recipe_dir:
         recipe_dir = Path(recipe_dir)
-        recipe_dir.joinpath("recipe.yaml").write_text("package:\n   name: foo")
+        recipe_dir.joinpath("recipe.yaml").write_text("package:\n  name: foo")
 
         recipe_dir.joinpath("conda-forge.yml").write_text(
             "conda_build_tool: rattler-build"
@@ -423,58 +423,73 @@ def test_rattler_cbc_osx_hints(
         with open(recipe_dir / "variants.yaml", "a") as fh:
             if macdt is not None:
                 fh.write(
-                    f"""\
-MACOSX_DEPLOYMENT_TARGET:
-  - if: osx
-    then:
-      - {macdt[0]}
-      - {macdt[1]}
-"""
+                    textwrap.dedent(
+                        f"""\
+                        MACOSX_DEPLOYMENT_TARGET:
+                          - if: osx
+                            then:
+                              - {macdt[0]}
+                              - {macdt[1]}
+                    """
+                    )
                 )
             if v_std is not None or with_linux:
                 arch1 = "arm64" if reverse_arch[1] else "x86_64"
                 arch2 = "x86_64" if reverse_arch[1] else "arm64"
 
-                fh.write("c_stdlib_version:")
+                fh.write(textwrap.dedent("c_stdlib_version:\n"))
 
                 if v_std is not None:
                     fh.write(
-                        f"""
-  - if: {std_selector} and {arch1}
-    then: {v_std[0]}
-"""
+                        textwrap.dedent(
+                            f"""\
+                            - if: {std_selector} and {arch1}
+                              then: {v_std[0]}
+                        """
+                        )
                     )
                 if v_std is not None and len(v_std) > 1:
                     fh.write(
-                        f"""
-  - if: {std_selector} and {arch2}
-    then: {v_std[1]}
-"""
+                        textwrap.dedent(
+                            f"""\
+                            - if: {std_selector} and {arch2}
+                              then: {v_std[1]}
+                        """
+                        )
                     )
                 if with_linux:
                     fh.write(
+                        textwrap.dedent(
+                            """\
+                            - if: linux
+                              then: 2.17
                         """
-  - if: linux
-    then: 2.17
-"""
+                        )
                     )
             if sdk is not None:
                 # often SDK is set uniformly for osx; test this as well
-                fh.write(
-                    f"""
-MACOSX_SDK_VERSION:
-  - if: osx and {"arm64" if reverse_arch[2] else "x86_64"}
-    then: {sdk[0]}
-  - if: osx and {"x86_64" if reverse_arch[2] else "arm64"}
-    then: {sdk[1]}
-"""
-                    if len(sdk) == 2
-                    else f"""
-MACOSX_SDK_VERSION:
-  - if: osx
-    then: {sdk[0]}
-"""
-                )
+                if len(sdk) == 2:
+                    fh.write(
+                        textwrap.dedent(
+                            f"""\
+                            MACOSX_SDK_VERSION:
+                              - if: osx and {"arm64" if reverse_arch[2] else "x86_64"}
+                                then: {sdk[0]}
+                              - if: osx and {"x86_64" if reverse_arch[2] else "arm64"}
+                                then: {sdk[1]}
+                        """
+                        )
+                    )
+                else:
+                    fh.write(
+                        textwrap.dedent(
+                            f"""\
+                            MACOSX_SDK_VERSION:
+                              - if: osx
+                                then: {sdk[0]}
+                        """
+                        )
+                    )
         # run the linter
         lints, _ = linter.main(
             recipe_dir, return_hints=True, feedstock_dir=recipe_dir
