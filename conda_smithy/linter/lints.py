@@ -763,12 +763,13 @@ def lint_stdlib(
     # collect output requirements
     output_build_reqs = [x.get("build", []) or [] for x in output_reqs]
     output_run_reqs = [x.get("run", []) or [] for x in output_reqs]
-    output_contraints = [
-        x.get("run_constrained", []) or [] for x in output_reqs
-    ]
     if is_rattler_build:
         output_contraints = [
             x.get("run_constraints", []) or [] for x in output_reqs
+        ]
+    else:
+        output_contraints = [
+            x.get("run_constrained", []) or [] for x in output_reqs
         ]
 
     # aggregate as necessary
