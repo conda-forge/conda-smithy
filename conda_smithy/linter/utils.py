@@ -12,6 +12,8 @@ from conda_build.metadata import (
 from rattler_build_conda_compat import loader as rattler_loader
 from rattler_build_conda_compat.recipe_sources import get_all_url_sources
 
+from conda_smithy.utils import RecipeVersion
+
 FIELDS = copy.deepcopy(_CONDA_BUILD_FIELDS)
 
 # Just in case 'extra' moves into conda_build
@@ -47,11 +49,15 @@ CONDA_BUILD_TOOL = "conda-build"
 RATTLER_BUILD_TOOL = "rattler-build"
 
 
-def get_section(parent, name, lints, is_recipe_v2=False):
-    if not is_recipe_v2:
+def get_section(
+    parent, name, lints, recipe_version: RecipeVersion = RecipeVersion.V1
+):
+    if recipe_version.is_v1:
         return get_meta_section(parent, name, lints)
-    else:
+    elif recipe_version.is_v2:
         return get_recipe_v2_section(parent, name)
+    else:
+        raise ValueError(f"Unknown recipe version: {recipe_version}")
 
 
 def get_meta_section(parent, name, lints):

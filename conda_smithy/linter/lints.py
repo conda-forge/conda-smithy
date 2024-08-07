@@ -24,13 +24,15 @@ from conda_smithy.linter.utils import (
     jinja_lines,
     selector_lines,
 )
-from conda_smithy.utils import get_yaml
+from conda_smithy.utils import RecipeVersion, get_yaml
 
 
 def lint_section_order(
-    major_sections: List[str], lints: List[str], is_recipe_v2: bool = False
+    major_sections: List[str],
+    lints: List[str],
+    recipe_version: RecipeVersion = RecipeVersion.V1,
 ):
-    if not is_recipe_v2:
+    if recipe_version.is_v1:
         order = EXPECTED_SECTION_ORDER
     else:
         if "outputs" in major_sections:
@@ -53,9 +55,11 @@ def lint_section_order(
         )
 
 
-def lint_about_contents(about_section, lints, is_recipe_v2: bool = False):
+def lint_about_contents(
+    about_section, lints, recipe_version: RecipeVersion = RecipeVersion.V1
+):
     expected_section = [
-        "homepage" if is_recipe_v2 else "home",
+        "homepage" if recipe_version.is_v2 else "home",
         "license",
         "summary",
     ]
@@ -86,9 +90,9 @@ def lint_recipe_have_tests(
     outputs_section,
     lints,
     hints,
-    is_recipe_v2: bool = False,
+    recipe_version: RecipeVersion = RecipeVersion.V1,
 ):
-    if is_recipe_v2:
+    if recipe_version.is_v2:
         conda_recipe_v2_linter.lint_recipe_tests(
             recipe_dir, test_section, outputs_section, lints, hints
         )
@@ -244,12 +248,12 @@ def lint_license_family_should_be_valid(
     license: str,
     needed_families: List[str],
     lints: List[str],
-    is_recipe_v2: bool = False,
+    recipe_version: RecipeVersion = RecipeVersion.V1,
 ) -> None:
     lint_msg = "license_file entry is missing, but is required."
     license_file = about_section.get("license_file", None)
     if not license_file:
-        if is_recipe_v2:
+        if recipe_version.is_v2:
             lints.append(lint_msg)
         else:
             license_family = about_section.get(
@@ -415,11 +419,13 @@ def lint_legacy_usage_of_compilers(build_reqs, lints):
 
 
 def lint_single_space_in_pinned_requirements(
-    requirements_section, lints, is_recipe_v2: bool = False
+    requirements_section,
+    lints,
+    recipe_version: RecipeVersion = RecipeVersion.V1,
 ):
     for section, requirements in requirements_section.items():
         for requirement in requirements or []:
-            if is_recipe_v2:
+            if recipe_version.is_v2:
                 req = requirement
                 symbol_to_check = "${{"
             else:
@@ -508,12 +514,14 @@ def lint_non_noarch_builds(
                         )
 
 
-def lint_jinja_var_references(meta_fname, hints, is_recipe_v2: bool = False):
+def lint_jinja_var_references(
+    meta_fname, hints, recipe_version: RecipeVersion = RecipeVersion.V1
+):
     bad_vars = []
     bad_lines = []
     jinja_pattern = (
         JINJA_VAR_PAT
-        if not is_recipe_v2
+        if recipe_version.is_v1
         else conda_recipe_v2_linter.JINJA_VAR_PAT
     )
     if os.path.exists(meta_fname):
@@ -528,7 +536,7 @@ def lint_jinja_var_references(meta_fname, hints, is_recipe_v2: bool = False):
         if bad_vars:
             hint_message = (
                 "``{{<one space><variable name><one space>}}``"
-                if not is_recipe_v2
+                if recipe_version.is_v1
                 else "``${{<one space><variable name><one space>}}``"
             )
             hints.append(
@@ -559,9 +567,9 @@ def lint_pin_subpackages(
     outputs_section,
     package_section,
     lints,
-    is_recipe_v2: bool = False,
+    recipe_version: RecipeVersion = RecipeVersion.V1,
 ):
-    if is_recipe_v2:
+    if recipe_version.is_v2:
         meta = render_recipe_with_context(meta)
         # use the rendered versions here
         package_section = meta.get("package", {})
@@ -569,7 +577,7 @@ def lint_pin_subpackages(
 
     subpackage_names = []
     for out in outputs_section:
-        if is_recipe_v2:
+        if recipe_version.is_v2:
             if out.get("package", {}).get("name"):
                 subpackage_names.append(out["package"]["name"])
         elif "name" in out:
@@ -606,7 +614,7 @@ def lint_pin_subpackages(
                 )
 
     def check_pins_build_and_requirements(top_level):
-        if not is_recipe_v2:
+        if recipe_version.is_v1:
             if "build" in top_level and "run_exports" in top_level["build"]:
                 check_pins(top_level["build"]["run_exports"])
             if (
@@ -681,12 +689,12 @@ def lint_check_usage_of_whls(meta_fname, noarch_value, lints, hints):
 def lint_rust_licenses_are_bundled(
     build_reqs: Optional[List[str]],
     lints: List[str],
-    is_recipe_v2: bool = False,
+    recipe_version: RecipeVersion = RecipeVersion.V1,
 ):
     if not build_reqs:
         return
 
-    if is_recipe_v2:
+    if recipe_version.is_v2:
         has_rust = "${{ compiler('rust') }}" in build_reqs
     else:
         has_rust = "{{ compiler('rust') }}" in build_reqs
@@ -701,12 +709,12 @@ def lint_rust_licenses_are_bundled(
 def lint_go_licenses_are_bundled(
     build_reqs: Optional[List[str]],
     lints: List[str],
-    is_recipe_v2: bool = False,
+    recipe_version: RecipeVersion = RecipeVersion.V1,
 ):
     if not build_reqs:
         return
 
-    if is_recipe_v2:
+    if recipe_version.is_v2:
         has_go = "${{ compiler('go') }}" in build_reqs
     else:
         has_go = "{{ compiler('go') }}" in build_reqs
@@ -725,16 +733,16 @@ def lint_stdlib(
     conda_build_config_filename,
     lints,
     hints,
-    is_recipe_v2: bool = False,
+    recipe_version: RecipeVersion = RecipeVersion.V1,
 ):
     global_build_reqs = requirements_section.get("build") or []
     global_run_reqs = requirements_section.get("run") or []
-    if is_recipe_v2:
+    if recipe_version.is_v2:
         global_constraints = requirements_section.get("run_constraints") or []
     else:
         global_constraints = requirements_section.get("run_constrained") or []
 
-    if is_recipe_v2:
+    if recipe_version.is_v2:
         jinja_stdlib_c = '`${{ stdlib("c") }}`'
     else:
         jinja_stdlib_c = '`{{ stdlib("c") }}`'
@@ -745,18 +753,18 @@ def lint_stdlib(
         "each output of the recipe using a compiler. For further details, please "
         "see https://github.com/conda-forge/conda-forge.github.io/issues/2102."
     )
-    if not is_recipe_v2:
+    if recipe_version.is_v1:
         pat_compiler_stub = re.compile(
             "(m2w64_)?(c|cxx|fortran|rust)_compiler_stub"
         )
     else:
         pat_compiler_stub = re.compile(r"^\${{ compiler\(")
 
-    outputs = get_section(meta, "outputs", lints, is_recipe_v2)
+    outputs = get_section(meta, "outputs", lints, recipe_version)
     output_reqs = [x.get("requirements", {}) for x in outputs]
 
     # deal with cb2 recipes (no build/host/run distinction)
-    if not is_recipe_v2:
+    if recipe_version.is_v1:
         output_reqs = [
             {"host": x, "run": x} if isinstance(x, CommentedSeq) else x
             for x in output_reqs
@@ -765,7 +773,7 @@ def lint_stdlib(
     # collect output requirements
     output_build_reqs = [x.get("build", []) or [] for x in output_reqs]
     output_run_reqs = [x.get("run", []) or [] for x in output_reqs]
-    if is_recipe_v2:
+    if recipe_version.is_v2:
         output_contraints = [
             x.get("run_constraints", []) or [] for x in output_reqs
         ]
@@ -790,7 +798,7 @@ def lint_stdlib(
     # this check needs to be done per output --> use separate (unflattened) requirements
     for build_reqs in all_build_reqs:
         has_compiler = any(pat_compiler_stub.match(rq) for rq in build_reqs)
-        stdlib_stub = "c_stdlib_stub" if not is_recipe_v2 else "${{ stdlib"
+        stdlib_stub = "c_stdlib_stub" if recipe_version.is_v1 else "${{ stdlib"
         if has_compiler and stdlib_stub not in build_reqs:
             if stdlib_lint not in lints:
                 lints.append(stdlib_lint)
@@ -823,7 +831,7 @@ def lint_stdlib(
     # stdlib issues in CBC ( conda-build-config )
     cbc_osx = {}
 
-    if is_recipe_v2:
+    if recipe_version.is_v2:
         platform_namespace = {
             "unix": True,
             "osx": True,
