@@ -1029,8 +1029,7 @@ def _render_ci_provider(
                 and provider_name == "github_actions"
                 and (
                     (not forge_config["github_actions"]["self_hosted"])
-                    or 
-                    (os.path.basename(forge_dir) not in SERVICE_FEEDSTOCKS)
+                    or (os.path.basename(forge_dir) not in SERVICE_FEEDSTOCKS)
                 )
             ):
                 raise RuntimeError(
