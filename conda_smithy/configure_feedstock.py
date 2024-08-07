@@ -1028,6 +1028,7 @@ def _render_ci_provider(
                 channel_target.startswith("conda-forge ")
                 and provider_name == "github_actions"
                 and not forge_config["github_actions"]["self_hosted"]
+                and os.path.basename(forge_dir) not in SERVICE_FEEDSTOCKS
             ):
                 raise RuntimeError(
                     "Using github_actions as the CI provider inside "
