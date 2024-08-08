@@ -8,7 +8,7 @@ from glob import glob
 from conda_smithy.linter import conda_recipe_v2_linter
 from conda_smithy.linter.errors import HINT_NO_ARCH
 from conda_smithy.linter.utils import find_local_config_file, is_selector_line
-from conda_smithy.utils import RecipeVersion, get_yaml
+from conda_smithy.utils import get_yaml
 
 
 def hint_pip_usage(build_section, hints):
@@ -32,7 +32,7 @@ def hint_suggest_noarch(
     conda_forge,
     recipe_fname,
     hints,
-    recipe_version: RecipeVersion = RecipeVersion.V1,
+    recipe_version: int = 1,
 ):
     if (
         noarch_value is None
@@ -41,7 +41,7 @@ def hint_suggest_noarch(
         and ("pip" in build_reqs)
         and (is_staged_recipes or not conda_forge)
     ):
-        if recipe_version.is_v2:
+        if recipe_version == 2:
             conda_recipe_v2_linter.hint_noarch_usage(
                 build_reqs, raw_requirements_section, hints
             )

@@ -14,7 +14,6 @@ import github
 import pytest
 
 import conda_smithy.lint_recipe as linter
-from conda_smithy.utils import RecipeVersion
 
 _thisdir = os.path.abspath(os.path.dirname(__file__))
 
@@ -325,10 +324,8 @@ MACOSX_SDK_VERSION:         # [osx]
             assert any(lint.startswith(exp_lint) for lint in lints)
 
 
-@pytest.mark.parametrize(
-    "recipe_version", [(RecipeVersion.V1), (RecipeVersion.V2)]
-)
-def test_license_file_required(recipe_version):
+@pytest.mark.parametrize("recipe_version", [(1), (2)])
+def test_license_file_required(recipe_version: int):
     meta = {
         "about": {
             "home": "a URL",
@@ -343,10 +340,8 @@ def test_license_file_required(recipe_version):
     assert expected_message in lints
 
 
-@pytest.mark.parametrize(
-    "recipe_version", [(RecipeVersion.V1), (RecipeVersion.V2)]
-)
-def test_license_file_empty(recipe_version):
+@pytest.mark.parametrize("recipe_version", [(1), (2)])
+def test_license_file_empty(recipe_version: int):
     meta = {
         "about": {
             "home": "a URL",
@@ -525,9 +520,7 @@ class TestLinter(unittest.TestCase):
 
     def test_recipe_v2_bad_top_level(self):
         meta = OrderedDict([["package", {}], ["build", {}], ["sources", {}]])
-        lints, hints = linter.lintify_meta_yaml(
-            meta, recipe_version=RecipeVersion.V2
-        )
+        lints, hints = linter.lintify_meta_yaml(meta, recipe_version=2)
         expected_msg = "The top level meta key sources is unexpected"
         self.assertIn(expected_msg, lints)
 
@@ -582,9 +575,7 @@ class TestLinter(unittest.TestCase):
 
     def test_missing_about_homepage_empty(self):
         meta = {"about": {"homepage": "", "summary": "", "license": ""}}
-        lints, hints = linter.lintify_meta_yaml(
-            meta, recipe_version=RecipeVersion.V2
-        )
+        lints, hints = linter.lintify_meta_yaml(meta, recipe_version=2)
         expected_message = (
             "The homepage item is expected in the about section."
         )
@@ -703,24 +694,22 @@ class TestLinter(unittest.TestCase):
     def test_recipe_v2_test_section(self):
         expected_message = "The recipe must have some tests."
 
-        lints, hints = linter.lintify_meta_yaml(
-            {}, recipe_version=RecipeVersion.V2
-        )
+        lints, hints = linter.lintify_meta_yaml({}, recipe_version=2)
         self.assertIn(expected_message, lints)
 
         lints, hints = linter.lintify_meta_yaml(
-            {"tests": {"script": "sys"}}, recipe_version=RecipeVersion.V2
+            {"tests": {"script": "sys"}}, recipe_version=2
         )
         self.assertNotIn(expected_message, lints)
 
         lints, hints = linter.lintify_meta_yaml(
-            {"outputs": [{"name": "foo"}]}, recipe_version=RecipeVersion.V2
+            {"outputs": [{"name": "foo"}]}, recipe_version=2
         )
         self.assertIn(expected_message, lints)
 
         lints, hints = linter.lintify_meta_yaml(
             {"outputs": [{"name": "foo", "tests": {"python": "sys"}}]},
-            recipe_version=RecipeVersion.V2,
+            recipe_version=2,
         )
         self.assertNotIn(expected_message, lints)
 
@@ -733,7 +722,7 @@ class TestLinter(unittest.TestCase):
                     },
                 ]
             },
-            recipe_version=RecipeVersion.V2,
+            recipe_version=2,
         )
         self.assertNotIn(expected_message, lints)
         self.assertIn(
@@ -762,14 +751,14 @@ class TestLinter(unittest.TestCase):
 
         with tmp_directory() as recipe_dir:
             lints, hints = linter.lintify_meta_yaml(
-                {}, recipe_dir, recipe_version=RecipeVersion.V2
+                {}, recipe_dir, recipe_version=2
             )
             self.assertIn(expected_message, lints)
 
             with open(os.path.join(recipe_dir, "run_test.py"), "w") as fh:
                 fh.write("# foo")
             lints, hints = linter.lintify_meta_yaml(
-                {}, recipe_dir, recipe_version=RecipeVersion.V2
+                {}, recipe_dir, recipe_version=2
             )
             self.assertNotIn(expected_message, lints)
 
@@ -829,7 +818,7 @@ class TestLinter(unittest.TestCase):
                 )
 
             _, hints = linter.lintify_meta_yaml(
-                {}, recipe_dir, recipe_version=RecipeVersion.V2
+                {}, recipe_dir, recipe_version=2
             )
             self.assertTrue(any(h.startswith(expected_message) for h in hints))
 
@@ -1701,9 +1690,7 @@ noarch_platforms:
 
     def test_recipe_v2_recipe_name(self):
         meta = {"package": {"name": "mp++"}}
-        lints, _ = linter.lintify_meta_yaml(
-            meta, recipe_version=RecipeVersion.V2
-        )
+        lints, _ = linter.lintify_meta_yaml(meta, recipe_version=2)
         expected_message = (
             "Recipe name has invalid characters. only lowercase alpha, "
             "numeric, underscores, hyphens and dots allowed"
@@ -1715,7 +1702,7 @@ noarch_platforms:
             "package": {"name": "${{ blah }}"},
         }  # noqa
         lints, _ = linter.lintify_meta_yaml(
-            meta_with_context, recipe_version=RecipeVersion.V2
+            meta_with_context, recipe_version=2
         )
         expected_message = (
             "Recipe name has invalid characters. only lowercase alpha, "
@@ -1725,7 +1712,7 @@ noarch_platforms:
 
         meta_with_context = {"recipe": {"name": "mp++"}, "outputs": []}  # noqa
         lints, _ = linter.lintify_meta_yaml(
-            meta_with_context, recipe_version=RecipeVersion.V2
+            meta_with_context, recipe_version=2
         )
         expected_message = (
             "Recipe name has invalid characters. only lowercase alpha, "
@@ -2014,18 +2001,14 @@ noarch_platforms:
     def test_recipe_v2_version(self):
         meta = {"package": {"name": "python", "version": "3.6.4"}}
         expected_message = "Package version 3.6.4 doesn't match conda spec"
-        lints, hints = linter.lintify_meta_yaml(
-            meta, recipe_version=RecipeVersion.V2
-        )
+        lints, hints = linter.lintify_meta_yaml(meta, recipe_version=2)
         self.assertNotIn(expected_message, lints)
 
         meta = {"package": {"name": "python", "version": "2.0.0~alpha0"}}
         expected_message = (
             "Package version 2.0.0~alpha0 doesn't match conda spec"
         )
-        lints, hints = linter.lintify_meta_yaml(
-            meta, recipe_version=RecipeVersion.V2
-        )
+        lints, hints = linter.lintify_meta_yaml(meta, recipe_version=2)
         assert any(lint.startswith(expected_message) for lint in lints)
 
         # when having multiple outputs it should use recipe keyword
@@ -2033,9 +2016,7 @@ noarch_platforms:
         expected_message = (
             "Package version 2.0.0~alpha0 doesn't match conda spec"
         )
-        lints, hints = linter.lintify_meta_yaml(
-            meta, recipe_version=RecipeVersion.V2
-        )
+        lints, hints = linter.lintify_meta_yaml(meta, recipe_version=2)
         assert any(lint.startswith(expected_message) for lint in lints)
 
     def test_recipe_v2_version_with_context(self):
@@ -2044,9 +2025,7 @@ noarch_platforms:
             "package": {"name": "python", "version": "${{ foo }}"},
         }
         expected_message = "Package version 3.6.4 doesn't match conda spec"
-        lints, hints = linter.lintify_meta_yaml(
-            meta, recipe_version=RecipeVersion.V2
-        )
+        lints, hints = linter.lintify_meta_yaml(meta, recipe_version=2)
         self.assertNotIn(expected_message, lints)
 
         meta = {
@@ -2056,9 +2035,7 @@ noarch_platforms:
         expected_message = (
             "Package version 2.0.0~alpha0 doesn't match conda spec"
         )
-        lints, hints = linter.lintify_meta_yaml(
-            meta, recipe_version=RecipeVersion.V2
-        )
+        lints, hints = linter.lintify_meta_yaml(meta, recipe_version=2)
         assert any(lint.startswith(expected_message) for lint in lints)
 
     @unittest.skipUnless(is_gh_token_set(), "GH_TOKEN not set")
@@ -2139,9 +2116,7 @@ noarch_platforms:
                 "run": ["xonsh>1.0", "conda= 4.*", "conda-smithy<=54.*"],
             }
         }
-        lints, hints = linter.lintify_meta_yaml(
-            meta, recipe_version=RecipeVersion.V2
-        )
+        lints, hints = linter.lintify_meta_yaml(meta, recipe_version=2)
         filtered_lints = [
             lint for lint in lints if lint.startswith("``requirements: ")
         ]
@@ -2272,14 +2247,12 @@ noarch_platforms:
         self.assertTrue(any(hint.startswith(expected) for hint in hints))
 
 
-@pytest.mark.parametrize(
-    "recipe_version", [RecipeVersion.V2, RecipeVersion.V1]
-)
-def test_rust_license_bundling(recipe_version: RecipeVersion):
+@pytest.mark.parametrize("recipe_version", [2, 1])
+def test_rust_license_bundling(recipe_version: int):
     # Case where go-licenses is missing
     compiler = (
         "${{ compiler('rust') }}"
-        if recipe_version.is_v2
+        if recipe_version == 2
         else "{{ compiler('rust') }}"
     )
     meta_missing_license = {
@@ -2306,14 +2279,12 @@ def test_rust_license_bundling(recipe_version: RecipeVersion):
     assert expected_msg not in lints
 
 
-@pytest.mark.parametrize(
-    "recipe_version", [RecipeVersion.V2, RecipeVersion.V1]
-)
-def test_go_license_bundling(recipe_version: RecipeVersion):
+@pytest.mark.parametrize("recipe_version", [2, 1])
+def test_go_license_bundling(recipe_version: int):
     # Case where go-licenses is missing
     compiler = (
         "${{ compiler('go') }}"
-        if recipe_version.is_v2
+        if recipe_version == 2
         else "{{ compiler('go') }}"
     )
     meta_missing_license = {
@@ -2621,17 +2592,15 @@ def test_lint_wheels(tmp_path, yaml_block, annotation):
         assert any(expected_message in hint for hint in hints)
 
 
-@pytest.mark.parametrize(
-    "recipe_version", [RecipeVersion.V1, RecipeVersion.V2]
-)
-def test_pin_compatible_in_run_exports(recipe_version: RecipeVersion):
+@pytest.mark.parametrize("recipe_version", [1, 2])
+def test_pin_compatible_in_run_exports(recipe_version: int):
     meta = {
         "package": {
             "name": "apackage",
         }
     }
 
-    if recipe_version.is_v2:
+    if recipe_version == 2:
         meta["requirements"] = {
             "run_exports": ['${{ pin_compatible("apackage") }}'],
         }
@@ -2647,11 +2616,9 @@ def test_pin_compatible_in_run_exports(recipe_version: RecipeVersion):
     assert any(lint.startswith(expected) for lint in lints)
 
 
-@pytest.mark.parametrize(
-    "recipe_version", [RecipeVersion.V1, RecipeVersion.V2]
-)
-def test_pin_compatible_in_run_exports_output(recipe_version: RecipeVersion):
-    if recipe_version.is_v2:
+@pytest.mark.parametrize("recipe_version", [1, 2])
+def test_pin_compatible_in_run_exports_output(recipe_version: int):
+    if recipe_version == 2:
         meta = {
             "recipe": {
                 "name": "apackage",

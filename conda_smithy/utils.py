@@ -6,7 +6,6 @@ import tempfile
 import time
 from collections import defaultdict
 from contextlib import contextmanager
-from enum import IntEnum
 from pathlib import Path
 from typing import Any, Dict, Union
 
@@ -19,19 +18,6 @@ from rattler_build_conda_compat.render import MetaData as RattlerBuildMetaData
 
 RATTLER_BUILD = "rattler-build"
 CONDA_BUILD = "conda-build"
-
-
-class RecipeVersion(IntEnum):
-    V1 = 1
-    V2 = 2
-
-    @property
-    def is_v1(self):
-        return self == RecipeVersion.V1
-
-    @property
-    def is_v2(self):
-        return self == RecipeVersion.V2
 
 
 def _get_metadata_from_feedstock_dir(
