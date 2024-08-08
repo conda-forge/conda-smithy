@@ -186,7 +186,10 @@ def lintify_meta_yaml(
     lint_build_section_should_be_before_run(requirements_section, lints)
 
     # 9: Files downloaded should have a hash.
-    lint_sources_should_have_hash(sources_section, lints)
+    if recipe_version == 1:
+        lint_sources_should_have_hash(sources_section, lints)
+    elif recipe_version == 2:
+        conda_recipe_v2_linter.lint_sources(sources_section, lints)
 
     # 10: License should not include the word 'license'.
     lint_license_should_not_have_license(about_section, lints)

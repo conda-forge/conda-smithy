@@ -210,3 +210,22 @@ def lint_usage_of_selectors_for_noarch(
             "the selectors are necessary, please remove "
             f"`noarch: {noarch_value}`."
         )
+
+
+def lint_sources(sources_section: list[dict[str, Any]], lints: List[str]):
+    for source in sources_section:
+        if "url" in source:
+            # make sure that we have a hash
+            if not (source.keys() & {"sha256", "md5"}):
+                lints.append("Source must have a sha256 or md5 checksum.")
+            # make sure that the hash is not a template (${{ ... }} will not match)
+            if source.get("sha256"):
+                if not re.match(r"[0-9a-f]{64}", source["sha256"]):
+                    lints.append(
+                        "sha256 checksum must be 64 characters long. Templates are not allowed for the sha256 checksum."
+                    )
+            if source.get("md5"):
+                if not re.match(r"[0-9a-f]{32}", source["md5"]):
+                    lints.append(
+                        "md5 checksum must be 32 characters long. Templates are not allowed for the md5 checksum."
+                    )
