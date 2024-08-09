@@ -224,11 +224,11 @@ def test_stdlib_on_azure(stdlib_recipe, jinja_env, request):
         pytest.skip(
             "skipping test for rattler-build usecase as we currently we don't have stdlib"
         )
-        configure_feedstock.render_azure(
-            jinja_env=jinja_env,
-            forge_config=stdlib_recipe.config,
-            forge_dir=stdlib_recipe.recipe,
-        )
+    configure_feedstock.render_azure(
+        jinja_env=jinja_env,
+        forge_config=stdlib_recipe.config,
+        forge_dir=stdlib_recipe.recipe,
+    )
     # this configuration should be run
     assert stdlib_recipe.config["azure"]["enabled"]
     matrix_dir = os.path.join(stdlib_recipe.recipe, ".ci_support")
