@@ -200,7 +200,6 @@ def lint_build_section_should_be_before_run(requirements_section, lints):
 def lint_sources_should_have_hash(
     sources_section: list[dict[str, Any]], lints, recipe_version: int = 1
 ):
-    print(sources_section)
     for source_section in sources_section:
         if "url" in source_section and not (
             {"sha1", "sha256", "md5"} & set(source_section.keys())
