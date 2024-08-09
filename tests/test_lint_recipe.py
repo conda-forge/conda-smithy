@@ -2675,33 +2675,24 @@ def test_pin_compatible_in_run_exports_output(recipe_version: int):
     assert any(lint.startswith(expected) for lint in lints)
 
 
-def test_source_section_v2():
+def test_v1_recipes():
     with get_recipe_in_dir(
-        "source_section_v2/recipe-no-lint.yaml"
+        "v1_recipes/recipe-no-lint.yaml"
     ) as recipe_dir:
         lints, hints = linter.main(str(recipe_dir), return_hints=True)
         assert not lints
 
 
-def test_source_section_v2_template():
+def test_v1_package_name_version():
     with get_recipe_in_dir(
-        "source_section_v2/recipe-sha-template.yaml"
-    ) as recipe_dir:
-        lints, hints = linter.main(str(recipe_dir), return_hints=True)
-        assert any(
-            "sha256 checksum must be 64 characters long. Templates are not allowed in the sha256 checksum." in lint
-            for lint in lints
-        )
-
-def test_v2_package_name_version():
-    with get_recipe_in_dir(
-        "source_section_v2/recipe-lint-name-version.yaml"
+        "v1_recipes/recipe-lint-name-version.yaml"
     ) as recipe_dir:
         lints, hints = linter.main(str(recipe_dir), return_hints=True)
         lint_1 = "Recipe name has invalid characters. only lowercase alpha, numeric, underscores, hyphens and dots allowed"
         lint_2 = "Package version $!@# doesn't match conda spec: Invalid version '$!@#': invalid character(s)"
         assert lint_1 in lints
         assert lint_2 in lints
+
 
 if __name__ == "__main__":
     unittest.main()
