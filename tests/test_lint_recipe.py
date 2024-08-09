@@ -2676,11 +2676,21 @@ def test_pin_compatible_in_run_exports_output(recipe_version: int):
 
 
 def test_v1_recipes():
-    with get_recipe_in_dir(
-        "v1_recipes/recipe-no-lint.yaml"
-    ) as recipe_dir:
+    with get_recipe_in_dir("v1_recipes/recipe-no-lint.yaml") as recipe_dir:
         lints, hints = linter.main(str(recipe_dir), return_hints=True)
         assert not lints
+
+
+def test_source_section_v1_template():
+    with get_recipe_in_dir(
+        "v1_recipes/recipe-sha-template.yaml"
+    ) as recipe_dir:
+        lints, hints = linter.main(str(recipe_dir), return_hints=True)
+        assert any(
+            "sha256 checksum must be 64 characters long. Templates are not allowed in the sha256 checksum."
+            in lint
+            for lint in lints
+        )
 
 
 def test_v1_package_name_version():

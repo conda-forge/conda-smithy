@@ -198,7 +198,9 @@ def lint_build_section_should_be_before_run(requirements_section, lints):
 
 
 def lint_sources_should_have_hash(
-    sources_section: list[dict[str, Any]], lints: list[str]
+    sources_section: list[dict[str, Any]],
+    lints: list[str],
+    recipe_version: int = 1,
 ):
     for source_section in sources_section:
         if "url" in source_section and not (
@@ -208,6 +210,20 @@ def lint_sources_should_have_hash(
                 "When defining a source/url please add a sha256, sha1 "
                 "or md5 checksum (sha256 preferably)."
             )
+
+    # make sure there is no templating involved for the hash and they look alright
+    if recipe_version == 2:
+        for source in sources_section:
+            if source.get("sha256"):
+                if not re.match(r"[0-9a-f]{64}", source["sha256"]):
+                    lints.append(
+                        "sha256 checksum must be 64 characters long. Templates are not allowed in the sha256 checksum."
+                    )
+            if source.get("md5"):
+                if not re.match(r"[0-9a-f]{32}", source["md5"]):
+                    lints.append(
+                        "md5 checksum must be 32 characters long. Templates are not allowed in the md5 checksum."
+                    )
 
 
 def lint_license_should_not_have_license(about_section, lints):
