@@ -717,7 +717,7 @@ class TestLinter(unittest.TestCase):
         self.assertIn(expected_message, lints)
 
         lints, hints = linter.lintify_meta_yaml(
-            {"tests": {"script": "sys"}}, recipe_version=1
+            {"tests": [{"script": "sys"}]}, recipe_version=1
         )
         self.assertNotIn(expected_message, lints)
 
@@ -774,12 +774,13 @@ class TestLinter(unittest.TestCase):
             )
             self.assertIn(expected_message, lints)
 
+            # Note: v1 recipes don't have implicit "run_test.py" support
             with open(os.path.join(recipe_dir, "run_test.py"), "w") as fh:
                 fh.write("# foo")
             lints, hints = linter.lintify_meta_yaml(
                 {}, recipe_dir, recipe_version=1
             )
-            self.assertNotIn(expected_message, lints)
+            self.assertIn(expected_message, lints)
 
     def test_jinja2_vars(self):
         expected_message = (
@@ -2676,21 +2677,16 @@ def test_pin_compatible_in_run_exports_output(recipe_version: int):
 
 
 def test_v1_recipes():
-    with get_recipe_in_dir(
-        "v1_recipes/recipe-no-lint.yaml"
-    ) as recipe_dir:
+    with get_recipe_in_dir("v1_recipes/recipe-no-lint.yaml") as recipe_dir:
         lints, hints = linter.main(str(recipe_dir), return_hints=True)
         assert not lints
 
 
 def test_v1_no_test():
-    with get_recipe_in_dir(
-        "v1_recipes/recipe-no-tests.yaml"
-    ) as recipe_dir:
+    with get_recipe_in_dir("v1_recipes/recipe-no-tests.yaml") as recipe_dir:
         lints, hints = linter.main(str(recipe_dir), return_hints=True)
         print(lints)
         assert "The recipe must have some tests." in lints
-
 
 
 def test_v1_package_name_version():

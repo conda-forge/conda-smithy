@@ -101,8 +101,8 @@ def lintify_forge_yaml(recipe_dir: str | None = None) -> (list, list):
 
 def lintify_meta_yaml(
     meta: Any,
-    recipe_dir : str | None = None,
-    conda_forge : bool = False,
+    recipe_dir: str | None = None,
+    conda_forge: bool = False,
     recipe_version: int = 0,
 ) -> Tuple[List[str], List[str]]:
     lints = []
