@@ -10,7 +10,7 @@ from conda_build.metadata import (
     FIELDS as _CONDA_BUILD_FIELDS,
 )
 from rattler_build_conda_compat import loader as rattler_loader
-from rattler_build_conda_compat.recipe_sources import get_all_url_sources
+from rattler_build_conda_compat.recipe_sources import get_all_sources
 
 FIELDS = copy.deepcopy(_CONDA_BUILD_FIELDS)
 
@@ -78,7 +78,7 @@ def get_recipe_v2_section(meta, name) -> Union[Dict, List[Dict]]:
     elif name == "tests":
         return rattler_loader.load_all_tests(meta)
     elif name == "source":
-        sources = get_all_url_sources(meta)
+        sources = get_all_sources(meta)
         return list(sources)
 
     return meta.get(name, {})
