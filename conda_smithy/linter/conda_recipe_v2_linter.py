@@ -50,32 +50,35 @@ def lint_recipe_tests(
     tests_lints = []
     tests_hints = []
 
-    if not any(key in TEST_KEYS for key in test_section):
-        a_test_file_exists = recipe_dir is not None and any(
-            os.path.exists(os.path.join(recipe_dir, test_file))
-            for test_file in TEST_FILES
-        )
-        if a_test_file_exists:
-            return
+    for test in test_section:
+        if not any(key in TEST_KEYS for key in test.keys()):
+            a_test_file_exists = recipe_dir is not None and any(
+                os.path.exists(os.path.join(recipe_dir, test_file))
+                for test_file in TEST_FILES
+            )
+            if a_test_file_exists:
+                return
 
-        if not outputs_section:
-            lints.append("The recipe must have some tests.")
-        else:
-            has_outputs_test = False
-            no_test_hints = []
-            for section in outputs_section:
-                test_section = section.get("tests", {})
-                if any(key in TEST_KEYS for key in test_section):
-                    has_outputs_test = True
-                else:
-                    no_test_hints.append(
-                        "It looks like the '{}' output doesn't "
-                        "have any tests.".format(section.get("name", "???"))
-                    )
-            if has_outputs_test:
-                hints.extend(no_test_hints)
-            else:
+            if not outputs_section:
                 lints.append("The recipe must have some tests.")
+            else:
+                has_outputs_test = False
+                no_test_hints = []
+                for section in outputs_section:
+                    test_section = section.get("tests", {})
+                    if any(key in TEST_KEYS for key in test_section):
+                        has_outputs_test = True
+                    else:
+                        no_test_hints.append(
+                            "It looks like the '{}' output doesn't "
+                            "have any tests.".format(
+                                section.get("name", "???")
+                            )
+                        )
+                if has_outputs_test:
+                    hints.extend(no_test_hints)
+                else:
+                    lints.append("The recipe must have some tests.")
 
     lints.extend(tests_lints)
     hints.extend(tests_hints)
