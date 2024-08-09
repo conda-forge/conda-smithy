@@ -224,6 +224,7 @@ def test_stdlib_on_azure(stdlib_recipe, jinja_env, request):
         pytest.skip(
             "skipping test for rattler-build usecase as we currently we don't have stdlib"
         )
+
     configure_feedstock.render_azure(
         jinja_env=jinja_env,
         forge_config=stdlib_recipe.config,
