@@ -680,9 +680,7 @@ requirements:
 
 
 @pytest.fixture(scope="function")
-def v1_recipe_with_multiple_outputs(
-    testing_workdir: Path, recipe_dirname
-):
+def v1_recipe_with_multiple_outputs(testing_workdir: Path, recipe_dirname):
     with open(os.path.join(testing_workdir, "conda-forge.yml"), "w") as f:
         config = {
             "recipe_dir": recipe_dirname,
