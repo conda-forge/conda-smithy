@@ -727,7 +727,14 @@ class TestLinter(unittest.TestCase):
         self.assertIn(expected_message, lints)
 
         lints, hints = linter.lintify_meta_yaml(
-            {"outputs": [{"name": "foo", "tests": {"python": "sys"}}]},
+            {
+                "outputs": [
+                    {
+                        "name": "foo",
+                        "tests": [{"python": {"imports": ["sys"]}}],
+                    }
+                ]
+            },
             recipe_version=1,
         )
         self.assertNotIn(expected_message, lints)

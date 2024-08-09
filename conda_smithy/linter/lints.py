@@ -83,11 +83,11 @@ def lint_recipe_maintainers(extra_section, lints):
 
 
 def lint_recipe_have_tests(
-    recipe_dir,
-    test_section,
-    outputs_section,
-    lints,
-    hints,
+    recipe_dir: str,
+    test_section: List[Dict[str, Any]],
+    outputs_section: List[Dict[str, Any]],
+    lints: List[str],
+    hints: List[str],
     recipe_version: int = 0,
 ):
     if recipe_version == 1:
