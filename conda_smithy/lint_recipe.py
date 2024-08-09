@@ -6,7 +6,7 @@ from glob import glob
 from inspect import cleandoc
 from pathlib import Path
 from textwrap import indent
-from typing import List, Tuple
+from typing import Any, List, Tuple
 
 import github
 import jsonschema
@@ -76,7 +76,7 @@ from conda_smithy.validate_schema import validate_json_schema
 NEEDED_FAMILIES = ["gpl", "bsd", "mit", "apache", "psf"]
 
 
-def lintify_forge_yaml(recipe_dir=None) -> (list, list):
+def lintify_forge_yaml(recipe_dir: str | None = None) -> (list, list):
     if recipe_dir:
         forge_yaml_filename = (
             glob(os.path.join(recipe_dir, "..", "conda-forge.yml"))
@@ -100,9 +100,9 @@ def lintify_forge_yaml(recipe_dir=None) -> (list, list):
 
 
 def lintify_meta_yaml(
-    meta,
-    recipe_dir=None,
-    conda_forge=False,
+    meta: Any,
+    recipe_dir: str = None,
+    conda_forge: bool = False,
     recipe_version: int = 1,
 ) -> Tuple[List[str], List[str]]:
     lints = []
@@ -123,6 +123,7 @@ def lintify_meta_yaml(
     run_reqs = requirements_section.get("run", [])
     if recipe_version == 2:
         test_section = get_section(meta, "tests", lints, recipe_version)
+        print(test_section)
     else:
         test_section = get_section(meta, "test", lints, recipe_version)
     about_section = get_section(meta, "about", lints, recipe_version)
@@ -186,10 +187,7 @@ def lintify_meta_yaml(
     lint_build_section_should_be_before_run(requirements_section, lints)
 
     # 9: Files downloaded should have a hash.
-    if recipe_version == 1:
-        lint_sources_should_have_hash(sources_section, lints)
-    elif recipe_version == 2:
-        conda_recipe_v2_linter.lint_sources(sources_section, lints)
+    lint_sources_should_have_hash(sources_section, lints, recipe_version)
 
     # 10: License should not include the word 'license'.
     lint_license_should_not_have_license(about_section, lints)
@@ -635,6 +633,9 @@ def main(
         forge_config = _read_forge_config(feedstock_dir)
         if forge_config.get("conda_build_tool", "") == RATTLER_BUILD_TOOL:
             build_tool = RATTLER_BUILD_TOOL
+    else:
+        if os.path.exists(os.path.join(recipe_dir, "recipe.yaml")):
+            build_tool = RATTLER_BUILD_TOOL
 
     if build_tool == RATTLER_BUILD_TOOL:
         recipe_file = os.path.join(recipe_dir, "recipe.yaml")
@@ -654,6 +655,7 @@ def main(
         meta = get_yaml().load(Path(recipe_file))
 
     recipe_version = 2 if build_tool == RATTLER_BUILD_TOOL else 1
+    print("recipe version:", recipe_version)
     results, hints = lintify_meta_yaml(
         meta,
         recipe_dir,

@@ -23,6 +23,27 @@ def is_gh_token_set():
 
 
 @contextmanager
+def get_recipe_in_dir(recipe_name: str) -> Path:
+    base_dir = Path(__file__).parent
+    recipe_path = base_dir / "recipes" / recipe_name
+    assert recipe_path.exists(), f"Recipe {recipe_name} does not exist"
+
+    # create a temporary directory to copy the recipe into
+    with tmp_directory() as tmp_dir:
+        # copy the file into the temporary directory
+        recipe_folder = Path(tmp_dir) / "recipe"
+        recipe_folder.mkdir()
+        shutil.copy(recipe_path, recipe_folder / "recipe.yaml")
+
+        print("FILES: ", list(recipe_folder.glob("*")))
+
+        try:
+            yield recipe_folder
+        finally:
+            pass
+
+
+@contextmanager
 def tmp_directory():
     tmp_dir = tempfile.mkdtemp("recipe_")
     yield tmp_dir
@@ -2655,6 +2676,25 @@ def test_pin_compatible_in_run_exports_output(recipe_version: int):
     expected = "pin_compatible should be used instead"
     assert any(lint.startswith(expected) for lint in lints)
 
+
+def test_source_section_v2():
+    with get_recipe_in_dir(
+        "source_section_v2/recipe-no-lint.yaml"
+    ) as recipe_dir:
+        lints, hints = linter.main(str(recipe_dir), return_hints=True)
+        print("=== LINTS ===\n", lints)
+        assert not lints
+
+
+def test_source_section_v2_template():
+    with get_recipe_in_dir(
+        "source_section_v2/recipe-sha-template.yaml"
+    ) as recipe_dir:
+        lints, hints = linter.main(str(recipe_dir), return_hints=True)
+        assert any(
+            "sha256 checksum must be 64 characters long. Templates are not allowed in the sha256 checksum." in lint
+            for lint in lints
+        )
 
 if __name__ == "__main__":
     unittest.main()
