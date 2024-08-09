@@ -1,4 +1,3 @@
-from __future__ import annotations
 import itertools
 import os
 import re
@@ -199,7 +198,7 @@ def lint_build_section_should_be_before_run(requirements_section, lints):
 
 
 def lint_sources_should_have_hash(
-    sources_section: list[dict[str, Any]], lints: list[str]
+    sources_section: List[Dict[str, Any]], lints: List[str]
 ):
     for source_section in sources_section:
         if "url" in source_section and not (
