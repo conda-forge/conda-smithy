@@ -2693,5 +2693,15 @@ def test_source_section_v2_template():
             for lint in lints
         )
 
+def test_v2_package_name_version():
+    with get_recipe_in_dir(
+        "source_section_v2/recipe-lint-name-version.yaml"
+    ) as recipe_dir:
+        lints, hints = linter.main(str(recipe_dir), return_hints=True)
+        lint_1 = "Recipe name has invalid characters. only lowercase alpha, numeric, underscores, hyphens and dots allowed"
+        lint_2 = "Package version $!@# doesn't match conda spec: Invalid version '$!@#': invalid character(s)"
+        assert lint_1 in lints
+        assert lint_2 in lints
+
 if __name__ == "__main__":
     unittest.main()
