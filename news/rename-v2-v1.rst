@@ -4,7 +4,7 @@
 
 **Changed:**
 
-* The conda recipe version was renamed from ``{1, 2}`` to ``{0, 1}``. (#)
+* The conda recipe version was renamed from ``{1, 2}`` to ``{0, 1}``. (#2031)
 
 **Deprecated:**
 
