@@ -520,7 +520,7 @@ class TestLinter(unittest.TestCase):
 
     def test_recipe_v1_bad_top_level(self):
         meta = OrderedDict([["package", {}], ["build", {}], ["sources", {}]])
-        lints, hints = linter.lintify_meta_yaml(meta, recipe_version=2)
+        lints, hints = linter.lintify_meta_yaml(meta, recipe_version=1)
         expected_msg = "The top level meta key sources is unexpected"
         self.assertIn(expected_msg, lints)
 
@@ -575,7 +575,7 @@ class TestLinter(unittest.TestCase):
 
     def test_missing_about_homepage_empty(self):
         meta = {"about": {"homepage": "", "summary": "", "license": ""}}
-        lints, hints = linter.lintify_meta_yaml(meta, recipe_version=2)
+        lints, hints = linter.lintify_meta_yaml(meta, recipe_version=1)
         expected_message = (
             "The homepage item is expected in the about section."
         )
@@ -694,22 +694,22 @@ class TestLinter(unittest.TestCase):
     def test_recipe_v1_test_section(self):
         expected_message = "The recipe must have some tests."
 
-        lints, hints = linter.lintify_meta_yaml({}, recipe_version=2)
+        lints, hints = linter.lintify_meta_yaml({}, recipe_version=1)
         self.assertIn(expected_message, lints)
 
         lints, hints = linter.lintify_meta_yaml(
-            {"tests": {"script": "sys"}}, recipe_version=2
+            {"tests": {"script": "sys"}}, recipe_version=1
         )
         self.assertNotIn(expected_message, lints)
 
         lints, hints = linter.lintify_meta_yaml(
-            {"outputs": [{"name": "foo"}]}, recipe_version=2
+            {"outputs": [{"name": "foo"}]}, recipe_version=1
         )
         self.assertIn(expected_message, lints)
 
         lints, hints = linter.lintify_meta_yaml(
             {"outputs": [{"name": "foo", "tests": {"python": "sys"}}]},
-            recipe_version=2,
+            recipe_version=1,
         )
         self.assertNotIn(expected_message, lints)
 
@@ -722,7 +722,7 @@ class TestLinter(unittest.TestCase):
                     },
                 ]
             },
-            recipe_version=2,
+            recipe_version=1,
         )
         self.assertNotIn(expected_message, lints)
         self.assertIn(
@@ -751,14 +751,14 @@ class TestLinter(unittest.TestCase):
 
         with tmp_directory() as recipe_dir:
             lints, hints = linter.lintify_meta_yaml(
-                {}, recipe_dir, recipe_version=2
+                {}, recipe_dir, recipe_version=1
             )
             self.assertIn(expected_message, lints)
 
             with open(os.path.join(recipe_dir, "run_test.py"), "w") as fh:
                 fh.write("# foo")
             lints, hints = linter.lintify_meta_yaml(
-                {}, recipe_dir, recipe_version=2
+                {}, recipe_dir, recipe_version=1
             )
             self.assertNotIn(expected_message, lints)
 
@@ -818,7 +818,7 @@ class TestLinter(unittest.TestCase):
                 )
 
             _, hints = linter.lintify_meta_yaml(
-                {}, recipe_dir, recipe_version=2
+                {}, recipe_dir, recipe_version=1
             )
             self.assertTrue(any(h.startswith(expected_message) for h in hints))
 
@@ -1690,7 +1690,7 @@ noarch_platforms:
 
     def test_recipe_v1_recipe_name(self):
         meta = {"package": {"name": "mp++"}}
-        lints, _ = linter.lintify_meta_yaml(meta, recipe_version=2)
+        lints, _ = linter.lintify_meta_yaml(meta, recipe_version=1)
         expected_message = (
             "Recipe name has invalid characters. only lowercase alpha, "
             "numeric, underscores, hyphens and dots allowed"
@@ -1702,7 +1702,7 @@ noarch_platforms:
             "package": {"name": "${{ blah }}"},
         }  # noqa
         lints, _ = linter.lintify_meta_yaml(
-            meta_with_context, recipe_version=2
+            meta_with_context, recipe_version=1
         )
         expected_message = (
             "Recipe name has invalid characters. only lowercase alpha, "
@@ -1712,7 +1712,7 @@ noarch_platforms:
 
         meta_with_context = {"recipe": {"name": "mp++"}, "outputs": []}  # noqa
         lints, _ = linter.lintify_meta_yaml(
-            meta_with_context, recipe_version=2
+            meta_with_context, recipe_version=1
         )
         expected_message = (
             "Recipe name has invalid characters. only lowercase alpha, "
@@ -2001,14 +2001,14 @@ noarch_platforms:
     def test_recipe_v1_version(self):
         meta = {"package": {"name": "python", "version": "3.6.4"}}
         expected_message = "Package version 3.6.4 doesn't match conda spec"
-        lints, hints = linter.lintify_meta_yaml(meta, recipe_version=2)
+        lints, hints = linter.lintify_meta_yaml(meta, recipe_version=1)
         self.assertNotIn(expected_message, lints)
 
         meta = {"package": {"name": "python", "version": "2.0.0~alpha0"}}
         expected_message = (
             "Package version 2.0.0~alpha0 doesn't match conda spec"
         )
-        lints, hints = linter.lintify_meta_yaml(meta, recipe_version=2)
+        lints, hints = linter.lintify_meta_yaml(meta, recipe_version=1)
         assert any(lint.startswith(expected_message) for lint in lints)
 
         # when having multiple outputs it should use recipe keyword
@@ -2016,7 +2016,7 @@ noarch_platforms:
         expected_message = (
             "Package version 2.0.0~alpha0 doesn't match conda spec"
         )
-        lints, hints = linter.lintify_meta_yaml(meta, recipe_version=2)
+        lints, hints = linter.lintify_meta_yaml(meta, recipe_version=1)
         assert any(lint.startswith(expected_message) for lint in lints)
 
     def test_recipe_v1_version_with_context(self):
@@ -2025,7 +2025,7 @@ noarch_platforms:
             "package": {"name": "python", "version": "${{ foo }}"},
         }
         expected_message = "Package version 3.6.4 doesn't match conda spec"
-        lints, hints = linter.lintify_meta_yaml(meta, recipe_version=2)
+        lints, hints = linter.lintify_meta_yaml(meta, recipe_version=1)
         self.assertNotIn(expected_message, lints)
 
         meta = {
@@ -2035,7 +2035,7 @@ noarch_platforms:
         expected_message = (
             "Package version 2.0.0~alpha0 doesn't match conda spec"
         )
-        lints, hints = linter.lintify_meta_yaml(meta, recipe_version=2)
+        lints, hints = linter.lintify_meta_yaml(meta, recipe_version=1)
         assert any(lint.startswith(expected_message) for lint in lints)
 
     @unittest.skipUnless(is_gh_token_set(), "GH_TOKEN not set")
@@ -2116,7 +2116,7 @@ noarch_platforms:
                 "run": ["xonsh>1.0", "conda= 4.*", "conda-smithy<=54.*"],
             }
         }
-        lints, hints = linter.lintify_meta_yaml(meta, recipe_version=2)
+        lints, hints = linter.lintify_meta_yaml(meta, recipe_version=1)
         filtered_lints = [
             lint for lint in lints if lint.startswith("``requirements: ")
         ]
@@ -2592,7 +2592,7 @@ def test_lint_wheels(tmp_path, yaml_block, annotation):
         assert any(expected_message in hint for hint in hints)
 
 
-@pytest.mark.parametrize("recipe_version", [1, 2])
+@pytest.mark.parametrize("recipe_version", [0, 1])
 def test_pin_compatible_in_run_exports(recipe_version: int):
     meta = {
         "package": {
@@ -2616,7 +2616,7 @@ def test_pin_compatible_in_run_exports(recipe_version: int):
     assert any(lint.startswith(expected) for lint in lints)
 
 
-@pytest.mark.parametrize("recipe_version", [1, 2])
+@pytest.mark.parametrize("recipe_version", [0, 1])
 def test_pin_compatible_in_run_exports_output(recipe_version: int):
     if recipe_version == 1:
         meta = {
