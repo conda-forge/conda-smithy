@@ -642,7 +642,7 @@ def jinja_env():
 
 
 @pytest.fixture(scope="function")
-def rattler_noarch_recipe_with_context(testing_workdir: Path, recipe_dirname):
+def v1_noarch_recipe_with_context(testing_workdir: Path, recipe_dirname):
     with open(os.path.join(testing_workdir, "conda-forge.yml"), "w") as f:
         config = {
             "recipe_dir": recipe_dirname,
@@ -680,7 +680,7 @@ requirements:
 
 
 @pytest.fixture(scope="function")
-def rattler_recipe_with_multiple_outputs(
+def v1_recipe_with_multiple_outputs(
     testing_workdir: Path, recipe_dirname
 ):
     with open(os.path.join(testing_workdir, "conda-forge.yml"), "w") as f:

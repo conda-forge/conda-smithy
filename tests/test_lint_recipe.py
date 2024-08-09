@@ -57,7 +57,7 @@ def test_stdlib_lint(comp_lang):
     "comp_lang",
     ["c", "cxx", "fortran", "rust", "m2w64_c", "m2w64_cxx", "m2w64_fortran"],
 )
-def test_rattler_stdlib_hint(comp_lang):
+def test_v1_stdlib_hint(comp_lang):
     expected_message = "This recipe is using a compiler"
 
     with tmp_directory() as recipe_dir:
@@ -188,7 +188,7 @@ def test_osx_noarch_hint(where):
         assert not any(h.startswith(avoid_message) for h in hints)
 
 
-def test_recipe_v2_osx_noarch_hint():
+def test_recipe_v1_osx_noarch_hint():
     # don't warn on packages that are using __osx as a noarch-marker, see
     # https://conda-forge.org/docs/maintainer/knowledge_base/#noarch-packages-with-os-specific-dependencies
     avoid_message = "You're setting a constraint on the `__osx` virtual"
@@ -409,7 +409,7 @@ def test_license_file_empty(recipe_version: int):
         (None, None, ["10.12", "11.0"], "You are"),
     ],
 )
-def test_rattler_cbc_osx_hints(
+def test_v1_cbc_osx_hints(
     std_selector, with_linux, reverse_arch, macdt, v_std, sdk, exp_lint
 ):
     with tmp_directory() as recipe_dir:
@@ -518,7 +518,7 @@ class TestLinter(unittest.TestCase):
         expected_msg = "The top level meta key sources is unexpected"
         self.assertIn(expected_msg, lints)
 
-    def test_recipe_v2_bad_top_level(self):
+    def test_recipe_v1_bad_top_level(self):
         meta = OrderedDict([["package", {}], ["build", {}], ["sources", {}]])
         lints, hints = linter.lintify_meta_yaml(meta, recipe_version=2)
         expected_msg = "The top level meta key sources is unexpected"
@@ -691,7 +691,7 @@ class TestLinter(unittest.TestCase):
             "It looks like the 'foobar' output doesn't have any tests.", hints
         )
 
-    def test_recipe_v2_test_section(self):
+    def test_recipe_v1_test_section(self):
         expected_message = "The recipe must have some tests."
 
         lints, hints = linter.lintify_meta_yaml({}, recipe_version=2)
@@ -744,8 +744,8 @@ class TestLinter(unittest.TestCase):
             lints, hints = linter.lintify_meta_yaml({}, recipe_dir)
             self.assertNotIn(expected_message, lints)
 
-    def test_recipe_v2_test_section_with_recipe(self):
-        # rattler-build support legacy run_test.py, so we need to test it
+    def test_recipe_v1_test_section_with_recipe(self):
+        # rattler-build supports legacy run_test.py, so we need to test it
 
         expected_message = "The recipe must have some tests."
 
@@ -791,7 +791,7 @@ class TestLinter(unittest.TestCase):
             _, hints = linter.lintify_meta_yaml({}, recipe_dir)
             self.assertTrue(any(h.startswith(expected_message) for h in hints))
 
-    def test_recipe_v2_jinja2_vars(self):
+    def test_recipe_v1_jinja2_vars(self):
         expected_message = (
             "Jinja2 variable references are suggested to take a ``${{<one space>"
             "<variable name><one space>}}`` form. See lines %s."
@@ -1121,7 +1121,7 @@ class TestLinter(unittest.TestCase):
                             """
             )
 
-    def test_recipe_v2_noarch_selectors(self):
+    def test_recipe_v1_noarch_selectors(self):
         expected_start = "`noarch` packages can't have"
 
         with tmp_directory() as recipe_dir:
@@ -1306,7 +1306,7 @@ noarch_platforms:
                 is_good=True,
             )
 
-    def test_suggest_rattler_noarch(self):
+    def test_suggest_v1_noarch(self):
         expected_start = "Whenever possible python packages should use noarch."
         with tmp_directory() as recipe_dir:
 
@@ -1688,7 +1688,7 @@ noarch_platforms:
         )
         self.assertIn(expected_message, lints)
 
-    def test_recipe_v2_recipe_name(self):
+    def test_recipe_v1_recipe_name(self):
         meta = {"package": {"name": "mp++"}}
         lints, _ = linter.lintify_meta_yaml(meta, recipe_version=2)
         expected_message = (
@@ -1998,7 +1998,7 @@ noarch_platforms:
         lints, hints = linter.lintify_meta_yaml(meta)
         assert any(lint.startswith(expected_message) for lint in lints)
 
-    def test_recipe_v2_version(self):
+    def test_recipe_v1_version(self):
         meta = {"package": {"name": "python", "version": "3.6.4"}}
         expected_message = "Package version 3.6.4 doesn't match conda spec"
         lints, hints = linter.lintify_meta_yaml(meta, recipe_version=2)
@@ -2019,7 +2019,7 @@ noarch_platforms:
         lints, hints = linter.lintify_meta_yaml(meta, recipe_version=2)
         assert any(lint.startswith(expected_message) for lint in lints)
 
-    def test_recipe_v2_version_with_context(self):
+    def test_recipe_v1_version_with_context(self):
         meta = {
             "context": {"foo": "3.6.4"},
             "package": {"name": "python", "version": "${{ foo }}"},
@@ -2108,7 +2108,7 @@ noarch_platforms:
         ]
         self.assertEqual(expected_messages, filtered_lints)
 
-    def test_recipe_v2_single_space_pins(self):
+    def test_recipe_v1_single_space_pins(self):
         meta = {
             "requirements": {
                 "build": ["${{ compiler('c') }}", "python >=3", "pip   19"],
@@ -2252,7 +2252,7 @@ def test_rust_license_bundling(recipe_version: int):
     # Case where go-licenses is missing
     compiler = (
         "${{ compiler('rust') }}"
-        if recipe_version == 2
+        if recipe_version == 1
         else "{{ compiler('rust') }}"
     )
     meta_missing_license = {
@@ -2284,7 +2284,7 @@ def test_go_license_bundling(recipe_version: int):
     # Case where go-licenses is missing
     compiler = (
         "${{ compiler('go') }}"
-        if recipe_version == 2
+        if recipe_version == 1
         else "{{ compiler('go') }}"
     )
     meta_missing_license = {
@@ -2600,7 +2600,7 @@ def test_pin_compatible_in_run_exports(recipe_version: int):
         }
     }
 
-    if recipe_version == 2:
+    if recipe_version == 1:
         meta["requirements"] = {
             "run_exports": ['${{ pin_compatible("apackage") }}'],
         }
@@ -2618,7 +2618,7 @@ def test_pin_compatible_in_run_exports(recipe_version: int):
 
 @pytest.mark.parametrize("recipe_version", [1, 2])
 def test_pin_compatible_in_run_exports_output(recipe_version: int):
-    if recipe_version == 2:
+    if recipe_version == 1:
         meta = {
             "recipe": {
                 "name": "apackage",
