@@ -123,7 +123,6 @@ def lintify_meta_yaml(
     run_reqs = requirements_section.get("run", [])
     if recipe_version == 2:
         test_section = get_section(meta, "tests", lints, recipe_version)
-        print(test_section)
     else:
         test_section = get_section(meta, "test", lints, recipe_version)
     about_section = get_section(meta, "about", lints, recipe_version)
@@ -655,7 +654,7 @@ def main(
         meta = get_yaml().load(Path(recipe_file))
 
     recipe_version = 2 if build_tool == RATTLER_BUILD_TOOL else 1
-    print("recipe version:", recipe_version)
+
     results, hints = lintify_meta_yaml(
         meta,
         recipe_dir,

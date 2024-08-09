@@ -35,8 +35,6 @@ def get_recipe_in_dir(recipe_name: str) -> Path:
         recipe_folder.mkdir()
         shutil.copy(recipe_path, recipe_folder / "recipe.yaml")
 
-        print("FILES: ", list(recipe_folder.glob("*")))
-
         try:
             yield recipe_folder
         finally:
@@ -2682,7 +2680,6 @@ def test_source_section_v2():
         "source_section_v2/recipe-no-lint.yaml"
     ) as recipe_dir:
         lints, hints = linter.main(str(recipe_dir), return_hints=True)
-        print("=== LINTS ===\n", lints)
         assert not lints
 
 
