@@ -12,7 +12,7 @@ import github
 import jsonschema
 import requests
 
-from conda_smithy.linter import conda_recipe_v2_linter
+from conda_smithy.linter import conda_recipe_v1_linter
 from conda_smithy.linter.hints import (
     hint_check_spdx,
     hint_pip_usage,
@@ -39,7 +39,7 @@ from conda_smithy.linter.lints import (
     lint_recipe_have_tests,
     lint_recipe_maintainers,
     lint_recipe_name,
-    lint_recipe_v2_noarch_and_runtime_dependencies,
+    lint_recipe_v1_noarch_and_runtime_dependencies,
     lint_require_lower_bound_on_python_version,
     lint_rust_licenses_are_bundled,
     lint_section_order,
@@ -103,7 +103,7 @@ def lintify_meta_yaml(
     meta,
     recipe_dir=None,
     conda_forge=False,
-    recipe_version: int = 1,
+    recipe_version: int = 0,
 ) -> Tuple[List[str], List[str]]:
     lints = []
     hints = []
@@ -111,7 +111,7 @@ def lintify_meta_yaml(
 
     # If the recipe_dir exists (no guarantee within this function) , we can
     # find the meta.yaml within it.
-    recipe_name = "meta.yaml" if recipe_version == 1 else "recipe.yaml"
+    recipe_name = "meta.yaml" if recipe_version == 0 else "recipe.yaml"
     recipe_fname = os.path.join(recipe_dir or "", recipe_name)
 
     sources_section = get_section(meta, "source", lints, recipe_version)
@@ -121,7 +121,7 @@ def lintify_meta_yaml(
     )
     build_requirements = requirements_section.get("build", [])
     run_reqs = requirements_section.get("run", [])
-    if recipe_version == 2:
+    if recipe_version == 1:
         test_section = get_section(meta, "tests", lints, recipe_version)
     else:
         test_section = get_section(meta, "test", lints, recipe_version)
@@ -135,12 +135,12 @@ def lintify_meta_yaml(
 
     # 0: Top level keys should be expected
     unexpected_sections = []
-    if recipe_version == 1:
+    if recipe_version == 0:
         expected_keys = EXPECTED_SECTION_ORDER
     else:
         expected_keys = (
-            conda_recipe_v2_linter.EXPECTED_SINGLE_OUTPUT_SECTION_ORDER
-            + conda_recipe_v2_linter.EXPECTED_MULTIPLE_OUTPUT_SECTION_ORDER
+            conda_recipe_v1_linter.EXPECTED_SINGLE_OUTPUT_SECTION_ORDER
+            + conda_recipe_v1_linter.EXPECTED_MULTIPLE_OUTPUT_SECTION_ORDER
         )
 
     for section in major_sections:
@@ -175,8 +175,8 @@ def lintify_meta_yaml(
     lint_license_cannot_be_unknown(about_section, lints)
 
     # 6: Selectors should be in a tidy form.
-    if recipe_version == 1:
-        # rattler-build does not have selectors in comments form
+    if recipe_version == 0:
+        # v1 does not have selectors in comments form
         lint_selectors_should_be_in_tidy_form(recipe_fname, lints, hints)
 
     # 7: The build section should have a build number.
@@ -195,9 +195,9 @@ def lintify_meta_yaml(
     lint_should_be_empty_line(recipe_fname, lints)
 
     # 12: License family must be valid (conda-build checks for that)
-    # we skip it for rattler builds as it will validate it
+    # we skip it for v1 builds as it will validate it
     # See more: https://prefix-dev.github.io/rattler-build/latest/reference/recipe_file/#about-section
-    if recipe_version == 1:
+    if recipe_version == 0:
         try:
             ensure_valid_license_family(meta)
         except RuntimeError as e:
@@ -210,8 +210,8 @@ def lintify_meta_yaml(
     )
 
     # 13: Check that the recipe name is valid
-    if recipe_version == 2:
-        conda_recipe_v2_linter.lint_recipe_name(meta, lints)
+    if recipe_version == 1:
+        conda_recipe_v1_linter.lint_recipe_name(meta, lints)
     else:
         lint_recipe_name(
             package_section,
@@ -228,7 +228,7 @@ def lintify_meta_yaml(
     lint_usage_of_legacy_patterns(requirements_section, lints)
 
     # 16: Subheaders should be in the allowed subheadings
-    if recipe_version == 1:
+    if recipe_version == 0:
         lint_subheaders(major_sections, meta, lints)
 
     # 17: Validate noarch
@@ -238,7 +238,7 @@ def lintify_meta_yaml(
     conda_build_config_filename = None
     if recipe_dir:
         cbc_file = "conda_build_config.yaml"
-        if recipe_version == 2:
+        if recipe_version == 1:
             cbc_file = "variants.yaml"
 
         conda_build_config_filename = find_local_config_file(
@@ -266,9 +266,9 @@ def lintify_meta_yaml(
 
     # 18: noarch doesn't work with selectors for runtime dependencies
     noarch_platforms = len(forge_yaml.get("noarch_platforms", [])) > 1
-    if recipe_version == 2:
+    if recipe_version == 1:
         raw_requirements_section = meta.get("requirements", {})
-        lint_recipe_v2_noarch_and_runtime_dependencies(
+        lint_recipe_v1_noarch_and_runtime_dependencies(
             noarch_value,
             raw_requirements_section,
             build_section,
@@ -285,8 +285,8 @@ def lintify_meta_yaml(
         )
 
     # 19: check version
-    if recipe_version == 2:
-        conda_recipe_v2_linter.lint_package_version(meta, lints)
+    if recipe_version == 1:
+        conda_recipe_v1_linter.lint_package_version(meta, lints)
     else:
         lint_package_version(package_section, lints)
 
@@ -379,7 +379,7 @@ def run_conda_forge_specific(
     recipe_dir,
     lints,
     hints,
-    recipe_version: int = 1,
+    recipe_version: int = 0,
 ):
     gh = github.Github(os.environ["GH_TOKEN"])
 
@@ -404,8 +404,8 @@ def run_conda_forge_specific(
     maintainers = extra_section.get("recipe-maintainers", [])
 
     recipe_dirname = os.path.basename(recipe_dir) if recipe_dir else "recipe"
-    if recipe_version == 2:
-        recipe_name = conda_recipe_v2_linter.get_recipe_name(meta)
+    if recipe_version == 1:
+        recipe_name = conda_recipe_v1_linter.get_recipe_name(meta)
     else:
         recipe_name = package_section.get("name", "").strip()
     is_staged_recipes = recipe_dirname != "recipe"
@@ -450,7 +450,7 @@ def run_conda_forge_specific(
             )
 
         url = None
-        if recipe_version == 2:
+        if recipe_version == 1:
             for source_url in sources_section:
                 if source_url.startswith("https://pypi.io/packages/source/"):
                     url = source_url
@@ -515,7 +515,7 @@ def run_conda_forge_specific(
     host_reqs = requirements_section.get("host") or []
     run_reqs = requirements_section.get("run") or []
     for out in outputs_section:
-        if recipe_version == 2:
+        if recipe_version == 1:
             output_requirements = rattler_loader.load_all_requirements(out)
             build_reqs += output_requirements.get("build") or []
             host_reqs += output_requirements.get("host") or []
@@ -650,7 +650,7 @@ def main(
     else:
         meta = get_yaml().load(Path(recipe_file))
 
-    recipe_version = 2 if build_tool == RATTLER_BUILD_TOOL else 1
+    recipe_version = 1 if build_tool == RATTLER_BUILD_TOOL else 0
     results, hints = lintify_meta_yaml(
         meta,
         recipe_dir,

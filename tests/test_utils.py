@@ -35,11 +35,11 @@ def test_get_feedstock_name_from_metadata(noarch_recipe):
 
 
 def test_get_feedstock_name_from_rattler_metadata(
-    rattler_noarch_recipe_with_context,
+    v1_noarch_recipe_with_context,
 ):
-    feedstock_dir = rattler_noarch_recipe_with_context[0]
+    feedstock_dir = v1_noarch_recipe_with_context[0]
     metadata = _get_metadata_from_feedstock_dir(
-        feedstock_dir, rattler_noarch_recipe_with_context[1]
+        feedstock_dir, v1_noarch_recipe_with_context[1]
     )
 
     feedstock_name = get_feedstock_name_from_meta(metadata)
@@ -48,11 +48,11 @@ def test_get_feedstock_name_from_rattler_metadata(
 
 
 def test_get_feedstock_name_from_rattler_metadata_multiple_outputs(
-    rattler_recipe_with_multiple_outputs,
+    v1_recipe_with_multiple_outputs,
 ):
-    feedstock_dir = rattler_recipe_with_multiple_outputs[0]
+    feedstock_dir = v1_recipe_with_multiple_outputs[0]
     metadata = _get_metadata_from_feedstock_dir(
-        feedstock_dir, rattler_recipe_with_multiple_outputs[1]
+        feedstock_dir, v1_recipe_with_multiple_outputs[1]
     )
 
     feedstock_name = get_feedstock_name_from_meta(metadata)

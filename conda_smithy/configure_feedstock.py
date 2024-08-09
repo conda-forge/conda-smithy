@@ -962,7 +962,7 @@ def _render_ci_provider(
             if ver:
                 os.environ["DEFAULT_LINUX_VERSION"] = ver
 
-        # detect if it's rattler-build recipe
+        # detect if it's v1 recipe
         if forge_config["conda_build_tool"] == RATTLER_BUILD:
             recipe_file = "recipe.yaml"
         else:
@@ -997,7 +997,7 @@ def _render_ci_provider(
         )
 
         # If we are using new recipe
-        # we also load rattler-build variants.yaml
+        # we also load v1 variants.yaml
         if recipe_file == "recipe.yaml":
             # get_selectors from conda-build return namespace
             # so it is usefull to reuse it here

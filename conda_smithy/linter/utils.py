@@ -47,11 +47,11 @@ CONDA_BUILD_TOOL = "conda-build"
 RATTLER_BUILD_TOOL = "rattler-build"
 
 
-def get_section(parent, name, lints, recipe_version: int = 1):
-    if recipe_version == 1:
+def get_section(parent, name, lints, recipe_version: int = 0):
+    if recipe_version == 0:
         return get_meta_section(parent, name, lints)
-    elif recipe_version == 2:
-        return get_recipe_v2_section(parent, name)
+    elif recipe_version == 1:
+        return get_recipe_v1_section(parent, name)
     else:
         raise ValueError(f"Unknown recipe version: {recipe_version}")
 
@@ -72,7 +72,7 @@ def get_meta_section(parent, name, lints):
     return section
 
 
-def get_recipe_v2_section(meta, name) -> Union[Dict, List[Dict]]:
+def get_recipe_v1_section(meta, name) -> Union[Dict, List[Dict]]:
     if name == "requirements":
         return rattler_loader.load_all_requirements(meta)
     elif name == "tests":
