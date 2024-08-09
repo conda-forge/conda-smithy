@@ -2247,7 +2247,7 @@ noarch_platforms:
         self.assertTrue(any(hint.startswith(expected) for hint in hints))
 
 
-@pytest.mark.parametrize("recipe_version", [2, 1])
+@pytest.mark.parametrize("recipe_version", [0, 1])
 def test_rust_license_bundling(recipe_version: int):
     # Case where go-licenses is missing
     compiler = (
@@ -2279,7 +2279,7 @@ def test_rust_license_bundling(recipe_version: int):
     assert expected_msg not in lints
 
 
-@pytest.mark.parametrize("recipe_version", [2, 1])
+@pytest.mark.parametrize("recipe_version", [0, 1])
 def test_go_license_bundling(recipe_version: int):
     # Case where go-licenses is missing
     compiler = (
