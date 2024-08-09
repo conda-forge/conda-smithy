@@ -117,16 +117,12 @@ def hint_noarch_usage(
 
 def get_recipe_name(recipe_content: RecipeWithContext) -> str:
     rendered_context_recipe = render_recipe_with_context(recipe_content)
-    # print("Rendered Context Recipe: ", rendered_context_recipe)
-    # print("Rendered Context Recipe: ", rendered_context_recipe["package"]["name"])
     package_name = (
         rendered_context_recipe.get("package", {}).get("name", "").strip()
     )
-    print("Package Name: ", package_name)
     recipe_name = (
         rendered_context_recipe.get("recipe", {}).get("name", "").strip()
     )
-    print("Recipe Name: ", package_name)
     return package_name or recipe_name
 
 
