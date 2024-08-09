@@ -6,7 +6,7 @@ from glob import glob
 from inspect import cleandoc
 from pathlib import Path
 from textwrap import indent
-from typing import Any, List, Tuple
+from typing import Any, List, Optional, Tuple
 
 import github
 import jsonschema
@@ -76,7 +76,7 @@ from conda_smithy.validate_schema import validate_json_schema
 NEEDED_FAMILIES = ["gpl", "bsd", "mit", "apache", "psf"]
 
 
-def lintify_forge_yaml(recipe_dir: str | None = None) -> (list, list):
+def lintify_forge_yaml(recipe_dir: Optional[str] = None) -> (list, list):
     if recipe_dir:
         forge_yaml_filename = (
             glob(os.path.join(recipe_dir, "..", "conda-forge.yml"))
@@ -101,7 +101,7 @@ def lintify_forge_yaml(recipe_dir: str | None = None) -> (list, list):
 
 def lintify_meta_yaml(
     meta: Any,
-    recipe_dir: str | None = None,
+    recipe_dir: Optional[str] = None,
     conda_forge: bool = False,
     recipe_version: int = 0,
 ) -> Tuple[List[str], List[str]]:
