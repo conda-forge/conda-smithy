@@ -324,7 +324,7 @@ MACOSX_SDK_VERSION:         # [osx]
             assert any(lint.startswith(exp_lint) for lint in lints)
 
 
-@pytest.mark.parametrize("recipe_version", [(1), (2)])
+@pytest.mark.parametrize("recipe_version", [0, 1])
 def test_license_file_required(recipe_version: int):
     meta = {
         "about": {
@@ -340,7 +340,7 @@ def test_license_file_required(recipe_version: int):
     assert expected_message in lints
 
 
-@pytest.mark.parametrize("recipe_version", [(1), (2)])
+@pytest.mark.parametrize("recipe_version", [0, 1])
 def test_license_file_empty(recipe_version: int):
     meta = {
         "about": {

@@ -217,11 +217,18 @@ def test_py_matrix_on_azure(py_recipe, jinja_env):
 
 
 def test_stdlib_on_azure(stdlib_recipe, jinja_env, request):
-    configure_feedstock.render_azure(
-        jinja_env=jinja_env,
-        forge_config=stdlib_recipe.config,
-        forge_dir=stdlib_recipe.recipe,
-    )
+    conda_build_param = request.node.callspec.params["config_yaml"]
+    if conda_build_param == "rattler-build":
+        # stdlib is not yet implemented in rattler-build
+        # https://github.com/prefix-dev/rattler-build/issues/239
+        pytest.skip(
+            "skipping test for rattler-build usecase as we currently we don't have stdlib"
+        )
+        configure_feedstock.render_azure(
+            jinja_env=jinja_env,
+            forge_config=stdlib_recipe.config,
+            forge_dir=stdlib_recipe.recipe,
+        )
     # this configuration should be run
     assert stdlib_recipe.config["azure"]["enabled"]
     matrix_dir = os.path.join(stdlib_recipe.recipe, ".ci_support")
@@ -254,6 +261,12 @@ def test_stdlib_on_azure(stdlib_recipe, jinja_env, request):
 def test_stdlib_deployment_target(
     stdlib_deployment_target_recipe, jinja_env, caplog, request
 ):
+    conda_build_param = request.node.callspec.params["config_yaml"]
+    if conda_build_param == "rattler-build":
+        # stdlib is not yet implemented in rattler-build
+        # https://github.com/prefix-dev/rattler-build/issues/239
+        pytest.skip("skipping test for rattler-build usecase")
+
     with caplog.at_level(logging.WARNING):
         configure_feedstock.render_azure(
             jinja_env=jinja_env,
