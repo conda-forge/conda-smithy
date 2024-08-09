@@ -50,32 +50,33 @@ def lint_recipe_tests(
     tests_lints = []
     tests_hints = []
 
-    if not any(key in TEST_KEYS for key in test_section):
-        a_test_file_exists = recipe_dir is not None and any(
-            os.path.exists(os.path.join(recipe_dir, test_file))
-            for test_file in TEST_FILES
-        )
-        if a_test_file_exists:
-            return
+    for test in test_section:
+        if not any(key in TEST_KEYS for key in test.keys()):
+            a_test_file_exists = recipe_dir is not None and any(
+                os.path.exists(os.path.join(recipe_dir, test_file))
+                for test_file in TEST_FILES
+            )
+            if a_test_file_exists:
+                return
 
-        if not outputs_section:
-            lints.append("The recipe must have some tests.")
-        else:
-            has_outputs_test = False
-            no_test_hints = []
-            for section in outputs_section:
-                test_section = section.get("tests", {})
-                if any(key in TEST_KEYS for key in test_section):
-                    has_outputs_test = True
-                else:
-                    no_test_hints.append(
-                        "It looks like the '{}' output doesn't "
-                        "have any tests.".format(section.get("name", "???"))
-                    )
-            if has_outputs_test:
-                hints.extend(no_test_hints)
-            else:
+            if not outputs_section:
                 lints.append("The recipe must have some tests.")
+            else:
+                has_outputs_test = False
+                no_test_hints = []
+                for section in outputs_section:
+                    test_section = section.get("tests", {})
+                    if any(key in TEST_KEYS for key in test_section):
+                        has_outputs_test = True
+                    else:
+                        no_test_hints.append(
+                            "It looks like the '{}' output doesn't "
+                            "have any tests.".format(section.get("name", "???"))
+                        )
+                if has_outputs_test:
+                    hints.extend(no_test_hints)
+                else:
+                    lints.append("The recipe must have some tests.")
 
     lints.extend(tests_lints)
     hints.extend(tests_hints)
@@ -116,12 +117,16 @@ def hint_noarch_usage(
 
 def get_recipe_name(recipe_content: RecipeWithContext) -> str:
     rendered_context_recipe = render_recipe_with_context(recipe_content)
+    # print("Rendered Context Recipe: ", rendered_context_recipe)
+    # print("Rendered Context Recipe: ", rendered_context_recipe["package"]["name"])
     package_name = (
         rendered_context_recipe.get("package", {}).get("name", "").strip()
     )
+    print("Package Name: ", package_name)
     recipe_name = (
         rendered_context_recipe.get("recipe", {}).get("name", "").strip()
     )
+    print("Recipe Name: ", package_name)
     return package_name or recipe_name
 
 
@@ -210,22 +215,3 @@ def lint_usage_of_selectors_for_noarch(
             "the selectors are necessary, please remove "
             f"`noarch: {noarch_value}`."
         )
-
-
-def lint_sources(sources_section: list[dict[str, Any]], lints: List[str]):
-    for source in sources_section:
-        if "url" in source:
-            # make sure that we have a hash
-            if not (source.keys() & {"sha256", "md5"}):
-                lints.append("Source must have a sha256 or md5 checksum.")
-            # make sure that the hash is not a template (${{ ... }} will not match)
-            if source.get("sha256"):
-                if not re.match(r"[0-9a-f]{64}", source["sha256"]):
-                    lints.append(
-                        "sha256 checksum must be 64 characters long. Templates are not allowed for the sha256 checksum."
-                    )
-            if source.get("md5"):
-                if not re.match(r"[0-9a-f]{32}", source["md5"]):
-                    lints.append(
-                        "md5 checksum must be 32 characters long. Templates are not allowed for the md5 checksum."
-                    )
