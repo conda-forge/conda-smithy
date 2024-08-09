@@ -650,7 +650,7 @@ def main(
     else:
         meta = get_yaml().load(Path(recipe_file))
 
-    recipe_version = 2 if build_tool == RATTLER_BUILD_TOOL else 1
+    recipe_version = 1 if build_tool == RATTLER_BUILD_TOOL else 0
     results, hints = lintify_meta_yaml(
         meta,
         recipe_dir,
