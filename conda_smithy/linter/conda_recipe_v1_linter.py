@@ -49,8 +49,15 @@ def lint_recipe_tests(
 ):
     tests_lints = []
     tests_hints = []
+    print("test_section", test_section)
+    print("outputs_section", outputs_section)
+
+    if not test_section and not outputs_section:
+        lints.append("The recipe must have some tests.")
+        return
 
     for test in test_section:
+        print("TEST:::", test)
         if not any(key in TEST_KEYS for key in test.keys()):
             a_test_file_exists = recipe_dir is not None and any(
                 os.path.exists(os.path.join(recipe_dir, test_file))

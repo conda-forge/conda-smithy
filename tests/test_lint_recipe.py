@@ -2683,6 +2683,16 @@ def test_v1_recipes():
         assert not lints
 
 
+def test_v1_no_test():
+    with get_recipe_in_dir(
+        "v1_recipes/recipe-no-tests.yaml"
+    ) as recipe_dir:
+        lints, hints = linter.main(str(recipe_dir), return_hints=True)
+        print(lints)
+        assert "The recipe must have some tests." in lints
+
+
+
 def test_v1_package_name_version():
     with get_recipe_in_dir(
         "v1_recipes/recipe-lint-name-version.yaml"
