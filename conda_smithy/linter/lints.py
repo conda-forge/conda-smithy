@@ -83,11 +83,11 @@ def lint_recipe_maintainers(extra_section, lints):
 
 
 def lint_recipe_have_tests(
-    recipe_dir,
-    test_section,
-    outputs_section,
-    lints,
-    hints,
+    recipe_dir: str,
+    test_section: List[Dict[str, Any]],
+    outputs_section: List[Dict[str, Any]],
+    lints: List[str],
+    hints: List[str],
     recipe_version: int = 0,
 ):
     if recipe_version == 1:
@@ -197,7 +197,9 @@ def lint_build_section_should_be_before_run(requirements_section, lints):
         )
 
 
-def lint_sources_should_have_hash(sources_section, lints):
+def lint_sources_should_have_hash(
+    sources_section: List[Dict[str, Any]], lints: List[str]
+):
     for source_section in sources_section:
         if "url" in source_section and not (
             {"sha1", "sha256", "md5"} & set(source_section.keys())

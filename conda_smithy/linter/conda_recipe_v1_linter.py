@@ -1,4 +1,3 @@
-import os
 import re
 from typing import Any, Dict, List, Optional
 
@@ -9,7 +8,6 @@ from rattler_build_conda_compat.jinja.jinja import (
 
 from conda_smithy.linter.errors import HINT_NO_ARCH
 from conda_smithy.linter.utils import (
-    TEST_FILES,
     _lint_package_version,
     _lint_recipe_name,
 )
@@ -36,7 +34,6 @@ EXPECTED_MULTIPLE_OUTPUT_SECTION_ORDER = [
     "about",
     "extra",
 ]
-TEST_KEYS = {"script", "python"}
 JINJA_VAR_PAT = re.compile(r"\${{(.*?)}}")
 
 
@@ -50,27 +47,20 @@ def lint_recipe_tests(
     tests_lints = []
     tests_hints = []
 
-    if not any(key in TEST_KEYS for key in test_section):
-        a_test_file_exists = recipe_dir is not None and any(
-            os.path.exists(os.path.join(recipe_dir, test_file))
-            for test_file in TEST_FILES
-        )
-        if a_test_file_exists:
-            return
-
+    if not test_section:
         if not outputs_section:
             lints.append("The recipe must have some tests.")
         else:
             has_outputs_test = False
             no_test_hints = []
-            for section in outputs_section:
-                test_section = section.get("tests", {})
-                if any(key in TEST_KEYS for key in test_section):
+            for output in outputs_section:
+                o_test_section = output.get("tests", [])
+                if o_test_section:
                     has_outputs_test = True
                 else:
                     no_test_hints.append(
                         "It looks like the '{}' output doesn't "
-                        "have any tests.".format(section.get("name", "???"))
+                        "have any tests.".format(output.get("name", "???"))
                     )
             if has_outputs_test:
                 hints.extend(no_test_hints)

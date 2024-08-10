@@ -6,7 +6,7 @@ from glob import glob
 from inspect import cleandoc
 from pathlib import Path
 from textwrap import indent
-from typing import List, Tuple
+from typing import Any, List, Optional, Tuple
 
 import github
 import jsonschema
@@ -76,7 +76,7 @@ from conda_smithy.validate_schema import validate_json_schema
 NEEDED_FAMILIES = ["gpl", "bsd", "mit", "apache", "psf"]
 
 
-def lintify_forge_yaml(recipe_dir=None) -> (list, list):
+def lintify_forge_yaml(recipe_dir: Optional[str] = None) -> (list, list):
     if recipe_dir:
         forge_yaml_filename = (
             glob(os.path.join(recipe_dir, "..", "conda-forge.yml"))
@@ -100,9 +100,9 @@ def lintify_forge_yaml(recipe_dir=None) -> (list, list):
 
 
 def lintify_meta_yaml(
-    meta,
-    recipe_dir=None,
-    conda_forge=False,
+    meta: Any,
+    recipe_dir: Optional[str] = None,
+    conda_forge: bool = False,
     recipe_version: int = 0,
 ) -> Tuple[List[str], List[str]]:
     lints = []
@@ -632,6 +632,9 @@ def main(
         forge_config = _read_forge_config(feedstock_dir)
         if forge_config.get("conda_build_tool", "") == RATTLER_BUILD_TOOL:
             build_tool = RATTLER_BUILD_TOOL
+    else:
+        if os.path.exists(os.path.join(recipe_dir, "recipe.yaml")):
+            build_tool = RATTLER_BUILD_TOOL
 
     if build_tool == RATTLER_BUILD_TOOL:
         recipe_file = os.path.join(recipe_dir, "recipe.yaml")
@@ -651,6 +654,7 @@ def main(
         meta = get_yaml().load(Path(recipe_file))
 
     recipe_version = 1 if build_tool == RATTLER_BUILD_TOOL else 0
+
     results, hints = lintify_meta_yaml(
         meta,
         recipe_dir,

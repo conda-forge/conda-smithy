@@ -23,6 +23,25 @@ def is_gh_token_set():
 
 
 @contextmanager
+def get_recipe_in_dir(recipe_name: str) -> Path:
+    base_dir = Path(__file__).parent
+    recipe_path = base_dir / "recipes" / recipe_name
+    assert recipe_path.exists(), f"Recipe {recipe_name} does not exist"
+
+    # create a temporary directory to copy the recipe into
+    with tmp_directory() as tmp_dir:
+        # copy the file into the temporary directory
+        recipe_folder = Path(tmp_dir) / "recipe"
+        recipe_folder.mkdir()
+        shutil.copy(recipe_path, recipe_folder / "recipe.yaml")
+
+        try:
+            yield recipe_folder
+        finally:
+            pass
+
+
+@contextmanager
 def tmp_directory():
     tmp_dir = tempfile.mkdtemp("recipe_")
     yield tmp_dir
@@ -698,7 +717,7 @@ class TestLinter(unittest.TestCase):
         self.assertIn(expected_message, lints)
 
         lints, hints = linter.lintify_meta_yaml(
-            {"tests": {"script": "sys"}}, recipe_version=1
+            {"tests": [{"script": "sys"}]}, recipe_version=1
         )
         self.assertNotIn(expected_message, lints)
 
@@ -708,7 +727,14 @@ class TestLinter(unittest.TestCase):
         self.assertIn(expected_message, lints)
 
         lints, hints = linter.lintify_meta_yaml(
-            {"outputs": [{"name": "foo", "tests": {"python": "sys"}}]},
+            {
+                "outputs": [
+                    {
+                        "name": "foo",
+                        "tests": [{"python": {"imports": ["sys"]}}],
+                    }
+                ]
+            },
             recipe_version=1,
         )
         self.assertNotIn(expected_message, lints)
@@ -745,8 +771,6 @@ class TestLinter(unittest.TestCase):
             self.assertNotIn(expected_message, lints)
 
     def test_recipe_v1_test_section_with_recipe(self):
-        # rattler-build supports legacy run_test.py, so we need to test it
-
         expected_message = "The recipe must have some tests."
 
         with tmp_directory() as recipe_dir:
@@ -755,12 +779,13 @@ class TestLinter(unittest.TestCase):
             )
             self.assertIn(expected_message, lints)
 
+            # Note: v1 recipes have no implicit "run_test.py" support
             with open(os.path.join(recipe_dir, "run_test.py"), "w") as fh:
                 fh.write("# foo")
             lints, hints = linter.lintify_meta_yaml(
                 {}, recipe_dir, recipe_version=1
             )
-            self.assertNotIn(expected_message, lints)
+            self.assertIn(expected_message, lints)
 
     def test_jinja2_vars(self):
         expected_message = (
@@ -2654,6 +2679,29 @@ def test_pin_compatible_in_run_exports_output(recipe_version: int):
     )
     expected = "pin_compatible should be used instead"
     assert any(lint.startswith(expected) for lint in lints)
+
+
+def test_v1_recipes():
+    with get_recipe_in_dir("v1_recipes/recipe-no-lint.yaml") as recipe_dir:
+        lints, hints = linter.main(str(recipe_dir), return_hints=True)
+        assert not lints
+
+
+def test_v1_no_test():
+    with get_recipe_in_dir("v1_recipes/recipe-no-tests.yaml") as recipe_dir:
+        lints, hints = linter.main(str(recipe_dir), return_hints=True)
+        assert "The recipe must have some tests." in lints
+
+
+def test_v1_package_name_version():
+    with get_recipe_in_dir(
+        "v1_recipes/recipe-lint-name-version.yaml"
+    ) as recipe_dir:
+        lints, hints = linter.main(str(recipe_dir), return_hints=True)
+        lint_1 = "Recipe name has invalid characters. only lowercase alpha, numeric, underscores, hyphens and dots allowed"
+        lint_2 = "Package version $!@# doesn't match conda spec: Invalid version '$!@#': invalid character(s)"
+        assert lint_1 in lints
+        assert lint_2 in lints
 
 
 if __name__ == "__main__":
