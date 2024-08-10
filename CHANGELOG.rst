@@ -4,6 +4,39 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.38.0
+====================
+
+**Added:**
+
+* make `stdlib` linting work for v2 recipe format (#1992)
+* add lint for noarch and runtime deps (#2001)
+* Added linting for go license bundling check in conda v2 recipes. (#2013)
+* Added linting for rust license bundling for v2 recipe format (#2015)
+* Added linting for Jinja expressions in the new v2 conda recipe format (#2017)
+* Added proper linting for `pin_subpackage` and `pin_compatible` for conda v2 recipes. (#2018)
+* Added more lints / hints for conda v2 recipes. (#2000, #2003, #2008, #2016, #2022)
+
+**Changed:**
+
+* Exclude ruff commits from git ( #2007 )
+* The conda recipe version was renamed from ``{1, 2}`` to ``{0, 1}``. (#2031)
+
+**Fixed:**
+
+* Add upper bound for rattler-build-conda-compat. (#2009)
+* Reenabled service feedstocks that were removed by accident in #1703. (#2025)
+
+**Authors:**
+
+* Matthew R. Becker
+* nichmor
+* Wolf Vollprecht
+* John Kirkham
+* pre-commit-ci[bot]
+
+
+
 v3.37.2ls
 ====================
 
