@@ -771,8 +771,6 @@ class TestLinter(unittest.TestCase):
             self.assertNotIn(expected_message, lints)
 
     def test_recipe_v1_test_section_with_recipe(self):
-        # rattler-build supports legacy run_test.py, so we need to test it
-
         expected_message = "The recipe must have some tests."
 
         with tmp_directory() as recipe_dir:
@@ -781,7 +779,7 @@ class TestLinter(unittest.TestCase):
             )
             self.assertIn(expected_message, lints)
 
-            # Note: v1 recipes don't have implicit "run_test.py" support
+            # Note: v1 recipes have no implicit "run_test.py" support
             with open(os.path.join(recipe_dir, "run_test.py"), "w") as fh:
                 fh.write("# foo")
             lints, hints = linter.lintify_meta_yaml(
