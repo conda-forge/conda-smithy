@@ -1,0 +1,8 @@
+package:
+  name: test-variant-mismatches
+  version: 1.0
+
+build:
+  skip: true  # [not linux64 or a != b]
+
+about: {}

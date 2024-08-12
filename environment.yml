@@ -8,7 +8,7 @@ dependencies:
   - pip
   - python-build
   - setuptools>=45
-  - setuptools_scm>=7
+  - setuptools_scm>=8.1
   - tomli>=1.0.0
   - pre-commit
   - mock
@@ -16,7 +16,7 @@ dependencies:
   - pytest-cov
   # Runtime dependencies
   - conda >=4.2
-  - conda-build >=3.21.8
+  - conda-build >=24.3
   - conda-package-handling >=1.9.0
   - jinja2
   - requests
@@ -31,4 +31,9 @@ dependencies:
   - scrypt
   - license-expression
   - libarchive
-  - cirun
+  - cirun >=0.30
+  - pydantic >=2,<3
+  - jsonschema
+  - backports.strenum
+  - exceptiongroup
+  - rattler-build-conda-compat >=1.2.0,<2.0.0a0

@@ -17,7 +17,11 @@ from vsts.service_endpoint.v4_1.service_endpoint_client import (
 from vsts.task_agent.v4_0.models import TaskAgentQueue
 from vsts.task_agent.v4_0.task_agent_client import TaskAgentClient
 from vsts.vss_connection import VssConnection
-from .azure_defaults import AZURE_DEFAULT_ORG, AZURE_DEFAULT_PROJECT_NAME
+
+from conda_smithy.azure_defaults import (
+    AZURE_DEFAULT_ORG,
+    AZURE_DEFAULT_PROJECT_NAME,
+)
 
 
 class AzureConfig:
@@ -40,13 +44,11 @@ class AzureConfig:
         )
 
         try:
-            with open(
-                os.path.expanduser("~/.conda-smithy/azure.token"), "r"
-            ) as fh:
+            with open(os.path.expanduser("~/.conda-smithy/azure.token")) as fh:
                 self.token = fh.read().strip()
             if not self.token:
                 raise ValueError()
-        except (IOError, ValueError):
+        except (OSError, ValueError):
             print(
                 "No azure token. Create a token and\n"
                 "put it in ~/.conda-smithy/azure.token"
@@ -83,10 +85,10 @@ def get_service_endpoint(config: AzureConfig = default_config):
     service_endpoint_client = ServiceEndpointClient(
         base_url=config.instance_base_url, creds=config.credentials
     )
-    endpoints: typing.List[
-        ServiceEndpoint
-    ] = service_endpoint_client.get_service_endpoints(
-        project=config.project_name, type="GitHub"
+    endpoints: typing.List[ServiceEndpoint] = (
+        service_endpoint_client.get_service_endpoints(
+            project=config.project_name, type="GitHub"
+        )
     )
     for service_endpoint in endpoints:
         if service_endpoint.name == config.org_or_user:
@@ -133,12 +135,13 @@ def get_default_build_definition(
     config: AzureConfig = default_config,
     **kwargs,
 ):
+    import inspect
+
     from vsts.build.v4_1.models import (
         BuildDefinition,
         BuildRepository,
     )
     from vsts.task_agent.v4_0.task_agent_client import TaskAgentClient
-    import inspect
 
     aclient = TaskAgentClient(config.instance_base_url, config.credentials)
 
@@ -224,9 +227,9 @@ def register_repo(github_org, repo_name, config: AzureConfig = default_config):
     )
 
     # clean up existing builds for the same feedstock if present
-    existing_definitions: typing.List[
-        BuildDefinitionReference
-    ] = bclient.get_definitions(project=config.project_name, name=repo_name)
+    existing_definitions: typing.List[BuildDefinitionReference] = (
+        bclient.get_definitions(project=config.project_name, name=repo_name)
+    )
     if existing_definitions:
         assert len(existing_definitions) == 1
         ed = existing_definitions[0]

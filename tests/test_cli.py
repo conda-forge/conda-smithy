@@ -1,12 +1,12 @@
 import argparse
 import collections
 import os
+import shutil
 import subprocess
 from textwrap import dedent
 
-import yaml
 import pytest
-import shutil
+import yaml
 
 from conda_smithy import cli
 
@@ -80,11 +80,11 @@ def test_init_with_custom_config(py_recipe):
     destination = os.path.join(recipe, "py-test-feedstock")
     assert os.path.isdir(destination)
     data = yaml.safe_load(
-        open(os.path.join(destination, "conda-forge.yml"), "r").read()
+        open(os.path.join(destination, "conda-forge.yml")).read()
     )
-    assert data.get("bot") != None
-    assert data["bot"]["automerge"] == True
-    assert data["bot"]["run_deps_from_wheel"] == True
+    assert data.get("bot") is not None
+    assert data["bot"]["automerge"] is True
+    assert data["bot"]["run_deps_from_wheel"] is True
 
 
 def test_init_multiple_output_matrix(testing_workdir):
@@ -173,7 +173,7 @@ def test_render_readme_with_multiple_outputs(testing_workdir, dirname):
     regen_obj(args)
     readme_path = os.path.join(feedstock_dir, "README.md")
     assert os.path.exists(readme_path)
-    with open(readme_path, "r") as readme_file:
+    with open(readme_path) as readme_file:
         readme = readme_file.read()
     if dirname == "multiple_outputs":
         # case 1: implicit subpackage, no individual subpackage about
@@ -328,3 +328,45 @@ def test_regenerate(py_recipe, testing_workdir):
 
     # one py ver, no target_platform  (tests that older configs don't stick around)
     assert len(os.listdir(matrix_folder)) == 4
+
+
+def test_render_variant_mismatches(testing_workdir):
+    parser = argparse.ArgumentParser()
+    subparser = parser.add_subparsers()
+    init_obj = cli.Init(subparser)
+    regen_obj = cli.Regenerate(subparser)
+    _thisdir = os.path.abspath(os.path.dirname(__file__))
+    recipe = os.path.join(_thisdir, "recipes", "variant_mismatches")
+    feedstock_dir = os.path.join(
+        testing_workdir, "test-variant-mismatches-feedstock"
+    )
+    args = InitArgs(
+        recipe_directory=recipe,
+        feedstock_directory=feedstock_dir,
+        temporary_directory=os.path.join(recipe, "temp"),
+    )
+    init_obj(args)
+    # Ignore conda-forge-pinning for this test, as the test relies on conda-forge-pinning
+    # not being present
+    args = RegenerateArgs(
+        feedstock_directory=feedstock_dir,
+        feedstock_config=None,
+        commit=False,
+        no_check_uptodate=True,
+        exclusive_config_file="recipe/conda_build_config.yaml",
+        check=False,
+        temporary_directory=os.path.join(recipe, "temp"),
+    )
+    regen_obj(args)
+
+    matrix_dir = os.path.join(feedstock_dir, ".ci_support")
+    cfgs = os.listdir(matrix_dir)
+    assert len(cfgs) == 3  # readme + 2 configs
+
+    for _cfg in cfgs:
+        if _cfg == "README":
+            continue
+        cfg = os.path.join(matrix_dir, _cfg)
+        with open(cfg) as f:
+            data = yaml.safe_load(f)
+        assert data["a"] == data["b"]

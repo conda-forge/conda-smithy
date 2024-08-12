@@ -6,11 +6,11 @@
 #
 # The line above this comment is a bash / sh / zsh guard
 # to stop people from running it with the wrong interpreter
-import os
 import glob
+import os
+import platform
 import subprocess
 from argparse import ArgumentParser
-import platform
 
 
 def setup_environment(ns):
@@ -67,8 +67,9 @@ def verify_config(ns):
     elif ns.config.startswith("osx"):
         if "OSX_SDK_DIR" not in os.environ:
             raise RuntimeError(
-                "Need OSX_SDK_DIR env variable set. Run 'export OSX_SDK_DIR=SDKs' "
-                "to download the SDK automatically to 'SDKs/MacOSX<ver>.sdk'. "
+                "Need OSX_SDK_DIR env variable set. Run 'export OSX_SDK_DIR=$PWD/SDKs' "
+                "to download the SDK automatically to '$PWD/SDKs/MacOSX<ver>.sdk'. "
+                "Note: OSX_SDK_DIR must be set to an absolute path. "
                 "Setting this variable implies agreement to the licensing terms of the SDK by Apple."
             )
 

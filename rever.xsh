@@ -10,7 +10,7 @@ $CHANGELOG_FILENAME = 'CHANGELOG.rst'
 $CHANGELOG_TEMPLATE = 'TEMPLATE.rst'
 
 def sdist_asset():
-    fname = os.path.join('dist', 'conda-smithy-' + $VERSION + '.tar.gz')
+    fname = os.path.join('dist', 'conda_smithy-' + $VERSION + '.tar.gz')
     print('Creating sdist tarball ' + fname)
     ![python -m build --sdist]
     return fname
@@ -18,4 +18,4 @@ def sdist_asset():
 $TAG_TEMPLATE = $GHRELEASE_NAME = 'v$VERSION'
 $GHRELEASE_ASSETS = [sdist_asset]
 $CONDA_FORGE_SOURCE_URL = ('https://github.com/conda-forge/conda-smithy/releases/'
-                           'download/v$VERSION/conda-smithy-$VERSION.tar.gz')
+                           'download/v$VERSION/conda_smithy-$VERSION.tar.gz')

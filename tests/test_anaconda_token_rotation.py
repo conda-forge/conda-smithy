@@ -3,7 +3,6 @@ from unittest import mock
 import pytest
 
 from conda_smithy.anaconda_token_rotation import rotate_anaconda_token
-
 from conda_smithy.ci_register import drone_default_endpoint
 
 
@@ -226,4 +225,4 @@ def test_rotate_anaconda_token_provider_error(
             user, project, None, drone_endpoints=[drone_default_endpoint]
         )
 
-    assert "on %s" % provider.replace("_", " ") in str(e.value)
+    assert "on {}".format(provider.replace("_", " ")) in str(e.value)

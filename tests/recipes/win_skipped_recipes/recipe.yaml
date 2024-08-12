@@ -1,0 +1,13 @@
+package:
+    name: skip-test
+    version: 1.0.0
+build:
+    skip: True
+requirements:
+    build:
+        - python
+    run:
+        - python
+
+extra:
+  feedstock-name: skip-test-meta

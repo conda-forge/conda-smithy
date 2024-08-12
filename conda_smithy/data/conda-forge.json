@@ -1,0 +1,2307 @@
+{
+  "$defs": {
+    "AzureConfig": {
+      "additionalProperties": false,
+      "description": "This dictates the behavior of the Azure Pipelines CI service. It is a sub-mapping for\nAzure-specific configuration options. For more information and some variables\nspecifications, see the [Azure Pipelines schema reference documentation](\nhttps://learn.microsoft.com/en-us/azure/devops/pipelines/yaml-schema/?view=azure-pipelines).",
+      "properties": {
+        "force": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": false,
+          "description": "Force building all supported providers",
+          "title": "Force"
+        },
+        "free_disk_space": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "items": {
+                "enum": [
+                  "apt",
+                  "cache",
+                  "docker"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": false,
+          "description": "Free up disk space before running the Docker container for building on Linux.\nThe following components can be cleaned up: `apt`, `cache`, `docker`.\nWhen set to `true`, only `apt` and `cache` are cleaned up.\nSet it to the full list to clean up all components.",
+          "title": "Free Disk Space"
+        },
+        "max_parallel": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": 50,
+          "description": "Limit the amount of CI jobs running concurrently at a given time",
+          "title": "Max Parallel"
+        },
+        "project_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "84710dde-1620-425b-80d0-4cf5baca359d",
+          "description": "The ID of the Azure Pipelines project",
+          "title": "Project Id"
+        },
+        "project_name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "feedstock-builds",
+          "description": "The name of the Azure Pipelines project",
+          "title": "Project Name"
+        },
+        "build_id": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The build ID for the specific feedstock used for rendering the badges in the\nREADME file generated. When the value is None, conda-smithy will compute the\nbuild ID by calling the Azure API which requires a token for private azure\nprojects.",
+          "title": "Build Id"
+        },
+        "upload_packages": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": true,
+          "description": "Whether to upload the packages to Anaconda.org. Useful for testing.",
+          "title": "Upload Packages"
+        },
+        "settings_linux": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/AzureRunnerSettings"
+            }
+          ],
+          "description": "Linux-specific settings for runners"
+        },
+        "settings_osx": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/AzureRunnerSettings"
+            }
+          ],
+          "description": "OSX-specific settings for runners"
+        },
+        "settings_win": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/AzureRunnerSettings"
+            }
+          ],
+          "description": "Windows-specific settings for runners"
+        },
+        "user_or_org": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The name of the Azure user or organization. Defaults to the value of github: user_or_org.",
+          "title": "User Or Org"
+        },
+        "store_build_artifacts": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": false,
+          "description": "Store the conda build_artifacts directory as an         Azure pipeline artifact",
+          "title": "Store Build Artifacts"
+        },
+        "timeout_minutes": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The maximum amount of time (in minutes) that a             job can run before it is automatically canceled",
+          "title": "Timeout Minutes"
+        }
+      },
+      "title": "AzureConfig",
+      "type": "object"
+    },
+    "AzureRunnerSettings": {
+      "additionalProperties": true,
+      "description": "This is the settings for runners.",
+      "properties": {
+        "pool": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The pool of self-hosted runners, e.g. 'vmImage': 'ubuntu-latest'",
+          "title": "Pool"
+        },
+        "swapfile_size": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Swapfile size in GiB",
+          "title": "Swapfile Size"
+        },
+        "timeoutInMinutes": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": 360,
+          "description": "Timeout in minutes for the job",
+          "title": "Timeoutinminutes"
+        },
+        "variables": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Variables",
+          "title": "Variables"
+        }
+      },
+      "title": "AzureRunnerSettings",
+      "type": "object"
+    },
+    "BotConfig": {
+      "additionalProperties": false,
+      "description": "This dictates the behavior of the conda-forge auto-tick bot which issues\nautomatic version updates/migrations for feedstocks.",
+      "properties": {
+        "automerge": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/BotConfigAutoMergeChoice"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": false,
+          "description": "Automatically merge PRs if possible",
+          "title": "Automerge"
+        },
+        "check_solvable": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": true,
+          "description": "Open PRs only if resulting environment is solvable.",
+          "title": "Check Solvable"
+        },
+        "inspection": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/BotConfigInspectionChoice"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "hint",
+          "description": "Method for generating hints or updating recipe"
+        },
+        "abi_migration_branches": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": [],
+          "description": "List of branches for additional bot migration PRs. Make sure branch names are `str` by quoting the value.",
+          "title": "Abi Migration Branches"
+        },
+        "run_deps_from_wheel": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": false,
+          "description": "Update run dependencies from the pip wheel",
+          "title": "Run Deps From Wheel"
+        },
+        "version_updates": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/BotConfigVersionUpdates"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Bot config for version update PRs"
+        }
+      },
+      "title": "BotConfig",
+      "type": "object"
+    },
+    "BotConfigAutoMergeChoice": {
+      "enum": [
+        "version",
+        "migration"
+      ],
+      "title": "BotConfigAutoMergeChoice",
+      "type": "string"
+    },
+    "BotConfigInspectionChoice": {
+      "enum": [
+        "hint",
+        "hint-all",
+        "hint-source",
+        "hint-grayskull",
+        "update-all",
+        "update-source",
+        "update-grayskull",
+        "disabled"
+      ],
+      "title": "BotConfigInspectionChoice",
+      "type": "string"
+    },
+    "BotConfigVersionUpdates": {
+      "additionalProperties": false,
+      "description": "This dictates the behavior of the conda-forge auto-tick bot for version\nupdates",
+      "properties": {
+        "random_fraction_to_keep": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Fraction of versions to keep for frequently updated packages",
+          "title": "Random Fraction To Keep"
+        },
+        "exclude": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": [],
+          "description": "List of versions to exclude. Make sure branch names are `str` by quoting the value.",
+          "title": "Exclude"
+        },
+        "sources": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/BotConfigVersionUpdatesSourcesChoice"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "List of sources to find new versions (i.e. the strings like 1.2.3) for the package.\n\nThe following sources are available:\n- `cran`: Update from CRAN\n- `github`: Update from the GitHub releases RSS feed (includes pre-releases)\n- `githubreleases`: Get the latest version by following the redirect of\n`https://github.com/{owner}/{repo}/releases/latest` (excludes pre-releases)\n- `incrementalpharawurl`: If this source is run for a specific small selection of feedstocks, it acts like\nthe `rawurl` source but also increments letters in the version string (e.g. 2024a -> 2024b). If the source\nis run for other feedstocks (even if selected manually), it does nothing.\n- `librariesio`: Update from Libraries.io RSS feed\n- `npm`: Update from the npm registry\n- `nvidia`: Update from the NVIDIA download page\n- `pypi`: Update from the PyPI registry\n- `rawurl`: Update from a raw URL by trying to bump the version number in different ways and\nchecking if the URL exists (e.g. 1.2.3 -> 1.2.4, 1.3.0, 2.0.0, etc.)\n- `rosdistro`: Update from a ROS distribution\n\nCommon issues:\n- If you are using a GitHub-based source in your recipe and the bot issues PRs for pre-releases, restrict\nthe sources to `githubreleases` to avoid pre-releases.\n- If you use source tarballs that are uploaded manually by the maintainers a significant time after a\nGitHub release, you may want to restrict the sources to `rawurl` to avoid the bot attempting to update\nthe recipe before the tarball is uploaded.",
+          "title": "Sources"
+        },
+        "skip": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": false,
+          "description": "Skip automatic version updates. Useful in cases where the source project's version numbers don't conform to PEP440.",
+          "title": "Skip"
+        }
+      },
+      "title": "BotConfigVersionUpdates",
+      "type": "object"
+    },
+    "BotConfigVersionUpdatesSourcesChoice": {
+      "enum": [
+        "cran",
+        "github",
+        "githubreleases",
+        "incrementalpharawurl",
+        "librariesio",
+        "npm",
+        "nvidia",
+        "pypi",
+        "rawurl",
+        "rosdistro"
+      ],
+      "title": "BotConfigVersionUpdatesSourcesChoice",
+      "type": "string"
+    },
+    "CIservices": {
+      "enum": [
+        "azure",
+        "circle",
+        "travis",
+        "appveyor",
+        "github_actions",
+        "drone",
+        "woodpecker",
+        "default",
+        "emulated",
+        "native",
+        "None"
+      ],
+      "title": "CIservices",
+      "type": "string"
+    },
+    "ChannelPriorityConfig": {
+      "enum": [
+        "strict",
+        "flexible",
+        "disabled"
+      ],
+      "title": "ChannelPriorityConfig",
+      "type": "string"
+    },
+    "CondaBuildConfig": {
+      "additionalProperties": true,
+      "properties": {
+        "pkg_format": {
+          "anyOf": [
+            {
+              "enum": [
+                "tar",
+                1,
+                2,
+                "1",
+                "2"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": 2,
+          "description": "The package version format for conda build.",
+          "title": "Pkg Format"
+        },
+        "zstd_compression_level": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": 16,
+          "description": "The compression level for the zstd compression algorithm for\n.conda artifacts. conda-forge uses a default value of 16 for a good\ncompromise of performance and compression.",
+          "title": "Zstd Compression Level"
+        },
+        "error_overlinking": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": false,
+          "description": "Enable error when shared libraries from transitive dependencies are\ndirectly  linked  to any executables or shared libraries in  built\npackages. For more details, see the\n[conda build documentation](https://docs.conda.io/projects/conda-build/en/stable/resources/commands/conda-build.html).",
+          "title": "Error Overlinking"
+        }
+      },
+      "title": "CondaBuildConfig",
+      "type": "object"
+    },
+    "CondaForgeDocker": {
+      "additionalProperties": false,
+      "properties": {
+        "executable": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "docker",
+          "description": "The executable for Docker",
+          "title": "Executable"
+        },
+        "fallback_image": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "quay.io/condaforge/linux-anvil-comp7",
+          "description": "The fallback image for Docker",
+          "title": "Fallback Image"
+        },
+        "command": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "bash",
+          "description": "The command to run in Docker",
+          "title": "Command"
+        },
+        "interactive": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "deprecated": true,
+          "description": "Whether to run Docker in interactive mode",
+          "title": "Interactive"
+        }
+      },
+      "title": "CondaForgeDocker",
+      "type": "object"
+    },
+    "DefaultTestPlatforms": {
+      "enum": [
+        "all",
+        "native",
+        "native_and_emulated"
+      ],
+      "title": "DefaultTestPlatforms",
+      "type": "string"
+    },
+    "GithubActionsConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "artifact_retention_days": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": 14,
+          "description": "The number of days to retain artifacts",
+          "title": "Artifact Retention Days"
+        },
+        "cancel_in_progress": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": true,
+          "description": "Whether to cancel jobs in the same build if one fails.",
+          "title": "Cancel In Progress"
+        },
+        "free_disk_space": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "items": {
+                "enum": [
+                  "apt",
+                  "cache",
+                  "docker"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": false,
+          "description": "Free up disk space before running the Docker container for building on Linux.\nThe following components can be cleaned up: `apt`, `cache`, `docker`.\nWhen set to `true`, only `apt` and `cache` are cleaned up.\nSet it to the full list to clean up all components.",
+          "title": "Free Disk Space"
+        },
+        "max_parallel": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The maximum number of jobs to run in parallel",
+          "title": "Max Parallel"
+        },
+        "self_hosted": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": false,
+          "description": "Whether to use self-hosted runners",
+          "title": "Self Hosted"
+        },
+        "store_build_artifacts": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": false,
+          "description": "Whether to store build artifacts",
+          "title": "Store Build Artifacts"
+        },
+        "timeout_minutes": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": 360,
+          "description": "The maximum amount of time (in minutes) that a             job can run before it is automatically canceled",
+          "title": "Timeout Minutes"
+        },
+        "triggers": {
+          "anyOf": [
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": [],
+          "description": "Triggers for Github Actions. Defaults to push, pull_request,             when not self-hosted and push when self-hosted",
+          "title": "Triggers"
+        },
+        "upload_packages": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": true,
+          "description": "Whether to upload the packages to Anaconda.org. Useful for testing.",
+          "title": "Upload Packages"
+        }
+      },
+      "title": "GithubActionsConfig",
+      "type": "object"
+    },
+    "GithubConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "user_or_org": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "conda-forge",
+          "description": "The name of the GitHub user or organization",
+          "title": "User Or Org"
+        },
+        "repo_name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "",
+          "description": "The name of the repository",
+          "title": "Repo Name"
+        },
+        "branch_name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "main",
+          "description": "The name of the branch to execute on",
+          "title": "Branch Name"
+        },
+        "tooling_branch_name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "main",
+          "description": "The name of the branch to use for rerender+webservices             github actions and conda-forge-ci-setup-feedstock references",
+          "title": "Tooling Branch Name"
+        }
+      },
+      "title": "GithubConfig",
+      "type": "object"
+    },
+    "Nullable": {
+      "const": null,
+      "description": "Created to avoid issue with schema validation of null values in lists or dicts.",
+      "enum": [
+        null
+      ],
+      "title": "Nullable"
+    },
+    "Platforms": {
+      "enum": [
+        "emscripten_wasm32",
+        "wasi_wasm32",
+        "freebsd_64",
+        "linux_32",
+        "linux_64",
+        "linux_aarch64",
+        "linux_armv6l",
+        "linux_armv7l",
+        "linux_ppc64",
+        "linux_ppc64le",
+        "linux_riscv64",
+        "linux_s390x",
+        "osx_64",
+        "osx_arm64",
+        "win_32",
+        "win_64",
+        "win_arm64",
+        "zos_z"
+      ],
+      "title": "Platforms",
+      "type": "string"
+    },
+    "ShellCheck": {
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "default": false,
+          "description": "Whether to use shellcheck to lint shell scripts",
+          "title": "Enabled",
+          "type": "boolean"
+        }
+      },
+      "title": "ShellCheck",
+      "type": "object"
+    },
+    "build_platform": {
+      "properties": {
+        "emscripten_wasm32": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Platforms"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "emscripten_wasm32"
+        },
+        "wasi_wasm32": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Platforms"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "wasi_wasm32"
+        },
+        "freebsd_64": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Platforms"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "freebsd_64"
+        },
+        "linux_32": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Platforms"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "linux_32"
+        },
+        "linux_64": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Platforms"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "linux_64"
+        },
+        "linux_aarch64": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Platforms"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "linux_aarch64"
+        },
+        "linux_armv6l": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Platforms"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "linux_armv6l"
+        },
+        "linux_armv7l": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Platforms"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "linux_armv7l"
+        },
+        "linux_ppc64": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Platforms"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "linux_ppc64"
+        },
+        "linux_ppc64le": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Platforms"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "linux_ppc64le"
+        },
+        "linux_riscv64": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Platforms"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "linux_riscv64"
+        },
+        "linux_s390x": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Platforms"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "linux_s390x"
+        },
+        "osx_64": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Platforms"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "osx_64"
+        },
+        "osx_arm64": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Platforms"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "osx_arm64"
+        },
+        "win_32": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Platforms"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "win_32"
+        },
+        "win_64": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Platforms"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "win_64"
+        },
+        "win_arm64": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Platforms"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "win_arm64"
+        },
+        "zos_z": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Platforms"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "zos_z"
+        }
+      },
+      "title": "build_platform",
+      "type": "object"
+    },
+    "os_version": {
+      "properties": {
+        "linux_32": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Linux 32"
+        },
+        "linux_64": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Linux 64"
+        },
+        "linux_aarch64": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Linux Aarch64"
+        },
+        "linux_armv6l": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Linux Armv6L"
+        },
+        "linux_armv7l": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Linux Armv7L"
+        },
+        "linux_ppc64": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Linux Ppc64"
+        },
+        "linux_ppc64le": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Linux Ppc64Le"
+        },
+        "linux_riscv64": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Linux Riscv64"
+        },
+        "linux_s390x": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Linux S390X"
+        }
+      },
+      "title": "os_version",
+      "type": "object"
+    },
+    "provider": {
+      "properties": {
+        "linux": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/CIservices"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/CIservices"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Linux"
+        },
+        "win": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/CIservices"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/CIservices"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Win"
+        },
+        "osx": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/CIservices"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/CIservices"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Osx"
+        },
+        "emscripten_wasm32": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/CIservices"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/CIservices"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Emscripten Wasm32"
+        },
+        "wasi_wasm32": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/CIservices"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/CIservices"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Wasi Wasm32"
+        },
+        "freebsd_64": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/CIservices"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/CIservices"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Freebsd 64"
+        },
+        "linux_32": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/CIservices"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/CIservices"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Linux 32"
+        },
+        "linux_64": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/CIservices"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/CIservices"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "azure",
+          "title": "Linux 64"
+        },
+        "linux_aarch64": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/CIservices"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/CIservices"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Linux Aarch64"
+        },
+        "linux_armv6l": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/CIservices"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/CIservices"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Linux Armv6L"
+        },
+        "linux_armv7l": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/CIservices"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/CIservices"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Linux Armv7L"
+        },
+        "linux_ppc64": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/CIservices"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/CIservices"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Linux Ppc64"
+        },
+        "linux_ppc64le": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/CIservices"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/CIservices"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Linux Ppc64Le"
+        },
+        "linux_riscv64": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/CIservices"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/CIservices"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Linux Riscv64"
+        },
+        "linux_s390x": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/CIservices"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/CIservices"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Linux S390X"
+        },
+        "osx_64": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/CIservices"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/CIservices"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "azure",
+          "title": "Osx 64"
+        },
+        "osx_arm64": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/CIservices"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/CIservices"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Osx Arm64"
+        },
+        "win_32": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/CIservices"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/CIservices"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Win 32"
+        },
+        "win_64": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/CIservices"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/CIservices"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "azure",
+          "title": "Win 64"
+        },
+        "win_arm64": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/CIservices"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/CIservices"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Win Arm64"
+        },
+        "zos_z": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/CIservices"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/CIservices"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Zos Z"
+        }
+      },
+      "title": "provider",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "This model describes in detail the top-level fields in  `conda-forge.yml`.\nGeneral configuration options are described below within the `Fields`\nspecifications. Additional examples are provided as part of the object\ndescription. Values and options are subject to change, and will be\nflagged as Deprecated as appropriate.",
+  "properties": {
+    "conda_build": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/CondaBuildConfig"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Settings in this block are used to control how `conda build`\nruns and produces artifacts. An example of the such configuration is:\n\n```yaml\nconda_build:\n    pkg_format: 2\n    zstd_compression_level: 16\n    error_overlinking: False\n```"
+    },
+    "conda_build_tool": {
+      "anyOf": [
+        {
+          "enum": [
+            "conda-build",
+            "conda-build+classic",
+            "conda-build+conda-libmamba-solver",
+            "mambabuild",
+            "rattler-build"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": "conda-build",
+      "description": "Use this option to choose which tool is used to build your recipe.",
+      "title": "Conda Build Tool"
+    },
+    "conda_install_tool": {
+      "anyOf": [
+        {
+          "enum": [
+            "conda",
+            "mamba"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": "mamba",
+      "description": "Use this option to choose which tool is used to provision the tooling in your\nfeedstock.",
+      "title": "Conda Install Tool"
+    },
+    "conda_forge_output_validation": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": false,
+      "description": "This field must be set to `True` for feedstocks in the `conda-forge` GitHub\norganization. It enables the required feedstock artifact validation as described\nin [Output Validation and Feedstock Tokens](/docs/maintainer/infrastructure#output-validation).",
+      "title": "Conda Forge Output Validation"
+    },
+    "conda_solver": {
+      "anyOf": [
+        {
+          "enum": [
+            "libmamba",
+            "classic"
+          ],
+          "type": "string"
+        },
+        {
+          "$ref": "#/$defs/Nullable"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": "libmamba",
+      "description": "Choose which `conda` solver plugin to use for feedstock builds.",
+      "title": "Conda Solver"
+    },
+    "github": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/GithubConfig"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Mapping for GitHub-specific configuration options. The defaults are as follows:\n\n```yaml\ngithub:\n    user_or_org: conda-forge\n    repo_name: \"my_repo\"\n    branch_name: main\n    tooling_branch_name: main\n```"
+    },
+    "bot": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/BotConfig"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "This dictates the behavior of the conda-forge auto-tick bot which issues\nautomatic version updates/migrations for feedstocks.\nA valid example is:\n\n```yaml\nbot:\n    # can the bot automerge PRs it makes on this feedstock\n    automerge: true\n    # only automerge on successful version PRs, migrations are not automerged\n    automerge: 'version'\n    # only automerge on successful migration PRs, versions are not automerged\n    automerge: 'migration'\n\n    # only open PRs if resulting environment is solvable, useful for tightly coupled packages\n    check_solvable: true\n\n    # The bot.inspection key in the conda-forge.yml can have one of seven possible values and controls\n    # the bots behaviour for automatic dependency updates:\n    inspection: hint  # generate hints using source code (backwards compatible)\n    inspection: hint-all  # generate hints using all methods\n    inspection: hint-source  # generate hints using only source code\n    inspection: hint-grayskull  # generate hints using only grayskull\n    inspection: update-all  # update recipe using all methods\n    inspection: update-source  # update recipe using only source code\n    inspection: update-grayskull  # update recipe using only grayskull\n    inspection: disabled # don't update recipe, don't generate hints\n\n    # any branches listed in this section will get bot migration PRs in addition\n    # to the default branch\n    abi_migration_branches:\n        - 'v1.10.x'\n\n    version_updates:\n        # use this for packages that are updated too frequently\n        random_fraction_to_keep: 0.1  # keeps 10% of versions at random\n        exclude:\n            - '08.14'\n```\n\nThe `abi_migration_branches` feature is useful to, for example, add a\nlong-term support (LTS) branch for a package."
+    },
+    "build_platform": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/build_platform"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "This is a mapping from the target platform to the build platform for the\npackage to be built. For example, the following builds a `osx-64` package\non the `linux-64` build platform using cross-compiling.\n\n```yaml\nbuild_platform:\n    osx_64: linux_64\n```\n\nLeaving this field empty implicitly requests to build a package natively. i.e.\n\n```yaml\nbuild_platform:\n    linux_64: linux_64\n    linux_ppc64le: linux_ppc64le\n    linux_aarch64: linux_aarch64\n    osx_64: osx_64\n    osx_arm64: osx_arm64\n    win_64: win_64\n```"
+    },
+    "channel_priority": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ChannelPriorityConfig"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": "strict",
+      "description": "The channel priority level for the conda solver during feedstock builds.\nFor extra information, see the\n[Strict channel priority](https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-channels.html#strict-channel-priority)\nsection on conda documentation."
+    },
+    "choco": {
+      "anyOf": [
+        {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "This parameter allows for conda-smithy to run chocoloatey installs on Windows\nwhen additional system packages are needed. This is a list of strings that\nrepresent package names and any additional parameters. For example,\n\n```yaml\nchoco:\n    # install a package\n    - nvidia-display-driver\n\n    # install a package with a specific version\n    - cuda --version=11.0.3\n```\n\nThis is currently only implemented for Azure Pipelines. The command that is run is\n`choco install {entry} -fdv -y --debug`.  That is, `choco install` is executed\nwith a standard set of additional flags that are useful on CI.",
+      "title": "Choco"
+    },
+    "docker": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/CondaForgeDocker"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "This is a mapping for Docker-specific configuration options.\nSome options are\n\n```yaml\ndocker:\n    executable: docker\n    command: \"bash\"\n```"
+    },
+    "idle_timeout_minutes": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "$ref": "#/$defs/Nullable"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Configurable idle timeout. Used for packages that don't have chatty enough\nbuilds. Applicable only to circleci and travis.\n\n```yaml\nidle_timeout_minutes: 60\n```",
+      "title": "Idle Timeout Minutes"
+    },
+    "noarch_platforms": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Platforms"
+        },
+        {
+          "items": {
+            "$ref": "#/$defs/Platforms"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Platforms on which to build noarch packages. The preferred default is a\nsingle build on `linux_64`.\n\n```yaml\nnoarch_platforms: linux_64\n```\n\nTo build on multiple platforms, e.g. for simple packages with platform-specific\ndependencies, provide a list.\n\n```yaml\nnoarch_platforms:\n  - linux_64\n  - win_64\n```",
+      "title": "Noarch Platforms"
+    },
+    "os_version": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/os_version"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "This key is used to set the OS versions for `linux_*` platforms. Valid entries\nmap a linux platform and arch to either `cos6` or `cos7`.\nCurrently `cos6` is the default for `linux-64`.\nAll other linux architectures use CentOS 7.\nHere is an example that enables CentOS 7 on `linux-64` builds\n\n```yaml\nos_version:\n    linux_64: cos7\n```"
+    },
+    "provider": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/provider"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "The `provider` field is a mapping from build platform (not target platform)\nto CI service. It determines which service handles each build platform.\nIf a desired build platform is not available with a selected provider\n(either natively or with emulation), the build will be disabled.\nUse the `build_platform` field to manually specify cross-compilation when\nno providers offer a desired build platform.\n\nThe following are available as supported build platforms:\n\n* `linux_64`\n* `osx_64`\n* `win_64`\n* `linux_aarch64`\n* `linux_ppc64le`\n* `linux_s390x`\n* `linux_armv7l`\n\nThe following CI services are available:\n\n* `azure`\n* `circle`\n* `travis`\n* `appveyor`\n* `None` or `False` to disable a build platform.\n* `default` to choose an appropriate CI (only if available)\n* `native` to choose an appropriate CI for native compiling (only if available)\n* `emulated` to choose an appropriate CI for compiling inside an emulation\n  of the target platform (only if available)\n\nFor example, switching linux_64 & osx_64 to build on Travis CI, with win_64 on\nAppveyor:\n\n```yaml\nprovider:\n    linux_64: travis\n    osx_64: travis\n    win_64: appveyor\n```\n\nCurrently, x86_64 platforms are enabled, but other build platforms are\ndisabled by default. i.e. an empty provider entry is equivalent to the\nfollowing:\n\n```yaml\nprovider:\n    linux_64: azure\n    osx_64: azure\n    win_64: azure\n    linux_ppc64le: None\n    linux_aarch64: None\n```\n\nTo enable `linux_ppc64le` and `linux_aarch64` add the following:\n\n```yaml\nprovider:\n    linux_ppc64le: default\n    linux_aarch64: default\n```"
+    },
+    "package": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "$ref": "#/$defs/Nullable"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Default location for a package feedstock directory basename.",
+      "title": "Package"
+    },
+    "recipe_dir": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": "recipe",
+      "description": "The relative path to the recipe directory. The default is:\n\n```yaml\nrecipe_dir: recipe\n```",
+      "title": "Recipe Dir"
+    },
+    "remote_ci_setup": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "This option can be used to override the default `conda-forge-ci-setup` package.\nCan be given with `${url or channel_alias}::package_name`,\ndefaults to conda-forge channel_alias if no prefix is given.\n\n```yaml\nremote_ci_setup: [\"conda-forge-ci-setup=4\", \"conda-build>=24.1\"]\n```",
+      "title": "Remote Ci Setup"
+    },
+    "shellcheck": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ShellCheck"
+        },
+        {
+          "$ref": "#/$defs/Nullable"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Shell scripts used for builds or activation scripts can be linted with\nshellcheck. This option can be used to enable shellcheck and configure\nits behavior. This is not enabled by default, but can be enabled like so:\n\n```yaml\nshellcheck:\n    enabled: True\n```",
+      "title": "Shellcheck"
+    },
+    "skip_render": {
+      "anyOf": [
+        {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "This option specifies a list of files which `conda smithy` will skip rendering.\nThis is useful for files that are not templates, but are still in the recipe\ndirectory. The default value is an empty list `[]`, which will consider that\nall files can be rendered. For example, if you want to skip rendering\nthe `.gitignore` and `LICENSE.txt` files, you can add the following:\n\n```yaml\nskip_render:\n    - .gitignore\n    - LICENSE.txt\n```",
+      "title": "Skip Render"
+    },
+    "templates": {
+      "anyOf": [
+        {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "This is mostly an internal field for specifying where template files reside.\nYou shouldn't need to modify it.",
+      "title": "Templates"
+    },
+    "test_on_native_only": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": false,
+      "deprecated": true,
+      "description": "This was used for disabling testing for cross-compiling.\n\n```warning\nThis has been deprecated in favor of the top-level `test` field.\nIt is now mapped to `test: native_and_emulated`.\n```",
+      "title": "Test On Native Only"
+    },
+    "test": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/DefaultTestPlatforms"
+        },
+        {
+          "$ref": "#/$defs/Nullable"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "This is used to configure on which platforms a recipe is tested.\n\n```yaml\ntest: native_and_emulated\n```\n\nWill do testing only if the platform is native or if there is an emulator.\n\n```yaml\ntest: native\n```\n\nWill do testing only if the platform is native.",
+      "title": "Test"
+    },
+    "upload_on_branch": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "$ref": "#/$defs/Nullable"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "This parameter restricts uploading access on work from certain branches of the\nsame repo. Only the branch listed in `upload_on_branch` will trigger uploading\nof packages to the target channel. The default is to skip this check if the key\n`upload_on_branch` is not in `conda-forge.yml`. To restrict uploads to the\nmain branch:\n\n```yaml\nupload_on_branch: main\n```",
+      "title": "Upload On Branch"
+    },
+    "config_version": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": "2",
+      "description": "The conda-smithy config version to be used for conda_build_config.yaml\nfiles in recipe and conda-forge-pinning. This should not be manually modified.",
+      "title": "Config Version"
+    },
+    "exclusive_config_file": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "$ref": "#/$defs/Nullable"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Exclusive conda-build config file to replace `conda-forge-pinning`.\nFor advanced usage only.",
+      "title": "Exclusive Config File"
+    },
+    "compiler_stack": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": "comp7",
+      "deprecated": true,
+      "description": "Compiler stack environment variable. This is used to specify the compiler\nstack to use for builds. Deprecated.\n\n```yaml\ncompiler_stack: comp7\n```",
+      "title": "Compiler Stack"
+    },
+    "min_py_ver": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": "27",
+      "deprecated": true,
+      "description": "Minimum Python version. This is used to specify the minimum Python version\nto use for builds. Deprecated.\n\n```yaml\nmin_py_ver: 27\n```",
+      "title": "Min Py Ver"
+    },
+    "max_py_ver": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": "37",
+      "deprecated": true,
+      "description": "Maximum Python version. This is used to specify the maximum Python version\nto use for builds. Deprecated.\n\n```yaml\nmax_py_ver: 37\n```",
+      "title": "Max Py Ver"
+    },
+    "min_r_ver": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": "34",
+      "deprecated": true,
+      "description": "Minimum R version. This is used to specify the minimum R version to\nuse for builds. Deprecated.\n\n```yaml\nmin_r_ver: 34\n```",
+      "title": "Min R Ver"
+    },
+    "max_r_ver": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": "34",
+      "deprecated": true,
+      "description": "Maximum R version. This is used to specify the maximum R version to use\nfor builds. Deprecated.\n\n```yaml\nmax_r_ver: 34\n```",
+      "title": "Max R Ver"
+    },
+    "private_upload": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": false,
+      "description": "Whether to upload to a private channel.\n\n```yaml\nprivate_upload: False\n```",
+      "title": "Private Upload"
+    },
+    "secrets": {
+      "anyOf": [
+        {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "List of secrets to be used in GitHub Actions.\nThe default is an empty list and will not be used.",
+      "title": "Secrets"
+    },
+    "clone_depth": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "$ref": "#/$defs/Nullable"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "The depth of the git clone.",
+      "title": "Clone Depth"
+    },
+    "travis": {
+      "anyOf": [
+        {
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Travis CI settings. This is usually read-only and should not normally be\nmanually modified. Tools like conda-smithy may modify this, as needed.",
+      "title": "Travis"
+    },
+    "circle": {
+      "anyOf": [
+        {
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Circle CI settings. This is usually read-only and should not normally be\nmanually modified. Tools like conda-smithy may modify this, as needed.",
+      "title": "Circle"
+    },
+    "appveyor": {
+      "anyOf": [
+        {
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "AppVeyor CI settings. This is usually read-only and should not normally be\nmanually modified. Tools like conda-smithy may modify this, as needed.",
+      "title": "Appveyor"
+    },
+    "azure": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/AzureConfig"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Azure Pipelines CI settings. This is usually read-only and should not\nnormally be manually modified. Tools like conda-smithy may modify this, as needed.\nFor example:\n\n```yaml\nazure:\n    # flag for forcing the building all supported providers\n    force: False\n    # toggle for storing the conda build_artifacts directory (including the\n    # built packages) as an Azure pipeline artifact that can be downloaded\n    store_build_artifacts: False\n    # toggle for freeing up some extra space on the default Azure Pipelines\n    # linux image before running the Docker container for building\n    free_disk_space: False\n    # limit the amount of CI jobs running concurrently at a given time\n    # each OS will get its proportional share of the configured value\n    max_parallel: 25\n```\n\nBelow is an example configuration for setting up a self-hosted Azure agent for Linux:\n\n```yaml\nazure:\n    settings_linux:\n    pool:\n        name: your_local_pool_name\n        demands:\n          - some_key -equals some_value\n    workspace:\n        clean: all\n    strategy:\n        maxParallel: 1\n```\n\nBelow is an example configuration for adding a swapfile on an Azure agent for Linux:\n\n```yaml\nazure:\n    settings_linux:\n        swapfile_size: 10GiB\n```"
+    },
+    "drone": {
+      "anyOf": [
+        {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Drone CI settings. This is usually read-only and should not normally be\nmanually modified. Tools like conda-smithy may modify this, as needed.",
+      "title": "Drone"
+    },
+    "github_actions": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/GithubActionsConfig"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "GitHub Actions CI settings. This is usually read-only and should not normally be\nmanually modified. Tools like conda-smithy may modify this, as needed."
+    },
+    "woodpecker": {
+      "anyOf": [
+        {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Woodpecker CI settings. This is usually read-only and should not normally be\nmanually modified. Tools like conda-smithy may modify this, as needed.",
+      "title": "Woodpecker"
+    },
+    "build_with_mambabuild": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": true,
+      "deprecated": true,
+      "description": "build_with_mambabuild is deprecated, use `conda_build_tool` instead.",
+      "title": "Build With Mambabuild"
+    },
+    "matrix": {
+      "anyOf": [
+        {
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "deprecated": true,
+      "description": "Build matrices were used to specify a set of build configurations to run for each\npackage pinned dependency. This has been deprecated in favor of the `provider` field.\nMore information can be found in the\n[Build Matrices](/docs/maintainer/knowledge_base/#build-matrices) section of the\nconda-forge docs.",
+      "title": "Matrix"
+    }
+  },
+  "title": "ConfigModel",
+  "type": "object"
+}

@@ -4,63 +4,71 @@ Authors are sorted by number of commits.
 * Isuru Fernando
 * Matthew R. Becker
 * Jaime Rodríguez-Guerra
+* nichmor
 * Christopher J. Wright
 * Anthony Scopatz
 * Phil Elson
-* Filipe Fernandes
+* Wolf Vollprecht
+* H. Vetinari
 * Uwe L. Korn
+* Filipe Fernandes
 * Dougal J. Sutherland
 * Amit Kumar
-* shadow_walker
-* Michael Sarahan
 * Min RK
 * Marcel Bargull
+* shadow_walker
+* John Kirkham
+* Michael Sarahan
+* Bastian Zimmermann
+* Mark Harfouche
 * Leo Fang
 * Hadrien Mary
 * Ryan Volz
-* John Kirkham
-* Mark Harfouche
 * Johnny Willemsen
+* pre-commit-ci[bot]
 * Chris Burr
 * Julian Rüth
-* Bastian Zimmermann
-* H. Vetinari
+* Yannik Tausch
 * Daniel Bast
 * Billy K. Poon
+* Daniel Ching
+* vinicius douglas cerutti
 * Tim Snyder
 * Mike Henry
 * Eric Dill
 * Natasha Pavlovikj
-* Daniel Ching
 * Maksim Rakitin
 * Jan Schulz
+* Nicholas Bollweg
 * Josh Reichardt
+* Bela Stoyan
 * Justin Calamari
 * Jason Furmanek
 * Patrick Sodré
+* Jan Lehnarsdt
 * C.A.M. Gerlach
 * refraction-ray
-* Nicholas Bollweg
 * Leopold Talirz
 * Tom Pollard
-* Bela Stoyan
 * Gonzalo Pena-Castellanos
-* pre-commit-ci[bot]
+* John Blischak
+* Matthias Diener
+* Antonio S. Cofiño
 * Carlo
 * Matthew Craig
 * Peter Williams
 * Joshua L. Adelman
-* Wolf Vollprecht
-* Matthias Diener
-* John Blischak
 * Marius van Niekerk
 * Johannes Köster
 * Philippe Blain
+* Mervin Fansler
 * Matt McCormick
 * Jan Janßen
 * xoviat
 * Elmar Pruesse
 * Patrick Sodré
+* David Hirschfeld
+* Finn Womack
 * Josh Barnes
 * Tobias Megies
 * Jonathan Helmus
@@ -68,8 +76,8 @@ Authors are sorted by number of commits.
 * Florian Rathgeber
 * Bruno Oliveira
 * Tony Kelman
-* Mervin Fansler
 * Jannis Leidel
+* Matt Fisher
 * Guilherme Quentel Melo
 * santi
 * buijennifer
@@ -89,6 +97,7 @@ Authors are sorted by number of commits.
 * Matthew W. Thompson
 * conda-forge-admin
 * Klaus Zimmermann
+* dependabot[bot]
 * lorenz
 * Tom Augspurger
 * Ryan May
@@ -113,3 +122,4 @@ Authors are sorted by number of commits.
 * Benjamin Tovar
 * Sylvain Corlay
 * Brandon Andersen
+* Vincenzo Eduardo Padulano
