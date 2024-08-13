@@ -483,19 +483,18 @@ def run_conda_forge_specific(
 
     # 4: Do not delete example recipe
     if is_staged_recipes and recipe_dir is not None:
-        for recipe_name in ("meta.yaml", "recipe.yaml"):
-            example_fname = os.path.abspath(
-                os.path.join(recipe_dir, "..", "example", recipe_name)
+        example_fname = os.path.abspath(
+            os.path.join(recipe_dir, "..", "example", "meta.yaml")
+        )
+
+        if not os.path.exists(example_fname):
+            msg = (
+                "Please do not delete the example recipe found in "
+                f"`recipes/example/{recipe_name}`."
             )
 
-            if not os.path.exists(example_fname):
-                msg = (
-                    "Please do not delete the example recipe found in "
-                    f"`recipes/example/{recipe_name}`."
-                )
-
-                if msg not in lints:
-                    lints.append(msg)
+            if msg not in lints:
+                lints.append(msg)
 
     # 5: Package-specific hints
     # (e.g. do not depend on matplotlib, only matplotlib-base)
