@@ -56,12 +56,12 @@ if EXIST LICENSE.txt (
     copy LICENSE.txt "{{ recipe_dir }}\\recipe-scripts-license.txt"
 )
 
-{%- if test == "native" %}
+{%- if test == "native"  && conda_build_tool != "rattler-build" %}
 if NOT [%HOST_PLATFORM%] == [%BUILD_PLATFORM%] (
     set "EXTRA_CB_OPTIONS=%EXTRA_CB_OPTIONS% --no-test"
 )
 {%- endif %}
-{%- if test == "native_and_emulated" %}
+{%- if test == "native_and_emulated" && conda_build_tool != "rattler-build" %}
 if NOT [%HOST_PLATFORM%] == [%BUILD_PLATFORM%] (
     if [%CROSSCOMPILING_EMULATOR%] == [] (
         set "EXTRA_CB_OPTIONS=%EXTRA_CB_OPTIONS% --no-test"
@@ -70,7 +70,11 @@ if NOT [%HOST_PLATFORM%] == [%BUILD_PLATFORM%] (
 {%- endif %}
 
 if NOT [%flow_run_id%] == [] (
-    set "EXTRA_CB_OPTIONS=%EXTRA_CB_OPTIONS% --extra-meta flow_run_id=%flow_run_id% remote_url=%remote_url% sha=%sha%"
+    {%- if conda_build_tool == "rattler-build" %}
+        set "EXTRA_CB_OPTIONS= --extra-meta flow_run_id=%flow_run_id% --extra-meta remote_url=%remote_url% --extra-meta sha=%sha%"
+    {%- else %}
+        set "EXTRA_CB_OPTIONS=%EXTRA_CB_OPTIONS% --extra-meta flow_run_id=%flow_run_id% remote_url=%remote_url% sha=%sha%"
+    {%- endif %}
 )
 
 call :end_group
