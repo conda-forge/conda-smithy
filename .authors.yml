@@ -27,7 +27,7 @@
   aliases:
   - John Kirkham
   - jakirkham
-  num_commits: 30
+  num_commits: 31
   first_commit: 2016-03-17 21:05:53
   github: jakirkham
 - name: Daniel Bast
@@ -393,7 +393,7 @@
   github: shadowwalkersb
 - name: Matthew R. Becker
   email: becker.mr@gmail.com
-  num_commits: 234
+  num_commits: 256
   first_commit: 2020-01-07 17:44:33
   github: beckermr
   alternate_emails:
@@ -488,7 +488,7 @@
   github: BastianZim
 - name: Wolf Vollprecht
   email: w.vollprecht@gmail.com
-  num_commits: 17
+  num_commits: 55
   first_commit: 2021-01-19 04:39:35
   github: wolfv
 - name: Hugo Slepicka
@@ -587,7 +587,7 @@
   github: zklaus
 - name: pre-commit-ci[bot]
   email: 66853113+pre-commit-ci[bot]@users.noreply.github.com
-  num_commits: 20
+  num_commits: 22
   first_commit: 2023-10-30 15:49:50
   github: carterbox
 - name: Amit Kumar
@@ -628,7 +628,7 @@
   first_commit: 2024-05-21 04:47:22
 - name: nichmor
   email: nmorkotilo@gmail.com
-  num_commits: 80
+  num_commits: 126
   first_commit: 2024-03-21 10:10:04
   github: nichmor
 - name: Jan Lehnarsdt

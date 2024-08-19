@@ -10,7 +10,7 @@ from conda_build.metadata import (
     FIELDS as _CONDA_BUILD_FIELDS,
 )
 from rattler_build_conda_compat import loader as rattler_loader
-from rattler_build_conda_compat.recipe_sources import get_all_url_sources
+from rattler_build_conda_compat.recipe_sources import get_all_sources
 
 FIELDS = copy.deepcopy(_CONDA_BUILD_FIELDS)
 
@@ -47,11 +47,13 @@ CONDA_BUILD_TOOL = "conda-build"
 RATTLER_BUILD_TOOL = "rattler-build"
 
 
-def get_section(parent, name, lints, is_rattler_build=False):
-    if not is_rattler_build:
+def get_section(parent, name, lints, recipe_version: int = 0):
+    if recipe_version == 0:
         return get_meta_section(parent, name, lints)
+    elif recipe_version == 1:
+        return get_recipe_v1_section(parent, name)
     else:
-        return get_rattler_section(parent, name)
+        raise ValueError(f"Unknown recipe version: {recipe_version}")
 
 
 def get_meta_section(parent, name, lints):
@@ -70,13 +72,13 @@ def get_meta_section(parent, name, lints):
     return section
 
 
-def get_rattler_section(meta, name) -> Union[Dict, List[Dict], List[str]]:
+def get_recipe_v1_section(meta, name) -> Union[Dict, List[Dict]]:
     if name == "requirements":
         return rattler_loader.load_all_requirements(meta)
     elif name == "tests":
         return rattler_loader.load_all_tests(meta)
     elif name == "source":
-        sources = get_all_url_sources(meta)
+        sources = get_all_sources(meta)
         return list(sources)
 
     return meta.get(name, {})

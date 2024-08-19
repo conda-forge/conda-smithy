@@ -23,6 +23,25 @@ def is_gh_token_set():
 
 
 @contextmanager
+def get_recipe_in_dir(recipe_name: str) -> Path:
+    base_dir = Path(__file__).parent
+    recipe_path = base_dir / "recipes" / recipe_name
+    assert recipe_path.exists(), f"Recipe {recipe_name} does not exist"
+
+    # create a temporary directory to copy the recipe into
+    with tmp_directory() as tmp_dir:
+        # copy the file into the temporary directory
+        recipe_folder = Path(tmp_dir) / "recipe"
+        recipe_folder.mkdir()
+        shutil.copy(recipe_path, recipe_folder / "recipe.yaml")
+
+        try:
+            yield recipe_folder
+        finally:
+            pass
+
+
+@contextmanager
 def tmp_directory():
     tmp_dir = tempfile.mkdtemp("recipe_")
     yield tmp_dir
@@ -57,7 +76,7 @@ def test_stdlib_lint(comp_lang):
     "comp_lang",
     ["c", "cxx", "fortran", "rust", "m2w64_c", "m2w64_cxx", "m2w64_fortran"],
 )
-def test_rattler_stdlib_hint(comp_lang):
+def test_v1_stdlib_hint(comp_lang):
     expected_message = "This recipe is using a compiler"
 
     with tmp_directory() as recipe_dir:
@@ -188,7 +207,7 @@ def test_osx_noarch_hint(where):
         assert not any(h.startswith(avoid_message) for h in hints)
 
 
-def test_rattler_osx_noarch_hint():
+def test_recipe_v1_osx_noarch_hint():
     # don't warn on packages that are using __osx as a noarch-marker, see
     # https://conda-forge.org/docs/maintainer/knowledge_base/#noarch-packages-with-os-specific-dependencies
     avoid_message = "You're setting a constraint on the `__osx` virtual"
@@ -324,8 +343,8 @@ MACOSX_SDK_VERSION:         # [osx]
             assert any(lint.startswith(exp_lint) for lint in lints)
 
 
-@pytest.mark.parametrize("is_rattler_build,", [(False,), (True,)])
-def test_license_file_required(is_rattler_build):
+@pytest.mark.parametrize("recipe_version", [0, 1])
+def test_license_file_required(recipe_version: int):
     meta = {
         "about": {
             "home": "a URL",
@@ -334,14 +353,14 @@ def test_license_file_required(is_rattler_build):
         }
     }
     lints, hints = linter.lintify_meta_yaml(
-        meta, is_rattler_build=is_rattler_build
+        meta, recipe_version=recipe_version
     )
     expected_message = "license_file entry is missing, but is required."
     assert expected_message in lints
 
 
-@pytest.mark.parametrize("is_rattler_build,", [(False,), (True,)])
-def test_license_file_empty(is_rattler_build):
+@pytest.mark.parametrize("recipe_version", [0, 1])
+def test_license_file_empty(recipe_version: int):
     meta = {
         "about": {
             "home": "a URL",
@@ -352,7 +371,7 @@ def test_license_file_empty(is_rattler_build):
         }
     }
     lints, hints = linter.lintify_meta_yaml(
-        meta, is_rattler_build=is_rattler_build
+        meta, recipe_version=recipe_version
     )
     expected_message = "license_file entry is missing, but is required."
     assert expected_message in lints
@@ -409,7 +428,7 @@ def test_license_file_empty(is_rattler_build):
         (None, None, ["10.12", "11.0"], "You are"),
     ],
 )
-def test_rattler_cbc_osx_hints(
+def test_v1_cbc_osx_hints(
     std_selector, with_linux, reverse_arch, macdt, v_std, sdk, exp_lint
 ):
     with tmp_directory() as recipe_dir:
@@ -518,9 +537,9 @@ class TestLinter(unittest.TestCase):
         expected_msg = "The top level meta key sources is unexpected"
         self.assertIn(expected_msg, lints)
 
-    def test_rattler_bad_top_level(self):
+    def test_recipe_v1_bad_top_level(self):
         meta = OrderedDict([["package", {}], ["build", {}], ["sources", {}]])
-        lints, hints = linter.lintify_meta_yaml(meta, is_rattler_build=True)
+        lints, hints = linter.lintify_meta_yaml(meta, recipe_version=1)
         expected_msg = "The top level meta key sources is unexpected"
         self.assertIn(expected_msg, lints)
 
@@ -575,7 +594,7 @@ class TestLinter(unittest.TestCase):
 
     def test_missing_about_homepage_empty(self):
         meta = {"about": {"homepage": "", "summary": "", "license": ""}}
-        lints, hints = linter.lintify_meta_yaml(meta, is_rattler_build=True)
+        lints, hints = linter.lintify_meta_yaml(meta, recipe_version=1)
         expected_message = (
             "The homepage item is expected in the about section."
         )
@@ -691,25 +710,32 @@ class TestLinter(unittest.TestCase):
             "It looks like the 'foobar' output doesn't have any tests.", hints
         )
 
-    def test_rattler_test_section(self):
+    def test_recipe_v1_test_section(self):
         expected_message = "The recipe must have some tests."
 
-        lints, hints = linter.lintify_meta_yaml({}, is_rattler_build=True)
+        lints, hints = linter.lintify_meta_yaml({}, recipe_version=1)
         self.assertIn(expected_message, lints)
 
         lints, hints = linter.lintify_meta_yaml(
-            {"tests": {"script": "sys"}}, is_rattler_build=True
+            {"tests": [{"script": "sys"}]}, recipe_version=1
         )
         self.assertNotIn(expected_message, lints)
 
         lints, hints = linter.lintify_meta_yaml(
-            {"outputs": [{"name": "foo"}]}, is_rattler_build=True
+            {"outputs": [{"name": "foo"}]}, recipe_version=1
         )
         self.assertIn(expected_message, lints)
 
         lints, hints = linter.lintify_meta_yaml(
-            {"outputs": [{"name": "foo", "tests": {"python": "sys"}}]},
-            is_rattler_build=True,
+            {
+                "outputs": [
+                    {
+                        "name": "foo",
+                        "tests": [{"python": {"imports": ["sys"]}}],
+                    }
+                ]
+            },
+            recipe_version=1,
         )
         self.assertNotIn(expected_message, lints)
 
@@ -722,7 +748,7 @@ class TestLinter(unittest.TestCase):
                     },
                 ]
             },
-            is_rattler_build=True,
+            recipe_version=1,
         )
         self.assertNotIn(expected_message, lints)
         self.assertIn(
@@ -744,23 +770,22 @@ class TestLinter(unittest.TestCase):
             lints, hints = linter.lintify_meta_yaml({}, recipe_dir)
             self.assertNotIn(expected_message, lints)
 
-    def test_rattler_test_section_with_recipe(self):
-        # rattler-build support legacy run_test.py, so we need to test it
-
+    def test_recipe_v1_test_section_with_recipe(self):
         expected_message = "The recipe must have some tests."
 
         with tmp_directory() as recipe_dir:
             lints, hints = linter.lintify_meta_yaml(
-                {}, recipe_dir, is_rattler_build=True
+                {}, recipe_dir, recipe_version=1
             )
             self.assertIn(expected_message, lints)
 
+            # Note: v1 recipes have no implicit "run_test.py" support
             with open(os.path.join(recipe_dir, "run_test.py"), "w") as fh:
                 fh.write("# foo")
             lints, hints = linter.lintify_meta_yaml(
-                {}, recipe_dir, is_rattler_build=True
+                {}, recipe_dir, recipe_version=1
             )
-            self.assertNotIn(expected_message, lints)
+            self.assertIn(expected_message, lints)
 
     def test_jinja2_vars(self):
         expected_message = (
@@ -791,7 +816,7 @@ class TestLinter(unittest.TestCase):
             _, hints = linter.lintify_meta_yaml({}, recipe_dir)
             self.assertTrue(any(h.startswith(expected_message) for h in hints))
 
-    def test_rattler_jinja2_vars(self):
+    def test_recipe_v1_jinja2_vars(self):
         expected_message = (
             "Jinja2 variable references are suggested to take a ``${{<one space>"
             "<variable name><one space>}}`` form. See lines %s."
@@ -818,7 +843,7 @@ class TestLinter(unittest.TestCase):
                 )
 
             _, hints = linter.lintify_meta_yaml(
-                {}, recipe_dir, is_rattler_build=True
+                {}, recipe_dir, recipe_version=1
             )
             self.assertTrue(any(h.startswith(expected_message) for h in hints))
 
@@ -1121,7 +1146,7 @@ class TestLinter(unittest.TestCase):
                             """
             )
 
-    def test_rattler_noarch_selectors(self):
+    def test_recipe_v1_noarch_selectors(self):
         expected_start = "`noarch` packages can't have"
 
         with tmp_directory() as recipe_dir:
@@ -1306,7 +1331,7 @@ noarch_platforms:
                 is_good=True,
             )
 
-    def test_suggest_rattler_noarch(self):
+    def test_suggest_v1_noarch(self):
         expected_start = "Whenever possible python packages should use noarch."
         with tmp_directory() as recipe_dir:
 
@@ -1688,9 +1713,9 @@ noarch_platforms:
         )
         self.assertIn(expected_message, lints)
 
-    def test_rattler_recipe_name(self):
+    def test_recipe_v1_recipe_name(self):
         meta = {"package": {"name": "mp++"}}
-        lints, _ = linter.lintify_meta_yaml(meta, is_rattler_build=True)
+        lints, _ = linter.lintify_meta_yaml(meta, recipe_version=1)
         expected_message = (
             "Recipe name has invalid characters. only lowercase alpha, "
             "numeric, underscores, hyphens and dots allowed"
@@ -1702,7 +1727,7 @@ noarch_platforms:
             "package": {"name": "${{ blah }}"},
         }  # noqa
         lints, _ = linter.lintify_meta_yaml(
-            meta_with_context, is_rattler_build=True
+            meta_with_context, recipe_version=1
         )
         expected_message = (
             "Recipe name has invalid characters. only lowercase alpha, "
@@ -1712,7 +1737,7 @@ noarch_platforms:
 
         meta_with_context = {"recipe": {"name": "mp++"}, "outputs": []}  # noqa
         lints, _ = linter.lintify_meta_yaml(
-            meta_with_context, is_rattler_build=True
+            meta_with_context, recipe_version=1
         )
         expected_message = (
             "Recipe name has invalid characters. only lowercase alpha, "
@@ -1998,17 +2023,17 @@ noarch_platforms:
         lints, hints = linter.lintify_meta_yaml(meta)
         assert any(lint.startswith(expected_message) for lint in lints)
 
-    def test_rattler_version(self):
+    def test_recipe_v1_version(self):
         meta = {"package": {"name": "python", "version": "3.6.4"}}
         expected_message = "Package version 3.6.4 doesn't match conda spec"
-        lints, hints = linter.lintify_meta_yaml(meta, is_rattler_build=True)
+        lints, hints = linter.lintify_meta_yaml(meta, recipe_version=1)
         self.assertNotIn(expected_message, lints)
 
         meta = {"package": {"name": "python", "version": "2.0.0~alpha0"}}
         expected_message = (
             "Package version 2.0.0~alpha0 doesn't match conda spec"
         )
-        lints, hints = linter.lintify_meta_yaml(meta, is_rattler_build=True)
+        lints, hints = linter.lintify_meta_yaml(meta, recipe_version=1)
         assert any(lint.startswith(expected_message) for lint in lints)
 
         # when having multiple outputs it should use recipe keyword
@@ -2016,16 +2041,16 @@ noarch_platforms:
         expected_message = (
             "Package version 2.0.0~alpha0 doesn't match conda spec"
         )
-        lints, hints = linter.lintify_meta_yaml(meta, is_rattler_build=True)
+        lints, hints = linter.lintify_meta_yaml(meta, recipe_version=1)
         assert any(lint.startswith(expected_message) for lint in lints)
 
-    def test_rattler_version_with_context(self):
+    def test_recipe_v1_version_with_context(self):
         meta = {
             "context": {"foo": "3.6.4"},
             "package": {"name": "python", "version": "${{ foo }}"},
         }
         expected_message = "Package version 3.6.4 doesn't match conda spec"
-        lints, hints = linter.lintify_meta_yaml(meta, is_rattler_build=True)
+        lints, hints = linter.lintify_meta_yaml(meta, recipe_version=1)
         self.assertNotIn(expected_message, lints)
 
         meta = {
@@ -2035,7 +2060,7 @@ noarch_platforms:
         expected_message = (
             "Package version 2.0.0~alpha0 doesn't match conda spec"
         )
-        lints, hints = linter.lintify_meta_yaml(meta, is_rattler_build=True)
+        lints, hints = linter.lintify_meta_yaml(meta, recipe_version=1)
         assert any(lint.startswith(expected_message) for lint in lints)
 
     @unittest.skipUnless(is_gh_token_set(), "GH_TOKEN not set")
@@ -2108,7 +2133,7 @@ noarch_platforms:
         ]
         self.assertEqual(expected_messages, filtered_lints)
 
-    def test_rattler_single_space_pins(self):
+    def test_recipe_v1_single_space_pins(self):
         meta = {
             "requirements": {
                 "build": ["${{ compiler('c') }}", "python >=3", "pip   19"],
@@ -2116,7 +2141,7 @@ noarch_platforms:
                 "run": ["xonsh>1.0", "conda= 4.*", "conda-smithy<=54.*"],
             }
         }
-        lints, hints = linter.lintify_meta_yaml(meta, is_rattler_build=True)
+        lints, hints = linter.lintify_meta_yaml(meta, recipe_version=1)
         filtered_lints = [
             lint for lint in lints if lint.startswith("``requirements: ")
         ]
@@ -2247,12 +2272,12 @@ noarch_platforms:
         self.assertTrue(any(hint.startswith(expected) for hint in hints))
 
 
-@pytest.mark.parametrize("is_rattler_build", [True, False])
-def test_rust_license_bundling(is_rattler_build: bool):
+@pytest.mark.parametrize("recipe_version", [0, 1])
+def test_rust_license_bundling(recipe_version: int):
     # Case where go-licenses is missing
     compiler = (
         "${{ compiler('rust') }}"
-        if is_rattler_build
+        if recipe_version == 1
         else "{{ compiler('rust') }}"
     )
     meta_missing_license = {
@@ -2260,7 +2285,7 @@ def test_rust_license_bundling(is_rattler_build: bool):
     }
 
     lints, hints = linter.lintify_meta_yaml(
-        meta_missing_license, is_rattler_build=is_rattler_build
+        meta_missing_license, recipe_version=recipe_version
     )
     expected_msg = (
         "Rust packages must include the licenses of the Rust dependencies. "
@@ -2274,23 +2299,25 @@ def test_rust_license_bundling(is_rattler_build: bool):
     }
 
     lints, hints = linter.lintify_meta_yaml(
-        meta_with_license, is_rattler_build=is_rattler_build
+        meta_with_license, recipe_version=recipe_version
     )
     assert expected_msg not in lints
 
 
-@pytest.mark.parametrize("is_rattler_build", [True, False])
-def test_go_license_bundling(is_rattler_build: bool):
+@pytest.mark.parametrize("recipe_version", [0, 1])
+def test_go_license_bundling(recipe_version: int):
     # Case where go-licenses is missing
     compiler = (
-        "${{ compiler('go') }}" if is_rattler_build else "{{ compiler('go') }}"
+        "${{ compiler('go') }}"
+        if recipe_version == 1
+        else "{{ compiler('go') }}"
     )
     meta_missing_license = {
         "requirements": {"build": [compiler]},
     }
 
     lints, hints = linter.lintify_meta_yaml(
-        meta_missing_license, is_rattler_build=is_rattler_build
+        meta_missing_license, recipe_version=recipe_version
     )
     expected_msg = (
         "Go packages must include the licenses of the Go dependencies. "
@@ -2304,7 +2331,7 @@ def test_go_license_bundling(is_rattler_build: bool):
     }
 
     lints, hints = linter.lintify_meta_yaml(
-        meta_with_license, is_rattler_build=is_rattler_build
+        meta_with_license, recipe_version=recipe_version
     )
     assert expected_msg not in lints
 
@@ -2590,15 +2617,15 @@ def test_lint_wheels(tmp_path, yaml_block, annotation):
         assert any(expected_message in hint for hint in hints)
 
 
-@pytest.mark.parametrize("is_rattler_build", [False, True])
-def test_pin_compatible_in_run_exports(is_rattler_build: bool):
+@pytest.mark.parametrize("recipe_version", [0, 1])
+def test_pin_compatible_in_run_exports(recipe_version: int):
     meta = {
         "package": {
             "name": "apackage",
         }
     }
 
-    if is_rattler_build:
+    if recipe_version == 1:
         meta["requirements"] = {
             "run_exports": ['${{ pin_compatible("apackage") }}'],
         }
@@ -2608,15 +2635,15 @@ def test_pin_compatible_in_run_exports(is_rattler_build: bool):
         }
 
     lints, hints = linter.lintify_meta_yaml(
-        meta, is_rattler_build=is_rattler_build
+        meta, recipe_version=recipe_version
     )
     expected = "pin_subpackage should be used instead"
     assert any(lint.startswith(expected) for lint in lints)
 
 
-@pytest.mark.parametrize("is_rattler_build", [False, True])
-def test_pin_compatible_in_run_exports_output(is_rattler_build: bool):
-    if is_rattler_build:
+@pytest.mark.parametrize("recipe_version", [0, 1])
+def test_pin_compatible_in_run_exports_output(recipe_version: int):
+    if recipe_version == 1:
         meta = {
             "recipe": {
                 "name": "apackage",
@@ -2648,10 +2675,33 @@ def test_pin_compatible_in_run_exports_output(is_rattler_build: bool):
         }
 
     lints, hints = linter.lintify_meta_yaml(
-        meta, is_rattler_build=is_rattler_build
+        meta, recipe_version=recipe_version
     )
     expected = "pin_compatible should be used instead"
     assert any(lint.startswith(expected) for lint in lints)
+
+
+def test_v1_recipes():
+    with get_recipe_in_dir("v1_recipes/recipe-no-lint.yaml") as recipe_dir:
+        lints, hints = linter.main(str(recipe_dir), return_hints=True)
+        assert not lints
+
+
+def test_v1_no_test():
+    with get_recipe_in_dir("v1_recipes/recipe-no-tests.yaml") as recipe_dir:
+        lints, hints = linter.main(str(recipe_dir), return_hints=True)
+        assert "The recipe must have some tests." in lints
+
+
+def test_v1_package_name_version():
+    with get_recipe_in_dir(
+        "v1_recipes/recipe-lint-name-version.yaml"
+    ) as recipe_dir:
+        lints, hints = linter.main(str(recipe_dir), return_hints=True)
+        lint_1 = "Recipe name has invalid characters. only lowercase alpha, numeric, underscores, hyphens and dots allowed"
+        lint_2 = "Package version $!@# doesn't match conda spec: Invalid version '$!@#': invalid character(s)"
+        assert lint_1 in lints
+        assert lint_2 in lints
 
 
 if __name__ == "__main__":

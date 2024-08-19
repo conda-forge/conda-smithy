@@ -4,10 +4,11 @@ Authors are sorted by number of commits.
 * Isuru Fernando
 * Matthew R. Becker
 * Jaime Rodríguez-Guerra
+* nichmor
 * Christopher J. Wright
 * Anthony Scopatz
 * Phil Elson
-* nichmor
+* Wolf Vollprecht
 * H. Vetinari
 * Uwe L. Korn
 * Filipe Fernandes
@@ -16,8 +17,8 @@ Authors are sorted by number of commits.
 * Min RK
 * Marcel Bargull
 * shadow_walker
-* Michael Sarahan
 * John Kirkham
+* Michael Sarahan
 * Bastian Zimmermann
 * Mark Harfouche
 * Leo Fang
@@ -27,7 +28,6 @@ Authors are sorted by number of commits.
 * pre-commit-ci[bot]
 * Chris Burr
 * Julian Rüth
-* Wolf Vollprecht
 * Yannik Tausch
 * Daniel Bast
 * Billy K. Poon

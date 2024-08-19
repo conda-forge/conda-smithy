@@ -11,7 +11,7 @@ from typing import Optional, Union
 import conda  # noqa
 from conda_build.metadata import MetaData
 from rattler_build_conda_compat.render import MetaData as RattlerMetaData
-from rattler_build_conda_compat.utils import has_recipe as has_rattler_recipe
+from rattler_build_conda_compat.utils import has_recipe as has_recipe_v1
 from ruamel.yaml import YAML
 
 import conda_smithy.cirun_utils
@@ -132,7 +132,7 @@ class Init(Subcommand):
         build_tool = CONDA_BUILD
 
         # detect what recipe ( meta.yaml or recipe.yaml ) we should render
-        if has_rattler_recipe(args.recipe_directory):
+        if has_recipe_v1(args.recipe_directory):
             build_tool = RATTLER_BUILD
 
         if build_tool == CONDA_BUILD:
