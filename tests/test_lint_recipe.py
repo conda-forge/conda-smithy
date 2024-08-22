@@ -2705,7 +2705,7 @@ def test_v1_package_name_version():
         assert lint_1 in lints
         assert lint_2 in lints
 
-
+@unittest.skipUnless(is_gh_token_set(), "GH_TOKEN not set")
 @pytest.mark.parametrize("remove_top_level", [True, False])
 @pytest.mark.parametrize(
     "outputs_to_add, outputs_expected_hints",
