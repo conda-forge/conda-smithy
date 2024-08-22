@@ -16,6 +16,7 @@ from conda_build.metadata import (
     ensure_valid_license_family,
 )
 from rattler_build_conda_compat import loader as rattler_loader
+from ruamel.yaml.constructor import DuplicateKeyError
 
 from conda_smithy.configure_feedstock import _read_forge_config
 from conda_smithy.linter import conda_recipe_v1_linter
@@ -490,20 +491,7 @@ def run_conda_forge_specific(
         )
 
     # 4: Do not delete example recipe
-    if is_staged_recipes and recipe_dir is not None:
-        for recipe_name in ("meta.yaml", "recipe.yaml"):
-            example_fname = os.path.abspath(
-                os.path.join(recipe_dir, "..", "example", recipe_name)
-            )
-
-            if not os.path.exists(example_fname):
-                msg = (
-                    "Please do not delete the example recipe found in "
-                    f"`recipes/example/{recipe_name}`."
-                )
-
-                if msg not in lints:
-                    lints.append(msg)
+    # removed in favor of direct check in staged-recipes CI
 
     # 5: Package-specific hints
     # (e.g. do not depend on matplotlib, only matplotlib-base)
@@ -595,6 +583,22 @@ def run_conda_forge_specific(
 
         name = out.get("name", "").strip()
         hint_pip_no_build_backend(host_reqs or build_reqs, name, hints)
+
+    # 9: No duplicates in conda-forge.yml
+    if (
+        not is_staged_recipes
+        and recipe_dir is not None
+        and os.path.exists(
+            cfyml_pth := os.path.join(recipe_dir, "..", "conda-forge.yml")
+        )
+    ):
+        try:
+            with open(cfyml_pth) as fh:
+                get_yaml(allow_duplicate_keys=False).load(fh)
+        except DuplicateKeyError:
+            lints.append(
+                "The ``conda-forge.yml`` file is not allowed to have duplicate keys."
+            )
 
 
 def _format_validation_msg(error: jsonschema.ValidationError):
