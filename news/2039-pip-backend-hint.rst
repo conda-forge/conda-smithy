@@ -1,6 +1,6 @@
 **Added:**
 
-* <news item>
+* Added hint for missing ``pip`` build backend in the ``host`` section of the recipe. (#2039)
 
 **Changed:**
 

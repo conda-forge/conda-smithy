@@ -187,7 +187,13 @@ def hint_pip_no_build_backend(host_or_build_section, package_name, hints):
         found_backend = False
         for backend in VALID_PYTHON_BUILD_BACKENDS:
             if any(
-                req.split(" ")[0] in [backend, backend.replace("-", "_"), backend.replace("_", "-")] for req in host_or_build_section
+                req.split(" ")[0]
+                in [
+                    backend,
+                    backend.replace("-", "_"),
+                    backend.replace("_", "-"),
+                ]
+                for req in host_or_build_section
             ):
                 found_backend = True
                 break
