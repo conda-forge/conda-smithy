@@ -18,7 +18,6 @@ from conda_smithy.linter.utils import (
     REQUIREMENTS_ORDER,
     TEST_FILES,
     TEST_KEYS,
-    VALID_PYTHON_BUILD_BACKENDS,
     _lint_recipe_name,
     get_section,
     is_selector_line,
@@ -977,30 +976,3 @@ def lint_stdlib(
         ):
             if sdk_lint not in lints:
                 lints.append(sdk_lint)
-
-
-def lint_pip_no_build_backend(host_or_build_section, package_name, lints):
-    if host_or_build_section and any(
-        req.split(" ")[0] == "pip" for req in host_or_build_section
-    ):
-        found_backend = False
-        for backend in VALID_PYTHON_BUILD_BACKENDS:
-            if any(
-                req.split(" ")[0]
-                in [
-                    backend,
-                    backend.replace("-", "_"),
-                    backend.replace("_", "-"),
-                ]
-                for req in host_or_build_section
-            ):
-                found_backend = True
-                break
-
-        if not found_backend:
-            lints.append(
-                f"No valid build backend found for Python recipe for package `{package_name}` using `pip`. Python recipes using `pip` need to "
-                "explicitly specify a build backend in the `host` section. "
-                "If your recipe has built with only `pip` in the `host` section in the past, you likely should "
-                "add `setuptools` to the `host` section of your recipe."
-            )

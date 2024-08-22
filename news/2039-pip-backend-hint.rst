@@ -1,6 +1,6 @@
 **Added:**
 
-* Added lint for missing ``pip``` build backend in ``host`` sections. (#2039)
+* <news item>
 
 **Changed:**
 
