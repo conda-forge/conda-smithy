@@ -2706,9 +2706,156 @@ def test_v1_package_name_version():
         assert lint_2 in lints
 
 
+@pytest.mark.parametrize("remove_top_level", [True, False])
+@pytest.mark.parametrize(
+    "outputs_to_add, outputs_expected_hints",
+    [
+        (
+            textwrap.dedent(
+                """
+                - name: python-output
+                  requirements:
+                    run:
+                      - python
+                """
+            ),
+            [],
+        ),
+        (
+            textwrap.dedent(
+                """
+                - name: python-output
+                  requirements:
+                    host:
+                      - pip
+                    run:
+                      - python
+                """
+            ),
+            [
+                "No valid build backend found for Python recipe for package `python-output`"
+            ],
+        ),
+        (
+            textwrap.dedent(
+                """
+                - name: python-output
+                  requirements:
+                    build:
+                      - pip
+                    run:
+                      - python
+                - name: python-output2
+                  requirements:
+                    run:
+                      - python
+                """
+            ),
+            [
+                "No valid build backend found for Python recipe for package `python-output`"
+            ],
+        ),
+        (
+            textwrap.dedent(
+                """
+                - name: python-output
+                  requirements:
+                    build:
+                      - blah
+                    host:
+                      - pip
+                    run:
+                      - python
+                """
+            ),
+            [
+                "No valid build backend found for Python recipe for package `python-output`"
+            ],
+        ),
+        (
+            textwrap.dedent(
+                """
+                - name: python-output
+                  requirements:
+                    host:
+                      - pip
+                      - @@backend@@
+                    run:
+                      - python
+                """
+            ),
+            [],
+        ),
+        (
+            textwrap.dedent(
+                """
+                - name: python-output
+                  requirements:
+                    build:
+                      - pip
+                      - @@backend@@
+                    run:
+                      - python
+                - name: python-output2
+                  requirements:
+                    host:
+                      - pip
+                    run:
+                      - python
+                """
+            ),
+            [
+                "No valid build backend found for Python recipe for package `python-output2`"
+            ],
+        ),
+        (
+            textwrap.dedent(
+                """
+                - name: python-output
+                  requirements:
+                    build:
+                      - pip
+                    run:
+                      - python
+                - name: python-output2
+                  requirements:
+                    host:
+                      - pip
+                    run:
+                      - python
+                """
+            ),
+            [
+                "No valid build backend found for Python recipe for package `python-output2`",
+                "No valid build backend found for Python recipe for package `python-output`",
+            ],
+        ),
+        (
+            textwrap.dedent(
+                """
+                - name: python-output
+                  requirements:
+                    build:
+                      - pip
+                      - setuptools
+                    run:
+                      - python
+                - name: python-output2
+                  requirements:
+                    host:
+                      - pip
+                      - @@backend@@
+                    run:
+                      - python
+                """
+            ),
+            [],
+        ),
+    ],
+)
 @pytest.mark.parametrize("backend", VALID_PYTHON_BUILD_BACKENDS)
 @pytest.mark.parametrize(
-    "meta_str,recipe_version,expected_hints",
+    "meta_str,expected_hints",
     [
         (
             textwrap.dedent(
@@ -2721,7 +2868,6 @@ def test_v1_package_name_version():
                     - python
                 """
             ),
-            0,
             [],
         ),
         (
@@ -2737,7 +2883,6 @@ def test_v1_package_name_version():
                     - python
                 """
             ),
-            0,
             [
                 "No valid build backend found for Python recipe for package `python`"
             ],
@@ -2757,7 +2902,6 @@ def test_v1_package_name_version():
                     - python
                 """
             ),
-            0,
             [
                 "No valid build backend found for Python recipe for package `python`"
             ],
@@ -2776,7 +2920,6 @@ def test_v1_package_name_version():
                     - python
                 """
             ),
-            0,
             [],
         ),
         (
@@ -2795,7 +2938,6 @@ def test_v1_package_name_version():
                     - python
                 """
             ),
-            0,
             [],
         ),
         (
@@ -2811,7 +2953,6 @@ def test_v1_package_name_version():
                     - python
                 """
             ),
-            0,
             [
                 "No valid build backend found for Python recipe for package `python`"
             ],
@@ -2819,16 +2960,33 @@ def test_v1_package_name_version():
     ],
 )
 def test_hint_pip_no_build_backend(
-    meta_str, recipe_version, expected_hints, backend
+    meta_str,
+    expected_hints,
+    backend,
+    outputs_to_add,
+    outputs_expected_hints,
+    remove_top_level,
 ):
+    meta = get_yaml().load(meta_str.replace("@@backend@@", backend))
+    if remove_top_level:
+        meta.pop("requirements", None)
+        # we expect no hints in this case
+        expected_hints = []
+
+    if outputs_to_add:
+        meta["outputs"] = get_yaml().load(
+            outputs_to_add.replace("@@backend@@", backend)
+        )
+        expected_hints += outputs_expected_hints
+
     lints = []
     hints = []
     linter.run_conda_forge_specific(
-        get_yaml().load(meta_str.replace("@@backend@@", backend)),
+        meta,
         None,
         lints,
         hints,
-        recipe_version=recipe_version,
+        recipe_version=0,
     )
 
     # make sure we have the expected hints
