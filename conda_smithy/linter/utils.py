@@ -64,6 +64,7 @@ VALID_PYTHON_BUILD_BACKENDS = [
     "meson-python",
     "scikit-build-core",
     "maturin",
+    "jupyter_packaging",
 ]
 
 
