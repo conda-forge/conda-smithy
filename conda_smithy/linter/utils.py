@@ -1,16 +1,24 @@
 import copy
 import os
 import re
+import sys
 from collections.abc import Sequence
+from functools import lru_cache
 from glob import glob
 from typing import Dict, List, Mapping, Optional, Union
 
+import requests
 from conda.models.version import InvalidVersionSpec, VersionOrder
 from conda_build.metadata import (
     FIELDS as _CONDA_BUILD_FIELDS,
 )
 from rattler_build_conda_compat import loader as rattler_loader
 from rattler_build_conda_compat.recipe_sources import get_all_sources
+
+if sys.version_info[:2] < (3, 11):
+    import tomli as tomllib
+else:
+    import tomllib
 
 FIELDS = copy.deepcopy(_CONDA_BUILD_FIELDS)
 
@@ -197,3 +205,15 @@ def _lint_package_version(version: Optional[str]) -> Optional[str]:
         VersionOrder(ver)
     except InvalidVersionSpec as e:
         return invalid_version.format(ver=ver, err=e)
+
+
+@lru_cache(maxsize=1)
+def load_linter_toml_metdata():
+    hints_toml_url = "https://raw.githubusercontent.com/conda-forge/conda-forge-pinning-feedstock/main/recipe/linter_hints/hints.toml"
+    hints_toml_req = requests.get(hints_toml_url)
+    if hints_toml_req.status_code != 200:
+        # too bad, but not important enough to throw an error;
+        # linter will rerun on the next commit anyway
+        return
+    hints_toml_str = hints_toml_req.content.decode("utf-8")
+    return tomllib.loads(hints_toml_str)

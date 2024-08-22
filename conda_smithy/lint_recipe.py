@@ -1,3 +1,4 @@
+import copy
 import json
 import os
 import sys
@@ -11,7 +12,12 @@ from typing import Any, List, Optional, Tuple
 import github
 import jsonschema
 import requests
+from conda_build.metadata import (
+    ensure_valid_license_family,
+)
+from rattler_build_conda_compat import loader as rattler_loader
 
+from conda_smithy.configure_feedstock import _read_forge_config
 from conda_smithy.linter import conda_recipe_v1_linter
 from conda_smithy.linter.hints import (
     hint_check_spdx,
@@ -58,19 +64,8 @@ from conda_smithy.linter.utils import (
     RATTLER_BUILD_TOOL,
     find_local_config_file,
     get_section,
+    load_linter_toml_metdata,
 )
-
-if sys.version_info[:2] < (3, 11):
-    import tomli as tomllib
-else:
-    import tomllib
-
-from conda_build.metadata import (
-    ensure_valid_license_family,
-)
-from rattler_build_conda_compat import loader as rattler_loader
-
-from conda_smithy.configure_feedstock import _read_forge_config
 from conda_smithy.utils import get_yaml, render_meta_yaml
 from conda_smithy.validate_schema import validate_json_schema
 
@@ -512,9 +507,10 @@ def run_conda_forge_specific(
 
     # 5: Package-specific hints
     # (e.g. do not depend on matplotlib, only matplotlib-base)
-    build_reqs = requirements_section.get("build") or []
-    host_reqs = requirements_section.get("host") or []
-    run_reqs = requirements_section.get("run") or []
+    # we use a copy here since the += below mofiies the original list
+    build_reqs = copy.deepcopy(requirements_section.get("build") or [])
+    host_reqs = copy.deepcopy(requirements_section.get("host") or [])
+    run_reqs = copy.deepcopy(requirements_section.get("run") or [])
     for out in outputs_section:
         if recipe_version == 1:
             output_requirements = rattler_loader.load_all_requirements(out)
@@ -530,14 +526,7 @@ def run_conda_forge_specific(
             else:
                 run_reqs += _req
 
-    hints_toml_url = "https://raw.githubusercontent.com/conda-forge/conda-forge-pinning-feedstock/main/recipe/linter_hints/hints.toml"
-    hints_toml_req = requests.get(hints_toml_url)
-    if hints_toml_req.status_code != 200:
-        # too bad, but not important enough to throw an error;
-        # linter will rerun on the next commit anyway
-        return
-    hints_toml_str = hints_toml_req.content.decode("utf-8")
-    specific_hints = tomllib.loads(hints_toml_str)["hints"]
+    specific_hints = load_linter_toml_metdata()["hints"]
 
     for rq in build_reqs + host_reqs + run_reqs:
         dep = rq.split(" ")[0].strip()

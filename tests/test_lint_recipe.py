@@ -2981,13 +2981,16 @@ def test_hint_pip_no_build_backend(
     if remove_top_level:
         meta.pop("requirements", None)
         # we expect no hints in this case
-        expected_hints = []
+        _expected_hints = []
+    else:
+        _expected_hints = expected_hints
 
     if outputs_to_add:
         meta["outputs"] = get_yaml().load(
             outputs_to_add.replace("@@backend@@", backend)
         )
-        expected_hints += outputs_expected_hints
+
+    total_expected_hints = _expected_hints + outputs_expected_hints
 
     lints = []
     hints = []
@@ -3000,11 +3003,11 @@ def test_hint_pip_no_build_backend(
     )
 
     # make sure we have the expected hints
-    for expected_hint in expected_hints:
+    for expected_hint in total_expected_hints:
         assert any(hint.startswith(expected_hint) for hint in hints), hints
 
     # in this case we should not hint at all
-    if not expected_hints:
+    if not total_expected_hints:
         assert all(
             "No valid build backend found for Python recipe for package"
             not in hint
