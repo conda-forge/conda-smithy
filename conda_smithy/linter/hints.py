@@ -7,8 +7,12 @@ from glob import glob
 
 from conda_smithy.linter import conda_recipe_v1_linter
 from conda_smithy.linter.errors import HINT_NO_ARCH
-from conda_smithy.linter.utils import find_local_config_file, is_selector_line
-from conda_smithy.utils import VALID_PYTHON_BUILD_BACKENDS, get_yaml
+from conda_smithy.linter.utils import (
+    VALID_PYTHON_BUILD_BACKENDS,
+    find_local_config_file,
+    is_selector_line,
+)
+from conda_smithy.utils import get_yaml
 
 
 def hint_pip_usage(build_section, hints):
