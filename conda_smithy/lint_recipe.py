@@ -15,6 +15,7 @@ import requests
 from conda_smithy.linter import conda_recipe_v1_linter
 from conda_smithy.linter.hints import (
     hint_check_spdx,
+    hint_pip_no_build_backend,
     hint_pip_usage,
     hint_shellcheck_usage,
     hint_suggest_noarch,
@@ -583,6 +584,28 @@ def run_conda_forge_specific(
             lints.append(
                 "The feedstock has no `.ci_support` files and thus will not build any packages."
             )
+
+    # 8: Ensure the recipe specifies a Python build backend if needed
+    host_or_build_reqs = (requirements_section.get("host") or []) or (
+        requirements_section.get("build") or []
+    )
+    hint_pip_no_build_backend(host_or_build_reqs, recipe_name, hints)
+    for out in outputs_section:
+        if recipe_version == 1:
+            output_requirements = rattler_loader.load_all_requirements(out)
+            build_reqs = output_requirements.get("build") or []
+            host_reqs = output_requirements.get("host") or []
+        else:
+            _req = out.get("requirements") or {}
+            if isinstance(_req, Mapping):
+                build_reqs = _req.get("build") or []
+                host_reqs = _req.get("host") or []
+            else:
+                build_reqs = []
+                host_reqs = []
+
+        name = out.get("name", "").strip()
+        hint_pip_no_build_backend(host_reqs or build_reqs, name, hints)
 
 
 def _format_validation_msg(error: jsonschema.ValidationError):

@@ -14,6 +14,8 @@ import github
 import pytest
 
 import conda_smithy.lint_recipe as linter
+from conda_smithy.linter.utils import VALID_PYTHON_BUILD_BACKENDS
+from conda_smithy.utils import get_yaml
 
 _thisdir = os.path.abspath(os.path.dirname(__file__))
 
@@ -2702,6 +2704,151 @@ def test_v1_package_name_version():
         lint_2 = "Package version $!@# doesn't match conda spec: Invalid version '$!@#': invalid character(s)"
         assert lint_1 in lints
         assert lint_2 in lints
+
+
+@pytest.mark.parametrize("backend", VALID_PYTHON_BUILD_BACKENDS)
+@pytest.mark.parametrize(
+    "meta_str,recipe_version,expected_hints",
+    [
+        (
+            textwrap.dedent(
+                """
+                package:
+                  name: python
+
+                requirements:
+                  run:
+                    - python
+                """
+            ),
+            0,
+            [],
+        ),
+        (
+            textwrap.dedent(
+                """
+                package:
+                  name: python
+
+                requirements:
+                  host:
+                    - pip
+                  run:
+                    - python
+                """
+            ),
+            0,
+            [
+                "No valid build backend found for Python recipe for package `python`"
+            ],
+        ),
+        (
+            textwrap.dedent(
+                """
+                package:
+                  name: python
+
+                requirements:
+                  build:
+                    - blah
+                  host:
+                    - pip
+                  run:
+                    - python
+                """
+            ),
+            0,
+            [
+                "No valid build backend found for Python recipe for package `python`"
+            ],
+        ),
+        (
+            textwrap.dedent(
+                """
+                package:
+                  name: python
+
+                requirements:
+                  host:
+                    - pip
+                    - @@backend@@
+                  run:
+                    - python
+                """
+            ),
+            0,
+            [],
+        ),
+        (
+            textwrap.dedent(
+                """
+                package:
+                  name: python
+
+                requirements:
+                  build:
+                    - blah
+                  host:
+                    - pip
+                    - @@backend@@
+                  run:
+                    - python
+                """
+            ),
+            0,
+            [],
+        ),
+        (
+            textwrap.dedent(
+                """
+                package:
+                  name: python
+
+                requirements:
+                  build:
+                    - pip
+                  run:
+                    - python
+                """
+            ),
+            0,
+            [
+                "No valid build backend found for Python recipe for package `python`"
+            ],
+        ),
+    ],
+)
+def test_hint_pip_no_build_backend(
+    meta_str, recipe_version, expected_hints, backend
+):
+    lints = []
+    hints = []
+    linter.run_conda_forge_specific(
+        get_yaml().load(meta_str.replace("@@backend@@", backend)),
+        None,
+        lints,
+        hints,
+        recipe_version=recipe_version,
+    )
+
+    # make sure we have the expected hints
+    for expected_hint in expected_hints:
+        assert any(hint.startswith(expected_hint) for hint in hints), hints
+
+    # in this case we should not hint at all
+    if not expected_hints:
+        assert all(
+            "No valid build backend found for Python recipe for package"
+            not in hint
+            for hint in hints
+        ), hints
+
+    # it is not a lint
+    assert all(
+        "No valid build backend found for Python recipe for package"
+        not in lint
+        for lint in lints
+    ), lints
 
 
 if __name__ == "__main__":

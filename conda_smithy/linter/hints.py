@@ -8,7 +8,7 @@ from glob import glob
 from conda_smithy.linter import conda_recipe_v1_linter
 from conda_smithy.linter.errors import HINT_NO_ARCH
 from conda_smithy.linter.utils import find_local_config_file, is_selector_line
-from conda_smithy.utils import get_yaml
+from conda_smithy.utils import VALID_PYTHON_BUILD_BACKENDS, get_yaml
 
 
 def hint_pip_usage(build_section, hints):
@@ -174,3 +174,24 @@ def hint_check_spdx(about_section, hints):
             "Documentation on acceptable licenses can be found "
             "[here]( https://conda-forge.org/docs/maintainer/adding_pkgs.html#spdx-identifiers-and-expressions )."
         )
+
+
+def hint_pip_no_build_backend(host_or_build_section, package_name, hints):
+    if host_or_build_section and any(
+        req.split(" ")[0] == "pip" for req in host_or_build_section
+    ):
+        found_backend = False
+        for backend in VALID_PYTHON_BUILD_BACKENDS:
+            if any(
+                req.split(" ")[0] == backend for req in host_or_build_section
+            ):
+                found_backend = True
+                break
+
+        if not found_backend:
+            hints.append(
+                f"No valid build backend found for Python recipe for package `{package_name}` using `pip`. Python recipes using `pip` need to "
+                "explicitly specify a build backend in the `host` section. "
+                "If your recipe has built with only `pip` in the `host` section in the past, you likely should "
+                "add `setuptools` to the `host` section of your recipe."
+            )

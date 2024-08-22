@@ -46,6 +46,18 @@ JINJA_VAR_PAT = re.compile(r"{{(.*?)}}")
 CONDA_BUILD_TOOL = "conda-build"
 RATTLER_BUILD_TOOL = "rattler-build"
 
+VALID_PYTHON_BUILD_BACKENDS = [
+    "setuptools",
+    "flit-core",
+    "hatchling",
+    "poetry-core",
+    "pdm-backend",
+    "pdm-pep517",
+    "meson-python",
+    "scikit-build-core",
+    "maturin",
+]
+
 
 def get_section(parent, name, lints, recipe_version: int = 0):
     if recipe_version == 0:
