@@ -586,9 +586,15 @@ def run_conda_forge_specific(
             )
 
     # 9: No duplicates in conda-forge.yml
-    if not is_staged_recipes and recipe_dir is not None:
+    if (
+        not is_staged_recipes
+        and recipe_dir is not None
+        and os.path.exists(
+            cfyml_pth := os.path.join(recipe_dir, "..", "conda-forge.yml")
+        )
+    ):
         try:
-            with open(os.path.join(recipe_dir, "..", "conda-forge.yml")) as fh:
+            with open(cfyml_pth) as fh:
                 get_yaml(allow_duplicate_keys=False).load(fh)
         except DuplicateKeyError:
             lints.append(
