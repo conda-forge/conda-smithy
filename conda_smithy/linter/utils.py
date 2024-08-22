@@ -214,6 +214,6 @@ def load_linter_toml_metdata():
     if hints_toml_req.status_code != 200:
         # too bad, but not important enough to throw an error;
         # linter will rerun on the next commit anyway
-        return
+        return None
     hints_toml_str = hints_toml_req.content.decode("utf-8")
     return tomllib.loads(hints_toml_str)
