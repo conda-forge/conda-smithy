@@ -526,7 +526,7 @@ def run_conda_forge_specific(
             else:
                 run_reqs += _req
 
-    specific_hints = load_linter_toml_metdata()["hints"]
+    specific_hints = (load_linter_toml_metdata() or {}).get("hints", [])
 
     for rq in build_reqs + host_reqs + run_reqs:
         dep = rq.split(" ")[0].strip()
