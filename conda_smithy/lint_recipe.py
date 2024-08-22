@@ -22,7 +22,6 @@ from conda_smithy.configure_feedstock import _read_forge_config
 from conda_smithy.linter import conda_recipe_v1_linter
 from conda_smithy.linter.hints import (
     hint_check_spdx,
-    hint_pip_no_build_backend,
     hint_pip_usage,
     hint_shellcheck_usage,
     hint_suggest_noarch,
@@ -44,6 +43,7 @@ from conda_smithy.linter.lints import (
     lint_non_noarch_builds,
     lint_package_version,
     lint_pin_subpackages,
+    lint_pip_no_build_backend,
     lint_recipe_have_tests,
     lint_recipe_maintainers,
     lint_recipe_name,
@@ -566,7 +566,7 @@ def run_conda_forge_specific(
     host_or_build_reqs = (requirements_section.get("host") or []) or (
         requirements_section.get("build") or []
     )
-    hint_pip_no_build_backend(host_or_build_reqs, recipe_name, hints)
+    lint_pip_no_build_backend(host_or_build_reqs, recipe_name, lints)
     for out in outputs_section:
         if recipe_version == 1:
             output_requirements = rattler_loader.load_all_requirements(out)
@@ -582,7 +582,7 @@ def run_conda_forge_specific(
                 host_reqs = []
 
         name = out.get("name", "").strip()
-        hint_pip_no_build_backend(host_reqs or build_reqs, name, hints)
+        lint_pip_no_build_backend(host_reqs or build_reqs, name, lints)
 
     # 9: No duplicates in conda-forge.yml
     if (

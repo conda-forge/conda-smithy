@@ -2753,7 +2753,7 @@ def test_v1_package_name_version():
 @unittest.skipUnless(is_gh_token_set(), "GH_TOKEN not set")
 @pytest.mark.parametrize("remove_top_level", [True, False])
 @pytest.mark.parametrize(
-    "outputs_to_add, outputs_expected_hints",
+    "outputs_to_add, outputs_expected_lints",
     [
         (
             textwrap.dedent(
@@ -2910,7 +2910,7 @@ def test_v1_package_name_version():
 )
 @pytest.mark.parametrize("backend", VALID_PYTHON_BUILD_BACKENDS)
 @pytest.mark.parametrize(
-    "meta_str,expected_hints",
+    "meta_str,expected_lints",
     [
         (
             textwrap.dedent(
@@ -3014,28 +3014,28 @@ def test_v1_package_name_version():
         ),
     ],
 )
-def test_hint_pip_no_build_backend(
+def test_lint_pip_no_build_backend(
     meta_str,
-    expected_hints,
+    expected_lints,
     backend,
     outputs_to_add,
-    outputs_expected_hints,
+    outputs_expected_lints,
     remove_top_level,
 ):
     meta = get_yaml().load(meta_str.replace("@@backend@@", backend))
     if remove_top_level:
         meta.pop("requirements", None)
-        # we expect no hints in this case
-        _expected_hints = []
+        # we expect no lints in this case
+        _expected_lints = []
     else:
-        _expected_hints = expected_hints
+        _expected_lints = expected_lints
 
     if outputs_to_add:
         meta["outputs"] = get_yaml().load(
             outputs_to_add.replace("@@backend@@", backend)
         )
 
-    total_expected_hints = _expected_hints + outputs_expected_hints
+    total_expected_lints = _expected_lints + outputs_expected_lints
 
     lints = []
     hints = []
@@ -3047,23 +3047,23 @@ def test_hint_pip_no_build_backend(
         recipe_version=0,
     )
 
-    # make sure we have the expected hints
-    for expected_hint in total_expected_hints:
-        assert any(hint.startswith(expected_hint) for hint in hints), hints
+    # make sure we have the expected lints
+    for expected_lint in total_expected_lints:
+        assert any(lint.startswith(expected_lint) for lint in lints), lints
 
-    # in this case we should not hint at all
-    if not total_expected_hints:
+    # in this case we should not lint at all
+    if not total_expected_lints:
         assert all(
             "No valid build backend found for Python recipe for package"
-            not in hint
-            for hint in hints
-        ), hints
+            not in lint
+            for lint in lints
+        ), lints
 
     # it is not a lint
     assert all(
         "No valid build backend found for Python recipe for package"
-        not in lint
-        for lint in lints
+        not in hint
+        for hint in hints
     ), lints
 
 
