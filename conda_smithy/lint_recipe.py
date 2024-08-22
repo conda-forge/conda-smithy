@@ -11,6 +11,7 @@ from typing import Any, List, Optional, Tuple
 import github
 import jsonschema
 import requests
+from ruamel.yaml.constructor import DuplicateKeyError
 
 from conda_smithy.linter import conda_recipe_v1_linter
 from conda_smithy.linter.hints import (
@@ -589,7 +590,7 @@ def run_conda_forge_specific(
         try:
             with open(os.path.join(recipe_dir, "..", "conda-forge.yml")) as fh:
                 get_yaml(allow_duplicate_keys=False).load(fh)
-        except Exception:
+        except DuplicateKeyError:
             lints.append(
                 "The ``conda-forge.yml`` file is not allowed to have duplicate keys."
             )
