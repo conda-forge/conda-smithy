@@ -2726,6 +2726,16 @@ def test_v1_package_name_version():
                 """
                 - name: python-output
                   requirements:
+                    - python
+                """
+            ),
+            [],
+        ),
+        (
+            textwrap.dedent(
+                """
+                - name: python-output
+                  requirements:
                     host:
                       - pip
                     run:
