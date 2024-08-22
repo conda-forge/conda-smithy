@@ -11,6 +11,7 @@ from typing import Any, List, Optional, Tuple
 import github
 import jsonschema
 import requests
+from ruamel.yaml.constructor import DuplicateKeyError
 
 from conda_smithy.linter import conda_recipe_v1_linter
 from conda_smithy.linter.hints import (
@@ -569,6 +570,22 @@ def run_conda_forge_specific(
         if not ci_support_files:
             lints.append(
                 "The feedstock has no `.ci_support` files and thus will not build any packages."
+            )
+
+    # 9: No duplicates in conda-forge.yml
+    if (
+        not is_staged_recipes
+        and recipe_dir is not None
+        and os.path.exists(
+            cfyml_pth := os.path.join(recipe_dir, "..", "conda-forge.yml")
+        )
+    ):
+        try:
+            with open(cfyml_pth) as fh:
+                get_yaml(allow_duplicate_keys=False).load(fh)
+        except DuplicateKeyError:
+            lints.append(
+                "The ``conda-forge.yml`` file is not allowed to have duplicate keys."
             )
 
 

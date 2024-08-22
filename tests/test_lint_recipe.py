@@ -2519,6 +2519,50 @@ def test_lint_no_builds():
         assert not any(lint.startswith(expected_message) for lint in lints)
 
 
+@unittest.skipUnless(is_gh_token_set(), "GH_TOKEN not set")
+def test_lint_duplicate_cfyml():
+    expected_message = (
+        "The ``conda-forge.yml`` file is not allowed to have duplicate keys."
+    )
+
+    with tmp_directory() as feedstock_dir:
+        cfyml = os.path.join(feedstock_dir, "conda-forge.yml")
+        recipe_dir = os.path.join(feedstock_dir, "recipe")
+        os.makedirs(recipe_dir, exist_ok=True)
+        with open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
+            fh.write(
+                """
+                package:
+                   name: foo
+                """
+            )
+
+        with open(cfyml, "w") as fh:
+            fh.write(
+                textwrap.dedent(
+                    """
+                    blah: 1
+                    blah: 2
+                    """
+                )
+            )
+
+        lints = linter.main(recipe_dir, conda_forge=True)
+        assert any(lint.startswith(expected_message) for lint in lints)
+
+        with open(cfyml, "w") as fh:
+            fh.write(
+                textwrap.dedent(
+                    """
+                    blah: 1
+                    """
+                )
+            )
+
+        lints = linter.main(recipe_dir, conda_forge=True)
+        assert not any(lint.startswith(expected_message) for lint in lints)
+
+
 @pytest.mark.parametrize(
     "yaml_block,annotation",
     [
