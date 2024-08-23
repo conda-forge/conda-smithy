@@ -1,3 +1,4 @@
+import copy
 import json
 import os
 import sys
@@ -11,10 +12,17 @@ from typing import Any, List, Optional, Tuple
 import github
 import jsonschema
 import requests
+from conda_build.metadata import (
+    ensure_valid_license_family,
+)
+from rattler_build_conda_compat import loader as rattler_loader
+from ruamel.yaml.constructor import DuplicateKeyError
 
+from conda_smithy.configure_feedstock import _read_forge_config
 from conda_smithy.linter import conda_recipe_v1_linter
 from conda_smithy.linter.hints import (
     hint_check_spdx,
+    hint_pip_no_build_backend,
     hint_pip_usage,
     hint_shellcheck_usage,
     hint_suggest_noarch,
@@ -57,19 +65,8 @@ from conda_smithy.linter.utils import (
     RATTLER_BUILD_TOOL,
     find_local_config_file,
     get_section,
+    load_linter_toml_metdata,
 )
-
-if sys.version_info[:2] < (3, 11):
-    import tomli as tomllib
-else:
-    import tomllib
-
-from conda_build.metadata import (
-    ensure_valid_license_family,
-)
-from rattler_build_conda_compat import loader as rattler_loader
-
-from conda_smithy.configure_feedstock import _read_forge_config
 from conda_smithy.utils import get_yaml, render_meta_yaml
 from conda_smithy.validate_schema import validate_json_schema
 
@@ -494,26 +491,14 @@ def run_conda_forge_specific(
         )
 
     # 4: Do not delete example recipe
-    if is_staged_recipes and recipe_dir is not None:
-        for recipe_name in ("meta.yaml", "recipe.yaml"):
-            example_fname = os.path.abspath(
-                os.path.join(recipe_dir, "..", "example", recipe_name)
-            )
-
-            if not os.path.exists(example_fname):
-                msg = (
-                    "Please do not delete the example recipe found in "
-                    f"`recipes/example/{recipe_name}`."
-                )
-
-                if msg not in lints:
-                    lints.append(msg)
+    # removed in favor of direct check in staged-recipes CI
 
     # 5: Package-specific hints
     # (e.g. do not depend on matplotlib, only matplotlib-base)
-    build_reqs = requirements_section.get("build") or []
-    host_reqs = requirements_section.get("host") or []
-    run_reqs = requirements_section.get("run") or []
+    # we use a copy here since the += below mofiies the original list
+    build_reqs = copy.deepcopy(requirements_section.get("build") or [])
+    host_reqs = copy.deepcopy(requirements_section.get("host") or [])
+    run_reqs = copy.deepcopy(requirements_section.get("run") or [])
     for out in outputs_section:
         if recipe_version == 1:
             output_requirements = rattler_loader.load_all_requirements(out)
@@ -529,14 +514,7 @@ def run_conda_forge_specific(
             else:
                 run_reqs += _req
 
-    hints_toml_url = "https://raw.githubusercontent.com/conda-forge/conda-forge-pinning-feedstock/main/recipe/linter_hints/hints.toml"
-    hints_toml_req = requests.get(hints_toml_url)
-    if hints_toml_req.status_code != 200:
-        # too bad, but not important enough to throw an error;
-        # linter will rerun on the next commit anyway
-        return
-    hints_toml_str = hints_toml_req.content.decode("utf-8")
-    specific_hints = tomllib.loads(hints_toml_str)["hints"]
+    specific_hints = (load_linter_toml_metdata() or {}).get("hints", [])
 
     for rq in build_reqs + host_reqs + run_reqs:
         dep = rq.split(" ")[0].strip()
@@ -582,6 +560,44 @@ def run_conda_forge_specific(
         if not ci_support_files:
             lints.append(
                 "The feedstock has no `.ci_support` files and thus will not build any packages."
+            )
+
+    # 8: Ensure the recipe specifies a Python build backend if needed
+    host_or_build_reqs = (requirements_section.get("host") or []) or (
+        requirements_section.get("build") or []
+    )
+    hint_pip_no_build_backend(host_or_build_reqs, recipe_name, hints)
+    for out in outputs_section:
+        if recipe_version == 1:
+            output_requirements = rattler_loader.load_all_requirements(out)
+            build_reqs = output_requirements.get("build") or []
+            host_reqs = output_requirements.get("host") or []
+        else:
+            _req = out.get("requirements") or {}
+            if isinstance(_req, Mapping):
+                build_reqs = _req.get("build") or []
+                host_reqs = _req.get("host") or []
+            else:
+                build_reqs = []
+                host_reqs = []
+
+        name = out.get("name", "").strip()
+        hint_pip_no_build_backend(host_reqs or build_reqs, name, hints)
+
+    # 9: No duplicates in conda-forge.yml
+    if (
+        not is_staged_recipes
+        and recipe_dir is not None
+        and os.path.exists(
+            cfyml_pth := os.path.join(recipe_dir, "..", "conda-forge.yml")
+        )
+    ):
+        try:
+            with open(cfyml_pth) as fh:
+                get_yaml(allow_duplicate_keys=False).load(fh)
+        except DuplicateKeyError:
+            lints.append(
+                "The ``conda-forge.yml`` file is not allowed to have duplicate keys."
             )
 
 
