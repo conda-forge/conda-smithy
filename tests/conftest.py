@@ -120,7 +120,9 @@ def config_yaml(testing_workdir: str, recipe_dirname: str, request) -> str:
 
 
 @pytest.fixture(scope="function")
-def noarch_recipe(config_yaml: ConfigYAML, recipe_dirname: str) -> RecipeConfigPair:
+def noarch_recipe(
+    config_yaml: ConfigYAML, recipe_dirname: str
+) -> RecipeConfigPair:
     # get the used params passed for config_yaml fixture
     with open(
         os.path.join(
@@ -369,7 +371,7 @@ zlib:
 @pytest.fixture(scope="function")
 def recipe_migration_cfep9_downgrade(
     config_yaml: ConfigYAML, recipe_migration_cfep9: RecipeConfigPair
-)-> RecipeConfigPair:
+) -> RecipeConfigPair:
     # write a downgrade migrator that lives next to the current migrator.
     # Only this, more recent migrator should apply.
     os.makedirs(
@@ -406,7 +408,9 @@ zlib:
 
 
 @pytest.fixture(scope="function")
-def recipe_migration_win_compiled(config_yaml: ConfigYAML, py_recipe: RecipeConfigPair) -> RecipeConfigPair:
+def recipe_migration_win_compiled(
+    config_yaml: ConfigYAML, py_recipe: RecipeConfigPair
+) -> RecipeConfigPair:
     os.makedirs(
         os.path.join(config_yaml.workdir, ".ci_support", "migrations"),
         exist_ok=True,

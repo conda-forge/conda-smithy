@@ -649,7 +649,10 @@ def _format_validation_msg(error: jsonschema.ValidationError):
 
 
 def main(
-    recipe_dir: str, conda_forge: bool = False, return_hints: bool = False, feedstock_dir=None
+    recipe_dir: str,
+    conda_forge: bool = False,
+    return_hints: bool = False,
+    feedstock_dir=None,
 ) -> Union[
     Tuple[List[str], List[str]],
     Tuple[List[str], List[Any]],

@@ -33,7 +33,9 @@ def default_feedstock_config_path(feedstock_directory: str) -> str:
 
 
 def generate_feedstock_content(
-    target_directory: str, source_recipe_dir: str, conda_build_tool: Optional[str] = None
+    target_directory: str,
+    source_recipe_dir: str,
+    conda_build_tool: Optional[str] = None,
 ):
     target_directory = os.path.abspath(target_directory)
     recipe_dir = "recipe"
