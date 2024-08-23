@@ -74,6 +74,11 @@ SERVICE_FEEDSTOCKS = [
     "conda-forge-pinning-feedstock",
     "conda-forge-repodata-patches-feedstock",
     "conda-smithy-feedstock",
+    "conda-forge-ci-setup-feedstock",
+    # these are parts of the bot or used by it
+    "conda-forge-tick",
+    "conda-forge-feedstock-check-solvable-feedstock",
+    "conda-forge-metadata-feedstock",
 ]
 if "CONDA_SMITHY_SERVICE_FEEDSTOCKS" in os.environ:
     SERVICE_FEEDSTOCKS += os.environ["CONDA_SMITHY_SERVICE_FEEDSTOCKS"].split(
