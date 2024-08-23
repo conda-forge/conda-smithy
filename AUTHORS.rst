@@ -77,6 +77,7 @@ Authors are sorted by number of commits.
 * Bruno Oliveira
 * Tony Kelman
 * Jannis Leidel
+* dependabot[bot]
 * Matt Fisher
 * Guilherme Quentel Melo
 * santi
@@ -97,7 +98,6 @@ Authors are sorted by number of commits.
 * Matthew W. Thompson
 * conda-forge-admin
 * Klaus Zimmermann
-* dependabot[bot]
 * lorenz
 * Tom Augspurger
 * Ryan May
