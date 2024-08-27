@@ -2163,12 +2163,14 @@ def azure_build_id_from_public(forge_config: Dict[str, Any]):
     build_def = resp.json()["value"][0]
     forge_config["azure"]["build_id"] = build_def["id"]
 
+
 def get_maintainer_url(user_or_team):
     if "/" in user_or_team:
         org, team_name = user_or_team.split("/")
         return f"https://github.com/orgs/{org}/teams/{team_name}/"
     else:
         return f"https://github.com/{user_or_team}/"
+
 
 def render_readme(
     jinja_env: SandboxedEnvironment,
