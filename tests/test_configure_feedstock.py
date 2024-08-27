@@ -771,7 +771,7 @@ def test_migrator_compiler_version_recipe(
 def test_files_skip_render(
     render_skipped_recipe: RecipeConfigPair, jinja_env: SandboxedEnvironment
 ):
-    configure_feedstock.render_README(
+    configure_feedstock.render_readme(
         jinja_env=jinja_env,
         forge_config=render_skipped_recipe.config,
         forge_dir=render_skipped_recipe.recipe,

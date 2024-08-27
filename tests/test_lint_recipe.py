@@ -300,7 +300,7 @@ def test_cbc_osx_hints(
     macdt: Optional[List[str]],
     v_std: Optional[List[str]],
     sdk: Optional[List[str]],
-    exp_hint: Optional[str],
+    exp_lint: Optional[str],
 ):
     with tmp_directory() as rdir:
         with open(os.path.join(rdir, "meta.yaml"), "w") as fh:

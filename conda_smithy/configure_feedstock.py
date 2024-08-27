@@ -3,13 +3,12 @@ import glob
 import hashlib
 import logging
 import os
+import pprint
 import re
 import subprocess
 import sys
-import pprint
 import textwrap
 import time
-import yaml
 import warnings
 from collections import Counter, OrderedDict, namedtuple
 from copy import deepcopy
@@ -17,7 +16,9 @@ from functools import lru_cache
 from itertools import chain, product
 from os import fspath
 from pathlib import Path, PurePath
+
 import requests
+import yaml
 
 # Imports for typing
 from conda_build.config import Config
@@ -35,10 +36,6 @@ from typing import (
     Union,
 )
 
-try:
-    from builtins import ExceptionGroup
-except ImportError:
-    from exceptiongroup import ExceptionGroup
 
 # The `requests` lib uses `simplejson` instead of `json` when available.
 # In consequence the same JSON library must be used or the `JSONDecodeError`
@@ -49,23 +46,22 @@ try:
 except ImportError:
     import json  # type: ignore
 
-from conda.models.match_spec import MatchSpec
-from conda.models.version import VersionOrder
-from conda.exceptions import InvalidVersionSpec
-
 import conda_build.api
 import conda_build.render
 import conda_build.utils
 import conda_build.variants
-import conda_build.conda_interface
-import conda_build.render
+from conda.exceptions import InvalidVersionSpec
 from conda.models.match_spec import MatchSpec
-from conda_build.metadata import get_selectors
-
-from copy import deepcopy
-
+from conda.models.version import VersionOrder
 from conda_build import __version__ as conda_build_version
-from jinja2 import Environment, FileSystemLoader
+from conda_build.metadata import get_selectors
+from jinja2 import FileSystemLoader
+from jinja2.sandbox import SandboxedEnvironment
+from rattler_build_conda_compat.loader import parse_recipe_config_file
+from rattler_build_conda_compat.render import render as rattler_render
+
+
+from conda_smithy import __version__
 
 from conda_smithy.feedstock_io import (
     copy_file,
@@ -74,19 +70,16 @@ from conda_smithy.feedstock_io import (
     set_exe_file,
     write_file,
 )
-from conda_smithy.validate_schema import (
-    validate_json_schema,
-    CONDA_FORGE_YAML_DEFAULTS_FILE,
-)
 from conda_smithy.utils import (
+    RATTLER_BUILD,
+    HashableDict,
     get_feedstock_about_from_meta,
     get_feedstock_name_from_meta,
 )
-
-from . import __version__
-from .rattler_build.build import render as rattler_render
-from .rattler_build.loader import parse_recipe_config_file
-from .utils import RATTLER_BUILD
+from conda_smithy.validate_schema import (
+    CONDA_FORGE_YAML_DEFAULTS_FILE,
+    validate_json_schema,
+)
 
 conda_forge_content = os.path.abspath(os.path.dirname(__file__))
 
@@ -1092,6 +1085,25 @@ def _render_ci_provider(
         ) = conda_build.variants.get_package_combined_spec(
             os.path.join(forge_dir, forge_config["recipe_dir"]), config=config
         )
+
+        # If we are using new recipe
+        # we also load v1 variants.yaml
+        if recipe_file == "recipe.yaml":
+            # get_selectors from conda-build return namespace
+            # so it is usefull to reuse it here
+            namespace = get_selectors(config)
+            variants_path = os.path.join(
+                forge_dir, forge_config["recipe_dir"], "variants.yaml"
+            )
+            if os.path.exists(variants_path):
+                new_spec = parse_recipe_config_file(variants_path, namespace)
+                specs = {
+                    "combined_spec": combined_variant_spec,
+                    "variants.yaml": new_spec,
+                }
+                combined_variant_spec = conda_build.variants.combine_specs(
+                    specs
+                )
 
         migrated_combined_variant_spec: Any
         migrated_combined_variant_spec = migrate_combined_spec(
@@ -2151,8 +2163,14 @@ def azure_build_id_from_public(forge_config: Dict[str, Any]):
     build_def = resp.json()["value"][0]
     forge_config["azure"]["build_id"] = build_def["id"]
 
+def get_maintainer_url(user_or_team):
+    if "/" in user_or_team:
+        org, team_name = user_or_team.split("/")
+        return f"https://github.com/orgs/{org}/teams/{team_name}/"
+    else:
+        return f"https://github.com/{user_or_team}/"
 
-def render_README(
+def render_readme(
     jinja_env: SandboxedEnvironment,
     forge_config: Dict[str, Any],
     forge_dir: str,
