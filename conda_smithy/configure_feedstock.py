@@ -2472,7 +2472,9 @@ def _legacy_compatibility_checks(
 
 
 def _load_forge_config(
-    forge_dir: str, exclusive_config_file: str, forge_yml: Optional[str] = None
+    forge_dir: str,
+    exclusive_config_file: Optional[str],
+    forge_yml: Optional[str] = None,
 ) -> Dict[str, Any]:
     config = _read_forge_config(forge_dir, forge_yml=forge_yml)
 

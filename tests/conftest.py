@@ -22,7 +22,7 @@ RecipeConfigPair = collections.namedtuple(
 
 
 class ConfigYAML(typing.NamedTuple):
-    workdir: Path
+    workdir: str
     recipe_name: str
     type: str
 
@@ -61,7 +61,7 @@ def recipe_dirname():
 
 
 @pytest.fixture(scope="function", params=["conda-build", "rattler-build"])
-def config_yaml(testing_workdir: str, recipe_dirname: str, request) -> str:
+def config_yaml(testing_workdir: str, recipe_dirname: str, request):
     config: dict = {"python": ["2.7", "3.5"], "r_base": ["3.3.2", "3.4.2"]}
     os.makedirs(os.path.join(testing_workdir, recipe_dirname))
     with open(os.path.join(testing_workdir, "config.yaml"), "w") as f:
@@ -650,7 +650,7 @@ def jinja_env():
 
 
 @pytest.fixture(scope="function")
-def v1_noarch_recipe_with_context(testing_workdir: Path, recipe_dirname):
+def v1_noarch_recipe_with_context(testing_workdir: str, recipe_dirname):
     with open(os.path.join(testing_workdir, "conda-forge.yml"), "w") as f:
         config = {
             "recipe_dir": recipe_dirname,
@@ -688,7 +688,7 @@ requirements:
 
 
 @pytest.fixture(scope="function")
-def v1_recipe_with_multiple_outputs(testing_workdir: Path, recipe_dirname):
+def v1_recipe_with_multiple_outputs(testing_workdir: str, recipe_dirname):
     with open(os.path.join(testing_workdir, "conda-forge.yml"), "w") as f:
         config = {
             "recipe_dir": recipe_dirname,

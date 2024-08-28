@@ -31,7 +31,7 @@ def is_gh_token_set() -> bool:
 
 
 @contextmanager
-def get_recipe_in_dir(recipe_name: str) -> Path:
+def get_recipe_in_dir(recipe_name: str):
     base_dir = Path(__file__).parent
     recipe_path = base_dir / "recipes" / recipe_name
     assert recipe_path.exists(), f"Recipe {recipe_name} does not exist"
@@ -2677,7 +2677,7 @@ def test_lint_wheels(tmp_path, yaml_block, annotation):
 
 @pytest.mark.parametrize("recipe_version", [0, 1])
 def test_pin_compatible_in_run_exports(recipe_version: int):
-    meta = {
+    meta: dict = {
         "package": {
             "name": "apackage",
         }

@@ -83,6 +83,8 @@ module = [
     'license_expression',
     'cirun',
     'scrypt',
-    'toolz'
+    'toolz',
+    'rattler_build_conda_compat.*',
+    'tlz'
 ]
 ignore_missing_imports = true

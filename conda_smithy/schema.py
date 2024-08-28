@@ -11,9 +11,9 @@ from conda.base.constants import KNOWN_SUBDIRS
 from pydantic import BaseModel, ConfigDict, Field, create_model
 
 try:
-    from enum import StrEnum  # type: ignore
+    from enum import StrEnum
 except ImportError:
-    from backports.strenum import StrEnum
+    from backports.strenum import StrEnum  # type: ignore
 
 
 from conda_smithy.validate_schema import (
@@ -493,7 +493,7 @@ def get_subdirs() -> List[str]:
     ]
 
 
-Platforms = StrEnum("Platforms", get_subdirs())
+Platforms = StrEnum("Platforms", get_subdirs())  # type: ignore
 
 
 class ChannelPriorityConfig(StrEnum):

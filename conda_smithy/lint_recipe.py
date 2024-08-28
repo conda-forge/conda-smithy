@@ -83,7 +83,7 @@ from conda_smithy.validate_schema import validate_json_schema
 NEEDED_FAMILIES = ["gpl", "bsd", "mit", "apache", "psf"]
 
 
-def lintify_forge_yaml(recipe_dir: Optional[str] = None) -> (list, list):
+def lintify_forge_yaml(recipe_dir: Optional[str] = None) -> tuple:
     if recipe_dir:
         forge_yaml_filename = (
             glob(os.path.join(recipe_dir, "..", "conda-forge.yml"))
@@ -112,8 +112,8 @@ def lintify_meta_yaml(
     conda_forge: bool = False,
     recipe_version: int = 0,
 ) -> Tuple[List[str], List[str]]:
-    lints = []
-    hints = []
+    lints: list = []
+    hints: list = []
     major_sections = list(meta.keys())
 
     # If the recipe_dir exists (no guarantee within this function) , we can
@@ -611,7 +611,7 @@ def run_conda_forge_specific(
             )
 
 
-def _format_validation_msg(error: jsonschema.ValidationError):
+def _format_validation_msg(error):
     """Use the data on the validation error to generate improved reporting.
 
     If available, get the help URL from the first level of the JSON path:
