@@ -11,7 +11,7 @@ from conda.base.constants import KNOWN_SUBDIRS
 from pydantic import BaseModel, ConfigDict, Field, create_model
 
 try:
-    from enum import StrEnum
+    from enum import StrEnum  # type: ignore
 except ImportError:
     from backports.strenum import StrEnum  # type: ignore
 
