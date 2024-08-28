@@ -7,12 +7,12 @@ import stat
 import string
 import tempfile
 import unittest
-
-import git
-from git.index.typ import BlobFilter
 from typing import (
     Iterator,
 )
+
+import git
+from git.index.typ import BlobFilter
 
 import conda_smithy.feedstock_io as fio
 

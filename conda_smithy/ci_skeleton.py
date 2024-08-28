@@ -8,10 +8,11 @@ added to conda-forge's queue.
 
 import os
 import sys
-
-from .configure_feedstock import make_jinja_env
-from jinja2.sandbox import SandboxedEnvironment
 from typing import Dict
+
+from jinja2.sandbox import SandboxedEnvironment
+
+from conda_smithy.configure_feedstock import make_jinja_env
 
 
 def _render_template(

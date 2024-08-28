@@ -7,20 +7,15 @@ from glob import glob
 from inspect import cleandoc
 from pathlib import Path
 from textwrap import indent
-from io import TextIOWrapper
 from typing import (
     Any,
-    Dict,
-    Iterator,
     List,
     Optional,
-    Set,
     Tuple,
     Union,
 )
 
 import github
-import jsonschema
 import requests
 from conda_build.metadata import (
     ensure_valid_license_family,

@@ -9,18 +9,9 @@ from pathlib import Path
 
 import pytest
 import yaml
-from conftest import ConfigYAML
-from conftest import RecipeConfigPair
 from _pytest.logging import LogCaptureFixture
+from conftest import ConfigYAML, RecipeConfigPair
 from jinja2.sandbox import SandboxedEnvironment
-from typing import (
-    Any,
-    Dict,
-    List,
-    Set,
-    Tuple,
-    Union,
-)
 
 from conda_smithy import configure_feedstock
 from conda_smithy.configure_feedstock import _read_forge_config

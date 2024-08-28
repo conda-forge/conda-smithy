@@ -4,13 +4,13 @@ import os
 import shutil
 import subprocess
 from textwrap import dedent
+from typing import Union
 
 import pytest
 import yaml
-from typing import Union
+from conftest import RecipeConfigPair
 
 from conda_smithy import cli
-from conftest import RecipeConfigPair
 
 _thisdir = os.path.abspath(os.path.dirname(__file__))
 

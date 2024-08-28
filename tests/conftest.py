@@ -5,6 +5,8 @@ from pathlib import Path
 
 import pytest
 import yaml
+from _pytest._py.path import LocalPath
+from _pytest.fixtures import SubRequest
 from conda_build.utils import copy_into
 from jinja2 import FileSystemLoader
 from jinja2.sandbox import SandboxedEnvironment
@@ -13,8 +15,6 @@ from conda_smithy.configure_feedstock import (
     _load_forge_config,
     conda_forge_content,
 )
-from _pytest._py.path import LocalPath
-from _pytest.fixtures import SubRequest
 
 RecipeConfigPair = collections.namedtuple(
     "RecipeConfigPair", ("recipe", "config")

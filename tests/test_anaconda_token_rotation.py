@@ -1,11 +1,11 @@
 from unittest import mock
+from unittest.mock import MagicMock
 
 import pytest
+from _pytest.monkeypatch import MonkeyPatch
 
 from conda_smithy.anaconda_token_rotation import rotate_anaconda_token
 from conda_smithy.ci_register import drone_default_endpoint
-from unittest.mock import MagicMock
-from _pytest.monkeypatch import MonkeyPatch
 
 
 @pytest.mark.parametrize("appveyor", [True, False])

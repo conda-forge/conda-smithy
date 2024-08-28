@@ -508,13 +508,13 @@ class DefaultTestPlatforms(StrEnum):
     native_and_emulated = "native_and_emulated"
 
 
-buildPlatform_fields: Dict[str, Any] = {
+build_platform_fields: Dict[str, Any] = {
     platform.value: (Optional[Platforms], Field(default=platform.value))
     for platform in Platforms
 }
 BuildPlatform = create_model(
     "build_platform",
-    **buildPlatform_fields,
+    **build_platform_fields,
 )
 
 OSVersion_fields: Dict[str, Any] = {

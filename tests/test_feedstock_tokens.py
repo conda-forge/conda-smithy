@@ -1,13 +1,13 @@
 import json
 import os
 import time
+from typing import Any, Optional
 from unittest import mock
+from unittest.mock import MagicMock
 
 import pytest
 import scrypt
 from _pytest._py.path import LocalPath
-from typing import Optional, Any
-from unittest.mock import MagicMock
 
 from conda_smithy.ci_register import drone_default_endpoint
 from conda_smithy.feedstock_tokens import (

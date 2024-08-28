@@ -6,14 +6,13 @@ import sys
 import tempfile
 import time
 from textwrap import dedent
-from typing import Optional, Union
+from typing import List, Optional, Union
 
 import conda  # noqa
 from conda_build.metadata import MetaData
 from rattler_build_conda_compat.render import MetaData as RattlerMetaData
 from rattler_build_conda_compat.utils import has_recipe as has_recipe_v1
 from ruamel.yaml import YAML
-from typing import Optional, List
 
 import conda_smithy.cirun_utils
 from conda_smithy import __version__, configure_feedstock, feedstock_io

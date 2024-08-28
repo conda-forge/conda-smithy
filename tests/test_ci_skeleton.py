@@ -1,4 +1,3 @@
-import pytest
 from _pytest._py.path import LocalPath
 
 from conda_smithy.ci_skeleton import generate

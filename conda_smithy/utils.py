@@ -8,16 +8,16 @@ from collections import defaultdict
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Dict, Union
-from conda_build.metadata import MetaData
 
 import jinja2
 import jinja2.sandbox
 import ruamel.yaml
-from ruamel.yaml.comments import CommentedMap
-from ruamel.yaml.main import YAML
 from conda_build.api import render as conda_build_render
+
+# from conda_build.metadata import MetaData
 from conda_build.render import MetaData
 from rattler_build_conda_compat.render import MetaData as RattlerBuildMetaData
+from ruamel.yaml.comments import CommentedMap
 
 RATTLER_BUILD = "rattler-build"
 CONDA_BUILD = "conda-build"

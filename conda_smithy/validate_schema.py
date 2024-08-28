@@ -1,12 +1,12 @@
 import json
 from pathlib import Path
 from typing import (
-    Tuple,
-    List,
     Dict,
+    List,
     Optional,
     Union,
 )
+
 from jsonschema import Draft202012Validator, validators
 from jsonschema.exceptions import ValidationError
 from ruamel.yaml.comments import CommentedMap

@@ -30,16 +30,16 @@ import secrets
 import tempfile
 import time
 from contextlib import contextmanager, redirect_stderr, redirect_stdout
-
-import git
-import requests
-import scrypt
 from typing import (
     Iterator,
     Optional,
     Tuple,
     Union,
 )
+
+import git
+import requests
+import scrypt
 
 
 class FeedstockTokenError(Exception):

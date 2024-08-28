@@ -9,15 +9,15 @@ import warnings
 from collections import OrderedDict
 from contextlib import contextmanager
 from pathlib import Path
-
-import github
-import pytest
 from typing import (
     Iterator,
     List,
     Optional,
     Tuple,
 )
+
+import github
+import pytest
 
 import conda_smithy.lint_recipe as linter
 from conda_smithy.linter.utils import VALID_PYTHON_BUILD_BACKENDS

@@ -16,14 +16,6 @@ from functools import lru_cache
 from itertools import chain, product
 from os import fspath
 from pathlib import Path, PurePath
-
-import requests
-import yaml
-
-# Imports for typing
-from conda_build.config import Config
-from conda_build.metadata import MetaData
-from jinja2.sandbox import SandboxedEnvironment
 from typing import (
     Any,
     Callable,
@@ -36,6 +28,13 @@ from typing import (
     Union,
 )
 
+import requests
+import yaml
+
+# Imports for typing
+from conda_build.config import Config
+from conda_build.metadata import MetaData
+from jinja2.sandbox import SandboxedEnvironment
 
 # The `requests` lib uses `simplejson` instead of `json` when available.
 # In consequence the same JSON library must be used or the `JSONDecodeError`
@@ -56,13 +55,10 @@ from conda.models.version import VersionOrder
 from conda_build import __version__ as conda_build_version
 from conda_build.metadata import get_selectors
 from jinja2 import FileSystemLoader
-from jinja2.sandbox import SandboxedEnvironment
 from rattler_build_conda_compat.loader import parse_recipe_config_file
 from rattler_build_conda_compat.render import render as rattler_render
 
-
 from conda_smithy import __version__
-
 from conda_smithy.feedstock_io import (
     copy_file,
     remove_file,

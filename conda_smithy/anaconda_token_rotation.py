@@ -12,8 +12,7 @@ conda-forge.yml in your feedstock to GitHub.
 import os
 import sys
 from contextlib import redirect_stderr, redirect_stdout
-from github import Github
-from typing import List, Optional, Union
+from typing import Optional, Union
 
 import requests
 from github import Github
