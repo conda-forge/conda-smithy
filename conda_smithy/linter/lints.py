@@ -796,8 +796,10 @@ def lint_stdlib(
     # this check needs to be done per output --> use separate (unflattened) requirements
     for build_reqs in all_build_reqs:
         has_compiler = any(pat_compiler_stub.match(rq) for rq in build_reqs)
-        stdlib_stub = "c_stdlib_stub" if recipe_version == 0 else "${{ stdlib"
-        if has_compiler and stdlib_stub not in build_reqs:
+        stdlib_search = (
+            "c_stdlib_stub" if recipe_version == 0 else "${{ stdlib"
+        )
+        if has_compiler and not any(stdlib_search in x for x in build_reqs):
             if stdlib_lint not in lints:
                 lints.append(stdlib_lint)
 

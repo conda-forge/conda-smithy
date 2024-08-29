@@ -74,6 +74,27 @@ def test_stdlib_lint(comp_lang):
         assert any(lint.startswith(expected_message) for lint in lints)
 
 
+def test_m2w64_stdlib_legal():
+    # allow recipes that _only_ depend on {{ stdlib("m2w64_c") }}
+    avoid_message = "This recipe is using a compiler"
+
+    with tmp_directory() as recipe_dir:
+        with open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
+            fh.write(
+                """
+                package:
+                   name: foo
+                requirements:
+                  build:
+                    - {{ stdlib("m2w64_c") }}
+                    - {{ compiler("m2w64_c") }}
+                """
+            )
+
+        lints, _ = linter.main(recipe_dir, return_hints=True)
+        assert not any(lint.startswith(avoid_message) for lint in lints)
+
+
 @pytest.mark.parametrize(
     "comp_lang",
     ["c", "cxx", "fortran", "rust", "m2w64_c", "m2w64_cxx", "m2w64_fortran"],
