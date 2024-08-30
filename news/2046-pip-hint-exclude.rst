@@ -16,7 +16,7 @@
 
 **Fixed:**
 
-* Fixed error where ``pdm-backend`` was flagged as not having a backend. (#2046)
+* Fixed error where some python build backends were flagged as not having a backend. (#2046)
 
 **Security:**
 
