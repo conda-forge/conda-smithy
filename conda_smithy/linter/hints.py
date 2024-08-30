@@ -181,6 +181,10 @@ def hint_check_spdx(about_section, hints):
 
 
 def hint_pip_no_build_backend(host_or_build_section, package_name, hints):
+    # we do NOT exclude all build backends since some of them
+    # need another backend to bootstrap
+    # the list below are the ones that self-bootstrap without
+    # another build backend
     if package_name in ["pdm-backend", "setuptools"]:
         return
 
