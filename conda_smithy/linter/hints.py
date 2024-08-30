@@ -181,7 +181,7 @@ def hint_check_spdx(about_section, hints):
 
 
 def hint_pip_no_build_backend(host_or_build_section, package_name, hints):
-    if package_name in ["pdm-backend"]:
+    if package_name in ["pdm-backend", "setuptools"]:
         return
 
     if host_or_build_section and any(
