@@ -2,6 +2,7 @@ import copy
 import os
 import re
 import sys
+import time
 from collections.abc import Sequence
 from functools import lru_cache
 from glob import glob
@@ -208,8 +209,15 @@ def _lint_package_version(version: Optional[str]) -> Optional[str]:
         return invalid_version.format(ver=ver, err=e)
 
 
-@lru_cache(maxsize=1)
 def load_linter_toml_metdata():
+    # ensure we refresh the cache every hour
+    ttl = 3600
+    time_salt = int(time.time() / ttl)
+    return load_linter_toml_metdata_internal(time_salt)
+
+
+@lru_cache(maxsize=1)
+def load_linter_toml_metdata_internal(time_salt):
     hints_toml_url = "https://raw.githubusercontent.com/conda-forge/conda-forge-pinning-feedstock/main/recipe/linter_hints/hints.toml"
     hints_toml_req = requests.get(hints_toml_url)
     if hints_toml_req.status_code != 200:
