@@ -76,7 +76,7 @@ def test_stdlib_lint(comp_lang):
 
 def test_m2w64_stdlib_legal():
     # allow recipes that _only_ depend on {{ stdlib("m2w64_c") }}
-    avoid_message = "This recipe is using a compiler"
+    avoid_message = "stdlib"
 
     with tmp_directory() as recipe_dir:
         with open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
@@ -92,7 +92,7 @@ def test_m2w64_stdlib_legal():
             )
 
         lints, _ = linter.main(recipe_dir, return_hints=True)
-        assert not any(lint.startswith(avoid_message) for lint in lints)
+        assert not any(avoid_message in lint for lint in lints)
 
 
 @pytest.mark.parametrize(
