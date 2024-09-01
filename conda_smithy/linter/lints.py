@@ -798,9 +798,9 @@ def lint_stdlib(
         has_compiler = any(pat_compiler_stub.match(rq) for rq in build_reqs)
         stdlib_regex = (
             # we need the C stdlib, not just any invocation of the stdlib jinja
-            "c_stdlib_stub"
+            "^(m2w64_)?c_stdlib_stub$"
             if recipe_version == 0
-            else r"\$\{\{ stdlib\(['\"]c['\"]"
+            else r"\$\{\{ stdlib\(['\"](m2w64_)?c['\"]\)"
         )
         if has_compiler and not any(
             re.search(stdlib_regex, x) for x in build_reqs
