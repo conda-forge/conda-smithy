@@ -247,7 +247,7 @@
   email: isuru.11@cse.mrt.ac.lk
   alternate_emails:
   - isuruf@gmail.com
-  num_commits: 664
+  num_commits: 665
   first_commit: 2017-01-08 22:03:03
   github: isuruf
 - name: Julian Rüth
@@ -329,7 +329,7 @@
   github: sodre
 - name: Mark Harfouche
   email: mark.harfouche@gmail.com
-  num_commits: 25
+  num_commits: 30
   first_commit: 2018-06-12 01:15:09
   github: hmaarrfk
 - name: Dougal J. Sutherland
@@ -393,7 +393,7 @@
   github: shadowwalkersb
 - name: Matthew R. Becker
   email: becker.mr@gmail.com
-  num_commits: 280
+  num_commits: 290
   first_commit: 2020-01-07 17:44:33
   github: beckermr
   alternate_emails:
@@ -537,7 +537,7 @@
   github: nehaljwani
 - name: H. Vetinari
   email: h.vetinari@gmx.com
-  num_commits: 53
+  num_commits: 59
   first_commit: 2021-11-14 02:53:10
 - name: Benjamin Tovar
   email: btovar@nd.edu
@@ -624,7 +624,7 @@
   github: ytausch
 - name: dependabot[bot]
   email: 49699333+dependabot[bot]@users.noreply.github.com
-  num_commits: 3
+  num_commits: 4
   first_commit: 2024-05-21 04:47:22
 - name: nichmor
   email: nmorkotilo@gmail.com
