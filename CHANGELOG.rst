@@ -4,6 +4,49 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.39.1
+====================
+
+**Added:**
+
+* Added bot feedstocks to the allowlist for service feedstocks on GHA. (#2041)
+
+**Fixed:**
+
+* Fixed a corner-case in stdlib-linting (#2042)
+* Fixed error where some python build backends were flagged as not having a backend. (#2046)
+
+**Authors:**
+
+* Isuru Fernando
+* Matthew R. Becker
+* H. Vetinari
+* Mark Harfouche
+* dependabot[bot]
+
+
+
+v3.39.0
+====================
+
+**Added:**
+
+* Added hint for missing ``pip`` build backend in the ``host`` section of the recipe. (#2039)
+* Added a lint for duplicate keys in the ``conda-forge.yml`` file. (#2040)
+
+**Removed:**
+
+* Removed lint for editing example recipes in staged-recipes since covered by CI already. (#2038)
+
+**Authors:**
+
+* Matthew R. Becker
+* Uwe L. Korn
+* pre-commit-ci[bot]
+* dependabot[bot]
+
+
+
 v3.38.0
 ====================
 

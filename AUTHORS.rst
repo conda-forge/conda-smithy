@@ -8,8 +8,8 @@ Authors are sorted by number of commits.
 * Christopher J. Wright
 * Anthony Scopatz
 * Phil Elson
-* Wolf Vollprecht
 * H. Vetinari
+* Wolf Vollprecht
 * Uwe L. Korn
 * Filipe Fernandes
 * Dougal J. Sutherland
@@ -19,8 +19,8 @@ Authors are sorted by number of commits.
 * shadow_walker
 * John Kirkham
 * Michael Sarahan
-* Bastian Zimmermann
 * Mark Harfouche
+* Bastian Zimmermann
 * Leo Fang
 * Hadrien Mary
 * Ryan Volz
@@ -68,6 +68,7 @@ Authors are sorted by number of commits.
 * Elmar Pruesse
 * Patrick Sodré
 * David Hirschfeld
+* dependabot[bot]
 * Finn Womack
 * Josh Barnes
 * Tobias Megies
@@ -97,7 +98,6 @@ Authors are sorted by number of commits.
 * Matthew W. Thompson
 * conda-forge-admin
 * Klaus Zimmermann
-* dependabot[bot]
 * lorenz
 * Tom Augspurger
 * Ryan May
