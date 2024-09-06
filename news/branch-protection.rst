@@ -1,6 +1,6 @@
 **Added:**
 
-* Enabled branch protection for ``conda-forge`` feedstocks by default. (#)
+* Enabled branch protection for ``conda-forge`` feedstocks by default. (#2054)
 
 **Changed:**
 
