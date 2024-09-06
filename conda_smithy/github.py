@@ -102,6 +102,15 @@ def get_cached_team(org, team_name, description=""):
     return team
 
 
+def _conda_forge_specific_repo_setup(gh_repo):
+    branch = gh_repo.get_branch(gh_repo.default_branch)
+    branch.edit_protection(
+        enforce_admins=True,
+        allow_force_pushes=False,
+        allow_deletions=False,
+    )
+
+
 def create_github_repo(args):
     token = gh_token()
 
@@ -115,6 +124,7 @@ def create_github_repo(args):
 
     gh = Github(token)
     user_or_org = None
+    is_conda_forge = False
     if args.user is not None:
         pass
         # User has been defined, and organization has not.
@@ -122,6 +132,8 @@ def create_github_repo(args):
     else:
         # Use the organization provided.
         user_or_org = gh.get_organization(args.organization)
+        if args.organization == "conda-forge":
+            is_conda_forge = True
 
     repo_name = f"{feedstock_name}-feedstock"
     try:
@@ -131,6 +143,10 @@ def create_github_repo(args):
             private=args.private,
             description=f"A conda-smithy repository for {feedstock_name}.",
         )
+
+        if is_conda_forge:
+            _conda_forge_specific_repo_setup(gh_repo)
+
         print(f"Created {gh_repo.full_name} on github")
     except GithubException as gh_except:
         if (
