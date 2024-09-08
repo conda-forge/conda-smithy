@@ -71,7 +71,7 @@ setup_conda_rc "${FEEDSTOCK_ROOT}" "${RECIPE_ROOT}" "${CONFIG_FILE}"
 # => Set a lower limit in a subshell for the `yum install`s only.
 ulimit -n 1024
 {{ yum_build_setup }}
-){% endif -%}
+){%- endif %}
 
 # make the build number clobber
 make_build_number "${FEEDSTOCK_ROOT}" "${RECIPE_ROOT}" "${CONFIG_FILE}"
