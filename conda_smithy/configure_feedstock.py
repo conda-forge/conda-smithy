@@ -1373,10 +1373,7 @@ def generate_yum_requirements(forge_config, forge_dir):
             # "recipe/yum_requirements.txt" file. After updating that file,
             # run "conda smithy rerender" and this line will be updated
             # automatically.
-            /usr/bin/sudo -n yum install -y {}
-
-
-        """.format(
+            /usr/bin/sudo -n yum install -y {}""".format(
                 " ".join(requirements)
             )
         )
