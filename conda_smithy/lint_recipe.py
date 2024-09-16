@@ -372,7 +372,10 @@ def lintify_meta_yaml(
 
 def _maintainer_exists(maintainer: str) -> bool:
     """Check if a maintainer exists on GitHub."""
-    return requests.get(f"https://api.github.com/users/{maintainer}").status_code == 200
+    return (
+        requests.get(f"https://api.github.com/users/{maintainer}").status_code
+        == 200
+    )
 
 
 def run_conda_forge_specific(
