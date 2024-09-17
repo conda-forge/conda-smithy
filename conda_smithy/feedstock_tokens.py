@@ -30,6 +30,12 @@ import secrets
 import tempfile
 import time
 from contextlib import contextmanager, redirect_stderr, redirect_stdout
+from typing import (
+    Iterator,
+    Optional,
+    Tuple,
+    Union,
+)
 
 import git
 import requests
@@ -41,7 +47,7 @@ class FeedstockTokenError(Exception):
 
 
 @contextmanager
-def _secure_io():
+def _secure_io() -> Iterator[None]:
     """context manager that redirects stdout and
     stderr to /dev/null to avoid spilling tokens"""
 
@@ -54,7 +60,9 @@ def _secure_io():
                 yield
 
 
-def feedstock_token_local_path(user, project, provider=None):
+def feedstock_token_local_path(
+    user: str, project: str, provider: Optional[str] = None
+) -> str:
     """Return the path locally where the feedstock
     token is stored.
     """
@@ -73,7 +81,9 @@ def feedstock_token_local_path(user, project, provider=None):
     return os.path.expanduser(pth)
 
 
-def generate_and_write_feedstock_token(user, project, provider=None):
+def generate_and_write_feedstock_token(
+    user: str, project: str, provider: Optional[str] = None
+) -> bool:
     """Generate a feedstock token and write it to the file given by
     ``feedstock_token_local_path(user, project, provider=provider)``.
 
@@ -122,7 +132,9 @@ def generate_and_write_feedstock_token(user, project, provider=None):
     return failed
 
 
-def read_feedstock_token(user, project, provider=None):
+def read_feedstock_token(
+    user: str, project: str, provider: Optional[str] = None
+) -> Union[Tuple[Optional[str], Optional[str]]]:
     """Read the feedstock token from the path given by
     ``feedstock_token_local_path(user, project, provider=provider)``.
 
@@ -149,7 +161,9 @@ def read_feedstock_token(user, project, provider=None):
     return feedstock_token, err_msg
 
 
-def feedstock_token_exists(user, project, token_repo, provider=None):
+def feedstock_token_exists(
+    user: str, project: str, token_repo: str, provider: Optional[str] = None
+) -> bool:
     """Test if the feedstock token exists for the given repo.
 
     All exceptions are swallowed and stdout/stderr from this function is
@@ -220,8 +234,12 @@ def feedstock_token_exists(user, project, token_repo, provider=None):
 
 
 def is_valid_feedstock_token(
-    user, project, feedstock_token, token_repo, provider=None
-):
+    user: str,
+    project: str,
+    feedstock_token: str,
+    token_repo: str,
+    provider: Optional[str] = None,
+) -> bool:
     """Test if the input feedstock_token is valid.
 
     All exceptions are swallowed and stdout/stderr from this function is
@@ -303,7 +321,9 @@ def is_valid_feedstock_token(
     return valid
 
 
-def register_feedstock_token(user, project, token_repo, provider=None):
+def register_feedstock_token(
+    user: str, project: str, token_repo: str, provider: Optional[str] = None
+) -> bool:
     """Register the feedstock token with the token repo.
 
     This function uses a random salt and scrypt to hash the feedstock
@@ -406,17 +426,17 @@ def register_feedstock_token(user, project, token_repo, provider=None):
 
 
 def register_feedstock_token_with_providers(
-    user,
-    project,
+    user: str,
+    project: str,
     *,
-    drone=True,
-    circle=True,
-    travis=True,
-    azure=True,
-    github_actions=True,
-    clobber=True,
+    drone: bool = True,
+    circle: bool = True,
+    travis: bool = True,
+    azure: bool = True,
+    github_actions: bool = True,
+    clobber: bool = True,
     drone_endpoints=(),
-    unique_token_per_provider=False,
+    unique_token_per_provider: bool = False,
 ):
     """Register the feedstock token with provider CI services.
 

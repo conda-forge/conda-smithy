@@ -72,3 +72,19 @@ markers = [
     "legacy_appveyor: Test designed to run as if prior to the azure migration",
     "cli: CLI tests outside of test/test_cli.py",
 ]
+
+[[tool.mypy.overrides]]
+module = [
+    # Conda build does not provide types: https://github.com/conda/conda-build/pull/4878#issuecomment-1543416104
+    'conda_build.*',
+    # `vsts` (conda) aka. `vsts-python-api` (pypi) seems to have been deprecated (https://github.com/microsoft/azure-devops-python-api/issues/440), and the successor library doesn’t seem to be a drop-in replacement.
+    'vsts.*',
+    # The following are rarely used in this project and might benefit from having custom stubs written for them, see https://mypy.readthedocs.io/en/stable/stubs.html#stub-files
+    'license_expression',
+    'cirun',
+    'scrypt',
+    'toolz',
+    'rattler_build_conda_compat.*',
+    'tlz'
+]
+ignore_missing_imports = true

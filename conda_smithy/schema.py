@@ -11,9 +11,9 @@ from conda.base.constants import KNOWN_SUBDIRS
 from pydantic import BaseModel, ConfigDict, Field, create_model
 
 try:
-    from enum import StrEnum
+    from enum import StrEnum  # type: ignore
 except ImportError:
-    from backports.strenum import StrEnum
+    from backports.strenum import StrEnum  # type: ignore
 
 
 from conda_smithy.validate_schema import (
@@ -99,7 +99,7 @@ class BotConfigVersionUpdatesSourcesChoice(StrEnum):
 class AzureRunnerSettings(BaseModel):
     """This is the settings for runners."""
 
-    model_config: ConfigDict = ConfigDict(extra="allow")
+    model_config = ConfigDict(extra="allow")
 
     pool: Optional[Dict[str, str]] = Field(
         default_factory=lambda: {"vmImage": "ubuntu-latest"},
@@ -135,7 +135,7 @@ class AzureConfig(BaseModel):
     https://learn.microsoft.com/en-us/azure/devops/pipelines/yaml-schema/?view=azure-pipelines).
     """
 
-    model_config: ConfigDict = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="forbid")
 
     force: Optional[bool] = Field(
         default=False,
@@ -236,7 +236,7 @@ class AzureConfig(BaseModel):
 
 
 class GithubConfig(BaseModel):
-    model_config: ConfigDict = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="forbid")
 
     user_or_org: Optional[str] = Field(
         description="The name of the GitHub user or organization",
@@ -258,7 +258,7 @@ class GithubConfig(BaseModel):
 
 
 class GithubActionsConfig(BaseModel):
-    model_config: ConfigDict = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="forbid")
 
     artifact_retention_days: Optional[int] = Field(
         description="The number of days to retain artifacts",
@@ -323,7 +323,7 @@ class BotConfigVersionUpdates(BaseModel):
     updates
     """
 
-    model_config: ConfigDict = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="forbid")
 
     random_fraction_to_keep: Optional[float] = Field(
         None,
@@ -382,7 +382,7 @@ class BotConfig(BaseModel):
     automatic version updates/migrations for feedstocks.
     """
 
-    model_config: ConfigDict = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="forbid")
 
     automerge: Optional[Union[bool, BotConfigAutoMergeChoice]] = Field(
         False,
@@ -411,13 +411,13 @@ class BotConfig(BaseModel):
     )
 
     version_updates: Optional[BotConfigVersionUpdates] = Field(
-        default_factory=BotConfigVersionUpdates,
+        default_factory=BotConfigVersionUpdates,  # type: ignore
         description="Bot config for version update PRs",
     )
 
 
 class CondaBuildConfig(BaseModel):
-    model_config: ConfigDict = ConfigDict(extra="allow")
+    model_config = ConfigDict(extra="allow")
 
     pkg_format: Optional[Literal["tar", 1, 2, "1", "2"]] = Field(
         description="The package version format for conda build.",
@@ -447,7 +447,7 @@ class CondaBuildConfig(BaseModel):
 
 
 class CondaForgeDocker(BaseModel):
-    model_config: ConfigDict = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="forbid")
 
     executable: Optional[str] = Field(
         description="The executable for Docker", default="docker"
@@ -473,7 +473,7 @@ class CondaForgeDocker(BaseModel):
 
 
 class ShellCheck(BaseModel):
-    model_config: ConfigDict = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="forbid")
 
     enabled: bool = Field(
         description="Whether to use shellcheck to lint shell scripts",
@@ -487,13 +487,13 @@ class PlatformsAliases(StrEnum):
     osx = "osx"
 
 
-def get_subdirs():
+def get_subdirs() -> List[str]:
     return [
         subdir.replace("-", "_") for subdir in KNOWN_SUBDIRS if "-" in subdir
     ]
 
 
-Platforms = StrEnum("Platforms", get_subdirs())
+Platforms = StrEnum("Platforms", get_subdirs())  # type: ignore
 
 
 class ChannelPriorityConfig(StrEnum):
@@ -508,37 +508,40 @@ class DefaultTestPlatforms(StrEnum):
     native_and_emulated = "native_and_emulated"
 
 
+build_platform_fields: Dict[str, Any] = {
+    platform.value: (Optional[Platforms], Field(default=platform.value))
+    for platform in Platforms
+}
 BuildPlatform = create_model(
     "build_platform",
-    **{
-        platform.value: (Optional[Platforms], Field(default=platform.value))
-        for platform in Platforms
-    },
+    **build_platform_fields,
 )
 
+OSVersion_fields: Dict[str, Any] = {
+    platform.value: (Optional[Union[str, Nullable]], Field(default=None))
+    for platform in Platforms
+    if platform.value.startswith("linux")
+}
 OSVersion = create_model(
     "os_version",
-    **{
-        platform.value: (Optional[Union[str, Nullable]], Field(default=None))
-        for platform in Platforms
-        if platform.value.startswith("linux")
-    },
+    **OSVersion_fields,
 )
 
 ProviderType = Union[List[CIservices], CIservices, bool, Nullable]
 
+provider_fields: Dict[str, Any] = dict(
+    [
+        (str(plat), (Optional[ProviderType], Field(default=None)))
+        for plat in list(PlatformsAliases) + list(Platforms)
+    ]
+    + [
+        (str(plat), (Optional[ProviderType], Field(default="azure")))
+        for plat in ("linux_64", "osx_64", "win_64")
+    ]
+)
 Provider = create_model(
     "provider",
-    **dict(
-        [
-            (str(plat), (Optional[ProviderType], Field(default=None)))
-            for plat in list(PlatformsAliases) + list(Platforms)
-        ]
-        + [
-            (str(plat), (Optional[ProviderType], Field(default="azure")))
-            for plat in ("linux_64", "osx_64", "win_64")
-        ]
-    ),
+    **provider_fields,
 )
 
 
@@ -551,7 +554,7 @@ class ConfigModel(BaseModel):
     flagged as Deprecated as appropriate.
     """
 
-    model_config: ConfigDict = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="forbid")
 
     # Values which are not expected to be present in the model dump, are
     # flagged with exclude=True. This is to avoid confusion when comparing
@@ -634,7 +637,7 @@ class ConfigModel(BaseModel):
     )
 
     bot: Optional[BotConfig] = Field(
-        default_factory=BotConfig,
+        default_factory=BotConfig,  # type: ignore
         description=cleandoc(
             """
         This dictates the behavior of the conda-forge auto-tick bot which issues
@@ -682,7 +685,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    build_platform: Optional[BuildPlatform] = Field(
+    build_platform: Optional[BuildPlatform] = Field(  # type: ignore
         default_factory=BuildPlatform,
         description=cleandoc(
             """
@@ -776,7 +779,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    noarch_platforms: Optional[Union[Platforms, List[Platforms]]] = Field(
+    noarch_platforms: Optional[Union[Platforms, List[Platforms]]] = Field(  # type: ignore
         default_factory=lambda: ["linux_64"],
         description=cleandoc(
             """
@@ -799,7 +802,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    os_version: Optional[OSVersion] = Field(
+    os_version: Optional[OSVersion] = Field(  # type: ignore
         default_factory=OSVersion,
         description=cleandoc(
             """
@@ -817,7 +820,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    provider: Optional[Provider] = Field(
+    provider: Optional[Provider] = Field(  # type: ignore
         default_factory=Provider,
         description=cleandoc(
             """

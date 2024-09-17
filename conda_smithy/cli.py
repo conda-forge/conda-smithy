@@ -6,7 +6,7 @@ import sys
 import tempfile
 import time
 from textwrap import dedent
-from typing import Optional, Union
+from typing import List, Optional, Union
 
 import conda  # noqa
 from conda_build.metadata import MetaData
@@ -27,12 +27,14 @@ from conda_smithy.utils import (
 )
 
 
-def default_feedstock_config_path(feedstock_directory):
+def default_feedstock_config_path(feedstock_directory: str) -> str:
     return os.path.join(feedstock_directory, "conda-forge.yml")
 
 
 def generate_feedstock_content(
-    target_directory, source_recipe_dir, conda_build_tool: Optional[str] = None
+    target_directory: str,
+    source_recipe_dir: str,
+    conda_build_tool: Optional[str] = None,
 ):
     target_directory = os.path.abspath(target_directory)
     recipe_dir = "recipe"
@@ -81,10 +83,10 @@ def generate_feedstock_content(
 
 class Subcommand:
     #: The name of the subcommand
-    subcommand = None
-    aliases = []
+    subcommand: Optional[str] = None
+    aliases: List[str] = []
 
-    def __init__(self, parser, help=None):
+    def __init__(self, parser, help: Optional[str] = None):
         subcommand_parser = parser.add_parser(
             self.subcommand, help=help, description=help, aliases=self.aliases
         )

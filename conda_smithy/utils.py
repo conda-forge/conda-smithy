@@ -13,8 +13,11 @@ import jinja2
 import jinja2.sandbox
 import ruamel.yaml
 from conda_build.api import render as conda_build_render
+
+# from conda_build.metadata import MetaData
 from conda_build.render import MetaData
 from rattler_build_conda_compat.render import MetaData as RattlerBuildMetaData
+from ruamel.yaml.comments import CommentedMap
 
 RATTLER_BUILD = "rattler-build"
 CONDA_BUILD = "conda-build"
@@ -56,7 +59,7 @@ def get_feedstock_name_from_meta(
         return meta.name()
 
 
-def get_feedstock_about_from_meta(meta) -> dict:
+def get_feedstock_about_from_meta(meta: MetaData) -> dict:
     """Fetch the feedtstock about from the parsed meta.yaml."""
     # it turns out that conda_build would not preserve the feedstock about:
     #   - if a subpackage does not have about, it uses the feedstock's
@@ -110,7 +113,7 @@ class MockOS(dict):
         self.sep = "/"
 
 
-def stub_compatible_pin(*args, **kwargs):
+def stub_compatible_pin(*args, **kwargs) -> str:
     return f"compatible_pin {args[0]}"
 
 
@@ -118,7 +121,7 @@ def stub_subpackage_pin(*args, **kwargs):
     return f"subpackage_pin {args[0]}"
 
 
-def render_meta_yaml(text):
+def render_meta_yaml(text: str) -> str:
     env = jinja2.sandbox.SandboxedEnvironment(undefined=NullUndefined)
 
     # stub out cb3 jinja2 functions - they are not important for linting
@@ -172,7 +175,9 @@ def update_conda_forge_config(forge_yaml):
     get_yaml().dump(code, Path(forge_yaml))
 
 
-def merge_dict(src, dest):
+def merge_dict(
+    src: Dict[Any, Any], dest: CommentedMap
+) -> Union[CommentedMap, Dict[str, bool]]:
     """Recursive merge dictionary"""
     for key, value in src.items():
         if isinstance(value, dict):

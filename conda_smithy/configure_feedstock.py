@@ -16,9 +16,25 @@ from functools import lru_cache
 from itertools import chain, product
 from os import fspath
 from pathlib import Path, PurePath
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Iterator,
+    List,
+    Optional,
+    Set,
+    Tuple,
+    Union,
+)
 
 import requests
 import yaml
+
+# Imports for typing
+from conda_build.config import Config
+from conda_build.metadata import MetaData
+from jinja2.sandbox import SandboxedEnvironment
 
 # The `requests` lib uses `simplejson` instead of `json` when available.
 # In consequence the same JSON library must be used or the `JSONDecodeError`
@@ -27,7 +43,7 @@ import yaml
 try:
     import simplejson as json
 except ImportError:
-    import json
+    import json  # type: ignore
 
 import conda_build.api
 import conda_build.render
@@ -39,7 +55,6 @@ from conda.models.version import VersionOrder
 from conda_build import __version__ as conda_build_version
 from conda_build.metadata import get_selectors
 from jinja2 import FileSystemLoader
-from jinja2.sandbox import SandboxedEnvironment
 from rattler_build_conda_compat.loader import parse_recipe_config_file
 from rattler_build_conda_compat.render import render as rattler_render
 
@@ -98,7 +113,11 @@ def warn_once(msg: str):
     logger.warning(msg)
 
 
-def package_key(config, used_loop_vars, subdir):
+def package_key(
+    config: Dict[str, Union[List[str], List[List[str]], OrderedDict]],
+    used_loop_vars: Set[str],
+    subdir: str,
+) -> str:
     # get the build string from whatever conda-build makes of the configuration
     key = "".join(
         [
@@ -110,7 +129,7 @@ def package_key(config, used_loop_vars, subdir):
     return key.replace("*", "_").replace(" ", "_")
 
 
-def _ignore_match(ignore, rel):
+def _ignore_match(ignore: Union[Set[str], Tuple[()]], rel: str):
     """Return true if rel or any of it's PurePath().parents are in ignore
 
     i.e. putting .github in skip_render will prevent rendering of anything
@@ -127,7 +146,12 @@ def _ignore_match(ignore, rel):
         return False
 
 
-def copytree(src, dst, ignore=(), root_dst=None):
+def copytree(
+    src: str,
+    dst: str,
+    ignore: Union[Set[str], Tuple[()]] = (),
+    root_dst: Optional[str] = None,
+):
     """This emulates shutil.copytree, but does so with our git file tracking, so that the new files
     are added to the repo"""
     if root_dst is None:
@@ -146,8 +170,10 @@ def copytree(src, dst, ignore=(), root_dst=None):
             copy_file(s, d)
 
 
-def merge_list_of_dicts(list_of_dicts):
-    squished_dict = OrderedDict()
+def merge_list_of_dicts(
+    list_of_dicts: List[Dict[str, List[str]]]
+) -> OrderedDict:
+    squished_dict: OrderedDict = OrderedDict()
     for idict in list_of_dicts:
         for key, val in idict.items():
             if key not in squished_dict:
@@ -156,11 +182,13 @@ def merge_list_of_dicts(list_of_dicts):
     return squished_dict
 
 
-def argsort(seq):
+def argsort(seq: List[tuple]) -> List[int]:
     return sorted(range(len(seq)), key=seq.__getitem__)
 
 
-def sort_config(config, zip_key_groups):
+def sort_config(
+    config: OrderedDict, zip_key_groups: List[Union[List[str], Any]]
+):
     groups = copy.deepcopy(zip_key_groups)
     for i, group in enumerate(groups):
         groups[i] = [pkg for pkg in group if pkg in config.keys()]
@@ -199,7 +227,19 @@ def sort_config(config, zip_key_groups):
             config[key] = p
 
 
-def break_up_top_level_values(top_level_keys, squished_variants):
+def break_up_top_level_values(
+    top_level_keys: Set[str], squished_variants: OrderedDict
+) -> List[
+    Dict[
+        str,
+        Union[
+            List[str],
+            OrderedDict,
+            List[Union[str, List[str]]],
+            List[List[str]],
+        ],
+    ]
+]:
     """top-level values make up CI configurations.  We need to break them up
     into individual files."""
 
@@ -211,8 +251,8 @@ def break_up_top_level_values(top_level_keys, squished_variants):
         zip_key_groups = squished_variants["zip_keys"]
         if zip_key_groups and not isinstance(zip_key_groups[0], list):
             zip_key_groups = [zip_key_groups]
-    zipped_configs = []
-    top_level_dimensions = []
+    zipped_configs: list = []
+    top_level_dimensions: list = []
     for key in top_level_keys:
         if key in accounted_for_keys:
             # remove the used variables from the collection of all variables - we have them in the
@@ -227,9 +267,9 @@ def break_up_top_level_values(top_level_keys, squished_variants):
                     #    config in its own file
 
                     zipped_config = []
-                    top_level_config_dict = OrderedDict()
+                    top_level_config_dict: dict = OrderedDict()
                     for idx, variant_key in enumerate(squished_variants[key]):
-                        top_level_config = []
+                        top_level_config: Any = []
                         for k in group:
                             if k in top_level_keys:
                                 top_level_config.append(
@@ -268,6 +308,7 @@ def break_up_top_level_values(top_level_keys, squished_variants):
     sort_config(squished_variants, zip_key_groups)
 
     for zipped_config in zipped_configs:
+        config: dict
         for config in zipped_config:
             sort_config(config, zip_key_groups)
 
@@ -286,7 +327,7 @@ def break_up_top_level_values(top_level_keys, squished_variants):
     return configs
 
 
-def _package_var_name(pkg):
+def _package_var_name(pkg: str) -> str:
     return pkg.replace("-", "_")
 
 
@@ -307,7 +348,7 @@ def _trim_unused_zip_keys(all_used_vars):
         del all_used_vars["zip_keys"]
 
 
-def _trim_unused_pin_run_as_build(all_used_vars):
+def _trim_unused_pin_run_as_build(all_used_vars: dict):
     """Remove unused keys in pin_run_as_build sets"""
     pkgs = all_used_vars.get("pin_run_as_build", {})
     used_pkgs = {}
@@ -322,10 +363,16 @@ def _trim_unused_pin_run_as_build(all_used_vars):
 
 
 def _get_used_key_values_by_input_order(
-    squished_input_variants,
-    squished_used_variants,
-    all_used_vars,
-):
+    squished_input_variants: Union[
+        OrderedDict,
+        Dict[
+            str,
+            Union[set, dict, list, tuple],
+        ],
+    ],
+    squished_used_variants: Union[OrderedDict, dict],
+    all_used_vars: Set[str],
+) -> tuple:
     used_key_values = {
         key: squished_input_variants[key]
         for key in all_used_vars
@@ -351,8 +398,8 @@ def _get_used_key_values_by_input_order(
     for keyset, tuples in zipped_tuples.items():
         # for each set of zipped keys from squished_input_variants,
         # we trim them down to what is in squished_used_variants
-        used_keyset = []
-        used_keyset_inds = []
+        used_keyset: Any = []
+        used_keyset_inds: Any = []
         for k in keyset:
             if k in squished_used_variants:
                 used_keyset.append(k)
@@ -426,7 +473,10 @@ def _get_used_key_values_by_input_order(
     return used_key_values, zipped_keys
 
 
-def _merge_deployment_target(container_of_dicts, has_macdt):
+def _merge_deployment_target(
+    container_of_dicts: set,
+    has_macdt: bool,
+) -> set:
     """
     For a collection of variant dictionaries, merge deployment target specs.
 
@@ -504,8 +554,12 @@ def _merge_deployment_target(container_of_dicts, has_macdt):
 
 
 def _collapse_subpackage_variants(
-    list_of_metas, root_path, platform, arch, forge_config
-):
+    list_of_metas: List[MetaData],
+    root_path: str,
+    platform: str,
+    arch: str,
+    forge_config: Dict[str, Any],
+) -> tuple:
     """Collapse all subpackage node variants into one aggregate collection of used variables
 
     We get one node per output, but a given recipe can have multiple outputs.  Each output
@@ -517,7 +571,7 @@ def _collapse_subpackage_variants(
     top_level_loop_vars = set()
 
     all_used_vars = set()
-    all_variants = set()
+    all_variants: set = set()
 
     is_noarch = True
 
@@ -616,6 +670,7 @@ def _collapse_subpackage_variants(
     logger.debug("top_level_vars %s", pprint.pformat(top_level_vars))
     logger.debug("top_level_loop_vars %s", pprint.pformat(top_level_loop_vars))
 
+    used_key_values: Any
     used_key_values, used_zipped_vars = _get_used_key_values_by_input_order(
         squished_input_variants,
         squished_used_variants,
@@ -652,7 +707,7 @@ def _collapse_subpackage_variants(
     )
 
 
-def _yaml_represent_ordereddict(yaml_representer, data):
+def _yaml_represent_ordereddict(yaml_representer, data: OrderedDict):
     # represent_dict processes dict-likes with a .sort() method or plain iterables of key-value
     #     pairs. Only for the latter it never sorts and retains the order of the OrderedDict.
     return yaml.representer.SafeRepresenter.represent_dict(
@@ -660,7 +715,7 @@ def _yaml_represent_ordereddict(yaml_representer, data):
     )
 
 
-def _santize_remote_ci_setup(remote_ci_setup):
+def _santize_remote_ci_setup(remote_ci_setup: List[str]) -> List[str]:
     remote_ci_setup_ = conda_build.utils.ensure_list(remote_ci_setup)
     remote_ci_setup = []
     for package in remote_ci_setup_:
@@ -672,7 +727,18 @@ def _santize_remote_ci_setup(remote_ci_setup):
     return remote_ci_setup
 
 
-def finalize_config(config, platform, arch, forge_config):
+def finalize_config(
+    config: Dict[
+        str,
+        Union[list, OrderedDict],
+    ],
+    platform: str,
+    arch: str,
+    forge_config: Dict[str, Any],
+) -> Dict[
+    str,
+    Union[List[str], List[List[str]], OrderedDict],
+]:
     """For configs without essential parameters like docker_image
     add fallback value.
     """
@@ -694,8 +760,13 @@ def finalize_config(config, platform, arch, forge_config):
 
 
 def dump_subspace_config_files(
-    metas, root_path, platform, arch, upload, forge_config
-):
+    metas: List[MetaData],
+    root_path: str,
+    platform: str,
+    arch: str,
+    upload: bool,
+    forge_config: Dict[str, Any],
+) -> List[Dict[str, Any]]:
     """With conda-build 3, it handles the build matrix.  We take what it spits out, and write a
     config.yaml file for each matrix entry that it spits out.  References to a specific file
     replace all of the old environment variables that specified a matrix entry.
@@ -766,8 +837,11 @@ def dump_subspace_config_files(
 
 
 def _get_fast_finish_script(
-    provider_name, forge_config, forge_dir, fast_finish_text
-):
+    provider_name: str,
+    forge_config: Dict[str, Any],
+    forge_dir: str,
+    fast_finish_text: str,
+) -> str:
     get_fast_finish_script = ""
     fast_finish_script = ""
     tooling_branch = forge_config["github"]["tooling_branch_name"]
@@ -816,7 +890,12 @@ def _get_fast_finish_script(
     return fast_finish_text
 
 
-def migrate_combined_spec(combined_spec, forge_dir, config, forge_config):
+def migrate_combined_spec(
+    combined_spec: Any,
+    forge_dir: str,
+    config: Config,
+    forge_config: Dict[str, Any],
+) -> Dict[str, Union[List[str], Dict[str, Dict[str, str]], List[List[str]]]]:
     """CFEP-9 variant migrations
 
     Apply the list of migrations configurations to the build (in the correct sequence)
@@ -856,14 +935,16 @@ def migrate_combined_spec(combined_spec, forge_dir, config, forge_config):
 
 
 def _conda_build_api_render_for_smithy(
-    recipe_path,
+    recipe_path: str,
     config=None,
-    variants=None,
-    permit_unsatisfiable_variants=True,
-    finalize=True,
-    bypass_env_check=False,
+    variants: Optional[
+        Dict[str, Union[List[str], List[List[str]], Dict[str, Dict[str, str]]]]
+    ] = None,
+    permit_unsatisfiable_variants: bool = True,
+    finalize: bool = True,
+    bypass_env_check: bool = False,
     **kwargs,
-):
+) -> List[Union[Tuple[MetaData, bool, bool], Any]]:
     """This function works just like conda_build.api.render, but it returns all of metadata objects
     regardless of whether they produce a unique package hash / name.
 
@@ -933,21 +1014,21 @@ def _conda_build_api_render_for_smithy(
 
 
 def _render_ci_provider(
-    provider_name,
-    jinja_env,
-    forge_config,
-    forge_dir,
-    platforms,
-    archs,
-    fast_finish_text,
-    platform_target_path,
-    platform_template_file,
-    platform_specific_setup,
-    keep_noarchs=None,
-    extra_platform_files={},
-    upload_packages=[],
-    return_metadata=False,
-):
+    provider_name: str,
+    jinja_env: SandboxedEnvironment,
+    forge_config: Dict[str, Any],
+    forge_dir: str,
+    platforms: List[Union[Any, str]],
+    archs: List[Union[Any, str]],
+    fast_finish_text: str,
+    platform_target_path: str,
+    platform_template_file: str,
+    platform_specific_setup: Callable,
+    keep_noarchs: Optional[List[Union[Any, bool]]] = None,
+    extra_platform_files: Dict[str, List[str]] = {},
+    upload_packages: List[Union[Any, bool]] = [],
+    return_metadata: bool = False,
+) -> Dict[str, Any]:
     if keep_noarchs is None:
         keep_noarchs = [False] * len(platforms)
 
@@ -1020,12 +1101,14 @@ def _render_ci_provider(
                     specs
                 )
 
+        migrated_combined_variant_spec: Any
         migrated_combined_variant_spec = migrate_combined_spec(
             combined_variant_spec,
             forge_dir,
             config,
             forge_config,
         )
+        channel_target: Any
         for channel_target in migrated_combined_variant_spec.get(
             "channel_targets", []
         ):
@@ -1107,6 +1190,7 @@ def _render_ci_provider(
 
         if not keep_noarch:
             to_delete = []
+            meta: Any
             for idx, meta in enumerate(metas):
                 if meta.noarch:
                     # do not build noarch, including noarch: python, packages on Travis CI.
@@ -1246,7 +1330,9 @@ def _render_ci_provider(
         return forge_config
 
 
-def _get_build_setup_line(forge_dir, platform, forge_config):
+def _get_build_setup_line(
+    forge_dir: str, platform: str, forge_config: Dict[str, Any]
+) -> str:
     # If the recipe supplies its own run_conda_forge_build_setup script_linux,
     # we use it instead of the global one.
     if platform == "linux":
@@ -1314,7 +1400,12 @@ def _get_build_setup_line(forge_dir, platform, forge_config):
     return build_setup
 
 
-def _circle_specific_setup(jinja_env, forge_config, forge_dir, platform):
+def _circle_specific_setup(
+    jinja_env: SandboxedEnvironment,
+    forge_config: Dict[str, Any],
+    forge_dir: str,
+    platform: str,
+):
     if platform == "linux":
         yum_build_setup = generate_yum_requirements(forge_config, forge_dir)
         if yum_build_setup:
@@ -1347,7 +1438,9 @@ def _circle_specific_setup(jinja_env, forge_config, forge_dir, platform):
         set_exe_file(target_fname, True)
 
 
-def generate_yum_requirements(forge_config, forge_dir):
+def generate_yum_requirements(
+    forge_config: Dict[str, Any], forge_dir: str
+) -> str:
     # If there is a "yum_requirements.txt" file in the recipe, we honour it.
     yum_requirements_fpath = os.path.join(
         forge_dir, forge_config["recipe_dir"], "yum_requirements.txt"
@@ -1380,7 +1473,12 @@ def generate_yum_requirements(forge_config, forge_dir):
     return yum_build_setup
 
 
-def _get_platforms_of_provider(provider, forge_config):
+def _get_platforms_of_provider(
+    provider: str, forge_config: Dict[str, Any]
+) -> Union[
+    Tuple[List[str], List[str], List[bool], List[bool]],
+    Tuple[List[Any], List[Any], List[Any], List[Any]],
+]:
     platforms = []
     keep_noarchs = []
     archs = []
@@ -1426,7 +1524,12 @@ def _get_platforms_of_provider(provider, forge_config):
     return platforms, archs, keep_noarchs, upload_packages
 
 
-def render_circle(jinja_env, forge_config, forge_dir, return_metadata=False):
+def render_circle(
+    jinja_env: SandboxedEnvironment,
+    forge_config: Dict[str, Any],
+    forge_dir: str,
+    return_metadata: bool = False,
+) -> Dict[str, Any]:
     target_path = os.path.join(forge_dir, ".circleci", "config.yml")
     template_filename = "circle.yml.tmpl"
     fast_finish_text = textwrap.dedent(
@@ -1467,7 +1570,12 @@ def render_circle(jinja_env, forge_config, forge_dir, return_metadata=False):
     )
 
 
-def _travis_specific_setup(jinja_env, forge_config, forge_dir, platform):
+def _travis_specific_setup(
+    jinja_env: SandboxedEnvironment,
+    forge_config: Dict[str, Any],
+    forge_dir: str,
+    platform: str,
+):
     build_setup = _get_build_setup_line(forge_dir, platform, forge_config)
 
     platform_templates = {
@@ -1475,7 +1583,7 @@ def _travis_specific_setup(jinja_env, forge_config, forge_dir, platform):
         "osx": [".scripts/run_osx_build.sh"],
         "win": [],
     }
-    template_files = platform_templates.get(platform, [])
+    template_files: Any = platform_templates.get(platform, [])
 
     if platform == "linux":
         yum_build_setup = generate_yum_requirements(forge_config, forge_dir)
@@ -1493,7 +1601,10 @@ def _travis_specific_setup(jinja_env, forge_config, forge_dir, platform):
 
 
 def _render_template_exe_files(
-    forge_config, jinja_env, template_files, forge_dir
+    forge_config: Dict[str, Any],
+    jinja_env: SandboxedEnvironment,
+    template_files: List[str],
+    forge_dir: str,
 ):
     for template_file in template_files:
         template = jinja_env.get_template(
@@ -1529,7 +1640,12 @@ def _render_template_exe_files(
         set_exe_file(target_fname, True)
 
 
-def render_travis(jinja_env, forge_config, forge_dir, return_metadata=False):
+def render_travis(
+    jinja_env: SandboxedEnvironment,
+    forge_config: Dict[str, Any],
+    forge_dir: str,
+    return_metadata: bool = False,
+) -> Dict[str, Any]:
     target_path = os.path.join(forge_dir, ".travis.yml")
     template_filename = "travis.yml.tmpl"
     fast_finish_text = ""
@@ -1558,7 +1674,12 @@ def render_travis(jinja_env, forge_config, forge_dir, return_metadata=False):
     )
 
 
-def _appveyor_specific_setup(jinja_env, forge_config, forge_dir, platform):
+def _appveyor_specific_setup(
+    jinja_env: SandboxedEnvironment,
+    forge_config: Dict[str, Any],
+    forge_dir: str,
+    platform: str,
+):
     build_setup = _get_build_setup_line(forge_dir, platform, forge_config)
     build_setup = build_setup.rstrip()
     new_build_setup = ""
@@ -1572,7 +1693,12 @@ def _appveyor_specific_setup(jinja_env, forge_config, forge_dir, platform):
     forge_config["build_setup"] = build_setup
 
 
-def render_appveyor(jinja_env, forge_config, forge_dir, return_metadata=False):
+def render_appveyor(
+    jinja_env: SandboxedEnvironment,
+    forge_config: Dict[str, Any],
+    forge_dir: str,
+    return_metadata: bool = False,
+) -> Dict[str, Any]:
     target_path = os.path.join(forge_dir, ".appveyor.yml")
     fast_finish_text = textwrap.dedent(
         """\
@@ -1607,7 +1733,10 @@ def render_appveyor(jinja_env, forge_config, forge_dir, return_metadata=False):
 
 
 def _github_actions_specific_setup(
-    jinja_env, forge_config, forge_dir, platform
+    jinja_env: SandboxedEnvironment,
+    forge_config: Dict[str, Any],
+    forge_dir: str,
+    platform: str,
 ):
     # Handle GH-hosted and self-hosted runners runs-on config
     # Do it before the deepcopy below so these changes can be used by the
@@ -1730,8 +1859,11 @@ def _github_actions_specific_setup(
 
 
 def render_github_actions(
-    jinja_env, forge_config, forge_dir, return_metadata=False
-):
+    jinja_env: SandboxedEnvironment,
+    forge_config: Dict[str, Any],
+    forge_dir: str,
+    return_metadata: bool = False,
+) -> Dict[str, Any]:
     target_path = os.path.join(
         forge_dir, ".github", "workflows", "conda-build.yml"
     )
@@ -1765,7 +1897,12 @@ def render_github_actions(
     )
 
 
-def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
+def _azure_specific_setup(
+    jinja_env: SandboxedEnvironment,
+    forge_config: Dict[str, Any],
+    forge_dir: str,
+    platform: str,
+):
     build_setup = _get_build_setup_line(forge_dir, platform, forge_config)
 
     if platform == "linux":
@@ -1850,7 +1987,12 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
     )
 
 
-def render_azure(jinja_env, forge_config, forge_dir, return_metadata=False):
+def render_azure(
+    jinja_env: SandboxedEnvironment,
+    forge_config: Dict[str, Any],
+    forge_dir: str,
+    return_metadata: bool = False,
+) -> Dict[str, Any]:
     target_path = os.path.join(forge_dir, "azure-pipelines.yml")
     template_filename = "azure-pipelines.yml.tmpl"
     fast_finish_text = ""
@@ -1882,13 +2024,18 @@ def render_azure(jinja_env, forge_config, forge_dir, return_metadata=False):
     )
 
 
-def _drone_specific_setup(jinja_env, forge_config, forge_dir, platform):
+def _drone_specific_setup(
+    jinja_env: SandboxedEnvironment,
+    forge_config: Dict[str, Any],
+    forge_dir: str,
+    platform: str,
+):
     platform_templates = {
         "linux": [".scripts/build_steps.sh"],
         "osx": [],
         "win": [],
     }
-    template_files = platform_templates.get(platform, [])
+    template_files: Any = platform_templates.get(platform, [])
 
     build_setup = _get_build_setup_line(forge_dir, platform, forge_config)
 
@@ -1907,7 +2054,12 @@ def _drone_specific_setup(jinja_env, forge_config, forge_dir, platform):
     )
 
 
-def render_drone(jinja_env, forge_config, forge_dir, return_metadata=False):
+def render_drone(
+    jinja_env: SandboxedEnvironment,
+    forge_config: Dict[str, Any],
+    forge_dir: str,
+    return_metadata: bool = False,
+) -> Dict[str, Any]:
     target_path = os.path.join(forge_dir, ".drone.yml")
     template_filename = "drone.yml.tmpl"
     fast_finish_text = ""
@@ -1940,8 +2092,11 @@ _woodpecker_specific_setup = _drone_specific_setup
 
 
 def render_woodpecker(
-    jinja_env, forge_config, forge_dir, return_metadata=False
-):
+    jinja_env: SandboxedEnvironment,
+    forge_config: Dict[str, Any],
+    forge_dir: str,
+    return_metadata: bool = False,
+) -> dict:
     target_path = os.path.join(forge_dir, ".woodpecker.yml")
     template_filename = "woodpecker.yml.tmpl"
     fast_finish_text = ""
@@ -1986,7 +2141,7 @@ def azure_build_id_from_token(forge_config):
     forge_config["azure"]["build_id"] = build_info["build_id"]
 
 
-def azure_build_id_from_public(forge_config):
+def azure_build_id_from_public(forge_config: Dict[str, Any]):
     """Retrieve Azure `build_id` from a `forge_config`. This function only works
     when the Azure org is public.
     """
@@ -2010,7 +2165,12 @@ def get_maintainer_url(user_or_team):
         return f"https://github.com/{user_or_team}/"
 
 
-def render_readme(jinja_env, forge_config, forge_dir, render_info=None):
+def render_readme(
+    jinja_env: SandboxedEnvironment,
+    forge_config: Dict[str, Any],
+    forge_dir: str,
+    render_info: Optional[list] = None,
+):
     if "README.md" in forge_config["skip_render"]:
         logger.info("README.md rendering is skipped")
         return
@@ -2122,7 +2282,7 @@ def render_readme(jinja_env, forge_config, forge_dir, render_info=None):
                 "Azure build_id can't be retrieved using the Azure token. Exception: %s",
                 err,
             )
-        except json.decoder.JSONDecodeError:
+        except json.decoder.JSONDecodeError:  # type: ignore
             azure_build_id_from_token(forge_config)
 
     logger.debug("README")
@@ -2146,14 +2306,18 @@ def render_readme(jinja_env, forge_config, forge_dir, render_info=None):
         remove_file_or_dir(code_owners_file)
 
 
-def _get_skip_files(forge_config):
+def _get_skip_files(forge_config: Dict[str, Any]) -> Set[str]:
     skip_files = {"README", "__pycache__"}
     for f in forge_config["skip_render"]:
         skip_files.add(f)
     return skip_files
 
 
-def render_github_actions_services(jinja_env, forge_config, forge_dir):
+def render_github_actions_services(
+    jinja_env: SandboxedEnvironment,
+    forge_config: Dict[str, Any],
+    forge_dir: str,
+):
     # render github actions files for automerge and rerendering services
     skip_files = _get_skip_files(forge_config)
     for template_file in ["automerge.yml", "webservices.yml"]:
@@ -2167,7 +2331,7 @@ def render_github_actions_services(jinja_env, forge_config, forge_dir):
             fh.write(new_file_contents)
 
 
-def copy_feedstock_content(forge_config, forge_dir):
+def copy_feedstock_content(forge_config: Dict[str, Any], forge_dir: str):
     feedstock_content = os.path.join(conda_forge_content, "feedstock_content")
     skip_files = _get_skip_files(forge_config)
     copytree(feedstock_content, forge_dir, skip_files)
@@ -2185,7 +2349,9 @@ def _update_dict_within_dict(items, config):
     return config
 
 
-def _read_forge_config(forge_dir, forge_yml=None):
+def _read_forge_config(
+    forge_dir: str, forge_yml: Optional[str] = None
+) -> Dict[str, Any]:
     # Load default values from the conda-forge.yml file
     with open(CONDA_FORGE_YAML_DEFAULTS_FILE) as fh:
         default_config = yaml.safe_load(fh.read())
@@ -2204,10 +2370,10 @@ def _read_forge_config(forge_dir, forge_yml=None):
 
     with open(forge_yml) as fh:
         documents = list(yaml.safe_load_all(fh))
-        file_config = (documents or [None])[0] or {}
+        file_config: Any = (documents or [None])[0] or {}
 
     # Validate loaded configuration against a JSON schema.
-    validate_lints, validate_hints = validate_json_schema(file_config)
+    validate_lints, validate_hints = validate_json_schema(file_config, None)
     for err in chain(validate_lints, validate_hints):
         logger.warning(
             "%s: %s = %s -> %s",
@@ -2262,7 +2428,9 @@ def _read_forge_config(forge_dir, forge_yml=None):
     return config
 
 
-def _legacy_compatibility_checks(config: dict, forge_dir):
+def _legacy_compatibility_checks(
+    config: dict, forge_dir: str
+) -> Dict[str, Any]:
     # An older conda-smithy used to have some files which should no longer exist,
     # remove those now.
     old_files = [
@@ -2296,7 +2464,11 @@ def _legacy_compatibility_checks(config: dict, forge_dir):
     return config
 
 
-def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
+def _load_forge_config(
+    forge_dir: str,
+    exclusive_config_file: Optional[str],
+    forge_yml: Optional[str] = None,
+) -> Dict[str, Any]:
     config = _read_forge_config(forge_dir, forge_yml=forge_yml)
 
     for plat in ["linux", "osx", "win"]:
@@ -2449,7 +2621,13 @@ def check_version_uptodate(name, installed_version, error_on_warn):
         logger.info(msg)
 
 
-def commit_changes(forge_file_directory, commit, cs_ver, cfp_ver, cb_ver):
+def commit_changes(
+    forge_file_directory: str,
+    commit: bool,
+    cs_ver: str,
+    cfp_ver: None,
+    cb_ver: str,
+):
     if cfp_ver:
         msg = f"Re-rendered with conda-build {cb_ver}, conda-smithy {cs_ver}, and conda-forge-pinning {cfp_ver}"
     else:
@@ -2570,7 +2748,7 @@ def get_cached_cfp_file_path(temporary_directory):
         return get_cfp_file_path(temporary_directory)
 
 
-def clear_variants(forge_dir):
+def clear_variants(forge_dir: str):
     "Remove all variant files placed in the .ci_support path"
     if os.path.isdir(os.path.join(forge_dir, ".ci_support")):
         configs = glob.glob(os.path.join(forge_dir, ".ci_support", "*.yaml"))
@@ -2578,7 +2756,7 @@ def clear_variants(forge_dir):
             remove_file(config)
 
 
-def get_common_scripts(forge_dir):
+def get_common_scripts(forge_dir: str) -> Iterator[str]:
     for old_file in [
         "run_docker_build.sh",
         "build_steps.sh",
@@ -2589,7 +2767,7 @@ def get_common_scripts(forge_dir):
         yield os.path.join(forge_dir, ".scripts", old_file)
 
 
-def clear_scripts(forge_dir):
+def clear_scripts(forge_dir: str):
     for folder in [
         ".azure-pipelines",
         ".circleci",
@@ -2608,7 +2786,7 @@ def clear_scripts(forge_dir):
             remove_file(os.path.join(forge_dir, folder, old_file))
 
 
-def make_jinja_env(feedstock_directory):
+def make_jinja_env(feedstock_directory: str) -> SandboxedEnvironment:
     """Creates a Jinja environment usable for rendering templates"""
     forge_dir = os.path.abspath(feedstock_directory)
     tmplt_dir = os.path.join(conda_forge_content, "templates")
@@ -2622,7 +2800,9 @@ def make_jinja_env(feedstock_directory):
     return env
 
 
-def get_migrations_in_dir(migrations_root):
+def get_migrations_in_dir(
+    migrations_root: str,
+) -> Dict[str, Tuple[str, int, bool]]:
     """
     Given a directory, return the migrations as a mapping
     from the timestamp to a tuple of (filename, migration_number)
@@ -2649,7 +2829,7 @@ def get_migrations_in_dir(migrations_root):
     return res
 
 
-def set_migration_fns(forge_dir, forge_config):
+def set_migration_fns(forge_dir: str, forge_config: Dict[str, Any]):
     """
     This will calculate the migration files and set migration_fns
     in the forge_config as a list.
@@ -2713,13 +2893,13 @@ def set_migration_fns(forge_dir, forge_config):
 
 
 def main(
-    forge_file_directory,
-    forge_yml=None,
-    no_check_uptodate=False,
-    commit=False,
-    exclusive_config_file=None,
-    check=False,
-    temporary_directory=None,
+    forge_file_directory: str,
+    forge_yml: Optional[str] = None,
+    no_check_uptodate: bool = False,
+    commit: bool = False,
+    exclusive_config_file: Optional[str] = None,
+    check: bool = False,
+    temporary_directory: Optional[str] = None,
 ):
     loglevel = os.environ.get("CONDA_SMITHY_LOGLEVEL", "INFO").upper()
     logger.setLevel(loglevel)

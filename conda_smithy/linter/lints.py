@@ -2,7 +2,7 @@ import itertools
 import os
 import re
 from collections.abc import Sequence
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Dict, List, Literal, Optional, Union
 
 from conda.exceptions import InvalidVersionSpec
 from conda.models.version import VersionOrder
@@ -44,7 +44,7 @@ def lint_section_order(
     section_order_sorted = sorted(major_sections, key=order.index)
 
     if major_sections != section_order_sorted:
-        section_order_sorted_str = map(
+        section_order_sorted_str: Union[str, map[str]] = map(
             lambda s: f"'{s}'", section_order_sorted
         )
         section_order_sorted_str = ", ".join(section_order_sorted_str)
@@ -83,7 +83,7 @@ def lint_recipe_maintainers(extra_section, lints):
 
 
 def lint_recipe_have_tests(
-    recipe_dir: str,
+    recipe_dir: Optional[str],
     test_section: List[Dict[str, Any]],
     outputs_section: List[Dict[str, Any]],
     lints: List[str],

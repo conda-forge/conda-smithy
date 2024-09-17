@@ -207,6 +207,7 @@ def _lint_package_version(version: Optional[str]) -> Optional[str]:
         VersionOrder(ver)
     except InvalidVersionSpec as e:
         return invalid_version.format(ver=ver, err=e)
+    return None
 
 
 def load_linter_toml_metdata():

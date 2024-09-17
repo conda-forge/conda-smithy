@@ -66,6 +66,11 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: run type check
+        run: |
+          mypy conda_smithy tests
+        continue-on-error: true # type check is optional
+
       - name: coveralls
         uses: coverallsapp/github-action@master
         with:

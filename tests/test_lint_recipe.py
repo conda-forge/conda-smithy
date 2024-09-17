@@ -9,6 +9,12 @@ import warnings
 from collections import OrderedDict
 from contextlib import contextmanager
 from pathlib import Path
+from typing import (
+    Iterator,
+    List,
+    Optional,
+    Tuple,
+)
 
 import github
 import pytest
@@ -20,12 +26,12 @@ from conda_smithy.utils import get_yaml
 _thisdir = os.path.abspath(os.path.dirname(__file__))
 
 
-def is_gh_token_set():
+def is_gh_token_set() -> bool:
     return "GH_TOKEN" in os.environ
 
 
 @contextmanager
-def get_recipe_in_dir(recipe_name: str) -> Path:
+def get_recipe_in_dir(recipe_name: str):
     base_dir = Path(__file__).parent
     recipe_path = base_dir / "recipes" / recipe_name
     assert recipe_path.exists(), f"Recipe {recipe_name} does not exist"
@@ -44,7 +50,7 @@ def get_recipe_in_dir(recipe_name: str) -> Path:
 
 
 @contextmanager
-def tmp_directory():
+def tmp_directory() -> Iterator[str]:
     tmp_dir = tempfile.mkdtemp("recipe_")
     yield tmp_dir
     shutil.rmtree(tmp_dir)
@@ -54,7 +60,7 @@ def tmp_directory():
     "comp_lang",
     ["c", "cxx", "fortran", "rust", "m2w64_c", "m2w64_cxx", "m2w64_fortran"],
 )
-def test_stdlib_lint(comp_lang):
+def test_stdlib_hint(comp_lang: str):
     expected_message = "This recipe is using a compiler"
 
     with tmp_directory() as recipe_dir:
@@ -143,7 +149,7 @@ def test_sysroot_lint():
 
 
 @pytest.mark.parametrize("where", ["run", "run_constrained"])
-def test_osx_lint(where):
+def test_osx_hint(where: str):
     expected_message = "You're setting a constraint on the `__osx` virtual"
 
     with tmp_directory() as recipe_dir:
@@ -209,7 +215,7 @@ def test_stdlib_lints_multi_output():
 
 
 @pytest.mark.parametrize("where", ["run", "run_constrained"])
-def test_osx_noarch_hint(where):
+def test_osx_noarch_hint(where: str):
     # don't warn on packages that are using __osx as a noarch-marker, see
     # https://conda-forge.org/docs/maintainer/knowledge_base/#noarch-packages-with-os-specific-dependencies
     avoid_message = "You're setting a constraint on the `__osx` virtual"
@@ -308,8 +314,14 @@ def test_recipe_v1_osx_noarch_hint():
         (None, None, ["10.12", "11.0"], "You are"),
     ],
 )
-def test_cbc_osx_lints(
-    std_selector, with_linux, reverse_arch, macdt, v_std, sdk, exp_lint
+def test_cbc_osx_hints(
+    std_selector,
+    with_linux: bool,
+    reverse_arch: Tuple[bool, bool, bool],
+    macdt: Optional[List[str]],
+    v_std: Optional[List[str]],
+    sdk: Optional[List[str]],
+    exp_lint: Optional[str],
 ):
     with tmp_directory() as rdir:
         with open(os.path.join(rdir, "meta.yaml"), "w") as fh:
@@ -2686,7 +2698,7 @@ def test_lint_wheels(tmp_path, yaml_block, annotation):
 
 @pytest.mark.parametrize("recipe_version", [0, 1])
 def test_pin_compatible_in_run_exports(recipe_version: int):
-    meta = {
+    meta: dict = {
         "package": {
             "name": "apackage",
         }

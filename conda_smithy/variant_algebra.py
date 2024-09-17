@@ -59,7 +59,7 @@ def parse_variant(
 
 
 def _version_order(
-    v: Union[str, float], ordering: Optional[List[str]] = None
+    v, ordering: Optional[List[str]] = None
 ) -> Union[int, VersionOrder, float]:
     if ordering is not None:
         return ordering.index(v)
@@ -77,7 +77,7 @@ def variant_key_add(
     v_left: Union[List[str], List[float]],
     v_right: Union[List[str], List[float]],
     ordering: Optional[List[str]] = None,
-) -> Union[List[str], List[float]]:
+) -> List[Union[str, float]]:
     """Version summation adder.
 
     This takes the higher version of the two things.
@@ -108,13 +108,23 @@ def variant_key_set_merge(k, v_left, v_right, ordering=None):
     return sorted(out_v, key=partial(_version_order, ordering=ordering))
 
 
-def variant_key_set_union(k, v_left, v_right, ordering=None):
+def variant_key_set_union(
+    k: None,
+    v_left: List[Union[Any, str]],
+    v_right: List[Union[Any, str]],
+    ordering: Optional[List[str]] = None,
+) -> List[str]:
     """Merges two sets in order, preserving all keys"""
     out_v = set(v_left) | set(v_right)
     return sorted(out_v, key=partial(_version_order, ordering=ordering))
 
 
-def op_variant_key_add(v1: dict, v2: dict):
+def op_variant_key_add(v1: dict, v2: dict) -> Dict[
+    str,
+    Union[
+        float, List[str], List[List[str]], List[Union[List[str], str, float]]
+    ],
+]:
     """Operator for performing a key-add
 
     key-add is additive so you will end up with more entries in the resulting dictionary
@@ -144,7 +154,7 @@ def op_variant_key_add(v1: dict, v2: dict):
 
     if additional_zip_keys:
         for chunk in result.get("zip_keys", []):
-            zip_keyset = set(chunk)
+            zip_keyset: Union[frozenset, set] = set(chunk)
             if primary_key in zip_keyset:
                 # The primary is already part of some zip_key, add the additional keys
                 for additional_key in additional_zip_keys:
@@ -221,7 +231,9 @@ def op_variant_key_add(v1: dict, v2: dict):
     return result
 
 
-def op_variant_key_remove(v1: dict, v2: dict):
+def op_variant_key_remove(
+    v1: dict, v2: dict
+) -> Dict[str, Union[float, List[str], List[List[str]]]]:
     """Inverse of op_variant_key_add
 
     Will remove a given value from the field identified by primary_key and associated
@@ -268,7 +280,7 @@ VARIANT_OP = {
 }
 
 
-def variant_add(v1: dict, v2: dict) -> Dict[str, Any]:
+def variant_add(v1, v2):
     """Adds the two variants together.
 
     Present this assumes mostly flat dictionaries.
@@ -295,7 +307,7 @@ def variant_add(v1: dict, v2: dict) -> Dict[str, Any]:
         right.remove("__migrator")
 
     # special keys in joint
-    special_variants = {}
+    special_variants: dict = {}
     if "pin_run_as_build" in joint:
         # For run_as_build we enforce the migrator's pin
         # TODO: should this just be a normal ordering merge, favoring more exact pins?
@@ -311,7 +323,7 @@ def variant_add(v1: dict, v2: dict) -> Dict[str, Any]:
         # That does require changes to conda-build itself though
         #
         # A zip_keys block is deemed mergeable if zkₛ,ᵢ ⊂ zkₘ,ᵢ
-        zk_out = []
+        zk_out: List = []
         zk_l = {frozenset(e) for e in v1["zip_keys"]}
         zk_r = {frozenset(e) for e in v2["zip_keys"]}
 

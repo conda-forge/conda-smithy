@@ -44,8 +44,8 @@ def lint_recipe_tests(
     lints: List[str],
     hints: List[str],
 ):
-    tests_lints = []
-    tests_hints = []
+    tests_lints: list = []
+    tests_hints: list = []
 
     if not test_section:
         if not outputs_section:

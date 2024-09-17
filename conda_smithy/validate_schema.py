@@ -1,9 +1,15 @@
 import json
 from pathlib import Path
-from typing import List, Tuple
+from typing import (
+    Dict,
+    List,
+    Optional,
+    Union,
+)
 
 from jsonschema import Draft202012Validator, validators
 from jsonschema.exceptions import ValidationError
+from ruamel.yaml.comments import CommentedMap
 
 CONDA_FORGE_YAML_DEFAULTS_FILE = (
     Path(__file__).resolve().parent / "data" / "conda-forge.yml"
@@ -39,8 +45,21 @@ _VALIDATOR_CLASS = get_validator_class()
 
 
 def validate_json_schema(
-    config, schema_file: str = None
-) -> Tuple[List[ValidationError], List[ValidationError]]:
+    config: Union[
+        CommentedMap,
+        Dict[
+            str,
+            Union[
+                bool,
+                str,
+                List[str],
+                Dict[str, bool],
+                Dict[str, Dict[str, str]],
+            ],
+        ],
+    ],
+    schema_file: Optional[Path],
+) -> tuple:
     # Validate the merged configuration against a JSON schema
     if not schema_file:
         schema_file = CONDA_FORGE_YAML_SCHEMA_FILE

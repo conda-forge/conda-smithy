@@ -1,6 +1,8 @@
 from unittest import mock
+from unittest.mock import MagicMock
 
 import pytest
+from _pytest.monkeypatch import MonkeyPatch
 
 from conda_smithy.anaconda_token_rotation import rotate_anaconda_token
 from conda_smithy.ci_register import drone_default_endpoint
@@ -23,20 +25,20 @@ from conda_smithy.ci_register import drone_default_endpoint
     "conda_smithy.anaconda_token_rotation.rotate_token_in_github_actions"
 )
 def test_rotate_anaconda_token(
-    github_actions_mock,
-    azure_mock,
-    travis_mock,
-    circle_mock,
-    drone_mock,
-    appveyor_mock,
-    get_ac_token,
-    get_gh_token,
-    appveyor,
-    drone,
-    circle,
-    azure,
-    travis,
-    github_actions,
+    github_actions_mock: MagicMock,
+    azure_mock: MagicMock,
+    travis_mock: MagicMock,
+    circle_mock: MagicMock,
+    drone_mock: MagicMock,
+    appveyor_mock: MagicMock,
+    get_ac_token: MagicMock,
+    get_gh_token: MagicMock,
+    appveyor: bool,
+    drone: bool,
+    circle: bool,
+    azure: bool,
+    travis: bool,
+    github_actions: bool,
 ):
     user = "foo"
     project = "bar"
@@ -131,19 +133,19 @@ def test_rotate_anaconda_token(
     "conda_smithy.anaconda_token_rotation.rotate_token_in_github_actions"
 )
 def test_rotate_anaconda_token_notoken(
-    github_actions_mock,
-    azure_mock,
-    travis_mock,
-    circle_mock,
-    drone_mock,
-    appveyor_mock,
-    appveyor,
-    drone,
-    circle,
-    azure,
-    travis,
-    github_actions,
-    monkeypatch,
+    github_actions_mock: MagicMock,
+    azure_mock: MagicMock,
+    travis_mock: MagicMock,
+    circle_mock: MagicMock,
+    drone_mock: MagicMock,
+    appveyor_mock: MagicMock,
+    appveyor: bool,
+    drone: bool,
+    circle: bool,
+    azure: bool,
+    travis: bool,
+    github_actions: bool,
+    monkeypatch: MonkeyPatch,
 ):
     user = "foo"
     project = "bar"
@@ -187,15 +189,15 @@ def test_rotate_anaconda_token_notoken(
     "conda_smithy.anaconda_token_rotation.rotate_token_in_github_actions"
 )
 def test_rotate_anaconda_token_provider_error(
-    github_actions_mock,
-    azure_mock,
-    travis_mock,
-    circle_mock,
-    drone_mock,
-    appveyor_mock,
-    get_ac_token,
-    get_gh_token,
-    provider,
+    github_actions_mock: MagicMock,
+    azure_mock: MagicMock,
+    travis_mock: MagicMock,
+    circle_mock: MagicMock,
+    drone_mock: MagicMock,
+    appveyor_mock: MagicMock,
+    get_ac_token: MagicMock,
+    get_gh_token: MagicMock,
+    provider: str,
 ):
     user = "foo"
     project = "bar"

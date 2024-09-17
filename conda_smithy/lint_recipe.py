@@ -7,10 +7,15 @@ from glob import glob
 from inspect import cleandoc
 from pathlib import Path
 from textwrap import indent
-from typing import Any, List, Optional, Tuple
+from typing import (
+    Any,
+    List,
+    Optional,
+    Tuple,
+    Union,
+)
 
 import github
-import jsonschema
 import requests
 from conda_build.metadata import (
     ensure_valid_license_family,
@@ -73,7 +78,7 @@ from conda_smithy.validate_schema import validate_json_schema
 NEEDED_FAMILIES = ["gpl", "bsd", "mit", "apache", "psf"]
 
 
-def lintify_forge_yaml(recipe_dir: Optional[str] = None) -> (list, list):
+def lintify_forge_yaml(recipe_dir: Optional[str] = None) -> tuple:
     if recipe_dir:
         forge_yaml_filename = (
             glob(os.path.join(recipe_dir, "..", "conda-forge.yml"))
@@ -93,7 +98,7 @@ def lintify_forge_yaml(recipe_dir: Optional[str] = None) -> (list, list):
         forge_yaml = {}
 
     # This is where we validate against the jsonschema and execute our custom validators.
-    return validate_json_schema(forge_yaml)
+    return validate_json_schema(forge_yaml, None)
 
 
 def lintify_meta_yaml(
@@ -102,8 +107,8 @@ def lintify_meta_yaml(
     conda_forge: bool = False,
     recipe_version: int = 0,
 ) -> Tuple[List[str], List[str]]:
-    lints = []
-    hints = []
+    lints: list = []
+    hints: list = []
     major_sections = list(meta.keys())
 
     # If the recipe_dir exists (no guarantee within this function) , we can
@@ -601,7 +606,7 @@ def run_conda_forge_specific(
             )
 
 
-def _format_validation_msg(error: jsonschema.ValidationError):
+def _format_validation_msg(error):
     """Use the data on the validation error to generate improved reporting.
 
     If available, get the help URL from the first level of the JSON path:
@@ -639,8 +644,16 @@ def _format_validation_msg(error: jsonschema.ValidationError):
 
 
 def main(
-    recipe_dir, conda_forge=False, return_hints=False, feedstock_dir=None
-):
+    recipe_dir: str,
+    conda_forge: bool = False,
+    return_hints: bool = False,
+    feedstock_dir=None,
+) -> Union[
+    Tuple[List[str], List[str]],
+    Tuple[List[str], List[Any]],
+    List[str],
+    Tuple[List[Any], List[str]],
+]:
     recipe_dir = os.path.abspath(recipe_dir)
     build_tool = CONDA_BUILD_TOOL
     if feedstock_dir:
