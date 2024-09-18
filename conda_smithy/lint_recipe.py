@@ -3,12 +3,15 @@ import json
 import os
 import sys
 from collections.abc import Mapping
+from functools import lru_cache
 from glob import glob
 from inspect import cleandoc
 from pathlib import Path
 from textwrap import indent
 from typing import Any, List, Optional, Tuple
 
+import github
+import github.Auth
 import jsonschema
 import requests
 from conda_build.metadata import (
@@ -370,12 +373,35 @@ def lintify_meta_yaml(
     return lints, hints
 
 
+# the two functions here allow the cache to refresh
+# if some changes the value of os.environ["GH_TOKEN"]
+# in the same Python process
+@lru_cache(maxsize=1)
+def _cached_gh_with_token(token: str) -> github.Github:
+    return github.Github(auth=github.Auth.Token(token))
+
+
+def _cached_gh() -> github.Github:
+    return _cached_gh_with_token(os.environ["GH_TOKEN"])
+
+
 def _maintainer_exists(maintainer: str) -> bool:
     """Check if a maintainer exists on GitHub."""
-    return (
-        requests.get(f"https://api.github.com/users/{maintainer}").status_code
-        == 200
-    )
+    if "GH_TOKEN" in os.environ:
+        # use a token if we have one
+        gh = _cached_gh()
+        try:
+            gh.get_user(maintainer)
+        except github.UnknownObjectException:
+            return False
+        return True
+    else:
+        return (
+            requests.get(
+                f"https://api.github.com/users/{maintainer}"
+            ).status_code
+            == 200
+        )
 
 
 def run_conda_forge_specific(
