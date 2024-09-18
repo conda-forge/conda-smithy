@@ -872,7 +872,7 @@ def reduce_variants(recipe_path, config, input_variants):
     variants = initial_variants = conda_build.variants.get_package_variants(
         metadata, variants=input_variants
     )
-    logger.debug(f"Starting with {len(initial_variants)} input variants")
+    logger.debug("Starting with %s input variants", len(initial_variants))
     metadata.config.variant = variants[0]
     metadata.config.variants = variants
 
@@ -892,7 +892,7 @@ def reduce_variants(recipe_path, config, input_variants):
         # only consider keys that increase render dimensionality for trimming at this stage
         # so we don't have to trust all_used to find _everything_
         if len(value) > 1 and key not in all_used:
-            logger.debug(f"Trimming unused dimension: {key}")
+            logger.debug("Trimming unused dimension: %s", key)
             new_input_variants.pop(key)
     _trim_unused_zip_keys(new_input_variants)
     # new_variants = metadata.get_reduced_variant_set(all_used)
@@ -1116,7 +1116,7 @@ def _render_ci_provider(
         # CBC yaml files where variants in the migrators are not in the CBC.
         # Thus we move it out of the way.
         # TODO: upstream this as a flag in conda-build
-        logger.info(f"Getting variants for {platform}-{arch}")
+        logger.info("Getting variants for %s-%s", platform, arch)
         try:
             _recipe_cbc = os.path.join(
                 forge_dir,
