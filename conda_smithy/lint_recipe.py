@@ -9,7 +9,6 @@ from pathlib import Path
 from textwrap import indent
 from typing import Any, List, Optional, Tuple
 
-import github
 import jsonschema
 import requests
 from conda_build.metadata import (
@@ -371,6 +370,14 @@ def lintify_meta_yaml(
     return lints, hints
 
 
+def _maintainer_exists(maintainer: str) -> bool:
+    """Check if a maintainer exists on GitHub."""
+    return (
+        requests.get(f"https://api.github.com/users/{maintainer}").status_code
+        == 200
+    )
+
+
 def run_conda_forge_specific(
     meta,
     recipe_dir,
@@ -378,17 +385,12 @@ def run_conda_forge_specific(
     hints,
     recipe_version: int = 0,
 ):
-    gh = github.Github(os.environ["GH_TOKEN"])
-
     # Retrieve sections from meta
     package_section = get_section(
         meta, "package", lints, recipe_version=recipe_version
     )
     extra_section = get_section(
         meta, "extra", lints, recipe_version=recipe_version
-    )
-    sources_section = get_section(
-        meta, "source", lints, recipe_version=recipe_version
     )
     requirements_section = get_section(
         meta, "requirements", lints, recipe_version=recipe_version
@@ -408,87 +410,18 @@ def run_conda_forge_specific(
     is_staged_recipes = recipe_dirname != "recipe"
 
     # 1: Check that the recipe does not exist in conda-forge or bioconda
-    if is_staged_recipes and recipe_name:
-        cf = gh.get_user(os.getenv("GH_ORG", "conda-forge"))
-
-        for name in set(
-            [
-                recipe_name,
-                recipe_name.replace("-", "_"),
-                recipe_name.replace("_", "-"),
-            ]
-        ):
-            try:
-                if cf.get_repo(f"{name}-feedstock"):
-                    existing_recipe_name = name
-                    feedstock_exists = True
-                    break
-                else:
-                    feedstock_exists = False
-            except github.UnknownObjectException:
-                feedstock_exists = False
-
-        if feedstock_exists and existing_recipe_name == recipe_name:
-            lints.append("Feedstock with the same name exists in conda-forge.")
-        elif feedstock_exists:
-            hints.append(
-                f"Feedstock with the name {existing_recipe_name} exists in conda-forge. Is it the same as this package ({recipe_name})?"
-            )
-
-        bio = gh.get_user("bioconda").get_repo("bioconda-recipes")
-        try:
-            bio.get_dir_contents(f"recipes/{recipe_name}")
-        except github.UnknownObjectException:
-            pass
-        else:
-            hints.append(
-                "Recipe with the same name exists in bioconda: "
-                "please discuss with @conda-forge/bioconda-recipes."
-            )
-
-        url = None
-        if recipe_version == 1:
-            for source_url in sources_section:
-                if source_url.startswith("https://pypi.io/packages/source/"):
-                    url = source_url
-        else:
-            for source_section in sources_section:
-                if str(source_section.get("url")).startswith(
-                    "https://pypi.io/packages/source/"
-                ):
-                    url = source_section["url"]
-        if url:
-            # get pypi name from  urls like "https://pypi.io/packages/source/b/build/build-0.4.0.tar.gz"
-            pypi_name = url.split("/")[6]
-            mapping_request = requests.get(
-                "https://raw.githubusercontent.com/regro/cf-graph-countyfair/master/mappings/pypi/name_mapping.yaml"
-            )
-            if mapping_request.status_code == 200:
-                mapping_raw_yaml = mapping_request.content
-                mapping = get_yaml().load(mapping_raw_yaml)
-                for pkg in mapping:
-                    if pkg.get("pypi_name", "") == pypi_name:
-                        conda_name = pkg["conda_name"]
-                        hints.append(
-                            f"A conda package with same name ({conda_name}) already exists."
-                        )
+    # moved to staged-recipes directly
 
     # 2: Check that the recipe maintainers exists:
     for maintainer in maintainers:
         if "/" in maintainer:
             # It's a team. Checking for existence is expensive. Skip for now
             continue
-        try:
-            gh.get_user(maintainer)
-        except github.UnknownObjectException:
+        if not _maintainer_exists(maintainer):
             lints.append(f'Recipe maintainer "{maintainer}" does not exist')
 
     # 3: if the recipe dir is inside the example dir
-    if recipe_dir is not None and "recipes/example/" in recipe_dir:
-        lints.append(
-            "Please move the recipe out of the example dir and "
-            "into its own dir."
-        )
+    # moved to staged-recipes directly
 
     # 4: Do not delete example recipe
     # removed in favor of direct check in staged-recipes CI
@@ -522,35 +455,7 @@ def run_conda_forge_specific(
             hints.append(specific_hints[dep])
 
     # 6: Check if all listed maintainers have commented:
-    pr_number = os.environ.get("STAGED_RECIPES_PR_NUMBER")
-
-    if is_staged_recipes and maintainers and pr_number:
-        # Get PR details using GitHub API
-        current_pr = gh.get_repo("conda-forge/staged-recipes").get_pull(
-            int(pr_number)
-        )
-
-        # Get PR author, issue comments, and review comments
-        pr_author = current_pr.user.login
-        issue_comments = current_pr.get_issue_comments()
-        review_comments = current_pr.get_reviews()
-
-        # Combine commenters from both issue comments and review comments
-        commenters = {comment.user.login for comment in issue_comments}
-        commenters.update({review.user.login for review in review_comments})
-
-        # Check if all maintainers have either commented or are the PR author
-        non_participating_maintainers = set()
-        for maintainer in maintainers:
-            if maintainer not in commenters and maintainer != pr_author:
-                non_participating_maintainers.add(maintainer)
-
-        # Add a lint message if there are any non-participating maintainers
-        if non_participating_maintainers:
-            lints.append(
-                f"The following maintainers have not yet confirmed that they are willing to be listed here: "
-                f"{', '.join(non_participating_maintainers)}. Please ask them to comment on this PR if they are."
-            )
+    # moved to staged recipes directly
 
     # 7: Ensure that the recipe has some .ci_support files
     if not is_staged_recipes and recipe_dir is not None:
