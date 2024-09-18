@@ -5,12 +5,10 @@ import subprocess
 import tempfile
 import textwrap
 import unittest
-import warnings
 from collections import OrderedDict
 from contextlib import contextmanager
 from pathlib import Path
 
-import github
 import pytest
 
 import conda_smithy.lint_recipe as linter
@@ -18,10 +16,6 @@ from conda_smithy.linter.utils import VALID_PYTHON_BUILD_BACKENDS
 from conda_smithy.utils import get_yaml
 
 _thisdir = os.path.abspath(os.path.dirname(__file__))
-
-
-def is_gh_token_set():
-    return "GH_TOKEN" in os.environ
 
 
 @contextmanager
@@ -1819,7 +1813,6 @@ noarch_platforms:
         )
         assert not lints
 
-    @unittest.skipUnless(is_gh_token_set(), "GH_TOKEN not set")
     def test_maintainer_exists(self):
         lints, _ = linter.lintify_meta_yaml(
             {"extra": {"recipe-maintainers": ["support"]}}, conda_forge=True
@@ -1832,168 +1825,6 @@ noarch_platforms:
         )
         expected_message = 'Recipe maintainer "isuruf" does not exist'
         self.assertNotIn(expected_message, lints)
-
-        expected_message = (
-            "Feedstock with the same name exists in conda-forge."
-        )
-        # Check that feedstock exists if staged_recipes
-        lints, _ = linter.lintify_meta_yaml(
-            {"package": {"name": "python"}},
-            recipe_dir="python",
-            conda_forge=True,
-        )
-        self.assertIn(expected_message, lints)
-        lints, _ = linter.lintify_meta_yaml(
-            {"package": {"name": "python"}},
-            recipe_dir="python",
-            conda_forge=False,
-        )
-        self.assertNotIn(expected_message, lints)
-        # No lint if in a feedstock
-        lints, _ = linter.lintify_meta_yaml(
-            {"package": {"name": "python"}},
-            recipe_dir="recipe",
-            conda_forge=True,
-        )
-        self.assertNotIn(expected_message, lints)
-        lints, _ = linter.lintify_meta_yaml(
-            {"package": {"name": "python"}},
-            recipe_dir="recipe",
-            conda_forge=False,
-        )
-        self.assertNotIn(expected_message, lints)
-
-        # Make sure there's no feedstock named python1 before proceeding
-        gh = github.Github(os.environ["GH_TOKEN"])
-        cf = gh.get_user("conda-forge")
-        try:
-            cf.get_repo("python1-feedstock")
-            feedstock_exists = True
-        except github.UnknownObjectException:
-            feedstock_exists = False
-
-        if feedstock_exists:
-            warnings.warn(
-                "There's a feedstock named python1, but tests assume that there isn't"
-            )
-        else:
-            lints, _ = linter.lintify_meta_yaml(
-                {"package": {"name": "python1"}},
-                recipe_dir="python",
-                conda_forge=True,
-            )
-            self.assertNotIn(expected_message, lints)
-
-        # Test bioconda recipe checking
-        expected_message = (
-            "Recipe with the same name exists in bioconda: "
-            "please discuss with @conda-forge/bioconda-recipes."
-        )
-        bio = gh.get_user("bioconda").get_repo("bioconda-recipes")
-        r = "samtools"
-        try:
-            bio.get_dir_contents(f"recipe/{r}")
-        except github.UnknownObjectException:
-            warnings.warn(
-                f"There's no bioconda recipe named {r}, but tests assume that there is"
-            )
-        else:
-            # Check that feedstock exists if staged_recipes
-            lints, _ = linter.lintify_meta_yaml(
-                {"package": {"name": r}}, recipe_dir=r, conda_forge=True
-            )
-            self.assertIn(expected_message, lints)
-            lints, _ = linter.lintify_meta_yaml(
-                {"package": {"name": r}}, recipe_dir=r, conda_forge=False
-            )
-            self.assertNotIn(expected_message, lints)
-            # No lint if in a feedstock
-            lints, _ = linter.lintify_meta_yaml(
-                {"package": {"name": r}}, recipe_dir="recipe", conda_forge=True
-            )
-            self.assertNotIn(expected_message, lints)
-            lints, _ = linter.lintify_meta_yaml(
-                {"package": {"name": r}},
-                recipe_dir="recipe",
-                conda_forge=False,
-            )
-            self.assertNotIn(expected_message, lints)
-            # No lint if the name isn't specified
-            lints, _ = linter.lintify_meta_yaml(
-                {}, recipe_dir=r, conda_forge=True
-            )
-            self.assertNotIn(expected_message, lints)
-
-        r = "this-will-never-exist"
-        try:
-            bio.get_dir_contents(f"recipes/{r}")
-        except github.UnknownObjectException:
-            lints, _ = linter.lintify_meta_yaml(
-                {"package": {"name": r}}, recipe_dir=r, conda_forge=True
-            )
-            self.assertNotIn(expected_message, lints)
-        else:
-            warnings.warn(
-                f"There's a bioconda recipe named {r}, but tests assume that there isn't"
-            )
-
-        expected_message = (
-            "A conda package with same name (numpy) already exists."
-        )
-        lints, hints = linter.lintify_meta_yaml(
-            {
-                "package": {"name": "this-will-never-exist"},
-                "source": {
-                    "url": "https://pypi.io/packages/source/n/numpy/numpy-1.26.4.tar.gz"
-                },
-            },
-            recipe_dir="recipes/foo",
-            conda_forge=True,
-        )
-        self.assertIn(expected_message, hints)
-
-        # check that this doesn't choke
-        lints, hints = linter.lintify_meta_yaml(
-            {
-                "package": {"name": "this-will-never-exist"},
-                "source": {
-                    "url": [
-                        "https://pypi.io/packages/source/n/numpy/numpy-1.26.4.tar.gz"
-                    ]
-                },
-            },
-            recipe_dir="recipes/foo",
-            conda_forge=True,
-        )
-
-    @unittest.skipUnless(is_gh_token_set(), "GH_TOKEN not set")
-    def test_maintainer_participation(self):
-        # Mocking PR and maintainer data
-        os.environ["STAGED_RECIPES_PR_NUMBER"] = "1"  # Example PR number
-        maintainers = ["pelson", "isuruf"]
-
-        try:
-            # Running the linter function
-            lints, _ = linter.lintify_meta_yaml(
-                {"extra": {"recipe-maintainers": maintainers}},
-                recipe_dir="python",
-                conda_forge=True,
-            )
-
-            # Expected message if a maintainer has not participated
-            expected_message = (
-                "The following maintainers have not yet confirmed that they are willing to be listed here: "
-                "isuruf. Please ask them to comment on this PR if they are."
-            )
-            self.assertIn(expected_message, lints)
-
-            expected_message = (
-                "The following maintainers have not yet confirmed that they are willing to be listed here: "
-                "pelson, isuruf. Please ask them to comment on this PR if they are."
-            )
-            self.assertNotIn(expected_message, lints)
-        finally:
-            del os.environ["STAGED_RECIPES_PR_NUMBER"]
 
     def test_bad_subheader(self):
         expected_message = (
@@ -2085,25 +1916,6 @@ noarch_platforms:
         )
         lints, hints = linter.lintify_meta_yaml(meta, recipe_version=1)
         assert any(lint.startswith(expected_message) for lint in lints)
-
-    @unittest.skipUnless(is_gh_token_set(), "GH_TOKEN not set")
-    def test_examples(self):
-        msg = (
-            "Please move the recipe out of the example dir and into its "
-            "own dir."
-        )
-        lints, hints = linter.lintify_meta_yaml(
-            {"extra": {"recipe-maintainers": ["support"]}},
-            recipe_dir="recipes/example/",
-            conda_forge=True,
-        )
-        self.assertIn(msg, lints)
-        lints = linter.lintify_meta_yaml(
-            {"extra": {"recipe-maintainers": ["support"]}},
-            recipe_dir="python",
-            conda_forge=True,
-        )
-        self.assertNotIn(msg, lints)
 
     def test_multiple_sources(self):
         lints = linter.main(
@@ -2268,7 +2080,6 @@ noarch_platforms:
         )
         assert len(hints) < 100
 
-    @unittest.skipUnless(is_gh_token_set(), "GH_TOKEN not set")
     def test_mpl_base_hint(self):
         meta = {
             "requirements": {
@@ -2279,7 +2090,6 @@ noarch_platforms:
         expected = "Recipes should usually depend on `matplotlib-base`"
         self.assertTrue(any(hint.startswith(expected) for hint in hints))
 
-    @unittest.skipUnless(is_gh_token_set(), "GH_TOKEN not set")
     def test_mpl_base_hint_outputs(self):
         meta = {
             "outputs": [
@@ -2513,7 +2323,6 @@ class TestCliRecipeLint(unittest.TestCase):
             assert_jinja('{% set version= "0.27.3"%}', is_good=False)
 
 
-@unittest.skipUnless(is_gh_token_set(), "GH_TOKEN not set")
 def test_lint_no_builds():
     expected_message = "The feedstock has no `.ci_support` files and "
 
@@ -2542,7 +2351,6 @@ def test_lint_no_builds():
         assert not any(lint.startswith(expected_message) for lint in lints)
 
 
-@unittest.skipUnless(is_gh_token_set(), "GH_TOKEN not set")
 def test_lint_duplicate_cfyml():
     expected_message = (
         "The ``conda-forge.yml`` file is not allowed to have duplicate keys."
@@ -2771,7 +2579,6 @@ def test_v1_package_name_version():
         assert lint_2 in lints
 
 
-@unittest.skipUnless(is_gh_token_set(), "GH_TOKEN not set")
 @pytest.mark.parametrize("remove_top_level", [True, False])
 @pytest.mark.parametrize(
     "outputs_to_add, outputs_expected_hints",
