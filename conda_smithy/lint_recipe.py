@@ -3,6 +3,7 @@ import json
 import os
 import sys
 from collections.abc import Mapping
+from functools import lru_cache
 from glob import glob
 from inspect import cleandoc
 from pathlib import Path
@@ -372,11 +373,23 @@ def lintify_meta_yaml(
     return lints, hints
 
 
+# the two functions here allow the cache to refresh
+# if some changes the value of os.environ["GH_TOKEN"]
+# in the same Python process
+@lru_cache(maxsize=1)
+def _cached_gh_with_token(token: str) -> github.Github:
+    return github.Github(auth=github.Auth.Token(token))
+
+
+def _cached_gh():
+    return _cached_gh_with_token(os.environ["GH_TOKEN"])
+
+
 def _maintainer_exists(maintainer: str) -> bool:
     """Check if a maintainer exists on GitHub."""
     if "GH_TOKEN" in os.environ:
         # use a token if we have one
-        gh = github.Github(auth=github.Auth.Token(os.getenv("GH_TOKEN")))
+        gh = _cached_gh()
         try:
             gh.get_user(maintainer)
         except github.UnknownObjectException:
