@@ -16,7 +16,7 @@
 
 **Fixed:**
 
-* Fixed linter to use a GitHub Token if one is available. (#)
+* Fixed linter to use a GitHub Token if one is available. (#2064)
 
 **Security:**
 
