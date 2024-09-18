@@ -384,7 +384,9 @@ def _maintainer_exists(maintainer: str) -> bool:
         return True
     else:
         return (
-            requests.get(f"https://api.github.com/users/{maintainer}").status_code
+            requests.get(
+                f"https://api.github.com/users/{maintainer}"
+            ).status_code
             == 200
         )
 
