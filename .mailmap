@@ -37,8 +37,8 @@ Leo Fang <leofang@bnl.gov> Leo Fang <leo80042@gmail.com>
 Leo Fang <leofang@bnl.gov> Leo Fang <leof@nvidia.com>
 Hadrien Mary <hadrien.mary@gmail.com> Hadrien Mary <hadim@users.noreply.github.com>
 Ryan Volz <rvolz@mit.edu> Ryan Volz <ryan.volz@gmail.com>
-Johnny Willemsen <jwillemsen@remedy.nl>
 pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>
+Johnny Willemsen <jwillemsen@remedy.nl>
 Chris Burr <christopher.burr@cern.ch> Chris Burr <chrisburr@users.noreply.github.com>
 Julian Rüth <julian.rueth@fsfe.org>
 Yannik Tausch <yannik.tausch@quantco.com>
@@ -64,6 +64,7 @@ Jan Lehnarsdt <jan@apache.org>
 C.A.M. Gerlach <widenetservices@gmail.com>
 refraction-ray <kcanamgal@foxmail.com>
 Leopold Talirz <leopold.talirz@gmail.com>
+Peter Williams <peter@newton.cx>
 Tom Pollard <tom.pollard@codethink.co.uk>
 Gonzalo Pena-Castellanos <goanpeca@gmail.com>
 John Blischak <jdblischak@gmail.com>
@@ -71,7 +72,6 @@ Matthias Diener <mdiener@illinois.edu>
 Antonio S. Cofiño <cofinoa@gmail.com>
 Carlo <carlo.dri@gmail.com> Carlo <carlodri@users.noreply.github.com>
 Matthew Craig <mattwcraig@gmail.com> Matt Craig <mattwcraig@gmail.com>
-Peter Williams <peter@newton.cx>
 Joshua L. Adelman <joshua.adelman@gmail.com>
 Marius van Niekerk <marius.v.niekerk@gmail.com> mariusvniekerk <marius.vanniekerk@maxpoint.com>
 Marius van Niekerk <marius.v.niekerk@gmail.com> mariusvniekerk <mvanniekerk@flatiron.com>
@@ -141,3 +141,4 @@ Benjamin Tovar <btovar@nd.edu>
 Sylvain Corlay <sylvain.corlay@gmail.com>
 Brandon Andersen <31670449+bandersen23@users.noreply.github.com>
 Vincenzo Eduardo Padulano <v.e.padulano@gmail.com>
+Bas Zalmstra <zalmstra.bas@gmail.com>

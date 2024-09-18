@@ -24,8 +24,8 @@ Authors are sorted by number of commits.
 * Leo Fang
 * Hadrien Mary
 * Ryan Volz
-* Johnny Willemsen
 * pre-commit-ci[bot]
+* Johnny Willemsen
 * Chris Burr
 * Julian Rüth
 * Yannik Tausch
@@ -49,6 +49,7 @@ Authors are sorted by number of commits.
 * C.A.M. Gerlach
 * refraction-ray
 * Leopold Talirz
+* Peter Williams
 * Tom Pollard
 * Gonzalo Pena-Castellanos
 * John Blischak
@@ -56,7 +57,6 @@ Authors are sorted by number of commits.
 * Antonio S. Cofiño
 * Carlo
 * Matthew Craig
-* Peter Williams
 * Joshua L. Adelman
 * Marius van Niekerk
 * Johannes Köster
@@ -123,3 +123,4 @@ Authors are sorted by number of commits.
 * Sylvain Corlay
 * Brandon Andersen
 * Vincenzo Eduardo Padulano
+* Bas Zalmstra
