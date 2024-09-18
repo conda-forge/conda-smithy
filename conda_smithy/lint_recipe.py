@@ -381,7 +381,7 @@ def _cached_gh_with_token(token: str) -> github.Github:
     return github.Github(auth=github.Auth.Token(token))
 
 
-def _cached_gh():
+def _cached_gh(): -> github.Github:
     return _cached_gh_with_token(os.environ["GH_TOKEN"])
 
 
