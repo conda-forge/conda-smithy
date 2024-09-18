@@ -639,3 +639,95 @@ def jinja_env():
     return SandboxedEnvironment(
         extensions=["jinja2.ext.do"], loader=FileSystemLoader([tmplt_dir])
     )
+
+
+@pytest.fixture(scope="function")
+def v1_noarch_recipe_with_context(testing_workdir: Path, recipe_dirname):
+    with open(os.path.join(testing_workdir, "conda-forge.yml"), "w") as f:
+        config = {
+            "recipe_dir": recipe_dirname,
+        }
+        config["conda_build_tool"] = "rattler-build"
+        yaml.dump(config, f, default_flow_style=False)
+
+    os.mkdir(os.path.join(testing_workdir, recipe_dirname))
+    with open(
+        os.path.join(testing_workdir, recipe_dirname, "recipe.yaml"),
+        "w",
+    ) as fh:
+        fh.write(
+            """
+context:
+    name: python-noarch-test-from-context
+    version: 9.0.0
+package:
+    name: ${{ name }}
+    version: ${{ version }}
+build:
+    noarch: python
+requirements:
+    build:
+        - python
+    run:
+        - python
+    """
+        )
+
+    return RecipeConfigPair(
+        testing_workdir,
+        _load_forge_config(testing_workdir, exclusive_config_file=None),
+    )
+
+
+@pytest.fixture(scope="function")
+def v1_recipe_with_multiple_outputs(testing_workdir: Path, recipe_dirname):
+    with open(os.path.join(testing_workdir, "conda-forge.yml"), "w") as f:
+        config = {
+            "recipe_dir": recipe_dirname,
+        }
+        config["conda_build_tool"] = "rattler-build"
+        yaml.dump(config, f, default_flow_style=False)
+
+    os.mkdir(os.path.join(testing_workdir, recipe_dirname))
+
+    with open(
+        os.path.join(testing_workdir, recipe_dirname, "recipe.yaml"),
+        "w",
+    ) as fh:
+        fh.write(
+            """
+context:
+  name: mamba
+  mamba_version: "1.5.8"
+  libmamba_version: "1.5.9"
+  libmambapy_version: "1.5.9"
+
+recipe:
+  name: mamba-split
+  version: ${{ mamba_version }}
+
+source:
+  url: https://github.com/mamba-org/mamba/archive/refs/tags/${{ release }}.tar.gz
+  sha256: 6ddaf4b0758eb7ca1250f427bc40c2c3ede43257a60bac54e4320a4de66759a6
+
+build:
+  number: 1
+
+outputs:
+  - package:
+      name: libmamba
+      version: ${{ libmamba_version }}
+
+  - package:
+      name: libmambapy
+      version: ${{ libmambapy_version }}
+
+  - package:
+      name: mamba
+      version: ${{ mamba_version }}
+    """
+        )
+    return RecipeConfigPair(
+        testing_workdir,
+        _load_forge_config(testing_workdir, exclusive_config_file=None),
+    )

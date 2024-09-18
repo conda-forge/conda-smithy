@@ -4,6 +4,126 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.39.1
+====================
+
+**Added:**
+
+* Added bot feedstocks to the allowlist for service feedstocks on GHA. (#2041)
+
+**Fixed:**
+
+* Fixed a corner-case in stdlib-linting (#2042)
+* Fixed error where some python build backends were flagged as not having a backend. (#2046)
+
+**Authors:**
+
+* Isuru Fernando
+* Matthew R. Becker
+* H. Vetinari
+* Mark Harfouche
+* dependabot[bot]
+
+
+
+v3.39.0
+====================
+
+**Added:**
+
+* Added hint for missing ``pip`` build backend in the ``host`` section of the recipe. (#2039)
+* Added a lint for duplicate keys in the ``conda-forge.yml`` file. (#2040)
+
+**Removed:**
+
+* Removed lint for editing example recipes in staged-recipes since covered by CI already. (#2038)
+
+**Authors:**
+
+* Matthew R. Becker
+* Uwe L. Korn
+* pre-commit-ci[bot]
+* dependabot[bot]
+
+
+
+v3.38.0
+====================
+
+**Added:**
+
+* make `stdlib` linting work for v2 recipe format (#1992)
+* add lint for noarch and runtime deps (#2001)
+* Added linting for go license bundling check in conda v2 recipes. (#2013)
+* Added linting for rust license bundling for v2 recipe format (#2015)
+* Added linting for Jinja expressions in the new v2 conda recipe format (#2017)
+* Added proper linting for `pin_subpackage` and `pin_compatible` for conda v2 recipes. (#2018)
+* Added more lints / hints for conda v2 recipes. (#2000, #2003, #2008, #2016, #2022)
+
+**Changed:**
+
+* Exclude ruff commits from git ( #2007 )
+* The conda recipe version was renamed from ``{1, 2}`` to ``{0, 1}``. (#2031)
+
+**Fixed:**
+
+* Add upper bound for rattler-build-conda-compat. (#2009)
+* Reenabled service feedstocks that were removed by accident in #1703. (#2025)
+
+**Authors:**
+
+* Matthew R. Becker
+* nichmor
+* Wolf Vollprecht
+* John Kirkham
+* pre-commit-ci[bot]
+
+
+
+v3.37.2ls
+====================
+
+**Authors:**
+
+
+
+
+v3.37.2
+====================
+
+**Added:**
+
+* extended documentation for the ``bot.version_updates.sources`` field in ``conda-forge.yml``
+* Added partial implementation of conda recipe format v2 linting. (#1984, #1985, #1987, #1988, #1988, #1991, #1999)
+
+**Changed:**
+
+* Introduced ``ruff`` as pre-commit linter. (#1919)
+* Make sure to use ``Miniforge`` everywhere instead of ``Mambaforge`` (they are equivalent). (#1986)
+* Use ``tlz`` namespace from ``toolz`` ( #2006 )
+* Refactor ``lint_recipe.py`` and split some functions into separate modules (``linter/lints.py`` and ``linter/hints.py``). (#1981)
+
+**Fixed:**
+
+* Remove import of deprecated ``conda_build.conda_interface``
+* When linting build_platform has a default value now (#1996).
+* Generate correct URL for feedstock maintainer teams in feedstock READMEs. (#1990)
+
+**Authors:**
+
+* Isuru Fernando
+* Matthew R. Becker
+* Jaime Rodríguez-Guerra
+* nichmor
+* Min RK
+* John Kirkham
+* pre-commit-ci[bot]
+* Wolf Vollprecht
+* Yannik Tausch
+* Daniel Ching
+
+
+
 v3.37.1
 ====================
 

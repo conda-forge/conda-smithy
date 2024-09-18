@@ -74,6 +74,11 @@ SERVICE_FEEDSTOCKS = [
     "conda-forge-pinning-feedstock",
     "conda-forge-repodata-patches-feedstock",
     "conda-smithy-feedstock",
+    "conda-forge-ci-setup-feedstock",
+    # these are parts of the bot or used by it
+    "conda-forge-tick",
+    "conda-forge-feedstock-check-solvable-feedstock",
+    "conda-forge-metadata-feedstock",
 ]
 if "CONDA_SMITHY_SERVICE_FEEDSTOCKS" in os.environ:
     SERVICE_FEEDSTOCKS += os.environ["CONDA_SMITHY_SERVICE_FEEDSTOCKS"].split(
@@ -1014,7 +1019,7 @@ def _render_ci_provider(
             if ver:
                 os.environ["DEFAULT_LINUX_VERSION"] = ver
 
-        # detect if it's rattler-build recipe
+        # detect if it's v1 recipe
         if forge_config["conda_build_tool"] == RATTLER_BUILD:
             recipe_file = "recipe.yaml"
         else:
@@ -1049,7 +1054,7 @@ def _render_ci_provider(
         )
 
         # If we are using new recipe
-        # we also load rattler-build variants.yaml
+        # we also load v1 variants.yaml
         if recipe_file == "recipe.yaml":
             # get_selectors from conda-build return namespace
             # so it is usefull to reuse it here
@@ -1079,7 +1084,10 @@ def _render_ci_provider(
             if (
                 channel_target.startswith("conda-forge ")
                 and provider_name == "github_actions"
-                and not forge_config["github_actions"]["self_hosted"]
+                and not (
+                    (forge_config["github_actions"]["self_hosted"])
+                    or (os.path.basename(forge_dir) in SERVICE_FEEDSTOCKS)
+                )
             ):
                 raise RuntimeError(
                     "Using github_actions as the CI provider inside "
@@ -1418,10 +1426,7 @@ def generate_yum_requirements(forge_config, forge_dir):
             # "recipe/yum_requirements.txt" file. After updating that file,
             # run "conda smithy rerender" and this line will be updated
             # automatically.
-            /usr/bin/sudo -n yum install -y {}
-
-
-        """.format(
+            /usr/bin/sudo -n yum install -y {}""".format(
                 " ".join(requirements)
             )
         )

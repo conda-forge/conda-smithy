@@ -7,17 +7,47 @@ import time
 from collections import defaultdict
 from contextlib import contextmanager
 from pathlib import Path
+from typing import Any, Dict, Union
 
 import jinja2
 import jinja2.sandbox
 import ruamel.yaml
+from conda_build.api import render as conda_build_render
+from conda_build.render import MetaData
+from rattler_build_conda_compat.render import MetaData as RattlerBuildMetaData
 
 RATTLER_BUILD = "rattler-build"
 CONDA_BUILD = "conda-build"
 
 
-def get_feedstock_name_from_meta(meta):
-    """Resolve the feedtstock name from the parsed meta.yaml."""
+def _get_metadata_from_feedstock_dir(
+    feedstock_directory: Union[str, os.PathLike], forge_config: Dict[str, Any]
+) -> Union[MetaData, RattlerBuildMetaData]:
+    """
+    Return either the conda-build metadata or rattler-build metadata from the feedstock directory
+    based on conda_build_tool value from forge_config.
+    Raises OsError if no meta.yaml or recipe.yaml is found in feedstock_directory.
+    """
+    if forge_config and forge_config.get("conda_build_tool") == RATTLER_BUILD:
+        meta = RattlerBuildMetaData(
+            feedstock_directory,
+        )
+    else:
+        meta = conda_build_render(
+            feedstock_directory,
+            permit_undefined_jinja=True,
+            finalize=False,
+            bypass_env_check=True,
+            trim_skip=False,
+        )[0][0]
+
+    return meta
+
+
+def get_feedstock_name_from_meta(
+    meta: Union[MetaData, RattlerBuildMetaData]
+) -> str:
+    """Get the feedstock name from a parsed meta.yaml or recipe.yaml."""
     if "feedstock-name" in meta.meta["extra"]:
         return meta.meta["extra"]["feedstock-name"]
     elif "parent_recipe" in meta.meta["extra"]:
@@ -45,14 +75,14 @@ def get_feedstock_about_from_meta(meta) -> dict:
         return dict(meta.meta["about"])
 
 
-def get_yaml():
+def get_yaml(allow_duplicate_keys: bool = True):
     # define global yaml API
     # roundrip-loader and allowing duplicate keys
     # for handling # [filter] / # [not filter]
     # Don't use a global variable for this as a global
     # variable will make conda-smithy thread unsafe.
     yaml = ruamel.yaml.YAML(typ="rt")
-    yaml.allow_duplicate_keys = True
+    yaml.allow_duplicate_keys = allow_duplicate_keys
     return yaml
 
 

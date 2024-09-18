@@ -1,14 +1,25 @@
 import copy
 import os
 import re
+import sys
+import time
 from collections.abc import Sequence
+from functools import lru_cache
 from glob import glob
-from typing import Mapping
+from typing import Dict, List, Mapping, Optional, Union
 
+import requests
+from conda.models.version import InvalidVersionSpec, VersionOrder
 from conda_build.metadata import (
     FIELDS as _CONDA_BUILD_FIELDS,
 )
 from rattler_build_conda_compat import loader as rattler_loader
+from rattler_build_conda_compat.recipe_sources import get_all_sources
+
+if sys.version_info[:2] < (3, 11):
+    import tomli as tomllib
+else:
+    import tomllib
 
 FIELDS = copy.deepcopy(_CONDA_BUILD_FIELDS)
 
@@ -44,12 +55,27 @@ JINJA_VAR_PAT = re.compile(r"{{(.*?)}}")
 CONDA_BUILD_TOOL = "conda-build"
 RATTLER_BUILD_TOOL = "rattler-build"
 
+VALID_PYTHON_BUILD_BACKENDS = [
+    "setuptools",
+    "flit-core",
+    "hatchling",
+    "poetry-core",
+    "pdm-backend",
+    "pdm-pep517",
+    "meson-python",
+    "scikit-build-core",
+    "maturin",
+    "jupyter_packaging",
+]
 
-def get_section(parent, name, lints, is_rattler_build=False):
-    if not is_rattler_build:
+
+def get_section(parent, name, lints, recipe_version: int = 0):
+    if recipe_version == 0:
         return get_meta_section(parent, name, lints)
+    elif recipe_version == 1:
+        return get_recipe_v1_section(parent, name)
     else:
-        return get_rattler_section(parent, name)
+        raise ValueError(f"Unknown recipe version: {recipe_version}")
 
 
 def get_meta_section(parent, name, lints):
@@ -68,15 +94,14 @@ def get_meta_section(parent, name, lints):
     return section
 
 
-def get_rattler_section(meta, name):
+def get_recipe_v1_section(meta, name) -> Union[Dict, List[Dict]]:
     if name == "requirements":
         return rattler_loader.load_all_requirements(meta)
     elif name == "tests":
         return rattler_loader.load_all_tests(meta)
     elif name == "source":
-        source = meta.get("source", [])
-        if isinstance(source, Mapping):
-            return [source]
+        sources = get_all_sources(meta)
+        return list(sources)
 
     return meta.get(name, {})
 
@@ -98,7 +123,7 @@ def get_list_section(parent, name, lints, allow_single=False):
         return [{}]
 
 
-def find_local_config_file(recipe_dir, filename):
+def find_local_config_file(recipe_dir: str, filename: str) -> Optional[str]:
     # support
     # 1. feedstocks
     # 2. staged-recipes with custom conda-forge.yaml in recipe
@@ -159,3 +184,45 @@ def jinja_lines(lines):
     for i, line in enumerate(lines):
         if is_jinja_line(line):
             yield line, i
+
+
+def _lint_recipe_name(recipe_name: str) -> Optional[str]:
+    wrong_recipe_name = "Recipe name has invalid characters. only lowercase alpha, numeric, underscores, hyphens and dots allowed"
+
+    if re.match(r"^[a-z0-9_\-.]+$", recipe_name) is None:
+        return wrong_recipe_name
+
+    return None
+
+
+def _lint_package_version(version: Optional[str]) -> Optional[str]:
+    no_package_version = "Package version is missing."
+    invalid_version = "Package version {ver} doesn't match conda spec: {err}"
+
+    if not version:
+        return no_package_version
+
+    ver = str(version)
+    try:
+        VersionOrder(ver)
+    except InvalidVersionSpec as e:
+        return invalid_version.format(ver=ver, err=e)
+
+
+def load_linter_toml_metdata():
+    # ensure we refresh the cache every hour
+    ttl = 3600
+    time_salt = int(time.time() / ttl)
+    return load_linter_toml_metdata_internal(time_salt)
+
+
+@lru_cache(maxsize=1)
+def load_linter_toml_metdata_internal(time_salt):
+    hints_toml_url = "https://raw.githubusercontent.com/conda-forge/conda-forge-pinning-feedstock/main/recipe/linter_hints/hints.toml"
+    hints_toml_req = requests.get(hints_toml_url)
+    if hints_toml_req.status_code != 200:
+        # too bad, but not important enough to throw an error;
+        # linter will rerun on the next commit anyway
+        return None
+    hints_toml_str = hints_toml_req.content.decode("utf-8")
+    return tomllib.loads(hints_toml_str)

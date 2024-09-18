@@ -1,6 +1,6 @@
 **Added:**
 
-* <news item>
+* Enabled branch protection for ``conda-forge`` feedstocks by default. (#2054)
 
 **Changed:**
 
@@ -16,7 +16,7 @@
 
 **Fixed:**
 
-* When linting build_platform has a default value now (#1996).
+* <news item>
 
 **Security:**
 

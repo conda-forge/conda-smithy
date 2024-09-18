@@ -4,7 +4,7 @@
 
 **Changed:**
 
-* Introduced ``ruff`` as pre-commit linter. (#1919)
+* <news item>
 
 **Deprecated:**
 
@@ -16,7 +16,7 @@
 
 **Fixed:**
 
-* <news item>
+* Fixed the ``sh`` trampoline in the ``build-locally.py`` template (#2053)
 
 **Security:**
 
