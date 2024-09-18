@@ -9,6 +9,8 @@ from pathlib import Path
 from textwrap import indent
 from typing import Any, List, Optional, Tuple
 
+import github
+import github.Auth
 import jsonschema
 import requests
 from conda_build.metadata import (
@@ -372,10 +374,19 @@ def lintify_meta_yaml(
 
 def _maintainer_exists(maintainer: str) -> bool:
     """Check if a maintainer exists on GitHub."""
-    return (
-        requests.get(f"https://api.github.com/users/{maintainer}").status_code
-        == 200
-    )
+    if "GH_TOKEN" in os.environ:
+        # use a token if we have one
+        gh = github.Github(auth=github.Auth.Token(os.getenv("GH_TOKEN")))
+        try:
+            gh.get_user(maintainer)
+        except github.UnknownObjectException:
+            return False
+        return True
+    else:
+        return (
+            requests.get(f"https://api.github.com/users/{maintainer}").status_code
+            == 200
+        )
 
 
 def run_conda_forge_specific(
