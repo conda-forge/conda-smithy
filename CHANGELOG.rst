@@ -4,6 +4,19 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.40.1
+====================
+
+**Fixed:**
+
+* Fixed linter to use a GitHub Token if one is available. (#2064)
+
+**Authors:**
+
+* Matthew R. Becker
+
+
+
 v3.40.0
 ====================
 
