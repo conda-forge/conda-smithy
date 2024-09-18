@@ -24,6 +24,18 @@ zlib:
 nonexistent:
   - a
   - b
+# not used; should not be picked up
+unused:
+  - a
+  - b
+# used in all output scripts
+script_only:
+  - a
+  - b
+# used in output2 script
+script_only_2:
+  - a2
+  - b2
 # zip these just for testing purposes
 zip_keys:
   -

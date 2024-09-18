@@ -880,6 +880,22 @@ def reduce_variants(recipe_path, config, input_variants):
     # Without this, dependencies won't be found for multi-output recipes
     # This may not be comprehensive!
     all_used = metadata.get_used_vars(force_global=True)
+    # conservatively, find all used vars in all scripts
+    # we can't use `output.script` because these aren't computed yet
+    # bonus: this will find output.build.script, which conda-build does not.
+    for script in Path(recipe_path).glob("*.sh"):
+        all_used.update(
+            conda_build.variants.find_used_variables_in_shell_script(
+                metadata.config.variant, script
+            )
+        )
+    for script in Path(recipe_path).glob("*.bat"):
+        all_used.update(
+            conda_build.variants.find_used_variables_in_batch_script(
+                metadata.config.variant, script
+            )
+        )
+
     # trim unused dimensions, these cost a lot in render_recipe!
     # because `get_used_vars` above _may_ not catch all possible used variables,
     # only trim unused variables that increase dimensionality.
