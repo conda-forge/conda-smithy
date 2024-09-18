@@ -14,7 +14,8 @@ requirements:
 
 outputs:
   - name: test_output_1
-    script: build-output1.sh
+    script: build-output1.sh  # [not win]
+    script: build-output1.bat  # [win]
     requirements:
       - bzip2
     test:
@@ -22,7 +23,8 @@ outputs:
         - test -e $PREFIX/lib/libz.so     # [linux]
         - test -e $PREFIX/lib/libz.dylib  # [osx]
   - name: test_output_2
-    script: build-output2.sh
+    script: build-output2.sh  # [not win]
+    script: build-output2.bat  # [win]
     requirements:
       host:
         - jpeg

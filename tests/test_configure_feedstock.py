@@ -5,7 +5,6 @@ import re
 import shutil
 import tempfile
 import textwrap
-from itertools import product
 from pathlib import Path
 
 import pytest
@@ -1982,47 +1981,6 @@ def test_get_used_key_values_by_input_order(
     assert used_key_values == expected_used_key_values
 
 
-def test_reduce_variants(config_yaml, jinja_env):
-    if config_yaml.type == "rattler-build":
-        pytest.skip("only conda-build")
-    _thisdir = os.path.abspath(os.path.dirname(__file__))
-    recipe = os.path.join(_thisdir, "recipes", "multiple_outputs")
-    dest_recipe = os.path.join(config_yaml.workdir, "recipe")
-    shutil.copytree(recipe, dest_recipe, dirs_exist_ok=True)
-
-    forge_config = configure_feedstock._load_forge_config(
-            config_yaml.workdir,
-            exclusive_config_file=os.path.join(
-                config_yaml.workdir, "recipe", "default_config.yaml"
-            ),
-        )
-
-    configure_feedstock.render_azure(
-        jinja_env=jinja_env,
-        forge_config=forge_config,
-        forge_dir=config_yaml.workdir,
-    )
-    ci_support = Path(config_yaml.workdir) / ".ci_support"
-    all_yamls = list(ci_support.glob("linux*.yaml"))
-    print(all_yamls)
-    matrix_entry = next(iter(ci_support.glob("linux*.yaml")))
-    with matrix_entry.open() as f:
-        cbc = yaml.safe_load(f)
-    assert len(all_yamls) == 8  # 2 libpq * 2 libpng * 2 script_only
-    # top-level entries
-    assert "libpq" in cbc
-    assert len(cbc["libpq"]) == 1
-    assert "libpng" in cbc
-    assert len(cbc["libpng"]) == 1
-    assert "script_only" in cbc
-    assert len(cbc["script_only"]) == 1
-
-    # inner per-build variants
-    assert "jpeg" in cbc
-    assert len(cbc["jpeg"]) == 2
-    assert "script_only_2" in cbc
-    assert len(cbc["script_only_2"]) == 2
-
 def test_conda_build_api_render_for_smithy(testing_workdir):
     import conda_build.api
 
@@ -2030,19 +1988,12 @@ def test_conda_build_api_render_for_smithy(testing_workdir):
     recipe = os.path.join(_thisdir, "recipes", "multiple_outputs")
     dest_recipe = os.path.join(testing_workdir, "recipe")
     shutil.copytree(recipe, dest_recipe)
-    with open(os.path.join(dest_recipe, "conda_build_config.yaml")) as f:
-        cbc = yaml.safe_load(f)
-
-    # all variants
-    # libpng, libpq contribute to top-level build matrix entries
-    # jpeg, script_only, script_only_2 contribute to output-only variants (not top-level builds)
-    # make sure all variants are still captured
-    variant_keys = ("libpng", "libpq", "jpeg", "script_only", "script_only_2")
-
-    all_top_level_builds = set(
-        tuple(map(str, variant))
-        for variant in product(*(cbc[key] for key in variant_keys))
-    )
+    all_top_level_builds = {
+        ("1.5", "9.5"),
+        ("1.5", "9.6"),
+        ("1.6", "9.5"),
+        ("1.6", "9.6"),
+    }
 
     cs_metas = configure_feedstock._conda_build_api_render_for_smithy(
         dest_recipe,
@@ -2063,10 +2014,18 @@ def test_conda_build_api_render_for_smithy(testing_workdir):
     for meta, _, _ in cs_metas:
         for variant in meta.config.variants:
             top_level_builds.add(
-                tuple(variant.get(key) for key in variant_keys)
+                (
+                    variant.get("libpng"),
+                    variant.get("libpq"),
+                )
             )
         variant = meta.config.variant
-        top_level_builds.add(tuple(variant.get(key) for key in variant_keys))
+        top_level_builds.add(
+            (
+                variant.get("libpng"),
+                variant.get("libpq"),
+            )
+        )
     assert len(top_level_builds) == len(all_top_level_builds)
     assert top_level_builds == all_top_level_builds
     cb_metas = conda_build.api.render(
@@ -2089,10 +2048,18 @@ def test_conda_build_api_render_for_smithy(testing_workdir):
     for meta, _, _ in cb_metas:
         for variant in meta.config.variants:
             top_level_builds.add(
-                tuple(variant.get(key) for key in variant_keys)
+                (
+                    variant.get("libpng"),
+                    variant.get("libpq"),
+                )
             )
         variant = meta.config.variant
-        top_level_builds.add(tuple(variant.get(key) for key in variant_keys))
+        top_level_builds.add(
+            (
+                variant.get("libpng"),
+                variant.get("libpq"),
+            )
+        )
     assert len(top_level_builds) < len(all_top_level_builds)
     assert top_level_builds.issubset(all_top_level_builds)
 

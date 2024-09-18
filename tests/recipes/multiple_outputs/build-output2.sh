@@ -1,2 +1,2 @@
-echo "${script_only}"
+echo "${script_all}"
 echo "${script_only_2}"
