@@ -4,6 +4,34 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.40.0
+====================
+
+**Added:**
+
+* Enabled branch protection for ``conda-forge`` feedstocks by default. (#2054)
+
+**Removed:**
+
+* Moved staged-recipes specific lints/hints that required a GitHub token to the `staged-recipes` repository. (#)
+
+**Fixed:**
+
+* Fixed the ``sh`` trampoline in the ``build-locally.py`` template (#2053)
+
+**Authors:**
+
+* Isuru Fernando
+* Matthew R. Becker
+* nichmor
+* H. Vetinari
+* Uwe L. Korn
+* pre-commit-ci[bot]
+* Peter Williams
+* Bas Zalmstra
+
+
+
 v3.39.1
 ====================
 
