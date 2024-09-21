@@ -57,7 +57,7 @@ def get_feedstock_name_from_meta(
 
 
 def get_feedstock_about_from_meta(meta) -> dict:
-    """Fetch the feedtstock about from the parsed meta.yaml."""
+    """Fetch the feedstock about from the parsed meta.yaml."""
     # it turns out that conda_build would not preserve the feedstock about:
     #   - if a subpackage does not have about, it uses the feedstock's
     #   - if a subpackage has about, it's used as is

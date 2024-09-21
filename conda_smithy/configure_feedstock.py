@@ -2082,9 +2082,19 @@ def render_readme(jinja_env, forge_config, forge_dir, render_info=None):
         about = about.copy()
         # if subpackages do not have about, conda-build would copy the top-level about;
         # if subpackages have their own about, conda-build would use them as is;
-        # we discussed in PR #1691 and decided to not show repetitve entries
+        # we discussed in PR #1691 and decided to not show repetitive entries
         if about != package_about:
             subpackages_about.append((name, about))
+
+    # align new style about with old style about
+    print("subpackages_about", subpackages_about)
+    for i, (name, about) in enumerate(subpackages_about):
+        if "repository" in about:
+            about["dev_url"] = about["repository"]
+        if "homepage" in about:
+            about["home"] = about["homepage"]
+        if "documentation" in about:
+            about["doc_url"] = about["documentation"]
 
     template = jinja_env.get_template("README.md.tmpl")
     target_fname = os.path.join(forge_dir, "README.md")
