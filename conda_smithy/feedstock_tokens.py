@@ -23,13 +23,13 @@ as a secret variable on the CI services. It is also hashed using `scrypt` and
 then uploaded to the token registry (a repo on GitHub).
 """
 
-import tempfile
-import os
-import json
-import time
-import secrets
 import hmac
-from contextlib import redirect_stderr, redirect_stdout, contextmanager
+import json
+import os
+import secrets
+import tempfile
+import time
+from contextlib import contextmanager, redirect_stderr, redirect_stdout
 
 import git
 import requests
@@ -62,13 +62,13 @@ def feedstock_token_local_path(user, project, provider=None):
         pth = os.path.join(
             "~",
             ".conda-smithy",
-            "%s_%s.token" % (user, project),
+            f"{user}_{project}.token",
         )
     else:
         pth = os.path.join(
             "~",
             ".conda-smithy",
-            "%s_%s_%s.token" % (user, project, provider),
+            f"{user}_{project}_{provider}.token",
         )
     return os.path.expanduser(pth)
 
@@ -89,13 +89,10 @@ def generate_and_write_feedstock_token(user, project, provider=None):
             pth = feedstock_token_local_path(user, project, provider=provider)
             if os.path.exists(pth):
                 failed = True
-                err_msg = (
-                    "Token for %s/%s on provider%s is already written locally!"
-                    % (
-                        user,
-                        project,
-                        "" if provider is None else " " + provider,
-                    )
+                err_msg = "Token for {}/{} on provider{} is already written locally!".format(
+                    user,
+                    project,
+                    "" if provider is None else " " + provider,
                 )
                 raise FeedstockTokenError(err_msg)
 
@@ -114,11 +111,12 @@ def generate_and_write_feedstock_token(user, project, provider=None):
         else:
             raise FeedstockTokenError(
                 (
-                    "Generating the feedstock token for %s/%s on provider%s failed!"
+                    "Generating the feedstock token for {}/{} on provider{} failed!"
                     " Try the command locally with DEBUG_FEEDSTOCK_TOKENS"
                     " defined in the environment to investigate!"
+                ).format(
+                    user, project, "" if provider is None else " " + provider
                 )
-                % (user, project, "" if provider is None else " " + provider)
             )
 
     return failed
@@ -141,12 +139,12 @@ def read_feedstock_token(user, project, provider=None):
     )
 
     if not os.path.exists(user_token_pth):
-        err_msg = "No token found in '%s'" % user_token_pth
+        err_msg = f"No token found in '{user_token_pth}'"
     else:
-        with open(user_token_pth, "r") as fp:
+        with open(user_token_pth) as fp:
             feedstock_token = fp.read().strip()
         if not feedstock_token:
-            err_msg = "Empty token found in '%s'" % user_token_pth
+            err_msg = f"Empty token found in '{user_token_pth}'"
             feedstock_token = None
     return feedstock_token, err_msg
 
@@ -161,7 +159,7 @@ def feedstock_token_exists(user, project, token_repo, provider=None):
     If you need to debug this function, define `DEBUG_FEEDSTOCK_TOKENS` in
     your environment before calling this function.
     """
-    from .github import gh_token
+    from conda_smithy.github import gh_token
 
     github_token = gh_token()
 
@@ -185,7 +183,7 @@ def feedstock_token_exists(user, project, token_repo, provider=None):
             )
 
             if os.path.exists(token_file):
-                with open(token_file, "r") as fp:
+                with open(token_file) as fp:
                     token_data = json.load(fp)
 
                 if "tokens" not in token_data:
@@ -210,11 +208,12 @@ def feedstock_token_exists(user, project, token_repo, provider=None):
         else:
             raise FeedstockTokenError(
                 (
-                    "Testing for the feedstock token for %s/%s on provider%s failed!"
+                    "Testing for the feedstock token for {}/{} on provider{} failed!"
                     " Try the command locally with DEBUG_FEEDSTOCK_TOKENS"
                     " defined in the environment to investigate!"
+                ).format(
+                    user, project, "" if provider is None else " " + provider
                 )
-                % (user, project, "" if provider is None else " " + provider)
             )
 
     return exists
@@ -232,7 +231,7 @@ def is_valid_feedstock_token(
     If you need to debug this function, define `DEBUG_FEEDSTOCK_TOKENS` in
     your environment before calling this function.
     """
-    from .github import gh_token
+    from conda_smithy.github import gh_token
 
     github_token = gh_token()
 
@@ -259,7 +258,7 @@ def is_valid_feedstock_token(
             )
 
             if os.path.exists(token_file):
-                with open(token_file, "r") as fp:
+                with open(token_file) as fp:
                     token_data = json.load(fp)
 
                 if "tokens" not in token_data:
@@ -293,11 +292,12 @@ def is_valid_feedstock_token(
         else:
             raise FeedstockTokenError(
                 (
-                    "Validating the feedstock token for %s/%s on provider%s failed!"
+                    "Validating the feedstock token for {}/{} on provider{} failed!"
                     " Try the command locally with DEBUG_FEEDSTOCK_TOKENS"
                     " defined in the environment to investigate!"
+                ).format(
+                    user, project, "" if provider is None else " " + provider
                 )
-                % (user, project, "" if provider is None else " " + provider)
             )
 
     return valid
@@ -326,7 +326,7 @@ def register_feedstock_token(
     If you need to debug this function, define `DEBUG_FEEDSTOCK_TOKENS` in
     your environment before calling this function.
     """
-    from .github import gh_token
+    from conda_smithy.github import gh_token
 
     github_token = gh_token()
 
@@ -360,7 +360,7 @@ def register_feedstock_token(
 
             # append the token if needed
             if os.path.exists(token_file):
-                with open(token_file, "r") as fp:
+                with open(token_file) as fp:
                     token_data = json.load(fp)
                 if "tokens" not in token_data:
                     token_data = {"tokens": [token_data]}
@@ -416,8 +416,7 @@ def register_feedstock_token(
             repo.index.add(token_file)
             repo.index.commit(
                 "[ci skip] [skip ci] [cf admin skip] ***NO_CI*** "
-                "added token for %s/%s on provider%s"
-                % (
+                "added token for {}/{} on provider{}".format(
                     user,
                     project,
                     "" if provider is None else " " + provider,
@@ -436,11 +435,12 @@ def register_feedstock_token(
         else:
             raise FeedstockTokenError(
                 (
-                    "Registering the feedstock token for %s/%s on provider%s failed!"
+                    "Registering the feedstock token for {}/{} on provider{} failed!"
                     " Try the command locally with DEBUG_FEEDSTOCK_TOKENS"
                     " defined in the environment to investigate!"
+                ).format(
+                    user, project, "" if provider is None else " " + provider
                 )
-                % (user, project, "" if provider is None else " " + provider)
             )
 
     return failed
@@ -475,7 +475,7 @@ def register_feedstock_token_with_providers(
     # to generate the proper errors for missing tokens
     from .ci_register import travis_endpoint  # noqa
     from .azure_ci_utils import default_config  # noqa
-    from .ci_register import drone_default_endpoint
+    from conda_smithy.ci_register import drone_default_endpoint
 
     def _register_token(user, project, clobber, provider, func, args=None):
         args = args or tuple()
@@ -499,9 +499,9 @@ def register_feedstock_token_with_providers(
                 raise e
             else:
                 err_msg = (
-                    "Failed to register feedstock token for %s/%s"
-                    " on %s for args %r!"
-                ) % (user, project, provider, args)
+                    f"Failed to register feedstock token for {user}/{project}"
+                    f" on {provider} for args {args!r}!"
+                )
                 raise FeedstockTokenError(err_msg)
 
     # capture stdout, stderr and suppress all exceptions so we don't
@@ -566,17 +566,14 @@ def register_feedstock_token_with_providers(
 
     if failed:
         raise FeedstockTokenError(
-            (
-                "Registering the feedstock token with providers for %s/%s failed!"
-                " Try the command locally with DEBUG_FEEDSTOCK_TOKENS"
-                " defined in the environment to investigate!"
-            )
-            % (user, project)
+            f"Registering the feedstock token with providers for {user}/{project} failed!"
+            " Try the command locally with DEBUG_FEEDSTOCK_TOKENS"
+            " defined in the environment to investigate!"
         )
 
 
 def add_feedstock_token_to_circle(user, project, feedstock_token, clobber):
-    from .ci_register import circle_token
+    from conda_smithy.ci_register import circle_token
 
     url_template = (
         "https://circleci.com/api/v1.1/project/github/{user}/{project}/envvar{extra}?"
@@ -623,7 +620,7 @@ def add_feedstock_token_to_circle(user, project, feedstock_token, clobber):
 def add_feedstock_token_to_drone(
     user, project, feedstock_token, clobber, drone_endpoint
 ):
-    from .ci_register import drone_session
+    from conda_smithy.ci_register import drone_session
 
     session = drone_session(drone_endpoint)
 
@@ -655,10 +652,10 @@ def add_feedstock_token_to_drone(
 
 def add_feedstock_token_to_travis(user, project, feedstock_token, clobber):
     """Add the FEEDSTOCK_TOKEN to travis."""
-    from .ci_register import (
+    from conda_smithy.ci_register import (
         travis_endpoint,
-        travis_headers,
         travis_get_repo_info,
+        travis_headers,
     )
 
     headers = travis_headers()
@@ -667,7 +664,7 @@ def add_feedstock_token_to_travis(user, project, feedstock_token, clobber):
     repo_id = repo_info["id"]
 
     r = requests.get(
-        "{}/repo/{repo_id}/env_vars".format(travis_endpoint, repo_id=repo_id),
+        f"{travis_endpoint}/repo/{repo_id}/env_vars",
         headers=headers,
     )
     if r.status_code != 200:
@@ -688,20 +685,14 @@ def add_feedstock_token_to_travis(user, project, feedstock_token, clobber):
 
     if have_feedstock_token and clobber:
         r = requests.patch(
-            "{}/repo/{repo_id}/env_var/{ev_id}".format(
-                travis_endpoint,
-                repo_id=repo_id,
-                ev_id=ev_id,
-            ),
+            f"{travis_endpoint}/repo/{repo_id}/env_var/{ev_id}",
             headers=headers,
             json=data,
         )
         r.raise_for_status()
     elif not have_feedstock_token:
         r = requests.post(
-            "{}/repo/{repo_id}/env_vars".format(
-                travis_endpoint, repo_id=repo_id
-            ),
+            f"{travis_endpoint}/repo/{repo_id}/env_vars",
             headers=headers,
             json=data,
         )
@@ -710,9 +701,13 @@ def add_feedstock_token_to_travis(user, project, feedstock_token, clobber):
 
 
 def add_feedstock_token_to_azure(user, project, feedstock_token, clobber):
-    from .azure_ci_utils import build_client, get_default_build_definition
-    from .azure_ci_utils import default_config as config
     from vsts.build.v4_1.models import BuildDefinitionVariable
+
+    from conda_smithy.azure_ci_utils import (
+        build_client,
+        get_default_build_definition,
+    )
+    from conda_smithy.azure_ci_utils import default_config as config
 
     bclient = build_client()
 
@@ -765,8 +760,9 @@ def add_feedstock_token_to_azure(user, project, feedstock_token, clobber):
 def add_feedstock_token_to_github_actions(
     user, project, feedstock_token, clobber
 ):
-    from .github import gh_token
     from github import Github
+
+    from conda_smithy.github import gh_token
 
     gh = Github(gh_token())
     repo = gh.get_repo(f"{user}/{project}")

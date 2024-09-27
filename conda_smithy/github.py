@@ -1,27 +1,27 @@
 import os
 from random import choice
 
+import github
 from git import Repo
-
 from github import Github
 from github.GithubException import GithubException
 from github.Organization import Organization
 from github.Team import Team
-import github
 
-import conda_build.api
-from conda_smithy.utils import get_feedstock_name_from_meta
+from conda_smithy.configure_feedstock import _load_forge_config
+from conda_smithy.utils import (
+    _get_metadata_from_feedstock_dir,
+    get_feedstock_name_from_meta,
+)
 
 
 def gh_token():
     try:
-        with open(
-            os.path.expanduser("~/.conda-smithy/github.token"), "r"
-        ) as fh:
+        with open(os.path.expanduser("~/.conda-smithy/github.token")) as fh:
             token = fh.read().strip()
         if not token:
             raise ValueError()
-    except (IOError, ValueError):
+    except (OSError, ValueError):
         msg = (
             "No github token. Go to https://github.com/settings/tokens/new and generate\n"
             "a token with repo access. Put it in ~/.conda-smithy/github.token"
@@ -68,17 +68,17 @@ def has_in_members(team, member):
 
 def get_cached_team(org, team_name, description=""):
     cached_file = os.path.expanduser(
-        "~/.conda-smithy/{}-{}-team".format(org.login, team_name)
+        f"~/.conda-smithy/{org.login}-{team_name}-team"
     )
     try:
-        with open(cached_file, "r") as fh:
+        with open(cached_file) as fh:
             team_id = int(fh.read().strip())
             return org.get_team(team_id)
-    except IOError:
+    except OSError:
         pass
 
     try:
-        repo = org.get_repo("{}-feedstock".format(team_name))
+        repo = org.get_repo(f"{team_name}-feedstock")
         team = next(
             (team for team in repo.get_teams() if team.name == team_name), None
         )
@@ -94,7 +94,7 @@ def get_cached_team(org, team_name, description=""):
         if description:
             team = create_team(org, team_name, description, [])
         else:
-            raise RuntimeError("Couldn't find team {}".format(team_name))
+            raise RuntimeError(f"Couldn't find team {team_name}")
 
     with open(cached_file, "w") as fh:
         fh.write(str(team.id))
@@ -102,20 +102,29 @@ def get_cached_team(org, team_name, description=""):
     return team
 
 
+def _conda_forge_specific_repo_setup(gh_repo):
+    branch = gh_repo.get_branch(gh_repo.default_branch)
+    branch.edit_protection(
+        enforce_admins=True,
+        allow_force_pushes=False,
+        allow_deletions=False,
+    )
+
+
 def create_github_repo(args):
     token = gh_token()
-    meta = conda_build.api.render(
-        args.feedstock_directory,
-        permit_undefined_jinja=True,
-        finalize=False,
-        bypass_env_check=True,
-        trim_skip=False,
-    )[0][0]
 
-    feedstock_name = get_feedstock_name_from_meta(meta)
+    # Load the conda-forge config and read metadata from the feedstock recipe
+    forge_config = _load_forge_config(args.feedstock_directory, None)
+    metadata = _get_metadata_from_feedstock_dir(
+        args.feedstock_directory, forge_config
+    )
+
+    feedstock_name = get_feedstock_name_from_meta(metadata)
 
     gh = Github(token)
     user_or_org = None
+    is_conda_forge = False
     if args.user is not None:
         pass
         # User has been defined, and organization has not.
@@ -123,18 +132,22 @@ def create_github_repo(args):
     else:
         # Use the organization provided.
         user_or_org = gh.get_organization(args.organization)
+        if args.organization == "conda-forge":
+            is_conda_forge = True
 
-    repo_name = "{}-feedstock".format(feedstock_name)
+    repo_name = f"{feedstock_name}-feedstock"
     try:
         gh_repo = user_or_org.create_repo(
             repo_name,
             has_wiki=False,
             private=args.private,
-            description="A conda-smithy repository for {}.".format(
-                feedstock_name
-            ),
+            description=f"A conda-smithy repository for {feedstock_name}.",
         )
-        print("Created {} on github".format(gh_repo.full_name))
+
+        if is_conda_forge:
+            _conda_forge_specific_repo_setup(gh_repo)
+
+        print(f"Created {gh_repo.full_name} on github")
     except GithubException as gh_except:
         if (
             gh_except.data.get("errors", [{}])[0].get("message", "")
@@ -152,10 +165,8 @@ def create_github_repo(args):
             existing_remote = repo.remotes[remote_name]
             if existing_remote.url != gh_repo.ssh_url:
                 print(
-                    "Remote {} already exists, and doesn't point to {} "
-                    "(it points to {}).".format(
-                        remote_name, gh_repo.ssh_url, existing_remote.url
-                    )
+                    f"Remote {remote_name} already exists, and doesn't point to {gh_repo.ssh_url} "
+                    f"(it points to {existing_remote.url})."
                 )
         else:
             repo.create_remote(remote_name, gh_repo.ssh_url)
@@ -166,7 +177,9 @@ def create_github_repo(args):
 
     if args.add_teams:
         if isinstance(user_or_org, Organization):
-            configure_github_team(meta, gh_repo, user_or_org, feedstock_name)
+            configure_github_team(
+                metadata, gh_repo, user_or_org, feedstock_name
+            )
 
 
 def accept_all_repository_invitations(gh):
@@ -183,7 +196,7 @@ def accept_all_repository_invitations(gh):
 
 def remove_from_project(gh, org, project):
     user = gh.get_user()
-    repo = gh.get_repo("{}/{}".format(org, project))
+    repo = gh.get_repo(f"{org}/{project}")
     repo.remove_from_collaborators(user.login)
 
 
@@ -228,14 +241,14 @@ def configure_github_team(meta, gh_repo, org, feedstock_name, remove=True):
         fs_team = create_team(
             org,
             team_name,
-            "The {} {} contributors!".format(choice(superlative), team_name),
+            f"The {choice(superlative)} {team_name} contributors!",
         )
         fs_team.add_to_repos(gh_repo)
 
     current_maintainers = set([e.login.lower() for e in fs_team.get_members()])
 
     # Get the all-members team
-    description = "All of the awesome {} contributors!".format(org.login)
+    description = f"All of the awesome {org.login} contributors!"
     all_members_team = get_cached_team(org, "all-members", description)
     new_org_members = set()
 

@@ -9,7 +9,7 @@ added to conda-forge's queue.
 import os
 import sys
 
-from .configure_feedstock import make_jinja_env
+from conda_smithy.configure_feedstock import make_jinja_env
 
 
 def _render_template(template_file, env, forge_dir, config):
@@ -40,7 +40,7 @@ def _insert_into_gitignore(
     fname = os.path.join(feedstock_directory, ".gitignore")
     print("Updating " + fname)
     if os.path.isfile(fname):
-        with open(fname, "r") as f:
+        with open(fname) as f:
             s = f.read()
         before, _, s = s.partition(prefix)
         _, _, after = s.partition(suffix)

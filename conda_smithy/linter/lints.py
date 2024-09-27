@@ -1,59 +1,71 @@
-from collections.abc import Sequence
-import re
-
-import fnmatch
-import io
 import itertools
 import os
-import sys
+import re
+from collections.abc import Sequence
+from typing import Any, Dict, List, Literal, Optional
 
-
-from typing import Optional
-
+from conda.exceptions import InvalidVersionSpec
+from conda.models.version import VersionOrder
+from rattler_build_conda_compat.jinja.jinja import render_recipe_with_context
+from rattler_build_conda_compat.loader import parse_recipe_config_file
 from ruamel.yaml import CommentedSeq
 
-
+from conda_smithy.linter import conda_recipe_v1_linter
 from conda_smithy.linter.utils import (
+    EXPECTED_SECTION_ORDER,
     FIELDS,
     JINJA_VAR_PAT,
     REQUIREMENTS_ORDER,
     TEST_FILES,
     TEST_KEYS,
+    _lint_recipe_name,
+    get_section,
     is_selector_line,
     jinja_lines,
-    EXPECTED_SECTION_ORDER,
-    get_section,
     selector_lines,
 )
 from conda_smithy.utils import get_yaml
 
 
-from conda.models.version import VersionOrder
+def lint_section_order(
+    major_sections: List[str],
+    lints: List[str],
+    recipe_version: int = 0,
+):
+    if recipe_version == 0:
+        order = EXPECTED_SECTION_ORDER
+    else:
+        if "outputs" in major_sections:
+            order = (
+                conda_recipe_v1_linter.EXPECTED_MULTIPLE_OUTPUT_SECTION_ORDER
+            )
+        else:
+            order = conda_recipe_v1_linter.EXPECTED_SINGLE_OUTPUT_SECTION_ORDER
+    section_order_sorted = sorted(major_sections, key=order.index)
 
-
-def lint_section_order(major_sections, lints):
-    section_order_sorted = sorted(
-        major_sections, key=EXPECTED_SECTION_ORDER.index
-    )
     if major_sections != section_order_sorted:
         section_order_sorted_str = map(
-            lambda s: "'%s'" % s, section_order_sorted
+            lambda s: f"'{s}'", section_order_sorted
         )
         section_order_sorted_str = ", ".join(section_order_sorted_str)
         section_order_sorted_str = "[" + section_order_sorted_str + "]"
         lints.append(
             "The top level meta keys are in an unexpected order. "
-            "Expecting {}.".format(section_order_sorted_str)
+            f"Expecting {section_order_sorted_str}."
         )
 
 
-def lint_about_contents(about_section, lints):
-    for about_item in ["home", "license", "summary"]:
+def lint_about_contents(about_section, lints, recipe_version: int = 0):
+    expected_section = [
+        "homepage" if recipe_version == 1 else "home",
+        "license",
+        "summary",
+    ]
+    for about_item in expected_section:
         # if the section doesn't exist, or is just empty, lint it.
         if not about_section.get(about_item, ""):
             lints.append(
-                "The {} item is expected in the about section."
-                "".format(about_item)
+                f"The {about_item} item is expected in the about section."
             )
 
 
@@ -71,8 +83,19 @@ def lint_recipe_maintainers(extra_section, lints):
 
 
 def lint_recipe_have_tests(
-    recipe_dir, test_section, outputs_section, lints, hints
+    recipe_dir: str,
+    test_section: List[Dict[str, Any]],
+    outputs_section: List[Dict[str, Any]],
+    lints: List[str],
+    hints: List[str],
+    recipe_version: int = 0,
 ):
+    if recipe_version == 1:
+        conda_recipe_v1_linter.lint_recipe_tests(
+            recipe_dir, test_section, outputs_section, lints, hints
+        )
+        return
+
     if not any(key in TEST_KEYS for key in test_section):
         a_test_file_exists = recipe_dir is not None and any(
             os.path.exists(os.path.join(recipe_dir, test_file))
@@ -108,46 +131,46 @@ def lint_license_cannot_be_unknown(about_section, lints):
 
 def lint_selectors_should_be_in_tidy_form(recipe_fname, lints, hints):
     bad_selectors, bad_lines = [], []
-    pyXY_selectors_lint, pyXY_lines_lint = [], []
-    pyXY_selectors_hint, pyXY_lines_hint = [], []
+    python_selectors_lint, py_selector_lines_lint = [], []
+    python_selectors_hint, py_selector_lines_hint = [], []
     # Good selectors look like ".*\s\s#\s[...]"
     good_selectors_pat = re.compile(r"(.+?)\s{2,}#\s\[(.+)\](?(2).*)$")
     # Look out for py27, py35 selectors; we prefer py==35
-    pyXY_selectors_pat = re.compile(r".+#\s*\[.*?(py\d{2,3}).*\]")
+    python_selectors_pat = re.compile(r".+#\s*\[.*?(py\d{2,3}).*\]")
     if os.path.exists(recipe_fname):
-        with io.open(recipe_fname, "rt") as fh:
+        with open(recipe_fname) as fh:
             for selector_line, line_number in selector_lines(fh):
                 if not good_selectors_pat.match(selector_line):
                     bad_selectors.append(selector_line)
                     bad_lines.append(line_number)
-                pyXY_matches = pyXY_selectors_pat.match(selector_line)
-                if pyXY_matches:
-                    for pyXY in pyXY_matches.groups():
-                        if int(pyXY[2:]) in (27, 34, 35, 36):
+                python_matches = python_selectors_pat.match(selector_line)
+                if python_matches:
+                    for py_selector in python_matches.groups():
+                        if int(py_selector[2:]) in (27, 34, 35, 36):
                             # py27, py35 and so on are ok up to py36 (included); only warn
-                            pyXY_selectors_hint.append(selector_line)
-                            pyXY_lines_hint.append(line_number)
+                            python_selectors_hint.append(selector_line)
+                            py_selector_lines_hint.append(line_number)
                         else:
-                            pyXY_selectors_lint.append(selector_line)
-                            pyXY_lines_lint.append(line_number)
+                            python_selectors_lint.append(selector_line)
+                            py_selector_lines_lint.append(line_number)
     if bad_selectors:
         lints.append(
             "Selectors are suggested to take a "
             "``<two spaces>#<one space>[<expression>]`` form."
-            " See lines {}".format(bad_lines)
+            f" See lines {bad_lines}"
         )
-    if pyXY_selectors_hint:
+    if python_selectors_hint:
         hints.append(
             "Old-style Python selectors (py27, py34, py35, py36) are "
             "deprecated. Instead, consider using the int ``py``. For "
-            "example: ``# [py>=36]``. See lines {}".format(pyXY_lines_hint)
+            f"example: ``# [py>=36]``. See lines {py_selector_lines_hint}"
         )
-    if pyXY_selectors_lint:
+    if python_selectors_lint:
         lints.append(
             "Old-style Python selectors (py27, py35, etc) are only available "
             "for Python 2.7, 3.4, 3.5, and 3.6. Please use explicit comparisons "
             "with the integer ``py``, e.g. ``# [py==37]`` or ``# [py>=37]``. "
-            "See lines {}".format(pyXY_lines_lint)
+            f"See lines {py_selector_lines_lint}"
         )
 
 
@@ -174,7 +197,9 @@ def lint_build_section_should_be_before_run(requirements_section, lints):
         )
 
 
-def lint_sources_should_have_hash(sources_section, lints):
+def lint_sources_should_have_hash(
+    sources_section: List[Dict[str, Any]], lints: List[str]
+):
     for source_section in sources_section:
         if "url" in source_section and not (
             {"sha1", "sha256", "md5"} & set(source_section.keys())
@@ -200,16 +225,16 @@ def lint_license_should_not_have_license(about_section, lints):
 
 def lint_should_be_empty_line(meta_fname, lints):
     if os.path.exists(meta_fname):
-        with io.open(meta_fname, "r") as f:
+        with open(meta_fname) as f:
             lines = f.read().split("\n")
         # Count the number of empty lines from the end of the file
         empty_lines = itertools.takewhile(lambda x: x == "", reversed(lines))
         end_empty_lines_count = len(list(empty_lines))
         if end_empty_lines_count > 1:
             lints.append(
-                "There are {} too many lines.  "
+                f"There are {end_empty_lines_count - 1} too many lines.  "
                 "There should be one empty line at the end of the "
-                "file.".format(end_empty_lines_count - 1)
+                "file."
             )
         elif end_empty_lines_count < 1:
             lints.append(
@@ -219,23 +244,33 @@ def lint_should_be_empty_line(meta_fname, lints):
 
 
 def lint_license_family_should_be_valid(
-    about_section, license, needed_families, lints
-):
-    license_family = about_section.get("license_family", license).lower()
+    about_section: Dict[str, Any],
+    license: str,
+    needed_families: List[str],
+    lints: List[str],
+    recipe_version: int = 0,
+) -> None:
+    lint_msg = "license_file entry is missing, but is required."
     license_file = about_section.get("license_file", None)
-    if not license_file and any(
-        f for f in needed_families if f in license_family
-    ):
-        lints.append("license_file entry is missing, but is required.")
+    if not license_file:
+        if recipe_version == 1:
+            lints.append(lint_msg)
+        else:
+            license_family = about_section.get(
+                "license_family", license
+            ).lower()
+            if any(f for f in needed_families if f in license_family):
+                lints.append(lint_msg)
 
 
-def lint_recipe_name(package_section, lints):
+def lint_recipe_name(
+    package_section: Dict[str, Any],
+    lints: List[str],
+):
     recipe_name = package_section.get("name", "").strip()
-    if re.match(r"^[a-z0-9_\-.]+$", recipe_name) is None:
-        lints.append(
-            "Recipe name has invalid characters. only lowercase alpha, numeric, "
-            "underscores, hyphens and dots allowed"
-        )
+    lint_msg = _lint_recipe_name(recipe_name)
+    if lint_msg:
+        lints.append(lint_msg)
 
 
 def lint_usage_of_legacy_patterns(requirements_section, lints):
@@ -260,17 +295,17 @@ def lint_subheaders(major_sections, meta, lints):
                 and subsection not in expected_subsections
             ):
                 lints.append(
-                    "The {} section contained an unexpected "
-                    "subsection name. {} is not a valid subsection"
-                    " name.".format(section, subsection)
+                    f"The {section} section contained an unexpected "
+                    f"subsection name. {subsection} is not a valid subsection"
+                    " name."
                 )
             elif section == "source" or section == "outputs":
                 for source_subsection in subsection:
                     if source_subsection not in expected_subsections:
                         lints.append(
-                            "The {} section contained an unexpected "
-                            "subsection name. {} is not a valid subsection"
-                            " name.".format(section, source_subsection)
+                            f"The {section} section contained an unexpected "
+                            f"subsection name. {source_subsection} is not a valid subsection"
+                            " name."
                         )
 
 
@@ -280,10 +315,25 @@ def lint_noarch(noarch_value: Optional[str], lints):
         if noarch_value not in valid_noarch_values:
             valid_noarch_str = "`, `".join(valid_noarch_values)
             lints.append(
-                "Invalid `noarch` value `{}`. Should be one of `{}`.".format(
-                    noarch_value, valid_noarch_str
-                )
+                f"Invalid `noarch` value `{noarch_value}`. Should be one of `{valid_noarch_str}`."
             )
+
+
+def lint_recipe_v1_noarch_and_runtime_dependencies(
+    noarch_value: Optional[Literal["python", "generic"]],
+    raw_requirements_section: Dict[str, Any],
+    build_section: Dict[str, Any],
+    noarch_platforms: bool,
+    lints: List[str],
+) -> None:
+    if noarch_value:
+        conda_recipe_v1_linter.lint_usage_of_selectors_for_noarch(
+            noarch_value,
+            raw_requirements_section,
+            build_section,
+            noarch_platforms,
+            lints,
+        )
 
 
 def lint_noarch_and_runtime_dependencies(
@@ -291,7 +341,7 @@ def lint_noarch_and_runtime_dependencies(
 ):
     if noarch_value is not None and os.path.exists(meta_fname):
         noarch_platforms = len(forge_yaml.get("noarch_platforms", [])) > 1
-        with io.open(meta_fname, "rt") as fh:
+        with open(meta_fname) as fh:
             in_runreqs = False
             for line in fh:
                 line_s = line.strip()
@@ -303,7 +353,7 @@ def lint_noarch_and_runtime_dependencies(
                     lints.append(
                         "`noarch` packages can't have skips with selectors. If "
                         "the selectors are necessary, please remove "
-                        "`noarch: {}`.".format(noarch_value)
+                        f"`noarch: {noarch_value}`."
                     )
                     break
                 if in_runreqs:
@@ -318,19 +368,23 @@ def lint_noarch_and_runtime_dependencies(
                         lints.append(
                             "`noarch` packages can't have selectors. If "
                             "the selectors are necessary, please remove "
-                            "`noarch: {}`.".format(noarch_value)
+                            f"`noarch: {noarch_value}`."
                         )
                         break
 
 
 def lint_package_version(package_section, lints):
+    version = package_section.get("version")
+    if not version:
+        lints.append("Package version is missing.")
+        return
     if package_section.get("version") is not None:
         ver = str(package_section.get("version"))
         try:
             VersionOrder(ver)
-        except:
+        except InvalidVersionSpec as e:
             lints.append(
-                "Package version {} doesn't match conda spec".format(ver)
+                f"Package version {ver} doesn't match conda spec: {e}"
             )
 
 
@@ -340,7 +394,7 @@ def lint_jinja_variables_definitions(meta_fname, lints):
     # Good Jinja2 variable definitions look like "{% set .+ = .+ %}"
     good_jinja_pat = re.compile(r"\s*\{%\s(set)\s[^\s]+\s=\s[^\s]+\s%\}")
     if os.path.exists(meta_fname):
-        with io.open(meta_fname, "rt") as fh:
+        with open(meta_fname) as fh:
             for jinja_line, line_number in jinja_lines(fh):
                 if not good_jinja_pat.match(jinja_line):
                     bad_jinja.append(jinja_line)
@@ -348,10 +402,10 @@ def lint_jinja_variables_definitions(meta_fname, lints):
         if bad_jinja:
             lints.append(
                 "Jinja2 variable definitions are suggested to "
-                "take a ``{{%<one space>set<one space>"
+                "take a ``{%<one space>set<one space>"
                 "<variable name><one space>=<one space>"
-                "<expression><one space>%}}`` form. See lines "
-                "{}".format(bad_lines)
+                "<expression><one space>%}`` form. See lines "
+                f"{bad_lines}"
             )
 
 
@@ -364,11 +418,21 @@ def lint_legacy_usage_of_compilers(build_reqs, lints):
         )
 
 
-def lint_single_space_in_pinned_requirements(requirements_section, lints):
+def lint_single_space_in_pinned_requirements(
+    requirements_section,
+    lints,
+    recipe_version: int = 0,
+):
     for section, requirements in requirements_section.items():
         for requirement in requirements or []:
-            req, _, _ = requirement.partition("#")
-            if "{{" in req:
+            if recipe_version == 1:
+                req = requirement
+                symbol_to_check = "${{"
+            else:
+                req, _, _ = requirement.partition("#")
+                symbol_to_check = "{{"
+
+            if symbol_to_check in req:
                 continue
             parts = req.split()
             if len(parts) > 2 and parts[1] in [
@@ -435,9 +499,7 @@ def lint_non_noarch_builds(
             ]
             if filtered_host_reqs and not filtered_run_reqs:
                 lints.append(
-                    "If {0} is a host requirement, it should be a run requirement.".format(
-                        str(language)
-                    )
+                    f"If {str(language)} is a host requirement, it should be a run requirement."
                 )
             for reqs in [filtered_host_reqs, filtered_run_reqs]:
                 if str(language) in reqs:
@@ -448,29 +510,37 @@ def lint_non_noarch_builds(
                         "<"
                     ):
                         lints.append(
-                            "Non noarch packages should have {0} requirement without any version constraints.".format(
-                                str(language)
-                            )
+                            f"Non noarch packages should have {str(language)} requirement without any version constraints."
                         )
 
 
-def lint_jinja_var_references(meta_fname, hints):
+def lint_jinja_var_references(meta_fname, hints, recipe_version: int = 0):
     bad_vars = []
     bad_lines = []
+    jinja_pattern = (
+        JINJA_VAR_PAT
+        if recipe_version == 0
+        else conda_recipe_v1_linter.JINJA_VAR_PAT
+    )
     if os.path.exists(meta_fname):
-        with io.open(meta_fname, "rt") as fh:
+        with open(meta_fname) as fh:
             for i, line in enumerate(fh.readlines()):
-                for m in JINJA_VAR_PAT.finditer(line):
+                for m in jinja_pattern.finditer(line):
                     if m.group(1) is not None:
                         var = m.group(1)
-                        if var != " %s " % var.strip():
+                        if var != f" {var.strip()} ":
                             bad_vars.append(m.group(1).strip())
                             bad_lines.append(i + 1)
         if bad_vars:
+            hint_message = (
+                "``{{<one space><variable name><one space>}}``"
+                if recipe_version == 0
+                else "``${{<one space><variable name><one space>}}``"
+            )
             hints.append(
                 "Jinja2 variable references are suggested to "
-                "take a ``{{<one space><variable name><one space>}}``"
-                " form. See lines %s." % (bad_lines,)
+                f"take a {hint_message}"
+                f" form. See lines {bad_lines}."
             )
 
 
@@ -490,18 +560,37 @@ def lint_require_lower_bound_on_python_version(
             )
 
 
-def lint_pin_subpackages(meta, outputs_section, package_section, lints):
+def lint_pin_subpackages(
+    meta,
+    outputs_section,
+    package_section,
+    lints,
+    recipe_version: int = 0,
+):
+    if recipe_version == 1:
+        meta = render_recipe_with_context(meta)
+        # use the rendered versions here
+        package_section = meta.get("package", {})
+        outputs_section = meta.get("outputs", [])
+
     subpackage_names = []
     for out in outputs_section:
-        if "name" in out:
+        if recipe_version == 1:
+            if out.get("package", {}).get("name"):
+                subpackage_names.append(out["package"]["name"])
+        elif "name" in out:
             subpackage_names.append(out["name"])  # explicit
+
     if "name" in package_section:
         subpackage_names.append(package_section["name"])  # implicit
 
     def check_pins(pinning_section):
         if pinning_section is None:
             return
-        for pin in fnmatch.filter(pinning_section, "compatible_pin*"):
+        filter_pin = "compatible_pin "
+        for pin in (
+            pin for pin in pinning_section if pin.startswith(filter_pin)
+        ):
             if pin.split()[1] in subpackage_names:
                 lints.append(
                     "pin_subpackage should be used instead of"
@@ -509,7 +598,11 @@ def lint_pin_subpackages(meta, outputs_section, package_section, lints):
                     " because it is one of the known outputs of this recipe:"
                     f" {subpackage_names}."
                 )
-        for pin in fnmatch.filter(pinning_section, "subpackage_pin*"):
+
+        filter_pin = "subpackage_pin "
+        for pin in (
+            pin for pin in pinning_section if pin.startswith(filter_pin)
+        ):
             if pin.split()[1] not in subpackage_names:
                 lints.append(
                     "pin_compatible should be used instead of"
@@ -519,12 +612,32 @@ def lint_pin_subpackages(meta, outputs_section, package_section, lints):
                 )
 
     def check_pins_build_and_requirements(top_level):
-        if "build" in top_level and "run_exports" in top_level["build"]:
-            check_pins(top_level["build"]["run_exports"])
-        if "requirements" in top_level and "run" in top_level["requirements"]:
-            check_pins(top_level["requirements"]["run"])
-        if "requirements" in top_level and "host" in top_level["requirements"]:
-            check_pins(top_level["requirements"]["host"])
+        if recipe_version == 0:
+            if "build" in top_level and "run_exports" in top_level["build"]:
+                check_pins(top_level["build"]["run_exports"])
+            if (
+                "requirements" in top_level
+                and "run" in top_level["requirements"]
+            ):
+                check_pins(top_level["requirements"]["run"])
+            if (
+                "requirements" in top_level
+                and "host" in top_level["requirements"]
+            ):
+                check_pins(top_level["requirements"]["host"])
+        else:
+            if (
+                "requirements" in top_level
+                and "run_exports" in top_level["requirements"]
+            ):
+                run_export_section = top_level["requirements"]["run_exports"]
+                # the dictionary might have strong / weak / noarch etc. keys
+                if isinstance(run_export_section, dict):
+                    for key in run_export_section:
+                        check_pins(run_export_section[key])
+                # or it can be just a list
+                else:
+                    check_pins(run_export_section)
 
     check_pins_build_and_requirements(meta)
     for out in outputs_section:
@@ -539,7 +652,7 @@ def lint_check_usage_of_whls(meta_fname, noarch_value, lints, hints):
     pure_python_wheel_re = re.compile(r".*[:-]\s+(http.*-none-any\.whl)\s+.*")
     wheel_re = re.compile(r".*[:-]\s+(http.*\.whl)\s+.*")
     if os.path.exists(meta_fname):
-        with open(meta_fname, "rt") as f:
+        with open(meta_fname) as f:
             for line in f:
                 if match := pure_python_wheel_re.search(line):
                     pure_python_wheel_urls.append(match.group(1))
@@ -571,17 +684,40 @@ def lint_check_usage_of_whls(meta_fname, noarch_value, lints, hints):
                 )
 
 
-def lint_rust_licenses_are_bundled(build_reqs, lints):
-    if build_reqs and ("{{ compiler('rust') }}" in build_reqs):
-        if "cargo-bundle-licenses" not in build_reqs:
-            lints.append(
-                "Rust packages must include the licenses of the Rust dependencies. "
-                "For more info, visit: https://conda-forge.org/docs/maintainer/adding_pkgs/#rust"
-            )
+def lint_rust_licenses_are_bundled(
+    build_reqs: Optional[List[str]],
+    lints: List[str],
+    recipe_version: int = 0,
+):
+    if not build_reqs:
+        return
+
+    if recipe_version == 1:
+        has_rust = "${{ compiler('rust') }}" in build_reqs
+    else:
+        has_rust = "{{ compiler('rust') }}" in build_reqs
+
+    if has_rust and "cargo-bundle-licenses" not in build_reqs:
+        lints.append(
+            "Rust packages must include the licenses of the Rust dependencies. "
+            "For more info, visit: https://conda-forge.org/docs/maintainer/adding_pkgs/#rust"
+        )
 
 
-def lint_go_licenses_are_bundled(build_reqs, lints):
-    if build_reqs and ("{{ compiler('go') }}" in build_reqs):
+def lint_go_licenses_are_bundled(
+    build_reqs: Optional[List[str]],
+    lints: List[str],
+    recipe_version: int = 0,
+):
+    if not build_reqs:
+        return
+
+    if recipe_version == 1:
+        has_go = "${{ compiler('go') }}" in build_reqs
+    else:
+        has_go = "{{ compiler('go') }}" in build_reqs
+
+    if has_go:
         if "go-licenses" not in build_reqs:
             lints.append(
                 "Go packages must include the licenses of the Go dependencies. "
@@ -590,56 +726,91 @@ def lint_go_licenses_are_bundled(build_reqs, lints):
 
 
 def lint_stdlib(
-    meta, requirements_section, conda_build_config_filename, lints, hints
+    meta,
+    requirements_section,
+    conda_build_config_filename,
+    lints,
+    hints,
+    recipe_version: int = 0,
 ):
     global_build_reqs = requirements_section.get("build") or []
     global_run_reqs = requirements_section.get("run") or []
-    global_constraints = requirements_section.get("run_constrained") or []
+    if recipe_version == 1:
+        global_constraints = requirements_section.get("run_constraints") or []
+    else:
+        global_constraints = requirements_section.get("run_constrained") or []
+
+    if recipe_version == 1:
+        jinja_stdlib_c = '`${{ stdlib("c") }}`'
+    else:
+        jinja_stdlib_c = '`{{ stdlib("c") }}`'
 
     stdlib_lint = (
         "This recipe is using a compiler, which now requires adding a build "
-        'dependence on `{{ stdlib("c") }}` as well. Note that this rule applies to '
+        f"dependence on {jinja_stdlib_c} as well. Note that this rule applies to "
         "each output of the recipe using a compiler. For further details, please "
         "see https://github.com/conda-forge/conda-forge.github.io/issues/2102."
     )
-    pat_compiler_stub = re.compile(
-        "(m2w64_)?(c|cxx|fortran|rust)_compiler_stub"
-    )
-    outputs = get_section(meta, "outputs", lints)
+    if recipe_version == 0:
+        pat_compiler_stub = re.compile(
+            "(m2w64_)?(c|cxx|fortran|rust)_compiler_stub"
+        )
+    else:
+        pat_compiler_stub = re.compile(r"^\${{ compiler\(")
+
+    outputs = get_section(meta, "outputs", lints, recipe_version)
     output_reqs = [x.get("requirements", {}) for x in outputs]
 
     # deal with cb2 recipes (no build/host/run distinction)
-    output_reqs = [
-        {"host": x, "run": x} if isinstance(x, CommentedSeq) else x
-        for x in output_reqs
-    ]
+    if recipe_version == 0:
+        output_reqs = [
+            {"host": x, "run": x} if isinstance(x, CommentedSeq) else x
+            for x in output_reqs
+        ]
 
     # collect output requirements
     output_build_reqs = [x.get("build", []) or [] for x in output_reqs]
     output_run_reqs = [x.get("run", []) or [] for x in output_reqs]
-    output_contraints = [
-        x.get("run_constrained", []) or [] for x in output_reqs
-    ]
+    if recipe_version == 1:
+        output_contraints = [
+            x.get("run_constraints", []) or [] for x in output_reqs
+        ]
+    else:
+        output_contraints = [
+            x.get("run_constrained", []) or [] for x in output_reqs
+        ]
 
     # aggregate as necessary
     all_build_reqs = [global_build_reqs] + output_build_reqs
     all_build_reqs_flat = global_build_reqs
     all_run_reqs_flat = global_run_reqs
     all_contraints_flat = global_constraints
-    [all_build_reqs_flat := all_build_reqs_flat + x for x in output_build_reqs]
-    [all_run_reqs_flat := all_run_reqs_flat + x for x in output_run_reqs]
-    [all_contraints_flat := all_contraints_flat + x for x in output_contraints]
+
+    def flatten_reqs(reqs):
+        return itertools.chain.from_iterable(reqs)
+
+    all_build_reqs_flat += flatten_reqs(output_build_reqs)
+    all_run_reqs_flat += flatten_reqs(output_run_reqs)
+    all_contraints_flat += flatten_reqs(output_contraints)
 
     # this check needs to be done per output --> use separate (unflattened) requirements
     for build_reqs in all_build_reqs:
         has_compiler = any(pat_compiler_stub.match(rq) for rq in build_reqs)
-        if has_compiler and "c_stdlib_stub" not in build_reqs:
+        stdlib_regex = (
+            # we need the C stdlib, not just any invocation of the stdlib jinja
+            "^(m2w64_)?c_stdlib_stub$"
+            if recipe_version == 0
+            else r"\$\{\{ stdlib\(['\"](m2w64_)?c['\"]\)"
+        )
+        if has_compiler and not any(
+            re.search(stdlib_regex, x) for x in build_reqs
+        ):
             if stdlib_lint not in lints:
                 lints.append(stdlib_lint)
 
     sysroot_lint = (
         "You're setting a requirement on sysroot_linux-<arch> directly; this should "
-        'now be done by adding a build dependence on `{{ stdlib("c") }}`, and '
+        f"now be done by adding a build dependence on {jinja_stdlib_c}, and "
         "overriding `c_stdlib_version` in `recipe/conda_build_config.yaml` for the "
         "respective platform as necessary. For further details, please see "
         "https://github.com/conda-forge/conda-forge.github.io/issues/2102."
@@ -651,41 +822,62 @@ def lint_stdlib(
 
     osx_lint = (
         "You're setting a constraint on the `__osx` virtual package directly; this "
-        'should now be done by adding a build dependence on `{{ stdlib("c") }}`, '
+        f"should now be done by adding a build dependence on {jinja_stdlib_c}, "
         "and overriding `c_stdlib_version` in `recipe/conda_build_config.yaml` for "
         "the respective platform as necessary. For further details, please see "
         "https://github.com/conda-forge/conda-forge.github.io/issues/2102."
     )
+
     to_check = all_run_reqs_flat + all_contraints_flat
     if any(req.startswith("__osx >") for req in to_check):
         if osx_lint not in lints:
             lints.append(osx_lint)
 
-    # stdlib issues in CBC
-    cbc_lines = []
-    if conda_build_config_filename:
-        with open(conda_build_config_filename, "r") as fh:
-            cbc_lines = fh.readlines()
+    # stdlib issues in CBC ( conda-build-config )
+    cbc_osx = {}
 
-    # filter on osx-relevant lines
-    pat = re.compile(
-        r"^([^:\#]*?)\s+\#\s\[.*(not\s(osx|unix)|(?<!not\s)(linux|win)).*\]\s*$"
-    )
-    # remove lines with selectors that don't apply to osx, i.e. if they contain
-    # "not osx", "not unix", "linux" or "win"; this also removes trailing newlines.
-    # the regex here doesn't handle `or`-conjunctions, but the important thing for
-    # having a valid yaml after filtering below is that we avoid filtering lines with
-    # a colon (`:`), meaning that all yaml keys "survive". As an example, keys like
-    # c_stdlib_version can have `or`'d selectors, even if all values are arch-specific.
-    cbc_lines_osx = [pat.sub("", x) for x in cbc_lines]
-    cbc_content_osx = "\n".join(cbc_lines_osx)
-    cbc_osx = get_yaml().load(cbc_content_osx) or {}
-    # filter None values out of cbc_osx dict, can appear for example with
-    # ```
-    # c_stdlib_version:  # [unix]
-    #   - 2.17           # [linux]
-    #   # note lack of osx
-    # ```
+    if recipe_version == 1:
+        platform_namespace = {
+            "unix": True,
+            "osx": True,
+            "linux": False,
+            "win": False,
+        }
+
+        if conda_build_config_filename and os.path.exists(
+            conda_build_config_filename
+        ):
+            cbc_osx = parse_recipe_config_file(
+                conda_build_config_filename,
+                platform_namespace,
+                allow_missing_selector=True,
+            )
+    else:
+        cbc_lines = []
+        if conda_build_config_filename:
+            with open(conda_build_config_filename) as fh:
+                cbc_lines = fh.readlines()
+
+        # filter on osx-relevant lines
+        pat = re.compile(
+            r"^([^:\#]*?)\s+\#\s\[.*(not\s(osx|unix)|(?<!not\s)(linux|win)).*\]\s*$"
+        )
+        # remove lines with selectors that don't apply to osx, i.e. if they contain
+        # "not osx", "not unix", "linux" or "win"; this also removes trailing newlines.
+        # the regex here doesn't handle `or`-conjunctions, but the important thing for
+        # having a valid yaml after filtering below is that we avoid filtering lines with
+        # a colon (`:`), meaning that all yaml keys "survive". As an example, keys like
+        # c_stdlib_version can have `or`'d selectors, even if all values are arch-specific.
+        cbc_lines_osx = [pat.sub("", x) for x in cbc_lines]
+        cbc_content_osx = "\n".join(cbc_lines_osx)
+        cbc_osx = get_yaml().load(cbc_content_osx) or {}
+        # filter None values out of cbc_osx dict, can appear for example with
+        # ```
+        # c_stdlib_version:  # [unix]
+        #   - 2.17           # [linux]
+        #   # note lack of osx
+        # ```
+
     cbc_osx = dict(filter(lambda item: item[1] is not None, cbc_osx.items()))
 
     def sort_osx(versions):

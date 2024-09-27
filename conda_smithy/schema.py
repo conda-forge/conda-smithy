@@ -7,9 +7,8 @@ from inspect import cleandoc
 from typing import Any, Dict, List, Literal, Optional, Union
 
 import yaml
-from pydantic import BaseModel, Field, create_model, ConfigDict
-
 from conda.base.constants import KNOWN_SUBDIRS
+from pydantic import BaseModel, ConfigDict, Field, create_model
 
 try:
     from enum import StrEnum
@@ -78,6 +77,8 @@ class BotConfigInspectionChoice(StrEnum):
 
 
 class BotConfigVersionUpdatesSourcesChoice(StrEnum):
+    # if adding a new source here, make sure to update the description of the sources field
+    # in the BotConfigVersionUpdates model as well
     CRAN = "cran"
     GITHUB = "github"
     GITHUB_RELEASES = "githubreleases"
@@ -109,8 +110,10 @@ class AzureRunnerSettings(BaseModel):
         default=None, description="Swapfile size in GiB"
     )
 
-    timeoutInMinutes: Optional[int] = Field(
-        default=360, description="Timeout in minutes for the job"
+    timeout_in_minutes: Optional[int] = Field(
+        default=360,
+        description="Timeout in minutes for the job",
+        alias="timeoutInMinutes",
     )
 
     variables: Optional[Dict[str, str]] = Field(
@@ -335,7 +338,34 @@ class BotConfigVersionUpdates(BaseModel):
 
     sources: Optional[List[BotConfigVersionUpdatesSourcesChoice]] = Field(
         None,
-        description="List of sources to use for version updates",
+        description=cleandoc(
+            """
+            List of sources to find new versions (i.e. the strings like 1.2.3) for the package.
+
+            The following sources are available:
+            - `cran`: Update from CRAN
+            - `github`: Update from the GitHub releases RSS feed (includes pre-releases)
+            - `githubreleases`: Get the latest version by following the redirect of
+            `https://github.com/{owner}/{repo}/releases/latest` (excludes pre-releases)
+            - `incrementalpharawurl`: If this source is run for a specific small selection of feedstocks, it acts like
+            the `rawurl` source but also increments letters in the version string (e.g. 2024a -> 2024b). If the source
+            is run for other feedstocks (even if selected manually), it does nothing.
+            - `librariesio`: Update from Libraries.io RSS feed
+            - `npm`: Update from the npm registry
+            - `nvidia`: Update from the NVIDIA download page
+            - `pypi`: Update from the PyPI registry
+            - `rawurl`: Update from a raw URL by trying to bump the version number in different ways and
+            checking if the URL exists (e.g. 1.2.3 -> 1.2.4, 1.3.0, 2.0.0, etc.)
+            - `rosdistro`: Update from a ROS distribution
+
+            Common issues:
+            - If you are using a GitHub-based source in your recipe and the bot issues PRs for pre-releases, restrict
+            the sources to `githubreleases` to avoid pre-releases.
+            - If you use source tarballs that are uploaded manually by the maintainers a significant time after a
+            GitHub release, you may want to restrict the sources to `rawurl` to avoid the bot attempting to update
+            the recipe before the tarball is uploaded.
+            """
+        ),
     )
 
     skip: Optional[bool] = Field(
@@ -1276,4 +1306,4 @@ if __name__ == "__main__":
         f.write("\n")
 
     with CONDA_FORGE_YAML_DEFAULTS_FILE.open(mode="w+") as f:
-        f.write(yaml.dump(model.model_dump(), indent=2))
+        f.write(yaml.dump(model.model_dump(by_alias=True), indent=2))
