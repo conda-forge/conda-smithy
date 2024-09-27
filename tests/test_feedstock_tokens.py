@@ -599,7 +599,7 @@ def test_register_feedstock_token_append_expire(
     if ci is not None:
         data["provider"] = ci
 
-    with open(token_json_pth, "r") as fp:
+    with open(token_json_pth) as fp:
         final_tokens = json.load(fp)
 
     if existing_tokens_time_to_expiration is None:
