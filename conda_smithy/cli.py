@@ -825,6 +825,39 @@ class GenerateFeedstockToken(Subcommand):
                 )
 
 
+class SetFeedstockDeployKey(Subcommand):
+    subcommand = "set-feedstock-deploy-key"
+
+    def __init__(self, parser):
+        super().__init__(
+            parser,
+            "Se the SSH deploy key for a feedstock.",
+        )
+        scp = self.subcommand_parser
+        scp.add_argument(
+            "--feedstock_directory",
+            default=feedstock_io.get_repo_root(os.getcwd()) or os.getcwd(),
+            help="The directory of the feedstock git repository.",
+        )
+        group = scp.add_mutually_exclusive_group()
+        group.add_argument(
+            "--user", help="github username under which to register this repo"
+        )
+        group.add_argument(
+            "--organization",
+            default="conda-forge",
+            help="github organisation under which to register this repo",
+        )
+
+    def __call__(self, args):
+        from conda_smithy.feedstock_deploy_keys import set_feedstock_deploy_key
+
+        owner = args.user or args.organization
+        repo = os.path.basename(os.path.abspath(args.feedstock_directory))
+
+        set_feedstock_deploy_key(owner, repo)
+
+
 class RegisterFeedstockToken(Subcommand):
     subcommand = "register-feedstock-token"
     ci_names = (
