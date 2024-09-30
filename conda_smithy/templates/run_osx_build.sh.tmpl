@@ -117,10 +117,11 @@ else
         --extra-meta flow_run_id="$flow_run_id" remote_url="$remote_url" sha="$sha"
 
     {%- else %}
-
+    export SYSTEM_VERSION_COMPAT=0
     {{ BUILD_CMD }} --recipe ./{{ recipe_dir }} \
         -m ./.ci_support/${CONFIG}.yaml \
         --output-dir ${MINIFORGE_HOME}/conda-bld ${EXTRA_CB_OPTIONS:-} \
+        --target-platform "${HOST_PLATFORM}" \
         --extra-meta flow_run_id="$flow_run_id" \
         --extra-meta remote_url="$remote_url" \
         --extra-meta sha="$sha"
