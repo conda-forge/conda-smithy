@@ -952,6 +952,10 @@ class RegisterFeedstockToken(Subcommand):
             unique_token_per_provider=args.unique_token_per_provider,
         )
 
+        if args.existing_tokens_time_to_expiration is not None:
+            expiry = int(args.existing_tokens_time_to_expiration)
+        else:
+            expiry = None
         # then if that works do the github repo
         if args.unique_token_per_provider:
             for ci_pretty in self.ci_names:
@@ -962,9 +966,7 @@ class RegisterFeedstockToken(Subcommand):
                         repo,
                         token_repo,
                         provider=ci,
-                        existing_tokens_time_to_expiration=int(
-                            args.existing_tokens_time_to_expiration
-                        ),
+                        existing_tokens_time_to_expiration=expiry,
                     )
         else:
             register_feedstock_token(
@@ -972,9 +974,7 @@ class RegisterFeedstockToken(Subcommand):
                 repo,
                 token_repo,
                 provider=None,
-                existing_tokens_time_to_expiration=int(
-                    args.existing_tokens_time_to_expiration
-                ),
+                existing_tokens_time_to_expiration=expiry,
             )
 
         print("Successfully registered the feedstock token!")
