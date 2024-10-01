@@ -4,6 +4,25 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.41.0
+====================
+
+**Added:**
+
+* Added expiration dates to tokens when rotating.
+
+**Fixed:**
+
+* fix cross-compilation with rattler-build by setting `--target-platform=${HOST_PLATFORM}`
+
+**Authors:**
+
+* Matthew R. Becker
+* Wolf Vollprecht
+* pre-commit-ci[bot]
+
+
+
 v3.40.1
 ====================
 
