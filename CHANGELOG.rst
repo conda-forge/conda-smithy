@@ -4,6 +4,19 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.41.1
+====================
+
+**Fixed:**
+
+* Fixed a bug in processing CLI arguments for token expiration times. (#2073)
+
+**Authors:**
+
+* Matthew R. Becker
+
+
+
 v3.41.0
 ====================
 
