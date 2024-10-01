@@ -393,7 +393,7 @@
   github: shadowwalkersb
 - name: Matthew R. Becker
   email: becker.mr@gmail.com
-  num_commits: 308
+  num_commits: 311
   first_commit: 2020-01-07 17:44:33
   github: beckermr
   alternate_emails:
@@ -488,7 +488,7 @@
   github: BastianZim
 - name: Wolf Vollprecht
   email: w.vollprecht@gmail.com
-  num_commits: 55
+  num_commits: 58
   first_commit: 2021-01-19 04:39:35
   github: wolfv
 - name: Hugo Slepicka
@@ -587,7 +587,7 @@
   github: zklaus
 - name: pre-commit-ci[bot]
   email: 66853113+pre-commit-ci[bot]@users.noreply.github.com
-  num_commits: 25
+  num_commits: 26
   first_commit: 2023-10-30 15:49:50
   github: carterbox
 - name: Amit Kumar

@@ -21,10 +21,10 @@ Authors are sorted by number of commits.
 * Michael Sarahan
 * Mark Harfouche
 * Bastian Zimmermann
+* pre-commit-ci[bot]
 * Leo Fang
 * Hadrien Mary
 * Ryan Volz
-* pre-commit-ci[bot]
 * Johnny Willemsen
 * Chris Burr
 * Julian Rüth
