@@ -8,6 +8,23 @@ set -xe
 
 MINIFORGE_HOME=${MINIFORGE_HOME:-${HOME}/miniforge3}
 
+{% if conda_install_tool == "micromamba" %}
+( startgroup "Provisioning base env with micromamba" ) 2> /dev/null
+MICROMAMBA_VERSION="1.5.10-0"
+MICROMAMBA_URL="https://github.com/mamba-org/micromamba-releases/releases/download/${MICROMAMBA_VERSION}/micromamba-osx-64"
+
+echo "Downloading micromamba ${MICROMAMBA_VERSION}"
+micromamba_exe="$(mktemp -d)/micromamba"
+curl -L -o "${micromamba_exe}" "${MICROMAMBA_URL}"
+chmod +x "${micromamba_exe}"
+echo "Creating environment"
+"${micromamba_exe}" create --yes --root-prefix ${HOME}/.conda --prefix "${MINIFORGE_ROOT}" \
+  --channel conda-forge \
+  pip {{ conda_build_tool_deps }} {{ " ".join(remote_ci_setup) }}
+
+( endgroup "Provisioning base env with micromamba" ) 2> /dev/null
+
+{% else %}
 ( startgroup "Installing a fresh version of Miniforge" ) 2> /dev/null
 
 MINIFORGE_URL="https://github.com/conda-forge/miniforge/releases/latest/download"
@@ -17,6 +34,7 @@ rm -rf ${MINIFORGE_HOME}
 bash $MINIFORGE_FILE -b -p ${MINIFORGE_HOME}
 
 ( endgroup "Installing a fresh version of Miniforge" ) 2> /dev/null
+{% endif %}
 
 ( startgroup "Configuring conda" ) 2> /dev/null
 {%- if conda_build_tool == "mambabuild" %}
@@ -40,12 +58,10 @@ export CONDA_SOLVER="{{ conda_solver }}"
 export CONDA_LIBMAMBA_SOLVER_NO_CHANNELS_FROM_INSTALLED=1
 {%- endif %}
 
+{% if conda_install_tool in ("conda", "mamba") %}
 {{ conda_install_tool }} install --update-specs --quiet --yes --channel conda-forge --strict-channel-priority \
     pip {{ conda_install_tool_deps }} {{ conda_build_tool_deps }} {{ " ".join(remote_ci_setup) }}
-{%- if conda_install_tool == "mamba" and (conda_build_tool_deps != "" or conda_install_tool_deps != "") %}
-{{ conda_install_tool }} update --update-specs --yes --quiet --channel conda-forge --strict-channel-priority \
-    pip {{ conda_install_tool_deps }} {{ conda_build_tool_deps }} {{ " ".join(remote_ci_setup_update) }}
-{%- endif %}
+{% endif %}
 
 {% if local_ci_setup %}
 conda uninstall --quiet --yes --force {{ " ".join(remote_ci_setup) }}

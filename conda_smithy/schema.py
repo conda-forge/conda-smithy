@@ -584,7 +584,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    conda_install_tool: Optional[Literal["conda", "mamba"]] = Field(
+    conda_install_tool: Optional[Literal["conda", "mamba", "micromamba"]] = Field(
         default="mamba",
         description=cleandoc(
             """
