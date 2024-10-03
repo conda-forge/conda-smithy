@@ -225,7 +225,7 @@ class AzureConfig(BaseModel):
             It's a slower drive but has more space available. We recommend you keep
             both `CONDA_BLD_PATH` and `MINIFORGE_HOME` in the same drive for performance.
             """
-        )
+        ),
     )
 
     user_or_org: Optional[Union[str, Nullable]] = Field(
