@@ -18,7 +18,7 @@ micromamba_exe="$(mktemp -d)/micromamba"
 curl -L -o "${micromamba_exe}" "${MICROMAMBA_URL}"
 chmod +x "${micromamba_exe}"
 echo "Creating environment"
-"${micromamba_exe}" create --yes --root-prefix ${HOME}/.conda --prefix "${MINIFORGE_ROOT}" \
+"${micromamba_exe}" create --yes --root-prefix ${HOME}/.conda --prefix "${MINIFORGE_HOME}" \
   --channel conda-forge \
   pip {{ conda_build_tool_deps }} {{ " ".join(remote_ci_setup) }}
 
