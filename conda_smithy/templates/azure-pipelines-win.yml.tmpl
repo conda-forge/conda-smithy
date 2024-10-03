@@ -21,6 +21,8 @@ jobs:
       displayName: Run Windows build
       env:
         MINIFORGE_HOME: D:\Miniforge
+        MAMBA_ROOT_PREFIX: D:\.conda
+        CONDA_PKGS_DIRS: D:\.conda
         PYTHONUNBUFFERED: 1
         CONFIG: $(CONFIG)
         CI: azure
