@@ -74,6 +74,11 @@ SERVICE_FEEDSTOCKS = [
     "conda-forge-pinning-feedstock",
     "conda-forge-repodata-patches-feedstock",
     "conda-smithy-feedstock",
+    "conda-forge-ci-setup-feedstock",
+    # these are parts of the bot or used by it
+    "conda-forge-tick",
+    "conda-forge-feedstock-check-solvable-feedstock",
+    "conda-forge-metadata-feedstock",
 ]
 if "CONDA_SMITHY_SERVICE_FEEDSTOCKS" in os.environ:
     SERVICE_FEEDSTOCKS += os.environ["CONDA_SMITHY_SERVICE_FEEDSTOCKS"].split(
@@ -1368,10 +1373,7 @@ def generate_yum_requirements(forge_config, forge_dir):
             # "recipe/yum_requirements.txt" file. After updating that file,
             # run "conda smithy rerender" and this line will be updated
             # automatically.
-            /usr/bin/sudo -n yum install -y {}
-
-
-        """.format(
+            /usr/bin/sudo -n yum install -y {}""".format(
                 " ".join(requirements)
             )
         )
@@ -2080,9 +2082,19 @@ def render_readme(jinja_env, forge_config, forge_dir, render_info=None):
         about = about.copy()
         # if subpackages do not have about, conda-build would copy the top-level about;
         # if subpackages have their own about, conda-build would use them as is;
-        # we discussed in PR #1691 and decided to not show repetitve entries
+        # we discussed in PR #1691 and decided to not show repetitive entries
         if about != package_about:
             subpackages_about.append((name, about))
+
+    # align new style about with old style about
+    print("subpackages_about", subpackages_about)
+    for i, (name, about) in enumerate(subpackages_about):
+        if "repository" in about:
+            about["dev_url"] = about["repository"]
+        if "homepage" in about:
+            about["home"] = about["homepage"]
+        if "documentation" in about:
+            about["doc_url"] = about["documentation"]
 
     template = jinja_env.get_template("README.md.tmpl")
     target_fname = os.path.join(forge_dir, "README.md")
@@ -2154,7 +2166,7 @@ def _get_skip_files(forge_config):
 def render_github_actions_services(jinja_env, forge_config, forge_dir):
     # render github actions files for automerge and rerendering services
     skip_files = _get_skip_files(forge_config)
-    for template_file in ["automerge.yml", "webservices.yml"]:
+    for template_file in ["automerge.yml"]:
         template = jinja_env.get_template(template_file + ".tmpl")
         rel_target_fname = os.path.join(".github", "workflows", template_file)
         if _ignore_match(skip_files, rel_target_fname):

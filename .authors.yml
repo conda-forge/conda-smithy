@@ -236,7 +236,7 @@
   email: uwe.korn@quantco.com
   alternate_emails:
   - xhochy@users.noreply.github.com
-  num_commits: 45
+  num_commits: 48
   first_commit: 2019-06-27 08:26:49
   github: xhochy
 - name: C.A.M. Gerlach
@@ -247,7 +247,7 @@
   email: isuru.11@cse.mrt.ac.lk
   alternate_emails:
   - isuruf@gmail.com
-  num_commits: 664
+  num_commits: 666
   first_commit: 2017-01-08 22:03:03
   github: isuruf
 - name: Julian Rüth
@@ -319,7 +319,7 @@
   github: hajapy
 - name: Peter Williams
   email: peter@newton.cx
-  num_commits: 6
+  num_commits: 8
   first_commit: 2017-04-23 09:00:59
   github: pkgw
 - name: Patrick Sodré
@@ -329,7 +329,7 @@
   github: sodre
 - name: Mark Harfouche
   email: mark.harfouche@gmail.com
-  num_commits: 25
+  num_commits: 30
   first_commit: 2018-06-12 01:15:09
   github: hmaarrfk
 - name: Dougal J. Sutherland
@@ -393,7 +393,7 @@
   github: shadowwalkersb
 - name: Matthew R. Becker
   email: becker.mr@gmail.com
-  num_commits: 256
+  num_commits: 315
   first_commit: 2020-01-07 17:44:33
   github: beckermr
   alternate_emails:
@@ -488,7 +488,7 @@
   github: BastianZim
 - name: Wolf Vollprecht
   email: w.vollprecht@gmail.com
-  num_commits: 55
+  num_commits: 58
   first_commit: 2021-01-19 04:39:35
   github: wolfv
 - name: Hugo Slepicka
@@ -537,7 +537,7 @@
   github: nehaljwani
 - name: H. Vetinari
   email: h.vetinari@gmx.com
-  num_commits: 53
+  num_commits: 60
   first_commit: 2021-11-14 02:53:10
 - name: Benjamin Tovar
   email: btovar@nd.edu
@@ -587,7 +587,7 @@
   github: zklaus
 - name: pre-commit-ci[bot]
   email: 66853113+pre-commit-ci[bot]@users.noreply.github.com
-  num_commits: 22
+  num_commits: 26
   first_commit: 2023-10-30 15:49:50
   github: carterbox
 - name: Amit Kumar
@@ -624,11 +624,11 @@
   github: ytausch
 - name: dependabot[bot]
   email: 49699333+dependabot[bot]@users.noreply.github.com
-  num_commits: 2
+  num_commits: 4
   first_commit: 2024-05-21 04:47:22
 - name: nichmor
   email: nmorkotilo@gmail.com
-  num_commits: 126
+  num_commits: 128
   first_commit: 2024-03-21 10:10:04
   github: nichmor
 - name: Jan Lehnarsdt
@@ -652,3 +652,7 @@
   num_commits: 3
   first_commit: 2024-06-30 13:54:12
   github: mfisher87
+- name: Bas Zalmstra
+  email: zalmstra.bas@gmail.com
+  num_commits: 1
+  first_commit: 2024-09-05 06:36:36

@@ -761,7 +761,6 @@ def test_files_skip_render(render_skipped_recipe, jinja_env):
         ".gitattributes",
         "README.md",
         "LICENSE.txt",
-        ".github/workflows/webservices.yml",
     ]
     for f in skipped_files:
         fpath = os.path.join(render_skipped_recipe.recipe, f)
@@ -792,23 +791,6 @@ def test_choco_install(choco_recipe, jinja_env):
       displayName: "Install Chocolatey Package: pkg1 --version=X.Y.Z"
 """.strip()
     assert exp in contents
-
-
-def test_webservices_action_exists(py_recipe, jinja_env):
-    configure_feedstock.render_github_actions_services(
-        jinja_env=jinja_env,
-        forge_config=py_recipe.config,
-        forge_dir=py_recipe.recipe,
-    )
-    assert os.path.exists(
-        os.path.join(py_recipe.recipe, ".github/workflows/webservices.yml")
-    )
-    with open(
-        os.path.join(py_recipe.recipe, ".github/workflows/webservices.yml")
-    ) as f:
-        action_config = yaml.safe_load(f)
-    assert "jobs" in action_config
-    assert "webservices" in action_config["jobs"]
 
 
 def test_automerge_action_exists(py_recipe, jinja_env):

@@ -57,7 +57,7 @@ def get_feedstock_name_from_meta(
 
 
 def get_feedstock_about_from_meta(meta) -> dict:
-    """Fetch the feedtstock about from the parsed meta.yaml."""
+    """Fetch the feedstock about from the parsed meta.yaml."""
     # it turns out that conda_build would not preserve the feedstock about:
     #   - if a subpackage does not have about, it uses the feedstock's
     #   - if a subpackage has about, it's used as is
@@ -75,14 +75,14 @@ def get_feedstock_about_from_meta(meta) -> dict:
         return dict(meta.meta["about"])
 
 
-def get_yaml():
+def get_yaml(allow_duplicate_keys: bool = True):
     # define global yaml API
     # roundrip-loader and allowing duplicate keys
     # for handling # [filter] / # [not filter]
     # Don't use a global variable for this as a global
     # variable will make conda-smithy thread unsafe.
     yaml = ruamel.yaml.YAML(typ="rt")
-    yaml.allow_duplicate_keys = True
+    yaml.allow_duplicate_keys = allow_duplicate_keys
     return yaml
 
 

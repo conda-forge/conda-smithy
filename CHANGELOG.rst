@@ -4,6 +4,122 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.41.1
+====================
+
+**Fixed:**
+
+* Fixed a bug in processing CLI arguments for token expiration times. (#2073)
+
+**Authors:**
+
+* Matthew R. Becker
+
+
+
+v3.41.0
+====================
+
+**Added:**
+
+* Added expiration dates to tokens when rotating.
+
+**Fixed:**
+
+* fix cross-compilation with rattler-build by setting `--target-platform=${HOST_PLATFORM}`
+
+**Authors:**
+
+* Matthew R. Becker
+* Wolf Vollprecht
+* pre-commit-ci[bot]
+
+
+
+v3.40.1
+====================
+
+**Fixed:**
+
+* Fixed linter to use a GitHub Token if one is available. (#2064)
+
+**Authors:**
+
+* Matthew R. Becker
+
+
+
+v3.40.0
+====================
+
+**Added:**
+
+* Enabled branch protection for ``conda-forge`` feedstocks by default. (#2054)
+
+**Removed:**
+
+* Moved staged-recipes specific lints/hints that required a GitHub token to the `staged-recipes` repository. (#)
+
+**Fixed:**
+
+* Fixed the ``sh`` trampoline in the ``build-locally.py`` template (#2053)
+
+**Authors:**
+
+* Isuru Fernando
+* Matthew R. Becker
+* nichmor
+* H. Vetinari
+* Uwe L. Korn
+* pre-commit-ci[bot]
+* Peter Williams
+* Bas Zalmstra
+
+
+
+v3.39.1
+====================
+
+**Added:**
+
+* Added bot feedstocks to the allowlist for service feedstocks on GHA. (#2041)
+
+**Fixed:**
+
+* Fixed a corner-case in stdlib-linting (#2042)
+* Fixed error where some python build backends were flagged as not having a backend. (#2046)
+
+**Authors:**
+
+* Isuru Fernando
+* Matthew R. Becker
+* H. Vetinari
+* Mark Harfouche
+* dependabot[bot]
+
+
+
+v3.39.0
+====================
+
+**Added:**
+
+* Added hint for missing ``pip`` build backend in the ``host`` section of the recipe. (#2039)
+* Added a lint for duplicate keys in the ``conda-forge.yml`` file. (#2040)
+
+**Removed:**
+
+* Removed lint for editing example recipes in staged-recipes since covered by CI already. (#2038)
+
+**Authors:**
+
+* Matthew R. Becker
+* Uwe L. Korn
+* pre-commit-ci[bot]
+* dependabot[bot]
+
+
+
 v3.38.0
 ====================
 

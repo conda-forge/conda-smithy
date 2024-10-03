@@ -106,7 +106,11 @@ if NOT [%HOST_PLATFORM%] == [%BUILD_PLATFORM%] (
 {%- endif %}
 
 if NOT [%flow_run_id%] == [] (
-    set "EXTRA_CB_OPTIONS=%EXTRA_CB_OPTIONS% --extra-meta flow_run_id=%flow_run_id% remote_url=%remote_url% sha=%sha%"
+    {%- if conda_build_tool == "rattler-build" %}
+        set "EXTRA_CB_OPTIONS=%EXTRA_CB_OPTIONS% --extra-meta flow_run_id=%flow_run_id% --extra-meta remote_url=%remote_url% --extra-meta sha=%sha%"
+    {%- else %}
+        set "EXTRA_CB_OPTIONS=%EXTRA_CB_OPTIONS% --extra-meta flow_run_id=%flow_run_id% remote_url=%remote_url% sha=%sha%"
+    {%- endif %}
 )
 
 call :end_group
@@ -124,7 +128,7 @@ conda-build.exe "{{ recipe_dir }}" -m .ci_support\%CONFIG%.yaml --suppress-varia
 {%- elif conda_build_tool == "conda-build" %}
 conda-build.exe "{{ recipe_dir }}" -m .ci_support\%CONFIG%.yaml --suppress-variables %EXTRA_CB_OPTIONS%
 {%- elif conda_build_tool == "rattler-build" %}
-conda.exe run rattler-build build --recipe "{{ recipe_dir }}" -m .ci_support\%CONFIG%.yaml %EXTRA_CB_OPTIONS%
+conda.exe run rattler-build build --recipe "{{ recipe_dir }}" -m .ci_support\%CONFIG%.yaml %EXTRA_CB_OPTIONS% --target-platform %HOST_PLATFORM%
 {%- endif %}
 if !errorlevel! neq 0 exit /b !errorlevel!
 

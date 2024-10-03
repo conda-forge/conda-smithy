@@ -5,21 +5,17 @@ import subprocess
 import tempfile
 import textwrap
 import unittest
-import warnings
 from collections import OrderedDict
 from contextlib import contextmanager
 from pathlib import Path
 
-import github
 import pytest
 
 import conda_smithy.lint_recipe as linter
+from conda_smithy.linter.utils import VALID_PYTHON_BUILD_BACKENDS
+from conda_smithy.utils import get_yaml
 
 _thisdir = os.path.abspath(os.path.dirname(__file__))
-
-
-def is_gh_token_set():
-    return "GH_TOKEN" in os.environ
 
 
 @contextmanager
@@ -70,6 +66,27 @@ def test_stdlib_lint(comp_lang):
 
         lints, _ = linter.main(recipe_dir, return_hints=True)
         assert any(lint.startswith(expected_message) for lint in lints)
+
+
+def test_m2w64_stdlib_legal():
+    # allow recipes that _only_ depend on {{ stdlib("m2w64_c") }}
+    avoid_message = "stdlib"
+
+    with tmp_directory() as recipe_dir:
+        with open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
+            fh.write(
+                """
+                package:
+                   name: foo
+                requirements:
+                  build:
+                    - {{ stdlib("m2w64_c") }}
+                    - {{ compiler("m2w64_c") }}
+                """
+            )
+
+        lints, _ = linter.main(recipe_dir, return_hints=True)
+        assert not any(avoid_message in lint for lint in lints)
 
 
 @pytest.mark.parametrize(
@@ -1796,7 +1813,6 @@ noarch_platforms:
         )
         assert not lints
 
-    @unittest.skipUnless(is_gh_token_set(), "GH_TOKEN not set")
     def test_maintainer_exists(self):
         lints, _ = linter.lintify_meta_yaml(
             {"extra": {"recipe-maintainers": ["support"]}}, conda_forge=True
@@ -1809,168 +1825,6 @@ noarch_platforms:
         )
         expected_message = 'Recipe maintainer "isuruf" does not exist'
         self.assertNotIn(expected_message, lints)
-
-        expected_message = (
-            "Feedstock with the same name exists in conda-forge."
-        )
-        # Check that feedstock exists if staged_recipes
-        lints, _ = linter.lintify_meta_yaml(
-            {"package": {"name": "python"}},
-            recipe_dir="python",
-            conda_forge=True,
-        )
-        self.assertIn(expected_message, lints)
-        lints, _ = linter.lintify_meta_yaml(
-            {"package": {"name": "python"}},
-            recipe_dir="python",
-            conda_forge=False,
-        )
-        self.assertNotIn(expected_message, lints)
-        # No lint if in a feedstock
-        lints, _ = linter.lintify_meta_yaml(
-            {"package": {"name": "python"}},
-            recipe_dir="recipe",
-            conda_forge=True,
-        )
-        self.assertNotIn(expected_message, lints)
-        lints, _ = linter.lintify_meta_yaml(
-            {"package": {"name": "python"}},
-            recipe_dir="recipe",
-            conda_forge=False,
-        )
-        self.assertNotIn(expected_message, lints)
-
-        # Make sure there's no feedstock named python1 before proceeding
-        gh = github.Github(os.environ["GH_TOKEN"])
-        cf = gh.get_user("conda-forge")
-        try:
-            cf.get_repo("python1-feedstock")
-            feedstock_exists = True
-        except github.UnknownObjectException:
-            feedstock_exists = False
-
-        if feedstock_exists:
-            warnings.warn(
-                "There's a feedstock named python1, but tests assume that there isn't"
-            )
-        else:
-            lints, _ = linter.lintify_meta_yaml(
-                {"package": {"name": "python1"}},
-                recipe_dir="python",
-                conda_forge=True,
-            )
-            self.assertNotIn(expected_message, lints)
-
-        # Test bioconda recipe checking
-        expected_message = (
-            "Recipe with the same name exists in bioconda: "
-            "please discuss with @conda-forge/bioconda-recipes."
-        )
-        bio = gh.get_user("bioconda").get_repo("bioconda-recipes")
-        r = "samtools"
-        try:
-            bio.get_dir_contents(f"recipe/{r}")
-        except github.UnknownObjectException:
-            warnings.warn(
-                f"There's no bioconda recipe named {r}, but tests assume that there is"
-            )
-        else:
-            # Check that feedstock exists if staged_recipes
-            lints, _ = linter.lintify_meta_yaml(
-                {"package": {"name": r}}, recipe_dir=r, conda_forge=True
-            )
-            self.assertIn(expected_message, lints)
-            lints, _ = linter.lintify_meta_yaml(
-                {"package": {"name": r}}, recipe_dir=r, conda_forge=False
-            )
-            self.assertNotIn(expected_message, lints)
-            # No lint if in a feedstock
-            lints, _ = linter.lintify_meta_yaml(
-                {"package": {"name": r}}, recipe_dir="recipe", conda_forge=True
-            )
-            self.assertNotIn(expected_message, lints)
-            lints, _ = linter.lintify_meta_yaml(
-                {"package": {"name": r}},
-                recipe_dir="recipe",
-                conda_forge=False,
-            )
-            self.assertNotIn(expected_message, lints)
-            # No lint if the name isn't specified
-            lints, _ = linter.lintify_meta_yaml(
-                {}, recipe_dir=r, conda_forge=True
-            )
-            self.assertNotIn(expected_message, lints)
-
-        r = "this-will-never-exist"
-        try:
-            bio.get_dir_contents(f"recipes/{r}")
-        except github.UnknownObjectException:
-            lints, _ = linter.lintify_meta_yaml(
-                {"package": {"name": r}}, recipe_dir=r, conda_forge=True
-            )
-            self.assertNotIn(expected_message, lints)
-        else:
-            warnings.warn(
-                f"There's a bioconda recipe named {r}, but tests assume that there isn't"
-            )
-
-        expected_message = (
-            "A conda package with same name (numpy) already exists."
-        )
-        lints, hints = linter.lintify_meta_yaml(
-            {
-                "package": {"name": "this-will-never-exist"},
-                "source": {
-                    "url": "https://pypi.io/packages/source/n/numpy/numpy-1.26.4.tar.gz"
-                },
-            },
-            recipe_dir="recipes/foo",
-            conda_forge=True,
-        )
-        self.assertIn(expected_message, hints)
-
-        # check that this doesn't choke
-        lints, hints = linter.lintify_meta_yaml(
-            {
-                "package": {"name": "this-will-never-exist"},
-                "source": {
-                    "url": [
-                        "https://pypi.io/packages/source/n/numpy/numpy-1.26.4.tar.gz"
-                    ]
-                },
-            },
-            recipe_dir="recipes/foo",
-            conda_forge=True,
-        )
-
-    @unittest.skipUnless(is_gh_token_set(), "GH_TOKEN not set")
-    def test_maintainer_participation(self):
-        # Mocking PR and maintainer data
-        os.environ["STAGED_RECIPES_PR_NUMBER"] = "1"  # Example PR number
-        maintainers = ["pelson", "isuruf"]
-
-        try:
-            # Running the linter function
-            lints, _ = linter.lintify_meta_yaml(
-                {"extra": {"recipe-maintainers": maintainers}},
-                recipe_dir="python",
-                conda_forge=True,
-            )
-
-            # Expected message if a maintainer has not participated
-            expected_message = (
-                "The following maintainers have not yet confirmed that they are willing to be listed here: "
-                "isuruf. Please ask them to comment on this PR if they are."
-            )
-            self.assertIn(expected_message, lints)
-
-            expected_message = (
-                "The following maintainers have not yet confirmed that they are willing to be listed here: "
-                "pelson, isuruf. Please ask them to comment on this PR if they are."
-            )
-            self.assertNotIn(expected_message, lints)
-        finally:
-            del os.environ["STAGED_RECIPES_PR_NUMBER"]
 
     def test_bad_subheader(self):
         expected_message = (
@@ -2062,25 +1916,6 @@ noarch_platforms:
         )
         lints, hints = linter.lintify_meta_yaml(meta, recipe_version=1)
         assert any(lint.startswith(expected_message) for lint in lints)
-
-    @unittest.skipUnless(is_gh_token_set(), "GH_TOKEN not set")
-    def test_examples(self):
-        msg = (
-            "Please move the recipe out of the example dir and into its "
-            "own dir."
-        )
-        lints, hints = linter.lintify_meta_yaml(
-            {"extra": {"recipe-maintainers": ["support"]}},
-            recipe_dir="recipes/example/",
-            conda_forge=True,
-        )
-        self.assertIn(msg, lints)
-        lints = linter.lintify_meta_yaml(
-            {"extra": {"recipe-maintainers": ["support"]}},
-            recipe_dir="python",
-            conda_forge=True,
-        )
-        self.assertNotIn(msg, lints)
 
     def test_multiple_sources(self):
         lints = linter.main(
@@ -2245,7 +2080,6 @@ noarch_platforms:
         )
         assert len(hints) < 100
 
-    @unittest.skipUnless(is_gh_token_set(), "GH_TOKEN not set")
     def test_mpl_base_hint(self):
         meta = {
             "requirements": {
@@ -2256,7 +2090,6 @@ noarch_platforms:
         expected = "Recipes should usually depend on `matplotlib-base`"
         self.assertTrue(any(hint.startswith(expected) for hint in hints))
 
-    @unittest.skipUnless(is_gh_token_set(), "GH_TOKEN not set")
     def test_mpl_base_hint_outputs(self):
         meta = {
             "outputs": [
@@ -2490,7 +2323,6 @@ class TestCliRecipeLint(unittest.TestCase):
             assert_jinja('{% set version= "0.27.3"%}', is_good=False)
 
 
-@unittest.skipUnless(is_gh_token_set(), "GH_TOKEN not set")
 def test_lint_no_builds():
     expected_message = "The feedstock has no `.ci_support` files and "
 
@@ -2514,6 +2346,49 @@ def test_lint_no_builds():
 
         with open(os.path.join(ci_support_dir, "blah.yaml"), "w") as fh:
             fh.write("blah")
+
+        lints = linter.main(recipe_dir, conda_forge=True)
+        assert not any(lint.startswith(expected_message) for lint in lints)
+
+
+def test_lint_duplicate_cfyml():
+    expected_message = (
+        "The ``conda-forge.yml`` file is not allowed to have duplicate keys."
+    )
+
+    with tmp_directory() as feedstock_dir:
+        cfyml = os.path.join(feedstock_dir, "conda-forge.yml")
+        recipe_dir = os.path.join(feedstock_dir, "recipe")
+        os.makedirs(recipe_dir, exist_ok=True)
+        with open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
+            fh.write(
+                """
+                package:
+                   name: foo
+                """
+            )
+
+        with open(cfyml, "w") as fh:
+            fh.write(
+                textwrap.dedent(
+                    """
+                    blah: 1
+                    blah: 2
+                    """
+                )
+            )
+
+        lints = linter.main(recipe_dir, conda_forge=True)
+        assert any(lint.startswith(expected_message) for lint in lints)
+
+        with open(cfyml, "w") as fh:
+            fh.write(
+                textwrap.dedent(
+                    """
+                    blah: 1
+                    """
+                )
+            )
 
         lints = linter.main(recipe_dir, conda_forge=True)
         assert not any(lint.startswith(expected_message) for lint in lints)
@@ -2702,6 +2577,322 @@ def test_v1_package_name_version():
         lint_2 = "Package version $!@# doesn't match conda spec: Invalid version '$!@#': invalid character(s)"
         assert lint_1 in lints
         assert lint_2 in lints
+
+
+@pytest.mark.parametrize("remove_top_level", [True, False])
+@pytest.mark.parametrize(
+    "outputs_to_add, outputs_expected_hints",
+    [
+        (
+            textwrap.dedent(
+                """
+                - name: python-output
+                  requirements:
+                    run:
+                      - python
+                """
+            ),
+            [],
+        ),
+        (
+            textwrap.dedent(
+                """
+                - name: python-output
+                  requirements:
+                    - python
+                """
+            ),
+            [],
+        ),
+        (
+            textwrap.dedent(
+                """
+                - name: python-output
+                  requirements:
+                    host:
+                      - pip
+                    run:
+                      - python
+                """
+            ),
+            [
+                "No valid build backend found for Python recipe for package `python-output`"
+            ],
+        ),
+        (
+            textwrap.dedent(
+                """
+                - name: python-output
+                  requirements:
+                    build:
+                      - pip
+                    run:
+                      - python
+                - name: python-output2
+                  requirements:
+                    run:
+                      - python
+                """
+            ),
+            [
+                "No valid build backend found for Python recipe for package `python-output`"
+            ],
+        ),
+        (
+            textwrap.dedent(
+                """
+                - name: python-output
+                  requirements:
+                    build:
+                      - blah
+                    host:
+                      - pip
+                    run:
+                      - python
+                """
+            ),
+            [
+                "No valid build backend found for Python recipe for package `python-output`"
+            ],
+        ),
+        (
+            textwrap.dedent(
+                """
+                - name: python-output
+                  requirements:
+                    host:
+                      - pip
+                      - @@backend@@
+                    run:
+                      - python
+                """
+            ),
+            [],
+        ),
+        (
+            textwrap.dedent(
+                """
+                - name: python-output
+                  requirements:
+                    build:
+                      - pip
+                      - @@backend@@
+                    run:
+                      - python
+                - name: python-output2
+                  requirements:
+                    host:
+                      - pip
+                    run:
+                      - python
+                """
+            ),
+            [
+                "No valid build backend found for Python recipe for package `python-output2`"
+            ],
+        ),
+        (
+            textwrap.dedent(
+                """
+                - name: python-output
+                  requirements:
+                    build:
+                      - pip
+                    run:
+                      - python
+                - name: python-output2
+                  requirements:
+                    host:
+                      - pip
+                    run:
+                      - python
+                """
+            ),
+            [
+                "No valid build backend found for Python recipe for package `python-output2`",
+                "No valid build backend found for Python recipe for package `python-output`",
+            ],
+        ),
+        (
+            textwrap.dedent(
+                """
+                - name: python-output
+                  requirements:
+                    build:
+                      - pip
+                      - setuptools
+                    run:
+                      - python
+                - name: python-output2
+                  requirements:
+                    host:
+                      - pip
+                      - @@backend@@
+                    run:
+                      - python
+                """
+            ),
+            [],
+        ),
+    ],
+)
+@pytest.mark.parametrize("backend", VALID_PYTHON_BUILD_BACKENDS)
+@pytest.mark.parametrize(
+    "meta_str,expected_hints",
+    [
+        (
+            textwrap.dedent(
+                """
+                package:
+                  name: python
+
+                requirements:
+                  run:
+                    - python
+                """
+            ),
+            [],
+        ),
+        (
+            textwrap.dedent(
+                """
+                package:
+                  name: python
+
+                requirements:
+                  host:
+                    - pip
+                  run:
+                    - python
+                """
+            ),
+            [
+                "No valid build backend found for Python recipe for package `python`"
+            ],
+        ),
+        (
+            textwrap.dedent(
+                """
+                package:
+                  name: python
+
+                requirements:
+                  build:
+                    - blah
+                  host:
+                    - pip
+                  run:
+                    - python
+                """
+            ),
+            [
+                "No valid build backend found for Python recipe for package `python`"
+            ],
+        ),
+        (
+            textwrap.dedent(
+                """
+                package:
+                  name: python
+
+                requirements:
+                  host:
+                    - pip
+                    - @@backend@@
+                  run:
+                    - python
+                """
+            ),
+            [],
+        ),
+        (
+            textwrap.dedent(
+                """
+                package:
+                  name: python
+
+                requirements:
+                  build:
+                    - blah
+                  host:
+                    - pip
+                    - @@backend@@
+                  run:
+                    - python
+                """
+            ),
+            [],
+        ),
+        (
+            textwrap.dedent(
+                """
+                package:
+                  name: python
+
+                requirements:
+                  build:
+                    - pip
+                  run:
+                    - python
+                """
+            ),
+            [
+                "No valid build backend found for Python recipe for package `python`"
+            ],
+        ),
+    ],
+)
+def test_hint_pip_no_build_backend(
+    meta_str,
+    expected_hints,
+    backend,
+    outputs_to_add,
+    outputs_expected_hints,
+    remove_top_level,
+):
+    meta = get_yaml().load(meta_str.replace("@@backend@@", backend))
+    if remove_top_level:
+        meta.pop("requirements", None)
+        # we expect no hints in this case
+        _expected_hints = []
+    else:
+        _expected_hints = expected_hints
+
+    if outputs_to_add:
+        meta["outputs"] = get_yaml().load(
+            outputs_to_add.replace("@@backend@@", backend)
+        )
+
+    total_expected_hints = _expected_hints + outputs_expected_hints
+
+    lints = []
+    hints = []
+    linter.run_conda_forge_specific(
+        meta,
+        None,
+        lints,
+        hints,
+        recipe_version=0,
+    )
+
+    # make sure we have the expected hints
+    for expected_hint in total_expected_hints:
+        assert any(hint.startswith(expected_hint) for hint in hints), hints
+
+    # in this case we should not hint at all
+    if not total_expected_hints:
+        assert all(
+            "No valid build backend found for Python recipe for package"
+            not in hint
+            for hint in hints
+        ), hints
+
+    # it is not a lint
+    assert all(
+        "No valid build backend found for Python recipe for package"
+        not in lint
+        for lint in lints
+    ), lints
 
 
 if __name__ == "__main__":

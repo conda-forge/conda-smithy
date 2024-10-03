@@ -8,8 +8,8 @@ Authors are sorted by number of commits.
 * Christopher J. Wright
 * Anthony Scopatz
 * Phil Elson
-* Wolf Vollprecht
 * H. Vetinari
+* Wolf Vollprecht
 * Uwe L. Korn
 * Filipe Fernandes
 * Dougal J. Sutherland
@@ -19,13 +19,13 @@ Authors are sorted by number of commits.
 * shadow_walker
 * John Kirkham
 * Michael Sarahan
-* Bastian Zimmermann
 * Mark Harfouche
+* Bastian Zimmermann
+* pre-commit-ci[bot]
 * Leo Fang
 * Hadrien Mary
 * Ryan Volz
 * Johnny Willemsen
-* pre-commit-ci[bot]
 * Chris Burr
 * Julian Rüth
 * Yannik Tausch
@@ -49,6 +49,7 @@ Authors are sorted by number of commits.
 * C.A.M. Gerlach
 * refraction-ray
 * Leopold Talirz
+* Peter Williams
 * Tom Pollard
 * Gonzalo Pena-Castellanos
 * John Blischak
@@ -56,7 +57,6 @@ Authors are sorted by number of commits.
 * Antonio S. Cofiño
 * Carlo
 * Matthew Craig
-* Peter Williams
 * Joshua L. Adelman
 * Marius van Niekerk
 * Johannes Köster
@@ -68,6 +68,7 @@ Authors are sorted by number of commits.
 * Elmar Pruesse
 * Patrick Sodré
 * David Hirschfeld
+* dependabot[bot]
 * Finn Womack
 * Josh Barnes
 * Tobias Megies
@@ -97,7 +98,6 @@ Authors are sorted by number of commits.
 * Matthew W. Thompson
 * conda-forge-admin
 * Klaus Zimmermann
-* dependabot[bot]
 * lorenz
 * Tom Augspurger
 * Ryan May
@@ -123,3 +123,4 @@ Authors are sorted by number of commits.
 * Sylvain Corlay
 * Brandon Andersen
 * Vincenzo Eduardo Padulano
+* Bas Zalmstra
