@@ -16,7 +16,7 @@ setlocal enableextensions enabledelayedexpansion
 if "%MINIFORGE_HOME%"=="" set "MINIFORGE_HOME=%USERPROFILE%\Miniforge3"
 
 {%- if conda_install_tool == "micromamba" %}
-( startgroup "Provisioning base env with micromamba" ) 2> /dev/null
+call :start_group "Provisioning base env with micromamba"
 set "MICROMAMBA_VERSION=1.5.10-0"
 set "MICROMAMBA_URL=https://github.com/mamba-org/micromamba-releases/releases/download/%MICROMAMBA_VERSION%/micromamba-win-64"
 set "MICROMAMBA_TMPDIR=%TMP%\micromamba-%RANDOM%"
@@ -32,9 +32,9 @@ call "%MICROMAMBA_EXE%" create --yes --root-prefix "%USERPROFILE%\.conda" --pref
     --channel conda-forge ^
     pip {{ conda_build_tool_deps }} {{ " ".join(remote_ci_setup) }}
 if errorlevel 1 exit 1
-( endgroup "Provisioning base env with micromamba" ) 2> /dev/null
+call :end_group
 {%- else %}
-( startgroup "Installing a fresh version of Miniforge" ) 2> /dev/null
+call :start_group "Installing a fresh version of Miniforge"
 set "MINIFORGE_URL=https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Windows-x86_64.exe"
 set "MINIFORGE_EXE=Miniforge3-Windows-x86_64.exe"
 echo Downloading Miniforge
@@ -42,7 +42,7 @@ certutil -urlcache -split -f "%MINIFORGE_URL%" "%MINIFORGE_EXE%"
 if errorlevel 1 exit 1
 echo Installing Miniforge
 start /wait "" %MINIFORGE_EXE% /InstallationType=JustMe /RegisterPython=0 /S /D=%MINIFORGE_HOME%
-( endgroup "Installing a fresh version of Miniforge" ) 2> /dev/null
+call :end_group
 {%- endif %}
 
 call :start_group "Configuring conda"
