@@ -27,10 +27,10 @@ jobs:
           urllib.request.urlretrieve(url, path)
 
     - script: |
-        start /wait "" %BUILD_ARTIFACTSTAGINGDIRECTORY%\Miniforge.exe /InstallationType=JustMe /RegisterPython=0 /S /D=D:\Miniforge
+        start /wait "" %BUILD_ARTIFACTSTAGINGDIRECTORY%\Miniforge.exe /InstallationType=JustMe /RegisterPython=0 /S /D=$(MINIFORGE_HOME)
       displayName: Install Miniforge
 
-    - powershell: Write-Host "##vso[task.prependpath]D:\Miniforge\Scripts"
+    - powershell: Write-Host "##vso[task.prependpath]$(MINIFORGE_HOME)\Scripts"
       displayName: Add conda to PATH
 
     - script: |
