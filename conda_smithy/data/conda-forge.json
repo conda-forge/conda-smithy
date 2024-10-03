@@ -110,27 +110,15 @@
           "title": "Upload Packages"
         },
         "settings_linux": {
-          "allOf": [
-            {
-              "$ref": "#/$defs/AzureRunnerSettings"
-            }
-          ],
+          "$ref": "#/$defs/AzureRunnerSettings",
           "description": "Linux-specific settings for runners"
         },
         "settings_osx": {
-          "allOf": [
-            {
-              "$ref": "#/$defs/AzureRunnerSettings"
-            }
-          ],
+          "$ref": "#/$defs/AzureRunnerSettings",
           "description": "OSX-specific settings for runners"
         },
         "settings_win": {
-          "allOf": [
-            {
-              "$ref": "#/$defs/AzureRunnerSettings"
-            }
-          ],
+          "$ref": "#/$defs/AzureRunnerSettings",
           "description": "Windows-specific settings for runners"
         },
         "user_or_org": {
