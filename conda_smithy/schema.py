@@ -207,7 +207,7 @@ class AzureConfig(BaseModel):
         default_factory=lambda: AzureRunnerSettings(
             pool={"vmImage": "windows-2022"},
             variables={
-                "MINIFORGE_HOME": "D:\\\\Miniforge\\\\",
+                "MINIFORGE_HOME": "D:\\Miniforge",
                 "CONDA_BLD_PATH": "D:\\\\bld\\\\",
                 "UPLOAD_TEMP": "D:\\\\tmp",
             },
