@@ -584,14 +584,16 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    conda_install_tool: Optional[Literal["conda", "mamba", "micromamba"]] = Field(
-        default="mamba",
-        description=cleandoc(
-            """
+    conda_install_tool: Optional[Literal["conda", "mamba", "micromamba"]] = (
+        Field(
+            default="mamba",
+            description=cleandoc(
+                """
         Use this option to choose which tool is used to provision the tooling in your
         feedstock.
         """
-        ),
+            ),
+        )
     )
 
     conda_forge_output_validation: Optional[bool] = Field(
