@@ -13,8 +13,8 @@ Authors are sorted by number of commits.
 * Uwe L. Korn
 * Filipe Fernandes
 * Dougal J. Sutherland
-* Amit Kumar
 * Min RK
+* Amit Kumar
 * Marcel Bargull
 * shadow_walker
 * John Kirkham
