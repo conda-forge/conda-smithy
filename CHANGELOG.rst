@@ -7,6 +7,31 @@ conda-smithy Change Log
 v3.42.0
 ====================
 
+**Changed:**
+
+* Bump Azure's ``vmImage`` to ``macOS-13``. (#2078)
+
+**Removed:**
+
+* Removed webservices GHA templates since they are not used anymore. (#2074)
+
+**Fixed:**
+
+* Azure Pipelines will now skip build jobs if the last commit message contains one of
+  ``[skip ci]``, ``[ci skip]``, ``[skip azp]``, or ``[azp skip]``. (#2077)
+
+**Authors:**
+
+* Matthew R. Becker
+* Jaime Rodríguez-Guerra
+* Min RK
+* pre-commit-ci[bot]
+
+
+
+v3.42.0
+====================
+
 **Authors:**
 
 
