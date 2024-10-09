@@ -1721,7 +1721,8 @@
         {
           "enum": [
             "conda",
-            "mamba"
+            "mamba",
+            "micromamba"
           ],
           "type": "string"
         },

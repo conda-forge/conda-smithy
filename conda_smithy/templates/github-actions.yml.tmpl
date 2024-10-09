@@ -164,12 +164,6 @@ jobs:
         choco install {{ choco_pkg }} -fdv -y --debug
 {% endfor %}
 
-    - name: Install Miniconda for windows
-      uses: conda-incubator/setup-miniconda@a4260408e20b96e80095f42ff7f1a15b27dd94ca # v3.0.4
-      with:
-        miniforge-version: latest
-      if: matrix.os == 'windows'
-
     - name: Build on windows
       shell: cmd
       run: |
@@ -178,6 +172,7 @@ jobs:
         set "sha=%GITHUB_SHA%"
         call ".scripts\run_win_build.bat"
       env:
+        MINIFORGE_HOME: D:\Miniforge
         PYTHONUNBUFFERED: 1
         CONFIG: {% raw %}${{ matrix.CONFIG }}{% endraw %}
         CI: github_actions
@@ -199,6 +194,7 @@ jobs:
         CONFIG: {% raw %}${{ matrix.CONFIG }}{% endraw %}
         SHORT_CONFIG: {% raw %}${{ matrix.SHORT_CONFIG }}{% endraw %}
         OS: {% raw %}${{ matrix.os }}{% endraw %}
+        MINIFORGE_HOME_WIN: D:\Miniforge
       run: |
         export CI=github_actions
         export CI_RUN_ID=$GITHUB_RUN_ID
@@ -207,7 +203,7 @@ jobs:
         if [ $OS == "macos" ]; then
           export CONDA_BLD_DIR="${MINIFORGE_HOME:-${HOME}/miniforge3}/conda-bld"
         elif [ $OS == "windows" ]; then
-          export CONDA_BLD_DIR="${CONDA//\\//}/conda-bld"
+          export CONDA_BLD_DIR="${MINIFORGE_HOME_WIN//\\//}/conda-bld"
         else
           export CONDA_BLD_DIR="build_artifacts"
         fi

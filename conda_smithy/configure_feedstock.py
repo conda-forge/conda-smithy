@@ -2337,17 +2337,24 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
         config["noarch_platforms"]
     )
 
-    # NOTE: Currently assuming these dependencies are name-only (no version constraints)
+    # NOTE: We are not shell escaping, so no ><! symbols in the version constraints, just =
+    python_version = "3.12"  # make it match latest Miniforge, if possible
     if config["conda_build_tool"] == "mambabuild":
-        config["conda_build_tool_deps"] = "conda-build boa"
+        config["conda_build_tool_deps"] = (
+            f"python={python_version} conda-build boa"
+        )
     elif config["conda_build_tool"] == "conda-build+conda-libmamba-solver":
-        config["conda_build_tool_deps"] = "conda-build conda-libmamba-solver"
+        config["conda_build_tool_deps"] = (
+            f"python={python_version} conda-build conda-libmamba-solver"
+        )
     elif config["conda_build_tool"] == "rattler-build":
         config["conda_build_tool_deps"] = "rattler-build"
     else:
-        config["conda_build_tool_deps"] = "conda-build"
+        config["conda_build_tool_deps"] = (
+            f"python={python_version} conda-build"
+        )
 
-    # NOTE: Currently assuming these dependencies are name-only (no version constraints)
+    # NOTE: We are not shell escaping, so no ><! symbols in the version constraints, just =
     if config["conda_install_tool"] == "mamba":
         config["conda_install_tool_deps"] = "mamba"
     elif config["conda_install_tool"] in "conda":
