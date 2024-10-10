@@ -207,11 +207,25 @@ class AzureConfig(BaseModel):
         default_factory=lambda: AzureRunnerSettings(
             pool={"vmImage": "windows-2022"},
             variables={
+                "MINIFORGE_HOME": "D:\\Miniforge",
                 "CONDA_BLD_PATH": "D:\\\\bld\\\\",
                 "UPLOAD_TEMP": "D:\\\\tmp",
             },
         ),
-        description="Windows-specific settings for runners",
+        description=cleandoc(
+            """
+            Windows-specific settings for runners. Some important variables you can set are:
+
+            - `CONDA_BLD_PATH`: Location of the conda-build workspace. Defaults to `D:\\bld`
+            - `MINIFORGE_HOME`: Location of the base environment installation. Defaults to
+              `D:\\Miniforge`.
+            - `SET_PAGEFILE`: `"True"` to increase the pagefile size via conda-forge-ci-setup.
+
+            If you are running out of space in `D:`, consider changing to `C:`.
+            It's a slower drive but has more space available. We recommend you keep
+            both `CONDA_BLD_PATH` and `MINIFORGE_HOME` in the same drive for performance.
+            """
+        ),
     )
 
     user_or_org: Optional[Union[str, Nullable]] = Field(
