@@ -4,6 +4,20 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.42.1
+====================
+
+**Fixed:**
+
+* Fix rerendering when migrators have multiple additional_zip_keys (#2083).
+* Fixed whitespace in .azure-pipelines.yml (#2084).
+
+**Authors:**
+
+* Isuru Fernando
+
+
+
 v3.42.0
 ====================
 
