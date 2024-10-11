@@ -1022,10 +1022,10 @@ class TestLinter(unittest.TestCase):
             def assert_noarch_selector(meta_string, is_good=False, skip=False):
                 with open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
                     fh.write(meta_string)
-                with open(
-                    os.path.join(recipe_dir, "conda-forge.yml"), "w"
-                ) as fh:
-                    if skip:
+                if skip:
+                    with open(
+                        os.path.join(recipe_dir, "conda-forge.yml"), "w"
+                    ) as fh:
                         fh.write(
                             """
 linter:
@@ -1034,6 +1034,9 @@ linter:
 """
                         )
                 lints = linter.main(recipe_dir)
+                if skip:
+                    os.remove(os.path.join(recipe_dir, "conda-forge.yml"))
+
                 if is_good:
                     message = (
                         "Found lints when there shouldn't have "
@@ -1219,6 +1222,7 @@ linter:
                         )
 
                 lints = linter.main(recipe_dir, feedstock_dir=recipe_dir)
+                os.remove(os.path.join(recipe_dir, "conda-forge.yml"))
                 if is_good:
                     message = (
                         "Found lints when there shouldn't have "
