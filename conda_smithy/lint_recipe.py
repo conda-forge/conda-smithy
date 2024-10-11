@@ -75,7 +75,7 @@ from conda_smithy.validate_schema import validate_json_schema
 NEEDED_FAMILIES = ["gpl", "bsd", "mit", "apache", "psf"]
 
 
-def lintify_forge_yaml(recipe_dir: Optional[str] = None) -> (list, list):
+def _get_forge_yaml(recipe_dir: Optional[str] = None) -> dict:
     if recipe_dir:
         forge_yaml_filename = (
             glob(os.path.join(recipe_dir, "..", "conda-forge.yml"))
@@ -94,6 +94,11 @@ def lintify_forge_yaml(recipe_dir: Optional[str] = None) -> (list, list):
     else:
         forge_yaml = {}
 
+    return forge_yaml
+
+
+def lintify_forge_yaml(recipe_dir: Optional[str] = None) -> (list, list):
+    forge_yaml = _get_forge_yaml(recipe_dir)
     # This is where we validate against the jsonschema and execute our custom validators.
     return validate_json_schema(forge_yaml)
 
@@ -107,6 +112,9 @@ def lintify_meta_yaml(
     lints = []
     hints = []
     major_sections = list(meta.keys())
+    lints_to_skip = (
+        _get_forge_yaml(recipe_dir).get("linter", {}).get("skip", [])
+    )
 
     # If the recipe_dir exists (no guarantee within this function) , we can
     # find the meta.yaml within it.
@@ -265,23 +273,24 @@ def lintify_meta_yaml(
 
     # 18: noarch doesn't work with selectors for runtime dependencies
     noarch_platforms = len(forge_yaml.get("noarch_platforms", [])) > 1
-    if recipe_version == 1:
-        raw_requirements_section = meta.get("requirements", {})
-        lint_recipe_v1_noarch_and_runtime_dependencies(
-            noarch_value,
-            raw_requirements_section,
-            build_section,
-            noarch_platforms,
-            lints,
-        )
-    else:
-        lint_noarch_and_runtime_dependencies(
-            noarch_value,
-            recipe_fname,
-            forge_yaml,
-            conda_build_config_keys,
-            lints,
-        )
+    if "lint_noarch_selectors" not in lints_to_skip:
+        if recipe_version == 1:
+            raw_requirements_section = meta.get("requirements", {})
+            lint_recipe_v1_noarch_and_runtime_dependencies(
+                noarch_value,
+                raw_requirements_section,
+                build_section,
+                noarch_platforms,
+                lints,
+            )
+        else:
+            lint_noarch_and_runtime_dependencies(
+                noarch_value,
+                recipe_fname,
+                forge_yaml,
+                conda_build_config_keys,
+                lints,
+            )
 
     # 19: check version
     if recipe_version == 1:

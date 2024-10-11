@@ -1019,9 +1019,20 @@ class TestLinter(unittest.TestCase):
 
         with tmp_directory() as recipe_dir:
 
-            def assert_noarch_selector(meta_string, is_good=False):
+            def assert_noarch_selector(meta_string, is_good=False, skip=False):
                 with open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
                     fh.write(meta_string)
+                with open(
+                    os.path.join(recipe_dir, "conda-forge.yml"), "w"
+                ) as fh:
+                    if skip:
+                        fh.write(
+                            """
+linter:
+  skip:
+    - lint_noarch_selectors
+"""
+                        )
                 lints = linter.main(recipe_dir)
                 if is_good:
                     message = (
@@ -1052,6 +1063,15 @@ class TestLinter(unittest.TestCase):
                               noarch: generic
                               skip: true  # [win]
                             """
+            )
+            assert_noarch_selector(
+                """
+                            build:
+                              noarch: generic
+                              skip: true  # [win]
+                            """,
+                is_good=True,
+                skip=True,
             )
             assert_noarch_selector(
                 """
@@ -1169,7 +1189,10 @@ class TestLinter(unittest.TestCase):
         with tmp_directory() as recipe_dir:
 
             def assert_noarch_selector(
-                meta_string, is_good=False, has_noarch=False
+                meta_string,
+                is_good=False,
+                has_noarch=False,
+                skip=False,
             ):
                 with open(os.path.join(recipe_dir, "recipe.yaml"), "w") as fh:
                     fh.write(meta_string)
@@ -1184,6 +1207,14 @@ class TestLinter(unittest.TestCase):
 noarch_platforms:
   - win_64
   - linux_64
+"""
+                        )
+                    if skip:
+                        fh.write(
+                            """
+linter:
+  skip:
+    - lint_noarch_selectors
 """
                         )
 
@@ -1211,6 +1242,16 @@ noarch_platforms:
                               skip:
                                 - win
                 """
+            )
+            assert_noarch_selector(
+                """
+                            build:
+                              noarch: python
+                              skip:
+                                - win
+                """,
+                is_good=True,
+                skip=True,
             )
             assert_noarch_selector(
                 """
