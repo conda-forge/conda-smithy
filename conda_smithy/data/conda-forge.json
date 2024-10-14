@@ -110,15 +110,27 @@
           "title": "Upload Packages"
         },
         "settings_linux": {
-          "$ref": "#/$defs/AzureRunnerSettings",
+          "allOf": [
+            {
+              "$ref": "#/$defs/AzureRunnerSettings"
+            }
+          ],
           "description": "Linux-specific settings for runners"
         },
         "settings_osx": {
-          "$ref": "#/$defs/AzureRunnerSettings",
+          "allOf": [
+            {
+              "$ref": "#/$defs/AzureRunnerSettings"
+            }
+          ],
           "description": "OSX-specific settings for runners"
         },
         "settings_win": {
-          "$ref": "#/$defs/AzureRunnerSettings",
+          "allOf": [
+            {
+              "$ref": "#/$defs/AzureRunnerSettings"
+            }
+          ],
           "description": "Windows-specific settings for runners. Some important variables you can set are:\n\n- `CONDA_BLD_PATH`: Location of the conda-build workspace. Defaults to `D:\\bld`\n- `MINIFORGE_HOME`: Location of the base environment installation. Defaults to\n  `D:\\Miniforge`.\n- `SET_PAGEFILE`: `\"True\"` to increase the pagefile size via conda-forge-ci-setup.\n\nIf you are running out of space in `D:`, consider changing to `C:`.\nIt's a slower drive but has more space available. We recommend you keep\nboth `CONDA_BLD_PATH` and `MINIFORGE_HOME` in the same drive for performance."
         },
         "user_or_org": {
@@ -784,9 +796,6 @@
     "Nullable": {
       "const": null,
       "description": "Created to avoid issue with schema validation of null values in lists or dicts.",
-      "enum": [
-        null
-      ],
       "title": "Nullable"
     },
     "Platforms": {
