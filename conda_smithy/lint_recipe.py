@@ -475,7 +475,9 @@ def run_conda_forge_specific(
                 )
         else:
             if not _maintainer_exists(maintainer):
-                lints.append(f'Recipe maintainer "{maintainer}" does not exist')
+                lints.append(
+                    f'Recipe maintainer "{maintainer}" does not exist'
+                )
 
     # 3: if the recipe dir is inside the example dir
     # moved to staged-recipes directly

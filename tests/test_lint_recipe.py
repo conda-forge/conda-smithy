@@ -1886,7 +1886,7 @@ linter:
         self.assertIn(expected_message, lints)
 
         lints, _ = linter.lintify_meta_yaml(
-            {"extra": {"recipe-maintainers": ["conda-forge/Core"]}},
+            {"extra": {"recipe-maintainers": ["conda-forge/core"]}},
             conda_forge=True,
         )
         expected_message = (
