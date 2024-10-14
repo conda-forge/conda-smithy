@@ -66,6 +66,7 @@ VALID_PYTHON_BUILD_BACKENDS = [
     "scikit-build-core",
     "maturin",
     "jupyter_packaging",
+    "whey",
 ]
 
 
