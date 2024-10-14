@@ -12,6 +12,8 @@ from typing import Any, List, Optional, Tuple
 
 import github
 import github.Auth
+import github.Organization
+import github.Team
 import jsonschema
 import requests
 from conda_build.metadata import (
@@ -413,6 +415,16 @@ def _maintainer_exists(maintainer: str) -> bool:
         )
 
 
+@lru_cache(maxsize=1)
+def _cached_gh_org(org: str) -> github.Organization.Organization:
+    return _cached_gh().get_organization(org)
+
+
+@lru_cache(maxsize=1)
+def _cached_gh_team(org: str, team: str) -> github.Team.Team:
+    return _cached_gh_org(org).get_team_by_slug(team)
+
+
 def _team_exists(org_team: str) -> bool:
     """Check if a team exists on GitHub."""
     if "GH_TOKEN" in os.environ:
@@ -420,10 +432,8 @@ def _team_exists(org_team: str) -> bool:
         if len(_res) != 2:
             return False
         org, team = _res
-        gh = _cached_gh()
-        _org = gh.get_organization(org)
         try:
-            _org.get_team_by_slug(team)
+            _cached_gh_team(org, team)
         except github.UnknownObjectException:
             return False
         return True
