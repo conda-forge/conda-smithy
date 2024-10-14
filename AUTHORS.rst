@@ -8,8 +8,8 @@ Authors are sorted by number of commits.
 * Christopher J. Wright
 * Anthony Scopatz
 * Phil Elson
-* H. Vetinari
 * Wolf Vollprecht
+* H. Vetinari
 * Uwe L. Korn
 * Filipe Fernandes
 * Dougal J. Sutherland
@@ -98,6 +98,7 @@ Authors are sorted by number of commits.
 * Matthew W. Thompson
 * conda-forge-admin
 * Klaus Zimmermann
+* Dominic Davis-Foster
 * lorenz
 * Tom Augspurger
 * Ryan May
