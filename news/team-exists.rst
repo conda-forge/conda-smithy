@@ -1,6 +1,6 @@
 **Added:**
 
-* Added check for team existence when linting. (#)
+* Added check for team existence when linting. (#2092)
 
 **Changed:**
 
