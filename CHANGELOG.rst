@@ -4,6 +4,30 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.42.2
+====================
+
+**Added:**
+
+* Add whey to list of known python build backends for the linter
+* Added check for team existence when linting. (#2092)
+
+**Fixed:**
+
+* Fix rerendering when migrators have multiple additional_zip_keys (#2083).
+* Fixed whitespace in .azure-pipelines.yml (#2084).
+* Pass explicit arguments/options when inspecting outputs. (#2087)
+* Fix mojibake with rattler-build on Windows by calling the executable directly (#2091)
+
+**Authors:**
+
+* Isuru Fernando
+* Matthew R. Becker
+* Wolf Vollprecht
+* Dominic Davis-Foster
+
+
+
 v3.42.0
 ====================
 
