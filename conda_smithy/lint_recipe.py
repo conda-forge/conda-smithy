@@ -470,7 +470,9 @@ def run_conda_forge_specific(
     for maintainer in maintainers:
         if "/" in maintainer:
             if not _team_exists(maintainer):
-                lints.append(f'Recipe maintainer team "{maintainer}" does not exist')
+                lints.append(
+                    f'Recipe maintainer team "{maintainer}" does not exist'
+                )
         if not _maintainer_exists(maintainer):
             lints.append(f'Recipe maintainer "{maintainer}" does not exist')
 
