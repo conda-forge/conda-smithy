@@ -1886,11 +1886,11 @@ linter:
         self.assertIn(expected_message, lints)
 
         lints, _ = linter.lintify_meta_yaml(
-            {"extra": {"recipe-maintainers": ["conda-forge/core"]}},
+            {"extra": {"recipe-maintainers": ["conda-forge/Core"]}},
             conda_forge=True,
         )
         expected_message = (
-            'Recipe maintainer team "conda-forge/core" does not exist'
+            'Recipe maintainer team "conda-forge/Core" does not exist'
         )
         self.assertNotIn(expected_message, lints)
 
