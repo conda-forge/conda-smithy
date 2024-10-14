@@ -131,7 +131,7 @@
               "$ref": "#/$defs/AzureRunnerSettings"
             }
           ],
-          "description": "Windows-specific settings for runners. Some important variables you can set are:\n\n- `CONDA_BLD_PATH`: Location of the conda-build workspace. Defaults to `D:\\bld`\n- `MINIFORGE_HOME`: Location of the base environment installation. Defaults to\n  `D:\\Miniforge`.\n- `SET_PAGEFILE`: `\"True\"` to increase the pagefile size via conda-forge-ci-setup.\n\nIf you are running out of space in `D:`, consider changing to `C:`.\nIt's a slower drive but has more space available. We recommend you keep\nboth `CONDA_BLD_PATH` and `MINIFORGE_HOME` in the same drive for performance."
+          "description": "Windows-specific settings for runners"
         },
         "user_or_org": {
           "anyOf": [
@@ -792,6 +792,32 @@
       },
       "title": "GithubConfig",
       "type": "object"
+    },
+    "LinterConfig": {
+      "properties": {
+        "skip": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/Lints"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "List of lints to skip",
+          "title": "Skip"
+        }
+      },
+      "title": "LinterConfig",
+      "type": "object"
+    },
+    "Lints": {
+      "const": "lint_noarch_selectors",
+      "title": "Lints",
+      "type": "string"
     },
     "Nullable": {
       "const": null,
@@ -1704,6 +1730,17 @@
         }
       ],
       "description": "Settings in this block are used to control how `conda build`\nruns and produces artifacts. An example of the such configuration is:\n\n```yaml\nconda_build:\n    pkg_format: 2\n    zstd_compression_level: 16\n    error_overlinking: False\n```"
+    },
+    "linter": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/LinterConfig"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Settings in this block are used to control how `conda smithy` lints\nAn example of the such configuration is:\n\n```yaml\nlinter:\n    skip:\n        - lint_noarch_selectors\n```"
     },
     "conda_build_tool": {
       "anyOf": [
