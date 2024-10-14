@@ -12,11 +12,11 @@
 
 **Removed:**
 
-* Removed webservices GHA templates since they are not used anymore. (#2074)
+* <news item>
 
 **Fixed:**
 
-* <news item>
+* Fix rerendering when migrators have multiple additional_zip_keys (#2083).
 
 **Security:**
 

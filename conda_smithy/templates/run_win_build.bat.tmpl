@@ -127,13 +127,13 @@ conda-build.exe "{{ recipe_dir }}" -m .ci_support\%CONFIG%.yaml --suppress-varia
 {%- elif conda_build_tool == "conda-build" %}
 conda-build.exe "{{ recipe_dir }}" -m .ci_support\%CONFIG%.yaml --suppress-variables %EXTRA_CB_OPTIONS%
 {%- elif conda_build_tool == "rattler-build" %}
-conda.exe run rattler-build build --recipe "{{ recipe_dir }}" -m .ci_support\%CONFIG%.yaml %EXTRA_CB_OPTIONS% --target-platform %HOST_PLATFORM%
+rattler-build.exe build --recipe "{{ recipe_dir }}" -m .ci_support\%CONFIG%.yaml %EXTRA_CB_OPTIONS% --target-platform %HOST_PLATFORM%
 {%- endif %}
 if !errorlevel! neq 0 exit /b !errorlevel!
 
 call :start_group "Inspecting artifacts"
-:: inspect_artifacts was only added in conda-forge-ci-setup 4.6.0
-WHERE inspect_artifacts >nul 2>nul && inspect_artifacts || echo "inspect_artifacts needs conda-forge-ci-setup >=4.6.0"
+:: inspect_artifacts was only added in conda-forge-ci-setup 4.9.4
+WHERE inspect_artifacts >nul 2>nul && inspect_artifacts --recipe-dir ".\{{ recipe_dir }}" -m .ci_support\%CONFIG%.yaml || echo "inspect_artifacts needs conda-forge-ci-setup >=4.9.4"
 call :end_group
 
 :: Prepare some environment variables for the upload step

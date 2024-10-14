@@ -1019,10 +1019,24 @@ class TestLinter(unittest.TestCase):
 
         with tmp_directory() as recipe_dir:
 
-            def assert_noarch_selector(meta_string, is_good=False):
+            def assert_noarch_selector(meta_string, is_good=False, skip=False):
                 with open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
                     fh.write(meta_string)
+                if skip:
+                    with open(
+                        os.path.join(recipe_dir, "conda-forge.yml"), "w"
+                    ) as fh:
+                        fh.write(
+                            """
+linter:
+  skip:
+    - lint_noarch_selectors
+"""
+                        )
                 lints = linter.main(recipe_dir)
+                if skip:
+                    os.remove(os.path.join(recipe_dir, "conda-forge.yml"))
+
                 if is_good:
                     message = (
                         "Found lints when there shouldn't have "
@@ -1052,6 +1066,15 @@ class TestLinter(unittest.TestCase):
                               noarch: generic
                               skip: true  # [win]
                             """
+            )
+            assert_noarch_selector(
+                """
+                            build:
+                              noarch: generic
+                              skip: true  # [win]
+                            """,
+                is_good=True,
+                skip=True,
             )
             assert_noarch_selector(
                 """
@@ -1169,7 +1192,10 @@ class TestLinter(unittest.TestCase):
         with tmp_directory() as recipe_dir:
 
             def assert_noarch_selector(
-                meta_string, is_good=False, has_noarch=False
+                meta_string,
+                is_good=False,
+                has_noarch=False,
+                skip=False,
             ):
                 with open(os.path.join(recipe_dir, "recipe.yaml"), "w") as fh:
                     fh.write(meta_string)
@@ -1186,8 +1212,17 @@ noarch_platforms:
   - linux_64
 """
                         )
+                    if skip:
+                        fh.write(
+                            """
+linter:
+  skip:
+    - lint_noarch_selectors
+"""
+                        )
 
                 lints = linter.main(recipe_dir, feedstock_dir=recipe_dir)
+                os.remove(os.path.join(recipe_dir, "conda-forge.yml"))
                 if is_good:
                     message = (
                         "Found lints when there shouldn't have "
@@ -1211,6 +1246,16 @@ noarch_platforms:
                               skip:
                                 - win
                 """
+            )
+            assert_noarch_selector(
+                """
+                            build:
+                              noarch: python
+                              skip:
+                                - win
+                """,
+                is_good=True,
+                skip=True,
             )
             assert_noarch_selector(
                 """
@@ -1824,6 +1869,29 @@ noarch_platforms:
             {"extra": {"recipe-maintainers": ["isuruf"]}}, conda_forge=True
         )
         expected_message = 'Recipe maintainer "isuruf" does not exist'
+        self.assertNotIn(expected_message, lints)
+
+    def test_maintainer_team_exists(self):
+        lints, _ = linter.lintify_meta_yaml(
+            {
+                "extra": {
+                    "recipe-maintainers": [
+                        "conda-forge/blahblahblah-foobarblah"
+                    ]
+                }
+            },
+            conda_forge=True,
+        )
+        expected_message = 'Recipe maintainer team "conda-forge/blahblahblah-foobarblah" does not exist'
+        self.assertIn(expected_message, lints)
+
+        lints, _ = linter.lintify_meta_yaml(
+            {"extra": {"recipe-maintainers": ["conda-forge/core"]}},
+            conda_forge=True,
+        )
+        expected_message = (
+            'Recipe maintainer team "conda-forge/Core" does not exist'
+        )
         self.assertNotIn(expected_message, lints)
 
     def test_bad_subheader(self):

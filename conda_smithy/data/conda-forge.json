@@ -110,15 +110,27 @@
           "title": "Upload Packages"
         },
         "settings_linux": {
-          "$ref": "#/$defs/AzureRunnerSettings",
+          "allOf": [
+            {
+              "$ref": "#/$defs/AzureRunnerSettings"
+            }
+          ],
           "description": "Linux-specific settings for runners"
         },
         "settings_osx": {
-          "$ref": "#/$defs/AzureRunnerSettings",
+          "allOf": [
+            {
+              "$ref": "#/$defs/AzureRunnerSettings"
+            }
+          ],
           "description": "OSX-specific settings for runners"
         },
         "settings_win": {
-          "$ref": "#/$defs/AzureRunnerSettings",
+          "allOf": [
+            {
+              "$ref": "#/$defs/AzureRunnerSettings"
+            }
+          ],
           "description": "Windows-specific settings for runners"
         },
         "user_or_org": {
@@ -781,12 +793,35 @@
       "title": "GithubConfig",
       "type": "object"
     },
+    "LinterConfig": {
+      "properties": {
+        "skip": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/Lints"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "List of lints to skip",
+          "title": "Skip"
+        }
+      },
+      "title": "LinterConfig",
+      "type": "object"
+    },
+    "Lints": {
+      "const": "lint_noarch_selectors",
+      "title": "Lints",
+      "type": "string"
+    },
     "Nullable": {
       "const": null,
       "description": "Created to avoid issue with schema validation of null values in lists or dicts.",
-      "enum": [
-        null
-      ],
       "title": "Nullable"
     },
     "Platforms": {
@@ -1695,6 +1730,17 @@
         }
       ],
       "description": "Settings in this block are used to control how `conda build`\nruns and produces artifacts. An example of the such configuration is:\n\n```yaml\nconda_build:\n    pkg_format: 2\n    zstd_compression_level: 16\n    error_overlinking: False\n```"
+    },
+    "linter": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/LinterConfig"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Settings in this block are used to control how `conda smithy` lints\nAn example of the such configuration is:\n\n```yaml\nlinter:\n    skip:\n        - lint_noarch_selectors\n```"
     },
     "conda_build_tool": {
       "anyOf": [

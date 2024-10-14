@@ -4,7 +4,7 @@
 
 **Changed:**
 
-* Bump Azure's ``vmImage`` to ``macOS-13``. (#2078)
+* <news item>
 
 **Deprecated:**
 
@@ -16,7 +16,7 @@
 
 **Fixed:**
 
-* <news item>
+* Pass explicit arguments/options when inspecting outputs. (#2087)
 
 **Security:**
 
