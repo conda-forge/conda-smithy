@@ -1871,6 +1871,29 @@ linter:
         expected_message = 'Recipe maintainer "isuruf" does not exist'
         self.assertNotIn(expected_message, lints)
 
+    def test_maintainer_team_exists(self):
+        lints, _ = linter.lintify_meta_yaml(
+            {
+                "extra": {
+                    "recipe-maintainers": [
+                        "conda-forge/blahblahblah-foobarblah"
+                    ]
+                }
+            },
+            conda_forge=True,
+        )
+        expected_message = 'Recipe maintainer team "conda-forge/blahblahblah-foobarblah" does not exist'
+        self.assertIn(expected_message, lints)
+
+        lints, _ = linter.lintify_meta_yaml(
+            {"extra": {"recipe-maintainers": ["conda-forge/core"]}},
+            conda_forge=True,
+        )
+        expected_message = (
+            'Recipe maintainer team "conda-forge/Core" does not exist'
+        )
+        self.assertNotIn(expected_message, lints)
+
     def test_bad_subheader(self):
         expected_message = (
             "The {} section contained an unexpected "

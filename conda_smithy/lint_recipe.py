@@ -413,6 +413,25 @@ def _maintainer_exists(maintainer: str) -> bool:
         )
 
 
+def _team_exists(org_team: str) -> bool:
+    """Check if a team exists on GitHub."""
+    if "GH_TOKEN" in os.environ:
+        _res = org_team.split("/", 1)
+        if len(_res) != 2:
+            return False
+        org, team = _res
+        gh = _cached_gh()
+        _org = gh.get_organization(org)
+        try:
+            _org.get_team_by_slug(team)
+        except github.UnknownObjectException:
+            return False
+        return True
+    else:
+        # we cannot check without a token
+        return True
+
+
 def run_conda_forge_specific(
     meta,
     recipe_dir,
@@ -450,10 +469,15 @@ def run_conda_forge_specific(
     # 2: Check that the recipe maintainers exists:
     for maintainer in maintainers:
         if "/" in maintainer:
-            # It's a team. Checking for existence is expensive. Skip for now
-            continue
-        if not _maintainer_exists(maintainer):
-            lints.append(f'Recipe maintainer "{maintainer}" does not exist')
+            if not _team_exists(maintainer):
+                lints.append(
+                    f'Recipe maintainer team "{maintainer}" does not exist'
+                )
+        else:
+            if not _maintainer_exists(maintainer):
+                lints.append(
+                    f'Recipe maintainer "{maintainer}" does not exist'
+                )
 
     # 3: if the recipe dir is inside the example dir
     # moved to staged-recipes directly
