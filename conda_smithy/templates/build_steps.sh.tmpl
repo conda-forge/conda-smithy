@@ -47,6 +47,9 @@ CONDARC
 {%- if conda_solver == "libmamba" %}
 export CONDA_LIBMAMBA_SOLVER_NO_CHANNELS_FROM_INSTALLED=1
 {%- endif %}
+{%- if conda_install_tool == "micromamba" %}
+{%- set conda_install_tool == "mamba" %}
+{%- endif %}
 
 {{ conda_install_tool }} install --update-specs --yes --quiet --channel conda-forge --strict-channel-priority \
     pip {{ conda_install_tool_deps }} {{ conda_build_tool_deps }} {{ " ".join(remote_ci_setup) }}
