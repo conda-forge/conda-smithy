@@ -4,7 +4,7 @@
 
 **Changed:**
 
-* Use the faster ``D:\`` drive for Miniforge installations on Windows. (#2076)
+* Use the faster ``D:\`` drive for Miniforge installations on Windows and expose this path as the ``MINIFORGE_HOME`` variable. (#2076)
 
 **Deprecated:**
 
