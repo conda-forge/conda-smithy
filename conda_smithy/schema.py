@@ -631,9 +631,12 @@ class ConfigModel(BaseModel):
             default="mamba",
             description=cleandoc(
                 """
-        Use this option to choose which tool is used to provision the tooling in your
-        feedstock.
-        """
+                Use this option to choose which tool is used to provision the tooling in your
+                feedstock.
+
+                Note: micromamba is only valid on macOS and Windows for now.
+                On Linux, mamba will still be used.
+                """
             ),
         )
     )

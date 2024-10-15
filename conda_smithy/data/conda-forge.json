@@ -1777,7 +1777,7 @@
         }
       ],
       "default": "mamba",
-      "description": "Use this option to choose which tool is used to provision the tooling in your\nfeedstock.",
+      "description": "Use this option to choose which tool is used to provision the tooling in your\nfeedstock.\n\nNote: micromamba is only valid on macOS and Windows for now.\nOn Linux, mamba will still be used.",
       "title": "Conda Install Tool"
     },
     "conda_forge_output_validation": {
