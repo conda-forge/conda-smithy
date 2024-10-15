@@ -1251,14 +1251,14 @@ class ConfigModel(BaseModel):
         ```yaml
         azure:
             settings_linux:
-            pool:
-                name: your_local_pool_name
-                demands:
-                  - some_key -equals some_value
-            workspace:
-                clean: all
-            strategy:
-                maxParallel: 1
+                pool:
+                    name: your_local_pool_name
+                    demands:
+                        - some_key -equals some_value
+                workspace:
+                    clean: all
+                strategy:
+                    maxParallel: 1
         ```
 
         Below is an example configuration for adding a swapfile on an Azure agent for Linux:
@@ -1267,6 +1267,16 @@ class ConfigModel(BaseModel):
         azure:
             settings_linux:
                 swapfile_size: 10GiB
+        ```
+
+        If you need more space on Windows, you can use `C:` at the cost of IO performance:
+
+        ```yaml
+        azure:
+            settings_win:
+                variables:
+                    CONDA_BLD_PATH: "C:\\bld"
+                    MINIFORGE_HOME: "C:\\Miniforge"
         ```
         """
         ),
