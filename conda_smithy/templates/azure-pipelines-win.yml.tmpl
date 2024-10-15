@@ -20,9 +20,7 @@ jobs:
         call ".scripts\run_win_build.bat"
       displayName: Run Windows build
       env:
-        MINIFORGE_HOME: D:\Miniforge
-        MAMBA_ROOT_PREFIX: D:\.conda
-        CONDA_PKGS_DIRS: D:\.conda
+        MINIFORGE_HOME: $(MINIFORGE_HOME)   
         PYTHONUNBUFFERED: 1
         CONFIG: $(CONFIG)
         CI: azure
@@ -40,7 +38,7 @@ jobs:
 
 {%- if azure.store_build_artifacts %}
     - script: |
-        set MINIFORGE_HOME=D:\Miniforge
+        set MINIFORGE_HOME=$(MINIFORGE_HOME)
         set CI=azure
         set CI_RUN_ID=$(build.BuildNumber).$(system.JobAttempt)
         set FEEDSTOCK_NAME=$(build.Repository.Name)

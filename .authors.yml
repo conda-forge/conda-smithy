@@ -247,7 +247,7 @@
   email: isuru.11@cse.mrt.ac.lk
   alternate_emails:
   - isuruf@gmail.com
-  num_commits: 666
+  num_commits: 672
   first_commit: 2017-01-08 22:03:03
   github: isuruf
 - name: Julian Rüth
@@ -393,7 +393,7 @@
   github: shadowwalkersb
 - name: Matthew R. Becker
   email: becker.mr@gmail.com
-  num_commits: 323
+  num_commits: 338
   first_commit: 2020-01-07 17:44:33
   github: beckermr
   alternate_emails:
@@ -488,7 +488,7 @@
   github: BastianZim
 - name: Wolf Vollprecht
   email: w.vollprecht@gmail.com
-  num_commits: 58
+  num_commits: 60
   first_commit: 2021-01-19 04:39:35
   github: wolfv
 - name: Hugo Slepicka
@@ -656,3 +656,8 @@
   email: zalmstra.bas@gmail.com
   num_commits: 1
   first_commit: 2024-09-05 06:36:36
+- name: Dominic Davis-Foster
+  email: dominic@davis-foster.co.uk
+  num_commits: 2
+  first_commit: 2024-10-14 09:13:04
+  github: domdfcoding

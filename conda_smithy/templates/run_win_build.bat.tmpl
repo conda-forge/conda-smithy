@@ -14,10 +14,12 @@
 setlocal enableextensions enabledelayedexpansion
 
 if "%MINIFORGE_HOME%"=="" set "MINIFORGE_HOME=%USERPROFILE%\Miniforge3"
+:: Remove trailing backslash, if present
+if "%MINIFORGE_HOME:~-1%"=="\" set "MINIFORGE_HOME=%MINIFORGE_HOME:~0,-1%"
 
 {%- if conda_install_tool == "micromamba" %}
 call :start_group "Provisioning base env with micromamba"
-if "%MAMBA_ROOT_PREFIX%"=="" set "MAMBA_ROOT_PREFIX=%USERPROFILE%\.conda"
+set "MAMBA_ROOT_PREFIX=%MINIFORGE_HOME%-micromamba-%RANDOM%"
 set "MICROMAMBA_VERSION=1.5.10-0"
 set "MICROMAMBA_URL=https://github.com/mamba-org/micromamba-releases/releases/download/%MICROMAMBA_VERSION%/micromamba-win-64"
 set "MICROMAMBA_TMPDIR=%TMP%\micromamba-%RANDOM%"
@@ -33,6 +35,11 @@ call "%MICROMAMBA_EXE%" create --yes --root-prefix "%MAMBA_ROOT_PREFIX%" --prefi
     --channel conda-forge ^
     pip {{ conda_build_tool_deps }} {{ " ".join(remote_ci_setup) }}
 if errorlevel 1 exit 1
+echo Moving pkgs cache from %MAMBA_ROOT_PREFIX% to %MINIFORGE_HOME%
+move /Y "%MAMBA_ROOT_PREFIX%\pkgs" "%MINIFORGE_HOME%"
+if errorlevel 1 exit 1
+echo Removing %MAMBA_ROOT_PREFIX%
+del /S /Q "%MAMBA_ROOT_PREFIX%"
 call :end_group
 {%- else %}
 call :start_group "Installing a fresh version of Miniforge"

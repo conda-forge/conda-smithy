@@ -1,3 +1,0 @@
-**Fixed:**
-
-* Fix mojibake with rattler-build on Windows by calling the executable directly (#2091)
