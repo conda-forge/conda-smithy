@@ -15,7 +15,7 @@ azure:
     variables: {}
   settings_osx:
     pool:
-      vmImage: macOS-12
+      vmImage: macOS-13
     swapfile_size: null
     timeoutInMinutes: 360
     variables: {}
@@ -96,6 +96,8 @@ github_actions:
   triggers: []
   upload_packages: true
 idle_timeout_minutes: null
+linter:
+  skip: []
 max_py_ver: '37'
 max_r_ver: '34'
 min_py_ver: '27'

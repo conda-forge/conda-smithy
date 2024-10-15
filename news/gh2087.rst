@@ -12,11 +12,11 @@
 
 **Removed:**
 
-* Removed webservices GHA templates since they are not used anymore. (#2074)
+* <news item>
 
 **Fixed:**
 
-* <news item>
+* Pass explicit arguments/options when inspecting outputs. (#2087)
 
 **Security:**
 

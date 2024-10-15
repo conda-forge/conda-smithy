@@ -91,6 +91,10 @@ class BotConfigVersionUpdatesSourcesChoice(StrEnum):
     ROS_DISTRO = "rosdistro"
 
 
+class Lints(StrEnum):
+    LINT_NOARCH_SELECTORS = "lint_noarch_selectors"
+
+
 ##############################################
 ########## Model definitions #################
 ##############################################
@@ -198,7 +202,7 @@ class AzureConfig(BaseModel):
 
     settings_osx: AzureRunnerSettings = Field(
         default_factory=lambda: AzureRunnerSettings(
-            pool={"vmImage": "macOS-12"}
+            pool={"vmImage": "macOS-13"}
         ),
         description="OSX-specific settings for runners",
     )
@@ -446,6 +450,14 @@ class CondaBuildConfig(BaseModel):
     )
 
 
+class LinterConfig(BaseModel):
+
+    skip: Optional[List[Lints]] = Field(
+        default_factory=list,
+        description="List of lints to skip",
+    )
+
+
 class CondaForgeDocker(BaseModel):
     model_config: ConfigDict = ConfigDict(extra="forbid")
 
@@ -570,6 +582,22 @@ class ConfigModel(BaseModel):
             pkg_format: 2
             zstd_compression_level: 16
             error_overlinking: False
+        ```
+        """
+        ),
+    )
+
+    linter: Optional[LinterConfig] = Field(
+        default_factory=LinterConfig,
+        description=cleandoc(
+            """
+        Settings in this block are used to control how `conda smithy` lints
+        An example of the such configuration is:
+
+        ```yaml
+        linter:
+            skip:
+                - lint_noarch_selectors
         ```
         """
         ),

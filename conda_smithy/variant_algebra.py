@@ -160,7 +160,7 @@ def op_variant_key_add(v1: dict, v2: dict):
             )
             newly_added_zip_keys.update([primary_key] + additional_zip_keys)
 
-    for key in newly_added_zip_keys:
+    for additional_key in newly_added_zip_keys:
         # store the default value for the key, so that subsequent
         # key additions don't need to specify them and continue to use the default value
         # assert len(v1[key]) == 1
