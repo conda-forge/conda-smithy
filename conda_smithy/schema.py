@@ -628,14 +628,19 @@ class ConfigModel(BaseModel):
 
     conda_install_tool: Optional[Literal["conda", "mamba", "micromamba"]] = (
         Field(
-            default="mamba",
+            default="micromamba",
             description=cleandoc(
                 """
                 Use this option to choose which tool is used to provision the tooling in your
-                feedstock.
+                feedstock. Defaults to micromamba.
 
-                Note: micromamba is only valid on macOS and Windows for now.
-                On Linux, mamba will still be used.
+                If conda or mamba are chosen, the latest Miniforge will be used to
+                provision the base environment. If micromamba is chosen, Miniforge
+                is not involved; the environment is created directly by micromamba.
+
+                Note: micromamba is only used on macOS and Windows for now.
+                On Linux, mamba (as provided in the Docker images) will still be used
+                even if micromamba is chosen.
                 """
             ),
         )
