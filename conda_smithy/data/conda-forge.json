@@ -1777,7 +1777,7 @@
         }
       ],
       "default": "micromamba",
-      "description": "Use this option to choose which tool is used to provision the tooling in your\nfeedstock. Defaults to micromamba.\n\nIf conda or mamba are chosen, the latest Miniforge will be used to\nprovision the base environment. If micromamba is chosen, Miniforge\nis not involved; the environment is created directly by micromamba.\n\nNote: micromamba is only used on macOS and Windows for now.\nOn Linux, mamba (as provided in the Docker images) will still be used\neven if micromamba is chosen.",
+      "description": "Use this option to choose which tool is used to provision the tooling in your\nfeedstock. Defaults to micromamba.\n\nIf conda or mamba are chosen, the latest Miniforge will be used to\nprovision the base environment. If micromamba is chosen, Miniforge\nis not involved; the environment is created directly by micromamba.",
       "title": "Conda Install Tool"
     },
     "conda_forge_output_validation": {

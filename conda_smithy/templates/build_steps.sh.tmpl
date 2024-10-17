@@ -33,6 +33,15 @@ solver: {{ conda_solver }}
 {%- endif %}
 
 CONDARC
+
+{%- if conda_install_tool == "micromamba" %}
+mv /opt/conda/conda-meta/history /opt/conda/conda-meta/history.$(date +%Y-%m-%d-%H-%M-%S)
+echo > /opt/conda/conda-meta/history
+micromamba install --root-prefix ~/.conda --prefix /opt/conda \
+    --yes --override-channels --channel conda-forge --strict-channel-priority \
+    pip {{ conda_install_tool_deps }} {{ conda_build_tool_deps }} {{ " ".join(remote_ci_setup) }}
+{%- endif %}
+
 {%- if conda_build_tool == "mambabuild" %}
 {%- set BUILD_CMD="conda-mambabuild" %}
 {%- elif conda_build_tool == "conda-build+conda-libmamba-solver" %}
@@ -47,12 +56,10 @@ CONDARC
 {%- if conda_solver == "libmamba" %}
 export CONDA_LIBMAMBA_SOLVER_NO_CHANNELS_FROM_INSTALLED=1
 {%- endif %}
-{%- if conda_install_tool == "micromamba" %}
-{%- set conda_install_tool = "mamba" %}
-{%- endif %}
-
+{%- if conda_install_tool in ("conda", "mamba") %}
 {{ conda_install_tool }} install --update-specs --yes --quiet --channel conda-forge --strict-channel-priority \
     pip {{ conda_install_tool_deps }} {{ conda_build_tool_deps }} {{ " ".join(remote_ci_setup) }}
+{%- endif %}
 {%- if conda_install_tool == "mamba" and (conda_build_tool_deps != "" or conda_install_tool_deps != "") %}
 {{ conda_install_tool }} update --update-specs --yes --quiet --channel conda-forge --strict-channel-priority \
     pip {{ conda_install_tool_deps }} {{ conda_build_tool_deps }} {{ " ".join(remote_ci_setup_update) }}
