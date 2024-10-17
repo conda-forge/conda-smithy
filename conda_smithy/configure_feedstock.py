@@ -12,7 +12,6 @@ import time
 import warnings
 from collections import Counter, OrderedDict, namedtuple
 from copy import deepcopy
-from datetime import datetime
 from functools import lru_cache
 from itertools import chain, product
 from os import fspath
@@ -1496,7 +1495,6 @@ def _travis_specific_setup(jinja_env, forge_config, forge_dir, platform):
 def _render_template_exe_files(
     forge_config, jinja_env, template_files, forge_dir
 ):
-    breakpoint()
     for template_file in template_files:
         template = jinja_env.get_template(
             os.path.basename(template_file) + ".tmpl"
@@ -2182,7 +2180,16 @@ def render_github_actions_services(jinja_env, forge_config, forge_dir):
 def render_pixi(jinja_env, forge_config, forge_dir):
     template = jinja_env.get_template("pixi.toml.tmpl")
     target_fname = os.path.join(forge_dir, "pixi.toml")
-    new_file_contents = template.render(**forge_config)
+    ci_support_path = os.path.join(forge_dir, ".ci_support")
+    variants = []
+    if os.path.exists(ci_support_path):
+        for filename in os.listdir(ci_support_path):
+            if filename.endswith(".yaml"):
+                variant_name, _ = os.path.splitext(filename)
+                variants.append(variant_name)
+    new_file_contents = template.render(
+        smithy_version=__version__, variants=variants, **forge_config
+    )
     with write_file(target_fname) as fh:
         fh.write(new_file_contents)
 
@@ -2413,6 +2420,10 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
         ]
     else:
         config["remote_ci_setup_update"] = config["remote_ci_setup"]
+
+    _build_tools_deps = config["conda_build_tool_deps"].split() + config["remote_ci_setup"]
+    _build_tools_deps = MatchSpec.merge([dep.strip("\"'") for dep in _build_tools_deps])
+    config["build_tool_deps_dict"] = {spec.name: str(spec.version) for spec in _build_tools_deps}
 
     if not config["github_actions"]["triggers"]:
         self_hosted = config["github_actions"]["self_hosted"]
@@ -2771,9 +2782,8 @@ def main(
         )
 
     config = _load_forge_config(forge_dir, exclusive_config_file, forge_yml)
-
     config["feedstock_name"] = os.path.basename(forge_dir)
-    config["render_time"] = datetime.now()
+
     env = make_jinja_env(forge_dir)
     logger.debug("env rendered")
 
