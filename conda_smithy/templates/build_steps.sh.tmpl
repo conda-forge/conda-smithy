@@ -35,28 +35,7 @@ solver: {{ conda_solver }}
 CONDARC
 
 {%- if conda_install_tool == "micromamba" %}
-if [[ ! -f /opt/conda/condabin/micromamba ]]; then
-    # TEMPORARY: only until https://github.com/conda-forge/docker-images/pull/288 is merged
-    export micromamba_version="1.5.10-0"
-    if [ "$(uname -m)" = "x86_64" ]; then
-        export micromamba_arch="64"
-        export micromamba_chksum="80057e007579d482a39dc283dd3e725503e34da7e7c51844957164511cdb917b"
-    elif [ "$(uname -m)" = "ppc64le" ]; then
-        export micromamba_arch="ppc64le"
-        export micromamba_chksum="5528e92b12f7389a8d23a409a476e871f4f889a17e381924cf74459f14627ddd"
-    elif [ "$(uname -m)" = "aarch64" ]; then
-        export micromamba_arch="aarch64"
-        export micromamba_chksum="7803a2aa51a5f0a58f3d2ef0f07724edb67f31f61b3e44ae9b8d6c9f009f7996"
-    else
-        exit 1
-    fi
-    export micromambapkg="https://github.com/mamba-org/micromamba-releases/releases/download/${micromamba_version}/micromamba-linux-${micromamba_arch}"
-    # Download micromamba and put it condabin
-    curl -s -L $micromambapkg > /opt/conda/condabin/micromamba
-    sha256sum /opt/conda/condabin/micromamba | grep $micromamba_chksum
-    chmod +x /opt/conda/condabin/micromamba
-fi
-micromamba info --root-prefix ~/.conda
+mv /opt/conda/conda-meta/history /opt/conda/conda-meta/history.$(date +%Y-%m-%d-%H-%M-%S)
 echo > /opt/conda/conda-meta/history
 micromamba install --root-prefix ~/.conda --prefix /opt/conda \
     --yes --override-channels --channel conda-forge --strict-channel-priority \
