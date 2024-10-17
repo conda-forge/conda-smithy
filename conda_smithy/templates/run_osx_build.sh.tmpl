@@ -32,6 +32,12 @@ mv "${MAMBA_ROOT_PREFIX}/pkgs" "${MINIFORGE_HOME}"
 echo "Cleaning up micromamba"
 rm -rf "${MAMBA_ROOT_PREFIX}" "${micromamba_exe}" || true
 ( endgroup "Provisioning base env with micromamba" ) 2> /dev/null
+{%- elif conda_install_tool == "pixi" %}
+( startgroup "Provisioning base env with pixi" ) 2> /dev/null
+curl -fsSL https://pixi.sh/install.sh | bash
+export PATH="~/.pixi/bin:$PATH"
+pixi install
+( endgroup "Provisioning base env with pixi" ) 2> /dev/null
 {%- else %}
 ( startgroup "Installing a fresh version of Miniforge" ) 2> /dev/null
 
@@ -57,8 +63,12 @@ bash "${MINIFORGE_FILE}" -b -p "${MINIFORGE_HOME}"
 {%- set BUILD_CMD="conda-build" %}
 {%- endif %}
 
+{%- if conda_install_tool == "pixi" %}
+eval "$(pixi shell-hook)"
+{%- else %}
 source "${MINIFORGE_HOME}/etc/profile.d/conda.sh"
 conda activate base
+{%- endif %}
 {%- if conda_solver %}
 export CONDA_SOLVER="{{ conda_solver }}"
 {%- endif %}
@@ -71,7 +81,7 @@ export CONDA_LIBMAMBA_SOLVER_NO_CHANNELS_FROM_INSTALLED=1
     pip {{ conda_install_tool_deps }} {{ conda_build_tool_deps }} {{ " ".join(remote_ci_setup) }}
 {%- endif %}
 
-{% if local_ci_setup %}
+{% if conda_install_tool != "pixi" and local_ci_setup %}
 conda uninstall --quiet --yes --force {{ " ".join(remote_ci_setup) }}
 pip install --no-deps {{ recipe_dir }}/.
 {%- endif %}
