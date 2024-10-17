@@ -1,6 +1,6 @@
 **Added:**
 
-* Added ``micromamba`` as the default install tool on macOS and Windows. (#2075)
+* Added ``micromamba`` as the default install tool on Linux, macOS and Windows. (#2075, #2097)
 
 **Changed:**
 
