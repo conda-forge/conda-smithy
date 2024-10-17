@@ -638,10 +638,6 @@ class ConfigModel(BaseModel):
                 provision the base environment. If micromamba or pixi are chosen,
                 Miniforge is not involved; the environment is created directly by
                 micromamba or pixi.
-
-                Note: micromamba and pixi are only used on macOS and Windows for now.
-                On Linux, mamba (as provided in the Docker images) will still be used
-                even if micromamba or pixi are chosen.
                 """
             ),
         )
