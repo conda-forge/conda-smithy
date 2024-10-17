@@ -12,6 +12,7 @@ import time
 import warnings
 from collections import Counter, OrderedDict, namedtuple
 from copy import deepcopy
+from datetime import datetime
 from functools import lru_cache
 from itertools import chain, product
 from os import fspath
@@ -1495,6 +1496,7 @@ def _travis_specific_setup(jinja_env, forge_config, forge_dir, platform):
 def _render_template_exe_files(
     forge_config, jinja_env, template_files, forge_dir
 ):
+    breakpoint()
     for template_file in template_files:
         template = jinja_env.get_template(
             os.path.basename(template_file) + ".tmpl"
@@ -2177,6 +2179,14 @@ def render_github_actions_services(jinja_env, forge_config, forge_dir):
             fh.write(new_file_contents)
 
 
+def render_pixi(jinja_env, forge_config, forge_dir):
+    template = jinja_env.get_template("pixi.toml.tmpl")
+    target_fname = os.path.join(forge_dir, "pixi.toml")
+    new_file_contents = template.render(**forge_config)
+    with write_file(target_fname) as fh:
+        fh.write(new_file_contents)
+
+
 def copy_feedstock_content(forge_config, forge_dir):
     feedstock_content = os.path.join(conda_forge_content, "feedstock_content")
     skip_files = _get_skip_files(forge_config)
@@ -2763,7 +2773,7 @@ def main(
     config = _load_forge_config(forge_dir, exclusive_config_file, forge_yml)
 
     config["feedstock_name"] = os.path.basename(forge_dir)
-
+    config["render_time"] = datetime.now()
     env = make_jinja_env(forge_dir)
     logger.debug("env rendered")
 
@@ -2783,41 +2793,43 @@ def main(
     render_info.append(
         render_circle(env, config, forge_dir, return_metadata=True)
     )
-
     logger.debug("circle rendered")
+
     render_info.append(
         render_travis(env, config, forge_dir, return_metadata=True)
     )
-
     logger.debug("travis rendered")
+
     render_info.append(
         render_appveyor(env, config, forge_dir, return_metadata=True)
     )
-
     logger.debug("appveyor rendered")
+
     render_info.append(
         render_azure(env, config, forge_dir, return_metadata=True)
     )
-
     logger.debug("azure rendered")
+
     render_info.append(
         render_drone(env, config, forge_dir, return_metadata=True)
     )
-
     logger.debug("drone rendered")
+
     render_info.append(
         render_woodpecker(env, config, forge_dir, return_metadata=True)
     )
-
     logger.debug("woodpecker rendered")
+
     render_info.append(
         render_github_actions(env, config, forge_dir, return_metadata=True)
     )
-
     logger.debug("github_actions rendered")
-    render_github_actions_services(env, config, forge_dir)
 
+    render_github_actions_services(env, config, forge_dir)
     logger.debug("github_actions services rendered")
+
+    render_pixi(env, config, forge_dir)
+    logger.debug("pixi config rendered")
 
     # put azure first just in case
     azure_ind = ([ri["provider_name"] for ri in render_info]).index("azure")
