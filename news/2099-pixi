@@ -1,0 +1,24 @@
+**Added:**
+
+* Added ``pixi`` as valid ``conda_install_tool`` option.
+  Includes several preconfigured tasks like ``build``,  ``debug``, ``rerender``, or ``lint``. (#2099)
+
+**Changed:**
+
+* <news item>
+
+**Deprecated:**
+
+* <news item>
+
+**Removed:**
+
+* <news item>
+
+**Fixed:**
+
+* <news item>
+
+**Security:**
+
+* <news item>

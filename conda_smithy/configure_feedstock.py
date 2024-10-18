@@ -2177,6 +2177,23 @@ def render_github_actions_services(jinja_env, forge_config, forge_dir):
             fh.write(new_file_contents)
 
 
+def render_pixi(jinja_env, forge_config, forge_dir):
+    template = jinja_env.get_template("pixi.toml.tmpl")
+    target_fname = os.path.join(forge_dir, "pixi.toml")
+    ci_support_path = os.path.join(forge_dir, ".ci_support")
+    variants = []
+    if os.path.exists(ci_support_path):
+        for filename in os.listdir(ci_support_path):
+            if filename.endswith(".yaml"):
+                variant_name, _ = os.path.splitext(filename)
+                variants.append(variant_name)
+    new_file_contents = template.render(
+        smithy_version=__version__, variants=variants, **forge_config
+    )
+    with write_file(target_fname) as fh:
+        fh.write(new_file_contents)
+
+
 def copy_feedstock_content(forge_config, forge_dir):
     feedstock_content = os.path.join(conda_forge_content, "feedstock_content")
     skip_files = _get_skip_files(forge_config)
@@ -2403,6 +2420,16 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
         ]
     else:
         config["remote_ci_setup_update"] = config["remote_ci_setup"]
+
+    _build_tools_deps = (
+        config["conda_build_tool_deps"].split() + config["remote_ci_setup"]
+    )
+    _build_tools_deps = MatchSpec.merge(
+        [dep.strip("\"'") for dep in _build_tools_deps]
+    )
+    config["build_tool_deps_dict"] = {
+        spec.name: str(spec.version) for spec in _build_tools_deps
+    }
 
     if not config["github_actions"]["triggers"]:
         self_hosted = config["github_actions"]["self_hosted"]
@@ -2761,7 +2788,6 @@ def main(
         )
 
     config = _load_forge_config(forge_dir, exclusive_config_file, forge_yml)
-
     config["feedstock_name"] = os.path.basename(forge_dir)
 
     env = make_jinja_env(forge_dir)
@@ -2783,41 +2809,43 @@ def main(
     render_info.append(
         render_circle(env, config, forge_dir, return_metadata=True)
     )
-
     logger.debug("circle rendered")
+
     render_info.append(
         render_travis(env, config, forge_dir, return_metadata=True)
     )
-
     logger.debug("travis rendered")
+
     render_info.append(
         render_appveyor(env, config, forge_dir, return_metadata=True)
     )
-
     logger.debug("appveyor rendered")
+
     render_info.append(
         render_azure(env, config, forge_dir, return_metadata=True)
     )
-
     logger.debug("azure rendered")
+
     render_info.append(
         render_drone(env, config, forge_dir, return_metadata=True)
     )
-
     logger.debug("drone rendered")
+
     render_info.append(
         render_woodpecker(env, config, forge_dir, return_metadata=True)
     )
-
     logger.debug("woodpecker rendered")
+
     render_info.append(
         render_github_actions(env, config, forge_dir, return_metadata=True)
     )
-
     logger.debug("github_actions rendered")
-    render_github_actions_services(env, config, forge_dir)
 
+    render_github_actions_services(env, config, forge_dir)
     logger.debug("github_actions services rendered")
+
+    render_pixi(env, config, forge_dir)
+    logger.debug("pixi config rendered")
 
     # put azure first just in case
     azure_ind = ([ri["provider_name"] for ri in render_info]).index("azure")
