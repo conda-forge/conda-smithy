@@ -48,6 +48,7 @@ inspect-{{ variant }} = "inspect_artifacts --recipe-dir {{ recipe_dir }} -m .ci_
 conda-smithy = "*"
 
 [feature.smithy.tasks]
+build-locally = "python ./build-locally.py"
 smithy = "conda-smithy"
 rerender = "conda-smithy rerender"
 lint = "conda-smithy lint {{ recipe_dir}}"
