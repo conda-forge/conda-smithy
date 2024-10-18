@@ -12,7 +12,16 @@
 
 setlocal enableextensions enabledelayedexpansion
 
+FOR %%A IN ("%~dp0.") DO SET "REPO_ROOT=%%~dpA"
+{%- if conda_install_tool == "pixi" %}
+if "%MINIFORGE_HOME%"=="" (
+    set "MINIFORGE_HOME=%REPO_ROOT%\.pixi\envs\default"
+) else (
+    set "PIXI_CACHE_DIR=%MINIFORGE_HOME%"
+)
+{%- else %}
 if "%MINIFORGE_HOME%"=="" set "MINIFORGE_HOME=%USERPROFILE%\Miniforge3"
+{%- endif %}
 :: Remove trailing backslash, if present
 if "%MINIFORGE_HOME:~-1%"=="\" set "MINIFORGE_HOME=%MINIFORGE_HOME:~0,-1%"
 
@@ -47,6 +56,13 @@ powershell -NoProfile -ExecutionPolicy unrestricted -Command "iwr -useb https://
 if !errorlevel! neq 0 exit /b !errorlevel!
 set "PATH=%USERPROFILE%\.pixi\bin;%PATH%"
 echo Installing environment
+if "%PIXI_CACHE_DIR%"=="%MINIFORGE_HOME%" (
+    mkdir "%MINIFORGE_HOME%"
+    copy /Y pixi.toml "%MINIFORGE_HOME%"
+    pushd "%MINIFORGE_HOME%"
+) else (
+    pushd "%REPO_ROOT%"
+)
 move /y pixi.toml pixi.toml.bak
 set "arch=64"
 if "%PROCESSOR_ARCHITECTURE%"=="ARM64" set "arch=arm64"
