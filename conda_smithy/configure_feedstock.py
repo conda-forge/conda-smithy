@@ -2178,8 +2178,11 @@ def render_github_actions_services(jinja_env, forge_config, forge_dir):
 
 
 def render_pixi(jinja_env, forge_config, forge_dir):
-    template = jinja_env.get_template("pixi.toml.tmpl")
     target_fname = os.path.join(forge_dir, "pixi.toml")
+    remove_file_or_dir(target_fname)
+    if forge_config["conda_install_tool"] != "pixi":
+        return
+    template = jinja_env.get_template("pixi.toml.tmpl")
     ci_support_path = os.path.join(forge_dir, ".ci_support")
     variants = []
     if os.path.exists(ci_support_path):
