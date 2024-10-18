@@ -663,21 +663,18 @@ def _yaml_represent_ordereddict(yaml_representer, data):
 def _has_local_ci_setup(forge_dir, forge_config):
     # If the recipe has its own conda_forge_ci_setup package, then
     # install that
-    return (
-        os.path.exists(
-            os.path.join(
-                forge_dir,
-                forge_config["recipe_dir"],
-                "conda_forge_ci_setup",
-                "__init__.py",
-            )
+    return os.path.exists(
+        os.path.join(
+            forge_dir,
+            forge_config["recipe_dir"],
+            "conda_forge_ci_setup",
+            "__init__.py",
         )
-        and os.path.exists(
-            os.path.join(
-                forge_dir,
-                forge_config["recipe_dir"],
-                "setup.py",
-            )
+    ) and os.path.exists(
+        os.path.join(
+            forge_dir,
+            forge_config["recipe_dir"],
+            "setup.py",
         )
     )
 
@@ -694,7 +691,9 @@ def _sanitize_remote_ci_setup(remote_ci_setup):
     return remote_ci_setup
 
 
-def _sanitize_build_tool_deps_as_dict(forge_dir, forge_config) -> dict[str, str]:
+def _sanitize_build_tool_deps_as_dict(
+    forge_dir, forge_config
+) -> dict[str, str]:
     """
     Aggregates different sources of build tool dependencies in
     mapping of package names to OR-merged version constraints.
@@ -707,9 +706,8 @@ def _sanitize_build_tool_deps_as_dict(forge_dir, forge_config) -> dict[str, str]
         spec.name: str(spec.version)
         for spec in MatchSpec.merge([dep.strip("\"'") for dep in deps])
     }
-    if (
-        forge_config.get("local_ci_setup")
-        or _has_local_ci_setup(forge_dir, forge_config)
+    if forge_config.get("local_ci_setup") or _has_local_ci_setup(
+        forge_dir, forge_config
     ):
         # We need to conda uninstall conda-forge-ci-setup
         # and then pip install on top
