@@ -25,12 +25,12 @@ build = "{{ conda_build_tool }} build --recipe {{ recipe_dir }}"
 {%- endif %}
 {%- for variant in variants %}
 {%- if conda_build_tool != "rattler-build" %}
-build-{{ variant }} = "{{ conda_build_tool }} build {{ recipe_dir }} -m .ci_support/{{ variant }}.yaml --suppress-variables --clobber-file .ci_support/clobber_{{ variant }}.yaml"
-debug-{{ variant }} = "{{ conda_build_tool }} debug {{ recipe_dir }} -m .ci_support/{{ variant }}.yaml"
+"build-{{ variant }}" = "{{ conda_build_tool }} build {{ recipe_dir }} -m .ci_support/{{ variant }}.yaml --suppress-variables --clobber-file .ci_support/clobber_{{ variant }}.yaml"
+"debug-{{ variant }}" = "{{ conda_build_tool }} debug {{ recipe_dir }} -m .ci_support/{{ variant }}.yaml"
 {%- else %}
-build-{{ variant }} = "{{ conda_build_tool }} build --recipe {{ recipe_dir }} -m .ci_support/{{ variant }}.yaml"
+"build-{{ variant }}" = "{{ conda_build_tool }} build --recipe {{ recipe_dir }} -m .ci_support/{{ variant }}.yaml"
 {%- endif %}
-inspect-{{ variant }} = "inspect_artifacts --recipe-dir {{ recipe_dir }} -m .ci_support/{{ variant }}.yaml"
+"inspect-{{ variant }}" = "inspect_artifacts --recipe-dir {{ recipe_dir }} -m .ci_support/{{ variant }}.yaml"
 {%- endfor %}
 
 [feature.smithy.dependencies]
