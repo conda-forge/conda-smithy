@@ -37,6 +37,7 @@ rm -rf "${MAMBA_ROOT_PREFIX}" "${micromamba_exe}" || true
 curl -fsSL https://pixi.sh/install.sh | bash
 export PATH="~/.pixi/bin:$PATH"
 pixi install
+pixi list
 ( endgroup "Provisioning base env with pixi" ) 2> /dev/null
 {%- else %}
 ( startgroup "Installing a fresh version of Miniforge" ) 2> /dev/null
