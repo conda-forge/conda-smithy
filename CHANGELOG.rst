@@ -4,6 +4,25 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.43.0
+====================
+
+**Added:**
+
+* Added ``micromamba`` as the default install tool on Linux, macOS and Windows. (#2075, #2097)
+
+**Changed:**
+
+* Use the faster ``D:\`` drive for Miniforge installations on Windows and expose this path as the ``MINIFORGE_HOME`` variable. (#2076)
+
+**Authors:**
+
+* Matthew R. Becker
+* Jaime Rodríguez-Guerra
+* pre-commit-ci[bot]
+
+
+
 v3.42.2
 ====================
 
