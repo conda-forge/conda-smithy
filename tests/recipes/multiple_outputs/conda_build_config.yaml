@@ -24,6 +24,22 @@ zlib:
 nonexistent:
   - a
   - b
+# not used; should not be picked up
+unused:
+  - a
+  - b
+# used in all output scripts
+# single value
+script_all:
+  - a
+# used in output2 sh script
+script_only_2:
+  - a2
+  - b2
+# used in both outputs, only windows
+script_bat:
+  - a2
+  - b2
 # zip these just for testing purposes
 zip_keys:
   -
