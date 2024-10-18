@@ -40,6 +40,11 @@ echo > /opt/conda/conda-meta/history
 micromamba install --root-prefix ~/.conda --prefix /opt/conda \
     --yes --override-channels --channel conda-forge --strict-channel-priority \
     pip {{ conda_install_tool_deps }} {{ conda_build_tool_deps }} {{ " ".join(remote_ci_setup) }}
+{%- elif conda_install_tool == "pixi" %}
+curl -fsSL https://pixi.sh/install.sh | bash
+export PATH="~/.pixi/bin:$PATH"
+pixi install --manifest-path "${FEEDSTOCK_ROOT}/pixi.toml" 
+eval "$(pixi shell-hook --manifest-path "${FEEDSTOCK_ROOT}/pixi.toml")"
 {%- endif %}
 
 {%- if conda_build_tool == "mambabuild" %}
@@ -64,7 +69,7 @@ export CONDA_LIBMAMBA_SOLVER_NO_CHANNELS_FROM_INSTALLED=1
 {{ conda_install_tool }} update --update-specs --yes --quiet --channel conda-forge --strict-channel-priority \
     pip {{ conda_install_tool_deps }} {{ conda_build_tool_deps }} {{ " ".join(remote_ci_setup_update) }}
 {%- endif %}
-{% if local_ci_setup %}
+{% if conda_install_tool != "pixi" and local_ci_setup %}
 conda uninstall --quiet --yes --force {{ " ".join(remote_ci_setup)}}
 pip install --no-deps ${RECIPE_ROOT}/.
 {%- endif %}
