@@ -43,7 +43,7 @@ micromamba install --root-prefix ~/.conda --prefix /opt/conda \
 {%- elif conda_install_tool == "pixi" %}
 curl -fsSL https://pixi.sh/install.sh | bash
 export PATH="~/.pixi/bin:$PATH"
-pixi install --manifest-path "${FEEDSTOCK_ROOT}/pixi.toml" 
+pixi install --manifest-path "${FEEDSTOCK_ROOT}/pixi.toml"
 eval "$(pixi shell-hook --manifest-path "${FEEDSTOCK_ROOT}/pixi.toml")"
 {%- endif %}
 

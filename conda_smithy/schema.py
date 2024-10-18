@@ -626,11 +626,12 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    conda_install_tool: Optional[Literal["conda", "mamba", "micromamba", "pixi"]] = (
-        Field(
-            default="micromamba",
-            description=cleandoc(
-                """
+    conda_install_tool: Optional[
+        Literal["conda", "mamba", "micromamba", "pixi"]
+    ] = Field(
+        default="micromamba",
+        description=cleandoc(
+            """
                 Use this option to choose which tool is used to provision the tooling in your
                 feedstock. Defaults to micromamba.
 
@@ -639,8 +640,7 @@ class ConfigModel(BaseModel):
                 Miniforge is not involved; the environment is created directly by
                 micromamba or pixi.
                 """
-            ),
-        )
+        ),
     )
 
     conda_forge_output_validation: Optional[bool] = Field(

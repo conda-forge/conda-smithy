@@ -2421,9 +2421,15 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
     else:
         config["remote_ci_setup_update"] = config["remote_ci_setup"]
 
-    _build_tools_deps = config["conda_build_tool_deps"].split() + config["remote_ci_setup"]
-    _build_tools_deps = MatchSpec.merge([dep.strip("\"'") for dep in _build_tools_deps])
-    config["build_tool_deps_dict"] = {spec.name: str(spec.version) for spec in _build_tools_deps}
+    _build_tools_deps = (
+        config["conda_build_tool_deps"].split() + config["remote_ci_setup"]
+    )
+    _build_tools_deps = MatchSpec.merge(
+        [dep.strip("\"'") for dep in _build_tools_deps]
+    )
+    config["build_tool_deps_dict"] = {
+        spec.name: str(spec.version) for spec in _build_tools_deps
+    }
 
     if not config["github_actions"]["triggers"]:
         self_hosted = config["github_actions"]["self_hosted"]
