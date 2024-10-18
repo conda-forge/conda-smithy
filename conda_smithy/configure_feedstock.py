@@ -2187,8 +2187,16 @@ def render_pixi(jinja_env, forge_config, forge_dir):
             if filename.endswith(".yaml"):
                 variant_name, _ = os.path.splitext(filename)
                 variants.append(variant_name)
+    platforms = [
+        platform.replace("_", "-")
+        for platform, service in forge_config["provider"].items()
+        if service
+    ]
     new_file_contents = template.render(
-        smithy_version=__version__, variants=variants, **forge_config
+        smithy_version=__version__,
+        platforms=platforms,
+        variants=variants,
+        **forge_config,
     )
     with write_file(target_fname) as fh:
         fh.write(new_file_contents)

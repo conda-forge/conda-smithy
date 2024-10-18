@@ -44,12 +44,18 @@ micromamba install --root-prefix ~/.conda --prefix /opt/conda \
 curl -fsSL https://pixi.sh/install.sh | bash
 export PATH="~/.pixi/bin:$PATH"
 pushd "${FEEDSTOCK_ROOT}"
-ln -s /opt/conda/pkgs/cache /opt/conda/repodata
+arch=$(uname -m)
+if [[ "$arch" == "x86_64" ]]; then
+  arch="64"
+fi
+sed -i.bak "s/platforms = .*/platforms = [\"linux-${arch}\"]/" pixi.toml
 echo "Creating environment"
 PIXI_CACHE_DIR=/opt/conda pixi install
 pixi list
 echo "Activating environment"
 eval "$(pixi shell-hook)"
+mv pixi.toml.bak pixi.toml
+popd
 {%- endif %}
 
 {%- if conda_build_tool == "mambabuild" %}

@@ -8,13 +8,7 @@ version = "{{ smithy_version }}"
 description = "Pixi configuration for conda-forge/{{ feedstock_name }}"
 authors = ["@conda-forge/{{ feedstock_name[:-11] }}"]
 channels = ["conda-forge"]
-platforms = [
-{%- for platform, service in provider.items() %}
-{%- if service %}
-    "{{ platform.replace('_', '-') }}",
-{%- endif %}
-{%- endfor %}
-]
+platforms = {{ platforms }}
 
 [dependencies]
 {%- for spec_name, spec_constraints in build_tool_deps_dict.items() %}
