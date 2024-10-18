@@ -16,6 +16,7 @@ from functools import lru_cache
 from itertools import chain, product
 from os import fspath
 from pathlib import Path, PurePath
+from typing import Dict
 
 import requests
 import yaml
@@ -693,12 +694,12 @@ def _sanitize_remote_ci_setup(remote_ci_setup):
 
 def _sanitize_build_tool_deps_as_dict(
     forge_dir, forge_config
-) -> dict[str, str]:
+) -> Dict[str, str]:
     """
     Aggregates different sources of build tool dependencies in
     mapping of package names to OR-merged version constraints.
     """
-    deps =[
+    deps = [
         *forge_config["conda_build_tool_deps"].split(),
         *forge_config["remote_ci_setup"],
     ]
