@@ -698,12 +698,12 @@ def _sanitize_build_tool_deps_as_dict(
     Aggregates different sources of build tool dependencies in
     mapping of package names to OR-merged version constraints.
     """
-    deps = [
+    deps =[
         *forge_config["conda_build_tool_deps"].split(),
         *forge_config["remote_ci_setup"],
     ]
     merged = {
-        spec.name: str(spec.version) or "*"
+        spec.name: str(spec.version or "*")
         for spec in MatchSpec.merge([dep.strip("\"'") for dep in deps])
     }
     if forge_config.get("local_ci_setup") or _has_local_ci_setup(
@@ -2218,14 +2218,14 @@ def render_pixi(jinja_env, forge_config, forge_dir):
             if filename.endswith(".yaml"):
                 variant_name, _ = os.path.splitext(filename)
                 variants.append(variant_name)
-    platforms = [
+    platforms = {
         platform.replace("_", "-")
         for platform, service in forge_config["provider"].items()
         if service
-    ]
+    }
     new_file_contents = template.render(
         smithy_version=__version__,
-        platforms=platforms,
+        platforms=sorted(platforms),
         variants=variants,
         **forge_config,
     )
