@@ -6,7 +6,7 @@
 name = "{{ feedstock_name }}"
 version = "{{ smithy_version }}"
 description = "Pixi configuration for conda-forge/{{ feedstock_name }}"
-authors = ["@conda-forge/{{ feedstock_name[:-11] }}"]
+authors = ["@conda-forge/{{ feedstock_name[:-10] }}"]
 channels = ["conda-forge"]
 platforms = {{ platforms }}
 
@@ -14,17 +14,12 @@ platforms = {{ platforms }}
 {%- for spec_name, spec_constraints in build_tool_deps_dict.items() %}
 {{ spec_name }} = "{{ spec_constraints }}"
 {%- endfor %}
-{%- if local_ci_setup %}
-
-[pypi-dependencies]
-conda_forge_ci_setup = { path = "./" }
-{%- endif %}
 
 [tasks]
 inspect-all = "inspect_artifacts --all-packages"
 {%- if conda_build_tool != "rattler-build" %}
 build = "{{ conda_build_tool }} build {{ recipe_dir }}"
-debug = "{{ conda_build_tool }} build {{ recipe_dir }}"
+debug = "{{ conda_build_tool }} debug {{ recipe_dir }}"
 {%- else %}
 build = "{{ conda_build_tool }} build --recipe {{ recipe_dir }}"
 {%- endif %}

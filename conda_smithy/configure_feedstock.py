@@ -660,7 +660,29 @@ def _yaml_represent_ordereddict(yaml_representer, data):
     )
 
 
-def _santize_remote_ci_setup(remote_ci_setup):
+def _has_local_ci_setup(forge_dir, forge_config):
+    # If the recipe has its own conda_forge_ci_setup package, then
+    # install that
+    return (
+        os.path.exists(
+            os.path.join(
+                forge_dir,
+                forge_config["recipe_dir"],
+                "conda_forge_ci_setup",
+                "__init__.py",
+            )
+        )
+        and os.path.exists(
+            os.path.join(
+                forge_dir,
+                forge_config["recipe_dir"],
+                "setup.py",
+            )
+        )
+    )
+
+
+def _sanitize_remote_ci_setup(remote_ci_setup):
     remote_ci_setup_ = conda_build.utils.ensure_list(remote_ci_setup)
     remote_ci_setup = []
     for package in remote_ci_setup_:
@@ -670,6 +692,30 @@ def _santize_remote_ci_setup(remote_ci_setup):
             package = '"' + package + '"'
         remote_ci_setup.append(package)
     return remote_ci_setup
+
+
+def _sanitize_build_tool_deps_as_dict(forge_dir, forge_config) -> dict[str, str]:
+    """
+    Aggregates different sources of build tool dependencies in
+    mapping of package names to OR-merged version constraints.
+    """
+    deps = [
+        *forge_config["conda_build_tool_deps"].split(),
+        *forge_config["remote_ci_setup"],
+    ]
+    merged = {
+        spec.name: str(spec.version)
+        for spec in MatchSpec.merge([dep.strip("\"'") for dep in deps])
+    }
+    if (
+        forge_config.get("local_ci_setup")
+        or _has_local_ci_setup(forge_dir, forge_config)
+    ):
+        # We need to conda uninstall conda-forge-ci-setup
+        # and then pip install on top
+        merged.setdefault("conda", "*")
+        merged.setdefault("pip", "*")
+    return merged
 
 
 def finalize_config(config, platform, arch, forge_config):
@@ -1185,25 +1231,9 @@ def _render_ci_provider(
             fast_finish_text=fast_finish_text,
         )
 
-        # If the recipe has its own conda_forge_ci_setup package, then
-        # install that
-        if os.path.exists(
-            os.path.join(
-                forge_dir,
-                forge_config["recipe_dir"],
-                "conda_forge_ci_setup",
-                "__init__.py",
-            )
-        ) and os.path.exists(
-            os.path.join(
-                forge_dir,
-                forge_config["recipe_dir"],
-                "setup.py",
-            )
-        ):
-            forge_config["local_ci_setup"] = True
-        else:
-            forge_config["local_ci_setup"] = False
+        forge_config["local_ci_setup"] = _has_local_ci_setup(
+            forge_dir, forge_config
+        )
 
         # hook for extending with whatever platform specific junk we need.
         #     Function passed in as argument
@@ -2421,7 +2451,7 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
     if config["provider"]["linux_s390x"] in {"default", "native"}:
         config["provider"]["linux_s390x"] = ["travis"]
 
-    config["remote_ci_setup"] = _santize_remote_ci_setup(
+    config["remote_ci_setup"] = _sanitize_remote_ci_setup(
         config["remote_ci_setup"]
     )
     if config["conda_install_tool"] == "conda":
@@ -2432,15 +2462,10 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
     else:
         config["remote_ci_setup_update"] = config["remote_ci_setup"]
 
-    _build_tools_deps = (
-        config["conda_build_tool_deps"].split() + config["remote_ci_setup"]
+    # Post-process requirements so they are tidier for the TOML files
+    config["build_tool_deps_dict"] = _sanitize_build_tool_deps_as_dict(
+        forge_dir, config
     )
-    _build_tools_deps = MatchSpec.merge(
-        [dep.strip("\"'") for dep in _build_tools_deps]
-    )
-    config["build_tool_deps_dict"] = {
-        spec.name: str(spec.version) for spec in _build_tools_deps
-    }
 
     if not config["github_actions"]["triggers"]:
         self_hosted = config["github_actions"]["self_hosted"]
@@ -2812,7 +2837,6 @@ def main(
     clear_variants(forge_dir)
     clear_scripts(forge_dir)
     set_migration_fns(forge_dir, config)
-
     logger.debug("migration fns set")
 
     # the order of these calls appears to matter
