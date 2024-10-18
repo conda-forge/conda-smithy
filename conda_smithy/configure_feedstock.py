@@ -703,7 +703,7 @@ def _sanitize_build_tool_deps_as_dict(
         *forge_config["remote_ci_setup"],
     ]
     merged = {
-        spec.name: str(spec.version)
+        spec.name: str(spec.version) or "*"
         for spec in MatchSpec.merge([dep.strip("\"'") for dep in deps])
     }
     if forge_config.get("local_ci_setup") or _has_local_ci_setup(
