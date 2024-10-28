@@ -29,6 +29,7 @@ from conda_smithy.linter.hints import (
     hint_pip_no_build_backend,
     hint_pip_usage,
     hint_shellcheck_usage,
+    hint_sources_should_not_mention_pypi_io_but_pypi_org,
     hint_suggest_noarch,
 )
 from conda_smithy.linter.lints import (
@@ -371,7 +372,12 @@ def lintify_meta_yaml(
     # 4: Check for SPDX
     hint_check_spdx(about_section, hints)
 
-    # 5: stdlib-related lints
+    # 5: hint pypi.io -> pypi.org
+    hint_sources_should_not_mention_pypi_io_but_pypi_org(
+        sources_section, hints
+    )
+
+    # 6: stdlib-related lints
     lint_stdlib(
         meta,
         requirements_section,

@@ -4,6 +4,7 @@ import shutil
 import subprocess
 import sys
 from glob import glob
+from typing import Any, Dict, List
 
 from conda_smithy.linter import conda_recipe_v1_linter
 from conda_smithy.linter.errors import HINT_NO_ARCH
@@ -26,6 +27,25 @@ def hint_pip_usage(build_section, hints):
                     "Whenever possible python packages should use pip. "
                     "See https://conda-forge.org/docs/maintainer/adding_pkgs.html#use-pip"
                 )
+
+
+def hint_sources_should_not_mention_pypi_io_but_pypi_org(
+    sources_section: List[Dict[str, Any]], hints: List[str]
+):
+    """
+    Grayskull and conda-forge default recipe used to have pypi.io as a default,
+    but cannonical url is PyPI.org.
+
+    See https://github.com/conda-forge/staged-recipes/pull/27946
+    """
+    for source_section in sources_section:
+        if (source_section.get("url", "") or "").startswith(
+            "https://pypi.io/"
+        ):
+            hints.append(
+                "PyPI default URL is now pypi.org, and not pypi.io."
+                " You may want to update the default source url."
+            )
 
 
 def hint_suggest_noarch(
