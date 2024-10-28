@@ -2498,7 +2498,7 @@ def test_hint_recipe(tmp_path, yaml_block: str, expected_message: str):
     (tmp_path / "meta.yaml").write_text(yaml_block)
 
     _, hints = linter.main(tmp_path, conda_forge=False, return_hints=True)
-    assert any(list(expected_message in hint for hint in hints)
+    assert any(list(expected_message in hint for hint in hints))
 
 
 @pytest.mark.parametrize(
