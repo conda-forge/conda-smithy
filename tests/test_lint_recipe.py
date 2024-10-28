@@ -2489,7 +2489,7 @@ def test_lint_duplicate_cfyml():
               script: {{ PYTHON }} -m pip install {{ name }}-{{ version }}-cp{{ CONDA_PY }}-cp{{ CONDA_PY }}-win_amd64.whl -vv  # [win]
               number: 3
             """,
-            "Pypi default url is now pypi.org",
+            "PyPI default URL is now pypi.org",
             id="pypi.io",
         )
     ],
