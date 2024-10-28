@@ -1,6 +1,6 @@
 **Added:**
 
-* Hint: source url contains ``pypi.io``, and suggest ``pypi.org``
+* Hint: if source url contains ``pypi.io``, suggest ``pypi.org``. (#2104)
 
 **Changed:**
 
