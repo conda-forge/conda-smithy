@@ -79,6 +79,9 @@ SERVICE_FEEDSTOCKS = [
     "conda-forge-tick",
     "conda-forge-feedstock-check-solvable-feedstock",
     "conda-forge-metadata-feedstock",
+    "conda-forge-feedstock-ops-feedstock",
+    # this one is used for testing
+    "cf-autotick-bot-test-package-feedstock",
 ]
 if "CONDA_SMITHY_SERVICE_FEEDSTOCKS" in os.environ:
     SERVICE_FEEDSTOCKS += os.environ["CONDA_SMITHY_SERVICE_FEEDSTOCKS"].split(
