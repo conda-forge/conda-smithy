@@ -4,6 +4,28 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.43.1
+====================
+
+**Added:**
+
+* Added more service feedstocks allowed to use GHA. (#2106)
+* Hint: if source url contains ``pypi.io``, suggest ``pypi.org``. (#2104)
+
+**Fixed:**
+
+* Do not move ``micromamba`` cache to ``conda``'s location to avoid "permission denied" errors on Windows. (#2102 via #2107)
+* Fixed a bug where azure would skip commits on main if previous commit had '[ci skip]' or similar. (#2110)
+
+**Authors:**
+
+* Matthew R. Becker
+* Jaime Rodríguez-Guerra
+* pre-commit-ci[bot]
+* M Bussonnier
+
+
+
 v3.43.0
 ====================
 
