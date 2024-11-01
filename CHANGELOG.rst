@@ -4,6 +4,20 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.43.2
+====================
+
+**Fixed:**
+
+* Fixed a bug in linting rule for PyPI source urls. (#2111)
+
+**Authors:**
+
+* Matthew R. Becker
+* Nicholas Bollweg
+
+
+
 v3.43.1
 ====================
 
