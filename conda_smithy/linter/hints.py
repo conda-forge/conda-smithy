@@ -39,9 +39,9 @@ def hint_sources_should_not_mention_pypi_io_but_pypi_org(
     See https://github.com/conda-forge/staged-recipes/pull/27946
     """
     for source_section in sources_section:
-        if (source_section.get("url", "") or "").startswith(
-            "https://pypi.io/"
-        ):
+        source = source_section.get("url", "") or ""
+        sources = [source] if isinstance(source, str) else source
+        if any(s.startswith("https://pypi.io/") for s in sources):
             hints.append(
                 "PyPI default URL is now pypi.org, and not pypi.io."
                 " You may want to update the default source url."
