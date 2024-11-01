@@ -38,8 +38,8 @@ Authors are sorted by number of commits.
 * Eric Dill
 * Natasha Pavlovikj
 * Maksim Rakitin
-* Jan Schulz
 * Nicholas Bollweg
+* Jan Schulz
 * Josh Reichardt
 * Bela Stoyan
 * Justin Calamari

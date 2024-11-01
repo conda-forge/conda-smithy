@@ -196,7 +196,7 @@
   first_commit: 2017-02-12 15:31:00
 - name: Nicholas Bollweg
   email: nick.bollweg@gmail.com
-  num_commits: 11
+  num_commits: 12
   first_commit: 2019-05-20 20:03:12
   github: bollwyvl
 - name: Leopold Talirz
@@ -393,7 +393,7 @@
   github: shadowwalkersb
 - name: Matthew R. Becker
   email: becker.mr@gmail.com
-  num_commits: 352
+  num_commits: 355
   first_commit: 2020-01-07 17:44:33
   github: beckermr
   alternate_emails:
