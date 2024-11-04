@@ -26,6 +26,7 @@ from conda_smithy.configure_feedstock import _read_forge_config
 from conda_smithy.linter import conda_recipe_v1_linter
 from conda_smithy.linter.hints import (
     hint_check_spdx,
+    hint_noarch_python_use_python_min,
     hint_pip_no_build_backend,
     hint_pip_usage,
     hint_shellcheck_usage,
@@ -469,6 +470,15 @@ def run_conda_forge_specific(
         meta, "outputs", lints, recipe_version=recipe_version
     )
 
+    build_section = get_section(meta, "build", lints, recipe_version)
+    noarch_value = build_section.get("noarch")
+
+    if recipe_version == 1:
+        test_section = get_section(meta, "tests", lints, recipe_version)
+    else:
+        test_section = get_section(meta, "test", lints, recipe_version)
+        test_reqs = test_section.get("requires") or []
+
     # Fetch list of recipe maintainers
     maintainers = extra_section.get("recipe-maintainers", [])
 
@@ -579,6 +589,16 @@ def run_conda_forge_specific(
             lints.append(
                 "The ``conda-forge.yml`` file is not allowed to have duplicate keys."
             )
+
+    # 10: check for proper noarch python syntax
+    hint_noarch_python_use_python_min(
+        requirements_section.get("host") or [],
+        requirements_section.get("run") or [],
+        test_reqs,
+        outputs_section,
+        noarch_value,
+        hints,
+    )
 
 
 def _format_validation_msg(error: jsonschema.ValidationError):

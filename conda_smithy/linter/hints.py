@@ -232,3 +232,27 @@ def hint_pip_no_build_backend(host_or_build_section, package_name, hints):
                 "If your recipe has built with only `pip` in the `host` section in the past, you likely should "
                 "add `setuptools` to the `host` section of your recipe."
             )
+
+
+def hint_noarch_python_use_python_min(
+    host_reqs, run_reqs, test_reqs, outputs_section, noarch_value, hints
+):
+    if noarch_value == "python" and not outputs_section:
+        for section_name, syntax, reqs in [
+            ("host", "python {{ python_min }}.*", host_reqs),
+            ("run", "python >={{ python_min }}", run_reqs),
+            ("test.requires", "python ={{ python_min }}", test_reqs),
+        ]:
+            for req in reqs:
+                if (
+                    req.strip().split()[0] == "python"
+                    and req != "python"
+                    and syntax not in req
+                ):
+                    hints.append(
+                        f"noarch: python recipes should almost always follow the syntax in "
+                        f"[CFEP-25](https://conda-forge.org/docs/maintainer/knowledge_base/#noarch-python). "
+                        f"For the `{section_name}` section of the recipe, you should almost always use `{syntax}` "
+                        f"for the `python` entry. You may need to override the `python_min` variable if the package "
+                        f"requires a newer Python version than the currently supported minimum version on `conda-forge`."
+                    )
