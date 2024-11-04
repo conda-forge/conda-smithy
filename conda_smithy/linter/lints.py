@@ -553,7 +553,7 @@ def lint_require_lower_bound_on_python_version(
         "Usually, this means having `python {{ python_min }}.*` in the `host` section, "
         "`python >={{ python_min }}` in the `run` section, and `python ={{ python_min }}` "
         "in the `requires` subsection in `test`. This syntax will be slightly different "
-        "for the newer v1 recipe format used with `recipe.yaml` files. However, you should check "
+        "for the newer v1 recipe format used with `recipe.yaml` files. You should check "
         "upstream for the package's Python compatibility and possibhly override the `python_min` "
         "variable if needed."
     )
