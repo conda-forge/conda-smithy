@@ -3002,5 +3002,193 @@ def test_hint_pip_no_build_backend(
     ), lints
 
 
+@pytest.mark.parametrize(
+    "meta_str,expected_hints",
+    [
+        (
+            textwrap.dedent(
+                """
+                package:
+                  name: python
+
+                requirements:
+                  run:
+                    - python
+                """
+            ),
+            [],
+        ),
+        (
+            textwrap.dedent(
+                """
+                package:
+                  name: python
+
+                build:
+                  noarch: python
+
+                requirements:
+                  run:
+                    - python
+                """
+            ),
+            [
+                "python {{ python_min }}.*",
+                "python >={{ python_min }}",
+                "python ={{ python_min }}",
+            ],
+        ),
+        (
+            textwrap.dedent(
+                """
+                package:
+                  name: python
+
+                build:
+                  noarch: python
+
+                requirements:
+                  host:
+                    - python
+                """
+            ),
+            [
+                "python {{ python_min }}.*",
+                "python >={{ python_min }}",
+                "python ={{ python_min }}",
+            ],
+        ),
+        (
+            textwrap.dedent(
+                """
+                package:
+                  name: python
+
+                build:
+                  noarch: python
+
+                test:
+                  requires:
+                    - python
+                """
+            ),
+            [
+                "python {{ python_min }}.*",
+                "python >={{ python_min }}",
+                "python ={{ python_min }}",
+            ],
+        ),
+        (
+            textwrap.dedent(
+                """
+                package:
+                  name: python
+
+                build:
+                  noarch: python
+
+                requirements:
+                  run:
+                    - python >={{ python_min }}
+                """
+            ),
+            [
+                "python {{ python_min }}.*",
+                "python ={{ python_min }}",
+            ],
+        ),
+        (
+            textwrap.dedent(
+                """
+                package:
+                  name: python
+
+                build:
+                  noarch: python
+
+                requirements:
+                  host:
+                    - python {{ python_min }}.*
+                  run:
+                    - python >={{ python_min }}
+                """
+            ),
+            [
+                "python ={{ python_min }}",
+            ],
+        ),
+        (
+            textwrap.dedent(
+                """
+                package:
+                  name: python
+
+                build:
+                  noarch: python
+
+                requirements:
+                  host:
+                    - python {{ python_min }}.*
+                  run:
+                    - python >={{ python_min }}
+
+                test:
+                  requires:
+                    - python ={{ python_min }}
+                """
+            ),
+            [],
+        ),
+        (
+            textwrap.dedent(
+                """
+                package:
+                  name: python
+
+                build:
+                  noarch: python
+
+                requirements:
+                  host:
+                    - python {{ python_min }}.*
+                  run:
+                    - python
+
+                test:
+                  requires:
+                    - python ={{ python_min }}
+                """
+            ),
+            ["python >={{ python_min }}"],
+        ),
+    ],
+)
+def test_hint_noarch_python_use_python_min(
+    meta_str,
+    expected_hints,
+):
+    meta = get_yaml().load(meta_str)
+    lints = []
+    hints = []
+    linter.run_conda_forge_specific(
+        meta,
+        None,
+        lints,
+        hints,
+        recipe_version=0,
+    )
+
+    # make sure we have the expected hints
+    if expected_hints:
+        for expected_hint in expected_hints:
+            assert any(expected_hint in hint for hint in hints), hints
+    else:
+        assert all(
+            "noarch: python recipes should almost always follow the syntax in"
+            not in hint
+            for hint in hints
+        )
+
+
 if __name__ == "__main__":
     unittest.main()
