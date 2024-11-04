@@ -477,7 +477,9 @@ def run_conda_forge_specific(
         test_section = get_section(meta, "tests", lints, recipe_version)
         test_reqs = []
         for test_element in test_section:
-            test_reqs += (test_element.get("requirements") or {}).get("run") or []
+            test_reqs += (test_element.get("requirements") or {}).get(
+                "run"
+            ) or []
     else:
         test_section = get_section(meta, "test", lints, recipe_version)
         test_reqs = test_section.get("requires") or []
