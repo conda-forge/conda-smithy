@@ -1638,11 +1638,8 @@ linter:
         self.assertNotIn(expected_message, lints)
 
     def test_noarch_python_bound(self):
-        expected_message = (
-            "noarch: python recipes are required to have a lower bound "
-            "on the python version. Typically this means putting "
-            "`python >=3.6` in **both** `host` and `run` but you should check "
-            "upstream for the package's Python compatibility."
+        expected_message_start = (
+            "noarch: python recipes are required to follow the syntax in "
         )
         meta = {
             "build": {"noarch": "python"},
@@ -1656,7 +1653,9 @@ linter:
             },
         }
         lints, hints = linter.lintify_meta_yaml(meta)
-        self.assertIn(expected_message, lints)
+        self.assertTrue(
+            any(lint.startswith(expected_message_start) for lint in lints)
+        )
 
         meta = {
             "build": {"noarch": "python"},
@@ -1670,7 +1669,76 @@ linter:
             },
         }
         lints, hints = linter.lintify_meta_yaml(meta)
-        self.assertNotIn(expected_message, lints)
+        self.assertTrue(
+            any(lint.startswith(expected_message_start) for lint in lints)
+        )
+
+        meta = {
+            "build": {"noarch": "python"},
+            "requirements": {
+                "host": [
+                    "python {{ python_min }}.*",
+                ],
+                "run": [
+                    "python",
+                ],
+            },
+            "test": {"requires": ["python ={{ python_min }}"]},
+        }
+        lints, hints = linter.lintify_meta_yaml(meta)
+        self.assertTrue(
+            any(lint.startswith(expected_message_start) for lint in lints)
+        )
+
+        meta = {
+            "build": {"noarch": "python"},
+            "requirements": {
+                "host": [
+                    "python",
+                ],
+                "run": [
+                    "python >={{ python_min }}",
+                ],
+            },
+            "test": {"requires": ["python ={{ python_min }}"]},
+        }
+        lints, hints = linter.lintify_meta_yaml(meta)
+        self.assertTrue(
+            any(lint.startswith(expected_message_start) for lint in lints)
+        )
+
+        meta = {
+            "build": {"noarch": "python"},
+            "requirements": {
+                "host": [
+                    "python {{ python_min }}.*",
+                ],
+                "run": [
+                    "python >={{ python_min }}",
+                ],
+            },
+        }
+        lints, hints = linter.lintify_meta_yaml(meta)
+        self.assertTrue(
+            any(lint.startswith(expected_message_start) for lint in lints)
+        )
+
+        meta = {
+            "build": {"noarch": "python"},
+            "requirements": {
+                "host": [
+                    "python {{ python_min }}.*",
+                ],
+                "run": [
+                    "python >={{ python_min }}",
+                ],
+            },
+            "test": {"requires": ["python ={{ python_min }}"]},
+        }
+        lints, hints = linter.lintify_meta_yaml(meta)
+        self.assertFalse(
+            any(lint.startswith(expected_message_start) for lint in lints)
+        )
 
         meta = {
             "build": {"noarch": "generic"},
@@ -1684,7 +1752,9 @@ linter:
             },
         }
         lints, hints = linter.lintify_meta_yaml(meta)
-        self.assertNotIn(expected_message, lints)
+        self.assertFalse(
+            any(lint.startswith(expected_message_start) for lint in lints)
+        )
 
     def test_no_sha_with_dl(self):
         expected_message = (

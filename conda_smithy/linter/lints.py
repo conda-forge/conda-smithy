@@ -547,17 +547,27 @@ def lint_jinja_var_references(meta_fname, hints, recipe_version: int = 0):
 def lint_require_lower_bound_on_python_version(
     run_reqs, outputs_section, noarch_value, lints
 ):
+    lint_text = (
+        "noarch: python recipes are required to follow the syntax in "
+        "[CFEP-25](https://conda-forge.org/docs/maintainer/knowledge_base/#noarch-python)."
+        "Usually, this means having `python {{ python_min }}.*` in the `host` section, "
+        "`python >={{ python_min }}` in the `run` section, and `python ={{ python_min }} "
+        "in the `requires` subsection in `test`. This syntax will be slightly different "
+        "for the newer v1 recipe format used with `recipe.yaml` files. However, you should check "
+        "upstream for the package's Python compatibility and possibhly override the `python_min` "
+        "variable if needed."
+    )
     if noarch_value == "python" and not outputs_section:
         for req in run_reqs:
-            if (req.strip().split()[0] == "python") and (req != "python"):
+            if (
+                (req.strip().split()[0] == "python")
+                and (req != "python")
+                and ("{{ python_min }}" in req)
+            ):
                 break
         else:
-            lints.append(
-                "noarch: python recipes are required to have a lower bound "
-                "on the python version. Typically this means putting "
-                "`python >=3.6` in **both** `host` and `run` but you should check "
-                "upstream for the package's Python compatibility."
-            )
+            if lint_text not in lints:
+                lints.append(lint_text)
 
 
 def lint_pin_subpackages(

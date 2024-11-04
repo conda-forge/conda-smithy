@@ -131,10 +131,13 @@ def lintify_meta_yaml(
     )
     build_requirements = requirements_section.get("build", [])
     run_reqs = requirements_section.get("run", [])
+    host_reqs = requirements_section.get("host", [])
     if recipe_version == 1:
         test_section = get_section(meta, "tests", lints, recipe_version)
+        test_requires_section = []  # FIXME
     else:
         test_section = get_section(meta, "test", lints, recipe_version)
+        test_requires_section = test_section.get("requires", [])
     about_section = get_section(meta, "about", lints, recipe_version)
     extra_section = get_section(meta, "extra", lints, recipe_version)
     package_section = get_section(meta, "package", lints, recipe_version)
@@ -322,7 +325,13 @@ def lintify_meta_yaml(
 
     # 25: require a lower bound on python version
     lint_require_lower_bound_on_python_version(
+        host_reqs, outputs_section, noarch_value, lints
+    )
+    lint_require_lower_bound_on_python_version(
         run_reqs, outputs_section, noarch_value, lints
+    )
+    lint_require_lower_bound_on_python_version(
+        test_requires_section, outputs_section, noarch_value, lints
     )
 
     # 26: pin_subpackage is for subpackages and pin_compatible is for
