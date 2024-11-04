@@ -20,8 +20,8 @@ Authors are sorted by number of commits.
 * John Kirkham
 * Michael Sarahan
 * Mark Harfouche
-* Bastian Zimmermann
 * pre-commit-ci[bot]
+* Bastian Zimmermann
 * Leo Fang
 * Hadrien Mary
 * Ryan Volz
@@ -38,8 +38,8 @@ Authors are sorted by number of commits.
 * Eric Dill
 * Natasha Pavlovikj
 * Maksim Rakitin
-* Jan Schulz
 * Nicholas Bollweg
+* Jan Schulz
 * Josh Reichardt
 * Bela Stoyan
 * Justin Calamari
@@ -70,6 +70,7 @@ Authors are sorted by number of commits.
 * David Hirschfeld
 * dependabot[bot]
 * Finn Womack
+* M Bussonnier
 * Josh Barnes
 * Tobias Megies
 * Jonathan Helmus
