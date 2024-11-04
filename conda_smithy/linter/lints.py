@@ -551,7 +551,7 @@ def lint_require_lower_bound_on_python_version(
         "noarch: python recipes are required to follow the syntax in "
         "[CFEP-25](https://conda-forge.org/docs/maintainer/knowledge_base/#noarch-python)."
         "Usually, this means having `python {{ python_min }}.*` in the `host` section, "
-        "`python >={{ python_min }}` in the `run` section, and `python ={{ python_min }} "
+        "`python >={{ python_min }}` in the `run` section, and `python ={{ python_min }}` "
         "in the `requires` subsection in `test`. This syntax will be slightly different "
         "for the newer v1 recipe format used with `recipe.yaml` files. However, you should check "
         "upstream for the package's Python compatibility and possibhly override the `python_min` "
