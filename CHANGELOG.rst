@@ -4,6 +4,33 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.44.0
+====================
+
+**Added:**
+
+* Added ``pixi`` as valid ``conda_install_tool`` option.
+  Includes several preconfigured tasks like ``build``,  ``debug``, ``rerender``, or ``lint``. (#2099)
+* Added hints for new ``noarch: python`` syntax for CFEP-25. (#2115)
+
+**Changed:**
+
+* Moved automerge to a central repository. (#2112)
+* Upgraded Github Actions ``actions/upload-artifact`` to v4.4.3. (#2113)
+
+**Fixed:**
+
+* Rerendering now removes old GHA service files. (#2112)
+
+**Authors:**
+
+* Matthew R. Becker
+* Jaime Rodríguez-Guerra
+* pre-commit-ci[bot]
+* dependabot[bot]
+
+
+
 v3.43.2
 ====================
 
