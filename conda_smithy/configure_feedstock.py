@@ -16,6 +16,7 @@ from functools import lru_cache
 from itertools import chain, product
 from os import fspath
 from pathlib import Path, PurePath
+from typing import Dict
 
 import requests
 import yaml
@@ -663,7 +664,26 @@ def _yaml_represent_ordereddict(yaml_representer, data):
     )
 
 
-def _santize_remote_ci_setup(remote_ci_setup):
+def _has_local_ci_setup(forge_dir, forge_config):
+    # If the recipe has its own conda_forge_ci_setup package, then
+    # install that
+    return os.path.exists(
+        os.path.join(
+            forge_dir,
+            forge_config["recipe_dir"],
+            "conda_forge_ci_setup",
+            "__init__.py",
+        )
+    ) and os.path.exists(
+        os.path.join(
+            forge_dir,
+            forge_config["recipe_dir"],
+            "setup.py",
+        )
+    )
+
+
+def _sanitize_remote_ci_setup(remote_ci_setup):
     remote_ci_setup_ = conda_build.utils.ensure_list(remote_ci_setup)
     remote_ci_setup = []
     for package in remote_ci_setup_:
@@ -673,6 +693,31 @@ def _santize_remote_ci_setup(remote_ci_setup):
             package = '"' + package + '"'
         remote_ci_setup.append(package)
     return remote_ci_setup
+
+
+def _sanitize_build_tool_deps_as_dict(
+    forge_dir, forge_config
+) -> Dict[str, str]:
+    """
+    Aggregates different sources of build tool dependencies in
+    mapping of package names to OR-merged version constraints.
+    """
+    deps = [
+        *forge_config["conda_build_tool_deps"].split(),
+        *forge_config["remote_ci_setup"],
+    ]
+    merged = {
+        spec.name: str(spec.version or "*")
+        for spec in MatchSpec.merge([dep.strip("\"'") for dep in deps])
+    }
+    if forge_config.get("local_ci_setup") or _has_local_ci_setup(
+        forge_dir, forge_config
+    ):
+        # We need to conda uninstall conda-forge-ci-setup
+        # and then pip install on top
+        merged.setdefault("conda", "*")
+        merged.setdefault("pip", "*")
+    return merged
 
 
 def finalize_config(config, platform, arch, forge_config):
@@ -1188,25 +1233,9 @@ def _render_ci_provider(
             fast_finish_text=fast_finish_text,
         )
 
-        # If the recipe has its own conda_forge_ci_setup package, then
-        # install that
-        if os.path.exists(
-            os.path.join(
-                forge_dir,
-                forge_config["recipe_dir"],
-                "conda_forge_ci_setup",
-                "__init__.py",
-            )
-        ) and os.path.exists(
-            os.path.join(
-                forge_dir,
-                forge_config["recipe_dir"],
-                "setup.py",
-            )
-        ):
-            forge_config["local_ci_setup"] = True
-        else:
-            forge_config["local_ci_setup"] = False
+        forge_config["local_ci_setup"] = _has_local_ci_setup(
+            forge_dir, forge_config
+        )
 
         # hook for extending with whatever platform specific junk we need.
         #     Function passed in as argument
@@ -2167,9 +2196,23 @@ def _get_skip_files(forge_config):
 
 
 def render_github_actions_services(jinja_env, forge_config, forge_dir):
-    # render github actions files for automerge and rerendering services
     skip_files = _get_skip_files(forge_config)
-    for template_file in ["automerge.yml"]:
+
+    # we always remove the old files if they exist
+    old_github_actions_files = [
+        "automerge.yml",
+        "webservices.yml",
+    ]
+    for filename in old_github_actions_files:
+        rel_target_fname = os.path.join(".github", "workflows", filename)
+        if _ignore_match(skip_files, rel_target_fname):
+            continue
+        remove_file(rel_target_fname)
+
+    # there are no current services to render, but if we add them in the future,
+    # they can go here
+    current_github_actions_files = []
+    for template_file in current_github_actions_files:
         template = jinja_env.get_template(template_file + ".tmpl")
         rel_target_fname = os.path.join(".github", "workflows", template_file)
         if _ignore_match(skip_files, rel_target_fname):
@@ -2178,6 +2221,34 @@ def render_github_actions_services(jinja_env, forge_config, forge_dir):
         new_file_contents = template.render(**forge_config)
         with write_file(target_fname) as fh:
             fh.write(new_file_contents)
+
+
+def render_pixi(jinja_env, forge_config, forge_dir):
+    target_fname = os.path.join(forge_dir, "pixi.toml")
+    remove_file_or_dir(target_fname)
+    if forge_config["conda_install_tool"] != "pixi":
+        return
+    template = jinja_env.get_template("pixi.toml.tmpl")
+    ci_support_path = os.path.join(forge_dir, ".ci_support")
+    variants = []
+    if os.path.exists(ci_support_path):
+        for filename in os.listdir(ci_support_path):
+            if filename.endswith(".yaml"):
+                variant_name, _ = os.path.splitext(filename)
+                variants.append(variant_name)
+    platforms = {
+        platform.replace("_", "-")
+        for platform, service in forge_config["provider"].items()
+        if service
+    }
+    new_file_contents = template.render(
+        smithy_version=__version__,
+        platforms=sorted(platforms),
+        variants=variants,
+        **forge_config,
+    )
+    with write_file(target_fname) as fh:
+        fh.write(new_file_contents)
 
 
 def copy_feedstock_content(forge_config, forge_dir):
@@ -2396,7 +2467,7 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
     if config["provider"]["linux_s390x"] in {"default", "native"}:
         config["provider"]["linux_s390x"] = ["travis"]
 
-    config["remote_ci_setup"] = _santize_remote_ci_setup(
+    config["remote_ci_setup"] = _sanitize_remote_ci_setup(
         config["remote_ci_setup"]
     )
     if config["conda_install_tool"] == "conda":
@@ -2406,6 +2477,11 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
         ]
     else:
         config["remote_ci_setup_update"] = config["remote_ci_setup"]
+
+    # Post-process requirements so they are tidier for the TOML files
+    config["build_tool_deps_dict"] = _sanitize_build_tool_deps_as_dict(
+        forge_dir, config
+    )
 
     if not config["github_actions"]["triggers"]:
         self_hosted = config["github_actions"]["self_hosted"]
@@ -2764,7 +2840,6 @@ def main(
         )
 
     config = _load_forge_config(forge_dir, exclusive_config_file, forge_yml)
-
     config["feedstock_name"] = os.path.basename(forge_dir)
 
     env = make_jinja_env(forge_dir)
@@ -2778,7 +2853,6 @@ def main(
     clear_variants(forge_dir)
     clear_scripts(forge_dir)
     set_migration_fns(forge_dir, config)
-
     logger.debug("migration fns set")
 
     # the order of these calls appears to matter
@@ -2786,41 +2860,43 @@ def main(
     render_info.append(
         render_circle(env, config, forge_dir, return_metadata=True)
     )
-
     logger.debug("circle rendered")
+
     render_info.append(
         render_travis(env, config, forge_dir, return_metadata=True)
     )
-
     logger.debug("travis rendered")
+
     render_info.append(
         render_appveyor(env, config, forge_dir, return_metadata=True)
     )
-
     logger.debug("appveyor rendered")
+
     render_info.append(
         render_azure(env, config, forge_dir, return_metadata=True)
     )
-
     logger.debug("azure rendered")
+
     render_info.append(
         render_drone(env, config, forge_dir, return_metadata=True)
     )
-
     logger.debug("drone rendered")
+
     render_info.append(
         render_woodpecker(env, config, forge_dir, return_metadata=True)
     )
-
     logger.debug("woodpecker rendered")
+
     render_info.append(
         render_github_actions(env, config, forge_dir, return_metadata=True)
     )
-
     logger.debug("github_actions rendered")
-    render_github_actions_services(env, config, forge_dir)
 
+    render_github_actions_services(env, config, forge_dir)
     logger.debug("github_actions services rendered")
+
+    render_pixi(env, config, forge_dir)
+    logger.debug("pixi config rendered")
 
     # put azure first just in case
     azure_ind = ([ri["provider_name"] for ri in render_info]).index("azure")

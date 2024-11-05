@@ -12,7 +12,16 @@
 
 setlocal enableextensions enabledelayedexpansion
 
+FOR %%A IN ("%~dp0.") DO SET "REPO_ROOT=%%~dpA"
+{%- if conda_install_tool == "pixi" %}
+if "%MINIFORGE_HOME%"=="" (
+    set "MINIFORGE_HOME=%REPO_ROOT%\.pixi\envs\default"
+) else (
+    set "PIXI_CACHE_DIR=%MINIFORGE_HOME%"
+)
+{%- else %}
 if "%MINIFORGE_HOME%"=="" set "MINIFORGE_HOME=%USERPROFILE%\Miniforge3"
+{%- endif %}
 :: Remove trailing backslash, if present
 if "%MINIFORGE_HOME:~-1%"=="\" set "MINIFORGE_HOME=%MINIFORGE_HOME:~0,-1%"
 
@@ -40,6 +49,35 @@ if !errorlevel! neq 0 exit /b !errorlevel!
 echo Removing %MAMBA_ROOT_PREFIX%
 del /S /Q "%MAMBA_ROOT_PREFIX%"
 del /S /Q "%MICROMAMBA_TMPDIR%"
+{%- elif conda_install_tool == "pixi" %}
+call :start_group "Provisioning base env with pixi"
+echo Installing pixi
+powershell -NoProfile -ExecutionPolicy unrestricted -Command "iwr -useb https://pixi.sh/install.ps1 | iex"
+if !errorlevel! neq 0 exit /b !errorlevel!
+set "PATH=%USERPROFILE%\.pixi\bin;%PATH%"
+echo Installing environment
+if "%PIXI_CACHE_DIR%"=="%MINIFORGE_HOME%" (
+    mkdir "%MINIFORGE_HOME%"
+    copy /Y pixi.toml "%MINIFORGE_HOME%"
+    pushd "%MINIFORGE_HOME%"
+) else (
+    pushd "%REPO_ROOT%"
+)
+move /y pixi.toml pixi.toml.bak
+set "arch=64"
+if "%PROCESSOR_ARCHITECTURE%"=="ARM64" set "arch=arm64"
+powershell -NoProfile -ExecutionPolicy unrestricted -Command "(Get-Content pixi.toml.bak -Encoding UTF8) -replace 'platforms = .*', 'platforms = [''win-%arch%'']' | Out-File pixi.toml -Encoding UTF8"
+pixi install
+if !errorlevel! neq 0 exit /b !errorlevel!
+pixi list
+if !errorlevel! neq 0 exit /b !errorlevel!
+set "ACTIVATE_PIXI=%TMP%\pixi-activate-%RANDOM%.bat"
+pixi shell-hook > "%ACTIVATE_PIXI%"
+if !errorlevel! neq 0 exit /b !errorlevel!
+call "%ACTIVATE_PIXI%"
+if !errorlevel! neq 0 exit /b !errorlevel!
+move /y pixi.toml.bak pixi.toml
+popd
 call :end_group
 {%- else %}
 call :start_group "Installing a fresh version of Miniforge"
@@ -56,7 +94,10 @@ call :end_group
 call :start_group "Configuring conda"
 
 :: Activate the base conda environment
+{%- if conda_install_tool != "pixi" %}
+echo Activating environment
 call "%MINIFORGE_HOME%\Scripts\activate.bat"
+{%- endif %}
 
 {%- if conda_solver %}
 :: Configure the solver
