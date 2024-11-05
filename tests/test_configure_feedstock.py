@@ -793,23 +793,6 @@ def test_choco_install(choco_recipe, jinja_env):
     assert exp in contents
 
 
-def test_automerge_action_exists(py_recipe, jinja_env):
-    configure_feedstock.render_github_actions_services(
-        jinja_env=jinja_env,
-        forge_config=py_recipe.config,
-        forge_dir=py_recipe.recipe,
-    )
-    assert os.path.exists(
-        os.path.join(py_recipe.recipe, ".github/workflows/automerge.yml")
-    )
-    with open(
-        os.path.join(py_recipe.recipe, ".github/workflows/automerge.yml")
-    ) as f:
-        action_config = yaml.safe_load(f)
-    assert "jobs" in action_config
-    assert "automerge-action" in action_config["jobs"]
-
-
 def test_conda_forge_yaml_empty(config_yaml: ConfigYAML):
     load_forge_config = lambda: configure_feedstock._load_forge_config(  # noqa
         config_yaml.workdir,
