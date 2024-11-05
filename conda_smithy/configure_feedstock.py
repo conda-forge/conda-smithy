@@ -2196,9 +2196,23 @@ def _get_skip_files(forge_config):
 
 
 def render_github_actions_services(jinja_env, forge_config, forge_dir):
-    # render github actions files for automerge and rerendering services
     skip_files = _get_skip_files(forge_config)
-    for template_file in ["automerge.yml"]:
+
+    # we always remove the old files if they exist
+    old_github_actions_files = [
+        "automerge.yml",
+        "webservices.yml",
+    ]
+    for filename in old_github_actions_files:
+        rel_target_fname = os.path.join(".github", "workflows", filename)
+        if _ignore_match(skip_files, rel_target_fname):
+            continue
+        remove_file(rel_target_fname)
+
+    # there are no current services to render, but if we add them in the future,
+    # they can go here
+    current_github_actions_files = []
+    for template_file in current_github_actions_files:
         template = jinja_env.get_template(template_file + ".tmpl")
         rel_target_fname = os.path.join(".github", "workflows", template_file)
         if _ignore_match(skip_files, rel_target_fname):
