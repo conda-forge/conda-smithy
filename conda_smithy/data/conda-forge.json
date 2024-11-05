@@ -1768,7 +1768,8 @@
           "enum": [
             "conda",
             "mamba",
-            "micromamba"
+            "micromamba",
+            "pixi"
           ],
           "type": "string"
         },
@@ -1777,7 +1778,7 @@
         }
       ],
       "default": "micromamba",
-      "description": "Use this option to choose which tool is used to provision the tooling in your\nfeedstock. Defaults to micromamba.\n\nIf conda or mamba are chosen, the latest Miniforge will be used to\nprovision the base environment. If micromamba is chosen, Miniforge\nis not involved; the environment is created directly by micromamba.",
+      "description": "Use this option to choose which tool is used to provision the tooling in your\nfeedstock. Defaults to micromamba.\n\nIf conda or mamba are chosen, the latest Miniforge will be used to\nprovision the base environment. If micromamba or pixi are chosen,\nMiniforge is not involved; the environment is created directly by\nmicromamba or pixi.",
       "title": "Conda Install Tool"
     },
     "conda_forge_output_validation": {
