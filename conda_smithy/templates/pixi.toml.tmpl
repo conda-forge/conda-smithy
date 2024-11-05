@@ -1,0 +1,46 @@
+# This file was generated automatically from conda-smithy. To update this configuration,
+# update the conda-forge.yml and/or the recipe/meta.yaml.
+# -*- mode: toml -*-
+
+[project]
+name = "{{ feedstock_name }}"
+version = "{{ smithy_version }}"
+description = "Pixi configuration for conda-forge/{{ feedstock_name }}"
+authors = ["@conda-forge/{{ feedstock_name[:-10] }}"]
+channels = ["conda-forge"]
+platforms = {{ platforms }}
+
+[dependencies]
+{%- for spec_name, spec_constraints in build_tool_deps_dict.items() %}
+{{ spec_name }} = "{{ spec_constraints }}"
+{%- endfor %}
+
+[tasks]
+inspect-all = "inspect_artifacts --all-packages"
+{%- if conda_build_tool != "rattler-build" %}
+build = "{{ conda_build_tool }} build {{ recipe_dir }}"
+debug = "{{ conda_build_tool }} debug {{ recipe_dir }}"
+{%- else %}
+build = "{{ conda_build_tool }} build --recipe {{ recipe_dir }}"
+{%- endif %}
+{%- for variant in variants %}
+{%- if conda_build_tool != "rattler-build" %}
+"build-{{ variant }}" = "{{ conda_build_tool }} build {{ recipe_dir }} -m .ci_support/{{ variant }}.yaml --suppress-variables --clobber-file .ci_support/clobber_{{ variant }}.yaml"
+"debug-{{ variant }}" = "{{ conda_build_tool }} debug {{ recipe_dir }} -m .ci_support/{{ variant }}.yaml"
+{%- else %}
+"build-{{ variant }}" = "{{ conda_build_tool }} build --recipe {{ recipe_dir }} -m .ci_support/{{ variant }}.yaml"
+{%- endif %}
+"inspect-{{ variant }}" = "inspect_artifacts --recipe-dir {{ recipe_dir }} -m .ci_support/{{ variant }}.yaml"
+{%- endfor %}
+
+[feature.smithy.dependencies]
+conda-smithy = "*"
+
+[feature.smithy.tasks]
+build-locally = "python ./build-locally.py"
+smithy = "conda-smithy"
+rerender = "conda-smithy rerender"
+lint = "conda-smithy lint {{ recipe_dir}}"
+
+[environments]
+smithy = ["smithy"]
