@@ -253,7 +253,7 @@ def hint_noarch_python_use_python_min(
             else:
                 hints.append(
                     f"noarch: python recipes should almost always follow the syntax in "
-                    f"[CFEP-25](https://conda-forge.org/docs/maintainer/knowledge_base/#noarch-python). "
+                    f"our [documentation](https://conda-forge.org/docs/maintainer/knowledge_base/#noarch-python). "
                     f"For the `{section_name}` section of the recipe, you should almost always use `{syntax}` "
                     f"for the `python` entry. You may need to override the `python_min` variable if the package "
                     f"requires a newer Python version than the currently supported minimum version on `conda-forge`."
