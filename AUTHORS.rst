@@ -62,13 +62,13 @@ Authors are sorted by number of commits.
 * Johannes Köster
 * Philippe Blain
 * Mervin Fansler
+* dependabot[bot]
 * Matt McCormick
 * Jan Janßen
 * xoviat
 * Elmar Pruesse
 * Patrick Sodré
 * David Hirschfeld
-* dependabot[bot]
 * Finn Womack
 * M Bussonnier
 * Josh Barnes
