@@ -602,6 +602,7 @@ def run_conda_forge_specific(
         test_reqs,
         outputs_section,
         noarch_value,
+        recipe_version,
         hints,
     )
 

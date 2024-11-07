@@ -235,7 +235,13 @@ def hint_pip_no_build_backend(host_or_build_section, package_name, hints):
 
 
 def hint_noarch_python_use_python_min(
-    host_reqs, run_reqs, test_reqs, outputs_section, noarch_value, hints
+    host_reqs,
+    run_reqs,
+    test_reqs,
+    outputs_section,
+    noarch_value,
+    recipe_version,
+    hints,
 ):
     if noarch_value == "python" and not outputs_section:
         for section_name, syntax, reqs in [
@@ -243,6 +249,11 @@ def hint_noarch_python_use_python_min(
             ("run", "python >={{ python_min }}", run_reqs),
             ("test.requires", "python ={{ python_min }}", test_reqs),
         ]:
+            if recipe_version == 1:
+                syntax = syntax.replace(
+                    "{{ python_min }}", "${{ python_min }}"
+                )
+
             for req in reqs:
                 if (
                     req.strip().split()[0] == "python"

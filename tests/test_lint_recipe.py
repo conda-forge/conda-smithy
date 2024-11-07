@@ -3190,5 +3190,93 @@ def test_hint_noarch_python_use_python_min(
         )
 
 
+@pytest.mark.parametrize(
+    "meta_str,expected_hints",
+    [
+        (
+            textwrap.dedent(
+                """
+                package:
+                  name: python
+
+                requirements:
+                  run:
+                    - python
+                """
+            ),
+            [],
+        ),
+        (
+            textwrap.dedent(
+                """
+                package:
+                  name: python
+
+                build:
+                  noarch: python
+
+                requirements:
+                  run:
+                    - python
+                """
+            ),
+            [
+                "python ${{ python_min }}.*",
+                "python >=${{ python_min }}",
+                "python =${{ python_min }}",
+            ],
+        ),
+        (
+            textwrap.dedent(
+                """
+                package:
+                  name: python
+
+                build:
+                  noarch: python
+
+                requirements:
+                  host:
+                    - python ${{ python_min }}.*
+                  run:
+                    - python >=${{ python_min }}
+
+                tests:
+                  - requirements:
+                      run:
+                        - python =${{ python_min }}
+                """
+            ),
+            [],
+        ),
+    ],
+)
+def test_hint_noarch_python_use_python_min_v1(
+    meta_str,
+    expected_hints,
+):
+    meta = get_yaml().load(meta_str)
+    lints = []
+    hints = []
+    linter.run_conda_forge_specific(
+        meta,
+        None,
+        lints,
+        hints,
+        recipe_version=1,
+    )
+
+    # make sure we have the expected hints
+    if expected_hints:
+        for expected_hint in expected_hints:
+            assert any(expected_hint in hint for hint in hints), hints
+    else:
+        assert all(
+            "noarch: python recipes should almost always follow the syntax in"
+            not in hint
+            for hint in hints
+        )
+
+
 if __name__ == "__main__":
     unittest.main()
