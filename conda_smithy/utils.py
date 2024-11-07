@@ -140,6 +140,7 @@ def render_meta_yaml(text):
             target_platform="linux-64",
             build_platform="linux-64",
             mpi="mpi",
+            python_min="9999",  # use as a sentinel value for linting
         )
     )
     mockos = MockOS()

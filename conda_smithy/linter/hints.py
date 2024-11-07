@@ -254,12 +254,13 @@ def hint_noarch_python_use_python_min(
                 syntax = syntax.replace(
                     "{{ python_min }}", "${{ python_min }}"
                 )
+            test_syntax = syntax.replace("{{ python_min }}", "9999")
 
             for req in reqs:
                 if (
                     req.strip().split()[0] == "python"
                     and req != "python"
-                    and syntax in req
+                    and test_syntax in req
                 ):
                     break
             else:
