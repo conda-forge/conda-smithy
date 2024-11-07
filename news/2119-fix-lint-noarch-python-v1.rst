@@ -17,7 +17,7 @@
 **Fixed:**
 
 * Fixed ``noarch: python`` hint for v1 recipes. (#2119)
-* Fixed ``noarch: python`` syntax to be more compatible. (#2112)
+* Fixed ``noarch: python`` syntax to be more compatible. (#2122)
 
 **Security:**
 
