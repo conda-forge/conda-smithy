@@ -4,6 +4,20 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.44.1
+====================
+
+**Fixed:**
+
+* Fixed ``noarch: python`` hint for v1 recipes. (#2119)
+* Fixed ``noarch: python`` syntax to be more compatible. (#2122)
+
+**Authors:**
+
+* Matthew R. Becker
+
+
+
 v3.44.0
 ====================
 
