@@ -4,6 +4,19 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.44.2
+====================
+
+**Fixed:**
+
+* Fixed false positives in the ``noarch: python`` check. (#2123)
+
+**Authors:**
+
+* Matthew R. Becker
+
+
+
 v3.44.1
 ====================
 
