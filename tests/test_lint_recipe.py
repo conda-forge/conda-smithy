@@ -3033,9 +3033,8 @@ def test_hint_pip_no_build_backend(
                 """
             ),
             [
-                "python {{ python_min }}.*",
+                "python {{ python_min }}",
                 "python >={{ python_min }}",
-                "python ={{ python_min }}",
             ],
         ),
         (
@@ -3053,9 +3052,8 @@ def test_hint_pip_no_build_backend(
                 """
             ),
             [
-                "python {{ python_min }}.*",
+                "python {{ python_min }}",
                 "python >={{ python_min }}",
-                "python ={{ python_min }}",
             ],
         ),
         (
@@ -3073,9 +3071,8 @@ def test_hint_pip_no_build_backend(
                 """
             ),
             [
-                "python {{ python_min }}.*",
+                "python {{ python_min }}",
                 "python >={{ python_min }}",
-                "python ={{ python_min }}",
             ],
         ),
         (
@@ -3093,8 +3090,7 @@ def test_hint_pip_no_build_backend(
                 """
             ),
             [
-                "python {{ python_min }}.*",
-                "python ={{ python_min }}",
+                "python {{ python_min }}",
             ],
         ),
         (
@@ -3108,13 +3104,13 @@ def test_hint_pip_no_build_backend(
 
                 requirements:
                   host:
-                    - python {{ python_min }}.*
+                    - python {{ python_min }}
                   run:
                     - python >={{ python_min }}
                 """
             ),
             [
-                "python ={{ python_min }}",
+                "python {{ python_min }}",
             ],
         ),
         (
@@ -3128,13 +3124,13 @@ def test_hint_pip_no_build_backend(
 
                 requirements:
                   host:
-                    - python {{ python_min }}.*
+                    - python {{ python_min }}
                   run:
                     - python >={{ python_min }}
 
                 test:
                   requires:
-                    - python ={{ python_min }}
+                    - python {{ python_min }}
                 """
             ),
             [],
@@ -3150,13 +3146,13 @@ def test_hint_pip_no_build_backend(
 
                 requirements:
                   host:
-                    - python {{ python_min }}.*
+                    - python {{ python_min }}
                   run:
                     - python
 
                 test:
                   requires:
-                    - python ={{ python_min }}
+                    - python {{ python_min }}
                 """
             ),
             ["python >={{ python_min }}"],
@@ -3221,9 +3217,8 @@ def test_hint_noarch_python_use_python_min(
                 """
             ),
             [
-                "python ${{ python_min }}.*",
+                "python ${{ python_min }}",
                 "python >=${{ python_min }}",
-                "python =${{ python_min }}",
             ],
         ),
         (
@@ -3237,14 +3232,14 @@ def test_hint_noarch_python_use_python_min(
 
                 requirements:
                   host:
-                    - python ${{ python_min }}.*
+                    - python ${{ python_min }}
                   run:
                     - python >=${{ python_min }}
 
                 tests:
                   - requirements:
                       run:
-                        - python =${{ python_min }}
+                        - python ${{ python_min }}
                 """
             ),
             [],
