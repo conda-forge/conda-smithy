@@ -13,7 +13,7 @@ import pytest
 
 import conda_smithy.lint_recipe as linter
 from conda_smithy.linter.utils import VALID_PYTHON_BUILD_BACKENDS
-from conda_smithy.utils import get_yaml
+from conda_smithy.utils import get_yaml, render_meta_yaml
 
 _thisdir = os.path.abspath(os.path.dirname(__file__))
 
@@ -3163,7 +3163,7 @@ def test_hint_noarch_python_use_python_min(
     meta_str,
     expected_hints,
 ):
-    meta = get_yaml().load(meta_str)
+    meta = get_yaml().load(render_meta_yaml(meta_str))
     lints = []
     hints = []
     linter.run_conda_forge_specific(
@@ -3250,7 +3250,7 @@ def test_hint_noarch_python_use_python_min_v1(
     meta_str,
     expected_hints,
 ):
-    meta = get_yaml().load(meta_str)
+    meta = get_yaml().load(render_meta_yaml(meta_str.replace("${{", "{{")))
     lints = []
     hints = []
     linter.run_conda_forge_specific(

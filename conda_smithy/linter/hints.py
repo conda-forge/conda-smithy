@@ -250,6 +250,8 @@ def hint_noarch_python_use_python_min(
             ("run", "python >={{ python_min }}", run_reqs),
             ("test.requires", "python {{ python_min }}", test_reqs),
         ]:
+            test_syntax = syntax.replace("{{ python_min }}", "9999")
+
             if recipe_version == 1:
                 syntax = syntax.replace(
                     "{{ python_min }}", "${{ python_min }}"
@@ -259,7 +261,7 @@ def hint_noarch_python_use_python_min(
                 if (
                     req.strip().split()[0] == "python"
                     and req != "python"
-                    and syntax in req
+                    and test_syntax in req
                 ):
                     break
             else:
