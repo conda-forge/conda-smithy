@@ -4,7 +4,7 @@
 
 **Changed:**
 
-* Changed the language in the ``noarch: python`` hint to add instructions on rerendering and use softer language. (#2126)
+* Changed the language in the ``noarch: python`` hint to add instructions on override w/ Jinja2/contexts and use softer language. (#2126)
 
 **Deprecated:**
 

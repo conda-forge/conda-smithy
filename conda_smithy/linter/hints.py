@@ -281,13 +281,10 @@ def hint_noarch_python_use_python_min(
                 )
                 + hint
                 + (
-                    "\n   - You can override the `python_min` variable in the `conda_build_config.yaml`/`variants.yaml` "
-                    "if the package requires a newer Python version than the currently supported minimum "
-                    "version on `conda-forge`."
-                )
-                + (
-                    "\n   - You will need to [rerender the feedstock](https://conda-forge.org/docs/maintainer/"
-                    "infrastructure/#conda-forge-admin-please-rerender) after making any of these changes."
+                    "\n   - If the package requires a newer Python version than the currently supported minimum "
+                    "version on `conda-forge`, you can override the `python_min` variable by adding a "
+                    "Jinja2 `set` statement at the top of your recipe (or using an equivalent `context` "
+                    "variable for v1 recipes)."
                 )
             )
             hints.append(hint)
