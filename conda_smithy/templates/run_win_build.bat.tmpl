@@ -47,8 +47,8 @@ call "%MICROMAMBA_EXE%" create --yes --root-prefix "%MAMBA_ROOT_PREFIX%" --prefi
 if !errorlevel! neq 0 exit /b !errorlevel!
 {#- set "CONDA_PKGS_DIRS=" #}
 echo Removing %MAMBA_ROOT_PREFIX%
-del /S /Q "%MAMBA_ROOT_PREFIX%"
-del /S /Q "%MICROMAMBA_TMPDIR%"
+del /S /Q "%MAMBA_ROOT_PREFIX%" >nul
+del /S /Q "%MICROMAMBA_TMPDIR%" >nul
 {%- elif conda_install_tool == "pixi" %}
 call :start_group "Provisioning base env with pixi"
 echo Installing pixi
