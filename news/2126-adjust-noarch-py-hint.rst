@@ -16,7 +16,7 @@
 
 **Fixed:**
 
-* <news item>
+* Fixed a bug where v1 recipes were not properly linted for `noarch: python` hints. (#2126)
 
 **Security:**
 
