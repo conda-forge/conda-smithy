@@ -227,7 +227,8 @@ def hint_pip_no_build_backend(host_or_build_section, package_name, hints):
 
         if not found_backend:
             hints.append(
-                f"No valid build backend found for Python recipe for package `{package_name}` using `pip`. Python recipes using `pip` need to "
+                f"No valid build backend found for Python recipe for package `{package_name}` using `pip`. "
+                "Python recipes using `pip` need to "
                 "explicitly specify a build backend in the `host` section. "
                 "If your recipe has built with only `pip` in the `host` section in the past, you likely should "
                 "add `setuptools` to the `host` section of your recipe."
@@ -250,12 +251,13 @@ def hint_noarch_python_use_python_min(
             ("run", "python >={{ python_min }}", run_reqs),
             ("test.requires", "python {{ python_min }}", test_reqs),
         ]:
-            test_syntax = syntax.replace("{{ python_min }}", "9999")
-
             if recipe_version == 1:
                 syntax = syntax.replace(
                     "{{ python_min }}", "${{ python_min }}"
                 )
+                test_syntax = syntax
+            else:
+                test_syntax = syntax.replace("{{ python_min }}", "9999")
 
             for req in reqs:
                 if (
