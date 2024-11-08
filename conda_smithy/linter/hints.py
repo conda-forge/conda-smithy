@@ -268,7 +268,7 @@ def hint_noarch_python_use_python_min(
                     break
             else:
                 hint += (
-                    f"\n  - For the `{section_name}` section of the recipe, you should usually use `{syntax}` "
+                    f"\n   - For the `{section_name}` section of the recipe, you should usually use `{syntax}` "
                     f"for the `python` entry."
                 )
 
@@ -281,12 +281,12 @@ def hint_noarch_python_use_python_min(
                 )
                 + hint
                 + (
-                    "\n  - You can override the `python_min` variable in the `conda_build_config.yaml`/`variants.yaml` "
+                    "\n   - You can override the `python_min` variable in the `conda_build_config.yaml`/`variants.yaml` "
                     "if the package requires a newer Python version than the currently supported minimum "
                     "version on `conda-forge`."
                 )
                 + (
-                    "\n  - You will need to [rerender the feedstock](https://conda-forge.org/docs/maintainer/"
+                    "\n   - You will need to [rerender the feedstock](https://conda-forge.org/docs/maintainer/"
                     "infrastructure/#conda-forge-admin-please-rerender) after making any of these changes."
                 )
             )
