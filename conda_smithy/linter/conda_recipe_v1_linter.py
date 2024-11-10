@@ -115,7 +115,7 @@ def get_recipe_name(recipe_content: RecipeWithContext) -> str:
     return package_name or recipe_name
 
 
-def get_recipe_version(recipe_content: RecipeWithContext) -> str | None:
+def get_recipe_version(recipe_content: RecipeWithContext) -> Optional[str]:
     rendered_context_recipe = render_recipe_with_context(recipe_content)
     package_version = rendered_context_recipe.get("package", {}).get("version")
     recipe_version = rendered_context_recipe.get("recipe", {}).get("version")
