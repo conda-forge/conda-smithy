@@ -3,8 +3,7 @@ import glob
 import multiprocessing
 import os
 
-import git
-from git import GitCommandError, Repo
+import pygit2
 from github import Github
 
 from conda_smithy import github as smithy_github
@@ -50,11 +49,11 @@ def cloned_feedstocks(feedstocks_directory):
 
 def fetch_feedstock(repo_dir):
     """Git fetch --all a single git repository."""
-    repo = Repo(repo_dir)
+    repo = pygit2.Repository(repo_dir)
     for remote in repo.remotes:
         try:
             remote.fetch()
-        except GitCommandError:
+        except pygit2.GitError:
             print(f"Failed to fetch {remote.name} from {remote.url}.")
 
 
@@ -87,12 +86,14 @@ def clone_feedstock(feedstock_gh_repo, feedstocks_dir):
     clone_directory = os.path.join(feedstocks_dir, repo.name)
     if not os.path.exists(clone_directory):
         print(f"Cloning {repo.name}")
-        clone = Repo.clone_from(repo.clone_url, clone_directory)
-        clone.delete_remote("origin")
-    clone = Repo(clone_directory)
-    if "upstream" in [remote.name for remote in clone.remotes]:
-        clone.delete_remote("upstream")
-    clone.create_remote("upstream", url=repo.clone_url)
+        clone = pygit2.clone_repository(repo.clone_url, clone_directory)
+        clone.remotes.delete("origin")
+    else:
+        clone = pygit2.Repository(clone_directory)
+
+    if "upstream" in clone.remotes.names():
+        clone.remotes.delete("upstream")
+    clone.remotes.create("upstream", repo.clone_url)
 
 
 def clone_all(gh_org, feedstocks_dir):
@@ -193,8 +194,8 @@ def feedstocks_repos(
         random.shuffle(feedstocks)
 
     for feedstock in feedstocks:
-        repo = git.Repo(feedstock.directory)
-        upstream = repo.remotes.upstream
+        repo = pygit2.Repository(feedstock.directory)
+        upstream = repo.remotes["upstream"]
 
         if pull_up_to_date:
             print("Fetching ", feedstock.package)
