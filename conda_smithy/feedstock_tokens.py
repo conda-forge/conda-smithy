@@ -27,11 +27,12 @@ import hmac
 import json
 import os
 import secrets
+import subprocess
 import tempfile
 import time
 from contextlib import contextmanager, redirect_stderr, redirect_stdout
 
-import git
+import pygit2
 import requests
 import scrypt
 
@@ -175,7 +176,6 @@ def feedstock_token_exists(user, project, token_repo, provider=None):
                 .replace("$GH_TOKEN", github_token)
                 .replace("${GH_TOKEN}", github_token)
             )
-            git.Repo.clone_from(_token_repo, tmpdir, depth=1)
             token_file = os.path.join(
                 tmpdir,
                 "tokens",
@@ -250,7 +250,8 @@ def is_valid_feedstock_token(
                 .replace("$GH_TOKEN", github_token)
                 .replace("${GH_TOKEN}", github_token)
             )
-            git.Repo.clone_from(_token_repo, tmpdir, depth=1)
+            subprocess.run(["git", "clone", "-q", "--depth", "1", _token_repo, tmpdir],
+                           check=True)
             token_file = os.path.join(
                 tmpdir,
                 "tokens",
@@ -351,7 +352,10 @@ def register_feedstock_token(
                 .replace("$GH_TOKEN", github_token)
                 .replace("${GH_TOKEN}", github_token)
             )
-            repo = git.Repo.clone_from(_token_repo, tmpdir, depth=1)
+            # cloning via subprocesses to take advantage of git SSH support
+            subprocess.run(["git", "clone", "-q", "--depth", "1", _token_repo, tmpdir],
+                           check=True)
+            repo = pygit2.Repository(tmpdir)
             token_file = os.path.join(
                 tmpdir,
                 "tokens",
@@ -413,17 +417,18 @@ def register_feedstock_token(
                 json.dump(token_data, fp)
 
             # push
-            repo.index.add(token_file)
-            repo.index.commit(
+            repo.index.add(os.path.relpath(token_file, tmpdir))
+            repo.index.write()
+            subprocess.run(["git", "commit", "-q", "-m",
                 "[ci skip] [skip ci] [cf admin skip] ***NO_CI*** "
                 "added token for {}/{} on provider{}".format(
                     user,
                     project,
                     "" if provider is None else " " + provider,
-                )
-            )
-            repo.remote().pull(rebase=True)
-            repo.remote().push()
+                )], check=True, cwd=tmpdir)
+
+            subprocess.run(["git", "pull", "-q", "--rebase"], check=True, cwd=tmpdir)
+            subprocess.run(["git", "push", "-q"], check=True, cwd=tmpdir)
         except Exception as e:
             if "DEBUG_FEEDSTOCK_TOKENS" in os.environ:
                 raise e
