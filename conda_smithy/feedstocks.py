@@ -232,23 +232,17 @@ def feedstocks_yaml(
     for repo, feedstock in feedstocks_repos(
         organization, feedstocks_directory, **feedstocks_repo_kwargs
     ):
-        upstream = repo.remotes.upstream
-        try:
-            refs = upstream.refs
-        except AssertionError:
-            # In early versions of gitpython and empty list of refs resulted in an
-            # assertion error (https://github.com/gitpython-developers/GitPython/pull/499).
-            refs = []
+        upstream = repo.remotes["upstream"]
+        refs = [ref for ref in repo.references.iterator()
+                if ref.name.startswith("refs/remotes/upstream/")]
 
         if not refs:
             upstream.fetch()
-            refs = upstream.refs
+            refs = [ref for ref in repo.references.iterator()
+                    if ref.name.startswith("refs/remotes/upstream/")]
 
         for ref in refs:
-            remote_branch = (
-                ref.remote_head
-            )  # .replace('{}/'.format(gh_me.login), '')
-            if remote_branch.endswith("HEAD"):
+            if ref.name == "refs/remotes/upstream/HEAD":
                 continue
 
             try:
@@ -260,9 +254,8 @@ def feedstocks_yaml(
                     ) as fh:
                         content = "".join(fh.readlines())
                 else:
-                    blob = ref.commit.tree["recipe"]["meta.yaml"]
-                    stream = blob.data_stream
-                    content = stream.read().decode("utf-8")
+                    blob = repo[ref.resolve().target].tree["recipe/meta.yaml"]
+                    content = blob.data.decode("utf-8")
                 yaml = yaml_meta(content)
             except:
                 # Add a helpful comment so we know what we are working with and reraise.
