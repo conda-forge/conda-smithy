@@ -1,6 +1,6 @@
 **Added:**
 
-* Set rattler cache to `XDG_CACHE_HOME=/tmp/rattler_cache` when building a linux package from a macOS machine with docker.
+* Set rattler cache to `RATTLER_CACHE_DIR=/tmp/rattler_cache` when building a linux package from a macOS machine with docker.
 
 **Changed:**
 
