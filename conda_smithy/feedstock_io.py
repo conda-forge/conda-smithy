@@ -12,9 +12,12 @@ def get_repo(path, search_parent_directories=True):
         if search_parent_directories:
             path = pygit2.discover_repository(path)
         if path is not None:
-            repo = pygit2.Repository(
-                path, pygit2.enums.RepositoryOpenFlag.NO_SEARCH
-            )
+            try:
+                no_search = pygit2.enums.RepositoryOpenFlag.NO_SEARCH
+            except AttributeError:  # pygit2 < 1.14
+                no_search = pygit2.GIT_REPOSITORY_OPEN_NO_SEARCH
+
+            repo = pygit2.Repository(path, no_search)
     except ImportError:
         pass
     except pygit2.GitError:
