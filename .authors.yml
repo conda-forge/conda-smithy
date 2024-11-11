@@ -393,7 +393,7 @@
   github: shadowwalkersb
 - name: Matthew R. Becker
   email: becker.mr@gmail.com
-  num_commits: 379
+  num_commits: 388
   first_commit: 2020-01-07 17:44:33
   github: beckermr
   alternate_emails:
@@ -507,11 +507,11 @@
   github: fhoehle
 - name: Ben Mares
   email: 15216687+maresb@users.noreply.github.com
-  num_commits: 2
+  num_commits: 4
   first_commit: 2021-05-15 08:16:11
   github: maresb
   alternate_emails:
-    - services-git-throwaway1@tensorial.com
+  - services-git-throwaway1@tensorial.com
 - name: Billy K. Poon
   email: bkpoon@lbl.gov
   num_commits: 15
@@ -539,7 +539,7 @@
   github: nehaljwani
 - name: H. Vetinari
   email: h.vetinari@gmx.com
-  num_commits: 60
+  num_commits: 61
   first_commit: 2021-11-14 02:53:10
 - name: Benjamin Tovar
   email: btovar@nd.edu
@@ -670,3 +670,6 @@
   github: Carreau
 - name: Anton Tetov
   email: anton@tetov.se
+  num_commits: 2
+  first_commit: 2024-11-10 09:28:45
+  github: tetov

@@ -18,8 +18,8 @@ Christopher J. Wright <cjwright4242gh@gmail.com> christopher <cjwright4242@gmail
 Christopher J. Wright <cjwright4242gh@gmail.com> Christopher J. 'CJ' Wright <cjwright4242@gmail.com>
 Anthony Scopatz <scopatz@gmail.com>
 Phil Elson <pelson.pub@gmail.com> pelson <pelson.pub@gmail.com>
-Wolf Vollprecht <w.vollprecht@gmail.com>
 H. Vetinari <h.vetinari@gmx.com>
+Wolf Vollprecht <w.vollprecht@gmail.com>
 Uwe L. Korn <uwe.korn@quantco.com> Uwe L. Korn <xhochy@users.noreply.github.com>
 Filipe Fernandes <ocefpaf@gmail.com> Filipe <ocefpaf@gmail.com>
 Filipe Fernandes <ocefpaf@gmail.com> ocefpaf <ocefpaf@gmail.com>
@@ -86,6 +86,7 @@ Jan Janßen <janssen@mpie.de> Jan Janßen <jan-janssen@users.noreply.github.com>
 xoviat <xoviat@users.noreply.github.com>
 Elmar Pruesse <epruesse@users.noreply.github.com>
 Patrick Sodré <sodre@sodre.co>
+Ben Mares <15216687+maresb@users.noreply.github.com> Ben Mares <services-git-throwaway1@tensorial.com>
 David Hirschfeld <david.hirschfeld@stanwell.com>
 Finn Womack <finnwomack@microsoft.com> Finn Womack <flan313@gmail.com>
 M Bussonnier <bussonniermatthias@gmail.com>
@@ -113,11 +114,11 @@ Axel Huebl <axel.huebl@plasma.ninja>
 Thomas Hopkins <thomashopkins000@gmail.com>
 Hugo Slepicka <slepicka@slac.stanford.edu>
 fhoehle <fhoehle@users.noreply.github.com>
-Ben Mares <15216687+maresb@users.noreply.github.com>
 Matthew W. Thompson <mattwthompson@protonmail.com>
 conda-forge-admin <pelson.pub+conda-forge@gmail.com>
 Klaus Zimmermann <klaus.zimmermann@smhi.se>
 Dominic Davis-Foster <dominic@davis-foster.co.uk>
+Anton Tetov <anton@tetov.se>
 lorenz <looooo@users.noreply.github.com>
 Tom Augspurger <tom.augspurger88@gmail.com>
 Ryan May <rmay31@gmail.com>
