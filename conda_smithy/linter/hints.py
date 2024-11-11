@@ -227,7 +227,8 @@ def hint_pip_no_build_backend(host_or_build_section, package_name, hints):
 
         if not found_backend:
             hints.append(
-                f"No valid build backend found for Python recipe for package `{package_name}` using `pip`. Python recipes using `pip` need to "
+                f"No valid build backend found for Python recipe for package `{package_name}` using `pip`. "
+                "Python recipes using `pip` need to "
                 "explicitly specify a build backend in the `host` section. "
                 "If your recipe has built with only `pip` in the `host` section in the past, you likely should "
                 "add `setuptools` to the `host` section of your recipe."
@@ -250,12 +251,13 @@ def hint_noarch_python_use_python_min(
             ("run", "python >={{ python_min }}", run_reqs),
             ("test.requires", "python {{ python_min }}", test_reqs),
         ]:
-            test_syntax = syntax.replace("{{ python_min }}", "9999")
-
             if recipe_version == 1:
                 syntax = syntax.replace(
                     "{{ python_min }}", "${{ python_min }}"
                 )
+                test_syntax = syntax
+            else:
+                test_syntax = syntax.replace("{{ python_min }}", "9999")
 
             for req in reqs:
                 if (
@@ -266,21 +268,23 @@ def hint_noarch_python_use_python_min(
                     break
             else:
                 hint += (
-                    f"For the `{section_name}` section of the recipe, you should almost always use `{syntax}` "
-                    f"for the `python` entry. "
+                    f"\n   - For the `{section_name}` section of the recipe, you should usually use `{syntax}` "
+                    f"for the `python` entry."
                 )
 
         if hint:
             hint = (
                 (
-                    "noarch: python recipes should almost always follow the syntax in "
-                    "our [documentation](https://conda-forge.org/docs/maintainer/knowledge_base/#noarch-python). "
+                    "`noarch: python` recipes should usually follow the syntax in "
+                    "our [documentation](https://conda-forge.org/docs/maintainer/knowledge_base/#noarch-python) "
+                    "for specifying the Python version."
                 )
                 + hint
                 + (
-                    "You may need to override the `python_min` variable in the `conda_build_config.yaml`/`variants.yaml` "
-                    "if the package requires a newer Python version than the currently supported minimum "
-                    "version on `conda-forge`."
+                    "\n   - If the package requires a newer Python version than the currently supported minimum "
+                    "version on `conda-forge`, you can override the `python_min` variable by adding a "
+                    "Jinja2 `set` statement at the top of your recipe (or using an equivalent `context` "
+                    "variable for v1 recipes)."
                 )
             )
             hints.append(hint)

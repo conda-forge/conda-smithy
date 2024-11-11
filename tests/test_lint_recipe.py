@@ -1966,6 +1966,17 @@ linter:
         lints, hints = linter.lintify_meta_yaml(meta, recipe_version=1)
         assert any(lint.startswith(expected_message) for lint in lints)
 
+        meta = {"package": {"name": "python"}}
+        lints, hints = linter.lintify_meta_yaml(meta, recipe_version=1)
+        expected_message = "Package version is missing."
+        assert any(lint.startswith(expected_message) for lint in lints)
+
+        # should handle integer versions
+        meta = {"package": {"name": "python", "version": 2}}
+        lints, hints = linter.lintify_meta_yaml(meta, recipe_version=1)
+        expected_message = "Package version 2 doesn't match conda spec"
+        self.assertNotIn(expected_message, lints)
+
     def test_recipe_v1_version_with_context(self):
         meta = {
             "context": {"foo": "3.6.4"},
@@ -1984,6 +1995,14 @@ linter:
         )
         lints, hints = linter.lintify_meta_yaml(meta, recipe_version=1)
         assert any(lint.startswith(expected_message) for lint in lints)
+
+        meta = {
+            "context": {"foo": 2},
+            "package": {"name": "python", "version": "${{ foo }}"},
+        }
+        lints, hints = linter.lintify_meta_yaml(meta, recipe_version=1)
+        expected_message = "Package version 2 doesn't match conda spec"
+        self.assertNotIn(expected_message, lints)
 
     def test_multiple_sources(self):
         lints = linter.main(
@@ -3250,7 +3269,7 @@ def test_hint_noarch_python_use_python_min_v1(
     meta_str,
     expected_hints,
 ):
-    meta = get_yaml().load(render_meta_yaml(meta_str.replace("${{", "{{")))
+    meta = get_yaml().load(meta_str)
     lints = []
     hints = []
     linter.run_conda_forge_specific(
