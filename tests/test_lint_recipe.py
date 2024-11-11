@@ -3269,7 +3269,7 @@ def test_hint_noarch_python_use_python_min_v1(
     meta_str,
     expected_hints,
 ):
-    meta = get_yaml().load(render_meta_yaml(meta_str.replace("${{", "{{")))
+    meta = get_yaml().load(meta_str)
     lints = []
     hints = []
     linter.run_conda_forge_specific(
