@@ -602,6 +602,7 @@ def run_conda_forge_specific(
         test_reqs,
         outputs_section,
         noarch_value,
+        recipe_version,
         hints,
     )
 
@@ -706,13 +707,13 @@ if __name__ == "__main__":
         all_pass = False
         messages.append(
             "\nFor **{}**:\n\n{}".format(
-                rel_path, "\n".join(f"* {lint}" for lint in lints)
+                rel_path, "\n".join(f"* ❌ {lint}" for lint in lints)
             )
         )
     if hints:
         messages.append(
             "\nFor **{}**:\n\n{}".format(
-                rel_path, "\n".join(f"* {hint}" for hint in hints)
+                rel_path, "\n".join(f"* ℹ️ {hint}" for hint in hints)
             )
         )
 

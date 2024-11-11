@@ -13,7 +13,7 @@ import pytest
 
 import conda_smithy.lint_recipe as linter
 from conda_smithy.linter.utils import VALID_PYTHON_BUILD_BACKENDS
-from conda_smithy.utils import get_yaml
+from conda_smithy.utils import get_yaml, render_meta_yaml
 
 _thisdir = os.path.abspath(os.path.dirname(__file__))
 
@@ -1966,6 +1966,17 @@ linter:
         lints, hints = linter.lintify_meta_yaml(meta, recipe_version=1)
         assert any(lint.startswith(expected_message) for lint in lints)
 
+        meta = {"package": {"name": "python"}}
+        lints, hints = linter.lintify_meta_yaml(meta, recipe_version=1)
+        expected_message = "Package version is missing."
+        assert any(lint.startswith(expected_message) for lint in lints)
+
+        # should handle integer versions
+        meta = {"package": {"name": "python", "version": 2}}
+        lints, hints = linter.lintify_meta_yaml(meta, recipe_version=1)
+        expected_message = "Package version 2 doesn't match conda spec"
+        self.assertNotIn(expected_message, lints)
+
     def test_recipe_v1_version_with_context(self):
         meta = {
             "context": {"foo": "3.6.4"},
@@ -1984,6 +1995,14 @@ linter:
         )
         lints, hints = linter.lintify_meta_yaml(meta, recipe_version=1)
         assert any(lint.startswith(expected_message) for lint in lints)
+
+        meta = {
+            "context": {"foo": 2},
+            "package": {"name": "python", "version": "${{ foo }}"},
+        }
+        lints, hints = linter.lintify_meta_yaml(meta, recipe_version=1)
+        expected_message = "Package version 2 doesn't match conda spec"
+        self.assertNotIn(expected_message, lints)
 
     def test_multiple_sources(self):
         lints = linter.main(
@@ -3033,9 +3052,8 @@ def test_hint_pip_no_build_backend(
                 """
             ),
             [
-                "python {{ python_min }}.*",
+                "python {{ python_min }}",
                 "python >={{ python_min }}",
-                "python ={{ python_min }}",
             ],
         ),
         (
@@ -3053,9 +3071,8 @@ def test_hint_pip_no_build_backend(
                 """
             ),
             [
-                "python {{ python_min }}.*",
+                "python {{ python_min }}",
                 "python >={{ python_min }}",
-                "python ={{ python_min }}",
             ],
         ),
         (
@@ -3073,9 +3090,8 @@ def test_hint_pip_no_build_backend(
                 """
             ),
             [
-                "python {{ python_min }}.*",
+                "python {{ python_min }}",
                 "python >={{ python_min }}",
-                "python ={{ python_min }}",
             ],
         ),
         (
@@ -3093,8 +3109,7 @@ def test_hint_pip_no_build_backend(
                 """
             ),
             [
-                "python {{ python_min }}.*",
-                "python ={{ python_min }}",
+                "python {{ python_min }}",
             ],
         ),
         (
@@ -3108,13 +3123,13 @@ def test_hint_pip_no_build_backend(
 
                 requirements:
                   host:
-                    - python {{ python_min }}.*
+                    - python {{ python_min }}
                   run:
                     - python >={{ python_min }}
                 """
             ),
             [
-                "python ={{ python_min }}",
+                "python {{ python_min }}",
             ],
         ),
         (
@@ -3128,13 +3143,13 @@ def test_hint_pip_no_build_backend(
 
                 requirements:
                   host:
-                    - python {{ python_min }}.*
+                    - python {{ python_min }}
                   run:
                     - python >={{ python_min }}
 
                 test:
                   requires:
-                    - python ={{ python_min }}
+                    - python {{ python_min }}
                 """
             ),
             [],
@@ -3150,13 +3165,13 @@ def test_hint_pip_no_build_backend(
 
                 requirements:
                   host:
-                    - python {{ python_min }}.*
+                    - python {{ python_min }}
                   run:
                     - python
 
                 test:
                   requires:
-                    - python ={{ python_min }}
+                    - python {{ python_min }}
                 """
             ),
             ["python >={{ python_min }}"],
@@ -3164,6 +3179,93 @@ def test_hint_pip_no_build_backend(
     ],
 )
 def test_hint_noarch_python_use_python_min(
+    meta_str,
+    expected_hints,
+):
+    meta = get_yaml().load(render_meta_yaml(meta_str))
+    lints = []
+    hints = []
+    linter.run_conda_forge_specific(
+        meta,
+        None,
+        lints,
+        hints,
+        recipe_version=0,
+    )
+
+    # make sure we have the expected hints
+    if expected_hints:
+        for expected_hint in expected_hints:
+            assert any(expected_hint in hint for hint in hints), hints
+    else:
+        assert all(
+            "noarch: python recipes should almost always follow the syntax in"
+            not in hint
+            for hint in hints
+        )
+
+
+@pytest.mark.parametrize(
+    "meta_str,expected_hints",
+    [
+        (
+            textwrap.dedent(
+                """
+                package:
+                  name: python
+
+                requirements:
+                  run:
+                    - python
+                """
+            ),
+            [],
+        ),
+        (
+            textwrap.dedent(
+                """
+                package:
+                  name: python
+
+                build:
+                  noarch: python
+
+                requirements:
+                  run:
+                    - python
+                """
+            ),
+            [
+                "python ${{ python_min }}",
+                "python >=${{ python_min }}",
+            ],
+        ),
+        (
+            textwrap.dedent(
+                """
+                package:
+                  name: python
+
+                build:
+                  noarch: python
+
+                requirements:
+                  host:
+                    - python ${{ python_min }}
+                  run:
+                    - python >=${{ python_min }}
+
+                tests:
+                  - requirements:
+                      run:
+                        - python ${{ python_min }}
+                """
+            ),
+            [],
+        ),
+    ],
+)
+def test_hint_noarch_python_use_python_min_v1(
     meta_str,
     expected_hints,
 ):
@@ -3175,7 +3277,7 @@ def test_hint_noarch_python_use_python_min(
         None,
         lints,
         hints,
-        recipe_version=0,
+        recipe_version=1,
     )
 
     # make sure we have the expected hints
