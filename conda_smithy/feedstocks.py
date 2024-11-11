@@ -233,13 +233,19 @@ def feedstocks_yaml(
         organization, feedstocks_directory, **feedstocks_repo_kwargs
     ):
         upstream = repo.remotes["upstream"]
-        refs = [ref for ref in repo.references.iterator()
-                if ref.name.startswith("refs/remotes/upstream/")]
+        refs = [
+            ref
+            for ref in repo.references.iterator()
+            if ref.name.startswith("refs/remotes/upstream/")
+        ]
 
         if not refs:
             upstream.fetch()
-            refs = [ref for ref in repo.references.iterator()
-                    if ref.name.startswith("refs/remotes/upstream/")]
+            refs = [
+                ref
+                for ref in repo.references.iterator()
+                if ref.name.startswith("refs/remotes/upstream/")
+            ]
 
         for ref in refs:
             if ref.name == "refs/remotes/upstream/HEAD":

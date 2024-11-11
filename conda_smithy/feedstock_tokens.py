@@ -250,8 +250,10 @@ def is_valid_feedstock_token(
                 .replace("$GH_TOKEN", github_token)
                 .replace("${GH_TOKEN}", github_token)
             )
-            subprocess.run(["git", "clone", "-q", "--depth", "1", _token_repo, tmpdir],
-                           check=True)
+            subprocess.run(
+                ["git", "clone", "-q", "--depth", "1", _token_repo, tmpdir],
+                check=True,
+            )
             token_file = os.path.join(
                 tmpdir,
                 "tokens",
@@ -353,8 +355,10 @@ def register_feedstock_token(
                 .replace("${GH_TOKEN}", github_token)
             )
             # cloning via subprocesses to take advantage of git SSH support
-            subprocess.run(["git", "clone", "-q", "--depth", "1", _token_repo, tmpdir],
-                           check=True)
+            subprocess.run(
+                ["git", "clone", "-q", "--depth", "1", _token_repo, tmpdir],
+                check=True,
+            )
             repo = pygit2.Repository(tmpdir)
             token_file = os.path.join(
                 tmpdir,
@@ -419,15 +423,26 @@ def register_feedstock_token(
             # push
             repo.index.add(os.path.relpath(token_file, tmpdir))
             repo.index.write()
-            subprocess.run(["git", "commit", "-q", "-m",
-                "[ci skip] [skip ci] [cf admin skip] ***NO_CI*** "
-                "added token for {}/{} on provider{}".format(
-                    user,
-                    project,
-                    "" if provider is None else " " + provider,
-                )], check=True, cwd=tmpdir)
+            subprocess.run(
+                [
+                    "git",
+                    "commit",
+                    "-q",
+                    "-m",
+                    "[ci skip] [skip ci] [cf admin skip] ***NO_CI*** "
+                    "added token for {}/{} on provider{}".format(
+                        user,
+                        project,
+                        "" if provider is None else " " + provider,
+                    ),
+                ],
+                check=True,
+                cwd=tmpdir,
+            )
 
-            subprocess.run(["git", "pull", "-q", "--rebase"], check=True, cwd=tmpdir)
+            subprocess.run(
+                ["git", "pull", "-q", "--rebase"], check=True, cwd=tmpdir
+            )
             subprocess.run(["git", "push", "-q"], check=True, cwd=tmpdir)
         except Exception as e:
             if "DEBUG_FEEDSTOCK_TOKENS" in os.environ:
