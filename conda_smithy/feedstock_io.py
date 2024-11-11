@@ -4,12 +4,17 @@ import stat
 from contextlib import contextmanager
 
 
-def get_repo(path):
+def get_repo(path, search_parent_directories=True):
     repo = None
     try:
         import pygit2
 
-        repo = pygit2.Repository(path)
+        if search_parent_directories:
+            path = pygit2.discover_repository(path)
+        if path is not None:
+            repo = pygit2.Repository(
+                path, pygit2.enums.RepositoryOpenFlag.NO_SEARCH
+            )
     except ImportError:
         pass
     except pygit2.GitError:
