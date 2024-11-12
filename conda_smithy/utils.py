@@ -1,6 +1,7 @@
 import datetime
 import json
 import os
+import re
 import shutil
 import tempfile
 import time
@@ -18,6 +19,7 @@ from rattler_build_conda_compat.render import MetaData as RattlerBuildMetaData
 
 RATTLER_BUILD = "rattler-build"
 CONDA_BUILD = "conda-build"
+SET_PYTHON_MIN_RE = re.compile(r"{%\s+set\s+python_min\s+=")
 
 
 def _get_metadata_from_feedstock_dir(
@@ -118,6 +120,15 @@ def stub_subpackage_pin(*args, **kwargs):
     return f"subpackage_pin {args[0]}"
 
 
+def _munge_python_min(text):
+    new_lines = []
+    for line in text.splitlines(keepends=True):
+        if SET_PYTHON_MIN_RE.match(line):
+            line = "{% set python_min = '9999' %}\n"
+        new_lines.append(line)
+    return "".join(new_lines)
+
+
 def render_meta_yaml(text):
     env = jinja2.sandbox.SandboxedEnvironment(undefined=NullUndefined)
 
@@ -146,7 +157,7 @@ def render_meta_yaml(text):
     mockos = MockOS()
     py_ver = "3.7"
     context = {"os": mockos, "environ": mockos.environ, "PY_VER": py_ver}
-    content = env.from_string(text).render(context)
+    content = env.from_string(_munge_python_min(text)).render(context)
     return content
 
 
