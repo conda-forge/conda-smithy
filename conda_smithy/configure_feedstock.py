@@ -1034,6 +1034,13 @@ def _render_ci_provider(
             if pat.match(ml):
                 os.environ["CF_CUDA_ENABLED"] = "True"
 
+        # looking for `compiler('dpcpp')` with both quote variants;
+        # do not match if there is a `#` somewhere before on the line
+        pat = re.compile(r"^[^\#]*compiler\((\"cuda\"|\'cuda\')\).*")
+        for ml in meta_lines:
+            if pat.match(ml):
+                os.environ["CF_DPCPP_ENABLED"] = "True"
+
         config = conda_build.config.get_or_merge_config(
             None,
             exclusive_config_file=forge_config["exclusive_config_file"],

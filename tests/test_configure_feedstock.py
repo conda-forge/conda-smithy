@@ -918,6 +918,37 @@ def test_cuda_enabled_render(cuda_enabled_recipe, jinja_env):
                 del os.environ["CF_CUDA_ENABLED"]
 
 
+def test_dpcpp_enabled_render(dpcpp_enabled_recipe, jinja_env):
+    forge_config = copy.deepcopy(dpcpp_enabled_recipe.config)
+    has_env = "CF_DPCPP_ENABLED" in os.environ
+    if has_env:
+        old_val = os.environ["CF_DPCPP_ENABLED"]
+        del os.environ["CF_DPCPP_ENABLED"]
+
+    try:
+        assert "CF_DPCPP_ENABLED" not in os.environ
+        configure_feedstock.render_azure(
+            jinja_env=jinja_env,
+            forge_config=forge_config,
+            forge_dir=dpcpp_enabled_recipe.recipe,
+        )
+        assert os.environ["CF_DPCPP_ENABLED"] == "True"
+
+        # this configuration should be run
+        assert forge_config["azure"]["enabled"]
+        matrix_dir = os.path.join(dpcpp_enabled_recipe.recipe, ".ci_support")
+        assert os.path.isdir(matrix_dir)
+        # single matrix entry - readme is generated later in main function
+        assert len(os.listdir(matrix_dir)) == 6
+
+    finally:
+        if has_env:
+            os.environ["CF_DPCPP_ENABLED"] = old_val
+        else:
+            if "CF_DPCPP_ENABLED" in os.environ:
+                del os.environ["CF_DPCPP_ENABLED"]
+
+
 def test_conda_build_tools(config_yaml: ConfigYAML, caplog):
     load_forge_config = lambda: configure_feedstock._load_forge_config(  # noqa
         config_yaml.workdir,
