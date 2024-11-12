@@ -176,6 +176,10 @@ def feedstock_token_exists(user, project, token_repo, provider=None):
                 .replace("$GH_TOKEN", github_token)
                 .replace("${GH_TOKEN}", github_token)
             )
+            subprocess.run(
+                ["git", "clone", "-q", "--depth", "1", _token_repo, tmpdir],
+                check=True,
+            )
             token_file = os.path.join(
                 tmpdir,
                 "tokens",
