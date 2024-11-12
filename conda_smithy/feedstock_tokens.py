@@ -430,11 +430,7 @@ def register_feedstock_token(
                     "-q",
                     "-m",
                     "[ci skip] [skip ci] [cf admin skip] ***NO_CI*** "
-                    "added token for {}/{} on provider{}".format(
-                        user,
-                        project,
-                        "" if provider is None else " " + provider,
-                    ),
+                    f"added token for {user}/{project} on provider{'' if provider is None else ' ' + provider}",
                 ],
                 check=True,
                 cwd=tmpdir,
