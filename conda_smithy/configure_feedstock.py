@@ -1036,7 +1036,7 @@ def _render_ci_provider(
 
         # looking for `compiler('dpcpp')` with both quote variants;
         # do not match if there is a `#` somewhere before on the line
-        pat = re.compile(r"^[^\#]*compiler\((\"cuda\"|\'cuda\')\).*")
+        pat = re.compile(r"^[^\#]*compiler\((\"dpcpp\"|\'dpcpp\')\).*")
         for ml in meta_lines:
             if pat.match(ml):
                 os.environ["CF_DPCPP_ENABLED"] = "True"
