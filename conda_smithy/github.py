@@ -2,7 +2,7 @@ import os
 from random import choice
 
 import github
-from git import Repo
+import pygit2
 from github import Github
 from github.GithubException import GithubException
 from github.Organization import Organization
@@ -191,10 +191,10 @@ def create_github_repo(args):
         print("Github repository already exists.")
 
     # Now add this new repo as a remote on the local clone.
-    repo = Repo(args.feedstock_directory)
+    repo = pygit2.Repository(args.feedstock_directory)
     remote_name = args.remote_name.strip()
     if remote_name:
-        if remote_name in [remote.name for remote in repo.remotes]:
+        if remote_name in repo.remotes.names():
             existing_remote = repo.remotes[remote_name]
             if existing_remote.url != gh_repo.ssh_url:
                 print(
@@ -202,7 +202,7 @@ def create_github_repo(args):
                     f"(it points to {existing_remote.url})."
                 )
         else:
-            repo.create_remote(remote_name, gh_repo.ssh_url)
+            repo.remotes.create(remote_name, gh_repo.ssh_url)
 
     if args.extra_admin_users is not None:
         for user in args.extra_admin_users:
