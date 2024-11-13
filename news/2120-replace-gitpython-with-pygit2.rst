@@ -16,7 +16,7 @@
 
 **Fixed:**
 
-* Fixed compatibility with git index versions 3 and 4 (#2116).
+* Fixed compatibility with git index versions 3 and 4 (#2120).
 
 **Security:**
 
