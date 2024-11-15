@@ -62,6 +62,7 @@ VALID_PYTHON_BUILD_BACKENDS = [
     "poetry-core",
     "pdm-backend",
     "pdm-pep517",
+    "pymsbuild",
     "meson-python",
     "scikit-build-core",
     "maturin",
