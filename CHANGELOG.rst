@@ -4,6 +4,25 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.44.4
+====================
+
+**Changed:**
+
+* Make old GHA removal relative to forge_dir
+
+**Fixed:**
+
+* Fixed bug when linting for ``noarch: python`` syntax and using jinja2 set statements. (#2132)
+
+**Authors:**
+
+* Matthew R. Becker
+* pre-commit-ci[bot]
+* Nehal J Wani
+
+
+
 v3.44.3
 ====================
 

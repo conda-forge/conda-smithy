@@ -31,8 +31,8 @@ shadow_walker <shadowwalkersb@gmail.com>
 John Kirkham <jakirkham@gmail.com> John Kirkham <kirkhamj@janelia.hhmi.org>
 John Kirkham <jakirkham@gmail.com> jakirkham <kirkhamj@janelia.hhmi.org>
 Michael Sarahan <msarahan@gmail.com> Mike Sarahan <msarahan@gmail.com>
-Mark Harfouche <mark.harfouche@gmail.com>
 pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>
+Mark Harfouche <mark.harfouche@gmail.com>
 Bastian Zimmermann <10774221+BastianZim@users.noreply.github.com> BastianZim <10774221+BastianZim@users.noreply.github.com>
 Leo Fang <leofang@bnl.gov> Leo Fang <leo80042@gmail.com>
 Leo Fang <leofang@bnl.gov> Leo Fang <leof@nvidia.com>
@@ -115,6 +115,7 @@ Thomas Hopkins <thomashopkins000@gmail.com>
 Hugo Slepicka <slepicka@slac.stanford.edu>
 fhoehle <fhoehle@users.noreply.github.com>
 Matthew W. Thompson <mattwthompson@protonmail.com>
+Nehal J Wani <nehaljw.kkd1@gmail.com>
 conda-forge-admin <pelson.pub+conda-forge@gmail.com>
 Klaus Zimmermann <klaus.zimmermann@smhi.se>
 Dominic Davis-Foster <dominic@davis-foster.co.uk>
@@ -139,7 +140,6 @@ Dave Hirschfeld <dave.hirschfeld@gmail.com>
 Nils Wentzell <nwentzell@flatironinstitute.org>
 Stuart Berg <bergs@janelia.hhmi.org>
 Mike Taves <mwtoews@gmail.com>
-Nehal J Wani <nehaljw.kkd1@gmail.com>
 Benjamin Tovar <btovar@nd.edu>
 Sylvain Corlay <sylvain.corlay@gmail.com>
 Brandon Andersen <31670449+bandersen23@users.noreply.github.com>

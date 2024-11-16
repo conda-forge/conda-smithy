@@ -3176,6 +3176,30 @@ def test_hint_pip_no_build_backend(
             ),
             ["python >={{ python_min }}"],
         ),
+        (
+            textwrap.dedent(
+                """
+                {% set python_min = '3.7' %}
+
+                package:
+                  name: python
+
+                build:
+                  noarch: python
+
+                requirements:
+                  host:
+                    - python {{ python_min }}
+                  run:
+                    - python >={{ python_min }}
+
+                test:
+                  requires:
+                    - python {{ python_min }}
+                """
+            ),
+            [],
+        ),
     ],
 )
 def test_hint_noarch_python_use_python_min(

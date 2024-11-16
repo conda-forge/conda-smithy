@@ -1,6 +1,7 @@
 import datetime
 import json
 import os
+import re
 import shutil
 import tempfile
 import time
@@ -13,15 +14,19 @@ import jinja2
 import jinja2.sandbox
 import ruamel.yaml
 from conda_build.api import render as conda_build_render
+from conda_build.config import Config
 from conda_build.render import MetaData
 from rattler_build_conda_compat.render import MetaData as RattlerBuildMetaData
 
 RATTLER_BUILD = "rattler-build"
 CONDA_BUILD = "conda-build"
+SET_PYTHON_MIN_RE = re.compile(r"{%\s+set\s+python_min\s+=")
 
 
 def _get_metadata_from_feedstock_dir(
-    feedstock_directory: Union[str, os.PathLike], forge_config: Dict[str, Any]
+    feedstock_directory: Union[str, os.PathLike],
+    forge_config: Dict[str, Any],
+    conda_forge_pinning_file: Union[str, os.PathLike, None] = None,
 ) -> Union[MetaData, RattlerBuildMetaData]:
     """
     Return either the conda-build metadata or rattler-build metadata from the feedstock directory
@@ -33,9 +38,15 @@ def _get_metadata_from_feedstock_dir(
             feedstock_directory,
         )
     else:
+        if conda_forge_pinning_file:
+            config = Config(
+                variant_config_files=[conda_forge_pinning_file],
+            )
+        else:
+            config = None
         meta = conda_build_render(
             feedstock_directory,
-            permit_undefined_jinja=True,
+            config=config,
             finalize=False,
             bypass_env_check=True,
             trim_skip=False,
@@ -118,6 +129,15 @@ def stub_subpackage_pin(*args, **kwargs):
     return f"subpackage_pin {args[0]}"
 
 
+def _munge_python_min(text):
+    new_lines = []
+    for line in text.splitlines(keepends=True):
+        if SET_PYTHON_MIN_RE.match(line):
+            line = "{% set python_min = '9999' %}\n"
+        new_lines.append(line)
+    return "".join(new_lines)
+
+
 def render_meta_yaml(text):
     env = jinja2.sandbox.SandboxedEnvironment(undefined=NullUndefined)
 
@@ -146,7 +166,7 @@ def render_meta_yaml(text):
     mockos = MockOS()
     py_ver = "3.7"
     context = {"os": mockos, "environ": mockos.environ, "PY_VER": py_ver}
-    content = env.from_string(text).render(context)
+    content = env.from_string(_munge_python_min(text)).render(context)
     return content
 
 

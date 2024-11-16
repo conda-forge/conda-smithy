@@ -2204,7 +2204,9 @@ def render_github_actions_services(jinja_env, forge_config, forge_dir):
         "webservices.yml",
     ]
     for filename in old_github_actions_files:
-        rel_target_fname = os.path.join(".github", "workflows", filename)
+        rel_target_fname = os.path.join(
+            forge_dir, ".github", "workflows", filename
+        )
         if _ignore_match(skip_files, rel_target_fname):
             continue
         remove_file(rel_target_fname)
@@ -2214,7 +2216,9 @@ def render_github_actions_services(jinja_env, forge_config, forge_dir):
     current_github_actions_files = []
     for template_file in current_github_actions_files:
         template = jinja_env.get_template(template_file + ".tmpl")
-        rel_target_fname = os.path.join(".github", "workflows", template_file)
+        rel_target_fname = os.path.join(
+            forge_dir, ".github", "workflows", template_file
+        )
         if _ignore_match(skip_files, rel_target_fname):
             continue
         target_fname = os.path.join(forge_dir, rel_target_fname)
