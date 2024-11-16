@@ -26,7 +26,7 @@ build:
   # and for all major OSs. Add the line "skip: True  # [py<35]" (for example)
   # to limit to Python 3.5 and newer, or "skip: True  # [not win]" to limit
   # to Windows.
-  script: "{{ PYTHON }} -m pip install . -vv"
+  script: "{{ PYTHON }} -m pip install . -vv --no-deps --no-build-isolation"
 
 requirements:
   build:

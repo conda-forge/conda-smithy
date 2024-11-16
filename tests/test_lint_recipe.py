@@ -2502,10 +2502,10 @@ def test_lint_duplicate_cfyml():
               sha256: a32e28b3e321bdb802f28a5f04d1df65071ab42eef06a6dc15ed656780c0361e  # [win and py==310]
             build:
               skip: true  # [py<38 or python_impl == 'pypy' or (win and py==311)]
-              script: {{ PYTHON }} -m pip install . -vv  # [unix]
+              script: {{ PYTHON }} -m pip install . -vv --no-deps --no-build-isolation  # [unix]
               script_env:  # [osx and arm64]
                 - SKBUILD_CONFIGURE_OPTIONS=-DWITH_CBOOL_EXITCODE=0 -DWITH_CBOOL_EXITCODE__TRYRUN_OUTPUT='' -Df03real128_EXITCODE=1 -Df03real128_EXITCODE__TRYRUN_OUTPUT='' -Df18errorstop_EXITCODE=1 -Df18errorstop_EXITCODE__TRYRUN_OUTPUT=''  # [osx and arm64]
-              script: {{ PYTHON }} -m pip install {{ name }}-{{ version }}-cp{{ CONDA_PY }}-cp{{ CONDA_PY }}-win_amd64.whl -vv  # [win]
+              script: {{ PYTHON }} -m pip install {{ name }}-{{ version }}-cp{{ CONDA_PY }}-cp{{ CONDA_PY }}-win_amd64.whl -vv --no-deps --no-build-isolation  # [win]
               number: 3
             """,
             "PyPI default URL is now pypi.org",
@@ -2541,10 +2541,10 @@ def test_hint_recipe(tmp_path, yaml_block: str, expected_message: str):
               sha256: a32e28b3e321bdb802f28a5f04d1df65071ab42eef06a6dc15ed656780c0361e  # [win and py==310]
             build:
               skip: true  # [py<38 or python_impl == 'pypy' or (win and py==311)]
-              script: {{ PYTHON }} -m pip install . -vv  # [unix]
+              script: {{ PYTHON }} -m pip install . -vv --no-deps --no-build-isolation  # [unix]
               script_env:  # [osx and arm64]
                 - SKBUILD_CONFIGURE_OPTIONS=-DWITH_CBOOL_EXITCODE=0 -DWITH_CBOOL_EXITCODE__TRYRUN_OUTPUT='' -Df03real128_EXITCODE=1 -Df03real128_EXITCODE__TRYRUN_OUTPUT='' -Df18errorstop_EXITCODE=1 -Df18errorstop_EXITCODE__TRYRUN_OUTPUT=''  # [osx and arm64]
-              script: {{ PYTHON }} -m pip install {{ name }}-{{ version }}-cp{{ CONDA_PY }}-cp{{ CONDA_PY }}-win_amd64.whl -vv  # [win]
+              script: {{ PYTHON }} -m pip install {{ name }}-{{ version }}-cp{{ CONDA_PY }}-cp{{ CONDA_PY }}-win_amd64.whl -vv --no-deps --no-build-isolation  # [win]
               number: 3
             """,
             "lint",
@@ -2574,9 +2574,9 @@ def test_hint_recipe(tmp_path, yaml_block: str, expected_message: str):
               noarch: python
               number: 0
               {% if use_wheel %}
-              script: "{{ PYTHON }} -m pip install --no-deps --ignore-installed --no-cache-dir -vvv *.whl"
+              script: "{{ PYTHON }} -m pip install --no-deps --no-build-isolation --ignore-installed --no-cache-dir -vvv *.whl"
               {% else %}
-              script: "{{ PYTHON }} -m pip install --no-deps --ignore-installed --no-cache-dir -vvv ."
+              script: "{{ PYTHON }} -m pip install --no-deps --no-build-isolation --ignore-installed --no-cache-dir -vvv ."
               {% endif %}
             """,
             "hint",
@@ -2600,7 +2600,7 @@ def test_hint_recipe(tmp_path, yaml_block: str, expected_message: str):
               noarch: python
               entry_points:
                 - weasyprint = weasyprint.__main__:main
-              script: {{ PYTHON }} -m pip install {{ name|lower }}-{{ version }}-py3-none-any.whl -vv
+              script: {{ PYTHON }} -m pip install {{ name|lower }}-{{ version }}-py3-none-any.whl -vv --no-deps --no-build-isolation
             """,
             "hint",
             id="weasyprint",
