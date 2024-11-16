@@ -16,7 +16,7 @@
 
 **Fixed:**
 
-* Fixed a bug where creating feedstocks with `noarch: python` would not work correctly. (#2135)
+* Fixed a bug where creating feedstocks with `noarch: python` would not work correctly. (#2135. #2138)
 
 **Security:**
 

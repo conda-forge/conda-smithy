@@ -156,7 +156,7 @@ def create_github_repo(args):
         args.feedstock_directory,
         forge_config,
         conda_forge_pinning_file=(
-            get_cached_cfp_file_path(".")
+            get_cached_cfp_file_path(".")[0]
             if args.user is None and args.organization == "conda-forge"
             else None
         ),
