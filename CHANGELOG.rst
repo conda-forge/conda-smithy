@@ -4,6 +4,24 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.44.5
+====================
+
+**Added:**
+
+* Add ``pymsbuild`` as another build backend
+
+**Fixed:**
+
+* Fixed a bug where creating feedstocks with `noarch: python` would not work correctly. (#2135)
+
+**Authors:**
+
+* Matthew R. Becker
+* Uwe L. Korn
+
+
+
 v3.44.4
 ====================
 
