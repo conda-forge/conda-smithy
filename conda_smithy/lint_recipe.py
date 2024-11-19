@@ -609,10 +609,10 @@ def run_conda_forge_specific(
 
     # 11: ensure we can parse the recipe
     if recipe_version == 1:
-        with open(os.path.join(recipe_dir, "recipe.yaml")) as fh:
+        with open(os.path.join(recipe_dir or "", "recipe.yaml")) as fh:
             recipe_text = fh.read()
     else:
-        with open(os.path.join(recipe_dir, "meta.yaml")) as fh:
+        with open(os.path.join(recipe_dir or "", "meta.yaml")) as fh:
             recipe_text = fh.read()
     lint_recipe_is_parsable(
         recipe_text,
