@@ -27,12 +27,16 @@ jobs:
           environment-file: environment.yml
           cache-environment: true
           create-args: >-
-            python=3.8
+            python=3.11
             coverage
             coveralls
+            conda-recipe-manager
+            conda-souschef
+            conda-forge-tick
 
       - name: install conda-smithy
         run: |
+          conda uninstall --force --yes conda-smithy
           python -m pip install -v --no-build-isolation -e .
           git config --global user.email "smithy@smithy.smithy"
           git config --global user.name "smithy"

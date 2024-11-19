@@ -51,6 +51,7 @@ from conda_smithy.linter.lints import (
     lint_package_version,
     lint_pin_subpackages,
     lint_recipe_have_tests,
+    lint_recipe_is_parsable,
     lint_recipe_maintainers,
     lint_recipe_name,
     lint_recipe_v1_noarch_and_runtime_dependencies,
@@ -605,6 +606,22 @@ def run_conda_forge_specific(
         recipe_version,
         hints,
     )
+
+    # 11: ensure we can parse the recipe
+    if recipe_version == 1:
+        recipe_fname = os.path.join(recipe_dir or "", "recipe.yaml")
+    else:
+        recipe_fname = os.path.join(recipe_dir or "", "meta.yaml")
+
+    if os.path.exists(recipe_fname):
+        with open(recipe_fname) as fh:
+            recipe_text = fh.read()
+        lint_recipe_is_parsable(
+            recipe_text,
+            lints,
+            hints,
+            recipe_version=recipe_version,
+        )
 
 
 def _format_validation_msg(error: jsonschema.ValidationError):
