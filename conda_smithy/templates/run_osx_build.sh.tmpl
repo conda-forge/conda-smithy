@@ -8,7 +8,6 @@ set -xe
 
 MINIFORGE_HOME=${MINIFORGE_HOME:-${HOME}/miniforge3}
 MINIFORGE_HOME=${MINIFORGE_HOME%/} # remove trailing slash
-mkdir -p ${MINIFORGE_HOME}
 
 {%- if conda_install_tool == "micromamba" %}
 
@@ -36,6 +35,7 @@ rm -rf "${MAMBA_ROOT_PREFIX}" "${micromamba_exe}" || true
 ( endgroup "Provisioning base env with micromamba" ) 2> /dev/null
 {%- elif conda_install_tool == "pixi" %}
 ( startgroup "Provisioning base env with pixi" ) 2> /dev/null
+mkdir -p ${MINIFORGE_HOME}
 curl -fsSL https://pixi.sh/install.sh | bash
 export PATH="~/.pixi/bin:$PATH"
 arch=$(uname -m)
