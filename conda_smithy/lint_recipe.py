@@ -609,17 +609,19 @@ def run_conda_forge_specific(
 
     # 11: ensure we can parse the recipe
     if recipe_version == 1:
-        with open(os.path.join(recipe_dir or "", "recipe.yaml")) as fh:
-            recipe_text = fh.read()
+        recipe_fname = os.path.join(recipe_dir or "", "recipe.yaml")
     else:
-        with open(os.path.join(recipe_dir or "", "meta.yaml")) as fh:
+        recipe_fname = os.path.join(recipe_dir or "", "meta.yaml")
+
+    if os.path.exists(recipe_fname):
+        with open() as fh:
             recipe_text = fh.read()
-    lint_recipe_is_parsable(
-        recipe_text,
-        lints,
-        hints,
-        recipe_version=recipe_version,
-    )
+        lint_recipe_is_parsable(
+            recipe_text,
+            lints,
+            hints,
+            recipe_version=recipe_version,
+        )
 
 
 def _format_validation_msg(error: jsonschema.ValidationError):
