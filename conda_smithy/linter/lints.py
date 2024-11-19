@@ -1,6 +1,8 @@
 import itertools
+import logging
 import os
 import re
+import tempfile
 from collections.abc import Sequence
 from typing import Any, Dict, List, Literal, Optional
 
@@ -25,6 +27,8 @@ from conda_smithy.linter.utils import (
     selector_lines,
 )
 from conda_smithy.utils import get_yaml
+
+logger = logging.getLogger(__name__)
 
 
 def lint_section_order(
@@ -983,3 +987,100 @@ def lint_stdlib(
         ):
             if sdk_lint not in lints:
                 lints.append(sdk_lint)
+
+
+def lint_recipe_is_parsable(
+    recipe_text: str,
+    lints: List[str],
+    hints: List[str],
+    recipe_version: int = 0,
+):
+    parse_vars = []
+    parser_names = []
+
+    if recipe_version == 0:
+        try:
+            from conda_forge_tick.recipe_parser import CondaMetaYAML
+        except ImportError:
+            parses_with_conda_forge_tick = None
+            pass
+        else:
+            try:
+                CondaMetaYAML(recipe_text, recipe_version)
+            except Exception as e:
+                logger.warning(
+                    "Error parsing recipe with conda-forge-tick (the bot): %s",
+                    repr(e),
+                    exc_info=e,
+                )
+                parses_with_conda_forge_tick = False
+            else:
+                parses_with_conda_forge_tick = True
+
+        parse_vars.append(parses_with_conda_forge_tick)
+        parser_names.append("conda-forge-tick (the bot)")
+
+        try:
+            from souschef.recipe import Recipe
+        except ImportError:
+            parses_with_souschef = None
+            pass
+        else:
+            with tempfile.TemporaryDirectory() as tmpdir:
+                recipe_file = os.path.join(tmpdir, "meta.yaml")
+                with open(recipe_file, "w") as f:
+                    f.write(recipe_text)
+
+                try:
+                    Recipe(load_file=recipe_file)
+                except Exception as e:
+                    logger.warning(
+                        "Error parsing recipe with conda-souschef: %s",
+                        repr(e),
+                        exc_info=e,
+                    )
+                    parses_with_souschef = False
+                else:
+                    parses_with_souschef = True
+
+        parse_vars.append(parses_with_souschef)
+        parser_names.append("conda-souschef")
+
+    try:
+        from conda_recipe_manager.parser.recipe_parser import RecipeParser
+    except ImportError:
+        parses_with_crm = None
+        pass
+    else:
+        try:
+            RecipeParser(recipe_text)
+        except Exception as e:
+            logger.warning(
+                "Error parsing recipe with conda-recipe-manager: %s",
+                repr(e),
+                exc_info=e,
+            )
+            parses_with_crm = False
+        else:
+            parses_with_crm = True
+
+    parse_vars.append(parses_with_crm)
+    parser_names.append("conda-recipe-manager")
+
+    if parse_vars:
+        if any(pv is not None for pv in parse_vars):
+            if not any(parse_vars):
+                lints.append(
+                    "The recipe is not parsable by any of the known "
+                    f"recipe parsers ({sorted(parser_names)}). Please "
+                    "check the logs for more information and ensure your "
+                    "recipe can be parsed."
+                )
+            for pv, parser_name in zip(parse_vars, parser_names):
+                if pv is False:
+                    hints.append(
+                        f"The recipe is not parsable by `{parser_name}`. Your recipe "
+                        "may not receive automatic updates and/or may not be compatible "
+                        "with conda-forge's infrastructure. Please check the logs for "
+                        "more information and ensure your recipe can be parsed."
+                    )

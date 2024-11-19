@@ -51,6 +51,7 @@ from conda_smithy.linter.lints import (
     lint_package_version,
     lint_pin_subpackages,
     lint_recipe_have_tests,
+    lint_recipe_is_parsable,
     lint_recipe_maintainers,
     lint_recipe_name,
     lint_recipe_v1_noarch_and_runtime_dependencies,
@@ -604,6 +605,20 @@ def run_conda_forge_specific(
         noarch_value,
         recipe_version,
         hints,
+    )
+
+    # 11: ensure we can parse the recipe
+    if recipe_version == 1:
+        with open(os.path.join(recipe_dir, "recipe.yaml")) as fh:
+            recipe_text = fh.read()
+    else:
+        with open(os.path.join(recipe_dir, "meta.yaml")) as fh:
+            recipe_text = fh.read()
+    lint_recipe_is_parsable(
+        recipe_text,
+        lints,
+        hints,
+        recipe_version=recipe_version,
     )
 
 
