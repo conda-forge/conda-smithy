@@ -995,14 +995,14 @@ def lint_recipe_is_parsable(
     hints: List[str],
     recipe_version: int = 0,
 ):
-    parse_vars = []
-    parser_names = []
+    parse_results = {}
 
     if recipe_version == 0:
+        parse_name = "conda-forge-tick (the bot)"
         try:
             from conda_forge_tick.recipe_parser import CondaMetaYAML
         except ImportError:
-            parses_with_conda_forge_tick = None
+            parse_results[parse_name] = None
             pass
         else:
             try:
@@ -1013,17 +1013,15 @@ def lint_recipe_is_parsable(
                     repr(e),
                     exc_info=e,
                 )
-                parses_with_conda_forge_tick = False
+                parse_results[parse_name] = False
             else:
-                parses_with_conda_forge_tick = True
+                parse_results[parse_name] = True
 
-        parse_vars.append(parses_with_conda_forge_tick)
-        parser_names.append("conda-forge-tick (the bot)")
-
+        parse_name = "conda-souschef (grayskull)"
         try:
             from souschef.recipe import Recipe
         except ImportError:
-            parses_with_souschef = None
+            parse_results[parse_name] = None
             pass
         else:
             with tempfile.TemporaryDirectory() as tmpdir:
@@ -1039,17 +1037,15 @@ def lint_recipe_is_parsable(
                         repr(e),
                         exc_info=e,
                     )
-                    parses_with_souschef = False
+                    parse_results[parse_name] = False
                 else:
-                    parses_with_souschef = True
+                    parse_results[parse_name] = True
 
-        parse_vars.append(parses_with_souschef)
-        parser_names.append("conda-souschef")
-
+    parse_name = "conda-recipe-manager"
     try:
         from conda_recipe_manager.parser.recipe_parser import RecipeParser
     except ImportError:
-        parses_with_crm = None
+        parse_results[parse_name] = None
         pass
     else:
         try:
@@ -1060,23 +1056,20 @@ def lint_recipe_is_parsable(
                 repr(e),
                 exc_info=e,
             )
-            parses_with_crm = False
+            parse_results[parse_name] = False
         else:
-            parses_with_crm = True
+            parse_results[parse_name] = True
 
-    parse_vars.append(parses_with_crm)
-    parser_names.append("conda-recipe-manager")
-
-    if parse_vars:
-        if any(pv is not None for pv in parse_vars):
-            if not any(parse_vars):
+    if parse_results:
+        if any(pv is not None for pv in parse_results.values()):
+            if not any(parse_results.values()):
                 lints.append(
                     "The recipe is not parsable by any of the known "
-                    f"recipe parsers ({sorted(parser_names)}). Please "
+                    f"recipe parsers ({sorted(parse_results.keys())}). Please "
                     "check the logs for more information and ensure your "
                     "recipe can be parsed."
                 )
-            for pv, parser_name in zip(parse_vars, parser_names):
+            for parser_name, pv in parse_results.items():
                 if pv is False:
                     hints.append(
                         f"The recipe is not parsable by parser `{parser_name}`. Your recipe "

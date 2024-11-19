@@ -3351,11 +3351,11 @@ def test_lint_recipe_parses_ok():
                 "The recipe is not parsable by any of the known recipe parsers"
             )
             for lint in lints
-        )
+        ), lints
         assert not any(
             hint.startswith("The recipe is not parsable by parser")
             for hint in hints
-        )
+        ), hints
 
 
 def test_lint_recipe_parses_forblock():
@@ -3392,25 +3392,25 @@ def test_lint_recipe_parses_forblock():
                 "The recipe is not parsable by any of the known recipe parsers"
             )
             for lint in lints
-        )
+        ), lints
         assert not any(
             hint.startswith(
                 "The recipe is not parsable by parser `conda-forge-tick"
             )
             for hint in hints
-        )
+        ), hints
         assert any(
             hint.startswith(
                 "The recipe is not parsable by parser `conda-recipe-manager"
             )
             for hint in hints
-        )
+        ), hints
         assert not any(
             hint.startswith(
                 "The recipe is not parsable by parser `conda-souschef"
             )
             for hint in hints
-        )
+        ), hints
 
 
 def test_lint_recipe_parses_spacing():
@@ -3445,25 +3445,25 @@ def test_lint_recipe_parses_spacing():
                 "The recipe is not parsable by any of the known recipe parsers"
             )
             for lint in lints
-        )
+        ), lints
         assert not any(
             hint.startswith(
                 "The recipe is not parsable by parser `conda-forge-tick"
             )
             for hint in hints
-        )
+        ), hints
         assert any(
             hint.startswith(
                 "The recipe is not parsable by parser `conda-recipe-manager"
             )
             for hint in hints
-        )
+        ), hints
         assert not any(
             hint.startswith(
                 "The recipe is not parsable by parser `conda-souschef"
             )
             for hint in hints
-        )
+        ), hints
 
 
 def test_lint_recipe_parses_v1_spacing():
@@ -3497,13 +3497,13 @@ def test_lint_recipe_parses_v1_spacing():
                 "The recipe is not parsable by any of the known recipe parsers"
             )
             for lint in lints
-        )
+        ), lints
         assert any(
             hint.startswith(
                 "The recipe is not parsable by parser `conda-recipe-manager"
             )
             for hint in hints
-        )
+        ), hints
 
 
 if __name__ == "__main__":
