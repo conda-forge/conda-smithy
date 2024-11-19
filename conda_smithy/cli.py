@@ -17,7 +17,10 @@ from ruamel.yaml import YAML
 import conda_smithy.cirun_utils
 from conda_smithy import __version__, configure_feedstock, feedstock_io
 from conda_smithy import lint_recipe as linter
-from conda_smithy.configure_feedstock import _load_forge_config
+from conda_smithy.configure_feedstock import (
+    _load_forge_config,
+    get_cached_cfp_file_path,
+)
 from conda_smithy.utils import (
     CONDA_BUILD,
     RATTLER_BUILD,
@@ -333,7 +336,13 @@ class RegisterCI(Subcommand):
         # Load the conda-forge config and read metadata from the feedstock recipe
         forge_config = _load_forge_config(args.feedstock_directory, None)
         metadata = _get_metadata_from_feedstock_dir(
-            args.feedstock_directory, forge_config
+            args.feedstock_directory,
+            forge_config,
+            conda_forge_pinning_file=(
+                get_cached_cfp_file_path(".")[0]
+                if args.user is None and args.organization == "conda-forge"
+                else None
+            ),
         )
 
         feedstock_name = get_feedstock_name_from_meta(metadata)
