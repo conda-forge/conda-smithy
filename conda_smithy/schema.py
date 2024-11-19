@@ -124,6 +124,11 @@ class AzureRunnerSettings(BaseModel):
         default_factory=dict, description="Variables"
     )
 
+    # windows only
+    install_atl: Optional[bool] = Field(
+        default=False, description="Whether to install ATL components for MSVC"
+    )
+
 
 class AzureFreeDiskSpaceConfig(StrEnum):
     CACHE = "cache"
@@ -209,6 +214,7 @@ class AzureConfig(BaseModel):
 
     settings_win: AzureRunnerSettings = Field(
         default_factory=lambda: AzureRunnerSettings(
+            install_atl=False,
             pool={"vmImage": "windows-2022"},
             variables={
                 "MINIFORGE_HOME": "D:\\Miniforge",
@@ -218,7 +224,12 @@ class AzureConfig(BaseModel):
         ),
         description=cleandoc(
             """
-            Windows-specific settings for runners. Some important variables you can set are:
+            Windows-specific settings for runners. Aside from overriding the `vmImage`,
+            you can also specify `install_atl: true` in case you need the ATL components
+            for MSVC; these don't get installed by default anymore, see
+            https://github.com/actions/runner-images/issues/9873
+
+            Finally, under `variables`, some important things you can set are:
 
             - `CONDA_BLD_PATH`: Location of the conda-build workspace. Defaults to `D:\\bld`
             - `MINIFORGE_HOME`: Location of the base environment installation. Defaults to
