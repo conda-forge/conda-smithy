@@ -3316,5 +3316,155 @@ def test_hint_noarch_python_use_python_min_v1(
         )
 
 
+def test_lint_recipe_parses_ok():
+    with tempfile.TemporaryDirectory() as tmpdir:
+        with open(os.path.join(tmpdir, "meta.yaml"), "w") as f:
+            f.write(
+                textwrap.dedent(
+                    """
+                    package:
+                      name: foo
+
+                    build:
+                      number: 0
+
+                    test:
+                      imports:
+                        - foo
+
+                    about:
+                      home: something
+                      license: MIT
+                      license_file: LICENSE
+                      summary: a test recipe
+
+                    extra:
+                      recipe-maintainers:
+                        - a
+                        - b
+                    """
+                )
+            )
+        lints, hints = linter.main(tmpdir, return_hints=True, conda_forge=True)
+        assert not any(
+            lint.startswith(
+                "The recipe is not parsable by any of the known recipe parsers"
+            )
+            for lint in lints
+        )
+        assert not any(
+            hint.startswith("The recipe is not parsable by parser")
+            for hint in hints
+        )
+
+
+def test_lint_recipe_parses_forblock():
+    with tempfile.TemporaryDirectory() as tmpdir:
+        # CRM cannot parse this one
+        with open(os.path.join(tmpdir, "meta.yaml"), "w") as f:
+            f.write(
+                textwrap.dedent(
+                    """
+                    package:
+                      name: foo
+                    build:
+                      number: 0
+                    test:
+                      imports:
+                        {% for blah in blahs %}
+                        - {{ blah }}
+                        {% endfor %}
+                    about:
+                      home: something
+                      license: MIT
+                      license_file: LICENSE
+                      summary: a test recipe
+                    extra:
+                      recipe-maintainers:
+                          - a
+                          - b
+                    """
+                )
+            )
+        lints, hints = linter.main(tmpdir, return_hints=True, conda_forge=True)
+        assert not any(
+            lint.startswith(
+                "The recipe is not parsable by any of the known recipe parsers"
+            )
+            for lint in lints
+        )
+        assert not any(
+            hint.startswith(
+                "The recipe is not parsable by parser `conda-forge-tick"
+            )
+            for hint in hints
+        )
+        assert any(
+            hint.startswith(
+                "The recipe is not parsable by parser `conda-recipe-manager"
+            )
+            for hint in hints
+        )
+        assert not any(
+            hint.startswith(
+                "The recipe is not parsable by parser `conda-souschef"
+            )
+            for hint in hints
+        )
+
+
+def test_lint_recipe_parses_spacing():
+    with tempfile.TemporaryDirectory() as tmpdir:
+        # CRM fails if the yaml has differing spacing
+        with open(os.path.join(tmpdir, "meta.yaml"), "w") as f:
+            f.write(
+                textwrap.dedent(
+                    """
+                    package:
+                      name: foo
+                    build:
+                      number: 0
+                    test:
+                      imports:
+                          - foo
+                    about:
+                      home: something
+                      license: MIT
+                      license_file: LICENSE
+                      summary: a test recipe
+                    extra:
+                      recipe-maintainers:
+                          - a
+                          - b
+                    """
+                )
+            )
+        lints, hints = linter.main(tmpdir, return_hints=True, conda_forge=True)
+        assert not any(
+            lint.startswith(
+                "The recipe is not parsable by any of the known recipe parsers"
+            )
+            for lint in lints
+        )
+        assert not any(
+            hint.startswith(
+                "The recipe is not parsable by parser `conda-forge-tick"
+            )
+            for hint in hints
+        )
+        assert any(
+            hint.startswith(
+                "The recipe is not parsable by parser `conda-recipe-manager"
+            )
+            for hint in hints
+        )
+        assert not any(
+            hint.startswith(
+                "The recipe is not parsable by parser `conda-souschef"
+            )
+            for hint in hints
+        )
+
+
 if __name__ == "__main__":
     unittest.main()

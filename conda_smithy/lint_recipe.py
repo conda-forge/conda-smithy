@@ -614,7 +614,7 @@ def run_conda_forge_specific(
         recipe_fname = os.path.join(recipe_dir or "", "meta.yaml")
 
     if os.path.exists(recipe_fname):
-        with open() as fh:
+        with open(recipe_fname) as fh:
             recipe_text = fh.read()
         lint_recipe_is_parsable(
             recipe_text,

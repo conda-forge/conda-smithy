@@ -1006,7 +1006,7 @@ def lint_recipe_is_parsable(
             pass
         else:
             try:
-                CondaMetaYAML(recipe_text, recipe_version)
+                CondaMetaYAML(recipe_text)
             except Exception as e:
                 logger.warning(
                     "Error parsing recipe with conda-forge-tick (the bot): %s",
@@ -1079,7 +1079,7 @@ def lint_recipe_is_parsable(
             for pv, parser_name in zip(parse_vars, parser_names):
                 if pv is False:
                     hints.append(
-                        f"The recipe is not parsable by `{parser_name}`. Your recipe "
+                        f"The recipe is not parsable by parser `{parser_name}`. Your recipe "
                         "may not receive automatic updates and/or may not be compatible "
                         "with conda-forge's infrastructure. Please check the logs for "
                         "more information and ensure your recipe can be parsed."
