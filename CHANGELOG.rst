@@ -4,6 +4,30 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.44.7
+====================
+
+**Added:**
+
+* Provide option `azure.settings_win.install_atl` (false by default), which can be used to install components that are necessary for some builds, but not present in the Azure images anymore
+* Added new ``conda-forge``-only hint+lint for recipe be able to be parsed. (#2141, #2147)
+* Set rattler cache to `RATTLER_CACHE_DIR=/tmp/rattler_cache` when building a linux package from a macOS machine with Docker. (#2124)
+
+**Fixed:**
+
+* Fixed a bug where the ``register-ci`` command fails for recipes with the ``python_min`` variable being used. (#2144)
+* Make sure $MINIFORGE_HOME folder exists during build. (#2142) (#2146)
+
+**Authors:**
+
+* Matthew R. Becker
+* Jaime Rodríguez-Guerra
+* H. Vetinari
+* John Kirkham
+* Hadrien Mary
+
+
+
 v3.44.6
 ====================
 
