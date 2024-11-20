@@ -1837,6 +1837,7 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
 
     azure_settings = deepcopy(forge_config["azure"][f"settings_{platform}"])
     azure_settings.pop("swapfile_size", None)
+    azure_settings.pop("install_atl", None)
     azure_settings.setdefault("strategy", {})
     azure_settings["strategy"].setdefault("matrix", {})
 
