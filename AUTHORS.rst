@@ -16,14 +16,14 @@ Authors are sorted by number of commits.
 * Min RK
 * Amit Kumar
 * Marcel Bargull
-* shadow_walker
 * John Kirkham
+* shadow_walker
+* Hadrien Mary
 * Michael Sarahan
 * pre-commit-ci[bot]
 * Mark Harfouche
 * Bastian Zimmermann
 * Leo Fang
-* Hadrien Mary
 * Ryan Volz
 * Johnny Willemsen
 * Chris Burr

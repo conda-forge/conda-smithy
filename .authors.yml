@@ -27,7 +27,7 @@
   aliases:
   - John Kirkham
   - jakirkham
-  num_commits: 31
+  num_commits: 33
   first_commit: 2016-03-17 21:05:53
   github: jakirkham
 - name: Daniel Bast
@@ -393,7 +393,7 @@
   github: shadowwalkersb
 - name: Matthew R. Becker
   email: becker.mr@gmail.com
-  num_commits: 399
+  num_commits: 414
   first_commit: 2020-01-07 17:44:33
   github: beckermr
   alternate_emails:
@@ -446,7 +446,7 @@
   email: hadrien.mary@gmail.com
   alternate_emails:
   - hadim@users.noreply.github.com
-  num_commits: 25
+  num_commits: 32
   first_commit: 2020-05-27 07:53:50
   github: hadim
 - name: Thomas Hopkins
@@ -476,7 +476,7 @@
   github: jwillemsen
 - name: Jaime Rodríguez-Guerra
   email: jaimergp@users.noreply.github.com
-  num_commits: 253
+  num_commits: 254
   first_commit: 2020-11-01 14:18:08
   github: jaimergp
 - name: Bastian Zimmermann
@@ -539,7 +539,7 @@
   github: nehaljwani
 - name: H. Vetinari
   email: h.vetinari@gmx.com
-  num_commits: 61
+  num_commits: 63
   first_commit: 2021-11-14 02:53:10
 - name: Benjamin Tovar
   email: btovar@nd.edu
