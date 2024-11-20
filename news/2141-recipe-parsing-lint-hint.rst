@@ -1,6 +1,6 @@
 **Added:**
 
-* Added new ``conda-forge``-only hint+lint for recipe be able to be parsed. (#2141)
+* Added new ``conda-forge``-only hint+lint for recipe be able to be parsed. (#2141, #2147)
 
 **Changed:**
 
