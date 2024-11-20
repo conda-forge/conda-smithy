@@ -247,9 +247,9 @@ def hint_noarch_python_use_python_min(
     if noarch_value == "python" and not outputs_section:
         hint = ""
         for section_name, syntax, reqs in [
-            ("host", "python {{ python_min }}", host_reqs),
-            ("run", "python >={{ python_min }}", run_reqs),
-            ("test.requires", "python {{ python_min }}", test_reqs),
+            ("host", r"python\s+{{ python_min }}", host_reqs),
+            ("run", r"python\s+>={{ python_min }}", run_reqs),
+            ("test.requires", r"python\s+{{ python_min }}", test_reqs),
         ]:
             if recipe_version == 1:
                 syntax = syntax.replace(
@@ -263,7 +263,7 @@ def hint_noarch_python_use_python_min(
                 if (
                     req.strip().split()[0] == "python"
                     and req != "python"
-                    and test_syntax in req
+                    and re.search(test_syntax, req)
                 ):
                     break
             else:
