@@ -16,7 +16,7 @@ MINIFORGE_HOME=${MINIFORGE_HOME%/} # remove trailing slash
 #inspect_artifacts.
 {%- if conda_install_tool == "pixi" %}
 export CONDA_BLD_PATH="${MINIFORGE_HOME}/conda-bld"
-{%- else %}
+{%- endif %}
 
 {%- if conda_install_tool == "micromamba" %}
 
