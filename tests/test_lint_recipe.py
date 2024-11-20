@@ -3506,5 +3506,52 @@ def test_lint_recipe_parses_v1_spacing():
         ), hints
 
 
+def test_lint_recipe_parses_v1_duplicate_keys():
+    with tempfile.TemporaryDirectory() as tmpdir:
+        with open(os.path.join(tmpdir, "recipe.yaml"), "w") as f:
+            f.write(
+                textwrap.dedent(
+                    """
+                    package:
+                      name: blah
+
+                    build:
+                      number: ${{ build }}
+                      number: 42
+
+                    about:
+                      home: something
+                      license: MIT
+                      license_file: LICENSE
+                      summary: a test recipe
+
+                    extra:
+                      recipe-maintainers:
+                        - a
+                        - b
+                    """
+                )
+            )
+        lints, hints = linter.main(tmpdir, return_hints=True, conda_forge=True)
+        assert not any(
+            lint.startswith(
+                "The recipe is not parsable by any of the known recipe parsers"
+            )
+            for lint in lints
+        ), lints
+        assert not any(
+            hint.startswith(
+                "The recipe is not parsable by parser `conda-recipe-manager"
+            )
+            for hint in hints
+        ), hints
+        assert any(
+            hint.startswith(
+                "The recipe is not parsable by parser `ruamel.yaml"
+            )
+            for hint in hints
+        ), hints
+
+
 if __name__ == "__main__":
     unittest.main()

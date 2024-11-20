@@ -1060,6 +1060,20 @@ def lint_recipe_is_parsable(
         else:
             parse_results[parse_name] = True
 
+    if recipe_version == 1:
+        parse_name = "ruamel.yaml"
+        try:
+            get_yaml(allow_duplicate_keys=False).load(recipe_text)
+        except Exception as e:
+            logger.warning(
+                "Error parsing recipe with ruamel.yaml: %s",
+                repr(e),
+                exc_info=e,
+            )
+            parse_results[parse_name] = False
+        else:
+            parse_results[parse_name] = True
+
     if parse_results:
         if any(pv is not None for pv in parse_results.values()):
             if not any(parse_results.values()):
