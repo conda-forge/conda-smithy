@@ -16,7 +16,7 @@
 
 **Fixed:**
 
-* Make sure $MINIFORGE_HOME folder exists during build.
+* Make sure $MINIFORGE_HOME folder exists during build. (#2142) (#2146)
 
 **Security:**
 
