@@ -2373,7 +2373,8 @@ def _legacy_compatibility_checks(config: dict, forge_dir):
     for old_file in old_files:
         if old_file.replace(os.sep, "/") in config["skip_render"]:
             continue
-        remove_file_or_dir(os.path.join(forge_dir, old_file))
+        file_with_path = os.path.join(forge_dir, old_file)
+        remove_file_or_dir(file_with_path)
 
     # Older conda-smithy versions supported this with only one
     # entry. To avoid breakage, we are converting single elements
