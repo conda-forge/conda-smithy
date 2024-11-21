@@ -246,13 +246,31 @@ def hint_noarch_python_use_python_min(
 ):
     if noarch_value == "python" and not outputs_section:
         hint = ""
-        for section_name, syntax, reqs in [
-            ("host", "python {{ python_min }}", host_reqs),
-            ("run", "python >={{ python_min }}", run_reqs),
-            ("test.requires", "python {{ python_min }}", test_reqs),
+        for section_name, syntax, report_syntax, reqs in [
+            (
+                "host",
+                r"python\s+{{ python_min }}",
+                "python {{ python_min }}",
+                host_reqs,
+            ),
+            (
+                "run",
+                r"python\s+>={{ python_min }}",
+                "python >={{ python_min }}",
+                run_reqs,
+            ),
+            (
+                "test.requires",
+                r"python\s+{{ python_min }}",
+                "python {{ python_min }}",
+                test_reqs,
+            ),
         ]:
             if recipe_version == 1:
                 syntax = syntax.replace(
+                    "{{ python_min }}", "${{ python_min }}"
+                )
+                report_syntax = report_syntax.replace(
                     "{{ python_min }}", "${{ python_min }}"
                 )
                 test_syntax = syntax
@@ -263,12 +281,12 @@ def hint_noarch_python_use_python_min(
                 if (
                     req.strip().split()[0] == "python"
                     and req != "python"
-                    and test_syntax in req
+                    and re.search(test_syntax, req)
                 ):
                     break
             else:
                 hint += (
-                    f"\n   - For the `{section_name}` section of the recipe, you should usually use `{syntax}` "
+                    f"\n   - For the `{section_name}` section of the recipe, you should usually use `{report_syntax}` "
                     f"for the `python` entry."
                 )
 
