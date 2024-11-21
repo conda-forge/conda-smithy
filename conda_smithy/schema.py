@@ -46,6 +46,9 @@ conda_build_tools = Literal[
 ]
 
 
+image_tags = Literal["cos7", "alma8", "alma9", "ubi8"]
+
+
 class CIservices(StrEnum):
     azure = "azure"
     circle = "circle"
@@ -556,7 +559,7 @@ BuildPlatform = create_model(
 OSVersion = create_model(
     "os_version",
     **{
-        platform.value: (Optional[Union[str, Nullable]], Field(default=None))
+        platform.value: (Optional[image_tags], Field(default=None))
         for platform in Platforms
         if platform.value.startswith("linux")
     },
@@ -864,14 +867,20 @@ class ConfigModel(BaseModel):
         description=cleandoc(
             """
         This key is used to set the OS versions for `linux_*` platforms. Valid entries
-        map a linux platform and arch to either `cos6` or `cos7`.
-        Currently `cos6` is the default for `linux-64`.
-        All other linux architectures use CentOS 7.
-        Here is an example that enables CentOS 7 on `linux-64` builds
+        map a linux platform and arch to either `cos7`, `alma8`, `alma9` or `ubi8`.
 
+        Currently `alma9` is the default, which should work out-of-the-box for the vast
+        majority of uses.
+
+        Note that the image version does not imply a matching `glibc` requirement (which
+        can be set using `c_stdlib_version` in `recipe/conda_build_config.yaml`).
+
+        If you need to opt into older images, here's an example how to do it:
         ```yaml
         os_version:
             linux_64: cos7
+            linux_aarch64: cos7
+            linux_ppc64le: cos7
         ```
         """
         ),
