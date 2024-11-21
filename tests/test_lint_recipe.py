@@ -2459,8 +2459,8 @@ def test_lint_duplicate_cfyml():
             fh.write(
                 textwrap.dedent(
                     """
-                    blah: 1
-                    blah: 2
+                    channel_priority: flexible
+                    channel_priority: strict
                     """
                 )
             )
@@ -2472,7 +2472,7 @@ def test_lint_duplicate_cfyml():
             fh.write(
                 textwrap.dedent(
                     """
-                    blah: 1
+                    channel_priority: flexible
                     """
                 )
             )
