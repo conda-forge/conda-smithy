@@ -310,7 +310,9 @@ def lintify_meta_yaml(
     lint_legacy_usage_of_compilers(build_requirements, lints)
 
     # 22: Single space in pinned requirements
-    lint_single_space_in_pinned_requirements(requirements_section, lints)
+    lint_single_space_in_pinned_requirements(
+        requirements_section, lints, recipe_version
+    )
 
     # 23: non noarch builds shouldn't use version constraints on python and r-base
     lint_non_noarch_builds(

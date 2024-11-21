@@ -2688,6 +2688,14 @@ def test_v1_recipes():
         assert not lints
 
 
+def test_v1_recipes_ignore_run_exports():
+    with get_recipe_in_dir(
+        "v1_recipes/recipe-ignore_run_exports-no-lint.yaml"
+    ) as recipe_dir:
+        lints, hints = linter.main(str(recipe_dir), return_hints=True)
+        assert not lints
+
+
 def test_v1_no_test():
     with get_recipe_in_dir("v1_recipes/recipe-no-tests.yaml") as recipe_dir:
         lints, hints = linter.main(str(recipe_dir), return_hints=True)
