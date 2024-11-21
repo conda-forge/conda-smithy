@@ -1,29 +1,28 @@
 import collections
 import os
-from pathlib import Path
-from textwrap import dedent
 import typing
+from pathlib import Path
 
 import pytest
 import yaml
-
+from conda_build.utils import copy_into
 from jinja2 import FileSystemLoader
 from jinja2.sandbox import SandboxedEnvironment
-from conda_build.utils import copy_into
 
 from conda_smithy.configure_feedstock import (
-    conda_forge_content,
     _load_forge_config,
+    conda_forge_content,
 )
-
 
 RecipeConfigPair = collections.namedtuple(
     "RecipeConfigPair", ("recipe", "config")
 )
 
-ConfigYAML = typing.NamedTuple(
-    "ConfigYAML", [("workdir", Path), ("recipe_name", str), ("type", str)]
-)
+
+class ConfigYAML(typing.NamedTuple):
+    workdir: Path
+    recipe_name: str
+    type: str
 
 
 @pytest.fixture(scope="function")
@@ -61,7 +60,11 @@ def recipe_dirname():
 
 @pytest.fixture(scope="function", params=["conda-build", "rattler-build"])
 def config_yaml(testing_workdir, recipe_dirname, request):
-    config = {"python": ["2.7", "3.5"], "r_base": ["3.3.2", "3.4.2"]}
+    config = {
+        "python": ["2.7", "3.5"],
+        "r_base": ["3.3.2", "3.4.2"],
+        "python_min": ["2.7"],
+    }
     os.makedirs(os.path.join(testing_workdir, recipe_dirname))
     with open(os.path.join(testing_workdir, "config.yaml"), "w") as f:
         f.write("docker:\n")
@@ -139,6 +142,43 @@ requirements:
         - python
     run:
         - python
+    """
+        )
+    return RecipeConfigPair(
+        str(config_yaml.workdir),
+        _load_forge_config(
+            config_yaml.workdir,
+            exclusive_config_file=os.path.join(
+                config_yaml.workdir, recipe_dirname, "default_config.yaml"
+            ),
+        ),
+    )
+
+
+@pytest.fixture(scope="function")
+def noarch_recipe_with_python_min(config_yaml: ConfigYAML, recipe_dirname):
+    if config_yaml.type == "rattler-build":
+        jinjatxt = "${{ python_min }}"
+    else:
+        jinjatxt = "{{ python_min }}"
+    with open(
+        os.path.join(
+            config_yaml.workdir, recipe_dirname, config_yaml.recipe_name
+        ),
+        "w",
+    ) as fh:
+        fh.write(
+            f"""\
+package:
+    name: python-noarch-test
+    version: 1.0.0
+build:
+    noarch: python
+requirements:
+    host:
+        - python {jinjatxt}
+    run:
+        - python >={jinjatxt}
     """
         )
     return RecipeConfigPair(
@@ -639,4 +679,96 @@ def jinja_env():
     # Load templates from the feedstock in preference to the smithy's templates.
     return SandboxedEnvironment(
         extensions=["jinja2.ext.do"], loader=FileSystemLoader([tmplt_dir])
+    )
+
+
+@pytest.fixture(scope="function")
+def v1_noarch_recipe_with_context(testing_workdir: Path, recipe_dirname):
+    with open(os.path.join(testing_workdir, "conda-forge.yml"), "w") as f:
+        config = {
+            "recipe_dir": recipe_dirname,
+        }
+        config["conda_build_tool"] = "rattler-build"
+        yaml.dump(config, f, default_flow_style=False)
+
+    os.mkdir(os.path.join(testing_workdir, recipe_dirname))
+    with open(
+        os.path.join(testing_workdir, recipe_dirname, "recipe.yaml"),
+        "w",
+    ) as fh:
+        fh.write(
+            """
+context:
+    name: python-noarch-test-from-context
+    version: 9.0.0
+package:
+    name: ${{ name }}
+    version: ${{ version }}
+build:
+    noarch: python
+requirements:
+    build:
+        - python
+    run:
+        - python
+    """
+        )
+
+    return RecipeConfigPair(
+        testing_workdir,
+        _load_forge_config(testing_workdir, exclusive_config_file=None),
+    )
+
+
+@pytest.fixture(scope="function")
+def v1_recipe_with_multiple_outputs(testing_workdir: Path, recipe_dirname):
+    with open(os.path.join(testing_workdir, "conda-forge.yml"), "w") as f:
+        config = {
+            "recipe_dir": recipe_dirname,
+        }
+        config["conda_build_tool"] = "rattler-build"
+        yaml.dump(config, f, default_flow_style=False)
+
+    os.mkdir(os.path.join(testing_workdir, recipe_dirname))
+
+    with open(
+        os.path.join(testing_workdir, recipe_dirname, "recipe.yaml"),
+        "w",
+    ) as fh:
+        fh.write(
+            """
+context:
+  name: mamba
+  mamba_version: "1.5.8"
+  libmamba_version: "1.5.9"
+  libmambapy_version: "1.5.9"
+
+recipe:
+  name: mamba-split
+  version: ${{ mamba_version }}
+
+source:
+  url: https://github.com/mamba-org/mamba/archive/refs/tags/${{ release }}.tar.gz
+  sha256: 6ddaf4b0758eb7ca1250f427bc40c2c3ede43257a60bac54e4320a4de66759a6
+
+build:
+  number: 1
+
+outputs:
+  - package:
+      name: libmamba
+      version: ${{ libmamba_version }}
+
+  - package:
+      name: libmambapy
+      version: ${{ libmambapy_version }}
+
+  - package:
+      name: mamba
+      version: ${{ mamba_version }}
+    """
+        )
+    return RecipeConfigPair(
+        testing_workdir,
+        _load_forge_config(testing_workdir, exclusive_config_file=None),
     )

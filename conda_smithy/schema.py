@@ -7,9 +7,8 @@ from inspect import cleandoc
 from typing import Any, Dict, List, Literal, Optional, Union
 
 import yaml
-from pydantic import BaseModel, Field, create_model, ConfigDict
-
 from conda.base.constants import KNOWN_SUBDIRS
+from pydantic import BaseModel, ConfigDict, Field, create_model
 
 try:
     from enum import StrEnum
@@ -60,6 +59,8 @@ conda_build_tools = Literal[
     "conda-build+conda-libmamba-solver",
     # will run 'conda mambabuild', as provided by boa
     "mambabuild",
+    # will run 'rattler-build build'
+    "rattler-build",
 ]
 
 
@@ -94,8 +95,11 @@ class BotConfigInspectionChoice(StrEnum):
 
 
 class BotConfigVersionUpdatesSourcesChoice(StrEnum):
+    # if adding a new source here, make sure to update the description of the sources field
+    # in the BotConfigVersionUpdates model as well
     CRAN = "cran"
     GITHUB = "github"
+    GITHUB_RELEASES = "githubreleases"
     INCREMENT_ALPHA_RAW_URL = "incrementalpharawurl"
     LIBRARIES_IO = "librariesio"
     NPM = "npm"
@@ -103,6 +107,10 @@ class BotConfigVersionUpdatesSourcesChoice(StrEnum):
     PYPI = "pypi"
     RAW_URL = "rawurl"
     ROS_DISTRO = "rosdistro"
+
+
+class Lints(StrEnum):
+    LINT_NOARCH_SELECTORS = "lint_noarch_selectors"
 
 
 ##############################################
@@ -124,12 +132,19 @@ class AzureRunnerSettings(BaseModel, NoExtraFieldsHint):
         default=None, description="Swapfile size in GiB"
     )
 
-    timeoutInMinutes: Optional[int] = Field(
-        default=360, description="Timeout in minutes for the job"
+    timeout_in_minutes: Optional[int] = Field(
+        default=360,
+        description="Timeout in minutes for the job",
+        alias="timeoutInMinutes",
     )
 
     variables: Optional[Dict[str, str]] = Field(
         default_factory=dict, description="Variables"
+    )
+
+    # windows only
+    install_atl: Optional[bool] = Field(
+        default=False, description="Whether to install ATL components for MSVC"
     )
 
 
@@ -210,20 +225,40 @@ class AzureConfig(BaseModel):
 
     settings_osx: AzureRunnerSettings = Field(
         default_factory=lambda: AzureRunnerSettings(
-            pool={"vmImage": "macOS-12"}
+            pool={"vmImage": "macOS-13"}
         ),
         description="OSX-specific settings for runners",
     )
 
     settings_win: AzureRunnerSettings = Field(
         default_factory=lambda: AzureRunnerSettings(
+            install_atl=False,
             pool={"vmImage": "windows-2022"},
             variables={
+                "MINIFORGE_HOME": "D:\\Miniforge",
                 "CONDA_BLD_PATH": "D:\\\\bld\\\\",
                 "UPLOAD_TEMP": "D:\\\\tmp",
             },
         ),
-        description="Windows-specific settings for runners",
+        description=cleandoc(
+            """
+            Windows-specific settings for runners. Aside from overriding the `vmImage`,
+            you can also specify `install_atl: true` in case you need the ATL components
+            for MSVC; these don't get installed by default anymore, see
+            https://github.com/actions/runner-images/issues/9873
+
+            Finally, under `variables`, some important things you can set are:
+
+            - `CONDA_BLD_PATH`: Location of the conda-build workspace. Defaults to `D:\\bld`
+            - `MINIFORGE_HOME`: Location of the base environment installation. Defaults to
+              `D:\\Miniforge`.
+            - `SET_PAGEFILE`: `"True"` to increase the pagefile size via conda-forge-ci-setup.
+
+            If you are running out of space in `D:`, consider changing to `C:`.
+            It's a slower drive but has more space available. We recommend you keep
+            both `CONDA_BLD_PATH` and `MINIFORGE_HOME` in the same drive for performance.
+            """
+        ),
     )
 
     user_or_org: Optional[Union[str, Nullable]] = Field(
@@ -350,7 +385,34 @@ class BotConfigVersionUpdates(BaseModel):
 
     sources: Optional[List[BotConfigVersionUpdatesSourcesChoice]] = Field(
         None,
-        description="List of sources to use for version updates",
+        description=cleandoc(
+            """
+            List of sources to find new versions (i.e. the strings like 1.2.3) for the package.
+
+            The following sources are available:
+            - `cran`: Update from CRAN
+            - `github`: Update from the GitHub releases RSS feed (includes pre-releases)
+            - `githubreleases`: Get the latest version by following the redirect of
+            `https://github.com/{owner}/{repo}/releases/latest` (excludes pre-releases)
+            - `incrementalpharawurl`: If this source is run for a specific small selection of feedstocks, it acts like
+            the `rawurl` source but also increments letters in the version string (e.g. 2024a -> 2024b). If the source
+            is run for other feedstocks (even if selected manually), it does nothing.
+            - `librariesio`: Update from Libraries.io RSS feed
+            - `npm`: Update from the npm registry
+            - `nvidia`: Update from the NVIDIA download page
+            - `pypi`: Update from the PyPI registry
+            - `rawurl`: Update from a raw URL by trying to bump the version number in different ways and
+            checking if the URL exists (e.g. 1.2.3 -> 1.2.4, 1.3.0, 2.0.0, etc.)
+            - `rosdistro`: Update from a ROS distribution
+
+            Common issues:
+            - If you are using a GitHub-based source in your recipe and the bot issues PRs for pre-releases, restrict
+            the sources to `githubreleases` to avoid pre-releases.
+            - If you use source tarballs that are uploaded manually by the maintainers a significant time after a
+            GitHub release, you may want to restrict the sources to `rawurl` to avoid the bot attempting to update
+            the recipe before the tarball is uploaded.
+            """
+        ),
     )
 
     skip: Optional[bool] = Field(
@@ -428,6 +490,14 @@ class CondaBuildConfig(BaseModel, NoExtraFieldsHint):
             [conda build documentation](https://docs.conda.io/projects/conda-build/en/stable/resources/commands/conda-build.html).
             """
         ),
+    )
+
+
+class LinterConfig(BaseModel):
+
+    skip: Optional[List[Lints]] = Field(
+        default_factory=list,
+        description="List of lints to skip",
     )
 
 
@@ -563,6 +633,22 @@ class ConfigModel(BaseModel):
         ),
     )
 
+    linter: Optional[LinterConfig] = Field(
+        default_factory=LinterConfig,
+        description=cleandoc(
+            """
+        Settings in this block are used to control how `conda smithy` lints
+        An example of the such configuration is:
+
+        ```yaml
+        linter:
+            skip:
+                - lint_noarch_selectors
+        ```
+        """
+        ),
+    )
+
     conda_build_tool: Optional[conda_build_tools] = Field(
         default="conda-build",
         description=cleandoc(
@@ -572,13 +658,20 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    conda_install_tool: Optional[Literal["conda", "mamba"]] = Field(
-        default="mamba",
+    conda_install_tool: Optional[
+        Literal["conda", "mamba", "micromamba", "pixi"]
+    ] = Field(
+        default="micromamba",
         description=cleandoc(
             """
-        Use this option to choose which tool is used to provision the tooling in your
-        feedstock.
-        """
+                Use this option to choose which tool is used to provision the tooling in your
+                feedstock. Defaults to micromamba.
+
+                If conda or mamba are chosen, the latest Miniforge will be used to
+                provision the base environment. If micromamba or pixi are chosen,
+                Miniforge is not involved; the environment is created directly by
+                micromamba or pixi.
+                """
         ),
     )
 
@@ -1197,14 +1290,14 @@ class ConfigModel(BaseModel):
         ```yaml
         azure:
             settings_linux:
-            pool:
-                name: your_local_pool_name
-                demands:
-                  - some_key -equals some_value
-            workspace:
-                clean: all
-            strategy:
-                maxParallel: 1
+                pool:
+                    name: your_local_pool_name
+                    demands:
+                        - some_key -equals some_value
+                workspace:
+                    clean: all
+                strategy:
+                    maxParallel: 1
         ```
 
         Below is an example configuration for adding a swapfile on an Azure agent for Linux:
@@ -1213,6 +1306,16 @@ class ConfigModel(BaseModel):
         azure:
             settings_linux:
                 swapfile_size: 10GiB
+        ```
+
+        If you need more space on Windows, you can use `C:` at the cost of IO performance:
+
+        ```yaml
+        azure:
+            settings_win:
+                variables:
+                    CONDA_BLD_PATH: "C:\\bld"
+                    MINIFORGE_HOME: "C:\\Miniforge"
         ```
         """
         ),
@@ -1294,4 +1397,4 @@ if __name__ == "__main__":
         f.write("\n")
 
     with CONDA_FORGE_YAML_DEFAULTS_FILE.open(mode="w+") as f:
-        f.write(yaml.dump(model.model_dump(), indent=2))
+        f.write(yaml.dump(model.model_dump(by_alias=True), indent=2))

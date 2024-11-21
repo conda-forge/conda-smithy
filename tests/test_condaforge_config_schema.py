@@ -1,8 +1,7 @@
 import pytest
 from pydantic import ValidationError
-import yaml
-from conda_smithy.schema import ConfigModel
 
+from conda_smithy.schema import ConfigModel
 
 # Sample config files
 SAMPLE_CONFIGS = [
@@ -77,4 +76,4 @@ def test_extra_fields():
         },
     }
     with pytest.raises(ValidationError):
-        config = ConfigModel(**config_dict)
+        ConfigModel(**config_dict)

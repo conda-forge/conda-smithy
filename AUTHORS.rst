@@ -4,68 +4,74 @@ Authors are sorted by number of commits.
 * Isuru Fernando
 * Matthew R. Becker
 * Jaime Rodríguez-Guerra
+* nichmor
 * Christopher J. Wright
 * Anthony Scopatz
 * Phil Elson
 * H. Vetinari
+* Wolf Vollprecht
 * Uwe L. Korn
 * Filipe Fernandes
 * Dougal J. Sutherland
+* Min RK
 * Amit Kumar
 * Marcel Bargull
-* shadow_walker
-* Michael Sarahan
-* Min RK
 * John Kirkham
-* Mark Harfouche
-* Leo Fang
+* shadow_walker
 * Hadrien Mary
+* Michael Sarahan
+* pre-commit-ci[bot]
+* Mark Harfouche
+* Bastian Zimmermann
+* Leo Fang
 * Ryan Volz
 * Johnny Willemsen
 * Chris Burr
 * Julian Rüth
-* Bastian Zimmermann
-* pre-commit-ci[bot]
+* Yannik Tausch
 * Daniel Bast
 * Billy K. Poon
+* Daniel Ching
 * vinicius douglas cerutti
 * Tim Snyder
 * Mike Henry
 * Eric Dill
 * Natasha Pavlovikj
-* Daniel Ching
 * Maksim Rakitin
-* Jan Schulz
 * Nicholas Bollweg
+* Jan Schulz
 * Josh Reichardt
 * Bela Stoyan
 * Justin Calamari
 * Jason Furmanek
 * Patrick Sodré
+* Jan Lehnarsdt
 * C.A.M. Gerlach
 * refraction-ray
 * Leopold Talirz
+* Peter Williams
 * Tom Pollard
 * Gonzalo Pena-Castellanos
 * John Blischak
 * Matthias Diener
 * Antonio S. Cofiño
-* Yannik Tausch
 * Carlo
 * Matthew Craig
-* Peter Williams
 * Joshua L. Adelman
-* Wolf Vollprecht
 * Marius van Niekerk
 * Johannes Köster
 * Philippe Blain
 * Mervin Fansler
+* dependabot[bot]
 * Matt McCormick
 * Jan Janßen
 * xoviat
 * Elmar Pruesse
 * Patrick Sodré
+* Ben Mares
 * David Hirschfeld
+* Finn Womack
+* M Bussonnier
 * Josh Barnes
 * Tobias Megies
 * Jonathan Helmus
@@ -74,6 +80,7 @@ Authors are sorted by number of commits.
 * Bruno Oliveira
 * Tony Kelman
 * Jannis Leidel
+* Matt Fisher
 * Guilherme Quentel Melo
 * santi
 * buijennifer
@@ -89,11 +96,12 @@ Authors are sorted by number of commits.
 * Thomas Hopkins
 * Hugo Slepicka
 * fhoehle
-* Ben Mares
 * Matthew W. Thompson
+* Nehal J Wani
 * conda-forge-admin
 * Klaus Zimmermann
-* dependabot[bot]
+* Dominic Davis-Foster
+* Anton Tetov
 * lorenz
 * Tom Augspurger
 * Ryan May
@@ -114,7 +122,8 @@ Authors are sorted by number of commits.
 * Nils Wentzell
 * Stuart Berg
 * Mike Taves
-* Nehal J Wani
 * Benjamin Tovar
 * Sylvain Corlay
 * Brandon Andersen
+* Vincenzo Eduardo Padulano
+* Bas Zalmstra

@@ -3,13 +3,12 @@ import glob
 import hashlib
 import logging
 import os
+import pprint
 import re
 import subprocess
 import sys
-import pprint
 import textwrap
 import time
-import yaml
 import warnings
 from collections import Counter, OrderedDict, namedtuple
 from copy import deepcopy
@@ -17,13 +16,10 @@ from functools import lru_cache
 from itertools import chain, product
 from os import fspath
 from pathlib import Path, PurePath
+from typing import Dict
 
 import requests
-
-try:
-    from builtins import ExceptionGroup
-except ImportError:
-    from exceptiongroup import ExceptionGroup
+import yaml
 
 # The `requests` lib uses `simplejson` instead of `json` when available.
 # In consequence the same JSON library must be used or the `JSONDecodeError`
@@ -34,25 +30,21 @@ try:
 except ImportError:
     import json
 
-from conda.models.match_spec import MatchSpec
-from conda.models.version import VersionOrder
-from conda.exceptions import InvalidVersionSpec
-
 import conda_build.api
 import conda_build.render
 import conda_build.utils
 import conda_build.variants
-import conda_build.conda_interface
-import conda_build.render
+from conda.exceptions import InvalidVersionSpec
 from conda.models.match_spec import MatchSpec
-from conda_build.metadata import get_selectors
-
-from copy import deepcopy
-
+from conda.models.version import VersionOrder
 from conda_build import __version__ as conda_build_version
+from conda_build.metadata import get_selectors
 from jinja2 import FileSystemLoader
 from jinja2.sandbox import SandboxedEnvironment
+from rattler_build_conda_compat.loader import parse_recipe_config_file
+from rattler_build_conda_compat.render import render as rattler_render
 
+from conda_smithy import __version__
 from conda_smithy.feedstock_io import (
     copy_file,
     remove_file,
@@ -60,20 +52,16 @@ from conda_smithy.feedstock_io import (
     set_exe_file,
     write_file,
 )
-from conda_smithy.validate_schema import (
-    validate_json_schema,
-    CONDA_FORGE_YAML_DEFAULTS_FILE,
-)
 from conda_smithy.utils import (
+    RATTLER_BUILD,
+    HashableDict,
     get_feedstock_about_from_meta,
     get_feedstock_name_from_meta,
-    HashableDict,
 )
-
-from . import __version__
-from rattler_build_conda_compat.render import render as rattler_render
-from rattler_build_conda_compat.loader import parse_recipe_config_file
-from .utils import RATTLER_BUILD
+from conda_smithy.validate_schema import (
+    CONDA_FORGE_YAML_DEFAULTS_FILE,
+    validate_json_schema,
+)
 
 conda_forge_content = os.path.abspath(os.path.dirname(__file__))
 
@@ -87,6 +75,14 @@ SERVICE_FEEDSTOCKS = [
     "conda-forge-pinning-feedstock",
     "conda-forge-repodata-patches-feedstock",
     "conda-smithy-feedstock",
+    "conda-forge-ci-setup-feedstock",
+    # these are parts of the bot or used by it
+    "conda-forge-tick",
+    "conda-forge-feedstock-check-solvable-feedstock",
+    "conda-forge-metadata-feedstock",
+    "conda-forge-feedstock-ops-feedstock",
+    # this one is used for testing
+    "cf-autotick-bot-test-package-feedstock",
 ]
 if "CONDA_SMITHY_SERVICE_FEEDSTOCKS" in os.environ:
     SERVICE_FEEDSTOCKS += os.environ["CONDA_SMITHY_SERVICE_FEEDSTOCKS"].split(
@@ -126,10 +122,10 @@ def _ignore_match(ignore, rel):
     """
     srch = {rel}
     srch.update(map(fspath, PurePath(rel).parents))
-    logger.debug(f"srch:{srch}")
-    logger.debug(f"ignore:{ignore}")
+    logger.debug("srch:%s", srch)
+    logger.debug("ignore:%s", ignore)
     if srch.intersection(ignore):
-        logger.info(f"{rel} rendering is skipped")
+        logger.info("%s rendering is skipped", rel)
         return True
     else:
         return False
@@ -339,9 +335,7 @@ def _get_used_key_values_by_input_order(
         for key in all_used_vars
         if key in squished_input_variants
     }
-    logger.debug(
-        "initial used_key_values {}".format(pprint.pformat(used_key_values))
-    )
+    logger.debug("initial used_key_values %s", pprint.pformat(used_key_values))
 
     # we want remove any used key values not in used variants and make sure they follow the
     #   input order
@@ -355,8 +349,8 @@ def _get_used_key_values_by_input_order(
             zip(*[squished_input_variants[k] for k in keyset])
         )
         zipped_keys |= set(keyset)
-    logger.debug("zipped_keys {}".format(pprint.pformat(zipped_keys)))
-    logger.debug("zipped_tuples {}".format(pprint.pformat(zipped_tuples)))
+    logger.debug("zipped_keys %s", pprint.pformat(zipped_keys))
+    logger.debug("zipped_tuples %s", pprint.pformat(zipped_tuples))
 
     for keyset, tuples in zipped_tuples.items():
         # for each set of zipped keys from squished_input_variants,
@@ -386,20 +380,17 @@ def _get_used_key_values_by_input_order(
                 for tup in tuples
             ]
         )
-        logger.debug("used_keyset {}".format(pprint.pformat(used_keyset)))
-        logger.debug(
-            "used_keyset_inds {}".format(pprint.pformat(used_keyset_inds))
-        )
-        logger.debug("used_tuples {}".format(pprint.pformat(used_tuples)))
+        logger.debug("used_keyset %s", pprint.pformat(used_keyset))
+        logger.debug("used_keyset_inds %s", pprint.pformat(used_keyset_inds))
+        logger.debug("used_tuples %s", pprint.pformat(used_tuples))
 
         # this is the set of tuples that we want to keep, but need to be reordered
         used_tuples_to_be_reordered = set(
             list(zip(*[squished_used_variants[k] for k in used_keyset]))
         )
         logger.debug(
-            "used_tuples_to_be_reordered {}".format(
-                pprint.pformat(used_tuples_to_be_reordered)
-            )
+            "used_tuples_to_be_reordered %s",
+            pprint.pformat(used_tuples_to_be_reordered),
         )
 
         # we double check the logic above by looking to ensure everything in
@@ -418,9 +409,7 @@ def _get_used_key_values_by_input_order(
         final_used_tuples = tuple(
             [tup for tup in used_tuples if tup in used_tuples_to_be_reordered]
         )
-        logger.debug(
-            "final_used_tuples {}".format(pprint.pformat(final_used_tuples))
-        )
+        logger.debug("final_used_tuples %s", pprint.pformat(final_used_tuples))
 
         # now we reconstruct the list of values per key and replace in used_key_values
         # we keep only keys in all_used_vars
@@ -434,9 +423,8 @@ def _get_used_key_values_by_input_order(
             used_key_values[k] = v
 
     logger.debug(
-        "post input reorder used_key_values {}".format(
-            pprint.pformat(used_key_values)
-        )
+        "post input reorder used_key_values %s",
+        pprint.pformat(used_key_values),
     )
 
     return used_key_values, zipped_keys
@@ -559,7 +547,7 @@ def _collapse_subpackage_variants(
     cbc_path = os.path.join(list_of_metas[0].path, "conda_build_config.yaml")
     has_macdt = False
     if os.path.exists(cbc_path):
-        with open(cbc_path, "r") as f:
+        with open(cbc_path) as f:
             lines = f.readlines()
         if any(re.match(r"^\s*MACOSX_DEPLOYMENT_TARGET:", x) for x in lines):
             has_macdt = True
@@ -574,9 +562,7 @@ def _collapse_subpackage_variants(
     if "target_platform" in all_used_vars:
         top_level_loop_vars.add("target_platform")
 
-    logger.debug(
-        "initial all_used_vars {}".format(pprint.pformat(all_used_vars))
-    )
+    logger.debug("initial all_used_vars %s", pprint.pformat(all_used_vars))
 
     # this is the initial collection of all variants before we discard any.  "Squishing"
     #     them is necessary because the input form is already broken out into one matrix
@@ -591,22 +577,16 @@ def _collapse_subpackage_variants(
         conda_build.variants.list_of_dicts_to_dict_of_lists(list(all_variants))
     )
     logger.debug(
-        "squished_input_variants {}".format(
-            pprint.pformat(squished_input_variants)
-        )
+        "squished_input_variants %s", pprint.pformat(squished_input_variants)
     )
     logger.debug(
-        "squished_used_variants {}".format(
-            pprint.pformat(squished_used_variants)
-        )
+        "squished_used_variants %s", pprint.pformat(squished_used_variants)
     )
 
     # these are variables that only occur in the top level, and thus won't show up as loops in the
     #     above collection of all variants.  We need to transfer them from the input_variants.
     preserve_top_level_loops = set(top_level_loop_vars) - set(all_used_vars)
-    logger.debug(
-        "preserve_top_level_loops {}".format(preserve_top_level_loops)
-    )
+    logger.debug("preserve_top_level_loops %s", preserve_top_level_loops)
 
     # Add in some variables that should always be preserved
     always_keep_keys = {
@@ -636,13 +616,9 @@ def _collapse_subpackage_variants(
     all_used_vars.update(always_keep_keys)
     all_used_vars.update(top_level_vars)
 
-    logger.debug(
-        "final all_used_vars {}".format(pprint.pformat(all_used_vars))
-    )
-    logger.debug("top_level_vars {}".format(pprint.pformat(top_level_vars)))
-    logger.debug(
-        "top_level_loop_vars {}".format(pprint.pformat(top_level_loop_vars))
-    )
+    logger.debug("final all_used_vars %s", pprint.pformat(all_used_vars))
+    logger.debug("top_level_vars %s", pprint.pformat(top_level_vars))
+    logger.debug("top_level_loop_vars %s", pprint.pformat(top_level_loop_vars))
 
     used_key_values, used_zipped_vars = _get_used_key_values_by_input_order(
         squished_input_variants,
@@ -672,9 +648,7 @@ def _collapse_subpackage_variants(
     _trim_unused_zip_keys(used_key_values)
     _trim_unused_pin_run_as_build(used_key_values)
 
-    logger.debug(
-        "final used_key_values {}".format(pprint.pformat(used_key_values))
-    )
+    logger.debug("final used_key_values %s", pprint.pformat(used_key_values))
 
     return (
         break_up_top_level_values(top_level_loop_vars, used_key_values),
@@ -690,7 +664,26 @@ def _yaml_represent_ordereddict(yaml_representer, data):
     )
 
 
-def _santize_remote_ci_setup(remote_ci_setup):
+def _has_local_ci_setup(forge_dir, forge_config):
+    # If the recipe has its own conda_forge_ci_setup package, then
+    # install that
+    return os.path.exists(
+        os.path.join(
+            forge_dir,
+            forge_config["recipe_dir"],
+            "conda_forge_ci_setup",
+            "__init__.py",
+        )
+    ) and os.path.exists(
+        os.path.join(
+            forge_dir,
+            forge_config["recipe_dir"],
+            "setup.py",
+        )
+    )
+
+
+def _sanitize_remote_ci_setup(remote_ci_setup):
     remote_ci_setup_ = conda_build.utils.ensure_list(remote_ci_setup)
     remote_ci_setup = []
     for package in remote_ci_setup_:
@@ -700,6 +693,31 @@ def _santize_remote_ci_setup(remote_ci_setup):
             package = '"' + package + '"'
         remote_ci_setup.append(package)
     return remote_ci_setup
+
+
+def _sanitize_build_tool_deps_as_dict(
+    forge_dir, forge_config
+) -> Dict[str, str]:
+    """
+    Aggregates different sources of build tool dependencies in
+    mapping of package names to OR-merged version constraints.
+    """
+    deps = [
+        *forge_config["conda_build_tool_deps"].split(),
+        *forge_config["remote_ci_setup"],
+    ]
+    merged = {
+        spec.name: str(spec.version or "*")
+        for spec in MatchSpec.merge([dep.strip("\"'") for dep in deps])
+    }
+    if forge_config.get("local_ci_setup") or _has_local_ci_setup(
+        forge_dir, forge_config
+    ):
+        # We need to conda uninstall conda-forge-ci-setup
+        # and then pip install on top
+        merged.setdefault("conda", "*")
+        merged.setdefault("pip", "*")
+    return merged
 
 
 def finalize_config(config, platform, arch, forge_config):
@@ -742,7 +760,7 @@ def dump_subspace_config_files(
         forge_config,
     )
     logger.debug(
-        "collapsed subspace config files: {}".format(pprint.pformat(configs))
+        "collapsed subspace config files: %s", pprint.pformat(configs)
     )
 
     # get rid of the special object notation in the yaml file for objects that we dump
@@ -752,7 +770,7 @@ def dump_subspace_config_files(
     )
     yaml.add_representer(OrderedDict, _yaml_represent_ordereddict)
 
-    platform_arch = "{}-{}".format(platform, arch)
+    platform_arch = f"{platform}-{arch}"
 
     result = []
     for config in configs:
@@ -774,9 +792,7 @@ def dump_subspace_config_files(
             os.makedirs(out_folder)
 
         config = finalize_config(config, platform, arch, forge_config)
-        logger.debug(
-            "finalized config file: {}".format(pprint.pformat(config))
-        )
+        logger.debug("finalized config file: %s", pprint.pformat(config))
 
         with write_file(out_path) as f:
             yaml.dump(config, f, default_flow_style=False)
@@ -865,17 +881,18 @@ def migrate_combined_spec(combined_spec, forge_dir, config, forge_config):
         migrations = set_migration_fns(forge_dir, forge_config)
     migrations = forge_config["migration_fns"]
 
-    from .variant_algebra import parse_variant, variant_add
+    from conda_smithy.variant_algebra import parse_variant, variant_add
 
     migration_variants = [
-        (fn, parse_variant(open(fn, "r").read(), config=config))
+        (fn, parse_variant(open(fn).read(), config=config))
         for fn in migrations
     ]
 
     migration_variants.sort(key=lambda fn_v: (fn_v[1]["migrator_ts"], fn_v[0]))
     if len(migration_variants):
         logger.info(
-            f"Applying migrations: {','.join(k for k, v in migration_variants)}"
+            "Applying migrations: %s",
+            ",".join(k for k, v in migration_variants),
         )
 
     for migrator_file, migration in migration_variants:
@@ -912,10 +929,9 @@ def _conda_build_api_render_for_smithy(
     """
 
     from conda.exceptions import NoPackagesFoundError
-
+    from conda_build.config import get_or_merge_config
     from conda_build.exceptions import DependencyNeedsBuildingError
     from conda_build.render import finalize_metadata, render_recipe
-    from conda_build.config import get_or_merge_config
 
     config = get_or_merge_config(config, **kwargs)
 
@@ -999,7 +1015,7 @@ def _render_ci_provider(
             if ver:
                 os.environ["DEFAULT_LINUX_VERSION"] = ver
 
-        # detect if it's rattler-build recipe
+        # detect if it's v1 recipe
         if forge_config["conda_build_tool"] == RATTLER_BUILD:
             recipe_file = "recipe.yaml"
         else:
@@ -1034,7 +1050,7 @@ def _render_ci_provider(
         )
 
         # If we are using new recipe
-        # we also load rattler-build variants.yaml
+        # we also load v1 variants.yaml
         if recipe_file == "recipe.yaml":
             # get_selectors from conda-build return namespace
             # so it is usefull to reuse it here
@@ -1064,7 +1080,10 @@ def _render_ci_provider(
             if (
                 channel_target.startswith("conda-forge ")
                 and provider_name == "github_actions"
-                and not forge_config["github_actions"]["self_hosted"]
+                and not (
+                    (forge_config["github_actions"]["self_hosted"])
+                    or (os.path.basename(forge_dir) in SERVICE_FEEDSTOCKS)
+                )
             ):
                 raise RuntimeError(
                     "Using github_actions as the CI provider inside "
@@ -1085,8 +1104,7 @@ def _render_ci_provider(
                 raise RuntimeError(
                     "Travis CI can only be used for 'linux_aarch64', "
                     "'linux_ppc64le' or 'linux_s390x' native builds"
-                    ", not '%s_%s', to avoid using open-source build minutes!"
-                    % (platform, arch)
+                    f", not '{platform}_{arch}', to avoid using open-source build minutes!"
                 )
 
         # AFAIK there is no way to get conda build to ignore the CBC yaml
@@ -1215,25 +1233,9 @@ def _render_ci_provider(
             fast_finish_text=fast_finish_text,
         )
 
-        # If the recipe has its own conda_forge_ci_setup package, then
-        # install that
-        if os.path.exists(
-            os.path.join(
-                forge_dir,
-                forge_config["recipe_dir"],
-                "conda_forge_ci_setup",
-                "__init__.py",
-            )
-        ) and os.path.exists(
-            os.path.join(
-                forge_dir,
-                forge_config["recipe_dir"],
-                "setup.py",
-            )
-        ):
-            forge_config["local_ci_setup"] = True
-        else:
-            forge_config["local_ci_setup"] = False
+        forge_config["local_ci_setup"] = _has_local_ci_setup(
+            forge_dir, forge_config
+        )
 
         # hook for extending with whatever platform specific junk we need.
         #     Function passed in as argument
@@ -1403,10 +1405,7 @@ def generate_yum_requirements(forge_config, forge_dir):
             # "recipe/yum_requirements.txt" file. After updating that file,
             # run "conda smithy rerender" and this line will be updated
             # automatically.
-            /usr/bin/sudo -n yum install -y {}
-
-
-        """.format(
+            /usr/bin/sudo -n yum install -y {}""".format(
                 " ".join(requirements)
             )
         )
@@ -1442,7 +1441,7 @@ def _get_platforms_of_provider(provider, forge_config):
             # Allow config to disable package uploads on a per provider basis,
             # default to True if not set explicitly set to False by config entry.
             upload_packages.append(
-                (forge_config.get(provider, {}).get("upload_packages", True))
+                forge_config.get(provider, {}).get("upload_packages", True)
             )
         elif (
             provider == "azure"
@@ -1537,28 +1536,24 @@ def _render_template_exe_files(
         if target_fname in get_common_scripts(forge_dir) and os.path.exists(
             target_fname
         ):
-            with open(target_fname, "r") as fh:
+            with open(target_fname) as fh:
                 old_file_contents = fh.read()
                 if old_file_contents != new_file_contents:
                     import difflib
 
                     logger.debug(
-                        "diff:\n%s"
-                        % (
-                            "\n".join(
-                                difflib.unified_diff(
-                                    old_file_contents.splitlines(),
-                                    new_file_contents.splitlines(),
-                                    fromfile=target_fname,
-                                    tofile=target_fname,
-                                )
+                        "diff:\n%s",
+                        "\n".join(
+                            difflib.unified_diff(
+                                old_file_contents.splitlines(),
+                                new_file_contents.splitlines(),
+                                fromfile=target_fname,
+                                tofile=target_fname,
                             )
-                        )
+                        ),
                     )
                     raise RuntimeError(
-                        "Same file {} is rendered twice with different contents".format(
-                            target_fname
-                        )
+                        f"Same file {target_fname} is rendered twice with different contents"
                     )
         with write_file(target_fname) as fh:
             fh.write(new_file_contents)
@@ -1842,6 +1837,7 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
 
     azure_settings = deepcopy(forge_config["azure"][f"settings_{platform}"])
     azure_settings.pop("swapfile_size", None)
+    azure_settings.pop("install_atl", None)
     azure_settings.setdefault("strategy", {})
     azure_settings["strategy"].setdefault("matrix", {})
 
@@ -2039,7 +2035,15 @@ def azure_build_id_from_public(forge_config):
     forge_config["azure"]["build_id"] = build_def["id"]
 
 
-def render_README(jinja_env, forge_config, forge_dir, render_info=None):
+def get_maintainer_url(user_or_team):
+    if "/" in user_or_team:
+        org, team_name = user_or_team.split("/")
+        return f"https://github.com/orgs/{org}/teams/{team_name}/"
+    else:
+        return f"https://github.com/{user_or_team}/"
+
+
+def render_readme(jinja_env, forge_config, forge_dir, render_info=None):
     if "README.md" in forge_config["skip_render"]:
         logger.info("README.md rendering is skipped")
         return
@@ -2111,9 +2115,19 @@ def render_README(jinja_env, forge_config, forge_dir, render_info=None):
         about = about.copy()
         # if subpackages do not have about, conda-build would copy the top-level about;
         # if subpackages have their own about, conda-build would use them as is;
-        # we discussed in PR #1691 and decided to not show repetitve entries
+        # we discussed in PR #1691 and decided to not show repetitive entries
         if about != package_about:
             subpackages_about.append((name, about))
+
+    # align new style about with old style about
+    print("subpackages_about", subpackages_about)
+    for i, (name, about) in enumerate(subpackages_about):
+        if "repository" in about:
+            about["dev_url"] = about["repository"]
+        if "homepage" in about:
+            about["home"] = about["homepage"]
+        if "documentation" in about:
+            about["doc_url"] = about["documentation"]
 
     template = jinja_env.get_template("README.md.tmpl")
     target_fname = os.path.join(forge_dir, "README.md")
@@ -2124,7 +2138,8 @@ def render_README(jinja_env, forge_config, forge_dir, render_info=None):
     forge_config["outputs"] = sorted(
         list(OrderedDict((meta.name(), None) for meta in metas))
     )
-    forge_config["maintainers"] = sorted(
+
+    maintainers = sorted(
         set(
             chain.from_iterable(
                 meta.meta["extra"].get("recipe-maintainers", [])
@@ -2132,6 +2147,11 @@ def render_README(jinja_env, forge_config, forge_dir, render_info=None):
             )
         )
     )
+
+    forge_config["maintainers"] = [
+        (name, get_maintainer_url(name)) for name in maintainers
+    ]
+
     forge_config["channel_targets"] = channel_targets
 
     if forge_config["azure"].get("build_id") is None:
@@ -2139,12 +2159,11 @@ def render_README(jinja_env, forge_config, forge_dir, render_info=None):
         # Works if the Azure CI is public
         try:
             azure_build_id_from_public(forge_config)
-        except (IndexError, IOError) as err:
+        except (OSError, IndexError) as err:
             # We don't want to command to fail if requesting the build_id fails.
             logger.warning(
-                "Azure build_id can't be retrieved using the Azure token. Exception: {}".format(
-                    err
-                )
+                "Azure build_id can't be retrieved using the Azure token. Exception: %s",
+                err,
             )
         except json.decoder.JSONDecodeError:
             azure_build_id_from_token(forge_config)
@@ -2159,7 +2178,7 @@ def render_README(jinja_env, forge_config, forge_dir, render_info=None):
     if len(forge_config["maintainers"]) > 0:
         with write_file(code_owners_file) as fh:
             line = "*"
-            for maintainer in forge_config["maintainers"]:
+            for maintainer, _ in forge_config["maintainers"]:
                 if "/" in maintainer:
                     _maintainer = maintainer.lower()
                 else:
@@ -2178,17 +2197,63 @@ def _get_skip_files(forge_config):
 
 
 def render_github_actions_services(jinja_env, forge_config, forge_dir):
-    # render github actions files for automerge and rerendering services
     skip_files = _get_skip_files(forge_config)
-    for template_file in ["automerge.yml", "webservices.yml"]:
+
+    # we always remove the old files if they exist
+    old_github_actions_files = [
+        "automerge.yml",
+        "webservices.yml",
+    ]
+    for filename in old_github_actions_files:
+        rel_target_fname = os.path.join(
+            forge_dir, ".github", "workflows", filename
+        )
+        if _ignore_match(skip_files, rel_target_fname):
+            continue
+        remove_file(rel_target_fname)
+
+    # there are no current services to render, but if we add them in the future,
+    # they can go here
+    current_github_actions_files = []
+    for template_file in current_github_actions_files:
         template = jinja_env.get_template(template_file + ".tmpl")
-        rel_target_fname = os.path.join(".github", "workflows", template_file)
+        rel_target_fname = os.path.join(
+            forge_dir, ".github", "workflows", template_file
+        )
         if _ignore_match(skip_files, rel_target_fname):
             continue
         target_fname = os.path.join(forge_dir, rel_target_fname)
         new_file_contents = template.render(**forge_config)
         with write_file(target_fname) as fh:
             fh.write(new_file_contents)
+
+
+def render_pixi(jinja_env, forge_config, forge_dir):
+    target_fname = os.path.join(forge_dir, "pixi.toml")
+    remove_file_or_dir(target_fname)
+    if forge_config["conda_install_tool"] != "pixi":
+        return
+    template = jinja_env.get_template("pixi.toml.tmpl")
+    ci_support_path = os.path.join(forge_dir, ".ci_support")
+    variants = []
+    if os.path.exists(ci_support_path):
+        for filename in os.listdir(ci_support_path):
+            if filename.endswith(".yaml"):
+                variant_name, _ = os.path.splitext(filename)
+                variants.append(variant_name)
+    platforms = {
+        platform.replace("_", "-")
+        for platform, service in forge_config["provider"].items()
+        if service
+    }
+    new_file_contents = template.render(
+        smithy_version=__version__,
+        platforms=sorted(platforms),
+        variants=variants,
+        **forge_config,
+    )
+    with write_file(target_fname) as fh:
+        fh.write(new_file_contents)
 
 
 def copy_feedstock_content(forge_config, forge_dir):
@@ -2211,7 +2276,7 @@ def _update_dict_within_dict(items, config):
 
 def _read_forge_config(forge_dir, forge_yml=None):
     # Load default values from the conda-forge.yml file
-    with open(CONDA_FORGE_YAML_DEFAULTS_FILE, "r") as fh:
+    with open(CONDA_FORGE_YAML_DEFAULTS_FILE) as fh:
         default_config = yaml.safe_load(fh.read())
 
     if forge_yml is None:
@@ -2226,7 +2291,7 @@ def _read_forge_config(forge_dir, forge_yml=None):
             " feedstock root if it's the latter."
         )
 
-    with open(forge_yml, "r") as fh:
+    with open(forge_yml) as fh:
         documents = list(yaml.safe_load_all(fh))
         file_config = (documents or [None])[0] or {}
 
@@ -2351,17 +2416,24 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
         config["noarch_platforms"]
     )
 
-    # NOTE: Currently assuming these dependencies are name-only (no version constraints)
+    # NOTE: We are not shell escaping, so no ><! symbols in the version constraints, just =
+    python_version = "3.12"  # make it match latest Miniforge, if possible
     if config["conda_build_tool"] == "mambabuild":
-        config["conda_build_tool_deps"] = "conda-build boa"
+        config["conda_build_tool_deps"] = (
+            f"python={python_version} conda-build boa"
+        )
     elif config["conda_build_tool"] == "conda-build+conda-libmamba-solver":
-        config["conda_build_tool_deps"] = "conda-build conda-libmamba-solver"
+        config["conda_build_tool_deps"] = (
+            f"python={python_version} conda-build conda-libmamba-solver"
+        )
     elif config["conda_build_tool"] == "rattler-build":
         config["conda_build_tool_deps"] = "rattler-build"
     else:
-        config["conda_build_tool_deps"] = "conda-build"
+        config["conda_build_tool_deps"] = (
+            f"python={python_version} conda-build"
+        )
 
-    # NOTE: Currently assuming these dependencies are name-only (no version constraints)
+    # NOTE: We are not shell escaping, so no ><! symbols in the version constraints, just =
     if config["conda_install_tool"] == "mamba":
         config["conda_install_tool_deps"] = "mamba"
     elif config["conda_install_tool"] in "conda":
@@ -2400,7 +2472,7 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
     if config["provider"]["linux_s390x"] in {"default", "native"}:
         config["provider"]["linux_s390x"] = ["travis"]
 
-    config["remote_ci_setup"] = _santize_remote_ci_setup(
+    config["remote_ci_setup"] = _sanitize_remote_ci_setup(
         config["remote_ci_setup"]
     )
     if config["conda_install_tool"] == "conda":
@@ -2410,6 +2482,11 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
         ]
     else:
         config["remote_ci_setup_update"] = config["remote_ci_setup"]
+
+    # Post-process requirements so they are tidier for the TOML files
+    config["build_tool_deps_dict"] = _sanitize_build_tool_deps_as_dict(
+        forge_dir, config
+    )
 
     if not config["github_actions"]["triggers"]:
         self_hosted = config["github_actions"]["self_hosted"]
@@ -2462,27 +2539,23 @@ def get_most_recent_version(name, include_broken=False):
 def check_version_uptodate(name, installed_version, error_on_warn):
     most_recent_version = get_most_recent_version(name).version
     if installed_version is None:
-        msg = "{} is not installed in conda-smithy's environment.".format(name)
+        msg = f"{name} is not installed in conda-smithy's environment."
     elif VersionOrder(installed_version) < VersionOrder(most_recent_version):
-        msg = "{} version ({}) is out-of-date ({}) in conda-smithy's environment.".format(
-            name, installed_version, most_recent_version
-        )
+        msg = f"{name} version ({installed_version}) is out-of-date ({most_recent_version}) in conda-smithy's environment."
     else:
         return
     if error_on_warn:
-        raise RuntimeError("{} Exiting.".format(msg))
+        raise RuntimeError(f"{msg} Exiting.")
     else:
         logger.info(msg)
 
 
 def commit_changes(forge_file_directory, commit, cs_ver, cfp_ver, cb_ver):
     if cfp_ver:
-        msg = "Re-rendered with conda-build {}, conda-smithy {}, and conda-forge-pinning {}".format(
-            cb_ver, cs_ver, cfp_ver
-        )
+        msg = f"Re-rendered with conda-build {cb_ver}, conda-smithy {cs_ver}, and conda-forge-pinning {cfp_ver}"
     else:
-        msg = "Re-rendered with conda-build {} and conda-smithy {}".format(
-            cb_ver, cs_ver
+        msg = (
+            f"Re-rendered with conda-build {cb_ver} and conda-smithy {cs_ver}"
         )
     logger.info(msg)
 
@@ -2494,7 +2567,7 @@ def commit_changes(forge_file_directory, commit, cs_ver, cfp_ver, cb_ver):
         )
         if has_staged_changes:
             if commit:
-                git_args = ["git", "commit", "-m", "MNT: {}".format(msg)]
+                git_args = ["git", "commit", "-m", f"MNT: {msg}"]
                 if commit == "edit":
                     git_args += ["--edit", "--status", "--verbose"]
                 subprocess.check_call(git_args, cwd=forge_file_directory)
@@ -2502,7 +2575,8 @@ def commit_changes(forge_file_directory, commit, cs_ver, cfp_ver, cb_ver):
             else:
                 logger.info(
                     "You can commit the changes with:\n\n"
-                    '    git commit -m "MNT: {}"\n'.format(msg)
+                    '    git commit -m "MNT: %s"\n',
+                    msg,
                 )
             logger.info("These changes need to be pushed to github!\n")
         else:
@@ -2518,20 +2592,20 @@ def get_cfp_file_path(temporary_directory):
     else:
         raise RuntimeError(
             "Could not determine proper conda package extension for "
-            "pinning package '%s'!" % pkg.url
+            f"pinning package '{pkg.url}'!"
         )
     dest = os.path.join(
         temporary_directory, f"conda-forge-pinning-{ pkg.version }{ext}"
     )
 
-    logger.info(f"Downloading conda-forge-pinning-{ pkg.version }")
+    logger.info("Downloading conda-forge-pinning-%s", pkg.version)
 
     response = requests.get(pkg.url)
     response.raise_for_status()
     with open(dest, "wb") as f:
         f.write(response.content)
 
-    logger.info(f"Extracting conda-forge-pinning to { temporary_directory }")
+    logger.info("Extracting conda-forge-pinning to %s", temporary_directory)
     cmd = ["cph"]
     # If possible, avoid needing to activate the environment to access cph
     if sys.executable:
@@ -2656,7 +2730,7 @@ def get_migrations_in_dir(migrations_root):
     """
     res = {}
     for fn in glob.glob(os.path.join(migrations_root, "*.yaml")):
-        with open(fn, "r") as f:
+        with open(fn) as f:
             contents = f.read()
             migration_yaml = (
                 yaml.load(contents, Loader=yaml.loader.BaseLoader) or {}
@@ -2725,14 +2799,15 @@ def set_migration_fns(forge_dir, forge_config):
             new_fn, new_num, _ = migrations_in_cfp[ts]
             if num == new_num:
                 logger.info(
-                    f"{os.path.basename(fn)} from feedstock is ignored and upstream version is used"
+                    "%s from feedstock is ignored and upstream version is used",
+                    os.path.basename(fn),
                 )
                 result.append(new_fn)
             else:
                 result.append(fn)
         else:
             # Delete this as this migration is over.
-            logger.info(f"{os.path.basename(fn)} is closed now. Removing")
+            logger.info("%s is closed now. Removing", os.path.basename(fn))
             remove_file(fn)
     forge_config["migration_fns"] = result
     return
@@ -2770,7 +2845,6 @@ def main(
         )
 
     config = _load_forge_config(forge_dir, exclusive_config_file, forge_yml)
-
     config["feedstock_name"] = os.path.basename(forge_dir)
 
     env = make_jinja_env(forge_dir)
@@ -2784,7 +2858,6 @@ def main(
     clear_variants(forge_dir)
     clear_scripts(forge_dir)
     set_migration_fns(forge_dir, config)
-
     logger.debug("migration fns set")
 
     # the order of these calls appears to matter
@@ -2792,48 +2865,50 @@ def main(
     render_info.append(
         render_circle(env, config, forge_dir, return_metadata=True)
     )
-
     logger.debug("circle rendered")
+
     render_info.append(
         render_travis(env, config, forge_dir, return_metadata=True)
     )
-
     logger.debug("travis rendered")
+
     render_info.append(
         render_appveyor(env, config, forge_dir, return_metadata=True)
     )
-
     logger.debug("appveyor rendered")
+
     render_info.append(
         render_azure(env, config, forge_dir, return_metadata=True)
     )
-
     logger.debug("azure rendered")
+
     render_info.append(
         render_drone(env, config, forge_dir, return_metadata=True)
     )
-
     logger.debug("drone rendered")
+
     render_info.append(
         render_woodpecker(env, config, forge_dir, return_metadata=True)
     )
-
     logger.debug("woodpecker rendered")
+
     render_info.append(
         render_github_actions(env, config, forge_dir, return_metadata=True)
     )
-
     logger.debug("github_actions rendered")
-    render_github_actions_services(env, config, forge_dir)
 
+    render_github_actions_services(env, config, forge_dir)
     logger.debug("github_actions services rendered")
+
+    render_pixi(env, config, forge_dir)
+    logger.debug("pixi config rendered")
 
     # put azure first just in case
     azure_ind = ([ri["provider_name"] for ri in render_info]).index("azure")
     tmp = render_info[0]
     render_info[0] = render_info[azure_ind]
     render_info[azure_ind] = tmp
-    render_README(env, config, forge_dir, render_info)
+    render_readme(env, config, forge_dir, render_info)
 
     logger.debug("README rendered")
 

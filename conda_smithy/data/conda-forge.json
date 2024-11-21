@@ -131,7 +131,7 @@
               "$ref": "#/$defs/AzureRunnerSettings"
             }
           ],
-          "description": "Windows-specific settings for runners"
+          "description": "Windows-specific settings for runners. Some important variables you can set are:\n\n- `CONDA_BLD_PATH`: Location of the conda-build workspace. Defaults to `D:\\bld`\n- `MINIFORGE_HOME`: Location of the base environment installation. Defaults to\n  `D:\\Miniforge`.\n- `SET_PAGEFILE`: `\"True\"` to increase the pagefile size via conda-forge-ci-setup.\n\nIf you are running out of space in `D:`, consider changing to `C:`.\nIt's a slower drive but has more space available. We recommend you keep\nboth `CONDA_BLD_PATH` and `MINIFORGE_HOME` in the same drive for performance."
         },
         "user_or_org": {
           "anyOf": [
@@ -406,7 +406,7 @@
             }
           ],
           "default": null,
-          "description": "List of sources to use for version updates",
+          "description": "List of sources to find new versions (i.e. the strings like 1.2.3) for the package.\n\nThe following sources are available:\n- `cran`: Update from CRAN\n- `github`: Update from the GitHub releases RSS feed (includes pre-releases)\n- `githubreleases`: Get the latest version by following the redirect of\n`https://github.com/{owner}/{repo}/releases/latest` (excludes pre-releases)\n- `incrementalpharawurl`: If this source is run for a specific small selection of feedstocks, it acts like\nthe `rawurl` source but also increments letters in the version string (e.g. 2024a -> 2024b). If the source\nis run for other feedstocks (even if selected manually), it does nothing.\n- `librariesio`: Update from Libraries.io RSS feed\n- `npm`: Update from the npm registry\n- `nvidia`: Update from the NVIDIA download page\n- `pypi`: Update from the PyPI registry\n- `rawurl`: Update from a raw URL by trying to bump the version number in different ways and\nchecking if the URL exists (e.g. 1.2.3 -> 1.2.4, 1.3.0, 2.0.0, etc.)\n- `rosdistro`: Update from a ROS distribution\n\nCommon issues:\n- If you are using a GitHub-based source in your recipe and the bot issues PRs for pre-releases, restrict\nthe sources to `githubreleases` to avoid pre-releases.\n- If you use source tarballs that are uploaded manually by the maintainers a significant time after a\nGitHub release, you may want to restrict the sources to `rawurl` to avoid the bot attempting to update\nthe recipe before the tarball is uploaded.",
           "title": "Sources"
         },
         "skip": {
@@ -430,6 +430,7 @@
       "enum": [
         "cran",
         "github",
+        "githubreleases",
         "incrementalpharawurl",
         "librariesio",
         "npm",
@@ -792,12 +793,35 @@
       "title": "GithubConfig",
       "type": "object"
     },
+    "LinterConfig": {
+      "properties": {
+        "skip": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/Lints"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "List of lints to skip",
+          "title": "Skip"
+        }
+      },
+      "title": "LinterConfig",
+      "type": "object"
+    },
+    "Lints": {
+      "const": "lint_noarch_selectors",
+      "title": "Lints",
+      "type": "string"
+    },
     "Nullable": {
       "const": null,
       "description": "Created to avoid issue with schema validation of null values in lists or dicts.",
-      "enum": [
-        null
-      ],
       "title": "Nullable"
     },
     "Platforms": {
@@ -1710,6 +1734,17 @@
       ],
       "description": "Settings in this block are used to control how `conda build`\nruns and produces artifacts. An example of the such configuration is:\n\n```yaml\nconda_build:\n    pkg_format: 2\n    zstd_compression_level: 16\n    error_overlinking: False\n```"
     },
+    "linter": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/LinterConfig"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Settings in this block are used to control how `conda smithy` lints\nAn example of the such configuration is:\n\n```yaml\nlinter:\n    skip:\n        - lint_noarch_selectors\n```"
+    },
     "conda_build_tool": {
       "anyOf": [
         {
@@ -1735,7 +1770,9 @@
         {
           "enum": [
             "conda",
-            "mamba"
+            "mamba",
+            "micromamba",
+            "pixi"
           ],
           "type": "string"
         },
@@ -1743,8 +1780,8 @@
           "type": "null"
         }
       ],
-      "default": "mamba",
-      "description": "Use this option to choose which tool is used to provision the tooling in your\nfeedstock.",
+      "default": "micromamba",
+      "description": "Use this option to choose which tool is used to provision the tooling in your\nfeedstock. Defaults to micromamba.\n\nIf conda or mamba are chosen, the latest Miniforge will be used to\nprovision the base environment. If micromamba or pixi are chosen,\nMiniforge is not involved; the environment is created directly by\nmicromamba or pixi.",
       "title": "Conda Install Tool"
     },
     "conda_forge_output_validation": {
@@ -2233,7 +2270,7 @@
           "type": "null"
         }
       ],
-      "description": "Azure Pipelines CI settings. This is usually read-only and should not\nnormally be manually modified. Tools like conda-smithy may modify this, as needed.\nFor example:\n\n```yaml\nazure:\n    # flag for forcing the building all supported providers\n    force: False\n    # toggle for storing the conda build_artifacts directory (including the\n    # built packages) as an Azure pipeline artifact that can be downloaded\n    store_build_artifacts: False\n    # toggle for freeing up some extra space on the default Azure Pipelines\n    # linux image before running the Docker container for building\n    free_disk_space: False\n    # limit the amount of CI jobs running concurrently at a given time\n    # each OS will get its proportional share of the configured value\n    max_parallel: 25\n```\n\nBelow is an example configuration for setting up a self-hosted Azure agent for Linux:\n\n```yaml\nazure:\n    settings_linux:\n    pool:\n        name: your_local_pool_name\n        demands:\n          - some_key -equals some_value\n    workspace:\n        clean: all\n    strategy:\n        maxParallel: 1\n```\n\nBelow is an example configuration for adding a swapfile on an Azure agent for Linux:\n\n```yaml\nazure:\n    settings_linux:\n        swapfile_size: 10GiB\n```"
+      "description": "Azure Pipelines CI settings. This is usually read-only and should not\nnormally be manually modified. Tools like conda-smithy may modify this, as needed.\nFor example:\n\n```yaml\nazure:\n    # flag for forcing the building all supported providers\n    force: False\n    # toggle for storing the conda build_artifacts directory (including the\n    # built packages) as an Azure pipeline artifact that can be downloaded\n    store_build_artifacts: False\n    # toggle for freeing up some extra space on the default Azure Pipelines\n    # linux image before running the Docker container for building\n    free_disk_space: False\n    # limit the amount of CI jobs running concurrently at a given time\n    # each OS will get its proportional share of the configured value\n    max_parallel: 25\n```\n\nBelow is an example configuration for setting up a self-hosted Azure agent for Linux:\n\n```yaml\nazure:\n    settings_linux:\n        pool:\n            name: your_local_pool_name\n            demands:\n                - some_key -equals some_value\n        workspace:\n            clean: all\n        strategy:\n            maxParallel: 1\n```\n\nBelow is an example configuration for adding a swapfile on an Azure agent for Linux:\n\n```yaml\nazure:\n    settings_linux:\n        swapfile_size: 10GiB\n```\n\nIf you need more space on Windows, you can use `C:` at the cost of IO performance:\n\n```yaml\nazure:\n    settings_win:\n        variables:\n            CONDA_BLD_PATH: \"C:\\bld\"\n            MINIFORGE_HOME: \"C:\\Miniforge\"\n```"
     },
     "drone": {
       "anyOf": [

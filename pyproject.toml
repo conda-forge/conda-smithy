@@ -33,6 +33,29 @@ write_to_template = "__version__ = '{version}'"
 [tool.black]
 line-length = 79
 
+[tool.ruff.lint]
+ignore = [
+    "E501",  # https://docs.astral.sh/ruff/faq/#is-the-ruff-linter-compatible-with-black
+]
+select = [
+    # pyflakes
+    "F",
+    # pycodestyle
+    "E", "W",
+    # isort
+    "I",
+    # pep8-naming
+    "N",
+    # pypugrade
+    "UP",
+    # flake8-logging-format
+    "G",
+    # flake8-tidy-imports
+    "TID",
+]
+isort.known-first-party = ["conda_smithy"]
+flake8-tidy-imports.ban-relative-imports = "all"
+
 [tool.pytest.ini_options]
 norecursedirs = [
     "tests/recipes",

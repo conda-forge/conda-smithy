@@ -3,14 +3,16 @@ import logging
 import os
 import re
 import shutil
+import tempfile
 import textwrap
 from pathlib import Path
 
 import pytest
 import yaml
-
 from conftest import ConfigYAML
+
 from conda_smithy import configure_feedstock
+from conda_smithy.configure_feedstock import _read_forge_config
 
 
 def test_noarch_skips_appveyor(noarch_recipe, jinja_env):
@@ -505,7 +507,7 @@ def test_circle_skipped(linux_skipped_recipe, jinja_env):
 
 
 def test_render_with_all_skipped_generates_readme(skipped_recipe, jinja_env):
-    configure_feedstock.render_README(
+    configure_feedstock.render_readme(
         jinja_env=jinja_env,
         forge_config=skipped_recipe.config,
         forge_dir=skipped_recipe.recipe,
@@ -537,7 +539,7 @@ def test_render_windows_with_skipped_python(python_skipped_recipe, jinja_env):
 
 
 def test_readme_has_terminating_newline(noarch_recipe, jinja_env):
-    configure_feedstock.render_README(
+    configure_feedstock.render_readme(
         jinja_env=jinja_env,
         forge_config=noarch_recipe.config,
         forge_dir=noarch_recipe.recipe,
@@ -746,7 +748,7 @@ def test_migrator_compiler_version_recipe(
 
 
 def test_files_skip_render(render_skipped_recipe, jinja_env):
-    configure_feedstock.render_README(
+    configure_feedstock.render_readme(
         jinja_env=jinja_env,
         forge_config=render_skipped_recipe.config,
         forge_dir=render_skipped_recipe.recipe,
@@ -759,7 +761,6 @@ def test_files_skip_render(render_skipped_recipe, jinja_env):
         ".gitattributes",
         "README.md",
         "LICENSE.txt",
-        ".github/workflows/webservices.yml",
     ]
     for f in skipped_files:
         fpath = os.path.join(render_skipped_recipe.recipe, f)
@@ -790,40 +791,6 @@ def test_choco_install(choco_recipe, jinja_env):
       displayName: "Install Chocolatey Package: pkg1 --version=X.Y.Z"
 """.strip()
     assert exp in contents
-
-
-def test_webservices_action_exists(py_recipe, jinja_env):
-    configure_feedstock.render_github_actions_services(
-        jinja_env=jinja_env,
-        forge_config=py_recipe.config,
-        forge_dir=py_recipe.recipe,
-    )
-    assert os.path.exists(
-        os.path.join(py_recipe.recipe, ".github/workflows/webservices.yml")
-    )
-    with open(
-        os.path.join(py_recipe.recipe, ".github/workflows/webservices.yml")
-    ) as f:
-        action_config = yaml.safe_load(f)
-    assert "jobs" in action_config
-    assert "webservices" in action_config["jobs"]
-
-
-def test_automerge_action_exists(py_recipe, jinja_env):
-    configure_feedstock.render_github_actions_services(
-        jinja_env=jinja_env,
-        forge_config=py_recipe.config,
-        forge_dir=py_recipe.recipe,
-    )
-    assert os.path.exists(
-        os.path.join(py_recipe.recipe, ".github/workflows/automerge.yml")
-    )
-    with open(
-        os.path.join(py_recipe.recipe, ".github/workflows/automerge.yml")
-    ) as f:
-        action_config = yaml.safe_load(f)
-    assert "jobs" in action_config
-    assert "automerge-action" in action_config["jobs"]
 
 
 def test_conda_forge_yaml_empty(config_yaml: ConfigYAML):
@@ -865,15 +832,14 @@ def test_noarch_platforms_bad_yaml(config_yaml: ConfigYAML, caplog):
 
 
 def test_forge_yml_alt_path(config_yaml: ConfigYAML):
-    load_forge_config = (
-        lambda forge_yml: configure_feedstock._load_forge_config(  # noqa
+    def load_forge_config(forge_yml):
+        return configure_feedstock._load_forge_config(
             config_yaml.workdir,
             exclusive_config_file=os.path.join(
                 config_yaml.workdir, "recipe", "default_config.yaml"
             ),
             forge_yml=forge_yml,
         )
-    )
 
     forge_yml = os.path.join(config_yaml.workdir, "conda-forge.yml")
     forge_yml_alt = os.path.join(
@@ -2093,3 +2059,26 @@ def test_github_actions_pins():
     assert sorted(set(get_uses(github_actions_template))) == sorted(
         set(get_uses(dependabot_inventory))
     )
+
+
+def test_read_forge_config_default_values_aliases():
+    with tempfile.TemporaryDirectory() as str_tmpdir:
+        tmpdir = Path(str_tmpdir)
+
+        # create empty conda-forge.yml file
+        forge_yml_file = tmpdir / "conda-forge.yml"
+        forge_yml_file.touch()
+
+        config = _read_forge_config(tmpdir)
+
+        # if this raises KeyError, it means that the default values stored in data/conda-forge.yml do not respect the
+        # aliases defined in the schema, which will lead to defaults being parsed incorrectly.
+        assert isinstance(
+            config["azure"]["settings_linux"]["timeoutInMinutes"], int
+        )
+        assert isinstance(
+            config["azure"]["settings_osx"]["timeoutInMinutes"], int
+        )
+        assert isinstance(
+            config["azure"]["settings_win"]["timeoutInMinutes"], int
+        )

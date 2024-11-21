@@ -15,7 +15,7 @@ azure:
     variables: {}
   settings_osx:
     pool:
-      vmImage: macOS-12
+      vmImage: macOS-13
     swapfile_size: null
     timeoutInMinutes: 360
     variables: {}
@@ -26,6 +26,7 @@ azure:
     timeoutInMinutes: 360
     variables:
       CONDA_BLD_PATH: D:\\bld\\
+      MINIFORGE_HOME: D:\Miniforge
       UPLOAD_TEMP: D:\\tmp
   store_build_artifacts: false
   timeout_minutes: null
@@ -71,7 +72,7 @@ conda_build:
   zstd_compression_level: 16
 conda_build_tool: conda-build
 conda_forge_output_validation: false
-conda_install_tool: mamba
+conda_install_tool: micromamba
 conda_solver: libmamba
 config_version: '2'
 docker:
@@ -96,6 +97,8 @@ github_actions:
   triggers: []
   upload_packages: true
 idle_timeout_minutes: null
+linter:
+  skip: []
 max_py_ver: '37'
 max_r_ver: '34'
 min_py_ver: '27'

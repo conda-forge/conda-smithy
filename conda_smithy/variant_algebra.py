@@ -13,16 +13,15 @@ https://github.com/conda-forge/conda-forge-enhancement-proposals/pull/13
 
 """
 
-import yaml
-import toolz
-from conda_build.utils import ensure_list
+from functools import partial
+from typing import Any, Dict, List, Optional, Union
+
 import conda_build.variants as variants
+import tlz
+import yaml
 from conda.exports import VersionOrder
 from conda_build.config import Config
-from functools import partial
-
-
-from typing import Any, Dict, List, Optional, Union
+from conda_build.utils import ensure_list
 
 
 def parse_variant(
@@ -47,7 +46,7 @@ def parse_variant(
         from conda_build.config import Config
 
         config = Config()
-    from conda_build.metadata import select_lines, ns_cfg
+    from conda_build.metadata import ns_cfg, select_lines
 
     contents = select_lines(
         variant_file_content, ns_cfg(config), variants_in_place=False
@@ -161,7 +160,7 @@ def op_variant_key_add(v1: dict, v2: dict):
             )
             newly_added_zip_keys.update([primary_key] + additional_zip_keys)
 
-    for key in newly_added_zip_keys:
+    for additional_key in newly_added_zip_keys:
         # store the default value for the key, so that subsequent
         # key additions don't need to specify them and continue to use the default value
         # assert len(v1[key]) == 1
@@ -345,8 +344,8 @@ def variant_add(v1: dict, v2: dict) -> Dict[str, Any]:
         )
 
     out = {
-        **toolz.keyfilter(lambda k: k in left, v1),
-        **toolz.keyfilter(lambda k: k in right, v2),
+        **tlz.keyfilter(lambda k: k in left, v1),
+        **tlz.keyfilter(lambda k: k in right, v2),
         **joint_variant,
         **special_variants,
     }

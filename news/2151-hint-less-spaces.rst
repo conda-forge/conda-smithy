@@ -1,10 +1,10 @@
 **Added:**
 
-* Linter now warns if go licenses are not bundled.
+* <news item>
 
 **Changed:**
 
-* <news item>
+* Changed ``noarch-python`` hint to not require exactly one space between python and the Jinja2 expression. (#2151)
 
 **Deprecated:**
 

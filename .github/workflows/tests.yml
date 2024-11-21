@@ -22,17 +22,21 @@ jobs:
         with:
           fetch-depth: 0
       - name: Set up Conda env
-        uses: mamba-org/setup-micromamba@f8b8a1e23a26f60a44c853292711bacfd3eac822
+        uses: mamba-org/setup-micromamba@617811f69075e3fd3ae68ca64220ad065877f246
         with:
           environment-file: environment.yml
           cache-environment: true
           create-args: >-
-            python=3.8
+            python=3.11
             coverage
             coveralls
+            conda-recipe-manager
+            conda-souschef
+            conda-forge-tick
 
       - name: install conda-smithy
         run: |
+          conda uninstall --force --yes conda-smithy
           python -m pip install -v --no-build-isolation -e .
           git config --global user.email "smithy@smithy.smithy"
           git config --global user.name "smithy"

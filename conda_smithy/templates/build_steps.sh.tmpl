@@ -33,6 +33,31 @@ solver: {{ conda_solver }}
 {%- endif %}
 
 CONDARC
+
+{%- if conda_install_tool == "micromamba" %}
+mv /opt/conda/conda-meta/history /opt/conda/conda-meta/history.$(date +%Y-%m-%d-%H-%M-%S)
+echo > /opt/conda/conda-meta/history
+micromamba install --root-prefix ~/.conda --prefix /opt/conda \
+    --yes --override-channels --channel conda-forge --strict-channel-priority \
+    pip {{ conda_install_tool_deps }} {{ conda_build_tool_deps }} {{ " ".join(remote_ci_setup) }}
+{%- elif conda_install_tool == "pixi" %}
+curl -fsSL https://pixi.sh/install.sh | bash
+export PATH="~/.pixi/bin:$PATH"
+pushd "${FEEDSTOCK_ROOT}"
+arch=$(uname -m)
+if [[ "$arch" == "x86_64" ]]; then
+  arch="64"
+fi
+sed -i.bak "s/platforms = .*/platforms = [\"linux-${arch}\"]/" pixi.toml
+echo "Creating environment"
+PIXI_CACHE_DIR=/opt/conda pixi install
+pixi list
+echo "Activating environment"
+eval "$(pixi shell-hook)"
+mv pixi.toml.bak pixi.toml
+popd
+{%- endif %}
+
 {%- if conda_build_tool == "mambabuild" %}
 {%- set BUILD_CMD="conda-mambabuild" %}
 {%- elif conda_build_tool == "conda-build+conda-libmamba-solver" %}
@@ -47,16 +72,17 @@ CONDARC
 {%- if conda_solver == "libmamba" %}
 export CONDA_LIBMAMBA_SOLVER_NO_CHANNELS_FROM_INSTALLED=1
 {%- endif %}
-
+{%- if conda_install_tool in ("conda", "mamba") %}
 {{ conda_install_tool }} install --update-specs --yes --quiet --channel conda-forge --strict-channel-priority \
     pip {{ conda_install_tool_deps }} {{ conda_build_tool_deps }} {{ " ".join(remote_ci_setup) }}
+{%- endif %}
 {%- if conda_install_tool == "mamba" and (conda_build_tool_deps != "" or conda_install_tool_deps != "") %}
 {{ conda_install_tool }} update --update-specs --yes --quiet --channel conda-forge --strict-channel-priority \
     pip {{ conda_install_tool_deps }} {{ conda_build_tool_deps }} {{ " ".join(remote_ci_setup_update) }}
 {%- endif %}
 {% if local_ci_setup %}
 conda uninstall --quiet --yes --force {{ " ".join(remote_ci_setup)}}
-pip install --no-deps ${RECIPE_ROOT}/.
+pip install --no-deps "${RECIPE_ROOT}/."
 {%- endif %}
 # set up the condarc
 setup_conda_rc "${FEEDSTOCK_ROOT}" "${RECIPE_ROOT}" "${CONFIG_FILE}"
@@ -71,7 +97,7 @@ setup_conda_rc "${FEEDSTOCK_ROOT}" "${RECIPE_ROOT}" "${CONFIG_FILE}"
 # => Set a lower limit in a subshell for the `yum install`s only.
 ulimit -n 1024
 {{ yum_build_setup }}
-){% endif -%}
+){%- endif %}
 
 # make the build number clobber
 make_build_number "${FEEDSTOCK_ROOT}" "${RECIPE_ROOT}" "${CONFIG_FILE}"
@@ -115,13 +141,19 @@ else
 
     {%- else %}
 
-    {{ BUILD_CMD }} --recipe "${RECIPE_ROOT}" -m "${CI_SUPPORT}/${CONFIG}.yaml" ${EXTRA_CB_OPTIONS:-}
+    {{ BUILD_CMD }} --recipe "${RECIPE_ROOT}" \
+     -m "${CI_SUPPORT}/${CONFIG}.yaml" \
+     ${EXTRA_CB_OPTIONS:-} \
+     --target-platform "${HOST_PLATFORM}" \
+     --extra-meta flow_run_id="${flow_run_id:-}" \
+     --extra-meta remote_url="${remote_url:-}" \
+     --extra-meta sha="${sha:-}"
 
     {%- endif %}
     ( startgroup "Inspecting artifacts" ) 2> /dev/null
 
-    # inspect_artifacts was only added in conda-forge-ci-setup 4.6.0
-    command -v inspect_artifacts >/dev/null 2>&1 && inspect_artifacts || echo "inspect_artifacts needs conda-forge-ci-setup >=4.6.0"
+    # inspect_artifacts was only added in conda-forge-ci-setup 4.9.4
+    command -v inspect_artifacts >/dev/null 2>&1 && inspect_artifacts --recipe-dir "${RECIPE_ROOT}" -m "${CONFIG_FILE}" || echo "inspect_artifacts needs conda-forge-ci-setup >=4.9.4"
 
     ( endgroup "Inspecting artifacts" ) 2> /dev/null
 

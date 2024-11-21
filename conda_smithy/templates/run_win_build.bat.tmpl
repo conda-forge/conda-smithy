@@ -3,20 +3,101 @@
 :: changes to this script, consider a proposal to conda-smithy so that other feedstocks can also
 :: benefit from the improvement.
 
-:: Note: we assume a Miniforge installation is available
-
 :: INPUTS (required environment variables)
 :: CONFIG: name of the .ci_support/*.yaml file for this job
 :: CI: azure, github_actions, or unset
+:: MINIFORGE_HOME: where to install the base conda environment
 :: UPLOAD_PACKAGES: true or false
 :: UPLOAD_ON_BRANCH: true or false
 
 setlocal enableextensions enabledelayedexpansion
 
+FOR %%A IN ("%~dp0.") DO SET "REPO_ROOT=%%~dpA"
+{%- if conda_install_tool == "pixi" %}
+if "%MINIFORGE_HOME%"=="" (
+    set "MINIFORGE_HOME=%REPO_ROOT%\.pixi\envs\default"
+) else (
+    set "PIXI_CACHE_DIR=%MINIFORGE_HOME%"
+)
+{%- else %}
+if "%MINIFORGE_HOME%"=="" set "MINIFORGE_HOME=%USERPROFILE%\Miniforge3"
+{%- endif %}
+:: Remove trailing backslash, if present
+if "%MINIFORGE_HOME:~-1%"=="\" set "MINIFORGE_HOME=%MINIFORGE_HOME:~0,-1%"
+
+{%- if conda_install_tool == "micromamba" %}
+call :start_group "Provisioning base env with micromamba"
+set "MAMBA_ROOT_PREFIX=%MINIFORGE_HOME%-micromamba-%RANDOM%"
+set "MICROMAMBA_VERSION=1.5.10-0"
+set "MICROMAMBA_URL=https://github.com/mamba-org/micromamba-releases/releases/download/%MICROMAMBA_VERSION%/micromamba-win-64"
+set "MICROMAMBA_TMPDIR=%TMP%\micromamba-%RANDOM%"
+set "MICROMAMBA_EXE=%MICROMAMBA_TMPDIR%\micromamba.exe"
+
+echo Downloading micromamba %MICROMAMBA_VERSION%
+if not exist "%MICROMAMBA_TMPDIR%" mkdir "%MICROMAMBA_TMPDIR%"
+certutil -urlcache -split -f "%MICROMAMBA_URL%" "%MICROMAMBA_EXE%"
+if !errorlevel! neq 0 exit /b !errorlevel!
+
+echo Creating environment
+{#- TODO: Set CONDA_PKGS_DIRS again when #2101 is fixed #}
+{#- set "CONDA_PKGS_DIRS=%MINIFORGE_HOME%\pkgs" #}
+call "%MICROMAMBA_EXE%" create --yes --root-prefix "%MAMBA_ROOT_PREFIX%" --prefix "%MINIFORGE_HOME%" ^
+    --channel conda-forge ^
+    pip {{ conda_build_tool_deps }} {{ " ".join(remote_ci_setup) }}
+if !errorlevel! neq 0 exit /b !errorlevel!
+{#- set "CONDA_PKGS_DIRS=" #}
+echo Removing %MAMBA_ROOT_PREFIX%
+del /S /Q "%MAMBA_ROOT_PREFIX%" >nul
+del /S /Q "%MICROMAMBA_TMPDIR%" >nul
+{%- elif conda_install_tool == "pixi" %}
+call :start_group "Provisioning base env with pixi"
+echo Installing pixi
+powershell -NoProfile -ExecutionPolicy unrestricted -Command "iwr -useb https://pixi.sh/install.ps1 | iex"
+if !errorlevel! neq 0 exit /b !errorlevel!
+set "PATH=%USERPROFILE%\.pixi\bin;%PATH%"
+echo Installing environment
+if "%PIXI_CACHE_DIR%"=="%MINIFORGE_HOME%" (
+    mkdir "%MINIFORGE_HOME%"
+    copy /Y pixi.toml "%MINIFORGE_HOME%"
+    pushd "%MINIFORGE_HOME%"
+) else (
+    pushd "%REPO_ROOT%"
+)
+move /y pixi.toml pixi.toml.bak
+set "arch=64"
+if "%PROCESSOR_ARCHITECTURE%"=="ARM64" set "arch=arm64"
+powershell -NoProfile -ExecutionPolicy unrestricted -Command "(Get-Content pixi.toml.bak -Encoding UTF8) -replace 'platforms = .*', 'platforms = [''win-%arch%'']' | Out-File pixi.toml -Encoding UTF8"
+pixi install
+if !errorlevel! neq 0 exit /b !errorlevel!
+pixi list
+if !errorlevel! neq 0 exit /b !errorlevel!
+set "ACTIVATE_PIXI=%TMP%\pixi-activate-%RANDOM%.bat"
+pixi shell-hook > "%ACTIVATE_PIXI%"
+if !errorlevel! neq 0 exit /b !errorlevel!
+call "%ACTIVATE_PIXI%"
+if !errorlevel! neq 0 exit /b !errorlevel!
+move /y pixi.toml.bak pixi.toml
+popd
+call :end_group
+{%- else %}
+call :start_group "Installing a fresh version of Miniforge"
+set "MINIFORGE_URL=https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Windows-x86_64.exe"
+set "MINIFORGE_EXE=Miniforge3-Windows-x86_64.exe"
+echo Downloading Miniforge
+certutil -urlcache -split -f "%MINIFORGE_URL%" "%MINIFORGE_EXE%"
+if !errorlevel! neq 0 exit /b !errorlevel!
+echo Installing Miniforge
+start /wait "" %MINIFORGE_EXE% /InstallationType=JustMe /RegisterPython=0 /S /D=%MINIFORGE_HOME%
+call :end_group
+{%- endif %}
+
 call :start_group "Configuring conda"
 
 :: Activate the base conda environment
-call activate base
+{%- if conda_install_tool != "pixi" %}
+echo Activating environment
+call "%MINIFORGE_HOME%\Scripts\activate.bat"
+{%- endif %}
 
 {%- if conda_solver %}
 :: Configure the solver
@@ -27,10 +108,12 @@ if !errorlevel! neq 0 exit /b !errorlevel!
 set "CONDA_LIBMAMBA_SOLVER_NO_CHANNELS_FROM_INSTALLED=1"
 {%- endif %}
 
+{%- if conda_install_tool in ("conda", "mamba") %}
 :: Provision the necessary dependencies to build the recipe later
 echo Installing dependencies
-{{ conda_install_tool }}.exe install "python=3.10" pip {{ conda_install_tool_deps }} {{ conda_build_tool_deps }} {{ " ".join(remote_ci_setup) }} -c conda-forge --strict-channel-priority --yes
+{{ conda_install_tool }}.exe install pip {{ conda_install_tool_deps }} {{ conda_build_tool_deps }} {{ " ".join(remote_ci_setup) }} -c conda-forge --strict-channel-priority --yes
 if !errorlevel! neq 0 exit /b !errorlevel!
+{%- endif %}
 
 {%- if local_ci_setup %}
 echo Overriding conda-forge-ci-setup with local version
@@ -70,7 +153,11 @@ if NOT [%HOST_PLATFORM%] == [%BUILD_PLATFORM%] (
 {%- endif %}
 
 if NOT [%flow_run_id%] == [] (
-    set "EXTRA_CB_OPTIONS=%EXTRA_CB_OPTIONS% --extra-meta flow_run_id=%flow_run_id% remote_url=%remote_url% sha=%sha%"
+    {%- if conda_build_tool == "rattler-build" %}
+        set "EXTRA_CB_OPTIONS=%EXTRA_CB_OPTIONS% --extra-meta flow_run_id=%flow_run_id% --extra-meta remote_url=%remote_url% --extra-meta sha=%sha%"
+    {%- else %}
+        set "EXTRA_CB_OPTIONS=%EXTRA_CB_OPTIONS% --extra-meta flow_run_id=%flow_run_id% remote_url=%remote_url% sha=%sha%"
+    {%- endif %}
 )
 
 call :end_group
@@ -88,13 +175,13 @@ conda-build.exe "{{ recipe_dir }}" -m .ci_support\%CONFIG%.yaml --suppress-varia
 {%- elif conda_build_tool == "conda-build" %}
 conda-build.exe "{{ recipe_dir }}" -m .ci_support\%CONFIG%.yaml --suppress-variables %EXTRA_CB_OPTIONS%
 {%- elif conda_build_tool == "rattler-build" %}
-conda.exe run rattler-build build --recipe "{{ recipe_dir }}" -m .ci_support\%CONFIG%.yaml %EXTRA_CB_OPTIONS%
+rattler-build.exe build --recipe "{{ recipe_dir }}" -m .ci_support\%CONFIG%.yaml %EXTRA_CB_OPTIONS% --target-platform %HOST_PLATFORM%
 {%- endif %}
 if !errorlevel! neq 0 exit /b !errorlevel!
 
 call :start_group "Inspecting artifacts"
-:: inspect_artifacts was only added in conda-forge-ci-setup 4.6.0
-WHERE inspect_artifacts >nul 2>nul && inspect_artifacts || echo "inspect_artifacts needs conda-forge-ci-setup >=4.6.0"
+:: inspect_artifacts was only added in conda-forge-ci-setup 4.9.4
+WHERE inspect_artifacts >nul 2>nul && inspect_artifacts --recipe-dir ".\{{ recipe_dir }}" -m .ci_support\%CONFIG%.yaml || echo "inspect_artifacts needs conda-forge-ci-setup >=4.9.4"
 call :end_group
 
 :: Prepare some environment variables for the upload step
