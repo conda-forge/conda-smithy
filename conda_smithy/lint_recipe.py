@@ -23,7 +23,6 @@ from pydantic import BaseModel
 from rattler_build_conda_compat import loader as rattler_loader
 from ruamel.yaml.constructor import DuplicateKeyError
 
-from conda_smithy.schema import ConfigModel, NoExtraFieldsHint
 from conda_smithy.configure_feedstock import _read_forge_config
 from conda_smithy.linter import conda_recipe_v1_linter
 from conda_smithy.linter.hints import (
@@ -76,6 +75,7 @@ from conda_smithy.linter.utils import (
     get_section,
     load_linter_toml_metdata,
 )
+from conda_smithy.schema import ConfigModel, NoExtraFieldsHint
 from conda_smithy.utils import get_yaml, render_meta_yaml
 from conda_smithy.validate_schema import validate_json_schema
 
@@ -130,7 +130,9 @@ def _get_forge_yaml(recipe_dir: Optional[str] = None) -> dict:
     return forge_yaml
 
 
-def lintify_forge_yaml(recipe_dir: Optional[str] = None) -> (list[str], list[str]):
+def lintify_forge_yaml(
+    recipe_dir: Optional[str] = None,
+) -> (list[str], list[str]):
     forge_yaml = _get_forge_yaml(recipe_dir)
     # This is where we validate against the jsonschema and execute our custom validators.
     json_lints, json_hints = validate_json_schema(forge_yaml)
