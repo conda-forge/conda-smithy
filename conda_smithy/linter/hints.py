@@ -278,7 +278,9 @@ def hint_noarch_python_use_python_min(
                 test_syntax = syntax.replace("{{ python_min }}", "9999")
 
             for req in reqs:
-                if (
+                # `req` may be a string or a CommentedMap. The latter is
+                # produced by if: then: syntax in recipe.yaml.
+                if hasattr(req, "split") and (
                     req.strip().split()[0] == "python"
                     and req != "python"
                     and re.search(test_syntax, req)
