@@ -2481,6 +2481,37 @@ def test_lint_duplicate_cfyml():
         assert not any(lint.startswith(expected_message) for lint in lints)
 
 
+def test_cfyml_wrong_os_version():
+    expected_message = (
+        "{'linux_64': 'wrong'} is not valid under any of the given schemas"
+    )
+
+    with tmp_directory() as feedstock_dir:
+        cfyml = os.path.join(feedstock_dir, "conda-forge.yml")
+        recipe_dir = os.path.join(feedstock_dir, "recipe")
+        os.makedirs(recipe_dir, exist_ok=True)
+        with open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
+            fh.write(
+                """
+                package:
+                  name: foo
+                """
+            )
+
+        with open(cfyml, "w") as fh:
+            fh.write(
+                textwrap.dedent(
+                    """
+                    os_version:
+                      linux_64: wrong
+                    """
+                )
+            )
+
+        lints = linter.main(recipe_dir, conda_forge=True)
+        assert any(expected_message in lint for lint in lints)
+
+
 @pytest.mark.parametrize(
     "yaml_block,expected_message",
     [
