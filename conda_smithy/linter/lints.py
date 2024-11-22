@@ -428,6 +428,12 @@ def lint_single_space_in_pinned_requirements(
     recipe_version: int = 0,
 ):
     for section, requirements in requirements_section.items():
+        if (
+            recipe_version == 1
+            and section == "ignore_run_exports"
+            and requirements
+        ):
+            requirements = requirements[0].get("from_package", [])
         for requirement in requirements or []:
             if recipe_version == 1:
                 req = requirement
