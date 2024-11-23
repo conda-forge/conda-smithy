@@ -1041,6 +1041,12 @@ def _render_ci_provider(
             arch=arch,
         )
 
+        # when running tests in conda-build, somehow a variant gets set that we do not want
+        if os.environ.get("CONDA_BUILD", None) and os.environ.get("CONDA_BUILD_STATE", "TEST"):
+            for _attr in ["variant", "variants"]:
+                if hasattr(config, _attr):
+                    delattr(config, _attr)
+
         # Get the combined variants from normal variant locations prior to running migrations
         (
             combined_variant_spec,
