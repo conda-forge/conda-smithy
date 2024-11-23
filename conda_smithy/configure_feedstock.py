@@ -1041,44 +1041,6 @@ def _render_ci_provider(
             arch=arch,
         )
 
-        print(
-            "exclusive config file",
-            forge_config["exclusive_config_file"],
-            flush=True,
-        )
-        os.system("ls -lah")
-        os.system("cat " + forge_config["exclusive_config_file"])
-        print("config.variant:", config.variant, flush=True)
-        if hasattr(config, "variants"):
-            print("config.variants:", config.variants, flush=True)
-        print(
-            "config.variant_config_files:",
-            config.variant_config_files,
-            flush=True,
-        )
-        print(
-            "conda-build defaults:",
-            conda_build.variants.get_default_variant(config),
-            flush=True,
-        )
-        files = conda_build.variants.find_config_files(
-            os.path.join(forge_dir, forge_config["recipe_dir"]), config
-        )
-        print("conda-build variant files:", files, flush=True)
-        specs = dict()
-        for f in files:
-            specs[f] = conda_build.variants.parse_config_file(f, config)
-        print("conda-build variant specs:", specs, flush=True)
-
-        # # when running tests in conda-build, somehow a variant gets set that we do not want
-        # if (
-        #     os.environ.get("CONDA_BUILD", None)
-        #     and os.environ.get("CONDA_BUILD_STATE", None) == "TEST"
-        # ):
-        #     for _attr, val in [("variant", {}), ("variants", [{}])]:
-        #         if hasattr(config, _attr):
-        #             setattr(config, _attr, val)
-
         # Get the combined variants from normal variant locations prior to running migrations
         (
             combined_variant_spec,
