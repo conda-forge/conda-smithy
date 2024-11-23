@@ -1041,7 +1041,11 @@ def _render_ci_provider(
             arch=arch,
         )
 
-        print("exclusive config file", forge_config["exclusive_config_file"], flush=True)
+        print(
+            "exclusive config file",
+            forge_config["exclusive_config_file"],
+            flush=True,
+        )
         os.system("ls -lah")
         os.system("cat " + forge_config["exclusive_config_file"])
         print("config.variant:", config.variant, flush=True)
