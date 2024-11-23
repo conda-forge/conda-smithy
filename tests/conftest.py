@@ -59,7 +59,16 @@ def recipe_dirname():
 
 
 @pytest.fixture(scope="function", params=["conda-build", "rattler-build"])
-def config_yaml(testing_workdir, recipe_dirname, request):
+def config_yaml(testing_workdir, recipe_dirname, request, monkeypatch):
+    # conda-build has legacy behavior where these env vars cause config
+    # objects to have default values for the associated language.
+    # This causes test failures, so we unset them here.
+    monkeypatch.delenv("CONDA_PY", raising=False)
+    monkeypatch.delenv("CONDA_R", raising=False)
+    monkeypatch.delenv("CONDA_PERL", raising=False)
+    monkeypatch.delenv("CONDA_LUA", raising=False)
+    monkeypatch.delenv("CONDA_NPY", raising=False)
+
     config = {
         "python": ["2.7", "3.5"],
         "r_base": ["3.3.2", "3.4.2"],
