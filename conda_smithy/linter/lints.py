@@ -451,7 +451,6 @@ def lint_single_space_in_pinned_requirements(
 
             if symbol_to_check in req:
                 continue
-            print(req)
             parts = req.split()
             if len(parts) > 2 and parts[1] in [
                 "!=",
