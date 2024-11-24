@@ -21,6 +21,7 @@ from conda_smithy.linter.utils import (
     TEST_FILES,
     TEST_KEYS,
     _lint_recipe_name,
+    flatten_v1_if_else,
     get_section,
     is_selector_line,
     jinja_lines,
@@ -434,6 +435,12 @@ def lint_single_space_in_pinned_requirements(
             and requirements
         ):
             requirements = requirements[0].get("from_package", [])
+
+        # we can have `if` statements in the v1 requirements and we need to
+        # flatten them
+        if recipe_version == 1:
+            requirements = flatten_v1_if_else(requirements)
+
         for requirement in requirements or []:
             if recipe_version == 1:
                 req = requirement
@@ -444,6 +451,7 @@ def lint_single_space_in_pinned_requirements(
 
             if symbol_to_check in req:
                 continue
+            print(req)
             parts = req.split()
             if len(parts) > 2 and parts[1] in [
                 "!=",
@@ -802,6 +810,10 @@ def lint_stdlib(
     all_build_reqs_flat += flatten_reqs(output_build_reqs)
     all_run_reqs_flat += flatten_reqs(output_run_reqs)
     all_contraints_flat += flatten_reqs(output_contraints)
+
+    if recipe_version == 1:
+        all_build_reqs = [flatten_v1_if_else(reqs) for reqs in all_build_reqs]
+        all_build_reqs_flat = flatten_v1_if_else(all_build_reqs_flat)
 
     # this check needs to be done per output --> use separate (unflattened) requirements
     for build_reqs in all_build_reqs:
