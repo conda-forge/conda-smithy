@@ -572,8 +572,9 @@ def lint_require_lower_bound_on_python_version(
             lints.append(
                 "noarch: python recipes are required to have a lower bound "
                 "on the python version. Typically this means putting "
-                "`python >=3.6` in **both** `host` and `run` but you should check "
-                "upstream for the package's Python compatibility."
+                "`python {{ python_min }}` in `host` and `python >={{ python_min }}` "
+                "in `run`. Please double-check upstream if the package already "
+                "requires an even newer Python version."
             )
 
 
