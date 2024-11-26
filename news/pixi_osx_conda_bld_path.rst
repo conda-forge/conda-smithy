@@ -16,7 +16,8 @@
 
 **Fixed:**
 
-* Set CONDA_BLD_PATH when using pixi to prevent the pixi env path from being used during validation when looking for the built packages.
+* Ensure ``CONDA_BLD_PATH`` is properly exported in macOS. (#2145 via #2148)
+* Close logging group for ``micromamba`` installs in Windows. (#2148)
 
 **Security:**
 
