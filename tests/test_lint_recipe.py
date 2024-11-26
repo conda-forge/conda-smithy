@@ -3358,6 +3358,66 @@ def test_hint_noarch_python_use_python_min(
             ),
             [],
         ),
+        (
+            textwrap.dedent(
+                """
+                package:
+                  name: python
+
+                requirements:
+                  run:
+                    - if: blah
+                      then: python
+                      else: python 3.7
+                """
+            ),
+            [],
+        ),
+        (
+            textwrap.dedent(
+                """
+                package:
+                  name: python
+
+                build:
+                  noarch: python
+
+                requirements:
+                  run:
+                    - if: blah
+                      then: python
+                """
+            ),
+            [
+                "python ${{ python_min }}",
+                "python >=${{ python_min }}",
+            ],
+        ),
+        (
+            textwrap.dedent(
+                """
+                package:
+                  name: python
+
+                build:
+                  noarch: python
+
+                requirements:
+                  host:
+                    - if: blah
+                      then: blahblah
+                      else: python ${{ python_min }}
+                  run:
+                    - python >=${{ python_min }}
+
+                tests:
+                  - requirements:
+                      run:
+                        - python ${{ python_min }}
+                """
+            ),
+            [],
+        ),
     ],
 )
 def test_hint_noarch_python_use_python_min_v1(
