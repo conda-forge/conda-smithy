@@ -8,18 +8,21 @@ azure:
   project_id: 84710dde-1620-425b-80d0-4cf5baca359d
   project_name: feedstock-builds
   settings_linux:
+    install_atl: false
     pool:
       vmImage: ubuntu-latest
     swapfile_size: 0GiB
     timeoutInMinutes: 360
     variables: {}
   settings_osx:
+    install_atl: false
     pool:
       vmImage: macOS-13
     swapfile_size: null
     timeoutInMinutes: 360
     variables: {}
   settings_win:
+    install_atl: false
     pool:
       vmImage: windows-2022
     swapfile_size: null
