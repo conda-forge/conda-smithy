@@ -30,9 +30,9 @@ Marcel Bargull <marcel.bargull@udo.edu> Marcel Bargull <mbargull@users.noreply.g
 John Kirkham <jakirkham@gmail.com> John Kirkham <kirkhamj@janelia.hhmi.org>
 John Kirkham <jakirkham@gmail.com> jakirkham <kirkhamj@janelia.hhmi.org>
 shadow_walker <shadowwalkersb@gmail.com>
+pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>
 Hadrien Mary <hadrien.mary@gmail.com> Hadrien Mary <hadim@users.noreply.github.com>
 Michael Sarahan <msarahan@gmail.com> Mike Sarahan <msarahan@gmail.com>
-pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>
 Mark Harfouche <mark.harfouche@gmail.com>
 Bastian Zimmermann <10774221+BastianZim@users.noreply.github.com> BastianZim <10774221+BastianZim@users.noreply.github.com>
 Leo Fang <leofang@bnl.gov> Leo Fang <leo80042@gmail.com>
@@ -145,3 +145,5 @@ Sylvain Corlay <sylvain.corlay@gmail.com>
 Brandon Andersen <31670449+bandersen23@users.noreply.github.com>
 Vincenzo Eduardo Padulano <v.e.padulano@gmail.com>
 Bas Zalmstra <zalmstra.bas@gmail.com>
+Adam Ehlers Nyholm Thomsen <aen@atp.dk>
+Ralf Gommers <ralf.gommers@gmail.com>
