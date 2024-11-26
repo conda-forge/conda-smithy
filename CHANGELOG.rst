@@ -4,6 +4,33 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.44.8
+====================
+
+**Changed:**
+
+* Changed ``noarch-python`` hint to not require exactly one space between python and the Jinja2 expression. (#2151)
+* Added linting for incorrect values under `os_version:` in `conda-forge.yml`
+
+**Fixed:**
+
+* Fixed a bug where the ``python_min`` hint failed on v1 recipes. (#2154)
+* Fixed a bug that caused the linter to fail when a v1 recipe had the `ignore_run_exports` key. (#2157, #2153)
+* Fixed a bug where legacy conda env vars caused test failues. (#2162)
+* Fixed bugs in the linting of v1 recipes where requirements with conditional (if/else) statements were not properly flattened. (#2165)
+
+**Authors:**
+
+* Isuru Fernando
+* Matthew R. Becker
+* H. Vetinari
+* Wolf Vollprecht
+* pre-commit-ci[bot]
+* Adam Ehlers Nyholm Thomsen
+* Ralf Gommers
+
+
+
 v3.44.7
 ====================
 

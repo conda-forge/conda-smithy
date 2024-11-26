@@ -228,3 +228,14 @@ def load_linter_toml_metdata_internal(time_salt):
         return None
     hints_toml_str = hints_toml_req.content.decode("utf-8")
     return tomllib.loads(hints_toml_str)
+
+
+def flatten_v1_if_else(requirements: List[str | Dict]) -> List[str]:
+    flattened_requirements = []
+    for req in requirements:
+        if isinstance(req, dict):
+            flattened_requirements.extend(req["then"])
+            flattened_requirements.extend(req.get("else") or [])
+        else:
+            flattened_requirements.append(req)
+    return flattened_requirements

@@ -18,9 +18,9 @@ Authors are sorted by number of commits.
 * Marcel Bargull
 * John Kirkham
 * shadow_walker
+* pre-commit-ci[bot]
 * Hadrien Mary
 * Michael Sarahan
-* pre-commit-ci[bot]
 * Mark Harfouche
 * Bastian Zimmermann
 * Leo Fang
@@ -127,3 +127,5 @@ Authors are sorted by number of commits.
 * Brandon Andersen
 * Vincenzo Eduardo Padulano
 * Bas Zalmstra
+* Adam Ehlers Nyholm Thomsen
+* Ralf Gommers
