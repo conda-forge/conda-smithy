@@ -6,17 +6,9 @@ source .scripts/logging_utils.sh
 
 set -xe
 
-MINIFORGE_HOME=${MINIFORGE_HOME:-${HOME}/miniforge3}
-MINIFORGE_HOME=${MINIFORGE_HOME%/} # remove trailing slash
-
-# Set CONDA_BLD_PATH when using pixi
-# to prevent the pixi env path from being used
-# during validation when looking for the built packages.
-# The export is required for the variable to propagate to
-#inspect_artifacts.
-{%- if conda_install_tool == "pixi" %}
-export CONDA_BLD_PATH="${MINIFORGE_HOME}/conda-bld"
-{%- endif %}
+MINIFORGE_HOME="${MINIFORGE_HOME:-${HOME}/miniforge3}"
+MINIFORGE_HOME="${MINIFORGE_HOME%/}" # remove trailing slash
+export CONDA_BLD_PATH="${CONDA_BLD_PATH:-${MINIFORGE_HOME}/conda-bld}"
 
 {%- if conda_install_tool == "micromamba" %}
 
@@ -44,7 +36,7 @@ rm -rf "${MAMBA_ROOT_PREFIX}" "${micromamba_exe}" || true
 ( endgroup "Provisioning base env with micromamba" ) 2> /dev/null
 {%- elif conda_install_tool == "pixi" %}
 ( startgroup "Provisioning base env with pixi" ) 2> /dev/null
-mkdir -p ${MINIFORGE_HOME}
+mkdir -p "${MINIFORGE_HOME}"
 curl -fsSL https://pixi.sh/install.sh | bash
 export PATH="~/.pixi/bin:$PATH"
 arch=$(uname -m)
@@ -173,7 +165,7 @@ else
     {%- else %}
     {{ BUILD_CMD }} --recipe ./{{ recipe_dir }} \
         -m ./.ci_support/${CONFIG}.yaml \
-        --output-dir ${CONDA_BLD_PATH} ${EXTRA_CB_OPTIONS:-} \
+        ${EXTRA_CB_OPTIONS:-} \
         --target-platform "${HOST_PLATFORM}" \
         --extra-meta flow_run_id="$flow_run_id" \
         --extra-meta remote_url="$remote_url" \
