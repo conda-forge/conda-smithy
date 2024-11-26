@@ -11,6 +11,7 @@ from conda_smithy.linter.errors import HINT_NO_ARCH
 from conda_smithy.linter.utils import (
     VALID_PYTHON_BUILD_BACKENDS,
     find_local_config_file,
+    flatten_v1_if_else,
     is_selector_line,
 )
 from conda_smithy.utils import get_yaml
@@ -245,6 +246,11 @@ def hint_noarch_python_use_python_min(
     hints,
 ):
     if noarch_value == "python" and not outputs_section:
+        if recipe_version == 1:
+            host_reqs = flatten_v1_if_else(host_reqs)
+            run_reqs = flatten_v1_if_else(run_reqs)
+            test_reqs = flatten_v1_if_else(test_reqs)
+
         hint = ""
         for section_name, syntax, report_syntax, reqs in [
             (
