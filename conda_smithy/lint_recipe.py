@@ -417,12 +417,20 @@ def _maintainer_exists(maintainer: str) -> bool:
             return False
         return True
     else:
-        return (
-            requests.get(
-                f"https://api.github.com/users/{maintainer}"
-            ).status_code
-            == 200
-        )
+        # this API request has no token and so has a restrictive rate limit
+        # return (
+        #     requests.get(
+        #         f"https://api.github.com/users/{maintainer}"
+        #     ).status_code
+        #     == 200
+        # )
+        # so we check two public URLs instead.
+        # 1. github.com/<maintainer> - this URL works for all users and all orgs
+        # 2. https://github.com/orgs/<maintainer> - this URL only works for
+        #    orgs so we make sure it fails
+        req_profile = requests.get(f"https://github.com/{maintainer}")
+        req_org = requests.get(f"https://github.com/orgs/{maintainer}")
+        return req_profile.status_code == 200 and req_org.status_code != 200
 
 
 @lru_cache(maxsize=1)
