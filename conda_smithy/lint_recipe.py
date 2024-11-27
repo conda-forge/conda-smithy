@@ -413,9 +413,18 @@ def _maintainer_exists(maintainer: str) -> bool:
         gh = _cached_gh()
         try:
             gh.get_user(maintainer)
+            is_user = True
         except github.UnknownObjectException:
-            return False
-        return True
+            is_user = False
+
+        # for w/e reason, the user endpoint returns an entry for orgs
+        # however the org endpoint does not return an entry for users
+        # so we have to check both
+        try:
+            gh.get_organization(maintainer)
+            is_org = True
+        except github.UnknownObjectException:
+            is_org = False
     else:
         # this API request has no token and so has a restrictive rate limit
         # return (
@@ -425,12 +434,23 @@ def _maintainer_exists(maintainer: str) -> bool:
         #     == 200
         # )
         # so we check two public URLs instead.
-        # 1. github.com/<maintainer> - this URL works for all users and all orgs
+        # 1. github.com/<maintainer>?tab=repositories - this URL works for all users and all orgs
         # 2. https://github.com/orgs/<maintainer>/teams - this URL only works for
         #    orgs so we make sure it fails
-        req_profile = requests.get(f"https://github.com/{maintainer}")
-        req_org = requests.get(f"https://github.com/orgs/{maintainer}/teams")
-        return req_profile.status_code == 200 and req_org.status_code != 200
+        # we do not allow redirects to ensure we get the correct status code
+        # for the specific URL we requested
+        req_profile = requests.get(
+            f"https://github.com/{maintainer}?tab=repositories",
+            allow_redirects=False,
+        )
+        is_user = req_profile.status_code == 200
+        req_org = requests.get(
+            f"https://github.com/orgs/{maintainer}/teams",
+            allow_redirects=False,
+        )
+        is_org = req_org.status_code == 200
+
+    return is_user and not is_org
 
 
 @lru_cache(maxsize=1)
