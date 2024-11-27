@@ -426,10 +426,10 @@ def _maintainer_exists(maintainer: str) -> bool:
         # )
         # so we check two public URLs instead.
         # 1. github.com/<maintainer> - this URL works for all users and all orgs
-        # 2. https://github.com/orgs/<maintainer> - this URL only works for
+        # 2. https://github.com/orgs/<maintainer>/teams - this URL only works for
         #    orgs so we make sure it fails
         req_profile = requests.get(f"https://github.com/{maintainer}")
-        req_org = requests.get(f"https://github.com/orgs/{maintainer}")
+        req_org = requests.get(f"https://github.com/orgs/{maintainer}/teams")
         return req_profile.status_code == 200 and req_org.status_code != 200
 
 
