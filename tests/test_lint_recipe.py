@@ -1871,6 +1871,42 @@ linter:
         expected_message = 'Recipe maintainer "isuruf" does not exist'
         self.assertNotIn(expected_message, lints)
 
+        lints, _ = linter.lintify_meta_yaml(
+            {"extra": {"recipe-maintainers": ["conda-forge"]}},
+            conda_forge=True,
+        )
+        expected_message = 'Recipe maintainer "conda-forge" does not exist'
+        self.assertIn(expected_message, lints)
+
+    def test_maintainer_exists_no_token(self):
+        gh_token = os.environ.get("GH_TOKEN", None)
+        try:
+            if "GH_TOKEN" in os.environ:
+                del os.environ["GH_TOKEN"]
+
+            lints, _ = linter.lintify_meta_yaml(
+                {"extra": {"recipe-maintainers": ["support"]}},
+                conda_forge=True,
+            )
+            expected_message = 'Recipe maintainer "support" does not exist'
+            self.assertIn(expected_message, lints)
+
+            lints, _ = linter.lintify_meta_yaml(
+                {"extra": {"recipe-maintainers": ["isuruf"]}}, conda_forge=True
+            )
+            expected_message = 'Recipe maintainer "isuruf" does not exist'
+            self.assertNotIn(expected_message, lints)
+
+            lints, _ = linter.lintify_meta_yaml(
+                {"extra": {"recipe-maintainers": ["conda-forge"]}},
+                conda_forge=True,
+            )
+            expected_message = 'Recipe maintainer "conda-forge" does not exist'
+            self.assertIn(expected_message, lints)
+        finally:
+            if gh_token is not None:
+                os.environ["GH_TOKEN"] = gh_token
+
     def test_maintainer_team_exists(self):
         lints, _ = linter.lintify_meta_yaml(
             {
