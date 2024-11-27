@@ -1871,6 +1871,12 @@ linter:
         expected_message = 'Recipe maintainer "isuruf" does not exist'
         self.assertNotIn(expected_message, lints)
 
+        lints, _ = linter.lintify_meta_yaml(
+            {"extra": {"recipe-maintainers": ["conda-forge"]}}, conda_forge=True
+        )
+        expected_message = 'Recipe maintainer "conda-forge" does not exist'
+        self.assertIn(expected_message, lints)
+
     def test_maintainer_team_exists(self):
         lints, _ = linter.lintify_meta_yaml(
             {
