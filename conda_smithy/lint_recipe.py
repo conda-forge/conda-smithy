@@ -439,16 +439,16 @@ def _maintainer_exists(maintainer: str) -> bool:
         #    orgs so we make sure it fails
         # we do not allow redirects to ensure we get the correct status code
         # for the specific URL we requested
-        req_profile = requests.get(
-            f"https://github.com/{maintainer}?tab=repositories",
+        req_profile = requests.head(
+            f"https://github.com/{maintainer}",
             allow_redirects=False,
         )
         is_user = req_profile.status_code == 200
-        req_org = requests.get(
+        req_org = requests.head(
             f"https://github.com/orgs/{maintainer}/teams",
             allow_redirects=False,
         )
-        is_org = req_org.status_code == 200
+        is_org = req_org.status_code < 400
 
     return is_user and not is_org
 
