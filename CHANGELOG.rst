@@ -4,6 +4,23 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.44.9
+====================
+
+**Fixed:**
+
+* Fixed a bug in checking in recipe maintainers exist without a GitHub token
+  where the anonymous API would run out of requests. (#2171)
+* Ensure ``CONDA_BLD_PATH`` is properly exported in macOS. (#2145 via #2148)
+* Close logging group for ``micromamba`` installs in Windows. (#2148)
+
+**Authors:**
+
+* Matthew R. Becker
+* Hadrien Mary
+
+
+
 v3.44.8
 ====================
 
