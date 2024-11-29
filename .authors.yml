@@ -393,7 +393,7 @@
   github: shadowwalkersb
 - name: Matthew R. Becker
   email: becker.mr@gmail.com
-  num_commits: 427
+  num_commits: 431
   first_commit: 2020-01-07 17:44:33
   github: beckermr
   alternate_emails:
@@ -446,7 +446,7 @@
   email: hadrien.mary@gmail.com
   alternate_emails:
   - hadim@users.noreply.github.com
-  num_commits: 32
+  num_commits: 33
   first_commit: 2020-05-27 07:53:50
   github: hadim
 - name: Thomas Hopkins

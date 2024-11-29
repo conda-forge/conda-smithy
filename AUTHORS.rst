@@ -18,8 +18,8 @@ Authors are sorted by number of commits.
 * Marcel Bargull
 * John Kirkham
 * shadow_walker
-* pre-commit-ci[bot]
 * Hadrien Mary
+* pre-commit-ci[bot]
 * Michael Sarahan
 * Mark Harfouche
 * Bastian Zimmermann
