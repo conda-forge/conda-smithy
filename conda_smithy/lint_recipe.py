@@ -19,6 +19,7 @@ import requests
 from conda_build.metadata import (
     ensure_valid_license_family,
 )
+from pydantic import BaseModel
 from rattler_build_conda_compat import loader as rattler_loader
 from ruamel.yaml.constructor import DuplicateKeyError
 
@@ -74,10 +75,37 @@ from conda_smithy.linter.utils import (
     get_section,
     load_linter_toml_metdata,
 )
+from conda_smithy.schema import ConfigModel, NoExtraFieldsHint
 from conda_smithy.utils import get_yaml, render_meta_yaml
 from conda_smithy.validate_schema import validate_json_schema
 
 NEEDED_FAMILIES = ["gpl", "bsd", "mit", "apache", "psf"]
+
+
+def _forge_yaml_hint_extra_fields(forge_yaml: dict) -> List[str]:
+    """
+    Identify unexpected keys in the conda-forge.yml file.
+    This only works if extra="allow" is set in the Pydantic sub-model where the unexpected key is found.
+    """
+
+    config = ConfigModel.model_validate(forge_yaml)
+    hints = []
+
+    def _find_extra_fields(model: BaseModel, prefix=""):
+        if not (
+            isinstance(model, NoExtraFieldsHint)
+            and not model.HINT_EXTRA_FIELDS
+        ):
+            for extra_field in (model.__pydantic_extra__ or {}).keys():
+                hints.append(f"Unexpected key {prefix + extra_field}")
+
+        for field, value in model:
+            if isinstance(value, BaseModel):
+                _find_extra_fields(value, f"{prefix + field}.")
+
+    _find_extra_fields(config)
+
+    return hints
 
 
 def _get_forge_yaml(recipe_dir: Optional[str] = None) -> dict:
@@ -102,10 +130,19 @@ def _get_forge_yaml(recipe_dir: Optional[str] = None) -> dict:
     return forge_yaml
 
 
-def lintify_forge_yaml(recipe_dir: Optional[str] = None) -> (list, list):
+def lintify_forge_yaml(
+    recipe_dir: Optional[str] = None,
+) -> (list[str], list[str]):
     forge_yaml = _get_forge_yaml(recipe_dir)
     # This is where we validate against the jsonschema and execute our custom validators.
-    return validate_json_schema(forge_yaml)
+    json_lints, json_hints = validate_json_schema(forge_yaml)
+
+    lints = [_format_validation_msg(err) for err in json_lints]
+    hints = [_format_validation_msg(hint) for hint in json_hints]
+
+    hints.extend(_forge_yaml_hint_extra_fields(forge_yaml))
+
+    return lints, hints
 
 
 def lintify_meta_yaml(
@@ -734,8 +771,8 @@ def main(
         recipe_dir=recipe_dir
     )
 
-    results.extend([_format_validation_msg(err) for err in validation_errors])
-    hints.extend([_format_validation_msg(hint) for hint in validation_hints])
+    results.extend(validation_errors)
+    hints.extend(validation_hints)
 
     if return_hints:
         return results, hints
@@ -743,15 +780,16 @@ def main(
         return results
 
 
-if __name__ == "__main__":
-    # This block is supposed to help debug how the rendered version
-    # of the linter bot would look like in Github. Taken from
-    # https://github.com/conda-forge/conda-forge-webservices/blob/747f75659/conda_forge_webservices/linting.py#L138C1-L146C72
+def main_debug():
+    """
+    This function is supposed to help debug how the rendered version
+    of the linter bot would look like in GitHub. Taken from
+    https://github.com/conda-forge/conda-forge-webservices/blob/747f75659/conda_forge_webservices/linting.py#L138C1-L146C72
+    """
     rel_path = sys.argv[1]
     lints, hints = main(rel_path, False, True)
     messages = []
     if lints:
-        all_pass = False
         messages.append(
             "\nFor **{}**:\n\n{}".format(
                 rel_path, "\n".join(f"* ❌ {lint}" for lint in lints)
@@ -765,3 +803,7 @@ if __name__ == "__main__":
         )
 
     print(*messages, sep="\n")
+
+
+if __name__ == "__main__":
+    main_debug()
