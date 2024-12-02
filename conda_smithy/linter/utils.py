@@ -59,6 +59,7 @@ VALID_PYTHON_BUILD_BACKENDS = [
     "setuptools",
     "flit-core",
     "hatchling",
+    "poetry",
     "poetry-core",
     "pdm-backend",
     "pdm-pep517",
