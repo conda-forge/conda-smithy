@@ -3,10 +3,10 @@ import os
 import re
 import sys
 import time
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from functools import lru_cache
 from glob import glob
-from typing import Dict, List, Mapping, Optional, Union
+from typing import Dict, List, Optional, Union
 
 import requests
 from conda.models.version import InvalidVersionSpec, VersionOrder
