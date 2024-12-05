@@ -4,7 +4,7 @@
 import json
 from enum import Enum
 from inspect import cleandoc
-from typing import Any, Dict, List, Literal, Optional, Union
+from typing import Any, Literal, Optional, Union
 
 import yaml
 from conda.base.constants import KNOWN_SUBDIRS
@@ -108,7 +108,7 @@ class AzureRunnerSettings(BaseModel):
 
     model_config: ConfigDict = ConfigDict(extra="allow")
 
-    pool: Optional[Dict[str, str]] = Field(
+    pool: Optional[dict[str, str]] = Field(
         default_factory=lambda: {"vmImage": "ubuntu-latest"},
         description="The pool of self-hosted runners, e.g. 'vmImage': 'ubuntu-latest'",
     )
@@ -123,7 +123,7 @@ class AzureRunnerSettings(BaseModel):
         alias="timeoutInMinutes",
     )
 
-    variables: Optional[Dict[str, str]] = Field(
+    variables: Optional[dict[str, str]] = Field(
         default_factory=dict, description="Variables"
     )
 
@@ -155,7 +155,7 @@ class AzureConfig(BaseModel):
     )
 
     free_disk_space: Optional[
-        Union[bool, Nullable, List[Literal["apt", "cache", "docker"]]]
+        Union[bool, Nullable, list[Literal["apt", "cache", "docker"]]]
     ] = Field(
         default=False,
         description=cleandoc(
@@ -303,7 +303,7 @@ class GithubActionsConfig(BaseModel):
     )
 
     free_disk_space: Optional[
-        Union[bool, Nullable, List[Literal["apt", "cache", "docker"]]]
+        Union[bool, Nullable, list[Literal["apt", "cache", "docker"]]]
     ] = Field(
         default=False,
         description=cleandoc(
@@ -362,13 +362,13 @@ class BotConfigVersionUpdates(BaseModel):
         description="Fraction of versions to keep for frequently updated packages",
     )
 
-    exclude: Optional[List[str]] = Field(
+    exclude: Optional[list[str]] = Field(
         default=[],
         description="List of versions to exclude. "
         "Make sure branch names are `str` by quoting the value.",
     )
 
-    sources: Optional[List[BotConfigVersionUpdatesSourcesChoice]] = Field(
+    sources: Optional[list[BotConfigVersionUpdatesSourcesChoice]] = Field(
         None,
         description=cleandoc(
             """
@@ -431,7 +431,7 @@ class BotConfig(BaseModel):
         description="Method for generating hints or updating recipe",
     )
 
-    abi_migration_branches: Optional[List[str]] = Field(
+    abi_migration_branches: Optional[list[str]] = Field(
         default=[],
         description="List of branches for additional bot migration PRs. "
         "Make sure branch names are `str` by quoting the value.",
@@ -480,7 +480,7 @@ class CondaBuildConfig(BaseModel):
 
 class LinterConfig(BaseModel):
 
-    skip: Optional[List[Lints]] = Field(
+    skip: Optional[list[Lints]] = Field(
         default_factory=list,
         description="List of lints to skip",
     )
@@ -565,7 +565,7 @@ OSVersion = create_model(
     },
 )
 
-ProviderType = Union[List[CIservices], CIservices, bool, Nullable]
+ProviderType = Union[list[CIservices], CIservices, bool, Nullable]
 
 Provider = create_model(
     "provider",
@@ -785,7 +785,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    choco: Optional[List[str]] = Field(
+    choco: Optional[list[str]] = Field(
         default_factory=list,
         description=cleandoc(
             """
@@ -839,7 +839,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    noarch_platforms: Optional[Union[Platforms, List[Platforms]]] = Field(
+    noarch_platforms: Optional[Union[Platforms, list[Platforms]]] = Field(
         default_factory=lambda: ["linux_64"],
         description=cleandoc(
             """
@@ -972,7 +972,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    remote_ci_setup: Optional[Union[str, List[str]]] = Field(
+    remote_ci_setup: Optional[Union[str, list[str]]] = Field(
         default_factory=lambda: [
             "conda-forge-ci-setup=4",
             "conda-build>=24.1",
@@ -1006,7 +1006,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    skip_render: Optional[List[str]] = Field(
+    skip_render: Optional[list[str]] = Field(
         default_factory=list,
         description=cleandoc(
             """
@@ -1025,7 +1025,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    templates: Optional[Dict[str, str]] = Field(
+    templates: Optional[dict[str, str]] = Field(
         default_factory=dict,
         description=cleandoc(
             """
@@ -1198,7 +1198,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    secrets: Optional[List[str]] = Field(
+    secrets: Optional[list[str]] = Field(
         default_factory=list,
         description=cleandoc(
             """
@@ -1220,7 +1220,7 @@ class ConfigModel(BaseModel):
     ###################################
     ####       CI Providers        ####
     ###################################
-    travis: Optional[Dict[str, Any]] = Field(
+    travis: Optional[dict[str, Any]] = Field(
         default_factory=dict,
         description=cleandoc(
             """
@@ -1230,7 +1230,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    circle: Optional[Dict[str, Any]] = Field(
+    circle: Optional[dict[str, Any]] = Field(
         default_factory=dict,
         description=cleandoc(
             """
@@ -1240,7 +1240,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    appveyor: Optional[Dict[str, Any]] = Field(
+    appveyor: Optional[dict[str, Any]] = Field(
         default_factory=lambda: {"image": "Visual Studio 2017"},
         description=cleandoc(
             """
@@ -1309,7 +1309,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    drone: Optional[Dict[str, str]] = Field(
+    drone: Optional[dict[str, str]] = Field(
         default_factory=dict,
         description=cleandoc(
             """
@@ -1329,7 +1329,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    woodpecker: Optional[Dict[str, str]] = Field(
+    woodpecker: Optional[dict[str, str]] = Field(
         default_factory=dict,
         description=cleandoc(
             """
@@ -1357,7 +1357,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    matrix: Optional[Dict[str, Any]] = Field(
+    matrix: Optional[dict[str, Any]] = Field(
         default_factory=dict,
         exclude=True,
         deprecated=True,

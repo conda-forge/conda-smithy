@@ -4,7 +4,7 @@ import shutil
 import subprocess
 import sys
 from glob import glob
-from typing import Any, Dict, List
+from typing import Any
 
 from conda_smithy.linter import conda_recipe_v1_linter
 from conda_smithy.linter.errors import HINT_NO_ARCH
@@ -31,7 +31,7 @@ def hint_pip_usage(build_section, hints):
 
 
 def hint_sources_should_not_mention_pypi_io_but_pypi_org(
-    sources_section: List[Dict[str, Any]], hints: List[str]
+    sources_section: list[dict[str, Any]], hints: list[str]
 ):
     """
     Grayskull and conda-forge default recipe used to have pypi.io as a default,
@@ -181,12 +181,12 @@ def hint_check_spdx(about_section, hints):
 
     with open(os.path.join(os.path.dirname(__file__), "licenses.txt")) as f:
         expected_licenses = f.readlines()
-        expected_licenses = set([li.strip() for li in expected_licenses])
+        expected_licenses = {li.strip() for li in expected_licenses}
     with open(
         os.path.join(os.path.dirname(__file__), "license_exceptions.txt")
     ) as f:
         expected_exceptions = f.readlines()
-        expected_exceptions = set([li.strip() for li in expected_exceptions])
+        expected_exceptions = {li.strip() for li in expected_exceptions}
     if set(filtered_licenses) - expected_licenses:
         hints.append(
             "License is not an SPDX identifier (or a custom LicenseRef) nor an SPDX license expression.\n\n"
