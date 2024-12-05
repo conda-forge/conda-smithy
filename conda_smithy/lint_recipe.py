@@ -8,7 +8,7 @@ from glob import glob
 from inspect import cleandoc
 from pathlib import Path
 from textwrap import indent
-from typing import Any, List, Optional, Tuple
+from typing import Any, Optional
 
 import github
 import github.Auth
@@ -113,7 +113,7 @@ def lintify_meta_yaml(
     recipe_dir: Optional[str] = None,
     conda_forge: bool = False,
     recipe_version: int = 0,
-) -> Tuple[List[str], List[str]]:
+) -> tuple[list[str], list[str]]:
     lints = []
     hints = []
     major_sections = list(meta.keys())

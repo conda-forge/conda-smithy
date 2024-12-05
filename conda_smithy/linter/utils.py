@@ -6,7 +6,7 @@ import time
 from collections.abc import Mapping, Sequence
 from functools import lru_cache
 from glob import glob
-from typing import Dict, List, Optional, Union
+from typing import Optional, Union
 
 import requests
 from conda.models.version import InvalidVersionSpec, VersionOrder
@@ -97,7 +97,7 @@ def get_meta_section(parent, name, lints):
     return section
 
 
-def get_recipe_v1_section(meta, name) -> Union[Dict, List[Dict]]:
+def get_recipe_v1_section(meta, name) -> Union[dict, list[dict]]:
     if name == "requirements":
         return rattler_loader.load_all_requirements(meta)
     elif name == "tests":
@@ -231,7 +231,7 @@ def load_linter_toml_metdata_internal(time_salt):
     return tomllib.loads(hints_toml_str)
 
 
-def flatten_v1_if_else(requirements: List[str | Dict]) -> List[str]:
+def flatten_v1_if_else(requirements: list[str | dict]) -> list[str]:
     flattened_requirements = []
     for req in requirements:
         if isinstance(req, dict):

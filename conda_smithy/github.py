@@ -267,9 +267,9 @@ def configure_github_team(meta, gh_repo, org, feedstock_name, remove=True):
     ]
 
     maintainers = set(meta.meta.get("extra", {}).get("recipe-maintainers", []))
-    maintainers = set(maintainer.lower() for maintainer in maintainers)
-    maintainer_teams = set(m for m in maintainers if "/" in m)
-    maintainers = set(m for m in maintainers if "/" not in m)
+    maintainers = {maintainer.lower() for maintainer in maintainers}
+    maintainer_teams = {m for m in maintainers if "/" in m}
+    maintainers = {m for m in maintainers if "/" not in m}
 
     # Try to get team or create it if it doesn't exist.
     team_name = feedstock_name
@@ -287,7 +287,7 @@ def configure_github_team(meta, gh_repo, org, feedstock_name, remove=True):
         )
         fs_team.add_to_repos(gh_repo)
 
-    current_maintainers = set([e.login.lower() for e in fs_team.get_members()])
+    current_maintainers = {e.login.lower() for e in fs_team.get_members()}
 
     # Get the all-members team
     description = f"All of the awesome {org.login} contributors!"
@@ -309,17 +309,15 @@ def configure_github_team(meta, gh_repo, org, feedstock_name, remove=True):
             remove_membership(fs_team, old_maintainer)
 
     # Add any new maintainer teams
-    maintainer_teams = set(
+    maintainer_teams = {
         m.split("/")[1]
         for m in maintainer_teams
         if m.startswith(str(org.login))
-    )
+    }
     current_maintainer_team_objs = {
         team.slug: team for team in current_maintainer_teams
     }
-    current_maintainer_teams = set(
-        [team.slug for team in current_maintainer_teams]
-    )
+    current_maintainer_teams = {team.slug for team in current_maintainer_teams}
     for new_team in maintainer_teams - current_maintainer_teams:
         team = org.get_team_by_slug(new_team)
         team.add_to_repos(gh_repo)
