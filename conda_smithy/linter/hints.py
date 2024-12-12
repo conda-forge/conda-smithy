@@ -274,7 +274,7 @@ def hint_noarch_python_use_python_min(
         ]:
             if recipe_version == 1:
                 syntax = syntax.replace(
-                    "{{ python_min }}", "${{ python_min }}"
+                    "{{ python_min }}", r"\${{ python_min }}"
                 )
                 report_syntax = report_syntax.replace(
                     "{{ python_min }}", "${{ python_min }}"
