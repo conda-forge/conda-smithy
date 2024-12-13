@@ -236,7 +236,7 @@
   email: uwe.korn@quantco.com
   alternate_emails:
   - xhochy@users.noreply.github.com
-  num_commits: 49
+  num_commits: 51
   first_commit: 2019-06-27 08:26:49
   github: xhochy
 - name: C.A.M. Gerlach
@@ -393,7 +393,7 @@
   github: shadowwalkersb
 - name: Matthew R. Becker
   email: becker.mr@gmail.com
-  num_commits: 431
+  num_commits: 434
   first_commit: 2020-01-07 17:44:33
   github: beckermr
   alternate_emails:
@@ -589,7 +589,7 @@
   github: zklaus
 - name: pre-commit-ci[bot]
   email: 66853113+pre-commit-ci[bot]@users.noreply.github.com
-  num_commits: 33
+  num_commits: 35
   first_commit: 2023-10-30 15:49:50
   github: carterbox
 - name: Amit Kumar
@@ -626,7 +626,7 @@
   github: ytausch
 - name: dependabot[bot]
   email: 49699333+dependabot[bot]@users.noreply.github.com
-  num_commits: 5
+  num_commits: 6
   first_commit: 2024-05-21 04:47:22
 - name: nichmor
   email: nmorkotilo@gmail.com
@@ -682,3 +682,16 @@
   email: ralf.gommers@gmail.com
   num_commits: 1
   first_commit: 2024-11-26 06:02:35
+- name: Brandon Maier
+  email: brandon.maier@gmail.com
+  num_commits: 2
+  first_commit: 2024-12-03 07:44:39
+  github: blmaier
+- name: Michał Górny
+  email: mgorny@gentoo.org
+  num_commits: 15
+  first_commit: 2024-11-06 09:06:27
+- name: Matt Chan
+  email: 49702524+thewchan@users.noreply.github.com
+  num_commits: 1
+  first_commit: 2024-12-02 14:19:56
