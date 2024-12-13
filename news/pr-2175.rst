@@ -1,3 +1,0 @@
-**Changed:**
-
-* Added ``poetry`` as a valid ``pip`` build backend. (#2175)

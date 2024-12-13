@@ -4,6 +4,34 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.45.0
+====================
+
+**Changed:**
+
+* Replaced the ``GitPython`` dependency with ``pygit2`` (#2120).
+* Added ``poetry`` as a valid ``pip`` build backend. (#2175)
+* Set minimal Python version to 3.9. (#2180)
+* The SPDX identifier list has been updated
+
+**Fixed:**
+
+* Fixed compatibility with git index versions 3 and 4 (#2120).
+* Fixed a bug where ``$`` was not properly escaped in a regex and this caused false-positive hints for
+  v1 recipes and ``noarch: python`` packages. (#2184)
+
+**Authors:**
+
+* Matthew R. Becker
+* Uwe L. Korn
+* pre-commit-ci[bot]
+* Michał Górny
+* dependabot[bot]
+* Brandon Maier
+* Matt Chan
+
+
+
 v3.44.9
 ====================
 
