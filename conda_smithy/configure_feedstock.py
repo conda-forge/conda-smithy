@@ -16,7 +16,6 @@ from functools import lru_cache
 from itertools import chain, product
 from os import fspath
 from pathlib import Path, PurePath
-from typing import Dict
 
 import requests
 import yaml
@@ -697,7 +696,7 @@ def _sanitize_remote_ci_setup(remote_ci_setup):
 
 def _sanitize_build_tool_deps_as_dict(
     forge_dir, forge_config
-) -> Dict[str, str]:
+) -> dict[str, str]:
     """
     Aggregates different sources of build tool dependencies in
     mapping of package names to OR-merged version constraints.
@@ -1837,6 +1836,7 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
 
     azure_settings = deepcopy(forge_config["azure"][f"settings_{platform}"])
     azure_settings.pop("swapfile_size", None)
+    azure_settings.pop("install_atl", None)
     azure_settings.setdefault("strategy", {})
     azure_settings["strategy"].setdefault("matrix", {})
 

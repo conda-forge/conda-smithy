@@ -1,27 +1,32 @@
 import datetime
 import json
 import os
+import re
 import shutil
 import tempfile
 import time
 from collections import defaultdict
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Dict, Union
+from typing import Any, Union
 
 import jinja2
 import jinja2.sandbox
 import ruamel.yaml
 from conda_build.api import render as conda_build_render
+from conda_build.config import Config
 from conda_build.render import MetaData
 from rattler_build_conda_compat.render import MetaData as RattlerBuildMetaData
 
 RATTLER_BUILD = "rattler-build"
 CONDA_BUILD = "conda-build"
+SET_PYTHON_MIN_RE = re.compile(r"{%\s+set\s+python_min\s+=")
 
 
 def _get_metadata_from_feedstock_dir(
-    feedstock_directory: Union[str, os.PathLike], forge_config: Dict[str, Any]
+    feedstock_directory: Union[str, os.PathLike],
+    forge_config: dict[str, Any],
+    conda_forge_pinning_file: Union[str, os.PathLike, None] = None,
 ) -> Union[MetaData, RattlerBuildMetaData]:
     """
     Return either the conda-build metadata or rattler-build metadata from the feedstock directory
@@ -33,9 +38,15 @@ def _get_metadata_from_feedstock_dir(
             feedstock_directory,
         )
     else:
+        if conda_forge_pinning_file:
+            config = Config(
+                variant_config_files=[conda_forge_pinning_file],
+            )
+        else:
+            config = None
         meta = conda_build_render(
             feedstock_directory,
-            permit_undefined_jinja=True,
+            config=config,
             finalize=False,
             bypass_env_check=True,
             trim_skip=False,
@@ -106,7 +117,7 @@ class NullUndefined(jinja2.Undefined):
 
 class MockOS(dict):
     def __init__(self):
-        self.environ = defaultdict(lambda: "")
+        self.environ = defaultdict(str)
         self.sep = "/"
 
 
@@ -116,6 +127,15 @@ def stub_compatible_pin(*args, **kwargs):
 
 def stub_subpackage_pin(*args, **kwargs):
     return f"subpackage_pin {args[0]}"
+
+
+def _munge_python_min(text):
+    new_lines = []
+    for line in text.splitlines(keepends=True):
+        if SET_PYTHON_MIN_RE.match(line):
+            line = "{% set python_min = '9999' %}\n"
+        new_lines.append(line)
+    return "".join(new_lines)
 
 
 def render_meta_yaml(text):
@@ -131,10 +151,10 @@ def render_meta_yaml(text):
             pin_subpackage=stub_subpackage_pin,
             pin_compatible=stub_compatible_pin,
             cdt=lambda *args, **kwargs: "cdt_stub",
-            load_file_regex=lambda *args, **kwargs: defaultdict(lambda: ""),
-            load_file_data=lambda *args, **kwargs: defaultdict(lambda: ""),
-            load_setup_py_data=lambda *args, **kwargs: defaultdict(lambda: ""),
-            load_str_data=lambda *args, **kwargs: defaultdict(lambda: ""),
+            load_file_regex=lambda *args, **kwargs: defaultdict(str),
+            load_file_data=lambda *args, **kwargs: defaultdict(str),
+            load_setup_py_data=lambda *args, **kwargs: defaultdict(str),
+            load_str_data=lambda *args, **kwargs: defaultdict(str),
             datetime=datetime,
             time=time,
             target_platform="linux-64",
@@ -146,7 +166,7 @@ def render_meta_yaml(text):
     mockos = MockOS()
     py_ver = "3.7"
     context = {"os": mockos, "environ": mockos.environ, "PY_VER": py_ver}
-    content = env.from_string(text).render(context)
+    content = env.from_string(_munge_python_min(text)).render(context)
     return content
 
 

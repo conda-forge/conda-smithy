@@ -59,8 +59,21 @@ def recipe_dirname():
 
 
 @pytest.fixture(scope="function", params=["conda-build", "rattler-build"])
-def config_yaml(testing_workdir, recipe_dirname, request):
-    config = {"python": ["2.7", "3.5"], "r_base": ["3.3.2", "3.4.2"]}
+def config_yaml(testing_workdir, recipe_dirname, request, monkeypatch):
+    # conda-build has legacy behavior where these env vars cause config
+    # objects to have default values for the associated language.
+    # This causes test failures, so we unset them here.
+    monkeypatch.delenv("CONDA_PY", raising=False)
+    monkeypatch.delenv("CONDA_R", raising=False)
+    monkeypatch.delenv("CONDA_PERL", raising=False)
+    monkeypatch.delenv("CONDA_LUA", raising=False)
+    monkeypatch.delenv("CONDA_NPY", raising=False)
+
+    config = {
+        "python": ["2.7", "3.5"],
+        "r_base": ["3.3.2", "3.4.2"],
+        "python_min": ["2.7"],
+    }
     os.makedirs(os.path.join(testing_workdir, recipe_dirname))
     with open(os.path.join(testing_workdir, "config.yaml"), "w") as f:
         f.write("docker:\n")
@@ -138,6 +151,43 @@ requirements:
         - python
     run:
         - python
+    """
+        )
+    return RecipeConfigPair(
+        str(config_yaml.workdir),
+        _load_forge_config(
+            config_yaml.workdir,
+            exclusive_config_file=os.path.join(
+                config_yaml.workdir, recipe_dirname, "default_config.yaml"
+            ),
+        ),
+    )
+
+
+@pytest.fixture(scope="function")
+def noarch_recipe_with_python_min(config_yaml: ConfigYAML, recipe_dirname):
+    if config_yaml.type == "rattler-build":
+        jinjatxt = "${{ python_min }}"
+    else:
+        jinjatxt = "{{ python_min }}"
+    with open(
+        os.path.join(
+            config_yaml.workdir, recipe_dirname, config_yaml.recipe_name
+        ),
+        "w",
+    ) as fh:
+        fh.write(
+            f"""\
+package:
+    name: python-noarch-test
+    version: 1.0.0
+build:
+    noarch: python
+requirements:
+    host:
+        - python {jinjatxt}
+    run:
+        - python >={jinjatxt}
     """
         )
     return RecipeConfigPair(

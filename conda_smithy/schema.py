@@ -4,7 +4,7 @@
 import json
 from enum import Enum
 from inspect import cleandoc
-from typing import Any, Dict, List, Literal, Optional, Union
+from typing import Any, Literal, Optional, Union
 
 import yaml
 from conda.base.constants import KNOWN_SUBDIRS
@@ -44,6 +44,9 @@ conda_build_tools = Literal[
     # will run 'rattler-build build'
     "rattler-build",
 ]
+
+
+image_tags = Literal["cos7", "alma8", "alma9", "ubi8"]
 
 
 class CIservices(StrEnum):
@@ -105,7 +108,7 @@ class AzureRunnerSettings(BaseModel):
 
     model_config: ConfigDict = ConfigDict(extra="allow")
 
-    pool: Optional[Dict[str, str]] = Field(
+    pool: Optional[dict[str, str]] = Field(
         default_factory=lambda: {"vmImage": "ubuntu-latest"},
         description="The pool of self-hosted runners, e.g. 'vmImage': 'ubuntu-latest'",
     )
@@ -120,8 +123,13 @@ class AzureRunnerSettings(BaseModel):
         alias="timeoutInMinutes",
     )
 
-    variables: Optional[Dict[str, str]] = Field(
+    variables: Optional[dict[str, str]] = Field(
         default_factory=dict, description="Variables"
+    )
+
+    # windows only
+    install_atl: Optional[bool] = Field(
+        default=False, description="Whether to install ATL components for MSVC"
     )
 
 
@@ -147,7 +155,7 @@ class AzureConfig(BaseModel):
     )
 
     free_disk_space: Optional[
-        Union[bool, Nullable, List[Literal["apt", "cache", "docker"]]]
+        Union[bool, Nullable, list[Literal["apt", "cache", "docker"]]]
     ] = Field(
         default=False,
         description=cleandoc(
@@ -209,6 +217,7 @@ class AzureConfig(BaseModel):
 
     settings_win: AzureRunnerSettings = Field(
         default_factory=lambda: AzureRunnerSettings(
+            install_atl=False,
             pool={"vmImage": "windows-2022"},
             variables={
                 "MINIFORGE_HOME": "D:\\Miniforge",
@@ -218,7 +227,12 @@ class AzureConfig(BaseModel):
         ),
         description=cleandoc(
             """
-            Windows-specific settings for runners. Some important variables you can set are:
+            Windows-specific settings for runners. Aside from overriding the `vmImage`,
+            you can also specify `install_atl: true` in case you need the ATL components
+            for MSVC; these don't get installed by default anymore, see
+            https://github.com/actions/runner-images/issues/9873
+
+            Finally, under `variables`, some important things you can set are:
 
             - `CONDA_BLD_PATH`: Location of the conda-build workspace. Defaults to `D:\\bld`
             - `MINIFORGE_HOME`: Location of the base environment installation. Defaults to
@@ -289,7 +303,7 @@ class GithubActionsConfig(BaseModel):
     )
 
     free_disk_space: Optional[
-        Union[bool, Nullable, List[Literal["apt", "cache", "docker"]]]
+        Union[bool, Nullable, list[Literal["apt", "cache", "docker"]]]
     ] = Field(
         default=False,
         description=cleandoc(
@@ -348,13 +362,13 @@ class BotConfigVersionUpdates(BaseModel):
         description="Fraction of versions to keep for frequently updated packages",
     )
 
-    exclude: Optional[List[str]] = Field(
+    exclude: Optional[list[str]] = Field(
         default=[],
         description="List of versions to exclude. "
         "Make sure branch names are `str` by quoting the value.",
     )
 
-    sources: Optional[List[BotConfigVersionUpdatesSourcesChoice]] = Field(
+    sources: Optional[list[BotConfigVersionUpdatesSourcesChoice]] = Field(
         None,
         description=cleandoc(
             """
@@ -417,7 +431,7 @@ class BotConfig(BaseModel):
         description="Method for generating hints or updating recipe",
     )
 
-    abi_migration_branches: Optional[List[str]] = Field(
+    abi_migration_branches: Optional[list[str]] = Field(
         default=[],
         description="List of branches for additional bot migration PRs. "
         "Make sure branch names are `str` by quoting the value.",
@@ -466,7 +480,7 @@ class CondaBuildConfig(BaseModel):
 
 class LinterConfig(BaseModel):
 
-    skip: Optional[List[Lints]] = Field(
+    skip: Optional[list[Lints]] = Field(
         default_factory=list,
         description="List of lints to skip",
     )
@@ -545,13 +559,13 @@ BuildPlatform = create_model(
 OSVersion = create_model(
     "os_version",
     **{
-        platform.value: (Optional[Union[str, Nullable]], Field(default=None))
+        platform.value: (Optional[image_tags], Field(default=None))
         for platform in Platforms
         if platform.value.startswith("linux")
     },
 )
 
-ProviderType = Union[List[CIservices], CIservices, bool, Nullable]
+ProviderType = Union[list[CIservices], CIservices, bool, Nullable]
 
 Provider = create_model(
     "provider",
@@ -771,7 +785,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    choco: Optional[List[str]] = Field(
+    choco: Optional[list[str]] = Field(
         default_factory=list,
         description=cleandoc(
             """
@@ -825,7 +839,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    noarch_platforms: Optional[Union[Platforms, List[Platforms]]] = Field(
+    noarch_platforms: Optional[Union[Platforms, list[Platforms]]] = Field(
         default_factory=lambda: ["linux_64"],
         description=cleandoc(
             """
@@ -853,14 +867,20 @@ class ConfigModel(BaseModel):
         description=cleandoc(
             """
         This key is used to set the OS versions for `linux_*` platforms. Valid entries
-        map a linux platform and arch to either `cos6` or `cos7`.
-        Currently `cos6` is the default for `linux-64`.
-        All other linux architectures use CentOS 7.
-        Here is an example that enables CentOS 7 on `linux-64` builds
+        map a linux platform and arch to either `cos7`, `alma8`, `alma9` or `ubi8`.
 
+        Currently `alma9` is the default, which should work out-of-the-box for the vast
+        majority of uses.
+
+        Note that the image version does not imply a matching `glibc` requirement (which
+        can be set using `c_stdlib_version` in `recipe/conda_build_config.yaml`).
+
+        If you need to opt into older images, here's an example how to do it:
         ```yaml
         os_version:
             linux_64: cos7
+            linux_aarch64: cos7
+            linux_ppc64le: cos7
         ```
         """
         ),
@@ -952,7 +972,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    remote_ci_setup: Optional[Union[str, List[str]]] = Field(
+    remote_ci_setup: Optional[Union[str, list[str]]] = Field(
         default_factory=lambda: [
             "conda-forge-ci-setup=4",
             "conda-build>=24.1",
@@ -986,7 +1006,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    skip_render: Optional[List[str]] = Field(
+    skip_render: Optional[list[str]] = Field(
         default_factory=list,
         description=cleandoc(
             """
@@ -1005,7 +1025,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    templates: Optional[Dict[str, str]] = Field(
+    templates: Optional[dict[str, str]] = Field(
         default_factory=dict,
         description=cleandoc(
             """
@@ -1178,7 +1198,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    secrets: Optional[List[str]] = Field(
+    secrets: Optional[list[str]] = Field(
         default_factory=list,
         description=cleandoc(
             """
@@ -1200,7 +1220,7 @@ class ConfigModel(BaseModel):
     ###################################
     ####       CI Providers        ####
     ###################################
-    travis: Optional[Dict[str, Any]] = Field(
+    travis: Optional[dict[str, Any]] = Field(
         default_factory=dict,
         description=cleandoc(
             """
@@ -1210,7 +1230,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    circle: Optional[Dict[str, Any]] = Field(
+    circle: Optional[dict[str, Any]] = Field(
         default_factory=dict,
         description=cleandoc(
             """
@@ -1220,7 +1240,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    appveyor: Optional[Dict[str, Any]] = Field(
+    appveyor: Optional[dict[str, Any]] = Field(
         default_factory=lambda: {"image": "Visual Studio 2017"},
         description=cleandoc(
             """
@@ -1289,7 +1309,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    drone: Optional[Dict[str, str]] = Field(
+    drone: Optional[dict[str, str]] = Field(
         default_factory=dict,
         description=cleandoc(
             """
@@ -1309,7 +1329,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    woodpecker: Optional[Dict[str, str]] = Field(
+    woodpecker: Optional[dict[str, str]] = Field(
         default_factory=dict,
         description=cleandoc(
             """
@@ -1337,7 +1357,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    matrix: Optional[Dict[str, Any]] = Field(
+    matrix: Optional[dict[str, Any]] = Field(
         default_factory=dict,
         exclude=True,
         deprecated=True,

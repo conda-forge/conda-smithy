@@ -8,7 +8,7 @@ from glob import glob
 from inspect import cleandoc
 from pathlib import Path
 from textwrap import indent
-from typing import Any, List, Optional, Tuple
+from typing import Any, Optional
 
 import github
 import github.Auth
@@ -51,6 +51,7 @@ from conda_smithy.linter.lints import (
     lint_package_version,
     lint_pin_subpackages,
     lint_recipe_have_tests,
+    lint_recipe_is_parsable,
     lint_recipe_maintainers,
     lint_recipe_name,
     lint_recipe_v1_noarch_and_runtime_dependencies,
@@ -112,7 +113,7 @@ def lintify_meta_yaml(
     recipe_dir: Optional[str] = None,
     conda_forge: bool = False,
     recipe_version: int = 0,
-) -> Tuple[List[str], List[str]]:
+) -> tuple[list[str], list[str]]:
     lints = []
     hints = []
     major_sections = list(meta.keys())
@@ -309,7 +310,9 @@ def lintify_meta_yaml(
     lint_legacy_usage_of_compilers(build_requirements, lints)
 
     # 22: Single space in pinned requirements
-    lint_single_space_in_pinned_requirements(requirements_section, lints)
+    lint_single_space_in_pinned_requirements(
+        requirements_section, lints, recipe_version
+    )
 
     # 23: non noarch builds shouldn't use version constraints on python and r-base
     lint_non_noarch_builds(
@@ -410,16 +413,44 @@ def _maintainer_exists(maintainer: str) -> bool:
         gh = _cached_gh()
         try:
             gh.get_user(maintainer)
+            is_user = True
         except github.UnknownObjectException:
-            return False
-        return True
+            is_user = False
+
+        # for w/e reason, the user endpoint returns an entry for orgs
+        # however the org endpoint does not return an entry for users
+        # so we have to check both
+        try:
+            gh.get_organization(maintainer)
+            is_org = True
+        except github.UnknownObjectException:
+            is_org = False
     else:
-        return (
-            requests.get(
-                f"https://api.github.com/users/{maintainer}"
-            ).status_code
-            == 200
+        # this API request has no token and so has a restrictive rate limit
+        # return (
+        #     requests.get(
+        #         f"https://api.github.com/users/{maintainer}"
+        #     ).status_code
+        #     == 200
+        # )
+        # so we check two public URLs instead.
+        # 1. github.com/<maintainer>?tab=repositories - this URL works for all users and all orgs
+        # 2. https://github.com/orgs/<maintainer>/teams - this URL only works for
+        #    orgs so we make sure it fails
+        # we do not allow redirects to ensure we get the correct status code
+        # for the specific URL we requested
+        req_profile = requests.head(
+            f"https://github.com/{maintainer}",
+            allow_redirects=False,
         )
+        is_user = req_profile.status_code == 200
+        req_org = requests.head(
+            f"https://github.com/orgs/{maintainer}/teams",
+            allow_redirects=False,
+        )
+        is_org = req_org.status_code < 400
+
+    return is_user and not is_org
 
 
 @lru_cache(maxsize=1)
@@ -605,6 +636,22 @@ def run_conda_forge_specific(
         recipe_version,
         hints,
     )
+
+    # 11: ensure we can parse the recipe
+    if recipe_version == 1:
+        recipe_fname = os.path.join(recipe_dir or "", "recipe.yaml")
+    else:
+        recipe_fname = os.path.join(recipe_dir or "", "meta.yaml")
+
+    if os.path.exists(recipe_fname):
+        with open(recipe_fname) as fh:
+            recipe_text = fh.read()
+        lint_recipe_is_parsable(
+            recipe_text,
+            lints,
+            hints,
+            recipe_version=recipe_version,
+        )
 
 
 def _format_validation_msg(error: jsonschema.ValidationError):

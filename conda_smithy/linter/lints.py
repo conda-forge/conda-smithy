@@ -1,8 +1,10 @@
 import itertools
+import logging
 import os
 import re
+import tempfile
 from collections.abc import Sequence
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Literal, Optional
 
 from conda.exceptions import InvalidVersionSpec
 from conda.models.version import VersionOrder
@@ -19,6 +21,7 @@ from conda_smithy.linter.utils import (
     TEST_FILES,
     TEST_KEYS,
     _lint_recipe_name,
+    flatten_v1_if_else,
     get_section,
     is_selector_line,
     jinja_lines,
@@ -26,10 +29,12 @@ from conda_smithy.linter.utils import (
 )
 from conda_smithy.utils import get_yaml
 
+logger = logging.getLogger(__name__)
+
 
 def lint_section_order(
-    major_sections: List[str],
-    lints: List[str],
+    major_sections: list[str],
+    lints: list[str],
     recipe_version: int = 0,
 ):
     if recipe_version == 0:
@@ -84,10 +89,10 @@ def lint_recipe_maintainers(extra_section, lints):
 
 def lint_recipe_have_tests(
     recipe_dir: str,
-    test_section: List[Dict[str, Any]],
-    outputs_section: List[Dict[str, Any]],
-    lints: List[str],
-    hints: List[str],
+    test_section: list[dict[str, Any]],
+    outputs_section: list[dict[str, Any]],
+    lints: list[str],
+    hints: list[str],
     recipe_version: int = 0,
 ):
     if recipe_version == 1:
@@ -198,7 +203,7 @@ def lint_build_section_should_be_before_run(requirements_section, lints):
 
 
 def lint_sources_should_have_hash(
-    sources_section: List[Dict[str, Any]], lints: List[str]
+    sources_section: list[dict[str, Any]], lints: list[str]
 ):
     for source_section in sources_section:
         if "url" in source_section and not (
@@ -244,10 +249,10 @@ def lint_should_be_empty_line(meta_fname, lints):
 
 
 def lint_license_family_should_be_valid(
-    about_section: Dict[str, Any],
+    about_section: dict[str, Any],
     license: str,
-    needed_families: List[str],
-    lints: List[str],
+    needed_families: list[str],
+    lints: list[str],
     recipe_version: int = 0,
 ) -> None:
     lint_msg = "license_file entry is missing, but is required."
@@ -264,8 +269,8 @@ def lint_license_family_should_be_valid(
 
 
 def lint_recipe_name(
-    package_section: Dict[str, Any],
-    lints: List[str],
+    package_section: dict[str, Any],
+    lints: list[str],
 ):
     recipe_name = package_section.get("name", "").strip()
     lint_msg = _lint_recipe_name(recipe_name)
@@ -321,10 +326,10 @@ def lint_noarch(noarch_value: Optional[str], lints):
 
 def lint_recipe_v1_noarch_and_runtime_dependencies(
     noarch_value: Optional[Literal["python", "generic"]],
-    raw_requirements_section: Dict[str, Any],
-    build_section: Dict[str, Any],
+    raw_requirements_section: dict[str, Any],
+    build_section: dict[str, Any],
     noarch_platforms: bool,
-    lints: List[str],
+    lints: list[str],
 ) -> None:
     if noarch_value:
         conda_recipe_v1_linter.lint_usage_of_selectors_for_noarch(
@@ -424,6 +429,18 @@ def lint_single_space_in_pinned_requirements(
     recipe_version: int = 0,
 ):
     for section, requirements in requirements_section.items():
+        if (
+            recipe_version == 1
+            and section == "ignore_run_exports"
+            and requirements
+        ):
+            requirements = requirements[0].get("from_package", [])
+
+        # we can have `if` statements in the v1 requirements and we need to
+        # flatten them
+        if recipe_version == 1:
+            requirements = flatten_v1_if_else(requirements)
+
         for requirement in requirements or []:
             if recipe_version == 1:
                 req = requirement
@@ -685,8 +702,8 @@ def lint_check_usage_of_whls(meta_fname, noarch_value, lints, hints):
 
 
 def lint_rust_licenses_are_bundled(
-    build_reqs: Optional[List[str]],
-    lints: List[str],
+    build_reqs: Optional[list[str]],
+    lints: list[str],
     recipe_version: int = 0,
 ):
     if not build_reqs:
@@ -705,8 +722,8 @@ def lint_rust_licenses_are_bundled(
 
 
 def lint_go_licenses_are_bundled(
-    build_reqs: Optional[List[str]],
-    lints: List[str],
+    build_reqs: Optional[list[str]],
+    lints: list[str],
     recipe_version: int = 0,
 ):
     if not build_reqs:
@@ -792,6 +809,10 @@ def lint_stdlib(
     all_build_reqs_flat += flatten_reqs(output_build_reqs)
     all_run_reqs_flat += flatten_reqs(output_run_reqs)
     all_contraints_flat += flatten_reqs(output_contraints)
+
+    if recipe_version == 1:
+        all_build_reqs = [flatten_v1_if_else(reqs) for reqs in all_build_reqs]
+        all_build_reqs_flat = flatten_v1_if_else(all_build_reqs_flat)
 
     # this check needs to be done per output --> use separate (unflattened) requirements
     for build_reqs in all_build_reqs:
@@ -983,3 +1004,107 @@ def lint_stdlib(
         ):
             if sdk_lint not in lints:
                 lints.append(sdk_lint)
+
+
+def lint_recipe_is_parsable(
+    recipe_text: str,
+    lints: list[str],
+    hints: list[str],
+    recipe_version: int = 0,
+):
+    parse_results = {}
+
+    if recipe_version == 0:
+        parse_name = "conda-forge-tick (the bot)"
+        try:
+            from conda_forge_tick.recipe_parser import CondaMetaYAML
+        except ImportError:
+            parse_results[parse_name] = None
+            pass
+        else:
+            try:
+                CondaMetaYAML(recipe_text)
+            except Exception as e:
+                logger.warning(
+                    "Error parsing recipe with conda-forge-tick (the bot): %s",
+                    repr(e),
+                    exc_info=e,
+                )
+                parse_results[parse_name] = False
+            else:
+                parse_results[parse_name] = True
+
+        parse_name = "conda-souschef (grayskull)"
+        try:
+            from souschef.recipe import Recipe
+        except ImportError:
+            parse_results[parse_name] = None
+            pass
+        else:
+            with tempfile.TemporaryDirectory() as tmpdir:
+                recipe_file = os.path.join(tmpdir, "meta.yaml")
+                with open(recipe_file, "w") as f:
+                    f.write(recipe_text)
+
+                try:
+                    Recipe(load_file=recipe_file)
+                except Exception as e:
+                    logger.warning(
+                        "Error parsing recipe with conda-souschef: %s",
+                        repr(e),
+                        exc_info=e,
+                    )
+                    parse_results[parse_name] = False
+                else:
+                    parse_results[parse_name] = True
+
+    parse_name = "conda-recipe-manager"
+    try:
+        from conda_recipe_manager.parser.recipe_parser import RecipeParser
+    except ImportError:
+        parse_results[parse_name] = None
+        pass
+    else:
+        try:
+            RecipeParser(recipe_text)
+        except Exception as e:
+            logger.warning(
+                "Error parsing recipe with conda-recipe-manager: %s",
+                repr(e),
+                exc_info=e,
+            )
+            parse_results[parse_name] = False
+        else:
+            parse_results[parse_name] = True
+
+    if recipe_version == 1:
+        parse_name = "ruamel.yaml"
+        try:
+            get_yaml(allow_duplicate_keys=False).load(recipe_text)
+        except Exception as e:
+            logger.warning(
+                "Error parsing recipe with ruamel.yaml: %s",
+                repr(e),
+                exc_info=e,
+            )
+            parse_results[parse_name] = False
+        else:
+            parse_results[parse_name] = True
+
+    if parse_results:
+        if any(pv is not None for pv in parse_results.values()):
+            if not any(parse_results.values()):
+                lints.append(
+                    "The recipe is not parsable by any of the known "
+                    f"recipe parsers ({sorted(parse_results.keys())}). Please "
+                    "check the logs for more information and ensure your "
+                    "recipe can be parsed."
+                )
+            for parser_name, pv in parse_results.items():
+                if pv is False:
+                    hints.append(
+                        f"The recipe is not parsable by parser `{parser_name}`. Your recipe "
+                        "may not receive automatic updates and/or may not be compatible "
+                        "with conda-forge's infrastructure. Please check the logs for "
+                        "more information and ensure your recipe can be parsed."
+                    )

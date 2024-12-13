@@ -27,7 +27,7 @@
   aliases:
   - John Kirkham
   - jakirkham
-  num_commits: 31
+  num_commits: 33
   first_commit: 2016-03-17 21:05:53
   github: jakirkham
 - name: Daniel Bast
@@ -236,7 +236,7 @@
   email: uwe.korn@quantco.com
   alternate_emails:
   - xhochy@users.noreply.github.com
-  num_commits: 48
+  num_commits: 49
   first_commit: 2019-06-27 08:26:49
   github: xhochy
 - name: C.A.M. Gerlach
@@ -247,7 +247,7 @@
   email: isuru.11@cse.mrt.ac.lk
   alternate_emails:
   - isuruf@gmail.com
-  num_commits: 672
+  num_commits: 673
   first_commit: 2017-01-08 22:03:03
   github: isuruf
 - name: Julian Rüth
@@ -393,7 +393,7 @@
   github: shadowwalkersb
 - name: Matthew R. Becker
   email: becker.mr@gmail.com
-  num_commits: 388
+  num_commits: 431
   first_commit: 2020-01-07 17:44:33
   github: beckermr
   alternate_emails:
@@ -446,7 +446,7 @@
   email: hadrien.mary@gmail.com
   alternate_emails:
   - hadim@users.noreply.github.com
-  num_commits: 25
+  num_commits: 33
   first_commit: 2020-05-27 07:53:50
   github: hadim
 - name: Thomas Hopkins
@@ -476,7 +476,7 @@
   github: jwillemsen
 - name: Jaime Rodríguez-Guerra
   email: jaimergp@users.noreply.github.com
-  num_commits: 253
+  num_commits: 254
   first_commit: 2020-11-01 14:18:08
   github: jaimergp
 - name: Bastian Zimmermann
@@ -488,7 +488,7 @@
   github: BastianZim
 - name: Wolf Vollprecht
   email: w.vollprecht@gmail.com
-  num_commits: 60
+  num_commits: 63
   first_commit: 2021-01-19 04:39:35
   github: wolfv
 - name: Hugo Slepicka
@@ -534,12 +534,12 @@
   github: mwtoews
 - name: Nehal J Wani
   email: nehaljw.kkd1@gmail.com
-  num_commits: 1
+  num_commits: 2
   first_commit: 2021-11-13 10:51:42
   github: nehaljwani
 - name: H. Vetinari
   email: h.vetinari@gmx.com
-  num_commits: 61
+  num_commits: 66
   first_commit: 2021-11-14 02:53:10
 - name: Benjamin Tovar
   email: btovar@nd.edu
@@ -589,7 +589,7 @@
   github: zklaus
 - name: pre-commit-ci[bot]
   email: 66853113+pre-commit-ci[bot]@users.noreply.github.com
-  num_commits: 30
+  num_commits: 33
   first_commit: 2023-10-30 15:49:50
   github: carterbox
 - name: Amit Kumar
@@ -673,3 +673,12 @@
   num_commits: 2
   first_commit: 2024-11-10 09:28:45
   github: tetov
+- name: Adam Ehlers Nyholm Thomsen
+  email: aen@atp.dk
+  num_commits: 1
+  first_commit: 2024-11-21 12:29:45
+  github: adament
+- name: Ralf Gommers
+  email: ralf.gommers@gmail.com
+  num_commits: 1
+  first_commit: 2024-11-26 06:02:35

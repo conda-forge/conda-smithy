@@ -4,13 +4,14 @@ import shutil
 import subprocess
 import sys
 from glob import glob
-from typing import Any, Dict, List
+from typing import Any
 
 from conda_smithy.linter import conda_recipe_v1_linter
 from conda_smithy.linter.errors import HINT_NO_ARCH
 from conda_smithy.linter.utils import (
     VALID_PYTHON_BUILD_BACKENDS,
     find_local_config_file,
+    flatten_v1_if_else,
     is_selector_line,
 )
 from conda_smithy.utils import get_yaml
@@ -30,7 +31,7 @@ def hint_pip_usage(build_section, hints):
 
 
 def hint_sources_should_not_mention_pypi_io_but_pypi_org(
-    sources_section: List[Dict[str, Any]], hints: List[str]
+    sources_section: list[dict[str, Any]], hints: list[str]
 ):
     """
     Grayskull and conda-forge default recipe used to have pypi.io as a default,
@@ -180,12 +181,12 @@ def hint_check_spdx(about_section, hints):
 
     with open(os.path.join(os.path.dirname(__file__), "licenses.txt")) as f:
         expected_licenses = f.readlines()
-        expected_licenses = set([li.strip() for li in expected_licenses])
+        expected_licenses = {li.strip() for li in expected_licenses}
     with open(
         os.path.join(os.path.dirname(__file__), "license_exceptions.txt")
     ) as f:
         expected_exceptions = f.readlines()
-        expected_exceptions = set([li.strip() for li in expected_exceptions])
+        expected_exceptions = {li.strip() for li in expected_exceptions}
     if set(filtered_licenses) - expected_licenses:
         hints.append(
             "License is not an SPDX identifier (or a custom LicenseRef) nor an SPDX license expression.\n\n"
@@ -245,14 +246,37 @@ def hint_noarch_python_use_python_min(
     hints,
 ):
     if noarch_value == "python" and not outputs_section:
+        if recipe_version == 1:
+            host_reqs = flatten_v1_if_else(host_reqs)
+            run_reqs = flatten_v1_if_else(run_reqs)
+            test_reqs = flatten_v1_if_else(test_reqs)
+
         hint = ""
-        for section_name, syntax, reqs in [
-            ("host", "python {{ python_min }}", host_reqs),
-            ("run", "python >={{ python_min }}", run_reqs),
-            ("test.requires", "python {{ python_min }}", test_reqs),
+        for section_name, syntax, report_syntax, reqs in [
+            (
+                "host",
+                r"python\s+{{ python_min }}",
+                "python {{ python_min }}",
+                host_reqs,
+            ),
+            (
+                "run",
+                r"python\s+>={{ python_min }}",
+                "python >={{ python_min }}",
+                run_reqs,
+            ),
+            (
+                "test.requires",
+                r"python\s+{{ python_min }}",
+                "python {{ python_min }}",
+                test_reqs,
+            ),
         ]:
             if recipe_version == 1:
                 syntax = syntax.replace(
+                    "{{ python_min }}", r"\${{ python_min }}"
+                )
+                report_syntax = report_syntax.replace(
                     "{{ python_min }}", "${{ python_min }}"
                 )
                 test_syntax = syntax
@@ -263,12 +287,12 @@ def hint_noarch_python_use_python_min(
                 if (
                     req.strip().split()[0] == "python"
                     and req != "python"
-                    and test_syntax in req
+                    and re.search(test_syntax, req)
                 ):
                     break
             else:
                 hint += (
-                    f"\n   - For the `{section_name}` section of the recipe, you should usually use `{syntax}` "
+                    f"\n   - For the `{section_name}` section of the recipe, you should usually use `{report_syntax}` "
                     f"for the `python` entry."
                 )
 

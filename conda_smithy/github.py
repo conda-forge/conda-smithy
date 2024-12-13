@@ -8,7 +8,10 @@ from github.GithubException import GithubException
 from github.Organization import Organization
 from github.Team import Team
 
-from conda_smithy.configure_feedstock import _load_forge_config
+from conda_smithy.configure_feedstock import (
+    _load_forge_config,
+    get_cached_cfp_file_path,
+)
 from conda_smithy.utils import (
     _get_metadata_from_feedstock_dir,
     get_feedstock_name_from_meta,
@@ -150,7 +153,13 @@ def create_github_repo(args):
     # Load the conda-forge config and read metadata from the feedstock recipe
     forge_config = _load_forge_config(args.feedstock_directory, None)
     metadata = _get_metadata_from_feedstock_dir(
-        args.feedstock_directory, forge_config
+        args.feedstock_directory,
+        forge_config,
+        conda_forge_pinning_file=(
+            get_cached_cfp_file_path(".")[0]
+            if args.user is None and args.organization == "conda-forge"
+            else None
+        ),
     )
 
     feedstock_name = get_feedstock_name_from_meta(metadata)
@@ -258,9 +267,9 @@ def configure_github_team(meta, gh_repo, org, feedstock_name, remove=True):
     ]
 
     maintainers = set(meta.meta.get("extra", {}).get("recipe-maintainers", []))
-    maintainers = set(maintainer.lower() for maintainer in maintainers)
-    maintainer_teams = set(m for m in maintainers if "/" in m)
-    maintainers = set(m for m in maintainers if "/" not in m)
+    maintainers = {maintainer.lower() for maintainer in maintainers}
+    maintainer_teams = {m for m in maintainers if "/" in m}
+    maintainers = {m for m in maintainers if "/" not in m}
 
     # Try to get team or create it if it doesn't exist.
     team_name = feedstock_name
@@ -278,7 +287,7 @@ def configure_github_team(meta, gh_repo, org, feedstock_name, remove=True):
         )
         fs_team.add_to_repos(gh_repo)
 
-    current_maintainers = set([e.login.lower() for e in fs_team.get_members()])
+    current_maintainers = {e.login.lower() for e in fs_team.get_members()}
 
     # Get the all-members team
     description = f"All of the awesome {org.login} contributors!"
@@ -300,17 +309,15 @@ def configure_github_team(meta, gh_repo, org, feedstock_name, remove=True):
             remove_membership(fs_team, old_maintainer)
 
     # Add any new maintainer teams
-    maintainer_teams = set(
+    maintainer_teams = {
         m.split("/")[1]
         for m in maintainer_teams
         if m.startswith(str(org.login))
-    )
+    }
     current_maintainer_team_objs = {
         team.slug: team for team in current_maintainer_teams
     }
-    current_maintainer_teams = set(
-        [team.slug for team in current_maintainer_teams]
-    )
+    current_maintainer_teams = {team.slug for team in current_maintainer_teams}
     for new_team in maintainer_teams - current_maintainer_teams:
         team = org.get_team_by_slug(new_team)
         team.add_to_repos(gh_repo)

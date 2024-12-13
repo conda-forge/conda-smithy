@@ -110,28 +110,16 @@
           "title": "Upload Packages"
         },
         "settings_linux": {
-          "allOf": [
-            {
-              "$ref": "#/$defs/AzureRunnerSettings"
-            }
-          ],
+          "$ref": "#/$defs/AzureRunnerSettings",
           "description": "Linux-specific settings for runners"
         },
         "settings_osx": {
-          "allOf": [
-            {
-              "$ref": "#/$defs/AzureRunnerSettings"
-            }
-          ],
+          "$ref": "#/$defs/AzureRunnerSettings",
           "description": "OSX-specific settings for runners"
         },
         "settings_win": {
-          "allOf": [
-            {
-              "$ref": "#/$defs/AzureRunnerSettings"
-            }
-          ],
-          "description": "Windows-specific settings for runners. Some important variables you can set are:\n\n- `CONDA_BLD_PATH`: Location of the conda-build workspace. Defaults to `D:\\bld`\n- `MINIFORGE_HOME`: Location of the base environment installation. Defaults to\n  `D:\\Miniforge`.\n- `SET_PAGEFILE`: `\"True\"` to increase the pagefile size via conda-forge-ci-setup.\n\nIf you are running out of space in `D:`, consider changing to `C:`.\nIt's a slower drive but has more space available. We recommend you keep\nboth `CONDA_BLD_PATH` and `MINIFORGE_HOME` in the same drive for performance."
+          "$ref": "#/$defs/AzureRunnerSettings",
+          "description": "Windows-specific settings for runners. Aside from overriding the `vmImage`,\nyou can also specify `install_atl: true` in case you need the ATL components\nfor MSVC; these don't get installed by default anymore, see\nhttps://github.com/actions/runner-images/issues/9873\n\nFinally, under `variables`, some important things you can set are:\n\n- `CONDA_BLD_PATH`: Location of the conda-build workspace. Defaults to `D:\\bld`\n- `MINIFORGE_HOME`: Location of the base environment installation. Defaults to\n  `D:\\Miniforge`.\n- `SET_PAGEFILE`: `\"True\"` to increase the pagefile size via conda-forge-ci-setup.\n\nIf you are running out of space in `D:`, consider changing to `C:`.\nIt's a slower drive but has more space available. We recommend you keep\nboth `CONDA_BLD_PATH` and `MINIFORGE_HOME` in the same drive for performance."
         },
         "user_or_org": {
           "anyOf": [
@@ -244,6 +232,19 @@
           ],
           "description": "Variables",
           "title": "Variables"
+        },
+        "install_atl": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": false,
+          "description": "Whether to install ATL components for MSVC",
+          "title": "Install Atl"
         }
       },
       "title": "AzureRunnerSettings",
@@ -815,13 +816,17 @@
       "type": "object"
     },
     "Lints": {
-      "const": "lint_noarch_selectors",
+      "enum": [
+        "lint_noarch_selectors"
+      ],
       "title": "Lints",
       "type": "string"
     },
     "Nullable": {
-      "const": null,
       "description": "Created to avoid issue with schema validation of null values in lists or dicts.",
+      "enum": [
+        null
+      ],
       "title": "Nullable"
     },
     "Platforms": {
@@ -1070,10 +1075,13 @@
         "linux_32": {
           "anyOf": [
             {
+              "enum": [
+                "cos7",
+                "alma8",
+                "alma9",
+                "ubi8"
+              ],
               "type": "string"
-            },
-            {
-              "$ref": "#/$defs/Nullable"
             },
             {
               "type": "null"
@@ -1085,10 +1093,13 @@
         "linux_64": {
           "anyOf": [
             {
+              "enum": [
+                "cos7",
+                "alma8",
+                "alma9",
+                "ubi8"
+              ],
               "type": "string"
-            },
-            {
-              "$ref": "#/$defs/Nullable"
             },
             {
               "type": "null"
@@ -1100,10 +1111,13 @@
         "linux_aarch64": {
           "anyOf": [
             {
+              "enum": [
+                "cos7",
+                "alma8",
+                "alma9",
+                "ubi8"
+              ],
               "type": "string"
-            },
-            {
-              "$ref": "#/$defs/Nullable"
             },
             {
               "type": "null"
@@ -1115,10 +1129,13 @@
         "linux_armv6l": {
           "anyOf": [
             {
+              "enum": [
+                "cos7",
+                "alma8",
+                "alma9",
+                "ubi8"
+              ],
               "type": "string"
-            },
-            {
-              "$ref": "#/$defs/Nullable"
             },
             {
               "type": "null"
@@ -1130,10 +1147,13 @@
         "linux_armv7l": {
           "anyOf": [
             {
+              "enum": [
+                "cos7",
+                "alma8",
+                "alma9",
+                "ubi8"
+              ],
               "type": "string"
-            },
-            {
-              "$ref": "#/$defs/Nullable"
             },
             {
               "type": "null"
@@ -1145,10 +1165,13 @@
         "linux_ppc64": {
           "anyOf": [
             {
+              "enum": [
+                "cos7",
+                "alma8",
+                "alma9",
+                "ubi8"
+              ],
               "type": "string"
-            },
-            {
-              "$ref": "#/$defs/Nullable"
             },
             {
               "type": "null"
@@ -1160,10 +1183,13 @@
         "linux_ppc64le": {
           "anyOf": [
             {
+              "enum": [
+                "cos7",
+                "alma8",
+                "alma9",
+                "ubi8"
+              ],
               "type": "string"
-            },
-            {
-              "$ref": "#/$defs/Nullable"
             },
             {
               "type": "null"
@@ -1175,10 +1201,13 @@
         "linux_riscv64": {
           "anyOf": [
             {
+              "enum": [
+                "cos7",
+                "alma8",
+                "alma9",
+                "ubi8"
+              ],
               "type": "string"
-            },
-            {
-              "$ref": "#/$defs/Nullable"
             },
             {
               "type": "null"
@@ -1190,10 +1219,13 @@
         "linux_s390x": {
           "anyOf": [
             {
+              "enum": [
+                "cos7",
+                "alma8",
+                "alma9",
+                "ubi8"
+              ],
               "type": "string"
-            },
-            {
-              "$ref": "#/$defs/Nullable"
             },
             {
               "type": "null"
@@ -1928,7 +1960,7 @@
           "type": "null"
         }
       ],
-      "description": "This key is used to set the OS versions for `linux_*` platforms. Valid entries\nmap a linux platform and arch to either `cos6` or `cos7`.\nCurrently `cos6` is the default for `linux-64`.\nAll other linux architectures use CentOS 7.\nHere is an example that enables CentOS 7 on `linux-64` builds\n\n```yaml\nos_version:\n    linux_64: cos7\n```"
+      "description": "This key is used to set the OS versions for `linux_*` platforms. Valid entries\nmap a linux platform and arch to either `cos7`, `alma8`, `alma9` or `ubi8`.\n\nCurrently `alma9` is the default, which should work out-of-the-box for the vast\nmajority of uses.\n\nNote that the image version does not imply a matching `glibc` requirement (which\ncan be set using `c_stdlib_version` in `recipe/conda_build_config.yaml`).\n\nIf you need to opt into older images, here's an example how to do it:\n```yaml\nos_version:\n    linux_64: cos7\n    linux_aarch64: cos7\n    linux_ppc64le: cos7\n```"
     },
     "provider": {
       "anyOf": [

@@ -16,14 +16,14 @@ Authors are sorted by number of commits.
 * Min RK
 * Amit Kumar
 * Marcel Bargull
-* shadow_walker
 * John Kirkham
+* shadow_walker
+* Hadrien Mary
+* pre-commit-ci[bot]
 * Michael Sarahan
 * Mark Harfouche
-* pre-commit-ci[bot]
 * Bastian Zimmermann
 * Leo Fang
-* Hadrien Mary
 * Ryan Volz
 * Johnny Willemsen
 * Chris Burr
@@ -97,6 +97,7 @@ Authors are sorted by number of commits.
 * Hugo Slepicka
 * fhoehle
 * Matthew W. Thompson
+* Nehal J Wani
 * conda-forge-admin
 * Klaus Zimmermann
 * Dominic Davis-Foster
@@ -121,9 +122,10 @@ Authors are sorted by number of commits.
 * Nils Wentzell
 * Stuart Berg
 * Mike Taves
-* Nehal J Wani
 * Benjamin Tovar
 * Sylvain Corlay
 * Brandon Andersen
 * Vincenzo Eduardo Padulano
 * Bas Zalmstra
+* Adam Ehlers Nyholm Thomsen
+* Ralf Gommers

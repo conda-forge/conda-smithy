@@ -4,6 +4,111 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.44.9
+====================
+
+**Fixed:**
+
+* Fixed a bug in checking in recipe maintainers exist without a GitHub token
+  where the anonymous API would run out of requests. (#2171)
+* Ensure ``CONDA_BLD_PATH`` is properly exported in macOS. (#2145 via #2148)
+* Close logging group for ``micromamba`` installs in Windows. (#2148)
+
+**Authors:**
+
+* Matthew R. Becker
+* Hadrien Mary
+
+
+
+v3.44.8
+====================
+
+**Changed:**
+
+* Changed ``noarch-python`` hint to not require exactly one space between python and the Jinja2 expression. (#2151)
+* Added linting for incorrect values under `os_version:` in `conda-forge.yml`
+
+**Fixed:**
+
+* Fixed a bug where the ``python_min`` hint failed on v1 recipes. (#2154)
+* Fixed a bug that caused the linter to fail when a v1 recipe had the `ignore_run_exports` key. (#2157, #2153)
+* Fixed a bug where legacy conda env vars caused test failues. (#2162)
+* Fixed bugs in the linting of v1 recipes where requirements with conditional (if/else) statements were not properly flattened. (#2165)
+
+**Authors:**
+
+* Isuru Fernando
+* Matthew R. Becker
+* H. Vetinari
+* Wolf Vollprecht
+* pre-commit-ci[bot]
+* Adam Ehlers Nyholm Thomsen
+* Ralf Gommers
+
+
+
+v3.44.7
+====================
+
+**Added:**
+
+* Provide option `azure.settings_win.install_atl` (false by default), which can be used to install components that are necessary for some builds, but not present in the Azure images anymore
+* Added new ``conda-forge``-only hint+lint for recipe be able to be parsed. (#2141, #2147)
+* Set rattler cache to `RATTLER_CACHE_DIR=/tmp/rattler_cache` when building a linux package from a macOS machine with Docker. (#2124)
+
+**Fixed:**
+
+* Fixed a bug where the ``register-ci`` command fails for recipes with the ``python_min`` variable being used. (#2144)
+* Make sure $MINIFORGE_HOME folder exists during build. (#2142) (#2146)
+
+**Authors:**
+
+* Matthew R. Becker
+* Jaime Rodríguez-Guerra
+* H. Vetinari
+* John Kirkham
+* Hadrien Mary
+
+
+
+v3.44.6
+====================
+
+**Added:**
+
+* Add ``pymsbuild`` as another build backend
+
+**Fixed:**
+
+* Fixed a bug where creating feedstocks with `noarch: python` would not work correctly. (#2135. #2138)
+
+**Authors:**
+
+* Matthew R. Becker
+* Uwe L. Korn
+
+
+
+v3.44.4
+====================
+
+**Changed:**
+
+* Make old GHA removal relative to forge_dir
+
+**Fixed:**
+
+* Fixed bug when linting for ``noarch: python`` syntax and using jinja2 set statements. (#2132)
+
+**Authors:**
+
+* Matthew R. Becker
+* pre-commit-ci[bot]
+* Nehal J Wani
+
+
+
 v3.44.3
 ====================
 

@@ -1871,6 +1871,42 @@ linter:
         expected_message = 'Recipe maintainer "isuruf" does not exist'
         self.assertNotIn(expected_message, lints)
 
+        lints, _ = linter.lintify_meta_yaml(
+            {"extra": {"recipe-maintainers": ["conda-forge"]}},
+            conda_forge=True,
+        )
+        expected_message = 'Recipe maintainer "conda-forge" does not exist'
+        self.assertIn(expected_message, lints)
+
+    def test_maintainer_exists_no_token(self):
+        gh_token = os.environ.get("GH_TOKEN", None)
+        try:
+            if "GH_TOKEN" in os.environ:
+                del os.environ["GH_TOKEN"]
+
+            lints, _ = linter.lintify_meta_yaml(
+                {"extra": {"recipe-maintainers": ["support"]}},
+                conda_forge=True,
+            )
+            expected_message = 'Recipe maintainer "support" does not exist'
+            self.assertIn(expected_message, lints)
+
+            lints, _ = linter.lintify_meta_yaml(
+                {"extra": {"recipe-maintainers": ["isuruf"]}}, conda_forge=True
+            )
+            expected_message = 'Recipe maintainer "isuruf" does not exist'
+            self.assertNotIn(expected_message, lints)
+
+            lints, _ = linter.lintify_meta_yaml(
+                {"extra": {"recipe-maintainers": ["conda-forge"]}},
+                conda_forge=True,
+            )
+            expected_message = 'Recipe maintainer "conda-forge" does not exist'
+            self.assertIn(expected_message, lints)
+        finally:
+            if gh_token is not None:
+                os.environ["GH_TOKEN"] = gh_token
+
     def test_maintainer_team_exists(self):
         lints, _ = linter.lintify_meta_yaml(
             {
@@ -2481,6 +2517,37 @@ def test_lint_duplicate_cfyml():
         assert not any(lint.startswith(expected_message) for lint in lints)
 
 
+def test_cfyml_wrong_os_version():
+    expected_message = (
+        "{'linux_64': 'wrong'} is not valid under any of the given schemas"
+    )
+
+    with tmp_directory() as feedstock_dir:
+        cfyml = os.path.join(feedstock_dir, "conda-forge.yml")
+        recipe_dir = os.path.join(feedstock_dir, "recipe")
+        os.makedirs(recipe_dir, exist_ok=True)
+        with open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
+            fh.write(
+                """
+                package:
+                  name: foo
+                """
+            )
+
+        with open(cfyml, "w") as fh:
+            fh.write(
+                textwrap.dedent(
+                    """
+                    os_version:
+                      linux_64: wrong
+                    """
+                )
+            )
+
+        lints = linter.main(recipe_dir, conda_forge=True)
+        assert any(expected_message in lint for lint in lints)
+
+
 @pytest.mark.parametrize(
     "yaml_block,expected_message",
     [
@@ -2684,6 +2751,22 @@ def test_pin_compatible_in_run_exports_output(recipe_version: int):
 
 def test_v1_recipes():
     with get_recipe_in_dir("v1_recipes/recipe-no-lint.yaml") as recipe_dir:
+        lints, hints = linter.main(str(recipe_dir), return_hints=True)
+        assert not lints
+
+    with get_recipe_in_dir("v1_recipes/torchaudio.yaml") as recipe_dir:
+        lints, hints = linter.main(str(recipe_dir), return_hints=True)
+        assert not lints
+
+    with get_recipe_in_dir("v1_recipes/ada-url.yaml") as recipe_dir:
+        lints, hints = linter.main(str(recipe_dir), return_hints=True)
+        assert not lints
+
+
+def test_v1_recipes_ignore_run_exports():
+    with get_recipe_in_dir(
+        "v1_recipes/recipe-ignore_run_exports-no-lint.yaml"
+    ) as recipe_dir:
         lints, hints = linter.main(str(recipe_dir), return_hints=True)
         assert not lints
 
@@ -3176,6 +3259,54 @@ def test_hint_pip_no_build_backend(
             ),
             ["python >={{ python_min }}"],
         ),
+        (
+            textwrap.dedent(
+                """
+                {% set python_min = '3.7' %}
+
+                package:
+                  name: python
+
+                build:
+                  noarch: python
+
+                requirements:
+                  host:
+                    - python {{ python_min }}
+                  run:
+                    - python >={{ python_min }}
+
+                test:
+                  requires:
+                    - python {{ python_min }}
+                """
+            ),
+            [],
+        ),
+        (
+            textwrap.dedent(
+                """
+                {% set python_min = '3.7' %}
+
+                package:
+                  name: python
+
+                build:
+                  noarch: python
+
+                requirements:
+                  host:
+                    - python  {{ python_min }}
+                  run:
+                    - python  >={{ python_min }}
+
+                test:
+                  requires:
+                    - python    {{ python_min }}
+                """
+            ),
+            [],
+        ),
     ],
 )
 def test_hint_noarch_python_use_python_min(
@@ -3263,6 +3394,96 @@ def test_hint_noarch_python_use_python_min(
             ),
             [],
         ),
+        (
+            textwrap.dedent(
+                """
+                package:
+                  name: python
+
+                requirements:
+                  run:
+                    - if: blah
+                      then: python
+                      else: python 3.7
+                """
+            ),
+            [],
+        ),
+        (
+            textwrap.dedent(
+                """
+                package:
+                  name: python
+
+                build:
+                  noarch: python
+
+                requirements:
+                  run:
+                    - if: blah
+                      then: python
+                """
+            ),
+            [
+                "python ${{ python_min }}",
+                "python >=${{ python_min }}",
+            ],
+        ),
+        (
+            textwrap.dedent(
+                """
+                package:
+                  name: python
+
+                build:
+                  noarch: python
+
+                requirements:
+                  host:
+                    - if: blah
+                      then: blahblah
+                      else: python ${{ python_min }}
+                  run:
+                    - python >=${{ python_min }}
+
+                tests:
+                  - requirements:
+                      run:
+                        - python ${{ python_min }}
+                """
+            ),
+            [],
+        ),
+        (
+            """\
+requirements:
+  host:
+    - python ${{ python_min }}
+    - pip
+    - setuptools
+  run:
+    - python >=${{ python_min }}
+    - lxml >=4.2.1
+    - numpy >=1.13.3
+    - openbabel >=3.0.0
+  run_constraints:
+    - ImageMagick >=7.0
+    - pymol-open-source >=2.3.0
+
+tests:
+  - python:
+      imports:
+        - plip
+      python_version: ${{ python_min }}
+      pip_check: false # it fails at detecting openbabel. see https://github.com/conda-forge/openbabel-feedstock/issues/49
+  - script:
+      - plip --help
+    requirements:
+      run:
+        - python ${{ python_min }}
+""",
+            [],
+        ),
     ],
 )
 def test_hint_noarch_python_use_python_min_v1(
@@ -3290,6 +3511,325 @@ def test_hint_noarch_python_use_python_min_v1(
             not in hint
             for hint in hints
         )
+
+
+def test_hint_noarch_python_from_main_v1():
+    with tempfile.TemporaryDirectory() as tmpdir:
+        with open(os.path.join(tmpdir, "recipe.yaml"), "w") as f:
+            f.write(
+                """\
+context:
+  name: plip
+  version: 2.3.1
+
+package:
+  name: ${{ name|lower }}
+  version: ${{ version }}
+
+source:
+  url: https://pypi.org/packages/source/${{ name[0] }}/${{ name }}/${{ name }}-${{ version }}.tar.gz
+  sha256: 8d62c798b5ef6f3ae6ddd72e87c353bff8263e557dfa5f6ecf699cdf975f04ce
+
+build:
+  number: 1
+  noarch: python
+  script: python -m pip install . --no-build-isolation -vv
+  python:
+    entry_points:
+      - plip = plip.plipcmd:main
+
+requirements:
+  host:
+    - python ${{ python_min }}
+    - pip
+    - setuptools
+  run:
+    - python >=${{ python_min }}
+    - lxml >=4.2.1
+    - numpy >=1.13.3
+    - openbabel >=3.0.0
+  run_constraints:
+    - ImageMagick >=7.0
+    - pymol-open-source >=2.3.0
+
+tests:
+  - python:
+      imports:
+        - plip
+      python_version: ${{ python_min }}
+      pip_check: false # it fails at detecting openbabel. see https://github.com/conda-forge/openbabel-feedstock/issues/49
+  - script:
+      - plip --help
+    requirements:
+      run:
+        - python ${{ python_min }}
+
+about:
+  license: GPL-2.0-only
+  license_file: LICENSE.txt
+  summary: Analyze non-covalent protein-ligand interactions in 3D structures
+  description: |
+    Protein-Ligand Interaction Profiler - Analyze and visualize non-covalent
+    protein-ligand interactions in PDB files according to memo Salentin et al. (2015)
+  homepage: https://github.com/pharmai/plip
+  repository: https://github.com/pharmai/plip
+  documentation: https://github.com/pharmai/plip/blob/master/DOCUMENTATION.md
+
+extra:
+  recipe-maintainers:
+    - hadim
+    - mikemhenry
+"""
+            )
+        lints, hints = linter.main(tmpdir, return_hints=True, conda_forge=True)
+        assert not any(
+            "`noarch: python` recipes should usually follow the syntax in"
+            in hint
+            for hint in hints
+        )
+
+
+def test_lint_recipe_parses_ok():
+    with tempfile.TemporaryDirectory() as tmpdir:
+        with open(os.path.join(tmpdir, "meta.yaml"), "w") as f:
+            f.write(
+                textwrap.dedent(
+                    """
+                    package:
+                      name: foo
+
+                    build:
+                      number: 0
+
+                    test:
+                      imports:
+                        - foo
+
+                    about:
+                      home: something
+                      license: MIT
+                      license_file: LICENSE
+                      summary: a test recipe
+
+                    extra:
+                      recipe-maintainers:
+                        - a
+                        - b
+                    """
+                )
+            )
+        lints, hints = linter.main(tmpdir, return_hints=True, conda_forge=True)
+        assert not any(
+            lint.startswith(
+                "The recipe is not parsable by any of the known recipe parsers"
+            )
+            for lint in lints
+        ), lints
+        assert not any(
+            hint.startswith("The recipe is not parsable by parser")
+            for hint in hints
+        ), hints
+
+
+def test_lint_recipe_parses_forblock():
+    with tempfile.TemporaryDirectory() as tmpdir:
+        # CRM cannot parse this one
+        with open(os.path.join(tmpdir, "meta.yaml"), "w") as f:
+            f.write(
+                textwrap.dedent(
+                    """
+                    package:
+                      name: foo
+                    build:
+                      number: 0
+                    test:
+                      imports:
+                        {% for blah in blahs %}
+                        - {{ blah }}
+                        {% endfor %}
+                    about:
+                      home: something
+                      license: MIT
+                      license_file: LICENSE
+                      summary: a test recipe
+                    extra:
+                      recipe-maintainers:
+                          - a
+                          - b
+                    """
+                )
+            )
+        lints, hints = linter.main(tmpdir, return_hints=True, conda_forge=True)
+        assert not any(
+            lint.startswith(
+                "The recipe is not parsable by any of the known recipe parsers"
+            )
+            for lint in lints
+        ), lints
+        assert not any(
+            hint.startswith(
+                "The recipe is not parsable by parser `conda-forge-tick"
+            )
+            for hint in hints
+        ), hints
+        assert any(
+            hint.startswith(
+                "The recipe is not parsable by parser `conda-recipe-manager"
+            )
+            for hint in hints
+        ), hints
+        assert not any(
+            hint.startswith(
+                "The recipe is not parsable by parser `conda-souschef"
+            )
+            for hint in hints
+        ), hints
+
+
+def test_lint_recipe_parses_spacing():
+    with tempfile.TemporaryDirectory() as tmpdir:
+        # CRM fails if the yaml has differing spacing
+        with open(os.path.join(tmpdir, "meta.yaml"), "w") as f:
+            f.write(
+                textwrap.dedent(
+                    """
+                    package:
+                      name: foo
+                    build:
+                      number: 0
+                    test:
+                      imports:
+                          - foo
+                    about:
+                      home: something
+                      license: MIT
+                      license_file: LICENSE
+                      summary: a test recipe
+                    extra:
+                      recipe-maintainers:
+                          - a
+                          - b
+                    """
+                )
+            )
+        lints, hints = linter.main(tmpdir, return_hints=True, conda_forge=True)
+        assert not any(
+            lint.startswith(
+                "The recipe is not parsable by any of the known recipe parsers"
+            )
+            for lint in lints
+        ), lints
+        assert not any(
+            hint.startswith(
+                "The recipe is not parsable by parser `conda-forge-tick"
+            )
+            for hint in hints
+        ), hints
+        assert any(
+            hint.startswith(
+                "The recipe is not parsable by parser `conda-recipe-manager"
+            )
+            for hint in hints
+        ), hints
+        assert not any(
+            hint.startswith(
+                "The recipe is not parsable by parser `conda-souschef"
+            )
+            for hint in hints
+        ), hints
+
+
+def test_lint_recipe_parses_v1_spacing():
+    with tempfile.TemporaryDirectory() as tmpdir:
+        with open(os.path.join(tmpdir, "recipe.yaml"), "w") as f:
+            f.write(
+                textwrap.dedent(
+                    """
+                    package:
+                      name: blah
+
+                    build:
+                        number: ${{ build }}
+
+                    about:
+                      home: something
+                      license: MIT
+                      license_file: LICENSE
+                      summary: a test recipe
+
+                    extra:
+                      recipe-maintainers:
+                        - a
+                        - b
+                    """
+                )
+            )
+        lints, hints = linter.main(tmpdir, return_hints=True, conda_forge=True)
+        assert not any(
+            lint.startswith(
+                "The recipe is not parsable by any of the known recipe parsers"
+            )
+            for lint in lints
+        ), lints
+        assert any(
+            hint.startswith(
+                "The recipe is not parsable by parser `conda-recipe-manager"
+            )
+            for hint in hints
+        ), hints
+        assert not any(
+            hint.startswith(
+                "The recipe is not parsable by parser `ruamel.yaml"
+            )
+            for hint in hints
+        ), hints
+
+
+def test_lint_recipe_parses_v1_duplicate_keys():
+    with tempfile.TemporaryDirectory() as tmpdir:
+        with open(os.path.join(tmpdir, "recipe.yaml"), "w") as f:
+            f.write(
+                textwrap.dedent(
+                    """
+                    package:
+                      name: blah
+
+                    build:
+                      number: ${{ build }}
+                      number: 42
+
+                    about:
+                      home: something
+                      license: MIT
+                      license_file: LICENSE
+                      summary: a test recipe
+
+                    extra:
+                      recipe-maintainers:
+                        - a
+                        - b
+                    """
+                )
+            )
+        lints, hints = linter.main(tmpdir, return_hints=True, conda_forge=True)
+        assert not any(
+            lint.startswith(
+                "The recipe is not parsable by any of the known recipe parsers"
+            )
+            for lint in lints
+        ), lints
+        assert not any(
+            hint.startswith(
+                "The recipe is not parsable by parser `conda-recipe-manager"
+            )
+            for hint in hints
+        ), hints
+        assert any(
+            hint.startswith(
+                "The recipe is not parsable by parser `ruamel.yaml"
+            )
+            for hint in hints
+        ), hints
 
 
 if __name__ == "__main__":

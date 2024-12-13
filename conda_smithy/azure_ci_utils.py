@@ -1,5 +1,4 @@
 import os
-import typing
 import warnings
 
 from msrest.authentication import Authentication, BasicAuthentication
@@ -85,7 +84,7 @@ def get_service_endpoint(config: AzureConfig = default_config):
     service_endpoint_client = ServiceEndpointClient(
         base_url=config.instance_base_url, creds=config.credentials
     )
-    endpoints: typing.List[ServiceEndpoint] = (
+    endpoints: list[ServiceEndpoint] = (
         service_endpoint_client.get_service_endpoints(
             project=config.project_name, type="GitHub"
         )
@@ -99,7 +98,7 @@ def get_service_endpoint(config: AzureConfig = default_config):
 
 def get_queues(
     config: AzureConfig = default_config,
-) -> typing.List[TaskAgentQueue]:
+) -> list[TaskAgentQueue]:
     aclient = TaskAgentClient(config.instance_base_url, config.credentials)
     return aclient.get_agent_queues(config.project_name)
 
@@ -227,7 +226,7 @@ def register_repo(github_org, repo_name, config: AzureConfig = default_config):
     )
 
     # clean up existing builds for the same feedstock if present
-    existing_definitions: typing.List[BuildDefinitionReference] = (
+    existing_definitions: list[BuildDefinitionReference] = (
         bclient.get_definitions(project=config.project_name, name=repo_name)
     )
     if existing_definitions:
@@ -253,7 +252,7 @@ def build_client(config: AzureConfig = default_config) -> BuildClient:
 def repo_registered(
     github_org: str, repo_name: str, config: AzureConfig = default_config
 ) -> bool:
-    existing_definitions: typing.List[BuildDefinitionReference] = build_client(
+    existing_definitions: list[BuildDefinitionReference] = build_client(
         config
     ).get_definitions(project=config.project_name, name=repo_name)
 

@@ -3,10 +3,10 @@ import os
 import re
 import sys
 import time
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from functools import lru_cache
 from glob import glob
-from typing import Dict, List, Mapping, Optional, Union
+from typing import Optional, Union
 
 import requests
 from conda.models.version import InvalidVersionSpec, VersionOrder
@@ -59,9 +59,11 @@ VALID_PYTHON_BUILD_BACKENDS = [
     "setuptools",
     "flit-core",
     "hatchling",
+    "poetry",
     "poetry-core",
     "pdm-backend",
     "pdm-pep517",
+    "pymsbuild",
     "meson-python",
     "scikit-build-core",
     "maturin",
@@ -95,7 +97,7 @@ def get_meta_section(parent, name, lints):
     return section
 
 
-def get_recipe_v1_section(meta, name) -> Union[Dict, List[Dict]]:
+def get_recipe_v1_section(meta, name) -> Union[dict, list[dict]]:
     if name == "requirements":
         return rattler_loader.load_all_requirements(meta)
     elif name == "tests":
@@ -227,3 +229,14 @@ def load_linter_toml_metdata_internal(time_salt):
         return None
     hints_toml_str = hints_toml_req.content.decode("utf-8")
     return tomllib.loads(hints_toml_str)
+
+
+def flatten_v1_if_else(requirements: list[str | dict]) -> list[str]:
+    flattened_requirements = []
+    for req in requirements:
+        if isinstance(req, dict):
+            flattened_requirements.extend(req["then"])
+            flattened_requirements.extend(req.get("else") or [])
+        else:
+            flattened_requirements.append(req)
+    return flattened_requirements
