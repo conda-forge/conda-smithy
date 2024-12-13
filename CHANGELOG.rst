@@ -7,6 +7,14 @@ conda-smithy Change Log
 v3.45.0
 ====================
 
+**Authors:**
+
+
+
+
+v3.45.0
+====================
+
 **Changed:**
 
 * Replaced the ``GitPython`` dependency with ``pygit2`` (#2120).
