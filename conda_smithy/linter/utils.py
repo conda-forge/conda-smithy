@@ -57,6 +57,7 @@ RATTLER_BUILD_TOOL = "rattler-build"
 
 VALID_PYTHON_BUILD_BACKENDS = [
     "setuptools",
+    "flit",
     "flit-core",
     "hatchling",
     "poetry",
