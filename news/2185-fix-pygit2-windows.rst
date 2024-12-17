@@ -16,7 +16,7 @@
 
 **Fixed:**
 
-* Fix passing paths to ``pygit2`` on Windows (#2185)
+* Fix passing paths to ``pygit2`` on Windows. (#2192)
 
 **Security:**
 
