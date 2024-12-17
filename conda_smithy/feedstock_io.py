@@ -38,7 +38,9 @@ def set_exe_file(filename, set_exe=True):
 
     repo = get_repo(filename)
     if repo:
-        index_entry = repo.index[os.path.relpath(filename, repo.workdir)]
+        index_entry = repo.index[
+            os.path.relpath(filename, repo.workdir).replace(os.path.sep, "/")
+        ]
         if set_exe:
             index_entry.mode |= all_execute_permissions
         else:
@@ -65,7 +67,9 @@ def write_file(filename):
 
     repo = get_repo(filename)
     if repo:
-        repo.index.add(os.path.relpath(filename, repo.workdir))
+        repo.index.add(
+            os.path.relpath(filename, repo.workdir).replace(os.path.sep, "/")
+        )
         repo.index.write()
 
 
@@ -123,5 +127,7 @@ def copy_file(src, dst):
 
     repo = get_repo(dst)
     if repo:
-        repo.index.add(os.path.relpath(dst, repo.workdir))
+        repo.index.add(
+            os.path.relpath(dst, repo.workdir).replace(os.path.sep, "/")
+        )
         repo.index.write()
