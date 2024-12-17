@@ -4,7 +4,7 @@ import os
 import re
 import tempfile
 from collections.abc import Sequence
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Literal, Optional
 
 from conda.exceptions import InvalidVersionSpec
 from conda.models.version import VersionOrder
@@ -33,8 +33,8 @@ logger = logging.getLogger(__name__)
 
 
 def lint_section_order(
-    major_sections: List[str],
-    lints: List[str],
+    major_sections: list[str],
+    lints: list[str],
     recipe_version: int = 0,
 ):
     if recipe_version == 0:
@@ -89,10 +89,10 @@ def lint_recipe_maintainers(extra_section, lints):
 
 def lint_recipe_have_tests(
     recipe_dir: str,
-    test_section: List[Dict[str, Any]],
-    outputs_section: List[Dict[str, Any]],
-    lints: List[str],
-    hints: List[str],
+    test_section: list[dict[str, Any]],
+    outputs_section: list[dict[str, Any]],
+    lints: list[str],
+    hints: list[str],
     recipe_version: int = 0,
 ):
     if recipe_version == 1:
@@ -203,7 +203,7 @@ def lint_build_section_should_be_before_run(requirements_section, lints):
 
 
 def lint_sources_should_have_hash(
-    sources_section: List[Dict[str, Any]], lints: List[str]
+    sources_section: list[dict[str, Any]], lints: list[str]
 ):
     for source_section in sources_section:
         if "url" in source_section and not (
@@ -249,10 +249,10 @@ def lint_should_be_empty_line(meta_fname, lints):
 
 
 def lint_license_family_should_be_valid(
-    about_section: Dict[str, Any],
+    about_section: dict[str, Any],
     license: str,
-    needed_families: List[str],
-    lints: List[str],
+    needed_families: list[str],
+    lints: list[str],
     recipe_version: int = 0,
 ) -> None:
     lint_msg = "license_file entry is missing, but is required."
@@ -269,8 +269,8 @@ def lint_license_family_should_be_valid(
 
 
 def lint_recipe_name(
-    package_section: Dict[str, Any],
-    lints: List[str],
+    package_section: dict[str, Any],
+    lints: list[str],
 ):
     recipe_name = package_section.get("name", "").strip()
     lint_msg = _lint_recipe_name(recipe_name)
@@ -326,10 +326,10 @@ def lint_noarch(noarch_value: Optional[str], lints):
 
 def lint_recipe_v1_noarch_and_runtime_dependencies(
     noarch_value: Optional[Literal["python", "generic"]],
-    raw_requirements_section: Dict[str, Any],
-    build_section: Dict[str, Any],
+    raw_requirements_section: dict[str, Any],
+    build_section: dict[str, Any],
     noarch_platforms: bool,
-    lints: List[str],
+    lints: list[str],
 ) -> None:
     if noarch_value:
         conda_recipe_v1_linter.lint_usage_of_selectors_for_noarch(
@@ -702,8 +702,8 @@ def lint_check_usage_of_whls(meta_fname, noarch_value, lints, hints):
 
 
 def lint_rust_licenses_are_bundled(
-    build_reqs: Optional[List[str]],
-    lints: List[str],
+    build_reqs: Optional[list[str]],
+    lints: list[str],
     recipe_version: int = 0,
 ):
     if not build_reqs:
@@ -722,8 +722,8 @@ def lint_rust_licenses_are_bundled(
 
 
 def lint_go_licenses_are_bundled(
-    build_reqs: Optional[List[str]],
-    lints: List[str],
+    build_reqs: Optional[list[str]],
+    lints: list[str],
     recipe_version: int = 0,
 ):
     if not build_reqs:
@@ -1008,8 +1008,8 @@ def lint_stdlib(
 
 def lint_recipe_is_parsable(
     recipe_text: str,
-    lints: List[str],
-    hints: List[str],
+    lints: list[str],
+    hints: list[str],
     recipe_version: int = 0,
 ):
     parse_results = {}

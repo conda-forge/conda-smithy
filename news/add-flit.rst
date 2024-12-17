@@ -4,7 +4,7 @@
 
 **Changed:**
 
-* <news item>
+* Add `flit` (previously only `flit-core`) to the list of valid build backends (#2187)
 
 **Deprecated:**
 
@@ -16,7 +16,7 @@
 
 **Fixed:**
 
-* Fixed a bug where legacy conda env vars caused test failues. (#2162)
+* <news item>
 
 **Security:**
 

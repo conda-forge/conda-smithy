@@ -8,7 +8,7 @@ import time
 from collections import defaultdict
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Dict, Union
+from typing import Any, Union
 
 import jinja2
 import jinja2.sandbox
@@ -25,7 +25,7 @@ SET_PYTHON_MIN_RE = re.compile(r"{%\s+set\s+python_min\s+=")
 
 def _get_metadata_from_feedstock_dir(
     feedstock_directory: Union[str, os.PathLike],
-    forge_config: Dict[str, Any],
+    forge_config: dict[str, Any],
     conda_forge_pinning_file: Union[str, os.PathLike, None] = None,
 ) -> Union[MetaData, RattlerBuildMetaData]:
     """
@@ -117,7 +117,7 @@ class NullUndefined(jinja2.Undefined):
 
 class MockOS(dict):
     def __init__(self):
-        self.environ = defaultdict(lambda: "")
+        self.environ = defaultdict(str)
         self.sep = "/"
 
 
@@ -151,10 +151,10 @@ def render_meta_yaml(text):
             pin_subpackage=stub_subpackage_pin,
             pin_compatible=stub_compatible_pin,
             cdt=lambda *args, **kwargs: "cdt_stub",
-            load_file_regex=lambda *args, **kwargs: defaultdict(lambda: ""),
-            load_file_data=lambda *args, **kwargs: defaultdict(lambda: ""),
-            load_setup_py_data=lambda *args, **kwargs: defaultdict(lambda: ""),
-            load_str_data=lambda *args, **kwargs: defaultdict(lambda: ""),
+            load_file_regex=lambda *args, **kwargs: defaultdict(str),
+            load_file_data=lambda *args, **kwargs: defaultdict(str),
+            load_setup_py_data=lambda *args, **kwargs: defaultdict(str),
+            load_str_data=lambda *args, **kwargs: defaultdict(str),
             datetime=datetime,
             time=time,
             target_platform="linux-64",

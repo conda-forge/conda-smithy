@@ -1,6 +1,5 @@
 import json
 from pathlib import Path
-from typing import List, Tuple
 
 from jsonschema import Draft202012Validator, validators
 from jsonschema.exceptions import ValidationError
@@ -40,7 +39,7 @@ _VALIDATOR_CLASS = get_validator_class()
 
 def validate_json_schema(
     config, schema_file: str = None
-) -> Tuple[List[ValidationError], List[ValidationError]]:
+) -> tuple[list[ValidationError], list[ValidationError]]:
     # Validate the merged configuration against a JSON schema
     if not schema_file:
         schema_file = CONDA_FORGE_YAML_SCHEMA_FILE

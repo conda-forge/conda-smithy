@@ -25,6 +25,8 @@ if "%MINIFORGE_HOME%"=="" set "MINIFORGE_HOME=%USERPROFILE%\Miniforge3"
 :: Remove trailing backslash, if present
 if "%MINIFORGE_HOME:~-1%"=="\" set "MINIFORGE_HOME=%MINIFORGE_HOME:~0,-1%"
 
+{#- NOTE: We are NOT setting a default CONDA_BLD_PATH here; that's done in conda-forge-ci-setup #}
+
 {%- if conda_install_tool == "micromamba" %}
 call :start_group "Provisioning base env with micromamba"
 set "MAMBA_ROOT_PREFIX=%MINIFORGE_HOME%-micromamba-%RANDOM%"
@@ -49,6 +51,7 @@ if !errorlevel! neq 0 exit /b !errorlevel!
 echo Removing %MAMBA_ROOT_PREFIX%
 del /S /Q "%MAMBA_ROOT_PREFIX%" >nul
 del /S /Q "%MICROMAMBA_TMPDIR%" >nul
+call :end_group
 {%- elif conda_install_tool == "pixi" %}
 call :start_group "Provisioning base env with pixi"
 echo Installing pixi

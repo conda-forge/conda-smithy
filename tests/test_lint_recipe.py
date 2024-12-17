@@ -1871,6 +1871,42 @@ linter:
         expected_message = 'Recipe maintainer "isuruf" does not exist'
         self.assertNotIn(expected_message, lints)
 
+        lints, _ = linter.lintify_meta_yaml(
+            {"extra": {"recipe-maintainers": ["conda-forge"]}},
+            conda_forge=True,
+        )
+        expected_message = 'Recipe maintainer "conda-forge" does not exist'
+        self.assertIn(expected_message, lints)
+
+    def test_maintainer_exists_no_token(self):
+        gh_token = os.environ.get("GH_TOKEN", None)
+        try:
+            if "GH_TOKEN" in os.environ:
+                del os.environ["GH_TOKEN"]
+
+            lints, _ = linter.lintify_meta_yaml(
+                {"extra": {"recipe-maintainers": ["support"]}},
+                conda_forge=True,
+            )
+            expected_message = 'Recipe maintainer "support" does not exist'
+            self.assertIn(expected_message, lints)
+
+            lints, _ = linter.lintify_meta_yaml(
+                {"extra": {"recipe-maintainers": ["isuruf"]}}, conda_forge=True
+            )
+            expected_message = 'Recipe maintainer "isuruf" does not exist'
+            self.assertNotIn(expected_message, lints)
+
+            lints, _ = linter.lintify_meta_yaml(
+                {"extra": {"recipe-maintainers": ["conda-forge"]}},
+                conda_forge=True,
+            )
+            expected_message = 'Recipe maintainer "conda-forge" does not exist'
+            self.assertIn(expected_message, lints)
+        finally:
+            if gh_token is not None:
+                os.environ["GH_TOKEN"] = gh_token
+
     def test_maintainer_team_exists(self):
         lints, _ = linter.lintify_meta_yaml(
             {
@@ -3358,6 +3394,96 @@ def test_hint_noarch_python_use_python_min(
             ),
             [],
         ),
+        (
+            textwrap.dedent(
+                """
+                package:
+                  name: python
+
+                requirements:
+                  run:
+                    - if: blah
+                      then: python
+                      else: python 3.7
+                """
+            ),
+            [],
+        ),
+        (
+            textwrap.dedent(
+                """
+                package:
+                  name: python
+
+                build:
+                  noarch: python
+
+                requirements:
+                  run:
+                    - if: blah
+                      then: python
+                """
+            ),
+            [
+                "python ${{ python_min }}",
+                "python >=${{ python_min }}",
+            ],
+        ),
+        (
+            textwrap.dedent(
+                """
+                package:
+                  name: python
+
+                build:
+                  noarch: python
+
+                requirements:
+                  host:
+                    - if: blah
+                      then: blahblah
+                      else: python ${{ python_min }}
+                  run:
+                    - python >=${{ python_min }}
+
+                tests:
+                  - requirements:
+                      run:
+                        - python ${{ python_min }}
+                """
+            ),
+            [],
+        ),
+        (
+            """\
+requirements:
+  host:
+    - python ${{ python_min }}
+    - pip
+    - setuptools
+  run:
+    - python >=${{ python_min }}
+    - lxml >=4.2.1
+    - numpy >=1.13.3
+    - openbabel >=3.0.0
+  run_constraints:
+    - ImageMagick >=7.0
+    - pymol-open-source >=2.3.0
+
+tests:
+  - python:
+      imports:
+        - plip
+      python_version: ${{ python_min }}
+      pip_check: false # it fails at detecting openbabel. see https://github.com/conda-forge/openbabel-feedstock/issues/49
+  - script:
+      - plip --help
+    requirements:
+      run:
+        - python ${{ python_min }}
+""",
+            [],
+        ),
     ],
 )
 def test_hint_noarch_python_use_python_min_v1(
@@ -3383,6 +3509,82 @@ def test_hint_noarch_python_use_python_min_v1(
         assert all(
             "noarch: python recipes should almost always follow the syntax in"
             not in hint
+            for hint in hints
+        )
+
+
+def test_hint_noarch_python_from_main_v1():
+    with tempfile.TemporaryDirectory() as tmpdir:
+        with open(os.path.join(tmpdir, "recipe.yaml"), "w") as f:
+            f.write(
+                """\
+context:
+  name: plip
+  version: 2.3.1
+
+package:
+  name: ${{ name|lower }}
+  version: ${{ version }}
+
+source:
+  url: https://pypi.org/packages/source/${{ name[0] }}/${{ name }}/${{ name }}-${{ version }}.tar.gz
+  sha256: 8d62c798b5ef6f3ae6ddd72e87c353bff8263e557dfa5f6ecf699cdf975f04ce
+
+build:
+  number: 1
+  noarch: python
+  script: python -m pip install . --no-build-isolation -vv
+  python:
+    entry_points:
+      - plip = plip.plipcmd:main
+
+requirements:
+  host:
+    - python ${{ python_min }}
+    - pip
+    - setuptools
+  run:
+    - python >=${{ python_min }}
+    - lxml >=4.2.1
+    - numpy >=1.13.3
+    - openbabel >=3.0.0
+  run_constraints:
+    - ImageMagick >=7.0
+    - pymol-open-source >=2.3.0
+
+tests:
+  - python:
+      imports:
+        - plip
+      python_version: ${{ python_min }}
+      pip_check: false # it fails at detecting openbabel. see https://github.com/conda-forge/openbabel-feedstock/issues/49
+  - script:
+      - plip --help
+    requirements:
+      run:
+        - python ${{ python_min }}
+
+about:
+  license: GPL-2.0-only
+  license_file: LICENSE.txt
+  summary: Analyze non-covalent protein-ligand interactions in 3D structures
+  description: |
+    Protein-Ligand Interaction Profiler - Analyze and visualize non-covalent
+    protein-ligand interactions in PDB files according to memo Salentin et al. (2015)
+  homepage: https://github.com/pharmai/plip
+  repository: https://github.com/pharmai/plip
+  documentation: https://github.com/pharmai/plip/blob/master/DOCUMENTATION.md
+
+extra:
+  recipe-maintainers:
+    - hadim
+    - mikemhenry
+"""
+            )
+        lints, hints = linter.main(tmpdir, return_hints=True, conda_forge=True)
+        assert not any(
+            "`noarch: python` recipes should usually follow the syntax in"
+            in hint
             for hint in hints
         )
 
