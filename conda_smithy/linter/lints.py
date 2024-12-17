@@ -1102,9 +1102,22 @@ def lint_recipe_is_parsable(
                 )
             for parser_name, pv in parse_results.items():
                 if pv is False:
+                    if parser_name == "conda-souschef (grayskull)":
+                        msg = (
+                            "This parser is not currently used by conda-forge, but may be in the future. "
+                            "We are collecting information to see which recipes are compatible with grayskull."
+                        )
+                    elif parser_name == "conda-recipe-manager":
+                        msg = (
+                            "The recipe can only be automatically migrated to the new v1 format "
+                            "if it is parseable by conda-recipe-manager."
+                        )
+                    else:
+                        msg = (
+                            "Your recipe  may not receive automatic updates and/or may not be compatible "
+                            "with conda-forge's infrastructure. Please check the logs for "
+                            "more information and ensure your recipe can be parsed."
+                        )
                     hints.append(
-                        f"The recipe is not parsable by parser `{parser_name}`. Your recipe "
-                        "may not receive automatic updates and/or may not be compatible "
-                        "with conda-forge's infrastructure. Please check the logs for "
-                        "more information and ensure your recipe can be parsed."
+                        f"The recipe is not parsable by parser `{parser_name}`. {msg}"
                     )
