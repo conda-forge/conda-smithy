@@ -31,6 +31,7 @@ import subprocess
 import tempfile
 import time
 from contextlib import contextmanager, redirect_stderr, redirect_stdout
+from pathlib import Path
 
 import pygit2
 import requests
@@ -425,7 +426,10 @@ def register_feedstock_token(
                 json.dump(token_data, fp)
 
             # push
-            repo.index.add(os.path.relpath(token_file, tmpdir))
+            index_path = (
+                Path(token_file).resolve().relative_to(tmpdir).as_posix()
+            )
+            repo.index.add(index_path)
             repo.index.write()
             subprocess.run(
                 [

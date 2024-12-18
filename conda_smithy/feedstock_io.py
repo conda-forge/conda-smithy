@@ -2,6 +2,7 @@ import os
 import shutil
 import stat
 from contextlib import contextmanager
+from pathlib import Path
 
 
 def get_repo(path, search_parent_directories=True):
@@ -38,7 +39,10 @@ def set_exe_file(filename, set_exe=True):
 
     repo = get_repo(filename)
     if repo:
-        index_entry = repo.index[os.path.relpath(filename, repo.workdir)]
+        index_path = (
+            Path(filename).resolve().relative_to(repo.workdir).as_posix()
+        )
+        index_entry = repo.index[index_path]
         if set_exe:
             index_entry.mode |= all_execute_permissions
         else:
@@ -65,7 +69,10 @@ def write_file(filename):
 
     repo = get_repo(filename)
     if repo:
-        repo.index.add(os.path.relpath(filename, repo.workdir))
+        index_path = (
+            Path(filename).resolve().relative_to(repo.workdir).as_posix()
+        )
+        repo.index.add(index_path)
         repo.index.write()
 
 
@@ -91,7 +98,10 @@ def remove_file(filename):
     repo = get_repo(filename)
     if repo:
         try:
-            repo.index.remove(os.path.relpath(filename, repo.workdir))
+            index_path = (
+                Path(filename).resolve().relative_to(repo.workdir).as_posix()
+            )
+            repo.index.remove(index_path)
             repo.index.write()
         except OSError:  # this is specifically "file not in index"
             pass
@@ -123,5 +133,6 @@ def copy_file(src, dst):
 
     repo = get_repo(dst)
     if repo:
-        repo.index.add(os.path.relpath(dst, repo.workdir))
+        index_path = Path(dst).resolve().relative_to(repo.workdir).as_posix()
+        repo.index.add(index_path)
         repo.index.write()
