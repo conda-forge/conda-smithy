@@ -12,8 +12,8 @@ Authors are sorted by number of commits.
 * Wolf Vollprecht
 * Uwe L. Korn
 * Filipe Fernandes
-* Dougal J. Sutherland
 * Min RK
+* Dougal J. Sutherland
 * pre-commit-ci[bot]
 * Amit Kumar
 * Marcel Bargull
@@ -30,10 +30,10 @@ Authors are sorted by number of commits.
 * Julian Rüth
 * Yannik Tausch
 * Daniel Bast
+* Michał Górny
 * Billy K. Poon
 * Daniel Ching
 * vinicius douglas cerutti
-* Michał Górny
 * Tim Snyder
 * Mike Henry
 * Eric Dill
@@ -63,13 +63,13 @@ Authors are sorted by number of commits.
 * Marius van Niekerk
 * Johannes Köster
 * Philippe Blain
+* Ben Mares
 * Mervin Fansler
 * Matt McCormick
 * Jan Janßen
 * xoviat
 * Elmar Pruesse
 * Patrick Sodré
-* Ben Mares
 * David Hirschfeld
 * Finn Womack
 * M Bussonnier
