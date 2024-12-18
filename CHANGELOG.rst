@@ -4,6 +4,26 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.45.1
+====================
+
+**Changed:**
+
+* Try to be more specific in hints when different parsers fail (#2190)
+* Add `flit` (previously only `flit-core`) to the list of valid build backends (#2187)
+
+**Fixed:**
+
+* Fix passing paths to ``pygit2`` on Windows. (#2192)
+
+**Authors:**
+
+* Min RK
+* Michał Górny
+* Ben Mares
+
+
+
 v3.45.0
 ====================
 
