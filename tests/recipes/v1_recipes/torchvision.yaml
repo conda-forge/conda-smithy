@@ -114,18 +114,18 @@ outputs:
             - ${{ compiler('cuda') }}
         # avoid nested conditions because of
         # https://github.com/conda-forge/conda-smithy/issues/2165
-        - if: build_platform != target_platform and cuda_compiler_version != "None"
-          then:
-            - libcublas-dev
-            - libcusolver-dev
-            - libcusparse-dev
-            - libnvjpeg-dev
         - if: build_platform != target_platform
           then:
             - python
             - cross-python_${{ target_platform }}
             # - numpy
             - pytorch ${{ compatible_pytorch }}.* [build=${{ torch_proc_type }}*]
+            - if: cuda_compiler_version != "None"
+              then:
+                - libcublas-dev
+                - libcusolver-dev
+                - libcusparse-dev
+                - libnvjpeg-dev
       host:
         - python
         # - numpy

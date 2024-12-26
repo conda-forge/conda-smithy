@@ -17,6 +17,7 @@
 **Fixed:**
 
 * Fix handling ``if``/``else`` blocks in ``run`` and ``run_constraints`` requirements, for v1 recipes (#2197)
+* Fix flattening nested ``if``/``else`` blocks in v1 recipes (#2197)
 
 **Security:**
 
