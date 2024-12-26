@@ -813,6 +813,8 @@ def lint_stdlib(
     if recipe_version == 1:
         all_build_reqs = [flatten_v1_if_else(reqs) for reqs in all_build_reqs]
         all_build_reqs_flat = flatten_v1_if_else(all_build_reqs_flat)
+        all_run_reqs_flat = flatten_v1_if_else(all_run_reqs_flat)
+        all_contraints_flat = flatten_v1_if_else(all_contraints_flat)
 
     # this check needs to be done per output --> use separate (unflattened) requirements
     for build_reqs in all_build_reqs:
