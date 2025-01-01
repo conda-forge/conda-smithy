@@ -87,7 +87,10 @@ def remove_file_or_dir(filename):
 
     repo = get_repo(filename)
     if repo:
-        repo.index.remove_all(["filename/**"])
+        index_path = (
+            Path(filename).resolve().relative_to(repo.workdir).as_posix()
+        )
+        repo.index.remove_all([f"{index_path}/**"])
         repo.index.write()
     shutil.rmtree(filename)
 
