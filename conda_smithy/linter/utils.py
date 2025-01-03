@@ -67,6 +67,7 @@ VALID_PYTHON_BUILD_BACKENDS = [
     "pymsbuild",
     "meson-python",
     "scikit-build-core",
+    "sphinx-theme-builder",
     "maturin",
     "jupyter_packaging",
     "whey",
