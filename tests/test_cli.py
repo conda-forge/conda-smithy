@@ -3,6 +3,7 @@ import collections
 import os
 import shutil
 import subprocess
+from pathlib import Path
 from textwrap import dedent
 
 import pytest
@@ -114,19 +115,23 @@ def test_init_multiple_output_matrix(testing_workdir):
         temporary_directory=os.path.join(recipe, "temp"),
     )
     regen_obj(args)
-    matrix_dir = os.path.join(feedstock_dir, ".ci_support")
     # the matrix should be consolidated among all outputs, as well as the top-level
     # reqs. Only the top-level reqs should have indedependent config files,
     # though - loops within outputs are contained in those top-level configs.
-    matrix_dir_len = len(os.listdir(matrix_dir))
-    assert matrix_dir_len == 13
+    matrix_dir = Path(feedstock_dir) / ".ci_support"
+    matrix_files = list(matrix_dir.glob("*.yaml"))
+    linux_libpng16 = matrix_dir / "linux_64_libpng1.6libpq9.5.yaml"
+    assert linux_libpng16 in matrix_files
+    assert len(matrix_files) == 16
     linux_libpng16 = os.path.join(
         matrix_dir, "linux_64_libpng1.6libpq9.5.yaml"
     )
     assert os.path.isfile(linux_libpng16)
     with open(linux_libpng16) as f:
         config = yaml.safe_load(f)
+    assert "libpng" in config
     assert config["libpng"] == ["1.6"]
+    assert "libpq" in config
     assert config["libpq"] == ["9.5"]
     # this is a zipped key, but it's not used, so it shouldn't show up
     assert "libtiff" not in config
@@ -138,6 +143,32 @@ def test_init_multiple_output_matrix(testing_workdir):
     # this is in conda_build_config.yaml, but is a transitive dependency.  It should
     #     not show up in the final configs.
     assert "zlib" not in config
+
+    # script vars are present
+    assert "script_all" in config
+    assert config["script_all"] == ["a"]
+    assert "script_only_2" in config
+    assert config["script_only_2"] == ["a2", "b2"]
+
+    # windows script_bat shouldn't be in config
+    assert "script_bat" not in config
+
+    # check windows, which has additional axis
+    win_config = matrix_dir / "win_64_libpng1.5libpq9.6script_bata2.yaml"
+    assert win_config in matrix_files
+    with win_config.open() as f:
+        config = yaml.safe_load(f)
+
+    # script vars are present
+    assert "script_all" in config
+    assert config["script_all"] == ["a"]
+
+    # sh-only var not in windows config
+    assert "script_only_2" not in config
+
+    # windows script_bat should be in config
+    assert "script_bat" in config
+    assert config["script_bat"] == ["a2"]
 
 
 @pytest.mark.parametrize(
