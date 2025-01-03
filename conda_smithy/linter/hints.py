@@ -255,7 +255,7 @@ def hint_noarch_python_use_python_min(
         for section_name, syntax, report_syntax, reqs in [
             (
                 "host",
-                r"python\s+{{ python_min }}",
+                r"python\s+=?=?{{ python_min }}",
                 "python {{ python_min }}",
                 host_reqs,
             ),
@@ -267,7 +267,7 @@ def hint_noarch_python_use_python_min(
             ),
             (
                 "test.requires",
-                r"python\s+{{ python_min }}",
+                r"python\s+=?=?{{ python_min }}",
                 "python {{ python_min }}",
                 test_reqs,
             ),
