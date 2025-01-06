@@ -117,9 +117,9 @@ def lintify_meta_yaml(
     lints = []
     hints = []
     major_sections = list(meta.keys())
-    lints_to_skip = (
-        _get_forge_yaml(recipe_dir).get("linter", {}).get("skip", [])
-    )
+    lints_to_skip = (_get_forge_yaml(recipe_dir).get("linter") or {}).get(
+        "skip"
+    ) or []
 
     # If the recipe_dir exists (no guarantee within this function) , we can
     # find the meta.yaml within it.
@@ -487,6 +487,10 @@ def run_conda_forge_specific(
     hints,
     recipe_version: int = 0,
 ):
+    lints_to_skip = (_get_forge_yaml(recipe_dir).get("linter") or {}).get(
+        "skip"
+    ) or []
+
     # Retrieve sections from meta
     package_section = get_section(
         meta, "package", lints, recipe_version=recipe_version
@@ -589,26 +593,27 @@ def run_conda_forge_specific(
             )
 
     # 8: Ensure the recipe specifies a Python build backend if needed
-    host_or_build_reqs = (requirements_section.get("host") or []) or (
-        requirements_section.get("build") or []
-    )
-    hint_pip_no_build_backend(host_or_build_reqs, recipe_name, hints)
-    for out in outputs_section:
-        if recipe_version == 1:
-            output_requirements = rattler_loader.load_all_requirements(out)
-            build_reqs = output_requirements.get("build") or []
-            host_reqs = output_requirements.get("host") or []
-        else:
-            _req = out.get("requirements") or {}
-            if isinstance(_req, Mapping):
-                build_reqs = _req.get("build") or []
-                host_reqs = _req.get("host") or []
+    if "hint_pip_no_build_backend" not in lints_to_skip:
+        host_or_build_reqs = (requirements_section.get("host") or []) or (
+            requirements_section.get("build") or []
+        )
+        hint_pip_no_build_backend(host_or_build_reqs, recipe_name, hints)
+        for out in outputs_section:
+            if recipe_version == 1:
+                output_requirements = rattler_loader.load_all_requirements(out)
+                build_reqs = output_requirements.get("build") or []
+                host_reqs = output_requirements.get("host") or []
             else:
-                build_reqs = []
-                host_reqs = []
+                _req = out.get("requirements") or {}
+                if isinstance(_req, Mapping):
+                    build_reqs = _req.get("build") or []
+                    host_reqs = _req.get("host") or []
+                else:
+                    build_reqs = []
+                    host_reqs = []
 
-        name = out.get("name", "").strip()
-        hint_pip_no_build_backend(host_reqs or build_reqs, name, hints)
+            name = out.get("name", "").strip()
+            hint_pip_no_build_backend(host_reqs or build_reqs, name, hints)
 
     # 9: No duplicates in conda-forge.yml
     if (
@@ -627,15 +632,16 @@ def run_conda_forge_specific(
             )
 
     # 10: check for proper noarch python syntax
-    hint_noarch_python_use_python_min(
-        requirements_section.get("host") or [],
-        requirements_section.get("run") or [],
-        test_reqs,
-        outputs_section,
-        noarch_value,
-        recipe_version,
-        hints,
-    )
+    if "hint_python_min" not in lints_to_skip:
+        hint_noarch_python_use_python_min(
+            requirements_section.get("host") or [],
+            requirements_section.get("run") or [],
+            test_reqs,
+            outputs_section,
+            noarch_value,
+            recipe_version,
+            hints,
+        )
 
     # 11: ensure we can parse the recipe
     if recipe_version == 1:

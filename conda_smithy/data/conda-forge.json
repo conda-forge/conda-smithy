@@ -817,7 +817,9 @@
     },
     "Lints": {
       "enum": [
-        "lint_noarch_selectors"
+        "lint_noarch_selectors",
+        "hint_pip_no_build_backend",
+        "hint_python_min"
       ],
       "title": "Lints",
       "type": "string"
