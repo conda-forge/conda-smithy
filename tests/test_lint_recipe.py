@@ -3865,5 +3865,22 @@ def test_lint_recipe_parses_v1_duplicate_keys():
         ), hints
 
 
+def test_lint_recipe_v1_invalid_schema_version():
+    with tempfile.TemporaryDirectory() as tmpdir:
+        with open(os.path.join(tmpdir, "recipe.yaml"), "w") as f:
+            f.write(
+                textwrap.dedent(
+                    """
+                    schema_version: 2
+
+                    package:
+                      name: blah
+                    """
+                )
+            )
+        lints, hints = linter.main(tmpdir, return_hints=True, conda_forge=True)
+        assert lints == ["Unsupported recipe.yaml schema version 2"]
+
+
 if __name__ == "__main__":
     unittest.main()

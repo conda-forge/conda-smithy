@@ -126,6 +126,14 @@ def lintify_meta_yaml(
     recipe_name = "meta.yaml" if recipe_version == 0 else "recipe.yaml"
     recipe_fname = os.path.join(recipe_dir or "", recipe_name)
 
+    if recipe_version == 1:
+        schema_version = meta.get("schema_version", 1)
+        if schema_version != 1:
+            lints.append(
+                f"Unsupported recipe.yaml schema version {schema_version}"
+            )
+            return lints, hints
+
     sources_section = get_section(meta, "source", lints, recipe_version)
     build_section = get_section(meta, "build", lints, recipe_version)
     requirements_section = get_section(
