@@ -117,9 +117,9 @@ def lintify_meta_yaml(
     lints = []
     hints = []
     major_sections = list(meta.keys())
-    lints_to_skip = (
-        _get_forge_yaml(recipe_dir).get("linter", {}).get("skip", [])
-    )
+    lints_to_skip = (_get_forge_yaml(recipe_dir).get("linter") or {}).get(
+        "skip"
+    ) or []
 
     # If the recipe_dir exists (no guarantee within this function) , we can
     # find the meta.yaml within it.
@@ -487,9 +487,9 @@ def run_conda_forge_specific(
     hints,
     recipe_version: int = 0,
 ):
-    lints_to_skip = (
-        _get_forge_yaml(recipe_dir).get("linter", {}).get("skip", [])
-    )
+    lints_to_skip = (_get_forge_yaml(recipe_dir).get("linter") or {}).get(
+        "skip"
+    ) or []
 
     # Retrieve sections from meta
     package_section = get_section(
