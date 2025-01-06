@@ -3067,10 +3067,6 @@ def test_hint_pip_no_build_backend(
     tmp_path,
 ):
     if skip:
-        if (
-            not expected_hints or remove_top_level
-        ) and not outputs_expected_hints:
-            pytest.skip("No hints expected")
         with open(tmp_path / "conda-forge.yml", "w") as fh:
             fh.write(
                 """
@@ -3341,8 +3337,6 @@ def test_hint_noarch_python_use_python_min(
     tmp_path,
 ):
     if skip:
-        if not expected_hints:
-            pytest.skip("No hints expected")
         with open(tmp_path / "conda-forge.yml", "w") as fh:
             fh.write(
                 """
