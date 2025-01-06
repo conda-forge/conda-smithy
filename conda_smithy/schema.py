@@ -96,6 +96,7 @@ class BotConfigVersionUpdatesSourcesChoice(StrEnum):
 
 class Lints(StrEnum):
     LINT_NOARCH_SELECTORS = "lint_noarch_selectors"
+    HINT_PYTHON_MIN = "hint_python_min"
 
 
 ##############################################

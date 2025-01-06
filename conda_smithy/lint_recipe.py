@@ -487,6 +487,10 @@ def run_conda_forge_specific(
     hints,
     recipe_version: int = 0,
 ):
+    lints_to_skip = (
+        _get_forge_yaml(recipe_dir).get("linter", {}).get("skip", [])
+    )
+
     # Retrieve sections from meta
     package_section = get_section(
         meta, "package", lints, recipe_version=recipe_version
@@ -627,15 +631,16 @@ def run_conda_forge_specific(
             )
 
     # 10: check for proper noarch python syntax
-    hint_noarch_python_use_python_min(
-        requirements_section.get("host") or [],
-        requirements_section.get("run") or [],
-        test_reqs,
-        outputs_section,
-        noarch_value,
-        recipe_version,
-        hints,
-    )
+    if "hint_python_min" not in lints_to_skip:
+        hint_noarch_python_use_python_min(
+            requirements_section.get("host") or [],
+            requirements_section.get("run") or [],
+            test_reqs,
+            outputs_section,
+            noarch_value,
+            recipe_version,
+            hints,
+        )
 
     # 11: ensure we can parse the recipe
     if recipe_version == 1:

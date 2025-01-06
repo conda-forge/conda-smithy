@@ -3313,23 +3313,38 @@ def test_hint_pip_no_build_backend(
         ),
     ],
 )
+@pytest.mark.parametrize("skip", [False, True])
 def test_hint_noarch_python_use_python_min(
     meta_str,
     expected_hints,
+    skip,
+    tmp_path,
 ):
+    if skip:
+        if not expected_hints:
+            pytest.skip("No hints expected")
+        with open(tmp_path / "conda-forge.yml", "w") as fh:
+            fh.write(
+                """
+linter:
+  skip:
+    - hint_python_min
+"""
+            )
+
     meta = get_yaml().load(render_meta_yaml(meta_str))
     lints = []
     hints = []
     linter.run_conda_forge_specific(
         meta,
-        None,
+        str(tmp_path),
         lints,
         hints,
         recipe_version=0,
     )
 
     # make sure we have the expected hints
-    if expected_hints:
+    if expected_hints and not skip:
         for expected_hint in expected_hints:
             assert any(expected_hint in hint for hint in hints), hints
     else:
