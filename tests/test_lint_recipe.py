@@ -3055,6 +3055,7 @@ def test_v1_package_name_version():
         ),
     ],
 )
+@pytest.mark.parametrize("skip", [False, True])
 def test_hint_pip_no_build_backend(
     meta_str,
     expected_hints,
@@ -3062,7 +3063,23 @@ def test_hint_pip_no_build_backend(
     outputs_to_add,
     outputs_expected_hints,
     remove_top_level,
+    skip,
+    tmp_path,
 ):
+    if skip:
+        if (
+            not expected_hints or remove_top_level
+        ) and not outputs_expected_hints:
+            pytest.skip("No hints expected")
+        with open(tmp_path / "conda-forge.yml", "w") as fh:
+            fh.write(
+                """
+linter:
+  skip:
+    - hint_pip_no_build_backend
+"""
+            )
+
     meta = get_yaml().load(meta_str.replace("@@backend@@", backend))
     if remove_top_level:
         meta.pop("requirements", None)
@@ -3076,13 +3093,16 @@ def test_hint_pip_no_build_backend(
             outputs_to_add.replace("@@backend@@", backend)
         )
 
-    total_expected_hints = _expected_hints + outputs_expected_hints
+    if skip:
+        total_expected_hints = []
+    else:
+        total_expected_hints = _expected_hints + outputs_expected_hints
 
     lints = []
     hints = []
     linter.run_conda_forge_specific(
         meta,
-        None,
+        str(tmp_path),
         lints,
         hints,
         recipe_version=0,
