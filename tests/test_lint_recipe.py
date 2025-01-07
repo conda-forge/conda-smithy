@@ -3911,5 +3911,6 @@ def test_lint_recipe_v1_python_min_in_python_version():
         _, hints = linter.main(tmpdir, return_hints=True, conda_forge=True)
         assert hints == []
 
+
 if __name__ == "__main__":
     unittest.main()
