@@ -529,7 +529,7 @@ def run_conda_forge_specific(
                 and test_element["python"].get("python_version") is not None
             ):
                 test_reqs.append(
-                    f"python {test_element["python"]['python_version']}"
+                    f"python {test_element['python']['python_version']}"
                 )
     else:
         test_section = get_section(meta, "test", lints, recipe_version)
