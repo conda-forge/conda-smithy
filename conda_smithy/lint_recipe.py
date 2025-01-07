@@ -523,6 +523,9 @@ def run_conda_forge_specific(
             test_reqs += (test_element.get("requirements") or {}).get(
                 "run"
             ) or []
+
+            if "python" in test_element and test_element["python"].get("python_version") is not None:
+                test_reqs.append(f"python {test_element["python"]['python_version']}")
     else:
         test_section = get_section(meta, "test", lints, recipe_version)
         test_reqs = test_section.get("requires") or []
