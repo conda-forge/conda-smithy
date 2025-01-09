@@ -497,11 +497,14 @@ def lint_single_space_in_pinned_requirements(
 
 
 def lint_non_noarch_builds(
-    requirements_section, outputs_section, noarch_value, lints
+    requirements_section, outputs_section, noarch_value, lints, recipe_version
 ):
     check_languages = ["python", "r-base"]
     host_reqs = requirements_section.get("host") or []
     run_reqs = requirements_section.get("run") or []
+    if recipe_version == 1:
+        host_reqs = flatten_v1_if_else(host_reqs)
+        run_reqs = flatten_v1_if_else(run_reqs)
     for language in check_languages:
         if noarch_value is None and not outputs_section:
             filtered_host_reqs = [
