@@ -71,6 +71,7 @@ from conda_smithy.linter.utils import (
     EXPECTED_SECTION_ORDER,
     RATTLER_BUILD_TOOL,
     find_local_config_file,
+    flatten_v1_if_else,
     get_section,
     load_linter_toml_metdata,
 )
@@ -324,7 +325,11 @@ def lintify_meta_yaml(
 
     # 23: non noarch builds shouldn't use version constraints on python and r-base
     lint_non_noarch_builds(
-        requirements_section, outputs_section, noarch_value, lints
+        requirements_section,
+        outputs_section,
+        noarch_value,
+        lints,
+        recipe_version,
     )
 
     # 24: jinja2 variable references should be {{<one space>var<one space>}}
@@ -589,8 +594,11 @@ def run_conda_forge_specific(
                 run_reqs += _req
 
     specific_hints = (load_linter_toml_metdata() or {}).get("hints", [])
+    all_reqs = build_reqs + host_reqs + run_reqs
+    if recipe_version == 1:
+        all_reqs = flatten_v1_if_else(all_reqs)
 
-    for rq in build_reqs + host_reqs + run_reqs:
+    for rq in all_reqs:
         dep = rq.split(" ")[0].strip()
         if dep in specific_hints and specific_hints[dep] not in hints:
             hints.append(specific_hints[dep])
@@ -613,6 +621,8 @@ def run_conda_forge_specific(
         host_or_build_reqs = (requirements_section.get("host") or []) or (
             requirements_section.get("build") or []
         )
+        if recipe_version == 1:
+            host_or_build_reqs = flatten_v1_if_else(host_or_build_reqs)
         hint_pip_no_build_backend(host_or_build_reqs, recipe_name, hints)
         for out in outputs_section:
             if recipe_version == 1:
