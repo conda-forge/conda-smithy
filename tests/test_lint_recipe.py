@@ -2754,6 +2754,12 @@ def test_v1_recipes():
         lints, hints = linter.main(str(recipe_dir), return_hints=True)
         assert not lints
 
+    with get_recipe_in_dir(
+        "v1_recipes/recipe-fenics-dolfinx.yaml"
+    ) as recipe_dir:
+        lints, hints = linter.main(str(recipe_dir), return_hints=True)
+        assert not lints
+
     with get_recipe_in_dir("v1_recipes/torchaudio.yaml") as recipe_dir:
         lints, hints = linter.main(str(recipe_dir), return_hints=True)
         assert not lints

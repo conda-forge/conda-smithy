@@ -605,9 +605,8 @@ def lint_pin_subpackages(
         if pinning_section is None:
             return
         filter_pin = "compatible_pin "
-        for pin in (
-            pin for pin in pinning_section if pin.startswith(filter_pin)
-        ):
+        all_pins = flatten_v1_if_else(pinning_section)
+        for pin in (pin for pin in all_pins if pin.startswith(filter_pin)):
             if pin.split()[1] in subpackage_names:
                 lints.append(
                     "pin_subpackage should be used instead of"
@@ -617,9 +616,7 @@ def lint_pin_subpackages(
                 )
 
         filter_pin = "subpackage_pin "
-        for pin in (
-            pin for pin in pinning_section if pin.startswith(filter_pin)
-        ):
+        for pin in (pin for pin in all_pins if pin.startswith(filter_pin)):
             if pin.split()[1] not in subpackage_names:
                 lints.append(
                     "pin_compatible should be used instead of"
