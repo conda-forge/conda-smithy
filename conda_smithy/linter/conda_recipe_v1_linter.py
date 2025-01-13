@@ -122,13 +122,11 @@ def get_recipe_version(recipe_content: RecipeWithContext) -> Optional[str]:
     package_version = rendered_context_recipe.get("package", {}).get("version")
     recipe_version = rendered_context_recipe.get("recipe", {}).get("version")
 
-    if not package_version and not recipe_version:
-        return None
-
-    if package_version:
+    if package_version is not None:
         return str(package_version).strip()
-
-    return str(recipe_version).strip()
+    if recipe_version is not None:
+        return str(recipe_version).strip()
+    return None
 
 
 def lint_recipe_name(

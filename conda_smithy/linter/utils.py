@@ -208,7 +208,7 @@ def _lint_package_version(version: Optional[str]) -> Optional[str]:
     no_package_version = "Package version is missing."
     invalid_version = "Package version {ver} doesn't match conda spec: {err}"
 
-    if not version:
+    if version is None:
         return no_package_version
 
     ver = str(version)
