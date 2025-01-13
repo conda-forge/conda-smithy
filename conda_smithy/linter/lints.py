@@ -395,7 +395,11 @@ def lint_noarch_and_runtime_dependencies(
 
 def lint_package_version(package_section, lints):
     version = package_section.get("version")
-    _lint_package_version(str(version) if version is not None else None)
+    lint_msg = _lint_package_version(
+        str(version) if version is not None else None
+    )
+    if lint_msg:
+        lints.append(lint_msg)
 
 
 def lint_jinja_variables_definitions(meta_fname, lints):
