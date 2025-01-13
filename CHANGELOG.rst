@@ -4,6 +4,40 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.45.2
+====================
+
+**Added:**
+
+* Added ``sphinx-theme-builder`` as a valid ``pip`` build backend. (#2204)
+* Added validation for ``schema_version`` key. (#2207)
+* Add ``hint_python_min`` and ``hint_pip_no_build_backend`` values to ``linter.skip`` key, allowing to skip respective checks. (#2206)
+
+**Fixed:**
+
+* Fixed removing directories recursively from git index. (#2199)
+* Fix handling ``if``/``else`` blocks in ``run`` and ``run_constraints`` requirements, for v1 recipes (#2197)
+* Fix flattening nested ``if``/``else`` blocks in v1 recipes (#2197)
+* Fix a test that uses `match` in skip to work with strict parsing (#2213)
+* ``schema_version`` key no longer causes linting failures. (#2207)
+* Fix a ``TypeError`` when either the ``linter`` key or the ``skip`` subkey is empty. (#2206)
+* Fix more linter errors for v1 recipes with conditional dependencies (#2212)
+* Fix linter error in check_pins for v1 recipes with conditional run_exports (#2211)
+* Consider `tests[].python.python_version`` when linting for cfep25 on v1.
+
+**Authors:**
+
+* Matthew R. Becker
+* Wolf Vollprecht
+* Min RK
+* pre-commit-ci[bot]
+* Hadrien Mary
+* Michał Górny
+* dependabot[bot]
+* Will Shanks
+
+
+
 v3.45.1
 ====================
 
