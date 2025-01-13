@@ -6,7 +6,6 @@ import tempfile
 from collections.abc import Sequence
 from typing import Any, Literal, Optional
 
-from conda.exceptions import InvalidVersionSpec
 from conda.models.version import VersionOrder
 from rattler_build_conda_compat.jinja.jinja import render_recipe_with_context
 from rattler_build_conda_compat.loader import parse_recipe_config_file
