@@ -3924,5 +3924,53 @@ def test_lint_recipe_v1_python_min_in_python_version():
         assert hints == []
 
 
+def test_lint_recipe_v1_comment_selectors():
+    with tempfile.TemporaryDirectory() as tmpdir:
+        with open(os.path.join(tmpdir, "recipe.yaml"), "w") as f:
+            f.write(
+                textwrap.dedent(
+                    """
+                package:
+                  name: test
+                  version: 1.2.3
+
+                build:
+                  number: 0
+
+                requirements:
+                  host:
+                    - foo  # [unix]
+                    # check for false positives with strings that look like
+                    # old-style (non-comment) selectors
+                    - bar  =1.2.3 [build=${{ torch_proc_type }}*]
+                  run:
+                    - bar  =1.2.3 [build=${{ torch_proc_type }}*]  # [py==312]
+
+                # this is some [comment]
+                tests:
+                  - script:
+                      - false  # [linux64]
+                      - true   # [osx or win]
+
+                about:
+                  summary: test
+                  homepage: https://example.com
+                  license: MIT
+                  license_file: COPYING
+
+                extra:
+                  recipe-maintainers:
+                    - a
+                """
+                )
+            )
+        lints, _ = linter.main(tmpdir, return_hints=True, conda_forge=True)
+        assert lints == [
+            "Selectors in comment form no longer work in v1 recipes. "
+            "Instead, if / then / else maps must be used. "
+            "See lines [10, 15, 20, 21]"
+        ]
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -48,6 +48,7 @@ from conda_smithy.linter.lints import (
     lint_noarch,
     lint_noarch_and_runtime_dependencies,
     lint_non_noarch_builds,
+    lint_no_comment_selectors,
     lint_package_version,
     lint_pin_subpackages,
     lint_recipe_have_tests,
@@ -199,6 +200,10 @@ def lintify_meta_yaml(
     if recipe_version == 0:
         # v1 does not have selectors in comments form
         lint_selectors_should_be_in_tidy_form(recipe_fname, lints, hints)
+
+    # 6a: Comment-style selectors must not be used in v1 recipes.
+    if recipe_version == 1:
+        lint_no_comment_selectors(recipe_fname, lints, hints)
 
     # 7: The build section should have a build number.
     lint_build_section_should_have_a_number(build_section, lints)
