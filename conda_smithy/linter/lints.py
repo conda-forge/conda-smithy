@@ -179,6 +179,21 @@ def lint_selectors_should_be_in_tidy_form(recipe_fname, lints, hints):
         )
 
 
+def lint_no_comment_selectors(recipe_fname, lints, hints):
+    bad_lines = []
+    if os.path.exists(recipe_fname):
+        with open(recipe_fname) as fh:
+            for selector_line, line_number in selector_lines(
+                fh, only_in_comment=True
+            ):
+                bad_lines.append(line_number)
+    if bad_lines:
+        lints.append(
+            "Selectors in comment form no longer work in v1 recipes. Instead,"
+            f" if / then / else maps must be used. See lines {bad_lines}."
+        )
+
+
 def lint_build_section_should_have_a_number(build_section, lints):
     if build_section.get("number", None) is None:
         lints.append("The recipe must have a `build/number` section.")

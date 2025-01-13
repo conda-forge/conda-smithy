@@ -146,7 +146,9 @@ def find_local_config_file(recipe_dir: str, filename: str) -> Optional[str]:
     return found_filesname[0] if found_filesname else None
 
 
-def is_selector_line(line, allow_platforms=False, allow_keys=set()):
+def is_selector_line(
+    line, allow_platforms=False, allow_keys=set(), only_in_comment=False
+):
     # Using the same pattern defined in conda-build (metadata.py),
     # we identify selectors.
     line = line.rstrip()
@@ -155,6 +157,8 @@ def is_selector_line(line, allow_platforms=False, allow_keys=set()):
         return False
     m = sel_pat.match(line)
     if m:
+        if only_in_comment and not m.group(2):
+            return False
         nouns = {
             w for w in m.group(3).split() if w not in ("not", "and", "or")
         }
@@ -179,9 +183,9 @@ def is_jinja_line(line):
     return False
 
 
-def selector_lines(lines):
+def selector_lines(lines, only_in_comment=False):
     for i, line in enumerate(lines):
-        if is_selector_line(line):
+        if is_selector_line(line, only_in_comment=only_in_comment):
             yield line, i
 
 
