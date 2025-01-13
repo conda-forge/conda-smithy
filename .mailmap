@@ -28,10 +28,10 @@ Dougal J. Sutherland <dougal@gmail.com>
 pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>
 Amit Kumar <dtu.amit@gmail.com>
 Marcel Bargull <marcel.bargull@udo.edu> Marcel Bargull <mbargull@users.noreply.github.com>
+Hadrien Mary <hadrien.mary@gmail.com> Hadrien Mary <hadim@users.noreply.github.com>
 John Kirkham <jakirkham@gmail.com> John Kirkham <kirkhamj@janelia.hhmi.org>
 John Kirkham <jakirkham@gmail.com> jakirkham <kirkhamj@janelia.hhmi.org>
 shadow_walker <shadowwalkersb@gmail.com>
-Hadrien Mary <hadrien.mary@gmail.com> Hadrien Mary <hadim@users.noreply.github.com>
 Michael Sarahan <msarahan@gmail.com> Mike Sarahan <msarahan@gmail.com>
 Mark Harfouche <mark.harfouche@gmail.com>
 Bastian Zimmermann <10774221+BastianZim@users.noreply.github.com> BastianZim <10774221+BastianZim@users.noreply.github.com>
@@ -39,11 +39,11 @@ Leo Fang <leofang@bnl.gov> Leo Fang <leo80042@gmail.com>
 Leo Fang <leofang@bnl.gov> Leo Fang <leof@nvidia.com>
 Ryan Volz <rvolz@mit.edu> Ryan Volz <ryan.volz@gmail.com>
 Johnny Willemsen <jwillemsen@remedy.nl>
+Michał Górny <mgorny@gentoo.org>
 Chris Burr <christopher.burr@cern.ch> Chris Burr <chrisburr@users.noreply.github.com>
 Julian Rüth <julian.rueth@fsfe.org>
 Yannik Tausch <yannik.tausch@quantco.com>
 Daniel Bast <2790401+dbast@users.noreply.github.com>
-Michał Górny <mgorny@gentoo.org>
 Billy K. Poon <bkpoon@lbl.gov>
 Daniel Ching <carterbox@users.noreply.github.com>
 vinicius douglas cerutti <vinivdc2009@hotmail.com> Vinicius D. Cerutti <51954708+viniciusdc@users.noreply.github.com>
@@ -71,10 +71,10 @@ Gonzalo Pena-Castellanos <goanpeca@gmail.com>
 John Blischak <jdblischak@gmail.com>
 Matthias Diener <mdiener@illinois.edu>
 Antonio S. Cofiño <cofinoa@gmail.com>
+dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
 Carlo <carlo.dri@gmail.com> Carlo <carlodri@users.noreply.github.com>
 Matthew Craig <mattwcraig@gmail.com> Matt Craig <mattwcraig@gmail.com>
 Joshua L. Adelman <joshua.adelman@gmail.com>
-dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
 Marius van Niekerk <marius.v.niekerk@gmail.com> mariusvniekerk <marius.vanniekerk@maxpoint.com>
 Marius van Niekerk <marius.v.niekerk@gmail.com> mariusvniekerk <mvanniekerk@flatiron.com>
 Marius van Niekerk <marius.v.niekerk@gmail.com> Marius Van Niekerk <marius.vanniekerk@maxpoint.com>
@@ -150,3 +150,4 @@ Bas Zalmstra <zalmstra.bas@gmail.com>
 Adam Ehlers Nyholm Thomsen <aen@atp.dk>
 Ralf Gommers <ralf.gommers@gmail.com>
 Matt Chan <49702524+thewchan@users.noreply.github.com>
+Will Shanks <wshaos@posteo.net>
