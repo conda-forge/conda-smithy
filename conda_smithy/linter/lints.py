@@ -20,6 +20,7 @@ from conda_smithy.linter.utils import (
     REQUIREMENTS_ORDER,
     TEST_FILES,
     TEST_KEYS,
+    _lint_package_version,
     _lint_recipe_name,
     flatten_v1_if_else,
     get_section,
@@ -395,17 +396,7 @@ def lint_noarch_and_runtime_dependencies(
 
 def lint_package_version(package_section, lints):
     version = package_section.get("version")
-    if not version:
-        lints.append("Package version is missing.")
-        return
-    if package_section.get("version") is not None:
-        ver = str(package_section.get("version"))
-        try:
-            VersionOrder(ver)
-        except InvalidVersionSpec as e:
-            lints.append(
-                f"Package version {ver} doesn't match conda spec: {e}"
-            )
+    _lint_package_version(str(version) if version is not None else None)
 
 
 def lint_jinja_variables_definitions(meta_fname, lints):

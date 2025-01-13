@@ -3972,5 +3972,22 @@ def test_lint_recipe_v1_comment_selectors():
         ]
 
 
+@pytest.mark.parametrize("filename", ["meta.yaml", "recipe.yaml"])
+def test_version_zero(filename: str):
+    with tempfile.TemporaryDirectory() as tmpdir:
+        with open(os.path.join(tmpdir, filename), "w") as f:
+            f.write(
+                textwrap.dedent(
+                    """
+                package:
+                  name: test
+                  version: 0
+                """
+                )
+            )
+        lints, _ = linter.main(tmpdir, return_hints=True, conda_forge=True)
+        assert "Package version is missing." not in lints
+
+
 if __name__ == "__main__":
     unittest.main()
