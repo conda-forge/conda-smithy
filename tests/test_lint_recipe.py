@@ -3968,7 +3968,7 @@ def test_lint_recipe_v1_comment_selectors():
         assert lints == [
             "Selectors in comment form no longer work in v1 recipes. "
             "Instead, if / then / else maps must be used. "
-            "See lines [10, 15, 20, 21]"
+            "See lines [10, 15, 20, 21]."
         ]
 
 
