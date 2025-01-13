@@ -190,7 +190,7 @@ def lint_no_comment_selectors(recipe_fname, lints, hints):
     if bad_lines:
         lints.append(
             "Selectors in comment form no longer work in v1 recipes. Instead,"
-            f" if / then / else maps must be used. See lines {bad_lines}"
+            f" if / then / else maps must be used. See lines {bad_lines}."
         )
 
 
