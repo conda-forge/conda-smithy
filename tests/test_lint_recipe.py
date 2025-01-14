@@ -3374,11 +3374,7 @@ linter:
         for expected_hint in expected_hints:
             assert any(expected_hint in hint for hint in hints), hints
     else:
-        assert all(
-            "noarch: python recipes should almost always follow the syntax in"
-            not in hint
-            for hint in hints
-        )
+        assert all("python_min" not in hint for hint in hints)
 
 
 @pytest.mark.parametrize(
@@ -3551,11 +3547,7 @@ def test_hint_noarch_python_use_python_min_v1(
         for expected_hint in expected_hints:
             assert any(expected_hint in hint for hint in hints), hints
     else:
-        assert all(
-            "noarch: python recipes should almost always follow the syntax in"
-            not in hint
-            for hint in hints
-        )
+        assert all("python_min" not in hint for hint in hints)
 
 
 def test_hint_noarch_python_from_main_v1():
