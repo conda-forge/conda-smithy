@@ -3339,6 +3339,123 @@ linter:
             ),
             [],
         ),
+        (
+            textwrap.dedent(
+                """
+                package:
+                  name: python
+
+                outputs:
+                  - name: python-foo
+                    build:
+                      noarch: python
+
+                    requirements:
+                      host:
+                        - python {{ python_min }}
+                      run:
+                        - python >={{ python_min }}
+
+                    test:
+                      requires:
+                        - python {{ python_min }}
+                """
+            ),
+            [],
+        ),
+        (
+            textwrap.dedent(
+                """
+                package:
+                  name: python
+
+                outputs:
+                  - name: python-foo
+                    build:
+                      noarch: python
+
+                    requirements:
+                      host:
+                        - python {{ python_min }}
+                      run:
+                        - python
+
+                    test:
+                      requires:
+                        - python {{ python_min }}
+                """
+            ),
+            ["python >={{ python_min }}"],
+        ),
+        (
+            textwrap.dedent(
+                """
+                package:
+                  name: python
+
+                outputs:
+                  - name: python-foo
+                    build:
+                      noarch: python
+
+                    requirements:
+                      host:
+                        - python {{ python_min }}
+                      run:
+                        - python >={{ python_min }}
+
+                    test:
+                      requires:
+                        - python {{ python_min }}
+                  - name: python-bar
+                    build:
+                      noarch: python
+
+                    requirements:
+                      - python
+
+                    test:
+                      requires:
+                        - python
+                """
+            ),
+            ["python {{ python_min }}"],
+        ),
+        (
+            textwrap.dedent(
+                """
+                package:
+                  name: python
+
+                outputs:
+                  - name: python-foo
+                    build:
+                      noarch: python
+
+                    requirements:
+                      host:
+                        - python {{ python_min }}
+                      run:
+                        - python >={{ python_min }}
+
+                    test:
+                      requires:
+                        - python {{ python_min }}
+                  - name: python-bar
+
+                    requirements:
+                      host:
+                        - python
+                      run:
+                        - python
+
+                    test:
+                      requires:
+                        - python
+                """
+            ),
+            [],
+        ),
     ],
 )
 @pytest.mark.parametrize("skip", [False, True])
@@ -3523,6 +3640,120 @@ tests:
       run:
         - python ${{ python_min }}
 """,
+            [],
+        ),
+        (
+            textwrap.dedent(
+                """
+                recipe:
+                  name: python
+
+                outputs:
+                  - package:
+                      name: python-foo
+                    build:
+                      noarch: python
+                    requirements:
+                      host:
+                        - if: blah
+                          then: blahblah
+                          else: python ${{ python_min }}
+                      run:
+                        - python >=${{ python_min }}
+
+                    tests:
+                      - requirements:
+                          run:
+                            - python ${{ python_min }}
+                """
+            ),
+            [],
+        ),
+        (
+            textwrap.dedent(
+                """
+                recipe:
+                  name: python
+
+                outputs:
+                  - package:
+                      name: python-foo
+                    build:
+                      noarch: python
+                    requirements:
+                      host:
+                        - if: blah
+                          then: blahblah
+                          else: python
+                      run:
+                        - python >=${{ python_min }}
+
+                    tests:
+                      - requirements:
+                          run:
+                            - python ${{ python_min }}
+                  - package:
+                      name: python-bar
+                    build:
+                      noarch: python
+                    requirements:
+                      host:
+                        - if: blah
+                          then: blahblah
+                          else: python ${{ python_min }}
+                      run:
+                        - python
+
+                    tests:
+                      - requirements:
+                          run:
+                            - python ${{ python_min }}
+                """
+            ),
+            [
+                "python ${{ python_min }}",
+                "python >=${{ python_min }}",
+            ],
+        ),
+        (
+            textwrap.dedent(
+                """
+                recipe:
+                  name: python
+
+                outputs:
+                  - package:
+                      name: python-foo
+                    build:
+                      noarch: python
+                    requirements:
+                      host:
+                        - if: blah
+                          then: blahblah
+                          else: python ${{ python_min }}
+                      run:
+                        - python >=${{ python_min }}
+
+                    tests:
+                      - requirements:
+                          run:
+                            - python ${{ python_min }}
+                  - package:
+                      name: python-bar
+                    requirements:
+                      host:
+                        - if: blah
+                          then: blahblah
+                          else: python
+                      run:
+                        - python
+
+                    tests:
+                      - requirements:
+                          run:
+                            - python
+                """
+            ),
             [],
         ),
     ],

@@ -3,6 +3,7 @@ import re
 import shutil
 import subprocess
 import sys
+from collections.abc import Mapping
 from glob import glob
 from typing import Any
 
@@ -12,6 +13,7 @@ from conda_smithy.linter.utils import (
     VALID_PYTHON_BUILD_BACKENDS,
     find_local_config_file,
     flatten_v1_if_else,
+    get_all_test_requirements,
     is_selector_line,
 )
 from conda_smithy.utils import get_yaml
@@ -236,22 +238,21 @@ def hint_pip_no_build_backend(host_or_build_section, package_name, hints):
             )
 
 
-def hint_noarch_python_use_python_min(
+def hint_noarch_python_use_python_min_inner(
     host_reqs,
     run_reqs,
     test_reqs,
-    outputs_section,
     noarch_value,
     recipe_version,
-    hints,
 ):
-    if noarch_value == "python" and not outputs_section:
+    hint = set()
+
+    if noarch_value == "python":
         if recipe_version == 1:
             host_reqs = flatten_v1_if_else(host_reqs)
             run_reqs = flatten_v1_if_else(run_reqs)
             test_reqs = flatten_v1_if_else(test_reqs)
 
-        hint = ""
         for section_name, syntax, report_syntax, reqs in [
             (
                 "host",
@@ -291,24 +292,63 @@ def hint_noarch_python_use_python_min(
                 ):
                     break
             else:
-                hint += (
+                hint.add(
                     f"\n   - For the `{section_name}` section of the recipe, you should usually use `{report_syntax}` "
                     f"for the `python` entry."
                 )
+    return hint
 
-        if hint:
-            hint = (
-                (
-                    "`noarch: python` recipes should usually follow the syntax in "
-                    "our [documentation](https://conda-forge.org/docs/maintainer/knowledge_base/#noarch-python) "
-                    "for specifying the Python version."
-                )
-                + hint
-                + (
-                    "\n   - If the package requires a newer Python version than the currently supported minimum "
-                    "version on `conda-forge`, you can override the `python_min` variable by adding a "
-                    "Jinja2 `set` statement at the top of your recipe (or using an equivalent `context` "
-                    "variable for v1 recipes)."
-                )
+
+def hint_noarch_python_use_python_min(
+    host_reqs,
+    run_reqs,
+    test_reqs,
+    outputs_section,
+    noarch_value,
+    recipe_version,
+    hints,
+):
+    hint = set()
+
+    if outputs_section:
+        for output in outputs_section:
+            requirements = output.get("requirements", {})
+            if isinstance(requirements, Mapping):
+                output_host_reqs = requirements.get("host")
+                output_run_reqs = requirements.get("run")
+            else:
+                output_host_reqs = requirements
+                output_run_reqs = requirements
+
+            hint.update(hint_noarch_python_use_python_min_inner(
+                output_host_reqs or [],
+                output_run_reqs or [],
+                get_all_test_requirements(output, [], recipe_version),
+                output.get("build", {}).get("noarch"),
+                recipe_version,
+            ))
+    else:
+        hint.update(hint_noarch_python_use_python_min_inner(
+            host_reqs,
+            run_reqs,
+            test_reqs,
+            noarch_value,
+            recipe_version,
+        ))
+
+    if hint:
+        hint = (
+            (
+                "`noarch: python` recipes should usually follow the syntax in "
+                "our [documentation](https://conda-forge.org/docs/maintainer/knowledge_base/#noarch-python) "
+                "for specifying the Python version."
             )
-            hints.append(hint)
+            + "".join(sorted(hint))
+            + (
+                "\n   - If the package requires a newer Python version than the currently supported minimum "
+                "version on `conda-forge`, you can override the `python_min` variable by adding a "
+                "Jinja2 `set` statement at the top of your recipe (or using an equivalent `context` "
+                "variable for v1 recipes)."
+            )
+        )
+        hints.append(hint)

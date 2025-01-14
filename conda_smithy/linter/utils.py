@@ -248,3 +248,25 @@ def flatten_v1_if_else(requirements: list[str | dict]) -> list[str]:
         else:
             flattened_requirements.append(req)
     return flattened_requirements
+
+
+def get_all_test_requirements(meta: dict, lints: list[str], recipe_version: int) -> list[str]:
+    if recipe_version == 1:
+        test_section = get_section(meta, "tests", lints, recipe_version)
+        test_reqs = []
+        for test_element in test_section:
+            test_reqs += (test_element.get("requirements") or {}).get(
+                "run"
+            ) or []
+
+            if (
+                "python" in test_element
+                and test_element["python"].get("python_version") is not None
+            ):
+                test_reqs.append(
+                    f"python {test_element['python']['python_version']}"
+                )
+    else:
+        test_section = get_section(meta, "test", lints, recipe_version)
+        test_reqs = test_section.get("requires") or []
+    return test_reqs

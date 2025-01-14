@@ -73,6 +73,7 @@ from conda_smithy.linter.utils import (
     RATTLER_BUILD_TOOL,
     find_local_config_file,
     flatten_v1_if_else,
+    get_all_test_requirements,
     get_section,
     load_linter_toml_metdata,
 )
@@ -525,25 +526,7 @@ def run_conda_forge_specific(
 
     build_section = get_section(meta, "build", lints, recipe_version)
     noarch_value = build_section.get("noarch")
-
-    if recipe_version == 1:
-        test_section = get_section(meta, "tests", lints, recipe_version)
-        test_reqs = []
-        for test_element in test_section:
-            test_reqs += (test_element.get("requirements") or {}).get(
-                "run"
-            ) or []
-
-            if (
-                "python" in test_element
-                and test_element["python"].get("python_version") is not None
-            ):
-                test_reqs.append(
-                    f"python {test_element['python']['python_version']}"
-                )
-    else:
-        test_section = get_section(meta, "test", lints, recipe_version)
-        test_reqs = test_section.get("requires") or []
+    test_reqs = get_all_test_requirements(meta, lints, recipe_version)
 
     # Fetch list of recipe maintainers
     maintainers = extra_section.get("recipe-maintainers", [])
