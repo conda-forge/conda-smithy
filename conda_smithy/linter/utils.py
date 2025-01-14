@@ -237,13 +237,19 @@ def load_linter_toml_metdata_internal(time_salt):
     return tomllib.loads(hints_toml_str)
 
 
-def flatten_v1_if_else(requirements: list[str | dict]) -> list[str]:
+def flatten_v1_if_else(requirements: list[str | dict] | str) -> list[str]:
     flattened_requirements = []
     for req in requirements:
         if isinstance(req, dict):
-            flattened_requirements.extend(flatten_v1_if_else(req["then"]))
             flattened_requirements.extend(
-                flatten_v1_if_else(req.get("else") or [])
+                flatten_v1_if_else(req["then"])
+                if isinstance(req["then"], list)
+                else [req["then"]]
+            )
+            flattened_requirements.extend(
+                flatten_v1_if_else(req.get("else", []))
+                if isinstance(req.get("else", []), list)
+                else [req["else"]]
             )
         else:
             flattened_requirements.append(req)
