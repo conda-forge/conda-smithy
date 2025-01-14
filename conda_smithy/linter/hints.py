@@ -320,21 +320,25 @@ def hint_noarch_python_use_python_min(
                 output_host_reqs = requirements
                 output_run_reqs = requirements
 
-            hint.update(hint_noarch_python_use_python_min_inner(
-                output_host_reqs or [],
-                output_run_reqs or [],
-                get_all_test_requirements(output, [], recipe_version),
-                output.get("build", {}).get("noarch"),
-                recipe_version,
-            ))
+            hint.update(
+                hint_noarch_python_use_python_min_inner(
+                    output_host_reqs or [],
+                    output_run_reqs or [],
+                    get_all_test_requirements(output, [], recipe_version),
+                    output.get("build", {}).get("noarch"),
+                    recipe_version,
+                )
+            )
     else:
-        hint.update(hint_noarch_python_use_python_min_inner(
-            host_reqs,
-            run_reqs,
-            test_reqs,
-            noarch_value,
-            recipe_version,
-        ))
+        hint.update(
+            hint_noarch_python_use_python_min_inner(
+                host_reqs,
+                run_reqs,
+                test_reqs,
+                noarch_value,
+                recipe_version,
+            )
+        )
 
     if hint:
         hint = (

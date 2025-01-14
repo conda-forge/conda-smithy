@@ -256,7 +256,9 @@ def flatten_v1_if_else(requirements: list[str | dict] | str) -> list[str]:
     return flattened_requirements
 
 
-def get_all_test_requirements(meta: dict, lints: list[str], recipe_version: int) -> list[str]:
+def get_all_test_requirements(
+    meta: dict, lints: list[str], recipe_version: int
+) -> list[str]:
     if recipe_version == 1:
         test_section = get_section(meta, "tests", lints, recipe_version)
         test_reqs = []
