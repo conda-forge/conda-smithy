@@ -237,14 +237,44 @@ def load_linter_toml_metdata_internal(time_salt):
     return tomllib.loads(hints_toml_str)
 
 
-def flatten_v1_if_else(requirements: list[str | dict]) -> list[str]:
+def flatten_v1_if_else(requirements: list[str | dict] | str) -> list[str]:
     flattened_requirements = []
     for req in requirements:
         if isinstance(req, dict):
-            flattened_requirements.extend(flatten_v1_if_else(req["then"]))
             flattened_requirements.extend(
-                flatten_v1_if_else(req.get("else") or [])
+                flatten_v1_if_else(req["then"])
+                if isinstance(req["then"], list)
+                else [req["then"]]
+            )
+            flattened_requirements.extend(
+                flatten_v1_if_else(req.get("else", []))
+                if isinstance(req.get("else", []), list)
+                else [req["else"]]
             )
         else:
             flattened_requirements.append(req)
     return flattened_requirements
+
+
+def get_all_test_requirements(
+    meta: dict, lints: list[str], recipe_version: int
+) -> list[str]:
+    if recipe_version == 1:
+        test_section = get_section(meta, "tests", lints, recipe_version)
+        test_reqs = []
+        for test_element in test_section:
+            test_reqs += (test_element.get("requirements") or {}).get(
+                "run"
+            ) or []
+
+            if "python" in test_element:
+                if test_element["python"].get("python_version") is not None:
+                    test_reqs.append(
+                        f"python {test_element['python']['python_version']}"
+                    )
+                else:
+                    test_reqs.append("python")
+    else:
+        test_section = get_section(meta, "test", lints, recipe_version)
+        test_reqs = test_section.get("requires") or []
+    return test_reqs
