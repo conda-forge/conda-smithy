@@ -244,8 +244,9 @@ def hint_noarch_python_use_python_min_inner(
     test_reqs,
     noarch_value,
     recipe_version,
+    output_name,
 ):
-    hint = set()
+    hint = []
 
     if noarch_value == "python":
         if recipe_version == 1:
@@ -292,8 +293,11 @@ def hint_noarch_python_use_python_min_inner(
                 ):
                     break
             else:
-                hint.add(
-                    f"\n   - For the `{section_name}` section of the recipe, you should usually use `{report_syntax}` "
+                section_desc = (
+                    f"`{output_name}` output" if output_name else "recipe"
+                )
+                hint.append(
+                    f"\n   - For the `{section_name}` section of {section_desc}, you should usually use `{report_syntax}` "
                     f"for the `python` entry."
                 )
     return hint
@@ -308,10 +312,10 @@ def hint_noarch_python_use_python_min(
     recipe_version,
     hints,
 ):
-    hint = set()
+    hint = []
 
     if outputs_section:
-        for output in outputs_section:
+        for output_num, output in enumerate(outputs_section):
             requirements = output.get("requirements", {})
             if isinstance(requirements, Mapping):
                 output_host_reqs = requirements.get("host")
@@ -320,23 +324,27 @@ def hint_noarch_python_use_python_min(
                 output_host_reqs = requirements
                 output_run_reqs = requirements
 
-            hint.update(
+            hint.extend(
                 hint_noarch_python_use_python_min_inner(
                     output_host_reqs or [],
                     output_run_reqs or [],
                     get_all_test_requirements(output, [], recipe_version),
                     output.get("build", {}).get("noarch"),
                     recipe_version,
+                    output.get("package", {}).get(
+                        "name", f"<output {output_num}"
+                    ),
                 )
             )
     else:
-        hint.update(
+        hint.extend(
             hint_noarch_python_use_python_min_inner(
                 host_reqs,
                 run_reqs,
                 test_reqs,
                 noarch_value,
                 recipe_version,
+                None,
             )
         )
 
@@ -347,7 +355,7 @@ def hint_noarch_python_use_python_min(
                 "our [documentation](https://conda-forge.org/docs/maintainer/knowledge_base/#noarch-python) "
                 "for specifying the Python version."
             )
-            + "".join(sorted(hint))
+            + "".join(hint)
             + (
                 "\n   - If the package requires a newer Python version than the currently supported minimum "
                 "version on `conda-forge`, you can override the `python_min` variable by adding a "
