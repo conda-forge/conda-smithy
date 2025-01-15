@@ -238,7 +238,7 @@ def hint_pip_no_build_backend(host_or_build_section, package_name, hints):
             )
 
 
-def hint_noarch_python_use_python_min_inner(
+def _hint_noarch_python_use_python_min_inner(
     host_reqs,
     run_reqs,
     test_reqs,
@@ -321,11 +321,11 @@ def hint_noarch_python_use_python_min(
                 output_host_reqs = requirements.get("host")
                 output_run_reqs = requirements.get("run")
             else:
-                output_host_reqs = requirements
+                output_host_reqs = None
                 output_run_reqs = requirements
 
             hint.extend(
-                hint_noarch_python_use_python_min_inner(
+                _hint_noarch_python_use_python_min_inner(
                     output_host_reqs or [],
                     output_run_reqs or [],
                     get_all_test_requirements(output, [], recipe_version),
@@ -338,7 +338,7 @@ def hint_noarch_python_use_python_min(
             )
     else:
         hint.extend(
-            hint_noarch_python_use_python_min_inner(
+            _hint_noarch_python_use_python_min_inner(
                 host_reqs,
                 run_reqs,
                 test_reqs,

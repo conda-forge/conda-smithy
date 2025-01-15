@@ -269,11 +269,13 @@ def get_all_test_requirements(
 
             if (
                 "python" in test_element
-                and test_element["python"].get("python_version") is not None
             ):
-                test_reqs.append(
-                    f"python {test_element['python']['python_version']}"
-                )
+                if test_element["python"].get("python_version") is not None:
+                    test_reqs.append(
+                        f"python {test_element['python']['python_version']}"
+                    )
+                else:
+                    test_reqs.append("python")
     else:
         test_section = get_section(meta, "test", lints, recipe_version)
         test_reqs = test_section.get("requires") or []
