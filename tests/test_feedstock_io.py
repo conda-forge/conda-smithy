@@ -75,7 +75,9 @@ class TestFeedstockIO(unittest.TestCase):
                     ),
                 )
                 os.makedirs(possible_repo_subdir)
-                assert fio.get_repo_root(possible_repo_subdir) == os.path.realpath(tmp_dir)
+                assert fio.get_repo_root(
+                    possible_repo_subdir
+                ) == os.path.realpath(tmp_dir)
 
     def test_set_exe_file(self):
         perms = [stat.S_IXUSR, stat.S_IXGRP, stat.S_IXOTH]
