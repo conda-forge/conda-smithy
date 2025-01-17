@@ -4,6 +4,39 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.45.3
+====================
+
+**Added:**
+
+* Added support for multi-output recipes in ``hint_noarch_python_use_python_min`` check. (#2218)
+* Added a linter check for use of v0 selectors in v1 recipes. (#2214)
+
+**Changed:**
+
+* Due to persistent problems with Travis CI, it is not the default provider for non-x64 architectures on linux anymore.
+  Builds will be emulated on azure by default, though it is recommended to switch recipes to cross-compilation
+  where possible, by adding the following to `conda-forge.yml` (and rerendering):
+  ```
+  build_platform:
+    linux_aarch64: linux_64
+    linux_ppc64le: linux_64
+  ```
+
+**Fixed:**
+
+* Fix `tests/test_feedstock_io.py::TestFeedstockIO::test_repo` path comparison to use `os.path.realpath`. (#2220)
+* Fixed "missing package version" false positives for version "0". (#2217)
+* Fixed flattening ``if / then / else`` clauses in v1 recipes with string values of ``then`` and ``else`` keys. (#2218)
+
+**Authors:**
+
+* H. Vetinari
+* Michał Górny
+* Ken Odegard
+
+
+
 v3.45.2
 ====================
 
