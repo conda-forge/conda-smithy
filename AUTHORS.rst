@@ -133,3 +133,4 @@ Authors are sorted by number of commits.
 * Ralf Gommers
 * Matt Chan
 * Will Shanks
+* Ken Odegard
