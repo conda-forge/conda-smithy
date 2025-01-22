@@ -264,8 +264,7 @@ def test_stdlib_deployment_target(
 ):
     conda_build_param = request.node.callspec.params["config_yaml"]
     if conda_build_param == "rattler-build":
-        # stdlib is not yet implemented in rattler-build
-        # https://github.com/prefix-dev/rattler-build/issues/239
+        # stdlib_deployment_target_recipe fixture doesn't have a recipe.yaml variant
         pytest.skip("skipping test for rattler-build usecase")
 
     with caplog.at_level(logging.WARNING):
@@ -294,6 +293,10 @@ def test_stdlib_deployment_target(
 
 
 def test_mixed_python_min(mixed_python_min_recipe, jinja_env, caplog, request):
+    conda_build_param = request.node.callspec.params["config_yaml"]
+    if conda_build_param == "rattler-build":
+        # mixed_python_min_recipe fixture doesn't have a recipe.yaml variant
+        pytest.skip("skipping test for rattler-build usecase")
     with caplog.at_level(logging.WARNING):
         configure_feedstock.render_azure(
             jinja_env=jinja_env,
