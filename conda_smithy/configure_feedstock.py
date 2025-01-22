@@ -548,9 +548,8 @@ def _collapse_subpackage_variants(
     has_macdt = False
     if os.path.exists(cbc_path):
         with open(cbc_path) as f:
-            lines = f.readlines()
-        dt_pat = re.compile(r"^\s*MACOSX_DEPLOYMENT_TARGET:")
-        if any(dt_pat.match(x) for x in lines):
+            cbc_text = f.read()
+        if re.match(r"^\s*MACOSX_DEPLOYMENT_TARGET:", cbc_text):
             has_macdt = True
 
     # check if recipe contains `python_min`; add it to used_vars if so; we cannot use
@@ -561,8 +560,7 @@ def _collapse_subpackage_variants(
     # either v0 or v1 recipe must exist; no fall-back if missing
     with open(recipe_path) as f:
         meta_text = f.read()
-    pm_pat = re.compile(r".*\{\{ python_min \}\}")
-    if pm_pat.match(meta_text):
+    if re.match(r".*\{\{ python_min \}\}", meta_text):
         all_used_vars.add("python_min")
 
     # on osx, merge MACOSX_DEPLOYMENT_TARGET & c_stdlib_version to max of either; see #1884
