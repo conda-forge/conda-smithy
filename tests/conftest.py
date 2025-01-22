@@ -333,6 +333,108 @@ MACOSX_SDK_VERSION:             # [osx]
 
 
 @pytest.fixture(scope="function")
+def mixed_python_min_recipe(config_yaml: ConfigYAML):
+    # check that we can render recipe that has a mix of noarch and non-noarch outputs
+    with open(
+        os.path.join(config_yaml.workdir, "recipe", "meta.yaml"), "w"
+    ) as fh:
+        fh.write(
+            """
+{% set version = "1.2.12" %}
+
+package:
+  name: brial-split
+  version: {{ version }}
+
+source:
+  url: https://github.com/BRiAl/BRiAl/releases/download/{{ version }}/brial-{{ version }}.tar.bz2
+  sha256: ca009e3722dd3f0a60d15501caed1413146c80abced57423e32ae0116f407494
+
+build:
+  number: 4
+  skip: true  # [win]
+  ignore_run_exports_from:
+    - libboost-devel
+
+requirements:
+  build:
+    - {{ compiler('c') }}
+    - {{ stdlib("c") }}
+    - {{ compiler('cxx') }}
+    - libtool
+    - pkg-config
+    - make
+
+outputs:
+  - name: libbrial
+    run_exports:
+      # Releases of brial are very rare. 1.2.11 seems to have changed
+      # inheritance structure, which might be a breaking ABI change so we pin
+      # exactly.
+      - {{ pin_subpackage("libbrial", max_pin="x.x.x") }}
+    requirements:
+      build:
+        - {{ compiler('c') }}
+        - {{ stdlib("c") }}
+        - {{ compiler('cxx') }}
+        - libtool
+        - pkg-config
+        - make
+        - gnuconfig
+      host:
+        - libpng
+        - libboost-devel
+        - m4ri
+        - zlib
+      run:
+        - libpng
+        - m4ri
+        - zlib
+    test:
+      commands:
+        - test -f ${PREFIX}/include/polybori.h
+        - test -f ${PREFIX}/lib/libbrial.so     # [linux]
+        - test -f ${PREFIX}/lib/libbrial.dylib  # [osx]
+
+  - name: brial
+    build:
+      noarch: python
+      # noarch only built on linux64
+      skip: true  # [not linux64]
+    requirements:
+      build:
+        - python {{ python_min }}                # [build_platform != target_platform]
+        - cross-python_{{ target_platform }}     # [build_platform != target_platform]
+      host:
+        - python {{ python_min }}
+        - pip
+        - setuptools
+        - libbrial {{ version }}
+      run:
+        - python >={{ python_min }}
+        - libbrial {{ version }}
+    test:
+      requires:
+        - python {{ python_min }}
+      imports:
+        - brial
+
+about:
+    home: home
+    """
+        )
+    return RecipeConfigPair(
+        str(config_yaml.workdir),
+        _load_forge_config(
+            config_yaml.workdir,
+            exclusive_config_file=os.path.join(
+                config_yaml.workdir, "recipe", "default_config.yaml"
+            ),
+        ),
+    )
+
+
+@pytest.fixture(scope="function")
 def upload_on_branch_recipe(config_yaml: ConfigYAML):
     with open(
         os.path.join(config_yaml.workdir, "recipe", config_yaml.recipe_name),
