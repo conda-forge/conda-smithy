@@ -599,6 +599,7 @@ def _collapse_subpackage_variants(
         "channel_targets",
         "docker_image",
         "build_number_decrement",
+        "python_min",
         # The following keys are required for some of our aarch64 builds
         # Added in https://github.com/conda-forge/conda-forge-pinning-feedstock/pull/180
         "cdt_arch",
