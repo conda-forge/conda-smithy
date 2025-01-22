@@ -293,6 +293,22 @@ def test_stdlib_deployment_target(
     assert re.match(r"(?s).*MACOSX_SDK_VERSION:\s*- ['\"]?10\.14", content)
 
 
+def test_mixed_python_min(mixed_python_min_recipe, jinja_env, caplog, request):
+    with caplog.at_level(logging.WARNING):
+        configure_feedstock.render_azure(
+            jinja_env=jinja_env,
+            forge_config=mixed_python_min_recipe.config,
+            forge_dir=mixed_python_min_recipe.recipe,
+        )
+    matrix_dir = os.path.join(mixed_python_min_recipe.recipe, ".ci_support")
+    assert os.path.isdir(matrix_dir)
+    for file in os.listdir(matrix_dir):
+        with open(os.path.join(matrix_dir, file)) as f:
+            lines = f.readlines()
+    # ensure python_min is set for all platforms
+    assert any(re.match(r"^python_min:.*", x) for x in lines)
+
+
 def test_upload_on_branch_azure(upload_on_branch_recipe, jinja_env):
     configure_feedstock.render_azure(
         jinja_env=jinja_env,
