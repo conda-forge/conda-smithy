@@ -308,8 +308,8 @@ def test_mixed_python_min(mixed_python_min_recipe, jinja_env, caplog, request):
     for file in os.listdir(matrix_dir):
         with open(os.path.join(matrix_dir, file)) as f:
             lines = f.readlines()
-    # ensure python_min is set for all platforms
-    assert any(re.match(r"^python_min:.*", x) for x in lines)
+        # ensure python_min is set for all platforms
+        assert any(re.match(r"^python_min:.*", x) for x in lines)
 
 
 def test_no_python_min_if_not_present(py_recipe, jinja_env, caplog, request):
@@ -324,8 +324,8 @@ def test_no_python_min_if_not_present(py_recipe, jinja_env, caplog, request):
     for file in os.listdir(matrix_dir):
         with open(os.path.join(matrix_dir, file)) as f:
             lines = f.readlines()
-    # ensure python_min does NOT appear all platforms
-    assert all(not re.match(r"^python_min:.*", x) for x in lines)
+        # ensure python_min does NOT appear for all platforms
+        assert all(not re.match(r"^python_min:.*", x) for x in lines)
 
 
 def test_upload_on_branch_azure(upload_on_branch_recipe, jinja_env):
