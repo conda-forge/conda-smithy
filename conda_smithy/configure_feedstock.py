@@ -543,13 +543,25 @@ def _collapse_subpackage_variants(
 
     # determine if MACOSX_DEPLOYMENT_TARGET appears in recipe-local CBC;
     # all metas in list_of_metas come from same recipe, so path is identical
-    cbc_path = os.path.join(list_of_metas[0].path, "conda_build_config.yaml")
+    recipe_dir = list_of_metas[0].path
+    cbc_path = os.path.join(recipe_dir, "conda_build_config.yaml")
     has_macdt = False
     if os.path.exists(cbc_path):
         with open(cbc_path) as f:
             lines = f.readlines()
         if any(re.match(r"^\s*MACOSX_DEPLOYMENT_TARGET:", x) for x in lines):
             has_macdt = True
+
+    # check if recipe contains `python_min`; add it to used_vars if so; we cannot use
+    # `m.get_recipe_text()`, because noarch outputs may have been skipped already
+    recipe_path = os.path.join(recipe_dir, "meta.yaml")
+    if not os.path.exists(recipe_path):
+        recipe_path = os.path.join(recipe_dir, "recipe.yaml")
+    # either v0 or v1 recipe must exist; no fall-back if missing
+    with open(recipe_path) as f:
+        lines = f.readlines()
+    if any(re.match(r".*\{\{ python_min \}\}", x) for x in lines):
+        all_used_vars.add("python_min")
 
     # on osx, merge MACOSX_DEPLOYMENT_TARGET & c_stdlib_version to max of either; see #1884
     all_variants = _merge_deployment_target(all_variants, has_macdt)
@@ -599,7 +611,6 @@ def _collapse_subpackage_variants(
         "channel_targets",
         "docker_image",
         "build_number_decrement",
-        "python_min",
         # The following keys are required for some of our aarch64 builds
         # Added in https://github.com/conda-forge/conda-forge-pinning-feedstock/pull/180
         "cdt_arch",
