@@ -560,7 +560,8 @@ def _collapse_subpackage_variants(
     # either v0 or v1 recipe must exist; no fall-back if missing
     with open(recipe_path) as f:
         meta_text = f.read()
-    if re.match(r".*\{\{ python_min \}\}", meta_text):
+    pm_pat = re.compile(r".*\{\{ python_min \}\}")
+    if any(pm_pat.match(x) for x in meta_text.splitlines()):
         all_used_vars.add("python_min")
 
     # on osx, merge MACOSX_DEPLOYMENT_TARGET & c_stdlib_version to max of either; see #1884
