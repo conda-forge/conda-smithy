@@ -264,8 +264,7 @@ def test_stdlib_deployment_target(
 ):
     conda_build_param = request.node.callspec.params["config_yaml"]
     if conda_build_param == "rattler-build":
-        # stdlib is not yet implemented in rattler-build
-        # https://github.com/prefix-dev/rattler-build/issues/239
+        # stdlib_deployment_target_recipe fixture doesn't have a recipe.yaml variant
         pytest.skip("skipping test for rattler-build usecase")
 
     with caplog.at_level(logging.WARNING):
@@ -291,6 +290,42 @@ def test_stdlib_deployment_target(
     )
     # MACOSX_SDK_VERSION gets updated as well if it's below the other two
     assert re.match(r"(?s).*MACOSX_SDK_VERSION:\s*- ['\"]?10\.14", content)
+
+
+def test_mixed_python_min(mixed_python_min_recipe, jinja_env, caplog, request):
+    conda_build_param = request.node.callspec.params["config_yaml"]
+    if conda_build_param == "rattler-build":
+        # mixed_python_min_recipe fixture doesn't have a recipe.yaml variant
+        pytest.skip("skipping test for rattler-build usecase")
+    with caplog.at_level(logging.WARNING):
+        configure_feedstock.render_azure(
+            jinja_env=jinja_env,
+            forge_config=mixed_python_min_recipe.config,
+            forge_dir=mixed_python_min_recipe.recipe,
+        )
+    matrix_dir = os.path.join(mixed_python_min_recipe.recipe, ".ci_support")
+    assert os.path.isdir(matrix_dir)
+    for file in os.listdir(matrix_dir):
+        with open(os.path.join(matrix_dir, file)) as f:
+            lines = f.readlines()
+        # ensure python_min is set for all platforms
+        assert any(re.match(r"^python_min:.*", x) for x in lines)
+
+
+def test_no_python_min_if_not_present(py_recipe, jinja_env, caplog, request):
+    with caplog.at_level(logging.WARNING):
+        configure_feedstock.render_azure(
+            jinja_env=jinja_env,
+            forge_config=py_recipe.config,
+            forge_dir=py_recipe.recipe,
+        )
+    matrix_dir = os.path.join(py_recipe.recipe, ".ci_support")
+    assert os.path.isdir(matrix_dir)
+    for file in os.listdir(matrix_dir):
+        with open(os.path.join(matrix_dir, file)) as f:
+            lines = f.readlines()
+        # ensure python_min does NOT appear for all platforms
+        assert all(not re.match(r"^python_min:.*", x) for x in lines)
 
 
 def test_upload_on_branch_azure(upload_on_branch_recipe, jinja_env):

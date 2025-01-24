@@ -921,13 +921,13 @@ class ConfigModel(BaseModel):
         * `emulated` to choose an appropriate CI for compiling inside an emulation
           of the target platform (only if available)
 
-        For example, switching linux_64 & osx_64 to build on Travis CI, with win_64 on
-        Appveyor:
+        For example, making explicit that linux_64 & osx_64 build on azure (by default),
+        and switching win_64 to Appveyor:
 
         ```yaml
         provider:
-            linux_64: travis
-            osx_64: travis
+            linux_64: azure
+            osx_64: azure
             win_64: appveyor
         ```
 

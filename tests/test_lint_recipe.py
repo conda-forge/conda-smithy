@@ -3956,7 +3956,6 @@ def test_lint_recipe_parses_forblock():
 
 def test_lint_recipe_parses_spacing():
     with tempfile.TemporaryDirectory() as tmpdir:
-        # CRM fails if the yaml has differing spacing
         with open(os.path.join(tmpdir, "meta.yaml"), "w") as f:
             f.write(
                 textwrap.dedent(
@@ -3993,7 +3992,7 @@ def test_lint_recipe_parses_spacing():
             )
             for hint in hints
         ), hints
-        assert any(
+        assert not any(
             hint.startswith(
                 "The recipe is not parsable by parser `conda-recipe-manager"
             )

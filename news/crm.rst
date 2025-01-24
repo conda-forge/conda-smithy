@@ -16,7 +16,7 @@
 
 **Fixed:**
 
-* Fix `tests/test_feedstock_io.py::TestFeedstockIO::test_repo` path comparison to use `os.path.realpath`. (#2220)
+* Fixed error in testing where tests fail for ``conda-recipe-manager >=0.4.1``. (#2223)
 
 **Security:**
 

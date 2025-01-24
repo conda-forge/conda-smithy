@@ -543,13 +543,26 @@ def _collapse_subpackage_variants(
 
     # determine if MACOSX_DEPLOYMENT_TARGET appears in recipe-local CBC;
     # all metas in list_of_metas come from same recipe, so path is identical
-    cbc_path = os.path.join(list_of_metas[0].path, "conda_build_config.yaml")
+    recipe_dir = list_of_metas[0].path
+    cbc_path = os.path.join(recipe_dir, "conda_build_config.yaml")
     has_macdt = False
     if os.path.exists(cbc_path):
         with open(cbc_path) as f:
-            lines = f.readlines()
-        if any(re.match(r"^\s*MACOSX_DEPLOYMENT_TARGET:", x) for x in lines):
+            cbc_text = f.read()
+        if re.match(r"^\s*MACOSX_DEPLOYMENT_TARGET:", cbc_text):
             has_macdt = True
+
+    # check if recipe contains `python_min`; add it to used_vars if so; we cannot use
+    # `m.get_recipe_text()`, because noarch outputs may have been skipped already
+    recipe_path = os.path.join(recipe_dir, "meta.yaml")
+    if not os.path.exists(recipe_path):
+        recipe_path = os.path.join(recipe_dir, "recipe.yaml")
+    # either v0 or v1 recipe must exist; no fall-back if missing
+    with open(recipe_path) as f:
+        meta_text = f.read()
+    pm_pat = re.compile(r".*\{\{ python_min \}\}")
+    if any(pm_pat.match(x) for x in meta_text.splitlines()):
+        all_used_vars.add("python_min")
 
     # on osx, merge MACOSX_DEPLOYMENT_TARGET & c_stdlib_version to max of either; see #1884
     all_variants = _merge_deployment_target(all_variants, has_macdt)
@@ -2457,18 +2470,21 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
     logger.debug("## END CONFIGURATION\n")
 
     if config["provider"]["linux_aarch64"] == "default":
-        config["provider"]["linux_aarch64"] = ["travis"]
+        config["provider"]["linux_aarch64"] = ["azure"]
 
     if config["provider"]["linux_aarch64"] == "native":
         config["provider"]["linux_aarch64"] = ["travis"]
 
     if config["provider"]["linux_ppc64le"] == "default":
-        config["provider"]["linux_ppc64le"] = ["travis"]
+        config["provider"]["linux_ppc64le"] = ["azure"]
 
     if config["provider"]["linux_ppc64le"] == "native":
         config["provider"]["linux_ppc64le"] = ["travis"]
 
-    if config["provider"]["linux_s390x"] in {"default", "native"}:
+    if config["provider"]["linux_s390x"] == "default":
+        config["provider"]["linux_s390x"] = ["azure"]
+
+    if config["provider"]["linux_s390x"] == "native":
         config["provider"]["linux_s390x"] = ["travis"]
 
     config["remote_ci_setup"] = _sanitize_remote_ci_setup(

@@ -4,7 +4,7 @@
 
 **Changed:**
 
-* <news item>
+* Always populate variant configs with `python_min`, if present
 
 **Deprecated:**
 
@@ -16,7 +16,7 @@
 
 **Fixed:**
 
-* Fixed "missing package version" false positives for version "0". (#2217)
+* <news item>
 
 **Security:**
 

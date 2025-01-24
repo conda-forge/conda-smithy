@@ -393,7 +393,7 @@
   github: shadowwalkersb
 - name: Matthew R. Becker
   email: becker.mr@gmail.com
-  num_commits: 443
+  num_commits: 445
   first_commit: 2020-01-07 17:44:33
   github: beckermr
   alternate_emails:
@@ -539,7 +539,7 @@
   github: nehaljwani
 - name: H. Vetinari
   email: h.vetinari@gmx.com
-  num_commits: 66
+  num_commits: 67
   first_commit: 2021-11-14 02:53:10
 - name: Benjamin Tovar
   email: btovar@nd.edu
@@ -689,7 +689,7 @@
   github: blmaier
 - name: Michał Górny
   email: mgorny@gentoo.org
-  num_commits: 20
+  num_commits: 23
   first_commit: 2024-11-06 09:06:27
 - name: Matt Chan
   email: 49702524+thewchan@users.noreply.github.com
@@ -699,3 +699,7 @@
   email: wshaos@posteo.net
   num_commits: 1
   first_commit: 2025-01-06 11:26:10
+- name: Ken Odegard
+  email: kodegard@anaconda.com
+  num_commits: 1
+  first_commit: 2025-01-15 11:12:15
