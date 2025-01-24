@@ -4,6 +4,26 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.45.4
+====================
+
+**Changed:**
+
+* Add output to gitignore for rattler-build's outputs.
+* Always populate variant configs with `python_min`, if present
+
+**Fixed:**
+
+* Fixed error in testing where tests fail for ``conda-recipe-manager >=0.4.1``. (#2223)
+
+**Authors:**
+
+* Matthew R. Becker
+* H. Vetinari
+* Pavel Zwerschke
+
+
+
 v3.45.3
 ====================
 
