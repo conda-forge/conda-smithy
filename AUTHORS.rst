@@ -104,6 +104,7 @@ Authors are sorted by number of commits.
 * Dominic Davis-Foster
 * Anton Tetov
 * Brandon Maier
+* Pavel Zwerschke
 * lorenz
 * Tom Augspurger
 * Ryan May
