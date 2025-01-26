@@ -375,22 +375,25 @@ def hint_space_separated_specs(
     report = {}
     for req_type, reqs in {
         **requirements_section,
-        "test": test_section.get("requires", []),
+        "test": test_section.get("requires") or (),
     }.items():
         bad_specs = [
-            req for req in reqs if not _ensure_spec_space_separated(req)
+            req
+            for req in (reqs or ())
+            if not _ensure_spec_space_separated(req)
         ]
         if bad_specs:
             report.setdefault("top-level", {})[req_type] = bad_specs
     for output in outputs_section:
+        requirements_section = output.get("requirements") or {}
+        if not hasattr(requirements_section, "items"):
+            # not a dict, but a list (CB2 style)
+            requirements_section = {"run": requirements_section}
         for req_type, reqs in {
-            "build": output.get("requirements", {}).get("build") or [],
-            "host": output.get("requirements", {}).get("host") or [],
-            "run": output.get("requirements", {}).get("run") or [],
-            "test": output.get("requirements", {})
-            .get("test", {})
-            .get("requires")
-            or [],
+            "build": requirements_section.get("build") or [],
+            "host": requirements_section.get("host") or [],
+            "run": requirements_section.get("run") or [],
+            "test": output.get("test", {}).get("requires") or [],
         }.items():
             bad_specs = [
                 req for req in reqs if not _ensure_spec_space_separated(req)
