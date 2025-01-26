@@ -415,7 +415,7 @@ def lintify_meta_yaml(
     # see https://github.com/conda/conda-build/issues/5571#issuecomment-2604505922
     hint_space_separated_specs(
         requirements_section,
-        test_section,
+        [test_section] if hasattr(test_section, "items") else test_section,
         outputs_section,
         hints,
     )

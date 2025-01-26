@@ -368,14 +368,18 @@ def hint_noarch_python_use_python_min(
 
 def hint_space_separated_specs(
     requirements_section,
-    test_section,
+    test_sections,
     outputs_section,
     hints,
 ):
     report = {}
     for req_type, reqs in {
         **requirements_section,
-        "test": test_section.get("requires", []),
+        "test": [
+            req
+            for section in test_sections
+            for req in section.get("requires", ())
+        ],
     }.items():
         bad_specs = [
             req for req in reqs if not _ensure_spec_space_separated(req)
