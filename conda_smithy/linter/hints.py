@@ -374,10 +374,12 @@ def hint_space_separated_specs(
 ):
     report = {}
     for req_type, reqs in {
-        **requirements_section, 
+        **requirements_section,
         "test": test_section.get("requires", []),
     }.items():
-        bad_specs = [req for req in reqs if not _ensure_spec_space_separated(req)]
+        bad_specs = [
+            req for req in reqs if not _ensure_spec_space_separated(req)
+        ]
         if bad_specs:
             report.setdefault("top-level", {})[req_type] = bad_specs
     for output in outputs_section:
@@ -385,9 +387,14 @@ def hint_space_separated_specs(
             "build": output.get("requirements", {}).get("build") or [],
             "host": output.get("requirements", {}).get("host") or [],
             "run": output.get("requirements", {}).get("run") or [],
-            "test": output.get("requirements", {}).get("test", {}).get("requires") or [],
+            "test": output.get("requirements", {})
+            .get("test", {})
+            .get("requires")
+            or [],
         }.items():
-            bad_specs = [req for req in reqs if not _ensure_spec_space_separated(req)]
+            bad_specs = [
+                req for req in reqs if not _ensure_spec_space_separated(req)
+            ]
             if bad_specs:
                 report.setdefault(output, {})[req_type] = bad_specs
 

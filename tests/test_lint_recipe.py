@@ -4222,7 +4222,7 @@ def test_version_zero(filename: str):
         ("python =3.9=*cpython*", False),
         ("python=3.9=*cpython*", False),
         ("python malformed=*cpython*", False),
-    ]
+    ],
 )
 def test_bad_specs(spec, result):
     assert hints._ensure_spec_space_separated(spec) is result
@@ -4238,7 +4238,7 @@ def test_bad_specs(spec, result):
         ("python =3.9=*cpython*", False),
         ("python=3.9=*cpython*", False),
         ("python malformed=*cpython*", False),
-    ]
+    ],
 )
 def test_bad_specs_report(tmp_path, spec, ok):
     (tmp_path / "meta.yaml").write_text(
