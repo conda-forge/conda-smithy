@@ -31,6 +31,7 @@ from conda_smithy.linter.hints import (
     hint_pip_usage,
     hint_shellcheck_usage,
     hint_sources_should_not_mention_pypi_io_but_pypi_org,
+    hint_space_separated_specs,
     hint_suggest_noarch,
 )
 from conda_smithy.linter.lints import (
@@ -408,6 +409,15 @@ def lintify_meta_yaml(
         lints,
         hints,
         recipe_version=recipe_version,
+    )
+
+    # 7: warn of `name =version=build` specs, suggest `name version build`
+    # see https://github.com/conda/conda-build/issues/5571#issuecomment-2604505922
+    hint_space_separated_specs(
+        requirements_section,
+        test_section,
+        outputs_section,
+        hints,
     )
 
     return lints, hints

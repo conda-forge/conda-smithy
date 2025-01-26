@@ -364,3 +364,64 @@ def hint_noarch_python_use_python_min(
             )
         )
         hints.append(hint)
+
+
+def hint_space_separated_specs(
+    requirements_section,
+    test_section,
+    outputs_section,
+    hints,
+):
+    report = {}
+    for req_type, reqs in {
+        **requirements_section, 
+        "test": test_section.get("requires", []),
+    }.items():
+        bad_specs = [req for req in reqs if not _ensure_spec_space_separated(req)]
+        if bad_specs:
+            report.setdefault("top-level", {})[req_type] = bad_specs
+    for output in outputs_section:
+        for req_type, reqs in {
+            "build": output.get("requirements", {}).get("build") or [],
+            "host": output.get("requirements", {}).get("host") or [],
+            "run": output.get("requirements", {}).get("run") or [],
+            "test": output.get("requirements", {}).get("test", {}).get("requires") or [],
+        }.items():
+            bad_specs = [req for req in reqs if not _ensure_spec_space_separated(req)]
+            if bad_specs:
+                report.setdefault(output, {})[req_type] = bad_specs
+
+    lines = []
+    for output, requirements in report.items():
+        lines.append(f"{output} output has some malformed specs:")
+        for req_type, specs in requirements.items():
+            specs = [f"`{spec}" for spec in specs]
+            lines.append(f"- In section {req_type}: {', '.join(specs)}")
+    if lines:
+        lines.append(
+            "Requirements spec fields should always be space-separated to avoid known issues in "
+            "conda-build. For example, instead of `name =version=build`, use `name version build`."
+        )
+        hints.append("\n".join(lines))
+
+
+def _ensure_spec_space_separated(spec: str) -> bool:
+    from conda import CondaError
+    from conda.models.match_spec import MatchSpec
+
+    if "#" in spec:
+        spec = spec.split("#")[0]
+    spec = spec.strip()
+    fields = spec.split(" ")
+    try:
+        match_spec = MatchSpec(spec)
+    except CondaError:
+        return False
+
+    if match_spec.strictness == len(fields):
+        # strictness is a value between 1 and 3:
+        # 1 = name only
+        # 2 = name and version
+        # 3 = name, version and build.
+        return True
+    return False
