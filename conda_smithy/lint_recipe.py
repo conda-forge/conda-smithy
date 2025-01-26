@@ -413,12 +413,13 @@ def lintify_meta_yaml(
 
     # 7: warn of `name =version=build` specs, suggest `name version build`
     # see https://github.com/conda/conda-build/issues/5571#issuecomment-2604505922
-    hint_space_separated_specs(
-        requirements_section,
-        [test_section] if hasattr(test_section, "items") else test_section,
-        outputs_section,
-        hints,
-    )
+    if recipe_version == 0:
+        hint_space_separated_specs(
+            requirements_section,
+            test_section,
+            outputs_section,
+            hints,
+        )
 
     return lints, hints
 
