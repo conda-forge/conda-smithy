@@ -12,6 +12,7 @@ from pathlib import Path
 import pytest
 
 import conda_smithy.lint_recipe as linter
+from conda_smithy.linter import hints
 from conda_smithy.linter.utils import VALID_PYTHON_BUILD_BACKENDS
 from conda_smithy.utils import get_yaml, render_meta_yaml
 
@@ -4209,6 +4210,52 @@ def test_version_zero(filename: str):
             )
         lints, _ = linter.main(tmpdir, return_hints=True, conda_forge=True)
         assert "Package version is missing." not in lints
+
+
+@pytest.mark.parametrize(
+    "spec, result",
+    [
+        ("python", True),
+        ("python 3.9", True),
+        ("python 3.9 *cpython*", True),
+        ("python 3.9=*cpython*", False),
+        ("python =3.9=*cpython*", False),
+        ("python=3.9=*cpython*", False),
+        ("python malformed=*cpython*", False),
+    ],
+)
+def test_bad_specs(spec, result):
+    assert hints._ensure_spec_space_separated(spec) is result
+
+
+@pytest.mark.parametrize(
+    "spec, ok",
+    [
+        ("python", True),
+        ("python 3.9", True),
+        ("python 3.9 *cpython*", True),
+        ("python 3.9=*cpython*", False),
+        ("python =3.9=*cpython*", False),
+        ("python=3.9=*cpython*", False),
+        ("python malformed=*cpython*", False),
+    ],
+)
+def test_bad_specs_report(tmp_path, spec, ok):
+    (tmp_path / "meta.yaml").write_text(
+        textwrap.dedent(
+            f"""
+            package:
+                name: foo
+            requirements:
+                run:
+                - {spec}
+            """
+        )
+    )
+
+    _, hints = linter.main(tmp_path, return_hints=True)
+    print(hints)
+    assert all("has some malformed specs" not in hint for hint in hints) is ok
 
 
 if __name__ == "__main__":
