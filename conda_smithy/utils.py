@@ -56,7 +56,7 @@ def _get_metadata_from_feedstock_dir(
 
 
 def get_feedstock_name_from_meta(
-    meta: Union[MetaData, RattlerBuildMetaData]
+    meta: Union[MetaData, RattlerBuildMetaData],
 ) -> str:
     """Get the feedstock name from a parsed meta.yaml or recipe.yaml."""
     if "feedstock-name" in meta.meta["extra"]:
