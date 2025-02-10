@@ -4,12 +4,11 @@
 import json
 from enum import Enum
 from inspect import cleandoc
-from typing import Any, Dict, List, Literal, Optional, Union
+from typing import Any, Literal, Optional, Union
 
 import yaml
-from pydantic import BaseModel, Field, create_model, ConfigDict
-
 from conda.base.constants import KNOWN_SUBDIRS
+from pydantic import BaseModel, ConfigDict, Field, create_model
 
 try:
     from enum import StrEnum
@@ -42,7 +41,12 @@ conda_build_tools = Literal[
     "conda-build+conda-libmamba-solver",
     # will run 'conda mambabuild', as provided by boa
     "mambabuild",
+    # will run 'rattler-build build'
+    "rattler-build",
 ]
+
+
+image_tags = Literal["cos7", "alma8", "alma9", "ubi8"]
 
 
 class CIservices(StrEnum):
@@ -76,8 +80,11 @@ class BotConfigInspectionChoice(StrEnum):
 
 
 class BotConfigVersionUpdatesSourcesChoice(StrEnum):
+    # if adding a new source here, make sure to update the description of the sources field
+    # in the BotConfigVersionUpdates model as well
     CRAN = "cran"
     GITHUB = "github"
+    GITHUB_RELEASES = "githubreleases"
     INCREMENT_ALPHA_RAW_URL = "incrementalpharawurl"
     LIBRARIES_IO = "librariesio"
     NPM = "npm"
@@ -85,6 +92,12 @@ class BotConfigVersionUpdatesSourcesChoice(StrEnum):
     PYPI = "pypi"
     RAW_URL = "rawurl"
     ROS_DISTRO = "rosdistro"
+
+
+class Lints(StrEnum):
+    LINT_NOARCH_SELECTORS = "lint_noarch_selectors"
+    HINT_PIP_NO_BUILD_BACKEND = "hint_pip_no_build_backend"
+    HINT_PYTHON_MIN = "hint_python_min"
 
 
 ##############################################
@@ -97,7 +110,7 @@ class AzureRunnerSettings(BaseModel):
 
     model_config: ConfigDict = ConfigDict(extra="allow")
 
-    pool: Optional[Dict[str, str]] = Field(
+    pool: Optional[dict[str, str]] = Field(
         default_factory=lambda: {"vmImage": "ubuntu-latest"},
         description="The pool of self-hosted runners, e.g. 'vmImage': 'ubuntu-latest'",
     )
@@ -106,12 +119,19 @@ class AzureRunnerSettings(BaseModel):
         default=None, description="Swapfile size in GiB"
     )
 
-    timeoutInMinutes: Optional[int] = Field(
-        default=360, description="Timeout in minutes for the job"
+    timeout_in_minutes: Optional[int] = Field(
+        default=360,
+        description="Timeout in minutes for the job",
+        alias="timeoutInMinutes",
     )
 
-    variables: Optional[Dict[str, str]] = Field(
+    variables: Optional[dict[str, str]] = Field(
         default_factory=dict, description="Variables"
+    )
+
+    # windows only
+    install_atl: Optional[bool] = Field(
+        default=False, description="Whether to install ATL components for MSVC"
     )
 
 
@@ -137,7 +157,7 @@ class AzureConfig(BaseModel):
     )
 
     free_disk_space: Optional[
-        Union[bool, Nullable, List[Literal["apt", "cache", "docker"]]]
+        Union[bool, Nullable, list[Literal["apt", "cache", "docker"]]]
     ] = Field(
         default=False,
         description=cleandoc(
@@ -192,20 +212,40 @@ class AzureConfig(BaseModel):
 
     settings_osx: AzureRunnerSettings = Field(
         default_factory=lambda: AzureRunnerSettings(
-            pool={"vmImage": "macOS-12"}
+            pool={"vmImage": "macOS-13"}
         ),
         description="OSX-specific settings for runners",
     )
 
     settings_win: AzureRunnerSettings = Field(
         default_factory=lambda: AzureRunnerSettings(
+            install_atl=False,
             pool={"vmImage": "windows-2022"},
             variables={
+                "MINIFORGE_HOME": "D:\\Miniforge",
                 "CONDA_BLD_PATH": "D:\\\\bld\\\\",
                 "UPLOAD_TEMP": "D:\\\\tmp",
             },
         ),
-        description="Windows-specific settings for runners",
+        description=cleandoc(
+            """
+            Windows-specific settings for runners. Aside from overriding the `vmImage`,
+            you can also specify `install_atl: true` in case you need the ATL components
+            for MSVC; these don't get installed by default anymore, see
+            https://github.com/actions/runner-images/issues/9873
+
+            Finally, under `variables`, some important things you can set are:
+
+            - `CONDA_BLD_PATH`: Location of the conda-build workspace. Defaults to `D:\\bld`
+            - `MINIFORGE_HOME`: Location of the base environment installation. Defaults to
+              `D:\\Miniforge`.
+            - `SET_PAGEFILE`: `"True"` to increase the pagefile size via conda-forge-ci-setup.
+
+            If you are running out of space in `D:`, consider changing to `C:`.
+            It's a slower drive but has more space available. We recommend you keep
+            both `CONDA_BLD_PATH` and `MINIFORGE_HOME` in the same drive for performance.
+            """
+        ),
     )
 
     user_or_org: Optional[Union[str, Nullable]] = Field(
@@ -265,7 +305,7 @@ class GithubActionsConfig(BaseModel):
     )
 
     free_disk_space: Optional[
-        Union[bool, Nullable, List[Literal["apt", "cache", "docker"]]]
+        Union[bool, Nullable, list[Literal["apt", "cache", "docker"]]]
     ] = Field(
         default=False,
         description=cleandoc(
@@ -324,15 +364,49 @@ class BotConfigVersionUpdates(BaseModel):
         description="Fraction of versions to keep for frequently updated packages",
     )
 
-    exclude: Optional[List[str]] = Field(
+    exclude: Optional[list[str]] = Field(
         default=[],
         description="List of versions to exclude. "
         "Make sure branch names are `str` by quoting the value.",
     )
 
-    sources: Optional[List[BotConfigVersionUpdatesSourcesChoice]] = Field(
+    sources: Optional[list[BotConfigVersionUpdatesSourcesChoice]] = Field(
         None,
-        description="List of sources to use for version updates",
+        description=cleandoc(
+            """
+            List of sources to find new versions (i.e. the strings like 1.2.3) for the package.
+
+            The following sources are available:
+            - `cran`: Update from CRAN
+            - `github`: Update from the GitHub releases RSS feed (includes pre-releases)
+            - `githubreleases`: Get the latest version by following the redirect of
+            `https://github.com/{owner}/{repo}/releases/latest` (excludes pre-releases)
+            - `incrementalpharawurl`: If this source is run for a specific small selection of feedstocks, it acts like
+            the `rawurl` source but also increments letters in the version string (e.g. 2024a -> 2024b). If the source
+            is run for other feedstocks (even if selected manually), it does nothing.
+            - `librariesio`: Update from Libraries.io RSS feed
+            - `npm`: Update from the npm registry
+            - `nvidia`: Update from the NVIDIA download page
+            - `pypi`: Update from the PyPI registry
+            - `rawurl`: Update from a raw URL by trying to bump the version number in different ways and
+            checking if the URL exists (e.g. 1.2.3 -> 1.2.4, 1.3.0, 2.0.0, etc.)
+            - `rosdistro`: Update from a ROS distribution
+
+            Common issues:
+            - If you are using a GitHub-based source in your recipe and the bot issues PRs for pre-releases, restrict
+            the sources to `githubreleases` to avoid pre-releases.
+            - If you use source tarballs that are uploaded manually by the maintainers a significant time after a
+            GitHub release, you may want to restrict the sources to `rawurl` to avoid the bot attempting to update
+            the recipe before the tarball is uploaded.
+            """
+        ),
+    )
+
+    skip: Optional[bool] = Field(
+        default=False,
+        description="Skip automatic version updates. "
+        "Useful in cases where the source project's version numbers don't conform to "
+        "PEP440.",
     )
 
 
@@ -359,7 +433,7 @@ class BotConfig(BaseModel):
         description="Method for generating hints or updating recipe",
     )
 
-    abi_migration_branches: Optional[List[str]] = Field(
+    abi_migration_branches: Optional[list[str]] = Field(
         default=[],
         description="List of branches for additional bot migration PRs. "
         "Make sure branch names are `str` by quoting the value.",
@@ -403,6 +477,14 @@ class CondaBuildConfig(BaseModel):
             [conda build documentation](https://docs.conda.io/projects/conda-build/en/stable/resources/commands/conda-build.html).
             """
         ),
+    )
+
+
+class LinterConfig(BaseModel):
+
+    skip: Optional[list[Lints]] = Field(
+        default_factory=list,
+        description="List of lints to skip",
     )
 
 
@@ -479,13 +561,13 @@ BuildPlatform = create_model(
 OSVersion = create_model(
     "os_version",
     **{
-        platform.value: (Optional[Union[str, Nullable]], Field(default=None))
+        platform.value: (Optional[image_tags], Field(default=None))
         for platform in Platforms
         if platform.value.startswith("linux")
     },
 )
 
-ProviderType = Union[List[CIservices], CIservices, bool, Nullable]
+ProviderType = Union[list[CIservices], CIservices, bool, Nullable]
 
 Provider = create_model(
     "provider",
@@ -535,6 +617,22 @@ class ConfigModel(BaseModel):
         ),
     )
 
+    linter: Optional[LinterConfig] = Field(
+        default_factory=LinterConfig,
+        description=cleandoc(
+            """
+        Settings in this block are used to control how `conda smithy` lints
+        An example of the such configuration is:
+
+        ```yaml
+        linter:
+            skip:
+                - lint_noarch_selectors
+        ```
+        """
+        ),
+    )
+
     conda_build_tool: Optional[conda_build_tools] = Field(
         default="conda-build",
         description=cleandoc(
@@ -544,13 +642,20 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    conda_install_tool: Optional[Literal["conda", "mamba"]] = Field(
-        default="mamba",
+    conda_install_tool: Optional[
+        Literal["conda", "mamba", "micromamba", "pixi"]
+    ] = Field(
+        default="micromamba",
         description=cleandoc(
             """
-        Use this option to choose which tool is used to provision the tooling in your
-        feedstock.
-        """
+                Use this option to choose which tool is used to provision the tooling in your
+                feedstock. Defaults to micromamba.
+
+                If conda or mamba are chosen, the latest Miniforge will be used to
+                provision the base environment. If micromamba or pixi are chosen,
+                Miniforge is not involved; the environment is created directly by
+                micromamba or pixi.
+                """
         ),
     )
 
@@ -682,7 +787,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    choco: Optional[List[str]] = Field(
+    choco: Optional[list[str]] = Field(
         default_factory=list,
         description=cleandoc(
             """
@@ -736,7 +841,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    noarch_platforms: Optional[Union[Platforms, List[Platforms]]] = Field(
+    noarch_platforms: Optional[Union[Platforms, list[Platforms]]] = Field(
         default_factory=lambda: ["linux_64"],
         description=cleandoc(
             """
@@ -764,14 +869,20 @@ class ConfigModel(BaseModel):
         description=cleandoc(
             """
         This key is used to set the OS versions for `linux_*` platforms. Valid entries
-        map a linux platform and arch to either `cos6` or `cos7`.
-        Currently `cos6` is the default for `linux-64`.
-        All other linux architectures use CentOS 7.
-        Here is an example that enables CentOS 7 on `linux-64` builds
+        map a linux platform and arch to either `cos7`, `alma8`, `alma9` or `ubi8`.
 
+        Currently `alma9` is the default, which should work out-of-the-box for the vast
+        majority of uses.
+
+        Note that the image version does not imply a matching `glibc` requirement (which
+        can be set using `c_stdlib_version` in `recipe/conda_build_config.yaml`).
+
+        If you need to opt into older images, here's an example how to do it:
         ```yaml
         os_version:
             linux_64: cos7
+            linux_aarch64: cos7
+            linux_ppc64le: cos7
         ```
         """
         ),
@@ -810,13 +921,13 @@ class ConfigModel(BaseModel):
         * `emulated` to choose an appropriate CI for compiling inside an emulation
           of the target platform (only if available)
 
-        For example, switching linux_64 & osx_64 to build on Travis CI, with win_64 on
-        Appveyor:
+        For example, making explicit that linux_64 & osx_64 build on azure (by default),
+        and switching win_64 to Appveyor:
 
         ```yaml
         provider:
-            linux_64: travis
-            osx_64: travis
+            linux_64: azure
+            osx_64: azure
             win_64: appveyor
         ```
 
@@ -863,7 +974,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    remote_ci_setup: Optional[Union[str, List[str]]] = Field(
+    remote_ci_setup: Optional[Union[str, list[str]]] = Field(
         default_factory=lambda: [
             "conda-forge-ci-setup=4",
             "conda-build>=24.1",
@@ -897,7 +1008,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    skip_render: Optional[List[str]] = Field(
+    skip_render: Optional[list[str]] = Field(
         default_factory=list,
         description=cleandoc(
             """
@@ -916,7 +1027,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    templates: Optional[Dict[str, str]] = Field(
+    templates: Optional[dict[str, str]] = Field(
         default_factory=dict,
         description=cleandoc(
             """
@@ -1089,7 +1200,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    secrets: Optional[List[str]] = Field(
+    secrets: Optional[list[str]] = Field(
         default_factory=list,
         description=cleandoc(
             """
@@ -1111,7 +1222,7 @@ class ConfigModel(BaseModel):
     ###################################
     ####       CI Providers        ####
     ###################################
-    travis: Optional[Dict[str, Any]] = Field(
+    travis: Optional[dict[str, Any]] = Field(
         default_factory=dict,
         description=cleandoc(
             """
@@ -1121,7 +1232,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    circle: Optional[Dict[str, Any]] = Field(
+    circle: Optional[dict[str, Any]] = Field(
         default_factory=dict,
         description=cleandoc(
             """
@@ -1131,7 +1242,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    appveyor: Optional[Dict[str, Any]] = Field(
+    appveyor: Optional[dict[str, Any]] = Field(
         default_factory=lambda: {"image": "Visual Studio 2017"},
         description=cleandoc(
             """
@@ -1169,14 +1280,14 @@ class ConfigModel(BaseModel):
         ```yaml
         azure:
             settings_linux:
-            pool:
-                name: your_local_pool_name
-                demands:
-                  - some_key -equals some_value
-            workspace:
-                clean: all
-            strategy:
-                maxParallel: 1
+                pool:
+                    name: your_local_pool_name
+                    demands:
+                        - some_key -equals some_value
+                workspace:
+                    clean: all
+                strategy:
+                    maxParallel: 1
         ```
 
         Below is an example configuration for adding a swapfile on an Azure agent for Linux:
@@ -1186,11 +1297,21 @@ class ConfigModel(BaseModel):
             settings_linux:
                 swapfile_size: 10GiB
         ```
+
+        If you need more space on Windows, you can use `C:` at the cost of IO performance:
+
+        ```yaml
+        azure:
+            settings_win:
+                variables:
+                    CONDA_BLD_PATH: "C:\\bld"
+                    MINIFORGE_HOME: "C:\\Miniforge"
+        ```
         """
         ),
     )
 
-    drone: Optional[Dict[str, str]] = Field(
+    drone: Optional[dict[str, str]] = Field(
         default_factory=dict,
         description=cleandoc(
             """
@@ -1210,7 +1331,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    woodpecker: Optional[Dict[str, str]] = Field(
+    woodpecker: Optional[dict[str, str]] = Field(
         default_factory=dict,
         description=cleandoc(
             """
@@ -1238,7 +1359,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    matrix: Optional[Dict[str, Any]] = Field(
+    matrix: Optional[dict[str, Any]] = Field(
         default_factory=dict,
         exclude=True,
         deprecated=True,
@@ -1266,4 +1387,4 @@ if __name__ == "__main__":
         f.write("\n")
 
     with CONDA_FORGE_YAML_DEFAULTS_FILE.open(mode="w+") as f:
-        f.write(yaml.dump(model.model_dump(), indent=2))
+        f.write(yaml.dump(model.model_dump(by_alias=True), indent=2))

@@ -1,23 +1,28 @@
 import collections
 import os
-from textwrap import dedent
+import typing
+from pathlib import Path
 
 import pytest
 import yaml
-
+from conda_build.utils import copy_into
 from jinja2 import FileSystemLoader
 from jinja2.sandbox import SandboxedEnvironment
-from conda_build.utils import copy_into
 
 from conda_smithy.configure_feedstock import (
-    conda_forge_content,
     _load_forge_config,
+    conda_forge_content,
 )
-
 
 RecipeConfigPair = collections.namedtuple(
     "RecipeConfigPair", ("recipe", "config")
 )
+
+
+class ConfigYAML(typing.NamedTuple):
+    workdir: Path
+    recipe_name: str
+    type: str
 
 
 @pytest.fixture(scope="function")
@@ -53,9 +58,22 @@ def recipe_dirname():
     return "recipe"
 
 
-@pytest.fixture(scope="function")
-def config_yaml(testing_workdir, recipe_dirname):
-    config = {"python": ["2.7", "3.5"], "r_base": ["3.3.2", "3.4.2"]}
+@pytest.fixture(scope="function", params=["conda-build", "rattler-build"])
+def config_yaml(testing_workdir, recipe_dirname, request, monkeypatch):
+    # conda-build has legacy behavior where these env vars cause config
+    # objects to have default values for the associated language.
+    # This causes test failures, so we unset them here.
+    monkeypatch.delenv("CONDA_PY", raising=False)
+    monkeypatch.delenv("CONDA_R", raising=False)
+    monkeypatch.delenv("CONDA_PERL", raising=False)
+    monkeypatch.delenv("CONDA_LUA", raising=False)
+    monkeypatch.delenv("CONDA_NPY", raising=False)
+
+    config = {
+        "python": ["2.7", "3.5"],
+        "r_base": ["3.3.2", "3.4.2"],
+        "python_min": ["2.7"],
+    }
     os.makedirs(os.path.join(testing_workdir, recipe_dirname))
     with open(os.path.join(testing_workdir, "config.yaml"), "w") as f:
         f.write("docker:\n")
@@ -65,24 +83,25 @@ def config_yaml(testing_workdir, recipe_dirname):
         os.path.join(testing_workdir, recipe_dirname, "default_config.yaml"),
         "w",
     ) as f:
+        if request.param == "conda-build":
+            config_name = "conda_build_config.yaml"
+            recipe_name = "meta.yaml"
+        else:
+            config_name = "rattler_build_config.yaml"
+            recipe_name = "recipe.yaml"
+
         yaml.dump(config, f, default_flow_style=False)
-        # need selectors, so write these more manually
-        f.write(
-            dedent(
-                """\
-        c_compiler:     # [win]
-        - vs2008        # [win]
-        - vs2015        # [win]
-        vc:             # [win]
-        - '9'           # [win]
-        - '14'          # [win]
-        zip_keys:       # [win]
-        - c_compiler    # [win]
-        - python        # [win]
-        - vc            # [win]
-        """
+
+        config_path = os.path.abspath(
+            os.path.join(
+                __file__, "../", "recipes", "default_config", config_name
             )
         )
+        config_text = Path(config_path).read_text()
+
+        # need selectors, so write these more manually
+        f.write(config_text)
+
     # dummy file that needs to be present for circle ci.  This is created by the init function
     os.makedirs(os.path.join(testing_workdir, ".circleci"))
     with open(
@@ -105,14 +124,20 @@ def config_yaml(testing_workdir, recipe_dirname):
             "upload_on_branch": "foo-branch",
             "recipe_dir": recipe_dirname,
         }
+        if request.param == "rattler-build":
+            config["conda_build_tool"] = "rattler-build"
         yaml.dump(config, f, default_flow_style=False)
-    return testing_workdir
+    yield ConfigYAML(testing_workdir, recipe_name, request.param)
 
 
 @pytest.fixture(scope="function")
-def noarch_recipe(config_yaml, recipe_dirname, request):
+def noarch_recipe(config_yaml: ConfigYAML, recipe_dirname):
+    # get the used params passed for config_yaml fixture
     with open(
-        os.path.join(config_yaml, recipe_dirname, "meta.yaml"), "w"
+        os.path.join(
+            config_yaml.workdir, recipe_dirname, config_yaml.recipe_name
+        ),
+        "w",
     ) as fh:
         fh.write(
             """
@@ -129,77 +154,115 @@ requirements:
     """
         )
     return RecipeConfigPair(
-        str(config_yaml),
+        str(config_yaml.workdir),
         _load_forge_config(
-            config_yaml,
+            config_yaml.workdir,
             exclusive_config_file=os.path.join(
-                config_yaml, recipe_dirname, "default_config.yaml"
+                config_yaml.workdir, recipe_dirname, "default_config.yaml"
             ),
         ),
     )
 
 
 @pytest.fixture(scope="function")
-def r_recipe(config_yaml, request):
-    with open(os.path.join(config_yaml, "recipe", "meta.yaml"), "w") as fh:
+def noarch_recipe_with_python_min(config_yaml: ConfigYAML, recipe_dirname):
+    if config_yaml.type == "rattler-build":
+        jinjatxt = "${{ python_min }}"
+    else:
+        jinjatxt = "{{ python_min }}"
+    with open(
+        os.path.join(
+            config_yaml.workdir, recipe_dirname, config_yaml.recipe_name
+        ),
+        "w",
+    ) as fh:
         fh.write(
-            """
+            f"""\
 package:
-    name: r-test
+    name: python-noarch-test
     version: 1.0.0
 build:
-    skip: True  # [win]
+    noarch: python
 requirements:
-    build:
-        - r-base
-    run:
-        - r-base
-    """
-        )
-    return RecipeConfigPair(
-        str(config_yaml),
-        _load_forge_config(
-            config_yaml,
-            exclusive_config_file=os.path.join(
-                config_yaml, "recipe", "default_config.yaml"
-            ),
-        ),
-    )
-
-
-@pytest.fixture(scope="function")
-def py_recipe(config_yaml, request):
-    with open(os.path.join(config_yaml, "recipe", "meta.yaml"), "w") as fh:
-        fh.write(
-            """
-package:
-    name: py-test
-    version: 1.0.0
-requirements:
-    build:                      # [win]
-        - {{ compiler('c') }}   # [win]
     host:
-        - python
+        - python {jinjatxt}
     run:
-        - python
-about:
-    home: home
+        - python >={jinjatxt}
     """
         )
     return RecipeConfigPair(
-        str(config_yaml),
+        str(config_yaml.workdir),
         _load_forge_config(
-            config_yaml,
+            config_yaml.workdir,
             exclusive_config_file=os.path.join(
-                config_yaml, "recipe", "default_config.yaml"
+                config_yaml.workdir, recipe_dirname, "default_config.yaml"
             ),
         ),
     )
 
 
 @pytest.fixture(scope="function")
-def stdlib_recipe(config_yaml, request):
-    with open(os.path.join(config_yaml, "recipe", "meta.yaml"), "w") as fh:
+def r_recipe(config_yaml: ConfigYAML):
+    with open(
+        os.path.join(config_yaml.workdir, "recipe", config_yaml.recipe_name),
+        "w",
+    ) as fh:
+
+        r_recipe_template_path = os.path.abspath(
+            os.path.join(
+                __file__, "../", "recipes", "r_recipe", config_yaml.recipe_name
+            )
+        )
+        recipe_template_text = Path(r_recipe_template_path).read_text()
+
+        fh.write(recipe_template_text)
+
+    return RecipeConfigPair(
+        str(config_yaml.workdir),
+        _load_forge_config(
+            config_yaml.workdir,
+            exclusive_config_file=os.path.join(
+                config_yaml.workdir, "recipe", "default_config.yaml"
+            ),
+        ),
+    )
+
+
+@pytest.fixture(scope="function")
+def py_recipe(config_yaml: ConfigYAML):
+    with open(
+        os.path.join(config_yaml.workdir, "recipe", config_yaml.recipe_name),
+        "w",
+    ) as fh:
+        recipe_path = os.path.abspath(
+            os.path.join(
+                __file__,
+                "../",
+                "recipes",
+                "py_recipe",
+                config_yaml.recipe_name,
+            )
+        )
+
+        content = Path(recipe_path).read_text()
+        fh.write(content)
+
+    return RecipeConfigPair(
+        str(config_yaml.workdir),
+        _load_forge_config(
+            config_yaml.workdir,
+            exclusive_config_file=os.path.join(
+                config_yaml.workdir, "recipe", "default_config.yaml"
+            ),
+        ),
+    )
+
+
+@pytest.fixture(scope="function")
+def stdlib_recipe(config_yaml: ConfigYAML):
+    with open(
+        os.path.join(config_yaml.workdir, "recipe", "meta.yaml"), "w"
+    ) as fh:
         fh.write(
             """
 package:
@@ -216,7 +279,7 @@ about:
     """
         )
     with open(
-        os.path.join(config_yaml, "recipe", "stdlib_config.yaml"), "w"
+        os.path.join(config_yaml.workdir, "recipe", "stdlib_config.yaml"), "w"
     ) as f:
         f.write(
             """\
@@ -232,21 +295,21 @@ c_stdlib_version:               # [unix]
 """
         )
     return RecipeConfigPair(
-        str(config_yaml),
+        str(config_yaml.workdir),
         _load_forge_config(
-            config_yaml,
+            config_yaml.workdir,
             exclusive_config_file=os.path.join(
-                config_yaml, "recipe", "stdlib_config.yaml"
+                config_yaml.workdir, "recipe", "stdlib_config.yaml"
             ),
         ),
     )
 
 
 @pytest.fixture(scope="function")
-def stdlib_deployment_target_recipe(config_yaml, stdlib_recipe):
+def stdlib_deployment_target_recipe(config_yaml: ConfigYAML, stdlib_recipe):
     # append to existing stdlib_config.yaml from stdlib_recipe
     with open(
-        os.path.join(config_yaml, "recipe", "stdlib_config.yaml"), "a"
+        os.path.join(config_yaml.workdir, "recipe", "stdlib_config.yaml"), "a"
     ) as f:
         f.write(
             """\
@@ -259,48 +322,155 @@ MACOSX_SDK_VERSION:             # [osx]
 """
         )
     return RecipeConfigPair(
-        str(config_yaml),
+        str(config_yaml.workdir),
         _load_forge_config(
-            config_yaml,
+            config_yaml.workdir,
             exclusive_config_file=os.path.join(
-                config_yaml, "recipe", "stdlib_config.yaml"
+                config_yaml.workdir, "recipe", "stdlib_config.yaml"
             ),
         ),
     )
 
 
 @pytest.fixture(scope="function")
-def upload_on_branch_recipe(config_yaml, request):
-    with open(os.path.join(config_yaml, "recipe", "meta.yaml"), "w") as fh:
+def mixed_python_min_recipe(config_yaml: ConfigYAML):
+    # check that we can render recipe that has a mix of noarch and non-noarch outputs
+    with open(
+        os.path.join(config_yaml.workdir, "recipe", "meta.yaml"), "w"
+    ) as fh:
         fh.write(
             """
+{% set version = "1.2.12" %}
+
 package:
-    name: py-test
-    version: 1.0.0
+  name: brial-split
+  version: {{ version }}
+
+source:
+  url: https://github.com/BRiAl/BRiAl/releases/download/{{ version }}/brial-{{ version }}.tar.bz2
+  sha256: ca009e3722dd3f0a60d15501caed1413146c80abced57423e32ae0116f407494
+
+build:
+  number: 4
+  skip: true  # [win]
+  ignore_run_exports_from:
+    - libboost-devel
+
 requirements:
-    build:                      # [win]
-        - {{ compiler('c') }}   # [win]
-    host:
-        - python
-    run:
-        - python
+  build:
+    - {{ compiler('c') }}
+    - {{ stdlib("c") }}
+    - {{ compiler('cxx') }}
+    - libtool
+    - pkg-config
+    - make
+
+outputs:
+  - name: libbrial
+    run_exports:
+      # Releases of brial are very rare. 1.2.11 seems to have changed
+      # inheritance structure, which might be a breaking ABI change so we pin
+      # exactly.
+      - {{ pin_subpackage("libbrial", max_pin="x.x.x") }}
+    requirements:
+      build:
+        - {{ compiler('c') }}
+        - {{ stdlib("c") }}
+        - {{ compiler('cxx') }}
+        - libtool
+        - pkg-config
+        - make
+        - gnuconfig
+      host:
+        - libpng
+        - libboost-devel
+        - m4ri
+        - zlib
+      run:
+        - libpng
+        - m4ri
+        - zlib
+    test:
+      commands:
+        - test -f ${PREFIX}/include/polybori.h
+        - test -f ${PREFIX}/lib/libbrial.so     # [linux]
+        - test -f ${PREFIX}/lib/libbrial.dylib  # [osx]
+
+  - name: brial
+    build:
+      noarch: python
+      # noarch only built on linux64
+      skip: true  # [not linux64]
+    requirements:
+      build:
+        - python {{ python_min }}                # [build_platform != target_platform]
+        - cross-python_{{ target_platform }}     # [build_platform != target_platform]
+      host:
+        - python {{ python_min }}
+        - pip
+        - setuptools
+        - libbrial {{ version }}
+      run:
+        - python >={{ python_min }}
+        - libbrial {{ version }}
+    test:
+      requires:
+        - python {{ python_min }}
+      imports:
+        - brial
+
 about:
     home: home
     """
         )
     return RecipeConfigPair(
-        str(config_yaml),
+        str(config_yaml.workdir),
         _load_forge_config(
-            config_yaml,
-            exclusive_config_file=os.path.join(config_yaml, "conda-forge.yml"),
+            config_yaml.workdir,
+            exclusive_config_file=os.path.join(
+                config_yaml.workdir, "recipe", "default_config.yaml"
+            ),
         ),
     )
 
 
 @pytest.fixture(scope="function")
-def recipe_migration_cfep9(config_yaml, request):
+def upload_on_branch_recipe(config_yaml: ConfigYAML):
+    with open(
+        os.path.join(config_yaml.workdir, "recipe", config_yaml.recipe_name),
+        "w",
+    ) as fh:
+        recipe_path = os.path.abspath(
+            os.path.join(
+                __file__,
+                "../",
+                "recipes",
+                "py_recipe",
+                config_yaml.recipe_name,
+            )
+        )
+
+        content = Path(recipe_path).read_text()
+        fh.write(content)
+
+    return RecipeConfigPair(
+        str(config_yaml.workdir),
+        _load_forge_config(
+            config_yaml.workdir,
+            exclusive_config_file=os.path.join(
+                config_yaml.workdir, "conda-forge.yml"
+            ),
+        ),
+    )
+
+
+@pytest.fixture(scope="function")
+def recipe_migration_cfep9(config_yaml: ConfigYAML):
     # write a migrator
-    with open(os.path.join(config_yaml, "recipe", "meta.yaml"), "w") as fh:
+    with open(
+        os.path.join(config_yaml.workdir, "recipe", config_yaml.recipe_name),
+        "w",
+    ) as fh:
         fh.write(
             """
 package:
@@ -312,16 +482,17 @@ requirements:
         - zlib
     run:
         - python
-about:
-    home: home
     """
         )
 
     os.makedirs(
-        os.path.join(config_yaml, ".ci_support", "migrations"), exist_ok=True
+        os.path.join(config_yaml.workdir, ".ci_support", "migrations"),
+        exist_ok=True,
     )
     with open(
-        os.path.join(config_yaml, ".ci_support", "migrations", "zlib.yaml"),
+        os.path.join(
+            config_yaml.workdir, ".ci_support", "migrations", "zlib.yaml"
+        ),
         "w",
     ) as fh:
         fh.write(
@@ -333,26 +504,33 @@ zlib:
         )
 
     return RecipeConfigPair(
-        str(config_yaml),
+        str(config_yaml.workdir),
         _load_forge_config(
-            config_yaml,
+            config_yaml.workdir,
             exclusive_config_file=os.path.join(
-                config_yaml, "recipe", "default_config.yaml"
+                config_yaml.workdir, "recipe", "default_config.yaml"
             ),
         ),
     )
 
 
 @pytest.fixture(scope="function")
-def recipe_migration_cfep9_downgrade(config_yaml, recipe_migration_cfep9):
+def recipe_migration_cfep9_downgrade(
+    config_yaml: ConfigYAML, recipe_migration_cfep9
+):
     # write a downgrade migrator that lives next to the current migrator.
     # Only this, more recent migrator should apply.
     os.makedirs(
-        os.path.join(config_yaml, ".ci_support", "migrations"), exist_ok=True
+        os.path.join(config_yaml.workdir, ".ci_support", "migrations"),
+        exist_ok=True,
     )
+
     with open(
         os.path.join(
-            config_yaml, ".ci_support", "migrations", "zlib-downgrade.yaml"
+            config_yaml.workdir,
+            ".ci_support",
+            "migrations",
+            "zlib-downgrade.yaml",
         ),
         "w",
     ) as fh:
@@ -365,153 +543,141 @@ zlib:
         )
     # return recipe_migration_cfep9
     return RecipeConfigPair(
-        str(config_yaml),
+        str(config_yaml.workdir),
         _load_forge_config(
-            config_yaml,
+            config_yaml.workdir,
             exclusive_config_file=os.path.join(
-                config_yaml, "recipe", "default_config.yaml"
+                config_yaml.workdir, "recipe", "default_config.yaml"
             ),
         ),
     )
 
 
 @pytest.fixture(scope="function")
-def recipe_migration_win_compiled(config_yaml, py_recipe):
+def recipe_migration_win_compiled(config_yaml: ConfigYAML, py_recipe):
     os.makedirs(
-        os.path.join(config_yaml, ".ci_support", "migrations"), exist_ok=True
+        os.path.join(config_yaml.workdir, ".ci_support", "migrations"),
+        exist_ok=True,
     )
+    migration_name = "vc-migrate.yaml"
+
     with open(
         os.path.join(
-            config_yaml, ".ci_support", "migrations", "vc-migrate.yaml"
+            config_yaml.workdir, ".ci_support", "migrations", migration_name
         ),
         "w",
     ) as fh:
-        fh.write(
-            dedent(
-                """
-        migrator_ts: 1.0
-        c_compiler:    # [win]
-            - vs2008   # [win]
-            - vs2017   # [win]
-        cxx_compiler:  # [win]
-            - vs2008   # [win]
-            - vs2017   # [win]
-        vc:            # [win]
-            - '9'      # [win]
-            - '14.1'   # [win]
-        zip_keys:
-            - - python          # [win]
-              - c_compiler      # [win]
-              - cxx_compiler    # [win]
-              - vc              # [win]
-        """
+        migration_path = os.path.abspath(
+            os.path.join(
+                __file__, "../", "recipes", "win_migrations", migration_name
             )
         )
+        content = Path(migration_path).read_text()
+        fh.write(content)
+
     return RecipeConfigPair(
-        str(config_yaml),
+        str(config_yaml.workdir),
         _load_forge_config(
-            config_yaml,
+            config_yaml.workdir,
             exclusive_config_file=os.path.join(
-                config_yaml, "recipe", "default_config.yaml"
+                config_yaml.workdir, "recipe", "default_config.yaml"
             ),
         ),
     )
 
 
 @pytest.fixture(scope="function")
-def skipped_recipe(config_yaml, request):
-    with open(os.path.join(config_yaml, "recipe", "meta.yaml"), "w") as fh:
-        fh.write(
-            """
-package:
-    name: skip-test
-    version: 1.0.0
-build:
-    skip: True
-requirements:
-    build:
-        - python
-    run:
-        - python
-about:
-    home: home
-
-extra:
-    feedstock-name: skip-test-meta
-    """
+def skipped_recipe(config_yaml: ConfigYAML):
+    with open(
+        os.path.join(config_yaml.workdir, "recipe", config_yaml.recipe_name),
+        "w",
+    ) as fh:
+        recipe_path = os.path.abspath(
+            os.path.join(
+                __file__,
+                "../",
+                "recipes",
+                "win_skipped_recipes",
+                config_yaml.recipe_name,
+            )
         )
+        content = Path(recipe_path).read_text()
+        fh.write(content)
+
     return RecipeConfigPair(
-        str(config_yaml),
+        str(config_yaml.workdir),
         _load_forge_config(
-            config_yaml,
+            config_yaml.workdir,
             exclusive_config_file=os.path.join(
-                config_yaml, "recipe", "default_config.yaml"
+                config_yaml.workdir, "recipe", "default_config.yaml"
             ),
         ),
     )
 
 
 @pytest.fixture(scope="function")
-def python_skipped_recipe(config_yaml, request):
-    with open(os.path.join(config_yaml, "recipe", "meta.yaml"), "w") as fh:
-        fh.write(
-            """
-package:
-    name: py-test
-    version: 1.0.0
-build:
-    skip: True   # [py36]
-requirements:
-    build:
-        - python
-    run:
-        - python
-about:
-    home: home
-    """
+def python_skipped_recipe(config_yaml: ConfigYAML):
+    with open(
+        os.path.join(config_yaml.workdir, "recipe", config_yaml.recipe_name),
+        "w",
+    ) as fh:
+        recipe_path = os.path.abspath(
+            os.path.join(
+                __file__,
+                "../",
+                "recipes",
+                "python_skipped_recipes",
+                config_yaml.recipe_name,
+            )
         )
+        content = Path(recipe_path).read_text()
+        fh.write(content)
+
     return RecipeConfigPair(
-        str(config_yaml),
+        str(config_yaml.workdir),
         _load_forge_config(
-            config_yaml,
+            config_yaml.workdir,
             exclusive_config_file=os.path.join(
-                config_yaml, "recipe", "default_config.yaml"
+                config_yaml.workdir, "recipe", "default_config.yaml"
             ),
         ),
     )
 
 
 @pytest.fixture(scope="function")
-def linux_skipped_recipe(config_yaml, request):
-    with open(os.path.join(config_yaml, "recipe", "meta.yaml"), "w") as fh:
-        fh.write(
-            """
-package:
-    name: py-test
-    version: 1.0.0
-build:
-    skip: True   # [linux]
-requirements:
-    build:
-        - zlib
-about:
-    home: home
-    """
+def linux_skipped_recipe(config_yaml: ConfigYAML):
+    with open(
+        os.path.join(config_yaml.workdir, "recipe", config_yaml.recipe_name),
+        "w",
+    ) as fh:
+        linux_recipe = os.path.abspath(
+            os.path.join(
+                __file__,
+                "../",
+                "recipes",
+                "linux_skipped_recipes",
+                config_yaml.recipe_name,
+            )
         )
+        content = Path(linux_recipe).read_text()
+        fh.write(content)
+
     return RecipeConfigPair(
-        str(config_yaml),
+        str(config_yaml.workdir),
         _load_forge_config(
-            config_yaml,
+            config_yaml.workdir,
             exclusive_config_file=os.path.join(
-                config_yaml, "recipe", "default_config.yaml"
+                config_yaml.workdir, "recipe", "default_config.yaml"
             ),
         ),
     )
 
 
 @pytest.fixture(scope="function")
-def render_skipped_recipe(config_yaml, request):
-    with open(os.path.join(config_yaml, "recipe", "meta.yaml"), "w") as fh:
+def render_skipped_recipe(config_yaml: ConfigYAML):
+    with open(
+        os.path.join(config_yaml.workdir, "recipe", "meta.yaml"), "w"
+    ) as fh:
         fh.write(
             """
 package:
@@ -526,7 +692,9 @@ requirements:
         - python
     """
         )
-    with open(os.path.join(config_yaml, "conda-forge.yml"), "a+") as fh:
+    with open(
+        os.path.join(config_yaml.workdir, "conda-forge.yml"), "a+"
+    ) as fh:
         fh.write(
             """
 skip_render:
@@ -538,38 +706,37 @@ skip_render:
     """
         )
     return RecipeConfigPair(
-        str(config_yaml),
+        str(config_yaml.workdir),
         _load_forge_config(
-            config_yaml,
+            config_yaml.workdir,
             exclusive_config_file=os.path.join(
-                config_yaml, "recipe", "default_config.yaml"
+                config_yaml.workdir, "recipe", "default_config.yaml"
             ),
         ),
     )
 
 
 @pytest.fixture(scope="function")
-def choco_recipe(config_yaml, request):
-    with open(os.path.join(config_yaml, "recipe", "meta.yaml"), "w") as fh:
-        fh.write(
-            """
-package:
-    name: py-test
-    version: 1.0.0
-build:
-    skip: true  # [not win]
-requirements:
-    build:
-        - {{ compiler('c') }}
-    host:
-        - python
-    run:
-        - python
-about:
-    home: home
-    """
+def choco_recipe(config_yaml: ConfigYAML):
+    with open(
+        os.path.join(config_yaml.workdir, "recipe", config_yaml.recipe_name),
+        "w",
+    ) as fh:
+        choco_recipe_path = os.path.abspath(
+            os.path.join(
+                __file__,
+                "../",
+                "recipes",
+                "choco_recipes",
+                config_yaml.recipe_name,
+            )
         )
-    with open(os.path.join(config_yaml, "conda-forge.yml"), "a+") as fh:
+        content = Path(choco_recipe_path).read_text()
+        fh.write(content)
+
+    with open(
+        os.path.join(config_yaml.workdir, "conda-forge.yml"), "a+"
+    ) as fh:
         fh.write(
             """
 choco:
@@ -578,53 +745,141 @@ choco:
     """
         )
     return RecipeConfigPair(
-        str(config_yaml),
+        str(config_yaml.workdir),
         _load_forge_config(
-            config_yaml,
+            config_yaml.workdir,
             exclusive_config_file=os.path.join(
-                config_yaml, "recipe", "default_config.yaml"
+                config_yaml.workdir, "recipe", "default_config.yaml"
             ),
         ),
     )
 
 
 @pytest.fixture(scope="function")
-def cuda_enabled_recipe(config_yaml, request):
-    with open(os.path.join(config_yaml, "recipe", "meta.yaml"), "w") as fh:
-        fh.write(
-            """
-package:
-    name: py-test
-    version: 1.0.0
-build:
-    skip: True   # [os.environ.get("CF_CUDA_ENABLED") != "True"]
-requirements:
-    build:
-        - {{ compiler('c') }}
-        - {{ compiler('cuda') }}
-    host:
-        - python
-    run:
-        - python
-about:
-    home: home
-    """
+def cuda_enabled_recipe(config_yaml: ConfigYAML):
+    with open(
+        os.path.join(config_yaml.workdir, "recipe", config_yaml.recipe_name),
+        "w",
+    ) as fh:
+        cuda_recipe_path = os.path.abspath(
+            os.path.join(
+                __file__,
+                "../",
+                "recipes",
+                "cuda_recipes",
+                config_yaml.recipe_name,
+            )
         )
+        content = Path(cuda_recipe_path).read_text()
+        fh.write(content)
+
     return RecipeConfigPair(
-        str(config_yaml),
+        str(config_yaml.workdir),
         _load_forge_config(
-            config_yaml,
+            config_yaml.workdir,
             exclusive_config_file=os.path.join(
-                config_yaml, "recipe", "default_config.yaml"
+                config_yaml.workdir, "recipe", "default_config.yaml"
             ),
         ),
     )
 
 
 @pytest.fixture(scope="function")
-def jinja_env(request):
+def jinja_env():
     tmplt_dir = os.path.join(conda_forge_content, "templates")
     # Load templates from the feedstock in preference to the smithy's templates.
     return SandboxedEnvironment(
         extensions=["jinja2.ext.do"], loader=FileSystemLoader([tmplt_dir])
+    )
+
+
+@pytest.fixture(scope="function")
+def v1_noarch_recipe_with_context(testing_workdir: Path, recipe_dirname):
+    with open(os.path.join(testing_workdir, "conda-forge.yml"), "w") as f:
+        config = {
+            "recipe_dir": recipe_dirname,
+        }
+        config["conda_build_tool"] = "rattler-build"
+        yaml.dump(config, f, default_flow_style=False)
+
+    os.mkdir(os.path.join(testing_workdir, recipe_dirname))
+    with open(
+        os.path.join(testing_workdir, recipe_dirname, "recipe.yaml"),
+        "w",
+    ) as fh:
+        fh.write(
+            """
+context:
+    name: python-noarch-test-from-context
+    version: 9.0.0
+package:
+    name: ${{ name }}
+    version: ${{ version }}
+build:
+    noarch: python
+requirements:
+    build:
+        - python
+    run:
+        - python
+    """
+        )
+
+    return RecipeConfigPair(
+        testing_workdir,
+        _load_forge_config(testing_workdir, exclusive_config_file=None),
+    )
+
+
+@pytest.fixture(scope="function")
+def v1_recipe_with_multiple_outputs(testing_workdir: Path, recipe_dirname):
+    with open(os.path.join(testing_workdir, "conda-forge.yml"), "w") as f:
+        config = {
+            "recipe_dir": recipe_dirname,
+        }
+        config["conda_build_tool"] = "rattler-build"
+        yaml.dump(config, f, default_flow_style=False)
+
+    os.mkdir(os.path.join(testing_workdir, recipe_dirname))
+
+    with open(
+        os.path.join(testing_workdir, recipe_dirname, "recipe.yaml"),
+        "w",
+    ) as fh:
+        fh.write(
+            """
+context:
+  name: mamba
+  mamba_version: "1.5.8"
+  libmamba_version: "1.5.9"
+  libmambapy_version: "1.5.9"
+
+recipe:
+  name: mamba-split
+  version: ${{ mamba_version }}
+
+source:
+  url: https://github.com/mamba-org/mamba/archive/refs/tags/${{ release }}.tar.gz
+  sha256: 6ddaf4b0758eb7ca1250f427bc40c2c3ede43257a60bac54e4320a4de66759a6
+
+build:
+  number: 1
+
+outputs:
+  - package:
+      name: libmamba
+      version: ${{ libmamba_version }}
+
+  - package:
+      name: libmambapy
+      version: ${{ libmambapy_version }}
+
+  - package:
+      name: mamba
+      version: ${{ mamba_version }}
+    """
+        )
+    return RecipeConfigPair(
+        testing_workdir,
+        _load_forge_config(testing_workdir, exclusive_config_file=None),
     )

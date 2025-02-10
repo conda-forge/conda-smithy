@@ -13,28 +13,27 @@ https://github.com/conda-forge/conda-forge-enhancement-proposals/pull/13
 
 """
 
-import yaml
-import toolz
-from conda_build.utils import ensure_list
+from functools import partial
+from typing import Any, Optional, Union
+
 import conda_build.variants as variants
+import tlz
+import yaml
 from conda.exports import VersionOrder
 from conda_build.config import Config
-from functools import partial
-
-
-from typing import Any, Dict, List, Optional, Union
+from conda_build.utils import ensure_list
 
 
 def parse_variant(
     variant_file_content: str, config: Optional[Config] = None
-) -> Dict[
+) -> dict[
     str,
     Union[
-        List[str],
+        list[str],
         float,
-        List[List[str]],
-        Dict[str, Dict[str, str]],
-        Dict[str, Dict[str, List[str]]],
+        list[list[str]],
+        dict[str, dict[str, str]],
+        dict[str, dict[str, list[str]]],
     ],
 ]:
     """
@@ -47,7 +46,7 @@ def parse_variant(
         from conda_build.config import Config
 
         config = Config()
-    from conda_build.metadata import select_lines, ns_cfg
+    from conda_build.metadata import ns_cfg, select_lines
 
     contents = select_lines(
         variant_file_content, ns_cfg(config), variants_in_place=False
@@ -60,7 +59,7 @@ def parse_variant(
 
 
 def _version_order(
-    v: Union[str, float], ordering: Optional[List[str]] = None
+    v: Union[str, float], ordering: Optional[list[str]] = None
 ) -> Union[int, VersionOrder, float]:
     if ordering is not None:
         return ordering.index(v)
@@ -75,10 +74,10 @@ def _version_order(
 
 def variant_key_add(
     k: str,
-    v_left: Union[List[str], List[float]],
-    v_right: Union[List[str], List[float]],
-    ordering: Optional[List[str]] = None,
-) -> Union[List[str], List[float]]:
+    v_left: Union[list[str], list[float]],
+    v_right: Union[list[str], list[float]],
+    ordering: Optional[list[str]] = None,
+) -> Union[list[str], list[float]]:
     """Version summation adder.
 
     This takes the higher version of the two things.
@@ -161,7 +160,7 @@ def op_variant_key_add(v1: dict, v2: dict):
             )
             newly_added_zip_keys.update([primary_key] + additional_zip_keys)
 
-    for key in newly_added_zip_keys:
+    for additional_key in newly_added_zip_keys:
         # store the default value for the key, so that subsequent
         # key additions don't need to specify them and continue to use the default value
         # assert len(v1[key]) == 1
@@ -269,7 +268,7 @@ VARIANT_OP = {
 }
 
 
-def variant_add(v1: dict, v2: dict) -> Dict[str, Any]:
+def variant_add(v1: dict, v2: dict) -> dict[str, Any]:
     """Adds the two variants together.
 
     Present this assumes mostly flat dictionaries.
@@ -345,8 +344,8 @@ def variant_add(v1: dict, v2: dict) -> Dict[str, Any]:
         )
 
     out = {
-        **toolz.keyfilter(lambda k: k in left, v1),
-        **toolz.keyfilter(lambda k: k in right, v2),
+        **tlz.keyfilter(lambda k: k in left, v1),
+        **tlz.keyfilter(lambda k: k in right, v2),
         **joint_variant,
         **special_variants,
     }

@@ -3,12 +3,11 @@ import glob
 import multiprocessing
 import os
 
-import git
-from git import Repo, GitCommandError
+import pygit2
 from github import Github
 
-from . import github as smithy_github
-from .utils import render_meta_yaml, get_yaml
+from conda_smithy import github as smithy_github
+from conda_smithy.utils import get_yaml, render_meta_yaml
 
 
 def feedstock_repos(gh_organization="conda-forge"):
@@ -50,14 +49,12 @@ def cloned_feedstocks(feedstocks_directory):
 
 def fetch_feedstock(repo_dir):
     """Git fetch --all a single git repository."""
-    repo = Repo(repo_dir)
+    repo = pygit2.Repository(repo_dir)
     for remote in repo.remotes:
         try:
             remote.fetch()
-        except GitCommandError:
-            print(
-                "Failed to fetch {} from {}.".format(remote.name, remote.url)
-            )
+        except pygit2.GitError:
+            print(f"Failed to fetch {remote.name} from {remote.url}.")
 
 
 def fetch_feedstocks(feedstock_directory):
@@ -88,13 +85,15 @@ def clone_feedstock(feedstock_gh_repo, feedstocks_dir):
 
     clone_directory = os.path.join(feedstocks_dir, repo.name)
     if not os.path.exists(clone_directory):
-        print("Cloning {}".format(repo.name))
-        clone = Repo.clone_from(repo.clone_url, clone_directory)
-        clone.delete_remote("origin")
-    clone = Repo(clone_directory)
-    if "upstream" in [remote.name for remote in clone.remotes]:
-        clone.delete_remote("upstream")
-    clone.create_remote("upstream", url=repo.clone_url)
+        print(f"Cloning {repo.name}")
+        clone = pygit2.clone_repository(repo.clone_url, clone_directory)
+        clone.remotes.delete("origin")
+    else:
+        clone = pygit2.Repository(clone_directory)
+
+    if "upstream" in clone.remotes.names():
+        clone.remotes.delete("upstream")
+    clone.remotes.create("upstream", repo.clone_url)
 
 
 def clone_all(gh_org, feedstocks_dir):
@@ -195,8 +194,8 @@ def feedstocks_repos(
         random.shuffle(feedstocks)
 
     for feedstock in feedstocks:
-        repo = git.Repo(feedstock.directory)
-        upstream = repo.remotes.upstream
+        repo = pygit2.Repository(feedstock.directory)
+        upstream = repo.remotes["upstream"]
 
         if pull_up_to_date:
             print("Fetching ", feedstock.package)
@@ -217,7 +216,7 @@ def feedstocks_yaml(
     organization,
     feedstocks_directory,
     use_local=False,
-    **feedstocks_repo_kwargs
+    **feedstocks_repo_kwargs,
 ):
     """
     Generator of (feedstock, ref, content, yaml) for each upstream git ref of each feedstock.
@@ -233,23 +232,23 @@ def feedstocks_yaml(
     for repo, feedstock in feedstocks_repos(
         organization, feedstocks_directory, **feedstocks_repo_kwargs
     ):
-        upstream = repo.remotes.upstream
-        try:
-            refs = upstream.refs
-        except AssertionError:
-            # In early versions of gitpython and empty list of refs resulted in an
-            # assertion error (https://github.com/gitpython-developers/GitPython/pull/499).
-            refs = []
+        upstream = repo.remotes["upstream"]
+        refs = [
+            ref
+            for ref in repo.references.iterator()
+            if ref.name.startswith("refs/remotes/upstream/")
+        ]
 
         if not refs:
             upstream.fetch()
-            refs = upstream.refs
+            refs = [
+                ref
+                for ref in repo.references.iterator()
+                if ref.name.startswith("refs/remotes/upstream/")
+            ]
 
         for ref in refs:
-            remote_branch = (
-                ref.remote_head
-            )  # .replace('{}/'.format(gh_me.login), '')
-            if remote_branch.endswith("HEAD"):
+            if ref.name == "refs/remotes/upstream/HEAD":
                 continue
 
             try:
@@ -258,17 +257,15 @@ def feedstocks_yaml(
                         os.path.join(
                             feedstock.directory, "recipe", "meta.yaml"
                         ),
-                        "r",
                     ) as fh:
                         content = "".join(fh.readlines())
                 else:
-                    blob = ref.commit.tree["recipe"]["meta.yaml"]
-                    stream = blob.data_stream
-                    content = stream.read().decode("utf-8")
+                    blob = repo[ref.resolve().target].tree["recipe/meta.yaml"]
+                    content = blob.data.decode("utf-8")
                 yaml = yaml_meta(content)
             except:
                 # Add a helpful comment so we know what we are working with and reraise.
-                print("Failed on {}".format(feedstock.package))
+                print(f"Failed on {feedstock.package}")
                 raise
 
             yield (feedstock, ref, content, yaml)

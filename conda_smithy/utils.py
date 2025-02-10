@@ -1,20 +1,64 @@
+import datetime
+import json
+import os
+import re
 import shutil
 import tempfile
-import io
-import jinja2
-import jinja2.sandbox
-import datetime
 import time
-import os
-from pathlib import Path
 from collections import defaultdict
 from contextlib import contextmanager
+from pathlib import Path
+from typing import Any, Union
 
+import jinja2
+import jinja2.sandbox
 import ruamel.yaml
+from conda_build.api import render as conda_build_render
+from conda_build.config import Config
+from conda_build.render import MetaData
+from rattler_build_conda_compat.render import MetaData as RattlerBuildMetaData
+
+RATTLER_BUILD = "rattler-build"
+CONDA_BUILD = "conda-build"
+SET_PYTHON_MIN_RE = re.compile(r"{%\s+set\s+python_min\s+=")
 
 
-def get_feedstock_name_from_meta(meta):
-    """Resolve the feedtstock name from the parsed meta.yaml."""
+def _get_metadata_from_feedstock_dir(
+    feedstock_directory: Union[str, os.PathLike],
+    forge_config: dict[str, Any],
+    conda_forge_pinning_file: Union[str, os.PathLike, None] = None,
+) -> Union[MetaData, RattlerBuildMetaData]:
+    """
+    Return either the conda-build metadata or rattler-build metadata from the feedstock directory
+    based on conda_build_tool value from forge_config.
+    Raises OsError if no meta.yaml or recipe.yaml is found in feedstock_directory.
+    """
+    if forge_config and forge_config.get("conda_build_tool") == RATTLER_BUILD:
+        meta = RattlerBuildMetaData(
+            feedstock_directory,
+        )
+    else:
+        if conda_forge_pinning_file:
+            config = Config(
+                variant_config_files=[conda_forge_pinning_file],
+            )
+        else:
+            config = None
+        meta = conda_build_render(
+            feedstock_directory,
+            config=config,
+            finalize=False,
+            bypass_env_check=True,
+            trim_skip=False,
+        )[0][0]
+
+    return meta
+
+
+def get_feedstock_name_from_meta(
+    meta: Union[MetaData, RattlerBuildMetaData],
+) -> str:
+    """Get the feedstock name from a parsed meta.yaml or recipe.yaml."""
     if "feedstock-name" in meta.meta["extra"]:
         return meta.meta["extra"]["feedstock-name"]
     elif "parent_recipe" in meta.meta["extra"]:
@@ -24,7 +68,7 @@ def get_feedstock_name_from_meta(meta):
 
 
 def get_feedstock_about_from_meta(meta) -> dict:
-    """Fetch the feedtstock about from the parsed meta.yaml."""
+    """Fetch the feedstock about from the parsed meta.yaml."""
     # it turns out that conda_build would not preserve the feedstock about:
     #   - if a subpackage does not have about, it uses the feedstock's
     #   - if a subpackage has about, it's used as is
@@ -33,7 +77,7 @@ def get_feedstock_about_from_meta(meta) -> dict:
         recipe_meta = os.path.join(
             meta.meta["extra"]["parent_recipe"]["path"], "meta.yaml"
         )
-        with io.open(recipe_meta, "rt") as fh:
+        with open(recipe_meta) as fh:
             content = render_meta_yaml("".join(fh))
             meta = get_yaml().load(content)
         return dict(meta["about"])
@@ -42,14 +86,14 @@ def get_feedstock_about_from_meta(meta) -> dict:
         return dict(meta.meta["about"])
 
 
-def get_yaml():
+def get_yaml(allow_duplicate_keys: bool = True):
     # define global yaml API
     # roundrip-loader and allowing duplicate keys
     # for handling # [filter] / # [not filter]
     # Don't use a global variable for this as a global
     # variable will make conda-smithy thread unsafe.
     yaml = ruamel.yaml.YAML(typ="rt")
-    yaml.allow_duplicate_keys = True
+    yaml.allow_duplicate_keys = allow_duplicate_keys
     return yaml
 
 
@@ -65,15 +109,15 @@ class NullUndefined(jinja2.Undefined):
         return self._undefined_name
 
     def __getattr__(self, name):
-        return "{}.{}".format(self, name)
+        return f"{self}.{name}"
 
     def __getitem__(self, name):
-        return '{}["{}"]'.format(self, name)
+        return f'{self}["{name}"]'
 
 
 class MockOS(dict):
     def __init__(self):
-        self.environ = defaultdict(lambda: "")
+        self.environ = defaultdict(str)
         self.sep = "/"
 
 
@@ -83,6 +127,15 @@ def stub_compatible_pin(*args, **kwargs):
 
 def stub_subpackage_pin(*args, **kwargs):
     return f"subpackage_pin {args[0]}"
+
+
+def _munge_python_min(text):
+    new_lines = []
+    for line in text.splitlines(keepends=True):
+        if SET_PYTHON_MIN_RE.match(line):
+            line = "{% set python_min = '9999' %}\n"
+        new_lines.append(line)
+    return "".join(new_lines)
 
 
 def render_meta_yaml(text):
@@ -98,20 +151,22 @@ def render_meta_yaml(text):
             pin_subpackage=stub_subpackage_pin,
             pin_compatible=stub_compatible_pin,
             cdt=lambda *args, **kwargs: "cdt_stub",
-            load_file_regex=lambda *args, **kwargs: defaultdict(lambda: ""),
-            load_file_data=lambda *args, **kwargs: defaultdict(lambda: ""),
-            load_setup_py_data=lambda *args, **kwargs: defaultdict(lambda: ""),
-            load_str_data=lambda *args, **kwargs: defaultdict(lambda: ""),
+            load_file_regex=lambda *args, **kwargs: defaultdict(str),
+            load_file_data=lambda *args, **kwargs: defaultdict(str),
+            load_setup_py_data=lambda *args, **kwargs: defaultdict(str),
+            load_str_data=lambda *args, **kwargs: defaultdict(str),
             datetime=datetime,
             time=time,
             target_platform="linux-64",
+            build_platform="linux-64",
             mpi="mpi",
+            python_min="9999",  # use as a sentinel value for linting
         )
     )
     mockos = MockOS()
     py_ver = "3.7"
     context = {"os": mockos, "environ": mockos.environ, "PY_VER": py_ver}
-    content = env.from_string(text).render(context)
+    content = env.from_string(_munge_python_min(text)).render(context)
     return content
 
 
@@ -124,7 +179,7 @@ def update_conda_forge_config(forge_yaml):
     ...     cfg['foo'] = 'bar'
     """
     if os.path.exists(forge_yaml):
-        with open(forge_yaml, "r") as fh:
+        with open(forge_yaml) as fh:
             code = get_yaml().load(fh)
     else:
         code = {}
@@ -149,3 +204,18 @@ def merge_dict(src, dest):
             dest[key] = value
 
     return dest
+
+
+def _json_default(obj):
+    """Accept sets for JSON"""
+    if isinstance(obj, set):
+        return sorted(obj)
+    else:
+        return obj
+
+
+class HashableDict(dict):
+    """Hashable dict so it can be in sets"""
+
+    def __hash__(self):
+        return hash(json.dumps(self, sort_keys=True, default=_json_default))

@@ -164,13 +164,6 @@ jobs:
         choco install {{ choco_pkg }} -fdv -y --debug
 {% endfor %}
 
-    - name: Install Miniconda for windows
-      uses: conda-incubator/setup-miniconda@a4260408e20b96e80095f42ff7f1a15b27dd94ca # v3.0.4
-      with:
-        miniforge-version: latest
-        miniforge-variant: Mambaforge
-      if: matrix.os == 'windows'
-
     - name: Build on windows
       shell: cmd
       run: |
@@ -179,6 +172,7 @@ jobs:
         set "sha=%GITHUB_SHA%"
         call ".scripts\run_win_build.bat"
       env:
+        MINIFORGE_HOME: D:\Miniforge
         PYTHONUNBUFFERED: 1
         CONFIG: {% raw %}${{ matrix.CONFIG }}{% endraw %}
         CI: github_actions
@@ -200,6 +194,7 @@ jobs:
         CONFIG: {% raw %}${{ matrix.CONFIG }}{% endraw %}
         SHORT_CONFIG: {% raw %}${{ matrix.SHORT_CONFIG }}{% endraw %}
         OS: {% raw %}${{ matrix.os }}{% endraw %}
+        MINIFORGE_HOME_WIN: D:\Miniforge
       run: |
         export CI=github_actions
         export CI_RUN_ID=$GITHUB_RUN_ID
@@ -208,7 +203,7 @@ jobs:
         if [ $OS == "macos" ]; then
           export CONDA_BLD_DIR="${MINIFORGE_HOME:-${HOME}/miniforge3}/conda-bld"
         elif [ $OS == "windows" ]; then
-          export CONDA_BLD_DIR="${CONDA//\\//}/conda-bld"
+          export CONDA_BLD_DIR="${MINIFORGE_HOME_WIN//\\//}/conda-bld"
         else
           export CONDA_BLD_DIR="build_artifacts"
         fi
@@ -227,7 +222,7 @@ jobs:
       continue-on-error: true
 
     - name: Store conda build artifacts
-      uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
+      uses: actions/upload-artifact@6f51ac03b9356f520e9adb1b1b7802705f340c2b # v4.5.0
       if: {% raw %}${{ always() && steps.prepare-artifacts.outcome == 'success' }}{% endraw %}
       with:
         name: {% raw %}${{ steps.prepare-artifacts.outputs.BLD_ARTIFACT_NAME }}{% endraw %}
@@ -236,7 +231,7 @@ jobs:
       continue-on-error: true
 
     - name: Store conda build environment artifacts
-      uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
+      uses: actions/upload-artifact@6f51ac03b9356f520e9adb1b1b7802705f340c2b # v4.5.0
       if: {% raw %}${{ failure() && steps.prepare-artifacts.outcome == 'success' }}{% endraw %}
       with:
         name: {% raw %}${{ steps.prepare-artifacts.outputs.ENV_ARTIFACT_NAME }}{% endraw %}

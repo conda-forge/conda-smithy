@@ -5,7 +5,7 @@ package:
   version: {{ version }}
 
 source:
-  url: https://pypi.io/packages/source/p/pytest/pytest-{{ version }}.tar.gz
+  url: https://pypi.org/packages/source/p/pytest/pytest-{{ version }}.tar.gz
   sha256: 4f365fec2dff9c1162f834d9f18af1ba13062db0c708bf7b946f8a5c76180c39
 
 build:
