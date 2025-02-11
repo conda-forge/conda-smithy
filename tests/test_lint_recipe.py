@@ -1640,10 +1640,11 @@ linter:
 
     def test_noarch_python_bound(self):
         expected_message = (
-            "noarch: python recipes are required to have a lower bound "
-            "on the python version. Typically this means putting "
-            "`python >=3.6` in **both** `host` and `run` but you should check "
-            "upstream for the package's Python compatibility."
+            "noarch: python recipes are required to have a lower bound on the "
+            "python version. Typically this means putting "
+            "`python >={{ python_min }}` in the `run` section of your "
+            "recipe. You may also want to check the upstream source for "
+            "the package's Python compatibility."
         )
         meta = {
             "build": {"noarch": "python"},
