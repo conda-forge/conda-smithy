@@ -31,7 +31,6 @@ jobs:
             python=3.10
             coverage
             coveralls
-            conda-recipe-manager>=0.4.1
             conda-souschef
             conda-forge-tick
 
@@ -64,6 +63,10 @@ jobs:
           pip uninstall conda-smithy --yes
 
           python -m pip install -v --no-build-isolation -e .
+
+      - name: run tests without token
+        run: |
+          pytest tests
 
       - name: run tests
         run: |
