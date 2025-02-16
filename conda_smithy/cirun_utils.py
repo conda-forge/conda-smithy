@@ -3,7 +3,7 @@ See http://py.cirun.io/api.html for cirun client docs
 """
 
 from functools import lru_cache
-from typing import Any, Optional
+from typing import Any
 
 from cirun import Cirun
 
@@ -44,12 +44,12 @@ def add_repo_to_cirun_resource(
     resources: list[str],
     teams: list,
     roles: list,
-    users_from_json: Optional[str] = None,
-    cirun_policy_args: Optional[list[str]] = None,
+    users_from_json: str | None = None,
+    cirun_policy_args: list[str] | None = None,
 ) -> dict[str, Any]:
     """Grant access to a cirun resource to a particular repository, with a particular policy."""
     cirun = _get_cirun_client()
-    policy_args: Optional[dict[str, Any]] = None
+    policy_args: dict[str, Any] | None = None
     if cirun_policy_args and "pull_request" in cirun_policy_args:
         policy_args = {"pull_request": True}
     print(

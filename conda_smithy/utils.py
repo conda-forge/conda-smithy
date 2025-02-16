@@ -8,7 +8,7 @@ import time
 from collections import defaultdict
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Union
+from typing import Any
 
 import jinja2
 import jinja2.sandbox
@@ -24,10 +24,10 @@ SET_PYTHON_MIN_RE = re.compile(r"{%\s+set\s+python_min\s+=")
 
 
 def _get_metadata_from_feedstock_dir(
-    feedstock_directory: Union[str, os.PathLike],
+    feedstock_directory: str | os.PathLike,
     forge_config: dict[str, Any],
-    conda_forge_pinning_file: Union[str, os.PathLike, None] = None,
-) -> Union[MetaData, RattlerBuildMetaData]:
+    conda_forge_pinning_file: str | os.PathLike | None = None,
+) -> MetaData | RattlerBuildMetaData:
     """
     Return either the conda-build metadata or rattler-build metadata from the feedstock directory
     based on conda_build_tool value from forge_config.
@@ -56,7 +56,7 @@ def _get_metadata_from_feedstock_dir(
 
 
 def get_feedstock_name_from_meta(
-    meta: Union[MetaData, RattlerBuildMetaData],
+    meta: MetaData | RattlerBuildMetaData,
 ) -> str:
     """Get the feedstock name from a parsed meta.yaml or recipe.yaml."""
     if "feedstock-name" in meta.meta["extra"]:
