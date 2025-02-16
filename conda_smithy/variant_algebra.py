@@ -28,7 +28,11 @@ def parse_variant(
     variant_file_content: str, config: Config | None = None
 ) -> dict[
     str,
-    list[str] | float | list[list[str]] | dict[str, dict[str, str]] | dict[str, dict[str, list[str]]],
+    list[str]
+    | float
+    | list[list[str]]
+    | dict[str, dict[str, str]]
+    | dict[str, dict[str, list[str]]],
 ]:
     """
     Parameters

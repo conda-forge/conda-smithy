@@ -156,7 +156,9 @@ class AzureConfig(BaseModel):
         description="Force building all supported providers",
     )
 
-    free_disk_space: bool | Nullable | list[Literal["apt", "cache", "docker"]] | None = Field(
+    free_disk_space: (
+        bool | Nullable | list[Literal["apt", "cache", "docker"]] | None
+    ) = Field(
         default=False,
         description=cleandoc(
             """
@@ -302,7 +304,9 @@ class GithubActionsConfig(BaseModel):
         default=True,
     )
 
-    free_disk_space: bool | Nullable | list[Literal["apt", "cache", "docker"]] | None = Field(
+    free_disk_space: (
+        bool | Nullable | list[Literal["apt", "cache", "docker"]] | None
+    ) = Field(
         default=False,
         description=cleandoc(
             """
@@ -638,7 +642,9 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    conda_install_tool: Literal["conda", "mamba", "micromamba", "pixi"] | None = Field(
+    conda_install_tool: (
+        Literal["conda", "mamba", "micromamba", "pixi"] | None
+    ) = Field(
         default="micromamba",
         description=cleandoc(
             """
@@ -664,15 +670,13 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    conda_solver: Literal["libmamba", "classic"] | Nullable | None = (
-        Field(
-            default="libmamba",
-            description=cleandoc(
-                """
+    conda_solver: Literal["libmamba", "classic"] | Nullable | None = Field(
+        default="libmamba",
+        description=cleandoc(
+            """
         Choose which `conda` solver plugin to use for feedstock builds.
         """
-            ),
-        )
+        ),
     )
 
     github: GithubConfig | None = Field(
