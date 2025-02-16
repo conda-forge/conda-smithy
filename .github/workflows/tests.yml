@@ -36,10 +36,10 @@ jobs:
             coveralls
             conda-souschef
 
-      - name: install conda-forge-tick and conda-forge-recipe-manager
+      - name: install conda-forge-tick and conda-recipe-manager
         run: |
           if [[ "${{ matrix.python_version }}" != "3.10" ]]; then
-            conda install "conda-forge-recipe-manager>=0.4.1" conda-forge-tick
+            conda install "conda-recipe-manager>=0.4.1" conda-forge-tick
           fi
 
       - name: install conda-smithy
