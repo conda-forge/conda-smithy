@@ -18,6 +18,12 @@ from conda_smithy.utils import get_yaml, render_meta_yaml
 
 _thisdir = os.path.abspath(os.path.dirname(__file__))
 
+try:
+    import conda_recipe_manager.parser.recipe_parser
+    has_conda_recipe_manager = True
+except ImportError:
+    has_conda_recipe_manager = False
+
 
 @contextmanager
 def get_recipe_in_dir(recipe_name: str) -> Path:
@@ -1908,6 +1914,9 @@ linter:
             if gh_token is not None:
                 os.environ["GH_TOKEN"] = gh_token
 
+    @pytest.mark.skipif(
+        "GH_TOKEN" not in os.environ, reason="github token not found"
+    )
     def test_maintainer_team_exists(self):
         lints, _ = linter.lintify_meta_yaml(
             {
@@ -3941,12 +3950,13 @@ def test_lint_recipe_parses_forblock():
             )
             for hint in hints
         ), hints
-        assert any(
-            hint.startswith(
-                "The recipe is not parsable by parser `conda-recipe-manager"
-            )
-            for hint in hints
-        ), hints
+        if has_conda_recipe_manager:
+            assert any(
+                hint.startswith(
+                    "The recipe is not parsable by parser `conda-recipe-manager"
+                )
+                for hint in hints
+            ), hints
         assert not any(
             hint.startswith(
                 "The recipe is not parsable by parser `conda-souschef"
@@ -3993,12 +4003,13 @@ def test_lint_recipe_parses_spacing():
             )
             for hint in hints
         ), hints
-        assert not any(
-            hint.startswith(
-                "The recipe is not parsable by parser `conda-recipe-manager"
-            )
-            for hint in hints
-        ), hints
+        if has_conda_recipe_manager:
+            assert not any(
+                hint.startswith(
+                    "The recipe is not parsable by parser `conda-recipe-manager"
+                )
+                for hint in hints
+            ), hints
         assert not any(
             hint.startswith(
                 "The recipe is not parsable by parser `conda-souschef"
@@ -4039,12 +4050,13 @@ def test_lint_recipe_parses_v1_spacing():
             )
             for lint in lints
         ), lints
-        assert any(
-            hint.startswith(
-                "The recipe is not parsable by parser `conda-recipe-manager"
-            )
-            for hint in hints
-        ), hints
+        if has_conda_recipe_manager:
+            assert any(
+                hint.startswith(
+                    "The recipe is not parsable by parser `conda-recipe-manager"
+                )
+                for hint in hints
+            ), hints
         assert not any(
             hint.startswith(
                 "The recipe is not parsable by parser `ruamel.yaml"
@@ -4080,18 +4092,19 @@ def test_lint_recipe_parses_v1_duplicate_keys():
                 )
             )
         lints, hints = linter.main(tmpdir, return_hints=True, conda_forge=True)
-        assert not any(
-            lint.startswith(
-                "The recipe is not parsable by any of the known recipe parsers"
-            )
-            for lint in lints
-        ), lints
-        assert not any(
-            hint.startswith(
-                "The recipe is not parsable by parser `conda-recipe-manager"
-            )
-            for hint in hints
-        ), hints
+        if has_conda_recipe_manager:
+            assert not any(
+                lint.startswith(
+                    "The recipe is not parsable by any of the known recipe parsers"
+                )
+                for lint in lints
+            ), lints
+            assert not any(
+                hint.startswith(
+                    "The recipe is not parsable by parser `conda-recipe-manager"
+                )
+                for hint in hints
+            ), hints
         assert any(
             hint.startswith(
                 "The recipe is not parsable by parser `ruamel.yaml"
