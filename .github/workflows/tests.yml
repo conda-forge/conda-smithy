@@ -44,7 +44,9 @@ jobs:
 
       - name: install conda-smithy
         run: |
-          conda uninstall --force --yes conda-smithy
+          if [[ "${{ matrix.python_version }}" != "3.10" ]]; then
+            conda uninstall --force --yes conda-smithy
+          fi
           python -m pip install -v --no-build-isolation -e .
           git config --global user.email "smithy@smithy.smithy"
           git config --global user.name "smithy"
