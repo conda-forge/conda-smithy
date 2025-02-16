@@ -28,7 +28,7 @@ jobs:
           micromamba-version: 1.5.12-0
           cache-environment: true
           create-args: >-
-            python=3.11
+            python=3.10
             coverage
             coveralls
             conda-recipe-manager>=0.4.1
