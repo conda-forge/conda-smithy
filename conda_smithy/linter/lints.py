@@ -143,7 +143,7 @@ def lint_selectors_should_be_in_tidy_form(recipe_fname, lints, hints):
     # Look out for py27, py35 selectors; we prefer py==35
     python_selectors_pat = re.compile(r".+#\s*\[.*?(py\d{2,3}).*\]")
     if os.path.exists(recipe_fname):
-        with open(recipe_fname) as fh:
+        with open(recipe_fname, encoding="utf-8") as fh:
             for selector_line, line_number in selector_lines(fh):
                 if not good_selectors_pat.match(selector_line):
                     bad_selectors.append(selector_line)
@@ -182,7 +182,7 @@ def lint_selectors_should_be_in_tidy_form(recipe_fname, lints, hints):
 def lint_no_comment_selectors(recipe_fname, lints, hints):
     bad_lines = []
     if os.path.exists(recipe_fname):
-        with open(recipe_fname) as fh:
+        with open(recipe_fname, encoding="utf-8") as fh:
             for selector_line, line_number in selector_lines(
                 fh, only_in_comment=True
             ):
@@ -245,7 +245,7 @@ def lint_license_should_not_have_license(about_section, lints):
 
 def lint_should_be_empty_line(meta_fname, lints):
     if os.path.exists(meta_fname):
-        with open(meta_fname) as f:
+        with open(meta_fname, encoding="utf-8") as f:
             lines = f.read().split("\n")
         # Count the number of empty lines from the end of the file
         empty_lines = itertools.takewhile(lambda x: x == "", reversed(lines))
@@ -361,7 +361,7 @@ def lint_noarch_and_runtime_dependencies(
 ):
     if noarch_value is not None and os.path.exists(meta_fname):
         noarch_platforms = len(forge_yaml.get("noarch_platforms", [])) > 1
-        with open(meta_fname) as fh:
+        with open(meta_fname, encoding="utf-8") as fh:
             in_runreqs = False
             for line in fh:
                 line_s = line.strip()
@@ -408,7 +408,7 @@ def lint_jinja_variables_definitions(meta_fname, lints):
     # Good Jinja2 variable definitions look like "{% set .+ = .+ %}"
     good_jinja_pat = re.compile(r"\s*\{%\s(set)\s[^\s]+\s=\s[^\s]+\s%\}")
     if os.path.exists(meta_fname):
-        with open(meta_fname) as fh:
+        with open(meta_fname, encoding="utf-8") as fh:
             for jinja_line, line_number in jinja_lines(fh):
                 if not good_jinja_pat.match(jinja_line):
                     bad_jinja.append(jinja_line)
@@ -552,7 +552,7 @@ def lint_jinja_var_references(meta_fname, hints, recipe_version: int = 0):
         else conda_recipe_v1_linter.JINJA_VAR_PAT
     )
     if os.path.exists(meta_fname):
-        with open(meta_fname) as fh:
+        with open(meta_fname, encoding="utf-8") as fh:
             for i, line in enumerate(fh.readlines()):
                 for m in jinja_pattern.finditer(line):
                     if m.group(1) is not None:
@@ -679,7 +679,7 @@ def lint_check_usage_of_whls(meta_fname, noarch_value, lints, hints):
     pure_python_wheel_re = re.compile(r".*[:-]\s+(http.*-none-any\.whl)\s+.*")
     wheel_re = re.compile(r".*[:-]\s+(http.*\.whl)\s+.*")
     if os.path.exists(meta_fname):
-        with open(meta_fname) as f:
+        with open(meta_fname, encoding="utf-8") as f:
             for line in f:
                 if match := pure_python_wheel_re.search(line):
                     pure_python_wheel_urls.append(match.group(1))
@@ -888,7 +888,7 @@ def lint_stdlib(
     else:
         cbc_lines = []
         if conda_build_config_filename:
-            with open(conda_build_config_filename) as fh:
+            with open(conda_build_config_filename, encoding="utf-8") as fh:
                 cbc_lines = fh.readlines()
 
         # filter on osx-relevant lines
@@ -1055,7 +1055,7 @@ def lint_recipe_is_parsable(
         else:
             with tempfile.TemporaryDirectory() as tmpdir:
                 recipe_file = os.path.join(tmpdir, "meta.yaml")
-                with open(recipe_file, "w") as f:
+                with open(recipe_file, "w", encoding="utf-8") as f:
                     f.write(recipe_text)
 
                 try:

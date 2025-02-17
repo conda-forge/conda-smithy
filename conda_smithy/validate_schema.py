@@ -44,7 +44,7 @@ def validate_json_schema(
     if not schema_file:
         schema_file = CONDA_FORGE_YAML_SCHEMA_FILE
 
-    with open(schema_file) as fh:
+    with open(schema_file, encoding="utf-8") as fh:
         _json_schema = json.loads(fh.read())
 
     validator = _VALIDATOR_CLASS(_json_schema)
