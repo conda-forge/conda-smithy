@@ -1036,7 +1036,8 @@ def _render_ci_provider(
         # detect if `compiler('cuda')` is used in meta.yaml,
         # and set appropriate environment variable
         with open(
-            os.path.join(forge_dir, forge_config["recipe_dir"], recipe_file)
+            os.path.join(forge_dir, forge_config["recipe_dir"], recipe_file),
+            encoding="utf-8",
         ) as f:
             meta_lines = f.readlines()
         # looking for `compiler('cuda')` with both quote variants;
@@ -2108,7 +2109,9 @@ def render_readme(jinja_env, forge_config, forge_dir, render_info=None):
             if filename.endswith(".yaml"):
                 variant_name, _ = os.path.splitext(filename)
                 variants.append(variant_name)
-                with open(os.path.join(ci_support_path, filename)) as fh:
+                with open(
+                    os.path.join(ci_support_path, filename), encoding="utf-8"
+                ) as fh:
                     data = yaml.safe_load(fh)
                     channel_targets.append(
                         data.get("channel_targets", ["conda-forge main"])[0]
@@ -2617,7 +2620,7 @@ def get_cfp_file_path(temporary_directory):
 
     response = requests.get(pkg.url)
     response.raise_for_status()
-    with open(dest, "wb") as f:
+    with open(dest, "wb", encoding="utf-8") as f:
         f.write(response.content)
 
     logger.info("Extracting conda-forge-pinning to %s", temporary_directory)
