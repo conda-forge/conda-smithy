@@ -547,7 +547,7 @@ def _collapse_subpackage_variants(
     cbc_path = os.path.join(recipe_dir, "conda_build_config.yaml")
     has_macdt = False
     if os.path.exists(cbc_path):
-        with open(cbc_path) as f:
+        with open(cbc_path, encoding="utf-8") as f:
             cbc_text = f.read()
         if re.match(r"^\s*MACOSX_DEPLOYMENT_TARGET:", cbc_text):
             has_macdt = True
@@ -558,7 +558,7 @@ def _collapse_subpackage_variants(
     if not os.path.exists(recipe_path):
         recipe_path = os.path.join(recipe_dir, "recipe.yaml")
     # either v0 or v1 recipe must exist; no fall-back if missing
-    with open(recipe_path) as f:
+    with open(recipe_path, encoding="utf-8") as f:
         meta_text = f.read()
     pm_pat = re.compile(r".*\{\{ python_min \}\}")
     if any(pm_pat.match(x) for x in meta_text.splitlines()):
@@ -896,7 +896,7 @@ def migrate_combined_spec(combined_spec, forge_dir, config, forge_config):
     from conda_smithy.variant_algebra import parse_variant, variant_add
 
     migration_variants = [
-        (fn, parse_variant(open(fn).read(), config=config))
+        (fn, parse_variant(open(fn, encoding="utf-8").read(), config=config))
         for fn in migrations
     ]
 
@@ -1036,7 +1036,8 @@ def _render_ci_provider(
         # detect if `compiler('cuda')` is used in meta.yaml,
         # and set appropriate environment variable
         with open(
-            os.path.join(forge_dir, forge_config["recipe_dir"], recipe_file)
+            os.path.join(forge_dir, forge_config["recipe_dir"], recipe_file),
+            encoding="utf-8",
         ) as f:
             meta_lines = f.readlines()
         # looking for `compiler('cuda')` with both quote variants;
@@ -1398,7 +1399,7 @@ def generate_yum_requirements(forge_config, forge_dir):
     )
     yum_build_setup = ""
     if os.path.exists(yum_requirements_fpath):
-        with open(yum_requirements_fpath) as fh:
+        with open(yum_requirements_fpath, encoding="utf-8") as fh:
             requirements = [
                 line.strip()
                 for line in fh
@@ -1548,7 +1549,7 @@ def _render_template_exe_files(
         if target_fname in get_common_scripts(forge_dir) and os.path.exists(
             target_fname
         ):
-            with open(target_fname) as fh:
+            with open(target_fname, encoding="utf-8") as fh:
                 old_file_contents = fh.read()
                 if old_file_contents != new_file_contents:
                     import difflib
@@ -2108,7 +2109,9 @@ def render_readme(jinja_env, forge_config, forge_dir, render_info=None):
             if filename.endswith(".yaml"):
                 variant_name, _ = os.path.splitext(filename)
                 variants.append(variant_name)
-                with open(os.path.join(ci_support_path, filename)) as fh:
+                with open(
+                    os.path.join(ci_support_path, filename), encoding="utf-8"
+                ) as fh:
                     data = yaml.safe_load(fh)
                     channel_targets.append(
                         data.get("channel_targets", ["conda-forge main"])[0]
@@ -2288,7 +2291,7 @@ def _update_dict_within_dict(items, config):
 
 def _read_forge_config(forge_dir, forge_yml=None):
     # Load default values from the conda-forge.yml file
-    with open(CONDA_FORGE_YAML_DEFAULTS_FILE) as fh:
+    with open(CONDA_FORGE_YAML_DEFAULTS_FILE, encoding="utf-8") as fh:
         default_config = yaml.safe_load(fh.read())
 
     if forge_yml is None:
@@ -2303,7 +2306,7 @@ def _read_forge_config(forge_dir, forge_yml=None):
             " feedstock root if it's the latter."
         )
 
-    with open(forge_yml) as fh:
+    with open(forge_yml, encoding="utf-8") as fh:
         documents = list(yaml.safe_load_all(fh))
         file_config = (documents or [None])[0] or {}
 
@@ -2617,7 +2620,7 @@ def get_cfp_file_path(temporary_directory):
 
     response = requests.get(pkg.url)
     response.raise_for_status()
-    with open(dest, "wb") as f:
+    with open(dest, "wb", encoding="utf-8") as f:
         f.write(response.content)
 
     logger.info("Extracting conda-forge-pinning to %s", temporary_directory)
@@ -2745,7 +2748,7 @@ def get_migrations_in_dir(migrations_root):
     """
     res = {}
     for fn in glob.glob(os.path.join(migrations_root, "*.yaml")):
-        with open(fn) as f:
+        with open(fn, encoding="utf-8") as f:
             contents = f.read()
             migration_yaml = (
                 yaml.load(contents, Loader=yaml.loader.BaseLoader) or {}

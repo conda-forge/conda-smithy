@@ -96,7 +96,7 @@ def _get_forge_yaml(recipe_dir: Optional[str] = None) -> dict:
             )
         )
         if forge_yaml_filename:
-            with open(forge_yaml_filename[0]) as fh:
+            with open(forge_yaml_filename[0], encoding="utf-8") as fh:
                 forge_yaml = get_yaml().load(fh)
         else:
             forge_yaml = {}
@@ -274,7 +274,7 @@ def lintify_meta_yaml(
         )
 
         if conda_build_config_filename:
-            with open(conda_build_config_filename) as fh:
+            with open(conda_build_config_filename, encoding="utf-8") as fh:
                 conda_build_config_keys = set(get_yaml().load(fh).keys())
         else:
             conda_build_config_keys = set()
@@ -284,7 +284,7 @@ def lintify_meta_yaml(
         )
 
         if forge_yaml_filename:
-            with open(forge_yaml_filename) as fh:
+            with open(forge_yaml_filename, encoding="utf-8") as fh:
                 forge_yaml = get_yaml().load(fh)
         else:
             forge_yaml = {}
@@ -649,7 +649,7 @@ def run_conda_forge_specific(
         )
     ):
         try:
-            with open(cfyml_pth) as fh:
+            with open(cfyml_pth, encoding="utf-8") as fh:
                 get_yaml(allow_duplicate_keys=False).load(fh)
         except DuplicateKeyError:
             lints.append(
@@ -675,7 +675,7 @@ def run_conda_forge_specific(
         recipe_fname = os.path.join(recipe_dir or "", "meta.yaml")
 
     if os.path.exists(recipe_fname):
-        with open(recipe_fname) as fh:
+        with open(recipe_fname, encoding="utf-8") as fh:
             recipe_text = fh.read()
         lint_recipe_is_parsable(
             recipe_text,
@@ -747,7 +747,7 @@ def main(
         )
 
     if build_tool == CONDA_BUILD_TOOL:
-        with open(recipe_file) as fh:
+        with open(recipe_file, encoding="utf-8") as fh:
             content = render_meta_yaml("".join(fh))
             meta = get_yaml().load(content)
     else:
