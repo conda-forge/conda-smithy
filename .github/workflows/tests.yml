@@ -8,7 +8,8 @@ on:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
+
 defaults:
   run:
     shell: bash -el {0}
@@ -16,7 +17,10 @@ defaults:
 jobs:
   tests:
     name: tests
-    runs-on: "ubuntu-latest"
+    runs-on: "macos-latest"
+    strategy:
+      matrix:
+        python_version: ["3.10", "3.11"]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -28,16 +32,22 @@ jobs:
           micromamba-version: 1.5.12-0
           cache-environment: true
           create-args: >-
-            python=3.11
+            python=${{ matrix.python_version }}
             coverage
             coveralls
-            conda-recipe-manager>=0.4.1
             conda-souschef
-            conda-forge-tick
+
+      - name: install conda-forge-tick and conda-recipe-manager
+        run: |
+          if [[ "${{ matrix.python_version }}" != "3.10" ]]; then
+            conda install "conda-recipe-manager>=0.4.1" conda-forge-tick --yes --quiet
+          fi
 
       - name: install conda-smithy
         run: |
-          conda uninstall --force --yes conda-smithy
+          if [[ "${{ matrix.python_version }}" != "3.10" ]]; then
+            conda uninstall --force --yes conda-smithy
+          fi
           python -m pip install -v --no-build-isolation -e .
           git config --global user.email "smithy@smithy.smithy"
           git config --global user.name "smithy"
@@ -64,6 +74,10 @@ jobs:
           pip uninstall conda-smithy --yes
 
           python -m pip install -v --no-build-isolation -e .
+
+      - name: run tests without token
+        run: |
+          pytest tests
 
       - name: run tests
         run: |
