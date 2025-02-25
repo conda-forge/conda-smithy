@@ -4,7 +4,7 @@
 
 **Changed:**
 
-* Improve the "reciep not found" exception to include the path used and a suggestion what path to pass. (#2249)
+* Improve the "recipe not found" exception to include the path used and a suggestion what path to pass. (#2249)
 
 **Deprecated:**
 
