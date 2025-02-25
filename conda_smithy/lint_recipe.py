@@ -743,7 +743,7 @@ def main(
 
     if not os.path.exists(recipe_file):
         raise OSError(
-            f"Feedstock has no recipe/{os.path.basename(recipe_file)}"
+            f'Recipe not found: {recipe_file}; did you pass the "recipe" subdirectory?'
         )
 
     if build_tool == CONDA_BUILD_TOOL:
