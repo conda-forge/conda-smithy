@@ -6,7 +6,6 @@ import sys
 import tempfile
 import time
 from textwrap import dedent
-from typing import Optional, Union
 
 import conda  # noqa
 from conda_build.metadata import MetaData
@@ -35,7 +34,7 @@ def default_feedstock_config_path(feedstock_directory):
 
 
 def generate_feedstock_content(
-    target_directory, source_recipe_dir, conda_build_tool: Optional[str] = None
+    target_directory, source_recipe_dir, conda_build_tool: str | None = None
 ):
     target_directory = os.path.abspath(target_directory)
     recipe_dir = "recipe"
@@ -130,7 +129,7 @@ class Init(Subcommand):
 
         # Get some information about the source recipe.
         # detect if it's old recipe or new one
-        meta: Union[MetaData, RattlerMetaData]
+        meta: MetaData | RattlerMetaData
 
         build_tool = CONDA_BUILD
 
@@ -143,7 +142,7 @@ class Init(Subcommand):
         else:
             meta = RattlerMetaData(args.recipe_directory)
 
-        conda_build_tool: Optional[str] = (
+        conda_build_tool: str | None = (
             RATTLER_BUILD if isinstance(meta, RattlerMetaData) else None
         )
 
