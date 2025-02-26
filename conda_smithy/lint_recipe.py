@@ -8,7 +8,7 @@ from glob import glob
 from inspect import cleandoc
 from pathlib import Path
 from textwrap import indent
-from typing import Any, Optional, Tuple
+from typing import Any, Optional
 
 import github
 import github.Auth
@@ -725,7 +725,7 @@ def _format_validation_msg(error: jsonschema.ValidationError):
 def find_recipe_directory(
     recipe_dir: str,
     feedstock_dir: Optional[str],
-) -> Tuple[str, str]:
+) -> tuple[str, str]:
     """Find recipe directory and build tool"""
 
     recipe_dir = os.path.abspath(recipe_dir)
@@ -754,7 +754,9 @@ def find_recipe_directory(
         if forge_config.get("conda_build_tool", "") == RATTLER_BUILD_TOOL:
             build_tool = RATTLER_BUILD_TOOL
         if recipe_dir is None:
-            recipe_dir = os.path.join(feedstock_dir, forge_config.get("recipe_dir", "recipe"))
+            recipe_dir = os.path.join(
+                feedstock_dir, forge_config.get("recipe_dir", "recipe")
+            )
 
     return (recipe_dir, build_tool)
 
@@ -770,9 +772,7 @@ def main(
         recipe_file = os.path.join(recipe_dir, "meta.yaml")
 
     if not os.path.exists(recipe_file):
-        raise OSError(
-            f"No recipe file found in {recipe_dir}"
-        )
+        raise OSError(f"No recipe file found in {recipe_dir}")
 
     if build_tool == CONDA_BUILD_TOOL:
         with open(recipe_file, encoding="utf-8") as fh:
