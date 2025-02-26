@@ -722,19 +722,49 @@ def _format_validation_msg(error: jsonschema.ValidationError):
     )
 
 
-def main(
-    recipe_dir, conda_forge=False, return_hints=False, feedstock_dir=None
-):
+def find_recipe_directory(
+    recipe_dir: str,
+    feedstock_dir: Optional[str],
+) -> tuple[str, str]:
+    """Find recipe directory and build tool"""
+
     recipe_dir = os.path.abspath(recipe_dir)
     build_tool = CONDA_BUILD_TOOL
-    if feedstock_dir:
+
+    # The logic below:
+    # 1. If `--feedstock-dir` is not specified, try looking for `recipe.yaml`
+    #    or `meta.yaml` in the specified recipe directory.
+    # 2. If there is none, look for `conda-forge.yml` -- perhaps the user
+    #    passed feedstock directory instead.  In that case, obtain
+    #    the recipe directory from `conda-forge.yml`.
+
+    if feedstock_dir is None:
+        if os.path.exists(os.path.join(recipe_dir, "recipe.yaml")):
+            return (recipe_dir, RATTLER_BUILD_TOOL)
+        elif os.path.exists(os.path.join(recipe_dir, "meta.yaml")):
+            return (recipe_dir, CONDA_BUILD_TOOL)
+        elif os.path.exists(os.path.join(recipe_dir, "conda-forge.yml")):
+            # passthrough to the feedstock_dir logic below
+            feedstock_dir = recipe_dir
+            recipe_dir = None
+
+    if feedstock_dir is not None:
         feedstock_dir = os.path.abspath(feedstock_dir)
         forge_config = _read_forge_config(feedstock_dir)
         if forge_config.get("conda_build_tool", "") == RATTLER_BUILD_TOOL:
             build_tool = RATTLER_BUILD_TOOL
-    else:
-        if os.path.exists(os.path.join(recipe_dir, "recipe.yaml")):
-            build_tool = RATTLER_BUILD_TOOL
+        if recipe_dir is None:
+            recipe_dir = os.path.join(
+                feedstock_dir, forge_config.get("recipe_dir", "recipe")
+            )
+
+    return (recipe_dir, build_tool)
+
+
+def main(
+    recipe_dir, conda_forge=False, return_hints=False, feedstock_dir=None
+):
+    recipe_dir, build_tool = find_recipe_directory(recipe_dir, feedstock_dir)
 
     if build_tool == RATTLER_BUILD_TOOL:
         recipe_file = os.path.join(recipe_dir, "recipe.yaml")
@@ -742,9 +772,7 @@ def main(
         recipe_file = os.path.join(recipe_dir, "meta.yaml")
 
     if not os.path.exists(recipe_file):
-        raise OSError(
-            f"Feedstock has no recipe/{os.path.basename(recipe_file)}"
-        )
+        raise OSError(f"No recipe file found in {recipe_dir}")
 
     if build_tool == CONDA_BUILD_TOOL:
         with open(recipe_file, encoding="utf-8") as fh:
