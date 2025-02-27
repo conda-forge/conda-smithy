@@ -457,7 +457,7 @@ class BotConfig(BaseModel):
         "and a concrete specificatoon (e.g., `llvmdev 15.0.7 *_5`). The "
         "bot will find the latest package that satisfies the abstract "
         "specification and update the concrete specification to this "
-        "latest package."
+        "latest package.",
     )
 
 
