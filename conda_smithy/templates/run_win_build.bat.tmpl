@@ -142,15 +142,27 @@ if EXIST LICENSE.txt (
     copy LICENSE.txt "{{ recipe_dir }}\\recipe-scripts-license.txt"
 )
 
+{%- if conda_build_tool == "mambabuild" %}
+{%- set NO_TEST_FLAG="--no-test" %}
+{%- elif conda_build_tool == "conda-build+conda-libmamba-solver" %}
+{%- set NO_TEST_FLAG="--no-test" %}
+{%- elif conda_build_tool == "conda-build+classic" %}
+{%- set NO_TEST_FLAG="--no-test" %}
+{%- elif conda_build_tool == "rattler-build" %}
+{%- set NO_TEST_FLAG="--test skip" %}
+{%- else %}
+{%- set NO_TEST_FLAG="--no-test" %}
+{%- endif %}
+
 {%- if test == "native" %}
 if NOT [%HOST_PLATFORM%] == [%BUILD_PLATFORM%] (
-    set "EXTRA_CB_OPTIONS=%EXTRA_CB_OPTIONS% --no-test"
+    set "EXTRA_CB_OPTIONS=%EXTRA_CB_OPTIONS% {{ NO_TEST_FLAG }}"
 )
 {%- endif %}
 {%- if test == "native_and_emulated" %}
 if NOT [%HOST_PLATFORM%] == [%BUILD_PLATFORM%] (
     if [%CROSSCOMPILING_EMULATOR%] == [] (
-        set "EXTRA_CB_OPTIONS=%EXTRA_CB_OPTIONS% --no-test"
+        set "EXTRA_CB_OPTIONS=%EXTRA_CB_OPTIONS% {{ NO_TEST_FLAG }}"
     )
 )
 {%- endif %}
