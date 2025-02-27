@@ -1797,21 +1797,19 @@ linter:
         lints, _ = linter.lintify_meta_yaml(
             meta_with_context, recipe_version=1
         )
-        expected_message = (
-            "Recipe name has invalid characters. only lowercase alpha, "
-            "numeric, underscores, hyphens and dots allowed"
-        )
         self.assertIn(expected_message, lints)
 
         meta_with_context = {"recipe": {"name": "mp++"}, "outputs": []}  # noqa
         lints, _ = linter.lintify_meta_yaml(
             meta_with_context, recipe_version=1
         )
-        expected_message = (
-            "Recipe name has invalid characters. only lowercase alpha, "
-            "numeric, underscores, hyphens and dots allowed"
-        )
         self.assertIn(expected_message, lints)
+
+        # variable may be defined e.g. in conda_build_config.yaml
+        # https://github.com/conda-forge/conda-smithy/issues/2224
+        meta = {"package": {"name": "${{ variant_name }}"}}
+        lints, _ = linter.lintify_meta_yaml(meta, recipe_version=1)
+        self.assertNotIn(expected_message, lints)
 
     def test_end_empty_line(self):
         bad_contents = [
