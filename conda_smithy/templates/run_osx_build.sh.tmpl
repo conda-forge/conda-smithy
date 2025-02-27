@@ -66,14 +66,19 @@ bash "${MINIFORGE_FILE}" -b -p "${MINIFORGE_HOME}"
 ( startgroup "Configuring conda" ) 2> /dev/null
 {%- if conda_build_tool == "mambabuild" %}
 {%- set BUILD_CMD="conda-mambabuild" %}
+{%- set NO_TEST_FLAG="--no-test" %}
 {%- elif conda_build_tool == "conda-build+conda-libmamba-solver" %}
 {%- set BUILD_CMD="CONDA_SOLVER=libmamba conda-build" %}
+{%- set NO_TEST_FLAG="--no-test" %}
 {%- elif conda_build_tool == "conda-build+classic" %}
 {%- set BUILD_CMD="CONDA_SOLVER=classic conda-build" %}
+{%- set NO_TEST_FLAG="--no-test" %}
 {%- elif conda_build_tool == "rattler-build" %}
 {%- set BUILD_CMD="rattler-build build" %}
+{%- set NO_TEST_FLAG="--test skip" %}
 {%- else %}
 {%- set BUILD_CMD="conda-build" %}
+{%- set NO_TEST_FLAG="--no-test" %}
 {%- endif %}
 
 {%- if conda_install_tool != "pixi" %}
@@ -153,7 +158,7 @@ if [[ "${BUILD_WITH_CONDA_DEBUG:-0}" == 1 ]]; then
 else
 {% if test in ["native", "native_and_emulated"] %}
     if [[ "${HOST_PLATFORM}" != "${BUILD_PLATFORM}" ]]; then
-        EXTRA_CB_OPTIONS="${EXTRA_CB_OPTIONS:-} --no-test"
+        EXTRA_CB_OPTIONS="${EXTRA_CB_OPTIONS:-} {{ NO_TEST_FLAG }}"
     fi
 {% endif %}
     {%- if conda_build_tool != "rattler-build" %}
