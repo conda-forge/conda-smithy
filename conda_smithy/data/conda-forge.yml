@@ -40,6 +40,7 @@ bot:
   check_solvable: true
   inspection: hint
   run_deps_from_wheel: false
+  update_static_libs: false
   version_updates:
     exclude: []
     random_fraction_to_keep: null
