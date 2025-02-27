@@ -4,6 +4,829 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.45.4
+====================
+
+**Changed:**
+
+* Add output to gitignore for rattler-build's outputs.
+* Always populate variant configs with `python_min`, if present
+
+**Fixed:**
+
+* Fixed error in testing where tests fail for ``conda-recipe-manager >=0.4.1``. (#2223)
+
+**Authors:**
+
+* Matthew R. Becker
+* H. Vetinari
+* Pavel Zwerschke
+
+
+
+v3.45.3
+====================
+
+**Added:**
+
+* Added support for multi-output recipes in ``hint_noarch_python_use_python_min`` check. (#2218)
+* Added a linter check for use of v0 selectors in v1 recipes. (#2214)
+
+**Changed:**
+
+* Due to persistent problems with Travis CI, it is not the default provider for non-x64 architectures on linux anymore.
+  Builds will be emulated on azure by default, though it is recommended to switch recipes to cross-compilation
+  where possible, by adding the following to `conda-forge.yml` (and rerendering):
+  ```
+  build_platform:
+    linux_aarch64: linux_64
+    linux_ppc64le: linux_64
+  ```
+
+**Fixed:**
+
+* Fix `tests/test_feedstock_io.py::TestFeedstockIO::test_repo` path comparison to use `os.path.realpath`. (#2220)
+* Fixed "missing package version" false positives for version "0". (#2217)
+* Fixed flattening ``if / then / else`` clauses in v1 recipes with string values of ``then`` and ``else`` keys. (#2218)
+
+**Authors:**
+
+* H. Vetinari
+* Michał Górny
+* Ken Odegard
+
+
+
+v3.45.2
+====================
+
+**Added:**
+
+* Added ``sphinx-theme-builder`` as a valid ``pip`` build backend. (#2204)
+* Added validation for ``schema_version`` key. (#2207)
+* Add ``hint_python_min`` and ``hint_pip_no_build_backend`` values to ``linter.skip`` key, allowing to skip respective checks. (#2206)
+
+**Fixed:**
+
+* Fixed removing directories recursively from git index. (#2199)
+* Fix handling ``if``/``else`` blocks in ``run`` and ``run_constraints`` requirements, for v1 recipes (#2197)
+* Fix flattening nested ``if``/``else`` blocks in v1 recipes (#2197)
+* Fix a test that uses `match` in skip to work with strict parsing (#2213)
+* ``schema_version`` key no longer causes linting failures. (#2207)
+* Fix a ``TypeError`` when either the ``linter`` key or the ``skip`` subkey is empty. (#2206)
+* Fix more linter errors for v1 recipes with conditional dependencies (#2212)
+* Fix linter error in check_pins for v1 recipes with conditional run_exports (#2211)
+* Consider `tests[].python.python_version`` when linting for cfep25 on v1.
+
+**Authors:**
+
+* Matthew R. Becker
+* Wolf Vollprecht
+* Min RK
+* pre-commit-ci[bot]
+* Hadrien Mary
+* Michał Górny
+* dependabot[bot]
+* Will Shanks
+
+
+
+v3.45.1
+====================
+
+**Changed:**
+
+* Try to be more specific in hints when different parsers fail (#2190)
+* Add `flit` (previously only `flit-core`) to the list of valid build backends (#2187)
+
+**Fixed:**
+
+* Fix passing paths to ``pygit2`` on Windows. (#2192)
+
+**Authors:**
+
+* Min RK
+* Michał Górny
+* Ben Mares
+
+
+
+v3.45.0
+====================
+
+**Authors:**
+
+
+
+
+v3.45.0
+====================
+
+**Changed:**
+
+* Replaced the ``GitPython`` dependency with ``pygit2`` (#2120).
+* Added ``poetry`` as a valid ``pip`` build backend. (#2175)
+* Set minimal Python version to 3.9. (#2180)
+* The SPDX identifier list has been updated
+
+**Fixed:**
+
+* Fixed compatibility with git index versions 3 and 4 (#2120).
+* Fixed a bug where ``$`` was not properly escaped in a regex and this caused false-positive hints for
+  v1 recipes and ``noarch: python`` packages. (#2184)
+
+**Authors:**
+
+* Matthew R. Becker
+* Uwe L. Korn
+* pre-commit-ci[bot]
+* Michał Górny
+* dependabot[bot]
+* Brandon Maier
+* Matt Chan
+
+
+
+v3.44.9
+====================
+
+**Fixed:**
+
+* Fixed a bug in checking in recipe maintainers exist without a GitHub token
+  where the anonymous API would run out of requests. (#2171)
+* Ensure ``CONDA_BLD_PATH`` is properly exported in macOS. (#2145 via #2148)
+* Close logging group for ``micromamba`` installs in Windows. (#2148)
+
+**Authors:**
+
+* Matthew R. Becker
+* Hadrien Mary
+
+
+
+v3.44.8
+====================
+
+**Changed:**
+
+* Changed ``noarch-python`` hint to not require exactly one space between python and the Jinja2 expression. (#2151)
+* Added linting for incorrect values under `os_version:` in `conda-forge.yml`
+
+**Fixed:**
+
+* Fixed a bug where the ``python_min`` hint failed on v1 recipes. (#2154)
+* Fixed a bug that caused the linter to fail when a v1 recipe had the `ignore_run_exports` key. (#2157, #2153)
+* Fixed a bug where legacy conda env vars caused test failues. (#2162)
+* Fixed bugs in the linting of v1 recipes where requirements with conditional (if/else) statements were not properly flattened. (#2165)
+
+**Authors:**
+
+* Isuru Fernando
+* Matthew R. Becker
+* H. Vetinari
+* Wolf Vollprecht
+* pre-commit-ci[bot]
+* Adam Ehlers Nyholm Thomsen
+* Ralf Gommers
+
+
+
+v3.44.7
+====================
+
+**Added:**
+
+* Provide option `azure.settings_win.install_atl` (false by default), which can be used to install components that are necessary for some builds, but not present in the Azure images anymore
+* Added new ``conda-forge``-only hint+lint for recipe be able to be parsed. (#2141, #2147)
+* Set rattler cache to `RATTLER_CACHE_DIR=/tmp/rattler_cache` when building a linux package from a macOS machine with Docker. (#2124)
+
+**Fixed:**
+
+* Fixed a bug where the ``register-ci`` command fails for recipes with the ``python_min`` variable being used. (#2144)
+* Make sure $MINIFORGE_HOME folder exists during build. (#2142) (#2146)
+
+**Authors:**
+
+* Matthew R. Becker
+* Jaime Rodríguez-Guerra
+* H. Vetinari
+* John Kirkham
+* Hadrien Mary
+
+
+
+v3.44.6
+====================
+
+**Added:**
+
+* Add ``pymsbuild`` as another build backend
+
+**Fixed:**
+
+* Fixed a bug where creating feedstocks with `noarch: python` would not work correctly. (#2135. #2138)
+
+**Authors:**
+
+* Matthew R. Becker
+* Uwe L. Korn
+
+
+
+v3.44.4
+====================
+
+**Changed:**
+
+* Make old GHA removal relative to forge_dir
+
+**Fixed:**
+
+* Fixed bug when linting for ``noarch: python`` syntax and using jinja2 set statements. (#2132)
+
+**Authors:**
+
+* Matthew R. Becker
+* pre-commit-ci[bot]
+* Nehal J Wani
+
+
+
+v3.44.3
+====================
+
+**Changed:**
+
+* Changed the language in the ``noarch: python`` hint to add instructions on override w/ Jinja2/contexts and use softer language. (#2126)
+*  Add emojis to visually distinguish between hints and lints (#2128)
+
+**Fixed:**
+
+* Fixed a bug where v1 recipes were not properly linted for `noarch: python` hints. (#2126)
+* Fixed linting of version 1 recipes where the version number was an integer (#2130)
+
+**Authors:**
+
+* Matthew R. Becker
+* H. Vetinari
+* Ben Mares
+* Anton Tetov
+
+
+
+v3.44.2
+====================
+
+**Fixed:**
+
+* Fixed false positives in the ``noarch: python`` check. (#2123)
+
+**Authors:**
+
+* Matthew R. Becker
+
+
+
+v3.44.1
+====================
+
+**Fixed:**
+
+* Fixed ``noarch: python`` hint for v1 recipes. (#2119)
+* Fixed ``noarch: python`` syntax to be more compatible. (#2122)
+
+**Authors:**
+
+* Matthew R. Becker
+
+
+
+v3.44.0
+====================
+
+**Added:**
+
+* Added ``pixi`` as valid ``conda_install_tool`` option.
+  Includes several preconfigured tasks like ``build``,  ``debug``, ``rerender``, or ``lint``. (#2099)
+* Added hints for new ``noarch: python`` syntax for CFEP-25. (#2115)
+
+**Changed:**
+
+* Moved automerge to a central repository. (#2112)
+* Upgraded Github Actions ``actions/upload-artifact`` to v4.4.3. (#2113)
+
+**Fixed:**
+
+* Rerendering now removes old GHA service files. (#2112)
+
+**Authors:**
+
+* Matthew R. Becker
+* Jaime Rodríguez-Guerra
+* pre-commit-ci[bot]
+* dependabot[bot]
+
+
+
+v3.43.2
+====================
+
+**Fixed:**
+
+* Fixed a bug in linting rule for PyPI source urls. (#2111)
+
+**Authors:**
+
+* Matthew R. Becker
+* Nicholas Bollweg
+
+
+
+v3.43.1
+====================
+
+**Added:**
+
+* Added more service feedstocks allowed to use GHA. (#2106)
+* Hint: if source url contains ``pypi.io``, suggest ``pypi.org``. (#2104)
+
+**Fixed:**
+
+* Do not move ``micromamba`` cache to ``conda``'s location to avoid "permission denied" errors on Windows. (#2102 via #2107)
+* Fixed a bug where azure would skip commits on main if previous commit had '[ci skip]' or similar. (#2110)
+
+**Authors:**
+
+* Matthew R. Becker
+* Jaime Rodríguez-Guerra
+* pre-commit-ci[bot]
+* M Bussonnier
+
+
+
+v3.43.0
+====================
+
+**Added:**
+
+* Added ``micromamba`` as the default install tool on Linux, macOS and Windows. (#2075, #2097)
+
+**Changed:**
+
+* Use the faster ``D:\`` drive for Miniforge installations on Windows and expose this path as the ``MINIFORGE_HOME`` variable. (#2076)
+
+**Authors:**
+
+* Matthew R. Becker
+* Jaime Rodríguez-Guerra
+* pre-commit-ci[bot]
+
+
+
+v3.42.2
+====================
+
+**Added:**
+
+* Add whey to list of known python build backends for the linter
+* Added check for team existence when linting. (#2092)
+
+**Fixed:**
+
+* Fix rerendering when migrators have multiple additional_zip_keys (#2083).
+* Fixed whitespace in .azure-pipelines.yml (#2084).
+* Pass explicit arguments/options when inspecting outputs. (#2087)
+* Fix mojibake with rattler-build on Windows by calling the executable directly (#2091)
+
+**Authors:**
+
+* Isuru Fernando
+* Matthew R. Becker
+* Wolf Vollprecht
+* Dominic Davis-Foster
+
+
+
+v3.42.0
+====================
+
+**Changed:**
+
+* Bump Azure's ``vmImage`` to ``macOS-13``. (#2078)
+
+**Removed:**
+
+* Removed webservices GHA templates since they are not used anymore. (#2074)
+
+**Fixed:**
+
+* Azure Pipelines will now skip build jobs if the last commit message contains one of
+  ``[skip ci]``, ``[ci skip]``, ``[skip azp]``, or ``[azp skip]``. (#2077)
+
+**Authors:**
+
+* Matthew R. Becker
+* Jaime Rodríguez-Guerra
+* Min RK
+* pre-commit-ci[bot]
+
+
+
+v3.42.0
+====================
+
+**Authors:**
+
+
+
+
+v3.41.1
+====================
+
+**Fixed:**
+
+* Fixed a bug in processing CLI arguments for token expiration times. (#2073)
+
+**Authors:**
+
+* Matthew R. Becker
+
+
+
+v3.41.0
+====================
+
+**Added:**
+
+* Added expiration dates to tokens when rotating.
+
+**Fixed:**
+
+* fix cross-compilation with rattler-build by setting `--target-platform=${HOST_PLATFORM}`
+
+**Authors:**
+
+* Matthew R. Becker
+* Wolf Vollprecht
+* pre-commit-ci[bot]
+
+
+
+v3.40.1
+====================
+
+**Fixed:**
+
+* Fixed linter to use a GitHub Token if one is available. (#2064)
+
+**Authors:**
+
+* Matthew R. Becker
+
+
+
+v3.40.0
+====================
+
+**Added:**
+
+* Enabled branch protection for ``conda-forge`` feedstocks by default. (#2054)
+
+**Removed:**
+
+* Moved staged-recipes specific lints/hints that required a GitHub token to the `staged-recipes` repository. (#)
+
+**Fixed:**
+
+* Fixed the ``sh`` trampoline in the ``build-locally.py`` template (#2053)
+
+**Authors:**
+
+* Isuru Fernando
+* Matthew R. Becker
+* nichmor
+* H. Vetinari
+* Uwe L. Korn
+* pre-commit-ci[bot]
+* Peter Williams
+* Bas Zalmstra
+
+
+
+v3.39.1
+====================
+
+**Added:**
+
+* Added bot feedstocks to the allowlist for service feedstocks on GHA. (#2041)
+
+**Fixed:**
+
+* Fixed a corner-case in stdlib-linting (#2042)
+* Fixed error where some python build backends were flagged as not having a backend. (#2046)
+
+**Authors:**
+
+* Isuru Fernando
+* Matthew R. Becker
+* H. Vetinari
+* Mark Harfouche
+* dependabot[bot]
+
+
+
+v3.39.0
+====================
+
+**Added:**
+
+* Added hint for missing ``pip`` build backend in the ``host`` section of the recipe. (#2039)
+* Added a lint for duplicate keys in the ``conda-forge.yml`` file. (#2040)
+
+**Removed:**
+
+* Removed lint for editing example recipes in staged-recipes since covered by CI already. (#2038)
+
+**Authors:**
+
+* Matthew R. Becker
+* Uwe L. Korn
+* pre-commit-ci[bot]
+* dependabot[bot]
+
+
+
+v3.38.0
+====================
+
+**Added:**
+
+* make `stdlib` linting work for v2 recipe format (#1992)
+* add lint for noarch and runtime deps (#2001)
+* Added linting for go license bundling check in conda v2 recipes. (#2013)
+* Added linting for rust license bundling for v2 recipe format (#2015)
+* Added linting for Jinja expressions in the new v2 conda recipe format (#2017)
+* Added proper linting for `pin_subpackage` and `pin_compatible` for conda v2 recipes. (#2018)
+* Added more lints / hints for conda v2 recipes. (#2000, #2003, #2008, #2016, #2022)
+
+**Changed:**
+
+* Exclude ruff commits from git ( #2007 )
+* The conda recipe version was renamed from ``{1, 2}`` to ``{0, 1}``. (#2031)
+
+**Fixed:**
+
+* Add upper bound for rattler-build-conda-compat. (#2009)
+* Reenabled service feedstocks that were removed by accident in #1703. (#2025)
+
+**Authors:**
+
+* Matthew R. Becker
+* nichmor
+* Wolf Vollprecht
+* John Kirkham
+* pre-commit-ci[bot]
+
+
+
+v3.37.2ls
+====================
+
+**Authors:**
+
+
+
+
+v3.37.2
+====================
+
+**Added:**
+
+* extended documentation for the ``bot.version_updates.sources`` field in ``conda-forge.yml``
+* Added partial implementation of conda recipe format v2 linting. (#1984, #1985, #1987, #1988, #1988, #1991, #1999)
+
+**Changed:**
+
+* Introduced ``ruff`` as pre-commit linter. (#1919)
+* Make sure to use ``Miniforge`` everywhere instead of ``Mambaforge`` (they are equivalent). (#1986)
+* Use ``tlz`` namespace from ``toolz`` ( #2006 )
+* Refactor ``lint_recipe.py`` and split some functions into separate modules (``linter/lints.py`` and ``linter/hints.py``). (#1981)
+
+**Fixed:**
+
+* Remove import of deprecated ``conda_build.conda_interface``
+* When linting build_platform has a default value now (#1996).
+* Generate correct URL for feedstock maintainer teams in feedstock READMEs. (#1990)
+
+**Authors:**
+
+* Isuru Fernando
+* Matthew R. Becker
+* Jaime Rodríguez-Guerra
+* nichmor
+* Min RK
+* John Kirkham
+* pre-commit-ci[bot]
+* Wolf Vollprecht
+* Yannik Tausch
+* Daniel Ching
+
+
+
+v3.37.1
+====================
+
+**Changed:**
+
+* ``c_stdlib``- and ``MACOSX_DEPLOYMENT_TARGET``-related hints are now lints. (#1978)
+
+**Authors:**
+
+* Matthew R. Becker
+
+
+
+v3.37.0
+====================
+
+**Added:**
+
+* Add support for rattler-build and the new recipe format. (#1876, #1977)
+* Support ``githubreleases`` version updates provider in the schema. (#1976)
+* Added new schema entries for the bot section of the ``conda-forge.yml``. (#1969)
+* Linter now warns if go licenses are not bundled.
+* Linter now warns if Rust licenses are not bundled.
+
+**Changed:**
+
+* Changed the build_steps.sh template so that it sets the number of maximum file
+  descriptors to 1024. This is done to mitigate a bug in old rpm versions (such
+  as the one shipped with the Centos7 container) that cause the yum install step
+  to take tremendously longer than necessary. See https://bugzilla.redhat.com/show_bug.cgi?id=1537564
+
+**Removed:**
+
+* Removed setup.py file and remaining references in tests and CI
+
+**Fixed:**
+
+* Bug causing rerender to incorrectly set the runs-on github actions option in the workflow yaml when self_hosted is set to true
+* Compatibility with conda-build 24.7, which removes HashableDict
+
+**Authors:**
+
+* Matthew R. Becker
+* Jaime Rodríguez-Guerra
+* nichmor
+* Min RK
+* Bastian Zimmermann
+* pre-commit-ci[bot]
+* Jan Lehnarsdt
+* Finn Womack
+* Matt Fisher
+* Vincenzo Eduardo Padulano
+
+
+
+v3.36.2
+====================
+
+**Added:**
+
+* Report artifacts contents after building via ``cph list``. Requires ``conda-forge-ci-setup >=4.6.0``. (#1947)
+
+**Fixed:**
+
+* Avoid linter failing on recipes using requirements without build/host/run distinction. (#1946)
+
+**Authors:**
+
+* Jaime Rodríguez-Guerra
+* H. Vetinari
+* dependabot[bot]
+
+
+
+v3.36.1
+====================
+
+**Added:**
+
+* Enable Dependabot for Github Actions workflows and templates. (#1930)
+* Lint / hint if a recipe uses Python wheels as its source. (#1935 via #1936)
+
+**Changed:**
+
+* Lint all outputs for required stdlib-fixes. (#1941)
+* Make recommended changes to Travis CI template. (#1942)
+
+**Fixed:**
+
+* Avoid linter failing on more complicated selector patterns in `conda_build_config.yaml`. (#1939)
+
+**Authors:**
+
+* Matthew R. Becker
+* Jaime Rodríguez-Guerra
+* H. Vetinari
+* Uwe L. Korn
+* Mervin Fansler
+* dependabot[bot]
+
+
+
+v3.36.0
+====================
+
+**Added:**
+
+* Added new lint for no ``.ci_support`` files which indicates no packages being built.
+
+**Changed:**
+
+* Provide linter hints if macOS quantities are misconfigured in `conda_build_config.yaml` (#1929)
+
+**Fixed:**
+
+* Ensure MACOSX_SDK_VERSION does not end up lower than `c_stdlib_version` in variant configs (#1927 via #1928)
+* Only mark the toplevel LICENSE and README as generated files
+
+**Authors:**
+
+* Matthew R. Becker
+* H. Vetinari
+* Uwe L. Korn
+
+
+
+v3.35.1
+====================
+
+**Removed:**
+
+* ``automerge.yml`` workflow template no longer relies on ``actions/checkout``. (#1923)
+
+**Fixed:**
+
+* linter no longer mis-diagnoses constraint-less ``__osx`` as requiring change. (#1925)
+* Fixed a bug where some keys in zips were not being rendered correctly into the ``.ci_support`` files
+  under some hard-to-describe circumstances.
+* Fixed source URL for rever releases.
+
+**Authors:**
+
+* Matthew R. Becker
+* Jaime Rodríguez-Guerra
+* H. Vetinari
+* pre-commit-ci[bot]
+
+
+
+v3.35.0
+====================
+
+**Changed:**
+
+* Do not populate `c_stdlib{,_version}` in CI configs that don't need them (#1908)
+* Added linter rules for providing hints about updating to new stdlib-functionality (#1909)
+* Github Actions: Explicitly use ``macos-13`` for ``osx-64`` runners. (#1913)
+* Github Actions: Bump to ``setup-miniconda@v3`` on Windows builds. (#1913)
+* Azure Pipelines: bump default macOS runners ``vmImage`` value to ``macos-12``. (#1914)
+
+**Authors:**
+
+* Jaime Rodríguez-Guerra
+* H. Vetinari
+
+
+
+v3.34.1
+====================
+
+**Removed:**
+
+* ``false`` is no longer a valid value for ``bot.inspection`` in the ``conda-forge.yml`` file. Use ``disabled`` instead.
+
+**Fixed:**
+
+* ``object`` is no longer an explicit base class of ``Subcommand`` (Python 3 class style)
+* replace ``logger.warn`` (deprecated) with ``logger.warning``
+* typo: `Usage` in ``update_conda_forge_config``
+* Unexpected top-level ``conda-forge.yml`` keys should no longer fail with a traceback.
+
+**Security:**
+
+* Use sandboxed jinja2 environments. (#1902)
+
+**Authors:**
+
+* Matthew R. Becker
+* pre-commit-ci[bot]
+* Nicholas Bollweg
+* Yannik Tausch
+
+
+
 v3.34.0
 ====================
 

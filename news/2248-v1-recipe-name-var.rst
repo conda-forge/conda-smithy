@@ -12,11 +12,11 @@
 
 **Removed:**
 
-* ``false`` is no longer a valid value for ``bot.inspection`` in the ``conda-forge.yml`` file. Use ``disabled`` instead.
+* <news item>
 
 **Fixed:**
 
-* <news item>
+* Fixed a false positive when a v1 recipe name refers to a variable from ``conda_build_config.yaml`` (#2248).
 
 **Security:**
 

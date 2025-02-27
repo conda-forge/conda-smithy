@@ -110,28 +110,16 @@
           "title": "Upload Packages"
         },
         "settings_linux": {
-          "allOf": [
-            {
-              "$ref": "#/$defs/AzureRunnerSettings"
-            }
-          ],
+          "$ref": "#/$defs/AzureRunnerSettings",
           "description": "Linux-specific settings for runners"
         },
         "settings_osx": {
-          "allOf": [
-            {
-              "$ref": "#/$defs/AzureRunnerSettings"
-            }
-          ],
+          "$ref": "#/$defs/AzureRunnerSettings",
           "description": "OSX-specific settings for runners"
         },
         "settings_win": {
-          "allOf": [
-            {
-              "$ref": "#/$defs/AzureRunnerSettings"
-            }
-          ],
-          "description": "Windows-specific settings for runners"
+          "$ref": "#/$defs/AzureRunnerSettings",
+          "description": "Windows-specific settings for runners. Aside from overriding the `vmImage`,\nyou can also specify `install_atl: true` in case you need the ATL components\nfor MSVC; these don't get installed by default anymore, see\nhttps://github.com/actions/runner-images/issues/9873\n\nFinally, under `variables`, some important things you can set are:\n\n- `CONDA_BLD_PATH`: Location of the conda-build workspace. Defaults to `D:\\bld`\n- `MINIFORGE_HOME`: Location of the base environment installation. Defaults to\n  `D:\\Miniforge`.\n- `SET_PAGEFILE`: `\"True\"` to increase the pagefile size via conda-forge-ci-setup.\n\nIf you are running out of space in `D:`, consider changing to `C:`.\nIt's a slower drive but has more space available. We recommend you keep\nboth `CONDA_BLD_PATH` and `MINIFORGE_HOME` in the same drive for performance."
         },
         "user_or_org": {
           "anyOf": [
@@ -244,6 +232,19 @@
           ],
           "description": "Variables",
           "title": "Variables"
+        },
+        "install_atl": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": false,
+          "description": "Whether to install ATL components for MSVC",
+          "title": "Install Atl"
         }
       },
       "title": "AzureRunnerSettings",
@@ -609,9 +610,41 @@
       "title": "GithubConfig",
       "type": "object"
     },
+    "LinterConfig": {
+      "properties": {
+        "skip": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/Lints"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "List of lints to skip",
+          "title": "Skip"
+        }
+      },
+      "title": "LinterConfig",
+      "type": "object"
+    },
+    "Lints": {
+      "enum": [
+        "lint_noarch_selectors",
+        "hint_pip_no_build_backend",
+        "hint_python_min"
+      ],
+      "title": "Lints",
+      "type": "string"
+    },
     "Nullable": {
-      "const": null,
       "description": "Created to avoid issue with schema validation of null values in lists or dicts.",
+      "enum": [
+        null
+      ],
       "title": "Nullable"
     },
     "Platforms": {
@@ -860,10 +893,13 @@
         "linux_32": {
           "anyOf": [
             {
+              "enum": [
+                "cos7",
+                "alma8",
+                "alma9",
+                "ubi8"
+              ],
               "type": "string"
-            },
-            {
-              "$ref": "#/$defs/Nullable"
             },
             {
               "type": "null"
@@ -875,10 +911,13 @@
         "linux_64": {
           "anyOf": [
             {
+              "enum": [
+                "cos7",
+                "alma8",
+                "alma9",
+                "ubi8"
+              ],
               "type": "string"
-            },
-            {
-              "$ref": "#/$defs/Nullable"
             },
             {
               "type": "null"
@@ -890,10 +929,13 @@
         "linux_aarch64": {
           "anyOf": [
             {
+              "enum": [
+                "cos7",
+                "alma8",
+                "alma9",
+                "ubi8"
+              ],
               "type": "string"
-            },
-            {
-              "$ref": "#/$defs/Nullable"
             },
             {
               "type": "null"
@@ -905,10 +947,13 @@
         "linux_armv6l": {
           "anyOf": [
             {
+              "enum": [
+                "cos7",
+                "alma8",
+                "alma9",
+                "ubi8"
+              ],
               "type": "string"
-            },
-            {
-              "$ref": "#/$defs/Nullable"
             },
             {
               "type": "null"
@@ -920,10 +965,13 @@
         "linux_armv7l": {
           "anyOf": [
             {
+              "enum": [
+                "cos7",
+                "alma8",
+                "alma9",
+                "ubi8"
+              ],
               "type": "string"
-            },
-            {
-              "$ref": "#/$defs/Nullable"
             },
             {
               "type": "null"
@@ -935,10 +983,13 @@
         "linux_ppc64": {
           "anyOf": [
             {
+              "enum": [
+                "cos7",
+                "alma8",
+                "alma9",
+                "ubi8"
+              ],
               "type": "string"
-            },
-            {
-              "$ref": "#/$defs/Nullable"
             },
             {
               "type": "null"
@@ -950,10 +1001,13 @@
         "linux_ppc64le": {
           "anyOf": [
             {
+              "enum": [
+                "cos7",
+                "alma8",
+                "alma9",
+                "ubi8"
+              ],
               "type": "string"
-            },
-            {
-              "$ref": "#/$defs/Nullable"
             },
             {
               "type": "null"
@@ -965,10 +1019,13 @@
         "linux_riscv64": {
           "anyOf": [
             {
+              "enum": [
+                "cos7",
+                "alma8",
+                "alma9",
+                "ubi8"
+              ],
               "type": "string"
-            },
-            {
-              "$ref": "#/$defs/Nullable"
             },
             {
               "type": "null"
@@ -980,10 +1037,13 @@
         "linux_s390x": {
           "anyOf": [
             {
+              "enum": [
+                "cos7",
+                "alma8",
+                "alma9",
+                "ubi8"
+              ],
               "type": "string"
-            },
-            {
-              "$ref": "#/$defs/Nullable"
             },
             {
               "type": "null"
@@ -1520,6 +1580,17 @@
       ],
       "description": "Settings in this block are used to control how `conda build`\nruns and produces artifacts. An example of the such configuration is:\n\n```yaml\nconda_build:\n    pkg_format: 2\n    zstd_compression_level: 16\n    error_overlinking: False\n```"
     },
+    "linter": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/LinterConfig"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Settings in this block are used to control how `conda smithy` lints\nAn example of the such configuration is:\n\n```yaml\nlinter:\n    skip:\n        - lint_noarch_selectors\n```"
+    },
     "conda_build_tool": {
       "anyOf": [
         {
@@ -1527,7 +1598,8 @@
             "conda-build",
             "conda-build+classic",
             "conda-build+conda-libmamba-solver",
-            "mambabuild"
+            "mambabuild",
+            "rattler-build"
           ],
           "type": "string"
         },
@@ -1544,7 +1616,9 @@
         {
           "enum": [
             "conda",
-            "mamba"
+            "mamba",
+            "micromamba",
+            "pixi"
           ],
           "type": "string"
         },
@@ -1552,8 +1626,8 @@
           "type": "null"
         }
       ],
-      "default": "mamba",
-      "description": "Use this option to choose which tool is used to provision the tooling in your\nfeedstock.",
+      "default": "micromamba",
+      "description": "Use this option to choose which tool is used to provision the tooling in your\nfeedstock. Defaults to micromamba.\n\nIf conda or mamba are chosen, the latest Miniforge will be used to\nprovision the base environment. If micromamba or pixi are chosen,\nMiniforge is not involved; the environment is created directly by\nmicromamba or pixi.",
       "title": "Conda Install Tool"
     },
     "conda_forge_output_validation": {
@@ -1703,7 +1777,7 @@
           "type": "null"
         }
       ],
-      "description": "This key is used to set the OS versions for `linux_*` platforms. Valid entries\nmap a linux platform and arch to either `cos6` or `cos7`.\nCurrently `cos6` is the default for `linux-64`.\nAll other linux architectures use CentOS 7.\nHere is an example that enables CentOS 7 on `linux-64` builds\n\n```yaml\nos_version:\n    linux_64: cos7\n```"
+      "description": "This key is used to set the OS versions for `linux_*` platforms. Valid entries\nmap a linux platform and arch to either `cos7`, `alma8`, `alma9` or `ubi8`.\n\nCurrently `alma9` is the default, which should work out-of-the-box for the vast\nmajority of uses.\n\nNote that the image version does not imply a matching `glibc` requirement (which\ncan be set using `c_stdlib_version` in `recipe/conda_build_config.yaml`).\n\nIf you need to opt into older images, here's an example how to do it:\n```yaml\nos_version:\n    linux_64: cos7\n    linux_aarch64: cos7\n    linux_ppc64le: cos7\n```"
     },
     "provider": {
       "anyOf": [
@@ -2042,7 +2116,7 @@
           "type": "null"
         }
       ],
-      "description": "Azure Pipelines CI settings. This is usually read-only and should not\nnormally be manually modified. Tools like conda-smithy may modify this, as needed.\nFor example:\n\n```yaml\nazure:\n    # flag for forcing the building all supported providers\n    force: False\n    # toggle for storing the conda build_artifacts directory (including the\n    # built packages) as an Azure pipeline artifact that can be downloaded\n    store_build_artifacts: False\n    # toggle for freeing up some extra space on the default Azure Pipelines\n    # linux image before running the Docker container for building\n    free_disk_space: False\n    # limit the amount of CI jobs running concurrently at a given time\n    # each OS will get its proportional share of the configured value\n    max_parallel: 25\n```\n\nBelow is an example configuration for setting up a self-hosted Azure agent for Linux:\n\n```yaml\nazure:\n    settings_linux:\n    pool:\n        name: your_local_pool_name\n        demands:\n          - some_key -equals some_value\n    workspace:\n        clean: all\n    strategy:\n        maxParallel: 1\n```\n\nBelow is an example configuration for adding a swapfile on an Azure agent for Linux:\n\n```yaml\nazure:\n    settings_linux:\n        swapfile_size: 10GiB\n```"
+      "description": "Azure Pipelines CI settings. This is usually read-only and should not\nnormally be manually modified. Tools like conda-smithy may modify this, as needed.\nFor example:\n\n```yaml\nazure:\n    # flag for forcing the building all supported providers\n    force: False\n    # toggle for storing the conda build_artifacts directory (including the\n    # built packages) as an Azure pipeline artifact that can be downloaded\n    store_build_artifacts: False\n    # toggle for freeing up some extra space on the default Azure Pipelines\n    # linux image before running the Docker container for building\n    free_disk_space: False\n    # limit the amount of CI jobs running concurrently at a given time\n    # each OS will get its proportional share of the configured value\n    max_parallel: 25\n```\n\nBelow is an example configuration for setting up a self-hosted Azure agent for Linux:\n\n```yaml\nazure:\n    settings_linux:\n        pool:\n            name: your_local_pool_name\n            demands:\n                - some_key -equals some_value\n        workspace:\n            clean: all\n        strategy:\n            maxParallel: 1\n```\n\nBelow is an example configuration for adding a swapfile on an Azure agent for Linux:\n\n```yaml\nazure:\n    settings_linux:\n        swapfile_size: 10GiB\n```\n\nIf you need more space on Windows, you can use `C:` at the cost of IO performance:\n\n```yaml\nazure:\n    settings_win:\n        variables:\n            CONDA_BLD_PATH: \"C:\\bld\"\n            MINIFORGE_HOME: \"C:\\Miniforge\"\n```"
     },
     "drone": {
       "anyOf": [

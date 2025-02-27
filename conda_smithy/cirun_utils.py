@@ -2,12 +2,12 @@
 See http://py.cirun.io/api.html for cirun client docs
 """
 
-import os
 from functools import lru_cache
-from typing import List, Dict, Any, Optional
+from typing import Any, Optional
 
 from cirun import Cirun
-from .github import gh_token, Github
+
+from conda_smithy.github import Github, gh_token
 
 
 @lru_cache
@@ -29,7 +29,7 @@ def get_cirun_installation_id(owner: str) -> int:
         raise ValueError(f"cirun not found for owner {owner}")
 
 
-def enable_cirun_for_project(owner: str, repo: str) -> Dict[str, Any]:
+def enable_cirun_for_project(owner: str, repo: str) -> dict[str, Any]:
     """Enable the cirun.io Github Application for a particular repository."""
     print(f"Enabling cirun for {owner}/{repo} ...")
     cirun = _get_cirun_client()
@@ -41,15 +41,15 @@ def enable_cirun_for_project(owner: str, repo: str) -> Dict[str, Any]:
 def add_repo_to_cirun_resource(
     owner: str,
     repo: str,
-    resources: List[str],
-    teams: List,
-    roles: List,
+    resources: list[str],
+    teams: list,
+    roles: list,
     users_from_json: Optional[str] = None,
-    cirun_policy_args: Optional[List[str]] = None,
-) -> Dict[str, Any]:
+    cirun_policy_args: Optional[list[str]] = None,
+) -> dict[str, Any]:
     """Grant access to a cirun resource to a particular repository, with a particular policy."""
     cirun = _get_cirun_client()
-    policy_args: Optional[Dict[str, Any]] = None
+    policy_args: Optional[dict[str, Any]] = None
     if cirun_policy_args and "pull_request" in cirun_policy_args:
         policy_args = {"pull_request": True}
     print(

@@ -1,0 +1,23 @@
+**Added:**
+
+* Linter: Report hint if some of the requirements in a ``meta.yaml`` recipe are not using space-separated ``MatchSpec`` syntax. (#2232)
+
+**Changed:**
+
+* <news item>
+
+**Deprecated:**
+
+* <news item>
+
+**Removed:**
+
+* <news item>
+
+**Fixed:**
+
+* <news item>
+
+**Security:**
+
+* <news item>

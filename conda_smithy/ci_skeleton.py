@@ -9,9 +9,7 @@ added to conda-forge's queue.
 import os
 import sys
 
-from jinja2 import Environment, FileSystemLoader
-
-from .configure_feedstock import make_jinja_env, conda_forge_content
+from conda_smithy.configure_feedstock import make_jinja_env
 
 
 def _render_template(template_file, env, forge_dir, config):
@@ -23,7 +21,7 @@ def _render_template(template_file, env, forge_dir, config):
     print("Generating " + target_fname, file=sys.stderr)
     new_file_contents = template.render(**config)
     os.makedirs(os.path.dirname(target_fname), exist_ok=True)
-    with open(target_fname, "w") as fh:
+    with open(target_fname, "w", encoding="utf-8") as fh:
         fh.write(new_file_contents)
 
 
@@ -42,7 +40,7 @@ def _insert_into_gitignore(
     fname = os.path.join(feedstock_directory, ".gitignore")
     print("Updating " + fname)
     if os.path.isfile(fname):
-        with open(fname, "r") as f:
+        with open(fname, encoding="utf-8") as f:
             s = f.read()
         before, _, s = s.partition(prefix)
         _, _, after = s.partition(suffix)
@@ -53,7 +51,7 @@ def _insert_into_gitignore(
             os.makedirs(dname, exist_ok=True)
     new = prefix + GITIGNORE_ADDITIONAL + suffix
     # write out the file
-    with open(fname, "w") as f:
+    with open(fname, "w", encoding="utf-8") as f:
         f.write(before + new + after)
     return fname
 

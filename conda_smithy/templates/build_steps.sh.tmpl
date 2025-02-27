@@ -20,6 +20,7 @@ export PYTHONUNBUFFERED=1
 export RECIPE_ROOT="${RECIPE_ROOT:-/home/conda/recipe_root}"
 export CI_SUPPORT="${FEEDSTOCK_ROOT}/.ci_support"
 export CONFIG_FILE="${CI_SUPPORT}/${CONFIG}.yaml"
+{#- We are not handling CONDA_BLD_PATH here because it's already set in the condarc below #}
 
 cat >~/.condarc <<CONDARC
 
@@ -33,28 +34,61 @@ solver: {{ conda_solver }}
 {%- endif %}
 
 CONDARC
+
+{%- if conda_install_tool == "micromamba" %}
+mv /opt/conda/conda-meta/history /opt/conda/conda-meta/history.$(date +%Y-%m-%d-%H-%M-%S)
+echo > /opt/conda/conda-meta/history
+micromamba install --root-prefix ~/.conda --prefix /opt/conda \
+    --yes --override-channels --channel conda-forge --strict-channel-priority \
+    pip {{ conda_install_tool_deps }} {{ conda_build_tool_deps }} {{ " ".join(remote_ci_setup) }}
+{%- elif conda_install_tool == "pixi" %}
+curl -fsSL https://pixi.sh/install.sh | bash
+export PATH="~/.pixi/bin:$PATH"
+pushd "${FEEDSTOCK_ROOT}"
+arch=$(uname -m)
+if [[ "$arch" == "x86_64" ]]; then
+  arch="64"
+fi
+sed -i.bak "s/platforms = .*/platforms = [\"linux-${arch}\"]/" pixi.toml
+echo "Creating environment"
+PIXI_CACHE_DIR=/opt/conda pixi install
+pixi list
+echo "Activating environment"
+eval "$(pixi shell-hook)"
+mv pixi.toml.bak pixi.toml
+popd
+{%- endif %}
+
 {%- if conda_build_tool == "mambabuild" %}
 {%- set BUILD_CMD="conda-mambabuild" %}
+{%- set NO_TEST_FLAG="--no-test" %}
 {%- elif conda_build_tool == "conda-build+conda-libmamba-solver" %}
 {%- set BUILD_CMD="CONDA_SOLVER=libmamba conda-build" %}
+{%- set NO_TEST_FLAG="--no-test" %}
 {%- elif conda_build_tool == "conda-build+classic" %}
 {%- set BUILD_CMD="CONDA_SOLVER=classic conda-build" %}
+{%- set NO_TEST_FLAG="--no-test" %}
+{%- elif conda_build_tool == "rattler-build" %}
+{%- set BUILD_CMD="rattler-build build" %}
+{%- set NO_TEST_FLAG="--test skip" %}
 {%- else %}
 {%- set BUILD_CMD="conda-build" %}
+{%- set NO_TEST_FLAG="--no-test" %}
 {%- endif %}
 {%- if conda_solver == "libmamba" %}
 export CONDA_LIBMAMBA_SOLVER_NO_CHANNELS_FROM_INSTALLED=1
 {%- endif %}
-
+{%- if conda_install_tool in ("conda", "mamba") %}
 {{ conda_install_tool }} install --update-specs --yes --quiet --channel conda-forge --strict-channel-priority \
     pip {{ conda_install_tool_deps }} {{ conda_build_tool_deps }} {{ " ".join(remote_ci_setup) }}
+{%- endif %}
 {%- if conda_install_tool == "mamba" and (conda_build_tool_deps != "" or conda_install_tool_deps != "") %}
 {{ conda_install_tool }} update --update-specs --yes --quiet --channel conda-forge --strict-channel-priority \
     pip {{ conda_install_tool_deps }} {{ conda_build_tool_deps }} {{ " ".join(remote_ci_setup_update) }}
 {%- endif %}
 {% if local_ci_setup %}
 conda uninstall --quiet --yes --force {{ " ".join(remote_ci_setup)}}
-pip install --no-deps ${RECIPE_ROOT}/.
+pip install --no-deps "${RECIPE_ROOT}/."
 {%- endif %}
 # set up the condarc
 setup_conda_rc "${FEEDSTOCK_ROOT}" "${RECIPE_ROOT}" "${CONFIG_FILE}"
@@ -62,18 +96,25 @@ setup_conda_rc "${FEEDSTOCK_ROOT}" "${RECIPE_ROOT}" "${CONFIG_FILE}"
 {% if build_setup -%}
 {{ build_setup }}{% endif -%}
 {% if yum_build_setup is defined -%}
-{{ yum_build_setup }}{% endif -%}
+(
+# Due to https://bugzilla.redhat.com/show_bug.cgi?id=1537564 old versions of rpm
+# are drastically slowed down when the number of file descriptors is very high.
+# This can be visible during a `yum install` step of a feedstock build.
+# => Set a lower limit in a subshell for the `yum install`s only.
+ulimit -n 1024
+{{ yum_build_setup }}
+){%- endif %}
 
 # make the build number clobber
 make_build_number "${FEEDSTOCK_ROOT}" "${RECIPE_ROOT}" "${CONFIG_FILE}"
 
 {% if test == "native" -%}
 if [[ "${HOST_PLATFORM}" != "${BUILD_PLATFORM}" ]] && [[ "${BUILD_WITH_CONDA_DEBUG:-0}" != 1 ]]; then
-    EXTRA_CB_OPTIONS="${EXTRA_CB_OPTIONS:-} --no-test"
+    EXTRA_CB_OPTIONS="${EXTRA_CB_OPTIONS:-} {{ NO_TEST_FLAG }}"
 fi
 {%- elif test == "native_and_emulated" -%}
 if [[ "${HOST_PLATFORM}" != "${BUILD_PLATFORM}" ]] && [[ "${HOST_PLATFORM}" != linux-* ]] && [[ "${BUILD_WITH_CONDA_DEBUG:-0}" != 1 ]]; then
-    EXTRA_CB_OPTIONS="${EXTRA_CB_OPTIONS:-} --no-test"
+    EXTRA_CB_OPTIONS="${EXTRA_CB_OPTIONS:-} {{ NO_TEST_FLAG }}"
 fi
 {% endif %}
 
@@ -84,6 +125,7 @@ if [[ -f "${FEEDSTOCK_ROOT}/LICENSE.txt" ]]; then
 fi
 
 if [[ "${BUILD_WITH_CONDA_DEBUG:-0}" == 1 ]]; then
+    {%- if conda_build_tool != "rattler-build" %}
     if [[ "x${BUILD_OUTPUT_ID:-}" != "x" ]]; then
         EXTRA_CB_OPTIONS="${EXTRA_CB_OPTIONS:-} --output-id ${BUILD_OUTPUT_ID}"
     fi
@@ -93,11 +135,33 @@ if [[ "${BUILD_WITH_CONDA_DEBUG:-0}" == 1 ]]; then
 
     # Drop into an interactive shell
     /bin/bash
+    {%- else %}
+    echo "rattler-build currently doesn't support debug mode"
+    {%- endif %}
 else
+    {%- if conda_build_tool != "rattler-build" %}
     {{ BUILD_CMD }} "${RECIPE_ROOT}" -m "${CI_SUPPORT}/${CONFIG}.yaml" \
         --suppress-variables ${EXTRA_CB_OPTIONS:-} \
         --clobber-file "${CI_SUPPORT}/clobber_${CONFIG}.yaml" \
         --extra-meta flow_run_id="${flow_run_id:-}" remote_url="${remote_url:-}" sha="${sha:-}"
+
+    {%- else %}
+
+    {{ BUILD_CMD }} --recipe "${RECIPE_ROOT}" \
+     -m "${CI_SUPPORT}/${CONFIG}.yaml" \
+     ${EXTRA_CB_OPTIONS:-} \
+     --target-platform "${HOST_PLATFORM}" \
+     --extra-meta flow_run_id="${flow_run_id:-}" \
+     --extra-meta remote_url="${remote_url:-}" \
+     --extra-meta sha="${sha:-}"
+
+    {%- endif %}
+    ( startgroup "Inspecting artifacts" ) 2> /dev/null
+
+    # inspect_artifacts was only added in conda-forge-ci-setup 4.9.4
+    command -v inspect_artifacts >/dev/null 2>&1 && inspect_artifacts --recipe-dir "${RECIPE_ROOT}" -m "${CONFIG_FILE}" || echo "inspect_artifacts needs conda-forge-ci-setup >=4.9.4"
+
+    ( endgroup "Inspecting artifacts" ) 2> /dev/null
 
     {%- if conda_forge_output_validation %}
     ( startgroup "Validating outputs" ) 2> /dev/null

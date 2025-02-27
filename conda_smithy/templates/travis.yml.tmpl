@@ -10,7 +10,7 @@
     {%- do platformset.append(pfarchless) %}
   {%- endif %}
 {%- endfor %}
-language: generic
+language: shell
 
 {% if travis.secure -%}
 env:
@@ -32,7 +32,7 @@ git:
 {%- endif %}
 
 {% if configs[0] -%}
-matrix:
+jobs:
   include:
     {%- for data in configs %}
     {%- if data.build_platform.startswith("osx") %}

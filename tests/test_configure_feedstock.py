@@ -2,12 +2,17 @@ import copy
 import logging
 import os
 import re
+import shutil
+import tempfile
 import textwrap
+from pathlib import Path
 
 import pytest
 import yaml
+from conftest import ConfigYAML
 
 from conda_smithy import configure_feedstock
+from conda_smithy.configure_feedstock import _read_forge_config
 
 
 def test_noarch_skips_appveyor(noarch_recipe, jinja_env):
@@ -211,7 +216,15 @@ def test_py_matrix_on_azure(py_recipe, jinja_env):
     assert len(os.listdir(matrix_dir)) == 6
 
 
-def test_stdlib_on_azure(stdlib_recipe, jinja_env):
+def test_stdlib_on_azure(stdlib_recipe, jinja_env, request):
+    conda_build_param = request.node.callspec.params["config_yaml"]
+    if conda_build_param == "rattler-build":
+        # stdlib is not yet implemented in rattler-build
+        # https://github.com/prefix-dev/rattler-build/issues/239
+        pytest.skip(
+            "skipping test for rattler-build usecase as we currently we don't have stdlib"
+        )
+
     configure_feedstock.render_azure(
         jinja_env=jinja_env,
         forge_config=stdlib_recipe.config,
@@ -247,8 +260,13 @@ def test_stdlib_on_azure(stdlib_recipe, jinja_env):
 
 
 def test_stdlib_deployment_target(
-    stdlib_deployment_target_recipe, jinja_env, caplog
+    stdlib_deployment_target_recipe, jinja_env, caplog, request
 ):
+    conda_build_param = request.node.callspec.params["config_yaml"]
+    if conda_build_param == "rattler-build":
+        # stdlib_deployment_target_recipe fixture doesn't have a recipe.yaml variant
+        pytest.skip("skipping test for rattler-build usecase")
+
     with caplog.at_level(logging.WARNING):
         configure_feedstock.render_azure(
             jinja_env=jinja_env,
@@ -270,6 +288,44 @@ def test_stdlib_deployment_target(
     assert re.match(
         r"(?s).*MACOSX_DEPLOYMENT_TARGET:\s*- ['\"]?10\.14", content
     )
+    # MACOSX_SDK_VERSION gets updated as well if it's below the other two
+    assert re.match(r"(?s).*MACOSX_SDK_VERSION:\s*- ['\"]?10\.14", content)
+
+
+def test_mixed_python_min(mixed_python_min_recipe, jinja_env, caplog, request):
+    conda_build_param = request.node.callspec.params["config_yaml"]
+    if conda_build_param == "rattler-build":
+        # mixed_python_min_recipe fixture doesn't have a recipe.yaml variant
+        pytest.skip("skipping test for rattler-build usecase")
+    with caplog.at_level(logging.WARNING):
+        configure_feedstock.render_azure(
+            jinja_env=jinja_env,
+            forge_config=mixed_python_min_recipe.config,
+            forge_dir=mixed_python_min_recipe.recipe,
+        )
+    matrix_dir = os.path.join(mixed_python_min_recipe.recipe, ".ci_support")
+    assert os.path.isdir(matrix_dir)
+    for file in os.listdir(matrix_dir):
+        with open(os.path.join(matrix_dir, file)) as f:
+            lines = f.readlines()
+        # ensure python_min is set for all platforms
+        assert any(re.match(r"^python_min:.*", x) for x in lines)
+
+
+def test_no_python_min_if_not_present(py_recipe, jinja_env, caplog, request):
+    with caplog.at_level(logging.WARNING):
+        configure_feedstock.render_azure(
+            jinja_env=jinja_env,
+            forge_config=py_recipe.config,
+            forge_dir=py_recipe.recipe,
+        )
+    matrix_dir = os.path.join(py_recipe.recipe, ".ci_support")
+    assert os.path.isdir(matrix_dir)
+    for file in os.listdir(matrix_dir):
+        with open(os.path.join(matrix_dir, file)) as f:
+            lines = f.readlines()
+        # ensure python_min does NOT appear for all platforms
+        assert all(not re.match(r"^python_min:.*", x) for x in lines)
 
 
 def test_upload_on_branch_azure(upload_on_branch_recipe, jinja_env):
@@ -486,7 +542,7 @@ def test_circle_skipped(linux_skipped_recipe, jinja_env):
 
 
 def test_render_with_all_skipped_generates_readme(skipped_recipe, jinja_env):
-    configure_feedstock.render_README(
+    configure_feedstock.render_readme(
         jinja_env=jinja_env,
         forge_config=skipped_recipe.config,
         forge_dir=skipped_recipe.recipe,
@@ -509,7 +565,7 @@ def test_render_windows_with_skipped_python(python_skipped_recipe, jinja_env):
         forge_config=config,
         forge_dir=python_skipped_recipe.recipe,
     )
-    # this configuration should be skipped
+    # this configuration should be enabled
     assert python_skipped_recipe.config["appveyor"]["enabled"]
 
     matrix_dir = os.path.join(python_skipped_recipe.recipe, ".ci_support")
@@ -518,7 +574,7 @@ def test_render_windows_with_skipped_python(python_skipped_recipe, jinja_env):
 
 
 def test_readme_has_terminating_newline(noarch_recipe, jinja_env):
-    configure_feedstock.render_README(
+    configure_feedstock.render_readme(
         jinja_env=jinja_env,
         forge_config=noarch_recipe.config,
         forge_dir=noarch_recipe.recipe,
@@ -602,6 +658,7 @@ def test_migrator_cfp_override(recipe_migration_cfep9, jinja_env):
         os.path.dirname(cfp_file), "share", "conda-forge", "migrations"
     )
     os.makedirs(cfp_migration_dir, exist_ok=True)
+
     with open(os.path.join(cfp_migration_dir, "zlib2.yaml"), "w") as f:
         f.write(
             textwrap.dedent(
@@ -726,7 +783,7 @@ def test_migrator_compiler_version_recipe(
 
 
 def test_files_skip_render(render_skipped_recipe, jinja_env):
-    configure_feedstock.render_README(
+    configure_feedstock.render_readme(
         jinja_env=jinja_env,
         forge_config=render_skipped_recipe.config,
         forge_dir=render_skipped_recipe.recipe,
@@ -739,7 +796,6 @@ def test_files_skip_render(render_skipped_recipe, jinja_env):
         ".gitattributes",
         "README.md",
         "LICENSE.txt",
-        ".github/workflows/webservices.yml",
     ]
     for f in skipped_files:
         fpath = os.path.join(render_skipped_recipe.recipe, f)
@@ -772,68 +828,36 @@ def test_choco_install(choco_recipe, jinja_env):
     assert exp in contents
 
 
-def test_webservices_action_exists(py_recipe, jinja_env):
-    configure_feedstock.render_github_actions_services(
-        jinja_env=jinja_env,
-        forge_config=py_recipe.config,
-        forge_dir=py_recipe.recipe,
-    )
-    assert os.path.exists(
-        os.path.join(py_recipe.recipe, ".github/workflows/webservices.yml")
-    )
-    with open(
-        os.path.join(py_recipe.recipe, ".github/workflows/webservices.yml")
-    ) as f:
-        action_config = yaml.safe_load(f)
-    assert "jobs" in action_config
-    assert "webservices" in action_config["jobs"]
-
-
-def test_automerge_action_exists(py_recipe, jinja_env):
-    configure_feedstock.render_github_actions_services(
-        jinja_env=jinja_env,
-        forge_config=py_recipe.config,
-        forge_dir=py_recipe.recipe,
-    )
-    assert os.path.exists(
-        os.path.join(py_recipe.recipe, ".github/workflows/automerge.yml")
-    )
-    with open(
-        os.path.join(py_recipe.recipe, ".github/workflows/automerge.yml")
-    ) as f:
-        action_config = yaml.safe_load(f)
-    assert "jobs" in action_config
-    assert "automerge-action" in action_config["jobs"]
-
-
-def test_conda_forge_yaml_empty(config_yaml):
+def test_conda_forge_yaml_empty(config_yaml: ConfigYAML):
     load_forge_config = lambda: configure_feedstock._load_forge_config(  # noqa
-        config_yaml,
+        config_yaml.workdir,
         exclusive_config_file=os.path.join(
-            config_yaml, "recipe", "default_config.yaml"
+            config_yaml.workdir, "recipe", "default_config.yaml"
         ),
     )
 
     assert load_forge_config()["recipe_dir"] == "recipe"
 
-    os.unlink(os.path.join(config_yaml, "conda-forge.yml"))
+    os.unlink(os.path.join(config_yaml.workdir, "conda-forge.yml"))
     with pytest.raises(RuntimeError):
         load_forge_config()
 
-    with open(os.path.join(config_yaml, "conda-forge.yml"), "w"):
+    with open(os.path.join(config_yaml.workdir, "conda-forge.yml"), "w"):
         pass
     assert load_forge_config()["recipe_dir"] == "recipe"
 
 
-def test_noarch_platforms_bad_yaml(config_yaml, caplog):
+def test_noarch_platforms_bad_yaml(config_yaml: ConfigYAML, caplog):
     load_forge_config = lambda: configure_feedstock._load_forge_config(  # noqa
-        config_yaml,
+        config_yaml.workdir,
         exclusive_config_file=os.path.join(
-            config_yaml, "recipe", "default_config.yaml"
+            config_yaml.workdir, "recipe", "default_config.yaml"
         ),
     )
 
-    with open(os.path.join(config_yaml, "conda-forge.yml"), "a+") as fp:
+    with open(
+        os.path.join(config_yaml.workdir, "conda-forge.yml"), "a+"
+    ) as fp:
         fp.write("noarch_platforms: [eniac, zx80]")
 
     with caplog.at_level(logging.WARNING):
@@ -842,20 +866,19 @@ def test_noarch_platforms_bad_yaml(config_yaml, caplog):
     assert "eniac" in caplog.text
 
 
-def test_forge_yml_alt_path(config_yaml):
-    load_forge_config = (
-        lambda forge_yml: configure_feedstock._load_forge_config(  # noqa
-            config_yaml,
+def test_forge_yml_alt_path(config_yaml: ConfigYAML):
+    def load_forge_config(forge_yml):
+        return configure_feedstock._load_forge_config(
+            config_yaml.workdir,
             exclusive_config_file=os.path.join(
-                config_yaml, "recipe", "default_config.yaml"
+                config_yaml.workdir, "recipe", "default_config.yaml"
             ),
             forge_yml=forge_yml,
         )
-    )
 
-    forge_yml = os.path.join(config_yaml, "conda-forge.yml")
+    forge_yml = os.path.join(config_yaml.workdir, "conda-forge.yml")
     forge_yml_alt = os.path.join(
-        config_yaml, ".config", "feedstock-config.yml"
+        config_yaml.workdir, ".config", "feedstock-config.yml"
     )
 
     os.mkdir(os.path.dirname(forge_yml_alt))
@@ -930,11 +953,11 @@ def test_cuda_enabled_render(cuda_enabled_recipe, jinja_env):
                 del os.environ["CF_CUDA_ENABLED"]
 
 
-def test_conda_build_tools(config_yaml, caplog):
+def test_conda_build_tools(config_yaml: ConfigYAML, caplog):
     load_forge_config = lambda: configure_feedstock._load_forge_config(  # noqa
-        config_yaml,
+        config_yaml.workdir,
         exclusive_config_file=os.path.join(
-            config_yaml, "recipe", "default_config.yaml"
+            config_yaml.workdir, "recipe", "default_config.yaml"
         ),
     )
 
@@ -942,24 +965,34 @@ def test_conda_build_tools(config_yaml, caplog):
     assert (
         "build_with_mambabuild" not in cfg
     )  # superseded by conda_build_tool=mambabuild
-    assert cfg["conda_build_tool"] == "conda-build"  # current default
+
+    assert cfg["conda_build_tool"] == config_yaml.type
 
     # legacy compatibility config
-    with open(os.path.join(config_yaml, "conda-forge.yml")) as fp:
+    with open(os.path.join(config_yaml.workdir, "conda-forge.yml")) as fp:
         unmodified = fp.read()
-    with open(os.path.join(config_yaml, "conda-forge.yml"), "a+") as fp:
-        fp.write("build_with_mambabuild: true")
-    with pytest.deprecated_call(match="build_with_mambabuild is deprecated"):
-        assert load_forge_config()["conda_build_tool"] == "mambabuild"
+    if config_yaml.type == "conda-build":
+        with open(
+            os.path.join(config_yaml.workdir, "conda-forge.yml"), "a+"
+        ) as fp:
+            fp.write("build_with_mambabuild: true")
+        with pytest.deprecated_call(
+            match="build_with_mambabuild is deprecated"
+        ):
+            assert load_forge_config()["conda_build_tool"] == "mambabuild"
 
-    with open(os.path.join(config_yaml, "conda-forge.yml"), "w") as fp:
-        fp.write(unmodified)
-        fp.write("build_with_mambabuild: false")
+        with open(
+            os.path.join(config_yaml.workdir, "conda-forge.yml"), "w"
+        ) as fp:
+            fp.write(unmodified)
+            fp.write("build_with_mambabuild: false")
 
-    with pytest.deprecated_call(match="build_with_mambabuild is deprecated"):
-        assert load_forge_config()["conda_build_tool"] == "conda-build"
+        with pytest.deprecated_call(
+            match="build_with_mambabuild is deprecated"
+        ):
+            assert load_forge_config()["conda_build_tool"] == "conda-build"
 
-    with open(os.path.join(config_yaml, "conda-forge.yml"), "w") as fp:
+    with open(os.path.join(config_yaml.workdir, "conda-forge.yml"), "w") as fp:
         fp.write(unmodified)
         fp.write("conda_build_tool: does-not-exist")
 
@@ -968,18 +1001,20 @@ def test_conda_build_tools(config_yaml, caplog):
     assert "does-not-exist" in caplog.text
 
 
-def test_remote_ci_setup(config_yaml):
+def test_remote_ci_setup(config_yaml: ConfigYAML):
     load_forge_config = lambda: configure_feedstock._load_forge_config(  # noqa
-        config_yaml,
+        config_yaml.workdir,
         exclusive_config_file=os.path.join(
-            config_yaml, "recipe", "default_config.yaml"
+            config_yaml.workdir, "recipe", "default_config.yaml"
         ),
     )
     cfg = load_forge_config()
-    with open(os.path.join(config_yaml, "conda-forge.yml")) as fp:
+    with open(os.path.join(config_yaml.workdir, "conda-forge.yml")) as fp:
         unmodified = fp.read()
 
-    with open(os.path.join(config_yaml, "conda-forge.yml"), "a+") as fp:
+    with open(
+        os.path.join(config_yaml.workdir, "conda-forge.yml"), "a+"
+    ) as fp:
         fp.write(
             "remote_ci_setup: ['conda-forge-ci-setup=3', 'py-lief<0.12']\n"
         )
@@ -996,7 +1031,7 @@ def test_remote_ci_setup(config_yaml):
         "py-lief",
     ]
 
-    with open(os.path.join(config_yaml, "conda-forge.yml"), "w") as fp:
+    with open(os.path.join(config_yaml.workdir, "conda-forge.yml"), "w") as fp:
         fp.write(unmodified + "\n")
         fp.write(
             "remote_ci_setup: ['conda-forge-ci-setup=3', 'py-lief<0.12']\n"
@@ -1015,7 +1050,7 @@ def test_remote_ci_setup(config_yaml):
 
 
 @pytest.mark.parametrize(
-    "squished_input_variants,squished_used_variants,all_used_vars,used_key_values",
+    "squished_input_variants,squished_used_variants,all_used_vars,expected_used_key_values",
     [
         (
             dict(
@@ -1934,13 +1969,151 @@ def test_get_used_key_values_by_input_order(
     squished_input_variants,
     squished_used_variants,
     all_used_vars,
-    used_key_values,
+    expected_used_key_values,
 ):
-    assert (
+    used_key_values, _ = (
         configure_feedstock._get_used_key_values_by_input_order(
             squished_input_variants,
             squished_used_variants,
             all_used_vars,
         )
-        == used_key_values
     )
+    assert used_key_values == expected_used_key_values
+
+
+def test_conda_build_api_render_for_smithy(testing_workdir):
+    import conda_build.api
+
+    _thisdir = os.path.abspath(os.path.dirname(__file__))
+    recipe = os.path.join(_thisdir, "recipes", "multiple_outputs")
+    dest_recipe = os.path.join(testing_workdir, "recipe")
+    shutil.copytree(recipe, dest_recipe)
+    all_top_level_builds = {
+        ("1.5", "9.5"),
+        ("1.5", "9.6"),
+        ("1.6", "9.5"),
+        ("1.6", "9.6"),
+    }
+
+    cs_metas = configure_feedstock._conda_build_api_render_for_smithy(
+        dest_recipe,
+        config=None,
+        variants=None,
+        permit_unsatisfiable_variants=True,
+        finalize=False,
+        bypass_env_check=True,
+        platform="linux",
+        arch="64",
+    )
+    # we have a build matrix with 4 combinations and we get two outputs
+    # plus a top-level build to give us 4 * (2 + 1) = 12 total
+    assert len(cs_metas) == 12
+
+    # we check that we get all combinations
+    top_level_builds = set()
+    for meta, _, _ in cs_metas:
+        for variant in meta.config.variants:
+            top_level_builds.add(
+                (
+                    variant.get("libpng"),
+                    variant.get("libpq"),
+                )
+            )
+        variant = meta.config.variant
+        top_level_builds.add(
+            (
+                variant.get("libpng"),
+                variant.get("libpq"),
+            )
+        )
+    assert len(top_level_builds) == len(all_top_level_builds)
+    assert top_level_builds == all_top_level_builds
+    cb_metas = conda_build.api.render(
+        dest_recipe,
+        config=None,
+        variants=None,
+        permit_unsatisfiable_variants=True,
+        finalize=False,
+        bypass_env_check=True,
+        platform="linux",
+        arch="64",
+    )
+    # conda build will only give us the builds for the unique file names
+    # and collapses the top-level build matrix expansion
+    # thus we only get 3 outputs
+    assert len(cb_metas) == 3
+
+    # we check that we get a subset of all combinations
+    top_level_builds = set()
+    for meta, _, _ in cb_metas:
+        for variant in meta.config.variants:
+            top_level_builds.add(
+                (
+                    variant.get("libpng"),
+                    variant.get("libpq"),
+                )
+            )
+        variant = meta.config.variant
+        top_level_builds.add(
+            (
+                variant.get("libpng"),
+                variant.get("libpq"),
+            )
+        )
+    assert len(top_level_builds) < len(all_top_level_builds)
+    assert top_level_builds.issubset(all_top_level_builds)
+
+
+def test_github_actions_pins():
+    """
+    Ensure our Github Actions template respects the latest pins provided by Dependabot.
+    Since Dependabot cannot parse the template due to the Jinja expressions, we provide
+    a proxy file with the inventory of used actions.
+
+    This test will check that the `uses: owner/repo@version` lines are the same in both files.
+    If Dependabot opens a PR against the proxy, just copy the new pins to the template to
+    make this pass.
+    """
+    repo_root = Path(__file__).parents[1]
+    github_actions_template = (
+        repo_root / "conda_smithy" / "templates" / "github-actions.yml.tmpl"
+    )
+    dependabot_inventory = (
+        repo_root
+        / ".github"
+        / "workflows"
+        / "_proxy-file-for-dependabot-tests.yml"
+    )
+
+    def get_uses(path):
+        content = path.read_text()
+        for line in content.splitlines():
+            if " uses: " in line:
+                yield line.strip().lstrip("-").strip()
+
+    assert sorted(set(get_uses(github_actions_template))) == sorted(
+        set(get_uses(dependabot_inventory))
+    )
+
+
+def test_read_forge_config_default_values_aliases():
+    with tempfile.TemporaryDirectory() as str_tmpdir:
+        tmpdir = Path(str_tmpdir)
+
+        # create empty conda-forge.yml file
+        forge_yml_file = tmpdir / "conda-forge.yml"
+        forge_yml_file.touch()
+
+        config = _read_forge_config(tmpdir)
+
+        # if this raises KeyError, it means that the default values stored in data/conda-forge.yml do not respect the
+        # aliases defined in the schema, which will lead to defaults being parsed incorrectly.
+        assert isinstance(
+            config["azure"]["settings_linux"]["timeoutInMinutes"], int
+        )
+        assert isinstance(
+            config["azure"]["settings_osx"]["timeoutInMinutes"], int
+        )
+        assert isinstance(
+            config["azure"]["settings_win"]["timeoutInMinutes"], int
+        )
