@@ -1,18 +1,14 @@
 # This model is also used for generating and automatic documentation for the conda-forge.yml file.
 # For an upstream preview of the documentation, see https://conda-forge.org/docs/maintainer/conda_forge_yml.
 
-import json
 from enum import Enum
 from inspect import cleandoc
 from typing import Any, Literal, Optional, Union
 
-import yaml
 import orjson
-from pydantic import BaseModel, Field, create_model, ConfigDict
-from pydantic import HttpUrl
-
+import yaml
 from conda.base.constants import KNOWN_SUBDIRS
-from pydantic import BaseModel, ConfigDict, Field, create_model
+from pydantic import BaseModel, ConfigDict, Field, HttpUrl, create_model
 
 try:
     from enum import StrEnum
@@ -333,7 +329,6 @@ class BotConfig(BaseModel):
     This dictates the behavior of the conda-forge auto-tick bot which issues
     automatic version updates/migrations for feedstocks.
     """
-
 
     class Config:
         json_schema_extra = {
