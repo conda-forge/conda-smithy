@@ -4,6 +4,41 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.46.0
+====================
+
+**Added:**
+
+* Allow ``={{ python_min }}`` and ``=={{ python_min }}`` in linter for ``noarch: python`` recipes. (#2167)
+* Linter: Report hint if some of the requirements in a ``meta.yaml`` recipe are not using space-separated ``MatchSpec`` syntax. (#2232)
+* Added documentation for new bot option ``update_static_libs``. (#2253)
+
+**Changed:**
+
+* Changed the ``noarch: python`` lint text to match the new syntax. (#2241)
+* Add pixi environments to .gitignore.
+* ``conda-smithy lint`` now can be run with the feedstock directory instead of
+  the recipe subdirectory. (#2250)
+
+**Fixed:**
+
+* Fixed a false positive when a v1 recipe name refers to a variable from ``conda_build_config.yaml`` (#2248).
+* rattler-build expects ``--test skip`` to skip tests instead of ``--no-test``. (#2254)
+* Ensure generated ``pixi.toml`` is deterministic. (#2255)
+
+**Authors:**
+
+* Matthew R. Becker
+* Jaime Rodríguez-Guerra
+* H. Vetinari
+* pre-commit-ci[bot]
+* Michał Górny
+* Chris Burr
+* dependabot[bot]
+* Pavel Zwerschke
+
+
+
 v3.45.4
 ====================
 
