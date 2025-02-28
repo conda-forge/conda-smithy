@@ -3265,6 +3265,46 @@ linter:
                     - python {{ python_min }}
                   run:
                     - python >={{ python_min }}
+                """
+            ),
+            [
+                "python {{ python_min }}",
+            ],
+        ),
+        (
+            textwrap.dedent(
+                """
+                package:
+                  name: python
+
+                build:
+                  noarch: python
+
+                requirements:
+                  host:
+                    - python ={{ python_min }}
+                  run:
+                    - python >={{ python_min }}
+                """
+            ),
+            [
+                "python {{ python_min }}",
+            ],
+        ),
+        (
+            textwrap.dedent(
+                """
+                package:
+                  name: python
+
+                build:
+                  noarch: python
+
+                requirements:
+                  host:
+                    - python =={{ python_min }}
+                  run:
+                    - python >={{ python_min }}
 
                 test:
                   requires:
@@ -3291,6 +3331,50 @@ linter:
                 test:
                   requires:
                     - python {{ python_min }}
+                """
+            ),
+            ["python >={{ python_min }}"],
+        ),
+        (
+            textwrap.dedent(
+                """
+                package:
+                  name: python
+
+                build:
+                  noarch: python
+
+                requirements:
+                  host:
+                    - python ={{ python_min }}
+                  run:
+                    - python
+
+                test:
+                  requires:
+                    - python ={{ python_min }}
+                """
+            ),
+            ["python >={{ python_min }}"],
+        ),
+        (
+            textwrap.dedent(
+                """
+                package:
+                  name: python
+
+                build:
+                  noarch: python
+
+                requirements:
+                  host:
+                    - python =={{ python_min }}
+                  run:
+                    - python
+
+                test:
+                  requires:
+                    - python =={{ python_min }}
                 """
             ),
             ["python >={{ python_min }}"],
@@ -3612,6 +3696,56 @@ linter:
                   - requirements:
                       run:
                         - python ${{ python_min }}
+                """
+            ),
+            [],
+        ),
+        (
+            textwrap.dedent(
+                """
+                package:
+                  name: python
+
+                build:
+                  noarch: python
+
+                requirements:
+                  host:
+                    - if: blah
+                      then: blahblah
+                      else: python =${{ python_min }}
+                  run:
+                    - python >=${{ python_min }}
+
+                tests:
+                  - requirements:
+                      run:
+                        - python =${{ python_min }}
+                """
+            ),
+            [],
+        ),
+        (
+            textwrap.dedent(
+                """
+                package:
+                  name: python
+
+                build:
+                  noarch: python
+
+                requirements:
+                  host:
+                    - if: blah
+                      then: blahblah
+                      else: python ==${{ python_min }}
+                  run:
+                    - python >=${{ python_min }}
+
+                tests:
+                  - requirements:
+                      run:
+                        - python ==${{ python_min }}
                 """
             ),
             [],
