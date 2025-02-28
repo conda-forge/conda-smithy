@@ -6,8 +6,9 @@ source .scripts/logging_utils.sh
 
 set -xe
 
-MINIFORGE_HOME=${MINIFORGE_HOME:-${HOME}/miniforge3}
-MINIFORGE_HOME=${MINIFORGE_HOME%/} # remove trailing slash
+MINIFORGE_HOME="${MINIFORGE_HOME:-${HOME}/miniforge3}"
+MINIFORGE_HOME="${MINIFORGE_HOME%/}" # remove trailing slash
+export CONDA_BLD_PATH="${CONDA_BLD_PATH:-${MINIFORGE_HOME}/conda-bld}"
 
 {%- if conda_install_tool == "micromamba" %}
 
@@ -35,7 +36,7 @@ rm -rf "${MAMBA_ROOT_PREFIX}" "${micromamba_exe}" || true
 ( endgroup "Provisioning base env with micromamba" ) 2> /dev/null
 {%- elif conda_install_tool == "pixi" %}
 ( startgroup "Provisioning base env with pixi" ) 2> /dev/null
-mkdir -p ${MINIFORGE_HOME}
+mkdir -p "${MINIFORGE_HOME}"
 curl -fsSL https://pixi.sh/install.sh | bash
 export PATH="~/.pixi/bin:$PATH"
 arch=$(uname -m)
@@ -65,14 +66,19 @@ bash "${MINIFORGE_FILE}" -b -p "${MINIFORGE_HOME}"
 ( startgroup "Configuring conda" ) 2> /dev/null
 {%- if conda_build_tool == "mambabuild" %}
 {%- set BUILD_CMD="conda-mambabuild" %}
+{%- set NO_TEST_FLAG="--no-test" %}
 {%- elif conda_build_tool == "conda-build+conda-libmamba-solver" %}
 {%- set BUILD_CMD="CONDA_SOLVER=libmamba conda-build" %}
+{%- set NO_TEST_FLAG="--no-test" %}
 {%- elif conda_build_tool == "conda-build+classic" %}
 {%- set BUILD_CMD="CONDA_SOLVER=classic conda-build" %}
+{%- set NO_TEST_FLAG="--no-test" %}
 {%- elif conda_build_tool == "rattler-build" %}
 {%- set BUILD_CMD="rattler-build build" %}
+{%- set NO_TEST_FLAG="--test skip" %}
 {%- else %}
 {%- set BUILD_CMD="conda-build" %}
+{%- set NO_TEST_FLAG="--no-test" %}
 {%- endif %}
 
 {%- if conda_install_tool != "pixi" %}
@@ -152,7 +158,7 @@ if [[ "${BUILD_WITH_CONDA_DEBUG:-0}" == 1 ]]; then
 else
 {% if test in ["native", "native_and_emulated"] %}
     if [[ "${HOST_PLATFORM}" != "${BUILD_PLATFORM}" ]]; then
-        EXTRA_CB_OPTIONS="${EXTRA_CB_OPTIONS:-} --no-test"
+        EXTRA_CB_OPTIONS="${EXTRA_CB_OPTIONS:-} {{ NO_TEST_FLAG }}"
     fi
 {% endif %}
     {%- if conda_build_tool != "rattler-build" %}
@@ -164,7 +170,7 @@ else
     {%- else %}
     {{ BUILD_CMD }} --recipe ./{{ recipe_dir }} \
         -m ./.ci_support/${CONFIG}.yaml \
-        --output-dir ${MINIFORGE_HOME}/conda-bld ${EXTRA_CB_OPTIONS:-} \
+        ${EXTRA_CB_OPTIONS:-} \
         --target-platform "${HOST_PLATFORM}" \
         --extra-meta flow_run_id="$flow_run_id" \
         --extra-meta remote_url="$remote_url" \

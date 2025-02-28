@@ -3,10 +3,10 @@ import os
 import re
 import sys
 import time
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from functools import lru_cache
 from glob import glob
-from typing import Dict, List, Mapping, Optional, Union
+from typing import Optional, Union
 
 import requests
 from conda.models.version import InvalidVersionSpec, VersionOrder
@@ -57,14 +57,17 @@ RATTLER_BUILD_TOOL = "rattler-build"
 
 VALID_PYTHON_BUILD_BACKENDS = [
     "setuptools",
+    "flit",
     "flit-core",
     "hatchling",
+    "poetry",
     "poetry-core",
     "pdm-backend",
     "pdm-pep517",
     "pymsbuild",
     "meson-python",
     "scikit-build-core",
+    "sphinx-theme-builder",
     "maturin",
     "jupyter_packaging",
     "whey",
@@ -96,7 +99,7 @@ def get_meta_section(parent, name, lints):
     return section
 
 
-def get_recipe_v1_section(meta, name) -> Union[Dict, List[Dict]]:
+def get_recipe_v1_section(meta, name) -> Union[dict, list[dict]]:
     if name == "requirements":
         return rattler_loader.load_all_requirements(meta)
     elif name == "tests":
@@ -143,7 +146,9 @@ def find_local_config_file(recipe_dir: str, filename: str) -> Optional[str]:
     return found_filesname[0] if found_filesname else None
 
 
-def is_selector_line(line, allow_platforms=False, allow_keys=set()):
+def is_selector_line(
+    line, allow_platforms=False, allow_keys=set(), only_in_comment=False
+):
     # Using the same pattern defined in conda-build (metadata.py),
     # we identify selectors.
     line = line.rstrip()
@@ -152,6 +157,8 @@ def is_selector_line(line, allow_platforms=False, allow_keys=set()):
         return False
     m = sel_pat.match(line)
     if m:
+        if only_in_comment and not m.group(2):
+            return False
         nouns = {
             w for w in m.group(3).split() if w not in ("not", "and", "or")
         }
@@ -176,9 +183,9 @@ def is_jinja_line(line):
     return False
 
 
-def selector_lines(lines):
+def selector_lines(lines, only_in_comment=False):
     for i, line in enumerate(lines):
-        if is_selector_line(line):
+        if is_selector_line(line, only_in_comment=only_in_comment):
             yield line, i
 
 
@@ -201,7 +208,7 @@ def _lint_package_version(version: Optional[str]) -> Optional[str]:
     no_package_version = "Package version is missing."
     invalid_version = "Package version {ver} doesn't match conda spec: {err}"
 
-    if not version:
+    if version is None:
         return no_package_version
 
     ver = str(version)
@@ -230,12 +237,44 @@ def load_linter_toml_metdata_internal(time_salt):
     return tomllib.loads(hints_toml_str)
 
 
-def flatten_v1_if_else(requirements: List[str | Dict]) -> List[str]:
+def flatten_v1_if_else(requirements: list[str | dict] | str) -> list[str]:
     flattened_requirements = []
     for req in requirements:
         if isinstance(req, dict):
-            flattened_requirements.extend(req["then"])
-            flattened_requirements.extend(req.get("else") or [])
+            flattened_requirements.extend(
+                flatten_v1_if_else(req["then"])
+                if isinstance(req["then"], list)
+                else [req["then"]]
+            )
+            flattened_requirements.extend(
+                flatten_v1_if_else(req.get("else", []))
+                if isinstance(req.get("else", []), list)
+                else [req["else"]]
+            )
         else:
             flattened_requirements.append(req)
     return flattened_requirements
+
+
+def get_all_test_requirements(
+    meta: dict, lints: list[str], recipe_version: int
+) -> list[str]:
+    if recipe_version == 1:
+        test_section = get_section(meta, "tests", lints, recipe_version)
+        test_reqs = []
+        for test_element in test_section:
+            test_reqs += (test_element.get("requirements") or {}).get(
+                "run"
+            ) or []
+
+            if "python" in test_element:
+                if test_element["python"].get("python_version") is not None:
+                    test_reqs.append(
+                        f"python {test_element['python']['python_version']}"
+                    )
+                else:
+                    test_reqs.append("python")
+    else:
+        test_section = get_section(meta, "test", lints, recipe_version)
+        test_reqs = test_section.get("requires") or []
+    return test_reqs

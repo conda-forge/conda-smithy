@@ -2,19 +2,26 @@ import os
 import shutil
 import stat
 from contextlib import contextmanager
+from pathlib import Path
 
 
 def get_repo(path, search_parent_directories=True):
     repo = None
     try:
-        import git
+        import pygit2
 
-        repo = git.Repo(
-            path, search_parent_directories=search_parent_directories
-        )
+        if search_parent_directories:
+            path = pygit2.discover_repository(path)
+        if path is not None:
+            try:
+                no_search = pygit2.enums.RepositoryOpenFlag.NO_SEARCH
+            except AttributeError:  # pygit2 < 1.14
+                no_search = pygit2.GIT_REPOSITORY_OPEN_NO_SEARCH
+
+            repo = pygit2.Repository(path, no_search)
     except ImportError:
         pass
-    except git.InvalidGitRepositoryError:
+    except pygit2.GitError:
         pass
 
     return repo
@@ -22,7 +29,7 @@ def get_repo(path, search_parent_directories=True):
 
 def get_repo_root(path):
     try:
-        return get_repo(path).working_tree_dir
+        return get_repo(path).workdir.rstrip(os.path.sep)
     except AttributeError:
         return None
 
@@ -32,8 +39,16 @@ def set_exe_file(filename, set_exe=True):
 
     repo = get_repo(filename)
     if repo:
-        mode = "+x" if set_exe else "-x"
-        repo.git.execute(["git", "update-index", f"--chmod={mode}", filename])
+        index_path = (
+            Path(filename).resolve().relative_to(repo.workdir).as_posix()
+        )
+        index_entry = repo.index[index_path]
+        if set_exe:
+            index_entry.mode |= all_execute_permissions
+        else:
+            index_entry.mode &= ~all_execute_permissions
+        repo.index.add(index_entry)
+        repo.index.write()
 
     mode = os.stat(filename).st_mode
     if set_exe:
@@ -54,7 +69,11 @@ def write_file(filename):
 
     repo = get_repo(filename)
     if repo:
-        repo.index.add([filename])
+        index_path = (
+            Path(filename).resolve().relative_to(repo.workdir).as_posix()
+        )
+        repo.index.add(index_path)
+        repo.index.write()
 
 
 def touch_file(filename):
@@ -68,7 +87,11 @@ def remove_file_or_dir(filename):
 
     repo = get_repo(filename)
     if repo:
-        repo.index.remove([filename], r=True)
+        index_path = (
+            Path(filename).resolve().relative_to(repo.workdir).as_posix()
+        )
+        repo.index.remove_all([f"{index_path}/**"])
+        repo.index.write()
     shutil.rmtree(filename)
 
 
@@ -77,7 +100,14 @@ def remove_file(filename):
 
     repo = get_repo(filename)
     if repo:
-        repo.index.remove([filename])
+        try:
+            index_path = (
+                Path(filename).resolve().relative_to(repo.workdir).as_posix()
+            )
+            repo.index.remove(index_path)
+            repo.index.write()
+        except OSError:  # this is specifically "file not in index"
+            pass
 
     os.remove(filename)
 
@@ -106,4 +136,6 @@ def copy_file(src, dst):
 
     repo = get_repo(dst)
     if repo:
-        repo.index.add([dst])
+        index_path = Path(dst).resolve().relative_to(repo.workdir).as_posix()
+        repo.index.add(index_path)
+        repo.index.write()

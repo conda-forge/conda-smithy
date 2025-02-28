@@ -4,9 +4,8 @@ import os
 import re
 import tempfile
 from collections.abc import Sequence
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Literal, Optional
 
-from conda.exceptions import InvalidVersionSpec
 from conda.models.version import VersionOrder
 from rattler_build_conda_compat.jinja.jinja import render_recipe_with_context
 from rattler_build_conda_compat.loader import parse_recipe_config_file
@@ -20,6 +19,7 @@ from conda_smithy.linter.utils import (
     REQUIREMENTS_ORDER,
     TEST_FILES,
     TEST_KEYS,
+    _lint_package_version,
     _lint_recipe_name,
     flatten_v1_if_else,
     get_section,
@@ -33,8 +33,8 @@ logger = logging.getLogger(__name__)
 
 
 def lint_section_order(
-    major_sections: List[str],
-    lints: List[str],
+    major_sections: list[str],
+    lints: list[str],
     recipe_version: int = 0,
 ):
     if recipe_version == 0:
@@ -89,10 +89,10 @@ def lint_recipe_maintainers(extra_section, lints):
 
 def lint_recipe_have_tests(
     recipe_dir: str,
-    test_section: List[Dict[str, Any]],
-    outputs_section: List[Dict[str, Any]],
-    lints: List[str],
-    hints: List[str],
+    test_section: list[dict[str, Any]],
+    outputs_section: list[dict[str, Any]],
+    lints: list[str],
+    hints: list[str],
     recipe_version: int = 0,
 ):
     if recipe_version == 1:
@@ -143,7 +143,7 @@ def lint_selectors_should_be_in_tidy_form(recipe_fname, lints, hints):
     # Look out for py27, py35 selectors; we prefer py==35
     python_selectors_pat = re.compile(r".+#\s*\[.*?(py\d{2,3}).*\]")
     if os.path.exists(recipe_fname):
-        with open(recipe_fname) as fh:
+        with open(recipe_fname, encoding="utf-8") as fh:
             for selector_line, line_number in selector_lines(fh):
                 if not good_selectors_pat.match(selector_line):
                     bad_selectors.append(selector_line)
@@ -179,6 +179,21 @@ def lint_selectors_should_be_in_tidy_form(recipe_fname, lints, hints):
         )
 
 
+def lint_no_comment_selectors(recipe_fname, lints, hints):
+    bad_lines = []
+    if os.path.exists(recipe_fname):
+        with open(recipe_fname, encoding="utf-8") as fh:
+            for selector_line, line_number in selector_lines(
+                fh, only_in_comment=True
+            ):
+                bad_lines.append(line_number)
+    if bad_lines:
+        lints.append(
+            "Selectors in comment form no longer work in v1 recipes. Instead,"
+            f" if / then / else maps must be used. See lines {bad_lines}."
+        )
+
+
 def lint_build_section_should_have_a_number(build_section, lints):
     if build_section.get("number", None) is None:
         lints.append("The recipe must have a `build/number` section.")
@@ -203,7 +218,7 @@ def lint_build_section_should_be_before_run(requirements_section, lints):
 
 
 def lint_sources_should_have_hash(
-    sources_section: List[Dict[str, Any]], lints: List[str]
+    sources_section: list[dict[str, Any]], lints: list[str]
 ):
     for source_section in sources_section:
         if "url" in source_section and not (
@@ -230,7 +245,7 @@ def lint_license_should_not_have_license(about_section, lints):
 
 def lint_should_be_empty_line(meta_fname, lints):
     if os.path.exists(meta_fname):
-        with open(meta_fname) as f:
+        with open(meta_fname, encoding="utf-8") as f:
             lines = f.read().split("\n")
         # Count the number of empty lines from the end of the file
         empty_lines = itertools.takewhile(lambda x: x == "", reversed(lines))
@@ -249,10 +264,10 @@ def lint_should_be_empty_line(meta_fname, lints):
 
 
 def lint_license_family_should_be_valid(
-    about_section: Dict[str, Any],
+    about_section: dict[str, Any],
     license: str,
-    needed_families: List[str],
-    lints: List[str],
+    needed_families: list[str],
+    lints: list[str],
     recipe_version: int = 0,
 ) -> None:
     lint_msg = "license_file entry is missing, but is required."
@@ -269,8 +284,8 @@ def lint_license_family_should_be_valid(
 
 
 def lint_recipe_name(
-    package_section: Dict[str, Any],
-    lints: List[str],
+    package_section: dict[str, Any],
+    lints: list[str],
 ):
     recipe_name = package_section.get("name", "").strip()
     lint_msg = _lint_recipe_name(recipe_name)
@@ -326,10 +341,10 @@ def lint_noarch(noarch_value: Optional[str], lints):
 
 def lint_recipe_v1_noarch_and_runtime_dependencies(
     noarch_value: Optional[Literal["python", "generic"]],
-    raw_requirements_section: Dict[str, Any],
-    build_section: Dict[str, Any],
+    raw_requirements_section: dict[str, Any],
+    build_section: dict[str, Any],
     noarch_platforms: bool,
-    lints: List[str],
+    lints: list[str],
 ) -> None:
     if noarch_value:
         conda_recipe_v1_linter.lint_usage_of_selectors_for_noarch(
@@ -346,7 +361,7 @@ def lint_noarch_and_runtime_dependencies(
 ):
     if noarch_value is not None and os.path.exists(meta_fname):
         noarch_platforms = len(forge_yaml.get("noarch_platforms", [])) > 1
-        with open(meta_fname) as fh:
+        with open(meta_fname, encoding="utf-8") as fh:
             in_runreqs = False
             for line in fh:
                 line_s = line.strip()
@@ -380,17 +395,11 @@ def lint_noarch_and_runtime_dependencies(
 
 def lint_package_version(package_section, lints):
     version = package_section.get("version")
-    if not version:
-        lints.append("Package version is missing.")
-        return
-    if package_section.get("version") is not None:
-        ver = str(package_section.get("version"))
-        try:
-            VersionOrder(ver)
-        except InvalidVersionSpec as e:
-            lints.append(
-                f"Package version {ver} doesn't match conda spec: {e}"
-            )
+    lint_msg = _lint_package_version(
+        str(version) if version is not None else None
+    )
+    if lint_msg:
+        lints.append(lint_msg)
 
 
 def lint_jinja_variables_definitions(meta_fname, lints):
@@ -399,7 +408,7 @@ def lint_jinja_variables_definitions(meta_fname, lints):
     # Good Jinja2 variable definitions look like "{% set .+ = .+ %}"
     good_jinja_pat = re.compile(r"\s*\{%\s(set)\s[^\s]+\s=\s[^\s]+\s%\}")
     if os.path.exists(meta_fname):
-        with open(meta_fname) as fh:
+        with open(meta_fname, encoding="utf-8") as fh:
             for jinja_line, line_number in jinja_lines(fh):
                 if not good_jinja_pat.match(jinja_line):
                     bad_jinja.append(jinja_line)
@@ -497,11 +506,14 @@ def lint_single_space_in_pinned_requirements(
 
 
 def lint_non_noarch_builds(
-    requirements_section, outputs_section, noarch_value, lints
+    requirements_section, outputs_section, noarch_value, lints, recipe_version
 ):
     check_languages = ["python", "r-base"]
     host_reqs = requirements_section.get("host") or []
     run_reqs = requirements_section.get("run") or []
+    if recipe_version == 1:
+        host_reqs = flatten_v1_if_else(host_reqs)
+        run_reqs = flatten_v1_if_else(run_reqs)
     for language in check_languages:
         if noarch_value is None and not outputs_section:
             filtered_host_reqs = [
@@ -540,7 +552,7 @@ def lint_jinja_var_references(meta_fname, hints, recipe_version: int = 0):
         else conda_recipe_v1_linter.JINJA_VAR_PAT
     )
     if os.path.exists(meta_fname):
-        with open(meta_fname) as fh:
+        with open(meta_fname, encoding="utf-8") as fh:
             for i, line in enumerate(fh.readlines()):
                 for m in jinja_pattern.finditer(line):
                     if m.group(1) is not None:
@@ -572,9 +584,9 @@ def lint_require_lower_bound_on_python_version(
             lints.append(
                 "noarch: python recipes are required to have a lower bound "
                 "on the python version. Typically this means putting "
-                "`python {{ python_min }}` in `host` and `python >={{ python_min }}` "
-                "in `run`. Please double-check upstream if the package already "
-                "requires an even newer Python version."
+                "`python >={{ python_min }}` in the `run` section of your "
+                "recipe. You may also want to check the upstream source "
+                "for the package's Python compatibility."
             )
 
 
@@ -606,9 +618,8 @@ def lint_pin_subpackages(
         if pinning_section is None:
             return
         filter_pin = "compatible_pin "
-        for pin in (
-            pin for pin in pinning_section if pin.startswith(filter_pin)
-        ):
+        all_pins = flatten_v1_if_else(pinning_section)
+        for pin in (pin for pin in all_pins if pin.startswith(filter_pin)):
             if pin.split()[1] in subpackage_names:
                 lints.append(
                     "pin_subpackage should be used instead of"
@@ -618,9 +629,7 @@ def lint_pin_subpackages(
                 )
 
         filter_pin = "subpackage_pin "
-        for pin in (
-            pin for pin in pinning_section if pin.startswith(filter_pin)
-        ):
+        for pin in (pin for pin in all_pins if pin.startswith(filter_pin)):
             if pin.split()[1] not in subpackage_names:
                 lints.append(
                     "pin_compatible should be used instead of"
@@ -670,7 +679,7 @@ def lint_check_usage_of_whls(meta_fname, noarch_value, lints, hints):
     pure_python_wheel_re = re.compile(r".*[:-]\s+(http.*-none-any\.whl)\s+.*")
     wheel_re = re.compile(r".*[:-]\s+(http.*\.whl)\s+.*")
     if os.path.exists(meta_fname):
-        with open(meta_fname) as f:
+        with open(meta_fname, encoding="utf-8") as f:
             for line in f:
                 if match := pure_python_wheel_re.search(line):
                     pure_python_wheel_urls.append(match.group(1))
@@ -703,8 +712,8 @@ def lint_check_usage_of_whls(meta_fname, noarch_value, lints, hints):
 
 
 def lint_rust_licenses_are_bundled(
-    build_reqs: Optional[List[str]],
-    lints: List[str],
+    build_reqs: Optional[list[str]],
+    lints: list[str],
     recipe_version: int = 0,
 ):
     if not build_reqs:
@@ -723,8 +732,8 @@ def lint_rust_licenses_are_bundled(
 
 
 def lint_go_licenses_are_bundled(
-    build_reqs: Optional[List[str]],
-    lints: List[str],
+    build_reqs: Optional[list[str]],
+    lints: list[str],
     recipe_version: int = 0,
 ):
     if not build_reqs:
@@ -814,6 +823,8 @@ def lint_stdlib(
     if recipe_version == 1:
         all_build_reqs = [flatten_v1_if_else(reqs) for reqs in all_build_reqs]
         all_build_reqs_flat = flatten_v1_if_else(all_build_reqs_flat)
+        all_run_reqs_flat = flatten_v1_if_else(all_run_reqs_flat)
+        all_contraints_flat = flatten_v1_if_else(all_contraints_flat)
 
     # this check needs to be done per output --> use separate (unflattened) requirements
     for build_reqs in all_build_reqs:
@@ -877,7 +888,7 @@ def lint_stdlib(
     else:
         cbc_lines = []
         if conda_build_config_filename:
-            with open(conda_build_config_filename) as fh:
+            with open(conda_build_config_filename, encoding="utf-8") as fh:
                 cbc_lines = fh.readlines()
 
         # filter on osx-relevant lines
@@ -1009,8 +1020,8 @@ def lint_stdlib(
 
 def lint_recipe_is_parsable(
     recipe_text: str,
-    lints: List[str],
-    hints: List[str],
+    lints: list[str],
+    hints: list[str],
     recipe_version: int = 0,
 ):
     parse_results = {}
@@ -1044,7 +1055,7 @@ def lint_recipe_is_parsable(
         else:
             with tempfile.TemporaryDirectory() as tmpdir:
                 recipe_file = os.path.join(tmpdir, "meta.yaml")
-                with open(recipe_file, "w") as f:
+                with open(recipe_file, "w", encoding="utf-8") as f:
                     f.write(recipe_text)
 
                 try:
@@ -1103,9 +1114,22 @@ def lint_recipe_is_parsable(
                 )
             for parser_name, pv in parse_results.items():
                 if pv is False:
+                    if parser_name == "conda-souschef (grayskull)":
+                        msg = (
+                            "This parser is not currently used by conda-forge, but may be in the future. "
+                            "We are collecting information to see which recipes are compatible with grayskull."
+                        )
+                    elif parser_name == "conda-recipe-manager":
+                        msg = (
+                            "The recipe can only be automatically migrated to the new v1 format "
+                            "if it is parseable by conda-recipe-manager."
+                        )
+                    else:
+                        msg = (
+                            "Your recipe  may not receive automatic updates and/or may not be compatible "
+                            "with conda-forge's infrastructure. Please check the logs for "
+                            "more information and ensure your recipe can be parsed."
+                        )
                     hints.append(
-                        f"The recipe is not parsable by parser `{parser_name}`. Your recipe "
-                        "may not receive automatic updates and/or may not be compatible "
-                        "with conda-forge's infrastructure. Please check the logs for "
-                        "more information and ensure your recipe can be parsed."
+                        f"The recipe is not parsable by parser `{parser_name}`. {msg}"
                     )

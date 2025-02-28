@@ -4,7 +4,7 @@
 import json
 from enum import Enum
 from inspect import cleandoc
-from typing import Any, Dict, List, Literal, Optional, Union
+from typing import Any, Literal, Optional, Union
 
 import yaml
 from conda.base.constants import KNOWN_SUBDIRS
@@ -96,6 +96,8 @@ class BotConfigVersionUpdatesSourcesChoice(StrEnum):
 
 class Lints(StrEnum):
     LINT_NOARCH_SELECTORS = "lint_noarch_selectors"
+    HINT_PIP_NO_BUILD_BACKEND = "hint_pip_no_build_backend"
+    HINT_PYTHON_MIN = "hint_python_min"
 
 
 ##############################################
@@ -108,7 +110,7 @@ class AzureRunnerSettings(BaseModel):
 
     model_config: ConfigDict = ConfigDict(extra="allow")
 
-    pool: Optional[Dict[str, str]] = Field(
+    pool: Optional[dict[str, str]] = Field(
         default_factory=lambda: {"vmImage": "ubuntu-latest"},
         description="The pool of self-hosted runners, e.g. 'vmImage': 'ubuntu-latest'",
     )
@@ -123,7 +125,7 @@ class AzureRunnerSettings(BaseModel):
         alias="timeoutInMinutes",
     )
 
-    variables: Optional[Dict[str, str]] = Field(
+    variables: Optional[dict[str, str]] = Field(
         default_factory=dict, description="Variables"
     )
 
@@ -155,7 +157,7 @@ class AzureConfig(BaseModel):
     )
 
     free_disk_space: Optional[
-        Union[bool, Nullable, List[Literal["apt", "cache", "docker"]]]
+        Union[bool, Nullable, list[Literal["apt", "cache", "docker"]]]
     ] = Field(
         default=False,
         description=cleandoc(
@@ -303,7 +305,7 @@ class GithubActionsConfig(BaseModel):
     )
 
     free_disk_space: Optional[
-        Union[bool, Nullable, List[Literal["apt", "cache", "docker"]]]
+        Union[bool, Nullable, list[Literal["apt", "cache", "docker"]]]
     ] = Field(
         default=False,
         description=cleandoc(
@@ -362,13 +364,13 @@ class BotConfigVersionUpdates(BaseModel):
         description="Fraction of versions to keep for frequently updated packages",
     )
 
-    exclude: Optional[List[str]] = Field(
+    exclude: Optional[list[str]] = Field(
         default=[],
         description="List of versions to exclude. "
         "Make sure branch names are `str` by quoting the value.",
     )
 
-    sources: Optional[List[BotConfigVersionUpdatesSourcesChoice]] = Field(
+    sources: Optional[list[BotConfigVersionUpdatesSourcesChoice]] = Field(
         None,
         description=cleandoc(
             """
@@ -431,7 +433,7 @@ class BotConfig(BaseModel):
         description="Method for generating hints or updating recipe",
     )
 
-    abi_migration_branches: Optional[List[str]] = Field(
+    abi_migration_branches: Optional[list[str]] = Field(
         default=[],
         description="List of branches for additional bot migration PRs. "
         "Make sure branch names are `str` by quoting the value.",
@@ -445,6 +447,17 @@ class BotConfig(BaseModel):
     version_updates: Optional[BotConfigVersionUpdates] = Field(
         default_factory=BotConfigVersionUpdates,
         description="Bot config for version update PRs",
+    )
+
+    update_static_libs: Optional[bool] = Field(
+        default=False,
+        description="Update packages in `host` that are used for static "
+        "linking. For bot to issue update PRs, you must have both an "
+        "abstract specification of the library (e.g., `llvmdev 15.0.*`) "
+        "and a concrete specification (e.g., `llvmdev 15.0.7 *_5`). The "
+        "bot will find the latest package that satisfies the abstract "
+        "specification and update the concrete specification to this "
+        "latest package.",
     )
 
 
@@ -480,7 +493,7 @@ class CondaBuildConfig(BaseModel):
 
 class LinterConfig(BaseModel):
 
-    skip: Optional[List[Lints]] = Field(
+    skip: Optional[list[Lints]] = Field(
         default_factory=list,
         description="List of lints to skip",
     )
@@ -565,7 +578,7 @@ OSVersion = create_model(
     },
 )
 
-ProviderType = Union[List[CIservices], CIservices, bool, Nullable]
+ProviderType = Union[list[CIservices], CIservices, bool, Nullable]
 
 Provider = create_model(
     "provider",
@@ -785,7 +798,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    choco: Optional[List[str]] = Field(
+    choco: Optional[list[str]] = Field(
         default_factory=list,
         description=cleandoc(
             """
@@ -839,7 +852,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    noarch_platforms: Optional[Union[Platforms, List[Platforms]]] = Field(
+    noarch_platforms: Optional[Union[Platforms, list[Platforms]]] = Field(
         default_factory=lambda: ["linux_64"],
         description=cleandoc(
             """
@@ -919,13 +932,13 @@ class ConfigModel(BaseModel):
         * `emulated` to choose an appropriate CI for compiling inside an emulation
           of the target platform (only if available)
 
-        For example, switching linux_64 & osx_64 to build on Travis CI, with win_64 on
-        Appveyor:
+        For example, making explicit that linux_64 & osx_64 build on azure (by default),
+        and switching win_64 to Appveyor:
 
         ```yaml
         provider:
-            linux_64: travis
-            osx_64: travis
+            linux_64: azure
+            osx_64: azure
             win_64: appveyor
         ```
 
@@ -972,7 +985,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    remote_ci_setup: Optional[Union[str, List[str]]] = Field(
+    remote_ci_setup: Optional[Union[str, list[str]]] = Field(
         default_factory=lambda: [
             "conda-forge-ci-setup=4",
             "conda-build>=24.1",
@@ -1006,7 +1019,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    skip_render: Optional[List[str]] = Field(
+    skip_render: Optional[list[str]] = Field(
         default_factory=list,
         description=cleandoc(
             """
@@ -1025,7 +1038,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    templates: Optional[Dict[str, str]] = Field(
+    templates: Optional[dict[str, str]] = Field(
         default_factory=dict,
         description=cleandoc(
             """
@@ -1198,7 +1211,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    secrets: Optional[List[str]] = Field(
+    secrets: Optional[list[str]] = Field(
         default_factory=list,
         description=cleandoc(
             """
@@ -1220,7 +1233,7 @@ class ConfigModel(BaseModel):
     ###################################
     ####       CI Providers        ####
     ###################################
-    travis: Optional[Dict[str, Any]] = Field(
+    travis: Optional[dict[str, Any]] = Field(
         default_factory=dict,
         description=cleandoc(
             """
@@ -1230,7 +1243,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    circle: Optional[Dict[str, Any]] = Field(
+    circle: Optional[dict[str, Any]] = Field(
         default_factory=dict,
         description=cleandoc(
             """
@@ -1240,7 +1253,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    appveyor: Optional[Dict[str, Any]] = Field(
+    appveyor: Optional[dict[str, Any]] = Field(
         default_factory=lambda: {"image": "Visual Studio 2017"},
         description=cleandoc(
             """
@@ -1309,7 +1322,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    drone: Optional[Dict[str, str]] = Field(
+    drone: Optional[dict[str, str]] = Field(
         default_factory=dict,
         description=cleandoc(
             """
@@ -1329,7 +1342,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    woodpecker: Optional[Dict[str, str]] = Field(
+    woodpecker: Optional[dict[str, str]] = Field(
         default_factory=dict,
         description=cleandoc(
             """
@@ -1357,7 +1370,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    matrix: Optional[Dict[str, Any]] = Field(
+    matrix: Optional[dict[str, Any]] = Field(
         default_factory=dict,
         exclude=True,
         deprecated=True,
@@ -1379,10 +1392,10 @@ if __name__ == "__main__":
 
     model = ConfigModel()
 
-    with CONDA_FORGE_YAML_SCHEMA_FILE.open(mode="w+") as f:
+    with CONDA_FORGE_YAML_SCHEMA_FILE.open(mode="w+", encoding="utf-8") as f:
         obj = model.model_json_schema()
         f.write(json.dumps(obj, indent=2))
         f.write("\n")
 
-    with CONDA_FORGE_YAML_DEFAULTS_FILE.open(mode="w+") as f:
+    with CONDA_FORGE_YAML_DEFAULTS_FILE.open(mode="w+", encoding="utf-8") as f:
         f.write(yaml.dump(model.model_dump(by_alias=True), indent=2))

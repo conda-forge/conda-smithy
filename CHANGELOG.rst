@@ -4,6 +4,166 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.45.4
+====================
+
+**Changed:**
+
+* Add output to gitignore for rattler-build's outputs.
+* Always populate variant configs with `python_min`, if present
+
+**Fixed:**
+
+* Fixed error in testing where tests fail for ``conda-recipe-manager >=0.4.1``. (#2223)
+
+**Authors:**
+
+* Matthew R. Becker
+* H. Vetinari
+* Pavel Zwerschke
+
+
+
+v3.45.3
+====================
+
+**Added:**
+
+* Added support for multi-output recipes in ``hint_noarch_python_use_python_min`` check. (#2218)
+* Added a linter check for use of v0 selectors in v1 recipes. (#2214)
+
+**Changed:**
+
+* Due to persistent problems with Travis CI, it is not the default provider for non-x64 architectures on linux anymore.
+  Builds will be emulated on azure by default, though it is recommended to switch recipes to cross-compilation
+  where possible, by adding the following to `conda-forge.yml` (and rerendering):
+  ```
+  build_platform:
+    linux_aarch64: linux_64
+    linux_ppc64le: linux_64
+  ```
+
+**Fixed:**
+
+* Fix `tests/test_feedstock_io.py::TestFeedstockIO::test_repo` path comparison to use `os.path.realpath`. (#2220)
+* Fixed "missing package version" false positives for version "0". (#2217)
+* Fixed flattening ``if / then / else`` clauses in v1 recipes with string values of ``then`` and ``else`` keys. (#2218)
+
+**Authors:**
+
+* H. Vetinari
+* Michał Górny
+* Ken Odegard
+
+
+
+v3.45.2
+====================
+
+**Added:**
+
+* Added ``sphinx-theme-builder`` as a valid ``pip`` build backend. (#2204)
+* Added validation for ``schema_version`` key. (#2207)
+* Add ``hint_python_min`` and ``hint_pip_no_build_backend`` values to ``linter.skip`` key, allowing to skip respective checks. (#2206)
+
+**Fixed:**
+
+* Fixed removing directories recursively from git index. (#2199)
+* Fix handling ``if``/``else`` blocks in ``run`` and ``run_constraints`` requirements, for v1 recipes (#2197)
+* Fix flattening nested ``if``/``else`` blocks in v1 recipes (#2197)
+* Fix a test that uses `match` in skip to work with strict parsing (#2213)
+* ``schema_version`` key no longer causes linting failures. (#2207)
+* Fix a ``TypeError`` when either the ``linter`` key or the ``skip`` subkey is empty. (#2206)
+* Fix more linter errors for v1 recipes with conditional dependencies (#2212)
+* Fix linter error in check_pins for v1 recipes with conditional run_exports (#2211)
+* Consider `tests[].python.python_version`` when linting for cfep25 on v1.
+
+**Authors:**
+
+* Matthew R. Becker
+* Wolf Vollprecht
+* Min RK
+* pre-commit-ci[bot]
+* Hadrien Mary
+* Michał Górny
+* dependabot[bot]
+* Will Shanks
+
+
+
+v3.45.1
+====================
+
+**Changed:**
+
+* Try to be more specific in hints when different parsers fail (#2190)
+* Add `flit` (previously only `flit-core`) to the list of valid build backends (#2187)
+
+**Fixed:**
+
+* Fix passing paths to ``pygit2`` on Windows. (#2192)
+
+**Authors:**
+
+* Min RK
+* Michał Górny
+* Ben Mares
+
+
+
+v3.45.0
+====================
+
+**Authors:**
+
+
+
+
+v3.45.0
+====================
+
+**Changed:**
+
+* Replaced the ``GitPython`` dependency with ``pygit2`` (#2120).
+* Added ``poetry`` as a valid ``pip`` build backend. (#2175)
+* Set minimal Python version to 3.9. (#2180)
+* The SPDX identifier list has been updated
+
+**Fixed:**
+
+* Fixed compatibility with git index versions 3 and 4 (#2120).
+* Fixed a bug where ``$`` was not properly escaped in a regex and this caused false-positive hints for
+  v1 recipes and ``noarch: python`` packages. (#2184)
+
+**Authors:**
+
+* Matthew R. Becker
+* Uwe L. Korn
+* pre-commit-ci[bot]
+* Michał Górny
+* dependabot[bot]
+* Brandon Maier
+* Matt Chan
+
+
+
+v3.44.9
+====================
+
+**Fixed:**
+
+* Fixed a bug in checking in recipe maintainers exist without a GitHub token
+  where the anonymous API would run out of requests. (#2171)
+* Ensure ``CONDA_BLD_PATH`` is properly exported in macOS. (#2145 via #2148)
+* Close logging group for ``micromamba`` installs in Windows. (#2148)
+
+**Authors:**
+
+* Matthew R. Becker
+* Hadrien Mary
+
+
+
 v3.44.8
 ====================
 

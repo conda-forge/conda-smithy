@@ -8,7 +8,7 @@ import time
 from collections import defaultdict
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Dict, Union
+from typing import Any, Union
 
 import jinja2
 import jinja2.sandbox
@@ -25,7 +25,7 @@ SET_PYTHON_MIN_RE = re.compile(r"{%\s+set\s+python_min\s+=")
 
 def _get_metadata_from_feedstock_dir(
     feedstock_directory: Union[str, os.PathLike],
-    forge_config: Dict[str, Any],
+    forge_config: dict[str, Any],
     conda_forge_pinning_file: Union[str, os.PathLike, None] = None,
 ) -> Union[MetaData, RattlerBuildMetaData]:
     """
@@ -56,7 +56,7 @@ def _get_metadata_from_feedstock_dir(
 
 
 def get_feedstock_name_from_meta(
-    meta: Union[MetaData, RattlerBuildMetaData]
+    meta: Union[MetaData, RattlerBuildMetaData],
 ) -> str:
     """Get the feedstock name from a parsed meta.yaml or recipe.yaml."""
     if "feedstock-name" in meta.meta["extra"]:
@@ -77,7 +77,7 @@ def get_feedstock_about_from_meta(meta) -> dict:
         recipe_meta = os.path.join(
             meta.meta["extra"]["parent_recipe"]["path"], "meta.yaml"
         )
-        with open(recipe_meta) as fh:
+        with open(recipe_meta, encoding="utf-8") as fh:
             content = render_meta_yaml("".join(fh))
             meta = get_yaml().load(content)
         return dict(meta["about"])
@@ -117,7 +117,7 @@ class NullUndefined(jinja2.Undefined):
 
 class MockOS(dict):
     def __init__(self):
-        self.environ = defaultdict(lambda: "")
+        self.environ = defaultdict(str)
         self.sep = "/"
 
 
@@ -151,10 +151,10 @@ def render_meta_yaml(text):
             pin_subpackage=stub_subpackage_pin,
             pin_compatible=stub_compatible_pin,
             cdt=lambda *args, **kwargs: "cdt_stub",
-            load_file_regex=lambda *args, **kwargs: defaultdict(lambda: ""),
-            load_file_data=lambda *args, **kwargs: defaultdict(lambda: ""),
-            load_setup_py_data=lambda *args, **kwargs: defaultdict(lambda: ""),
-            load_str_data=lambda *args, **kwargs: defaultdict(lambda: ""),
+            load_file_regex=lambda *args, **kwargs: defaultdict(str),
+            load_file_data=lambda *args, **kwargs: defaultdict(str),
+            load_setup_py_data=lambda *args, **kwargs: defaultdict(str),
+            load_str_data=lambda *args, **kwargs: defaultdict(str),
             datetime=datetime,
             time=time,
             target_platform="linux-64",
@@ -179,7 +179,7 @@ def update_conda_forge_config(forge_yaml):
     ...     cfg['foo'] = 'bar'
     """
     if os.path.exists(forge_yaml):
-        with open(forge_yaml) as fh:
+        with open(forge_yaml, encoding="utf-8") as fh:
             code = get_yaml().load(fh)
     else:
         code = {}

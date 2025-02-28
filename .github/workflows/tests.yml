@@ -22,15 +22,16 @@ jobs:
         with:
           fetch-depth: 0
       - name: Set up Conda env
-        uses: mamba-org/setup-micromamba@617811f69075e3fd3ae68ca64220ad065877f246
+        uses: mamba-org/setup-micromamba@0dea6379afdaffa5d528b3d1dabc45da37f443fc
         with:
           environment-file: environment.yml
+          micromamba-version: 1.5.12-0
           cache-environment: true
           create-args: >-
             python=3.11
             coverage
             coveralls
-            conda-recipe-manager
+            conda-recipe-manager>=0.4.1
             conda-souschef
             conda-forge-tick
 

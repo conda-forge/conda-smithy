@@ -1,0 +1,229 @@
+schema_version: 1
+
+context:
+  version: 0.20.1
+  build_number: 2
+  # see github.com/conda-forge/conda-forge.github.io/issues/1059 for naming discussion
+  # torchvision requires that CUDA major and minor versions match with pytorch
+  # https://github.com/pytorch/vision/blob/fa99a5360fbcd1683311d57a76fcc0e7323a4c1e/torchvision/extension.py#L79C1-L85C1
+  torch_proc_type: ${{ "cuda" ~ cuda_compiler_version | version_to_buildstring if cuda_compiler_version != "None" else "cpu" }}
+  # Upstream has specific compatability ranges for pytorch and python which are
+  # updated every 0.x release. https://github.com/pytorch/vision#installation
+  compatible_pytorch: 2.5
+
+  tests_to_skip: >
+    ${{ 'skip test_url_is_accessible instead of hitting 20+ servers per run, since' if 0 }}
+    ${{ 'each server might be occasionally unresponsive and end up failing our CI' if 0 }}
+    test_url_is_accessible
+    ${{ 'spurious failure because upstream skip (Image.__version__ >= "7") does not trigger for Pillow "10"' if 0 }}
+    or (test_transforms and test_adjust_saturation)
+    ${{ 'osx warns with nnpack if there is no AVX2, see conda-forge/pytorch-cpu-feedstock#56' if 0 }}
+    ${{ "or test_adjust_sharpness" if osx }}
+    ${{ '2021/10/28 hmaarrfk: I am able to run it locally on a large machine.' if 0 }}
+    ${{ 'It seems to fail around testing of vgg' if 0 }}
+    ${{ 'This test seems to just destroy the memory of the system.' if 0 }}
+    or test_forward_backward
+    or test_jit_forward_backward
+    ${{ '2022/01/21 hmaarrfk (test_frame_reading)' if 0 }}
+    ${{ 'They indicate that there can be a 1% error in their test.' if 0 }}
+    ${{ 'However, this test seems to causing the CIs to fail when this' if 0 }}
+    ${{ 'case is hit. For example the last CI failed with' if 0 }}
+    ${{ '>                   assert mean_delta.item() < 2.5' if 0 }}
+    ${{ 'E                   assert 2.502098560333252 < 2.5' if 0 }}
+    or test_frame_reading
+    ${{ 'Random perspective tests can fail if the perspective is too sharp' if 0 }}
+    ${{ 'https://github.com/conda-forge/torchvision-feedstock/issues/38' if 0 }}
+    or test_randomperspective_fill
+    ${{ 'Tolerance on the test_frozenbatchnorm2d_eps test seems to be too strict' if 0 }}
+    or test_frozenbatchnorm2d_eps
+    or test_random_apply
+    ${{ '2022/03/29 hmaarrfk' if 0 }}
+    ${{ 'It seems that this test can cause segmentation faults on the CIs.' if 0 }}
+    or test_write_video_with_audio
+    or test_video_clips_custom_fps
+    ${{ '2022/07 hmaarrfk really large memory tests. Fail on CIs' if 0 }}
+    or test_memory_efficient_densenet
+    or test_resnet_dilation
+    or test_mobilenet_v2_residual_setting
+    or test_mobilenet_norm_layer
+    or test_inception_v3_eval
+    or test_fasterrcnn_double
+    or test_googlenet_eval
+    or test_fasterrcnn_switch_devices
+    or test_mobilenet_v2_residual_setting
+    or test_vitc_models
+    or test_classification_model
+    or test_segmentation_model
+    or test_detection_model
+    or test_detection_model_validation
+    or test_video_model
+    or test_quantized_classification_model
+    or test_detection_model_trainable_backbone_layers
+    or test_raft
+    or test_build_fx_feature_extractor
+    ${{ "2023/01 These tests fail on newer numpy with module 'numpy' has no attribute 'int'" if 0 }}
+    or test_transformation_range
+    or test_transformation_discrete
+    ${{ '2023/05 The gaussian blur tests are known to be flaky due to some non-determinism on CUDA (see pytorch/vision#6755)' if 0 }}
+    or test_batched_vs_single
+    ${{ '2023/11 Draw boxes test broken by pillow 1.10.0, but is non-critical and the test is patched upstream (pytorch/vision#8051)' if 0 }}
+    or test_draw_boxes
+    ${{ '2024/02 These tests assert warnings and in PyTorch 2.1.2 the number of warnings increased' if 0 }}
+    ${{ 'causing them to fail' if 0 }}
+    or test_pretrained_pos or test_equivalent_behavior_weights
+    ${{ '2024/12 These tests use Internet' if 0 }}
+    or test_decode_gif or test_download_url or "test_get_model[lraspp"
+
+recipe:
+  name: torchvision
+  version: ${{ version }}
+
+source:
+  url: https://github.com/pytorch/vision/archive/refs/tags/v${{ version }}.tar.gz
+  sha256: 7e08c7f56e2c89859310e53d898f72bccc4987cd83e08cfd6303513da15a9e71
+  patches:
+    # Our newer conda-forge clang compilers complain about this for OSX
+    # https://github.com/pytorch/vision/pull/8406/files#r1730151047
+    - patches/0001-Use-system-giflib.patch
+    - patches/0002-Force-nvjpeg-and-force-failure.patch
+    # 2024/08 hmaarrfk
+    # known flaky test https://github.com/pytorch/vision/blob/9e78fe29e0851b10eb8fba0b88cc521ad67cf322/test/test_image.py#L840
+    - patches/0003-Skip-OSS-CI-in-conda-forge-as-well.patch
+    # Can likely remove after 0.20.1
+    # https://github.com/pytorch/vision/pull/8776
+    - patches/8776_compatibility_with_pyav_14.patch
+
+build:
+  number: ${{ build_number }}
+  string: ${{ torch_proc_type }}_py${{ python | version_to_buildstring }}_h${{ hash }}_${{ build_number }}
+  # CUDA < 12 not supported by pytorch anymore
+  skip: cuda_compiler_version == "11.8" or win
+
+outputs:
+  - package:
+      name: torchvision
+    build:
+      script:
+        env:
+          BUILD_VERSION: ${{ version }}
+    requirements:
+      build:
+        - ${{ stdlib('c') }}
+        - ${{ compiler('c') }}
+        - ${{ compiler('cxx') }}
+        - if: cuda_compiler_version != "None"
+          then:
+            - ${{ compiler('cuda') }}
+        # avoid nested conditions because of
+        # https://github.com/conda-forge/conda-smithy/issues/2165
+        - if: build_platform != target_platform
+          then:
+            - python
+            - cross-python_${{ target_platform }}
+            # - numpy
+            - pytorch ${{ compatible_pytorch }}.* [build=${{ torch_proc_type }}*]
+            - if: cuda_compiler_version != "None"
+              then:
+                - libcublas-dev
+                - libcusolver-dev
+                - libcusparse-dev
+                - libnvjpeg-dev
+      host:
+        - python
+        # - numpy
+        - pip
+        - setuptools
+        - if: cuda_compiler_version != "None"
+          then:
+            - cudnn
+            - libcublas-dev
+            - libcusolver-dev
+            - libcusparse-dev
+            - libnvjpeg-dev
+        - libjpeg-turbo
+        - libpng
+        - libwebp
+        # https://github.com/pytorch/vision/pull/8406/files#r1730151047
+        - giflib
+        # Specify lgpl version of ffmpeg so that there are
+        # no quesitons about the license of the resulting binary
+        # hmaarrfk: 2022/07, I think that torchvision just has bugs with ffmpeg
+        # - ffmpeg {{ ffmpeg }} [build=lgpl_*]
+        # exclude 8.3.0 and 8.3.1 specifically due to pytorch/vision#4146, python-pillow/Pillow#5571
+        - pillow >=5.3.0,!=8.3.0,!=8.3.1
+        - libtorch ${{ compatible_pytorch }}.* [build=${{ torch_proc_type }}*]
+        - pytorch ${{ compatible_pytorch }}.* [build=${{ torch_proc_type }}*]
+        - requests
+      run:
+        - python
+        - pytorch ${{ compatible_pytorch }}.* [build=${{ torch_proc_type }}*]
+        - if: cuda_compiler_version != "None"
+          then:
+            - ${{ pin_compatible('cudnn') }}
+        - pillow >=5.3.0,!=8.3.0,!=8.3.1
+        # They don't really document it, but it seems that they want a minimum version
+        # https://github.com/pytorch/vision/blob/v0.19.0/packaging/torchvision/meta.yaml#L26
+        - numpy >=1.23.5
+        # While their conda package depends on requests, it seems it is only used for some test
+        # scripts and not the runtime
+        # - requests
+    tests:
+      - python:
+          imports:
+            - torchvision
+            - torchvision.datasets
+            - torchvision.models
+            - torchvision.transforms
+            - torchvision.utils
+          pip_check: true
+      - requirements:
+          run:
+            - pip
+        script:
+          - pip list
+          - if: unix
+            then: pip list | grep torchvision | grep ${{ version }}
+
+  - package:
+      name: torchvision-tests
+    build:
+      script: true
+    requirements:
+      run:
+        - ${{ pin_subpackage('torchvision', exact=True) }}
+    tests:
+      - files:
+          source:
+            - test/
+            - references/
+            - pytest.ini
+        requirements:
+          run:
+            - pytest
+            - requests
+            - av
+            - expecttest
+            - scipy
+            - pytest-mock
+            - pytest-socket
+        script:
+          - if: not aarch64
+            then: pytest --disable-socket --verbose -k "not (${{ tests_to_skip }})" --durations=50 test/
+          - if: aarch64 and (build_platform == target_platform)
+            then: pytest --disable-socket -k "not (${{ tests_to_skip }})" --durations=50 test/
+          - if: aarch64 and (build_platform != target_platform)
+            then: true
+
+about:
+  license: BSD-3-Clause
+  license_file: LICENSE
+  summary: Image and video datasets and models for torch deep learning
+  homepage: http://pytorch.org/
+  repository: https://github.com/pytorch/vision
+
+extra:
+  recipe-maintainers:
+    - nehaljwani
+    - hmaarrfk
+    - h-vetinari
+  feedstock-name: torchvision

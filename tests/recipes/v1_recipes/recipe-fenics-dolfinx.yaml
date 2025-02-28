@@ -1,0 +1,208 @@
+context:
+  name: fenics-dolfinx
+  version: 0.9.0
+  major_minor: ${{ version | split(".") | slice(2) | first | join(".") }}.*
+  ufl_version: "2024.2.*"
+  build: 8
+
+recipe:
+  name: ${{ name|lower }}
+  version: ${{ version }}
+
+source:
+  url: https://github.com/fenics/dolfinx/archive/refs/tags/v${{ version }}.tar.gz
+  sha256: b266c74360c2590c5745d74768c04568c965b44739becca4cd6b5aa58cdbbbd1
+  patches:
+    # cffi is pinned down for a bug
+    # but 1.17 is needed for Windows, CPython 3.13
+    - unpin-cffi.patch
+
+build:
+  number: ${{ (build | int + 100) if scalar == 'real' else build }}
+  skip: win # temporarily
+
+outputs:
+  - package:
+      name: fenics-libdolfinx
+    build:
+      script: build-libdolfinx
+    requirements:
+      build:
+        - ${{ compiler("c") }}
+        - ${{ stdlib("c") }}
+        - ${{ compiler("cxx") }}
+        - cmake
+        - ninja
+        - if: not win
+          then:
+            - pkg-config
+        - if: "mpi == 'openmpi' and build_platform != target_platform"
+          then: ${{ mpi }}
+      host:
+        - ${{ mpi | replace("impi", "impi-devel") }}
+        - if: not win
+          then:
+            - libadios2
+            - libadios2 * mpi_${{ mpi }}_*
+            - kahip
+            - parmetis
+            - petsc
+            - petsc * ${{ scalar }}_*
+            - slepc
+        - libboost-devel
+        - hdf5 ${{ hdf5 }}.* mpi_${{ mpi }}_*
+        - libscotch
+        - libptscotch
+        - pugixml
+        - fmt
+        - spdlog
+        - fenics-libbasix ${{ major_minor }}
+        - fenics-ufcx ${{ major_minor }}
+        - if: win
+          # these shouldn't be required,
+          # but are in INTERFACE_LINK_LIBRARIES for libscotch
+          then:
+            - zlib
+            - liblzma-devel
+      run:
+        # these don't have run_exports
+        # but are needed at runtime for code generation
+        - fenics-ufcx ${{ major_minor }}
+        - if: not win
+          then:
+            - ${{ pin_compatible("parmetis", upper_bound="x.x") }}
+        # needs boost metadata just to CMake-load fenix-libdolfinx
+        - libboost-devel
+        # need these to resolve cmake dependencies of libscotch
+        # (only on windows)
+        - if: win
+          then:
+            - zlib
+            - liblzma-devel
+      run_exports:
+        - ${{ pin_subpackage("fenics-libdolfinx", upper_bound="x.x.x") }}
+        - if: not win
+          then:
+            - petsc * ${{ scalar }}_*
+        - ${{ mpi | replace("impi", "impi_rt") }}
+    tests:
+      - script: test-libdolfinx
+        files:
+          recipe:
+            - if: win
+              then: impi-toolchain.cmake
+          source:
+            - cpp/test/
+        requirements:
+          run:
+            - ${{ compiler("c") }}
+            - ${{ compiler("cxx") }}
+            - if: win
+              then: impi-devel
+            - pkg-config
+            - cmake
+            - catch2 3.*
+            - ninja
+            - fenics-ffcx ${{ major_minor }}
+
+  - package:
+      name: fenics-dolfinx
+    build:
+      script: build-dolfinx
+    requirements:
+      build:
+        - ${{ compiler("c") }}
+        - ${{ stdlib("c") }}
+        - ${{ compiler("cxx") }}
+        - cmake
+        - ninja
+        - pkg-config
+        - if: build_platform != target_platform
+          then: python
+        - if: build_platform != target_platform
+          then: cross-python_${{ target_platform }}
+        - if: build_platform != target_platform
+          then: nanobind
+        - if: mpi == 'openmpi' and build_platform != target_platform
+          then: ${{ mpi }}
+      host:
+        - ${{ mpi | replace("impi", "impi-devel") }}
+        # hdf5 shouldn't be needed here, but solver fails without it
+        - hdf5 ${{ hdf5 }}.* mpi_${{ mpi }}_*
+        - ${{ pin_subpackage("fenics-libdolfinx", exact=True) }}
+        - python
+        - pip
+        - scikit-build-core
+        - wheel
+        - nanobind
+        - fenics-basix ${{ major_minor }}
+        - fenics-basix-nanobind-abi
+        - mpi4py
+        - if: not win
+          then:
+            - petsc * ${{ scalar }}_*
+            - petsc4py
+            - slepc
+            - slepc4py
+        # not actually a dependency of the Python part, but having it here
+        # seems to fix a solver error on libxml2's noicu build
+        - libboost-devel
+      run:
+        # code generation only needs c, not cxx
+        - ${{ compiler("c") }}
+        - pkg-config
+        - python
+        - ${{ pin_subpackage("fenics-libdolfinx", exact=True) }}
+        - cffi
+        - if: not (win or match(python, ">=3.13"))
+          then: cffi <1.17
+        - mpi4py
+        - numpy >=1.21
+        - if: not win
+          then:
+            - petsc4py
+            - slepc4py
+        - fenics-basix ${{ major_minor }}
+        - fenics-ffcx ${{ major_minor }}
+        - fenics-ufl ${{ ufl_version }}
+    tests:
+      - python:
+          pip_check: true
+          imports:
+            - dolfinx
+      - script:
+          file: test-dolfinx
+          env:
+            scalar: ${{ scalar }}
+        files:
+          recipe:
+            - test_dolfinx.py
+          source:
+            - python/demo/
+            - python/test/
+        requirements:
+          run:
+            - pip
+            - pytest >=6
+            - python-gmsh
+            - if: linux and aarch64
+              then: cairo
+            - sympy
+            - scipy
+            - matplotlib-base
+
+about:
+  summary: The computational environment of FEniCSx
+  description: |
+    DOLFINx is the computational environment of FEniCSx
+    and implements the FEniCS Problem Solving Environment in Python and C++.
+  license: LGPL-3.0-or-later
+  license_file: COPYING.LESSER
+  homepage: https://fenicsproject.org
+  repository: https://github.com/fenics/dolfinx
+  documentation: https://docs.fenicsproject.org/dolfinx/v${{ version }}/
+
+extra:
+  feedstock-name: fenics-dolfinx
+  recipe-maintainers:
+    - minrk

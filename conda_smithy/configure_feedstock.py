@@ -16,7 +16,6 @@ from functools import lru_cache
 from itertools import chain, product
 from os import fspath
 from pathlib import Path, PurePath
-from typing import Dict
 
 import requests
 import yaml
@@ -544,13 +543,26 @@ def _collapse_subpackage_variants(
 
     # determine if MACOSX_DEPLOYMENT_TARGET appears in recipe-local CBC;
     # all metas in list_of_metas come from same recipe, so path is identical
-    cbc_path = os.path.join(list_of_metas[0].path, "conda_build_config.yaml")
+    recipe_dir = list_of_metas[0].path
+    cbc_path = os.path.join(recipe_dir, "conda_build_config.yaml")
     has_macdt = False
     if os.path.exists(cbc_path):
-        with open(cbc_path) as f:
-            lines = f.readlines()
-        if any(re.match(r"^\s*MACOSX_DEPLOYMENT_TARGET:", x) for x in lines):
+        with open(cbc_path, encoding="utf-8") as f:
+            cbc_text = f.read()
+        if re.match(r"^\s*MACOSX_DEPLOYMENT_TARGET:", cbc_text):
             has_macdt = True
+
+    # check if recipe contains `python_min`; add it to used_vars if so; we cannot use
+    # `m.get_recipe_text()`, because noarch outputs may have been skipped already
+    recipe_path = os.path.join(recipe_dir, "meta.yaml")
+    if not os.path.exists(recipe_path):
+        recipe_path = os.path.join(recipe_dir, "recipe.yaml")
+    # either v0 or v1 recipe must exist; no fall-back if missing
+    with open(recipe_path, encoding="utf-8") as f:
+        meta_text = f.read()
+    pm_pat = re.compile(r".*\{\{ python_min \}\}")
+    if any(pm_pat.match(x) for x in meta_text.splitlines()):
+        all_used_vars.add("python_min")
 
     # on osx, merge MACOSX_DEPLOYMENT_TARGET & c_stdlib_version to max of either; see #1884
     all_variants = _merge_deployment_target(all_variants, has_macdt)
@@ -697,7 +709,7 @@ def _sanitize_remote_ci_setup(remote_ci_setup):
 
 def _sanitize_build_tool_deps_as_dict(
     forge_dir, forge_config
-) -> Dict[str, str]:
+) -> dict[str, str]:
     """
     Aggregates different sources of build tool dependencies in
     mapping of package names to OR-merged version constraints.
@@ -884,7 +896,7 @@ def migrate_combined_spec(combined_spec, forge_dir, config, forge_config):
     from conda_smithy.variant_algebra import parse_variant, variant_add
 
     migration_variants = [
-        (fn, parse_variant(open(fn).read(), config=config))
+        (fn, parse_variant(open(fn, encoding="utf-8").read(), config=config))
         for fn in migrations
     ]
 
@@ -1024,7 +1036,8 @@ def _render_ci_provider(
         # detect if `compiler('cuda')` is used in meta.yaml,
         # and set appropriate environment variable
         with open(
-            os.path.join(forge_dir, forge_config["recipe_dir"], recipe_file)
+            os.path.join(forge_dir, forge_config["recipe_dir"], recipe_file),
+            encoding="utf-8",
         ) as f:
             meta_lines = f.readlines()
         # looking for `compiler('cuda')` with both quote variants;
@@ -1386,7 +1399,7 @@ def generate_yum_requirements(forge_config, forge_dir):
     )
     yum_build_setup = ""
     if os.path.exists(yum_requirements_fpath):
-        with open(yum_requirements_fpath) as fh:
+        with open(yum_requirements_fpath, encoding="utf-8") as fh:
             requirements = [
                 line.strip()
                 for line in fh
@@ -1536,7 +1549,7 @@ def _render_template_exe_files(
         if target_fname in get_common_scripts(forge_dir) and os.path.exists(
             target_fname
         ):
-            with open(target_fname) as fh:
+            with open(target_fname, encoding="utf-8") as fh:
                 old_file_contents = fh.read()
                 if old_file_contents != new_file_contents:
                     import difflib
@@ -2096,7 +2109,9 @@ def render_readme(jinja_env, forge_config, forge_dir, render_info=None):
             if filename.endswith(".yaml"):
                 variant_name, _ = os.path.splitext(filename)
                 variants.append(variant_name)
-                with open(os.path.join(ci_support_path, filename)) as fh:
+                with open(
+                    os.path.join(ci_support_path, filename), encoding="utf-8"
+                ) as fh:
                     data = yaml.safe_load(fh)
                     channel_targets.append(
                         data.get("channel_targets", ["conda-forge main"])[0]
@@ -2276,7 +2291,7 @@ def _update_dict_within_dict(items, config):
 
 def _read_forge_config(forge_dir, forge_yml=None):
     # Load default values from the conda-forge.yml file
-    with open(CONDA_FORGE_YAML_DEFAULTS_FILE) as fh:
+    with open(CONDA_FORGE_YAML_DEFAULTS_FILE, encoding="utf-8") as fh:
         default_config = yaml.safe_load(fh.read())
 
     if forge_yml is None:
@@ -2291,7 +2306,7 @@ def _read_forge_config(forge_dir, forge_yml=None):
             " feedstock root if it's the latter."
         )
 
-    with open(forge_yml) as fh:
+    with open(forge_yml, encoding="utf-8") as fh:
         documents = list(yaml.safe_load_all(fh))
         file_config = (documents or [None])[0] or {}
 
@@ -2458,18 +2473,21 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
     logger.debug("## END CONFIGURATION\n")
 
     if config["provider"]["linux_aarch64"] == "default":
-        config["provider"]["linux_aarch64"] = ["travis"]
+        config["provider"]["linux_aarch64"] = ["azure"]
 
     if config["provider"]["linux_aarch64"] == "native":
         config["provider"]["linux_aarch64"] = ["travis"]
 
     if config["provider"]["linux_ppc64le"] == "default":
-        config["provider"]["linux_ppc64le"] = ["travis"]
+        config["provider"]["linux_ppc64le"] = ["azure"]
 
     if config["provider"]["linux_ppc64le"] == "native":
         config["provider"]["linux_ppc64le"] = ["travis"]
 
-    if config["provider"]["linux_s390x"] in {"default", "native"}:
+    if config["provider"]["linux_s390x"] == "default":
+        config["provider"]["linux_s390x"] = ["azure"]
+
+    if config["provider"]["linux_s390x"] == "native":
         config["provider"]["linux_s390x"] = ["travis"]
 
     config["remote_ci_setup"] = _sanitize_remote_ci_setup(
@@ -2730,7 +2748,7 @@ def get_migrations_in_dir(migrations_root):
     """
     res = {}
     for fn in glob.glob(os.path.join(migrations_root, "*.yaml")):
-        with open(fn) as f:
+        with open(fn, encoding="utf-8") as f:
             contents = f.read()
             migration_yaml = (
                 yaml.load(contents, Loader=yaml.loader.BaseLoader) or {}
