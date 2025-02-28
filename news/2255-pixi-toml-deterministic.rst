@@ -16,7 +16,7 @@
 
 **Fixed:**
 
-* Ensure generated pixi.toml is deterministic
+* Ensure generated ``pixi.toml`` is deterministic. (#2255)
 
 **Security:**
 
