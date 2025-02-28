@@ -454,7 +454,7 @@ class BotConfig(BaseModel):
         description="Update packages in `host` that are used for static "
         "linking. For bot to issue update PRs, you must have both an "
         "abstract specification of the library (e.g., `llvmdev 15.0.*`) "
-        "and a concrete specificatoon (e.g., `llvmdev 15.0.7 *_5`). The "
+        "and a concrete specification (e.g., `llvmdev 15.0.7 *_5`). The "
         "bot will find the latest package that satisfies the abstract "
         "specification and update the concrete specification to this "
         "latest package.",
