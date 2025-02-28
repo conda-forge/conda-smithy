@@ -2268,7 +2268,7 @@ def render_pixi(jinja_env, forge_config, forge_dir):
         **forge_config,
     )
     with write_file(target_fname) as fh:
-        fh.write(new_file_contents)
+        fh.write(new_file_contents.rstrip() + "\n")
 
 
 def copy_feedstock_content(forge_config, forge_dir):
