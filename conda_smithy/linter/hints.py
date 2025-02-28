@@ -73,7 +73,7 @@ def hint_suggest_noarch(
                 build_reqs, raw_requirements_section, hints
             )
         else:
-            with open(recipe_fname) as fh:
+            with open(recipe_fname, encoding="utf-8") as fh:
                 in_runreqs = False
                 no_arch_possible = True
                 for line in fh:
@@ -103,7 +103,7 @@ def hint_shellcheck_usage(recipe_dir, hints):
         shell_scripts = glob(os.path.join(recipe_dir, "*.sh"))
         forge_yaml = find_local_config_file(recipe_dir, "conda-forge.yml")
         if shell_scripts and forge_yaml:
-            with open(forge_yaml) as fh:
+            with open(forge_yaml, encoding="utf-8") as fh:
                 code = get_yaml().load(fh)
                 shellcheck_enabled = code.get("shellcheck", {}).get(
                     "enabled", shellcheck_enabled
@@ -181,11 +181,15 @@ def hint_check_spdx(about_section, hints):
         if not licenseref_regex.match(license):
             filtered_licenses.append(license)
 
-    with open(os.path.join(os.path.dirname(__file__), "licenses.txt")) as f:
+    with open(
+        os.path.join(os.path.dirname(__file__), "licenses.txt"),
+        encoding="utf-8",
+    ) as f:
         expected_licenses = f.readlines()
         expected_licenses = {li.strip() for li in expected_licenses}
     with open(
-        os.path.join(os.path.dirname(__file__), "license_exceptions.txt")
+        os.path.join(os.path.dirname(__file__), "license_exceptions.txt"),
+        encoding="utf-8",
     ) as f:
         expected_exceptions = f.readlines()
         expected_exceptions = {li.strip() for li in expected_exceptions}

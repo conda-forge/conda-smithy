@@ -449,6 +449,17 @@ class BotConfig(BaseModel):
         description="Bot config for version update PRs",
     )
 
+    update_static_libs: Optional[bool] = Field(
+        default=False,
+        description="Update packages in `host` that are used for static "
+        "linking. For bot to issue update PRs, you must have both an "
+        "abstract specification of the library (e.g., `llvmdev 15.0.*`) "
+        "and a concrete specification (e.g., `llvmdev 15.0.7 *_5`). The "
+        "bot will find the latest package that satisfies the abstract "
+        "specification and update the concrete specification to this "
+        "latest package.",
+    )
+
 
 class CondaBuildConfig(BaseModel):
     model_config: ConfigDict = ConfigDict(extra="allow")
@@ -1381,10 +1392,10 @@ if __name__ == "__main__":
 
     model = ConfigModel()
 
-    with CONDA_FORGE_YAML_SCHEMA_FILE.open(mode="w+") as f:
+    with CONDA_FORGE_YAML_SCHEMA_FILE.open(mode="w+", encoding="utf-8") as f:
         obj = model.model_json_schema()
         f.write(json.dumps(obj, indent=2))
         f.write("\n")
 
-    with CONDA_FORGE_YAML_DEFAULTS_FILE.open(mode="w+") as f:
+    with CONDA_FORGE_YAML_DEFAULTS_FILE.open(mode="w+", encoding="utf-8") as f:
         f.write(yaml.dump(model.model_dump(by_alias=True), indent=2))

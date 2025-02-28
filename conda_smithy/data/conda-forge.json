@@ -334,6 +334,19 @@
             }
           ],
           "description": "Bot config for version update PRs"
+        },
+        "update_static_libs": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": false,
+          "description": "Update packages in `host` that are used for static linking. For bot to issue update PRs, you must have both an abstract specification of the library (e.g., `llvmdev 15.0.*`) and a concrete specification (e.g., `llvmdev 15.0.7 *_5`). The bot will find the latest package that satisfies the abstract specification and update the concrete specification to this latest package.",
+          "title": "Update Static Libs"
         }
       },
       "title": "BotConfig",
@@ -825,6 +838,7 @@
       "type": "string"
     },
     "Nullable": {
+      "const": null,
       "description": "Created to avoid issue with schema validation of null values in lists or dicts.",
       "enum": [
         null
@@ -1973,7 +1987,7 @@
           "type": "null"
         }
       ],
-      "description": "The `provider` field is a mapping from build platform (not target platform)\nto CI service. It determines which service handles each build platform.\nIf a desired build platform is not available with a selected provider\n(either natively or with emulation), the build will be disabled.\nUse the `build_platform` field to manually specify cross-compilation when\nno providers offer a desired build platform.\n\nThe following are available as supported build platforms:\n\n* `linux_64`\n* `osx_64`\n* `win_64`\n* `linux_aarch64`\n* `linux_ppc64le`\n* `linux_s390x`\n* `linux_armv7l`\n\nThe following CI services are available:\n\n* `azure`\n* `circle`\n* `travis`\n* `appveyor`\n* `None` or `False` to disable a build platform.\n* `default` to choose an appropriate CI (only if available)\n* `native` to choose an appropriate CI for native compiling (only if available)\n* `emulated` to choose an appropriate CI for compiling inside an emulation\n  of the target platform (only if available)\n\nFor example, switching linux_64 & osx_64 to build on Travis CI, with win_64 on\nAppveyor:\n\n```yaml\nprovider:\n    linux_64: travis\n    osx_64: travis\n    win_64: appveyor\n```\n\nCurrently, x86_64 platforms are enabled, but other build platforms are\ndisabled by default. i.e. an empty provider entry is equivalent to the\nfollowing:\n\n```yaml\nprovider:\n    linux_64: azure\n    osx_64: azure\n    win_64: azure\n    linux_ppc64le: None\n    linux_aarch64: None\n```\n\nTo enable `linux_ppc64le` and `linux_aarch64` add the following:\n\n```yaml\nprovider:\n    linux_ppc64le: default\n    linux_aarch64: default\n```"
+      "description": "The `provider` field is a mapping from build platform (not target platform)\nto CI service. It determines which service handles each build platform.\nIf a desired build platform is not available with a selected provider\n(either natively or with emulation), the build will be disabled.\nUse the `build_platform` field to manually specify cross-compilation when\nno providers offer a desired build platform.\n\nThe following are available as supported build platforms:\n\n* `linux_64`\n* `osx_64`\n* `win_64`\n* `linux_aarch64`\n* `linux_ppc64le`\n* `linux_s390x`\n* `linux_armv7l`\n\nThe following CI services are available:\n\n* `azure`\n* `circle`\n* `travis`\n* `appveyor`\n* `None` or `False` to disable a build platform.\n* `default` to choose an appropriate CI (only if available)\n* `native` to choose an appropriate CI for native compiling (only if available)\n* `emulated` to choose an appropriate CI for compiling inside an emulation\n  of the target platform (only if available)\n\nFor example, making explicit that linux_64 & osx_64 build on azure (by default),\nand switching win_64 to Appveyor:\n\n```yaml\nprovider:\n    linux_64: azure\n    osx_64: azure\n    win_64: appveyor\n```\n\nCurrently, x86_64 platforms are enabled, but other build platforms are\ndisabled by default. i.e. an empty provider entry is equivalent to the\nfollowing:\n\n```yaml\nprovider:\n    linux_64: azure\n    osx_64: azure\n    win_64: azure\n    linux_ppc64le: None\n    linux_aarch64: None\n```\n\nTo enable `linux_ppc64le` and `linux_aarch64` add the following:\n\n```yaml\nprovider:\n    linux_ppc64le: default\n    linux_aarch64: default\n```"
     },
     "package": {
       "anyOf": [

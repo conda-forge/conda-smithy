@@ -257,6 +257,7 @@ def feedstocks_yaml(
                         os.path.join(
                             feedstock.directory, "recipe", "meta.yaml"
                         ),
+                        encoding="utf-8",
                     ) as fh:
                         content = "".join(fh.readlines())
                 else:

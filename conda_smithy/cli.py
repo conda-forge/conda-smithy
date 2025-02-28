@@ -70,12 +70,12 @@ def generate_feedstock_content(
             os.path.join(target_recipe_dir, "conda-forge.yml")
         )
         try:
-            with open(forge_yml_recipe) as fp:
+            with open(forge_yml_recipe, encoding="utf-8") as fp:
                 _cfg = yaml.load(fp.read())
         except Exception:
             _cfg = {}
 
-        with open(forge_yml) as fp:
+        with open(forge_yml, encoding="utf-8") as fp:
             _cfg_feedstock = yaml.load(fp.read())
             merge_dict(_cfg, _cfg_feedstock)
         with feedstock_io.write_file(forge_yml) as fp:
