@@ -8,7 +8,7 @@ version = "{{ smithy_version }}"
 description = "Pixi configuration for conda-forge/{{ feedstock_name }}"
 authors = ["@conda-forge/{{ feedstock_name[:-10] }}"]
 channels = ["conda-forge"]
-platforms = {{ platforms }}
+platforms = {{ platforms|tojson }}
 
 [dependencies]
 {%- for spec_name, spec_constraints in build_tool_deps_dict|dictsort %}
