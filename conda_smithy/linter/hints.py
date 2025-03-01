@@ -388,7 +388,7 @@ def hint_space_separated_specs(
         ]
         if bad_specs:
             report.setdefault("top-level", {})[req_type] = bad_specs
-    for output in outputs_section:
+    for i, output in enumerate(outputs_section):
         requirements_section = output.get("requirements") or {}
         if not hasattr(requirements_section, "items"):
             # not a dict, but a list (CB2 style)
@@ -403,7 +403,9 @@ def hint_space_separated_specs(
                 req for req in reqs if not _ensure_spec_space_separated(req)
             ]
             if bad_specs:
-                report.setdefault(output, {})[req_type] = bad_specs
+                report.setdefault(output.get("name", f"output {i}"), {})[
+                    req_type
+                ] = bad_specs
 
     lines = []
     for output, requirements in report.items():
