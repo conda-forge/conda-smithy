@@ -33,7 +33,6 @@ dependencies:
   - libarchive
   - cirun >=0.30
   - pydantic >=2,<3
-  - orjson
   - jsonschema
   - backports.strenum
   - exceptiongroup

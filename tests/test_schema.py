@@ -1,6 +1,6 @@
 import json
 
-from conda_smithy.schema import ConfigModel, Url
+from conda_smithy.schema import ConfigModel
 from conda_smithy.validate_schema import (
     CONDA_FORGE_YAML_SCHEMA_FILE,
     validate_json_schema,
@@ -10,16 +10,8 @@ from conda_smithy.validate_schema import (
 def test_schema_up_to_date():
     model = ConfigModel()
 
-    def json_dumps_default(o):
-        if isinstance(o, Url):
-            return str(o)
-        raise TypeError
-
     json_blob_from_model = (
-        json.dumps(
-            model.model_json_schema(), indent=2, default=json_dumps_default
-        )
-        + "\n"
+        json.dumps(model.model_json_schema(), indent=2) + "\n"
     )
     assert CONDA_FORGE_YAML_SCHEMA_FILE.exists(), (
         "The config schema file does not exist. "

@@ -1,14 +1,14 @@
 # This model is also used for generating and automatic documentation for the conda-forge.yml file.
 # For an upstream preview of the documentation, see https://conda-forge.org/docs/maintainer/conda_forge_yml.
 
+import json
 from enum import Enum
 from inspect import cleandoc
 from typing import Any, Literal, Optional, Union
 
-import orjson
 import yaml
 from conda.base.constants import KNOWN_SUBDIRS
-from pydantic import BaseModel, ConfigDict, Field, HttpUrl, create_model
+from pydantic import BaseModel, ConfigDict, Field, create_model
 
 try:
     from enum import StrEnum
@@ -320,10 +320,6 @@ class GithubActionsConfig(BaseModel):
     )
 
 
-class Url(HttpUrl):
-    pass
-
-
 class BotConfig(BaseModel):
     """
     This dictates the behavior of the conda-forge auto-tick bot which issues
@@ -332,9 +328,7 @@ class BotConfig(BaseModel):
 
     class Config:
         json_schema_extra = {
-            "$ref": Url(
-                "https://raw.githubusercontent.com/regro/cf-scripts/refs/heads/main/conda_forge_tick/cf_tick_schema.json"
-            )
+            "$ref": "https://raw.githubusercontent.com/regro/cf-scripts/refs/heads/main/conda_forge_tick/cf_tick_schema.json"
         }
 
 
@@ -1269,19 +1263,9 @@ if __name__ == "__main__":
 
     model = ConfigModel()
 
-    def json_dumps_default(o):
-        if isinstance(o, Url):
-            return str(o)
-        raise TypeError
-
     with CONDA_FORGE_YAML_SCHEMA_FILE.open(mode="w+") as f:
         obj = model.model_json_schema()
-
-        f.write(
-            orjson.dumps(
-                obj, default=json_dumps_default, option=orjson.OPT_INDENT_2
-            ).decode("utf-8")
-        )
+        f.write(json.dumps(obj, indent=2))
         f.write("\n")
 
     with CONDA_FORGE_YAML_DEFAULTS_FILE.open(mode="w+", encoding="utf-8") as f:
