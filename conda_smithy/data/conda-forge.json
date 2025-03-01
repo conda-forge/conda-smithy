@@ -253,21 +253,7 @@
     "BotConfig": {
       "$ref": "https://raw.githubusercontent.com/regro/cf-scripts/refs/heads/bot-schema/conda_forge_tick/cf_tick_schema.json",
       "description": "This dictates the behavior of the conda-forge auto-tick bot which issues\nautomatic version updates/migrations for feedstocks.",
-      "properties": {
-        "update_static_libs": {
-          "anyOf": [
-            {
-              "type": "boolean"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": false,
-          "description": "Update packages in `host` that are used for static linking. For bot to issue update PRs, you must have both an abstract specification of the library (e.g., `llvmdev 15.0.*`) and a concrete specification (e.g., `llvmdev 15.0.7 *_5`). The bot will find the latest package that satisfies the abstract specification and update the concrete specification to this latest package.",
-          "title": "Update Static Libs"
-        }
-      },
+      "properties": {},
       "title": "BotConfig",
       "type": "object"
     },

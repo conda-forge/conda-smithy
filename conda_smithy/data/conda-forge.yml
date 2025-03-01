@@ -34,8 +34,7 @@ azure:
   store_build_artifacts: false
   timeout_minutes: null
   upload_packages: true
-bot:
-  update_static_libs: false
+bot: {}
 build_platform:
   emscripten_wasm32: emscripten_wasm32
   freebsd_64: freebsd_64
