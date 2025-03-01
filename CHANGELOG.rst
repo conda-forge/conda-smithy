@@ -4,6 +4,25 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.46.1
+====================
+
+**Changed:**
+
+* Ensure newline at the end of ``pixi.toml``. (#2256)
+* Use double quotes in ``platforms`` list in ``pixi.toml`` (like in the rest of the file). (#2256)
+
+**Fixed:**
+
+* Fixed bug in hinting for space-separated specs in recipes with outputs. (#2258)
+
+**Authors:**
+
+* Matthew R. Becker
+* Bas Nijholt
+
+
+
 v3.46.0
 ====================
 
