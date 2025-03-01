@@ -333,7 +333,7 @@ class BotConfig(BaseModel):
     class Config:
         json_schema_extra = {
             "$ref": Url(
-                "https://gist.githubusercontent.com/isuruf/7fbc5a6d53e6a3f5450b90a12c1ace5a/raw/ddb6054c8683ac302a567bd8b42e792a8d4bda30/conda-forge-bot-config.json"
+                "https://raw.githubusercontent.com/regro/cf-scripts/refs/heads/bot-schema/conda_forge_tick/cf_tick_schema.json"
             )
         }
 
