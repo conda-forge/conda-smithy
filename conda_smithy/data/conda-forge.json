@@ -251,7 +251,7 @@
       "type": "object"
     },
     "BotConfig": {
-      "$ref": "https://raw.githubusercontent.com/regro/cf-scripts/refs/heads/bot-schema/conda_forge_tick/cf_tick_schema.json",
+      "$ref": "https://raw.githubusercontent.com/regro/cf-scripts/refs/heads/main/conda_forge_tick/cf_tick_schema.json",
       "description": "This dictates the behavior of the conda-forge auto-tick bot which issues\nautomatic version updates/migrations for feedstocks.",
       "properties": {},
       "title": "BotConfig",
