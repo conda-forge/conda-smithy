@@ -261,7 +261,7 @@ def _hint_noarch_python_use_python_min_inner(
         for section_name, syntax, report_syntax, reqs in [
             (
                 "host",
-                r"python\s+{{ python_min }}",
+                r"python\s+=?=?{{ python_min }}",
                 "python {{ python_min }}",
                 host_reqs,
             ),
@@ -273,7 +273,7 @@ def _hint_noarch_python_use_python_min_inner(
             ),
             (
                 "test.requires",
-                r"python\s+{{ python_min }}",
+                r"python\s+=?=?{{ python_min }}",
                 "python {{ python_min }}",
                 test_reqs,
             ),
@@ -388,7 +388,7 @@ def hint_space_separated_specs(
         ]
         if bad_specs:
             report.setdefault("top-level", {})[req_type] = bad_specs
-    for output in outputs_section:
+    for i, output in enumerate(outputs_section):
         requirements_section = output.get("requirements") or {}
         if not hasattr(requirements_section, "items"):
             # not a dict, but a list (CB2 style)
@@ -403,7 +403,9 @@ def hint_space_separated_specs(
                 req for req in reqs if not _ensure_spec_space_separated(req)
             ]
             if bad_specs:
-                report.setdefault(output, {})[req_type] = bad_specs
+                report.setdefault(output.get("name", f"output {i}"), {})[
+                    req_type
+                ] = bad_specs
 
     lines = []
     for output, requirements in report.items():

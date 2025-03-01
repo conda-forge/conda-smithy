@@ -24,8 +24,8 @@ Uwe L. Korn <uwe.korn@quantco.com> Uwe L. Korn <xhochy@users.noreply.github.com>
 Filipe Fernandes <ocefpaf@gmail.com> Filipe <ocefpaf@gmail.com>
 Filipe Fernandes <ocefpaf@gmail.com> ocefpaf <ocefpaf@gmail.com>
 Min RK <benjaminrk@gmail.com>
-Dougal J. Sutherland <dougal@gmail.com>
 pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>
+Dougal J. Sutherland <dougal@gmail.com>
 Amit Kumar <dtu.amit@gmail.com>
 Marcel Bargull <marcel.bargull@udo.edu> Marcel Bargull <mbargull@users.noreply.github.com>
 Hadrien Mary <hadrien.mary@gmail.com> Hadrien Mary <hadim@users.noreply.github.com>
@@ -35,11 +35,11 @@ shadow_walker <shadowwalkersb@gmail.com>
 Michael Sarahan <msarahan@gmail.com> Mike Sarahan <msarahan@gmail.com>
 Mark Harfouche <mark.harfouche@gmail.com>
 Bastian Zimmermann <10774221+BastianZim@users.noreply.github.com> BastianZim <10774221+BastianZim@users.noreply.github.com>
+Michał Górny <mgorny@gentoo.org>
 Leo Fang <leofang@bnl.gov> Leo Fang <leo80042@gmail.com>
 Leo Fang <leofang@bnl.gov> Leo Fang <leof@nvidia.com>
 Ryan Volz <rvolz@mit.edu> Ryan Volz <ryan.volz@gmail.com>
 Johnny Willemsen <jwillemsen@remedy.nl>
-Michał Górny <mgorny@gentoo.org>
 Chris Burr <christopher.burr@cern.ch> Chris Burr <chrisburr@users.noreply.github.com>
 Julian Rüth <julian.rueth@fsfe.org>
 Yannik Tausch <yannik.tausch@quantco.com>
@@ -67,11 +67,11 @@ refraction-ray <kcanamgal@foxmail.com>
 Leopold Talirz <leopold.talirz@gmail.com>
 Peter Williams <peter@newton.cx>
 Tom Pollard <tom.pollard@codethink.co.uk>
+dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
 Gonzalo Pena-Castellanos <goanpeca@gmail.com>
 John Blischak <jdblischak@gmail.com>
 Matthias Diener <mdiener@illinois.edu>
 Antonio S. Cofiño <cofinoa@gmail.com>
-dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
 Carlo <carlo.dri@gmail.com> Carlo <carlodri@users.noreply.github.com>
 Matthew Craig <mattwcraig@gmail.com> Matt Craig <mattwcraig@gmail.com>
 Joshua L. Adelman <joshua.adelman@gmail.com>
@@ -91,6 +91,7 @@ Patrick Sodré <sodre@sodre.co>
 David Hirschfeld <david.hirschfeld@stanwell.com>
 Finn Womack <finnwomack@microsoft.com> Finn Womack <flan313@gmail.com>
 M Bussonnier <bussonniermatthias@gmail.com>
+Pavel Zwerschke <pavelzw@gmail.com>
 Josh Barnes <joshuacookebarnes@gmail.com>
 Tobias Megies <megies@users.noreply.github.com>
 Jonathan Helmus <jjhelmus@gmail.com>
@@ -122,7 +123,6 @@ Klaus Zimmermann <klaus.zimmermann@smhi.se>
 Dominic Davis-Foster <dominic@davis-foster.co.uk>
 Anton Tetov <anton@tetov.se>
 Brandon Maier <brandon.maier@gmail.com>
-Pavel Zwerschke <pavelzw@gmail.com>
 lorenz <looooo@users.noreply.github.com>
 Tom Augspurger <tom.augspurger88@gmail.com>
 Ryan May <rmay31@gmail.com>
@@ -153,3 +153,4 @@ Ralf Gommers <ralf.gommers@gmail.com>
 Matt Chan <49702524+thewchan@users.noreply.github.com>
 Will Shanks <wshaos@posteo.net>
 Ken Odegard <kodegard@anaconda.com>
+Bas Nijholt <basnijholt@gmail.com>
