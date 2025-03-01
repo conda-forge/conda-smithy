@@ -393,7 +393,7 @@
   github: shadowwalkersb
 - name: Matthew R. Becker
   email: becker.mr@gmail.com
-  num_commits: 458
+  num_commits: 461
   first_commit: 2020-01-07 17:44:33
   github: beckermr
   alternate_emails:
@@ -708,3 +708,7 @@
   email: pavelzw@gmail.com
   num_commits: 4
   first_commit: 2025-01-17 04:44:50
+- name: Bas Nijholt
+  email: basnijholt@gmail.com
+  num_commits: 1
+  first_commit: 2025-02-28 14:24:57

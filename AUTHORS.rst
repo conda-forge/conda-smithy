@@ -135,3 +135,4 @@ Authors are sorted by number of commits.
 * Matt Chan
 * Will Shanks
 * Ken Odegard
+* Bas Nijholt
