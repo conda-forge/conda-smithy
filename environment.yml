@@ -21,6 +21,7 @@ dependencies:
   - jinja2
   - requests
   - pycryptodome
+  - referencing
   - pygit2
   - pygithub >=2,<3
   - ruamel.yaml
