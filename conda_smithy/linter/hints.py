@@ -415,8 +415,9 @@ def hint_space_separated_specs(
             lines.append(f"- In section {req_type}: {', '.join(specs)}")
     if lines:
         lines.append(
-            "Requirements spec fields should always be space-separated to avoid known issues in "
-            "conda-build. For example, instead of `name =version=build`, use `name version build`."
+            "Requirement spec fields should always be space-separated to avoid known issues in "
+            "conda-build. For example, instead of `name =version=build`, use `name version.* "
+            "build`."
         )
         hints.append("\n".join(lines))
 
