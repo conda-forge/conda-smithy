@@ -444,6 +444,10 @@ def lint_single_space_in_pinned_requirements(
             and requirements
         ):
             requirements = requirements[0].get("from_package", [])
+        if recipe_version == 1 and section == "run_exports":
+            # v1 recipes have more sections under 'requirements' than v0
+            # and rattler_build_conda_compat doesn't return the right structure for run_exports
+            continue
 
         # we can have `if` statements in the v1 requirements and we need to
         # flatten them
