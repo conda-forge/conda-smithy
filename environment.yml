@@ -14,6 +14,7 @@ dependencies:
   - mock
   - pytest
   - pytest-cov
+  - inline-snapshot
   # Runtime dependencies
   - conda >=4.2
   - conda-build >=24.3
