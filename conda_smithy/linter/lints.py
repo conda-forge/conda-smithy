@@ -363,7 +363,7 @@ def lint_noarch_and_runtime_dependencies(
         noarch_platforms = len(forge_yaml.get("noarch_platforms", [])) > 1
         with open(meta_fname, encoding="utf-8") as fh:
             in_runreqs = False
-            for line in fh:
+            for line_number, line in enumerate(fh):
                 line_s = line.strip()
                 if line_s == "host:" or line_s == "run:":
                     in_runreqs = True
@@ -373,7 +373,7 @@ def lint_noarch_and_runtime_dependencies(
                     lints.append(
                         "`noarch` packages can't have skips with selectors. If "
                         "the selectors are necessary, please remove "
-                        f"`noarch: {noarch_value}`."
+                        f"`noarch: {noarch_value}` on line {line_number}."
                     )
                     break
                 if in_runreqs:
@@ -388,7 +388,7 @@ def lint_noarch_and_runtime_dependencies(
                         lints.append(
                             "`noarch` packages can't have selectors. If "
                             "the selectors are necessary, please remove "
-                            f"`noarch: {noarch_value}`."
+                            f"`noarch: {noarch_value}` on line {line_number}."
                         )
                         break
 
