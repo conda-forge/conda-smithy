@@ -1,6 +1,6 @@
 **Added:**
 
-* Added a lint for feedstocks using obsolete ``os_version``. (#2270)
+* Added a hint for feedstocks using obsolete ``os_version``. (#2270)
 
 **Changed:**
 
