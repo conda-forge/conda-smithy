@@ -8,7 +8,7 @@ from glob import glob
 from inspect import cleandoc
 from pathlib import Path
 from textwrap import indent
-from typing import Any, Optional
+from typing import Any
 
 import github
 import github.Auth
@@ -85,7 +85,7 @@ from conda_smithy.validate_schema import validate_json_schema
 NEEDED_FAMILIES = ["gpl", "bsd", "mit", "apache", "psf"]
 
 
-def _get_forge_yaml(recipe_dir: Optional[str] = None) -> dict:
+def _get_forge_yaml(recipe_dir: str | None = None) -> dict:
     if recipe_dir:
         forge_yaml_filename = (
             glob(os.path.join(recipe_dir, "..", "conda-forge.yml"))
@@ -107,7 +107,7 @@ def _get_forge_yaml(recipe_dir: Optional[str] = None) -> dict:
     return forge_yaml
 
 
-def lintify_forge_yaml(recipe_dir: Optional[str] = None) -> (list, list):
+def lintify_forge_yaml(recipe_dir: str | None = None) -> (list, list):
     forge_yaml = _get_forge_yaml(recipe_dir)
     # This is where we validate against the jsonschema and execute our custom validators.
     return validate_json_schema(forge_yaml)
@@ -115,7 +115,7 @@ def lintify_forge_yaml(recipe_dir: Optional[str] = None) -> (list, list):
 
 def lintify_meta_yaml(
     meta: Any,
-    recipe_dir: Optional[str] = None,
+    recipe_dir: str | None = None,
     conda_forge: bool = False,
     recipe_version: int = 0,
 ) -> tuple[list[str], list[str]]:
@@ -729,7 +729,7 @@ def _format_validation_msg(error: jsonschema.ValidationError):
 
 def find_recipe_directory(
     recipe_dir: str,
-    feedstock_dir: Optional[str],
+    feedstock_dir: str | None,
 ) -> tuple[str, str]:
     """Find recipe directory and build tool"""
 
