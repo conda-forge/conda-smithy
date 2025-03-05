@@ -442,3 +442,22 @@ def _ensure_spec_space_separated(spec: str) -> bool:
         # 3 = name, version and build.
         return True
     return False
+
+
+def hint_os_version(
+    forge_yaml: dict[str, Any],
+    hints: list[str],
+) -> None:
+    default_os_version = "alma9"
+    obsolete_os_versions = ("cos7", "alma8")
+    matches = {
+        k: v
+        for k, v in forge_yaml.get("os_version", {}).items()
+        if v in obsolete_os_versions
+    }
+    if matches:
+        hints.append(
+            f"The feedstock is lowering the image versions for one or more platforms: {matches} "
+            f"(the default is {default_os_version}). Unless you are in the very rare case of repackaging binary"
+            "artifacts, consider removing these overrides from conda-forge.yml in the top feedstock directory."
+        )
