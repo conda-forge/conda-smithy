@@ -24,6 +24,7 @@ _thisdir = os.path.abspath(os.path.dirname(__file__))
 
 try:
     import conda_recipe_manager.parser.recipe_parser
+
     has_conda_recipe_manager = True
 except ImportError:
     has_conda_recipe_manager = False

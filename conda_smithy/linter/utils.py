@@ -6,7 +6,6 @@ import time
 from collections.abc import Mapping, Sequence
 from functools import lru_cache
 from glob import glob
-from typing import Optional, Union
 
 import requests
 from conda.models.version import InvalidVersionSpec, VersionOrder
@@ -99,7 +98,7 @@ def get_meta_section(parent, name, lints):
     return section
 
 
-def get_recipe_v1_section(meta, name) -> Union[dict, list[dict]]:
+def get_recipe_v1_section(meta, name) -> dict | list[dict]:
     if name == "requirements":
         return rattler_loader.load_all_requirements(meta)
     elif name == "tests":
@@ -128,7 +127,7 @@ def get_list_section(parent, name, lints, allow_single=False):
         return [{}]
 
 
-def find_local_config_file(recipe_dir: str, filename: str) -> Optional[str]:
+def find_local_config_file(recipe_dir: str, filename: str) -> str | None:
     # support
     # 1. feedstocks
     # 2. staged-recipes with custom conda-forge.yaml in recipe
@@ -195,7 +194,7 @@ def jinja_lines(lines):
             yield line, i
 
 
-def _lint_recipe_name(recipe_name: str) -> Optional[str]:
+def _lint_recipe_name(recipe_name: str) -> str | None:
     wrong_recipe_name = "Recipe name has invalid characters. only lowercase alpha, numeric, underscores, hyphens and dots allowed"
 
     if re.match(r"^[a-z0-9_\-.]+$", recipe_name) is None:
@@ -204,7 +203,7 @@ def _lint_recipe_name(recipe_name: str) -> Optional[str]:
     return None
 
 
-def _lint_package_version(version: Optional[str]) -> Optional[str]:
+def _lint_package_version(version: str | None) -> str | None:
     no_package_version = "Package version is missing."
     invalid_version = "Package version {ver} doesn't match conda spec: {err}"
 

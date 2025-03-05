@@ -14,7 +14,7 @@ https://github.com/conda-forge/conda-forge-enhancement-proposals/pull/13
 """
 
 from functools import partial
-from typing import Any, Optional, Union
+from typing import Any
 
 import conda_build.variants as variants
 import tlz
@@ -25,16 +25,10 @@ from conda_build.utils import ensure_list
 
 
 def parse_variant(
-    variant_file_content: str, config: Optional[Config] = None
+    variant_file_content: str, config: Config | None = None
 ) -> dict[
     str,
-    Union[
-        list[str],
-        float,
-        list[list[str]],
-        dict[str, dict[str, str]],
-        dict[str, dict[str, list[str]]],
-    ],
+    list[str] | float | list[list[str]] | dict[str, dict[str, str]] | dict[str, dict[str, list[str]]],
 ]:
     """
     Parameters
@@ -59,8 +53,8 @@ def parse_variant(
 
 
 def _version_order(
-    v: Union[str, float], ordering: Optional[list[str]] = None
-) -> Union[int, VersionOrder, float]:
+    v: str | float, ordering: list[str] | None = None
+) -> int | VersionOrder | float:
     if ordering is not None:
         return ordering.index(v)
     else:
@@ -74,10 +68,10 @@ def _version_order(
 
 def variant_key_add(
     k: str,
-    v_left: Union[list[str], list[float]],
-    v_right: Union[list[str], list[float]],
-    ordering: Optional[list[str]] = None,
-) -> Union[list[str], list[float]]:
+    v_left: list[str] | list[float],
+    v_right: list[str] | list[float],
+    ordering: list[str] | None = None,
+) -> list[str] | list[float]:
     """Version summation adder.
 
     This takes the higher version of the two things.
