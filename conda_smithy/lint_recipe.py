@@ -50,6 +50,7 @@ from conda_smithy.linter.lints import (
     lint_noarch,
     lint_noarch_and_runtime_dependencies,
     lint_non_noarch_builds,
+    lint_os_version,
     lint_package_version,
     lint_pin_subpackages,
     lint_recipe_have_tests,
@@ -372,6 +373,9 @@ def lintify_meta_yaml(
     lint_go_licenses_are_bundled(
         build_requirements, lints, recipe_version=recipe_version
     )
+
+    # 30. Check for obsolete os_version
+    lint_os_version(forge_yaml, lints)
 
     # hints
     # 1: suggest pip
