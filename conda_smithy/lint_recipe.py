@@ -423,7 +423,8 @@ def lintify_meta_yaml(
         )
 
     # 8. check for obsolete os_version
-    hint_os_version(forge_yaml, hints)
+    if "hint_os_version" not in lints_to_skip:
+        hint_os_version(forge_yaml, hints)
 
     return lints, hints
 
