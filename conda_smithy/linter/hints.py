@@ -73,7 +73,7 @@ def hint_suggest_noarch(
                 build_reqs, raw_requirements_section, hints
             )
         else:
-            with open(recipe_fname) as fh:
+            with open(recipe_fname, encoding="utf-8") as fh:
                 in_runreqs = False
                 no_arch_possible = True
                 for line in fh:
@@ -103,7 +103,7 @@ def hint_shellcheck_usage(recipe_dir, hints):
         shell_scripts = glob(os.path.join(recipe_dir, "*.sh"))
         forge_yaml = find_local_config_file(recipe_dir, "conda-forge.yml")
         if shell_scripts and forge_yaml:
-            with open(forge_yaml) as fh:
+            with open(forge_yaml, encoding="utf-8") as fh:
                 code = get_yaml().load(fh)
                 shellcheck_enabled = code.get("shellcheck", {}).get(
                     "enabled", shellcheck_enabled
@@ -181,11 +181,15 @@ def hint_check_spdx(about_section, hints):
         if not licenseref_regex.match(license):
             filtered_licenses.append(license)
 
-    with open(os.path.join(os.path.dirname(__file__), "licenses.txt")) as f:
+    with open(
+        os.path.join(os.path.dirname(__file__), "licenses.txt"),
+        encoding="utf-8",
+    ) as f:
         expected_licenses = f.readlines()
         expected_licenses = {li.strip() for li in expected_licenses}
     with open(
-        os.path.join(os.path.dirname(__file__), "license_exceptions.txt")
+        os.path.join(os.path.dirname(__file__), "license_exceptions.txt"),
+        encoding="utf-8",
     ) as f:
         expected_exceptions = f.readlines()
         expected_exceptions = {li.strip() for li in expected_exceptions}
@@ -257,7 +261,7 @@ def _hint_noarch_python_use_python_min_inner(
         for section_name, syntax, report_syntax, reqs in [
             (
                 "host",
-                r"python\s+{{ python_min }}",
+                r"python\s+=?=?{{ python_min }}",
                 "python {{ python_min }}",
                 host_reqs,
             ),
@@ -269,7 +273,7 @@ def _hint_noarch_python_use_python_min_inner(
             ),
             (
                 "test.requires",
-                r"python\s+{{ python_min }}",
+                r"python\s+=?=?{{ python_min }}",
                 "python {{ python_min }}",
                 test_reqs,
             ),
@@ -384,7 +388,7 @@ def hint_space_separated_specs(
         ]
         if bad_specs:
             report.setdefault("top-level", {})[req_type] = bad_specs
-    for output in outputs_section:
+    for i, output in enumerate(outputs_section):
         requirements_section = output.get("requirements") or {}
         if not hasattr(requirements_section, "items"):
             # not a dict, but a list (CB2 style)
@@ -399,7 +403,9 @@ def hint_space_separated_specs(
                 req for req in reqs if not _ensure_spec_space_separated(req)
             ]
             if bad_specs:
-                report.setdefault(output, {})[req_type] = bad_specs
+                report.setdefault(output.get("name", f"output {i}"), {})[
+                    req_type
+                ] = bad_specs
 
     lines = []
     for output, requirements in report.items():
@@ -409,8 +415,9 @@ def hint_space_separated_specs(
             lines.append(f"- In section {req_type}: {', '.join(specs)}")
     if lines:
         lines.append(
-            "Requirements spec fields should always be space-separated to avoid known issues in "
-            "conda-build. For example, instead of `name =version=build`, use `name version build`."
+            "Requirement spec fields should always be space-separated to avoid known issues in "
+            "conda-build. For example, instead of `name =version=build`, use `name version.* "
+            "build`."
         )
         hints.append("\n".join(lines))
 

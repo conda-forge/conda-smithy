@@ -77,7 +77,7 @@ def get_feedstock_about_from_meta(meta) -> dict:
         recipe_meta = os.path.join(
             meta.meta["extra"]["parent_recipe"]["path"], "meta.yaml"
         )
-        with open(recipe_meta) as fh:
+        with open(recipe_meta, encoding="utf-8") as fh:
             content = render_meta_yaml("".join(fh))
             meta = get_yaml().load(content)
         return dict(meta["about"])
@@ -179,7 +179,7 @@ def update_conda_forge_config(forge_yaml):
     ...     cfg['foo'] = 'bar'
     """
     if os.path.exists(forge_yaml):
-        with open(forge_yaml) as fh:
+        with open(forge_yaml, encoding="utf-8") as fh:
             code = get_yaml().load(fh)
     else:
         code = {}

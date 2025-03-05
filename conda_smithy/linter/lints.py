@@ -143,7 +143,7 @@ def lint_selectors_should_be_in_tidy_form(recipe_fname, lints, hints):
     # Look out for py27, py35 selectors; we prefer py==35
     python_selectors_pat = re.compile(r".+#\s*\[.*?(py\d{2,3}).*\]")
     if os.path.exists(recipe_fname):
-        with open(recipe_fname) as fh:
+        with open(recipe_fname, encoding="utf-8") as fh:
             for selector_line, line_number in selector_lines(fh):
                 if not good_selectors_pat.match(selector_line):
                     bad_selectors.append(selector_line)
@@ -182,7 +182,7 @@ def lint_selectors_should_be_in_tidy_form(recipe_fname, lints, hints):
 def lint_no_comment_selectors(recipe_fname, lints, hints):
     bad_lines = []
     if os.path.exists(recipe_fname):
-        with open(recipe_fname) as fh:
+        with open(recipe_fname, encoding="utf-8") as fh:
             for selector_line, line_number in selector_lines(
                 fh, only_in_comment=True
             ):
@@ -245,7 +245,7 @@ def lint_license_should_not_have_license(about_section, lints):
 
 def lint_should_be_empty_line(meta_fname, lints):
     if os.path.exists(meta_fname):
-        with open(meta_fname) as f:
+        with open(meta_fname, encoding="utf-8") as f:
             lines = f.read().split("\n")
         # Count the number of empty lines from the end of the file
         empty_lines = itertools.takewhile(lambda x: x == "", reversed(lines))
@@ -361,7 +361,7 @@ def lint_noarch_and_runtime_dependencies(
 ):
     if noarch_value is not None and os.path.exists(meta_fname):
         noarch_platforms = len(forge_yaml.get("noarch_platforms", [])) > 1
-        with open(meta_fname) as fh:
+        with open(meta_fname, encoding="utf-8") as fh:
             in_runreqs = False
             for line in fh:
                 line_s = line.strip()
@@ -408,7 +408,7 @@ def lint_jinja_variables_definitions(meta_fname, lints):
     # Good Jinja2 variable definitions look like "{% set .+ = .+ %}"
     good_jinja_pat = re.compile(r"\s*\{%\s(set)\s[^\s]+\s=\s[^\s]+\s%\}")
     if os.path.exists(meta_fname):
-        with open(meta_fname) as fh:
+        with open(meta_fname, encoding="utf-8") as fh:
             for jinja_line, line_number in jinja_lines(fh):
                 if not good_jinja_pat.match(jinja_line):
                     bad_jinja.append(jinja_line)
@@ -443,7 +443,32 @@ def lint_single_space_in_pinned_requirements(
             and section == "ignore_run_exports"
             and requirements
         ):
-            requirements = requirements[0].get("from_package", [])
+            # v1 ignore_run_exports is a dict, but
+            # rattler-build-conda-compat returns it inside a list
+            # instead of the dict itself
+            # check for this case to protect against rattler-build-conda-compat fixing the bug
+            if isinstance(requirements, list):
+                requirements = requirements[0]
+            requirements = requirements.get("from_package", [])
+        if recipe_version == 1 and section == "run_exports" and requirements:
+            # v1 run_exports may be a list of requirements
+            # or a dict of `weak:, strong:` etc. lists.
+            # The dict case may arrive as a length-1 list containing the dict
+            # this is a bug in rattler-build-conda-compat
+            # handle this case, but make sure it's not
+            # run_exports:
+            #   - if: something
+            #     then: ...
+            # which is _correctly_ a length-1 list containing a dict
+            if (
+                isinstance(requirements, list)
+                and len(requirements) == 1
+                and isinstance(requirements[0], dict)
+                and "if" not in requirements[0]
+            ):
+                requirements = requirements[0]
+            if isinstance(requirements, dict):
+                requirements = list(itertools.chain(*requirements.values()))
 
         # we can have `if` statements in the v1 requirements and we need to
         # flatten them
@@ -552,7 +577,7 @@ def lint_jinja_var_references(meta_fname, hints, recipe_version: int = 0):
         else conda_recipe_v1_linter.JINJA_VAR_PAT
     )
     if os.path.exists(meta_fname):
-        with open(meta_fname) as fh:
+        with open(meta_fname, encoding="utf-8") as fh:
             for i, line in enumerate(fh.readlines()):
                 for m in jinja_pattern.finditer(line):
                     if m.group(1) is not None:
@@ -584,8 +609,9 @@ def lint_require_lower_bound_on_python_version(
             lints.append(
                 "noarch: python recipes are required to have a lower bound "
                 "on the python version. Typically this means putting "
-                "`python >=3.6` in **both** `host` and `run` but you should check "
-                "upstream for the package's Python compatibility."
+                "`python >={{ python_min }}` in the `run` section of your "
+                "recipe. You may also want to check the upstream source "
+                "for the package's Python compatibility."
             )
 
 
@@ -678,7 +704,7 @@ def lint_check_usage_of_whls(meta_fname, noarch_value, lints, hints):
     pure_python_wheel_re = re.compile(r".*[:-]\s+(http.*-none-any\.whl)\s+.*")
     wheel_re = re.compile(r".*[:-]\s+(http.*\.whl)\s+.*")
     if os.path.exists(meta_fname):
-        with open(meta_fname) as f:
+        with open(meta_fname, encoding="utf-8") as f:
             for line in f:
                 if match := pure_python_wheel_re.search(line):
                     pure_python_wheel_urls.append(match.group(1))
@@ -887,7 +913,7 @@ def lint_stdlib(
     else:
         cbc_lines = []
         if conda_build_config_filename:
-            with open(conda_build_config_filename) as fh:
+            with open(conda_build_config_filename, encoding="utf-8") as fh:
                 cbc_lines = fh.readlines()
 
         # filter on osx-relevant lines
@@ -1054,7 +1080,7 @@ def lint_recipe_is_parsable(
         else:
             with tempfile.TemporaryDirectory() as tmpdir:
                 recipe_file = os.path.join(tmpdir, "meta.yaml")
-                with open(recipe_file, "w") as f:
+                with open(recipe_file, "w", encoding="utf-8") as f:
                     f.write(recipe_text)
 
                 try:
