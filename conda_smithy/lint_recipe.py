@@ -27,6 +27,7 @@ from conda_smithy.linter import conda_recipe_v1_linter
 from conda_smithy.linter.hints import (
     hint_check_spdx,
     hint_noarch_python_use_python_min,
+    hint_os_version,
     hint_pip_no_build_backend,
     hint_pip_usage,
     hint_shellcheck_usage,
@@ -50,7 +51,6 @@ from conda_smithy.linter.lints import (
     lint_noarch,
     lint_noarch_and_runtime_dependencies,
     lint_non_noarch_builds,
-    lint_os_version,
     lint_package_version,
     lint_pin_subpackages,
     lint_recipe_have_tests,
@@ -374,9 +374,6 @@ def lintify_meta_yaml(
         build_requirements, lints, recipe_version=recipe_version
     )
 
-    # 30. Check for obsolete os_version
-    lint_os_version(forge_yaml, lints)
-
     # hints
     # 1: suggest pip
     hint_pip_usage(build_section, hints)
@@ -424,6 +421,9 @@ def lintify_meta_yaml(
             outputs_section,
             hints,
         )
+
+    # 8. check for obsolete os_version
+    hint_os_version(forge_yaml, hints)
 
     return lints, hints
 

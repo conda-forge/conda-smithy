@@ -4539,8 +4539,8 @@ def test_cfyml_obsolete_os_version():
                 )
             )
 
-        lints = linter.main(recipe_dir, conda_forge=True)
-        assert any(expected_message in lint for lint in lints)
+        _, hints = linter.main(recipe_dir, conda_forge=True, return_hints=True)
+        assert any(expected_message in hint for hint in hints)
 
 
 if __name__ == "__main__":
