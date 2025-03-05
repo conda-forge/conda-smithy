@@ -4515,9 +4515,7 @@ def test_find_recipe_directory_with_feedstock_dir(
 
 
 def test_cfyml_obsolete_os_version():
-    expected_message = (
-        "The feedstock is lowering the image versions for one or more platforms: {'linux_64': 'cos7'}"
-    )
+    expected_message = "The feedstock is lowering the image versions for one or more platforms: {'linux_64': 'cos7'}"
 
     with tmp_directory() as feedstock_dir:
         cfyml = os.path.join(feedstock_dir, "conda-forge.yml")

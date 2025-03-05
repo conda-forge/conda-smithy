@@ -1166,8 +1166,11 @@ def lint_os_version(
 ) -> None:
     default_os_version = "alma9"
     obsolete_os_versions = ("cos7", "alma8")
-    matches = {k: v for k, v in forge_yaml.get("os_version", {}).items()
-               if v in obsolete_os_versions}
+    matches = {
+        k: v
+        for k, v in forge_yaml.get("os_version", {}).items()
+        if v in obsolete_os_versions
+    }
     if matches:
         lints.append(
             f"The feedstock is lowering the image versions for one or more platforms: {matches} "
