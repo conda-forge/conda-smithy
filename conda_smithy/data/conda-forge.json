@@ -632,6 +632,7 @@
     "Lints": {
       "enum": [
         "lint_noarch_selectors",
+        "hint_os_version",
         "hint_pip_no_build_backend",
         "hint_python_min"
       ],
