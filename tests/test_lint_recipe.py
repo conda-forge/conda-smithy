@@ -1059,7 +1059,7 @@ linter:
                 )
                 self.assertEqual(
                     not is_good,
-                    any(f"or selector on line {line_number}" in lint  for lint in lints),
+                    any(lint.startswith(expected_start) and f"or selector on line {line_number}" in lint for lint in lints),
                 )
 
             assert_noarch_selector(
