@@ -1024,7 +1024,9 @@ class TestLinter(unittest.TestCase):
 
         with tmp_directory() as recipe_dir:
 
-            def assert_noarch_selector(meta_string, line_number=None, is_good=False, skip=False):
+            def assert_noarch_selector(
+                meta_string, line_number=None, is_good=False, skip=False
+            ):
                 with open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
                     fh.write(meta_string)
                 if skip:
@@ -1059,7 +1061,11 @@ linter:
                 )
                 self.assertEqual(
                     not is_good,
-                    any(lint.startswith(expected_start) and f"or selector on line {line_number}" in lint for lint in lints),
+                    any(
+                        lint.startswith(expected_start)
+                        and f"or selector on line {line_number}" in lint
+                        for lint in lints
+                    ),
                 )
 
             assert_noarch_selector(
@@ -1068,7 +1074,7 @@ linter:
                               noarch: python
                               skip: true  # [py2k]
                             """,
-                line_number=4
+                line_number=4,
             )
             assert_noarch_selector(
                 """
@@ -1076,7 +1082,7 @@ linter:
                               noarch: generic
                               skip: true  # [win]
                             """,
-                line_number=4
+                line_number=4,
             )
             assert_noarch_selector(
                 """
@@ -1174,7 +1180,7 @@ linter:
                                   - python
                                   - enum34     # [py2k]
                             """,
-                line_number=7
+                line_number=7,
             )
             assert_noarch_selector(
                 """
@@ -1186,7 +1192,7 @@ linter:
                                 run:
                                   - python
                             """,
-                line_number=6
+                line_number=6,
             )
             assert_noarch_selector(
                 """
@@ -1198,7 +1204,7 @@ linter:
                                 run:
                                   - enum34     # [py2k]
                             """,
-                line_number=8
+                line_number=8,
             )
 
     def test_recipe_v1_noarch_selectors(self):

@@ -361,7 +361,7 @@ def lint_noarch_and_runtime_dependencies(
 ):
     """Lints `noarch` recipes where the meta file exists.
 
-    `noarch` recipes may not have runtime dependencies.  They are checked 
+    `noarch` recipes may not have runtime dependencies.  They are checked
     for skips with selectors, and for packages with selectors.
     """
     if noarch_value is None or not os.path.exists(meta_fname):
