@@ -359,38 +359,46 @@ def lint_recipe_v1_noarch_and_runtime_dependencies(
 def lint_noarch_and_runtime_dependencies(
     noarch_value, meta_fname, forge_yaml, conda_build_config_keys, lints
 ):
-    if noarch_value is not None and os.path.exists(meta_fname):
-        noarch_platforms = len(forge_yaml.get("noarch_platforms", [])) > 1
-        with open(meta_fname, encoding="utf-8") as fh:
-            in_runreqs = False
-            for line in fh:
-                line_s = line.strip()
-                if line_s == "host:" or line_s == "run:":
-                    in_runreqs = True
-                    runreqs_spacing = line[: -len(line.lstrip())]
+    """Lints `noarch` recipes where the meta file exists.
+
+    `noarch` recipes may not have runtime dependencies.  They are checked
+    for skips with selectors, and for packages with selectors.
+    """
+    if noarch_value is None or not os.path.exists(meta_fname):
+        return
+    noarch_platforms = len(forge_yaml.get("noarch_platforms", [])) > 1
+    with open(meta_fname, encoding="utf-8") as fh:
+        in_runreqs = False
+        for line_number, line in enumerate(fh, 1):
+            line_s = line.strip()
+            if line_s == "host:" or line_s == "run:":
+                in_runreqs = True
+                runreqs_spacing = line[: -len(line.lstrip())]
+                continue
+            if line_s.startswith("skip:") and is_selector_line(line):
+                lints.append(
+                    "`noarch` packages can't have skips with selectors. If "
+                    "the selectors are necessary, please remove "
+                    f"`noarch: {noarch_value}`, or selector on line {line_number}:"
+                    f"\n{line}"
+                )
+                break
+            if in_runreqs:
+                if runreqs_spacing == line[: -len(line.lstrip())]:
+                    in_runreqs = False
                     continue
-                if line_s.startswith("skip:") and is_selector_line(line):
+                if is_selector_line(
+                    line,
+                    allow_platforms=noarch_platforms,
+                    allow_keys=conda_build_config_keys,
+                ):
                     lints.append(
-                        "`noarch` packages can't have skips with selectors. If "
+                        "`noarch` packages can't have selectors. If "
                         "the selectors are necessary, please remove "
-                        f"`noarch: {noarch_value}`."
+                        f"`noarch: {noarch_value}`, or selector on line {line_number}:"
+                        f"\n{line}"
                     )
                     break
-                if in_runreqs:
-                    if runreqs_spacing == line[: -len(line.lstrip())]:
-                        in_runreqs = False
-                        continue
-                    if is_selector_line(
-                        line,
-                        allow_platforms=noarch_platforms,
-                        allow_keys=conda_build_config_keys,
-                    ):
-                        lints.append(
-                            "`noarch` packages can't have selectors. If "
-                            "the selectors are necessary, please remove "
-                            f"`noarch: {noarch_value}`."
-                        )
-                        break
 
 
 def lint_package_version(package_section, lints):
