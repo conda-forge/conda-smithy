@@ -451,7 +451,32 @@ def lint_single_space_in_pinned_requirements(
             and section == "ignore_run_exports"
             and requirements
         ):
-            requirements = requirements[0].get("from_package", [])
+            # v1 ignore_run_exports is a dict, but
+            # rattler-build-conda-compat returns it inside a list
+            # instead of the dict itself
+            # check for this case to protect against rattler-build-conda-compat fixing the bug
+            if isinstance(requirements, list):
+                requirements = requirements[0]
+            requirements = requirements.get("from_package", [])
+        if recipe_version == 1 and section == "run_exports" and requirements:
+            # v1 run_exports may be a list of requirements
+            # or a dict of `weak:, strong:` etc. lists.
+            # The dict case may arrive as a length-1 list containing the dict
+            # this is a bug in rattler-build-conda-compat
+            # handle this case, but make sure it's not
+            # run_exports:
+            #   - if: something
+            #     then: ...
+            # which is _correctly_ a length-1 list containing a dict
+            if (
+                isinstance(requirements, list)
+                and len(requirements) == 1
+                and isinstance(requirements[0], dict)
+                and "if" not in requirements[0]
+            ):
+                requirements = requirements[0]
+            if isinstance(requirements, dict):
+                requirements = list(itertools.chain(*requirements.values()))
 
         # we can have `if` statements in the v1 requirements and we need to
         # flatten them

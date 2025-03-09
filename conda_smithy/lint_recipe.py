@@ -27,6 +27,7 @@ from conda_smithy.linter import conda_recipe_v1_linter
 from conda_smithy.linter.hints import (
     hint_check_spdx,
     hint_noarch_python_use_python_min,
+    hint_os_version,
     hint_pip_no_build_backend,
     hint_pip_usage,
     hint_shellcheck_usage,
@@ -420,6 +421,10 @@ def lintify_meta_yaml(
             outputs_section,
             hints,
         )
+
+    # 8. check for obsolete os_version
+    if "hint_os_version" not in lints_to_skip:
+        hint_os_version(forge_yaml, hints)
 
     return lints, hints
 
