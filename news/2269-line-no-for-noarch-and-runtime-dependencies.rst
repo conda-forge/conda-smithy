@@ -1,6 +1,6 @@
 **Added:**
 
-* print line number of selector for noarch recipes that contain runtime dependencies. (#2269)
+* Print line number of selector for noarch recipes that contain runtime dependencies. (#2269)
 
 **Changed:**
 
