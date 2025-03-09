@@ -32,7 +32,36 @@ from conda_smithy.utils import get_yaml
 logger = logging.getLogger(__name__)
 
 
+def _lineno(data, *key):
+    """Gets the liner number for a series of keys in meta.
+
+    Args:
+        data: the node in the meta data dictionary loaded with ruamel.yaml so that
+              line numbers are available.
+        key: one or more keys to traverse meta data with.
+
+    Returns:
+        the line number of the last key with a line number, otherwise '???'.
+    """
+    # Note: data.lc.line is zero-based
+    lineno = "???"
+    if not hasattr(data, "lc"):
+        return lineno
+    if len(data) == 0:
+        return "1"
+    if not all(isinstance(k, str) for k in key):
+        raise Exception()
+    for k in key:
+        data = data.get(k)
+        if data is None or not hasattr(data, "lc"):
+            lineno = f"~{lineno}"  # tilde for when line number is not accurate
+            break
+        lineno = f"{data.lc.line + 1}"
+    return lineno
+
+
 def lint_section_order(
+    meta: Any,
     major_sections: list[str],
     lints: list[str],
     recipe_version: int = 0,
@@ -49,18 +78,24 @@ def lint_section_order(
     section_order_sorted = sorted(major_sections, key=order.index)
 
     if major_sections != section_order_sorted:
+        for (major_section, expected_section) in zip(major_sections, section_order_sorted):
+            if major_section != expected_section:
+                break
+        else:
+            major_section = None
+        line_no = _lineno(meta, major_section)
         section_order_sorted_str = map(
             lambda s: f"'{s}'", section_order_sorted
         )
         section_order_sorted_str = ", ".join(section_order_sorted_str)
         section_order_sorted_str = "[" + section_order_sorted_str + "]"
         lints.append(
-            "The top level meta keys are in an unexpected order. "
-            f"Expecting {section_order_sorted_str}."
+            f"The top level meta keys are in an unexpected order starting on line {line_no}."
+            f" Expecting {section_order_sorted_str}."
         )
 
 
-def lint_about_contents(about_section, lints, recipe_version: int = 0):
+def lint_about_contents(meta, about_section, lints, recipe_version: int = 0):
     expected_section = [
         "homepage" if recipe_version == 1 else "home",
         "license",
@@ -68,26 +103,35 @@ def lint_about_contents(about_section, lints, recipe_version: int = 0):
     ]
     for about_item in expected_section:
         # if the section doesn't exist, or is just empty, lint it.
-        if not about_section.get(about_item, ""):
+        if about_item not in about_section:
+            line_no = _lineno(meta, "about")
             lints.append(
-                f"The {about_item} item is expected in the about section."
+                f"The {about_item} item is expected in the about section on line {line_no}."
+            )
+        elif about_section[about_item] == "":
+            line_no = _lineno(meta["about"], about_item)
+            lints.append(
+                f"The {about_item} item is empty in the about section on line {line_no}."
             )
 
 
-def lint_recipe_maintainers(extra_section, lints):
+def lint_recipe_maintainers(meta, extra_section, lints):
     if not extra_section.get("recipe-maintainers", []):
+        line_no = _lineno(meta, "extra")
         lints.append(
             "The recipe could do with some maintainers listed in "
-            "the `extra/recipe-maintainers` section."
+            f"the `extra/recipe-maintainers` section on line {line_no}."
         )
     if not (
         isinstance(extra_section.get("recipe-maintainers", []), Sequence)
         and not isinstance(extra_section.get("recipe-maintainers", []), str)
     ):
-        lints.append("Recipe maintainers should be a json list.")
+        line_no = _lineno(meta, "extra", "recipe-maintainers")
+        lints.append(f"Recipe maintainers should be a json list on line {line_no}.")
 
 
 def lint_recipe_have_tests(
+    meta: Any,
     recipe_dir: str,
     test_section: list[dict[str, Any]],
     outputs_section: list[dict[str, Any]],
@@ -110,16 +154,17 @@ def lint_recipe_have_tests(
             has_outputs_test = False
             no_test_hints = []
             if outputs_section:
-                for out in outputs_section:
+                for index, out in enumerate(outputs_section, 0):
                     test_out = get_section(out, "test", lints)
                     if any(key in TEST_KEYS for key in test_out):
                         has_outputs_test = True
                     elif test_out.get("script", "").endswith((".bat", ".sh")):
                         has_outputs_test = True
                     else:
+                        line_no = _lineno(meta["outputs"][index], "name")
                         no_test_hints.append(
                             "It looks like the '{}' output doesn't "
-                            "have any tests.".format(out.get("name", "???"))
+                            "have any tests on line {}.".format(out.get("name", "???"), line_no)
                         )
 
             if has_outputs_test:
@@ -128,10 +173,11 @@ def lint_recipe_have_tests(
                 lints.append("The recipe must have some tests.")
 
 
-def lint_license_cannot_be_unknown(about_section, lints):
+def lint_license_cannot_be_unknown(meta, about_section, lints):
     license = about_section.get("license", "").lower()
     if "unknown" == license.strip():
-        lints.append("The recipe license cannot be unknown.")
+        line_no = _lineno(meta, "about", "license")
+        lints.append(f"The recipe license cannot be unknown on line {line_no}.")
 
 
 def lint_selectors_should_be_in_tidy_form(recipe_fname, lints, hints):

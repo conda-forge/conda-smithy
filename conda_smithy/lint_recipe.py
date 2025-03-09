@@ -177,17 +177,18 @@ def lintify_meta_yaml(
         major_sections.remove(section)
 
     # 1: Top level meta.yaml keys should have a specific order.
-    lint_section_order(major_sections, lints, recipe_version)
+    lint_section_order(meta, major_sections, lints, recipe_version)
 
     # 2: The about section should have a home, license and summary.
-    lint_about_contents(about_section, lints, recipe_version)
+    lint_about_contents(meta, about_section, lints, recipe_version)
 
     # 3a: The recipe should have some maintainers.
     # 3b: Maintainers should be a list
-    lint_recipe_maintainers(extra_section, lints)
+    lint_recipe_maintainers(meta, extra_section, lints)
 
     # 4: The recipe should have some tests.
     lint_recipe_have_tests(
+        meta,
         recipe_dir,
         test_section,
         outputs_section,
@@ -197,7 +198,7 @@ def lintify_meta_yaml(
     )
 
     # 5: License cannot be 'unknown.'
-    lint_license_cannot_be_unknown(about_section, lints)
+    lint_license_cannot_be_unknown(meta, about_section, lints)
 
     # 6: Selectors should be in a tidy form.
     if recipe_version == 0:

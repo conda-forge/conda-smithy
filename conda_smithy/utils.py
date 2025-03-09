@@ -9,6 +9,7 @@ from collections import defaultdict
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Union
+from ruamel.yaml.representer import RoundTripRepresenter
 
 import jinja2
 import jinja2.sandbox
@@ -21,6 +22,144 @@ from rattler_build_conda_compat.render import MetaData as RattlerBuildMetaData
 RATTLER_BUILD = "rattler-build"
 CONDA_BUILD = "conda-build"
 SET_PYTHON_MIN_RE = re.compile(r"{%\s+set\s+python_min\s+=")
+
+
+class _LiteralScalarString(ruamel.yaml.scalarstring.LiteralScalarString):
+    __slots__ = ('comment', 'lc')
+
+
+class _FoldedScalarString(ruamel.yaml.scalarstring.FoldedScalarString):
+    __slots__ = ('fold_pos', 'comment', 'lc')
+
+
+class _DoubleQuotedScalarString(ruamel.yaml.scalarstring.DoubleQuotedScalarString):
+    __slots__ = ('lc')
+
+
+class _SingleQuotedScalarString(ruamel.yaml.scalarstring.SingleQuotedScalarString):
+    __slots__ = ('lc')
+
+
+class _PlainScalarString(ruamel.yaml.scalarstring.PlainScalarString):
+    __slots__ = ('lc')
+
+
+class _ScalarInt(ruamel.yaml.scalarint.ScalarInt):
+    lc = None
+
+
+class _DecimalInt(ruamel.yaml.scalarint.DecimalInt):
+    lc = None
+
+
+class _ScalarBoolean(ruamel.yaml.scalarbool.ScalarBoolean):
+    lc = None
+
+
+class _ScalarFloat(ruamel.yaml.scalarfloat.ScalarFloat):
+    lc = None
+
+
+class _WithLineNumberConstructor(ruamel.yaml.constructor.RoundTripConstructor):
+    """Round trip constructor that keeps line numbers for most elements.
+
+    Adapted from: https://stackoverflow.com/questions/45716281/parsing-yaml-get-line-numbers-even-in-ordered-maps
+    """
+
+    def __init__(self, preserve_quotes=None, loader=None):
+        super(_WithLineNumberConstructor, self).__init__(preserve_quotes=preserve_quotes, loader=loader)
+        if not hasattr(self.loader, 'comment_handling'):
+            self.loader.comment_handling = None
+
+    def _update_lc(self, node, value):
+        value.lc = ruamel.yaml.comments.LineCol()
+        value.lc.line = node.start_mark.line
+        value.lc.col = node.start_mark.column
+        return value
+
+    def construct_scalar(self, node):
+        super_value = super().construct_scalar(node)
+        ret_val = None
+        if isinstance(super_value, str):
+            ret_val = _PlainScalarString(node.value, anchor=node.anchor)
+        elif isinstance(super_value, ruamel.yaml.scalarstring.LiteralScalarString):
+            ret_val = _LiteralScalarString(node.value, anchor=node.anchor)
+            if self.loader and self.loader.comment_handling is None:
+                if node.comment and node.comment[1]:
+                    ret_val.comment = node.comment[1][0]  # type: ignore
+            else:
+                # NEWCMNT
+                if node.comment is not None and node.comment[1]:
+                    # EOL comment after |
+                    ret_val.comment = self.comment(node.comment[1][0])  # type: ignore
+        elif isinstance(super_value, ruamel.yaml.scalarstring._LiteralScalarString):
+            fold_positions = []  # type: List[int]
+            idx = -1
+            while True:
+                idx = node.value.find('\a', idx + 1)
+                if idx < 0:
+                    break
+                fold_positions.append(idx - len(fold_positions))
+            ret_val = _FoldedScalarString(node.value, anchor=node.anchor)
+            if self.loader and self.loader.comment_handling is None:
+                if node.comment and node.comment[1]:
+                    ret_val.comment = node.comment[1][0]  # type: ignore
+            else:
+                # NEWCMNT
+                if node.comment is not None and node.comment[1]:
+                    # EOL comment after >
+                    ret_val.comment = self.comment(node.comment[1][0])  # type: ignore
+            if fold_positions:
+                ret_val.fold_pos = fold_positions  # type: ignore
+
+        elif isinstance(super_value, ruamel.yaml.scalarstring._LiteralScalarString):
+            fold_positions = []  # type: List[int]
+            idx = -1
+            while True:
+                idx = node.value.find('\a', idx + 1)
+                if idx < 0:
+                    break
+                fold_positions.append(idx - len(fold_positions))
+            ret_val = _FoldedScalarString(node.value, anchor=node.anchor)
+            if self.loader and self.loader.comment_handling is None:
+                if node.comment and node.comment[1]:
+                    ret_val.comment = node.comment[1][0]  # type: ignore
+            else:
+                # NEWCMNT
+                if node.comment is not None and node.comment[1]:
+                    # EOL comment after >
+                    ret_val.comment = self.comment(node.comment[1][0])  # type: ignore
+            if fold_positions:
+                ret_val.fold_pos = fold_positions  # type: ignore
+
+        elif isinstance(super_value, ruamel.yaml.scalarstring.SingleQuotedScalarString):
+            ret_val = _SingleQuotedScalarString(node.value, anchor=node.anchor)
+        elif isinstance(super_value, ruamel.yaml.scalarstring.DoubleQuotedScalarString):
+            ret_val = _DoubleQuotedScalarString(node.value, anchor=node.anchor)
+        elif isinstance(super_value, ruamel.yaml.scalarint.ScalarInt):
+            ret_val = _ScalarInt(node.value, anchor=node.anchor)
+        elif isinstance(super_value, ruamel.yaml.scalarfloat.ScalarFloat):
+            ret_val = _ScalarFloat(node.value, anchor=node.anchor)
+        elif isinstance(super_value, ruamel.yaml.scalarbool.ScalarBoolean):
+            ret_val = _ScalarBoolean(node.value, anchor=node.anchor)
+        else:
+            ret_val = _PlainScalarString(node.value, anchor=node.anchor)
+        return self._update_lc(node, ret_val)
+
+    def construct_yaml_int(self, node: Any) -> Any:
+        super_value = super().construct_yaml_int(node)
+        ret_val = _ScalarInt(super_value, anchor=node.anchor)
+        return self._update_lc(node, ret_val)
+
+    def construct_yaml_float(self, node: Any) -> Any:
+        super_value = super().construct_yaml_float(node)
+        ret_val = _ScalarFloat(super_value, anchor=node.anchor)
+        return self._update_lc(node, ret_val)
+
+    def construct_yaml_bool(self, node: Any) -> Any:
+        super_value = super().construct_yaml_bool(node)
+        ret_val = _ScalarBoolean(super_value, anchor=node.anchor)
+        return self._update_lc(node, ret_val)
 
 
 def _get_metadata_from_feedstock_dir(
@@ -93,6 +232,25 @@ def get_yaml(allow_duplicate_keys: bool = True):
     # Don't use a global variable for this as a global
     # variable will make conda-smithy thread unsafe.
     yaml = ruamel.yaml.YAML(typ="rt")
+    yaml.Constructor = _WithLineNumberConstructor
+    # re-add so that we override the parent class' default constructor
+    yaml.Constructor.add_default_constructor('int')
+    yaml.Constructor.add_default_constructor('float')
+    yaml.Constructor.add_default_constructor('bool')
+    yaml.Constructor.allow_duplicate_keys = allow_duplicate_keys
+    # needed for representers
+    RoundTripRepresenter.add_representer(_LiteralScalarString, RoundTripRepresenter.represent_literal_scalarstring)
+    RoundTripRepresenter.add_representer(_FoldedScalarString, RoundTripRepresenter.represent_folded_scalarstring)
+    RoundTripRepresenter.add_representer(_SingleQuotedScalarString, RoundTripRepresenter.represent_single_quoted_scalarstring)
+    RoundTripRepresenter.add_representer(_DoubleQuotedScalarString, RoundTripRepresenter.represent_double_quoted_scalarstring)
+    RoundTripRepresenter.add_representer(_PlainScalarString, RoundTripRepresenter.represent_plain_scalarstring)
+    RoundTripRepresenter.add_representer(_ScalarInt, RoundTripRepresenter.represent_scalar_int)
+    #RoundTripRepresenter.add_representer(BinaryInt, RoundTripRepresenter.represent_binary_int)
+    #RoundTripRepresenter.add_representer(OctalInt, RoundTripRepresenter.represent_octal_int)
+    #RoundTripRepresenter.add_representer(HexInt, RoundTripRepresenter.represent_hex_int)
+    #RoundTripRepresenter.add_representer(HexCapsInt, RoundTripRepresenter.represent_hex_caps_int)
+    RoundTripRepresenter.add_representer(_ScalarFloat, RoundTripRepresenter.represent_scalar_float)
+    RoundTripRepresenter.add_representer(_ScalarBoolean, RoundTripRepresenter.represent_scalar_bool)
     yaml.allow_duplicate_keys = allow_duplicate_keys
     return yaml
 
