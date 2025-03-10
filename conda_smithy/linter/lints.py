@@ -169,7 +169,7 @@ def lint_recipe_have_tests(
                         no_test_hints.append(
                             "It looks like the '{}' output doesn't "
                             "have any tests on line {}.".format(
-                                out.get("name", "???"), line_no
+                                out.get("name", f"<output {index+1}>"), line_no
                             )
                         )
 
