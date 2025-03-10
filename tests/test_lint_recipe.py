@@ -2846,20 +2846,14 @@ def test_pin_compatible_in_run_exports_output(recipe_version: int):
     assert any(lint.startswith(expected) for lint in lints)
 
 
-def test_v1_recipes():
-    with get_recipe_in_dir("v1_recipes/recipe-no-lint.yaml") as recipe_dir:
-        lints, hints = linter.main(str(recipe_dir), return_hints=True)
-        assert not lints
-
-    with get_recipe_in_dir("v1_recipes/torchaudio.yaml") as recipe_dir:
-        lints, hints = linter.main(str(recipe_dir), return_hints=True)
-        assert not lints
-
-    with get_recipe_in_dir("v1_recipes/torchvision.yaml") as recipe_dir:
-        lints, hints = linter.main(str(recipe_dir), return_hints=True)
-        assert not lints
-
-    with get_recipe_in_dir("v1_recipes/ada-url.yaml") as recipe_dir:
+@pytest.mark.parametrize("path", [
+    "v1_recipes/recipe-no-lint.yaml",
+    "v1_recipes/torchaudio.yaml",
+    "v1_recipes/torchvision.yaml",
+    "v1_recipes/ada-url.yaml",
+])
+def test_v1_recipes(path: str):
+    with get_recipe_in_dir(path) as recipe_dir:
         lints, hints = linter.main(str(recipe_dir), return_hints=True)
         assert not lints
 
