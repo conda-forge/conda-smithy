@@ -4,6 +4,35 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.47.0
+====================
+
+**Added:**
+
+* Print line number of selector for noarch recipes that contain runtime dependencies. (#2269)
+* Added a hint for feedstocks using obsolete ``os_version``. (#2270)
+
+**Changed:**
+
+* Moved the bot schema to the bot code base. (#2260)
+
+**Fixed:**
+
+* Added ``.*`` to space-separated spec hint to help avoid hash mismatch errors. (#2264)
+* Lint error in v1 recipes when `run_exports` is a dict
+
+**Authors:**
+
+* Isuru Fernando
+* Matthew R. Becker
+* pre-commit-ci[bot]
+* Min RK
+* Michał Górny
+* dependabot[bot]
+* Nils Homer
+
+
+
 v3.46.1
 ====================
 
