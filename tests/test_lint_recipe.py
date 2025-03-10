@@ -60,6 +60,7 @@ def _update_meta(meta):
         with open(recipe_file, encoding="utf-8") as fh:
             return get_yaml().load("".join(fh))
 
+
 @pytest.mark.parametrize(
     "comp_lang",
     ["c", "cxx", "fortran", "rust", "m2w64_c", "m2w64_cxx", "m2w64_fortran"],
@@ -565,19 +566,25 @@ def test_v1_cbc_osx_hints(
 
 class TestLinter(unittest.TestCase):
     def test_bad_top_level(self):
-        meta = _update_meta(OrderedDict([["package", {}], ["build", {}], ["sources", {}]]))
+        meta = _update_meta(
+            OrderedDict([["package", {}], ["build", {}], ["sources", {}]])
+        )
         lints, hints = linter.lintify_meta_yaml(meta)
         expected_msg = "The top level meta key sources is unexpected"
         self.assertIn(expected_msg, lints)
 
     def test_recipe_v1_bad_top_level(self):
-        meta = _update_meta(OrderedDict([["package", {}], ["build", {}], ["sources", {}]]))
+        meta = _update_meta(
+            OrderedDict([["package", {}], ["build", {}], ["sources", {}]])
+        )
         lints, hints = linter.lintify_meta_yaml(meta, recipe_version=1)
         expected_msg = "The top level meta key sources is unexpected"
         self.assertIn(expected_msg, lints)
 
     def test_bad_order(self):
-        meta = _update_meta(OrderedDict([["package", {}], ["build", {}], ["source", {}]]))
+        meta = _update_meta(
+            OrderedDict([["package", {}], ["build", {}], ["source", {}]])
+        )
         lints, hints = linter.lintify_meta_yaml(meta)
         expected_msg = (
             "The top level meta keys are in an unexpected "
@@ -588,67 +595,93 @@ class TestLinter(unittest.TestCase):
     def test_missing_about_license_and_summary(self):
         meta = _update_meta({"about": {"home": "a URL"}})
         lints, hints = linter.lintify_meta_yaml(meta)
-        expected_message = "The license item is expected in the about section on line 2."
+        expected_message = (
+            "The license item is expected in the about section on line 2."
+        )
         self.assertIn(expected_message, lints)
 
-        expected_message = "The summary item is expected in the about section on line 2."
+        expected_message = (
+            "The summary item is expected in the about section on line 2."
+        )
         self.assertIn(expected_message, lints)
 
     def test_bad_about_license(self):
-        meta = _update_meta({
-            "about": {
-                "home": "a URL",
-                "summary": "A test summary",
-                "license": "unknown",
+        meta = _update_meta(
+            {
+                "about": {
+                    "home": "a URL",
+                    "summary": "A test summary",
+                    "license": "unknown",
+                }
             }
-        })
+        )
         lints, hints = linter.lintify_meta_yaml(meta)
         expected_message = "The recipe license cannot be unknown on line 4."
         self.assertIn(expected_message, lints)
 
     def test_bad_about_license_family(self):
-        meta = _update_meta({
-            "about": {
-                "home": "a URL",
-                "summary": "A test summary",
-                "license": "BSD 3-clause",
-                "license_family": "BSD3",
+        meta = _update_meta(
+            {
+                "about": {
+                    "home": "a URL",
+                    "summary": "A test summary",
+                    "license": "BSD 3-clause",
+                    "license_family": "BSD3",
+                }
             }
-        })
+        )
         lints, hints = linter.lintify_meta_yaml(meta)
         expected = "about/license_family 'BSD3' not allowed"
         self.assertTrue(any(lint.startswith(expected) for lint in lints))
 
     def test_missing_about_home(self):
-        meta = _update_meta({"about": {"license": "BSD", "summary": "A test summary"}})
+        meta = _update_meta(
+            {"about": {"license": "BSD", "summary": "A test summary"}}
+        )
         lints, hints = linter.lintify_meta_yaml(meta)
-        expected_message = "The home item is expected in the about section on line 2."
+        expected_message = (
+            "The home item is expected in the about section on line 2."
+        )
         self.assertIn(expected_message, lints)
 
     def test_missing_about_homepage_empty(self):
-        meta = _update_meta({"about": {"homepage": "", "summary": "", "license": ""}})
+        meta = _update_meta(
+            {"about": {"homepage": "", "summary": "", "license": ""}}
+        )
         lints, hints = linter.lintify_meta_yaml(meta, recipe_version=1)
         expected_message = (
             "The homepage item is empty in the about section on line 2."
         )
         self.assertIn(expected_message, lints)
 
-        expected_message = "The summary item is empty in the about section on line 3."
+        expected_message = (
+            "The summary item is empty in the about section on line 3."
+        )
         self.assertIn(expected_message, lints)
 
-        expected_message = "The license item is empty in the about section on line 4."
+        expected_message = (
+            "The license item is empty in the about section on line 4."
+        )
         self.assertIn(expected_message, lints)
 
     def test_missing_about_home_empty(self):
-        meta = _update_meta({"about": {"home": "", "summary": "", "license": ""}})
+        meta = _update_meta(
+            {"about": {"home": "", "summary": "", "license": ""}}
+        )
         lints, hints = linter.lintify_meta_yaml(meta)
-        expected_message = "The home item is empty in the about section on line 2."
+        expected_message = (
+            "The home item is empty in the about section on line 2."
+        )
         self.assertIn(expected_message, lints)
 
-        expected_message = "The summary item is empty in the about section on line 3."
+        expected_message = (
+            "The summary item is empty in the about section on line 3."
+        )
         self.assertIn(expected_message, lints)
 
-        expected_message = "The license item is empty in the about section on line 4."
+        expected_message = (
+            "The license item is empty in the about section on line 4."
+        )
         self.assertIn(expected_message, lints)
 
     def test_noarch_value(self):
@@ -692,7 +725,9 @@ class TestLinter(unittest.TestCase):
         lints, hints = linter.lintify_meta_yaml(
             _update_meta({"extra": {"recipe-maintainers": "Luke"}})
         )
-        expected_message = "Recipe maintainers should be a json list on line 2."
+        expected_message = (
+            "Recipe maintainers should be a json list on line 2."
+        )
         self.assertIn(expected_message, lints)
 
     def test_test_section(self):
@@ -701,49 +736,68 @@ class TestLinter(unittest.TestCase):
         lints, hints = linter.lintify_meta_yaml({})
         self.assertIn(expected_message, lints)
 
-        lints, hints = linter.lintify_meta_yaml(_update_meta({"test": {"files": "foo"}}))
-        self.assertIn(expected_message, lints)
-
-        lints, hints = linter.lintify_meta_yaml(_update_meta({"test": {"imports": "sys"}}))
-        self.assertNotIn(expected_message, lints)
-
-        lints, hints = linter.lintify_meta_yaml(_update_meta({"outputs": [{"name": "foo"}]}))
-        self.assertIn(expected_message, lints)
-
         lints, hints = linter.lintify_meta_yaml(
-            _update_meta({"outputs": [{"name": "foo", "test": {"files": "foo"}}]})
+            _update_meta({"test": {"files": "foo"}})
         )
         self.assertIn(expected_message, lints)
 
         lints, hints = linter.lintify_meta_yaml(
-            _update_meta({"outputs": [{"name": "foo", "test": {"imports": "sys"}}]})
+            _update_meta({"test": {"imports": "sys"}})
         )
         self.assertNotIn(expected_message, lints)
 
-        lints, hints = linter.lintify_meta_yaml(_update_meta(
-            {
-                "outputs": [
-                    {"name": "foo", "test": {"imports": "sys"}},
-                    {"name": "foobar", "test": {"files": "hi"}},
-                ]
-            }
-        ))
+        lints, hints = linter.lintify_meta_yaml(
+            _update_meta({"outputs": [{"name": "foo"}]})
+        )
+        self.assertIn(expected_message, lints)
+
+        lints, hints = linter.lintify_meta_yaml(
+            _update_meta(
+                {"outputs": [{"name": "foo", "test": {"files": "foo"}}]}
+            )
+        )
+        self.assertIn(expected_message, lints)
+
+        lints, hints = linter.lintify_meta_yaml(
+            _update_meta(
+                {"outputs": [{"name": "foo", "test": {"imports": "sys"}}]}
+            )
+        )
+        self.assertNotIn(expected_message, lints)
+
+        lints, hints = linter.lintify_meta_yaml(
+            _update_meta(
+                {
+                    "outputs": [
+                        {"name": "foo", "test": {"imports": "sys"}},
+                        {"name": "foobar", "test": {"files": "hi"}},
+                    ]
+                }
+            )
+        )
         self.assertNotIn(expected_message, lints)
         self.assertIn(
-            "It looks like the 'foobar' output doesn't have any tests on line 5.", hints
+            "It looks like the 'foobar' output doesn't have any tests on line 5.",
+            hints,
         )
 
-        lints, hints = linter.lintify_meta_yaml(_update_meta(
-            {
-                "outputs": [
-                    {"name": "foo", "test": {"script": "test-foo.sh"}},
-                    {"name": "foobar", "test": {"script": "test-foobar.pl"}},
-                ]
-            }
-        ))
+        lints, hints = linter.lintify_meta_yaml(
+            _update_meta(
+                {
+                    "outputs": [
+                        {"name": "foo", "test": {"script": "test-foo.sh"}},
+                        {
+                            "name": "foobar",
+                            "test": {"script": "test-foobar.pl"},
+                        },
+                    ]
+                }
+            )
+        )
         self.assertNotIn(expected_message, lints)
         self.assertIn(
-            "It looks like the 'foobar' output doesn't have any tests on line 5.", hints
+            "It looks like the 'foobar' output doesn't have any tests on line 5.",
+            hints,
         )
 
     def test_recipe_v1_test_section(self):
@@ -1943,13 +1997,15 @@ linter:
 
     def test_maintainer_team_exists(self):
         lints, _ = linter.lintify_meta_yaml(
-            _update_meta({
-                "extra": {
-                    "recipe-maintainers": [
-                        "conda-forge/blahblahblah-foobarblah"
-                    ]
+            _update_meta(
+                {
+                    "extra": {
+                        "recipe-maintainers": [
+                            "conda-forge/blahblahblah-foobarblah"
+                        ]
+                    }
                 }
-            }),
+            ),
             conda_forge=True,
         )
         expected_message = 'Recipe maintainer team "conda-forge/blahblahblah-foobarblah" does not exist'
@@ -1957,7 +2013,9 @@ linter:
         return
 
         lints, _ = linter.lintify_meta_yaml(
-            _update_meta({"extra": {"recipe-maintainers": ["conda-forge/core"]}}),
+            _update_meta(
+                {"extra": {"recipe-maintainers": ["conda-forge/core"]}}
+            ),
             conda_forge=True,
         )
         expected_message = (
@@ -1971,23 +2029,27 @@ linter:
             "subsection name. {} is not a valid subsection"
             " name."
         )
-        meta = _update_meta({
-            "build": {
-                "skip": "True",
-                "script": "python setup.py install",
-                "number": 0,
+        meta = _update_meta(
+            {
+                "build": {
+                    "skip": "True",
+                    "script": "python setup.py install",
+                    "number": 0,
+                }
             }
-        })
+        )
         lints, hints = linter.lintify_meta_yaml(meta)
         self.assertNotIn(expected_message.format("build", "ski"), lints)
 
-        meta = _update_meta({
-            "build": {
-                "ski": "True",
-                "script": "python setup.py install",
-                "number": 0,
+        meta = _update_meta(
+            {
+                "build": {
+                    "ski": "True",
+                    "script": "python setup.py install",
+                    "number": 0,
+                }
             }
-        })
+        )
         lints, hints = linter.lintify_meta_yaml(meta)
         self.assertIn(expected_message.format("build", "ski"), lints)
 

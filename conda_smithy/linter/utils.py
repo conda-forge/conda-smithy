@@ -90,7 +90,9 @@ def _get_type_name(section):
             if not base.__module__.startswith("ruamel.yaml"):
                 return base.__name__
         else:
-            raise ValueError("Could not determine type for {type(section).__name__}")
+            raise ValueError(
+                "Could not determine type for {type(section).__name__}"
+            )
     return type(section).__name__
 
 

@@ -78,7 +78,9 @@ def lint_section_order(
     section_order_sorted = sorted(major_sections, key=order.index)
 
     if major_sections != section_order_sorted:
-        for (major_section, expected_section) in zip(major_sections, section_order_sorted):
+        for major_section, expected_section in zip(
+            major_sections, section_order_sorted
+        ):
             if major_section != expected_section:
                 break
         else:
@@ -127,7 +129,9 @@ def lint_recipe_maintainers(meta, extra_section, lints):
         and not isinstance(extra_section.get("recipe-maintainers", []), str)
     ):
         line_no = _lineno(meta, "extra", "recipe-maintainers")
-        lints.append(f"Recipe maintainers should be a json list on line {line_no}.")
+        lints.append(
+            f"Recipe maintainers should be a json list on line {line_no}."
+        )
 
 
 def lint_recipe_have_tests(
@@ -164,7 +168,9 @@ def lint_recipe_have_tests(
                         line_no = _lineno(meta["outputs"][index], "name")
                         no_test_hints.append(
                             "It looks like the '{}' output doesn't "
-                            "have any tests on line {}.".format(out.get("name", "???"), line_no)
+                            "have any tests on line {}.".format(
+                                out.get("name", "???"), line_no
+                            )
                         )
 
             if has_outputs_test:
@@ -177,7 +183,9 @@ def lint_license_cannot_be_unknown(meta, about_section, lints):
     license = about_section.get("license", "").lower()
     if "unknown" == license.strip():
         line_no = _lineno(meta, "about", "license")
-        lints.append(f"The recipe license cannot be unknown on line {line_no}.")
+        lints.append(
+            f"The recipe license cannot be unknown on line {line_no}."
+        )
 
 
 def lint_selectors_should_be_in_tidy_form(recipe_fname, lints, hints):
