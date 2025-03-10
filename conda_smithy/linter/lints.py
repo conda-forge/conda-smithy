@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 
 
 def _lineno(data, *key):
-    """Gets the liner number for a series of keys in meta.
+    """Gets the line number for a series of keys in meta.
 
     Args:
         data: the node in the meta data dictionary loaded with ruamel.yaml so that
