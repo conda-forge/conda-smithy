@@ -71,7 +71,7 @@ class _WithLineNumberConstructor(ruamel.yaml.constructor.RoundTripConstructor):
     """
 
     def __init__(self, preserve_quotes=None, loader=None):
-        super(_WithLineNumberConstructor, self).__init__(
+        super().__init__(
             preserve_quotes=preserve_quotes, loader=loader
         )
         if not hasattr(self.loader, "comment_handling"):
