@@ -80,27 +80,27 @@ class AzureRunnerSettings(BaseModel):
 
     model_config: ConfigDict = ConfigDict(extra="allow")
 
-    pool: Optional[dict[str, str]] = Field(
+    pool: dict[str, str] | None = Field(
         default_factory=lambda: {"vmImage": "ubuntu-latest"},
         description="The pool of self-hosted runners, e.g. 'vmImage': 'ubuntu-latest'",
     )
 
-    swapfile_size: Optional[Union[str, Nullable]] = Field(
+    swapfile_size: str | Nullable | None = Field(
         default=None, description="Swapfile size in GiB"
     )
 
-    timeout_in_minutes: Optional[int] = Field(
+    timeout_in_minutes: int | None = Field(
         default=360,
         description="Timeout in minutes for the job",
         alias="timeoutInMinutes",
     )
 
-    variables: Optional[dict[str, str]] = Field(
+    variables: dict[str, str] | None = Field(
         default_factory=dict, description="Variables"
     )
 
     # windows only
-    install_atl: Optional[bool] = Field(
+    install_atl: bool | None = Field(
         default=False, description="Whether to install ATL components for MSVC"
     )
 
@@ -121,14 +121,14 @@ class AzureConfig(BaseModel):
 
     model_config: ConfigDict = ConfigDict(extra="forbid")
 
-    force: Optional[bool] = Field(
+    force: bool | None = Field(
         default=False,
         description="Force building all supported providers",
     )
 
-    free_disk_space: Optional[
-        Union[bool, Nullable, list[Literal["apt", "cache", "docker"]]]
-    ] = Field(
+    free_disk_space: (
+        bool | Nullable | list[Literal["apt", "cache", "docker"]] | None
+    ) = Field(
         default=False,
         description=cleandoc(
             """
@@ -140,22 +140,22 @@ class AzureConfig(BaseModel):
         ),
     )
 
-    max_parallel: Optional[int] = Field(
+    max_parallel: int | None = Field(
         default=50,
         description="Limit the amount of CI jobs running concurrently at a given time",
     )
 
-    project_id: Optional[str] = Field(
+    project_id: str | None = Field(
         default="84710dde-1620-425b-80d0-4cf5baca359d",
         description="The ID of the Azure Pipelines project",
     )
 
-    project_name: Optional[str] = Field(
+    project_name: str | None = Field(
         default="feedstock-builds",
         description="The name of the Azure Pipelines project",
     )
 
-    build_id: Optional[int] = Field(
+    build_id: int | None = Field(
         default=None,
         description=cleandoc(
             """
@@ -167,7 +167,7 @@ class AzureConfig(BaseModel):
         ),
     )
 
-    upload_packages: Optional[bool] = Field(
+    upload_packages: bool | None = Field(
         default=True,
         description="Whether to upload the packages to Anaconda.org. Useful for testing.",
     )
@@ -218,7 +218,7 @@ class AzureConfig(BaseModel):
         ),
     )
 
-    user_or_org: Optional[Union[str, Nullable]] = Field(
+    user_or_org: str | Nullable | None = Field(
         default=None,
         description="The name of the Azure user or organization. Defaults to the "
         "value of github: user_or_org.",
@@ -226,13 +226,13 @@ class AzureConfig(BaseModel):
         # set or not
     )
 
-    store_build_artifacts: Optional[bool] = Field(
+    store_build_artifacts: bool | None = Field(
         default=False,
         description="Store the conda build_artifacts directory as an \
         Azure pipeline artifact",
     )
 
-    timeout_minutes: Optional[Union[int, Nullable]] = Field(
+    timeout_minutes: int | Nullable | None = Field(
         default=None,
         description="The maximum amount of time (in minutes) that a \
             job can run before it is automatically canceled",
@@ -242,19 +242,19 @@ class AzureConfig(BaseModel):
 class GithubConfig(BaseModel):
     model_config: ConfigDict = ConfigDict(extra="forbid")
 
-    user_or_org: Optional[str] = Field(
+    user_or_org: str | None = Field(
         description="The name of the GitHub user or organization",
         default="conda-forge",
     )
-    repo_name: Optional[str] = Field(
+    repo_name: str | None = Field(
         description="The name of the repository",
         default="",
     )
-    branch_name: Optional[str] = Field(
+    branch_name: str | None = Field(
         description="The name of the branch to execute on",
         default="main",
     )
-    tooling_branch_name: Optional[str] = Field(
+    tooling_branch_name: str | None = Field(
         description="The name of the branch to use for rerender+webservices \
             github actions and conda-forge-ci-setup-feedstock references",
         default="main",
@@ -264,19 +264,19 @@ class GithubConfig(BaseModel):
 class GithubActionsConfig(BaseModel):
     model_config: ConfigDict = ConfigDict(extra="forbid")
 
-    artifact_retention_days: Optional[int] = Field(
+    artifact_retention_days: int | None = Field(
         description="The number of days to retain artifacts",
         default=14,
     )
 
-    cancel_in_progress: Optional[bool] = Field(
+    cancel_in_progress: bool | None = Field(
         description="Whether to cancel jobs in the same build if one fails.",
         default=True,
     )
 
-    free_disk_space: Optional[
-        Union[bool, Nullable, list[Literal["apt", "cache", "docker"]]]
-    ] = Field(
+    free_disk_space: (
+        bool | Nullable | list[Literal["apt", "cache", "docker"]] | None
+    ) = Field(
         default=False,
         description=cleandoc(
             """
@@ -288,34 +288,34 @@ class GithubActionsConfig(BaseModel):
         ),
     )
 
-    max_parallel: Optional[Union[int, Nullable]] = Field(
+    max_parallel: int | Nullable | None = Field(
         description="The maximum number of jobs to run in parallel",
         default=None,
     )
 
-    self_hosted: Optional[bool] = Field(
+    self_hosted: bool | None = Field(
         description="Whether to use self-hosted runners",
         default=False,
     )
 
-    store_build_artifacts: Optional[bool] = Field(
+    store_build_artifacts: bool | None = Field(
         description="Whether to store build artifacts",
         default=False,
     )
 
-    timeout_minutes: Optional[int] = Field(
+    timeout_minutes: int | None = Field(
         default=360,
         description="The maximum amount of time (in minutes) that a \
             job can run before it is automatically canceled",
     )
 
-    triggers: Optional[list] = Field(
+    triggers: list | None = Field(
         default=[],
         description="Triggers for Github Actions. Defaults to push, pull_request, \
             when not self-hosted and push when self-hosted",
     )
 
-    upload_packages: Optional[bool] = Field(
+    upload_packages: bool | None = Field(
         default=True,
         description="Whether to upload the packages to Anaconda.org. Useful for testing.",
     )
@@ -336,12 +336,12 @@ class BotConfig(BaseModel):
 class CondaBuildConfig(BaseModel):
     model_config: ConfigDict = ConfigDict(extra="allow")
 
-    pkg_format: Optional[Literal["tar", 1, 2, "1", "2"]] = Field(
+    pkg_format: Literal["tar", 1, 2, "1", "2"] | None = Field(
         description="The package version format for conda build.",
         default=2,
     )
 
-    zstd_compression_level: Optional[int] = Field(
+    zstd_compression_level: int | None = Field(
         default=16,
         description=cleandoc(
             """The compression level for the zstd compression algorithm for
@@ -350,7 +350,7 @@ class CondaBuildConfig(BaseModel):
         ),
     )
 
-    error_overlinking: Optional[bool] = Field(
+    error_overlinking: bool | None = Field(
         default=False,
         description=cleandoc(
             """
@@ -365,7 +365,7 @@ class CondaBuildConfig(BaseModel):
 
 class LinterConfig(BaseModel):
 
-    skip: Optional[list[Lints]] = Field(
+    skip: list[Lints] | None = Field(
         default_factory=list,
         description="List of lints to skip",
     )
@@ -374,23 +374,23 @@ class LinterConfig(BaseModel):
 class CondaForgeDocker(BaseModel):
     model_config: ConfigDict = ConfigDict(extra="forbid")
 
-    executable: Optional[str] = Field(
+    executable: str | None = Field(
         description="The executable for Docker", default="docker"
     )
 
-    fallback_image: Optional[str] = Field(
+    fallback_image: str | None = Field(
         description="The fallback image for Docker",
         default="quay.io/condaforge/linux-anvil-comp7",
     )
 
-    command: Optional[str] = Field(
+    command: str | None = Field(
         description="The command to run in Docker", default="bash"
     )
 
     #########################################
     #### Deprecated Docker configuration ####
     #########################################
-    interactive: Optional[Union[bool, Nullable]] = Field(
+    interactive: bool | Nullable | None = Field(
         description="Whether to run Docker in interactive mode",
         default=None,
         deprecated=True,
@@ -483,7 +483,7 @@ class ConfigModel(BaseModel):
     # the model dump with the default conda-forge.yml file used for smithy
     # or to avoid deprecated values been rendered.
 
-    conda_build: Optional[CondaBuildConfig] = Field(
+    conda_build: CondaBuildConfig | None = Field(
         default_factory=CondaBuildConfig,
         description=cleandoc(
             """
@@ -500,7 +500,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    linter: Optional[LinterConfig] = Field(
+    linter: LinterConfig | None = Field(
         default_factory=LinterConfig,
         description=cleandoc(
             """
@@ -516,7 +516,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    conda_build_tool: Optional[conda_build_tools] = Field(
+    conda_build_tool: conda_build_tools | None = Field(
         default="conda-build",
         description=cleandoc(
             """
@@ -525,9 +525,9 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    conda_install_tool: Optional[
-        Literal["conda", "mamba", "micromamba", "pixi"]
-    ] = Field(
+    conda_install_tool: (
+        Literal["conda", "mamba", "micromamba", "pixi"] | None
+    ) = Field(
         default="micromamba",
         description=cleandoc(
             """
@@ -542,7 +542,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    conda_forge_output_validation: Optional[bool] = Field(
+    conda_forge_output_validation: bool | None = Field(
         default=False,
         description=cleandoc(
             """
@@ -553,18 +553,16 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    conda_solver: Optional[Union[Literal["libmamba", "classic"], Nullable]] = (
-        Field(
-            default="libmamba",
-            description=cleandoc(
-                """
+    conda_solver: Literal["libmamba", "classic"] | Nullable | None = Field(
+        default="libmamba",
+        description=cleandoc(
+            """
         Choose which `conda` solver plugin to use for feedstock builds.
         """
-            ),
-        )
+        ),
     )
 
-    github: Optional[GithubConfig] = Field(
+    github: GithubConfig | None = Field(
         default_factory=GithubConfig,
         description=cleandoc(
             """
@@ -581,7 +579,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    bot: Optional[BotConfig] = Field(
+    bot: BotConfig | None = Field(
         default_factory=BotConfig,
         description=cleandoc(
             """
@@ -630,7 +628,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    build_platform: Optional[BuildPlatform] = Field(
+    build_platform: BuildPlatform | None = Field(
         default_factory=BuildPlatform,
         description=cleandoc(
             """
@@ -658,7 +656,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    channel_priority: Optional[ChannelPriorityConfig] = Field(
+    channel_priority: ChannelPriorityConfig | None = Field(
         default="strict",
         description=cleandoc(
             """
@@ -670,7 +668,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    choco: Optional[list[str]] = Field(
+    choco: list[str] | None = Field(
         default_factory=list,
         description=cleandoc(
             """
@@ -694,7 +692,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    docker: Optional[CondaForgeDocker] = Field(
+    docker: CondaForgeDocker | None = Field(
         default_factory=CondaForgeDocker,
         description=cleandoc(
             """
@@ -710,7 +708,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    idle_timeout_minutes: Optional[Union[int, Nullable]] = Field(
+    idle_timeout_minutes: int | Nullable | None = Field(
         default=None,
         description=cleandoc(
             """
@@ -724,7 +722,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    noarch_platforms: Optional[Union[Platforms, list[Platforms]]] = Field(
+    noarch_platforms: Platforms | list[Platforms] | None = Field(
         default_factory=lambda: ["linux_64"],
         description=cleandoc(
             """
@@ -747,7 +745,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    os_version: Optional[OSVersion] = Field(
+    os_version: OSVersion | None = Field(
         default_factory=OSVersion,
         description=cleandoc(
             """
@@ -771,7 +769,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    provider: Optional[Provider] = Field(
+    provider: Provider | None = Field(
         default_factory=Provider,
         description=cleandoc(
             """
@@ -838,13 +836,13 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    package: Optional[Union[str, Nullable]] = Field(
+    package: str | Nullable | None = Field(
         default=None,
         exclude=True,  # Will not be rendered in the model dump
         description="Default location for a package feedstock directory basename.",
     )
 
-    recipe_dir: Optional[str] = Field(
+    recipe_dir: str | None = Field(
         default="recipe",
         description=cleandoc(
             """
@@ -857,7 +855,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    remote_ci_setup: Optional[Union[str, list[str]]] = Field(
+    remote_ci_setup: str | list[str] | None = Field(
         default_factory=lambda: [
             "conda-forge-ci-setup=4",
             "conda-build>=24.1",
@@ -875,7 +873,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    shellcheck: Optional[Union[ShellCheck, Nullable]] = Field(
+    shellcheck: ShellCheck | Nullable | None = Field(
         default_factory=lambda: {"enabled": False},
         description=cleandoc(
             """
@@ -891,7 +889,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    skip_render: Optional[list[str]] = Field(
+    skip_render: list[str] | None = Field(
         default_factory=list,
         description=cleandoc(
             """
@@ -910,7 +908,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    templates: Optional[dict[str, str]] = Field(
+    templates: dict[str, str] | None = Field(
         default_factory=dict,
         description=cleandoc(
             """
@@ -920,7 +918,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    test_on_native_only: Optional[bool] = Field(
+    test_on_native_only: bool | None = Field(
         default=False,
         deprecated=True,
         description=cleandoc(
@@ -935,7 +933,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    test: Optional[Union[DefaultTestPlatforms, Nullable]] = Field(
+    test: DefaultTestPlatforms | Nullable | None = Field(
         default=None,
         description=cleandoc(
             """
@@ -956,7 +954,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    upload_on_branch: Optional[Union[str, Nullable]] = Field(
+    upload_on_branch: str | Nullable | None = Field(
         default=None,
         exclude=True,  # Will not be rendered in the model dump
         description=cleandoc(
@@ -974,7 +972,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    config_version: Optional[str] = Field(
+    config_version: str | None = Field(
         default="2",
         description=cleandoc(
             """
@@ -984,7 +982,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    exclusive_config_file: Optional[Union[str, Nullable]] = Field(
+    exclusive_config_file: str | Nullable | None = Field(
         default=None,
         exclude=True,  # Will not be rendered in the model dump
         description=cleandoc(
@@ -995,7 +993,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    compiler_stack: Optional[str] = Field(
+    compiler_stack: str | None = Field(
         default="comp7",
         deprecated=True,
         description=cleandoc(
@@ -1010,7 +1008,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    min_py_ver: Optional[str] = Field(
+    min_py_ver: str | None = Field(
         default="27",
         deprecated=True,
         description=cleandoc(
@@ -1025,7 +1023,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    max_py_ver: Optional[str] = Field(
+    max_py_ver: str | None = Field(
         default="37",
         deprecated=True,
         description=cleandoc(
@@ -1040,7 +1038,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    min_r_ver: Optional[str] = Field(
+    min_r_ver: str | None = Field(
         default="34",
         deprecated=True,
         description=cleandoc(
@@ -1055,7 +1053,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    max_r_ver: Optional[str] = Field(
+    max_r_ver: str | None = Field(
         default="34",
         deprecated=True,
         description=cleandoc(
@@ -1070,7 +1068,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    private_upload: Optional[bool] = Field(
+    private_upload: bool | None = Field(
         default=False,
         description=cleandoc(
             """
@@ -1083,7 +1081,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    secrets: Optional[list[str]] = Field(
+    secrets: list[str] | None = Field(
         default_factory=list,
         description=cleandoc(
             """
@@ -1093,7 +1091,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    clone_depth: Optional[Union[int, Nullable]] = Field(
+    clone_depth: int | Nullable | None = Field(
         default=None,
         description=cleandoc(
             """
@@ -1105,7 +1103,7 @@ class ConfigModel(BaseModel):
     ###################################
     ####       CI Providers        ####
     ###################################
-    travis: Optional[dict[str, Any]] = Field(
+    travis: dict[str, Any] | None = Field(
         default_factory=dict,
         description=cleandoc(
             """
@@ -1115,7 +1113,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    circle: Optional[dict[str, Any]] = Field(
+    circle: dict[str, Any] | None = Field(
         default_factory=dict,
         description=cleandoc(
             """
@@ -1125,7 +1123,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    appveyor: Optional[dict[str, Any]] = Field(
+    appveyor: dict[str, Any] | None = Field(
         default_factory=lambda: {"image": "Visual Studio 2017"},
         description=cleandoc(
             """
@@ -1135,7 +1133,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    azure: Optional[AzureConfig] = Field(
+    azure: AzureConfig | None = Field(
         default_factory=AzureConfig,
         description=cleandoc(
             """
@@ -1194,7 +1192,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    drone: Optional[dict[str, str]] = Field(
+    drone: dict[str, str] | None = Field(
         default_factory=dict,
         description=cleandoc(
             """
@@ -1204,7 +1202,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    github_actions: Optional[GithubActionsConfig] = Field(
+    github_actions: GithubActionsConfig | None = Field(
         default_factory=GithubActionsConfig,
         description=cleandoc(
             """
@@ -1214,7 +1212,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    woodpecker: Optional[dict[str, str]] = Field(
+    woodpecker: dict[str, str] | None = Field(
         default_factory=dict,
         description=cleandoc(
             """
@@ -1231,7 +1229,7 @@ class ConfigModel(BaseModel):
     # Deprecated values, only present for validation will not show up in
     # the model dump, due to exclude=True
 
-    build_with_mambabuild: Optional[bool] = Field(
+    build_with_mambabuild: bool | None = Field(
         default=True,
         exclude=True,
         deprecated=True,
@@ -1242,7 +1240,7 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    matrix: Optional[dict[str, Any]] = Field(
+    matrix: dict[str, Any] | None = Field(
         default_factory=dict,
         exclude=True,
         deprecated=True,

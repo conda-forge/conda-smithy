@@ -1,5 +1,5 @@
 import re
-from typing import Any, Optional
+from typing import Any
 
 from rattler_build_conda_compat.jinja.jinja import (
     RecipeWithContext,
@@ -40,7 +40,7 @@ JINJA_VAR_PAT = re.compile(r"\${{(.*?)}}")
 
 
 def lint_recipe_tests(
-    recipe_dir: Optional[str],
+    recipe_dir: str | None,
     test_section: list[dict[str, Any]],
     outputs_section: list[dict[str, Any]],
     lints: list[str],
@@ -117,7 +117,7 @@ def get_recipe_name(recipe_content: RecipeWithContext) -> str:
     return package_name or recipe_name
 
 
-def get_recipe_version(recipe_content: RecipeWithContext) -> Optional[str]:
+def get_recipe_version(recipe_content: RecipeWithContext) -> str | None:
     rendered_context_recipe = render_recipe_with_context(recipe_content)
     package_version = rendered_context_recipe.get("package", {}).get("version")
     recipe_version = rendered_context_recipe.get("recipe", {}).get("version")

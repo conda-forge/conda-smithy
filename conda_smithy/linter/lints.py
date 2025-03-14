@@ -4,7 +4,7 @@ import os
 import re
 import tempfile
 from collections.abc import Sequence
-from typing import Any, Literal, Optional
+from typing import Any, Literal
 
 from conda.models.version import VersionOrder
 from rattler_build_conda_compat.jinja.jinja import render_recipe_with_context
@@ -329,7 +329,7 @@ def lint_subheaders(major_sections, meta, lints):
                         )
 
 
-def lint_noarch(noarch_value: Optional[str], lints):
+def lint_noarch(noarch_value: str | None, lints):
     if noarch_value is not None:
         valid_noarch_values = ["python", "generic"]
         if noarch_value not in valid_noarch_values:
@@ -340,7 +340,7 @@ def lint_noarch(noarch_value: Optional[str], lints):
 
 
 def lint_recipe_v1_noarch_and_runtime_dependencies(
-    noarch_value: Optional[Literal["python", "generic"]],
+    noarch_value: Literal["python", "generic"] | None,
     raw_requirements_section: dict[str, Any],
     build_section: dict[str, Any],
     noarch_platforms: bool,
@@ -745,7 +745,7 @@ def lint_check_usage_of_whls(meta_fname, noarch_value, lints, hints):
 
 
 def lint_rust_licenses_are_bundled(
-    build_reqs: Optional[list[str]],
+    build_reqs: list[str] | None,
     lints: list[str],
     recipe_version: int = 0,
 ):
@@ -765,7 +765,7 @@ def lint_rust_licenses_are_bundled(
 
 
 def lint_go_licenses_are_bundled(
-    build_reqs: Optional[list[str]],
+    build_reqs: list[str] | None,
     lints: list[str],
     recipe_version: int = 0,
 ):
