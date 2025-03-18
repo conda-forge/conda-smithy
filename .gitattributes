@@ -1,4 +1,6 @@
 .git_archival.txt  export-subst
 
 # Make GitHub syntax-highlight the templates correctly
+*.sh.tmpl linguist-language=sh
+*.bat.tmpl linguist-language=bat
 *.tmpl linguist-language=jinja
