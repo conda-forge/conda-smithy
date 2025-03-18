@@ -2,7 +2,7 @@
 
 # Make GitHub syntax-highlight the templates correctly
 *.bat.tmpl linguist-language=bat
-*.md.tmpl linguist-language=markdown
+*.md.tmpl linguist-language=jinja
 *.sh.tmpl linguist-language=sh
 *.toml.tmpl linguist-language=toml
 *.yml.ci-skel.tmpl linguist-language=yaml
