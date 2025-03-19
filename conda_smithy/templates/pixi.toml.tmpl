@@ -44,3 +44,5 @@ lint = "conda-smithy lint {{ recipe_dir }}"
 
 [environments]
 smithy = ["smithy"]
+# This is a copy of default, to be enabled by build_steps.sh during Docker builds
+# __PLATFORM_SPECIFIC_ENV__ = []

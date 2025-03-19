@@ -49,12 +49,15 @@ arch=$(uname -m)
 if [[ "$arch" == "x86_64" ]]; then
   arch="64"
 fi
-sed -i.bak "s/platforms = .*/platforms = [\"linux-${arch}\"]/" pixi.toml
+{#- We patch the pixi.toml file to only solve for one platform, and to create a platform-specific
+environment identical to 'default'. Otherwise local usage might result in 'default' being clobbered
+by the OS-specific builds (e.g. running Docker Linux on macOS). #}
+sed -i.bak -e "s/platforms = .*/platforms = [\"linux-${arch}\"]/" -e "s/# __PLATFORM_SPECIFIC_ENV__ =/build_linux-$arch =/" pixi.toml
 echo "Creating environment"
-PIXI_CACHE_DIR=/opt/conda pixi install
+PIXI_CACHE_DIR=/opt/conda pixi install --environment build_linux-$arch
 pixi list
 echo "Activating environment"
-eval "$(pixi shell-hook)"
+eval "$(pixi shell-hook --environment build_linux-$arch)"
 mv pixi.toml.bak pixi.toml
 popd
 {%- endif %}
