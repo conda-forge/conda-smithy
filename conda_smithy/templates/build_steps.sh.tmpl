@@ -52,12 +52,12 @@ fi
 {#- We patch the pixi.toml file to only solve for one platform, and to create a platform-specific
 environment identical to 'default'. Otherwise local usage might result in 'default' being clobbered
 by the OS-specific builds (e.g. running Docker Linux on macOS). #}
-sed -i.bak -e "s/platforms = .*/platforms = [\"linux-${arch}\"]/" -e "s/# __PLATFORM_SPECIFIC_ENV__ =/build-linux-$arch =/" pixi.toml
+sed -i.bak -e "s/platforms = .*/platforms = [\"linux-${arch}\"]/" -e "s/# __PLATFORM_SPECIFIC_ENV__ =/docker-build-linux-$arch =/" pixi.toml
 echo "Creating environment"
-PIXI_CACHE_DIR=/opt/conda pixi install --environment build-linux-$arch
+PIXI_CACHE_DIR=/opt/conda pixi install --environment docker-build-linux-$arch
 pixi list
 echo "Activating environment"
-eval "$(pixi shell-hook --environment build-linux-$arch)"
+eval "$(pixi shell-hook --environment docker-build-linux-$arch)"
 mv pixi.toml.bak pixi.toml
 popd
 {%- endif %}
