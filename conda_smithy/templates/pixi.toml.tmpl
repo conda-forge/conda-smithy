@@ -64,7 +64,7 @@ description = "Run conda-smithy. Pass necessary arguments."
 cmd = "conda-smithy rerender"
 description = "Rerender the feedstock."
 [feature.smithy.tasks.lint]
-cmd = "conda-smithy lint {{ recipe_dir }}"
+cmd = "conda-smithy lint --conda-forge {{ recipe_dir }}"
 description = "Lint the feedstock recipe"
 
 [environments]
