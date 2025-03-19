@@ -15,6 +15,7 @@ from argparse import ArgumentParser
 
 BUILD_LOCALLY_FILTER = os.environ.get("BUILD_LOCALLY_FILTER") or "*"
 
+
 def setup_environment(ns):
     os.environ["CONFIG"] = ns.config
     os.environ["UPLOAD_PACKAGES"] = "False"
@@ -53,7 +54,8 @@ def run_win_build(ns):
 
 def verify_config(ns):
     valid_configs = {
-        os.path.basename(f)[:-5] for f in glob.glob(f".ci_support/{BUILD_LOCALLY_FILTER}.yaml")
+        os.path.basename(f)[:-5]
+        for f in glob.glob(f".ci_support/{BUILD_LOCALLY_FILTER}.yaml")
     }
     if BUILD_LOCALLY_FILTER != "*":
         print(f"filtering for '{BUILD_LOCALLY_FILTER}.yaml' configs")
