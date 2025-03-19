@@ -54,10 +54,10 @@ environment identical to 'default'. Otherwise local usage might result in 'defau
 by the OS-specific builds (e.g. running Docker Linux on macOS). #}
 sed -i.bak -e "s/platforms = .*/platforms = [\"linux-${arch}\"]/" -e "s/# __PLATFORM_SPECIFIC_ENV__ =/build-linux-$arch =/" pixi.toml
 echo "Creating environment"
-PIXI_CACHE_DIR=/opt/conda pixi install --environment build_linux-$arch
+PIXI_CACHE_DIR=/opt/conda pixi install --environment build-linux-$arch
 pixi list
 echo "Activating environment"
-eval "$(pixi shell-hook --environment build_linux-$arch)"
+eval "$(pixi shell-hook --environment build-linux-$arch)"
 mv pixi.toml.bak pixi.toml
 popd
 {%- endif %}
