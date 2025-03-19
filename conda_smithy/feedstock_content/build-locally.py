@@ -80,14 +80,17 @@ def verify_config(ns):
         print(f"selected {ns.config}")
     else:
         raise ValueError("config " + ns.config + " is not valid")
-    if ns.config.startswith("osx") and platform.system() == "Darwin":
-        if "OSX_SDK_DIR" not in os.environ:
-            raise RuntimeError(
-                "Need OSX_SDK_DIR env variable set. Run 'export OSX_SDK_DIR=$PWD/SDKs' "
-                "to download the SDK automatically to '$PWD/SDKs/MacOSX<ver>.sdk'. "
-                "Note: OSX_SDK_DIR must be set to an absolute path. "
-                "Setting this variable implies agreement to the licensing terms of the SDK by Apple."
-            )
+    if (
+        ns.config.startswith("osx")
+        and platform.system() == "Darwin"
+        and not os.environ.get("OSX_SDK_DIR")
+    ):
+        raise RuntimeError(
+            "Need OSX_SDK_DIR env variable set. Run 'export OSX_SDK_DIR=$PWD/SDKs' "
+            "to download the SDK automatically to '$PWD/SDKs/MacOSX<ver>.sdk'. "
+            "Note: OSX_SDK_DIR must be set to an absolute path. "
+            "Setting this variable implies agreement to the licensing terms of the SDK by Apple."
+        )
 
 
 def main(args=None):
