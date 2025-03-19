@@ -2,9 +2,12 @@
 # update the conda-forge.yml and/or the recipe/meta.yaml.
 # -*- mode: toml -*-
 
+#                             VVVVVV  minimum `pixi` version
+"$schema" = "https://pixi.sh/v0.36.0/schema/manifest/schema.json"
+
 [project]
 name = "{{ feedstock_name }}"
-version = "{{ smithy_version }}"
+version = "{{ smithy_version }}"  # conda-smithy version used to generate this file
 description = "Pixi configuration for conda-forge/{{ feedstock_name }}"
 authors = ["@conda-forge/{{ feedstock_name[:-10] }}"]
 channels = ["conda-forge"]
@@ -16,31 +19,53 @@ platforms = {{ platforms|tojson }}
 {%- endfor %}
 
 [tasks]
-inspect-all = "inspect_artifacts --all-packages"
+[tasks.inspect-all]
+cmd = "inspect_artifacts --all-packages"
+description = "List contents of all packages found in {{ conda_build_tool }} build directory."
 {%- if conda_build_tool != "rattler-build" %}
-build = "{{ conda_build_tool }} build {{ recipe_dir }}"
-debug = "{{ conda_build_tool }} debug {{ recipe_dir }}"
+[tasks.build]
+cmd = "{{ conda_build_tool }} build {{ recipe_dir }}"
+description = "Build {{ feedstock_name }} with {{ conda_build_tool }}"
+[tasks.debug]
+cmd = "{{ conda_build_tool }} debug {{ recipe_dir }}"
+description = "Debug {{ feedstock_name }} with {{ conda_build_tool }}"
 {%- else %}
-build = "{{ conda_build_tool }} build --recipe {{ recipe_dir }}"
+[tasks.build]
+cmd = "{{ conda_build_tool }} build --recipe {{ recipe_dir }}"
+description = "Build {{ feedstock_name }} with {{ conda_build_tool }}"
 {%- endif %}
 {%- for variant in variants|sort %}
 {%- if conda_build_tool != "rattler-build" %}
-"build-{{ variant }}" = "{{ conda_build_tool }} build {{ recipe_dir }} -m .ci_support/{{ variant }}.yaml --suppress-variables --clobber-file .ci_support/clobber_{{ variant }}.yaml"
-"debug-{{ variant }}" = "{{ conda_build_tool }} debug {{ recipe_dir }} -m .ci_support/{{ variant }}.yaml"
+[tasks."build-{{ variant }}"]
+cmd = "{{ conda_build_tool }} build {{ recipe_dir }} -m .ci_support/{{ variant }}.yaml --suppress-variables --clobber-file .ci_support/clobber_{{ variant }}.yaml"
+description = "Build {{ feedstock_name }} with variant {{ variant }}"
+[tasks."debug-{{ variant }}"]
+cmd = "{{ conda_build_tool }} debug {{ recipe_dir }} -m .ci_support/{{ variant }}.yaml"
+description = "Debug {{ feedstock_name }} with variant {{ variant }}"
 {%- else %}
-"build-{{ variant }}" = "{{ conda_build_tool }} build --recipe {{ recipe_dir }} -m .ci_support/{{ variant }}.yaml"
+[tasks."build-{{ variant }}"]
+cmd = "{{ conda_build_tool }} build --recipe {{ recipe_dir }} -m .ci_support/{{ variant }}.yaml"
+description = "Build {{ feedstock_name }} with variant {{ variant }}"
 {%- endif %}
-"inspect-{{ variant }}" = "inspect_artifacts --recipe-dir {{ recipe_dir }} -m .ci_support/{{ variant }}.yaml"
+[tasks."inspect-{{ variant }}"]
+cmd = "inspect_artifacts --recipe-dir {{ recipe_dir }} -m .ci_support/{{ variant }}.yaml"
+description = "List contents of {{ feedstock_name }} packages built for variant {{ variant }}"
 {%- endfor %}
 
 [feature.smithy.dependencies]
 conda-smithy = "*"
-
-[feature.smithy.tasks]
-build-locally = "python ./build-locally.py"
-smithy = "conda-smithy"
-rerender = "conda-smithy rerender"
-lint = "conda-smithy lint {{ recipe_dir }}"
+[feature.smithy.tasks.build-locally]
+cmd = "python ./build-locally.py"
+description = "Run build-locally.py script"
+[feature.smithy.tasks.smithy]
+cmd = "conda-smithy"
+description = "Run conda-smithy. Pass necessary arguments."
+[feature.smithy.tasks.rerender]
+cmd = "conda-smithy rerender"
+description = "Rerender the feedstock."
+[feature.smithy.tasks.lint]
+cmd = "conda-smithy lint {{ recipe_dir }}"
+description = "Lint the feedstock recipe"
 
 [environments]
 smithy = ["smithy"]
