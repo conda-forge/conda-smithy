@@ -163,7 +163,6 @@ def test_osx_lint(where):
 
 
 def test_stdlib_lints_multi_output():
-
     with tmp_directory() as recipe_dir:
         with open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
             fh.write(
@@ -666,10 +665,7 @@ class TestLinter(unittest.TestCase):
         )
         self.assertNotIn(expected_message, lints)
 
-        expected_message = (
-            'The "extra" section was expected to be a '
-            "dictionary, but got a list."
-        )
+        expected_message = 'The "extra" section was expected to be a dictionary, but got a list.'
         lints, hints = linter.lintify_meta_yaml(
             {"extra": ["recipe-maintainers"]}
         )
@@ -1050,10 +1046,7 @@ linter:
                         f"been a lint for '{meta_string}'."
                     )
                 else:
-                    message = (
-                        f"Expected lints for '{meta_string}', but didn't "
-                        "get any."
-                    )
+                    message = f"Expected lints for '{meta_string}', but didn't get any."
                 self.assertEqual(
                     not is_good,
                     any(lint.startswith(expected_start) for lint in lints),
@@ -1250,10 +1243,7 @@ linter:
                         f"been a lint for '{meta_string}'."
                     )
                 else:
-                    message = (
-                        f"Expected lints for '{meta_string}', but didn't "
-                        "get any."
-                    )
+                    message = f"Expected lints for '{meta_string}', but didn't get any."
                 self.assertEqual(
                     not is_good,
                     any(lint.startswith(expected_start) for lint in lints),
@@ -1355,10 +1345,7 @@ linter:
                         f"been a lint for '{meta_string}'."
                     )
                 else:
-                    message = (
-                        f"Expected hints for '{meta_string}', but didn't "
-                        "get any."
-                    )
+                    message = f"Expected hints for '{meta_string}', but didn't get any."
                 self.assertEqual(
                     not is_good,
                     any(lint.startswith(expected_start) for lint in hints),
@@ -1436,10 +1423,7 @@ linter:
                         f"been a hint for '{meta_string}'."
                     )
                 else:
-                    message = (
-                        f"Expected hints for '{meta_string}', but didn't "
-                        "get any."
-                    )
+                    message = f"Expected hints for '{meta_string}', but didn't get any."
                 self.assertEqual(
                     not is_good,
                     any(lint.startswith(expected_start) for lint in hints),
@@ -1739,7 +1723,7 @@ linter:
         }
         lints, hints = linter.lintify_meta_yaml(meta)
         expected_message = (
-            "The recipe `license` should not include " 'the word "License".'
+            'The recipe `license` should not include the word "License".'
         )
         self.assertIn(expected_message, lints)
 
@@ -3629,7 +3613,7 @@ linter:
                 """
             ),
             [
-                "python ${{ python_min }}",
+                "python ${{ python_min }}.*",
                 "python >=${{ python_min }}",
             ],
         ),
@@ -3644,14 +3628,14 @@ linter:
 
                 requirements:
                   host:
-                    - python ${{ python_min }}
+                    - python ${{ python_min }}.*
                   run:
                     - python >=${{ python_min }}
 
                 tests:
                   - requirements:
                       run:
-                        - python ${{ python_min }}
+                        - python ${{ python_min }}.*
                 """
             ),
             [],
@@ -3687,7 +3671,7 @@ linter:
                 """
             ),
             [
-                "python ${{ python_min }}",
+                "python ${{ python_min }}.*",
                 "python >=${{ python_min }}",
             ],
         ),
@@ -3704,14 +3688,14 @@ linter:
                   host:
                     - if: blah
                       then: blahblah
-                      else: python ${{ python_min }}
+                      else: python ${{ python_min }}.*
                   run:
                     - python >=${{ python_min }}
 
                 tests:
                   - requirements:
                       run:
-                        - python ${{ python_min }}
+                        - python ${{ python_min }}.*
                 """
             ),
             [],
@@ -3792,7 +3776,7 @@ tests:
       - plip --help
     requirements:
       run:
-        - python ${{ python_min }}
+        - python ${{ python_min }}.*
 """,
             [],
         ),
@@ -3811,14 +3795,14 @@ tests:
                       host:
                         - if: blah
                           then: blahblah
-                          else: python ${{ python_min }}
+                          else: python ${{ python_min }}.*
                       run:
                         - python >=${{ python_min }}
 
                     tests:
                       - requirements:
                           run:
-                            - python ${{ python_min }}
+                            - python ${{ python_min }}.*
                 """
             ),
             [],
@@ -3845,7 +3829,7 @@ tests:
                     tests:
                       - requirements:
                           run:
-                            - python ${{ python_min }}
+                            - python ${{ python_min }}.*
                   - package:
                       name: python-bar
                     build:
@@ -3854,14 +3838,14 @@ tests:
                       host:
                         - if: blah
                           then: blahblah
-                          else: python ${{ python_min }}
+                          else: python ${{ python_min }}.*
                       run:
                         - python
 
                     tests:
                       - requirements:
                           run:
-                            - python ${{ python_min }}
+                            - python ${{ python_min }}.*
                 """
             ),
             [
@@ -3884,14 +3868,14 @@ tests:
                       host:
                         - if: blah
                           then: blahblah
-                          else: python ${{ python_min }}
+                          else: python ${{ python_min }}.*
                       run:
                         - python >=${{ python_min }}
 
                     tests:
                       - requirements:
                           run:
-                            - python ${{ python_min }}
+                            - python ${{ python_min }}.*
                   - package:
                       name: python-bar
                     requirements:
@@ -3932,6 +3916,9 @@ def test_hint_noarch_python_use_python_min_v1(
         for expected_hint in expected_hints:
             assert any(expected_hint in hint for hint in hints), hints
     else:
+        for hint in hints:
+            if "python_min" in hint:
+                print(hint)
         assert all("python_min" not in hint for hint in hints)
 
 
@@ -3962,7 +3949,7 @@ build:
 
 requirements:
   host:
-    - python ${{ python_min }}
+    - python ${{ python_min }}.*
     - pip
     - setuptools
   run:
@@ -3984,7 +3971,7 @@ tests:
       - plip --help
     requirements:
       run:
-        - python ${{ python_min }}
+        - python ${{ python_min }}.*
 
 about:
   license: GPL-2.0-only
@@ -4460,7 +4447,10 @@ def test_find_recipe_directory(
 
     assert linter.find_recipe_directory(
         str(tmp_path / directory_param), None
-    ) == (str(tmp_path / directory_param), expected_tool)
+    ) == (
+        str(tmp_path / directory_param),
+        expected_tool,
+    )
 
 
 @pytest.mark.parametrize(

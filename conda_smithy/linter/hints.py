@@ -279,12 +279,19 @@ def _hint_noarch_python_use_python_min_inner(
             ),
         ]:
             if recipe_version == 1:
+                # V1 recipes now require a `python ${{ python_min }}.*` matchspec
+                # in lieu of the ambiguous `python {{ python_min }}` matchspec
                 syntax = syntax.replace(
                     "{{ python_min }}", r"\${{ python_min }}"
                 )
-                report_syntax = report_syntax.replace(
-                    "{{ python_min }}", "${{ python_min }}"
-                )
+                if section_name in ["host", "test.requires"]:
+                    report_syntax = report_syntax.replace(
+                        "{{ python_min }}", "${{ python_min }}.*"
+                    )
+                else:
+                    report_syntax = report_syntax.replace(
+                        "{{ python_min }}", "${{ python_min }}"
+                    )
                 test_syntax = syntax
             else:
                 test_syntax = syntax.replace("{{ python_min }}", "9999")
