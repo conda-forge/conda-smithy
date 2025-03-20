@@ -437,6 +437,9 @@ def _ensure_spec_space_separated(spec: str) -> bool:
         return True
 
     fields = spec.split()
+    if len(fields) == 0 or len(fields) > 3:
+        return False
+
     try:
         match_spec = MatchSpec(spec)
     except CondaError:
