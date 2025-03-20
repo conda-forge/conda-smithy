@@ -431,7 +431,10 @@ def _ensure_spec_space_separated(spec: str) -> bool:
     if "#" in spec:
         spec = spec.split("#")[0]
     spec = spec.strip()
-    fields = spec.split(" ")
+
+    if "{{" in spec:
+        # Do not flag Jinja expressions
+        return True
     try:
         match_spec = MatchSpec(spec)
     except CondaError:
