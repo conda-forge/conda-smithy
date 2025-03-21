@@ -3916,9 +3916,6 @@ def test_hint_noarch_python_use_python_min_v1(
         for expected_hint in expected_hints:
             assert any(expected_hint in hint for hint in hints), hints
     else:
-        for hint in hints:
-            if "python_min" in hint:
-                print(hint)
         assert all("python_min" not in hint for hint in hints)
 
 
