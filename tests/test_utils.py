@@ -41,7 +41,7 @@ def test_get_metadata_from_feedstock_dir_jinja2(noarch_recipe_with_python_min):
 
     if build_tool == RATTLER_BUILD:
         assert metadata.meta["requirements"]["host"] == [
-            "python ${{ python_min }}"
+            "python ${{ python_min }}.*"
         ]
     else:
         assert metadata.meta["requirements"]["host"] == ["python 2.7"]

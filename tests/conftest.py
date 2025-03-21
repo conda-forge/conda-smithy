@@ -167,9 +167,11 @@ requirements:
 @pytest.fixture(scope="function")
 def noarch_recipe_with_python_min(config_yaml: ConfigYAML, recipe_dirname):
     if config_yaml.type == "rattler-build":
-        jinjatxt = "${{ python_min }}"
+        jinjatxt_run = "${{ python_min }}"
+        jinjatxt_host_test = "${{ python_min }}.*"
     else:
-        jinjatxt = "{{ python_min }}"
+        jinjatxt_run = "{{ python_min }}"
+        jinjatxt_host_test = jinjatxt_run
     with open(
         os.path.join(
             config_yaml.workdir, recipe_dirname, config_yaml.recipe_name
@@ -185,9 +187,9 @@ build:
     noarch: python
 requirements:
     host:
-        - python {jinjatxt}
+        - python {jinjatxt_host_test}
     run:
-        - python >={jinjatxt}
+        - python >={jinjatxt_run}
     """
         )
     return RecipeConfigPair(
