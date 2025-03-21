@@ -422,9 +422,11 @@ def hint_space_separated_specs(
             lines.append(f"- In section {req_type}: {', '.join(specs)}")
     if lines:
         lines.append(
-            "Requirement spec fields should always be space-separated to avoid known issues in "
-            "conda-build. For example, instead of `name =version=build`, use `name version.* "
-            "build`."
+            "Requirement spec fields should match the syntax `name [version [build]]`"
+            "to avoid known issues in conda-build. For example, instead of "
+            "`name =version=build`, use `name version.* build`. "
+            "There should be no spaces between version operators and versions either: "
+            "`python >= 3.8` should be `python >=3.8`."
         )
         hints.append("\n".join(lines))
 
@@ -436,7 +438,15 @@ def _ensure_spec_space_separated(spec: str) -> bool:
     if "#" in spec:
         spec = spec.split("#")[0]
     spec = spec.strip()
-    fields = spec.split(" ")
+
+    if "{{" in spec:
+        # Do not flag Jinja expressions
+        return True
+
+    fields = spec.split()
+    if len(fields) == 0 or len(fields) > 3:
+        return False
+
     try:
         match_spec = MatchSpec(spec)
     except CondaError:

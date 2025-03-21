@@ -4359,6 +4359,10 @@ def test_version_zero(filename: str):
         ("python =3.9=*cpython*", False),
         ("python=3.9=*cpython*", False),
         ("python malformed=*cpython*", False),
+        ("python >= 3.9", False),
+        ('{{ pin_subpackage("pkg-" ~ var, max_pin="x.x.x") }}', True),
+        ("conda-verify  >=3.1.0", True),
+        ("conda-verify  >=3.1.0   *_0", True),
     ],
 )
 def test_bad_specs(spec, result):
