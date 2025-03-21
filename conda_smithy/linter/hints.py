@@ -466,7 +466,7 @@ def hint_os_version(
     hints: list[str],
 ) -> None:
     default_os_version = "alma9"
-    obsolete_os_versions = ("cos7", "alma8")
+    obsolete_os_versions = ("cos7", "alma8", "ubi8")
     matches = {
         k: v
         for k, v in forge_yaml.get("os_version", {}).items()
