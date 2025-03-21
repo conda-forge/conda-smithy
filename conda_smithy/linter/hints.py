@@ -279,12 +279,19 @@ def _hint_noarch_python_use_python_min_inner(
             ),
         ]:
             if recipe_version == 1:
+                # V1 recipes now require a `python ${{ python_min }}.*` matchspec
+                # in lieu of the ambiguous `python {{ python_min }}` matchspec
                 syntax = syntax.replace(
                     "{{ python_min }}", r"\${{ python_min }}"
                 )
-                report_syntax = report_syntax.replace(
-                    "{{ python_min }}", "${{ python_min }}"
-                )
+                if section_name in ["host", "test.requires"]:
+                    report_syntax = report_syntax.replace(
+                        "{{ python_min }}", "${{ python_min }}.*"
+                    )
+                else:
+                    report_syntax = report_syntax.replace(
+                        "{{ python_min }}", "${{ python_min }}"
+                    )
                 test_syntax = syntax
             else:
                 test_syntax = syntax.replace("{{ python_min }}", "9999")
@@ -415,9 +422,11 @@ def hint_space_separated_specs(
             lines.append(f"- In section {req_type}: {', '.join(specs)}")
     if lines:
         lines.append(
-            "Requirement spec fields should always be space-separated to avoid known issues in "
-            "conda-build. For example, instead of `name =version=build`, use `name version.* "
-            "build`."
+            "Requirement spec fields should match the syntax `name [version [build]]`"
+            "to avoid known issues in conda-build. For example, instead of "
+            "`name =version=build`, use `name version.* build`. "
+            "There should be no spaces between version operators and versions either: "
+            "`python >= 3.8` should be `python >=3.8`."
         )
         hints.append("\n".join(lines))
 
@@ -429,7 +438,15 @@ def _ensure_spec_space_separated(spec: str) -> bool:
     if "#" in spec:
         spec = spec.split("#")[0]
     spec = spec.strip()
-    fields = spec.split(" ")
+
+    if "{{" in spec:
+        # Do not flag Jinja expressions
+        return True
+
+    fields = spec.split()
+    if len(fields) == 0 or len(fields) > 3:
+        return False
+
     try:
         match_spec = MatchSpec(spec)
     except CondaError:
