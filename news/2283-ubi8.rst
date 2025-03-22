@@ -1,0 +1,23 @@
+**Added:**
+
+* Added ``ubi8`` to list of ``os_version``s linted on. (#2283)
+
+**Changed:**
+
+* <news item>
+
+**Deprecated:**
+
+* <news item>
+
+**Removed:**
+
+* <news item>
+
+**Fixed:**
+
+* <news item>
+
+**Security:**
+
+* <news item>
