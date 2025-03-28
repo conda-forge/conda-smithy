@@ -4,11 +4,11 @@
 import json
 from enum import Enum
 from inspect import cleandoc
-from typing import Any, Literal, Optional, Union
+from typing import Annotated, Any, Literal, Optional, Union
 
 import yaml
 from conda.base.constants import KNOWN_SUBDIRS
-from pydantic import BaseModel, ConfigDict, Field, create_model
+from pydantic import BaseModel, ConfigDict, Field, WithJsonSchema, create_model
 
 try:
     from enum import StrEnum
@@ -321,18 +321,6 @@ class GithubActionsConfig(BaseModel):
     )
 
 
-class BotConfig(BaseModel):
-    """
-    This dictates the behavior of the conda-forge auto-tick bot which issues
-    automatic version updates/migrations for feedstocks.
-    """
-
-    class Config:
-        json_schema_extra = {
-            "$ref": "https://raw.githubusercontent.com/regro/cf-scripts/refs/heads/main/conda_forge_tick/cf_tick_schema.json"
-        }
-
-
 class CondaBuildConfig(BaseModel):
     model_config: ConfigDict = ConfigDict(extra="allow")
 
@@ -581,8 +569,16 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    bot: Optional[BotConfig] = Field(
-        default_factory=BotConfig,
+    bot: Annotated[
+        dict,
+        WithJsonSchema(
+            {
+                "$ref": "https://raw.githubusercontent.com/regro/cf-scripts/refs/heads/main/conda_forge_tick/cf_tick_schema.json"
+            }
+        ),
+    ] = Field(
+        default={},
+        title="BotConfig",
         description=cleandoc(
             """
         This dictates the behavior of the conda-forge auto-tick bot which issues

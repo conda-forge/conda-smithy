@@ -250,13 +250,6 @@
       "title": "AzureRunnerSettings",
       "type": "object"
     },
-    "BotConfig": {
-      "$ref": "https://raw.githubusercontent.com/regro/cf-scripts/refs/heads/main/conda_forge_tick/cf_tick_schema.json",
-      "description": "This dictates the behavior of the conda-forge auto-tick bot which issues\nautomatic version updates/migrations for feedstocks.",
-      "properties": {},
-      "title": "BotConfig",
-      "type": "object"
-    },
     "CIservices": {
       "enum": [
         "azure",
@@ -1675,15 +1668,10 @@
       "description": "Mapping for GitHub-specific configuration options. The defaults are as follows:\n\n```yaml\ngithub:\n    user_or_org: conda-forge\n    repo_name: \"my_repo\"\n    branch_name: main\n    tooling_branch_name: main\n```"
     },
     "bot": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/BotConfig"
-        },
-        {
-          "type": "null"
-        }
-      ],
-      "description": "This dictates the behavior of the conda-forge auto-tick bot which issues\nautomatic version updates/migrations for feedstocks.\nA valid example is:\n\n```yaml\nbot:\n    # can the bot automerge PRs it makes on this feedstock\n    automerge: true\n    # only automerge on successful version PRs, migrations are not automerged\n    automerge: 'version'\n    # only automerge on successful migration PRs, versions are not automerged\n    automerge: 'migration'\n\n    # only open PRs if resulting environment is solvable, useful for tightly coupled packages\n    check_solvable: true\n\n    # The bot.inspection key in the conda-forge.yml can have one of seven possible values and controls\n    # the bots behaviour for automatic dependency updates:\n    inspection: hint  # generate hints using source code (backwards compatible)\n    inspection: hint-all  # generate hints using all methods\n    inspection: hint-source  # generate hints using only source code\n    inspection: hint-grayskull  # generate hints using only grayskull\n    inspection: update-all  # update recipe using all methods\n    inspection: update-source  # update recipe using only source code\n    inspection: update-grayskull  # update recipe using only grayskull\n    inspection: disabled # don't update recipe, don't generate hints\n\n    # any branches listed in this section will get bot migration PRs in addition\n    # to the default branch\n    abi_migration_branches:\n        - 'v1.10.x'\n\n    version_updates:\n        # use this for packages that are updated too frequently\n        random_fraction_to_keep: 0.1  # keeps 10% of versions at random\n        exclude:\n            - '08.14'\n```\n\nThe `abi_migration_branches` feature is useful to, for example, add a\nlong-term support (LTS) branch for a package."
+      "$ref": "https://raw.githubusercontent.com/regro/cf-scripts/refs/heads/main/conda_forge_tick/cf_tick_schema.json",
+      "default": {},
+      "description": "This dictates the behavior of the conda-forge auto-tick bot which issues\nautomatic version updates/migrations for feedstocks.\nA valid example is:\n\n```yaml\nbot:\n    # can the bot automerge PRs it makes on this feedstock\n    automerge: true\n    # only automerge on successful version PRs, migrations are not automerged\n    automerge: 'version'\n    # only automerge on successful migration PRs, versions are not automerged\n    automerge: 'migration'\n\n    # only open PRs if resulting environment is solvable, useful for tightly coupled packages\n    check_solvable: true\n\n    # The bot.inspection key in the conda-forge.yml can have one of seven possible values and controls\n    # the bots behaviour for automatic dependency updates:\n    inspection: hint  # generate hints using source code (backwards compatible)\n    inspection: hint-all  # generate hints using all methods\n    inspection: hint-source  # generate hints using only source code\n    inspection: hint-grayskull  # generate hints using only grayskull\n    inspection: update-all  # update recipe using all methods\n    inspection: update-source  # update recipe using only source code\n    inspection: update-grayskull  # update recipe using only grayskull\n    inspection: disabled # don't update recipe, don't generate hints\n\n    # any branches listed in this section will get bot migration PRs in addition\n    # to the default branch\n    abi_migration_branches:\n        - 'v1.10.x'\n\n    version_updates:\n        # use this for packages that are updated too frequently\n        random_fraction_to_keep: 0.1  # keeps 10% of versions at random\n        exclude:\n            - '08.14'\n```\n\nThe `abi_migration_branches` feature is useful to, for example, add a\nlong-term support (LTS) branch for a package.",
+      "title": "BotConfig"
     },
     "build_platform": {
       "anyOf": [

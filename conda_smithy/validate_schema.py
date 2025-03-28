@@ -64,7 +64,7 @@ def validate_json_schema(
 
     # allow the URI to be set dynamically
     if "CONDA_SMITHY_BOT_SCHEMA_URI" in os.environ:
-        _json_schema["$defs"]["BotConfig"]["$ref"] = os.environ[
+        _json_schema["properties"]["bot"]["$ref"] = os.environ[
             "CONDA_SMITHY_BOT_SCHEMA_URI"
         ]
 
