@@ -1,5 +1,6 @@
 import json
 import os
+from pathlib import Path
 
 from conda_smithy.schema import ConfigModel
 from conda_smithy.validate_schema import (
@@ -48,6 +49,24 @@ def test_schema_validate_json_schema_with_bot():
     lints, hints = validate_json_schema(cfyaml)
     assert lints == []
     assert hints == []
+
+
+def test_schema_no_empty_properties_for_bot():
+    """
+    If a property references a remote schema with $ref, it should NOT have a properties key.
+    This is because some JSON schema validators (VSCode) will fail the validation if a property
+    is not in the properties object in this case.
+    """
+    with (
+        Path(__file__)
+        .parents[1]
+        .joinpath("conda_smithy/data/conda-forge.json")
+        .open("r") as f
+    ):
+        schema = json.load(f)
+
+    assert "properties" not in schema["properties"]["bot"]
+    assert schema["properties"]["bot"]["$ref"].startswith("https://")
 
 
 def test_schema_validate_json_schema_with_bot_uri_override(tmp_path):
