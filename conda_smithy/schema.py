@@ -579,51 +579,6 @@ class ConfigModel(BaseModel):
     ] = Field(
         default={},
         title="BotConfig",
-        description=cleandoc(
-            """
-        This dictates the behavior of the conda-forge auto-tick bot which issues
-        automatic version updates/migrations for feedstocks.
-        A valid example is:
-
-        ```yaml
-        bot:
-            # can the bot automerge PRs it makes on this feedstock
-            automerge: true
-            # only automerge on successful version PRs, migrations are not automerged
-            automerge: 'version'
-            # only automerge on successful migration PRs, versions are not automerged
-            automerge: 'migration'
-
-            # only open PRs if resulting environment is solvable, useful for tightly coupled packages
-            check_solvable: true
-
-            # The bot.inspection key in the conda-forge.yml can have one of seven possible values and controls
-            # the bots behaviour for automatic dependency updates:
-            inspection: hint  # generate hints using source code (backwards compatible)
-            inspection: hint-all  # generate hints using all methods
-            inspection: hint-source  # generate hints using only source code
-            inspection: hint-grayskull  # generate hints using only grayskull
-            inspection: update-all  # update recipe using all methods
-            inspection: update-source  # update recipe using only source code
-            inspection: update-grayskull  # update recipe using only grayskull
-            inspection: disabled # don't update recipe, don't generate hints
-
-            # any branches listed in this section will get bot migration PRs in addition
-            # to the default branch
-            abi_migration_branches:
-                - 'v1.10.x'
-
-            version_updates:
-                # use this for packages that are updated too frequently
-                random_fraction_to_keep: 0.1  # keeps 10% of versions at random
-                exclude:
-                    - '08.14'
-        ```
-
-        The `abi_migration_branches` feature is useful to, for example, add a
-        long-term support (LTS) branch for a package.
-        """
-        ),
     )
 
     build_platform: Optional[BuildPlatform] = Field(

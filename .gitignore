@@ -24,3 +24,6 @@ nppBackup/
 
 conda_smithy/_version.py
 .pixi/*
+
+venv
+oryx-build-commands.txt
