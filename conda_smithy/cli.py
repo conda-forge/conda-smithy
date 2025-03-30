@@ -406,7 +406,7 @@ class RegisterCI(Subcommand):
                 print(
                     "No azure token. Create a token at https://dev.azure.com/"
                     f"{owner}/_usersSettings/tokens and\n"
-                    "put it in ~/.conda-smithy/azure.token"
+                    "put it in ~/.conda-smithy/azure.token with chmod 600"
                 )
             ci_register.add_project_to_azure(owner, repo)
         else:

@@ -36,6 +36,9 @@ from pathlib import Path
 import pygit2
 import requests
 import scrypt
+from conda_build.utils import create_file_with_permissions
+
+from conda_smithy.utils import file_permissions
 
 
 class FeedstockTokenError(Exception):
@@ -100,7 +103,7 @@ def generate_and_write_feedstock_token(user, project, provider=None):
 
             os.makedirs(os.path.dirname(pth), exist_ok=True)
 
-            with open(pth, "w") as fp:
+            with create_file_with_permissions(pth, 0o600) as fp:
                 fp.write(token)
         except Exception as e:
             if "DEBUG_FEEDSTOCK_TOKENS" in os.environ:
@@ -142,6 +145,8 @@ def read_feedstock_token(user, project, provider=None):
 
     if not os.path.exists(user_token_pth):
         err_msg = f"No token found in '{user_token_pth}'"
+    elif file_permissions(user_token_pth) != "0o600":
+        err_msg = f"Incorrect permissions in '{user_token_pth}'. Must be 600."
     else:
         with open(user_token_pth) as fp:
             feedstock_token = fp.read().strip()

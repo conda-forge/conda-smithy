@@ -214,6 +214,10 @@ def _json_default(obj):
         return obj
 
 
+def file_permissions(path) -> str:
+    return oct(os.stat(path).st_mode & 0o777)
+
+
 class HashableDict(dict):
     """Hashable dict so it can be in sets"""
 

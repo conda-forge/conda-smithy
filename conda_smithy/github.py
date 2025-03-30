@@ -14,20 +14,24 @@ from conda_smithy.configure_feedstock import (
 )
 from conda_smithy.utils import (
     _get_metadata_from_feedstock_dir,
+    file_permissions,
     get_feedstock_name_from_meta,
 )
 
 
 def gh_token():
     try:
-        with open(os.path.expanduser("~/.conda-smithy/github.token")) as fh:
+        github_token_path = os.path.expanduser("~/.conda-smithy/github.token")
+        if file_permissions(github_token_path) != "0o600":
+            raise ValueError("Incorrect permissions")
+        with open(github_token_path) as fh:
             token = fh.read().strip()
         if not token:
             raise ValueError()
     except (OSError, ValueError):
         msg = (
             "No github token. Go to https://github.com/settings/tokens/new and generate\n"
-            "a token with repo access. Put it in ~/.conda-smithy/github.token"
+            "a token with repo access. Put it in ~/.conda-smithy/github.token with chmod 600"
         )
         raise RuntimeError(msg)
     return token

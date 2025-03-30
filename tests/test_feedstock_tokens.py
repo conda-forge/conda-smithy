@@ -17,6 +17,7 @@ from conda_smithy.feedstock_tokens import (
     register_feedstock_token,
     register_feedstock_token_with_providers,
 )
+from conda_smithy.utils import file_permissions
 
 
 @pytest.mark.parametrize(
@@ -218,6 +219,7 @@ def test_generate_and_write_feedstock_token(ci):
 
         assert not os.path.exists(opth)
         assert os.path.exists(pth)
+        assert file_permissions(pth) == "0o600"
 
         if ci is not None:
             generate_and_write_feedstock_token(user, repo, provider=None)

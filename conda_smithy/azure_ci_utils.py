@@ -21,6 +21,7 @@ from conda_smithy.azure_defaults import (
     AZURE_DEFAULT_ORG,
     AZURE_DEFAULT_PROJECT_NAME,
 )
+from conda_smithy.utils import file_permissions
 
 
 class AzureConfig:
@@ -43,7 +44,12 @@ class AzureConfig:
         )
 
         try:
-            with open(os.path.expanduser("~/.conda-smithy/azure.token")) as fh:
+            azure_token_path = os.path.expanduser(
+                "~/.conda-smithy/azure.token"
+            )
+            if file_permissions(azure_token_path) != "0o600":
+                raise ValueError("Incorrect permissions")
+            with open(azure_token_path) as fh:
                 self.token = fh.read().strip()
             if not self.token:
                 raise ValueError()
@@ -51,6 +57,7 @@ class AzureConfig:
             print(
                 "No azure token. Create a token and\n"
                 "put it in ~/.conda-smithy/azure.token"
+                "with chmod 600."
             )
             self.token = None
 

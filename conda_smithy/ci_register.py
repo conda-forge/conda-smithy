@@ -4,9 +4,13 @@ import sys
 import time
 
 import requests
+from conda_build.utils import create_file_with_permissions
 
 from conda_smithy import github
-from conda_smithy.utils import update_conda_forge_config
+from conda_smithy.utils import (
+    file_permissions,
+    update_conda_forge_config,
+)
 
 # https://circleci.com/docs/api#add-environment-variable
 
@@ -14,7 +18,10 @@ from conda_smithy.utils import update_conda_forge_config
 # https://circleci.com/api/v1/project/:username/:project/envvar?circle-token=:token
 
 try:
-    with open(os.path.expanduser("~/.conda-smithy/circle.token")) as fh:
+    circle_token_path = os.path.expanduser("~/.conda-smithy/circle.token")
+    if file_permissions(circle_token_path) != "0o600":
+        raise ValueError("Incorrect permissions")
+    with open(circle_token_path) as fh:
         circle_token = fh.read().strip()
     if not circle_token:
         raise ValueError()
@@ -25,32 +32,43 @@ except (OSError, ValueError):
     )
 
 try:
-    with open(os.path.expanduser("~/.conda-smithy/appveyor.token")) as fh:
+    appveyor_token_path = os.path.expanduser("~/.conda-smithy/appveyor.token")
+    if file_permissions(appveyor_token_path) != "0o600":
+        raise ValueError("Incorrect permissions")
+    with open(appveyor_token_path) as fh:
         appveyor_token = fh.read().strip()
     if not appveyor_token:
         raise ValueError()
 except (OSError, ValueError):
     print(
         "No appveyor token. Create a token at https://ci.appveyor.com/api-token and\n"
-        "Put one in ~/.conda-smithy/appveyor.token"
+        "Put one in ~/.conda-smithy/appveyor.token with chmod 600"
     )
 
 try:
-    with open(os.path.expanduser("~/.conda-smithy/drone.token")) as fh:
+    drone_token_path = os.path.expanduser("~/.conda-smithy/drone.token")
+    if file_permissions(drone_token_path) != "0o600":
+        raise ValueError("Incorrect permissions")
+    with open(drone_token_path) as fh:
         drone_token = fh.read().strip()
     if not drone_token:
         raise ValueError()
 except (OSError, ValueError):
     print(
         "No drone token. Create a token at https://cloud.drone.io/account and\n"
-        "Put one in ~/.conda-smithy/drone.token"
+        "Put one in ~/.conda-smithy/drone.token with chmod 600"
     )
 
 try:
     anaconda_token = os.environ["BINSTAR_TOKEN"]
 except KeyError:
     try:
-        with open(os.path.expanduser("~/.conda-smithy/anaconda.token")) as fh:
+        anaconda_token_path = os.path.expanduser(
+            "~/.conda-smithy/anaconda.token"
+        )
+        if file_permissions(anaconda_token_path) != "0o600":
+            raise ValueError("Incorrect permissions")
+        with open(anaconda_token_path) as fh:
             anaconda_token = fh.read().strip()
         if not anaconda_token:
             raise ValueError()
@@ -58,7 +76,7 @@ except KeyError:
         print(
             "No anaconda token. Create a token via\n"
             '  anaconda auth --create --name conda-smithy --scopes "repos conda api"\n'
-            "and put it in ~/.conda-smithy/anaconda.token"
+            "and put it in ~/.conda-smithy/anaconda.token with chmod 600"
         )
 
 travis_endpoint = "https://api.travis-ci.com"
@@ -106,9 +124,8 @@ def travis_headers():
         if response.status_code != 201:
             response.raise_for_status()
         token = response.json()["access_token"]
-        with open(travis_token, "w") as fh:
+        with create_file_with_permissions(travis_token, 0o600) as fh:
             fh.write(token)
-        # TODO: Set the permissions on the file.
 
     headers["Authorization"] = f"token {token}"
     return headers
@@ -434,9 +451,11 @@ def travis_encrypt_binstar_token(repo, string_to_encrypt):
     #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
     #    License for the specific language governing permissions and limitations
     #    under the License.
+    #
+    # Update 2025-03-20: Replace PKCS1_v1_5 with PKCS1_OAEP
     import base64
 
-    from Crypto.Cipher import PKCS1_v1_5
+    from Crypto.Cipher import PKCS1_OAEP
     from Crypto.PublicKey import RSA
 
     keyurl = f"https://api.travis-ci.com/repo/{repo}/key_pair/generated"
@@ -444,7 +463,7 @@ def travis_encrypt_binstar_token(repo, string_to_encrypt):
     r.raise_for_status()
     public_key = r.json()["public_key"]
     key = RSA.importKey(public_key)
-    cipher = PKCS1_v1_5.new(key)
+    cipher = PKCS1_OAEP.new(key)
     return base64.b64encode(cipher.encrypt(string_to_encrypt.encode())).decode(
         "utf-8"
     )
