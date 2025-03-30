@@ -250,9 +250,20 @@ def test_read_feedstock_token(ci):
     assert "No token found in" in err
     assert token is None
 
+    # bad permissions
+    try:
+        os.system("touch " + pth)
+        token, err = read_feedstock_token(user, repo, provider=ci)
+        assert "Incorrect permissions" in err
+        assert token is None
+    finally:
+        if os.path.exists(pth):
+            os.remove(pth)
+
     # empty
     try:
         os.system("touch " + pth)
+        os.system("chmod 600 " + pth)
         token, err = read_feedstock_token(user, repo, provider=ci)
         assert "Empty token found in" in err
         assert token is None
