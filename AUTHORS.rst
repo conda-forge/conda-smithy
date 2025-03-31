@@ -12,8 +12,8 @@ Authors are sorted by number of commits.
 * Wolf Vollprecht
 * Uwe L. Korn
 * Filipe Fernandes
-* pre-commit-ci[bot]
 * Min RK
+* pre-commit-ci[bot]
 * Dougal J. Sutherland
 * Amit Kumar
 * Marcel Bargull
@@ -137,3 +137,5 @@ Authors are sorted by number of commits.
 * Ken Odegard
 * Bas Nijholt
 * Nils Homer
+* Alfredo Luque
+* Philipp A.
