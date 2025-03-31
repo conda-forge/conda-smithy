@@ -2061,6 +2061,7 @@
     "travis": {
       "anyOf": [
         {
+          "additionalProperties": true,
           "type": "object"
         },
         {
@@ -2073,6 +2074,7 @@
     "circle": {
       "anyOf": [
         {
+          "additionalProperties": true,
           "type": "object"
         },
         {
@@ -2085,6 +2087,7 @@
     "appveyor": {
       "anyOf": [
         {
+          "additionalProperties": true,
           "type": "object"
         },
         {
@@ -2163,6 +2166,7 @@
     "matrix": {
       "anyOf": [
         {
+          "additionalProperties": true,
           "type": "object"
         },
         {
