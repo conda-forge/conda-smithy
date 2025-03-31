@@ -4,6 +4,47 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.47.1
+====================
+
+**Added:**
+
+* Added linguist hooks for template files. (#2278)
+* Pixi tasks have descriptions now. (#2280)
+* ``pixi run lint`` will now run conda-forge specific logic too. (#2280)
+* ``build-locally.py`` can now run Windows builds. (#2280)
+* ``build-locally.py`` interactive choices can be filtered with a glob via ``--filter``. (#2280)
+* Added ``ubi8`` to list of ``os_version``s linted on. (#2283)
+
+**Changed:**
+
+* Use a platform-specific name for Pixi-provisioned environments when run in a Docker container
+  to avoid cross-operating-system ``default`` environment clobbering. (#2279)
+* In V1 recipes, the hint for ``python_min`` usage in the host and test.requires section now uses ``python {{ python_min }}.*`` for compatibility with the latest versions of rattler-build used in conda-forge feedstocks. (#2281)
+* Reduce false positives for space-separated ``MatchSpec`` syntax hints. (#2272 via #2282)
+* Apply owner-only (``chmod 600``) permissions to token files written in ``~/.conda-smithy/`` (e.g. Travis CI token, feedstock tokens).
+* Refuse to read ``~/.conda-smithy/*.token`` files if they have incorrect permissions. Users must apply ``chmod 600``.
+* Use ``PKCS1_OAEP`` to encrypt payloads for Travis.
+
+**Fixed:**
+
+* Allow current directory to have whitespace in its path. (#2276)
+* Fixed error in the JSON schema, no longer combining "$ref" and "properties" to support validation in all cases. (#2285)
+* Fixed issue with bot schema description not showing by moving it to the bot repo. (#2288)
+* Updated schema with pydantic 2.11 (#2289)
+
+**Authors:**
+
+* Matthew R. Becker
+* Jaime Rodríguez-Guerra
+* H. Vetinari
+* Min RK
+* Yannik Tausch
+* Alfredo Luque
+* Philipp A.
+
+
+
 v3.47.0
 ====================
 
