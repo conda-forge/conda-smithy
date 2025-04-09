@@ -1124,12 +1124,15 @@ class ConfigModel(BaseModel):
                     maxParallel: 1
         ```
 
-        Below is an example configuration for adding a swapfile on an Azure agent for Linux:
+        Below is an example configuration for adding a swapfile on an Azure agent for Linux and Windows:
 
         ```yaml
         azure:
             settings_linux:
                 swapfile_size: 10GiB
+            settings_win:
+                variables:
+                    SET_PAGEFILE: 'True'
         ```
 
         If you need more space on Windows, you can use `C:` at the cost of IO performance:
