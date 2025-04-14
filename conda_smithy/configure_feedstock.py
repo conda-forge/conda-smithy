@@ -791,12 +791,13 @@ def dump_subspace_config_files(
             package_key(config, top_level_loop_vars, metas[0].config.subdir),
         )
         short_config_name = config_name
+        salt = hashlib.sha256(config_name.encode("utf-8")).hexdigest()[:8]
+        # drone has a limit of 50, see https://github.com/conda-forge/conda-smithy/issues/1188
         if len(short_config_name) >= 49:
-            h = hashlib.sha256(config_name.encode("utf-8")).hexdigest()[:10]
-            short_config_name = config_name[:35] + "_h" + h
-        if len("conda-forge-build-done-" + config_name) >= 250:
+            short_config_name = config_name[:40] + "_h" + salt
+        if len("conda-forge-build-done-" + config_name) >= 200:
             # Shorten file name length to avoid hitting maximum filename limits.
-            config_name = short_config_name
+            config_name = config_name[:190] + "_h" + salt
 
         out_folder = os.path.join(root_path, ".ci_support")
         out_path = os.path.join(out_folder, config_name) + ".yaml"
