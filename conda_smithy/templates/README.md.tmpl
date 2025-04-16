@@ -203,7 +203,7 @@ Current release info
 | Name | Downloads | Version | Platforms |
 | --- | --- | --- | --- |
 {%- for output in outputs %}
-| [![Conda Recipe]({{ shield }}badge/recipe-{{ output.replace('-','--') }}-green.svg)](https://anaconda.org/{{ channel_name }}/{{ output }}) | [![Conda Downloads]({{ shield }}conda/dn/{{ channel_name }}/{{ output }}.svg)](https://anaconda.org/{{ channel_name }}/{{ output }}) | [![Conda Version]({{ shield }}conda/vn/{{ channel_name }}/{{ output }}.svg)](https://anaconda.org/{{ channel_name }}/{{ output }}) | [![Conda Platforms]({{ shield }}conda/pn/{{ channel_name }}/{{ output }}.svg)](https://anaconda.org/{{ channel_name }}/{{ output }}) |
+| [![Conda Recipe]({{ shield }}badge/recipe-{{ output.replace('-','--').replace('_','__') }}-green.svg)](https://anaconda.org/{{ channel_name }}/{{ output }}) | [![Conda Downloads]({{ shield }}conda/dn/{{ channel_name }}/{{ output }}.svg)](https://anaconda.org/{{ channel_name }}/{{ output }}) | [![Conda Version]({{ shield }}conda/vn/{{ channel_name }}/{{ output }}.svg)](https://anaconda.org/{{ channel_name }}/{{ output }}) | [![Conda Platforms]({{ shield }}conda/pn/{{ channel_name }}/{{ output }}.svg)](https://anaconda.org/{{ channel_name }}/{{ output }}) |
 {%- endfor %}
 
 Installing {{ package_name }}
