@@ -1205,6 +1205,11 @@ def _render_ci_provider(
         for meta in metas:
             if not meta.skip():
                 enable_platform[i] = True
+
+        # sort the list of metas by the distribution string to ensure stable
+        # rendering later
+        metas = sorted(metas, key=lambda x: x.dist())
+
         metas_list_of_lists.append(metas)
 
     if not any(enable_platform):
