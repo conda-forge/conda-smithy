@@ -1,6 +1,6 @@
 **Added:**
 
-* <news item>
+* Added info-level logging statement printing which variables are used to distribute CI jobs. (#2300)
 
 **Changed:**
 
@@ -17,6 +17,7 @@
 **Fixed:**
 
 * Fixed unstable rerenders in an edge case by producing the smallest number of CI support jobs. (#2300)
+* Removed extraneous print statement in rendering, turning it into a debug-level log statement. (#2300)
 
 **Security:**
 
