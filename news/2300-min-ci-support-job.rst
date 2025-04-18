@@ -16,7 +16,7 @@
 
 **Fixed:**
 
-* Fixed unstable rerenders in an edge case by producing the smallest number of CI support jobs. (#2300)
+* Fixed unstable rerenders in an edge case by using the intersection of top-leve loop vars over all outputs. (#2300)
 * Removed extraneous print statement in rendering, turning it into a debug-level log statement. (#2300)
 
 **Security:**

@@ -567,7 +567,8 @@ def _collapse_subpackage_variants(
     # on osx, merge MACOSX_DEPLOYMENT_TARGET & c_stdlib_version to max of either; see #1884
     all_variants = _merge_deployment_target(all_variants, has_macdt)
 
-    # we use the intersection of all of the loop vars in the outputs.
+    # we use the intersection of all of the loop vars in the outputs
+    # to distribute CI jobs.
     # this eliminates cases where a fully expanded build matrix would produce
     # duplicate outputs if an output used some variables but not others.
     # For outputs that do not use some variables, conda-build will properly
