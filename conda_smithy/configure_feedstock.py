@@ -567,10 +567,37 @@ def _collapse_subpackage_variants(
     # on osx, merge MACOSX_DEPLOYMENT_TARGET & c_stdlib_version to max of either; see #1884
     all_variants = _merge_deployment_target(all_variants, has_macdt)
 
-    top_level_loop_vars = list_of_metas[0].get_used_loop_vars(
-        force_top_level=True
-    )
-    top_level_vars = list_of_metas[0].get_used_vars(force_top_level=True)
+    # we grab the shortest list of top-level loop vars
+    # for some recipes, there can be outputs which do not depend on some
+    # of the variables used by other outputs. these outputs will get
+    # duplicate builds if we naively expand the entire build matrix into
+    # one .ci_support file per entry.
+    # for this reason, we want to force the ci_support files to only be
+    # produced for the smallest set of top-level loop vars over all outputs.
+    # this heuristic will fail if we have a recipe that builds two totally unrelated
+    # packages. in that case, we'd need to group the outputs into non-overlapping
+    # subsets (as determined by overlaps between their top-level loop vars), use the
+    # smallest set of top-level vars per group, and then produce a set of ci support jobs
+    # that is a union of the jobs from each group.
+    # we don't do that here since we should not be building unrelated packages in the
+    # same recipe anyways.
+    top_level_loop_vars = None
+    top_level_vars = None
+    for meta in list_of_metas:
+        curr_top_level_loop_vars = meta.get_used_loop_vars(
+            force_top_level=True
+        )
+        curr_top_level_vars = meta.get_used_vars(force_top_level=True)
+
+        if top_level_loop_vars is None:
+            top_level_loop_vars = curr_top_level_loop_vars
+            top_level_vars = curr_top_level_vars
+            continue
+
+        if len(curr_top_level_loop_vars) < len(top_level_loop_vars):
+            top_level_loop_vars = curr_top_level_loop_vars
+            top_level_vars = curr_top_level_vars
+
     if "target_platform" in all_used_vars:
         top_level_loop_vars.add("target_platform")
 
