@@ -567,39 +567,27 @@ def _collapse_subpackage_variants(
     # on osx, merge MACOSX_DEPLOYMENT_TARGET & c_stdlib_version to max of either; see #1884
     all_variants = _merge_deployment_target(all_variants, has_macdt)
 
-    # we grab the shortest list of top-level loop vars
-    # for some recipes, there can be outputs which do not depend on some
-    # of the variables used by other outputs. these outputs will get
-    # duplicate builds if we naively expand the entire build matrix into
-    # one .ci_support file per entry.
-    # for this reason, we want to force the ci_support files to only be
-    # produced for the smallest set of top-level loop vars over all outputs.
-    # this heuristic will fail if we have a recipe that builds two totally unrelated
-    # packages. in that case, we'd need to group the outputs into non-overlapping
-    # subsets (as determined by overlaps between their top-level loop vars), use the
-    # smallest set of top-level vars per group, and then produce a set of ci support jobs
-    # that is a union of the jobs from each group.
-    # we don't do that here since we should not be building unrelated packages in the
-    # same recipe anyways.
-    top_level_loop_vars = None
-    top_level_vars = None
-    for meta in list_of_metas:
-        curr_top_level_loop_vars = meta.get_used_loop_vars(
-            force_top_level=True
-        )
-        curr_top_level_vars = meta.get_used_vars(force_top_level=True)
-
-        if top_level_loop_vars is None:
-            top_level_loop_vars = curr_top_level_loop_vars
-            top_level_vars = curr_top_level_vars
-            continue
-
-        if len(curr_top_level_loop_vars) < len(top_level_loop_vars):
-            top_level_loop_vars = curr_top_level_loop_vars
-            top_level_vars = curr_top_level_vars
+    # we use the intersection of all of the loop vars in the outputs.
+    # this eliminates cases where a fully expanded build matrix would produce
+    # duplicate outputs if an output used some variables but not others.
+    # For outputs that do not use some variables, conda-build will properly
+    # deduplicate the packages it builds in a single CI job.
+    top_level_loop_vars = [
+        meta.get_used_loop_vars(force_top_level=True) for meta in list_of_metas
+    ]
+    top_level_vars = [
+        meta.get_used_vars(force_top_level=True) for meta in list_of_metas
+    ]
+    top_level_vars = set.intersection(*top_level_vars)
+    top_level_loop_vars = set.intersection(*top_level_loop_vars)
 
     if "target_platform" in all_used_vars:
         top_level_loop_vars.add("target_platform")
+
+    logger.info(
+        "variables used to distribute packages over CI jobs:\n%s",
+        textwrap.indent(pprint.pformat(top_level_loop_vars), "    "),
+    )
 
     logger.debug("initial all_used_vars %s", pprint.pformat(all_used_vars))
 
@@ -2167,7 +2155,7 @@ def render_readme(jinja_env, forge_config, forge_dir, render_info=None):
             subpackages_about.append((name, about))
 
     # align new style about with old style about
-    print("subpackages_about", subpackages_about)
+    logger.debug("subpackages_about\n %s", pprint.pformat(subpackages_about))
     for i, (name, about) in enumerate(subpackages_about):
         if "repository" in about:
             about["dev_url"] = about["repository"]
