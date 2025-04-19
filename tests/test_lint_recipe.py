@@ -3646,6 +3646,59 @@ linter:
                 package:
                   name: python
 
+                build:
+                  noarch: python
+
+                requirements:
+                  host:
+                    - python ${{ python_min }}.*
+                  run:
+                    - python >=${{ python_min }}
+
+                tests:
+                  - requirements:
+                      run:
+                        - python
+                """
+            ),
+            [
+                "tests[].python.python_version",
+                "tests[].requirements.run",
+                "python ${{ python_min }}.*",
+            ],
+        ),
+        (
+            textwrap.dedent(
+                """
+                package:
+                  name: python
+
+                build:
+                  noarch: python
+
+                requirements:
+                  host:
+                    - python ${{ python_min }}.*
+                  run:
+                    - python >=${{ python_min }}
+
+                tests:
+                  - python:
+                      pip_check: false
+                """
+            ),
+            [
+                "tests[].python.python_version",
+                "tests[].requirements.run",
+                "python ${{ python_min }}.*",
+            ],
+        ),
+        (
+            textwrap.dedent(
+                """
+                package:
+                  name: python
+
                 requirements:
                   run:
                     - if: blah

@@ -293,8 +293,19 @@ def _hint_noarch_python_use_python_min_inner(
                         "{{ python_min }}", "${{ python_min }}"
                     )
                 test_syntax = syntax
+
+                if section_name == "test.requires":
+                    report_section_name = "`tests[].python.python_version` or `tests[].requirements.run`"
+                    report_entry = "`python_version` or `python`"
+                    report_syntax = "`python_version: ${{ python_min }}.*` or `python ${{ python_min }}.*`"
+                else:
+                    report_section_name = f"`{section_name}`"
+                    report_entry = "`python`"
             else:
                 test_syntax = syntax.replace("{{ python_min }}", "9999")
+                report_section_name = f"`{section_name}`"
+                report_entry = "`python`"
+                report_syntax = f"`{report_syntax}`"
 
             for req in reqs:
                 if (
@@ -305,11 +316,11 @@ def _hint_noarch_python_use_python_min_inner(
                     break
             else:
                 section_desc = (
-                    f"`{output_name}` output" if output_name else "recipe"
+                    f"`{output_name}` output" if output_name else "the recipe"
                 )
                 hint.append(
-                    f"\n   - For the `{section_name}` section of {section_desc}, you should usually use `{report_syntax}` "
-                    f"for the `python` entry."
+                    f"\n   - For the {report_section_name} section of {section_desc}, you "
+                    f"should usually use the pin {report_syntax} for the {report_entry} entry."
                 )
     return hint
 
