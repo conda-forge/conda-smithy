@@ -429,7 +429,7 @@ def hint_space_separated_specs(
     for output, requirements in report.items():
         lines.append(f"{output} output has some malformed specs:")
         for req_type, specs in requirements.items():
-            specs = [f"`{spec}" for spec in specs]
+            specs = [f"`{spec}`" for spec in specs]
             lines.append(f"- In section {req_type}: {', '.join(specs)}")
     if lines:
         lines.append(
@@ -450,8 +450,14 @@ def _ensure_spec_space_separated(spec: str) -> bool:
         spec = spec.split("#")[0]
     spec = spec.strip()
 
-    if "{{" in spec:
-        # Do not flag Jinja expressions
+    # exclude jinja2 stubs or expressions
+    if "{{" in spec or any(
+        spec.startswith(stub)
+        for stub in [
+            "compatible_pin ",
+            "subpackage_pin ",
+        ]
+    ):
         return True
 
     fields = spec.split()
