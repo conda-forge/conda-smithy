@@ -4363,6 +4363,8 @@ def test_version_zero(filename: str):
         ('{{ pin_subpackage("pkg-" ~ var, max_pin="x.x.x") }}', True),
         ("conda-verify  >=3.1.0", True),
         ("conda-verify  >=3.1.0   *_0", True),
+        ("subpackage_pin blah 4.5", True),
+        ("compatible_pin blah 345", True),
     ],
 )
 def test_bad_specs(spec, result):
