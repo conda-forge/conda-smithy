@@ -567,12 +567,28 @@ def _collapse_subpackage_variants(
     # on osx, merge MACOSX_DEPLOYMENT_TARGET & c_stdlib_version to max of either; see #1884
     all_variants = _merge_deployment_target(all_variants, has_macdt)
 
-    top_level_loop_vars = list_of_metas[0].get_used_loop_vars(
-        force_top_level=True
-    )
-    top_level_vars = list_of_metas[0].get_used_vars(force_top_level=True)
+    # we use the intersection of all of the loop vars in the outputs
+    # to distribute CI jobs.
+    # this eliminates cases where a fully expanded build matrix would produce
+    # duplicate outputs if an output used some variables but not others.
+    # For outputs that do not use some variables, conda-build will properly
+    # deduplicate the packages it builds in a single CI job.
+    top_level_loop_vars = [
+        meta.get_used_loop_vars(force_top_level=True) for meta in list_of_metas
+    ]
+    top_level_vars = [
+        meta.get_used_vars(force_top_level=True) for meta in list_of_metas
+    ]
+    top_level_vars = set.intersection(*top_level_vars)
+    top_level_loop_vars = set.intersection(*top_level_loop_vars)
+
     if "target_platform" in all_used_vars:
         top_level_loop_vars.add("target_platform")
+
+    logger.info(
+        "variables used to distribute packages over CI jobs:\n%s",
+        textwrap.indent(pprint.pformat(top_level_loop_vars), "    "),
+    )
 
     logger.debug("initial all_used_vars %s", pprint.pformat(all_used_vars))
 
@@ -1178,6 +1194,11 @@ def _render_ci_provider(
         for meta in metas:
             if not meta.skip():
                 enable_platform[i] = True
+
+        # sort the list of metas by the distribution string to ensure stable
+        # rendering later
+        metas = sorted(metas, key=lambda x: x.dist())
+
         metas_list_of_lists.append(metas)
 
     if not any(enable_platform):
@@ -2135,7 +2156,7 @@ def render_readme(jinja_env, forge_config, forge_dir, render_info=None):
             subpackages_about.append((name, about))
 
     # align new style about with old style about
-    print("subpackages_about", subpackages_about)
+    logger.debug("subpackages_about\n %s", pprint.pformat(subpackages_about))
     for i, (name, about) in enumerate(subpackages_about):
         if "repository" in about:
             about["dev_url"] = about["repository"]
