@@ -12,13 +12,13 @@ Authors are sorted by number of commits.
 * Wolf Vollprecht
 * Uwe L. Korn
 * Filipe Fernandes
-* Min RK
 * pre-commit-ci[bot]
+* Min RK
 * Dougal J. Sutherland
 * Amit Kumar
+* John Kirkham
 * Marcel Bargull
 * Hadrien Mary
-* John Kirkham
 * shadow_walker
 * Michael Sarahan
 * Mark Harfouche
@@ -46,10 +46,10 @@ Authors are sorted by number of commits.
 * Justin Calamari
 * Jason Furmanek
 * Patrick Sodré
+* dependabot[bot]
 * Jan Lehnarsdt
 * C.A.M. Gerlach
 * refraction-ray
-* dependabot[bot]
 * Leopold Talirz
 * Peter Williams
 * Tom Pollard
@@ -139,3 +139,4 @@ Authors are sorted by number of commits.
 * Nils Homer
 * Alfredo Luque
 * Philipp A.
+* Andreas Poehlmann
