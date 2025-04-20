@@ -4,6 +4,32 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.47.2
+====================
+
+**Added:**
+
+* Added info-level logging statement printing which variables are used to distribute CI jobs. (#2300)
+* Include Windows pagefile example (#2295)
+
+**Fixed:**
+
+* Fixed unstable rerenders in an edge case by using the intersection of top-leve loop vars over all outputs. (#2300)
+* Removed extraneous print statement in rendering, turning it into a debug-level log statement. (#2300)
+* Fixed linter false-positive for malformed specs on jinja2 ``pin_compatible`` and ``pin_subpackage`` statements. (#2301)
+* Fixed hint for ``noarch: python`` min version pins for the ``tests`` section for v1 recipes. (#2302)
+* Escape underscore in README output shields.io badges (#2298)
+
+**Authors:**
+
+* Matthew R. Becker
+* pre-commit-ci[bot]
+* John Kirkham
+* dependabot[bot]
+* Andreas Poehlmann
+
+
+
 v3.47.1
 ====================
 
