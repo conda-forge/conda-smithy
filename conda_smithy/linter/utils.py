@@ -71,6 +71,7 @@ VALID_PYTHON_BUILD_BACKENDS = [
     "maturin",
     "jupyter_packaging",
     "whey",
+    "uv-build",
 ]
 
 
