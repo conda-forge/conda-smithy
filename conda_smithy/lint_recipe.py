@@ -403,14 +403,15 @@ def lintify_meta_yaml(
     )
 
     # 6: stdlib-related lints
-    lint_stdlib(
-        meta,
-        requirements_section,
-        conda_build_config_filename,
-        lints,
-        hints,
-        recipe_version=recipe_version,
-    )
+    if "lint_stdlib" not in lints_to_skip:
+        lint_stdlib(
+            meta,
+            requirements_section,
+            conda_build_config_filename,
+            lints,
+            hints,
+            recipe_version=recipe_version,
+        )
 
     # 7: warn of `name =version=build` specs, suggest `name version build`
     # see https://github.com/conda/conda-build/issues/5571#issuecomment-2604505922
