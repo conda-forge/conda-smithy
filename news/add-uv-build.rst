@@ -1,6 +1,7 @@
 **Added:**
 
-* Add `uv-build` to the list of valid Python build backends (#2303)
+* Add ``uv-build`` to the list of valid Python build backends. (#2303)
+
 
 **Changed:**
 
