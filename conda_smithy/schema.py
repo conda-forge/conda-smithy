@@ -65,6 +65,7 @@ class CIservices(StrEnum):
 
 class Lints(StrEnum):
     LINT_NOARCH_SELECTORS = "lint_noarch_selectors"
+    LINT_STDLIB = "lint_stdlib"
     HINT_OS_VERSION = "hint_os_version"
     HINT_PIP_NO_BUILD_BACKEND = "hint_pip_no_build_backend"
     HINT_PYTHON_MIN = "hint_python_min"
