@@ -813,10 +813,12 @@ def lint_stdlib(
     )
     if recipe_version == 0:
         pat_compiler_stub = re.compile(
-            "(m2w64_)?(c|cxx|fortran|rust)_compiler_stub"
+            "(m2w64_)?(c|cxx|fortran|rust|go-cgo)_compiler_stub"
         )
     else:
-        pat_compiler_stub = re.compile(r"^\${{ compiler\(")
+        pat_compiler_stub = re.compile(
+            r"^\${{ compiler\('(m2w64_)?(c|cxx|fortran|rust|go-cgo)"
+        )
 
     outputs = get_section(meta, "outputs", lints, recipe_version)
     output_reqs = [x.get("requirements", {}) for x in outputs]
