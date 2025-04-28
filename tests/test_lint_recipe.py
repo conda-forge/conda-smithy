@@ -51,7 +51,17 @@ def tmp_directory():
 
 @pytest.mark.parametrize(
     "comp_lang",
-    ["c", "cxx", "fortran", "rust", "m2w64_c", "m2w64_cxx", "m2w64_fortran"],
+    [
+        "c",
+        "cxx",
+        "fortran",
+        "rust",
+        "m2w64_c",
+        "m2w64_cxx",
+        "m2w64_fortran",
+        "go-cgo",
+        "go-nocgo",
+    ],
 )
 def test_stdlib_lint(comp_lang):
     expected_message = "This recipe is using a compiler"
@@ -70,7 +80,11 @@ def test_stdlib_lint(comp_lang):
             )
 
         lints, _ = linter.main(recipe_dir, return_hints=True)
-        assert any(lint.startswith(expected_message) for lint in lints)
+        if comp_lang == "go-nocgo":
+            # This doesn't need a stdlib
+            assert not any(lint.startswith(expected_message) for lint in lints)
+        else:
+            assert any(lint.startswith(expected_message) for lint in lints)
 
 
 def test_m2w64_stdlib_legal():
@@ -96,7 +110,17 @@ def test_m2w64_stdlib_legal():
 
 @pytest.mark.parametrize(
     "comp_lang",
-    ["c", "cxx", "fortran", "rust", "m2w64_c", "m2w64_cxx", "m2w64_fortran"],
+    [
+        "c",
+        "cxx",
+        "fortran",
+        "rust",
+        "m2w64_c",
+        "m2w64_cxx",
+        "m2w64_fortran",
+        "go-cgo",
+        "go-nocgo",
+    ],
 )
 def test_v1_stdlib_hint(comp_lang):
     expected_message = "This recipe is using a compiler"
@@ -119,7 +143,10 @@ def test_v1_stdlib_hint(comp_lang):
         lints, _ = linter.main(
             recipe_dir, feedstock_dir=recipe_dir, return_hints=True
         )
-        assert any(lint.startswith(expected_message) for lint in lints)
+        if comp_lang == "go-nocgo":
+            assert not any(lint.startswith(expected_message) for lint in lints)
+        else:
+            assert any(lint.startswith(expected_message) for lint in lints)
 
 
 def test_sysroot_lint():
