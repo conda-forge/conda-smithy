@@ -117,7 +117,7 @@ def config_yaml(testing_workdir, recipe_dirname, request, monkeypatch):
     with open(
         os.path.join(testing_workdir, recipe_dirname, "long_config.yaml"), "w"
     ) as f:
-        config = {"python": ["2.7", "3.5", "3.6"]}
+        config = {"python": ["2.7", "3.5", "3.6"], "is_abi3": True}
         yaml.dump(config, f, default_flow_style=False)
     with open(os.path.join(testing_workdir, "conda-forge.yml"), "w") as f:
         config = {
@@ -255,6 +255,36 @@ def py_recipe(config_yaml: ConfigYAML):
             config_yaml.workdir,
             exclusive_config_file=os.path.join(
                 config_yaml.workdir, "recipe", "default_config.yaml"
+            ),
+        ),
+    )
+
+
+@pytest.fixture(scope="function")
+def py_abi3_recipe(config_yaml: ConfigYAML):
+    with open(
+        os.path.join(config_yaml.workdir, "recipe", config_yaml.recipe_name),
+        "w",
+    ) as fh:
+        recipe_path = os.path.abspath(
+            os.path.join(
+                __file__,
+                "../",
+                "recipes",
+                "py_abi3_recipe",
+                config_yaml.recipe_name,
+            )
+        )
+
+        content = Path(recipe_path).read_text()
+        fh.write(content)
+
+    return RecipeConfigPair(
+        str(config_yaml.workdir),
+        _load_forge_config(
+            config_yaml.workdir,
+            exclusive_config_file=os.path.join(
+                config_yaml.workdir, "recipe", "long_config.yaml"
             ),
         ),
     )

@@ -692,6 +692,14 @@ def _yaml_represent_ordereddict(yaml_representer, data):
     )
 
 
+def _yaml_represent_str(yaml_representer, data):
+    # boolean types in cbc and other sources get converted to strings by conda-build
+    # let's go back to booleans
+    if data in ["true", "false"]:
+        return yaml.representer.SafeRepresenter.represent_bool(yaml_representer, bool(data))
+    return yaml.representer.SafeRepresenter.represent_str(yaml_representer, data)
+
+
 def _has_local_ci_setup(forge_dir, forge_config):
     # If the recipe has its own conda_forge_ci_setup package, then
     # install that
@@ -797,6 +805,7 @@ def dump_subspace_config_files(
         tuple, yaml.representer.SafeRepresenter.represent_list
     )
     yaml.add_representer(OrderedDict, _yaml_represent_ordereddict)
+    yaml.add_representer(str, _yaml_represent_str)
 
     platform_arch = f"{platform}-{arch}"
 

@@ -328,6 +328,21 @@ def test_no_python_min_if_not_present(py_recipe, jinja_env, caplog, request):
         assert all(not re.match(r"^python_min:.*", x) for x in lines)
 
 
+def test_abi3_bools(py_abi3_recipe, jinja_env, caplog, request):
+    with caplog.at_level(logging.WARNING):
+        configure_feedstock.render_azure(
+            jinja_env=jinja_env,
+            forge_config=py_abi3_recipe.config,
+            forge_dir=py_abi3_recipe.recipe,
+        )
+    matrix_dir = os.path.join(py_abi3_recipe.recipe, ".ci_support")
+    assert os.path.isdir(matrix_dir)
+    for file in os.listdir(matrix_dir):
+        with open(os.path.join(matrix_dir, file)) as f:
+            lines = f.read()
+            assert "is_abi3:\n- true" in lines
+
+
 def test_upload_on_branch_azure(upload_on_branch_recipe, jinja_env):
     configure_feedstock.render_azure(
         jinja_env=jinja_env,
