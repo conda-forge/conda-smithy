@@ -696,8 +696,12 @@ def _yaml_represent_str(yaml_representer, data):
     # boolean types in cbc and other sources get converted to strings by conda-build
     # let's go back to booleans
     if data in ["true", "false"]:
-        return yaml.representer.SafeRepresenter.represent_bool(yaml_representer, bool(data))
-    return yaml.representer.SafeRepresenter.represent_str(yaml_representer, data)
+        return yaml.representer.SafeRepresenter.represent_bool(
+            yaml_representer, bool(data)
+        )
+    return yaml.representer.SafeRepresenter.represent_str(
+        yaml_representer, data
+    )
 
 
 def _has_local_ci_setup(forge_dir, forge_config):
