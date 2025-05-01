@@ -4658,7 +4658,7 @@ def test_is_abi3_bool_lint(lstr, ok):
                 """
             )
 
-        lints, _ = linter.main(recipe_dir, return_hints=True)
+        lints, _ = linter.main(recipe_dir, return_hints=True, conda_forge=True)
         if ok:
             assert not any(expected_message in lint for lint in lints)
         else:

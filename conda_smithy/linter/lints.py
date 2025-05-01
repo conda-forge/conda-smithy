@@ -1177,11 +1177,6 @@ def lint_recipe_is_abi3_bool(
     recipe_text: str,
     lints: list[str],
 ):
-    for item in ['false', 'true']:
-        for sym in ['==', '!=']:
-            tstr = f"is_abi3 {sym} '{item}'"
-            if item in recipe_text:
-                print("it is there!")
     if IS_AB3_BOOL_RE.search(recipe_text):
         lints.append(
             "The `is_abi3` variant variable is now a boolean value instead of a "
