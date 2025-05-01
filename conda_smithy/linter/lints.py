@@ -1173,10 +1173,9 @@ def lint_recipe_is_parsable(
 IS_AB3_BOOL_RE = re.compile(r"is_abi3\s(==|!=)\s('\")(true|false)('\")")
 
 
-def lint_recipe_is_Abi3_bool(
+def lint_recipe_is_abi3_bool(
     recipe_text: str,
     lints: list[str],
-    hints: list[str],
 ):
     if IS_AB3_BOOL_RE.match(recipe_text):
         lints.append(
