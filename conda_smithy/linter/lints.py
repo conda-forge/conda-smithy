@@ -1177,7 +1177,7 @@ def lint_recipe_is_abi3_bool(
     recipe_text: str,
     lints: list[str],
 ):
-    if IS_AB3_BOOL_RE.match(recipe_text):
+    if IS_AB3_BOOL_RE.search(recipe_text):
         lints.append(
             "The `is_abi3` variant variable is now a boolean value instead of a "
             "string (i.e., 'true' or 'false'). Please change syntax like "
