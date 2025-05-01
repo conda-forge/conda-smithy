@@ -4632,5 +4632,38 @@ def test_cfyml_obsolete_os_version():
         assert any(expected_message in hint for hint in hints)
 
 
+@pytest.mark.parametrize(
+    "lstr,ok",
+    [
+        ("is_abi3", True),
+        ("is_abi3 == 'true'", False),
+        ("is_abi3 != 'true'", False),
+        ("is_abi3 == 'false'", False),
+        ("is_abi3 != 'false'", False),
+    ],
+)
+def test_is_abi3_bool_lint(lstr, ok):
+    expected_message = "`is_abi3` variant variable is now a boolea"
+
+    with tmp_directory() as recipe_dir:
+        with open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
+            fh.write(
+                f"""
+                package:
+                   name: foo
+                requirements:
+                  run:
+                    # {lstr}
+                    - python
+                """
+            )
+
+        lints, _ = linter.main(recipe_dir, return_hints=True, conda_forge=True)
+        if ok:
+            assert not any(expected_message in lint for lint in lints)
+        else:
+            assert any(expected_message in lint for lint in lints)
+
+
 if __name__ == "__main__":
     unittest.main()
