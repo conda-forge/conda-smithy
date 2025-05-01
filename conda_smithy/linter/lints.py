@@ -1168,3 +1168,19 @@ def lint_recipe_is_parsable(
                     hints.append(
                         f"The recipe is not parsable by parser `{parser_name}`. {msg}"
                     )
+
+
+IS_AB3_BOOL_RE = re.compile(r"is_abi3\s(==|!=)\s('\")(true|false)('\")")
+
+
+def lint_recipe_is_Abi3_bool(
+    recipe_text: str,
+    lints: list[str],
+    hints: list[str],
+):
+    if IS_AB3_BOOL_RE.match(recipe_text):
+        lints.append(
+            "The `is_abi3` variant variable is now a boolean value instead of a "
+            "string (i.e., 'true' or 'false'). Please change syntax like "
+            "`is_abi3 == 'true' to `is_abi3`."
+        )
