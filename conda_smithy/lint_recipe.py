@@ -696,7 +696,7 @@ def run_conda_forge_specific(
         lint_recipe_is_abi3_bool(
             recipe_text,
             lints,
-        )        
+        )
 
 
 def _format_validation_msg(error: jsonschema.ValidationError):
