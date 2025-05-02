@@ -4,6 +4,20 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.48.1
+====================
+
+**Fixed:**
+
+* Dumping false into .ci_support is fixed now.
+
+**Authors:**
+
+* Isuru Fernando
+* pre-commit-ci[bot]
+
+
+
 v3.48.0
 ====================
 
