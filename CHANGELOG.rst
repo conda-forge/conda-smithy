@@ -4,6 +4,35 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.48.0
+====================
+
+**Added:**
+
+* Add ``uv-build`` to the list of valid Python build backends. (#2303)
+* Added a lint for ``is_abi3`` being handled as a boolean value and not a string. (#2312)
+* Allow skipping the ``lint_stdlib`` check
+
+**Changed:**
+
+* Booleans are dumped as true/false instead of 'true'/'false' in .ci_support files
+* Only show stdlib lint for go-cgo compilers, not go-nocgo
+
+**Fixed:**
+
+* Use ``powershell`` instead of ``certutil``to avoid virus scanners blocking downloads (#2299)
+
+**Authors:**
+
+* Isuru Fernando
+* Matthew R. Becker
+* H. Vetinari
+* Uwe L. Korn
+* James Myatt
+* Dan Yeaw
+
+
+
 v3.47.2
 ====================
 
