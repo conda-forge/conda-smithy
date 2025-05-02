@@ -236,7 +236,7 @@
   email: uwe.korn@quantco.com
   alternate_emails:
   - xhochy@users.noreply.github.com
-  num_commits: 51
+  num_commits: 53
   first_commit: 2019-06-27 08:26:49
   github: xhochy
 - name: C.A.M. Gerlach
@@ -247,7 +247,7 @@
   email: isuru.11@cse.mrt.ac.lk
   alternate_emails:
   - isuruf@gmail.com
-  num_commits: 674
+  num_commits: 675
   first_commit: 2017-01-08 22:03:03
   github: isuruf
 - name: Julian Rüth
@@ -393,7 +393,7 @@
   github: shadowwalkersb
 - name: Matthew R. Becker
   email: becker.mr@gmail.com
-  num_commits: 484
+  num_commits: 487
   first_commit: 2020-01-07 17:44:33
   github: beckermr
   alternate_emails:
@@ -539,7 +539,7 @@
   github: nehaljwani
 - name: H. Vetinari
   email: h.vetinari@gmx.com
-  num_commits: 82
+  num_commits: 83
   first_commit: 2021-11-14 02:53:10
 - name: Benjamin Tovar
   email: btovar@nd.edu
@@ -728,3 +728,12 @@
   email: ap--@users.noreply.github.com
   num_commits: 1
   first_commit: 2025-04-16 07:18:09
+- name: James Myatt
+  email: james@jamesmyatt.co.uk
+  num_commits: 1
+  first_commit: 2025-04-22 07:33:40
+- name: Dan Yeaw
+  email: dan@yeaw.me
+  num_commits: 1
+  first_commit: 2025-04-17 20:27:59
+  github: danyeaw

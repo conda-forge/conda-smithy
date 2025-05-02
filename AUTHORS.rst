@@ -140,3 +140,5 @@ Authors are sorted by number of commits.
 * Alfredo Luque
 * Philipp A.
 * Andreas Poehlmann
+* James Myatt
+* Dan Yeaw
