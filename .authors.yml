@@ -247,7 +247,7 @@
   email: isuru.11@cse.mrt.ac.lk
   alternate_emails:
   - isuruf@gmail.com
-  num_commits: 675
+  num_commits: 677
   first_commit: 2017-01-08 22:03:03
   github: isuruf
 - name: Julian Rüth
@@ -393,7 +393,7 @@
   github: shadowwalkersb
 - name: Matthew R. Becker
   email: becker.mr@gmail.com
-  num_commits: 487
+  num_commits: 489
   first_commit: 2020-01-07 17:44:33
   github: beckermr
   alternate_emails:
@@ -589,7 +589,7 @@
   github: zklaus
 - name: pre-commit-ci[bot]
   email: 66853113+pre-commit-ci[bot]@users.noreply.github.com
-  num_commits: 41
+  num_commits: 42
   first_commit: 2023-10-30 15:49:50
   github: carterbox
 - name: Amit Kumar
