@@ -8,7 +8,7 @@ requirements:
         - {{ compiler('c') }}   # [win]
     host:
         - python
-        - python-abi3   # [is_abi3]
+        - python-abi3   # [is_abi3 and not is_python_min]
     run:
         - python
 about:

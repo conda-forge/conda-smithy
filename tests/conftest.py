@@ -117,7 +117,11 @@ def config_yaml(testing_workdir, recipe_dirname, request, monkeypatch):
     with open(
         os.path.join(testing_workdir, recipe_dirname, "long_config.yaml"), "w"
     ) as f:
-        config = {"python": ["2.7", "3.5", "3.6"], "is_abi3": True}
+        config = {
+            "python": ["2.7", "3.5", "3.6"],
+            "is_abi3": True,
+            "is_python_min": False,
+        }
         yaml.dump(config, f, default_flow_style=False)
     with open(os.path.join(testing_workdir, "conda-forge.yml"), "w") as f:
         config = {
