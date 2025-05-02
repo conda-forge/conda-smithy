@@ -4,7 +4,6 @@ package:
 build:
     python:
         version_independent: true
-    skip: is_abi3 and not is_python_min
 requirements:
     build:
       - if: win
@@ -12,7 +11,7 @@ requirements:
           - ${{ compiler('c') }}
     host:
         - python
-        - if: is_abi3
+        - if: is_abi3 and not is_python_min
           then:
             - python-abi3
     run:
