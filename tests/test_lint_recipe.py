@@ -4640,6 +4640,10 @@ def test_cfyml_obsolete_os_version():
         ("is_abi3 != 'true'", False),
         ("is_abi3 == 'false'", False),
         ("is_abi3 != 'false'", False),
+        ('is_abi3=="true"', False),
+        ('is_abi3!="true"', False),
+        ('is_abi3  =="false"', False),
+        ('is_abi3!=  "false"', False),
     ],
 )
 def test_is_abi3_bool_lint(lstr, ok):
