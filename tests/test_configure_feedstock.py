@@ -341,6 +341,7 @@ def test_abi3_bools(py_abi3_recipe, jinja_env, caplog, request):
         with open(os.path.join(matrix_dir, file)) as f:
             lines = f.read()
             assert "is_abi3:\n- true" in lines
+            assert "is_python_min:\n- false" in lines
 
 
 def test_upload_on_branch_azure(upload_on_branch_recipe, jinja_env):

@@ -697,7 +697,7 @@ def _yaml_represent_str(yaml_representer, data):
     # let's go back to booleans
     if data in ["true", "false"]:
         return yaml.representer.SafeRepresenter.represent_bool(
-            yaml_representer, bool(data)
+            yaml_representer, data == "true"
         )
     return yaml.representer.SafeRepresenter.represent_str(
         yaml_representer, data

@@ -4,6 +4,7 @@ package:
 build:
     python:
         version_independent: true
+    skip: is_abi3 and not is_python_min
 requirements:
     build:
       - if: win
