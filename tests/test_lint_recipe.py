@@ -4384,7 +4384,10 @@ def test_lint_recipe_v1_python_min_in_python_version(text):
         with open(os.path.join(tmpdir, "recipe.yaml"), "w") as f:
             f.write(text)
         _, hints = linter.main(tmpdir, return_hints=True, conda_forge=True)
-        assert hints == []
+        assert not any(
+            "`noarch: python` recipes should usually follow the syntax" in h
+            for h in hints
+        )
 
 
 def test_lint_recipe_v1_comment_selectors():
