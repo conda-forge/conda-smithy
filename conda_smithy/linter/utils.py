@@ -269,10 +269,13 @@ def get_all_test_requirements(
             ) or []
 
             if "python" in test_element:
-                if test_element["python"].get("python_version") is not None:
-                    test_reqs.append(
-                        f"python {test_element['python']['python_version']}"
-                    )
+                py_version = test_element["python"].get("python_version")
+
+                if isinstance(py_version, str):
+                    py_version = [py_version]
+
+                if isinstance(py_version, list):
+                    test_reqs += [f"python {pv}" for pv in py_version]
                 else:
                     test_reqs.append("python")
     else:
