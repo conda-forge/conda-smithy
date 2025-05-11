@@ -4334,34 +4334,60 @@ def test_lint_recipe_v1_invalid_schema_version():
         assert lints == ["Unsupported recipe.yaml schema version 2"]
 
 
-def test_lint_recipe_v1_python_min_in_python_version():
+@pytest.mark.parametrize(
+    "text",
+    [
+        """
+package:
+    name: python
+
+build:
+    noarch: python
+
+requirements:
+    host:
+      - python ${{ python_min }}
+    run:
+      - python >=${{ python_min }}
+
+tests:
+  - python:
+      imports:
+        - mypackage
+      python_version: ${{ python_min }}.*
+    """,
+        """
+package:
+  name: python
+
+build:
+  noarch: python
+
+requirements:
+  host:
+    - python ${{ python_min }}
+  run:
+    - python >=${{ python_min }}
+
+tests:
+  - python:
+      imports:
+        - mypackage
+      python_version:
+        - ${{ python_min }}.*
+        - 3.13.*
+    """,
+    ],
+)
+def test_lint_recipe_v1_python_min_in_python_version(text):
     with tempfile.TemporaryDirectory() as tmpdir:
         with open(os.path.join(tmpdir, "recipe.yaml"), "w") as f:
-            f.write(
-                textwrap.dedent(
-                    """
-                package:
-                  name: python
-
-                build:
-                  noarch: python
-
-                requirements:
-                  host:
-                    - python ${{ python_min }}
-                  run:
-                    - python >=${{ python_min }}
-
-                tests:
-                - python:
-                    imports:
-                        - mypackage
-                    python_version: ${{ python_min }}.*
-                """
-                )
-            )
+            f.write(text)
         _, hints = linter.main(tmpdir, return_hints=True, conda_forge=True)
-        assert hints == []
+        assert not any(
+            "`noarch: python` recipes should usually follow the syntax" in h
+            for h in hints
+        )
 
 
 def test_lint_recipe_v1_comment_selectors():
