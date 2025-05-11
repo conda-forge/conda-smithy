@@ -4334,8 +4334,10 @@ def test_lint_recipe_v1_invalid_schema_version():
         assert lints == ["Unsupported recipe.yaml schema version 2"]
 
 
-@pytest.mark.parametrize("text", [
-    """
+@pytest.mark.parametrize(
+    "text",
+    [
+        """
 package:
     name: python
 
@@ -4353,7 +4355,8 @@ tests:
       imports:
         - mypackage
       python_version: ${{ python_min }}.*
-    """, """
+    """,
+        """
 package:
   name: python
 
@@ -4374,7 +4377,8 @@ tests:
         - ${{ python_min }}.*
         - 3.13.*
     """,
-])
+    ],
+)
 def test_lint_recipe_v1_python_min_in_python_version(text):
     with tempfile.TemporaryDirectory() as tmpdir:
         with open(os.path.join(tmpdir, "recipe.yaml"), "w") as f:
