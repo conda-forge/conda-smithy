@@ -84,6 +84,19 @@ def get_section(parent, name, lints, recipe_version: int = 0):
         raise ValueError(f"Unknown recipe version: {recipe_version}")
 
 
+def _get_type_name(section):
+    """Get the type name, accounting for comments from `ruamel.yaml`."""
+    if type(section).__module__.startswith("ruamel.yaml"):
+        for base in section.__class__.__bases__:
+            if not base.__module__.startswith("ruamel.yaml"):
+                return base.__name__
+        else:
+            raise ValueError(
+                "Could not determine type for {type(section).__name__}"
+            )
+    return type(section).__name__
+
+
 def get_meta_section(parent, name, lints):
     if name == "source":
         return get_list_section(parent, name, lints, allow_single=True)
@@ -94,7 +107,7 @@ def get_meta_section(parent, name, lints):
     if not isinstance(section, Mapping):
         lints.append(
             f'The "{name}" section was expected to be a dictionary, but '
-            f"got a {type(section).__name__}."
+            f"got a {_get_type_name(section)}."
         )
         section = {}
     return section
@@ -123,7 +136,7 @@ def get_list_section(parent, name, lints, allow_single=False):
             name,
             "dictionary or a " if allow_single else "",
             type(section).__module__,
-            type(section).__name__,
+            _get_type_name(section),
         )
         lints.append(msg)
         return [{}]
