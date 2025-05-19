@@ -16,7 +16,7 @@
 
 **Fixed:**
 
-* Enable dev mode on azure pipeline win so we can build source with symlink.
+* Enable Windows Developer Mode in Azure Pipelines to allow symlink.
 
 **Security:**
 
