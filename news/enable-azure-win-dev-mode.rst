@@ -16,7 +16,7 @@
 
 **Fixed:**
 
-* Enable dev mode on azure win runner to handle source tarball with symlink.
+* Enable dev mode on azure pipeline win so we can build source with symlink.
 
 **Security:**
 
