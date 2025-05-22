@@ -116,8 +116,10 @@ jobs:
 {%- endfor %}
       shell: bash
       run: |
-        echo "::group::Configure binfmt_misc"
-        docker run --rm --privileged multiarch/qemu-user-static:register --reset --credential yes
+        if [[ "$(uname -m)" == "x86_64" ]]; then
+          echo "::group::Configure binfmt_misc"
+          docker run --rm --privileged multiarch/qemu-user-static:register --reset --credential yes
+        fi
         export flow_run_id="github_$GITHUB_RUN_ID"
         export remote_url="https://github.com/$GITHUB_REPOSITORY"
         export sha="$GITHUB_SHA"
