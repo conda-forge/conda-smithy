@@ -1710,7 +1710,7 @@ def _github_actions_specific_setup(
         },
         "linux-aarch64": {
             "os": "ubuntu",
-            "hosted_labels": ("ubuntu-latest",),
+            "hosted_labels": ("ubuntu-24.04-arm",),
             "self_hosted_labels": ("linux", "ARM64"),
         },
         "win-64": {
