@@ -4,6 +4,33 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.50.0
+====================
+
+**Changed:**
+
+* When using GitHub Actions as a CI provider to build linux-aarch64; and using
+  the GitHub hosted runners, CI will now use the native ARM64 runners
+  (`ubuntu-24.04-arm`) instead of emulation.
+* A v1 recipe ``tests`` item with a matrix-style ``python_version`` will not be
+  flagged for CFEP-25 syntax as long it contains `at least` a
+  ``${{ python_min }}.*`` item. Feedstocks may use this syntax to verify the
+  package will at least solve, install, import, and ``pip_check`` on both the
+  current CFEP-25 minimum and a later python.
+
+**Fixed:**
+
+* Run post-link scripts on Windows in order to fix a m2-git SSL issue.
+
+**Authors:**
+
+* Wolf Vollprecht
+* pre-commit-ci[bot]
+* Nicholas Bollweg
+* Guillaume Fraux
+
+
+
 v3.48.1
 ====================
 
