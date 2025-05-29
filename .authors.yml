@@ -196,7 +196,7 @@
   first_commit: 2017-02-12 15:31:00
 - name: Nicholas Bollweg
   email: nick.bollweg@gmail.com
-  num_commits: 12
+  num_commits: 13
   first_commit: 2019-05-20 20:03:12
   github: bollwyvl
 - name: Leopold Talirz
@@ -393,7 +393,7 @@
   github: shadowwalkersb
 - name: Matthew R. Becker
   email: becker.mr@gmail.com
-  num_commits: 489
+  num_commits: 491
   first_commit: 2020-01-07 17:44:33
   github: beckermr
   alternate_emails:
@@ -488,7 +488,7 @@
   github: BastianZim
 - name: Wolf Vollprecht
   email: w.vollprecht@gmail.com
-  num_commits: 64
+  num_commits: 65
   first_commit: 2021-01-19 04:39:35
   github: wolfv
 - name: Hugo Slepicka
@@ -589,7 +589,7 @@
   github: zklaus
 - name: pre-commit-ci[bot]
   email: 66853113+pre-commit-ci[bot]@users.noreply.github.com
-  num_commits: 42
+  num_commits: 43
   first_commit: 2023-10-30 15:49:50
   github: carterbox
 - name: Amit Kumar
@@ -737,3 +737,7 @@
   num_commits: 1
   first_commit: 2025-04-17 20:27:59
   github: danyeaw
+- name: Guillaume Fraux
+  email: luthaf@luthaf.fr
+  num_commits: 1
+  first_commit: 2025-05-23 11:40:46

@@ -36,10 +36,10 @@ Authors are sorted by number of commits.
 * vinicius douglas cerutti
 * Tim Snyder
 * Mike Henry
+* Nicholas Bollweg
 * Eric Dill
 * Natasha Pavlovikj
 * Maksim Rakitin
-* Nicholas Bollweg
 * Jan Schulz
 * Josh Reichardt
 * Bela Stoyan
@@ -142,3 +142,4 @@ Authors are sorted by number of commits.
 * Andreas Poehlmann
 * James Myatt
 * Dan Yeaw
+* Guillaume Fraux
