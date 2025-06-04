@@ -1,0 +1,1 @@
+echo "${script_all}"

@@ -37,7 +37,7 @@ from conda.exceptions import InvalidVersionSpec
 from conda.models.match_spec import MatchSpec
 from conda.models.version import VersionOrder
 from conda_build import __version__ as conda_build_version
-from conda_build.metadata import get_selectors
+from conda_build.metadata import MetaData, get_selectors
 from jinja2 import FileSystemLoader
 from jinja2.sandbox import SandboxedEnvironment
 from rattler_build_conda_compat.loader import parse_recipe_config_file
@@ -92,6 +92,24 @@ if "CONDA_SMITHY_SERVICE_FEEDSTOCKS" in os.environ:
 CONDA_FORGE_PINNING_LIFETIME = int(
     os.environ.get("CONDA_FORGE_PINNING_LIFETIME", 15 * 60)
 )
+
+ALWAYS_KEEP_KEYS = {
+    "zip_keys",
+    "pin_run_as_build",
+    "MACOSX_DEPLOYMENT_TARGET",
+    "MACOSX_SDK_VERSION",
+    "macos_min_version",
+    "macos_machine",
+    "channel_sources",
+    "channel_targets",
+    "docker_image",
+    "build_number_decrement",
+    # The following keys are required for some of our aarch64 builds
+    # Added in https://github.com/conda-forge/conda-forge-pinning-feedstock/pull/180
+    "cdt_arch",
+    "cdt_name",
+    "BUILD",
+}
 
 
 # use lru_cache to avoid repeating warnings endlessly;
@@ -617,23 +635,7 @@ def _collapse_subpackage_variants(
     logger.debug("preserve_top_level_loops %s", preserve_top_level_loops)
 
     # Add in some variables that should always be preserved
-    always_keep_keys = {
-        "zip_keys",
-        "pin_run_as_build",
-        "MACOSX_DEPLOYMENT_TARGET",
-        "MACOSX_SDK_VERSION",
-        "macos_min_version",
-        "macos_machine",
-        "channel_sources",
-        "channel_targets",
-        "docker_image",
-        "build_number_decrement",
-        # The following keys are required for some of our aarch64 builds
-        # Added in https://github.com/conda-forge/conda-forge-pinning-feedstock/pull/180
-        "cdt_arch",
-        "cdt_name",
-        "BUILD",
-    }
+    always_keep_keys = set() | ALWAYS_KEEP_KEYS
 
     if not is_noarch:
         always_keep_keys.add("target_platform")
@@ -944,6 +946,65 @@ def migrate_combined_spec(combined_spec, forge_dir, config, forge_config):
     return combined_spec
 
 
+def reduce_variants(recipe_path, config, input_variants):
+    """Subset of render_recipe to compute reduced variant matrix
+
+    large numbers of unused variants greatly increase render time
+    """
+
+    # from render_recipe
+    with conda_build.render.open_recipe(recipe_path) as recipe:
+        metadata = MetaData(str(recipe), config=config)
+
+    # from distribute_variants
+    # explode variants dict to list of variants
+    variants = initial_variants = conda_build.variants.get_package_variants(
+        metadata, variants=input_variants
+    )
+    logger.debug("Starting with %s input variants", len(initial_variants))
+    metadata.config.variant = variants[0]
+    metadata.config.variants = variants
+
+    # force_global finds variables in the whole recipe, not just a single output.
+    # Without this, dependencies won't be found for multi-output recipes
+    # This may not be comprehensive!
+    all_used = metadata.get_used_vars(force_global=True)
+    # conservatively, find all used vars in all scripts
+    # we can't use `output.script` because these aren't computed yet
+    # bonus: this will find output.build.script, which conda-build does not.
+    for script in Path(recipe_path).glob("*.sh"):
+        all_used.update(
+            conda_build.variants.find_used_variables_in_shell_script(
+                metadata.config.variant, script
+            )
+        )
+    for script in Path(recipe_path).glob("*.bat"):
+        all_used.update(
+            conda_build.variants.find_used_variables_in_batch_script(
+                metadata.config.variant, script
+            )
+        )
+
+    # trim unused dimensions, these cost a lot in render_recipe!
+    # because `get_used_vars` above _may_ not catch all possible used variables,
+    # only trim unused variables that increase dimensionality.
+    all_used.update(ALWAYS_KEEP_KEYS)
+    all_used.update(
+        {"target_platform", "extend_keys", "ignore_build_only_deps"}
+    )
+    new_input_variants = input_variants.copy()
+    for key, value in input_variants.items():
+        # only consider keys that increase render dimensionality for trimming at this stage
+        # so we don't have to trust all_used to find _everything_
+        if len(value) > 1 and key not in all_used:
+            logger.debug("Trimming unused dimension: %s", key)
+            new_input_variants.pop(key)
+    _trim_unused_zip_keys(new_input_variants)
+    # new_variants = metadata.get_reduced_variant_set(all_used)
+    # logger.info(f"Rendering with {len(new_variants)} input variants")
+    return new_input_variants
+
+
 def _conda_build_api_render_for_smithy(
     recipe_path,
     config=None,
@@ -976,6 +1037,12 @@ def _conda_build_api_render_for_smithy(
 
     config = get_or_merge_config(config, **kwargs)
 
+    # reduce unused variants first, they get very expensive in render_recipe
+    if variants:
+        variants = reduce_variants(
+            recipe_path, config=config, input_variants=variants
+        )
+
     metadata_tuples = render_recipe(
         recipe_path,
         bypass_env_check=bypass_env_check,
@@ -985,6 +1052,7 @@ def _conda_build_api_render_for_smithy(
         permit_unsatisfiable_variants=permit_unsatisfiable_variants,
     )
     output_metas = []
+    # reduce input variant set to those that are actually used
     for meta, download, render_in_env in metadata_tuples:
         if not meta.skip() or not config.trim_skip:
             for od, om in meta.get_output_metadata_set(
@@ -1154,6 +1222,7 @@ def _render_ci_provider(
         # CBC yaml files where variants in the migrators are not in the CBC.
         # Thus we move it out of the way.
         # TODO: upstream this as a flag in conda-build
+        logger.info("Getting variants for %s-%s", platform, arch)
         try:
             _recipe_cbc = os.path.join(
                 forge_dir,
