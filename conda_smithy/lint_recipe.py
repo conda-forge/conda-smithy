@@ -241,9 +241,9 @@ def lintify_meta_yaml(
 
     # 13: Check that the recipe name is valid
     if recipe_version == 1:
-        conda_recipe_v1_linter.lint_recipe_name(meta, lints)
+        recipe_name = conda_recipe_v1_linter.lint_recipe_name(meta, lints)
     else:
-        lint_recipe_name(
+        recipe_name = lint_recipe_name(
             package_section,
             lints,
         )
@@ -367,7 +367,7 @@ def lintify_meta_yaml(
 
     # 28: Check that Rust licenses are bundled.
     lint_rust_licenses_are_bundled(
-        build_requirements, lints, recipe_version=recipe_version
+        recipe_name, build_requirements, lints, recipe_version=recipe_version
     )
 
     # 29: Check that go licenses are bundled.
