@@ -286,11 +286,12 @@ def lint_license_family_should_be_valid(
 def lint_recipe_name(
     package_section: dict[str, Any],
     lints: list[str],
-):
+) -> str:
     recipe_name = package_section.get("name", "").strip()
     lint_msg = _lint_recipe_name(recipe_name)
     if lint_msg:
         lints.append(lint_msg)
+    return recipe_name
 
 
 def lint_usage_of_legacy_patterns(requirements_section, lints):
@@ -745,11 +746,16 @@ def lint_check_usage_of_whls(meta_fname, noarch_value, lints, hints):
 
 
 def lint_rust_licenses_are_bundled(
+    recipe_name: str | None,
     build_reqs: Optional[list[str]],
     lints: list[str],
     recipe_version: int = 0,
 ):
     if not build_reqs:
+        return
+
+    if recipe_name == "cargo-bundle-licenses":
+        # cargo-bundle-licenses itself bundles its own licenses
         return
 
     if recipe_version == 1:

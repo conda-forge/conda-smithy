@@ -2280,13 +2280,23 @@ def test_rust_license_bundling(recipe_version: int):
     )
     assert expected_msg in lints
 
-    # Case where go-licenses is present
+    # Case where cargo-bundle-licenses is present
     meta_with_license = {
         "requirements": {"build": [compiler, "cargo-bundle-licenses"]},
     }
 
     lints, hints = linter.lintify_meta_yaml(
         meta_with_license, recipe_version=recipe_version
+    )
+    assert expected_msg not in lints
+
+    # cargo-bundle-licenses itself should not be linted
+    meta_cargo_bundle_licenses = {
+        "requirements": {"build": [compiler]},
+        "package": {"name": "cargo-bundle-licenses"},
+    }
+    lints, hints = linter.lintify_meta_yaml(
+        meta_cargo_bundle_licenses, recipe_version=recipe_version
     )
     assert expected_msg not in lints
 
