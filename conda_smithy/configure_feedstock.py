@@ -824,7 +824,8 @@ def dump_subspace_config_files(
         # drone has a limit of 50, see https://github.com/conda-forge/conda-smithy/issues/1188
         if len(short_config_name) >= 49:
             short_config_name = config_name[:40] + "_h" + config_hash
-        if len("conda-forge-build-done-" + config_name) >= 200:
+        # 200 = 190 + len("_h") + len(config_hash)
+        if len(config_name) >= 200:
             # Shorten file name length to avoid hitting maximum filename limits.
             config_name = config_name[:190] + "_h" + config_hash
 
