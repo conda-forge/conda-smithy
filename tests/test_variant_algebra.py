@@ -93,6 +93,37 @@ def test_ordering():
     assert res["c_compiler"] == ["gcc"]
 
 
+def test_ordering_with_tail():
+    # c.f. https://github.com/conda-forge/conda-smithy/issues/2331
+    start = parse_variant(
+        dedent(
+            """\
+    cuda_compiler_version:
+        - "None"
+        - "12.6"
+    """
+        )
+    )
+
+    cuda_migrator = parse_variant(
+        dedent(
+            """\
+    __migrator:
+        ordering:
+            cuda_compiler_version:
+                - "12.6"
+                - "None"
+                - "12.9"
+    cuda_compiler_version:
+        - "12.9"
+    """
+        )
+    )
+
+    res = variant_add(start, cuda_migrator)
+    assert res["cuda_compiler_version"] == ["None", "12.9"]
+
+
 def test_no_ordering():
     start = parse_variant(
         dedent(
