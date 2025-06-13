@@ -804,10 +804,8 @@ class GenerateFeedstockToken(Subcommand):
                 provider = ci.lower().replace("-", "_")
                 generate_and_write_feedstock_token(owner, repo, provider=provider)
                 print(
-                    "Your feedstock token has been generated at {}\n"
-                    "This token is stored in plaintext so be careful!".format(
-                        feedstock_token_local_path(owner, repo, provider=provider)
-                    )
+                    f"Your feedstock token has been generated at {feedstock_token_local_path(owner, repo, provider=provider)}\n"
+                    "This token is stored in plaintext so be careful!"
                 )
 
 
