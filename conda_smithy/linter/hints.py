@@ -484,6 +484,6 @@ def hint_os_version(
     if matches:
         hints.append(
             f"The feedstock is lowering the image versions for one or more platforms: {matches} "
-            f"(the default is {default_os_version}). Unless you are in the very rare case of repackaging binary"
+            f"(the default is {default_os_version}). Unless you are in the very rare case of repackaging binary "
             "artifacts, consider removing these overrides from conda-forge.yml in the top feedstock directory."
         )
