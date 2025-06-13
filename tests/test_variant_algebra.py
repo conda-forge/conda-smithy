@@ -136,8 +136,8 @@ def test_ordering_with_tail_and_readd():
     cuda_compiler_version:
         - "None"
         - "12.6"
-    docker_image:
-        - linux-anvil-x86_64:alma9
+    cuda_compiler_version_min:
+        - "12.6"
     """
         )
     )
@@ -176,7 +176,13 @@ def test_ordering_with_tail_and_readd():
                 - "None"
                 - "12.9"
                 - "11.8"
+            cuda_compiler_version_min:
+                - "12.6"
+                - "12.9"
+                - "11.8"
     cuda_compiler_version:
+        - "11.8"
+    cuda_compiler_version_min:
         - "11.8"
     cuda_compiler:
         - nvcc
@@ -188,6 +194,7 @@ def test_ordering_with_tail_and_readd():
     res2 = variant_add(res, cuda129_migrator)
     assert res2["cuda_compiler_version"] == ["None", "12.9", "11.8"]
     assert res2["cuda_compiler"] == ["cuda-nvcc", "cuda-nvcc", "nvcc"]
+    assert res2["cuda_compiler_version_min"] == ["11.8"]
 
 
 def test_no_ordering():

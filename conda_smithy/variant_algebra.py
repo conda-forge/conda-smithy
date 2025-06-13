@@ -237,6 +237,13 @@ def op_variant_key_add(v1: dict, v2: dict):
 
                     result[key] = new_value
 
+    # case where there's a non-primary, non-zipped key with an ordering
+    extra_ordering = set(ordering.keys()).difference(
+        set(newly_added_zip_keys) | {primary_key}
+    )
+    for key in extra_ordering:
+        result[key] = variant_key_add(key, v1[key], v2[key], ordering[key])
+
     return result
 
 
