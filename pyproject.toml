@@ -32,7 +32,8 @@ write_to = "conda_smithy/_version.py"
 write_to_template = "__version__ = '{version}'"
 
 [tool.black]
-line-length = 79
+# matches black's default value
+line-length = 88
 
 [tool.ruff.lint]
 ignore = [
