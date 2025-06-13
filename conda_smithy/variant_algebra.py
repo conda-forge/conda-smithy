@@ -105,7 +105,9 @@ def variant_key_add(
     else:
         v_left_ordinal = [_version_order(v, ordering) for v in v_left]
         v_right_ordinal = [_version_order(v, ordering) for v in v_right]
-        v_merge_ordinal=sorted(list(set(v_left_ordinal) | set(v_right_ordinal)))
+        v_merge_ordinal = sorted(
+            list(set(v_left_ordinal) | set(v_right_ordinal))
+        )
         # take the number of elements corresponding to the longer of v_left/v_right
         longer = max(len(v_left), len(v_right))
         if len(v_merge_ordinal) < longer:
@@ -113,7 +115,9 @@ def variant_key_add(
             if len(v_merge_ordinal) == 1:
                 # only one value across v_left/v_right; merge is trivial by definition
                 return [v_left[0]] * longer
-            raise ValueError("ambiguous merge due to duplicate values and non-None ordering")
+            raise ValueError(
+                "ambiguous merge due to duplicate values and non-None ordering"
+            )
         # take the right number of elements from the back of v_merge_ordinal
         v_merge_ordinal = v_merge_ordinal[-longer:]
         out_v = [ordering[i] for i in v_merge_ordinal]
