@@ -124,6 +124,72 @@ def test_ordering_with_tail():
     assert res["cuda_compiler_version"] == ["None", "12.9"]
 
 
+def test_ordering_with_tail_and_readd():
+    # test interaction between migrating CUDA from ("None", "12.6") to ("None", "12.9"),
+    # while also allowing an opt-in migrator to re-add CUDA 11.8, see
+    # https://github.com/conda-forge/conda-forge-pinning-feedstock/pull/7472
+    start = parse_variant(
+        dedent(
+            """\
+    cuda_compiler:
+        - cuda-nvcc
+    cuda_compiler_version:
+        - "None"
+        - "12.6"
+    docker_image:
+        - linux-anvil-x86_64:alma9
+    """
+        )
+    )
+
+    cuda129_migrator = parse_variant(
+        dedent(
+            """\
+    __migrator:
+        ordering:
+            cuda_compiler_version:
+                - "12.6"
+                - "None"
+                - "12.9"
+                - "11.8"
+    cuda_compiler_version:
+        - "12.9"
+    """
+        )
+    )
+
+    cuda118_migrator = parse_variant(
+        dedent(
+            """\
+    __migrator:
+        operation: key_add
+        primary_key: cuda_compiler_version
+        additional_zip_keys:
+            - cuda_compiler
+        ordering:
+            cuda_compiler:
+                - None
+                - cuda-nvcc
+                - nvcc
+            cuda_compiler_version:
+                - "12.6"
+                - "None"
+                - "12.9"
+                - "11.8"
+    cuda_compiler_version:
+        - "11.8"
+    cuda_compiler:
+        - nvcc
+    """
+        )
+    )
+
+    res = variant_add(start, cuda118_migrator)
+    res2 = variant_add(res, cuda129_migrator)
+    assert res2["cuda_compiler_version"] == ["None", "12.9", "11.8"]
+    assert res2["cuda_compiler"] == ["cuda-nvcc", "cuda-nvcc", "nvcc"]
+
+
 def test_no_ordering():
     start = parse_variant(
         dedent(
