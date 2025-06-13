@@ -196,9 +196,7 @@ def test_py_matrix_on_github(py_recipe, jinja_env):
     # single matrix entry - readme is generated later in main function
     assert len(os.listdir(matrix_dir)) == 2
     assert os.path.exists(
-        os.path.join(
-            py_recipe.recipe, ".github", "workflows", "conda-build.yml"
-        )
+        os.path.join(py_recipe.recipe, ".github", "workflows", "conda-build.yml")
     )
 
 
@@ -244,14 +242,10 @@ def test_stdlib_on_azure(stdlib_recipe, jinja_env, request):
     with open(os.path.join(matrix_dir, "osx_64_.yaml")) as f:
         osx_lines = f.readlines()
         osx_content = "".join(osx_lines)
-    assert re.match(
-        r"(?s).*c_stdlib:\s*- macosx_deployment_target", osx_content
-    )
+    assert re.match(r"(?s).*c_stdlib:\s*- macosx_deployment_target", osx_content)
     assert re.match(r"(?s).*c_stdlib_version:\s*- ['\"]?10\.9", osx_content)
     # ensure MACOSX_DEPLOYMENT_TARGET _also_ gets set to the same value
-    assert re.match(
-        r"(?s).*MACOSX_DEPLOYMENT_TARGET:\s*- ['\"]?10\.9", osx_content
-    )
+    assert re.match(r"(?s).*MACOSX_DEPLOYMENT_TARGET:\s*- ['\"]?10\.9", osx_content)
     with open(os.path.join(matrix_dir, "win_64_.yaml")) as f:
         win_lines = f.readlines()
         win_content = "".join(win_lines)
@@ -275,9 +269,7 @@ def test_stdlib_deployment_target(
         )
     # this configuration should be run
     assert stdlib_deployment_target_recipe.config["azure"]["enabled"]
-    matrix_dir = os.path.join(
-        stdlib_deployment_target_recipe.recipe, ".ci_support"
-    )
+    matrix_dir = os.path.join(stdlib_deployment_target_recipe.recipe, ".ci_support")
     assert os.path.isdir(matrix_dir)
     with open(os.path.join(matrix_dir, "osx_64_.yaml")) as f:
         lines = f.readlines()
@@ -285,9 +277,7 @@ def test_stdlib_deployment_target(
     # ensure both MACOSX_DEPLOYMENT_TARGET and c_stdlib_version match
     # the maximum of either, c.f. stdlib_deployment_target_recipe fixture
     assert re.match(r"(?s).*c_stdlib_version:\s*- ['\"]?10\.14", content)
-    assert re.match(
-        r"(?s).*MACOSX_DEPLOYMENT_TARGET:\s*- ['\"]?10\.14", content
-    )
+    assert re.match(r"(?s).*MACOSX_DEPLOYMENT_TARGET:\s*- ['\"]?10\.14", content)
     # MACOSX_SDK_VERSION gets updated as well if it's below the other two
     assert re.match(r"(?s).*MACOSX_SDK_VERSION:\s*- ['\"]?10\.14", content)
 
@@ -363,13 +353,9 @@ def test_upload_on_branch_azure(upload_on_branch_recipe, jinja_env):
     ) as fp:
         content_osx = yaml.safe_load(fp)
     assert (
-        'UPLOAD_ON_BRANCH="foo-branch"'
-        in content_osx["jobs"][0]["steps"][0]["script"]
+        'UPLOAD_ON_BRANCH="foo-branch"' in content_osx["jobs"][0]["steps"][0]["script"]
     )
-    assert (
-        "BUILD_SOURCEBRANCHNAME"
-        in content_osx["jobs"][0]["steps"][0]["script"]
-    )
+    assert "BUILD_SOURCEBRANCHNAME" in content_osx["jobs"][0]["steps"][0]["script"]
 
     with open(
         os.path.join(
@@ -404,13 +390,9 @@ def test_upload_on_branch_azure(upload_on_branch_recipe, jinja_env):
     ) as fp:
         content_lin = yaml.safe_load(fp)
     assert (
-        'UPLOAD_ON_BRANCH="foo-branch"'
-        in content_lin["jobs"][0]["steps"][1]["script"]
+        'UPLOAD_ON_BRANCH="foo-branch"' in content_lin["jobs"][0]["steps"][1]["script"]
     )
-    assert (
-        "BUILD_SOURCEBRANCHNAME"
-        in content_lin["jobs"][0]["steps"][1]["script"]
-    )
+    assert "BUILD_SOURCEBRANCHNAME" in content_lin["jobs"][0]["steps"][1]["script"]
 
 
 def test_upload_on_branch_appveyor(upload_on_branch_recipe, jinja_env):
@@ -425,9 +407,7 @@ def test_upload_on_branch_appveyor(upload_on_branch_recipe, jinja_env):
     assert upload_on_branch_recipe.config["upload_on_branch"] == "foo-branch"
 
     # Check that the parameter is in the generated file.
-    with open(
-        os.path.join(upload_on_branch_recipe.recipe, ".appveyor.yml")
-    ) as fp:
+    with open(os.path.join(upload_on_branch_recipe.recipe, ".appveyor.yml")) as fp:
         content = yaml.safe_load(fp)
     assert "%APPVEYOR_REPO_BRANCH%" in content["deploy_script"][0]
     assert "UPLOAD_ON_BRANCH=foo-branch" in content["deploy_script"][-2]
@@ -484,9 +464,7 @@ def test_circle_osx(py_recipe, jinja_env):
     forge_dir = py_recipe.recipe
     travis_yml_file = os.path.join(forge_dir, ".travis.yml")
     circle_osx_file = os.path.join(forge_dir, ".scripts", "run_osx_build.sh")
-    circle_linux_file = os.path.join(
-        forge_dir, ".scripts", "run_docker_build.sh"
-    )
+    circle_linux_file = os.path.join(forge_dir, ".scripts", "run_docker_build.sh")
     circle_config_file = os.path.join(forge_dir, ".circleci", "config.yml")
 
     configure_feedstock.clear_scripts(forge_dir)
@@ -530,9 +508,7 @@ def test_circle_osx(py_recipe, jinja_env):
 def test_circle_skipped(linux_skipped_recipe, jinja_env):
     forge_dir = linux_skipped_recipe.recipe
     circle_osx_file = os.path.join(forge_dir, ".scripts", "run_osx_build.sh")
-    circle_linux_file = os.path.join(
-        forge_dir, ".scripts", "run_docker_build.sh"
-    )
+    circle_linux_file = os.path.join(forge_dir, ".scripts", "run_docker_build.sh")
     circle_config_file = os.path.join(forge_dir, ".circleci", "config.yml")
 
     config = copy.deepcopy(linux_skipped_recipe.config)
@@ -609,16 +585,12 @@ def test_secrets(py_recipe, jinja_env):
         forge_dir=py_recipe.recipe,
     )
 
-    run_docker_build = os.path.join(
-        py_recipe.recipe, ".scripts", "run_docker_build.sh"
-    )
+    run_docker_build = os.path.join(py_recipe.recipe, ".scripts", "run_docker_build.sh")
     with open(run_docker_build, "rb") as run_docker_build_file:
         content = run_docker_build_file.read()
     assert b"-e BINSTAR_TOKEN" in content
 
-    for config_yaml in os.listdir(
-        os.path.join(py_recipe.recipe, ".azure-pipelines")
-    ):
+    for config_yaml in os.listdir(os.path.join(py_recipe.recipe, ".azure-pipelines")):
         if config_yaml.endswith(".yaml"):
             with open(config_yaml) as fo:
                 config = yaml.safe_load(fo)
@@ -731,9 +703,7 @@ def test_migrator_delete_old(recipe_migration_cfep9, jinja_env):
     )
 
 
-def test_migrator_downgrade_recipe(
-    recipe_migration_cfep9_downgrade, jinja_env
-):
+def test_migrator_downgrade_recipe(recipe_migration_cfep9_downgrade, jinja_env):
     """
     Assert that even when we have two migrations targeting the same file the correct one wins.
     """
@@ -766,9 +736,7 @@ def test_migrator_downgrade_recipe(
         assert variant["zlib"] == ["1000"]
 
 
-def test_migrator_compiler_version_recipe(
-    recipe_migration_win_compiled, jinja_env
-):
+def test_migrator_compiler_version_recipe(recipe_migration_win_compiled, jinja_env):
     """
     Assert that even when we have two migrations targeting the same file the correct one wins.
     """
@@ -825,9 +793,7 @@ def test_choco_install(choco_recipe, jinja_env):
         forge_dir=choco_recipe.recipe,
     )
     azure_file = os.path.join(
-        os.path.join(
-            choco_recipe.recipe, ".azure-pipelines", "azure-pipelines-win.yml"
-        )
+        os.path.join(choco_recipe.recipe, ".azure-pipelines", "azure-pipelines-win.yml")
     )
     assert os.path.isfile(azure_file)
     with open(azure_file) as f:
@@ -871,9 +837,7 @@ def test_noarch_platforms_bad_yaml(config_yaml: ConfigYAML, caplog):
         ),
     )
 
-    with open(
-        os.path.join(config_yaml.workdir, "conda-forge.yml"), "a+"
-    ) as fp:
+    with open(os.path.join(config_yaml.workdir, "conda-forge.yml"), "a+") as fp:
         fp.write("noarch_platforms: [eniac, zx80]")
 
     with caplog.at_level(logging.WARNING):
@@ -893,9 +857,7 @@ def test_forge_yml_alt_path(config_yaml: ConfigYAML):
         )
 
     forge_yml = os.path.join(config_yaml.workdir, "conda-forge.yml")
-    forge_yml_alt = os.path.join(
-        config_yaml.workdir, ".config", "feedstock-config.yml"
-    )
+    forge_yml_alt = os.path.join(config_yaml.workdir, ".config", "feedstock-config.yml")
 
     os.mkdir(os.path.dirname(forge_yml_alt))
     os.rename(forge_yml, forge_yml_alt)
@@ -988,24 +950,16 @@ def test_conda_build_tools(config_yaml: ConfigYAML, caplog):
     with open(os.path.join(config_yaml.workdir, "conda-forge.yml")) as fp:
         unmodified = fp.read()
     if config_yaml.type == "conda-build":
-        with open(
-            os.path.join(config_yaml.workdir, "conda-forge.yml"), "a+"
-        ) as fp:
+        with open(os.path.join(config_yaml.workdir, "conda-forge.yml"), "a+") as fp:
             fp.write("build_with_mambabuild: true")
-        with pytest.deprecated_call(
-            match="build_with_mambabuild is deprecated"
-        ):
+        with pytest.deprecated_call(match="build_with_mambabuild is deprecated"):
             assert load_forge_config()["conda_build_tool"] == "mambabuild"
 
-        with open(
-            os.path.join(config_yaml.workdir, "conda-forge.yml"), "w"
-        ) as fp:
+        with open(os.path.join(config_yaml.workdir, "conda-forge.yml"), "w") as fp:
             fp.write(unmodified)
             fp.write("build_with_mambabuild: false")
 
-        with pytest.deprecated_call(
-            match="build_with_mambabuild is deprecated"
-        ):
+        with pytest.deprecated_call(match="build_with_mambabuild is deprecated"):
             assert load_forge_config()["conda_build_tool"] == "conda-build"
 
     with open(os.path.join(config_yaml.workdir, "conda-forge.yml"), "w") as fp:
@@ -1028,12 +982,8 @@ def test_remote_ci_setup(config_yaml: ConfigYAML):
     with open(os.path.join(config_yaml.workdir, "conda-forge.yml")) as fp:
         unmodified = fp.read()
 
-    with open(
-        os.path.join(config_yaml.workdir, "conda-forge.yml"), "a+"
-    ) as fp:
-        fp.write(
-            "remote_ci_setup: ['conda-forge-ci-setup=3', 'py-lief<0.12']\n"
-        )
+    with open(os.path.join(config_yaml.workdir, "conda-forge.yml"), "a+") as fp:
+        fp.write("remote_ci_setup: ['conda-forge-ci-setup=3', 'py-lief<0.12']\n")
         fp.write("conda_install_tool: conda\n")
     cfg = load_forge_config()
     # pylief was quoted due to <
@@ -1049,9 +999,7 @@ def test_remote_ci_setup(config_yaml: ConfigYAML):
 
     with open(os.path.join(config_yaml.workdir, "conda-forge.yml"), "w") as fp:
         fp.write(unmodified + "\n")
-        fp.write(
-            "remote_ci_setup: ['conda-forge-ci-setup=3', 'py-lief<0.12']\n"
-        )
+        fp.write("remote_ci_setup: ['conda-forge-ci-setup=3', 'py-lief<0.12']\n")
         fp.write("conda_install_tool: mamba\n")
     cfg = load_forge_config()
     # with conda_install_tool = mamba, we don't strip constraints
@@ -1987,12 +1935,10 @@ def test_get_used_key_values_by_input_order(
     all_used_vars,
     expected_used_key_values,
 ):
-    used_key_values, _ = (
-        configure_feedstock._get_used_key_values_by_input_order(
-            squished_input_variants,
-            squished_used_variants,
-            all_used_vars,
-        )
+    used_key_values, _ = configure_feedstock._get_used_key_values_by_input_order(
+        squished_input_variants,
+        squished_used_variants,
+        all_used_vars,
     )
     assert used_key_values == expected_used_key_values
 
@@ -2095,10 +2041,7 @@ def test_github_actions_pins():
         repo_root / "conda_smithy" / "templates" / "github-actions.yml.tmpl"
     )
     dependabot_inventory = (
-        repo_root
-        / ".github"
-        / "workflows"
-        / "_proxy-file-for-dependabot-tests.yml"
+        repo_root / ".github" / "workflows" / "_proxy-file-for-dependabot-tests.yml"
     )
 
     def get_uses(path):
@@ -2124,12 +2067,6 @@ def test_read_forge_config_default_values_aliases():
 
         # if this raises KeyError, it means that the default values stored in data/conda-forge.yml do not respect the
         # aliases defined in the schema, which will lead to defaults being parsed incorrectly.
-        assert isinstance(
-            config["azure"]["settings_linux"]["timeoutInMinutes"], int
-        )
-        assert isinstance(
-            config["azure"]["settings_osx"]["timeoutInMinutes"], int
-        )
-        assert isinstance(
-            config["azure"]["settings_win"]["timeoutInMinutes"], int
-        )
+        assert isinstance(config["azure"]["settings_linux"]["timeoutInMinutes"], int)
+        assert isinstance(config["azure"]["settings_osx"]["timeoutInMinutes"], int)
+        assert isinstance(config["azure"]["settings_win"]["timeoutInMinutes"], int)

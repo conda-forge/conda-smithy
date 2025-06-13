@@ -39,9 +39,7 @@ def set_exe_file(filename, set_exe=True):
 
     repo = get_repo(filename)
     if repo:
-        index_path = (
-            Path(filename).resolve().relative_to(repo.workdir).as_posix()
-        )
+        index_path = Path(filename).resolve().relative_to(repo.workdir).as_posix()
         index_entry = repo.index[index_path]
         if set_exe:
             index_entry.mode |= all_execute_permissions
@@ -69,9 +67,7 @@ def write_file(filename):
 
     repo = get_repo(filename)
     if repo:
-        index_path = (
-            Path(filename).resolve().relative_to(repo.workdir).as_posix()
-        )
+        index_path = Path(filename).resolve().relative_to(repo.workdir).as_posix()
         repo.index.add(index_path)
         repo.index.write()
 
@@ -87,9 +83,7 @@ def remove_file_or_dir(filename):
 
     repo = get_repo(filename)
     if repo:
-        index_path = (
-            Path(filename).resolve().relative_to(repo.workdir).as_posix()
-        )
+        index_path = Path(filename).resolve().relative_to(repo.workdir).as_posix()
         repo.index.remove_all([f"{index_path}/**"])
         repo.index.write()
     shutil.rmtree(filename)
@@ -101,9 +95,7 @@ def remove_file(filename):
     repo = get_repo(filename)
     if repo:
         try:
-            index_path = (
-                Path(filename).resolve().relative_to(repo.workdir).as_posix()
-            )
+            index_path = Path(filename).resolve().relative_to(repo.workdir).as_posix()
             repo.index.remove(index_path)
             repo.index.write()
         except OSError:  # this is specifically "file not in index"

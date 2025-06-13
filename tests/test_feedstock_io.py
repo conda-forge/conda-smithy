@@ -52,9 +52,7 @@ class TestFeedstockIO(unittest.TestCase):
         self.tmp_dir = tempfile.mkdtemp()
         os.chdir(self.tmp_dir)
 
-        with open(
-            os.path.abspath(".keep"), "w", encoding="utf-8", newline="\n"
-        ) as fh:
+        with open(os.path.abspath(".keep"), "w", encoding="utf-8", newline="\n") as fh:
             fh.write("")
 
     def test_repo(self):
@@ -68,16 +66,14 @@ class TestFeedstockIO(unittest.TestCase):
                 possible_repo_subdir = os.path.join(
                     tmp_dir,
                     "".join(
-                        "{}{}".format(
-                            x, os.path.sep if random.random() > 0.5 else ""
-                        )
+                        "{}{}".format(x, os.path.sep if random.random() > 0.5 else "")
                         for x in string.ascii_lowercase
                     ),
                 )
                 os.makedirs(possible_repo_subdir)
-                assert fio.get_repo_root(
-                    possible_repo_subdir
-                ) == os.path.realpath(tmp_dir)
+                assert fio.get_repo_root(possible_repo_subdir) == os.path.realpath(
+                    tmp_dir
+                )
 
     def test_set_exe_file(self):
         perms = [stat.S_IXUSR, stat.S_IXGRP, stat.S_IXOTH]
@@ -101,9 +97,7 @@ class TestFeedstockIO(unittest.TestCase):
                 if repo is not None:
                     repo.index.read()
                     blob = repo.index[basename]
-                    self.assertEqual(
-                        blob.mode & set_mode, int(set_exe) * set_mode
-                    )
+                    self.assertEqual(blob.mode & set_mode, int(set_exe) * set_mode)
 
     def test_write_file(self):
         for tmp_dir, repo, pathfunc in parameterize():

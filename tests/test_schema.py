@@ -12,19 +12,13 @@ from conda_smithy.validate_schema import (
 def test_schema_up_to_date():
     model = ConfigModel()
 
-    json_blob_from_model = (
-        json.dumps(model.model_json_schema(), indent=2) + "\n"
-    )
+    json_blob_from_model = json.dumps(model.model_json_schema(), indent=2) + "\n"
     assert CONDA_FORGE_YAML_SCHEMA_FILE.exists(), (
         "The config schema file does not exist. "
         "Run `python -m conda_smithy.schema` to generate it."
     )
-    json_blob_from_code = CONDA_FORGE_YAML_SCHEMA_FILE.read_text(
-        encoding="utf-8"
-    )
-    assert json.loads(json_blob_from_model) == json.loads(
-        json_blob_from_code
-    ), (
+    json_blob_from_code = CONDA_FORGE_YAML_SCHEMA_FILE.read_text(encoding="utf-8")
+    assert json.loads(json_blob_from_model) == json.loads(json_blob_from_code), (
         "The config schema file is out of date. "
         "Run `python -m conda_smithy.schema` to regenerate it."
     )

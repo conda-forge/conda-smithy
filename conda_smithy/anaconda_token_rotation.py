@@ -138,9 +138,7 @@ def rotate_anaconda_token(
 
                 if azure:
                     try:
-                        rotate_token_in_azure(
-                            user, project, anaconda_token, token_name
-                        )
+                        rotate_token_in_azure(user, project, anaconda_token, token_name)
                     except Exception as e:
                         if "DEBUG_ANACONDA_TOKENS" in os.environ:
                             raise e
@@ -209,9 +207,7 @@ def rotate_token_in_circle(user, project, binstar_token, token_name):
     )
 
     r = requests.get(
-        url_template.format(
-            token=circle_token, user=user, project=project, extra=""
-        )
+        url_template.format(token=circle_token, user=user, project=project, extra="")
     )
     if r.status_code != 200:
         r.raise_for_status()
@@ -235,18 +231,14 @@ def rotate_token_in_circle(user, project, binstar_token, token_name):
 
     data = {"name": token_name, "value": binstar_token}
     response = requests.post(
-        url_template.format(
-            token=circle_token, user=user, project=project, extra=""
-        ),
+        url_template.format(token=circle_token, user=user, project=project, extra=""),
         data,
     )
     if response.status_code != 201:
         raise ValueError(response)
 
 
-def rotate_token_in_drone(
-    user, project, binstar_token, token_name, drone_endpoint
-):
+def rotate_token_in_drone(user, project, binstar_token, token_name, drone_endpoint):
     from conda_smithy.ci_register import drone_session
 
     session = drone_session(drone_endpoint)
@@ -408,20 +400,16 @@ def rotate_token_in_appveyor(feedstock_config_path, binstar_token, token_name):
 
     headers = {"Authorization": f"Bearer {appveyor_token}"}
     url = "https://ci.appveyor.com/api/account/encrypt"
-    response = requests.post(
-        url, headers=headers, data={"plainValue": binstar_token}
-    )
+    response = requests.post(url, headers=headers, data={"plainValue": binstar_token})
     if response.status_code != 200:
         raise ValueError(response)
 
     with update_conda_forge_config(feedstock_config_path) as code:
-        code.setdefault("appveyor", {}).setdefault("secure", {})[
-            token_name
-        ] = response.content.decode("utf-8")
+        code.setdefault("appveyor", {}).setdefault("secure", {})[token_name] = (
+            response.content.decode("utf-8")
+        )
 
 
-def rotate_token_in_github_actions(
-    user, project, binstar_token, token_name, gh
-):
+def rotate_token_in_github_actions(user, project, binstar_token, token_name, gh):
     repo = gh.get_repo(f"{user}/{project}")
     assert repo.create_secret(token_name, binstar_token)

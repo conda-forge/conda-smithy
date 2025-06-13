@@ -150,9 +150,7 @@ def hint_shellcheck_usage(recipe_dir, hints):
                     )
             elif p.returncode != 0:
                 # Something went wrong.
-                hints.append(
-                    "There have been errors while scanning with shellcheck."
-                )
+                hints.append("There have been errors while scanning with shellcheck.")
 
 
 def hint_check_spdx(about_section, hints):
@@ -281,9 +279,7 @@ def _hint_noarch_python_use_python_min_inner(
             if recipe_version == 1:
                 # V1 recipes now require a `python ${{ python_min }}.*` matchspec
                 # in lieu of the ambiguous `python {{ python_min }}` matchspec
-                syntax = syntax.replace(
-                    "{{ python_min }}", r"\${{ python_min }}"
-                )
+                syntax = syntax.replace("{{ python_min }}", r"\${{ python_min }}")
                 if section_name in ["host", "test.requires"]:
                     report_syntax = report_syntax.replace(
                         "{{ python_min }}", "${{ python_min }}.*"
@@ -295,7 +291,9 @@ def _hint_noarch_python_use_python_min_inner(
                 test_syntax = syntax
 
                 if section_name == "test.requires":
-                    report_section_name = "`tests[].python.python_version` or `tests[].requirements.run`"
+                    report_section_name = (
+                        "`tests[].python.python_version` or `tests[].requirements.run`"
+                    )
                     report_entry = "`python_version` or `python`"
                     report_syntax = "`python_version: ${{ python_min }}.*` or `python ${{ python_min }}.*`"
                 else:
@@ -353,9 +351,7 @@ def hint_noarch_python_use_python_min(
                     get_all_test_requirements(output, [], recipe_version),
                     output.get("build", {}).get("noarch"),
                     recipe_version,
-                    output.get("package", {}).get(
-                        "name", f"<output {output_num}"
-                    ),
+                    output.get("package", {}).get("name", f"<output {output_num}"),
                 )
             )
     else:
@@ -400,9 +396,7 @@ def hint_space_separated_specs(
         "test": test_section.get("requires") or (),
     }.items():
         bad_specs = [
-            req
-            for req in (reqs or ())
-            if not _ensure_spec_space_separated(req)
+            req for req in (reqs or ()) if not _ensure_spec_space_separated(req)
         ]
         if bad_specs:
             report.setdefault("top-level", {})[req_type] = bad_specs
@@ -417,9 +411,7 @@ def hint_space_separated_specs(
             "run": requirements_section.get("run") or [],
             "test": output.get("test", {}).get("requires") or [],
         }.items():
-            bad_specs = [
-                req for req in reqs if not _ensure_spec_space_separated(req)
-            ]
+            bad_specs = [req for req in reqs if not _ensure_spec_space_separated(req)]
             if bad_specs:
                 report.setdefault(output.get("name", f"output {i}"), {})[
                     req_type

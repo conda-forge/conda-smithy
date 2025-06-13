@@ -14,9 +14,7 @@ from conda_smithy.configure_feedstock import make_jinja_env
 
 def _render_template(template_file, env, forge_dir, config):
     """Renders the template"""
-    template = env.get_template(
-        os.path.basename(template_file) + ".ci-skel.tmpl"
-    )
+    template = env.get_template(os.path.basename(template_file) + ".ci-skel.tmpl")
     target_fname = os.path.join(forge_dir, template_file)
     print("Generating " + target_fname, file=sys.stderr)
     new_file_contents = template.render(**config)
@@ -56,9 +54,7 @@ def _insert_into_gitignore(
     return fname
 
 
-def generate(
-    package_name="pkg", feedstock_directory=".", recipe_directory="recipe"
-):
+def generate(package_name="pkg", feedstock_directory=".", recipe_directory="recipe"):
     """Generates the CI skeleton."""
     forge_dir = os.path.abspath(feedstock_directory)
     env = make_jinja_env(forge_dir)

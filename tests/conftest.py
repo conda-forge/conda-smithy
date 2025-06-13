@@ -14,9 +14,7 @@ from conda_smithy.configure_feedstock import (
     conda_forge_content,
 )
 
-RecipeConfigPair = collections.namedtuple(
-    "RecipeConfigPair", ("recipe", "config")
-)
+RecipeConfigPair = collections.namedtuple("RecipeConfigPair", ("recipe", "config"))
 
 
 class ConfigYAML(typing.NamedTuple):
@@ -93,9 +91,7 @@ def config_yaml(testing_workdir, recipe_dirname, request, monkeypatch):
         yaml.dump(config, f, default_flow_style=False)
 
         config_path = os.path.abspath(
-            os.path.join(
-                __file__, "../", "recipes", "default_config", config_name
-            )
+            os.path.join(__file__, "../", "recipes", "default_config", config_name)
         )
         config_text = Path(config_path).read_text()
 
@@ -138,9 +134,7 @@ def config_yaml(testing_workdir, recipe_dirname, request, monkeypatch):
 def noarch_recipe(config_yaml: ConfigYAML, recipe_dirname):
     # get the used params passed for config_yaml fixture
     with open(
-        os.path.join(
-            config_yaml.workdir, recipe_dirname, config_yaml.recipe_name
-        ),
+        os.path.join(config_yaml.workdir, recipe_dirname, config_yaml.recipe_name),
         "w",
     ) as fh:
         fh.write(
@@ -177,9 +171,7 @@ def noarch_recipe_with_python_min(config_yaml: ConfigYAML, recipe_dirname):
         jinjatxt_run = "{{ python_min }}"
         jinjatxt_host_test = jinjatxt_run
     with open(
-        os.path.join(
-            config_yaml.workdir, recipe_dirname, config_yaml.recipe_name
-        ),
+        os.path.join(config_yaml.workdir, recipe_dirname, config_yaml.recipe_name),
         "w",
     ) as fh:
         fh.write(
@@ -296,9 +288,7 @@ def py_abi3_recipe(config_yaml: ConfigYAML):
 
 @pytest.fixture(scope="function")
 def stdlib_recipe(config_yaml: ConfigYAML):
-    with open(
-        os.path.join(config_yaml.workdir, "recipe", "meta.yaml"), "w"
-    ) as fh:
+    with open(os.path.join(config_yaml.workdir, "recipe", "meta.yaml"), "w") as fh:
         fh.write(
             """
 package:
@@ -371,9 +361,7 @@ MACOSX_SDK_VERSION:             # [osx]
 @pytest.fixture(scope="function")
 def mixed_python_min_recipe(config_yaml: ConfigYAML):
     # check that we can render recipe that has a mix of noarch and non-noarch outputs
-    with open(
-        os.path.join(config_yaml.workdir, "recipe", "meta.yaml"), "w"
-    ) as fh:
+    with open(os.path.join(config_yaml.workdir, "recipe", "meta.yaml"), "w") as fh:
         fh.write(
             """
 {% set version = "1.2.12" %}
@@ -493,9 +481,7 @@ def upload_on_branch_recipe(config_yaml: ConfigYAML):
         str(config_yaml.workdir),
         _load_forge_config(
             config_yaml.workdir,
-            exclusive_config_file=os.path.join(
-                config_yaml.workdir, "conda-forge.yml"
-            ),
+            exclusive_config_file=os.path.join(config_yaml.workdir, "conda-forge.yml"),
         ),
     )
 
@@ -526,9 +512,7 @@ requirements:
         exist_ok=True,
     )
     with open(
-        os.path.join(
-            config_yaml.workdir, ".ci_support", "migrations", "zlib.yaml"
-        ),
+        os.path.join(config_yaml.workdir, ".ci_support", "migrations", "zlib.yaml"),
         "w",
     ) as fh:
         fh.write(
@@ -551,9 +535,7 @@ zlib:
 
 
 @pytest.fixture(scope="function")
-def recipe_migration_cfep9_downgrade(
-    config_yaml: ConfigYAML, recipe_migration_cfep9
-):
+def recipe_migration_cfep9_downgrade(config_yaml: ConfigYAML, recipe_migration_cfep9):
     # write a downgrade migrator that lives next to the current migrator.
     # Only this, more recent migrator should apply.
     os.makedirs(
@@ -598,15 +580,11 @@ def recipe_migration_win_compiled(config_yaml: ConfigYAML, py_recipe):
     migration_name = "vc-migrate.yaml"
 
     with open(
-        os.path.join(
-            config_yaml.workdir, ".ci_support", "migrations", migration_name
-        ),
+        os.path.join(config_yaml.workdir, ".ci_support", "migrations", migration_name),
         "w",
     ) as fh:
         migration_path = os.path.abspath(
-            os.path.join(
-                __file__, "../", "recipes", "win_migrations", migration_name
-            )
+            os.path.join(__file__, "../", "recipes", "win_migrations", migration_name)
         )
         content = Path(migration_path).read_text()
         fh.write(content)
@@ -711,9 +689,7 @@ def linux_skipped_recipe(config_yaml: ConfigYAML):
 
 @pytest.fixture(scope="function")
 def render_skipped_recipe(config_yaml: ConfigYAML):
-    with open(
-        os.path.join(config_yaml.workdir, "recipe", "meta.yaml"), "w"
-    ) as fh:
+    with open(os.path.join(config_yaml.workdir, "recipe", "meta.yaml"), "w") as fh:
         fh.write(
             """
 package:
@@ -728,9 +704,7 @@ requirements:
         - python
     """
         )
-    with open(
-        os.path.join(config_yaml.workdir, "conda-forge.yml"), "a+"
-    ) as fh:
+    with open(os.path.join(config_yaml.workdir, "conda-forge.yml"), "a+") as fh:
         fh.write(
             """
 skip_render:
@@ -770,9 +744,7 @@ def choco_recipe(config_yaml: ConfigYAML):
         content = Path(choco_recipe_path).read_text()
         fh.write(content)
 
-    with open(
-        os.path.join(config_yaml.workdir, "conda-forge.yml"), "a+"
-    ) as fh:
+    with open(os.path.join(config_yaml.workdir, "conda-forge.yml"), "a+") as fh:
         fh.write(
             """
 choco:

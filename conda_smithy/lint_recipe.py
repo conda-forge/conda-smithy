@@ -123,9 +123,7 @@ def lintify_meta_yaml(
     lints = []
     hints = []
     major_sections = list(meta.keys())
-    lints_to_skip = (_get_forge_yaml(recipe_dir).get("linter") or {}).get(
-        "skip"
-    ) or []
+    lints_to_skip = (_get_forge_yaml(recipe_dir).get("linter") or {}).get("skip") or []
 
     # If the recipe_dir exists (no guarantee within this function) , we can
     # find the meta.yaml within it.
@@ -135,16 +133,12 @@ def lintify_meta_yaml(
     if recipe_version == 1:
         schema_version = meta.get("schema_version", 1)
         if schema_version != 1:
-            lints.append(
-                f"Unsupported recipe.yaml schema version {schema_version}"
-            )
+            lints.append(f"Unsupported recipe.yaml schema version {schema_version}")
             return lints, hints
 
     sources_section = get_section(meta, "source", lints, recipe_version)
     build_section = get_section(meta, "build", lints, recipe_version)
-    requirements_section = get_section(
-        meta, "requirements", lints, recipe_version
-    )
+    requirements_section = get_section(meta, "requirements", lints, recipe_version)
     build_requirements = requirements_section.get("build", [])
     run_reqs = requirements_section.get("run", [])
     if recipe_version == 1:
@@ -271,9 +265,7 @@ def lintify_meta_yaml(
         if recipe_version == 1:
             cbc_file = "variants.yaml"
 
-        conda_build_config_filename = find_local_config_file(
-            recipe_dir, cbc_file
-        )
+        conda_build_config_filename = find_local_config_file(recipe_dir, cbc_file)
 
         if conda_build_config_filename:
             with open(conda_build_config_filename, encoding="utf-8") as fh:
@@ -281,9 +273,7 @@ def lintify_meta_yaml(
         else:
             conda_build_config_keys = set()
 
-        forge_yaml_filename = find_local_config_file(
-            recipe_dir, "conda-forge.yml"
-        )
+        forge_yaml_filename = find_local_config_file(recipe_dir, "conda-forge.yml")
 
         if forge_yaml_filename:
             with open(forge_yaml_filename, encoding="utf-8") as fh:
@@ -342,9 +332,7 @@ def lintify_meta_yaml(
     )
 
     # 24: jinja2 variable references should be {{<one space>var<one space>}}
-    lint_jinja_var_references(
-        recipe_fname, hints, recipe_version=recipe_version
-    )
+    lint_jinja_var_references(recipe_fname, hints, recipe_version=recipe_version)
 
     # 25: require a lower bound on python version
     lint_require_lower_bound_on_python_version(
@@ -399,9 +387,7 @@ def lintify_meta_yaml(
     hint_check_spdx(about_section, hints)
 
     # 5: hint pypi.io -> pypi.org
-    hint_sources_should_not_mention_pypi_io_but_pypi_org(
-        sources_section, hints
-    )
+    hint_sources_should_not_mention_pypi_io_but_pypi_org(sources_section, hints)
 
     # 6: stdlib-related lints
     if "lint_stdlib" not in lints_to_skip:
@@ -524,23 +510,15 @@ def run_conda_forge_specific(
     hints,
     recipe_version: int = 0,
 ):
-    lints_to_skip = (_get_forge_yaml(recipe_dir).get("linter") or {}).get(
-        "skip"
-    ) or []
+    lints_to_skip = (_get_forge_yaml(recipe_dir).get("linter") or {}).get("skip") or []
 
     # Retrieve sections from meta
-    package_section = get_section(
-        meta, "package", lints, recipe_version=recipe_version
-    )
-    extra_section = get_section(
-        meta, "extra", lints, recipe_version=recipe_version
-    )
+    package_section = get_section(meta, "package", lints, recipe_version=recipe_version)
+    extra_section = get_section(meta, "extra", lints, recipe_version=recipe_version)
     requirements_section = get_section(
         meta, "requirements", lints, recipe_version=recipe_version
     )
-    outputs_section = get_section(
-        meta, "outputs", lints, recipe_version=recipe_version
-    )
+    outputs_section = get_section(meta, "outputs", lints, recipe_version=recipe_version)
 
     build_section = get_section(meta, "build", lints, recipe_version)
     noarch_value = build_section.get("noarch")
@@ -563,14 +541,10 @@ def run_conda_forge_specific(
     for maintainer in maintainers:
         if "/" in maintainer:
             if not _team_exists(maintainer):
-                lints.append(
-                    f'Recipe maintainer team "{maintainer}" does not exist'
-                )
+                lints.append(f'Recipe maintainer team "{maintainer}" does not exist')
         else:
             if not _maintainer_exists(maintainer):
-                lints.append(
-                    f'Recipe maintainer "{maintainer}" does not exist'
-                )
+                lints.append(f'Recipe maintainer "{maintainer}" does not exist')
 
     # 3: if the recipe dir is inside the example dir
     # moved to staged-recipes directly
@@ -614,9 +588,7 @@ def run_conda_forge_specific(
 
     # 7: Ensure that the recipe has some .ci_support files
     if not is_staged_recipes and recipe_dir is not None:
-        ci_support_files = glob(
-            os.path.join(recipe_dir, "..", ".ci_support", "*.yaml")
-        )
+        ci_support_files = glob(os.path.join(recipe_dir, "..", ".ci_support", "*.yaml"))
         if not ci_support_files:
             lints.append(
                 "The feedstock has no `.ci_support` files and thus will not build any packages."
@@ -775,9 +747,7 @@ def find_recipe_directory(
     return (recipe_dir, build_tool)
 
 
-def main(
-    recipe_dir, conda_forge=False, return_hints=False, feedstock_dir=None
-):
+def main(recipe_dir, conda_forge=False, return_hints=False, feedstock_dir=None):
     recipe_dir, build_tool = find_recipe_directory(recipe_dir, feedstock_dir)
 
     if build_tool == RATTLER_BUILD_TOOL:
@@ -803,9 +773,7 @@ def main(
         conda_forge,
         recipe_version=recipe_version,
     )
-    validation_errors, validation_hints = lintify_forge_yaml(
-        recipe_dir=recipe_dir
-    )
+    validation_errors, validation_hints = lintify_forge_yaml(recipe_dir=recipe_dir)
 
     results.extend([_format_validation_msg(err) for err in validation_errors])
     hints.extend([_format_validation_msg(hint) for hint in validation_hints])

@@ -94,10 +94,12 @@ def generate_and_write_feedstock_token(user, project, provider=None):
             pth = feedstock_token_local_path(user, project, provider=provider)
             if os.path.exists(pth):
                 failed = True
-                err_msg = "Token for {}/{} on provider{} is already written locally!".format(
-                    user,
-                    project,
-                    "" if provider is None else " " + provider,
+                err_msg = (
+                    "Token for {}/{} on provider{} is already written locally!".format(
+                        user,
+                        project,
+                        "" if provider is None else " " + provider,
+                    )
                 )
                 raise FeedstockTokenError(err_msg)
 
@@ -119,9 +121,7 @@ def generate_and_write_feedstock_token(user, project, provider=None):
                     "Generating the feedstock token for {}/{} on provider{} failed!"
                     " Try the command locally with DEBUG_FEEDSTOCK_TOKENS"
                     " defined in the environment to investigate!"
-                ).format(
-                    user, project, "" if provider is None else " " + provider
-                )
+                ).format(user, project, "" if provider is None else " " + provider)
             )
 
     return failed
@@ -139,9 +139,7 @@ def read_feedstock_token(user, project, provider=None):
     feedstock_token = None
 
     # read the token
-    user_token_pth = feedstock_token_local_path(
-        user, project, provider=provider
-    )
+    user_token_pth = feedstock_token_local_path(user, project, provider=provider)
 
     if not os.path.exists(user_token_pth):
         err_msg = f"No token found in '{user_token_pth}'"
@@ -221,17 +219,13 @@ def feedstock_token_exists(user, project, token_repo, provider=None):
                     "Testing for the feedstock token for {}/{} on provider{} failed!"
                     " Try the command locally with DEBUG_FEEDSTOCK_TOKENS"
                     " defined in the environment to investigate!"
-                ).format(
-                    user, project, "" if provider is None else " " + provider
-                )
+                ).format(user, project, "" if provider is None else " " + provider)
             )
 
     return exists
 
 
-def is_valid_feedstock_token(
-    user, project, feedstock_token, token_repo, provider=None
-):
+def is_valid_feedstock_token(user, project, feedstock_token, token_repo, provider=None):
     """Test if the input feedstock_token is valid.
 
     All exceptions are swallowed and stdout/stderr from this function is
@@ -308,9 +302,7 @@ def is_valid_feedstock_token(
                     "Validating the feedstock token for {}/{} on provider{} failed!"
                     " Try the command locally with DEBUG_FEEDSTOCK_TOKENS"
                     " defined in the environment to investigate!"
-                ).format(
-                    user, project, "" if provider is None else " " + provider
-                )
+                ).format(user, project, "" if provider is None else " " + provider)
             )
 
     return valid
@@ -388,9 +380,7 @@ def register_feedstock_token(
             # clean out old tokens
             now = time.time()
             token_data["tokens"] = [
-                td
-                for td in token_data["tokens"]
-                if td.get("expires_at", now) >= now
+                td for td in token_data["tokens"] if td.get("expires_at", now) >= now
             ]
 
             if existing_tokens_time_to_expiration is not None:
@@ -398,9 +388,7 @@ def register_feedstock_token(
                 now_plus_expire = now + existing_tokens_time_to_expiration
 
                 for i in range(len(token_data["tokens"])):
-                    tokens_provider = token_data["tokens"][i].get(
-                        "provider", None
-                    )
+                    tokens_provider = token_data["tokens"][i].get("provider", None)
                     if (
                         # doesn't have an expiration time currently
                         "expires_at" not in token_data["tokens"][i]
@@ -431,9 +419,7 @@ def register_feedstock_token(
                 json.dump(token_data, fp)
 
             # push
-            index_path = (
-                Path(token_file).resolve().relative_to(tmpdir).as_posix()
-            )
+            index_path = Path(token_file).resolve().relative_to(tmpdir).as_posix()
             repo.index.add(index_path)
             repo.index.write()
             subprocess.run(
@@ -449,9 +435,7 @@ def register_feedstock_token(
                 cwd=tmpdir,
             )
 
-            subprocess.run(
-                ["git", "pull", "-q", "--rebase"], check=True, cwd=tmpdir
-            )
+            subprocess.run(["git", "pull", "-q", "--rebase"], check=True, cwd=tmpdir)
             subprocess.run(["git", "push", "-q"], check=True, cwd=tmpdir)
         except Exception as e:
             if "DEBUG_FEEDSTOCK_TOKENS" in os.environ:
@@ -467,9 +451,7 @@ def register_feedstock_token(
                     "Registering the feedstock token for {}/{} on provider{} failed!"
                     " Try the command locally with DEBUG_FEEDSTOCK_TOKENS"
                     " defined in the environment to investigate!"
-                ).format(
-                    user, project, "" if provider is None else " " + provider
-                )
+                ).format(user, project, "" if provider is None else " " + provider)
             )
 
     return failed
@@ -610,9 +592,7 @@ def add_feedstock_token_to_circle(user, project, feedstock_token, clobber):
     )
 
     r = requests.get(
-        url_template.format(
-            token=circle_token, user=user, project=project, extra=""
-        )
+        url_template.format(token=circle_token, user=user, project=project, extra="")
     )
     if r.status_code != 200:
         r.raise_for_status()
@@ -786,9 +766,7 @@ def add_feedstock_token_to_azure(user, project, feedstock_token, clobber):
         )
 
 
-def add_feedstock_token_to_github_actions(
-    user, project, feedstock_token, clobber
-):
+def add_feedstock_token_to_github_actions(user, project, feedstock_token, clobber):
     from github import Github
 
     from conda_smithy.github import gh_token

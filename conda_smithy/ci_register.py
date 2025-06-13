@@ -63,9 +63,7 @@ try:
     anaconda_token = os.environ["BINSTAR_TOKEN"]
 except KeyError:
     try:
-        anaconda_token_path = os.path.expanduser(
-            "~/.conda-smithy/anaconda.token"
-        )
+        anaconda_token_path = os.path.expanduser("~/.conda-smithy/anaconda.token")
         if file_permissions(anaconda_token_path) != "0o600":
             raise ValueError("Incorrect permissions")
         with open(anaconda_token_path) as fh:
@@ -188,9 +186,7 @@ def add_project_to_drone(user, project, drone_endpoint=drone_default_endpoint):
         response.raise_for_status()
 
 
-def regenerate_drone_webhooks(
-    user, project, drone_endpoint=drone_default_endpoint
-):
+def regenerate_drone_webhooks(user, project, drone_endpoint=drone_default_endpoint):
     session = drone_session(drone_endpoint)
     response = session.post(f"/api/repos/{user}/{project}/repair")
     response.raise_for_status()
@@ -278,16 +274,14 @@ def appveyor_encrypt_binstar_token(feedstock_config_path, user, project):
     anaconda_token = _get_anaconda_token()
     headers = {"Authorization": f"Bearer {appveyor_token}"}
     url = "https://ci.appveyor.com/api/account/encrypt"
-    response = requests.post(
-        url, headers=headers, data={"plainValue": anaconda_token}
-    )
+    response = requests.post(url, headers=headers, data={"plainValue": anaconda_token})
     if response.status_code != 200:
         raise ValueError(response)
 
     with update_conda_forge_config(feedstock_config_path) as code:
-        code.setdefault("appveyor", {}).setdefault("secure", {})[
-            "BINSTAR_TOKEN"
-        ] = response.content.decode("utf-8")
+        code.setdefault("appveyor", {}).setdefault("secure", {})["BINSTAR_TOKEN"] = (
+            response.content.decode("utf-8")
+        )
 
 
 def appveyor_configure(user, project):
@@ -390,9 +384,7 @@ def add_project_to_travis(user, project):
                     end="",
                 )
             sys.stdout.flush()
-            sync_url = "{}/user/{}/sync".format(
-                travis_endpoint, user_info["id"]
-            )
+            sync_url = "{}/user/{}/sync".format(travis_endpoint, user_info["id"])
             response = requests.post(sync_url, headers=headers)
             if response.status_code != 409:
                 # 409 status code is for indicating that another synching might be happening at the
@@ -423,17 +415,15 @@ def add_project_to_travis(user, project):
         print(f" * {user}/{project} registered on travis-ci")
 
 
-def travis_token_update_conda_forge_config(
-    feedstock_config_path, user, project
-):
+def travis_token_update_conda_forge_config(feedstock_config_path, user, project):
     anaconda_token = _get_anaconda_token()
     item = f'BINSTAR_TOKEN="{anaconda_token}"'
     slug = f"{user}%2F{project}"
 
     with update_conda_forge_config(feedstock_config_path) as code:
-        code.setdefault("travis", {}).setdefault("secure", {})[
-            "BINSTAR_TOKEN"
-        ] = travis_encrypt_binstar_token(slug, item)
+        code.setdefault("travis", {}).setdefault("secure", {})["BINSTAR_TOKEN"] = (
+            travis_encrypt_binstar_token(slug, item)
+        )
 
 
 def travis_encrypt_binstar_token(repo, string_to_encrypt):
@@ -464,9 +454,7 @@ def travis_encrypt_binstar_token(repo, string_to_encrypt):
     public_key = r.json()["public_key"]
     key = RSA.importKey(public_key)
     cipher = PKCS1_OAEP.new(key)
-    return base64.b64encode(cipher.encrypt(string_to_encrypt.encode())).decode(
-        "utf-8"
-    )
+    return base64.b64encode(cipher.encrypt(string_to_encrypt.encode())).decode("utf-8")
 
 
 def travis_configure(user, project):
