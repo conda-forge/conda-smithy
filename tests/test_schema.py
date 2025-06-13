@@ -51,12 +51,7 @@ def test_schema_no_empty_properties_for_bot():
     This is because some JSON schema validators (VSCode) will fail the validation if a property
     is not in the properties object in this case.
     """
-    with (
-        Path(__file__)
-        .parents[1]
-        .joinpath("conda_smithy/data/conda-forge.json")
-        .open("r") as f
-    ):
+    with Path(__file__).parents[1].joinpath("conda_smithy/data/conda-forge.json").open("r") as f:
         schema = json.load(f)
 
     assert "properties" not in schema["properties"]["bot"]

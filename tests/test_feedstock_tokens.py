@@ -46,9 +46,7 @@ from conda_smithy.utils import file_permissions
     ],
 )
 @pytest.mark.parametrize("project", ["bar", "bar-feedstock"])
-@pytest.mark.parametrize(
-    "repo", ["GITHUB_TOKEN", "${GITHUB_TOKEN}", "GH_TOKEN", "${GH_TOKEN}"]
-)
+@pytest.mark.parametrize("repo", ["GITHUB_TOKEN", "${GITHUB_TOKEN}", "GH_TOKEN", "${GH_TOKEN}"])
 @mock.patch("conda_smithy.feedstock_tokens.tempfile")
 @mock.patch("conda_smithy.feedstock_tokens.pygit2")
 @mock.patch("conda_smithy.feedstock_tokens.subprocess")
@@ -98,9 +96,7 @@ def test_feedstock_tokens_roundtrip(
         with open(pth) as fp:
             feedstock_token = fp.read().strip()
 
-        retval = is_valid_feedstock_token(
-            user, project, feedstock_token, repo, provider=ci
-        )
+        retval = is_valid_feedstock_token(user, project, feedstock_token, repo, provider=ci)
     finally:
         if os.path.exists(pth):
             os.remove(pth)
@@ -112,9 +108,7 @@ def test_feedstock_tokens_roundtrip(
 
 @pytest.mark.parametrize("ci", [None, "azure"])
 @pytest.mark.parametrize("project", ["bar", "bar-feedstock"])
-@pytest.mark.parametrize(
-    "repo", ["GITHUB_TOKEN", "${GITHUB_TOKEN}", "GH_TOKEN", "${GH_TOKEN}"]
-)
+@pytest.mark.parametrize("repo", ["GITHUB_TOKEN", "${GITHUB_TOKEN}", "GH_TOKEN", "${GH_TOKEN}"])
 @mock.patch("conda_smithy.feedstock_tokens.tempfile")
 @mock.patch("conda_smithy.feedstock_tokens.pygit2")
 @mock.patch("conda_smithy.feedstock_tokens.subprocess")
@@ -153,9 +147,7 @@ def test_is_valid_feedstock_token_nofile(
     [(time.time() + 1e4), (time.time() - 1e4)],
 )
 @pytest.mark.parametrize("project", ["bar", "bar-feedstock"])
-@pytest.mark.parametrize(
-    "repo", ["GITHUB_TOKEN", "${GITHUB_TOKEN}", "GH_TOKEN", "${GH_TOKEN}"]
-)
+@pytest.mark.parametrize("repo", ["GITHUB_TOKEN", "${GITHUB_TOKEN}", "GH_TOKEN", "${GH_TOKEN}"])
 @mock.patch("conda_smithy.feedstock_tokens.tempfile")
 @mock.patch("conda_smithy.feedstock_tokens.pygit2")
 @mock.patch("conda_smithy.feedstock_tokens.subprocess")
@@ -306,9 +298,7 @@ def test_read_feedstock_token(ci):
 )
 @pytest.mark.parametrize("file_exists", [True, False])
 @pytest.mark.parametrize("project", ["bar", "bar-feedstock"])
-@pytest.mark.parametrize(
-    "repo", ["$GITHUB_TOKEN", "${GITHUB_TOKEN}", "$GH_TOKEN", "${GH_TOKEN}"]
-)
+@pytest.mark.parametrize("repo", ["$GITHUB_TOKEN", "${GITHUB_TOKEN}", "$GH_TOKEN", "${GH_TOKEN}"])
 @mock.patch("conda_smithy.feedstock_tokens.tempfile")
 @mock.patch("conda_smithy.feedstock_tokens.pygit2")
 @mock.patch("conda_smithy.feedstock_tokens.subprocess")
@@ -354,9 +344,7 @@ def test_feedstock_token_exists(
 
 @pytest.mark.parametrize("ci", [None, "azure"])
 @pytest.mark.parametrize("project", ["bar", "bar-feedstock"])
-@pytest.mark.parametrize(
-    "repo", ["$GITHUB_TOKEN", "${GITHUB_TOKEN}", "$GH_TOKEN", "${GH_TOKEN}"]
-)
+@pytest.mark.parametrize("repo", ["$GITHUB_TOKEN", "${GITHUB_TOKEN}", "$GH_TOKEN", "${GH_TOKEN}"])
 @mock.patch("conda_smithy.feedstock_tokens.tempfile")
 @mock.patch("conda_smithy.feedstock_tokens.pygit2")
 @mock.patch("conda_smithy.feedstock_tokens.subprocess")
@@ -385,9 +373,7 @@ def test_feedstock_token_raises(
 
 
 @pytest.mark.parametrize("ci", [None, "azure"])
-@pytest.mark.parametrize(
-    "repo", ["$GITHUB_TOKEN", "${GITHUB_TOKEN}", "$GH_TOKEN", "${GH_TOKEN}"]
-)
+@pytest.mark.parametrize("repo", ["$GITHUB_TOKEN", "${GITHUB_TOKEN}", "$GH_TOKEN", "${GH_TOKEN}"])
 @mock.patch("conda_smithy.feedstock_tokens.secrets")
 @mock.patch("conda_smithy.feedstock_tokens.os.urandom")
 @mock.patch("conda_smithy.feedstock_tokens.tempfile")
@@ -448,9 +434,7 @@ def test_register_feedstock_token_works(
         check=True,
         cwd=tmpdir,
     )
-    subprocess_mock.run.assert_any_call(
-        ["git", "pull", "-q", "--rebase"], check=True, cwd=tmpdir
-    )
+    subprocess_mock.run.assert_any_call(["git", "pull", "-q", "--rebase"], check=True, cwd=tmpdir)
     subprocess_mock.run.assert_any_call(["git", "push", "-q"], check=True, cwd=tmpdir)
 
     salted_token = scrypt.hash("fgh", b"\x80SA", buflen=256)
@@ -466,9 +450,7 @@ def test_register_feedstock_token_works(
 
 
 @pytest.mark.parametrize("ci", [None, "azure"])
-@pytest.mark.parametrize(
-    "repo", ["$GITHUB_TOKEN", "${GITHUB_TOKEN}", "$GH_TOKEN", "${GH_TOKEN}"]
-)
+@pytest.mark.parametrize("repo", ["$GITHUB_TOKEN", "${GITHUB_TOKEN}", "$GH_TOKEN", "${GH_TOKEN}"])
 @mock.patch("conda_smithy.feedstock_tokens.secrets")
 @mock.patch("conda_smithy.feedstock_tokens.os.urandom")
 @mock.patch("conda_smithy.feedstock_tokens.tempfile")
@@ -520,9 +502,7 @@ def test_register_feedstock_token_notoken(
 
 @pytest.mark.parametrize("existing_tokens_time_to_expiration", [None, 10])
 @pytest.mark.parametrize("ci", [None, "azure"])
-@pytest.mark.parametrize(
-    "repo", ["$GITHUB_TOKEN", "${GITHUB_TOKEN}", "$GH_TOKEN", "${GH_TOKEN}"]
-)
+@pytest.mark.parametrize("repo", ["$GITHUB_TOKEN", "${GITHUB_TOKEN}", "$GH_TOKEN", "${GH_TOKEN}"])
 @mock.patch("conda_smithy.feedstock_tokens.secrets")
 @mock.patch("conda_smithy.feedstock_tokens.os.urandom")
 @mock.patch("conda_smithy.feedstock_tokens.tempfile")
@@ -603,9 +583,7 @@ def test_register_feedstock_token_append_expire(
         check=True,
         cwd=tmpdir,
     )
-    subprocess_mock.run.assert_any_call(
-        ["git", "pull", "-q", "--rebase"], check=True, cwd=tmpdir
-    )
+    subprocess_mock.run.assert_any_call(["git", "pull", "-q", "--rebase"], check=True, cwd=tmpdir)
     subprocess_mock.run.assert_any_call(["git", "push", "-q"], check=True, cwd=tmpdir)
     salted_token = scrypt.hash("fgh", b"\x80SA", buflen=256)
     data = {
@@ -710,9 +688,7 @@ def test_register_feedstock_token_with_providers(
 
         if drone:
             if unique_token_per_provider:
-                feedstock_token, _ = read_feedstock_token(
-                    user, project, provider="drone"
-                )
+                feedstock_token, _ = read_feedstock_token(user, project, provider="drone")
             else:
                 feedstock_token, _ = read_feedstock_token(user, project)
 
@@ -728,9 +704,7 @@ def test_register_feedstock_token_with_providers(
 
         if circle:
             if unique_token_per_provider:
-                feedstock_token, _ = read_feedstock_token(
-                    user, project, provider="circle"
-                )
+                feedstock_token, _ = read_feedstock_token(user, project, provider="circle")
             else:
                 feedstock_token, _ = read_feedstock_token(user, project)
 
@@ -740,9 +714,7 @@ def test_register_feedstock_token_with_providers(
 
         if travis:
             if unique_token_per_provider:
-                feedstock_token, _ = read_feedstock_token(
-                    user, project, provider="travis"
-                )
+                feedstock_token, _ = read_feedstock_token(user, project, provider="travis")
             else:
                 feedstock_token, _ = read_feedstock_token(user, project)
 
@@ -752,9 +724,7 @@ def test_register_feedstock_token_with_providers(
 
         if azure:
             if unique_token_per_provider:
-                feedstock_token, _ = read_feedstock_token(
-                    user, project, provider="azure"
-                )
+                feedstock_token, _ = read_feedstock_token(user, project, provider="azure")
             else:
                 feedstock_token, _ = read_feedstock_token(user, project)
 
@@ -764,15 +734,11 @@ def test_register_feedstock_token_with_providers(
 
         if github_actions:
             if unique_token_per_provider:
-                feedstock_token, _ = read_feedstock_token(
-                    user, project, provider="github_actions"
-                )
+                feedstock_token, _ = read_feedstock_token(user, project, provider="github_actions")
             else:
                 feedstock_token, _ = read_feedstock_token(user, project)
 
-            github_actions_mock.assert_called_once_with(
-                user, project, feedstock_token, clobber
-            )
+            github_actions_mock.assert_called_once_with(user, project, feedstock_token, clobber)
         else:
             github_actions_mock.assert_not_called()
     finally:
@@ -835,9 +801,7 @@ def test_register_feedstock_token_with_providers_notoken(
 
 
 @pytest.mark.parametrize("unique_token_per_provider", [False, True])
-@pytest.mark.parametrize(
-    "provider", ["drone", "circle", "travis", "azure", "github_actions"]
-)
+@pytest.mark.parametrize("provider", ["drone", "circle", "travis", "azure", "github_actions"])
 @mock.patch("conda_smithy.feedstock_tokens.add_feedstock_token_to_drone")
 @mock.patch("conda_smithy.feedstock_tokens.add_feedstock_token_to_circle")
 @mock.patch("conda_smithy.feedstock_tokens.add_feedstock_token_to_travis")

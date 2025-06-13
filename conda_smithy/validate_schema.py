@@ -8,13 +8,9 @@ from jsonschema.exceptions import ValidationError
 from referencing import Registry, Resource
 from referencing.jsonschema import DRAFT202012
 
-CONDA_FORGE_YAML_DEFAULTS_FILE = (
-    Path(__file__).resolve().parent / "data" / "conda-forge.yml"
-)
+CONDA_FORGE_YAML_DEFAULTS_FILE = Path(__file__).resolve().parent / "data" / "conda-forge.yml"
 
-CONDA_FORGE_YAML_SCHEMA_FILE = (
-    Path(__file__).resolve().parent / "data" / "conda-forge.json"
-)
+CONDA_FORGE_YAML_SCHEMA_FILE = Path(__file__).resolve().parent / "data" / "conda-forge.json"
 
 
 # this is actually not an error, therefore the naming is okay
@@ -24,9 +20,7 @@ class DeprecatedFieldWarning(ValidationError):  # noqa: N818
 
 def deprecated_validator(validator, value, instance, schema):
     if value and instance is not None:
-        yield DeprecatedFieldWarning(
-            f"'{schema['title']}' is deprecated.\n{schema['description']}"
-        )
+        yield DeprecatedFieldWarning(f"'{schema['title']}' is deprecated.\n{schema['description']}")
 
 
 def get_validator_class():
@@ -64,13 +58,9 @@ def validate_json_schema(
 
     # allow the URI to be set dynamically
     if "CONDA_SMITHY_BOT_SCHEMA_URI" in os.environ:
-        _json_schema["properties"]["bot"]["$ref"] = os.environ[
-            "CONDA_SMITHY_BOT_SCHEMA_URI"
-        ]
+        _json_schema["properties"]["bot"]["$ref"] = os.environ["CONDA_SMITHY_BOT_SCHEMA_URI"]
 
-    validator = _VALIDATOR_CLASS(
-        _json_schema, registry=Registry(retrieve=_get_json_schema)
-    )
+    validator = _VALIDATOR_CLASS(_json_schema, registry=Registry(retrieve=_get_json_schema))
     lints = []
     hints = []
     for error in validator.iter_errors(config):

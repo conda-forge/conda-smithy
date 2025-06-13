@@ -46,9 +46,7 @@ def parse_variant(variant_file_content: str, config: Optional[Config] = None) ->
         config = Config()
     from conda_build.metadata import ns_cfg, select_lines
 
-    contents = select_lines(
-        variant_file_content, ns_cfg(config), variants_in_place=False
-    )
+    contents = select_lines(variant_file_content, ns_cfg(config), variants_in_place=False)
     content = yaml.load(contents, Loader=yaml.loader.BaseLoader) or {}
     variants.trim_empty_keys(content)
     # TODO: Base this default on mtime or something
@@ -153,18 +151,16 @@ def op_variant_key_add(v1: dict, v2: dict):
         else:
             # The for loop didn't break thus the primary is not part of any zip_key,
             # create a new one including the primary key
-            result.setdefault("zip_keys", []).append(
-                [primary_key] + additional_zip_keys
-            )
+            result.setdefault("zip_keys", []).append([primary_key] + additional_zip_keys)
             newly_added_zip_keys.update([primary_key] + additional_zip_keys)
 
     for additional_key in newly_added_zip_keys:
         # store the default value for the key, so that subsequent
         # key additions don't need to specify them and continue to use the default value
         # assert len(v1[key]) == 1
-        result.setdefault("__additional_zip_keys_default_values", {})[
+        result.setdefault("__additional_zip_keys_default_values", {})[additional_key] = result[
             additional_key
-        ] = result[additional_key][0]
+        ][0]
 
     for pkey_ind, pkey_val in enumerate(v2[primary_key]):
         # object is present already, ignore everything
@@ -192,9 +188,7 @@ def op_variant_key_add(v1: dict, v2: dict):
 
                     # Transform key to zip_key if required
                     if key in newly_added_zip_keys:
-                        default_value = result["__additional_zip_keys_default_values"][
-                            key
-                        ]
+                        default_value = result["__additional_zip_keys_default_values"][key]
                         result[key] = [default_value] * len(new_keys)
 
                     # Create a new version of the key from
@@ -231,9 +225,7 @@ def op_variant_key_remove(v1: dict, v2: dict):
         return v1
     if v2[primary_key][0] not in v1[primary_key]:
         return v1
-    new_keys = variant_key_set_union(
-        None, v1[primary_key], [], ordering=ordering.get(primary_key)
-    )
+    new_keys = variant_key_set_union(None, v1[primary_key], [], ordering=ordering.get(primary_key))
     new_keys.remove(v2[primary_key][0])
     position_map = {i: v1[primary_key].index(v) for i, v in enumerate(new_keys)}
     result[primary_key] = new_keys
@@ -329,9 +321,7 @@ def variant_add(v1: dict, v2: dict) -> dict[str, Any]:
     joint_variant = {}
     for k in joint:
         v_left, v_right = ensure_list(v1[k]), ensure_list(v2[k])
-        joint_variant[k] = variant_key_add(
-            k, v_left, v_right, ordering=ordering.get(k, None)
-        )
+        joint_variant[k] = variant_key_add(k, v_left, v_right, ordering=ordering.get(k, None))
 
     out = {
         **tlz.keyfilter(lambda k: k in left, v1),

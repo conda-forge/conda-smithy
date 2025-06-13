@@ -94,9 +94,7 @@ def hint_noarch_usage(
             no_arch_possible = False
 
         for _, section_requirements in requirement_section.items():
-            if any(
-                isinstance(requirement, dict) for requirement in section_requirements
-            ):
+            if any(isinstance(requirement, dict) for requirement in section_requirements):
                 no_arch_possible = False
                 break
 
@@ -180,9 +178,7 @@ def lint_usage_of_selectors_for_noarch(
                                     if selector not in ("not", "and", "or")
                                 }
                                 allowed_nouns = (
-                                    {"win", "linux", "osx", "unix"}
-                                    if noarch_platforms
-                                    else set()
+                                    {"win", "linux", "osx", "unix"} if noarch_platforms else set()
                                 )
                                 if not if_selectors.issubset(allowed_nouns):
                                     has_bad_selector = True

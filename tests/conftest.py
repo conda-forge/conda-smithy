@@ -105,14 +105,10 @@ def config_yaml(testing_workdir, recipe_dirname, request, monkeypatch):
         "w",
     ) as f:
         f.write("echo dummy file")
-    with open(
-        os.path.join(testing_workdir, recipe_dirname, "short_config.yaml"), "w"
-    ) as f:
+    with open(os.path.join(testing_workdir, recipe_dirname, "short_config.yaml"), "w") as f:
         config = {"python": ["2.7"]}
         yaml.dump(config, f, default_flow_style=False)
-    with open(
-        os.path.join(testing_workdir, recipe_dirname, "long_config.yaml"), "w"
-    ) as f:
+    with open(os.path.join(testing_workdir, recipe_dirname, "long_config.yaml"), "w") as f:
         config = {
             "python": ["2.7", "3.5", "3.6"],
             "is_abi3": True,
@@ -207,9 +203,7 @@ def r_recipe(config_yaml: ConfigYAML):
     ) as fh:
 
         r_recipe_template_path = os.path.abspath(
-            os.path.join(
-                __file__, "../", "recipes", "r_recipe", config_yaml.recipe_name
-            )
+            os.path.join(__file__, "../", "recipes", "r_recipe", config_yaml.recipe_name)
         )
         recipe_template_text = Path(r_recipe_template_path).read_text()
 
@@ -279,9 +273,7 @@ def py_abi3_recipe(config_yaml: ConfigYAML):
         str(config_yaml.workdir),
         _load_forge_config(
             config_yaml.workdir,
-            exclusive_config_file=os.path.join(
-                config_yaml.workdir, "recipe", "long_config.yaml"
-            ),
+            exclusive_config_file=os.path.join(config_yaml.workdir, "recipe", "long_config.yaml"),
         ),
     )
 
@@ -304,9 +296,7 @@ about:
     home: home
     """
         )
-    with open(
-        os.path.join(config_yaml.workdir, "recipe", "stdlib_config.yaml"), "w"
-    ) as f:
+    with open(os.path.join(config_yaml.workdir, "recipe", "stdlib_config.yaml"), "w") as f:
         f.write(
             """\
 c_stdlib:
@@ -324,9 +314,7 @@ c_stdlib_version:               # [unix]
         str(config_yaml.workdir),
         _load_forge_config(
             config_yaml.workdir,
-            exclusive_config_file=os.path.join(
-                config_yaml.workdir, "recipe", "stdlib_config.yaml"
-            ),
+            exclusive_config_file=os.path.join(config_yaml.workdir, "recipe", "stdlib_config.yaml"),
         ),
     )
 
@@ -334,9 +322,7 @@ c_stdlib_version:               # [unix]
 @pytest.fixture(scope="function")
 def stdlib_deployment_target_recipe(config_yaml: ConfigYAML, stdlib_recipe):
     # append to existing stdlib_config.yaml from stdlib_recipe
-    with open(
-        os.path.join(config_yaml.workdir, "recipe", "stdlib_config.yaml"), "a"
-    ) as f:
+    with open(os.path.join(config_yaml.workdir, "recipe", "stdlib_config.yaml"), "a") as f:
         f.write(
             """\
 MACOSX_DEPLOYMENT_TARGET:       # [osx]
@@ -351,9 +337,7 @@ MACOSX_SDK_VERSION:             # [osx]
         str(config_yaml.workdir),
         _load_forge_config(
             config_yaml.workdir,
-            exclusive_config_file=os.path.join(
-                config_yaml.workdir, "recipe", "stdlib_config.yaml"
-            ),
+            exclusive_config_file=os.path.join(config_yaml.workdir, "recipe", "stdlib_config.yaml"),
         ),
     )
 
@@ -796,9 +780,7 @@ def cuda_enabled_recipe(config_yaml: ConfigYAML):
 def jinja_env():
     tmplt_dir = os.path.join(conda_forge_content, "templates")
     # Load templates from the feedstock in preference to the smithy's templates.
-    return SandboxedEnvironment(
-        extensions=["jinja2.ext.do"], loader=FileSystemLoader([tmplt_dir])
-    )
+    return SandboxedEnvironment(extensions=["jinja2.ext.do"], loader=FileSystemLoader([tmplt_dir]))
 
 
 @pytest.fixture(scope="function")

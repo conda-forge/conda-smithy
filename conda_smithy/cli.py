@@ -50,9 +50,9 @@ def generate_feedstock_content(
         except Exception as e:
             import sys
 
-            raise type(e)(
-                str(e) + f" while copying file {source_recipe_dir}"
-            ).with_traceback(sys.exc_info()[2])
+            raise type(e)(str(e) + f" while copying file {source_recipe_dir}").with_traceback(
+                sys.exc_info()[2]
+            )
 
     forge_yml = default_feedstock_config_path(target_directory)
     yaml = YAML()
@@ -104,13 +104,10 @@ class Init(Subcommand):
 
         super().__init__(
             parser,
-            "Create a feedstock git repository, which can contain "
-            "one conda recipes.",
+            "Create a feedstock git repository, which can contain " "one conda recipes.",
         )
         scp = self.subcommand_parser
-        scp.add_argument(
-            "recipe_directory", help="The path to the source recipe directory."
-        )
+        scp.add_argument("recipe_directory", help="The path to the source recipe directory.")
         scp.add_argument(
             "--feedstock-directory",
             default="./{package.name}-feedstock",
@@ -152,9 +149,7 @@ class Init(Subcommand):
 
         os.makedirs(feedstock_directory)
         subprocess.check_call(["git", "init"], cwd=feedstock_directory)
-        generate_feedstock_content(
-            feedstock_directory, args.recipe_directory, conda_build_tool
-        )
+        generate_feedstock_content(feedstock_directory, args.recipe_directory, conda_build_tool)
         subprocess.check_call(["git", "commit", "-m", msg], cwd=feedstock_directory)
 
         print(
@@ -181,9 +176,7 @@ class RegisterGithub(Subcommand):
             help="The directory of the feedstock git repository.",
         )
         group = scp.add_mutually_exclusive_group()
-        group.add_argument(
-            "--user", help="github username under which to register this repo"
-        )
+        group.add_argument("--user", help="github username under which to register this repo")
         group.add_argument(
             "--organization",
             default="conda-forge",
@@ -245,9 +238,7 @@ class RegisterCI(Subcommand):
             + default_feedstock_config_path("{FEEDSTOCK_DIRECTORY}"),
         )
         group = scp.add_mutually_exclusive_group()
-        group.add_argument(
-            "--user", help="github username under which to register this repo"
-        )
+        group.add_argument("--user", help="github username under which to register this repo")
         group.add_argument(
             "--organization",
             default="conda-forge",
@@ -318,8 +309,7 @@ class RegisterCI(Subcommand):
         scp.add_argument(
             "--remove",
             action="store_true",
-            help="Revoke access to the configured CI services. "
-            "Only available for Cirun for now",
+            help="Revoke access to the configured CI services. " "Only available for Cirun for now",
         )
 
     def __call__(self, args):
@@ -344,9 +334,7 @@ class RegisterCI(Subcommand):
         repo = f"{feedstock_name}-feedstock"
 
         if args.feedstock_config is None:
-            args.feedstock_config = default_feedstock_config_path(
-                args.feedstock_directory
-            )
+            args.feedstock_config = default_feedstock_config_path(args.feedstock_directory)
 
         for ci in self.ci_names:
             if getattr(args, ci.lower().replace("-", "_")) is None:
@@ -406,9 +394,7 @@ class RegisterCI(Subcommand):
         if args.appveyor:
             ci_register.add_project_to_appveyor(owner, repo)
             if args.anaconda_token:
-                ci_register.appveyor_encrypt_binstar_token(
-                    args.feedstock_config, owner, repo
-                )
+                ci_register.appveyor_encrypt_binstar_token(args.feedstock_config, owner, repo)
             ci_register.appveyor_configure(owner, repo)
         else:
             print("Appveyor registration disabled.")
@@ -420,13 +406,9 @@ class RegisterCI(Subcommand):
             if drone_endpoints is None:
                 drone_endpoints = [drone_default_endpoint]
             for drone_endpoint in drone_endpoints:
-                ci_register.add_project_to_drone(
-                    owner, repo, drone_endpoint=drone_endpoint
-                )
+                ci_register.add_project_to_drone(owner, repo, drone_endpoint=drone_endpoint)
                 if args.anaconda_token:
-                    ci_register.add_token_to_drone(
-                        owner, repo, drone_endpoint=drone_endpoint
-                    )
+                    ci_register.add_token_to_drone(owner, repo, drone_endpoint=drone_endpoint)
         else:
             print("Drone registration disabled.")
 
@@ -440,9 +422,7 @@ class RegisterCI(Subcommand):
 
                 print(f"Cirun Registration: resources to remove: {to_remove}")
                 for resource in to_remove:
-                    conda_smithy.cirun_utils.remove_repo_from_cirun_resource(
-                        owner, repo, resource
-                    )
+                    conda_smithy.cirun_utils.remove_repo_from_cirun_resource(owner, repo, resource)
             else:
                 print(f"Cirun Registration: resources to add to: {owner}/{repo}")
                 conda_smithy.cirun_utils.enable_cirun_for_project(owner, repo)
@@ -516,16 +496,12 @@ class AddAzureBuildId(Subcommand):
         owner = args.user or args.organization
         repo = os.path.basename(os.path.abspath(args.feedstock_directory))
 
-        config = azure_ci_utils.AzureConfig(
-            org_or_user=owner, project_name=args.project_name
-        )
+        config = azure_ci_utils.AzureConfig(org_or_user=owner, project_name=args.project_name)
 
         build_info = azure_ci_utils.get_build_id(repo, config)
 
         if args.feedstock_config is None:
-            args.feedstock_config = default_feedstock_config_path(
-                args.feedstock_directory
-            )
+            args.feedstock_config = default_feedstock_config_path(args.feedstock_directory)
 
         from conda_smithy.utils import update_conda_forge_config
 
@@ -648,15 +624,11 @@ class RecipeLint(Subcommand):
                     print(
                         "{} also has some suggestions:\n  {}".format(
                             recipe,
-                            "\n  ".join(
-                                [hint.replace("\n", "\n    ") for hint in hints]
-                            ),
+                            "\n  ".join([hint.replace("\n", "\n    ") for hint in hints]),
                         )
                     )
             elif hints:
-                print(
-                    "{} has some suggestions:\n  {}".format(recipe, "\n  ".join(hints))
-                )
+                print("{} has some suggestions:\n  {}".format(recipe, "\n  ".join(hints)))
             else:
                 print(f"{recipe} is in fine form")
         # Exit code 1 for some lint, 0 for no lint.
@@ -687,9 +659,7 @@ class CISkeleton(Subcommand):
     subcommand = "ci-skeleton"
 
     def __init__(self, parser):
-        super().__init__(
-            parser, "Generate skeleton for using CI outside of a feedstock"
-        )
+        super().__init__(parser, "Generate skeleton for using CI outside of a feedstock")
         scp = self.subcommand_parser
         scp.add_argument(
             "--feedstock-directory",
@@ -775,9 +745,7 @@ class GenerateFeedstockToken(Subcommand):
             help="If set, use a unique token per CI provider.",
         )
         group = scp.add_mutually_exclusive_group()
-        group.add_argument(
-            "--user", help="github username under which to register this repo"
-        )
+        group.add_argument("--user", help="github username under which to register this repo")
         group.add_argument(
             "--organization",
             default="conda-forge",
@@ -862,9 +830,7 @@ class RegisterFeedstockToken(Subcommand):
             ),
         )
         group = scp.add_mutually_exclusive_group()
-        group.add_argument(
-            "--user", help="github username under which to register this repo"
-        )
+        group.add_argument("--user", help="github username under which to register this repo")
         group.add_argument(
             "--organization",
             default="conda-forge",
@@ -914,9 +880,7 @@ class RegisterFeedstockToken(Subcommand):
         repo = os.path.basename(os.path.abspath(args.feedstock_directory))
 
         if args.token_repo is None:
-            token_repo = (
-                f"https://${{GITHUB_TOKEN}}@github.com/{owner}/feedstock-tokens"
-            )
+            token_repo = f"https://${{GITHUB_TOKEN}}@github.com/{owner}/feedstock-tokens"
         else:
             token_repo = args.token_repo
 
@@ -1053,9 +1017,7 @@ class UpdateAnacondaToken(Subcommand):
         repo = os.path.basename(os.path.abspath(args.feedstock_directory))
 
         if args.feedstock_config is None:
-            args.feedstock_config = default_feedstock_config_path(
-                args.feedstock_directory
-            )
+            args.feedstock_config = default_feedstock_config_path(args.feedstock_directory)
 
         print("Updating the anaconda/binstar token. Can take up to ~30 seconds.")
         from conda_smithy.ci_register import drone_default_endpoint
@@ -1084,8 +1046,7 @@ class UpdateAnacondaToken(Subcommand):
         )
 
         print(
-            f"Successfully updated the anaconda/binstar token for "
-            f"{args.feedstock_directory}!"
+            f"Successfully updated the anaconda/binstar token for " f"{args.feedstock_directory}!"
         )
         if args.appveyor:
             print(

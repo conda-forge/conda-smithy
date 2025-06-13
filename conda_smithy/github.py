@@ -53,9 +53,7 @@ def create_team(org, name, description, repo_names=[]):
 
 
 def add_membership(team, member):
-    headers, data = team._requester.requestJsonAndCheck(
-        "PUT", team.url + "/memberships/" + member
-    )
+    headers, data = team._requester.requestJsonAndCheck("PUT", team.url + "/memberships/" + member)
     return (headers, data)
 
 
@@ -67,9 +65,7 @@ def remove_membership(team, member):
 
 
 def has_in_members(team, member):
-    status, headers, data = team._requester.requestJson(
-        "GET", team.url + "/members/" + member
-    )
+    status, headers, data = team._requester.requestJson("GET", team.url + "/members/" + member)
     return status == 204
 
 
@@ -301,12 +297,8 @@ def configure_github_team(meta, gh_repo, org, feedstock_name, remove=True):
             remove_membership(fs_team, old_maintainer)
 
     # Add any new maintainer teams
-    maintainer_teams = {
-        m.split("/")[1] for m in maintainer_teams if m.startswith(str(org.login))
-    }
-    current_maintainer_team_objs = {
-        team.slug: team for team in current_maintainer_teams
-    }
+    maintainer_teams = {m.split("/")[1] for m in maintainer_teams if m.startswith(str(org.login))}
+    current_maintainer_team_objs = {team.slug: team for team in current_maintainer_teams}
     current_maintainer_teams = {team.slug for team in current_maintainer_teams}
     for new_team in maintainer_teams - current_maintainer_teams:
         team = org.get_team_by_slug(new_team)
@@ -315,9 +307,7 @@ def configure_github_team(meta, gh_repo, org, feedstock_name, remove=True):
     # remove any old teams
     if remove:
         for old_team in current_maintainer_teams - maintainer_teams:
-            team = current_maintainer_team_objs.get(
-                old_team, org.get_team_by_slug(old_team)
-            )
+            team = current_maintainer_team_objs.get(old_team, org.get_team_by_slug(old_team))
             if team.name == fs_team.name:
                 continue
             team.remove_from_repos(gh_repo)

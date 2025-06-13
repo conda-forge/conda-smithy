@@ -60,9 +60,7 @@ class TestFeedstockIO(unittest.TestCase):
             if repo is None:
                 self.assertTrue(fio.get_repo(pathfunc(tmp_dir)) is None)
             else:
-                self.assertIsInstance(
-                    fio.get_repo(pathfunc(tmp_dir)), pygit2.Repository
-                )
+                self.assertIsInstance(fio.get_repo(pathfunc(tmp_dir)), pygit2.Repository)
                 possible_repo_subdir = os.path.join(
                     tmp_dir,
                     "".join(
@@ -71,9 +69,7 @@ class TestFeedstockIO(unittest.TestCase):
                     ),
                 )
                 os.makedirs(possible_repo_subdir)
-                assert fio.get_repo_root(possible_repo_subdir) == os.path.realpath(
-                    tmp_dir
-                )
+                assert fio.get_repo_root(possible_repo_subdir) == os.path.realpath(tmp_dir)
 
     def test_set_exe_file(self):
         perms = [stat.S_IXUSR, stat.S_IXGRP, stat.S_IXOTH]

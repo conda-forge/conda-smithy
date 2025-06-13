@@ -69,9 +69,7 @@ def hint_suggest_noarch(
         and (is_staged_recipes or not conda_forge)
     ):
         if recipe_version == 1:
-            conda_recipe_v1_linter.hint_noarch_usage(
-                build_reqs, raw_requirements_section, hints
-            )
+            conda_recipe_v1_linter.hint_noarch_usage(build_reqs, raw_requirements_section, hints)
         else:
             with open(recipe_fname, encoding="utf-8") as fh:
                 in_runreqs = False
@@ -105,9 +103,7 @@ def hint_shellcheck_usage(recipe_dir, hints):
         if shell_scripts and forge_yaml:
             with open(forge_yaml, encoding="utf-8") as fh:
                 code = get_yaml().load(fh)
-                shellcheck_enabled = code.get("shellcheck", {}).get(
-                    "enabled", shellcheck_enabled
-                )
+                shellcheck_enabled = code.get("shellcheck", {}).get("enabled", shellcheck_enabled)
 
         if shellcheck_enabled and shutil.which("shellcheck") and shell_scripts:
             max_shellcheck_lines = 50
@@ -132,11 +128,7 @@ def hint_shellcheck_usage(recipe_dir, hints):
 
             if p.returncode == 1:
                 # All files successfully scanned with some issues.
-                findings = (
-                    sc_stdout.decode(sys.stdout.encoding)
-                    .replace("\r\n", "\n")
-                    .splitlines()
-                )
+                findings = sc_stdout.decode(sys.stdout.encoding).replace("\r\n", "\n").splitlines()
                 hints.append(
                     "Whenever possible fix all shellcheck findings ('"
                     + " ".join(cmd)
@@ -161,9 +153,7 @@ def hint_check_spdx(about_section, hints):
     parsed_exceptions = []
     try:
         parsed_licenses = []
-        parsed_licenses_with_exception = licensing.license_symbols(
-            license.strip(), decompose=False
-        )
+        parsed_licenses_with_exception = licensing.license_symbols(license.strip(), decompose=False)
         for li in parsed_licenses_with_exception:
             if isinstance(li, license_expression.LicenseWithExceptionSymbol):
                 parsed_licenses.append(li.license_symbol.key)
@@ -213,9 +203,7 @@ def hint_pip_no_build_backend(host_or_build_section, package_name, hints):
     if package_name in ["pdm-backend", "setuptools"]:
         return
 
-    if host_or_build_section and any(
-        req.split(" ")[0] == "pip" for req in host_or_build_section
-    ):
+    if host_or_build_section and any(req.split(" ")[0] == "pip" for req in host_or_build_section):
         found_backend = False
         for backend in VALID_PYTHON_BUILD_BACKENDS:
             if any(
@@ -281,13 +269,9 @@ def _hint_noarch_python_use_python_min_inner(
                 # in lieu of the ambiguous `python {{ python_min }}` matchspec
                 syntax = syntax.replace("{{ python_min }}", r"\${{ python_min }}")
                 if section_name in ["host", "test.requires"]:
-                    report_syntax = report_syntax.replace(
-                        "{{ python_min }}", "${{ python_min }}.*"
-                    )
+                    report_syntax = report_syntax.replace("{{ python_min }}", "${{ python_min }}.*")
                 else:
-                    report_syntax = report_syntax.replace(
-                        "{{ python_min }}", "${{ python_min }}"
-                    )
+                    report_syntax = report_syntax.replace("{{ python_min }}", "${{ python_min }}")
                 test_syntax = syntax
 
                 if section_name == "test.requires":
@@ -295,7 +279,9 @@ def _hint_noarch_python_use_python_min_inner(
                         "`tests[].python.python_version` or `tests[].requirements.run`"
                     )
                     report_entry = "`python_version` or `python`"
-                    report_syntax = "`python_version: ${{ python_min }}.*` or `python ${{ python_min }}.*`"
+                    report_syntax = (
+                        "`python_version: ${{ python_min }}.*` or `python ${{ python_min }}.*`"
+                    )
                 else:
                     report_section_name = f"`{section_name}`"
                     report_entry = "`python`"
@@ -313,9 +299,7 @@ def _hint_noarch_python_use_python_min_inner(
                 ):
                     break
             else:
-                section_desc = (
-                    f"`{output_name}` output" if output_name else "the recipe"
-                )
+                section_desc = f"`{output_name}` output" if output_name else "the recipe"
                 hint.append(
                     f"\n   - For the {report_section_name} section of {section_desc}, you "
                     f"should usually use the pin {report_syntax} for the {report_entry} entry."
@@ -395,9 +379,7 @@ def hint_space_separated_specs(
         **requirements_section,
         "test": test_section.get("requires") or (),
     }.items():
-        bad_specs = [
-            req for req in (reqs or ()) if not _ensure_spec_space_separated(req)
-        ]
+        bad_specs = [req for req in (reqs or ()) if not _ensure_spec_space_separated(req)]
         if bad_specs:
             report.setdefault("top-level", {})[req_type] = bad_specs
     for i, output in enumerate(outputs_section):
@@ -413,9 +395,7 @@ def hint_space_separated_specs(
         }.items():
             bad_specs = [req for req in reqs if not _ensure_spec_space_separated(req)]
             if bad_specs:
-                report.setdefault(output.get("name", f"output {i}"), {})[
-                    req_type
-                ] = bad_specs
+                report.setdefault(output.get("name", f"output {i}"), {})[req_type] = bad_specs
 
     lines = []
     for output, requirements in report.items():
@@ -477,9 +457,7 @@ def hint_os_version(
     default_os_version = "alma9"
     obsolete_os_versions = ("cos7", "alma8", "ubi8")
     matches = {
-        k: v
-        for k, v in forge_yaml.get("os_version", {}).items()
-        if v in obsolete_os_versions
+        k: v for k, v in forge_yaml.get("os_version", {}).items() if v in obsolete_os_versions
     }
     if matches:
         hints.append(

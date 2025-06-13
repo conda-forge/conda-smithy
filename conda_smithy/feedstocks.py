@@ -128,8 +128,7 @@ def feedstocks_apply_cloned_handle_args(args):
         }
         env.update(context)
         cmd = [
-            item.format(feedstock.directory, feedstock=feedstock, **context)
-            for item in args.cmd
+            item.format(feedstock.directory, feedstock=feedstock, **context) for item in args.cmd
         ]
         print('\nRunning "{}" for {}:'.format(" ".join(cmd), feedstock.package))
         subprocess.check_call(cmd, env=env, cwd=feedstock.directory)
@@ -177,9 +176,7 @@ def feedstocks_repos(
         import re
 
         regexp = re.compile(regexp)
-        feedstocks = [
-            feedstock for feedstock in feedstocks if regexp.match(feedstock.package)
-        ]
+        feedstocks = [feedstock for feedstock in feedstocks if regexp.match(feedstock.package)]
 
     if randomise:
         import random

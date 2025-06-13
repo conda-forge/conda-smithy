@@ -195,9 +195,7 @@ def test_py_matrix_on_github(py_recipe, jinja_env):
     assert os.path.isdir(matrix_dir)
     # single matrix entry - readme is generated later in main function
     assert len(os.listdir(matrix_dir)) == 2
-    assert os.path.exists(
-        os.path.join(py_recipe.recipe, ".github", "workflows", "conda-build.yml")
-    )
+    assert os.path.exists(os.path.join(py_recipe.recipe, ".github", "workflows", "conda-build.yml"))
 
 
 def test_py_matrix_on_azure(py_recipe, jinja_env):
@@ -219,9 +217,7 @@ def test_stdlib_on_azure(stdlib_recipe, jinja_env, request):
     if conda_build_param == "rattler-build":
         # stdlib is not yet implemented in rattler-build
         # https://github.com/prefix-dev/rattler-build/issues/239
-        pytest.skip(
-            "skipping test for rattler-build usecase as we currently we don't have stdlib"
-        )
+        pytest.skip("skipping test for rattler-build usecase as we currently we don't have stdlib")
 
     configure_feedstock.render_azure(
         jinja_env=jinja_env,
@@ -253,9 +249,7 @@ def test_stdlib_on_azure(stdlib_recipe, jinja_env, request):
     # no stdlib-version expected on windows
 
 
-def test_stdlib_deployment_target(
-    stdlib_deployment_target_recipe, jinja_env, caplog, request
-):
+def test_stdlib_deployment_target(stdlib_deployment_target_recipe, jinja_env, caplog, request):
     conda_build_param = request.node.callspec.params["config_yaml"]
     if conda_build_param == "rattler-build":
         # stdlib_deployment_target_recipe fixture doesn't have a recipe.yaml variant
@@ -352,9 +346,7 @@ def test_upload_on_branch_azure(upload_on_branch_recipe, jinja_env):
         )
     ) as fp:
         content_osx = yaml.safe_load(fp)
-    assert (
-        'UPLOAD_ON_BRANCH="foo-branch"' in content_osx["jobs"][0]["steps"][0]["script"]
-    )
+    assert 'UPLOAD_ON_BRANCH="foo-branch"' in content_osx["jobs"][0]["steps"][0]["script"]
     assert "BUILD_SOURCEBRANCHNAME" in content_osx["jobs"][0]["steps"][0]["script"]
 
     with open(
@@ -389,9 +381,7 @@ def test_upload_on_branch_azure(upload_on_branch_recipe, jinja_env):
         )
     ) as fp:
         content_lin = yaml.safe_load(fp)
-    assert (
-        'UPLOAD_ON_BRANCH="foo-branch"' in content_lin["jobs"][0]["steps"][1]["script"]
-    )
+    assert 'UPLOAD_ON_BRANCH="foo-branch"' in content_lin["jobs"][0]["steps"][1]["script"]
     assert "BUILD_SOURCEBRANCHNAME" in content_lin["jobs"][0]["steps"][1]["script"]
 
 
@@ -414,9 +404,7 @@ def test_upload_on_branch_appveyor(upload_on_branch_recipe, jinja_env):
 
 
 def test_circle_with_yum_reqs(py_recipe, jinja_env):
-    with open(
-        os.path.join(py_recipe.recipe, "recipe", "yum_requirements.txt"), "w"
-    ) as f:
+    with open(os.path.join(py_recipe.recipe, "recipe", "yum_requirements.txt"), "w") as f:
         f.write("nano\n")
     configure_feedstock.render_circle(
         jinja_env=jinja_env,
@@ -429,9 +417,7 @@ def test_circle_with_yum_reqs(py_recipe, jinja_env):
 def test_circle_with_empty_yum_reqs_raises(py_recipe, jinja_env):
     py_recipe.config["provider"]["linux"] = "circle"
 
-    with open(
-        os.path.join(py_recipe.recipe, "recipe", "yum_requirements.txt"), "w"
-    ) as f:
+    with open(os.path.join(py_recipe.recipe, "recipe", "yum_requirements.txt"), "w") as f:
         f.write("# effectively empty")
     with pytest.raises(ValueError):
         configure_feedstock.render_circle(
@@ -442,9 +428,7 @@ def test_circle_with_empty_yum_reqs_raises(py_recipe, jinja_env):
 
 
 def test_azure_with_empty_yum_reqs_raises(py_recipe, jinja_env):
-    with open(
-        os.path.join(py_recipe.recipe, "recipe", "yum_requirements.txt"), "w"
-    ) as f:
+    with open(os.path.join(py_recipe.recipe, "recipe", "yum_requirements.txt"), "w") as f:
         f.write("# effectively empty")
     with pytest.raises(ValueError):
         configure_feedstock.render_azure(
@@ -482,24 +466,18 @@ def test_circle_osx(py_recipe, jinja_env):
     configure_feedstock.clear_scripts(forge_dir)
     config = copy.deepcopy(py_recipe.config)
     config["provider"]["osx"] = "circle"
-    configure_feedstock.render_circle(
-        jinja_env=jinja_env, forge_config=config, forge_dir=forge_dir
-    )
+    configure_feedstock.render_circle(jinja_env=jinja_env, forge_config=config, forge_dir=forge_dir)
     assert os.path.exists(circle_osx_file)
     assert os.path.exists(circle_linux_file)
     assert os.path.exists(circle_config_file)
-    configure_feedstock.render_travis(
-        jinja_env=jinja_env, forge_config=config, forge_dir=forge_dir
-    )
+    configure_feedstock.render_travis(jinja_env=jinja_env, forge_config=config, forge_dir=forge_dir)
     assert not os.path.exists(travis_yml_file)
 
     configure_feedstock.clear_scripts(forge_dir)
     config = copy.deepcopy(py_recipe.config)
     config["provider"]["linux"] = "dummy"
     config["provider"]["osx"] = "circle"
-    configure_feedstock.render_circle(
-        jinja_env=jinja_env, forge_config=config, forge_dir=forge_dir
-    )
+    configure_feedstock.render_circle(jinja_env=jinja_env, forge_config=config, forge_dir=forge_dir)
     assert os.path.exists(circle_osx_file)
     assert not os.path.exists(circle_linux_file)
     assert os.path.exists(circle_config_file)
@@ -525,9 +503,7 @@ def test_circle_skipped(linux_skipped_recipe, jinja_env):
     config["provider"]["osx"] = "circle"
 
     configure_feedstock.copy_feedstock_content(config, forge_dir)
-    configure_feedstock.render_circle(
-        jinja_env=jinja_env, forge_config=config, forge_dir=forge_dir
-    )
+    configure_feedstock.render_circle(jinja_env=jinja_env, forge_config=config, forge_dir=forge_dir)
     assert os.path.exists(circle_osx_file)
     assert not os.path.exists(circle_linux_file)
     assert os.path.exists(circle_config_file)
@@ -597,8 +573,7 @@ def test_secrets(py_recipe, jinja_env):
                 if "jobs" in config:
                     assert any(
                         any(
-                            step.get("env", {}).get("BINSTAR_TOKEN", None)
-                            == "$(BINSTAR_TOKEN)"
+                            step.get("env", {}).get("BINSTAR_TOKEN", None) == "$(BINSTAR_TOKEN)"
                             for step in job["steps"]
                         )
                         for job in config["jobs"]
@@ -614,9 +589,7 @@ def test_secrets(py_recipe, jinja_env):
     with open(os.path.join(py_recipe.recipe, ".drone.yml")) as fo:
         config = list(yaml.safe_load_all(fo))[-1]
         assert any(
-            step.get("environment", {})
-            .get("BINSTAR_TOKEN", {})
-            .get("from_secret", None)
+            step.get("environment", {}).get("BINSTAR_TOKEN", {}).get("from_secret", None)
             == "BINSTAR_TOKEN"
             for step in config["steps"]
         )
@@ -813,9 +786,7 @@ def test_choco_install(choco_recipe, jinja_env):
 def test_conda_forge_yaml_empty(config_yaml: ConfigYAML):
     load_forge_config = lambda: configure_feedstock._load_forge_config(  # noqa
         config_yaml.workdir,
-        exclusive_config_file=os.path.join(
-            config_yaml.workdir, "recipe", "default_config.yaml"
-        ),
+        exclusive_config_file=os.path.join(config_yaml.workdir, "recipe", "default_config.yaml"),
     )
 
     assert load_forge_config()["recipe_dir"] == "recipe"
@@ -832,9 +803,7 @@ def test_conda_forge_yaml_empty(config_yaml: ConfigYAML):
 def test_noarch_platforms_bad_yaml(config_yaml: ConfigYAML, caplog):
     load_forge_config = lambda: configure_feedstock._load_forge_config(  # noqa
         config_yaml.workdir,
-        exclusive_config_file=os.path.join(
-            config_yaml.workdir, "recipe", "default_config.yaml"
-        ),
+        exclusive_config_file=os.path.join(config_yaml.workdir, "recipe", "default_config.yaml"),
     )
 
     with open(os.path.join(config_yaml.workdir, "conda-forge.yml"), "a+") as fp:
@@ -934,15 +903,11 @@ def test_cuda_enabled_render(cuda_enabled_recipe, jinja_env):
 def test_conda_build_tools(config_yaml: ConfigYAML, caplog):
     load_forge_config = lambda: configure_feedstock._load_forge_config(  # noqa
         config_yaml.workdir,
-        exclusive_config_file=os.path.join(
-            config_yaml.workdir, "recipe", "default_config.yaml"
-        ),
+        exclusive_config_file=os.path.join(config_yaml.workdir, "recipe", "default_config.yaml"),
     )
 
     cfg = load_forge_config()
-    assert (
-        "build_with_mambabuild" not in cfg
-    )  # superseded by conda_build_tool=mambabuild
+    assert "build_with_mambabuild" not in cfg  # superseded by conda_build_tool=mambabuild
 
     assert cfg["conda_build_tool"] == config_yaml.type
 
@@ -974,9 +939,7 @@ def test_conda_build_tools(config_yaml: ConfigYAML, caplog):
 def test_remote_ci_setup(config_yaml: ConfigYAML):
     load_forge_config = lambda: configure_feedstock._load_forge_config(  # noqa
         config_yaml.workdir,
-        exclusive_config_file=os.path.join(
-            config_yaml.workdir, "recipe", "default_config.yaml"
-        ),
+        exclusive_config_file=os.path.join(config_yaml.workdir, "recipe", "default_config.yaml"),
     )
     cfg = load_forge_config()
     with open(os.path.join(config_yaml.workdir, "conda-forge.yml")) as fp:
@@ -2037,9 +2000,7 @@ def test_github_actions_pins():
     make this pass.
     """
     repo_root = Path(__file__).parents[1]
-    github_actions_template = (
-        repo_root / "conda_smithy" / "templates" / "github-actions.yml.tmpl"
-    )
+    github_actions_template = repo_root / "conda_smithy" / "templates" / "github-actions.yml.tmpl"
     dependabot_inventory = (
         repo_root / ".github" / "workflows" / "_proxy-file-for-dependabot-tests.yml"
     )

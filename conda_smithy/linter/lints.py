@@ -97,8 +97,7 @@ def lint_recipe_have_tests(
 
     if not any(key in TEST_KEYS for key in test_section):
         a_test_file_exists = recipe_dir is not None and any(
-            os.path.exists(os.path.join(recipe_dir, test_file))
-            for test_file in TEST_FILES
+            os.path.exists(os.path.join(recipe_dir, test_file)) for test_file in TEST_FILES
         )
         if not a_test_file_exists:
             has_outputs_test = False
@@ -205,13 +204,9 @@ def lint_build_section_should_be_before_run(requirements_section, lints):
         )
 
 
-def lint_sources_should_have_hash(
-    sources_section: list[dict[str, Any]], lints: list[str]
-):
+def lint_sources_should_have_hash(sources_section: list[dict[str, Any]], lints: list[str]):
     for source_section in sources_section:
-        if "url" in source_section and not (
-            {"sha1", "sha256", "md5"} & set(source_section.keys())
-        ):
+        if "url" in source_section and not ({"sha1", "sha256", "md5"} & set(source_section.keys())):
             lints.append(
                 "When defining a source/url please add a sha256, sha1 "
                 "or md5 checksum (sha256 preferably)."
@@ -531,9 +526,7 @@ def lint_non_noarch_builds(
             filtered_host_reqs = [
                 req for req in host_reqs if req.partition(" ")[0] == str(language)
             ]
-            filtered_run_reqs = [
-                req for req in run_reqs if req.partition(" ")[0] == str(language)
-            ]
+            filtered_run_reqs = [req for req in run_reqs if req.partition(" ")[0] == str(language)]
             if filtered_host_reqs and not filtered_run_reqs:
                 lints.append(
                     f"If {str(language)} is a host requirement, it should be a run requirement."
@@ -552,9 +545,7 @@ def lint_non_noarch_builds(
 def lint_jinja_var_references(meta_fname, hints, recipe_version: int = 0):
     bad_vars = []
     bad_lines = []
-    jinja_pattern = (
-        JINJA_VAR_PAT if recipe_version == 0 else conda_recipe_v1_linter.JINJA_VAR_PAT
-    )
+    jinja_pattern = JINJA_VAR_PAT if recipe_version == 0 else conda_recipe_v1_linter.JINJA_VAR_PAT
     if os.path.exists(meta_fname):
         with open(meta_fname, encoding="utf-8") as fh:
             for i, line in enumerate(fh.readlines()):
@@ -577,9 +568,7 @@ def lint_jinja_var_references(meta_fname, hints, recipe_version: int = 0):
             )
 
 
-def lint_require_lower_bound_on_python_version(
-    run_reqs, outputs_section, noarch_value, lints
-):
+def lint_require_lower_bound_on_python_version(run_reqs, outputs_section, noarch_value, lints):
     if noarch_value == "python" and not outputs_section:
         for req in run_reqs:
             if (req.strip().split()[0] == "python") and (req != "python"):
@@ -651,10 +640,7 @@ def lint_pin_subpackages(
             if "requirements" in top_level and "host" in top_level["requirements"]:
                 check_pins(top_level["requirements"]["host"])
         else:
-            if (
-                "requirements" in top_level
-                and "run_exports" in top_level["requirements"]
-            ):
+            if "requirements" in top_level and "run_exports" in top_level["requirements"]:
                 run_export_section = top_level["requirements"]["run_exports"]
                 # the dictionary might have strong / weak / noarch etc. keys
                 if isinstance(run_export_section, dict):
@@ -778,13 +764,9 @@ def lint_stdlib(
         "see https://github.com/conda-forge/conda-forge.github.io/issues/2102."
     )
     if recipe_version == 0:
-        pat_compiler_stub = re.compile(
-            "(m2w64_)?(c|cxx|fortran|rust|go-cgo)_compiler_stub"
-        )
+        pat_compiler_stub = re.compile("(m2w64_)?(c|cxx|fortran|rust|go-cgo)_compiler_stub")
     else:
-        pat_compiler_stub = re.compile(
-            r"^\${{ compiler\('(m2w64_)?(c|cxx|fortran|rust|go-cgo)"
-        )
+        pat_compiler_stub = re.compile(r"^\${{ compiler\('(m2w64_)?(c|cxx|fortran|rust|go-cgo)")
 
     outputs = get_section(meta, "outputs", lints, recipe_version)
     output_reqs = [x.get("requirements", {}) for x in outputs]
@@ -792,8 +774,7 @@ def lint_stdlib(
     # deal with cb2 recipes (no build/host/run distinction)
     if recipe_version == 0:
         output_reqs = [
-            {"host": x, "run": x} if isinstance(x, CommentedSeq) else x
-            for x in output_reqs
+            {"host": x, "run": x} if isinstance(x, CommentedSeq) else x for x in output_reqs
         ]
 
     # collect output requirements
@@ -885,9 +866,7 @@ def lint_stdlib(
                 cbc_lines = fh.readlines()
 
         # filter on osx-relevant lines
-        pat = re.compile(
-            r"^([^:\#]*?)\s+\#\s\[.*(not\s(osx|unix)|(?<!not\s)(linux|win)).*\]\s*$"
-        )
+        pat = re.compile(r"^([^:\#]*?)\s+\#\s\[.*(not\s(osx|unix)|(?<!not\s)(linux|win)).*\]\s*$")
         # remove lines with selectors that don't apply to osx, i.e. if they contain
         # "not osx", "not unix", "linux" or "win"; this also removes trailing newlines.
         # the regex here doesn't handle `or`-conjunctions, but the important thing for
@@ -941,9 +920,7 @@ def lint_stdlib(
                 if VersionOrder(v_std) != VersionOrder(v_mdt):
                     if mismatch_lint not in lints:
                         lints.append(mismatch_lint)
-                merged_dt.append(
-                    v_mdt if VersionOrder(v_std) < VersionOrder(v_mdt) else v_std
-                )
+                merged_dt.append(v_mdt if VersionOrder(v_std) < VersionOrder(v_mdt) else v_std)
             cbc_osx["merged"] = merged_dt
     elif "MACOSX_DEPLOYMENT_TARGET" in cbc_osx.keys():
         cbc_osx["merged"] = macdt
@@ -971,10 +948,7 @@ def lint_stdlib(
         elif len(v_stdlib) == 1:
             # if length doesn't match, only warn if a single stdlib version
             # is lower than _all_ baseline deployment targets
-            if all(
-                VersionOrder(str(v_stdlib[0])) < VersionOrder(str(v_mdt))
-                for v_mdt in macdt
-            ):
+            if all(VersionOrder(str(v_stdlib[0])) < VersionOrder(str(v_mdt)) for v_mdt in macdt):
                 if outdated_lint not in lints:
                     lints.append(outdated_lint)
 
@@ -1001,9 +975,7 @@ def lint_stdlib(
     elif len(sdk) == 1:
         # if length doesn't match, only warn if a single SDK version
         # is lower than _all_ merged deployment targets
-        if all(
-            VersionOrder(str(sdk[0])) < VersionOrder(str(v_mdt)) for v_mdt in merged_dt
-        ):
+        if all(VersionOrder(str(sdk[0])) < VersionOrder(str(v_mdt)) for v_mdt in merged_dt):
             if sdk_lint not in lints:
                 lints.append(sdk_lint)
 
@@ -1120,9 +1092,7 @@ def lint_recipe_is_parsable(
                             "with conda-forge's infrastructure. Please check the logs for "
                             "more information and ensure your recipe can be parsed."
                         )
-                    hints.append(
-                        f"The recipe is not parsable by parser `{parser_name}`. {msg}"
-                    )
+                    hints.append(f"The recipe is not parsable by parser `{parser_name}`. {msg}")
 
 
 IS_AB3_BOOL_RE = re.compile(r"is_abi3\s*(==|!=)\s*('|\")(true|false)('|\")")

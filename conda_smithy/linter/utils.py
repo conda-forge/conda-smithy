@@ -147,9 +147,7 @@ def find_local_config_file(recipe_dir: str, filename: str) -> Optional[str]:
     return found_filesname[0] if found_filesname else None
 
 
-def is_selector_line(
-    line, allow_platforms=False, allow_keys=set(), only_in_comment=False
-):
+def is_selector_line(line, allow_platforms=False, allow_keys=set(), only_in_comment=False):
     # Using the same pattern defined in conda-build (metadata.py),
     # we identify selectors.
     line = line.rstrip()
@@ -161,9 +159,7 @@ def is_selector_line(
         if only_in_comment and not m.group(2):
             return False
         nouns = {w for w in m.group(3).split() if w not in ("not", "and", "or")}
-        allowed_nouns = (
-            {"win", "linux", "osx", "unix"} if allow_platforms else set()
-        ) | allow_keys
+        allowed_nouns = ({"win", "linux", "osx", "unix"} if allow_platforms else set()) | allow_keys
 
         if nouns.issubset(allowed_nouns):
             # the selector only contains (a boolean chain of) platform selectors
@@ -241,9 +237,7 @@ def flatten_v1_if_else(requirements: list[str | dict] | str) -> list[str]:
     for req in requirements:
         if isinstance(req, dict):
             flattened_requirements.extend(
-                flatten_v1_if_else(req["then"])
-                if isinstance(req["then"], list)
-                else [req["then"]]
+                flatten_v1_if_else(req["then"]) if isinstance(req["then"], list) else [req["then"]]
             )
             flattened_requirements.extend(
                 flatten_v1_if_else(req.get("else", []))
@@ -255,9 +249,7 @@ def flatten_v1_if_else(requirements: list[str | dict] | str) -> list[str]:
     return flattened_requirements
 
 
-def get_all_test_requirements(
-    meta: dict, lints: list[str], recipe_version: int
-) -> list[str]:
+def get_all_test_requirements(meta: dict, lints: list[str], recipe_version: int) -> list[str]:
     if recipe_version == 1:
         test_section = get_section(meta, "tests", lints, recipe_version)
         test_reqs = []

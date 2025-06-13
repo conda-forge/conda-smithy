@@ -581,9 +581,7 @@ def test_variant_key_remove():
     assert res["python_impl"] == ["pypy", "cpython"]
 
 
-@pytest.mark.parametrize(
-    "platform,arch", [["osx", "64"], ["osx", "arm64"], ["linux", "64"]]
-)
+@pytest.mark.parametrize("platform,arch", [["osx", "64"], ["osx", "arm64"], ["linux", "64"]])
 def test_variant_remove_add(platform, arch):
     from conda_build.config import Config
 

@@ -65,8 +65,6 @@ def generate(package_name="pkg", feedstock_directory=".", recipe_directory="reci
     )
     # render templates
     _render_template("conda-forge.yml", env, forge_dir, config)
-    _render_template(
-        os.path.join(recipe_directory, "meta.yaml"), env, forge_dir, config
-    )
+    _render_template(os.path.join(recipe_directory, "meta.yaml"), env, forge_dir, config)
     # update files which may exist with other content
     _insert_into_gitignore(feedstock_directory=feedstock_directory)

@@ -96,9 +96,7 @@ class AzureRunnerSettings(BaseModel):
         alias="timeoutInMinutes",
     )
 
-    variables: Optional[dict[str, str]] = Field(
-        default_factory=dict, description="Variables"
-    )
+    variables: Optional[dict[str, str]] = Field(default_factory=dict, description="Variables")
 
     # windows only
     install_atl: Optional[bool] = Field(
@@ -127,18 +125,18 @@ class AzureConfig(BaseModel):
         description="Force building all supported providers",
     )
 
-    free_disk_space: Optional[
-        Union[bool, Nullable, list[Literal["apt", "cache", "docker"]]]
-    ] = Field(
-        default=False,
-        description=cleandoc(
-            """
+    free_disk_space: Optional[Union[bool, Nullable, list[Literal["apt", "cache", "docker"]]]] = (
+        Field(
+            default=False,
+            description=cleandoc(
+                """
             Free up disk space before running the Docker container for building on Linux.
             The following components can be cleaned up: `apt`, `cache`, `docker`.
             When set to `true`, only `apt` and `cache` are cleaned up.
             Set it to the full list to clean up all components.
             """
-        ),
+            ),
+        )
     )
 
     max_parallel: Optional[int] = Field(
@@ -273,18 +271,18 @@ class GithubActionsConfig(BaseModel):
         default=True,
     )
 
-    free_disk_space: Optional[
-        Union[bool, Nullable, list[Literal["apt", "cache", "docker"]]]
-    ] = Field(
-        default=False,
-        description=cleandoc(
-            """
+    free_disk_space: Optional[Union[bool, Nullable, list[Literal["apt", "cache", "docker"]]]] = (
+        Field(
+            default=False,
+            description=cleandoc(
+                """
             Free up disk space before running the Docker container for building on Linux.
             The following components can be cleaned up: `apt`, `cache`, `docker`.
             When set to `true`, only `apt` and `cache` are cleaned up.
             Set it to the full list to clean up all components.
             """
-        ),
+            ),
+        )
     )
 
     max_parallel: Optional[Union[int, Nullable]] = Field(
@@ -361,18 +359,14 @@ class LinterConfig(BaseModel):
 class CondaForgeDocker(BaseModel):
     model_config: ConfigDict = ConfigDict(extra="forbid")
 
-    executable: Optional[str] = Field(
-        description="The executable for Docker", default="docker"
-    )
+    executable: Optional[str] = Field(description="The executable for Docker", default="docker")
 
     fallback_image: Optional[str] = Field(
         description="The fallback image for Docker",
         default="quay.io/condaforge/linux-anvil-comp7",
     )
 
-    command: Optional[str] = Field(
-        description="The command to run in Docker", default="bash"
-    )
+    command: Optional[str] = Field(description="The command to run in Docker", default="bash")
 
     #########################################
     #### Deprecated Docker configuration ####
@@ -510,11 +504,10 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    conda_install_tool: Optional[Literal["conda", "mamba", "micromamba", "pixi"]] = (
-        Field(
-            default="micromamba",
-            description=cleandoc(
-                """
+    conda_install_tool: Optional[Literal["conda", "mamba", "micromamba", "pixi"]] = Field(
+        default="micromamba",
+        description=cleandoc(
+            """
                 Use this option to choose which tool is used to provision the tooling in your
                 feedstock. Defaults to micromamba.
 
@@ -523,8 +516,7 @@ class ConfigModel(BaseModel):
                 Miniforge is not involved; the environment is created directly by
                 micromamba or pixi.
                 """
-            ),
-        )
+        ),
     )
 
     conda_forge_output_validation: Optional[bool] = Field(

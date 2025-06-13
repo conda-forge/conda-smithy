@@ -244,9 +244,7 @@ def lintify_meta_yaml(
 
     # 14: Run conda-forge specific lints
     if conda_forge:
-        run_conda_forge_specific(
-            meta, recipe_dir, lints, hints, recipe_version=recipe_version
-        )
+        run_conda_forge_specific(meta, recipe_dir, lints, hints, recipe_version=recipe_version)
 
     # 15: Check if we are using legacy patterns
     lint_usage_of_legacy_patterns(requirements_section, lints)
@@ -318,9 +316,7 @@ def lintify_meta_yaml(
     lint_legacy_usage_of_compilers(build_requirements, lints)
 
     # 22: Single space in pinned requirements
-    lint_single_space_in_pinned_requirements(
-        requirements_section, lints, recipe_version
-    )
+    lint_single_space_in_pinned_requirements(requirements_section, lints, recipe_version)
 
     # 23: non noarch builds shouldn't use version constraints on python and r-base
     lint_non_noarch_builds(
@@ -335,9 +331,7 @@ def lintify_meta_yaml(
     lint_jinja_var_references(recipe_fname, hints, recipe_version=recipe_version)
 
     # 25: require a lower bound on python version
-    lint_require_lower_bound_on_python_version(
-        run_reqs, outputs_section, noarch_value, lints
-    )
+    lint_require_lower_bound_on_python_version(run_reqs, outputs_section, noarch_value, lints)
 
     # 26: pin_subpackage is for subpackages and pin_compatible is for
     # non-subpackages of the recipe. Contact @carterbox for troubleshooting
@@ -359,9 +353,7 @@ def lintify_meta_yaml(
     )
 
     # 29: Check that go licenses are bundled.
-    lint_go_licenses_are_bundled(
-        build_requirements, lints, recipe_version=recipe_version
-    )
+    lint_go_licenses_are_bundled(build_requirements, lints, recipe_version=recipe_version)
 
     # hints
     # 1: suggest pip
@@ -515,9 +507,7 @@ def run_conda_forge_specific(
     # Retrieve sections from meta
     package_section = get_section(meta, "package", lints, recipe_version=recipe_version)
     extra_section = get_section(meta, "extra", lints, recipe_version=recipe_version)
-    requirements_section = get_section(
-        meta, "requirements", lints, recipe_version=recipe_version
-    )
+    requirements_section = get_section(meta, "requirements", lints, recipe_version=recipe_version)
     outputs_section = get_section(meta, "outputs", lints, recipe_version=recipe_version)
 
     build_section = get_section(meta, "build", lints, recipe_version)
@@ -623,17 +613,13 @@ def run_conda_forge_specific(
     if (
         not is_staged_recipes
         and recipe_dir is not None
-        and os.path.exists(
-            cfyml_pth := os.path.join(recipe_dir, "..", "conda-forge.yml")
-        )
+        and os.path.exists(cfyml_pth := os.path.join(recipe_dir, "..", "conda-forge.yml"))
     ):
         try:
             with open(cfyml_pth, encoding="utf-8") as fh:
                 get_yaml(allow_duplicate_keys=False).load(fh)
         except DuplicateKeyError:
-            lints.append(
-                "The ``conda-forge.yml`` file is not allowed to have duplicate keys."
-            )
+            lints.append("The ``conda-forge.yml`` file is not allowed to have duplicate keys.")
 
     # 10: check for proper noarch python syntax
     if "hint_python_min" not in lints_to_skip:
@@ -684,9 +670,7 @@ def _format_validation_msg(error: jsonschema.ValidationError):
     subschema_text = ""
 
     if error.schema:
-        descriptionless_schema = {
-            k: v for (k, v) in error.schema.items() if k != "description"
-        }
+        descriptionless_schema = {k: v for (k, v) in error.schema.items() if k != "description"}
 
     if len(path) > 1:
         help_url += f"""/#{path[1].split("[")[0].replace("_", "-")}"""
@@ -740,9 +724,7 @@ def find_recipe_directory(
         if forge_config.get("conda_build_tool", "") == RATTLER_BUILD_TOOL:
             build_tool = RATTLER_BUILD_TOOL
         if recipe_dir is None:
-            recipe_dir = os.path.join(
-                feedstock_dir, forge_config.get("recipe_dir", "recipe")
-            )
+            recipe_dir = os.path.join(feedstock_dir, forge_config.get("recipe_dir", "recipe"))
 
     return (recipe_dir, build_tool)
 
@@ -794,15 +776,11 @@ if __name__ == "__main__":
     if lints:
         all_pass = False
         messages.append(
-            "\nFor **{}**:\n\n{}".format(
-                rel_path, "\n".join(f"* ❌ {lint}" for lint in lints)
-            )
+            "\nFor **{}**:\n\n{}".format(rel_path, "\n".join(f"* ❌ {lint}" for lint in lints))
         )
     if hints:
         messages.append(
-            "\nFor **{}**:\n\n{}".format(
-                rel_path, "\n".join(f"* ℹ️ {hint}" for hint in hints)
-            )
+            "\nFor **{}**:\n\n{}".format(rel_path, "\n".join(f"* ℹ️ {hint}" for hint in hints))
         )
 
     print(*messages, sep="\n")

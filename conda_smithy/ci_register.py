@@ -198,8 +198,7 @@ def add_project_to_circle(user, project):
         "Accept": "application/json",
     }
     url_template = (
-        "https://circleci.com/api/v1.1/project/github/{component}?"
-        "circle-token={token}"
+        "https://circleci.com/api/v1.1/project/github/{component}?" "circle-token={token}"
     )
 
     # Note, we used to check to see whether the project was already registered, but it started
@@ -229,9 +228,7 @@ def add_project_to_circle(user, project):
     if response.status_code != 200:
         response.raise_for_status()
     # Enable CircleCI builds on forked PRs.
-    response = requests.put(
-        url, headers=headers, json={"feature_flags": {"build-fork-prs": True}}
-    )
+    response = requests.put(url, headers=headers, json={"feature_flags": {"build-fork-prs": True}})
     if response.status_code != 200:
         response.raise_for_status()
 
@@ -574,9 +571,7 @@ def add_conda_forge_webservice_hooks(user, repo):
     response.raise_for_status()
     registered = response.json()
     hook_by_url = {
-        hook["config"].get("url"): hook
-        for hook in registered
-        if "url" in hook["config"]
+        hook["config"].get("url"): hook for hook in registered if "url" in hook["config"]
     }
 
     hooks = [

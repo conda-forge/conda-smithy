@@ -29,9 +29,7 @@ class AzureConfig:
     _default_project_name = AZURE_DEFAULT_PROJECT_NAME
 
     def __init__(self, org_or_user=None, project_name=None, team_instance=None):
-        self.org_or_user = org_or_user or os.getenv(
-            "AZURE_ORG_OR_USER", self._default_org
-        )
+        self.org_or_user = org_or_user or os.getenv("AZURE_ORG_OR_USER", self._default_org)
         # This will only need to be changed if you need to point to a non-standard azure
         # instance.
         self.instance_base_url = team_instance or os.getenv(
@@ -62,9 +60,7 @@ class AzureConfig:
 
     @property
     def connection(self):
-        connection = VssConnection(
-            base_url=self.instance_base_url, creds=self.credentials
-        )
+        connection = VssConnection(base_url=self.instance_base_url, creds=self.credentials)
         return connection
 
     @property
@@ -111,9 +107,7 @@ def get_default_queue(project_name):
 
 def get_repo_reference(config: AzureConfig, github_org, repo_name):
     service_endpoint = get_service_endpoint(config)
-    bclient: BuildClient = config.connection.get_client(
-        "vsts.build.v4_1.build_client.BuildClient"
-    )
+    bclient: BuildClient = config.connection.get_client("vsts.build.v4_1.build_client.BuildClient")
     repos: SourceRepositories = bclient.list_repositories(
         project=config.project_name,
         provider_name="github",
@@ -173,9 +167,7 @@ def get_default_build_definition(
             # These might be optional;
             "resources": {
                 "queues": [{"id": q.id, "alias": q.name} for q in queues],
-                "endpoints": [
-                    {"id": service_endpoint.id, "alias": service_endpoint.name}
-                ],
+                "endpoints": [{"id": service_endpoint.id, "alias": service_endpoint.name}],
             },
             "yamlFilename": "/azure-pipelines.yml",
         },
@@ -235,21 +227,17 @@ def register_repo(github_org, repo_name, config: AzureConfig = default_config):
             project=ed.project.name,
         )
     else:
-        bclient.create_definition(
-            definition=build_definition, project=config.project_name
-        )
+        bclient.create_definition(definition=build_definition, project=config.project_name)
 
 
 def build_client(config: AzureConfig = default_config) -> BuildClient:
     return config.connection.get_client("vsts.build.v4_1.build_client.BuildClient")
 
 
-def repo_registered(
-    github_org: str, repo_name: str, config: AzureConfig = default_config
-) -> bool:
-    existing_definitions: list[BuildDefinitionReference] = build_client(
-        config
-    ).get_definitions(project=config.project_name, name=repo_name)
+def repo_registered(github_org: str, repo_name: str, config: AzureConfig = default_config) -> bool:
+    existing_definitions: list[BuildDefinitionReference] = build_client(config).get_definitions(
+        project=config.project_name, name=repo_name
+    )
 
     return bool(existing_definitions)
 
@@ -268,9 +256,7 @@ def get_build_id(repo, config: AzureConfig = default_config) -> dict:
     This is needed by non-conda-forge use cases"""
     bclient = build_client(config)
     bdef_header = bclient.get_definitions(project=config.project_name, name=repo)[0]
-    bdef: BuildDefinition = bclient.get_definition(
-        bdef_header.id, bdef_header.project.name
-    )
+    bdef: BuildDefinition = bclient.get_definition(bdef_header.id, bdef_header.project.name)
 
     return dict(
         user_or_org=config.org_or_user,

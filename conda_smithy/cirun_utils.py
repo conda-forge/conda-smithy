@@ -33,9 +33,7 @@ def enable_cirun_for_project(owner: str, repo: str) -> dict[str, Any]:
     """Enable the cirun.io Github Application for a particular repository."""
     print(f"Enabling cirun for {owner}/{repo} ...")
     cirun = _get_cirun_client()
-    return cirun.set_repo(
-        f"{owner}/{repo}", installation_id=get_cirun_installation_id(owner)
-    )
+    return cirun.set_repo(f"{owner}/{repo}", installation_id=get_cirun_installation_id(owner))
 
 
 def add_repo_to_cirun_resource(
@@ -52,9 +50,7 @@ def add_repo_to_cirun_resource(
     policy_args: Optional[dict[str, Any]] = None
     if cirun_policy_args and "pull_request" in cirun_policy_args:
         policy_args = {"pull_request": True}
-    print(
-        f"Adding repo {owner}/{repo} to resources {resources} with policy_args: {policy_args}"
-    )
+    print(f"Adding repo {owner}/{repo} to resources {resources} with policy_args: {policy_args}")
     gh = Github(gh_token())
     gh_owner = gh.get_user(owner)
     gh_repo = gh_owner.get_repo(repo)

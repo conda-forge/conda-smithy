@@ -71,9 +71,7 @@ def test_rotate_anaconda_token(
         drone_mock.assert_not_called()
 
     if circle:
-        circle_mock.assert_called_once_with(
-            user, project, anaconda_token, "MY_FANCY_TOKEN"
-        )
+        circle_mock.assert_called_once_with(user, project, anaconda_token, "MY_FANCY_TOKEN")
     else:
         circle_mock.assert_not_called()
 
@@ -89,9 +87,7 @@ def test_rotate_anaconda_token(
         travis_mock.assert_not_called()
 
     if azure:
-        azure_mock.assert_called_once_with(
-            user, project, anaconda_token, "MY_FANCY_TOKEN"
-        )
+        azure_mock.assert_called_once_with(user, project, anaconda_token, "MY_FANCY_TOKEN")
     else:
         azure_mock.assert_not_called()
 
@@ -215,8 +211,6 @@ def test_rotate_anaconda_token_provider_error(
         github_actions_mock.side_effect = ValueError("blah")
 
     with pytest.raises(RuntimeError) as e:
-        rotate_anaconda_token(
-            user, project, None, drone_endpoints=[drone_default_endpoint]
-        )
+        rotate_anaconda_token(user, project, None, drone_endpoints=[drone_default_endpoint])
 
     assert "on {}".format(provider.replace("_", " ")) in str(e.value)

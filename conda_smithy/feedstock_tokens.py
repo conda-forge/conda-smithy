@@ -94,12 +94,10 @@ def generate_and_write_feedstock_token(user, project, provider=None):
             pth = feedstock_token_local_path(user, project, provider=provider)
             if os.path.exists(pth):
                 failed = True
-                err_msg = (
-                    "Token for {}/{} on provider{} is already written locally!".format(
-                        user,
-                        project,
-                        "" if provider is None else " " + provider,
-                    )
+                err_msg = "Token for {}/{} on provider{} is already written locally!".format(
+                    user,
+                    project,
+                    "" if provider is None else " " + provider,
                 )
                 raise FeedstockTokenError(err_msg)
 
@@ -342,9 +340,7 @@ def register_feedstock_token(
     # spill tokens
     with _secure_io(), tempfile.TemporaryDirectory() as tmpdir:
         try:
-            feedstock_token, err_msg = read_feedstock_token(
-                user, project, provider=provider
-            )
+            feedstock_token, err_msg = read_feedstock_token(user, project, provider=provider)
             if err_msg:
                 failed = True
                 raise FeedstockTokenError(err_msg)
@@ -492,13 +488,9 @@ def register_feedstock_token_with_providers(
         args = args or tuple()
 
         if unique_token_per_provider:
-            feedstock_token, err_msg = read_feedstock_token(
-                user, project, provider=provider
-            )
+            feedstock_token, err_msg = read_feedstock_token(user, project, provider=provider)
         else:
-            feedstock_token, err_msg = read_feedstock_token(
-                user, project, provider=None
-            )
+            feedstock_token, err_msg = read_feedstock_token(user, project, provider=None)
 
         if err_msg:
             raise FeedstockTokenError(err_msg)
@@ -591,9 +583,7 @@ def add_feedstock_token_to_circle(user, project, feedstock_token, clobber):
         "circle-token={token}"
     )
 
-    r = requests.get(
-        url_template.format(token=circle_token, user=user, project=project, extra="")
-    )
+    r = requests.get(url_template.format(token=circle_token, user=user, project=project, extra=""))
     if r.status_code != 200:
         r.raise_for_status()
 
@@ -617,18 +607,14 @@ def add_feedstock_token_to_circle(user, project, feedstock_token, clobber):
     if not have_feedstock_token or (have_feedstock_token and clobber):
         data = {"name": "FEEDSTOCK_TOKEN", "value": feedstock_token}
         response = requests.post(
-            url_template.format(
-                token=circle_token, user=user, project=project, extra=""
-            ),
+            url_template.format(token=circle_token, user=user, project=project, extra=""),
             data,
         )
         if response.status_code != 201:
             raise ValueError(response)
 
 
-def add_feedstock_token_to_drone(
-    user, project, feedstock_token, clobber, drone_endpoint
-):
+def add_feedstock_token_to_drone(user, project, feedstock_token, clobber, drone_endpoint):
     from conda_smithy.ci_register import drone_session
 
     session = drone_session(drone_endpoint)
@@ -720,9 +706,7 @@ def add_feedstock_token_to_azure(user, project, feedstock_token, clobber):
 
     bclient = build_client()
 
-    existing_definitions = bclient.get_definitions(
-        project=config.project_name, name=project
-    )
+    existing_definitions = bclient.get_definitions(project=config.project_name, name=project)
     if existing_definitions:
         assert len(existing_definitions) == 1
         ed = existing_definitions[0]
@@ -775,9 +759,7 @@ def add_feedstock_token_to_github_actions(user, project, feedstock_token, clobbe
     repo = gh.get_repo(f"{user}/{project}")
 
     if not clobber:
-        status, headers, data = repo._requester.requestJson(
-            "GET", f"{repo.url}/actions/secrets"
-        )
+        status, headers, data = repo._requester.requestJson("GET", f"{repo.url}/actions/secrets")
         assert status == 200
         data = json.loads(data)
         for secret_data in data["secrets"]:
