@@ -91,8 +91,103 @@ def test_ordering():
 
     res = variant_add(start, mig_compiler)
     assert res["c_compiler"] == ["gcc"]
-    print(res)
-    # raise Exception()
+
+
+def test_ordering_with_tail():
+    # c.f. https://github.com/conda-forge/conda-smithy/issues/2331
+    start = parse_variant(
+        dedent(
+            """\
+    cuda_compiler_version:
+        - "None"
+        - "12.6"
+    """
+        )
+    )
+
+    cuda_migrator = parse_variant(
+        dedent(
+            """\
+    __migrator:
+        ordering:
+            cuda_compiler_version:
+                - "12.6"
+                - "None"
+                - "12.9"
+    cuda_compiler_version:
+        - "12.9"
+    """
+        )
+    )
+
+    res = variant_add(start, cuda_migrator)
+    assert res["cuda_compiler_version"] == ["None", "12.9"]
+
+
+def test_ordering_with_tail_and_readd():
+    # test interaction between migrating CUDA from ("None", "12.6") to ("None", "12.9"),
+    # while also allowing an opt-in migrator to re-add CUDA 11.8, see
+    # https://github.com/conda-forge/conda-forge-pinning-feedstock/pull/7472
+    start = parse_variant(
+        dedent(
+            """\
+    cuda_compiler:
+        - cuda-nvcc
+    cuda_compiler_version:
+        - "None"
+        - "12.6"
+    docker_image:
+        - linux-anvil-x86_64:alma9
+    """
+        )
+    )
+
+    cuda129_migrator = parse_variant(
+        dedent(
+            """\
+    __migrator:
+        ordering:
+            cuda_compiler_version:
+                - "12.6"
+                - "None"
+                - "12.9"
+                - "11.8"
+    cuda_compiler_version:
+        - "12.9"
+    """
+        )
+    )
+
+    cuda118_migrator = parse_variant(
+        dedent(
+            """\
+    __migrator:
+        operation: key_add
+        primary_key: cuda_compiler_version
+        additional_zip_keys:
+            - cuda_compiler
+        ordering:
+            cuda_compiler:
+                - None
+                - cuda-nvcc
+                - nvcc
+            cuda_compiler_version:
+                - "12.6"
+                - "None"
+                - "12.9"
+                - "11.8"
+    cuda_compiler_version:
+        - "11.8"
+    cuda_compiler:
+        - nvcc
+    """
+        )
+    )
+
+    res = variant_add(start, cuda118_migrator)
+    res2 = variant_add(res, cuda129_migrator)
+    assert res2["cuda_compiler_version"] == ["None", "12.9", "11.8"]
+    assert res2["cuda_compiler"] == ["cuda-nvcc", "cuda-nvcc", "nvcc"]
 
 
 def test_no_ordering():
@@ -121,8 +216,6 @@ def test_no_ordering():
 
     res = variant_add(start, mig_compiler)
     assert res["xyz"] == ["2"]
-    print(res)
-    # raise Exception()
 
 
 def test_ordering_downgrade():
@@ -151,7 +244,6 @@ def test_ordering_downgrade():
 
     res = variant_add(start, mig_compiler)
     assert res["jpeg"] == ["2.0"]
-    print(res)
 
 
 def test_ordering_space():
@@ -175,7 +267,6 @@ def test_ordering_space():
 
     res = variant_add(start, mig_compiler)
     assert res["python"] == ["2.7 *_cpython"]
-    print(res)
 
 
 def test_new_pinned_package():
@@ -206,7 +297,6 @@ def test_new_pinned_package():
     res = variant_add(start, mig_compiler)
     assert res["gprc-cpp"] == ["1.23"]
     assert res["pin_run_as_build"]["gprc-cpp"]["max_pin"] == "x.x"
-    print(res)
 
 
 def test_zip_keys():
@@ -240,7 +330,6 @@ def test_zip_keys():
     )
 
     res = variant_add(start, mig_compiler)
-    print(res)
 
     assert len(res["zip_keys"]) == 3
     assert ["python", "vc", "vc_runtime"] in res["zip_keys"]
@@ -277,7 +366,6 @@ def test_migrate_windows_compilers():
     )
 
     res = variant_add(start, mig)
-    print(res)
 
     assert len(res["c_compiler"]) == 2
     assert res["c_compiler"] == ["vs2008", "vs2017"]
@@ -310,7 +398,6 @@ def test_pin_run_as_build():
     )
 
     res = variant_add(start, mig_compiler)
-    print(res)
 
     assert len(res["pin_run_as_build"]) == 3
 
@@ -395,9 +482,6 @@ def test_py39_migration():
     res = variant_add(base, migration_pypy)
     res2 = variant_add(res, migration_py39)
 
-    print(res)
-    print(res2)
-
     assert res2["python"] == migration_py39["__migrator"]["ordering"]["python"]
     # assert that we've ordered the numpy bits properly
     assert res2["numpy"] == [
@@ -409,7 +493,6 @@ def test_py39_migration():
     ]
 
     res3 = variant_add(base, migration_py39)
-    print(res3)
     assert res3["python"] == [
         "3.6.* *_cpython",
         "3.9.* *_cpython",  # newly added
@@ -504,9 +587,6 @@ def test_multiple_key_add_migration():
     res = variant_add(base, migration_pypy)
     res2 = variant_add(res, migration_py39)
 
-    print(res)
-    print(res2)
-
     assert res2["python"] == migration_py39["__migrator"]["ordering"]["python"]
     # assert that we've ordered the numpy bits properly
     assert res2["numpy"] == [
@@ -519,7 +599,6 @@ def test_multiple_key_add_migration():
     ]
 
     res3 = variant_add(base, migration_py39)
-    print(res3)
     assert res3["python"] == [
         "3.6.* *_cpython",
         "3.9.* *_cpython",  # newly added
@@ -680,8 +759,6 @@ def test_variant_remove_add(platform, arch):
     res = variant_add(base, remove)
     res = variant_add(res, add)
     res = variant_add(res, add_py39)
-    print(res["python"])
-    print(res["numpy"])
 
     # alternatively we could just remove py38_osx-arm64 and then add py39
     res2 = variant_add(base, remove2)

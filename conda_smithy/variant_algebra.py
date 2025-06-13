@@ -79,19 +79,44 @@ def variant_key_add(
     """Version summation adder.
 
     This takes the higher version of the two things.
+
+    If there's a non-None ordering and the lengths of v_left/v_right do not
+    match, we need to perform a merge based on the ordered values. For example,
+    if ordering=["x", "y", "z"] and v_left=["y", "x"] resp. v_right=["z"], then
+    we need to ensure the result is ["y", "z"], and not ["z", "x"]; which would
+    happen if we only apply the ordering on the common set of initial entries.
     """
     out_v = []
-    common_length = min(len(v_left), len(v_right))
-    for i in range(common_length):
-        e_l, e_r = v_left[i], v_right[i]
-        if _version_order(e_l, ordering) < _version_order(e_r, ordering):
-            out_v.append(e_r)
-        else:
-            out_v.append(e_l)
-    # Tail items
-    for vs in (v_left, v_right):
-        if len(vs) > common_length:
-            out_v.extend(vs[common_length:])
+    if ordering is None:
+        common_length = min(len(v_left), len(v_right))
+        for i in range(common_length):
+            e_l, e_r = v_left[i], v_right[i]
+            if _version_order(e_l, ordering) < _version_order(e_r, ordering):
+                out_v.append(e_r)
+            else:
+                out_v.append(e_l)
+        # Tail items
+        for vs in (v_left, v_right):
+            if len(vs) > common_length:
+                out_v.extend(vs[common_length:])
+        return out_v
+    else:
+        v_left_ordinal = [_version_order(v, ordering) for v in v_left]
+        v_right_ordinal = [_version_order(v, ordering) for v in v_right]
+        v_merge_ordinal = sorted(list(set(v_left_ordinal) | set(v_right_ordinal)))
+        # take the number of elements corresponding to the longer of v_left/v_right
+        longer = max(len(v_left), len(v_right))
+        if len(v_merge_ordinal) < longer:
+            # this can happen when the are many identical values in v_left/v_right
+            if len(v_merge_ordinal) == 1:
+                # only one value across v_left/v_right; merge is trivial by definition
+                return [v_left[0]] * longer
+            raise ValueError(
+                "ambiguous merge due to duplicate values and non-None ordering"
+            )
+        # take the right number of elements from the back of v_merge_ordinal
+        v_merge_ordinal = v_merge_ordinal[-longer:]
+        out_v = [ordering[i] for i in v_merge_ordinal]
 
     return out_v
 
