@@ -66,9 +66,7 @@ def generate_feedstock_content(
     # merge in the existing configuration in the source recipe directory
     forge_yml_recipe = os.path.join(source_recipe_dir, "conda-forge.yml")
     if os.path.exists(forge_yml_recipe):
-        feedstock_io.remove_file(
-            os.path.join(target_recipe_dir, "conda-forge.yml")
-        )
+        feedstock_io.remove_file(os.path.join(target_recipe_dir, "conda-forge.yml"))
         try:
             with open(forge_yml_recipe, encoding="utf-8") as fp:
                 _cfg = yaml.load(fp.read())
@@ -157,9 +155,7 @@ class Init(Subcommand):
         generate_feedstock_content(
             feedstock_directory, args.recipe_directory, conda_build_tool
         )
-        subprocess.check_call(
-            ["git", "commit", "-m", msg], cwd=feedstock_directory
-        )
+        subprocess.check_call(["git", "commit", "-m", msg], cwd=feedstock_directory)
 
         print(
             "\nRepository created, please edit recipe/conda_build_config.yaml to configure the upload channels\n"
@@ -215,9 +211,7 @@ class RegisterGithub(Subcommand):
         from conda_smithy import github
 
         github.create_github_repo(args)
-        print(
-            "\nRepository registered at github, now call 'conda smithy register-ci'"
-        )
+        print("\nRepository registered at github, now call 'conda smithy register-ci'")
 
 
 class RegisterCI(Subcommand):
@@ -369,9 +363,7 @@ class RegisterCI(Subcommand):
                 args.anaconda_token,
             ]
         ):
-            raise RuntimeError(
-                "The --remove flag is only supported for Cirun for now"
-            )
+            raise RuntimeError("The --remove flag is only supported for Cirun for now")
         if not args.anaconda_token:
             print(
                 "Warning: By not registering an Anaconda/Binstar token"
@@ -452,9 +444,7 @@ class RegisterCI(Subcommand):
                         owner, repo, resource
                     )
             else:
-                print(
-                    f"Cirun Registration: resources to add to: {owner}/{repo}"
-                )
+                print(f"Cirun Registration: resources to add to: {owner}/{repo}")
                 conda_smithy.cirun_utils.enable_cirun_for_project(owner, repo)
                 conda_smithy.cirun_utils.add_repo_to_cirun_resource(
                     owner,
@@ -490,9 +480,7 @@ class AddAzureBuildId(Subcommand):
 
         super().__init__(
             parser,
-            dedent(
-                "Update the azure configuration stored in the config file."
-            ),
+            dedent("Update the azure configuration stored in the config file."),
         )
         scp = self.subcommand_parser
         scp.add_argument(
@@ -653,9 +641,7 @@ class RecipeLint(Subcommand):
                 print(
                     "{} has some lint:\n  {}".format(
                         recipe,
-                        "\n  ".join(
-                            [lint.replace("\n", "\n    ") for lint in lints]
-                        ),
+                        "\n  ".join([lint.replace("\n", "\n    ") for lint in lints]),
                     )
                 )
                 if hints:
@@ -663,18 +649,13 @@ class RecipeLint(Subcommand):
                         "{} also has some suggestions:\n  {}".format(
                             recipe,
                             "\n  ".join(
-                                [
-                                    hint.replace("\n", "\n    ")
-                                    for hint in hints
-                                ]
+                                [hint.replace("\n", "\n    ") for hint in hints]
                             ),
                         )
                     )
             elif hints:
                 print(
-                    "{} has some suggestions:\n  {}".format(
-                        recipe, "\n  ".join(hints)
-                    )
+                    "{} has some suggestions:\n  {}".format(recipe, "\n  ".join(hints))
                 )
             else:
                 print(f"{recipe} is in fine form")
@@ -821,16 +802,10 @@ class GenerateFeedstockToken(Subcommand):
         else:
             for ci in self.ci_names:
                 provider = ci.lower().replace("-", "_")
-                generate_and_write_feedstock_token(
-                    owner, repo, provider=provider
-                )
+                generate_and_write_feedstock_token(owner, repo, provider=provider)
                 print(
-                    "Your feedstock token has been generated at {}\n"
-                    "This token is stored in plaintext so be careful!".format(
-                        feedstock_token_local_path(
-                            owner, repo, provider=provider
-                        )
-                    )
+                    f"Your feedstock token has been generated at {feedstock_token_local_path(owner, repo, provider=provider)}\n"
+                    "This token is stored in plaintext so be careful!"
                 )
 
 
@@ -937,7 +912,9 @@ class RegisterFeedstockToken(Subcommand):
         repo = os.path.basename(os.path.abspath(args.feedstock_directory))
 
         if args.token_repo is None:
-            token_repo = f"https://${{GITHUB_TOKEN}}@github.com/{owner}/feedstock-tokens"
+            token_repo = (
+                f"https://${{GITHUB_TOKEN}}@github.com/{owner}/feedstock-tokens"
+            )
         else:
             token_repo = args.token_repo
 
@@ -1078,9 +1055,7 @@ class UpdateAnacondaToken(Subcommand):
                 args.feedstock_directory
             )
 
-        print(
-            "Updating the anaconda/binstar token. Can take up to ~30 seconds."
-        )
+        print("Updating the anaconda/binstar token. Can take up to ~30 seconds.")
         from conda_smithy.ci_register import drone_default_endpoint
 
         drone_endpoints = args.drone_endpoints

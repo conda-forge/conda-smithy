@@ -160,9 +160,7 @@ def is_selector_line(
     if m:
         if only_in_comment and not m.group(2):
             return False
-        nouns = {
-            w for w in m.group(3).split() if w not in ("not", "and", "or")
-        }
+        nouns = {w for w in m.group(3).split() if w not in ("not", "and", "or")}
         allowed_nouns = (
             {"win", "linux", "osx", "unix"} if allow_platforms else set()
         ) | allow_keys
@@ -264,9 +262,7 @@ def get_all_test_requirements(
         test_section = get_section(meta, "tests", lints, recipe_version)
         test_reqs = []
         for test_element in test_section:
-            test_reqs += (test_element.get("requirements") or {}).get(
-                "run"
-            ) or []
+            test_reqs += (test_element.get("requirements") or {}).get("run") or []
 
             if "python" in test_element:
                 py_version = test_element["python"].get("python_version")

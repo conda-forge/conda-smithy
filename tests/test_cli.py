@@ -79,9 +79,7 @@ def test_init_with_custom_config(py_recipe):
     init_obj(args)
     destination = os.path.join(recipe, "py-test-feedstock")
     assert os.path.isdir(destination)
-    data = yaml.safe_load(
-        open(os.path.join(destination, "conda-forge.yml")).read()
-    )
+    data = yaml.safe_load(open(os.path.join(destination, "conda-forge.yml")).read())
     assert data.get("bot") is not None
     assert data["bot"]["automerge"] is True
     assert data["bot"]["run_deps_from_wheel"] is True
@@ -93,9 +91,7 @@ def test_init_multiple_output_matrix(testing_workdir):
     init_obj = cli.Init(subparser)
     regen_obj = cli.Regenerate(subparser)
     recipe = os.path.join(_thisdir, "recipes", "multiple_outputs")
-    feedstock_dir = os.path.join(
-        testing_workdir, "multiple-outputs-test-feedstock"
-    )
+    feedstock_dir = os.path.join(testing_workdir, "multiple-outputs-test-feedstock")
     args = InitArgs(
         recipe_directory=recipe,
         feedstock_directory=feedstock_dir,
@@ -120,9 +116,7 @@ def test_init_multiple_output_matrix(testing_workdir):
     # though - loops within outputs are contained in those top-level configs.
     matrix_dir_len = len(os.listdir(matrix_dir))
     assert matrix_dir_len == 13
-    linux_libpng16 = os.path.join(
-        matrix_dir, "linux_64_libpng1.6libpq9.5.yaml"
-    )
+    linux_libpng16 = os.path.join(matrix_dir, "linux_64_libpng1.6libpq9.5.yaml")
     assert os.path.isfile(linux_libpng16)
     with open(linux_libpng16) as f:
         config = yaml.safe_load(f)
@@ -150,9 +144,7 @@ def test_render_readme_with_multiple_outputs(testing_workdir, dirname):
     regen_obj = cli.Regenerate(subparser)
     _thisdir = os.path.abspath(os.path.dirname(__file__))
     recipe = os.path.join(_thisdir, "recipes", dirname)
-    feedstock_dir = os.path.join(
-        testing_workdir, "multiple-outputs-test-feedstock"
-    )
+    feedstock_dir = os.path.join(testing_workdir, "multiple-outputs-test-feedstock")
     args = InitArgs(
         recipe_directory=recipe,
         feedstock_directory=feedstock_dir,
@@ -206,9 +198,7 @@ def test_init_cuda_docker_images(testing_workdir):
     init_obj = cli.Init(subparser)
     regen_obj = cli.Regenerate(subparser)
     recipe = os.path.join(_thisdir, "recipes", "cuda_docker_images")
-    feedstock_dir = os.path.join(
-        testing_workdir, "cuda_docker_images-feedstock"
-    )
+    feedstock_dir = os.path.join(testing_workdir, "cuda_docker_images-feedstock")
     args = InitArgs(
         recipe_directory=recipe,
         feedstock_directory=feedstock_dir,
@@ -235,9 +225,7 @@ def test_init_cuda_docker_images(testing_workdir):
     matrix_dir_len = len(os.listdir(matrix_dir))
     assert matrix_dir_len == 7  # 6 docker images plus the README
     for v in [None, "9.2", "10.0", "10.1", "10.2", "11.0"]:
-        fn = os.path.join(
-            matrix_dir, f"linux_64_cuda_compiler_version{v}.yaml"
-        )
+        fn = os.path.join(matrix_dir, f"linux_64_cuda_compiler_version{v}.yaml")
         assert os.path.isfile(fn)
         with open(fn) as fh:
             config = yaml.safe_load(fh)
@@ -260,9 +248,7 @@ def test_init_multiple_docker_images(testing_workdir):
     init_obj = cli.Init(subparser)
     regen_obj = cli.Regenerate(subparser)
     recipe = os.path.join(_thisdir, "recipes", "multiple_docker_images")
-    feedstock_dir = os.path.join(
-        testing_workdir, "multiple_docker_images-feedstock"
-    )
+    feedstock_dir = os.path.join(testing_workdir, "multiple_docker_images-feedstock")
     args = InitArgs(
         recipe_directory=recipe,
         feedstock_directory=feedstock_dir,
@@ -318,9 +304,7 @@ def test_regenerate(py_recipe, testing_workdir):
         feedstock_config=None,
         commit=False,
         no_check_uptodate=True,
-        exclusive_config_file=os.path.join(
-            recipe, "recipe", "short_config.yaml"
-        ),
+        exclusive_config_file=os.path.join(recipe, "recipe", "short_config.yaml"),
         check=False,
         temporary_directory=os.path.join(dest_dir, "temp"),
     )
@@ -337,9 +321,7 @@ def test_render_variant_mismatches(testing_workdir):
     regen_obj = cli.Regenerate(subparser)
     _thisdir = os.path.abspath(os.path.dirname(__file__))
     recipe = os.path.join(_thisdir, "recipes", "variant_mismatches")
-    feedstock_dir = os.path.join(
-        testing_workdir, "test-variant-mismatches-feedstock"
-    )
+    feedstock_dir = os.path.join(testing_workdir, "test-variant-mismatches-feedstock")
     args = InitArgs(
         recipe_directory=recipe,
         feedstock_directory=feedstock_dir,

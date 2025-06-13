@@ -24,9 +24,7 @@ from conda_build.config import Config
 from conda_build.utils import ensure_list
 
 
-def parse_variant(
-    variant_file_content: str, config: Optional[Config] = None
-) -> dict[
+def parse_variant(variant_file_content: str, config: Optional[Config] = None) -> dict[
     str,
     Union[
         list[str],
@@ -206,9 +204,7 @@ def op_variant_key_add(v1: dict, v2: dict):
             [pkey_val],
             ordering=ordering.get(primary_key),
         )
-        position_map = {
-            i: new_keys.index(v) for i, v in enumerate(result[primary_key])
-        }
+        position_map = {i: new_keys.index(v) for i, v in enumerate(result[primary_key])}
 
         result[primary_key] = new_keys
         new_key_position = new_keys.index(pkey_val)
@@ -223,9 +219,9 @@ def op_variant_key_add(v1: dict, v2: dict):
 
                     # Transform key to zip_key if required
                     if key in newly_added_zip_keys:
-                        default_value = result[
-                            "__additional_zip_keys_default_values"
-                        ][key]
+                        default_value = result["__additional_zip_keys_default_values"][
+                            key
+                        ]
                         result[key] = [default_value] * len(new_keys)
 
                     # Create a new version of the key from
@@ -236,9 +232,7 @@ def op_variant_key_add(v1: dict, v2: dict):
 
                     if key in v2:
                         new_value[new_key_position] = v2[key][pkey_ind]
-                    elif key in result.get(
-                        "__additional_zip_keys_default_values", {}
-                    ):
+                    elif key in result.get("__additional_zip_keys_default_values", {}):
                         new_value[new_key_position] = result[
                             "__additional_zip_keys_default_values"
                         ][key]
@@ -268,9 +262,7 @@ def op_variant_key_remove(v1: dict, v2: dict):
         None, v1[primary_key], [], ordering=ordering.get(primary_key)
     )
     new_keys.remove(v2[primary_key][0])
-    position_map = {
-        i: v1[primary_key].index(v) for i, v in enumerate(new_keys)
-    }
+    position_map = {i: v1[primary_key].index(v) for i, v in enumerate(new_keys)}
     result[primary_key] = new_keys
 
     # handle zip_keys
@@ -356,9 +348,7 @@ def variant_add(v1: dict, v2: dict) -> dict[str, Any]:
 
         zk_out.extend(zk_l)
         zk_out.extend(zk_r)
-        zk_out = sorted(
-            [sorted(zk) for zk in zk_out], key=lambda x: (len(x), str(x))
-        )
+        zk_out = sorted([sorted(zk) for zk in zk_out], key=lambda x: (len(x), str(x)))
 
         joint.remove("zip_keys")
         special_variants["zip_keys"] = zk_out
