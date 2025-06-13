@@ -33,9 +33,7 @@ def cloned_feedstocks(feedstocks_directory):
             print(feedstock.directory)  # The absolute path to the repo
 
     """
-    pattern = os.path.abspath(
-        os.path.join(feedstocks_directory, "*-feedstock")
-    )
+    pattern = os.path.abspath(os.path.join(feedstocks_directory, "*-feedstock"))
     for feedstock_dir in sorted(glob.glob(pattern)):
         feedstock_basename = os.path.basename(feedstock_dir)
         feedstock_package = feedstock_basename.rsplit("-feedstock", 1)[0]
@@ -133,9 +131,7 @@ def feedstocks_apply_cloned_handle_args(args):
             item.format(feedstock.directory, feedstock=feedstock, **context)
             for item in args.cmd
         ]
-        print(
-            '\nRunning "{}" for {}:'.format(" ".join(cmd), feedstock.package)
-        )
+        print('\nRunning "{}" for {}:'.format(" ".join(cmd), feedstock.package))
         subprocess.check_call(cmd, env=env, cwd=feedstock.directory)
 
 
@@ -182,9 +178,7 @@ def feedstocks_repos(
 
         regexp = re.compile(regexp)
         feedstocks = [
-            feedstock
-            for feedstock in feedstocks
-            if regexp.match(feedstock.package)
+            feedstock for feedstock in feedstocks if regexp.match(feedstock.package)
         ]
 
     if randomise:
@@ -254,9 +248,7 @@ def feedstocks_yaml(
             try:
                 if use_local:
                     with open(
-                        os.path.join(
-                            feedstock.directory, "recipe", "meta.yaml"
-                        ),
+                        os.path.join(feedstock.directory, "recipe", "meta.yaml"),
                         encoding="utf-8",
                     ) as fh:
                         content = "".join(fh.readlines())
@@ -299,21 +291,15 @@ def main():
         "list-cloned",
         help="List all of the feedstocks which have been cloned.",
     )
-    list_cloned_feedstocks.set_defaults(
-        func=feedstocks_list_cloned_handle_args
-    )
+    list_cloned_feedstocks.set_defaults(func=feedstocks_list_cloned_handle_args)
     list_cloned_feedstocks.add_argument("--feedstocks-directory", default="./")
 
     apply_cloned_feedstocks = subparsers.add_parser(
         "apply-cloned",
         help="Apply a subprocess to all of the all feedstocks which have been cloned.",
     )
-    apply_cloned_feedstocks.set_defaults(
-        func=feedstocks_apply_cloned_handle_args
-    )
-    apply_cloned_feedstocks.add_argument(
-        "--feedstocks-directory", default="./"
-    )
+    apply_cloned_feedstocks.set_defaults(func=feedstocks_apply_cloned_handle_args)
+    apply_cloned_feedstocks.add_argument("--feedstocks-directory", default="./")
     apply_cloned_feedstocks.add_argument(
         "cmd",
         nargs="+",

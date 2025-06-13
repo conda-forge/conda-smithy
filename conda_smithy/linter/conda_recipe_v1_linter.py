@@ -83,8 +83,7 @@ def hint_noarch_usage(
         build_reqs
         and not any(
             [
-                b.startswith("${{")
-                and ("compiler('c')" in b or 'compiler("c")' in b)
+                b.startswith("${{") and ("compiler('c')" in b or 'compiler("c")' in b)
                 for b in build_reqs
             ]
         )
@@ -96,8 +95,7 @@ def hint_noarch_usage(
 
         for _, section_requirements in requirement_section.items():
             if any(
-                isinstance(requirement, dict)
-                for requirement in section_requirements
+                isinstance(requirement, dict) for requirement in section_requirements
             ):
                 no_arch_possible = False
                 break
@@ -108,12 +106,8 @@ def hint_noarch_usage(
 
 def get_recipe_name(recipe_content: RecipeWithContext) -> str:
     rendered_context_recipe = render_recipe_with_context(recipe_content)
-    package_name = (
-        rendered_context_recipe.get("package", {}).get("name", "").strip()
-    )
-    recipe_name = (
-        rendered_context_recipe.get("recipe", {}).get("name", "").strip()
-    )
+    package_name = rendered_context_recipe.get("package", {}).get("name", "").strip()
+    recipe_name = rendered_context_recipe.get("recipe", {}).get("name", "").strip()
     return package_name or recipe_name
 
 

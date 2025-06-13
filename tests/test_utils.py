@@ -12,9 +12,7 @@ def test_get_metadata_from_feedstock_dir(noarch_recipe):
     feedstock_dir = noarch_recipe[0]
 
     build_tool = noarch_recipe[1]["conda_build_tool"]
-    metadata = _get_metadata_from_feedstock_dir(
-        feedstock_dir, noarch_recipe[1]
-    )
+    metadata = _get_metadata_from_feedstock_dir(feedstock_dir, noarch_recipe[1])
 
     expected_metadata_type = (
         RatlerBuildMetadata if build_tool == RATTLER_BUILD else MetaData
@@ -40,9 +38,7 @@ def test_get_metadata_from_feedstock_dir_jinja2(noarch_recipe_with_python_min):
     )
 
     if build_tool == RATTLER_BUILD:
-        assert metadata.meta["requirements"]["host"] == [
-            "python ${{ python_min }}.*"
-        ]
+        assert metadata.meta["requirements"]["host"] == ["python ${{ python_min }}.*"]
     else:
         assert metadata.meta["requirements"]["host"] == ["python 2.7"]
 
@@ -51,9 +47,7 @@ def test_get_metadata_from_feedstock_dir_jinja2(noarch_recipe_with_python_min):
 
 def test_get_feedstock_name_from_metadata(noarch_recipe):
     feedstock_dir = noarch_recipe[0]
-    metadata = _get_metadata_from_feedstock_dir(
-        feedstock_dir, noarch_recipe[1]
-    )
+    metadata = _get_metadata_from_feedstock_dir(feedstock_dir, noarch_recipe[1])
 
     feedstock_name = get_feedstock_name_from_meta(metadata)
 

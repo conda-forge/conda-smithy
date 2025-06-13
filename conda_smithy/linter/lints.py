@@ -41,17 +41,13 @@ def lint_section_order(
         order = EXPECTED_SECTION_ORDER
     else:
         if "outputs" in major_sections:
-            order = (
-                conda_recipe_v1_linter.EXPECTED_MULTIPLE_OUTPUT_SECTION_ORDER
-            )
+            order = conda_recipe_v1_linter.EXPECTED_MULTIPLE_OUTPUT_SECTION_ORDER
         else:
             order = conda_recipe_v1_linter.EXPECTED_SINGLE_OUTPUT_SECTION_ORDER
     section_order_sorted = sorted(major_sections, key=order.index)
 
     if major_sections != section_order_sorted:
-        section_order_sorted_str = map(
-            lambda s: f"'{s}'", section_order_sorted
-        )
+        section_order_sorted_str = map(lambda s: f"'{s}'", section_order_sorted)
         section_order_sorted_str = ", ".join(section_order_sorted_str)
         section_order_sorted_str = "[" + section_order_sorted_str + "]"
         lints.append(
@@ -69,9 +65,7 @@ def lint_about_contents(about_section, lints, recipe_version: int = 0):
     for about_item in expected_section:
         # if the section doesn't exist, or is just empty, lint it.
         if not about_section.get(about_item, ""):
-            lints.append(
-                f"The {about_item} item is expected in the about section."
-            )
+            lints.append(f"The {about_item} item is expected in the about section.")
 
 
 def lint_recipe_maintainers(extra_section, lints):
@@ -183,9 +177,7 @@ def lint_no_comment_selectors(recipe_fname, lints, hints):
     bad_lines = []
     if os.path.exists(recipe_fname):
         with open(recipe_fname, encoding="utf-8") as fh:
-            for selector_line, line_number in selector_lines(
-                fh, only_in_comment=True
-            ):
+            for selector_line, line_number in selector_lines(fh, only_in_comment=True):
                 bad_lines.append(line_number)
     if bad_lines:
         lints.append(
@@ -200,12 +192,8 @@ def lint_build_section_should_have_a_number(build_section, lints):
 
 
 def lint_build_section_should_be_before_run(requirements_section, lints):
-    seen_requirements = [
-        k for k in requirements_section if k in REQUIREMENTS_ORDER
-    ]
-    requirements_order_sorted = sorted(
-        seen_requirements, key=REQUIREMENTS_ORDER.index
-    )
+    seen_requirements = [k for k in requirements_section if k in REQUIREMENTS_ORDER]
+    requirements_order_sorted = sorted(seen_requirements, key=REQUIREMENTS_ORDER.index)
     if seen_requirements != requirements_order_sorted:
         lints.append(
             "The `requirements/` sections should be defined "
@@ -238,9 +226,7 @@ def lint_license_should_not_have_license(about_section, lints):
         and "licenseref" not in license.lower()
         and "-license" not in license.lower()
     ):
-        lints.append(
-            "The recipe `license` should not include the word " '"License".'
-        )
+        lints.append("The recipe `license` should not include the word " '"License".')
 
 
 def lint_should_be_empty_line(meta_fname, lints):
@@ -276,9 +262,7 @@ def lint_license_family_should_be_valid(
         if recipe_version == 1:
             lints.append(lint_msg)
         else:
-            license_family = about_section.get(
-                "license_family", license
-            ).lower()
+            license_family = about_section.get("license_family", license).lower()
             if any(f for f in needed_families if f in license_family):
                 lints.append(lint_msg)
 
@@ -404,9 +388,7 @@ def lint_noarch_and_runtime_dependencies(
 
 def lint_package_version(package_section, lints):
     version = package_section.get("version")
-    lint_msg = _lint_package_version(
-        str(version) if version is not None else None
-    )
+    lint_msg = _lint_package_version(str(version) if version is not None else None)
     if lint_msg:
         lints.append(lint_msg)
 
@@ -447,11 +429,7 @@ def lint_single_space_in_pinned_requirements(
     recipe_version: int = 0,
 ):
     for section, requirements in requirements_section.items():
-        if (
-            recipe_version == 1
-            and section == "ignore_run_exports"
-            and requirements
-        ):
+        if recipe_version == 1 and section == "ignore_run_exports" and requirements:
             # v1 ignore_run_exports is a dict, but
             # rattler-build-conda-compat returns it inside a list
             # instead of the dict itself
@@ -551,14 +529,10 @@ def lint_non_noarch_builds(
     for language in check_languages:
         if noarch_value is None and not outputs_section:
             filtered_host_reqs = [
-                req
-                for req in host_reqs
-                if req.partition(" ")[0] == str(language)
+                req for req in host_reqs if req.partition(" ")[0] == str(language)
             ]
             filtered_run_reqs = [
-                req
-                for req in run_reqs
-                if req.partition(" ")[0] == str(language)
+                req for req in run_reqs if req.partition(" ")[0] == str(language)
             ]
             if filtered_host_reqs and not filtered_run_reqs:
                 lints.append(
@@ -569,9 +543,7 @@ def lint_non_noarch_builds(
                     continue
                 for req in reqs:
                     constraint = req.split(" ", 1)[1]
-                    if constraint.startswith(">") or constraint.startswith(
-                        "<"
-                    ):
+                    if constraint.startswith(">") or constraint.startswith("<"):
                         lints.append(
                             f"Non noarch packages should have {str(language)} requirement without any version constraints."
                         )
@@ -581,9 +553,7 @@ def lint_jinja_var_references(meta_fname, hints, recipe_version: int = 0):
     bad_vars = []
     bad_lines = []
     jinja_pattern = (
-        JINJA_VAR_PAT
-        if recipe_version == 0
-        else conda_recipe_v1_linter.JINJA_VAR_PAT
+        JINJA_VAR_PAT if recipe_version == 0 else conda_recipe_v1_linter.JINJA_VAR_PAT
     )
     if os.path.exists(meta_fname):
         with open(meta_fname, encoding="utf-8") as fh:
@@ -676,15 +646,9 @@ def lint_pin_subpackages(
         if recipe_version == 0:
             if "build" in top_level and "run_exports" in top_level["build"]:
                 check_pins(top_level["build"]["run_exports"])
-            if (
-                "requirements" in top_level
-                and "run" in top_level["requirements"]
-            ):
+            if "requirements" in top_level and "run" in top_level["requirements"]:
                 check_pins(top_level["requirements"]["run"])
-            if (
-                "requirements" in top_level
-                and "host" in top_level["requirements"]
-            ):
+            if "requirements" in top_level and "host" in top_level["requirements"]:
                 check_pins(top_level["requirements"]["host"])
         else:
             if (
@@ -720,18 +684,14 @@ def lint_check_usage_of_whls(meta_fname, noarch_value, lints, hints):
                 elif match := wheel_re.search(line):
                     compiled_wheel_urls.append(match.group(1))
         if compiled_wheel_urls:
-            formatted_urls = ", ".join(
-                [f"`{url}`" for url in compiled_wheel_urls]
-            )
+            formatted_urls = ", ".join([f"`{url}`" for url in compiled_wheel_urls])
             lints.append(
                 f"Detected compiled wheel(s) in source: {formatted_urls}. "
                 "This is disallowed. All packages should be built from source except in "
                 "rare and exceptional cases."
             )
         if pure_python_wheel_urls:
-            formatted_urls = ", ".join(
-                [f"`{url}`" for url in pure_python_wheel_urls]
-            )
+            formatted_urls = ", ".join([f"`{url}`" for url in pure_python_wheel_urls])
             if noarch_value == "python":  # this is ok, just hint
                 hints.append(
                     f"Detected pure Python wheel(s) in source: {formatted_urls}. "
@@ -840,13 +800,9 @@ def lint_stdlib(
     output_build_reqs = [x.get("build", []) or [] for x in output_reqs]
     output_run_reqs = [x.get("run", []) or [] for x in output_reqs]
     if recipe_version == 1:
-        output_contraints = [
-            x.get("run_constraints", []) or [] for x in output_reqs
-        ]
+        output_contraints = [x.get("run_constraints", []) or [] for x in output_reqs]
     else:
-        output_contraints = [
-            x.get("run_constrained", []) or [] for x in output_reqs
-        ]
+        output_contraints = [x.get("run_constrained", []) or [] for x in output_reqs]
 
     # aggregate as necessary
     all_build_reqs = [global_build_reqs] + output_build_reqs
@@ -876,9 +832,7 @@ def lint_stdlib(
             if recipe_version == 0
             else r"\$\{\{ stdlib\(['\"](m2w64_)?c['\"]\)"
         )
-        if has_compiler and not any(
-            re.search(stdlib_regex, x) for x in build_reqs
-        ):
+        if has_compiler and not any(re.search(stdlib_regex, x) for x in build_reqs):
             if stdlib_lint not in lints:
                 lints.append(stdlib_lint)
 
@@ -918,9 +872,7 @@ def lint_stdlib(
             "win": False,
         }
 
-        if conda_build_config_filename and os.path.exists(
-            conda_build_config_filename
-        ):
+        if conda_build_config_filename and os.path.exists(conda_build_config_filename):
             cbc_osx = parse_recipe_config_file(
                 conda_build_config_filename,
                 platform_namespace,
@@ -990,9 +942,7 @@ def lint_stdlib(
                     if mismatch_lint not in lints:
                         lints.append(mismatch_lint)
                 merged_dt.append(
-                    v_mdt
-                    if VersionOrder(v_std) < VersionOrder(v_mdt)
-                    else v_std
+                    v_mdt if VersionOrder(v_std) < VersionOrder(v_mdt) else v_std
                 )
             cbc_osx["merged"] = merged_dt
     elif "MACOSX_DEPLOYMENT_TARGET" in cbc_osx.keys():
@@ -1052,8 +1002,7 @@ def lint_stdlib(
         # if length doesn't match, only warn if a single SDK version
         # is lower than _all_ merged deployment targets
         if all(
-            VersionOrder(str(sdk[0])) < VersionOrder(str(v_mdt))
-            for v_mdt in merged_dt
+            VersionOrder(str(sdk[0])) < VersionOrder(str(v_mdt)) for v_mdt in merged_dt
         ):
             if sdk_lint not in lints:
                 lints.append(sdk_lint)

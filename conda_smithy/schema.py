@@ -182,9 +182,7 @@ class AzureConfig(BaseModel):
     )
 
     settings_osx: AzureRunnerSettings = Field(
-        default_factory=lambda: AzureRunnerSettings(
-            pool={"vmImage": "macOS-13"}
-        ),
+        default_factory=lambda: AzureRunnerSettings(pool={"vmImage": "macOS-13"}),
         description="OSX-specific settings for runners",
     )
 
@@ -402,9 +400,7 @@ class PlatformsAliases(StrEnum):
 
 
 def get_subdirs():
-    return [
-        subdir.replace("-", "_") for subdir in KNOWN_SUBDIRS if "-" in subdir
-    ]
+    return [subdir.replace("-", "_") for subdir in KNOWN_SUBDIRS if "-" in subdir]
 
 
 Platforms = StrEnum("Platforms", get_subdirs())
@@ -514,12 +510,11 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    conda_install_tool: Optional[
-        Literal["conda", "mamba", "micromamba", "pixi"]
-    ] = Field(
-        default="micromamba",
-        description=cleandoc(
-            """
+    conda_install_tool: Optional[Literal["conda", "mamba", "micromamba", "pixi"]] = (
+        Field(
+            default="micromamba",
+            description=cleandoc(
+                """
                 Use this option to choose which tool is used to provision the tooling in your
                 feedstock. Defaults to micromamba.
 
@@ -528,7 +523,8 @@ class ConfigModel(BaseModel):
                 Miniforge is not involved; the environment is created directly by
                 micromamba or pixi.
                 """
-        ),
+            ),
+        )
     )
 
     conda_forge_output_validation: Optional[bool] = Field(
@@ -542,15 +538,13 @@ class ConfigModel(BaseModel):
         ),
     )
 
-    conda_solver: Optional[Union[Literal["libmamba", "classic"], Nullable]] = (
-        Field(
-            default="libmamba",
-            description=cleandoc(
-                """
+    conda_solver: Optional[Union[Literal["libmamba", "classic"], Nullable]] = Field(
+        default="libmamba",
+        description=cleandoc(
+            """
         Choose which `conda` solver plugin to use for feedstock builds.
         """
-            ),
-        )
+        ),
     )
 
     github: Optional[GithubConfig] = Field(

@@ -74,9 +74,7 @@ def has_in_members(team, member):
 
 
 def get_cached_team(org, team_name, description=""):
-    cached_file = os.path.expanduser(
-        f"~/.conda-smithy/{org.login}-{team_name}-team"
-    )
+    cached_file = os.path.expanduser(f"~/.conda-smithy/{org.login}-{team_name}-team")
     try:
         with open(cached_file) as fh:
             team_id = int(fh.read().strip())
@@ -86,17 +84,13 @@ def get_cached_team(org, team_name, description=""):
 
     try:
         repo = org.get_repo(f"{team_name}-feedstock")
-        team = next(
-            (team for team in repo.get_teams() if team.name == team_name), None
-        )
+        team = next((team for team in repo.get_teams() if team.name == team_name), None)
         if team:
             return team
     except GithubException:
         pass
 
-    team = next(
-        (team for team in org.get_teams() if team.name == team_name), None
-    )
+    team = next((team for team in org.get_teams() if team.name == team_name), None)
     if not team:
         if description:
             team = create_team(org, team_name, description, [])
@@ -116,9 +110,7 @@ def _conda_forge_specific_repo_setup(gh_repo):
 
     # first, check if the ruleset exists already
     rulesets_url = gh_repo.url + "/rulesets"
-    _, ruleset_list = gh_repo._requester.requestJsonAndCheck(
-        "GET", rulesets_url
-    )
+    _, ruleset_list = gh_repo._requester.requestJsonAndCheck("GET", rulesets_url)
     ruleset_id = None
     for ruleset in ruleset_list:
         if ruleset["name"] == ruleset_name:
@@ -142,9 +134,7 @@ def _conda_forge_specific_repo_setup(gh_repo):
         input={
             "name": ruleset_name,
             "target": "branch",
-            "conditions": {
-                "ref_name": {"exclude": [], "include": ["~DEFAULT_BRANCH"]}
-            },
+            "conditions": {"ref_name": {"exclude": [], "include": ["~DEFAULT_BRANCH"]}},
             "rules": [{"type": "deletion"}, {"type": "non_fast_forward"}],
             "enforcement": "active",
         },
@@ -223,9 +213,7 @@ def create_github_repo(args):
 
     if args.add_teams:
         if isinstance(user_or_org, Organization):
-            configure_github_team(
-                metadata, gh_repo, user_or_org, feedstock_name
-            )
+            configure_github_team(metadata, gh_repo, user_or_org, feedstock_name)
 
 
 def accept_all_repository_invitations(gh):
@@ -314,9 +302,7 @@ def configure_github_team(meta, gh_repo, org, feedstock_name, remove=True):
 
     # Add any new maintainer teams
     maintainer_teams = {
-        m.split("/")[1]
-        for m in maintainer_teams
-        if m.startswith(str(org.login))
+        m.split("/")[1] for m in maintainer_teams if m.startswith(str(org.login))
     }
     current_maintainer_team_objs = {
         team.slug: team for team in current_maintainer_teams

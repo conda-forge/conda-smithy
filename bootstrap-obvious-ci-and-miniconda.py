@@ -22,9 +22,7 @@ MINICONDA_URL_TEMPLATE = (
 )
 
 
-def miniconda_url(
-    target_system, target_arch, major_py_version, miniconda_version
-):
+def miniconda_url(target_system, target_arch, major_py_version, miniconda_version):
     template_values = {"miniconda_version": miniconda_version}
 
     if target_arch == "x86":
@@ -47,9 +45,7 @@ def miniconda_url(
     template_values["ext"] = miniconda_os_ext[template_values["OS"]]
 
     if major_py_version not in ["3"]:
-        raise ValueError(
-            f"Unexpected major Python version {major_py_version!r}."
-        )
+        raise ValueError(f"Unexpected major Python version {major_py_version!r}.")
     template_values["major_py_version"] = major_py_version
 
     return MINICONDA_URL_TEMPLATE.format(**template_values)
@@ -63,9 +59,7 @@ def main(
     install_obvci=True,
 ):
     system = platform.system()
-    url = miniconda_url(
-        system, target_arch, major_py_version, miniconda_version
-    )
+    url = miniconda_url(system, target_arch, major_py_version, miniconda_version)
     basename = url.rsplit("/", 1)[1]
     if system in ["Linux", "Darwin"]:
         cmd = ["bash", basename, "-b", "-p", target_dir]
