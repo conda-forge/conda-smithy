@@ -91,8 +91,6 @@ def test_ordering():
 
     res = variant_add(start, mig_compiler)
     assert res["c_compiler"] == ["gcc"]
-    print(res)
-    # raise Exception()
 
 
 def test_no_ordering():
@@ -121,8 +119,6 @@ def test_no_ordering():
 
     res = variant_add(start, mig_compiler)
     assert res["xyz"] == ["2"]
-    print(res)
-    # raise Exception()
 
 
 def test_ordering_downgrade():
@@ -151,7 +147,6 @@ def test_ordering_downgrade():
 
     res = variant_add(start, mig_compiler)
     assert res["jpeg"] == ["2.0"]
-    print(res)
 
 
 def test_ordering_space():
@@ -175,7 +170,6 @@ def test_ordering_space():
 
     res = variant_add(start, mig_compiler)
     assert res["python"] == ["2.7 *_cpython"]
-    print(res)
 
 
 def test_new_pinned_package():
@@ -206,7 +200,6 @@ def test_new_pinned_package():
     res = variant_add(start, mig_compiler)
     assert res["gprc-cpp"] == ["1.23"]
     assert res["pin_run_as_build"]["gprc-cpp"]["max_pin"] == "x.x"
-    print(res)
 
 
 def test_zip_keys():
@@ -240,7 +233,6 @@ def test_zip_keys():
     )
 
     res = variant_add(start, mig_compiler)
-    print(res)
 
     assert len(res["zip_keys"]) == 3
     assert ["python", "vc", "vc_runtime"] in res["zip_keys"]
@@ -277,7 +269,6 @@ def test_migrate_windows_compilers():
     )
 
     res = variant_add(start, mig)
-    print(res)
 
     assert len(res["c_compiler"]) == 2
     assert res["c_compiler"] == ["vs2008", "vs2017"]
@@ -310,7 +301,6 @@ def test_pin_run_as_build():
     )
 
     res = variant_add(start, mig_compiler)
-    print(res)
 
     assert len(res["pin_run_as_build"]) == 3
 
@@ -395,9 +385,6 @@ def test_py39_migration():
     res = variant_add(base, migration_pypy)
     res2 = variant_add(res, migration_py39)
 
-    print(res)
-    print(res2)
-
     assert res2["python"] == migration_py39["__migrator"]["ordering"]["python"]
     # assert that we've ordered the numpy bits properly
     assert res2["numpy"] == [
@@ -409,7 +396,6 @@ def test_py39_migration():
     ]
 
     res3 = variant_add(base, migration_py39)
-    print(res3)
     assert res3["python"] == [
         "3.6.* *_cpython",
         "3.9.* *_cpython",  # newly added
@@ -504,9 +490,6 @@ def test_multiple_key_add_migration():
     res = variant_add(base, migration_pypy)
     res2 = variant_add(res, migration_py39)
 
-    print(res)
-    print(res2)
-
     assert res2["python"] == migration_py39["__migrator"]["ordering"]["python"]
     # assert that we've ordered the numpy bits properly
     assert res2["numpy"] == [
@@ -519,7 +502,6 @@ def test_multiple_key_add_migration():
     ]
 
     res3 = variant_add(base, migration_py39)
-    print(res3)
     assert res3["python"] == [
         "3.6.* *_cpython",
         "3.9.* *_cpython",  # newly added
@@ -680,8 +662,6 @@ def test_variant_remove_add(platform, arch):
     res = variant_add(base, remove)
     res = variant_add(res, add)
     res = variant_add(res, add_py39)
-    print(res["python"])
-    print(res["numpy"])
 
     # alternatively we could just remove py38_osx-arm64 and then add py39
     res2 = variant_add(base, remove2)
