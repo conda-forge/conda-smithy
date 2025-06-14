@@ -4,6 +4,23 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.50.1
+====================
+
+**Fixed:**
+
+* Rust license lint will no longer raise on ``cargo-bundle-licenses`` itself.
+* Fix merging of variants in the presence of non-None ordering (#2335)
+* Avoid problems with too-long paths on windows by lowering the threshold at which we replace variant filenames with hashes (#2233).
+
+**Authors:**
+
+* H. Vetinari
+* Uwe L. Korn
+* pre-commit-ci[bot]
+
+
+
 v3.50.0
 ====================
 
