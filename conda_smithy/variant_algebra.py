@@ -183,13 +183,12 @@ def op_variant_key_add(v1: dict, v2: dict):
             )
             newly_added_zip_keys.update([primary_key] + additional_zip_keys)
 
+    additional_zip_keys_default_values = {}
     for additional_key in newly_added_zip_keys:
         # store the default value for the key, so that subsequent
         # key additions don't need to specify them and continue to use the default value
         # assert len(v1[key]) == 1
-        result.setdefault("__additional_zip_keys_default_values", {})[
-            additional_key
-        ] = result[additional_key][0]
+        additional_zip_keys_default_values[additional_key] = result[additional_key][0]
 
     for pkey_ind, pkey_val in enumerate(v2[primary_key]):
         # object is present already, ignore everything
@@ -217,9 +216,7 @@ def op_variant_key_add(v1: dict, v2: dict):
 
                     # Transform key to zip_key if required
                     if key in newly_added_zip_keys:
-                        default_value = result["__additional_zip_keys_default_values"][
-                            key
-                        ]
+                        default_value = additional_zip_keys_default_values[key]
                         result[key] = [default_value] * len(new_keys)
 
                     # Create a new version of the key from
@@ -230,10 +227,10 @@ def op_variant_key_add(v1: dict, v2: dict):
 
                     if key in v2:
                         new_value[new_key_position] = v2[key][pkey_ind]
-                    elif key in result.get("__additional_zip_keys_default_values", {}):
-                        new_value[new_key_position] = result[
-                            "__additional_zip_keys_default_values"
-                        ][key]
+                    elif key in additional_zip_keys_default_values:
+                        new_value[new_key_position] = (
+                            additional_zip_keys_default_values[key]
+                        )
 
                     result[key] = new_value
 
