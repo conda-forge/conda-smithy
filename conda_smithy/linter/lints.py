@@ -4,6 +4,7 @@ import os
 import re
 import tempfile
 from collections.abc import Sequence
+from io import StringIO
 from typing import Any, Literal, Optional
 
 from conda.models.version import VersionOrder
@@ -1138,3 +1139,27 @@ def lint_recipe_is_abi3_bool(
             "string (i.e., 'true' or 'false'). Please change syntax like "
             "`is_abi3 == 'true' to `is_abi3`."
         )
+
+
+def lint_recipe_uses_cargo_variable(build_section, lints):
+    """
+    Check for lowercase "cargo" usage in build scripts.
+
+    Build scripts should use $CARGO (on Unix) or %CARGO% (on Windows)
+    instead of lowercase "cargo" to ensure proper environment setup.
+    """
+    if "script" in build_section:
+        script = build_section["script"]
+        if not isinstance(script, str):
+            stream = StringIO()
+            get_yaml().dump(script, stream)
+            script = stream.getvalue()
+
+        # Check for lowercase "cargo" as a standalone word
+        # Use word boundaries to avoid matching within other words
+        if re.search(r"\bcargo\b", script):
+            lints.append(
+                "Found plain 'cargo' in build script. "
+                "Use $CARGO (on Unix) or %CARGO% (on Windows) instead "
+                "to ensure proper environment setup."
+            )
