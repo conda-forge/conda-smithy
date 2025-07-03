@@ -1526,6 +1526,9 @@ def _render_template_exe_files(forge_config, jinja_env, template_files, forge_di
         template = jinja_env.get_template(os.path.basename(template_file) + ".tmpl")
         target_fname = os.path.join(forge_dir, template_file)
         new_file_contents = template.render(**forge_config)
+        # ensure trailing newline
+        if new_file_contents[-1] != "\n":
+            new_file_contents += "\n"
         if target_fname in get_common_scripts(forge_dir) and os.path.exists(
             target_fname
         ):
