@@ -36,9 +36,6 @@ if not "%ARTIFACT_UNIQUE_ID%" == "%ARTIFACT_UNIQUE_ID:~0,80%" (
     set ARTIFACT_UNIQUE_ID=%CI_RUN_ID%_%SHORT_CONFIG%
 )
 
-rem Set a descriptive ID for the archive(s), specialized for this particular job run
-set ARCHIVE_UNIQUE_ID=%CI_RUN_ID%_%CONFIG%
-
 rem Make the build artifact zip
 if defined BLD_ARTIFACT_PREFIX (
     set BLD_ARTIFACT_NAME=%BLD_ARTIFACT_PREFIX%_%ARTIFACT_UNIQUE_ID%
