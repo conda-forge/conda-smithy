@@ -1741,6 +1741,7 @@ def _github_actions_specific_setup(jinja_env, forge_config, forge_dir, platform)
     # Templates for all platforms
     if forge_config["github_actions"]["store_build_artifacts"]:
         template_files.append(".scripts/create_conda_build_artifacts.sh")
+        template_files.append(".scripts/create_conda_build_artifacts.bat")
 
     _render_template_exe_files(
         forge_config=forge_config,

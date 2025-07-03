@@ -175,6 +175,9 @@ jobs:
         set "sha=%GITHUB_SHA%"
         call ".scripts\run_win_build.bat"
       env:
+        # default value; make it explicit, as it needs to match with artefact
+        # generation below. Not configurable for now, can be revisited later
+        CONDA_BLD_DIR: C:\bld
         MINIFORGE_HOME: D:\Miniforge
         PYTHONUNBUFFERED: 1
         CONFIG: {% raw %}${{ matrix.CONFIG }}{% endraw %}
@@ -198,7 +201,6 @@ jobs:
         CONFIG: {% raw %}${{ matrix.CONFIG }}{% endraw %}
         SHORT_CONFIG: {% raw %}${{ matrix.SHORT_CONFIG }}{% endraw %}
         OS: {% raw %}${{ matrix.os }}{% endraw %}
-        MINIFORGE_HOME_WIN: D:\Miniforge
       run: |
         export CI_RUN_ID=$GITHUB_RUN_ID
         export FEEDSTOCK_NAME="$(basename $GITHUB_REPOSITORY)"
@@ -206,7 +208,8 @@ jobs:
         if [ $OS == "macos" ]; then
           export CONDA_BLD_DIR="${MINIFORGE_HOME:-${HOME}/miniforge3}/conda-bld"
         elif [ $OS == "windows" ]; then
-          export CONDA_BLD_DIR="${MINIFORGE_HOME_WIN//\\//}/conda-bld"
+          # this needs to be consistent with build step, see above
+          export CONDA_BLD_DIR="C:\\bld"
         else
           export CONDA_BLD_DIR="build_artifacts"
         fi
@@ -221,7 +224,11 @@ jobs:
         else
           export BLD_ARTIFACT_PREFIX="conda_pkgs"
         fi
-        ./.scripts/create_conda_build_artifacts.sh
+        if [ $OS == "windows" ]; then
+          pwsh -Command ". '.scripts/create_conda_build_artifacts.bat'"
+        else
+          ./.scripts/create_conda_build_artifacts.sh
+        fi
 
     - name: Store conda build artifacts
       uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
