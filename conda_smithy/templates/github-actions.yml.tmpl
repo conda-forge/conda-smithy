@@ -219,7 +219,8 @@ jobs:
       continue-on-error: true
       id: prepare-artifacts
       shell: bash
-      if: {% raw %}${{ always() }}{% endraw %}
+      # we do not want to trigger artefact creation if the build was cancelled
+      if: {% raw %}${{ steps.determine-status.outputs.status != 'cancelled' }}{% endraw %}
       env:
         CI: github_actions
         CONFIG: {% raw %}${{ matrix.CONFIG }}{% endraw %}
@@ -256,7 +257,7 @@ jobs:
 
     - name: Store conda build artifacts
       uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-      if: {% raw %}${{ always() && steps.prepare-artifacts.outcome == 'success' }}{% endraw %}
+      if: {% raw %}${{ steps.prepare-artifacts.outcome == 'success' }}{% endraw %}
       with:
         name: {% raw %}${{ steps.prepare-artifacts.outputs.BLD_ARTIFACT_NAME }}{% endraw %}
         path: {% raw %}${{ steps.prepare-artifacts.outputs.BLD_ARTIFACT_PATH }}{% endraw %}
@@ -265,7 +266,8 @@ jobs:
 
     - name: Store conda build environment artifacts
       uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-      if: {% raw %}${{ failure() && steps.prepare-artifacts.outcome == 'success' }}{% endraw %}
+      # only relevant if build failed, see above
+      if: {% raw %}${{ steps.determine-status.outputs.status == 'failure' && steps.prepare-artifacts.outcome == 'success' }}{% endraw %}
       with:
         name: {% raw %}${{ steps.prepare-artifacts.outputs.ENV_ARTIFACT_NAME }}{% endraw %}
         path: {% raw %}${{ steps.prepare-artifacts.outputs.ENV_ARTIFACT_PATH }}{% endraw %}
