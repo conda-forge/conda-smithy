@@ -97,6 +97,7 @@ jobs:
 {%- endif %}
 
     - name: Build on Linux
+      id: build-linux
       if: matrix.os == 'ubuntu'
       env:
         CONFIG: {% raw %}${{ matrix.CONFIG }}{% endraw %}
@@ -134,6 +135,7 @@ jobs:
         ./.scripts/run_docker_build.sh
 
     - name: Build on macOS
+      id: build-macos
       if: matrix.os == 'macos'
       env:
         CONFIG: {% raw %}${{ matrix.CONFIG }}{% endraw %}
@@ -167,6 +169,7 @@ jobs:
 {% endfor %}
 
     - name: Build on windows
+      id: build-windows
       if: matrix.os == 'windows'
       shell: cmd
       run: |
@@ -191,6 +194,27 @@ jobs:
 {%- endfor %}
 {%- if github_actions.store_build_artifacts %}
 
+    - name: Determine build outcome
+      # this is to merge the status of the linux/osx/win builds into
+      # something we can easily reuse during artefact generation
+      id: determine-status
+      shell: bash
+      env:
+        OS: {% raw %}${{ matrix.os }}{% endraw %}
+      run: |
+        if [[ "$OS" == "ubuntu" ]]; then
+          STATUS={% raw %}${{ steps.build-linux.outcome }}{% endraw %}
+        elif [[ "$OS" == "macos" ]]; then
+          STATUS={% raw %}${{ steps.build-macos.outcome }}{% endraw %}
+        elif [[ "$OS" == "windows" ]]; then
+          STATUS={% raw %}${{ steps.build-windows.outcome }}{% endraw %}
+        fi
+        if [ -z "$STATUS" ]; then
+          # steps that never ran will have empty status
+          STATUS="cancelled"
+        fi
+        echo "status=$STATUS" >> $GITHUB_OUTPUT
+
     - name: Prepare conda build artifacts
       continue-on-error: true
       id: prepare-artifacts
@@ -200,6 +224,7 @@ jobs:
         CI: github_actions
         CONFIG: {% raw %}${{ matrix.CONFIG }}{% endraw %}
         SHORT_CONFIG: {% raw %}${{ matrix.SHORT_CONFIG }}{% endraw %}
+        JOB_STATUS: {% raw %}${{ steps.determine-status.outputs.status }}{% endraw %}
         OS: {% raw %}${{ matrix.os }}{% endraw %}
       run: |
         export CI_RUN_ID=$GITHUB_RUN_ID
@@ -217,7 +242,6 @@ jobs:
         # Archive the CONDA_BLD_DIR environments only when the job fails
         # Use different prefix for successful and failed build artifacts
         # so random failures don't prevent rebuilds from creating artifacts.
-        JOB_STATUS="{% raw %}${{ job.status }}{% endraw %}"
         if [ $JOB_STATUS == "failure" ]; then
           export BLD_ARTIFACT_PREFIX="conda_artifacts"
           export ENV_ARTIFACT_PREFIX="conda_envs"
