@@ -167,6 +167,7 @@ jobs:
 {% endfor %}
 
     - name: Build on windows
+      if: matrix.os == 'windows'
       shell: cmd
       run: |
         set "flow_run_id=github_%GITHUB_RUN_ID%"
@@ -185,20 +186,20 @@ jobs:
 {%- for secret in secrets %}
         {{ secret }}: {% raw %}${{{% endraw %} secrets.{{ secret }} {% raw %}}}{% endraw %}
 {%- endfor %}
-      if: matrix.os == 'windows'
-
 {%- if github_actions.store_build_artifacts %}
+
     - name: Prepare conda build artifacts
+      continue-on-error: true
       id: prepare-artifacts
       shell: bash
       if: {% raw %}${{ always() }}{% endraw %}
       env:
+        CI: github_actions
         CONFIG: {% raw %}${{ matrix.CONFIG }}{% endraw %}
         SHORT_CONFIG: {% raw %}${{ matrix.SHORT_CONFIG }}{% endraw %}
         OS: {% raw %}${{ matrix.os }}{% endraw %}
         MINIFORGE_HOME_WIN: D:\Miniforge
       run: |
-        export CI=github_actions
         export CI_RUN_ID=$GITHUB_RUN_ID
         export FEEDSTOCK_NAME="$(basename $GITHUB_REPOSITORY)"
         export ARTIFACT_STAGING_DIR="$GITHUB_WORKSPACE"
@@ -221,7 +222,6 @@ jobs:
           export BLD_ARTIFACT_PREFIX="conda_pkgs"
         fi
         ./.scripts/create_conda_build_artifacts.sh
-      continue-on-error: true
 
     - name: Store conda build artifacts
       uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
