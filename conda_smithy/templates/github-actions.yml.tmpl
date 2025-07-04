@@ -97,6 +97,7 @@ jobs:
 {%- endif %}
 
     - name: Build on Linux
+      id: build-linux
       if: matrix.os == 'ubuntu'
       env:
         CONFIG: {% raw %}${{ matrix.CONFIG }}{% endraw %}
@@ -134,6 +135,7 @@ jobs:
         ./.scripts/run_docker_build.sh
 
     - name: Build on macOS
+      id: build-macos
       if: matrix.os == 'macos'
       env:
         CONFIG: {% raw %}${{ matrix.CONFIG }}{% endraw %}
@@ -167,6 +169,8 @@ jobs:
 {% endfor %}
 
     - name: Build on windows
+      id: build-windows
+      if: matrix.os == 'windows'
       shell: cmd
       run: |
         set "flow_run_id=github_%GITHUB_RUN_ID%"
@@ -174,6 +178,9 @@ jobs:
         set "sha=%GITHUB_SHA%"
         call ".scripts\run_win_build.bat"
       env:
+        # default value; make it explicit, as it needs to match with artefact
+        # generation below. Not configurable for now, can be revisited later
+        CONDA_BLD_DIR: C:\bld
         MINIFORGE_HOME: D:\Miniforge
         PYTHONUNBUFFERED: 1
         CONFIG: {% raw %}${{ matrix.CONFIG }}{% endraw %}
@@ -185,27 +192,50 @@ jobs:
 {%- for secret in secrets %}
         {{ secret }}: {% raw %}${{{% endraw %} secrets.{{ secret }} {% raw %}}}{% endraw %}
 {%- endfor %}
-      if: matrix.os == 'windows'
-
 {%- if github_actions.store_build_artifacts %}
+
+    - name: Determine build outcome
+      # this is to merge the status of the linux/osx/win builds into
+      # something we can easily reuse during artefact generation
+      id: determine-status
+      shell: bash
+      env:
+        OS: {% raw %}${{ matrix.os }}{% endraw %}
+      run: |
+        if [[ "$OS" == "ubuntu" ]]; then
+          STATUS={% raw %}${{ steps.build-linux.outcome }}{% endraw %}
+        elif [[ "$OS" == "macos" ]]; then
+          STATUS={% raw %}${{ steps.build-macos.outcome }}{% endraw %}
+        elif [[ "$OS" == "windows" ]]; then
+          STATUS={% raw %}${{ steps.build-windows.outcome }}{% endraw %}
+        fi
+        if [ -z "$STATUS" ]; then
+          # steps that never ran will have empty status
+          STATUS="cancelled"
+        fi
+        echo "status=$STATUS" >> $GITHUB_OUTPUT
+
     - name: Prepare conda build artifacts
+      continue-on-error: true
       id: prepare-artifacts
       shell: bash
-      if: {% raw %}${{ always() }}{% endraw %}
+      # we do not want to trigger artefact creation if the build was cancelled
+      if: {% raw %}${{ steps.determine-status.outputs.status != 'cancelled' }}{% endraw %}
       env:
+        CI: github_actions
         CONFIG: {% raw %}${{ matrix.CONFIG }}{% endraw %}
         SHORT_CONFIG: {% raw %}${{ matrix.SHORT_CONFIG }}{% endraw %}
+        JOB_STATUS: {% raw %}${{ steps.determine-status.outputs.status }}{% endraw %}
         OS: {% raw %}${{ matrix.os }}{% endraw %}
-        MINIFORGE_HOME_WIN: D:\Miniforge
       run: |
-        export CI=github_actions
         export CI_RUN_ID=$GITHUB_RUN_ID
         export FEEDSTOCK_NAME="$(basename $GITHUB_REPOSITORY)"
         export ARTIFACT_STAGING_DIR="$GITHUB_WORKSPACE"
         if [ $OS == "macos" ]; then
           export CONDA_BLD_DIR="${MINIFORGE_HOME:-${HOME}/miniforge3}/conda-bld"
         elif [ $OS == "windows" ]; then
-          export CONDA_BLD_DIR="${MINIFORGE_HOME_WIN//\\//}/conda-bld"
+          # this needs to be consistent with build step, see above
+          export CONDA_BLD_DIR="C:\\bld"
         else
           export CONDA_BLD_DIR="build_artifacts"
         fi
@@ -213,19 +243,21 @@ jobs:
         # Archive the CONDA_BLD_DIR environments only when the job fails
         # Use different prefix for successful and failed build artifacts
         # so random failures don't prevent rebuilds from creating artifacts.
-        JOB_STATUS="{% raw %}${{ job.status }}{% endraw %}"
         if [ $JOB_STATUS == "failure" ]; then
           export BLD_ARTIFACT_PREFIX="conda_artifacts"
           export ENV_ARTIFACT_PREFIX="conda_envs"
         else
           export BLD_ARTIFACT_PREFIX="conda_pkgs"
         fi
-        ./.scripts/create_conda_build_artifacts.sh
-      continue-on-error: true
+        if [ $OS == "windows" ]; then
+          pwsh -Command ". '.scripts/create_conda_build_artifacts.bat'"
+        else
+          ./.scripts/create_conda_build_artifacts.sh
+        fi
 
     - name: Store conda build artifacts
       uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-      if: {% raw %}${{ always() && steps.prepare-artifacts.outcome == 'success' }}{% endraw %}
+      if: {% raw %}${{ steps.prepare-artifacts.outcome == 'success' }}{% endraw %}
       with:
         name: {% raw %}${{ steps.prepare-artifacts.outputs.BLD_ARTIFACT_NAME }}{% endraw %}
         path: {% raw %}${{ steps.prepare-artifacts.outputs.BLD_ARTIFACT_PATH }}{% endraw %}
@@ -234,7 +266,8 @@ jobs:
 
     - name: Store conda build environment artifacts
       uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-      if: {% raw %}${{ failure() && steps.prepare-artifacts.outcome == 'success' }}{% endraw %}
+      # only relevant if build failed, see above
+      if: {% raw %}${{ steps.determine-status.outputs.status == 'failure' && steps.prepare-artifacts.outcome == 'success' }}{% endraw %}
       with:
         name: {% raw %}${{ steps.prepare-artifacts.outputs.ENV_ARTIFACT_NAME }}{% endraw %}
         path: {% raw %}${{ steps.prepare-artifacts.outputs.ENV_ARTIFACT_PATH }}{% endraw %}
