@@ -198,6 +198,7 @@ jobs:
       # this is to merge the status of the linux/osx/win builds into
       # something we can easily reuse during artefact generation
       id: determine-status
+      if: {% raw %}${{ always() }}{% endraw %}
       shell: bash
       env:
         OS: {% raw %}${{ matrix.os }}{% endraw %}
