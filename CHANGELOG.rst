@@ -4,6 +4,24 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.51.0
+====================
+
+**Fixed:**
+
+* Bug preventing rerender of v1 recipes with migrators that add zip keys
+* Fixed artefact creation scripts for windows when using `provider: github_actions` (#2345).
+* Avoid running artefact generation scripts (on GHA) for cancelled jobs.
+* Ensure trailing newline in rendered template files.
+
+**Authors:**
+
+* H. Vetinari
+* Min RK
+* dependabot[bot]
+
+
+
 v3.50.1
 ====================
 
