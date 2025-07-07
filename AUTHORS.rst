@@ -7,8 +7,8 @@ Authors are sorted by number of commits.
 * nichmor
 * Christopher J. Wright
 * Anthony Scopatz
-* Phil Elson
 * H. Vetinari
+* Phil Elson
 * Wolf Vollprecht
 * Uwe L. Korn
 * Filipe Fernandes
@@ -43,10 +43,10 @@ Authors are sorted by number of commits.
 * Jan Schulz
 * Josh Reichardt
 * Bela Stoyan
+* dependabot[bot]
 * Justin Calamari
 * Jason Furmanek
 * Patrick Sodré
-* dependabot[bot]
 * Jan Lehnarsdt
 * C.A.M. Gerlach
 * refraction-ray
