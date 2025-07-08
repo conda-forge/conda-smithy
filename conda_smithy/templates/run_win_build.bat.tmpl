@@ -193,6 +193,9 @@ conda-build.exe "{{ recipe_dir }}" -m .ci_support\%CONFIG%.yaml --suppress-varia
 {%- elif conda_build_tool == "conda-build" %}
 conda-build.exe "{{ recipe_dir }}" -m .ci_support\%CONFIG%.yaml --suppress-variables %EXTRA_CB_OPTIONS%
 {%- elif conda_build_tool == "rattler-build" %}
+if exist "{{ recipe_dir }}\rattler-build-config.toml" (
+    set "EXTRA_CB_OPTIONS=%EXTRA_CB_OPTIONS% --config-file {{ recipe_dir }}\rattler-build-config.toml"
+)
 rattler-build.exe build --recipe "{{ recipe_dir }}" -m .ci_support\%CONFIG%.yaml %EXTRA_CB_OPTIONS% --target-platform %HOST_PLATFORM%
 {%- endif %}
 if !errorlevel! neq 0 exit /b !errorlevel!
