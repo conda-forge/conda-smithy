@@ -124,6 +124,50 @@ def test_ordering_with_tail():
     assert res["cuda_compiler_version"] == ["None", "12.9"]
 
 
+@pytest.mark.parametrize("gcc_for_12dot6", ["13", "14", "15"])
+def test_ordering_with_primary_key(gcc_for_12dot6):
+    # ensure that GCC pins matching the respective CUDA versions get merged
+    # correctly; the GCC pin for 12.6 should never get picked since that CUDA
+    # version gets dropped in the merge of the primary keys (based on ordering).
+    start = parse_variant(
+        dedent(
+            f"""\
+    cuda_compiler_version:
+        - "None"
+        - "12.6"
+    c_compiler_version:
+        - "14"
+        - "{gcc_for_12dot6}"
+    zip_keys:
+        - - c_compiler_version
+          - cuda_compiler_version
+    """
+        )
+    )
+
+    cuda_migrator = parse_variant(
+        dedent(
+            """\
+    __migrator:
+        primary_key: cuda_compiler_version
+        ordering:
+            cuda_compiler_version:
+                - "12.6"
+                - "None"
+                - "12.9"
+    cuda_compiler_version:
+        - "12.9"
+    c_compiler_version:
+        - "14"
+    """
+        )
+    )
+
+    res = variant_add(start, cuda_migrator)
+    assert res["cuda_compiler_version"] == ["None", "12.9"]
+    assert res["c_compiler_version"] == ["14", "14"]
+
+
 def test_ordering_with_tail_and_readd():
     # test interaction between migrating CUDA from ("None", "12.6") to ("None", "12.9"),
     # while also allowing an opt-in migrator to re-add CUDA 11.8, see
