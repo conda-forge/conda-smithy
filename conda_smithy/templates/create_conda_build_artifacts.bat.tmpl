@@ -19,8 +19,6 @@ rem BLD_ARTIFACT_PATH
 rem ENV_ARTIFACT_NAME
 rem ENV_ARTIFACT_PATH
 
-@echo on
-
 rem Check that the conda-build directory exists
 if not exist %CONDA_BLD_DIR% (
     echo conda-build directory does not exist
