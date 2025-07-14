@@ -6,13 +6,13 @@ Authors are sorted by number of commits.
 * Jaime Rodríguez-Guerra
 * nichmor
 * Christopher J. Wright
-* Anthony Scopatz
 * H. Vetinari
+* Anthony Scopatz
 * Phil Elson
 * Wolf Vollprecht
 * Uwe L. Korn
-* Filipe Fernandes
 * pre-commit-ci[bot]
+* Filipe Fernandes
 * Min RK
 * Dougal J. Sutherland
 * Amit Kumar
@@ -143,3 +143,4 @@ Authors are sorted by number of commits.
 * James Myatt
 * Dan Yeaw
 * Guillaume Fraux
+* Lucas Colley
