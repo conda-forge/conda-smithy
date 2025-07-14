@@ -301,15 +301,16 @@ def variant_add(v1: dict, v2: dict) -> dict[str, Any]:
     right = set(v2.keys()).difference(v1.keys())
     joint = set(v1.keys()) & set(v2.keys())
 
-    # deal with __migrator: ordering
+    # deal with __migrator: ordering etc.
+    ordering = {}
+    primary_key = []
     if "__migrator" in v2:
         ordering = v2["__migrator"].get("ordering", {})
+        primary_key = v2["__migrator"].get("primary_key", [])
         operation = v2["__migrator"].get("operation")
         # handle special operations
         if operation:
             return VARIANT_OP[operation](v1, v2)
-    else:
-        ordering = {}
 
     # special keys
     if "__migrator" in right:
@@ -356,7 +357,50 @@ def variant_add(v1: dict, v2: dict) -> dict[str, Any]:
         special_variants["zip_keys"] = zk_out
 
     joint_variant = {}
-    for k in joint:
+    # determine set of keys attached to primary_key, if any
+    pk_group = set()
+    already_handled = set()
+    # it's possible that primary key is defined in v2, while corresponding
+    # zip group is defined in v1; joint zip_keys handled above already
+    zip_key_groups = v1.get("zip_keys", []) + v2.get("zip_keys", [])
+    for pk in ensure_list(primary_key):
+        if pk not in v2:
+            continue
+        pk_left, pk_right = ensure_list(v1[pk]), ensure_list(v2[pk])
+        pk_merge = variant_key_add(
+            pk, pk_left, pk_right, ordering=ordering.get(pk, None)
+        )
+        joint_variant[pk] = pk_merge
+
+        # keys in same zip_keys-group with primary key
+        pk_group = [g for g in zip_key_groups if pk in g]
+        # even if primary key exists, we don't enforce anywhere that it belongs to
+        # a group in zip_keys, so we might not find a match; if we do find a match,
+        # it's unique though, so extract it from the comprehenshion result.
+        pk_group = set(pk_group[0] if pk_group else [])
+        if not pk_group:
+            continue
+        # determine which values of primary_key were chosen upon merging,
+        # relative to concatenation of left/right values
+        chosen_ordinals = []
+        for i, v in enumerate(pk_left + pk_right):
+            if v in pk_merge:
+                chosen_ordinals.append(i)
+
+        # for non-primary keys of the zip_keys group, choose the values from the
+        # same positions as those that were chosen for the primary key
+        for k in pk_group - {pk}:
+            v_left, v_right = ensure_list(v1[k]), ensure_list(v2[k])
+            res = []
+            for i, v in enumerate(v_left + v_right):
+                if i in chosen_ordinals:
+                    res.append(v)
+            joint_variant[k] = res
+
+        already_handled |= pk_group
+
+    # all other keys
+    for k in joint - already_handled:
         v_left, v_right = ensure_list(v1[k]), ensure_list(v2[k])
         joint_variant[k] = variant_key_add(
             k, v_left, v_right, ordering=ordering.get(k, None)
