@@ -124,7 +124,7 @@ def test_ordering_with_tail():
     assert res["cuda_compiler_version"] == ["None", "12.9"]
 
 
-@pytest.mark.parametrize("gcc_for_12dot6", ["13", "14", "15"])
+@pytest.mark.parametrize("gcc_for_12dot6", ["13", "14", "15", "16"])
 def test_ordering_with_primary_key(gcc_for_12dot6):
     # ensure that GCC pins matching the respective CUDA versions get merged
     # correctly; the GCC pin for 12.6 should never get picked since that CUDA
@@ -136,7 +136,7 @@ def test_ordering_with_primary_key(gcc_for_12dot6):
         - "None"
         - "12.6"
     c_compiler_version:
-        - "14"
+        - "15"
         - "{gcc_for_12dot6}"
     zip_keys:
         - - c_compiler_version
@@ -165,7 +165,7 @@ def test_ordering_with_primary_key(gcc_for_12dot6):
 
     res = variant_add(start, cuda_migrator)
     assert res["cuda_compiler_version"] == ["None", "12.9"]
-    assert res["c_compiler_version"] == ["14", "14"]
+    assert res["c_compiler_version"] == ["15", "14"]
 
 
 def test_ordering_with_tail_and_readd():
