@@ -4,6 +4,26 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.51.1
+====================
+
+**Changed:**
+
+* ``pixi.toml`` files generated in feedstocks by setting ``conda_install_tool: pixi`` are now recognised by GitHub as generated.
+
+**Fixed:**
+
+* Fix artefact generation on windows failing spuriously due to enabling logging (#2351).
+* Fix merging of variants for migrators using both `primary_key:` and `ordering:`.
+
+**Authors:**
+
+* H. Vetinari
+* pre-commit-ci[bot]
+* Lucas Colley
+
+
+
 v3.51.0
 ====================
 
