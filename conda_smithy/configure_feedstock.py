@@ -2513,7 +2513,9 @@ def check_version_uptodate(name, installed_version, error_on_warn):
         logger.info(msg)
 
 
-def commit_changes(forge_file_directory, commit, cs_ver, cfp_ver, cb_ver, rb_ver=None, rbc_ver=None):
+def commit_changes(
+    forge_file_directory, commit, cs_ver, cfp_ver, cb_ver, rb_ver=None, rbc_ver=None
+):
     tools_and_versions = {
         "conda-build": cb_ver,
         "rattler-build": rb_ver,
@@ -2523,7 +2525,13 @@ def commit_changes(forge_file_directory, commit, cs_ver, cfp_ver, cb_ver, rb_ver
     if cfp_ver:
         msg += f" and conda-forge-pinning {cfp_ver}"
     msg += "\n\nOther tools:\n"
-    msg += "\n".join([f"- {tool} {version}" for tool, version in tools_and_versions.items() if version])
+    msg += "\n".join(
+        [
+            f"- {tool} {version}"
+            for tool, version in tools_and_versions.items()
+            if version
+        ]
+    )
     logger.info(msg)
 
     is_git_repo = os.path.exists(os.path.join(forge_file_directory, ".git"))
