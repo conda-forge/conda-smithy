@@ -12,7 +12,8 @@ import time
 import warnings
 from collections import Counter, OrderedDict, namedtuple
 from copy import deepcopy
-from functools import lru_cache
+from functools import cache, lru_cache
+from importlib.metadata import version as importlib_version
 from itertools import chain, product
 from os import fspath
 from pathlib import Path, PurePath
@@ -97,6 +98,14 @@ CONDA_FORGE_PINNING_LIFETIME = int(
 @lru_cache(10)
 def warn_once(msg: str):
     logger.warning(msg)
+
+
+@cache
+def rattler_build_version() -> str | None:
+    p = subprocess.run(["rattler-build", "--version"], text=True, capture_output=True)
+    if p.returncode == 0:
+        return p.stdout.strip().split()[-1]
+    return None
 
 
 def package_key(config, used_loop_vars, subdir):
@@ -2504,11 +2513,17 @@ def check_version_uptodate(name, installed_version, error_on_warn):
         logger.info(msg)
 
 
-def commit_changes(forge_file_directory, commit, cs_ver, cfp_ver, cb_ver):
+def commit_changes(forge_file_directory, commit, cs_ver, cfp_ver, cb_ver, rb_ver=None, rbc_ver=None):
+    tools_and_versions = {
+        "conda-build": cb_ver,
+        "rattler-build": rb_ver,
+        "rattler-build-conda-compat": rbc_ver,
+    }
+    msg = f"Re-rendered with conda-smithy {cs_ver}"
     if cfp_ver:
-        msg = f"Re-rendered with conda-build {cb_ver}, conda-smithy {cs_ver}, and conda-forge-pinning {cfp_ver}"
-    else:
-        msg = f"Re-rendered with conda-build {cb_ver} and conda-smithy {cs_ver}"
+        msg += f" and conda-forge-pinning {cfp_ver}"
+    msg += "\n\nOther tools:\n"
+    msg += "\n".join([f"- {tool} {version}" for tool, version in tools_and_versions.items() if version])
     logger.info(msg)
 
     is_git_repo = os.path.exists(os.path.join(forge_file_directory, ".git"))
@@ -2844,6 +2859,8 @@ def main(
         __version__,
         cf_pinning_ver,
         conda_build_version,
+        rattler_build_version(),
+        importlib_version("rattler_build_conda_compat"),
     )
 
 
