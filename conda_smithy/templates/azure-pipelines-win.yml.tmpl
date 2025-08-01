@@ -6,6 +6,10 @@ jobs:
 - job: win
   {{ azure_yaml|indent(2) }}
   steps:
+    # enabled dev mode to allow symlink
+    - displayName: enable dev mode
+      powershell: reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\AppModelUnlock" /t REG_DWORD /f /v "AllowDevelopmentWithoutDevLicense" /d "1"
+
 {%- if clone_depth is not none %}
     - checkout: self
       fetchDepth: {{ clone_depth }}
