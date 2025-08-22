@@ -647,7 +647,7 @@ def test_migrator_cfp_override(recipe_migration_cfep9, jinja_env):
     )
     os.makedirs(cfp_migration_dir, exist_ok=True)
 
-    with open(os.path.join(cfp_migration_dir, "zlib2.yaml"), "w") as f:
+    with open(os.path.join(cfp_migration_dir, "zlib.yaml"), "w") as f:
         f.write(
             textwrap.dedent(
                 """
