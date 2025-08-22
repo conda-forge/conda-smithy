@@ -801,6 +801,9 @@ def dump_subspace_config_files(metas, root_path, platform, arch, upload, forge_c
             f"{platform}_{arch}",
             package_key(config, top_level_loop_vars, metas[0].config.subdir),
         )
+        # remove slashes that may occur in variant values and thus the filename
+        config_name = config_name.replace("/", "").replace(",", "")
+
         short_config_name = config_name
         conf_hash = hashlib.sha256(config_name.encode("utf-8")).hexdigest()[:8]
         # drone has a limit of 50, see https://github.com/conda-forge/conda-smithy/issues/1188
