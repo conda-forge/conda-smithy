@@ -2694,7 +2694,7 @@ def make_jinja_env(feedstock_directory):
 def get_migrations_in_dir(migrations_root):
     """
     Given a directory, return the migrations as a mapping
-    from the (filename, timestamp) to (full_path, migration_number, use_local)
+    from the filename to a tuple of (full_path, migration_number, timestamp, use_local)
     """
     res = {}
     for full_path in glob.glob(os.path.join(migrations_root, "*.yaml")):
@@ -2711,7 +2711,7 @@ def get_migrations_in_dir(migrations_root):
                 == "true"
             )
             fn = os.path.basename(full_path)
-            res[(fn, ts)] = (full_path, migration_number, use_local)
+            res[fn] = (full_path, migration_number, ts, use_local)
     return res
 
 
@@ -2747,21 +2747,21 @@ def set_migration_fns(forge_dir, forge_config):
     migrations_in_feedstock = get_migrations_in_dir(migrations_root)
 
     if not os.path.exists(cfp_migrations_dir):
-        migration_fns = [fp for fp, _, _ in migrations_in_feedstock.values()]
+        migration_fns = [fp for fp, _, _, _ in migrations_in_feedstock.values()]
         forge_config["migration_fns"] = migration_fns
         return
 
     migrations_in_cfp = get_migrations_in_dir(cfp_migrations_dir)
 
     result = []
-    for (fn, ts), (full_path, num, use_local) in migrations_in_feedstock.items():
+    for fn, (full_path, num, ts, use_local) in migrations_in_feedstock.items():
         if use_local or not isinstance(ts, (int, str, float)):
             # This file has a setting to use the file in the feedstock
             # or doesn't have a timestamp. Use it as it is.
             result.append(full_path)
-        elif (fn, ts) in migrations_in_cfp:
+        elif fn in migrations_in_cfp:
             # Use the one from cfp if migration_numbers match
-            new_full_path, new_num, _ = migrations_in_cfp[(fn, ts)]
+            new_full_path, new_num, _, _ = migrations_in_cfp[fn]
             if num == new_num:
                 logger.info(
                     "%s from feedstock is ignored and upstream version is used",
