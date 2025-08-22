@@ -4030,7 +4030,6 @@ def test_lint_recipe_parses_ok():
 
 def test_lint_recipe_parses_forblock():
     with tempfile.TemporaryDirectory() as tmpdir:
-        # CRM cannot parse this one
         with open(os.path.join(tmpdir, "meta.yaml"), "w") as f:
             f.write(
                 textwrap.dedent(
@@ -4065,12 +4064,6 @@ def test_lint_recipe_parses_forblock():
         ), lints
         assert not any(
             hint.startswith("The recipe is not parsable by parser `conda-forge-tick")
-            for hint in hints
-        ), hints
-        assert any(
-            hint.startswith(
-                "The recipe is not parsable by parser `conda-recipe-manager"
-            )
             for hint in hints
         ), hints
         assert not any(
@@ -4159,12 +4152,6 @@ def test_lint_recipe_parses_v1_spacing():
             )
             for lint in lints
         ), lints
-        assert any(
-            hint.startswith(
-                "The recipe is not parsable by parser `conda-recipe-manager"
-            )
-            for hint in hints
-        ), hints
         assert not any(
             hint.startswith("The recipe is not parsable by parser `ruamel.yaml")
             for hint in hints
