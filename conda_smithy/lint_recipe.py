@@ -30,6 +30,7 @@ from conda_smithy.linter.hints import (
     hint_os_version,
     hint_pip_no_build_backend,
     hint_pip_usage,
+    hint_rattler_build_bld_bat,
     hint_shellcheck_usage,
     hint_sources_should_not_mention_pypi_io_but_pypi_org,
     hint_space_separated_specs,
@@ -413,6 +414,9 @@ def lintify_meta_yaml(
     # 8. check for obsolete os_version
     if "hint_os_version" not in lints_to_skip:
         hint_os_version(forge_yaml, hints)
+
+    # 9. check for bld.bat with rattler-build
+    hint_rattler_build_bld_bat(recipe_dir, hints, recipe_version)
 
     return lints, hints
 

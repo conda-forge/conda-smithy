@@ -487,3 +487,30 @@ def hint_os_version(
             f"(the default is {default_os_version}). Unless you are in the very rare case of repackaging binary "
             "artifacts, consider removing these overrides from conda-forge.yml in the top feedstock directory."
         )
+
+
+def hint_rattler_build_bld_bat(
+    recipe_dir: str | None,
+    hints: list[str],
+    recipe_version: int = 0,
+):
+    """Hint for bld.bat presence when using rattler-build.
+
+    rattler-build uses build.bat instead of bld.bat for Windows builds.
+    Having bld.bat present when using rattler-build is likely a mistake.
+    """
+    if not recipe_dir:
+        return
+
+    # Check if this is a recipe version 1 (rattler-build)
+    if recipe_version != 1:
+        return
+
+    # Check if bld.bat exists in the recipe directory
+    bld_bat_path = os.path.join(recipe_dir, "bld.bat")
+    if os.path.exists(bld_bat_path):
+        hints.append(
+            "Found `bld.bat` in recipe directory, but this is a recipe v1 "
+            "(rattler-build recipe). rattler-build uses `build.bat` instead of `bld.bat` "
+            "for Windows builds. Consider renaming `bld.bat` to `build.bat`."
+        )
