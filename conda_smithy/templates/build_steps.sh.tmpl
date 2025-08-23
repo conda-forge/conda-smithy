@@ -150,6 +150,9 @@ else
 
     {%- else %}
 
+    if [[ -f "${RECIPE_ROOT}/rattler-build-config.toml" ]]; then
+        EXTRA_CB_OPTIONS="${EXTRA_CB_OPTIONS:-} --config-file ${RECIPE_ROOT}/rattler-build-config.toml"
+    fi
     {{ BUILD_CMD }} --recipe "${RECIPE_ROOT}" \
      -m "${CI_SUPPORT}/${CONFIG}.yaml" \
      ${EXTRA_CB_OPTIONS:-} \
