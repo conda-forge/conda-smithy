@@ -4567,5 +4567,35 @@ def test_is_abi3_bool_lint(lstr, ok):
             assert any(expected_message in lint for lint in lints)
 
 
+@pytest.mark.parametrize(
+    "recipe_file,has_bld_bat,should_hint",
+    [
+        ("meta.yaml", True, False),  # v0 (conda-build) uses bld.bat, so no hint
+        ("meta.yaml", False, False),  # v0 without bld.bat, no hint
+        ("recipe.yaml", False, False),  # v1 (rattler-build) but no bld.bat, no hint
+        ("recipe.yaml", True, True),  # v1 (rattler-build) with bld.bat, should hint
+    ],
+)
+def test_rattler_build_bld_bat_hint(recipe_file, has_bld_bat, should_hint):
+    expected_message = "Found `bld.bat` in recipe directory, but this is a recipe v1"
+
+    with tmp_directory() as recipe_dir:
+        # Create minimal recipe content - the linter determines version from filename
+        with open(os.path.join(recipe_dir, recipe_file), "w") as fh:
+            fh.write("package:\n  name: foo")
+
+        # Create bld.bat if needed
+        if has_bld_bat:
+            with open(os.path.join(recipe_dir, "bld.bat"), "w") as fh:
+                fh.write("echo 'Windows build script'")
+
+        lints, hints = linter.main(recipe_dir, return_hints=True, conda_forge=True)
+
+        if should_hint:
+            assert any(expected_message in hint for hint in hints)
+        else:
+            assert not any(expected_message in hint for hint in hints)
+
+
 if __name__ == "__main__":
     unittest.main()
