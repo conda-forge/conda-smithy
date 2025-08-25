@@ -2694,11 +2694,11 @@ def make_jinja_env(feedstock_directory):
 def get_migrations_in_dir(migrations_root):
     """
     Given a directory, return the migrations as a mapping
-    from the timestamp to a tuple of (filename, migration_number)
+    from the (filename, timestamp) to (full_path, migration_number, use_local)
     """
     res = {}
-    for fn in glob.glob(os.path.join(migrations_root, "*.yaml")):
-        with open(fn, encoding="utf-8") as f:
+    for full_path in glob.glob(os.path.join(migrations_root, "*.yaml")):
+        with open(full_path, encoding="utf-8") as f:
             contents = f.read()
             migration_yaml = yaml.load(contents, Loader=yaml.loader.BaseLoader) or {}
             # Use a object as timestamp to not delete it
@@ -2710,7 +2710,8 @@ def get_migrations_in_dir(migrations_root):
                 migration_yaml.get("__migrator", {}).get("use_local", "false").lower()
                 == "true"
             )
-            res[ts] = (fn, migration_number, use_local)
+            fn = os.path.basename(full_path)
+            res[(fn, ts)] = (full_path, migration_number, use_local)
     return res
 
 
@@ -2746,33 +2747,42 @@ def set_migration_fns(forge_dir, forge_config):
     migrations_in_feedstock = get_migrations_in_dir(migrations_root)
 
     if not os.path.exists(cfp_migrations_dir):
-        migration_fns = [fn for fn, _, _ in migrations_in_feedstock.values()]
+        migration_fns = [fp for fp, _, _ in migrations_in_feedstock.values()]
         forge_config["migration_fns"] = migration_fns
         return
 
     migrations_in_cfp = get_migrations_in_dir(cfp_migrations_dir)
 
     result = []
-    for ts, (fn, num, use_local) in migrations_in_feedstock.items():
+    for (fn, ts), (full_path, num, use_local) in migrations_in_feedstock.items():
         if use_local or not isinstance(ts, (int, str, float)):
             # This file has a setting to use the file in the feedstock
             # or doesn't have a timestamp. Use it as it is.
-            result.append(fn)
-        elif ts in migrations_in_cfp:
+            result.append(full_path)
+        elif (fn, ts) in migrations_in_cfp:
             # Use the one from cfp if migration_numbers match
-            new_fn, new_num, _ = migrations_in_cfp[ts]
+            new_full_path, new_num, _ = migrations_in_cfp[(fn, ts)]
             if num == new_num:
                 logger.info(
                     "%s from feedstock is ignored and upstream version is used",
-                    os.path.basename(fn),
+                    fn,
                 )
-                result.append(new_fn)
+                result.append(new_full_path)
             else:
-                result.append(fn)
+                result.append(full_path)
         else:
             # Delete this as this migration is over.
-            logger.info("%s is closed now. Removing", os.path.basename(fn))
-            remove_file(fn)
+            logger.info(
+                "%s with timestamp %s does not exist in global pinning (anymore), removing it.",
+                fn,
+                ts,
+            )
+            logger.info(
+                "If it should be applied nevertheless, check that migrator_ts/migration_number match the ones in "
+                "https://github.com/conda-forge/conda-forge-pinning-feedstock/tree/main/recipe/migrations"
+                "or add `use_local: true`."
+            )
+            remove_file(full_path)
     forge_config["migration_fns"] = result
     return
 
