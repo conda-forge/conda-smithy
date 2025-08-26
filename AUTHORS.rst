@@ -5,8 +5,8 @@ Authors are sorted by number of commits.
 * Matthew R. Becker
 * Jaime Rodríguez-Guerra
 * nichmor
-* Christopher J. Wright
 * H. Vetinari
+* Christopher J. Wright
 * Anthony Scopatz
 * Phil Elson
 * Wolf Vollprecht
