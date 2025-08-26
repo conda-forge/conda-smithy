@@ -4,6 +4,32 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.52.0
+====================
+
+**Added:**
+
+* Reformat commit messages in rerenders to show rattler-build and rattler-build-conda-compat versions. (#2359)
+* In feedstocks with Pixi integrations, ``pixi run lint`` will include ``shellcheck`` lints if enabled in ``conda-forge.yml``. (#2360)
+* Added hint to flag `bld.bat` files when using rattler-build (recipe v1). rattler-build uses `build.bat` instead of `bld.bat` for Windows builds (#2371).
+
+**Changed:**
+
+* Avoid using only timestamps to determine whether migrations should be applied. The logic for ``use_local`` and ``migration_number`` remains unchanged, but migrations now also require the name of the migrator file to match, avoiding spurious matches on timestamps between different migrations (#2374).
+
+**Fixed:**
+
+* Remove slashes from variant file names which caused problems due to being mis-handled as folders. Also remove commas, which can be similarly misinterpreted (#2366).
+
+**Authors:**
+
+* Jaime Rodríguez-Guerra
+* H. Vetinari
+* pre-commit-ci[bot]
+* Chris Burr
+
+
+
 v3.51.1
 ====================
 
