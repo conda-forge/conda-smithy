@@ -54,6 +54,7 @@ jobs:
             CONDA_FORGE_DOCKER_RUN_ARGS: "--gpus all"
           {%- endif %}
         {%- endif %}
+            BUILD_PLATFORM: {{ data.build_platform }}
         {%- endfor %}
     steps:
 {%- if github_actions.free_disk_space %}
@@ -144,6 +145,7 @@ jobs:
 {%- if upload_on_branch %}
         UPLOAD_ON_BRANCH: {{ upload_on_branch }}
 {%- endif %}
+        BUILD_PLATFORM: {% raw %}${{ matrix.BUILD_PLATFORM }}{% endraw %}
 {%- for secret in secrets %}
         {{ secret }}: {% raw %}${{{% endraw %} secrets.{{ secret }} {% raw %}}}{% endraw %}
 {%- endfor %}
@@ -159,7 +161,11 @@ jobs:
         else
           export IS_PR_BUILD="False"
         fi
-        ./.scripts/run_osx_build.sh
+          if [[ "${BUILD_PLATFORM:-}" == "osx-64" && "$(uname -m)" == "arm64" ]]; then
+            arch -x86_64 ./.scripts/run_osx_build.sh
+          else
+            ./.scripts/run_osx_build.sh
+          fi
 
 {%- for choco_pkg in choco %}
     - name: "Install Chocolatey Package: {{ choco_pkg }}"
