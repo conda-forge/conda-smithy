@@ -17,7 +17,7 @@ azure:
   settings_osx:
     install_atl: false
     pool:
-      vmImage: macOS-15
+      vmImage: macOS-13
     swapfile_size: null
     timeoutInMinutes: 360
     variables: {}
