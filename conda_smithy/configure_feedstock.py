@@ -1659,7 +1659,7 @@ def _github_actions_specific_setup(jinja_env, forge_config, forge_dir, platform)
         "osx-arm64": {
             "os": "macos",
             # FUTURE: Use -latest once GHA fully migrates
-            "hosted_labels": ("macos-14",),
+            "hosted_labels": ("macos-15",),
             "self_hosted_labels": ("macOS", "arm64"),
         },
         "linux-64": {
