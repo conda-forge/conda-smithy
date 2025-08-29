@@ -16,7 +16,7 @@
 
 **Fixed:**
 
-* Allow conda-smithy to run in an unactivated environment.
+* Allow conda-smithy to run in an unactivated environment. (#2381)
 
 **Security:**
 
