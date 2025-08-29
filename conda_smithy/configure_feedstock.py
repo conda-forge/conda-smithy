@@ -102,7 +102,13 @@ def warn_once(msg: str):
 
 @cache
 def rattler_build_version() -> str | None:
-    p = subprocess.run(["rattler-build", "--version"], text=True, capture_output=True)
+    if sys.platform == "win32":
+        path = os.path.join(sys.prefix, "Library", "bin")
+    else:
+        path = os.path.join(sys.prefix, "bin")
+    p = subprocess.run(
+        [f"{path}/rattler-build", "--version"], text=True, capture_output=True
+    )
     if p.returncode == 0:
         return p.stdout.strip().split()[-1]
     return None
