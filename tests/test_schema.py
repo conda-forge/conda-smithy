@@ -38,6 +38,9 @@ def test_schema_validate_json_schema_with_bot():
     cfyaml = {
         "bot": {
             "automerge": True,
+            "version_updates": {
+              "random_fraction_to_keep": 0.1,
+            }
         }
     }
     lints, hints = validate_json_schema(cfyaml)
