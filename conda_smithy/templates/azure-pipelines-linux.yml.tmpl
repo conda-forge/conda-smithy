@@ -42,10 +42,17 @@ jobs:
 {%- endif %}
 {%- if not (azure.settings_linux.swapfile_size|string).startswith("0") %}
   - script: |
-         sudo fallocate -l {{ azure.settings_linux.swapfile_size }} /swapfile || true
-         sudo chmod 600 /swapfile || true
-         sudo mkswap /swapfile || true
-         sudo swapon /swapfile || true
+        SWAPFILE=/swapfile
+        # If there is already a swapfile, disable it and remove it
+        if swapon --show | grep -q $SWAPFILE; then
+            echo "Disabling existing swapfile..."
+            sudo swapoff $SWAPFILE || true
+        fi
+        [ -f "$SWAPFILE" ] && sudo rm -f $SWAPFILE
+        sudo fallocate -l {{ azure.settings_linux.swapfile_size }} $SWAPFILE
+        sudo chmod 600 $SWAPFILE
+        sudo mkswap $SWAPFILE
+        sudo swapon $SWAPFILE
     displayName: Create swap file
 {%- endif %}
   # configure qemu binfmt-misc running.  This allows us to run docker containers
