@@ -1,8 +1,13 @@
 import json
 import os
+import tempfile
+import textwrap
 from pathlib import Path
 
+import pytest
+
 from conda_smithy.schema import ConfigModel
+from conda_smithy.utils import get_yaml
 from conda_smithy.validate_schema import (
     CONDA_FORGE_YAML_SCHEMA_FILE,
     validate_json_schema,
@@ -278,15 +283,46 @@ def test_schema_validate_json_schema_with_bot_uri_override(tmp_path):
 
         cfyaml = {
             "bot": {
-                "inspection": "hint",
+                "inspection": "hint-all",
+                "version_updates": {
+                    "random_fraction_to_keep": 0.02,
+                },
             }
         }
         lints, hints = validate_json_schema(cfyaml)
         assert lints == []
         assert hints == []
-
     finally:
         if old_val:
             os.environ["CONDA_SMITHY_BOT_SCHEMA_URI"] = old_val
         else:
             del os.environ["CONDA_SMITHY_BOT_SCHEMA_URI"]
+
+
+@pytest.mark.xfail(
+    reason="rattler-build-conda-compat makes global modifications to ruamel.yaml - see https://github.com/prefix-dev/rattler-build-conda-compat/issues/88"
+)
+def test_schema_with_rattler_build_conda_compat():
+    # this test assures
+    from rattler_build_conda_compat.yaml import _yaml_object
+
+    _yaml_object()
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        pth = os.path.join(tmpdir, "conda-forge.yml")
+        with open(pth, "w") as fp:
+            fp.write(
+                textwrap.dedent(
+                    """\
+                bot:
+                version_updates:
+                    random_fracvtion_to_keep: 0.02
+                """
+                )
+            )
+        with open(pth) as fp:
+            cfyaml = get_yaml().load(fp)
+
+        lints, hints = validate_json_schema(cfyaml)
+        assert lints == []
+        assert hints == []
