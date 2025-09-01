@@ -102,10 +102,9 @@ def warn_once(msg: str):
 
 @cache
 def rattler_build_version() -> str | None:
-    if sys.platform == "win32":
-        path = os.path.join(sys.prefix, "Library", "bin")
-    else:
-        path = os.path.join(sys.prefix, "bin")
+    # rattler-build is not packaged in %CONDA_PREFIX%\Library\bin on windows,
+    # but in the same location (relative to prefix) as on unix
+    path = os.path.join(sys.prefix, "bin")
     p = subprocess.run(
         [f"{path}/rattler-build", "--version"], text=True, capture_output=True
     )
