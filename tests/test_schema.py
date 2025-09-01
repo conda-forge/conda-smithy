@@ -301,7 +301,10 @@ def test_schema_validate_json_schema_with_bot_uri_override(tmp_path):
 
 
 @pytest.mark.xfail(
-    reason="rattler-build-conda-compat makes global modifications to ruamel.yaml - see https://github.com/prefix-dev/rattler-build-conda-compat/issues/88"
+    reason=(
+        "rattler-build-conda-compat makes global modifications to ruamel.yaml"
+        " - see https://github.com/prefix-dev/rattler-build-conda-compat/issues/88"
+    ),
 )
 def test_schema_with_rattler_build_conda_compat():
     # this test assures
