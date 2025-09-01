@@ -307,7 +307,6 @@ def test_schema_validate_json_schema_with_bot_uri_override(tmp_path):
     ),
 )
 def test_schema_with_rattler_build_conda_compat():
-    # this test assures
     from rattler_build_conda_compat.yaml import _yaml_object
 
     _yaml_object()
