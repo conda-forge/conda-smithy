@@ -319,7 +319,7 @@ def test_schema_with_rattler_build_conda_compat():
                     """\
                 bot:
                 version_updates:
-                    random_fracvtion_to_keep: 0.02
+                    random_fraction_to_keep: 0.02
                 """
                 )
             )
