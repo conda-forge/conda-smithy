@@ -771,13 +771,19 @@ def main(recipe_dir, conda_forge=False, return_hints=False, feedstock_dir=None):
 
     recipe_version = 1 if build_tool == RATTLER_BUILD_TOOL else 0
 
+    # this call to lint the confa-forge.yml has to come before the
+    # actual recipe linter is called
+    # rattler-build-conda-compat
+    # is setting a global option to force yaml to be parsed as a string
+    # see https://github.com/prefix-dev/rattler-build-conda-compat/issues/88
+    validation_errors, validation_hints = lintify_forge_yaml(recipe_dir=recipe_dir)
+
     results, hints = lintify_meta_yaml(
         meta,
         recipe_dir,
         conda_forge,
         recipe_version=recipe_version,
     )
-    validation_errors, validation_hints = lintify_forge_yaml(recipe_dir=recipe_dir)
 
     results.extend([_format_validation_msg(err) for err in validation_errors])
     hints.extend([_format_validation_msg(hint) for hint in validation_hints])
