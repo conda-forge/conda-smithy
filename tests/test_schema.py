@@ -292,6 +292,7 @@ def test_schema_validate_json_schema_with_bot_uri_override(tmp_path):
         lints, hints = validate_json_schema(cfyaml)
         assert lints == []
         assert hints == []
+
     finally:
         if old_val:
             os.environ["CONDA_SMITHY_BOT_SCHEMA_URI"] = old_val
