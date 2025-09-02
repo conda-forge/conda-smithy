@@ -731,6 +731,7 @@ def lint_rust_licenses_are_bundled(
 
 
 def lint_go_licenses_are_bundled(
+    recipe_name: str,
     build_reqs: Optional[list[str]],
     lints: list[str],
     recipe_version: int = 0,
@@ -744,7 +745,7 @@ def lint_go_licenses_are_bundled(
         has_go = "{{ compiler('go') }}" in build_reqs
 
     if has_go:
-        if "go-licenses" not in build_reqs:
+        if "go-licenses" not in [*build_reqs, recipe_name]:
             lints.append(
                 "Go packages must include the licenses of the Go dependencies. "
                 "For more info, visit: https://conda-forge.org/docs/maintainer/adding_pkgs/#go"

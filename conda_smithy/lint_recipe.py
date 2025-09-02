@@ -361,7 +361,7 @@ def lintify_meta_yaml(
 
     # 29: Check that go licenses are bundled.
     lint_go_licenses_are_bundled(
-        build_requirements, lints, recipe_version=recipe_version
+        recipe_name, build_requirements, lints, recipe_version=recipe_version
     )
 
     # hints
