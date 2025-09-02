@@ -4,6 +4,30 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.52.1
+====================
+
+**Changed:**
+
+* Try harder to set up swap file, and fail early if this does not succeed. (#2384)
+* Switched to `macOS-15` images for osx jobs by default, due to impending removal of `macOS-13`.
+
+**Fixed:**
+
+* Fixed issue where ``rattler-build-conda-compat`` makes global modifications to YAML
+  parsing causing the linter for ``conda-forge.yml`` files to fail. (#2387)
+* Fixed wrong lower bound on ``rattler-build-conda-compat``, increasing it to ``1.4.5``. (#358)
+* Allow conda-smithy to run in an unactivated environment. (#2381)
+
+**Authors:**
+
+* Isuru Fernando
+* Matthew R. Becker
+* H. Vetinari
+* pre-commit-ci[bot]
+
+
+
 v3.52.0
 ====================
 
