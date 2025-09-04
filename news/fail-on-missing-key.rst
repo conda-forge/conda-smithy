@@ -16,7 +16,7 @@
 
 **Fixed:**
 
-* Avoid spuriously adding values for missing keys for migrations using `additional_zip_keys`.
+* Avoid spuriously adding values for missing zip_keys for migrations using `additional_zip_keys`.
 
 **Security:**
 

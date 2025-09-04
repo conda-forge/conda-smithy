@@ -173,7 +173,7 @@ def test_ordering_with_tail_and_readd(initial_min):
     # test interaction between migrating CUDA from ("None", "12.6") to ("None", "12.9"),
     # while also allowing an opt-in migrator to re-add CUDA 11.8, see
     # https://github.com/conda-forge/conda-forge-pinning-feedstock/pull/7472
-    # since CUDA for PPC was removed, need to be able cuda_compiler_version_min == "None"
+    # since CUDA for PPC was removed, need to handle cuda_compiler_version_min == "None"
     start = parse_variant(
         dedent(
             f"""\
@@ -246,7 +246,7 @@ def test_ordering_with_tail_and_readd(initial_min):
 
 @pytest.mark.parametrize("initial_min", ["12.6", "None"])
 def test_fail_on_missing_zip_component(initial_min):
-    # since CUDA for PPC was removed, need to be able cuda_compiler_version_min == "None"
+    # since CUDA for PPC was removed, need to handle cuda_compiler_version_min == "None"
     start = parse_variant(
         dedent(
             f"""\
