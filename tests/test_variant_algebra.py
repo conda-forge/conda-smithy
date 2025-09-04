@@ -168,20 +168,22 @@ def test_ordering_with_primary_key(gcc_for_12dot6):
     assert res["c_compiler_version"] == ["15", "14"]
 
 
-def test_ordering_with_tail_and_readd():
+@pytest.mark.parametrize("initial_min", ["12.6", "None"])
+def test_ordering_with_tail_and_readd(initial_min):
     # test interaction between migrating CUDA from ("None", "12.6") to ("None", "12.9"),
     # while also allowing an opt-in migrator to re-add CUDA 11.8, see
     # https://github.com/conda-forge/conda-forge-pinning-feedstock/pull/7472
+    # since CUDA for PPC was removed, need to be able cuda_compiler_version_min == "None"
     start = parse_variant(
         dedent(
-            """\
+            f"""\
     cuda_compiler:
         - cuda-nvcc
     cuda_compiler_version:
         - "None"
         - "12.6"
     cuda_compiler_version_min:
-        - "12.6"
+        - "{initial_min}"
     """
         )
     )
@@ -221,6 +223,7 @@ def test_ordering_with_tail_and_readd():
                 - "12.9"
                 - "11.8"
             cuda_compiler_version_min:
+                - "None"
                 - "12.6"
                 - "12.9"
                 - "11.8"
@@ -234,8 +237,8 @@ def test_ordering_with_tail_and_readd():
         )
     )
 
-    res = variant_add(start, cuda118_migrator)
-    res2 = variant_add(res, cuda129_migrator)
+    res = variant_add(start, cuda129_migrator)
+    res2 = variant_add(res, cuda118_migrator)
     assert res2["cuda_compiler_version"] == ["None", "12.9", "11.8"]
     assert res2["cuda_compiler"] == ["cuda-nvcc", "cuda-nvcc", "nvcc"]
     assert res2["cuda_compiler_version_min"] == ["11.8"]
