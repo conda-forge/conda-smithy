@@ -16,7 +16,7 @@
 
 **Fixed:**
 
-* Allow conda-smithy to run in an unactivated environment. (#2381)
+* Excluded `go-licenses` from the `go-licenses` lint
 
 **Security:**
 

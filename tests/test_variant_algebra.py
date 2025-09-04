@@ -168,20 +168,22 @@ def test_ordering_with_primary_key(gcc_for_12dot6):
     assert res["c_compiler_version"] == ["15", "14"]
 
 
-def test_ordering_with_tail_and_readd():
+@pytest.mark.parametrize("initial_min", ["12.6", "None"])
+def test_ordering_with_tail_and_readd(initial_min):
     # test interaction between migrating CUDA from ("None", "12.6") to ("None", "12.9"),
     # while also allowing an opt-in migrator to re-add CUDA 11.8, see
     # https://github.com/conda-forge/conda-forge-pinning-feedstock/pull/7472
+    # since CUDA for PPC was removed, need to handle cuda_compiler_version_min == "None"
     start = parse_variant(
         dedent(
-            """\
+            f"""\
     cuda_compiler:
         - cuda-nvcc
     cuda_compiler_version:
         - "None"
         - "12.6"
     cuda_compiler_version_min:
-        - "12.6"
+        - "{initial_min}"
     """
         )
     )
@@ -221,6 +223,7 @@ def test_ordering_with_tail_and_readd():
                 - "12.9"
                 - "11.8"
             cuda_compiler_version_min:
+                - "None"
                 - "12.6"
                 - "12.9"
                 - "11.8"
@@ -234,11 +237,76 @@ def test_ordering_with_tail_and_readd():
         )
     )
 
-    res = variant_add(start, cuda118_migrator)
-    res2 = variant_add(res, cuda129_migrator)
+    res = variant_add(start, cuda129_migrator)
+    res2 = variant_add(res, cuda118_migrator)
     assert res2["cuda_compiler_version"] == ["None", "12.9", "11.8"]
     assert res2["cuda_compiler"] == ["cuda-nvcc", "cuda-nvcc", "nvcc"]
     assert res2["cuda_compiler_version_min"] == ["11.8"]
+
+
+@pytest.mark.parametrize("initial_min", ["12.6", "None"])
+def test_fail_on_missing_zip_component(initial_min):
+    # since CUDA for PPC was removed, need to handle cuda_compiler_version_min == "None"
+    start = parse_variant(
+        dedent(
+            f"""\
+    cuda_compiler:
+        - cuda-nvcc
+    cuda_compiler_version:
+        - "None"
+        - "12.9"
+    cuda_compiler_version_min:
+        - "{initial_min}"
+    c_stdlib_version:
+        - "2.17"
+        - "2.28"
+    zip_keys:
+        - - cuda_compiler_version
+          - c_stdlib_version
+    """
+        )
+    )
+
+    # if this migrator is missing c_stdlib_version, the migration should not be
+    # insert `c_stdlib_version: None` silently, but the rerender needs to fail
+    cuda118_migrator = parse_variant(
+        dedent(
+            """\
+    __migrator:
+        operation: key_add
+        primary_key: cuda_compiler_version
+        additional_zip_keys:
+            - cuda_compiler
+        ordering:
+            cuda_compiler:
+                - None
+                - cuda-nvcc
+                - nvcc
+            cuda_compiler_version:
+                - "12.6"
+                - "None"
+                - "12.9"
+                - "11.8"
+            cuda_compiler_version_min:
+                - "None"
+                - "12.6"
+                - "12.9"
+                - "11.8"
+    cuda_compiler_version:
+        - "11.8"
+    cuda_compiler_version_min:
+        - "11.8"
+    cuda_compiler:
+        - nvcc
+    # commented out intentionally!
+    # c_stdlib_version:
+    #     - "2.17"
+    """
+        )
+    )
+
+    with pytest.raises(ValueError):
+        variant_add(start, cuda118_migrator)
 
 
 def test_no_ordering():

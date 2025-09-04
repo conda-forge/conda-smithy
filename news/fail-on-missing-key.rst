@@ -4,7 +4,7 @@
 
 **Changed:**
 
-* Switched to `macOS-15` images for osx jobs by default, due to impending removal of `macOS-13`.
+* <news item>
 
 **Deprecated:**
 
@@ -16,7 +16,7 @@
 
 **Fixed:**
 
-* <news item>
+* Avoid spuriously adding values for missing ``zip_keys`` for migrations using ``additional_zip_keys``.
 
 **Security:**
 

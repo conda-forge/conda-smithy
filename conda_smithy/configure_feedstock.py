@@ -2784,7 +2784,7 @@ def set_migration_fns(forge_dir, forge_config):
             )
             logger.info(
                 "If it should be applied nevertheless, check that migrator_ts/migration_number match the ones in "
-                "https://github.com/conda-forge/conda-forge-pinning-feedstock/tree/main/recipe/migrations"
+                "https://github.com/conda-forge/conda-forge-pinning-feedstock/tree/main/recipe/migrations "
                 "or add `use_local: true`."
             )
             remove_file(full_path)

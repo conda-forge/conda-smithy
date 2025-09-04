@@ -218,6 +218,8 @@ def op_variant_key_add(v1: dict, v2: dict):
                     if key in newly_added_zip_keys:
                         default_value = additional_zip_keys_default_values[key]
                         result[key] = [default_value] * len(new_keys)
+                    elif key not in v2:
+                        raise ValueError(f"Required zip_key {key} not specified in v2!")
 
                     # Create a new version of the key from
                     # assert len(v2[key]) == 1
