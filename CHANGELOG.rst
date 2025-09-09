@@ -4,6 +4,22 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.52.2
+====================
+
+**Fixed:**
+
+* Avoid spuriously adding values for missing ``zip_keys`` for migrations using ``additional_zip_keys``.
+* Excluded `go-licenses` from the `go-licenses` lint
+
+**Authors:**
+
+* H. Vetinari
+* Nicholas Bollweg
+* dependabot[bot]
+
+
+
 v3.52.1
 ====================
 
