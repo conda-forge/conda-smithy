@@ -34,16 +34,16 @@ Authors are sorted by number of commits.
 * Billy K. Poon
 * Daniel Ching
 * vinicius douglas cerutti
+* Nicholas Bollweg
 * Tim Snyder
 * Mike Henry
-* Nicholas Bollweg
 * Eric Dill
 * Natasha Pavlovikj
 * Maksim Rakitin
+* dependabot[bot]
 * Jan Schulz
 * Josh Reichardt
 * Bela Stoyan
-* dependabot[bot]
 * Justin Calamari
 * Jason Furmanek
 * Patrick Sodré

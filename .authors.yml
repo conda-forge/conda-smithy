@@ -196,7 +196,7 @@
   first_commit: 2017-02-12 15:31:00
 - name: Nicholas Bollweg
   email: nick.bollweg@gmail.com
-  num_commits: 13
+  num_commits: 14
   first_commit: 2019-05-20 20:03:12
   github: bollwyvl
 - name: Leopold Talirz
@@ -393,7 +393,7 @@
   github: shadowwalkersb
 - name: Matthew R. Becker
   email: becker.mr@gmail.com
-  num_commits: 505
+  num_commits: 507
   first_commit: 2020-01-07 17:44:33
   github: beckermr
   alternate_emails:
@@ -539,7 +539,7 @@
   github: nehaljwani
 - name: H. Vetinari
   email: h.vetinari@gmx.com
-  num_commits: 109
+  num_commits: 111
   first_commit: 2021-11-14 02:53:10
 - name: Benjamin Tovar
   email: btovar@nd.edu
@@ -626,7 +626,7 @@
   github: ytausch
 - name: dependabot[bot]
   email: 49699333+dependabot[bot]@users.noreply.github.com
-  num_commits: 11
+  num_commits: 12
   first_commit: 2024-05-21 04:47:22
 - name: nichmor
   email: nmorkotilo@gmail.com
