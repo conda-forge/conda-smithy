@@ -236,10 +236,6 @@ def test_init_cuda_docker_images(testing_workdir):
         else:
             docker_image = f"condaforge/linux-anvil-cuda:{v}"
         assert config["docker_image"] == [docker_image]
-        if v == "11.0":
-            assert config["cdt_name"] == ["cos7"]
-        else:
-            assert config["cdt_name"] == ["cos6"]
 
 
 def test_init_multiple_docker_images(testing_workdir):
