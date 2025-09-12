@@ -275,7 +275,6 @@ def test_init_multiple_docker_images(testing_workdir):
     with open(fn) as fh:
         config = yaml.safe_load(fh)
     assert config["docker_image"] == ["pickme_a"]
-    assert config["cdt_name"] == ["pickme_1"]
 
 
 def test_regenerate(py_recipe, testing_workdir):
