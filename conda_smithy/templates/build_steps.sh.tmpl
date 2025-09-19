@@ -42,8 +42,6 @@ micromamba install --root-prefix ~/.conda --prefix /opt/conda \
     --yes --override-channels --channel conda-forge --strict-channel-priority \
     pip {{ conda_install_tool_deps }} {{ conda_build_tool_deps }} {{ " ".join(remote_ci_setup) }}
 {%- elif conda_install_tool == "pixi" %}
-curl -fsSL https://pixi.sh/install.sh | bash
-export PATH="~/.pixi/bin:$PATH"
 pushd "${FEEDSTOCK_ROOT}"
 arch=$(uname -m)
 if [[ "$arch" == "x86_64" ]]; then
