@@ -3,6 +3,7 @@ import logging
 import os
 import re
 import shutil
+import sys
 import tempfile
 import textwrap
 from pathlib import Path
@@ -13,6 +14,11 @@ from conftest import ConfigYAML
 
 from conda_smithy import configure_feedstock
 from conda_smithy.configure_feedstock import _read_forge_config
+
+if sys.version_info >= (3, 11):
+    import tomllib
+else:
+    import tomli as tomllib
 
 
 def test_noarch_skips_appveyor(noarch_recipe, jinja_env):
@@ -2070,3 +2076,55 @@ def test_read_forge_config_default_values_aliases():
         assert isinstance(config["azure"]["settings_linux"]["timeoutInMinutes"], int)
         assert isinstance(config["azure"]["settings_osx"]["timeoutInMinutes"], int)
         assert isinstance(config["azure"]["settings_win"]["timeoutInMinutes"], int)
+
+
+@pytest.mark.parametrize("shellcheck", [True, False])
+@pytest.mark.parametrize("conda_install_tool", ["pixi", None])
+def test_render_pixi(
+    stdlib_recipe,
+    jinja_env,
+    shellcheck,
+    conda_install_tool,
+    platform_without_shellcheck,
+):
+    config, recipe = stdlib_recipe.config, Path(stdlib_recipe.recipe)
+    config["feedstock_name"] = "a-feedstock-with-pixi"
+    pixi_toml = recipe / "pixi.toml"
+    pixi_toml.touch()
+    config["shellcheck"]["enabled"] = shellcheck
+    config["provider"][platform_without_shellcheck.replace("-", "_")] = "default"
+
+    if conda_install_tool:
+        config["conda_install_tool"] = conda_install_tool
+
+    configure_feedstock.render_pixi(
+        jinja_env=jinja_env,
+        forge_config=config,
+        forge_dir=recipe,
+    )
+
+    if not conda_install_tool:
+        assert not pixi_toml.exists(), "pixi.toml should have been deleted"
+        return
+
+    pixi_text = pixi_toml.read_text(encoding="utf-8")
+
+    pixi = tomllib.loads(pixi_text)
+
+    if not shellcheck:
+        assert (
+            "shellcheck" not in pixi_text
+        ), "pixi.toml should not mention `shellcheck`"
+    else:
+        platforms = pixi["project"]["platforms"]
+        assert (
+            platform_without_shellcheck in platforms
+        ), f"expected {platform_without_shellcheck} in pixi project platforms"
+        shellcheck_platforms = pixi["feature"]["shellcheck"]["platforms"]
+        smithy_env = pixi["environments"]["smithy"]
+        assert shellcheck_platforms, "`shellcheck` should be enabled on _some_ platform"
+        assert (
+            platform_without_shellcheck not in shellcheck_platforms
+        ), f"`shellcheck` should not be enabled for {platform_without_shellcheck}"
+
+        assert "shellcheck" in smithy_env, "`smithy` env should have `shellcheck`"

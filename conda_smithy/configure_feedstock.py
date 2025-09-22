@@ -92,6 +92,15 @@ CONDA_FORGE_PINNING_LIFETIME = int(
     os.environ.get("CONDA_FORGE_PINNING_LIFETIME", 15 * 60)
 )
 
+# platforms for which ``shecllcheck`` has been built for conda-forge
+CONDA_FORGE_SHELLCHECK_PLATFORMS = [
+    "linux-64",
+    "linux-aarch64",
+    "osx-64",
+    "osx-arm64",
+    "win-64",
+]
+
 
 # use lru_cache to avoid repeating warnings endlessly;
 # this keeps track of 10 different messages and then warns again
@@ -2230,6 +2239,7 @@ def render_pixi(jinja_env, forge_config, forge_dir):
     new_file_contents = template.render(
         smithy_version=__version__,
         platforms=sorted(platforms),
+        all_shellcheck_platforms=CONDA_FORGE_SHELLCHECK_PLATFORMS,
         variants=variants,
         **forge_config,
     )

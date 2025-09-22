@@ -68,15 +68,13 @@ cmd = "conda-smithy lint --conda-forge {{ recipe_dir }}"
 description = "Lint the feedstock recipe"
 
 {% set shellcheck_platforms = [] -%}
-{%- if shellcheck and shellcheck.enabled -%}
-{%- set shellcheck_platforms = platforms | select("in", ["linux-64", "linux-aarch64", "osx-64", "osx-arm64", "win-64"]) | sort %}
-{%- if shellcheck_platforms -%}
+{%- set shellcheck_platforms = platforms | select("in", all_shellcheck_platforms) | sort -%}
+{%- if shellcheck.enabled and shellcheck_platforms -%}
 [feature.shellcheck]
 dependencies.shellcheck = "*"
 platforms = {{ shellcheck_platforms | tojson }}
-{% endif -%}
-{%- endif %}
+{% endif %}
 [environments]
-smithy = ["smithy"{% if shellcheck_platforms %}, "shellcheck"{% endif %}]
+smithy = ["smithy"{% if shellcheck.enabled and shellcheck_platforms %}, "shellcheck"{% endif %}]
 # This is a copy of default, to be enabled by build_steps.sh during Docker builds
 # __PLATFORM_SPECIFIC_ENV__ = []
