@@ -93,6 +93,7 @@ CONDA_FORGE_PINNING_LIFETIME = int(
 )
 
 # platforms for which ``shecllcheck`` has been built for conda-forge
+# see https://github.com/conda-forge/conda-smithy/pull/2395
 CONDA_FORGE_SHELLCHECK_PLATFORMS = [
     "linux-64",
     "linux-aarch64",
@@ -2239,7 +2240,7 @@ def render_pixi(jinja_env, forge_config, forge_dir):
     new_file_contents = template.render(
         smithy_version=__version__,
         platforms=sorted(platforms),
-        all_shellcheck_platforms=CONDA_FORGE_SHELLCHECK_PLATFORMS,
+        shellcheck_platforms=CONDA_FORGE_SHELLCHECK_PLATFORMS,
         variants=variants,
         **forge_config,
     )
