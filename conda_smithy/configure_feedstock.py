@@ -92,7 +92,7 @@ CONDA_FORGE_PINNING_LIFETIME = int(
     os.environ.get("CONDA_FORGE_PINNING_LIFETIME", 15 * 60)
 )
 
-# platforms for which ``shecllcheck`` has been built for conda-forge
+# platforms for which ``shellcheck`` has been built for conda-forge
 # see https://github.com/conda-forge/conda-smithy/pull/2395
 CONDA_FORGE_SHELLCHECK_PLATFORMS = [
     "linux-64",
