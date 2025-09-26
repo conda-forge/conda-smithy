@@ -54,7 +54,6 @@ description = "List contents of {{ feedstock_name }} packages built for variant 
 
 [feature.smithy.dependencies]
 conda-smithy = "*"
-shellcheck = "*"
 [feature.smithy.tasks.build-locally]
 cmd = "python ./build-locally.py"
 description = "Build packages locally using the same setup scripts used in conda-forge's CI"
@@ -68,7 +67,18 @@ description = "Rerender the feedstock."
 cmd = "conda-smithy lint --conda-forge {{ recipe_dir }}"
 description = "Lint the feedstock recipe"
 
+{% set _smithy_features = ["smithy"] -%}
+
+{%- set _feature_platforms = platforms | select("in", shellcheck_platforms) -%}
+{%- if (shellcheck is defined) and shellcheck.enabled and _feature_platforms -%}
+{%- set _smithy_features = _smithy_features + ["shellcheck"] -%}
+[feature.shellcheck]
+dependencies.shellcheck = "*"
+platforms = {{ _feature_platforms | sort | tojson }}
+
+{% endif -%}
 [environments]
-smithy = ["smithy"]
+smithy = {{ _smithy_features | sort | tojson }}
+
 # This is a copy of default, to be enabled by build_steps.sh during Docker builds
 # __PLATFORM_SPECIFIC_ENV__ = []
