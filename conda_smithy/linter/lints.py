@@ -21,14 +21,13 @@ from conda_smithy.linter.utils import (
     TEST_KEYS,
     _lint_package_version,
     _lint_recipe_name,
-    ensure_standard_strings,
     flatten_v1_if_else,
     get_section,
     is_selector_line,
     jinja_lines,
     selector_lines,
 )
-from conda_smithy.utils import get_yaml
+from conda_smithy.utils import ensure_standard_strings, get_yaml
 
 logger = logging.getLogger(__name__)
 
