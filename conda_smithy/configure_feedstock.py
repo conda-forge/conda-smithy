@@ -55,6 +55,7 @@ from conda_smithy.feedstock_io import (
 from conda_smithy.utils import (
     RATTLER_BUILD,
     HashableDict,
+    ensure_standard_strings,
     get_feedstock_about_from_meta,
     get_feedstock_name_from_meta,
 )
@@ -1079,6 +1080,7 @@ def _render_ci_provider(
             )
             if os.path.exists(variants_path):
                 new_spec = parse_recipe_config_file(variants_path, namespace)
+                new_spec = ensure_standard_strings(new_spec)
                 specs = {
                     "combined_spec": combined_variant_spec,
                     "variants.yaml": new_spec,

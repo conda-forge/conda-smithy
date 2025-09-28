@@ -1,4 +1,5 @@
 import copy
+import io
 import logging
 import os
 import re
@@ -10,9 +11,11 @@ from pathlib import Path
 import pytest
 import yaml
 from conftest import ConfigYAML
+from rattler_build_conda_compat.loader import parse_recipe_config_file
 
 from conda_smithy import configure_feedstock
 from conda_smithy.configure_feedstock import _read_forge_config
+from conda_smithy.utils import ensure_standard_strings
 
 
 def test_noarch_skips_appveyor(noarch_recipe, jinja_env):
@@ -2070,3 +2073,30 @@ def test_read_forge_config_default_values_aliases():
         assert isinstance(config["azure"]["settings_linux"]["timeoutInMinutes"], int)
         assert isinstance(config["azure"]["settings_osx"]["timeoutInMinutes"], int)
         assert isinstance(config["azure"]["settings_win"]["timeoutInMinutes"], int)
+
+
+def test_configure_feedstock_rattler_build_conda_compat_round_trip():
+    def _dumps(cfg):
+        val = io.StringIO()
+        yaml.dump(cfg, val, default_flow_style=False)
+        return val.getvalue()
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        fname = os.path.join(tmpdir, "variants.yaml")
+        with open(fname, "w") as fp:
+            fp.write(
+                textwrap.dedent(
+                    """
+                varkey:
+                - "val1"
+                - 'val2'
+                - val
+                """
+                )
+            )
+
+        cfg = parse_recipe_config_file(fname, {})
+        assert "ruamel.yaml" in _dumps(cfg)
+
+        cfg = ensure_standard_strings(cfg)
+        assert "ruamel.yaml" not in _dumps(cfg)

@@ -21,6 +21,7 @@ from conda_smithy.linter.utils import (
     TEST_KEYS,
     _lint_package_version,
     _lint_recipe_name,
+    ensure_standard_strings,
     flatten_v1_if_else,
     get_section,
     is_selector_line,
@@ -879,6 +880,7 @@ def lint_stdlib(
                 platform_namespace,
                 allow_missing_selector=True,
             )
+            cbc_osx = ensure_standard_strings(cbc_osx)
     else:
         cbc_lines = []
         if conda_build_config_filename:
