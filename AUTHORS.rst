@@ -144,3 +144,4 @@ Authors are sorted by number of commits.
 * Dan Yeaw
 * Guillaume Fraux
 * Lucas Colley
+* Mikhail Ryazanov
