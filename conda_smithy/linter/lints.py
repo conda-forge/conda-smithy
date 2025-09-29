@@ -27,7 +27,7 @@ from conda_smithy.linter.utils import (
     jinja_lines,
     selector_lines,
 )
-from conda_smithy.utils import get_yaml
+from conda_smithy.utils import ensure_standard_strings, get_yaml
 
 logger = logging.getLogger(__name__)
 
@@ -879,6 +879,7 @@ def lint_stdlib(
                 platform_namespace,
                 allow_missing_selector=True,
             )
+            cbc_osx = ensure_standard_strings(cbc_osx)
     else:
         cbc_lines = []
         if conda_build_config_filename:
