@@ -4,6 +4,30 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.52.3
+====================
+
+**Changed:**
+
+* Feedstocks will use pixi installed from the docker image.
+
+**Removed:**
+
+* Remove cdt_name, cdt_arch, BUILD from being saved in every feedstock
+
+**Fixed:**
+
+* Fixed bug where variants loaded via ``parse_recipe_config_file`` had non-standard Python strings
+  that did not serialize correctly when passed through ``yaml.dump``. (#)
+
+**Authors:**
+
+* Isuru Fernando
+* Matthew R. Becker
+* Mikhail Ryazanov
+
+
+
 v3.52.2
 ====================
 
