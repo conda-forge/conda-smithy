@@ -16,7 +16,7 @@
 
 **Fixed:**
 
-* linter will ignore package versions that are jinja templated for v1.
+* linter will ignore package versions that are jinja templated for v1 (#2402).
 
 **Security:**
 
