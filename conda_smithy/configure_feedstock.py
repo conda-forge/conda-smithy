@@ -2229,6 +2229,16 @@ def render_pixi(jinja_env, forge_config, forge_dir):
         for platform, service in forge_config["provider"].items()
         if service
     }
+    if (
+        len(variants) == 1
+        and variants[0].startswith("linux_64")
+        and platforms == {"linux-64", "osx-64", "win-64"}
+    ):
+        # very likely noarch, add also osx-arm64 for local debugging
+        # this workaround can be removed when forge_config["providers"]
+        # gains 'osx-arm64' as default; see 'Provider' in schema.py
+        platforms.add("osx-arm64")
+
     new_file_contents = template.render(
         smithy_version=__version__,
         platforms=sorted(platforms),
