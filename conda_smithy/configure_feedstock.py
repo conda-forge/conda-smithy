@@ -1655,13 +1655,13 @@ def _github_actions_specific_setup(jinja_env, forge_config, forge_dir, platform)
     runs_on = {
         "osx-64": {
             "os": "macos",
-            "hosted_labels": ("macos-13",),
+            # FUTURE: macos-15-intel will be deprecated in Fall 2027
+            "hosted_labels": ("macos-15-intel",),
             "self_hosted_labels": ("macOS", "x64"),
         },
         "osx-arm64": {
             "os": "macos",
-            # FUTURE: Use -latest once GHA fully migrates
-            "hosted_labels": ("macos-15",),
+            "hosted_labels": ("macos-latest",),
             "self_hosted_labels": ("macOS", "arm64"),
         },
         "linux-64": {
