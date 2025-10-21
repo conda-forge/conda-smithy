@@ -20,6 +20,8 @@ about:
   summary: A package that does foo.
 
 extra:
+  compute-subdir: cudss
+  redist-json-name: libcudss
   recipe-maintainers:
     - Alice
     - Bob
