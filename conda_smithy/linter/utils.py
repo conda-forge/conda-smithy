@@ -29,6 +29,9 @@ if "extra" not in FIELDS.keys():
 
 FIELDS["extra"]["recipe-maintainers"] = ()
 FIELDS["extra"]["feedstock-name"] = ""
+# compute-subdir and redist-json-name configure the NVIDIA specific autotick bot
+FIELDS["extra"]["compute-subdir"] = ""
+FIELDS["extra"]["redist-json-name"] = ""
 
 EXPECTED_SECTION_ORDER = [
     "package",
