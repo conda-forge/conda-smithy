@@ -77,9 +77,10 @@ jobs:
         done
 {%- endif %}
 {%- if (github_actions.free_disk_space == true) or ('apt' in github_actions.free_disk_space) %}
-        sudo apt-get purge -y -f firefox \
-                                 google-chrome-stable \
-                                 microsoft-edge-stable
+        BROWSERS="firefox google-chrome-stable microsoft-edge-stable"
+        BROWSERS_TO_REMOVE=$(dpkg --get-selections $BROWSERS 2>/dev/null | awk '{print $1}')
+        sudo apt-get remove --purge -y $BROWSERS_TO_REMOVE
+
         sudo apt-get autoremove -y >& /dev/null
         sudo apt-get autoclean -y >& /dev/null
 {%- endif %}
