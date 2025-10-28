@@ -71,6 +71,9 @@ from conda_smithy.linter.lints import (
     lint_subheaders,
     lint_usage_of_legacy_patterns,
 )
+from conda_smithy.linter.messages import (
+    RecipeUnexpectedSection,
+)
 from conda_smithy.linter.utils import (
     CONDA_BUILD_TOOL,
     EXPECTED_SECTION_ORDER,
@@ -166,13 +169,13 @@ def lintify_meta_yaml(
 
     for section in major_sections:
         if section not in expected_keys:
-            lints.append(f"The top level meta key {section} is unexpected")
+            lints.append(RecipeUnexpectedSection(section=section))
             unexpected_sections.append(section)
 
     for section in unexpected_sections:
         major_sections.remove(section)
 
-    # 1: Top level meta.yaml keys should have a specific order.
+    # 1: Top level keys in recipe file should have a specific order.
     lint_section_order(major_sections, lints, recipe_version)
 
     # 2: The about section should have a home, license and summary.

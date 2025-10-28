@@ -12,6 +12,18 @@ from rattler_build_conda_compat.loader import parse_recipe_config_file
 from ruamel.yaml import CommentedSeq
 
 from conda_smithy.linter import conda_recipe_v1_linter
+from conda_smithy.linter.messages import (
+    RecipeFormattedSelectors,
+    RecipeMaintainersMustBeList,
+    RecipeMissingAboutItem,
+    RecipeNoMaintainers,
+    RecipeOldPythonSelectorsHint,
+    RecipeOldPythonSelectorsLint,
+    RecipeRecommendedTests,
+    RecipeRequiredTests,
+    RecipeSectionOrder,
+    RecipeUnknownLicense,
+)
 from conda_smithy.linter.utils import (
     EXPECTED_SECTION_ORDER,
     FIELDS,
@@ -47,13 +59,7 @@ def lint_section_order(
     section_order_sorted = sorted(major_sections, key=order.index)
 
     if major_sections != section_order_sorted:
-        section_order_sorted_str = map(lambda s: f"'{s}'", section_order_sorted)
-        section_order_sorted_str = ", ".join(section_order_sorted_str)
-        section_order_sorted_str = "[" + section_order_sorted_str + "]"
-        lints.append(
-            "The top level meta keys are in an unexpected order. "
-            f"Expecting {section_order_sorted_str}."
-        )
+        lints.append(RecipeSectionOrder(order=section_order_sorted))
 
 
 def lint_about_contents(about_section, lints, recipe_version: int = 0):
@@ -65,20 +71,17 @@ def lint_about_contents(about_section, lints, recipe_version: int = 0):
     for about_item in expected_section:
         # if the section doesn't exist, or is just empty, lint it.
         if not about_section.get(about_item, ""):
-            lints.append(f"The {about_item} item is expected in the about section.")
+            lints.append(RecipeMissingAboutItem(item=about_item))
 
 
 def lint_recipe_maintainers(extra_section, lints):
     if not extra_section.get("recipe-maintainers", []):
-        lints.append(
-            "The recipe could do with some maintainers listed in "
-            "the `extra/recipe-maintainers` section."
-        )
+        lints.append(RecipeNoMaintainers())
     if not (
         isinstance(extra_section.get("recipe-maintainers", []), Sequence)
         and not isinstance(extra_section.get("recipe-maintainers", []), str)
     ):
-        lints.append("Recipe maintainers should be a json list.")
+        lints.append(RecipeMaintainersMustBeList())
 
 
 def lint_recipe_have_tests(
@@ -112,20 +115,19 @@ def lint_recipe_have_tests(
                         has_outputs_test = True
                     else:
                         no_test_hints.append(
-                            "It looks like the '{}' output doesn't "
-                            "have any tests.".format(out.get("name", "???"))
+                            RecipeRecommendedTests(output=out.get("name", "???"))
                         )
 
             if has_outputs_test:
                 hints.extend(no_test_hints)
             else:
-                lints.append("The recipe must have some tests.")
+                lints.append(RecipeRequiredTests())
 
 
 def lint_license_cannot_be_unknown(about_section, lints):
     license = about_section.get("license", "").lower()
     if "unknown" == license.strip():
-        lints.append("The recipe license cannot be unknown.")
+        lints.append(RecipeUnknownLicense())
 
 
 def lint_selectors_should_be_in_tidy_form(recipe_fname, lints, hints):
@@ -153,24 +155,11 @@ def lint_selectors_should_be_in_tidy_form(recipe_fname, lints, hints):
                             python_selectors_lint.append(selector_line)
                             py_selector_lines_lint.append(line_number)
     if bad_selectors:
-        lints.append(
-            "Selectors are suggested to take a "
-            "``<two spaces>#<one space>[<expression>]`` form."
-            f" See lines {bad_lines}"
-        )
+        lints.append(RecipeFormattedSelectors(lines=bad_lines))
     if python_selectors_hint:
-        hints.append(
-            "Old-style Python selectors (py27, py34, py35, py36) are "
-            "deprecated. Instead, consider using the int ``py``. For "
-            f"example: ``# [py>=36]``. See lines {py_selector_lines_hint}"
-        )
+        hints.append(RecipeOldPythonSelectorsHint(lines=py_selector_lines_hint))
     if python_selectors_lint:
-        lints.append(
-            "Old-style Python selectors (py27, py35, etc) are only available "
-            "for Python 2.7, 3.4, 3.5, and 3.6. Please use explicit comparisons "
-            "with the integer ``py``, e.g. ``# [py==37]`` or ``# [py>=37]``. "
-            f"See lines {py_selector_lines_lint}"
-        )
+        lints.append(RecipeOldPythonSelectorsLint(lines=py_selector_lines_lint))
 
 
 def lint_no_comment_selectors(recipe_fname, lints, hints):
