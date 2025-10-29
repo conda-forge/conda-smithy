@@ -83,9 +83,9 @@ def test_stdlib_lint(comp_lang):
         lints, _ = linter.main(recipe_dir, return_hints=True)
         if comp_lang == "go-nocgo":
             # This doesn't need a stdlib
-            assert not any(str(lint).startswith(expected_message) for lint in lints)
+            assert not any(lint.startswith(expected_message) for lint in lints)
         else:
-            assert any(str(lint).startswith(expected_message) for lint in lints)
+            assert any(lint.startswith(expected_message) for lint in lints)
 
 
 def test_m2w64_stdlib_legal():
@@ -143,9 +143,9 @@ def test_v1_stdlib_hint(comp_lang):
 
         lints, _ = linter.main(recipe_dir, feedstock_dir=recipe_dir, return_hints=True)
         if comp_lang == "go-nocgo":
-            assert not any(str(lint).startswith(expected_message) for lint in lints)
+            assert not any(lint.startswith(expected_message) for lint in lints)
         else:
-            assert any(str(lint).startswith(expected_message) for lint in lints)
+            assert any(lint.startswith(expected_message) for lint in lints)
 
 
 def test_sysroot_lint():
@@ -164,7 +164,7 @@ def test_sysroot_lint():
             )
 
         lints, _ = linter.main(recipe_dir, return_hints=True)
-        assert any(str(lint).startswith(expected_message) for lint in lints)
+        assert any(lint.startswith(expected_message) for lint in lints)
 
 
 @pytest.mark.parametrize("where", ["run", "run_constrained"])
@@ -185,7 +185,7 @@ def test_osx_lint(where):
             )
 
         lints, _ = linter.main(recipe_dir, return_hints=True)
-        assert any(str(lint).startswith(expected_message) for lint in lints)
+        assert any(lint.startswith(expected_message) for lint in lints)
 
 
 def test_stdlib_lints_multi_output():
@@ -227,9 +227,9 @@ def test_stdlib_lints_multi_output():
         exp_stdlib = "This recipe is using a compiler"
         exp_sysroot = "You're setting a requirement on sysroot"
         exp_osx = "You're setting a constraint on the `__osx`"
-        assert any(str(lint).startswith(exp_stdlib) for lint in lints)
-        assert any(str(lint).startswith(exp_sysroot) for lint in lints)
-        assert any(str(lint).startswith(exp_osx) for lint in lints)
+        assert any(lint.startswith(exp_stdlib) for lint in lints)
+        assert any(lint.startswith(exp_sysroot) for lint in lints)
+        assert any(lint.startswith(exp_osx) for lint in lints)
 
 
 @pytest.mark.parametrize("where", ["run", "run_constrained"])
@@ -383,9 +383,9 @@ MACOSX_SDK_VERSION:         # [osx]
                 "You are",
                 "In your conda_build_config.yaml",
             ]:
-                assert not any(str(lint).startswith(slug) for lint in lints)
+                assert not any(lint.startswith(slug) for lint in lints)
         else:
-            assert any(str(lint).startswith(exp_lint) for lint in lints)
+            assert any(lint.startswith(exp_lint) for lint in lints)
 
 
 @pytest.mark.parametrize("recipe_version", [0, 1])
@@ -564,9 +564,9 @@ def test_v1_cbc_osx_hints(
                 "You are",
                 "In your conda_build_config.yaml",
             ]:
-                assert not any(str(lint).startswith(slug) for lint in lints)
+                assert not any(lint.startswith(slug) for lint in lints)
         else:
-            assert any(str(lint).startswith(exp_lint) for lint in lints)
+            assert any(lint.startswith(exp_lint) for lint in lints)
 
 
 class TestLinter(unittest.TestCase):
@@ -623,7 +623,7 @@ class TestLinter(unittest.TestCase):
         }
         lints, hints = linter.lintify_meta_yaml(meta)
         expected = "about/license_family 'BSD3' not allowed"
-        self.assertTrue(any(str(lint).startswith(expected) for lint in lints))
+        self.assertTrue(any(lint.startswith(expected) for lint in lints))
 
     def test_missing_about_home(self):
         meta = {"about": {"license": "BSD", "summary": "A test summary"}}
@@ -659,7 +659,7 @@ class TestLinter(unittest.TestCase):
         meta = {"build": {"noarch": "true"}}
         expected = "Invalid `noarch` value `true`. Should be one of"
         lints, hints = linter.lintify_meta_yaml(meta)
-        self.assertTrue(any(str(lint).startswith(expected) for lint in lints))
+        self.assertTrue(any(lint.startswith(expected) for lint in lints))
 
     def test_maintainers_section(self):
         expected_message = (
@@ -899,7 +899,7 @@ class TestLinter(unittest.TestCase):
                     message = f"Expecting lints for '{selector}', but didn't get any."
                 self.assertEqual(
                     not is_good,
-                    any(str(lint).startswith(expected_message) for lint in lints),
+                    any(lint.startswith(expected_message) for lint in lints),
                     message,
                 )
 
@@ -930,7 +930,7 @@ class TestLinter(unittest.TestCase):
                 problems = lints if kind == "lint" else hints
                 self.assertEqual(
                     not is_good,
-                    any(str(problem).startswith(expected_start) for problem in problems),
+                    any(problem.startswith(expected_start) for problem in problems),
                     message,
                 )
 
@@ -1048,13 +1048,13 @@ linter:
                     message = f"Expected lints for '{meta_string}', but didn't get any."
                 self.assertEqual(
                     not is_good,
-                    any(str(lint).startswith(expected_start) for lint in lints),
+                    any(lint.startswith(expected_start) for lint in lints),
                     message,
                 )
                 self.assertEqual(
                     not is_good,
                     any(
-                        str(lint).startswith(expected_start)
+                        lint.startswith(expected_start)
                         and f"or selector on line {line_number}" in lint
                         for lint in lints
                     ),
@@ -1243,7 +1243,7 @@ linter:
                     message = f"Expected lints for '{meta_string}', but didn't get any."
                 self.assertEqual(
                     not is_good,
-                    any(str(lint).startswith(expected_start) for lint in lints),
+                    any(lint.startswith(expected_start) for lint in lints),
                     message,
                 )
 
@@ -1345,7 +1345,7 @@ linter:
                     message = f"Expected hints for '{meta_string}', but didn't get any."
                 self.assertEqual(
                     not is_good,
-                    any(str(lint).startswith(expected_start) for lint in hints),
+                    any(lint.startswith(expected_start) for lint in hints),
                     message,
                 )
 
@@ -1421,7 +1421,7 @@ linter:
                     message = f"Expected hints for '{meta_string}', but didn't get any."
                 self.assertEqual(
                     not is_good,
-                    any(str(lint).startswith(expected_start) for lint in hints),
+                    any(lint.startswith(expected_start) for lint in hints),
                     message,
                 )
 
@@ -1957,7 +1957,7 @@ linter:
         meta = {"package": {"name": "python", "version": "2.0.0~alpha0"}}
         expected_message = "Package version 2.0.0~alpha0 doesn't match conda spec"
         lints, hints = linter.lintify_meta_yaml(meta)
-        assert any(str(lint).startswith(expected_message) for lint in lints)
+        assert any(lint.startswith(expected_message) for lint in lints)
 
     def test_recipe_v1_version(self):
         meta = {"package": {"name": "python", "version": "3.6.4"}}
@@ -1968,18 +1968,18 @@ linter:
         meta = {"package": {"name": "python", "version": "2.0.0~alpha0"}}
         expected_message = "Package version 2.0.0~alpha0 doesn't match conda spec"
         lints, hints = linter.lintify_meta_yaml(meta, recipe_version=1)
-        assert any(str(lint).startswith(expected_message) for lint in lints)
+        assert any(lint.startswith(expected_message) for lint in lints)
 
         # when having multiple outputs it should use recipe keyword
         meta = {"recipe": {"version": "2.0.0~alpha0"}, "outputs": []}
         expected_message = "Package version 2.0.0~alpha0 doesn't match conda spec"
         lints, hints = linter.lintify_meta_yaml(meta, recipe_version=1)
-        assert any(str(lint).startswith(expected_message) for lint in lints)
+        assert any(lint.startswith(expected_message) for lint in lints)
 
         meta = {"package": {"name": "python"}}
         lints, hints = linter.lintify_meta_yaml(meta, recipe_version=1)
         expected_message = "Package version is missing."
-        assert any(str(lint).startswith(expected_message) for lint in lints)
+        assert any(lint.startswith(expected_message) for lint in lints)
 
         # should handle integer versions
         meta = {"package": {"name": "python", "version": 2}}
@@ -2002,7 +2002,7 @@ linter:
         }
         expected_message = "Package version 2.0.0~alpha0 doesn't match conda spec"
         lints, hints = linter.lintify_meta_yaml(meta, recipe_version=1)
-        assert any(str(lint).startswith(expected_message) for lint in lints)
+        assert any(lint.startswith(expected_message) for lint in lints)
 
         meta = {
             "context": {"foo": 2},
@@ -2046,7 +2046,7 @@ linter:
             }
         }
         lints, hints = linter.lintify_meta_yaml(meta)
-        filtered_lints = [lint for lint in lints if str(lint).startswith("``requirements: ")]
+        filtered_lints = [lint for lint in lints if lint.startswith("``requirements: ")]
         expected_messages = [
             "``requirements: host: python >= 2`` should not contain a space between "
             "relational operator and the version, i.e. ``python >=2``",
@@ -2068,7 +2068,7 @@ linter:
             }
         }
         lints, hints = linter.lintify_meta_yaml(meta, recipe_version=1)
-        filtered_lints = [lint for lint in lints if str(lint).startswith("``requirements: ")]
+        filtered_lints = [lint for lint in lints if lint.startswith("``requirements: ")]
         expected_messages = [
             "``requirements: host: python >= 2`` should not contain a space between "
             "relational operator and the version, i.e. ``python >=2``",
@@ -2403,7 +2403,7 @@ class TestCliRecipeLint(unittest.TestCase):
                     message = f"Expecting lints for '{jinja_var}', but didn't get any."
                 self.assertEqual(
                     not is_good,
-                    any(str(lint).startswith(expected_message) for lint in lints),
+                    any(lint.startswith(expected_message) for lint in lints),
                     message,
                 )
 
@@ -2433,13 +2433,13 @@ def test_lint_no_builds():
             )
 
         lints = linter.main(recipe_dir, conda_forge=True)
-        assert any(str(lint).startswith(expected_message) for lint in lints)
+        assert any(lint.startswith(expected_message) for lint in lints)
 
         with open(os.path.join(ci_support_dir, "blah.yaml"), "w") as fh:
             fh.write("blah")
 
         lints = linter.main(recipe_dir, conda_forge=True)
-        assert not any(str(lint).startswith(expected_message) for lint in lints)
+        assert not any(lint.startswith(expected_message) for lint in lints)
 
 
 def test_lint_duplicate_cfyml():
@@ -2470,7 +2470,7 @@ def test_lint_duplicate_cfyml():
             )
 
         lints = linter.main(recipe_dir, conda_forge=True)
-        assert any(str(lint).startswith(expected_message) for lint in lints)
+        assert any(lint.startswith(expected_message) for lint in lints)
 
         with open(cfyml, "w") as fh:
             fh.write(
@@ -2482,7 +2482,7 @@ def test_lint_duplicate_cfyml():
             )
 
         lints = linter.main(recipe_dir, conda_forge=True)
-        assert not any(str(lint).startswith(expected_message) for lint in lints)
+        assert not any(lint.startswith(expected_message) for lint in lints)
 
 
 def test_cfyml_wrong_os_version():
@@ -2672,7 +2672,7 @@ def test_pin_compatible_in_run_exports(recipe_version: int):
 
     lints, hints = linter.lintify_meta_yaml(meta, recipe_version=recipe_version)
     expected = "pin_subpackage should be used instead"
-    assert any(str(lint).startswith(expected) for lint in lints)
+    assert any(lint.startswith(expected) for lint in lints)
 
 
 @pytest.mark.parametrize("recipe_version", [0, 1])
@@ -2708,7 +2708,7 @@ def test_pin_compatible_in_run_exports_output(recipe_version: int):
 
     lints, hints = linter.lintify_meta_yaml(meta, recipe_version=recipe_version)
     expected = "pin_compatible should be used instead"
-    assert any(str(lint).startswith(expected) for lint in lints)
+    assert any(lint.startswith(expected) for lint in lints)
 
 
 def test_v1_recipes():
@@ -4022,7 +4022,7 @@ def test_lint_recipe_parses_ok():
             )
         lints, hints = linter.main(tmpdir, return_hints=True, conda_forge=True)
         assert not any(
-            str(lint).startswith(
+            lint.startswith(
                 "The recipe is not parsable by any of the known recipe parsers"
             )
             for lint in lints
@@ -4061,7 +4061,7 @@ def test_lint_recipe_parses_forblock():
             )
         lints, hints = linter.main(tmpdir, return_hints=True, conda_forge=True)
         assert not any(
-            str(lint).startswith(
+            lint.startswith(
                 "The recipe is not parsable by any of the known recipe parsers"
             )
             for lint in lints
@@ -4103,7 +4103,7 @@ def test_lint_recipe_parses_spacing():
             )
         lints, hints = linter.main(tmpdir, return_hints=True, conda_forge=True)
         assert not any(
-            str(lint).startswith(
+            lint.startswith(
                 "The recipe is not parsable by any of the known recipe parsers"
             )
             for lint in lints
@@ -4151,7 +4151,7 @@ def test_lint_recipe_parses_v1_spacing():
             )
         lints, hints = linter.main(tmpdir, return_hints=True, conda_forge=True)
         assert not any(
-            str(lint).startswith(
+            lint.startswith(
                 "The recipe is not parsable by any of the known recipe parsers"
             )
             for lint in lints
@@ -4190,7 +4190,7 @@ def test_lint_recipe_parses_v1_duplicate_keys():
             )
         lints, hints = linter.main(tmpdir, return_hints=True, conda_forge=True)
         assert not any(
-            str(lint).startswith(
+            lint.startswith(
                 "The recipe is not parsable by any of the known recipe parsers"
             )
             for lint in lints
@@ -4605,9 +4605,9 @@ def test_linter_docs_up_to_date():
     repo_root = Path(__file__).parent.parent
     linter_docs_path = repo_root / "LINTER.md"
     original_linter_docs = linter_docs_path.read_text()
-    assert generate_docs("").strip() == original_linter_docs.strip(), (
-        "!!! TIP:\n\nRun 'python -m conda_smithy.linter.messages' to regenerate."
-    )
+    assert (
+        generate_docs("").strip() == original_linter_docs.strip()
+    ), "!!! TIP:\n\nRun 'python -m conda_smithy.linter.messages' to regenerate."
 
 
 if __name__ == "__main__":
