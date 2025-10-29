@@ -800,6 +800,195 @@ The `is_abi3` variant variable is now a boolean value instead of a string (i.e.,
 
 </details>
 
+<a id='R-039'></a>
+### `R-039`: `RecipeUsePip`
+
+
+Python packages should be built with `pip install ...`, not `python setup.py install`,
+which is deprecated.
+
+<details>
+
+<summary>Hint message</summary>
+
+```text
+Whenever possible python packages should use pip. See https://conda-forge.org/docs/maintainer/adding_pkgs.html#use-pip
+```
+
+</details>
+
+<a id='R-040'></a>
+### `R-040`: `RecipeUsePyPiOrg`
+
+
+Grayskull and the conda-forge example recipe used to have pypi.io as a default,
+but the canonical URL is now PyPI.org.
+
+See https://github.com/conda-forge/staged-recipes/pull/27946.
+
+<details>
+
+<summary>Hint message</summary>
+
+```text
+PyPI default URL is now pypi.org, and not pypi.io. You may want to update the default source url.
+```
+
+</details>
+
+<a id='R-041'></a>
+### `R-041`: `RecipeSuggestNoarch`
+
+
+`noarch` packages are strongly preferred when possible.
+See https://conda-forge.org/docs/maintainer/knowledge_base.html#noarch-builds.
+
+<details>
+
+<summary>Hint message</summary>
+
+```text
+Whenever possible python packages should use noarch. See https://conda-forge.org/docs/maintainer/knowledge_base.html#noarch-builds
+```
+
+</details>
+
+<a id='R-042'></a>
+### `R-042`: `ScriptShellcheckReport`
+
+
+This issue is raised when `shellcheck` is enabled and detects problems
+in your build `.sh` scripts.
+
+See https://www.shellcheck.net/wiki/ for details on the shellcheck error codes.
+
+_Message generated dynamically. Template not available._
+
+<a id='R-043'></a>
+### `R-043`: `ScriptShellcheckFailure`
+
+
+This issue is raised when `shellcheck` is enabled but could not
+run successfully (something went wrong).
+
+<details>
+
+<summary>Hint message</summary>
+
+```text
+There have been errors while scanning with shellcheck.
+```
+
+</details>
+
+<a id='R-044'></a>
+### `R-044`: `RecipeLicenseSPDX`
+
+
+The `license` field must be a valid SPDX identifier.
+
+See list at [`licenses.txt`](https://github.com/conda-forge/conda-smithy/blob/main/conda_smithy/linter/licenses.txt).
+
+<details>
+
+<summary>Hint message</summary>
+
+```text
+License is not an SPDX identifier (or a custom LicenseRef) nor an SPDX license expression.
+
+Documentation on acceptable licenses can be found [here]( https://conda-forge.org/docs/maintainer/adding_pkgs.html#spdx-identifiers-and-expressions ).
+```
+
+</details>
+
+<a id='R-045'></a>
+### `R-045`: `RecipeInvalidLicenseException`
+
+
+The `license` field may accept some SPDX exception expressions, as controlled
+in [this file](https://github.com/conda-forge/conda-smithy/blob/main/conda_smithy/linter/license_exceptions.txt)
+
+<details>
+
+<summary>Hint message</summary>
+
+```text
+License exception is not an SPDX exception.
+
+Documentation on acceptable licenses can be found [here]( https://conda-forge.org/docs/maintainer/adding_pkgs.html#spdx-identifiers-and-expressions ).
+```
+
+</details>
+
+<a id='R-046'></a>
+### `R-046`: `RecipePythonBuildBackendHost`
+
+
+Build backends in Python packages must be explictly added to `host`.
+
+<details>
+
+<summary>Hint message</summary>
+
+```text
+No valid build backend found for Python recipe for package `{package_name}` using `pip`. Python recipes using `pip` need to explicitly specify a build backend in the `host` section. If your recipe has built with only `pip` in the `host` section in the past, you likely should add `setuptools` to the `host` section of your recipe.
+```
+
+</details>
+
+<a id='R-047'></a>
+### `R-047`: `RecipePythonMinPin`
+
+
+Python packages should depend on certain `>={min_version}` at runtime,
+but build and test against `{min_version}.*`.
+
+<details>
+
+<summary>Hint message</summary>
+
+```text
+`noarch: python` recipes should usually follow the syntax in our [documentation](https://conda-forge.org/docs/maintainer/knowledge_base/#noarch-python) for specifying the Python version.
+{recommendations}
+- If the package requires a newer Python version than the currently supported minimum version on `conda-forge`, you can override the `python_min` variable by adding a Jinja2 `set` statement at the top of your recipe (or using an equivalent `context` variable for v1 recipes).
+```
+
+</details>
+
+<a id='R-048'></a>
+### `R-048`: `RecipeSpaceSeparatedSpecs`
+
+
+Prefer `name [version [build]]` match spec syntax.
+
+<details>
+
+<summary>Hint message</summary>
+
+```text
+{output} output has some malformed specs:
+{bad_specs_list}
+Requirement spec fields should match the syntax `name [version [build]]`to avoid known issues in conda-build. For example, instead of `name =version=build`, use `name version.* build`. There should be no spaces between version operators and versions either: `python >= 3.8` should be `python >=3.8`.
+```
+
+</details>
+
+<a id='R-049'></a>
+### `R-049`: `RecipeOsVersion`
+
+
+Prefer `name [version [build]]` match spec syntax.
+
+<details>
+
+<summary>Hint message</summary>
+
+```text
+The feedstock is lowering the image versions for one or more platforms: {platforms} (the default is {default}). Unless you are in the very rare case of repackaging binary artifacts, consider removing these overrides from conda-forge.yml in the top feedstock directory.
+```
+
+</details>
+
 <a id='R0'></a>
 ## `R0`: Recipe v0 (`meta.yaml`)
 
@@ -946,6 +1135,22 @@ Noarch packages are not generally compatible with v1 conditional blocks.
 
 ```text
 `noarch` packages can't have {skips}selectors. If the selectors are necessary, please remove `noarch: {noarch}`.
+```
+
+</details>
+
+<a id='R1-003'></a>
+### `R1-003`: `RecipeRattlerBldBat`
+
+
+`rattler-build` does not use `bld.bat` scripts, but `build.bat`.
+
+<details>
+
+<summary>Hint message</summary>
+
+```text
+Found `bld.bat` in recipe directory, but this is a recipe v1 (rattler-build recipe). rattler-build uses `build.bat` instead of `bld.bat` for Windows builds. Consider renaming `bld.bat` to `build.bat`.
 ```
 
 </details>

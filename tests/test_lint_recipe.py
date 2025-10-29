@@ -3065,7 +3065,8 @@ linter:
         hints,
         recipe_version=0,
     )
-
+    lints = list(map(str, lints))
+    hints = list(map(str, hints))
     # make sure we have the expected hints
     for expected_hint in total_expected_hints:
         assert any(hint.startswith(expected_hint) for hint in hints), hints
@@ -3517,7 +3518,8 @@ linter:
         hints,
         recipe_version=0,
     )
-
+    hints = list(map(str, hints))
+    lints = list(map(str, lints))
     # make sure we have the expected hints
     if expected_hints and not skip:
         for expected_hint in expected_hints:
@@ -3907,7 +3909,7 @@ def test_hint_noarch_python_use_python_min_v1(
         hints,
         recipe_version=1,
     )
-
+    hints = list(map(str, hints))
     # make sure we have the expected hints
     if expected_hints:
         for expected_hint in expected_hints:

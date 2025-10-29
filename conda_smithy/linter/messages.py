@@ -989,6 +989,247 @@ class FCNoDuplicateKeys(_BaseMessage):
     message = "The ``conda-forge.yml`` file is not allowed to have duplicate keys."
 
 
+@dataclass(kw_only=True)
+class RecipeUsePip(_BaseMessage):
+    """
+    Python packages should be built with `pip install ...`, not `python setup.py install`,
+    which is deprecated.
+    """
+
+    kind = "hint"
+    identifier = "R-039"
+    message = (
+        "Whenever possible python packages should use pip. "
+        "See https://conda-forge.org/docs/maintainer/adding_pkgs.html#use-pip"
+    )
+
+
+@dataclass(kw_only=True)
+class RecipeUsePyPiOrg(_BaseMessage):
+    """
+    Grayskull and the conda-forge example recipe used to have pypi.io as a default,
+    but the canonical URL is now PyPI.org.
+
+    See https://github.com/conda-forge/staged-recipes/pull/27946.
+    """
+
+    kind = "hint"
+    identifier = "R-040"
+    message = (
+        "PyPI default URL is now pypi.org, and not pypi.io."
+        " You may want to update the default source url."
+    )
+
+
+@dataclass(kw_only=True)
+class RecipeSuggestNoarch(_BaseMessage):
+    """
+    `noarch` packages are strongly preferred when possible.
+    See https://conda-forge.org/docs/maintainer/knowledge_base.html#noarch-builds.
+    """
+
+    kind = "hint"
+    identifier = "R-041"
+    message = (
+        "Whenever possible python packages should use noarch. "
+        "See https://conda-forge.org/docs/maintainer/knowledge_base.html#noarch-builds"
+    )
+
+
+@dataclass(kw_only=True)
+class ScriptShellcheckReport(_BaseMessage):
+    """
+    This issue is raised when `shellcheck` is enabled and detects problems
+    in your build `.sh` scripts.
+
+    See https://www.shellcheck.net/wiki/ for details on the shellcheck error codes.
+    """
+
+    kind = "hint"
+    identifier = "R-042"
+    max_lines: ClassVar[int] = 50
+    command: list[str] | None = None
+    output_lines: list[str] | None = None
+
+    @property
+    def message(self):
+        # All files successfully scanned with some issues.
+        joined_cmd = " ".join(self.command)
+        lines = [
+            "Whenever possible fix all shellcheck findings "
+            f"('{joined_cmd}' recipe/*.sh -f diff | git apply' helps)",
+            *self.output_lines[:50],
+        ]
+        if len(self.output_lines) > self.max_lines:
+            lines.append(
+                "Output restricted, there are "
+                f"'{len(self.output_lines) - self.max_lines}' more lines."
+            )
+        return "\n".join(lines).replace("{", "{{").replace("}", "}}")
+
+
+@dataclass(kw_only=True)
+class ScriptShellcheckFailure(_BaseMessage):
+    """
+    This issue is raised when `shellcheck` is enabled but could not
+    run successfully (something went wrong).
+    """
+
+    kind = "hint"
+    identifier = "R-043"
+    message = "There have been errors while scanning with shellcheck."
+
+
+@dataclass(kw_only=True)
+class RecipeLicenseSPDX(_BaseMessage):
+    """
+    The `license` field must be a valid SPDX identifier.
+
+    See list at [`licenses.txt`](https://github.com/conda-forge/conda-smithy/blob/main/conda_smithy/linter/licenses.txt).
+    """
+
+    kind = "hint"
+    identifier = "R-044"
+    message = (
+        "License is not an SPDX identifier (or a custom LicenseRef) "
+        "nor an SPDX license expression.\n\n"
+        "Documentation on acceptable licenses can be found "
+        "[here]( https://conda-forge.org/docs/maintainer/adding_pkgs.html#spdx-identifiers-and-expressions )."
+    )
+
+
+@dataclass(kw_only=True)
+class RecipeInvalidLicenseException(_BaseMessage):
+    """
+    The `license` field may accept some SPDX exception expressions, as controlled
+    in [this file](https://github.com/conda-forge/conda-smithy/blob/main/conda_smithy/linter/license_exceptions.txt)
+    """
+
+    kind = "hint"
+    identifier = "R-045"
+    message = (
+        "License exception is not an SPDX exception.\n\n"
+        "Documentation on acceptable licenses can be found "
+        "[here]( https://conda-forge.org/docs/maintainer/adding_pkgs.html#spdx-identifiers-and-expressions )."
+    )
+
+
+@dataclass(kw_only=True)
+class RecipePythonBuildBackendHost(_BaseMessage):
+    """
+    Build backends in Python packages must be explictly added to `host`.
+    """
+
+    kind = "hint"
+    identifier = "R-046"
+    message = (
+        "No valid build backend found for Python recipe for package "
+        "`{package_name}` using `pip`. Python recipes using `pip` need to "
+        "explicitly specify a build backend in the `host` section. "
+        "If your recipe has built with only `pip` in the `host` section "
+        "in the past, you likely should add `setuptools` to the `host` "
+        "section of your recipe."
+    )
+    package_name: str
+
+
+@dataclass(kw_only=True)
+class RecipePythonMinPin(_BaseMessage):
+    """
+    Python packages should depend on certain `>={min_version}` at runtime,
+    but build and test against `{min_version}.*`.
+    """
+
+    kind = "hint"
+    identifier = "R-047"
+    message = (
+        "`noarch: python` recipes should usually follow the syntax in "
+        "our [documentation](https://conda-forge.org/docs/maintainer/knowledge_base/#noarch-python) "
+        "for specifying the Python version.\n"
+        "{recommendations}\n"
+        "- If the package requires a newer Python version than the currently supported minimum "
+        "version on `conda-forge`, you can override the `python_min` variable by adding a "
+        "Jinja2 `set` statement at the top of your recipe (or using an equivalent `context` "
+        "variable for v1 recipes)."
+    )
+    recommendations: list[tuple[str, str, str, str]]
+
+    def render_attributes(self):
+        recommendations = []
+        for (
+            report_section_name,
+            section_desc,
+            report_syntax,
+            report_entry,
+        ) in self.recommendations:
+            recommendations.append(
+                f"\n   - For the {report_section_name} section of {section_desc}, you "
+                f"should usually use the pin {report_syntax} for the {report_entry} entry."
+            )
+        return {"recommendations": "".join(recommendations)}
+
+
+@dataclass(kw_only=True)
+class RecipeSpaceSeparatedSpecs(_BaseMessage):
+    """
+    Prefer `name [version [build]]` match spec syntax.
+    """
+
+    kind = "hint"
+    identifier = "R-048"
+    message = (
+        "{output} output has some malformed specs:\n"
+        "{bad_specs_list}\n"
+        "Requirement spec fields should match the syntax `name [version [build]]`"
+        "to avoid known issues in conda-build. For example, instead of "
+        "`name =version=build`, use `name version.* build`. "
+        "There should be no spaces between version operators and versions either: "
+        "`python >= 3.8` should be `python >=3.8`."
+    )
+    output: str
+    bad_specs: dict[str, list[str]]
+
+    def render_attributes(self):
+        bad_specs_list = []
+        for req_type, specs in self.bad_specs.items():
+            specs = [f"`{spec}`" for spec in specs]
+            bad_specs_list.append(f"- In section {req_type}: {', '.join(specs)}")
+        return {"output": self.output, "bad_specs_list": bad_specs_list}
+
+
+@dataclass(kw_only=True)
+class RecipeOsVersion(_BaseMessage):
+    """
+    Prefer `name [version [build]]` match spec syntax.
+    """
+
+    kind = "hint"
+    identifier = "R-049"
+    message = (
+        "The feedstock is lowering the image versions for one or more platforms: {platforms} "
+        "(the default is {default}). Unless you are in the very rare case of repackaging binary "
+        "artifacts, consider removing these overrides from conda-forge.yml "
+        "in the top feedstock directory."
+    )
+    platforms: dict[str, str]
+    default: str
+
+
+@dataclass(kw_only=True)
+class RecipeRattlerBldBat(_BaseMessage):
+    """
+    `rattler-build` does not use `bld.bat` scripts, but `build.bat`.
+    """
+
+    kind = "hint"
+    identifier = "R1-003"
+    message = (
+        "Found `bld.bat` in recipe directory, but this is a recipe v1 "
+        "(rattler-build recipe). rattler-build uses `build.bat` instead of `bld.bat` "
+        "for Windows builds. Consider renaming `bld.bat` to `build.bat`."
+    )
+
+
 def generate_docs(output_file: str | None = None) -> str:
     if output_file is None:
         # Let's check if we are in a repo or installed
