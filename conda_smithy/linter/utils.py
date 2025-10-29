@@ -16,6 +16,12 @@ from conda_build.metadata import (
 from rattler_build_conda_compat import loader as rattler_loader
 from rattler_build_conda_compat.recipe_sources import get_all_sources
 
+from conda_smithy.linter.messages import (
+    RecipeInvalidVersion,
+    RecipeMissingVersion,
+    RecipeName,
+)
+
 if sys.version_info[:2] < (3, 11):
     import tomli as tomllib
 else:
@@ -195,20 +201,15 @@ def jinja_lines(lines):
 
 
 def _lint_recipe_name(recipe_name: str) -> Optional[str]:
-    wrong_recipe_name = "Recipe name has invalid characters. only lowercase alpha, numeric, underscores, hyphens and dots allowed"
-
     if re.match(r"^[a-z0-9_\-.]+$", recipe_name) is None:
-        return wrong_recipe_name
+        return RecipeName()
 
     return None
 
 
 def _lint_package_version(version: Optional[str]) -> Optional[str]:
-    no_package_version = "Package version is missing."
-    invalid_version = "Package version {ver} doesn't match conda spec: {err}"
-
     if version is None:
-        return no_package_version
+        return RecipeMissingVersion()
 
     ver = str(version)
 
@@ -219,14 +220,17 @@ def _lint_package_version(version: Optional[str]) -> Optional[str]:
     try:
         VersionOrder(ver)
     except InvalidVersionSpec as e:
-        return invalid_version.format(ver=ver, err=e)
+        return RecipeInvalidVersion(version=ver, error=str(e))
 
 
-def load_linter_toml_metdata():
+def load_linter_toml_metadata():
     # ensure we refresh the cache every hour
     ttl = 3600
     time_salt = int(time.time() / ttl)
     return load_linter_toml_metdata_internal(time_salt)
+
+
+load_linter_toml_metdata = load_linter_toml_metadata  # BW Compat
 
 
 @lru_cache(maxsize=1)

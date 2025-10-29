@@ -8,6 +8,7 @@ from rattler_build_conda_compat.jinja.jinja import (
 
 from conda_smithy.linter.errors import HINT_NO_ARCH
 from conda_smithy.linter.messages import (
+    RecipeNoarchSelectorsV1,
     RecipeRecommendedTests,
     RecipeRequiredTests,
 )
@@ -194,16 +195,8 @@ def lint_usage_of_selectors_for_noarch(
                 has_bad_selector = True
 
             if has_bad_selector:
-                lints.append(
-                    "`noarch` packages can't have selectors. If "
-                    "the selectors are necessary, please remove "
-                    f"`noarch: {noarch_value}`."
-                )
+                lints.append(RecipeNoarchSelectorsV1(noarch=noarch_value))
                 break
 
     if "skip" in build_section:
-        lints.append(
-            "`noarch` packages can't have skips with selectors. If "
-            "the selectors are necessary, please remove "
-            f"`noarch: {noarch_value}`."
-        )
+        lints.append(RecipeNoarchSelectorsV1(noarch=noarch_value, skips=True))
