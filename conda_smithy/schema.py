@@ -292,6 +292,11 @@ class GithubActionsConfig(BaseModel):
         default=None,
     )
 
+    resize_win_partitions: Optional[bool] = Field(
+        description="Whether to resize partitions to use all space on Windows",
+        default=False,
+    )
+
     self_hosted: Optional[bool] = Field(
         description="Whether to use self-hosted runners",
         default=False,
