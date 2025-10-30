@@ -169,6 +169,31 @@ jobs:
         choco install {{ choco_pkg }} -fdv -y --debug
 {% endfor %}
 
+    # https://github.com/aktech/cirun-azure-resize-disk
+    - name: Resize all partitions to maximum
+      if: matrix.os == 'windows'
+      shell: pwsh
+      run: |
+        Write-Output "=== RESIZING PARTITIONS ==="
+        $disks = Get-Disk | Where-Object PartitionStyle -ne 'RAW'
+
+        foreach ($disk in $disks) {
+            $partitions = Get-Partition -DiskNumber $disk.Number
+            foreach ($partition in $partitions) {
+                try {
+                    $size = Get-PartitionSupportedSize -DiskNumber $disk.Number -PartitionNumber $partition.PartitionNumber
+                    if ($partition.Size -lt $size.SizeMax) {
+                        Write-Output "Resizing Disk $($disk.Number) Partition $($partition.PartitionNumber) from $($partition.Size) to $($size.SizeMax)"
+                        Resize-Partition -DiskNumber $disk.Number -PartitionNumber $partition.PartitionNumber -Size $size.SizeMax -Verbose
+                    } else {
+                        Write-Output "Disk $($disk.Number) Partition $($partition.PartitionNumber) already at max size ($($partition.Size))"
+                    }
+                } catch {
+                    Write-Warning "Failed resizing Disk $($disk.Number) Partition $($partition.PartitionNumber): $_"
+                }
+            }
+        }
+
     - name: Build on windows
       id: build-windows
       if: matrix.os == 'windows'
