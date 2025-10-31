@@ -1,7 +1,7 @@
 **Added:**
 
-* Windows GHA runners now automatically resize partitions to use the whole
-  available disk space. (#2394)
+* ``github_actions.resize_win_partitions`` option to resize partitions
+  on Windows GHA runners to use the whole available disk space. (#2394)
 
 **Changed:**
 
