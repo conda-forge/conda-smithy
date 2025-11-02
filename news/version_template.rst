@@ -12,11 +12,11 @@
 
 **Removed:**
 
-* Remove cdt_name, cdt_arch, BUILD from being saved in every feedstock
+* <news item>
 
 **Fixed:**
 
-* <news item>
+* linter will ignore package versions that are jinja templated for v1 (#2402).
 
 **Security:**
 

@@ -6,6 +6,7 @@ import shutil
 import tempfile
 import time
 from collections import defaultdict
+from collections.abc import Mapping, Sequence
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Union
@@ -223,3 +224,22 @@ class HashableDict(dict):
 
     def __hash__(self):
         return hash(json.dumps(self, sort_keys=True, default=_json_default))
+
+
+def ensure_standard_strings(cfg: Any) -> Any:
+    """Ensure an object composed of sequences, dicts, and values only has
+    Python `str` strings in it."""
+
+    if isinstance(cfg, str):
+        return str(cfg)
+    elif isinstance(cfg, Mapping):
+        for k in list(cfg.keys()):
+            v = cfg.pop(k)
+            k = ensure_standard_strings(k)
+            v = ensure_standard_strings(v)
+            cfg[k] = v
+        return cfg
+    elif isinstance(cfg, Sequence):
+        return type(cfg)([ensure_standard_strings(v) for v in cfg])
+    else:
+        return cfg

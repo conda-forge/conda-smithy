@@ -4,7 +4,7 @@
 
 **Changed:**
 
-* Feedstocks will use pixi installed from the docker image.
+* Use ``macos-15-intel`` runners in Github Actions workflows. (#2405)
 
 **Deprecated:**
 

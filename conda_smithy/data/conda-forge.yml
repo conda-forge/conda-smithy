@@ -84,6 +84,7 @@ github_actions:
   cancel_in_progress: true
   free_disk_space: false
   max_parallel: null
+  resize_win_partitions: false
   self_hosted: false
   store_build_artifacts: false
   timeout_minutes: 360

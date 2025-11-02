@@ -211,6 +211,11 @@ def _lint_package_version(version: Optional[str]) -> Optional[str]:
         return no_package_version
 
     ver = str(version)
+
+    if ver.startswith("${{"):
+        # version is templatised. skip the lint
+        return
+
     try:
         VersionOrder(ver)
     except InvalidVersionSpec as e:

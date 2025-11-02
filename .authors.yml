@@ -247,7 +247,7 @@
   email: isuru.11@cse.mrt.ac.lk
   alternate_emails:
   - isuruf@gmail.com
-  num_commits: 678
+  num_commits: 682
   first_commit: 2017-01-08 22:03:03
   github: isuruf
 - name: Julian Rüth
@@ -393,7 +393,7 @@
   github: shadowwalkersb
 - name: Matthew R. Becker
   email: becker.mr@gmail.com
-  num_commits: 507
+  num_commits: 511
   first_commit: 2020-01-07 17:44:33
   github: beckermr
   alternate_emails:
@@ -745,3 +745,8 @@
   email: lucas.colley8@gmail.com
   num_commits: 1
   first_commit: 2025-07-14 12:20:19
+- name: Mikhail Ryazanov
+  email: MikhailRyazanov@users.noreply.github.com
+  num_commits: 1
+  first_commit: 2025-09-25 14:33:39
+  github: MikhailRyazanov

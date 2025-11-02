@@ -55,6 +55,7 @@ from conda_smithy.feedstock_io import (
 from conda_smithy.utils import (
     RATTLER_BUILD,
     HashableDict,
+    ensure_standard_strings,
     get_feedstock_about_from_meta,
     get_feedstock_name_from_meta,
 )
@@ -1089,6 +1090,7 @@ def _render_ci_provider(
             )
             if os.path.exists(variants_path):
                 new_spec = parse_recipe_config_file(variants_path, namespace)
+                new_spec = ensure_standard_strings(new_spec)
                 specs = {
                     "combined_spec": combined_variant_spec,
                     "variants.yaml": new_spec,
@@ -1663,13 +1665,13 @@ def _github_actions_specific_setup(jinja_env, forge_config, forge_dir, platform)
     runs_on = {
         "osx-64": {
             "os": "macos",
-            "hosted_labels": ("macos-13",),
+            # FUTURE: macos-15-intel will be deprecated in Fall 2027
+            "hosted_labels": ("macos-15-intel",),
             "self_hosted_labels": ("macOS", "x64"),
         },
         "osx-arm64": {
             "os": "macos",
-            # FUTURE: Use -latest once GHA fully migrates
-            "hosted_labels": ("macos-15",),
+            "hosted_labels": ("macos-latest",),
             "self_hosted_labels": ("macOS", "arm64"),
         },
         "linux-64": {
