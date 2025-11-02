@@ -34,6 +34,7 @@ dependencies:
   - libarchive
   - cirun >=0.30
   - pydantic >=2.11,<3
+  - pixi >=0.44.0
   - jsonschema
   - backports.strenum
   - exceptiongroup
