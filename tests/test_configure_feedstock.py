@@ -2119,7 +2119,7 @@ def test_render_pixi(
             "shellcheck" not in pixi_text
         ), "pixi.toml should not mention `shellcheck`"
     else:
-        platforms = pixi["project"]["platforms"]
+        platforms = pixi["workspace"]["platforms"]
         assert (
             platform_without_shellcheck in platforms
         ), f"expected {platform_without_shellcheck} in pixi project platforms"
