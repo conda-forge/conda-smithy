@@ -17,7 +17,7 @@
 
 **Fixed:**
 
-* <news item>
+* Fix ``pixi`` deprecation warning for `[project]` versus `[workspace]`. (#2395)
 
 **Security:**
 
