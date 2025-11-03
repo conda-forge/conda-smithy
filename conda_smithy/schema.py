@@ -4,7 +4,7 @@
 import json
 from enum import Enum
 from inspect import cleandoc
-from typing import Annotated, Any, Literal, Optional, TypeVar, Union
+from typing import Annotated, Any, Literal, Optional, Union
 
 import yaml
 from conda.base.constants import KNOWN_SUBDIRS
@@ -26,8 +26,6 @@ from conda_smithy.validate_schema import (
     CONDA_FORGE_YAML_DEFAULTS_FILE,
     CONDA_FORGE_YAML_SCHEMA_FILE,
 )
-
-T = TypeVar("T")
 
 
 class Nullable(Enum):
