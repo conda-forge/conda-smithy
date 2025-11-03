@@ -653,6 +653,64 @@
       ],
       "title": "Nullable"
     },
+    "PerPlatformSettings_bool_": {
+      "properties": {
+        "all": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Value for all platforms",
+          "title": "All"
+        },
+        "linux": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Value for Linux runners",
+          "title": "Linux"
+        },
+        "osx": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Value for macOS runners",
+          "title": "Osx"
+        },
+        "win": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Value for Windows runners",
+          "title": "Win"
+        }
+      },
+      "title": "PerPlatformSettings[bool]",
+      "type": "object"
+    },
     "Platforms": {
       "enum": [
         "emscripten_wasm32",
@@ -2162,6 +2220,17 @@
       ],
       "description": "Woodpecker CI settings. This is usually read-only and should not normally be\nmanually modified. Tools like conda-smithy may modify this, as needed.",
       "title": "Woodpecker"
+    },
+    "store_build_artifacts": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/PerPlatformSettings_bool_"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Whether to store build artifacts"
     },
     "build_with_mambabuild": {
       "anyOf": [

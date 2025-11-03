@@ -4,11 +4,11 @@
 import json
 from enum import Enum
 from inspect import cleandoc
-from typing import Annotated, Any, Literal, Optional, Union
+from typing import Annotated, Any, Generic, Literal, Optional, Self, TypeVar, Union
 
 import yaml
 from conda.base.constants import KNOWN_SUBDIRS
-from pydantic import BaseModel, ConfigDict, Field, WithJsonSchema, create_model
+from pydantic import BaseModel, ConfigDict, Field, WithJsonSchema, create_model, model_validator
 
 try:
     from enum import StrEnum
@@ -20,6 +20,9 @@ from conda_smithy.validate_schema import (
     CONDA_FORGE_YAML_DEFAULTS_FILE,
     CONDA_FORGE_YAML_SCHEMA_FILE,
 )
+
+
+T = TypeVar("T")
 
 
 class Nullable(Enum):
@@ -71,9 +74,24 @@ class Lints(StrEnum):
     HINT_PYTHON_MIN = "hint_python_min"
 
 
+class Platform(StrEnum):
+    LINUX = "linux"
+    OSX = "osx"
+    WIN = "win"
+
+
 ##############################################
 ########## Model definitions #################
 ##############################################
+
+
+class PerPlatformSettings(BaseModel, Generic[T]):
+    """A generic setting with per-platform values."""
+
+    all: Optional[T] = Field(description="Value for all platforms", default=None)
+    linux: Optional[T] = Field(description="Value for Linux runners", default=None)
+    osx: Optional[T] = Field(description="Value for macOS runners", default=None)
+    win: Optional[T] = Field(description="Value for Windows runners", default=None)
 
 
 class AzureRunnerSettings(BaseModel):
@@ -1176,6 +1194,15 @@ class ConfigModel(BaseModel):
         manually modified. Tools like conda-smithy may modify this, as needed.
         """
         ),
+    )
+
+    ###################################
+    ####   Per-platform Settings   ####
+    ###################################
+
+    store_build_artifacts: Optional[PerPlatformSettings[bool]] = Field(
+        default_factory=PerPlatformSettings,
+        description="Whether to store build artifacts"
     )
 
     ###################################

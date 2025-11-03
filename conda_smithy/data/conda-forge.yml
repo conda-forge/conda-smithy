@@ -140,6 +140,11 @@ secrets: []
 shellcheck:
   enabled: false
 skip_render: []
+store_build_artifacts:
+  all: null
+  linux: null
+  osx: null
+  win: null
 templates: {}
 test: null
 test_on_native_only: false

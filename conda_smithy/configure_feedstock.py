@@ -2324,6 +2324,30 @@ def _read_forge_config(forge_dir, forge_yml=None):
             "Use 'conda_build_tool' instead."
         )
 
+    # Handle per-platform configs
+    # TODO: can we import .schema here? should we move the list somewhere else?
+    platforms = ("linux", "osx", "win")
+    plat_specific_keys = set(["all", *platforms])
+    for key, values in default_config.items():
+        # if default looks like plat-specific key, process it as such
+        if isinstance(values, dict) and set(values) == plat_specific_keys:
+            if key not in file_config:
+                continue
+            all_value = file_config[key].get("all")
+            for platform in platforms:
+                plat_value = file_config[key].get(platform)
+                if all_value is not None:
+                    # if both "all" and platform-specific values are specified,
+                    # they must be the same
+                    if plat_value is not None and all_value != plat_value:
+                        raise ValueError(
+                            "{}: conflicting values; all={!r}, {}={!r}".format(
+                                key, all_value, platform, plat_value
+                            )
+                        )
+                    # default platform-specific value to the all value
+                    config[key][platform] = all_value
+
     return config
 
 
