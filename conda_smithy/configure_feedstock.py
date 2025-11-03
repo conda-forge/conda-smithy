@@ -105,8 +105,12 @@ CONDA_FORGE_SHELLCHECK_PLATFORMS = [
 
 CONDA_FORGE_ALIAS_PLATFORMS = {
     "win": {"win-64"},
-    "unix": {"linux-64", "linux-aarch64", "linux-ppc64le"},
+    "linux": {"linux-64", "linux-aarch64", "linux-ppc64le"},
     "osx": {"osx-64", "osx-arm64"},
+}
+CONDA_FORGE_ALIAS_PLATFORMS["unix"] = {
+    *CONDA_FORGE_ALIAS_PLATFORMS["linux"],
+    *CONDA_FORGE_ALIAS_PLATFORMS["osx"],
 }
 
 CONDA_FORGE_PIXI_VERSION = "0.59.0"
