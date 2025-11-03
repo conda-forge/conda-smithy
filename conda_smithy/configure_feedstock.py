@@ -103,6 +103,12 @@ CONDA_FORGE_SHELLCHECK_PLATFORMS = [
     "win-64",
 ]
 
+CONDA_FORGE_ALIAS_PLATFORMS = {
+    "win": {"win-64"},
+    "unix": {"linux-64", "linux-aarch64", "linux-ppc64le"},
+    "osx": {"osx-64", "osx-arm64"},
+}
+
 CONDA_FORGE_PIXI_VERSION = "0.59.0"
 
 
@@ -2236,15 +2242,19 @@ def render_pixi(jinja_env, forge_config, forge_dir):
             if filename.endswith(".yaml"):
                 variant_name, _ = os.path.splitext(filename)
                 variants.append(variant_name)
-    platforms = {
-        platform.replace("_", "-")
-        for platform, service in forge_config["provider"].items()
-        if service
-    }
+
+    pixi_platforms = set()
+
+    for platform, service in forge_config["provider"].items():
+        if not service:
+            continue
+        aliased = CONDA_FORGE_ALIAS_PLATFORMS.get(platform)
+        pixi_platforms |= aliased if aliased else {platform.replace("_", "-")}
+
     new_file_contents = template.render(
         smithy_version=__version__,
         pixi_version=CONDA_FORGE_PIXI_VERSION,
-        platforms=sorted(platforms),
+        platforms=sorted(pixi_platforms),
         shellcheck_platforms=CONDA_FORGE_SHELLCHECK_PLATFORMS,
         variants=variants,
         **forge_config,

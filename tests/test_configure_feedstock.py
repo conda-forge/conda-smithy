@@ -2095,8 +2095,12 @@ def test_render_pixi(
     pixi_toml = recipe / "pixi.toml"
     pixi_toml.touch()
     config["shellcheck"]["enabled"] = shellcheck
-    config["provider"][platform_without_shellcheck.replace("-", "_")] = "default"
-
+    config["provider"].update(
+        {
+            platform_without_shellcheck.replace("-", "_"): "default",
+            "win": "default",
+        }
+    )
     if conda_install_tool:
         config["conda_install_tool"] = conda_install_tool
 
@@ -2122,7 +2126,10 @@ def test_render_pixi(
         platforms = pixi["workspace"]["platforms"]
         assert (
             platform_without_shellcheck in platforms
-        ), f"expected {platform_without_shellcheck} in pixi project platforms"
+        ), f"expected {platform_without_shellcheck} in pixi workspace platforms"
+        assert (
+            "win-64" in platforms
+        ), "expected an aliased platform in pixi workspace platforms"
         shellcheck_platforms = pixi["feature"]["shellcheck"]["platforms"]
         smithy_env = pixi["environments"]["smithy"]
         assert shellcheck_platforms, "`shellcheck` should be enabled on _some_ platform"
