@@ -141,7 +141,7 @@ shellcheck:
   enabled: false
 skip_render: []
 store_build_artifacts:
-  all: null
+  all: false
   linux: null
   osx: null
   win: null

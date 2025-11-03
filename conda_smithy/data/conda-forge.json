@@ -653,7 +653,7 @@
       ],
       "title": "Nullable"
     },
-    "PerPlatformSettings_bool_": {
+    "PerPlatformSettings__class__bool__": {
       "properties": {
         "all": {
           "anyOf": [
@@ -678,21 +678,8 @@
             }
           ],
           "default": null,
-          "description": "Value for Linux runners",
+          "description": "Value for linux platform",
           "title": "Linux"
-        },
-        "osx": {
-          "anyOf": [
-            {
-              "type": "boolean"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "description": "Value for macOS runners",
-          "title": "Osx"
         },
         "win": {
           "anyOf": [
@@ -704,11 +691,24 @@
             }
           ],
           "default": null,
-          "description": "Value for Windows runners",
+          "description": "Value for win platform",
           "title": "Win"
+        },
+        "osx": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Value for osx platform",
+          "title": "Osx"
         }
       },
-      "title": "PerPlatformSettings[bool]",
+      "title": "PerPlatformSettings_<class 'bool'>",
       "type": "object"
     },
     "Platforms": {
@@ -2224,7 +2224,7 @@
     "store_build_artifacts": {
       "anyOf": [
         {
-          "$ref": "#/$defs/PerPlatformSettings_bool_"
+          "$ref": "#/$defs/PerPlatformSettings__class__bool__"
         },
         {
           "type": "null"
