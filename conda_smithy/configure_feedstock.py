@@ -2341,9 +2341,7 @@ def _read_forge_config(forge_dir, forge_yml=None):
                     # they must be the same
                     if plat_value is not None and all_value != plat_value:
                         raise ValueError(
-                            "{}: conflicting values; all={!r}, {}={!r}".format(
-                                key, all_value, platform, plat_value
-                            )
+                            f"{key}: conflicting values; all={all_value!r}, {platform}={plat_value!r}"
                         )
                     # default platform-specific value to the all value
                     config[key][platform] = all_value
