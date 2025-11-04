@@ -16,7 +16,7 @@
 
 **Fixed:**
 
-* Fix pixi.toml deprecation warning
+* Fix `pixi.toml` deprecation warning. (#2409)
 
 **Security:**
 
