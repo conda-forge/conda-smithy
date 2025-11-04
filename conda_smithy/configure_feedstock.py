@@ -2346,7 +2346,30 @@ def _read_forge_config(forge_dir, forge_yml=None):
                     platform, _ = plat_provider.split("_", 1)
                     config[key][plat_provider] = config[key][platform]
 
+    # Backwards compatibility with the pre-per-platform configs
+    _copy_provider_value_to_plat_provider(
+        file_config, config, "azure", "store_build_artifacts"
+    )
+    _copy_provider_value_to_plat_provider(
+        file_config, config, "github_actions", "store_build_artifacts"
+    )
     return config
+
+
+def _copy_provider_value_to_plat_provider(
+    file_config: dict,
+    config: dict,
+    provider: str,
+    key: str,
+) -> None:
+    legacy_value = file_config.get(provider, {}).get(key)
+    if legacy_value is not None:
+        warnings.warn(
+            f"{provider}.{key} is deprecated, use subkeys of {key} instead",
+            DeprecationWarning,
+        )
+        for platform in ("linux", "osx", "win"):
+            config[key][f"{platform}_{provider}"] = legacy_value
 
 
 def _legacy_compatibility_checks(config: dict, forge_dir):
