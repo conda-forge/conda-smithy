@@ -472,6 +472,19 @@
           "description": "The maximum number of jobs to run in parallel",
           "title": "Max Parallel"
         },
+        "resize_win_partitions": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": false,
+          "description": "Whether to resize partitions to use all space on Windows",
+          "title": "Resize Win Partitions"
+        },
         "self_hosted": {
           "anyOf": [
             {

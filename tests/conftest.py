@@ -891,3 +891,9 @@ outputs:
         testing_workdir,
         _load_forge_config(testing_workdir, exclusive_config_file=None),
     )
+
+
+@pytest.fixture
+def platform_without_shellcheck():
+    """see https://github.com/conda-forge/shellcheck-feedstock/pull/16"""
+    return "linux-ppc64le"

@@ -93,6 +93,28 @@ CONDA_FORGE_PINNING_LIFETIME = int(
     os.environ.get("CONDA_FORGE_PINNING_LIFETIME", 15 * 60)
 )
 
+# platforms for which ``shellcheck`` has been built for conda-forge
+# see https://github.com/conda-forge/conda-smithy/pull/2395
+CONDA_FORGE_SHELLCHECK_PLATFORMS = [
+    "linux-64",
+    "linux-aarch64",
+    "osx-64",
+    "osx-arm64",
+    "win-64",
+]
+
+CONDA_FORGE_ALIAS_PLATFORMS = {
+    "win": {"win-64"},
+    "linux": {"linux-64", "linux-aarch64", "linux-ppc64le"},
+    "osx": {"osx-64", "osx-arm64"},
+}
+CONDA_FORGE_ALIAS_PLATFORMS["unix"] = {
+    *CONDA_FORGE_ALIAS_PLATFORMS["linux"],
+    *CONDA_FORGE_ALIAS_PLATFORMS["osx"],
+}
+
+CONDA_FORGE_PIXI_VERSION = "0.59.0"
+
 
 # use lru_cache to avoid repeating warnings endlessly;
 # this keeps track of 10 different messages and then warns again
@@ -2224,14 +2246,20 @@ def render_pixi(jinja_env, forge_config, forge_dir):
             if filename.endswith(".yaml"):
                 variant_name, _ = os.path.splitext(filename)
                 variants.append(variant_name)
-    platforms = {
-        platform.replace("_", "-")
-        for platform, service in forge_config["provider"].items()
-        if service
-    }
+
+    pixi_platforms = set()
+
+    for platform, service in forge_config["provider"].items():
+        if not service:
+            continue
+        aliased = CONDA_FORGE_ALIAS_PLATFORMS.get(platform)
+        pixi_platforms |= aliased if aliased else {platform.replace("_", "-")}
+
     new_file_contents = template.render(
         smithy_version=__version__,
-        platforms=sorted(platforms),
+        pixi_version=CONDA_FORGE_PIXI_VERSION,
+        platforms=sorted(pixi_platforms),
+        shellcheck_platforms=CONDA_FORGE_SHELLCHECK_PLATFORMS,
         variants=variants,
         **forge_config,
     )
