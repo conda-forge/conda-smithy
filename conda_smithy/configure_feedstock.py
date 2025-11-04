@@ -2333,14 +2333,14 @@ def _read_forge_config(forge_dir, forge_yml=None):
         if isinstance(values, dict) and plat_specific_keys.issubset(values):
             all_value = config[key]["all"]
             for platform in platforms:
-                plat_value = file_config[key].get(platform)
+                plat_value = file_config.get(key, {}).get(platform)
                 if plat_value is None:
                     # default platform-specific value to the all value
                     config[key][platform] = all_value
             for plat_provider in default_config[key].keys():
                 if "_" not in plat_provider:
                     continue
-                plat_prov_value = file_config[key].get(plat_provider)
+                plat_prov_value = file_config.get(key, {}).get(plat_provider)
                 if plat_prov_value is None:
                     # default to platform-specific value
                     platform, _ = plat_provider.split("_", 1)
