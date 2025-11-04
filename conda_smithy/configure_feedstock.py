@@ -2355,8 +2355,11 @@ def _read_forge_config(forge_dir, forge_yml=None):
                 plat_prov_value = file_config.get(key, {}).get(plat_provider)
                 if plat_prov_value is None:
                     # default to platform-specific value
-                    platform, _ = plat_provider.split("_", 1)
+                    platform, provider = plat_provider.split("_", 1)
                     config[key][plat_provider] = config[key][platform]
+                    if isinstance(all_value, bool):
+                        # prepare the default, to be replaced below
+                        config[key][f"any_{provider}"] = False
 
     # Backwards compatibility with the pre-per-platform configs
     _copy_provider_value_to_plat_provider(
