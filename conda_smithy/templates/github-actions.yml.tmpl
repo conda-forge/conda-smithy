@@ -42,7 +42,7 @@ jobs:
         include:
         {%- for data in configs %}
           - CONFIG: {{ data.config_name }}
-        {%- if github_actions.store_build_artifacts %}
+        {%- if store_build_artifacts.any_github_actions %}
             SHORT_CONFIG: {{ data.short_config_name }}
         {%- endif %}
             UPLOAD_PACKAGES: {{ data.upload }}
@@ -220,7 +220,7 @@ jobs:
 {%- for secret in secrets %}
         {{ secret }}: {% raw %}${{{% endraw %} secrets.{{ secret }} {% raw %}}}{% endraw %}
 {%- endfor %}
-{%- if github_actions.store_build_artifacts %}
+{%- if store_build_artifacts.any_github_actions %}
 
     - name: Determine build outcome
       # this is to merge the status of the linux/osx/win builds into

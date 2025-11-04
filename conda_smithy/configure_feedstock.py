@@ -1756,7 +1756,7 @@ def _github_actions_specific_setup(jinja_env, forge_config, forge_dir, platform)
     template_files = platform_templates.get(platform, [])
 
     # Templates for all platforms
-    if forge_config["github_actions"]["store_build_artifacts"]:
+    if forge_config["store_build_artifacts"]["any_github_actions"]:
         template_files.append(".scripts/create_conda_build_artifacts.sh")
         template_files.append(".scripts/create_conda_build_artifacts.bat")
 
@@ -1826,10 +1826,17 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
             ".scripts/run_win_build.bat",
         ],
     }
-    if forge_config["azure"]["store_build_artifacts"]:
-        platform_templates["linux"].append(".scripts/create_conda_build_artifacts.sh")
-        platform_templates["osx"].append(".scripts/create_conda_build_artifacts.sh")
-        platform_templates["win"].append(".scripts/create_conda_build_artifacts.bat")
+    if forge_config["store_build_artifacts"]["any_azure"]:
+        if forge_config["store_build_artifacts"]["linux_azure"]:
+            platform_templates["linux"].append(
+                ".scripts/create_conda_build_artifacts.sh"
+            )
+        if forge_config["store_build_artifacts"]["osx_azure"]:
+            platform_templates["osx"].append(".scripts/create_conda_build_artifacts.sh")
+        if forge_config["store_build_artifacts"]["win_azure"]:
+            platform_templates["win"].append(
+                ".scripts/create_conda_build_artifacts.bat"
+            )
     template_files = platform_templates.get(platform, [])
 
     azure_settings = deepcopy(forge_config["azure"][f"settings_{platform}"])
@@ -1861,7 +1868,7 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
         # fmt: off
         if "docker_image" in data["config"] and platform == "linux":
             config_rendered["DOCKER_IMAGE"] = data["config"]["docker_image"][-1]
-        if forge_config["azure"]["store_build_artifacts"]:
+        if forge_config["store_build_artifacts"]["any_azure"]:
             config_rendered["SHORT_CONFIG"] = data["short_config_name"]
         azure_settings["strategy"]["matrix"][data["config_name"]] = config_rendered
         # fmt: on
@@ -2324,6 +2331,11 @@ def _read_forge_config(forge_dir, forge_yml=None):
             "Use 'conda_build_tool' instead."
         )
 
+    # TODO: a quick hack, since _update_dict_within_dict() updates
+    # default_config in place
+    with open(CONDA_FORGE_YAML_DEFAULTS_FILE, encoding="utf-8") as fh:
+        default_config = yaml.safe_load(fh.read())
+
     # Handle per-platform configs
     # TODO: can we import .schema here? should we move the list somewhere else?
     platforms = ("linux", "osx", "win")
@@ -2353,6 +2365,20 @@ def _read_forge_config(forge_dir, forge_yml=None):
     _copy_provider_value_to_plat_provider(
         file_config, config, "github_actions", "store_build_artifacts"
     )
+
+    # Per-platform value post-processing (after backwards compat applied).
+    for key, values in default_config.items():
+        if isinstance(values, dict) and plat_specific_keys.issubset(values):
+            all_value = config[key]["all"]
+            if isinstance(all_value, bool):
+                # add "any_{provider}" internal key for convenience
+                for plat_provider in default_config[key].keys():
+                    if "_" not in plat_provider:
+                        continue
+                    if config[key][plat_provider]:
+                        _, provider = plat_provider.split("_", 1)
+                        config[key][f"any_{provider}"] = True
+
     return config
 
 
