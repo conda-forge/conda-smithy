@@ -2331,9 +2331,7 @@ def _read_forge_config(forge_dir, forge_yml=None):
     for key, values in default_config.items():
         # if default looks like plat-specific key, process it as such
         if isinstance(values, dict) and plat_specific_keys.issubset(values):
-            if key not in file_config:
-                continue
-            all_value = file_config[key].get("all")
+            all_value = config[key]["all"]
             for platform in platforms:
                 plat_value = file_config[key].get(platform)
                 if plat_value is None:
