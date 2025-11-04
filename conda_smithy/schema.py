@@ -410,7 +410,9 @@ class PlatformsAliases(StrEnum):
     osx = "osx"
 
 
-def per_platform_setting(typ: type, default: Any = None) -> BaseModel:
+def per_platform_setting(
+    typ: type, ci_providers: tuple[str, ...], default: Any = None
+) -> BaseModel:
     return create_model(
         f"PerPlatformSettings_{typ}",
         **{
@@ -427,6 +429,17 @@ def per_platform_setting(typ: type, default: Any = None) -> BaseModel:
                     ),
                 )
                 for platform in PlatformsAliases
+            },
+            **{
+                f"{platform}_{ci_provider}": (
+                    Optional[typ],
+                    Field(
+                        description=f"Value for {platform} platform on {ci_provider} provider",
+                        default=None,
+                    ),
+                )
+                for platform in PlatformsAliases
+                for ci_provider in ci_providers
             },
         },
     )
@@ -1210,8 +1223,12 @@ class ConfigModel(BaseModel):
     ####   Per-platform Settings   ####
     ###################################
 
-    store_build_artifacts: Optional[per_platform_setting(bool)] = Field(
-        default_factory=per_platform_setting(bool, False),
+    store_build_artifacts: Optional[
+        per_platform_setting(bool, (CIservices.azure, CIservices.github_actions))
+    ] = Field(
+        default_factory=per_platform_setting(
+            bool, (CIservices.azure, CIservices.github_actions), False
+        ),
         description="Whether to store build artifacts",
     )
 

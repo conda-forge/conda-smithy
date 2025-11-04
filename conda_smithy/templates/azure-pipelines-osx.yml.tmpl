@@ -34,7 +34,7 @@ jobs:
       {{ secret }}: $({{ secret }})
 {%- endfor %}
 
-{%- if store_build_artifacts.osx %}
+{%- if store_build_artifacts.osx_azure %}
   - script: |
       export CI=azure
       export CI_RUN_ID=$(build.BuildNumber).$(system.JobAttempt)

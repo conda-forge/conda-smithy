@@ -2330,7 +2330,7 @@ def _read_forge_config(forge_dir, forge_yml=None):
     plat_specific_keys = set(["all", *platforms])
     for key, values in default_config.items():
         # if default looks like plat-specific key, process it as such
-        if isinstance(values, dict) and set(values) == plat_specific_keys:
+        if isinstance(values, dict) and plat_specific_keys.issubset(values):
             if key not in file_config:
                 continue
             all_value = file_config[key].get("all")
@@ -2339,6 +2339,14 @@ def _read_forge_config(forge_dir, forge_yml=None):
                 if plat_value is None:
                     # default platform-specific value to the all value
                     config[key][platform] = all_value
+            for plat_provider in default_config[key].keys():
+                if "_" not in plat_provider:
+                    continue
+                plat_prov_value = file_config[key].get(plat_provider)
+                if plat_prov_value is None:
+                    # default to platform-specific value
+                    platform, _ = plat_provider.split("_", 1)
+                    config[key][plat_provider] = config[key][platform]
 
     return config
 
