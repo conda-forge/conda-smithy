@@ -442,6 +442,8 @@ OSVersion = create_model(
 
 ProviderType = Union[list[CIservices], CIservices, bool, Nullable]
 
+# When updating the list of default providers, check
+# 'platforms' in configure_feedstock.render_pixi() and update accordingly
 Provider = create_model(
     "provider",
     **dict(
