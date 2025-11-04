@@ -2336,13 +2336,7 @@ def _read_forge_config(forge_dir, forge_yml=None):
             all_value = file_config[key].get("all")
             for platform in platforms:
                 plat_value = file_config[key].get(platform)
-                if all_value is not None:
-                    # if both "all" and platform-specific values are specified,
-                    # they must be the same
-                    if plat_value is not None and all_value != plat_value:
-                        raise ValueError(
-                            f"{key}: conflicting values; all={all_value!r}, {platform}={plat_value!r}"
-                        )
+                if plat_value is None:
                     # default platform-specific value to the all value
                     config[key][platform] = all_value
 
