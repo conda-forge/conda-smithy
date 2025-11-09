@@ -689,6 +689,8 @@
   github: blmaier
 - name: Michał Górny
   email: mgorny@gentoo.org
+  alternate_emails:
+  - mgorny@quansight.com
   num_commits: 27
   first_commit: 2024-11-06 09:06:27
   github: mgorny
@@ -739,6 +741,8 @@
   github: danyeaw
 - name: Guillaume Fraux
   email: luthaf@luthaf.fr
+  alternate_emails:
+  - guillaume.fraux@epfl.ch
   num_commits: 1
   first_commit: 2025-05-23 11:40:46
 - name: Lucas Colley
