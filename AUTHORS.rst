@@ -21,9 +21,9 @@ Authors are sorted by number of commits.
 * Hadrien Mary
 * shadow_walker
 * Michael Sarahan
+* Michał Górny
 * Mark Harfouche
 * Bastian Zimmermann
-* Michał Górny
 * Leo Fang
 * Ryan Volz
 * Johnny Willemsen
@@ -31,16 +31,16 @@ Authors are sorted by number of commits.
 * Julian Rüth
 * Yannik Tausch
 * Daniel Bast
+* Nicholas Bollweg
 * Billy K. Poon
 * Daniel Ching
 * vinicius douglas cerutti
-* Nicholas Bollweg
 * Tim Snyder
 * Mike Henry
 * Eric Dill
 * Natasha Pavlovikj
-* Maksim Rakitin
 * dependabot[bot]
+* Maksim Rakitin
 * Jan Schulz
 * Josh Reichardt
 * Bela Stoyan
@@ -65,6 +65,7 @@ Authors are sorted by number of commits.
 * Philippe Blain
 * Ben Mares
 * Mervin Fansler
+* Pavel Zwerschke
 * Matt McCormick
 * Jan Janßen
 * xoviat
@@ -73,7 +74,6 @@ Authors are sorted by number of commits.
 * David Hirschfeld
 * Finn Womack
 * M Bussonnier
-* Pavel Zwerschke
 * Josh Barnes
 * Tobias Megies
 * Jonathan Helmus
@@ -105,6 +105,7 @@ Authors are sorted by number of commits.
 * Dominic Davis-Foster
 * Anton Tetov
 * Brandon Maier
+* Guillaume Fraux
 * lorenz
 * Tom Augspurger
 * Ryan May
@@ -142,6 +143,5 @@ Authors are sorted by number of commits.
 * Andreas Poehlmann
 * James Myatt
 * Dan Yeaw
-* Guillaume Fraux
 * Lucas Colley
 * Mikhail Ryazanov
