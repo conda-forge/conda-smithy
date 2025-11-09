@@ -4,6 +4,43 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.53.0
+====================
+
+**Added:**
+
+* ``github_actions.resize_win_partitions`` option to resize partitions
+  on Windows GHA runners to use the whole available disk space. (#2394)
+
+**Changed:**
+
+* The minimum ``pixi`` version has been raised to ``0.59.0``. (#2395)
+* In feedstocks with ``pixi`` integration, ``shellcheck`` will only be used if enabled in ``conda-forge.yml``. (#2395)
+* Use ``macos-15-intel`` runners in Github Actions workflows. (#2405)
+* Temporarily reverted ``actions/checkout`` to v4.x due to lack of NodeJS 24 on the conda-forge runners. (#2412)
+
+**Fixed:**
+
+* Fix ``pixi`` deprecation warning for `[project]` versus `[workspace]`. (#2395)
+* `free_disk_space = [apt]` now properly works on native linux-aarch64 runner
+  with GitHub Actions.
+* Fix `pixi.toml` deprecation warning. (#2409)
+* linter will ignore package versions that are jinja templated for v1 (#2402).
+
+**Authors:**
+
+* Isuru Fernando
+* Matthew R. Becker
+* Jaime Rodríguez-Guerra
+* pre-commit-ci[bot]
+* Michał Górny
+* Nicholas Bollweg
+* dependabot[bot]
+* Pavel Zwerschke
+* Guillaume Fraux
+
+
+
 v3.52.3
 ====================
 
