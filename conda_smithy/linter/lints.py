@@ -12,6 +12,54 @@ from rattler_build_conda_compat.loader import parse_recipe_config_file
 from ruamel.yaml import CommentedSeq
 
 from conda_smithy.linter import conda_recipe_v1_linter
+from conda_smithy.linter.messages import (
+    CBCMacOSDeploymentTargetBelow,
+    CBCMacOSDeploymentTargetBelowStdlib,
+    CBCMacOSDeploymentTargetConflict,
+    CBCMacOSDeploymentTargetRename,
+    RecipeBuildNumberMissing,
+    RecipeCompiledWheelsNotAllowed,
+    RecipeFormattedSelectors,
+    RecipeGoLicenses,
+    RecipeJinjaDefinitions,
+    RecipeJinjaExpression,
+    RecipeLanguageHostRun,
+    RecipeLanguageHostRunUnpinned,
+    RecipeLegacyToolchain,
+    RecipeLicenseFamily,
+    RecipeLicenseLicense,
+    RecipeMaintainersMustBeList,
+    RecipeMissingAboutItem,
+    RecipeNoarchSelectorsV0,
+    RecipeNoarchValue,
+    RecipeNoCommentSelectors,
+    RecipeNoMaintainers,
+    RecipeNotParsableHint,
+    RecipeNotParsableLint,
+    RecipeOldPythonSelectorsHint,
+    RecipeOldPythonSelectorsLint,
+    RecipePinnedNumpy,
+    RecipePinSubpackagePinCompatible,
+    RecipePureWheelsNotAllowed,
+    RecipePureWheelsNotAllowedNoarch,
+    RecipePythonIsAbi3Bool,
+    RecipePythonLowerBound,
+    RecipeRecommendedTests,
+    RecipeRequiredTests,
+    RecipeRequirementJoinVersionOperator,
+    RecipeRequirementSeparateNameVersion,
+    RecipeRequirementsOrder,
+    RecipeRustLicenses,
+    RecipeSectionOrder,
+    RecipeSourceHash,
+    RecipeStdlibJinja,
+    RecipeStdlibOsx,
+    RecipeStdlibSysroot,
+    RecipeTooFewEmptyLines,
+    RecipeTooManyEmptyLines,
+    RecipeUnexpectedSubsection,
+    RecipeUnknownLicense,
+)
 from conda_smithy.linter.utils import (
     EXPECTED_SECTION_ORDER,
     FIELDS,
@@ -47,13 +95,7 @@ def lint_section_order(
     section_order_sorted = sorted(major_sections, key=order.index)
 
     if major_sections != section_order_sorted:
-        section_order_sorted_str = map(lambda s: f"'{s}'", section_order_sorted)
-        section_order_sorted_str = ", ".join(section_order_sorted_str)
-        section_order_sorted_str = "[" + section_order_sorted_str + "]"
-        lints.append(
-            "The top level meta keys are in an unexpected order. "
-            f"Expecting {section_order_sorted_str}."
-        )
+        lints.append(RecipeSectionOrder(order=section_order_sorted))
 
 
 def lint_about_contents(about_section, lints, recipe_version: int = 0):
@@ -65,20 +107,17 @@ def lint_about_contents(about_section, lints, recipe_version: int = 0):
     for about_item in expected_section:
         # if the section doesn't exist, or is just empty, lint it.
         if not about_section.get(about_item, ""):
-            lints.append(f"The {about_item} item is expected in the about section.")
+            lints.append(RecipeMissingAboutItem(item=about_item))
 
 
 def lint_recipe_maintainers(extra_section, lints):
     if not extra_section.get("recipe-maintainers", []):
-        lints.append(
-            "The recipe could do with some maintainers listed in "
-            "the `extra/recipe-maintainers` section."
-        )
+        lints.append(RecipeNoMaintainers())
     if not (
         isinstance(extra_section.get("recipe-maintainers", []), Sequence)
         and not isinstance(extra_section.get("recipe-maintainers", []), str)
     ):
-        lints.append("Recipe maintainers should be a json list.")
+        lints.append(RecipeMaintainersMustBeList())
 
 
 def lint_recipe_have_tests(
@@ -112,20 +151,19 @@ def lint_recipe_have_tests(
                         has_outputs_test = True
                     else:
                         no_test_hints.append(
-                            "It looks like the '{}' output doesn't "
-                            "have any tests.".format(out.get("name", "???"))
+                            RecipeRecommendedTests(output=out.get("name", "???"))
                         )
 
             if has_outputs_test:
                 hints.extend(no_test_hints)
             else:
-                lints.append("The recipe must have some tests.")
+                lints.append(RecipeRequiredTests())
 
 
 def lint_license_cannot_be_unknown(about_section, lints):
     license = about_section.get("license", "").lower()
     if "unknown" == license.strip():
-        lints.append("The recipe license cannot be unknown.")
+        lints.append(RecipeUnknownLicense())
 
 
 def lint_selectors_should_be_in_tidy_form(recipe_fname, lints, hints):
@@ -153,24 +191,11 @@ def lint_selectors_should_be_in_tidy_form(recipe_fname, lints, hints):
                             python_selectors_lint.append(selector_line)
                             py_selector_lines_lint.append(line_number)
     if bad_selectors:
-        lints.append(
-            "Selectors are suggested to take a "
-            "``<two spaces>#<one space>[<expression>]`` form."
-            f" See lines {bad_lines}"
-        )
+        lints.append(RecipeFormattedSelectors(lines=bad_lines))
     if python_selectors_hint:
-        hints.append(
-            "Old-style Python selectors (py27, py34, py35, py36) are "
-            "deprecated. Instead, consider using the int ``py``. For "
-            f"example: ``# [py>=36]``. See lines {py_selector_lines_hint}"
-        )
+        hints.append(RecipeOldPythonSelectorsHint(lines=py_selector_lines_hint))
     if python_selectors_lint:
-        lints.append(
-            "Old-style Python selectors (py27, py35, etc) are only available "
-            "for Python 2.7, 3.4, 3.5, and 3.6. Please use explicit comparisons "
-            "with the integer ``py``, e.g. ``# [py==37]`` or ``# [py>=37]``. "
-            f"See lines {py_selector_lines_lint}"
-        )
+        lints.append(RecipeOldPythonSelectorsLint(lines=py_selector_lines_lint))
 
 
 def lint_no_comment_selectors(recipe_fname, lints, hints):
@@ -180,15 +205,12 @@ def lint_no_comment_selectors(recipe_fname, lints, hints):
             for selector_line, line_number in selector_lines(fh, only_in_comment=True):
                 bad_lines.append(line_number)
     if bad_lines:
-        lints.append(
-            "Selectors in comment form no longer work in v1 recipes. Instead,"
-            f" if / then / else maps must be used. See lines {bad_lines}."
-        )
+        lints.append(RecipeNoCommentSelectors(lines=bad_lines))
 
 
 def lint_build_section_should_have_a_number(build_section, lints):
     if build_section.get("number", None) is None:
-        lints.append("The recipe must have a `build/number` section.")
+        lints.append(RecipeBuildNumberMissing())
 
 
 def lint_build_section_should_be_before_run(requirements_section, lints):
@@ -196,12 +218,7 @@ def lint_build_section_should_be_before_run(requirements_section, lints):
     requirements_order_sorted = sorted(seen_requirements, key=REQUIREMENTS_ORDER.index)
     if seen_requirements != requirements_order_sorted:
         lints.append(
-            "The `requirements/` sections should be defined "
-            "in the following order: "
-            + ", ".join(REQUIREMENTS_ORDER)
-            + "; instead saw: "
-            + ", ".join(seen_requirements)
-            + "."
+            RecipeRequirementsOrder(expected=REQUIREMENTS_ORDER, seen=seen_requirements)
         )
 
 
@@ -212,10 +229,7 @@ def lint_sources_should_have_hash(
         if "url" in source_section and not (
             {"sha1", "sha256", "md5"} & set(source_section.keys())
         ):
-            lints.append(
-                "When defining a source/url please add a sha256, sha1 "
-                "or md5 checksum (sha256 preferably)."
-            )
+            lints.append(RecipeSourceHash())
 
 
 def lint_license_should_not_have_license(about_section, lints):
@@ -226,7 +240,7 @@ def lint_license_should_not_have_license(about_section, lints):
         and "licenseref" not in license.lower()
         and "-license" not in license.lower()
     ):
-        lints.append("The recipe `license` should not include the word " '"License".')
+        lints.append(RecipeLicenseLicense())
 
 
 def lint_should_be_empty_line(meta_fname, lints):
@@ -237,16 +251,9 @@ def lint_should_be_empty_line(meta_fname, lints):
         empty_lines = itertools.takewhile(lambda x: x == "", reversed(lines))
         end_empty_lines_count = len(list(empty_lines))
         if end_empty_lines_count > 1:
-            lints.append(
-                f"There are {end_empty_lines_count - 1} too many lines.  "
-                "There should be one empty line at the end of the "
-                "file."
-            )
+            lints.append(RecipeTooManyEmptyLines(n_lines=end_empty_lines_count - 1))
         elif end_empty_lines_count < 1:
-            lints.append(
-                "There are too few lines.  There should be one empty "
-                "line at the end of the file."
-            )
+            lints.append(RecipeTooFewEmptyLines())
 
 
 def lint_license_family_should_be_valid(
@@ -256,15 +263,14 @@ def lint_license_family_should_be_valid(
     lints: list[str],
     recipe_version: int = 0,
 ) -> None:
-    lint_msg = "license_file entry is missing, but is required."
     license_file = about_section.get("license_file", None)
     if not license_file:
         if recipe_version == 1:
-            lints.append(lint_msg)
+            lints.append(RecipeLicenseFamily())
         else:
             license_family = about_section.get("license_family", license).lower()
             if any(f for f in needed_families if f in license_family):
-                lints.append(lint_msg)
+                lints.append(RecipeLicenseFamily())
 
 
 def lint_recipe_name(
@@ -281,11 +287,7 @@ def lint_recipe_name(
 def lint_usage_of_legacy_patterns(requirements_section, lints):
     build_reqs = requirements_section.get("build", None)
     if build_reqs and ("numpy x.x" in build_reqs):
-        lints.append(
-            "Using pinned numpy packages is a deprecated pattern.  Consider "
-            "using the method outlined "
-            "[here](https://conda-forge.org/docs/maintainer/knowledge_base.html#linking-numpy)."
-        )
+        lints.append(RecipePinnedNumpy())
 
 
 def lint_subheaders(major_sections, meta, lints):
@@ -300,28 +302,22 @@ def lint_subheaders(major_sections, meta, lints):
                 and subsection not in expected_subsections
             ):
                 lints.append(
-                    f"The {section} section contained an unexpected "
-                    f"subsection name. {subsection} is not a valid subsection"
-                    " name."
+                    RecipeUnexpectedSubsection(section=section, subsection=subsection)
                 )
             elif section == "source" or section == "outputs":
                 for source_subsection in subsection:
                     if source_subsection not in expected_subsections:
                         lints.append(
-                            f"The {section} section contained an unexpected "
-                            f"subsection name. {source_subsection} is not a valid subsection"
-                            " name."
+                            RecipeUnexpectedSubsection(
+                                section=section, subsection=source_subsection
+                            )
                         )
 
 
 def lint_noarch(noarch_value: Optional[str], lints):
     if noarch_value is not None:
-        valid_noarch_values = ["python", "generic"]
-        if noarch_value not in valid_noarch_values:
-            valid_noarch_str = "`, `".join(valid_noarch_values)
-            lints.append(
-                f"Invalid `noarch` value `{noarch_value}`. Should be one of `{valid_noarch_str}`."
-            )
+        if noarch_value not in RecipeNoarchValue.valid:
+            lints.append(RecipeNoarchValue(given=noarch_value))
 
 
 def lint_recipe_v1_noarch_and_runtime_dependencies(
@@ -362,10 +358,12 @@ def lint_noarch_and_runtime_dependencies(
                 continue
             if line_s.startswith("skip:") and is_selector_line(line):
                 lints.append(
-                    "`noarch` packages can't have skips with selectors. If "
-                    "the selectors are necessary, please remove "
-                    f"`noarch: {noarch_value}`, or selector on line {line_number}:"
-                    f"\n{line}"
+                    RecipeNoarchSelectorsV0(
+                        noarch=noarch_value,
+                        line_number=line_number,
+                        line=line,
+                        skips=True,
+                    )
                 )
                 break
             if in_runreqs:
@@ -378,10 +376,11 @@ def lint_noarch_and_runtime_dependencies(
                     allow_keys=conda_build_config_keys,
                 ):
                     lints.append(
-                        "`noarch` packages can't have selectors. If "
-                        "the selectors are necessary, please remove "
-                        f"`noarch: {noarch_value}`, or selector on line {line_number}:"
-                        f"\n{line}"
+                        RecipeNoarchSelectorsV0(
+                            noarch=noarch_value,
+                            line_number=line_number,
+                            line=line,
+                        )
                     )
                     break
 
@@ -405,22 +404,12 @@ def lint_jinja_variables_definitions(meta_fname, lints):
                     bad_jinja.append(jinja_line)
                     bad_lines.append(line_number)
         if bad_jinja:
-            lints.append(
-                "Jinja2 variable definitions are suggested to "
-                "take a ``{%<one space>set<one space>"
-                "<variable name><one space>=<one space>"
-                "<expression><one space>%}`` form. See lines "
-                f"{bad_lines}"
-            )
+            lints.append(RecipeJinjaDefinitions(lines=bad_lines))
 
 
 def lint_legacy_usage_of_compilers(build_reqs, lints):
     if build_reqs and ("toolchain" in build_reqs):
-        lints.append(
-            "Using toolchain directly in this manner is deprecated.  Consider "
-            "using the compilers outlined "
-            "[here](https://conda-forge.org/docs/maintainer/knowledge_base.html#compilers)."
-        )
+        lints.append(RecipeLegacyToolchain())
 
 
 def lint_single_space_in_pinned_requirements(
@@ -484,11 +473,7 @@ def lint_single_space_in_pinned_requirements(
             ]:
                 # check for too many spaces
                 lints.append(
-                    (
-                        "``requirements: {section}: {requirement}`` should not "
-                        "contain a space between relational operator and the version, i.e. "
-                        "``{name} {pin}``"
-                    ).format(
+                    RecipeRequirementJoinVersionOperator(
                         section=section,
                         requirement=requirement,
                         name=parts[0],
@@ -503,11 +488,7 @@ def lint_single_space_in_pinned_requirements(
                 bad_char_idx.sort()
                 i = bad_char_idx[0][0]
                 lints.append(
-                    (
-                        "``requirements: {section}: {requirement}`` must "
-                        "contain a space between the name and the pin, i.e. "
-                        "``{name} {pin}``"
-                    ).format(
+                    RecipeRequirementSeparateNameVersion(
                         section=section,
                         requirement=requirement,
                         name=parts[0][:i],
@@ -535,18 +516,14 @@ def lint_non_noarch_builds(
                 req for req in run_reqs if req.partition(" ")[0] == str(language)
             ]
             if filtered_host_reqs and not filtered_run_reqs:
-                lints.append(
-                    f"If {str(language)} is a host requirement, it should be a run requirement."
-                )
+                lints.append(RecipeLanguageHostRun(language=language))
             for reqs in [filtered_host_reqs, filtered_run_reqs]:
                 if str(language) in reqs:
                     continue
                 for req in reqs:
                     constraint = req.split(" ", 1)[1]
                     if constraint.startswith(">") or constraint.startswith("<"):
-                        lints.append(
-                            f"Non noarch packages should have {str(language)} requirement without any version constraints."
-                        )
+                        lints.append(RecipeLanguageHostRunUnpinned(language=language))
 
 
 def lint_jinja_var_references(meta_fname, hints, recipe_version: int = 0):
@@ -565,15 +542,8 @@ def lint_jinja_var_references(meta_fname, hints, recipe_version: int = 0):
                             bad_vars.append(m.group(1).strip())
                             bad_lines.append(i + 1)
         if bad_vars:
-            hint_message = (
-                "``{{<one space><variable name><one space>}}``"
-                if recipe_version == 0
-                else "``${{<one space><variable name><one space>}}``"
-            )
             hints.append(
-                "Jinja2 variable references are suggested to "
-                f"take a {hint_message}"
-                f" form. See lines {bad_lines}."
+                RecipeJinjaExpression(recipe_version=recipe_version, lines=bad_lines)
             )
 
 
@@ -585,13 +555,7 @@ def lint_require_lower_bound_on_python_version(
             if (req.strip().split()[0] == "python") and (req != "python"):
                 break
         else:
-            lints.append(
-                "noarch: python recipes are required to have a lower bound "
-                "on the python version. Typically this means putting "
-                "`python >={{ python_min }}` in the `run` section of your "
-                "recipe. You may also want to check the upstream source "
-                "for the package's Python compatibility."
-            )
+            lints.append(RecipePythonLowerBound())
 
 
 def lint_pin_subpackages(
@@ -626,20 +590,26 @@ def lint_pin_subpackages(
         for pin in (pin for pin in all_pins if pin.startswith(filter_pin)):
             if pin.split()[1] in subpackage_names:
                 lints.append(
-                    "pin_subpackage should be used instead of"
-                    f" pin_compatible for `{pin.split()[1]}`"
-                    " because it is one of the known outputs of this recipe:"
-                    f" {subpackage_names}."
+                    RecipePinSubpackagePinCompatible(
+                        in_use="pin_compatible",
+                        should_use="pin_subpackage",
+                        pin=pin.split()[1],
+                        subpackages=subpackage_names,
+                        is_output=True,
+                    )
                 )
 
         filter_pin = "subpackage_pin "
         for pin in (pin for pin in all_pins if pin.startswith(filter_pin)):
             if pin.split()[1] not in subpackage_names:
                 lints.append(
-                    "pin_compatible should be used instead of"
-                    f" pin_subpackage for `{pin.split()[1]}`"
-                    " because it is not a known output of this recipe:"
-                    f" {subpackage_names}."
+                    RecipePinSubpackagePinCompatible(
+                        in_use="pin_subpackage",
+                        should_use="pin_compatible",
+                        pin=pin.split()[1],
+                        subpackages=subpackage_names,
+                        is_output=False,
+                    )
                 )
 
     def check_pins_build_and_requirements(top_level):
@@ -684,25 +654,14 @@ def lint_check_usage_of_whls(meta_fname, noarch_value, lints, hints):
                 elif match := wheel_re.search(line):
                     compiled_wheel_urls.append(match.group(1))
         if compiled_wheel_urls:
-            formatted_urls = ", ".join([f"`{url}`" for url in compiled_wheel_urls])
-            lints.append(
-                f"Detected compiled wheel(s) in source: {formatted_urls}. "
-                "This is disallowed. All packages should be built from source except in "
-                "rare and exceptional cases."
-            )
+            lints.append(RecipeCompiledWheelsNotAllowed(urls=compiled_wheel_urls))
         if pure_python_wheel_urls:
-            formatted_urls = ", ".join([f"`{url}`" for url in pure_python_wheel_urls])
             if noarch_value == "python":  # this is ok, just hint
                 hints.append(
-                    f"Detected pure Python wheel(s) in source: {formatted_urls}. "
-                    "This is generally ok for pure Python wheels and noarch=python "
-                    "packages but it's preferred to use a source distribution (sdist) if possible."
+                    RecipePureWheelsNotAllowedNoarch(urls=pure_python_wheel_urls)
                 )
             else:
-                lints.append(
-                    f"Detected pure Python wheel(s) in source: {formatted_urls}. "
-                    "This is discouraged. Please consider using a source distribution (sdist) instead."
-                )
+                lints.append(RecipePureWheelsNotAllowed(urls=pure_python_wheel_urls))
 
 
 def lint_rust_licenses_are_bundled(
@@ -724,10 +683,7 @@ def lint_rust_licenses_are_bundled(
         has_rust = "{{ compiler('rust') }}" in build_reqs
 
     if has_rust and "cargo-bundle-licenses" not in build_reqs:
-        lints.append(
-            "Rust packages must include the licenses of the Rust dependencies. "
-            "For more info, visit: https://conda-forge.org/docs/maintainer/adding_pkgs/#rust"
-        )
+        lints.append(RecipeRustLicenses())
 
 
 def lint_go_licenses_are_bundled(
@@ -746,10 +702,7 @@ def lint_go_licenses_are_bundled(
 
     if has_go:
         if "go-licenses" not in [*build_reqs, recipe_name]:
-            lints.append(
-                "Go packages must include the licenses of the Go dependencies. "
-                "For more info, visit: https://conda-forge.org/docs/maintainer/adding_pkgs/#go"
-            )
+            lints.append(RecipeGoLicenses())
 
 
 def lint_stdlib(
@@ -767,17 +720,6 @@ def lint_stdlib(
     else:
         global_constraints = requirements_section.get("run_constrained") or []
 
-    if recipe_version == 1:
-        jinja_stdlib_c = '`${{ stdlib("c") }}`'
-    else:
-        jinja_stdlib_c = '`{{ stdlib("c") }}`'
-
-    stdlib_lint = (
-        "This recipe is using a compiler, which now requires adding a build "
-        f"dependence on {jinja_stdlib_c} as well. Note that this rule applies to "
-        "each output of the recipe using a compiler. For further details, please "
-        "see https://github.com/conda-forge/conda-forge.github.io/issues/2102."
-    )
     if recipe_version == 0:
         pat_compiler_stub = re.compile(
             "(m2w64_)?(c|cxx|fortran|rust|go-cgo)_compiler_stub"
@@ -834,33 +776,18 @@ def lint_stdlib(
             else r"\$\{\{ stdlib\(['\"](m2w64_)?c['\"]\)"
         )
         if has_compiler and not any(re.search(stdlib_regex, x) for x in build_reqs):
-            if stdlib_lint not in lints:
-                lints.append(stdlib_lint)
+            if not any(isinstance(lint, RecipeStdlibJinja) for lint in lints):
+                lints.append(RecipeStdlibJinja(recipe_version=recipe_version))
 
-    sysroot_lint = (
-        "You're setting a requirement on sysroot_linux-<arch> directly; this should "
-        f"now be done by adding a build dependence on {jinja_stdlib_c}, and "
-        "overriding `c_stdlib_version` in `recipe/conda_build_config.yaml` for the "
-        "respective platform as necessary. For further details, please see "
-        "https://github.com/conda-forge/conda-forge.github.io/issues/2102."
-    )
     pat_sysroot = re.compile(r"sysroot_linux.*")
     if any(pat_sysroot.match(req) for req in all_build_reqs_flat):
-        if sysroot_lint not in lints:
-            lints.append(sysroot_lint)
-
-    osx_lint = (
-        "You're setting a constraint on the `__osx` virtual package directly; this "
-        f"should now be done by adding a build dependence on {jinja_stdlib_c}, "
-        "and overriding `c_stdlib_version` in `recipe/conda_build_config.yaml` for "
-        "the respective platform as necessary. For further details, please see "
-        "https://github.com/conda-forge/conda-forge.github.io/issues/2102."
-    )
+        if not any(isinstance(lint, RecipeStdlibSysroot) for lint in lints):
+            lints.append(RecipeStdlibSysroot(recipe_version=recipe_version))
 
     to_check = all_run_reqs_flat + all_contraints_flat
     if any(req.startswith("__osx >") for req in to_check):
-        if osx_lint not in lints:
-            lints.append(osx_lint)
+        if not any(isinstance(lint, RecipeStdlibOsx) for lint in lints):
+            lints.append(RecipeStdlibOsx(recipe_version=recipe_version))
 
     # stdlib issues in CBC ( conda-build-config )
     cbc_osx = {}
@@ -930,19 +857,16 @@ def lint_stdlib(
             # let the rerender deal with the details
             pass
         else:
-            mismatch_lint = (
-                "Conflicting specification for minimum macOS deployment target!\n"
-                "If your conda_build_config.yaml sets `MACOSX_DEPLOYMENT_TARGET`, "
-                "please change the name of that key to `c_stdlib_version`!\n"
-                "Continuing with `max(c_stdlib_version, MACOSX_DEPLOYMENT_TARGET)`."
-            )
             merged_dt = []
             for v_std, v_mdt in zip(v_stdlib, macdt):
                 # versions with a single dot may have been read as floats
                 v_std, v_mdt = str(v_std), str(v_mdt)
                 if VersionOrder(v_std) != VersionOrder(v_mdt):
-                    if mismatch_lint not in lints:
-                        lints.append(mismatch_lint)
+                    if not any(
+                        isinstance(lint, CBCMacOSDeploymentTargetConflict)
+                        for lint in lints
+                    ):
+                        lints.append(CBCMacOSDeploymentTargetConflict())
                 merged_dt.append(
                     v_mdt if VersionOrder(v_std) < VersionOrder(v_mdt) else v_std
                 )
@@ -950,26 +874,20 @@ def lint_stdlib(
     elif "MACOSX_DEPLOYMENT_TARGET" in cbc_osx.keys():
         cbc_osx["merged"] = macdt
         # only MACOSX_DEPLOYMENT_TARGET, should be renamed
-        deprecated_dt = (
-            "In your conda_build_config.yaml, please change the name of "
-            "`MACOSX_DEPLOYMENT_TARGET`, to `c_stdlib_version`!"
-        )
-        if deprecated_dt not in hints:
-            lints.append(deprecated_dt)
+        if not any(isinstance(lint, CBCMacOSDeploymentTargetRename) for lint in lints):
+            lints.append(CBCMacOSDeploymentTargetRename())
     elif "c_stdlib_version" in cbc_osx.keys():
         cbc_osx["merged"] = v_stdlib
         # only warn if version is below baseline
-        outdated_lint = (
-            "You are setting `c_stdlib_version` below the current global baseline "
-            "in conda-forge (10.13). If this is your intention, you also need to "
-            "override `MACOSX_DEPLOYMENT_TARGET` (with the same value) locally."
-        )
         if len(v_stdlib) == len(macdt):
             # if length matches, compare individually
             for v_std, v_mdt in zip(v_stdlib, macdt):
                 if VersionOrder(str(v_std)) < VersionOrder(str(v_mdt)):
-                    if outdated_lint not in lints:
-                        lints.append(outdated_lint)
+                    if not any(
+                        isinstance(lint, CBCMacOSDeploymentTargetBelow)
+                        for lint in lints
+                    ):
+                        lints.append(CBCMacOSDeploymentTargetBelow())
         elif len(v_stdlib) == 1:
             # if length doesn't match, only warn if a single stdlib version
             # is lower than _all_ baseline deployment targets
@@ -977,37 +895,34 @@ def lint_stdlib(
                 VersionOrder(str(v_stdlib[0])) < VersionOrder(str(v_mdt))
                 for v_mdt in macdt
             ):
-                if outdated_lint not in lints:
-                    lints.append(outdated_lint)
+                if not any(
+                    isinstance(lint, CBCMacOSDeploymentTargetBelow) for lint in lints
+                ):
+                    lints.append(CBCMacOSDeploymentTargetBelow())
 
     # warn if SDK is lower than merged v_stdlib/macdt
     merged_dt = cbc_osx.get("merged", baseline_version)
-    sdk_lint = (
-        "You are setting `MACOSX_SDK_VERSION` below `c_stdlib_version`, "
-        "in conda_build_config.yaml which is not possible! Please ensure "
-        "`MACOSX_SDK_VERSION` is at least `c_stdlib_version` "
-        "(you can leave it out if it is equal).\n"
-        "If you are not setting `c_stdlib_version` yourself, this means "
-        "you are requesting a version below the current global baseline in "
-        "conda-forge (10.13). If this is the intention, you also need to "
-        "override `c_stdlib_version` and `MACOSX_DEPLOYMENT_TARGET` locally."
-    )
     if len(sdk) == len(merged_dt):
         # if length matches, compare individually
         for v_sdk, v_mdt in zip(sdk, merged_dt):
             # versions with a single dot may have been read as floats
             v_sdk, v_mdt = str(v_sdk), str(v_mdt)
             if VersionOrder(v_sdk) < VersionOrder(v_mdt):
-                if sdk_lint not in lints:
-                    lints.append(sdk_lint)
+                if not any(
+                    isinstance(lint, CBCMacOSDeploymentTargetBelowStdlib)
+                    for lint in lints
+                ):
+                    lints.append(CBCMacOSDeploymentTargetBelowStdlib())
     elif len(sdk) == 1:
         # if length doesn't match, only warn if a single SDK version
         # is lower than _all_ merged deployment targets
         if all(
             VersionOrder(str(sdk[0])) < VersionOrder(str(v_mdt)) for v_mdt in merged_dt
         ):
-            if sdk_lint not in lints:
-                lints.append(sdk_lint)
+            if not any(
+                isinstance(lint, CBCMacOSDeploymentTargetBelowStdlib) for lint in lints
+            ):
+                lints.append(CBCMacOSDeploymentTargetBelowStdlib())
 
 
 def lint_recipe_is_parsable(
@@ -1098,33 +1013,10 @@ def lint_recipe_is_parsable(
     if parse_results:
         if any(pv is not None for pv in parse_results.values()):
             if not any(parse_results.values()):
-                lints.append(
-                    "The recipe is not parsable by any of the known "
-                    f"recipe parsers ({sorted(parse_results.keys())}). Please "
-                    "check the logs for more information and ensure your "
-                    "recipe can be parsed."
-                )
+                lints.append(RecipeNotParsableLint(parsers=list(parse_results)))
             for parser_name, pv in parse_results.items():
                 if pv is False:
-                    if parser_name == "conda-souschef (grayskull)":
-                        msg = (
-                            "This parser is not currently used by conda-forge, but may be in the future. "
-                            "We are collecting information to see which recipes are compatible with grayskull."
-                        )
-                    elif parser_name == "conda-recipe-manager":
-                        msg = (
-                            "The recipe can only be automatically migrated to the new v1 format "
-                            "if it is parseable by conda-recipe-manager."
-                        )
-                    else:
-                        msg = (
-                            "Your recipe  may not receive automatic updates and/or may not be compatible "
-                            "with conda-forge's infrastructure. Please check the logs for "
-                            "more information and ensure your recipe can be parsed."
-                        )
-                    hints.append(
-                        f"The recipe is not parsable by parser `{parser_name}`. {msg}"
-                    )
+                    hints.append(RecipeNotParsableHint(parser=parser_name))
 
 
 IS_AB3_BOOL_RE = re.compile(r"is_abi3\s*(==|!=)\s*('|\")(true|false)('|\")")
@@ -1135,8 +1027,4 @@ def lint_recipe_is_abi3_bool(
     lints: list[str],
 ):
     if IS_AB3_BOOL_RE.search(recipe_text):
-        lints.append(
-            "The `is_abi3` variant variable is now a boolean value instead of a "
-            "string (i.e., 'true' or 'false'). Please change syntax like "
-            "`is_abi3 == 'true' to `is_abi3`."
-        )
+        lints.append(RecipePythonIsAbi3Bool())

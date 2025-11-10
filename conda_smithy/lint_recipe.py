@@ -71,6 +71,13 @@ from conda_smithy.linter.lints import (
     lint_subheaders,
     lint_usage_of_legacy_patterns,
 )
+from conda_smithy.linter.messages import (
+    CFMaintainerExists,
+    CFNoCiSupport,
+    CFPackageToAvoid,
+    FCNoDuplicateKeys,
+    RecipeUnexpectedSection,
+)
 from conda_smithy.linter.utils import (
     CONDA_BUILD_TOOL,
     EXPECTED_SECTION_ORDER,
@@ -166,13 +173,13 @@ def lintify_meta_yaml(
 
     for section in major_sections:
         if section not in expected_keys:
-            lints.append(f"The top level meta key {section} is unexpected")
+            lints.append(RecipeUnexpectedSection(section=section))
             unexpected_sections.append(section)
 
     for section in unexpected_sections:
         major_sections.remove(section)
 
-    # 1: Top level meta.yaml keys should have a specific order.
+    # 1: Top level keys in recipe file should have a specific order.
     lint_section_order(major_sections, lints, recipe_version)
 
     # 2: The about section should have a home, license and summary.
@@ -418,7 +425,9 @@ def lintify_meta_yaml(
     # 9. check for bld.bat with rattler-build
     hint_rattler_build_bld_bat(recipe_dir, hints, recipe_version)
 
-    return lints, hints
+    # TODO: Filter out ignored lints / hints
+
+    return list(map(str, lints)), list(map(str, hints))
 
 
 # the two functions here allow the cache to refresh
@@ -545,10 +554,10 @@ def run_conda_forge_specific(
     for maintainer in maintainers:
         if "/" in maintainer:
             if not _team_exists(maintainer):
-                lints.append(f'Recipe maintainer team "{maintainer}" does not exist')
+                lints.append(CFMaintainerExists(maintainer=maintainer))
         else:
             if not _maintainer_exists(maintainer):
-                lints.append(f'Recipe maintainer "{maintainer}" does not exist')
+                lints.append(CFMaintainerExists(maintainer=maintainer))
 
     # 3: if the recipe dir is inside the example dir
     # moved to staged-recipes directly
@@ -558,7 +567,7 @@ def run_conda_forge_specific(
 
     # 5: Package-specific hints
     # (e.g. do not depend on matplotlib, only matplotlib-base)
-    # we use a copy here since the += below mofiies the original list
+    # we use a copy here since the += below modifies the original list
     build_reqs = copy.deepcopy(requirements_section.get("build") or [])
     host_reqs = copy.deepcopy(requirements_section.get("host") or [])
     run_reqs = copy.deepcopy(requirements_section.get("run") or [])
@@ -584,8 +593,9 @@ def run_conda_forge_specific(
 
     for rq in all_reqs:
         dep = rq.split(" ")[0].strip()
-        if dep in specific_hints and specific_hints[dep] not in hints:
-            hints.append(specific_hints[dep])
+        dep_hint = specific_hints.get(dep)
+        if dep_hint and dep_hint not in hints:
+            hints.append(CFPackageToAvoid(package_hint=dep_hint))
 
     # 6: Check if all listed maintainers have commented:
     # moved to staged recipes directly
@@ -594,9 +604,7 @@ def run_conda_forge_specific(
     if not is_staged_recipes and recipe_dir is not None:
         ci_support_files = glob(os.path.join(recipe_dir, "..", ".ci_support", "*.yaml"))
         if not ci_support_files:
-            lints.append(
-                "The feedstock has no `.ci_support` files and thus will not build any packages."
-            )
+            lints.append(CFNoCiSupport())
 
     # 8: Ensure the recipe specifies a Python build backend if needed
     if "hint_pip_no_build_backend" not in lints_to_skip:
@@ -635,9 +643,7 @@ def run_conda_forge_specific(
             with open(cfyml_pth, encoding="utf-8") as fh:
                 get_yaml(allow_duplicate_keys=False).load(fh)
         except DuplicateKeyError:
-            lints.append(
-                "The ``conda-forge.yml`` file is not allowed to have duplicate keys."
-            )
+            lints.append(FCNoDuplicateKeys())
 
     # 10: check for proper noarch python syntax
     if "hint_python_min" not in lints_to_skip:

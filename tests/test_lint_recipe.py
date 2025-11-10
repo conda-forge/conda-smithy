@@ -13,6 +13,7 @@ import pytest
 
 import conda_smithy.lint_recipe as linter
 from conda_smithy.linter import hints
+from conda_smithy.linter.messages import generate_docs
 from conda_smithy.linter.utils import (
     CONDA_BUILD_TOOL,
     RATTLER_BUILD_TOOL,
@@ -1892,6 +1893,9 @@ linter:
                 os.environ["GH_TOKEN"] = gh_token
 
     def test_maintainer_team_exists(self):
+        if "GH_TOKEN" not in os.environ:
+            return  # skip if not present, test requires it
+
         lints, _ = linter.lintify_meta_yaml(
             {"extra": {"recipe-maintainers": ["conda-forge/blahblahblah-foobarblah"]}},
             conda_forge=True,
@@ -3061,7 +3065,8 @@ linter:
         hints,
         recipe_version=0,
     )
-
+    lints = list(map(str, lints))
+    hints = list(map(str, hints))
     # make sure we have the expected hints
     for expected_hint in total_expected_hints:
         assert any(hint.startswith(expected_hint) for hint in hints), hints
@@ -3513,7 +3518,8 @@ linter:
         hints,
         recipe_version=0,
     )
-
+    hints = list(map(str, hints))
+    lints = list(map(str, lints))
     # make sure we have the expected hints
     if expected_hints and not skip:
         for expected_hint in expected_hints:
@@ -3903,7 +3909,7 @@ def test_hint_noarch_python_use_python_min_v1(
         hints,
         recipe_version=1,
     )
-
+    hints = list(map(str, hints))
     # make sure we have the expected hints
     if expected_hints:
         for expected_hint in expected_hints:
@@ -4595,6 +4601,15 @@ def test_rattler_build_bld_bat_hint(recipe_file, has_bld_bat, should_hint):
             assert any(expected_message in hint for hint in hints)
         else:
             assert not any(expected_message in hint for hint in hints)
+
+
+def test_linter_docs_up_to_date():
+    repo_root = Path(__file__).parent.parent
+    linter_docs_path = repo_root / "LINTER.md"
+    original_linter_docs = linter_docs_path.read_text()
+    assert (
+        generate_docs("").strip() == original_linter_docs.strip()
+    ), "!!! TIP:\n\nRun 'python -m conda_smithy.linter.messages' to regenerate."
 
 
 if __name__ == "__main__":

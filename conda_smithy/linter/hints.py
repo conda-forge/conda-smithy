@@ -8,7 +8,20 @@ from glob import glob
 from typing import Any
 
 from conda_smithy.linter import conda_recipe_v1_linter
-from conda_smithy.linter.errors import HINT_NO_ARCH
+from conda_smithy.linter.messages import (
+    RecipeInvalidLicenseException,
+    RecipeLicenseSPDX,
+    RecipeOsVersion,
+    RecipePythonBuildBackendHost,
+    RecipePythonMinPin,
+    RecipeRattlerBldBat,
+    RecipeSpaceSeparatedSpecs,
+    RecipeSuggestNoarch,
+    RecipeUsePip,
+    RecipeUsePyPiOrg,
+    ScriptShellcheckFailure,
+    ScriptShellcheckReport,
+)
 from conda_smithy.linter.utils import (
     VALID_PYTHON_BUILD_BACKENDS,
     find_local_config_file,
@@ -26,10 +39,7 @@ def hint_pip_usage(build_section, hints):
             scripts = [scripts]
         for script in scripts:
             if "python setup.py install" in script:
-                hints.append(
-                    "Whenever possible python packages should use pip. "
-                    "See https://conda-forge.org/docs/maintainer/adding_pkgs.html#use-pip"
-                )
+                hints.append(RecipeUsePip())
 
 
 def hint_sources_should_not_mention_pypi_io_but_pypi_org(
@@ -45,10 +55,7 @@ def hint_sources_should_not_mention_pypi_io_but_pypi_org(
         source = source_section.get("url", "") or ""
         sources = [source] if isinstance(source, str) else source
         if any(s.startswith("https://pypi.io/") for s in sources):
-            hints.append(
-                "PyPI default URL is now pypi.org, and not pypi.io."
-                " You may want to update the default source url."
-            )
+            hints.append(RecipeUsePyPiOrg())
 
 
 def hint_suggest_noarch(
@@ -93,7 +100,7 @@ def hint_suggest_noarch(
                             no_arch_possible = False
                             break
                 if no_arch_possible:
-                    hints.append(HINT_NO_ARCH)
+                    hints.append(RecipeSuggestNoarch())
 
 
 def hint_shellcheck_usage(recipe_dir, hints):
@@ -110,7 +117,6 @@ def hint_shellcheck_usage(recipe_dir, hints):
                 )
 
         if shellcheck_enabled and shutil.which("shellcheck") and shell_scripts:
-            max_shellcheck_lines = 50
             cmd = [
                 "shellcheck",
                 "--enable=all",
@@ -138,19 +144,14 @@ def hint_shellcheck_usage(recipe_dir, hints):
                     .splitlines()
                 )
                 hints.append(
-                    "Whenever possible fix all shellcheck findings ('"
-                    + " ".join(cmd)
-                    + " recipe/*.sh -f diff | git apply' helps)"
-                )
-                hints.extend(findings[:50])
-                if len(findings) > max_shellcheck_lines:
-                    hints.append(
-                        "Output restricted, there are '%s' more lines."
-                        % (len(findings) - max_shellcheck_lines)
+                    ScriptShellcheckReport(
+                        command=cmd,
+                        output_lines=findings,
                     )
+                )
             elif p.returncode != 0:
                 # Something went wrong.
-                hints.append("There have been errors while scanning with shellcheck.")
+                hints.append(ScriptShellcheckFailure())
 
 
 def hint_check_spdx(about_section, hints):
@@ -192,17 +193,9 @@ def hint_check_spdx(about_section, hints):
         expected_exceptions = f.readlines()
         expected_exceptions = {li.strip() for li in expected_exceptions}
     if set(filtered_licenses) - expected_licenses:
-        hints.append(
-            "License is not an SPDX identifier (or a custom LicenseRef) nor an SPDX license expression.\n\n"
-            "Documentation on acceptable licenses can be found "
-            "[here]( https://conda-forge.org/docs/maintainer/adding_pkgs.html#spdx-identifiers-and-expressions )."
-        )
+        hints.append(RecipeLicenseSPDX())
     if set(parsed_exceptions) - expected_exceptions:
-        hints.append(
-            "License exception is not an SPDX exception.\n\n"
-            "Documentation on acceptable licenses can be found "
-            "[here]( https://conda-forge.org/docs/maintainer/adding_pkgs.html#spdx-identifiers-and-expressions )."
-        )
+        hints.append(RecipeInvalidLicenseException())
 
 
 def hint_pip_no_build_backend(host_or_build_section, package_name, hints):
@@ -231,13 +224,7 @@ def hint_pip_no_build_backend(host_or_build_section, package_name, hints):
                 break
 
         if not found_backend:
-            hints.append(
-                f"No valid build backend found for Python recipe for package `{package_name}` using `pip`. "
-                "Python recipes using `pip` need to "
-                "explicitly specify a build backend in the `host` section. "
-                "If your recipe has built with only `pip` in the `host` section in the past, you likely should "
-                "add `setuptools` to the `host` section of your recipe."
-            )
+            hints.append(RecipePythonBuildBackendHost(package_name=package_name))
 
 
 def _hint_noarch_python_use_python_min_inner(
@@ -317,8 +304,12 @@ def _hint_noarch_python_use_python_min_inner(
                     f"`{output_name}` output" if output_name else "the recipe"
                 )
                 hint.append(
-                    f"\n   - For the {report_section_name} section of {section_desc}, you "
-                    f"should usually use the pin {report_syntax} for the {report_entry} entry."
+                    (
+                        report_section_name,
+                        section_desc,
+                        report_syntax,
+                        report_entry,
+                    )
                 )
     return hint
 
@@ -367,21 +358,7 @@ def hint_noarch_python_use_python_min(
         )
 
     if hint:
-        hint = (
-            (
-                "`noarch: python` recipes should usually follow the syntax in "
-                "our [documentation](https://conda-forge.org/docs/maintainer/knowledge_base/#noarch-python) "
-                "for specifying the Python version."
-            )
-            + "".join(hint)
-            + (
-                "\n   - If the package requires a newer Python version than the currently supported minimum "
-                "version on `conda-forge`, you can override the `python_min` variable by adding a "
-                "Jinja2 `set` statement at the top of your recipe (or using an equivalent `context` "
-                "variable for v1 recipes)."
-            )
-        )
-        hints.append(hint)
+        hints.append(RecipePythonMinPin(recommendations=hint))
 
 
 def hint_space_separated_specs(
@@ -417,21 +394,8 @@ def hint_space_separated_specs(
                     req_type
                 ] = bad_specs
 
-    lines = []
     for output, requirements in report.items():
-        lines.append(f"{output} output has some malformed specs:")
-        for req_type, specs in requirements.items():
-            specs = [f"`{spec}`" for spec in specs]
-            lines.append(f"- In section {req_type}: {', '.join(specs)}")
-    if lines:
-        lines.append(
-            "Requirement spec fields should match the syntax `name [version [build]]`"
-            "to avoid known issues in conda-build. For example, instead of "
-            "`name =version=build`, use `name version.* build`. "
-            "There should be no spaces between version operators and versions either: "
-            "`python >= 3.8` should be `python >=3.8`."
-        )
-        hints.append("\n".join(lines))
+        hints.append(RecipeSpaceSeparatedSpecs(output=output, bad_specs=requirements))
 
 
 def _ensure_spec_space_separated(spec: str) -> bool:
@@ -482,11 +446,7 @@ def hint_os_version(
         if v in obsolete_os_versions
     }
     if matches:
-        hints.append(
-            f"The feedstock is lowering the image versions for one or more platforms: {matches} "
-            f"(the default is {default_os_version}). Unless you are in the very rare case of repackaging binary "
-            "artifacts, consider removing these overrides from conda-forge.yml in the top feedstock directory."
-        )
+        hints.append(RecipeOsVersion(platforms=matches, default=default_os_version))
 
 
 def hint_rattler_build_bld_bat(
@@ -509,8 +469,4 @@ def hint_rattler_build_bld_bat(
     # Check if bld.bat exists in the recipe directory
     bld_bat_path = os.path.join(recipe_dir, "bld.bat")
     if os.path.exists(bld_bat_path):
-        hints.append(
-            "Found `bld.bat` in recipe directory, but this is a recipe v1 "
-            "(rattler-build recipe). rattler-build uses `build.bat` instead of `bld.bat` "
-            "for Windows builds. Consider renaming `bld.bat` to `build.bat`."
-        )
+        hints.append(RecipeRattlerBldBat())

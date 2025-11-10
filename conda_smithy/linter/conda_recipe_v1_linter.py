@@ -7,6 +7,11 @@ from rattler_build_conda_compat.jinja.jinja import (
 )
 
 from conda_smithy.linter.errors import HINT_NO_ARCH
+from conda_smithy.linter.messages import (
+    RecipeNoarchSelectorsV1,
+    RecipeRecommendedTests,
+    RecipeRequiredTests,
+)
 from conda_smithy.linter.utils import (
     _lint_package_version,
     _lint_recipe_name,
@@ -51,7 +56,7 @@ def lint_recipe_tests(
 
     if not test_section:
         if not outputs_section:
-            lints.append("The recipe must have some tests.")
+            lints.append(RecipeRequiredTests())
         else:
             has_outputs_test = False
             no_test_hints = []
@@ -61,13 +66,12 @@ def lint_recipe_tests(
                     has_outputs_test = True
                 else:
                     no_test_hints.append(
-                        "It looks like the '{}' output doesn't "
-                        "have any tests.".format(output.get("name", "???"))
+                        RecipeRecommendedTests(output=output.get("name", "???"))
                     )
             if has_outputs_test:
                 hints.extend(no_test_hints)
             else:
-                lints.append("The recipe must have some tests.")
+                lints.append(RecipeRequiredTests())
 
     lints.extend(tests_lints)
     hints.extend(tests_hints)
@@ -191,16 +195,8 @@ def lint_usage_of_selectors_for_noarch(
                 has_bad_selector = True
 
             if has_bad_selector:
-                lints.append(
-                    "`noarch` packages can't have selectors. If "
-                    "the selectors are necessary, please remove "
-                    f"`noarch: {noarch_value}`."
-                )
+                lints.append(RecipeNoarchSelectorsV1(noarch=noarch_value))
                 break
 
     if "skip" in build_section:
-        lints.append(
-            "`noarch` packages can't have skips with selectors. If "
-            "the selectors are necessary, please remove "
-            f"`noarch: {noarch_value}`."
-        )
+        lints.append(RecipeNoarchSelectorsV1(noarch=noarch_value, skips=True))
