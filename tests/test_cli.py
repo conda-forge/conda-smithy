@@ -348,6 +348,7 @@ def test_render_variant_mismatches(testing_workdir):
             data = yaml.safe_load(f)
         assert data["a"] == data["b"]
 
+
 def test_render_readme_with_v1_recipe_name(testing_workdir):
     parser = argparse.ArgumentParser()
     subparser = parser.add_subparsers()
