@@ -87,7 +87,7 @@ def get_feedstock_about_from_meta(meta) -> dict:
         return dict(meta.meta["about"])
 
 
-def get_yaml(allow_duplicate_keys: bool = True):
+def get_yaml(allow_duplicate_keys: bool = True, preserve_quotes: bool = False):
     # define global yaml API
     # roundrip-loader and allowing duplicate keys
     # for handling # [filter] / # [not filter]
@@ -95,6 +95,7 @@ def get_yaml(allow_duplicate_keys: bool = True):
     # variable will make conda-smithy thread unsafe.
     yaml = ruamel.yaml.YAML(typ="rt")
     yaml.allow_duplicate_keys = allow_duplicate_keys
+    yaml.preserve_quotes = preserve_quotes
     return yaml
 
 
