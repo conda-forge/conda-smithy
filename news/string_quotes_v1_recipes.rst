@@ -16,7 +16,7 @@
 
 **Fixed:**
 
-* Fixed a bug where string quoting information was not preserved when load/linting v1 recipes. (#)
+* Fixed a bug where string quoting information was not preserved when load/linting v1 recipes. (#2422)
 
 **Security:**
 
