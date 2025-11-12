@@ -1,6 +1,6 @@
 **Added:**
 
-* Allow CDTs to be linted using conda-forge-pinning-feedstock linter_hints.
+* Allow CDTs to be linted using conda-forge-pinning-feedstock linter_hints (#2419).
 
 **Changed:**
 
