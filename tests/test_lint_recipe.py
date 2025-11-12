@@ -2161,6 +2161,15 @@ linter:
         assert any("Whenever possible fix all shellcheck findings" in h for h in hints)
         assert len(hints) < 100
 
+    def test_cdt_hint(self):
+        lints, hints = linter.main(
+            os.path.join(_thisdir, "recipes", "cb3_jinja2_functions", "recipe"),
+            return_hints=True,
+            conda_forge=True,
+        )
+        expected = "Use of `cdt(mesa-libgl-devel)` is deprecated"
+        self.assertTrue(any(hint.startswith(expected) for hint in hints))
+
     def test_mpl_base_hint(self):
         meta = {
             "requirements": {
