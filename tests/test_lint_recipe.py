@@ -1897,7 +1897,10 @@ linter:
             conda_forge=True,
         )
         expected_message = 'Recipe maintainer team "conda-forge/blahblahblah-foobarblah" does not exist'
-        self.assertIn(expected_message, lints)
+        if "GH_TOKEN" in os.environ:
+            self.assertIn(expected_message, lints)
+        else:
+            self.assertNotIn(expected_message, lints)
 
         lints, _ = linter.lintify_meta_yaml(
             {"extra": {"recipe-maintainers": ["conda-forge/core"]}},
