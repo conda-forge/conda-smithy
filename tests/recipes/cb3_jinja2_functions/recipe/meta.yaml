@@ -9,6 +9,7 @@ requirements:
   build:
     - {{ compiler('c') }}
     - {{ stdlib('c') }}
+    - {{ cdt('mesa-libgl-devel') }}
   host:
     - zlib
   run:

@@ -1897,7 +1897,10 @@ linter:
             conda_forge=True,
         )
         expected_message = 'Recipe maintainer team "conda-forge/blahblahblah-foobarblah" does not exist'
-        self.assertIn(expected_message, lints)
+        if "GH_TOKEN" in os.environ:
+            self.assertIn(expected_message, lints)
+        else:
+            self.assertNotIn(expected_message, lints)
 
         lints, _ = linter.lintify_meta_yaml(
             {"extra": {"recipe-maintainers": ["conda-forge/core"]}},
@@ -2160,6 +2163,15 @@ linter:
         )
         assert any("Whenever possible fix all shellcheck findings" in h for h in hints)
         assert len(hints) < 100
+
+    def test_cdt_hint(self):
+        lints, hints = linter.main(
+            os.path.join(_thisdir, "recipes", "cb3_jinja2_functions", "recipe"),
+            return_hints=True,
+            conda_forge=True,
+        )
+        expected = "Use of `cdt(mesa-libgl-devel)` is deprecated"
+        self.assertTrue(any(hint.startswith(expected) for hint in hints))
 
     def test_mpl_base_hint(self):
         meta = {
