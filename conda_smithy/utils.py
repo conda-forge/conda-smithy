@@ -152,7 +152,7 @@ def render_meta_yaml(text):
             stdlib=lambda x: x + "_stdlib_stub",
             pin_subpackage=stub_subpackage_pin,
             pin_compatible=stub_compatible_pin,
-            cdt=lambda *args, **kwargs: "cdt_stub",
+            cdt=lambda x: x.replace("-", "_") + "_cdt_stub",
             load_file_regex=lambda *args, **kwargs: defaultdict(str),
             load_file_data=lambda *args, **kwargs: defaultdict(str),
             load_setup_py_data=lambda *args, **kwargs: defaultdict(str),
