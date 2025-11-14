@@ -4609,5 +4609,63 @@ def test_rattler_build_bld_bat_hint(recipe_file, has_bld_bat, should_hint):
             assert not any(expected_message in hint for hint in hints)
 
 
+def test_lint_v1_context_quotes():
+    recipe = """\
+context:
+  name: stackvana-core
+  version: "0.2025.40"
+  raw_major_version: '${{ (version | split("."))[0] }}'
+  raw_minor_version: '${{ (version | split("."))[1] }}'
+  raw_patch_version: '${{ (version | split("."))[2] }}'
+  patch_version: ${{ "_" + raw_patch_version if (raw_patch_version | length) == 2 else "_0"  + raw_patch_version }}
+  weekly_dm_tag: ${{ "w_" + raw_minor_version + patch_version }}
+  non_weekly_dm_tag: ${{ "v" + (version | replace(".", "_")) }}
+  dm_tag: ${{ weekly_dm_tag if raw_major_version == '0' else non_weekly_dm_tag }}
+
+package:
+  name: ${{ name|lower }}
+  version: ${{ version }}
+
+source:
+  url: https://eups.lsst.cloud/stack/src/tags/${{ dm_tag }}.list
+  sha256: 0dc3553cde005ead150677f51170511b2dedb44a44d62ca00ffa5ef728698cf3
+
+build:
+  number: 1
+
+requirements:
+  run:
+    - python
+
+tests:
+  - script: run_test_impl.sh
+    requirements:
+      run:
+        - python
+
+about:
+  homepage: https://github.com/beckermr/stackvana-core
+  license: GPL-3.0-or-later
+  license_file:
+    - LICENSE
+    - COPYRIGHT
+  summary: core build tooling for stackvana
+
+extra:
+  recipe-maintainers:
+    - beckermr
+"""
+
+    with tmp_directory() as recipe_dir:
+        # Create minimal recipe content - the linter determines version from filename
+        with open(os.path.join(recipe_dir, "recipe.yaml"), "w") as fh:
+            fh.write(recipe)
+
+        lints, hints = linter.main(recipe_dir, return_hints=True, conda_forge=True)
+
+    assert lints == []
+    assert hints == []
+
+
 if __name__ == "__main__":
     unittest.main()
