@@ -4,6 +4,24 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.53.1
+====================
+
+**Added:**
+
+* Allow CDTs to be linted using conda-forge-pinning-feedstock linter_hints (#2419).
+
+**Fixed:**
+
+* Fixed a bug where string quoting information was not preserved when load/linting v1 recipes. (#2422)
+
+**Authors:**
+
+* Isuru Fernando
+* Matthew R. Becker
+
+
+
 v3.53.0
 ====================
 
