@@ -887,7 +887,9 @@ def lint_stdlib(
                 cbc_lines = fh.readlines()
 
         if not cbc_lines:
-            lints.append(f'The recipe should not have an empty conda_build_config.yaml file')
+            lints.append(
+                f"The recipe should not have an empty conda_build_config.yaml file"
+            )
 
         # filter on osx-relevant lines
         pat = re.compile(

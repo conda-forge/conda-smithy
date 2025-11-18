@@ -2450,9 +2450,9 @@ class TestCliRecipeLint(unittest.TestCase):
 
             open(os.path.join(tmpdir, "conda_build_config.yaml"), "w").close()
 
-
             lints = linter.main(tmpdir)
             assert any(lint.startswith(expected_message) for lint in lints)
+
 
 def test_lint_no_builds():
     expected_message = "The feedstock has no `.ci_support` files and "
