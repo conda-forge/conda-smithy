@@ -2144,7 +2144,17 @@ def render_readme(jinja_env, forge_config, forge_dir, render_info=None):
     forge_config["package_name"] = package_name
     forge_config["variants"] = sorted(variants)
     forge_config["outputs"] = sorted(
-        list(OrderedDict((meta.name(), None) for meta in metas))
+        list(
+            OrderedDict(
+                (m.name(), None)
+                for m in metas
+                if not (
+                    hasattr(m, "meta")
+                    and "recipe" in m.meta
+                    and "name" in m.meta["recipe"]
+                )
+            )
+        )
     )
 
     maintainers = sorted(
