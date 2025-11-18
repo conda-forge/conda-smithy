@@ -6,7 +6,6 @@ from collections.abc import Mapping
 from functools import lru_cache
 from glob import glob
 from inspect import cleandoc
-from pathlib import Path
 from textwrap import indent
 from typing import Any, Optional
 
@@ -767,7 +766,11 @@ def main(recipe_dir, conda_forge=False, return_hints=False, feedstock_dir=None):
             content = render_meta_yaml("".join(fh))
             meta = get_yaml().load(content)
     else:
-        meta = get_yaml().load(Path(recipe_file))
+        # we have to preserve the string quoting information for properly
+        # rendering the context section of the recipe
+        yl = get_yaml(preserve_quotes=True)
+        with open(recipe_file) as fp:
+            meta = yl.load(fp.read())
 
     recipe_version = 1 if build_tool == RATTLER_BUILD_TOOL else 0
 
