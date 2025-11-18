@@ -2413,6 +2413,7 @@ class TestCliRecipeLint(unittest.TestCase):
         """
         Test that checks linting on empty conda build config file
         """
+        expected_message = "The recipe should not have an empty conda_build_config.yaml"
         with tempfile.TemporaryDirectory() as tmpdir:
             with open(os.path.join(tmpdir, "meta.yaml"), "w") as f:
                 f.write(
@@ -2450,7 +2451,8 @@ class TestCliRecipeLint(unittest.TestCase):
             open(os.path.join(tmpdir, "conda_build_config.yaml"), "w").close()
 
 
-            linter.main(tmpdir)
+            lints = linter.main(tmpdir)
+            assert any(lint.startswith(expected_message) for lint in lints)
 
 def test_lint_no_builds():
     expected_message = "The feedstock has no `.ci_support` files and "
