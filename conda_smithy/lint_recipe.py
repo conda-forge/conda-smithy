@@ -269,10 +269,7 @@ def lintify_meta_yaml(
 
         if conda_build_config_filename:
             with open(conda_build_config_filename, encoding="utf-8") as fh:
-                if fh.read():
-                    conda_build_config_keys = set(get_yaml().load(fh).keys())
-                else:
-                    conda_build_config_keys = set()
+                conda_build_config_keys = set(get_yaml().load(fh).keys())
         else:
             conda_build_config_keys = set()
 
