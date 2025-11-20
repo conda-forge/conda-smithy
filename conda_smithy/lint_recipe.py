@@ -684,7 +684,7 @@ def run_conda_forge_specific(
             data = fh.read()
         if not data:
             lints.append(
-                "The recipe should not have an empty conda_build_config.yaml file"
+                "The recipe should not have an empty `conda_build_config.yaml` file."
             )
 
 
