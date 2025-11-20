@@ -775,8 +775,7 @@ def lint_stdlib(
     stdlib_lint = (
         "This recipe is using a compiler, which now requires adding a build "
         f"dependence on {jinja_stdlib_c} as well. Note that this rule applies to "
-        "each output of the recipe using a compiler. For further details, please "
-        "see https://github.com/conda-forge/conda-forge.github.io/issues/2102."
+        "each output of the recipe using a compiler."
     )
     if recipe_version == 0:
         pat_compiler_stub = re.compile(
