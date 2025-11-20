@@ -677,6 +677,16 @@ def run_conda_forge_specific(
             lints,
         )
 
+    # 13: no empty conda_forge_config.yaml files
+    cbc_pth = os.path.join(recipe_dir or "", "conda_build_config.yaml")
+    if os.path.exists(cbc_pth):
+        with open(cbc_pth) as fh:
+            data = fh.read()
+        if not data:
+            lints.append(
+                "The recipe should not have an empty conda_build_config.yaml file"
+            )
+
 
 def _format_validation_msg(error: jsonschema.ValidationError):
     """Use the data on the validation error to generate improved reporting.

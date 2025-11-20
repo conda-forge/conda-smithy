@@ -886,11 +886,6 @@ def lint_stdlib(
             with open(conda_build_config_filename, encoding="utf-8") as fh:
                 cbc_lines = fh.readlines()
 
-        if not cbc_lines:
-            lints.append(
-                "The recipe should not have an empty conda_build_config.yaml file"
-            )
-
         # filter on osx-relevant lines
         pat = re.compile(
             r"^([^:\#]*?)\s+\#\s\[.*(not\s(osx|unix)|(?<!not\s)(linux|win)).*\]\s*$"
