@@ -2421,6 +2421,52 @@ class TestCliRecipeLint(unittest.TestCase):
             assert_jinja('{% set version = "0.27.3"%}', is_good=False)
             assert_jinja('{% set version= "0.27.3"%}', is_good=False)
 
+    def test_lint_recipe_empty_cbc(self):
+        """
+        Test that checks linting on empty conda build config file
+        """
+        expected_message = (
+            "The recipe should not have an empty `conda_build_config.yaml` file."
+        )
+        with tempfile.TemporaryDirectory() as tmpdir:
+            with open(os.path.join(tmpdir, "meta.yaml"), "w") as f:
+                f.write(
+                    textwrap.dedent(
+                        """
+                        package:
+                          name: foo
+                          version: 0
+
+
+                        build:
+                          number: 0
+
+
+                        test:
+                          imports:
+                            - foo
+
+
+                        about:
+                          home: something
+                          license: MIT
+                          license_file: LICENSE
+                          summary: a test recipe
+
+
+                        extra:
+                          recipe-maintainers:
+                            - a
+                            - b
+                        """
+                    )
+                )
+
+            open(os.path.join(tmpdir, "conda_build_config.yaml"), "w").close()
+
+            lints = linter.main(tmpdir, conda_forge=True)
+            assert any(lint.startswith(expected_message) for lint in lints)
+
 
 def test_lint_no_builds():
     expected_message = "The feedstock has no `.ci_support` files and "

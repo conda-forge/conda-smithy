@@ -269,7 +269,11 @@ def lintify_meta_yaml(
 
         if conda_build_config_filename:
             with open(conda_build_config_filename, encoding="utf-8") as fh:
-                conda_build_config_keys = set(get_yaml().load(fh).keys())
+                fh_data = fh.read()
+                if fh_data:
+                    conda_build_config_keys = set(get_yaml().load(fh_data).keys())
+                else:
+                    conda_build_config_keys = set()
         else:
             conda_build_config_keys = set()
 
@@ -672,6 +676,16 @@ def run_conda_forge_specific(
             recipe_text,
             lints,
         )
+
+    # 13: no empty conda_forge_config.yaml files
+    cbc_pth = os.path.join(recipe_dir or "", "conda_build_config.yaml")
+    if os.path.exists(cbc_pth):
+        with open(cbc_pth) as fh:
+            data = fh.read()
+        if not data:
+            lints.append(
+                "The recipe should not have an empty `conda_build_config.yaml` file."
+            )
 
 
 def _format_validation_msg(error: jsonschema.ValidationError):
