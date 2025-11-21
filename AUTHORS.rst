@@ -106,6 +106,7 @@ Authors are sorted by number of commits.
 * Anton Tetov
 * Brandon Maier
 * Guillaume Fraux
+* Jakov Smolić
 * lorenz
 * Tom Augspurger
 * Ryan May
