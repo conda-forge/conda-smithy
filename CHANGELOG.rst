@@ -4,6 +4,26 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.53.2
+====================
+
+**Added:**
+
+* Report new lint on empty ``conda_build_config.yaml`` file. (#2417, #2427)
+
+**Fixed:**
+
+* Fixed bug where linting failed on recipes with empty ``conda_build_config.yaml`` files. (#2417, #2427)
+* Fixed a bug where v1 recipes contained non-existing outputs in README (#2418)
+
+**Authors:**
+
+* Matthew R. Becker
+* H. Vetinari
+* Jakov Smolić
+
+
+
 v3.53.1
 ====================
 
