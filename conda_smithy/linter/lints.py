@@ -841,7 +841,7 @@ def lint_stdlib(
         f"now be done by adding a build dependence on {jinja_stdlib_c}, and "
         "overriding `c_stdlib_version` in `recipe/conda_build_config.yaml` for the "
         "respective platform as necessary. For further details, please see "
-        "https://github.com/conda-forge/conda-forge.github.io/issues/2102."
+        "https://conda-forge.org/docs/maintainer/infrastructure/#using-compilers-in-feedstocks"
     )
     pat_sysroot = re.compile(r"sysroot_linux.*")
     if any(pat_sysroot.match(req) for req in all_build_reqs_flat):
@@ -853,7 +853,7 @@ def lint_stdlib(
         f"should now be done by adding a build dependence on {jinja_stdlib_c}, "
         "and overriding `c_stdlib_version` in `recipe/conda_build_config.yaml` for "
         "the respective platform as necessary. For further details, please see "
-        "https://github.com/conda-forge/conda-forge.github.io/issues/2102."
+        "https://conda-forge.org/docs/maintainer/knowledge_base/#requiring-newer-macos-sdks"
     )
 
     to_check = all_run_reqs_flat + all_contraints_flat
