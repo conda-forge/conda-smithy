@@ -4,6 +4,19 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.53.3
+====================
+
+**Changed:**
+
+* Replace old ``{{ stdlib("c") }}`` meta issue links with doc links. ( #2429 )
+
+**Authors:**
+
+* John Kirkham
+
+
+
 v3.53.2
 ====================
 
