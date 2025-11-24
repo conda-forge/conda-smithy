@@ -27,7 +27,7 @@
   aliases:
   - John Kirkham
   - jakirkham
-  num_commits: 34
+  num_commits: 35
   first_commit: 2016-03-17 21:05:53
   github: jakirkham
 - name: Daniel Bast
@@ -393,7 +393,7 @@
   github: shadowwalkersb
 - name: Matthew R. Becker
   email: becker.mr@gmail.com
-  num_commits: 522
+  num_commits: 524
   first_commit: 2020-01-07 17:44:33
   github: beckermr
   alternate_emails:

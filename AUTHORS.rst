@@ -15,8 +15,8 @@ Authors are sorted by number of commits.
 * Filipe Fernandes
 * Min RK
 * Dougal J. Sutherland
-* Amit Kumar
 * John Kirkham
+* Amit Kumar
 * Marcel Bargull
 * Hadrien Mary
 * shadow_walker
