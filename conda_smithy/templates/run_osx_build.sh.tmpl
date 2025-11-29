@@ -123,6 +123,10 @@ if [[ "${sha:-}" == "" ]]; then
 fi
 
 {% if build_setup -%}
+export OSX_SDK_DIR=/opt/conda-sdks
+/usr/bin/sudo mkdir -p "${OSX_SDK_DIR}"
+/usr/bin/sudo chown "${USER}" "${OSX_SDK_DIR}"
+
 echo -e "\n\nRunning the build setup script."
 {{ build_setup }}
 {%- endif %}
