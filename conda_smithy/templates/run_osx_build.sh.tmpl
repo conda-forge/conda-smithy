@@ -125,7 +125,8 @@ fi
 {% if build_setup -%}
 if [[ "${OSX_SDK_DIR:-}" == "" ]]; then
   if [[ "${CI:-}" == "" ]]; then
-    OSX_SDK_DIR=$(mktemp -d)
+    echo "Please set OSX_SDK_DIR to a directory where SDKs can be downloaded to. Aborting"
+    exit 1
   else
     # here we're definitely in the CI case
     export OSX_SDK_DIR=/opt/conda-sdks
