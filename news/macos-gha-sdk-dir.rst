@@ -4,7 +4,7 @@
 
 **Changed:**
 
-* macOS GitHub Actions setup now sets ``OSX_SDK_DIR`` to a dedicated directory where SDKs can be downloaded without altering the system (see https://github.com/conda-forge/conda-forge-ci-setup-feedstock/issues/409).
+* macOS CI setup now sets ``OSX_SDK_DIR`` to a dedicated directory where SDKs can be downloaded without altering the system (see https://github.com/conda-forge/conda-forge-ci-setup-feedstock/issues/409).
 
 **Deprecated:**
 
