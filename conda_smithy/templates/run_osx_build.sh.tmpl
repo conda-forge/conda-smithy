@@ -128,7 +128,6 @@ if [[ "${OSX_SDK_DIR:-}" == "" ]]; then
     echo "Please set OSX_SDK_DIR to a directory where SDKs can be downloaded to. Aborting"
     exit 1
   else
-    # here we're definitely in the CI case
     export OSX_SDK_DIR=/opt/conda-sdks
     /usr/bin/sudo mkdir -p "${OSX_SDK_DIR}"
     /usr/bin/sudo chown "${USER}" "${OSX_SDK_DIR}"
