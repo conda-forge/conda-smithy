@@ -2117,6 +2117,33 @@ linter:
             lints,
         )
 
+        meta = {"requirements": {"host": ["python >=3"]}}
+        lints, hints = linter.lintify_meta_yaml(meta, recipe_version=1)
+        self.assertIn(
+            "Non noarch packages should have python requirement without any version constraints.",
+            lints,
+        )
+
+        meta = {
+            "build": {"python_version_independent": True},
+            "requirements": {"host": ["python >=3"]},
+        }
+        lints, hints = linter.lintify_meta_yaml(meta)
+        self.assertNotIn(
+            "Non noarch packages should have python requirement without any version constraints.",
+            lints,
+        )
+
+        meta = {
+            "build": {"python": {"version_indepndent": True}},
+            "requirements": {"host": ["python >=3"]},
+        }
+        lints, hints = linter.lintify_meta_yaml(meta, recipe_version=1)
+        self.assertNotIn(
+            "Non noarch packages should have python requirement without any version constraints.",
+            lints,
+        )
+
         meta = {"requirements": {"host": ["python"], "run": ["python-dateutil"]}}
         # Test that this doesn't crash
         lints, hints = linter.lintify_meta_yaml(meta)

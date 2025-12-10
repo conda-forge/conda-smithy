@@ -330,6 +330,7 @@ def lintify_meta_yaml(
     lint_non_noarch_builds(
         requirements_section,
         outputs_section,
+        build_section,
         noarch_value,
         lints,
         recipe_version,

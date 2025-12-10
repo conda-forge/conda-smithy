@@ -23,6 +23,7 @@ from conda_smithy.linter.utils import (
     _lint_recipe_name,
     flatten_v1_if_else,
     get_section,
+    get_version_independent,
     is_selector_line,
     jinja_lines,
     selector_lines,
@@ -518,7 +519,12 @@ def lint_single_space_in_pinned_requirements(
 
 
 def lint_non_noarch_builds(
-    requirements_section, outputs_section, noarch_value, lints, recipe_version
+    requirements_section,
+    outputs_section,
+    build_section,
+    noarch_value,
+    lints,
+    recipe_version,
 ):
     check_languages = ["python", "r-base"]
     host_reqs = requirements_section.get("host") or []
@@ -536,16 +542,18 @@ def lint_non_noarch_builds(
             ]
             if filtered_host_reqs and not filtered_run_reqs:
                 lints.append(
-                    f"If {str(language)} is a host requirement, it should be a run requirement."
+                    f"If {language} is a host requirement, it should be a run requirement."
                 )
+            if get_version_independent(build_section, language, recipe_version):
+                continue
             for reqs in [filtered_host_reqs, filtered_run_reqs]:
                 if str(language) in reqs:
                     continue
                 for req in reqs:
                     constraint = req.split(" ", 1)[1]
-                    if constraint.startswith(">") or constraint.startswith("<"):
+                    if constraint.startswith((">", "<")):
                         lints.append(
-                            f"Non noarch packages should have {str(language)} requirement without any version constraints."
+                            f"Non noarch packages should have {language} requirement without any version constraints."
                         )
 
 
