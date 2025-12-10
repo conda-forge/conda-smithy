@@ -16,7 +16,7 @@
 
 **Fixed:**
 
-* Version-independent python packages will not be flagged for unconstrained python requirements
+* Version-independent python packages will not be flagged for unconstrained python requirements. (#2433)
 
 **Security:**
 
