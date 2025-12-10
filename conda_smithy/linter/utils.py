@@ -6,7 +6,7 @@ import time
 from collections.abc import Mapping, Sequence
 from functools import lru_cache
 from glob import glob
-from typing import Optional, Union
+from typing import Any, Optional, Union
 
 import requests
 from conda.models.version import InvalidVersionSpec, VersionOrder
@@ -283,3 +283,19 @@ def get_all_test_requirements(
         test_section = get_section(meta, "test", lints, recipe_version)
         test_reqs = test_section.get("requires") or []
     return test_reqs
+
+
+def get_version_independent(
+    build_section: dict[str, Any], language: str, recipe_version: int
+) -> bool:
+    version_independent = False
+    if language == "python":
+        if recipe_version == 1:
+            version_independent = build_section.get(language, {}).get(
+                "version_independent", False
+            )
+        else:
+            version_independent = build_section.get(
+                f"{language}_version_independent", False
+            )
+    return version_independent
