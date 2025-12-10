@@ -2135,7 +2135,7 @@ linter:
         )
 
         meta = {
-            "build": {"python": {"version_indepndent": True}},
+            "build": {"python": {"version_independent": True}},
             "requirements": {"host": ["python >=3"]},
         }
         lints, hints = linter.lintify_meta_yaml(meta, recipe_version=1)
