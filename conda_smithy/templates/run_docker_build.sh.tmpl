@@ -11,6 +11,16 @@ source .scripts/logging_utils.sh
 
 set -xeo pipefail
 
+# Detect container runtime (prefer docker, fallback to podman)
+if command -v docker &>/dev/null; then
+    CONTAINER_RUNTIME_EXE=docker
+elif command -v podman &>/dev/null; then
+    CONTAINER_RUNTIME_EXE=podman
+else
+    echo "Error: No supported container runtime found (docker or podman)."
+    exit 1
+fi
+
 THISDIR="$( cd "$( dirname "$0" )" >/dev/null && pwd )"
 PROVIDER_DIR="$(basename "$THISDIR")"
 
@@ -27,14 +37,13 @@ if [[ "${sha:-}" == "" ]]; then
   popd
 fi
 
-docker info
+${CONTAINER_RUNTIME_EXE} info
 
 # In order for the conda-build process in the container to write to the mounted
 # volumes, we need to run with the same id as the host machine, which is
 # normally the owner of the mounted volumes, or at least has write permission
 export HOST_USER_ID=$(id -u)
-# Check if docker-machine is being used (normally on OSX) and get the uid from
-# the VM
+# Check if docker-machine is being used (normally on OSX) and get the uid from the VM
 if hash docker-machine 2> /dev/null && docker-machine active > /dev/null; then
     export HOST_USER_ID=$(docker-machine ssh $(docker-machine active) id -u)
 fi
@@ -70,10 +79,25 @@ mkdir -p "$ARTIFACTS"
 DONE_CANARY="$ARTIFACTS/conda-forge-build-done-${CONFIG}"
 rm -f "$DONE_CANARY"
 
-# Allow people to specify extra default arguments to `docker run` (e.g. `--rm`)
+# Allow people to specify extra default arguments to container runtime
 DOCKER_RUN_ARGS="${CONDA_FORGE_DOCKER_RUN_ARGS}"
 if [ -z "${CI}" ]; then
     DOCKER_RUN_ARGS="-it ${DOCKER_RUN_ARGS}"
+fi
+
+# Podman-specific fixes for SELinux and rootless mode
+if [ "${CONTAINER_RUNTIME_EXE}" = "podman" ]; then
+    # Fix file permissions for rootless podman builds
+    podman unshare chown -R 1000:1000 "${ARTIFACTS}"
+
+    # Add SELinux label for proper volume mounting
+    if command -v getenforce &>/dev/null && [ "$(getenforce)" != "Disabled" ]; then
+        VOLUME_SUFFIX=":z"
+    else
+        VOLUME_SUFFIX=""
+    fi
+else
+    VOLUME_SUFFIX=""
 fi
 
 ( endgroup "Configure Docker" ) 2> /dev/null
@@ -82,10 +106,11 @@ fi
 
 export UPLOAD_PACKAGES="${UPLOAD_PACKAGES:-True}"
 export IS_PR_BUILD="${IS_PR_BUILD:-False}"
-{{ docker.executable }} pull "${DOCKER_IMAGE}"
-{{ docker.executable }} run ${DOCKER_RUN_ARGS} \
-           -v "${RECIPE_ROOT}":/home/conda/recipe_root:rw,z,delegated \
-           -v "${FEEDSTOCK_ROOT}":/home/conda/feedstock_root:rw,z,delegated \
+
+${CONTAINER_RUNTIME_EXE} pull "${DOCKER_IMAGE}"
+${CONTAINER_RUNTIME_EXE} run ${DOCKER_RUN_ARGS} \
+           -v "${RECIPE_ROOT}":/home/conda/recipe_root:rw${VOLUME_SUFFIX},delegated \
+           -v "${FEEDSTOCK_ROOT}":/home/conda/feedstock_root:rw${VOLUME_SUFFIX},delegated \
            -e CONFIG \
            -e HOST_USER_ID \
            -e UPLOAD_PACKAGES \
