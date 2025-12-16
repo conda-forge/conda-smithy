@@ -2591,10 +2591,11 @@ def commit_changes(
                 subprocess.check_call(git_args, cwd=forge_file_directory)
                 logger.info("")
             else:
+                # Use only the first line of msg for the suggested command
+                msg_first_line = msg.split("\n")[0]
                 logger.info(
-                    "You can commit the changes with:\n\n"
-                    '    git commit -m "MNT: %s"\n',
-                    msg,
+                    'You can commit the changes with:\n\n    git commit -m "MNT: %s"\n',
+                    msg_first_line,
                 )
             logger.info("These changes need to be pushed to github!\n")
         else:
