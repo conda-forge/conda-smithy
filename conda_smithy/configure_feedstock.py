@@ -2620,7 +2620,7 @@ def get_cfp_file_path(temporary_directory):
 
     response = requests.get(pkg.url)
     response.raise_for_status()
-    with open(dest, "wb") as f:
+    with open(dest, "wb", encoding="utf-8") as f:
         f.write(response.content)
 
     logger.info("Extracting conda-forge-pinning to %s", temporary_directory)
