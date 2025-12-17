@@ -244,6 +244,90 @@ def test_ordering_with_tail_and_readd(initial_min):
     assert res2["cuda_compiler_version_min"] == ["11.8"]
 
 
+def test_ordering_with_coinciding_pk():
+    # test interaction between tegra migrator, which uses `primary_key: cuda_compiler_version` but
+    # *does not* set a previously-unknown value for it (the distinguishing key `arm_variant_type`
+    # cannot be the primary key, because it needs to be zipped into `cuda_compiler_version`).
+    # therefore, this tests that uniqueness a new _set_ of values across the relevant zip_keys
+    # will still be inserted, not discarded
+    start = parse_variant(
+        dedent(
+            f"""\
+    cuda_compiler:
+        - cuda-nvcc
+    cuda_compiler_version:
+        - "None"
+        - "12.6"
+    # does not participate in first two migrations!
+    arm_variant_type:
+        - "sbsa"
+    """
+        )
+    )
+
+    cuda129_migrator = parse_variant(
+        dedent(
+            """\
+    __migrator:
+        ordering:
+            cuda_compiler_version:
+                - "12.6"
+                - "None"
+                - "12.9"
+                - "11.8"
+    cuda_compiler_version:
+        - "12.9"
+    """
+        )
+    )
+
+    cuda130_migrator = parse_variant(
+        dedent(
+            """\
+    __migrator:
+        operation: key_add
+        primary_key: cuda_compiler_version
+        ordering:
+            cuda_compiler_version:
+                - "12.6"
+                - "None"
+                - "12.9"
+                - "13.0"
+    cuda_compiler_version:
+        - "13.0"
+    """
+        )
+    )
+
+    tegra_migrator = parse_variant(
+        dedent(
+            """\
+    __migrator:
+        operation: key_add
+        primary_key: cuda_compiler_version
+        ordering:
+            arm_variant_type:
+                - None
+                - sbsa
+                - tegra
+        additional_zip_keys:
+            - arm_variant_type
+    # same value as before in primary_key!
+    cuda_compiler_version:
+        - "12.9"
+    arm_variant_type:
+        - "tegra"
+    """
+        )
+    )
+
+    res = variant_add(start, cuda129_migrator)
+    res2 = variant_add(res, cuda130_migrator)
+    res3 = variant_add(res2, tegra_migrator)
+    assert res3["cuda_compiler_version"] == ["None", "12.9", "12.9", "13.0"]
+    assert res3["arm_variant_type"] == ["sbsa", "sbsa", "tegra", "sbsa"]
+
+
 @pytest.mark.parametrize("initial_min", ["12.6", "None"])
 def test_fail_on_missing_zip_component(initial_min):
     # since CUDA for PPC was removed, need to handle cuda_compiler_version_min == "None"
