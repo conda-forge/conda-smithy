@@ -38,6 +38,7 @@ line-length = 88
 [tool.ruff.lint]
 ignore = [
     "E501",  # https://docs.astral.sh/ruff/faq/#is-the-ruff-linter-compatible-with-black
+    "E731",  # lambdas are useful
 ]
 select = [
     # pyflakes
