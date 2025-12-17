@@ -252,7 +252,7 @@ def test_ordering_with_coinciding_pk():
     # will still be inserted, not discarded
     start = parse_variant(
         dedent(
-            f"""\
+            """\
     cuda_compiler:
         - cuda-nvcc
     cuda_compiler_version:
