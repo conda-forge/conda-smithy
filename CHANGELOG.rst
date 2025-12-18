@@ -4,6 +4,27 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.54.0
+====================
+
+**Changed:**
+
+* When running `operation: key_add` migrations, consider whether the variant being added exists already based on the full set of values in the `zip_keys:` involving `primary_key:`, not just based on the value of `primary_key:` itself. (#2438)
+* macOS CI setup now sets ``OSX_SDK_DIR`` to a dedicated directory where SDKs can be downloaded without altering the system (see https://github.com/conda-forge/conda-forge-ci-setup-feedstock/issues/409).
+
+**Fixed:**
+
+* Version-independent python packages will not be flagged for unconstrained python requirements. (#2433)
+
+**Authors:**
+
+* H. Vetinari
+* pre-commit-ci[bot]
+* Michał Górny
+* Nicholas Bollweg
+
+
+
 v3.53.3
 ====================
 
