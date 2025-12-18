@@ -4,6 +4,20 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.54.1
+====================
+
+**Fixed:**
+
+* Binary files do not have encodings. (#2440)
+
+**Authors:**
+
+* Matthew R. Becker
+* H. Vetinari
+
+
+
 v3.54.0
 ====================
 
