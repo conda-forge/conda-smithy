@@ -17,11 +17,11 @@ Authors are sorted by number of commits.
 * Dougal J. Sutherland
 * John Kirkham
 * Amit Kumar
+* Michał Górny
 * Marcel Bargull
 * Hadrien Mary
 * shadow_walker
 * Michael Sarahan
-* Michał Górny
 * Mark Harfouche
 * Bastian Zimmermann
 * Leo Fang
