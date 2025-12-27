@@ -20,7 +20,7 @@ except ImportError:
 
 # use relative imports to ensure that we don't pick up the data paths from
 # a non-development conda-smithy installed in site-packages
-from .validate_schema import (
+from .validate_schema import (  # noqa: TID252
     CONDA_FORGE_YAML_DEFAULTS_FILE,
     CONDA_FORGE_YAML_SCHEMA_FILE,
 )
