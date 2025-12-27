@@ -1,6 +1,8 @@
 # This model is also used for generating and automatic documentation for the conda-forge.yml file.
 # For an upstream preview of the documentation, see https://conda-forge.org/docs/maintainer/conda_forge_yml.
 
+# To regenerate conda_smithy/data/conda-forge.{json,yml}, run `python -m conda_smithy.schema` in the repo root.
+
 import json
 from enum import Enum
 from inspect import cleandoc
@@ -16,7 +18,9 @@ except ImportError:
     from backports.strenum import StrEnum
 
 
-from conda_smithy.validate_schema import (
+# use relative imports to ensure that we don't pick up the data paths from
+# a non-development conda-smithy installed in site-packages
+from .validate_schema import (
     CONDA_FORGE_YAML_DEFAULTS_FILE,
     CONDA_FORGE_YAML_SCHEMA_FILE,
 )
