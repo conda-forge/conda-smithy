@@ -165,6 +165,13 @@ def op_variant_key_add(v1: dict, v2: dict):
 
     result = v1.copy()
 
+    # if primary_key is part of a zip_keys, pk_group will be overwritten below;
+    # otherwise, the pk_group is trivially only the primary_key itself.
+    pk_group = [primary_key]
+    for chunk in result.get("zip_keys", []):
+        if primary_key in set(chunk):
+            pk_group = chunk
+
     if additional_zip_keys:
         for chunk in result.get("zip_keys", []):
             zip_keyset = set(chunk)
@@ -172,69 +179,62 @@ def op_variant_key_add(v1: dict, v2: dict):
                 # The primary is already part of some zip_key, add the additional keys
                 for additional_key in additional_zip_keys:
                     if additional_key not in zip_keyset:
+                        # this modifies results["zip_keys"] in place!
                         chunk.append(additional_key)
                         newly_added_zip_keys.add(additional_key)
+                        pk_group = chunk.copy()
                 break
         else:
             # The for loop didn't break thus the primary is not part of any zip_key,
             # create a new one including the primary key
-            result.setdefault("zip_keys", []).append(
-                [primary_key] + additional_zip_keys
-            )
-            newly_added_zip_keys.update([primary_key] + additional_zip_keys)
-
-    additional_zip_keys_default_values = {}
-    for additional_key in newly_added_zip_keys:
-        # store the default value for the key, so that subsequent
-        # key additions don't need to specify them and continue to use the default value
-        # assert len(v1[key]) == 1
-        additional_zip_keys_default_values[additional_key] = result[additional_key][0]
+            pk_group = [primary_key] + additional_zip_keys
+            result.setdefault("zip_keys", []).append(pk_group)
+            newly_added_zip_keys.update(additional_zip_keys)
 
     for pkey_ind, pkey_val in enumerate(v2[primary_key]):
-        # object is present already, ignore everything
-        if pkey_val in result[primary_key]:
+        # For newly added keys, we have to broadcast them correctly to the expected length.
+        left = result.copy()
+        num_existing = len(left[primary_key])
+        for key in newly_added_zip_keys:
+            if len(left[key]) != 1:
+                raise ValueError(
+                    f"Cannot broadcast non-unit-length {key} to length {num_existing}; "
+                    f"received {left[key]}"
+                )
+            # broadcast to correct length
+            left[key] = [left[key][0]] * num_existing
+
+        for key in pk_group:
+            if key not in v2:
+                raise ValueError(f"Required zip_key {key} not specified in v2!")
+
+        # form tuples from groups of values
+        existing_tuples = list(zip(*(left[k] for k in pk_group)))
+        new_tuple = tuple(v2[k][pkey_ind] for k in pk_group)
+
+        # to determine whether the key (or more likely: the combination of keys) being added
+        # is already present, we need to compare against all existing combinations.
+        if new_tuple in existing_tuples:
+            # exact combination already exists in result, ignore
             continue
 
-        new_keys = variant_key_set_union(
+        all_tuples_unsorted = variant_key_set_union(
             None,
-            result[primary_key],
-            [pkey_val],
-            ordering=ordering.get(primary_key),
+            existing_tuples,
+            [new_tuple],
         )
-        position_map = {i: new_keys.index(v) for i, v in enumerate(result[primary_key])}
+        pk_idx_in_group = pk_group.index(primary_key)
+        sorter = lambda x: _version_order(
+            x[pk_idx_in_group], ordering=ordering.get(primary_key, None)
+        )
+        all_tuples = sorted(all_tuples_unsorted, key=sorter)
 
-        result[primary_key] = new_keys
-        new_key_position = new_keys.index(pkey_val)
-
-        # handle zip_keys
-        for chunk in result.get("zip_keys", []):
-            zip_keyset = frozenset(chunk)
-            if primary_key in zip_keyset:
-                for key in zip_keyset:
-                    if key == primary_key:
-                        continue
-
-                    # Transform key to zip_key if required
-                    if key in newly_added_zip_keys:
-                        default_value = additional_zip_keys_default_values[key]
-                        result[key] = [default_value] * len(new_keys)
-                    elif key not in v2:
-                        raise ValueError(f"Required zip_key {key} not specified in v2!")
-
-                    # Create a new version of the key from
-                    # assert len(v2[key]) == 1
-                    new_value = [None] * len(new_keys)
-                    for i, j in position_map.items():
-                        new_value[j] = result[key][i]
-
-                    if key in v2:
-                        new_value[new_key_position] = v2[key][pkey_ind]
-                    elif key in additional_zip_keys_default_values:
-                        new_value[new_key_position] = (
-                            additional_zip_keys_default_values[key]
-                        )
-
-                    result[key] = new_value
+        # turn tuples of values (across keys) back into groups of values per key
+        values = list(zip(*all_tuples))
+        # fill in values of tuples into corresponding keys of result
+        for i, key in enumerate(pk_group):
+            # convert tuples back to lists
+            result[key] = list(values[i])
 
     # case where there's a non-primary, non-zipped key with an ordering
     extra_ordering = set(ordering.keys()).difference(

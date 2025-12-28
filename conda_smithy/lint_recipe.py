@@ -681,7 +681,7 @@ def run_conda_forge_specific(
     # 13: no empty conda_forge_config.yaml files
     cbc_pth = os.path.join(recipe_dir or "", "conda_build_config.yaml")
     if os.path.exists(cbc_pth):
-        with open(cbc_pth) as fh:
+        with open(cbc_pth, encoding="utf-8") as fh:
             data = fh.read()
         if not data:
             lints.append(
@@ -784,7 +784,7 @@ def main(recipe_dir, conda_forge=False, return_hints=False, feedstock_dir=None):
         # we have to preserve the string quoting information for properly
         # rendering the context section of the recipe
         yl = get_yaml(preserve_quotes=True)
-        with open(recipe_file) as fp:
+        with open(recipe_file, encoding="utf-8") as fp:
             meta = yl.load(fp.read())
 
     recipe_version = 1 if build_tool == RATTLER_BUILD_TOOL else 0
