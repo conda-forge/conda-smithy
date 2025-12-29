@@ -709,30 +709,36 @@ def _collapse_subpackage_variants(
 
 def _is_config_skipped(config, top_level_loop_vars, list_of_metas):
     trimmed_config = {loop_var: config[loop_var] for loop_var in top_level_loop_vars}
-    logger.debug(f"checking config: {trimmed_config}")
+    logger.debug("checking config: %s", trimmed_config)
     for i, meta in enumerate(list_of_metas):
         trimmed_meta = {
             loop_var: meta.config.variant.get(loop_var)
             for loop_var in top_level_loop_vars
         }
-        logger.debug(f"  checking in meta: {trimmed_meta}")
+        logger.debug("  checking in meta: %s", trimmed_meta)
         for loop_var in top_level_loop_vars:
             variant = meta.config.variant
             if loop_var not in variant:
-                logger.debug(f"    skipping meta because {loop_var} in variant")
+                logger.debug("    skipping meta because %s in variant", loop_var)
                 break
             if isinstance(variant[loop_var], (list, set)) and set(
                 config[loop_var]
             ) - set(variant[loop_var]):
                 logger.debug(
-                    f"    skipping meta because {loop_var} in variant is {variant[loop_var]} and {loop_var} in config is {config[loop_var]}"
+                    "    skipping meta because %s in variant is %s and in config is %s",
+                    loop_var,
+                    variant[loop_var],
+                    config[loop_var],
                 )
                 break
             if isinstance(variant[loop_var], (int, float, str)) and set(
                 config[loop_var]
             ) - set([variant[loop_var]]):
                 logger.debug(
-                    f"    skipping meta because {loop_var} in variant is {[variant[loop_var]]} and {loop_var} in config is {config[loop_var]}"
+                    "    skipping meta because %s in variant is %s and in config is %s",
+                    loop_var,
+                    [variant[loop_var]],
+                    config[loop_var],
                 )
                 break
         else:
