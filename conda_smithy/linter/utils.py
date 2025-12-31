@@ -212,7 +212,7 @@ def _lint_package_version(version: Optional[str]) -> Optional[str]:
 
     ver = str(version)
 
-    if ver.startswith("${{"):
+    if re.search(r"\$\{\{.*\}\}", ver):
         # version is templatised. skip the lint
         return
 
