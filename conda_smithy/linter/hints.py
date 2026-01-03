@@ -212,7 +212,7 @@ def hint_pip_no_build_backend(host_or_build_section, package_name, hints):
     # another build backend
     if package_name in [
         "hatchling",
-        "pdm-backend", 
+        "pdm-backend",
         "setuptools",
     ]:
         return
