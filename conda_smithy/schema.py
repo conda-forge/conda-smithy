@@ -1,6 +1,8 @@
 # This model is also used for generating and automatic documentation for the conda-forge.yml file.
 # For an upstream preview of the documentation, see https://conda-forge.org/docs/maintainer/conda_forge_yml.
 
+# To regenerate conda_smithy/data/conda-forge.{json,yml}, run `python -m conda_smithy.schema` in the repo root.
+
 import json
 from enum import Enum
 from inspect import cleandoc
@@ -16,7 +18,9 @@ except ImportError:
     from backports.strenum import StrEnum
 
 
-from conda_smithy.validate_schema import (
+# use relative imports to ensure that we don't pick up the data paths from
+# a non-development conda-smithy installed in site-packages
+from .validate_schema import (  # noqa: TID252
     CONDA_FORGE_YAML_DEFAULTS_FILE,
     CONDA_FORGE_YAML_SCHEMA_FILE,
 )
@@ -46,7 +50,7 @@ conda_build_tools = Literal[
 ]
 
 
-image_tags = Literal["cos7", "alma8", "alma9", "ubi8"]
+image_tags = Literal["alma10", "rocky10", "alma9", "alma8", "ubi8", "cos7"]
 
 
 class CIservices(StrEnum):
@@ -703,10 +707,11 @@ class ConfigModel(BaseModel):
         description=cleandoc(
             """
         This key is used to set the OS versions for `linux_*` platforms. Valid entries
-        map a linux platform and arch to either `cos7`, `alma8`, `alma9` or `ubi8`.
+        map a linux platform and arch to either `alma9`, `alma8` or `cos7`. For CUDA 11.8
+        images, a choice equivalent to `alma8` is `ubi8`.
 
-        Currently `alma9` is the default, which should work out-of-the-box for the vast
-        majority of uses.
+        Currently `alma9` is the default, though `alma10` is available for opt-in where
+        necessary. `rocky10` may be added in the future.
 
         Note that the image version does not imply a matching `glibc` requirement (which
         can be set using `c_stdlib_version` in `recipe/conda_build_config.yaml`).
