@@ -210,7 +210,11 @@ def hint_pip_no_build_backend(host_or_build_section, package_name, hints):
     # need another backend to bootstrap
     # the list below are the ones that self-bootstrap without
     # another build backend
-    if package_name in ["pdm-backend", "setuptools"]:
+    if package_name in [
+        "hatchling",
+        "pdm-backend",
+        "setuptools",
+    ]:
         return
 
     if host_or_build_section and any(
