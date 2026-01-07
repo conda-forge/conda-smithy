@@ -725,7 +725,7 @@ def _is_config_skipped(config, top_level_loop_vars, list_of_metas):
                 config[loop_var]
             ) - set(variant[loop_var]):
                 logger.debug(
-                    "    skipping meta because %s in variant is %s and in config is %s",
+                    "    not skipping config because %s in variant is %s and in config is %s",
                     loop_var,
                     variant[loop_var],
                     config[loop_var],
