@@ -719,7 +719,7 @@ def _is_config_skipped(config, top_level_loop_vars, list_of_metas):
         for loop_var in top_level_loop_vars:
             variant = meta.config.variant
             if loop_var not in variant:
-                logger.debug("    skipping meta because %s in variant", loop_var)
+                logger.debug("    not skipping config because %s is in variant", loop_var)
                 break
             if isinstance(variant[loop_var], (list, set)) and set(
                 config[loop_var]
