@@ -1,0 +1,3 @@
+**Fixed:**
+
+* The linter no longer flags false positives for valid templating starting partway through the `version` field of v1 recipes

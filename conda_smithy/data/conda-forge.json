@@ -900,10 +900,12 @@
           "anyOf": [
             {
               "enum": [
-                "cos7",
-                "alma8",
+                "alma10",
+                "rocky10",
                 "alma9",
-                "ubi8"
+                "alma8",
+                "ubi8",
+                "cos7"
               ],
               "type": "string"
             },
@@ -918,10 +920,12 @@
           "anyOf": [
             {
               "enum": [
-                "cos7",
-                "alma8",
+                "alma10",
+                "rocky10",
                 "alma9",
-                "ubi8"
+                "alma8",
+                "ubi8",
+                "cos7"
               ],
               "type": "string"
             },
@@ -936,10 +940,12 @@
           "anyOf": [
             {
               "enum": [
-                "cos7",
-                "alma8",
+                "alma10",
+                "rocky10",
                 "alma9",
-                "ubi8"
+                "alma8",
+                "ubi8",
+                "cos7"
               ],
               "type": "string"
             },
@@ -954,10 +960,12 @@
           "anyOf": [
             {
               "enum": [
-                "cos7",
-                "alma8",
+                "alma10",
+                "rocky10",
                 "alma9",
-                "ubi8"
+                "alma8",
+                "ubi8",
+                "cos7"
               ],
               "type": "string"
             },
@@ -972,10 +980,12 @@
           "anyOf": [
             {
               "enum": [
-                "cos7",
-                "alma8",
+                "alma10",
+                "rocky10",
                 "alma9",
-                "ubi8"
+                "alma8",
+                "ubi8",
+                "cos7"
               ],
               "type": "string"
             },
@@ -990,10 +1000,12 @@
           "anyOf": [
             {
               "enum": [
-                "cos7",
-                "alma8",
+                "alma10",
+                "rocky10",
                 "alma9",
-                "ubi8"
+                "alma8",
+                "ubi8",
+                "cos7"
               ],
               "type": "string"
             },
@@ -1008,10 +1020,12 @@
           "anyOf": [
             {
               "enum": [
-                "cos7",
-                "alma8",
+                "alma10",
+                "rocky10",
                 "alma9",
-                "ubi8"
+                "alma8",
+                "ubi8",
+                "cos7"
               ],
               "type": "string"
             },
@@ -1026,10 +1040,12 @@
           "anyOf": [
             {
               "enum": [
-                "cos7",
-                "alma8",
+                "alma10",
+                "rocky10",
                 "alma9",
-                "ubi8"
+                "alma8",
+                "ubi8",
+                "cos7"
               ],
               "type": "string"
             },
@@ -1044,10 +1060,12 @@
           "anyOf": [
             {
               "enum": [
-                "cos7",
-                "alma8",
+                "alma10",
+                "rocky10",
                 "alma9",
-                "ubi8"
+                "alma8",
+                "ubi8",
+                "cos7"
               ],
               "type": "string"
             },
@@ -1778,7 +1796,7 @@
           "type": "null"
         }
       ],
-      "description": "This key is used to set the OS versions for `linux_*` platforms. Valid entries\nmap a linux platform and arch to either `cos7`, `alma8`, `alma9` or `ubi8`.\n\nCurrently `alma9` is the default, which should work out-of-the-box for the vast\nmajority of uses.\n\nNote that the image version does not imply a matching `glibc` requirement (which\ncan be set using `c_stdlib_version` in `recipe/conda_build_config.yaml`).\n\nIf you need to opt into older images, here's an example how to do it:\n```yaml\nos_version:\n    linux_64: cos7\n    linux_aarch64: cos7\n    linux_ppc64le: cos7\n```"
+      "description": "This key is used to set the OS versions for `linux_*` platforms. Valid entries\nmap a linux platform and arch to either `alma9`, `alma8` or `cos7`. For CUDA 11.8\nimages, a choice equivalent to `alma8` is `ubi8`.\n\nCurrently `alma9` is the default, though `alma10` is available for opt-in where\nnecessary. `rocky10` may be added in the future.\n\nNote that the image version does not imply a matching `glibc` requirement (which\ncan be set using `c_stdlib_version` in `recipe/conda_build_config.yaml`).\n\nIf you need to opt into older images, here's an example how to do it:\n```yaml\nos_version:\n    linux_64: cos7\n    linux_aarch64: cos7\n    linux_ppc64le: cos7\n```"
     },
     "provider": {
       "anyOf": [
