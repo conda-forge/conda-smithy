@@ -3,6 +3,7 @@ import collections
 import os
 import shutil
 import subprocess
+from pathlib import Path
 from textwrap import dedent
 
 import pytest
@@ -347,6 +348,39 @@ def test_render_variant_mismatches(testing_workdir):
         with open(cfg) as f:
             data = yaml.safe_load(f)
         assert data["a"] == data["b"]
+
+
+def test_render_skipped_variants(testing_workdir):
+    """
+    Regression test for https://github.com/conda-forge/conda-smithy/issues/1617
+    """
+    parser = argparse.ArgumentParser()
+    subparser = parser.add_subparsers()
+    init_obj = cli.Init(subparser)
+    regen_obj = cli.Regenerate(subparser)
+    _thisdir = os.path.abspath(os.path.dirname(__file__))
+    recipe = os.path.join(_thisdir, "recipes", "skip_rerenders_ok")
+    feedstock_dir = os.path.join(testing_workdir, "test-skipped-variants-feedstock")
+    args = InitArgs(
+        recipe_directory=recipe,
+        feedstock_directory=feedstock_dir,
+        temporary_directory=os.path.join(recipe, "temp"),
+    )
+    init_obj(args)
+    args = RegenerateArgs(
+        feedstock_directory=feedstock_dir,
+        feedstock_config=None,
+        commit=False,
+        no_check_uptodate=True,
+        exclusive_config_file="recipe/conda_build_config.yaml",
+        check=False,
+        temporary_directory=os.path.join(recipe, "temp"),
+    )
+    regen_obj(args)
+
+    # We skip one config out of the 2x2 matrix, so we expect three configs
+    configs = list(Path(feedstock_dir, ".ci_support").glob("*.yaml"))
+    assert len(configs) == 3
 
 
 def test_render_readme_with_v1_recipe_name(testing_workdir):

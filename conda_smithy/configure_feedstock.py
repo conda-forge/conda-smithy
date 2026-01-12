@@ -693,10 +693,61 @@ def _collapse_subpackage_variants(
 
     logger.debug("final used_key_values %s", pprint.pformat(used_key_values))
 
+    configs = break_up_top_level_values(top_level_loop_vars, used_key_values)
+
+    # return (configs, top_level_loop_vars)
+
     return (
-        break_up_top_level_values(top_level_loop_vars, used_key_values),
+        [
+            config
+            for config in configs
+            if not _is_config_skipped(config, top_level_loop_vars, list_of_metas)
+        ],
         top_level_loop_vars,
     )
+
+
+def _is_config_skipped(config, top_level_loop_vars, list_of_metas):
+    trimmed_config = {loop_var: config[loop_var] for loop_var in top_level_loop_vars}
+    logger.debug("checking config: %s", trimmed_config)
+    for i, meta in enumerate(list_of_metas):
+        trimmed_meta = {
+            loop_var: meta.config.variant.get(loop_var)
+            for loop_var in top_level_loop_vars
+        }
+        logger.debug("  checking in meta: %s", trimmed_meta)
+        for loop_var in top_level_loop_vars:
+            variant = meta.config.variant
+            if loop_var not in variant:
+                logger.debug(
+                    "    skipping meta because %s is not in meta variant", loop_var
+                )
+                break
+            if isinstance(variant[loop_var], (list, set)) and set(
+                config[loop_var]
+            ) - set(variant[loop_var]):
+                logger.debug(
+                    "    skipping meta because %s in meta variant is %s, but in config is %s",
+                    loop_var,
+                    variant[loop_var],
+                    config[loop_var],
+                )
+                break
+            if isinstance(variant[loop_var], (int, float, str)) and set(
+                config[loop_var]
+            ) - set([variant[loop_var]]):
+                logger.debug(
+                    "    skipping meta because %s in meta variant is %s and in config is %s",
+                    loop_var,
+                    [variant[loop_var]],
+                    config[loop_var],
+                )
+                break
+        else:
+            logger.debug("    FOUND! meta variant matches config")
+            return False
+    logger.debug("  SKIPPED!")
+    return True
 
 
 def _yaml_represent_ordereddict(yaml_representer, data):
