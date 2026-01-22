@@ -1,8 +1,8 @@
 **Added:**
 
 * Add Podman support and SELinux volume handling to
-  ``run_docker_build.sh`` template, enabling local builds when
-  Docker is unavailable. (#2435)
+  ``run_docker_build.sh`` template, enabling local builds on
+  systems where Docker is unavailable. (#2435)
 
 **Changed:**
 
