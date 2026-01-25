@@ -88,16 +88,16 @@ fi
 # Podman-specific fixes for SELinux and rootless mode
 if [ "${CONTAINER_RUNTIME_EXE}" = "podman" ]; then
     # Fix file permissions for rootless podman builds
-    podman unshare chown -R 1000:1000 "${ARTIFACTS}"
+    podman unshare chown -R ${HOST_USER_ID}:${HOST_USER_ID} "${ARTIFACTS}"
 
     # Add SELinux label for proper volume mounting
     if command -v getenforce &>/dev/null && [ "$(getenforce)" != "Disabled" ]; then
-        VOLUME_SUFFIX=":z"
+        VOLUME_SUFFIX=",z"
     else
         VOLUME_SUFFIX=""
     fi
 else
-    VOLUME_SUFFIX=""
+    VOLUME_SUFFIX=",z"
 fi
 
 ( endgroup "Configure Docker" ) 2> /dev/null
