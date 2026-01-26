@@ -12,8 +12,8 @@ source .scripts/logging_utils.sh
 set -xeo pipefail
 
 # Detect container runtime (prefer docker, fallback to podman)
-if command -v docker &>/dev/null; then
-    CONTAINER_RUNTIME_EXE=docker
+if command -v {{ docker.executable }} &>/dev/null; then
+    CONTAINER_RUNTIME_EXE={{ docker.executable }}
 elif command -v podman &>/dev/null; then
     CONTAINER_RUNTIME_EXE=podman
 else
