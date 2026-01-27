@@ -1068,19 +1068,13 @@ def lint_recipe_is_parsable(
                     parse_results[parse_name] = False
                 else:
                     parse_results[parse_name] = True
-
-    parse_name = "conda-recipe-manager"
-    try:
-        from conda_recipe_manager.parser.recipe_parser import RecipeParser
-    except ImportError:
-        parse_results[parse_name] = None
-        pass
-    else:
+    elif recipe_version == 1:
+        parse_name = "ruamel.yaml"
         try:
-            RecipeParser(recipe_text)
+            get_yaml(allow_duplicate_keys=False).load(recipe_text)
         except Exception as e:
             logger.warning(
-                "Error parsing recipe with conda-recipe-manager: %s",
+                "Error parsing recipe with ruamel.yaml: %s",
                 repr(e),
                 exc_info=e,
             )
@@ -1088,13 +1082,17 @@ def lint_recipe_is_parsable(
         else:
             parse_results[parse_name] = True
 
-    if recipe_version == 1:
-        parse_name = "ruamel.yaml"
+    parse_name = "conda-recipe-manager"
+    try:
+        from conda_recipe_manager.parser.recipe_parser import RecipeParser
+    except ImportError:
+        parse_results[parse_name] = None
+    else:
         try:
-            get_yaml(allow_duplicate_keys=False).load(recipe_text)
+            RecipeParser(recipe_text)
         except Exception as e:
             logger.warning(
-                "Error parsing recipe with ruamel.yaml: %s",
+                "Error parsing recipe with conda-recipe-manager: %s",
                 repr(e),
                 exc_info=e,
             )
