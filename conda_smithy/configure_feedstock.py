@@ -1,3 +1,4 @@
+import asyncio
 import copy
 import glob
 import hashlib
@@ -34,6 +35,7 @@ import conda_build.api
 import conda_build.render
 import conda_build.utils
 import conda_build.variants
+import rattler
 from conda.exceptions import InvalidVersionSpec
 from conda.models.match_spec import MatchSpec
 from conda.models.version import VersionOrder
@@ -2581,16 +2583,30 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
     return config
 
 
-def get_most_recent_version(name, include_broken=False):
-    request = requests.get("https://api.anaconda.org/package/conda-forge/" + name)
-    request.raise_for_status()
-    files = request.json()["files"]
-    if not include_broken:
-        files = [f for f in files if "broken" not in f.get("labels", ())]
-    pkg = max(files, key=lambda x: VersionOrder(x["version"]))
+NameVersionUrlRecord = namedtuple("PackageRecord", ["name", "version", "url"])
 
-    PackageRecord = namedtuple("PackageRecord", ["name", "version", "url"])
-    return PackageRecord(name, pkg["version"], "https:" + pkg["download_url"])
+
+@cache
+def get_most_recent_version(name, include_broken=False) -> NameVersionUrlRecord:
+    channels = ["conda-forge"]
+    if include_broken:
+        channels.append("conda-forge/label/broken")
+
+    # Then we can use the repodata shards for faster access
+    async def query():
+        gateway = rattler.Gateway(cache_dir=get_cache_dir())
+        return chain(
+            *await gateway.query(
+                channels=channels,
+                platforms=[rattler.Platform.current(), "noarch"],
+                specs=[name],
+                recursive=False,
+            )
+        )
+
+    pkgs = asyncio.run(query())
+    pkg = max(pkgs, key=lambda pkg: pkg.version)
+    return NameVersionUrlRecord(pkg.name.normalized, str(pkg.version), pkg.url)
 
 
 def check_version_uptodate(name, installed_version, error_on_warn):
