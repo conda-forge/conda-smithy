@@ -125,7 +125,7 @@ provider:
   linux_s390x: null
   osx: null
   osx_64: azure
-  osx_arm64: azure
+  osx_arm64: null
   wasi_wasm32: null
   win: null
   win_32: null
