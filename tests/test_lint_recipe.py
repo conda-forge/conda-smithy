@@ -4244,6 +4244,9 @@ def test_lint_recipe_parses_v1_spacing():
 
 
 def test_lint_recipe_parses_v1_duplicate_keys():
+    """
+    A v1 recipe with duplicate keys is incorrect. No parser should be able to read it.
+    """
     with tempfile.TemporaryDirectory() as tmpdir:
         with open(os.path.join(tmpdir, "recipe.yaml"), "w") as f:
             f.write(
@@ -4270,13 +4273,13 @@ def test_lint_recipe_parses_v1_duplicate_keys():
                 )
             )
         lints, hints = linter.main(tmpdir, return_hints=True, conda_forge=True)
-        assert not any(
+        assert any(
             lint.startswith(
                 "The recipe is not parsable by any of the known recipe parsers"
             )
             for lint in lints
         ), lints
-        assert not any(
+        assert any(
             hint.startswith(
                 "The recipe is not parsable by parser `conda-recipe-manager"
             )

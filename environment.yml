@@ -14,6 +14,10 @@ dependencies:
   - mock
   - pytest
   - pytest-cov
+  # # Part of some optional lint tests
+  - conda-recipe-manager >=0.9
+  - conda-souschef
+  - conda-forge-tick
   # Runtime dependencies
   - conda >=4.2
   - conda-build >=25.3.1
