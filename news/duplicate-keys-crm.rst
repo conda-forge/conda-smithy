@@ -4,7 +4,7 @@
 
 **Changed:**
 
-* <news item>
+* Require ``conda-recipe-manager>=0.9``. This version rejects duplicate keys in ``recipe.yaml``. (#2452)
 
 **Deprecated:**
 
@@ -16,7 +16,7 @@
 
 **Fixed:**
 
-* Pin to ``conda-recipe-manager<0.9`` to avoid unwanted duplicate key errors. (#2452)
+* <news item>
 
 **Security:**
 
