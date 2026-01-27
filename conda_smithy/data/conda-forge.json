@@ -1487,7 +1487,7 @@
               "type": "null"
             }
           ],
-          "default": "azure",
+          "default": null,
           "title": "Osx Arm64"
         },
         "win_32": {
