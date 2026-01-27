@@ -4,7 +4,7 @@
 
 **Changed:**
 
-* Optimized ``get_most_recent_version`` for faster rerenders by using sharded repodata instead of Anaconda.org API. ()
+* Optimized ``get_most_recent_version`` for faster rerenders by using sharded repodata instead of Anaconda.org API. (#2451)
 
 **Deprecated:**
 
