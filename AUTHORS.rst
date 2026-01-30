@@ -28,10 +28,10 @@ Authors are sorted by number of commits.
 * Ryan Volz
 * Johnny Willemsen
 * Chris Burr
+* Nicholas Bollweg
 * Julian Rüth
 * Yannik Tausch
 * Daniel Bast
-* Nicholas Bollweg
 * Billy K. Poon
 * Daniel Ching
 * vinicius douglas cerutti
@@ -106,6 +106,7 @@ Authors are sorted by number of commits.
 * Anton Tetov
 * Brandon Maier
 * Guillaume Fraux
+* Lucas Colley
 * Jakov Smolić
 * lorenz
 * Tom Augspurger
@@ -144,5 +145,4 @@ Authors are sorted by number of commits.
 * Andreas Poehlmann
 * James Myatt
 * Dan Yeaw
-* Lucas Colley
 * Mikhail Ryazanov
