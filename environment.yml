@@ -17,7 +17,6 @@ dependencies:
   # # Part of some optional lint tests
   - conda-recipe-manager >=0.9
   - conda-souschef
-  - conda-forge-tick
   # Runtime dependencies
   - conda >=4.2
   - conda-build >=25.3.1
@@ -42,5 +41,6 @@ dependencies:
   - jsonschema
   - backports.strenum
   - exceptiongroup
-  - py-rattler >=0.21
+  # capped due to https://github.com/conda/rattler/issues/2023
+  - py-rattler >=0.21,<0.22
   - rattler-build-conda-compat >=1.4.5,<2.0.0a0
