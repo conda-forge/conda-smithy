@@ -137,8 +137,7 @@ def noarch_recipe(config_yaml: ConfigYAML, recipe_dirname):
         os.path.join(config_yaml.workdir, recipe_dirname, config_yaml.recipe_name),
         "w",
     ) as fh:
-        fh.write(
-            """
+        fh.write("""
 package:
     name: python-noarch-test
     version: 1.0.0
@@ -149,8 +148,7 @@ requirements:
         - python
     run:
         - python
-    """
-        )
+    """)
     return RecipeConfigPair(
         str(config_yaml.workdir),
         _load_forge_config(
@@ -174,8 +172,7 @@ def noarch_recipe_with_python_min(config_yaml: ConfigYAML, recipe_dirname):
         os.path.join(config_yaml.workdir, recipe_dirname, config_yaml.recipe_name),
         "w",
     ) as fh:
-        fh.write(
-            f"""\
+        fh.write(f"""\
 package:
     name: python-noarch-test
     version: 1.0.0
@@ -186,8 +183,7 @@ requirements:
         - python {jinjatxt_host_test}
     run:
         - python >={jinjatxt_run}
-    """
-        )
+    """)
     return RecipeConfigPair(
         str(config_yaml.workdir),
         _load_forge_config(
@@ -289,8 +285,7 @@ def py_abi3_recipe(config_yaml: ConfigYAML):
 @pytest.fixture(scope="function")
 def stdlib_recipe(config_yaml: ConfigYAML):
     with open(os.path.join(config_yaml.workdir, "recipe", "meta.yaml"), "w") as fh:
-        fh.write(
-            """
+        fh.write("""
 package:
     name: stdlib-test
     version: 1.0.0
@@ -302,13 +297,11 @@ requirements:
         - zlib
 about:
     home: home
-    """
-        )
+    """)
     with open(
         os.path.join(config_yaml.workdir, "recipe", "stdlib_config.yaml"), "w"
     ) as f:
-        f.write(
-            """\
+        f.write("""\
 c_stdlib:
   - sysroot                     # [linux]
   - macosx_deployment_target    # [osx]
@@ -318,8 +311,7 @@ c_stdlib_version:               # [unix]
   - 2.17                        # [aarch64 or ppc64le]
   - 10.9                        # [osx and x86_64]
   - 11.0                        # [osx and arm64]
-"""
-        )
+""")
     return RecipeConfigPair(
         str(config_yaml.workdir),
         _load_forge_config(
@@ -337,16 +329,14 @@ def stdlib_deployment_target_recipe(config_yaml: ConfigYAML, stdlib_recipe):
     with open(
         os.path.join(config_yaml.workdir, "recipe", "stdlib_config.yaml"), "a"
     ) as f:
-        f.write(
-            """\
+        f.write("""\
 MACOSX_DEPLOYMENT_TARGET:       # [osx]
   - 10.14                       # [osx and x86_64]
   - 12.0                        # [osx and arm64]
 MACOSX_SDK_VERSION:             # [osx]
   - 10.12                       # [osx and x86_64]
   - 12.0                        # [osx and arm64]
-"""
-        )
+""")
     return RecipeConfigPair(
         str(config_yaml.workdir),
         _load_forge_config(
@@ -362,8 +352,7 @@ MACOSX_SDK_VERSION:             # [osx]
 def mixed_python_min_recipe(config_yaml: ConfigYAML):
     # check that we can render recipe that has a mix of noarch and non-noarch outputs
     with open(os.path.join(config_yaml.workdir, "recipe", "meta.yaml"), "w") as fh:
-        fh.write(
-            """
+        fh.write("""
 {% set version = "1.2.12" %}
 
 package:
@@ -445,8 +434,7 @@ outputs:
 
 about:
     home: home
-    """
-        )
+    """)
     return RecipeConfigPair(
         str(config_yaml.workdir),
         _load_forge_config(
@@ -493,8 +481,7 @@ def recipe_migration_cfep9(config_yaml: ConfigYAML):
         os.path.join(config_yaml.workdir, "recipe", config_yaml.recipe_name),
         "w",
     ) as fh:
-        fh.write(
-            """
+        fh.write("""
 package:
     name: py-test
     version: 1.0.0
@@ -504,8 +491,7 @@ requirements:
         - zlib
     run:
         - python
-    """
-        )
+    """)
 
     os.makedirs(
         os.path.join(config_yaml.workdir, ".ci_support", "migrations"),
@@ -515,13 +501,11 @@ requirements:
         os.path.join(config_yaml.workdir, ".ci_support", "migrations", "zlib.yaml"),
         "w",
     ) as fh:
-        fh.write(
-            """
+        fh.write("""
 migrator_ts: 1
 zlib:
     - 1000
-"""
-        )
+""")
 
     return RecipeConfigPair(
         str(config_yaml.workdir),
@@ -552,13 +536,11 @@ def recipe_migration_cfep9_downgrade(config_yaml: ConfigYAML, recipe_migration_c
         ),
         "w",
     ) as fh:
-        fh.write(
-            """
+        fh.write("""
 migrator_ts: 1.0
 zlib:
     - 999
-"""
-        )
+""")
     # return recipe_migration_cfep9
     return RecipeConfigPair(
         str(config_yaml.workdir),
@@ -690,8 +672,7 @@ def linux_skipped_recipe(config_yaml: ConfigYAML):
 @pytest.fixture(scope="function")
 def render_skipped_recipe(config_yaml: ConfigYAML):
     with open(os.path.join(config_yaml.workdir, "recipe", "meta.yaml"), "w") as fh:
-        fh.write(
-            """
+        fh.write("""
 package:
     name: python-noarch-test
     version: 1.0.0
@@ -702,19 +683,16 @@ requirements:
         - python
     run:
         - python
-    """
-        )
+    """)
     with open(os.path.join(config_yaml.workdir, "conda-forge.yml"), "a+") as fh:
-        fh.write(
-            """
+        fh.write("""
 skip_render:
     - .gitignore
     - .gitattributes
     - README.md
     - LICENSE.txt
     - .github/workflows
-    """
-        )
+    """)
     return RecipeConfigPair(
         str(config_yaml.workdir),
         _load_forge_config(
@@ -745,13 +723,11 @@ def choco_recipe(config_yaml: ConfigYAML):
         fh.write(content)
 
     with open(os.path.join(config_yaml.workdir, "conda-forge.yml"), "a+") as fh:
-        fh.write(
-            """
+        fh.write("""
 choco:
     - pkg0
     - pkg1 --version=X.Y.Z
-    """
-        )
+    """)
     return RecipeConfigPair(
         str(config_yaml.workdir),
         _load_forge_config(
@@ -815,8 +791,7 @@ def v1_noarch_recipe_with_context(testing_workdir: Path, recipe_dirname):
         os.path.join(testing_workdir, recipe_dirname, "recipe.yaml"),
         "w",
     ) as fh:
-        fh.write(
-            """
+        fh.write("""
 context:
     name: python-noarch-test-from-context
     version: 9.0.0
@@ -830,8 +805,7 @@ requirements:
         - python
     run:
         - python
-    """
-        )
+    """)
 
     return RecipeConfigPair(
         testing_workdir,
@@ -854,8 +828,7 @@ def v1_recipe_with_multiple_outputs(testing_workdir: Path, recipe_dirname):
         os.path.join(testing_workdir, recipe_dirname, "recipe.yaml"),
         "w",
     ) as fh:
-        fh.write(
-            """
+        fh.write("""
 context:
   name: mamba
   mamba_version: "1.5.8"
@@ -885,8 +858,7 @@ outputs:
   - package:
       name: mamba
       version: ${{ mamba_version }}
-    """
-        )
+    """)
     return RecipeConfigPair(
         testing_workdir,
         _load_forge_config(testing_workdir, exclusive_config_file=None),

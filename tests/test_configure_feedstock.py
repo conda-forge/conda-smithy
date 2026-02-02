@@ -657,15 +657,11 @@ def test_migrator_cfp_override(recipe_migration_cfep9, jinja_env):
     os.makedirs(cfp_migration_dir, exist_ok=True)
 
     with open(os.path.join(cfp_migration_dir, "zlib.yaml"), "w") as f:
-        f.write(
-            textwrap.dedent(
-                """
+        f.write(textwrap.dedent("""
                 migrator_ts: 1
                 zlib:
                    - 1001
-                """
-            )
-        )
+                """))
     configure_feedstock.render_azure(
         jinja_env=jinja_env,
         forge_config=recipe_migration_cfep9.config,
@@ -2149,16 +2145,12 @@ def test_configure_feedstock_rattler_build_conda_compat_round_trip():
     with tempfile.TemporaryDirectory() as tmpdir:
         fname = os.path.join(tmpdir, "variants.yaml")
         with open(fname, "w") as fp:
-            fp.write(
-                textwrap.dedent(
-                    """
+            fp.write(textwrap.dedent("""
                 varkey:
                 - "val1"
                 - 'val2'
                 - val
-                """
-                )
-            )
+                """))
 
         cfg = parse_recipe_config_file(fname, {})
         assert "ruamel.yaml" in _dumps(cfg)

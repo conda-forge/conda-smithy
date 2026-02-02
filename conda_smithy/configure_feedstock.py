@@ -1395,46 +1395,32 @@ def _get_build_setup_line(forge_dir, platform, forge_config):
     build_setup = ""
     if os.path.exists(cfbs_fpath):
         if platform == "linux":
-            build_setup += textwrap.dedent(
-                """\
+            build_setup += textwrap.dedent("""\
                 # Overriding global run_conda_forge_build_setup_linux with local copy.
                 source ${RECIPE_ROOT}/run_conda_forge_build_setup_linux
 
-            """
-            )
+            """)
         elif platform == "win":
-            build_setup += textwrap.dedent(
-                """\
+            build_setup += textwrap.dedent("""\
                 :: Overriding global run_conda_forge_build_setup_win with local copy.
                 CALL {recipe_dir}\\run_conda_forge_build_setup_win
-            """.format(
-                    recipe_dir=forge_config["recipe_dir"]
-                )
-            )
+            """.format(recipe_dir=forge_config["recipe_dir"]))
         else:
-            build_setup += textwrap.dedent(
-                """\
+            build_setup += textwrap.dedent("""\
                 # Overriding global run_conda_forge_build_setup_osx with local copy.
                 source {recipe_dir}/run_conda_forge_build_setup_osx
-            """.format(
-                    recipe_dir=forge_config["recipe_dir"]
-                )
-            )
+            """.format(recipe_dir=forge_config["recipe_dir"]))
     else:
         if platform == "win":
-            build_setup += textwrap.dedent(
-                """\
+            build_setup += textwrap.dedent("""\
                 CALL run_conda_forge_build_setup
 
-            """
-            )
+            """)
         else:
-            build_setup += textwrap.dedent(
-                """\
+            build_setup += textwrap.dedent("""\
             source run_conda_forge_build_setup
 
-            """
-            )
+            """)
     return build_setup
 
 
@@ -1488,17 +1474,13 @@ def generate_yum_requirements(forge_config, forge_dir):
                 "yum_requirements.txt, please remove the file "
                 "or add some."
             )
-        yum_build_setup = textwrap.dedent(
-            """\
+        yum_build_setup = textwrap.dedent("""\
 
             # Install the yum requirements defined canonically in the
             # "recipe/yum_requirements.txt" file. After updating that file,
             # run "conda smithy rerender" and this line will be updated
             # automatically.
-            /usr/bin/sudo -n yum install -y {}""".format(
-                " ".join(requirements)
-            )
-        )
+            /usr/bin/sudo -n yum install -y {}""".format(" ".join(requirements)))
     return yum_build_setup
 
 
@@ -1547,12 +1529,10 @@ def _get_platforms_of_provider(provider, forge_config):
 def render_circle(jinja_env, forge_config, forge_dir, return_metadata=False):
     target_path = os.path.join(forge_dir, ".circleci", "config.yml")
     template_filename = "circle.yml.tmpl"
-    fast_finish_text = textwrap.dedent(
-        """\
+    fast_finish_text = textwrap.dedent("""\
             {get_fast_finish_script} | \\
                  python - -v --ci "circle" "${{CIRCLE_PROJECT_USERNAME}}/${{CIRCLE_PROJECT_REPONAME}}" "${{CIRCLE_BUILD_NUM}}" "${{CIRCLE_PR_NUMBER}}"
-        """  # noqa
-    )
+        """)  # noqa
     extra_platform_files = {
         "common": [
             os.path.join(forge_dir, ".circleci", "checkout_merge_commit.sh"),
@@ -1691,12 +1671,10 @@ def _appveyor_specific_setup(jinja_env, forge_config, forge_dir, platform):
 
 def render_appveyor(jinja_env, forge_config, forge_dir, return_metadata=False):
     target_path = os.path.join(forge_dir, ".appveyor.yml")
-    fast_finish_text = textwrap.dedent(
-        """\
+    fast_finish_text = textwrap.dedent("""\
             {get_fast_finish_script}
             "%CONDA_INSTALL_LOCN%\\python.exe" {fast_finish_script}.py -v --ci "appveyor" "%APPVEYOR_ACCOUNT_NAME%/%APPVEYOR_PROJECT_SLUG%" "%APPVEYOR_BUILD_NUMBER%" "%APPVEYOR_PULL_REQUEST_NUMBER%"
-        """  # noqa
-    )
+        """)  # noqa
     template_filename = "appveyor.yml.tmpl"
 
     (
