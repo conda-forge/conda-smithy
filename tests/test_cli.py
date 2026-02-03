@@ -62,15 +62,11 @@ def test_init_with_custom_config(py_recipe):
     # expected args object has
 
     with open(os.path.join(recipe, "recipe", "conda-forge.yml"), "w") as fp:
-        fp.write(
-            dedent(
-                """\
+        fp.write(dedent("""\
             bot:
               automerge: true
               run_deps_from_wheel: true
-            """
-            )
-        )
+            """))
 
     args = InitArgs(
         recipe_directory=os.path.join(recipe, "recipe"),

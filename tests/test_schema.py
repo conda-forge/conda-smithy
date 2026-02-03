@@ -72,8 +72,7 @@ def test_schema_validate_json_schema_with_bot_uri_override(tmp_path):
 
     schema_pth = tmp_path / "bot_schema.json"
     with open(schema_pth, "w", encoding="utf-8") as fh:
-        fh.write(
-            r"""{
+        fh.write(r"""{
   "$defs": {
     "BotConfigAutoMergeChoice": {
       "enum": [
@@ -265,8 +264,7 @@ def test_schema_validate_json_schema_with_bot_uri_override(tmp_path):
   "title": "BotConfig",
   "type": "object"
 }
-"""
-        )
+""")
     assert schema_pth.exists(), "The schema file was not created."
     old_val = os.environ.get("CONDA_SMITHY_BOT_SCHEMA_URI")
     try:
@@ -314,15 +312,11 @@ def test_schema_with_rattler_build_conda_compat():
     with tempfile.TemporaryDirectory() as tmpdir:
         pth = os.path.join(tmpdir, "conda-forge.yml")
         with open(pth, "w") as fp:
-            fp.write(
-                textwrap.dedent(
-                    """\
+            fp.write(textwrap.dedent("""\
                 bot:
                 version_updates:
                     random_fraction_to_keep: 0.02
-                """
-                )
-            )
+                """))
         with open(pth) as fp:
             cfyaml = get_yaml().load(fp)
 

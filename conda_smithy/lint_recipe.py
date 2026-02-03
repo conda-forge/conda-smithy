@@ -710,8 +710,7 @@ def _format_validation_msg(error: jsonschema.ValidationError):
         help_url += f"""/#{path[1].split("[")[0].replace("_", "-")}"""
         subschema_text = json.dumps(descriptionless_schema, indent=2)
 
-    return cleandoc(
-        f"""
+    return cleandoc(f"""
         In conda-forge.yml: [`{error.json_path}`]({help_url}) `=` `{error.instance}`.
 {indent(error.message, " " * 12 + "> ")}
             <details>
@@ -722,8 +721,7 @@ def _format_validation_msg(error: jsonschema.ValidationError):
             ```
 
             </details>
-        """
-    )
+        """)
 
 
 def find_recipe_directory(
