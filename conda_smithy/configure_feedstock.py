@@ -1030,15 +1030,26 @@ def _conda_build_api_render_for_smithy(
     from conda_build.render import finalize_metadata, render_recipe
 
     config = get_or_merge_config(config, **kwargs)
+    logger.debug(pprint.pformat(variants))
 
-    metadata_tuples = render_recipe(
-        recipe_path,
-        bypass_env_check=bypass_env_check,
-        no_download_source=config.no_download_source,
-        config=config,
-        variants=variants,
-        permit_unsatisfiable_variants=permit_unsatisfiable_variants,
-    )
+    try:
+        metadata_tuples = render_recipe(
+            recipe_path,
+            bypass_env_check=bypass_env_check,
+            no_download_source=config.no_download_source,
+            config=config,
+            variants=variants,
+            permit_unsatisfiable_variants=permit_unsatisfiable_variants,
+        )
+    except ValueError as e:
+        # if conda-build fails to render the recipe, e.g. due to some zip_keys that have
+        # become mismatched by applying migrations, tell users how to debug this more easily
+        print(
+            "To see the variant configuration that was handed to conda-build, which failed "
+            "to render the recipe, set the environment variable CONDA_SMITHY_LOGLEVEL=debug"
+        )
+        raise e
+
     output_metas = []
     for meta, download, render_in_env in metadata_tuples:
         if not meta.skip() or not config.trim_skip:
