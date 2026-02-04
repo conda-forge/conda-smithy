@@ -1,3 +1,4 @@
+import asyncio
 import copy
 import glob
 import hashlib
@@ -34,6 +35,7 @@ import conda_build.api
 import conda_build.render
 import conda_build.utils
 import conda_build.variants
+import rattler
 from conda.exceptions import InvalidVersionSpec
 from conda.models.match_spec import MatchSpec
 from conda.models.version import VersionOrder
@@ -693,10 +695,61 @@ def _collapse_subpackage_variants(
 
     logger.debug("final used_key_values %s", pprint.pformat(used_key_values))
 
+    configs = break_up_top_level_values(top_level_loop_vars, used_key_values)
+
+    # return (configs, top_level_loop_vars)
+
     return (
-        break_up_top_level_values(top_level_loop_vars, used_key_values),
+        [
+            config
+            for config in configs
+            if not _is_config_skipped(config, top_level_loop_vars, list_of_metas)
+        ],
         top_level_loop_vars,
     )
+
+
+def _is_config_skipped(config, top_level_loop_vars, list_of_metas):
+    trimmed_config = {loop_var: config[loop_var] for loop_var in top_level_loop_vars}
+    logger.debug("checking config: %s", trimmed_config)
+    for i, meta in enumerate(list_of_metas):
+        trimmed_meta = {
+            loop_var: meta.config.variant.get(loop_var)
+            for loop_var in top_level_loop_vars
+        }
+        logger.debug("  checking in meta: %s", trimmed_meta)
+        for loop_var in top_level_loop_vars:
+            variant = meta.config.variant
+            if loop_var not in variant:
+                logger.debug(
+                    "    skipping meta because %s is not in meta variant", loop_var
+                )
+                break
+            if isinstance(variant[loop_var], (list, set)) and set(
+                config[loop_var]
+            ) - set(variant[loop_var]):
+                logger.debug(
+                    "    skipping meta because %s in meta variant is %s, but in config is %s",
+                    loop_var,
+                    variant[loop_var],
+                    config[loop_var],
+                )
+                break
+            if isinstance(variant[loop_var], (int, float, str)) and set(
+                config[loop_var]
+            ) - set([variant[loop_var]]):
+                logger.debug(
+                    "    skipping meta because %s in meta variant is %s and in config is %s",
+                    loop_var,
+                    [variant[loop_var]],
+                    config[loop_var],
+                )
+                break
+        else:
+            logger.debug("    FOUND! meta variant matches config")
+            return False
+    logger.debug("  SKIPPED!")
+    return True
 
 
 def _yaml_represent_ordereddict(yaml_representer, data):
@@ -1342,46 +1395,32 @@ def _get_build_setup_line(forge_dir, platform, forge_config):
     build_setup = ""
     if os.path.exists(cfbs_fpath):
         if platform == "linux":
-            build_setup += textwrap.dedent(
-                """\
+            build_setup += textwrap.dedent("""\
                 # Overriding global run_conda_forge_build_setup_linux with local copy.
                 source ${RECIPE_ROOT}/run_conda_forge_build_setup_linux
 
-            """
-            )
+            """)
         elif platform == "win":
-            build_setup += textwrap.dedent(
-                """\
+            build_setup += textwrap.dedent("""\
                 :: Overriding global run_conda_forge_build_setup_win with local copy.
                 CALL {recipe_dir}\\run_conda_forge_build_setup_win
-            """.format(
-                    recipe_dir=forge_config["recipe_dir"]
-                )
-            )
+            """.format(recipe_dir=forge_config["recipe_dir"]))
         else:
-            build_setup += textwrap.dedent(
-                """\
+            build_setup += textwrap.dedent("""\
                 # Overriding global run_conda_forge_build_setup_osx with local copy.
                 source {recipe_dir}/run_conda_forge_build_setup_osx
-            """.format(
-                    recipe_dir=forge_config["recipe_dir"]
-                )
-            )
+            """.format(recipe_dir=forge_config["recipe_dir"]))
     else:
         if platform == "win":
-            build_setup += textwrap.dedent(
-                """\
+            build_setup += textwrap.dedent("""\
                 CALL run_conda_forge_build_setup
 
-            """
-            )
+            """)
         else:
-            build_setup += textwrap.dedent(
-                """\
+            build_setup += textwrap.dedent("""\
             source run_conda_forge_build_setup
 
-            """
-            )
+            """)
     return build_setup
 
 
@@ -1435,17 +1474,13 @@ def generate_yum_requirements(forge_config, forge_dir):
                 "yum_requirements.txt, please remove the file "
                 "or add some."
             )
-        yum_build_setup = textwrap.dedent(
-            """\
+        yum_build_setup = textwrap.dedent("""\
 
             # Install the yum requirements defined canonically in the
             # "recipe/yum_requirements.txt" file. After updating that file,
             # run "conda smithy rerender" and this line will be updated
             # automatically.
-            /usr/bin/sudo -n yum install -y {}""".format(
-                " ".join(requirements)
-            )
-        )
+            /usr/bin/sudo -n yum install -y {}""".format(" ".join(requirements)))
     return yum_build_setup
 
 
@@ -1494,12 +1529,10 @@ def _get_platforms_of_provider(provider, forge_config):
 def render_circle(jinja_env, forge_config, forge_dir, return_metadata=False):
     target_path = os.path.join(forge_dir, ".circleci", "config.yml")
     template_filename = "circle.yml.tmpl"
-    fast_finish_text = textwrap.dedent(
-        """\
+    fast_finish_text = textwrap.dedent("""\
             {get_fast_finish_script} | \\
                  python - -v --ci "circle" "${{CIRCLE_PROJECT_USERNAME}}/${{CIRCLE_PROJECT_REPONAME}}" "${{CIRCLE_BUILD_NUM}}" "${{CIRCLE_PR_NUMBER}}"
-        """  # noqa
-    )
+        """)  # noqa
     extra_platform_files = {
         "common": [
             os.path.join(forge_dir, ".circleci", "checkout_merge_commit.sh"),
@@ -1638,12 +1671,10 @@ def _appveyor_specific_setup(jinja_env, forge_config, forge_dir, platform):
 
 def render_appveyor(jinja_env, forge_config, forge_dir, return_metadata=False):
     target_path = os.path.join(forge_dir, ".appveyor.yml")
-    fast_finish_text = textwrap.dedent(
-        """\
+    fast_finish_text = textwrap.dedent("""\
             {get_fast_finish_script}
             "%CONDA_INSTALL_LOCN%\\python.exe" {fast_finish_script}.py -v --ci "appveyor" "%APPVEYOR_ACCOUNT_NAME%/%APPVEYOR_PROJECT_SLUG%" "%APPVEYOR_BUILD_NUMBER%" "%APPVEYOR_PULL_REQUEST_NUMBER%"
-        """  # noqa
-    )
+        """)  # noqa
     template_filename = "appveyor.yml.tmpl"
 
     (
@@ -2144,7 +2175,17 @@ def render_readme(jinja_env, forge_config, forge_dir, render_info=None):
     forge_config["package_name"] = package_name
     forge_config["variants"] = sorted(variants)
     forge_config["outputs"] = sorted(
-        list(OrderedDict((meta.name(), None) for meta in metas))
+        list(
+            OrderedDict(
+                (m.name(), None)
+                for m in metas
+                if not (
+                    hasattr(m, "meta")
+                    and "recipe" in m.meta
+                    and "name" in m.meta["recipe"]
+                )
+            )
+        )
     )
 
     maintainers = sorted(
@@ -2520,16 +2561,30 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
     return config
 
 
-def get_most_recent_version(name, include_broken=False):
-    request = requests.get("https://api.anaconda.org/package/conda-forge/" + name)
-    request.raise_for_status()
-    files = request.json()["files"]
-    if not include_broken:
-        files = [f for f in files if "broken" not in f.get("labels", ())]
-    pkg = max(files, key=lambda x: VersionOrder(x["version"]))
+NameVersionUrlRecord = namedtuple("PackageRecord", ["name", "version", "url"])
 
-    PackageRecord = namedtuple("PackageRecord", ["name", "version", "url"])
-    return PackageRecord(name, pkg["version"], "https:" + pkg["download_url"])
+
+@cache
+def get_most_recent_version(name, include_broken=False) -> NameVersionUrlRecord:
+    channels = ["conda-forge"]
+    if include_broken:
+        channels.append("conda-forge/label/broken")
+
+    # Then we can use the repodata shards for faster access
+    async def query():
+        gateway = rattler.Gateway(cache_dir=get_cache_dir())
+        return chain(
+            *await gateway.query(
+                channels=channels,
+                platforms=[rattler.Platform.current(), "noarch"],
+                specs=[name],
+                recursive=False,
+            )
+        )
+
+    pkgs = asyncio.run(query())
+    pkg = max(pkgs, key=lambda pkg: pkg.version)
+    return NameVersionUrlRecord(pkg.name.normalized, str(pkg.version), pkg.url)
 
 
 def check_version_uptodate(name, installed_version, error_on_warn):

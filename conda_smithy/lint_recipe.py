@@ -6,7 +6,6 @@ from collections.abc import Mapping
 from functools import lru_cache
 from glob import glob
 from inspect import cleandoc
-from pathlib import Path
 from textwrap import indent
 from typing import Any, Optional
 
@@ -270,7 +269,11 @@ def lintify_meta_yaml(
 
         if conda_build_config_filename:
             with open(conda_build_config_filename, encoding="utf-8") as fh:
-                conda_build_config_keys = set(get_yaml().load(fh).keys())
+                fh_data = fh.read()
+                if fh_data:
+                    conda_build_config_keys = set(get_yaml().load(fh_data).keys())
+                else:
+                    conda_build_config_keys = set()
         else:
             conda_build_config_keys = set()
 
@@ -327,6 +330,7 @@ def lintify_meta_yaml(
     lint_non_noarch_builds(
         requirements_section,
         outputs_section,
+        build_section,
         noarch_value,
         lints,
         recipe_version,
@@ -674,6 +678,16 @@ def run_conda_forge_specific(
             lints,
         )
 
+    # 13: no empty conda_forge_config.yaml files
+    cbc_pth = os.path.join(recipe_dir or "", "conda_build_config.yaml")
+    if os.path.exists(cbc_pth):
+        with open(cbc_pth, encoding="utf-8") as fh:
+            data = fh.read()
+        if not data:
+            lints.append(
+                "The recipe should not have an empty `conda_build_config.yaml` file."
+            )
+
 
 def _format_validation_msg(error: jsonschema.ValidationError):
     """Use the data on the validation error to generate improved reporting.
@@ -696,8 +710,7 @@ def _format_validation_msg(error: jsonschema.ValidationError):
         help_url += f"""/#{path[1].split("[")[0].replace("_", "-")}"""
         subschema_text = json.dumps(descriptionless_schema, indent=2)
 
-    return cleandoc(
-        f"""
+    return cleandoc(f"""
         In conda-forge.yml: [`{error.json_path}`]({help_url}) `=` `{error.instance}`.
 {indent(error.message, " " * 12 + "> ")}
             <details>
@@ -708,8 +721,7 @@ def _format_validation_msg(error: jsonschema.ValidationError):
             ```
 
             </details>
-        """
-    )
+        """)
 
 
 def find_recipe_directory(
@@ -767,7 +779,11 @@ def main(recipe_dir, conda_forge=False, return_hints=False, feedstock_dir=None):
             content = render_meta_yaml("".join(fh))
             meta = get_yaml().load(content)
     else:
-        meta = get_yaml().load(Path(recipe_file))
+        # we have to preserve the string quoting information for properly
+        # rendering the context section of the recipe
+        yl = get_yaml(preserve_quotes=True)
+        with open(recipe_file, encoding="utf-8") as fp:
+            meta = yl.load(fp.read())
 
     recipe_version = 1 if build_tool == RATTLER_BUILD_TOOL else 0
 

@@ -15,23 +15,23 @@ Authors are sorted by number of commits.
 * Filipe Fernandes
 * Min RK
 * Dougal J. Sutherland
-* Amit Kumar
 * John Kirkham
+* Amit Kumar
+* Michał Górny
 * Marcel Bargull
 * Hadrien Mary
 * shadow_walker
 * Michael Sarahan
-* Michał Górny
 * Mark Harfouche
 * Bastian Zimmermann
 * Leo Fang
 * Ryan Volz
 * Johnny Willemsen
 * Chris Burr
+* Nicholas Bollweg
 * Julian Rüth
 * Yannik Tausch
 * Daniel Bast
-* Nicholas Bollweg
 * Billy K. Poon
 * Daniel Ching
 * vinicius douglas cerutti
@@ -106,6 +106,8 @@ Authors are sorted by number of commits.
 * Anton Tetov
 * Brandon Maier
 * Guillaume Fraux
+* Lucas Colley
+* Jakov Smolić
 * lorenz
 * Tom Augspurger
 * Ryan May
@@ -143,5 +145,4 @@ Authors are sorted by number of commits.
 * Andreas Poehlmann
 * James Myatt
 * Dan Yeaw
-* Lucas Colley
 * Mikhail Ryazanov

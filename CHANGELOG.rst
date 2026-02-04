@@ -4,6 +4,122 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.54.2
+====================
+
+**Added:**
+
+* Allow `alma10` as an image tag for `os_version` (#2441)
+
+**Changed:**
+
+* Use ``ubuntu-latest`` in Azure Pipelines skip-control job. (#2449)
+* Require ``conda-recipe-manager>=0.9``. This version rejects duplicate keys in ``recipe.yaml``. (#2452)
+* Optimized ``get_most_recent_version`` for faster rerenders by using sharded repodata instead of Anaconda.org API. (#2451)
+
+**Fixed:**
+
+* Fix configuration generation by respecting additive ``skip`` statements properly. (#1617 via #2434)
+* The linter no longer flags false positives for valid templating starting partway through the `version` field of v1 recipes
+* Add ``hatchling`` bootstrap exception to python build backend hint (#2444)
+
+**Authors:**
+
+* Isuru Fernando
+* Jaime Rodríguez-Guerra
+* H. Vetinari
+* pre-commit-ci[bot]
+* Nicholas Bollweg
+* Lucas Colley
+
+
+
+v3.54.1
+====================
+
+**Fixed:**
+
+* Binary files do not have encodings. (#2440)
+
+**Authors:**
+
+* Matthew R. Becker
+* H. Vetinari
+
+
+
+v3.54.0
+====================
+
+**Changed:**
+
+* When running `operation: key_add` migrations, consider whether the variant being added exists already based on the full set of values in the `zip_keys:` involving `primary_key:`, not just based on the value of `primary_key:` itself. (#2438)
+* macOS CI setup now sets ``OSX_SDK_DIR`` to a dedicated directory where SDKs can be downloaded without altering the system (see https://github.com/conda-forge/conda-forge-ci-setup-feedstock/issues/409).
+
+**Fixed:**
+
+* Version-independent python packages will not be flagged for unconstrained python requirements. (#2433)
+
+**Authors:**
+
+* H. Vetinari
+* pre-commit-ci[bot]
+* Michał Górny
+* Nicholas Bollweg
+
+
+
+v3.53.3
+====================
+
+**Changed:**
+
+* Replace old ``{{ stdlib("c") }}`` meta issue links with doc links. ( #2429 )
+
+**Authors:**
+
+* John Kirkham
+
+
+
+v3.53.2
+====================
+
+**Added:**
+
+* Report new lint on empty ``conda_build_config.yaml`` file. (#2417, #2427)
+
+**Fixed:**
+
+* Fixed bug where linting failed on recipes with empty ``conda_build_config.yaml`` files. (#2417, #2427)
+* Fixed a bug where v1 recipes contained non-existing outputs in README (#2418)
+
+**Authors:**
+
+* Matthew R. Becker
+* H. Vetinari
+* Jakov Smolić
+
+
+
+v3.53.1
+====================
+
+**Added:**
+
+* Allow CDTs to be linted using conda-forge-pinning-feedstock linter_hints (#2419).
+
+**Fixed:**
+
+* Fixed a bug where string quoting information was not preserved when load/linting v1 recipes. (#2422)
+
+**Authors:**
+
+* Isuru Fernando
+* Matthew R. Becker
+
+
+
 v3.53.0
 ====================
 

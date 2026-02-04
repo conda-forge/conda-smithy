@@ -23,6 +23,7 @@ from conda_smithy.linter.utils import (
     _lint_recipe_name,
     flatten_v1_if_else,
     get_section,
+    get_version_independent,
     is_selector_line,
     jinja_lines,
     selector_lines,
@@ -518,7 +519,12 @@ def lint_single_space_in_pinned_requirements(
 
 
 def lint_non_noarch_builds(
-    requirements_section, outputs_section, noarch_value, lints, recipe_version
+    requirements_section,
+    outputs_section,
+    build_section,
+    noarch_value,
+    lints,
+    recipe_version,
 ):
     check_languages = ["python", "r-base"]
     host_reqs = requirements_section.get("host") or []
@@ -536,16 +542,18 @@ def lint_non_noarch_builds(
             ]
             if filtered_host_reqs and not filtered_run_reqs:
                 lints.append(
-                    f"If {str(language)} is a host requirement, it should be a run requirement."
+                    f"If {language} is a host requirement, it should be a run requirement."
                 )
+            if get_version_independent(build_section, language, recipe_version):
+                continue
             for reqs in [filtered_host_reqs, filtered_run_reqs]:
                 if str(language) in reqs:
                     continue
                 for req in reqs:
                     constraint = req.split(" ", 1)[1]
-                    if constraint.startswith(">") or constraint.startswith("<"):
+                    if constraint.startswith((">", "<")):
                         lints.append(
-                            f"Non noarch packages should have {str(language)} requirement without any version constraints."
+                            f"Non noarch packages should have {language} requirement without any version constraints."
                         )
 
 
@@ -775,8 +783,7 @@ def lint_stdlib(
     stdlib_lint = (
         "This recipe is using a compiler, which now requires adding a build "
         f"dependence on {jinja_stdlib_c} as well. Note that this rule applies to "
-        "each output of the recipe using a compiler. For further details, please "
-        "see https://github.com/conda-forge/conda-forge.github.io/issues/2102."
+        "each output of the recipe using a compiler."
     )
     if recipe_version == 0:
         pat_compiler_stub = re.compile(
@@ -842,7 +849,7 @@ def lint_stdlib(
         f"now be done by adding a build dependence on {jinja_stdlib_c}, and "
         "overriding `c_stdlib_version` in `recipe/conda_build_config.yaml` for the "
         "respective platform as necessary. For further details, please see "
-        "https://github.com/conda-forge/conda-forge.github.io/issues/2102."
+        "https://conda-forge.org/docs/maintainer/infrastructure/#using-compilers-in-feedstocks"
     )
     pat_sysroot = re.compile(r"sysroot_linux.*")
     if any(pat_sysroot.match(req) for req in all_build_reqs_flat):
@@ -854,7 +861,7 @@ def lint_stdlib(
         f"should now be done by adding a build dependence on {jinja_stdlib_c}, "
         "and overriding `c_stdlib_version` in `recipe/conda_build_config.yaml` for "
         "the respective platform as necessary. For further details, please see "
-        "https://github.com/conda-forge/conda-forge.github.io/issues/2102."
+        "https://conda-forge.org/docs/maintainer/knowledge_base/#requiring-newer-macos-sdks"
     )
 
     to_check = all_run_reqs_flat + all_contraints_flat
@@ -1061,19 +1068,13 @@ def lint_recipe_is_parsable(
                     parse_results[parse_name] = False
                 else:
                     parse_results[parse_name] = True
-
-    parse_name = "conda-recipe-manager"
-    try:
-        from conda_recipe_manager.parser.recipe_parser import RecipeParser
-    except ImportError:
-        parse_results[parse_name] = None
-        pass
-    else:
+    elif recipe_version == 1:
+        parse_name = "ruamel.yaml"
         try:
-            RecipeParser(recipe_text)
+            get_yaml(allow_duplicate_keys=False).load(recipe_text)
         except Exception as e:
             logger.warning(
-                "Error parsing recipe with conda-recipe-manager: %s",
+                "Error parsing recipe with ruamel.yaml: %s",
                 repr(e),
                 exc_info=e,
             )
@@ -1081,13 +1082,17 @@ def lint_recipe_is_parsable(
         else:
             parse_results[parse_name] = True
 
-    if recipe_version == 1:
-        parse_name = "ruamel.yaml"
+    parse_name = "conda-recipe-manager"
+    try:
+        from conda_recipe_manager.parser.recipe_parser import RecipeParser
+    except ImportError:
+        parse_results[parse_name] = None
+    else:
         try:
-            get_yaml(allow_duplicate_keys=False).load(recipe_text)
+            RecipeParser(recipe_text)
         except Exception as e:
             logger.warning(
-                "Error parsing recipe with ruamel.yaml: %s",
+                "Error parsing recipe with conda-recipe-manager: %s",
                 repr(e),
                 exc_info=e,
             )
