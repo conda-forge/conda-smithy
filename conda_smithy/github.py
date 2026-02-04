@@ -266,17 +266,29 @@ def configure_github_team(meta, gh_repo, org, feedstock_name, remove=True):
     # Try to get team or create it if it doesn't exist.
     team_name = feedstock_name
     current_maintainer_teams = list(gh_repo.get_teams())
-    fs_team = next(
+    repo_fs_team = next(
         (team for team in current_maintainer_teams if team.name == team_name),
         None,
     )
     current_maintainers = set()
-    if not fs_team:
+
+    try:
+        org_fs_team = org.get_team_by_slug(team_name)
+    except Exception:
+        org_fs_team = None
+
+    if not org_fs_team:
+        # team does not exist so make it
         fs_team = create_team(
             org,
             team_name,
             f"The {choice(superlative)} {team_name} contributors!",
         )
+    else:
+        fs_team = org_fs_team
+
+    if not repo_fs_team:
+        # team is not added to repo so do that
         fs_team.add_to_repos(gh_repo)
 
     current_maintainers = {e.login.lower() for e in fs_team.get_members()}
