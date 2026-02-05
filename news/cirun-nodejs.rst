@@ -4,7 +4,7 @@
 
 **Changed:**
 
-* Self-hosted runners in GHA are now using `actions/checkout@v5.0`.
+* Self-hosted runners in GHA are now using `actions/checkout@v6`. (#2462)
 
 **Deprecated:**
 
