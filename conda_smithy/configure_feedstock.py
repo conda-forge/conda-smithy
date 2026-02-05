@@ -2586,7 +2586,7 @@ def get_most_recent_version(name, include_broken=False) -> NameVersionUrlRecord:
         gateway = rattler.Gateway(cache_dir=get_cache_dir())
         return chain(
             *await gateway.query(
-                channels=channels,
+                sources=channels,
                 platforms=[rattler.Platform.current(), "noarch"],
                 specs=[name],
                 recursive=False,

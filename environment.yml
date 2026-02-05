@@ -41,6 +41,6 @@ dependencies:
   - jsonschema
   - backports.strenum
   - exceptiongroup
-  # capped due to https://github.com/conda/rattler/issues/2023
-  - py-rattler >=0.21,<0.22
+  # py-rattler's API subject to change, pin to minor
+  - py-rattler >=0.22,<0.23
   - rattler-build-conda-compat >=1.4.5,<2.0.0a0
