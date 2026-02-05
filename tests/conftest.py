@@ -769,6 +769,35 @@ def cuda_enabled_recipe(config_yaml: ConfigYAML):
 
 
 @pytest.fixture(scope="function")
+def dpcpp_enabled_recipe(config_yaml: ConfigYAML):
+    with open(
+        os.path.join(config_yaml.workdir, "recipe", config_yaml.recipe_name),
+        "w",
+    ) as fh:
+        cuda_recipe_path = os.path.abspath(
+            os.path.join(
+                __file__,
+                "../",
+                "recipes",
+                "dpcpp_recipes",
+                config_yaml.recipe_name,
+            )
+        )
+        content = Path(cuda_recipe_path).read_text()
+        fh.write(content)
+
+    return RecipeConfigPair(
+        str(config_yaml.workdir),
+        _load_forge_config(
+            config_yaml.workdir,
+            exclusive_config_file=os.path.join(
+                config_yaml.workdir, "recipe", "default_config.yaml"
+            ),
+        ),
+    )
+
+
+@pytest.fixture(scope="function")
 def jinja_env():
     tmplt_dir = os.path.join(conda_forge_content, "templates")
     # Load templates from the feedstock in preference to the smithy's templates.
