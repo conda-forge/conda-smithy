@@ -4,7 +4,7 @@
 
 **Changed:**
 
-* Support ``py-rattler 0.22`` new ``sources`` API. (#2463) 
+* Support ``py-rattler 0.22`` new ``sources`` API. (#2463)
 
 **Deprecated:**
 
