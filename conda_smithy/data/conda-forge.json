@@ -653,6 +653,142 @@
       ],
       "title": "Nullable"
     },
+    "PerPlatformSettings__class__bool__": {
+      "properties": {
+        "all": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Value for all platforms",
+          "title": "All"
+        },
+        "linux": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Value for linux platform",
+          "title": "Linux"
+        },
+        "win": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Value for win platform",
+          "title": "Win"
+        },
+        "osx": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Value for osx platform",
+          "title": "Osx"
+        },
+        "linux_azure": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Value for linux platform on azure provider",
+          "title": "Linux Azure"
+        },
+        "linux_github_actions": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Value for linux platform on github_actions provider",
+          "title": "Linux Github Actions"
+        },
+        "win_azure": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Value for win platform on azure provider",
+          "title": "Win Azure"
+        },
+        "win_github_actions": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Value for win platform on github_actions provider",
+          "title": "Win Github Actions"
+        },
+        "osx_azure": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Value for osx platform on azure provider",
+          "title": "Osx Azure"
+        },
+        "osx_github_actions": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Value for osx platform on github_actions provider",
+          "title": "Osx Github Actions"
+        }
+      },
+      "title": "PerPlatformSettings_<class 'bool'>",
+      "type": "object"
+    },
     "Platforms": {
       "enum": [
         "emscripten_wasm32",
@@ -2180,6 +2316,17 @@
       ],
       "description": "Woodpecker CI settings. This is usually read-only and should not normally be\nmanually modified. Tools like conda-smithy may modify this, as needed.",
       "title": "Woodpecker"
+    },
+    "store_build_artifacts": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/PerPlatformSettings__class__bool__"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Whether to store build artifacts"
     },
     "build_with_mambabuild": {
       "anyOf": [

@@ -42,7 +42,7 @@ jobs:
         include:
         {%- for data in configs %}
           - CONFIG: {{ data.config_name }}
-        {%- if github_actions.store_build_artifacts %}
+        {%- if store_build_artifacts.any_github_actions %}
             SHORT_CONFIG: {{ data.short_config_name }}
         {%- endif %}
             UPLOAD_PACKAGES: {{ data.upload }}
@@ -220,7 +220,7 @@ jobs:
 {%- for secret in secrets %}
         {{ secret }}: {% raw %}${{{% endraw %} secrets.{{ secret }} {% raw %}}}{% endraw %}
 {%- endfor %}
-{%- if github_actions.store_build_artifacts %}
+{%- if store_build_artifacts.any_github_actions %}
 
     - name: Determine build outcome
       # this is to merge the status of the linux/osx/win builds into
@@ -231,13 +231,21 @@ jobs:
       env:
         OS: {% raw %}${{ matrix.os }}{% endraw %}
       run: |
+{%- if store_build_artifacts.linux_github_actions %}
         if [[ "$OS" == "ubuntu" ]]; then
           STATUS={% raw %}${{ steps.build-linux.outcome }}{% endraw %}
-        elif [[ "$OS" == "macos" ]]; then
+        fi
+{%- endif %}
+{%- if store_build_artifacts.osx_github_actions %}
+        if [[ "$OS" == "macos" ]]; then
           STATUS={% raw %}${{ steps.build-macos.outcome }}{% endraw %}
-        elif [[ "$OS" == "windows" ]]; then
+        fi
+{%- endif %}
+{%- if store_build_artifacts.win_github_actions %}
+        if [[ "$OS" == "windows" ]]; then
           STATUS={% raw %}${{ steps.build-windows.outcome }}{% endraw %}
         fi
+{%- endif %}
         if [ -z "$STATUS" ]; then
           # steps that never ran will have empty status
           STATUS="cancelled"

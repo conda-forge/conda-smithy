@@ -10,7 +10,13 @@ from typing import Annotated, Any, Literal, Optional, Union
 
 import yaml
 from conda.base.constants import KNOWN_SUBDIRS
-from pydantic import BaseModel, ConfigDict, Field, WithJsonSchema, create_model
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    WithJsonSchema,
+    create_model,
+)
 
 try:
     from enum import StrEnum
@@ -396,6 +402,41 @@ class PlatformsAliases(StrEnum):
     linux = "linux"
     win = "win"
     osx = "osx"
+
+
+def per_platform_setting(
+    typ: type, ci_providers: tuple[str, ...], default: Any = None
+) -> BaseModel:
+    return create_model(
+        f"PerPlatformSettings_{typ}",
+        **{
+            "all": (
+                Optional[typ],
+                Field(description="Value for all platforms", default=default),
+            ),
+            **{
+                str(platform): (
+                    Optional[typ],
+                    Field(
+                        description=f"Value for {platform} platform",
+                        default=None,
+                    ),
+                )
+                for platform in PlatformsAliases
+            },
+            **{
+                f"{platform}_{ci_provider}": (
+                    Optional[typ],
+                    Field(
+                        description=f"Value for {platform} platform on {ci_provider} provider",
+                        default=None,
+                    ),
+                )
+                for platform in PlatformsAliases
+                for ci_provider in ci_providers
+            },
+        },
+    )
 
 
 def get_subdirs():
@@ -1091,6 +1132,19 @@ class ConfigModel(BaseModel):
         Woodpecker CI settings. This is usually read-only and should not normally be
         manually modified. Tools like conda-smithy may modify this, as needed.
         """),
+    )
+
+    ###################################
+    ####   Per-platform Settings   ####
+    ###################################
+
+    store_build_artifacts: Optional[
+        per_platform_setting(bool, (CIservices.azure, CIservices.github_actions))
+    ] = Field(
+        default_factory=per_platform_setting(
+            bool, (CIservices.azure, CIservices.github_actions), False
+        ),
+        description="Whether to store build artifacts",
     )
 
     ###################################

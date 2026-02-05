@@ -140,6 +140,17 @@ secrets: []
 shellcheck:
   enabled: false
 skip_render: []
+store_build_artifacts:
+  all: false
+  linux: null
+  linux_azure: null
+  linux_github_actions: null
+  osx: null
+  osx_azure: null
+  osx_github_actions: null
+  win: null
+  win_azure: null
+  win_github_actions: null
 templates: {}
 test: null
 test_on_native_only: false
