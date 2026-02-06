@@ -877,8 +877,8 @@ def dump_subspace_config_files(metas, root_path, platform, arch, upload, forge_c
             f"{platform}_{arch}",
             package_key(config, top_level_loop_vars, metas[0].config.subdir),
         )
-        # remove slashes that may occur in variant values and thus the filename
-        config_name = config_name.replace("/", "").replace(",", "")
+        # remove characters in variant values that are not legal for paths everywhere
+        config_name = re.sub(r"[<>:?*,\"\/\|\\]", "", config_name)
 
         short_config_name = config_name
         conf_hash = hashlib.sha256(config_name.encode("utf-8")).hexdigest()[:8]
