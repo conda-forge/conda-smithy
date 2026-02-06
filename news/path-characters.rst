@@ -16,7 +16,7 @@
 
 **Fixed:**
 
-* Ensure that characters that aren't legal for filepaths are stripped from file names for variant configs.
+* Ensure that characters that aren't legal for filepaths are stripped from file names for variant configs. (#2465)
 
 **Security:**
 
