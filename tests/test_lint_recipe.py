@@ -285,10 +285,10 @@ def test_recipe_v1_osx_noarch_hint():
         (["10.9", "11.0"], ["10.13", "11.0"], None, "Conflicting spec"),
         (["10.13", "11.0"], ["10.13", "12.3"], None, "Conflicting spec"),
         # only deployment target -> warn
-        (["10.13", "11.0"], None, None, "In your conda_build_config.yaml"),
+        (["11.0", "12.0"], None, None, "In your conda_build_config.yaml"),
         # only stdlib -> no warning
-        (None, ["10.13", "11.0"], None, None),
-        (None, ["10.15"], None, None),
+        (None, ["11.0", "11.0"], None, None),
+        (None, ["11.1"], None, None),
         # only stdlib, but outdated -> warn
         (None, ["10.9", "11.0"], None, "You are"),
         (None, ["10.9"], None, "You are"),
@@ -306,8 +306,8 @@ def test_recipe_v1_osx_noarch_hint():
         (["10.9", "11.0"], ["10.13", "11.0"], ["10.12"], "Conflicting spec"),
         (["10.9", "11.0"], ["10.13", "11.0"], ["10.12"], "You are"),
         # only sdk -> no warning
-        (None, None, ["10.13"], None),
-        (None, None, ["10.14", "12.0"], None),
+        (None, None, ["11.0"], None),
+        (None, None, ["11.1", "12.0"], None),
         # only sdk, but below global baseline -> warning
         (None, None, ["10.12"], "You are"),
         (None, None, ["10.12", "11.0"], "You are"),
@@ -422,10 +422,10 @@ def test_license_file_empty(recipe_version: int):
         (["10.9", "11.0"], ["10.13", "11.0"], None, "Conflicting spec"),
         (["10.13", "11.0"], ["10.13", "12.3"], None, "Conflicting spec"),
         # only deployment target -> warn
-        (["10.13", "11.0"], None, None, "In your conda_build_config.yaml"),
+        (["11.0", "12.0"], None, None, "In your conda_build_config.yaml"),
         # only stdlib -> no warning
-        (None, ["10.13", "11.0"], None, None),
-        (None, ["10.15"], None, None),
+        (None, ["11.0", "11.0"], None, None),
+        (None, ["11.1"], None, None),
         # only stdlib, but outdated -> warn
         (None, ["10.9", "11.0"], None, "You are"),
         (None, ["10.9"], None, "You are"),
@@ -443,8 +443,8 @@ def test_license_file_empty(recipe_version: int):
         (["10.9", "11.0"], ["10.13", "11.0"], ["10.12"], "Conflicting spec"),
         (["10.9", "11.0"], ["10.13", "11.0"], ["10.12"], "You are"),
         # only sdk -> no warning
-        (None, None, ["10.13"], None),
-        (None, None, ["10.14", "12.0"], None),
+        (None, None, ["11.0"], None),
+        (None, None, ["11.1", "12.0"], None),
         # only sdk, but below global baseline -> warning
         (None, None, ["10.12"], "You are"),
         (None, None, ["10.12", "11.0"], "You are"),
