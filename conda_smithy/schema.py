@@ -182,7 +182,8 @@ class AzureConfig(BaseModel):
     )
 
     settings_osx: AzureRunnerSettings = Field(
-        default_factory=lambda: AzureRunnerSettings(pool={"vmImage": "macOS-15"}),
+        # $(VMIMAGE) will be defined in the matrix entries
+        default_factory=lambda: AzureRunnerSettings(pool={"vmImage": "$(VMIMAGE)"}),
         description="OSX-specific settings for runners",
     )
 
