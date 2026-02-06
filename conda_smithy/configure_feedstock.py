@@ -1044,11 +1044,10 @@ def _conda_build_api_render_for_smithy(
     except ValueError as e:
         # if conda-build fails to render the recipe, e.g. due to some zip_keys that have
         # become mismatched by applying migrations, tell users how to debug this more easily
-        print(
+        raise ValueError(
             "To see the variant configuration that was handed to conda-build, which failed "
             "to render the recipe, set the environment variable CONDA_SMITHY_LOGLEVEL=debug"
-        )
-        raise e
+        ) from e
 
     output_metas = []
     for meta, download, render_in_env in metadata_tuples:
