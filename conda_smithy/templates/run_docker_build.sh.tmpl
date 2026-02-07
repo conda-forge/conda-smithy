@@ -11,15 +11,7 @@ source .scripts/logging_utils.sh
 
 set -xeo pipefail
 
-# Detect container runtime (prefer docker, fallback to podman)
-if command -v docker &>/dev/null; then
-    CONTAINER_RUNTIME_EXE=docker
-elif command -v podman &>/dev/null; then
-    CONTAINER_RUNTIME_EXE=podman
-else
-    echo "Error: No supported container runtime found (docker or podman)."
-    exit 1
-fi
+CONTAINER_RUNTIME="{{ docker.executable }}"
 
 THISDIR="$( cd "$( dirname "$0" )" >/dev/null && pwd )"
 PROVIDER_DIR="$(basename "$THISDIR")"
@@ -37,13 +29,13 @@ if [[ "${sha:-}" == "" ]]; then
   popd
 fi
 
-${CONTAINER_RUNTIME_EXE} info
+${CONTAINER_RUNTIME} info
 
 # In order for the conda-build process in the container to write to the mounted
-# volumes, we need to run with the same id as the host machine, which is
-# normally the owner of the mounted volumes, or at least has write permission
+# volumes, we need to run with the same id as the host machine.
 export HOST_USER_ID=$(id -u)
-# Check if docker-machine is being used (normally on OSX) and get the uid from the VM
+
+# Check if docker-machine is being used (normally on OSX)
 if hash docker-machine 2> /dev/null && docker-machine active > /dev/null; then
     export HOST_USER_ID=$(docker-machine ssh $(docker-machine active) id -u)
 fi
@@ -79,36 +71,34 @@ mkdir -p "$ARTIFACTS"
 DONE_CANARY="$ARTIFACTS/conda-forge-build-done-${CONFIG}"
 rm -f "$DONE_CANARY"
 
-# Allow people to specify extra default arguments to container runtime
+# Allow people to specify extra default arguments
 DOCKER_RUN_ARGS="${CONDA_FORGE_DOCKER_RUN_ARGS}"
 if [ -z "${CI}" ]; then
     DOCKER_RUN_ARGS="-it ${DOCKER_RUN_ARGS}"
 fi
 
-# Podman-specific fixes for SELinux and rootless mode
-if [ "${CONTAINER_RUNTIME_EXE}" = "podman" ]; then
+# Podman-specific handling (does not affect Docker)
+VOLUME_SUFFIX=""
+
+if [ "${CONTAINER_RUNTIME}" = "podman" ]; then
     # Fix file permissions for rootless podman builds
     podman unshare chown -R ${HOST_USER_ID}:${HOST_USER_ID} "${ARTIFACTS}"
 
-    # Add SELinux label for proper volume mounting
-    if command -v getenforce &>/dev/null && [ "$(getenforce)" != "Disabled" ]; then
+    # Add SELinux label only if enforcing
+    if command -v getenforce &>/dev/null && [ "$(getenforce)" = "Enforcing" ]; then
         VOLUME_SUFFIX=",z"
-    else
-        VOLUME_SUFFIX=""
     fi
-else
-    VOLUME_SUFFIX=",z"
 fi
 
 ( endgroup "Configure Docker" ) 2> /dev/null
-
 ( startgroup "Start Docker" ) 2> /dev/null
 
 export UPLOAD_PACKAGES="${UPLOAD_PACKAGES:-True}"
 export IS_PR_BUILD="${IS_PR_BUILD:-False}"
 
-${CONTAINER_RUNTIME_EXE} pull "${DOCKER_IMAGE}"
-${CONTAINER_RUNTIME_EXE} run ${DOCKER_RUN_ARGS} \
+${CONTAINER_RUNTIME} pull "${DOCKER_IMAGE}"
+
+${CONTAINER_RUNTIME} run ${DOCKER_RUN_ARGS} \
            -v "${RECIPE_ROOT}":/home/conda/recipe_root:rw${VOLUME_SUFFIX},delegated \
            -v "${FEEDSTOCK_ROOT}":/home/conda/feedstock_root:rw${VOLUME_SUFFIX},delegated \
            -e CONFIG \
