@@ -4,8 +4,8 @@ Authors are sorted by number of commits.
 * Isuru Fernando
 * Matthew R. Becker
 * Jaime Rodríguez-Guerra
-* nichmor
 * H. Vetinari
+* nichmor
 * Christopher J. Wright
 * Anthony Scopatz
 * Phil Elson
@@ -37,9 +37,9 @@ Authors are sorted by number of commits.
 * vinicius douglas cerutti
 * Tim Snyder
 * Mike Henry
+* dependabot[bot]
 * Eric Dill
 * Natasha Pavlovikj
-* dependabot[bot]
 * Maksim Rakitin
 * Jan Schulz
 * Josh Reichardt
@@ -60,12 +60,12 @@ Authors are sorted by number of commits.
 * Carlo
 * Matthew Craig
 * Joshua L. Adelman
+* Pavel Zwerschke
 * Marius van Niekerk
 * Johannes Köster
 * Philippe Blain
 * Ben Mares
 * Mervin Fansler
-* Pavel Zwerschke
 * Matt McCormick
 * Jan Janßen
 * xoviat
