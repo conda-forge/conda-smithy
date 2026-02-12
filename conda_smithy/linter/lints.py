@@ -924,7 +924,7 @@ def lint_stdlib(
                 versions = versions[::-1]
         return versions
 
-    baseline_version = ["10.13", "11.0"]
+    baseline_version = ["11.0", "11.0"]
     v_stdlib = sort_osx(cbc_osx.get("c_stdlib_version", baseline_version))
     macdt = sort_osx(cbc_osx.get("MACOSX_DEPLOYMENT_TARGET", baseline_version))
     sdk = sort_osx(cbc_osx.get("MACOSX_SDK_VERSION", baseline_version))
@@ -968,7 +968,7 @@ def lint_stdlib(
         # only warn if version is below baseline
         outdated_lint = (
             "You are setting `c_stdlib_version` below the current global baseline "
-            "in conda-forge (10.13). If this is your intention, you also need to "
+            "in conda-forge (11.0). If this is your intention, you also need to "
             "override `MACOSX_DEPLOYMENT_TARGET` (with the same value) locally."
         )
         if len(v_stdlib) == len(macdt):
@@ -996,7 +996,7 @@ def lint_stdlib(
         "(you can leave it out if it is equal).\n"
         "If you are not setting `c_stdlib_version` yourself, this means "
         "you are requesting a version below the current global baseline in "
-        "conda-forge (10.13). If this is the intention, you also need to "
+        "conda-forge (11.0). If this is the intention, you also need to "
         "override `c_stdlib_version` and `MACOSX_DEPLOYMENT_TARGET` locally."
     )
     if len(sdk) == len(merged_dt):
