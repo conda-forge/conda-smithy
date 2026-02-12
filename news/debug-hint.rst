@@ -2,7 +2,7 @@
 
 * Provide a hint and additional logging in case of failures within conda-build, such that
   analysing intermediate variant configurations (e.g. after applying migrations) becomes
-  more discoverable and accessible without hacking on smithy's source code.
+  more discoverable and accessible without hacking on smithy's source code. (#2464)
 
 **Changed:**
 
