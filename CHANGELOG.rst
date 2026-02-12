@@ -4,6 +4,41 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.55.0
+====================
+
+**Added:**
+
+* Enable support for native Apple Silicon (``osx-arm64``) runners on Azure. (#2450)
+* Provide a hint and additional logging in case of failures within conda-build, such that
+  analysing intermediate variant configurations (e.g. after applying migrations) becomes
+  more discoverable and accessible without hacking on smithy's source code. (#2464)
+
+**Changed:**
+
+* Support ``py-rattler 0.22`` new ``sources`` API. (#2463)
+* Self-hosted runners in GHA are now using `actions/checkout@v6`. (#2462)
+
+**Removed:**
+
+* Removed "All rights reserved" notice in license files, as it is a historical leftover without relevance today. (#2466)
+
+**Fixed:**
+
+* Ensure that characters that aren't legal for filepaths are stripped from file names for variant configs. (#2465)
+* Fixed a bug where feedstock team updates did not work if feedstock repo did not get added to the team on the first try. (#2460)
+
+**Authors:**
+
+* Matthew R. Becker
+* Jaime Rodríguez-Guerra
+* H. Vetinari
+* pre-commit-ci[bot]
+* dependabot[bot]
+* Pavel Zwerschke
+
+
+
 v3.54.2
 ====================
 
