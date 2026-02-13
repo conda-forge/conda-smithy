@@ -12,6 +12,7 @@ import textwrap
 import time
 import warnings
 from collections import Counter, OrderedDict, namedtuple
+from contextlib import contextmanager
 from copy import deepcopy
 from functools import cache, lru_cache
 from importlib.metadata import version as importlib_version
@@ -123,6 +124,21 @@ CONDA_FORGE_PIXI_VERSION = "0.59.0"
 @lru_cache(10)
 def warn_once(msg: str):
     logger.warning(msg)
+
+
+@contextmanager
+def debug_hint_on_failure():
+    try:
+        yield
+    except ValueError as e:
+        # if conda-build fails to perform some action, e.g. due to some zip_keys that have
+        # become mismatched by applying migrations, tell users how to debug this more easily
+        if os.environ.get("CONDA_SMITHY_LOGLEVEL", None) is None:
+            raise ValueError(
+                "To see debug information about the config that was handed to conda-build "
+                "(which failed), set the environment variable CONDA_SMITHY_LOGLEVEL=debug"
+            ) from e
+        raise
 
 
 @cache
@@ -1032,7 +1048,7 @@ def _conda_build_api_render_for_smithy(
     config = get_or_merge_config(config, **kwargs)
     logger.debug(pprint.pformat(variants))
 
-    try:
+    with debug_hint_on_failure():
         metadata_tuples = render_recipe(
             recipe_path,
             bypass_env_check=bypass_env_check,
@@ -1041,15 +1057,6 @@ def _conda_build_api_render_for_smithy(
             variants=variants,
             permit_unsatisfiable_variants=permit_unsatisfiable_variants,
         )
-    except ValueError as e:
-        # if conda-build fails to render the recipe, e.g. due to some zip_keys that have
-        # become mismatched by applying migrations, tell users how to debug this more easily
-        if os.environ.get("CONDA_SMITHY_LOGLEVEL", None) is None:
-            raise ValueError(
-                "To see the variant configuration that was handed to conda-build, which failed "
-                "to render the recipe, set the environment variable CONDA_SMITHY_LOGLEVEL=debug"
-            ) from e
-        raise
 
     output_metas = []
     for meta, download, render_in_env in metadata_tuples:
@@ -1147,14 +1154,19 @@ def _render_ci_provider(
             platform=platform,
             arch=arch,
         )
+        logger.debug("merged configs: %s", pprint.pformat(config.__dict__))
+        # work-around for spurious values inserted by conda-build despite
+        # exclusive_config_file, see https://github.com/conda/conda-build/issues/5922
+        config.variant = {}
 
         # Get the combined variants from normal variant locations prior to running migrations
-        (
-            combined_variant_spec,
-            _,
-        ) = conda_build.variants.get_package_combined_spec(
-            os.path.join(forge_dir, forge_config["recipe_dir"]), config=config
-        )
+        with debug_hint_on_failure():
+            (
+                combined_variant_spec,
+                _,
+            ) = conda_build.variants.get_package_combined_spec(
+                os.path.join(forge_dir, forge_config["recipe_dir"]), config=config
+            )
 
         # If we are using new recipe
         # we also load v1 variants.yaml
@@ -1959,7 +1971,7 @@ def render_azure(jinja_env, forge_config, forge_dir, return_metadata=False):
         upload_packages,
     ) = _get_platforms_of_provider("azure", forge_config)
 
-    logger.debug("azure platforms retreived")
+    logger.debug("azure platforms retrieved")
 
     remove_file_or_dir(os.path.join(forge_dir, ".azure-pipelines"))
     return _render_ci_provider(
@@ -2707,7 +2719,7 @@ def get_cfp_file_path(temporary_directory):
 
 def get_cache_dir():
     if sys.platform.startswith("win"):
-        return Path(os.environ.get("TEMP"))
+        return Path(os.environ.get("TEMP", Path.home() / ".cache"))
     else:
         return Path(os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache"))
 
