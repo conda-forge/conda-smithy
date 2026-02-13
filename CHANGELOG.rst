@@ -4,6 +4,24 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.55.1
+====================
+
+**Added:**
+
+* More debugging hints for when to set CONDA_SMITHY_LOGLEVEL (#2468)
+
+**Fixed:**
+
+* Fixed broken rerender in the presence of `CONDA_*` environment variables (#2467)
+* Don't rely on `%TEMP%` environment variable to be present on windows (#2468)
+
+**Authors:**
+
+* H. Vetinari
+
+
+
 v3.55.0
 ====================
 
