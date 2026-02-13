@@ -1147,6 +1147,9 @@ def _render_ci_provider(
             platform=platform,
             arch=arch,
         )
+        # work-around for spurious values inserted by conda-build despite
+        # exclusive_config_file, see https://github.com/conda/conda-build/issues/5922
+        config.variant = {}
 
         # Get the combined variants from normal variant locations prior to running migrations
         (
