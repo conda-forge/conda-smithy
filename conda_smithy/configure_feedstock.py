@@ -2719,7 +2719,7 @@ def get_cfp_file_path(temporary_directory):
 
 def get_cache_dir():
     if sys.platform.startswith("win"):
-        return Path(os.environ.get("TEMP"))
+        return Path(os.environ.get("TEMP", Path.home() / ".cache"))
     else:
         return Path(os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache"))
 
