@@ -4500,6 +4500,11 @@ def test_no_custom_github_actions_workflows(tmp_path):
     lints, hints = linter.main(tmp_path / "recipe", return_hints=True, conda_forge=True)
     assert any("Github Actions workflows" in lint for lint in lints)
 
+    # No GHA workflows directory should be ok too
+    shutil.rmtree(tmp_path / ".github")
+    lints, hints = linter.main(tmp_path / "recipe", return_hints=True, conda_forge=True)
+    assert not any("Github Actions workflows" in lint for lint in lints)
+
 
 if __name__ == "__main__":
     unittest.main()
