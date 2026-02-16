@@ -4485,5 +4485,21 @@ extra:
     assert hints == []
 
 
+def test_no_custom_github_actions_workflows(tmp_path):
+    (tmp_path / ".github/workflows").mkdir(parents=True)
+    (tmp_path / "recipe").mkdir(parents=True)
+    (tmp_path / "recipe/meta.yaml").write_text("package:\n  name: foo")
+
+    # With our own workflow it should be ok
+    (tmp_path / ".github/workflows/conda-build.yml").write_text("name: This is ok")
+    lints, hints = linter.main(tmp_path / "recipe", return_hints=True, conda_forge=True)
+    assert not any("Github Actions workflows" in lint for lint in lints)
+
+    # Adding a custom GHA should result in a lint
+    (tmp_path / ".github/workflows/extra.yaml").write_text("name: Custom workflow")
+    lints, hints = linter.main(tmp_path / "recipe", return_hints=True, conda_forge=True)
+    assert any("Github Actions workflows" in lint for lint in lints)
+
+
 if __name__ == "__main__":
     unittest.main()
