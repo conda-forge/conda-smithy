@@ -690,7 +690,7 @@ def run_conda_forge_specific(
             )
 
     # 14: Do not allow custom Github Actions workflows
-    gha_workflows_dir = Path(recipe_dir, "..", ".github", "workflows")
+    gha_workflows_dir = Path(recipe_dir or "", "..", ".github", "workflows")
     gha_workflows = [*gha_workflows_dir.glob("*.yml"), *gha_workflows_dir.glob("*.yaml")]
     if gha_workflows and (len(gha_workflows) > 1 or gha_workflows[0].name != "conda-build.yml"):
         lints.append(
