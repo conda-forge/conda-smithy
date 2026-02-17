@@ -54,6 +54,33 @@ def test_noarch_python_exceptions():
     assert not warnings
 
 
+@pytest.mark.parametrize("name,n_errors", [("numpy", 0), ("test", 1), ("tests", 1)])
+def test_disallowed_python_package_names(name, n_errors):
+    paths = [
+        f"site-packages/{name}/__init__.py",
+    ]
+    index = {"noarch": "python"}
+    errors, warnings = check_path_patterns(paths=paths, index=index)
+    assert len(errors) == n_errors
+    assert not warnings
+
+    paths = [
+        f"Lib/site-packages/{name}/__init__.py",
+    ]
+    index = {"subdir": "win-64"}
+    errors, warnings = check_path_patterns(paths=paths, index=index)
+    assert len(errors) == n_errors
+    assert not warnings
+
+    paths = [
+        f"lib/python3.10/site-packages/{name}/__init__.py",
+    ]
+    index = {"subdir": "linux-64"}
+    errors, warnings = check_path_patterns(paths=paths)
+    assert len(errors) == n_errors
+    assert not warnings
+
+
 @pytest.mark.parametrize("name", ["openssl", "ca-certificates"])
 def test_ssl_exceptions(name):
     paths = [

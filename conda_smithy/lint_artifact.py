@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from fnmatch import fnmatchcase
+import re
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -30,64 +30,94 @@ def check_path_patterns(
     index: dict[str, Any] | None = None,
 ) -> tuple[dict[str, list[str]], dict[str, list[str]]]:
     index = index or {}
-
+    for_windows = index.get("subdir", "").startswith("win-") or any(
+        dep.startswith("__win") for dep in index.get("depends", ())
+    )
+    noarch_python = index.get("noarch") == "python"
     #: These will result in a lint if the path DOES NOT match
     allowed: list[str] = [
-        "bin/*",
-        "etc/*",
-        "fonts/*",
-        "include/*",
-        "lib/*",
-        "libexec/*",
-        "Menu/*",  # menuinst location
-        "share/*",
-        "var/*",
+        r"bin/.*",
+        r"etc/.*",
+        r"fonts/.*",
+        r"include/.*",
+        r"lib/.*",
+        r"libexec/.*",
+        r"Menu/.*",  # menuinst location
+        r"share/.*",
+        r"var/.*",
     ]
     #: These will result in a hint if the path DOES match
     warned: dict[str, list[str]] = {
         "Place man and doc pages under share/man/ or share/doc/": [
-            "man/*",
-            "doc/*",
+            r"man/.*",
+            r"doc/.*",
         ],
         "Place binaries under bin/, not sbin/": [
-            "sbin/*",
+            r"sbin/.*",
         ],
         "Place fonts under share/fonts/, not fonts/": [
-            "fonts/*",
+            r"fonts/.*",
         ],
     }
+
     #: These will result in a lint if the path DOES match
-    disallowed: dict[str, list[str]] = {
-        "Can't populate a top-level `test(s)` Python package": [
-            "lib/python*.*/site-packages/tests?/*",
-            "Lib/site-packages/tests?/*",
-            "site-packages/tests?/*",
-        ]
-    }
+    disallowed: dict[str, list[str]] = {}
+
+    if noarch_python:
+        python_pkg_path_pattern = r"site-packages/{package_name}/.*"
+    elif for_windows:
+        python_pkg_path_pattern = r"Lib/site-packages/{package_name}/.*"
+    else:
+        python_pkg_path_pattern = r"lib/python\d\.\d+/site-packages/{package_name}/.*"
+    disallowed["These top-level Python package names are disallowed"] = [
+        python_pkg_path_pattern.format(package_name=package_name_pattern)
+        for package_name_pattern in (
+            # Taken from Gentoo:
+            # https://github.com/gentoo/gentoo/blob/a783f19d743633metadata/install-qa-check.d/60python-site#L24
+            r"_trial_temp",
+            r"\.hypothesis",
+            r"\.pytest_cache",
+            r"benchmarks?",
+            r"dist",
+            r"docs?",
+            r"examples?",
+            r"lib",
+            r"scripts?",
+            r"tasks?",
+            r"tests?",
+            r"tools?",
+            r"usr",
+            r"utils?",
+        )
+    ]
+    disallowed["conda-meta/ and info/ are protected locations"] = [
+        r"conda-meta/.*",
+        r"info/.*",
+    ]
 
     # Now the exceptions
 
     # Packages targeting Windows may have these special locations
-    if index.get("subdir", "").startswith("win-") or any(
-        dep.startswith("__win") for dep in index.get("depends", ())
-    ):
+    if for_windows:
         allowed.extend(
             [
-                "Scripts/*",
-                "Library/*",
-                "Lib/*",
+                r"Scripts/.*",
+                r"Library/.*",
+                r"Lib/.*",
             ]
         )
-    if index.get("noarch") == "python":
-        allowed.append("site-packages/*")
+    if noarch_python:
+        allowed.append(r"site-packages/.*")
     if index.get("name") in ("conda", "mamba"):
-        allowed.append("condabin/*")
-        allowed.append("shell/*")
+        allowed.append(r"condabin/.*")
+        allowed.append(r"shell/.*")
     if index.get("name") in ("ca-certificates", "openssl"):
-        allowed.append("ssl/*")
+        allowed.append(r"ssl/.*")
 
     allowed_patterns = ", ".join(f"`{pattern}`" for pattern in allowed)
-    outside_allowed_msg = f"Found paths outside expected top-level trees ({allowed_patterns})"
+    outside_allowed_msg = (
+        f"Found paths outside expected top-level trees ({allowed_patterns})"
+    )
     errors: dict[str, list[str]] = {}
     warnings: dict[str, list[str]] = {}
     for path in paths:
@@ -97,17 +127,17 @@ def check_path_patterns(
             continue
         for message, rules in disallowed.items():
             for rule in rules:
-                if fnmatchcase(path, rule):
+                if re.match(rule, path):
                     errors.setdefault(message, []).append(path)
                     received_error = True
         for message, rules in warned.items():
             for rule in rules:
-                if fnmatchcase(path, rule):
+                if re.match(rule, path):
                     warnings.setdefault(message, []).append(path)
                     received_warning = True
         if received_error or received_warning:
             continue  # avoid duplicate reports with the general deny list
-        if not any(fnmatchcase(path, rule) for rule in allowed):
+        if not any(re.match(rule, path) for rule in allowed):
             errors.setdefault(outside_allowed_msg, []).append(path)
 
     return errors, warnings
@@ -121,14 +151,10 @@ def format_errors_warnings(
 ) -> None:
     for message, paths in errors.items():
         joined_lines = "\n  ".join(sorted(dict.fromkeys(paths)))
-        lints.append(
-            f"- ❌ {message}:\n  ```text\n  {joined_lines}\n  ```"
-        )
+        lints.append(f"- ❌ {message}:\n  ```text\n  {joined_lines}\n  ```")
     for message, paths in warnings.items():
         joined_lines = "\n  ".join(sorted(dict.fromkeys(paths)))
-        hints.append(
-            f"- ℹ️ {message}:\n  ```text\n  {joined_lines}\n  ```"
-        )
+        hints.append(f"- ℹ️ {message}:\n  ```text\n  {joined_lines}\n  ```")
 
 
 def main(artifact: str | Path) -> tuple[list[str], list[str]]:
