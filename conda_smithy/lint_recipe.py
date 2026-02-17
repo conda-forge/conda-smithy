@@ -700,7 +700,7 @@ def run_conda_forge_specific(
     ):
         lints.append(
             "conda-forge feedstocks cannot have custom Github Actions workflows. "
-            "See https://conda-forge.org/docs/maintainer/infrastructure/#third-party-use-of-our-ci-services "
+            "See https://github.com/conda-forge/conda-forge.github.io/issues/2750 "
             "for more information. If you didn't add any custom workflows, please "
             "consider rerendering your feedstock to remove deprecated workflows."
         )
