@@ -69,6 +69,16 @@ def lint_about_contents(about_section, lints, recipe_version: int = 0):
             lints.append(f"The {about_item} item is expected in the about section.")
 
 
+def lint_feedstock_name_not_end_with_feedstock(extra_section, lints):
+    feedstock_name = extra_section.get("feedstock-name", "")
+    if feedstock_name and feedstock_name.endswith("-feedstock"):
+        lints.append(
+            "The feedstock-name in the `extra` section must not end with "
+            "'-feedstock'. The '-feedstock' suffix is automatically appended "
+            "during feedstock creation."
+        )
+
+
 def lint_recipe_maintainers(extra_section, lints):
     if not extra_section.get("recipe-maintainers", []):
         lints.append(

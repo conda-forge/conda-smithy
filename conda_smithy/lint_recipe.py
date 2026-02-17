@@ -41,6 +41,7 @@ from conda_smithy.linter.lints import (
     lint_build_section_should_be_before_run,
     lint_build_section_should_have_a_number,
     lint_check_usage_of_whls,
+    lint_feedstock_name_not_end_with_feedstock,
     lint_go_licenses_are_bundled,
     lint_jinja_var_references,
     lint_jinja_variables_definitions,
@@ -181,6 +182,9 @@ def lintify_meta_yaml(
     # 3a: The recipe should have some maintainers.
     # 3b: Maintainers should be a list
     lint_recipe_maintainers(extra_section, lints)
+
+    # 3c: feedstock-name should not end with "-feedstock"
+    lint_feedstock_name_not_end_with_feedstock(extra_section, lints)
 
     # 4: The recipe should have some tests.
     lint_recipe_have_tests(

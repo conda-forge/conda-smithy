@@ -648,6 +648,29 @@ class TestLinter(unittest.TestCase):
         expected_message = "Recipe maintainers should be a json list."
         self.assertIn(expected_message, lints)
 
+    def test_feedstock_name_endswith_feedstock(self):
+        expected_message = (
+            "The feedstock-name in the `extra` section must not end with "
+            "'-feedstock'. The '-feedstock' suffix is automatically appended "
+            "during feedstock creation."
+        )
+
+        # Should lint when feedstock-name ends with "-feedstock"
+        lints, hints = linter.lintify_meta_yaml(
+            {"extra": {"feedstock-name": "foo-feedstock"}}
+        )
+        self.assertIn(expected_message, lints)
+
+        # Should not lint when feedstock-name doesn't end with "-feedstock"
+        lints, hints = linter.lintify_meta_yaml({"extra": {"feedstock-name": "foo"}})
+        self.assertNotIn(expected_message, lints)
+
+        # Should not lint when feedstock-name is absent
+        lints, hints = linter.lintify_meta_yaml(
+            {"extra": {"recipe-maintainers": ["a"]}}
+        )
+        self.assertNotIn(expected_message, lints)
+
     def test_test_section(self):
         expected_message = "The recipe must have some tests."
 
