@@ -6,6 +6,7 @@ from collections.abc import Mapping
 from functools import lru_cache
 from glob import glob
 from inspect import cleandoc
+from pathlib import Path
 from textwrap import indent
 from typing import Any, Optional
 
@@ -678,7 +679,7 @@ def run_conda_forge_specific(
             lints,
         )
 
-    # 13: no empty conda_forge_config.yaml files
+    # 13: no empty conda_build_config.yaml files
     cbc_pth = os.path.join(recipe_dir or "", "conda_build_config.yaml")
     if os.path.exists(cbc_pth):
         with open(cbc_pth, encoding="utf-8") as fh:
@@ -687,6 +688,22 @@ def run_conda_forge_specific(
             lints.append(
                 "The recipe should not have an empty `conda_build_config.yaml` file."
             )
+
+    # 14: Do not allow custom Github Actions workflows
+    gha_workflows_dir = Path(recipe_dir or "", "..", ".github", "workflows")
+    gha_workflows = [
+        *gha_workflows_dir.glob("*.yml"),
+        *gha_workflows_dir.glob("*.yaml"),
+    ]
+    if gha_workflows and (
+        len(gha_workflows) > 1 or gha_workflows[0].name != "conda-build.yml"
+    ):
+        lints.append(
+            "conda-forge feedstocks cannot have custom Github Actions workflows. "
+            "See https://github.com/conda-forge/conda-forge.github.io/issues/2750 "
+            "for more information. If you didn't add any custom workflows, please "
+            "consider rerendering your feedstock to remove deprecated workflows."
+        )
 
 
 def _format_validation_msg(error: jsonschema.ValidationError):
