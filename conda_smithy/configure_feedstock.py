@@ -2810,15 +2810,13 @@ def make_jinja_env(feedstock_directory):
 def get_migrations_in_dir(migrations_root):
     """
     Given a directory, return the migrations as a mapping
-    from the (filename, timestamp) to (full_path, migration_number, use_local)
+    from the filename to a tuple of (full_path, migration_number, use_local)
     """
     res = {}
     for full_path in glob.glob(os.path.join(migrations_root, "*.yaml")):
         with open(full_path, encoding="utf-8") as f:
             contents = f.read()
             migration_yaml = yaml.load(contents, Loader=yaml.loader.BaseLoader) or {}
-            # Use a object as timestamp to not delete it
-            ts = migration_yaml.get("migrator_ts", object())
             migration_number = migration_yaml.get("__migrator", {}).get(
                 "migration_number", 1
             )
@@ -2827,7 +2825,7 @@ def get_migrations_in_dir(migrations_root):
                 == "true"
             )
             fn = os.path.basename(full_path)
-            res[(fn, ts)] = (full_path, migration_number, use_local)
+            res[fn] = (full_path, migration_number, use_local)
     return res
 
 
@@ -2870,14 +2868,12 @@ def set_migration_fns(forge_dir, forge_config):
     migrations_in_cfp = get_migrations_in_dir(cfp_migrations_dir)
 
     result = []
-    for (fn, ts), (full_path, num, use_local) in migrations_in_feedstock.items():
-        if use_local or not isinstance(ts, (int, str, float)):
-            # This file has a setting to use the file in the feedstock
-            # or doesn't have a timestamp. Use it as it is.
+    for fn, (full_path, num, use_local) in migrations_in_feedstock.items():
+        if use_local:
             result.append(full_path)
-        elif (fn, ts) in migrations_in_cfp:
+        elif fn in migrations_in_cfp:
             # Use the one from cfp if migration_numbers match
-            new_full_path, new_num, _ = migrations_in_cfp[(fn, ts)]
+            new_full_path, new_num, _ = migrations_in_cfp[fn]
             if num == new_num:
                 logger.info(
                     "%s from feedstock is ignored and upstream version is used",
@@ -2889,9 +2885,8 @@ def set_migration_fns(forge_dir, forge_config):
         else:
             # Delete this as this migration is over.
             logger.info(
-                "%s with timestamp %s does not exist in global pinning (anymore), removing it.",
+                "%s does not exist in global pinning (anymore), removing it.",
                 fn,
-                ts,
             )
             logger.info(
                 "If it should be applied nevertheless, check that migrator_ts/migration_number match the ones in "
