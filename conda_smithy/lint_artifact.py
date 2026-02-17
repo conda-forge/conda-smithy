@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from fnmatch import fnmatch
+from fnmatch import fnmatchcase
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -26,15 +26,12 @@ def get_index_json(artifact: str | Path) -> dict[str, Any]:
 
 
 def check_path_patterns(
-    lints: list[str],
-    hints: list[str],
-    name: str,
     paths: list[str],
-    subdir: str,
-    noarch_python: bool = False,
-) -> None:
+    index: dict[str, Any] | None = None,
+) -> tuple[dict[str, list[str]], dict[str, list[str]]]:
+    index = index or {}
+
     #: These will result in a lint if the path DOES NOT match
-    outside_allowed_msg = "These files were found outside allowed locations"
     allowed: list[str] = [
         "bin/*",
         "etc/*",
@@ -67,7 +64,13 @@ def check_path_patterns(
             "site-packages/tests?/*",
         ]
     }
-    if subdir.startswith == "win-":
+
+    # Now the exceptions
+
+    # Packages targeting Windows may have these special locations
+    if index.get("subdir", "").startswith("win-") or any(
+        dep.startswith("__win") for dep in index.get("depends", ())
+    ):
         allowed.extend(
             [
                 "Scripts/*",
@@ -75,58 +78,56 @@ def check_path_patterns(
                 "Lib/*",
             ]
         )
-    if noarch_python:
+    if index.get("noarch") == "python":
         allowed.append("site-packages/*")
-    if name in ("conda", "mamba"):
+    if index.get("name") in ("conda", "mamba"):
         allowed.append("condabin/*")
         allowed.append("shell/*")
-    if name in ("ca-certificates", "openssl"):
+    if index.get("name") in ("ca-certificates", "openssl"):
         allowed.append("ssl/*")
 
-    message = "Path outside expected top-level tree"
+    allowed_patterns = ", ".join(f"`{pattern}`" for pattern in allowed)
+    outside_allowed_msg = f"Found paths outside expected top-level trees ({allowed_patterns})"
     errors: dict[str, list[str]] = {}
     warnings: dict[str, list[str]] = {}
     for path in paths:
+        received_error, received_warning = False, False
         if "/" not in path:
             # top-level file, skip
             continue
-        errored, received_warning = False, False
         for message, rules in disallowed.items():
             for rule in rules:
-                if fnmatch(path, rule):
+                if fnmatchcase(path, rule):
                     errors.setdefault(message, []).append(path)
-                    errored = True
-                    break
-        if errored:
-            continue
+                    received_error = True
         for message, rules in warned.items():
             for rule in rules:
-                if fnmatch(path, rule):
+                if fnmatchcase(path, rule):
                     warnings.setdefault(message, []).append(path)
                     received_warning = True
-                    break
-        if received_warning:
-            continue
-        if not any(fnmatch(path, rule) for rule in allowed):
+        if received_error or received_warning:
+            continue  # avoid duplicate reports with the general deny list
+        if not any(fnmatchcase(path, rule) for rule in allowed):
             errors.setdefault(outside_allowed_msg, []).append(path)
 
+    return errors, warnings
+
+
+def format_errors_warnings(
+    errors: dict[str, list[str]],
+    warnings: dict[str, list[str]],
+    lints: list[str],
+    hints: list[str],
+) -> None:
     for message, paths in errors.items():
         joined_lines = "\n  ".join(sorted(dict.fromkeys(paths)))
         lints.append(
-            # noqa (keep formatting this way for clarity)
-            f"- ❌ {message}:\n"
-            "  ```text\n"
-            f"  {joined_lines}\n"
-            "  ```"
+            f"- ❌ {message}:\n  ```text\n  {joined_lines}\n  ```"
         )
     for message, paths in warnings.items():
         joined_lines = "\n  ".join(sorted(dict.fromkeys(paths)))
         hints.append(
-            # noqa (keep formatting this way for clarity)
-            f"- ℹ️ {message}:\n"
-            "  ```text\n"
-            f"  {joined_lines}\n"
-            "  ```"
+            f"- ℹ️ {message}:\n  ```text\n  {joined_lines}\n  ```"
         )
 
 
@@ -135,18 +136,14 @@ def main(artifact: str | Path) -> tuple[list[str], list[str]]:
     if not paths:
         return [], []
 
-    index_data = get_index_json(artifact)
     lints: list[str] = []
     hints: list[str] = []
 
-    check_path_patterns(
-        lints,
-        hints,
-        name=index_data["name"],
+    errors, warnings = check_path_patterns(
         paths=paths,
-        subdir=index_data["subdir"],
-        noarch_python=index_data.get("noarch") == "python",
+        index=get_index_json(artifact),
     )
+    format_errors_warnings(errors, warnings, lints, hints)
 
     return lints, hints
 
