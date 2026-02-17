@@ -677,6 +677,7 @@ class ArtifactLint(Subcommand):
         "Please adjust your build scripts so the files mentioned below "
         "are placed in the correct paths."
     )
+
     def __init__(self, parser):
         super().__init__(
             parser,

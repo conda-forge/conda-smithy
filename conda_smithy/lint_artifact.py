@@ -111,17 +111,21 @@ def check_path_patterns(
             errors.setdefault(outside_allowed_msg, []).append(path)
 
     for message, paths in errors.items():
+        joined_lines = "\n  ".join(sorted(dict.fromkeys(paths)))
         lints.append(
+            # noqa (keep formatting this way for clarity)
             f"- ❌ {message}:\n"
             "  ```text\n"
-            f"  {'\n  '.join(sorted(dict.fromkeys(paths)))}\n"
+            f"  {joined_lines}\n"
             "  ```"
         )
     for message, paths in warnings.items():
+        joined_lines = "\n  ".join(sorted(dict.fromkeys(paths)))
         hints.append(
+            # noqa (keep formatting this way for clarity)
             f"- ℹ️ {message}:\n"
             "  ```text\n"
-            f"  {'\n  '.join(sorted(dict.fromkeys(paths)))}\n"
+            f"  {joined_lines}\n"
             "  ```"
         )
 
