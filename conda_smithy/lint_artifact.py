@@ -143,6 +143,8 @@ def check_path_patterns(
         )
         if name in ("ca-certificates", "openssl"):
             allowed.append(r"[Ll]ibrary/ssl/.*")
+        elif name == "nodejs" or _depends_on(index, "nodejs"):
+            allowed.append(r"node_modules/.*")
         elif name == "python":
             # Python interpreters drop some files here, Windows only
             allowed.append(r"[Dd][Ll][Ll])s/.*")
