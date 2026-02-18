@@ -61,7 +61,7 @@ def test_disallowed_python_package_names(name, n_errors):
     paths = [
         f"site-packages/{name}/__init__.py",
     ]
-    index = {"noarch": "python"}
+    index = {"noarch": "python", "depends": ["python"]}
     errors, warnings = check_path_patterns(paths=paths, index=index)
     assert len(errors) == n_errors
     assert not warnings
@@ -69,7 +69,7 @@ def test_disallowed_python_package_names(name, n_errors):
     paths = [
         f"Lib/site-packages/{name}/__init__.py",
     ]
-    index = {"subdir": "win-64"}
+    index = {"subdir": "win-64", "depends": ["python"]}
     errors, warnings = check_path_patterns(paths=paths, index=index)
     assert len(errors) == n_errors
     assert not warnings
