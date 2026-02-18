@@ -11,7 +11,7 @@ source .scripts/logging_utils.sh
 
 set -xeo pipefail
 
-CONTAINER_RUNTIME="{{ docker.executable }}"
+CONTAINER_RUNTIME="${CONTAINER_RUNTIME:-{{ docker.executable }}}"
 
 THISDIR="$( cd "$( dirname "$0" )" >/dev/null && pwd )"
 PROVIDER_DIR="$(basename "$THISDIR")"
