@@ -133,22 +133,22 @@ def check_path_patterns(
     if for_windows:
         allowed.extend(
             [
-                r"Library/bin/.*",
-                r"Library/etc/.*",
-                r"Library/include/.*",
-                r"Library/lib/.*",
-                r"Library/share/.*",
-                r"Library/var/.*",
+                r"[Ll]ibrary/bin/.*",
+                r"[Ll]ibrary/etc/.*",
+                r"[Ll]ibrary/include/.*",
+                r"[Ll]ibrary/lib/.*",
+                r"[Ll]ibrary/share/.*",
+                r"[Ll]ibrary/var/.*",
             ]
         )
         if name in ("ca-certificates", "openssl"):
-            allowed.append(r"Library/ssl/.*")
+            allowed.append(r"[Ll]ibrary/ssl/.*")
         elif name == "python":
             # Python interpreters drop some files here, Windows only
-            allowed.append(r"Lib/.*")
+            allowed.append(r"[Ll]ib/.*")
         if _depends_on(index, "python"):
             # Python entry points and their EXE trampolines
-            allowed.append(r"Scripts/.*")
+            allowed.append(r"[Ss]cripts/.*")
     else:
         # Unix exceptions
         if name in ("ca-certificates", "openssl"):
