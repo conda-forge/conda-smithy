@@ -35,8 +35,10 @@ def check_path_patterns(
     index: dict[str, Any] | None = None,
 ) -> tuple[dict[str, list[str]], dict[str, list[str]]]:
     """
-    Check for allowed and disallowed file paths in a conda package. This function only
-    inspect paths, not their file contents!
+    Check for allowed and disallowed file paths in a conda package.
+    Follows https://github.com/conda/ceps/pull/133 plus some conda-forge specific changes.
+
+    Note: This function only inspect file paths, not their contents!
 
     It tries to `re.match()` a collection of regex expressions against each path.
     This means each pattern must result in a full match (not a partial one).
