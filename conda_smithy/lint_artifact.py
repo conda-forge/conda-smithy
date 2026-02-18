@@ -145,8 +145,11 @@ def check_path_patterns(
             allowed.append(r"[Ll]ibrary/ssl/.*")
         elif name == "python":
             # Python interpreters drop some files here, Windows only
-            allowed.append(r"[Ll]ib/.*")
+            allowed.append(r"[Dd][Ll][Ll])s/.*")
+            allowed.append(r"[Ll]ibs?/.*")
+            allowed.append(r"[Tt]ools/.*")
         if _depends_on(index, "python"):
+            allowed.append(r"[Ll]ib/site-packages/.*")
             # Python entry points and their EXE trampolines
             allowed.append(r"[Ss]cripts/.*")
     else:
