@@ -5,6 +5,7 @@ import re
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from conda.models.match_spec import MatchSpec
 from conda_package_streaming.package_streaming import stream_conda_info
 
 if TYPE_CHECKING:
@@ -25,20 +26,47 @@ def get_index_json(artifact: str | Path) -> dict[str, Any]:
     raise ValueError(f"Artifact '{artifact}' does not contain 'info/index.json'")
 
 
+def _depends_on(index: dict[str, Any], name: str) -> bool:
+    return any(MatchSpec(dep).name == name for dep in index.get("depends", ()))
+
+
 def check_path_patterns(
     paths: list[str],
     index: dict[str, Any] | None = None,
 ) -> tuple[dict[str, list[str]], dict[str, list[str]]]:
+    """
+    Check for allowed and disallowed file paths in a conda package. This function only
+    inspect paths, not their file contents!
+
+    It tries to `re.match()` a collection of regex expressions against each path.
+    This means each pattern must result in a full match (not a partial one).
+
+    There are three types of patterns:
+
+    - disallowed: These are banned locations. If there's a match, it is an error too.
+    - warned: These result in warnings if there's a match.
+    - allowed: These are the expected locations. If the path does NOT match any, it is an error.
+      These are only checked if `disallowed` or `warned` didn't result in matches.
+
+    Note there are a number of exceptions to the general rule, depending on the target platform,
+    the source ecosystem, or more concrete cases.
+
+    :param paths: List of paths to check, relative to $PREFIX, always with forward slashes.
+    :param index: Parsed contents of a package's `info/index.json`.
+    :return: Errors and warnings, as a dict of messages and their offending paths.
+    """
+    # These will get reused later, define once
     index = index or {}
-    for_windows = index.get("subdir", "").startswith("win-") or any(
-        dep.startswith("__win") for dep in index.get("depends", ())
+    for_windows = index.get("subdir", "").startswith("win-") or _depends_on(
+        index, "__win"
     )
     noarch_python = index.get("noarch") == "python"
+    name = index.get("name", "")
+
     #: These will result in a lint if the path DOES NOT match
     allowed: list[str] = [
         r"bin/.*",
         r"etc/.*",
-        r"fonts/.*",
         r"include/.*",
         r"lib/.*",
         r"libexec/.*",
@@ -96,23 +124,40 @@ def check_path_patterns(
     ]
 
     # Now the exceptions
+    if noarch_python:
+        # These are remapped at install time
+        allowed.append(r"site-packages/.*")
+        allowed.append(r"python-scripts/.*")
 
     # Packages targeting Windows may have these special locations
     if for_windows:
         allowed.extend(
             [
-                r"Scripts/.*",
-                r"Library/.*",
-                r"Lib/.*",
+                r"Library/bin/.*",
+                r"Library/etc/.*",
+                r"Library/include/.*",
+                r"Library/lib/.*",
+                r"Library/share/.*",
+                r"Library/var/.*",
             ]
         )
-    if noarch_python:
-        allowed.append(r"site-packages/.*")
-    if index.get("name") in ("conda", "mamba"):
+        if name in ("ca-certificates", "openssl"):
+            allowed.append(r"Library/ssl/.*")
+        elif name == "python":
+            # Python interpreters drop some files here, Windows only
+            allowed.append(r"Lib/.*")
+        if _depends_on(index, "python"):
+            # Python entry points and their EXE trampolines
+            allowed.append(r"Scripts/.*")
+    else:
+        # Unix exceptions
+        if name in ("ca-certificates", "openssl"):
+            allowed.append(r"ssl/.*")
+
+    if name in ("conda", "mamba"):
         allowed.append(r"condabin/.*")
+        # TODO: Move this in conda; should be under share/conda/
         allowed.append(r"shell/.*")
-    if index.get("name") in ("ca-certificates", "openssl"):
-        allowed.append(r"ssl/.*")
 
     allowed_patterns = ", ".join(f"`{pattern}`" for pattern in allowed)
     outside_allowed_msg = (

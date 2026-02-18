@@ -43,6 +43,7 @@ def test_windows_paths():
 def test_noarch_python_exceptions():
     paths = [
         "site-packages/numpy/__init__.py",
+        "python-scripts/numpy-script.py",
     ]
     index = {"noarch": "python"}
     errors, warnings = check_path_patterns(paths=paths, index=index)
@@ -51,6 +52,7 @@ def test_noarch_python_exceptions():
 
     errors, warnings = check_path_patterns(paths=paths)
     assert errors
+    assert list(errors.values())[0] == paths
     assert not warnings
 
 
