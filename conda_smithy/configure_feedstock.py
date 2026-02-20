@@ -2914,6 +2914,7 @@ def main(
 ):
     loglevel = os.environ.get("CONDA_SMITHY_LOGLEVEL", "INFO").upper()
     logger.setLevel(loglevel)
+    logger.addHandler(logging.StreamHandler(sys.stdout))
 
     if check or not no_check_uptodate:
         # Check that conda-smithy is up-to-date
