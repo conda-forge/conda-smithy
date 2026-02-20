@@ -60,6 +60,7 @@ from conda_smithy.linter.lints import (
     lint_recipe_is_parsable,
     lint_recipe_maintainers,
     lint_recipe_name,
+    lint_recipe_uses_cargo_variable,
     lint_recipe_v1_noarch_and_runtime_dependencies,
     lint_require_lower_bound_on_python_version,
     lint_rust_licenses_are_bundled,
@@ -372,6 +373,9 @@ def lintify_meta_yaml(
     lint_go_licenses_are_bundled(
         recipe_name, build_requirements, lints, recipe_version=recipe_version
     )
+
+    # 30: Check that cargo variable is used in build script.
+    lint_recipe_uses_cargo_variable(build_section, lints)
 
     # hints
     # 1: suggest pip

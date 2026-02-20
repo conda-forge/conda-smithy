@@ -2211,6 +2211,46 @@ def test_rust_license_bundling(recipe_version: int):
 
 
 @pytest.mark.parametrize("recipe_version", [0, 1])
+def test_rust_cargo_variable_usage(recipe_version: int):
+    meta_direct_cargo = {
+        "build": {
+            "script": "cargo install .",
+        }
+    }
+
+    lints, hints = linter.lintify_meta_yaml(
+        meta_direct_cargo, recipe_version=recipe_version
+    )
+    expected_msg = (
+        "Found plain 'cargo' in build script. "
+        "Use $CARGO (on Unix) or %CARGO% (on Windows) instead "
+        "to ensure proper environment setup."
+    )
+    assert expected_msg in lints
+
+    meta_no_script = {"build": {}}
+
+    lints, hints = linter.lintify_meta_yaml(
+        meta_no_script, recipe_version=recipe_version
+    )
+    assert expected_msg not in lints
+
+    meta_nested_script = {
+        "build": {
+            "script": [
+                "cargo install .",
+            ],
+        }
+    }
+
+    lints, hints = linter.lintify_meta_yaml(
+        meta_nested_script, recipe_version=recipe_version
+    )
+
+    assert expected_msg in lints
+
+
+@pytest.mark.parametrize("recipe_version", [0, 1])
 def test_go_license_bundling(recipe_version: int):
     # Case where go-licenses is missing
     compiler = (
