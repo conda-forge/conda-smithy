@@ -658,6 +658,7 @@ def _collapse_subpackage_variants(
     always_keep_keys = {
         "zip_keys",
         "pin_run_as_build",
+        "CMAKE_GENERATOR",
         "MACOSX_DEPLOYMENT_TARGET",
         "MACOSX_SDK_VERSION",
         "macos_min_version",
