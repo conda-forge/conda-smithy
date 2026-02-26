@@ -88,7 +88,7 @@ from conda_smithy.validate_schema import validate_json_schema
 NEEDED_FAMILIES = ["gpl", "bsd", "mit", "apache", "psf"]
 
 
-def _get_forge_yaml(recipe_dir: Optional[str] = None) -> dict:
+def _get_feedstock_config(recipe_dir: Optional[str] = None) -> dict:
     feedstock_config_keys = {}
     if recipe_dir:
         feedstock_config_file = find_local_config_file(recipe_dir, "conda-forge.yml")
@@ -100,9 +100,9 @@ def _get_forge_yaml(recipe_dir: Optional[str] = None) -> dict:
 
 
 def lintify_forge_yaml(recipe_dir: Optional[str] = None) -> (list, list):
-    forge_yaml = _get_forge_yaml(recipe_dir)
+    feedstock_config_keys = _get_feedstock_config(recipe_dir)
     # This is where we validate against the jsonschema and execute our custom validators.
-    return validate_json_schema(forge_yaml)
+    return validate_json_schema(feedstock_config_keys)
 
 
 def lintify_meta_yaml(
@@ -114,7 +114,7 @@ def lintify_meta_yaml(
     lints = []
     hints = []
     major_sections = list(meta.keys())
-    lints_to_skip = (_get_forge_yaml(recipe_dir).get("linter") or {}).get("skip") or []
+    lints_to_skip = _get_feedstock_config(recipe_dir).get("linter", {}).get("skip", [])
 
     # If the recipe_dir exists (no guarantee within this function) , we can
     # find the meta.yaml within it.
@@ -254,7 +254,7 @@ def lintify_meta_yaml(
     lint_noarch(noarch_value, lints)
 
     # Interlude: load feedstock and recipe config
-    feedstock_config_keys = {}
+    feedstock_config_keys = _get_feedstock_config(recipe_dir)
     # mapping from version to config filename; will be set to None if files don't exist;
     # note that v1 recipes can also use conda_build_config.yaml, but not vice versa
     recipe_config_filenames = {0: "conda_build_config.yaml", 1: "variants.yaml"}
@@ -262,13 +262,6 @@ def lintify_meta_yaml(
     recipe_config_keys = {0: set()}
 
     if recipe_dir:
-        feedstock_config_filename = find_local_config_file(
-            recipe_dir, "conda-forge.yml"
-        )
-        if feedstock_config_filename:
-            with open(feedstock_config_filename, encoding="utf-8") as fh:
-                feedstock_config_keys = get_yaml().load(fh)
-
         for ver, config_fn in recipe_config_filenames.items():
             config_fn = find_local_config_file(recipe_dir, config_fn)
 
@@ -514,7 +507,7 @@ def run_conda_forge_specific(
     hints,
     recipe_version: int = 0,
 ):
-    lints_to_skip = (_get_forge_yaml(recipe_dir).get("linter") or {}).get("skip") or []
+    lints_to_skip = _get_feedstock_config(recipe_dir).get("linter", {}).get("skip", [])
 
     # Retrieve sections from meta
     package_section = get_section(meta, "package", lints, recipe_version=recipe_version)
