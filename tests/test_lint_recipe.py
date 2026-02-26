@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import os
+import platform
 import shutil
 import subprocess
 import tempfile
@@ -1751,6 +1752,7 @@ linter:
         lints, _ = linter.lintify_meta_yaml(meta, recipe_version=1)
         self.assertNotIn(expected_message, lints)
 
+    @pytest.mark.skipif(platform.system() == "Windows", reason="Line-ending confusion")
     def test_end_empty_line(self):
         bad_contents = [
             # No empty lines at the end of the file
