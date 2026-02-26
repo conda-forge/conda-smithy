@@ -104,9 +104,9 @@ def _get_recipe_config_keys(recipe_dir: Optional[str] = None) -> dict:
     """
     This function maps the two different recipe config formats to their keys
 
-    Currently, the content is not for variant.yaml files; the only relevant
-    information in that case is whether the file has been found (i.e. the
-    entry of the dict for "variant.yaml" is not None).
+    Currently, the content of variant.yaml files is not validated; the only
+    relevant information in that case is whether the file has been found
+    (i.e. the entry of the dict for "variant.yaml" is not None).
     """
     # mapping from possible filenames to their content; v1 recipes can use either format
     recipe_config_keys = {"conda_build_config.yaml": None, "variants.yaml": None}
