@@ -264,7 +264,10 @@ def lintify_meta_yaml(
     noarch_value = build_section.get("noarch")
     lint_noarch(noarch_value, lints)
 
+    forge_yaml = {}
     conda_build_config_filename = None
+    conda_build_config_keys = set()
+
     if recipe_dir:
         cbc_file = "conda_build_config.yaml"
         if recipe_version == 1:
@@ -277,21 +280,12 @@ def lintify_meta_yaml(
                 fh_data = fh.read()
                 if fh_data:
                     conda_build_config_keys = set(get_yaml().load(fh_data).keys())
-                else:
-                    conda_build_config_keys = set()
-        else:
-            conda_build_config_keys = set()
 
         forge_yaml_filename = find_local_config_file(recipe_dir, "conda-forge.yml")
 
         if forge_yaml_filename:
             with open(forge_yaml_filename, encoding="utf-8") as fh:
                 forge_yaml = get_yaml().load(fh)
-        else:
-            forge_yaml = {}
-    else:
-        conda_build_config_keys = set()
-        forge_yaml = {}
 
     # 18: noarch doesn't work with selectors for runtime dependencies
     noarch_platforms = len(forge_yaml.get("noarch_platforms", [])) > 1
