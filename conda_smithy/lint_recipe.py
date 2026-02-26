@@ -264,31 +264,31 @@ def lintify_meta_yaml(
     noarch_value = build_section.get("noarch")
     lint_noarch(noarch_value, lints)
 
-    forge_yaml = {}
-    conda_build_config_filename = None
-    conda_build_config_keys = set()
+    feedstock_config_keys = {}
+    recipe_config_filename = None
+    recipe_config_keys = set()
 
     if recipe_dir:
-        cbc_file = "conda_build_config.yaml"
+        recipe_config_filename = "conda_build_config.yaml"
         if recipe_version == 1:
-            cbc_file = "variants.yaml"
+            recipe_config_filename = "variants.yaml"
 
-        conda_build_config_filename = find_local_config_file(recipe_dir, cbc_file)
+        recipe_config_filename = find_local_config_file(recipe_dir, recipe_config_filename)
 
-        if conda_build_config_filename:
-            with open(conda_build_config_filename, encoding="utf-8") as fh:
+        if recipe_config_filename:
+            with open(recipe_config_filename, encoding="utf-8") as fh:
                 fh_data = fh.read()
                 if fh_data:
-                    conda_build_config_keys = set(get_yaml().load(fh_data).keys())
+                    recipe_config_keys = set(get_yaml().load(fh_data).keys())
 
-        forge_yaml_filename = find_local_config_file(recipe_dir, "conda-forge.yml")
+        feedstock_config_filename = find_local_config_file(recipe_dir, "conda-forge.yml")
 
-        if forge_yaml_filename:
-            with open(forge_yaml_filename, encoding="utf-8") as fh:
-                forge_yaml = get_yaml().load(fh)
+        if feedstock_config_filename:
+            with open(feedstock_config_filename, encoding="utf-8") as fh:
+                feedstock_config_keys = get_yaml().load(fh)
 
     # 18: noarch doesn't work with selectors for runtime dependencies
-    noarch_platforms = len(forge_yaml.get("noarch_platforms", [])) > 1
+    noarch_platforms = len(feedstock_config_keys.get("noarch_platforms", [])) > 1
     if "lint_noarch_selectors" not in lints_to_skip:
         if recipe_version == 1:
             raw_requirements_section = meta.get("requirements", {})
@@ -303,8 +303,8 @@ def lintify_meta_yaml(
             lint_noarch_and_runtime_dependencies(
                 noarch_value,
                 recipe_fname,
-                forge_yaml,
-                conda_build_config_keys,
+                feedstock_config_keys,
+                recipe_config_keys,
                 lints,
             )
 
@@ -372,7 +372,7 @@ def lintify_meta_yaml(
         lint_stdlib(
             meta,
             requirements_section,
-            conda_build_config_filename,
+            recipe_config_filename,
             lints,
             recipe_version=recipe_version,
         )
@@ -415,7 +415,7 @@ def lintify_meta_yaml(
 
     # 7. check for obsolete os_version
     if "hint_os_version" not in lints_to_skip:
-        hint_os_version(forge_yaml, hints)
+        hint_os_version(feedstock_config_keys, hints)
 
     # 8. check for bld.bat with rattler-build
     hint_rattler_build_bld_bat(recipe_dir, hints, recipe_version)

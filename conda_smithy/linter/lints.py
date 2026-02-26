@@ -773,7 +773,7 @@ def lint_go_licenses_are_bundled(
 def lint_stdlib(
     meta,
     requirements_section,
-    conda_build_config_filename,
+    recipe_config_filename,
     lints,
     recipe_version: int = 0,
 ):
@@ -889,17 +889,17 @@ def lint_stdlib(
             "win": False,
         }
 
-        if conda_build_config_filename and os.path.exists(conda_build_config_filename):
+        if recipe_config_filename and os.path.exists(recipe_config_filename):
             cbc_osx = parse_recipe_config_file(
-                conda_build_config_filename,
+                recipe_config_filename,
                 platform_namespace,
                 allow_missing_selector=True,
             )
             cbc_osx = ensure_standard_strings(cbc_osx)
     else:
         cbc_lines = []
-        if conda_build_config_filename:
-            with open(conda_build_config_filename, encoding="utf-8") as fh:
+        if recipe_config_filename:
+            with open(recipe_config_filename, encoding="utf-8") as fh:
                 cbc_lines = fh.readlines()
 
         # filter on osx-relevant lines
