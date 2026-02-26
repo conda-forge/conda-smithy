@@ -53,6 +53,7 @@ from conda_smithy.linter.lints import (
     lint_noarch,
     lint_noarch_and_runtime_dependencies,
     lint_non_noarch_builds,
+    lint_osx_pins,
     lint_package_version,
     lint_pin_subpackages,
     lint_recipe_have_tests,
@@ -697,7 +698,14 @@ def run_conda_forge_specific(
                 "The recipe should not have an empty `conda_build_config.yaml` file."
             )
 
-    # 14: Do not allow custom Github Actions workflows
+    # 14: incorrect configuration on osx for c_stdlib_version, MACOSX_SDK_VERSION etc.
+    # get recipe config files (we don't care about the content, only if it's non-None)
+    recipe_config_keys = _get_recipe_config_keys(recipe_dir)
+    for config_fn, content in recipe_config_keys.items():
+        if content is not None:
+            lint_osx_pins(recipe_dir, config_fn, lints, recipe_version)
+
+    # 15: Do not allow custom Github Actions workflows
     gha_workflows_dir = Path(recipe_dir or "", "..", ".github", "workflows")
     gha_workflows = [
         *gha_workflows_dir.glob("*.yml"),

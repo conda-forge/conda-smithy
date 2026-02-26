@@ -770,6 +770,120 @@ def lint_go_licenses_are_bundled(
             )
 
 
+def lint_osx_pins(recipe_dir, recipe_config_filename, lints, recipe_version):
+    cbc_osx = {}
+    if recipe_dir is None or recipe_config_filename is None:
+        # nothing left to do
+        return
+
+    recipe_config_file = os.path.join(recipe_dir, recipe_config_filename)
+
+    if recipe_config_filename == "variants.yaml":
+        # definitely v1 recipe
+        platform_namespace = {
+            "unix": True,
+            "osx": True,
+            "linux": False,
+            "win": False,
+        }
+
+        if os.path.exists(recipe_config_file):
+            cbc_osx = parse_recipe_config_file(
+                recipe_config_file,
+                platform_namespace,
+                allow_missing_selector=True,
+            )
+            cbc_osx = ensure_standard_strings(cbc_osx)
+    else:
+        # may be v0 or v1 recipe, but recipe config is conda_build_config.yaml
+        cbc_lines = []
+        if os.path.exists(recipe_config_file):
+            with open(recipe_config_file, encoding="utf-8") as fh:
+                cbc_lines = fh.readlines()
+
+        # filter on osx-relevant lines
+        pat = re.compile(
+            r"^([^:\#]*?)\s+\#\s\[.*(not\s(osx|unix)|(?<!not\s)(linux|win)).*\]\s*$"
+        )
+        # remove lines with selectors that don't apply to osx, i.e. if they contain
+        # "not osx", "not unix", "linux" or "win"; this also removes trailing newlines.
+        # the regex here doesn't handle `or`-conjunctions, but the important thing for
+        # having a valid yaml after filtering below is that we avoid filtering lines with
+        # a colon (`:`), meaning that all yaml keys "survive". As an example, keys like
+        # c_stdlib_version can have `or`'d selectors, even if all values are arch-specific.
+        cbc_lines_osx = [pat.sub("", x) for x in cbc_lines]
+        cbc_content_osx = "\n".join(cbc_lines_osx)
+        cbc_osx = get_yaml().load(cbc_content_osx) or {}
+
+    # filter None values out of cbc_osx dict, can appear for example with
+    # ```
+    # c_stdlib_version:  # [unix]
+    #   - 2.17           # [linux]
+    #   # note lack of osx
+    # ```
+    cbc_osx = dict(filter(lambda item: item[1] is not None, cbc_osx.items()))
+    if not cbc_osx:
+        # nothing left to do
+        return
+
+    def sort_osx(versions):
+        # we need to have a known order for [x64, arm64]; in the absence of more
+        # complicated regex processing, we assume that if there are two versions
+        # being specified, the higher one is osx-arm64.
+        if len(versions) == 2:
+            if VersionOrder(str(versions[0])) > VersionOrder(str(versions[1])):
+                versions = versions[::-1]
+        return versions
+
+    baseline_version = ["11.0", "11.0"]
+    v_stdlib = sort_osx(cbc_osx.get("c_stdlib_version", baseline_version))
+    sdk = sort_osx(cbc_osx.get("MACOSX_SDK_VERSION", baseline_version))
+
+    if "c_stdlib_version" in cbc_osx.keys():
+        # only warn if version is below baseline
+        outdated_lint = (
+            "You are setting `c_stdlib_version` on osx below the current global "
+            f"baseline in conda-forge ({baseline_version[0]})."
+        )
+        if len(v_stdlib) == len(baseline_version):
+            # if length matches, compare individually
+            for v_std, v_base in zip(v_stdlib, baseline_version):
+                if VersionOrder(str(v_std)) < VersionOrder(str(v_base)):
+                    if outdated_lint not in lints:
+                        lints.append(outdated_lint)
+        elif len(v_stdlib) == 1:
+            # compare against first value (same baseline for x64/arm64)
+            if VersionOrder(str(v_stdlib[0])) < VersionOrder(str(baseline_version[0])):
+                if outdated_lint not in lints:
+                    lints.append(outdated_lint)
+
+    # warn if SDK is lower than v_stdlib
+    sdk_lint = (
+        "You are setting `MACOSX_SDK_VERSION` below `c_stdlib_version`, "
+        "in conda_build_config.yaml which is not possible! Please ensure "
+        "`MACOSX_SDK_VERSION` is at least `c_stdlib_version` "
+        "(you can leave it out if it is equal).\n"
+        "If you are not setting `c_stdlib_version` yourself, this means "
+        "you are requesting a version below the current global baseline in "
+        f"conda-forge ({baseline_version[0]})."
+    )
+    if len(sdk) == len(v_stdlib):
+        # if length matches, compare individually
+        for v_sdk, v_std in zip(sdk, v_stdlib):
+            # versions with a single dot may have been read as floats
+            if VersionOrder(str(v_sdk)) < VersionOrder(str(v_std)):
+                if sdk_lint not in lints:
+                    lints.append(sdk_lint)
+    elif len(sdk) == 1:
+        # if length doesn't match, only warn if a single SDK version
+        # is lower than _all_ merged deployment targets
+        if all(
+            VersionOrder(str(sdk[0])) < VersionOrder(str(v_std)) for v_std in v_stdlib
+        ):
+            if sdk_lint not in lints:
+                lints.append(sdk_lint)
+
+
 def lint_stdlib(
     meta,
     requirements_section,
@@ -878,119 +992,6 @@ def lint_stdlib(
     if any(req.startswith("__osx >") for req in to_check):
         if osx_lint not in lints:
             lints.append(osx_lint)
-
-    # stdlib issues for osx in recipe config
-    cbc_osx = {}
-    if recipe_dir is None or recipe_config_filename is None:
-        # nothing left to do
-        return
-
-    recipe_config_file = os.path.join(recipe_dir, recipe_config_filename)
-
-    if recipe_config_filename == "variants.yaml":
-        # definitely v1 recipe
-        platform_namespace = {
-            "unix": True,
-            "osx": True,
-            "linux": False,
-            "win": False,
-        }
-
-        if os.path.exists(recipe_config_file):
-            cbc_osx = parse_recipe_config_file(
-                recipe_config_file,
-                platform_namespace,
-                allow_missing_selector=True,
-            )
-            cbc_osx = ensure_standard_strings(cbc_osx)
-    else:
-        # may be v0 or v1 recipe, but recipe config is conda_build_config.yaml
-        cbc_lines = []
-        if os.path.exists(recipe_config_file):
-            with open(recipe_config_file, encoding="utf-8") as fh:
-                cbc_lines = fh.readlines()
-
-        # filter on osx-relevant lines
-        pat = re.compile(
-            r"^([^:\#]*?)\s+\#\s\[.*(not\s(osx|unix)|(?<!not\s)(linux|win)).*\]\s*$"
-        )
-        # remove lines with selectors that don't apply to osx, i.e. if they contain
-        # "not osx", "not unix", "linux" or "win"; this also removes trailing newlines.
-        # the regex here doesn't handle `or`-conjunctions, but the important thing for
-        # having a valid yaml after filtering below is that we avoid filtering lines with
-        # a colon (`:`), meaning that all yaml keys "survive". As an example, keys like
-        # c_stdlib_version can have `or`'d selectors, even if all values are arch-specific.
-        cbc_lines_osx = [pat.sub("", x) for x in cbc_lines]
-        cbc_content_osx = "\n".join(cbc_lines_osx)
-        cbc_osx = get_yaml().load(cbc_content_osx) or {}
-        # filter None values out of cbc_osx dict, can appear for example with
-        # ```
-        # c_stdlib_version:  # [unix]
-        #   - 2.17           # [linux]
-        #   # note lack of osx
-        # ```
-
-    cbc_osx = dict(filter(lambda item: item[1] is not None, cbc_osx.items()))
-    if not cbc_osx:
-        # nothing left to do
-        return
-
-    def sort_osx(versions):
-        # we need to have a known order for [x64, arm64]; in the absence of more
-        # complicated regex processing, we assume that if there are two versions
-        # being specified, the higher one is osx-arm64.
-        if len(versions) == 2:
-            if VersionOrder(str(versions[0])) > VersionOrder(str(versions[1])):
-                versions = versions[::-1]
-        return versions
-
-    baseline_version = ["11.0", "11.0"]
-    v_stdlib = sort_osx(cbc_osx.get("c_stdlib_version", baseline_version))
-    sdk = sort_osx(cbc_osx.get("MACOSX_SDK_VERSION", baseline_version))
-
-    if "c_stdlib_version" in cbc_osx.keys():
-        # only warn if version is below baseline
-        outdated_lint = (
-            "You are setting `c_stdlib_version` on osx below the current global "
-            f"baseline in conda-forge ({baseline_version[0]})."
-        )
-        if len(v_stdlib) == len(baseline_version):
-            # if length matches, compare individually
-            for v_std, v_base in zip(v_stdlib, baseline_version):
-                if VersionOrder(str(v_std)) < VersionOrder(str(v_base)):
-                    if outdated_lint not in lints:
-                        lints.append(outdated_lint)
-        elif len(v_stdlib) == 1:
-            # compare against first value (same baseline for x64/arm64)
-            if VersionOrder(str(v_stdlib[0])) < VersionOrder(str(baseline_version[0])):
-                if outdated_lint not in lints:
-                    lints.append(outdated_lint)
-
-    # warn if SDK is lower than v_stdlib
-    sdk_lint = (
-        "You are setting `MACOSX_SDK_VERSION` below `c_stdlib_version`, "
-        "in conda_build_config.yaml which is not possible! Please ensure "
-        "`MACOSX_SDK_VERSION` is at least `c_stdlib_version` "
-        "(you can leave it out if it is equal).\n"
-        "If you are not setting `c_stdlib_version` yourself, this means "
-        "you are requesting a version below the current global baseline in "
-        f"conda-forge ({baseline_version[0]})."
-    )
-    if len(sdk) == len(v_stdlib):
-        # if length matches, compare individually
-        for v_sdk, v_std in zip(sdk, v_stdlib):
-            # versions with a single dot may have been read as floats
-            if VersionOrder(str(v_sdk)) < VersionOrder(str(v_std)):
-                if sdk_lint not in lints:
-                    lints.append(sdk_lint)
-    elif len(sdk) == 1:
-        # if length doesn't match, only warn if a single SDK version
-        # is lower than _all_ merged deployment targets
-        if all(
-            VersionOrder(str(sdk[0])) < VersionOrder(str(v_std)) for v_std in v_stdlib
-        ):
-            if sdk_lint not in lints:
-                lints.append(sdk_lint)
 
 
 def lint_recipe_is_parsable(

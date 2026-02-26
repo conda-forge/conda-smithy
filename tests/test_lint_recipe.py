@@ -338,7 +338,7 @@ MACOSX_SDK_VERSION:         # [osx]
 """
                 )
         # run the linter
-        lints = linter.main(rdir)
+        lints = linter.main(rdir, conda_forge=True)
         # show CBC/hints for debugging
         with open(os.path.join(rdir, "conda_build_config.yaml")) as fh:
             print("".join(fh.readlines()))
@@ -470,10 +470,10 @@ def test_cbc_osx_lints_variants_yaml(
                                 then: {sdk[0]}
                         """))
         # run the linter
-        lints = linter.main(recipe_dir, feedstock_dir=recipe_dir)
+        lints = linter.main(recipe_dir, conda_forge=True)
         # show CBC/hints for debugging
         lines = recipe_dir.joinpath("variants.yaml").read_text().splitlines()
-        print("".join(lines))
+        print("\n".join(lines))
         print(lints)
 
         # validate against expectations
