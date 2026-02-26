@@ -373,6 +373,16 @@ def lintify_meta_yaml(
         recipe_name, build_requirements, lints, recipe_version=recipe_version
     )
 
+    # 30: stdlib-related lints
+    if "lint_stdlib" not in lints_to_skip:
+        lint_stdlib(
+            meta,
+            requirements_section,
+            conda_build_config_filename,
+            lints,
+            recipe_version=recipe_version,
+        )
+
     # hints
     # 1: suggest pip
     hint_pip_usage(build_section, hints)
@@ -399,17 +409,7 @@ def lintify_meta_yaml(
     # 5: hint pypi.io -> pypi.org
     hint_sources_should_not_mention_pypi_io_but_pypi_org(sources_section, hints)
 
-    # 6: stdlib-related lints
-    if "lint_stdlib" not in lints_to_skip:
-        lint_stdlib(
-            meta,
-            requirements_section,
-            conda_build_config_filename,
-            lints,
-            recipe_version=recipe_version,
-        )
-
-    # 7: warn of `name =version=build` specs, suggest `name version build`
+    # 6: warn of `name =version=build` specs, suggest `name version build`
     # see https://github.com/conda/conda-build/issues/5571#issuecomment-2604505922
     if recipe_version == 0:
         hint_space_separated_specs(
@@ -419,11 +419,11 @@ def lintify_meta_yaml(
             hints,
         )
 
-    # 8. check for obsolete os_version
+    # 7. check for obsolete os_version
     if "hint_os_version" not in lints_to_skip:
         hint_os_version(forge_yaml, hints)
 
-    # 9. check for bld.bat with rattler-build
+    # 8. check for bld.bat with rattler-build
     hint_rattler_build_bld_bat(recipe_dir, hints, recipe_version)
 
     return lints, hints
