@@ -253,28 +253,34 @@ def lintify_meta_yaml(
     noarch_value = build_section.get("noarch")
     lint_noarch(noarch_value, lints)
 
+    # Interlude: load feedstock and recipe config
     feedstock_config_keys = {}
-    recipe_config_filename = None
-    recipe_config_keys = set()
+    # mapping from version to config filename; will be set to None if files don't exist;
+    # note that v1 recipes can also use conda_build_config.yaml, but not vice versa
+    recipe_config_filenames = {0: "conda_build_config.yaml", 1: "variants.yaml"}
+    # only used for v0, but using the same pattern for consistency
+    recipe_config_keys = {0: set()}
 
     if recipe_dir:
-        recipe_config_filename = "conda_build_config.yaml"
-        if recipe_version == 1:
-            recipe_config_filename = "variants.yaml"
-
-        recipe_config_filename = find_local_config_file(recipe_dir, recipe_config_filename)
-
-        if recipe_config_filename:
-            with open(recipe_config_filename, encoding="utf-8") as fh:
-                fh_data = fh.read()
-                if fh_data:
-                    recipe_config_keys = set(get_yaml().load(fh_data).keys())
-
-        feedstock_config_filename = find_local_config_file(recipe_dir, "conda-forge.yml")
-
+        feedstock_config_filename = find_local_config_file(
+            recipe_dir, "conda-forge.yml"
+        )
         if feedstock_config_filename:
             with open(feedstock_config_filename, encoding="utf-8") as fh:
                 feedstock_config_keys = get_yaml().load(fh)
+
+        for ver, config_fn in recipe_config_filenames.items():
+            config_fn = find_local_config_file(recipe_dir, config_fn)
+
+            # we don't need recipe_config_keys for v1 recipes
+            if config_fn and ver == 0:
+                with open(config_fn, encoding="utf-8") as fh:
+                    fh_data = fh.read()
+                    if fh_data:
+                        recipe_config_keys[ver] = set(get_yaml().load(fh_data).keys())
+            elif not config_fn:
+                # if file doesn't exist, mark it as not found
+                recipe_config_filenames[ver] = None
 
     # 18: noarch doesn't work with selectors for runtime dependencies
     noarch_platforms = len(feedstock_config_keys.get("noarch_platforms", [])) > 1
@@ -293,7 +299,7 @@ def lintify_meta_yaml(
                 noarch_value,
                 recipe_fname,
                 feedstock_config_keys,
-                recipe_config_keys,
+                recipe_config_keys[recipe_version],
                 lints,
             )
 
@@ -358,13 +364,16 @@ def lintify_meta_yaml(
 
     # 30: stdlib-related lints
     if "lint_stdlib" not in lints_to_skip:
-        lint_stdlib(
-            meta,
-            requirements_section,
-            recipe_config_filename,
-            lints,
-            recipe_version=recipe_version,
-        )
+        for config_fn in recipe_config_filenames.values():
+            lint_stdlib(
+                meta,
+                requirements_section,
+                recipe_dir,
+                config_fn,
+                lints,
+                # the version of the config file does not change the version of the recipe
+                recipe_version=recipe_version,
+            )
 
     # hints
     # 1: suggest pip

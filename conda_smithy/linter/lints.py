@@ -773,6 +773,7 @@ def lint_go_licenses_are_bundled(
 def lint_stdlib(
     meta,
     requirements_section,
+    recipe_dir,
     recipe_config_filename,
     lints,
     recipe_version: int = 0,
@@ -878,10 +879,16 @@ def lint_stdlib(
         if osx_lint not in lints:
             lints.append(osx_lint)
 
-    # stdlib issues in CBC ( conda-build-config )
+    # stdlib issues for osx in recipe config
     cbc_osx = {}
+    if recipe_dir is None or recipe_config_filename is None:
+        # nothing left to do
+        return
 
-    if recipe_version == 1:
+    recipe_config_file = os.path.join(recipe_dir, recipe_config_filename)
+
+    if recipe_config_filename == "variants.yaml":
+        # definitely v1 recipe
         platform_namespace = {
             "unix": True,
             "osx": True,
@@ -889,17 +896,18 @@ def lint_stdlib(
             "win": False,
         }
 
-        if recipe_config_filename and os.path.exists(recipe_config_filename):
+        if os.path.exists(recipe_config_file):
             cbc_osx = parse_recipe_config_file(
-                recipe_config_filename,
+                recipe_config_file,
                 platform_namespace,
                 allow_missing_selector=True,
             )
             cbc_osx = ensure_standard_strings(cbc_osx)
     else:
+        # may be v0 or v1 recipe, but recipe config is conda_build_config.yaml
         cbc_lines = []
-        if recipe_config_filename:
-            with open(recipe_config_filename, encoding="utf-8") as fh:
+        if os.path.exists(recipe_config_file):
+            with open(recipe_config_file, encoding="utf-8") as fh:
                 cbc_lines = fh.readlines()
 
         # filter on osx-relevant lines
@@ -923,6 +931,9 @@ def lint_stdlib(
         # ```
 
     cbc_osx = dict(filter(lambda item: item[1] is not None, cbc_osx.items()))
+    if not cbc_osx:
+        # nothing left to do
+        return
 
     def sort_osx(versions):
         # we need to have a known order for [x64, arm64]; in the absence of more

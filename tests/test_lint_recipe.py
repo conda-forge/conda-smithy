@@ -262,6 +262,7 @@ def test_recipe_v1_osx_noarch_hint():
         assert not any(h.startswith(avoid_message) for h in hints)
 
 
+@pytest.mark.parametrize("recipe_version", [0, 1])
 @pytest.mark.parametrize(
     "std_selector",
     ["unix", "linux or (osx and x86_64)"],
@@ -296,10 +297,20 @@ def test_recipe_v1_osx_noarch_hint():
         (None, ["10.12", "11.0"], "You are"),
     ],
 )
-def test_cbc_osx_lints(std_selector, with_linux, reverse_arch, v_std, sdk, exp_lint):
+def test_cbc_osx_lints(
+    recipe_version, std_selector, with_linux, reverse_arch, v_std, sdk, exp_lint
+):
     with tmp_directory() as rdir:
-        with open(os.path.join(rdir, "meta.yaml"), "w") as fh:
-            fh.write("package:\n   name: foo")
+        rdir = Path(rdir)
+        if recipe_version == 1:
+            rdir.joinpath("recipe.yaml").write_text("package:\n  name: foo")
+            rdir.joinpath("conda-forge.yml").write_text(
+                "conda_build_tool: rattler-build"
+            )
+        else:
+            rdir.joinpath("meta.yaml").write_text("package:\n  name: foo")
+
+        # conda_build_config can be used with both v0 and v1 recipes
         with open(os.path.join(rdir, "conda_build_config.yaml"), "a") as fh:
             if v_std is not None or with_linux:
                 arch1 = "arm64" if reverse_arch[1] else "x86_64"
@@ -408,7 +419,10 @@ def test_license_file_empty(recipe_version: int):
         (None, ["10.12", "11.0"], "You are"),
     ],
 )
-def test_v1_cbc_osx_hints(std_selector, with_linux, reverse_arch, v_std, sdk, exp_lint):
+def test_cbc_osx_lints_variants_yaml(
+    std_selector, with_linux, reverse_arch, v_std, sdk, exp_lint
+):
+    # v1 recipes using conda_build_config.yaml are covered by test_cbc_osx_lints
     with tmp_directory() as recipe_dir:
         recipe_dir = Path(recipe_dir)
         recipe_dir.joinpath("recipe.yaml").write_text("package:\n  name: foo")
