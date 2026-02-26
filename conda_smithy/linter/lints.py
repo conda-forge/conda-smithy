@@ -386,7 +386,7 @@ def lint_noarch_and_runtime_dependencies(
                 if is_selector_line(
                     line,
                     allow_platforms=noarch_platforms,
-                    allow_keys=conda_build_config_keys,
+                    allow_keys=conda_build_config_keys or set(),
                 ):
                     lints.append(
                         "`noarch` packages can't have selectors. If "

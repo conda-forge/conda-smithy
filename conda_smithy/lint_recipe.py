@@ -99,6 +99,36 @@ def _get_feedstock_config(recipe_dir: Optional[str] = None) -> dict:
     return feedstock_config_keys
 
 
+def _get_recipe_config_keys(recipe_dir: Optional[str] = None) -> dict:
+    """
+    This function maps the two different recipe config formats to their keys
+
+    Currently, the content is not for variant.yaml files; the only relevant
+    information in that case is whether the file has been found (i.e. the
+    entry of the dict for "variant.yaml" is not None).
+    """
+    # mapping from possible filenames to their content; v1 recipes can use either format
+    recipe_config_keys = {"conda_build_config.yaml": None, "variants.yaml": None}
+    if recipe_dir:
+        for config_filename in recipe_config_keys.copy().keys():
+            config_file = find_local_config_file(recipe_dir, config_filename)
+            if not config_file:
+                # file not found, leave as None
+                continue
+            # otherwise, the file exists; content is definitely not None
+            recipe_config_keys[config_filename] = {}
+            # the linter currently does not analyze content of variants.yaml directly
+            if config_filename == "conda_build_config.yaml":
+                with open(config_file, encoding="utf-8") as fh:
+                    fh_data = fh.read()
+                    if fh_data:
+                        recipe_config_keys[config_filename] = set(
+                            get_yaml().load(fh_data).keys()
+                        )
+
+    return recipe_config_keys
+
+
 def lintify_forge_yaml(recipe_dir: Optional[str] = None) -> (list, list):
     feedstock_config_keys = _get_feedstock_config(recipe_dir)
     # This is where we validate against the jsonschema and execute our custom validators.
@@ -255,25 +285,7 @@ def lintify_meta_yaml(
 
     # Interlude: load feedstock and recipe config
     feedstock_config_keys = _get_feedstock_config(recipe_dir)
-    # mapping from version to config filename; will be set to None if files don't exist;
-    # note that v1 recipes can also use conda_build_config.yaml, but not vice versa
-    recipe_config_filenames = {0: "conda_build_config.yaml", 1: "variants.yaml"}
-    # only used for v0, but using the same pattern for consistency
-    recipe_config_keys = {0: set()}
-
-    if recipe_dir:
-        for ver, config_fn in recipe_config_filenames.items():
-            config_fn = find_local_config_file(recipe_dir, config_fn)
-
-            # we don't need recipe_config_keys for v1 recipes
-            if config_fn and ver == 0:
-                with open(config_fn, encoding="utf-8") as fh:
-                    fh_data = fh.read()
-                    if fh_data:
-                        recipe_config_keys[ver] = set(get_yaml().load(fh_data).keys())
-            elif not config_fn:
-                # if file doesn't exist, mark it as not found
-                recipe_config_filenames[ver] = None
+    recipe_config_keys = _get_recipe_config_keys(recipe_dir)
 
     # 18: noarch doesn't work with selectors for runtime dependencies
     noarch_platforms = len(feedstock_config_keys.get("noarch_platforms", [])) > 1
@@ -292,7 +304,7 @@ def lintify_meta_yaml(
                 noarch_value,
                 recipe_fname,
                 feedstock_config_keys,
-                recipe_config_keys[recipe_version],
+                recipe_config_keys["conda_build_config.yaml"],
                 lints,
             )
 
@@ -357,7 +369,7 @@ def lintify_meta_yaml(
 
     # 30: stdlib-related lints
     if "lint_stdlib" not in lints_to_skip:
-        for config_fn in recipe_config_filenames.values():
+        for config_fn in recipe_config_keys.keys():
             lint_stdlib(
                 meta,
                 requirements_section,
