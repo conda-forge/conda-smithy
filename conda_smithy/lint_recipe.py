@@ -406,7 +406,6 @@ def lintify_meta_yaml(
             requirements_section,
             conda_build_config_filename,
             lints,
-            hints,
             recipe_version=recipe_version,
         )
 

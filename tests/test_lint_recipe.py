@@ -275,57 +275,32 @@ def test_recipe_v1_osx_noarch_hint():
     ids=["False", "True", "mixed"],
 )
 @pytest.mark.parametrize(
-    "macdt,v_std,sdk,exp_lint",
+    "v_std,sdk,exp_lint",
     [
-        # matching -> no warning
-        (["10.9", "11.0"], ["10.9", "11.0"], None, None),
-        # mismatched length -> no warning (leave it to rerender)
-        (["10.9", "11.0"], ["10.9"], None, None),
-        # mismatch between stdlib and deployment target -> warn
-        (["10.9", "11.0"], ["10.13", "11.0"], None, "Conflicting spec"),
-        (["10.13", "11.0"], ["10.13", "12.3"], None, "Conflicting spec"),
-        # only deployment target -> warn
-        (["11.0", "12.0"], None, None, "In your conda_build_config.yaml"),
         # only stdlib -> no warning
-        (None, ["11.0", "11.0"], None, None),
-        (None, ["11.1"], None, None),
+        (["11.0", "11.0"], None, None),
+        (["11.1"], None, None),
         # only stdlib, but outdated -> warn
-        (None, ["10.9", "11.0"], None, "You are"),
-        (None, ["10.9"], None, "You are"),
-        # sdk below stdlib / deployment target -> warn
-        (["10.13", "11.0"], ["10.13", "11.0"], ["10.12"], "You are"),
-        (["10.13", "11.0"], ["10.13", "11.0"], ["10.12", "12.0"], "You are"),
-        # sdk above stdlib / deployment target -> no warning
-        (["10.13", "11.0"], ["10.13", "11.0"], ["12.0", "12.0"], None),
-        # only one sdk version, not universally below deployment target
-        # -> no warning (because we don't know enough to diagnose)
-        (["10.13", "11.0"], ["10.13", "11.0"], ["10.15"], None),
-        # mismatched version + wrong sdk; requires merge logic to work before
-        # checking sdk version; to avoid unnecessary complexity in the exp_hint
-        # handling below, repeat same test twice with different expected hints
-        (["10.9", "11.0"], ["10.13", "11.0"], ["10.12"], "Conflicting spec"),
-        (["10.9", "11.0"], ["10.13", "11.0"], ["10.12"], "You are"),
+        (["10.9", "11.0"], None, "You are"),
+        (["10.9"], None, "You are"),
+        # sdk below stdlib -> warn
+        (["11.0", "12.0"], ["10.12"], "You are"),
+        (["11.0", "12.0"], ["10.12", "12.0"], "You are"),
+        # sdk above stdlib -> no warning
+        (["11.0", "12.0"], ["12.0", "12.0"], None),
         # only sdk -> no warning
-        (None, None, ["11.0"], None),
-        (None, None, ["11.1", "12.0"], None),
+        (None, ["11.0"], None),
+        (None, ["11.1", "12.0"], None),
         # only sdk, but below global baseline -> warning
-        (None, None, ["10.12"], "You are"),
-        (None, None, ["10.12", "11.0"], "You are"),
+        (None, ["10.12"], "You are"),
+        (None, ["10.12", "11.0"], "You are"),
     ],
 )
-def test_cbc_osx_lints(
-    std_selector, with_linux, reverse_arch, macdt, v_std, sdk, exp_lint
-):
+def test_cbc_osx_lints(std_selector, with_linux, reverse_arch, v_std, sdk, exp_lint):
     with tmp_directory() as rdir:
         with open(os.path.join(rdir, "meta.yaml"), "w") as fh:
             fh.write("package:\n   name: foo")
         with open(os.path.join(rdir, "conda_build_config.yaml"), "a") as fh:
-            if macdt is not None:
-                fh.write(f"""\
-MACOSX_DEPLOYMENT_TARGET:   # [osx]
-  - {macdt[0]}              # [osx and {"arm64" if reverse_arch[0] else "x86_64"}]
-  - {macdt[1]}              # [osx and {"x86_64" if reverse_arch[0] else "arm64"}]
-""")
             if v_std is not None or with_linux:
                 arch1 = "arm64" if reverse_arch[1] else "x86_64"
                 arch2 = "x86_64" if reverse_arch[1] else "arm64"
@@ -352,7 +327,7 @@ MACOSX_SDK_VERSION:         # [osx]
 """
                 )
         # run the linter
-        lints, _ = linter.main(rdir, return_hints=True)
+        lints = linter.main(rdir)
         # show CBC/hints for debugging
         with open(os.path.join(rdir, "conda_build_config.yaml")) as fh:
             print("".join(fh.readlines()))
@@ -412,47 +387,28 @@ def test_license_file_empty(recipe_version: int):
     ids=["False", "True", "mixed"],
 )
 @pytest.mark.parametrize(
-    "macdt,v_std,sdk,exp_lint",
+    "v_std,sdk,exp_lint",
     [
-        # matching -> no warning
-        (["10.9", "11.0"], ["10.9", "11.0"], None, None),
-        # mismatched length -> no warning (leave it to rerender)
-        (["10.9", "11.0"], ["10.9"], None, None),
-        # mismatch between stdlib and deployment target -> warn
-        (["10.9", "11.0"], ["10.13", "11.0"], None, "Conflicting spec"),
-        (["10.13", "11.0"], ["10.13", "12.3"], None, "Conflicting spec"),
-        # only deployment target -> warn
-        (["11.0", "12.0"], None, None, "In your conda_build_config.yaml"),
         # only stdlib -> no warning
-        (None, ["11.0", "11.0"], None, None),
-        (None, ["11.1"], None, None),
+        (["11.0", "11.0"], None, None),
+        (["11.1"], None, None),
         # only stdlib, but outdated -> warn
-        (None, ["10.9", "11.0"], None, "You are"),
-        (None, ["10.9"], None, "You are"),
-        # sdk below stdlib / deployment target -> warn
-        (["10.13", "11.0"], ["10.13", "11.0"], ["10.12"], "You are"),
-        (["10.13", "11.0"], ["10.13", "11.0"], ["10.12", "12.0"], "You are"),
-        # sdk above stdlib / deployment target -> no warning
-        (["10.13", "11.0"], ["10.13", "11.0"], ["12.0", "12.0"], None),
-        # only one sdk version, not universally below deployment target
-        # -> no warning (because we don't know enough to diagnose)
-        (["10.13", "11.0"], ["10.13", "11.0"], ["10.15"], None),
-        # mismatched version + wrong sdk; requires merge logic to work before
-        # checking sdk version; to avoid unnecessary complexity in the exp_hint
-        # handling below, repeat same test twice with different expected hints
-        (["10.9", "11.0"], ["10.13", "11.0"], ["10.12"], "Conflicting spec"),
-        (["10.9", "11.0"], ["10.13", "11.0"], ["10.12"], "You are"),
+        (["10.9", "11.0"], None, "You are"),
+        (["10.9"], None, "You are"),
+        # sdk below stdlib -> warn
+        (["11.0", "12.0"], ["10.12"], "You are"),
+        (["11.0", "12.0"], ["10.12", "12.0"], "You are"),
+        # sdk above stdlib -> no warning
+        (["11.0", "12.0"], ["12.0", "12.0"], None),
         # only sdk -> no warning
-        (None, None, ["11.0"], None),
-        (None, None, ["11.1", "12.0"], None),
+        (None, ["11.0"], None),
+        (None, ["11.1", "12.0"], None),
         # only sdk, but below global baseline -> warning
-        (None, None, ["10.12"], "You are"),
-        (None, None, ["10.12", "11.0"], "You are"),
+        (None, ["10.12"], "You are"),
+        (None, ["10.12", "11.0"], "You are"),
     ],
 )
-def test_v1_cbc_osx_hints(
-    std_selector, with_linux, reverse_arch, macdt, v_std, sdk, exp_lint
-):
+def test_v1_cbc_osx_hints(std_selector, with_linux, reverse_arch, v_std, sdk, exp_lint):
     with tmp_directory() as recipe_dir:
         recipe_dir = Path(recipe_dir)
         recipe_dir.joinpath("recipe.yaml").write_text("package:\n  name: foo")
@@ -462,14 +418,6 @@ def test_v1_cbc_osx_hints(
         )
 
         with open(recipe_dir / "variants.yaml", "a") as fh:
-            if macdt is not None:
-                fh.write(textwrap.dedent(f"""\
-                        MACOSX_DEPLOYMENT_TARGET:
-                          - if: osx
-                            then:
-                              - {macdt[0]}
-                              - {macdt[1]}
-                    """))
             if v_std is not None or with_linux:
                 arch1 = "arm64" if reverse_arch[1] else "x86_64"
                 arch2 = "x86_64" if reverse_arch[1] else "arm64"
@@ -508,7 +456,7 @@ def test_v1_cbc_osx_hints(
                                 then: {sdk[0]}
                         """))
         # run the linter
-        lints, _ = linter.main(recipe_dir, return_hints=True, feedstock_dir=recipe_dir)
+        lints = linter.main(recipe_dir, feedstock_dir=recipe_dir)
         # show CBC/hints for debugging
         lines = recipe_dir.joinpath("variants.yaml").read_text().splitlines()
         print("".join(lines))

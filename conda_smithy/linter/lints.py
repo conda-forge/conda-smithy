@@ -775,7 +775,6 @@ def lint_stdlib(
     requirements_section,
     conda_build_config_filename,
     lints,
-    hints,
     recipe_version: int = 0,
 ):
     global_build_reqs = requirements_section.get("build") or []
@@ -936,69 +935,27 @@ def lint_stdlib(
 
     baseline_version = ["11.0", "11.0"]
     v_stdlib = sort_osx(cbc_osx.get("c_stdlib_version", baseline_version))
-    macdt = sort_osx(cbc_osx.get("MACOSX_DEPLOYMENT_TARGET", baseline_version))
     sdk = sort_osx(cbc_osx.get("MACOSX_SDK_VERSION", baseline_version))
 
-    if {"MACOSX_DEPLOYMENT_TARGET", "c_stdlib_version"} <= set(cbc_osx.keys()):
-        # both specified, check that they match
-        if len(v_stdlib) != len(macdt):
-            # if lengths aren't matching, assume it's a legal combination
-            # where one key is specified for less arches than the other and
-            # let the rerender deal with the details
-            pass
-        else:
-            mismatch_lint = (
-                "Conflicting specification for minimum macOS deployment target!\n"
-                "If your conda_build_config.yaml sets `MACOSX_DEPLOYMENT_TARGET`, "
-                "please change the name of that key to `c_stdlib_version`!\n"
-                "Continuing with `max(c_stdlib_version, MACOSX_DEPLOYMENT_TARGET)`."
-            )
-            merged_dt = []
-            for v_std, v_mdt in zip(v_stdlib, macdt):
-                # versions with a single dot may have been read as floats
-                v_std, v_mdt = str(v_std), str(v_mdt)
-                if VersionOrder(v_std) != VersionOrder(v_mdt):
-                    if mismatch_lint not in lints:
-                        lints.append(mismatch_lint)
-                merged_dt.append(
-                    v_mdt if VersionOrder(v_std) < VersionOrder(v_mdt) else v_std
-                )
-            cbc_osx["merged"] = merged_dt
-    elif "MACOSX_DEPLOYMENT_TARGET" in cbc_osx.keys():
-        cbc_osx["merged"] = macdt
-        # only MACOSX_DEPLOYMENT_TARGET, should be renamed
-        deprecated_dt = (
-            "In your conda_build_config.yaml, please change the name of "
-            "`MACOSX_DEPLOYMENT_TARGET`, to `c_stdlib_version`!"
-        )
-        if deprecated_dt not in hints:
-            lints.append(deprecated_dt)
-    elif "c_stdlib_version" in cbc_osx.keys():
-        cbc_osx["merged"] = v_stdlib
+    if "c_stdlib_version" in cbc_osx.keys():
         # only warn if version is below baseline
         outdated_lint = (
-            "You are setting `c_stdlib_version` below the current global baseline "
-            "in conda-forge (11.0). If this is your intention, you also need to "
-            "override `MACOSX_DEPLOYMENT_TARGET` (with the same value) locally."
+            "You are setting `c_stdlib_version` on osx below the current global "
+            f"baseline in conda-forge ({baseline_version[0]})."
         )
-        if len(v_stdlib) == len(macdt):
+        if len(v_stdlib) == len(baseline_version):
             # if length matches, compare individually
-            for v_std, v_mdt in zip(v_stdlib, macdt):
-                if VersionOrder(str(v_std)) < VersionOrder(str(v_mdt)):
+            for v_std, v_base in zip(v_stdlib, baseline_version):
+                if VersionOrder(str(v_std)) < VersionOrder(str(v_base)):
                     if outdated_lint not in lints:
                         lints.append(outdated_lint)
         elif len(v_stdlib) == 1:
-            # if length doesn't match, only warn if a single stdlib version
-            # is lower than _all_ baseline deployment targets
-            if all(
-                VersionOrder(str(v_stdlib[0])) < VersionOrder(str(v_mdt))
-                for v_mdt in macdt
-            ):
+            # compare against first value (same baseline for x64/arm64)
+            if VersionOrder(str(v_stdlib[0])) < VersionOrder(str(baseline_version[0])):
                 if outdated_lint not in lints:
                     lints.append(outdated_lint)
 
-    # warn if SDK is lower than merged v_stdlib/macdt
-    merged_dt = cbc_osx.get("merged", baseline_version)
+    # warn if SDK is lower than v_stdlib
     sdk_lint = (
         "You are setting `MACOSX_SDK_VERSION` below `c_stdlib_version`, "
         "in conda_build_config.yaml which is not possible! Please ensure "
@@ -1006,22 +963,20 @@ def lint_stdlib(
         "(you can leave it out if it is equal).\n"
         "If you are not setting `c_stdlib_version` yourself, this means "
         "you are requesting a version below the current global baseline in "
-        "conda-forge (11.0). If this is the intention, you also need to "
-        "override `c_stdlib_version` and `MACOSX_DEPLOYMENT_TARGET` locally."
+        f"conda-forge ({baseline_version[0]})."
     )
-    if len(sdk) == len(merged_dt):
+    if len(sdk) == len(v_stdlib):
         # if length matches, compare individually
-        for v_sdk, v_mdt in zip(sdk, merged_dt):
+        for v_sdk, v_std in zip(sdk, v_stdlib):
             # versions with a single dot may have been read as floats
-            v_sdk, v_mdt = str(v_sdk), str(v_mdt)
-            if VersionOrder(v_sdk) < VersionOrder(v_mdt):
+            if VersionOrder(str(v_sdk)) < VersionOrder(str(v_std)):
                 if sdk_lint not in lints:
                     lints.append(sdk_lint)
     elif len(sdk) == 1:
         # if length doesn't match, only warn if a single SDK version
         # is lower than _all_ merged deployment targets
         if all(
-            VersionOrder(str(sdk[0])) < VersionOrder(str(v_mdt)) for v_mdt in merged_dt
+            VersionOrder(str(sdk[0])) < VersionOrder(str(v_std)) for v_std in v_stdlib
         ):
             if sdk_lint not in lints:
                 lints.append(sdk_lint)
