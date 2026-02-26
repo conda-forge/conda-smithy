@@ -488,6 +488,29 @@ def test_cbc_osx_lints_variants_yaml(
             assert any(lint.startswith(exp_lint) for lint in lints)
 
 
+@pytest.mark.parametrize("recipe_version", [0, 1])
+def test_duplicated_recipe_configs(recipe_version):
+    recipe_content = "package:\n  name: foo"
+    config_content = "c_stdlib_version:\n - 2.17"
+    with tmp_directory() as recipe_dir:
+        recipe_dir = Path(recipe_dir)
+        if recipe_version == 1:
+            recipe_dir.joinpath("recipe.yaml").write_text(recipe_content)
+            recipe_dir.joinpath("conda-forge.yml").write_text(
+                "conda_build_tool: rattler-build"
+            )
+        else:
+            recipe_dir.joinpath("meta.yaml").write_text(recipe_content)
+
+        # write both config formats
+        recipe_dir.joinpath("conda_build_config.yaml").write_text(config_content)
+        recipe_dir.joinpath("variants.yaml").write_text(config_content)
+
+        # run the linter
+        lints = linter.main(recipe_dir)
+        assert any(lint.startswith("Found two recipe config") for lint in lints)
+
+
 class TestLinter(unittest.TestCase):
     def test_bad_top_level(self):
         meta = OrderedDict([["package", {}], ["build", {}], ["sources", {}]])

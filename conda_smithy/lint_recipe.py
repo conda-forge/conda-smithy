@@ -367,7 +367,15 @@ def lintify_meta_yaml(
         recipe_name, build_requirements, lints, recipe_version=recipe_version
     )
 
-    # 30: stdlib-related lints
+    # 30: two configuration files present
+    if sum(v is not None for v in recipe_config_keys.values()) > 1:
+        lints.append(
+            "Found two recipe configuration files, but you may only use one! "
+            "You may use `conda_build_config.yaml` for both v0 and v1 recipes, "
+            "while `variants.yaml` may only be used with v1 recipes"
+        )
+
+    # 31: stdlib-related lints
     if "lint_stdlib" not in lints_to_skip:
         for config_fn in recipe_config_keys.keys():
             lint_stdlib(
