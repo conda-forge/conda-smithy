@@ -511,6 +511,34 @@ def test_duplicated_recipe_configs(recipe_version):
         assert any(lint.startswith("Found two recipe config") for lint in lints)
 
 
+@pytest.mark.parametrize(
+    "recipe_version,config_file",
+    [(0, "conda_build_config.yaml"), (0, "variants.yaml"), (1, "variants.yaml")],
+)
+def test_lint_macdt(recipe_version, config_file):
+    recipe_content = "package:\n  name: foo"
+    with tmp_directory() as recipe_dir:
+        recipe_dir = Path(recipe_dir)
+        if recipe_version == 1:
+            recipe_dir.joinpath("recipe.yaml").write_text(recipe_content)
+            recipe_dir.joinpath("conda-forge.yml").write_text(
+                "conda_build_tool: rattler-build"
+            )
+        else:
+            recipe_dir.joinpath("meta.yaml").write_text(recipe_content)
+
+        if config_file == "conda_build_config.yaml":
+            payload = "MACOSX_DEPLOYMENT_TARGET:\n  - 10.13  # [osx]"
+        else:
+            payload = "MACOSX_DEPLOYMENT_TARGET:\n  - if: osx\n    then: 10.13"
+
+        recipe_dir.joinpath(config_file).write_text(payload)
+
+        # run the linter
+        lints = linter.main(recipe_dir, conda_forge=True)
+        assert any(lint.startswith("The MACOSX_DEPLOYMENT_TARGET") for lint in lints)
+
+
 class TestLinter(unittest.TestCase):
     def test_bad_top_level(self):
         meta = OrderedDict([["package", {}], ["build", {}], ["sources", {}]])

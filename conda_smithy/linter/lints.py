@@ -826,6 +826,12 @@ def lint_osx_pins(recipe_dir, recipe_config_filename, lints, recipe_version):
         # nothing left to do
         return
 
+    if "MACOSX_DEPLOYMENT_TARGET" in cbc_osx:
+        lints.append(
+            f"The MACOSX_DEPLOYMENT_TARGET key in {recipe_config_file} needs to be "
+            "removed or replaced by c_stdlib_version, appropriately restricted to osx"
+        )
+
     def sort_osx(versions):
         # we need to have a known order for [x64, arm64]; in the absence of more
         # complicated regex processing, we assume that if there are two versions
