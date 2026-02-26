@@ -89,25 +89,14 @@ NEEDED_FAMILIES = ["gpl", "bsd", "mit", "apache", "psf"]
 
 
 def _get_forge_yaml(recipe_dir: Optional[str] = None) -> dict:
+    feedstock_config_keys = {}
     if recipe_dir:
-        forge_yaml_filename = (
-            glob(os.path.join(recipe_dir, "..", "conda-forge.yml"))
-            or glob(
-                os.path.join(recipe_dir, "conda-forge.yml"),
-            )
-            or glob(
-                os.path.join(recipe_dir, "..", "..", "conda-forge.yml"),
-            )
-        )
-        if forge_yaml_filename:
-            with open(forge_yaml_filename[0], encoding="utf-8") as fh:
-                forge_yaml = get_yaml().load(fh)
-        else:
-            forge_yaml = {}
-    else:
-        forge_yaml = {}
+        feedstock_config_file = find_local_config_file(recipe_dir, "conda-forge.yml")
+        if feedstock_config_file:
+            with open(feedstock_config_file, encoding="utf-8") as fh:
+                feedstock_config_keys = get_yaml().load(fh)
 
-    return forge_yaml
+    return feedstock_config_keys
 
 
 def lintify_forge_yaml(recipe_dir: Optional[str] = None) -> (list, list):
