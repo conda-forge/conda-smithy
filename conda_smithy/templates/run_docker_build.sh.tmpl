@@ -29,7 +29,7 @@ if [[ "${sha:-}" == "" ]]; then
   popd
 fi
 
-${CONTAINER_RUNTIME} info
+${DOCKER_EXECUTABLE} info
 
 # In order for the conda-build process in the container to write to the mounted
 # volumes, we need to run with the same id as the host machine, which is
@@ -83,7 +83,7 @@ fi
 VOLUME_SUFFIX=",z"
 
 # Podman-specific handling
-if [ "${CONTAINER_RUNTIME}" = "podman" ]; then
+if [ "${DOCKER_EXECUTABLE}" = "podman" ]; then
     # Fix file permissions for rootless podman builds
     podman unshare chown -R ${HOST_USER_ID}:${HOST_USER_ID} "${ARTIFACTS}"
     podman unshare chown -R ${HOST_USER_ID}:${HOST_USER_ID} "${RECIPE_ROOT}"
@@ -102,9 +102,9 @@ fi
 export UPLOAD_PACKAGES="${UPLOAD_PACKAGES:-True}"
 export IS_PR_BUILD="${IS_PR_BUILD:-False}"
 
-${CONTAINER_RUNTIME} pull "${DOCKER_IMAGE}"
+${DOCKER_EXECUTABLE} pull "${DOCKER_IMAGE}"
 
-${CONTAINER_RUNTIME} run ${DOCKER_RUN_ARGS} \
+${DOCKER_EXECUTABLE} run ${DOCKER_RUN_ARGS} \
            -v "${RECIPE_ROOT}":/home/conda/recipe_root:rw${VOLUME_SUFFIX},delegated \
            -v "${FEEDSTOCK_ROOT}":/home/conda/feedstock_root:rw${VOLUME_SUFFIX},delegated \
            -e CONFIG \
