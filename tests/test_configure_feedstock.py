@@ -419,6 +419,63 @@ def test_upload_on_branch_azure(upload_on_branch_recipe, jinja_env):
     assert "BUILD_SOURCEBRANCHNAME" in content_lin["jobs"][0]["steps"][1]["script"]
 
 
+def test_upload_on_branch_github_actions(upload_on_branch_recipe, jinja_env):
+    upload_on_branch_recipe.config["provider"]["linux"] = "github_actions"
+    upload_on_branch_recipe.config["provider"]["osx"] = "github_actions"
+    upload_on_branch_recipe.config["provider"]["win"] = "github_actions"
+
+    configure_feedstock.render_github_actions(
+        jinja_env=jinja_env,
+        forge_config=upload_on_branch_recipe.config,
+        forge_dir=upload_on_branch_recipe.recipe,
+    )
+    # Check that the parameter is in the configuration.
+    assert "upload_on_branch" in upload_on_branch_recipe.config
+    assert upload_on_branch_recipe.config["upload_on_branch"] == "foo-branch"
+    # Check that the parameter is in the generated file.
+    with open(
+        os.path.join(
+            upload_on_branch_recipe.recipe,
+            ".github",
+            "workflows",
+            "conda-build.yml",
+        )
+    ) as fp:
+        content = yaml.safe_load(fp)
+
+    linux_step = next(
+        step
+        for step in content["jobs"]["build"]["steps"]
+        if step["name"] == "Build on Linux"
+    )
+    assert linux_step["env"]["UPLOAD_ON_BRANCH"] == "foo-branch"
+    assert "$(basename $GITHUB_REF)" in linux_step["run"]
+
+    macos_step = next(
+        step
+        for step in content["jobs"]["build"]["steps"]
+        if step["name"] == "Build on macOS"
+    )
+    assert macos_step["env"]["UPLOAD_ON_BRANCH"] == "foo-branch"
+    assert "$(basename $GITHUB_REF)" in macos_step["run"]
+
+    win_build_step = next(
+        step
+        for step in content["jobs"]["build"]["steps"]
+        if step["name"] == "Build on windows"
+    )
+    assert win_build_step["env"]["UPLOAD_ON_BRANCH"] == "foo-branch"
+    with open(
+        os.path.join(
+            upload_on_branch_recipe.recipe,
+            ".scripts",
+            "run_win_build.bat",
+        )
+    ) as fp:
+        build_script_win = fp.read()
+    assert r"%GITHUB_REF:refs/heads/=%" in build_script_win
+
+
 def test_upload_on_branch_appveyor(upload_on_branch_recipe, jinja_env):
     upload_on_branch_recipe.config["provider"]["win"] = "appveyor"
     configure_feedstock.render_appveyor(
