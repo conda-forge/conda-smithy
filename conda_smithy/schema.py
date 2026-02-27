@@ -18,18 +18,12 @@ except ImportError:
     from backports.strenum import StrEnum
 
 
-if __name__ == "__main__":
-    from conda_smithy.validate_schema import (
-        CONDA_FORGE_YAML_DEFAULTS_FILE,
-        CONDA_FORGE_YAML_SCHEMA_FILE,
-    )
-else:
-    # use relative imports to ensure that we don't pick up the data paths from
-    # a non-development conda-smithy installed in site-packages
-    from .validate_schema import (  # noqa: TID252
-        CONDA_FORGE_YAML_DEFAULTS_FILE,
-        CONDA_FORGE_YAML_SCHEMA_FILE,
-    )
+# use relative imports to ensure that we don't pick up the data paths from
+# a non-development conda-smithy installed in site-packages
+from .validate_schema import (  # noqa: TID252
+    CONDA_FORGE_YAML_DEFAULTS_FILE,
+    CONDA_FORGE_YAML_SCHEMA_FILE,
+)
 
 
 class Nullable(Enum):
@@ -1133,6 +1127,7 @@ class ConfigModel(BaseModel):
 if __name__ == "__main__":
     # This is used to generate the model dump for conda-smithy internal use
     # and for documentation purposes.
+    # Run this code via `python -m conda_smithy.schema`
 
     model = ConfigModel()
 
