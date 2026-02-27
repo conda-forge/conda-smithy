@@ -885,6 +885,11 @@ def dump_subspace_config_files(metas, root_path, platform, arch, upload, forge_c
     yaml.add_representer(OrderedDict, _yaml_represent_ordereddict)
     yaml.add_representer(str, _yaml_represent_str)
 
+    # get feedstock name; prefer explicit config, otherwise fall back to default
+    fn = metas[0].meta.get("extra", {}).get("feedstock-name")
+    feedstock_name = fn if fn else metas[0].meta.get("package", {}).get("name")
+    repo_name = f"{feedstock_name}-feedstock"
+
     platform_arch = f"{platform}-{arch}"
 
     result = []
@@ -901,10 +906,16 @@ def dump_subspace_config_files(metas, root_path, platform, arch, upload, forge_c
         # drone has a limit of 50, see https://github.com/conda-forge/conda-smithy/issues/1188
         if len(short_config_name) >= 49:
             short_config_name = config_name[:40] + "_h" + conf_hash
-        # 200 = 190 + len("_h") + len(conf_hash)
-        if len(config_name) >= 200:
-            # Shorten file name length to avoid hitting maximum filename limits.
-            config_name = config_name[:190] + "_h" + conf_hash
+        # we need to shorten long variant files to avoid hitting maximum path limits on win.
+        # GHA is pretty much the worst offender here, as it will waste a lot of characters by
+        # duplicating the repo name in a way that cannot be overridden (see #2476), e.g.
+        #   C:/Users/runnerx/_work/pytorch-cpu-feedstock/pytorch-cpu-feedstock/<actual_content>
+        # Other providers generally have shorter folder hierarchies, so not handled explicitly
+        outer_len = len(f"C:/Users/runnerx/_work/{repo_name}/{repo_name}/.ci_support/")
+        # 260 characters is default max for total path length on win; incl. null terminator
+        if outer_len + len(f"{config_name}.yaml") > 259:
+            # config_name does not include `.yaml` extension; 15 == len(f"_h{conf_hash}.yaml")
+            config_name = config_name[: (259 - outer_len - 15)] + "_h" + conf_hash
 
         out_folder = os.path.join(root_path, ".ci_support")
         out_path = os.path.join(out_folder, config_name) + ".yaml"
