@@ -479,6 +479,19 @@ def test_azure_with_empty_yum_reqs_raises(py_recipe, jinja_env):
         )
 
 
+def test_github_actions_with_empty_yum_reqs_raises(py_recipe, jinja_env):
+    with open(
+        os.path.join(py_recipe.recipe, "recipe", "yum_requirements.txt"), "w"
+    ) as f:
+        f.write("# effectively empty")
+    with pytest.raises(ValueError):
+        configure_feedstock.render_github_actions(
+            jinja_env=jinja_env,
+            forge_config=py_recipe.config,
+            forge_dir=py_recipe.recipe,
+        )
+
+
 @pytest.mark.legacy_circle
 @pytest.mark.legacy_travis
 def test_circle_osx(py_recipe, jinja_env):
@@ -650,9 +663,9 @@ def test_secrets(py_recipe, jinja_env):
 
 
 def test_migrator_recipe(recipe_migration_cfep9, jinja_env):
-    recipe_migration_cfep9.config["provider"]["linux"] = "azure"
+    render_func = getattr(configure_feedstock, f"render_{DEFAULT_PROVIDER}")
 
-    configure_feedstock.render_azure(
+    render_func(
         jinja_env=jinja_env,
         forge_config=recipe_migration_cfep9.config,
         forge_dir=recipe_migration_cfep9.recipe,
@@ -670,7 +683,7 @@ def test_migrator_recipe(recipe_migration_cfep9, jinja_env):
 
 
 def test_migrator_cfp_override(recipe_migration_cfep9, jinja_env):
-    recipe_migration_cfep9.config["provider"]["linux"] = "azure"
+    render_func = getattr(configure_feedstock, f"render_{DEFAULT_PROVIDER}")
 
     cfp_file = recipe_migration_cfep9.config["exclusive_config_file"]
     cfp_migration_dir = os.path.join(
@@ -684,7 +697,7 @@ def test_migrator_cfp_override(recipe_migration_cfep9, jinja_env):
                 zlib:
                    - 1001
                 """))
-    configure_feedstock.render_azure(
+    render_func(
         jinja_env=jinja_env,
         forge_config=recipe_migration_cfep9.config,
         forge_dir=recipe_migration_cfep9.recipe,
@@ -702,7 +715,7 @@ def test_migrator_cfp_override(recipe_migration_cfep9, jinja_env):
 
 
 def test_migrator_delete_old(recipe_migration_cfep9, jinja_env):
-    recipe_migration_cfep9.config["provider"]["linux"] = "azure"
+    render_func = getattr(configure_feedstock, f"render_{DEFAULT_PROVIDER}")
 
     cfp_file = recipe_migration_cfep9.config["exclusive_config_file"]
     cfp_migration_dir = os.path.join(
@@ -717,7 +730,7 @@ def test_migrator_delete_old(recipe_migration_cfep9, jinja_env):
         )
     )
     os.makedirs(cfp_migration_dir, exist_ok=True)
-    configure_feedstock.render_azure(
+    render_func(
         jinja_env=jinja_env,
         forge_config=recipe_migration_cfep9.config,
         forge_dir=recipe_migration_cfep9.recipe,
@@ -736,8 +749,8 @@ def test_migrator_downgrade_recipe(recipe_migration_cfep9_downgrade, jinja_env):
     """
     Assert that even when we have two migrations targeting the same file the correct one wins.
     """
-    recipe_migration_cfep9_downgrade.config["provider"]["linux"] = "azure"
-    configure_feedstock.render_azure(
+    render_func = getattr(configure_feedstock, f"render_{DEFAULT_PROVIDER}")
+    render_func(
         jinja_env=jinja_env,
         forge_config=recipe_migration_cfep9_downgrade.config,
         forge_dir=recipe_migration_cfep9_downgrade.recipe,
@@ -770,9 +783,8 @@ def test_migrator_compiler_version_recipe(recipe_migration_win_compiled, jinja_e
     """
     Assert that even when we have two migrations targeting the same file the correct one wins.
     """
-    recipe_migration_win_compiled.config["provider"]["linux"] = "azure"
-    recipe_migration_win_compiled.config["provider"]["win"] = "azure"
-    configure_feedstock.render_azure(
+    render_func = getattr(configure_feedstock, f"render_{DEFAULT_PROVIDER}")
+    render_func(
         jinja_env=jinja_env,
         forge_config=recipe_migration_win_compiled.config,
         forge_dir=recipe_migration_win_compiled.recipe,
@@ -818,7 +830,7 @@ def test_files_skip_render(render_skipped_recipe, jinja_env):
         assert not os.path.exists(fpath)
 
 
-def test_choco_install(choco_recipe, jinja_env):
+def test_choco_install_azure(choco_recipe, jinja_env):
     choco_recipe.config["provider"]["win"] = "azure"
     configure_feedstock.render_azure(
         jinja_env=jinja_env,
@@ -839,6 +851,32 @@ def test_choco_install(choco_recipe, jinja_env):
     - script: |
         choco install pkg1 --version=X.Y.Z -fdv -y --debug
       displayName: "Install Chocolatey Package: pkg1 --version=X.Y.Z"
+""".strip()
+    assert exp in contents
+
+
+def test_choco_install_github_actions(choco_recipe, jinja_env):
+    configure_feedstock.render_github_actions(
+        jinja_env=jinja_env,
+        forge_config=choco_recipe.config,
+        forge_dir=choco_recipe.recipe,
+    )
+    gha_file = os.path.join(
+        os.path.join(choco_recipe.recipe, ".github", "workflows", "conda-build.yml")
+    )
+    assert os.path.isfile(gha_file)
+    with open(gha_file) as f:
+        contents = f.read()
+    exp = """
+    - name: "Install Chocolatey Package: pkg0"
+      if matrix.os == 'windows'
+      run: |
+        choco install pkg0 -fdv -y --debug
+
+    - name: "Install Chocolatey Package: pkg1 --version=X.Y.Z"
+      if matrix.os == 'windows'
+      run: |
+        choco install pkg1 --version=X.Y.Z -fdv -y --debug
 """.strip()
     assert exp in contents
 
@@ -902,10 +940,6 @@ def test_forge_yml_alt_path(config_yaml: ConfigYAML):
 
 
 def test_cos7_env_render(py_recipe, jinja_env):
-    py_recipe.config["provider"]["linux"] = "azure"
-    py_recipe.config["provider"]["osx"] = "azure"
-    py_recipe.config["provider"]["win"] = "azure"
-
     forge_config = copy.deepcopy(py_recipe.config)
     forge_config["os_version"] = {"linux_64": "cos7"}
     has_env = "DEFAULT_LINUX_VERSION" in os.environ
@@ -915,7 +949,8 @@ def test_cos7_env_render(py_recipe, jinja_env):
 
     try:
         assert "DEFAULT_LINUX_VERSION" not in os.environ
-        configure_feedstock.render_azure(
+        render_func = getattr(configure_feedstock, f"render_{DEFAULT_PROVIDER}")
+        render_func(
             jinja_env=jinja_env,
             forge_config=forge_config,
             forge_dir=py_recipe.recipe,
@@ -923,7 +958,7 @@ def test_cos7_env_render(py_recipe, jinja_env):
         assert os.environ["DEFAULT_LINUX_VERSION"] == "cos7"
 
         # this configuration should be run
-        assert forge_config["azure"]["enabled"]
+        assert forge_config[DEFAULT_PROVIDER]["enabled"]
         matrix_dir = os.path.join(py_recipe.recipe, ".ci_support")
         assert os.path.isdir(matrix_dir)
         # single matrix entry - readme is generated later in main function
@@ -950,7 +985,8 @@ def test_cuda_enabled_render(cuda_enabled_recipe, jinja_env):
 
     try:
         assert "CF_CUDA_ENABLED" not in os.environ
-        configure_feedstock.render_azure(
+        render_func = getattr(configure_feedstock, f"render_{DEFAULT_PROVIDER}")
+        render_func(
             jinja_env=jinja_env,
             forge_config=forge_config,
             forge_dir=cuda_enabled_recipe.recipe,
