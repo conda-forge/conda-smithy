@@ -18,12 +18,18 @@ except ImportError:
     from backports.strenum import StrEnum
 
 
-# use relative imports to ensure that we don't pick up the data paths from
-# a non-development conda-smithy installed in site-packages
-from .validate_schema import (  # noqa: TID252
-    CONDA_FORGE_YAML_DEFAULTS_FILE,
-    CONDA_FORGE_YAML_SCHEMA_FILE,
-)
+if __name__ == "__main__":
+    from conda_smithy.validate_schema import (
+        CONDA_FORGE_YAML_DEFAULTS_FILE,
+        CONDA_FORGE_YAML_SCHEMA_FILE,
+    )
+else:
+    # use relative imports to ensure that we don't pick up the data paths from
+    # a non-development conda-smithy installed in site-packages
+    from .validate_schema import (  # noqa: TID252
+        CONDA_FORGE_YAML_DEFAULTS_FILE,
+        CONDA_FORGE_YAML_SCHEMA_FILE,
+    )
 
 
 class Nullable(Enum):
@@ -286,7 +292,7 @@ class GithubActionsConfig(BaseModel):
 
     max_parallel: Optional[Union[int, Nullable]] = Field(
         description="The maximum number of jobs to run in parallel",
-        default=None,
+        default=10,
     )
 
     resize_win_partitions: Optional[bool] = Field(
@@ -445,7 +451,7 @@ Provider = create_model(
             for plat in list(PlatformsAliases) + list(Platforms)
         ]
         + [
-            (str(plat), (Optional[ProviderType], Field(default="azure")))
+            (str(plat), (Optional[ProviderType], Field(default="github_actions")))
             for plat in ("linux_64", "osx_64", "win_64")
         ]
     ),
