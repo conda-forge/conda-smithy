@@ -1487,7 +1487,7 @@
               "type": "null"
             }
           ],
-          "default": null,
+          "default": "github_actions",
           "title": "Osx Arm64"
         },
         "win_32": {

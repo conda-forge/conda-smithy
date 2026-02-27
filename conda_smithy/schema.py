@@ -452,7 +452,7 @@ Provider = create_model(
         ]
         + [
             (str(plat), (Optional[ProviderType], Field(default="github_actions")))
-            for plat in ("linux_64", "osx_64", "win_64")
+            for plat in ("linux_64", "osx_64", "win_64", "osx_arm64")
         ]
     ),
 )
