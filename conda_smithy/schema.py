@@ -25,6 +25,8 @@ from .validate_schema import (  # noqa: TID252
     CONDA_FORGE_YAML_SCHEMA_FILE,
 )
 
+DEFAULT_PROVIDER = "github_actions"
+
 
 class Nullable(Enum):
     """Created to avoid issue with schema validation of null values in lists or dicts."""
@@ -445,8 +447,8 @@ Provider = create_model(
             for plat in list(PlatformsAliases) + list(Platforms)
         ]
         + [
-            (str(plat), (Optional[ProviderType], Field(default="github_actions")))
-            for plat in ("linux_64", "osx_64", "win_64", "osx_arm64")
+            (str(plat), (Optional[ProviderType], Field(default=DEFAULT_PROVIDER)))
+            for plat in ("linux_64", "osx_64", "win_64")
         ]
     ),
 )
