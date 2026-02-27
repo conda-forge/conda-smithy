@@ -1054,10 +1054,6 @@ def test_cos7_env_render(py_recipe, jinja_env):
 
 def test_cuda_enabled_render(cuda_enabled_recipe, jinja_env):
     forge_config = copy.deepcopy(cuda_enabled_recipe.config)
-    forge_config["provider"]["linux"] = "azure"
-    forge_config["provider"]["osx"] = "azure"
-    forge_config["provider"]["win"] = "azure"
-
     has_env = "CF_CUDA_ENABLED" in os.environ
     if has_env:
         old_val = os.environ["CF_CUDA_ENABLED"]
@@ -1074,7 +1070,7 @@ def test_cuda_enabled_render(cuda_enabled_recipe, jinja_env):
         assert os.environ["CF_CUDA_ENABLED"] == "True"
 
         # this configuration should be run
-        assert forge_config["azure"]["enabled"]
+        assert forge_config[DEFAULT_PROVIDER]["enabled"]
         matrix_dir = os.path.join(cuda_enabled_recipe.recipe, ".ci_support")
         assert os.path.isdir(matrix_dir)
         # single matrix entry - readme is generated later in main function
