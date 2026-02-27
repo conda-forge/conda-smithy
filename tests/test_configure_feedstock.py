@@ -618,7 +618,6 @@ def test_readme_has_terminating_newline(noarch_recipe, jinja_env):
 
 def test_secrets(py_recipe, jinja_env):
     py_recipe.config["provider"]["linux"] = "azure"
-
     configure_feedstock.render_azure(
         jinja_env=jinja_env,
         forge_config=py_recipe.config,
@@ -643,6 +642,30 @@ def test_secrets(py_recipe, jinja_env):
                         )
                         for job in config["jobs"]
                     )
+
+    py_recipe.config["provider"]["osx"] = "github_actions"
+    configure_feedstock.render_github_actions(
+        jinja_env=jinja_env,
+        forge_config=py_recipe.config,
+        forge_dir=py_recipe.recipe,
+    )
+
+    run_docker_build = os.path.join(py_recipe.recipe, ".scripts", "run_docker_build.sh")
+    with open(run_docker_build, "rb") as run_docker_build_file:
+        content = run_docker_build_file.read()
+    assert b"-e BINSTAR_TOKEN" in content
+
+    config_yaml = os.path.join(
+        py_recipe.recipe, ".github", "workflows", "conda-build.yml"
+    )
+    with open(config_yaml) as fo:
+        config = yaml.safe_load(fo)
+        print(config)
+        if "steps" in config:
+            any(
+                step.get("env", {}).get("BINSTAR_TOKEN", None) == "$(BINSTAR_TOKEN)"
+                for step in config["steps"]
+            )
 
     py_recipe.config["provider"]["linux_aarch64"] = "drone"
     configure_feedstock.render_drone(
