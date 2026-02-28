@@ -3,7 +3,7 @@
 * Add Podman support and SELinux volume handling to
   ``run_docker_build.sh`` template, enabling local builds on
   systems where Docker is unavailable. The container runtime can
-  now be overridden using the ``CONTAINER_RUNTIME`` environment
+  now be overridden using the ``DOCKER_EXECUTABLE`` environment
   variable for one-off builds without rerendering. (#2435)
 
 **Changed:**
