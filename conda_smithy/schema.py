@@ -25,6 +25,8 @@ from .validate_schema import (  # noqa: TID252
     CONDA_FORGE_YAML_SCHEMA_FILE,
 )
 
+DEFAULT_PROVIDER = "github_actions"
+
 
 class Nullable(Enum):
     """Created to avoid issue with schema validation of null values in lists or dicts."""
@@ -286,7 +288,7 @@ class GithubActionsConfig(BaseModel):
 
     max_parallel: Optional[Union[int, Nullable]] = Field(
         description="The maximum number of jobs to run in parallel",
-        default=None,
+        default=10,
     )
 
     resize_win_partitions: Optional[bool] = Field(
@@ -445,7 +447,7 @@ Provider = create_model(
             for plat in list(PlatformsAliases) + list(Platforms)
         ]
         + [
-            (str(plat), (Optional[ProviderType], Field(default="azure")))
+            (str(plat), (Optional[ProviderType], Field(default=DEFAULT_PROVIDER)))
             for plat in ("linux_64", "osx_64", "win_64")
         ]
     ),
@@ -1127,6 +1129,7 @@ class ConfigModel(BaseModel):
 if __name__ == "__main__":
     # This is used to generate the model dump for conda-smithy internal use
     # and for documentation purposes.
+    # Run this code via `python -m conda_smithy.schema`
 
     model = ConfigModel()
 

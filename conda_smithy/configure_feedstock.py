@@ -1204,19 +1204,21 @@ def _render_ci_provider(
             forge_config,
         )
         for channel_target in migrated_combined_variant_spec.get("channel_targets", []):
-            if (
-                channel_target.startswith("conda-forge ")
-                and provider_name == "github_actions"
-                and not (
-                    (forge_config["github_actions"]["self_hosted"])
-                    or (os.path.basename(forge_dir) in SERVICE_FEEDSTOCKS)
-                )
-            ):
-                raise RuntimeError(
-                    "Using github_actions as the CI provider inside "
-                    "conda-forge github org is not allowed in order "
-                    "to avoid a denial of service for other infrastructure."
-                )
+            # MRB: Commented this out when github granted us a bigger runner allocation
+            #      Put this back to prevent feedstocks from using GHA
+            # if (
+            #     channel_target.startswith("conda-forge ")
+            #     and provider_name == "github_actions"
+            #     and not (
+            #         (forge_config["github_actions"]["self_hosted"])
+            #         or (os.path.basename(forge_dir) in SERVICE_FEEDSTOCKS)
+            #     )
+            # ):
+            #     raise RuntimeError(
+            #         "Using github_actions as the CI provider inside "
+            #         "conda-forge github org is not allowed in order "
+            #         "to avoid a denial of service for other infrastructure."
+            #     )
 
             # we skip travis builds for anything but aarch64, ppc64le and s390x
             # due to their current open-source policies around usage
