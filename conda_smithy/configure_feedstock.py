@@ -2948,7 +2948,7 @@ def main(
         )
 
     config = _load_forge_config(forge_dir, exclusive_config_file, forge_yml)
-    config["feedstock_name"] = os.path.basename(forge_dir)
+    config["feedstock_name"] = config["github"]["repo_name"]
 
     env = make_jinja_env(forge_dir)
     logger.debug("env rendered")
