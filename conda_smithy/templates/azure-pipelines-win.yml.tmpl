@@ -69,7 +69,7 @@ jobs:
         {{ secret }}: $({{ secret }})
 {%- endfor %}
 
-{%- if azure.store_build_artifacts %}
+{%- if store_build_artifacts.win_azure %}
     - script: |
         set MINIFORGE_HOME=$(MINIFORGE_HOME)
         set CI=azure
