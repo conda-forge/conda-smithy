@@ -15,8 +15,13 @@ from rattler_build_conda_compat.utils import has_recipe as has_recipe_v1
 from ruamel.yaml import YAML
 
 import conda_smithy.cirun_utils
-from conda_smithy import __version__, configure_feedstock, feedstock_io
-from conda_smithy import lint_recipe as linter
+from conda_smithy import (
+    __version__,
+    configure_feedstock,
+    feedstock_io,
+    lint_artifact,
+    lint_recipe,
+)
 from conda_smithy.configure_feedstock import (
     _load_forge_config,
     get_cached_cfp_file_path,
@@ -104,8 +109,7 @@ class Init(Subcommand):
 
         super().__init__(
             parser,
-            "Create a feedstock git repository, which can contain "
-            "one conda recipes.",
+            "Create a feedstock git repository, which can contain one conda recipes.",
         )
         scp = self.subcommand_parser
         scp.add_argument(
@@ -544,7 +548,7 @@ class Regenerate(Subcommand):
     def __init__(self, parser):
         super().__init__(
             parser,
-            "Regenerate / update the CI support files of the " "feedstock.",
+            "Regenerate / update the CI support files of the feedstock.",
         )
         scp = self.subcommand_parser
         scp.add_argument(
@@ -630,7 +634,7 @@ class RecipeLint(Subcommand):
     def __call__(self, args):
         all_good = True
         for recipe in args.recipe_directory:
-            lints, hints = linter.main(
+            lints, hints = lint_recipe.main(
                 os.path.join(recipe),
                 conda_forge=args.conda_forge,
                 return_hints=True,
@@ -661,6 +665,47 @@ class RecipeLint(Subcommand):
                 print(f"{recipe} is in fine form")
         # Exit code 1 for some lint, 0 for no lint.
         sys.exit(int(not all_good))
+
+
+class ArtifactLint(Subcommand):
+    subcommand = "artifact-lint"
+    aliases = ["lint-artifact"]
+
+    intro_message = (
+        "We detected some problems in the contents of your artifacts! "
+        "This usually has to do with the location of some files. "
+        "Please adjust your build scripts so the files mentioned below "
+        "are placed in the correct paths."
+    )
+
+    def __init__(self, parser):
+        super().__init__(
+            parser,
+            "Lint the contents of one or conda artifacts.",
+        )
+        scp = self.subcommand_parser
+        scp.add_argument(
+            "artifacts",
+            metavar="artifact",
+            nargs="+",
+            help="Path to conda artifacts to check",
+        )
+
+    def __call__(self, args):
+        exit_code = 0
+        showed_intro_message = False
+        for artifact in args.artifacts:
+            lints, hints = lint_artifact.main(artifact)
+            if lints or hints:
+                if not showed_intro_message:
+                    print(self.intro_message)
+                    showed_intro_message = True
+                print(f"\n**{artifact}**")
+                print("\n".join(lints))
+                print("\n".join(hints))
+                exit_code = 1
+        # Exit code 1 for some lint, 0 for no lint.
+        sys.exit(exit_code)
 
 
 POST_SKELETON_MESSAGE = """
