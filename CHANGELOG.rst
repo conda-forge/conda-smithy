@@ -4,6 +4,15 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.56.1
+====================
+
+**Authors:**
+
+* Isuru Fernando
+
+
+
 v3.56.0
 ====================
 
