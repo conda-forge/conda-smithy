@@ -42,6 +42,7 @@ from conda_smithy.linter.lints import (
     lint_build_section_should_have_a_number,
     lint_check_usage_of_whls,
     lint_feedstock_name_not_end_with_feedstock,
+    lint_floats_quoted,
     lint_go_licenses_are_bundled,
     lint_jinja_var_references,
     lint_jinja_variables_definitions,
@@ -388,6 +389,9 @@ def lintify_meta_yaml(
                 # the version of the config file does not change the version of the recipe
                 recipe_version=recipe_version,
             )
+
+    # 32: floats should be quoted
+    lint_floats_quoted(meta, lints, recipe_version=recipe_version)
 
     # hints
     # 1: suggest pip
