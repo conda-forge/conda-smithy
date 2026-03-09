@@ -15,9 +15,9 @@ Authors are sorted by number of commits.
 * Filipe Fernandes
 * Min RK
 * Dougal J. Sutherland
+* Michał Górny
 * John Kirkham
 * Amit Kumar
-* Michał Górny
 * Marcel Bargull
 * Hadrien Mary
 * shadow_walker
@@ -32,8 +32,8 @@ Authors are sorted by number of commits.
 * Julian Rüth
 * Yannik Tausch
 * Daniel Bast
-* Billy K. Poon
 * Daniel Ching
+* Billy K. Poon
 * vinicius douglas cerutti
 * Tim Snyder
 * Mike Henry
@@ -53,6 +53,7 @@ Authors are sorted by number of commits.
 * Leopold Talirz
 * Peter Williams
 * Tom Pollard
+* Pavel Zwerschke
 * Gonzalo Pena-Castellanos
 * John Blischak
 * Matthias Diener
@@ -60,7 +61,6 @@ Authors are sorted by number of commits.
 * Carlo
 * Matthew Craig
 * Joshua L. Adelman
-* Pavel Zwerschke
 * Marius van Niekerk
 * Johannes Köster
 * Philippe Blain
@@ -146,3 +146,4 @@ Authors are sorted by number of commits.
 * James Myatt
 * Dan Yeaw
 * Mikhail Ryazanov
+* Filippo Luca Ferretti

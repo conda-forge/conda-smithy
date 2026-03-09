@@ -393,7 +393,7 @@
   github: shadowwalkersb
 - name: Matthew R. Becker
   email: becker.mr@gmail.com
-  num_commits: 532
+  num_commits: 534
   first_commit: 2020-01-07 17:44:33
   github: beckermr
   alternate_emails:
@@ -476,7 +476,7 @@
   github: jwillemsen
 - name: Jaime Rodríguez-Guerra
   email: jaimergp@users.noreply.github.com
-  num_commits: 279
+  num_commits: 280
   first_commit: 2020-11-01 14:18:08
   github: jaimergp
 - name: Bastian Zimmermann
@@ -539,7 +539,7 @@
   github: nehaljwani
 - name: H. Vetinari
   email: h.vetinari@gmx.com
-  num_commits: 138
+  num_commits: 157
   first_commit: 2021-11-14 02:53:10
 - name: Benjamin Tovar
   email: btovar@nd.edu
@@ -560,7 +560,7 @@
   github: SylvainCorlay
 - name: Daniel Ching
   email: carterbox@users.noreply.github.com
-  num_commits: 15
+  num_commits: 16
   first_commit: 2022-05-11 16:57:15
   github: carterbox
   alternate_emails:
@@ -591,7 +591,7 @@
   github: zklaus
 - name: pre-commit-ci[bot]
   email: 66853113+pre-commit-ci[bot]@users.noreply.github.com
-  num_commits: 52
+  num_commits: 53
   first_commit: 2023-10-30 15:49:50
   github: carterbox
 - name: Amit Kumar
@@ -693,7 +693,7 @@
   email: mgorny@gentoo.org
   alternate_emails:
   - mgorny@quansight.com
-  num_commits: 35
+  num_commits: 36
   first_commit: 2024-11-06 09:06:27
   github: mgorny
 - name: Matt Chan
@@ -710,8 +710,9 @@
   first_commit: 2025-01-15 11:12:15
 - name: Pavel Zwerschke
   email: pavelzw@gmail.com
-  num_commits: 6
+  num_commits: 8
   first_commit: 2025-01-17 04:44:50
+  github: pavelzw
 - name: Bas Nijholt
   email: basnijholt@gmail.com
   num_commits: 1
@@ -765,3 +766,5 @@
   first_commit: 2025-11-18 14:09:22
 - name: Filippo Luca Ferretti
   email: 102977828+flferretti@users.noreply.github.com
+  num_commits: 1
+  first_commit: 2026-03-03 12:08:58
