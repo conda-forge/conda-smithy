@@ -1128,3 +1128,27 @@ def lint_recipe_is_abi3_bool(
             "string (i.e., 'true' or 'false'). Please change syntax like "
             "`is_abi3 == 'true' to `is_abi3`."
         )
+
+
+def lint_floats_quoted(
+    meta: dict,
+    lints: list[str],
+    recipe_version: int,
+) -> None:
+    def process_recursively(key: str, value: Any) -> None:
+        if isinstance(value, dict):
+            for subkey, subvalue in value.items():
+                process_recursively(f"{key}.{subkey}", subvalue)
+        elif isinstance(value, list):
+            for i, subvalue in enumerate(value):
+                process_recursively(f"{key}[{i}]", subvalue)
+        elif isinstance(value, float):
+            v0_hint = ' or "{{ var }}"' if recipe_version == 0 else ""
+            lints.append(
+                f"{key} has a value that is interpreted as a floating-point "
+                f'number. Please quote it (like "{value}"{v0_hint}) to '
+                "ensure that it is interpreted as string and preserved exactly."
+            )
+
+    for key, value in meta.items():
+        process_recursively(key, value)

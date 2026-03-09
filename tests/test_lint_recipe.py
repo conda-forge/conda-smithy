@@ -4544,5 +4544,127 @@ def test_no_custom_github_actions_workflows(tmp_path):
     assert not any("Github Actions workflows" in lint for lint in lints)
 
 
+@pytest.mark.parametrize(
+    "var_value,value,expect_lint",
+    [
+        ("1.0", "{{ version }}", True),
+        ("1.0", '"{{ version }}"', False),
+        ('\\"1.0\\"', "{{ version }}", False),  # ugly but valid
+        ("1", "{{ version }}", False),
+        ("1.0.0", "{{ version }}", False),
+        ("", "1.0", True),
+        ("", '"1.0"', False),
+        ("", "1", False),
+        ("", "1.0.0", False),
+    ],
+)
+def test_lint_v0_unquoted_floats(var_value: str, value: str, expect_lint: bool) -> None:
+    recipe = f"""\
+{{% set version = "{var_value}" %}}
+
+package:
+  name: foo
+  version: {value}
+
+build:
+  number: 1
+
+test:
+  commands:
+    - true
+
+about:
+  home: https://example.com
+  license: GPL-3.0-or-later
+  license_file:
+    - COPYING
+  summary: test
+
+extra:
+  recipe-maintainers:
+    - mgorny
+"""
+
+    with tmp_directory() as recipe_dir:
+        # Create minimal recipe content - the linter determines version from filename
+        with open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
+            fh.write(recipe)
+
+        lints, hints = linter.main(recipe_dir, return_hints=True, conda_forge=True)
+
+    assert lints == (
+        [
+            "package.version has a value that is interpreted as a floating-point "
+            'number. Please quote it (like "1.0" or "{{ var }}") to ensure that it is '
+            "interpreted as string and preserved exactly."
+        ]
+        if expect_lint
+        else []
+    )
+    assert hints == []
+
+
+@pytest.mark.parametrize(
+    "var_value,value,expect_lint",
+    [
+        ("1.0", "${{ version }}", "context.version"),
+        ('"1.0"', "${{ version }}", None),
+        ("1", "${{ version }}", None),
+        ("1.0.0", "${{ version }}", None),
+        ("", "1.0", "package.version"),
+        ("", '"1.0"', None),
+        ("", "1", None),
+        ("", "1.0.0", None),
+    ],
+)
+def test_lint_v1_unquoted_floats(
+    var_value: str, value: str, expect_lint: str | None
+) -> None:
+    recipe = f"""\
+context:
+  version: {var_value}
+
+package:
+  name: foo
+  version: {value}
+
+build:
+  number: 1
+
+tests:
+  - script:
+    - true
+
+about:
+  homepage: https://example.com
+  license: GPL-3.0-or-later
+  license_file:
+    - COPYING
+  summary: test
+
+extra:
+  recipe-maintainers:
+    - mgorny
+"""
+
+    with tmp_directory() as recipe_dir:
+        # Create minimal recipe content - the linter determines version from filename
+        with open(os.path.join(recipe_dir, "recipe.yaml"), "w") as fh:
+            fh.write(recipe)
+
+        lints, hints = linter.main(recipe_dir, return_hints=True, conda_forge=True)
+
+    assert lints == (
+        [
+            f"{expect_lint} has a value that is interpreted as a floating-point "
+            'number. Please quote it (like "1.0") to ensure that it is '
+            "interpreted as string and preserved exactly."
+        ]
+        if expect_lint is not None
+        else []
+    )
+    assert hints == []
+
+
 if __name__ == "__main__":
     unittest.main()
