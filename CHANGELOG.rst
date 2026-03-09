@@ -4,6 +4,47 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.56.0
+====================
+
+**Added:**
+
+* Add "feedstock-name must not end with -feedstock" linter (#2470)
+* New linter that checks that no unquoted floating-point number is found in a recipe. (#2453)
+* New conda-forge-specific linter rule will raise an error if custom Github Actions workflows are added to a feedstock. (#2469)
+
+**Changed:**
+
+* Changed default provider to ``github_actions`` for all feedstocks. (#2478)
+* Improve path lengths calculation to avoid hitting max paths issues on windows (#2477).
+* The long-deprecated `MACOSX_DEPLOYMENT_TARGET` will not be taken into account anymore when rerendering a recipe (#2473).
+* The linter now raises an error if `MACOSX_DEPLOYMENT_TARGET` is found in recipe configuration files (#2473).
+* The linter will now also raise issues found in `conda_build_config.yaml` for v1 recipes (#2473).
+* The linter will now raise if two different recipe configuration files are found (#2473).
+* Issues related to `c_stdlib_version` / `MACOSX_SDK_VERSION` and `MACOSX_DEPLOYMENT_TARGET` have been
+  moved to the conda-forge-specific part of the linter (c.f. `conda smithy lint --conda-forge`) (#2473).
+* Set rattler cache to `RATTLER_CACHE_DIR="${FEEDSTOCK_ROOT}/build_artifacts/pkg_cache"`
+  so that it persists across builds. We already use this directory as the pkg_cache for
+  conda-build.
+
+**Fixed:**
+
+* Derive the rerendered feedstock name from recipe metadata instead of the local checkout directory basename, so worktrees and custom checkout paths do not render names like `worktree1-feedstock`.
+* Avoid creating variant paths that cannot be checkout out on a default windows machine (#2476).
+
+**Authors:**
+
+* Matthew R. Becker
+* Jaime Rodríguez-Guerra
+* H. Vetinari
+* pre-commit-ci[bot]
+* Michał Górny
+* Daniel Ching
+* Pavel Zwerschke
+* Filippo Luca Ferretti
+
+
+
 v3.55.1
 ====================
 
