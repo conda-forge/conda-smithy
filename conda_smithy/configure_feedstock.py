@@ -2540,11 +2540,10 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
     logger.debug("## END CONFIGURATION\n")
 
     # Fallback handling set to gha, for platforms that are not fully specified by this time
-    for platform, providers in config["provider"].items():
-        for i, provider in enumerate(providers):
-            if provider in {"default", "emulated"}:
-                providers[i] = "github_actions"
-
+    for plat in config["provider"].keys():
+        if config["provider"][plat] in {"default", "emulated"}:
+            config["provider"][plat] = "github_actions"
+    
     native_ci_provider = {
         "linux_aarch64": "github_actions",
         "osx_arm64": "github_actions",
@@ -2552,10 +2551,9 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
         "linux_ppc64le": "travis",
         "linux_s390x": "travis",
     }
-
     for plat, ci in native_ci_provider.items():
         if config["provider"][plat] == "native":
-            config["provider"][plat] = [ci]
+            config["provider"][plat] = ci
 
     config["remote_ci_setup"] = _sanitize_remote_ci_setup(config["remote_ci_setup"])
     if config["conda_install_tool"] == "conda":
