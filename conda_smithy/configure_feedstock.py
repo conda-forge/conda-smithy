@@ -2543,7 +2543,7 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
     for plat in config["provider"].keys():
         if config["provider"][plat] in {"default", "emulated"}:
             config["provider"][plat] = "github_actions"
-    
+
     native_ci_provider = {
         "linux_aarch64": "github_actions",
         "osx_arm64": "github_actions",
