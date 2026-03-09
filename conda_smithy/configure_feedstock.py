@@ -2539,23 +2539,23 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
     logger.debug(log)
     logger.debug("## END CONFIGURATION\n")
 
-    if config["provider"]["linux_aarch64"] == "default":
-        config["provider"]["linux_aarch64"] = ["azure"]
+    # Fallback handling set to gha, for platforms that are not fully specified by this time
+    for platform, providers in config["provider"].items():
+        for i, provider in enumerate(providers):
+            if provider in {"default", "emulated"}:
+                providers[i] = "github_actions"
 
-    if config["provider"]["linux_aarch64"] == "native":
-        config["provider"]["linux_aarch64"] = ["travis"]
+    native_ci_provider = {
+        "linux_aarch64": "github_actions",
+        "osx_arm64": "github_actions",
+        "win_arm64": "github_actions",
+        "linux_ppc64le": "travis",
+        "linux_s390x": "travis",
+    }
 
-    if config["provider"]["linux_ppc64le"] == "default":
-        config["provider"]["linux_ppc64le"] = ["azure"]
-
-    if config["provider"]["linux_ppc64le"] == "native":
-        config["provider"]["linux_ppc64le"] = ["travis"]
-
-    if config["provider"]["linux_s390x"] == "default":
-        config["provider"]["linux_s390x"] = ["azure"]
-
-    if config["provider"]["linux_s390x"] == "native":
-        config["provider"]["linux_s390x"] = ["travis"]
+    for plat, ci in native_ci_provider.items():
+        if config["provider"][plat] == "native":
+            config["provider"][plat] = [ci]
 
     config["remote_ci_setup"] = _sanitize_remote_ci_setup(config["remote_ci_setup"])
     if config["conda_install_tool"] == "conda":
@@ -2579,12 +2579,6 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
 
     # Run the legacy checks for backwards compatibility
     config = _legacy_compatibility_checks(config, forge_dir)
-
-    # Fallback handling set to azure, for platforms that are not fully specified by this time
-    for platform, providers in config["provider"].items():
-        for i, provider in enumerate(providers):
-            if provider in {"default", "emulated"}:
-                providers[i] = "azure"
 
     # Set the environment variable for the compiler stack
     os.environ["CF_COMPILER_STACK"] = config["compiler_stack"]
