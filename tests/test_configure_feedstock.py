@@ -15,12 +15,7 @@ from conftest import ConfigYAML
 from rattler_build_conda_compat.loader import parse_recipe_config_file
 
 from conda_smithy import configure_feedstock
-from conda_smithy.configure_feedstock import _read_forge_config
-
-# This import of conda_smithy.schema can only be done in the test suite.
-# We cannot do it in the main package in order to avoid the need for
-# pydantic at runtime.
-from conda_smithy.schema import DEFAULT_PROVIDER
+from conda_smithy.configure_feedstock import DEFAULT_PROVIDER, _read_forge_config
 from conda_smithy.utils import ensure_standard_strings
 
 if sys.version_info >= (3, 11):
@@ -541,6 +536,7 @@ def test_azure_with_empty_yum_reqs_raises(py_recipe, jinja_env):
 
 
 def test_github_actions_with_empty_yum_reqs_raises(py_recipe, jinja_env):
+    py_recipe.config["provider"]["linux"] = "github_actions"
     with open(
         os.path.join(py_recipe.recipe, "recipe", "yum_requirements.txt"), "w"
     ) as f:
@@ -940,6 +936,7 @@ def test_choco_install_azure(choco_recipe, jinja_env):
 
 
 def test_choco_install_github_actions(choco_recipe, jinja_env):
+    choco_recipe.config["provider"]["win"] = "github_actions"
     configure_feedstock.render_github_actions(
         jinja_env=jinja_env,
         forge_config=choco_recipe.config,

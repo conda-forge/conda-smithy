@@ -83,7 +83,7 @@ github_actions:
   artifact_retention_days: 14
   cancel_in_progress: true
   free_disk_space: false
-  max_parallel: 10
+  max_parallel: 50
   resize_win_partitions: false
   self_hosted: false
   store_build_artifacts: false
@@ -115,7 +115,7 @@ provider:
   freebsd_64: null
   linux: null
   linux_32: null
-  linux_64: github_actions
+  linux_64: azure
   linux_aarch64: null
   linux_armv6l: null
   linux_armv7l: null
@@ -124,12 +124,12 @@ provider:
   linux_riscv64: null
   linux_s390x: null
   osx: null
-  osx_64: github_actions
+  osx_64: azure
   osx_arm64: null
   wasi_wasm32: null
   win: null
   win_32: null
-  win_64: github_actions
+  win_64: azure
   win_arm64: null
   zos_z: null
 recipe_dir: recipe

@@ -118,6 +118,16 @@ CONDA_FORGE_ALIAS_PLATFORMS["unix"] = {
 
 CONDA_FORGE_PIXI_VERSION = "0.59.0"
 
+DEFAULT_PROVIDER = "azure"
+
+NATIVE_CI_PROVIDER = {
+    "linux_aarch64": "travis",
+    "osx_arm64": "azure",
+    "win_arm64": "github_actions",
+    "linux_ppc64le": "travis",
+    "linux_s390x": "travis",
+}
+
 
 # use lru_cache to avoid repeating warnings endlessly;
 # this keeps track of 10 different messages and then warns again
@@ -2539,19 +2549,13 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
     logger.debug(log)
     logger.debug("## END CONFIGURATION\n")
 
-    # Fallback handling set to gha, for platforms that are not fully specified by this time
+    # Fallback handling set to DEFAULT_PROVIDER, for platforms that
+    # are not fully specified by this time
     for plat in config["provider"].keys():
         if config["provider"][plat] in {"default", "emulated"}:
-            config["provider"][plat] = "github_actions"
+            config["provider"][plat] = DEFAULT_PROVIDER
 
-    native_ci_provider = {
-        "linux_aarch64": "github_actions",
-        "osx_arm64": "github_actions",
-        "win_arm64": "github_actions",
-        "linux_ppc64le": "travis",
-        "linux_s390x": "travis",
-    }
-    for plat, ci in native_ci_provider.items():
+    for plat, ci in NATIVE_CI_PROVIDER.items():
         if config["provider"][plat] == "native":
             config["provider"][plat] = ci
 
