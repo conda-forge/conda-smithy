@@ -15,12 +15,7 @@ from conftest import ConfigYAML
 from rattler_build_conda_compat.loader import parse_recipe_config_file
 
 from conda_smithy import configure_feedstock
-from conda_smithy.configure_feedstock import _read_forge_config
-
-# This import of conda_smithy.schema can only be done in the test suite.
-# We cannot do it in the main package in order to avoid the need for
-# pydantic at runtime.
-from conda_smithy.schema import DEFAULT_PROVIDER
+from conda_smithy.configure_feedstock import DEFAULT_PROVIDER, _read_forge_config
 from conda_smithy.utils import ensure_standard_strings
 
 if sys.version_info >= (3, 11):
