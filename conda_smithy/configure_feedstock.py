@@ -123,7 +123,7 @@ DEFAULT_PROVIDER = "azure"
 NATIVE_CI_PROVIDER = {
     "linux_aarch64": "travis",
     "osx_arm64": "azure",
-    "win_arm64": "azure",
+    "win_arm64": "github_actions",
     "linux_ppc64le": "travis",
     "linux_s390x": "travis",
 }
