@@ -20,12 +20,11 @@ except ImportError:
 
 # use relative imports to ensure that we don't pick up the data paths from
 # a non-development conda-smithy installed in site-packages
+from .configure_feedstock import DEFAULT_PROVIDER  # noqa: TID252
 from .validate_schema import (  # noqa: TID252
     CONDA_FORGE_YAML_DEFAULTS_FILE,
     CONDA_FORGE_YAML_SCHEMA_FILE,
 )
-
-DEFAULT_PROVIDER = "github_actions"
 
 
 class Nullable(Enum):
@@ -288,7 +287,7 @@ class GithubActionsConfig(BaseModel):
 
     max_parallel: Optional[Union[int, Nullable]] = Field(
         description="The maximum number of jobs to run in parallel",
-        default=10,
+        default=50,
     )
 
     resize_win_partitions: Optional[bool] = Field(

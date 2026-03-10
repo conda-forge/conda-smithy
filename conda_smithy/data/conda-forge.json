@@ -468,7 +468,7 @@
               "type": "null"
             }
           ],
-          "default": 10,
+          "default": 50,
           "description": "The maximum number of jobs to run in parallel",
           "title": "Max Parallel"
         },
@@ -1271,7 +1271,7 @@
               "type": "null"
             }
           ],
-          "default": "github_actions",
+          "default": "azure",
           "title": "Linux 64"
         },
         "linux_aarch64": {
@@ -1463,7 +1463,7 @@
               "type": "null"
             }
           ],
-          "default": "github_actions",
+          "default": "azure",
           "title": "Osx 64"
         },
         "osx_arm64": {
@@ -1535,7 +1535,7 @@
               "type": "null"
             }
           ],
-          "default": "github_actions",
+          "default": "azure",
           "title": "Win 64"
         },
         "win_arm64": {
