@@ -4,6 +4,19 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.56.2
+====================
+
+**Changed:**
+
+* Put default CI provider back to Azure. (#2488)
+
+**Authors:**
+
+* Matthew R. Becker
+
+
+
 v3.56.1
 ====================
 
