@@ -536,6 +536,7 @@ def test_azure_with_empty_yum_reqs_raises(py_recipe, jinja_env):
 
 
 def test_github_actions_with_empty_yum_reqs_raises(py_recipe, jinja_env):
+    py_recipe.config["provider"]["linux"] = "github_actions"
     with open(
         os.path.join(py_recipe.recipe, "recipe", "yum_requirements.txt"), "w"
     ) as f:
