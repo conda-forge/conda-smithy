@@ -2539,14 +2539,18 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
     logger.debug(log)
     logger.debug("## END CONFIGURATION\n")
 
-    # Fallback handling set to gha, for platforms that are not fully specified by this time
+    # Fallback handling for platforms that are not fully specified by this time
+    osx_platforms = {"osx_64", "osx_arm64"}
     for plat in config["provider"].keys():
         if config["provider"][plat] in {"default", "emulated"}:
-            config["provider"][plat] = "github_actions"
+            if plat in osx_platforms:
+                config["provider"][plat] = "azure"
+            else:
+                config["provider"][plat] = "github_actions"
 
     native_ci_provider = {
         "linux_aarch64": "github_actions",
-        "osx_arm64": "github_actions",
+        "osx_arm64": "azure",
         "win_arm64": "github_actions",
         "linux_ppc64le": "travis",
         "linux_s390x": "travis",
