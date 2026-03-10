@@ -935,6 +935,7 @@ def test_choco_install_azure(choco_recipe, jinja_env):
 
 
 def test_choco_install_github_actions(choco_recipe, jinja_env):
+    choco_recipe.config["provider"]["win"] = "github_actions"
     configure_feedstock.render_github_actions(
         jinja_env=jinja_env,
         forge_config=choco_recipe.config,
