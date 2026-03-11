@@ -468,7 +468,7 @@
               "type": "null"
             }
           ],
-          "default": null,
+          "default": 50,
           "description": "The maximum number of jobs to run in parallel",
           "title": "Max Parallel"
         },

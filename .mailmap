@@ -26,10 +26,10 @@ Filipe Fernandes <ocefpaf@gmail.com> Filipe <ocefpaf@gmail.com>
 Filipe Fernandes <ocefpaf@gmail.com> ocefpaf <ocefpaf@gmail.com>
 Min RK <benjaminrk@gmail.com>
 Dougal J. Sutherland <dougal@gmail.com>
+Michał Górny <mgorny@gentoo.org> Michał Górny <mgorny@quansight.com>
 John Kirkham <jakirkham@gmail.com> John Kirkham <kirkhamj@janelia.hhmi.org>
 John Kirkham <jakirkham@gmail.com> jakirkham <kirkhamj@janelia.hhmi.org>
 Amit Kumar <dtu.amit@gmail.com>
-Michał Górny <mgorny@gentoo.org> Michał Górny <mgorny@quansight.com>
 Marcel Bargull <marcel.bargull@udo.edu> Marcel Bargull <mbargull@users.noreply.github.com>
 Hadrien Mary <hadrien.mary@gmail.com> Hadrien Mary <hadim@users.noreply.github.com>
 shadow_walker <shadowwalkersb@gmail.com>
@@ -45,8 +45,8 @@ Nicholas Bollweg <nick.bollweg@gmail.com>
 Julian Rüth <julian.rueth@fsfe.org>
 Yannik Tausch <yannik.tausch@quantco.com>
 Daniel Bast <2790401+dbast@users.noreply.github.com>
+Daniel Ching <carterbox@users.noreply.github.com> Daniel Ching <9604511+carterbox@users.noreply.github.com>
 Billy K. Poon <bkpoon@lbl.gov>
-Daniel Ching <carterbox@users.noreply.github.com>
 vinicius douglas cerutti <vinivdc2009@hotmail.com> Vinicius D. Cerutti <51954708+viniciusdc@users.noreply.github.com>
 vinicius douglas cerutti <vinivdc2009@hotmail.com> viniciusdc <51954708+viniciusdc@users.noreply.github.com>
 Tim Snyder <snyder.tim@gmail.com>
@@ -68,6 +68,7 @@ refraction-ray <kcanamgal@foxmail.com>
 Leopold Talirz <leopold.talirz@gmail.com>
 Peter Williams <peter@newton.cx>
 Tom Pollard <tom.pollard@codethink.co.uk>
+Pavel Zwerschke <pavelzw@gmail.com>
 Gonzalo Pena-Castellanos <goanpeca@gmail.com>
 John Blischak <jdblischak@gmail.com>
 Matthias Diener <mdiener@illinois.edu>
@@ -75,7 +76,6 @@ Antonio S. Cofiño <cofinoa@gmail.com>
 Carlo <carlo.dri@gmail.com> Carlo <carlodri@users.noreply.github.com>
 Matthew Craig <mattwcraig@gmail.com> Matt Craig <mattwcraig@gmail.com>
 Joshua L. Adelman <joshua.adelman@gmail.com>
-Pavel Zwerschke <pavelzw@gmail.com>
 Marius van Niekerk <marius.v.niekerk@gmail.com> mariusvniekerk <marius.vanniekerk@maxpoint.com>
 Marius van Niekerk <marius.v.niekerk@gmail.com> mariusvniekerk <mvanniekerk@flatiron.com>
 Marius van Niekerk <marius.v.niekerk@gmail.com> Marius Van Niekerk <marius.vanniekerk@maxpoint.com>
@@ -164,3 +164,4 @@ Andreas Poehlmann <ap--@users.noreply.github.com>
 James Myatt <james@jamesmyatt.co.uk>
 Dan Yeaw <dan@yeaw.me>
 Mikhail Ryazanov <MikhailRyazanov@users.noreply.github.com>
+Filippo Luca Ferretti <102977828+flferretti@users.noreply.github.com>

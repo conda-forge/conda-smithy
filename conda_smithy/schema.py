@@ -20,6 +20,7 @@ except ImportError:
 
 # use relative imports to ensure that we don't pick up the data paths from
 # a non-development conda-smithy installed in site-packages
+from .configure_feedstock import DEFAULT_PROVIDER  # noqa: TID252
 from .validate_schema import (  # noqa: TID252
     CONDA_FORGE_YAML_DEFAULTS_FILE,
     CONDA_FORGE_YAML_SCHEMA_FILE,
@@ -286,7 +287,7 @@ class GithubActionsConfig(BaseModel):
 
     max_parallel: Optional[Union[int, Nullable]] = Field(
         description="The maximum number of jobs to run in parallel",
-        default=None,
+        default=50,
     )
 
     resize_win_partitions: Optional[bool] = Field(
@@ -445,7 +446,7 @@ Provider = create_model(
             for plat in list(PlatformsAliases) + list(Platforms)
         ]
         + [
-            (str(plat), (Optional[ProviderType], Field(default="azure")))
+            (str(plat), (Optional[ProviderType], Field(default=DEFAULT_PROVIDER)))
             for plat in ("linux_64", "osx_64", "win_64")
         ]
     ),
@@ -1127,6 +1128,7 @@ class ConfigModel(BaseModel):
 if __name__ == "__main__":
     # This is used to generate the model dump for conda-smithy internal use
     # and for documentation purposes.
+    # Run this code via `python -m conda_smithy.schema`
 
     model = ConfigModel()
 

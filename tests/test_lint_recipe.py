@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import os
+import platform
 import shutil
 import subprocess
 import tempfile
@@ -262,6 +263,7 @@ def test_recipe_v1_osx_noarch_hint():
         assert not any(h.startswith(avoid_message) for h in hints)
 
 
+@pytest.mark.parametrize("recipe_version", [0, 1])
 @pytest.mark.parametrize(
     "std_selector",
     ["unix", "linux or (osx and x86_64)"],
@@ -275,57 +277,42 @@ def test_recipe_v1_osx_noarch_hint():
     ids=["False", "True", "mixed"],
 )
 @pytest.mark.parametrize(
-    "macdt,v_std,sdk,exp_lint",
+    "v_std,sdk,exp_lint",
     [
-        # matching -> no warning
-        (["10.9", "11.0"], ["10.9", "11.0"], None, None),
-        # mismatched length -> no warning (leave it to rerender)
-        (["10.9", "11.0"], ["10.9"], None, None),
-        # mismatch between stdlib and deployment target -> warn
-        (["10.9", "11.0"], ["10.13", "11.0"], None, "Conflicting spec"),
-        (["10.13", "11.0"], ["10.13", "12.3"], None, "Conflicting spec"),
-        # only deployment target -> warn
-        (["11.0", "12.0"], None, None, "In your conda_build_config.yaml"),
         # only stdlib -> no warning
-        (None, ["11.0", "11.0"], None, None),
-        (None, ["11.1"], None, None),
+        (["11.0", "11.0"], None, None),
+        (["11.1"], None, None),
         # only stdlib, but outdated -> warn
-        (None, ["10.9", "11.0"], None, "You are"),
-        (None, ["10.9"], None, "You are"),
-        # sdk below stdlib / deployment target -> warn
-        (["10.13", "11.0"], ["10.13", "11.0"], ["10.12"], "You are"),
-        (["10.13", "11.0"], ["10.13", "11.0"], ["10.12", "12.0"], "You are"),
-        # sdk above stdlib / deployment target -> no warning
-        (["10.13", "11.0"], ["10.13", "11.0"], ["12.0", "12.0"], None),
-        # only one sdk version, not universally below deployment target
-        # -> no warning (because we don't know enough to diagnose)
-        (["10.13", "11.0"], ["10.13", "11.0"], ["10.15"], None),
-        # mismatched version + wrong sdk; requires merge logic to work before
-        # checking sdk version; to avoid unnecessary complexity in the exp_hint
-        # handling below, repeat same test twice with different expected hints
-        (["10.9", "11.0"], ["10.13", "11.0"], ["10.12"], "Conflicting spec"),
-        (["10.9", "11.0"], ["10.13", "11.0"], ["10.12"], "You are"),
+        (["10.9", "11.0"], None, "You are"),
+        (["10.9"], None, "You are"),
+        # sdk below stdlib -> warn
+        (["11.0", "12.0"], ["10.12"], "You are"),
+        (["11.0", "12.0"], ["10.12", "12.0"], "You are"),
+        # sdk above stdlib -> no warning
+        (["11.0", "12.0"], ["12.0", "12.0"], None),
         # only sdk -> no warning
-        (None, None, ["11.0"], None),
-        (None, None, ["11.1", "12.0"], None),
+        (None, ["11.0"], None),
+        (None, ["11.1", "12.0"], None),
         # only sdk, but below global baseline -> warning
-        (None, None, ["10.12"], "You are"),
-        (None, None, ["10.12", "11.0"], "You are"),
+        (None, ["10.12"], "You are"),
+        (None, ["10.12", "11.0"], "You are"),
     ],
 )
 def test_cbc_osx_lints(
-    std_selector, with_linux, reverse_arch, macdt, v_std, sdk, exp_lint
+    recipe_version, std_selector, with_linux, reverse_arch, v_std, sdk, exp_lint
 ):
     with tmp_directory() as rdir:
-        with open(os.path.join(rdir, "meta.yaml"), "w") as fh:
-            fh.write("package:\n   name: foo")
+        rdir = Path(rdir)
+        if recipe_version == 1:
+            rdir.joinpath("recipe.yaml").write_text("package:\n  name: foo")
+            rdir.joinpath("conda-forge.yml").write_text(
+                "conda_build_tool: rattler-build"
+            )
+        else:
+            rdir.joinpath("meta.yaml").write_text("package:\n  name: foo")
+
+        # conda_build_config can be used with both v0 and v1 recipes
         with open(os.path.join(rdir, "conda_build_config.yaml"), "a") as fh:
-            if macdt is not None:
-                fh.write(f"""\
-MACOSX_DEPLOYMENT_TARGET:   # [osx]
-  - {macdt[0]}              # [osx and {"arm64" if reverse_arch[0] else "x86_64"}]
-  - {macdt[1]}              # [osx and {"x86_64" if reverse_arch[0] else "arm64"}]
-""")
             if v_std is not None or with_linux:
                 arch1 = "arm64" if reverse_arch[1] else "x86_64"
                 arch2 = "x86_64" if reverse_arch[1] else "arm64"
@@ -352,7 +339,7 @@ MACOSX_SDK_VERSION:         # [osx]
 """
                 )
         # run the linter
-        lints, _ = linter.main(rdir, return_hints=True)
+        lints = linter.main(rdir, conda_forge=True)
         # show CBC/hints for debugging
         with open(os.path.join(rdir, "conda_build_config.yaml")) as fh:
             print("".join(fh.readlines()))
@@ -412,47 +399,31 @@ def test_license_file_empty(recipe_version: int):
     ids=["False", "True", "mixed"],
 )
 @pytest.mark.parametrize(
-    "macdt,v_std,sdk,exp_lint",
+    "v_std,sdk,exp_lint",
     [
-        # matching -> no warning
-        (["10.9", "11.0"], ["10.9", "11.0"], None, None),
-        # mismatched length -> no warning (leave it to rerender)
-        (["10.9", "11.0"], ["10.9"], None, None),
-        # mismatch between stdlib and deployment target -> warn
-        (["10.9", "11.0"], ["10.13", "11.0"], None, "Conflicting spec"),
-        (["10.13", "11.0"], ["10.13", "12.3"], None, "Conflicting spec"),
-        # only deployment target -> warn
-        (["11.0", "12.0"], None, None, "In your conda_build_config.yaml"),
         # only stdlib -> no warning
-        (None, ["11.0", "11.0"], None, None),
-        (None, ["11.1"], None, None),
+        (["11.0", "11.0"], None, None),
+        (["11.1"], None, None),
         # only stdlib, but outdated -> warn
-        (None, ["10.9", "11.0"], None, "You are"),
-        (None, ["10.9"], None, "You are"),
-        # sdk below stdlib / deployment target -> warn
-        (["10.13", "11.0"], ["10.13", "11.0"], ["10.12"], "You are"),
-        (["10.13", "11.0"], ["10.13", "11.0"], ["10.12", "12.0"], "You are"),
-        # sdk above stdlib / deployment target -> no warning
-        (["10.13", "11.0"], ["10.13", "11.0"], ["12.0", "12.0"], None),
-        # only one sdk version, not universally below deployment target
-        # -> no warning (because we don't know enough to diagnose)
-        (["10.13", "11.0"], ["10.13", "11.0"], ["10.15"], None),
-        # mismatched version + wrong sdk; requires merge logic to work before
-        # checking sdk version; to avoid unnecessary complexity in the exp_hint
-        # handling below, repeat same test twice with different expected hints
-        (["10.9", "11.0"], ["10.13", "11.0"], ["10.12"], "Conflicting spec"),
-        (["10.9", "11.0"], ["10.13", "11.0"], ["10.12"], "You are"),
+        (["10.9", "11.0"], None, "You are"),
+        (["10.9"], None, "You are"),
+        # sdk below stdlib -> warn
+        (["11.0", "12.0"], ["10.12"], "You are"),
+        (["11.0", "12.0"], ["10.12", "12.0"], "You are"),
+        # sdk above stdlib -> no warning
+        (["11.0", "12.0"], ["12.0", "12.0"], None),
         # only sdk -> no warning
-        (None, None, ["11.0"], None),
-        (None, None, ["11.1", "12.0"], None),
+        (None, ["11.0"], None),
+        (None, ["11.1", "12.0"], None),
         # only sdk, but below global baseline -> warning
-        (None, None, ["10.12"], "You are"),
-        (None, None, ["10.12", "11.0"], "You are"),
+        (None, ["10.12"], "You are"),
+        (None, ["10.12", "11.0"], "You are"),
     ],
 )
-def test_v1_cbc_osx_hints(
-    std_selector, with_linux, reverse_arch, macdt, v_std, sdk, exp_lint
+def test_cbc_osx_lints_variants_yaml(
+    std_selector, with_linux, reverse_arch, v_std, sdk, exp_lint
 ):
+    # v1 recipes using conda_build_config.yaml are covered by test_cbc_osx_lints
     with tmp_directory() as recipe_dir:
         recipe_dir = Path(recipe_dir)
         recipe_dir.joinpath("recipe.yaml").write_text("package:\n  name: foo")
@@ -462,14 +433,6 @@ def test_v1_cbc_osx_hints(
         )
 
         with open(recipe_dir / "variants.yaml", "a") as fh:
-            if macdt is not None:
-                fh.write(textwrap.dedent(f"""\
-                        MACOSX_DEPLOYMENT_TARGET:
-                          - if: osx
-                            then:
-                              - {macdt[0]}
-                              - {macdt[1]}
-                    """))
             if v_std is not None or with_linux:
                 arch1 = "arm64" if reverse_arch[1] else "x86_64"
                 arch2 = "x86_64" if reverse_arch[1] else "arm64"
@@ -508,10 +471,10 @@ def test_v1_cbc_osx_hints(
                                 then: {sdk[0]}
                         """))
         # run the linter
-        lints, _ = linter.main(recipe_dir, return_hints=True, feedstock_dir=recipe_dir)
+        lints = linter.main(recipe_dir, conda_forge=True)
         # show CBC/hints for debugging
         lines = recipe_dir.joinpath("variants.yaml").read_text().splitlines()
-        print("".join(lines))
+        print("\n".join(lines))
         print(lints)
 
         # validate against expectations
@@ -524,6 +487,57 @@ def test_v1_cbc_osx_hints(
                 assert not any(lint.startswith(slug) for lint in lints)
         else:
             assert any(lint.startswith(exp_lint) for lint in lints)
+
+
+@pytest.mark.parametrize("recipe_version", [0, 1])
+def test_duplicated_recipe_configs(recipe_version):
+    recipe_content = "package:\n  name: foo"
+    config_content = "c_stdlib_version:\n - 2.17"
+    with tmp_directory() as recipe_dir:
+        recipe_dir = Path(recipe_dir)
+        if recipe_version == 1:
+            recipe_dir.joinpath("recipe.yaml").write_text(recipe_content)
+            recipe_dir.joinpath("conda-forge.yml").write_text(
+                "conda_build_tool: rattler-build"
+            )
+        else:
+            recipe_dir.joinpath("meta.yaml").write_text(recipe_content)
+
+        # write both config formats
+        recipe_dir.joinpath("conda_build_config.yaml").write_text(config_content)
+        recipe_dir.joinpath("variants.yaml").write_text(config_content)
+
+        # run the linter
+        lints = linter.main(recipe_dir)
+        assert any(lint.startswith("Found two recipe config") for lint in lints)
+
+
+@pytest.mark.parametrize(
+    "recipe_version,config_file",
+    [(0, "conda_build_config.yaml"), (0, "variants.yaml"), (1, "variants.yaml")],
+)
+def test_lint_macdt(recipe_version, config_file):
+    recipe_content = "package:\n  name: foo"
+    with tmp_directory() as recipe_dir:
+        recipe_dir = Path(recipe_dir)
+        if recipe_version == 1:
+            recipe_dir.joinpath("recipe.yaml").write_text(recipe_content)
+            recipe_dir.joinpath("conda-forge.yml").write_text(
+                "conda_build_tool: rattler-build"
+            )
+        else:
+            recipe_dir.joinpath("meta.yaml").write_text(recipe_content)
+
+        if config_file == "conda_build_config.yaml":
+            payload = "MACOSX_DEPLOYMENT_TARGET:\n  - 10.13  # [osx]"
+        else:
+            payload = "MACOSX_DEPLOYMENT_TARGET:\n  - if: osx\n    then: 10.13"
+
+        recipe_dir.joinpath(config_file).write_text(payload)
+
+        # run the linter
+        lints = linter.main(recipe_dir, conda_forge=True)
+        assert any(lint.startswith("The MACOSX_DEPLOYMENT_TARGET") for lint in lints)
 
 
 class TestLinter(unittest.TestCase):
@@ -1738,6 +1752,7 @@ linter:
         lints, _ = linter.lintify_meta_yaml(meta, recipe_version=1)
         self.assertNotIn(expected_message, lints)
 
+    @pytest.mark.skipif(platform.system() == "Windows", reason="Line-ending confusion")
     def test_end_empty_line(self):
         bad_contents = [
             # No empty lines at the end of the file
@@ -4527,6 +4542,128 @@ def test_no_custom_github_actions_workflows(tmp_path):
     shutil.rmtree(tmp_path / ".github")
     lints, hints = linter.main(tmp_path / "recipe", return_hints=True, conda_forge=True)
     assert not any("Github Actions workflows" in lint for lint in lints)
+
+
+@pytest.mark.parametrize(
+    "var_value,value,expect_lint",
+    [
+        ("1.0", "{{ version }}", True),
+        ("1.0", '"{{ version }}"', False),
+        ('\\"1.0\\"', "{{ version }}", False),  # ugly but valid
+        ("1", "{{ version }}", False),
+        ("1.0.0", "{{ version }}", False),
+        ("", "1.0", True),
+        ("", '"1.0"', False),
+        ("", "1", False),
+        ("", "1.0.0", False),
+    ],
+)
+def test_lint_v0_unquoted_floats(var_value: str, value: str, expect_lint: bool) -> None:
+    recipe = f"""\
+{{% set version = "{var_value}" %}}
+
+package:
+  name: foo
+  version: {value}
+
+build:
+  number: 1
+
+test:
+  commands:
+    - true
+
+about:
+  home: https://example.com
+  license: GPL-3.0-or-later
+  license_file:
+    - COPYING
+  summary: test
+
+extra:
+  recipe-maintainers:
+    - mgorny
+"""
+
+    with tmp_directory() as recipe_dir:
+        # Create minimal recipe content - the linter determines version from filename
+        with open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
+            fh.write(recipe)
+
+        lints, hints = linter.main(recipe_dir, return_hints=True, conda_forge=True)
+
+    assert lints == (
+        [
+            "package.version has a value that is interpreted as a floating-point "
+            'number. Please quote it (like "1.0" or "{{ var }}") to ensure that it is '
+            "interpreted as string and preserved exactly."
+        ]
+        if expect_lint
+        else []
+    )
+    assert hints == []
+
+
+@pytest.mark.parametrize(
+    "var_value,value,expect_lint",
+    [
+        ("1.0", "${{ version }}", "context.version"),
+        ('"1.0"', "${{ version }}", None),
+        ("1", "${{ version }}", None),
+        ("1.0.0", "${{ version }}", None),
+        ("", "1.0", "package.version"),
+        ("", '"1.0"', None),
+        ("", "1", None),
+        ("", "1.0.0", None),
+    ],
+)
+def test_lint_v1_unquoted_floats(
+    var_value: str, value: str, expect_lint: str | None
+) -> None:
+    recipe = f"""\
+context:
+  version: {var_value}
+
+package:
+  name: foo
+  version: {value}
+
+build:
+  number: 1
+
+tests:
+  - script:
+    - true
+
+about:
+  homepage: https://example.com
+  license: GPL-3.0-or-later
+  license_file:
+    - COPYING
+  summary: test
+
+extra:
+  recipe-maintainers:
+    - mgorny
+"""
+
+    with tmp_directory() as recipe_dir:
+        # Create minimal recipe content - the linter determines version from filename
+        with open(os.path.join(recipe_dir, "recipe.yaml"), "w") as fh:
+            fh.write(recipe)
+
+        lints, hints = linter.main(recipe_dir, return_hints=True, conda_forge=True)
+
+    assert lints == (
+        [
+            f"{expect_lint} has a value that is interpreted as a floating-point "
+            'number. Please quote it (like "1.0") to ensure that it is '
+            "interpreted as string and preserved exactly."
+        ]
+        if expect_lint is not None
+        else []
+    )
+    assert hints == []
 
 
 if __name__ == "__main__":

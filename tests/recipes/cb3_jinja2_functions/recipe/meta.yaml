@@ -1,6 +1,6 @@
 package:
   name: test_cb3_jinja2_functions
-  version: 1.0
+  version: "1.0"
 
 build:
   number: 0

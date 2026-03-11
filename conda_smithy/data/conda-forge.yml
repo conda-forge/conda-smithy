@@ -83,7 +83,7 @@ github_actions:
   artifact_retention_days: 14
   cancel_in_progress: true
   free_disk_space: false
-  max_parallel: null
+  max_parallel: 50
   resize_win_partitions: false
   self_hosted: false
   store_build_artifacts: false

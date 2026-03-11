@@ -118,6 +118,16 @@ CONDA_FORGE_ALIAS_PLATFORMS["unix"] = {
 
 CONDA_FORGE_PIXI_VERSION = "0.59.0"
 
+DEFAULT_PROVIDER = "azure"
+
+NATIVE_CI_PROVIDER = {
+    "linux_aarch64": "travis",
+    "osx_arm64": "azure",
+    "win_arm64": "github_actions",
+    "linux_ppc64le": "travis",
+    "linux_s390x": "travis",
+}
+
 
 # use lru_cache to avoid repeating warnings endlessly;
 # this keeps track of 10 different messages and then warns again
@@ -885,6 +895,11 @@ def dump_subspace_config_files(metas, root_path, platform, arch, upload, forge_c
     yaml.add_representer(OrderedDict, _yaml_represent_ordereddict)
     yaml.add_representer(str, _yaml_represent_str)
 
+    # get feedstock name; prefer explicit config, otherwise fall back to default
+    fn = metas[0].meta.get("extra", {}).get("feedstock-name")
+    feedstock_name = fn if fn else metas[0].meta.get("package", {}).get("name")
+    repo_name = f"{feedstock_name}-feedstock"
+
     platform_arch = f"{platform}-{arch}"
 
     result = []
@@ -901,10 +916,16 @@ def dump_subspace_config_files(metas, root_path, platform, arch, upload, forge_c
         # drone has a limit of 50, see https://github.com/conda-forge/conda-smithy/issues/1188
         if len(short_config_name) >= 49:
             short_config_name = config_name[:40] + "_h" + conf_hash
-        # 200 = 190 + len("_h") + len(conf_hash)
-        if len(config_name) >= 200:
-            # Shorten file name length to avoid hitting maximum filename limits.
-            config_name = config_name[:190] + "_h" + conf_hash
+        # we need to shorten long variant files to avoid hitting maximum path limits on win.
+        # GHA is pretty much the worst offender here, as it will waste a lot of characters by
+        # duplicating the repo name in a way that cannot be overridden (see #2476), e.g.
+        #   C:/Users/runnerx/_work/pytorch-cpu-feedstock/pytorch-cpu-feedstock/<actual_content>
+        # Other providers generally have shorter folder hierarchies, so not handled explicitly
+        outer_len = len(f"C:/Users/runnerx/_work/{repo_name}/{repo_name}/.ci_support/")
+        # 260 characters is default max for total path length on win; incl. null terminator
+        if outer_len + len(f"{config_name}.yaml") > 259:
+            # config_name does not include `.yaml` extension; 15 == len(f"_h{conf_hash}.yaml")
+            config_name = config_name[: (259 - outer_len - 15)] + "_h" + conf_hash
 
         out_folder = os.path.join(root_path, ".ci_support")
         out_path = os.path.join(out_folder, config_name) + ".yaml"
@@ -1193,19 +1214,21 @@ def _render_ci_provider(
             forge_config,
         )
         for channel_target in migrated_combined_variant_spec.get("channel_targets", []):
-            if (
-                channel_target.startswith("conda-forge ")
-                and provider_name == "github_actions"
-                and not (
-                    (forge_config["github_actions"]["self_hosted"])
-                    or (os.path.basename(forge_dir) in SERVICE_FEEDSTOCKS)
-                )
-            ):
-                raise RuntimeError(
-                    "Using github_actions as the CI provider inside "
-                    "conda-forge github org is not allowed in order "
-                    "to avoid a denial of service for other infrastructure."
-                )
+            # MRB: Commented this out when github granted us a bigger runner allocation
+            #      Put this back to prevent feedstocks from using GHA
+            # if (
+            #     channel_target.startswith("conda-forge ")
+            #     and provider_name == "github_actions"
+            #     and not (
+            #         (forge_config["github_actions"]["self_hosted"])
+            #         or (os.path.basename(forge_dir) in SERVICE_FEEDSTOCKS)
+            #     )
+            # ):
+            #     raise RuntimeError(
+            #         "Using github_actions as the CI provider inside "
+            #         "conda-forge github org is not allowed in order "
+            #         "to avoid a denial of service for other infrastructure."
+            #     )
 
             # we skip travis builds for anything but aarch64, ppc64le and s390x
             # due to their current open-source policies around usage
@@ -2526,23 +2549,15 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
     logger.debug(log)
     logger.debug("## END CONFIGURATION\n")
 
-    if config["provider"]["linux_aarch64"] == "default":
-        config["provider"]["linux_aarch64"] = ["azure"]
+    # Fallback handling set to DEFAULT_PROVIDER, for platforms that
+    # are not fully specified by this time
+    for plat in config["provider"].keys():
+        if config["provider"][plat] in {"default", "emulated"}:
+            config["provider"][plat] = DEFAULT_PROVIDER
 
-    if config["provider"]["linux_aarch64"] == "native":
-        config["provider"]["linux_aarch64"] = ["travis"]
-
-    if config["provider"]["linux_ppc64le"] == "default":
-        config["provider"]["linux_ppc64le"] = ["azure"]
-
-    if config["provider"]["linux_ppc64le"] == "native":
-        config["provider"]["linux_ppc64le"] = ["travis"]
-
-    if config["provider"]["linux_s390x"] == "default":
-        config["provider"]["linux_s390x"] = ["azure"]
-
-    if config["provider"]["linux_s390x"] == "native":
-        config["provider"]["linux_s390x"] = ["travis"]
+    for plat, ci in NATIVE_CI_PROVIDER.items():
+        if config["provider"][plat] == "native":
+            config["provider"][plat] = ci
 
     config["remote_ci_setup"] = _sanitize_remote_ci_setup(config["remote_ci_setup"])
     if config["conda_install_tool"] == "conda":
@@ -2566,12 +2581,6 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
 
     # Run the legacy checks for backwards compatibility
     config = _legacy_compatibility_checks(config, forge_dir)
-
-    # Fallback handling set to azure, for platforms that are not fully specified by this time
-    for platform, providers in config["provider"].items():
-        for i, provider in enumerate(providers):
-            if provider in {"default", "emulated"}:
-                providers[i] = "azure"
 
     # Set the environment variable for the compiler stack
     os.environ["CF_COMPILER_STACK"] = config["compiler_stack"]
@@ -2935,7 +2944,7 @@ def main(
         )
 
     config = _load_forge_config(forge_dir, exclusive_config_file, forge_yml)
-    config["feedstock_name"] = os.path.basename(forge_dir)
+    config["feedstock_name"] = config["github"]["repo_name"]
 
     env = make_jinja_env(forge_dir)
     logger.debug("env rendered")

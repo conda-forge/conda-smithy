@@ -70,7 +70,11 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: coveralls
-        uses: coverallsapp/github-action@master
+        uses: coverallsapp/github-action@main
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           path-to-lcov: ./coverage.lcov
+          # TODO: revert as soon as feasible; coveralls has an extended outage
+          #       and is recommending this work-around for the time being, see
+          #       https://status.coveralls.io/incidents/pdbt7vdzlvpj
+          fail-on-error: false

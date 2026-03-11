@@ -42,6 +42,7 @@ from conda_smithy.linter.lints import (
     lint_build_section_should_have_a_number,
     lint_check_usage_of_whls,
     lint_feedstock_name_not_end_with_feedstock,
+    lint_floats_quoted,
     lint_go_licenses_are_bundled,
     lint_jinja_var_references,
     lint_jinja_variables_definitions,
@@ -53,6 +54,7 @@ from conda_smithy.linter.lints import (
     lint_noarch,
     lint_noarch_and_runtime_dependencies,
     lint_non_noarch_builds,
+    lint_osx_pins,
     lint_package_version,
     lint_pin_subpackages,
     lint_recipe_have_tests,
@@ -88,32 +90,51 @@ from conda_smithy.validate_schema import validate_json_schema
 NEEDED_FAMILIES = ["gpl", "bsd", "mit", "apache", "psf"]
 
 
-def _get_forge_yaml(recipe_dir: Optional[str] = None) -> dict:
+def _get_feedstock_config(recipe_dir: Optional[str] = None) -> dict:
+    feedstock_config_keys = {}
     if recipe_dir:
-        forge_yaml_filename = (
-            glob(os.path.join(recipe_dir, "..", "conda-forge.yml"))
-            or glob(
-                os.path.join(recipe_dir, "conda-forge.yml"),
-            )
-            or glob(
-                os.path.join(recipe_dir, "..", "..", "conda-forge.yml"),
-            )
-        )
-        if forge_yaml_filename:
-            with open(forge_yaml_filename[0], encoding="utf-8") as fh:
-                forge_yaml = get_yaml().load(fh)
-        else:
-            forge_yaml = {}
-    else:
-        forge_yaml = {}
+        feedstock_config_file = find_local_config_file(recipe_dir, "conda-forge.yml")
+        if feedstock_config_file:
+            with open(feedstock_config_file, encoding="utf-8") as fh:
+                feedstock_config_keys = get_yaml().load(fh)
 
-    return forge_yaml
+    return feedstock_config_keys
+
+
+def _get_recipe_config_keys(recipe_dir: Optional[str] = None) -> dict:
+    """
+    This function maps the two different recipe config formats to their keys
+
+    Currently, the content of variant.yaml files is not validated; the only
+    relevant information in that case is whether the file has been found
+    (i.e. the entry of the dict for "variant.yaml" is not None).
+    """
+    # mapping from possible filenames to their content; v1 recipes can use either format
+    recipe_config_keys = {"conda_build_config.yaml": None, "variants.yaml": None}
+    if recipe_dir:
+        for config_filename in recipe_config_keys.copy().keys():
+            config_file = find_local_config_file(recipe_dir, config_filename)
+            if not config_file:
+                # file not found, leave as None
+                continue
+            # otherwise, the file exists; content is definitely not None
+            recipe_config_keys[config_filename] = {}
+            # the linter currently does not analyze content of variants.yaml directly
+            if config_filename == "conda_build_config.yaml":
+                with open(config_file, encoding="utf-8") as fh:
+                    fh_data = fh.read()
+                    if fh_data:
+                        recipe_config_keys[config_filename] = set(
+                            get_yaml().load(fh_data).keys()
+                        )
+
+    return recipe_config_keys
 
 
 def lintify_forge_yaml(recipe_dir: Optional[str] = None) -> (list, list):
-    forge_yaml = _get_forge_yaml(recipe_dir)
+    feedstock_config_keys = _get_feedstock_config(recipe_dir)
     # This is where we validate against the jsonschema and execute our custom validators.
-    return validate_json_schema(forge_yaml)
+    return validate_json_schema(feedstock_config_keys)
 
 
 def lintify_meta_yaml(
@@ -125,7 +146,7 @@ def lintify_meta_yaml(
     lints = []
     hints = []
     major_sections = list(meta.keys())
-    lints_to_skip = (_get_forge_yaml(recipe_dir).get("linter") or {}).get("skip") or []
+    lints_to_skip = _get_feedstock_config(recipe_dir).get("linter", {}).get("skip", [])
 
     # If the recipe_dir exists (no guarantee within this function) , we can
     # find the meta.yaml within it.
@@ -264,37 +285,12 @@ def lintify_meta_yaml(
     noarch_value = build_section.get("noarch")
     lint_noarch(noarch_value, lints)
 
-    conda_build_config_filename = None
-    if recipe_dir:
-        cbc_file = "conda_build_config.yaml"
-        if recipe_version == 1:
-            cbc_file = "variants.yaml"
-
-        conda_build_config_filename = find_local_config_file(recipe_dir, cbc_file)
-
-        if conda_build_config_filename:
-            with open(conda_build_config_filename, encoding="utf-8") as fh:
-                fh_data = fh.read()
-                if fh_data:
-                    conda_build_config_keys = set(get_yaml().load(fh_data).keys())
-                else:
-                    conda_build_config_keys = set()
-        else:
-            conda_build_config_keys = set()
-
-        forge_yaml_filename = find_local_config_file(recipe_dir, "conda-forge.yml")
-
-        if forge_yaml_filename:
-            with open(forge_yaml_filename, encoding="utf-8") as fh:
-                forge_yaml = get_yaml().load(fh)
-        else:
-            forge_yaml = {}
-    else:
-        conda_build_config_keys = set()
-        forge_yaml = {}
+    # Interlude: load feedstock and recipe config
+    feedstock_config_keys = _get_feedstock_config(recipe_dir)
+    recipe_config_keys = _get_recipe_config_keys(recipe_dir)
 
     # 18: noarch doesn't work with selectors for runtime dependencies
-    noarch_platforms = len(forge_yaml.get("noarch_platforms", [])) > 1
+    noarch_platforms = len(feedstock_config_keys.get("noarch_platforms", [])) > 1
     if "lint_noarch_selectors" not in lints_to_skip:
         if recipe_version == 1:
             raw_requirements_section = meta.get("requirements", {})
@@ -309,8 +305,8 @@ def lintify_meta_yaml(
             lint_noarch_and_runtime_dependencies(
                 noarch_value,
                 recipe_fname,
-                forge_yaml,
-                conda_build_config_keys,
+                feedstock_config_keys,
+                recipe_config_keys["conda_build_config.yaml"],
                 lints,
             )
 
@@ -373,6 +369,30 @@ def lintify_meta_yaml(
         recipe_name, build_requirements, lints, recipe_version=recipe_version
     )
 
+    # 30: two configuration files present
+    if sum(v is not None for v in recipe_config_keys.values()) > 1:
+        lints.append(
+            "Found two recipe configuration files, but you may only use one! "
+            "You may use `conda_build_config.yaml` for both v0 and v1 recipes, "
+            "while `variants.yaml` may only be used with v1 recipes"
+        )
+
+    # 31: stdlib-related lints
+    if "lint_stdlib" not in lints_to_skip:
+        for config_fn in recipe_config_keys.keys():
+            lint_stdlib(
+                meta,
+                requirements_section,
+                recipe_dir,
+                config_fn,
+                lints,
+                # the version of the config file does not change the version of the recipe
+                recipe_version=recipe_version,
+            )
+
+    # 32: floats should be quoted
+    lint_floats_quoted(meta, lints, recipe_version=recipe_version)
+
     # hints
     # 1: suggest pip
     hint_pip_usage(build_section, hints)
@@ -399,18 +419,7 @@ def lintify_meta_yaml(
     # 5: hint pypi.io -> pypi.org
     hint_sources_should_not_mention_pypi_io_but_pypi_org(sources_section, hints)
 
-    # 6: stdlib-related lints
-    if "lint_stdlib" not in lints_to_skip:
-        lint_stdlib(
-            meta,
-            requirements_section,
-            conda_build_config_filename,
-            lints,
-            hints,
-            recipe_version=recipe_version,
-        )
-
-    # 7: warn of `name =version=build` specs, suggest `name version build`
+    # 6: warn of `name =version=build` specs, suggest `name version build`
     # see https://github.com/conda/conda-build/issues/5571#issuecomment-2604505922
     if recipe_version == 0:
         hint_space_separated_specs(
@@ -420,11 +429,11 @@ def lintify_meta_yaml(
             hints,
         )
 
-    # 8. check for obsolete os_version
+    # 7. check for obsolete os_version
     if "hint_os_version" not in lints_to_skip:
-        hint_os_version(forge_yaml, hints)
+        hint_os_version(feedstock_config_keys, hints)
 
-    # 9. check for bld.bat with rattler-build
+    # 8. check for bld.bat with rattler-build
     hint_rattler_build_bld_bat(recipe_dir, hints, recipe_version)
 
     return lints, hints
@@ -523,7 +532,7 @@ def run_conda_forge_specific(
     hints,
     recipe_version: int = 0,
 ):
-    lints_to_skip = (_get_forge_yaml(recipe_dir).get("linter") or {}).get("skip") or []
+    lints_to_skip = _get_feedstock_config(recipe_dir).get("linter", {}).get("skip", [])
 
     # Retrieve sections from meta
     package_section = get_section(meta, "package", lints, recipe_version=recipe_version)
@@ -693,7 +702,14 @@ def run_conda_forge_specific(
                 "The recipe should not have an empty `conda_build_config.yaml` file."
             )
 
-    # 14: Do not allow custom Github Actions workflows
+    # 14: incorrect configuration on osx for c_stdlib_version, MACOSX_SDK_VERSION etc.
+    # get recipe config files (we don't care about the content, only if it's non-None)
+    recipe_config_keys = _get_recipe_config_keys(recipe_dir)
+    for config_fn, content in recipe_config_keys.items():
+        if content is not None:
+            lint_osx_pins(recipe_dir, config_fn, lints, recipe_version)
+
+    # 15: Do not allow custom Github Actions workflows
     gha_workflows_dir = Path(recipe_dir or "", "..", ".github", "workflows")
     gha_workflows = [
         *gha_workflows_dir.glob("*.yml"),
