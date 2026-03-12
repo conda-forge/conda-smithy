@@ -1901,7 +1901,10 @@ def render_github_actions(jinja_env, forge_config, forge_dir, return_metadata=Fa
     )
     if not os.path.isfile(target_path):
         # Restore dummy GHA if it was removed because platform is not enabled
-        copy_file(os.path.join(conda_forge_content, "feedstock_content", rel_path), target_path)
+        copy_file(
+            os.path.join(conda_forge_content, "feedstock_content", rel_path),
+            target_path,
+        )
     return config
 
 
