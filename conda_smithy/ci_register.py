@@ -548,6 +548,16 @@ def travis_cleanup(org, project):
         github.remove_from_project(gh, org, project)
 
 
+def enable_cirrus_runners_app(org: str, project: str) -> None:
+    app = 108385308 if org == "conda-forge" else "cirrus-runners"
+    github.configure_github_app(org, project, app)
+
+
+def disable_cirrus_runners_app(org: str, project: str) -> None:
+    app = 108385308 if org == "conda-forge" else "cirrus-runners"
+    github.configure_github_app(org, project, app, remove=True)
+
+
 def get_conda_hook_info(hook_url, events):
     payload = {
         "name": "web",
