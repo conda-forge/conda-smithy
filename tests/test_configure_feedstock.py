@@ -2306,3 +2306,48 @@ def test_configure_feedstock_rattler_build_conda_compat_round_trip():
 
         cfg = ensure_standard_strings(cfg)
         assert "ruamel.yaml" not in _dumps(cfg)
+
+
+def test_github_actions_populated(linux_skipped_recipe, jinja_env):
+    forge_dir = linux_skipped_recipe.recipe
+    config = copy.deepcopy(linux_skipped_recipe.config)
+    conda_build_yml = Path(forge_dir, ".github/workflows/conda-build.yml")
+
+    config["provider"]["linux"] = "azure"
+    config["provider"]["osx"] = "azure"
+    config["provider"]["win"] = "azure"
+
+    configure_feedstock.copy_feedstock_content(config, forge_dir)
+    assert conda_build_yml.is_file()
+    assert "name: Disabled build" in conda_build_yml.read_text()
+
+    configure_feedstock.render_azure(
+        jinja_env=jinja_env,
+        forge_config=config,
+        forge_dir=forge_dir,
+    )
+    configure_feedstock.render_github_actions(
+        jinja_env=jinja_env,
+        forge_config=config,
+        forge_dir=forge_dir,
+    )
+
+    assert conda_build_yml.is_file()
+    assert "name: Disabled build" in conda_build_yml.read_text()
+
+    config["provider"]["osx"] = "github_actions"
+
+    configure_feedstock.copy_feedstock_content(config, forge_dir)
+    configure_feedstock.render_azure(
+        jinja_env=jinja_env,
+        forge_config=config,
+        forge_dir=forge_dir,
+    )
+    configure_feedstock.render_github_actions(
+        jinja_env=jinja_env,
+        forge_config=config,
+        forge_dir=forge_dir,
+    )
+    assert conda_build_yml.is_file()
+    assert "name: Disabled build" not in conda_build_yml.read_text()
+    assert "name: Checkout code" in conda_build_yml.read_text()
