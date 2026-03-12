@@ -4,6 +4,22 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.56.3
+====================
+
+**Added:**
+
+* Add dummy ``.github/workflows/conda-build.yml`` workflow to ensure that Github Actions is enabled for feedstocks. (#2494)
+
+**Authors:**
+
+* Matthew R. Becker
+* Jaime Rodríguez-Guerra
+* Uwe L. Korn
+* dependabot[bot]
+
+
+
 v3.56.2
 ====================
 
