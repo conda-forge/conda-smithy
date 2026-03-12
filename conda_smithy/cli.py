@@ -224,7 +224,7 @@ class RegisterCI(Subcommand):
         "Drone",
         "Webservice",
         "Cirun",
-        "Cirrus-Runners"
+        "Cirrus-Runners",
     )
 
     def __init__(self, parser):
