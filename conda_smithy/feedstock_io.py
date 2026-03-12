@@ -115,6 +115,7 @@ def copy_file(src, dst):
 
     If the file fails to be decoded with utf-8, we revert to a regular copy.
     """
+    os.makedirs(os.path.dirname(dst), exist_ok=True)
     try:
         with open(src, encoding="utf-8") as fh_src:
             with open(dst, "w", encoding="utf-8", newline="\n") as fh_dst:

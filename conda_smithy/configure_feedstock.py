@@ -1869,7 +1869,8 @@ def _github_actions_specific_setup(jinja_env, forge_config, forge_dir, platform)
 
 
 def render_github_actions(jinja_env, forge_config, forge_dir, return_metadata=False):
-    target_path = os.path.join(forge_dir, ".github", "workflows", "conda-build.yml")
+    rel_path = os.path.join(".github", "workflows", "conda-build.yml")
+    target_path = os.path.join(forge_dir, rel_path)
     template_filename = "github-actions.yml.tmpl"
     fast_finish_text = ""
 
@@ -1883,7 +1884,7 @@ def render_github_actions(jinja_env, forge_config, forge_dir, return_metadata=Fa
     logger.debug("github platforms retrieved")
 
     remove_file_or_dir(target_path)
-    return _render_ci_provider(
+    config = _render_ci_provider(
         "github_actions",
         jinja_env=jinja_env,
         forge_config=forge_config,
@@ -1898,6 +1899,10 @@ def render_github_actions(jinja_env, forge_config, forge_dir, return_metadata=Fa
         upload_packages=upload_packages,
         return_metadata=return_metadata,
     )
+    if not os.path.isfile(target_path):
+        # Restore dummy GHA if it was removed because platform is not enabled
+        copy_file(os.path.join(conda_forge_content, "feedstock_content", rel_path), target_path)
+    return config
 
 
 def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
