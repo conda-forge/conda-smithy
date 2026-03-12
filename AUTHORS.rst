@@ -35,9 +35,9 @@ Authors are sorted by number of commits.
 * Daniel Ching
 * Billy K. Poon
 * vinicius douglas cerutti
+* dependabot[bot]
 * Tim Snyder
 * Mike Henry
-* dependabot[bot]
 * Eric Dill
 * Natasha Pavlovikj
 * Maksim Rakitin
