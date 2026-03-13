@@ -4,6 +4,7 @@ from random import choice
 import github
 import pygit2
 from github import Github
+from github.Consts import DEFAULT_BASE_URL as GITHUB_API_URL
 from github.GithubException import GithubException
 from github.Organization import Organization
 from github.Team import Team
@@ -335,3 +336,32 @@ def configure_github_team(meta, gh_repo, org, feedstock_name, remove=True):
             team.remove_from_repos(gh_repo)
 
     return maintainers, current_maintainers, new_org_members
+
+
+def configure_github_app(
+    org: str,
+    repo: str,
+    app_slug_or_installation_id: str | int = None,
+    remove: bool = False,
+) -> None:
+    gh = Github(auth=github.Auth.Token(gh_token()))
+    org: github.Organization = gh.get_organization(org)
+    repo: github.Repository = org.get_repo(repo)
+    inst_id: int = 0
+    if isinstance(app_slug_or_installation_id, str):
+        for inst in org.get_installations():
+            if inst.app_slug == app_slug_or_installation_id:
+                inst_id = inst.id
+                break
+        else:
+            raise ValueError(
+                f"Could not find installation ID for '{app_slug_or_installation_id}'. "
+                "Is it installed?"
+            )
+    else:
+        inst_id = app_slug_or_installation_id
+    url = f"{GITHUB_API_URL}/user/installations/{inst_id}/repositories/{repo.id}"
+    if remove:
+        gh.requester.requestJsonAndCheck("DELETE", url)
+    else:
+        gh.requester.requestJsonAndCheck("PUT", url)
