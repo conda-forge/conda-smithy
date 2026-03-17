@@ -15,7 +15,11 @@ from conftest import ConfigYAML
 from rattler_build_conda_compat.loader import parse_recipe_config_file
 
 from conda_smithy import configure_feedstock
-from conda_smithy.configure_feedstock import DEFAULT_PROVIDER, _read_forge_config
+from conda_smithy.configure_feedstock import (
+    DEFAULT_PROVIDER,
+    DEFAULT_PROVIDERS,
+    _read_forge_config,
+)
 from conda_smithy.utils import ensure_standard_strings
 
 if sys.version_info >= (3, 11):
@@ -75,7 +79,8 @@ def test_noarch_runs_on_circle(noarch_recipe, jinja_env):
 
 @pytest.mark.parametrize("recipe_dirname", ["recipe", "custom_recipe_dir"])
 def test_noarch_runs_on_default(noarch_recipe, jinja_env):
-    render_func = getattr(configure_feedstock, f"render_{DEFAULT_PROVIDER}")
+    """By default, noarch runs on the default provider for Linux x64"""
+    render_func = getattr(configure_feedstock, f"render_{DEFAULT_PROVIDERS['linux_64']}")
     render_func(
         jinja_env=jinja_env,
         forge_config=noarch_recipe.config,
@@ -83,7 +88,7 @@ def test_noarch_runs_on_default(noarch_recipe, jinja_env):
     )
 
     # this configuration should be run
-    assert noarch_recipe.config[DEFAULT_PROVIDER]["enabled"]
+    assert noarch_recipe.config[DEFAULT_PROVIDERS['linux_64']]["enabled"]
     matrix_dir = os.path.join(noarch_recipe.recipe, ".ci_support")
     assert os.path.isdir(matrix_dir)
     # single matrix entry - readme is generated later in main function
@@ -137,14 +142,16 @@ def test_r_matrix_on_circle(r_recipe, jinja_env):
 
 
 def test_r_matrix_default(r_recipe, jinja_env):
-    render_func = getattr(configure_feedstock, f"render_{DEFAULT_PROVIDER}")
-    render_func(
-        jinja_env=jinja_env,
-        forge_config=r_recipe.config,
-        forge_dir=r_recipe.recipe,
-    )
-    # this configuration should be run
-    assert r_recipe.config[DEFAULT_PROVIDER]["enabled"]
+    default_providers = sorted({prov for _, prov in DEFAULT_PROVIDERS.items()})
+    for provider in default_providers:
+        render_func = getattr(configure_feedstock, f"render_{provider}")
+        render_func(
+            jinja_env=jinja_env,
+            forge_config=r_recipe.config,
+            forge_dir=r_recipe.recipe,
+        )
+        # this configuration should be run
+        assert r_recipe.config[provider]["enabled"]
     matrix_dir = os.path.join(r_recipe.recipe, ".ci_support")
     assert os.path.isdir(matrix_dir)
     # single matrix entry - readme is generated later in main function
@@ -245,14 +252,16 @@ def test_stdlib_on_default(stdlib_recipe, jinja_env, request):
             "skipping test for rattler-build usecase as we currently we don't have stdlib"
         )
 
-    render_func = getattr(configure_feedstock, f"render_{DEFAULT_PROVIDER}")
-    render_func(
-        jinja_env=jinja_env,
-        forge_config=stdlib_recipe.config,
-        forge_dir=stdlib_recipe.recipe,
-    )
-    # this configuration should be run
-    assert stdlib_recipe.config[DEFAULT_PROVIDER]["enabled"]
+    default_providers = sorted({prov for _, prov in DEFAULT_PROVIDERS.items()})
+    for provider in default_providers:
+        render_func = getattr(configure_feedstock, f"render_{provider}")
+        render_func(
+            jinja_env=jinja_env,
+            forge_config=stdlib_recipe.config,
+            forge_dir=stdlib_recipe.recipe,
+        )
+        # this configuration should be run
+        assert stdlib_recipe.config[provider]["enabled"]
     matrix_dir = os.path.join(stdlib_recipe.recipe, ".ci_support")
     assert os.path.isdir(matrix_dir)
     # find stdlib-config in generated yaml files (plus version, on unix)
@@ -284,15 +293,17 @@ def test_stdlib_deployment_target(
         # stdlib_deployment_target_recipe fixture doesn't have a recipe.yaml variant
         pytest.skip("skipping test for rattler-build usecase")
 
-    with caplog.at_level(logging.WARNING):
-        render_func = getattr(configure_feedstock, f"render_{DEFAULT_PROVIDER}")
-        render_func(
-            jinja_env=jinja_env,
-            forge_config=stdlib_deployment_target_recipe.config,
-            forge_dir=stdlib_deployment_target_recipe.recipe,
-        )
-    # this configuration should be run
-    assert stdlib_deployment_target_recipe.config[DEFAULT_PROVIDER]["enabled"]
+    default_providers = sorted({prov for _, prov in DEFAULT_PROVIDERS.items()})
+    for provider in default_providers:
+        with caplog.at_level(logging.WARNING):
+            render_func = getattr(configure_feedstock, f"render_{provider}")
+            render_func(
+                jinja_env=jinja_env,
+                forge_config=stdlib_deployment_target_recipe.config,
+                forge_dir=stdlib_deployment_target_recipe.recipe,
+            )
+        # this configuration should be run
+        assert stdlib_deployment_target_recipe.config[provider]["enabled"]
     matrix_dir = os.path.join(stdlib_deployment_target_recipe.recipe, ".ci_support")
     assert os.path.isdir(matrix_dir)
     with open(os.path.join(matrix_dir, "osx_64_.yaml")) as f:
@@ -780,11 +791,13 @@ def test_migrator_cfp_override(recipe_migration_cfep9, jinja_env):
     os.makedirs(cfp_migration_dir, exist_ok=True)
 
     with open(os.path.join(cfp_migration_dir, "zlib.yaml"), "w") as f:
-        f.write(textwrap.dedent("""
+        f.write(
+            textwrap.dedent("""
                 migrator_ts: 1
                 zlib:
                    - 1001
-                """))
+                """)
+        )
     render_func(
         jinja_env=jinja_env,
         forge_config=recipe_migration_cfep9.config,
@@ -1038,16 +1051,17 @@ def test_cos7_env_render(py_recipe, jinja_env):
 
     try:
         assert "DEFAULT_LINUX_VERSION" not in os.environ
-        render_func = getattr(configure_feedstock, f"render_{DEFAULT_PROVIDER}")
-        render_func(
-            jinja_env=jinja_env,
-            forge_config=forge_config,
-            forge_dir=py_recipe.recipe,
-        )
+        default_providers = sorted({prov for _, prov in DEFAULT_PROVIDERS.items()})
+        for provider in default_providers:
+            render_func = getattr(configure_feedstock, f"render_{provider}")
+            render_func(
+                jinja_env=jinja_env,
+                forge_config=forge_config,
+                forge_dir=py_recipe.recipe,
+            )
+            # this configuration should be run
+            assert forge_config[provider]["enabled"]
         assert os.environ["DEFAULT_LINUX_VERSION"] == "cos7"
-
-        # this configuration should be run
-        assert forge_config[DEFAULT_PROVIDER]["enabled"]
         matrix_dir = os.path.join(py_recipe.recipe, ".ci_support")
         assert os.path.isdir(matrix_dir)
         # single matrix entry - readme is generated later in main function
@@ -1070,16 +1084,18 @@ def test_cuda_enabled_render(cuda_enabled_recipe, jinja_env):
 
     try:
         assert "CF_CUDA_ENABLED" not in os.environ
-        render_func = getattr(configure_feedstock, f"render_{DEFAULT_PROVIDER}")
-        render_func(
-            jinja_env=jinja_env,
-            forge_config=forge_config,
-            forge_dir=cuda_enabled_recipe.recipe,
-        )
-        assert os.environ["CF_CUDA_ENABLED"] == "True"
+        default_providers = sorted({prov for _, prov in DEFAULT_PROVIDERS.items()})
+        for provider in default_providers:
+            render_func = getattr(configure_feedstock, f"render_{provider}")
+            render_func(
+                jinja_env=jinja_env,
+                forge_config=forge_config,
+                forge_dir=cuda_enabled_recipe.recipe,
+            )
+            assert os.environ["CF_CUDA_ENABLED"] == "True"
 
-        # this configuration should be run
-        assert forge_config[DEFAULT_PROVIDER]["enabled"]
+            # this configuration should be run
+            assert forge_config[provider]["enabled"]
         matrix_dir = os.path.join(cuda_enabled_recipe.recipe, ".ci_support")
         assert os.path.isdir(matrix_dir)
         # single matrix entry - readme is generated later in main function
@@ -2272,23 +2288,23 @@ def test_render_pixi(
     pixi = tomllib.loads(pixi_text)
 
     if not shellcheck:
-        assert (
-            "shellcheck" not in pixi_text
-        ), "pixi.toml should not mention `shellcheck`"
+        assert "shellcheck" not in pixi_text, (
+            "pixi.toml should not mention `shellcheck`"
+        )
     else:
         platforms = pixi["workspace"]["platforms"]
-        assert (
-            platform_without_shellcheck in platforms
-        ), f"expected {platform_without_shellcheck} in pixi workspace platforms"
-        assert (
-            "win-64" in platforms
-        ), "expected an aliased platform in pixi workspace platforms"
+        assert platform_without_shellcheck in platforms, (
+            f"expected {platform_without_shellcheck} in pixi workspace platforms"
+        )
+        assert "win-64" in platforms, (
+            "expected an aliased platform in pixi workspace platforms"
+        )
         shellcheck_platforms = pixi["feature"]["shellcheck"]["platforms"]
         smithy_env = pixi["environments"]["smithy"]
         assert shellcheck_platforms, "`shellcheck` should be enabled on _some_ platform"
-        assert (
-            platform_without_shellcheck not in shellcheck_platforms
-        ), f"`shellcheck` should not be enabled for {platform_without_shellcheck}"
+        assert platform_without_shellcheck not in shellcheck_platforms, (
+            f"`shellcheck` should not be enabled for {platform_without_shellcheck}"
+        )
 
         assert "shellcheck" in smithy_env, "`smithy` env should have `shellcheck`"
 
@@ -2302,12 +2318,14 @@ def test_configure_feedstock_rattler_build_conda_compat_round_trip():
     with tempfile.TemporaryDirectory() as tmpdir:
         fname = os.path.join(tmpdir, "variants.yaml")
         with open(fname, "w") as fp:
-            fp.write(textwrap.dedent("""
+            fp.write(
+                textwrap.dedent("""
                 varkey:
                 - "val1"
                 - 'val2'
                 - val
-                """))
+                """)
+            )
 
         cfg = parse_recipe_config_file(fname, {})
         assert "ruamel.yaml" in _dumps(cfg)
