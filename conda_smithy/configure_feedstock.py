@@ -1482,19 +1482,15 @@ def _get_build_setup_line(forge_dir, platform, forge_config):
 
             """)
         elif platform == "win":
-            build_setup += textwrap.dedent(
-                """\
+            build_setup += textwrap.dedent("""\
                 :: Overriding global run_conda_forge_build_setup_win with local copy.
                 CALL {recipe_dir}\\run_conda_forge_build_setup_win
-            """.format(recipe_dir=forge_config["recipe_dir"])
-            )
+            """.format(recipe_dir=forge_config["recipe_dir"]))
         else:
-            build_setup += textwrap.dedent(
-                """\
+            build_setup += textwrap.dedent("""\
                 # Overriding global run_conda_forge_build_setup_osx with local copy.
                 source {recipe_dir}/run_conda_forge_build_setup_osx
-            """.format(recipe_dir=forge_config["recipe_dir"])
-            )
+            """.format(recipe_dir=forge_config["recipe_dir"]))
     else:
         if platform == "win":
             build_setup += textwrap.dedent("""\
@@ -1559,15 +1555,13 @@ def generate_yum_requirements(forge_config, forge_dir):
                 "yum_requirements.txt, please remove the file "
                 "or add some."
             )
-        yum_build_setup = textwrap.dedent(
-            """\
+        yum_build_setup = textwrap.dedent("""\
 
             # Install the yum requirements defined canonically in the
             # "recipe/yum_requirements.txt" file. After updating that file,
             # run "conda smithy rerender" and this line will be updated
             # automatically.
-            /usr/bin/sudo -n yum install -y {}""".format(" ".join(requirements))
-        )
+            /usr/bin/sudo -n yum install -y {}""".format(" ".join(requirements)))
     return yum_build_setup
 
 
