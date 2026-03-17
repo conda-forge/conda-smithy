@@ -114,7 +114,12 @@ def copy_file(src, dst):
     getting CRLF characters added on Windows.
 
     If the file fails to be decoded with utf-8, we revert to a regular copy.
+
+    Parent directories will be created for `dst`.
     """
+    parent = os.path.dirname(dst)
+    if parent:
+        os.makedirs(parent, exist_ok=True)
     try:
         with open(src, encoding="utf-8") as fh_src:
             with open(dst, "w", encoding="utf-8", newline="\n") as fh_dst:
