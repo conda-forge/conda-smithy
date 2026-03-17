@@ -138,9 +138,9 @@ DEFAULT_PLATFORMS = (
 DEFAULT_PROVIDER = "github_actions"
 DEFAULT_PROVIDERS = {
     "linux_64": "github_actions",
-    "linux_aarch64": "azure",  # emulated
-    "linux_ppc64le": "azure",  # emulated
-    "linux_s390x": "azure",  # emulated
+    "linux_aarch64": "github_actions",  # emulated
+    "linux_ppc64le": "github_actions",  # emulated
+    "linux_s390x": "github_actions",  # emulated
     "osx_64": "azure",
     "osx_arm64": "azure",
     "win_64": "github_actions",
