@@ -1815,7 +1815,7 @@ def _github_actions_specific_setup(jinja_env, forge_config, forge_dir, platform)
         },
         "win-arm64": {
             "os": "windows",
-            "hosted_labels": ("windows-latest",),
+            "hosted_labels": ("windows-11-arm",),
             "self_hosted_labels": ("windows", "ARM64"),
         },
     }
