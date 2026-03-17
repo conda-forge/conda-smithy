@@ -24,6 +24,14 @@ else:
     import tomli as tomllib
 
 
+def test_platforms_populated():
+    all_platforms = configure_feedstock.ALL_PLATFORMS
+    assert sorted(all_platforms) == sorted(configure_feedstock.FANCY_PLATFORM_NAMES)
+    assert sorted(all_platforms) == sorted(configure_feedstock.DEFAULT_PROVIDERS)
+    assert sorted(all_platforms) == sorted(configure_feedstock.NATIVE_CI_PROVIDER)
+    assert set(configure_feedstock.DEFAULT_PLATFORMS).issubset(all_platforms)
+
+
 def test_noarch_skips_appveyor(noarch_recipe, jinja_env):
     noarch_recipe.config["provider"]["win"] = "appveyor"
     configure_feedstock.render_appveyor(

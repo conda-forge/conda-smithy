@@ -118,14 +118,55 @@ CONDA_FORGE_ALIAS_PLATFORMS["unix"] = {
 
 CONDA_FORGE_PIXI_VERSION = "0.59.0"
 
+ALL_PLATFORMS = (
+    "linux_64",
+    "linux_aarch64",
+    "linux_ppc64le",
+    "linux_s390x",
+    "osx_64",
+    "osx_arm64",
+    "win_64",
+    "win_arm64",
+)
+# These are enabled by default
+DEFAULT_PLATFORMS = (
+    "linux_64",
+    "osx_64",
+    "win_64",
+)
+
 DEFAULT_PROVIDER = "azure"
+DEFAULT_PROVIDERS = {
+    "linux_64": "github_actions",
+    "linux_aarch64": "azure",  # emulated
+    "linux_ppc64le": "azure",  # emulated
+    "linux_s390x": "azure",  # emulated
+    "osx_64": "azure",
+    "osx_arm64": "azure",
+    "win_64": "github_actions",
+    "win_arm64": "github_actions",
+}
 
 NATIVE_CI_PROVIDER = {
+    "linux_64": "github_actions",
     "linux_aarch64": "travis",
-    "osx_arm64": "azure",
-    "win_arm64": "github_actions",
     "linux_ppc64le": "travis",
     "linux_s390x": "travis",
+    "osx_64": "azure",
+    "osx_arm64": "azure",
+    "win_64": "github_actions",
+    "win_arm64": "github_actions",
+}
+
+FANCY_PLATFORM_NAMES = {
+    "linux_64": "Linux",
+    "linux_aarch64": "Arm64",
+    "linux_ppc64le": "PowerPC64",
+    "linux_s390x": "S390X",
+    "osx_64": "OSX",
+    "osx_arm64": "OSXARM",
+    "win_64": "Windows",
+    "win_arm64": "WindowsARM",
 }
 
 
@@ -1321,13 +1362,6 @@ def _render_ci_provider(
             remove_file(each_target_fname)
     else:
         forge_config[provider_name]["enabled"] = True
-        fancy_name = {
-            "linux_64": "Linux",
-            "osx_64": "OSX",
-            "win_64": "Windows",
-            "linux_aarch64": "Arm64",
-            "linux_ppc64le": "PowerPC64",
-        }
         fancy_platforms = []
         unfancy_platforms = set()
 
@@ -1348,7 +1382,7 @@ def _render_ci_provider(
 
                 plat_arch = f"{platform}_{arch}"
                 forge_config[plat_arch]["enabled"] = True
-                fancy_platforms.append(fancy_name.get(plat_arch, plat_arch))
+                fancy_platforms.append(FANCY_PLATFORM_NAMES.get(plat_arch, plat_arch))
                 unfancy_platforms.add(plat_arch)
             elif platform in extra_platform_files:
                 for each_target_fname in extra_platform_files[platform]:
@@ -2561,7 +2595,7 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
     # are not fully specified by this time
     for plat in config["provider"].keys():
         if config["provider"][plat] in {"default", "emulated"}:
-            config["provider"][plat] = DEFAULT_PROVIDER
+            config["provider"][plat] = DEFAULT_PROVIDERS.get(plat, DEFAULT_PROVIDER)
 
     for plat, ci in NATIVE_CI_PROVIDER.items():
         if config["provider"][plat] == "native":
@@ -2685,8 +2719,7 @@ def commit_changes(
                 logger.info("")
             else:
                 logger.info(
-                    "You can commit the changes with:\n\n"
-                    '    git commit -m "MNT: %s"\n',
+                    'You can commit the changes with:\n\n    git commit -m "MNT: %s"\n',
                     msg,
                 )
             logger.info("These changes need to be pushed to github!\n")
@@ -2705,9 +2738,7 @@ def get_cfp_file_path(temporary_directory):
             "Could not determine proper conda package extension for "
             f"pinning package '{pkg.url}'!"
         )
-    dest = os.path.join(
-        temporary_directory, f"conda-forge-pinning-{ pkg.version }{ext}"
-    )
+    dest = os.path.join(temporary_directory, f"conda-forge-pinning-{pkg.version}{ext}")
 
     logger.info("Downloading conda-forge-pinning-%s", pkg.version)
 
@@ -3022,7 +3053,7 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(
-        description=("Configure a feedstock given " "a conda-forge.yml file.")
+        description=("Configure a feedstock given a conda-forge.yml file.")
     )
     parser.add_argument(
         "forge_file_directory",
