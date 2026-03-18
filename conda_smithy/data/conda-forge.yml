@@ -129,7 +129,7 @@ provider:
   wasi_wasm32: null
   win: null
   win_32: null
-  win_64: github_actions
+  win_64: azure
   win_arm64: null
   zos_z: null
 recipe_dir: recipe

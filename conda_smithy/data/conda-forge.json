@@ -1535,7 +1535,7 @@
               "type": "null"
             }
           ],
-          "default": "github_actions",
+          "default": "azure",
           "title": "Win 64"
         },
         "win_arm64": {
