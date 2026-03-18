@@ -884,7 +884,7 @@ def test_migrator_compiler_version_recipe(recipe_migration_win_compiled, jinja_e
     """
     Assert that even when we have two migrations targeting the same file the correct one wins.
     """
-    render_func = getattr(configure_feedstock, f"render_{DEFAULT_PROVIDER}")
+    render_func = getattr(configure_feedstock, f"render_{DEFAULT_PROVIDERS['win_64']}")
     render_func(
         jinja_env=jinja_env,
         forge_config=recipe_migration_win_compiled.config,
