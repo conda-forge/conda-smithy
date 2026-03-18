@@ -4,6 +4,33 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.57.0
+====================
+
+**Added:**
+
+* Support enabling or disable the Cirrus Runners app from the CLI. (#2493)
+
+**Changed:**
+
+* Re-enable Github Actions as default provider for Linux. (#2495, #2498)
+* ``github_actions_labels`` field in ``conda_build_config.yaml`` can now mix Github-hosted and self-hosted runners. If absent, defaults to Github-hosted runners; this can be explicitly set with the ``default`` value too. (#2499)
+
+**Deprecated:**
+
+* ``github_actions.self_hosted`` configuration in ``conda-forge.yml`` doesn't have an effect anymore. Use ``github_actions_labels`` in ``conda_build_config.yaml`` to configure the ``runs-on`` field for each CI job. (#2499)
+
+**Fixed:**
+
+* Fix ``runs-on`` label for native Github-hosted ``win-arm64`` runners. (#2496)
+* Fix default ``MINIFORGE_HOME`` value for native Github-hosted ``win-arm64`` runners. (#2497)
+
+**Authors:**
+
+* Jaime Rodríguez-Guerra
+
+
+
 v3.56.3
 ====================
 
