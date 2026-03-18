@@ -1271,7 +1271,7 @@
               "type": "null"
             }
           ],
-          "default": "azure",
+          "default": "github_actions",
           "title": "Linux 64"
         },
         "linux_aarch64": {
@@ -1535,7 +1535,7 @@
               "type": "null"
             }
           ],
-          "default": "azure",
+          "default": "github_actions",
           "title": "Win 64"
         },
         "win_arm64": {

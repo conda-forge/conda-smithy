@@ -20,7 +20,10 @@ except ImportError:
 
 # use relative imports to ensure that we don't pick up the data paths from
 # a non-development conda-smithy installed in site-packages
-from .configure_feedstock import DEFAULT_PROVIDER  # noqa: TID252
+from .configure_feedstock import (  # noqa: TID252
+    DEFAULT_PLATFORMS,
+    DEFAULT_PROVIDERS,
+)
 from .validate_schema import (  # noqa: TID252
     CONDA_FORGE_YAML_DEFAULTS_FILE,
     CONDA_FORGE_YAML_SCHEMA_FILE,
@@ -352,7 +355,6 @@ class CondaBuildConfig(BaseModel):
 
 
 class LinterConfig(BaseModel):
-
     skip: Optional[list[Lints]] = Field(
         default_factory=list,
         description="List of lints to skip",
@@ -446,8 +448,11 @@ Provider = create_model(
             for plat in list(PlatformsAliases) + list(Platforms)
         ]
         + [
-            (str(plat), (Optional[ProviderType], Field(default=DEFAULT_PROVIDER)))
-            for plat in ("linux_64", "osx_64", "win_64")
+            (
+                str(plat),
+                (Optional[ProviderType], Field(default=DEFAULT_PROVIDERS[plat])),
+            )
+            for plat in DEFAULT_PLATFORMS
         ]
     ),
 )

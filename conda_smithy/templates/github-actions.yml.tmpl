@@ -209,7 +209,7 @@ jobs:
         # default value; make it explicit, as it needs to match with artefact
         # generation below. Not configurable for now, can be revisited later
         CONDA_BLD_DIR: C:\bld
-        MINIFORGE_HOME: D:\Miniforge
+        MINIFORGE_HOME: {% raw %}${{ contains(runner.arch, 'ARM') && 'C' || 'D' }}{% endraw %}:\Miniforge
         PYTHONUNBUFFERED: 1
         CONFIG: {% raw %}${{ matrix.CONFIG }}{% endraw %}
         CI: github_actions
