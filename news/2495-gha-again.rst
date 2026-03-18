@@ -4,7 +4,7 @@
 
 **Changed:**
 
-* Re-enable Github Actions as default provider for Linux and Windows. (#2495)
+* Re-enable Github Actions as default provider for Linux. (#2495, #2498)
 
 **Deprecated:**
 
