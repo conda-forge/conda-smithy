@@ -2375,3 +2375,73 @@ def test_github_actions_populated(linux_skipped_recipe, jinja_env):
     assert conda_build_yml.is_file()
     assert "name: Disabled build" not in conda_build_yml.read_text()
     assert "name: Checkout code" in conda_build_yml.read_text()
+
+
+@pytest.mark.parametrize(
+    "label",
+    [None, "default", "hosted", "cirun-linux", "self-hosted@another-linux-runner"],
+)
+def test_github_actions_labels(py_recipe, jinja_env, label):
+    forge_dir = py_recipe.recipe
+    config = copy.deepcopy(py_recipe.config)
+    conda_build_yml = Path(forge_dir, ".github/workflows/conda-build.yml")
+    print(conda_build_yml)
+
+    config["provider"]["linux_64"] = "github_actions"
+    config["provider"]["osx"] = "azure"
+    config["provider"]["win"] = "azure"
+    if label:
+        with open(config["exclusive_config_file"], "a") as f:
+            f.write(f"\ngithub_actions_labels:\n  - {label}  # [linux64]\n")
+        if (recipe := Path(py_recipe.recipe, "recipe", "meta.yaml")).is_file():
+            with open(recipe, "a") as f:
+                f.write("\n{% set github_actions_labels = github_actions_labels %}\n")
+        else:
+            recipe = Path(py_recipe.recipe, "recipe", "recipe.yaml")
+            with open(recipe) as f:
+                contents = yaml.safe_load(f)
+            contents.setdefault("context", {})[
+                "github_actions_labels"
+            ] = "${{ github_actions_labels }}"
+            with open(recipe, "w") as f:
+                yaml.safe_dump(contents, f)
+
+    configure_feedstock.render_github_actions(
+        jinja_env=jinja_env,
+        forge_config=config,
+        forge_dir=forge_dir,
+    )
+
+    with conda_build_yml.open() as f:
+        workflow = yaml.safe_load(f)
+    matrix = workflow["jobs"]["build"]["strategy"]["matrix"]["include"]
+
+    assert all(entry["os"] == "ubuntu" for entry in matrix)
+    if label in (None, "default", "hosted"):
+        assert all(
+            entry["runs_on"]
+            == list(
+                configure_feedstock.GITHUB_ACTIONS_RUNS_ON["linux-64"]["hosted_labels"]
+            )
+            for entry in matrix
+        )
+    elif label == "cirun-linux":
+        # cirun gets expanded with --{ stuff } for debugging purposes
+        assert all(entry["runs_on"][0].startswith("cirun-linux--") for entry in matrix)
+    elif label == "self-hosted@another-linux-runner":
+        # self-hosted@ gets "expanded" with generic self-hosted labels (e.g. Linux, x64)
+        assert all(
+            sorted(entry["runs_on"])
+            == sorted(
+                [
+                    "another-linux-runner",
+                    *configure_feedstock.GITHUB_ACTIONS_RUNS_ON["linux-64"][
+                        "self_hosted_labels"
+                    ],
+                    "self-hosted",
+                ]
+            )
+            for entry in matrix
+        )
+    else:
+        raise AssertionError("Bad label? Check test parameters.")
