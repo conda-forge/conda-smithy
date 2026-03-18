@@ -169,6 +169,40 @@ FANCY_PLATFORM_NAMES = {
     "win_arm64": "WindowsARM",
 }
 
+GITHUB_ACTIONS_RUNS_ON = {
+    "osx-64": {
+        "os": "macos",
+        # FUTURE: macos-15-intel will be deprecated in Fall 2027
+        "hosted_labels": ("macos-15-intel",),
+        "self_hosted_labels": ("macOS", "x64"),
+    },
+    "osx-arm64": {
+        "os": "macos",
+        "hosted_labels": ("macos-latest",),
+        "self_hosted_labels": ("macOS", "arm64"),
+    },
+    "linux-64": {
+        "os": "ubuntu",
+        "hosted_labels": ("ubuntu-latest",),
+        "self_hosted_labels": ("linux", "x64"),
+    },
+    "linux-aarch64": {
+        "os": "ubuntu",
+        "hosted_labels": ("ubuntu-24.04-arm",),
+        "self_hosted_labels": ("linux", "ARM64"),
+    },
+    "win-64": {
+        "os": "windows",
+        "hosted_labels": ("windows-latest",),
+        "self_hosted_labels": ("windows", "x64"),
+    },
+    "win-arm64": {
+        "os": "windows",
+        "hosted_labels": ("windows-11-arm",),
+        "self_hosted_labels": ("windows", "ARM64"),
+    },
+}
+
 
 # use lru_cache to avoid repeating warnings endlessly;
 # this keeps track of 10 different messages and then warns again
@@ -1329,7 +1363,6 @@ def _render_ci_provider(
 
         # render returns some download & reparsing info that we don't care about
         metas = [m for m, _, _ in metas]
-
         if not keep_noarch:
             to_delete = []
             for idx, meta in enumerate(metas):
@@ -1786,39 +1819,6 @@ def _github_actions_specific_setup(jinja_env, forge_config, forge_dir, platform)
     # Handle GH-hosted and self-hosted runners runs-on config
     # Do it before the deepcopy below so these changes can be used by the
     # .github/worfkflows/conda-build.yml template
-    runs_on = {
-        "osx-64": {
-            "os": "macos",
-            # FUTURE: macos-15-intel will be deprecated in Fall 2027
-            "hosted_labels": ("macos-15-intel",),
-            "self_hosted_labels": ("macOS", "x64"),
-        },
-        "osx-arm64": {
-            "os": "macos",
-            "hosted_labels": ("macos-latest",),
-            "self_hosted_labels": ("macOS", "arm64"),
-        },
-        "linux-64": {
-            "os": "ubuntu",
-            "hosted_labels": ("ubuntu-latest",),
-            "self_hosted_labels": ("linux", "x64"),
-        },
-        "linux-aarch64": {
-            "os": "ubuntu",
-            "hosted_labels": ("ubuntu-24.04-arm",),
-            "self_hosted_labels": ("linux", "ARM64"),
-        },
-        "win-64": {
-            "os": "windows",
-            "hosted_labels": ("windows-latest",),
-            "self_hosted_labels": ("windows", "x64"),
-        },
-        "win-arm64": {
-            "os": "windows",
-            "hosted_labels": ("windows-11-arm",),
-            "self_hosted_labels": ("windows", "ARM64"),
-        },
-    }
     for data in forge_config["configs"]:
         if not data["build_platform"].startswith(platform):
             continue
@@ -1826,43 +1826,45 @@ def _github_actions_specific_setup(jinja_env, forge_config, forge_dir, platform)
         # because we are not deepcopying the data dict intentionally
         # so it can be used in the general "render_github_actions" function
         # This avoid potential collisions with other CI providers :crossed_fingers:
-        data["gha_os"] = runs_on[data["build_platform"]]["os"]
+        data["gha_os"] = GITHUB_ACTIONS_RUNS_ON[data["build_platform"]]["os"]
         data["gha_with_gpu"] = False
 
         self_hosted_default = list(
-            runs_on[data["build_platform"]]["self_hosted_labels"]
+            GITHUB_ACTIONS_RUNS_ON[data["build_platform"]]["self_hosted_labels"]
         )
         self_hosted_default += ["self-hosted"]
-        hosted_default = list(runs_on[data["build_platform"]]["hosted_labels"])
-
-        labels_default = (
-            ["self-hosted"]
-            if forge_config["github_actions"]["self_hosted"]
-            else ["hosted"]
-        )
-        labels = conda_build.utils.ensure_list(
-            data["config"].get("github_actions_labels", [labels_default])[0]
+        hosted_default = list(
+            GITHUB_ACTIONS_RUNS_ON[data["build_platform"]]["hosted_labels"]
         )
 
-        if len(labels) == 1 and labels[0] == "hosted":
+        # labels may be overridden in conda_build_config.yaml
+        labels = data["config"].get("github_actions_labels") or ["hosted"]
+        if labels in (["hosted"], ["default"]):
+            # These two keywords (hosted, default) alias to
+            # whatever GH-hosted image we default to
             labels = hosted_default
-        elif len(labels) == 1 and labels[0] in "self-hosted":
-            labels = self_hosted_default
-        else:
-            # Prepend the required ones
-            labels += self_hosted_default
+        elif any(label.startswith("self-hosted@") for label in labels):
+            # If prefixed with `self-hosted@`, we add the generic self-hosted labels
+            # Some providers needs these labels, others don't care, others will fail
+            labels = list(
+                dict.fromkeys(
+                    (
+                        *[label.replace("self-hosted@", "") for label in labels],
+                        *self_hosted_default,
+                    )
+                )
+            )
 
-        if forge_config["github_actions"]["self_hosted"]:
-            data["gha_runs_on"] = []
-            # labels provided in conda-forge.yml
-            for label in labels:
-                if label.startswith("cirun-"):
-                    label += "--${{ github.run_id }}-" + data["short_config_name"]
-                if "gpu" in label.lower():
-                    data["gha_with_gpu"] = True
-                data["gha_runs_on"].append(label)
-        else:
-            data["gha_runs_on"] = hosted_default
+        data["gha_runs_on"] = []
+        for label in labels:
+            if label.startswith("cirun-"):
+                # Patch Cirun runners to add some extra debug info
+                label += "--${{ github.run_id }}-" + data["short_config_name"]
+            if "gpu" in label.lower():
+                # Having 'gpu' in one label name is enough to trigger
+                # the extra docker args needed on Linux
+                data["gha_with_gpu"] = True
+            data["gha_runs_on"].append(label)
 
     build_setup = _get_build_setup_line(forge_dir, platform, forge_config)
 
