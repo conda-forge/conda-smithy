@@ -1835,34 +1835,35 @@ def _github_actions_specific_setup(jinja_env, forge_config, forge_dir, platform)
         self_hosted_default += ["self-hosted"]
         hosted_default = list(runs_on[data["build_platform"]]["hosted_labels"])
 
-        labels_default = (
-            ["self-hosted"]
-            if forge_config["github_actions"]["self_hosted"]
-            else ["hosted"]
-        )
-        labels = conda_build.utils.ensure_list(
-            data["config"].get("github_actions_labels", [labels_default])[0]
-        )
-
-        if len(labels) == 1 and labels[0] == "hosted":
+        # labels may be overridden in conda_build_config.yaml
+        labels = data["config"].get("github_actions_labels") or ["hosted"]
+        if labels in (["hosted"], ["default"]):
+            # These two keywords (hosted, default) alias to
+            # whatever GH-hosted image we default to
             labels = hosted_default
-        elif len(labels) == 1 and labels[0] in "self-hosted":
-            labels = self_hosted_default
-        else:
-            # Prepend the required ones
-            labels += self_hosted_default
+        elif any(label.startswith("self-hosted@") for label in labels):
+            # If prefixed with `self-hosted@`, we add the generic self-hosted labels
+            # Some providers needs these labels, others don't care, others will fail
+            labels = list(
+                dict.fromkeys(
+                    (
+                        *[label.replace("self-hosted@", "") for label in labels],
+                        *self_hosted_default,
+                        "self-hosted",
+                    )
+                )
+            )
 
-        if forge_config["github_actions"]["self_hosted"]:
-            data["gha_runs_on"] = []
-            # labels provided in conda-forge.yml
-            for label in labels:
-                if label.startswith("cirun-"):
-                    label += "--${{ github.run_id }}-" + data["short_config_name"]
-                if "gpu" in label.lower():
-                    data["gha_with_gpu"] = True
-                data["gha_runs_on"].append(label)
-        else:
-            data["gha_runs_on"] = hosted_default
+        data["gha_runs_on"] = []
+        for label in labels:
+            if label.startswith("cirun-"):
+                # Patch Cirun runners to add some extra debug info
+                label += "--${{ github.run_id }}-" + data["short_config_name"]
+            if "gpu" in label.lower():
+                # Having 'gpu' in one label name is enough to trigger
+                # the extra docker args needed on Linux
+                data["gha_with_gpu"] = True
+            data["gha_runs_on"].append(label)
 
     build_setup = _get_build_setup_line(forge_dir, platform, forge_config)
 
