@@ -137,6 +137,7 @@ remote_ci_setup:
 - conda-forge-ci-setup=4
 - conda-build>=24.1
 secrets: []
+set_env_vars: []
 shellcheck:
   enabled: false
 skip_render: []
