@@ -460,6 +460,39 @@ Provider = create_model(
 )
 
 
+class SetEnvVar(BaseModel):
+    os: Optional[Union[list[PlatformsAliases], PlatformsAliases, Nullable]] = Field(
+        default=None,
+        description=cleandoc("""
+        Operating systems to set environment variable on (default: all)
+        """),
+    )
+    platform: Optional[Union[list[Platforms], Platforms, Nullable]] = Field(
+        default=None,
+        description=cleandoc("""
+        Platforms to set environment variable on (default: all)
+        """),
+    )
+    provider: Optional[Union[list[CIservices], CIservices, Nullable]] = Field(
+        default=None,
+        description=cleandoc("""
+        CI providers to set environment variable on (default: all)
+        """),
+    )
+
+    key: str = Field(
+        description=cleandoc("""
+        Environment variable name
+        """),
+        # TODO: validation
+    )
+    value: str = Field(
+        description=cleandoc("""
+        Environment variable value
+        """),
+    )
+
+
 class ConfigModel(BaseModel):
     """
     This model describes in detail the top-level fields in  `conda-forge.yml`.
@@ -988,6 +1021,13 @@ class ConfigModel(BaseModel):
         default=None,
         description=cleandoc("""
         The depth of the git clone.
+        """),
+    )
+
+    set_env_vars: Optional[list[SetEnvVar]] = Field(
+        default=[],
+        description=cleandoc("""
+        Environment variables to set in the CI environment.
         """),
     )
 
