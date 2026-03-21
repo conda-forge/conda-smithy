@@ -391,6 +391,84 @@
       "title": "CondaForgeDocker",
       "type": "object"
     },
+    "ConditionalValue__class__bool__": {
+      "properties": {
+        "os": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/PlatformsAliases"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/PlatformsAliases"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Operating systems to set environment variable on (default: all)",
+          "title": "Os"
+        },
+        "platform": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/Platforms"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/Platforms"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Platforms to set environment variable on (default: all)",
+          "title": "Platform"
+        },
+        "provider": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/CIservices"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/CIservices"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "CI providers to set environment variable on (default: all)",
+          "title": "Provider"
+        },
+        "value": {
+          "default": false,
+          "description": "Option value",
+          "title": "Value",
+          "type": "boolean"
+        }
+      },
+      "title": "ConditionalValue_<class 'bool'>",
+      "type": "object"
+    },
     "DefaultTestPlatforms": {
       "enum": [
         "all",
@@ -687,92 +765,6 @@
       "title": "PlatformsAliases",
       "type": "string"
     },
-    "SetEnvVar": {
-      "properties": {
-        "os": {
-          "anyOf": [
-            {
-              "items": {
-                "$ref": "#/$defs/PlatformsAliases"
-              },
-              "type": "array"
-            },
-            {
-              "$ref": "#/$defs/PlatformsAliases"
-            },
-            {
-              "$ref": "#/$defs/Nullable"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "description": "Operating systems to set environment variable on (default: all)",
-          "title": "Os"
-        },
-        "platform": {
-          "anyOf": [
-            {
-              "items": {
-                "$ref": "#/$defs/Platforms"
-              },
-              "type": "array"
-            },
-            {
-              "$ref": "#/$defs/Platforms"
-            },
-            {
-              "$ref": "#/$defs/Nullable"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "description": "Platforms to set environment variable on (default: all)",
-          "title": "Platform"
-        },
-        "provider": {
-          "anyOf": [
-            {
-              "items": {
-                "$ref": "#/$defs/CIservices"
-              },
-              "type": "array"
-            },
-            {
-              "$ref": "#/$defs/CIservices"
-            },
-            {
-              "$ref": "#/$defs/Nullable"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "description": "CI providers to set environment variable on (default: all)",
-          "title": "Provider"
-        },
-        "key": {
-          "description": "Environment variable name",
-          "title": "Key",
-          "type": "string"
-        },
-        "value": {
-          "description": "Environment variable value",
-          "title": "Value",
-          "type": "string"
-        }
-      },
-      "required": [
-        "key",
-        "value"
-      ],
-      "title": "SetEnvVar",
-      "type": "object"
-    },
     "ShellCheck": {
       "additionalProperties": false,
       "properties": {
@@ -784,6 +776,31 @@
         }
       },
       "title": "ShellCheck",
+      "type": "object"
+    },
+    "WorkflowSettings": {
+      "properties": {
+        "store_build_artifacts": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/ConditionalValue__class__bool__"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": false,
+          "description": "Store the conda build_artifacts directory as artifacts.",
+          "title": "Store Build Artifacts"
+        }
+      },
+      "title": "WorkflowSettings",
       "type": "object"
     },
     "build_platform": {
@@ -2186,21 +2203,16 @@
       "description": "The depth of the git clone.",
       "title": "Clone Depth"
     },
-    "set_env_vars": {
+    "workflow_settings": {
       "anyOf": [
         {
-          "items": {
-            "$ref": "#/$defs/SetEnvVar"
-          },
-          "type": "array"
+          "$ref": "#/$defs/WorkflowSettings"
         },
         {
           "type": "null"
         }
       ],
-      "default": [],
-      "description": "Environment variables to set in the CI environment.",
-      "title": "Set Env Vars"
+      "description": "Per-workflow settings."
     },
     "travis": {
       "anyOf": [
