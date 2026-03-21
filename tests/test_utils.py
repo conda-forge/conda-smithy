@@ -1,9 +1,13 @@
+from typing import Union
+
+import pytest
 from conda_build.metadata import MetaData
 from rattler_build_conda_compat.render import MetaData as RatlerBuildMetadata
 
 from conda_smithy.utils import (
     RATTLER_BUILD,
     _get_metadata_from_feedstock_dir,
+    conditional_value_any_matches,
     get_feedstock_name_from_meta,
 )
 
@@ -78,3 +82,78 @@ def test_get_feedstock_name_from_rattler_metadata_multiple_outputs(
     feedstock_name = get_feedstock_name_from_meta(metadata)
 
     assert feedstock_name == "mamba-split"
+
+
+@pytest.mark.parametrize(
+    "restrict,linux_value,linux_or_win_value",
+    [
+        ({}, True, True),
+        ({"os": "linux"}, True, True),
+        ({"os": "win"}, None, True),
+        ({"os": "osx"}, None, None),
+        ({"platform": "linux_64"}, True, True),
+        ({"provider": "azure"}, True, True),
+        ({"provider": "azure", "os": "linux"}, True, True),
+        ({"provider": "azure", "os": "win"}, None, True),
+        ({"provider": "azure", "os": "osx"}, None, None),
+    ],
+)
+def test_conditional_value_any_matches(
+    restrict: dict[str, Union[str, list[str]]],
+    linux_value: bool,
+    linux_or_win_value: bool,
+) -> None:
+    # value passed directly is always used
+    assert conditional_value_any_matches(True, **restrict) is True
+    assert conditional_value_any_matches(False, **restrict) is False
+
+    # no value
+    assert conditional_value_any_matches(None, **restrict) is None
+    assert conditional_value_any_matches([], **restrict) is None
+
+    # corner case: a value with no conditions
+    assert conditional_value_any_matches([{"value": True}], **restrict) is True
+    assert conditional_value_any_matches([{"value": False}], **restrict) is False
+
+    # corner case 2: final value with no conditions
+    assert (
+        conditional_value_any_matches(
+            [
+                {"os": "linux", "value": False},
+                {"provider": "azure", "value": False},
+                {"value": True},
+            ],
+            **restrict,
+        )
+        is True
+    )
+    assert (
+        conditional_value_any_matches(
+            [
+                {"os": "linux", "value": True},
+                {"provider": "azure", "value": True},
+                {"value": False},
+            ],
+            **restrict,
+        )
+        is False
+    )
+
+    assert (
+        conditional_value_any_matches(
+            [
+                {"os": "linux", "value": True},
+            ],
+            **restrict,
+        )
+        is linux_value
+    )
+    assert (
+        conditional_value_any_matches(
+            [
+                {"os": ["linux", "win"], "value": True},
+            ],
+            **restrict,
+        )
+        is linux_or_win_value
+    )

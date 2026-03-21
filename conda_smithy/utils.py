@@ -9,7 +9,7 @@ from collections import defaultdict
 from collections.abc import Mapping, Sequence
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Union
+from typing import Any, Optional, Union
 
 import jinja2
 import jinja2.sandbox
@@ -244,3 +244,40 @@ def ensure_standard_strings(cfg: Any) -> Any:
         return type(cfg)([ensure_standard_strings(v) for v in cfg])
     else:
         return cfg
+
+
+def conditional_value_any_matches(
+    conditional_value: Optional[Union[list[dict], bool]],
+    os: Optional[str] = None,
+    platform: Optional[str] = None,
+    provider: Optional[str] = None,
+) -> Optional[bool]:
+    """Establish if the "conditional value" can be true for the specified os,
+    platform and/or provider combination. Returns True if there is at least one
+    entry that could match all the specified restrictions (but may be further
+    restricted on conditions not passed to the function), False if all values
+    matching this specification evaluate to False, or None if there is no value
+    matching the specified restrictions (meaning a fallback may be in order)."""
+
+    if conditional_value in (None, False, True):
+        return conditional_value
+
+    def to_list(x: Union[str, list[str]]) -> list[str]:
+        if isinstance(x, list):
+            return x
+        return [x]
+
+    for cv_item in reversed(conditional_value):
+        print(to_list(cv_item.get("os", [os])))
+        if os is not None and os not in to_list(cv_item.get("os", [os])):
+            continue
+        if platform is not None and platform not in to_list(
+            cv_item.get("platform", [platform])
+        ):
+            continue
+        if provider is not None and provider not in to_list(
+            cv_item.get("provider", [provider])
+        ):
+            continue
+
+        return cv_item["value"]
