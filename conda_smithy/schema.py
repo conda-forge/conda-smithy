@@ -460,35 +460,55 @@ Provider = create_model(
 )
 
 
-class SetEnvVar(BaseModel):
-    os: Optional[Union[list[PlatformsAliases], PlatformsAliases, Nullable]] = Field(
-        default=None,
-        description=cleandoc("""
-        Operating systems to set environment variable on (default: all)
-        """),
-    )
-    platform: Optional[Union[list[Platforms], Platforms, Nullable]] = Field(
-        default=None,
-        description=cleandoc("""
-        Platforms to set environment variable on (default: all)
-        """),
-    )
-    provider: Optional[Union[list[CIservices], CIservices, Nullable]] = Field(
-        default=None,
-        description=cleandoc("""
-        CI providers to set environment variable on (default: all)
-        """),
+def conditional_value(typ: type, default: Any = None) -> BaseModel:
+    return create_model(
+        f"ConditionalValue_{typ}",
+        os=(
+            Optional[Union[list[PlatformsAliases], PlatformsAliases, Nullable]],
+            Field(
+                default=None,
+                description=cleandoc("""
+                Operating systems to set environment variable on (default: all)
+                """),
+            ),
+        ),
+        platform=(
+            Optional[Union[list[Platforms], Platforms, Nullable]],
+            Field(
+                default=None,
+                description=cleandoc("""
+                Platforms to set environment variable on (default: all)
+                """),
+            ),
+        ),
+        provider=(
+            Optional[Union[list[CIservices], CIservices, Nullable]],
+            Field(
+                default=None,
+                description=cleandoc("""
+                CI providers to set environment variable on (default: all)
+                """),
+            ),
+        ),
+        value=(
+            typ,
+            Field(
+                description=cleandoc("""
+                Option value
+                """),
+                default=default,
+            ),
+        ),
     )
 
-    key: str = Field(
+
+class WorkflowSettings(BaseModel):
+    store_build_artifacts: Optional[
+        Union[bool, conditional_value(bool, False), Nullable]
+    ] = Field(
+        default=False,
         description=cleandoc("""
-        Environment variable name
-        """),
-        # TODO: validation
-    )
-    value: str = Field(
-        description=cleandoc("""
-        Environment variable value
+        Store the conda build_artifacts directory as artifacts.
         """),
     )
 
@@ -1024,13 +1044,12 @@ class ConfigModel(BaseModel):
         """),
     )
 
-    set_env_vars: Optional[list[SetEnvVar]] = Field(
-        default=[],
+    workflow_settings: Optional[WorkflowSettings] = Field(
+        default_factory=WorkflowSettings,
         description=cleandoc("""
-        Environment variables to set in the CI environment.
+        Per-workflow settings.
         """),
     )
-
     ###################################
     ####       CI Providers        ####
     ###################################
