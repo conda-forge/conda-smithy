@@ -59,6 +59,7 @@ from conda_smithy.utils import (
     RATTLER_BUILD,
     HashableDict,
     ensure_standard_strings,
+    filter_conditional_values,
     get_feedstock_about_from_meta,
     get_feedstock_name_from_meta,
 )
@@ -1897,7 +1898,11 @@ def _github_actions_specific_setup(jinja_env, forge_config, forge_dir, platform)
     template_files = platform_templates.get(platform, [])
 
     # Templates for all platforms
-    if forge_config["github_actions"]["store_build_artifacts"]:
+    gha_store = filter_conditional_values(
+        forge_config["workflow_settings"]["store_build_artifacts"],
+        provider="github_actions",
+    )
+    if any(x.value for x in gha_store):
         template_files.append(".scripts/create_conda_build_artifacts.sh")
         template_files.append(".scripts/create_conda_build_artifacts.bat")
 
@@ -1975,7 +1980,10 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
             ".scripts/run_win_build.bat",
         ],
     }
-    if forge_config["azure"]["store_build_artifacts"]:
+    azure_store = filter_conditional_values(
+        forge_config["workflow_settings"]["store_build_artifacts"], provider="azure"
+    )
+    if any(x.value for x in azure_store):
         platform_templates["linux"].append(".scripts/create_conda_build_artifacts.sh")
         platform_templates["osx"].append(".scripts/create_conda_build_artifacts.sh")
         platform_templates["win"].append(".scripts/create_conda_build_artifacts.bat")
@@ -2010,7 +2018,8 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
         # fmt: off
         if "docker_image" in data["config"] and platform == "linux":
             config_rendered["DOCKER_IMAGE"] = data["config"]["docker_image"][-1]
-        if forge_config["azure"]["store_build_artifacts"]:
+        azure_store = filter_conditional_values(forge_config["workflow_settings"]["store_build_artifacts"], provider="azure")
+        if any(x.value for x in azure_store):
             config_rendered["SHORT_CONFIG"] = data["short_config_name"]
         if platform == "osx":
             if data["build_platform"] == "osx-64":
