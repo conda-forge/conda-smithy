@@ -147,7 +147,8 @@
             }
           ],
           "default": false,
-          "description": "Store the conda build_artifacts directory as an         Azure pipeline artifact",
+          "deprecated": true,
+          "description": "Deprecated. Store the conda build_artifacts directory as an Azure pipeline artifact. Use `workflow_settings.store_build_artifacts` instead.",
           "title": "Store Build Artifacts"
         },
         "timeout_minutes": {
@@ -587,7 +588,8 @@
             }
           ],
           "default": false,
-          "description": "Whether to store build artifacts",
+          "deprecated": true,
+          "description": "Deprecated. Whether to store build artifacts. Use `workflow_settings.store_build_artifacts` instead.",
           "title": "Store Build Artifacts"
         },
         "timeout_minutes": {

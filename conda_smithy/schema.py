@@ -230,8 +230,9 @@ class AzureConfig(BaseModel):
 
     store_build_artifacts: Optional[bool] = Field(
         default=False,
-        description="Store the conda build_artifacts directory as an \
-        Azure pipeline artifact",
+        deprecated=True,
+        description="Deprecated. Store the conda build_artifacts directory as an "
+        "Azure pipeline artifact. Use `workflow_settings.store_build_artifacts` instead.",
     )
 
     timeout_minutes: Optional[Union[int, Nullable]] = Field(
@@ -306,8 +307,10 @@ class GithubActionsConfig(BaseModel):
     )
 
     store_build_artifacts: Optional[bool] = Field(
-        description="Whether to store build artifacts",
+        description="Deprecated. Whether to store build artifacts. "
+        "Use `workflow_settings.store_build_artifacts` instead.",
         default=False,
+        deprecated=True,
     )
 
     timeout_minutes: Optional[int] = Field(
