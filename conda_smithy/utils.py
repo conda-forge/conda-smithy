@@ -8,6 +8,7 @@ import time
 from collections import defaultdict
 from collections.abc import Mapping, Sequence
 from contextlib import contextmanager
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Optional, Union
 
@@ -246,38 +247,50 @@ def ensure_standard_strings(cfg: Any) -> Any:
         return cfg
 
 
-def conditional_value_any_matches(
-    conditional_value: Optional[Union[list[dict], bool]],
+@dataclass
+class ConditionalValue:
+    value: Any
+    os: Optional[list[str]] = None
+    platform: Optional[list[str]] = None
+    provider: Optional[list[str]] = None
+
+
+def filter_conditional_values(
+    value: Any,
     os: Optional[str] = None,
     platform: Optional[str] = None,
     provider: Optional[str] = None,
-) -> Optional[bool]:
-    """Establish if the "conditional value" can be true for the specified os,
-    platform and/or provider combination. Returns True if there is at least one
-    entry that could match all the specified restrictions (but may be further
-    restricted on conditions not passed to the function), False if all values
-    matching this specification evaluate to False, or None if there is no value
-    matching the specified restrictions (meaning a fallback may be in order)."""
+) -> list[ConditionalValue]:
+    """Filter conditional values from conda-smithy.yml by specified
+    criteria, and return the matching values as a list of ConditionalValue.
+    The matched criteria are removed, leaving only the unmatched criteria
+    in ConditionalValue instances. If there is"""
 
-    if conditional_value in (None, False, True):
-        return conditional_value
+    # direct value
+    if value is None:
+        return []
+    if not isinstance(value, list):
+        return [ConditionalValue(value=value)]
 
-    def to_list(x: Union[str, list[str]]) -> list[str]:
-        if isinstance(x, list):
-            return x
-        return [x]
-
-    for cv_item in reversed(conditional_value):
-        print(to_list(cv_item.get("os", [os])))
-        if os is not None and os not in to_list(cv_item.get("os", [os])):
-            continue
-        if platform is not None and platform not in to_list(
-            cv_item.get("platform", [platform])
+    # a list of condition-values
+    ret = []
+    for cv_item in value:
+        new_cv_item = {"value": cv_item["value"]}
+        for cond_name, cond_expect in (
+            ("os", os),
+            ("platform", platform),
+            ("provider", provider),
         ):
-            continue
-        if provider is not None and provider not in to_list(
-            cv_item.get("provider", [provider])
-        ):
-            continue
-
-        return cv_item["value"]
+            cond_value: Union[list[str], str] = cv_item.get(cond_name, [cond_expect])
+            if not isinstance(cond_value, list):
+                cond_value = [cond_value]
+            if cond_expect is not None:
+                # filter by specified condition
+                if cond_expect not in cond_value:
+                    break
+            elif cond_name in cv_item:
+                # preserve the condition from from input
+                new_cv_item[cond_name] = cond_value
+        else:
+            ret.append(ConditionalValue(**new_cv_item))
+    return ret
