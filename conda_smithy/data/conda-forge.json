@@ -495,7 +495,8 @@
             }
           ],
           "default": false,
-          "description": "Whether to use self-hosted runners",
+          "deprecated": true,
+          "description": "Deprecated. Whether to use self-hosted runners. Use `github_actions_labels` in `conda_build_config.yaml` instead.",
           "title": "Self Hosted"
         },
         "store_build_artifacts": {
@@ -1535,7 +1536,7 @@
               "type": "null"
             }
           ],
-          "default": "github_actions",
+          "default": "azure",
           "title": "Win 64"
         },
         "win_arm64": {

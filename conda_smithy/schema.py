@@ -299,8 +299,10 @@ class GithubActionsConfig(BaseModel):
     )
 
     self_hosted: Optional[bool] = Field(
-        description="Whether to use self-hosted runners",
+        description="Deprecated. Whether to use self-hosted runners. "
+        "Use `github_actions_labels` in `conda_build_config.yaml` instead.",
         default=False,
+        deprecated=True,
     )
 
     store_build_artifacts: Optional[bool] = Field(
