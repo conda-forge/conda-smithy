@@ -2460,8 +2460,12 @@ def _read_forge_config(forge_dir, forge_yml=None):
         )
         logger.debug("Relevant schema:\n%s", json.dumps(err.schema, indent=2))
 
-    # Check for conflicting values.
+    # The config is just the union of the defaults, and the overridden
+    # values.
+    config = _update_dict_within_dict(file_config.items(), default_config)
+
     if "store_build_artifacts" in file_config.get("workflow_settings", {}):
+        # Check for conflicting old keys.
         if "store_build_artifacts" in file_config.get("azure", {}):
             raise ValueError(
                 "store_build_artifacts both in workflow_settings and azure. "
@@ -2472,10 +2476,20 @@ def _read_forge_config(forge_dir, forge_yml=None):
                 "store_build_artifacts both in workflow_settings and "
                 "github_actions. Please remove the latter."
             )
-
-    # The config is just the union of the defaults, and the overridden
-    # values.
-    config = _update_dict_within_dict(file_config.items(), default_config)
+    else:
+        # Convert old keys to new settings.
+        config["workflow_settings"]["store_build_artifacts"].append(
+            {
+                "provider": "azure",
+                "value": config["azure"]["store_build_artifacts"],
+            }
+        )
+        config["workflow_settings"]["store_build_artifacts"].append(
+            {
+                "provider": "github_actions",
+                "value": config["github_actions"]["store_build_artifacts"],
+            }
+        )
 
     # check for conda-smithy 2.x matrix which we can't auto-migrate
     # to conda_build_config

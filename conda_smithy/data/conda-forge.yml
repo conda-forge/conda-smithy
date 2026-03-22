@@ -146,4 +146,4 @@ test_on_native_only: false
 travis: {}
 woodpecker: {}
 workflow_settings:
-  store_build_artifacts: false
+  store_build_artifacts: []

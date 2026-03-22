@@ -797,7 +797,7 @@
               "type": "null"
             }
           ],
-          "default": false,
+          "default": [],
           "description": "Store the conda build_artifacts directory as artifacts.",
           "title": "Store Build Artifacts"
         }

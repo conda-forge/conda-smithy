@@ -509,7 +509,7 @@ class WorkflowSettings(BaseModel):
     store_build_artifacts: Optional[
         Union[bool, conditional_value(bool, False), Nullable]
     ] = Field(
-        default=False,
+        default=[],
         description=cleandoc("""
         Store the conda build_artifacts directory as artifacts.
         """),
