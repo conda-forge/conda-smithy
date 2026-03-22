@@ -2460,6 +2460,19 @@ def _read_forge_config(forge_dir, forge_yml=None):
         )
         logger.debug("Relevant schema:\n%s", json.dumps(err.schema, indent=2))
 
+    # Check for conflicting values.
+    if "store_build_artifacts" in file_config.get("workflow_settings", {}):
+        if "store_build_artifacts" in file_config.get("azure", {}):
+            raise ValueError(
+                "store_build_artifacts both in workflow_settings and azure. "
+                "Please remove the latter."
+            )
+        if "store_build_artifacts" in file_config.get("github_actions", {}):
+            raise ValueError(
+                "store_build_artifacts both in workflow_settings and "
+                "github_actions. Please remove the latter."
+            )
+
     # The config is just the union of the defaults, and the overridden
     # values.
     config = _update_dict_within_dict(file_config.items(), default_config)
