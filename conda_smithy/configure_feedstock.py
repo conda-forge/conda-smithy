@@ -1872,14 +1872,15 @@ def _github_actions_specific_setup(jinja_env, forge_config, forge_dir, platform)
                 data["gha_with_gpu"] = True
             data["gha_runs_on"].append(label)
 
-        # TODO: filter per specific job
+        store_build_artifacts = filter_conditional_values(
+            forge_config["workflow_settings"]["store_build_artifacts"],
+            provider="github_actions",
+            platform=data["platform"],
+            os=data["platform"].split("-", 1)[0],
+        )
         data["store_build_artifacts"] = (
-            filter_conditional_values(
-                forge_config["workflow_settings"]["store_build_artifacts"],
-                provider="github_actions",
-            )
-            or []
-        )[-1].value
+            store_build_artifacts[-1].value if store_build_artifacts else False
+        )
 
     build_setup = _get_build_setup_line(forge_dir, platform, forge_config)
 
