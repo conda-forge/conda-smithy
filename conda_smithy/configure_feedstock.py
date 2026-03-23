@@ -2028,9 +2028,6 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
         # fmt: off
         if "docker_image" in data["config"] and platform == "linux":
             config_rendered["DOCKER_IMAGE"] = data["config"]["docker_image"][-1]
-        azure_store = filter_conditional_values(forge_config["workflow_settings"]["store_build_artifacts"], provider="azure")
-        if any(x.value for x in azure_store):
-            config_rendered["SHORT_CONFIG"] = data["short_config_name"]
         if platform == "osx":
             if data["build_platform"] == "osx-64":
                 config_rendered["VMIMAGE"] = "macOS-15"
@@ -2038,6 +2035,17 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
                 config_rendered["VMIMAGE"] = "macOS-15-arm64"
             else:
                 raise ValueError(f"Unknown build platform: '{data['build_platform']}'")
+        store_build_artifacts = filter_conditional_values(
+            forge_config["workflow_settings"]["store_build_artifacts"],
+            provider="azure",
+            platform=data["platform"],
+            os=data["platform"].split("-", 1)[0],
+        )
+        config_rendered["STORE_BUILD_ARTIFACTS"] = (
+            store_build_artifacts[-1].value if store_build_artifacts else False
+        )
+        if config_rendered["STORE_BUILD_ARTIFACTS"]:
+            config_rendered["SHORT_CONFIG"] = data["short_config_name"]
         azure_settings["strategy"]["matrix"][data["config_name"]] = config_rendered
         # fmt: on
 

@@ -34,7 +34,6 @@ jobs:
       {{ secret }}: $({{ secret }})
 {%- endfor %}
 
-{%- if azure.store_build_artifacts %}
   - script: |
       export CI=azure
       export CI_RUN_ID=$(build.BuildNumber).$(system.JobAttempt)
@@ -49,7 +48,7 @@ jobs:
       fi
       ./.scripts/create_conda_build_artifacts.sh
     displayName: Prepare conda build artifacts
-    condition: succeededOrFailed()
+    condition: and(succeededOrFailed(), eq(variables.STORE_BUILD_ARTIFACTS, true))
 
   - task: PublishPipelineArtifact@1
     displayName: Store conda build artifacts
@@ -64,4 +63,3 @@ jobs:
     inputs:
       targetPath: $(ENV_ARTIFACT_PATH)
       artifactName: $(ENV_ARTIFACT_NAME)
-{%- endif %}

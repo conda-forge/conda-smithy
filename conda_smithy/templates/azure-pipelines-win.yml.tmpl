@@ -69,7 +69,6 @@ jobs:
         {{ secret }}: $({{ secret }})
 {%- endfor %}
 
-{%- if azure.store_build_artifacts %}
     - script: |
         set MINIFORGE_HOME=$(MINIFORGE_HOME)
         set CI=azure
@@ -83,7 +82,7 @@ jobs:
         )
         call ".scripts\create_conda_build_artifacts.bat"
       displayName: Prepare conda build artifacts
-      condition: succeededOrFailed()
+      condition: and(succeededOrFailed(), eq(variables.STORE_BUILD_ARTIFACTS, true))
 
     - task: PublishPipelineArtifact@1
       displayName: Store conda build artifacts
@@ -98,4 +97,3 @@ jobs:
       inputs:
         targetPath: $(ENV_ARTIFACT_PATH)
         artifactName: $(ENV_ARTIFACT_NAME)
-{%- endif %}
