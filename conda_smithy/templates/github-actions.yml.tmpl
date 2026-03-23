@@ -42,7 +42,8 @@ jobs:
         include:
         {%- for data in configs %}
           - CONFIG: {{ data.config_name }}
-        {%- if github_actions.store_build_artifacts %}
+            STORE_BUILD_ARTIFACTS: {{ data.store_build_artifacts }}
+        {%- if data.store_build_artifacts %}
             SHORT_CONFIG: {{ data.short_config_name }}
         {%- endif %}
             UPLOAD_PACKAGES: {{ data.upload }}
@@ -220,7 +221,6 @@ jobs:
 {%- for secret in secrets %}
         {{ secret }}: {% raw %}${{{% endraw %} secrets.{{ secret }} {% raw %}}}{% endraw %}
 {%- endfor %}
-{%- if github_actions.store_build_artifacts %}
 
     - name: Determine build outcome
       # this is to merge the status of the linux/osx/win builds into
@@ -249,11 +249,10 @@ jobs:
       id: prepare-artifacts
       shell: bash
       # we do not want to trigger artefact creation if the build was cancelled
-      if: {% raw %}${{ always() && steps.determine-status.outputs.status != 'cancelled' }}{% endraw %}
+      if: {% raw %}${{ always() && steps.determine-status.outputs.status != 'cancelled' && matrix.STORE_BUILD_ARTIFACTS == True }}{% endraw %}
       env:
         CI: github_actions
         CONFIG: {% raw %}${{ matrix.CONFIG }}{% endraw %}
-        SHORT_CONFIG: {% raw %}${{ matrix.SHORT_CONFIG }}{% endraw %}
         JOB_STATUS: {% raw %}${{ steps.determine-status.outputs.status }}{% endraw %}
         OS: {% raw %}${{ matrix.os }}{% endraw %}
       run: |
@@ -302,4 +301,3 @@ jobs:
         path: {% raw %}${{ steps.prepare-artifacts.outputs.ENV_ARTIFACT_PATH }}{% endraw %}
         retention-days: {{ github_actions.artifact_retention_days }}
       continue-on-error: true
-{%- endif %}
