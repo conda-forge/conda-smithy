@@ -264,7 +264,7 @@ def filter_conditional_values(
     """Filter conditional values from conda-smithy.yml by specified
     criteria, and return the matching values as a list of ConditionalValue.
     The matched criteria are removed, leaving only the unmatched criteria
-    in ConditionalValue instances. If there is"""
+    in ConditionalValue instances."""
 
     # direct value
     if value is None:
