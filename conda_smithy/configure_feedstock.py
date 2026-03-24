@@ -1872,15 +1872,14 @@ def _github_actions_specific_setup(jinja_env, forge_config, forge_dir, platform)
                 data["gha_with_gpu"] = True
             data["gha_runs_on"].append(label)
 
-        store_build_artifacts = filter_conditional_values(
-            forge_config["workflow_settings"]["store_build_artifacts"],
-            provider="github_actions",
-            platform=data["platform"],
-            os=data["platform"].split("-", 1)[0],
-        )
-        data["store_build_artifacts"] = (
-            store_build_artifacts[-1].value if store_build_artifacts else None
-        )
+        for setting_key, setting_value in forge_config["workflow_settings"].items():
+            filtered = filter_conditional_values(
+                setting_value,
+                provider="github_actions",
+                platform=data["platform"],
+                os=data["platform"].split("-", 1)[0],
+            )
+            data[setting_key] = filtered[-1].value if filtered else None
 
     build_setup = _get_build_setup_line(forge_dir, platform, forge_config)
 
@@ -2035,16 +2034,17 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
                 config_rendered["VMIMAGE"] = "macOS-15-arm64"
             else:
                 raise ValueError(f"Unknown build platform: '{data['build_platform']}'")
-        store_build_artifacts = filter_conditional_values(
-            forge_config["workflow_settings"]["store_build_artifacts"],
-            provider="azure",
-            platform=data["platform"],
-            os=data["platform"].split("-", 1)[0],
-        )
-        config_rendered["STORE_BUILD_ARTIFACTS"] = (
-            store_build_artifacts[-1].value if store_build_artifacts else None
-        )
-        if config_rendered["STORE_BUILD_ARTIFACTS"]:
+        for setting_key, setting_value in forge_config["workflow_settings"].items():
+            filtered = filter_conditional_values(
+                setting_value,
+                provider="azure",
+                platform=data["platform"],
+                os=data["platform"].split("-", 1)[0],
+            )
+            config_rendered[setting_key] = (
+                filtered[-1].value if filtered else None
+            )
+        if config_rendered["store_build_artifacts"]:
             config_rendered["SHORT_CONFIG"] = data["short_config_name"]
         azure_settings["strategy"]["matrix"][data["config_name"]] = config_rendered
         # fmt: on
