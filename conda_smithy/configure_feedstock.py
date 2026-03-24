@@ -2495,13 +2495,13 @@ def _read_forge_config(forge_dir, forge_yml=None):
         # Check for conflicting old keys.
         if "store_build_artifacts" in file_config.get("azure", {}):
             raise ValueError(
-                "store_build_artifacts both in workflow_settings and azure. "
-                "Please remove the latter."
+                "`store_build_artifacts` both in `workflow_settings` and `azure` "
+                "sections. Please remove the latter."
             )
         if "store_build_artifacts" in file_config.get("github_actions", {}):
             raise ValueError(
-                "store_build_artifacts both in workflow_settings and "
-                "github_actions. Please remove the latter."
+                "`store_build_artifacts` both in `workflow_settings` and "
+                "`github_actions` sections. Please remove the latter."
             )
     else:
         # Convert old keys to new settings.
