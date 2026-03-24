@@ -4,6 +4,28 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.58.0
+====================
+
+**Added:**
+
+* Add Podman support and SELinux volume handling to
+  ``run_docker_build.sh`` template, enabling local builds on
+  systems where Docker is unavailable. The container runtime can
+  now be overridden using the ``DOCKER_EXECUTABLE`` environment
+  variable for one-off builds without rerendering. (#2435)
+
+**Fixed:**
+
+* Fix ``KeyError`` seen on rerenders for feedstocks configured to use ``linux-ppc64le``. (#2501 via #2502)
+
+**Authors:**
+
+* Jaime Rodríguez-Guerra
+* Aman Srivastava
+
+
+
 v3.57.0
 ====================
 
