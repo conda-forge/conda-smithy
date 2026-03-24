@@ -311,20 +311,15 @@ def filter_conditional_values(
     ret = []
     for value_item in value:
         ret_item = {"value": value_item["value"]}
-        for criteria_key, criteria_expected in criteria.items():
+        for criteria_key, needle in criteria.items():
             if criteria_key in value_item:
-                criteria_got: Union[list[str], str] = value_item.get(
-                    criteria_key, [criteria_expected]
-                )
+                haystack: Union[list[str], str] = value_item.get(criteria_key, [needle])
                 # Normalize the condition into a list.
-                if not isinstance(criteria_got, list):
-                    criteria_got = [criteria_got]
-                ret_item[criteria_key] = criteria_got
+                if not isinstance(haystack, list):
+                    haystack = [haystack]
+                ret_item[criteria_key] = haystack
                 # Filter by it if requested.
-                if (
-                    criteria_expected is not None
-                    and criteria_expected not in criteria_got
-                ):
+                if needle is not None and needle not in haystack:
                     break
         else:
             ret.append(ConditionalValue(**ret_item))
