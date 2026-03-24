@@ -798,7 +798,7 @@
             }
           ],
           "default": [],
-          "description": "Store the conda build_artifacts directory as artifacts.",
+          "description": "Store the outputs of the build process as uploaded CI artifacts.",
           "title": "Store Build Artifacts"
         }
       },
@@ -2214,7 +2214,7 @@
           "type": "null"
         }
       ],
-      "description": "Per-workflow settings."
+      "description": "Per-workflow settings.\n\n```yaml\nworkflow_settings:\n  store_build_artifacts:\n    # the ultimate value matched is used\n    - provider: github_actions\n      value: true\n    - platform: [linux-64, win-64]  # OR\n      value: true\n```"
     },
     "travis": {
       "anyOf": [

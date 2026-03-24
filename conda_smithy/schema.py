@@ -1051,6 +1051,16 @@ class ConfigModel(BaseModel):
         default_factory=WorkflowSettings,
         description=cleandoc("""
         Per-workflow settings.
+
+        ```yaml
+        workflow_settings:
+          store_build_artifacts:
+            # the ultimate value matched is used
+            - provider: github_actions
+              value: true
+            - platform: [linux-64, win-64]  # OR
+              value: true
+        ```
         """),
     )
     ###################################
