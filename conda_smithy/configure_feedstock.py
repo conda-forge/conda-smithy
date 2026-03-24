@@ -191,6 +191,11 @@ GITHUB_ACTIONS_RUNS_ON = {
         "hosted_labels": ("ubuntu-24.04-arm",),
         "self_hosted_labels": ("linux", "ARM64"),
     },
+    "linux-ppc64le": {
+        "os": "ubuntu",
+        "hosted_labels": ("ubuntu-latest",),
+        "self_hosted_labels": ("linux",),
+    },
     "win-64": {
         "os": "windows",
         "hosted_labels": ("windows-latest",),
