@@ -273,14 +273,16 @@ def filter_conditional_values(
         return [ConditionalValue(value=value)]
 
     # a list of condition-values
+    filters = {
+        "os": os,
+        "platform": platform,
+        "provider": provider,
+    }
+
     ret = []
     for cv_item in value:
         new_cv_item = {"value": cv_item["value"]}
-        for cond_name, cond_expect in (
-            ("os", os),
-            ("platform", platform),
-            ("provider", provider),
-        ):
+        for cond_name, cond_expect in filters.items():
             cond_value: Union[list[str], str] = cv_item.get(cond_name, [cond_expect])
             if not isinstance(cond_value, list):
                 cond_value = [cond_value]
