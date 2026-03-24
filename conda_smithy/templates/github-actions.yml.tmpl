@@ -42,7 +42,7 @@ jobs:
         include:
         {%- for data in configs %}
           - CONFIG: {{ data.config_name }}
-            STORE_BUILD_ARTIFACTS: {{ data.store_build_artifacts }}
+            STORE_BUILD_ARTIFACTS: {{ data.store_build_artifacts is true }}
         {%- if data.store_build_artifacts %}
             SHORT_CONFIG: {{ data.short_config_name }}
         {%- endif %}

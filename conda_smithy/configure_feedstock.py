@@ -1879,7 +1879,7 @@ def _github_actions_specific_setup(jinja_env, forge_config, forge_dir, platform)
             os=data["platform"].split("-", 1)[0],
         )
         data["store_build_artifacts"] = (
-            store_build_artifacts[-1].value if store_build_artifacts else False
+            store_build_artifacts[-1].value if store_build_artifacts else None
         )
 
     build_setup = _get_build_setup_line(forge_dir, platform, forge_config)
@@ -2042,7 +2042,7 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
             os=data["platform"].split("-", 1)[0],
         )
         config_rendered["STORE_BUILD_ARTIFACTS"] = (
-            store_build_artifacts[-1].value if store_build_artifacts else False
+            store_build_artifacts[-1].value if store_build_artifacts else None
         )
         if config_rendered["STORE_BUILD_ARTIFACTS"]:
             config_rendered["SHORT_CONFIG"] = data["short_config_name"]
