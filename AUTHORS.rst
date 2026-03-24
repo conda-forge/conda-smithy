@@ -44,6 +44,7 @@ Authors are sorted by number of commits.
 * Jan Schulz
 * Josh Reichardt
 * Bela Stoyan
+* Aman Srivastava
 * Justin Calamari
 * Jason Furmanek
 * Patrick Sodré
