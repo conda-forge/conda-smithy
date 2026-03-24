@@ -511,7 +511,7 @@ class WorkflowSettings(BaseModel):
     ] = Field(
         default=[],
         description=cleandoc("""
-        Store the conda build_artifacts directory as artifacts.
+        Store the outputs of the build process as uploaded CI artifacts.
         """),
     )
 

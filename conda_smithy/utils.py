@@ -261,7 +261,7 @@ def filter_conditional_values(
     platform: Optional[str] = None,
     provider: Optional[str] = None,
 ) -> list[ConditionalValue]:
-    """Filter conditional values from conda-smithy.yml by specified
+    """Filter conditional values from conda-forge.yml by specified
     criteria, and return the matching values as a list of ConditionalValue.
     The matched criteria are removed, leaving only the unmatched criteria
     in ConditionalValue instances."""
