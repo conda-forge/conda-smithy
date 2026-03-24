@@ -261,8 +261,35 @@ def filter_conditional_values(
     platform: Optional[str] = None,
     provider: Optional[str] = None,
 ) -> list[ConditionalValue]:
-    """Filter conditional values from conda-forge.yml by specified
-    criteria, and return the matching values as a list of ConditionalValue."""
+    """
+    Filter "conditional values" as found in `workflow_settings` by specified
+    criteria, and return a list normalized to `ConditionalValue` instances.
+
+    The `value` is the value corresponding to a `workflow_settings` key. It may
+    be:
+
+    - A list of "conditional value" dicts, such as the value of
+      `store_build_artifacts` in:
+
+      ```yaml
+      workflow_settings:
+        store_build_artifacts:
+          - provider: github_actions
+            value: true
+          - platform: [win-64, linux-64]  # matched as OR
+            value: true
+      ```
+
+      All items that matched the criteria will be returned, normalized to
+      `ConditianalValue` instances. If no items matched, an empty list will be
+      returned.
+
+    - A direct value, as from `store_build_artifacts: true`. In that case, a
+      list with a single `ConditionValue` instance will be returned.
+
+    - A `None`, i.e. when there is no `store_build_artifacts` key. In that case,
+      an empty list will be returned.
+    """
 
     # direct value
     if value is None:
