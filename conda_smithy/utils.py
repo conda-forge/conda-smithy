@@ -262,9 +262,7 @@ def filter_conditional_values(
     provider: Optional[str] = None,
 ) -> list[ConditionalValue]:
     """Filter conditional values from conda-forge.yml by specified
-    criteria, and return the matching values as a list of ConditionalValue.
-    The matched criteria are removed, leaving only the unmatched criteria
-    in ConditionalValue instances."""
+    criteria, and return the matching values as a list of ConditionalValue."""
 
     # direct value
     if value is None:
@@ -286,12 +284,11 @@ def filter_conditional_values(
             cond_value: Union[list[str], str] = cv_item.get(cond_name, [cond_expect])
             if not isinstance(cond_value, list):
                 cond_value = [cond_value]
-            if cond_expect is not None:
-                # filter by specified condition
-                if cond_expect not in cond_value:
-                    break
-            elif cond_name in cv_item:
-                # preserve the condition from from input
+            # filter by specified condition
+            if cond_expect is not None and cond_expect not in cond_value:
+                break
+            # preserve the condition from from input
+            if cond_name in cv_item:
                 new_cv_item[cond_name] = cond_value
         else:
             ret.append(ConditionalValue(**new_cv_item))

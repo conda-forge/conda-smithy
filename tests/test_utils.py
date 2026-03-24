@@ -97,16 +97,16 @@ def test_filter_conditional_values() -> None:
     assert filter_conditional_values([{"os": ["linux", "win"], "value": True}]) == [
         ConditionalValue(True, os=["linux", "win"])
     ]
-    assert filter_conditional_values(
-        [
-            {
-                "os": ["linux", "win"],
-                "provider": "azure",
-                "platform": ["linux_64", "win_64"],
-                "value": True,
-            }
-        ]
-    ) == [
+
+    common_example_in = [
+        {
+            "os": ["linux", "win"],
+            "provider": "azure",
+            "platform": ["linux_64", "win_64"],
+            "value": True,
+        }
+    ]
+    common_example_out = [
         ConditionalValue(
             True,
             os=["linux", "win"],
@@ -115,103 +115,25 @@ def test_filter_conditional_values() -> None:
         )
     ]
 
+    assert filter_conditional_values(common_example_in) == common_example_out
+
     # filtering
-    assert filter_conditional_values(
-        [
-            {
-                "os": ["linux", "win"],
-                "provider": "azure",
-                "platform": ["linux_64", "win_64"],
-                "value": True,
-            }
-        ],
-        provider="azure",
-    ) == [
-        ConditionalValue(
-            True,
-            os=["linux", "win"],
-            platform=["linux_64", "win_64"],
-        )
-    ]
+    assert (
+        filter_conditional_values(common_example_in, provider="azure")
+        == common_example_out
+    )
+    assert filter_conditional_values(common_example_in, provider="github_actions") == []
+    assert (
+        filter_conditional_values(common_example_in, os="linux") == common_example_out
+    )
+    assert filter_conditional_values(common_example_in, os="win") == common_example_out
+    assert filter_conditional_values(common_example_in, os="osx") == []
     assert (
         filter_conditional_values(
-            [
-                {
-                    "os": ["linux", "win"],
-                    "provider": "azure",
-                    "platform": ["linux_64", "win_64"],
-                    "value": True,
-                }
-            ],
-            provider="github_actions",
+            common_example_in, os="linux", platform="linux_64", provider="azure"
         )
-        == []
+        == common_example_out
     )
-    assert filter_conditional_values(
-        [
-            {
-                "os": ["linux", "win"],
-                "provider": "azure",
-                "platform": ["linux_64", "win_64"],
-                "value": True,
-            }
-        ],
-        os="linux",
-    ) == [
-        ConditionalValue(
-            True,
-            platform=["linux_64", "win_64"],
-            provider=["azure"],
-        )
-    ]
-    assert filter_conditional_values(
-        [
-            {
-                "os": ["linux", "win"],
-                "provider": "azure",
-                "platform": ["linux_64", "win_64"],
-                "value": True,
-            }
-        ],
-        os="win",
-    ) == [
-        ConditionalValue(
-            True,
-            platform=["linux_64", "win_64"],
-            provider=["azure"],
-        )
-    ]
-    assert (
-        filter_conditional_values(
-            [
-                {
-                    "os": ["linux", "win"],
-                    "provider": "azure",
-                    "platform": ["linux_64", "win_64"],
-                    "value": True,
-                }
-            ],
-            os="osx",
-        )
-        == []
-    )
-    assert filter_conditional_values(
-        [
-            {
-                "os": ["linux", "win"],
-                "provider": "azure",
-                "platform": ["linux_64", "win_64"],
-                "value": True,
-            }
-        ],
-        os="linux",
-        platform="linux_64",
-        provider="azure",
-    ) == [
-        ConditionalValue(
-            True,
-        )
-    ]
     assert filter_conditional_values(
         [
             {
