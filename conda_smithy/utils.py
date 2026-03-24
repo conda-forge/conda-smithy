@@ -281,8 +281,8 @@ def filter_conditional_values(
       ```
 
       All items that matched the criteria will be returned, normalized to
-      `ConditianalValue` instances. If no items matched, an empty list will be
-      returned.
+      `ConditianalValue` instances. Normally, you'd want to use the ultimate
+      value from the list. If no items matched, an empty list will be returned.
 
     - A direct value, as from `store_build_artifacts: true`. In that case, a
       list with a single `ConditionValue` instance will be returned.
@@ -291,32 +291,41 @@ def filter_conditional_values(
       an empty list will be returned.
     """
 
-    # direct value
+    # If None is passed, there is no value. Return an empty list.
     if value is None:
         return []
+
+    # If value is not a list, then a value has been assigned to the key
+    # directly. Wrap it in `ConditionalValue` and return as the only item.
     if not isinstance(value, list):
         return [ConditionalValue(value=value)]
 
-    # a list of condition-values
-    filters = {
+    # Otherwise, it's a list of "conditional values". Filter them using
+    # specified criteria.
+
+    criteria = {
         "os": os,
         "platform": platform,
         "provider": provider,
     }
-
     ret = []
-    for cv_item in value:
-        new_cv_item = {"value": cv_item["value"]}
-        for cond_name, cond_expect in filters.items():
-            cond_value: Union[list[str], str] = cv_item.get(cond_name, [cond_expect])
-            if not isinstance(cond_value, list):
-                cond_value = [cond_value]
-            # filter by specified condition
-            if cond_expect is not None and cond_expect not in cond_value:
-                break
-            # preserve the condition from from input
-            if cond_name in cv_item:
-                new_cv_item[cond_name] = cond_value
+    for value_item in value:
+        ret_item = {"value": value_item["value"]}
+        for criteria_key, criteria_expected in criteria.items():
+            if criteria_key in value_item:
+                criteria_got: Union[list[str], str] = value_item.get(
+                    criteria_key, [criteria_expected]
+                )
+                # Normalize the condition into a list.
+                if not isinstance(criteria_got, list):
+                    criteria_got = [criteria_got]
+                ret_item[criteria_key] = criteria_got
+                # Filter by it if requested.
+                if (
+                    criteria_expected is not None
+                    and criteria_expected not in criteria_got
+                ):
+                    break
         else:
-            ret.append(ConditionalValue(**new_cv_item))
+            ret.append(ConditionalValue(**ret_item))
     return ret
