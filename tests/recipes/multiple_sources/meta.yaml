@@ -1,6 +1,6 @@
 package:
   name: test_cb3_multiple_sources
-  version: 1.0
+  version: "1.0"
 
 source:
   - url: https://storage.googleapis.com/golang/go{{ version }}.src.tar.gz

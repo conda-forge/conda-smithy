@@ -224,6 +224,7 @@ class RegisterCI(Subcommand):
         "Drone",
         "Webservice",
         "Cirun",
+        "Cirrus-Runners",
     )
 
     def __init__(self, parser):
@@ -319,7 +320,7 @@ class RegisterCI(Subcommand):
             "--remove",
             action="store_true",
             help="Revoke access to the configured CI services. "
-            "Only available for Cirun for now",
+            "Only available for Cirun and Cirrus Runners for now",
         )
 
     def __call__(self, args):
@@ -457,6 +458,17 @@ class RegisterCI(Subcommand):
                 )
         else:
             print("Cirun registration disabled.")
+
+        if args.cirrus_runners:
+            if args.remove:
+                print("Cirrus Runners Registration: removing")
+                ci_register.enable_cirrus_runners_app(owner, repo)
+            else:
+                print("Cirrus Runners Registration: installing")
+                ci_register.disable_cirrus_runners_app(owner, repo)
+
+        else:
+            print("Cirrus Runners registration disabled.")
 
         if args.webservice:
             ci_register.add_conda_forge_webservice_hooks(owner, repo)

@@ -4,6 +4,7 @@ import logging
 import os
 import re
 import shutil
+import sys
 import tempfile
 import textwrap
 from pathlib import Path
@@ -14,8 +15,25 @@ from conftest import ConfigYAML
 from rattler_build_conda_compat.loader import parse_recipe_config_file
 
 from conda_smithy import configure_feedstock
-from conda_smithy.configure_feedstock import _read_forge_config
+from conda_smithy.configure_feedstock import (
+    DEFAULT_PROVIDER,
+    DEFAULT_PROVIDERS,
+    _read_forge_config,
+)
 from conda_smithy.utils import ensure_standard_strings
+
+if sys.version_info >= (3, 11):
+    import tomllib
+else:
+    import tomli as tomllib
+
+
+def test_platforms_populated():
+    all_platforms = configure_feedstock.ALL_PLATFORMS
+    assert sorted(all_platforms) == sorted(configure_feedstock.FANCY_PLATFORM_NAMES)
+    assert sorted(all_platforms) == sorted(configure_feedstock.DEFAULT_PROVIDERS)
+    assert sorted(all_platforms) == sorted(configure_feedstock.NATIVE_CI_PROVIDER)
+    assert set(configure_feedstock.DEFAULT_PLATFORMS).issubset(all_platforms)
 
 
 def test_noarch_skips_appveyor(noarch_recipe, jinja_env):
@@ -60,14 +78,19 @@ def test_noarch_runs_on_circle(noarch_recipe, jinja_env):
 
 
 @pytest.mark.parametrize("recipe_dirname", ["recipe", "custom_recipe_dir"])
-def test_noarch_runs_on_azure(noarch_recipe, jinja_env):
-    configure_feedstock.render_azure(
+def test_noarch_runs_on_default(noarch_recipe, jinja_env):
+    """By default, noarch runs on the default provider for Linux x64"""
+    render_func = getattr(
+        configure_feedstock, f"render_{DEFAULT_PROVIDERS['linux_64']}"
+    )
+    render_func(
         jinja_env=jinja_env,
         forge_config=noarch_recipe.config,
         forge_dir=noarch_recipe.recipe,
     )
+
     # this configuration should be run
-    assert noarch_recipe.config["azure"]["enabled"]
+    assert noarch_recipe.config[DEFAULT_PROVIDERS["linux_64"]]["enabled"]
     matrix_dir = os.path.join(noarch_recipe.recipe, ".ci_support")
     assert os.path.isdir(matrix_dir)
     # single matrix entry - readme is generated later in main function
@@ -120,14 +143,17 @@ def test_r_matrix_on_circle(r_recipe, jinja_env):
     assert len(os.listdir(matrix_dir)) == 2
 
 
-def test_r_matrix_azure(r_recipe, jinja_env):
-    configure_feedstock.render_azure(
-        jinja_env=jinja_env,
-        forge_config=r_recipe.config,
-        forge_dir=r_recipe.recipe,
-    )
-    # this configuration should be run
-    assert r_recipe.config["azure"]["enabled"]
+def test_r_matrix_default(r_recipe, jinja_env):
+    default_providers = sorted({prov for _, prov in DEFAULT_PROVIDERS.items()})
+    for provider in default_providers:
+        render_func = getattr(configure_feedstock, f"render_{provider}")
+        render_func(
+            jinja_env=jinja_env,
+            forge_config=r_recipe.config,
+            forge_dir=r_recipe.recipe,
+        )
+        # this configuration should be run
+        assert r_recipe.config[provider]["enabled"]
     matrix_dir = os.path.join(r_recipe.recipe, ".ci_support")
     assert os.path.isdir(matrix_dir)
     # single matrix entry - readme is generated later in main function
@@ -197,13 +223,15 @@ def test_py_matrix_on_github(py_recipe, jinja_env):
     matrix_dir = os.path.join(py_recipe.recipe, ".ci_support")
     assert os.path.isdir(matrix_dir)
     # single matrix entry - readme is generated later in main function
-    assert len(os.listdir(matrix_dir)) == 2
+    assert len([fn for fn in os.listdir(matrix_dir) if fn.startswith("linux_64_")]) == 2
     assert os.path.exists(
         os.path.join(py_recipe.recipe, ".github", "workflows", "conda-build.yml")
     )
 
 
 def test_py_matrix_on_azure(py_recipe, jinja_env):
+    py_recipe.config["provider"]["linux"] = "azure"
+
     configure_feedstock.render_azure(
         jinja_env=jinja_env,
         forge_config=py_recipe.config,
@@ -214,10 +242,10 @@ def test_py_matrix_on_azure(py_recipe, jinja_env):
     matrix_dir = os.path.join(py_recipe.recipe, ".ci_support")
     assert os.path.isdir(matrix_dir)
     # single matrix entry - readme is generated later in main function
-    assert len(os.listdir(matrix_dir)) == 6
+    assert len([fn for fn in os.listdir(matrix_dir) if fn.startswith("linux_64_")]) == 2
 
 
-def test_stdlib_on_azure(stdlib_recipe, jinja_env, request):
+def test_stdlib_on_default(stdlib_recipe, jinja_env, request):
     conda_build_param = request.node.callspec.params["config_yaml"]
     if conda_build_param == "rattler-build":
         # stdlib is not yet implemented in rattler-build
@@ -226,13 +254,16 @@ def test_stdlib_on_azure(stdlib_recipe, jinja_env, request):
             "skipping test for rattler-build usecase as we currently we don't have stdlib"
         )
 
-    configure_feedstock.render_azure(
-        jinja_env=jinja_env,
-        forge_config=stdlib_recipe.config,
-        forge_dir=stdlib_recipe.recipe,
-    )
-    # this configuration should be run
-    assert stdlib_recipe.config["azure"]["enabled"]
+    default_providers = sorted({prov for _, prov in DEFAULT_PROVIDERS.items()})
+    for provider in default_providers:
+        render_func = getattr(configure_feedstock, f"render_{provider}")
+        render_func(
+            jinja_env=jinja_env,
+            forge_config=stdlib_recipe.config,
+            forge_dir=stdlib_recipe.recipe,
+        )
+        # this configuration should be run
+        assert stdlib_recipe.config[provider]["enabled"]
     matrix_dir = os.path.join(stdlib_recipe.recipe, ".ci_support")
     assert os.path.isdir(matrix_dir)
     # find stdlib-config in generated yaml files (plus version, on unix)
@@ -264,14 +295,17 @@ def test_stdlib_deployment_target(
         # stdlib_deployment_target_recipe fixture doesn't have a recipe.yaml variant
         pytest.skip("skipping test for rattler-build usecase")
 
-    with caplog.at_level(logging.WARNING):
-        configure_feedstock.render_azure(
-            jinja_env=jinja_env,
-            forge_config=stdlib_deployment_target_recipe.config,
-            forge_dir=stdlib_deployment_target_recipe.recipe,
-        )
-    # this configuration should be run
-    assert stdlib_deployment_target_recipe.config["azure"]["enabled"]
+    default_providers = sorted({prov for _, prov in DEFAULT_PROVIDERS.items()})
+    for provider in default_providers:
+        with caplog.at_level(logging.WARNING):
+            render_func = getattr(configure_feedstock, f"render_{provider}")
+            render_func(
+                jinja_env=jinja_env,
+                forge_config=stdlib_deployment_target_recipe.config,
+                forge_dir=stdlib_deployment_target_recipe.recipe,
+            )
+        # this configuration should be run
+        assert stdlib_deployment_target_recipe.config[provider]["enabled"]
     matrix_dir = os.path.join(stdlib_deployment_target_recipe.recipe, ".ci_support")
     assert os.path.isdir(matrix_dir)
     with open(os.path.join(matrix_dir, "osx_64_.yaml")) as f:
@@ -291,7 +325,8 @@ def test_mixed_python_min(mixed_python_min_recipe, jinja_env, caplog, request):
         # mixed_python_min_recipe fixture doesn't have a recipe.yaml variant
         pytest.skip("skipping test for rattler-build usecase")
     with caplog.at_level(logging.WARNING):
-        configure_feedstock.render_azure(
+        render_func = getattr(configure_feedstock, f"render_{DEFAULT_PROVIDER}")
+        render_func(
             jinja_env=jinja_env,
             forge_config=mixed_python_min_recipe.config,
             forge_dir=mixed_python_min_recipe.recipe,
@@ -307,7 +342,8 @@ def test_mixed_python_min(mixed_python_min_recipe, jinja_env, caplog, request):
 
 def test_no_python_min_if_not_present(py_recipe, jinja_env, caplog, request):
     with caplog.at_level(logging.WARNING):
-        configure_feedstock.render_azure(
+        render_func = getattr(configure_feedstock, f"render_{DEFAULT_PROVIDER}")
+        render_func(
             jinja_env=jinja_env,
             forge_config=py_recipe.config,
             forge_dir=py_recipe.recipe,
@@ -323,7 +359,8 @@ def test_no_python_min_if_not_present(py_recipe, jinja_env, caplog, request):
 
 def test_abi3_bools(py_abi3_recipe, jinja_env, caplog, request):
     with caplog.at_level(logging.WARNING):
-        configure_feedstock.render_azure(
+        render_func = getattr(configure_feedstock, f"render_{DEFAULT_PROVIDER}")
+        render_func(
             jinja_env=jinja_env,
             forge_config=py_abi3_recipe.config,
             forge_dir=py_abi3_recipe.recipe,
@@ -338,6 +375,10 @@ def test_abi3_bools(py_abi3_recipe, jinja_env, caplog, request):
 
 
 def test_upload_on_branch_azure(upload_on_branch_recipe, jinja_env):
+    upload_on_branch_recipe.config["provider"]["linux"] = "azure"
+    upload_on_branch_recipe.config["provider"]["osx"] = "azure"
+    upload_on_branch_recipe.config["provider"]["win"] = "azure"
+
     configure_feedstock.render_azure(
         jinja_env=jinja_env,
         forge_config=upload_on_branch_recipe.config,
@@ -398,6 +439,63 @@ def test_upload_on_branch_azure(upload_on_branch_recipe, jinja_env):
     assert "BUILD_SOURCEBRANCHNAME" in content_lin["jobs"][0]["steps"][1]["script"]
 
 
+def test_upload_on_branch_github_actions(upload_on_branch_recipe, jinja_env):
+    upload_on_branch_recipe.config["provider"]["linux"] = "github_actions"
+    upload_on_branch_recipe.config["provider"]["osx"] = "github_actions"
+    upload_on_branch_recipe.config["provider"]["win"] = "github_actions"
+
+    configure_feedstock.render_github_actions(
+        jinja_env=jinja_env,
+        forge_config=upload_on_branch_recipe.config,
+        forge_dir=upload_on_branch_recipe.recipe,
+    )
+    # Check that the parameter is in the configuration.
+    assert "upload_on_branch" in upload_on_branch_recipe.config
+    assert upload_on_branch_recipe.config["upload_on_branch"] == "foo-branch"
+    # Check that the parameter is in the generated file.
+    with open(
+        os.path.join(
+            upload_on_branch_recipe.recipe,
+            ".github",
+            "workflows",
+            "conda-build.yml",
+        )
+    ) as fp:
+        content = yaml.safe_load(fp)
+
+    linux_step = next(
+        step
+        for step in content["jobs"]["build"]["steps"]
+        if step["name"] == "Build on Linux"
+    )
+    assert linux_step["env"]["UPLOAD_ON_BRANCH"] == "foo-branch"
+    assert "$(basename $GITHUB_REF)" in linux_step["run"]
+
+    macos_step = next(
+        step
+        for step in content["jobs"]["build"]["steps"]
+        if step["name"] == "Build on macOS"
+    )
+    assert macos_step["env"]["UPLOAD_ON_BRANCH"] == "foo-branch"
+    assert "$(basename $GITHUB_REF)" in macos_step["run"]
+
+    win_build_step = next(
+        step
+        for step in content["jobs"]["build"]["steps"]
+        if step["name"] == "Build on windows"
+    )
+    assert win_build_step["env"]["UPLOAD_ON_BRANCH"] == "foo-branch"
+    with open(
+        os.path.join(
+            upload_on_branch_recipe.recipe,
+            ".scripts",
+            "run_win_build.bat",
+        )
+    ) as fp:
+        build_script_win = fp.read()
+    assert r"%GITHUB_REF:refs/heads/=%" in build_script_win
+
+
 def test_upload_on_branch_appveyor(upload_on_branch_recipe, jinja_env):
     upload_on_branch_recipe.config["provider"]["win"] = "appveyor"
     configure_feedstock.render_appveyor(
@@ -445,12 +543,27 @@ def test_circle_with_empty_yum_reqs_raises(py_recipe, jinja_env):
 
 
 def test_azure_with_empty_yum_reqs_raises(py_recipe, jinja_env):
+    py_recipe.config["provider"]["linux"] = "azure"
     with open(
         os.path.join(py_recipe.recipe, "recipe", "yum_requirements.txt"), "w"
     ) as f:
         f.write("# effectively empty")
     with pytest.raises(ValueError):
         configure_feedstock.render_azure(
+            jinja_env=jinja_env,
+            forge_config=py_recipe.config,
+            forge_dir=py_recipe.recipe,
+        )
+
+
+def test_github_actions_with_empty_yum_reqs_raises(py_recipe, jinja_env):
+    py_recipe.config["provider"]["linux"] = "github_actions"
+    with open(
+        os.path.join(py_recipe.recipe, "recipe", "yum_requirements.txt"), "w"
+    ) as f:
+        f.write("# effectively empty")
+    with pytest.raises(ValueError):
+        configure_feedstock.render_github_actions(
             jinja_env=jinja_env,
             forge_config=py_recipe.config,
             forge_dir=py_recipe.recipe,
@@ -582,6 +695,7 @@ def test_readme_has_terminating_newline(noarch_recipe, jinja_env):
 
 
 def test_secrets(py_recipe, jinja_env):
+    py_recipe.config["provider"]["linux"] = "azure"
     configure_feedstock.render_azure(
         jinja_env=jinja_env,
         forge_config=py_recipe.config,
@@ -607,6 +721,30 @@ def test_secrets(py_recipe, jinja_env):
                         for job in config["jobs"]
                     )
 
+    py_recipe.config["provider"]["osx"] = "github_actions"
+    configure_feedstock.render_github_actions(
+        jinja_env=jinja_env,
+        forge_config=py_recipe.config,
+        forge_dir=py_recipe.recipe,
+    )
+
+    run_docker_build = os.path.join(py_recipe.recipe, ".scripts", "run_docker_build.sh")
+    with open(run_docker_build, "rb") as run_docker_build_file:
+        content = run_docker_build_file.read()
+    assert b"-e BINSTAR_TOKEN" in content
+
+    config_yaml = os.path.join(
+        py_recipe.recipe, ".github", "workflows", "conda-build.yml"
+    )
+    with open(config_yaml) as fo:
+        config = yaml.safe_load(fo)
+        print(config)
+        if "steps" in config:
+            any(
+                step.get("env", {}).get("BINSTAR_TOKEN", None) == "$(BINSTAR_TOKEN)"
+                for step in config["steps"]
+            )
+
     py_recipe.config["provider"]["linux_aarch64"] = "drone"
     configure_feedstock.render_drone(
         jinja_env=jinja_env,
@@ -626,7 +764,9 @@ def test_secrets(py_recipe, jinja_env):
 
 
 def test_migrator_recipe(recipe_migration_cfep9, jinja_env):
-    configure_feedstock.render_azure(
+    render_func = getattr(configure_feedstock, f"render_{DEFAULT_PROVIDER}")
+
+    render_func(
         jinja_env=jinja_env,
         forge_config=recipe_migration_cfep9.config,
         forge_dir=recipe_migration_cfep9.recipe,
@@ -644,6 +784,8 @@ def test_migrator_recipe(recipe_migration_cfep9, jinja_env):
 
 
 def test_migrator_cfp_override(recipe_migration_cfep9, jinja_env):
+    render_func = getattr(configure_feedstock, f"render_{DEFAULT_PROVIDER}")
+
     cfp_file = recipe_migration_cfep9.config["exclusive_config_file"]
     cfp_migration_dir = os.path.join(
         os.path.dirname(cfp_file), "share", "conda-forge", "migrations"
@@ -651,16 +793,12 @@ def test_migrator_cfp_override(recipe_migration_cfep9, jinja_env):
     os.makedirs(cfp_migration_dir, exist_ok=True)
 
     with open(os.path.join(cfp_migration_dir, "zlib.yaml"), "w") as f:
-        f.write(
-            textwrap.dedent(
-                """
+        f.write(textwrap.dedent("""
                 migrator_ts: 1
                 zlib:
                    - 1001
-                """
-            )
-        )
-    configure_feedstock.render_azure(
+                """))
+    render_func(
         jinja_env=jinja_env,
         forge_config=recipe_migration_cfep9.config,
         forge_dir=recipe_migration_cfep9.recipe,
@@ -678,6 +816,8 @@ def test_migrator_cfp_override(recipe_migration_cfep9, jinja_env):
 
 
 def test_migrator_delete_old(recipe_migration_cfep9, jinja_env):
+    render_func = getattr(configure_feedstock, f"render_{DEFAULT_PROVIDER}")
+
     cfp_file = recipe_migration_cfep9.config["exclusive_config_file"]
     cfp_migration_dir = os.path.join(
         os.path.dirname(cfp_file), "share", "conda-forge", "migrations"
@@ -691,7 +831,7 @@ def test_migrator_delete_old(recipe_migration_cfep9, jinja_env):
         )
     )
     os.makedirs(cfp_migration_dir, exist_ok=True)
-    configure_feedstock.render_azure(
+    render_func(
         jinja_env=jinja_env,
         forge_config=recipe_migration_cfep9.config,
         forge_dir=recipe_migration_cfep9.recipe,
@@ -710,7 +850,8 @@ def test_migrator_downgrade_recipe(recipe_migration_cfep9_downgrade, jinja_env):
     """
     Assert that even when we have two migrations targeting the same file the correct one wins.
     """
-    configure_feedstock.render_azure(
+    render_func = getattr(configure_feedstock, f"render_{DEFAULT_PROVIDER}")
+    render_func(
         jinja_env=jinja_env,
         forge_config=recipe_migration_cfep9_downgrade.config,
         forge_dir=recipe_migration_cfep9_downgrade.recipe,
@@ -743,7 +884,8 @@ def test_migrator_compiler_version_recipe(recipe_migration_win_compiled, jinja_e
     """
     Assert that even when we have two migrations targeting the same file the correct one wins.
     """
-    configure_feedstock.render_azure(
+    render_func = getattr(configure_feedstock, f"render_{DEFAULT_PROVIDERS['win_64']}")
+    render_func(
         jinja_env=jinja_env,
         forge_config=recipe_migration_win_compiled.config,
         forge_dir=recipe_migration_win_compiled.recipe,
@@ -789,7 +931,8 @@ def test_files_skip_render(render_skipped_recipe, jinja_env):
         assert not os.path.exists(fpath)
 
 
-def test_choco_install(choco_recipe, jinja_env):
+def test_choco_install_azure(choco_recipe, jinja_env):
+    choco_recipe.config["provider"]["win"] = "azure"
     configure_feedstock.render_azure(
         jinja_env=jinja_env,
         forge_config=choco_recipe.config,
@@ -809,6 +952,33 @@ def test_choco_install(choco_recipe, jinja_env):
     - script: |
         choco install pkg1 --version=X.Y.Z -fdv -y --debug
       displayName: "Install Chocolatey Package: pkg1 --version=X.Y.Z"
+""".strip()
+    assert exp in contents
+
+
+def test_choco_install_github_actions(choco_recipe, jinja_env):
+    choco_recipe.config["provider"]["win"] = "github_actions"
+    configure_feedstock.render_github_actions(
+        jinja_env=jinja_env,
+        forge_config=choco_recipe.config,
+        forge_dir=choco_recipe.recipe,
+    )
+    gha_file = os.path.join(
+        os.path.join(choco_recipe.recipe, ".github", "workflows", "conda-build.yml")
+    )
+    assert os.path.isfile(gha_file)
+    with open(gha_file) as f:
+        contents = f.read()
+    exp = """
+    - name: "Install Chocolatey Package: pkg0"
+      if matrix.os == 'windows'
+      run: |
+        choco install pkg0 -fdv -y --debug
+
+    - name: "Install Chocolatey Package: pkg1 --version=X.Y.Z"
+      if matrix.os == 'windows'
+      run: |
+        choco install pkg1 --version=X.Y.Z -fdv -y --debug
 """.strip()
     assert exp in contents
 
@@ -881,15 +1051,17 @@ def test_cos7_env_render(py_recipe, jinja_env):
 
     try:
         assert "DEFAULT_LINUX_VERSION" not in os.environ
-        configure_feedstock.render_azure(
-            jinja_env=jinja_env,
-            forge_config=forge_config,
-            forge_dir=py_recipe.recipe,
-        )
+        default_providers = sorted({prov for _, prov in DEFAULT_PROVIDERS.items()})
+        for provider in default_providers:
+            render_func = getattr(configure_feedstock, f"render_{provider}")
+            render_func(
+                jinja_env=jinja_env,
+                forge_config=forge_config,
+                forge_dir=py_recipe.recipe,
+            )
+            # this configuration should be run
+            assert forge_config[provider]["enabled"]
         assert os.environ["DEFAULT_LINUX_VERSION"] == "cos7"
-
-        # this configuration should be run
-        assert forge_config["azure"]["enabled"]
         matrix_dir = os.path.join(py_recipe.recipe, ".ci_support")
         assert os.path.isdir(matrix_dir)
         # single matrix entry - readme is generated later in main function
@@ -912,15 +1084,18 @@ def test_cuda_enabled_render(cuda_enabled_recipe, jinja_env):
 
     try:
         assert "CF_CUDA_ENABLED" not in os.environ
-        configure_feedstock.render_azure(
-            jinja_env=jinja_env,
-            forge_config=forge_config,
-            forge_dir=cuda_enabled_recipe.recipe,
-        )
-        assert os.environ["CF_CUDA_ENABLED"] == "True"
+        default_providers = sorted({prov for _, prov in DEFAULT_PROVIDERS.items()})
+        for provider in default_providers:
+            render_func = getattr(configure_feedstock, f"render_{provider}")
+            render_func(
+                jinja_env=jinja_env,
+                forge_config=forge_config,
+                forge_dir=cuda_enabled_recipe.recipe,
+            )
+            assert os.environ["CF_CUDA_ENABLED"] == "True"
 
-        # this configuration should be run
-        assert forge_config["azure"]["enabled"]
+            # this configuration should be run
+            assert forge_config[provider]["enabled"]
         matrix_dir = os.path.join(cuda_enabled_recipe.recipe, ".ci_support")
         assert os.path.isdir(matrix_dir)
         # single matrix entry - readme is generated later in main function
@@ -2075,6 +2250,65 @@ def test_read_forge_config_default_values_aliases():
         assert isinstance(config["azure"]["settings_win"]["timeoutInMinutes"], int)
 
 
+@pytest.mark.parametrize("shellcheck", [True, False])
+@pytest.mark.parametrize("conda_install_tool", ["pixi", None])
+def test_render_pixi(
+    stdlib_recipe,
+    jinja_env,
+    shellcheck,
+    conda_install_tool,
+    platform_without_shellcheck,
+):
+    config, recipe = stdlib_recipe.config, Path(stdlib_recipe.recipe)
+    config["feedstock_name"] = "a-feedstock-with-pixi"
+    pixi_toml = recipe / "pixi.toml"
+    pixi_toml.touch()
+    config["shellcheck"]["enabled"] = shellcheck
+    config["provider"].update(
+        {
+            platform_without_shellcheck.replace("-", "_"): "default",
+            "win": "default",
+        }
+    )
+    if conda_install_tool:
+        config["conda_install_tool"] = conda_install_tool
+
+    configure_feedstock.render_pixi(
+        jinja_env=jinja_env,
+        forge_config=config,
+        forge_dir=recipe,
+    )
+
+    if not conda_install_tool:
+        assert not pixi_toml.exists(), "pixi.toml should have been deleted"
+        return
+
+    pixi_text = pixi_toml.read_text(encoding="utf-8")
+
+    pixi = tomllib.loads(pixi_text)
+
+    if not shellcheck:
+        assert (
+            "shellcheck" not in pixi_text
+        ), "pixi.toml should not mention `shellcheck`"
+    else:
+        platforms = pixi["workspace"]["platforms"]
+        assert (
+            platform_without_shellcheck in platforms
+        ), f"expected {platform_without_shellcheck} in pixi workspace platforms"
+        assert (
+            "win-64" in platforms
+        ), "expected an aliased platform in pixi workspace platforms"
+        shellcheck_platforms = pixi["feature"]["shellcheck"]["platforms"]
+        smithy_env = pixi["environments"]["smithy"]
+        assert shellcheck_platforms, "`shellcheck` should be enabled on _some_ platform"
+        assert (
+            platform_without_shellcheck not in shellcheck_platforms
+        ), f"`shellcheck` should not be enabled for {platform_without_shellcheck}"
+
+        assert "shellcheck" in smithy_env, "`smithy` env should have `shellcheck`"
+
+
 def test_configure_feedstock_rattler_build_conda_compat_round_trip():
     def _dumps(cfg):
         val = io.StringIO()
@@ -2084,19 +2318,130 @@ def test_configure_feedstock_rattler_build_conda_compat_round_trip():
     with tempfile.TemporaryDirectory() as tmpdir:
         fname = os.path.join(tmpdir, "variants.yaml")
         with open(fname, "w") as fp:
-            fp.write(
-                textwrap.dedent(
-                    """
+            fp.write(textwrap.dedent("""
                 varkey:
                 - "val1"
                 - 'val2'
                 - val
-                """
-                )
-            )
+                """))
 
         cfg = parse_recipe_config_file(fname, {})
         assert "ruamel.yaml" in _dumps(cfg)
 
         cfg = ensure_standard_strings(cfg)
         assert "ruamel.yaml" not in _dumps(cfg)
+
+
+def test_github_actions_populated(linux_skipped_recipe, jinja_env):
+    forge_dir = linux_skipped_recipe.recipe
+    config = copy.deepcopy(linux_skipped_recipe.config)
+    conda_build_yml = Path(forge_dir, ".github/workflows/conda-build.yml")
+
+    config["provider"]["linux"] = "azure"
+    config["provider"]["osx"] = "azure"
+    config["provider"]["win"] = "azure"
+
+    configure_feedstock.copy_feedstock_content(config, forge_dir)
+    assert conda_build_yml.is_file()
+    assert "name: Disabled build" in conda_build_yml.read_text()
+
+    configure_feedstock.render_azure(
+        jinja_env=jinja_env,
+        forge_config=config,
+        forge_dir=forge_dir,
+    )
+    configure_feedstock.render_github_actions(
+        jinja_env=jinja_env,
+        forge_config=config,
+        forge_dir=forge_dir,
+    )
+
+    assert conda_build_yml.is_file()
+    assert "name: Disabled build" in conda_build_yml.read_text()
+
+    config["provider"]["osx"] = "github_actions"
+
+    configure_feedstock.copy_feedstock_content(config, forge_dir)
+    configure_feedstock.render_azure(
+        jinja_env=jinja_env,
+        forge_config=config,
+        forge_dir=forge_dir,
+    )
+    configure_feedstock.render_github_actions(
+        jinja_env=jinja_env,
+        forge_config=config,
+        forge_dir=forge_dir,
+    )
+    assert conda_build_yml.is_file()
+    assert "name: Disabled build" not in conda_build_yml.read_text()
+    assert "name: Checkout code" in conda_build_yml.read_text()
+
+
+@pytest.mark.parametrize(
+    "label",
+    [None, "default", "hosted", "cirun-linux", "self-hosted@another-linux-runner"],
+)
+def test_github_actions_labels(py_recipe, jinja_env, label):
+    forge_dir = py_recipe.recipe
+    config = copy.deepcopy(py_recipe.config)
+    conda_build_yml = Path(forge_dir, ".github/workflows/conda-build.yml")
+    print(conda_build_yml)
+
+    config["provider"]["linux_64"] = "github_actions"
+    config["provider"]["osx"] = "azure"
+    config["provider"]["win"] = "azure"
+    if label:
+        with open(config["exclusive_config_file"], "a") as f:
+            f.write(f"\ngithub_actions_labels:\n  - {label}  # [linux64]\n")
+        if (recipe := Path(py_recipe.recipe, "recipe", "meta.yaml")).is_file():
+            with open(recipe, "a") as f:
+                f.write("\n{% set github_actions_labels = github_actions_labels %}\n")
+        else:
+            recipe = Path(py_recipe.recipe, "recipe", "recipe.yaml")
+            with open(recipe) as f:
+                contents = yaml.safe_load(f)
+            contents.setdefault("context", {})[
+                "github_actions_labels"
+            ] = "${{ github_actions_labels }}"
+            with open(recipe, "w") as f:
+                yaml.safe_dump(contents, f)
+
+    configure_feedstock.render_github_actions(
+        jinja_env=jinja_env,
+        forge_config=config,
+        forge_dir=forge_dir,
+    )
+
+    with conda_build_yml.open() as f:
+        workflow = yaml.safe_load(f)
+    matrix = workflow["jobs"]["build"]["strategy"]["matrix"]["include"]
+
+    assert all(entry["os"] == "ubuntu" for entry in matrix)
+    if label in (None, "default", "hosted"):
+        assert all(
+            entry["runs_on"]
+            == list(
+                configure_feedstock.GITHUB_ACTIONS_RUNS_ON["linux-64"]["hosted_labels"]
+            )
+            for entry in matrix
+        )
+    elif label == "cirun-linux":
+        # cirun gets expanded with --{ stuff } for debugging purposes
+        assert all(entry["runs_on"][0].startswith("cirun-linux--") for entry in matrix)
+    elif label == "self-hosted@another-linux-runner":
+        # self-hosted@ gets "expanded" with generic self-hosted labels (e.g. Linux, x64)
+        assert all(
+            sorted(entry["runs_on"])
+            == sorted(
+                [
+                    "another-linux-runner",
+                    *configure_feedstock.GITHUB_ACTIONS_RUNS_ON["linux-64"][
+                        "self_hosted_labels"
+                    ],
+                    "self-hosted",
+                ]
+            )
+            for entry in matrix
+        )
+    else:
+        raise AssertionError("Bad label? Check test parameters.")

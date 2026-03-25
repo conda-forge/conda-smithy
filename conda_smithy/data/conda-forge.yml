@@ -17,7 +17,7 @@ azure:
   settings_osx:
     install_atl: false
     pool:
-      vmImage: macOS-15
+      vmImage: $(VMIMAGE)
     swapfile_size: null
     timeoutInMinutes: 360
     variables: {}
@@ -83,7 +83,8 @@ github_actions:
   artifact_retention_days: 14
   cancel_in_progress: true
   free_disk_space: false
-  max_parallel: null
+  max_parallel: 50
+  resize_win_partitions: false
   self_hosted: false
   store_build_artifacts: false
   timeout_minutes: 360
@@ -114,7 +115,7 @@ provider:
   freebsd_64: null
   linux: null
   linux_32: null
-  linux_64: azure
+  linux_64: github_actions
   linux_aarch64: null
   linux_armv6l: null
   linux_armv7l: null

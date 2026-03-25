@@ -4,8 +4,8 @@ Authors are sorted by number of commits.
 * Isuru Fernando
 * Matthew R. Becker
 * Jaime Rodríguez-Guerra
-* nichmor
 * H. Vetinari
+* nichmor
 * Christopher J. Wright
 * Anthony Scopatz
 * Phil Elson
@@ -15,35 +15,36 @@ Authors are sorted by number of commits.
 * Filipe Fernandes
 * Min RK
 * Dougal J. Sutherland
-* Amit Kumar
+* Michał Górny
 * John Kirkham
+* Amit Kumar
 * Marcel Bargull
 * Hadrien Mary
 * shadow_walker
 * Michael Sarahan
 * Mark Harfouche
 * Bastian Zimmermann
-* Michał Górny
 * Leo Fang
 * Ryan Volz
 * Johnny Willemsen
 * Chris Burr
+* Nicholas Bollweg
 * Julian Rüth
 * Yannik Tausch
 * Daniel Bast
-* Billy K. Poon
 * Daniel Ching
+* Billy K. Poon
 * vinicius douglas cerutti
-* Nicholas Bollweg
+* dependabot[bot]
 * Tim Snyder
 * Mike Henry
 * Eric Dill
 * Natasha Pavlovikj
 * Maksim Rakitin
-* dependabot[bot]
 * Jan Schulz
 * Josh Reichardt
 * Bela Stoyan
+* Aman Srivastava
 * Justin Calamari
 * Jason Furmanek
 * Patrick Sodré
@@ -53,6 +54,7 @@ Authors are sorted by number of commits.
 * Leopold Talirz
 * Peter Williams
 * Tom Pollard
+* Pavel Zwerschke
 * Gonzalo Pena-Castellanos
 * John Blischak
 * Matthias Diener
@@ -73,7 +75,6 @@ Authors are sorted by number of commits.
 * David Hirschfeld
 * Finn Womack
 * M Bussonnier
-* Pavel Zwerschke
 * Josh Barnes
 * Tobias Megies
 * Jonathan Helmus
@@ -105,6 +106,9 @@ Authors are sorted by number of commits.
 * Dominic Davis-Foster
 * Anton Tetov
 * Brandon Maier
+* Guillaume Fraux
+* Lucas Colley
+* Jakov Smolić
 * lorenz
 * Tom Augspurger
 * Ryan May
@@ -142,6 +146,5 @@ Authors are sorted by number of commits.
 * Andreas Poehlmann
 * James Myatt
 * Dan Yeaw
-* Guillaume Fraux
-* Lucas Colley
 * Mikhail Ryazanov
+* Filippo Luca Ferretti
