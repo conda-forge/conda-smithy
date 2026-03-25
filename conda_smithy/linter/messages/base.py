@@ -67,3 +67,17 @@ class _BaseMessage:
 
     def __str__(self) -> str:
         return self._render()
+
+    def append_if_absent(
+        self, iterable: list, test: Literal["isinstance", "str"] = "isinstance"
+    ) -> None:
+        if test == "isinstance":
+            test = lambda a, b: isinstance(a, b.__class__)
+        elif test == "str":
+            test = lambda a, b: str(a) == str(b)
+        else:
+            raise ValueError("`test` must be either 'isinstance' or 'str'")
+
+        if any(test(item, self) for item in iterable):
+            return
+        iterable.append(self)
