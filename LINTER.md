@@ -116,6 +116,57 @@ The feedstock has no `.ci_support` files and thus will not build any packages.
 
 _No samples available_
 
+<a id='CF-005'></a>
+### `CF-005`: `CFNoEmptyVariantsFile`
+
+- Type: 🚨 Lint
+- Added in: conda-smithy <3.28.
+
+Variants files can't be empty.
+
+#### Samples
+
+<details>
+
+<summary>Base template</summary>
+
+```text
+The recipe should not have an empty `conda_build_config.yaml` file.
+```
+
+</details>
+
+_No samples available_
+
+<a id='CF-006'></a>
+### `CF-006`: `CFNoCustomGHAWorkflows`
+
+- Type: 🚨 Lint
+- Added in: conda-smithy <3.28.
+
+Due to its stature in the open-source community, conda-forge has enhanced
+access to certain CI services. This access is a community resource entrusted
+to conda-forge for use in building packages. We thus cannot support
+third-party or "off-label" CI jobs in our feedstocks on any of our CI
+services. If we find such use, we will politely ask the maintainers to
+rectify the situation. We may take more serious actions, including archiving
+feedstocks or removing maintainers from the organization, if the situation
+cannot be rectified.
+
+#### Samples
+
+<details>
+
+<summary>Base template</summary>
+
+```text
+conda-forge feedstocks cannot have custom Github Actions workflows. See https://github.com/conda-forge/conda-forge.github.io/issues/2750 for more information. If you didn't add any custom workflows, please consider rerendering your feedstock to remove deprecated workflows.
+```
+
+</details>
+
+_No samples available_
+
 <a id='FC'></a>
 ## `FC`: Feedstock configuration in `conda-forge.yml`.
 
@@ -1615,6 +1666,28 @@ https://github.com/conda-forge/conda-forge.github.io/issues/2102
 ```text
 You are setting `MACOSX_SDK_VERSION` below `c_stdlib_version`, in conda_build_config.yaml which is not possible! Please ensure `MACOSX_SDK_VERSION` is at least `c_stdlib_version` (you can leave it out if it is equal).
 If you are not setting `c_stdlib_version` yourself, this means you are requesting a version below the current global baseline in conda-forge ({baseline}). If this is the intention, you also need to override `c_stdlib_version` and `MACOSX_DEPLOYMENT_TARGET` locally.
+```
+
+</details>
+
+_No samples available_
+
+<a id='RC-003'></a>
+### `RC-003`: `RCMoreThanOneFile`
+
+- Type: 🚨 Lint
+- Added in: conda-smithy <3.28.
+
+Only one recipe variants file must be used in a feedstock.
+
+#### Samples
+
+<details>
+
+<summary>Base template</summary>
+
+```text
+Found two recipe configuration files, but you may only use one! You may use `conda_build_config.yaml` for both v0 and v1 recipes, while `variants.yaml` may only be used with v1 recipes.
 ```
 
 </details>

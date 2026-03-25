@@ -66,6 +66,20 @@ class CBCMacOSDeploymentTargetBelowStdlib(_BaseMessage):
     baseline: str
 
 
+@dataclass(kw_only=True)
+class RCMoreThanOneFile(_BaseMessage):
+    """
+    Only one recipe variants file must be used in a feedstock.
+    """
+
+    kind = "lint"
+    identifier = "RC-003"
+    message = (
+        "Found two recipe configuration files, but you may only use one! "
+        "You may use `conda_build_config.yaml` for both v0 and v1 recipes, "
+        "while `variants.yaml` may only be used with v1 recipes."
+    )
+
 # endregion
 # region CBC
 

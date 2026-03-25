@@ -372,11 +372,7 @@ def lintify_meta_yaml(
 
     # 30: two configuration files present
     if sum(v is not None for v in recipe_config_keys.values()) > 1:
-        lints.append(
-            "Found two recipe configuration files, but you may only use one! "
-            "You may use `conda_build_config.yaml` for both v0 and v1 recipes, "
-            "while `variants.yaml` may only be used with v1 recipes"
-        )
+        lints.append(msg.RCMoreThanOneFile())
 
     # 31: stdlib-related lints
     if "lint_stdlib" not in lints_to_skip:
@@ -699,10 +695,8 @@ def run_conda_forge_specific(
     if os.path.exists(cbc_pth):
         with open(cbc_pth, encoding="utf-8") as fh:
             data = fh.read()
-        if not data:
-            lints.append(
-                "The recipe should not have an empty `conda_build_config.yaml` file."
-            )
+        if not data or not data.strip():
+            lints.append(msg.CFNoEmptyVariantsFile())
 
     # 14: incorrect configuration on osx for c_stdlib_version, MACOSX_SDK_VERSION etc.
     # get recipe config files (we don't care about the content, only if it's non-None)
@@ -720,12 +714,7 @@ def run_conda_forge_specific(
     if gha_workflows and (
         len(gha_workflows) > 1 or gha_workflows[0].name != "conda-build.yml"
     ):
-        lints.append(
-            "conda-forge feedstocks cannot have custom Github Actions workflows. "
-            "See https://github.com/conda-forge/conda-forge.github.io/issues/2750 "
-            "for more information. If you didn't add any custom workflows, please "
-            "consider rerendering your feedstock to remove deprecated workflows."
-        )
+        lints.append(msg.CFNoCustomGHAWorkflows())
 
 
 def _format_validation_msg(error: jsonschema.ValidationError):
