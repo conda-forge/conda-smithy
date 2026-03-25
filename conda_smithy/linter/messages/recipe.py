@@ -1,60 +1,21 @@
 """
-Collection of linter messages.
-
-If you want to add a lint or a hint, this is where you define the
-text, its identifier and the necessary variables.
+Messages concerning recipe files (`meta.yaml`, `recipe.yaml`).
 """
 
 from dataclasses import asdict, dataclass
-from inspect import cleandoc
-from pathlib import Path
-from typing import ClassVar, Literal
+from typing import ClassVar, Literal, TypeAlias
 
-CATEGORIES: dict[str, str] = {
-    "CBC": "Variants configuration (`conda_build_config.yaml`)",
-    "FC": "Feedstock configuration (`conda-forge.yml`)",
+from conda_smithy.linter.messages.base import _BaseMessage
+
+CATEGORIES = {
     "R": "All recipe versions",
-    "R0": "Recipe v0 (`meta.yaml`)",
-    "R1": "Recipe v1 (`recipe.yaml`)",
-    "CF": "Recipe issues specific to conda-forge",
+    "R0": "Only `meta.yaml`",
+    "R1": "Only `recipe.yaml`",
 }
+RECIPE_VERSIONS: TypeAlias = Literal[0, 1]
 
 
-class _BaseMessage:
-    """
-    A templated message with an identifier.
-    """
-
-    #: Shorthand to identify a given error, using two parts: category-instance; e.g. E-100
-    identifier: ClassVar[str]
-    #: The templated message that will be rendered when converted to string. Subclass with
-    #: a property if dynamic behavior is required.
-    message: ClassVar[str]
-    kind: ClassVar[Literal["lint", "hint"]]
-
-    def template(self) -> str:
-        """
-        Message to print, whose placeholders will be formatted in .render().
-
-        Subclass if necessary for dynamic behavior.
-        Otherwise, it returns the class docstring.
-        """
-        return self.__doc__
-
-    def render(self) -> str:
-        """
-        Formats the `.template` text by using the dataclass attributes.
-        """
-        return cleandoc(self.message.format(**self.render_attributes()))
-
-    def render_attributes(self) -> dict[str, str]:
-        """
-        Returns attributes rendered as strings. Subclass if necessary.
-        """
-        return asdict(self)
-
-    def __str__(self) -> str:
-        return self.render()
+# region All recipes
 
 
 @dataclass(kw_only=True)
@@ -80,7 +41,7 @@ class RecipeSectionOrder(_BaseMessage):
     message = "The top level meta keys are in an unexpected order. Expecting {order}."
     order: list[str]
 
-    def render_attributes(self) -> dict[str, str]:
+    def _render_attributes(self) -> dict[str, str]:
         sections = ", ".join([f"'{section}'" for section in self.order])
         return {"order": f"[{sections}]"}
 
@@ -157,84 +118,6 @@ class RecipeUnknownLicense(_BaseMessage):
 
 
 @dataclass(kw_only=True)
-class RecipeFormattedSelectors(_BaseMessage):
-    """
-    Recipe format v0 (`meta.yaml`) supports the notion of line selectors
-    as trailing comments:
-
-    ```yaml
-    build:
-      skip: true  # [not win]
-    ```
-
-    These must be formatted with two spaces before the `#` symbol, followed
-    by one space before the opening square bracket `[`, followed by no spaces.
-    The closing bracket must not be surrounded by spaces either.
-    """
-
-    kind = "lint"
-    identifier = "R0-001"
-    message = (
-        "Selectors are suggested to take a "
-        "``<two spaces>#<one space>[<expression>]`` form."
-        " See lines {lines}"
-    )
-    lines: list[str]
-
-
-@dataclass(kw_only=True)
-class RecipeOldPythonSelectorsLint(_BaseMessage):
-    """
-    Recipe v0 selectors used to include one Python version selector
-    per release, like `py27` for Python 2.7 and `py35` for Python 3.5.
-    This was deprecated in favor of the `py` integer, which is preferred.
-    """
-
-    kind = "lint"
-    identifier = "R0-002"
-    message = (
-        "Old-style Python selectors (py27, py35, etc) are only available "
-        "for Python 2.7, 3.4, 3.5, and 3.6. Please use explicit comparisons "
-        "with the integer ``py``, e.g. ``# [py==37]`` or ``# [py>=37]``. "
-        "See lines {lines}"
-    )
-    lines: list[str]
-
-
-@dataclass(kw_only=True)
-class RecipeOldPythonSelectorsHint(_BaseMessage):
-    """
-    Recipe v0 selectors (see [`R0-002`](#r0-002)) used to include one Python
-    version selector per release, like `py27` for Python 2.7 and `py35` for Python 3.5.
-    This was deprecated in favor of the `py` integer, which is preferred.
-    """
-
-    kind = "hint"
-    identifier = "R0-003"
-    message = (
-        "Old-style Python selectors (py27, py34, py35, py36) are "
-        "deprecated. Instead, consider using the int ``py``. For "
-        "example: ``# [py>=36]``. See lines {lines}"
-    )
-    lines: list[str]
-
-
-@dataclass(kw_only=True)
-class RecipeNoCommentSelectors(_BaseMessage):
-    """
-    Recipe v0 selectors (see [`R0-002`](#r0-002)) are not supported in v1 recipes.
-    """
-
-    kind = "lint"
-    identifier = "R1-001"
-    message = (
-        "Selectors in comment form no longer work in v1 recipes. Instead,"
-        " if / then / else maps must be used. See lines {lines}."
-    )
-    lines: list[str]
-
-
-@dataclass(kw_only=True)
 class RecipeBuildNumberMissing(_BaseMessage):
     """
     All recipes must define a `build.number` value.
@@ -261,7 +144,7 @@ class RecipeRequirementsOrder(_BaseMessage):
     expected: list[str]
     seen: list[str]
 
-    def render_attributes(self):
+    def _render_attributes(self):
         return {
             "expected": ", ".join(self.expected),
             "seen": ", ".join(self.seen),
@@ -422,86 +305,8 @@ class RecipeNoarchValue(_BaseMessage):
     message = "Invalid `noarch` value `{given}`. Should be one of `{valid}`."
     given: str
 
-    def render_attributes(self):
+    def _render_attributes(self):
         return {"given": self.given, "valid": ", ".join(self.valid)}
-
-
-@dataclass(kw_only=True)
-class RecipeNoarchSelectorsV0(_BaseMessage):
-    """
-    Noarch packages are not generally compatible with v0 selectors
-    """
-
-    kind = "lint"
-    identifier = "R0-004"
-    message = (
-        "`noarch` packages can't have {skips}selectors. If "
-        "the selectors are necessary, please remove "
-        "`noarch: {noarch}`, or selector on line {line_number}:"
-        "\n{line}"
-    )
-    noarch: str
-    line_number: int
-    line: str
-    skips: bool = False
-
-    def render_attributes(self):
-        attrs = asdict(self)
-        attrs["skips"] = "skips with " if self.skips else ""
-        return attrs
-
-
-@dataclass(kw_only=True)
-class RecipeNoarchSelectorsV1(_BaseMessage):
-    """
-    Noarch packages are not generally compatible with v1 conditional blocks.
-    """
-
-    kind = "lint"
-    identifier = "R1-002"
-    message = (
-        "`noarch` packages can't have {skips}selectors. If "
-        "the selectors are necessary, please remove "
-        "`noarch: {noarch}`."
-    )
-    noarch: str
-    skips: bool = False
-
-    def render_attributes(self):
-        return {"noarch": self.noarch, "skips": "skips with " if self.skips else ""}
-
-
-@dataclass(kw_only=True)
-class RecipeJinjaDefinitions(_BaseMessage):
-    """
-    In v0 recipes, Jinja definitions must follow a particular style.
-    """
-
-    kind = "lint"
-    identifier = "R0-005"
-    message = (
-        "Jinja2 variable definitions are suggested to "
-        "take a ``{{%<one space>set<one space>"
-        "<variable name><one space>=<one space>"
-        "<expression><one space>%}}`` form. See lines {lines}"
-    )
-    lines: list[int]
-
-
-@dataclass(kw_only=True)
-class RecipeLegacyToolchain(_BaseMessage):
-    """
-    The `toolchain` package is deprecated. Use compilers as outlined in
-    <https://conda-forge.org/docs/maintainer/knowledge_base.html#compilers>.
-    """
-
-    kind = "lint"
-    identifier = "R0-006"
-    message = (
-        "Using toolchain directly in this manner is deprecated.  Consider "
-        "using the compilers outlined "
-        "[here](https://conda-forge.org/docs/maintainer/knowledge_base.html#compilers)."
-    )
 
 
 @dataclass(kw_only=True)
@@ -588,10 +393,10 @@ class RecipeJinjaExpression(_BaseMessage):
         "take a ``{dollar}{{{{<one space><variable name><one space>}}}}`` "
         "form. See lines {lines}."
     )
-    recipe_version: Literal[0, 1]
+    recipe_version: RECIPE_VERSIONS
     lines: list[int]
 
-    def render_attributes(self):
+    def _render_attributes(self):
         return {"dollar": "$" if self.recipe_version == 1 else "", "lines": self.lines}
 
 
@@ -637,7 +442,7 @@ class RecipePinSubpackagePinCompatible(_BaseMessage):
     subpackages: list[str]
     is_output: bool
 
-    def render_attributes(self):
+    def _render_attributes(self):
         attrs = asdict(self)
         is_output = attrs.pop("is_output")
         attrs["what"] = "one of the" if is_output else "not a"
@@ -660,7 +465,7 @@ class RecipeCompiledWheelsNotAllowed(_BaseMessage):
     )
     urls: list[str]
 
-    def render_attributes(self):
+    def _render_attributes(self):
         return {"urls": ", ".join([f"`{url}`" for url in self.urls])}
 
 
@@ -679,7 +484,7 @@ class RecipePureWheelsNotAllowed(_BaseMessage):
     )
     urls: list[str]
 
-    def render_attributes(self):
+    def _render_attributes(self):
         return {"urls": ", ".join([f"`{url}`" for url in self.urls])}
 
 
@@ -699,7 +504,7 @@ class RecipePureWheelsNotAllowedNoarch(_BaseMessage):
     )
     urls: list[str]
 
-    def render_attributes(self):
+    def _render_attributes(self):
         return {"urls": ", ".join([f"`{url}`" for url in self.urls])}
 
 
@@ -745,9 +550,9 @@ class RecipeStdlibJinja(_BaseMessage):
         "each output of the recipe using a compiler. For further details, please "
         "see https://github.com/conda-forge/conda-forge.github.io/issues/2102."
     )
-    recipe_version: Literal[0, 1]
+    recipe_version: RECIPE_VERSIONS
 
-    def render_attributes(self):
+    def _render_attributes(self):
         return {"dollar": "$" if self.recipe_version == 1 else ""}
 
 
@@ -766,9 +571,9 @@ class RecipeStdlibSysroot(_BaseMessage):
         "respective platform as necessary. For further details, please see "
         "https://github.com/conda-forge/conda-forge.github.io/issues/2102."
     )
-    recipe_version: Literal[0, 1]
+    recipe_version: RECIPE_VERSIONS
 
-    def render_attributes(self):
+    def _render_attributes(self):
         return {"dollar": "$" if self.recipe_version == 1 else ""}
 
 
@@ -785,77 +590,12 @@ class RecipeStdlibOsx(_BaseMessage):
         'should now be done by adding a build dependence on `{dollar}{{{{ stdlib("c") }}}}`, '
         "and overriding `c_stdlib_version` in `recipe/conda_build_config.yaml` for "
         "the respective platform as necessary. For further details, please see "
-        "https://github.com/conda-forge/conda-forge.github.io/issues/2102."
+        "https://conda-forge.org/docs/maintainer/knowledge_base/#requiring-newer-macos-sdks."
     )
-    recipe_version: Literal[0, 1]
+    recipe_version: RECIPE_VERSIONS
 
-    def render_attributes(self):
+    def _render_attributes(self):
         return {"dollar": "$" if self.recipe_version == 1 else ""}
-
-
-@dataclass(kw_only=True)
-class CBCMacOSDeploymentTargetConflict(_BaseMessage):
-    """
-    https://github.com/conda-forge/conda-forge.github.io/issues/2102
-    """
-
-    kind = "lint"
-    identifier = "CBC-000"
-    message = (
-        "Conflicting specification for minimum macOS deployment target!\n"
-        "If your conda_build_config.yaml sets `MACOSX_DEPLOYMENT_TARGET`, "
-        "please change the name of that key to `c_stdlib_version`!\n"
-        "Continuing with `max(c_stdlib_version, MACOSX_DEPLOYMENT_TARGET)`."
-    )
-
-
-@dataclass(kw_only=True)
-class CBCMacOSDeploymentTargetRename(_BaseMessage):
-    """
-    https://github.com/conda-forge/conda-forge.github.io/issues/2102
-    """
-
-    kind = "lint"
-    identifier = "CBC-001"
-    message = (
-        "In your conda_build_config.yaml, please change the name of "
-        "`MACOSX_DEPLOYMENT_TARGET`, to `c_stdlib_version`!"
-    )
-
-
-@dataclass(kw_only=True)
-class CBCMacOSDeploymentTargetBelow(_BaseMessage):
-    """
-    https://github.com/conda-forge/conda-forge.github.io/issues/2102
-    """
-
-    kind = "lint"
-    identifier = "CBC-002"
-    message = (
-        "You are setting `c_stdlib_version` below the current global baseline "
-        "in conda-forge (10.13). If this is your intention, you also need to "
-        "override `MACOSX_DEPLOYMENT_TARGET` (with the same value) locally."
-    )
-
-
-@dataclass(kw_only=True)
-class CBCMacOSDeploymentTargetBelowStdlib(_BaseMessage):
-    """
-    https://github.com/conda-forge/conda-forge.github.io/issues/2102
-    """
-
-    kind = "lint"
-    identifier = "CBC-003"
-    message = (
-        "You are setting `MACOSX_SDK_VERSION` below `c_stdlib_version`, "
-        "in conda_build_config.yaml which is not possible! Please ensure "
-        "`MACOSX_SDK_VERSION` is at least `c_stdlib_version` "
-        "(you can leave it out if it is equal).\n"
-        "If you are not setting `c_stdlib_version` yourself, this means "
-        "you are requesting a version below the current global baseline in "
-        "conda-forge (10.13). If this is the intention, you also need to "
-        "override `c_stdlib_version` and `MACOSX_DEPLOYMENT_TARGET` locally."
-    )
 
 
 @dataclass(kw_only=True)
@@ -875,7 +615,7 @@ class RecipeNotParsableLint(_BaseMessage):
     )
     parsers: list[str]
 
-    def render_attributes(self):
+    def _render_attributes(self):
         return {"parsers": sorted(self.parsers)}
 
 
@@ -928,97 +668,43 @@ class RecipePythonIsAbi3Bool(_BaseMessage):
 
 
 @dataclass(kw_only=True)
-class CFMaintainerExists(_BaseMessage):
+class RecipeExtraFeedstockNameSuffix(_BaseMessage):
     """
-    Maintainers listed in `extra.recipe-maintainers` must be valid Github usernames
-    or `@conda-forge/*` teams.
-    """
-
-    kind = "lint"
-    identifier = "CF-001"
-    message = 'Recipe maintainer {team_or}"{maintainer}" does not exist'
-    maintainer: str
-
-    def render_attributes(self):
-        return {
-            "maintainer": self.maintainer,
-            "team_or": "team " if "/" in self.maintainer else "",
-        }
-
-
-@dataclass(kw_only=True)
-class CFPackageToAvoid(_BaseMessage):
-    """
-    Some package names may not be used in recipes directly, or under some circumstances.
-
-    The full list of package names and their explanations can be found in
-    [`conda-forge-pinning-feedstock`](https://github.com/conda-forge/conda-forge-pinning-feedstock/blob/main/recipe/linter_hints/hints.toml).
-    """
-
-    kind = "hint"
-    identifier = "CF-002"
-    message = "{package_hint}"
-    package_hint: str
-
-
-@dataclass(kw_only=True)
-class CFNoCiSupport(_BaseMessage):
-    """
-    No `.ci_support/*.yaml` files could be found, which means that build matrix is empty
-    and no packages will be built.
-
-    This is usually caused by a misconfiguration of your recipe file (e.g. `build.skip` is always
-    `true`, disabling all builds).
+    https://github.com/conda-forge/conda-forge.github.io/issues/2102
     """
 
     kind = "lint"
-    identifier = "CF-004"
-    message = (
-        "The feedstock has no `.ci_support` files and thus will not build any packages."
-    )
-
-
-@dataclass(kw_only=True)
-class FCNoDuplicateKeys(_BaseMessage):
-    """
-    `conda-forge.yml` must not contain duplicate keys.
-    """
-
-    kind = "lint"
-    identifier = "FC-001"
-    message = "The ``conda-forge.yml`` file is not allowed to have duplicate keys."
-
-
-@dataclass(kw_only=True)
-class RecipeUsePip(_BaseMessage):
-    """
-    Python packages should be built with `pip install ...`, not `python setup.py install`,
-    which is deprecated.
-    """
-
-    kind = "hint"
     identifier = "R-039"
     message = (
-        "Whenever possible python packages should use pip. "
-        "See https://conda-forge.org/docs/maintainer/adding_pkgs.html#use-pip"
+        "The feedstock-name in the `extra` section must not end with "
+        "'-feedstock'. The '-feedstock' suffix is automatically appended "
+        "during feedstock creation."
     )
 
 
 @dataclass(kw_only=True)
-class RecipeUsePyPiOrg(_BaseMessage):
+class RecipeVersionParsedAsFloat(_BaseMessage):
     """
-    Grayskull and the conda-forge example recipe used to have pypi.io as a default,
-    but the canonical URL is now PyPI.org.
-
-    See https://github.com/conda-forge/staged-recipes/pull/27946.
+    https://github.com/conda-forge/conda-forge.github.io/issues/2102
     """
 
-    kind = "hint"
+    kind = "lint"
     identifier = "R-040"
+    key: str
+    value: float
+    recipe_version: RECIPE_VERSIONS
     message = (
-        "PyPI default URL is now pypi.org, and not pypi.io."
-        " You may want to update the default source url."
+        "{key} has a value that is interpreted as a floating-point "
+        'number. Please quote it (like `"{value}"`{v0_hint}) to '
+        "ensure that it is interpreted as string and preserved exactly."
     )
+
+    def _render_attributes(self):
+        return {
+            "key": self.key,
+            "value": self.value,
+            "v0_hint": ' or `"{{ var }}"`' if self.recipe_version == 0 else "",
+        }
 
 
 @dataclass(kw_only=True)
@@ -1154,7 +840,7 @@ class RecipePythonMinPin(_BaseMessage):
     )
     recommendations: list[tuple[str, str, str, str]]
 
-    def render_attributes(self):
+    def _render_attributes(self):
         recommendations = []
         for (
             report_section_name,
@@ -1189,7 +875,7 @@ class RecipeSpaceSeparatedSpecs(_BaseMessage):
     output: str
     bad_specs: dict[str, list[str]]
 
-    def render_attributes(self):
+    def _render_attributes(self):
         bad_specs_list = []
         for req_type, specs in self.bad_specs.items():
             specs = [f"`{spec}`" for spec in specs]
@@ -1216,6 +902,202 @@ class RecipeOsVersion(_BaseMessage):
 
 
 @dataclass(kw_only=True)
+class RecipeUsePip(_BaseMessage):
+    """
+    Python packages should be built with `pip install ...`, not `python setup.py install`,
+    which is deprecated.
+    """
+
+    kind = "hint"
+    identifier = "R-050"
+    message = (
+        "Whenever possible python packages should use pip. "
+        "See https://conda-forge.org/docs/maintainer/adding_pkgs.html#use-pip"
+    )
+
+
+@dataclass(kw_only=True)
+class RecipeUsePyPiOrg(_BaseMessage):
+    """
+    Grayskull and the conda-forge example recipe used to have pypi.io as a default,
+    but the canonical URL is now PyPI.org.
+
+    See https://github.com/conda-forge/staged-recipes/pull/27946.
+    """
+
+    kind = "hint"
+    identifier = "R-051"
+    message = (
+        "PyPI default URL is now pypi.org, and not pypi.io."
+        " You may want to update the default source url."
+    )
+
+
+# endregion
+# region Recipe v0
+
+
+@dataclass(kw_only=True)
+class RecipeFormattedSelectors(_BaseMessage):
+    """
+    Recipe format v0 (`meta.yaml`) supports the notion of line selectors
+    as trailing comments:
+
+    ```yaml
+    build:
+      skip: true  # [not win]
+    ```
+
+    These must be formatted with two spaces before the `#` symbol, followed
+    by one space before the opening square bracket `[`, followed by no spaces.
+    The closing bracket must not be surrounded by spaces either.
+    """
+
+    kind = "lint"
+    identifier = "R0-001"
+    message = (
+        "Selectors are suggested to take a "
+        "``<two spaces>#<one space>[<expression>]`` form."
+        " See lines {lines}"
+    )
+    lines: list[str]
+
+
+@dataclass(kw_only=True)
+class RecipeOldPythonSelectorsLint(_BaseMessage):
+    """
+    Recipe v0 selectors used to include one Python version selector
+    per release, like `py27` for Python 2.7 and `py35` for Python 3.5.
+    This was deprecated in favor of the `py` integer, which is preferred.
+    """
+
+    kind = "lint"
+    identifier = "R0-002"
+    message = (
+        "Old-style Python selectors (py27, py35, etc) are only available "
+        "for Python 2.7, 3.4, 3.5, and 3.6. Please use explicit comparisons "
+        "with the integer ``py``, e.g. ``# [py==37]`` or ``# [py>=37]``. "
+        "See lines {lines}"
+    )
+    lines: list[str]
+
+
+@dataclass(kw_only=True)
+class RecipeOldPythonSelectorsHint(_BaseMessage):
+    """
+    Recipe v0 selectors (see [`R0-002`](#r0-002)) used to include one Python
+    version selector per release, like `py27` for Python 2.7 and `py35` for Python 3.5.
+    This was deprecated in favor of the `py` integer, which is preferred.
+    """
+
+    kind = "hint"
+    identifier = "R0-003"
+    message = (
+        "Old-style Python selectors (py27, py34, py35, py36) are "
+        "deprecated. Instead, consider using the int ``py``. For "
+        "example: ``# [py>=36]``. See lines {lines}"
+    )
+    lines: list[str]
+
+
+@dataclass(kw_only=True)
+class RecipeLegacyToolchain(_BaseMessage):
+    """
+    The `toolchain` package is deprecated. Use compilers as outlined in
+    <https://conda-forge.org/docs/maintainer/knowledge_base.html#compilers>.
+    """
+
+    kind = "lint"
+    identifier = "R0-006"
+    message = (
+        "Using toolchain directly in this manner is deprecated.  Consider "
+        "using the compilers outlined "
+        "[here](https://conda-forge.org/docs/maintainer/knowledge_base.html#compilers)."
+    )
+
+
+@dataclass(kw_only=True)
+class RecipeNoarchSelectorsV0(_BaseMessage):
+    """
+    Noarch packages are not generally compatible with v0 selectors
+    """
+
+    kind = "lint"
+    identifier = "R0-004"
+    message = (
+        "`noarch` packages can't have {skips}selectors. If "
+        "the selectors are necessary, please remove "
+        "`noarch: {noarch}`, or selector on line {line_number}:"
+        "\n{line}"
+    )
+    noarch: str
+    line_number: int
+    line: str
+    skips: bool = False
+
+    def _render_attributes(self):
+        attrs = asdict(self)
+        attrs["skips"] = "skips with " if self.skips else ""
+        return attrs
+
+
+@dataclass(kw_only=True)
+class RecipeJinjaDefinitions(_BaseMessage):
+    """
+    In v0 recipes, Jinja definitions must follow a particular style.
+    """
+
+    kind = "lint"
+    identifier = "R0-005"
+    message = (
+        "Jinja2 variable definitions are suggested to "
+        "take a ``{{%<one space>set<one space>"
+        "<variable name><one space>=<one space>"
+        "<expression><one space>%}}`` form. See lines {lines}"
+    )
+    lines: list[int]
+
+
+# endregion
+# region Recipe v1
+
+
+@dataclass(kw_only=True)
+class RecipeNoCommentSelectors(_BaseMessage):
+    """
+    Recipe v0 selectors (see [`R0-002`](#r0-002)) are not supported in v1 recipes.
+    """
+
+    kind = "lint"
+    identifier = "R1-001"
+    message = (
+        "Selectors in comment form no longer work in v1 recipes. Instead,"
+        " if / then / else maps must be used. See lines {lines}."
+    )
+    lines: list[str]
+
+
+@dataclass(kw_only=True)
+class RecipeNoarchSelectorsV1(_BaseMessage):
+    """
+    Noarch packages are not generally compatible with v1 conditional blocks.
+    """
+
+    kind = "lint"
+    identifier = "R1-002"
+    message = (
+        "`noarch` packages can't have {skips}selectors. If "
+        "the selectors are necessary, please remove "
+        "`noarch: {noarch}`."
+    )
+    noarch: str
+    skips: bool = False
+
+    def _render_attributes(self):
+        return {"noarch": self.noarch, "skips": "skips with " if self.skips else ""}
+
+
+@dataclass(kw_only=True)
 class RecipeRattlerBldBat(_BaseMessage):
     """
     `rattler-build` does not use `bld.bat` scripts, but `build.bat`.
@@ -1230,71 +1112,4 @@ class RecipeRattlerBldBat(_BaseMessage):
     )
 
 
-def generate_docs(output_file: str | None = None) -> str:
-    if output_file is None:
-        # Let's check if we are in a repo or installed
-        maybe_repo_root = Path(__file__).parents[2]
-        if (maybe_repo_root / "README.md").is_file() and (
-            maybe_repo_root / ".git"
-        ).is_dir():
-            output_file = maybe_repo_root / "LINTER.md"
-
-    def collect_messages():
-        current_globals = globals().copy()
-        for obj_name, obj in current_globals.items():
-            if obj_name.startswith("_"):
-                continue
-            try:
-                if issubclass(obj, _BaseMessage):
-                    yield obj
-            except TypeError:
-                pass
-
-    lines = ["# Linter messages", ""]
-    identifiers = set()
-    by_categories = {}
-    for cls in sorted(collect_messages(), key=lambda obj: obj.identifier):
-        category_prefix = cls.identifier.split("-")[0]
-        by_categories.setdefault(category_prefix, []).append(cls)
-    lines.append("Categories:")
-    lines.extend(
-        [
-            f"- [`{category_prefix}`: {CATEGORIES[category_prefix]}](#{category_prefix})"
-            for category_prefix in by_categories
-        ]
-    )
-    for category_prefix, messages in by_categories.items():
-        lines.append(f"<a id='{category_prefix}'></a>")
-        lines.append(f"## `{category_prefix}`: {CATEGORIES[category_prefix]}")
-        lines.append("")
-        for cls in messages:
-            if cls.identifier in identifiers:
-                raise ValueError(f"Duplicate identifier: {cls.identifier}.")
-            identifiers.add(cls.identifier)
-            lines.extend(
-                [
-                    f"<a id='{cls.identifier}'></a>",
-                    f"### `{cls.identifier}`: `{cls.__name__}`",
-                    "",
-                    "",
-                    cleandoc(cls.__doc__),
-                    "",
-                    (
-                        f"<details>\n\n<summary>{cls.kind.title()} message</summary>\n\n"
-                        f"```text\n{cls.message}\n```\n\n</details>"
-                        if isinstance(cls.message, str)
-                        else "_Message generated dynamically. Template not available._"
-                    ),
-                    "",
-                ]
-            )
-
-    text = "\n".join(lines)
-    if output_file:
-        with open(output_file, "w") as f:
-            f.write(text)
-    return text
-
-
-if __name__ == "__main__":
-    print(generate_docs())
+# endregion

@@ -8,7 +8,7 @@ from glob import glob
 from typing import Any
 
 from conda_smithy.linter import conda_recipe_v1_linter
-from conda_smithy.linter.messages import (
+from conda_smithy.linter.messages.recipe import (
     RecipeInvalidLicenseException,
     RecipeLicenseSPDX,
     RecipeOsVersion,

@@ -1,0 +1,142 @@
+from collections import Counter
+from inspect import cleandoc
+from pathlib import Path
+
+from conda_smithy.linter.messages.conda_forge import *  # noqa: F403
+from conda_smithy.linter.messages.feedstock_config import *  # noqa: F403
+from conda_smithy.linter.messages.recipe import *  # noqa: F403
+from conda_smithy.linter.messages.recipe_variants import *  # noqa: F403
+
+
+def generate_docs(output_file: str | None = None) -> str:
+    """
+    Generate a Markdown file documenting all linter messages
+    """
+    from conda_smithy.linter.messages.base import _BaseMessage
+    from conda_smithy.linter.messages.conda_forge import (
+        CATEGORIES as CONDA_FORGE_CATEGORIES,
+    )
+    from conda_smithy.linter.messages.feedstock_config import (
+        CATEGORIES as FEEDSTOCK_CONFIG_CATEGORIES,
+    )
+    from conda_smithy.linter.messages.recipe import CATEGORIES as RECIPE_CATEGORIES
+    from conda_smithy.linter.messages.recipe_variants import (
+        CATEGORIES as RECIPE_CONFIG_CATEGORIES,
+    )
+
+    all_categories = {
+        **CONDA_FORGE_CATEGORIES,
+        **FEEDSTOCK_CONFIG_CATEGORIES,
+        **RECIPE_CATEGORIES,
+        **RECIPE_CONFIG_CATEGORIES,
+    }
+    module_to_categories = {
+        "conda_smithy.linter.messages.conda_forge": list(CONDA_FORGE_CATEGORIES),
+        "conda_smithy.linter.messages.feedstock_config": list(
+            FEEDSTOCK_CONFIG_CATEGORIES
+        ),
+        "conda_smithy.linter.messages.recipe": list(RECIPE_CATEGORIES),
+        "conda_smithy.linter.messages.recipe_variants": list(RECIPE_CONFIG_CATEGORIES),
+    }
+    category_to_module = {
+        cat: module for module, cats in module_to_categories.items() for cat in cats
+    }
+
+    if output_file is None:
+        # Let's check if we are in a repo or installed
+        maybe_repo_root = Path(__file__).parents[3]
+        if (maybe_repo_root / "README.md").is_file() and (
+            maybe_repo_root / ".git"
+        ).is_dir():
+            output_file = maybe_repo_root / "LINTER.md"
+
+    def collect_messages():
+        current_globals = globals().copy()
+        for obj_name, obj in current_globals.items():
+            if obj_name.startswith("_"):
+                continue
+            try:
+                if issubclass(obj, _BaseMessage):
+                    yield obj
+            except TypeError:
+                pass
+
+    lines = ["# Linter messages", ""]
+    identifiers = []
+    by_categories = {}
+    for cls in sorted(collect_messages(), key=lambda obj: obj.identifier):
+        category_prefix = cls.identifier.split("-")[0]
+        by_categories.setdefault(category_prefix, []).append(cls)
+    lines.append("Categories:")
+    lines.extend(
+        [
+            f"- [`{category_prefix}`: {all_categories[category_prefix]}](#{category_prefix})"
+            for category_prefix in by_categories
+        ]
+    )
+    emoji = {"lint": "🚨", "hint": "ℹ️"}
+    for category_prefix, messages in by_categories.items():
+        lines.append("")
+        lines.append(f"<a id='{category_prefix}'></a>")
+        lines.append(f"## `{category_prefix}`: {all_categories[category_prefix]}")
+        for cls in messages:
+            identifiers.append(cls.identifier)
+            depr = "~~" if cls.deprecated_in else ""
+            template = (
+                f"```text\n{cls.message}\n```"
+                if isinstance(cls.message, str)
+                else "_Message generated dynamically. Template not available._"
+            )
+            lines.extend(
+                [
+                    "",
+                    f"<a id='{cls.identifier}'></a>",
+                    f"### {depr}`{cls.identifier}`: `{cls.__name__}`{depr}",
+                    "",
+                    f"- Type: {emoji[cls.kind]} {cls.kind.title()}",
+                    f"- Added in: conda-smithy {cls.added_in}.",
+                    *(
+                        (f"- **Deprecated in: conda-smithy {cls.deprecated_in}**",)
+                        if cls.deprecated_in
+                        else ()
+                    ),
+                    "",
+                    cleandoc(cls.__doc__),
+                    "",
+                    "#### Samples",
+                    "",
+                    (
+                        f"<details>\n\n<summary>Base template</summary>\n\n"
+                        f"{template}\n\n</details>"
+                    ),
+                    "",
+                    "\n\n".join(cls.samples()) or "_No samples available_",
+                ]
+            )
+
+    text = "\n".join(lines)
+    if output_file:
+        with open(output_file, "w") as f:
+            f.write(text)
+    duplicate_identifiers = [
+        key for key, reps in Counter(identifiers).items() if reps > 1
+    ]
+    if duplicate_identifiers:
+        modules_to_duplicate = {}
+        for ident in duplicate_identifiers:
+            category = ident.split("-")[0]
+            modules_to_duplicate.setdefault(category_to_module[category], []).append(
+                ident
+            )
+        msg = "Some identifiers are duplicated:\n"
+        for module, identifiers in modules_to_duplicate.items():
+            msg += f"- {module}: {identifiers}\n"
+        raise ValueError(msg)
+    return text
+
+
+if __name__ == "__main__":
+    import sys
+
+    generate_docs()
+    sys.exit()

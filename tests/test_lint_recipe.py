@@ -14,7 +14,7 @@ import pytest
 
 import conda_smithy.lint_recipe as linter
 from conda_smithy.linter import hints
-from conda_smithy.linter.messages import generate_docs
+from conda_smithy.linter.messages.__main__ import generate_docs
 from conda_smithy.linter.utils import (
     CONDA_BUILD_TOOL,
     RATTLER_BUILD_TOOL,

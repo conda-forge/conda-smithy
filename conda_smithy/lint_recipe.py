@@ -74,13 +74,13 @@ from conda_smithy.linter.lints import (
     lint_subheaders,
     lint_usage_of_legacy_patterns,
 )
-from conda_smithy.linter.messages import (
+from conda_smithy.linter.messages.conda_forge import (
     CFMaintainerExists,
     CFNoCiSupport,
     CFPackageToAvoid,
-    FCNoDuplicateKeys,
-    RecipeUnexpectedSection,
 )
+from conda_smithy.linter.messages.feedstock_config import FCNoDuplicateKeys
+from conda_smithy.linter.messages.recipe import RecipeUnexpectedSection
 from conda_smithy.linter.utils import (
     CONDA_BUILD_TOOL,
     EXPECTED_SECTION_ORDER,

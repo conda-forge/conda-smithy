@@ -16,7 +16,7 @@ from conda_build.metadata import (
 from rattler_build_conda_compat import loader as rattler_loader
 from rattler_build_conda_compat.recipe_sources import get_all_sources
 
-from conda_smithy.linter.messages import (
+from conda_smithy.linter.messages.recipe import (
     RecipeInvalidVersion,
     RecipeMissingVersion,
     RecipeName,

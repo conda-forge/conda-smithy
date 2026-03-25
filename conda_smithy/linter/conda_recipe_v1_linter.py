@@ -7,7 +7,7 @@ from rattler_build_conda_compat.jinja.jinja import (
 )
 
 from conda_smithy.linter.errors import HINT_NO_ARCH
-from conda_smithy.linter.messages import (
+from conda_smithy.linter.messages.recipe import (
     RecipeNoarchSelectorsV1,
     RecipeRecommendedTests,
     RecipeRequiredTests,

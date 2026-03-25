@@ -12,13 +12,10 @@ from rattler_build_conda_compat.loader import parse_recipe_config_file
 from ruamel.yaml import CommentedSeq
 
 from conda_smithy.linter import conda_recipe_v1_linter
-from conda_smithy.linter.messages import (
-    CBCMacOSDeploymentTargetBelow,
-    CBCMacOSDeploymentTargetBelowStdlib,
-    CBCMacOSDeploymentTargetConflict,
-    CBCMacOSDeploymentTargetRename,
+from conda_smithy.linter.messages.recipe import (
     RecipeBuildNumberMissing,
     RecipeCompiledWheelsNotAllowed,
+    RecipeExtraFeedstockNameSuffix,
     RecipeFormattedSelectors,
     RecipeGoLicenses,
     RecipeJinjaDefinitions,
@@ -60,6 +57,11 @@ from conda_smithy.linter.messages import (
     RecipeUnexpectedSubsection,
     RecipeUnknownLicense,
     RecipeVersionParsedAsFloat,
+)
+from conda_smithy.linter.messages.recipe_variants import (
+    CBCMacOSDeploymentTargetBelow,
+    CBCMacOSDeploymentTargetBelowStdlib,
+    CBCMacOSDeploymentTargetRename,
 )
 from conda_smithy.linter.utils import (
     EXPECTED_SECTION_ORDER,
@@ -115,11 +117,7 @@ def lint_about_contents(about_section, lints, recipe_version: int = 0):
 def lint_feedstock_name_not_end_with_feedstock(extra_section, lints):
     feedstock_name = extra_section.get("feedstock-name", "")
     if feedstock_name and feedstock_name.endswith("-feedstock"):
-        lints.append(
-            "The feedstock-name in the `extra` section must not end with "
-            "'-feedstock'. The '-feedstock' suffix is automatically appended "
-            "during feedstock creation."
-        )
+        lints.append(RecipeExtraFeedstockNameSuffix())
 
 
 def lint_recipe_maintainers(extra_section, lints):
@@ -781,9 +779,8 @@ def lint_osx_pins(recipe_dir, recipe_config_filename, lints, recipe_version):
         return
 
     if "MACOSX_DEPLOYMENT_TARGET" in cbc_osx:
-        lints.append(  # PENDING
-            f"The MACOSX_DEPLOYMENT_TARGET key in {recipe_config_file} needs to be "
-            "removed or replaced by c_stdlib_version, appropriately restricted to osx"
+        lints.append(
+            CBCMacOSDeploymentTargetRename(recipe_config_file=recipe_config_file)
         )
 
     def sort_osx(versions):
@@ -801,9 +798,8 @@ def lint_osx_pins(recipe_dir, recipe_config_filename, lints, recipe_version):
 
     if "c_stdlib_version" in cbc_osx.keys():
         # only warn if version is below baseline
-        outdated_lint = (  # PENDING
-            "You are setting `c_stdlib_version` on osx below the current global "
-            f"baseline in conda-forge ({baseline_version[0]})."
+        outdated_lint = CBCMacOSDeploymentTargetBelow(
+            baseline_version=baseline_version[0]
         )
         if len(v_stdlib) == len(baseline_version):
             # if length matches, compare individually
@@ -818,15 +814,7 @@ def lint_osx_pins(recipe_dir, recipe_config_filename, lints, recipe_version):
                     lints.append(outdated_lint)
 
     # warn if SDK is lower than v_stdlib
-    sdk_lint = (  # PENDING
-        "You are setting `MACOSX_SDK_VERSION` below `c_stdlib_version`, "
-        "in conda_build_config.yaml which is not possible! Please ensure "
-        "`MACOSX_SDK_VERSION` is at least `c_stdlib_version` "
-        "(you can leave it out if it is equal).\n"
-        "If you are not setting `c_stdlib_version` yourself, this means "
-        "you are requesting a version below the current global baseline in "
-        f"conda-forge ({baseline_version[0]})."
-    )
+    sdk_lint = CBCMacOSDeploymentTargetBelowStdlib(baseline=baseline_version[0])
     if len(sdk) == len(v_stdlib):
         # if length matches, compare individually
         for v_sdk, v_std in zip(sdk, v_stdlib):
