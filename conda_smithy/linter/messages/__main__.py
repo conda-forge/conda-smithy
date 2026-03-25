@@ -116,6 +116,7 @@ def generate_docs(output_file: str | None = None) -> str:
                     ),
                     "",
                     "\n\n".join(cls.samples()) or "_No samples available_",
+                    "",
                 ]
             )
 

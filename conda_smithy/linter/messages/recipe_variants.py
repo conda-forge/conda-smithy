@@ -80,6 +80,7 @@ class RCMoreThanOneFile(_BaseMessage):
         "while `variants.yaml` may only be used with v1 recipes."
     )
 
+
 # endregion
 # region CBC
 
