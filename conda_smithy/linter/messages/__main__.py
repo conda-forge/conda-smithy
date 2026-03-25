@@ -8,6 +8,13 @@ from conda_smithy.linter.messages.recipe import *  # noqa: F403
 from conda_smithy.linter.messages.recipe_variants import *  # noqa: F403
 
 
+def quote(text: str) -> str:
+    lines = []
+    for line in text.splitlines():
+        lines.append(f"> {line}".rstrip())
+    return "\n".join(lines)
+
+
 def generate_docs(output_file: str | None = None) -> str:
     """
     Generate a Markdown file documenting all linter messages
@@ -87,11 +94,54 @@ def generate_docs(output_file: str | None = None) -> str:
         for cls in messages:
             identifiers.append(cls.identifier)
             depr = "~~" if cls.deprecated_in else ""
-            template = (
-                f"```text\n{cls.message}\n```"
-                if isinstance(cls.message, str)
-                else "_Message generated dynamically. Template not available._"
-            )
+            examples = []
+            if isinstance(cls.message, str):
+                if "{" in cls.message:
+                    examples.extend(
+                        [
+                            "#### Message template",
+                            "",
+                            quote(cls.message),
+                            "",
+                        ]
+                    )
+                    if samples := cls.samples():
+                        examples.extend(
+                            [
+                                "#### Message examples",
+                                *[quote(sample) for sample in samples],
+                            ]
+                        )
+                else:
+                    examples.extend(
+                        [
+                            "#### Message",
+                            "",
+                            (
+                                quote(cls.message)
+                                if cls.message
+                                else "_Message unavailable_."
+                            ),
+                        ]
+                    )
+            elif samples := cls.samples():
+                # Message template is not a string, but a callable:
+                # print samples directly
+                examples.extend(
+                    [
+                        "#### Message examples",
+                        "",
+                        *[quote(sample) for sample in samples],
+                    ]
+                )
+            if not examples:
+                examples.extend(
+                    [
+                        "#### Message examples",
+                        "",
+                        "_No examples available yet_.",
+                    ]
+                )
             lines.extend(
                 [
                     "",
@@ -108,22 +158,16 @@ def generate_docs(output_file: str | None = None) -> str:
                     "",
                     cleandoc(cls.__doc__),
                     "",
-                    "#### Samples",
-                    "",
-                    (
-                        f"<details>\n\n<summary>Base template</summary>\n\n"
-                        f"{template}\n\n</details>"
-                    ),
-                    "",
-                    "\n\n".join(cls.samples()) or "_No samples available_",
-                    "",
+                    *examples,
                 ]
             )
 
-    text = "\n".join(lines)
+    text = "\n".join(lines) + "\n"
     if output_file:
         with open(output_file, "w") as f:
             f.write(text)
+    else:
+        print(text)
     duplicate_identifiers = [
         key for key, reps in Counter(identifiers).items() if reps > 1
     ]
