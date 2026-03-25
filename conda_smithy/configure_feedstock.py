@@ -1822,6 +1822,9 @@ def render_appveyor(jinja_env, forge_config, forge_dir, return_metadata=False):
 
 
 def _github_actions_specific_setup(jinja_env, forge_config, forge_dir, platform):
+    store_build_artifacts_unix = False
+    store_build_artifacts_win = False
+
     # Handle GH-hosted and self-hosted runners runs-on config
     # Do it before the deepcopy below so these changes can be used by the
     # .github/worfkflows/conda-build.yml template
@@ -1881,6 +1884,13 @@ def _github_actions_specific_setup(jinja_env, forge_config, forge_dir, platform)
             )
             data[setting_key] = filtered[-1].value if filtered else None
 
+        if data["store_build_artifacts"]:
+            forge_config["store_any_build_artifacts"] = True
+            if platform.startswith("win-"):
+                store_build_artifacts_win = True
+            else:
+                store_build_artifacts_unix = True
+
     build_setup = _get_build_setup_line(forge_dir, platform, forge_config)
 
     if platform == "linux":
@@ -1906,13 +1916,9 @@ def _github_actions_specific_setup(jinja_env, forge_config, forge_dir, platform)
 
     template_files = platform_templates.get(platform, [])
 
-    # Templates for all platforms
-    gha_store = filter_conditional_values(
-        forge_config["workflow_settings"]["store_build_artifacts"],
-        provider="github_actions",
-    )
-    if any(x.value for x in gha_store):
+    if store_build_artifacts_unix:
         template_files.append(".scripts/create_conda_build_artifacts.sh")
+    if store_build_artifacts_win:
         template_files.append(".scripts/create_conda_build_artifacts.bat")
 
     _render_template_exe_files(

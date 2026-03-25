@@ -221,6 +221,7 @@ jobs:
 {%- for secret in secrets %}
         {{ secret }}: {% raw %}${{{% endraw %} secrets.{{ secret }} {% raw %}}}{% endraw %}
 {%- endfor %}
+{%- if store_any_build_artifacts %}
 
     - name: Determine build outcome
       # this is to merge the status of the linux/osx/win builds into
@@ -301,3 +302,4 @@ jobs:
         path: {% raw %}${{ steps.prepare-artifacts.outputs.ENV_ARTIFACT_PATH }}{% endraw %}
         retention-days: {{ github_actions.artifact_retention_days }}
       continue-on-error: true
+{%- endif %}
