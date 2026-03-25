@@ -24,6 +24,7 @@ from ruamel.yaml.constructor import DuplicateKeyError
 
 from conda_smithy.configure_feedstock import _read_forge_config
 from conda_smithy.linter import conda_recipe_v1_linter
+from conda_smithy.linter import messages as msg
 from conda_smithy.linter.hints import (
     hint_check_spdx,
     hint_noarch_python_use_python_min,
@@ -74,13 +75,6 @@ from conda_smithy.linter.lints import (
     lint_subheaders,
     lint_usage_of_legacy_patterns,
 )
-from conda_smithy.linter.messages.conda_forge import (
-    CFMaintainerExists,
-    CFNoCiSupport,
-    CFPackageToAvoid,
-)
-from conda_smithy.linter.messages.feedstock_config import FCNoDuplicateKeys
-from conda_smithy.linter.messages.recipe import RecipeUnexpectedSection
 from conda_smithy.linter.utils import (
     CONDA_BUILD_TOOL,
     EXPECTED_SECTION_ORDER,
@@ -195,7 +189,7 @@ def lintify_meta_yaml(
 
     for section in major_sections:
         if section not in expected_keys:
-            lints.append(RecipeUnexpectedSection(section=section))
+            lints.append(msg.RecipeUnexpectedSection(section=section))
             unexpected_sections.append(section)
 
     for section in unexpected_sections:
@@ -572,10 +566,10 @@ def run_conda_forge_specific(
     for maintainer in maintainers:
         if "/" in maintainer:
             if not _team_exists(maintainer):
-                lints.append(CFMaintainerExists(maintainer=maintainer))
+                lints.append(msg.CFMaintainerExists(maintainer=maintainer))
         else:
             if not _maintainer_exists(maintainer):
-                lints.append(CFMaintainerExists(maintainer=maintainer))
+                lints.append(msg.CFMaintainerExists(maintainer=maintainer))
 
     # 3: if the recipe dir is inside the example dir
     # moved to staged-recipes directly
@@ -612,8 +606,10 @@ def run_conda_forge_specific(
     for rq in all_reqs:
         dep = rq.split(" ")[0].strip()
         dep_hint = specific_hints.get(dep)
-        if dep_hint and dep_hint not in hints:
-            hints.append(CFPackageToAvoid(package_hint=dep_hint))
+        if dep_hint:
+            msg.CFPackageToAvoid(package_hint=dep_hint).append_if_absent(
+                hints, test="str"
+            )
 
     # 6: Check if all listed maintainers have commented:
     # moved to staged recipes directly
@@ -622,7 +618,7 @@ def run_conda_forge_specific(
     if not is_staged_recipes and recipe_dir is not None:
         ci_support_files = glob(os.path.join(recipe_dir, "..", ".ci_support", "*.yaml"))
         if not ci_support_files:
-            lints.append(CFNoCiSupport())
+            lints.append(msg.CFNoCiSupport())
 
     # 8: Ensure the recipe specifies a Python build backend if needed
     if "hint_pip_no_build_backend" not in lints_to_skip:
@@ -661,7 +657,7 @@ def run_conda_forge_specific(
             with open(cfyml_pth, encoding="utf-8") as fh:
                 get_yaml(allow_duplicate_keys=False).load(fh)
         except DuplicateKeyError:
-            lints.append(FCNoDuplicateKeys())
+            lints.append(msg.FCNoDuplicateKeys())
 
     # 10: check for proper noarch python syntax
     if "hint_python_min" not in lints_to_skip:

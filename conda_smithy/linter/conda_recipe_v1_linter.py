@@ -6,12 +6,8 @@ from rattler_build_conda_compat.jinja.jinja import (
     render_recipe_with_context,
 )
 
+from conda_smithy.linter import messages as msg
 from conda_smithy.linter.errors import HINT_NO_ARCH
-from conda_smithy.linter.messages.recipe import (
-    RecipeNoarchSelectorsV1,
-    RecipeRecommendedTests,
-    RecipeRequiredTests,
-)
 from conda_smithy.linter.utils import (
     _lint_package_version,
     _lint_recipe_name,
@@ -56,7 +52,7 @@ def lint_recipe_tests(
 
     if not test_section:
         if not outputs_section:
-            lints.append(RecipeRequiredTests())
+            lints.append(msg.RecipeRequiredTests())
         else:
             has_outputs_test = False
             no_test_hints = []
@@ -66,12 +62,12 @@ def lint_recipe_tests(
                     has_outputs_test = True
                 else:
                     no_test_hints.append(
-                        RecipeRecommendedTests(output=output.get("name", "???"))
+                        msg.RecipeRecommendedTests(output=output.get("name", "???"))
                     )
             if has_outputs_test:
                 hints.extend(no_test_hints)
             else:
-                lints.append(RecipeRequiredTests())
+                lints.append(msg.RecipeRequiredTests())
 
     lints.extend(tests_lints)
     hints.extend(tests_hints)
@@ -195,8 +191,8 @@ def lint_usage_of_selectors_for_noarch(
                 has_bad_selector = True
 
             if has_bad_selector:
-                lints.append(RecipeNoarchSelectorsV1(noarch=noarch_value))
+                lints.append(msg.RecipeNoarchSelectorsV1(noarch=noarch_value))
                 break
 
     if "skip" in build_section:
-        lints.append(RecipeNoarchSelectorsV1(noarch=noarch_value, skips=True))
+        lints.append(msg.RecipeNoarchSelectorsV1(noarch=noarch_value, skips=True))

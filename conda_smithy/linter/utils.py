@@ -16,11 +16,7 @@ from conda_build.metadata import (
 from rattler_build_conda_compat import loader as rattler_loader
 from rattler_build_conda_compat.recipe_sources import get_all_sources
 
-from conda_smithy.linter.messages.recipe import (
-    RecipeInvalidVersion,
-    RecipeMissingVersion,
-    RecipeName,
-)
+from conda_smithy.linter import messages as msg
 
 if sys.version_info[:2] < (3, 11):
     import tomli as tomllib
@@ -202,14 +198,14 @@ def jinja_lines(lines):
 
 def _lint_recipe_name(recipe_name: str) -> Optional[str]:
     if re.match(r"^[a-z0-9_\-.]+$", recipe_name) is None:
-        return RecipeName()
+        return msg.RecipeName()
 
     return None
 
 
 def _lint_package_version(version: Optional[str]) -> Optional[str]:
     if version is None:
-        return RecipeMissingVersion()
+        return msg.RecipeMissingVersion()
 
     ver = str(version)
 
@@ -220,7 +216,7 @@ def _lint_package_version(version: Optional[str]) -> Optional[str]:
     try:
         VersionOrder(ver)
     except InvalidVersionSpec as e:
-        return RecipeInvalidVersion(version=ver, error=str(e))
+        return msg.RecipeInvalidVersion(version=ver, error=str(e))
 
 
 def load_linter_toml_metadata():
