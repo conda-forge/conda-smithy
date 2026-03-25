@@ -1980,30 +1980,6 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
     forge_config = deepcopy(forge_config)
     forge_config["build_setup"] = build_setup
 
-    platform_templates = {
-        "linux": [
-            ".scripts/run_docker_build.sh",
-            ".scripts/build_steps.sh",
-            ".azure-pipelines/azure-pipelines-linux.yml",
-        ],
-        "osx": [
-            ".azure-pipelines/azure-pipelines-osx.yml",
-            ".scripts/run_osx_build.sh",
-        ],
-        "win": [
-            ".azure-pipelines/azure-pipelines-win.yml",
-            ".scripts/run_win_build.bat",
-        ],
-    }
-    azure_store = filter_conditional_values(
-        forge_config["workflow_settings"]["store_build_artifacts"], provider="azure"
-    )
-    if any(x.value for x in azure_store):
-        platform_templates["linux"].append(".scripts/create_conda_build_artifacts.sh")
-        platform_templates["osx"].append(".scripts/create_conda_build_artifacts.sh")
-        platform_templates["win"].append(".scripts/create_conda_build_artifacts.bat")
-    template_files = platform_templates.get(platform, [])
-
     azure_settings = deepcopy(forge_config["azure"][f"settings_{platform}"])
     azure_settings.pop("swapfile_size", None)
     azure_settings.pop("install_atl", None)
@@ -2020,6 +1996,8 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
         )
         ratio = platform_counts[platform.split("-")[0]] / n_configs
         azure_settings["strategy"]["maxParallel"] = max(1, round(max_parallel * ratio))
+
+    store_build_artifacts = {x: False for x in ("linux", "osx", "win")}
 
     for data in forge_config["configs"]:
         if not data["build_platform"].startswith(platform):
@@ -2040,20 +2018,46 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
                 config_rendered["VMIMAGE"] = "macOS-15-arm64"
             else:
                 raise ValueError(f"Unknown build platform: '{data['build_platform']}'")
+        os = data["platform"].split("-", 1)[0]
         for setting_key, setting_value in forge_config["workflow_settings"].items():
             filtered = filter_conditional_values(
                 setting_value,
                 provider="azure",
                 platform=data["platform"],
-                os=data["platform"].split("-", 1)[0],
+                os=os,
             )
             config_rendered[setting_key] = (
                 filtered[-1].value if filtered else None
             )
         if config_rendered["store_build_artifacts"]:
+            store_build_artifacts[os] = True
+            forge_config[f"store_{os}_build_artifacts"] = True
             config_rendered["SHORT_CONFIG"] = data["short_config_name"]
         azure_settings["strategy"]["matrix"][data["config_name"]] = config_rendered
         # fmt: on
+
+    platform_templates = {
+        "linux": [
+            ".scripts/run_docker_build.sh",
+            ".scripts/build_steps.sh",
+            ".azure-pipelines/azure-pipelines-linux.yml",
+        ],
+        "osx": [
+            ".azure-pipelines/azure-pipelines-osx.yml",
+            ".scripts/run_osx_build.sh",
+        ],
+        "win": [
+            ".azure-pipelines/azure-pipelines-win.yml",
+            ".scripts/run_win_build.bat",
+        ],
+    }
+    for key, enabled in store_build_artifacts.items():
+        if enabled:
+            suffix = ".bat" if key == "win" else ".sh"
+            platform_templates[key].append(
+                f".scripts/create_conda_build_artifacts{suffix}"
+            )
+    template_files = platform_templates.get(platform, [])
 
     forge_config["azure_yaml"] = yaml.dump(azure_settings)
     _render_template_exe_files(

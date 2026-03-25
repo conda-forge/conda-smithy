@@ -33,6 +33,7 @@ jobs:
 {%- for secret in secrets %}
       {{ secret }}: $({{ secret }})
 {%- endfor %}
+{%- if store_osx_build_artifacts %}
 
   - script: |
       export CI=azure
@@ -63,3 +64,4 @@ jobs:
     inputs:
       targetPath: $(ENV_ARTIFACT_PATH)
       artifactName: $(ENV_ARTIFACT_NAME)
+{%- endif %}

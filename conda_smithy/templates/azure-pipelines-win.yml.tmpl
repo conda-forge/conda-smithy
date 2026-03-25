@@ -68,6 +68,7 @@ jobs:
 {%- for secret in secrets %}
         {{ secret }}: $({{ secret }})
 {%- endfor %}
+{%- if store_win_build_artifacts %}
 
     - script: |
         set MINIFORGE_HOME=$(MINIFORGE_HOME)
@@ -97,3 +98,4 @@ jobs:
       inputs:
         targetPath: $(ENV_ARTIFACT_PATH)
         artifactName: $(ENV_ARTIFACT_NAME)
+{%- endif %}
