@@ -538,7 +538,7 @@ def test_lint_macdt(recipe_version, config_file):
 
         # run the linter
         lints = linter.main(recipe_dir, conda_forge=True)
-        assert any(lint.startswith("The MACOSX_DEPLOYMENT_TARGET") for lint in lints)
+        assert any(lint.startswith("The `MACOSX_DEPLOYMENT_TARGET`") for lint in lints)
 
 
 class TestLinter(unittest.TestCase):
@@ -4610,7 +4610,7 @@ extra:
     assert lints == (
         [
             "package.version has a value that is interpreted as a floating-point "
-            'number. Please quote it (like "1.0" or "{{ var }}") to ensure that it is '
+            'number. Please quote it (like `"1.0"` or `"{{ var }}"`) to ensure that it is '
             "interpreted as string and preserved exactly."
         ]
         if expect_lint
@@ -4672,7 +4672,7 @@ extra:
     assert lints == (
         [
             f"{expect_lint} has a value that is interpreted as a floating-point "
-            'number. Please quote it (like "1.0") to ensure that it is '
+            'number. Please quote it (like `"1.0"`) to ensure that it is '
             "interpreted as string and preserved exactly."
         ]
         if expect_lint is not None
