@@ -31,6 +31,7 @@ from conda_smithy.linter.hints import (
     hint_pip_no_build_backend,
     hint_pip_usage,
     hint_rattler_build_bld_bat,
+    hint_remove_ppc64le,
     hint_shellcheck_usage,
     hint_sources_should_not_mention_pypi_io_but_pypi_org,
     hint_space_separated_specs,
@@ -532,7 +533,9 @@ def run_conda_forge_specific(
     hints,
     recipe_version: int = 0,
 ):
-    lints_to_skip = _get_feedstock_config(recipe_dir).get("linter", {}).get("skip", [])
+
+    feedstock_config = _get_feedstock_config(recipe_dir)
+    lints_to_skip = feedstock_config.get("linter", {}).get("skip", [])
 
     # Retrieve sections from meta
     package_section = get_section(meta, "package", lints, recipe_version=recipe_version)
@@ -724,6 +727,10 @@ def run_conda_forge_specific(
             "for more information. If you didn't add any custom workflows, please "
             "consider rerendering your feedstock to remove deprecated workflows."
         )
+
+    # 16: note deprecation of ppc64le support
+    if "hint_remove_ppc64le" not in lints_to_skip:
+        hint_remove_ppc64le(feedstock_config, hints)
 
 
 def _format_validation_msg(error: jsonschema.ValidationError):

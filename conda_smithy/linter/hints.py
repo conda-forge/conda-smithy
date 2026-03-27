@@ -518,3 +518,18 @@ def hint_rattler_build_bld_bat(
             "(rattler-build recipe). rattler-build uses `build.bat` instead of `bld.bat` "
             "for Windows builds. Consider renaming `bld.bat` to `build.bat`."
         )
+
+
+def hint_remove_ppc64le(feedstock_config, hints):
+    """
+    hint for conda-forge.yml to remove linux_ppc64le
+    """
+    provider = feedstock_config.get("provider", {})
+    build_platform = feedstock_config.get("build_platform", {})
+    if provider.get("linux_ppc64le") or build_platform.get("linux_ppc64le"):
+        hints.append(
+            "Found linux_ppc64le in conda-forge.yml. "
+            "Conda-Forge is ending support for linux_ppc64le builds. "
+            "Consider removing linux_ppc64le from conda-forge.yml. "
+            "See https://github.com/conda-forge/conda-forge.github.io/issues/2781 for more information."
+        )
