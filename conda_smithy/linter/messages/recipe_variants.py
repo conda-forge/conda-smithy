@@ -8,7 +8,9 @@ from conda_smithy.linter.messages.base import _BaseMessage
 
 CATEGORIES = {
     "RC": "All recipe variants files",
-    "CBC": "Recipe configuration in `conda_build_config.yaml`",
+    "CBC": "Recipe variants in `conda_build_config.yaml`",
+    # None yet, but let's reserve the VC- prefix:
+    # "VC": "Recipe variants in `variants.yaml`",
 }
 
 # region RC
