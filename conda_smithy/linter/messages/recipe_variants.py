@@ -79,6 +79,7 @@ class CBCMacOSDeploymentTargetConflict(_BaseMessage):
         "Continuing with `max(c_stdlib_version, MACOSX_DEPLOYMENT_TARGET)`."
     )
 
+
 @dataclass(kw_only=True)
 class CBCMacOSDeploymentTargetBelowStdlib(_BaseMessage):
     """

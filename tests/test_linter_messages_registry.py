@@ -1,23 +1,26 @@
 import importlib
 import inspect
 import pkgutil
-import pytest
 import re
 from collections import defaultdict
+
+import pytest
 
 import conda_smithy.linter.messages as _messages_pkg
 from conda_smithy.linter.messages.base import _BaseMessage
 
 _EXCLUDED_MODULES = {"base", "__main__"}
 
+
 def _generate_message_modules():
     _message_modules = []
     for mod in pkgutil.iter_modules(_messages_pkg.__path__):
         if mod.name not in _EXCLUDED_MODULES:
             _message_modules.append(
-                importlib.import_module(
-                    f"{_messages_pkg.__name__}.{mod.name}"))
+                importlib.import_module(f"{_messages_pkg.__name__}.{mod.name}")
+            )
     return _message_modules
+
 
 MESSAGE_MODULES = _generate_message_modules()
 
@@ -26,11 +29,12 @@ IDENTIFIER_RE = re.compile(r"^(?P<prefix>[A-Z0-9]+)-(?P<number>\d{3})$")
 
 def _message_classes(module):
     message_classes = []
-    for _, obj in inspect.getmembers(
-        module, inspect.isclass):
-        if not (obj is _BaseMessage or
-                not issubclass(obj, _BaseMessage) or
-                obj.__module__ != module.__name__):
+    for _, obj in inspect.getmembers(module, inspect.isclass):
+        if not (
+            obj is _BaseMessage
+            or not issubclass(obj, _BaseMessage)
+            or obj.__module__ != module.__name__
+        ):
             message_classes.append(obj)
     return message_classes
 

@@ -56,7 +56,9 @@ class _BaseMessage:
         when it is immediately followed by a valid identifier that is also a
         key in ``_render_attributes()`` and must not be substituted.
         """
-        return cleandoc(Template(self.message).safe_substitute(self._render_attributes()))
+        return cleandoc(
+            Template(self.message).safe_substitute(self._render_attributes())
+        )
 
     def _render_attributes(self) -> dict[str, str]:
         """
