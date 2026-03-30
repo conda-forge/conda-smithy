@@ -20,7 +20,7 @@ class CFMaintainerExists(_BaseMessage):
 
     kind = "lint"
     identifier = "CF-001"
-    message = 'Recipe maintainer {team_or}"{maintainer}" does not exist'
+    message = 'Recipe maintainer ${team_or}"${maintainer}" does not exist'
     maintainer: str
 
     def _render_attributes(self):
@@ -41,7 +41,7 @@ class CFPackageToAvoid(_BaseMessage):
 
     kind = "hint"
     identifier = "CF-002"
-    message = "{package_hint}"
+    message = "${package_hint}"
     package_hint: str
 
 

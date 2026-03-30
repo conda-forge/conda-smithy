@@ -26,7 +26,7 @@ class RecipeUnexpectedSection(_BaseMessage):
 
     kind = "lint"
     identifier = "R-000"
-    message = "The top level meta key {section} is unexpected"
+    message = "The top level meta key ${section} is unexpected"
     section: str
 
 
@@ -38,7 +38,7 @@ class RecipeSectionOrder(_BaseMessage):
 
     kind = "lint"
     identifier = "R-001"
-    message = "The top level meta keys are in an unexpected order. Expecting {order}."
+    message = "The top level meta keys are in an unexpected order. Expecting ${order}."
     order: list[str]
 
     def _render_attributes(self) -> dict[str, str]:
@@ -54,7 +54,7 @@ class RecipeMissingAboutItem(_BaseMessage):
 
     kind = "lint"
     identifier = "R-002"
-    message = "The {item} item is expected in the about section."
+    message = "The ${item} item is expected in the about section."
     item: str
 
 
@@ -102,7 +102,7 @@ class RecipeRecommendedTests(_BaseMessage):
 
     kind = "hint"
     identifier = "R-006"
-    message = "It looks like the '{output}' output doesn't have any tests."
+    message = "It looks like the '${output}' output doesn't have any tests."
     output: str
 
 
@@ -139,7 +139,7 @@ class RecipeRequirementsOrder(_BaseMessage):
     identifier = "R-009"
     message = (
         "The `requirements/` sections should be defined "
-        "in the following order: {expected}; instead saw: {seen}."
+        "in the following order: ${expected}; instead saw: ${seen}."
     )
     expected: list[str]
     seen: list[str]
@@ -171,7 +171,7 @@ class RecipeTooManyEmptyLines(_BaseMessage):
     kind = "lint"
     identifier = "R-011"
     message = (
-        "There are {n_lines} too many lines.  "
+        "There are ${n_lines} too many lines.  "
         "There should be one empty line at the end of the "
         "file."
     )
@@ -240,7 +240,7 @@ class RecipeInvalidVersion(_BaseMessage):
 
     kind = "lint"
     identifier = "R-016"
-    message = "Package version {version} doesn't match conda spec: {error}"
+    message = "Package version ${version} doesn't match conda spec: ${error}"
     version: str
     error: str
 
@@ -274,8 +274,8 @@ class RecipeUnexpectedSubsection(_BaseMessage):
     kind = "lint"
     identifier = "R-018"
     message = (
-        "The {section} section contained an unexpected subsection name. "
-        "{subsection} is not a valid subsection name."
+        "The ${section} section contained an unexpected subsection name. "
+        "${subsection} is not a valid subsection name."
     )
     section: str
     subsection: str
@@ -304,7 +304,7 @@ class RecipeNoarchValue(_BaseMessage):
     kind = "lint"
     identifier = "R-020"
     valid: ClassVar[list[str]] = ["python", "generic"]
-    message = "Invalid `noarch` value `{given}`. Should be one of `{valid}`."
+    message = "Invalid `noarch` value `${given}`. Should be one of `${valid}`."
     given: str
 
     def _render_attributes(self):
@@ -322,9 +322,9 @@ class RecipeRequirementJoinVersionOperator(_BaseMessage):
     kind = "lint"
     identifier = "R-021"
     message = (
-        "``requirements: {section}: {requirement}`` should not "
+        "``requirements: ${section}: ${requirement}`` should not "
         "contain a space between relational operator and the version, i.e. "
-        "``{name} {pin}``"
+        "``${name} ${pin}``"
     )
     section: str
     requirement: str
@@ -342,9 +342,9 @@ class RecipeRequirementSeparateNameVersion(_BaseMessage):
     kind = "lint"
     identifier = "R-022"
     message = (
-        "``requirements: {section}: {requirement}`` must "
+        "``requirements: ${section}: ${requirement}`` must "
         "contain a space between the name and the pin, i.e. "
-        "``{name} {pin}``"
+        "``${name} ${pin}``"
     )
     section: str
     requirement: str
@@ -361,7 +361,7 @@ class RecipeLanguageHostRun(_BaseMessage):
 
     kind = "lint"
     identifier = "R-023"
-    message = "If {language} is a host requirement, it should be a run requirement."
+    message = "If ${language} is a host requirement, it should be a run requirement."
     language: str
 
 
@@ -376,7 +376,7 @@ class RecipeLanguageHostRunUnpinned(_BaseMessage):
     kind = "lint"
     identifier = "R-024"
     message = (
-        "Non noarch packages should have {language} requirement "
+        "Non noarch packages should have ${language} requirement "
         "without any version constraints."
     )
     language: str
@@ -392,8 +392,8 @@ class RecipeJinjaExpression(_BaseMessage):
     identifier = "R-025"
     message = (
         "Jinja2 variable references are suggested to "
-        "take a ``{dollar}{{{{<one space><variable name><one space>}}}}`` "
-        "form. See lines {lines}."
+        "take a ``${dollar}{{<one space><variable name><one space>}}`` "
+        "form. See lines ${lines}."
     )
     recipe_version: RECIPE_VERSIONS
     lines: list[int]
@@ -413,7 +413,7 @@ class RecipePythonLowerBound(_BaseMessage):
     message = (
         "noarch: python recipes are required to have a lower bound "
         "on the python version. Typically this means putting "
-        "`python >={{{{ python_min }}}}` in the `run` section of your "
+        "`python >={{ python_min }}` in the `run` section of your "
         "recipe. You may also want to check the upstream source "
         "for the package's Python compatibility."
     )
@@ -435,8 +435,8 @@ class RecipePinSubpackagePinCompatible(_BaseMessage):
     kind = "lint"
     identifier = "R-027"
     message = (
-        "{should_use} should be used instead of {in_use} for `{pin}` "
-        "because it is {what} known outputs of this recipe: {subpackages}."
+        "${should_use} should be used instead of ${in_use} for `${pin}` "
+        "because it is ${what} known outputs of this recipe: ${subpackages}."
     )
     in_use: str
     should_use: str
@@ -461,7 +461,7 @@ class RecipeCompiledWheelsNotAllowed(_BaseMessage):
     kind = "lint"
     identifier = "R-028"
     message = (
-        "Detected compiled wheel(s) in source: {urls}. "
+        "Detected compiled wheel(s) in source: ${urls}. "
         "This is disallowed. All packages should be built from source except in "
         "rare and exceptional cases."
     )
@@ -481,7 +481,7 @@ class RecipePureWheelsNotAllowed(_BaseMessage):
     kind = "lint"
     identifier = "R-029"
     message = (
-        "Detected pure Python wheel(s) in source: {urls}. "
+        "Detected pure Python wheel(s) in source: ${urls}. "
         "This is discouraged. Please consider using a source distribution (sdist) instead."
     )
     urls: list[str]
@@ -500,7 +500,7 @@ class RecipePureWheelsNotAllowedNoarch(_BaseMessage):
     kind = "hint"
     identifier = "R-030"
     message = (
-        "Detected pure Python wheel(s) in source: {urls}. "
+        "Detected pure Python wheel(s) in source: ${urls}. "
         "This is generally ok for pure Python wheels and noarch=python "
         "packages but it's preferred to use a source distribution (sdist) if possible."
     )
@@ -548,7 +548,7 @@ class RecipeStdlibJinja(_BaseMessage):
     identifier = "R-033"
     message = (
         "This recipe is using a compiler, which now requires adding a build "
-        'dependence on `{dollar}{{{{ stdlib("c") }}}}` as well. Note that this rule applies to '
+        'dependence on `${dollar}{{ stdlib("c") }}` as well. Note that this rule applies to '
         "each output of the recipe using a compiler. For further details, please "
         "see https://github.com/conda-forge/conda-forge.github.io/issues/2102."
     )
@@ -568,7 +568,7 @@ class RecipeStdlibSysroot(_BaseMessage):
     identifier = "R-034"
     message = (
         "You're setting a requirement on sysroot_linux-<arch> directly; this should "
-        'now be done by adding a build dependence on `{dollar}{{{{ stdlib("c") }}}}`, and '
+        'now be done by adding a build dependence on `${dollar}{{ stdlib("c") }}`, and '
         "overriding `c_stdlib_version` in `recipe/conda_build_config.yaml` for the "
         "respective platform as necessary. For further details, please see "
         "https://github.com/conda-forge/conda-forge.github.io/issues/2102."
@@ -589,7 +589,7 @@ class RecipeStdlibOsx(_BaseMessage):
     identifier = "R-035"
     message = (
         "You're setting a constraint on the `__osx` virtual package directly; this "
-        'should now be done by adding a build dependence on `{dollar}{{{{ stdlib("c") }}}}`, '
+        'should now be done by adding a build dependence on `${dollar}{{ stdlib("c") }}`, '
         "and overriding `c_stdlib_version` in `recipe/conda_build_config.yaml` for "
         "the respective platform as necessary. For further details, please see "
         "https://conda-forge.org/docs/maintainer/knowledge_base/#requiring-newer-macos-sdks."
@@ -611,7 +611,7 @@ class RecipeNotParsableLint(_BaseMessage):
     identifier = "R-036"
     message = (
         "The recipe is not parsable by any of the known "
-        "recipe parsers ({parsers}). Please "
+        "recipe parsers (${parsers}). Please "
         "check the logs for more information and ensure your "
         "recipe can be parsed."
     )
@@ -696,8 +696,8 @@ class RecipeVersionParsedAsFloat(_BaseMessage):
     value: float
     recipe_version: RECIPE_VERSIONS
     message = (
-        "{key} has a value that is interpreted as a floating-point "
-        'number. Please quote it (like `"{value}"`{v0_hint}) to '
+        "${key} has a value that is interpreted as a floating-point "
+        'number. Please quote it (like `"${value}"`${v0_hint}) to '
         "ensure that it is interpreted as string and preserved exactly."
     )
 
@@ -753,7 +753,7 @@ class RecipeScriptShellcheckReport(_BaseMessage):
                 "Output restricted, there are "
                 f"'{len(self.output_lines) - self.max_lines}' more lines."
             )
-        return "\n".join(lines).replace("{", "{{").replace("}", "}}")
+        return "\n".join(lines)
 
 
 @dataclass(kw_only=True)
@@ -816,7 +816,7 @@ class RecipePythonBuildBackendHost(_BaseMessage):
     identifier = "R-046"
     message = (
         "No valid build backend found for Python recipe for package "
-        "`{package_name}` using `pip`. Python recipes using `pip` need to "
+        "`${package_name}` using `pip`. Python recipes using `pip` need to "
         "explicitly specify a build backend in the `host` section. "
         "If your recipe has built with only `pip` in the `host` section "
         "in the past, you likely should add `setuptools` to the `host` "
@@ -838,7 +838,7 @@ class RecipePythonMinPin(_BaseMessage):
         "`noarch: python` recipes should usually follow the syntax in "
         "our [documentation](https://conda-forge.org/docs/maintainer/knowledge_base/#noarch-python) "
         "for specifying the Python version.\n"
-        "{recommendations}\n"
+        "${recommendations}\n"
         "- If the package requires a newer Python version than the currently supported minimum "
         "version on `conda-forge`, you can override the `python_min` variable by adding a "
         "Jinja2 `set` statement at the top of your recipe (or using an equivalent `context` "
@@ -870,8 +870,8 @@ class RecipeSpaceSeparatedSpecs(_BaseMessage):
     kind = "hint"
     identifier = "R-048"
     message = (
-        "{output} output has some malformed specs:\n"
-        "{bad_specs_list}\n"
+        "${output} output has some malformed specs:\n"
+        "${bad_specs_list}\n"
         "Requirement spec fields should match the syntax `name [version [build]]`"
         "to avoid known issues in conda-build. For example, instead of "
         "`name =version=build`, use `name version.* build`. "
@@ -898,8 +898,8 @@ class RecipeOsVersion(_BaseMessage):
     kind = "hint"
     identifier = "R-049"
     message = (
-        "The feedstock is lowering the image versions for one or more platforms: {platforms} "
-        "(the default is {default}). Unless you are in the very rare case of repackaging binary "
+        "The feedstock is lowering the image versions for one or more platforms: ${platforms} "
+        "(the default is ${default}). Unless you are in the very rare case of repackaging binary "
         "artifacts, consider removing these overrides from conda-forge.yml "
         "in the top feedstock directory."
     )
@@ -964,7 +964,7 @@ class RecipeFormattedSelectors(_BaseMessage):
     message = (
         "Selectors are suggested to take a "
         "``<two spaces>#<one space>[<expression>]`` form."
-        " See lines {lines}"
+        " See lines ${lines}"
     )
     lines: list[str]
 
@@ -983,7 +983,7 @@ class RecipeOldPythonSelectorsLint(_BaseMessage):
         "Old-style Python selectors (py27, py35, etc) are only available "
         "for Python 2.7, 3.4, 3.5, and 3.6. Please use explicit comparisons "
         "with the integer ``py``, e.g. ``# [py==37]`` or ``# [py>=37]``. "
-        "See lines {lines}"
+        "See lines ${lines}"
     )
     lines: list[str]
 
@@ -1001,7 +1001,7 @@ class RecipeOldPythonSelectorsHint(_BaseMessage):
     message = (
         "Old-style Python selectors (py27, py34, py35, py36) are "
         "deprecated. Instead, consider using the int ``py``. For "
-        "example: ``# [py>=36]``. See lines {lines}"
+        "example: ``# [py>=36]``. See lines ${lines}"
     )
     lines: list[str]
 
@@ -1015,10 +1015,10 @@ class RecipeNoarchSelectorsV0(_BaseMessage):
     kind = "lint"
     identifier = "R0-004"
     message = (
-        "`noarch` packages can't have {skips}selectors. If "
+        "`noarch` packages can't have ${skips}selectors. If "
         "the selectors are necessary, please remove "
-        "`noarch: {noarch}`, or selector on line {line_number}:"
-        "\n{line}"
+        "`noarch: ${noarch}`, or selector on line ${line_number}:"
+        "\n${line}"
     )
     noarch: str
     line_number: int
@@ -1041,9 +1041,9 @@ class RecipeJinjaDefinitions(_BaseMessage):
     identifier = "R0-005"
     message = (
         "Jinja2 variable definitions are suggested to "
-        "take a ``{{%<one space>set<one space>"
+        "take a ``{%<one space>set<one space>"
         "<variable name><one space>=<one space>"
-        "<expression><one space>%}}`` form. See lines {lines}"
+        "<expression><one space>%}`` form. See lines ${lines}"
     )
     lines: list[int]
 
@@ -1080,7 +1080,7 @@ class RecipeNoCommentSelectors(_BaseMessage):
     identifier = "R1-001"
     message = (
         "Selectors in comment form no longer work in v1 recipes. Instead,"
-        " if / then / else maps must be used. See lines {lines}."
+        " if / then / else maps must be used. See lines ${lines}."
     )
     lines: list[str]
 
@@ -1094,9 +1094,9 @@ class RecipeNoarchSelectorsV1(_BaseMessage):
     kind = "lint"
     identifier = "R1-002"
     message = (
-        "`noarch` packages can't have {skips}selectors. If "
+        "`noarch` packages can't have ${skips}selectors. If "
         "the selectors are necessary, please remove "
-        "`noarch: {noarch}`."
+        "`noarch: ${noarch}`."
     )
     noarch: str
     skips: bool = False

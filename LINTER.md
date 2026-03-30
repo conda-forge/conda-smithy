@@ -57,7 +57,7 @@ or `@conda-forge/*` teams.
 
 #### Message template
 
-> Recipe maintainer {team_or}"{maintainer}" does not exist
+> Recipe maintainer ${team_or}"${maintainer}" does not exist
 
 
 <a id='CF-002'></a>
@@ -73,7 +73,7 @@ The full list of package names and their explanations can be found in
 
 #### Message template
 
-> {package_hint}
+> ${package_hint}
 
 
 <a id='CF-003'></a>
@@ -151,7 +151,7 @@ Recipe files must not contain unknown top-level keys.
 
 #### Message template
 
-> The top level meta key {section} is unexpected
+> The top level meta key ${section} is unexpected
 
 
 <a id='R-001'></a>
@@ -164,7 +164,7 @@ The top-level sections of a recipe file must always follow the same order.
 
 #### Message template
 
-> The top level meta keys are in an unexpected order. Expecting {order}.
+> The top level meta keys are in an unexpected order. Expecting ${order}.
 
 
 <a id='R-002'></a>
@@ -177,7 +177,7 @@ The `about` section requires three fields: homepage (`home` in v1), license, and
 
 #### Message template
 
-> The {item} item is expected in the about section.
+> The ${item} item is expected in the about section.
 
 
 <a id='R-003'></a>
@@ -226,7 +226,7 @@ All recipes must have a non-empty `test` section.
 
 #### Message template
 
-> It looks like the '{output}' output doesn't have any tests.
+> It looks like the '${output}' output doesn't have any tests.
 
 
 <a id='R-007'></a>
@@ -264,7 +264,7 @@ a strict order: `build`, `host`, `run`, `run_constrained`.
 
 #### Message template
 
-> The `requirements/` sections should be defined in the following order: {expected}; instead saw: {seen}.
+> The `requirements/` sections should be defined in the following order: ${expected}; instead saw: ${seen}.
 
 
 <a id='R-010'></a>
@@ -289,7 +289,7 @@ Recipe files should end with a single empty line, not more.
 
 #### Message template
 
-> There are {n_lines} too many lines.  There should be one empty line at the end of the file.
+> There are ${n_lines} too many lines.  There should be one empty line at the end of the file.
 
 
 <a id='R-012'></a>
@@ -354,7 +354,7 @@ The package `version` field must be a valid version string.
 
 #### Message template
 
-> Package version {version} doesn't match conda spec: {error}
+> Package version ${version} doesn't match conda spec: ${error}
 
 
 <a id='R-017'></a>
@@ -382,7 +382,7 @@ https://github.com/conda/conda-build/blob/25.9.0/conda_build/metadata.py#L619)
 
 #### Message template
 
-> The {section} section contained an unexpected subsection name. {subsection} is not a valid subsection name.
+> The ${section} section contained an unexpected subsection name. ${subsection} is not a valid subsection name.
 
 
 <a id='R-019'></a>
@@ -407,7 +407,7 @@ The `build.noarch` field can only take `python` or `generic` as a value.
 
 #### Message template
 
-> Invalid `noarch` value `{given}`. Should be one of `{valid}`.
+> Invalid `noarch` value `${given}`. Should be one of `${valid}`.
 
 
 <a id='R-021'></a>
@@ -422,7 +422,7 @@ literals.
 
 #### Message template
 
-> ``requirements: {section}: {requirement}`` should not contain a space between relational operator and the version, i.e. ``{name} {pin}``
+> ``requirements: ${section}: ${requirement}`` should not contain a space between relational operator and the version, i.e. ``${name} ${pin}``
 
 
 <a id='R-022'></a>
@@ -436,7 +436,7 @@ conda recipes should use the three-field matchspec syntax to express requirement
 
 #### Message template
 
-> ``requirements: {section}: {requirement}`` must contain a space between the name and the pin, i.e. ``{name} {pin}``
+> ``requirements: ${section}: ${requirement}`` must contain a space between the name and the pin, i.e. ``${name} ${pin}``
 
 
 <a id='R-023'></a>
@@ -450,7 +450,7 @@ on the language runtime both in `host` and `run`.
 
 #### Message template
 
-> If {language} is a host requirement, it should be a run requirement.
+> If ${language} is a host requirement, it should be a run requirement.
 
 
 <a id='R-024'></a>
@@ -465,7 +465,7 @@ particular version when the package is not `noarch`.
 
 #### Message template
 
-> Non noarch packages should have {language} requirement without any version constraints.
+> Non noarch packages should have ${language} requirement without any version constraints.
 
 
 <a id='R-025'></a>
@@ -478,7 +478,7 @@ Jinja expressions should add a space between the double curly braces.
 
 #### Message template
 
-> Jinja2 variable references are suggested to take a ``{dollar}{{{{<one space><variable name><one space>}}}}`` form. See lines {lines}.
+> Jinja2 variable references are suggested to take a ``${dollar}{{<one space><variable name><one space>}}`` form. See lines ${lines}.
 
 
 <a id='R-026'></a>
@@ -491,7 +491,7 @@ Noarch Python recipes should always pin the lower bound on their `python` requir
 
 #### Message template
 
-> noarch: python recipes are required to have a lower bound on the python version. Typically this means putting `python >={{{{ python_min }}}}` in the `run` section of your recipe. You may also want to check the upstream source for the package's Python compatibility.
+> noarch: python recipes are required to have a lower bound on the python version. Typically this means putting `python >={{ python_min }}` in the `run` section of your recipe. You may also want to check the upstream source for the package's Python compatibility.
 
 
 <a id='R-027'></a>
@@ -511,7 +511,7 @@ have different purposes.
 
 #### Message template
 
-> {should_use} should be used instead of {in_use} for `{pin}` because it is {what} known outputs of this recipe: {subpackages}.
+> ${should_use} should be used instead of ${in_use} for `${pin}` because it is ${what} known outputs of this recipe: ${subpackages}.
 
 
 <a id='R-028'></a>
@@ -525,7 +525,7 @@ for compiled wheels, which are forbidden.
 
 #### Message template
 
-> Detected compiled wheel(s) in source: {urls}. This is disallowed. All packages should be built from source except in rare and exceptional cases.
+> Detected compiled wheel(s) in source: ${urls}. This is disallowed. All packages should be built from source except in rare and exceptional cases.
 
 
 <a id='R-029'></a>
@@ -539,7 +539,7 @@ for pure Python wheels when building non-noarch packages.
 
 #### Message template
 
-> Detected pure Python wheel(s) in source: {urls}. This is discouraged. Please consider using a source distribution (sdist) instead.
+> Detected pure Python wheel(s) in source: ${urls}. This is discouraged. Please consider using a source distribution (sdist) instead.
 
 
 <a id='R-030'></a>
@@ -553,7 +553,7 @@ wheels may be used as a source for noarch Python packages, although sdists are p
 
 #### Message template
 
-> Detected pure Python wheel(s) in source: {urls}. This is generally ok for pure Python wheels and noarch=python packages but it's preferred to use a source distribution (sdist) if possible.
+> Detected pure Python wheel(s) in source: ${urls}. This is generally ok for pure Python wheels and noarch=python packages but it's preferred to use a source distribution (sdist) if possible.
 
 
 <a id='R-031'></a>
@@ -590,7 +590,7 @@ https://github.com/conda-forge/conda-forge.github.io/issues/2102
 
 #### Message template
 
-> This recipe is using a compiler, which now requires adding a build dependence on `{dollar}{{{{ stdlib("c") }}}}` as well. Note that this rule applies to each output of the recipe using a compiler. For further details, please see https://github.com/conda-forge/conda-forge.github.io/issues/2102.
+> This recipe is using a compiler, which now requires adding a build dependence on `${dollar}{{ stdlib("c") }}` as well. Note that this rule applies to each output of the recipe using a compiler. For further details, please see https://github.com/conda-forge/conda-forge.github.io/issues/2102.
 
 
 <a id='R-034'></a>
@@ -603,7 +603,7 @@ https://github.com/conda-forge/conda-forge.github.io/issues/2102
 
 #### Message template
 
-> You're setting a requirement on sysroot_linux-<arch> directly; this should now be done by adding a build dependence on `{dollar}{{{{ stdlib("c") }}}}`, and overriding `c_stdlib_version` in `recipe/conda_build_config.yaml` for the respective platform as necessary. For further details, please see https://github.com/conda-forge/conda-forge.github.io/issues/2102.
+> You're setting a requirement on sysroot_linux-<arch> directly; this should now be done by adding a build dependence on `${dollar}{{ stdlib("c") }}`, and overriding `c_stdlib_version` in `recipe/conda_build_config.yaml` for the respective platform as necessary. For further details, please see https://github.com/conda-forge/conda-forge.github.io/issues/2102.
 
 
 <a id='R-035'></a>
@@ -616,7 +616,7 @@ https://github.com/conda-forge/conda-forge.github.io/issues/2102
 
 #### Message template
 
-> You're setting a constraint on the `__osx` virtual package directly; this should now be done by adding a build dependence on `{dollar}{{{{ stdlib("c") }}}}`, and overriding `c_stdlib_version` in `recipe/conda_build_config.yaml` for the respective platform as necessary. For further details, please see https://conda-forge.org/docs/maintainer/knowledge_base/#requiring-newer-macos-sdks.
+> You're setting a constraint on the `__osx` virtual package directly; this should now be done by adding a build dependence on `${dollar}{{ stdlib("c") }}`, and overriding `c_stdlib_version` in `recipe/conda_build_config.yaml` for the respective platform as necessary. For further details, please see https://conda-forge.org/docs/maintainer/knowledge_base/#requiring-newer-macos-sdks.
 
 
 <a id='R-036'></a>
@@ -630,7 +630,7 @@ If none can parse it, this constitutes an error that needs to be remediated.
 
 #### Message template
 
-> The recipe is not parsable by any of the known recipe parsers ({parsers}). Please check the logs for more information and ensure your recipe can be parsed.
+> The recipe is not parsable by any of the known recipe parsers (${parsers}). Please check the logs for more information and ensure your recipe can be parsed.
 
 
 <a id='R-037'></a>
@@ -680,7 +680,7 @@ https://github.com/conda-forge/conda-forge.github.io/issues/2102
 
 #### Message template
 
-> {key} has a value that is interpreted as a floating-point number. Please quote it (like `"{value}"`{v0_hint}) to ensure that it is interpreted as string and preserved exactly.
+> ${key} has a value that is interpreted as a floating-point number. Please quote it (like `"${value}"`${v0_hint}) to ensure that it is interpreted as string and preserved exactly.
 
 
 <a id='R-041'></a>
@@ -765,7 +765,7 @@ Build backends in Python packages must be explictly added to `host`.
 
 #### Message template
 
-> No valid build backend found for Python recipe for package `{package_name}` using `pip`. Python recipes using `pip` need to explicitly specify a build backend in the `host` section. If your recipe has built with only `pip` in the `host` section in the past, you likely should add `setuptools` to the `host` section of your recipe.
+> No valid build backend found for Python recipe for package `${package_name}` using `pip`. Python recipes using `pip` need to explicitly specify a build backend in the `host` section. If your recipe has built with only `pip` in the `host` section in the past, you likely should add `setuptools` to the `host` section of your recipe.
 
 
 <a id='R-047'></a>
@@ -780,7 +780,7 @@ but build and test against `{min_version}.*`.
 #### Message template
 
 > `noarch: python` recipes should usually follow the syntax in our [documentation](https://conda-forge.org/docs/maintainer/knowledge_base/#noarch-python) for specifying the Python version.
-> {recommendations}
+> ${recommendations}
 > - If the package requires a newer Python version than the currently supported minimum version on `conda-forge`, you can override the `python_min` variable by adding a Jinja2 `set` statement at the top of your recipe (or using an equivalent `context` variable for v1 recipes).
 
 
@@ -794,8 +794,8 @@ Prefer `name [version [build]]` match spec syntax.
 
 #### Message template
 
-> {output} output has some malformed specs:
-> {bad_specs_list}
+> ${output} output has some malformed specs:
+> ${bad_specs_list}
 > Requirement spec fields should match the syntax `name [version [build]]`to avoid known issues in conda-build. For example, instead of `name =version=build`, use `name version.* build`. There should be no spaces between version operators and versions either: `python >= 3.8` should be `python >=3.8`.
 
 
@@ -809,7 +809,7 @@ Prefer `name [version [build]]` match spec syntax.
 
 #### Message template
 
-> The feedstock is lowering the image versions for one or more platforms: {platforms} (the default is {default}). Unless you are in the very rare case of repackaging binary artifacts, consider removing these overrides from conda-forge.yml in the top feedstock directory.
+> The feedstock is lowering the image versions for one or more platforms: ${platforms} (the default is ${default}). Unless you are in the very rare case of repackaging binary artifacts, consider removing these overrides from conda-forge.yml in the top feedstock directory.
 
 
 <a id='R-050'></a>
@@ -863,7 +863,7 @@ The closing bracket must not be surrounded by spaces either.
 
 #### Message template
 
-> Selectors are suggested to take a ``<two spaces>#<one space>[<expression>]`` form. See lines {lines}
+> Selectors are suggested to take a ``<two spaces>#<one space>[<expression>]`` form. See lines ${lines}
 
 
 <a id='R0-002'></a>
@@ -878,7 +878,7 @@ This was deprecated in favor of the `py` integer, which is preferred.
 
 #### Message template
 
-> Old-style Python selectors (py27, py35, etc) are only available for Python 2.7, 3.4, 3.5, and 3.6. Please use explicit comparisons with the integer ``py``, e.g. ``# [py==37]`` or ``# [py>=37]``. See lines {lines}
+> Old-style Python selectors (py27, py35, etc) are only available for Python 2.7, 3.4, 3.5, and 3.6. Please use explicit comparisons with the integer ``py``, e.g. ``# [py==37]`` or ``# [py>=37]``. See lines ${lines}
 
 
 <a id='R0-003'></a>
@@ -893,7 +893,7 @@ This was deprecated in favor of the `py` integer, which is preferred.
 
 #### Message template
 
-> Old-style Python selectors (py27, py34, py35, py36) are deprecated. Instead, consider using the int ``py``. For example: ``# [py>=36]``. See lines {lines}
+> Old-style Python selectors (py27, py34, py35, py36) are deprecated. Instead, consider using the int ``py``. For example: ``# [py>=36]``. See lines ${lines}
 
 
 <a id='R0-004'></a>
@@ -906,8 +906,8 @@ Noarch packages are not generally compatible with v0 selectors
 
 #### Message template
 
-> `noarch` packages can't have {skips}selectors. If the selectors are necessary, please remove `noarch: {noarch}`, or selector on line {line_number}:
-> {line}
+> `noarch` packages can't have ${skips}selectors. If the selectors are necessary, please remove `noarch: ${noarch}`, or selector on line ${line_number}:
+> ${line}
 
 
 <a id='R0-005'></a>
@@ -920,7 +920,7 @@ In v0 recipes, Jinja definitions must follow a particular style.
 
 #### Message template
 
-> Jinja2 variable definitions are suggested to take a ``{{%<one space>set<one space><variable name><one space>=<one space><expression><one space>%}}`` form. See lines {lines}
+> Jinja2 variable definitions are suggested to take a ``{%<one space>set<one space><variable name><one space>=<one space><expression><one space>%}`` form. See lines ${lines}
 
 
 <a id='R0-006'></a>
@@ -949,7 +949,7 @@ Recipe v0 selectors (see [`R0-002`](#r0-002)) are not supported in v1 recipes.
 
 #### Message template
 
-> Selectors in comment form no longer work in v1 recipes. Instead, if / then / else maps must be used. See lines {lines}.
+> Selectors in comment form no longer work in v1 recipes. Instead, if / then / else maps must be used. See lines ${lines}.
 
 
 <a id='R1-002'></a>
@@ -962,7 +962,7 @@ Noarch packages are not generally compatible with v1 conditional blocks.
 
 #### Message template
 
-> `noarch` packages can't have {skips}selectors. If the selectors are necessary, please remove `noarch: {noarch}`.
+> `noarch` packages can't have ${skips}selectors. If the selectors are necessary, please remove `noarch: ${noarch}`.
 
 
 <a id='R1-003'></a>
@@ -990,7 +990,7 @@ https://github.com/conda-forge/conda-forge.github.io/issues/2102
 
 #### Message template
 
-> The `MACOSX_DEPLOYMENT_TARGET` key in {recipe_config_file} needs to be removed or replaced by `c_stdlib_version`, appropriately restricted to osx
+> The `MACOSX_DEPLOYMENT_TARGET` key in ${recipe_config_file} needs to be removed or replaced by `c_stdlib_version`, appropriately restricted to osx
 
 
 <a id='RC-001'></a>
@@ -1003,7 +1003,7 @@ https://github.com/conda-forge/conda-forge.github.io/issues/2102
 
 #### Message template
 
-> You are setting `c_stdlib_version` on osx below the current global baseline in conda-forge ({baseline_version}).
+> You are setting `c_stdlib_version` on osx below the current global baseline in conda-forge (${baseline_version}).
 
 
 <a id='RC-002'></a>

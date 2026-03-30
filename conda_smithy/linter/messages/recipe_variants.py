@@ -23,7 +23,7 @@ class RCMacOSDeploymentTargetRename(_BaseMessage):
     kind = "lint"
     identifier = "RC-000"
     message = (
-        "The `MACOSX_DEPLOYMENT_TARGET` key in {recipe_config_file} needs to be "
+        "The `MACOSX_DEPLOYMENT_TARGET` key in ${recipe_config_file} needs to be "
         "removed or replaced by `c_stdlib_version`, appropriately restricted to osx"
     )
     recipe_config_file: str
@@ -39,7 +39,7 @@ class RCMacOSDeploymentTargetBelow(_BaseMessage):
     identifier = "RC-001"
     message = (
         "You are setting `c_stdlib_version` on osx below the current global "
-        "baseline in conda-forge ({baseline_version})."
+        "baseline in conda-forge (${baseline_version})."
     )
     baseline_version: str
 
