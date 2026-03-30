@@ -50,6 +50,14 @@ def _module_classes_in_source_order(module):
 
 @pytest.mark.parametrize("module", MESSAGE_MODULES)
 def test_message_registry_integrity(module):
+    """
+    Check that:
+
+    - No duplicate identifiers
+    - There are no gaps in identifiers (e.g. VC-001 and VC-003 would fail
+      because VC-002 is missing)
+    - All identifiers show up in order in the file
+    """
     seen_identifiers = {}
 
     classes = _module_classes_in_source_order(module)
