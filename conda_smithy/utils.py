@@ -281,11 +281,11 @@ def filter_conditional_values(
       ```
 
       All items that matched the criteria will be returned, normalized to
-      `ConditianalValue` instances. Normally, you'd want to use the ultimate
+      `ConditionalValue` instances. Normally, you'd want to use the ultimate
       value from the list. If no items matched, an empty list will be returned.
 
     - A direct value, as from `store_build_artifacts: true`. In that case, a
-      list with a single `ConditionValue` instance will be returned.
+      list with a single `ConditionalValue` instance will be returned.
 
     - A `None`, i.e. when there is no `store_build_artifacts` key. In that case,
       an empty list will be returned.
