@@ -95,7 +95,7 @@ class CBCMacOSDeploymentTargetBelowStdlib(_BaseMessage):
         "(you can leave it out if it is equal).\n"
         "If you are not setting `c_stdlib_version` yourself, this means "
         "you are requesting a version below the current global baseline in "
-        "conda-forge ({baseline}). If this is the intention, you also need to "
+        "conda-forge (${baseline}). If this is the intention, you also need to "
         "override `c_stdlib_version` and `MACOSX_DEPLOYMENT_TARGET` locally."
     )
     baseline: str
