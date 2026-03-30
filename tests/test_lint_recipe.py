@@ -1675,9 +1675,12 @@ linter:
 
     def test_spdx_license(self):
         msg = (
-            "License is not an SPDX identifier (or a custom LicenseRef) nor an SPDX license expression.\n\n"
+            "License is not an SPDX identifier (or a custom LicenseRef) "
+            "nor an SPDX license expression.\n\n"
             "Documentation on acceptable licenses can be found "
-            "[here]( https://conda-forge.org/docs/maintainer/adding_pkgs.html#spdx-identifiers-and-expressions )."
+            "[conda-forge.org > Docs > Maintainer Documentation "
+            "> Contributing packages > SPDX Identifiers and Expressions]"
+            "(https://conda-forge.org/docs/maintainer/adding_pkgs.html#spdx-identifiers-and-expressions)."
         )
         licenses = {
             "BSD-100": False,
@@ -1704,7 +1707,9 @@ linter:
         msg = (
             "License exception is not an SPDX exception.\n\n"
             "Documentation on acceptable licenses can be found "
-            "[here]( https://conda-forge.org/docs/maintainer/adding_pkgs.html#spdx-identifiers-and-expressions )."
+            "[conda-forge.org > Docs > Maintainer Documentation "
+            "> Contributing packages > SPDX Identifiers and Expressions]"
+            "(https://conda-forge.org/docs/maintainer/adding_pkgs.html#spdx-identifiers-and-expressions)."
         )
         licenses = {
             "Apache 2.0 WITH LLVM-exception": True,

@@ -56,7 +56,7 @@ class CFNoCiSupport(_BaseMessage):
     """
 
     kind = "lint"
-    identifier = "CF-004"
+    identifier = "CF-003"
     message = (
         "The feedstock has no `.ci_support` files and thus will not build any packages."
     )
@@ -69,7 +69,7 @@ class CFNoEmptyVariantsFile(_BaseMessage):
     """
 
     kind = "lint"
-    identifier = "CF-005"
+    identifier = "CF-004"
     message = "The recipe should not have an empty `conda_build_config.yaml` file."
 
 
@@ -87,7 +87,7 @@ class CFNoCustomGHAWorkflows(_BaseMessage):
     """
 
     kind = "lint"
-    identifier = "CF-006"
+    identifier = "CF-005"
     message = (
         "conda-forge feedstocks cannot have custom Github Actions workflows. "
         "See https://github.com/conda-forge/conda-forge.github.io/issues/2750 "

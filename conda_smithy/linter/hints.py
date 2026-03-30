@@ -131,14 +131,14 @@ def hint_shellcheck_usage(recipe_dir, hints):
                     .splitlines()
                 )
                 hints.append(
-                    msg.ScriptShellcheckReport(
+                    msg.RecipeScriptShellcheckReport(
                         command=cmd,
                         output_lines=findings,
                     )
                 )
             elif p.returncode != 0:
                 # Something went wrong.
-                hints.append(msg.ScriptShellcheckFailure())
+                hints.append(msg.RecipeScriptShellcheckFailure())
 
 
 def hint_check_spdx(about_section, hints):

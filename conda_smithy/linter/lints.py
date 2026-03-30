@@ -740,7 +740,7 @@ def lint_osx_pins(recipe_dir, recipe_config_filename, lints, recipe_version):
 
     if "MACOSX_DEPLOYMENT_TARGET" in cbc_osx:
         lints.append(
-            msg.CBCMacOSDeploymentTargetRename(recipe_config_file=recipe_config_file)
+            msg.RCMacOSDeploymentTargetRename(recipe_config_file=recipe_config_file)
         )
 
     def sort_osx(versions):
@@ -758,7 +758,7 @@ def lint_osx_pins(recipe_dir, recipe_config_filename, lints, recipe_version):
 
     if "c_stdlib_version" in cbc_osx.keys():
         # only warn if version is below baseline
-        outdated_lint = msg.CBCMacOSDeploymentTargetBelow(
+        outdated_lint = msg.RCMacOSDeploymentTargetBelow(
             baseline_version=baseline_version[0]
         )
         if len(v_stdlib) == len(baseline_version):

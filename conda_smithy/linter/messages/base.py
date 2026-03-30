@@ -9,15 +9,6 @@ from dataclasses import asdict
 from inspect import cleandoc
 from typing import ClassVar, Literal, Self
 
-CATEGORIES: dict[str, str] = {
-    "CBC": "Variants configuration (`conda_build_config.yaml`, `variants.yml`)",
-    "FC": "Feedstock configuration (`conda-forge.yml`)",
-    "R": "All recipe versions",
-    "R0": "Recipe v0 (`meta.yaml`)",
-    "R1": "Recipe v1 (`recipe.yaml`)",
-    "CF": "Issues specific to conda-forge",
-}
-
 
 class _BaseMessage:
     """

@@ -9,8 +9,8 @@ from conda_smithy.linter.messages.base import _BaseMessage
 
 CATEGORIES = {
     "R": "All recipe versions",
-    "R0": "Only `meta.yaml`",
-    "R1": "Only `recipe.yaml`",
+    "R0": "Recipe v0 (`meta.yaml`)",
+    "R1": "Recipe v1 (`recipe.yaml`)",
 }
 RECIPE_VERSIONS: TypeAlias = Literal[0, 1]
 
@@ -254,9 +254,11 @@ class RecipePinnedNumpy(_BaseMessage):
     kind = "lint"
     identifier = "R-017"
     message = (
-        "Using pinned numpy packages is a deprecated pattern.  Consider "
+        "Using pinned numpy packages is a deprecated pattern. Consider "
         "using the method outlined "
-        "[here](https://conda-forge.org/docs/maintainer/knowledge_base.html#linking-numpy)."
+        "[conda-forge.org > Docs > Maintainer Documentation > "
+        "Knowledge Base > Building Against NumPy]"
+        "(https://conda-forge.org/docs/maintainer/knowledge_base.html#linking-numpy)."
     )
 
 
@@ -645,7 +647,7 @@ class RecipeNotParsableHint(_BaseMessage):
             )
         else:
             msg += (
-                "Your recipe  may not receive automatic updates and/or may not be compatible "
+                "Your recipe may not receive automatic updates and/or may not be compatible "
                 "with conda-forge's infrastructure. Please check the logs for "
                 "more information and ensure your recipe can be parsed."
             )
@@ -723,7 +725,7 @@ class RecipeSuggestNoarch(_BaseMessage):
 
 
 @dataclass(kw_only=True)
-class ScriptShellcheckReport(_BaseMessage):
+class RecipeScriptShellcheckReport(_BaseMessage):
     """
     This issue is raised when `shellcheck` is enabled and detects problems
     in your build `.sh` scripts.
@@ -755,7 +757,7 @@ class ScriptShellcheckReport(_BaseMessage):
 
 
 @dataclass(kw_only=True)
-class ScriptShellcheckFailure(_BaseMessage):
+class RecipeScriptShellcheckFailure(_BaseMessage):
     """
     This issue is raised when `shellcheck` is enabled but could not
     run successfully (something went wrong).
@@ -780,7 +782,9 @@ class RecipeLicenseSPDX(_BaseMessage):
         "License is not an SPDX identifier (or a custom LicenseRef) "
         "nor an SPDX license expression.\n\n"
         "Documentation on acceptable licenses can be found "
-        "[here]( https://conda-forge.org/docs/maintainer/adding_pkgs.html#spdx-identifiers-and-expressions )."
+        "[conda-forge.org > Docs > Maintainer Documentation "
+        "> Contributing packages > SPDX Identifiers and Expressions]"
+        "(https://conda-forge.org/docs/maintainer/adding_pkgs.html#spdx-identifiers-and-expressions)."
     )
 
 
@@ -796,7 +800,9 @@ class RecipeInvalidLicenseException(_BaseMessage):
     message = (
         "License exception is not an SPDX exception.\n\n"
         "Documentation on acceptable licenses can be found "
-        "[here]( https://conda-forge.org/docs/maintainer/adding_pkgs.html#spdx-identifiers-and-expressions )."
+        "[conda-forge.org > Docs > Maintainer Documentation "
+        "> Contributing packages > SPDX Identifiers and Expressions]"
+        "(https://conda-forge.org/docs/maintainer/adding_pkgs.html#spdx-identifiers-and-expressions)."
     )
 
 
@@ -1001,22 +1007,6 @@ class RecipeOldPythonSelectorsHint(_BaseMessage):
 
 
 @dataclass(kw_only=True)
-class RecipeLegacyToolchain(_BaseMessage):
-    """
-    The `toolchain` package is deprecated. Use compilers as outlined in
-    <https://conda-forge.org/docs/maintainer/knowledge_base.html#compilers>.
-    """
-
-    kind = "lint"
-    identifier = "R0-006"
-    message = (
-        "Using toolchain directly in this manner is deprecated.  Consider "
-        "using the compilers outlined "
-        "[here](https://conda-forge.org/docs/maintainer/knowledge_base.html#compilers)."
-    )
-
-
-@dataclass(kw_only=True)
 class RecipeNoarchSelectorsV0(_BaseMessage):
     """
     Noarch packages are not generally compatible with v0 selectors
@@ -1056,6 +1046,24 @@ class RecipeJinjaDefinitions(_BaseMessage):
         "<expression><one space>%}}`` form. See lines {lines}"
     )
     lines: list[int]
+
+
+@dataclass(kw_only=True)
+class RecipeLegacyToolchain(_BaseMessage):
+    """
+    The `toolchain` package is deprecated. Use compilers as outlined in
+    <https://conda-forge.org/docs/maintainer/knowledge_base.html#compilers>.
+    """
+
+    kind = "lint"
+    identifier = "R0-006"
+    message = (
+        "Using toolchain directly in this manner is deprecated. Consider "
+        "using the compilers outlined "
+        "[conda-forge.org > Docs > Maintainer Documentation > "
+        "Knowledge Base > Compilers]"
+        "(https://conda-forge.org/docs/maintainer/knowledge_base.html#compilers)."
+    )
 
 
 # endregion
