@@ -14,7 +14,6 @@ import pytest
 
 import conda_smithy.lint_recipe as linter
 from conda_smithy.linter import hints
-from conda_smithy.linter.messages.__main__ import generate_docs
 from conda_smithy.linter.utils import (
     CONDA_BUILD_TOOL,
     RATTLER_BUILD_TOOL,
@@ -4474,15 +4473,6 @@ def test_rattler_build_bld_bat_hint(recipe_file, has_bld_bat, should_hint):
             assert any(expected_message in hint for hint in hints)
         else:
             assert not any(expected_message in hint for hint in hints)
-
-
-def test_linter_docs_up_to_date():
-    repo_root = Path(__file__).parent.parent
-    linter_docs_path = repo_root / "LINTER.md"
-    original_linter_docs = linter_docs_path.read_text()
-    assert (
-        generate_docs("").strip() == original_linter_docs.strip()
-    ), "!!! TIP:\n\nRun 'python -m conda_smithy.linter.messages' to regenerate."
 
 
 def test_lint_v1_context_quotes():

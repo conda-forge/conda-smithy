@@ -3,10 +3,12 @@ import inspect
 import pkgutil
 import re
 from collections import defaultdict
+from pathlib import Path
 
 import pytest
 
 import conda_smithy.linter.messages as _messages_pkg
+from conda_smithy.linter.messages.__main__ import generate_docs
 from conda_smithy.linter.messages.base import _BaseMessage
 
 _EXCLUDED_MODULES = {"base", "__main__"}
@@ -46,6 +48,16 @@ def _module_classes_in_source_order(module):
     classes = _message_classes(module)
     classes.sort(key=definition_line_number)
     return [cls for cls in classes]
+
+
+def test_linter_docs_up_to_date():
+    """
+    If this test fails, run 'python -m conda_smithy.linter.messages' to regenerate.
+    """
+    repo_root = Path(__file__).parent.parent
+    linter_docs_path = repo_root / "LINTER.md"
+    original_linter_docs = linter_docs_path.read_text()
+    assert generate_docs("").strip() == original_linter_docs.strip()
 
 
 @pytest.mark.parametrize("module", MESSAGE_MODULES)
