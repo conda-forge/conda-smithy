@@ -1,3 +1,4 @@
+import dataclasses
 import importlib
 import inspect
 import pkgutil
@@ -121,3 +122,48 @@ def test_message_registry_integrity(module):
             f"{module.__name__}::{cls.__name__}: "
             f"found {numbers}, expected {expected}"
         )
+
+
+@pytest.mark.parametrize("module", MESSAGE_MODULES)
+def test_message_template_fields_are_valid(module):
+    """
+    Check that every `${word}` reference in a `message` string corresponds
+    to an actual dataclass field on the same class.
+
+    This catches typos and references to non-existent fields: `string.Template`
+    uses `safe_substitute`, so unknown `$name` tokens are silently left
+    as-is, meaning a misspelled field name would appear verbatim in the
+    rendered message shown to users.
+    """
+    _DOLLAR_BRACE_RE = re.compile(r"\$\{(\w+)\}")
+
+    for cls in _message_classes(module):
+        if not dataclasses.is_dataclass(cls):
+            continue
+
+        # Skip classes where `message` is a property (dynamic messages).
+        if isinstance(inspect.getattr_static(cls, "message", None), property):
+            continue
+
+        # Skip classes that override _render_attributes: they control the
+        # substitution dict themselves and may inject computed keys that are
+        # not dataclass fields (e.g. `dollar` derived from `recipe_version`).
+        # TODO: instead of skipping, instantiate the class with zero/default
+        # values, call _render_attributes() on the instance, and union its
+        # returned keys with field_names so injected keys are also validated.
+        if cls._render_attributes is not _BaseMessage._render_attributes:
+            continue
+
+        message = cls.message
+        field_names = {f.name for f in dataclasses.fields(cls)}
+
+        for match in _DOLLAR_BRACE_RE.finditer(message):
+            word = match.group(1)
+            assert word in field_names, (
+                f"'${{{word}}}' in the message of {module.__name__}.{cls.__name__} "
+                f"does not match any field of that class. "
+                f"Available fields: {sorted(field_names)}. "
+                f"If '{{{word}}}' is meant as a literal string, "
+                f"remove the '$' (use '{{{word}}}' instead). "
+                f"Full message: {message!r}"
+            )
