@@ -2393,18 +2393,6 @@ def test_github_actions_labels(py_recipe, jinja_env, label):
     if label:
         with open(config["exclusive_config_file"], "a") as f:
             f.write(f"\ngithub_actions_labels:\n  - {label}  # [linux64]\n")
-        if (recipe := Path(py_recipe.recipe, "recipe", "meta.yaml")).is_file():
-            with open(recipe, "a") as f:
-                f.write("\n{% set github_actions_labels = github_actions_labels %}\n")
-        else:
-            recipe = Path(py_recipe.recipe, "recipe", "recipe.yaml")
-            with open(recipe) as f:
-                contents = yaml.safe_load(f)
-            contents.setdefault("context", {})[
-                "github_actions_labels"
-            ] = "${{ github_actions_labels }}"
-            with open(recipe, "w") as f:
-                yaml.safe_dump(contents, f)
 
     configure_feedstock.render_github_actions(
         jinja_env=jinja_env,
