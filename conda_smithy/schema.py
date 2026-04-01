@@ -505,7 +505,7 @@ def conditional_value(typ: type, default: Any = None) -> BaseModel:
 
 class WorkflowSettings(BaseModel):
     store_build_artifacts: Optional[
-        Union[bool, conditional_value(bool, False), Nullable]
+        Union[bool, list[conditional_value(bool, False)], Nullable]
     ] = Field(
         default=[],
         description=cleandoc("""
