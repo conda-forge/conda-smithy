@@ -761,7 +761,7 @@ def _collapse_subpackage_variants(
     if not is_noarch:
         always_keep_keys.add("target_platform")
 
-    if forge_config["github_actions"]["self_hosted"]:
+    if forge_config["github_actions"].get("enabled"):
         always_keep_keys.add("github_actions_labels")
 
     all_used_vars.update(always_keep_keys)
