@@ -4,6 +4,19 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.58.1
+====================
+
+**Fixed:**
+
+* Ensure ``github_actions_labels`` is always considered during rerenders without having to mention it in recipe files. (#2505)
+
+**Authors:**
+
+* Jaime Rodríguez-Guerra
+
+
+
 v3.58.0
 ====================
 
