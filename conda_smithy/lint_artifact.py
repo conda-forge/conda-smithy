@@ -14,9 +14,11 @@ if TYPE_CHECKING:
 
 from enum import Enum
 
+
 class CondaInfoType(Enum):
     Index = 1
     Paths = 2
+
 
 def get_json(artifact: str | Path, info_type: CondaInfoType) -> dict[str, Any]:
     info_path = "paths.json" if info_type == CondaInfoType.Paths else "index.json"
@@ -210,7 +212,10 @@ def format_errors_warnings(
 
 
 def main(artifact: str | Path) -> tuple[list[str], list[str]]:
-    paths = [item["_path"] for item in get_json(artifact, info_type=CondaInfoType.Paths)["paths"]]
+    paths = [
+        item["_path"]
+        for item in get_json(artifact, info_type=CondaInfoType.Paths)["paths"]
+    ]
     if not paths:
         return [], []
 
