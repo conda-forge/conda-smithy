@@ -135,7 +135,7 @@ def test_message_template_fields_are_valid(module):
     as-is, meaning a misspelled field name would appear verbatim in the
     rendered message shown to users.
     """
-    _DOLLAR_BRACE_RE = re.compile(r"\$\{(\w+)\}")
+    _dollar_brace_re = re.compile(r"\$\{(\w+)\}")
 
     for cls in _message_classes(module):
         if not dataclasses.is_dataclass(cls):
@@ -157,7 +157,7 @@ def test_message_template_fields_are_valid(module):
         message = cls.message
         field_names = {f.name for f in dataclasses.fields(cls)}
 
-        for match in _DOLLAR_BRACE_RE.finditer(message):
+        for match in _dollar_brace_re.finditer(message):
             word = match.group(1)
             assert word in field_names, (
                 f"'${{{word}}}' in the message of {module.__name__}.{cls.__name__} "
