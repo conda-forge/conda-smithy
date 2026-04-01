@@ -788,7 +788,10 @@
               "type": "boolean"
             },
             {
-              "$ref": "#/$defs/ConditionalValue__class__bool__"
+              "items": {
+                "$ref": "#/$defs/ConditionalValue__class__bool__"
+              },
+              "type": "array"
             },
             {
               "$ref": "#/$defs/Nullable"
