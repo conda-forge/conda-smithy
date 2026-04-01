@@ -2,7 +2,7 @@
 
 * Add a new top-level ``workflow_settings`` configuration key for
   ``conda-forge.yml`` that provides more fine-grained configuration for
-  workflows. initially, it can be used to control ``store_build_artifacts``.
+  workflows. Initially, it can be used to control ``store_build_artifacts``. (#2500)
 
 **Changed:**
 

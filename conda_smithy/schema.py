@@ -496,9 +496,7 @@ def conditional_value(typ: type, default: Any = None) -> BaseModel:
         value=(
             typ,
             Field(
-                description=cleandoc("""
-                Option value
-                """),
+                description="Option value",
                 default=default,
             ),
         ),
