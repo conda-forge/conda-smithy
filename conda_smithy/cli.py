@@ -732,8 +732,17 @@ class CISkeleton(Subcommand):
         print(POST_SKELETON_MESSAGE.format(args=args).strip())
 
 
-def main():
+def main(argv=None):
+    """Run the conda-smithy command-line interface.
+
+    argv is the list of arguments after the program name (like ``sys.argv[1:]``);
+    if None, ``sys.argv[1:]`` is used (e.g. when invoked as the ``conda-smithy``
+    console script).
+    """
     logging.basicConfig(level=logging.INFO)
+
+    if argv is None:
+        argv = sys.argv[1:]
 
     parser = argparse.ArgumentParser(
         prog="conda smithy",
@@ -752,10 +761,10 @@ def main():
         help="Show conda-smithy's version, and exit.",
     )
 
-    if not sys.argv[1:]:
+    if not argv:
         args = parser.parse_args(["--help"])
     else:
-        args = parser.parse_args()
+        args = parser.parse_args(argv)
 
     args.subcommand_func(args)
 

@@ -22,6 +22,9 @@ home = "https://github.com/conda-forge/conda-smithy"
 feedstocks = "conda_smithy.feedstocks:main"
 conda-smithy = "conda_smithy.cli:main"
 
+[project.entry-points.conda]
+conda-smithy = "conda_smithy.plugin"
+
 [tool.setuptools]
 packages = ["conda_smithy"]
 zip-safe = false
