@@ -254,6 +254,7 @@ jobs:
       env:
         CI: github_actions
         CONFIG: {% raw %}${{ matrix.CONFIG }}{% endraw %}
+        SHORT_CONFIG: {% raw %}${{ matrix.SHORT_CONFIG }}{% endraw %}
         JOB_STATUS: {% raw %}${{ steps.determine-status.outputs.status }}{% endraw %}
         OS: {% raw %}${{ matrix.os }}{% endraw %}
       run: |
