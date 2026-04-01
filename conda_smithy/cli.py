@@ -681,7 +681,7 @@ class ArtifactLint(Subcommand):
     def __init__(self, parser):
         super().__init__(
             parser,
-            "Lint the contents of one or conda artifacts.",
+            "Lint the contents of one or more conda artifacts.",
         )
         scp = self.subcommand_parser
         scp.add_argument(
@@ -703,7 +703,8 @@ class ArtifactLint(Subcommand):
                 print(f"\n**{artifact}**")
                 print("\n".join(lints))
                 print("\n".join(hints))
-                exit_code = 1
+                if lints:
+                    exit_code = 1
         # Exit code 1 for some lint, 0 for no lint.
         sys.exit(exit_code)
 

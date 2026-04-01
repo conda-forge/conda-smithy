@@ -12,18 +12,18 @@ if TYPE_CHECKING:
     from typing import Any
 
 
-def get_paths_json(artifact: str | Path) -> dict[str, Any]:
-    for tarfile, tarinfo in stream_conda_info(artifact):
-        if tarinfo.name == "info/paths.json":
-            return json.load(tarfile.extractfile(tarinfo))
-    raise ValueError(f"Artifact '{artifact}' does not contain 'info/paths.json'")
+from enum import Enum
 
+class CondaInfoType(Enum):
+    Index = 1
+    Paths = 2
 
-def get_index_json(artifact: str | Path) -> dict[str, Any]:
+def get_json(artifact: str | Path, info_type: CondaInfoType) -> dict[str, Any]:
+    info_path = "paths.json" if info_type == CondaInfoType.Paths else "index.json"
     for tarfile, tarinfo in stream_conda_info(artifact):
-        if tarinfo.name == "info/index.json":
+        if tarinfo.name == f"info/{info_path}":
             return json.load(tarfile.extractfile(tarinfo))
-    raise ValueError(f"Artifact '{artifact}' does not contain 'info/index.json'")
+    raise ValueError(f"Artifact '{artifact}' does not contain 'info/{info_path}'")
 
 
 def _depends_on(index: dict[str, Any], name: str) -> bool:
@@ -149,7 +149,7 @@ def check_path_patterns(
             allowed.append(r"node_modules/.*")
         elif name == "python":
             # Python interpreters drop some files here, Windows only
-            allowed.append(r"[Dd][Ll][Ll])s/.*")
+            allowed.append(r"[Dd][Ll][Ll]s/.*")
             allowed.append(r"[Ll]ibs?/.*")
             allowed.append(r"[Tt]ools/.*")
         if _depends_on(index, "python"):
@@ -210,7 +210,7 @@ def format_errors_warnings(
 
 
 def main(artifact: str | Path) -> tuple[list[str], list[str]]:
-    paths = [item["_path"] for item in get_paths_json(artifact)["paths"]]
+    paths = [item["_path"] for item in get_json(artifact, info_type=CondaInfoType.Paths)["paths"]]
     if not paths:
         return [], []
 
@@ -219,7 +219,7 @@ def main(artifact: str | Path) -> tuple[list[str], list[str]]:
 
     errors, warnings = check_path_patterns(
         paths=paths,
-        index=get_index_json(artifact),
+        index=get_json(artifact, info_type=CondaInfoType.Index),
     )
     format_errors_warnings(errors, warnings, lints, hints)
 
