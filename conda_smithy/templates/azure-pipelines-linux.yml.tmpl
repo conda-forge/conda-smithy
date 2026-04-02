@@ -87,7 +87,7 @@ jobs:
 {%- for secret in secrets %}
       {{ secret }}: $({{ secret }})
 {%- endfor %}
-{%- if store_linux_build_artifacts %}
+{%- if "linux" in workflow_settings_processed.store_build_artifacts %}
 
   - script: |
         export CI=azure

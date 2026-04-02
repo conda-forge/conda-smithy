@@ -33,7 +33,7 @@ jobs:
 {%- for secret in secrets %}
       {{ secret }}: $({{ secret }})
 {%- endfor %}
-{%- if store_osx_build_artifacts %}
+{%- if "osx" in workflow_settings_processed.store_build_artifacts %}
 
   - script: |
       export CI=azure
