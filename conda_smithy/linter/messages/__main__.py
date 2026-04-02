@@ -109,7 +109,8 @@ def generate_docs(output_file: str | None = None) -> str:
                         examples.extend(
                             [
                                 "**Message examples**",
-                                *[quote(sample) for sample in samples],
+                                "",
+                                *[quote(str(sample)) + "\n" for sample in samples],
                             ]
                         )
                 else:
@@ -131,7 +132,7 @@ def generate_docs(output_file: str | None = None) -> str:
                     [
                         "**Message examples**",
                         "",
-                        *[quote(sample) for sample in samples],
+                        *[quote(str(sample)) + "\n" for sample in samples],
                     ]
                 )
             if not examples:

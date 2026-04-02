@@ -2,9 +2,15 @@
 Messages exclusive to conda-forge recipes.
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 from conda_smithy.linter.messages.base import _BaseMessage
+
+if TYPE_CHECKING:
+    from typing import Self
 
 CATEGORIES = {
     "CF": "conda-forge specific rules",
@@ -28,6 +34,13 @@ class CFMaintainerExists(_BaseMessage):
             "maintainer": self.maintainer,
             "team_or": "team " if "/" in self.maintainer else "",
         }
+
+    @classmethod
+    def samples(cls) -> list[Self]:
+        return [
+            cls(maintainer="@banned-user"),
+            cls(maintainer="@conda-forge/deleted-team"),
+        ]
 
 
 @dataclass(kw_only=True)

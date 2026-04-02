@@ -18,7 +18,7 @@ Categories:
 ### ~~`CBC-000`: `CBCMacOSDeploymentTargetConflict`~~
 
 - Type: 🚨 Lint
-- Added in: conda-smithy <3.28.
+- Added in: conda-smithy <3.56.
 - **Deprecated in: conda-smithy 3.56.0**
 
 https://github.com/conda-forge/conda-forge.github.io/issues/2102
@@ -33,7 +33,7 @@ https://github.com/conda-forge/conda-forge.github.io/issues/2102
 ### `CBC-001`: `CBCMacOSDeploymentTargetBelowStdlib`
 
 - Type: 🚨 Lint
-- Added in: conda-smithy <3.28.
+- Added in: conda-smithy <3.56.
 
 https://github.com/conda-forge/conda-forge.github.io/issues/2102
 
@@ -50,7 +50,7 @@ https://github.com/conda-forge/conda-forge.github.io/issues/2102
 ### `CF-001`: `CFMaintainerExists`
 
 - Type: 🚨 Lint
-- Added in: conda-smithy <3.28.
+- Added in: conda-smithy <3.56.
 
 Maintainers listed in `extra.recipe-maintainers` must be valid Github usernames
 or `@conda-forge/*` teams.
@@ -59,12 +59,18 @@ or `@conda-forge/*` teams.
 
 > Recipe maintainer \${team_or}"\${maintainer}" does not exist
 
+**Message examples**
+
+> Recipe maintainer "@banned-user" does not exist
+
+> Recipe maintainer team "@conda-forge/deleted-team" does not exist
+
 
 <a id='CF-002'></a>
 ### `CF-002`: `CFPackageToAvoid`
 
 - Type: ℹ️ Hint
-- Added in: conda-smithy <3.28.
+- Added in: conda-smithy <3.56.
 
 Some package names may not be used in recipes directly, or under some circumstances.
 
@@ -80,7 +86,7 @@ The full list of package names and their explanations can be found in
 ### `CF-003`: `CFNoCiSupport`
 
 - Type: 🚨 Lint
-- Added in: conda-smithy <3.28.
+- Added in: conda-smithy <3.56.
 
 No `.ci_support/*.yaml` files could be found, which means that build matrix is empty
 and no packages will be built.
@@ -96,7 +102,7 @@ This is usually caused by a misconfiguration of your recipe file (e.g. `build.sk
 ### `CF-004`: `CFNoEmptyVariantsFile`
 
 - Type: 🚨 Lint
-- Added in: conda-smithy <3.28.
+- Added in: conda-smithy <3.56.
 
 Variants files can't be empty.
 
@@ -108,7 +114,7 @@ Variants files can't be empty.
 ### `CF-005`: `CFNoCustomGHAWorkflows`
 
 - Type: 🚨 Lint
-- Added in: conda-smithy <3.28.
+- Added in: conda-smithy <3.56.
 
 Due to its stature in the open-source community, conda-forge has enhanced
 access to certain CI services. This access is a community resource entrusted
@@ -130,7 +136,7 @@ cannot be rectified.
 ### `FC-001`: `FCNoDuplicateKeys`
 
 - Type: 🚨 Lint
-- Added in: conda-smithy <3.28.
+- Added in: conda-smithy <3.56.
 
 `conda-forge.yml` must not contain duplicate keys.
 
@@ -145,7 +151,7 @@ cannot be rectified.
 ### `R-000`: `RecipeUnexpectedSection`
 
 - Type: 🚨 Lint
-- Added in: conda-smithy <3.28.
+- Added in: conda-smithy <3.56.
 
 Recipe files must not contain unknown top-level keys.
 
@@ -158,7 +164,7 @@ Recipe files must not contain unknown top-level keys.
 ### `R-001`: `RecipeSectionOrder`
 
 - Type: 🚨 Lint
-- Added in: conda-smithy <3.28.
+- Added in: conda-smithy <3.56.
 
 The top-level sections of a recipe file must always follow the same order.
 
@@ -171,7 +177,7 @@ The top-level sections of a recipe file must always follow the same order.
 ### `R-002`: `RecipeMissingAboutItem`
 
 - Type: 🚨 Lint
-- Added in: conda-smithy <3.28.
+- Added in: conda-smithy <3.56.
 
 The `about` section requires three fields: homepage (`home` in v1), license, and summary.
 
@@ -184,7 +190,7 @@ The `about` section requires three fields: homepage (`home` in v1), license, and
 ### `R-003`: `RecipeNoMaintainers`
 
 - Type: 🚨 Lint
-- Added in: conda-smithy <3.28.
+- Added in: conda-smithy <3.56.
 
 All recipes must list at least one maintainer under `extra/recipe-maintainers`.
 
@@ -196,7 +202,7 @@ All recipes must list at least one maintainer under `extra/recipe-maintainers`.
 ### `R-004`: `RecipeMaintainersMustBeList`
 
 - Type: 🚨 Lint
-- Added in: conda-smithy <3.28.
+- Added in: conda-smithy <3.56.
 
 The `extra/recipe-maintainers` only accepts a list of strings as a value.
 
@@ -208,7 +214,7 @@ The `extra/recipe-maintainers` only accepts a list of strings as a value.
 ### `R-005`: `RecipeRequiredTests`
 
 - Type: 🚨 Lint
-- Added in: conda-smithy <3.28.
+- Added in: conda-smithy <3.56.
 
 All recipes must have a non-empty `test` section.
 
@@ -220,7 +226,7 @@ All recipes must have a non-empty `test` section.
 ### `R-006`: `RecipeRecommendedTests`
 
 - Type: ℹ️ Hint
-- Added in: conda-smithy <3.28.
+- Added in: conda-smithy <3.56.
 
 All recipes must have a non-empty `test` section.
 
@@ -233,7 +239,7 @@ All recipes must have a non-empty `test` section.
 ### `R-007`: `RecipeUnknownLicense`
 
 - Type: 🚨 Lint
-- Added in: conda-smithy <3.28.
+- Added in: conda-smithy <3.56.
 
 All recipes must have a license identifier, but it can't be "unknown".
 
@@ -245,7 +251,7 @@ All recipes must have a license identifier, but it can't be "unknown".
 ### `R-008`: `RecipeBuildNumberMissing`
 
 - Type: 🚨 Lint
-- Added in: conda-smithy <3.28.
+- Added in: conda-smithy <3.56.
 
 All recipes must define a `build.number` value.
 
@@ -257,7 +263,7 @@ All recipes must define a `build.number` value.
 ### `R-009`: `RecipeRequirementsOrder`
 
 - Type: 🚨 Lint
-- Added in: conda-smithy <3.28.
+- Added in: conda-smithy <3.56.
 
 The different subcategories of the `requirements` section must follow
 a strict order: `build`, `host`, `run`, `run_constrained`.
@@ -271,7 +277,7 @@ a strict order: `build`, `host`, `run`, `run_constrained`.
 ### `R-010`: `RecipeLicenseLicense`
 
 - Type: 🚨 Lint
-- Added in: conda-smithy <3.28.
+- Added in: conda-smithy <3.56.
 
 Licenses should omit the term 'License' in its name.
 
@@ -283,7 +289,7 @@ Licenses should omit the term 'License' in its name.
 ### `R-011`: `RecipeTooManyEmptyLines`
 
 - Type: 🚨 Lint
-- Added in: conda-smithy <3.28.
+- Added in: conda-smithy <3.56.
 
 Recipe files should end with a single empty line, not more.
 
@@ -296,7 +302,7 @@ Recipe files should end with a single empty line, not more.
 ### `R-012`: `RecipeTooFewEmptyLines`
 
 - Type: 🚨 Lint
-- Added in: conda-smithy <3.28.
+- Added in: conda-smithy <3.56.
 
 Recipe files should end with a single empty line.
 
@@ -308,7 +314,7 @@ Recipe files should end with a single empty line.
 ### `R-013`: `RecipeLicenseFamily`
 
 - Type: 🚨 Lint
-- Added in: conda-smithy <3.28.
+- Added in: conda-smithy <3.56.
 
 The field `license_file` must be always present.
 
@@ -320,7 +326,7 @@ The field `license_file` must be always present.
 ### `R-014`: `RecipeName`
 
 - Type: 🚨 Lint
-- Added in: conda-smithy <3.28.
+- Added in: conda-smithy <3.56.
 
 The recipe `name` can only contain certain characters:
 
@@ -336,7 +342,7 @@ The recipe `name` can only contain certain characters:
 ### `R-015`: `RecipeMissingVersion`
 
 - Type: 🚨 Lint
-- Added in: conda-smithy <3.28.
+- Added in: conda-smithy <3.56.
 
 The package `version` field is required.
 
@@ -348,7 +354,7 @@ The package `version` field is required.
 ### `R-016`: `RecipeInvalidVersion`
 
 - Type: 🚨 Lint
-- Added in: conda-smithy <3.28.
+- Added in: conda-smithy <3.56.
 
 The package `version` field must be a valid version string.
 
@@ -361,7 +367,7 @@ The package `version` field must be a valid version string.
 ### `R-017`: `RecipePinnedNumpy`
 
 - Type: 🚨 Lint
-- Added in: conda-smithy <3.28.
+- Added in: conda-smithy <3.56.
 
 See <https://conda-forge.org/docs/maintainer/knowledge_base.html#linking-numpy>
 
@@ -373,7 +379,7 @@ See <https://conda-forge.org/docs/maintainer/knowledge_base.html#linking-numpy>
 ### `R-018`: `RecipeUnexpectedSubsection`
 
 - Type: 🚨 Lint
-- Added in: conda-smithy <3.28.
+- Added in: conda-smithy <3.56.
 
 This check ensures that the passed recipe conforms to the expected recipe v0 schema.
 
@@ -389,7 +395,7 @@ https://github.com/conda/conda-build/blob/25.9.0/conda_build/metadata.py#L619)
 ### `R-019`: `RecipeSourceHash`
 
 - Type: 🚨 Lint
-- Added in: conda-smithy <3.28.
+- Added in: conda-smithy <3.56.
 
 All recipe source URLs must have a hash checksum for integrity checks.
 
@@ -401,7 +407,7 @@ All recipe source URLs must have a hash checksum for integrity checks.
 ### `R-020`: `RecipeNoarchValue`
 
 - Type: 🚨 Lint
-- Added in: conda-smithy <3.28.
+- Added in: conda-smithy <3.56.
 
 The `build.noarch` field can only take `python` or `generic` as a value.
 
@@ -414,7 +420,7 @@ The `build.noarch` field can only take `python` or `generic` as a value.
 ### `R-021`: `RecipeRequirementJoinVersionOperator`
 
 - Type: 🚨 Lint
-- Added in: conda-smithy <3.28.
+- Added in: conda-smithy <3.56.
 
 conda recipes should use the three-field matchspec syntax to express requirements:
 `name [version [build]]`. This means having no spaces between operator and version
@@ -429,7 +435,7 @@ literals.
 ### `R-022`: `RecipeRequirementSeparateNameVersion`
 
 - Type: 🚨 Lint
-- Added in: conda-smithy <3.28.
+- Added in: conda-smithy <3.56.
 
 conda recipes should use the three-field matchspec syntax to express requirements:
 `name [version [build]]`. This means having a space between name and version.
@@ -443,7 +449,7 @@ conda recipes should use the three-field matchspec syntax to express requirement
 ### `R-023`: `RecipeLanguageHostRun`
 
 - Type: 🚨 Lint
-- Added in: conda-smithy <3.28.
+- Added in: conda-smithy <3.56.
 
 Packages may depend on certain languages (e.g. Python, R) that require depending
 on the language runtime both in `host` and `run`.
@@ -457,7 +463,7 @@ on the language runtime both in `host` and `run`.
 ### `R-024`: `RecipeLanguageHostRunUnpinned`
 
 - Type: 🚨 Lint
-- Added in: conda-smithy <3.28.
+- Added in: conda-smithy <3.56.
 
 Packages may depend on certain languages (e.g. Python, R) that require depending
 on the language runtime both in `host` and `run`. They should not pin it to a
@@ -472,7 +478,7 @@ particular version when the package is not `noarch`.
 ### `R-025`: `RecipeJinjaExpression`
 
 - Type: ℹ️ Hint
-- Added in: conda-smithy <3.28.
+- Added in: conda-smithy <3.56.
 
 Jinja expressions should add a space between the double curly braces.
 
@@ -485,7 +491,7 @@ Jinja expressions should add a space between the double curly braces.
 ### `R-026`: `RecipePythonLowerBound`
 
 - Type: 🚨 Lint
-- Added in: conda-smithy <3.28.
+- Added in: conda-smithy <3.56.
 
 Noarch Python recipes should always pin the lower bound on their `python` requirement.
 
@@ -498,7 +504,7 @@ Noarch Python recipes should always pin the lower bound on their `python` requir
 ### `R-027`: `RecipePinSubpackagePinCompatible`
 
 - Type: 🚨 Lint
-- Added in: conda-smithy <3.28.
+- Added in: conda-smithy <3.56.
 
 The Jinja functions `pin_subpackage` and `pin_compatible` may be confused
 because both would add version constraints to a package name. However, they
@@ -518,7 +524,7 @@ have different purposes.
 ### `R-028`: `RecipeCompiledWheelsNotAllowed`
 
 - Type: 🚨 Lint
-- Added in: conda-smithy <3.28.
+- Added in: conda-smithy <3.56.
 
 Python wheels are often discouraged as package sources. This is especially the case
 for compiled wheels, which are forbidden.
@@ -532,7 +538,7 @@ for compiled wheels, which are forbidden.
 ### `R-029`: `RecipePureWheelsNotAllowed`
 
 - Type: 🚨 Lint
-- Added in: conda-smithy <3.28.
+- Added in: conda-smithy <3.56.
 
 Python wheels are often discouraged as package sources. This is also the case
 for pure Python wheels when building non-noarch packages.
@@ -546,7 +552,7 @@ for pure Python wheels when building non-noarch packages.
 ### `R-030`: `RecipePureWheelsNotAllowedNoarch`
 
 - Type: ℹ️ Hint
-- Added in: conda-smithy <3.28.
+- Added in: conda-smithy <3.56.
 
 Python wheels are often discouraged as package sources. However, pure Python
 wheels may be used as a source for noarch Python packages, although sdists are preferred.
@@ -560,7 +566,7 @@ wheels may be used as a source for noarch Python packages, although sdists are p
 ### `R-031`: `RecipeRustLicenses`
 
 - Type: 🚨 Lint
-- Added in: conda-smithy <3.28.
+- Added in: conda-smithy <3.56.
 
 <https://conda-forge.org/docs/maintainer/adding_pkgs/#rust>
 
@@ -572,7 +578,7 @@ wheels may be used as a source for noarch Python packages, although sdists are p
 ### `R-032`: `RecipeGoLicenses`
 
 - Type: 🚨 Lint
-- Added in: conda-smithy <3.28.
+- Added in: conda-smithy <3.56.
 
 <https://conda-forge.org/docs/maintainer/adding_pkgs/#go>
 
@@ -584,7 +590,7 @@ wheels may be used as a source for noarch Python packages, although sdists are p
 ### `R-033`: `RecipeStdlibJinja`
 
 - Type: 🚨 Lint
-- Added in: conda-smithy <3.28.
+- Added in: conda-smithy <3.56.
 
 https://github.com/conda-forge/conda-forge.github.io/issues/2102
 
@@ -597,7 +603,7 @@ https://github.com/conda-forge/conda-forge.github.io/issues/2102
 ### `R-034`: `RecipeStdlibSysroot`
 
 - Type: 🚨 Lint
-- Added in: conda-smithy <3.28.
+- Added in: conda-smithy <3.56.
 
 https://github.com/conda-forge/conda-forge.github.io/issues/2102
 
@@ -610,7 +616,7 @@ https://github.com/conda-forge/conda-forge.github.io/issues/2102
 ### `R-035`: `RecipeStdlibOsx`
 
 - Type: 🚨 Lint
-- Added in: conda-smithy <3.28.
+- Added in: conda-smithy <3.56.
 
 https://github.com/conda-forge/conda-forge.github.io/issues/2102
 
@@ -623,7 +629,7 @@ https://github.com/conda-forge/conda-forge.github.io/issues/2102
 ### `R-036`: `RecipeNotParsableLint`
 
 - Type: 🚨 Lint
-- Added in: conda-smithy <3.28.
+- Added in: conda-smithy <3.56.
 
 The conda recipe should be parsable by at least one backend.
 If none can parse it, this constitutes an error that needs to be remediated.
@@ -637,7 +643,7 @@ If none can parse it, this constitutes an error that needs to be remediated.
 ### `R-037`: `RecipeNotParsableHint`
 
 - Type: ℹ️ Hint
-- Added in: conda-smithy <3.28.
+- Added in: conda-smithy <3.56.
 
 The conda recipe should be parsable by at least one backend.
 Sometimes, only some backends fail, which is not critical, but should be looked into.
@@ -650,7 +656,7 @@ _No examples available yet_.
 ### `R-038`: `RecipePythonIsAbi3Bool`
 
 - Type: 🚨 Lint
-- Added in: conda-smithy <3.28.
+- Added in: conda-smithy <3.56.
 
 https://github.com/conda-forge/conda-forge.github.io/issues/2102
 
@@ -662,7 +668,7 @@ https://github.com/conda-forge/conda-forge.github.io/issues/2102
 ### `R-039`: `RecipeExtraFeedstockNameSuffix`
 
 - Type: 🚨 Lint
-- Added in: conda-smithy <3.28.
+- Added in: conda-smithy <3.56.
 
 https://github.com/conda-forge/conda-forge.github.io/issues/2102
 
@@ -674,7 +680,7 @@ https://github.com/conda-forge/conda-forge.github.io/issues/2102
 ### `R-040`: `RecipeVersionParsedAsFloat`
 
 - Type: 🚨 Lint
-- Added in: conda-smithy <3.28.
+- Added in: conda-smithy <3.56.
 
 https://github.com/conda-forge/conda-forge.github.io/issues/2102
 
@@ -687,7 +693,7 @@ https://github.com/conda-forge/conda-forge.github.io/issues/2102
 ### `R-041`: `RecipeSuggestNoarch`
 
 - Type: ℹ️ Hint
-- Added in: conda-smithy <3.28.
+- Added in: conda-smithy <3.56.
 
 `noarch` packages are strongly preferred when possible.
 See https://conda-forge.org/docs/maintainer/knowledge_base.html#noarch-builds.
@@ -700,7 +706,7 @@ See https://conda-forge.org/docs/maintainer/knowledge_base.html#noarch-builds.
 ### `R-042`: `RecipeScriptShellcheckReport`
 
 - Type: ℹ️ Hint
-- Added in: conda-smithy <3.28.
+- Added in: conda-smithy <3.56.
 
 This issue is raised when `shellcheck` is enabled and detects problems
 in your build `.sh` scripts.
@@ -715,7 +721,7 @@ _No examples available yet_.
 ### `R-043`: `RecipeScriptShellcheckFailure`
 
 - Type: ℹ️ Hint
-- Added in: conda-smithy <3.28.
+- Added in: conda-smithy <3.56.
 
 This issue is raised when `shellcheck` is enabled but could not
 run successfully (something went wrong).
@@ -728,7 +734,7 @@ run successfully (something went wrong).
 ### `R-044`: `RecipeLicenseSPDX`
 
 - Type: ℹ️ Hint
-- Added in: conda-smithy <3.28.
+- Added in: conda-smithy <3.56.
 
 The `license` field must be a valid SPDX identifier.
 
@@ -744,7 +750,7 @@ See list at [`licenses.txt`](https://github.com/conda-forge/conda-smithy/blob/ma
 ### `R-045`: `RecipeInvalidLicenseException`
 
 - Type: ℹ️ Hint
-- Added in: conda-smithy <3.28.
+- Added in: conda-smithy <3.56.
 
 The `license` field may accept some SPDX exception expressions, as controlled
 in [this file](https://github.com/conda-forge/conda-smithy/blob/main/conda_smithy/linter/license_exceptions.txt)
@@ -759,7 +765,7 @@ in [this file](https://github.com/conda-forge/conda-smithy/blob/main/conda_smith
 ### `R-046`: `RecipePythonBuildBackendHost`
 
 - Type: ℹ️ Hint
-- Added in: conda-smithy <3.28.
+- Added in: conda-smithy <3.56.
 
 Build backends in Python packages must be explictly added to `host`.
 
@@ -772,7 +778,7 @@ Build backends in Python packages must be explictly added to `host`.
 ### `R-047`: `RecipePythonMinPin`
 
 - Type: ℹ️ Hint
-- Added in: conda-smithy <3.28.
+- Added in: conda-smithy <3.56.
 
 Python packages should depend on certain `>={min_version}` at runtime,
 but build and test against `{min_version}.*`.
@@ -788,7 +794,7 @@ but build and test against `{min_version}.*`.
 ### `R-048`: `RecipeSpaceSeparatedSpecs`
 
 - Type: ℹ️ Hint
-- Added in: conda-smithy <3.28.
+- Added in: conda-smithy <3.56.
 
 Prefer `name [version [build]]` match spec syntax.
 
@@ -803,7 +809,7 @@ Prefer `name [version [build]]` match spec syntax.
 ### `R-049`: `RecipeOsVersion`
 
 - Type: ℹ️ Hint
-- Added in: conda-smithy <3.28.
+- Added in: conda-smithy <3.56.
 
 Prefer `name [version [build]]` match spec syntax.
 
@@ -816,7 +822,7 @@ Prefer `name [version [build]]` match spec syntax.
 ### `R-050`: `RecipeUsePip`
 
 - Type: ℹ️ Hint
-- Added in: conda-smithy <3.28.
+- Added in: conda-smithy <3.56.
 
 Python packages should be built with `pip install ...`, not `python setup.py install`,
 which is deprecated.
@@ -829,7 +835,7 @@ which is deprecated.
 ### `R-051`: `RecipeUsePyPiOrg`
 
 - Type: ℹ️ Hint
-- Added in: conda-smithy <3.28.
+- Added in: conda-smithy <3.56.
 
 Grayskull and the conda-forge example recipe used to have pypi.io as a default,
 but the canonical URL is now PyPI.org.
@@ -847,7 +853,7 @@ See https://github.com/conda-forge/staged-recipes/pull/27946.
 ### `R0-001`: `RecipeFormattedSelectors`
 
 - Type: 🚨 Lint
-- Added in: conda-smithy <3.28.
+- Added in: conda-smithy <3.56.
 
 Recipe format v0 (`meta.yaml`) supports the notion of line selectors
 as trailing comments:
@@ -870,7 +876,7 @@ The closing bracket must not be surrounded by spaces either.
 ### `R0-002`: `RecipeOldPythonSelectorsLint`
 
 - Type: 🚨 Lint
-- Added in: conda-smithy <3.28.
+- Added in: conda-smithy <3.56.
 
 Recipe v0 selectors used to include one Python version selector
 per release, like `py27` for Python 2.7 and `py35` for Python 3.5.
@@ -885,7 +891,7 @@ This was deprecated in favor of the `py` integer, which is preferred.
 ### `R0-003`: `RecipeOldPythonSelectorsHint`
 
 - Type: ℹ️ Hint
-- Added in: conda-smithy <3.28.
+- Added in: conda-smithy <3.56.
 
 Recipe v0 selectors (see [`R0-002`](#r0-002)) used to include one Python
 version selector per release, like `py27` for Python 2.7 and `py35` for Python 3.5.
@@ -900,7 +906,7 @@ This was deprecated in favor of the `py` integer, which is preferred.
 ### `R0-004`: `RecipeNoarchSelectorsV0`
 
 - Type: 🚨 Lint
-- Added in: conda-smithy <3.28.
+- Added in: conda-smithy <3.56.
 
 Noarch packages are not generally compatible with v0 selectors
 
@@ -914,7 +920,7 @@ Noarch packages are not generally compatible with v0 selectors
 ### `R0-005`: `RecipeJinjaDefinitions`
 
 - Type: 🚨 Lint
-- Added in: conda-smithy <3.28.
+- Added in: conda-smithy <3.56.
 
 In v0 recipes, Jinja definitions must follow a particular style.
 
@@ -927,7 +933,7 @@ In v0 recipes, Jinja definitions must follow a particular style.
 ### `R0-006`: `RecipeLegacyToolchain`
 
 - Type: 🚨 Lint
-- Added in: conda-smithy <3.28.
+- Added in: conda-smithy <3.56.
 
 The `toolchain` package is deprecated. Use compilers as outlined in
 <https://conda-forge.org/docs/maintainer/knowledge_base.html#compilers>.
@@ -943,7 +949,7 @@ The `toolchain` package is deprecated. Use compilers as outlined in
 ### `R1-001`: `RecipeNoCommentSelectors`
 
 - Type: 🚨 Lint
-- Added in: conda-smithy <3.28.
+- Added in: conda-smithy <3.56.
 
 Recipe v0 selectors (see [`R0-002`](#r0-002)) are not supported in v1 recipes.
 
@@ -956,7 +962,7 @@ Recipe v0 selectors (see [`R0-002`](#r0-002)) are not supported in v1 recipes.
 ### `R1-002`: `RecipeNoarchSelectorsV1`
 
 - Type: 🚨 Lint
-- Added in: conda-smithy <3.28.
+- Added in: conda-smithy <3.56.
 
 Noarch packages are not generally compatible with v1 conditional blocks.
 
@@ -969,7 +975,7 @@ Noarch packages are not generally compatible with v1 conditional blocks.
 ### `R1-003`: `RecipeRattlerBldBat`
 
 - Type: ℹ️ Hint
-- Added in: conda-smithy <3.28.
+- Added in: conda-smithy <3.56.
 
 `rattler-build` does not use `bld.bat` scripts, but `build.bat`.
 
@@ -984,7 +990,7 @@ Noarch packages are not generally compatible with v1 conditional blocks.
 ### `RC-000`: `RCMacOSDeploymentTargetRename`
 
 - Type: 🚨 Lint
-- Added in: conda-smithy <3.28.
+- Added in: conda-smithy <3.56.
 
 https://github.com/conda-forge/conda-forge.github.io/issues/2102
 
@@ -997,7 +1003,7 @@ https://github.com/conda-forge/conda-forge.github.io/issues/2102
 ### `RC-001`: `RCMacOSDeploymentTargetBelow`
 
 - Type: 🚨 Lint
-- Added in: conda-smithy <3.28.
+- Added in: conda-smithy <3.56.
 
 https://github.com/conda-forge/conda-forge.github.io/issues/2102
 
@@ -1010,7 +1016,7 @@ https://github.com/conda-forge/conda-forge.github.io/issues/2102
 ### `RC-002`: `RCMoreThanOneFile`
 
 - Type: 🚨 Lint
-- Added in: conda-smithy <3.28.
+- Added in: conda-smithy <3.56.
 
 Only one recipe variants file must be used in a feedstock.
 

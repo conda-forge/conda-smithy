@@ -34,7 +34,7 @@ class _BaseMessage:
     #: Whether the problem is a lint (error) or a hint (warning)
     kind: ClassVar[Literal["lint", "hint"]]
     #: conda-smithy version where the lint introduced
-    added_in: ClassVar[str] = "<3.28"
+    added_in: ClassVar[str] = "<3.56"
     #: conda-smithy version where the lint was deprecated
     deprecated_in: ClassVar[str] = ""
 
@@ -42,6 +42,8 @@ class _BaseMessage:
     def samples(cls) -> list[Self]:
         """
         Provides one or more example instances of the error message. Used in documentation.
+        Define at least one if `message` needs to be rendered with additional attributes.
+        Not needed for static `message` strings.
         """
         return []
 
