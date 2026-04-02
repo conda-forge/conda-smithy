@@ -59,9 +59,9 @@ from conda_smithy.utils import (
     RATTLER_BUILD,
     HashableDict,
     ensure_standard_strings,
-    filter_conditional_values,
     get_feedstock_about_from_meta,
     get_feedstock_name_from_meta,
+    get_workflow_settings,
 )
 from conda_smithy.validate_schema import (
     CONDA_FORGE_YAML_DEFAULTS_FILE,
@@ -1875,15 +1875,11 @@ def _github_actions_specific_setup(jinja_env, forge_config, forge_dir, platform)
                 data["gha_with_gpu"] = True
             data["gha_runs_on"].append(label)
 
-        for setting_key, setting_value in forge_config["workflow_settings"].items():
-            filtered = filter_conditional_values(
-                setting_value,
-                provider="github_actions",
-                platform=data["platform"],
-                os=data["platform"].split("-", 1)[0],
+        data.update(
+            get_workflow_settings(
+                forge_config["workflow_settings"], "github_actions", data["platform"]
             )
-            data[setting_key] = filtered[-1].value if filtered else None
-
+        )
         if data["store_build_artifacts"]:
             forge_config["store_any_build_artifacts"] = True
             if platform.startswith("win-"):
@@ -2018,17 +2014,9 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
                 config_rendered["VMIMAGE"] = "macOS-15-arm64"
             else:
                 raise ValueError(f"Unknown build platform: '{data['build_platform']}'")
+
+        config_rendered.update(get_workflow_settings(forge_config["workflow_settings"], "azure", data["platform"]))
         os = data["platform"].split("-", 1)[0]
-        for setting_key, setting_value in forge_config["workflow_settings"].items():
-            filtered = filter_conditional_values(
-                setting_value,
-                provider="azure",
-                platform=data["platform"],
-                os=os,
-            )
-            config_rendered[setting_key] = (
-                filtered[-1].value if filtered else None
-            )
         if config_rendered["store_build_artifacts"]:
             store_build_artifacts[os] = True
             forge_config[f"store_{os}_build_artifacts"] = True

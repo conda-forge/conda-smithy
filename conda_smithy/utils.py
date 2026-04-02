@@ -324,3 +324,23 @@ def filter_conditional_values(
         else:
             ret.append(ConditionalValue(**ret_item))
     return ret
+
+
+def get_workflow_settings(
+    workflow_settings: dict[str, Any], provider: str, platform: str
+) -> dict[str, Any]:
+    """
+    Process the `workflow_settings` dictionary, returning the keys and specific
+    values for given provider and platform.
+    """
+
+    data = {}
+    for setting_key, setting_value in workflow_settings.items():
+        filtered = filter_conditional_values(
+            setting_value,
+            provider=provider,
+            platform=platform,
+            os=platform.split("-", 1)[0],
+        )
+        data[setting_key] = filtered[-1].value if filtered else None
+    return data
