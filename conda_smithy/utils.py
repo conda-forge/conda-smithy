@@ -308,7 +308,7 @@ def filter_conditional_values(
 
     criteria = {
         "os": os,
-        "platform": platform.replace("-", "_"),
+        "platform": platform.replace("-", "_") if platform else None,
         "provider": provider,
     }
     ret = []
