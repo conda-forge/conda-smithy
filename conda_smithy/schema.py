@@ -1055,10 +1055,11 @@ class ConfigModel(BaseModel):
         ```yaml
         workflow_settings:
           store_build_artifacts:
-            # the ultimate value matched is used
+            # there can be at most one value for each workflow
             - provider: github_actions
+              platform: linux_aarch64
               value: true
-            - platform: [linux-64, win-64]  # OR
+            - platform: [linux_64, win_64]  # OR
               value: true
         ```
         """),

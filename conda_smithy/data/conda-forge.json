@@ -2217,7 +2217,7 @@
           "type": "null"
         }
       ],
-      "description": "Per-workflow settings.\n\n```yaml\nworkflow_settings:\n  store_build_artifacts:\n    # the ultimate value matched is used\n    - provider: github_actions\n      value: true\n    - platform: [linux-64, win-64]  # OR\n      value: true\n```"
+      "description": "Per-workflow settings.\n\n```yaml\nworkflow_settings:\n  store_build_artifacts:\n    # there can be at most one value for each workflow\n    - provider: github_actions\n      platform: linux_aarch64\n      value: true\n    - platform: [linux_64, win_64]  # OR\n      value: true\n```"
     },
     "travis": {
       "anyOf": [

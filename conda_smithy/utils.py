@@ -1,3 +1,4 @@
+import dataclasses
 import datetime
 import json
 import os
@@ -8,7 +9,6 @@ import time
 from collections import defaultdict
 from collections.abc import Mapping, Sequence
 from contextlib import contextmanager
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Optional, Union
 
@@ -247,12 +247,15 @@ def ensure_standard_strings(cfg: Any) -> Any:
         return cfg
 
 
-@dataclass
+@dataclasses.dataclass
 class ConditionalValue:
     value: Any
     os: Optional[list[str]] = None
     platform: Optional[list[str]] = None
     provider: Optional[list[str]] = None
+
+    def __str__(self) -> str:
+        return str({k: v for k, v in dataclasses.asdict(self).items() if v is not None})
 
 
 def filter_conditional_values(
@@ -342,5 +345,11 @@ def get_workflow_settings(
             platform=platform,
             os=platform.split("-", 1)[0],
         )
+        if len(filtered) > 1:
+            raise ValueError(
+                f"More than one value matched for `workflow_settings."
+                f"{setting_key}` when provider={provider} and "
+                f"platform={platform}: {filtered[0]} vs. {filtered[1]}"
+            )
         data[setting_key] = filtered[-1].value if filtered else None
     return data
