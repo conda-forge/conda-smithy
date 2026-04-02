@@ -99,23 +99,23 @@ def generate_docs(output_file: str | None = None) -> str:
                 if "{" in cls.message:
                     examples.extend(
                         [
-                            "#### Message template",
+                            "**Message template**",
                             "",
-                            quote(cls.message),
+                            quote(cls.message).replace("$", "\\$"),
                             "",
                         ]
                     )
                     if samples := cls.samples():
                         examples.extend(
                             [
-                                "#### Message examples",
+                                "**Message examples**",
                                 *[quote(sample) for sample in samples],
                             ]
                         )
                 else:
                     examples.extend(
                         [
-                            "#### Message",
+                            "**Message**",
                             "",
                             (
                                 quote(cls.message)
@@ -129,7 +129,7 @@ def generate_docs(output_file: str | None = None) -> str:
                 # print samples directly
                 examples.extend(
                     [
-                        "#### Message examples",
+                        "**Message examples**",
                         "",
                         *[quote(sample) for sample in samples],
                     ]
@@ -137,7 +137,7 @@ def generate_docs(output_file: str | None = None) -> str:
             if not examples:
                 examples.extend(
                     [
-                        "#### Message examples",
+                        "**Message examples**",
                         "",
                         "_No examples available yet_.",
                     ]
