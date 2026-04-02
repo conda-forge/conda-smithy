@@ -463,6 +463,7 @@ Provider = create_model(
 )
 
 
+@lru_cache
 def conditional_value(typ: type, default: Any = None) -> BaseModel:
     return create_model(
         f"ConditionalValue_{typ}",
