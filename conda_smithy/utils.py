@@ -276,7 +276,7 @@ def filter_conditional_values(
         store_build_artifacts:
           - provider: github_actions
             value: true
-          - platform: [win-64, linux-64]  # matched as OR
+          - platform: [win_64, linux_64]  # matched as OR
             value: true
       ```
 
@@ -305,7 +305,7 @@ def filter_conditional_values(
 
     criteria = {
         "os": os,
-        "platform": platform,
+        "platform": platform.replace("-", "_"),
         "provider": provider,
     }
     ret = []
