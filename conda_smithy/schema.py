@@ -5,6 +5,7 @@
 
 import json
 from enum import Enum
+from functools import lru_cache
 from inspect import cleandoc
 from typing import Annotated, Any, Literal, Optional, Union
 
