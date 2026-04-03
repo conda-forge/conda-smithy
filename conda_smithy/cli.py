@@ -732,7 +732,7 @@ class CISkeleton(Subcommand):
         print(POST_SKELETON_MESSAGE.format(args=args).strip())
 
 
-def main():
+def main(argv=None):
     logging.basicConfig(level=logging.INFO)
 
     parser = argparse.ArgumentParser(
@@ -752,11 +752,11 @@ def main():
         help="Show conda-smithy's version, and exit.",
     )
 
-    if not sys.argv[1:]:
-        args = parser.parse_args(["--help"])
-    else:
-        args = parser.parse_args()
-
+    # use argv if provided (e.g. when invoked via conda plugin system),
+    # otherwise use sys.argv[1:] (e.g. when invoked as the `conda-smithy` console script),
+    # if neither are provided, use ["--help"]
+    argv = (argv if argv else sys.argv[1:]) or ["--help"]
+    args = parser.parse_args(argv)
     args.subcommand_func(args)
 
 
