@@ -462,10 +462,10 @@ class RegisterCI(Subcommand):
         if args.cirrus_runners:
             if args.remove:
                 print("Cirrus Runners Registration: removing")
-                ci_register.enable_cirrus_runners_app(owner, repo)
+                ci_register.disable_cirrus_runners_app(owner, repo)
             else:
                 print("Cirrus Runners Registration: installing")
-                ci_register.disable_cirrus_runners_app(owner, repo)
+                ci_register.enable_cirrus_runners_app(owner, repo)
 
         else:
             print("Cirrus Runners registration disabled.")
