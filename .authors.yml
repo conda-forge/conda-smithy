@@ -476,7 +476,7 @@
   github: jwillemsen
 - name: Jaime Rodríguez-Guerra
   email: jaimergp@users.noreply.github.com
-  num_commits: 291
+  num_commits: 295
   first_commit: 2020-11-01 14:18:08
   github: jaimergp
 - name: Bastian Zimmermann
@@ -628,7 +628,7 @@
   github: ytausch
 - name: dependabot[bot]
   email: 49699333+dependabot[bot]@users.noreply.github.com
-  num_commits: 15
+  num_commits: 16
   first_commit: 2024-05-21 04:47:22
 - name: nichmor
   email: nmorkotilo@gmail.com
@@ -706,7 +706,7 @@
   first_commit: 2025-01-06 11:26:10
 - name: Ken Odegard
   email: kodegard@anaconda.com
-  num_commits: 1
+  num_commits: 2
   first_commit: 2025-01-15 11:12:15
 - name: Pavel Zwerschke
   email: pavelzw@gmail.com
