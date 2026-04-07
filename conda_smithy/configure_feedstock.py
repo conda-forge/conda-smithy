@@ -1822,9 +1822,19 @@ def render_appveyor(jinja_env, forge_config, forge_dir, return_metadata=False):
 
 
 def _github_actions_specific_setup(jinja_env, forge_config, forge_dir, platform):
-    forge_config.setdefault("workflow_settings_processed", {})[
-        "store_build_artifacts"
-    ] = set()
+    platform_templates = {
+        "linux": [
+            ".scripts/run_docker_build.sh",
+            ".scripts/build_steps.sh",
+        ],
+        "osx": [
+            ".scripts/run_osx_build.sh",
+        ],
+        "win": [
+            ".scripts/run_win_build.bat",
+        ],
+    }
+    template_files = platform_templates.get(platform, [])
 
     # Handle GH-hosted and self-hosted runners runs-on config
     # Do it before the deepcopy below so these changes can be used by the
@@ -1882,8 +1892,9 @@ def _github_actions_specific_setup(jinja_env, forge_config, forge_dir, platform)
             )
         )
         if data["store_build_artifacts"]:
-            forge_config["workflow_settings_processed"]["store_build_artifacts"].add(
-                data["platform"].split("-", 1)[0]
+            script_suffix = ".bat" if platform == "win" else ".sh"
+            template_files.append(
+                f".scripts/create_conda_build_artifacts{script_suffix}"
             )
 
     build_setup = _get_build_setup_line(forge_dir, platform, forge_config)
@@ -1895,24 +1906,6 @@ def _github_actions_specific_setup(jinja_env, forge_config, forge_dir, platform)
 
     forge_config = deepcopy(forge_config)
     forge_config["build_setup"] = build_setup
-
-    platform_templates = {
-        "linux": [
-            ".scripts/run_docker_build.sh",
-            ".scripts/build_steps.sh",
-        ],
-        "osx": [
-            ".scripts/run_osx_build.sh",
-        ],
-        "win": [
-            ".scripts/run_win_build.bat",
-        ],
-    }
-
-    template_files = platform_templates.get(platform, [])
-    if platform in forge_config["workflow_settings_processed"]["store_build_artifacts"]:
-        suffix = ".bat" if platform == "win" else ".sh"
-        template_files.append(f".scripts/create_conda_build_artifacts{suffix}")
 
     _render_template_exe_files(
         forge_config=forge_config,
@@ -1965,6 +1958,23 @@ def render_github_actions(jinja_env, forge_config, forge_dir, return_metadata=Fa
 def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
     build_setup = _get_build_setup_line(forge_dir, platform, forge_config)
 
+    platform_templates = {
+        "linux": [
+            ".scripts/run_docker_build.sh",
+            ".scripts/build_steps.sh",
+            ".azure-pipelines/azure-pipelines-linux.yml",
+        ],
+        "osx": [
+            ".azure-pipelines/azure-pipelines-osx.yml",
+            ".scripts/run_osx_build.sh",
+        ],
+        "win": [
+            ".azure-pipelines/azure-pipelines-win.yml",
+            ".scripts/run_win_build.bat",
+        ],
+    }
+    template_files = platform_templates.get(platform, [])
+
     if platform == "linux":
         yum_build_setup = generate_yum_requirements(forge_config, forge_dir)
         if yum_build_setup:
@@ -1990,10 +2000,6 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
         ratio = platform_counts[platform.split("-")[0]] / n_configs
         azure_settings["strategy"]["maxParallel"] = max(1, round(max_parallel * ratio))
 
-    forge_config.setdefault("workflow_settings_processed", {})[
-        "store_build_artifacts"
-    ] = set()
-
     for data in forge_config["configs"]:
         if not data["build_platform"].startswith(platform):
             continue
@@ -2014,32 +2020,15 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
             else:
                 raise ValueError(f"Unknown build platform: '{data['build_platform']}'")
 
-        config_rendered.update(get_workflow_settings(forge_config["workflow_settings"], "azure", data["platform"]))
+        workflow_settings = get_workflow_settings(forge_config["workflow_settings"], "azure", data["platform"])
+        data.update(workflow_settings)
+        config_rendered.update(workflow_settings)
         if config_rendered["store_build_artifacts"]:
-            forge_config["workflow_settings_processed"]["store_build_artifacts"].add(data["platform"].split("-", 1)[0])
             config_rendered["SHORT_CONFIG"] = data["short_config_name"]
+            script_suffix = ".bat" if platform == "win" else ".sh"
+            template_files.append(f".scripts/create_conda_build_artifacts{script_suffix}")
         azure_settings["strategy"]["matrix"][data["config_name"]] = config_rendered
         # fmt: on
-
-    platform_templates = {
-        "linux": [
-            ".scripts/run_docker_build.sh",
-            ".scripts/build_steps.sh",
-            ".azure-pipelines/azure-pipelines-linux.yml",
-        ],
-        "osx": [
-            ".azure-pipelines/azure-pipelines-osx.yml",
-            ".scripts/run_osx_build.sh",
-        ],
-        "win": [
-            ".azure-pipelines/azure-pipelines-win.yml",
-            ".scripts/run_win_build.bat",
-        ],
-    }
-    template_files = platform_templates.get(platform, [])
-    if platform in forge_config["workflow_settings_processed"]["store_build_artifacts"]:
-        suffix = ".bat" if platform == "win" else ".sh"
-        template_files.append(f".scripts/create_conda_build_artifacts{suffix}")
 
     forge_config["azure_yaml"] = yaml.dump(azure_settings)
     _render_template_exe_files(
