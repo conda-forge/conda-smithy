@@ -2,12 +2,8 @@
 # update the conda-forge.yml and/or the recipe/meta.yaml.
 # -*- mode: yaml -*-
 
-{%- set vars = namespace(platformset=[], store_build_artifacts=False) %}
+{%- set vars = namespace(store_build_artifacts=False) %}
 {%- for data in configs %}
-  {%- set os = data.build_platform.split('-')[0] %}
-  {%- if os not in vars.platformset %}
-    {%- do vars.platformset.append(os) %}
-  {%- endif %}
   {%- if data.store_build_artifacts %}
     {%- set vars.store_build_artifacts = True %}
   {%- endif %}
