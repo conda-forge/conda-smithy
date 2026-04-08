@@ -4,6 +4,20 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.59.1
+====================
+
+**Fixed:**
+
+* Fixed a bug where logging did not work with the ``conda smithy`` CLI entrypoint. (#2512)
+
+**Authors:**
+
+* Matthew R. Becker
+* pre-commit-ci[bot]
+
+
+
 v3.59.0
 ====================
 
