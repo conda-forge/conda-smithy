@@ -4,8 +4,8 @@
 
 {%- set vars = namespace(store_build_artifacts=False) %}
 {%- for data in configs %}
-  {%- set pfarchless = data.build_platform.split('-')[0] %}
-  {%- if pfarchless == 'linux' and data.store_build_artifacts %}
+  {%- set os = data.build_platform.split('-')[0] %}
+  {%- if os == 'linux' and data.store_build_artifacts %}
     {%- set vars.store_build_artifacts = True %}
   {%- endif %}
 {%- endfor %}

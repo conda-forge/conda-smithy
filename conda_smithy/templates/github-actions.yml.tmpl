@@ -4,9 +4,9 @@
 
 {%- set vars = namespace(platformset=[], store_build_artifacts=False) %}
 {%- for data in configs %}
-  {%- set pfarchless = data.build_platform.split('-')[0] %}
-  {%- if pfarchless not in vars.platformset %}
-    {%- do vars.platformset.append(pfarchless) %}
+  {%- set os = data.build_platform.split('-')[0] %}
+  {%- if os not in vars.platformset %}
+    {%- do vars.platformset.append(os) %}
   {%- endif %}
   {%- if data.store_build_artifacts %}
     {%- set vars.store_build_artifacts = True %}
