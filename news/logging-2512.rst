@@ -16,7 +16,7 @@
 
 **Fixed:**
 
-* Fixed a bug where logging did not work with the ``conda smithy`` CLI entrypoint. (#TBD)
+* Fixed a bug where logging did not work with the ``conda smithy`` CLI entrypoint. (#2512)
 
 **Security:**
 
