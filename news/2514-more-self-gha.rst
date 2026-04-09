@@ -12,7 +12,7 @@
 
 **Removed:**
 
-* <news item>
+* CI registration support for Cirrus Runners has been removed since the service will shut down in June. (#2514)
 
 **Fixed:**
 
