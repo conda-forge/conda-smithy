@@ -2445,3 +2445,52 @@ def test_github_actions_labels(py_recipe, jinja_env, label):
         )
     else:
         raise AssertionError("Bad label? Check test parameters.")
+
+
+@pytest.mark.parametrize("path", ["github_actions", "workflow_settings"])
+@pytest.mark.parametrize("value", [False, True])
+def test_store_build_artifacts_gha(py_recipe, jinja_env, path: str, value: bool):
+    forge_dir = py_recipe.recipe
+    forge_yml = Path(forge_dir, "conda-forge.yml")
+
+    with open(forge_yml, "a") as f:
+        f.write(textwrap.dedent(f"""\
+            provider:
+              linux_64: github_actions
+              osx_64: github_actions
+              win_64: github_actions
+            {path}:
+              store_build_artifacts: {value}
+        """))
+
+    config = configure_feedstock._load_forge_config(
+        forge_dir, "recipe/default_config.yaml"
+    )
+    configure_feedstock.render_github_actions(
+        jinja_env=jinja_env,
+        forge_config=config,
+        forge_dir=forge_dir,
+    )
+
+    conda_build_yml = Path(forge_dir, ".github/workflows/conda-build.yml")
+    with conda_build_yml.open() as f:
+        workflow = yaml.safe_load(f)
+
+    matrix = workflow["jobs"]["build"]["strategy"]["matrix"]["include"]
+    assert all(entry["STORE_BUILD_ARTIFACTS"] is value for entry in matrix)
+    if value:
+        assert all(entry.get("SHORT_CONFIG") for entry in matrix)
+
+    # check that artifacts steps are output / not output
+    steps = workflow["jobs"]["build"]["steps"]
+    step_names = set(step["name"] for step in steps)
+    wf_step_names = {
+        "Store conda build environment artifacts",
+        "Store conda build artifacts",
+        "Prepare conda build artifacts",
+        "Determine build outcome",
+    }
+    if value:
+        assert step_names.issuperset(wf_step_names)
+    else:
+        assert not step_names.intersection(wf_step_names)
