@@ -2494,3 +2494,8 @@ def test_store_build_artifacts_gha(py_recipe, jinja_env, path: str, value: bool)
         assert step_names.issuperset(wf_step_names)
     else:
         assert not step_names.intersection(wf_step_names)
+
+    assert (
+        Path(forge_dir, ".scripts/create_conda_build_artifacts.bat").exists() is value
+    )
+    assert Path(forge_dir, ".scripts/create_conda_build_artifacts.sh").exists() is value
