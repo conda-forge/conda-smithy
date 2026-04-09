@@ -2559,3 +2559,27 @@ def test_store_build_artifacts_azure(py_recipe, jinja_env, path: str, value: boo
             Path(forge_dir, ".scripts/create_conda_build_artifacts.sh").exists()
             is value
         )
+
+
+@pytest.mark.parametrize("ci", ["azure", "github_actions"])
+def test_store_build_artifacts_duplicate_setting(py_recipe, jinja_env, ci: str):
+    forge_dir = py_recipe.recipe
+    forge_yml = Path(forge_dir, "conda-forge.yml")
+
+    with open(forge_yml, "a") as f:
+        f.write(textwrap.dedent(f"""\
+            provider:
+              linux_64: azure
+              osx_64: azure
+              win_64: azure
+            workflow_settings:
+              store_build_artifacts: true
+            {ci}:
+              store_build_artifacts: true
+        """))
+
+    with pytest.raises(
+        ValueError,
+        match=rf"`store_build_artifacts` both in `workflow_settings` and `{ci}` sections",
+    ):
+        configure_feedstock._load_forge_config(forge_dir, "recipe/default_config.yaml")
