@@ -734,10 +734,11 @@ class CISkeleton(Subcommand):
 
 def main(argv=None):
     logger = logging.getLogger("conda_smithy")
-    handler = logging.StreamHandler()
-    handler.setFormatter(logging.Formatter(logging.BASIC_FORMAT, None, "%"))
-    logger.addHandler(handler)
-    logger.setLevel(logging.INFO)
+    if len(logger.handlers) == 0:
+        handler = logging.StreamHandler()
+        handler.setFormatter(logging.Formatter(logging.BASIC_FORMAT, None, "%"))
+        logger.addHandler(handler)
+        logger.setLevel(logging.INFO)
 
     parser = argparse.ArgumentParser(
         prog="conda smithy",
