@@ -225,6 +225,8 @@ class RegisterCI(Subcommand):
         "Webservice",
         "Cirun",
         "Cirrus-Runners",
+        "Blacksmith",
+        "Namespace",
     )
 
     def __init__(self, parser):
@@ -320,7 +322,7 @@ class RegisterCI(Subcommand):
             "--remove",
             action="store_true",
             help="Revoke access to the configured CI services. "
-            "Only available for Cirun and Cirrus Runners for now",
+            "Only available for Cirun, Namespace and Blacksmith for now",
         )
 
     def __call__(self, args):
@@ -460,15 +462,27 @@ class RegisterCI(Subcommand):
             print("Cirun registration disabled.")
 
         if args.cirrus_runners:
-            if args.remove:
-                print("Cirrus Runners Registration: removing")
-                ci_register.disable_cirrus_runners_app(owner, repo)
-            else:
-                print("Cirrus Runners Registration: installing")
-                ci_register.enable_cirrus_runners_app(owner, repo)
+            print("Cirrus Runners support is deprecated.")
 
+        if args.blacksmith:
+            if args.remove:
+                print("Blacksmith.sh Registration: removing")
+                ci_register.disable_blacksmith_app(owner, repo)
+            else:
+                print("Blacksmith.sh Registration: installing")
+                ci_register.enable_blacksmith_app(owner, repo)
         else:
-            print("Cirrus Runners registration disabled.")
+            print("Blacksmith.sh registration disabled.")
+
+        if args.namespace:
+            if args.remove:
+                print("Namespace.so Registration: removing")
+                ci_register.disable_namespace_app(owner, repo)
+            else:
+                print("Namespace.so Registration: installing")
+                ci_register.enable_namespace_app(owner, repo)
+        else:
+            print("Namespace.so registration disabled.")
 
         if args.webservice:
             ci_register.add_conda_forge_webservice_hooks(owner, repo)
