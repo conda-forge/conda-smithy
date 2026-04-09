@@ -134,7 +134,8 @@ def test_filter_conditional_values() -> None:
         )
         == common_example_out
     )
-    assert filter_conditional_values(
+
+    result = filter_conditional_values(
         [
             {
                 "provider": "azure",
@@ -151,7 +152,8 @@ def test_filter_conditional_values() -> None:
             },
         ],
         os="linux",
-    ) == [
+    )
+    expected = [
         ConditionalValue(
             True,
             platform=["linux_64", "win_64"],
@@ -159,3 +161,4 @@ def test_filter_conditional_values() -> None:
         ),
         ConditionalValue(True, provider=["github_actions"]),
     ]
+    assert result == expected
