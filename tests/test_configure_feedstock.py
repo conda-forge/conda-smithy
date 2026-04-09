@@ -2499,3 +2499,63 @@ def test_store_build_artifacts_gha(py_recipe, jinja_env, path: str, value: bool)
         Path(forge_dir, ".scripts/create_conda_build_artifacts.bat").exists() is value
     )
     assert Path(forge_dir, ".scripts/create_conda_build_artifacts.sh").exists() is value
+
+
+@pytest.mark.parametrize("path", ["azure", "workflow_settings"])
+@pytest.mark.parametrize("value", [False, True])
+def test_store_build_artifacts_azure(py_recipe, jinja_env, path: str, value: bool):
+    forge_dir = py_recipe.recipe
+    forge_yml = Path(forge_dir, "conda-forge.yml")
+
+    with open(forge_yml, "a") as f:
+        f.write(textwrap.dedent(f"""\
+            provider:
+              linux_64: azure
+              osx_64: azure
+              win_64: azure
+            {path}:
+              store_build_artifacts: {value}
+        """))
+
+    config = configure_feedstock._load_forge_config(
+        forge_dir, "recipe/default_config.yaml"
+    )
+    configure_feedstock.render_azure(
+        jinja_env=jinja_env,
+        forge_config=config,
+        forge_dir=forge_dir,
+    )
+
+    for os_name in ("linux", "osx", "win"):
+        workflow_yml = Path(
+            forge_dir, ".azure-pipelines", f"azure-pipelines-{os_name}.yml"
+        )
+        with workflow_yml.open() as f:
+            workflow = yaml.safe_load(f)
+
+        matrix = workflow["jobs"][0]["strategy"]["matrix"]
+        assert all(entry["store_build_artifacts"] is value for entry in matrix.values())
+        if value:
+            assert all(entry.get("SHORT_CONFIG") for entry in matrix.values())
+
+        # check that artifacts steps are output / not output
+        steps = workflow["jobs"][0]["steps"]
+        step_names = set(step["displayName"] for step in steps)
+        wf_step_names = {
+            "Store conda build environment artifacts",
+            "Store conda build artifacts",
+            "Prepare conda build artifacts",
+        }
+        if value:
+            assert step_names.issuperset(wf_step_names)
+        else:
+            assert not step_names.intersection(wf_step_names)
+
+        assert (
+            Path(forge_dir, ".scripts/create_conda_build_artifacts.bat").exists()
+            is value
+        )
+        assert (
+            Path(forge_dir, ".scripts/create_conda_build_artifacts.sh").exists()
+            is value
+        )
