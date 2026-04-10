@@ -16,7 +16,7 @@
 
 **Fixed:**
 
-* Fixed duplicate log entries. (#2515)
+* Fixed duplicate log entries. (#2516)
 
 **Security:**
 
