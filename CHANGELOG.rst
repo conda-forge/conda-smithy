@@ -4,6 +4,28 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.60.0
+====================
+
+**Added:**
+
+* CI registration now supports Blacksmith.sh and Namespace.so Github Actions runners. (#2514)
+
+**Removed:**
+
+* CI registration support for Cirrus Runners has been removed since the service will shut down in June. (#2514)
+
+**Fixed:**
+
+* Fixed duplicate log entries. (#2516)
+
+**Authors:**
+
+* Matthew R. Becker
+* Jaime Rodríguez-Guerra
+
+
+
 v3.59.1
 ====================
 
