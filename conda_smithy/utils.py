@@ -1,3 +1,4 @@
+import dataclasses
 import datetime
 import json
 import os
@@ -9,7 +10,7 @@ from collections import defaultdict
 from collections.abc import Mapping, Sequence
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Union
+from typing import Any, Optional, Union
 
 import jinja2
 import jinja2.sandbox
@@ -244,3 +245,111 @@ def ensure_standard_strings(cfg: Any) -> Any:
         return type(cfg)([ensure_standard_strings(v) for v in cfg])
     else:
         return cfg
+
+
+@dataclasses.dataclass
+class ConditionalValue:
+    value: Any
+    os: Optional[list[str]] = None
+    platform: Optional[list[str]] = None
+    provider: Optional[list[str]] = None
+
+    def __str__(self) -> str:
+        return str({k: v for k, v in dataclasses.asdict(self).items() if v is not None})
+
+
+def filter_conditional_values(
+    value: Any,
+    os: Optional[str] = None,
+    platform: Optional[str] = None,
+    provider: Optional[str] = None,
+) -> list[ConditionalValue]:
+    """
+    Filter "conditional values" as found in `workflow_settings` by specified
+    criteria, and return a list normalized to `ConditionalValue` instances.
+
+    The `value` is the value corresponding to a `workflow_settings` key. It may
+    be:
+
+    - A list of "conditional value" dicts, such as the value of
+      `store_build_artifacts` in:
+
+      ```yaml
+      workflow_settings:
+        store_build_artifacts:
+          - provider: github_actions
+            value: true
+          - platform: [win_64, linux_64]  # matched as OR
+            value: true
+      ```
+
+      All items that matched the criteria will be returned, normalized to
+      `ConditionalValue` instances. Normally, you'd want to use the ultimate
+      value from the list. If no items matched, an empty list will be returned.
+
+    - A direct value, as from `store_build_artifacts: true`. In that case, a
+      list with a single `ConditionalValue` instance will be returned.
+
+    - A `None`, i.e. when there is no `store_build_artifacts` key. In that case,
+      an empty list will be returned.
+    """
+
+    # If None is passed, there is no value. Return an empty list.
+    if value is None:
+        return []
+
+    # If value is not a list, then a value has been assigned to the key
+    # directly. Wrap it in `ConditionalValue` and return as the only item.
+    if not isinstance(value, list):
+        return [ConditionalValue(value=value)]
+
+    # Otherwise, it's a list of "conditional values". Filter them using
+    # specified criteria.
+
+    criteria = {
+        "os": os,
+        "platform": platform.replace("-", "_") if platform else None,
+        "provider": provider,
+    }
+    ret = []
+    for value_item in value:
+        ret_item = {"value": value_item["value"]}
+        for criteria_key, needle in criteria.items():
+            if criteria_key in value_item:
+                haystack: Union[list[str], str] = value_item.get(criteria_key, [needle])
+                # Normalize the condition into a list.
+                if not isinstance(haystack, list):
+                    haystack = [haystack]
+                ret_item[criteria_key] = haystack
+                # Filter by it if requested.
+                if needle is not None and needle not in haystack:
+                    break
+        else:
+            ret.append(ConditionalValue(**ret_item))
+    return ret
+
+
+def get_workflow_settings(
+    workflow_settings: dict[str, Any], provider: str, platform: str
+) -> dict[str, Any]:
+    """
+    Process the `workflow_settings` dictionary, returning the keys and specific
+    values for given provider and platform.
+    """
+
+    data = {}
+    for setting_key, setting_value in workflow_settings.items():
+        filtered = filter_conditional_values(
+            setting_value,
+            provider=provider,
+            platform=platform,
+            os=platform.split("-", 1)[0],
+        )
+        if len(filtered) > 1:
+            raise ValueError(
+                f"More than one value matched for `workflow_settings."
+                f"{setting_key}` when provider={provider} and "
+                f"platform={platform}: {filtered[0]} vs. {filtered[1]}"
+            )
+        data[setting_key] = filtered[-1].value if filtered else None
+    return data

@@ -2,6 +2,14 @@
 # update the conda-forge.yml and/or the recipe/meta.yaml.
 # -*- mode: yaml -*-
 
+{%- set vars = namespace(store_build_artifacts=False) %}
+{%- for data in configs %}
+  {%- set os = data.build_platform.split('-')[0] %}
+  {%- if os == 'osx' and data.store_build_artifacts %}
+    {%- set vars.store_build_artifacts = True %}
+  {%- endif %}
+{%- endfor %}
+
 jobs:
 - job: osx
   {{ azure_yaml|indent(2) }}
@@ -33,8 +41,8 @@ jobs:
 {%- for secret in secrets %}
       {{ secret }}: $({{ secret }})
 {%- endfor %}
+{%- if vars.store_build_artifacts %}
 
-{%- if azure.store_build_artifacts %}
   - script: |
       export CI=azure
       export CI_RUN_ID=$(build.BuildNumber).$(system.JobAttempt)
@@ -49,7 +57,7 @@ jobs:
       fi
       ./.scripts/create_conda_build_artifacts.sh
     displayName: Prepare conda build artifacts
-    condition: succeededOrFailed()
+    condition: and(succeededOrFailed(), eq(variables.store_build_artifacts, true))
 
   - task: PublishPipelineArtifact@1
     displayName: Store conda build artifacts

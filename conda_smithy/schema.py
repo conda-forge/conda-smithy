@@ -5,6 +5,7 @@
 
 import json
 from enum import Enum
+from functools import lru_cache
 from inspect import cleandoc
 from typing import Annotated, Any, Literal, Optional, Union
 
@@ -230,8 +231,9 @@ class AzureConfig(BaseModel):
 
     store_build_artifacts: Optional[bool] = Field(
         default=False,
-        description="Store the conda build_artifacts directory as an \
-        Azure pipeline artifact",
+        deprecated=True,
+        description="Deprecated. Store the conda build_artifacts directory as an "
+        "Azure pipeline artifact. Use `workflow_settings.store_build_artifacts` instead.",
     )
 
     timeout_minutes: Optional[Union[int, Nullable]] = Field(
@@ -306,8 +308,10 @@ class GithubActionsConfig(BaseModel):
     )
 
     store_build_artifacts: Optional[bool] = Field(
-        description="Whether to store build artifacts",
+        description="Deprecated. Whether to store build artifacts. "
+        "Use `workflow_settings.store_build_artifacts` instead.",
         default=False,
+        deprecated=True,
     )
 
     timeout_minutes: Optional[int] = Field(
@@ -458,6 +462,58 @@ Provider = create_model(
         ]
     ),
 )
+
+
+@lru_cache
+def conditional_value(typ: type, default: Any = None) -> BaseModel:
+    return create_model(
+        f"ConditionalValue_{typ}",
+        os=(
+            Optional[Union[list[PlatformsAliases], PlatformsAliases, Nullable]],
+            Field(
+                default=None,
+                description=cleandoc("""
+                Operating systems to set environment variable on (default: all)
+                """),
+            ),
+        ),
+        platform=(
+            Optional[Union[list[Platforms], Platforms, Nullable]],
+            Field(
+                default=None,
+                description=cleandoc("""
+                Platforms to set environment variable on (default: all)
+                """),
+            ),
+        ),
+        provider=(
+            Optional[Union[list[CIservices], CIservices, Nullable]],
+            Field(
+                default=None,
+                description=cleandoc("""
+                CI providers to set environment variable on (default: all)
+                """),
+            ),
+        ),
+        value=(
+            typ,
+            Field(
+                description="Option value",
+                default=default,
+            ),
+        ),
+    )
+
+
+class WorkflowSettings(BaseModel):
+    store_build_artifacts: Optional[
+        Union[bool, list[conditional_value(bool, False)], Nullable]
+    ] = Field(
+        default=[],
+        description=cleandoc("""
+        Store the outputs of the build process as uploaded CI artifacts.
+        """),
+    )
 
 
 class ConfigModel(BaseModel):
@@ -991,6 +1047,23 @@ class ConfigModel(BaseModel):
         """),
     )
 
+    workflow_settings: Optional[WorkflowSettings] = Field(
+        default_factory=WorkflowSettings,
+        description=cleandoc("""
+        Per-workflow settings.
+
+        ```yaml
+        workflow_settings:
+          store_build_artifacts:
+            # there can be at most one value for each workflow
+            - provider: github_actions
+              platform: linux_aarch64
+              value: true
+            - platform: [linux_64, win_64]  # OR
+              value: true
+        ```
+        """),
+    )
     ###################################
     ####       CI Providers        ####
     ###################################
