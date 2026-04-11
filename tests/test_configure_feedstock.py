@@ -2734,3 +2734,93 @@ def test_store_build_artifacts_overlapping_conditions(py_recipe, jinja_env, ci: 
                 forge_config=config,
                 forge_dir=forge_dir,
             )
+
+
+def test_store_build_artifacts_gha_and_azure_conditions(py_recipe, jinja_env):
+    forge_dir = py_recipe.recipe
+    forge_yml = Path(forge_dir, "conda-forge.yml")
+
+    with open(forge_yml, "a") as f:
+        f.write(textwrap.dedent("""\
+            provider:
+              linux_64: github_actions
+              linux_aarch64: azure
+              osx_64: azure
+              osx_arm64: github_actions
+              win_64: azure
+            workflow_settings:
+              store_build_artifacts:
+                - os: osx
+                  provider: azure
+                  value: true
+                - os: linux
+                  provider: github_actions
+                  value: true
+        """))
+
+    config = configure_feedstock._load_forge_config(
+        forge_dir, "recipe/default_config.yaml"
+    )
+    configure_feedstock.render_azure(
+        jinja_env=jinja_env,
+        forge_config=config,
+        forge_dir=forge_dir,
+    )
+    configure_feedstock.render_github_actions(
+        jinja_env=jinja_env,
+        forge_config=config,
+        forge_dir=forge_dir,
+    )
+
+    # check github_actions workflows
+    conda_build_yml = Path(forge_dir, ".github/workflows/conda-build.yml")
+    with conda_build_yml.open() as f:
+        workflow = yaml.safe_load(f)
+
+    matrix = workflow["jobs"]["build"]["strategy"]["matrix"]["include"]
+    assert all(
+        entry["STORE_BUILD_ARTIFACTS"] == entry["CONFIG"].startswith("linux_64")
+        for entry in matrix
+    )
+
+    # check that artifacts steps are output / not output
+    steps = workflow["jobs"]["build"]["steps"]
+    step_names = set(step["name"] for step in steps)
+    wf_step_names = {
+        "Store conda build environment artifacts",
+        "Store conda build artifacts",
+        "Prepare conda build artifacts",
+        "Determine build outcome",
+    }
+    assert step_names.issuperset(wf_step_names)
+
+    # check azure workflows
+    for os_name in ("linux", "osx", "win"):
+        workflow_yml = Path(
+            forge_dir, ".azure-pipelines", f"azure-pipelines-{os_name}.yml"
+        )
+        with workflow_yml.open() as f:
+            workflow = yaml.safe_load(f)
+
+        matrix = workflow["jobs"][0]["strategy"]["matrix"]
+        assert all(
+            entry["store_build_artifacts"]
+            is (True if entry["CONFIG"].startswith("osx") else None)
+            for entry in matrix.values()
+        )
+
+        # check that artifacts steps are output / not output
+        steps = workflow["jobs"][0]["steps"]
+        step_names = set(step["displayName"] for step in steps)
+        wf_step_names = {
+            "Store conda build environment artifacts",
+            "Store conda build artifacts",
+            "Prepare conda build artifacts",
+        }
+        if os_name == "osx":
+            assert step_names.issuperset(wf_step_names)
+        else:
+            assert not step_names.intersection(wf_step_names)
+
+    assert not Path(forge_dir, ".scripts/create_conda_build_artifacts.bat").exists()
+    assert Path(forge_dir, ".scripts/create_conda_build_artifacts.sh").exists()
