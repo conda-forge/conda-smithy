@@ -137,6 +137,7 @@ def test_filter_conditional_values() -> None:
 
     result = filter_conditional_values(
         [
+            # these two should be preserved, since they do not specify os
             {
                 "provider": "azure",
                 "platform": ["linux_64", "win_64"],
@@ -146,6 +147,7 @@ def test_filter_conditional_values() -> None:
                 "provider": "github_actions",
                 "value": True,
             },
+            # this one gets filtered over os!="linux"
             {
                 "os": "win",
                 "value": True,
