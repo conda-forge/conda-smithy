@@ -10,6 +10,8 @@ authors = [
 description = "A package to create repositories for conda recipes, and automate their building with CI tools on Linux, OSX and Windows."
 dynamic = ["version"]
 requires-python = ">=3.9"
+license = "BSD-3-Clause"
+license-files = ["LICENSE.txt"]
 
 [project.urls]
 home = "https://github.com/conda-forge/conda-smithy"
