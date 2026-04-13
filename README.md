@@ -1,4 +1,4 @@
-# Conda Smithy
+# conda-smithy
 
 ## Overview
 
