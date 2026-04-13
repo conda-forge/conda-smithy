@@ -53,7 +53,7 @@ class _BaseMessage:
         Override this to render dynamic content (e.g. import a list of valid keys from)
         somewhere.
         """
-        return cls.__doc__
+        return cleandoc(cls.__doc__)
 
     def _render(self) -> str:
         """
