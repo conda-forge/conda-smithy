@@ -23,15 +23,15 @@ class UnexpectedSection(_BaseMessage):
     """
     Recipe files must not contain unknown top-level keys.
     For recipe version 0, the expected keys are (in this order):
-    {VERSION_0_LIST}
+    {version_0_list}
 
     For other versions, it depends if you are generating one or
     multiple artifacts. For single artifacts, the expected keys are
     (in this order):
-    {SINGLE_OUTPUT_LIST}
+    {single_output_list}
 
     For multiple artifacts, the expected keys are (in this order):
-    {MULTIPLE_OUTPUT_LIST}
+    {multiple_output_list}
     """
 
     kind = "lint"
@@ -48,10 +48,13 @@ class UnexpectedSection(_BaseMessage):
         from conda_smithy.linter.utils import EXPECTED_SECTION_ORDER
 
         doc = super().documentation()
+        version_0_list = "\n- ".join(EXPECTED_SECTION_ORDER)
+        single_output_list = "\n- ".join(EXPECTED_SINGLE_OUTPUT_SECTION_ORDER)
+        multiple_output_list = "\n- ".join(EXPECTED_MULTIPLE_OUTPUT_SECTION_ORDER)
         formatted_doc = doc.format(
-            VERSION_0_LIST=f"- {'\n- '.join(EXPECTED_SECTION_ORDER)}",
-            SINGLE_OUTPUT_LIST=f"- {'\n- '.join(EXPECTED_SINGLE_OUTPUT_SECTION_ORDER)}",
-            MULTIPLE_OUTPUT_LIST=f"- {'\n- '.join(EXPECTED_MULTIPLE_OUTPUT_SECTION_ORDER)}",
+            version_0_list=f"- {version_0_list}",
+            single_output_list=f"- {single_output_list}",
+            multiple_output_list=f"- {multiple_output_list}",
         )
         return formatted_doc
 
