@@ -47,6 +47,14 @@ class _BaseMessage:
         """
         return []
 
+    @classmethod
+    def documentation(cls) -> str:
+        """
+        Override this to render dynamic content (e.g. import a list of valid keys from)
+        somewhere.
+        """
+        return cls.__doc__
+
     def _render(self) -> str:
         """
         Formats the `.message` text by using the dataclass attributes.

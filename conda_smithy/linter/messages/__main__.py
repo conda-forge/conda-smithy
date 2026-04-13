@@ -157,7 +157,7 @@ def generate_docs(output_file: str | None = None) -> str:
                         else ()
                     ),
                     "",
-                    cleandoc(cls.__doc__),
+                    cleandoc(cls.documentation()),
                     "",
                     *examples,
                 ]
