@@ -1045,9 +1045,7 @@ def _get_fast_finish_script(provider_name, forge_config, forge_dir, fast_finish_
     )
     if provider_name == "appveyor":
         if os.path.exists(cfbs_fpath):
-            fast_finish_script = "{recipe_dir}\\ff_ci_pr_build".format(
-                recipe_dir=forge_config["recipe_dir"]
-            )
+            fast_finish_script = f"{forge_config['recipe_dir']}\\ff_ci_pr_build"
         else:
             get_fast_finish_script = '''powershell -Command "(New-Object Net.WebClient).DownloadFile('https://raw.githubusercontent.com/conda-forge/conda-forge-ci-setup-feedstock/{branch}/recipe/conda_forge_ci_setup/ff_ci_pr_build.py', 'ff_ci_pr_build.py')"'''  # NOQA
             fast_finish_script += "ff_ci_pr_build"
@@ -1064,8 +1062,8 @@ def _get_fast_finish_script(provider_name, forge_config, forge_dir, fast_finish_
         # If the recipe supplies its own ff_ci_pr_build.py script,
         # we use it instead of the global one.
         if os.path.exists(cfbs_fpath):
-            get_fast_finish_script += "cat {recipe_dir}/ff_ci_pr_build.py".format(
-                recipe_dir=forge_config["recipe_dir"]
+            get_fast_finish_script += (
+                f"cat {forge_config['recipe_dir']}/ff_ci_pr_build.py"
             )
         else:
             get_fast_finish_script += "curl https://raw.githubusercontent.com/conda-forge/conda-forge-ci-setup-feedstock/{branch}/recipe/conda_forge_ci_setup/ff_ci_pr_build.py"  # NOQA
@@ -1521,15 +1519,15 @@ def _get_build_setup_line(forge_dir, platform, forge_config):
 
             """)
         elif platform == "win":
-            build_setup += textwrap.dedent("""\
+            build_setup += textwrap.dedent(f"""\
                 :: Overriding global run_conda_forge_build_setup_win with local copy.
-                CALL {recipe_dir}\\run_conda_forge_build_setup_win
-            """.format(recipe_dir=forge_config["recipe_dir"]))
+                CALL {forge_config["recipe_dir"]}\\run_conda_forge_build_setup_win
+            """)
         else:
-            build_setup += textwrap.dedent("""\
+            build_setup += textwrap.dedent(f"""\
                 # Overriding global run_conda_forge_build_setup_osx with local copy.
-                source {recipe_dir}/run_conda_forge_build_setup_osx
-            """.format(recipe_dir=forge_config["recipe_dir"]))
+                source {forge_config["recipe_dir"]}/run_conda_forge_build_setup_osx
+            """)
     else:
         if platform == "win":
             build_setup += textwrap.dedent("""\
@@ -1600,7 +1598,7 @@ def generate_yum_requirements(forge_config, forge_dir):
             # "recipe/yum_requirements.txt" file. After updating that file,
             # run "conda smithy rerender" and this line will be updated
             # automatically.
-            /usr/bin/sudo -n yum install -y {}""".format(" ".join(requirements)))
+            /usr/bin/sudo -n yum install -y {" ".join(requirements)}""")
     return yum_build_setup
 
 

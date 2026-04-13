@@ -88,19 +88,14 @@ def generate_and_write_feedstock_token(user, project, provider=None):
     # spill tokens
     failed = False
     err_msg = None
+    provider = "provider" if provider is None else "provider " + provider
     with _secure_io():
         try:
             token = secrets.token_hex(32)
             pth = feedstock_token_local_path(user, project, provider=provider)
             if os.path.exists(pth):
                 failed = True
-                err_msg = (
-                    "Token for {}/{} on provider{} is already written locally!".format(
-                        user,
-                        project,
-                        "" if provider is None else " " + provider,
-                    )
-                )
+                err_msg = f"Token for {user}/{project} on {provider} is already written locally!"
                 raise FeedstockTokenError(err_msg)
 
             os.makedirs(os.path.dirname(pth), exist_ok=True)
@@ -117,11 +112,9 @@ def generate_and_write_feedstock_token(user, project, provider=None):
             raise FeedstockTokenError(err_msg)
         else:
             raise FeedstockTokenError(
-                (
-                    "Generating the feedstock token for {}/{} on provider{} failed!"
-                    " Try the command locally with DEBUG_FEEDSTOCK_TOKENS"
-                    " defined in the environment to investigate!"
-                ).format(user, project, "" if provider is None else " " + provider)
+                f"Generating the feedstock token for {user}/{project} on {provider} failed!"
+                " Try the command locally with DEBUG_FEEDSTOCK_TOKENS"
+                " defined in the environment to investigate!"
             )
 
     return failed
