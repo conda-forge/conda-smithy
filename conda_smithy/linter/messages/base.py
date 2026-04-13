@@ -48,19 +48,22 @@ class _BaseMessage:
     @classmethod
     def documentation(cls) -> str:
         """
-        Override this to render dynamic content (e.g. import a list of valid keys from)
-        somewhere. For example:
-
-        ```python
-        @classmethod
-        def documentation(cls) -> str:
-            import random
-
-            doc = super().documentation()
-            return doc.format(variable=random.random())
-        ```
+        Returns the docstring text, with rendered variables if any.
         """
-        return cleandoc(cls.__doc__)
+        docstring = cleandoc(cls.__doc__)
+        if variables := cls._documentation_variables():
+            return Template(docstring).safe_substitute(variables)
+        return docstring
+
+    @classmethod
+    def _documentation_variables(cls) -> dict[str, str]:
+        """
+        Returns the necessary attributes to render `${...}` variables
+        in the docstring, if any.
+
+        Subclass to provide dynamic fields.
+        """
+        return {}
 
     @classmethod
     def samples(cls) -> list[Self]:
@@ -82,9 +85,10 @@ class _BaseMessage:
         when it is immediately followed by a valid identifier that is also a
         key in ``_render_attributes()`` and must not be substituted.
         """
-        return cleandoc(
-            Template(self.message).safe_substitute(self._render_attributes())
-        )
+        message = cleandoc(self.message)
+        if variables := self._render_attributes():
+            return Template(message).safe_substitute(variables)
+        return message
 
     def _render_attributes(self) -> dict[str, str]:
         """

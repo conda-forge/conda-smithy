@@ -155,6 +155,43 @@ cannot be rectified.
 
 Recipe files must not contain unknown top-level keys.
 
+For recipe version 0, the expected keys are (in this order):
+
+- `package`
+- `source`
+- `build`
+- `requirements`
+- `test`
+- `app`
+- `outputs`
+- `about`
+- `extra`
+
+For other versions, it depends if you are generating one or
+multiple artifacts. For single artifacts, the expected keys are
+(in this order):
+
+- `schema_version`
+- `context`
+- `package`
+- `source`
+- `build`
+- `requirements`
+- `tests`
+- `about`
+- `extra`
+
+For multiple artifacts, the expected keys are (in this order):
+
+- `schema_version`
+- `context`
+- `recipe`
+- `source`
+- `build`
+- `outputs`
+- `about`
+- `extra`
+
 **Message template**
 
 > The top level meta key \${section} is unexpected
@@ -167,6 +204,9 @@ Recipe files must not contain unknown top-level keys.
 - Added in: conda-smithy <3.56.
 
 The top-level sections of a recipe file must always follow the same order.
+
+Please refer to linter rule [`R-000`](#R-000) (`RecipeUnexpectedSection`) for more
+details.
 
 **Message template**
 

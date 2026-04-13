@@ -22,16 +22,20 @@ RECIPE_VERSIONS: TypeAlias = Literal[0, 1]
 class UnexpectedSection(_BaseMessage):
     """
     Recipe files must not contain unknown top-level keys.
-    For recipe version 0, the expected keys are (in this order):
-    {version_0_list}
 
-    For other versions, it depends if you are generating one or
+    For recipe version 0, the allowed keys are (in this order):
+
+    ${version_0_list}
+
+    For recipe version 1, it depends if you are generating one or
     multiple artifacts. For single artifacts, the expected keys are
     (in this order):
-    {single_output_list}
+
+    ${single_output_list}
 
     For multiple artifacts, the expected keys are (in this order):
-    {multiple_output_list}
+
+    ${multiple_output_list}
     """
 
     kind = "lint"
@@ -40,29 +44,34 @@ class UnexpectedSection(_BaseMessage):
     section: str
 
     @classmethod
-    def documentation(cls) -> str:
+    def _documentation_variables(cls) -> str:
         from conda_smithy.linter.conda_recipe_v1_linter import (
             EXPECTED_MULTIPLE_OUTPUT_SECTION_ORDER,
             EXPECTED_SINGLE_OUTPUT_SECTION_ORDER,
         )
         from conda_smithy.linter.utils import EXPECTED_SECTION_ORDER
 
-        doc = super().documentation()
-        version_0_list = "\n- ".join(EXPECTED_SECTION_ORDER)
-        single_output_list = "\n- ".join(EXPECTED_SINGLE_OUTPUT_SECTION_ORDER)
-        multiple_output_list = "\n- ".join(EXPECTED_MULTIPLE_OUTPUT_SECTION_ORDER)
-        formatted_doc = doc.format(
-            version_0_list=f"- {version_0_list}",
-            single_output_list=f"- {single_output_list}",
-            multiple_output_list=f"- {multiple_output_list}",
+        version_0_list = "\n- ".join(
+            f"`{section}`" for section in EXPECTED_SECTION_ORDER
         )
-        return formatted_doc
+        single_output_list = "\n- ".join(
+            f"`{section}`" for section in EXPECTED_SINGLE_OUTPUT_SECTION_ORDER
+        )
+        multiple_output_list = "\n- ".join(
+            f"`{section}`" for section in EXPECTED_MULTIPLE_OUTPUT_SECTION_ORDER
+        )
+        return {
+            "version_0_list": f"- {version_0_list}",
+            "single_output_list": f"- {single_output_list}",
+            "multiple_output_list": f"- {multiple_output_list}",
+        }
 
 
 @dataclass(kw_only=True)
 class SectionOrder(_BaseMessage):
     """
     The top-level sections of a recipe file must always follow the same order.
+
     Please refer to linter rule [`R-000`](#R-000) (`RecipeUnexpectedSection`) for more
     details.
     """
