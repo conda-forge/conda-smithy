@@ -31,7 +31,7 @@ For development and contribution setup, see [Developing conda-smithy](#Developin
 You need a token from GitHub and potentially other services.
 The commands which need this will tell you where to get these tokens and where to
 place them.
-If you need help, please reach out to the [conda-forge Community](https://conda-forge.org/community/getting-in-touch/).
+If you need help, please [reach out](https://conda-forge.org/community/getting-in-touch/).
 
 You should be able to test parts of `conda-smithy` with whatever tokens you have.
 For example, you should be able to `conda smithy register-github` without the CI service tokens.
