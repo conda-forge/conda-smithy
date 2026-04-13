@@ -740,7 +740,7 @@ def lint_osx_pins(recipe_dir, recipe_config_filename, lints, recipe_version):
 
     if "MACOSX_DEPLOYMENT_TARGET" in cbc_osx:
         lints.append(
-            msg.RCMacOSDeploymentTargetRename(recipe_config_file=recipe_config_file)
+            msg.MacOSDeploymentTargetRename(recipe_config_file=recipe_config_file)
         )
 
     def sort_osx(versions):
@@ -758,7 +758,7 @@ def lint_osx_pins(recipe_dir, recipe_config_filename, lints, recipe_version):
 
     if "c_stdlib_version" in cbc_osx.keys():
         # only warn if version is below baseline
-        outdated_lint = msg.RCMacOSDeploymentTargetBelow(
+        outdated_lint = msg.MacOSDeploymentTargetBelow(
             baseline_version=baseline_version[0]
         )
         if len(v_stdlib) == len(baseline_version):
@@ -774,7 +774,7 @@ def lint_osx_pins(recipe_dir, recipe_config_filename, lints, recipe_version):
                     lints.append(outdated_lint)
 
     # warn if SDK is lower than v_stdlib
-    sdk_lint = msg.CBCMacOSDeploymentTargetBelowStdlib(baseline=baseline_version[0])
+    sdk_lint = msg.MacOSDeploymentTargetBelowStdlib(baseline=baseline_version[0])
     if len(sdk) == len(v_stdlib):
         # if length matches, compare individually
         for v_sdk, v_std in zip(sdk, v_stdlib):

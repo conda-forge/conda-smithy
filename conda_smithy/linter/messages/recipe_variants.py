@@ -17,7 +17,7 @@ CATEGORIES = {
 
 
 @dataclass(kw_only=True)
-class RCMacOSDeploymentTargetRename(_BaseMessage):
+class MacOSDeploymentTargetRename(_BaseMessage):
     """
     https://github.com/conda-forge/conda-forge.github.io/issues/2102
     """
@@ -32,7 +32,7 @@ class RCMacOSDeploymentTargetRename(_BaseMessage):
 
 
 @dataclass(kw_only=True)
-class RCMacOSDeploymentTargetBelow(_BaseMessage):
+class MacOSDeploymentTargetBelow(_BaseMessage):
     """
     https://github.com/conda-forge/conda-forge.github.io/issues/2102
     """
@@ -47,7 +47,7 @@ class RCMacOSDeploymentTargetBelow(_BaseMessage):
 
 
 @dataclass(kw_only=True)
-class RCMoreThanOneFile(_BaseMessage):
+class MoreThanOneFile(_BaseMessage):
     """
     Only one recipe variants file must be used in a feedstock.
     """
@@ -66,7 +66,7 @@ class RCMoreThanOneFile(_BaseMessage):
 
 
 @dataclass(kw_only=True)
-class CBCMacOSDeploymentTargetConflict(_BaseMessage):
+class MacOSDeploymentTargetConflict(_BaseMessage):
     """
     https://github.com/conda-forge/conda-forge.github.io/issues/2102
     """
@@ -83,7 +83,7 @@ class CBCMacOSDeploymentTargetConflict(_BaseMessage):
 
 
 @dataclass(kw_only=True)
-class CBCMacOSDeploymentTargetBelowStdlib(_BaseMessage):
+class MacOSDeploymentTargetBelowStdlib(_BaseMessage):
     """
     https://github.com/conda-forge/conda-forge.github.io/issues/2102
     """

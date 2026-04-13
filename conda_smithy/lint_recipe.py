@@ -372,7 +372,7 @@ def lintify_meta_yaml(
 
     # 30: two configuration files present
     if sum(v is not None for v in recipe_config_keys.values()) > 1:
-        lints.append(msg.RCMoreThanOneFile())
+        lints.append(msg.MoreThanOneFile())
 
     # 31: stdlib-related lints
     if "lint_stdlib" not in lints_to_skip:
