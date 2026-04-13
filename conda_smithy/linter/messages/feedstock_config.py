@@ -12,7 +12,7 @@ CATEGORIES = {
 
 
 @dataclass(kw_only=True)
-class FCNoDuplicateKeys(_BaseMessage):
+class NoDuplicateKeys(_BaseMessage):
     """
     `conda-forge.yml` must not contain duplicate keys.
     """

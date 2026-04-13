@@ -653,7 +653,7 @@ def run_conda_forge_specific(
             with open(cfyml_pth, encoding="utf-8") as fh:
                 get_yaml(allow_duplicate_keys=False).load(fh)
         except DuplicateKeyError:
-            lints.append(msg.FCNoDuplicateKeys())
+            lints.append(msg.NoDuplicateKeys())
 
     # 10: check for proper noarch python syntax
     if "hint_python_min" not in lints_to_skip:
