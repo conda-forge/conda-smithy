@@ -23,7 +23,10 @@ nppBackup/
 .mypy_cache/
 
 conda_smithy/_version.py
+
+# pixi environments
 .pixi/*
+!.pixi/config.toml
 
 venv
 oryx-build-commands.txt

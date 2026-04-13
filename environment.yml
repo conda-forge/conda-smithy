@@ -1,46 +1,42 @@
 name: conda-smithy
 channels:
-  - conda-forge
-  - nodefaults
+- conda-forge
+- nodefaults
 dependencies:
-  - python>=3.6
-  # Development dependencies
-  - pip
-  - python-build
-  - setuptools>=45
-  - setuptools_scm>=8.1
-  - tomli>=1.0.0
-  - pre-commit
-  - mock
-  - pytest
-  - pytest-cov
-  # # Part of some optional lint tests
-  - conda-recipe-manager >=0.9
-  - conda-souschef
-  # Runtime dependencies
-  - conda >=4.2
-  - conda-build >=25.3.1
-  - conda-package-handling >=1.9.0
-  - jinja2
-  - requests
-  - pycryptodome
-  - referencing
-  - pygit2
-  - pygithub >=2,<3
-  - ruamel.yaml
-  - conda-forge-pinning
-  - vsts-python-api
-  - toolz
-  - shellcheck
-  - scrypt
-  - license-expression
-  - libarchive
-  - cirun >=0.30
-  - pydantic >=2.11,<3
-  - pixi >=0.59.0
-  - jsonschema
-  - backports.strenum
-  - exceptiongroup
-  # py-rattler's API subject to change, pin to minor
-  - py-rattler >=0.22,<0.23
-  - rattler-build-conda-compat >=1.4.5,<2.0.0a0
+- python >=3.9
+- pip *
+- python-build *
+- setuptools >=45
+- setuptools_scm >=8.1
+- tomli >=1.0.0
+- pre-commit *
+- mock *
+- pytest *
+- pytest-cov *
+- conda-recipe-manager >=0.9
+- conda-souschef *
+- conda >=4.2
+- conda-build >=25.3.1
+- conda-package-handling >=1.9.0
+- jinja2 *
+- requests *
+- pycryptodome *
+- referencing *
+- pygit2 *
+- pygithub >=2,<3
+- ruamel.yaml *
+- conda-forge-pinning *
+- vsts-python-api *
+- toolz *
+- shellcheck *
+- scrypt *
+- license-expression *
+- libarchive *
+- cirun >=0.30
+- pydantic >=2.11,<3
+- pixi >=0.59.0
+- jsonschema *
+- backports.strenum *
+- exceptiongroup *
+- py-rattler >=0.22,<0.23
+- rattler-build-conda-compat >=1.4.5,<2.0.0a0

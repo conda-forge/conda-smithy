@@ -78,3 +78,52 @@ markers = [
     "legacy_appveyor: Test designed to run as if prior to the azure migration",
     "cli: CLI tests outside of test/test_cli.py",
 ]
+
+[tool.pixi.workspace]
+channels = ["conda-forge"]
+name = "conda-smithy"
+platforms = ["linux-64", "linux-aarch64", "osx-arm64", "win-64"]
+
+[tool.pixi.tasks]
+install = { cmd = "pip install --no-build-isolation -e .", description = "Install conda-smithy in editable mode" }
+test = { cmd = "pytest tests --cov conda_smithy", description = "Run tests with coverage", depends-on = ["install"] }
+lint = { cmd = "pre-commit run --all-files", description = "Run linters (pre-commit)" }
+
+[tool.pixi.dependencies]
+python = ">=3.9"
+pip = "*"
+python-build = "*"
+setuptools = ">=45"
+setuptools_scm = ">=8.1"
+tomli = ">=1.0.0"
+pre-commit = "*"
+mock = "*"
+pytest = "*"
+pytest-cov = "*"
+conda-recipe-manager = ">=0.9"
+conda-souschef = "*"
+conda = ">=4.2"
+conda-build = ">=25.3.1"
+conda-package-handling = ">=1.9.0"
+jinja2 = "*"
+requests = "*"
+pycryptodome = "*"
+referencing = "*"
+pygit2 = "*"
+pygithub = ">=2,<3"
+"ruamel.yaml" = "*"
+conda-forge-pinning = "*"
+vsts-python-api = "*"
+toolz = "*"
+shellcheck = "*"
+scrypt = "*"
+license-expression = "*"
+libarchive = "*"
+cirun = ">=0.30"
+pydantic = ">=2.11,<3"
+pixi = ">=0.59.0"
+jsonschema = "*"
+"backports.strenum" = "*"
+exceptiongroup = "*"
+py-rattler = ">=0.22,<0.23"
+rattler-build-conda-compat = ">=1.4.5,<2.0.0a0"

@@ -111,10 +111,23 @@ When everything is configured you can trigger a build with a push to the feedsto
 Developing conda-smithy
 -----------------------
 
-To develop conda smithy, use your favortite conda-based environment manager and create an environment based on the `environment.yml`.
+To develop conda-smithy, create an environment with all dependencies and install conda-smithy in editable mode.
+
+### Using pixi
 
 ```
-$ conda env create
+pixi install
+pixi run install
+pixi run test
+```
+
+### Using conda
+
+```
+conda env create
+conda activate conda-smithy
+pip install --no-build-isolation -e .
+pytest tests
 ```
 
 Releasing conda-smithy
