@@ -5,6 +5,7 @@ Below are a few things we ask you kindly to self-check before getting a review. 
 Checklist
 * [ ] Added a ``news`` entry
 * [ ] Regenerated schema JSON if schema altered (`python -m conda_smithy.schema`)
+* [ ] Regenerated linter documentation if any rules were added, removed or modified (`python -m conda_smithy.linter.messages`)
 
 <!--
 Please note any issues this fixes using [closing keywords]( https://help.github.com/articles/closing-issues-using-keywords/ ):

@@ -155,7 +155,7 @@ cannot be rectified.
 
 Recipe files must not contain unknown top-level keys.
 
-For recipe version 0, the expected keys are (in this order):
+For recipe version 0, the allowed keys are (in this order):
 
 - `package`
 - `source`
@@ -167,7 +167,7 @@ For recipe version 0, the expected keys are (in this order):
 - `about`
 - `extra`
 
-For other versions, it depends if you are generating one or
+For recipe version 1, it depends if you are generating one or
 multiple artifacts. For single artifacts, the expected keys are
 (in this order):
 
