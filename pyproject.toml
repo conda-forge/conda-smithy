@@ -25,7 +25,6 @@ conda-smithy = "conda_smithy.plugin"
 
 [tool.setuptools]
 packages = ["conda_smithy"]
-zip-safe = false
 include-package-data = true
 
 [tool.setuptools_scm]
