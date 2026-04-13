@@ -78,3 +78,53 @@ markers = [
     "legacy_appveyor: Test designed to run as if prior to the azure migration",
     "cli: CLI tests outside of test/test_cli.py",
 ]
+
+[tool.pixi.workspace]
+channels = ["conda-forge"]
+name = "conda-smithy"
+platforms = ["linux-64", "linux-aarch64", "osx-arm64", "win-64"]
+
+[tool.pixi.pypi-dependencies]
+conda-smithy = { path = ".", editable = true }
+
+# Runtime dependencies
+[tool.pixi.dependencies]
+conda = ">=4.2"
+conda-build = ">=25.3.1"
+conda-package-handling = ">=1.9.0"
+jinja2 = "*"
+requests = "*"
+pycryptodome = "*"
+referencing = "*"
+pygit2 = "*"
+pygithub = ">=2,<3"
+"ruamel.yaml" = "*"
+conda-forge-pinning = "*"
+vsts-python-api = "*"
+toolz = "*"
+shellcheck = "*"
+scrypt = "*"
+license-expression = "*"
+libarchive = "*"
+cirun = ">=0.30"
+pydantic = ">=2.11,<3"
+pixi = ">=0.59.0"
+jsonschema = "*"
+"backports.strenum" = "*"
+exceptiongroup = "*"
+# py-rattler's API subject to change, pin to minor
+py-rattler = ">=0.22,<0.23"
+rattler-build-conda-compat = ">=1.4.5,<2.0.0a0"
+
+# Development and testing dependencies
+[tool.pixi.feature.dev.dependencies]
+pre-commit = "*"
+mock = "*"
+pytest = "*"
+pytest-cov = "*"
+# Part of some optional lint tests
+conda-recipe-manager = ">=0.9"
+conda-souschef = "*"
+
+[tool.pixi.environments]
+default = { features = ["dev"], solve-group = "default" }

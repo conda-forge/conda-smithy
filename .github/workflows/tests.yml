@@ -78,3 +78,20 @@ jobs:
           #       and is recommending this work-around for the time being, see
           #       https://status.coveralls.io/incidents/pdbt7vdzlvpj
           fail-on-error: false
+
+  check-environment:
+    name: Check dependencies in sync
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: prefix-dev/setup-pixi@v0.9.5
+        with:
+          run-install: false
+      - name: Check pyproject.toml and environment.yml are in sync
+        run: |
+          pixi workspace export conda-environment --name conda-smithy | sed '/^$/d' > environment.yml
+          if ! git diff --exit-code environment.yml; then
+            echo "error: pyproject.toml [tool.pixi] and environment.yml are out of sync"
+            echo "Run: pixi workspace export conda-environment --name conda-smithy | sed '/^\$/d' > environment.yml"
+            exit 1
+          fi
