@@ -7,7 +7,7 @@
 
 + Create a git repo with a conda recipe and the files to run conda builds via CI
   services.
-+ Register the repo on github and push it.
++ Register the repo on GitHub and push it.
 + Connect the repo to the CI services travis-ci.com, appveyor.com, circleci.com, dev.azure.com
   (For travis-ci.com, configure your org or user to enable the service for all repos)
 
@@ -28,10 +28,10 @@ For development and contribution setup, see [Developing conda-smithy](#Developin
 
 ## Setup
 
-You need a token from github, travis-ci.com, appveyor.com and circleci.com to try out
+You need a token from GitHub, travis-ci.com, appveyor.com and circleci.com to try out
 `conda-smithy`. The commands which need this will tell you where to get these tokens and where to
-place them. If you need help getting tokens please ask on the
-[conda-forge google group](https://groups.google.com/forum/?hl=en#!forum/conda-forge).
+place them. If you need help getting tokens, please ask on the
+[conda-forge Google Group](https://groups.google.com/forum/?hl=en#!forum/conda-forge).
 
 You should be able to test parts of `conda-smithy` with whatever tokens you have.
 For example, you should be able to `conda smithy register-github` without the CI service tokens.
@@ -49,7 +49,7 @@ Re-rendering an existing feedstock is possible without CI service tokens set.
 3. Commit and push all changes
 
 Optionally one can commit the changes automatically with `conda-smithy` version `1.4.1+`.
-To do this just use the `--commit`/`-c` option. By default this will open an editor to make a commit.
+To do this, use the `--commit`/`-c` option. By default, this will open an editor to make a commit.
 It will provide a default commit message and show the changes to be added. If you wish to do this
 automatically, please just use `--commit auto`/`-c auto` and it will use the stock commit message.
 
@@ -60,8 +60,8 @@ automatically, please just use `--commit auto`/`-c auto` and it will use the sto
 directory called `foo-feedstock`, populates it with CI setup skeletons, adds the recipe under
 `recipe` and initializes it as a git repo.
 
-2. **Create a github repo:** `conda smithy register-github --organization conda-forge ./foo-feedstock`.
-This requires a github token. You can try it out with a github user account
+2. **Create a GitHub repo:** `conda smithy register-github --organization conda-forge ./foo-feedstock`.
+This requires a GitHub token. You can try it out with a GitHub user account
 instead of an organization by replacing the organization argument with
 `--user github_user_name`. If you are interested in adding teams for your feedstocks,
 you can provide the `--add-teams` option to create them. This can be done when creating
@@ -70,10 +70,10 @@ the feedstock or after.
 3. **Register the feedstock with CI services:**
 `conda smithy register-ci --organization conda-forge --feedstock_directory ./foo-feedstock`.
 This requires tokens for the CI services. You can give the name of a user instead
-of organization with `--user github_user_name`. By default this command requires an Anaconda/Binstar token
+of organization with `--user github_user_name`. By default, this command requires an Anaconda/Binstar token
 to be available in `~/.conda-smithy/anaconda.token`, or as BINSTAR_TOKEN in the environment. This can be opted
 out of by specifying `--without-anaconda-token`, as such execpted package uploads will not be attempted.
-     * For Azure, you will have to create a service connection with the same name as your github user or org
+     * For Azure, you will have to create a service connection with the same name as your GitHub user or org
         `https://dev.azure.com/YOUR_ORG/feedstock-builds/_settings/adminservices`
      * For Azure builds, you will have to export the environment variable `AZURE_ORG_OR_USER` to point to your Azure org
      * If this is your first build on Azure, make sure to add [Library Variable Group](https://docs.microsoft.com/en-us/azure/devops/pipelines/process/variables?view=azure-devops&tabs=yaml%2Cbatch#share-variables-across-pipelines) containing your BINSTAR_TOKEN for automated anaconda uploads.
@@ -101,13 +101,13 @@ out of by specifying `--without-anaconda-token`, as such execpted package upload
 
 ## Running a build
 
-When everything is configured you can trigger a build with a push to the feedstock repo on github.
+When everything is configured, you can trigger a build with a push to the feedstock repo on GitHub.
 
 ## Developing conda-smithy
 
 To install conda-smithy from source:
 
-* Install `conda`, e.g. via [Miniforge](https://conda-forge.org/download/).
+* Install `conda`, e.g., via [Miniforge](https://conda-forge.org/download/).
 * Clone this repository: `git clone https://github.com/conda-forge/conda-smithy` (or your fork).
 * Create a new conda environment with all requirements based on [environment.yml](environment.yml): `conda env create`.
 * Activate the environment: `conda activate conda-smithy`.
@@ -119,7 +119,7 @@ To install conda-smithy from source:
 Before making a release, consult `@conda-forge/core` and wait some time for objections.
 
 To release a new version of conda-smithy, you can use the
-[rever](https://regro.github.io/rever-docs/index.html) release managment tool.
+[rever](https://regro.github.io/rever-docs/index.html) release management tool.
 Run `rever` in the root repo directory with the version number you want to release.
 For example,
 
@@ -129,6 +129,6 @@ $ rever 0.1.2
 
 ## Conda-smithy in a nutshell
 
-#### xkcd 1319: Automation
+**xkcd 1319: Automation**
 
 [![xkcd 1319: Automation](https://imgs.xkcd.com/comics/automation.png)](https://xkcd.com/1319/)
