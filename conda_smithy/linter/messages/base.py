@@ -41,7 +41,7 @@ class _BaseMessage:
     @classmethod
     def category(cls) -> str:
         """
-        Category identifier for this message (e.g. `R` or `CF).
+        Category identifier for this message (e.g. `R` or `CF`).
         """
         return cls.identifier.split("-")[0]
 
