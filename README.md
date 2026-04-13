@@ -24,8 +24,7 @@ The easiest way to install conda-smithy is to use conda and conda-forge:
 conda install -n root -c conda-forge conda-smithy
 ```
 
-To install conda-smithy from source, see the requirements file in `requirements.txt`, clone this
-repo, and `python -m pip install .`.
+For development and contribution setup, see [Developing conda-smithy](#Developing-conda-smithy).
 
 Setup
 -----
@@ -111,11 +110,14 @@ When everything is configured you can trigger a build with a push to the feedsto
 Developing conda-smithy
 -----------------------
 
-To develop conda smithy, use your favortite conda-based environment manager and create an environment based on the `environment.yml`.
+To install conda-smithy from source:
 
-```
-$ conda env create
-```
+* Install `conda`, e.g. via [Miniforge](https://conda-forge.org/download/).
+* Clone this repository: `git clone https://github.com/conda-forge/conda-smithy` (or your fork).
+* Create a new conda environment with all requirements based on [environment.yml](environment.yml): `conda env create`.
+* Activate the environment: `conda activate conda-smithy`.
+  * Alternatively: Run `conda install -n base conda-spawn` and `conda spawn conda-smithy`
+* Install conda-smithy: `pip install --no-deps --editable .`
 
 Releasing conda-smithy
 ----------------------
