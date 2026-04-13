@@ -482,7 +482,10 @@ def test_pin_run_as_build():
     assert len(res["pin_run_as_build"]) == 3
 
 
-@pytest.mark.skipif(platform.system() == "Darwin" and platform.machine() == "arm64", reason="No Python below 3.8 on Apple Silicon")
+@pytest.mark.skipif(
+    platform.system() == "Darwin" and platform.machine() == "arm64",
+    reason="No Python below 3.8 on Apple Silicon",
+)
 def test_py39_migration():
     """Test that running the python 3.9 keyadd migrator has the desired effect."""
     base = parse_variant(dedent("""
@@ -572,7 +575,10 @@ def test_py39_migration():
     assert "numpy" not in res3
 
 
-@pytest.mark.skipif(platform.system() == "Darwin" and platform.machine() == "arm64", reason="No Python below 3.8 on Apple Silicon")
+@pytest.mark.skipif(
+    platform.system() == "Darwin" and platform.machine() == "arm64",
+    reason="No Python below 3.8 on Apple Silicon",
+)
 def test_multiple_key_add_migration():
     """Test that running the python 3.9 keyadd migrator has the desired effect."""
     base = parse_variant(dedent("""
