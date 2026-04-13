@@ -98,6 +98,16 @@ class _BaseMessage:
     def append_if_absent(
         self, iterable: list, test: Literal["isinstance", "str"] = "isinstance"
     ) -> None:
+        """
+        Appends itself to a list if there are no other instances of the message yet.
+
+        The `test` keyword argument offers two modes, passed as strings:
+
+        - `"isinstance"` will only result in an appended item if there are no other
+          instances of this class in the list (potentially with other arguments).
+        - `"str"` will only result in an appended item if there are no other items
+          in the list that match in string representation.
+        """
         if test == "isinstance":
             test = lambda a, b: isinstance(a, b.__class__)
         elif test == "str":
