@@ -22,9 +22,9 @@ RECIPE_VERSIONS: TypeAlias = Literal[0, 1]
 class UnexpectedSection(_BaseMessage):
     """
     Recipe files must not contain unknown top-level keys.
-    For recipe version 0, the expected keys are (in this order): 
+    For recipe version 0, the expected keys are (in this order):
     {VERSION_0_LIST}
- 
+
     For other versions, it depends if you are generating one or
     multiple artifacts. For single artifacts, the expected keys are
     (in this order):
@@ -41,11 +41,12 @@ class UnexpectedSection(_BaseMessage):
 
     @classmethod
     def documentation(cls) -> str:
-        from conda_smithy.linter.utils import EXPECTED_SECTION_ORDER
         from conda_smithy.linter.conda_recipe_v1_linter import (
-            EXPECTED_SINGLE_OUTPUT_SECTION_ORDER, 
-            EXPECTED_MULTIPLE_OUTPUT_SECTION_ORDER
+            EXPECTED_MULTIPLE_OUTPUT_SECTION_ORDER,
+            EXPECTED_SINGLE_OUTPUT_SECTION_ORDER,
         )
+        from conda_smithy.linter.utils import EXPECTED_SECTION_ORDER
+
         doc = super().documentation()
         formatted_doc = doc.format(
             VERSION_0_LIST=f"- {'\n- '.join(EXPECTED_SECTION_ORDER)}",
@@ -53,6 +54,7 @@ class UnexpectedSection(_BaseMessage):
             MULTIPLE_OUTPUT_LIST=f"- {'\n- '.join(EXPECTED_MULTIPLE_OUTPUT_SECTION_ORDER)}",
         )
         return formatted_doc
+
 
 @dataclass(kw_only=True)
 class SectionOrder(_BaseMessage):
