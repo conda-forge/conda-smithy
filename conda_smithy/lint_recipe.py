@@ -189,7 +189,7 @@ def lintify_meta_yaml(
 
     for section in major_sections:
         if section not in expected_keys:
-            lints.append(msg.UnexpectedSection(section=section))
+            lints.append(msg.r.UnexpectedSection(section=section))
             unexpected_sections.append(section)
 
     for section in unexpected_sections:
@@ -372,7 +372,7 @@ def lintify_meta_yaml(
 
     # 30: two configuration files present
     if sum(v is not None for v in recipe_config_keys.values()) > 1:
-        lints.append(msg.MoreThanOneFile())
+        lints.append(msg.rv.MoreThanOneFile())
 
     # 31: stdlib-related lints
     if "lint_stdlib" not in lints_to_skip:
@@ -562,10 +562,10 @@ def run_conda_forge_specific(
     for maintainer in maintainers:
         if "/" in maintainer:
             if not _team_exists(maintainer):
-                lints.append(msg.MaintainerExists(maintainer=maintainer))
+                lints.append(msg.cf.MaintainerExists(maintainer=maintainer))
         else:
             if not _maintainer_exists(maintainer):
-                lints.append(msg.MaintainerExists(maintainer=maintainer))
+                lints.append(msg.cf.MaintainerExists(maintainer=maintainer))
 
     # 3: if the recipe dir is inside the example dir
     # moved to staged-recipes directly
@@ -603,7 +603,7 @@ def run_conda_forge_specific(
         dep = rq.split(" ")[0].strip()
         dep_hint = specific_hints.get(dep)
         if dep_hint:
-            msg.PackageToAvoid(package_hint=dep_hint).append_if_absent(
+            msg.cf.PackageToAvoid(package_hint=dep_hint).append_if_absent(
                 hints, test="str"
             )
 
@@ -614,7 +614,7 @@ def run_conda_forge_specific(
     if not is_staged_recipes and recipe_dir is not None:
         ci_support_files = glob(os.path.join(recipe_dir, "..", ".ci_support", "*.yaml"))
         if not ci_support_files:
-            lints.append(msg.NoCiSupport())
+            lints.append(msg.cf.NoCiSupport())
 
     # 8: Ensure the recipe specifies a Python build backend if needed
     if "hint_pip_no_build_backend" not in lints_to_skip:
@@ -653,7 +653,7 @@ def run_conda_forge_specific(
             with open(cfyml_pth, encoding="utf-8") as fh:
                 get_yaml(allow_duplicate_keys=False).load(fh)
         except DuplicateKeyError:
-            lints.append(msg.NoDuplicateKeys())
+            lints.append(msg.fc.NoDuplicateKeys())
 
     # 10: check for proper noarch python syntax
     if "hint_python_min" not in lints_to_skip:
@@ -696,7 +696,7 @@ def run_conda_forge_specific(
         with open(cbc_pth, encoding="utf-8") as fh:
             data = fh.read()
         if not data or not data.strip():
-            lints.append(msg.NoEmptyVariantsFile())
+            lints.append(msg.cf.NoEmptyVariantsFile())
 
     # 14: incorrect configuration on osx for c_stdlib_version, MACOSX_SDK_VERSION etc.
     # get recipe config files (we don't care about the content, only if it's non-None)
@@ -714,7 +714,7 @@ def run_conda_forge_specific(
     if gha_workflows and (
         len(gha_workflows) > 1 or gha_workflows[0].name != "conda-build.yml"
     ):
-        lints.append(msg.NoCustomGHAWorkflows())
+        lints.append(msg.cf.NoCustomGHAWorkflows())
 
 
 def _format_validation_msg(error: jsonschema.ValidationError):

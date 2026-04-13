@@ -52,7 +52,7 @@ def lint_recipe_tests(
 
     if not test_section:
         if not outputs_section:
-            lints.append(msg.RequiredTests())
+            lints.append(msg.r.RequiredTests())
         else:
             has_outputs_test = False
             no_test_hints = []
@@ -62,12 +62,12 @@ def lint_recipe_tests(
                     has_outputs_test = True
                 else:
                     no_test_hints.append(
-                        msg.RecommendedTests(output=output.get("name", "???"))
+                        msg.r.RecommendedTests(output=output.get("name", "???"))
                     )
             if has_outputs_test:
                 hints.extend(no_test_hints)
             else:
-                lints.append(msg.RequiredTests())
+                lints.append(msg.r.RequiredTests())
 
     lints.extend(tests_lints)
     hints.extend(tests_hints)
@@ -191,8 +191,8 @@ def lint_usage_of_selectors_for_noarch(
                 has_bad_selector = True
 
             if has_bad_selector:
-                lints.append(msg.NoarchSelectorsV1(noarch=noarch_value))
+                lints.append(msg.r.NoarchSelectorsV1(noarch=noarch_value))
                 break
 
     if "skip" in build_section:
-        lints.append(msg.NoarchSelectorsV1(noarch=noarch_value, skips=True))
+        lints.append(msg.r.NoarchSelectorsV1(noarch=noarch_value, skips=True))

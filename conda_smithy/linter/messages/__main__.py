@@ -2,11 +2,6 @@ from collections import Counter
 from inspect import cleandoc
 from pathlib import Path
 
-from conda_smithy.linter.messages.conda_forge import *  # noqa: F403
-from conda_smithy.linter.messages.feedstock_config import *  # noqa: F403
-from conda_smithy.linter.messages.recipe import *  # noqa: F403
-from conda_smithy.linter.messages.recipe_variants import *  # noqa: F403
-
 
 def quote(text: str) -> str:
     lines = []
@@ -19,6 +14,7 @@ def generate_docs(output_file: str | None = None) -> str:
     """
     Generate a Markdown file documenting all linter messages
     """
+    from conda_smithy.linter.messages import all_modules
     from conda_smithy.linter.messages.base import _BaseMessage
     from conda_smithy.linter.messages.conda_forge import (
         CATEGORIES as CONDA_FORGE_CATEGORIES,
@@ -58,15 +54,16 @@ def generate_docs(output_file: str | None = None) -> str:
             output_file = maybe_repo_root / "LINTER.md"
 
     def collect_messages():
-        current_globals = globals().copy()
-        for obj_name, obj in current_globals.items():
-            if obj_name.startswith("_"):
-                continue
-            try:
-                if issubclass(obj, _BaseMessage):
-                    yield obj
-            except TypeError:
-                pass
+        for module in all_modules:
+            for obj_name in dir(module):
+                if obj_name.startswith("_"):
+                    continue
+                try:
+                    obj = getattr(module, obj_name)
+                    if issubclass(obj, _BaseMessage):
+                        yield obj
+                except TypeError:
+                    pass
 
     lines = [
         "# Linter messages",

@@ -26,7 +26,7 @@ def hint_pip_usage(build_section, hints):
             scripts = [scripts]
         for script in scripts:
             if "python setup.py install" in script:
-                hints.append(msg.UsePip())
+                hints.append(msg.r.UsePip())
 
 
 def hint_sources_should_not_mention_pypi_io_but_pypi_org(
@@ -42,7 +42,7 @@ def hint_sources_should_not_mention_pypi_io_but_pypi_org(
         source = source_section.get("url", "") or ""
         sources = [source] if isinstance(source, str) else source
         if any(s.startswith("https://pypi.io/") for s in sources):
-            hints.append(msg.UsePyPiOrg())
+            hints.append(msg.r.UsePyPiOrg())
 
 
 def hint_suggest_noarch(
@@ -87,7 +87,7 @@ def hint_suggest_noarch(
                             no_arch_possible = False
                             break
                 if no_arch_possible:
-                    hints.append(msg.SuggestNoarch())
+                    hints.append(msg.r.SuggestNoarch())
 
 
 def hint_shellcheck_usage(recipe_dir, hints):
@@ -131,14 +131,14 @@ def hint_shellcheck_usage(recipe_dir, hints):
                     .splitlines()
                 )
                 hints.append(
-                    msg.ScriptShellcheckReport(
+                    msg.r.ScriptShellcheckReport(
                         command=cmd,
                         output_lines=findings,
                     )
                 )
             elif p.returncode != 0:
                 # Something went wrong.
-                hints.append(msg.ScriptShellcheckFailure())
+                hints.append(msg.r.ScriptShellcheckFailure())
 
 
 def hint_check_spdx(about_section, hints):
@@ -180,9 +180,9 @@ def hint_check_spdx(about_section, hints):
         expected_exceptions = f.readlines()
         expected_exceptions = {li.strip() for li in expected_exceptions}
     if set(filtered_licenses) - expected_licenses:
-        hints.append(msg.LicenseSPDX())
+        hints.append(msg.r.LicenseSPDX())
     if set(parsed_exceptions) - expected_exceptions:
-        hints.append(msg.InvalidLicenseException())
+        hints.append(msg.r.InvalidLicenseException())
 
 
 def hint_pip_no_build_backend(host_or_build_section, package_name, hints):
@@ -215,7 +215,7 @@ def hint_pip_no_build_backend(host_or_build_section, package_name, hints):
                 break
 
         if not found_backend:
-            hints.append(msg.PythonBuildBackendHost(package_name=package_name))
+            hints.append(msg.r.PythonBuildBackendHost(package_name=package_name))
 
 
 def _hint_noarch_python_use_python_min_inner(
@@ -226,7 +226,7 @@ def _hint_noarch_python_use_python_min_inner(
     recipe_version,
     output_name,
 ):
-    hint = []
+    recommendations = []
 
     if noarch_value == "python":
         if recipe_version == 1:
@@ -294,7 +294,7 @@ def _hint_noarch_python_use_python_min_inner(
                 section_desc = (
                     f"`{output_name}` output" if output_name else "the recipe"
                 )
-                hint.append(
+                recommendations.append(
                     (
                         report_section_name,
                         section_desc,
@@ -302,7 +302,7 @@ def _hint_noarch_python_use_python_min_inner(
                         report_entry,
                     )
                 )
-    return hint
+    return recommendations
 
 
 def hint_noarch_python_use_python_min(
@@ -314,7 +314,7 @@ def hint_noarch_python_use_python_min(
     recipe_version,
     hints,
 ):
-    hint = []
+    recommendations = []
 
     if outputs_section:
         for output_num, output in enumerate(outputs_section):
@@ -326,7 +326,7 @@ def hint_noarch_python_use_python_min(
                 output_host_reqs = None
                 output_run_reqs = requirements
 
-            hint.extend(
+            recommendations.extend(
                 _hint_noarch_python_use_python_min_inner(
                     output_host_reqs or [],
                     output_run_reqs or [],
@@ -337,7 +337,7 @@ def hint_noarch_python_use_python_min(
                 )
             )
     else:
-        hint.extend(
+        recommendations.extend(
             _hint_noarch_python_use_python_min_inner(
                 host_reqs,
                 run_reqs,
@@ -348,8 +348,8 @@ def hint_noarch_python_use_python_min(
             )
         )
 
-    if hint:
-        hints.append(msg.PythonMinPin(recommendations=hint))
+    if recommendations:
+        hints.append(msg.r.PythonMinPin(recommendations=recommendations))
 
 
 def hint_space_separated_specs(
@@ -386,7 +386,7 @@ def hint_space_separated_specs(
                 ] = bad_specs
 
     for output, requirements in report.items():
-        hints.append(msg.SpaceSeparatedSpecs(output=output, bad_specs=requirements))
+        hints.append(msg.r.SpaceSeparatedSpecs(output=output, bad_specs=requirements))
 
 
 def _ensure_spec_space_separated(spec: str) -> bool:
@@ -437,7 +437,7 @@ def hint_os_version(
         if v in obsolete_os_versions
     }
     if matches:
-        hints.append(msg.OsVersion(platforms=matches, default=default_os_version))
+        hints.append(msg.r.OsVersion(platforms=matches, default=default_os_version))
 
 
 def hint_rattler_build_bld_bat(
@@ -460,4 +460,4 @@ def hint_rattler_build_bld_bat(
     # Check if bld.bat exists in the recipe directory
     bld_bat_path = os.path.join(recipe_dir, "bld.bat")
     if os.path.exists(bld_bat_path):
-        hints.append(msg.RattlerBldBat())
+        hints.append(msg.r.RattlerBldBat())
