@@ -24,7 +24,7 @@ The easiest way to install conda-smithy is to use conda and conda-forge:
 conda install -n root -c conda-forge conda-smithy
 ```
 
-For development and contribution setup, see [Developing conda-smithy](#Developing-conda-smithy).
+For development and contribution setup, see [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 ## Setup
 
