@@ -84,24 +84,11 @@ channels = ["conda-forge"]
 name = "conda-smithy"
 platforms = ["linux-64", "linux-aarch64", "osx-arm64", "win-64"]
 
-[tool.pixi.tasks]
-install = { cmd = "pip install --no-build-isolation -e .", description = "Install conda-smithy in editable mode" }
-test = { cmd = "pytest tests --cov conda_smithy", description = "Run tests with coverage", depends-on = ["install"] }
-lint = { cmd = "pre-commit run --all-files", description = "Run linters (pre-commit)" }
+[tool.pixi.pypi-dependencies]
+conda-smithy = { path = ".", editable = true }
 
+# Runtime dependencies
 [tool.pixi.dependencies]
-python = ">=3.9"
-pip = "*"
-python-build = "*"
-setuptools = ">=45"
-setuptools_scm = ">=8.1"
-tomli = ">=1.0.0"
-pre-commit = "*"
-mock = "*"
-pytest = "*"
-pytest-cov = "*"
-conda-recipe-manager = ">=0.9"
-conda-souschef = "*"
 conda = ">=4.2"
 conda-build = ">=25.3.1"
 conda-package-handling = ">=1.9.0"
@@ -125,5 +112,19 @@ pixi = ">=0.59.0"
 jsonschema = "*"
 "backports.strenum" = "*"
 exceptiongroup = "*"
+# py-rattler's API subject to change, pin to minor
 py-rattler = ">=0.22,<0.23"
 rattler-build-conda-compat = ">=1.4.5,<2.0.0a0"
+
+# Development and testing dependencies
+[tool.pixi.feature.dev.dependencies]
+pre-commit = "*"
+mock = "*"
+pytest = "*"
+pytest-cov = "*"
+# Part of some optional lint tests
+conda-recipe-manager = ">=0.9"
+conda-souschef = "*"
+
+[tool.pixi.environments]
+default = { features = ["dev"], solve-group = "default" }

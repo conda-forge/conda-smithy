@@ -3,12 +3,6 @@ channels:
 - conda-forge
 - nodefaults
 dependencies:
-- python >=3.9
-- pip *
-- python-build *
-- setuptools >=45
-- setuptools_scm >=8.1
-- tomli >=1.0.0
 - pre-commit *
 - mock *
 - pytest *
@@ -40,3 +34,7 @@ dependencies:
 - exceptiongroup *
 - py-rattler >=0.22,<0.23
 - rattler-build-conda-compat >=1.4.5,<2.0.0a0
+- python >=3.9
+- pip
+- pip:
+  - -e .

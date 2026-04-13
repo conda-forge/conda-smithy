@@ -9,5 +9,3 @@
 *.yaml.ci-skel.tmpl linguist-language=yaml
 *.yml.tmpl linguist-language=yaml
 *.yaml.tmpl linguist-language=yaml
-# SCM syntax highlighting & preventing 3-way merges
-pixi.lock merge=binary linguist-language=YAML linguist-generated=true -diff

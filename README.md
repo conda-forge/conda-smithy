@@ -117,8 +117,7 @@ To develop conda-smithy, create an environment with all dependencies and install
 
 ```
 pixi install
-pixi run install
-pixi run test
+pixi run pytest
 ```
 
 ### Using conda
