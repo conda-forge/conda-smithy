@@ -38,7 +38,6 @@ dependencies:
   - pydantic >=2.11,<3
   - pixi >=0.59.0
   - jsonschema
-  - backports.strenum
   - exceptiongroup
   # py-rattler's API subject to change, pin to minor
   - py-rattler >=0.22,<0.23
