@@ -18,7 +18,7 @@ CATEGORIES = {
 
 
 @dataclass(kw_only=True)
-class CFMaintainerExists(_BaseMessage):
+class MaintainerExists(_BaseMessage):
     """
     Maintainers listed in `extra.recipe-maintainers` must be valid Github usernames
     or `@conda-forge/*` teams.
@@ -44,7 +44,7 @@ class CFMaintainerExists(_BaseMessage):
 
 
 @dataclass(kw_only=True)
-class CFPackageToAvoid(_BaseMessage):
+class PackageToAvoid(_BaseMessage):
     """
     Some package names may not be used in recipes directly, or under some circumstances.
 
@@ -59,7 +59,7 @@ class CFPackageToAvoid(_BaseMessage):
 
 
 @dataclass(kw_only=True)
-class CFNoCiSupport(_BaseMessage):
+class NoCiSupport(_BaseMessage):
     """
     No `.ci_support/*.yaml` files could be found, which means that build matrix is empty
     and no packages will be built.
@@ -76,7 +76,7 @@ class CFNoCiSupport(_BaseMessage):
 
 
 @dataclass(kw_only=True)
-class CFNoEmptyVariantsFile(_BaseMessage):
+class NoEmptyVariantsFile(_BaseMessage):
     """
     Variants files can't be empty.
     """
@@ -87,7 +87,7 @@ class CFNoEmptyVariantsFile(_BaseMessage):
 
 
 @dataclass(kw_only=True)
-class CFNoCustomGHAWorkflows(_BaseMessage):
+class NoCustomGHAWorkflows(_BaseMessage):
     """
     Due to its stature in the open-source community, conda-forge has enhanced
     access to certain CI services. This access is a community resource entrusted
