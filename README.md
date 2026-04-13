@@ -1,5 +1,6 @@
-Overview
---------
+# Conda Smithy
+
+## Overview
 
 `conda-smithy` is a tool for combining a conda recipe with configurations to build using freely hosted CI services into a single repository, also known as a feedstock.
 `conda-smithy` is still a work-in-progress, but when complete, `conda-smithy` will:
@@ -15,8 +16,7 @@ Overview
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
 
-Installation
-------------
+## Installation
 
 The easiest way to install conda-smithy is to use conda and conda-forge:
 
@@ -26,8 +26,7 @@ conda install -n root -c conda-forge conda-smithy
 
 For development and contribution setup, see [Developing conda-smithy](#Developing-conda-smithy).
 
-Setup
------
+## Setup
 
 You need a token from github, travis-ci.com, appveyor.com and circleci.com to try out
 `conda-smithy`. The commands which need this will tell you where to get these tokens and where to
@@ -38,8 +37,7 @@ You should be able to test parts of `conda-smithy` with whatever tokens you have
 For example, you should be able to `conda smithy register-github` without the CI service tokens.
 Re-rendering an existing feedstock is also possible without CI service tokens set.
 
-Re-rendering an existing feedstock
-----------------------------------
+## Re-rendering an existing feedstock
 
 Periodically feedstocks need to be upgraded to include new features. To do
 this we use `conda-smithy` to go through a process called re-rendering.
@@ -55,8 +53,7 @@ To do this just use the `--commit`/`-c` option. By default this will open an edi
 It will provide a default commit message and show the changes to be added. If you wish to do this
 automatically, please just use `--commit auto`/`-c auto` and it will use the stock commit message.
 
-Making a new feedstock
-----------------------
+## Making a new feedstock
 
 1. **Make the feedstock repo:** `conda smithy init
 <directory_of_conda_recipe>`.     For a recipe called `foo`, this creates a
@@ -102,13 +99,11 @@ out of by specifying `--without-anaconda-token`, as such execpted package upload
 
 7. **Commit the changes:** ``cd foo-feedstock && git commit``, then push ``git push upstream master``.
 
-Running a build
----------------
+## Running a build
 
 When everything is configured you can trigger a build with a push to the feedstock repo on github.
 
-Developing conda-smithy
------------------------
+## Developing conda-smithy
 
 To install conda-smithy from source:
 
@@ -119,8 +114,7 @@ To install conda-smithy from source:
   * Alternatively: Run `conda install -n base conda-spawn` and `conda spawn conda-smithy`
 * Install conda-smithy: `pip install --no-deps --editable .`
 
-Releasing conda-smithy
-----------------------
+## Releasing conda-smithy
 
 Before making a release, consult `@conda-forge/core` and wait some time for objections.
 
@@ -133,9 +127,7 @@ For example,
 $ rever 0.1.2
 ```
 
-
-Conda-smithy in a nutshell
---------------------------
+## Conda-smithy in a nutshell
 
 #### xkcd 1319: Automation
 
