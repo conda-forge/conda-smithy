@@ -51,7 +51,16 @@ class _BaseMessage:
     def documentation(cls) -> str:
         """
         Override this to render dynamic content (e.g. import a list of valid keys from)
-        somewhere.
+        somewhere. For example:
+
+        ```python
+        @classmethod
+        def documentation(cls) -> str:
+            import random
+
+            doc = super().documentation()
+            return doc.format(variable=random.random())
+        ```
         """
         return cleandoc(cls.__doc__)
 
