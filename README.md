@@ -114,6 +114,21 @@ To install conda-smithy from source:
   * Alternatively: Run `conda install -n base conda-spawn` and `conda spawn conda-smithy`
 * Install conda-smithy: `pip install --no-deps --editable .`
 
+To run all tests:
+
+```sh
+$ pytest
+```
+
+To run all code checks:
+
+```sh
+# staged changes
+$ pre-commit run
+# all files
+$ pre-commit run --all-files
+```
+
 ## Releasing conda-smithy
 
 Before making a release, consult `@conda-forge/core` and wait some time for objections.
