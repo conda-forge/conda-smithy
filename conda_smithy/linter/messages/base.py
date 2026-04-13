@@ -39,13 +39,11 @@ class _BaseMessage:
     deprecated_in: ClassVar[str] = ""
 
     @classmethod
-    def samples(cls) -> list[Self]:
+    def category(cls) -> str:
         """
-        Provides one or more example instances of the error message. Used in documentation.
-        Define at least one if `message` needs to be rendered with additional attributes.
-        Not needed for static `message` strings.
+        Category identifier for this message (e.g. `R` or `CF).
         """
-        return []
+        return cls.identifier.split("-")[0]
 
     @classmethod
     def documentation(cls) -> str:
@@ -63,6 +61,15 @@ class _BaseMessage:
         ```
         """
         return cleandoc(cls.__doc__)
+
+    @classmethod
+    def samples(cls) -> list[Self]:
+        """
+        Provides one or more example instances of the error message. Used in documentation.
+        Define at least one if `message` needs to be rendered with additional attributes.
+        Not needed for static `message` strings.
+        """
+        return []
 
     def _render(self) -> str:
         """
