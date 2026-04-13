@@ -417,9 +417,9 @@ def hint_space_separated_specs(
         }.items():
             bad_specs = [req for req in reqs if not _ensure_spec_space_separated(req)]
             if bad_specs:
-                report.setdefault(output.get("name", f"output {i}"), {})[
-                    req_type
-                ] = bad_specs
+                report.setdefault(output.get("name", f"output {i}"), {})[req_type] = (
+                    bad_specs
+                )
 
     lines = []
     for output, requirements in report.items():

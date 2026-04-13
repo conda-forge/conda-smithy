@@ -312,11 +312,13 @@ def test_schema_with_rattler_build_conda_compat():
     with tempfile.TemporaryDirectory() as tmpdir:
         pth = os.path.join(tmpdir, "conda-forge.yml")
         with open(pth, "w") as fp:
-            fp.write(textwrap.dedent("""\
+            fp.write(
+                textwrap.dedent("""\
                 bot:
                 version_updates:
                     random_fraction_to_keep: 0.02
-                """))
+                """)
+            )
         with open(pth) as fp:
             cfyaml = get_yaml().load(fp)
 

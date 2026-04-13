@@ -58,12 +58,15 @@ def test_add():
 
 
 def test_ordering():
-    start = parse_variant(dedent("""\
+    start = parse_variant(
+        dedent("""\
     c_compiler:
         - toolchain
-    """))
+    """)
+    )
 
-    mig_compiler = parse_variant(dedent("""\
+    mig_compiler = parse_variant(
+        dedent("""\
     __migrator:
         ordering:
             c_compiler:
@@ -71,7 +74,8 @@ def test_ordering():
                 - gcc
     c_compiler:
         - gcc
-    """))
+    """)
+    )
 
     res = variant_add(start, mig_compiler)
     assert res["c_compiler"] == ["gcc"]
@@ -79,13 +83,16 @@ def test_ordering():
 
 def test_ordering_with_tail():
     # c.f. https://github.com/conda-forge/conda-smithy/issues/2331
-    start = parse_variant(dedent("""\
+    start = parse_variant(
+        dedent("""\
     cuda_compiler_version:
         - "None"
         - "12.6"
-    """))
+    """)
+    )
 
-    cuda_migrator = parse_variant(dedent("""\
+    cuda_migrator = parse_variant(
+        dedent("""\
     __migrator:
         ordering:
             cuda_compiler_version:
@@ -94,7 +101,8 @@ def test_ordering_with_tail():
                 - "12.9"
     cuda_compiler_version:
         - "12.9"
-    """))
+    """)
+    )
 
     res = variant_add(start, cuda_migrator)
     assert res["cuda_compiler_version"] == ["None", "12.9"]
@@ -105,7 +113,8 @@ def test_ordering_with_primary_key(gcc_for_12dot6):
     # ensure that GCC pins matching the respective CUDA versions get merged
     # correctly; the GCC pin for 12.6 should never get picked since that CUDA
     # version gets dropped in the merge of the primary keys (based on ordering).
-    start = parse_variant(dedent(f"""\
+    start = parse_variant(
+        dedent(f"""\
     cuda_compiler_version:
         - "None"
         - "12.6"
@@ -115,9 +124,11 @@ def test_ordering_with_primary_key(gcc_for_12dot6):
     zip_keys:
         - - c_compiler_version
           - cuda_compiler_version
-    """))
+    """)
+    )
 
-    cuda_migrator = parse_variant(dedent("""\
+    cuda_migrator = parse_variant(
+        dedent("""\
     __migrator:
         primary_key: cuda_compiler_version
         ordering:
@@ -129,7 +140,8 @@ def test_ordering_with_primary_key(gcc_for_12dot6):
         - "12.9"
     c_compiler_version:
         - "14"
-    """))
+    """)
+    )
 
     res = variant_add(start, cuda_migrator)
     assert res["cuda_compiler_version"] == ["None", "12.9"]
@@ -142,7 +154,8 @@ def test_ordering_with_tail_and_readd(initial_min):
     # while also allowing an opt-in migrator to re-add CUDA 11.8, see
     # https://github.com/conda-forge/conda-forge-pinning-feedstock/pull/7472
     # since CUDA for PPC was removed, need to handle cuda_compiler_version_min == "None"
-    start = parse_variant(dedent(f"""\
+    start = parse_variant(
+        dedent(f"""\
     cuda_compiler:
         - cuda-nvcc
     cuda_compiler_version:
@@ -150,9 +163,11 @@ def test_ordering_with_tail_and_readd(initial_min):
         - "12.6"
     cuda_compiler_version_min:
         - "{initial_min}"
-    """))
+    """)
+    )
 
-    cuda129_migrator = parse_variant(dedent("""\
+    cuda129_migrator = parse_variant(
+        dedent("""\
     __migrator:
         ordering:
             cuda_compiler_version:
@@ -162,9 +177,11 @@ def test_ordering_with_tail_and_readd(initial_min):
                 - "11.8"
     cuda_compiler_version:
         - "12.9"
-    """))
+    """)
+    )
 
-    cuda118_migrator = parse_variant(dedent("""\
+    cuda118_migrator = parse_variant(
+        dedent("""\
     __migrator:
         operation: key_add
         primary_key: cuda_compiler_version
@@ -191,7 +208,8 @@ def test_ordering_with_tail_and_readd(initial_min):
         - "11.8"
     cuda_compiler:
         - nvcc
-    """))
+    """)
+    )
 
     res = variant_add(start, cuda129_migrator)
     res2 = variant_add(res, cuda118_migrator)
@@ -206,7 +224,8 @@ def test_ordering_with_coinciding_pk():
     # cannot be the primary key, because it needs to be zipped into `cuda_compiler_version`).
     # therefore, this tests that uniqueness a new _set_ of values across the relevant zip_keys
     # will still be inserted, not discarded
-    start = parse_variant(dedent("""\
+    start = parse_variant(
+        dedent("""\
     cuda_compiler:
         - cuda-nvcc
     cuda_compiler_version:
@@ -215,9 +234,11 @@ def test_ordering_with_coinciding_pk():
     # does not participate in first two migrations!
     arm_variant_type:
         - "sbsa"
-    """))
+    """)
+    )
 
-    cuda129_migrator = parse_variant(dedent("""\
+    cuda129_migrator = parse_variant(
+        dedent("""\
     __migrator:
         ordering:
             cuda_compiler_version:
@@ -227,9 +248,11 @@ def test_ordering_with_coinciding_pk():
                 - "11.8"
     cuda_compiler_version:
         - "12.9"
-    """))
+    """)
+    )
 
-    cuda130_migrator = parse_variant(dedent("""\
+    cuda130_migrator = parse_variant(
+        dedent("""\
     __migrator:
         operation: key_add
         primary_key: cuda_compiler_version
@@ -241,9 +264,11 @@ def test_ordering_with_coinciding_pk():
                 - "13.0"
     cuda_compiler_version:
         - "13.0"
-    """))
+    """)
+    )
 
-    tegra_migrator = parse_variant(dedent("""\
+    tegra_migrator = parse_variant(
+        dedent("""\
     __migrator:
         operation: key_add
         primary_key: cuda_compiler_version
@@ -259,7 +284,8 @@ def test_ordering_with_coinciding_pk():
         - "12.9"
     arm_variant_type:
         - "tegra"
-    """))
+    """)
+    )
 
     res = variant_add(start, cuda129_migrator)
     res2 = variant_add(res, cuda130_migrator)
@@ -271,7 +297,8 @@ def test_ordering_with_coinciding_pk():
 @pytest.mark.parametrize("initial_min", ["12.6", "None"])
 def test_fail_on_missing_zip_component(initial_min):
     # since CUDA for PPC was removed, need to handle cuda_compiler_version_min == "None"
-    start = parse_variant(dedent(f"""\
+    start = parse_variant(
+        dedent(f"""\
     cuda_compiler:
         - cuda-nvcc
     cuda_compiler_version:
@@ -285,11 +312,13 @@ def test_fail_on_missing_zip_component(initial_min):
     zip_keys:
         - - cuda_compiler_version
           - c_stdlib_version
-    """))
+    """)
+    )
 
     # if this migrator is missing c_stdlib_version, the migration should not be
     # insert `c_stdlib_version: None` silently, but the rerender needs to fail
-    cuda118_migrator = parse_variant(dedent("""\
+    cuda118_migrator = parse_variant(
+        dedent("""\
     __migrator:
         operation: key_add
         primary_key: cuda_compiler_version
@@ -319,19 +348,23 @@ def test_fail_on_missing_zip_component(initial_min):
     # commented out intentionally!
     # c_stdlib_version:
     #     - "2.17"
-    """))
+    """)
+    )
 
     with pytest.raises(ValueError):
         variant_add(start, cuda118_migrator)
 
 
 def test_no_ordering():
-    start = parse_variant(dedent("""\
+    start = parse_variant(
+        dedent("""\
     xyz:
         - 1
-    """))
+    """)
+    )
 
-    mig_compiler = parse_variant(dedent("""\
+    mig_compiler = parse_variant(
+        dedent("""\
     __migrator:
         kind:
             version
@@ -339,19 +372,23 @@ def test_no_ordering():
             1
     xyz:
         - 2
-    """))
+    """)
+    )
 
     res = variant_add(start, mig_compiler)
     assert res["xyz"] == ["2"]
 
 
 def test_ordering_downgrade():
-    start = parse_variant(dedent("""\
+    start = parse_variant(
+        dedent("""\
     jpeg:
         - 3.0
-    """))
+    """)
+    )
 
-    mig_compiler = parse_variant(dedent("""\
+    mig_compiler = parse_variant(
+        dedent("""\
     __migrator:
         ordering:
             jpeg:
@@ -359,43 +396,52 @@ def test_ordering_downgrade():
                 - 2.0
     jpeg:
         - 2.0
-    """))
+    """)
+    )
 
     res = variant_add(start, mig_compiler)
     assert res["jpeg"] == ["2.0"]
 
 
 def test_ordering_space():
-    start = parse_variant(dedent("""\
+    start = parse_variant(
+        dedent("""\
     python:
         - 2.7
-    """))
+    """)
+    )
 
-    mig_compiler = parse_variant(dedent("""\
+    mig_compiler = parse_variant(
+        dedent("""\
     python:
         - 2.7 *_cpython
-    """))
+    """)
+    )
 
     res = variant_add(start, mig_compiler)
     assert res["python"] == ["2.7 *_cpython"]
 
 
 def test_new_pinned_package():
-    start = parse_variant(dedent("""\
+    start = parse_variant(
+        dedent("""\
     pin_run_as_build:
         jpeg:
             max_pin: x
     jpeg:
         - 3.0
-    """))
+    """)
+    )
 
-    mig_compiler = parse_variant(dedent("""\
+    mig_compiler = parse_variant(
+        dedent("""\
     pin_run_as_build:
         gprc-cpp:
             max_pin: x.x
     gprc-cpp:
         - 1.23
-    """))
+    """)
+    )
 
     res = variant_add(start, mig_compiler)
     assert res["gprc-cpp"] == ["1.23"]
@@ -403,7 +449,8 @@ def test_new_pinned_package():
 
 
 def test_zip_keys():
-    start = parse_variant(dedent("""\
+    start = parse_variant(
+        dedent("""\
     zip_keys:
         -
             - vc
@@ -411,9 +458,11 @@ def test_zip_keys():
         -
             - qt
             - pyqt
-    """))
+    """)
+    )
 
-    mig_compiler = parse_variant(dedent("""\
+    mig_compiler = parse_variant(
+        dedent("""\
     zip_keys:
         -
             - python
@@ -422,7 +471,8 @@ def test_zip_keys():
         -
             - root
             - c_compiler
-    """))
+    """)
+    )
 
     res = variant_add(start, mig_compiler)
 
@@ -431,7 +481,8 @@ def test_zip_keys():
 
 
 def test_migrate_windows_compilers():
-    start = parse_variant(dedent("""
+    start = parse_variant(
+        dedent("""
         c_compiler:
             - vs2008
             - vs2015
@@ -441,16 +492,19 @@ def test_migrate_windows_compilers():
         zip_keys:
             - - vc
               - c_compiler
-        """))
+        """)
+    )
 
-    mig = parse_variant(dedent("""
+    mig = parse_variant(
+        dedent("""
         c_compiler:
             - vs2008
             - vs2017
         vc:
             - '9'
             - '14.1'
-        """))
+        """)
+    )
 
     res = variant_add(start, mig)
 
@@ -460,21 +514,25 @@ def test_migrate_windows_compilers():
 
 
 def test_pin_run_as_build():
-    start = parse_variant(dedent("""\
+    start = parse_variant(
+        dedent("""\
     pin_run_as_build:
         python:
             max_pin: x.x
         boost-cpp:
             max_pin: x
-    """))
+    """)
+    )
 
-    mig_compiler = parse_variant(dedent("""\
+    mig_compiler = parse_variant(
+        dedent("""\
     pin_run_as_build:
         boost-cpp:
             max_pin: x.x
         rust:
             max_pin: x
-    """))
+    """)
+    )
 
     res = variant_add(start, mig_compiler)
 
@@ -483,7 +541,8 @@ def test_pin_run_as_build():
 
 def test_py39_migration():
     """Test that running the python 3.9 keyadd migrator has the desired effect."""
-    base = parse_variant(dedent("""
+    base = parse_variant(
+        dedent("""
             python:
               - 3.6.* *_cpython    # [not (osx and arm64)]
               - 3.7.* *_cpython    # [not (osx and arm64)]
@@ -497,9 +556,11 @@ def test_py39_migration():
                 - cuda_compiler_version     # ["linux-64"]
                 - docker_image              # ["linux-64"]
 
-            """))
+            """)
+    )
 
-    migration_pypy = parse_variant(dedent("""
+    migration_pypy = parse_variant(
+        dedent("""
     python:
       - 3.6.* *_cpython   # [not (osx and arm64)]
       - 3.7.* *_cpython   # [not (osx and arm64)]
@@ -524,9 +585,11 @@ def test_py39_migration():
         - python
         - numpy
         - python_impl
-    """))
+    """)
+    )
 
-    migration_py39 = parse_variant(dedent("""
+    migration_py39 = parse_variant(
+        dedent("""
         __migrator:
             operation: key_add
             primary_key: python
@@ -544,7 +607,8 @@ def test_py39_migration():
           - 1.100
         python_impl:
           - cpython
-        """))
+        """)
+    )
 
     res = variant_add(base, migration_pypy)
     res2 = variant_add(res, migration_py39)
@@ -572,7 +636,8 @@ def test_py39_migration():
 
 def test_multiple_key_add_migration():
     """Test that running the python 3.9 keyadd migrator has the desired effect."""
-    base = parse_variant(dedent("""
+    base = parse_variant(
+        dedent("""
             python:
               - 3.6.* *_cpython    # [not (osx and arm64)]
               - 3.7.* *_cpython    # [not (osx and arm64)]
@@ -586,9 +651,11 @@ def test_multiple_key_add_migration():
                 - cuda_compiler_version     # ["linux-64"]
                 - docker_image              # ["linux-64"]
 
-            """))
+            """)
+    )
 
-    migration_pypy = parse_variant(dedent("""
+    migration_pypy = parse_variant(
+        dedent("""
     python:
       - 3.6.* *_cpython   # [not (osx and arm64)]
       - 3.7.* *_cpython   # [not (osx and arm64)]
@@ -613,9 +680,11 @@ def test_multiple_key_add_migration():
         - python
         - numpy
         - python_impl
-    """))
+    """)
+    )
 
-    migration_py39 = parse_variant(dedent("""
+    migration_py39 = parse_variant(
+        dedent("""
         __migrator:
             operation: key_add
             primary_key: python
@@ -637,7 +706,8 @@ def test_multiple_key_add_migration():
         python_impl:
           - cpython
           - cpython
-        """))
+        """)
+    )
 
     res = variant_add(base, migration_pypy)
     res2 = variant_add(res, migration_py39)
@@ -666,7 +736,8 @@ def test_multiple_key_add_migration():
 
 
 def test_variant_key_remove():
-    base = parse_variant(dedent("""
+    base = parse_variant(
+        dedent("""
     python:
       - 3.6.* *_cpython
       - 3.8.* *_cpython
@@ -684,8 +755,10 @@ def test_variant_key_remove():
         - python
         - numpy
         - python_impl
-    """))
-    removal = parse_variant(dedent("""
+    """)
+    )
+    removal = parse_variant(
+        dedent("""
             __migrator:
                 operation: key_remove
                 primary_key: python
@@ -698,7 +771,8 @@ def test_variant_key_remove():
                         - 3.9.* *_cpython
             python:
               - 3.6.* *_cpython
-            """))
+            """)
+    )
 
     res = variant_add(base, removal)
 
@@ -778,7 +852,8 @@ def test_variant_remove_add(platform, arch):
         config=config,
     )
 
-    add_py39 = parse_variant(dedent("""
+    add_py39 = parse_variant(
+        dedent("""
         __migrator:
             operation: key_add
             primary_key: python
@@ -789,7 +864,8 @@ def test_variant_remove_add(platform, arch):
           - 1.100
         python_impl:
           - cpython
-        """))
+        """)
+    )
 
     res = variant_add(base, remove)
     res = variant_add(res, add)

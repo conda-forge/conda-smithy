@@ -793,11 +793,13 @@ def test_migrator_cfp_override(recipe_migration_cfep9, jinja_env):
     os.makedirs(cfp_migration_dir, exist_ok=True)
 
     with open(os.path.join(cfp_migration_dir, "zlib.yaml"), "w") as f:
-        f.write(textwrap.dedent("""
+        f.write(
+            textwrap.dedent("""
                 migrator_ts: 1
                 zlib:
                    - 1001
-                """))
+                """)
+        )
     render_func(
         jinja_env=jinja_env,
         forge_config=recipe_migration_cfep9.config,
@@ -2288,23 +2290,23 @@ def test_render_pixi(
     pixi = tomllib.loads(pixi_text)
 
     if not shellcheck:
-        assert (
-            "shellcheck" not in pixi_text
-        ), "pixi.toml should not mention `shellcheck`"
+        assert "shellcheck" not in pixi_text, (
+            "pixi.toml should not mention `shellcheck`"
+        )
     else:
         platforms = pixi["workspace"]["platforms"]
-        assert (
-            platform_without_shellcheck in platforms
-        ), f"expected {platform_without_shellcheck} in pixi workspace platforms"
-        assert (
-            "win-64" in platforms
-        ), "expected an aliased platform in pixi workspace platforms"
+        assert platform_without_shellcheck in platforms, (
+            f"expected {platform_without_shellcheck} in pixi workspace platforms"
+        )
+        assert "win-64" in platforms, (
+            "expected an aliased platform in pixi workspace platforms"
+        )
         shellcheck_platforms = pixi["feature"]["shellcheck"]["platforms"]
         smithy_env = pixi["environments"]["smithy"]
         assert shellcheck_platforms, "`shellcheck` should be enabled on _some_ platform"
-        assert (
-            platform_without_shellcheck not in shellcheck_platforms
-        ), f"`shellcheck` should not be enabled for {platform_without_shellcheck}"
+        assert platform_without_shellcheck not in shellcheck_platforms, (
+            f"`shellcheck` should not be enabled for {platform_without_shellcheck}"
+        )
 
         assert "shellcheck" in smithy_env, "`smithy` env should have `shellcheck`"
 
@@ -2318,12 +2320,14 @@ def test_configure_feedstock_rattler_build_conda_compat_round_trip():
     with tempfile.TemporaryDirectory() as tmpdir:
         fname = os.path.join(tmpdir, "variants.yaml")
         with open(fname, "w") as fp:
-            fp.write(textwrap.dedent("""
+            fp.write(
+                textwrap.dedent("""
                 varkey:
                 - "val1"
                 - 'val2'
                 - val
-                """))
+                """)
+            )
 
         cfg = parse_recipe_config_file(fname, {})
         assert "ruamel.yaml" in _dumps(cfg)
@@ -2442,14 +2446,16 @@ def test_store_build_artifacts_gha(py_recipe, jinja_env, path: str, value: bool)
     forge_yml = Path(forge_dir, "conda-forge.yml")
 
     with open(forge_yml, "a") as f:
-        f.write(textwrap.dedent(f"""\
+        f.write(
+            textwrap.dedent(f"""\
             provider:
               linux_64: github_actions
               osx_64: github_actions
               win_64: github_actions
             {path}:
               store_build_artifacts: {value}
-        """))
+        """)
+        )
 
     config = configure_feedstock._load_forge_config(
         forge_dir, "recipe/default_config.yaml"
@@ -2496,14 +2502,16 @@ def test_store_build_artifacts_azure(py_recipe, jinja_env, path: str, value: boo
     forge_yml = Path(forge_dir, "conda-forge.yml")
 
     with open(forge_yml, "a") as f:
-        f.write(textwrap.dedent(f"""\
+        f.write(
+            textwrap.dedent(f"""\
             provider:
               linux_64: azure
               osx_64: azure
               win_64: azure
             {path}:
               store_build_artifacts: {value}
-        """))
+        """)
+        )
 
     config = configure_feedstock._load_forge_config(
         forge_dir, "recipe/default_config.yaml"
@@ -2551,7 +2559,8 @@ def test_store_build_artifacts_duplicate_setting(py_recipe, jinja_env, ci: str):
     forge_yml = Path(forge_dir, "conda-forge.yml")
 
     with open(forge_yml, "a") as f:
-        f.write(textwrap.dedent(f"""\
+        f.write(
+            textwrap.dedent(f"""\
             provider:
               linux_64: azure
               osx_64: azure
@@ -2560,7 +2569,8 @@ def test_store_build_artifacts_duplicate_setting(py_recipe, jinja_env, ci: str):
               store_build_artifacts: true
             {ci}:
               store_build_artifacts: true
-        """))
+        """)
+        )
 
     with pytest.raises(
         ValueError,
@@ -2574,7 +2584,8 @@ def test_store_build_artifacts_gha_conditions(py_recipe, jinja_env):
     forge_yml = Path(forge_dir, "conda-forge.yml")
 
     with open(forge_yml, "a") as f:
-        f.write(textwrap.dedent("""\
+        f.write(
+            textwrap.dedent("""\
             provider:
               linux_64: github_actions
               linux_aarch64: github_actions
@@ -2587,7 +2598,8 @@ def test_store_build_artifacts_gha_conditions(py_recipe, jinja_env):
                   value: true
                 - os: osx
                   value: true
-        """))
+        """)
+        )
 
     config = configure_feedstock._load_forge_config(
         forge_dir, "recipe/default_config.yaml"
@@ -2629,7 +2641,8 @@ def test_store_build_artifacts_azure_conditions(py_recipe, jinja_env):
     forge_yml = Path(forge_dir, "conda-forge.yml")
 
     with open(forge_yml, "a") as f:
-        f.write(textwrap.dedent("""\
+        f.write(
+            textwrap.dedent("""\
             provider:
               linux_64: azure
               linux_aarch64: azure
@@ -2642,7 +2655,8 @@ def test_store_build_artifacts_azure_conditions(py_recipe, jinja_env):
                   value: true
                 - os: osx
                   value: true
-        """))
+        """)
+        )
 
     config = configure_feedstock._load_forge_config(
         forge_dir, "recipe/default_config.yaml"
@@ -2690,7 +2704,8 @@ def test_store_build_artifacts_overlapping_conditions(py_recipe, jinja_env, ci: 
     forge_yml = Path(forge_dir, "conda-forge.yml")
 
     with open(forge_yml, "a") as f:
-        f.write(textwrap.dedent(f"""\
+        f.write(
+            textwrap.dedent(f"""\
             provider:
               linux_64: {ci}
               osx_64: {ci}
@@ -2701,7 +2716,8 @@ def test_store_build_artifacts_overlapping_conditions(py_recipe, jinja_env, ci: 
                   value: true
                 - os: linux
                   value: true
-        """))
+        """)
+        )
 
     config = configure_feedstock._load_forge_config(
         forge_dir, "recipe/default_config.yaml"
@@ -2729,7 +2745,8 @@ def test_store_build_artifacts_gha_and_azure_conditions(py_recipe, jinja_env):
     forge_yml = Path(forge_dir, "conda-forge.yml")
 
     with open(forge_yml, "a") as f:
-        f.write(textwrap.dedent("""\
+        f.write(
+            textwrap.dedent("""\
             provider:
               linux_64: github_actions
               linux_aarch64: azure
@@ -2744,7 +2761,8 @@ def test_store_build_artifacts_gha_and_azure_conditions(py_recipe, jinja_env):
                 - os: linux
                   provider: github_actions
                   value: true
-        """))
+        """)
+        )
 
     config = configure_feedstock._load_forge_config(
         forge_dir, "recipe/default_config.yaml"

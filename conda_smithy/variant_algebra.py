@@ -24,7 +24,9 @@ from conda_build.config import Config
 from conda_build.utils import ensure_list
 
 
-def parse_variant(variant_file_content: str, config: Optional[Config] = None) -> dict[
+def parse_variant(
+    variant_file_content: str, config: Optional[Config] = None
+) -> dict[
     str,
     Union[
         list[str],

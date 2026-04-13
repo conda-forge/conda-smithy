@@ -61,8 +61,9 @@ def lint_recipe_tests(
                     has_outputs_test = True
                 else:
                     no_test_hints.append(
-                        "It looks like the '{}' output doesn't "
-                        "have any tests.".format(output.get("name", "???"))
+                        "It looks like the '{}' output doesn't have any tests.".format(
+                            output.get("name", "???")
+                        )
                     )
             if has_outputs_test:
                 hints.extend(no_test_hints)
