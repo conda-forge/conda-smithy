@@ -2,6 +2,6 @@
 DEPRECATED. Moved to messages.py.
 """
 
-from conda_smithy.linter.messages.recipe import RecipeSuggestNoarch
+from conda_smithy.linter.messages.recipe import SuggestNoarch
 
-HINT_NO_ARCH = RecipeSuggestNoarch.message  # DEPRECATED
+HINT_NO_ARCH = SuggestNoarch.message  # DEPRECATED

@@ -198,14 +198,14 @@ def jinja_lines(lines):
 
 def _lint_recipe_name(recipe_name: str) -> Optional[str]:
     if re.match(r"^[a-z0-9_\-.]+$", recipe_name) is None:
-        return msg.RecipeName()
+        return msg.InvalidPackageName()
 
     return None
 
 
 def _lint_package_version(version: Optional[str]) -> Optional[str]:
     if version is None:
-        return msg.RecipeMissingVersion()
+        return msg.MissingVersion()
 
     ver = str(version)
 
@@ -216,7 +216,7 @@ def _lint_package_version(version: Optional[str]) -> Optional[str]:
     try:
         VersionOrder(ver)
     except InvalidVersionSpec as e:
-        return msg.RecipeInvalidVersion(version=ver, error=str(e))
+        return msg.InvalidVersion(version=ver, error=str(e))
 
 
 def load_linter_toml_metadata():

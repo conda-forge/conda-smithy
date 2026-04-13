@@ -621,7 +621,7 @@ class Regenerate(Subcommand):
         )
 
 
-class RecipeLint(Subcommand):
+class Lint(Subcommand):
     subcommand = "recipe-lint"
     aliases = ["lint"]
 

@@ -189,7 +189,7 @@ def lintify_meta_yaml(
 
     for section in major_sections:
         if section not in expected_keys:
-            lints.append(msg.RecipeUnexpectedSection(section=section))
+            lints.append(msg.UnexpectedSection(section=section))
             unexpected_sections.append(section)
 
     for section in unexpected_sections:
