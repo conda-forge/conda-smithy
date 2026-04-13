@@ -4,7 +4,7 @@
 
 **Changed:**
 
-* Small code improvements as pointed out by pylint.
+* Small code improvements as pointed out by pylint. (#2518)
 
 **Deprecated:**
 
