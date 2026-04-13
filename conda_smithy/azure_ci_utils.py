@@ -6,6 +6,7 @@ from vsts.build.v4_1.build_client import BuildClient
 from vsts.build.v4_1.models import (
     BuildDefinition,
     BuildDefinitionReference,
+    BuildRepository,
     SourceRepositories,
     SourceRepository,
 )
@@ -132,8 +133,6 @@ def get_default_build_definition(
     **kwargs,
 ):
     import inspect
-
-    from vsts.build.v4_1.models import BuildRepository
 
     aclient = TaskAgentClient(config.instance_base_url, config.credentials)
 
