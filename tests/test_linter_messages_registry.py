@@ -61,17 +61,38 @@ def test_linter_docs_up_to_date():
     assert generate_docs("").strip() == original_linter_docs.strip()
 
 
+def test_no_duplicate_identifiers():
+    seen_identifiers = {}
+    seen_class_names = {}
+    for module in MESSAGE_MODULES:
+        for cls in _module_classes_in_source_order(module):
+            identifier = cls.identifier
+            assert identifier not in seen_identifiers, (
+                f"Duplicate identifier {identifier} found "
+                f"in {module.__name__}::{cls.__name__}, previously defined in "
+                f"{seen_identifiers[identifier].__module__}::"
+                f"{seen_identifiers[identifier].__name__}"
+            )
+            seen_identifiers[identifier] = cls
+
+            assert cls.__name__ not in seen_class_names, (
+                f"Duplicate class name {cls.__name__} found "
+                f"in {module.__name__}::{cls.__name__}, previously defined in "
+                f"{seen_class_names[cls.__name__].__module__}::"
+                f"{seen_class_names[cls.__name__].__name__}"
+            )
+            seen_class_names[cls.__name__] = cls
+
+
 @pytest.mark.parametrize("module", MESSAGE_MODULES)
 def test_message_registry_integrity(module):
     """
     Check that:
 
-    - No duplicate identifiers
-    - There are no gaps in identifiers (e.g. VC-001 and VC-003 would fail
+    - There are no gaps in identifiers (e.g. [VC-001, VC-003] would fail
       because VC-002 is missing)
     - All identifiers show up in order in the file
     """
-    seen_identifiers = {}
 
     classes = _module_classes_in_source_order(module)
 
@@ -93,14 +114,6 @@ def test_message_registry_integrity(module):
             "registered in CATEGORIES "
             f"(found in {module.__name__}::{cls.__name__}: {identifier})"
         )
-
-        assert identifier not in seen_identifiers, (
-            f"Duplicate identifier {identifier} found "
-            f"in {module.__name__}::{cls.__name__}, previously defined in "
-            f"{seen_identifiers[identifier].__module__}::"
-            f"{seen_identifiers[identifier].__name__}"
-        )
-        seen_identifiers[identifier] = cls
 
         grouped_numbers[prefix].append(number)
 
