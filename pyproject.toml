@@ -1,9 +1,5 @@
 [build-system]
-requires = [
-    "setuptools>=70",
-    "setuptools_scm>=7",
-    "tomli>=1.0.0; python_version < '3.11'",
-]
+requires = ["setuptools>=80", "setuptools-scm>=8"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -14,6 +10,8 @@ authors = [
 description = "A package to create repositories for conda recipes, and automate their building with CI tools on Linux, OSX and Windows."
 dynamic = ["version"]
 requires-python = ">=3.11"
+license = "BSD-3-Clause"
+license-files = ["LICENSE.txt"]
 
 [project.urls]
 home = "https://github.com/conda-forge/conda-smithy"
@@ -27,7 +25,6 @@ conda-smithy = "conda_smithy.plugin"
 
 [tool.setuptools]
 packages = ["conda_smithy"]
-zip-safe = false
 include-package-data = true
 
 [tool.setuptools_scm]
