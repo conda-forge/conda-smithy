@@ -63,6 +63,16 @@ jobs:
 
           python -m pip install -v --no-build-isolation -e .
 
+      - name: test data and templates files in sdist
+        run: |
+          rm -rf dist/*
+          python -m build --sdist --output dist/ .
+          mkdir sdist-content/
+          tar -xzf dist/*.tar.gz -C sdist-content/
+          test -f sdist-content/conda_smithy-*/conda_smithy/data/conda-forge.yml
+          test -f sdist-content/conda_smithy-*/conda_smithy/templates/github-actions.yml.tmpl
+          rm -r sdist-content/
+
       - name: run tests
         run: |
           pytest tests --cov conda_smithy --cov-report lcov --cov-report term-missing
