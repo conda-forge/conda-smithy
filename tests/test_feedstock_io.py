@@ -157,10 +157,10 @@ class TestFeedstockIO(unittest.TestCase):
 
                 fio.remove_file(pathfunc(filename))
 
-                self.assertFalse(os.path.exists(filename))
+                assert not os.path.exists(filename)
                 if dirname:
-                    self.assertFalse(os.path.exists(dirname))
-                    self.assertFalse(os.path.exists(os.path.dirname(dirname)))
+                    assert not os.path.exists(dirname)
+                    assert not os.path.exists(os.path.dirname(dirname))
                 if repo is not None:
                     repo.index.read()
                     self.assertRaises(KeyError, lambda: repo.index[basename])
@@ -186,11 +186,11 @@ class TestFeedstockIO(unittest.TestCase):
             fio.remove_file_or_dir(pathfunc(dirname))
 
             for basename in ["dir/a/foo.txt", "dir/b/bar.txt", "dir/baz.txt"]:
-                self.assertFalse(os.path.exists(filename))
+                assert not os.path.exists(filename)
                 if repo is not None:
                     repo.index.read()
                     self.assertRaises(KeyError, lambda: repo.index[basename])
-            self.assertFalse(os.path.exists(dirname))
+            assert not os.path.exists(dirname)
 
     def test_copy_file(self):
         for tmp_dir, repo, pathfunc in parameterize():
@@ -205,7 +205,7 @@ class TestFeedstockIO(unittest.TestCase):
                 fh.write(write_text)
 
             assert os.path.exists(filename1)
-            self.assertFalse(os.path.exists(filename2))
+            assert not os.path.exists(filename2)
             if repo is not None:
                 self.assertRaises(KeyError, lambda: repo.index[basename2])
 
