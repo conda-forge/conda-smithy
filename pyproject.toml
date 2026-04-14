@@ -9,7 +9,7 @@ authors = [
 ]
 description = "A package to create repositories for conda recipes, and automate their building with CI tools on Linux, OSX and Windows."
 dynamic = ["version"]
-requires-python = ">=3.9"
+requires-python = ">=3.11"
 license = "BSD-3-Clause"
 license-files = ["LICENSE.txt"]
 
@@ -39,6 +39,9 @@ line-length = 88
 ignore = [
     "E501",  # https://docs.astral.sh/ruff/faq/#is-the-ruff-linter-compatible-with-black
     "E731",  # lambdas are useful
+    # part of migration to Python 3.11, to be resolved in a separate PR
+    "UP007",  # `typing.Union[A, B]` -> `A | B`
+    "UP045",  # `typing.Optional[A]` -> `A | None`
 ]
 select = [
     # pyflakes
