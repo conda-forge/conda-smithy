@@ -4,7 +4,7 @@
 
 **Changed:**
 
-* <news item>
+* Bumped the minimum ``rattler-build-conda-compat`` version to ``1.4.12`` for ``is_staging_output`` support. (#2524)
 
 **Deprecated:**
 
