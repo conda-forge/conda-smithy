@@ -6,7 +6,6 @@ import shutil
 import stat
 import string
 import tempfile
-import unittest
 
 import pygit2
 import pytest
@@ -233,7 +232,3 @@ def test_copy_file():
             read_text = repo[blob.id].data.decode("utf-8")
 
             assert write_text == read_text
-
-
-if __name__ == "__main__":
-    unittest.main()
