@@ -51,9 +51,7 @@ class TestFeedstockIO(unittest.TestCase):
             if repo is None:
                 assert fio.get_repo(pathfunc(tmp_dir)) is None
             else:
-                self.assertIsInstance(
-                    fio.get_repo(pathfunc(tmp_dir)), pygit2.Repository
-                )
+                assert isinstance(fio.get_repo(pathfunc(tmp_dir)), pygit2.Repository)
                 possible_repo_subdir = os.path.join(
                     tmp_dir,
                     "".join(
