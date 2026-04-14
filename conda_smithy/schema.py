@@ -4,7 +4,7 @@
 # To regenerate conda_smithy/data/conda-forge.{json,yml}, run `python -m conda_smithy.schema` in the repo root.
 
 import json
-from enum import Enum
+from enum import Enum, StrEnum
 from functools import lru_cache
 from inspect import cleandoc
 from typing import Annotated, Any, Literal, Optional, Union
@@ -12,12 +12,6 @@ from typing import Annotated, Any, Literal, Optional, Union
 import yaml
 from conda.base.constants import KNOWN_SUBDIRS
 from pydantic import BaseModel, ConfigDict, Field, WithJsonSchema, create_model
-
-try:
-    from enum import StrEnum
-except ImportError:
-    from backports.strenum import StrEnum
-
 
 # use relative imports to ensure that we don't pick up the data paths from
 # a non-development conda-smithy installed in site-packages
