@@ -4,9 +4,9 @@ import logging
 import os
 import re
 import shutil
-import sys
 import tempfile
 import textwrap
+import tomllib
 from pathlib import Path
 
 import pytest
@@ -21,11 +21,6 @@ from conda_smithy.configure_feedstock import (
     _read_forge_config,
 )
 from conda_smithy.utils import ensure_standard_strings
-
-if sys.version_info >= (3, 11):
-    import tomllib
-else:
-    import tomli as tomllib
 
 
 def test_platforms_populated():

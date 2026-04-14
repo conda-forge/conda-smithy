@@ -1,8 +1,8 @@
 import copy
 import os
 import re
-import sys
 import time
+import tomllib
 from collections.abc import Mapping, Sequence
 from functools import lru_cache
 from glob import glob
@@ -15,11 +15,6 @@ from conda_build.metadata import (
 )
 from rattler_build_conda_compat import loader as rattler_loader
 from rattler_build_conda_compat.recipe_sources import get_all_sources
-
-if sys.version_info[:2] < (3, 11):
-    import tomli as tomllib
-else:
-    import tomllib
 
 FIELDS = copy.deepcopy(_CONDA_BUILD_FIELDS)
 

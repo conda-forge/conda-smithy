@@ -3,13 +3,12 @@ channels:
   - conda-forge
   - nodefaults
 dependencies:
-  - python>=3.6
+  - python>=3.11
   # Development dependencies
   - pip
   - python-build
   - setuptools>=45
   - setuptools_scm>=8.1
-  - tomli>=1.0.0
   - pre-commit
   - mock
   - pytest
@@ -39,7 +38,6 @@ dependencies:
   - pydantic >=2.11,<3
   - pixi >=0.59.0
   - jsonschema
-  - backports.strenum
   - exceptiongroup
   # py-rattler's API subject to change, pin to minor
   - py-rattler >=0.22,<0.23
