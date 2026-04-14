@@ -2271,7 +2271,7 @@ class TestCliRecipeLint(unittest.TestCase):
                 stdout=subprocess.PIPE,
             )
             out, _ = child.communicate()
-            self.assertEqual(child.returncode, 1, out)
+            assert child.returncode == 1, out
 
     @pytest.mark.cli
     def test_cli_success(self):
@@ -2301,7 +2301,7 @@ class TestCliRecipeLint(unittest.TestCase):
                 stdout=subprocess.PIPE,
             )
             out, _ = child.communicate()
-            self.assertEqual(child.returncode, 0, out)
+            assert child.returncode == 0, out
 
     @pytest.mark.cli
     def test_cli_environ(self):
@@ -2333,7 +2333,7 @@ class TestCliRecipeLint(unittest.TestCase):
                 stdout=subprocess.PIPE,
             )
             out, _ = child.communicate()
-            self.assertEqual(child.returncode, 0, out)
+            assert child.returncode == 0, out
 
     @pytest.mark.cli
     def test_unicode(self):
