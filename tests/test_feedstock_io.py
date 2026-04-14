@@ -9,6 +9,7 @@ import tempfile
 import unittest
 
 import pygit2
+import pytest
 
 import conda_smithy.feedstock_io as fio
 
@@ -161,7 +162,8 @@ class TestFeedstockIO(unittest.TestCase):
                     assert not os.path.exists(os.path.dirname(dirname))
                 if repo is not None:
                     repo.index.read()
-                    self.assertRaises(KeyError, lambda: repo.index[basename])
+                    with pytest.raises(KeyError):
+                        repo.index[basename]
 
     def test_remove_dir(self):
         for tmp_dir, repo, pathfunc in parameterize():
@@ -187,7 +189,8 @@ class TestFeedstockIO(unittest.TestCase):
                 assert not os.path.exists(filename)
                 if repo is not None:
                     repo.index.read()
-                    self.assertRaises(KeyError, lambda: repo.index[basename])
+                    with pytest.raises(KeyError):
+                        repo.index[basename]
             assert not os.path.exists(dirname)
 
     def test_copy_file(self):
@@ -205,7 +208,8 @@ class TestFeedstockIO(unittest.TestCase):
             assert os.path.exists(filename1)
             assert not os.path.exists(filename2)
             if repo is not None:
-                self.assertRaises(KeyError, lambda: repo.index[basename2])
+                with pytest.raises(KeyError):
+                    repo.index[basename2]
 
             fio.copy_file(pathfunc(filename1), pathfunc(filename2))
 
