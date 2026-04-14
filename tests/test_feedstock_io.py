@@ -49,7 +49,7 @@ class TestFeedstockIO(unittest.TestCase):
     def test_repo(self):
         for tmp_dir, repo, pathfunc in parameterize():
             if repo is None:
-                self.assertTrue(fio.get_repo(pathfunc(tmp_dir)) is None)
+                assert fio.get_repo(pathfunc(tmp_dir)) is None
             else:
                 self.assertIsInstance(
                     fio.get_repo(pathfunc(tmp_dir)), pygit2.Repository
@@ -148,10 +148,10 @@ class TestFeedstockIO(unittest.TestCase):
                     repo.index.add(basename)
                     repo.index.write()
 
-                self.assertTrue(os.path.exists(filename))
+                assert os.path.exists(filename)
                 if dirname:
-                    self.assertTrue(os.path.exists(dirname))
-                    self.assertTrue(os.path.exists(os.path.dirname(dirname)))
+                    assert os.path.exists(dirname)
+                    assert os.path.exists(os.path.dirname(dirname))
                 if repo is not None:
                     self.assertIsNotNone(repo.index[basename])
 
@@ -179,7 +179,7 @@ class TestFeedstockIO(unittest.TestCase):
                     repo.index.add(basename)
                     repo.index.write()
 
-                self.assertTrue(os.path.exists(filename))
+                assert os.path.exists(filename)
                 if repo is not None:
                     self.assertIsNotNone(repo.index[basename])
 
@@ -204,15 +204,15 @@ class TestFeedstockIO(unittest.TestCase):
             with open(filename1, "w", encoding="utf-8", newline="\n") as fh:
                 fh.write(write_text)
 
-            self.assertTrue(os.path.exists(filename1))
+            assert os.path.exists(filename1)
             self.assertFalse(os.path.exists(filename2))
             if repo is not None:
                 self.assertRaises(KeyError, lambda: repo.index[basename2])
 
             fio.copy_file(pathfunc(filename1), pathfunc(filename2))
 
-            self.assertTrue(os.path.exists(filename1))
-            self.assertTrue(os.path.exists(filename2))
+            assert os.path.exists(filename1)
+            assert os.path.exists(filename2)
             if repo is not None:
                 repo.index.read()
                 self.assertIsNotNone(repo.index[basename2])

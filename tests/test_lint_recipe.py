@@ -594,7 +594,7 @@ class TestLinter(unittest.TestCase):
         }
         lints, hints = linter.lintify_meta_yaml(meta)
         expected = "about/license_family 'BSD3' not allowed"
-        self.assertTrue(any(lint.startswith(expected) for lint in lints))
+        assert any(lint.startswith(expected) for lint in lints)
 
     def test_missing_about_home(self):
         meta = {"about": {"license": "BSD", "summary": "A test summary"}}
@@ -630,7 +630,7 @@ class TestLinter(unittest.TestCase):
         meta = {"build": {"noarch": "true"}}
         expected = "Invalid `noarch` value `true`. Should be one of"
         lints, hints = linter.lintify_meta_yaml(meta)
-        self.assertTrue(any(lint.startswith(expected) for lint in lints))
+        assert any(lint.startswith(expected) for lint in lints)
 
     def test_maintainers_section(self):
         expected_message = (
@@ -833,7 +833,7 @@ class TestLinter(unittest.TestCase):
                     """)
 
             _, hints = linter.lintify_meta_yaml({}, recipe_dir)
-            self.assertTrue(any(h.startswith(expected_message) for h in hints))
+            assert any(h.startswith(expected_message) for h in hints)
 
     def test_recipe_v1_jinja2_vars(self):
         expected_message = (
@@ -859,7 +859,7 @@ class TestLinter(unittest.TestCase):
                     """)
 
             _, hints = linter.lintify_meta_yaml({}, recipe_dir, recipe_version=1)
-            self.assertTrue(any(h.startswith(expected_message) for h in hints))
+            assert any(h.startswith(expected_message) for h in hints)
 
     def test_selectors(self):
         expected_message = (
@@ -2158,7 +2158,7 @@ linter:
             conda_forge=True,
         )
         expected = "Use of `cdt(mesa-libgl-devel)` is deprecated"
-        self.assertTrue(any(hint.startswith(expected) for hint in hints))
+        assert any(hint.startswith(expected) for hint in hints)
 
     def test_mpl_base_hint(self):
         meta = {
@@ -2168,7 +2168,7 @@ linter:
         }
         lints, hints = linter.lintify_meta_yaml(meta, conda_forge=True)
         expected = "Recipes should usually depend on `matplotlib-base`"
-        self.assertTrue(any(hint.startswith(expected) for hint in hints))
+        assert any(hint.startswith(expected) for hint in hints)
 
     def test_mpl_base_hint_outputs(self):
         meta = {
@@ -2182,7 +2182,7 @@ linter:
         }
         lints, hints = linter.lintify_meta_yaml(meta, conda_forge=True)
         expected = "Recipes should usually depend on `matplotlib-base`"
-        self.assertTrue(any(hint.startswith(expected) for hint in hints))
+        assert any(hint.startswith(expected) for hint in hints)
 
 
 @pytest.mark.parametrize("recipe_version", [0, 1])
