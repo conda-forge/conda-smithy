@@ -1655,7 +1655,7 @@ linter:
         lints, hints = linter.lintify_meta_yaml(
             {"source": {"url": None, "sha256": None}}
         )
-        self.assertNotIn(expected_message, lints, hints)
+        assert expected_message not in lints, hints
 
         meta = {"source": {"url": None, "md5": None}}
         assert expected_message not in linter.lintify_meta_yaml(meta)
