@@ -1658,7 +1658,7 @@ linter:
         self.assertNotIn(expected_message, lints, hints)
 
         meta = {"source": {"url": None, "md5": None}}
-        self.assertNotIn(expected_message, linter.lintify_meta_yaml(meta))
+        assert expected_message not in linter.lintify_meta_yaml(meta)
 
     def test_redundant_license(self):
         meta = {
@@ -1695,7 +1695,7 @@ linter:
             lints, hints = linter.lintify_meta_yaml(meta)
             print(license, good)
             if good:
-                self.assertNotIn(msg, hints)
+                assert msg not in hints
             else:
                 assert msg in hints
 
@@ -1713,7 +1713,7 @@ linter:
             meta = {"about": {"license": license}}
             lints, hints = linter.lintify_meta_yaml(meta)
             if good:
-                self.assertNotIn(msg, hints)
+                assert msg not in hints
             else:
                 assert msg in hints
 
@@ -1883,7 +1883,7 @@ linter:
             }
         }
         lints, hints = linter.lintify_meta_yaml(meta)
-        self.assertNotIn(expected_message.format("build", "ski"), lints)
+        assert expected_message.format("build", "ski") not in lints
 
         meta = {
             "build": {
