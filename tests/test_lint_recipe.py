@@ -2058,16 +2058,16 @@ linter:
             "outputs": [{"name": "foo"}],
         }
         lints, hints = linter.lintify_meta_yaml(meta)
-        self.assertNotIn(
-            "If python is a host requirement, it should be a run requirement.",
-            lints,
+        assert (
+            "If python is a host requirement, it should be a run requirement."
+            not in lints
         )
 
         meta = {"requirements": {"host": ["python >=3", "python"]}}
         lints, hints = linter.lintify_meta_yaml(meta)
-        self.assertNotIn(
-            "Non noarch packages should have python requirement without any version constraints.",
-            lints,
+        assert (
+            "Non noarch packages should have python requirement without any version constraints."
+            not in lints
         )
 
         meta = {"requirements": {"host": ["python >=3"]}}
@@ -2089,9 +2089,9 @@ linter:
             "requirements": {"host": ["python >=3"]},
         }
         lints, hints = linter.lintify_meta_yaml(meta)
-        self.assertNotIn(
-            "Non noarch packages should have python requirement without any version constraints.",
-            lints,
+        assert (
+            "Non noarch packages should have python requirement without any version constraints."
+            not in lints
         )
 
         meta = {
@@ -2099,9 +2099,9 @@ linter:
             "requirements": {"host": ["python >=3"]},
         }
         lints, hints = linter.lintify_meta_yaml(meta, recipe_version=1)
-        self.assertNotIn(
-            "Non noarch packages should have python requirement without any version constraints.",
-            lints,
+        assert (
+            "Non noarch packages should have python requirement without any version constraints."
+            not in lints
         )
 
         meta = {"requirements": {"host": ["python"], "run": ["python-dateutil"]}}
@@ -2121,16 +2121,16 @@ linter:
             "outputs": [{"name": "foo"}],
         }
         lints, hints = linter.lintify_meta_yaml(meta)
-        self.assertNotIn(
-            "If r-base is a host requirement, it should be a run requirement.",
-            lints,
+        assert (
+            "If r-base is a host requirement, it should be a run requirement."
+            not in lints
         )
 
         meta = {"requirements": {"host": ["r-base >=3.5", "r-base"]}}
         lints, hints = linter.lintify_meta_yaml(meta)
-        self.assertNotIn(
-            "Non noarch packages should have r-base requirement without any version constraints.",
-            lints,
+        assert (
+            "Non noarch packages should have r-base requirement without any version constraints."
+            not in lints
         )
 
         meta = {"requirements": {"host": ["r-base >=3.5"]}}
