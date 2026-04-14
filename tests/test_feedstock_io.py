@@ -151,7 +151,7 @@ class TestFeedstockIO(unittest.TestCase):
                     assert os.path.exists(dirname)
                     assert os.path.exists(os.path.dirname(dirname))
                 if repo is not None:
-                    self.assertIsNotNone(repo.index[basename])
+                    assert repo.index[basename] is not None
 
                 fio.remove_file(pathfunc(filename))
 
@@ -179,7 +179,7 @@ class TestFeedstockIO(unittest.TestCase):
 
                 assert os.path.exists(filename)
                 if repo is not None:
-                    self.assertIsNotNone(repo.index[basename])
+                    assert repo.index[basename] is not None
 
             fio.remove_file_or_dir(pathfunc(dirname))
 
@@ -213,7 +213,7 @@ class TestFeedstockIO(unittest.TestCase):
             assert os.path.exists(filename2)
             if repo is not None:
                 repo.index.read()
-                self.assertIsNotNone(repo.index[basename2])
+                assert repo.index[basename2] is not None
 
             read_text = ""
             with open(filename2, encoding="utf-8") as fh:
