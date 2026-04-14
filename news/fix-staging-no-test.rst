@@ -16,7 +16,7 @@
 
 **Fixed:**
 
-* Fixed the v1 recipe linter hinting about missing tests for staging outputs, which cannot declare tests.
+* Fixed the v1 recipe linter hinting about missing tests for staging outputs, which cannot declare tests. (#2524)
 
 **Security:**
 
