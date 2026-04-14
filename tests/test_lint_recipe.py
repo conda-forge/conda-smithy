@@ -1025,13 +1025,10 @@ linter:
                 assert (not is_good) == any(
                     lint.startswith(expected_start) for lint in lints
                 ), message
-                self.assertEqual(
-                    not is_good,
-                    any(
-                        lint.startswith(expected_start)
-                        and f"or selector on line {line_number}" in lint
-                        for lint in lints
-                    ),
+                assert (not is_good) == any(
+                    lint.startswith(expected_start)
+                    and f"or selector on line {line_number}" in lint
+                    for lint in lints
                 )
 
             assert_noarch_selector(
