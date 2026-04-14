@@ -719,9 +719,7 @@ class TestLinter(unittest.TestCase):
             }
         )
         assert expected_message not in lints
-        self.assertIn(
-            "It looks like the 'foobar' output doesn't have any tests.", hints
-        )
+        assert "It looks like the 'foobar' output doesn't have any tests." in hints
 
         lints, hints = linter.lintify_meta_yaml(
             {
@@ -732,9 +730,7 @@ class TestLinter(unittest.TestCase):
             }
         )
         assert expected_message not in lints
-        self.assertIn(
-            "It looks like the 'foobar' output doesn't have any tests.", hints
-        )
+        assert "It looks like the 'foobar' output doesn't have any tests." in hints
 
     def test_recipe_v1_test_section(self):
         expected_message = "The recipe must have some tests."
@@ -777,9 +773,7 @@ class TestLinter(unittest.TestCase):
             recipe_version=1,
         )
         assert expected_message not in lints
-        self.assertIn(
-            "It looks like the 'foobar' output doesn't have any tests.", hints
-        )
+        assert "It looks like the 'foobar' output doesn't have any tests." in hints
 
     def test_test_section_with_recipe(self):
         # If we have a run_test.py file, we shouldn't need to provide
@@ -2048,9 +2042,8 @@ linter:
     def test_python_requirements(self):
         meta = {"requirements": {"host": ["python >=3"]}}
         lints, hints = linter.lintify_meta_yaml(meta)
-        self.assertIn(
-            "If python is a host requirement, it should be a run requirement.",
-            lints,
+        assert (
+            "If python is a host requirement, it should be a run requirement." in lints
         )
 
         meta = {
@@ -2072,16 +2065,16 @@ linter:
 
         meta = {"requirements": {"host": ["python >=3"]}}
         lints, hints = linter.lintify_meta_yaml(meta)
-        self.assertIn(
-            "Non noarch packages should have python requirement without any version constraints.",
-            lints,
+        assert (
+            "Non noarch packages should have python requirement without any version constraints."
+            in lints
         )
 
         meta = {"requirements": {"host": ["python >=3"]}}
         lints, hints = linter.lintify_meta_yaml(meta, recipe_version=1)
-        self.assertIn(
-            "Non noarch packages should have python requirement without any version constraints.",
-            lints,
+        assert (
+            "Non noarch packages should have python requirement without any version constraints."
+            in lints
         )
 
         meta = {
@@ -2111,9 +2104,8 @@ linter:
     def test_r_base_requirements(self):
         meta = {"requirements": {"host": ["r-base >=3.5"]}}
         lints, hints = linter.lintify_meta_yaml(meta)
-        self.assertIn(
-            "If r-base is a host requirement, it should be a run requirement.",
-            lints,
+        assert (
+            "If r-base is a host requirement, it should be a run requirement." in lints
         )
 
         meta = {
@@ -2135,9 +2127,9 @@ linter:
 
         meta = {"requirements": {"host": ["r-base >=3.5"]}}
         lints, hints = linter.lintify_meta_yaml(meta)
-        self.assertIn(
-            "Non noarch packages should have r-base requirement without any version constraints.",
-            lints,
+        assert (
+            "Non noarch packages should have r-base requirement without any version constraints."
+            in lints
         )
 
     @pytest.mark.skipif(
