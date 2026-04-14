@@ -65,6 +65,7 @@ jobs:
 
       - name: test data and templates files in sdist
         run: |
+          set -ex
           rm -rf dist/*
           python -m build --sdist --outdir dist/ .
           mkdir sdist-content/
