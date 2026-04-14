@@ -2255,8 +2255,8 @@ def test_go_license_bundling(recipe_version: int):
     assert expected_msg not in lints
 
 
-@pytest.mark.cli
 class TestCliRecipeLint(unittest.TestCase):
+    @pytest.mark.cli
     def test_cli_fail(self):
         with tmp_directory() as recipe_dir:
             with open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
@@ -2273,6 +2273,7 @@ class TestCliRecipeLint(unittest.TestCase):
             out, _ = child.communicate()
             self.assertEqual(child.returncode, 1, out)
 
+    @pytest.mark.cli
     def test_cli_success(self):
         with tmp_directory() as recipe_dir:
             with open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
@@ -2302,6 +2303,7 @@ class TestCliRecipeLint(unittest.TestCase):
             out, _ = child.communicate()
             self.assertEqual(child.returncode, 0, out)
 
+    @pytest.mark.cli
     def test_cli_environ(self):
         with tmp_directory() as recipe_dir:
             with open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
@@ -2333,6 +2335,7 @@ class TestCliRecipeLint(unittest.TestCase):
             out, _ = child.communicate()
             self.assertEqual(child.returncode, 0, out)
 
+    @pytest.mark.cli
     def test_unicode(self):
         """
         Tests that unicode does not confuse the linter.
@@ -2355,6 +2358,7 @@ class TestCliRecipeLint(unittest.TestCase):
             # Just run it and make sure it does not raise.
             linter.main(recipe_dir)
 
+    @pytest.mark.cli
     def test_jinja_variable_def(self):
         expected_message = (
             "Jinja2 variable definitions are suggested to "
@@ -2392,6 +2396,7 @@ class TestCliRecipeLint(unittest.TestCase):
             assert_jinja('{% set version = "0.27.3"%}', is_good=False)
             assert_jinja('{% set version= "0.27.3"%}', is_good=False)
 
+    @pytest.mark.cli
     def test_lint_recipe_empty_cbc(self):
         """
         Test that checks linting on empty conda build config file
