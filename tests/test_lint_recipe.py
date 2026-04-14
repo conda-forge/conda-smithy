@@ -1697,7 +1697,7 @@ linter:
             if good:
                 self.assertNotIn(msg, hints)
             else:
-                self.assertIn(msg, hints)
+                assert msg in hints
 
     def test_spdx_license_exception(self):
         msg = (
@@ -1715,7 +1715,7 @@ linter:
             if good:
                 self.assertNotIn(msg, hints)
             else:
-                self.assertIn(msg, hints)
+                assert msg in hints
 
     def test_recipe_name(self):
         meta = {"package": {"name": "mp++"}}
@@ -1893,15 +1893,15 @@ linter:
             }
         }
         lints, hints = linter.lintify_meta_yaml(meta)
-        self.assertIn(expected_message.format("build", "ski"), lints)
+        assert expected_message.format("build", "ski") in lints
 
         meta = {"source": {"urll": "http://test"}}
         lints, hints = linter.lintify_meta_yaml(meta)
-        self.assertIn(expected_message.format("source", "urll"), lints)
+        assert expected_message.format("source", "urll") in lints
 
         meta = {"source": [{"urll": "http://test"}, {"url": "https://test"}]}
         lints, hints = linter.lintify_meta_yaml(meta)
-        self.assertIn(expected_message.format("source", "urll"), lints)
+        assert expected_message.format("source", "urll") in lints
 
     def test_outputs(self):
         meta = OrderedDict([["outputs", [{"name": "asd"}]]])
@@ -1994,7 +1994,7 @@ linter:
             'The "source" section was expected to be a dictionary or a '
             f"list, but got a {type(url).__module__}.{type(url).__name__}."
         )
-        self.assertIn(msg, lints)
+        assert msg in lints
 
     def test_single_space_pins(self):
         meta = {
