@@ -545,13 +545,13 @@ class TestLinter(unittest.TestCase):
         meta = OrderedDict([["package", {}], ["build", {}], ["sources", {}]])
         lints, hints = linter.lintify_meta_yaml(meta)
         expected_msg = "The top level meta key sources is unexpected"
-        self.assertIn(expected_msg, lints)
+        assert expected_msg in lints
 
     def test_recipe_v1_bad_top_level(self):
         meta = OrderedDict([["package", {}], ["build", {}], ["sources", {}]])
         lints, hints = linter.lintify_meta_yaml(meta, recipe_version=1)
         expected_msg = "The top level meta key sources is unexpected"
-        self.assertIn(expected_msg, lints)
+        assert expected_msg in lints
 
     def test_bad_order(self):
         meta = OrderedDict([["package", {}], ["build", {}], ["source", {}]])
@@ -560,7 +560,7 @@ class TestLinter(unittest.TestCase):
             "The top level meta keys are in an unexpected "
             "order. Expecting ['package', 'source', 'build']."
         )
-        self.assertIn(expected_msg, lints)
+        assert expected_msg in lints
 
     def test_missing_about_license_and_summary(self):
         meta = {"about": {"home": "a URL"}}
