@@ -82,11 +82,11 @@ class TestFeedstockIO(unittest.TestCase):
                 fio.set_exe_file(pathfunc(filename), set_exe)
 
                 file_mode = os.stat(filename).st_mode
-                self.assertEqual(file_mode & set_mode, int(set_exe) * set_mode)
+                assert file_mode & set_mode == int(set_exe) * set_mode
                 if repo is not None:
                     repo.index.read()
                     blob = repo.index[basename]
-                    self.assertEqual(blob.mode & set_mode, int(set_exe) * set_mode)
+                    assert blob.mode & set_mode == int(set_exe) * set_mode
 
     def test_write_file(self):
         for tmp_dir, repo, pathfunc in parameterize():
@@ -102,14 +102,14 @@ class TestFeedstockIO(unittest.TestCase):
                 with open(filename, encoding="utf-8") as fh:
                     read_text = fh.read()
 
-                self.assertEqual(write_text, read_text)
+                assert write_text == read_text
 
                 if repo is not None:
                     repo.index.read()
                     blob = repo.index[basename]
                     read_text = repo[blob.id].data.decode("utf-8")
 
-                    self.assertEqual(write_text, read_text)
+                    assert write_text == read_text
 
     def test_touch_file(self):
         for tmp_dir, repo, pathfunc in parameterize():
@@ -122,14 +122,14 @@ class TestFeedstockIO(unittest.TestCase):
                 with open(filename, encoding="utf-8") as fh:
                     read_text = fh.read()
 
-                self.assertEqual("", read_text)
+                assert "" == read_text
 
                 if repo is not None:
                     repo.index.read()
                     blob = repo.index[basename]
                     read_bytes = repo[blob.id].data
 
-                    self.assertEqual(b"", read_bytes)
+                    assert b"" == read_bytes
 
     def test_remove_file(self):
         for tmp_dir, repo, pathfunc in parameterize():
@@ -219,13 +219,13 @@ class TestFeedstockIO(unittest.TestCase):
             with open(filename2, encoding="utf-8") as fh:
                 read_text = fh.read()
 
-            self.assertEqual(write_text, read_text)
+            assert write_text == read_text
 
             if repo is not None:
                 blob = repo.index[basename2]
                 read_text = repo[blob.id].data.decode("utf-8")
 
-                self.assertEqual(write_text, read_text)
+                assert write_text == read_text
 
 
 if __name__ == "__main__":

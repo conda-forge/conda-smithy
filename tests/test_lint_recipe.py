@@ -2016,7 +2016,7 @@ linter:
             "``requirements: run: conda-smithy<=54.*`` must contain a space "
             "between the name and the pin, i.e. ``conda-smithy <=54.*``",
         ]
-        self.assertEqual(expected_messages, filtered_lints)
+        assert expected_messages == filtered_lints
 
     def test_recipe_v1_single_space_pins(self):
         meta = {
@@ -2038,7 +2038,7 @@ linter:
             "``requirements: run: conda-smithy<=54.*`` must contain a space "
             "between the name and the pin, i.e. ``conda-smithy <=54.*``",
         ]
-        self.assertEqual(expected_messages, filtered_lints)
+        assert expected_messages == filtered_lints
 
     def test_empty_host(self):
         meta = {"requirements": {"build": None, "host": None, "run": None}}
