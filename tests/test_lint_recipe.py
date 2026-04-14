@@ -879,11 +879,9 @@ class TestLinter(unittest.TestCase):
                     )
                 else:
                     message = f"Expecting lints for '{selector}', but didn't get any."
-                self.assertEqual(
-                    not is_good,
-                    any(lint.startswith(expected_message) for lint in lints),
-                    message,
-                )
+                assert (not is_good) == any(
+                    lint.startswith(expected_message) for lint in lints
+                ), message
 
             assert_selector("name: foo_py3      # [py3k]")
             assert_selector("name: foo_py3  [py3k]", is_good=False)
@@ -910,11 +908,9 @@ class TestLinter(unittest.TestCase):
                 else:
                     message = f"Expected lints or hints for '{meta_string}', but didn't get any."
                 problems = lints if kind == "lint" else hints
-                self.assertEqual(
-                    not is_good,
-                    any(problem.startswith(expected_start) for problem in problems),
-                    message,
-                )
+                assert (not is_good) == any(
+                    problem.startswith(expected_start) for problem in problems
+                ), message
 
             assert_python_selector(
                 """
@@ -1026,11 +1022,9 @@ linter:
                     )
                 else:
                     message = f"Expected lints for '{meta_string}', but didn't get any."
-                self.assertEqual(
-                    not is_good,
-                    any(lint.startswith(expected_start) for lint in lints),
-                    message,
-                )
+                assert (not is_good) == any(
+                    lint.startswith(expected_start) for lint in lints
+                ), message
                 self.assertEqual(
                     not is_good,
                     any(
@@ -1217,11 +1211,9 @@ linter:
                     )
                 else:
                     message = f"Expected lints for '{meta_string}', but didn't get any."
-                self.assertEqual(
-                    not is_good,
-                    any(lint.startswith(expected_start) for lint in lints),
-                    message,
-                )
+                assert (not is_good) == any(
+                    lint.startswith(expected_start) for lint in lints
+                ), message
 
             assert_noarch_selector("""
                             build:
@@ -1315,11 +1307,9 @@ linter:
                     )
                 else:
                     message = f"Expected hints for '{meta_string}', but didn't get any."
-                self.assertEqual(
-                    not is_good,
-                    any(lint.startswith(expected_start) for lint in hints),
-                    message,
-                )
+                assert (not is_good) == any(
+                    lint.startswith(expected_start) for lint in hints
+                ), message
 
             assert_noarch_hint(
                 """
@@ -1389,11 +1379,9 @@ linter:
                     )
                 else:
                     message = f"Expected hints for '{meta_string}', but didn't get any."
-                self.assertEqual(
-                    not is_good,
-                    any(lint.startswith(expected_start) for lint in hints),
-                    message,
-                )
+                assert (not is_good) == any(
+                    lint.startswith(expected_start) for lint in hints
+                ), message
 
             assert_noarch_hint(
                 """
@@ -2376,11 +2364,9 @@ class TestCliRecipeLint(unittest.TestCase):
                     )
                 else:
                     message = f"Expecting lints for '{jinja_var}', but didn't get any."
-                self.assertEqual(
-                    not is_good,
-                    any(lint.startswith(expected_message) for lint in lints),
-                    message,
-                )
+                assert (not is_good) == any(
+                    lint.startswith(expected_message) for lint in lints
+                ), message
 
             assert_jinja('{% set version = "0.27.3" %}')
             assert_jinja('{% set version="0.27.3" %}', is_good=False)
