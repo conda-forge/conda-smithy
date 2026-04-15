@@ -5,6 +5,7 @@ from rattler_build_conda_compat.jinja.jinja import (
     RecipeWithContext,
     render_recipe_with_context,
 )
+from rattler_build_conda_compat.outputs import is_staging_output
 
 from conda_smithy.linter.errors import HINT_NO_ARCH
 from conda_smithy.linter.utils import (
@@ -56,6 +57,9 @@ def lint_recipe_tests(
             has_outputs_test = False
             no_test_hints = []
             for output in outputs_section:
+                if is_staging_output(output):
+                    # Staging outputs produce no artifact and have no `tests:`.
+                    continue
                 o_test_section = output.get("tests", [])
                 if o_test_section:
                     has_outputs_test = True

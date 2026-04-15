@@ -47,12 +47,12 @@ jobs:
       export CI=azure
       export CI_RUN_ID=$(build.BuildNumber).$(system.JobAttempt)
       export FEEDSTOCK_NAME=$(basename ${BUILD_REPOSITORY_NAME})
-      export CONDA_BLD_DIR=/Users/runner/miniforge3/conda-bld
+      export CONDA_BLD_PATH=/Users/runner/miniforge3/conda-bld
       export ARTIFACT_STAGING_DIR="$(Build.ArtifactStagingDirectory)"
-      # Archive everything in CONDA_BLD_DIR except environments
+      # Archive everything in CONDA_BLD_PATH except environments
       export BLD_ARTIFACT_PREFIX=conda_artifacts
       if [[ "$AGENT_JOBSTATUS" == "Failed" ]]; then
-        # Archive the CONDA_BLD_DIR environments only when the job fails
+        # Archive the CONDA_BLD_PATH environments only when the job fails
         export ENV_ARTIFACT_PREFIX=conda_envs
       fi
       ./.scripts/create_conda_build_artifacts.sh
