@@ -33,9 +33,9 @@ Authors are sorted by number of commits.
 * Yannik Tausch
 * Daniel Bast
 * Daniel Ching
+* dependabot[bot]
 * Billy K. Poon
 * vinicius douglas cerutti
-* dependabot[bot]
 * Tim Snyder
 * Mike Henry
 * Eric Dill
@@ -106,6 +106,7 @@ Authors are sorted by number of commits.
 * Dominic Davis-Foster
 * Anton Tetov
 * Brandon Maier
+* Ken Odegard
 * Guillaume Fraux
 * Lucas Colley
 * Jakov Smolić
@@ -138,7 +139,6 @@ Authors are sorted by number of commits.
 * Ralf Gommers
 * Matt Chan
 * Will Shanks
-* Ken Odegard
 * Bas Nijholt
 * Nils Homer
 * Alfredo Luque

@@ -225,6 +225,8 @@ class RegisterCI(Subcommand):
         "Webservice",
         "Cirun",
         "Cirrus-Runners",
+        "Blacksmith",
+        "Namespace",
     )
 
     def __init__(self, parser):
@@ -320,7 +322,7 @@ class RegisterCI(Subcommand):
             "--remove",
             action="store_true",
             help="Revoke access to the configured CI services. "
-            "Only available for Cirun and Cirrus Runners for now",
+            "Only available for Cirun, Namespace and Blacksmith for now",
         )
 
     def __call__(self, args):
@@ -460,15 +462,27 @@ class RegisterCI(Subcommand):
             print("Cirun registration disabled.")
 
         if args.cirrus_runners:
-            if args.remove:
-                print("Cirrus Runners Registration: removing")
-                ci_register.enable_cirrus_runners_app(owner, repo)
-            else:
-                print("Cirrus Runners Registration: installing")
-                ci_register.disable_cirrus_runners_app(owner, repo)
+            print("Cirrus Runners support is deprecated.")
 
+        if args.blacksmith:
+            if args.remove:
+                print("Blacksmith.sh Registration: removing")
+                ci_register.disable_blacksmith_app(owner, repo)
+            else:
+                print("Blacksmith.sh Registration: installing")
+                ci_register.enable_blacksmith_app(owner, repo)
         else:
-            print("Cirrus Runners registration disabled.")
+            print("Blacksmith.sh registration disabled.")
+
+        if args.namespace:
+            if args.remove:
+                print("Namespace.so Registration: removing")
+                ci_register.disable_namespace_app(owner, repo)
+            else:
+                print("Namespace.so Registration: installing")
+                ci_register.enable_namespace_app(owner, repo)
+        else:
+            print("Namespace.so registration disabled.")
 
         if args.webservice:
             ci_register.add_conda_forge_webservice_hooks(owner, repo)
@@ -732,8 +746,8 @@ class CISkeleton(Subcommand):
         print(POST_SKELETON_MESSAGE.format(args=args).strip())
 
 
-def main():
-    logging.basicConfig(level=logging.INFO)
+def main(argv=None):
+    logging.basicConfig(level=logging.INFO, force=True)
 
     parser = argparse.ArgumentParser(
         prog="conda smithy",
@@ -752,11 +766,11 @@ def main():
         help="Show conda-smithy's version, and exit.",
     )
 
-    if not sys.argv[1:]:
-        args = parser.parse_args(["--help"])
-    else:
-        args = parser.parse_args()
-
+    # use argv if provided (e.g. when invoked via conda plugin system),
+    # otherwise use sys.argv[1:] (e.g. when invoked as the `conda-smithy` console script),
+    # if neither are provided, use ["--help"]
+    argv = (argv if argv else sys.argv[1:]) or ["--help"]
+    args = parser.parse_args(argv)
     args.subcommand_func(args)
 
 

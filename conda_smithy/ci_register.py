@@ -358,6 +358,9 @@ def travis_get_repo_info(user, project, show_error=False):
 
 
 def add_project_to_travis(user, project):
+    """
+    UNUSED
+    """
     # Make sure the travis-ci user has accepted all invitations
     if os.getenv("GH_TRAVIS_TOKEN"):
         gh = github.Github(os.getenv("GH_TRAVIS_TOKEN"))
@@ -549,12 +552,34 @@ def travis_cleanup(org, project):
 
 
 def enable_cirrus_runners_app(org: str, project: str) -> None:
+    """DEPRECATED"""
     app = 108385308 if org == "conda-forge" else "cirrus-runners"
     github.configure_github_app(org, project, app)
 
 
 def disable_cirrus_runners_app(org: str, project: str) -> None:
+    """DEPRECATED"""
     app = 108385308 if org == "conda-forge" else "cirrus-runners"
+    github.configure_github_app(org, project, app, remove=True)
+
+
+def enable_namespace_app(org: str, project: str) -> None:
+    app = 122481775 if org == "conda-forge" else "namespace-managed-runners"
+    github.configure_github_app(org, project, app)
+
+
+def disable_namespace_app(org: str, project: str) -> None:
+    app = 122481775 if org == "conda-forge" else "namespace-managed-runners"
+    github.configure_github_app(org, project, app, remove=True)
+
+
+def enable_blacksmith_app(org: str, project: str) -> None:
+    app = 122473844 if org == "conda-forge" else "blacksmith-sh"
+    github.configure_github_app(org, project, app)
+
+
+def disable_blacksmith_app(org: str, project: str) -> None:
+    app = 122473844 if org == "conda-forge" else "blacksmith-sh"
     github.configure_github_app(org, project, app, remove=True)
 
 

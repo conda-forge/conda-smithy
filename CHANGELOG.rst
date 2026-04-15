@@ -4,6 +4,138 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.60.0
+====================
+
+**Added:**
+
+* CI registration now supports Blacksmith.sh and Namespace.so Github Actions runners. (#2514)
+
+**Removed:**
+
+* CI registration support for Cirrus Runners has been removed since the service will shut down in June. (#2514)
+
+**Fixed:**
+
+* Fixed duplicate log entries. (#2516)
+
+**Authors:**
+
+* Matthew R. Becker
+* Jaime Rodríguez-Guerra
+
+
+
+v3.59.1
+====================
+
+**Fixed:**
+
+* Fixed a bug where logging did not work with the ``conda smithy`` CLI entrypoint. (#2512)
+
+**Authors:**
+
+* Matthew R. Becker
+* pre-commit-ci[bot]
+
+
+
+v3.59.0
+====================
+
+**Added:**
+
+* Register ``conda-smithy`` as a conda subcommand via conda's plugin system. (#2506)
+
+**Fixed:**
+
+* Fix inverted logic in Cirrus Runners registration. (#2508)
+
+**Authors:**
+
+* Isuru Fernando
+* Matthew R. Becker
+* Jaime Rodríguez-Guerra
+* H. Vetinari
+* nichmor
+* Wolf Vollprecht
+* Uwe L. Korn
+* pre-commit-ci[bot]
+* Filipe Fernandes
+* Min RK
+* Michał Górny
+* John Kirkham
+* Amit Kumar
+* Marcel Bargull
+* Hadrien Mary
+* Mark Harfouche
+* Bastian Zimmermann
+* Leo Fang
+* Ryan Volz
+* Johnny Willemsen
+* Chris Burr
+* Nicholas Bollweg
+* Yannik Tausch
+* Daniel Bast
+* Daniel Ching
+* dependabot[bot]
+* Billy K. Poon
+* vinicius douglas cerutti
+* Tim Snyder
+* Mike Henry
+* Bela Stoyan
+* Aman Srivastava
+* Jan Lehnarsdt
+* Peter Williams
+* Pavel Zwerschke
+* John Blischak
+* Matthias Diener
+* Antonio S. Cofiño
+* Marius van Niekerk
+* Philippe Blain
+* Ben Mares
+* Mervin Fansler
+* David Hirschfeld
+* Finn Womack
+* M Bussonnier
+* Duncan Macleod
+* Jannis Leidel
+* Matt Fisher
+* Hugo Slepicka
+* fhoehle
+* Matthew W. Thompson
+* Nehal J Wani
+* conda-forge-admin
+* Klaus Zimmermann
+* Dominic Davis-Foster
+* Anton Tetov
+* Brandon Maier
+* Ken Odegard
+* Guillaume Fraux
+* Lucas Colley
+* Jakov Smolić
+* Mike Taves
+* Benjamin Tovar
+* Sylvain Corlay
+* Brandon Andersen
+* Vincenzo Eduardo Padulano
+* Bas Zalmstra
+* Adam Ehlers Nyholm Thomsen
+* Ralf Gommers
+* Matt Chan
+* Will Shanks
+* Bas Nijholt
+* Nils Homer
+* Alfredo Luque
+* Philipp A.
+* Andreas Poehlmann
+* James Myatt
+* Dan Yeaw
+* Mikhail Ryazanov
+* Filippo Luca Ferretti
+
+
+
 v3.58.1
 ====================
 

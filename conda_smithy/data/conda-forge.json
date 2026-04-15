@@ -147,7 +147,8 @@
             }
           ],
           "default": false,
-          "description": "Store the conda build_artifacts directory as an         Azure pipeline artifact",
+          "deprecated": true,
+          "description": "Deprecated. Store the conda build_artifacts directory as an Azure pipeline artifact. Use `workflow_settings.store_build_artifacts` instead.",
           "title": "Store Build Artifacts"
         },
         "timeout_minutes": {
@@ -391,6 +392,84 @@
       "title": "CondaForgeDocker",
       "type": "object"
     },
+    "ConditionalValue__class__bool__": {
+      "properties": {
+        "os": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/PlatformsAliases"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/PlatformsAliases"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Operating systems to set environment variable on (default: all)",
+          "title": "Os"
+        },
+        "platform": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/Platforms"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/Platforms"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Platforms to set environment variable on (default: all)",
+          "title": "Platform"
+        },
+        "provider": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/CIservices"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/CIservices"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "CI providers to set environment variable on (default: all)",
+          "title": "Provider"
+        },
+        "value": {
+          "default": false,
+          "description": "Option value",
+          "title": "Value",
+          "type": "boolean"
+        }
+      },
+      "title": "ConditionalValue_<class 'bool'>",
+      "type": "object"
+    },
     "DefaultTestPlatforms": {
       "enum": [
         "all",
@@ -509,7 +588,8 @@
             }
           ],
           "default": false,
-          "description": "Whether to store build artifacts",
+          "deprecated": true,
+          "description": "Deprecated. Whether to store build artifacts. Use `workflow_settings.store_build_artifacts` instead.",
           "title": "Store Build Artifacts"
         },
         "timeout_minutes": {
@@ -678,6 +758,15 @@
       "title": "Platforms",
       "type": "string"
     },
+    "PlatformsAliases": {
+      "enum": [
+        "linux",
+        "win",
+        "osx"
+      ],
+      "title": "PlatformsAliases",
+      "type": "string"
+    },
     "ShellCheck": {
       "additionalProperties": false,
       "properties": {
@@ -689,6 +778,34 @@
         }
       },
       "title": "ShellCheck",
+      "type": "object"
+    },
+    "WorkflowSettings": {
+      "properties": {
+        "store_build_artifacts": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "items": {
+                "$ref": "#/$defs/ConditionalValue__class__bool__"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": [],
+          "description": "Store the outputs of the build process as uploaded CI artifacts.",
+          "title": "Store Build Artifacts"
+        }
+      },
+      "title": "WorkflowSettings",
       "type": "object"
     },
     "build_platform": {
@@ -2090,6 +2207,17 @@
       "default": null,
       "description": "The depth of the git clone.",
       "title": "Clone Depth"
+    },
+    "workflow_settings": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/WorkflowSettings"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Per-workflow settings.\n\n```yaml\nworkflow_settings:\n  store_build_artifacts:\n    # there can be at most one value for each workflow\n    - provider: github_actions\n      platform: linux_aarch64\n      value: true\n    - platform: [linux_64, win_64]  # OR\n      value: true\n```"
     },
     "travis": {
       "anyOf": [

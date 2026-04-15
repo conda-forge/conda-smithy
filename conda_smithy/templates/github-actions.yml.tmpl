@@ -2,11 +2,10 @@
 # update the conda-forge.yml and/or the recipe/meta.yaml.
 # -*- mode: yaml -*-
 
-{%- set platformset = [] %}
+{%- set vars = namespace(store_build_artifacts=False) %}
 {%- for data in configs %}
-  {%- set pfarchless = data.build_platform.split('-')[0] %}
-  {%- if pfarchless not in platformset %}
-    {%- do platformset.append(pfarchless) %}
+  {%- if data.store_build_artifacts %}
+    {%- set vars.store_build_artifacts = True %}
   {%- endif %}
 {%- endfor %}
 
@@ -42,7 +41,8 @@ jobs:
         include:
         {%- for data in configs %}
           - CONFIG: {{ data.config_name }}
-        {%- if github_actions.store_build_artifacts %}
+            STORE_BUILD_ARTIFACTS: {{ data.store_build_artifacts is true }}
+        {%- if data.store_build_artifacts %}
             SHORT_CONFIG: {{ data.short_config_name }}
         {%- endif %}
             UPLOAD_PACKAGES: {{ data.upload }}
@@ -208,7 +208,7 @@ jobs:
       env:
         # default value; make it explicit, as it needs to match with artefact
         # generation below. Not configurable for now, can be revisited later
-        CONDA_BLD_DIR: C:\bld
+        CONDA_BLD_PATH: C:\bld
         MINIFORGE_HOME: {% raw %}${{ contains(runner.arch, 'ARM') && 'C' || 'D' }}{% endraw %}:\Miniforge
         PYTHONUNBUFFERED: 1
         CONFIG: {% raw %}${{ matrix.CONFIG }}{% endraw %}
@@ -220,7 +220,7 @@ jobs:
 {%- for secret in secrets %}
         {{ secret }}: {% raw %}${{{% endraw %} secrets.{{ secret }} {% raw %}}}{% endraw %}
 {%- endfor %}
-{%- if github_actions.store_build_artifacts %}
+{%- if vars.store_build_artifacts %}
 
     - name: Determine build outcome
       # this is to merge the status of the linux/osx/win builds into
@@ -249,7 +249,7 @@ jobs:
       id: prepare-artifacts
       shell: bash
       # we do not want to trigger artefact creation if the build was cancelled
-      if: {% raw %}${{ always() && steps.determine-status.outputs.status != 'cancelled' }}{% endraw %}
+      if: {% raw %}${{ always() && steps.determine-status.outputs.status != 'cancelled' && matrix.STORE_BUILD_ARTIFACTS }}{% endraw %}
       env:
         CI: github_actions
         CONFIG: {% raw %}${{ matrix.CONFIG }}{% endraw %}
@@ -261,15 +261,15 @@ jobs:
         export FEEDSTOCK_NAME="$(basename $GITHUB_REPOSITORY)"
         export ARTIFACT_STAGING_DIR="$GITHUB_WORKSPACE"
         if [ $OS == "macos" ]; then
-          export CONDA_BLD_DIR="${MINIFORGE_HOME:-${HOME}/miniforge3}/conda-bld"
+          export CONDA_BLD_PATH="${MINIFORGE_HOME:-${HOME}/miniforge3}/conda-bld"
         elif [ $OS == "windows" ]; then
           # this needs to be consistent with build step, see above
-          export CONDA_BLD_DIR="C:\\bld"
+          export CONDA_BLD_PATH="C:\\bld"
         else
-          export CONDA_BLD_DIR="build_artifacts"
+          export CONDA_BLD_PATH="build_artifacts"
         fi
-        # Archive everything in CONDA_BLD_DIR except environments
-        # Archive the CONDA_BLD_DIR environments only when the job fails
+        # Archive everything in CONDA_BLD_PATH except environments
+        # Archive the CONDA_BLD_PATH environments only when the job fails
         # Use different prefix for successful and failed build artifacts
         # so random failures don't prevent rebuilds from creating artifacts.
         if [ $JOB_STATUS == "failure" ]; then

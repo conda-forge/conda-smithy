@@ -61,6 +61,7 @@ from conda_smithy.utils import (
     ensure_standard_strings,
     get_feedstock_about_from_meta,
     get_feedstock_name_from_meta,
+    get_workflow_settings,
 )
 from conda_smithy.validate_schema import (
     CONDA_FORGE_YAML_DEFAULTS_FILE,
@@ -1821,6 +1822,20 @@ def render_appveyor(jinja_env, forge_config, forge_dir, return_metadata=False):
 
 
 def _github_actions_specific_setup(jinja_env, forge_config, forge_dir, platform):
+    platform_templates = {
+        "linux": [
+            ".scripts/run_docker_build.sh",
+            ".scripts/build_steps.sh",
+        ],
+        "osx": [
+            ".scripts/run_osx_build.sh",
+        ],
+        "win": [
+            ".scripts/run_win_build.bat",
+        ],
+    }
+    template_files = platform_templates.get(platform, [])
+
     # Handle GH-hosted and self-hosted runners runs-on config
     # Do it before the deepcopy below so these changes can be used by the
     # .github/worfkflows/conda-build.yml template
@@ -1871,6 +1886,17 @@ def _github_actions_specific_setup(jinja_env, forge_config, forge_dir, platform)
                 data["gha_with_gpu"] = True
             data["gha_runs_on"].append(label)
 
+        data.update(
+            get_workflow_settings(
+                forge_config["workflow_settings"], "github_actions", data["platform"]
+            )
+        )
+        if data["store_build_artifacts"]:
+            script_suffix = ".bat" if platform == "win" else ".sh"
+            template_files.append(
+                f".scripts/create_conda_build_artifacts{script_suffix}"
+            )
+
     build_setup = _get_build_setup_line(forge_dir, platform, forge_config)
 
     if platform == "linux":
@@ -1880,26 +1906,6 @@ def _github_actions_specific_setup(jinja_env, forge_config, forge_dir, platform)
 
     forge_config = deepcopy(forge_config)
     forge_config["build_setup"] = build_setup
-
-    platform_templates = {
-        "linux": [
-            ".scripts/run_docker_build.sh",
-            ".scripts/build_steps.sh",
-        ],
-        "osx": [
-            ".scripts/run_osx_build.sh",
-        ],
-        "win": [
-            ".scripts/run_win_build.bat",
-        ],
-    }
-
-    template_files = platform_templates.get(platform, [])
-
-    # Templates for all platforms
-    if forge_config["github_actions"]["store_build_artifacts"]:
-        template_files.append(".scripts/create_conda_build_artifacts.sh")
-        template_files.append(".scripts/create_conda_build_artifacts.bat")
 
     _render_template_exe_files(
         forge_config=forge_config,
@@ -1952,14 +1958,6 @@ def render_github_actions(jinja_env, forge_config, forge_dir, return_metadata=Fa
 def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
     build_setup = _get_build_setup_line(forge_dir, platform, forge_config)
 
-    if platform == "linux":
-        yum_build_setup = generate_yum_requirements(forge_config, forge_dir)
-        if yum_build_setup:
-            forge_config["yum_build_setup"] = yum_build_setup
-
-    forge_config = deepcopy(forge_config)
-    forge_config["build_setup"] = build_setup
-
     platform_templates = {
         "linux": [
             ".scripts/run_docker_build.sh",
@@ -1975,11 +1973,15 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
             ".scripts/run_win_build.bat",
         ],
     }
-    if forge_config["azure"]["store_build_artifacts"]:
-        platform_templates["linux"].append(".scripts/create_conda_build_artifacts.sh")
-        platform_templates["osx"].append(".scripts/create_conda_build_artifacts.sh")
-        platform_templates["win"].append(".scripts/create_conda_build_artifacts.bat")
     template_files = platform_templates.get(platform, [])
+
+    if platform == "linux":
+        yum_build_setup = generate_yum_requirements(forge_config, forge_dir)
+        if yum_build_setup:
+            forge_config["yum_build_setup"] = yum_build_setup
+
+    forge_config = deepcopy(forge_config)
+    forge_config["build_setup"] = build_setup
 
     azure_settings = deepcopy(forge_config["azure"][f"settings_{platform}"])
     azure_settings.pop("swapfile_size", None)
@@ -2010,8 +2012,6 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
         # fmt: off
         if "docker_image" in data["config"] and platform == "linux":
             config_rendered["DOCKER_IMAGE"] = data["config"]["docker_image"][-1]
-        if forge_config["azure"]["store_build_artifacts"]:
-            config_rendered["SHORT_CONFIG"] = data["short_config_name"]
         if platform == "osx":
             if data["build_platform"] == "osx-64":
                 config_rendered["VMIMAGE"] = "macOS-15"
@@ -2019,6 +2019,14 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
                 config_rendered["VMIMAGE"] = "macOS-15-arm64"
             else:
                 raise ValueError(f"Unknown build platform: '{data['build_platform']}'")
+
+        workflow_settings = get_workflow_settings(forge_config["workflow_settings"], "azure", data["platform"])
+        data.update(workflow_settings)
+        config_rendered.update(workflow_settings)
+        if config_rendered["store_build_artifacts"]:
+            config_rendered["SHORT_CONFIG"] = data["short_config_name"]
+            script_suffix = ".bat" if platform == "win" else ".sh"
+            template_files.append(f".scripts/create_conda_build_artifacts{script_suffix}")
         azure_settings["strategy"]["matrix"][data["config_name"]] = config_rendered
         # fmt: on
 
@@ -2463,6 +2471,33 @@ def _read_forge_config(forge_dir, forge_yml=None):
     # The config is just the union of the defaults, and the overridden
     # values.
     config = _update_dict_within_dict(file_config.items(), default_config)
+
+    if "store_build_artifacts" in file_config.get("workflow_settings", {}):
+        # Check for conflicting old keys.
+        if "store_build_artifacts" in file_config.get("azure", {}):
+            raise ValueError(
+                "`store_build_artifacts` both in `workflow_settings` and `azure` "
+                "sections. Please remove the latter."
+            )
+        if "store_build_artifacts" in file_config.get("github_actions", {}):
+            raise ValueError(
+                "`store_build_artifacts` both in `workflow_settings` and "
+                "`github_actions` sections. Please remove the latter."
+            )
+    else:
+        # Convert old keys to new settings.
+        config["workflow_settings"]["store_build_artifacts"].append(
+            {
+                "provider": "azure",
+                "value": config["azure"]["store_build_artifacts"],
+            }
+        )
+        config["workflow_settings"]["store_build_artifacts"].append(
+            {
+                "provider": "github_actions",
+                "value": config["github_actions"]["store_build_artifacts"],
+            }
+        )
 
     # check for conda-smithy 2.x matrix which we can't auto-migrate
     # to conda_build_config
