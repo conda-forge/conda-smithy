@@ -14,6 +14,7 @@ import pytest
 
 import conda_smithy.lint_recipe as linter
 from conda_smithy.linter import hints
+from conda_smithy.linter.conda_recipe_v1_linter import lint_recipe_tests
 from conda_smithy.linter.utils import (
     CONDA_BUILD_TOOL,
     RATTLER_BUILD_TOOL,
@@ -2752,6 +2753,47 @@ def test_v1_no_test():
     with get_recipe_in_dir("v1_recipes/recipe-no-tests.yaml") as recipe_dir:
         lints, hints = linter.main(str(recipe_dir), return_hints=True)
         assert "The recipe must have some tests." in lints
+
+
+def test_v1_lint_recipe_tests_skips_staging_outputs():
+    outputs = [
+        {"staging": {"name": "libfoo-build"}},
+        {
+            "package": {"name": "libfoo"},
+            "name": "libfoo",
+            "tests": [{"script": ["test -f $PREFIX/lib/libfoo.so"]}],
+        },
+    ]
+    lints: list[str] = []
+    hints: list[str] = []
+    lint_recipe_tests(
+        recipe_dir=None,
+        test_section=[],
+        outputs_section=outputs,
+        lints=lints,
+        hints=hints,
+    )
+    assert lints == []
+    assert hints == []
+
+
+def test_v1_lint_recipe_tests_still_flags_missing_tests_on_package_outputs():
+    outputs = [
+        {"staging": {"name": "libfoo-build"}},
+        {"name": "libfoo"},
+        {"name": "libfoo-dev", "tests": [{"script": ["true"]}]},
+    ]
+    lints: list[str] = []
+    hints: list[str] = []
+    lint_recipe_tests(
+        recipe_dir=None,
+        test_section=[],
+        outputs_section=outputs,
+        lints=lints,
+        hints=hints,
+    )
+    assert len(hints) == 1
+    assert "'libfoo'" in hints[0]
 
 
 def test_v1_package_name_version():
