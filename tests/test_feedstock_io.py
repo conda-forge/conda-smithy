@@ -60,9 +60,8 @@ def test_repo():
                 ),
             )
             os.makedirs(possible_repo_subdir)
-            assert fio.get_repo_root(possible_repo_subdir) == os.path.realpath(
-                tmp_dir
-            )
+            assert fio.get_repo_root(possible_repo_subdir) == os.path.realpath(tmp_dir)
+
 
 def test_set_exe_file():
     perms = [stat.S_IXUSR, stat.S_IXGRP, stat.S_IXOTH]
@@ -88,6 +87,7 @@ def test_set_exe_file():
                 blob = repo.index[basename]
                 assert blob.mode & set_mode == int(set_exe) * set_mode
 
+
 def test_write_file():
     for tmp_dir, repo, pathfunc in parameterize():
         for basename in ["test.txt", "dir1/dir2/test.txt"]:
@@ -111,6 +111,7 @@ def test_write_file():
 
                 assert write_text == read_text
 
+
 def test_touch_file():
     for tmp_dir, repo, pathfunc in parameterize():
         for basename in ["test.txt", "dir1/dir2/test.txt"]:
@@ -130,6 +131,7 @@ def test_touch_file():
                 read_bytes = repo[blob.id].data
 
                 assert b"" == read_bytes
+
 
 def test_remove_file():
     for tmp_dir, repo, pathfunc in parameterize():
@@ -164,6 +166,7 @@ def test_remove_file():
                 with pytest.raises(KeyError):
                     repo.index[basename]
 
+
 def test_remove_dir():
     for tmp_dir, repo, pathfunc in parameterize():
         dirname = os.path.join(tmp_dir, "dir")
@@ -191,6 +194,7 @@ def test_remove_dir():
                 with pytest.raises(KeyError):
                     repo.index[basename]
         assert not os.path.exists(dirname)
+
 
 def test_copy_file():
     for tmp_dir, repo, pathfunc in parameterize():

@@ -546,11 +546,13 @@ def test_bad_top_level():
     expected_msg = "The top level meta key sources is unexpected"
     assert expected_msg in lints
 
+
 def test_recipe_v1_bad_top_level():
     meta = OrderedDict([["package", {}], ["build", {}], ["sources", {}]])
     lints, hints = linter.lintify_meta_yaml(meta, recipe_version=1)
     expected_msg = "The top level meta key sources is unexpected"
     assert expected_msg in lints
+
 
 def test_bad_order():
     meta = OrderedDict([["package", {}], ["build", {}], ["source", {}]])
@@ -561,6 +563,7 @@ def test_bad_order():
     )
     assert expected_msg in lints
 
+
 def test_missing_about_license_and_summary():
     meta = {"about": {"home": "a URL"}}
     lints, hints = linter.lintify_meta_yaml(meta)
@@ -569,6 +572,7 @@ def test_missing_about_license_and_summary():
 
     expected_message = "The summary item is expected in the about section."
     assert expected_message in lints
+
 
 def test_bad_about_license():
     meta = {
@@ -581,6 +585,7 @@ def test_bad_about_license():
     lints, hints = linter.lintify_meta_yaml(meta)
     expected_message = "The recipe license cannot be unknown."
     assert expected_message in lints
+
 
 def test_bad_about_license_family():
     meta = {
@@ -595,11 +600,13 @@ def test_bad_about_license_family():
     expected = "about/license_family 'BSD3' not allowed"
     assert any(lint.startswith(expected) for lint in lints)
 
+
 def test_missing_about_home():
     meta = {"about": {"license": "BSD", "summary": "A test summary"}}
     lints, hints = linter.lintify_meta_yaml(meta)
     expected_message = "The home item is expected in the about section."
     assert expected_message in lints
+
 
 def test_missing_about_homepage_empty():
     meta = {"about": {"homepage": "", "summary": "", "license": ""}}
@@ -613,6 +620,7 @@ def test_missing_about_homepage_empty():
     expected_message = "The summary item is expected in the about section."
     assert expected_message in lints
 
+
 def test_missing_about_home_empty():
     meta = {"about": {"home": "", "summary": "", "license": ""}}
     lints, hints = linter.lintify_meta_yaml(meta)
@@ -625,11 +633,13 @@ def test_missing_about_home_empty():
     expected_message = "The summary item is expected in the about section."
     assert expected_message in lints
 
+
 def test_noarch_value():
     meta = {"build": {"noarch": "true"}}
     expected = "Invalid `noarch` value `true`. Should be one of"
     lints, hints = linter.lintify_meta_yaml(meta)
     assert any(lint.startswith(expected) for lint in lints)
+
 
 def test_maintainers_section():
     expected_message = (
@@ -644,9 +654,7 @@ def test_maintainers_section():
     lints, hints = linter.lintify_meta_yaml({})
     assert expected_message in lints
 
-    lints, hints = linter.lintify_meta_yaml(
-        {"extra": {"recipe-maintainers": ["a"]}}
-    )
+    lints, hints = linter.lintify_meta_yaml({"extra": {"recipe-maintainers": ["a"]}})
     assert expected_message not in lints
 
     expected_message = (
@@ -655,11 +663,10 @@ def test_maintainers_section():
     lints, hints = linter.lintify_meta_yaml({"extra": ["recipe-maintainers"]})
     assert expected_message in lints
 
-    lints, hints = linter.lintify_meta_yaml(
-        {"extra": {"recipe-maintainers": "Luke"}}
-    )
+    lints, hints = linter.lintify_meta_yaml({"extra": {"recipe-maintainers": "Luke"}})
     expected_message = "Recipe maintainers should be a json list."
     assert expected_message in lints
+
 
 def test_feedstock_name_endswith_feedstock():
     expected_message = (
@@ -679,10 +686,9 @@ def test_feedstock_name_endswith_feedstock():
     assert expected_message not in lints
 
     # Should not lint when feedstock-name is absent
-    lints, hints = linter.lintify_meta_yaml(
-        {"extra": {"recipe-maintainers": ["a"]}}
-    )
+    lints, hints = linter.lintify_meta_yaml({"extra": {"recipe-maintainers": ["a"]}})
     assert expected_message not in lints
+
 
 def test_test_section():
     expected_message = "The recipe must have some tests."
@@ -731,6 +737,7 @@ def test_test_section():
     assert expected_message not in lints
     assert "It looks like the 'foobar' output doesn't have any tests." in hints
 
+
 def test_recipe_v1_test_section():
     expected_message = "The recipe must have some tests."
 
@@ -774,6 +781,7 @@ def test_recipe_v1_test_section():
     assert expected_message not in lints
     assert "It looks like the 'foobar' output doesn't have any tests." in hints
 
+
 def test_test_section_with_recipe():
     # If we have a run_test.py file, we shouldn't need to provide
     # other tests.
@@ -789,6 +797,7 @@ def test_test_section_with_recipe():
         lints, hints = linter.lintify_meta_yaml({}, recipe_dir)
         assert expected_message not in lints
 
+
 def test_recipe_v1_test_section_with_recipe():
     expected_message = "The recipe must have some tests."
 
@@ -801,6 +810,7 @@ def test_recipe_v1_test_section_with_recipe():
             fh.write("# foo")
         lints, hints = linter.lintify_meta_yaml({}, recipe_dir, recipe_version=1)
         assert expected_message in lints
+
 
 def test_jinja2_vars():
     expected_message = (
@@ -828,6 +838,7 @@ def test_jinja2_vars():
         _, hints = linter.lintify_meta_yaml({}, recipe_dir)
         assert any(h.startswith(expected_message) for h in hints)
 
+
 def test_recipe_v1_jinja2_vars():
     expected_message = (
         "Jinja2 variable references are suggested to take a ``${{<one space>"
@@ -853,6 +864,7 @@ def test_recipe_v1_jinja2_vars():
 
         _, hints = linter.lintify_meta_yaml({}, recipe_dir, recipe_version=1)
         assert any(h.startswith(expected_message) for h in hints)
+
 
 def test_selectors():
     expected_message = (
@@ -887,15 +899,20 @@ def test_selectors():
         assert_selector("name: foo_py3  #[py3k]", is_good=False)
         assert_selector("name: foo_py3 # [py3k]", is_good=False)
 
+
 def test_python_selectors():
     with tmp_directory() as recipe_dir:
 
         def assert_python_selector(meta_string, is_good=False, kind="lint"):
             assert kind in ("lint", "hint")
             if kind == "hint":
-                expected_start = "Old-style Python selectors (py27, py34, py35, py36) are deprecated"
+                expected_start = (
+                    "Old-style Python selectors (py27, py34, py35, py36) are deprecated"
+                )
             else:
-                expected_start = "Old-style Python selectors (py27, py35, etc) are only available"
+                expected_start = (
+                    "Old-style Python selectors (py27, py35, etc) are only available"
+                )
             with open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
                 fh.write(meta_string)
             lints, hints = linter.main(recipe_dir, return_hints=True)
@@ -905,7 +922,9 @@ def test_python_selectors():
                     f"been for '{meta_string}'."
                 )
             else:
-                message = f"Expected lints or hints for '{meta_string}', but didn't get any."
+                message = (
+                    f"Expected lints or hints for '{meta_string}', but didn't get any."
+                )
             problems = lints if kind == "lint" else hints
             assert (not is_good) == any(
                 problem.startswith(expected_start) for problem in problems
@@ -992,6 +1011,7 @@ def test_python_selectors():
                         """,
             is_good=True,
         )
+
 
 def test_noarch_selectors():
     expected_start = "`noarch` packages can't have"
@@ -1169,6 +1189,7 @@ linter:
             line_number=8,
         )
 
+
 def test_recipe_v1_noarch_selectors():
     expected_start = "`noarch` packages can't have"
 
@@ -1287,6 +1308,7 @@ linter:
                                 - enum34
                         """)
 
+
 def test_suggest_noarch():
     expected_start = "Whenever possible python packages should use noarch."
 
@@ -1353,6 +1375,7 @@ def test_suggest_noarch():
                         """,
             is_good=True,
         )
+
 
 def test_suggest_v1_noarch():
     expected_start = "Whenever possible python packages should use noarch."
@@ -1426,6 +1449,7 @@ def test_suggest_v1_noarch():
             is_good=True,
         )
 
+
 def test_jinja_os_environ():
     # Test that we can use os.environ in a recipe. We don't care about
     # the results here.
@@ -1438,6 +1462,7 @@ def test_jinja_os_environ():
                        version: {{ version }}
                      """)
         linter.main(recipe_dir)
+
 
 def test_jinja_load_file_regex():
     # Test that we can use load_file_regex in a recipe. We don't care about
@@ -1459,6 +1484,7 @@ def test_jinja_load_file_regex():
                     """)
         linter.main(recipe_dir)
 
+
 def test_jinja_load_file_data():
     # Test that we can use load_file_data in a recipe. We don't care about
     # the results here and/or the actual file data because the recipe linter
@@ -1473,6 +1499,7 @@ def test_jinja_load_file_data():
                       version: {{ version }}
                     """)
         linter.main(recipe_dir)
+
 
 def test_jinja_load_setup_py_data():
     # Test that we can use load_setup_py_data in a recipe. We don't care about
@@ -1489,6 +1516,7 @@ def test_jinja_load_setup_py_data():
                     """)
         linter.main(recipe_dir)
 
+
 def test_jinja_load_str_data():
     # Test that we can use load_str_data in a recipe. We don't care about
     # the results here and/or the actual file data because the recipe linter
@@ -1504,6 +1532,7 @@ def test_jinja_load_str_data():
                     """)
         linter.main(recipe_dir)
 
+
 def test_jinja_os_sep():
     # Test that we can use os.sep in a recipe.
     with tmp_directory() as recipe_dir:
@@ -1517,6 +1546,7 @@ def test_jinja_os_sep():
                      """)
         linter.main(recipe_dir)
 
+
 def test_target_platform():
     # Test that we can use target_platform in a recipe. We don't care about
     # the results here.
@@ -1528,6 +1558,7 @@ def test_target_platform():
                        version: 1.0
                      """)
         linter.main(recipe_dir)
+
 
 def test_missing_build_number():
     expected_message = "The recipe must have a `build/number` section."
@@ -1545,6 +1576,7 @@ def test_missing_build_number():
     meta = {"build": {"skip": "True", "script": "python setup.py install"}}
     lints, hints = linter.lintify_meta_yaml(meta)
     assert expected_message in lints
+
 
 def test_bad_requirements_order():
     expected_message = (
@@ -1568,6 +1600,7 @@ def test_bad_requirements_order():
     meta = {"requirements": OrderedDict([["build", ["a"]], ["run", ["a"]]])}
     lints, hints = linter.lintify_meta_yaml(meta)
     assert expected_message not in lints
+
 
 def test_noarch_python_bound():
     expected_message = (
@@ -1619,6 +1652,7 @@ def test_noarch_python_bound():
     lints, hints = linter.lintify_meta_yaml(meta)
     assert expected_message not in lints
 
+
 def test_no_sha_with_dl():
     expected_message = (
         "When defining a source/url please add a sha256, "
@@ -1630,13 +1664,12 @@ def test_no_sha_with_dl():
     lints, hints = linter.lintify_meta_yaml({"source": {"url": None, "sha1": None}})
     assert expected_message not in lints
 
-    lints, hints = linter.lintify_meta_yaml(
-        {"source": {"url": None, "sha256": None}}
-    )
+    lints, hints = linter.lintify_meta_yaml({"source": {"url": None, "sha256": None}})
     assert expected_message not in lints, hints
 
     meta = {"source": {"url": None, "md5": None}}
     assert expected_message not in linter.lintify_meta_yaml(meta)
+
 
 def test_redundant_license():
     meta = {
@@ -1649,6 +1682,7 @@ def test_redundant_license():
     lints, hints = linter.lintify_meta_yaml(meta)
     expected_message = 'The recipe `license` should not include the word "License".'
     assert expected_message in lints
+
 
 def test_spdx_license():
     msg = (
@@ -1677,6 +1711,7 @@ def test_spdx_license():
         else:
             assert msg in hints
 
+
 def test_spdx_license_exception():
     msg = (
         "License exception is not an SPDX exception.\n\n"
@@ -1695,6 +1730,7 @@ def test_spdx_license_exception():
         else:
             assert msg in hints
 
+
 def test_recipe_name():
     meta = {"package": {"name": "mp++"}}
     lints, hints = linter.lintify_meta_yaml(meta)
@@ -1703,6 +1739,7 @@ def test_recipe_name():
         "numeric, underscores, hyphens and dots allowed"
     )
     assert expected_message in lints
+
 
 def test_recipe_v1_recipe_name():
     meta = {"package": {"name": "mp++"}}
@@ -1729,6 +1766,7 @@ def test_recipe_v1_recipe_name():
     meta = {"package": {"name": "${{ variant_name }}"}}
     lints, _ = linter.lintify_meta_yaml(meta, recipe_version=1)
     assert expected_message not in lints
+
 
 @pytest.mark.skipif(platform.system() == "Windows", reason="Line-ending confusion")
 def test_end_empty_line():
@@ -1774,11 +1812,13 @@ def test_end_empty_line():
             else:
                 assert expected_message in lints
 
+
 def test_cb3_jinja2_functions():
     lints = linter.main(
         os.path.join(_thisdir, "recipes", "cb3_jinja2_functions", "recipe")
     )
     assert not lints
+
 
 def test_maintainer_exists():
     lints, _ = linter.lintify_meta_yaml(
@@ -1799,6 +1839,7 @@ def test_maintainer_exists():
     )
     expected_message = 'Recipe maintainer "conda-forge" does not exist'
     assert expected_message in lints
+
 
 def test_maintainer_exists_no_token():
     gh_token = os.environ.get("GH_TOKEN", None)
@@ -1829,12 +1870,15 @@ def test_maintainer_exists_no_token():
         if gh_token is not None:
             os.environ["GH_TOKEN"] = gh_token
 
+
 def test_maintainer_team_exists():
     lints, _ = linter.lintify_meta_yaml(
         {"extra": {"recipe-maintainers": ["conda-forge/blahblahblah-foobarblah"]}},
         conda_forge=True,
     )
-    expected_message = 'Recipe maintainer team "conda-forge/blahblahblah-foobarblah" does not exist'
+    expected_message = (
+        'Recipe maintainer team "conda-forge/blahblahblah-foobarblah" does not exist'
+    )
     if "GH_TOKEN" in os.environ:
         assert expected_message in lints
     else:
@@ -1846,6 +1890,7 @@ def test_maintainer_team_exists():
     )
     expected_message = 'Recipe maintainer team "conda-forge/Core" does not exist'
     assert expected_message not in lints
+
 
 def test_bad_subheader():
     expected_message = (
@@ -1881,9 +1926,11 @@ def test_bad_subheader():
     lints, hints = linter.lintify_meta_yaml(meta)
     assert expected_message.format("source", "urll") in lints
 
+
 def test_outputs():
     meta = OrderedDict([["outputs", [{"name": "asd"}]]])
     lints, hints = linter.lintify_meta_yaml(meta)
+
 
 def test_version():
     meta = {"package": {"name": "python", "version": "3.6.4"}}
@@ -1895,6 +1942,7 @@ def test_version():
     expected_message = "Package version 2.0.0~alpha0 doesn't match conda spec"
     lints, hints = linter.lintify_meta_yaml(meta)
     assert any(lint.startswith(expected_message) for lint in lints)
+
 
 def test_recipe_v1_version():
     meta = {"package": {"name": "python", "version": "3.6.4"}}
@@ -1924,6 +1972,7 @@ def test_recipe_v1_version():
     expected_message = "Package version 2 doesn't match conda spec"
     assert expected_message not in lints
 
+
 def test_recipe_v1_version_with_context():
     meta = {
         "context": {"foo": "3.6.4"},
@@ -1949,21 +1998,21 @@ def test_recipe_v1_version_with_context():
     expected_message = "Package version 2 doesn't match conda spec"
     assert expected_message not in lints
 
+
 def test_multiple_sources():
     lints = linter.main(os.path.join(_thisdir, "recipes", "multiple_sources"))
     assert not lints
 
+
 def test_noarch_platforms():
-    lints = linter.main(
-        os.path.join(_thisdir, "recipes", "noarch_platforms", "recipe")
-    )
+    lints = linter.main(os.path.join(_thisdir, "recipes", "noarch_platforms", "recipe"))
     assert not lints
 
+
 def test_noarch_selector_variants():
-    lints = linter.main(
-        os.path.join(_thisdir, "recipes", "noarch_selector_variants")
-    )
+    lints = linter.main(os.path.join(_thisdir, "recipes", "noarch_selector_variants"))
     assert not lints
+
 
 def test_string_source():
     url = "http://mistake.com/v1.0.tar.gz"
@@ -1973,6 +2022,7 @@ def test_string_source():
         f"list, but got a {type(url).__module__}.{type(url).__name__}."
     )
     assert msg in lints
+
 
 def test_single_space_pins():
     meta = {
@@ -1996,6 +2046,7 @@ def test_single_space_pins():
     ]
     assert expected_messages == filtered_lints
 
+
 def test_recipe_v1_single_space_pins():
     meta = {
         "requirements": {
@@ -2018,17 +2069,17 @@ def test_recipe_v1_single_space_pins():
     ]
     assert expected_messages == filtered_lints
 
+
 def test_empty_host():
     meta = {"requirements": {"build": None, "host": None, "run": None}}
     # Test that this doesn't crash
     lints, hints = linter.lintify_meta_yaml(meta)
 
+
 def test_python_requirements():
     meta = {"requirements": {"host": ["python >=3"]}}
     lints, hints = linter.lintify_meta_yaml(meta)
-    assert (
-        "If python is a host requirement, it should be a run requirement." in lints
-    )
+    assert "If python is a host requirement, it should be a run requirement." in lints
 
     meta = {
         "requirements": {"host": ["python >=3"]},
@@ -2036,8 +2087,7 @@ def test_python_requirements():
     }
     lints, hints = linter.lintify_meta_yaml(meta)
     assert (
-        "If python is a host requirement, it should be a run requirement."
-        not in lints
+        "If python is a host requirement, it should be a run requirement." not in lints
     )
 
     meta = {"requirements": {"host": ["python >=3", "python"]}}
@@ -2085,12 +2135,11 @@ def test_python_requirements():
     # Test that this doesn't crash
     lints, hints = linter.lintify_meta_yaml(meta)
 
+
 def test_r_base_requirements():
     meta = {"requirements": {"host": ["r-base >=3.5"]}}
     lints, hints = linter.lintify_meta_yaml(meta)
-    assert (
-        "If r-base is a host requirement, it should be a run requirement." in lints
-    )
+    assert "If r-base is a host requirement, it should be a run requirement." in lints
 
     meta = {
         "requirements": {"host": ["r-base >=3.5"]},
@@ -2098,8 +2147,7 @@ def test_r_base_requirements():
     }
     lints, hints = linter.lintify_meta_yaml(meta)
     assert (
-        "If r-base is a host requirement, it should be a run requirement."
-        not in lints
+        "If r-base is a host requirement, it should be a run requirement." not in lints
     )
 
     meta = {"requirements": {"host": ["r-base >=3.5", "r-base"]}}
@@ -2116,9 +2164,8 @@ def test_r_base_requirements():
         in lints
     )
 
-@pytest.mark.skipif(
-    shutil.which("shellcheck") is None, reason="shellcheck not found"
-)
+
+@pytest.mark.skipif(shutil.which("shellcheck") is None, reason="shellcheck not found")
 def test_build_sh_with_shellcheck_findings():
     lints, hints = linter.main(
         os.path.join(_thisdir, "recipes", "build_script_with_findings"),
@@ -2126,6 +2173,7 @@ def test_build_sh_with_shellcheck_findings():
     )
     assert any("Whenever possible fix all shellcheck findings" in h for h in hints)
     assert len(hints) < 100
+
 
 def test_cdt_hint():
     lints, hints = linter.main(
@@ -2136,6 +2184,7 @@ def test_cdt_hint():
     expected = "Use of `cdt(mesa-libgl-devel)` is deprecated"
     assert any(hint.startswith(expected) for hint in hints)
 
+
 def test_mpl_base_hint():
     meta = {
         "requirements": {
@@ -2145,6 +2194,7 @@ def test_mpl_base_hint():
     lints, hints = linter.lintify_meta_yaml(meta, conda_forge=True)
     expected = "Recipes should usually depend on `matplotlib-base`"
     assert any(hint.startswith(expected) for hint in hints)
+
 
 def test_mpl_base_hint_outputs():
     meta = {
@@ -2248,6 +2298,7 @@ def test_cli_fail():
         out, _ = child.communicate()
         assert child.returncode == 1, out
 
+
 @pytest.mark.cli
 def test_cli_success():
     with tmp_directory() as recipe_dir:
@@ -2277,6 +2328,7 @@ def test_cli_success():
         )
         out, _ = child.communicate()
         assert child.returncode == 0, out
+
 
 @pytest.mark.cli
 def test_cli_environ():
@@ -2310,15 +2362,14 @@ def test_cli_environ():
         out, _ = child.communicate()
         assert child.returncode == 0, out
 
+
 @pytest.mark.cli
 def test_unicode():
     """
     Tests that unicode does not confuse the linter.
     """
     with tmp_directory() as recipe_dir:
-        with open(
-            os.path.join(recipe_dir, "meta.yaml"), "w", encoding="utf-8"
-        ) as fh:
+        with open(os.path.join(recipe_dir, "meta.yaml"), "w", encoding="utf-8") as fh:
             fh.write("""
                 package:
                     name: 'test_package'
@@ -2332,6 +2383,7 @@ def test_unicode():
                      """)
         # Just run it and make sure it does not raise.
         linter.main(recipe_dir)
+
 
 @pytest.mark.cli
 def test_jinja_variable_def():
@@ -2368,6 +2420,7 @@ def test_jinja_variable_def():
         assert_jinja('{%set version = "0.27.3" %}', is_good=False)
         assert_jinja('{% set version = "0.27.3"%}', is_good=False)
         assert_jinja('{% set version= "0.27.3"%}', is_good=False)
+
 
 @pytest.mark.cli
 def test_lint_recipe_empty_cbc():
