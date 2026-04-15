@@ -5,7 +5,7 @@
 To install conda-smithy from source:
 
 * Install `conda`, e.g., via [Miniforge](https://conda-forge.org/download/).
-* Clone this repository: `git clone https://github.com/conda-forge/conda-smithy` (or your fork).
+* Fork and clone this repository: `git clone https://github.com/YOUR-USERNAME/conda-smithy.git`. Change to it: `cd conda-smithy`.
 * Create a new conda environment with all requirements based on [environment.yml](environment.yml): `conda env create`.
 * Activate the environment: `conda activate conda-smithy`.
   * Alternatively: Run `conda install -n base conda-spawn` and `conda spawn conda-smithy`
