@@ -146,4 +146,6 @@ test_on_native_only: false
 travis: {}
 woodpecker: {}
 workflow_settings:
+  build_workspace_dir: []
   store_build_artifacts: []
+  tools_install_dir: []

@@ -509,6 +509,24 @@ class WorkflowSettings(BaseModel):
         """),
     )
 
+    tools_install_dir: Optional[
+        Union[str, list[conditional_value(str, None)], Nullable]
+    ] = Field(
+        default=[],
+        description=cleandoc("""
+        Directory to store build-time tools in.
+        """),
+    )
+
+    build_workspace_dir: Optional[
+        Union[str, list[conditional_value(str, None)], Nullable]
+    ] = Field(
+        default=[],
+        description=cleandoc("""
+        Directory to build in.
+        """),
+    )
+
 
 class ConfigModel(BaseModel):
     """

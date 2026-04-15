@@ -470,6 +470,84 @@
       "title": "ConditionalValue_<class 'bool'>",
       "type": "object"
     },
+    "ConditionalValue__class__str__": {
+      "properties": {
+        "os": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/PlatformsAliases"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/PlatformsAliases"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Operating systems to set environment variable on (default: all)",
+          "title": "Os"
+        },
+        "platform": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/Platforms"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/Platforms"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Platforms to set environment variable on (default: all)",
+          "title": "Platform"
+        },
+        "provider": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/CIservices"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/CIservices"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "CI providers to set environment variable on (default: all)",
+          "title": "Provider"
+        },
+        "value": {
+          "default": null,
+          "description": "Option value",
+          "title": "Value",
+          "type": "string"
+        }
+      },
+      "title": "ConditionalValue_<class 'str'>",
+      "type": "object"
+    },
     "DefaultTestPlatforms": {
       "enum": [
         "all",
@@ -803,6 +881,50 @@
           "default": [],
           "description": "Store the outputs of the build process as uploaded CI artifacts.",
           "title": "Store Build Artifacts"
+        },
+        "tools_install_dir": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "$ref": "#/$defs/ConditionalValue__class__str__"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": [],
+          "description": "Directory to store build-time tools in.",
+          "title": "Tools Install Dir"
+        },
+        "build_workspace_dir": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "$ref": "#/$defs/ConditionalValue__class__str__"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": [],
+          "description": "Directory to build in.",
+          "title": "Build Workspace Dir"
         }
       },
       "title": "WorkflowSettings",
