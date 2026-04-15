@@ -136,6 +136,8 @@ jobs:
         else
           export IS_PR_BUILD="False"
         fi
+        export MINIFORGE_HOME="${MINIFORGE_HOME/#~/${HOME}}"
+        export CONDA_BLD_PATH="${CONDA_BLD_PATH/#~/${HOME}}"
         echo "::endgroup::"
         ./.scripts/run_docker_build.sh
 
@@ -166,6 +168,8 @@ jobs:
         else
           export IS_PR_BUILD="False"
         fi
+        export MINIFORGE_HOME="${MINIFORGE_HOME/#~/${HOME}}"
+        export CONDA_BLD_PATH="${CONDA_BLD_PATH/#~/${HOME}}"
         ./.scripts/run_osx_build.sh
 
 {%- for choco_pkg in choco %}
@@ -262,6 +266,8 @@ jobs:
         JOB_STATUS: {% raw %}${{ steps.determine-status.outputs.status }}{% endraw %}
         OS: {% raw %}${{ matrix.os }}{% endraw %}
       run: |
+        export MINIFORGE_HOME="${MINIFORGE_HOME/#~/${HOME}}"
+        export CONDA_BLD_PATH="${CONDA_BLD_PATH/#~/${HOME}}"
         export CI_RUN_ID=$GITHUB_RUN_ID
         export FEEDSTOCK_NAME="$(basename $GITHUB_REPOSITORY)"
         export ARTIFACT_STAGING_DIR="$GITHUB_WORKSPACE"
