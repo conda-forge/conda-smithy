@@ -1,9 +1,11 @@
+#!/usr/bin/env python
 import os
 import platform
 import shutil
 import subprocess
 import tempfile
 import textwrap
+import unittest
 from collections import OrderedDict
 from contextlib import contextmanager
 from pathlib import Path
@@ -4693,3 +4695,7 @@ extra:
         else []
     )
     assert hints == []
+
+
+if __name__ == "__main__":
+    unittest.main()
