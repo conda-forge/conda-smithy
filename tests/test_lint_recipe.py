@@ -540,7 +540,6 @@ def test_lint_macdt(recipe_version, config_file):
         assert any(lint.startswith("The MACOSX_DEPLOYMENT_TARGET") for lint in lints)
 
 
-class TestLinter(unittest.TestCase):
     def test_bad_top_level(self):
         meta = OrderedDict([["package", {}], ["build", {}], ["sources", {}]])
         lints, hints = linter.lintify_meta_yaml(meta)
@@ -2232,7 +2231,6 @@ def test_go_license_bundling(recipe_version: int):
     assert expected_msg not in lints
 
 
-class TestCliRecipeLint(unittest.TestCase):
     @pytest.mark.cli
     def test_cli_fail(self):
         with tmp_directory() as recipe_dir:

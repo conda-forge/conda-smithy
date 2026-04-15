@@ -46,7 +46,6 @@ def parameterize():
                 shutil.rmtree(tmp_dir)
 
 
-class TestFeedstockIO(unittest.TestCase):
     def test_repo(self):
         for tmp_dir, repo, pathfunc in parameterize():
             if repo is None:
