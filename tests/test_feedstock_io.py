@@ -46,7 +46,7 @@ def parameterize():
                 shutil.rmtree(tmp_dir)
 
 
-    def test_repo(self):
+    def test_repo():
         for tmp_dir, repo, pathfunc in parameterize():
             if repo is None:
                 assert fio.get_repo(pathfunc(tmp_dir)) is None
@@ -64,7 +64,7 @@ def parameterize():
                     tmp_dir
                 )
 
-    def test_set_exe_file(self):
+    def test_set_exe_file():
         perms = [stat.S_IXUSR, stat.S_IXGRP, stat.S_IXOTH]
 
         set_mode = functools.reduce(op.or_, perms)
@@ -88,7 +88,7 @@ def parameterize():
                     blob = repo.index[basename]
                     assert blob.mode & set_mode == int(set_exe) * set_mode
 
-    def test_write_file(self):
+    def test_write_file():
         for tmp_dir, repo, pathfunc in parameterize():
             for basename in ["test.txt", "dir1/dir2/test.txt"]:
                 filename = os.path.join(tmp_dir, basename)
@@ -111,7 +111,7 @@ def parameterize():
 
                     assert write_text == read_text
 
-    def test_touch_file(self):
+    def test_touch_file():
         for tmp_dir, repo, pathfunc in parameterize():
             for basename in ["test.txt", "dir1/dir2/test.txt"]:
                 filename = os.path.join(tmp_dir, basename)
@@ -131,7 +131,7 @@ def parameterize():
 
                     assert b"" == read_bytes
 
-    def test_remove_file(self):
+    def test_remove_file():
         for tmp_dir, repo, pathfunc in parameterize():
             for basename in ["test.txt", "dir1/dir2/test.txt"]:
                 dirname = os.path.dirname(basename)
@@ -164,7 +164,7 @@ def parameterize():
                     with pytest.raises(KeyError):
                         repo.index[basename]
 
-    def test_remove_dir(self):
+    def test_remove_dir():
         for tmp_dir, repo, pathfunc in parameterize():
             dirname = os.path.join(tmp_dir, "dir")
             os.makedirs(f"{dirname}/a")
@@ -192,7 +192,7 @@ def parameterize():
                         repo.index[basename]
             assert not os.path.exists(dirname)
 
-    def test_copy_file(self):
+    def test_copy_file():
         for tmp_dir, repo, pathfunc in parameterize():
             basename1 = "test1.txt"
             basename2 = "test2.txt"
