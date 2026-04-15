@@ -46,193 +46,190 @@ def parameterize():
                 shutil.rmtree(tmp_dir)
 
 
-def test_repo():
-    for tmp_dir, repo, pathfunc in parameterize():
-        if repo is None:
-            assert fio.get_repo(pathfunc(tmp_dir)) is None
-        else:
-            assert isinstance(fio.get_repo(pathfunc(tmp_dir)), pygit2.Repository)
-            possible_repo_subdir = os.path.join(
-                tmp_dir,
-                "".join(
-                    "{}{}".format(x, os.path.sep if random.random() > 0.5 else "")
-                    for x in string.ascii_lowercase
-                ),
-            )
-            os.makedirs(possible_repo_subdir)
-            assert fio.get_repo_root(possible_repo_subdir) == os.path.realpath(tmp_dir)
-
-
-def test_set_exe_file():
-    perms = [stat.S_IXUSR, stat.S_IXGRP, stat.S_IXOTH]
-
-    set_mode = functools.reduce(op.or_, perms)
-
-    for set_exe in [True, False]:
+class TestFeedstockIO(unittest.TestCase):
+    def test_repo(self):
         for tmp_dir, repo, pathfunc in parameterize():
-            basename = "test.txt"
-            filename = os.path.join(tmp_dir, basename)
-            with open(filename, "w", encoding="utf-8", newline="\n") as fh:
-                fh.write("")
-            if repo is not None:
-                repo.index.add(basename)
-                repo.index.write()
+            if repo is None:
+                assert fio.get_repo(pathfunc(tmp_dir)) is None
+            else:
+                assert isinstance(fio.get_repo(pathfunc(tmp_dir)), pygit2.Repository)
+                possible_repo_subdir = os.path.join(
+                    tmp_dir,
+                    "".join(
+                        "{}{}".format(x, os.path.sep if random.random() > 0.5 else "")
+                        for x in string.ascii_lowercase
+                    ),
+                )
+                os.makedirs(possible_repo_subdir)
+                assert fio.get_repo_root(possible_repo_subdir) == os.path.realpath(
+                    tmp_dir
+                )
 
-            fio.set_exe_file(pathfunc(filename), set_exe)
+    def test_set_exe_file(self):
+        perms = [stat.S_IXUSR, stat.S_IXGRP, stat.S_IXOTH]
 
-            file_mode = os.stat(filename).st_mode
-            assert file_mode & set_mode == int(set_exe) * set_mode
-            if repo is not None:
-                repo.index.read()
-                blob = repo.index[basename]
-                assert blob.mode & set_mode == int(set_exe) * set_mode
+        set_mode = functools.reduce(op.or_, perms)
 
+        for set_exe in [True, False]:
+            for tmp_dir, repo, pathfunc in parameterize():
+                basename = "test.txt"
+                filename = os.path.join(tmp_dir, basename)
+                with open(filename, "w", encoding="utf-8", newline="\n") as fh:
+                    fh.write("")
+                if repo is not None:
+                    repo.index.add(basename)
+                    repo.index.write()
 
-def test_write_file():
-    for tmp_dir, repo, pathfunc in parameterize():
-        for basename in ["test.txt", "dir1/dir2/test.txt"]:
-            filename = os.path.join(tmp_dir, basename)
+                fio.set_exe_file(pathfunc(filename), set_exe)
 
-            write_text = "text"
+                file_mode = os.stat(filename).st_mode
+                assert file_mode & set_mode == int(set_exe) * set_mode
+                if repo is not None:
+                    repo.index.read()
+                    blob = repo.index[basename]
+                    assert blob.mode & set_mode == int(set_exe) * set_mode
 
-            with fio.write_file(pathfunc(filename)) as fh:
-                fh.write(write_text)
+    def test_write_file(self):
+        for tmp_dir, repo, pathfunc in parameterize():
+            for basename in ["test.txt", "dir1/dir2/test.txt"]:
+                filename = os.path.join(tmp_dir, basename)
 
-            read_text = ""
-            with open(filename, encoding="utf-8") as fh:
-                read_text = fh.read()
+                write_text = "text"
 
-            assert write_text == read_text
+                with fio.write_file(pathfunc(filename)) as fh:
+                    fh.write(write_text)
 
-            if repo is not None:
-                repo.index.read()
-                blob = repo.index[basename]
-                read_text = repo[blob.id].data.decode("utf-8")
+                read_text = ""
+                with open(filename, encoding="utf-8") as fh:
+                    read_text = fh.read()
 
                 assert write_text == read_text
 
+                if repo is not None:
+                    repo.index.read()
+                    blob = repo.index[basename]
+                    read_text = repo[blob.id].data.decode("utf-8")
 
-def test_touch_file():
-    for tmp_dir, repo, pathfunc in parameterize():
-        for basename in ["test.txt", "dir1/dir2/test.txt"]:
-            filename = os.path.join(tmp_dir, basename)
+                    assert write_text == read_text
 
-            fio.touch_file(pathfunc(filename))
+    def test_touch_file(self):
+        for tmp_dir, repo, pathfunc in parameterize():
+            for basename in ["test.txt", "dir1/dir2/test.txt"]:
+                filename = os.path.join(tmp_dir, basename)
+
+                fio.touch_file(pathfunc(filename))
+
+                read_text = ""
+                with open(filename, encoding="utf-8") as fh:
+                    read_text = fh.read()
+
+                assert "" == read_text
+
+                if repo is not None:
+                    repo.index.read()
+                    blob = repo.index[basename]
+                    read_bytes = repo[blob.id].data
+
+                    assert b"" == read_bytes
+
+    def test_remove_file(self):
+        for tmp_dir, repo, pathfunc in parameterize():
+            for basename in ["test.txt", "dir1/dir2/test.txt"]:
+                dirname = os.path.dirname(basename)
+                if dirname and not os.path.exists(dirname):
+                    os.makedirs(dirname)
+
+                filename = os.path.join(tmp_dir, basename)
+
+                with open(filename, "w", encoding="utf-8", newline="\n") as fh:
+                    fh.write("")
+                if repo is not None:
+                    repo.index.add(basename)
+                    repo.index.write()
+
+                assert os.path.exists(filename)
+                if dirname:
+                    assert os.path.exists(dirname)
+                    assert os.path.exists(os.path.dirname(dirname))
+                if repo is not None:
+                    assert repo.index[basename] is not None
+
+                fio.remove_file(pathfunc(filename))
+
+                assert not os.path.exists(filename)
+                if dirname:
+                    assert not os.path.exists(dirname)
+                    assert not os.path.exists(os.path.dirname(dirname))
+                if repo is not None:
+                    repo.index.read()
+                    with pytest.raises(KeyError):
+                        repo.index[basename]
+
+    def test_remove_dir(self):
+        for tmp_dir, repo, pathfunc in parameterize():
+            dirname = os.path.join(tmp_dir, "dir")
+            os.makedirs(f"{dirname}/a")
+            os.makedirs(f"{dirname}/b")
+            for basename in ["dir/a/foo.txt", "dir/b/bar.txt", "dir/baz.txt"]:
+                filename = os.path.join(tmp_dir, basename)
+
+                with open(filename, "w", encoding="utf-8", newline="\n") as fh:
+                    fh.write("")
+                if repo is not None:
+                    repo.index.add(basename)
+                    repo.index.write()
+
+                assert os.path.exists(filename)
+                if repo is not None:
+                    assert repo.index[basename] is not None
+
+            fio.remove_file_or_dir(pathfunc(dirname))
+
+            for basename in ["dir/a/foo.txt", "dir/b/bar.txt", "dir/baz.txt"]:
+                assert not os.path.exists(filename)
+                if repo is not None:
+                    repo.index.read()
+                    with pytest.raises(KeyError):
+                        repo.index[basename]
+            assert not os.path.exists(dirname)
+
+    def test_copy_file(self):
+        for tmp_dir, repo, pathfunc in parameterize():
+            basename1 = "test1.txt"
+            basename2 = "test2.txt"
+
+            filename1 = os.path.join(tmp_dir, basename1)
+            filename2 = os.path.join(tmp_dir, basename2)
+
+            write_text = "text"
+            with open(filename1, "w", encoding="utf-8", newline="\n") as fh:
+                fh.write(write_text)
+
+            assert os.path.exists(filename1)
+            assert not os.path.exists(filename2)
+            if repo is not None:
+                with pytest.raises(KeyError):
+                    repo.index[basename2]
+
+            fio.copy_file(pathfunc(filename1), pathfunc(filename2))
+
+            assert os.path.exists(filename1)
+            assert os.path.exists(filename2)
+            if repo is not None:
+                repo.index.read()
+                assert repo.index[basename2] is not None
 
             read_text = ""
-            with open(filename, encoding="utf-8") as fh:
+            with open(filename2, encoding="utf-8") as fh:
                 read_text = fh.read()
 
-            assert "" == read_text
-
-            if repo is not None:
-                repo.index.read()
-                blob = repo.index[basename]
-                read_bytes = repo[blob.id].data
-
-                assert b"" == read_bytes
-
-
-def test_remove_file():
-    for tmp_dir, repo, pathfunc in parameterize():
-        for basename in ["test.txt", "dir1/dir2/test.txt"]:
-            dirname = os.path.dirname(basename)
-            if dirname and not os.path.exists(dirname):
-                os.makedirs(dirname)
-
-            filename = os.path.join(tmp_dir, basename)
-
-            with open(filename, "w", encoding="utf-8", newline="\n") as fh:
-                fh.write("")
-            if repo is not None:
-                repo.index.add(basename)
-                repo.index.write()
-
-            assert os.path.exists(filename)
-            if dirname:
-                assert os.path.exists(dirname)
-                assert os.path.exists(os.path.dirname(dirname))
-            if repo is not None:
-                assert repo.index[basename] is not None
-
-            fio.remove_file(pathfunc(filename))
-
-            assert not os.path.exists(filename)
-            if dirname:
-                assert not os.path.exists(dirname)
-                assert not os.path.exists(os.path.dirname(dirname))
-            if repo is not None:
-                repo.index.read()
-                with pytest.raises(KeyError):
-                    repo.index[basename]
-
-
-def test_remove_dir():
-    for tmp_dir, repo, pathfunc in parameterize():
-        dirname = os.path.join(tmp_dir, "dir")
-        os.makedirs(f"{dirname}/a")
-        os.makedirs(f"{dirname}/b")
-        for basename in ["dir/a/foo.txt", "dir/b/bar.txt", "dir/baz.txt"]:
-            filename = os.path.join(tmp_dir, basename)
-
-            with open(filename, "w", encoding="utf-8", newline="\n") as fh:
-                fh.write("")
-            if repo is not None:
-                repo.index.add(basename)
-                repo.index.write()
-
-            assert os.path.exists(filename)
-            if repo is not None:
-                assert repo.index[basename] is not None
-
-        fio.remove_file_or_dir(pathfunc(dirname))
-
-        for basename in ["dir/a/foo.txt", "dir/b/bar.txt", "dir/baz.txt"]:
-            assert not os.path.exists(filename)
-            if repo is not None:
-                repo.index.read()
-                with pytest.raises(KeyError):
-                    repo.index[basename]
-        assert not os.path.exists(dirname)
-
-
-def test_copy_file():
-    for tmp_dir, repo, pathfunc in parameterize():
-        basename1 = "test1.txt"
-        basename2 = "test2.txt"
-
-        filename1 = os.path.join(tmp_dir, basename1)
-        filename2 = os.path.join(tmp_dir, basename2)
-
-        write_text = "text"
-        with open(filename1, "w", encoding="utf-8", newline="\n") as fh:
-            fh.write(write_text)
-
-        assert os.path.exists(filename1)
-        assert not os.path.exists(filename2)
-        if repo is not None:
-            with pytest.raises(KeyError):
-                repo.index[basename2]
-
-        fio.copy_file(pathfunc(filename1), pathfunc(filename2))
-
-        assert os.path.exists(filename1)
-        assert os.path.exists(filename2)
-        if repo is not None:
-            repo.index.read()
-            assert repo.index[basename2] is not None
-
-        read_text = ""
-        with open(filename2, encoding="utf-8") as fh:
-            read_text = fh.read()
-
-        assert write_text == read_text
-
-        if repo is not None:
-            blob = repo.index[basename2]
-            read_text = repo[blob.id].data.decode("utf-8")
-
             assert write_text == read_text
+
+            if repo is not None:
+                blob = repo.index[basename2]
+                read_text = repo[blob.id].data.decode("utf-8")
+
+                assert write_text == read_text
 
 
 if __name__ == "__main__":
