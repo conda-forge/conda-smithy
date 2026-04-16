@@ -60,8 +60,8 @@ jobs:
         call ".scripts\run_win_build.bat"
       displayName: Run Windows build
       env:
-        MINIFORGE_HOME: $(MINIFORGE_HOME)
-        CONDA_BLD_PATH: $(CONDA_BLD_PATH)
+        MINIFORGE_HOME: $(tools_install_dir)
+        CONDA_BLD_PATH: $(build_workspace_dir)
         PYTHONUNBUFFERED: 1
         CONFIG: $(CONFIG)
         CI: azure
@@ -79,12 +79,12 @@ jobs:
 {%- if vars.store_build_artifacts %}
 
     - script: |
-        set MINIFORGE_HOME=$(MINIFORGE_HOME)
+        set MINIFORGE_HOME=$(tools_install_dir)
+        set CONDA_BLD_PATH=$(build_workspace_dir)
         set CI=azure
         set CI_RUN_ID=$(build.BuildNumber).$(system.JobAttempt)
         set FEEDSTOCK_NAME=$(build.Repository.Name)
         set ARTIFACT_STAGING_DIR=$(Build.ArtifactStagingDirectory)
-        set CONDA_BLD_PATH=$(CONDA_BLD_PATH)
         set BLD_ARTIFACT_PREFIX=conda_artifacts
         if "%AGENT_JOBSTATUS%" == "Failed" (
             set ENV_ARTIFACT_PREFIX=conda_envs
