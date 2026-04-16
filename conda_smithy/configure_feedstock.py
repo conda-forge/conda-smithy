@@ -2499,6 +2499,46 @@ def _read_forge_config(forge_dir, forge_yml=None):
             }
         )
 
+    if "MINIFORGE_HOME" in file_config.get("azure", {}).get("settings_win", {}).get(
+        "variables", {}
+    ):
+        if "tools_install_dir" in file_config.get("workflow_settings", {}):
+            raise ValueError(
+                "`workflow_settings.tools_install_dir` and "
+                "`azure.settings_win.variables.MINIFORGE_HOME` are mutually exclusive. "
+                "Please remove the latter."
+            )
+        else:
+            config["workflow_settings"]["tools_install_dir"].append(
+                {
+                    "provider": "azure",
+                    "os": "win",
+                    "value": config["azure"]["settings_win"]["variables"].pop(
+                        "MINIFORGE_HOME"
+                    ),
+                }
+            )
+
+    if "CONDA_BLD_DIR" in file_config.get("azure", {}).get("settings_win", {}).get(
+        "variables", {}
+    ):
+        if "build_workspace_dir" in file_config.get("workflow_settings", {}):
+            raise ValueError(
+                "`workflow_settings.build_workspace_dir` and "
+                "`azure.settings_win.variables.CONDA_BLD_DIR` are mutually exclusive. "
+                "Please remove the latter."
+            )
+        else:
+            config["workflow_settings"]["build_workspace_dir"].append(
+                {
+                    "provider": "azure",
+                    "os": "win",
+                    "value": config["azure"]["settings_win"]["variables"].pop(
+                        "CONDA_BLD_DIR"
+                    ),
+                }
+            )
+
     # check for conda-smithy 2.x matrix which we can't auto-migrate
     # to conda_build_config
     if file_config.get("matrix") and not os.path.exists(
