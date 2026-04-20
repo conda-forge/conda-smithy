@@ -620,7 +620,7 @@ class StdlibSysroot(_BaseMessage):
 
 
 @dataclass(kw_only=True)
-class StdlibOsx(_BaseMessage):
+class StdlibOSX(_BaseMessage):
     """
     https://github.com/conda-forge/conda-forge.github.io/issues/2102
     """
@@ -930,7 +930,7 @@ class SpaceSeparatedSpecs(_BaseMessage):
 
 
 @dataclass(kw_only=True)
-class OsVersion(_BaseMessage):
+class OSVersion(_BaseMessage):
     """
     Prefer `name [version [build]]` match spec syntax.
     """
@@ -963,7 +963,7 @@ class UsePip(_BaseMessage):
 
 
 @dataclass(kw_only=True)
-class UsePyPiOrg(_BaseMessage):
+class UsePyPIOrg(_BaseMessage):
     """
     Grayskull and the conda-forge example recipe used to have pypi.io as a default,
     but the canonical URL is now PyPI.org.

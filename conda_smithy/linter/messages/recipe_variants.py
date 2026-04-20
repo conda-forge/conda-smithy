@@ -47,7 +47,7 @@ class MacOSDeploymentTargetBelow(_BaseMessage):
 
 
 @dataclass(kw_only=True)
-class MoreThanOneFile(_BaseMessage):
+class MoreThanOneConfigFile(_BaseMessage):
     """
     Only one recipe variants file must be used in a feedstock.
     """
