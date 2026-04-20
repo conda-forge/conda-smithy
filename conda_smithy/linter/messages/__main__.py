@@ -42,7 +42,10 @@ def generate_docs(write: bool = True) -> dict[str, object]:
             **RECIPE_CATEGORIES,
             **RECIPE_CONFIG_CATEGORIES,
         },
-        "messages": [MessageCls.dump() for MessageCls in collect_messages()],
+        "messages": [
+            MessageCls.dump()
+            for MessageCls in sorted(collect_messages(), key=lambda msg: msg.identifier)
+        ],
     }
     if write:
         Path(__file__).parents[2].joinpath("data", "linter-messages.json").write_text(

@@ -45,6 +45,7 @@ class LinterMessage:
         dump as JSON.
         """
         return {
+            "name": cls.__name__,
             "identifier": cls.identifier,
             "category": cls.category(),
             "kind": cls.kind,
