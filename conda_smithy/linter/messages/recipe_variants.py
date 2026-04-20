@@ -4,7 +4,7 @@ Messages concerning variants configuration (`conda_build_config.yaml`, `variants
 
 from dataclasses import dataclass
 
-from conda_smithy.linter.messages.base import _BaseMessage
+from conda_smithy.linter.messages.base import LinterMessage
 
 CATEGORIES = {
     "RC": "All recipe variants files",
@@ -17,7 +17,7 @@ CATEGORIES = {
 
 
 @dataclass(kw_only=True)
-class MacOSDeploymentTargetRename(_BaseMessage):
+class MacOSDeploymentTargetRename(LinterMessage):
     """
     https://github.com/conda-forge/conda-forge.github.io/issues/2102
     """
@@ -26,13 +26,13 @@ class MacOSDeploymentTargetRename(_BaseMessage):
     identifier = "RC-000"
     message = (
         "The `MACOSX_DEPLOYMENT_TARGET` key in ${recipe_config_file} needs to be "
-        "removed or replaced by `c_stdlib_version`, appropriately restricted to osx"
+        "removed or replaced by `c_stdlib_version`, appropriately restricted to macOS."
     )
     recipe_config_file: str
 
 
 @dataclass(kw_only=True)
-class MacOSDeploymentTargetBelow(_BaseMessage):
+class MacOSDeploymentTargetBelow(LinterMessage):
     """
     https://github.com/conda-forge/conda-forge.github.io/issues/2102
     """
@@ -40,14 +40,14 @@ class MacOSDeploymentTargetBelow(_BaseMessage):
     kind = "lint"
     identifier = "RC-001"
     message = (
-        "You are setting `c_stdlib_version` on osx below the current global "
+        "You are setting `c_stdlib_version` on macOS below the current global "
         "baseline in conda-forge (${baseline_version})."
     )
     baseline_version: str
 
 
 @dataclass(kw_only=True)
-class MoreThanOneConfigFile(_BaseMessage):
+class MoreThanOneConfigFile(LinterMessage):
     """
     Only one recipe variants file must be used in a feedstock.
     """
@@ -66,7 +66,7 @@ class MoreThanOneConfigFile(_BaseMessage):
 
 
 @dataclass(kw_only=True)
-class MacOSDeploymentTargetConflict(_BaseMessage):
+class MacOSDeploymentTargetConflict(LinterMessage):
     """
     https://github.com/conda-forge/conda-forge.github.io/issues/2102
     """
@@ -83,7 +83,7 @@ class MacOSDeploymentTargetConflict(_BaseMessage):
 
 
 @dataclass(kw_only=True)
-class MacOSDeploymentTargetBelowStdlib(_BaseMessage):
+class MacOSDeploymentTargetBelowStdlib(LinterMessage):
     """
     https://github.com/conda-forge/conda-forge.github.io/issues/2102
     """
@@ -101,6 +101,7 @@ class MacOSDeploymentTargetBelowStdlib(_BaseMessage):
         "override `c_stdlib_version` and `MACOSX_DEPLOYMENT_TARGET` locally."
     )
     baseline: str
+    deprecated_in = "3.56.0"
 
 
 # endregion

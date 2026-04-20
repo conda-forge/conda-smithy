@@ -6,7 +6,7 @@ import tomllib
 from collections.abc import Mapping, Sequence
 from functools import lru_cache
 from glob import glob
-from typing import Any, Optional, Union
+from typing import TYPE_CHECKING, Any, Optional, Union
 
 import requests
 from conda.models.version import InvalidVersionSpec, VersionOrder
@@ -17,6 +17,9 @@ from rattler_build_conda_compat import loader as rattler_loader
 from rattler_build_conda_compat.recipe_sources import get_all_sources
 
 from conda_smithy.linter import messages as msg
+
+if TYPE_CHECKING:
+    from conda_smithy.linter.messages.base import LinterMessage
 
 FIELDS = copy.deepcopy(_CONDA_BUILD_FIELDS)
 
@@ -256,7 +259,7 @@ def flatten_v1_if_else(requirements: list[str | dict] | str) -> list[str]:
 
 
 def get_all_test_requirements(
-    meta: dict, lints: list[str], recipe_version: int
+    meta: dict, lints: list[LinterMessage], recipe_version: int
 ) -> list[str]:
     if recipe_version == 1:
         test_section = get_section(meta, "tests", lints, recipe_version)

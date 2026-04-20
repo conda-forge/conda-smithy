@@ -5,7 +5,7 @@ import subprocess
 import sys
 from collections.abc import Mapping
 from glob import glob
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from conda_smithy.linter import conda_recipe_v1_linter
 from conda_smithy.linter import messages as msg
@@ -17,6 +17,9 @@ from conda_smithy.linter.utils import (
     is_selector_line,
 )
 from conda_smithy.utils import get_yaml
+
+if TYPE_CHECKING:
+    from conda_smithy.linter.messages.base import LinterMessage
 
 
 def hint_pip_usage(build_section, hints):
@@ -30,7 +33,7 @@ def hint_pip_usage(build_section, hints):
 
 
 def hint_sources_should_not_mention_pypi_io_but_pypi_org(
-    sources_section: list[dict[str, Any]], hints: list[str]
+    sources_section: list[dict[str, Any]], hints: list[LinterMessage]
 ):
     """
     Grayskull and conda-forge default recipe used to have pypi.io as a default,
@@ -42,7 +45,7 @@ def hint_sources_should_not_mention_pypi_io_but_pypi_org(
         source = source_section.get("url", "") or ""
         sources = [source] if isinstance(source, str) else source
         if any(s.startswith("https://pypi.io/") for s in sources):
-            hints.append(msg.r.UsePyPiOrg())
+            hints.append(msg.r.UsePyPIOrg())
 
 
 def hint_suggest_noarch(
@@ -427,7 +430,7 @@ def _ensure_spec_space_separated(spec: str) -> bool:
 
 def hint_os_version(
     forge_yaml: dict[str, Any],
-    hints: list[str],
+    hints: list[LinterMessage],
 ) -> None:
     default_os_version = "alma9"
     obsolete_os_versions = ("cos7", "alma8", "ubi8")
@@ -437,12 +440,12 @@ def hint_os_version(
         if v in obsolete_os_versions
     }
     if matches:
-        hints.append(msg.r.OsVersion(platforms=matches, default=default_os_version))
+        hints.append(msg.r.OSVersion(platforms=matches, default=default_os_version))
 
 
 def hint_rattler_build_bld_bat(
     recipe_dir: str | None,
-    hints: list[str],
+    hints: list[LinterMessage],
     recipe_version: int = 0,
 ):
     """Hint for bld.bat presence when using rattler-build.

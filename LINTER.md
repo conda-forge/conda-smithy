@@ -30,10 +30,11 @@ https://github.com/conda-forge/conda-forge.github.io/issues/2102
 > Continuing with `max(c_stdlib_version, MACOSX_DEPLOYMENT_TARGET)`.
 
 <a id='CBC-001'></a>
-### `CBC-001`: `MacOSDeploymentTargetBelowStdlib`
+### ~~`CBC-001`: `MacOSDeploymentTargetBelowStdlib`~~
 
 - Type: 🚨 Lint
 - Added in: conda-smithy <3.56.
+- **Deprecated in: conda-smithy 3.56.0**
 
 https://github.com/conda-forge/conda-forge.github.io/issues/2102
 
@@ -653,7 +654,7 @@ https://github.com/conda-forge/conda-forge.github.io/issues/2102
 
 
 <a id='R-035'></a>
-### `R-035`: `StdlibOsx`
+### `R-035`: `StdlibMacOS`
 
 - Type: 🚨 Lint
 - Added in: conda-smithy <3.56.
@@ -846,7 +847,7 @@ Prefer `name [version [build]]` match spec syntax.
 
 
 <a id='R-049'></a>
-### `R-049`: `OsVersion`
+### `R-049`: `OSVersion`
 
 - Type: ℹ️ Hint
 - Added in: conda-smithy <3.56.
@@ -872,7 +873,7 @@ which is deprecated.
 > Whenever possible python packages should use pip. See https://conda-forge.org/docs/maintainer/adding_pkgs.html#use-pip
 
 <a id='R-051'></a>
-### `R-051`: `UsePyPiOrg`
+### `R-051`: `UsePyPIOrg`
 
 - Type: ℹ️ Hint
 - Added in: conda-smithy <3.56.
@@ -1036,7 +1037,7 @@ https://github.com/conda-forge/conda-forge.github.io/issues/2102
 
 **Message template**
 
-> The `MACOSX_DEPLOYMENT_TARGET` key in \${recipe_config_file} needs to be removed or replaced by `c_stdlib_version`, appropriately restricted to osx
+> The `MACOSX_DEPLOYMENT_TARGET` key in \${recipe_config_file} needs to be removed or replaced by `c_stdlib_version`, appropriately restricted to macOS.
 
 
 <a id='RC-001'></a>
@@ -1049,11 +1050,11 @@ https://github.com/conda-forge/conda-forge.github.io/issues/2102
 
 **Message template**
 
-> You are setting `c_stdlib_version` on osx below the current global baseline in conda-forge (\${baseline_version}).
+> You are setting `c_stdlib_version` on macOS below the current global baseline in conda-forge (\${baseline_version}).
 
 
 <a id='RC-002'></a>
-### `RC-002`: `MoreThanOneFile`
+### `RC-002`: `MoreThanOneConfigFile`
 
 - Type: 🚨 Lint
 - Added in: conda-smithy <3.56.

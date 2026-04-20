@@ -15,6 +15,7 @@ import pytest
 import conda_smithy.lint_recipe as linter
 from conda_smithy.linter import hints
 from conda_smithy.linter.conda_recipe_v1_linter import lint_recipe_tests
+from conda_smithy.linter.messages.base import LinterMessage
 from conda_smithy.linter.utils import (
     CONDA_BUILD_TOOL,
     RATTLER_BUILD_TOOL,
@@ -2772,8 +2773,8 @@ def test_v1_lint_recipe_tests_skips_staging_outputs():
             "tests": [{"script": ["test -f $PREFIX/lib/libfoo.so"]}],
         },
     ]
-    lints: list[str] = []
-    hints: list[str] = []
+    lints: list[LinterMessage] = []
+    hints: list[LinterMessage] = []
     lint_recipe_tests(
         recipe_dir=None,
         test_section=[],
@@ -2791,8 +2792,8 @@ def test_v1_lint_recipe_tests_still_flags_missing_tests_on_package_outputs():
         {"name": "libfoo"},
         {"name": "libfoo-dev", "tests": [{"script": ["true"]}]},
     ]
-    lints: list[str] = []
-    hints: list[str] = []
+    lints: list[LinterMessage] = []
+    hints: list[LinterMessage] = []
     lint_recipe_tests(
         recipe_dir=None,
         test_section=[],
@@ -2801,7 +2802,7 @@ def test_v1_lint_recipe_tests_still_flags_missing_tests_on_package_outputs():
         hints=hints,
     )
     assert len(hints) == 1
-    assert "'libfoo'" in hints[0]
+    assert "'libfoo'" in str(hints[0])
 
 
 def test_v1_package_name_version():

@@ -4,7 +4,7 @@ Messages concerning feedstock configuration (`conda-forge.yml`)
 
 from dataclasses import dataclass
 
-from conda_smithy.linter.messages.base import _BaseMessage
+from conda_smithy.linter.messages.base import LinterMessage
 
 CATEGORIES = {
     "FC": "Feedstock configuration in `conda-forge.yml`.",
@@ -12,7 +12,7 @@ CATEGORIES = {
 
 
 @dataclass(kw_only=True)
-class NoDuplicateKeys(_BaseMessage):
+class NoDuplicateKeys(LinterMessage):
     """
     `conda-forge.yml` must not contain duplicate keys.
     """

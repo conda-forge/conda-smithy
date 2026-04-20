@@ -10,7 +10,7 @@ import pytest
 
 import conda_smithy.linter.messages as _messages_pkg
 from conda_smithy.linter.messages.__main__ import generate_docs
-from conda_smithy.linter.messages.base import _BaseMessage
+from conda_smithy.linter.messages.base import LinterMessage
 
 _EXCLUDED_MODULES = {"base", "__main__"}
 
@@ -34,8 +34,8 @@ def _message_classes(module):
     message_classes = []
     for _, obj in inspect.getmembers(module, inspect.isclass):
         if not (
-            obj is _BaseMessage
-            or not issubclass(obj, _BaseMessage)
+            obj is LinterMessage
+            or not issubclass(obj, LinterMessage)
             or obj.__module__ != module.__name__
         ):
             message_classes.append(obj)
@@ -164,7 +164,7 @@ def test_message_template_fields_are_valid(module):
         # TODO: instead of skipping, instantiate the class with zero/default
         # values, call _render_attributes() on the instance, and union its
         # returned keys with field_names so injected keys are also validated.
-        if cls._render_attributes is not _BaseMessage._render_attributes:
+        if cls._render_attributes is not LinterMessage._render_attributes:
             continue
 
         message = cls.message

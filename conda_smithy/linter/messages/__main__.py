@@ -15,7 +15,7 @@ def generate_docs(output_file: str | None = None) -> str:
     Generate a Markdown file documenting all linter messages
     """
     from conda_smithy.linter.messages import all_modules
-    from conda_smithy.linter.messages.base import _BaseMessage
+    from conda_smithy.linter.messages.base import LinterMessage
     from conda_smithy.linter.messages.conda_forge import (
         CATEGORIES as CONDA_FORGE_CATEGORIES,
     )
@@ -60,7 +60,7 @@ def generate_docs(output_file: str | None = None) -> str:
                     continue
                 try:
                     obj = getattr(module, obj_name)
-                    if issubclass(obj, _BaseMessage):
+                    if issubclass(obj, LinterMessage):
                         yield obj
                 except TypeError:
                     pass

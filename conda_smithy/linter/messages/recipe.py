@@ -5,7 +5,7 @@ Messages concerning recipe files (`meta.yaml`, `recipe.yaml`).
 from dataclasses import asdict, dataclass
 from typing import ClassVar, Literal, TypeAlias
 
-from conda_smithy.linter.messages.base import _BaseMessage
+from conda_smithy.linter.messages.base import LinterMessage
 
 CATEGORIES = {
     "R": "All recipe versions",
@@ -19,7 +19,7 @@ RECIPE_VERSIONS: TypeAlias = Literal[0, 1]
 
 
 @dataclass(kw_only=True)
-class UnexpectedSection(_BaseMessage):
+class UnexpectedSection(LinterMessage):
     """
     Recipe files must not contain unknown top-level keys.
 
@@ -68,7 +68,7 @@ class UnexpectedSection(_BaseMessage):
 
 
 @dataclass(kw_only=True)
-class SectionOrder(_BaseMessage):
+class SectionOrder(LinterMessage):
     """
     The top-level sections of a recipe file must always follow the same order.
 
@@ -87,7 +87,7 @@ class SectionOrder(_BaseMessage):
 
 
 @dataclass(kw_only=True)
-class MissingAboutItem(_BaseMessage):
+class MissingAboutItem(LinterMessage):
     """
     The `about` section requires three fields: homepage (`home` in v1), license, and summary.
     """
@@ -99,7 +99,7 @@ class MissingAboutItem(_BaseMessage):
 
 
 @dataclass(kw_only=True)
-class NoMaintainers(_BaseMessage):
+class NoMaintainers(LinterMessage):
     """
     All recipes must list at least one maintainer under `extra/recipe-maintainers`.
     """
@@ -113,7 +113,7 @@ class NoMaintainers(_BaseMessage):
 
 
 @dataclass(kw_only=True)
-class MaintainersMustBeList(_BaseMessage):
+class MaintainersMustBeList(LinterMessage):
     """
     The `extra/recipe-maintainers` only accepts a list of strings as a value.
     """
@@ -124,7 +124,7 @@ class MaintainersMustBeList(_BaseMessage):
 
 
 @dataclass(kw_only=True)
-class RequiredTests(_BaseMessage):
+class RequiredTests(LinterMessage):
     """
     All recipes must have a non-empty `test` section.
     """
@@ -135,7 +135,7 @@ class RequiredTests(_BaseMessage):
 
 
 @dataclass(kw_only=True)
-class RecommendedTests(_BaseMessage):
+class RecommendedTests(LinterMessage):
     """
     All recipes must have a non-empty `test` section.
     """
@@ -147,7 +147,7 @@ class RecommendedTests(_BaseMessage):
 
 
 @dataclass(kw_only=True)
-class UnknownLicense(_BaseMessage):
+class UnknownLicense(LinterMessage):
     """
     All recipes must have a license identifier, but it can't be "unknown".
     """
@@ -158,7 +158,7 @@ class UnknownLicense(_BaseMessage):
 
 
 @dataclass(kw_only=True)
-class BuildNumberMissing(_BaseMessage):
+class BuildNumberMissing(LinterMessage):
     """
     All recipes must define a `build.number` value.
     """
@@ -169,7 +169,7 @@ class BuildNumberMissing(_BaseMessage):
 
 
 @dataclass(kw_only=True)
-class RequirementsOrder(_BaseMessage):
+class RequirementsOrder(LinterMessage):
     """
     The different subcategories of the `requirements` section must follow
     a strict order: `build`, `host`, `run`, `run_constrained`.
@@ -192,7 +192,7 @@ class RequirementsOrder(_BaseMessage):
 
 
 @dataclass(kw_only=True)
-class LicenseFieldMentionsLicense(_BaseMessage):
+class LicenseFieldMentionsLicense(LinterMessage):
     """
     Licenses should omit the term 'License' in its name.
     """
@@ -203,7 +203,7 @@ class LicenseFieldMentionsLicense(_BaseMessage):
 
 
 @dataclass(kw_only=True)
-class TooManyEmptyLines(_BaseMessage):
+class TooManyEmptyLines(LinterMessage):
     """
     Recipe files should end with a single empty line, not more.
     """
@@ -219,7 +219,7 @@ class TooManyEmptyLines(_BaseMessage):
 
 
 @dataclass(kw_only=True)
-class TooFewEmptyLines(_BaseMessage):
+class TooFewEmptyLines(LinterMessage):
     """
     Recipe files should end with a single empty line.
     """
@@ -233,7 +233,7 @@ class TooFewEmptyLines(_BaseMessage):
 
 
 @dataclass(kw_only=True)
-class LicenseFamily(_BaseMessage):
+class LicenseFamily(LinterMessage):
     """
     The field `license_file` must be always present.
     """
@@ -244,7 +244,7 @@ class LicenseFamily(_BaseMessage):
 
 
 @dataclass(kw_only=True)
-class InvalidPackageName(_BaseMessage):
+class InvalidPackageName(LinterMessage):
     """
     The recipe `name` can only contain certain characters:
 
@@ -262,7 +262,7 @@ class InvalidPackageName(_BaseMessage):
 
 
 @dataclass(kw_only=True)
-class MissingVersion(_BaseMessage):
+class MissingVersion(LinterMessage):
     """
     The package `version` field is required.
     """
@@ -273,7 +273,7 @@ class MissingVersion(_BaseMessage):
 
 
 @dataclass(kw_only=True)
-class InvalidVersion(_BaseMessage):
+class InvalidVersion(LinterMessage):
     """
     The package `version` field must be a valid version string.
     """
@@ -286,7 +286,7 @@ class InvalidVersion(_BaseMessage):
 
 
 @dataclass(kw_only=True)
-class PinnedNumpy(_BaseMessage):
+class PinnedNumpy(LinterMessage):
     """
     See <https://conda-forge.org/docs/maintainer/knowledge_base.html#linking-numpy>
     """
@@ -303,7 +303,7 @@ class PinnedNumpy(_BaseMessage):
 
 
 @dataclass(kw_only=True)
-class UnexpectedSubsection(_BaseMessage):
+class UnexpectedSubsection(LinterMessage):
     """
     This check ensures that the passed recipe conforms to the expected recipe v0 schema.
 
@@ -322,7 +322,7 @@ class UnexpectedSubsection(_BaseMessage):
 
 
 @dataclass(kw_only=True)
-class SourceHash(_BaseMessage):
+class SourceHash(LinterMessage):
     """
     All recipe source URLs must have a hash checksum for integrity checks.
     """
@@ -336,7 +336,7 @@ class SourceHash(_BaseMessage):
 
 
 @dataclass(kw_only=True)
-class NoarchValue(_BaseMessage):
+class NoarchValue(LinterMessage):
     """
     The `build.noarch` field can only take `python` or `generic` as a value.
     """
@@ -352,7 +352,7 @@ class NoarchValue(_BaseMessage):
 
 
 @dataclass(kw_only=True)
-class RequirementJoinVersionOperator(_BaseMessage):
+class RequirementJoinVersionOperator(LinterMessage):
     """
     conda recipes should use the three-field matchspec syntax to express requirements:
     `name [version [build]]`. This means having no spaces between operator and version
@@ -373,7 +373,7 @@ class RequirementJoinVersionOperator(_BaseMessage):
 
 
 @dataclass(kw_only=True)
-class RequirementSeparateNameVersion(_BaseMessage):
+class RequirementSeparateNameVersion(LinterMessage):
     """
     conda recipes should use the three-field matchspec syntax to express requirements:
     `name [version [build]]`. This means having a space between name and version.
@@ -393,7 +393,7 @@ class RequirementSeparateNameVersion(_BaseMessage):
 
 
 @dataclass(kw_only=True)
-class LanguageHostRun(_BaseMessage):
+class LanguageHostRun(LinterMessage):
     """
     Packages may depend on certain languages (e.g. Python, R) that require depending
     on the language runtime both in `host` and `run`.
@@ -406,7 +406,7 @@ class LanguageHostRun(_BaseMessage):
 
 
 @dataclass(kw_only=True)
-class LanguageHostRunUnpinned(_BaseMessage):
+class LanguageHostRunUnpinned(LinterMessage):
     """
     Packages may depend on certain languages (e.g. Python, R) that require depending
     on the language runtime both in `host` and `run`. They should not pin it to a
@@ -423,7 +423,7 @@ class LanguageHostRunUnpinned(_BaseMessage):
 
 
 @dataclass(kw_only=True)
-class JinjaExpression(_BaseMessage):
+class JinjaExpression(LinterMessage):
     """
     Jinja expressions should add a space between the double curly braces.
     """
@@ -443,7 +443,7 @@ class JinjaExpression(_BaseMessage):
 
 
 @dataclass(kw_only=True)
-class PythonLowerBound(_BaseMessage):
+class PythonLowerBound(LinterMessage):
     """
     Noarch Python recipes should always pin the lower bound on their `python` requirement.
     """
@@ -460,7 +460,7 @@ class PythonLowerBound(_BaseMessage):
 
 
 @dataclass(kw_only=True)
-class PinSubpackagePinCompatible(_BaseMessage):
+class PinSubpackagePinCompatible(LinterMessage):
     """
     The Jinja functions `pin_subpackage` and `pin_compatible` may be confused
     because both would add version constraints to a package name. However, they
@@ -492,7 +492,7 @@ class PinSubpackagePinCompatible(_BaseMessage):
 
 
 @dataclass(kw_only=True)
-class CompiledWheelsNotAllowed(_BaseMessage):
+class CompiledWheelsNotAllowed(LinterMessage):
     """
     Python wheels are often discouraged as package sources. This is especially the case
     for compiled wheels, which are forbidden.
@@ -512,7 +512,7 @@ class CompiledWheelsNotAllowed(_BaseMessage):
 
 
 @dataclass(kw_only=True)
-class PureWheelsNotAllowed(_BaseMessage):
+class PureWheelsNotAllowed(LinterMessage):
     """
     Python wheels are often discouraged as package sources. This is also the case
     for pure Python wheels when building non-noarch packages.
@@ -531,7 +531,7 @@ class PureWheelsNotAllowed(_BaseMessage):
 
 
 @dataclass(kw_only=True)
-class PureWheelsNotAllowedNoarch(_BaseMessage):
+class PureWheelsNotAllowedNoarch(LinterMessage):
     """
     Python wheels are often discouraged as package sources. However, pure Python
     wheels may be used as a source for noarch Python packages, although sdists are preferred.
@@ -551,7 +551,7 @@ class PureWheelsNotAllowedNoarch(_BaseMessage):
 
 
 @dataclass(kw_only=True)
-class RustLicenses(_BaseMessage):
+class RustLicenses(LinterMessage):
     """
     <https://conda-forge.org/docs/maintainer/adding_pkgs/#rust>
     """
@@ -565,7 +565,7 @@ class RustLicenses(_BaseMessage):
 
 
 @dataclass(kw_only=True)
-class GoLicenses(_BaseMessage):
+class GoLicenses(LinterMessage):
     """
     <https://conda-forge.org/docs/maintainer/adding_pkgs/#go>
     """
@@ -579,7 +579,7 @@ class GoLicenses(_BaseMessage):
 
 
 @dataclass(kw_only=True)
-class StdlibJinja(_BaseMessage):
+class StdlibJinja(LinterMessage):
     """
     https://github.com/conda-forge/conda-forge.github.io/issues/2102
     """
@@ -599,7 +599,7 @@ class StdlibJinja(_BaseMessage):
 
 
 @dataclass(kw_only=True)
-class StdlibSysroot(_BaseMessage):
+class StdlibSysroot(LinterMessage):
     """
     https://github.com/conda-forge/conda-forge.github.io/issues/2102
     """
@@ -620,7 +620,7 @@ class StdlibSysroot(_BaseMessage):
 
 
 @dataclass(kw_only=True)
-class StdlibOSX(_BaseMessage):
+class StdlibMacOS(LinterMessage):
     """
     https://github.com/conda-forge/conda-forge.github.io/issues/2102
     """
@@ -641,7 +641,7 @@ class StdlibOSX(_BaseMessage):
 
 
 @dataclass(kw_only=True)
-class NotParsableLint(_BaseMessage):
+class NotParsableLint(LinterMessage):
     """
     The conda recipe should be parsable by at least one backend.
     If none can parse it, this constitutes an error that needs to be remediated.
@@ -662,7 +662,7 @@ class NotParsableLint(_BaseMessage):
 
 
 @dataclass(kw_only=True)
-class NotParsableHint(_BaseMessage):
+class NotParsableHint(LinterMessage):
     """
     The conda recipe should be parsable by at least one backend.
     Sometimes, only some backends fail, which is not critical, but should be looked into.
@@ -695,7 +695,7 @@ class NotParsableHint(_BaseMessage):
 
 
 @dataclass(kw_only=True)
-class PythonIsAbi3Bool(_BaseMessage):
+class PythonIsAbi3Bool(LinterMessage):
     """
     https://github.com/conda-forge/conda-forge.github.io/issues/2102
     """
@@ -710,7 +710,7 @@ class PythonIsAbi3Bool(_BaseMessage):
 
 
 @dataclass(kw_only=True)
-class ExtraFeedstockNameSuffix(_BaseMessage):
+class ExtraFeedstockNameSuffix(LinterMessage):
     """
     https://github.com/conda-forge/conda-forge.github.io/issues/2102
     """
@@ -725,7 +725,7 @@ class ExtraFeedstockNameSuffix(_BaseMessage):
 
 
 @dataclass(kw_only=True)
-class VersionParsedAsFloat(_BaseMessage):
+class VersionParsedAsFloat(LinterMessage):
     """
     https://github.com/conda-forge/conda-forge.github.io/issues/2102
     """
@@ -750,7 +750,7 @@ class VersionParsedAsFloat(_BaseMessage):
 
 
 @dataclass(kw_only=True)
-class SuggestNoarch(_BaseMessage):
+class SuggestNoarch(LinterMessage):
     """
     `noarch` packages are strongly preferred when possible.
     See https://conda-forge.org/docs/maintainer/knowledge_base.html#noarch-builds.
@@ -765,7 +765,7 @@ class SuggestNoarch(_BaseMessage):
 
 
 @dataclass(kw_only=True)
-class ScriptShellcheckReport(_BaseMessage):
+class ScriptShellcheckReport(LinterMessage):
     """
     This issue is raised when `shellcheck` is enabled and detects problems
     in your build `.sh` scripts.
@@ -797,7 +797,7 @@ class ScriptShellcheckReport(_BaseMessage):
 
 
 @dataclass(kw_only=True)
-class ScriptShellcheckFailure(_BaseMessage):
+class ScriptShellcheckFailure(LinterMessage):
     """
     This issue is raised when `shellcheck` is enabled but could not
     run successfully (something went wrong).
@@ -809,7 +809,7 @@ class ScriptShellcheckFailure(_BaseMessage):
 
 
 @dataclass(kw_only=True)
-class LicenseSPDX(_BaseMessage):
+class LicenseSPDX(LinterMessage):
     """
     The `license` field must be a valid SPDX identifier.
 
@@ -829,7 +829,7 @@ class LicenseSPDX(_BaseMessage):
 
 
 @dataclass(kw_only=True)
-class InvalidLicenseException(_BaseMessage):
+class InvalidLicenseException(LinterMessage):
     """
     The `license` field may accept some SPDX exception expressions, as controlled
     in [this file](https://github.com/conda-forge/conda-smithy/blob/main/conda_smithy/linter/license_exceptions.txt)
@@ -847,7 +847,7 @@ class InvalidLicenseException(_BaseMessage):
 
 
 @dataclass(kw_only=True)
-class PythonBuildBackendHost(_BaseMessage):
+class PythonBuildBackendHost(LinterMessage):
     """
     Build backends in Python packages must be explictly added to `host`.
     """
@@ -866,7 +866,7 @@ class PythonBuildBackendHost(_BaseMessage):
 
 
 @dataclass(kw_only=True)
-class PythonMinPin(_BaseMessage):
+class PythonMinPin(LinterMessage):
     """
     Python packages should depend on certain `>={min_version}` at runtime,
     but build and test against `{min_version}.*`.
@@ -902,7 +902,7 @@ class PythonMinPin(_BaseMessage):
 
 
 @dataclass(kw_only=True)
-class SpaceSeparatedSpecs(_BaseMessage):
+class SpaceSeparatedSpecs(LinterMessage):
     """
     Prefer `name [version [build]]` match spec syntax.
     """
@@ -930,7 +930,7 @@ class SpaceSeparatedSpecs(_BaseMessage):
 
 
 @dataclass(kw_only=True)
-class OSVersion(_BaseMessage):
+class OSVersion(LinterMessage):
     """
     Prefer `name [version [build]]` match spec syntax.
     """
@@ -948,7 +948,7 @@ class OSVersion(_BaseMessage):
 
 
 @dataclass(kw_only=True)
-class UsePip(_BaseMessage):
+class UsePip(LinterMessage):
     """
     Python packages should be built with `pip install ...`, not `python setup.py install`,
     which is deprecated.
@@ -963,7 +963,7 @@ class UsePip(_BaseMessage):
 
 
 @dataclass(kw_only=True)
-class UsePyPIOrg(_BaseMessage):
+class UsePyPIOrg(LinterMessage):
     """
     Grayskull and the conda-forge example recipe used to have pypi.io as a default,
     but the canonical URL is now PyPI.org.
@@ -984,7 +984,7 @@ class UsePyPIOrg(_BaseMessage):
 
 
 @dataclass(kw_only=True)
-class FormattedSelectors(_BaseMessage):
+class FormattedSelectors(LinterMessage):
     """
     Recipe format v0 (`meta.yaml`) supports the notion of line selectors
     as trailing comments:
@@ -1010,7 +1010,7 @@ class FormattedSelectors(_BaseMessage):
 
 
 @dataclass(kw_only=True)
-class OldPythonSelectorsLint(_BaseMessage):
+class OldPythonSelectorsLint(LinterMessage):
     """
     Recipe v0 selectors used to include one Python version selector
     per release, like `py27` for Python 2.7 and `py35` for Python 3.5.
@@ -1029,7 +1029,7 @@ class OldPythonSelectorsLint(_BaseMessage):
 
 
 @dataclass(kw_only=True)
-class OldPythonSelectorsHint(_BaseMessage):
+class OldPythonSelectorsHint(LinterMessage):
     """
     Recipe v0 selectors (see [`R0-002`](#r0-002)) used to include one Python
     version selector per release, like `py27` for Python 2.7 and `py35` for Python 3.5.
@@ -1047,7 +1047,7 @@ class OldPythonSelectorsHint(_BaseMessage):
 
 
 @dataclass(kw_only=True)
-class NoarchSelectorsV0(_BaseMessage):
+class NoarchSelectorsV0(LinterMessage):
     """
     Noarch packages are not generally compatible with v0 selectors
     """
@@ -1072,7 +1072,7 @@ class NoarchSelectorsV0(_BaseMessage):
 
 
 @dataclass(kw_only=True)
-class JinjaDefinitions(_BaseMessage):
+class JinjaDefinitions(LinterMessage):
     """
     In v0 recipes, Jinja definitions must follow a particular style.
     """
@@ -1089,7 +1089,7 @@ class JinjaDefinitions(_BaseMessage):
 
 
 @dataclass(kw_only=True)
-class LegacyToolchain(_BaseMessage):
+class LegacyToolchain(LinterMessage):
     """
     The `toolchain` package is deprecated. Use compilers as outlined in
     <https://conda-forge.org/docs/maintainer/knowledge_base.html#compilers>.
@@ -1111,7 +1111,7 @@ class LegacyToolchain(_BaseMessage):
 
 
 @dataclass(kw_only=True)
-class NoCommentSelectors(_BaseMessage):
+class NoCommentSelectors(LinterMessage):
     """
     Recipe v0 selectors (see [`R0-002`](#r0-002)) are not supported in v1 recipes.
     """
@@ -1126,7 +1126,7 @@ class NoCommentSelectors(_BaseMessage):
 
 
 @dataclass(kw_only=True)
-class NoarchSelectorsV1(_BaseMessage):
+class NoarchSelectorsV1(LinterMessage):
     """
     Noarch packages are not generally compatible with v1 conditional blocks.
     """
@@ -1146,7 +1146,7 @@ class NoarchSelectorsV1(_BaseMessage):
 
 
 @dataclass(kw_only=True)
-class RattlerBldBat(_BaseMessage):
+class RattlerBldBat(LinterMessage):
     """
     `rattler-build` does not use `bld.bat` scripts, but `build.bat`.
     """

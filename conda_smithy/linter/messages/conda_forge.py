@@ -7,7 +7,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from conda_smithy.linter.messages.base import _BaseMessage
+from conda_smithy.linter.messages.base import LinterMessage
 
 if TYPE_CHECKING:
     from typing import Self
@@ -18,7 +18,7 @@ CATEGORIES = {
 
 
 @dataclass(kw_only=True)
-class MaintainerExists(_BaseMessage):
+class MaintainerExists(LinterMessage):
     """
     Maintainers listed in `extra.recipe-maintainers` must be valid Github usernames
     or `@conda-forge/*` teams.
@@ -44,7 +44,7 @@ class MaintainerExists(_BaseMessage):
 
 
 @dataclass(kw_only=True)
-class PackageToAvoid(_BaseMessage):
+class PackageToAvoid(LinterMessage):
     """
     Some package names may not be used in recipes directly, or under some circumstances.
 
@@ -59,7 +59,7 @@ class PackageToAvoid(_BaseMessage):
 
 
 @dataclass(kw_only=True)
-class NoCiSupport(_BaseMessage):
+class NoCiSupport(LinterMessage):
     """
     No `.ci_support/*.yaml` files could be found, which means that build matrix is empty
     and no packages will be built.
@@ -76,7 +76,7 @@ class NoCiSupport(_BaseMessage):
 
 
 @dataclass(kw_only=True)
-class NoEmptyVariantsFile(_BaseMessage):
+class NoEmptyVariantsFile(LinterMessage):
     """
     Variants files can't be empty.
     """
@@ -87,7 +87,7 @@ class NoEmptyVariantsFile(_BaseMessage):
 
 
 @dataclass(kw_only=True)
-class NoCustomGHAWorkflows(_BaseMessage):
+class NoCustomGHAWorkflows(LinterMessage):
     """
     Due to its stature in the open-source community, conda-forge has enhanced
     access to certain CI services. This access is a community resource entrusted

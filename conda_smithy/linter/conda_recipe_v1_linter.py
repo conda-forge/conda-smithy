@@ -1,5 +1,5 @@
 import re
-from typing import Any, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 from rattler_build_conda_compat.jinja.jinja import (
     RecipeWithContext,
@@ -13,6 +13,10 @@ from conda_smithy.linter.utils import (
     _lint_package_version,
     _lint_recipe_name,
 )
+
+if TYPE_CHECKING:
+    from conda_smithy.linter.messages.base import LinterMessage
+
 
 REQUIREMENTS_ORDER = ["build", "host", "run"]
 
@@ -45,8 +49,8 @@ def lint_recipe_tests(
     recipe_dir: Optional[str],
     test_section: list[dict[str, Any]],
     outputs_section: list[dict[str, Any]],
-    lints: list[str],
-    hints: list[str],
+    lints: list[LinterMessage],
+    hints: list[LinterMessage],
 ):
     tests_lints = []
     tests_hints = []
@@ -80,7 +84,7 @@ def lint_recipe_tests(
 def hint_noarch_usage(
     build_section: dict[str, Any],
     requirement_section: dict[str, Any],
-    hints: list[str],
+    hints: list[LinterMessage],
 ):
     build_reqs = requirement_section.get("build", None)
     if (
@@ -129,7 +133,7 @@ def get_recipe_version(recipe_content: RecipeWithContext) -> Optional[str]:
 
 def lint_recipe_name(
     recipe_content: RecipeWithContext,
-    lints: list[str],
+    lints: list[LinterMessage],
 ) -> str | None:
     name = get_recipe_name(recipe_content)
     # Avoid false positives if the recipe is using variables
@@ -147,7 +151,7 @@ def lint_recipe_name(
 
 def lint_package_version(
     recipe_content: RecipeWithContext,
-    lints: list[str],
+    lints: list[LinterMessage],
 ) -> None:
     version = get_recipe_version(recipe_content)
 
@@ -162,7 +166,7 @@ def lint_usage_of_selectors_for_noarch(
     requirements_section: dict[str, Any],
     build_section: dict[str, Any],
     noarch_platforms: bool,
-    lints: list[str],
+    lints: list[LinterMessage],
 ):
     for section in requirements_section:
         section_requirements = requirements_section[section]

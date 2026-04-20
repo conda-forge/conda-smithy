@@ -4,7 +4,7 @@ import os
 import re
 import tempfile
 from collections.abc import Sequence
-from typing import Any, Literal, Optional
+from typing import TYPE_CHECKING, Any, Literal, Optional
 
 from conda.models.version import VersionOrder
 from rattler_build_conda_compat.jinja.jinja import render_recipe_with_context
@@ -31,12 +31,15 @@ from conda_smithy.linter.utils import (
 )
 from conda_smithy.utils import ensure_standard_strings, get_yaml
 
+if TYPE_CHECKING:
+    from conda_smithy.linter.messages.base import LinterMessage
+
 logger = logging.getLogger(__name__)
 
 
 def lint_section_order(
     major_sections: list[str],
-    lints: list[str],
+    lints: list[LinterMessage],
     recipe_version: int = 0,
 ):
     if recipe_version == 0:
@@ -84,8 +87,8 @@ def lint_recipe_have_tests(
     recipe_dir: str,
     test_section: list[dict[str, Any]],
     outputs_section: list[dict[str, Any]],
-    lints: list[str],
-    hints: list[str],
+    lints: list[LinterMessage],
+    hints: list[LinterMessage],
     recipe_version: int = 0,
 ):
     if recipe_version == 1:
@@ -183,7 +186,7 @@ def lint_build_section_should_be_before_run(requirements_section, lints):
 
 
 def lint_sources_should_have_hash(
-    sources_section: list[dict[str, Any]], lints: list[str]
+    sources_section: list[dict[str, Any]], lints: list[LinterMessage]
 ):
     for source_section in sources_section:
         if "url" in source_section and not (
@@ -220,7 +223,7 @@ def lint_license_family_should_be_valid(
     about_section: dict[str, Any],
     license: str,
     needed_families: list[str],
-    lints: list[str],
+    lints: list[LinterMessage],
     recipe_version: int = 0,
 ) -> None:
     license_file = about_section.get("license_file", None)
@@ -235,7 +238,7 @@ def lint_license_family_should_be_valid(
 
 def lint_recipe_name(
     package_section: dict[str, Any],
-    lints: list[str],
+    lints: list[LinterMessage],
 ) -> str:
     recipe_name = package_section.get("name", "").strip()
     lint_msg = _lint_recipe_name(recipe_name)
@@ -285,7 +288,7 @@ def lint_recipe_v1_noarch_and_runtime_dependencies(
     raw_requirements_section: dict[str, Any],
     build_section: dict[str, Any],
     noarch_platforms: bool,
-    lints: list[str],
+    lints: list[LinterMessage],
 ) -> None:
     if noarch_value:
         conda_recipe_v1_linter.lint_usage_of_selectors_for_noarch(
@@ -634,7 +637,7 @@ def lint_check_usage_of_whls(meta_fname, noarch_value, lints, hints):
 def lint_rust_licenses_are_bundled(
     recipe_name: str | None,
     build_reqs: Optional[list[str]],
-    lints: list[str],
+    lints: list[LinterMessage],
     recipe_version: int = 0,
 ):
     if not build_reqs:
@@ -656,7 +659,7 @@ def lint_rust_licenses_are_bundled(
 def lint_go_licenses_are_bundled(
     recipe_name: str,
     build_reqs: Optional[list[str]],
-    lints: list[str],
+    lints: list[LinterMessage],
     recipe_version: int = 0,
 ):
     if not build_reqs:
@@ -861,13 +864,13 @@ def lint_stdlib(
 
     to_check = all_run_reqs_flat + all_contraints_flat
     if any(req.startswith("__osx >") for req in to_check):
-        msg.r.StdlibOsx(recipe_version=recipe_version).append_if_absent(lints)
+        msg.r.StdlibMacOS(recipe_version=recipe_version).append_if_absent(lints)
 
 
 def lint_recipe_is_parsable(
     recipe_text: str,
-    lints: list[str],
-    hints: list[str],
+    lints: list[LinterMessage],
+    hints: list[LinterMessage],
     recipe_version: int = 0,
 ):
     parse_results = {}
@@ -961,7 +964,7 @@ IS_AB3_BOOL_RE = re.compile(r"is_abi3\s*(==|!=)\s*('|\")(true|false)('|\")")
 
 def lint_recipe_is_abi3_bool(
     recipe_text: str,
-    lints: list[str],
+    lints: list[LinterMessage],
 ) -> None:
     if IS_AB3_BOOL_RE.search(recipe_text):
         lints.append(msg.r.PythonIsAbi3Bool())
@@ -969,7 +972,7 @@ def lint_recipe_is_abi3_bool(
 
 def lint_floats_quoted(
     meta: dict,
-    lints: list[str],
+    lints: list[LinterMessage],
     recipe_version: int,
 ) -> None:  # PENDING
     def process_recursively(key: str, value: Any) -> None:

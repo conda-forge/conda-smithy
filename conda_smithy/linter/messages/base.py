@@ -11,7 +11,7 @@ from string import Template
 from typing import ClassVar, Literal, Self
 
 
-class _BaseMessage:
+class LinterMessage:
     """
     A templated message with an identifier.
 
