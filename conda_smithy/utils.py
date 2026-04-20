@@ -9,7 +9,7 @@ import time
 from collections import defaultdict
 from collections.abc import Mapping, Sequence
 from contextlib import contextmanager
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 from typing import Any, Optional, Union
 
 import jinja2
@@ -374,8 +374,13 @@ def fill_workflow_settings_defaults(
             win_default if os == "win" else "~/miniforge3"
         )
     if workflow_settings.get("build_workspace_dir") is None:
+        tools_drive = (
+            PureWindowsPath(workflow_settings["tools_install_dir"]).drive
+            if os == "win"
+            else ""
+        )
         workflow_settings["build_workspace_dir"] = {
             "linux": "build_artifacts",
             "osx": f"{workflow_settings['tools_install_dir']}/conda-bld",
-            "win": r"C:\\bld\\",
+            "win": rf"{tools_drive}\\bld\\",
         }[os]
