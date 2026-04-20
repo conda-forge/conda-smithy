@@ -1,6 +1,7 @@
 import dataclasses
 import importlib
 import inspect
+import json
 import pkgutil
 import re
 from collections import defaultdict
@@ -56,9 +57,9 @@ def test_linter_docs_up_to_date():
     If this test fails, run 'python -m conda_smithy.linter.messages' to regenerate.
     """
     repo_root = Path(__file__).parent.parent
-    linter_docs_path = repo_root / "LINTER.md"
-    original_linter_docs = linter_docs_path.read_text()
-    assert generate_docs("").strip() == original_linter_docs.strip()
+    linter_messages_path = repo_root / "conda_smithy" / "data" / "linter-messages.json"
+    on_disk = json.loads(linter_messages_path.read_text().strip())
+    assert generate_docs(write=False) == on_disk
 
 
 def test_no_duplicate_identifiers():

@@ -3,7 +3,7 @@ Messages concerning recipe files (`meta.yaml`, `recipe.yaml`).
 """
 
 from dataclasses import asdict, dataclass
-from typing import ClassVar, Literal, TypeAlias
+from typing import ClassVar, Literal, Self, TypeAlias
 
 from conda_smithy.linter.messages.base import LinterMessage
 
@@ -693,6 +693,10 @@ class NotParsableHint(LinterMessage):
             )
         return msg
 
+    @classmethod
+    def examples(cls) -> list[Self]:
+        return [cls(parser="conda-recipe-manager"), cls(parser="other")]
+
 
 @dataclass(kw_only=True)
 class PythonIsAbi3Bool(LinterMessage):
@@ -782,18 +786,23 @@ class ScriptShellcheckReport(LinterMessage):
     @property
     def message(self):
         # All files successfully scanned with some issues.
-        joined_cmd = " ".join(self.command)
+        joined_cmd = " ".join(self.command or [])
+        output_lines = self.output_lines or []
         lines = [
             "Whenever possible fix all shellcheck findings "
             f"('{joined_cmd}' recipe/*.sh -f diff | git apply' helps)",
-            *self.output_lines[:50],
+            *output_lines[:50],
         ]
-        if len(self.output_lines) > self.max_lines:
+        if len(output_lines) > self.max_lines:
             lines.append(
                 "Output restricted, there are "
-                f"'{len(self.output_lines) - self.max_lines}' more lines."
+                f"'{len(output_lines) - self.max_lines}' more lines."
             )
         return "\n".join(lines)
+
+    @classmethod
+    def examples(cls):
+        return [cls()]
 
 
 @dataclass(kw_only=True)

@@ -39,6 +39,23 @@ class LinterMessage:
     deprecated_in: ClassVar[str] = ""
 
     @classmethod
+    def dump(cls) -> dict[str, str | list[str]]:
+        """
+        Generates a dictionary of static information to make it easy to
+        dump as JSON.
+        """
+        return {
+            "identifier": cls.identifier,
+            "category": cls.category(),
+            "kind": cls.kind,
+            "added_in": cls.added_in,
+            "deprecated_in": cls.deprecated_in,
+            "documentation": cls.documentation(),
+            "message": cls.message if isinstance(cls.message, str) else "(dynamic)",
+            "examples": [str(example) for example in cls.examples()],
+        }
+
+    @classmethod
     def category(cls) -> str:
         """
         Category identifier for this message (e.g. `R` or `CF`).
@@ -66,7 +83,7 @@ class LinterMessage:
         return {}
 
     @classmethod
-    def samples(cls) -> list[Self]:
+    def examples(cls) -> list[Self]:
         """
         Provides one or more example instances of the error message. Used in documentation.
         Define at least one if `message` needs to be rendered with additional attributes.

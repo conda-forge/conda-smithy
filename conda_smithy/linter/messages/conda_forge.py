@@ -36,7 +36,7 @@ class MaintainerMissing(LinterMessage):
         }
 
     @classmethod
-    def samples(cls) -> list[Self]:
+    def examples(cls) -> list[Self]:
         return [
             cls(maintainer="@banned-user"),
             cls(maintainer="@conda-forge/deleted-team"),
