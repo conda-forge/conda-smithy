@@ -56,7 +56,7 @@ def generate_docs(output_file: str | None = None) -> str:
     def collect_messages():
         for module in all_modules:
             for obj_name in dir(module):
-                if obj_name.startswith("_"):
+                if obj_name.startswith("_") or obj_name == "LinterMessage":
                     continue
                 try:
                     obj = getattr(module, obj_name)
