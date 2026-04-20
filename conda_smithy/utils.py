@@ -356,7 +356,10 @@ def get_workflow_settings(
 
 
 def fill_workflow_settings_defaults(
-    workflow_settings: dict[str, Any], provider: str, platform: str
+    workflow_settings: dict[str, Any],
+    provider: str,
+    platform: str,
+    gha_runs_on: list[str],
 ) -> None:
     """
     Fill the missing entries from `workflow_settings` with defaults for
@@ -364,8 +367,11 @@ def fill_workflow_settings_defaults(
     """
     os = platform.split("-", 1)[0]
     if workflow_settings.get("tools_install_dir") is None:
+        win_default = (
+            r"D:\Miniforge" if "windows-latest" in gha_runs_on else r"C:\Miniforge"
+        )
         workflow_settings["tools_install_dir"] = (
-            r"C:\Miniforge" if os == "win" else "~/miniforge3"
+            win_default if os == "win" else "~/miniforge3"
         )
     if workflow_settings.get("build_workspace_dir") is None:
         workflow_settings["build_workspace_dir"] = {
