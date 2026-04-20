@@ -363,15 +363,14 @@ def fill_workflow_settings_defaults(
     Fill the missing entries from `workflow_settings` with defaults for
     the given provider-platform combination.
     """
+    os = platform.split("-", 1)[0]
     if workflow_settings.get("tools_install_dir") is None:
-        workflow_settings["tools_install_dir"] = {
-            "win-32": r"D:\Miniforge",
-            "win-64": r"D:\Miniforge",
-            "win-arm64": r"C:\Miniforge",
-        }.get(platform, "~/miniforge3")
+        workflow_settings["tools_install_dir"] = (
+            r"C:\Miniforge" if os == "win" else "~/miniforge3"
+        )
     if workflow_settings.get("build_workspace_dir") is None:
         workflow_settings["build_workspace_dir"] = {
             "linux": "build_artifacts",
             "osx": f"{workflow_settings['tools_install_dir']}/conda-bld",
             "win": r"C:\bld",
-        }[platform.split("-", 1)[0]]
+        }[os]
