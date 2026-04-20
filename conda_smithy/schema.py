@@ -202,9 +202,9 @@ class AzureConfig(BaseModel):
 
             Finally, under `variables`, some important things you can set are:
 
-            - `CONDA_BLD_PATH`: Location of the conda-build workspace. Deprecated, use
+            - ~~`CONDA_BLD_PATH`~~: Location of the conda-build workspace. Deprecated, use
               `workflow_settings.build_workspace_dir` instead.
-            - `MINIFORGE_HOME`: Location of the base environment installation. Deprecated,
+            - ~~`MINIFORGE_HOME`~~: Location of the base environment installation. Deprecated,
               use `workflow_settings.tools_install_dir` instead.
             - `SET_PAGEFILE`: `"True"` to increase the pagefile size via conda-forge-ci-setup.
 
@@ -513,7 +513,7 @@ class WorkflowSettings(BaseModel):
     ] = Field(
         default=[],
         description=cleandoc("""
-        Directory to store build-time tools in.
+        Directory to install build-time tools in.
         """),
     )
 
