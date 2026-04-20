@@ -562,10 +562,10 @@ def run_conda_forge_specific(
     for maintainer in maintainers:
         if "/" in maintainer:
             if not _team_exists(maintainer):
-                lints.append(msg.cf.MaintainerExists(maintainer=maintainer))
+                lints.append(msg.cf.MaintainerMissing(maintainer=maintainer))
         else:
             if not _maintainer_exists(maintainer):
-                lints.append(msg.cf.MaintainerExists(maintainer=maintainer))
+                lints.append(msg.cf.MaintainerMissing(maintainer=maintainer))
 
     # 3: if the recipe dir is inside the example dir
     # moved to staged-recipes directly
@@ -614,7 +614,7 @@ def run_conda_forge_specific(
     if not is_staged_recipes and recipe_dir is not None:
         ci_support_files = glob(os.path.join(recipe_dir, "..", ".ci_support", "*.yaml"))
         if not ci_support_files:
-            lints.append(msg.cf.NoCiSupport())
+            lints.append(msg.cf.NoVariantConfigs())
 
     # 8: Ensure the recipe specifies a Python build backend if needed
     if "hint_pip_no_build_backend" not in lints_to_skip:

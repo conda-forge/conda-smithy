@@ -18,7 +18,7 @@ CATEGORIES = {
 
 
 @dataclass(kw_only=True)
-class MaintainerExists(LinterMessage):
+class MaintainerMissing(LinterMessage):
     """
     Maintainers listed in `extra.recipe-maintainers` must be valid Github usernames
     or `@conda-forge/*` teams.
@@ -59,10 +59,10 @@ class PackageToAvoid(LinterMessage):
 
 
 @dataclass(kw_only=True)
-class NoCiSupport(LinterMessage):
+class NoVariantConfigs(LinterMessage):
     """
-    No `.ci_support/*.yaml` files could be found, which means that build matrix is empty
-    and no packages will be built.
+    No variant config files could be found in `.ci_support/*.yaml` , which means that
+    build matrix is empty and no packages will be built.
 
     This is usually caused by a misconfiguration of your recipe file (e.g. `build.skip` is always
     `true`, disabling all builds).

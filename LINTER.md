@@ -48,7 +48,7 @@ https://github.com/conda-forge/conda-forge.github.io/issues/2102
 ## `CF`: conda-forge specific rules
 
 <a id='CF-001'></a>
-### `CF-001`: `MaintainerExists`
+### `CF-001`: `MaintainerMissing`
 
 - Type: 🚨 Lint
 - Added in: conda-smithy <3.56.
@@ -84,13 +84,13 @@ The full list of package names and their explanations can be found in
 
 
 <a id='CF-003'></a>
-### `CF-003`: `NoCiSupport`
+### `CF-003`: `NoVariantConfigs`
 
 - Type: 🚨 Lint
 - Added in: conda-smithy <3.56.
 
-No `.ci_support/*.yaml` files could be found, which means that build matrix is empty
-and no packages will be built.
+No variant config files could be found in `.ci_support/*.yaml` , which means that
+build matrix is empty and no packages will be built.
 
 This is usually caused by a misconfiguration of your recipe file (e.g. `build.skip` is always
 `true`, disabling all builds).
