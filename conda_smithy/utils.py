@@ -352,7 +352,6 @@ def get_workflow_settings(
                 f"platform={platform}: {filtered[0]} vs. {filtered[1]}"
             )
         data[setting_key] = filtered[-1].value if filtered else None
-    fill_workflow_settings_defaults(data, provider, platform)
     return data
 
 

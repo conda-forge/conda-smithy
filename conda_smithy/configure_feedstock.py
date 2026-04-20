@@ -59,6 +59,7 @@ from conda_smithy.utils import (
     RATTLER_BUILD,
     HashableDict,
     ensure_standard_strings,
+    fill_workflow_settings_defaults,
     get_feedstock_about_from_meta,
     get_feedstock_name_from_meta,
     get_workflow_settings,
@@ -1886,11 +1887,13 @@ def _github_actions_specific_setup(jinja_env, forge_config, forge_dir, platform)
                 data["gha_with_gpu"] = True
             data["gha_runs_on"].append(label)
 
-        data.update(
-            get_workflow_settings(
-                forge_config["workflow_settings"], "github_actions", data["platform"]
-            )
+        workflow_settings = get_workflow_settings(
+            forge_config["workflow_settings"], "github_actions", data["platform"]
         )
+        fill_workflow_settings_defaults(
+            workflow_settings, "github_actions", data["platform"]
+        )
+        data.update(workflow_settings)
         if data["store_build_artifacts"]:
             script_suffix = ".bat" if platform == "win" else ".sh"
             template_files.append(
@@ -2021,6 +2024,7 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
                 raise ValueError(f"Unknown build platform: '{data['build_platform']}'")
 
         workflow_settings = get_workflow_settings(forge_config["workflow_settings"], "azure", data["platform"])
+        fill_workflow_settings_defaults(workflow_settings, "azure", data["platform"])
         data.update(workflow_settings)
         config_rendered.update(workflow_settings)
         if config_rendered["store_build_artifacts"]:
