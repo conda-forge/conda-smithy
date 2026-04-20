@@ -1,9 +1,5 @@
 [build-system]
-requires = [
-    "setuptools>=70",
-    "setuptools_scm>=7",
-    "tomli>=1.0.0; python_version < '3.11'",
-]
+requires = ["setuptools>=80", "setuptools-scm>=8"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -13,7 +9,9 @@ authors = [
 ]
 description = "A package to create repositories for conda recipes, and automate their building with CI tools on Linux, OSX and Windows."
 dynamic = ["version"]
-requires-python = ">=3.9"
+requires-python = ">=3.11"
+license = "BSD-3-Clause"
+license-files = ["LICENSE.txt"]
 
 [project.urls]
 home = "https://github.com/conda-forge/conda-smithy"
@@ -22,9 +20,11 @@ home = "https://github.com/conda-forge/conda-smithy"
 feedstocks = "conda_smithy.feedstocks:main"
 conda-smithy = "conda_smithy.cli:main"
 
+[project.entry-points.conda]
+conda-smithy = "conda_smithy.plugin"
+
 [tool.setuptools]
 packages = ["conda_smithy"]
-zip-safe = false
 include-package-data = true
 
 [tool.setuptools_scm]
@@ -39,6 +39,9 @@ line-length = 88
 ignore = [
     "E501",  # https://docs.astral.sh/ruff/faq/#is-the-ruff-linter-compatible-with-black
     "E731",  # lambdas are useful
+    # part of migration to Python 3.11, to be resolved in a separate PR
+    "UP007",  # `typing.Union[A, B]` -> `A | B`
+    "UP045",  # `typing.Optional[A]` -> `A | None`
 ]
 select = [
     # pyflakes

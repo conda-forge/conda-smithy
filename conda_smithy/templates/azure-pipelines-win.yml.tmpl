@@ -2,6 +2,14 @@
 # update the conda-forge.yml and/or the recipe/meta.yaml.
 # -*- mode: yaml -*-
 
+{%- set vars = namespace(store_build_artifacts=False) %}
+{%- for data in configs %}
+  {%- set os = data.build_platform.split('-')[0] %}
+  {%- if os == 'win' and data.store_build_artifacts %}
+    {%- set vars.store_build_artifacts = True %}
+  {%- endif %}
+{%- endfor %}
+
 jobs:
 - job: win
   {{ azure_yaml|indent(2) }}
@@ -68,22 +76,22 @@ jobs:
 {%- for secret in secrets %}
         {{ secret }}: $({{ secret }})
 {%- endfor %}
+{%- if vars.store_build_artifacts %}
 
-{%- if azure.store_build_artifacts %}
     - script: |
         set MINIFORGE_HOME=$(MINIFORGE_HOME)
         set CI=azure
         set CI_RUN_ID=$(build.BuildNumber).$(system.JobAttempt)
         set FEEDSTOCK_NAME=$(build.Repository.Name)
         set ARTIFACT_STAGING_DIR=$(Build.ArtifactStagingDirectory)
-        set CONDA_BLD_DIR=$(CONDA_BLD_PATH)
+        set CONDA_BLD_PATH=$(CONDA_BLD_PATH)
         set BLD_ARTIFACT_PREFIX=conda_artifacts
         if "%AGENT_JOBSTATUS%" == "Failed" (
             set ENV_ARTIFACT_PREFIX=conda_envs
         )
         call ".scripts\create_conda_build_artifacts.bat"
       displayName: Prepare conda build artifacts
-      condition: succeededOrFailed()
+      condition: and(succeededOrFailed(), eq(variables.store_build_artifacts, true))
 
     - task: PublishPipelineArtifact@1
       displayName: Store conda build artifacts
