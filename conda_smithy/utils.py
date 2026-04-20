@@ -337,13 +337,14 @@ def get_workflow_settings(
     values for given provider and platform.
     """
 
+    os = platform.split("-", 1)[0]
     data = {}
     for setting_key, setting_value in workflow_settings.items():
         filtered = filter_conditional_values(
             setting_value,
             provider=provider,
             platform=platform,
-            os=platform.split("-", 1)[0],
+            os=os,
         )
         if len(filtered) > 1:
             raise ValueError(
@@ -352,6 +353,24 @@ def get_workflow_settings(
                 f"platform={platform}: {filtered[0]} vs. {filtered[1]}"
             )
         data[setting_key] = filtered[-1].value if filtered else None
+
+    for path_var in ("tools_install_dir", "build_workspace_dir"):
+        if data[path_var] is None:
+            continue
+        win_path = PureWindowsPath(data[path_var])
+        print((os, win_path, win_path.drive))
+        if os == "win":
+            if not win_path.drive:
+                raise ValueError(
+                    f"workflow_settings.{path_var} specifies non-Windows path "
+                    f"for Windows workflows: {win_path}"
+                )
+        elif win_path.drive:
+            raise ValueError(
+                f"workflow_settings.{path_var} specifies Windows path for Unix "
+                f"workflows: {win_path}"
+            )
+
     return data
 
 
