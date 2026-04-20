@@ -372,5 +372,5 @@ def fill_workflow_settings_defaults(
         workflow_settings["build_workspace_dir"] = {
             "linux": "build_artifacts",
             "osx": f"{workflow_settings['tools_install_dir']}/conda-bld",
-            "win": r"C:\bld",
+            "win": r"C:\\bld\\",
         }[os]
