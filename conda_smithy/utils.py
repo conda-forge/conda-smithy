@@ -363,8 +363,8 @@ def get_workflow_settings(
         if os == "win":
             if not win_path.drive:
                 raise ValueError(
-                    f"workflow_settings.{path_var} specifies non-Windows path "
-                    f"for Windows workflows: {win_path}"
+                    f"workflow_settings.{path_var} specifies Unix path for Windows "
+                    f"workflows: {win_path}"
                 )
         elif win_path.drive:
             raise ValueError(
