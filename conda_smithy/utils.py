@@ -337,6 +337,8 @@ def get_workflow_settings(
     values for given provider and platform.
     """
 
+    assert "-" in platform
+
     os = platform.split("-", 1)[0]
     data = {}
     for setting_key, setting_value in workflow_settings.items():
@@ -383,6 +385,11 @@ def fill_workflow_settings_defaults(
     Fill the missing entries from `workflow_settings` with defaults for
     the given provider-platform combination.
     """
+
+    assert "-" in platform
+    assert len(win_default_drive) == 2
+    assert win_default_drive[1] == ":"
+
     os = platform.split("-", 1)[0]
     if workflow_settings.get("tools_install_dir") is None:
         workflow_settings["tools_install_dir"] = (
