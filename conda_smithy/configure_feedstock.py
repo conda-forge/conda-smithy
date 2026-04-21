@@ -2532,13 +2532,13 @@ def _read_forge_config(forge_dir, forge_yml=None):
                 }
             )
 
-    if "CONDA_BLD_DIR" in file_config.get("azure", {}).get("settings_win", {}).get(
+    if "CONDA_BLD_PATH" in file_config.get("azure", {}).get("settings_win", {}).get(
         "variables", {}
     ):
         if "build_workspace_dir" in file_config.get("workflow_settings", {}):
             raise ValueError(
                 "`workflow_settings.build_workspace_dir` and "
-                "`azure.settings_win.variables.CONDA_BLD_DIR` are mutually exclusive. "
+                "`azure.settings_win.variables.CONDA_BLD_PATH` are mutually exclusive. "
                 "Please remove the latter."
             )
         else:
@@ -2547,7 +2547,7 @@ def _read_forge_config(forge_dir, forge_yml=None):
                     "provider": "azure",
                     "os": "win",
                     "value": config["azure"]["settings_win"]["variables"].pop(
-                        "CONDA_BLD_DIR"
+                        "CONDA_BLD_PATH"
                     ),
                 }
             )
