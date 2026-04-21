@@ -404,5 +404,8 @@ def fill_workflow_settings_defaults(
         workflow_settings["build_workspace_dir"] = {
             "linux": "build_artifacts",
             "osx": f"{workflow_settings['tools_install_dir']}/conda-bld",
+            # use C:\\bld\\ or D:\\bld\\ for backwards compatibility with conda-forge-ci-setup
+            # https://github.com/conda-forge/conda-forge-ci-setup-feedstock/blob/29b3d39d4c21cd96c6274231f295bacd5c860611/recipe/run_conda_forge_build_setup_win.bat#L32-L42
+            # TODO: switch to normalizing all paths once we're ready
             "win": rf"{tools_drive}\\bld\\",
         }[os]
