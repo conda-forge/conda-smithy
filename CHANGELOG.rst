@@ -4,6 +4,41 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.61.0
+====================
+
+**Added:**
+
+* Add a new top-level ``workflow_settings`` configuration key for
+  ``conda-forge.yml`` that provides more fine-grained configuration for
+  workflows. Initially, it can be used to control ``store_build_artifacts``. (#2500)
+
+**Changed:**
+
+* Update Python project configuration to follow packaging and setuptools updates. (#2521)
+* Bump minimum Python version to 3.11. (#2523)
+* Update templates to use ``CONDA_BLD_PATH`` for build directory consistently. (#2528)
+* Bumped the minimum ``rattler-build-conda-compat`` version to ``1.4.12`` for ``is_staging_output`` support. (#2524)
+
+**Fixed:**
+
+* Fixed the v1 recipe linter hinting about missing tests for staging outputs, which cannot declare tests. (#2524)
+
+**Security:**
+
+* Fixed a security issue where usernames relinquished by one person, and then picked up by another
+  would cause the other person to get write access to feedstocks.
+
+**Authors:**
+
+* Matthew R. Becker
+* Michał Górny
+* Niklas Mertsch
+* Christoph Deil
+* Hofer-Julian
+
+
+
 v3.60.0
 ====================
 
