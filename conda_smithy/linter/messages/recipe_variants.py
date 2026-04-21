@@ -75,7 +75,7 @@ class MoreThanOneConfigFile(LinterMessage, _ConfigFileMessage):
 
 
 @dataclass(kw_only=True)
-class MacOSDeploymentTargetConflict(LinterMessage, _ConfigFileMessage):
+class MacOSDeploymentTargetConflict(LinterMessage):
     """
     https://github.com/conda-forge/conda-forge.github.io/issues/2102
     """
@@ -89,10 +89,11 @@ class MacOSDeploymentTargetConflict(LinterMessage, _ConfigFileMessage):
         "please change the name of that key to `c_stdlib_version`!\n"
         "Continuing with `max(c_stdlib_version, MACOSX_DEPLOYMENT_TARGET)`."
     )
+    path: str = "recipe/conda_build_config.yaml"
 
 
 @dataclass(kw_only=True)
-class MacOSDeploymentTargetBelowStdlib(LinterMessage, _ConfigFileMessage):
+class MacOSDeploymentTargetBelowStdlib(LinterMessage):
     """
     https://github.com/conda-forge/conda-forge.github.io/issues/2102
     """
@@ -111,6 +112,7 @@ class MacOSDeploymentTargetBelowStdlib(LinterMessage, _ConfigFileMessage):
     )
     baseline: str
     deprecated_in = "3.56.0"
+    path: str = "recipe/conda_build_config.yaml"
 
 
 # endregion

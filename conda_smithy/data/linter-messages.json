@@ -19,7 +19,7 @@
       "documentation": "https://github.com/conda-forge/conda-forge.github.io/issues/2102",
       "message": "Conflicting specification for minimum macOS deployment target!\nIf your conda_build_config.yaml sets `MACOSX_DEPLOYMENT_TARGET`, please change the name of that key to `c_stdlib_version`!\nContinuing with `max(c_stdlib_version, MACOSX_DEPLOYMENT_TARGET)`.",
       "examples": [],
-      "path": "recipe/(conda_build_config|variants).yaml"
+      "path": "recipe/conda_build_config.yaml"
     },
     {
       "name": "MacOSDeploymentTargetBelowStdlib",
@@ -31,7 +31,7 @@
       "documentation": "https://github.com/conda-forge/conda-forge.github.io/issues/2102",
       "message": "You are setting `MACOSX_SDK_VERSION` below `c_stdlib_version`, in conda_build_config.yaml which is not possible! Please ensure `MACOSX_SDK_VERSION` is at least `c_stdlib_version` (you can leave it out if it is equal).\nIf you are not setting `c_stdlib_version` yourself, this means you are requesting a version below the current global baseline in conda-forge (${baseline}). If this is the intention, you also need to override `c_stdlib_version` and `MACOSX_DEPLOYMENT_TARGET` locally.",
       "examples": [],
-      "path": "recipe/(conda_build_config|variants).yaml"
+      "path": "recipe/conda_build_config.yaml"
     },
     {
       "name": "MaintainerMissing",
