@@ -819,11 +819,14 @@ class ScriptShellcheckReport(LinterMessage):
         lines = [
             "Whenever possible fix all shellcheck findings "
             f"('{joined_cmd} recipe/*.sh -f diff | git apply' helps)",
+            "",
+            "```text",
             *output_lines[: self.max_lines],
+            "```",
         ]
         if len(output_lines) > self.max_lines:
             lines.append(
-                "Output restricted, there are "
+                "\nOutput restricted, there are "
                 f"'{len(output_lines) - self.max_lines}' more lines."
             )
         return "\n".join(lines)
@@ -840,7 +843,7 @@ class ScriptShellcheckReport(LinterMessage):
                 ],
                 output_lines=[
                     "In ./recipe/build.sh line 337:",
-                    "ln -sf $PREFIX/$f $PWD/$f",
+                    "" "ln -sf $PREFIX/$f $PWD/$f",
                     "        ^-----^ SC2086 (info): Double quote to prevent globbing and word splitting.",
                     "                ^-- SC2086 (info): Double quote to prevent globbing and word splitting.",
                     "                ^--^ SC2086 (info): Double quote to prevent globbing and word splitting.",

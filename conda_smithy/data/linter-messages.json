@@ -625,7 +625,7 @@
       "documentation": "This issue is raised when `shellcheck` is enabled and detects problems\nin your build `.sh` scripts.\n\nSee https://www.shellcheck.net/wiki/ for details on the shellcheck error codes.",
       "message": "(dynamic)",
       "examples": [
-        "Whenever possible fix all shellcheck findings ('shellcheck --enable=all --shell=bash --exclude=SC2154 recipe/*.sh -f diff | git apply' helps)\nIn ./recipe/build.sh line 337:\nln -sf $PREFIX/$f $PWD/$f\n        ^-----^ SC2086 (info): Double quote to prevent globbing and word splitting.\n                ^-- SC2086 (info): Double quote to prevent globbing and word splitting.\n                ^--^ SC2086 (info): Double quote to prevent globbing and word splitting.\n                        ^-- SC2086 (info): Double quote to prevent globbing and word splitting.\n\nDid you mean:\n          ln -sf \"$PREFIX\"/\"$f\" \"$PWD\"/\"$f\""
+        "Whenever possible fix all shellcheck findings ('shellcheck --enable=all --shell=bash --exclude=SC2154 recipe/*.sh -f diff | git apply' helps)\n\n```text\nIn ./recipe/build.sh line 337:\nln -sf $PREFIX/$f $PWD/$f\n        ^-----^ SC2086 (info): Double quote to prevent globbing and word splitting.\n                ^-- SC2086 (info): Double quote to prevent globbing and word splitting.\n                ^--^ SC2086 (info): Double quote to prevent globbing and word splitting.\n                        ^-- SC2086 (info): Double quote to prevent globbing and word splitting.\n\nDid you mean:\n          ln -sf \"$PREFIX\"/\"$f\" \"$PWD\"/\"$f\"\n```"
       ],
       "path": "recipe/*.sh"
     },
