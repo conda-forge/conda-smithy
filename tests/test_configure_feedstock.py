@@ -2912,3 +2912,106 @@ def test_tools_build_paths_azure(py_recipe, jinja_env):
             )
             for entry in matrix.values()
         } == expected_values
+
+
+def test_tools_build_paths_gha_override_tools_dir(py_recipe, jinja_env):
+    forge_dir = py_recipe.recipe
+    forge_yml = Path(forge_dir, "conda-forge.yml")
+
+    with open(forge_yml, "a") as f:
+        f.write(textwrap.dedent("""\
+            provider:
+              linux_64: github_actions
+              osx_64: github_actions
+              win_arm64: github_actions
+              win_64: github_actions
+            workflow_settings:
+              tools_install_dir:
+                - os: [linux, osx]
+                  value: ~/foo
+                - os: [win]
+                  value: C:\\foo
+        """))
+
+    config = configure_feedstock._load_forge_config(
+        forge_dir, "recipe/default_config.yaml"
+    )
+    configure_feedstock.render_github_actions(
+        jinja_env=jinja_env,
+        forge_config=config,
+        forge_dir=forge_dir,
+    )
+
+    conda_build_yml = Path(forge_dir, ".github/workflows/conda-build.yml")
+    with conda_build_yml.open() as f:
+        workflow = yaml.safe_load(f)
+
+    expected = {
+        "macos-15-intel": ("~/foo", "~/foo/conda-bld"),
+        "ubuntu-latest": ("~/foo", "build_artifacts"),
+        "windows-11-arm": (r"C:\foo", r"C:\\bld\\"),
+        "windows-latest": (r"C:\foo", r"C:\\bld\\"),
+    }
+
+    matrix = workflow["jobs"]["build"]["strategy"]["matrix"]["include"]
+    assert {
+        " ".join(entry["runs_on"]): (
+            entry["tools_install_dir"],
+            entry["build_workspace_dir"],
+        )
+        for entry in matrix
+    } == expected
+
+
+def test_tools_build_paths_gha_override_both(py_recipe, jinja_env):
+    forge_dir = py_recipe.recipe
+    forge_yml = Path(forge_dir, "conda-forge.yml")
+
+    with open(forge_yml, "a") as f:
+        f.write(textwrap.dedent("""\
+            provider:
+              linux_64: github_actions
+              osx_64: github_actions
+              win_arm64: github_actions
+              win_64: github_actions
+            workflow_settings:
+              tools_install_dir:
+                - os: [linux, osx]
+                  value: ~/foo
+                - os: [win]
+                  value: C:\\foo
+              build_workspace_dir:
+                - os: [linux, osx]
+                  value: ~/bar
+                - os: [win]
+                  value: D:\\bar
+        """))
+
+    config = configure_feedstock._load_forge_config(
+        forge_dir, "recipe/default_config.yaml"
+    )
+    configure_feedstock.render_github_actions(
+        jinja_env=jinja_env,
+        forge_config=config,
+        forge_dir=forge_dir,
+    )
+
+    conda_build_yml = Path(forge_dir, ".github/workflows/conda-build.yml")
+    with conda_build_yml.open() as f:
+        workflow = yaml.safe_load(f)
+
+    expected = {
+        "macos-15-intel": ("~/foo", "~/bar"),
+        "ubuntu-latest": ("~/foo", "~/bar"),
+        "windows-11-arm": (r"C:\foo", r"D:\bar"),
+        "windows-latest": (r"C:\foo", r"D:\bar"),
+    }
+
+    matrix = workflow["jobs"]["build"]["strategy"]["matrix"]["include"]
+    assert {
+        " ".join(entry["runs_on"]): (
+            entry["tools_install_dir"],
+            entry["build_workspace_dir"],
+        )
+        for entry in matrix
+    } == expected
