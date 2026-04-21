@@ -17,7 +17,16 @@ CATEGORIES = {
 
 
 @dataclass(kw_only=True)
-class MacOSDeploymentTargetRename(LinterMessage):
+class _ConfigFileMessage:
+    """
+    A message concerning conda-forge.yml files
+    """
+
+    path: str = "recipe/(conda_build_config|variants).yaml"
+
+
+@dataclass(kw_only=True)
+class MacOSDeploymentTargetRename(LinterMessage, _ConfigFileMessage):
     """
     https://github.com/conda-forge/conda-forge.github.io/issues/2102
     """
@@ -32,7 +41,7 @@ class MacOSDeploymentTargetRename(LinterMessage):
 
 
 @dataclass(kw_only=True)
-class MacOSDeploymentTargetBelow(LinterMessage):
+class MacOSDeploymentTargetBelow(LinterMessage, _ConfigFileMessage):
     """
     https://github.com/conda-forge/conda-forge.github.io/issues/2102
     """
@@ -47,7 +56,7 @@ class MacOSDeploymentTargetBelow(LinterMessage):
 
 
 @dataclass(kw_only=True)
-class MoreThanOneConfigFile(LinterMessage):
+class MoreThanOneConfigFile(LinterMessage, _ConfigFileMessage):
     """
     Only one recipe variants file must be used in a feedstock.
     """
@@ -66,7 +75,7 @@ class MoreThanOneConfigFile(LinterMessage):
 
 
 @dataclass(kw_only=True)
-class MacOSDeploymentTargetConflict(LinterMessage):
+class MacOSDeploymentTargetConflict(LinterMessage, _ConfigFileMessage):
     """
     https://github.com/conda-forge/conda-forge.github.io/issues/2102
     """
@@ -83,7 +92,7 @@ class MacOSDeploymentTargetConflict(LinterMessage):
 
 
 @dataclass(kw_only=True)
-class MacOSDeploymentTargetBelowStdlib(LinterMessage):
+class MacOSDeploymentTargetBelowStdlib(LinterMessage, _ConfigFileMessage):
     """
     https://github.com/conda-forge/conda-forge.github.io/issues/2102
     """

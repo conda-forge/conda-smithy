@@ -18,7 +18,8 @@
       "deprecated_in": "3.56.0",
       "documentation": "https://github.com/conda-forge/conda-forge.github.io/issues/2102",
       "message": "Conflicting specification for minimum macOS deployment target!\nIf your conda_build_config.yaml sets `MACOSX_DEPLOYMENT_TARGET`, please change the name of that key to `c_stdlib_version`!\nContinuing with `max(c_stdlib_version, MACOSX_DEPLOYMENT_TARGET)`.",
-      "examples": []
+      "examples": [],
+      "path": "recipe/(conda_build_config|variants).yaml"
     },
     {
       "name": "MacOSDeploymentTargetBelowStdlib",
@@ -29,7 +30,8 @@
       "deprecated_in": "3.56.0",
       "documentation": "https://github.com/conda-forge/conda-forge.github.io/issues/2102",
       "message": "You are setting `MACOSX_SDK_VERSION` below `c_stdlib_version`, in conda_build_config.yaml which is not possible! Please ensure `MACOSX_SDK_VERSION` is at least `c_stdlib_version` (you can leave it out if it is equal).\nIf you are not setting `c_stdlib_version` yourself, this means you are requesting a version below the current global baseline in conda-forge (${baseline}). If this is the intention, you also need to override `c_stdlib_version` and `MACOSX_DEPLOYMENT_TARGET` locally.",
-      "examples": []
+      "examples": [],
+      "path": "recipe/(conda_build_config|variants).yaml"
     },
     {
       "name": "MaintainerMissing",
@@ -43,7 +45,8 @@
       "examples": [
         "Recipe maintainer \"@banned-user\" does not exist",
         "Recipe maintainer team \"@conda-forge/deleted-team\" does not exist"
-      ]
+      ],
+      "path": "recipe/(meta|recipe).yaml"
     },
     {
       "name": "PackageToAvoid",
@@ -54,7 +57,8 @@
       "deprecated_in": "",
       "documentation": "Some package names may not be used in recipes directly, or under some circumstances.\n\nThe full list of package names and their explanations can be found in\n[`conda-forge-pinning-feedstock`](https://github.com/conda-forge/conda-forge-pinning-feedstock/blob/main/recipe/linter_hints/hints.toml).",
       "message": "${package_hint}",
-      "examples": []
+      "examples": [],
+      "path": "recipe/(meta|recipe).yaml"
     },
     {
       "name": "NoVariantConfigs",
@@ -65,7 +69,8 @@
       "deprecated_in": "",
       "documentation": "No variant config files could be found in `.ci_support/*.yaml` , which means that\nbuild matrix is empty and no packages will be built.\n\nThis is usually caused by a misconfiguration of your recipe file (e.g. `build.skip` is always\n`true`, disabling all builds).",
       "message": "The feedstock has no `.ci_support` files and thus will not build any packages.",
-      "examples": []
+      "examples": [],
+      "path": ".ci_support/*.yaml"
     },
     {
       "name": "NoEmptyVariantsFile",
@@ -76,7 +81,8 @@
       "deprecated_in": "",
       "documentation": "Variants files can't be empty.",
       "message": "The recipe should not have an empty `conda_build_config.yaml` file.",
-      "examples": []
+      "examples": [],
+      "path": "recipe/conda_build_config.yaml"
     },
     {
       "name": "NoCustomGHAWorkflows",
@@ -87,7 +93,8 @@
       "deprecated_in": "",
       "documentation": "Due to its stature in the open-source community, conda-forge has enhanced\naccess to certain CI services. This access is a community resource entrusted\nto conda-forge for use in building packages. We thus cannot support\nthird-party or \"off-label\" CI jobs in our feedstocks on any of our CI\nservices. If we find such use, we will politely ask the maintainers to\nrectify the situation. We may take more serious actions, including archiving\nfeedstocks or removing maintainers from the organization, if the situation\ncannot be rectified.",
       "message": "conda-forge feedstocks cannot have custom Github Actions workflows. See https://github.com/conda-forge/conda-forge.github.io/issues/2750 for more information. If you didn't add any custom workflows, please consider rerendering your feedstock to remove deprecated workflows.",
-      "examples": []
+      "examples": [],
+      "path": ".github/workflows/*.y*ml"
     },
     {
       "name": "NoDuplicateKeys",
@@ -98,7 +105,8 @@
       "deprecated_in": "",
       "documentation": "`conda-forge.yml` must not contain duplicate keys.",
       "message": "The ``conda-forge.yml`` file is not allowed to have duplicate keys.",
-      "examples": []
+      "examples": [],
+      "path": "conda-forge.yml"
     },
     {
       "name": "UnexpectedSection",
@@ -109,7 +117,8 @@
       "deprecated_in": "",
       "documentation": "Recipe files must not contain unknown top-level keys.\n\nFor recipe version 0, the allowed keys are (in this order):\n\n- `package`\n- `source`\n- `build`\n- `requirements`\n- `test`\n- `app`\n- `outputs`\n- `about`\n- `extra`\n\nFor recipe version 1, it depends if you are generating one or\nmultiple artifacts. For single artifacts, the expected keys are\n(in this order):\n\n- `schema_version`\n- `context`\n- `package`\n- `source`\n- `build`\n- `requirements`\n- `tests`\n- `about`\n- `extra`\n\nFor multiple artifacts, the expected keys are (in this order):\n\n- `schema_version`\n- `context`\n- `recipe`\n- `source`\n- `build`\n- `outputs`\n- `about`\n- `extra`",
       "message": "The top level meta key ${section} is unexpected",
-      "examples": []
+      "examples": [],
+      "path": "recipe/(meta|recipe).yaml"
     },
     {
       "name": "SectionOrder",
@@ -120,7 +129,8 @@
       "deprecated_in": "",
       "documentation": "The top-level sections of a recipe file must always follow the same order.\n\nPlease refer to linter rule [`R-000`](#R-000) (`RecipeUnexpectedSection`) for more\ndetails.",
       "message": "The top level meta keys are in an unexpected order. Expecting ${order}.",
-      "examples": []
+      "examples": [],
+      "path": "recipe/(meta|recipe).yaml"
     },
     {
       "name": "MissingAboutItem",
@@ -131,7 +141,8 @@
       "deprecated_in": "",
       "documentation": "The `about` section requires three fields: homepage (`home` in v1), license, and summary.",
       "message": "The ${item} item is expected in the about section.",
-      "examples": []
+      "examples": [],
+      "path": "recipe/(meta|recipe).yaml"
     },
     {
       "name": "NoMaintainers",
@@ -142,7 +153,8 @@
       "deprecated_in": "",
       "documentation": "All recipes must list at least one maintainer under `extra/recipe-maintainers`.",
       "message": "The recipe could do with some maintainers listed in the `extra/recipe-maintainers` section.",
-      "examples": []
+      "examples": [],
+      "path": "recipe/(meta|recipe).yaml"
     },
     {
       "name": "MaintainersMustBeList",
@@ -153,7 +165,8 @@
       "deprecated_in": "",
       "documentation": "The `extra/recipe-maintainers` only accepts a list of strings as a value.",
       "message": "Recipe maintainers should be a json list.",
-      "examples": []
+      "examples": [],
+      "path": "recipe/(meta|recipe).yaml"
     },
     {
       "name": "RequiredTests",
@@ -164,7 +177,8 @@
       "deprecated_in": "",
       "documentation": "All recipes must have a non-empty `test` section.",
       "message": "The recipe must have some tests.",
-      "examples": []
+      "examples": [],
+      "path": "recipe/(meta|recipe).yaml"
     },
     {
       "name": "RecommendedTests",
@@ -175,7 +189,8 @@
       "deprecated_in": "",
       "documentation": "All recipes must have a non-empty `test` section.",
       "message": "It looks like the '${output}' output doesn't have any tests.",
-      "examples": []
+      "examples": [],
+      "path": "recipe/(meta|recipe).yaml"
     },
     {
       "name": "UnknownLicense",
@@ -186,7 +201,8 @@
       "deprecated_in": "",
       "documentation": "All recipes must have a license identifier, but it can't be \"unknown\".",
       "message": "The recipe license cannot be unknown.",
-      "examples": []
+      "examples": [],
+      "path": "recipe/(meta|recipe).yaml"
     },
     {
       "name": "BuildNumberMissing",
@@ -197,7 +213,8 @@
       "deprecated_in": "",
       "documentation": "All recipes must define a `build.number` value.",
       "message": "The recipe must have a `build/number` section.",
-      "examples": []
+      "examples": [],
+      "path": "recipe/(meta|recipe).yaml"
     },
     {
       "name": "RequirementsOrder",
@@ -208,7 +225,8 @@
       "deprecated_in": "",
       "documentation": "The different subcategories of the `requirements` section must follow\na strict order: `build`, `host`, `run`, `run_constrained`.",
       "message": "The `requirements/` sections should be defined in the following order: ${expected}; instead saw: ${seen}.",
-      "examples": []
+      "examples": [],
+      "path": "recipe/(meta|recipe).yaml"
     },
     {
       "name": "LicenseFieldMentionsLicense",
@@ -219,7 +237,8 @@
       "deprecated_in": "",
       "documentation": "Licenses should omit the term 'License' in its name.",
       "message": "The recipe `license` should not include the word \"License\".",
-      "examples": []
+      "examples": [],
+      "path": "recipe/(meta|recipe).yaml"
     },
     {
       "name": "TooManyEmptyLines",
@@ -230,7 +249,8 @@
       "deprecated_in": "",
       "documentation": "Recipe files should end with a single empty line, not more.",
       "message": "There are ${n_lines} too many lines.  There should be one empty line at the end of the file.",
-      "examples": []
+      "examples": [],
+      "path": "recipe/(meta|recipe).yaml"
     },
     {
       "name": "TooFewEmptyLines",
@@ -241,7 +261,8 @@
       "deprecated_in": "",
       "documentation": "Recipe files should end with a single empty line.",
       "message": "There are too few lines.  There should be one empty line at the end of the file.",
-      "examples": []
+      "examples": [],
+      "path": "recipe/(meta|recipe).yaml"
     },
     {
       "name": "LicenseFamily",
@@ -252,7 +273,8 @@
       "deprecated_in": "",
       "documentation": "The field `license_file` must be always present.",
       "message": "license_file entry is missing, but is required.",
-      "examples": []
+      "examples": [],
+      "path": "recipe/(meta|recipe).yaml"
     },
     {
       "name": "InvalidPackageName",
@@ -263,7 +285,8 @@
       "deprecated_in": "",
       "documentation": "The recipe `name` can only contain certain characters:\n\n- lowercase ASCII letters (`a-z`)\n- digits (`0-9`)\n- underscores, hyphens and dots (`_`, `-`, `.`)",
       "message": "Recipe name has invalid characters. only lowercase alpha, numeric, underscores, hyphens and dots allowed",
-      "examples": []
+      "examples": [],
+      "path": "recipe/(meta|recipe).yaml"
     },
     {
       "name": "MissingVersion",
@@ -274,7 +297,8 @@
       "deprecated_in": "",
       "documentation": "The package `version` field is required.",
       "message": "Package version is missing.",
-      "examples": []
+      "examples": [],
+      "path": "recipe/(meta|recipe).yaml"
     },
     {
       "name": "InvalidVersion",
@@ -285,7 +309,8 @@
       "deprecated_in": "",
       "documentation": "The package `version` field must be a valid version string.",
       "message": "Package version ${version} doesn't match conda spec: ${error}",
-      "examples": []
+      "examples": [],
+      "path": "recipe/(meta|recipe).yaml"
     },
     {
       "name": "PinnedNumpy",
@@ -296,7 +321,8 @@
       "deprecated_in": "",
       "documentation": "See <https://conda-forge.org/docs/maintainer/knowledge_base.html#linking-numpy>",
       "message": "Using pinned numpy packages is a deprecated pattern. Consider using the method outlined [conda-forge.org > Docs > Maintainer Documentation > Knowledge Base > Building Against NumPy](https://conda-forge.org/docs/maintainer/knowledge_base.html#linking-numpy).",
-      "examples": []
+      "examples": [],
+      "path": "recipe/(meta|recipe).yaml"
     },
     {
       "name": "UnexpectedSubsection",
@@ -307,7 +333,8 @@
       "deprecated_in": "",
       "documentation": "This check ensures that the passed recipe conforms to the expected recipe v0 schema.\n\nSee schema in [`conda_build.metadata.FIELDS`](\nhttps://github.com/conda/conda-build/blob/25.9.0/conda_build/metadata.py#L619)",
       "message": "The ${section} section contained an unexpected subsection name. ${subsection} is not a valid subsection name.",
-      "examples": []
+      "examples": [],
+      "path": "recipe/(meta|recipe).yaml"
     },
     {
       "name": "SourceHash",
@@ -318,7 +345,8 @@
       "deprecated_in": "",
       "documentation": "All recipe source URLs must have a hash checksum for integrity checks.",
       "message": "When defining a source/url please add a sha256, sha1 or md5 checksum (sha256 preferably).",
-      "examples": []
+      "examples": [],
+      "path": "recipe/(meta|recipe).yaml"
     },
     {
       "name": "NoarchValue",
@@ -329,7 +357,8 @@
       "deprecated_in": "",
       "documentation": "The `build.noarch` field can only take `python` or `generic` as a value.",
       "message": "Invalid `noarch` value `${given}`. Should be one of `${valid}`.",
-      "examples": []
+      "examples": [],
+      "path": "recipe/(meta|recipe).yaml"
     },
     {
       "name": "RequirementJoinVersionOperator",
@@ -340,7 +369,8 @@
       "deprecated_in": "",
       "documentation": "conda recipes should use the three-field matchspec syntax to express requirements:\n`name [version [build]]`. This means having no spaces between operator and version\nliterals.",
       "message": "``requirements: ${section}: ${requirement}`` should not contain a space between relational operator and the version, i.e. ``${name} ${pin}``",
-      "examples": []
+      "examples": [],
+      "path": "recipe/(meta|recipe).yaml"
     },
     {
       "name": "RequirementSeparateNameVersion",
@@ -351,7 +381,8 @@
       "deprecated_in": "",
       "documentation": "conda recipes should use the three-field matchspec syntax to express requirements:\n`name [version [build]]`. This means having a space between name and version.",
       "message": "``requirements: ${section}: ${requirement}`` must contain a space between the name and the pin, i.e. ``${name} ${pin}``",
-      "examples": []
+      "examples": [],
+      "path": "recipe/(meta|recipe).yaml"
     },
     {
       "name": "LanguageHostRun",
@@ -362,7 +393,8 @@
       "deprecated_in": "",
       "documentation": "Packages may depend on certain languages (e.g. Python, R) that require depending\non the language runtime both in `host` and `run`.",
       "message": "If ${language} is a host requirement, it should be a run requirement.",
-      "examples": []
+      "examples": [],
+      "path": "recipe/(meta|recipe).yaml"
     },
     {
       "name": "LanguageHostRunUnpinned",
@@ -373,7 +405,8 @@
       "deprecated_in": "",
       "documentation": "Packages may depend on certain languages (e.g. Python, R) that require depending\non the language runtime both in `host` and `run`. They should not pin it to a\nparticular version when the package is not `noarch`.",
       "message": "Non noarch packages should have ${language} requirement without any version constraints.",
-      "examples": []
+      "examples": [],
+      "path": "recipe/(meta|recipe).yaml"
     },
     {
       "name": "JinjaExpression",
@@ -384,7 +417,8 @@
       "deprecated_in": "",
       "documentation": "Jinja expressions should add a space between the double curly braces.",
       "message": "Jinja2 variable references are suggested to take a ``${dollar}{{<one space><variable name><one space>}}`` form. See lines ${lines}.",
-      "examples": []
+      "examples": [],
+      "path": "recipe/(meta|recipe).yaml"
     },
     {
       "name": "PythonLowerBound",
@@ -395,7 +429,8 @@
       "deprecated_in": "",
       "documentation": "Noarch Python recipes should always pin the lower bound on their `python` requirement.",
       "message": "noarch: python recipes are required to have a lower bound on the python version. Typically this means putting `python >={{ python_min }}` in the `run` section of your recipe. You may also want to check the upstream source for the package's Python compatibility.",
-      "examples": []
+      "examples": [],
+      "path": "recipe/(meta|recipe).yaml"
     },
     {
       "name": "PinSubpackagePinCompatible",
@@ -406,7 +441,8 @@
       "deprecated_in": "",
       "documentation": "The Jinja functions `pin_subpackage` and `pin_compatible` may be confused\nbecause both would add version constraints to a package name. However, they\nhave different purposes.\n\n- `pin_subpackage()` must be used when the package to be pinned is a known output\n  in the current recipe.\n- `pin_compatible()` must be used when the package to be pinned is _not_ an output\n  of the current recipe.",
       "message": "${should_use} should be used instead of ${in_use} for `${pin}` because it is ${what} known outputs of this recipe: ${subpackages}.",
-      "examples": []
+      "examples": [],
+      "path": "recipe/(meta|recipe).yaml"
     },
     {
       "name": "CompiledWheelsNotAllowed",
@@ -417,7 +453,8 @@
       "deprecated_in": "",
       "documentation": "Python wheels are often discouraged as package sources. This is especially the case\nfor compiled wheels, which are forbidden.",
       "message": "Detected compiled wheel(s) in source: ${urls}. This is disallowed. All packages should be built from source except in rare and exceptional cases.",
-      "examples": []
+      "examples": [],
+      "path": "recipe/(meta|recipe).yaml"
     },
     {
       "name": "PureWheelsNotAllowed",
@@ -428,7 +465,8 @@
       "deprecated_in": "",
       "documentation": "Python wheels are often discouraged as package sources. This is also the case\nfor pure Python wheels when building non-noarch packages.",
       "message": "Detected pure Python wheel(s) in source: ${urls}. This is discouraged. Please consider using a source distribution (sdist) instead.",
-      "examples": []
+      "examples": [],
+      "path": "recipe/(meta|recipe).yaml"
     },
     {
       "name": "PureWheelsNotAllowedNoarch",
@@ -439,7 +477,8 @@
       "deprecated_in": "",
       "documentation": "Python wheels are often discouraged as package sources. However, pure Python\nwheels may be used as a source for noarch Python packages, although sdists are preferred.",
       "message": "Detected pure Python wheel(s) in source: ${urls}. This is generally ok for pure Python wheels and noarch=python packages but it's preferred to use a source distribution (sdist) if possible.",
-      "examples": []
+      "examples": [],
+      "path": "recipe/(meta|recipe).yaml"
     },
     {
       "name": "RustLicenses",
@@ -450,7 +489,8 @@
       "deprecated_in": "",
       "documentation": "<https://conda-forge.org/docs/maintainer/adding_pkgs/#rust>",
       "message": "Rust packages must include the licenses of the Rust dependencies. For more info, visit: https://conda-forge.org/docs/maintainer/adding_pkgs/#rust",
-      "examples": []
+      "examples": [],
+      "path": "recipe/(meta|recipe).yaml"
     },
     {
       "name": "GoLicenses",
@@ -461,7 +501,8 @@
       "deprecated_in": "",
       "documentation": "<https://conda-forge.org/docs/maintainer/adding_pkgs/#go>",
       "message": "Go packages must include the licenses of the Go dependencies. For more info, visit: https://conda-forge.org/docs/maintainer/adding_pkgs/#go",
-      "examples": []
+      "examples": [],
+      "path": "recipe/(meta|recipe).yaml"
     },
     {
       "name": "StdlibJinja",
@@ -472,7 +513,8 @@
       "deprecated_in": "",
       "documentation": "https://github.com/conda-forge/conda-forge.github.io/issues/2102",
       "message": "This recipe is using a compiler, which now requires adding a build dependence on `${dollar}{{ stdlib(\"c\") }}` as well. Note that this rule applies to each output of the recipe using a compiler. For further details, please see https://github.com/conda-forge/conda-forge.github.io/issues/2102.",
-      "examples": []
+      "examples": [],
+      "path": "recipe/(meta|recipe).yaml"
     },
     {
       "name": "StdlibSysroot",
@@ -483,7 +525,8 @@
       "deprecated_in": "",
       "documentation": "https://github.com/conda-forge/conda-forge.github.io/issues/2102",
       "message": "You're setting a requirement on sysroot_linux-<arch> directly; this should now be done by adding a build dependence on `${dollar}{{ stdlib(\"c\") }}`, and overriding `c_stdlib_version` in `recipe/conda_build_config.yaml` for the respective platform as necessary. For further details, please see https://github.com/conda-forge/conda-forge.github.io/issues/2102.",
-      "examples": []
+      "examples": [],
+      "path": "recipe/(meta|recipe).yaml"
     },
     {
       "name": "StdlibMacOS",
@@ -494,7 +537,8 @@
       "deprecated_in": "",
       "documentation": "https://github.com/conda-forge/conda-forge.github.io/issues/2102",
       "message": "You're setting a constraint on the `__osx` virtual package directly; this should now be done by adding a build dependence on `${dollar}{{ stdlib(\"c\") }}`, and overriding `c_stdlib_version` in `recipe/conda_build_config.yaml` for the respective platform as necessary. For further details, please see https://conda-forge.org/docs/maintainer/knowledge_base/#requiring-newer-macos-sdks.",
-      "examples": []
+      "examples": [],
+      "path": "recipe/(meta|recipe).yaml"
     },
     {
       "name": "NotParsableLint",
@@ -505,7 +549,8 @@
       "deprecated_in": "",
       "documentation": "The conda recipe should be parsable by at least one backend.\nIf none can parse it, this constitutes an error that needs to be remediated.",
       "message": "The recipe is not parsable by any of the known recipe parsers (${parsers}). Please check the logs for more information and ensure your recipe can be parsed.",
-      "examples": []
+      "examples": [],
+      "path": "recipe/(meta|recipe).yaml"
     },
     {
       "name": "NotParsableHint",
@@ -519,7 +564,8 @@
       "examples": [
         "The recipe is not parsable by parser `conda-recipe-manager`. The recipe can only be automatically migrated to the new v1 format if it is parseable by conda-recipe-manager.",
         "The recipe is not parsable by parser `other`. Your recipe may not receive automatic updates and/or may not be compatible with conda-forge's infrastructure. Please check the logs for more information and ensure your recipe can be parsed."
-      ]
+      ],
+      "path": "recipe/(meta|recipe).yaml"
     },
     {
       "name": "PythonIsAbi3Bool",
@@ -530,7 +576,8 @@
       "deprecated_in": "",
       "documentation": "https://github.com/conda-forge/conda-forge.github.io/issues/2102",
       "message": "The `is_abi3` variant variable is now a boolean value instead of a string (i.e., 'true' or 'false'). Please change syntax like `is_abi3 == 'true' to `is_abi3`.",
-      "examples": []
+      "examples": [],
+      "path": "recipe/(meta|recipe).yaml"
     },
     {
       "name": "ExtraFeedstockNameSuffix",
@@ -541,7 +588,8 @@
       "deprecated_in": "",
       "documentation": "https://github.com/conda-forge/conda-forge.github.io/issues/2102",
       "message": "The feedstock-name in the `extra` section must not end with '-feedstock'. The '-feedstock' suffix is automatically appended during feedstock creation.",
-      "examples": []
+      "examples": [],
+      "path": "recipe/(meta|recipe).yaml"
     },
     {
       "name": "VersionParsedAsFloat",
@@ -552,7 +600,8 @@
       "deprecated_in": "",
       "documentation": "https://github.com/conda-forge/conda-forge.github.io/issues/2102",
       "message": "${key} has a value that is interpreted as a floating-point number. Please quote it (like `\"${value}\"`${v0_hint}) to ensure that it is interpreted as string and preserved exactly.",
-      "examples": []
+      "examples": [],
+      "path": "recipe/(meta|recipe).yaml"
     },
     {
       "name": "SuggestNoarch",
@@ -563,7 +612,8 @@
       "deprecated_in": "",
       "documentation": "`noarch` packages are strongly preferred when possible.\nSee https://conda-forge.org/docs/maintainer/knowledge_base.html#noarch-builds.",
       "message": "Whenever possible python packages should use noarch. See https://conda-forge.org/docs/maintainer/knowledge_base.html#noarch-builds",
-      "examples": []
+      "examples": [],
+      "path": "recipe/(meta|recipe).yaml"
     },
     {
       "name": "ScriptShellcheckReport",
@@ -576,7 +626,8 @@
       "message": "(dynamic)",
       "examples": [
         "Whenever possible fix all shellcheck findings ('' recipe/*.sh -f diff | git apply' helps)"
-      ]
+      ],
+      "path": "recipe/(meta|recipe).yaml"
     },
     {
       "name": "ScriptShellcheckFailure",
@@ -587,7 +638,8 @@
       "deprecated_in": "",
       "documentation": "This issue is raised when `shellcheck` is enabled but could not\nrun successfully (something went wrong).",
       "message": "There have been errors while scanning with shellcheck.",
-      "examples": []
+      "examples": [],
+      "path": "recipe/(meta|recipe).yaml"
     },
     {
       "name": "LicenseSPDX",
@@ -598,7 +650,8 @@
       "deprecated_in": "",
       "documentation": "The `license` field must be a valid SPDX identifier.\n\nSee list at [`licenses.txt`](https://github.com/conda-forge/conda-smithy/blob/main/conda_smithy/linter/licenses.txt).",
       "message": "License is not an SPDX identifier (or a custom LicenseRef) nor an SPDX license expression.\n\nDocumentation on acceptable licenses can be found [conda-forge.org > Docs > Maintainer Documentation > Contributing packages > SPDX Identifiers and Expressions](https://conda-forge.org/docs/maintainer/adding_pkgs.html#spdx-identifiers-and-expressions).",
-      "examples": []
+      "examples": [],
+      "path": "recipe/(meta|recipe).yaml"
     },
     {
       "name": "InvalidLicenseException",
@@ -609,7 +662,8 @@
       "deprecated_in": "",
       "documentation": "The `license` field may accept some SPDX exception expressions, as controlled\nin [this file](https://github.com/conda-forge/conda-smithy/blob/main/conda_smithy/linter/license_exceptions.txt)",
       "message": "License exception is not an SPDX exception.\n\nDocumentation on acceptable licenses can be found [conda-forge.org > Docs > Maintainer Documentation > Contributing packages > SPDX Identifiers and Expressions](https://conda-forge.org/docs/maintainer/adding_pkgs.html#spdx-identifiers-and-expressions).",
-      "examples": []
+      "examples": [],
+      "path": "recipe/(meta|recipe).yaml"
     },
     {
       "name": "PythonBuildBackendHost",
@@ -620,7 +674,8 @@
       "deprecated_in": "",
       "documentation": "Build backends in Python packages must be explictly added to `host`.",
       "message": "No valid build backend found for Python recipe for package `${package_name}` using `pip`. Python recipes using `pip` need to explicitly specify a build backend in the `host` section. If your recipe has built with only `pip` in the `host` section in the past, you likely should add `setuptools` to the `host` section of your recipe.",
-      "examples": []
+      "examples": [],
+      "path": "recipe/(meta|recipe).yaml"
     },
     {
       "name": "PythonMinPin",
@@ -631,7 +686,8 @@
       "deprecated_in": "",
       "documentation": "Python packages should depend on certain `>={min_version}` at runtime,\nbut build and test against `{min_version}.*`.",
       "message": "`noarch: python` recipes should usually follow the syntax in our [documentation](https://conda-forge.org/docs/maintainer/knowledge_base/#noarch-python) for specifying the Python version.\n${recommendations}\n- If the package requires a newer Python version than the currently supported minimum version on `conda-forge`, you can override the `python_min` variable by adding a Jinja2 `set` statement at the top of your recipe (or using an equivalent `context` variable for v1 recipes).",
-      "examples": []
+      "examples": [],
+      "path": "recipe/(meta|recipe).yaml"
     },
     {
       "name": "SpaceSeparatedSpecs",
@@ -642,7 +698,8 @@
       "deprecated_in": "",
       "documentation": "Prefer `name [version [build]]` match spec syntax.",
       "message": "${output} output has some malformed specs:\n${bad_specs_list}\nRequirement spec fields should match the syntax `name [version [build]]`to avoid known issues in conda-build. For example, instead of `name =version=build`, use `name version.* build`. There should be no spaces between version operators and versions either: `python >= 3.8` should be `python >=3.8`.",
-      "examples": []
+      "examples": [],
+      "path": "recipe/(meta|recipe).yaml"
     },
     {
       "name": "OSVersion",
@@ -653,7 +710,8 @@
       "deprecated_in": "",
       "documentation": "Prefer `name [version [build]]` match spec syntax.",
       "message": "The feedstock is lowering the image versions for one or more platforms: ${platforms} (the default is ${default}). Unless you are in the very rare case of repackaging binary artifacts, consider removing these overrides from conda-forge.yml in the top feedstock directory.",
-      "examples": []
+      "examples": [],
+      "path": "recipe/(meta|recipe).yaml"
     },
     {
       "name": "UsePip",
@@ -664,7 +722,8 @@
       "deprecated_in": "",
       "documentation": "Python packages should be built with `pip install ...`, not `python setup.py install`,\nwhich is deprecated.",
       "message": "Whenever possible python packages should use pip. See https://conda-forge.org/docs/maintainer/adding_pkgs.html#use-pip",
-      "examples": []
+      "examples": [],
+      "path": "recipe/(meta|recipe).yaml"
     },
     {
       "name": "UsePyPIOrg",
@@ -675,7 +734,8 @@
       "deprecated_in": "",
       "documentation": "Grayskull and the conda-forge example recipe used to have pypi.io as a default,\nbut the canonical URL is now PyPI.org.\n\nSee https://github.com/conda-forge/staged-recipes/pull/27946.",
       "message": "PyPI default URL is now pypi.org, and not pypi.io. You may want to update the default source url.",
-      "examples": []
+      "examples": [],
+      "path": "recipe/(meta|recipe).yaml"
     },
     {
       "name": "FormattedSelectors",
@@ -686,7 +746,8 @@
       "deprecated_in": "",
       "documentation": "Recipe format v0 (`meta.yaml`) supports the notion of line selectors\nas trailing comments:\n\n```yaml\nbuild:\n  skip: true  # [not win]\n```\n\nThese must be formatted with two spaces before the `#` symbol, followed\nby one space before the opening square bracket `[`, followed by no spaces.\nThe closing bracket must not be surrounded by spaces either.",
       "message": "Selectors are suggested to take a ``<two spaces>#<one space>[<expression>]`` form. See lines ${lines}",
-      "examples": []
+      "examples": [],
+      "path": "recipe/meta.yaml"
     },
     {
       "name": "OldPythonSelectorsLint",
@@ -697,7 +758,8 @@
       "deprecated_in": "",
       "documentation": "Recipe v0 selectors used to include one Python version selector\nper release, like `py27` for Python 2.7 and `py35` for Python 3.5.\nThis was deprecated in favor of the `py` integer, which is preferred.",
       "message": "Old-style Python selectors (py27, py35, etc) are only available for Python 2.7, 3.4, 3.5, and 3.6. Please use explicit comparisons with the integer ``py``, e.g. ``# [py==37]`` or ``# [py>=37]``. See lines ${lines}",
-      "examples": []
+      "examples": [],
+      "path": "recipe/meta.yaml"
     },
     {
       "name": "OldPythonSelectorsHint",
@@ -708,7 +770,8 @@
       "deprecated_in": "",
       "documentation": "Recipe v0 selectors (see [`R0-002`](#r0-002)) used to include one Python\nversion selector per release, like `py27` for Python 2.7 and `py35` for Python 3.5.\nThis was deprecated in favor of the `py` integer, which is preferred.",
       "message": "Old-style Python selectors (py27, py34, py35, py36) are deprecated. Instead, consider using the int ``py``. For example: ``# [py>=36]``. See lines ${lines}",
-      "examples": []
+      "examples": [],
+      "path": "recipe/meta.yaml"
     },
     {
       "name": "NoarchSelectorsV0",
@@ -719,7 +782,8 @@
       "deprecated_in": "",
       "documentation": "Noarch packages are not generally compatible with v0 selectors",
       "message": "`noarch` packages can't have ${skips}selectors. If the selectors are necessary, please remove `noarch: ${noarch}`, or selector on line ${line_number}:\n${line}",
-      "examples": []
+      "examples": [],
+      "path": "recipe/meta.yaml"
     },
     {
       "name": "JinjaDefinitions",
@@ -730,7 +794,8 @@
       "deprecated_in": "",
       "documentation": "In v0 recipes, Jinja definitions must follow a particular style.",
       "message": "Jinja2 variable definitions are suggested to take a ``{%<one space>set<one space><variable name><one space>=<one space><expression><one space>%}`` form. See lines ${lines}",
-      "examples": []
+      "examples": [],
+      "path": "recipe/meta.yaml"
     },
     {
       "name": "LegacyToolchain",
@@ -741,7 +806,8 @@
       "deprecated_in": "",
       "documentation": "The `toolchain` package is deprecated. Use compilers as outlined in\n<https://conda-forge.org/docs/maintainer/knowledge_base.html#compilers>.",
       "message": "Using toolchain directly in this manner is deprecated. Consider using the compilers outlined [conda-forge.org > Docs > Maintainer Documentation > Knowledge Base > Compilers](https://conda-forge.org/docs/maintainer/knowledge_base.html#compilers).",
-      "examples": []
+      "examples": [],
+      "path": "recipe/meta.yaml"
     },
     {
       "name": "NoCommentSelectors",
@@ -752,7 +818,8 @@
       "deprecated_in": "",
       "documentation": "Recipe v0 selectors (see [`R0-002`](#r0-002)) are not supported in v1 recipes.",
       "message": "Selectors in comment form no longer work in v1 recipes. Instead, if / then / else maps must be used. See lines ${lines}.",
-      "examples": []
+      "examples": [],
+      "path": "recipe/recipe.yaml"
     },
     {
       "name": "NoarchSelectorsV1",
@@ -763,7 +830,8 @@
       "deprecated_in": "",
       "documentation": "Noarch packages are not generally compatible with v1 conditional blocks.",
       "message": "`noarch` packages can't have ${skips}selectors. If the selectors are necessary, please remove `noarch: ${noarch}`.",
-      "examples": []
+      "examples": [],
+      "path": "recipe/recipe.yaml"
     },
     {
       "name": "RattlerBldBat",
@@ -774,7 +842,8 @@
       "deprecated_in": "",
       "documentation": "`rattler-build` does not use `bld.bat` scripts, but `build.bat`.",
       "message": "Found `bld.bat` in recipe directory, but this is a recipe v1 (rattler-build recipe). rattler-build uses `build.bat` instead of `bld.bat` for Windows builds. Consider renaming `bld.bat` to `build.bat`.",
-      "examples": []
+      "examples": [],
+      "path": "recipe/recipe.yaml"
     },
     {
       "name": "MacOSDeploymentTargetRename",
@@ -785,7 +854,8 @@
       "deprecated_in": "",
       "documentation": "https://github.com/conda-forge/conda-forge.github.io/issues/2102",
       "message": "The `MACOSX_DEPLOYMENT_TARGET` key in ${recipe_config_file} needs to be removed or replaced by `c_stdlib_version`, appropriately restricted to macOS.",
-      "examples": []
+      "examples": [],
+      "path": "recipe/(conda_build_config|variants).yaml"
     },
     {
       "name": "MacOSDeploymentTargetBelow",
@@ -796,7 +866,8 @@
       "deprecated_in": "",
       "documentation": "https://github.com/conda-forge/conda-forge.github.io/issues/2102",
       "message": "You are setting `c_stdlib_version` on macOS below the current global baseline in conda-forge (${baseline_version}).",
-      "examples": []
+      "examples": [],
+      "path": "recipe/(conda_build_config|variants).yaml"
     },
     {
       "name": "MoreThanOneConfigFile",
@@ -807,7 +878,8 @@
       "deprecated_in": "",
       "documentation": "Only one recipe variants file must be used in a feedstock.",
       "message": "Found two recipe configuration files, but you may only use one! You may use `conda_build_config.yaml` for both v0 and v1 recipes, while `variants.yaml` may only be used with v1 recipes.",
-      "examples": []
+      "examples": [],
+      "path": "recipe/(conda_build_config|variants).yaml"
     }
   ]
 }

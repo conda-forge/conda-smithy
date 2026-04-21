@@ -28,6 +28,7 @@ class MaintainerMissing(LinterMessage):
     identifier = "CF-001"
     message = 'Recipe maintainer ${team_or}"${maintainer}" does not exist'
     maintainer: str
+    path: str = "recipe/(meta|recipe).yaml"
 
     def _render_attributes(self):
         return {
@@ -56,6 +57,7 @@ class PackageToAvoid(LinterMessage):
     identifier = "CF-002"
     message = "${package_hint}"
     package_hint: str
+    path: str = "recipe/(meta|recipe).yaml"
 
 
 @dataclass(kw_only=True)
@@ -73,6 +75,7 @@ class NoVariantConfigs(LinterMessage):
     message = (
         "The feedstock has no `.ci_support` files and thus will not build any packages."
     )
+    path: str = ".ci_support/*.yaml"
 
 
 @dataclass(kw_only=True)
@@ -84,6 +87,7 @@ class NoEmptyVariantsFile(LinterMessage):
     kind = "lint"
     identifier = "CF-004"
     message = "The recipe should not have an empty `conda_build_config.yaml` file."
+    path: str = "recipe/conda_build_config.yaml"
 
 
 @dataclass(kw_only=True)
@@ -107,3 +111,4 @@ class NoCustomGHAWorkflows(LinterMessage):
         "for more information. If you didn't add any custom workflows, please "
         "consider rerendering your feedstock to remove deprecated workflows."
     )
+    path: str = ".github/workflows/*.y*ml"

@@ -531,6 +531,11 @@ def run_conda_forge_specific(
     hints,
     recipe_version: int = 0,
 ):
+    if recipe_version == 1:
+        recipe_fname = os.path.join(recipe_dir or "", "recipe.yaml")
+    else:
+        recipe_fname = os.path.join(recipe_dir or "", "meta.yaml")
+
     lints_to_skip = _get_feedstock_config(recipe_dir).get("linter", {}).get("skip", [])
 
     # Retrieve sections from meta
@@ -562,10 +567,14 @@ def run_conda_forge_specific(
     for maintainer in maintainers:
         if "/" in maintainer:
             if not _team_exists(maintainer):
-                lints.append(msg.cf.MaintainerMissing(maintainer=maintainer))
+                lints.append(
+                    msg.cf.MaintainerMissing(maintainer=maintainer, path=recipe_fname)
+                )
         else:
             if not _maintainer_exists(maintainer):
-                lints.append(msg.cf.MaintainerMissing(maintainer=maintainer))
+                lints.append(
+                    msg.cf.MaintainerMissing(maintainer=maintainer, path=recipe_fname)
+                )
 
     # 3: if the recipe dir is inside the example dir
     # moved to staged-recipes directly
@@ -603,9 +612,9 @@ def run_conda_forge_specific(
         dep = rq.split(" ")[0].strip()
         dep_hint = specific_hints.get(dep)
         if dep_hint:
-            msg.cf.PackageToAvoid(package_hint=dep_hint).append_if_absent(
-                hints, test="str"
-            )
+            msg.cf.PackageToAvoid(
+                package_hint=dep_hint, path=recipe_fname
+            ).append_if_absent(hints, test="str")
 
     # 6: Check if all listed maintainers have commented:
     # moved to staged recipes directly
@@ -667,11 +676,6 @@ def run_conda_forge_specific(
             hints,
         )
 
-    if recipe_version == 1:
-        recipe_fname = os.path.join(recipe_dir or "", "recipe.yaml")
-    else:
-        recipe_fname = os.path.join(recipe_dir or "", "meta.yaml")
-
     if os.path.exists(recipe_fname):
         with open(recipe_fname, encoding="utf-8") as fh:
             recipe_text = fh.read()
@@ -696,7 +700,7 @@ def run_conda_forge_specific(
         with open(cbc_pth, encoding="utf-8") as fh:
             data = fh.read()
         if not data or not data.strip():
-            lints.append(msg.cf.NoEmptyVariantsFile())
+            lints.append(msg.cf.NoEmptyVariantsFile(path=cbc_pth))
 
     # 14: incorrect configuration on osx for c_stdlib_version, MACOSX_SDK_VERSION etc.
     # get recipe config files (we don't care about the content, only if it's non-None)
@@ -714,7 +718,7 @@ def run_conda_forge_specific(
     if gha_workflows and (
         len(gha_workflows) > 1 or gha_workflows[0].name != "conda-build.yml"
     ):
-        lints.append(msg.cf.NoCustomGHAWorkflows())
+        lints.append(msg.cf.NoCustomGHAWorkflows(path=f"{gha_workflows}/*.yaml"))
 
 
 def _format_validation_msg(error: jsonschema.ValidationError):

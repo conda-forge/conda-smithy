@@ -5,7 +5,7 @@ If you want to add a lint or a hint, this is where you define the
 text, its identifier and the necessary variables.
 """
 
-from dataclasses import asdict
+from dataclasses import MISSING, asdict, fields
 from inspect import cleandoc
 from string import Template
 from typing import ClassVar, Literal, Self
@@ -44,6 +44,14 @@ class LinterMessage:
         Generates a dictionary of static information to make it easy to
         dump as JSON.
         """
+        default_path = next(
+            (
+                f.default
+                for f in fields(cls)
+                if f.name == "path" and f.default != MISSING
+            ),
+            "",
+        )
         return {
             "name": cls.__name__,
             "identifier": cls.identifier,
@@ -54,6 +62,7 @@ class LinterMessage:
             "documentation": cls.documentation(),
             "message": cls.message if isinstance(cls.message, str) else "(dynamic)",
             "examples": [str(example) for example in cls.examples()],
+            "path": default_path,
         }
 
     @classmethod

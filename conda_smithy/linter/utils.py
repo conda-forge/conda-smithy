@@ -232,7 +232,7 @@ load_linter_toml_metdata = load_linter_toml_metadata  # BW Compat
 @lru_cache(maxsize=1)
 def load_linter_toml_metdata_internal(time_salt):
     hints_toml_url = "https://raw.githubusercontent.com/conda-forge/conda-forge-pinning-feedstock/main/recipe/linter_hints/hints.toml"
-    hints_toml_req = requests.get(hints_toml_url)
+    hints_toml_req = requests.get(hints_toml_url, timeout=5)
     if hints_toml_req.status_code != 200:
         # too bad, but not important enough to throw an error;
         # linter will rerun on the next commit anyway

@@ -27,7 +27,6 @@ def _generate_message_modules():
 
 
 MESSAGE_MODULES = _generate_message_modules()
-
 IDENTIFIER_RE = re.compile(r"^(?P<prefix>[A-Z0-9]+)-(?P<number>\d{3})$")
 
 

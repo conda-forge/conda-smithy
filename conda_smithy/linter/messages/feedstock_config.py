@@ -12,7 +12,16 @@ CATEGORIES = {
 
 
 @dataclass(kw_only=True)
-class NoDuplicateKeys(LinterMessage):
+class _CondaForgeYmlMessage:
+    """
+    A message concerning conda-forge.yml files
+    """
+
+    path: str = "conda-forge.yml"
+
+
+@dataclass(kw_only=True)
+class NoDuplicateKeys(LinterMessage, _CondaForgeYmlMessage):
     """
     `conda-forge.yml` must not contain duplicate keys.
     """
