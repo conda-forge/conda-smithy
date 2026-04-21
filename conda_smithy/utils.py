@@ -358,7 +358,6 @@ def get_workflow_settings(
         if data[path_var] is None:
             continue
         win_path = PureWindowsPath(data[path_var])
-        print((os, win_path, win_path.drive))
         if os == "win":
             if not win_path.drive:
                 raise ValueError(
