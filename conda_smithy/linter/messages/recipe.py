@@ -814,12 +814,12 @@ class ScriptShellcheckReport(LinterMessage):
     @property
     def message(self):
         # All files successfully scanned with some issues.
-        joined_cmd = " ".join(self.command or [])
+        joined_cmd = " ".join(self.command or ["shellcheck"])
         output_lines = self.output_lines or []
         lines = [
             "Whenever possible fix all shellcheck findings "
-            f"('{joined_cmd}' recipe/*.sh -f diff | git apply' helps)",
-            *output_lines[:50],
+            f"('{joined_cmd} recipe/*.sh -f diff | git apply' helps)",
+            *output_lines[: self.max_lines],
         ]
         if len(output_lines) > self.max_lines:
             lines.append(
@@ -830,7 +830,27 @@ class ScriptShellcheckReport(LinterMessage):
 
     @classmethod
     def examples(cls):
-        return [cls()]
+        return [
+            cls(
+                command=[
+                    "shellcheck",
+                    "--enable=all",
+                    "--shell=bash",
+                    "--exclude=SC2154",
+                ],
+                output_lines=[
+                    "In ./recipe/build.sh line 337:",
+                    "ln -sf $PREFIX/$f $PWD/$f",
+                    "        ^-----^ SC2086 (info): Double quote to prevent globbing and word splitting.",
+                    "                ^-- SC2086 (info): Double quote to prevent globbing and word splitting.",
+                    "                ^--^ SC2086 (info): Double quote to prevent globbing and word splitting.",
+                    "                        ^-- SC2086 (info): Double quote to prevent globbing and word splitting.",
+                    "",
+                    "Did you mean:",
+                    '          ln -sf "$PREFIX"/"$f" "$PWD"/"$f"',
+                ],
+            )
+        ]
 
 
 @dataclass(kw_only=True)
