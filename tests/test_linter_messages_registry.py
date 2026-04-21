@@ -59,7 +59,11 @@ def test_linter_docs_up_to_date():
     repo_root = Path(__file__).parent.parent
     linter_messages_path = repo_root / "conda_smithy" / "data" / "linter-messages.json"
     on_disk = json.loads(linter_messages_path.read_text().strip())
-    assert generate_docs(write=False) == on_disk
+    generated = generate_docs(write=False)
+    assert generated["messages"] == sorted(
+        generated["messages"], key=lambda message: message["identifier"]
+    ), "Messages are not properly sorted by identifier!"
+    assert generated == on_disk
 
 
 def test_no_duplicate_identifiers():
