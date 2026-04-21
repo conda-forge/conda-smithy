@@ -1,7 +1,7 @@
 {
   "categories": {
     "CF": "conda-forge specific rules",
-    "FC": "Feedstock configuration in `conda-forge.yml`.",
+    "FC": "Feedstock configuration in `conda-forge.yml`",
     "R": "All recipe versions",
     "R0": "Recipe v0 (`meta.yaml`)",
     "R1": "Recipe v1 (`recipe.yaml`)",
