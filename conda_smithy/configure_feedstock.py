@@ -1891,7 +1891,10 @@ def _github_actions_specific_setup(jinja_env, forge_config, forge_dir, platform)
             forge_config["workflow_settings"], "github_actions", data["platform"]
         )
         fill_workflow_settings_defaults(
-            workflow_settings, "github_actions", data["platform"], data["gha_runs_on"]
+            workflow_settings,
+            "github_actions",
+            data["platform"],
+            "D:" if "windows-latest" in data["gha_runs_on"] else "C:",
         )
         data.update(workflow_settings)
         if data["store_build_artifacts"]:
@@ -2024,7 +2027,7 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
                 raise ValueError(f"Unknown build platform: '{data['build_platform']}'")
 
         workflow_settings = get_workflow_settings(forge_config["workflow_settings"], "azure", data["platform"])
-        fill_workflow_settings_defaults(workflow_settings, "azure", data["platform"], [])
+        fill_workflow_settings_defaults(workflow_settings, "azure", data["platform"], "D:" if data["platform"] == "win-64" else "C:")
         data.update(workflow_settings)
         config_rendered.update(workflow_settings)
         if config_rendered["store_build_artifacts"]:
