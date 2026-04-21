@@ -627,7 +627,7 @@
       "examples": [
         "Whenever possible fix all shellcheck findings ('' recipe/*.sh -f diff | git apply' helps)"
       ],
-      "path": "recipe/(meta|recipe).yaml"
+      "path": "recipe/*.sh"
     },
     {
       "name": "ScriptShellcheckFailure",
@@ -639,7 +639,7 @@
       "documentation": "This issue is raised when `shellcheck` is enabled but could not\nrun successfully (something went wrong).",
       "message": "There have been errors while scanning with shellcheck.",
       "examples": [],
-      "path": "recipe/(meta|recipe).yaml"
+      "path": "recipe/*.sh"
     },
     {
       "name": "LicenseSPDX",

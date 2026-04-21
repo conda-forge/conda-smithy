@@ -796,7 +796,7 @@ class SuggestNoarch(LinterMessage, _AnyRecipeMessage):
 
 
 @dataclass(kw_only=True)
-class ScriptShellcheckReport(LinterMessage, _AnyRecipeMessage):
+class ScriptShellcheckReport(LinterMessage):
     """
     This issue is raised when `shellcheck` is enabled and detects problems
     in your build `.sh` scripts.
@@ -809,6 +809,7 @@ class ScriptShellcheckReport(LinterMessage, _AnyRecipeMessage):
     max_lines: ClassVar[int] = 50
     command: list[str] | None = None
     output_lines: list[str] | None = None
+    path: str = "recipe/*.sh"
 
     @property
     def message(self):
@@ -833,7 +834,7 @@ class ScriptShellcheckReport(LinterMessage, _AnyRecipeMessage):
 
 
 @dataclass(kw_only=True)
-class ScriptShellcheckFailure(LinterMessage, _AnyRecipeMessage):
+class ScriptShellcheckFailure(LinterMessage):
     """
     This issue is raised when `shellcheck` is enabled but could not
     run successfully (something went wrong).
@@ -842,6 +843,7 @@ class ScriptShellcheckFailure(LinterMessage, _AnyRecipeMessage):
     kind = "hint"
     identifier = "R-043"
     message = "There have been errors while scanning with shellcheck."
+    path: str = "recipe/*.sh"
 
 
 @dataclass(kw_only=True)
