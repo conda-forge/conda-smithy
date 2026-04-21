@@ -3065,3 +3065,35 @@ def test_tools_build_paths_gha_override_wrong(
             forge_config=config,
             forge_dir=forge_dir,
         )
+
+
+@pytest.mark.parametrize(
+    "old_var,new_var",
+    [("MINIFORGE_HOME", "tools_install_dir"), ("CONDA_BLD_DIR", "build_workspace_dir")],
+)
+def test_tools_build_paths_duplicate_vars(
+    py_recipe, jinja_env, old_var: str, new_var: str
+):
+    forge_dir = py_recipe.recipe
+    forge_yml = Path(forge_dir, "conda-forge.yml")
+
+    with open(forge_yml, "a") as f:
+        f.write(textwrap.dedent(f"""\
+            azure:
+              settings_win:
+                variables:
+                  {old_var}: C:\\foo
+            provider:
+              win_64: azure
+            workflow_settings:
+              {new_var}:
+                - os: win
+                  value: C:\\foo
+        """))
+
+    with pytest.raises(
+        ValueError,
+        match=rf"`workflow_settings\.{new_var}` and `azure\.settings_win\."
+        rf"variables\.{old_var}` are mutually exclusive",
+    ):
+        configure_feedstock._load_forge_config(forge_dir, "recipe/default_config.yaml")
