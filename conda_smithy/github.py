@@ -478,7 +478,9 @@ def configure_github_team(
             # who wants to be removed from the feedstock delete their
             # entry in the ID registry in addition to remvoing their
             # old username from the recipe. Instead of either of those,
-            # for now we simply remove everyone. - MRB
+            # for now we simply remove everyone. This matches
+            # the current conda-forge default behavior anyways
+            # so is fine. - MRB
             # COMMENTED CODE
             # # if we could not fetch the ID for a user, then skip doing anything
             # if cached_username2id[old_maintainer] is None:
