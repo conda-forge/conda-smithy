@@ -9,13 +9,13 @@ Authors are sorted by number of commits.
 * Christopher J. Wright
 * Anthony Scopatz
 * Phil Elson
+* Michał Górny
 * Wolf Vollprecht
 * Uwe L. Korn
 * pre-commit-ci[bot]
 * Filipe Fernandes
 * Min RK
 * Dougal J. Sutherland
-* Michał Górny
 * John Kirkham
 * Amit Kumar
 * Marcel Bargull
@@ -110,6 +110,7 @@ Authors are sorted by number of commits.
 * Guillaume Fraux
 * Lucas Colley
 * Jakov Smolić
+* Niklas Mertsch
 * lorenz
 * Tom Augspurger
 * Ryan May
@@ -148,3 +149,5 @@ Authors are sorted by number of commits.
 * Dan Yeaw
 * Mikhail Ryazanov
 * Filippo Luca Ferretti
+* Christoph Deil
+* Hofer-Julian

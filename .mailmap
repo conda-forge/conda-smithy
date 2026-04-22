@@ -19,6 +19,7 @@ Christopher J. Wright <cjwright4242gh@gmail.com> christopher <cjwright4242@gmail
 Christopher J. Wright <cjwright4242gh@gmail.com> Christopher J. 'CJ' Wright <cjwright4242@gmail.com>
 Anthony Scopatz <scopatz@gmail.com>
 Phil Elson <pelson.pub@gmail.com> pelson <pelson.pub@gmail.com>
+Michał Górny <mgorny@gentoo.org> Michał Górny <mgorny@quansight.com>
 Wolf Vollprecht <w.vollprecht@gmail.com>
 Uwe L. Korn <uwe.korn@quantco.com> Uwe L. Korn <xhochy@users.noreply.github.com>
 pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>
@@ -26,7 +27,6 @@ Filipe Fernandes <ocefpaf@gmail.com> Filipe <ocefpaf@gmail.com>
 Filipe Fernandes <ocefpaf@gmail.com> ocefpaf <ocefpaf@gmail.com>
 Min RK <benjaminrk@gmail.com>
 Dougal J. Sutherland <dougal@gmail.com>
-Michał Górny <mgorny@gentoo.org> Michał Górny <mgorny@quansight.com>
 John Kirkham <jakirkham@gmail.com> John Kirkham <kirkhamj@janelia.hhmi.org>
 John Kirkham <jakirkham@gmail.com> jakirkham <kirkhamj@janelia.hhmi.org>
 Amit Kumar <dtu.amit@gmail.com>
@@ -128,6 +128,7 @@ Ken Odegard <kodegard@anaconda.com>
 Guillaume Fraux <luthaf@luthaf.fr> Guillaume Fraux <guillaume.fraux@epfl.ch>
 Lucas Colley <lucas.colley8@gmail.com>
 Jakov Smolić <jsmolic@quansight.com> Jakov Smolić <jsmolic@gentoo.org>
+Niklas Mertsch <49114330+NMertsch@users.noreply.github.com>
 lorenz <looooo@users.noreply.github.com>
 Tom Augspurger <tom.augspurger88@gmail.com>
 Ryan May <rmay31@gmail.com>
@@ -166,3 +167,5 @@ James Myatt <james@jamesmyatt.co.uk>
 Dan Yeaw <dan@yeaw.me>
 Mikhail Ryazanov <MikhailRyazanov@users.noreply.github.com>
 Filippo Luca Ferretti <102977828+flferretti@users.noreply.github.com>
+Christoph Deil <Deil.Christoph@gmail.com>
+Hofer-Julian <30049909+Hofer-Julian@users.noreply.github.com>
