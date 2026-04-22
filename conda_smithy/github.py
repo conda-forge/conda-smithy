@@ -469,21 +469,32 @@ def configure_github_team(
     # Remove any maintainers that need to be removed (unlikely here).
     if remove:
         for old_maintainer in current_maintainers - maintainers:
-            # if we could not fetch the ID for a user, then skip doing anything
-            if cached_username2id[old_maintainer] is None:
-                continue
+            # FIXME: skipping this check for now. The issue is that we
+            # cannot distinguish between maintainers on the team
+            # currently who want to be removed (and have also changed
+            # their username) vs the same situation where a person does
+            # not want to be removed. The solution is to either update
+            # the recipe with the username change or have the maintainer
+            # who wants to be removed from the feedstock delete their
+            # entry in the ID registry in addition to remvoing their
+            # old username from the recipe. Instead of either of those,
+            # for now we simply remove everyone. - MRB
+            # COMMENTED CODE
+            # # if we could not fetch the ID for a user, then skip doing anything
+            # if cached_username2id[old_maintainer] is None:
+            #     continue
 
-            # we do not remove maintainers whose ID is in the registry
-            # but username has changed. These are legit members who have
-            # changed their usernames.
-            old_maintainer_id = cached_username2id[old_maintainer]
-            skip_remove = False
-            for username, userid in curr_maintainer2id.items():
-                if username != old_maintainer and userid == old_maintainer_id:
-                    skip_remove = True
-
-            if skip_remove:
-                continue
+            # # we do not remove maintainers whose ID is in the registry
+            # # but username has changed. These are legit members who have
+            # # changed their usernames.
+            # old_maintainer_id = cached_username2id[old_maintainer]
+            # skip_remove = False
+            # for username, userid in curr_maintainer2id.items():
+            #     if username != old_maintainer and userid == old_maintainer_id:
+            #         skip_remove = True
+            # if skip_remove:
+            #     continue
+            # END OF COMMENTED CODE
 
             # we get to here only if a maintainer being removed has the
             # same username and ID as it was recorded in the registry
