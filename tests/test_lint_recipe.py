@@ -749,7 +749,7 @@ class TestLinter(unittest.TestCase):
         self.assertNotIn(expected_message, lints)
 
         lints, hints = linter.lintify_meta_yaml(
-            {"outputs": [{"name": "foo"}]}, recipe_version=1
+            {"outputs": [{"package": {"name": "foo"}}]}, recipe_version=1
         )
         self.assertIn(expected_message, lints)
 
@@ -757,7 +757,7 @@ class TestLinter(unittest.TestCase):
             {
                 "outputs": [
                     {
-                        "name": "foo",
+                        "package": {"name": "foo"},
                         "tests": [{"python": {"imports": ["sys"]}}],
                     }
                 ]
@@ -769,9 +769,9 @@ class TestLinter(unittest.TestCase):
         lints, hints = linter.lintify_meta_yaml(
             {
                 "outputs": [
-                    {"name": "foo", "tests": {"script": "sys"}},
+                    {"package": {"name": "foo"}, "tests": {"script": "sys"}},
                     {
-                        "name": "foobar",
+                        "package": {"name": "foobar"},
                     },
                 ]
             },
