@@ -4,6 +4,19 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.61.1
+====================
+
+**Fixed:**
+
+* Always remove maintainers that do not match even if we can detect a user rename. (#2531)
+
+**Authors:**
+
+* Matthew R. Becker
+
+
+
 v3.61.0
 ====================
 
