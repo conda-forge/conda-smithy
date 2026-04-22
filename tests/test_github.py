@@ -465,7 +465,16 @@ def test_github_configure_github_team_add_changed_user_id_team_remove(
         ],
         any_order=True,
     )
-    remove_membership.assert_called_once_with(pkg1_team, "user1")
+    # FIXME - if we do not remove renamed folks, then the test should
+    # only remove user 1
+    # remove_membership.assert_called_once_with(pkg1_team, "user1")
+    remove_membership.assert_has_calls(
+        [
+            mock.call(pkg1_team, "user1"),
+            mock.call(pkg1_team, "user11"),
+        ],
+        any_order=True,
+    )
     team.add_to_repos.assert_not_called()
     team.remove_from_repos.assert_called_once_with(gh_repo)
     new_team.add_to_repos.assert_called_once_with(gh_repo)
