@@ -1890,17 +1890,16 @@ def _github_actions_specific_setup(jinja_env, forge_config, forge_dir, platform)
         workflow_settings = get_workflow_settings(
             forge_config["workflow_settings"], "github_actions", data["platform"]
         )
+        on_hosted_runner = {
+            "windows-latest",
+            "windows-2022",
+            "windows-2025",
+        }.intersection(data["gha_runs_on"])
         fill_workflow_settings_defaults(
             workflow_settings,
             "github_actions",
             data["platform"],
-            (
-                "D:"
-                if {"windows-latest", "windows-2022", "windows-2025"}.intersection(
-                    data["gha_runs_on"]
-                )
-                else "C:"
-            ),
+            "D:" if on_hosted_runner else "C:",
         )
         data.update(workflow_settings)
         if data["store_build_artifacts"]:
