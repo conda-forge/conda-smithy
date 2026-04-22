@@ -476,7 +476,7 @@ def configure_github_team(
             # not want to be removed. The solution is to either update
             # the recipe with the username change or have the maintainer
             # who wants to be removed from the feedstock delete their
-            # entry in the ID registry in addition to remvoing their
+            # entry in the ID registry in addition to removing their
             # old username from the recipe. Instead of either of those,
             # for now we simply remove everyone. This matches
             # the current conda-forge default behavior anyways
