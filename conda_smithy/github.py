@@ -1,3 +1,7 @@
+import base64
+import copy
+import json
+import logging
 import os
 from random import choice
 
@@ -19,6 +23,8 @@ from conda_smithy.utils import (
     get_feedstock_name_from_meta,
 )
 
+logger = logging.getLogger(__name__)
+
 
 def gh_token():
     try:
@@ -36,6 +42,76 @@ def gh_token():
         )
         raise RuntimeError(msg)
     return token
+
+
+def github_client(token: str | None = None) -> github.Github:
+    return Github(auth=github.Auth.Token(token or gh_token()))
+
+
+def _test_and_raise_besides_file_not_exists(e: github.GithubException):
+    if isinstance(e, github.UnknownObjectException):
+        return
+    if e.status == 404 and "No object found" in e.data["message"]:
+        return
+    raise e
+
+
+def _get_path_blob_sha_and_content(
+    path: str, repo: github.Repository.Repository
+) -> tuple[str | None, str | None]:
+    try:
+        cnt = repo.get_contents(path)
+        # I was using the decoded_content attribute here, but it seems that
+        # every once and a while github does not send the encoding correctly
+        # so I switched to doing the decoding by hand.
+        data = base64.b64decode(cnt.content.encode("utf-8")).decode("utf-8")
+        return cnt.sha, data
+    except github.GithubException as e:
+        _test_and_raise_besides_file_not_exists(e)
+        return None, None
+
+
+def pull_file_via_gh_api(repo: github.Repository.Repository, pth: str) -> str | None:
+    """Pull a file from a repo via the GitHub API.
+
+    Parameters
+    ----------
+    repo
+        The repo as a pygithub object.
+    pth
+        The path to the file.
+
+    Returns
+    -------
+    data
+        The file contents as a string. Returns `None` if file does not exist.
+    """
+    _, cnt = _get_path_blob_sha_and_content(pth, repo)
+    return cnt
+
+
+def push_file_via_gh_api(
+    repo: github.Repository.Repository, pth: str, data: str, msg: str
+) -> None:
+    """Push a file to a repo via the GitHub API.
+
+    Parameters
+    ----------
+    repo
+        The repo as a pygithub object.
+    pth
+        The path of the file in the repo.
+    data
+        The file data as a utf-8 string.
+    msg
+        The commit message.
+    """
+    sha, cnt = _get_path_blob_sha_and_content(pth, repo)
+    if sha is None:
+        repo.create_file(pth, msg, data)
+    else:
+        if cnt != data:
+            repo.update_file(pth, msg, data, sha)
 
 
 def create_team(org, name, description, repo_names=[]):
@@ -159,7 +235,7 @@ def create_github_repo(args):
 
     feedstock_name = get_feedstock_name_from_meta(metadata)
 
-    gh = Github(token)
+    gh = github_client(token=token)
     user_or_org = None
     is_conda_forge = False
     if args.user is not None:
@@ -214,7 +290,9 @@ def create_github_repo(args):
 
     if args.add_teams:
         if isinstance(user_or_org, Organization):
-            configure_github_team(metadata, gh_repo, user_or_org, feedstock_name)
+            configure_github_team(
+                metadata, gh_repo, user_or_org, feedstock_name, remove=True, gh=gh
+            )
 
 
 def accept_all_repository_invitations(gh):
@@ -235,8 +313,13 @@ def remove_from_project(gh, org, project):
     repo.remove_from_collaborators(user.login)
 
 
-def configure_github_team(meta, gh_repo, org, feedstock_name, remove=True):
-    # Add a team for this repo and add the maintainers to it.
+def configure_github_team(
+    meta, gh_repo, org, feedstock_name, remove=True, gh: Github | None = None
+):
+    """Add a team for this repo and add/remove the maintainers to it."""
+
+    gh = gh or github_client()
+
     superlative = [
         "awesome",
         "slick",
@@ -259,10 +342,18 @@ def configure_github_team(meta, gh_repo, org, feedstock_name, remove=True):
         "smashing",
     ]
 
+    # get maintainers in the recipe
     maintainers = set(meta.meta.get("extra", {}).get("recipe-maintainers", []))
     maintainers = {maintainer.lower() for maintainer in maintainers}
     maintainer_teams = {m for m in maintainers if "/" in m}
     maintainers = {m for m in maintainers if "/" not in m}
+
+    # get current maintainer to durable ID mapping in feedstock
+    recipe_maintainers_file = ".recipe_maintainers.json"
+    curr_maintainer2id = json.loads(
+        pull_file_via_gh_api(gh_repo, recipe_maintainers_file) or "{}"
+    )
+    new_maintainer2id = copy.deepcopy(curr_maintainer2id)
 
     # Try to get team or create it if it doesn't exist.
     team_name = feedstock_name
@@ -299,19 +390,125 @@ def configure_github_team(meta, gh_repo, org, feedstock_name, remove=True):
     all_members_team = get_cached_team(org, "all-members", description)
     new_org_members = set()
 
+    # we cache this mapping once so that it consistently used throughout
+    # the function
+    cached_username2id = {}
+    for uname in (current_maintainers - maintainers) | (
+        maintainers - current_maintainers
+    ):
+        try:
+            uid = gh.get_user(uname).id
+        except Exception:
+            uid = None
+            logger.warning(
+                "Could not get user ID for user '%s'! Their feedstock permissions will not be changed.",
+                uname,
+            )
+
+        cached_username2id[uname] = uid
+
+    # some notes - MRB
+    # The definitions of the variables is as follows
+    #
+    #  - maintainers: the set of usernames listed in the recipe/meta.yaml
+    #  - current_maintainers: the set of usernames corresponding to the people
+    #    who are a part of the github feedstock team
+    #  - new_maintainer: a username in the recipe/meta.yaml, but not in the set
+    #    of usernames corresponding to the unique people on the github feedstock
+    #    team.
+    #
+    # The correct set of usernames that should be in the github feedstock team are
+    # the usernames that both:
+    #
+    #  - appear in the recipe/meta.yaml
+    #  - map to the same unique userid as it was recorded in the curr_maintainer2id
+    #    mapping
+    #
+    # The code below goes through each new_maintainer (i.e. a username that is in the
+    # recipe/meta.yaml, but not in the github team), and checks that it maps
+    # to the correct userid as previously recorded in curr_maintainer2id (if one was).
+    # If it finds a mismatch, the username must have
+    # been mapped to a new userid and thus we do NOT add this person to the github team.
+    # If the username is not found in the mapping, we add it to the mapping and add the
+    # person to the team.
+    # We do not need to check the ID condition for the users in current_maintainers
+    # since github ensures that username changes do not escalate permissions itself.
+
     # Add only the new maintainers to the team.
     # Also add the new maintainers to all-members if not already included.
     for new_maintainer in maintainers - current_maintainers:
+        # if we could not fetch the ID for a user, then skip doing anything
+        if cached_username2id[new_maintainer] is None:
+            continue
+
+        # if a new maintainer is in the current mapping of logins to IDs and the ID
+        # does not match, then we do not add them to the repo or conda-forge.
+        # MRB: I am not relying on `.get` with a default to None here to ensure that if we happen
+        # to somehow write an entry with the ID as null in json, we do not add users.
+        if new_maintainer in curr_maintainer2id:
+            new_maintainer_id = cached_username2id[new_maintainer]
+            if curr_maintainer2id[new_maintainer] != new_maintainer_id:
+                logger.warning(
+                    "Did not add user '%s' since new id '%s' does not match current id '%s'!",
+                    new_maintainer,
+                    new_maintainer_id,
+                    curr_maintainer2id[new_maintainer],
+                )
+                continue
+
         add_membership(fs_team, new_maintainer)
 
         if not has_in_members(all_members_team, new_maintainer):
             add_membership(all_members_team, new_maintainer)
             new_org_members.add(new_maintainer)
 
+        # if we have not recorded the new maintainer's ID yet, we do that now
+        if new_maintainer not in new_maintainer2id:
+            new_maintainer2id[new_maintainer] = gh.get_user(new_maintainer).id
+
     # Remove any maintainers that need to be removed (unlikely here).
     if remove:
         for old_maintainer in current_maintainers - maintainers:
+            # FIXME: skipping this check for now. The issue is that we
+            # cannot distinguish between maintainers on the team
+            # currently who want to be removed (and have also changed
+            # their username) vs the same situation where a person does
+            # not want to be removed. The solution is to either update
+            # the recipe with the username change or have the maintainer
+            # who wants to be removed from the feedstock delete their
+            # entry in the ID registry in addition to removing their
+            # old username from the recipe. Instead of either of those,
+            # for now we simply remove everyone. This matches
+            # the current conda-forge default behavior anyways
+            # so is fine. - MRB
+            # COMMENTED CODE
+            # # if we could not fetch the ID for a user, then skip doing anything
+            # if cached_username2id[old_maintainer] is None:
+            #     continue
+
+            # # we do not remove maintainers whose ID is in the registry
+            # # but username has changed. These are legit members who have
+            # # changed their usernames.
+            # old_maintainer_id = cached_username2id[old_maintainer]
+            # skip_remove = False
+            # for username, userid in curr_maintainer2id.items():
+            #     if username != old_maintainer and userid == old_maintainer_id:
+            #         skip_remove = True
+            # if skip_remove:
+            #     continue
+            # END OF COMMENTED CODE
+
+            # we get to here only if a maintainer being removed has the
+            # same username and ID as it was recorded in the registry
+            # and they are no longer in the list in the recipe
             remove_membership(fs_team, old_maintainer)
+
+            # if someone leaves, we remove their ID.
+            # that way if the username gets mapped to a new ID later,
+            # we can add that new person.
+            # MRB: this removal is safe since this username is no longer
+            # in the recipe/meta.yaml
+            new_maintainer2id.pop(old_maintainer, None)
 
     # Add any new maintainer teams
     maintainer_teams = {
@@ -335,6 +532,16 @@ def configure_github_team(meta, gh_repo, org, feedstock_name, remove=True):
                 continue
             team.remove_from_repos(gh_repo)
 
+    # finally we push the maintainer to ID mapping if it is changed
+    if new_maintainer2id != curr_maintainer2id:
+        changed_folks = sorted(set(new_maintainer2id) - set(curr_maintainer2id))
+        push_file_via_gh_api(
+            gh_repo,
+            recipe_maintainers_file,
+            json.dumps(new_maintainer2id, sort_keys=True, indent=2),
+            f"[ci skip] [skip ci] [cf admin skip] ***NO_CI*** add/remove IDs for maintainers {changed_folks!r}",
+        )
+
     return maintainers, current_maintainers, new_org_members
 
 
@@ -344,7 +551,7 @@ def configure_github_app(
     app_slug_or_installation_id: str | int = None,
     remove: bool = False,
 ) -> None:
-    gh = Github(auth=github.Auth.Token(gh_token()))
+    gh = github_client()
     org: github.Organization = gh.get_organization(org)
     repo: github.Repository = org.get_repo(repo)
     inst_id: int = 0

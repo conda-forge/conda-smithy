@@ -393,7 +393,7 @@
   github: shadowwalkersb
 - name: Matthew R. Becker
   email: becker.mr@gmail.com
-  num_commits: 550
+  num_commits: 557
   first_commit: 2020-01-07 17:44:33
   github: beckermr
   alternate_emails:
@@ -693,7 +693,7 @@
   email: mgorny@gentoo.org
   alternate_emails:
   - mgorny@quansight.com
-  num_commits: 36
+  num_commits: 90
   first_commit: 2024-11-06 09:06:27
   github: mgorny
 - name: Matt Chan
@@ -774,3 +774,15 @@
   - 160766756+aman-coder03@users.noreply.github.com
   num_commits: 11
   first_commit: 2025-12-11 18:38:02
+- name: Niklas Mertsch
+  email: 49114330+NMertsch@users.noreply.github.com
+  num_commits: 2
+  first_commit: 2026-04-14 10:53:41
+- name: Christoph Deil
+  email: Deil.Christoph@gmail.com
+  num_commits: 1
+  first_commit: 2026-04-13 06:28:46
+- name: Hofer-Julian
+  email: 30049909+Hofer-Julian@users.noreply.github.com
+  num_commits: 1
+  first_commit: 2026-04-15 10:02:31

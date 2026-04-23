@@ -4,7 +4,7 @@
 
 **Changed:**
 
-* Update templates to use ``CONDA_BLD_PATH`` for build directory consistently. (#2528)
+* <news item>
 
 **Deprecated:**
 
@@ -16,7 +16,7 @@
 
 **Fixed:**
 
-* <news item>
+* Add ``.recipe_maintainers.json`` file to the ignore in the ``.gitignore``. (#2533)
 
 **Security:**
 
