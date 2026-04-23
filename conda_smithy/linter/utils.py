@@ -197,14 +197,14 @@ def jinja_lines(lines):
             yield line, i
 
 
-def _lint_recipe_name(recipe_name: str) -> Optional[str]:
+def _lint_recipe_name(recipe_name: str) -> Optional[LinterMessage]:
     if re.match(r"^[a-z0-9_\-.]+$", recipe_name) is None:
         return msg.r.InvalidPackageName()
 
     return None
 
 
-def _lint_package_version(version: Optional[str]) -> Optional[str]:
+def _lint_package_version(version: Optional[str]) -> Optional[LinterMessage]:
     if version is None:
         return msg.r.MissingVersion()
 

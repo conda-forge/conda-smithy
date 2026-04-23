@@ -976,7 +976,7 @@ def lint_floats_quoted(
     meta: dict,
     lints: list[LinterMessage],
     recipe_version: int,
-) -> None:  # PENDING
+) -> None:
     def process_recursively(key: str, value: Any) -> None:
         if isinstance(value, dict):
             for subkey, subvalue in value.items():
