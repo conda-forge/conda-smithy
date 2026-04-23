@@ -13,12 +13,18 @@ from typing import ClassVar, Literal, Self
 
 class LinterMessage:
     """
-    A templated message with an identifier.
+    A (templated) message with an identifier.
 
-    The error message shown to the user by conda-smithy lint is contained in the
-    `message` attribute.
+    Create a dataclass(kw_only=True) subclass of this class to create your
+    own message. The name of the subclass MUST be sufficiently informative
+    and UNIQUE across all the messages in the `.messages` subpackage. It will
+    be used as a way to refer to the message in settings like "ignore this hint type".
+    You MUST always provide `identifier`, `message`, `kind`, and `added_in`.
+    Refer to their attribute docstrings for more details.
 
-    The docstring should contain longer-form details that will be used
+    Please also provide an `examples` classmethod if the message contains variables.
+
+    The subclass docstring itself should contain longer-form details that will be used
     to auto-generate documentation pages. This docstring should explain:
 
     - What's wrong
@@ -26,17 +32,31 @@ class LinterMessage:
     - How to fix it (with examples)
     """
 
-    #: Shorthand to identify a given error, using two parts: category-instance; e.g. E-100
+    #: Shorthand to identify a given error, using two parts: category-number; e.g. E-100
+    #: The category MUST conform to the regex [A-Z]+. The number MUST be a positive integer
+    #: part of the category series starting at 000, and leaving no gaps in the sequence.
+    #: The resulting identifier MUST be UNIQUE across all the messages
+    #: in the `.messages` subpackage.
     identifier: ClassVar[str]
-    #: The templated message that will be rendered when converted to string. Subclass with
-    #: a property if dynamic behavior is required.
+    #: The message that will be rendered when converted to string. It can be a static string,
+    #  or a dynamic one supported by instance attributes refered to with the `${...}` syntax.
+    # Subclass with a property if dynamic behavior is required.
     message: ClassVar[str]
     #: Whether the problem is a lint (error) or a hint (warning)
     kind: ClassVar[Literal["lint", "hint"]]
-    #: conda-smithy version where the lint introduced
+    #: conda-smithy version where the message introduced
     added_in: ClassVar[str] = "<3.56"
-    #: conda-smithy version where the lint was deprecated
+    #: conda-smithy version where the message was deprecated
     deprecated_in: ClassVar[str] = ""
+
+    @classmethod
+    def examples(cls) -> list[Self]:
+        """
+        Provides one or more example instances of the error message. Used in documentation.
+        Define at least one if `message` needs to be rendered with additional attributes.
+        Not needed for static `message` strings.
+        """
+        return []
 
     @classmethod
     def dump(cls) -> dict[str, str | list[str]]:
@@ -91,15 +111,6 @@ class LinterMessage:
         Subclass to provide dynamic fields.
         """
         return {}
-
-    @classmethod
-    def examples(cls) -> list[Self]:
-        """
-        Provides one or more example instances of the error message. Used in documentation.
-        Define at least one if `message` needs to be rendered with additional attributes.
-        Not needed for static `message` strings.
-        """
-        return []
 
     def _render(self) -> str:
         """
