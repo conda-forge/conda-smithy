@@ -3,6 +3,7 @@ import copy
 import json
 import logging
 import os
+import re
 from random import choice
 
 import github
@@ -24,6 +25,7 @@ from conda_smithy.utils import (
 )
 
 logger = logging.getLogger(__name__)
+SLUGIFY_RE = re.compile(r"[^a-zA-Z0-9]+")
 
 
 def gh_token():
@@ -313,6 +315,26 @@ def remove_from_project(gh, org, project):
     repo.remove_from_collaborators(user.login)
 
 
+def _guess_team_slug(team_name):
+    """Guess a team's slug.
+
+    Github does the following to team names to make slugs:
+
+      - replaces any special characters or spaces with "-"
+      - replaces any characters not in a-z or 0-9 with their
+        closest lower-case ascii equivalent (e.g., A -> a,
+        e with an accent -> e, etc.)
+      - if the resulting team slug is not unique, it may append
+        a number to the team
+
+    This function guesses the most likely team slug for a team
+    name. If you get the team from the API with this slug, you
+    MUST check the that the team you got has the same name as the
+    name you expected.
+    """
+    return SLUGIFY_RE.sub("-", team_name.lower()).strip("-").lstrip("-")
+
+
 def configure_github_team(
     meta, gh_repo, org, feedstock_name, remove=True, gh: Github | None = None
 ):
@@ -362,22 +384,50 @@ def configure_github_team(
         (team for team in current_maintainer_teams if team.name == team_name),
         None,
     )
+    fs_team = None
     current_maintainers = set()
 
-    try:
-        org_fs_team = org.get_team_by_slug(team_name)
-    except Exception:
-        org_fs_team = None
+    if repo_fs_team:
+        fs_team = repo_fs_team
 
-    if not org_fs_team:
-        # team does not exist so make it
-        fs_team = create_team(
-            org,
-            team_name,
-            f"The {choice(superlative)} {team_name} contributors!",
+    if fs_team is None:
+        # NEVER search for a github team by guessing its slug, or if you do,
+        # check that the team name matches after you get it.
+        guessed_slug = _guess_team_slug(team_name)
+        try:
+            fs_team = org.get_team_by_slug(guessed_slug)
+            assert fs_team.name == team_name
+        except Exception:
+            fs_team = None
+
+    team_desc = f"The {choice(superlative)} {team_name} contributors!"
+
+    if fs_team is None:
+        try:
+            # first try to make it since a search of the org will be expensive
+            fs_team = create_team(
+                org,
+                team_name,
+                team_desc,
+            )
+        except Exception:
+            fs_team = None
+
+    if fs_team is None:
+        try:
+            # try a full search of the org or the local cache
+            fs_team = get_cached_team(
+                org,
+                team_name,
+                description=team_desc,
+            )
+        except Exception:
+            fs_team = None
+
+    if fs_team is None:
+        raise RuntimeError(
+            f"Could not find feedstock team for feedstock {feedstock_name}!"
         )
-    else:
-        fs_team = org_fs_team
 
     if not repo_fs_team:
         # team is not added to repo so do that
