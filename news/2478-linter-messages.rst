@@ -4,7 +4,7 @@
 
 **Changed:**
 
-* Refactor linter messages as self-documenting dataclasses with automated Markdown outputs. (#2478)
+* Refactor linter messages as self-documenting dataclasses with automated JSON outputs. (#2478)
 
 **Deprecated:**
 
