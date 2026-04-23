@@ -2182,7 +2182,8 @@ def azure_build_id_from_public(forge_config):
             org=forge_config["azure"]["user_or_org"],
             project_name=forge_config["azure"]["project_name"],
             repo=forge_config["github"]["repo_name"],
-        )
+        ),
+        timeout=5,
     )
     resp.raise_for_status()
     build_def = resp.json()["value"][0]
