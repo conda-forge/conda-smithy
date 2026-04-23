@@ -18,7 +18,6 @@ import pytest
 import conda_smithy.lint_recipe as linter
 from conda_smithy.linter import hints
 from conda_smithy.linter.conda_recipe_v1_linter import lint_recipe_tests
-from conda_smithy.linter.messages.base import LinterMessage
 from conda_smithy.linter.utils import (
     CONDA_BUILD_TOOL,
     RATTLER_BUILD_TOOL,
