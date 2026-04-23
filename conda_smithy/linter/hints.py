@@ -7,7 +7,7 @@ import subprocess
 import sys
 from collections.abc import Mapping
 from glob import glob
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from conda_smithy.linter import conda_recipe_v1_linter
 from conda_smithy.linter import messages as msg
@@ -20,9 +20,6 @@ from conda_smithy.linter.utils import (
 )
 from conda_smithy.utils import get_yaml
 
-if TYPE_CHECKING:
-    from conda_smithy.linter.messages.base import LinterMessage
-
 
 def hint_pip_usage(build_section, hints):
     if "script" in build_section:
@@ -31,11 +28,11 @@ def hint_pip_usage(build_section, hints):
             scripts = [scripts]
         for script in scripts:
             if "python setup.py install" in script:
-                hints.append(msg.r.UsePip())
+                hints.append(msg.r.UsePip().as_string())
 
 
 def hint_sources_should_not_mention_pypi_io_but_pypi_org(
-    sources_section: list[dict[str, Any]], hints: list[LinterMessage]
+    sources_section: list[dict[str, Any]], hints: list[str]
 ):
     """
     Grayskull and conda-forge default recipe used to have pypi.io as a default,
@@ -47,7 +44,7 @@ def hint_sources_should_not_mention_pypi_io_but_pypi_org(
         source = source_section.get("url", "") or ""
         sources = [source] if isinstance(source, str) else source
         if any(s.startswith("https://pypi.io/") for s in sources):
-            hints.append(msg.r.UsePyPIOrg())
+            hints.append(msg.r.UsePyPIOrg().as_string())
 
 
 def hint_suggest_noarch(
@@ -92,7 +89,7 @@ def hint_suggest_noarch(
                             no_arch_possible = False
                             break
                 if no_arch_possible:
-                    hints.append(msg.r.SuggestNoarch())
+                    hints.append(msg.r.SuggestNoarch().as_string())
 
 
 def hint_shellcheck_usage(recipe_dir, hints):
@@ -139,11 +136,11 @@ def hint_shellcheck_usage(recipe_dir, hints):
                     msg.r.ScriptShellcheckReport(
                         command=cmd,
                         output_lines=findings,
-                    )
+                    ).as_string()
                 )
             elif p.returncode != 0:
                 # Something went wrong.
-                hints.append(msg.r.ScriptShellcheckFailure())
+                hints.append(msg.r.ScriptShellcheckFailure().as_string())
 
 
 def hint_check_spdx(about_section, hints):
@@ -185,9 +182,9 @@ def hint_check_spdx(about_section, hints):
         expected_exceptions = f.readlines()
         expected_exceptions = {li.strip() for li in expected_exceptions}
     if set(filtered_licenses) - expected_licenses:
-        hints.append(msg.r.LicenseSPDX())
+        hints.append(msg.r.LicenseSPDX().as_string())
     if set(parsed_exceptions) - expected_exceptions:
-        hints.append(msg.r.InvalidLicenseException())
+        hints.append(msg.r.InvalidLicenseException().as_string())
 
 
 def hint_pip_no_build_backend(host_or_build_section, package_name, hints):
@@ -220,7 +217,9 @@ def hint_pip_no_build_backend(host_or_build_section, package_name, hints):
                 break
 
         if not found_backend:
-            hints.append(msg.r.PythonBuildBackendHost(package_name=package_name))
+            hints.append(
+                msg.r.PythonBuildBackendHost(package_name=package_name).as_string()
+            )
 
 
 def _hint_noarch_python_use_python_min_inner(
@@ -354,7 +353,7 @@ def hint_noarch_python_use_python_min(
         )
 
     if recommendations:
-        hints.append(msg.r.PythonMinPin(recommendations=recommendations))
+        hints.append(msg.r.PythonMinPin(recommendations=recommendations).as_string())
 
 
 def hint_space_separated_specs(
@@ -391,7 +390,9 @@ def hint_space_separated_specs(
                 ] = bad_specs
 
     for output, requirements in report.items():
-        hints.append(msg.r.SpaceSeparatedSpecs(output=output, bad_specs=requirements))
+        hints.append(
+            msg.r.SpaceSeparatedSpecs(output=output, bad_specs=requirements).as_string()
+        )
 
 
 def _ensure_spec_space_separated(spec: str) -> bool:
@@ -432,7 +433,7 @@ def _ensure_spec_space_separated(spec: str) -> bool:
 
 def hint_os_version(
     forge_yaml: dict[str, Any],
-    hints: list[LinterMessage],
+    hints: list[str],
 ) -> None:
     default_os_version = "alma9"
     obsolete_os_versions = ("cos7", "alma8", "ubi8")
@@ -442,12 +443,14 @@ def hint_os_version(
         if v in obsolete_os_versions
     }
     if matches:
-        hints.append(msg.r.OSVersion(platforms=matches, default=default_os_version))
+        hints.append(
+            msg.r.OSVersion(platforms=matches, default=default_os_version).as_string()
+        )
 
 
 def hint_rattler_build_bld_bat(
     recipe_dir: str | None,
-    hints: list[LinterMessage],
+    hints: list[str],
     recipe_version: int = 0,
 ):
     """Hint for bld.bat presence when using rattler-build.
@@ -465,4 +468,4 @@ def hint_rattler_build_bld_bat(
     # Check if bld.bat exists in the recipe directory
     bld_bat_path = os.path.join(recipe_dir, "bld.bat")
     if os.path.exists(bld_bat_path):
-        hints.append(msg.r.RattlerBldBat())
+        hints.append(msg.r.RattlerBldBat().as_string())

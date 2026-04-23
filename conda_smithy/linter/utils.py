@@ -8,7 +8,7 @@ import tomllib
 from collections.abc import Mapping, Sequence
 from functools import lru_cache
 from glob import glob
-from typing import TYPE_CHECKING, Any, Optional, Union
+from typing import Any, Optional, Union
 
 import requests
 from conda.models.version import InvalidVersionSpec, VersionOrder
@@ -20,9 +20,6 @@ from rattler_build_conda_compat.recipe_sources import get_all_sources
 from requests.exceptions import Timeout
 
 from conda_smithy.linter import messages as msg
-
-if TYPE_CHECKING:
-    from conda_smithy.linter.messages.base import LinterMessage
 
 FIELDS = copy.deepcopy(_CONDA_BUILD_FIELDS)
 
@@ -197,16 +194,16 @@ def jinja_lines(lines):
             yield line, i
 
 
-def _lint_recipe_name(recipe_name: str) -> Optional[LinterMessage]:
+def _lint_recipe_name(recipe_name: str) -> Optional[str]:
     if re.match(r"^[a-z0-9_\-.]+$", recipe_name) is None:
-        return msg.r.InvalidPackageName()
+        return msg.r.InvalidPackageName().as_string()
 
     return None
 
 
-def _lint_package_version(version: Optional[str]) -> Optional[LinterMessage]:
+def _lint_package_version(version: Optional[str]) -> Optional[str]:
     if version is None:
-        return msg.r.MissingVersion()
+        return msg.r.MissingVersion().as_string()
 
     ver = str(version)
 
@@ -217,7 +214,7 @@ def _lint_package_version(version: Optional[str]) -> Optional[LinterMessage]:
     try:
         VersionOrder(ver)
     except InvalidVersionSpec as e:
-        return msg.r.InvalidVersion(version=ver, error=str(e))
+        return msg.r.InvalidVersion(version=ver, error=str(e)).as_string()
 
 
 def load_linter_toml_metadata():
@@ -265,7 +262,7 @@ def flatten_v1_if_else(requirements: list[str | dict] | str) -> list[str]:
 
 
 def get_all_test_requirements(
-    meta: dict, lints: list[LinterMessage], recipe_version: int
+    meta: dict, lints: list[str], recipe_version: int
 ) -> list[str]:
     if recipe_version == 1:
         test_section = get_section(meta, "tests", lints, recipe_version)

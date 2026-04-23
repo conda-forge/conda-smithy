@@ -126,8 +126,12 @@ class LinterMessage:
     def __str__(self) -> str:
         return self._render()
 
+    # convenience alias; FIXME: remove once we bump major
+    # FIXME: Remove usage from append_if_absent too!
+    as_string = __str__
+
     def append_if_absent(
-        self, iterable: list, test: Literal["isinstance", "str"] = "isinstance"
+        self, iterable: list, test: Literal["isinstance", "str"] = "str"
     ) -> None:
         """
         Appends itself to a list if there are no other instances of the message yet.
@@ -148,4 +152,5 @@ class LinterMessage:
 
         if any(test(item, self) for item in iterable):
             return
-        iterable.append(self)
+        # FIXME: Remove this once we remove as_string
+        iterable.append(self.as_string())

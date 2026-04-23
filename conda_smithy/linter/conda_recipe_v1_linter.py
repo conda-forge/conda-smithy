@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import re
-from typing import TYPE_CHECKING, Any, Optional
+from typing import Any, Optional
 
 from rattler_build_conda_compat.jinja.jinja import (
     RecipeWithContext,
@@ -15,10 +15,6 @@ from conda_smithy.linter.utils import (
     _lint_package_version,
     _lint_recipe_name,
 )
-
-if TYPE_CHECKING:
-    from conda_smithy.linter.messages.base import LinterMessage
-
 
 REQUIREMENTS_ORDER = ["build", "host", "run"]
 
@@ -51,15 +47,15 @@ def lint_recipe_tests(
     recipe_dir: Optional[str],
     test_section: list[dict[str, Any]],
     outputs_section: list[dict[str, Any]],
-    lints: list[LinterMessage],
-    hints: list[LinterMessage],
+    lints: list[str],
+    hints: list[str],
 ):
     tests_lints = []
     tests_hints = []
 
     if not test_section:
         if not outputs_section:
-            lints.append(msg.r.RequiredTests())
+            lints.append(msg.r.RequiredTests().as_string())
         else:
             has_outputs_test = False
             no_test_hints = []
@@ -72,12 +68,14 @@ def lint_recipe_tests(
                     has_outputs_test = True
                 else:
                     no_test_hints.append(
-                        msg.r.RecommendedTests(output=output.get("name", "???"))
+                        msg.r.RecommendedTests(
+                            output=output.get("name", "???")
+                        ).as_string()
                     )
             if has_outputs_test:
                 hints.extend(no_test_hints)
             else:
-                lints.append(msg.r.RequiredTests())
+                lints.append(msg.r.RequiredTests().as_string())
 
     lints.extend(tests_lints)
     hints.extend(tests_hints)
@@ -86,7 +84,7 @@ def lint_recipe_tests(
 def hint_noarch_usage(
     build_section: dict[str, Any],
     requirement_section: dict[str, Any],
-    hints: list[LinterMessage],
+    hints: list[str],
 ):
     build_reqs = requirement_section.get("build", None)
     if (
@@ -135,7 +133,7 @@ def get_recipe_version(recipe_content: RecipeWithContext) -> Optional[str]:
 
 def lint_recipe_name(
     recipe_content: RecipeWithContext,
-    lints: list[LinterMessage],
+    lints: list[str],
 ) -> str | None:
     name = get_recipe_name(recipe_content)
     # Avoid false positives if the recipe is using variables
@@ -153,7 +151,7 @@ def lint_recipe_name(
 
 def lint_package_version(
     recipe_content: RecipeWithContext,
-    lints: list[LinterMessage],
+    lints: list[str],
 ) -> None:
     version = get_recipe_version(recipe_content)
 
@@ -168,7 +166,7 @@ def lint_usage_of_selectors_for_noarch(
     requirements_section: dict[str, Any],
     build_section: dict[str, Any],
     noarch_platforms: bool,
-    lints: list[LinterMessage],
+    lints: list[str],
 ):
     for section in requirements_section:
         section_requirements = requirements_section[section]
@@ -201,8 +199,10 @@ def lint_usage_of_selectors_for_noarch(
                 has_bad_selector = True
 
             if has_bad_selector:
-                lints.append(msg.r.NoarchSelectorsV1(noarch=noarch_value))
+                lints.append(msg.r.NoarchSelectorsV1(noarch=noarch_value).as_string())
                 break
 
     if "skip" in build_section:
-        lints.append(msg.r.NoarchSelectorsV1(noarch=noarch_value, skips=True))
+        lints.append(
+            msg.r.NoarchSelectorsV1(noarch=noarch_value, skips=True).as_string()
+        )

@@ -10,6 +10,7 @@ import textwrap
 import unittest
 from collections import OrderedDict
 from contextlib import contextmanager
+from itertools import count
 from pathlib import Path
 
 import pytest
@@ -2775,8 +2776,8 @@ def test_v1_lint_recipe_tests_skips_staging_outputs():
             "tests": [{"script": ["test -f $PREFIX/lib/libfoo.so"]}],
         },
     ]
-    lints: list[LinterMessage] = []
-    hints: list[LinterMessage] = []
+    lints: list[str] = []
+    hints: list[str] = []
     lint_recipe_tests(
         recipe_dir=None,
         test_section=[],
@@ -3089,8 +3090,7 @@ linter:
         hints,
         recipe_version=0,
     )
-    lints = list(map(str, lints))
-    hints = list(map(str, hints))
+
     # make sure we have the expected hints
     for expected_hint in total_expected_hints:
         assert any(hint.startswith(expected_hint) for hint in hints), hints
@@ -3504,8 +3504,7 @@ linter:
         hints,
         recipe_version=0,
     )
-    hints = list(map(str, hints))
-    lints = list(map(str, lints))
+
     # make sure we have the expected hints
     if expected_hints and not skip:
         for expected_hint in expected_hints:
@@ -3854,6 +3853,7 @@ tests:
             [],
         ),
     ],
+    ids=(f"recipe-{i}" for i in count(1)),
 )
 def test_hint_noarch_python_use_python_min_v1(
     meta_str,
@@ -3869,7 +3869,7 @@ def test_hint_noarch_python_use_python_min_v1(
         hints,
         recipe_version=1,
     )
-    hints = list(map(str, hints))
+
     # make sure we have the expected hints
     if expected_hints:
         for expected_hint in expected_hints:
