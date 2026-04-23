@@ -2,8 +2,20 @@ import json
 import unittest.mock as mock
 
 import github
+import pytest
 
-from conda_smithy.github import configure_github_team
+from conda_smithy.github import _guess_team_slug, configure_github_team
+
+
+@pytest.mark.parametrize(
+    "team,slug",
+    [
+        (" - - - blah@$!#$!$- ", "blah"),
+        ("-R.nmf five", "r-nmf-five"),
+    ],
+)
+def test_guess_team_slug(team, slug):
+    assert _guess_team_slug(team) == slug
 
 
 @mock.patch("conda_smithy.github.has_in_members")
@@ -62,8 +74,10 @@ def test_github_configure_github_team_all_new(
     gh_repo.get_teams.assert_called_once_with()
     org.get_team_by_slug.assert_has_calls(
         [
+            mock.call("pkg1"),
             mock.call("team"),
-        ]
+        ],
+        any_order=True,
     )
     create_team.assert_called_once()  # did not patch random.choice so do not assert actual call
     create_team.return_value.add_to_repos.assert_called_once_with(gh_repo)
