@@ -2795,8 +2795,8 @@ def test_v1_lint_recipe_tests_still_flags_missing_tests_on_package_outputs():
         {"name": "libfoo"},
         {"name": "libfoo-dev", "tests": [{"script": ["true"]}]},
     ]
-    lints: list[LinterMessage] = []
-    hints: list[LinterMessage] = []
+    lints: list[str] = []
+    hints: list[str] = []
     lint_recipe_tests(
         recipe_dir=None,
         test_section=[],
