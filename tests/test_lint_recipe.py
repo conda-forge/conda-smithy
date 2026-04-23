@@ -752,7 +752,7 @@ class TestLinter(unittest.TestCase):
         self.assertNotIn(expected_message, lints)
 
         lints, hints = linter.lintify_meta_yaml(
-            {"outputs": [{"name": "foo"}]}, recipe_version=1
+            {"outputs": [{"package": {"name": "foo"}}]}, recipe_version=1
         )
         self.assertIn(expected_message, lints)
 
@@ -760,7 +760,7 @@ class TestLinter(unittest.TestCase):
             {
                 "outputs": [
                     {
-                        "name": "foo",
+                        "package": {"name": "foo"},
                         "tests": [{"python": {"imports": ["sys"]}}],
                     }
                 ]
@@ -772,10 +772,8 @@ class TestLinter(unittest.TestCase):
         lints, hints = linter.lintify_meta_yaml(
             {
                 "outputs": [
-                    {"name": "foo", "tests": {"script": "sys"}},
-                    {
-                        "name": "foobar",
-                    },
+                    {"package": {"name": "foo"}, "tests": {"script": "sys"}},
+                    {"package": {"name": "foobar"}},
                 ]
             },
             recipe_version=1,
@@ -2791,8 +2789,8 @@ def test_v1_lint_recipe_tests_skips_staging_outputs():
 def test_v1_lint_recipe_tests_still_flags_missing_tests_on_package_outputs():
     outputs = [
         {"staging": {"name": "libfoo-build"}},
-        {"name": "libfoo"},
-        {"name": "libfoo-dev", "tests": [{"script": ["true"]}]},
+        {"package": {"name": "libfoo"}},
+        {"package": {"name": "libfoo-dev"}, "tests": [{"script": ["true"]}]},
     ]
     lints: list[str] = []
     hints: list[str] = []

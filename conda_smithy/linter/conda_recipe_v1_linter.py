@@ -69,7 +69,7 @@ def lint_recipe_tests(
                 else:
                     no_test_hints.append(
                         msg.r.RecommendedTests(
-                            output=output.get("name", "???")
+                            output=output.get("package", {}).get("name", "???")
                         ).as_string()
                     )
             if has_outputs_test:
