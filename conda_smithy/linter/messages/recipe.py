@@ -843,7 +843,7 @@ class ScriptShellcheckReport(LinterMessage):
                 ],
                 output_lines=[
                     "In ./recipe/build.sh line 337:",
-                    "" "ln -sf $PREFIX/$f $PWD/$f",
+                    "ln -sf $PREFIX/$f $PWD/$f",
                     "        ^-----^ SC2086 (info): Double quote to prevent globbing and word splitting.",
                     "                ^-- SC2086 (info): Double quote to prevent globbing and word splitting.",
                     "                ^--^ SC2086 (info): Double quote to prevent globbing and word splitting.",
