@@ -62,7 +62,6 @@ def test_github_configure_github_team_all_new(
     gh_repo.get_teams.assert_called_once_with()
     org.get_team_by_slug.assert_has_calls(
         [
-            mock.call("pkg1"),
             mock.call("team"),
         ]
     )
@@ -130,6 +129,7 @@ def test_github_configure_github_team_add(
 
     pkg1_team = mock.MagicMock()
     pkg1_team.slug = "pkg1"
+    pkg1_team.name = "pkg1"
     user1 = mock.MagicMock()
     user1.login = "user1"
     user2 = mock.MagicMock()
@@ -185,7 +185,6 @@ def test_github_configure_github_team_add(
     gh_repo.get_teams.assert_called_once_with()
     org.get_team_by_slug.assert_has_calls(
         [
-            mock.call("pkg1"),
             mock.call("new-team"),
             mock.call("pkg1"),
         ]
@@ -251,6 +250,7 @@ def test_github_configure_github_team_add_user_changed_id(
 
     pkg1_team = mock.MagicMock()
     pkg1_team.slug = "pkg1"
+    pkg1_team.name = "pkg1"
     user1 = mock.MagicMock()
     user1.login = "user1"
     pkg1_team.get_members.return_value = [
@@ -308,7 +308,6 @@ def test_github_configure_github_team_add_user_changed_id(
     gh_repo.get_teams.assert_called_once_with()
     org.get_team_by_slug.assert_has_calls(
         [
-            mock.call("pkg1"),
             mock.call("new-team"),
             mock.call("pkg1"),
         ]
@@ -379,6 +378,7 @@ def test_github_configure_github_team_add_changed_user_id_team_remove(
 
     pkg1_team = mock.MagicMock()
     pkg1_team.slug = "pkg1"
+    pkg1_team.name = "pkg1"
     user1 = mock.MagicMock()
     user1.login = "user1"
     user411 = mock.MagicMock()
@@ -443,7 +443,6 @@ def test_github_configure_github_team_add_changed_user_id_team_remove(
     gh_repo.get_teams.assert_called_once_with()
     org.get_team_by_slug.assert_has_calls(
         [
-            mock.call("pkg1"),
             mock.call("new-team"),
             mock.call("team"),
             mock.call("pkg1"),

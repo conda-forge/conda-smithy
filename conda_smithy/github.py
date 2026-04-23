@@ -362,22 +362,33 @@ def configure_github_team(
         (team for team in current_maintainer_teams if team.name == team_name),
         None,
     )
+    fs_team = None
     current_maintainers = set()
 
-    try:
-        org_fs_team = org.get_team_by_slug(team_name)
-    except Exception:
-        org_fs_team = None
+    if not repo_fs_team:
+        team_desc = f"The {choice(superlative)} {team_name} contributors!"
 
-    if not org_fs_team:
-        # team does not exist so make it
-        fs_team = create_team(
-            org,
-            team_name,
-            f"The {choice(superlative)} {team_name} contributors!",
-        )
+        try:
+            # first try to make it since a search of the org will be expensive
+            fs_team = create_team(
+                org,
+                team_name,
+                team_desc,
+            )
+        except Exception:
+            # try a full search of the org or the local cache
+            fs_team = get_cached_team(
+                org,
+                team_name,
+                description=team_desc,
+            )
     else:
-        fs_team = org_fs_team
+        fs_team = repo_fs_team
+
+    if fs_team is None:
+        raise RuntimeError(
+            f"Could not find feedstock team for feedstock {feedstock_name}!"
+        )
 
     if not repo_fs_team:
         # team is not added to repo so do that
