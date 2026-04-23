@@ -16,7 +16,7 @@
 
 **Fixed:**
 
-* Do not use team name as slug when trying to find feedstock teams. (#2535)
+* fix: check teams found by slug and default to a search if we do not find them (#2535)
 
 **Security:**
 
