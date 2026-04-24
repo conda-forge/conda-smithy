@@ -2514,45 +2514,31 @@ def _read_forge_config(forge_dir, forge_yml=None):
             }
         )
 
-    if "MINIFORGE_HOME" in file_config.get("azure", {}).get("settings_win", {}).get(
-        "variables", {}
-    ):
-        if "tools_install_dir" in file_config.get("workflow_settings", {}):
-            raise ValueError(
-                "`workflow_settings.tools_install_dir` and "
-                "`azure.settings_win.variables.MINIFORGE_HOME` are mutually exclusive. "
-                "Please remove the latter."
-            )
-        else:
-            config["workflow_settings"]["tools_install_dir"].append(
-                {
-                    "provider": "azure",
-                    "os": "win",
-                    "value": config["azure"]["settings_win"]["variables"].pop(
-                        "MINIFORGE_HOME"
-                    ),
-                }
-            )
-
-    if "CONDA_BLD_PATH" in file_config.get("azure", {}).get("settings_win", {}).get(
-        "variables", {}
-    ):
-        if "build_workspace_dir" in file_config.get("workflow_settings", {}):
-            raise ValueError(
-                "`workflow_settings.build_workspace_dir` and "
-                "`azure.settings_win.variables.CONDA_BLD_PATH` are mutually exclusive. "
-                "Please remove the latter."
-            )
-        else:
-            config["workflow_settings"]["build_workspace_dir"].append(
-                {
-                    "provider": "azure",
-                    "os": "win",
-                    "value": config["azure"]["settings_win"]["variables"].pop(
-                        "CONDA_BLD_PATH"
-                    ),
-                }
-            )
+    path_var_mapping = {
+        "tools_install_dir": "MINIFORGE_HOME",
+        "build_workspace_dir": "CONDA_BLD_PATH",
+    }
+    for new_var, old_var in path_var_mapping.items():
+        if old_var in file_config.get("azure", {}).get("settings_win", {}).get(
+            "variables", {}
+        ):
+            if new_var in file_config.get("workflow_settings", {}):
+                warnings.warn(
+                    f"`azure.settings_win.variables.{old_var}` is ignored when "
+                    f"`workflow_settings.{new_var}` is set",
+                    DeprecationWarning,
+                )
+                del config["azure"]["settings_win"]["variables"][old_var]
+            else:
+                config["workflow_settings"][new_var].append(
+                    {
+                        "provider": "azure",
+                        "os": "win",
+                        "value": config["azure"]["settings_win"]["variables"].pop(
+                            old_var
+                        ),
+                    }
+                )
 
     # check for conda-smithy 2.x matrix which we can't auto-migrate
     # to conda_build_config

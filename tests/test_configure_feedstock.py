@@ -2975,6 +2975,73 @@ def test_tools_build_paths_azure_old_vars(py_recipe, jinja_env):
         assert "CONDA_BLD_PATH" not in workflow["jobs"][0]["variables"]
 
 
+def test_tools_build_paths_azure_old_and_new_vars(py_recipe, jinja_env):
+    forge_dir = py_recipe.recipe
+    forge_yml = Path(forge_dir, "conda-forge.yml")
+
+    with open(forge_yml, "a") as f:
+        f.write(textwrap.dedent("""\
+            azure:
+              settings_win:
+                variables:
+                  MINIFORGE_HOME: C:\\foo
+                  CONDA_BLD_PATH: D:\\foo
+            provider:
+              win_arm64: azure
+              win_64: azure
+            workflow_settings:
+              tools_install_dir:
+                - os: win
+                  value: C:\\bar
+              build_workspace_dir:
+                - os: win
+                  value: D:\\bar
+        """))
+
+    with (
+        pytest.warns(
+            DeprecationWarning, match=r"`azure.settings_win.variables.MINIFORGE_HOME`"
+        ),
+        pytest.warns(
+            DeprecationWarning, match=r"`azure.settings_win.variables.CONDA_BLD_PATH`"
+        ),
+    ):
+        config = configure_feedstock._load_forge_config(
+            forge_dir, "recipe/default_config.yaml"
+        )
+        configure_feedstock.render_azure(
+            jinja_env=jinja_env,
+            forge_config=config,
+            forge_dir=forge_dir,
+        )
+
+    expected = {
+        "win": {
+            "win_64": (r"C:\bar", r"D:\bar"),
+            "win_arm64": (r"C:\bar", r"D:\bar"),
+        },
+    }
+
+    for os_name, expected_values in expected.items():
+        workflow_yml = Path(
+            forge_dir, ".azure-pipelines", f"azure-pipelines-{os_name}.yml"
+        )
+        with workflow_yml.open() as f:
+            workflow = yaml.safe_load(f)
+
+        matrix = workflow["jobs"][0]["strategy"]["matrix"]
+        assert {
+            "_".join(entry["CONFIG"].split("_", 2)[:2]): (
+                entry["tools_install_dir"],
+                entry["build_workspace_dir"],
+            )
+            for entry in matrix.values()
+        } == expected_values
+
+        assert "MINIFORGE_HOME" not in workflow["jobs"][0]["variables"]
+        assert "CONDA_BLD_PATH" not in workflow["jobs"][0]["variables"]
+
+
 def test_tools_build_paths_gha_override_tools_dir(py_recipe, jinja_env):
     forge_dir = py_recipe.recipe
     forge_yml = Path(forge_dir, "conda-forge.yml")
@@ -3126,38 +3193,3 @@ def test_tools_build_paths_gha_override_wrong(
             forge_config=config,
             forge_dir=forge_dir,
         )
-
-
-@pytest.mark.parametrize(
-    "old_var,new_var",
-    [
-        ("MINIFORGE_HOME", "tools_install_dir"),
-        ("CONDA_BLD_PATH", "build_workspace_dir"),
-    ],
-)
-def test_tools_build_paths_duplicate_vars(
-    py_recipe, jinja_env, old_var: str, new_var: str
-):
-    forge_dir = py_recipe.recipe
-    forge_yml = Path(forge_dir, "conda-forge.yml")
-
-    with open(forge_yml, "a") as f:
-        f.write(textwrap.dedent(f"""\
-            azure:
-              settings_win:
-                variables:
-                  {old_var}: C:\\foo
-            provider:
-              win_64: azure
-            workflow_settings:
-              {new_var}:
-                - os: win
-                  value: C:\\foo
-        """))
-
-    with pytest.raises(
-        ValueError,
-        match=rf"`workflow_settings\.{new_var}` and `azure\.settings_win\."
-        rf"variables\.{old_var}` are mutually exclusive",
-    ):
-        configure_feedstock._load_forge_config(forge_dir, "recipe/default_config.yaml")
