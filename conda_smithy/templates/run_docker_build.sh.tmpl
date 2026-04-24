@@ -42,7 +42,7 @@ if hash docker-machine 2> /dev/null && docker-machine active > /dev/null; then
     export HOST_USER_ID=$(docker-machine ssh $(docker-machine active) id -u)
 fi
 
-ARTIFACTS="$CONDA_BLD_PATH"
+ARTIFACTS="$FEEDSTOCK_ROOT/build_artifacts"
 
 if [ -z "$CONFIG" ]; then
     set +x
@@ -107,7 +107,6 @@ ${DOCKER_EXECUTABLE} pull "${DOCKER_IMAGE}"
 ${DOCKER_EXECUTABLE} run ${DOCKER_RUN_ARGS} \
            -v "${RECIPE_ROOT}":/home/conda/recipe_root:rw${VOLUME_SUFFIX},delegated \
            -v "${FEEDSTOCK_ROOT}":/home/conda/feedstock_root:rw${VOLUME_SUFFIX},delegated \
-           -v "${CONDA_BLD_PATH}":/home/conda/feedstock_root/build_artifacts:rw${VOLUME_SUFFIX},delegated \
            -e CONFIG \
            -e HOST_USER_ID \
            -e UPLOAD_PACKAGES \
