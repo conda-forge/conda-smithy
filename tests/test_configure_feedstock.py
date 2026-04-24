@@ -2811,7 +2811,15 @@ def test_store_build_artifacts_gha_and_azure_conditions(py_recipe, jinja_env):
 
 @pytest.mark.parametrize(
     "label",
-    [None, "default", "hosted", "blacksmith-8vcpu-windows-2025"],
+    [
+        None,
+        "default",
+        "hosted",
+        "blacksmith-8vcpu-windows-2025",
+        "windows-latest",
+        "windows-2025",
+        "namespace-profile-16cpu-on-win-64",
+    ],
 )
 def test_tools_build_paths_gha(py_recipe, jinja_env, label: str):
     forge_dir = py_recipe.recipe
@@ -2847,10 +2855,11 @@ def test_tools_build_paths_gha(py_recipe, jinja_env, label: str):
         "ubuntu-latest": ("~/miniforge3", "build_artifacts"),
         "windows-11-arm": (r"C:\Miniforge", r"C:\\bld\\"),
     }
-    if (label or "").startswith("blacksmith"):
-        expected[label] = (r"C:\Miniforge", r"C:\\bld\\")
+    expected_label = "windows-latest" if label in (None, "default", "hosted") else label
+    if expected_label.startswith("blacksmith"):
+        expected[expected_label] = (r"C:\Miniforge", r"C:\\bld\\")
     else:
-        expected["windows-latest"] = (r"D:\Miniforge", r"D:\\bld\\")
+        expected[expected_label] = (r"D:\Miniforge", r"D:\\bld\\")
 
     matrix = workflow["jobs"]["build"]["strategy"]["matrix"]["include"]
     assert {
