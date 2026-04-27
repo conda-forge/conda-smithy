@@ -9,7 +9,7 @@ import time
 from collections import defaultdict
 from collections.abc import Mapping, Sequence
 from contextlib import contextmanager
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 from typing import Any, Optional, Union
 
 import jinja2
@@ -337,13 +337,16 @@ def get_workflow_settings(
     values for given provider and platform.
     """
 
+    assert "-" in platform
+
+    os = platform.split("-", 1)[0]
     data = {}
     for setting_key, setting_value in workflow_settings.items():
         filtered = filter_conditional_values(
             setting_value,
             provider=provider,
             platform=platform,
-            os=platform.split("-", 1)[0],
+            os=os,
         )
         if len(filtered) > 1:
             raise ValueError(
@@ -352,4 +355,57 @@ def get_workflow_settings(
                 f"platform={platform}: {filtered[0]} vs. {filtered[1]}"
             )
         data[setting_key] = filtered[-1].value if filtered else None
+
+    for path_var in ("tools_install_dir", "build_workspace_dir"):
+        if data[path_var] is None:
+            continue
+        win_path = PureWindowsPath(data[path_var])
+        if os == "win":
+            if not win_path.drive:
+                raise ValueError(
+                    f"workflow_settings.{path_var} specifies Unix path for Windows "
+                    f"workflows: {win_path}"
+                )
+        elif win_path.drive:
+            raise ValueError(
+                f"workflow_settings.{path_var} specifies Windows path for Unix "
+                f"workflows: {win_path}"
+            )
+
     return data
+
+
+def fill_workflow_settings_defaults(
+    workflow_settings: dict[str, Any],
+    provider: str,
+    platform: str,
+    win_default_drive: str,
+) -> None:
+    """
+    Fill the missing entries from `workflow_settings` with defaults for
+    the given provider-platform combination.
+    """
+
+    assert "-" in platform
+    assert len(win_default_drive) == 2
+    assert win_default_drive[1] == ":"
+
+    os = platform.split("-", 1)[0]
+    if workflow_settings.get("tools_install_dir") is None:
+        workflow_settings["tools_install_dir"] = (
+            rf"{win_default_drive}\Miniforge" if os == "win" else "~/miniforge3"
+        )
+    if workflow_settings.get("build_workspace_dir") is None:
+        tools_drive = (
+            PureWindowsPath(workflow_settings["tools_install_dir"]).drive
+            if os == "win"
+            else ""
+        )
+        workflow_settings["build_workspace_dir"] = {
+            "linux": "build_artifacts",
+            "osx": f"{workflow_settings['tools_install_dir']}/conda-bld",
+            # use C:\\bld\\ or D:\\bld\\ for backwards compatibility with conda-forge-ci-setup
+            # https://github.com/conda-forge/conda-forge-ci-setup-feedstock/blob/29b3d39d4c21cd96c6274231f295bacd5c860611/recipe/run_conda_forge_build_setup_win.bat#L32-L42
+            # TODO: switch to normalizing all paths once we're ready
+            "win": rf"{tools_drive}\\bld\\",
+        }[os]

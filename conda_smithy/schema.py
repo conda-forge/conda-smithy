@@ -191,8 +191,6 @@ class AzureConfig(BaseModel):
             install_atl=False,
             pool={"vmImage": "windows-2022"},
             variables={
-                "MINIFORGE_HOME": "D:\\Miniforge",
-                "CONDA_BLD_PATH": "D:\\\\bld\\\\",
                 "UPLOAD_TEMP": "D:\\\\tmp",
             },
         ),
@@ -204,9 +202,10 @@ class AzureConfig(BaseModel):
 
             Finally, under `variables`, some important things you can set are:
 
-            - `CONDA_BLD_PATH`: Location of the conda-build workspace. Defaults to `D:\\bld`
-            - `MINIFORGE_HOME`: Location of the base environment installation. Defaults to
-              `D:\\Miniforge`.
+            - ~~`CONDA_BLD_PATH`~~: Location of the conda-build workspace. Deprecated, use
+              `workflow_settings.build_workspace_dir` instead.
+            - ~~`MINIFORGE_HOME`~~: Location of the base environment installation. Deprecated,
+              use `workflow_settings.tools_install_dir` instead.
             - `SET_PAGEFILE`: `"True"` to increase the pagefile size via conda-forge-ci-setup.
 
             If you are running out of space in `D:`, consider changing to `C:`.
@@ -506,6 +505,24 @@ class WorkflowSettings(BaseModel):
         default=[],
         description=cleandoc("""
         Store the outputs of the build process as uploaded CI artifacts.
+        """),
+    )
+
+    tools_install_dir: Optional[
+        Union[str, list[conditional_value(str, None)], Nullable]
+    ] = Field(
+        default=[],
+        description=cleandoc("""
+        Directory to install build-time tools in.
+        """),
+    )
+
+    build_workspace_dir: Optional[
+        Union[str, list[conditional_value(str, None)], Nullable]
+    ] = Field(
+        default=[],
+        description=cleandoc("""
+        Directory to build in.
         """),
     )
 

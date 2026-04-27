@@ -28,8 +28,6 @@ azure:
     swapfile_size: null
     timeoutInMinutes: 360
     variables:
-      CONDA_BLD_PATH: D:\\bld\\
-      MINIFORGE_HOME: D:\Miniforge
       UPLOAD_TEMP: D:\\tmp
   store_build_artifacts: false
   timeout_minutes: null
@@ -146,4 +144,6 @@ test_on_native_only: false
 travis: {}
 woodpecker: {}
 workflow_settings:
+  build_workspace_dir: []
   store_build_artifacts: []
+  tools_install_dir: []

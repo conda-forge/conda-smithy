@@ -54,6 +54,8 @@ jobs:
             CONDA_FORGE_DOCKER_RUN_ARGS: "--gpus all"
           {%- endif %}
         {%- endif %}
+            tools_install_dir: {{ data.tools_install_dir }}
+            build_workspace_dir: {{ data.build_workspace_dir }}
         {%- endfor %}
     steps:
 {%- if github_actions.free_disk_space %}
@@ -101,6 +103,8 @@ jobs:
       id: build-linux
       if: matrix.os == 'ubuntu'
       env:
+        MINIFORGE_HOME: {% raw %}${{ matrix.tools_install_dir }}{% endraw %}
+        CONDA_BLD_PATH: {% raw %}${{ matrix.build_workspace_dir }}{% endraw %}
         CONFIG: {% raw %}${{ matrix.CONFIG }}{% endraw %}
         UPLOAD_PACKAGES: {% raw %}${{ matrix.UPLOAD_PACKAGES }}{% endraw %}
         DOCKER_IMAGE: {% raw %}${{ matrix.DOCKER_IMAGE }}{% endraw %}
@@ -132,6 +136,8 @@ jobs:
         else
           export IS_PR_BUILD="False"
         fi
+        export MINIFORGE_HOME="${MINIFORGE_HOME/#~/${HOME}}"
+        export CONDA_BLD_PATH="${CONDA_BLD_PATH/#~/${HOME}}"
         echo "::endgroup::"
         ./.scripts/run_docker_build.sh
 
@@ -139,6 +145,8 @@ jobs:
       id: build-macos
       if: matrix.os == 'macos'
       env:
+        MINIFORGE_HOME: {% raw %}${{ matrix.tools_install_dir }}{% endraw %}
+        CONDA_BLD_PATH: {% raw %}${{ matrix.build_workspace_dir }}{% endraw %}
         CONFIG: {% raw %}${{ matrix.CONFIG }}{% endraw %}
         UPLOAD_PACKAGES: {% raw %}${{ matrix.UPLOAD_PACKAGES }}{% endraw %}
         CI: github_actions
@@ -160,6 +168,8 @@ jobs:
         else
           export IS_PR_BUILD="False"
         fi
+        export MINIFORGE_HOME="${MINIFORGE_HOME/#~/${HOME}}"
+        export CONDA_BLD_PATH="${CONDA_BLD_PATH/#~/${HOME}}"
         ./.scripts/run_osx_build.sh
 
 {%- for choco_pkg in choco %}
@@ -206,10 +216,8 @@ jobs:
         set "sha=%GITHUB_SHA%"
         call ".scripts\run_win_build.bat"
       env:
-        # default value; make it explicit, as it needs to match with artefact
-        # generation below. Not configurable for now, can be revisited later
-        CONDA_BLD_PATH: C:\bld
-        MINIFORGE_HOME: {% raw %}${{ contains(runner.arch, 'ARM') && 'C' || 'D' }}{% endraw %}:\Miniforge
+        MINIFORGE_HOME: {% raw %}${{ matrix.tools_install_dir }}{% endraw %}
+        CONDA_BLD_PATH: {% raw %}${{ matrix.build_workspace_dir }}{% endraw %}
         PYTHONUNBUFFERED: 1
         CONFIG: {% raw %}${{ matrix.CONFIG }}{% endraw %}
         CI: github_actions
@@ -251,23 +259,18 @@ jobs:
       # we do not want to trigger artefact creation if the build was cancelled
       if: {% raw %}${{ always() && steps.determine-status.outputs.status != 'cancelled' && matrix.STORE_BUILD_ARTIFACTS }}{% endraw %}
       env:
+        CONDA_BLD_PATH: {% raw %}${{ matrix.build_workspace_dir }}{% endraw %}
         CI: github_actions
         CONFIG: {% raw %}${{ matrix.CONFIG }}{% endraw %}
         SHORT_CONFIG: {% raw %}${{ matrix.SHORT_CONFIG }}{% endraw %}
         JOB_STATUS: {% raw %}${{ steps.determine-status.outputs.status }}{% endraw %}
         OS: {% raw %}${{ matrix.os }}{% endraw %}
       run: |
+        export MINIFORGE_HOME="${MINIFORGE_HOME/#~/${HOME}}"
+        export CONDA_BLD_PATH="${CONDA_BLD_PATH/#~/${HOME}}"
         export CI_RUN_ID=$GITHUB_RUN_ID
         export FEEDSTOCK_NAME="$(basename $GITHUB_REPOSITORY)"
         export ARTIFACT_STAGING_DIR="$GITHUB_WORKSPACE"
-        if [ $OS == "macos" ]; then
-          export CONDA_BLD_PATH="${MINIFORGE_HOME:-${HOME}/miniforge3}/conda-bld"
-        elif [ $OS == "windows" ]; then
-          # this needs to be consistent with build step, see above
-          export CONDA_BLD_PATH="C:\\bld"
-        else
-          export CONDA_BLD_PATH="build_artifacts"
-        fi
         # Archive everything in CONDA_BLD_PATH except environments
         # Archive the CONDA_BLD_PATH environments only when the job fails
         # Use different prefix for successful and failed build artifacts
