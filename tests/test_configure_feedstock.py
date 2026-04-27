@@ -1125,15 +1125,24 @@ def test_conda_build_tools(config_yaml: ConfigYAML, caplog):
     if config_yaml.type == "conda-build":
         with open(os.path.join(config_yaml.workdir, "conda-forge.yml"), "a+") as fp:
             fp.write("build_with_mambabuild: true")
-        with pytest.deprecated_call(match="build_with_mambabuild is deprecated"):
+        with caplog.at_level(logging.WARNING):
             assert load_forge_config()["conda_build_tool"] == "mambabuild"
+            assert any(
+                "build_with_mambabuild is deprecated" in record.message
+                for record in caplog.records
+            )
 
         with open(os.path.join(config_yaml.workdir, "conda-forge.yml"), "w") as fp:
             fp.write(unmodified)
             fp.write("build_with_mambabuild: false")
 
-        with pytest.deprecated_call(match="build_with_mambabuild is deprecated"):
+        caplog.clear()
+        with caplog.at_level(logging.WARNING):
             assert load_forge_config()["conda_build_tool"] == "conda-build"
+            assert any(
+                "build_with_mambabuild is deprecated" in record.message
+                for record in caplog.records
+            )
 
     with open(os.path.join(config_yaml.workdir, "conda-forge.yml"), "w") as fp:
         fp.write(unmodified)
@@ -2975,7 +2984,7 @@ def test_tools_build_paths_azure_old_vars(py_recipe, jinja_env):
         assert "CONDA_BLD_PATH" not in workflow["jobs"][0]["variables"]
 
 
-def test_tools_build_paths_azure_old_and_new_vars(py_recipe, jinja_env):
+def test_tools_build_paths_azure_old_and_new_vars(py_recipe, jinja_env, caplog):
     forge_dir = py_recipe.recipe
     forge_yml = Path(forge_dir, "conda-forge.yml")
 
@@ -2998,14 +3007,7 @@ def test_tools_build_paths_azure_old_and_new_vars(py_recipe, jinja_env):
                   value: D:\\bar
         """))
 
-    with (
-        pytest.warns(
-            DeprecationWarning, match=r"`azure.settings_win.variables.MINIFORGE_HOME`"
-        ),
-        pytest.warns(
-            DeprecationWarning, match=r"`azure.settings_win.variables.CONDA_BLD_PATH`"
-        ),
-    ):
+    with caplog.at_level(logging.WARNING):
         config = configure_feedstock._load_forge_config(
             forge_dir, "recipe/default_config.yaml"
         )
@@ -3013,6 +3015,15 @@ def test_tools_build_paths_azure_old_and_new_vars(py_recipe, jinja_env):
             jinja_env=jinja_env,
             forge_config=config,
             forge_dir=forge_dir,
+        )
+
+        assert any(
+            "`azure.settings_win.variables.MINIFORGE_HOME`" in record.message
+            for record in caplog.records
+        )
+        assert any(
+            "`azure.settings_win.variables.CONDA_BLD_PATH`" in record.message
+            for record in caplog.records
         )
 
     expected = {
