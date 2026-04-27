@@ -2486,32 +2486,24 @@ def _read_forge_config(forge_dir, forge_yml=None):
     # values.
     config = _update_dict_within_dict(file_config.items(), default_config)
 
-    if "store_build_artifacts" in file_config.get("workflow_settings", {}):
-        # Check for conflicting old keys.
-        if "store_build_artifacts" in file_config.get("azure", {}):
-            raise ValueError(
-                "`store_build_artifacts` both in `workflow_settings` and `azure` "
-                "sections. Please remove the latter."
-            )
-        if "store_build_artifacts" in file_config.get("github_actions", {}):
-            raise ValueError(
-                "`store_build_artifacts` both in `workflow_settings` and "
-                "`github_actions` sections. Please remove the latter."
-            )
-    else:
-        # Convert old keys to new settings.
-        config["workflow_settings"]["store_build_artifacts"].append(
-            {
-                "provider": "azure",
-                "value": config["azure"]["store_build_artifacts"],
-            }
-        )
-        config["workflow_settings"]["store_build_artifacts"].append(
-            {
-                "provider": "github_actions",
-                "value": config["github_actions"]["store_build_artifacts"],
-            }
-        )
+    for setting in ("store_build_artifacts",):
+        for provider in ("azure", "github_actions"):
+            if setting in file_config.get("workflow_settings", {}):
+                # Check for conflicting old keys.
+                if setting in file_config.get(provider, {}):
+                    logger.warning(
+                        "`%(provider)s.%(setting)s` is ignored when "
+                        "`workflow_settings.%(setting)s` is set",
+                        {"provider": provider, "setting": setting},
+                    )
+            else:
+                # Convert old keys to new settings.
+                config["workflow_settings"][setting].append(
+                    {
+                        "provider": provider,
+                        "value": config[provider][setting],
+                    }
+                )
 
     path_var_mapping = {
         "tools_install_dir": "MINIFORGE_HOME",
