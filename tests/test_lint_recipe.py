@@ -11,6 +11,7 @@ from contextlib import contextmanager
 from pathlib import Path
 
 import pytest
+import yaml
 
 import conda_smithy.lint_recipe as linter
 from conda_smithy.linter import hints
@@ -4706,6 +4707,33 @@ extra:
         else []
     )
     assert hints == []
+
+
+@pytest.mark.parametrize(
+    "found_in, should_hint",
+    [
+        ("provider", True),
+        ("build_platform", True),
+        (None, False),
+    ],
+)
+def test_hint_remove_ppc64le(tmp_path, found_in, should_hint):
+    expected_message = "Consider removing linux_ppc64le from conda-forge.yml"
+    with get_recipe_in_dir("v1_recipes/recipe-no-lint.yaml") as recipe_dir:
+        cf_config = {}
+        if found_in == "provider":
+            cf_config["provider"] = {"linux_ppc64le": "default"}
+        if found_in == "build_platform":
+            cf_config["build_platform"] = {"linux_ppc64le": "linux_64"}
+        cf_yaml = Path(recipe_dir).parent / "conda-forge.yml"
+        with cf_yaml.open("w") as f:
+            yaml.dump(cf_config, f)
+        lints, hints = linter.main(recipe_dir, return_hints=True, conda_forge=True)
+
+    if should_hint:
+        assert any(expected_message in hint for hint in hints)
+    else:
+        assert not any(expected_message in hint for hint in hints)
 
 
 if __name__ == "__main__":
