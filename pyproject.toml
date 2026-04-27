@@ -31,13 +31,13 @@ include-package-data = true
 write_to = "conda_smithy/_version.py"
 write_to_template = "__version__ = '{version}'"
 
-[tool.black]
-# matches black's default value
+[tool.ruff]
+# Mention default explicitly
 line-length = 88
 
 [tool.ruff.lint]
 ignore = [
-    "E501",  # https://docs.astral.sh/ruff/faq/#is-the-ruff-linter-compatible-with-black
+    "E501",  # line length is enforced by the formatter
     "E731",  # lambdas are useful
     # part of migration to Python 3.11, to be resolved in a separate PR
     "UP007",  # `typing.Union[A, B]` -> `A | B`

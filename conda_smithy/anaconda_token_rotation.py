@@ -144,8 +144,7 @@ def rotate_anaconda_token(
                             raise e
                         else:
                             err_msg = (
-                                f"Failed to rotate token for {user}/{project}"
-                                " on azure!"
+                                f"Failed to rotate token for {user}/{project} on azure!"
                             )
                             failed = True
                             raise RuntimeError(err_msg)

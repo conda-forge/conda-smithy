@@ -237,7 +237,7 @@ def lint_license_should_not_have_license(about_section, lints):
         and "licenseref" not in license.lower()
         and "-license" not in license.lower()
     ):
-        lints.append("The recipe `license` should not include the word " '"License".')
+        lints.append('The recipe `license` should not include the word "License".')
 
 
 def lint_should_be_empty_line(meta_fname, lints):

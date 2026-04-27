@@ -441,36 +441,46 @@ def test_cbc_osx_lints_variants_yaml(
                 fh.write(textwrap.dedent("c_stdlib_version:\n"))
 
                 if v_std is not None:
-                    fh.write(textwrap.dedent(f"""\
+                    fh.write(
+                        textwrap.dedent(f"""\
                             - if: {std_selector} and {arch1}
                               then: {v_std[0]}
-                        """))
+                        """)
+                    )
                 if v_std is not None and len(v_std) > 1:
-                    fh.write(textwrap.dedent(f"""\
+                    fh.write(
+                        textwrap.dedent(f"""\
                             - if: {std_selector} and {arch2}
                               then: {v_std[1]}
-                        """))
+                        """)
+                    )
                 if with_linux:
-                    fh.write(textwrap.dedent("""\
+                    fh.write(
+                        textwrap.dedent("""\
                             - if: linux
                               then: 2.17
-                        """))
+                        """)
+                    )
             if sdk is not None:
                 # often SDK is set uniformly for osx; test this as well
                 if len(sdk) == 2:
-                    fh.write(textwrap.dedent(f"""\
+                    fh.write(
+                        textwrap.dedent(f"""\
                             MACOSX_SDK_VERSION:
                               - if: osx and {"arm64" if reverse_arch[2] else "x86_64"}
                                 then: {sdk[0]}
                               - if: osx and {"x86_64" if reverse_arch[2] else "arm64"}
                                 then: {sdk[1]}
-                        """))
+                        """)
+                    )
                 else:
-                    fh.write(textwrap.dedent(f"""\
+                    fh.write(
+                        textwrap.dedent(f"""\
                             MACOSX_SDK_VERSION:
                               - if: osx
                                 then: {sdk[0]}
-                        """))
+                        """)
+                    )
         # run the linter
         lints = linter.main(recipe_dir, conda_forge=True)
         # show CBC/hints for debugging
@@ -2261,12 +2271,14 @@ class TestCliRecipeLint(unittest.TestCase):
     def test_cli_fail(self):
         with tmp_directory() as recipe_dir:
             with open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
-                fh.write(textwrap.dedent("""
+                fh.write(
+                    textwrap.dedent("""
                     package:
                         name: 'test_package'
                     build: []
                     requirements: []
-                    """))
+                    """)
+                )
             child = subprocess.Popen(
                 ["conda-smithy", "recipe-lint", recipe_dir],
                 stdout=subprocess.PIPE,
@@ -2277,7 +2289,8 @@ class TestCliRecipeLint(unittest.TestCase):
     def test_cli_success(self):
         with tmp_directory() as recipe_dir:
             with open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
-                fh.write(textwrap.dedent("""
+                fh.write(
+                    textwrap.dedent("""
                     package:
                         name: 'test_package'
                         version: 1.0.0
@@ -2295,7 +2308,8 @@ class TestCliRecipeLint(unittest.TestCase):
                         recipe-maintainers:
                             - a
                             - b
-                    """))
+                    """)
+                )
             child = subprocess.Popen(
                 ["conda-smithy", "recipe-lint", recipe_dir],
                 stdout=subprocess.PIPE,
@@ -2306,7 +2320,8 @@ class TestCliRecipeLint(unittest.TestCase):
     def test_cli_environ(self):
         with tmp_directory() as recipe_dir:
             with open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
-                fh.write(textwrap.dedent("""
+                fh.write(
+                    textwrap.dedent("""
                     package:
                         name: 'test_package'
                         version: 1.0.0
@@ -2326,7 +2341,8 @@ class TestCliRecipeLint(unittest.TestCase):
                         recipe-maintainers:
                             - a
                             - b
-                    """))
+                    """)
+                )
             child = subprocess.Popen(
                 ["conda-smithy", "recipe-lint", recipe_dir],
                 stdout=subprocess.PIPE,
@@ -2402,7 +2418,8 @@ class TestCliRecipeLint(unittest.TestCase):
         )
         with tempfile.TemporaryDirectory() as tmpdir:
             with open(os.path.join(tmpdir, "meta.yaml"), "w") as f:
-                f.write(textwrap.dedent("""
+                f.write(
+                    textwrap.dedent("""
                         package:
                           name: foo
                           version: 0
@@ -2428,7 +2445,8 @@ class TestCliRecipeLint(unittest.TestCase):
                           recipe-maintainers:
                             - a
                             - b
-                        """))
+                        """)
+                )
 
             open(os.path.join(tmpdir, "conda_build_config.yaml"), "w").close()
 
@@ -2478,18 +2496,22 @@ def test_lint_duplicate_cfyml():
                 """)
 
         with open(cfyml, "w") as fh:
-            fh.write(textwrap.dedent("""
+            fh.write(
+                textwrap.dedent("""
                     blah: 1
                     blah: 2
-                    """))
+                    """)
+            )
 
         lints = linter.main(recipe_dir, conda_forge=True)
         assert any(lint.startswith(expected_message) for lint in lints)
 
         with open(cfyml, "w") as fh:
-            fh.write(textwrap.dedent("""
+            fh.write(
+                textwrap.dedent("""
                     blah: 1
-                    """))
+                    """)
+            )
 
         lints = linter.main(recipe_dir, conda_forge=True)
         assert not any(lint.startswith(expected_message) for lint in lints)
@@ -2511,10 +2533,12 @@ def test_cfyml_wrong_os_version():
                 """)
 
         with open(cfyml, "w") as fh:
-            fh.write(textwrap.dedent("""
+            fh.write(
+                textwrap.dedent("""
                     os_version:
                       linux_64: wrong
-                    """))
+                    """)
+            )
 
         lints = linter.main(recipe_dir, conda_forge=True)
         assert any(expected_message in lint for lint in lints)
@@ -3941,7 +3965,8 @@ extra:
 def test_lint_recipe_parses_ok():
     with tempfile.TemporaryDirectory() as tmpdir:
         with open(os.path.join(tmpdir, "meta.yaml"), "w") as f:
-            f.write(textwrap.dedent("""
+            f.write(
+                textwrap.dedent("""
                     package:
                       name: foo
 
@@ -3962,7 +3987,8 @@ def test_lint_recipe_parses_ok():
                       recipe-maintainers:
                         - a
                         - b
-                    """))
+                    """)
+            )
         lints, hints = linter.main(tmpdir, return_hints=True, conda_forge=True)
         assert not any(
             lint.startswith(
@@ -3978,7 +4004,8 @@ def test_lint_recipe_parses_ok():
 def test_lint_recipe_parses_forblock():
     with tempfile.TemporaryDirectory() as tmpdir:
         with open(os.path.join(tmpdir, "meta.yaml"), "w") as f:
-            f.write(textwrap.dedent("""
+            f.write(
+                textwrap.dedent("""
                     package:
                       name: foo
                     build:
@@ -3997,7 +4024,8 @@ def test_lint_recipe_parses_forblock():
                       recipe-maintainers:
                           - a
                           - b
-                    """))
+                    """)
+            )
         lints, hints = linter.main(tmpdir, return_hints=True, conda_forge=True)
         assert not any(
             lint.startswith(
@@ -4018,7 +4046,8 @@ def test_lint_recipe_parses_forblock():
 def test_lint_recipe_parses_spacing():
     with tempfile.TemporaryDirectory() as tmpdir:
         with open(os.path.join(tmpdir, "meta.yaml"), "w") as f:
-            f.write(textwrap.dedent("""
+            f.write(
+                textwrap.dedent("""
                     package:
                       name: foo
                     build:
@@ -4035,7 +4064,8 @@ def test_lint_recipe_parses_spacing():
                       recipe-maintainers:
                           - a
                           - b
-                    """))
+                    """)
+            )
         lints, hints = linter.main(tmpdir, return_hints=True, conda_forge=True)
         assert not any(
             lint.startswith(
@@ -4062,7 +4092,8 @@ def test_lint_recipe_parses_spacing():
 def test_lint_recipe_parses_v1_spacing():
     with tempfile.TemporaryDirectory() as tmpdir:
         with open(os.path.join(tmpdir, "recipe.yaml"), "w") as f:
-            f.write(textwrap.dedent("""
+            f.write(
+                textwrap.dedent("""
                     package:
                       name: blah
 
@@ -4079,7 +4110,8 @@ def test_lint_recipe_parses_v1_spacing():
                       recipe-maintainers:
                         - a
                         - b
-                    """))
+                    """)
+            )
         lints, hints = linter.main(tmpdir, return_hints=True, conda_forge=True)
         assert not any(
             lint.startswith(
@@ -4099,7 +4131,8 @@ def test_lint_recipe_parses_v1_duplicate_keys():
     """
     with tempfile.TemporaryDirectory() as tmpdir:
         with open(os.path.join(tmpdir, "recipe.yaml"), "w") as f:
-            f.write(textwrap.dedent("""
+            f.write(
+                textwrap.dedent("""
                     package:
                       name: blah
 
@@ -4117,7 +4150,8 @@ def test_lint_recipe_parses_v1_duplicate_keys():
                       recipe-maintainers:
                         - a
                         - b
-                    """))
+                    """)
+            )
         lints, hints = linter.main(tmpdir, return_hints=True, conda_forge=True)
         assert any(
             lint.startswith(
@@ -4140,12 +4174,14 @@ def test_lint_recipe_parses_v1_duplicate_keys():
 def test_lint_recipe_v1_invalid_schema_version():
     with tempfile.TemporaryDirectory() as tmpdir:
         with open(os.path.join(tmpdir, "recipe.yaml"), "w") as f:
-            f.write(textwrap.dedent("""
+            f.write(
+                textwrap.dedent("""
                     schema_version: 2
 
                     package:
                       name: blah
-                    """))
+                    """)
+            )
         lints, hints = linter.main(tmpdir, return_hints=True, conda_forge=True)
         assert lints == ["Unsupported recipe.yaml schema version 2"]
 
@@ -4209,7 +4245,8 @@ def test_lint_recipe_v1_python_min_in_python_version(text):
 def test_lint_recipe_v1_comment_selectors():
     with tempfile.TemporaryDirectory() as tmpdir:
         with open(os.path.join(tmpdir, "recipe.yaml"), "w") as f:
-            f.write(textwrap.dedent("""
+            f.write(
+                textwrap.dedent("""
                 package:
                   name: test
                   version: 1.2.3
@@ -4241,7 +4278,8 @@ def test_lint_recipe_v1_comment_selectors():
                 extra:
                   recipe-maintainers:
                     - a
-                """))
+                """)
+            )
         lints, _ = linter.main(tmpdir, return_hints=True, conda_forge=True)
         assert lints == [
             "Selectors in comment form no longer work in v1 recipes. "
@@ -4254,11 +4292,13 @@ def test_lint_recipe_v1_comment_selectors():
 def test_version_zero(filename: str):
     with tempfile.TemporaryDirectory() as tmpdir:
         with open(os.path.join(tmpdir, filename), "w") as f:
-            f.write(textwrap.dedent("""
+            f.write(
+                textwrap.dedent("""
                 package:
                   name: test
                   version: 0
-                """))
+                """)
+            )
         lints, _ = linter.main(tmpdir, return_hints=True, conda_forge=True)
         assert "Package version is missing." not in lints
 
@@ -4298,7 +4338,8 @@ def test_bad_specs(spec, result):
     ],
 )
 def test_bad_specs_report(tmp_path, spec, ok):
-    (tmp_path / "meta.yaml").write_text(textwrap.dedent(f"""
+    (tmp_path / "meta.yaml").write_text(
+        textwrap.dedent(f"""
             package:
                 name: foo
             requirements:
@@ -4309,7 +4350,8 @@ def test_bad_specs_report(tmp_path, spec, ok):
                 requirements:
                   host:
                     - {spec}
-            """))
+            """)
+    )
 
     _, hints = linter.main(tmp_path, return_hints=True)
     print(hints)
@@ -4433,10 +4475,12 @@ def test_cfyml_obsolete_os_version():
                 """)
 
         with open(cfyml, "w") as fh:
-            fh.write(textwrap.dedent("""
+            fh.write(
+                textwrap.dedent("""
                     os_version:
                       linux_64: cos7
-                    """))
+                    """)
+            )
 
         _, hints = linter.main(recipe_dir, conda_forge=True, return_hints=True)
         assert any(expected_message in hint for hint in hints)

@@ -192,7 +192,6 @@ def r_recipe(config_yaml: ConfigYAML):
         os.path.join(config_yaml.workdir, "recipe", config_yaml.recipe_name),
         "w",
     ) as fh:
-
         r_recipe_template_path = os.path.abspath(
             os.path.join(
                 __file__, "../", "recipes", "r_recipe", config_yaml.recipe_name

@@ -104,8 +104,7 @@ class Init(Subcommand):
 
         super().__init__(
             parser,
-            "Create a feedstock git repository, which can contain "
-            "one conda recipes.",
+            "Create a feedstock git repository, which can contain one conda recipes.",
         )
         scp = self.subcommand_parser
         scp.add_argument(
@@ -570,7 +569,7 @@ class Regenerate(Subcommand):
     def __init__(self, parser):
         super().__init__(
             parser,
-            "Regenerate / update the CI support files of the " "feedstock.",
+            "Regenerate / update the CI support files of the feedstock.",
         )
         scp = self.subcommand_parser
         scp.add_argument(

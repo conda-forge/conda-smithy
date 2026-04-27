@@ -198,8 +198,7 @@ def add_project_to_circle(user, project):
         "Accept": "application/json",
     }
     url_template = (
-        "https://circleci.com/api/v1.1/project/github/{component}?"
-        "circle-token={token}"
+        "https://circleci.com/api/v1.1/project/github/{component}?circle-token={token}"
     )
 
     # Note, we used to check to see whether the project was already registered, but it started
