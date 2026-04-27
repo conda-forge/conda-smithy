@@ -4,6 +4,33 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.61.2
+====================
+
+**Fixed:**
+
+* Add ``.recipe_maintainers.json`` file to the ignore in the ``.gitignore``. (#2533)
+* fix: check teams found by slug and default to a search if we do not find them (#2535)
+
+**Authors:**
+
+* Matthew R. Becker
+
+
+
+v3.61.1
+====================
+
+**Fixed:**
+
+* Always remove maintainers that do not match even if we can detect a user rename. (#2531)
+
+**Authors:**
+
+* Matthew R. Becker
+
+
+
 v3.61.0
 ====================
 

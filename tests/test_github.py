@@ -2,8 +2,20 @@ import json
 import unittest.mock as mock
 
 import github
+import pytest
 
-from conda_smithy.github import configure_github_team
+from conda_smithy.github import _guess_team_slug, configure_github_team
+
+
+@pytest.mark.parametrize(
+    "team,slug",
+    [
+        (" - - - blah@$!#$!$- ", "blah"),
+        ("-R.nmf five", "r-nmf-five"),
+    ],
+)
+def test_guess_team_slug(team, slug):
+    assert _guess_team_slug(team) == slug
 
 
 @mock.patch("conda_smithy.github.has_in_members")
@@ -64,7 +76,8 @@ def test_github_configure_github_team_all_new(
         [
             mock.call("pkg1"),
             mock.call("team"),
-        ]
+        ],
+        any_order=True,
     )
     create_team.assert_called_once()  # did not patch random.choice so do not assert actual call
     create_team.return_value.add_to_repos.assert_called_once_with(gh_repo)
@@ -130,6 +143,7 @@ def test_github_configure_github_team_add(
 
     pkg1_team = mock.MagicMock()
     pkg1_team.slug = "pkg1"
+    pkg1_team.name = "pkg1"
     user1 = mock.MagicMock()
     user1.login = "user1"
     user2 = mock.MagicMock()
@@ -185,7 +199,6 @@ def test_github_configure_github_team_add(
     gh_repo.get_teams.assert_called_once_with()
     org.get_team_by_slug.assert_has_calls(
         [
-            mock.call("pkg1"),
             mock.call("new-team"),
             mock.call("pkg1"),
         ]
@@ -251,6 +264,7 @@ def test_github_configure_github_team_add_user_changed_id(
 
     pkg1_team = mock.MagicMock()
     pkg1_team.slug = "pkg1"
+    pkg1_team.name = "pkg1"
     user1 = mock.MagicMock()
     user1.login = "user1"
     pkg1_team.get_members.return_value = [
@@ -308,7 +322,6 @@ def test_github_configure_github_team_add_user_changed_id(
     gh_repo.get_teams.assert_called_once_with()
     org.get_team_by_slug.assert_has_calls(
         [
-            mock.call("pkg1"),
             mock.call("new-team"),
             mock.call("pkg1"),
         ]
@@ -379,6 +392,7 @@ def test_github_configure_github_team_add_changed_user_id_team_remove(
 
     pkg1_team = mock.MagicMock()
     pkg1_team.slug = "pkg1"
+    pkg1_team.name = "pkg1"
     user1 = mock.MagicMock()
     user1.login = "user1"
     user411 = mock.MagicMock()
@@ -443,7 +457,6 @@ def test_github_configure_github_team_add_changed_user_id_team_remove(
     gh_repo.get_teams.assert_called_once_with()
     org.get_team_by_slug.assert_has_calls(
         [
-            mock.call("pkg1"),
             mock.call("new-team"),
             mock.call("team"),
             mock.call("pkg1"),
@@ -465,7 +478,16 @@ def test_github_configure_github_team_add_changed_user_id_team_remove(
         ],
         any_order=True,
     )
-    remove_membership.assert_called_once_with(pkg1_team, "user1")
+    # FIXME - if we do not remove renamed folks, then the test should
+    # only remove user 1
+    # remove_membership.assert_called_once_with(pkg1_team, "user1")
+    remove_membership.assert_has_calls(
+        [
+            mock.call(pkg1_team, "user1"),
+            mock.call(pkg1_team, "user11"),
+        ],
+        any_order=True,
+    )
     team.add_to_repos.assert_not_called()
     team.remove_from_repos.assert_called_once_with(gh_repo)
     new_team.add_to_repos.assert_called_once_with(gh_repo)
