@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import re
 from typing import Any, Optional
 
@@ -7,6 +9,7 @@ from rattler_build_conda_compat.jinja.jinja import (
 )
 from rattler_build_conda_compat.outputs import is_staging_output
 
+from conda_smithy.linter import messages as msg
 from conda_smithy.linter.errors import HINT_NO_ARCH
 from conda_smithy.linter.utils import (
     _lint_package_version,
@@ -52,7 +55,7 @@ def lint_recipe_tests(
 
     if not test_section:
         if not outputs_section:
-            lints.append("The recipe must have some tests.")
+            lints.append(msg.r.RequiredTests().as_string())
         else:
             has_outputs_test = False
             no_test_hints = []
@@ -65,13 +68,14 @@ def lint_recipe_tests(
                     has_outputs_test = True
                 else:
                     no_test_hints.append(
-                        "It looks like the '{}' output doesn't "
-                        "have any tests.".format(output.get("name", "???"))
+                        msg.r.RecommendedTests(
+                            output=output.get("package", {}).get("name", "???")
+                        ).as_string()
                     )
             if has_outputs_test:
                 hints.extend(no_test_hints)
             else:
-                lints.append("The recipe must have some tests.")
+                lints.append(msg.r.RequiredTests().as_string())
 
     lints.extend(tests_lints)
     hints.extend(tests_hints)
@@ -195,16 +199,10 @@ def lint_usage_of_selectors_for_noarch(
                 has_bad_selector = True
 
             if has_bad_selector:
-                lints.append(
-                    "`noarch` packages can't have selectors. If "
-                    "the selectors are necessary, please remove "
-                    f"`noarch: {noarch_value}`."
-                )
+                lints.append(msg.r.NoarchSelectorsV1(noarch=noarch_value).as_string())
                 break
 
     if "skip" in build_section:
         lints.append(
-            "`noarch` packages can't have skips with selectors. If "
-            "the selectors are necessary, please remove "
-            f"`noarch: {noarch_value}`."
+            msg.r.NoarchSelectorsV1(noarch=noarch_value, skips=True).as_string()
         )

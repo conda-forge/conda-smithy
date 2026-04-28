@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+from __future__ import annotations
+
 import os
 import platform
 import shutil
@@ -8,6 +10,7 @@ import textwrap
 import unittest
 from collections import OrderedDict
 from contextlib import contextmanager
+from itertools import count
 from pathlib import Path
 
 import pytest
@@ -538,7 +541,7 @@ def test_lint_macdt(recipe_version, config_file):
 
         # run the linter
         lints = linter.main(recipe_dir, conda_forge=True)
-        assert any(lint.startswith("The MACOSX_DEPLOYMENT_TARGET") for lint in lints)
+        assert any(lint.startswith("The `MACOSX_DEPLOYMENT_TARGET`") for lint in lints)
 
 
 class TestLinter(unittest.TestCase):
@@ -749,7 +752,7 @@ class TestLinter(unittest.TestCase):
         self.assertNotIn(expected_message, lints)
 
         lints, hints = linter.lintify_meta_yaml(
-            {"outputs": [{"name": "foo"}]}, recipe_version=1
+            {"outputs": [{"package": {"name": "foo"}}]}, recipe_version=1
         )
         self.assertIn(expected_message, lints)
 
@@ -757,7 +760,7 @@ class TestLinter(unittest.TestCase):
             {
                 "outputs": [
                     {
-                        "name": "foo",
+                        "package": {"name": "foo"},
                         "tests": [{"python": {"imports": ["sys"]}}],
                     }
                 ]
@@ -769,10 +772,8 @@ class TestLinter(unittest.TestCase):
         lints, hints = linter.lintify_meta_yaml(
             {
                 "outputs": [
-                    {"name": "foo", "tests": {"script": "sys"}},
-                    {
-                        "name": "foobar",
-                    },
+                    {"package": {"name": "foo"}, "tests": {"script": "sys"}},
+                    {"package": {"name": "foobar"}},
                 ]
             },
             recipe_version=1,
@@ -1675,9 +1676,12 @@ linter:
 
     def test_spdx_license(self):
         msg = (
-            "License is not an SPDX identifier (or a custom LicenseRef) nor an SPDX license expression.\n\n"
+            "License is not an SPDX identifier (or a custom LicenseRef) "
+            "nor an SPDX license expression.\n\n"
             "Documentation on acceptable licenses can be found "
-            "[here]( https://conda-forge.org/docs/maintainer/adding_pkgs.html#spdx-identifiers-and-expressions )."
+            "[conda-forge.org > Docs > Maintainer Documentation "
+            "> Contributing packages > SPDX Identifiers and Expressions]"
+            "(https://conda-forge.org/docs/maintainer/adding_pkgs.html#spdx-identifiers-and-expressions)."
         )
         licenses = {
             "BSD-100": False,
@@ -1704,7 +1708,9 @@ linter:
         msg = (
             "License exception is not an SPDX exception.\n\n"
             "Documentation on acceptable licenses can be found "
-            "[here]( https://conda-forge.org/docs/maintainer/adding_pkgs.html#spdx-identifiers-and-expressions )."
+            "[conda-forge.org > Docs > Maintainer Documentation "
+            "> Contributing packages > SPDX Identifiers and Expressions]"
+            "(https://conda-forge.org/docs/maintainer/adding_pkgs.html#spdx-identifiers-and-expressions)."
         )
         licenses = {
             "Apache 2.0 WITH LLVM-exception": True,
@@ -1853,6 +1859,9 @@ linter:
                 os.environ["GH_TOKEN"] = gh_token
 
     def test_maintainer_team_exists(self):
+        if "GH_TOKEN" not in os.environ:
+            return  # skip if not present, test requires it
+
         lints, _ = linter.lintify_meta_yaml(
             {"extra": {"recipe-maintainers": ["conda-forge/blahblahblah-foobarblah"]}},
             conda_forge=True,
@@ -2780,8 +2789,8 @@ def test_v1_lint_recipe_tests_skips_staging_outputs():
 def test_v1_lint_recipe_tests_still_flags_missing_tests_on_package_outputs():
     outputs = [
         {"staging": {"name": "libfoo-build"}},
-        {"name": "libfoo"},
-        {"name": "libfoo-dev", "tests": [{"script": ["true"]}]},
+        {"package": {"name": "libfoo"}},
+        {"package": {"name": "libfoo-dev"}, "tests": [{"script": ["true"]}]},
     ]
     lints: list[str] = []
     hints: list[str] = []
@@ -2793,7 +2802,7 @@ def test_v1_lint_recipe_tests_still_flags_missing_tests_on_package_outputs():
         hints=hints,
     )
     assert len(hints) == 1
-    assert "'libfoo'" in hints[0]
+    assert "'libfoo'" in str(hints[0])
 
 
 def test_v1_package_name_version():
@@ -3841,6 +3850,7 @@ tests:
             [],
         ),
     ],
+    ids=(f"recipe-{i}" for i in count(1)),
 )
 def test_hint_noarch_python_use_python_min_v1(
     meta_str,
@@ -4637,7 +4647,7 @@ extra:
     assert lints == (
         [
             "package.version has a value that is interpreted as a floating-point "
-            'number. Please quote it (like "1.0" or "{{ var }}") to ensure that it is '
+            'number. Please quote it (like `"1.0"` or `"{{ var }}"`) to ensure that it is '
             "interpreted as string and preserved exactly."
         ]
         if expect_lint
@@ -4699,7 +4709,7 @@ extra:
     assert lints == (
         [
             f"{expect_lint} has a value that is interpreted as a floating-point "
-            'number. Please quote it (like "1.0") to ensure that it is '
+            'number. Please quote it (like `"1.0"`) to ensure that it is '
             "interpreted as string and preserved exactly."
         ]
         if expect_lint is not None

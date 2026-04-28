@@ -1,6 +1,7 @@
 """
-Collection of errors that can be raised by the linter.
+DEPRECATED. Moved to messages.py.
 """
 
-HINT_NO_ARCH = """Whenever possible python packages should use noarch.
-                See https://conda-forge.org/docs/maintainer/knowledge_base.html#noarch-builds"""
+from conda_smithy.linter.messages.recipe import SuggestNoarch
+
+HINT_NO_ARCH = SuggestNoarch.message  # DEPRECATED
