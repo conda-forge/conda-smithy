@@ -59,6 +59,7 @@ from conda_smithy.utils import (
     RATTLER_BUILD,
     HashableDict,
     ensure_standard_strings,
+    fill_workflow_settings_defaults,
     get_feedstock_about_from_meta,
     get_feedstock_name_from_meta,
     get_workflow_settings,
@@ -1886,11 +1887,24 @@ def _github_actions_specific_setup(jinja_env, forge_config, forge_dir, platform)
                 data["gha_with_gpu"] = True
             data["gha_runs_on"].append(label)
 
-        data.update(
-            get_workflow_settings(
-                forge_config["workflow_settings"], "github_actions", data["platform"]
-            )
+        workflow_settings = get_workflow_settings(
+            forge_config["workflow_settings"], "github_actions", data["platform"]
         )
+        on_hosted_runner = {
+            "windows-latest",
+            "windows-2022",
+            "windows-2025",
+        }.intersection(data["gha_runs_on"])
+        on_namespace = any(
+            x.startswith("namespace-profile-") for x in data["gha_runs_on"]
+        )
+        fill_workflow_settings_defaults(
+            workflow_settings,
+            "github_actions",
+            data["platform"],
+            "D:" if on_hosted_runner or on_namespace else "C:",
+        )
+        data.update(workflow_settings)
         if data["store_build_artifacts"]:
             script_suffix = ".bat" if platform == "win" else ".sh"
             template_files.append(
@@ -2021,6 +2035,7 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
                 raise ValueError(f"Unknown build platform: '{data['build_platform']}'")
 
         workflow_settings = get_workflow_settings(forge_config["workflow_settings"], "azure", data["platform"])
+        fill_workflow_settings_defaults(workflow_settings, "azure", data["platform"], "D:" if data["platform"] == "win-64" else "C:")
         data.update(workflow_settings)
         config_rendered.update(workflow_settings)
         if config_rendered["store_build_artifacts"]:
@@ -2499,6 +2514,32 @@ def _read_forge_config(forge_dir, forge_yml=None):
                 "value": config["github_actions"]["store_build_artifacts"],
             }
         )
+
+    path_var_mapping = {
+        "tools_install_dir": "MINIFORGE_HOME",
+        "build_workspace_dir": "CONDA_BLD_PATH",
+    }
+    for new_var, old_var in path_var_mapping.items():
+        if old_var in file_config.get("azure", {}).get("settings_win", {}).get(
+            "variables", {}
+        ):
+            if new_var in file_config.get("workflow_settings", {}):
+                warnings.warn(
+                    f"`azure.settings_win.variables.{old_var}` is ignored when "
+                    f"`workflow_settings.{new_var}` is set",
+                    DeprecationWarning,
+                )
+                del config["azure"]["settings_win"]["variables"][old_var]
+            else:
+                config["workflow_settings"][new_var].append(
+                    {
+                        "provider": "azure",
+                        "os": "win",
+                        "value": config["azure"]["settings_win"]["variables"].pop(
+                            old_var
+                        ),
+                    }
+                )
 
     # check for conda-smithy 2.x matrix which we can't auto-migrate
     # to conda_build_config
