@@ -48,8 +48,6 @@ def generate_feedstock_content(
         try:
             configure_feedstock.copytree(source_recipe_dir, target_recipe_dir)
         except Exception as e:
-            import sys
-
             raise type(e)(
                 str(e) + f" while copying file {source_recipe_dir}"
             ).with_traceback(sys.exc_info()[2])
@@ -570,7 +568,7 @@ class Regenerate(Subcommand):
     def __init__(self, parser):
         super().__init__(
             parser,
-            "Regenerate / update the CI support files of the " "feedstock.",
+            "Regenerate / update the CI support files of the feedstock.",
         )
         scp = self.subcommand_parser
         scp.add_argument(
