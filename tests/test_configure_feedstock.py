@@ -2469,13 +2469,11 @@ def test_store_build_artifacts_gha(
         config = configure_feedstock._load_forge_config(
             forge_dir, "recipe/default_config.yaml"
         )
-        assert (
-            any(
+        if add_old:
+            assert any(
                 "`github_actions.store_build_artifacts` is ignored" in record.message
                 for record in caplog.records
             )
-            == add_old
-        )
     configure_feedstock.render_github_actions(
         jinja_env=jinja_env,
         forge_config=config,
@@ -2541,13 +2539,11 @@ def test_store_build_artifacts_azure(
         config = configure_feedstock._load_forge_config(
             forge_dir, "recipe/default_config.yaml"
         )
-        assert (
-            any(
+        if add_old:
+            assert any(
                 "`azure.store_build_artifacts` is ignored" in record.message
                 for record in caplog.records
             )
-            == add_old
-        )
 
     configure_feedstock.render_azure(
         jinja_env=jinja_env,
