@@ -2474,7 +2474,7 @@ def _read_forge_config(forge_dir, forge_yml=None):
 
     # Validate loaded configuration against a JSON schema.
     validate_lints, validate_hints = validate_json_schema(file_config)
-    for err in chain(validate_lints, validate_hints):
+    for err in validate_lints:
         logger.warning(
             "%s: %s = %s -> %s",
             os.path.relpath(forge_yml, forge_dir),
@@ -2483,6 +2483,8 @@ def _read_forge_config(forge_dir, forge_yml=None):
             err.message,
         )
         logger.debug("Relevant schema:\n%s", json.dumps(err.schema, indent=2))
+    for hint in validate_hints:
+        logger.warning("%s: %s", os.path.relpath(forge_yml, forge_dir), hint)
 
     # The config is just the union of the defaults, and the overridden
     # values.
