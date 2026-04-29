@@ -1,5 +1,7 @@
 # Copyright (C) 2012 Anaconda, Inc
 # SPDX-License-Identifier: BSD-3-Clause
+# Vendored from conda/conda@26.3.2 on 2026-04-29
+# Modified to accept timedelta in remove_in arguments
 """Tools to aid in deprecating code."""
 
 from __future__ import annotations
@@ -8,6 +10,7 @@ import sys
 import warnings
 from argparse import SUPPRESS, Action
 from dataclasses import dataclass, field
+from datetime import datetime, timedelta
 from functools import wraps
 from types import ModuleType
 from typing import TYPE_CHECKING
@@ -84,7 +87,7 @@ class DeprecationHandler:
     def __call__(
         self: Self,
         deprecate_in: str,
-        remove_in: str,
+        remove_in: str | timedelta,
         *,
         addendum: str | None = None,
         stack: int = 0,
@@ -93,7 +96,8 @@ class DeprecationHandler:
         """Deprecation decorator for functions, methods, & classes.
 
         :param deprecate_in: Version in which code will be marked as deprecated.
-        :param remove_in: Version in which code is expected to be removed.
+        :param remove_in: Version in which code is expected to be removed,
+            or a timedelta to add to current version (calver).
         :param addendum: Optional additional messaging. Useful to indicate what to do instead.
         :param stack: Optional stacklevel increment.
         """
@@ -144,7 +148,7 @@ class DeprecationHandler:
     def argument(
         self: Self,
         deprecate_in: str,
-        remove_in: str,
+        remove_in: str | timedelta,
         argument: str,
         *,
         rename: str | None = None,
@@ -155,7 +159,8 @@ class DeprecationHandler:
         """Deprecation decorator for keyword arguments.
 
         :param deprecate_in: Version in which code will be marked as deprecated.
-        :param remove_in: Version in which code is expected to be removed.
+        :param remove_in: Version in which code is expected to be removed,
+            or a timedelta to add to current version (calver).
         :param argument: The argument to deprecate.
         :param rename: Optional new argument name.
         :param addendum: Optional additional messaging. Useful to indicate what to do instead.
@@ -200,7 +205,7 @@ class DeprecationHandler:
     def action(
         self: Self,
         deprecate_in: str,
-        remove_in: str,
+        remove_in: str | timedelta,
         action: ActionType,
         *,
         addendum: str | None = None,
@@ -264,7 +269,7 @@ class DeprecationHandler:
     def module(
         self: Self,
         deprecate_in: str,
-        remove_in: str,
+        remove_in: str | timedelta,
         *,
         addendum: str | None = None,
         stack: int = 0,
@@ -272,7 +277,8 @@ class DeprecationHandler:
         """Deprecation function for modules.
 
         :param deprecate_in: Version in which code will be marked as deprecated.
-        :param remove_in: Version in which code is expected to be removed.
+        :param remove_in: Version in which code is expected to be removed,
+            or a timedelta to add to current version (calver).
         :param addendum: Optional additional messaging. Useful to indicate what to do instead.
         :param stack: Optional stacklevel increment.
         """
@@ -287,7 +293,7 @@ class DeprecationHandler:
     def constant(
         self: Self,
         deprecate_in: str,
-        remove_in: str,
+        remove_in: str | timedelta,
         constant: str,
         value: Any,
         *,
@@ -298,7 +304,8 @@ class DeprecationHandler:
         """Deprecation function for module constant/global.
 
         :param deprecate_in: Version in which code will be marked as deprecated.
-        :param remove_in: Version in which code is expected to be removed.
+        :param remove_in: Version in which code is expected to be removed,
+            or a timedelta to add to current version (calver).
         :param constant:
         :param value:
         :param addendum: Optional additional messaging. Useful to indicate what to do instead.
@@ -334,7 +341,7 @@ class DeprecationHandler:
     def topic(
         self: Self,
         deprecate_in: str,
-        remove_in: str,
+        remove_in: str | timedelta,
         *,
         topic: str,
         addendum: str | None = None,
@@ -344,7 +351,8 @@ class DeprecationHandler:
         """Deprecation function for a topic.
 
         :param deprecate_in: Version in which code will be marked as deprecated.
-        :param remove_in: Version in which code is expected to be removed.
+        :param remove_in: Version in which code is expected to be removed,
+            or a timedelta to add to current version (calver).
         :param topic: The topic being deprecated.
         :param addendum: Optional additional messaging. Useful to indicate what to do instead.
         :param stack: Optional stacklevel increment.
@@ -406,7 +414,7 @@ class DeprecationHandler:
     def _generate_message(
         self: Self,
         deprecate_in: str,
-        remove_in: str,
+        remove_in: str | timedelta,
         prefix: str,
         addendum: str | None,
         *,
@@ -416,22 +424,31 @@ class DeprecationHandler:
         deprecation is pending, active, or past.
 
         :param deprecate_in: Version in which code will be marked as deprecated.
-        :param remove_in: Version in which code is expected to be removed.
+        :param remove_in: Version in which code is expected to be removed,
+            or a timedelta to add to current version (calver).
         :param prefix: The message prefix, usually the function name.
         :param addendum: Additional messaging. Useful to indicate what to do instead.
         :param deprecation_type: The warning type to use for active deprecations.
         :return: The warning category (if applicable) and the message.
         """
         category: type[Warning] | None
+        if isinstance(remove_in, timedelta):
+            deprecate_in_tuple = self._get_version_tuple(deprecate_in)
+            if deprecate_in_tuple is None:
+                raise ValueError(f"Cannot add timedelta to version {deprecate_in}")
+            elif len(deprecate_in_tuple) < 3:
+                raise ValueError("'deprecate_in' version needs at least three components")
+            next_version = datetime(*deprecate_in_tuple[:3]) + remove_in
+            remove_in = f"{next_version.year}.{next_version.month}.{next_version.day}"
         if self._version_less_than(deprecate_in):
             category = PendingDeprecationWarning
-            warning = f"is pending deprecation and will be removed in {remove_in}."
+            warning = f"is pending deprecation and will be removed by {remove_in}."
         elif self._version_less_than(remove_in):
             category = deprecation_type
-            warning = f"is deprecated and will be removed in {remove_in}."
+            warning = f"is deprecated and will be removed by {remove_in}."
         else:
             category = None
-            warning = f"was slated for removal in {remove_in}."
+            warning = f"was slated for removal by {remove_in}."
 
         return (
             category,
