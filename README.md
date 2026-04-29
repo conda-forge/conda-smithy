@@ -134,13 +134,7 @@ $ rever 0.1.2
 Deprecation policy
 ------------------
 
-We make a best effort to keep backwards compatibility with our existing Python API,
-which is defined as the collection of all reachable symbols whose fully qualified import
-path do not feature a leading underscore in any of its components. This covers renames
-and, if callable, changes in signatures (argument and keyword argument names and types,
-plus the return types).
-
-Any other symbol may change without prior notice.
+`conda-smithy` has no guaranteed API. All API changes must undergo a 60-day deprecation period and must be clearly indicated via a `DeprecationWarning`.
 
 Conda-smithy in a nutshell
 --------------------------
