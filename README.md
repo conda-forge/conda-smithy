@@ -134,9 +134,14 @@ $ rever 0.1.2
 Deprecation policy
 ------------------
 
-`conda-smithy` has no guaranteed API. All API changes must undergo a 60-day
-deprecation period and must be clearly indicated via a `DeprecationWarning`
-and a news entry in the ``Deprecated`` section.
+`conda-smithy`'s API is defined as the collection of all reachable symbols whose fully qualified import
+path does not feature a leading underscore in any of its components. The API covers renames
+and, if callable, changes in signatures (argument and keyword argument names and types,
+plus the return types). The API also covers the command-line interface. Any other symbol may change
+at any time and has no guaranteed API.
+
+All API changes must undergo a 60-day deprecation period, must be clearly indicated via
+a `DeprecationWarning`, and must have a news entry in the ``Deprecated`` section.
 
 Conda-smithy in a nutshell
 --------------------------
