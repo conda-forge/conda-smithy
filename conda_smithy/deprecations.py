@@ -219,9 +219,7 @@ class DeprecationHandler:
             help: str  # override argparse.Action's help type annotation
 
             def __init__(
-                inner_self: Self,  # noqa: N805
-                *args: Any,
-                **kwargs: Any
+                inner_self: Self, *args: Any, **kwargs: Any  # noqa: N805
             ) -> None:
                 super().__init__(*args, **kwargs)
 
