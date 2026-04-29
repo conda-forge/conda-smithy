@@ -134,7 +134,9 @@ $ rever 0.1.2
 Deprecation policy
 ------------------
 
-`conda-smithy` has no guaranteed API. All API changes must undergo a 60-day deprecation period and must be clearly indicated via a `DeprecationWarning`.
+`conda-smithy` has no guaranteed API. All API changes must undergo a 60-day
+deprecation period and must be clearly indicated via a `DeprecationWarning`
+and a news entry in the ``Deprecation`` section.
 
 Conda-smithy in a nutshell
 --------------------------
