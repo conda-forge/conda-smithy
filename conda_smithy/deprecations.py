@@ -27,7 +27,7 @@ if TYPE_CHECKING:
 
     ActionType = TypeVar("ActionType", bound=type[Action])
 
-from . import __version__
+from conda_smithy import __version__
 
 
 class DeprecatedError(RuntimeError):
@@ -218,7 +218,7 @@ class DeprecationHandler:
             category: type[Warning]
             help: str  # override argparse.Action's help type annotation
 
-            def __init__(inner_self: Self, *args: Any, **kwargs: Any) -> None:
+            def __init__(inner_self: Self, *args: Any, **kwargs: Any) -> None:  # noqa: N805
                 super().__init__(*args, **kwargs)
 
                 category, message = self._generate_message(
@@ -251,7 +251,7 @@ class DeprecationHandler:
                 namespace: Namespace,
                 values: Any,
                 option_string: str | None = None,
-            ) -> None:
+            ) -> None:  # noqa: N805
                 # alert user that it's time to remove something
                 from conda.common.constants import NULL
 
