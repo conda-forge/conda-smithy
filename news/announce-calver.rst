@@ -1,6 +1,6 @@
 **Added:**
 
-* <news item>
+* Introduce deprecation machinery for the upcoming CalVer switch. (#2541)
 
 **Changed:**
 
