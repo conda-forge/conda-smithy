@@ -437,7 +437,9 @@ class DeprecationHandler:
             if deprecate_in_tuple is None:
                 raise ValueError(f"Cannot add timedelta to version {deprecate_in}")
             elif len(deprecate_in_tuple) < 3:
-                raise ValueError("'deprecate_in' version needs at least three components")
+                raise ValueError(
+                    "'deprecate_in' version needs at least three components"
+                )
             next_version = datetime(*deprecate_in_tuple[:3]) + remove_in
             remove_in = f"{next_version.year}.{next_version.month}.{next_version.day}"
         if self._version_less_than(deprecate_in):
