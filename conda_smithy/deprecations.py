@@ -250,12 +250,12 @@ class DeprecationHandler:
                     inner_self.help = message
 
             def __call__(
-                inner_self: Self,
+                inner_self: Self,  # noqa: N805
                 parser: ArgumentParser,
                 namespace: Namespace,
                 values: Any,
                 option_string: str | None = None,
-            ) -> None:  # noqa: N805
+            ) -> None:
                 # alert user that it's time to remove something
                 from conda.common.constants import NULL
 
