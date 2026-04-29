@@ -218,7 +218,11 @@ class DeprecationHandler:
             category: type[Warning]
             help: str  # override argparse.Action's help type annotation
 
-            def __init__(inner_self: Self, *args: Any, **kwargs: Any) -> None:  # noqa: N805
+            def __init__(
+                inner_self: Self,  # noqa: N805
+                *args: Any,
+                **kwargs: Any
+            ) -> None:
                 super().__init__(*args, **kwargs)
 
                 category, message = self._generate_message(
