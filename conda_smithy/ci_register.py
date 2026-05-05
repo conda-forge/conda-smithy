@@ -387,7 +387,7 @@ def add_project_to_travis(user, project):
                     end="",
                 )
             sys.stdout.flush()
-            sync_url = "{}/user/{}/sync".format(travis_endpoint, user_info["id"])
+            sync_url = f"{travis_endpoint}/user/{user_info['id']}/sync"
             response = requests.post(sync_url, headers=headers)
             if response.status_code != 409:
                 # 409 status code is for indicating that another synching might be happening at the
