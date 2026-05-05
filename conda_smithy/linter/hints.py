@@ -469,3 +469,82 @@ def hint_rattler_build_bld_bat(
     bld_bat_path = os.path.join(recipe_dir, "bld.bat")
     if os.path.exists(bld_bat_path):
         hints.append(msg.r.RattlerBldBat().as_string())
+
+
+def _is_pin_overridden(spec: str, pins: set[str]) -> bool:
+    from conda import CondaError
+    from conda.models.match_spec import MatchSpec
+
+    if "#" in spec:
+        spec = spec.split("#")[0]
+    spec = spec.strip()
+
+    # exclude jinja2 stubs or expressions
+    if "{{" in spec or any(
+        spec.startswith(stub)
+        for stub in [
+            "compatible_pin ",
+            "subpackage_pin ",
+        ]
+    ):
+        return False
+
+    fields = spec.split()
+    if len(fields) not in (2, 3):
+        return False
+
+    try:
+        match_spec = MatchSpec(spec)
+    except CondaError:
+        return False
+
+    return match_spec.name in pins and match_spec.version
+
+
+def hint_dependency_pins(
+    requirements_section,
+    outputs_section,
+    ci_support_files,
+    hints,
+):
+    """Hint for dependencies that override pinning"""
+
+    if not ci_support_files:
+        return
+
+    potential_pins = set()
+    for pin_file in ci_support_files:
+        # TODO: can we do this better?
+        with open(pin_file, encoding="utf-8") as fh:
+            pin_yaml = get_yaml().load(fh)
+        potential_pins.update(pin_yaml.keys())
+
+    report = {}
+    for req_type, reqs in requirements_section.items():
+        if req_type != "host":
+            continue
+        bad_specs = [
+            req for req in (reqs or ()) if _is_pin_overridden(req, potential_pins)
+        ]
+        if bad_specs:
+            report.setdefault("top-level", {})[req_type] = bad_specs
+    for i, output in enumerate(outputs_section):
+        requirements_section = output.get("requirements") or {}
+        if not hasattr(requirements_section, "items"):
+            # not a dict, but a list (CB2 style)
+            requirements_section = {"run": requirements_section}
+        for req_type, reqs in requirements_section.items():
+            if req_type != "host":
+                continue
+            bad_specs = [req for req in reqs if _is_pin_overridden(req, potential_pins)]
+            if bad_specs:
+                report.setdefault(output.get("name", f"output {i}"), {})[
+                    req_type
+                ] = bad_specs
+
+    for output, requirements in report.items():
+        hints.append(
+            msg.cf.PinnedDependencyOverridden(
+                output=output, bad_specs=requirements
+            ).as_string()
+        )
