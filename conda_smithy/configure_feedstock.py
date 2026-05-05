@@ -820,7 +820,7 @@ def _collapse_subpackage_variants(
 def _is_config_skipped(config, top_level_loop_vars, list_of_metas):
     trimmed_config = {loop_var: config[loop_var] for loop_var in top_level_loop_vars}
     logger.debug("checking config: %s", trimmed_config)
-    for i, meta in enumerate(list_of_metas):
+    for meta in list_of_metas:
         trimmed_meta = {
             loop_var: meta.config.variant.get(loop_var)
             for loop_var in top_level_loop_vars
@@ -2287,7 +2287,7 @@ def render_readme(jinja_env, forge_config, forge_dir, render_info=None):
 
     # align new style about with old style about
     logger.debug("subpackages_about\n %s", pprint.pformat(subpackages_about))
-    for i, (name, about) in enumerate(subpackages_about):
+    for name, about in subpackages_about:
         if "repository" in about:
             about["dev_url"] = about["repository"]
         if "homepage" in about:
