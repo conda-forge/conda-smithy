@@ -521,7 +521,7 @@ def hint_dependency_pins(
 
     report = {}
     for req_type, reqs in requirements_section.items():
-        if req_type != "host":
+        if req_type != "host" or reqs is None:
             continue
         bad_specs = [
             req for req in (reqs or ()) if _is_pin_overridden(req, potential_pins)
@@ -534,7 +534,7 @@ def hint_dependency_pins(
             # not a dict, but a list (CB2 style)
             requirements_section = {"run": requirements_section}
         for req_type, reqs in requirements_section.items():
-            if req_type != "host":
+            if req_type != "host" or reqs is None:
                 continue
             bad_specs = [req for req in reqs if _is_pin_overridden(req, potential_pins)]
             if bad_specs:
