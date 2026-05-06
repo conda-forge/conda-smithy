@@ -4718,5 +4718,77 @@ extra:
     assert hints == []
 
 
+def test_hint_pinned_dependency_override() -> None:
+    recipe = """\
+context:
+  version: "1.0"
+
+package:
+  name: foo
+  version: ${{ version }}
+
+build:
+  number: 1
+
+requirements:
+  host:
+    - libhwloc >=2.5
+    - not_pinned >=3.7,<4
+    - if: win
+      then: windows_only >=1.1
+
+tests:
+  - script:
+    - true
+
+about:
+  homepage: https://example.com
+  license: GPL-3.0-or-later
+  license_file:
+    - COPYING
+  summary: test
+
+extra:
+  recipe-maintainers:
+    - mgorny
+"""
+
+    linux_pinning = """\
+libhwloc:
+- 2.12
+"""
+
+    win_pinning = """\
+libhwloc:
+- 2.12
+windows_only:
+- 2.0
+"""
+
+    with tmp_directory() as feedstock_dir:
+        recipe_dir = os.path.join(feedstock_dir, "recipe")
+        os.mkdir(recipe_dir)
+        with open(os.path.join(recipe_dir, "recipe.yaml"), "w") as fh:
+            fh.write(recipe)
+
+        ci_support_dir = os.path.join(feedstock_dir, ".ci_support")
+        os.mkdir(ci_support_dir)
+        with open(os.path.join(ci_support_dir, "linux_64.yaml"), "w") as fh:
+            fh.write(linux_pinning)
+        with open(os.path.join(ci_support_dir, "win_64.yaml"), "w") as fh:
+            fh.write(win_pinning)
+
+        lints, hints = linter.main(recipe_dir, return_hints=True, conda_forge=True)
+
+    assert lints == []
+    assert hints == [
+        "top-level output overrides versions pinned in the feedstock:\n"
+        "['- In section host: `libhwloc >=2.5`, `windows_only >=1.1`']\n"
+        "Requirement spec should not list version specifiers to respect "
+        "conda-forge-pinning. If you need to force another version, please "
+        "override the pin via `conda_build_config.yaml`.",
+    ]
+
+
 if __name__ == "__main__":
     unittest.main()
