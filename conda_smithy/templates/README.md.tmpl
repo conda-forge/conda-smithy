@@ -66,6 +66,15 @@ Current build status
       </a>
     </td>
   </tr>
+  {%- elif github_actions.enabled -%}
+  <tr>
+    <td>All platforms:</td>
+    <td>
+      <a href="https://github.com/{{ github.user_or_org }}/{{ github.repo_name }}/actions/workflows/conda-build.yml">
+        <img src="https://github.com/{{ github.user_or_org }}/{{ github.repo_name }}/actions/workflows/conda-build.yml/badge.svg?event=push">
+      </a>
+    </td>
+  </tr>
   {%- elif azure.enabled -%}
   <tr>
     {#- Sample url #-}
@@ -124,6 +133,16 @@ Current build status
     <td>
       <a href="https://ci.appveyor.com/project/{{ github.user_or_org }}/{{ appveyor_url_name }}/branch/{{ github.branch_name }}">
         <img alt="windows" src="{{ shield }}appveyor/ci/{{ github.user_or_org }}/{{ appveyor_url_name }}/{{ github.branch_name }}.svg?label=Windows">
+      </a>
+    </td>
+  </tr>
+  {%- endif -%}
+  {%- if github_actions.enabled -%}
+  <tr>
+    <td>GitHub Actions</td>
+    <td>
+      <a href="https://github.com/{{ github.user_or_org }}/{{ github.repo_name }}/actions/workflows/conda-build.yml">
+        <img src="https://github.com/{{ github.user_or_org }}/{{ github.repo_name }}/actions/workflows/conda-build.yml/badge.svg?event=push">
       </a>
     </td>
   </tr>
