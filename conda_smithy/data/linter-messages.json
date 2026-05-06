@@ -97,6 +97,18 @@
       "path": ".github/workflows/*.y*ml"
     },
     {
+      "name": "PinnedDependencyOverridden",
+      "identifier": "CF-006",
+      "category": "CF",
+      "kind": "hint",
+      "added_in": "<3.56",
+      "deprecated_in": "",
+      "documentation": "Hint when dependency specification overrides a pin.",
+      "message": "${output} output overrides versions pinned in the feedstock:\n${bad_specs_list}\nRequirement spec should not list version specifiers to respect conda-forge-pinning. If you need to force another version, please override the pin via `conda_build_config.yaml`.",
+      "examples": [],
+      "path": ""
+    },
+    {
       "name": "NoDuplicateKeys",
       "identifier": "FC-001",
       "category": "FC",
