@@ -2465,7 +2465,7 @@ def test_lint_no_builds():
         assert any(lint.startswith(expected_message) for lint in lints)
 
         with open(os.path.join(ci_support_dir, "blah.yaml"), "w") as fh:
-            fh.write("blah")
+            fh.write("blah:\n- foo")
 
         lints = linter.main(recipe_dir, conda_forge=True)
         assert not any(lint.startswith(expected_message) for lint in lints)
