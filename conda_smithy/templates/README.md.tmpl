@@ -166,6 +166,8 @@ Current build status
           <tbody>
           {%- for variant in variants -%}
             {%- set variant_os = variant.split('_')[0] -%}
+            {%- set platform = variant.split('_')[:2] | join('_') -%}
+            {%- if "azure" in provider[platform] -%}
             <tr>
               <td>{{ variant.strip('_') }}</td>
               <td>
@@ -174,6 +176,7 @@ Current build status
                 </a>
               </td>
             </tr>
+            {%- endif -%}
           {%- endfor %}
           </tbody>
         </table>
