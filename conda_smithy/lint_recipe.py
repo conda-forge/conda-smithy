@@ -838,7 +838,7 @@ def main(recipe_dir, conda_forge=False, return_hints=False, feedstock_dir=None):
     )
 
     results.extend([_format_validation_msg(err) for err in validation_errors])
-    hints.extend([_format_validation_msg(hint) for hint in validation_hints])
+    hints.extend(validation_hints)
 
     if return_hints:
         return results, hints
