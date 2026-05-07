@@ -66,6 +66,15 @@ Current build status
       </a>
     </td>
   </tr>
+  {%- elif github_actions.enabled -%}
+  <tr>
+    <td>All platforms:</td>
+    <td>
+      <a href="https://github.com/{{ github.user_or_org }}/{{ github.repo_name }}/actions/workflows/conda-build.yml">
+        <img src="https://github.com/{{ github.user_or_org }}/{{ github.repo_name }}/actions/workflows/conda-build.yml/badge.svg?event=push&branch={{ github.branch_name }}">
+      </a>
+    </td>
+  </tr>
   {%- elif azure.enabled -%}
   <tr>
     {#- Sample url #-}
@@ -128,6 +137,16 @@ Current build status
     </td>
   </tr>
   {%- endif -%}
+  {%- if github_actions.enabled -%}
+  <tr>
+    <td>GitHub Actions</td>
+    <td>
+      <a href="https://github.com/{{ github.user_or_org }}/{{ github.repo_name }}/actions/workflows/conda-build.yml">
+        <img src="https://github.com/{{ github.user_or_org }}/{{ github.repo_name }}/actions/workflows/conda-build.yml/badge.svg?event=push&branch={{ github.branch_name }}">
+      </a>
+    </td>
+  </tr>
+  {%- endif -%}
   {%- if azure.enabled -%}
     {#- Sample url #-}
     {#- [![Azure Status](https://dev.azure.com/conda-forge/feedstock-builds/_apis/build/status/cryptography-feedstock?branchName=master)](https://dev.azure.com/conda-forge/feedstock-builds/_build/latest?definitionId=195&branchName=master) -#}
@@ -147,6 +166,8 @@ Current build status
           <tbody>
           {%- for variant in variants -%}
             {%- set variant_os = variant.split('_')[0] -%}
+            {%- set platform = variant.split('_')[:2] | join('_') -%}
+            {%- if "azure" in provider[platform] -%}
             <tr>
               <td>{{ variant.strip('_') }}</td>
               <td>
@@ -155,6 +176,7 @@ Current build status
                 </a>
               </td>
             </tr>
+            {%- endif -%}
           {%- endfor %}
           </tbody>
         </table>
