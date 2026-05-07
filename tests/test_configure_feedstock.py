@@ -1125,15 +1125,24 @@ def test_conda_build_tools(config_yaml: ConfigYAML, caplog):
     if config_yaml.type == "conda-build":
         with open(os.path.join(config_yaml.workdir, "conda-forge.yml"), "a+") as fp:
             fp.write("build_with_mambabuild: true")
-        with pytest.deprecated_call(match="build_with_mambabuild is deprecated"):
+        with caplog.at_level(logging.WARNING):
             assert load_forge_config()["conda_build_tool"] == "mambabuild"
+            assert any(
+                "build_with_mambabuild is deprecated" in record.message
+                for record in caplog.records
+            )
 
         with open(os.path.join(config_yaml.workdir, "conda-forge.yml"), "w") as fp:
             fp.write(unmodified)
             fp.write("build_with_mambabuild: false")
 
-        with pytest.deprecated_call(match="build_with_mambabuild is deprecated"):
+        caplog.clear()
+        with caplog.at_level(logging.WARNING):
             assert load_forge_config()["conda_build_tool"] == "conda-build"
+            assert any(
+                "build_with_mambabuild is deprecated" in record.message
+                for record in caplog.records
+            )
 
     with open(os.path.join(config_yaml.workdir, "conda-forge.yml"), "w") as fp:
         fp.write(unmodified)
@@ -2432,7 +2441,12 @@ def test_github_actions_labels(py_recipe, jinja_env, label):
 
 @pytest.mark.parametrize("path", ["github_actions", "workflow_settings"])
 @pytest.mark.parametrize("value", [False, True])
-def test_store_build_artifacts_gha(py_recipe, jinja_env, path: str, value: bool):
+@pytest.mark.parametrize("add_old", [False, True])
+def test_store_build_artifacts_gha(
+    py_recipe, jinja_env, caplog, path: str, value: bool, add_old: bool
+):
+    if add_old and path == "github_actions":
+        pytest.skip("not a meaningful combination")
     forge_dir = py_recipe.recipe
     forge_yml = Path(forge_dir, "conda-forge.yml")
 
@@ -2445,10 +2459,21 @@ def test_store_build_artifacts_gha(py_recipe, jinja_env, path: str, value: bool)
             {path}:
               store_build_artifacts: {value}
         """))
+        if add_old:
+            f.write(textwrap.dedent(f"""\
+                github_actions:
+                  store_build_artifacts: {not value}
+            """))
 
-    config = configure_feedstock._load_forge_config(
-        forge_dir, "recipe/default_config.yaml"
-    )
+    with caplog.at_level(logging.WARNING):
+        config = configure_feedstock._load_forge_config(
+            forge_dir, "recipe/default_config.yaml"
+        )
+        if add_old:
+            assert any(
+                "`github_actions.store_build_artifacts` is ignored" in record.message
+                for record in caplog.records
+            )
     configure_feedstock.render_github_actions(
         jinja_env=jinja_env,
         forge_config=config,
@@ -2486,7 +2511,12 @@ def test_store_build_artifacts_gha(py_recipe, jinja_env, path: str, value: bool)
 
 @pytest.mark.parametrize("path", ["azure", "workflow_settings"])
 @pytest.mark.parametrize("value", [False, True])
-def test_store_build_artifacts_azure(py_recipe, jinja_env, path: str, value: bool):
+@pytest.mark.parametrize("add_old", [False, True])
+def test_store_build_artifacts_azure(
+    py_recipe, jinja_env, caplog, path: str, value: bool, add_old: bool
+):
+    if add_old and path == "azure":
+        pytest.skip("not a meaningful combination")
     forge_dir = py_recipe.recipe
     forge_yml = Path(forge_dir, "conda-forge.yml")
 
@@ -2499,10 +2529,22 @@ def test_store_build_artifacts_azure(py_recipe, jinja_env, path: str, value: boo
             {path}:
               store_build_artifacts: {value}
         """))
+        if add_old:
+            f.write(textwrap.dedent(f"""\
+                azure:
+                  store_build_artifacts: {not value}
+            """))
 
-    config = configure_feedstock._load_forge_config(
-        forge_dir, "recipe/default_config.yaml"
-    )
+    with caplog.at_level(logging.WARNING):
+        config = configure_feedstock._load_forge_config(
+            forge_dir, "recipe/default_config.yaml"
+        )
+        if add_old:
+            assert any(
+                "`azure.store_build_artifacts` is ignored" in record.message
+                for record in caplog.records
+            )
+
     configure_feedstock.render_azure(
         jinja_env=jinja_env,
         forge_config=config,
@@ -2538,30 +2580,6 @@ def test_store_build_artifacts_azure(py_recipe, jinja_env, path: str, value: boo
         Path(forge_dir, ".scripts/create_conda_build_artifacts.bat").exists() is value
     )
     assert Path(forge_dir, ".scripts/create_conda_build_artifacts.sh").exists() is value
-
-
-@pytest.mark.parametrize("ci", ["azure", "github_actions"])
-def test_store_build_artifacts_duplicate_setting(py_recipe, jinja_env, ci: str):
-    forge_dir = py_recipe.recipe
-    forge_yml = Path(forge_dir, "conda-forge.yml")
-
-    with open(forge_yml, "a") as f:
-        f.write(textwrap.dedent(f"""\
-            provider:
-              linux_64: azure
-              osx_64: azure
-              win_64: azure
-            workflow_settings:
-              store_build_artifacts: true
-            {ci}:
-              store_build_artifacts: true
-        """))
-
-    with pytest.raises(
-        ValueError,
-        match=rf"`store_build_artifacts` both in `workflow_settings` and `{ci}` sections",
-    ):
-        configure_feedstock._load_forge_config(forge_dir, "recipe/default_config.yaml")
 
 
 def test_store_build_artifacts_gha_conditions(py_recipe, jinja_env):
@@ -2975,7 +2993,7 @@ def test_tools_build_paths_azure_old_vars(py_recipe, jinja_env):
         assert "CONDA_BLD_PATH" not in workflow["jobs"][0]["variables"]
 
 
-def test_tools_build_paths_azure_old_and_new_vars(py_recipe, jinja_env):
+def test_tools_build_paths_azure_old_and_new_vars(py_recipe, jinja_env, caplog):
     forge_dir = py_recipe.recipe
     forge_yml = Path(forge_dir, "conda-forge.yml")
 
@@ -2998,14 +3016,7 @@ def test_tools_build_paths_azure_old_and_new_vars(py_recipe, jinja_env):
                   value: D:\\bar
         """))
 
-    with (
-        pytest.warns(
-            DeprecationWarning, match=r"`azure.settings_win.variables.MINIFORGE_HOME`"
-        ),
-        pytest.warns(
-            DeprecationWarning, match=r"`azure.settings_win.variables.CONDA_BLD_PATH`"
-        ),
-    ):
+    with caplog.at_level(logging.WARNING):
         config = configure_feedstock._load_forge_config(
             forge_dir, "recipe/default_config.yaml"
         )
@@ -3013,6 +3024,15 @@ def test_tools_build_paths_azure_old_and_new_vars(py_recipe, jinja_env):
             jinja_env=jinja_env,
             forge_config=config,
             forge_dir=forge_dir,
+        )
+
+        assert any(
+            "`azure.settings_win.variables.MINIFORGE_HOME`" in record.message
+            for record in caplog.records
+        )
+        assert any(
+            "`azure.settings_win.variables.CONDA_BLD_PATH`" in record.message
+            for record in caplog.records
         )
 
     expected = {
