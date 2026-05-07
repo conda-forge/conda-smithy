@@ -5,7 +5,7 @@ import re
 import shutil
 import subprocess
 import sys
-from collections.abc import Mapping
+from collections.abc import Generator, Mapping
 from glob import glob
 from typing import Any
 
@@ -471,34 +471,40 @@ def hint_rattler_build_bld_bat(
         hints.append(msg.r.RattlerBldBat().as_string())
 
 
-def _is_pin_overridden(spec: str, pins: set[str]) -> bool:
+def _check_pin_overridden(specs: list[str], pins: set[str]) -> Generator[str]:
     from conda import CondaError
     from conda.models.match_spec import MatchSpec
 
-    if "#" in spec:
-        spec = spec.split("#")[0]
-    spec = spec.strip()
+    packages_found = {}
 
-    # exclude jinja2 stubs or expressions
-    if "{{" in spec or any(
-        spec.startswith(stub)
-        for stub in [
-            "compatible_pin ",
-            "subpackage_pin ",
-        ]
-    ):
-        return False
+    for spec in specs:
+        if "#" in spec:
+            spec = spec.split("#")[0]
+        spec = spec.strip()
 
-    fields = spec.split()
-    if len(fields) not in (2, 3):
-        return False
+        try:
+            match_spec = MatchSpec(spec)
+        except CondaError:
+            # this covers specs using jinja expressions like:
+            #   - python ${{ python_min }}
+            #   - blah ${{ blah }}
+            continue
 
-    try:
-        match_spec = MatchSpec(spec)
-    except CondaError:
-        return False
+        packages_found.setdefault(match_spec.name, []).append(
+            (match_spec.version, spec)
+        )
 
-    return match_spec.name in pins and match_spec.version
+    for package, matches in packages_found.items():
+        # skip packages that are referenced more than once, to cover patterns
+        # like:
+        #   - blah
+        #   - blah >=3.7
+        if len(matches) > 1:
+            continue
+        assert len(matches) == 1
+        version, spec = matches[0]
+        if package in pins and version is not None:
+            yield spec
 
 
 def hint_dependency_pins(
@@ -523,9 +529,7 @@ def hint_dependency_pins(
     for req_type, reqs in requirements_section.items():
         if req_type != "host" or reqs is None:
             continue
-        bad_specs = [
-            req for req in (reqs or ()) if _is_pin_overridden(req, potential_pins)
-        ]
+        bad_specs = list(_check_pin_overridden(reqs or [], potential_pins))
         if bad_specs:
             report.setdefault("top-level", {})[req_type] = bad_specs
     for i, output in enumerate(outputs_section):
@@ -536,7 +540,7 @@ def hint_dependency_pins(
         for req_type, reqs in requirements_section.items():
             if req_type != "host" or reqs is None:
                 continue
-            bad_specs = [req for req in reqs if _is_pin_overridden(req, potential_pins)]
+            bad_specs = list(_check_pin_overridden(reqs or [], potential_pins))
             if bad_specs:
                 report.setdefault(output.get("name", f"output {i}"), {})[
                     req_type

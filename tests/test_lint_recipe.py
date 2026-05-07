@@ -4732,10 +4732,15 @@ build:
 
 requirements:
   host:
+    - blah ${{ blah }}
     - libhwloc >=2.5
     - not_pinned >=3.7,<4
     - if: win
       then: windows_only >=1.1
+    - pin_plus_min
+    - pin_plus_min >=5.4.3
+  run:
+    - another_dep >=5
 
 tests:
   - script:
@@ -4756,11 +4761,31 @@ extra:
     linux_pinning = """\
 libhwloc:
 - 2.12
+python:
+- 3.12.* *_cpython
+python_min:
+- 3.10
+blah:
+- 1.2
+pin_plus_min:
+- 6.0
+another_dep:
+- 10
 """
 
     win_pinning = """\
 libhwloc:
 - 2.12
+python:
+- 3.12.* *_cpython
+python_min:
+- 3.10
+blah:
+- 1.2
+pin_plus_min:
+- 6.0
+another_dep:
+- 10
 windows_only:
 - 2.0
 """
