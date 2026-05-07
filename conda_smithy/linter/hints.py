@@ -471,12 +471,15 @@ def hint_rattler_build_bld_bat(
         hints.append(msg.r.RattlerBldBat().as_string())
 
 
-def _check_pin_overridden(specs: list[str], pins: set[str]) -> Generator[str]:
+def _check_pin_overridden(
+    requirements_section: dict[str, list[str]], pins: set[str]
+) -> Generator[str]:
     from conda import CondaError
     from conda.models.match_spec import MatchSpec
 
     packages_found = {}
 
+    specs = requirements_section.get("host") or []
     for spec in specs:
         if "#" in spec:
             spec = spec.split("#")[0]
@@ -526,25 +529,17 @@ def hint_dependency_pins(
         potential_pins.update(pin_yaml.keys())
 
     report = {}
-    for req_type, reqs in requirements_section.items():
-        if req_type != "host" or reqs is None:
-            continue
-        bad_specs = list(_check_pin_overridden(reqs or [], potential_pins))
-        if bad_specs:
-            report.setdefault("top-level", {})[req_type] = bad_specs
+    bad_specs = list(_check_pin_overridden(requirements_section, potential_pins))
+    if bad_specs:
+        report.setdefault("top-level", {})["host"] = bad_specs
     for i, output in enumerate(outputs_section):
         requirements_section = output.get("requirements") or {}
         if not hasattr(requirements_section, "items"):
             # not a dict, but a list (CB2 style)
             requirements_section = {"run": requirements_section}
-        for req_type, reqs in requirements_section.items():
-            if req_type != "host" or reqs is None:
-                continue
-            bad_specs = list(_check_pin_overridden(reqs or [], potential_pins))
-            if bad_specs:
-                report.setdefault(output.get("name", f"output {i}"), {})[
-                    req_type
-                ] = bad_specs
+        bad_specs = list(_check_pin_overridden(requirements_section, potential_pins))
+        if bad_specs:
+            report.setdefault(output.get("name", f"output {i}"), {})["host"] = bad_specs
 
     for output, requirements in report.items():
         hints.append(
