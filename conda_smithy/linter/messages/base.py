@@ -1,0 +1,167 @@
+"""
+Collection of linter messages.
+
+If you want to add a lint or a hint, this is where you define the
+text, its identifier and the necessary variables.
+"""
+
+from dataclasses import MISSING, asdict, fields
+from inspect import cleandoc
+from string import Template
+from typing import ClassVar, Literal, Self
+
+
+class LinterMessage:
+    """
+    A (templated) message with an identifier.
+
+    Create a dataclass(kw_only=True) subclass of this class to create your
+    own message. The name of the subclass MUST be sufficiently informative
+    and UNIQUE across all the messages in the `.messages` subpackage. It will
+    be used as a way to refer to the message in settings like "ignore this hint type".
+    You MUST always provide `identifier`, `message`, `kind`, and `added_in`.
+    Refer to their attribute docstrings for more details.
+
+    Please also provide an `examples` classmethod if the message contains variables.
+
+    The subclass docstring itself should contain longer-form details that will be used
+    to auto-generate documentation pages. This docstring should explain:
+
+    - What's wrong
+    - Why that's a problem
+    - How to fix it (with examples)
+    """
+
+    #: Shorthand to identify a given error, using two parts: category-number; e.g. E-100
+    #: The category MUST conform to the regex [A-Z]+. The number MUST be a positive integer
+    #: part of the category series starting at 000, and leaving no gaps in the sequence.
+    #: The resulting identifier MUST be UNIQUE across all the messages
+    #: in the `.messages` subpackage.
+    identifier: ClassVar[str]
+    #: The message that will be rendered when converted to string. It can be a static string,
+    #  or a dynamic one supported by instance attributes refered to with the `${...}` syntax.
+    # Subclass with a property if dynamic behavior is required.
+    message: ClassVar[str]
+    #: Whether the problem is a lint (error) or a hint (warning)
+    kind: ClassVar[Literal["lint", "hint"]]
+    #: conda-smithy version where the message introduced
+    added_in: ClassVar[str] = "<3.56"
+    #: conda-smithy version where the message was deprecated
+    deprecated_in: ClassVar[str] = ""
+
+    @classmethod
+    def examples(cls) -> list[Self]:
+        """
+        Provides one or more example instances of the error message. Used in documentation.
+        Define at least one if `message` needs to be rendered with additional attributes.
+        Not needed for static `message` strings.
+        """
+        return []
+
+    @classmethod
+    def dump(cls) -> dict[str, str | list[str]]:
+        """
+        Generates a dictionary of static information to make it easy to
+        dump as JSON.
+        """
+        default_path = next(
+            (
+                f.default
+                for f in fields(cls)
+                if f.name == "path" and f.default != MISSING
+            ),
+            "",
+        )
+        return {
+            "name": cls.__name__,
+            "identifier": cls.identifier,
+            "category": cls.category(),
+            "kind": cls.kind,
+            "added_in": cls.added_in,
+            "deprecated_in": cls.deprecated_in,
+            "documentation": cls.documentation(),
+            "message": cls.message if isinstance(cls.message, str) else "(dynamic)",
+            "examples": [str(example) for example in cls.examples()],
+            "path": default_path,
+        }
+
+    @classmethod
+    def category(cls) -> str:
+        """
+        Category identifier for this message (e.g. `R` or `CF`).
+        """
+        return cls.identifier.split("-")[0]
+
+    @classmethod
+    def documentation(cls) -> str:
+        """
+        Returns the docstring text, with rendered variables if any.
+        """
+        docstring = cleandoc(cls.__doc__)
+        if variables := cls._documentation_variables():
+            return Template(docstring).safe_substitute(variables)
+        return docstring
+
+    @classmethod
+    def _documentation_variables(cls) -> dict[str, str]:
+        """
+        Returns the necessary attributes to render `${...}` variables
+        in the docstring, if any.
+
+        Subclass to provide dynamic fields.
+        """
+        return {}
+
+    def _render(self) -> str:
+        """
+        Formats the `.message` text by using the dataclass attributes.
+
+        Uses `string.Template.safe_substitute`, so `$name` and `${name}` are
+        replacement fields. Curly braces are never interpreted and need no
+        escaping. Unrecognised ``$name`` tokens are left as-is by
+        ``safe_substitute``, so a bare ``$`` only needs to be written as ``$$``
+        when it is immediately followed by a valid identifier that is also a
+        key in ``_render_attributes()`` and must not be substituted.
+        """
+        message = cleandoc(self.message)
+        if variables := self._render_attributes():
+            return Template(message).safe_substitute(variables)
+        return message
+
+    def _render_attributes(self) -> dict[str, str]:
+        """
+        Returns attributes rendered as strings. Subclass if necessary.
+        """
+        return asdict(self)
+
+    def __str__(self) -> str:
+        return self._render()
+
+    # convenience alias; FIXME: remove once we bump major
+    # FIXME: Remove usage from append_if_absent too!
+    as_string = __str__
+
+    def append_if_absent(
+        self, iterable: list, test: Literal["isinstance", "str"] = "str"
+    ) -> None:
+        """
+        Appends itself to a list if there are no other instances of the message yet.
+
+        The `test` keyword argument offers two modes, passed as strings:
+
+        - `"isinstance"` will only result in an appended item if there are no other
+          instances of this class in the list (potentially with other arguments).
+        - `"str"` will only result in an appended item if there are no other items
+          in the list that match in string representation.
+        """
+        if test == "isinstance":
+            test = lambda a, b: isinstance(a, b.__class__)
+        elif test == "str":
+            test = lambda a, b: str(a) == str(b)
+        else:
+            raise ValueError("`test` must be either 'isinstance' or 'str'")
+
+        if any(test(item, self) for item in iterable):
+            return
+        # FIXME: Remove this once we remove as_string
+        iterable.append(self.as_string())

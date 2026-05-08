@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import copy
 import os
 import re
@@ -15,6 +17,9 @@ from conda_build.metadata import (
 )
 from rattler_build_conda_compat import loader as rattler_loader
 from rattler_build_conda_compat.recipe_sources import get_all_sources
+from requests.exceptions import Timeout
+
+from conda_smithy.linter import messages as msg
 
 FIELDS = copy.deepcopy(_CONDA_BUILD_FIELDS)
 
@@ -190,20 +195,15 @@ def jinja_lines(lines):
 
 
 def _lint_recipe_name(recipe_name: str) -> Optional[str]:
-    wrong_recipe_name = "Recipe name has invalid characters. only lowercase alpha, numeric, underscores, hyphens and dots allowed"
-
     if re.match(r"^[a-z0-9_\-.]+$", recipe_name) is None:
-        return wrong_recipe_name
+        return msg.r.InvalidPackageName().as_string()
 
     return None
 
 
 def _lint_package_version(version: Optional[str]) -> Optional[str]:
-    no_package_version = "Package version is missing."
-    invalid_version = "Package version {ver} doesn't match conda spec: {err}"
-
     if version is None:
-        return no_package_version
+        return msg.r.MissingVersion().as_string()
 
     ver = str(version)
 
@@ -214,20 +214,26 @@ def _lint_package_version(version: Optional[str]) -> Optional[str]:
     try:
         VersionOrder(ver)
     except InvalidVersionSpec as e:
-        return invalid_version.format(ver=ver, err=e)
+        return msg.r.InvalidVersion(version=ver, error=str(e)).as_string()
 
 
-def load_linter_toml_metdata():
+def load_linter_toml_metadata():
     # ensure we refresh the cache every hour
     ttl = 3600
     time_salt = int(time.time() / ttl)
     return load_linter_toml_metdata_internal(time_salt)
 
 
+load_linter_toml_metdata = load_linter_toml_metadata  # BW Compat
+
+
 @lru_cache(maxsize=1)
 def load_linter_toml_metdata_internal(time_salt):
     hints_toml_url = "https://raw.githubusercontent.com/conda-forge/conda-forge-pinning-feedstock/main/recipe/linter_hints/hints.toml"
-    hints_toml_req = requests.get(hints_toml_url)
+    try:
+        hints_toml_req = requests.get(hints_toml_url, timeout=5)
+    except Timeout:
+        return None
     if hints_toml_req.status_code != 200:
         # too bad, but not important enough to throw an error;
         # linter will rerun on the next commit anyway
