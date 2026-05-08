@@ -10,7 +10,6 @@ import subprocess
 import sys
 import textwrap
 import time
-import warnings
 from collections import Counter, OrderedDict, namedtuple
 from contextlib import contextmanager
 from copy import deepcopy
@@ -2488,32 +2487,24 @@ def _read_forge_config(forge_dir, forge_yml=None):
     # values.
     config = _update_dict_within_dict(file_config.items(), default_config)
 
-    if "store_build_artifacts" in file_config.get("workflow_settings", {}):
-        # Check for conflicting old keys.
-        if "store_build_artifacts" in file_config.get("azure", {}):
-            raise ValueError(
-                "`store_build_artifacts` both in `workflow_settings` and `azure` "
-                "sections. Please remove the latter."
-            )
-        if "store_build_artifacts" in file_config.get("github_actions", {}):
-            raise ValueError(
-                "`store_build_artifacts` both in `workflow_settings` and "
-                "`github_actions` sections. Please remove the latter."
-            )
-    else:
-        # Convert old keys to new settings.
-        config["workflow_settings"]["store_build_artifacts"].append(
-            {
-                "provider": "azure",
-                "value": config["azure"]["store_build_artifacts"],
-            }
-        )
-        config["workflow_settings"]["store_build_artifacts"].append(
-            {
-                "provider": "github_actions",
-                "value": config["github_actions"]["store_build_artifacts"],
-            }
-        )
+    for setting in ("store_build_artifacts",):
+        for provider in ("azure", "github_actions"):
+            if setting in file_config.get("workflow_settings", {}):
+                # Check for conflicting old keys.
+                if setting in file_config.get(provider, {}):
+                    logger.warning(
+                        "`%(provider)s.%(setting)s` is ignored when "
+                        "`workflow_settings.%(setting)s` is set",
+                        {"provider": provider, "setting": setting},
+                    )
+            else:
+                # Convert old keys to new settings.
+                config["workflow_settings"][setting].append(
+                    {
+                        "provider": provider,
+                        "value": config[provider][setting],
+                    }
+                )
 
     path_var_mapping = {
         "tools_install_dir": "MINIFORGE_HOME",
@@ -2524,10 +2515,10 @@ def _read_forge_config(forge_dir, forge_yml=None):
             "variables", {}
         ):
             if new_var in file_config.get("workflow_settings", {}):
-                warnings.warn(
-                    f"`azure.settings_win.variables.{old_var}` is ignored when "
-                    f"`workflow_settings.{new_var}` is set",
-                    DeprecationWarning,
+                logger.warning(
+                    "`azure.settings_win.variables.%(old_var)s` is ignored when "
+                    "`workflow_settings.%(new_var)s` is set",
+                    {"old_var": old_var, "new_var": new_var},
                 )
                 del config["azure"]["settings_win"]["variables"][old_var]
             else:
@@ -2560,9 +2551,8 @@ def _read_forge_config(forge_dir, forge_yml=None):
         )
 
     if "build_with_mambabuild" in file_config and "conda_build_tool" not in file_config:
-        warnings.warn(
+        logger.warning(
             "build_with_mambabuild is deprecated, use conda_build_tool instead",
-            DeprecationWarning,
         )
         config["conda_build_tool"] = (
             "mambabuild" if config["build_with_mambabuild"] else "conda-build"
