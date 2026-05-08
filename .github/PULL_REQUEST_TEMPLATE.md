@@ -3,7 +3,7 @@ Thank you for pull request.
 Below are a few things we ask you kindly to self-check before getting a review. Remove checks that are not relevant.
 -->
 Checklist
-* [ ] Added a ``news`` entry
+* [ ] Added a ``news`` entry with any new deprecations added to the ``Deprecated`` section.
 * [ ] Regenerated schema JSON if schema altered (`python -m conda_smithy.schema`)
 * [ ] Regenerated linter documentation if any rules were added, removed or modified (`python -m conda_smithy.linter.messages`)
 
