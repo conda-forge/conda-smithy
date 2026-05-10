@@ -5,7 +5,7 @@ import re
 import shutil
 import subprocess
 import sys
-from collections.abc import Mapping
+from collections.abc import Generator, Mapping
 from glob import glob
 from typing import Any
 
@@ -469,3 +469,81 @@ def hint_rattler_build_bld_bat(
     bld_bat_path = os.path.join(recipe_dir, "bld.bat")
     if os.path.exists(bld_bat_path):
         hints.append(msg.r.RattlerBldBat().as_string())
+
+
+def _check_pin_overridden(
+    requirements_section: dict[str, list[str]], pins: set[str]
+) -> Generator[str]:
+    from conda import CondaError
+    from conda.models.match_spec import MatchSpec
+
+    packages_found = {}
+
+    specs = requirements_section.get("host") or []
+    for spec in specs:
+        if "#" in spec:
+            spec = spec.split("#")[0]
+        spec = spec.strip()
+
+        try:
+            match_spec = MatchSpec(spec)
+        except CondaError:
+            # this covers specs using jinja expressions like:
+            #   - python ${{ python_min }}
+            #   - blah ${{ blah }}
+            continue
+
+        packages_found.setdefault(match_spec.name, []).append(
+            (match_spec.version, spec)
+        )
+
+    for package, matches in packages_found.items():
+        # skip packages that are referenced more than once, to cover patterns
+        # like:
+        #   - blah
+        #   - blah >=3.7
+        if len(matches) > 1:
+            continue
+        assert len(matches) == 1
+        version, spec = matches[0]
+        if package in pins and version is not None:
+            yield spec
+
+
+def hint_dependency_pins(
+    requirements_section,
+    outputs_section,
+    ci_support_files,
+    hints,
+):
+    """Hint for dependencies that override pinning"""
+
+    if not ci_support_files:
+        return
+
+    potential_pins = set()
+    for pin_file in ci_support_files:
+        # TODO: can we do this better?
+        with open(pin_file, encoding="utf-8") as fh:
+            pin_yaml = get_yaml().load(fh)
+        potential_pins.update(pin_yaml.keys())
+
+    report = {}
+    bad_specs = list(_check_pin_overridden(requirements_section, potential_pins))
+    if bad_specs:
+        report.setdefault("top-level", {})["host"] = bad_specs
+    for i, output in enumerate(outputs_section):
+        requirements_section = output.get("requirements") or {}
+        if not hasattr(requirements_section, "items"):
+            # not a dict, but a list (CB2 style)
+            requirements_section = {"run": requirements_section}
+        bad_specs = list(_check_pin_overridden(requirements_section, potential_pins))
+        if bad_specs:
+            report.setdefault(output.get("name", f"output {i}"), {})["host"] = bad_specs
+
+    for output, requirements in report.items():
+        hints.append(
+            msg.cf.PinnedDependencyOverridden(
+                output=output, bad_specs=requirements
+            ).as_string()
+        )

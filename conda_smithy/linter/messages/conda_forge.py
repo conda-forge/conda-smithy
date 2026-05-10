@@ -112,3 +112,29 @@ class NoCustomGHAWorkflows(LinterMessage):
         "consider rerendering your feedstock to remove deprecated workflows."
     )
     path: str = ".github/workflows/*.y*ml"
+
+
+@dataclass(kw_only=True)
+class PinnedDependencyOverridden(LinterMessage):
+    """
+    Hint when dependency specification overrides a pin.
+    """
+
+    kind = "hint"
+    identifier = "CF-006"
+    message = (
+        "${output} output overrides versions pinned in the feedstock:\n"
+        "${bad_specs_list}\n"
+        "Requirement spec should not list version specifiers to respect "
+        "conda-forge-pinning. If you need to force another version, "
+        "please override the pin via `conda_build_config.yaml`."
+    )
+    output: str
+    bad_specs: dict[str, list[str]]
+
+    def _render_attributes(self):
+        bad_specs_list = []
+        for req_type, specs in self.bad_specs.items():
+            specs = [f"`{spec}`" for spec in specs]
+            bad_specs_list.append(f"- In section {req_type}: {', '.join(specs)}")
+        return {"output": self.output, "bad_specs_list": bad_specs_list}
