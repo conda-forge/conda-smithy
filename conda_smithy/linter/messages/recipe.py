@@ -991,24 +991,6 @@ class SpaceSeparatedSpecs(LinterMessage, _AnyRecipeMessage):
 
 
 @dataclass(kw_only=True)
-class OSVersion(LinterMessage, _AnyRecipeMessage):
-    """
-    Prefer `name [version [build]]` match spec syntax.
-    """
-
-    kind = "hint"
-    identifier = "R-049"
-    message = (
-        "The feedstock is lowering the image versions for one or more platforms: ${platforms} "
-        "(the default is ${default}). Unless you are in the very rare case of repackaging binary "
-        "artifacts, consider removing these overrides from conda-forge.yml "
-        "in the top feedstock directory."
-    )
-    platforms: dict[str, str]
-    default: str
-
-
-@dataclass(kw_only=True)
 class UsePip(LinterMessage, _AnyRecipeMessage):
     """
     Python packages should be built with `pip install ...`, not `python setup.py install`,
@@ -1016,7 +998,7 @@ class UsePip(LinterMessage, _AnyRecipeMessage):
     """
 
     kind = "hint"
-    identifier = "R-050"
+    identifier = "R-049"
     message = (
         "Whenever possible python packages should use pip. "
         "See https://conda-forge.org/docs/maintainer/adding_pkgs.html#use-pip"
@@ -1033,7 +1015,7 @@ class UsePyPIOrg(LinterMessage, _AnyRecipeMessage):
     """
 
     kind = "hint"
-    identifier = "R-051"
+    identifier = "R-050"
     message = (
         "PyPI default URL is now pypi.org, and not pypi.io."
         " You may want to update the default source url."

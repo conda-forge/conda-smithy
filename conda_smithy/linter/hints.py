@@ -444,7 +444,9 @@ def hint_os_version(
     }
     if matches:
         hints.append(
-            msg.r.OSVersion(platforms=matches, default=default_os_version).as_string()
+            msg.fc.OSVersionLower(
+                platforms=matches, default=default_os_version
+            ).as_string()
         )
 
 
