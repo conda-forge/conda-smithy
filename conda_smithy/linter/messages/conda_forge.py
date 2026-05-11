@@ -131,6 +131,7 @@ class PinnedDependencyOverridden(LinterMessage):
     )
     output: str
     bad_specs: dict[str, list[str]]
+    path: str = "recipe/(meta|recipe).yaml"
 
     def _render_attributes(self):
         bad_specs_list = []
