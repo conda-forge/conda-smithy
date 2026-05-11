@@ -1,10 +1,10 @@
 **Added:**
 
-* <news item>
+* Hint when dependency specifiers override pins (#2546)
 
 **Changed:**
 
-* Refactor linter messages as self-documenting dataclasses with automated JSON outputs. (#2478, #2548)
+* <news item>
 
 **Deprecated:**
 

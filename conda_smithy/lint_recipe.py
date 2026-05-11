@@ -27,6 +27,7 @@ from conda_smithy.linter import conda_recipe_v1_linter
 from conda_smithy.linter import messages as msg
 from conda_smithy.linter.hints import (
     hint_check_spdx,
+    hint_dependency_pins,
     hint_noarch_python_use_python_min,
     hint_os_version,
     hint_pip_no_build_backend,
@@ -626,6 +627,8 @@ def run_conda_forge_specific(
         ci_support_files = glob(os.path.join(recipe_dir, "..", ".ci_support", "*.yaml"))
         if not ci_support_files:
             lints.append(msg.cf.NoVariantConfigs().as_string())
+    else:
+        ci_support_files = []
 
     # 8: Ensure the recipe specifies a Python build backend if needed
     if "hint_pip_no_build_backend" not in lints_to_skip:
@@ -723,6 +726,9 @@ def run_conda_forge_specific(
         lints.append(
             msg.cf.NoCustomGHAWorkflows(path=f"{gha_workflows}/*.yaml").as_string()
         )
+
+    # 16: Check for requirements overriding dependency pins
+    hint_dependency_pins(requirements_section, outputs_section, ci_support_files, hints)
 
 
 def _format_validation_msg(error: jsonschema.ValidationError):

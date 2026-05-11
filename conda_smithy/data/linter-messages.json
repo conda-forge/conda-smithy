@@ -97,6 +97,18 @@
       "path": ".github/workflows/*.y*ml"
     },
     {
+      "name": "PinnedDependencyOverridden",
+      "identifier": "CF-006",
+      "category": "CF",
+      "kind": "hint",
+      "added_in": "<3.56",
+      "deprecated_in": "",
+      "documentation": "Hint when dependency specification overrides a pin.",
+      "message": "${output} output overrides versions pinned in the feedstock:\n${bad_specs_list}\nRequirement spec should not list version specifiers to respect conda-forge-pinning. If you need to force another version, please override the pin via `conda_build_config.yaml`.",
+      "examples": [],
+      "path": "recipe/(meta|recipe).yaml"
+    },
+    {
       "name": "NoDuplicateKeys",
       "identifier": "FC-001",
       "category": "FC",
@@ -105,6 +117,18 @@
       "deprecated_in": "",
       "documentation": "`conda-forge.yml` must not contain duplicate keys.",
       "message": "The ``conda-forge.yml`` file is not allowed to have duplicate keys.",
+      "examples": [],
+      "path": "conda-forge.yml"
+    },
+    {
+      "name": "OSVersionLower",
+      "identifier": "FC-002",
+      "category": "FC",
+      "kind": "hint",
+      "added_in": "<3.56",
+      "deprecated_in": "",
+      "documentation": "The feedstock has been configured to use an older `os_version` value in `conda-forge.yml`.\nUsually this is needed for _newer_ versions of the Linux image (e.g. opt-in early for\n`alma10` while the default is still `alma9`). In most cases, an older version probably\nmeans that the override was not updated when the default value caught up.",
+      "message": "The feedstock is lowering the image versions for one or more platforms: ${platforms} (the default is ${default}). Unless you are in the very rare case of repackaging binary artifacts, consider removing these overrides from conda-forge.yml in the top feedstock directory.",
       "examples": [],
       "path": "conda-forge.yml"
     },
@@ -702,20 +726,8 @@
       "path": "recipe/(meta|recipe).yaml"
     },
     {
-      "name": "OSVersion",
-      "identifier": "R-049",
-      "category": "R",
-      "kind": "hint",
-      "added_in": "<3.56",
-      "deprecated_in": "",
-      "documentation": "Prefer `name [version [build]]` match spec syntax.",
-      "message": "The feedstock is lowering the image versions for one or more platforms: ${platforms} (the default is ${default}). Unless you are in the very rare case of repackaging binary artifacts, consider removing these overrides from conda-forge.yml in the top feedstock directory.",
-      "examples": [],
-      "path": "recipe/(meta|recipe).yaml"
-    },
-    {
       "name": "UsePip",
-      "identifier": "R-050",
+      "identifier": "R-049",
       "category": "R",
       "kind": "hint",
       "added_in": "<3.56",
@@ -727,7 +739,7 @@
     },
     {
       "name": "UsePyPIOrg",
-      "identifier": "R-051",
+      "identifier": "R-050",
       "category": "R",
       "kind": "hint",
       "added_in": "<3.56",
