@@ -1847,7 +1847,6 @@ def _github_actions_specific_setup(jinja_env, forge_config, forge_dir, platform)
         # so it can be used in the general "render_github_actions" function
         # This avoid potential collisions with other CI providers :crossed_fingers:
         data["gha_os"] = GITHUB_ACTIONS_RUNS_ON[data["build_platform"]]["os"]
-        data["gha_with_gpu"] = False
 
         self_hosted_default = list(
             GITHUB_ACTIONS_RUNS_ON[data["build_platform"]]["self_hosted_labels"]
@@ -1876,6 +1875,7 @@ def _github_actions_specific_setup(jinja_env, forge_config, forge_dir, platform)
             )
 
         data["gha_runs_on"] = []
+        with_gpu = False
         for label in labels:
             if label.startswith("cirun-"):
                 # Patch Cirun runners to add some extra debug info
@@ -1883,7 +1883,7 @@ def _github_actions_specific_setup(jinja_env, forge_config, forge_dir, platform)
             if "gpu" in label.lower():
                 # Having 'gpu' in one label name is enough to trigger
                 # the extra docker args needed on Linux
-                data["gha_with_gpu"] = True
+                with_gpu = True
             data["gha_runs_on"].append(label)
 
         workflow_settings = get_workflow_settings(
@@ -1902,6 +1902,7 @@ def _github_actions_specific_setup(jinja_env, forge_config, forge_dir, platform)
             "github_actions",
             data["platform"],
             "D:" if on_hosted_runner or on_namespace else "C:",
+            "--gpus all" if with_gpu else "",
         )
         data.update(workflow_settings)
         if data["store_build_artifacts"]:
@@ -2533,6 +2534,29 @@ def _read_forge_config(forge_dir, forge_yml=None):
                         ),
                     }
                 )
+
+    old_var = "CONDA_FORGE_DOCKER_RUN_ARGS"
+    new_var = "docker_run_args"
+    if old_var in file_config.get("azure", {}).get("settings_linux", {}).get(
+        "variables", {}
+    ):
+        if new_var in file_config.get("workflow_settings", {}):
+            logger.warning(
+                "`azure.settings_linux.variables.%(old_var)s` is ignored when "
+                "`workflow_settings.%(new_var)s` is set",
+                {"old_var": old_var, "new_var": new_var},
+            )
+            del config["azure"]["settings_linux"]["variables"][old_var]
+        else:
+            config["workflow_settings"][new_var].append(
+                {
+                    "provider": "azure",
+                    "os": "linux",
+                    "value": config["azure"]["settings_linux"]["variables"].pop(
+                        old_var
+                    ),
+                }
+            )
 
     # check for conda-smithy 2.x matrix which we can't auto-migrate
     # to conda_build_config

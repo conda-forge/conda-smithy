@@ -380,6 +380,7 @@ def fill_workflow_settings_defaults(
     provider: str,
     platform: str,
     win_default_drive: str,
+    default_docker_run_args: str = "",
 ) -> None:
     """
     Fill the missing entries from `workflow_settings` with defaults for
@@ -409,3 +410,5 @@ def fill_workflow_settings_defaults(
             # TODO: switch to normalizing all paths once we're ready
             "win": rf"{tools_drive}\\bld\\",
         }[os]
+    if workflow_settings.get("docker_run_args") is None:
+        workflow_settings["docker_run_args"] = default_docker_run_args

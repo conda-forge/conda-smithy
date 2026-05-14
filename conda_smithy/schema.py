@@ -526,6 +526,13 @@ class WorkflowSettings(BaseModel):
         """),
     )
 
+    docker_run_args: Optional[
+        Union[str, list[conditional_value(str, None)], Nullable]
+    ] = Field(
+        default=[],
+        description="Additional arguments to pass to `docker run`.",
+    )
+
 
 class ConfigModel(BaseModel):
     """

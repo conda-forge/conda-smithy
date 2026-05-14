@@ -925,6 +925,28 @@
           "default": [],
           "description": "Directory to build in.",
           "title": "Build Workspace Dir"
+        },
+        "docker_run_args": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "$ref": "#/$defs/ConditionalValue__class__str__"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": [],
+          "description": "Additional arguments to pass to `docker run`.",
+          "title": "Docker Run Args"
         }
       },
       "title": "WorkflowSettings",
