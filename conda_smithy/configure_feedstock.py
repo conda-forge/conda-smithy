@@ -1902,7 +1902,7 @@ def _github_actions_specific_setup(jinja_env, forge_config, forge_dir, platform)
             "github_actions",
             data["platform"],
             "D:" if on_hosted_runner or on_namespace else "C:",
-            "--gpus all" if with_gpu else "",
+            "--gpus all" if with_gpu and platform == "linux" else "",
         )
         data.update(workflow_settings)
         if data["store_build_artifacts"]:

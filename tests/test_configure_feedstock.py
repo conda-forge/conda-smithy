@@ -3213,3 +3213,112 @@ def test_tools_build_paths_gha_override_wrong(
             forge_config=config,
             forge_dir=forge_dir,
         )
+
+
+@pytest.mark.parametrize("gpu", (False, True))
+@pytest.mark.parametrize("run_args", (None, "--cap-add SYS_ADMIN"))
+def test_docker_run_args_gha(py_recipe, jinja_env, gpu: bool, run_args: str | None):
+    forge_dir = py_recipe.recipe
+    forge_yml = Path(forge_dir, "conda-forge.yml")
+
+    with open(forge_yml, "a") as f:
+        f.write(textwrap.dedent("""\
+            provider:
+              linux_64: github_actions
+              osx_64: github_actions
+              win_64: github_actions
+        """))
+        if run_args is not None:
+            f.write(textwrap.dedent(f"""\
+                workflow_settings:
+                  docker_run_args:
+                    - os: linux
+                      value: {run_args}
+            """))
+    if gpu:
+        with open(py_recipe.config["exclusive_config_file"], "a") as f:
+            f.write("\ngithub_actions_labels:\n  - gpu\n")
+
+    config = configure_feedstock._load_forge_config(
+        forge_dir, "recipe/default_config.yaml"
+    )
+    configure_feedstock.render_github_actions(
+        jinja_env=jinja_env,
+        forge_config=config,
+        forge_dir=forge_dir,
+    )
+
+    conda_build_yml = Path(forge_dir, ".github/workflows/conda-build.yml")
+    with conda_build_yml.open() as f:
+        workflow = yaml.safe_load(f)
+
+    matrix = workflow["jobs"]["build"]["strategy"]["matrix"]["include"]
+    assert {entry["os"]: entry["docker_run_args"] for entry in matrix} == {
+        "macos": None,
+        "windows": None,
+        "ubuntu": run_args or ("--gpus all" if gpu else None),
+    }
+
+
+@pytest.mark.parametrize("old", (False, True))
+@pytest.mark.parametrize("new", (False, True))
+def test_docker_run_args_azure(
+    py_recipe,
+    jinja_env,
+    caplog,
+    old: bool,
+    new: bool,
+):
+    forge_dir = py_recipe.recipe
+    forge_yml = Path(forge_dir, "conda-forge.yml")
+
+    with open(forge_yml, "a") as f:
+        f.write(textwrap.dedent("""\
+            provider:
+              linux_64: azure
+              osx_64: azure
+              win_64: azure
+        """))
+        if old:
+            f.write(textwrap.dedent(f"""\
+                azure:
+                  settings_linux:
+                    variables:
+                      CONDA_FORGE_DOCKER_RUN_ARGS: {'--ignored' if new else '--cap-add SYS_ADMIN'}
+            """))
+        if new:
+            f.write(textwrap.dedent("""\
+                workflow_settings:
+                  docker_run_args:
+                    - os: linux
+                      value: --cap-add SYS_ADMIN
+            """))
+
+    with caplog.at_level(logging.WARNING):
+        config = configure_feedstock._load_forge_config(
+            forge_dir, "recipe/default_config.yaml"
+        )
+        if old and new:
+            assert any(
+                "`azure.settings_linux.variables.CONDA_FORGE_DOCKER_RUN_ARGS` is ignored"
+                in record.message
+                for record in caplog.records
+            )
+
+    configure_feedstock.render_azure(
+        jinja_env=jinja_env,
+        forge_config=config,
+        forge_dir=forge_dir,
+    )
+
+    for os_name in ("linux", "osx", "win"):
+        workflow_yml = Path(
+            forge_dir, ".azure-pipelines", f"azure-pipelines-{os_name}.yml"
+        )
+        with workflow_yml.open() as f:
+            workflow = yaml.safe_load(f)
+
+        matrix = workflow["jobs"][0]["strategy"]["matrix"]
+        assert {entry["docker_run_args"] for entry in matrix.values()} == {
+            "--cap-add SYS_ADMIN" if os_name == "linux" and (old or new) else ""
+        }
