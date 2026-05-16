@@ -148,7 +148,8 @@ def lintify_meta_yaml(
     lints = []
     hints = []
     major_sections = list(meta.keys())
-    lints_to_skip = _get_feedstock_config(recipe_dir).get("linter", {}).get("skip", [])
+    feedstock_config_keys = _get_feedstock_config(recipe_dir)
+    lints_to_skip = feedstock_config_keys.get("linter", {}).get("skip", [])
 
     # If the recipe_dir exists (no guarantee within this function) , we can
     # find the meta.yaml within it.
@@ -273,7 +274,12 @@ def lintify_meta_yaml(
     # 14: Run conda-forge specific lints
     if conda_forge:
         run_conda_forge_specific(
-            meta, recipe_dir, lints, hints, recipe_version=recipe_version
+            meta,
+            recipe_dir,
+            lints,
+            hints,
+            recipe_version=recipe_version,
+            feedstock_config=feedstock_config_keys,
         )
 
     # 15: Check if we are using legacy patterns
@@ -287,8 +293,7 @@ def lintify_meta_yaml(
     noarch_value = build_section.get("noarch")
     lint_noarch(noarch_value, lints)
 
-    # Interlude: load feedstock and recipe config
-    feedstock_config_keys = _get_feedstock_config(recipe_dir)
+    # Interlude: load recipe config
     recipe_config_keys = _get_recipe_config_keys(recipe_dir)
 
     # 18: noarch doesn't work with selectors for runtime dependencies
@@ -409,7 +414,7 @@ def lintify_meta_yaml(
     )
 
     # 3: suggest fixing all recipe/*.sh shellcheck findings
-    hint_shellcheck_usage(recipe_dir, hints)
+    hint_shellcheck_usage(recipe_dir, hints, feedstock_config=feedstock_config_keys)
 
     # 4: Check for SPDX
     hint_check_spdx(about_section, hints)
@@ -524,18 +529,16 @@ def _team_exists(org_team: str) -> bool:
 
 
 def run_conda_forge_specific(
-    meta,
-    recipe_dir,
-    lints,
-    hints,
-    recipe_version: int = 0,
+    meta, recipe_dir, lints, hints, recipe_version: int = 0, feedstock_config=None
 ):
     if recipe_version == 1:
         recipe_fname = os.path.join(recipe_dir or "", "recipe.yaml")
     else:
         recipe_fname = os.path.join(recipe_dir or "", "meta.yaml")
 
-    lints_to_skip = _get_feedstock_config(recipe_dir).get("linter", {}).get("skip", [])
+    if feedstock_config is None:
+        feedstock_config = _get_feedstock_config(recipe_dir)
+    lints_to_skip = feedstock_config.get("linter", {}).get("skip", [])
 
     # Retrieve sections from meta
     package_section = get_section(meta, "package", lints, recipe_version=recipe_version)
