@@ -92,20 +92,25 @@ def hint_suggest_noarch(
                     hints.append(msg.r.SuggestNoarch().as_string())
 
 
-def hint_shellcheck_usage(recipe_dir, hints):
+def hint_shellcheck_usage(recipe_dir, hints, feedstock_config=None):
     shellcheck_enabled = False
     shell_scripts = []
     if recipe_dir:
         shell_scripts = glob(os.path.join(recipe_dir, "*.sh"))
-        forge_yaml = find_local_config_file(recipe_dir, "conda-forge.yml")
-        if shell_scripts and forge_yaml:
-            with open(forge_yaml, encoding="utf-8") as fh:
-                code = get_yaml().load(fh)
-                shellcheck_enabled = code.get("shellcheck", {}).get(
-                    "enabled", shellcheck_enabled
-                )
+        if not shell_scripts:
+            return
+        if feedstock_config is None:
+            forge_yaml = find_local_config_file(recipe_dir, "conda-forge.yml")
+            if forge_yaml:
+                with open(forge_yaml, encoding="utf-8") as fh:
+                    feedstock_config = get_yaml().load(fh)
+            else:
+                feedstock_config = {}
 
-        if shellcheck_enabled and shutil.which("shellcheck") and shell_scripts:
+        shellcheck_enabled = feedstock_config.get("shellcheck", {}).get(
+            "enabled", shellcheck_enabled
+        )
+        if shellcheck_enabled and shutil.which("shellcheck"):
             cmd = [
                 "shellcheck",
                 "--enable=all",
