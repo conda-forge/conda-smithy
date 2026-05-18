@@ -476,7 +476,7 @@ def hint_rattler_build_bld_bat(
 def _check_pin_overridden(
     requirements_section: dict[str, list[str]],
     pins: set[str],
-    recipe_version: int = 1,
+    recipe_version: int,
 ) -> Generator[str]:
     from conda import CondaError
     from conda.models.match_spec import MatchSpec
@@ -521,7 +521,7 @@ def hint_dependency_pins(
     outputs_section,
     ci_support_files,
     hints,
-    recipe_version: int = 1,
+    recipe_version: int,
 ):
     """Hint for dependencies that override pinning"""
 
