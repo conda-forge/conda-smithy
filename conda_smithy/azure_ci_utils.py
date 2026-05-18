@@ -25,10 +25,13 @@ from conda_smithy.utils import file_permissions
 
 
 class AzureConfig:
+    """Azure DevOps configuration for connecting to an Azure organization/project."""
+
     _default_org = AZURE_DEFAULT_ORG
     _default_project_name = AZURE_DEFAULT_PROJECT_NAME
 
     def __init__(self, org_or_user=None, project_name=None, team_instance=None):
+        """Initialize Azure configuration from explicit values or environment defaults."""
         self.org_or_user = org_or_user or os.getenv(
             "AZURE_ORG_OR_USER", self._default_org
         )
@@ -62,6 +65,7 @@ class AzureConfig:
 
     @property
     def connection(self):
+        """Return a VssConnection for this Azure configuration."""
         connection = VssConnection(
             base_url=self.instance_base_url, creds=self.credentials
         )
@@ -69,6 +73,7 @@ class AzureConfig:
 
     @property
     def credentials(self):
+        """Return Azure credentials based on an existing token, or a stub auth."""
         if self.token:
             return BasicAuthentication("", self.token)
         else:
@@ -80,6 +85,7 @@ default_config = AzureConfig()
 
 
 def get_service_endpoint(config: AzureConfig = default_config):
+    """Return the GitHub service endpoint for the configured Azure project."""
     service_endpoint_client = ServiceEndpointClient(
         base_url=config.instance_base_url, creds=config.credentials
     )
@@ -96,11 +102,13 @@ def get_service_endpoint(config: AzureConfig = default_config):
 def get_queues(
     config: AzureConfig = default_config,
 ) -> list[TaskAgentQueue]:
+    """Return the Azure task agent queues available to the configured project."""
     aclient = TaskAgentClient(config.instance_base_url, config.credentials)
     return aclient.get_agent_queues(config.project_name)
 
 
 def get_default_queue(project_name):
+    """Return the default Azure task queue for the given project."""
     queues = get_queues(project_name)
     for q in queues:
         if q.name == "Default":
@@ -110,6 +118,7 @@ def get_default_queue(project_name):
 
 
 def get_repo_reference(config: AzureConfig, github_org, repo_name):
+    """Return the GitHub repository reference stored in Azure DevOps."""
     service_endpoint = get_service_endpoint(config)
     bclient: BuildClient = config.connection.get_client(
         "vsts.build.v4_1.build_client.BuildClient"
@@ -131,6 +140,7 @@ def get_default_build_definition(
     config: AzureConfig = default_config,
     **kwargs,
 ):
+    """Build and return a default Azure build definition for the specified repo."""
     import inspect
 
     from vsts.build.v4_1.models import (
@@ -143,14 +153,12 @@ def get_default_build_definition(
 
     source_repo = get_repo_reference(config, github_org, repo_name)
 
+    valid_buildrepo_args = set(inspect.getfullargspec(BuildRepository).args) - {"url"}
+
     new_repo = BuildRepository(
         type="GitHub",
         url=source_repo.properties["cloneUrl"],
-        **{
-            k: v
-            for k, v in source_repo.as_dict().items()
-            if k in set(inspect.getfullargspec(BuildRepository).args) - {"url"}
-        },
+        **{k: v for k, v in source_repo.as_dict().items() if k in valid_buildrepo_args},
     )
     new_repo.name = source_repo.properties["fullName"]
     new_repo.properties["cleanOptions"] = "0"
@@ -213,6 +221,7 @@ def get_default_build_definition(
 
 
 def register_repo(github_org, repo_name, config: AzureConfig = default_config):
+    """Register or update the Azure build definition for a GitHub repository."""
     from vsts.build.v4_1.models import BuildDefinitionReference
 
     bclient = build_client()
@@ -241,12 +250,14 @@ def register_repo(github_org, repo_name, config: AzureConfig = default_config):
 
 
 def build_client(config: AzureConfig = default_config) -> BuildClient:
+    """Return a BuildClient for the configured Azure connection."""
     return config.connection.get_client("vsts.build.v4_1.build_client.BuildClient")
 
 
 def repo_registered(
     github_org: str, repo_name: str, config: AzureConfig = default_config
 ) -> bool:
+    """Return True if an Azure build definition already exists for the repo."""
     existing_definitions: list[BuildDefinitionReference] = build_client(
         config
     ).get_definitions(project=config.project_name, name=repo_name)
@@ -255,6 +266,7 @@ def repo_registered(
 
 
 def enable_reporting(repo, config: AzureConfig = default_config) -> None:
+    """Enable build-status reporting for an existing Azure build definition."""
     bclient = build_client(config)
     bdef_header = bclient.get_definitions(project=config.project_name, name=repo)[0]
     bdef = bclient.get_definition(bdef_header.id, bdef_header.project.name)
