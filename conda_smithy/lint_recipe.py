@@ -28,6 +28,7 @@ from conda_smithy.linter import messages as msg
 from conda_smithy.linter.hints import (
     hint_check_spdx,
     hint_dependency_pins,
+    hint_deprecated_environment_variables,
     hint_noarch_python_use_python_min,
     hint_os_version,
     hint_pip_no_build_backend,
@@ -732,6 +733,10 @@ def run_conda_forge_specific(
 
     # 16: Check for requirements overriding dependency pins
     hint_dependency_pins(requirements_section, outputs_section, ci_support_files, hints)
+
+    # 17: Check for deprecated conda-forge.yml variables (that cannot be caught
+    # via the schema)
+    hint_deprecated_environment_variables(feedstock_config, hints)
 
 
 def _format_validation_msg(error: jsonschema.ValidationError):
