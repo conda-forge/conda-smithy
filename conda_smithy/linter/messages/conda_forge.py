@@ -149,6 +149,7 @@ class DeprecatedEnvironmentVariable(LinterMessage):
 
     kind = "hint"
     identifier = "CF-007"
+    added_in = "3.62"
     message = "`${variable}` is deprecated, please use `${replacement}` instead.\n"
     variable: str
     replacement: str
