@@ -731,7 +731,9 @@ def run_conda_forge_specific(
         )
 
     # 16: Check for requirements overriding dependency pins
-    hint_dependency_pins(requirements_section, outputs_section, ci_support_files, hints)
+    hint_dependency_pins(
+        requirements_section, outputs_section, ci_support_files, hints, recipe_version
+    )
 
 
 def _format_validation_msg(error: jsonschema.ValidationError):

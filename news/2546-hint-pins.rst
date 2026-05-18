@@ -1,6 +1,6 @@
 **Added:**
 
-* Hint when dependency specifiers override pins (#2546)
+* Hint when dependency specifiers override pins (#2546, #2553)
 
 **Changed:**
 
