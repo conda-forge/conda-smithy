@@ -122,6 +122,7 @@ class PinnedDependencyOverridden(LinterMessage):
 
     kind = "hint"
     identifier = "CF-006"
+    added_in = "3.62"
     message = (
         "${output} output overrides versions pinned in the feedstock:\n"
         "${bad_specs_list}\n"
