@@ -4815,5 +4815,47 @@ windows_only:
     ]
 
 
+def test_deprecated_environment_variables():
+    with tmp_directory() as feedstock_dir:
+        cfyml = os.path.join(feedstock_dir, "conda-forge.yml")
+        recipe_dir = os.path.join(feedstock_dir, "recipe")
+        os.makedirs(recipe_dir, exist_ok=True)
+        with open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
+            fh.write("""
+                package:
+                  name: foo
+                """)
+
+        with open(cfyml, "w") as fh:
+            fh.write(textwrap.dedent(r"""
+                    azure:
+                      settings_linux:
+                        variables:
+                          CONDA_BLD_PATH: ~/foo
+                      settings_osx:
+                        variables:
+                          CONDA_BLD_PATH: ~/bar
+                          MINIFORGE_HOME: ~/foo
+                      settings_win:
+                        variables:
+                          MINIFORGE_HOME: D:\\Miniforge
+                    """))
+
+        lints, hints = linter.main(recipe_dir, return_hints=True, conda_forge=True)
+
+    expected = {
+        "`azure.settings_linux.CONDA_BLD_PATH` is deprecated, please use "
+        "`workflow_settings.build_workspace_dir` instead.",
+        "`azure.settings_osx.CONDA_BLD_PATH` is deprecated, please use "
+        "`workflow_settings.build_workspace_dir` instead.",
+        "`azure.settings_osx.MINIFORGE_HOME` is deprecated, please use "
+        "`workflow_settings.tools_install_dir` instead.",
+        "`azure.settings_win.MINIFORGE_HOME` is deprecated, please use "
+        "`workflow_settings.tools_install_dir` instead.",
+    }
+
+    assert expected.issubset(hints)
+
+
 if __name__ == "__main__":
     unittest.main()
