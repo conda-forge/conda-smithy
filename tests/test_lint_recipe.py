@@ -4723,7 +4723,7 @@ def test_hint_pinned_dependency_override(outputs: bool) -> None:
     midpart = """\
 requirements:
   host:
-    - blah ${ blah }
+    - blah ${{ blah }}
     - libhwloc >=2.5
     - not_pinned >=3.7,<4
     - if: win
