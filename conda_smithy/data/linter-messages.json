@@ -109,6 +109,18 @@
       "path": "recipe/(meta|recipe).yaml"
     },
     {
+      "name": "DeprecatedEnvironmentVariable",
+      "identifier": "CF-007",
+      "category": "CF",
+      "kind": "hint",
+      "added_in": "<3.56",
+      "deprecated_in": "",
+      "documentation": "Hint when a deprecated environment variable is used.",
+      "message": "`${variable}` is deprecated, please use `${replacement}` instead.\n",
+      "examples": [],
+      "path": ""
+    },
+    {
       "name": "NoDuplicateKeys",
       "identifier": "FC-001",
       "category": "FC",
