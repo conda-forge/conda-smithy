@@ -2093,7 +2093,7 @@
           "type": "null"
         }
       ],
-      "description": "This option can be used to override the default `conda-forge-ci-setup` package.\nCan be given with `${url or channel_alias}::package_name`,\ndefaults to conda-forge channel_alias if no prefix is given.\n\n```yaml\nremote_ci_setup: [\"conda-forge-ci-setup=4\", \"conda-build>=24.1\"]\n```",
+      "description": "This option can be used to override the default `conda-forge-ci-setup` package.\nCan be given with `${url or channel_alias}::package_name`,\ndefaults to conda-forge channel_alias if no prefix is given.\n\n```yaml\nremote_ci_setup: [\"conda-forge-ci-setup=4\", \"conda-build>=26.3\"]\n```",
       "title": "Remote Ci Setup"
     },
     "shellcheck": {
