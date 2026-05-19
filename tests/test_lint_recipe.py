@@ -4815,33 +4815,30 @@ windows_only:
     ]
 
 
-def test_deprecated_environment_variables():
-    with tmp_directory() as feedstock_dir:
-        cfyml = os.path.join(feedstock_dir, "conda-forge.yml")
-        recipe_dir = os.path.join(feedstock_dir, "recipe")
-        os.makedirs(recipe_dir, exist_ok=True)
-        with open(os.path.join(recipe_dir, "meta.yaml"), "w") as fh:
-            fh.write("""
-                package:
-                  name: foo
-                """)
+def test_deprecated_environment_variables(tmp_path):
+    cfyml = tmp_path / "conda-forge.yml"
+    recipe_dir = tmp_path / "recipe"
+    recipe_dir.mkdir()
+    (recipe_dir / "meta.yaml").write_text("""
+        package:
+          name: foo
+        """)
 
-        with open(cfyml, "w") as fh:
-            fh.write(textwrap.dedent(r"""
-                    azure:
-                      settings_linux:
-                        variables:
-                          CONDA_BLD_PATH: ~/foo
-                      settings_osx:
-                        variables:
-                          CONDA_BLD_PATH: ~/bar
-                          MINIFORGE_HOME: ~/foo
-                      settings_win:
-                        variables:
-                          MINIFORGE_HOME: D:\\Miniforge
-                    """))
+    cfyml.write_text(textwrap.dedent(r"""
+        azure:
+          settings_linux:
+            variables:
+              CONDA_BLD_PATH: ~/foo
+          settings_osx:
+            variables:
+              CONDA_BLD_PATH: ~/bar
+              MINIFORGE_HOME: ~/foo
+          settings_win:
+            variables:
+              MINIFORGE_HOME: D:\\Miniforge
+        """))
 
-        lints, hints = linter.main(recipe_dir, return_hints=True, conda_forge=True)
+    lints, hints = linter.main(tmp_path, return_hints=True, conda_forge=True)
 
     expected = {
         "`azure.settings_linux.CONDA_BLD_PATH` is deprecated, please use "
