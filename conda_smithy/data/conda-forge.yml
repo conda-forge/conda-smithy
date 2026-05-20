@@ -71,6 +71,7 @@ docker:
   executable: docker
   fallback_image: quay.io/condaforge/linux-anvil-comp7
   interactive: null
+  run_args: ''
 drone: {}
 github:
   branch_name: main

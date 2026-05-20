@@ -376,6 +376,11 @@ class CondaForgeDocker(BaseModel):
         description="The command to run in Docker", default="bash"
     )
 
+    run_args: Optional[str] = Field(
+        description="Additional arguments to pass to `docker run`.",
+        default="",
+    )
+
     #########################################
     #### Deprecated Docker configuration ####
     #########################################

@@ -50,12 +50,10 @@ jobs:
             runs_on: {{ data.gha_runs_on }}
         {%- if data.build_platform.startswith("linux") %}
             DOCKER_IMAGE: {{ data.config["docker_image"][-1] }}
-          {%- if data.gha_with_gpu %}
-            CONDA_FORGE_DOCKER_RUN_ARGS: "--gpus all"
-          {%- endif %}
         {%- endif %}
             tools_install_dir: {{ data.tools_install_dir }}
             build_workspace_dir: {{ data.build_workspace_dir }}
+            docker_run_args: {{ data.docker_run_args }}
         {%- endfor %}
     steps:
 {%- if github_actions.free_disk_space %}
@@ -112,11 +110,7 @@ jobs:
 {%- if upload_on_branch %}
         UPLOAD_ON_BRANCH: {{ upload_on_branch }}
 {%- endif %}
-{%- if docker.run_args is defined %}
-        CONDA_FORGE_DOCKER_RUN_ARGS: "{{ docker.run_args }} {% raw %}${{ matrix.CONDA_FORGE_DOCKER_RUN_ARGS }}{% endraw %}"
-{%- else %}
-        CONDA_FORGE_DOCKER_RUN_ARGS: "{% raw %}${{ matrix.CONDA_FORGE_DOCKER_RUN_ARGS }}{% endraw %}"
-{%- endif %}
+        CONDA_FORGE_DOCKER_RUN_ARGS: "{% raw %}${{ matrix.docker_run_args }}{% endraw %}"
 {%- for secret in secrets %}
         {{ secret }}: {% raw %}${{{% endraw %} secrets.{{ secret }} {% raw %}}}{% endraw %}
 {%- endfor %}

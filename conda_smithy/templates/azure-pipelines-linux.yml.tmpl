@@ -74,6 +74,7 @@ jobs:
   - script: |
         export MINIFORGE_HOME=$(tools_install_dir)
         export CONDA_BLD_PATH=$(build_workspace_dir)
+        export CONDA_FORGE_DOCKER_RUN_ARGS="$(docker_run_args)"
         export CI=azure
         export flow_run_id=azure_$(Build.BuildNumber).$(System.JobAttempt)
         export remote_url=$(Build.Repository.Uri)
@@ -82,9 +83,6 @@ jobs:
         export FEEDSTOCK_NAME=$(basename ${BUILD_REPOSITORY_NAME})
 {%- if upload_on_branch %}
         export UPLOAD_ON_BRANCH="{{ upload_on_branch }}"
-{%- endif %}
-{%- if docker.run_args is defined %}
-        export CONDA_FORGE_DOCKER_RUN_ARGS="{{ docker.run_args }}"
 {%- endif %}
         if [[ "${BUILD_REASON:-}" == "PullRequest" ]]; then
           export IS_PR_BUILD="True"

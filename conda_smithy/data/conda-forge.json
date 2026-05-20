@@ -371,6 +371,19 @@
           "description": "The command to run in Docker",
           "title": "Command"
         },
+        "run_args": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "",
+          "description": "Additional arguments to pass to `docker run`.",
+          "title": "Run Args"
+        },
         "interactive": {
           "anyOf": [
             {
