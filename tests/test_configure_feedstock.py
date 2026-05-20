@@ -3230,10 +3230,8 @@ def test_docker_run_args_gha(py_recipe, jinja_env, gpu: bool, run_args: str | No
         """))
         if run_args is not None:
             f.write(textwrap.dedent(f"""\
-                workflow_settings:
-                  docker_run_args:
-                    - os: linux
-                      value: {run_args}
+                docker:
+                  run_args: {run_args}
             """))
     if gpu:
         with open(py_recipe.config["exclusive_config_file"], "a") as f:
@@ -3292,10 +3290,8 @@ def test_docker_run_args_azure(
             """))
         if new:
             f.write(textwrap.dedent("""\
-                workflow_settings:
-                  docker_run_args:
-                    - os: linux
-                      value: --cap-add SYS_ADMIN
+                docker:
+                  run_args: --cap-add SYS_ADMIN
             """))
 
     with caplog.at_level(logging.WARNING):
@@ -3323,6 +3319,6 @@ def test_docker_run_args_azure(
             workflow = yaml.safe_load(f)
 
         matrix = workflow["jobs"][0]["strategy"]["matrix"]
-        assert {entry["docker_run_args"] for entry in matrix.values()} == {
-            "--cap-add SYS_ADMIN" if os_name == "linux" and (old or new) else ""
+        assert {entry.get("docker_run_args") for entry in matrix.values()} == {
+            None if os_name != "linux" else "--cap-add SYS_ADMIN" if old or new else ""
         }

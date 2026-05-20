@@ -409,6 +409,3 @@ def fill_workflow_settings_defaults(
             # TODO: switch to normalizing all paths once we're ready
             "win": rf"{tools_drive}\\bld\\",
         }[os]
-    # TODO: do we need it?
-    if workflow_settings.get("docker_run_args") is None:
-        workflow_settings["docker_run_args"] = ""

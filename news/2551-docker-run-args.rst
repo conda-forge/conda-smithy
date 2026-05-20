@@ -1,6 +1,6 @@
 **Added:**
 
-* Add ``workflow_settings.docker_run_args`` to pass additional arguments to ``docker run`` on different CI providers. (#2551)
+* Add ``docker.run_args`` to pass additional arguments to ``docker run`` on all CI providers. (#2551)
 
 **Changed:**
 

@@ -376,6 +376,11 @@ class CondaForgeDocker(BaseModel):
         description="The command to run in Docker", default="bash"
     )
 
+    run_args: Optional[str] = Field(
+        description="Additional arguments to pass to `docker run`.",
+        default="",
+    )
+
     #########################################
     #### Deprecated Docker configuration ####
     #########################################
@@ -524,13 +529,6 @@ class WorkflowSettings(BaseModel):
         description=cleandoc("""
         Directory to build in.
         """),
-    )
-
-    docker_run_args: Optional[
-        Union[str, list[conditional_value(str, None)], Nullable]
-    ] = Field(
-        default=[],
-        description="Additional arguments to pass to `docker run`.",
     )
 
 

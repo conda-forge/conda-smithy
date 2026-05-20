@@ -1903,17 +1903,17 @@ def _github_actions_specific_setup(jinja_env, forge_config, forge_dir, platform)
             data["platform"],
             "D:" if on_hosted_runner or on_namespace else "C:",
         )
-        if with_gpu and platform == "linux":
-            if workflow_settings.get("docker_run_args"):
-                workflow_settings["docker_run_args"] += " --gpus all"
-            else:
-                workflow_settings["docker_run_args"] = "--gpus all"
         data.update(workflow_settings)
         if data["store_build_artifacts"]:
             script_suffix = ".bat" if platform == "win" else ".sh"
             template_files.append(
                 f".scripts/create_conda_build_artifacts{script_suffix}"
             )
+
+        if platform == "linux":
+            data["docker_run_args"] = forge_config["docker"]["run_args"]
+            if with_gpu:
+                data["docker_run_args"] += " --gpus all"
 
     build_setup = _get_build_setup_line(forge_dir, platform, forge_config)
 
@@ -2041,6 +2041,10 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
         workflow_settings = get_workflow_settings(forge_config["workflow_settings"], "azure", data["platform"])
         fill_workflow_settings_defaults(workflow_settings, "azure", data["platform"], "D:" if data["platform"] == "win-64" else "C:")
         data.update(workflow_settings)
+
+        if platform == "linux":
+            config_rendered["docker_run_args"] = forge_config["docker"]["run_args"]
+
         config_rendered.update(workflow_settings)
         if config_rendered["store_build_artifacts"]:
             config_rendered["SHORT_CONFIG"] = data["short_config_name"]
@@ -2539,28 +2543,21 @@ def _read_forge_config(forge_dir, forge_yml=None):
                     }
                 )
 
-    old_var = "CONDA_FORGE_DOCKER_RUN_ARGS"
-    new_var = "docker_run_args"
-    if old_var in file_config.get("azure", {}).get("settings_linux", {}).get(
-        "variables", {}
-    ):
-        if new_var in file_config.get("workflow_settings", {}):
+    if "CONDA_FORGE_DOCKER_RUN_ARGS" in file_config.get("azure", {}).get(
+        "settings_linux", {}
+    ).get("variables", {}):
+        if "run_args" in file_config.get("docker", {}):
             logger.warning(
-                "`azure.settings_linux.variables.%(old_var)s` is ignored when "
-                "`workflow_settings.%(new_var)s` is set",
-                {"old_var": old_var, "new_var": new_var},
+                "`azure.settings_linux.variables.CONDA_FORGE_DOCKER_RUN_ARGS` is ignored when "
+                "`docker.run_args` is set",
             )
-            del config["azure"]["settings_linux"]["variables"][old_var]
+            del config["azure"]["settings_linux"]["variables"][
+                "CONDA_FORGE_DOCKER_RUN_ARGS"
+            ]
         else:
-            config["workflow_settings"][new_var].append(
-                {
-                    "provider": "azure",
-                    "os": "linux",
-                    "value": config["azure"]["settings_linux"]["variables"].pop(
-                        old_var
-                    ),
-                }
-            )
+            config["docker"]["run_args"] = config["azure"]["settings_linux"][
+                "variables"
+            ].pop("CONDA_FORGE_DOCKER_RUN_ARGS")
 
     # check for conda-smithy 2.x matrix which we can't auto-migrate
     # to conda_build_config
