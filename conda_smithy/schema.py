@@ -855,7 +855,7 @@ class ConfigModel(BaseModel):
     remote_ci_setup: Optional[Union[str, list[str]]] = Field(
         default_factory=lambda: [
             "conda-forge-ci-setup=4",
-            "conda-build>=24.1",
+            "conda-build>=26.3",
         ],
         description=cleandoc("""
         This option can be used to override the default `conda-forge-ci-setup` package.
@@ -863,7 +863,7 @@ class ConfigModel(BaseModel):
         defaults to conda-forge channel_alias if no prefix is given.
 
         ```yaml
-        remote_ci_setup: ["conda-forge-ci-setup=4", "conda-build>=24.1"]
+        remote_ci_setup: ["conda-forge-ci-setup=4", "conda-build>=26.3"]
         ```
         """),
     )

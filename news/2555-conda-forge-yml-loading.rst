@@ -1,10 +1,10 @@
 **Added:**
 
-* Hint when dependency specifiers override pins (#2546, #2553)
+* <news item>
 
 **Changed:**
 
-* <news item>
+* Optimized the code to avoid unnecessary loading ``conda-forge.yml`` multiple times. (#2555)
 
 **Deprecated:**
 
