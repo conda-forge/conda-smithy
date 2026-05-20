@@ -3256,7 +3256,11 @@ def test_docker_run_args_gha(py_recipe, jinja_env, gpu: bool, run_args: str | No
     assert {entry["os"]: entry["docker_run_args"] for entry in matrix} == {
         "macos": None,
         "windows": None,
-        "ubuntu": run_args or ("--gpus all" if gpu else None),
+        "ubuntu": (
+            f"{run_args} --gpus all"
+            if run_args and gpu
+            else "--gpus all" if gpu else run_args
+        ),
     }
 
 
