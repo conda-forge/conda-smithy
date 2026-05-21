@@ -582,7 +582,7 @@ def hint_deprecated_environment_variables(
         for deprecated_variable in set(deprecated_variables).intersection(variables):
             hints.append(
                 msg.cf.DeprecatedEnvironmentVariable(
-                    variable=f"azure.settings_{platform}.{deprecated_variable}",
+                    variable=f"azure.settings_{platform}.variables.{deprecated_variable}",
                     replacement=deprecated_variables[deprecated_variable],
                 ).as_string()
             )
