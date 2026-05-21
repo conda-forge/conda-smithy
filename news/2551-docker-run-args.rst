@@ -1,6 +1,6 @@
 **Added:**
 
-* Hint when dependency specifiers override pins (#2546, #2553)
+* Add ``docker.run_args`` to pass additional arguments to ``docker run`` on all CI providers. (#2551)
 
 **Changed:**
 

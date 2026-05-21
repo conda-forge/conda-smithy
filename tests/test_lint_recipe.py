@@ -4718,18 +4718,9 @@ extra:
     assert hints == []
 
 
-def test_hint_pinned_dependency_override() -> None:
-    recipe = """\
-context:
-  version: "1.0"
-
-package:
-  name: foo
-  version: ${{ version }}
-
-build:
-  number: 1
-
+@pytest.mark.parametrize("outputs", (False, True))
+def test_hint_pinned_dependency_override(outputs: bool) -> None:
+    midpart = """\
 requirements:
   host:
     - blah ${{ blah }}
@@ -4744,7 +4735,28 @@ requirements:
 
 tests:
   - script:
-    - true
+    - true\
+"""
+    if outputs:
+        midpart = f"""\
+outputs:
+  - package:
+      name: foo
+{textwrap.indent(midpart, '    ')}\
+"""
+
+    recipe = f"""\
+context:
+  version: "1.0"
+
+{'recipe' if outputs else 'package'}:
+  name: foo
+  version: ${{{{ version }}}}
+
+build:
+  number: 1
+
+{midpart}
 
 about:
   homepage: https://example.com
@@ -4807,7 +4819,8 @@ windows_only:
 
     assert lints == []
     assert hints == [
-        "top-level output overrides versions pinned in the feedstock:\n"
+        f"{'output 0' if outputs else 'top-level'} output overrides versions "
+        "pinned in the feedstock:\n"
         "['- In section host: `libhwloc >=2.5`, `windows_only >=1.1`']\n"
         "Requirement spec should not list version specifiers to respect "
         "conda-forge-pinning. If you need to force another version, please "

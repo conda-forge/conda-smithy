@@ -1,10 +1,10 @@
 **Added:**
 
-* Hint when dependency specifiers override pins (#2546, #2553)
+* <news item>
 
 **Changed:**
 
-* <news item>
+* Update ``remote_ci_setup`` to use ``conda-build`` version ``26.3`` or newer. (#2558)
 
 **Deprecated:**
 

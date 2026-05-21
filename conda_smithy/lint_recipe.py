@@ -732,7 +732,9 @@ def run_conda_forge_specific(
         )
 
     # 16: Check for requirements overriding dependency pins
-    hint_dependency_pins(requirements_section, outputs_section, ci_support_files, hints)
+    hint_dependency_pins(
+        requirements_section, outputs_section, ci_support_files, hints, recipe_version
+    )
 
     # 17: Check for deprecated conda-forge.yml variables (that cannot be caught
     # via the schema)
