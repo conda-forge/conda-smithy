@@ -4842,6 +4842,7 @@ def test_deprecated_environment_variables(tmp_path):
           settings_linux:
             variables:
               CONDA_BLD_PATH: ~/foo
+              CONDA_FORGE_DOCKER_RUN_ARGS: --cap-add SYS_ADMIN
           settings_osx:
             variables:
               CONDA_BLD_PATH: ~/bar
@@ -4854,6 +4855,8 @@ def test_deprecated_environment_variables(tmp_path):
     lints, hints = linter.main(tmp_path, return_hints=True, conda_forge=True)
 
     expected = {
+        "`azure.settings_linux.variables.CONDA_FORGE_DOCKER_RUN_ARGS` is deprecated, "
+        "please use `docker.run_args` instead.",
         "`azure.settings_linux.variables.CONDA_BLD_PATH` is deprecated, please use "
         "`workflow_settings.build_workspace_dir` instead.",
         "`azure.settings_osx.variables.CONDA_BLD_PATH` is deprecated, please use "
