@@ -122,6 +122,7 @@ class PinnedDependencyOverridden(LinterMessage):
 
     kind = "hint"
     identifier = "CF-006"
+    added_in = "3.62"
     message = (
         "${output} output overrides versions pinned in the feedstock:\n"
         "${bad_specs_list}\n"
@@ -139,3 +140,17 @@ class PinnedDependencyOverridden(LinterMessage):
             specs = [f"`{spec}`" for spec in specs]
             bad_specs_list.append(f"- In section {req_type}: {', '.join(specs)}")
         return {"output": self.output, "bad_specs_list": bad_specs_list}
+
+
+@dataclass(kw_only=True)
+class DeprecatedEnvironmentVariable(LinterMessage):
+    """
+    Hint when a deprecated environment variable is used.
+    """
+
+    kind = "hint"
+    identifier = "CF-007"
+    added_in = "3.62"
+    message = "`${variable}` is deprecated, please use `${replacement}` instead.\n"
+    variable: str
+    replacement: str

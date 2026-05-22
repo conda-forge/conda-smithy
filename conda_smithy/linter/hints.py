@@ -563,3 +563,27 @@ def hint_dependency_pins(
                 output=output, bad_specs=requirements
             ).as_string()
         )
+
+
+def hint_deprecated_environment_variables(
+    forge_config,
+    hints,
+):
+    """Hint for deprecated workflow environment variables"""
+
+    deprecated_variables = {
+        "CONDA_BLD_PATH": "workflow_settings.build_workspace_dir",
+        "CONDA_FORGE_DOCKER_RUN_ARGS": "docker.run_args",
+        "MINIFORGE_HOME": "workflow_settings.tools_install_dir",
+    }
+
+    azure = forge_config.get("azure", {})
+    for platform in ("linux", "osx", "win"):
+        variables = azure.get(f"settings_{platform}", {}).get("variables", {})
+        for deprecated_variable in set(deprecated_variables).intersection(variables):
+            hints.append(
+                msg.cf.DeprecatedEnvironmentVariable(
+                    variable=f"azure.settings_{platform}.variables.{deprecated_variable}",
+                    replacement=deprecated_variables[deprecated_variable],
+                ).as_string()
+            )
