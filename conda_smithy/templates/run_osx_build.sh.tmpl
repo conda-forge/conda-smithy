@@ -187,6 +187,10 @@ else
         --extra-meta flow_run_id="$flow_run_id" remote_url="$remote_url" sha="$sha"
 
     {%- else %}
+
+    if [[ -f ./{{ recipe_dir }}/rattler-build-config.toml ]]; then
+        EXTRA_CB_OPTIONS="${EXTRA_CB_OPTIONS:-} --config-file ./{{ recipe_dir }}/rattler-build-config.toml"
+    fi
     {{ BUILD_CMD }} --recipe ./{{ recipe_dir }} \
         -m ./.ci_support/${CONFIG}.yaml \
         ${EXTRA_CB_OPTIONS:-} \
