@@ -44,10 +44,10 @@ def parse_variant(variant_file_content: str, config: Optional[Config] = None) ->
         from conda_build.config import Config
 
         config = Config()
-    from conda_build.metadata import ns_cfg, select_lines
+    from conda_build.metadata import get_selectors, select_lines
 
     contents = select_lines(
-        variant_file_content, ns_cfg(config), variants_in_place=False
+        variant_file_content, get_selectors(config), variants_in_place=False
     )
     content = yaml.load(contents, Loader=yaml.loader.BaseLoader) or {}
     variants.trim_empty_keys(content)
