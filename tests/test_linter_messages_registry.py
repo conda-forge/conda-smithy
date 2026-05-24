@@ -56,7 +56,7 @@ def test_linter_docs_up_to_date():
     """
     If this test fails, run 'python -m conda_smithy.linter.messages' to regenerate.
     """
-    pkg_root = Path(conda_smithy.__file__).parent
+    pkg_root = Path(conda_smithy.__file__).resolve().parent
     linter_messages_path = pkg_root / "data" / "linter-messages.json"
     on_disk = json.loads(linter_messages_path.read_text().strip())
     generated = generate_docs(write=False)
