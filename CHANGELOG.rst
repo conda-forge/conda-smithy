@@ -4,6 +4,47 @@ conda-smithy Change Log
 
 .. current developments
 
+v3.62.0
+====================
+
+**Added:**
+
+* Add ``workflow_settings.tools_install_dir`` and
+  ``workflow_settings.build_workspace_dir`` settings to ``conda-forge.yml`` that
+  provide per-platform and per-provider ability to override the paths used by
+  workflows. (#2529) (#2538)
+* Hint when dependency specifiers override pins (#2546, #2553)
+* Badges for workflows using GitHub Actions are now included in ``README.md``. (#2547)
+* Add ``docker.run_args`` to pass additional arguments to ``docker run`` on all CI providers. (#2551)
+* Hint about deprecated variables in ``azure.settings_*.variables``. (#2556)
+* Introduce deprecation machinery for the upcoming CalVer switch. (#2541)
+
+**Changed:**
+
+* Refactor linter messages as self-documenting dataclasses with automated JSON outputs. (#2478, #2548)
+* Optimized the code to avoid unnecessary loading ``conda-forge.yml`` multiple times. (#2555)
+* Update ``remote_ci_setup`` to use ``conda-build`` version ``26.3`` or newer. (#2558)
+* IMPORTANT: This will be the last release of the ``3.x`` series.
+  In the next release, we will switch from Semver to CalVer, following a ``YYYY.MM.DD`` scheme.
+  The first CalVer will be identical to the last SemVer release, except for the introduction
+  of a formal 60-day deprecation policy. (#2541)
+
+**Fixed:**
+
+* Deprecated schema fields that aren't top-level are now correctly reported as hints. (#2540)
+* Azure badges for configs that are not run on Azure are no longer included in ``README.md``. (#2547)
+* Fixed import of deprecated function ``ns_cfg`` from ``conda-build``. (#2559)
+
+**Authors:**
+
+* Matthew R. Becker
+* Jaime Rodríguez-Guerra
+* Michał Górny
+* pre-commit-ci[bot]
+* John Kirkham
+
+
+
 v3.61.2
 ====================
 
