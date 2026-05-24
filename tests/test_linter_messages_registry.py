@@ -9,6 +9,7 @@ from pathlib import Path
 
 import pytest
 
+import conda_smithy
 import conda_smithy.linter.messages as _messages_pkg
 from conda_smithy.linter.messages.__main__ import generate_docs
 from conda_smithy.linter.messages.base import LinterMessage
@@ -55,8 +56,8 @@ def test_linter_docs_up_to_date():
     """
     If this test fails, run 'python -m conda_smithy.linter.messages' to regenerate.
     """
-    repo_root = Path(__file__).parent.parent
-    linter_messages_path = repo_root / "conda_smithy" / "data" / "linter-messages.json"
+    pkg_root = Path(conda_smithy.__file__).parent
+    linter_messages_path = pkg_root / "data" / "linter-messages.json"
     on_disk = json.loads(linter_messages_path.read_text().strip())
     generated = generate_docs(write=False)
     assert generated["messages"] == sorted(
