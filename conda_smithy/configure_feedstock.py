@@ -2592,7 +2592,7 @@ def _read_forge_config(forge_dir, forge_yml=None):
                     "provider": "azure",
                     "os": "win",
                     "value": (
-                        "8GiB"
+                        "16GiB"
                         if config["azure"]["settings_win"]["variables"]["SET_PAGEFILE"]
                         else "0"
                     ),
