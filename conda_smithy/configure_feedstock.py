@@ -2559,6 +2559,46 @@ def _read_forge_config(forge_dir, forge_yml=None):
                 "variables"
             ].pop("CONDA_FORGE_DOCKER_RUN_ARGS")
 
+    if "swapfile_size" in file_config.get("azure", {}).get("settings_linux", {}):
+        if "pagefile_size" in file_config.get("workflow_settings", {}):
+            logger.warning(
+                "`azure.settings_linux.swapfile_size` is ignored when "
+                "`workflow_settings.pagefile_size` is set",
+            )
+            del config["azure"]["settings_linux"]["swapfile_size"]
+        else:
+            # Convert old keys to new settings.
+            config["workflow_settings"]["pagefile_size"].append(
+                {
+                    "provider": "azure",
+                    "os": "linux",
+                    "value": config["azure"]["settings_linux"]["swapfile_size"],
+                }
+            )
+
+    if "SET_PAGEFILE" in file_config.get("azure", {}).get("settings_win", {}).get(
+        "variables", {}
+    ):
+        if "pagefile_size" in file_config.get("workflow_settings", {}):
+            logger.warning(
+                "`azure.settings_win.variables.SET_PAGEFILE` is ignored when "
+                "`workflow_settings.pagefile_size` is set",
+            )
+            del config["azure"]["settings_win"]["variables"]["SET_PAGEFILE"]
+        else:
+            # Convert old keys to new settings.
+            config["workflow_settings"]["pagefile_size"].append(
+                {
+                    "provider": "azure",
+                    "os": "win",
+                    "value": (
+                        "8GiB"
+                        if config["azure"]["settings_win"]["variables"]["SET_PAGEFILE"]
+                        else "0"
+                    ),
+                }
+            )
+
     # check for conda-smithy 2.x matrix which we can't auto-migrate
     # to conda_build_config
     if file_config.get("matrix") and not os.path.exists(

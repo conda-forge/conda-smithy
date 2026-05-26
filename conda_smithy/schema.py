@@ -90,7 +90,11 @@ class AzureRunnerSettings(BaseModel):
     )
 
     swapfile_size: Optional[Union[str, Nullable]] = Field(
-        default=None, description="Swapfile size in GiB"
+        default=None,
+        description=cleandoc("""
+            Deprecated. Swapfile size in GiB.
+            Use `workflow_settings.pagefile_size` instead.
+        """),
     )
 
     timeout_in_minutes: Optional[int] = Field(
@@ -206,7 +210,8 @@ class AzureConfig(BaseModel):
               `workflow_settings.build_workspace_dir` instead.
             - ~~`MINIFORGE_HOME`~~: Location of the base environment installation. Deprecated,
               use `workflow_settings.tools_install_dir` instead.
-            - `SET_PAGEFILE`: `"True"` to increase the pagefile size via conda-forge-ci-setup.
+            - ~~`SET_PAGEFILE`~~: `"True"` to increase the pagefile size via conda-forge-ci-setup.
+              Deprecated, use `workflow_settings.pagefile_size` instead.
 
             If you are running out of space in `D:`, consider changing to `C:`.
             It's a slower drive but has more space available. We recommend you keep
@@ -528,6 +533,16 @@ class WorkflowSettings(BaseModel):
         default=[],
         description=cleandoc("""
         Directory to build in.
+        """),
+    )
+
+    pagefile_size: Optional[
+        Union[str, list[conditional_value(str, None)], Nullable]
+    ] = Field(
+        default=[],
+        description=cleandoc("""
+        Override the default paging (swap) file size. Specify along with
+        the unit, e.g. "8GiB".
         """),
     )
 

@@ -57,6 +57,9 @@ jobs:
 {%- endif %}
 
     - script: |
+        if "%SET_PAGEFILE_SIZE:~0,1%" NEQ "0" (
+            set SET_PAGEFILE=True
+        )
         call ".scripts\run_win_build.bat"
       displayName: Run Windows build
       env:
@@ -73,6 +76,7 @@ jobs:
 {%- if upload_on_branch %}
         UPLOAD_ON_BRANCH: {{ upload_on_branch }}
 {%- endif %}
+        SET_PAGEFILE_SIZE: $(pagefile_size)
 {%- for secret in secrets %}
         {{ secret }}: $({{ secret }})
 {%- endfor %}
