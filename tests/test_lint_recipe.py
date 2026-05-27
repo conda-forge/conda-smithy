@@ -4718,18 +4718,9 @@ extra:
     assert hints == []
 
 
-def test_hint_pinned_dependency_override() -> None:
-    recipe = """\
-context:
-  version: "1.0"
-
-package:
-  name: foo
-  version: ${{ version }}
-
-build:
-  number: 1
-
+@pytest.mark.parametrize("outputs", (False, True))
+def test_hint_pinned_dependency_override(outputs: bool) -> None:
+    midpart = """\
 requirements:
   host:
     - blah ${{ blah }}
@@ -4744,7 +4735,28 @@ requirements:
 
 tests:
   - script:
-    - true
+    - true\
+"""
+    if outputs:
+        midpart = f"""\
+outputs:
+  - package:
+      name: foo
+{textwrap.indent(midpart, '    ')}\
+"""
+
+    recipe = f"""\
+context:
+  version: "1.0"
+
+{'recipe' if outputs else 'package'}:
+  name: foo
+  version: ${{{{ version }}}}
+
+build:
+  number: 1
+
+{midpart}
 
 about:
   homepage: https://example.com
@@ -4807,12 +4819,50 @@ windows_only:
 
     assert lints == []
     assert hints == [
-        "top-level output overrides versions pinned in the feedstock:\n"
+        f"{'output 0' if outputs else 'top-level'} output overrides versions "
+        "pinned in the feedstock:\n"
         "['- In section host: `libhwloc >=2.5`, `windows_only >=1.1`']\n"
         "Requirement spec should not list version specifiers to respect "
         "conda-forge-pinning. If you need to force another version, please "
         "override the pin via `conda_build_config.yaml`.",
     ]
+
+
+def test_deprecated_environment_variables(tmp_path):
+    cfyml = tmp_path / "conda-forge.yml"
+    recipe_dir = tmp_path / "recipe"
+    recipe_dir.mkdir()
+    (recipe_dir / "meta.yaml").write_text("""
+        package:
+          name: foo
+        """)
+
+    cfyml.write_text(textwrap.dedent(r"""
+        azure:
+          settings_linux:
+            variables:
+              CONDA_BLD_PATH: ~/foo
+              CONDA_FORGE_DOCKER_RUN_ARGS: --cap-add SYS_ADMIN
+          settings_osx:
+            variables:
+              CONDA_BLD_PATH: ~/bar
+              MINIFORGE_HOME: ~/foo
+          settings_win:
+            variables:
+              MINIFORGE_HOME: D:\\Miniforge
+        """))
+
+    lints, hints = linter.main(tmp_path, return_hints=True, conda_forge=True)
+
+    expected = {
+        "`azure.settings_linux.variables.CONDA_FORGE_DOCKER_RUN_ARGS` is deprecated, please use `docker.run_args` instead.",
+        "`azure.settings_linux.variables.CONDA_BLD_PATH` is deprecated, please use `workflow_settings.build_workspace_dir` instead.",
+        "`azure.settings_osx.variables.CONDA_BLD_PATH` is deprecated, please use `workflow_settings.build_workspace_dir` instead.",
+        "`azure.settings_osx.variables.MINIFORGE_HOME` is deprecated, please use `workflow_settings.tools_install_dir` instead.",
+        "`azure.settings_win.variables.MINIFORGE_HOME` is deprecated, please use `workflow_settings.tools_install_dir` instead.",
+    }
+
+    assert expected.issubset(hints)
 
 
 if __name__ == "__main__":

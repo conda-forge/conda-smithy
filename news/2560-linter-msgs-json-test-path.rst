@@ -16,7 +16,7 @@
 
 **Fixed:**
 
-* Deprecated schema fields that aren't top-level are now correctly reported as hints. (#2540)
+* Fixed computation of path to linter messages json file so tests run OK in recipe. (#2560)
 
 **Security:**
 

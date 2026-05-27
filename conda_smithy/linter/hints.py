@@ -92,20 +92,25 @@ def hint_suggest_noarch(
                     hints.append(msg.r.SuggestNoarch().as_string())
 
 
-def hint_shellcheck_usage(recipe_dir, hints):
+def hint_shellcheck_usage(recipe_dir, hints, feedstock_config=None):
     shellcheck_enabled = False
     shell_scripts = []
     if recipe_dir:
         shell_scripts = glob(os.path.join(recipe_dir, "*.sh"))
-        forge_yaml = find_local_config_file(recipe_dir, "conda-forge.yml")
-        if shell_scripts and forge_yaml:
-            with open(forge_yaml, encoding="utf-8") as fh:
-                code = get_yaml().load(fh)
-                shellcheck_enabled = code.get("shellcheck", {}).get(
-                    "enabled", shellcheck_enabled
-                )
+        if not shell_scripts:
+            return
+        if feedstock_config is None:
+            forge_yaml = find_local_config_file(recipe_dir, "conda-forge.yml")
+            if forge_yaml:
+                with open(forge_yaml, encoding="utf-8") as fh:
+                    feedstock_config = get_yaml().load(fh)
+            else:
+                feedstock_config = {}
 
-        if shellcheck_enabled and shutil.which("shellcheck") and shell_scripts:
+        shellcheck_enabled = feedstock_config.get("shellcheck", {}).get(
+            "enabled", shellcheck_enabled
+        )
+        if shellcheck_enabled and shutil.which("shellcheck"):
             cmd = [
                 "shellcheck",
                 "--enable=all",
@@ -474,7 +479,9 @@ def hint_rattler_build_bld_bat(
 
 
 def _check_pin_overridden(
-    requirements_section: dict[str, list[str]], pins: set[str]
+    requirements_section: dict[str, list[str]],
+    pins: set[str],
+    recipe_version: int,
 ) -> Generator[str]:
     from conda import CondaError
     from conda.models.match_spec import MatchSpec
@@ -482,6 +489,8 @@ def _check_pin_overridden(
     packages_found = {}
 
     specs = requirements_section.get("host") or []
+    if recipe_version == 1:
+        specs = flatten_v1_if_else(specs)
     for spec in specs:
         if "#" in spec:
             spec = spec.split("#")[0]
@@ -517,6 +526,7 @@ def hint_dependency_pins(
     outputs_section,
     ci_support_files,
     hints,
+    recipe_version: int,
 ):
     """Hint for dependencies that override pinning"""
 
@@ -531,7 +541,9 @@ def hint_dependency_pins(
         potential_pins.update(pin_yaml.keys())
 
     report = {}
-    bad_specs = list(_check_pin_overridden(requirements_section, potential_pins))
+    bad_specs = list(
+        _check_pin_overridden(requirements_section, potential_pins, recipe_version)
+    )
     if bad_specs:
         report.setdefault("top-level", {})["host"] = bad_specs
     for i, output in enumerate(outputs_section):
@@ -539,7 +551,9 @@ def hint_dependency_pins(
         if not hasattr(requirements_section, "items"):
             # not a dict, but a list (CB2 style)
             requirements_section = {"run": requirements_section}
-        bad_specs = list(_check_pin_overridden(requirements_section, potential_pins))
+        bad_specs = list(
+            _check_pin_overridden(requirements_section, potential_pins, recipe_version)
+        )
         if bad_specs:
             report.setdefault(output.get("name", f"output {i}"), {})["host"] = bad_specs
 
@@ -549,3 +563,27 @@ def hint_dependency_pins(
                 output=output, bad_specs=requirements
             ).as_string()
         )
+
+
+def hint_deprecated_environment_variables(
+    forge_config,
+    hints,
+):
+    """Hint for deprecated workflow environment variables"""
+
+    deprecated_variables = {
+        "CONDA_BLD_PATH": "workflow_settings.build_workspace_dir",
+        "CONDA_FORGE_DOCKER_RUN_ARGS": "docker.run_args",
+        "MINIFORGE_HOME": "workflow_settings.tools_install_dir",
+    }
+
+    azure = forge_config.get("azure", {})
+    for platform in ("linux", "osx", "win"):
+        variables = azure.get(f"settings_{platform}", {}).get("variables", {})
+        for deprecated_variable in set(deprecated_variables).intersection(variables):
+            hints.append(
+                msg.cf.DeprecatedEnvironmentVariable(
+                    variable=f"azure.settings_{platform}.variables.{deprecated_variable}",
+                    replacement=deprecated_variables[deprecated_variable],
+                ).as_string()
+            )

@@ -71,6 +71,7 @@ docker:
   executable: docker
   fallback_image: quay.io/condaforge/linux-anvil-comp7
   interactive: null
+  run_args: ''
 drone: {}
 github:
   branch_name: main
@@ -133,7 +134,7 @@ provider:
 recipe_dir: recipe
 remote_ci_setup:
 - conda-forge-ci-setup=4
-- conda-build>=24.1
+- conda-build>=26.3
 secrets: []
 shellcheck:
   enabled: false

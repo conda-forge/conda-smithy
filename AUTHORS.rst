@@ -6,17 +6,17 @@ Authors are sorted by number of commits.
 * Jaime Rodríguez-Guerra
 * H. Vetinari
 * nichmor
+* Michał Górny
 * Christopher J. Wright
 * Anthony Scopatz
 * Phil Elson
-* Michał Górny
 * Wolf Vollprecht
 * Uwe L. Korn
 * pre-commit-ci[bot]
 * Filipe Fernandes
 * Min RK
-* Dougal J. Sutherland
 * John Kirkham
+* Dougal J. Sutherland
 * Amit Kumar
 * Marcel Bargull
 * Hadrien Mary
