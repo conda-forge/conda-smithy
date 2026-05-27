@@ -57,7 +57,7 @@ jobs:
 {%- endif %}
 
     - script: |
-        if "%SET_PAGEFILE_SIZE:~0,1%" NEQ "0" (
+        if "%SET_PAGEFILE_SIZE%" NEQ "0" (
             set SET_PAGEFILE=True
         )
         call ".scripts\run_win_build.bat"

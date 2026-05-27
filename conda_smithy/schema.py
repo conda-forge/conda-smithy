@@ -537,12 +537,12 @@ class WorkflowSettings(BaseModel):
     )
 
     pagefile_size: Optional[
-        Union[str, list[conditional_value(str, None)], Nullable]
+        Union[int, list[conditional_value(int, None)], Nullable]
     ] = Field(
         default=[],
         description=cleandoc("""
-        Override the default paging (swap) file size. Specify along with
-        the unit, e.g. "8GiB".
+        Override the default paging (swap) file size, in GiB.
+        For example, 8 means 8 GiB.
         """),
     )
 

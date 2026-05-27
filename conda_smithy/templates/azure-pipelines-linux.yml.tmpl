@@ -49,8 +49,8 @@ jobs:
     displayName: Manage disk space
 {%- endif %}
   - script: |
-        PAGEFILE_SIZE=$(pagefile_size)
-        [[ ${PAGEFILE_SIZE} == 0* ]] && exit
+        SET_PAGEFILE_SIZE=$(pagefile_size)
+        [[ ${SET_PAGEFILE_SIZE} -le 0 ]] && exit
         SWAPFILE=/swapfile
         # If there is already a swapfile, disable it and remove it
         if swapon --show | grep -q $SWAPFILE; then
@@ -58,7 +58,7 @@ jobs:
             sudo swapoff $SWAPFILE || true
         fi
         [ -f "$SWAPFILE" ] && sudo rm -f $SWAPFILE
-        sudo fallocate -l "${PAGEFILE_SIZE}" $SWAPFILE
+        sudo fallocate -l "${SET_PAGEFILE_SIZE}GiB" $SWAPFILE
         sudo chmod 600 $SWAPFILE
         sudo mkswap $SWAPFILE
         sudo swapon $SWAPFILE

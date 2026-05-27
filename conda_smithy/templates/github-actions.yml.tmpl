@@ -135,7 +135,7 @@ jobs:
         export MINIFORGE_HOME="${MINIFORGE_HOME/#~/${HOME}}"
         export CONDA_BLD_PATH="${CONDA_BLD_PATH/#~/${HOME}}"
         echo "::endgroup::"
-        if [[ ${SET_PAGEFILE_SIZE} != 0* ]]; then
+        if [[ ${SET_PAGEFILE_SIZE} -gt 0 ]]; then
             echo "::group::Setting up swap file"
             SWAPFILE=/swapfile
             # If there is already a swapfile, disable it and remove it
@@ -144,7 +144,7 @@ jobs:
                 sudo swapoff $SWAPFILE
             fi
             [ -f "$SWAPFILE" ] && sudo rm -f $SWAPFILE
-            sudo fallocate -l "${SET_PAGEFILE_SIZE}" $SWAPFILE
+            sudo fallocate -l "${SET_PAGEFILE_SIZE}GiB" $SWAPFILE
             sudo chmod 600 $SWAPFILE
             sudo mkswap $SWAPFILE
             sudo swapon $SWAPFILE
@@ -225,7 +225,7 @@ jobs:
         set "flow_run_id=github_%GITHUB_RUN_ID%"
         set "remote_url=https://github.com/%GITHUB_REPOSITORY%"
         set "sha=%GITHUB_SHA%"
-        if "%SET_PAGEFILE_SIZE:~0,1%" NEQ "0" (
+        if "%SET_PAGEFILE_SIZE%" NEQ "0" (
             set SET_PAGEFILE=True
         )
         call ".scripts\run_win_build.bat"

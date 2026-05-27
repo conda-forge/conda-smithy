@@ -483,6 +483,84 @@
       "title": "ConditionalValue_<class 'bool'>",
       "type": "object"
     },
+    "ConditionalValue__class__int__": {
+      "properties": {
+        "os": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/PlatformsAliases"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/PlatformsAliases"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Operating systems to set environment variable on (default: all)",
+          "title": "Os"
+        },
+        "platform": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/Platforms"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/Platforms"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Platforms to set environment variable on (default: all)",
+          "title": "Platform"
+        },
+        "provider": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/CIservices"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/CIservices"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "CI providers to set environment variable on (default: all)",
+          "title": "Provider"
+        },
+        "value": {
+          "default": null,
+          "description": "Option value",
+          "title": "Value",
+          "type": "integer"
+        }
+      },
+      "title": "ConditionalValue_<class 'int'>",
+      "type": "object"
+    },
     "ConditionalValue__class__str__": {
       "properties": {
         "os": {
@@ -942,11 +1020,11 @@
         "pagefile_size": {
           "anyOf": [
             {
-              "type": "string"
+              "type": "integer"
             },
             {
               "items": {
-                "$ref": "#/$defs/ConditionalValue__class__str__"
+                "$ref": "#/$defs/ConditionalValue__class__int__"
               },
               "type": "array"
             },
@@ -958,7 +1036,7 @@
             }
           ],
           "default": [],
-          "description": "Override the default paging (swap) file size. Specify along with\nthe unit, e.g. \"8GiB\".",
+          "description": "Override the default paging (swap) file size, in GiB.\nFor example, 8 means 8 GiB.",
           "title": "Pagefile Size"
         }
       },

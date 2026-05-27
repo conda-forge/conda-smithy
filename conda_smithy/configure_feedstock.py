@@ -2567,14 +2567,25 @@ def _read_forge_config(forge_dir, forge_yml=None):
             )
             del config["azure"]["settings_linux"]["swapfile_size"]
         else:
-            # Convert old keys to new settings.
-            config["workflow_settings"]["pagefile_size"].append(
-                {
-                    "provider": "azure",
-                    "os": "linux",
-                    "value": config["azure"]["settings_linux"]["swapfile_size"],
-                }
-            )
+            value_re = re.compile(r"(\d+)GiB")
+            if (
+                value_match := value_re.fullmatch(
+                    config["azure"]["settings_linux"]["swapfile_size"]
+                )
+            ) is not None:
+                config["workflow_settings"]["pagefile_size"].append(
+                    {
+                        "provider": "azure",
+                        "os": "linux",
+                        "value": int(value_match.group(1)),
+                    }
+                )
+            else:
+                logger.warning(
+                    "`azure.settings_linux.swapfile_size` has invalid value `%s`, "
+                    "should be `{number}GiB`",
+                    config["azure"]["settings_linux"]["swapfile_size"],
+                )
 
     if "SET_PAGEFILE" in file_config.get("azure", {}).get("settings_win", {}).get(
         "variables", {}
@@ -2592,9 +2603,9 @@ def _read_forge_config(forge_dir, forge_yml=None):
                     "provider": "azure",
                     "os": "win",
                     "value": (
-                        "16GiB"
+                        16
                         if config["azure"]["settings_win"]["variables"]["SET_PAGEFILE"]
-                        else "0"
+                        else 0
                     ),
                 }
             )
