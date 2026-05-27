@@ -429,9 +429,9 @@ def test_upload_on_branch_azure(upload_on_branch_recipe, jinja_env):
     ) as fp:
         content_lin = yaml.safe_load(fp)
     assert (
-        'UPLOAD_ON_BRANCH="foo-branch"' in content_lin["jobs"][0]["steps"][1]["script"]
+        'UPLOAD_ON_BRANCH="foo-branch"' in content_lin["jobs"][0]["steps"][2]["script"]
     )
-    assert "BUILD_SOURCEBRANCHNAME" in content_lin["jobs"][0]["steps"][1]["script"]
+    assert "BUILD_SOURCEBRANCHNAME" in content_lin["jobs"][0]["steps"][2]["script"]
 
 
 def test_upload_on_branch_github_actions(upload_on_branch_recipe, jinja_env):
