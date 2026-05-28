@@ -4850,6 +4850,7 @@ def test_deprecated_environment_variables(tmp_path):
           settings_win:
             variables:
               MINIFORGE_HOME: D:\\Miniforge
+              SET_PAGEFILE: True
         """))
 
     lints, hints = linter.main(tmp_path, return_hints=True, conda_forge=True)
@@ -4860,6 +4861,7 @@ def test_deprecated_environment_variables(tmp_path):
         "`azure.settings_osx.variables.CONDA_BLD_PATH` is deprecated, please use `workflow_settings.build_workspace_dir` instead.",
         "`azure.settings_osx.variables.MINIFORGE_HOME` is deprecated, please use `workflow_settings.tools_install_dir` instead.",
         "`azure.settings_win.variables.MINIFORGE_HOME` is deprecated, please use `workflow_settings.tools_install_dir` instead.",
+        "`azure.settings_win.variables.SET_PAGEFILE` is deprecated, please use `workflow_settings.pagefile_size` instead.",
     }
 
     assert expected.issubset(hints)
