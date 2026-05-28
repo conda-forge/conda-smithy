@@ -57,7 +57,7 @@ jobs:
 {%- endif %}
 
     - script: |
-        call ".scripts\create_pagefile.bat" "%SET_PAGEFILE_SIZE%"
+        call ".scripts\create_pagefile.bat" %SET_PAGEFILE_SIZE%
         call ".scripts\run_win_build.bat"
       displayName: Run Windows build
       env:
