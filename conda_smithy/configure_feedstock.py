@@ -1904,11 +1904,15 @@ def _github_actions_specific_setup(jinja_env, forge_config, forge_dir, platform)
             "D:" if on_hosted_runner or on_namespace else "C:",
         )
         data.update(workflow_settings)
+        script_suffix = ".bat" if platform == "win" else ".sh"
         if data["store_build_artifacts"]:
-            script_suffix = ".bat" if platform == "win" else ".sh"
             template_files.append(
                 f".scripts/create_conda_build_artifacts{script_suffix}"
             )
+        if data["pagefile_size"] != 0 and platform in ("linux", "win"):
+            template_files.append(f".scripts/create_pagefile{script_suffix}")
+            if platform == "win":
+                template_files.append(".scripts/SetPageFileSize.ps1")
 
         if platform == "linux":
             data["docker_run_args"] = forge_config["docker"]["run_args"]
@@ -2046,10 +2050,14 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
             config_rendered["docker_run_args"] = forge_config["docker"]["run_args"]
 
         config_rendered.update(workflow_settings)
+        script_suffix = ".bat" if platform == "win" else ".sh"
         if config_rendered["store_build_artifacts"]:
             config_rendered["SHORT_CONFIG"] = data["short_config_name"]
-            script_suffix = ".bat" if platform == "win" else ".sh"
             template_files.append(f".scripts/create_conda_build_artifacts{script_suffix}")
+        if config_rendered["pagefile_size"] != 0 and platform in ("linux", "win"):
+            template_files.append(f".scripts/create_pagefile{script_suffix}")
+            if platform == "win":
+                template_files.append(".scripts/SetPageFileSize.ps1")
         azure_settings["strategy"]["matrix"][data["config_name"]] = config_rendered
         # fmt: on
 
@@ -2972,6 +2980,9 @@ def get_common_scripts(forge_dir):
         "run_osx_build.sh",
         "create_conda_build_artifacts.bat",
         "create_conda_build_artifacts.sh",
+        "create_pagefile.bat",
+        "create_pagefile.sh",
+        "SetPageFileSize.ps1",
     ]:
         yield os.path.join(forge_dir, ".scripts", old_file)
 
@@ -2991,6 +3002,9 @@ def clear_scripts(forge_dir):
             "run_win_build.bat",
             "create_conda_build_artifacts.bat",
             "create_conda_build_artifacts.sh",
+            "create_pagefile.bat",
+            "create_pagefile.sh",
+            "SetPageFileSize.ps1",
         ]:
             remove_file(os.path.join(forge_dir, folder, old_file))
 

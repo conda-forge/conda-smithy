@@ -137,17 +137,7 @@ jobs:
         echo "::endgroup::"
         if [[ ${SET_PAGEFILE_SIZE} -gt 0 ]]; then
             echo "::group::Setting up swap file"
-            SWAPFILE=/swapfile
-            # If there is already a swapfile, disable it and remove it
-            if swapon --show | grep -q $SWAPFILE; then
-                echo "Disabling existing swapfile..."
-                sudo swapoff $SWAPFILE
-            fi
-            [ -f "$SWAPFILE" ] && sudo rm -f $SWAPFILE
-            sudo fallocate -l "${SET_PAGEFILE_SIZE}GiB" $SWAPFILE
-            sudo chmod 600 $SWAPFILE
-            sudo mkswap $SWAPFILE
-            sudo swapon $SWAPFILE
+            .scripts/create_pagefile.sh "${SET_PAGEFILE_SIZE}"
             echo "::endgroup::"
         fi
         ./.scripts/run_docker_build.sh
@@ -225,9 +215,7 @@ jobs:
         set "flow_run_id=github_%GITHUB_RUN_ID%"
         set "remote_url=https://github.com/%GITHUB_REPOSITORY%"
         set "sha=%GITHUB_SHA%"
-        if "%SET_PAGEFILE_SIZE%" NEQ "0" (
-            set SET_PAGEFILE=True
-        )
+        call ".scripts\create_pagefile.bat" "%SET_PAGEFILE_SIZE%"
         call ".scripts\run_win_build.bat"
       env:
         MINIFORGE_HOME: {% raw %}${{ matrix.tools_install_dir }}{% endraw %}
