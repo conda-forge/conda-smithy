@@ -411,4 +411,4 @@ def fill_workflow_settings_defaults(
         }[os]
 
     if workflow_settings.get("pagefile_size") is None:
-        workflow_settings["pagefile_size"] = "0"
+        workflow_settings["pagefile_size"] = 0

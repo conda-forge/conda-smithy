@@ -1,12 +1,11 @@
 setlocal enableextensions enabledelayedexpansion
 
-set SET_PAGEFILE_SIZE=%1%
+set SET_PAGEFILE_SIZE=%1
 
 :: Increase pagefile size, cf. https://github.com/conda-forge/conda-forge-ci-setup-feedstock/issues/155
-:: Both in the recipe and in the final package, this script is co-located with SetPageFileSize.ps1, see meta.yaml
 set ThisScriptsDirectory=%~dp0
 set EntryPointPath=%ThisScriptsDirectory%SetPageFileSize.ps1
-REM use different drive than CONDA_BLD_PATH-location for pagefile
+REM Try to use different drive than CONDA_BLD_PATH-location for pagefile, if available
 set PageFileDrive=C:
 if /i "%CONDA_BLD_PATH:~0,2%" == "C:" (
     if exist D:\ set "PageFileDrive=D:"

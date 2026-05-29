@@ -9,7 +9,7 @@ SET_PAGEFILE_SIZE=${1}
 SWAPFILE=/swapfile
 # If there is already a swapfile, disable it and remove it
 if swapon --show | grep -q "^${SWAPFILE}"; then
-	sudo swapoff "${SWAPFILE}" || true
+    sudo swapoff "${SWAPFILE}" || true
 fi
 [[ -f ${SWAPFILE} ]] && sudo rm -f "${SWAPFILE}"
 
