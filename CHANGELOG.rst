@@ -4,6 +4,27 @@ conda-smithy Change Log
 
 .. current developments
 
+v2026.5.29
+====================
+
+**Changed:**
+
+* Github Actions runner images for macOS and Windows now match Azure Pipelines defaults (15 and 2022, respectively). (#2564)
+
+**Fixed:**
+
+* Make sure writable location checks are compatible with older macOS versions. (#2549)
+* Fixed computation of path to linter messages json file so tests run OK in recipe. (#2560)
+* Updated reference to bot documentation JSON blob. (#)
+
+**Authors:**
+
+* Matthew R. Becker
+* Jaime Rodríguez-Guerra
+* Monson Shao
+
+
+
 v3.62.0
 ====================
 
