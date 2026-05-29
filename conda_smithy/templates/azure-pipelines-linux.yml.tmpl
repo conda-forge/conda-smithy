@@ -8,6 +8,9 @@
   {%- if os == 'linux' and data.store_build_artifacts %}
     {%- set vars.store_build_artifacts = True %}
   {%- endif %}
+  {%- if os == 'linux' and data.pagefile_size != 0 %}
+    {%- set vars.create_pagefile = True %}
+  {%- endif %}
 {%- endfor %}
 
 jobs:
@@ -48,9 +51,11 @@ jobs:
          df -h
     displayName: Manage disk space
 {%- endif %}
+{%- if vars.create_pagefile %}
   - script: |
         .scripts/create_pagefile.sh "$(pagefile_size)"
-    displayName: Create swap file
+    displayName: Create page file
+{%- endif %}
   # configure qemu binfmt-misc running.  This allows us to run docker containers
   # embedded qemu-static
   - script: |
