@@ -8,7 +8,7 @@
 
 **Deprecated:**
 
-* <news item>
+* ``azure.settings_linux.swapfile_size`` and ``azure.settings_win.variables.SET_PAGEFILE`` are deprecated in favor of ``workflow_settings.pagefile_size``. (#2562)
 
 **Removed:**
 
