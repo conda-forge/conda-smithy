@@ -3322,3 +3322,72 @@ def test_docker_run_args_azure(
         assert {entry.get("docker_run_args") for entry in matrix.values()} == {
             None if os_name != "linux" else "--cap-add SYS_ADMIN" if old or new else ""
         }
+
+
+@pytest.mark.parametrize("path", ["azure", "workflow_settings", "both"])
+@pytest.mark.parametrize("value", [0, 16])
+def test_pagefile_size_azure(py_recipe, jinja_env, caplog, path: str, value: bool):
+    forge_dir = py_recipe.recipe
+    forge_yml = Path(forge_dir, "conda-forge.yml")
+
+    with open(forge_yml, "a") as f:
+        f.write(textwrap.dedent("""\
+            provider:
+              linux_64: azure
+              osx_64: azure
+              win_64: azure
+        """))
+        if path != "workflow_settings":
+            f.write(textwrap.dedent(f"""\
+                azure:
+                  settings_linux:
+                    swapfile_size: {value}GiB
+                  settings_win:
+                    variables:
+                      SET_PAGEFILE: {'True' if value else ''}
+            """))
+        if path != "azure":
+            f.write(textwrap.dedent(f"""\
+                workflow_settings:
+                  pagefile_size: {value}
+            """))
+
+    with caplog.at_level(logging.WARNING):
+        config = configure_feedstock._load_forge_config(
+            forge_dir, "recipe/default_config.yaml"
+        )
+        if path == "both":
+            assert any(
+                "`azure.settings_linux.swapfile_size` is ignored" in record.message
+                for record in caplog.records
+            )
+            assert any(
+                "`azure.settings_win.variables.SET_PAGEFILE` is ignored"
+                in record.message
+                for record in caplog.records
+            )
+
+    configure_feedstock.render_azure(
+        jinja_env=jinja_env,
+        forge_config=config,
+        forge_dir=forge_dir,
+    )
+
+    for os_name in ("linux", "win"):
+        workflow_yml = Path(
+            forge_dir, ".azure-pipelines", f"azure-pipelines-{os_name}.yml"
+        )
+        with workflow_yml.open() as f:
+            workflow = yaml.safe_load(f)
+
+        matrix = workflow["jobs"][0]["strategy"]["matrix"]
+        assert all(entry["pagefile_size"] == value for entry in matrix.values())
+
+        # check that artifacts steps are output / not output
+        steps = workflow["jobs"][0]["steps"]
+        step_names = set(step["displayName"] for step in steps)
+        assert ("Create page file" in step_names) is (value != 0)
+
+    assert Path(forge_dir, ".scripts/create_pagefile.bat").exists() is (value != 0)
+    assert Path(forge_dir, ".scripts/SetPageFileSize.ps1").exists() is (value != 0)
+    assert Path(forge_dir, ".scripts/create_pagefile.sh").exists() is (value != 0)
