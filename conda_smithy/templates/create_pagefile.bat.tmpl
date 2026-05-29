@@ -5,7 +5,7 @@ set SET_PAGEFILE_SIZE=%1
 :: Increase pagefile size, cf. https://github.com/conda-forge/conda-forge-ci-setup-feedstock/issues/155
 set ThisScriptsDirectory=%~dp0
 set EntryPointPath=%ThisScriptsDirectory%SetPageFileSize.ps1
-REM Try to use different drive than CONDA_BLD_PATH-location for pagefile, if available
+:: Try to use different drive than CONDA_BLD_PATH-location for pagefile, if available
 set PageFileDrive=C:
 if /i "%CONDA_BLD_PATH:~0,2%" == "C:" (
     if exist D:\ set "PageFileDrive=D:"
@@ -21,3 +21,4 @@ if "%SET_PAGEFILE_SIZE%" GTR "0" (
         PowerShell -NoProfile -ExecutionPolicy Bypass -Command "& '%EntryPointPath%' -MinimumSize "%SET_PAGEFILE_SIZE%GB" -MaximumSize "%SET_PAGEFILE_SIZE%GB" -DiskRoot \"%PageFileDrive%\""
     )
 )
+exit /b
