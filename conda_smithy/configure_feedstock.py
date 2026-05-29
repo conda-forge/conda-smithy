@@ -199,7 +199,7 @@ GITHUB_ACTIONS_RUNS_ON = {
     },
     "win-64": {
         "os": "windows",
-        "hosted_labels": ("windows-latest",),
+        "hosted_labels": ("windows-2022",),
         "self_hosted_labels": ("windows", "x64"),
     },
     "win-arm64": {
