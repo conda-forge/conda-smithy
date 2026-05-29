@@ -634,7 +634,7 @@ class ConfigModel(BaseModel):
         dict,
         WithJsonSchema(
             {
-                "$ref": "https://raw.githubusercontent.com/regro/cf-scripts/refs/heads/main/conda_forge_tick/cf_tick_schema.json"
+                "$ref": "https://raw.githubusercontent.com/conda-forge/conda-forge-bot/refs/heads/main/conda_forge_tick/cf_tick_schema.json"
             }
         ),
     ] = Field(
