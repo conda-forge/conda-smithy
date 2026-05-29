@@ -2834,7 +2834,7 @@ def test_store_build_artifacts_gha_and_azure_conditions(py_recipe, jinja_env):
         "default",
         "hosted",
         "blacksmith-8vcpu-windows-2025",
-        "windows-latest",
+        "windows-2022",
         "windows-2025",
         "namespace-profile-16cpu-on-win-64",
     ],
@@ -2873,7 +2873,7 @@ def test_tools_build_paths_gha(py_recipe, jinja_env, label: str):
         "ubuntu-latest": ("~/miniforge3", "build_artifacts"),
         "windows-11-arm": (r"C:\Miniforge", r"C:\\bld\\"),
     }
-    expected_label = "windows-latest" if label in (None, "default", "hosted") else label
+    expected_label = "windows-2022" if label in (None, "default", "hosted") else label
     if expected_label.startswith("blacksmith"):
         expected[expected_label] = (r"C:\Miniforge", r"C:\\bld\\")
     else:
@@ -3098,7 +3098,7 @@ def test_tools_build_paths_gha_override_tools_dir(py_recipe, jinja_env):
         "macos-15-intel": ("~/foo", "~/foo/conda-bld"),
         "ubuntu-latest": ("~/foo", "build_artifacts"),
         "windows-11-arm": (r"C:\foo", r"C:\\bld\\"),
-        "windows-latest": (r"C:\foo", r"C:\\bld\\"),
+        "windows-2022": (r"C:\foo", r"C:\\bld\\"),
     }
 
     matrix = workflow["jobs"]["build"]["strategy"]["matrix"]["include"]
@@ -3152,7 +3152,7 @@ def test_tools_build_paths_gha_override_both(py_recipe, jinja_env):
         "macos-15-intel": ("~/foo", "~/bar"),
         "ubuntu-latest": ("~/foo", "~/bar"),
         "windows-11-arm": (r"C:\foo", r"D:\bar"),
-        "windows-latest": (r"C:\foo", r"D:\bar"),
+        "windows-2022": (r"C:\foo", r"D:\bar"),
     }
 
     matrix = workflow["jobs"]["build"]["strategy"]["matrix"]["include"]

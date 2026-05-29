@@ -179,7 +179,7 @@ GITHUB_ACTIONS_RUNS_ON = {
     },
     "osx-arm64": {
         "os": "macos",
-        "hosted_labels": ("macos-latest",),
+        "hosted_labels": ("macos-15",),
         "self_hosted_labels": ("macOS", "arm64"),
     },
     "linux-64": {
@@ -199,7 +199,7 @@ GITHUB_ACTIONS_RUNS_ON = {
     },
     "win-64": {
         "os": "windows",
-        "hosted_labels": ("windows-latest",),
+        "hosted_labels": ("windows-2022",),
         "self_hosted_labels": ("windows", "x64"),
     },
     "win-arm64": {
