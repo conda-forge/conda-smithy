@@ -151,3 +151,4 @@ Authors are sorted by number of commits.
 * Filippo Luca Ferretti
 * Christoph Deil
 * Hofer-Julian
+* Monson Shao
