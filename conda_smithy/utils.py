@@ -409,3 +409,6 @@ def fill_workflow_settings_defaults(
             # TODO: switch to normalizing all paths once we're ready
             "win": rf"{tools_drive}\\bld\\",
         }[os]
+
+    if workflow_settings.get("pagefile_size") is None:
+        workflow_settings["pagefile_size"] = 0

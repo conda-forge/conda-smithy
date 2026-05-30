@@ -3322,3 +3322,116 @@ def test_docker_run_args_azure(
         assert {entry.get("docker_run_args") for entry in matrix.values()} == {
             None if os_name != "linux" else "--cap-add SYS_ADMIN" if old or new else ""
         }
+
+
+@pytest.mark.parametrize("path", ["none", "azure", "workflow_settings", "both"])
+@pytest.mark.parametrize("value", [0, 16])
+def test_pagefile_size_azure(py_recipe, jinja_env, caplog, path: str, value: int):
+    if path == "none" and value != 0:
+        pytest.skip("meaningless combination")
+    forge_dir = py_recipe.recipe
+    forge_yml = Path(forge_dir, "conda-forge.yml")
+
+    with open(forge_yml, "a") as f:
+        f.write(textwrap.dedent("""\
+            provider:
+              linux_64: azure
+              osx_64: azure
+              win_64: azure
+        """))
+        if path in ("azure", "both"):
+            f.write(textwrap.dedent(f"""\
+                azure:
+                  settings_linux:
+                    swapfile_size: {value}GiB
+                  settings_win:
+                    variables:
+                      SET_PAGEFILE: {'True' if value else ''}
+            """))
+        if path in ("workflow_settings", "both"):
+            f.write(textwrap.dedent(f"""\
+                workflow_settings:
+                  pagefile_size: {value}
+            """))
+
+    with caplog.at_level(logging.WARNING):
+        config = configure_feedstock._load_forge_config(
+            forge_dir, "recipe/default_config.yaml"
+        )
+        if path == "both":
+            assert any(
+                "`azure.settings_linux.swapfile_size` is ignored" in record.message
+                for record in caplog.records
+            )
+            assert any(
+                "`azure.settings_win.variables.SET_PAGEFILE` is ignored"
+                in record.message
+                for record in caplog.records
+            )
+
+    configure_feedstock.render_azure(
+        jinja_env=jinja_env,
+        forge_config=config,
+        forge_dir=forge_dir,
+    )
+
+    expected = value != 0
+    for os_name in ("linux", "win"):
+        workflow_yml = Path(
+            forge_dir, ".azure-pipelines", f"azure-pipelines-{os_name}.yml"
+        )
+        with workflow_yml.open() as f:
+            workflow = yaml.safe_load(f)
+
+        matrix = workflow["jobs"][0]["strategy"]["matrix"]
+        assert all(entry["pagefile_size"] == value for entry in matrix.values())
+
+        # check that artifacts steps are output / not output
+        steps = workflow["jobs"][0]["steps"]
+        step_names = set(step["displayName"] for step in steps)
+        assert ("Create page file" in step_names) is expected
+
+    assert Path(forge_dir, ".scripts/create_pagefile.bat").exists() is expected
+    assert Path(forge_dir, ".scripts/SetPageFileSize.ps1").exists() is expected
+    assert Path(forge_dir, ".scripts/create_pagefile.sh").exists() is expected
+
+
+@pytest.mark.parametrize("value", [None, 0, 16])
+def test_pagefile_size_gha(py_recipe, jinja_env, caplog, value: int | None):
+    forge_dir = py_recipe.recipe
+    forge_yml = Path(forge_dir, "conda-forge.yml")
+
+    with open(forge_yml, "a") as f:
+        f.write(textwrap.dedent("""\
+            provider:
+              linux_64: github_actions
+              osx_64: github_actions
+              win_64: github_actions
+        """))
+        if value is not None:
+            f.write(textwrap.dedent(f"""\
+                workflow_settings:
+                  pagefile_size: {value}
+            """))
+
+    config = configure_feedstock._load_forge_config(
+        forge_dir, "recipe/default_config.yaml"
+    )
+    configure_feedstock.render_github_actions(
+        jinja_env=jinja_env,
+        forge_config=config,
+        forge_dir=forge_dir,
+    )
+
+    conda_build_yml = Path(forge_dir, ".github/workflows/conda-build.yml")
+    with conda_build_yml.open() as f:
+        workflow = yaml.safe_load(f)
+
+    matrix = workflow["jobs"]["build"]["strategy"]["matrix"]["include"]
+    assert all(entry["pagefile_size"] == (value or 0) for entry in matrix)
+
+    # check that artifacts steps are output / not output
+    expected = (value or 0) != 0
+    assert Path(forge_dir, ".scripts/create_pagefile.bat").exists() is expected
+    assert Path(forge_dir, ".scripts/SetPageFileSize.ps1").exists() is expected
+    assert Path(forge_dir, ".scripts/create_pagefile.sh").exists() is expected

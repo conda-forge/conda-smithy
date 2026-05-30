@@ -8,6 +8,9 @@
   {%- if os == 'linux' and data.store_build_artifacts %}
     {%- set vars.store_build_artifacts = True %}
   {%- endif %}
+  {%- if os == 'linux' and data.pagefile_size != 0 %}
+    {%- set vars.create_pagefile = True %}
+  {%- endif %}
 {%- endfor %}
 
 jobs:
@@ -48,20 +51,10 @@ jobs:
          df -h
     displayName: Manage disk space
 {%- endif %}
-{%- if not (azure.settings_linux.swapfile_size|string).startswith("0") %}
+{%- if vars.create_pagefile %}
   - script: |
-        SWAPFILE=/swapfile
-        # If there is already a swapfile, disable it and remove it
-        if swapon --show | grep -q $SWAPFILE; then
-            echo "Disabling existing swapfile..."
-            sudo swapoff $SWAPFILE || true
-        fi
-        [ -f "$SWAPFILE" ] && sudo rm -f $SWAPFILE
-        sudo fallocate -l {{ azure.settings_linux.swapfile_size }} $SWAPFILE
-        sudo chmod 600 $SWAPFILE
-        sudo mkswap $SWAPFILE
-        sudo swapon $SWAPFILE
-    displayName: Create swap file
+        .scripts/create_pagefile.sh "$(pagefile_size)"
+    displayName: Create page file
 {%- endif %}
   # configure qemu binfmt-misc running.  This allows us to run docker containers
   # embedded qemu-static

@@ -1904,11 +1904,15 @@ def _github_actions_specific_setup(jinja_env, forge_config, forge_dir, platform)
             "D:" if on_hosted_runner or on_namespace else "C:",
         )
         data.update(workflow_settings)
+        script_suffix = ".bat" if platform == "win" else ".sh"
         if data["store_build_artifacts"]:
-            script_suffix = ".bat" if platform == "win" else ".sh"
             template_files.append(
                 f".scripts/create_conda_build_artifacts{script_suffix}"
             )
+        if data["pagefile_size"] != 0 and platform in ("linux", "win"):
+            template_files.append(f".scripts/create_pagefile{script_suffix}")
+            if platform == "win":
+                template_files.append(".scripts/SetPageFileSize.ps1")
 
         if platform == "linux":
             data["docker_run_args"] = forge_config["docker"]["run_args"]
@@ -2046,10 +2050,14 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
             config_rendered["docker_run_args"] = forge_config["docker"]["run_args"]
 
         config_rendered.update(workflow_settings)
+        script_suffix = ".bat" if platform == "win" else ".sh"
         if config_rendered["store_build_artifacts"]:
             config_rendered["SHORT_CONFIG"] = data["short_config_name"]
-            script_suffix = ".bat" if platform == "win" else ".sh"
             template_files.append(f".scripts/create_conda_build_artifacts{script_suffix}")
+        if config_rendered["pagefile_size"] != 0 and platform in ("linux", "win"):
+            template_files.append(f".scripts/create_pagefile{script_suffix}")
+            if platform == "win":
+                template_files.append(".scripts/SetPageFileSize.ps1")
         azure_settings["strategy"]["matrix"][data["config_name"]] = config_rendered
         # fmt: on
 
@@ -2559,6 +2567,57 @@ def _read_forge_config(forge_dir, forge_yml=None):
                 "variables"
             ].pop("CONDA_FORGE_DOCKER_RUN_ARGS")
 
+    if "swapfile_size" in file_config.get("azure", {}).get("settings_linux", {}):
+        if "pagefile_size" in file_config.get("workflow_settings", {}):
+            logger.warning(
+                "`azure.settings_linux.swapfile_size` is ignored when "
+                "`workflow_settings.pagefile_size` is set",
+            )
+            del config["azure"]["settings_linux"]["swapfile_size"]
+        else:
+            value_re = re.compile(r"(\d+)GiB")
+            if (
+                value_match := value_re.fullmatch(
+                    config["azure"]["settings_linux"]["swapfile_size"]
+                )
+            ) is not None:
+                config["workflow_settings"]["pagefile_size"].append(
+                    {
+                        "provider": "azure",
+                        "os": "linux",
+                        "value": int(value_match.group(1)),
+                    }
+                )
+            else:
+                logger.warning(
+                    "`azure.settings_linux.swapfile_size` has invalid value `%s`, "
+                    "should be `{number}GiB`",
+                    config["azure"]["settings_linux"]["swapfile_size"],
+                )
+
+    if "SET_PAGEFILE" in file_config.get("azure", {}).get("settings_win", {}).get(
+        "variables", {}
+    ):
+        if "pagefile_size" in file_config.get("workflow_settings", {}):
+            logger.warning(
+                "`azure.settings_win.variables.SET_PAGEFILE` is ignored when "
+                "`workflow_settings.pagefile_size` is set",
+            )
+            del config["azure"]["settings_win"]["variables"]["SET_PAGEFILE"]
+        else:
+            # Convert old keys to new settings.
+            config["workflow_settings"]["pagefile_size"].append(
+                {
+                    "provider": "azure",
+                    "os": "win",
+                    "value": (
+                        16
+                        if config["azure"]["settings_win"]["variables"]["SET_PAGEFILE"]
+                        else 0
+                    ),
+                }
+            )
+
     # check for conda-smithy 2.x matrix which we can't auto-migrate
     # to conda_build_config
     if file_config.get("matrix") and not os.path.exists(
@@ -2921,6 +2980,9 @@ def get_common_scripts(forge_dir):
         "run_osx_build.sh",
         "create_conda_build_artifacts.bat",
         "create_conda_build_artifacts.sh",
+        "create_pagefile.bat",
+        "create_pagefile.sh",
+        "SetPageFileSize.ps1",
     ]:
         yield os.path.join(forge_dir, ".scripts", old_file)
 
@@ -2940,6 +3002,9 @@ def clear_scripts(forge_dir):
             "run_win_build.bat",
             "create_conda_build_artifacts.bat",
             "create_conda_build_artifacts.sh",
+            "create_pagefile.bat",
+            "create_pagefile.sh",
+            "SetPageFileSize.ps1",
         ]:
             remove_file(os.path.join(forge_dir, folder, old_file))
 

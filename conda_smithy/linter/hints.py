@@ -575,6 +575,7 @@ def hint_deprecated_environment_variables(
         "CONDA_BLD_PATH": "workflow_settings.build_workspace_dir",
         "CONDA_FORGE_DOCKER_RUN_ARGS": "docker.run_args",
         "MINIFORGE_HOME": "workflow_settings.tools_install_dir",
+        "SET_PAGEFILE": "workflow_settings.pagefile_size",
     }
 
     azure = forge_config.get("azure", {})

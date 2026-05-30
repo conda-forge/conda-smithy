@@ -54,6 +54,7 @@ jobs:
             tools_install_dir: {{ data.tools_install_dir }}
             build_workspace_dir: {{ data.build_workspace_dir }}
             docker_run_args: {{ data.docker_run_args }}
+            pagefile_size: {{ data.pagefile_size }}
         {%- endfor %}
     steps:
 {%- if github_actions.free_disk_space %}
@@ -111,6 +112,7 @@ jobs:
         UPLOAD_ON_BRANCH: {{ upload_on_branch }}
 {%- endif %}
         CONDA_FORGE_DOCKER_RUN_ARGS: "{% raw %}${{ matrix.docker_run_args }}{% endraw %}"
+        PAGEFILE_SIZE: {% raw %}${{ matrix.pagefile_size }}{% endraw %}
 {%- for secret in secrets %}
         {{ secret }}: {% raw %}${{{% endraw %} secrets.{{ secret }} {% raw %}}}{% endraw %}
 {%- endfor %}
@@ -133,6 +135,11 @@ jobs:
         export MINIFORGE_HOME="${MINIFORGE_HOME/#~/${HOME}}"
         export CONDA_BLD_PATH="${CONDA_BLD_PATH/#~/${HOME}}"
         echo "::endgroup::"
+        if [[ ${PAGEFILE_SIZE} -gt 0 ]]; then
+            echo "::group::Setting up swap file"
+            .scripts/create_pagefile.sh "${PAGEFILE_SIZE}"
+            echo "::endgroup::"
+        fi
         ./.scripts/run_docker_build.sh
 
     - name: Build on macOS
@@ -208,6 +215,7 @@ jobs:
         set "flow_run_id=github_%GITHUB_RUN_ID%"
         set "remote_url=https://github.com/%GITHUB_REPOSITORY%"
         set "sha=%GITHUB_SHA%"
+        call ".scripts\create_pagefile.bat" %PAGEFILE_SIZE%
         call ".scripts\run_win_build.bat"
       env:
         MINIFORGE_HOME: {% raw %}${{ matrix.tools_install_dir }}{% endraw %}
@@ -219,6 +227,7 @@ jobs:
 {%- if upload_on_branch %}
         UPLOAD_ON_BRANCH: {{ upload_on_branch }}
 {%- endif %}
+        PAGEFILE_SIZE: {% raw %}${{ matrix.pagefile_size }}{% endraw %}
 {%- for secret in secrets %}
         {{ secret }}: {% raw %}${{{% endraw %} secrets.{{ secret }} {% raw %}}}{% endraw %}
 {%- endfor %}

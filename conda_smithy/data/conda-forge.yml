@@ -146,5 +146,6 @@ travis: {}
 woodpecker: {}
 workflow_settings:
   build_workspace_dir: []
+  pagefile_size: []
   store_build_artifacts: []
   tools_install_dir: []
