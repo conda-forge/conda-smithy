@@ -227,6 +227,7 @@ class RegisterCI(Subcommand):
         "Cirrus-Runners",
         "Blacksmith",
         "Namespace",
+        "Depot",
     )
 
     def __init__(self, parser):
@@ -483,6 +484,16 @@ class RegisterCI(Subcommand):
                 ci_register.enable_namespace_app(owner, repo)
         else:
             print("Namespace.so registration disabled.")
+
+        if args.depot:
+            if args.remove:
+                print("Depot.dev Registration: removing")
+                ci_register.disable_depot_app(owner, repo)
+            else:
+                print("Depot.dev Registration: installing")
+                ci_register.enable_depot_app(owner, repo)
+        else:
+            print("Depot.dev registration disabled.")
 
         if args.webservice:
             ci_register.add_conda_forge_webservice_hooks(owner, repo)

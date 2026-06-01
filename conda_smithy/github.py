@@ -601,6 +601,16 @@ def configure_github_app(
     app_slug_or_installation_id: str | int = None,
     remove: bool = False,
 ) -> None:
+    """
+    `app_slug_or_installation_id` can be a string or an integer. When a string
+    is passed, we will find the integer ID by matching the app slug.
+    For known installations (e.g. in conda-forge), you can find (and hardcode)
+    the ID with the following Github API call:
+
+        /orgs/<YOUR-ORG>/installations
+
+    Annotate the .app_slug and .id fields.
+    """
     gh = github_client()
     org: github.Organization = gh.get_organization(org)
     repo: github.Repository = org.get_repo(repo)
