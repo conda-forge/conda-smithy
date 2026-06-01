@@ -139,13 +139,6 @@ if [[ "${BUILD_WITH_CONDA_DEBUG:-0}" == 1 ]]; then
     # Drop into an interactive shell
     /bin/bash
     {%- else %}
-    # rattler-build's `debug` subcommand (>=0.41) is the equivalent of
-    # `conda debug`: it resolves dependencies, downloads sources, applies
-    # patches, installs the build/host environments and writes the build
-    # script (work/conda_build.sh + work/build_env.sh), then stops before
-    # running the build. `debug shell` then opens an interactive shell with
-    # that environment activated, locating the work directory through the
-    # rattler-build-log.txt written under CONDA_BLD_PATH.
     export CONDA_BLD_PATH="${CONDA_BLD_PATH:-${FEEDSTOCK_ROOT}/build_artifacts}"
     rattler-build debug setup \
         --recipe "${RECIPE_ROOT}" \
@@ -154,7 +147,6 @@ if [[ "${BUILD_WITH_CONDA_DEBUG:-0}" == 1 ]]; then
         ${BUILD_OUTPUT_ID:+--output-name "${BUILD_OUTPUT_ID}"} \
         ${EXTRA_CB_OPTIONS:-}
 
-    # Drop into an interactive shell inside the prepared build environment.
     rattler-build debug shell
     {%- endif %}
 else
