@@ -1,14 +1,16 @@
+from __future__ import annotations
+
 import os
 import re
 import shutil
 import subprocess
 import sys
-from collections.abc import Mapping
+from collections.abc import Generator, Mapping
 from glob import glob
 from typing import Any
 
 from conda_smithy.linter import conda_recipe_v1_linter
-from conda_smithy.linter.errors import HINT_NO_ARCH
+from conda_smithy.linter import messages as msg
 from conda_smithy.linter.utils import (
     VALID_PYTHON_BUILD_BACKENDS,
     find_local_config_file,
@@ -26,10 +28,7 @@ def hint_pip_usage(build_section, hints):
             scripts = [scripts]
         for script in scripts:
             if "python setup.py install" in script:
-                hints.append(
-                    "Whenever possible python packages should use pip. "
-                    "See https://conda-forge.org/docs/maintainer/adding_pkgs.html#use-pip"
-                )
+                hints.append(msg.r.UsePip().as_string())
 
 
 def hint_sources_should_not_mention_pypi_io_but_pypi_org(
@@ -45,10 +44,7 @@ def hint_sources_should_not_mention_pypi_io_but_pypi_org(
         source = source_section.get("url", "") or ""
         sources = [source] if isinstance(source, str) else source
         if any(s.startswith("https://pypi.io/") for s in sources):
-            hints.append(
-                "PyPI default URL is now pypi.org, and not pypi.io."
-                " You may want to update the default source url."
-            )
+            hints.append(msg.r.UsePyPIOrg().as_string())
 
 
 def hint_suggest_noarch(
@@ -93,24 +89,28 @@ def hint_suggest_noarch(
                             no_arch_possible = False
                             break
                 if no_arch_possible:
-                    hints.append(HINT_NO_ARCH)
+                    hints.append(msg.r.SuggestNoarch().as_string())
 
 
-def hint_shellcheck_usage(recipe_dir, hints):
+def hint_shellcheck_usage(recipe_dir, hints, feedstock_config=None):
     shellcheck_enabled = False
     shell_scripts = []
     if recipe_dir:
         shell_scripts = glob(os.path.join(recipe_dir, "*.sh"))
-        forge_yaml = find_local_config_file(recipe_dir, "conda-forge.yml")
-        if shell_scripts and forge_yaml:
-            with open(forge_yaml, encoding="utf-8") as fh:
-                code = get_yaml().load(fh)
-                shellcheck_enabled = code.get("shellcheck", {}).get(
-                    "enabled", shellcheck_enabled
-                )
+        if not shell_scripts:
+            return
+        if feedstock_config is None:
+            forge_yaml = find_local_config_file(recipe_dir, "conda-forge.yml")
+            if forge_yaml:
+                with open(forge_yaml, encoding="utf-8") as fh:
+                    feedstock_config = get_yaml().load(fh)
+            else:
+                feedstock_config = {}
 
-        if shellcheck_enabled and shutil.which("shellcheck") and shell_scripts:
-            max_shellcheck_lines = 50
+        shellcheck_enabled = feedstock_config.get("shellcheck", {}).get(
+            "enabled", shellcheck_enabled
+        )
+        if shellcheck_enabled and shutil.which("shellcheck"):
             cmd = [
                 "shellcheck",
                 "--enable=all",
@@ -138,19 +138,14 @@ def hint_shellcheck_usage(recipe_dir, hints):
                     .splitlines()
                 )
                 hints.append(
-                    "Whenever possible fix all shellcheck findings ('"
-                    + " ".join(cmd)
-                    + " recipe/*.sh -f diff | git apply' helps)"
+                    msg.r.ScriptShellcheckReport(
+                        command=cmd,
+                        output_lines=findings,
+                    ).as_string()
                 )
-                hints.extend(findings[:50])
-                if len(findings) > max_shellcheck_lines:
-                    hints.append(
-                        "Output restricted, there are '%s' more lines."
-                        % (len(findings) - max_shellcheck_lines)
-                    )
             elif p.returncode != 0:
                 # Something went wrong.
-                hints.append("There have been errors while scanning with shellcheck.")
+                hints.append(msg.r.ScriptShellcheckFailure().as_string())
 
 
 def hint_check_spdx(about_section, hints):
@@ -192,17 +187,9 @@ def hint_check_spdx(about_section, hints):
         expected_exceptions = f.readlines()
         expected_exceptions = {li.strip() for li in expected_exceptions}
     if set(filtered_licenses) - expected_licenses:
-        hints.append(
-            "License is not an SPDX identifier (or a custom LicenseRef) nor an SPDX license expression.\n\n"
-            "Documentation on acceptable licenses can be found "
-            "[here]( https://conda-forge.org/docs/maintainer/adding_pkgs.html#spdx-identifiers-and-expressions )."
-        )
+        hints.append(msg.r.LicenseSPDX().as_string())
     if set(parsed_exceptions) - expected_exceptions:
-        hints.append(
-            "License exception is not an SPDX exception.\n\n"
-            "Documentation on acceptable licenses can be found "
-            "[here]( https://conda-forge.org/docs/maintainer/adding_pkgs.html#spdx-identifiers-and-expressions )."
-        )
+        hints.append(msg.r.InvalidLicenseException().as_string())
 
 
 def hint_pip_no_build_backend(host_or_build_section, package_name, hints):
@@ -210,7 +197,11 @@ def hint_pip_no_build_backend(host_or_build_section, package_name, hints):
     # need another backend to bootstrap
     # the list below are the ones that self-bootstrap without
     # another build backend
-    if package_name in ["pdm-backend", "setuptools"]:
+    if package_name in [
+        "hatchling",
+        "pdm-backend",
+        "setuptools",
+    ]:
         return
 
     if host_or_build_section and any(
@@ -232,11 +223,7 @@ def hint_pip_no_build_backend(host_or_build_section, package_name, hints):
 
         if not found_backend:
             hints.append(
-                f"No valid build backend found for Python recipe for package `{package_name}` using `pip`. "
-                "Python recipes using `pip` need to "
-                "explicitly specify a build backend in the `host` section. "
-                "If your recipe has built with only `pip` in the `host` section in the past, you likely should "
-                "add `setuptools` to the `host` section of your recipe."
+                msg.r.PythonBuildBackendHost(package_name=package_name).as_string()
             )
 
 
@@ -248,7 +235,7 @@ def _hint_noarch_python_use_python_min_inner(
     recipe_version,
     output_name,
 ):
-    hint = []
+    recommendations = []
 
     if noarch_value == "python":
         if recipe_version == 1:
@@ -316,11 +303,15 @@ def _hint_noarch_python_use_python_min_inner(
                 section_desc = (
                     f"`{output_name}` output" if output_name else "the recipe"
                 )
-                hint.append(
-                    f"\n   - For the {report_section_name} section of {section_desc}, you "
-                    f"should usually use the pin {report_syntax} for the {report_entry} entry."
+                recommendations.append(
+                    (
+                        report_section_name,
+                        section_desc,
+                        report_syntax,
+                        report_entry,
+                    )
                 )
-    return hint
+    return recommendations
 
 
 def hint_noarch_python_use_python_min(
@@ -332,7 +323,7 @@ def hint_noarch_python_use_python_min(
     recipe_version,
     hints,
 ):
-    hint = []
+    recommendations = []
 
     if outputs_section:
         for output_num, output in enumerate(outputs_section):
@@ -344,7 +335,7 @@ def hint_noarch_python_use_python_min(
                 output_host_reqs = None
                 output_run_reqs = requirements
 
-            hint.extend(
+            recommendations.extend(
                 _hint_noarch_python_use_python_min_inner(
                     output_host_reqs or [],
                     output_run_reqs or [],
@@ -355,7 +346,7 @@ def hint_noarch_python_use_python_min(
                 )
             )
     else:
-        hint.extend(
+        recommendations.extend(
             _hint_noarch_python_use_python_min_inner(
                 host_reqs,
                 run_reqs,
@@ -366,22 +357,8 @@ def hint_noarch_python_use_python_min(
             )
         )
 
-    if hint:
-        hint = (
-            (
-                "`noarch: python` recipes should usually follow the syntax in "
-                "our [documentation](https://conda-forge.org/docs/maintainer/knowledge_base/#noarch-python) "
-                "for specifying the Python version."
-            )
-            + "".join(hint)
-            + (
-                "\n   - If the package requires a newer Python version than the currently supported minimum "
-                "version on `conda-forge`, you can override the `python_min` variable by adding a "
-                "Jinja2 `set` statement at the top of your recipe (or using an equivalent `context` "
-                "variable for v1 recipes)."
-            )
-        )
-        hints.append(hint)
+    if recommendations:
+        hints.append(msg.r.PythonMinPin(recommendations=recommendations).as_string())
 
 
 def hint_space_separated_specs(
@@ -417,21 +394,10 @@ def hint_space_separated_specs(
                     req_type
                 ] = bad_specs
 
-    lines = []
     for output, requirements in report.items():
-        lines.append(f"{output} output has some malformed specs:")
-        for req_type, specs in requirements.items():
-            specs = [f"`{spec}`" for spec in specs]
-            lines.append(f"- In section {req_type}: {', '.join(specs)}")
-    if lines:
-        lines.append(
-            "Requirement spec fields should match the syntax `name [version [build]]`"
-            "to avoid known issues in conda-build. For example, instead of "
-            "`name =version=build`, use `name version.* build`. "
-            "There should be no spaces between version operators and versions either: "
-            "`python >= 3.8` should be `python >=3.8`."
+        hints.append(
+            msg.r.SpaceSeparatedSpecs(output=output, bad_specs=requirements).as_string()
         )
-        hints.append("\n".join(lines))
 
 
 def _ensure_spec_space_separated(spec: str) -> bool:
@@ -483,7 +449,142 @@ def hint_os_version(
     }
     if matches:
         hints.append(
-            f"The feedstock is lowering the image versions for one or more platforms: {matches} "
-            f"(the default is {default_os_version}). Unless you are in the very rare case of repackaging binary "
-            "artifacts, consider removing these overrides from conda-forge.yml in the top feedstock directory."
+            msg.fc.OSVersionLower(
+                platforms=matches, default=default_os_version
+            ).as_string()
         )
+
+
+def hint_rattler_build_bld_bat(
+    recipe_dir: str | None,
+    hints: list[str],
+    recipe_version: int = 0,
+):
+    """Hint for bld.bat presence when using rattler-build.
+
+    rattler-build uses build.bat instead of bld.bat for Windows builds.
+    Having bld.bat present when using rattler-build is likely a mistake.
+    """
+    if not recipe_dir:
+        return
+
+    # Check if this is a recipe version 1 (rattler-build)
+    if recipe_version != 1:
+        return
+
+    # Check if bld.bat exists in the recipe directory
+    bld_bat_path = os.path.join(recipe_dir, "bld.bat")
+    if os.path.exists(bld_bat_path):
+        hints.append(msg.r.RattlerBldBat().as_string())
+
+
+def _check_pin_overridden(
+    requirements_section: dict[str, list[str]],
+    pins: set[str],
+    recipe_version: int,
+) -> Generator[str]:
+    from conda import CondaError
+    from conda.models.match_spec import MatchSpec
+
+    packages_found = {}
+
+    specs = requirements_section.get("host") or []
+    if recipe_version == 1:
+        specs = flatten_v1_if_else(specs)
+    for spec in specs:
+        if "#" in spec:
+            spec = spec.split("#")[0]
+        spec = spec.strip()
+
+        try:
+            match_spec = MatchSpec(spec)
+        except CondaError:
+            # this covers specs using jinja expressions like:
+            #   - python ${{ python_min }}
+            #   - blah ${{ blah }}
+            continue
+
+        packages_found.setdefault(match_spec.name, []).append(
+            (match_spec.version, spec)
+        )
+
+    for package, matches in packages_found.items():
+        # skip packages that are referenced more than once, to cover patterns
+        # like:
+        #   - blah
+        #   - blah >=3.7
+        if len(matches) > 1:
+            continue
+        assert len(matches) == 1
+        version, spec = matches[0]
+        if package in pins and version is not None:
+            yield spec
+
+
+def hint_dependency_pins(
+    requirements_section,
+    outputs_section,
+    ci_support_files,
+    hints,
+    recipe_version: int,
+):
+    """Hint for dependencies that override pinning"""
+
+    if not ci_support_files:
+        return
+
+    potential_pins = set()
+    for pin_file in ci_support_files:
+        # TODO: can we do this better?
+        with open(pin_file, encoding="utf-8") as fh:
+            pin_yaml = get_yaml().load(fh)
+        potential_pins.update(pin_yaml.keys())
+
+    report = {}
+    bad_specs = list(
+        _check_pin_overridden(requirements_section, potential_pins, recipe_version)
+    )
+    if bad_specs:
+        report.setdefault("top-level", {})["host"] = bad_specs
+    for i, output in enumerate(outputs_section):
+        requirements_section = output.get("requirements") or {}
+        if not hasattr(requirements_section, "items"):
+            # not a dict, but a list (CB2 style)
+            requirements_section = {"run": requirements_section}
+        bad_specs = list(
+            _check_pin_overridden(requirements_section, potential_pins, recipe_version)
+        )
+        if bad_specs:
+            report.setdefault(output.get("name", f"output {i}"), {})["host"] = bad_specs
+
+    for output, requirements in report.items():
+        hints.append(
+            msg.cf.PinnedDependencyOverridden(
+                output=output, bad_specs=requirements
+            ).as_string()
+        )
+
+
+def hint_deprecated_environment_variables(
+    forge_config,
+    hints,
+):
+    """Hint for deprecated workflow environment variables"""
+
+    deprecated_variables = {
+        "CONDA_BLD_PATH": "workflow_settings.build_workspace_dir",
+        "CONDA_FORGE_DOCKER_RUN_ARGS": "docker.run_args",
+        "MINIFORGE_HOME": "workflow_settings.tools_install_dir",
+        "SET_PAGEFILE": "workflow_settings.pagefile_size",
+    }
+
+    azure = forge_config.get("azure", {})
+    for platform in ("linux", "osx", "win"):
+        variables = azure.get(f"settings_{platform}", {}).get("variables", {})
+        for deprecated_variable in set(deprecated_variables).intersection(variables):
+            hints.append(
+                msg.cf.DeprecatedEnvironmentVariable(
+                    variable=f"azure.settings_{platform}.variables.{deprecated_variable}",
+                    replacement=deprecated_variables[deprecated_variable],
+                ).as_string()
+            )

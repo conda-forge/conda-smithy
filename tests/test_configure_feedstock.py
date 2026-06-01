@@ -1,18 +1,34 @@
 import copy
+import io
 import logging
 import os
 import re
 import shutil
 import tempfile
 import textwrap
+import tomllib
 from pathlib import Path
 
 import pytest
 import yaml
 from conftest import ConfigYAML
+from rattler_build_conda_compat.loader import parse_recipe_config_file
 
 from conda_smithy import configure_feedstock
-from conda_smithy.configure_feedstock import _read_forge_config
+from conda_smithy.configure_feedstock import (
+    DEFAULT_PROVIDER,
+    DEFAULT_PROVIDERS,
+    _read_forge_config,
+)
+from conda_smithy.utils import ensure_standard_strings
+
+
+def test_platforms_populated():
+    all_platforms = configure_feedstock.ALL_PLATFORMS
+    assert sorted(all_platforms) == sorted(configure_feedstock.FANCY_PLATFORM_NAMES)
+    assert sorted(all_platforms) == sorted(configure_feedstock.DEFAULT_PROVIDERS)
+    assert sorted(all_platforms) == sorted(configure_feedstock.NATIVE_CI_PROVIDER)
+    assert set(configure_feedstock.DEFAULT_PLATFORMS).issubset(all_platforms)
 
 
 def test_noarch_skips_appveyor(noarch_recipe, jinja_env):
@@ -57,14 +73,19 @@ def test_noarch_runs_on_circle(noarch_recipe, jinja_env):
 
 
 @pytest.mark.parametrize("recipe_dirname", ["recipe", "custom_recipe_dir"])
-def test_noarch_runs_on_azure(noarch_recipe, jinja_env):
-    configure_feedstock.render_azure(
+def test_noarch_runs_on_default(noarch_recipe, jinja_env):
+    """By default, noarch runs on the default provider for Linux x64"""
+    render_func = getattr(
+        configure_feedstock, f"render_{DEFAULT_PROVIDERS['linux_64']}"
+    )
+    render_func(
         jinja_env=jinja_env,
         forge_config=noarch_recipe.config,
         forge_dir=noarch_recipe.recipe,
     )
+
     # this configuration should be run
-    assert noarch_recipe.config["azure"]["enabled"]
+    assert noarch_recipe.config[DEFAULT_PROVIDERS["linux_64"]]["enabled"]
     matrix_dir = os.path.join(noarch_recipe.recipe, ".ci_support")
     assert os.path.isdir(matrix_dir)
     # single matrix entry - readme is generated later in main function
@@ -117,14 +138,17 @@ def test_r_matrix_on_circle(r_recipe, jinja_env):
     assert len(os.listdir(matrix_dir)) == 2
 
 
-def test_r_matrix_azure(r_recipe, jinja_env):
-    configure_feedstock.render_azure(
-        jinja_env=jinja_env,
-        forge_config=r_recipe.config,
-        forge_dir=r_recipe.recipe,
-    )
-    # this configuration should be run
-    assert r_recipe.config["azure"]["enabled"]
+def test_r_matrix_default(r_recipe, jinja_env):
+    default_providers = sorted({prov for _, prov in DEFAULT_PROVIDERS.items()})
+    for provider in default_providers:
+        render_func = getattr(configure_feedstock, f"render_{provider}")
+        render_func(
+            jinja_env=jinja_env,
+            forge_config=r_recipe.config,
+            forge_dir=r_recipe.recipe,
+        )
+        # this configuration should be run
+        assert r_recipe.config[provider]["enabled"]
     matrix_dir = os.path.join(r_recipe.recipe, ".ci_support")
     assert os.path.isdir(matrix_dir)
     # single matrix entry - readme is generated later in main function
@@ -194,13 +218,15 @@ def test_py_matrix_on_github(py_recipe, jinja_env):
     matrix_dir = os.path.join(py_recipe.recipe, ".ci_support")
     assert os.path.isdir(matrix_dir)
     # single matrix entry - readme is generated later in main function
-    assert len(os.listdir(matrix_dir)) == 2
+    assert len([fn for fn in os.listdir(matrix_dir) if fn.startswith("linux_64_")]) == 2
     assert os.path.exists(
         os.path.join(py_recipe.recipe, ".github", "workflows", "conda-build.yml")
     )
 
 
 def test_py_matrix_on_azure(py_recipe, jinja_env):
+    py_recipe.config["provider"]["linux"] = "azure"
+
     configure_feedstock.render_azure(
         jinja_env=jinja_env,
         forge_config=py_recipe.config,
@@ -211,10 +237,10 @@ def test_py_matrix_on_azure(py_recipe, jinja_env):
     matrix_dir = os.path.join(py_recipe.recipe, ".ci_support")
     assert os.path.isdir(matrix_dir)
     # single matrix entry - readme is generated later in main function
-    assert len(os.listdir(matrix_dir)) == 6
+    assert len([fn for fn in os.listdir(matrix_dir) if fn.startswith("linux_64_")]) == 2
 
 
-def test_stdlib_on_azure(stdlib_recipe, jinja_env, request):
+def test_stdlib_on_default(stdlib_recipe, jinja_env, request):
     conda_build_param = request.node.callspec.params["config_yaml"]
     if conda_build_param == "rattler-build":
         # stdlib is not yet implemented in rattler-build
@@ -223,13 +249,16 @@ def test_stdlib_on_azure(stdlib_recipe, jinja_env, request):
             "skipping test for rattler-build usecase as we currently we don't have stdlib"
         )
 
-    configure_feedstock.render_azure(
-        jinja_env=jinja_env,
-        forge_config=stdlib_recipe.config,
-        forge_dir=stdlib_recipe.recipe,
-    )
-    # this configuration should be run
-    assert stdlib_recipe.config["azure"]["enabled"]
+    default_providers = sorted({prov for _, prov in DEFAULT_PROVIDERS.items()})
+    for provider in default_providers:
+        render_func = getattr(configure_feedstock, f"render_{provider}")
+        render_func(
+            jinja_env=jinja_env,
+            forge_config=stdlib_recipe.config,
+            forge_dir=stdlib_recipe.recipe,
+        )
+        # this configuration should be run
+        assert stdlib_recipe.config[provider]["enabled"]
     matrix_dir = os.path.join(stdlib_recipe.recipe, ".ci_support")
     assert os.path.isdir(matrix_dir)
     # find stdlib-config in generated yaml files (plus version, on unix)
@@ -261,14 +290,17 @@ def test_stdlib_deployment_target(
         # stdlib_deployment_target_recipe fixture doesn't have a recipe.yaml variant
         pytest.skip("skipping test for rattler-build usecase")
 
-    with caplog.at_level(logging.WARNING):
-        configure_feedstock.render_azure(
-            jinja_env=jinja_env,
-            forge_config=stdlib_deployment_target_recipe.config,
-            forge_dir=stdlib_deployment_target_recipe.recipe,
-        )
-    # this configuration should be run
-    assert stdlib_deployment_target_recipe.config["azure"]["enabled"]
+    default_providers = sorted({prov for _, prov in DEFAULT_PROVIDERS.items()})
+    for provider in default_providers:
+        with caplog.at_level(logging.WARNING):
+            render_func = getattr(configure_feedstock, f"render_{provider}")
+            render_func(
+                jinja_env=jinja_env,
+                forge_config=stdlib_deployment_target_recipe.config,
+                forge_dir=stdlib_deployment_target_recipe.recipe,
+            )
+        # this configuration should be run
+        assert stdlib_deployment_target_recipe.config[provider]["enabled"]
     matrix_dir = os.path.join(stdlib_deployment_target_recipe.recipe, ".ci_support")
     assert os.path.isdir(matrix_dir)
     with open(os.path.join(matrix_dir, "osx_64_.yaml")) as f:
@@ -288,7 +320,8 @@ def test_mixed_python_min(mixed_python_min_recipe, jinja_env, caplog, request):
         # mixed_python_min_recipe fixture doesn't have a recipe.yaml variant
         pytest.skip("skipping test for rattler-build usecase")
     with caplog.at_level(logging.WARNING):
-        configure_feedstock.render_azure(
+        render_func = getattr(configure_feedstock, f"render_{DEFAULT_PROVIDER}")
+        render_func(
             jinja_env=jinja_env,
             forge_config=mixed_python_min_recipe.config,
             forge_dir=mixed_python_min_recipe.recipe,
@@ -304,7 +337,8 @@ def test_mixed_python_min(mixed_python_min_recipe, jinja_env, caplog, request):
 
 def test_no_python_min_if_not_present(py_recipe, jinja_env, caplog, request):
     with caplog.at_level(logging.WARNING):
-        configure_feedstock.render_azure(
+        render_func = getattr(configure_feedstock, f"render_{DEFAULT_PROVIDER}")
+        render_func(
             jinja_env=jinja_env,
             forge_config=py_recipe.config,
             forge_dir=py_recipe.recipe,
@@ -320,7 +354,8 @@ def test_no_python_min_if_not_present(py_recipe, jinja_env, caplog, request):
 
 def test_abi3_bools(py_abi3_recipe, jinja_env, caplog, request):
     with caplog.at_level(logging.WARNING):
-        configure_feedstock.render_azure(
+        render_func = getattr(configure_feedstock, f"render_{DEFAULT_PROVIDER}")
+        render_func(
             jinja_env=jinja_env,
             forge_config=py_abi3_recipe.config,
             forge_dir=py_abi3_recipe.recipe,
@@ -335,6 +370,10 @@ def test_abi3_bools(py_abi3_recipe, jinja_env, caplog, request):
 
 
 def test_upload_on_branch_azure(upload_on_branch_recipe, jinja_env):
+    upload_on_branch_recipe.config["provider"]["linux"] = "azure"
+    upload_on_branch_recipe.config["provider"]["osx"] = "azure"
+    upload_on_branch_recipe.config["provider"]["win"] = "azure"
+
     configure_feedstock.render_azure(
         jinja_env=jinja_env,
         forge_config=upload_on_branch_recipe.config,
@@ -395,6 +434,63 @@ def test_upload_on_branch_azure(upload_on_branch_recipe, jinja_env):
     assert "BUILD_SOURCEBRANCHNAME" in content_lin["jobs"][0]["steps"][1]["script"]
 
 
+def test_upload_on_branch_github_actions(upload_on_branch_recipe, jinja_env):
+    upload_on_branch_recipe.config["provider"]["linux"] = "github_actions"
+    upload_on_branch_recipe.config["provider"]["osx"] = "github_actions"
+    upload_on_branch_recipe.config["provider"]["win"] = "github_actions"
+
+    configure_feedstock.render_github_actions(
+        jinja_env=jinja_env,
+        forge_config=upload_on_branch_recipe.config,
+        forge_dir=upload_on_branch_recipe.recipe,
+    )
+    # Check that the parameter is in the configuration.
+    assert "upload_on_branch" in upload_on_branch_recipe.config
+    assert upload_on_branch_recipe.config["upload_on_branch"] == "foo-branch"
+    # Check that the parameter is in the generated file.
+    with open(
+        os.path.join(
+            upload_on_branch_recipe.recipe,
+            ".github",
+            "workflows",
+            "conda-build.yml",
+        )
+    ) as fp:
+        content = yaml.safe_load(fp)
+
+    linux_step = next(
+        step
+        for step in content["jobs"]["build"]["steps"]
+        if step["name"] == "Build on Linux"
+    )
+    assert linux_step["env"]["UPLOAD_ON_BRANCH"] == "foo-branch"
+    assert "$(basename $GITHUB_REF)" in linux_step["run"]
+
+    macos_step = next(
+        step
+        for step in content["jobs"]["build"]["steps"]
+        if step["name"] == "Build on macOS"
+    )
+    assert macos_step["env"]["UPLOAD_ON_BRANCH"] == "foo-branch"
+    assert "$(basename $GITHUB_REF)" in macos_step["run"]
+
+    win_build_step = next(
+        step
+        for step in content["jobs"]["build"]["steps"]
+        if step["name"] == "Build on windows"
+    )
+    assert win_build_step["env"]["UPLOAD_ON_BRANCH"] == "foo-branch"
+    with open(
+        os.path.join(
+            upload_on_branch_recipe.recipe,
+            ".scripts",
+            "run_win_build.bat",
+        )
+    ) as fp:
+        build_script_win = fp.read()
+    assert r"%GITHUB_REF:refs/heads/=%" in build_script_win
+
+
 def test_upload_on_branch_appveyor(upload_on_branch_recipe, jinja_env):
     upload_on_branch_recipe.config["provider"]["win"] = "appveyor"
     configure_feedstock.render_appveyor(
@@ -442,12 +538,27 @@ def test_circle_with_empty_yum_reqs_raises(py_recipe, jinja_env):
 
 
 def test_azure_with_empty_yum_reqs_raises(py_recipe, jinja_env):
+    py_recipe.config["provider"]["linux"] = "azure"
     with open(
         os.path.join(py_recipe.recipe, "recipe", "yum_requirements.txt"), "w"
     ) as f:
         f.write("# effectively empty")
     with pytest.raises(ValueError):
         configure_feedstock.render_azure(
+            jinja_env=jinja_env,
+            forge_config=py_recipe.config,
+            forge_dir=py_recipe.recipe,
+        )
+
+
+def test_github_actions_with_empty_yum_reqs_raises(py_recipe, jinja_env):
+    py_recipe.config["provider"]["linux"] = "github_actions"
+    with open(
+        os.path.join(py_recipe.recipe, "recipe", "yum_requirements.txt"), "w"
+    ) as f:
+        f.write("# effectively empty")
+    with pytest.raises(ValueError):
+        configure_feedstock.render_github_actions(
             jinja_env=jinja_env,
             forge_config=py_recipe.config,
             forge_dir=py_recipe.recipe,
@@ -579,6 +690,7 @@ def test_readme_has_terminating_newline(noarch_recipe, jinja_env):
 
 
 def test_secrets(py_recipe, jinja_env):
+    py_recipe.config["provider"]["linux"] = "azure"
     configure_feedstock.render_azure(
         jinja_env=jinja_env,
         forge_config=py_recipe.config,
@@ -604,6 +716,30 @@ def test_secrets(py_recipe, jinja_env):
                         for job in config["jobs"]
                     )
 
+    py_recipe.config["provider"]["osx"] = "github_actions"
+    configure_feedstock.render_github_actions(
+        jinja_env=jinja_env,
+        forge_config=py_recipe.config,
+        forge_dir=py_recipe.recipe,
+    )
+
+    run_docker_build = os.path.join(py_recipe.recipe, ".scripts", "run_docker_build.sh")
+    with open(run_docker_build, "rb") as run_docker_build_file:
+        content = run_docker_build_file.read()
+    assert b"-e BINSTAR_TOKEN" in content
+
+    config_yaml = os.path.join(
+        py_recipe.recipe, ".github", "workflows", "conda-build.yml"
+    )
+    with open(config_yaml) as fo:
+        config = yaml.safe_load(fo)
+        print(config)
+        if "steps" in config:
+            any(
+                step.get("env", {}).get("BINSTAR_TOKEN", None) == "$(BINSTAR_TOKEN)"
+                for step in config["steps"]
+            )
+
     py_recipe.config["provider"]["linux_aarch64"] = "drone"
     configure_feedstock.render_drone(
         jinja_env=jinja_env,
@@ -623,7 +759,9 @@ def test_secrets(py_recipe, jinja_env):
 
 
 def test_migrator_recipe(recipe_migration_cfep9, jinja_env):
-    configure_feedstock.render_azure(
+    render_func = getattr(configure_feedstock, f"render_{DEFAULT_PROVIDER}")
+
+    render_func(
         jinja_env=jinja_env,
         forge_config=recipe_migration_cfep9.config,
         forge_dir=recipe_migration_cfep9.recipe,
@@ -641,23 +779,21 @@ def test_migrator_recipe(recipe_migration_cfep9, jinja_env):
 
 
 def test_migrator_cfp_override(recipe_migration_cfep9, jinja_env):
+    render_func = getattr(configure_feedstock, f"render_{DEFAULT_PROVIDER}")
+
     cfp_file = recipe_migration_cfep9.config["exclusive_config_file"]
     cfp_migration_dir = os.path.join(
         os.path.dirname(cfp_file), "share", "conda-forge", "migrations"
     )
     os.makedirs(cfp_migration_dir, exist_ok=True)
 
-    with open(os.path.join(cfp_migration_dir, "zlib2.yaml"), "w") as f:
-        f.write(
-            textwrap.dedent(
-                """
+    with open(os.path.join(cfp_migration_dir, "zlib.yaml"), "w") as f:
+        f.write(textwrap.dedent("""
                 migrator_ts: 1
                 zlib:
                    - 1001
-                """
-            )
-        )
-    configure_feedstock.render_azure(
+                """))
+    render_func(
         jinja_env=jinja_env,
         forge_config=recipe_migration_cfep9.config,
         forge_dir=recipe_migration_cfep9.recipe,
@@ -675,6 +811,8 @@ def test_migrator_cfp_override(recipe_migration_cfep9, jinja_env):
 
 
 def test_migrator_delete_old(recipe_migration_cfep9, jinja_env):
+    render_func = getattr(configure_feedstock, f"render_{DEFAULT_PROVIDER}")
+
     cfp_file = recipe_migration_cfep9.config["exclusive_config_file"]
     cfp_migration_dir = os.path.join(
         os.path.dirname(cfp_file), "share", "conda-forge", "migrations"
@@ -688,7 +826,7 @@ def test_migrator_delete_old(recipe_migration_cfep9, jinja_env):
         )
     )
     os.makedirs(cfp_migration_dir, exist_ok=True)
-    configure_feedstock.render_azure(
+    render_func(
         jinja_env=jinja_env,
         forge_config=recipe_migration_cfep9.config,
         forge_dir=recipe_migration_cfep9.recipe,
@@ -707,7 +845,8 @@ def test_migrator_downgrade_recipe(recipe_migration_cfep9_downgrade, jinja_env):
     """
     Assert that even when we have two migrations targeting the same file the correct one wins.
     """
-    configure_feedstock.render_azure(
+    render_func = getattr(configure_feedstock, f"render_{DEFAULT_PROVIDER}")
+    render_func(
         jinja_env=jinja_env,
         forge_config=recipe_migration_cfep9_downgrade.config,
         forge_dir=recipe_migration_cfep9_downgrade.recipe,
@@ -740,7 +879,8 @@ def test_migrator_compiler_version_recipe(recipe_migration_win_compiled, jinja_e
     """
     Assert that even when we have two migrations targeting the same file the correct one wins.
     """
-    configure_feedstock.render_azure(
+    render_func = getattr(configure_feedstock, f"render_{DEFAULT_PROVIDERS['win_64']}")
+    render_func(
         jinja_env=jinja_env,
         forge_config=recipe_migration_win_compiled.config,
         forge_dir=recipe_migration_win_compiled.recipe,
@@ -786,7 +926,8 @@ def test_files_skip_render(render_skipped_recipe, jinja_env):
         assert not os.path.exists(fpath)
 
 
-def test_choco_install(choco_recipe, jinja_env):
+def test_choco_install_azure(choco_recipe, jinja_env):
+    choco_recipe.config["provider"]["win"] = "azure"
     configure_feedstock.render_azure(
         jinja_env=jinja_env,
         forge_config=choco_recipe.config,
@@ -806,6 +947,33 @@ def test_choco_install(choco_recipe, jinja_env):
     - script: |
         choco install pkg1 --version=X.Y.Z -fdv -y --debug
       displayName: "Install Chocolatey Package: pkg1 --version=X.Y.Z"
+""".strip()
+    assert exp in contents
+
+
+def test_choco_install_github_actions(choco_recipe, jinja_env):
+    choco_recipe.config["provider"]["win"] = "github_actions"
+    configure_feedstock.render_github_actions(
+        jinja_env=jinja_env,
+        forge_config=choco_recipe.config,
+        forge_dir=choco_recipe.recipe,
+    )
+    gha_file = os.path.join(
+        os.path.join(choco_recipe.recipe, ".github", "workflows", "conda-build.yml")
+    )
+    assert os.path.isfile(gha_file)
+    with open(gha_file) as f:
+        contents = f.read()
+    exp = """
+    - name: "Install Chocolatey Package: pkg0"
+      if matrix.os == 'windows'
+      run: |
+        choco install pkg0 -fdv -y --debug
+
+    - name: "Install Chocolatey Package: pkg1 --version=X.Y.Z"
+      if matrix.os == 'windows'
+      run: |
+        choco install pkg1 --version=X.Y.Z -fdv -y --debug
 """.strip()
     assert exp in contents
 
@@ -878,15 +1046,17 @@ def test_cos7_env_render(py_recipe, jinja_env):
 
     try:
         assert "DEFAULT_LINUX_VERSION" not in os.environ
-        configure_feedstock.render_azure(
-            jinja_env=jinja_env,
-            forge_config=forge_config,
-            forge_dir=py_recipe.recipe,
-        )
+        default_providers = sorted({prov for _, prov in DEFAULT_PROVIDERS.items()})
+        for provider in default_providers:
+            render_func = getattr(configure_feedstock, f"render_{provider}")
+            render_func(
+                jinja_env=jinja_env,
+                forge_config=forge_config,
+                forge_dir=py_recipe.recipe,
+            )
+            # this configuration should be run
+            assert forge_config[provider]["enabled"]
         assert os.environ["DEFAULT_LINUX_VERSION"] == "cos7"
-
-        # this configuration should be run
-        assert forge_config["azure"]["enabled"]
         matrix_dir = os.path.join(py_recipe.recipe, ".ci_support")
         assert os.path.isdir(matrix_dir)
         # single matrix entry - readme is generated later in main function
@@ -909,15 +1079,18 @@ def test_cuda_enabled_render(cuda_enabled_recipe, jinja_env):
 
     try:
         assert "CF_CUDA_ENABLED" not in os.environ
-        configure_feedstock.render_azure(
-            jinja_env=jinja_env,
-            forge_config=forge_config,
-            forge_dir=cuda_enabled_recipe.recipe,
-        )
-        assert os.environ["CF_CUDA_ENABLED"] == "True"
+        default_providers = sorted({prov for _, prov in DEFAULT_PROVIDERS.items()})
+        for provider in default_providers:
+            render_func = getattr(configure_feedstock, f"render_{provider}")
+            render_func(
+                jinja_env=jinja_env,
+                forge_config=forge_config,
+                forge_dir=cuda_enabled_recipe.recipe,
+            )
+            assert os.environ["CF_CUDA_ENABLED"] == "True"
 
-        # this configuration should be run
-        assert forge_config["azure"]["enabled"]
+            # this configuration should be run
+            assert forge_config[provider]["enabled"]
         matrix_dir = os.path.join(cuda_enabled_recipe.recipe, ".ci_support")
         assert os.path.isdir(matrix_dir)
         # single matrix entry - readme is generated later in main function
@@ -952,15 +1125,24 @@ def test_conda_build_tools(config_yaml: ConfigYAML, caplog):
     if config_yaml.type == "conda-build":
         with open(os.path.join(config_yaml.workdir, "conda-forge.yml"), "a+") as fp:
             fp.write("build_with_mambabuild: true")
-        with pytest.deprecated_call(match="build_with_mambabuild is deprecated"):
+        with caplog.at_level(logging.WARNING):
             assert load_forge_config()["conda_build_tool"] == "mambabuild"
+            assert any(
+                "build_with_mambabuild is deprecated" in record.message
+                for record in caplog.records
+            )
 
         with open(os.path.join(config_yaml.workdir, "conda-forge.yml"), "w") as fp:
             fp.write(unmodified)
             fp.write("build_with_mambabuild: false")
 
-        with pytest.deprecated_call(match="build_with_mambabuild is deprecated"):
+        caplog.clear()
+        with caplog.at_level(logging.WARNING):
             assert load_forge_config()["conda_build_tool"] == "conda-build"
+            assert any(
+                "build_with_mambabuild is deprecated" in record.message
+                for record in caplog.records
+            )
 
     with open(os.path.join(config_yaml.workdir, "conda-forge.yml"), "w") as fp:
         fp.write(unmodified)
@@ -2070,3 +2252,1186 @@ def test_read_forge_config_default_values_aliases():
         assert isinstance(config["azure"]["settings_linux"]["timeoutInMinutes"], int)
         assert isinstance(config["azure"]["settings_osx"]["timeoutInMinutes"], int)
         assert isinstance(config["azure"]["settings_win"]["timeoutInMinutes"], int)
+
+
+@pytest.mark.parametrize("shellcheck", [True, False])
+@pytest.mark.parametrize("conda_install_tool", ["pixi", None])
+def test_render_pixi(
+    stdlib_recipe,
+    jinja_env,
+    shellcheck,
+    conda_install_tool,
+    platform_without_shellcheck,
+):
+    config, recipe = stdlib_recipe.config, Path(stdlib_recipe.recipe)
+    config["feedstock_name"] = "a-feedstock-with-pixi"
+    pixi_toml = recipe / "pixi.toml"
+    pixi_toml.touch()
+    config["shellcheck"]["enabled"] = shellcheck
+    config["provider"].update(
+        {
+            platform_without_shellcheck.replace("-", "_"): "default",
+            "win": "default",
+        }
+    )
+    if conda_install_tool:
+        config["conda_install_tool"] = conda_install_tool
+
+    configure_feedstock.render_pixi(
+        jinja_env=jinja_env,
+        forge_config=config,
+        forge_dir=recipe,
+    )
+
+    if not conda_install_tool:
+        assert not pixi_toml.exists(), "pixi.toml should have been deleted"
+        return
+
+    pixi_text = pixi_toml.read_text(encoding="utf-8")
+
+    pixi = tomllib.loads(pixi_text)
+
+    if not shellcheck:
+        assert (
+            "shellcheck" not in pixi_text
+        ), "pixi.toml should not mention `shellcheck`"
+    else:
+        platforms = pixi["workspace"]["platforms"]
+        assert (
+            platform_without_shellcheck in platforms
+        ), f"expected {platform_without_shellcheck} in pixi workspace platforms"
+        assert (
+            "win-64" in platforms
+        ), "expected an aliased platform in pixi workspace platforms"
+        shellcheck_platforms = pixi["feature"]["shellcheck"]["platforms"]
+        smithy_env = pixi["environments"]["smithy"]
+        assert shellcheck_platforms, "`shellcheck` should be enabled on _some_ platform"
+        assert (
+            platform_without_shellcheck not in shellcheck_platforms
+        ), f"`shellcheck` should not be enabled for {platform_without_shellcheck}"
+
+        assert "shellcheck" in smithy_env, "`smithy` env should have `shellcheck`"
+
+
+def test_configure_feedstock_rattler_build_conda_compat_round_trip():
+    def _dumps(cfg):
+        val = io.StringIO()
+        yaml.dump(cfg, val, default_flow_style=False)
+        return val.getvalue()
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        fname = os.path.join(tmpdir, "variants.yaml")
+        with open(fname, "w") as fp:
+            fp.write(textwrap.dedent("""
+                varkey:
+                - "val1"
+                - 'val2'
+                - val
+                """))
+
+        cfg = parse_recipe_config_file(fname, {})
+        assert "ruamel.yaml" in _dumps(cfg)
+
+        cfg = ensure_standard_strings(cfg)
+        assert "ruamel.yaml" not in _dumps(cfg)
+
+
+def test_github_actions_populated(linux_skipped_recipe, jinja_env):
+    forge_dir = linux_skipped_recipe.recipe
+    config = copy.deepcopy(linux_skipped_recipe.config)
+    conda_build_yml = Path(forge_dir, ".github/workflows/conda-build.yml")
+
+    config["provider"]["linux"] = "azure"
+    config["provider"]["osx"] = "azure"
+    config["provider"]["win"] = "azure"
+
+    configure_feedstock.copy_feedstock_content(config, forge_dir)
+    assert conda_build_yml.is_file()
+    assert "name: Disabled build" in conda_build_yml.read_text()
+
+    configure_feedstock.render_azure(
+        jinja_env=jinja_env,
+        forge_config=config,
+        forge_dir=forge_dir,
+    )
+    configure_feedstock.render_github_actions(
+        jinja_env=jinja_env,
+        forge_config=config,
+        forge_dir=forge_dir,
+    )
+
+    assert conda_build_yml.is_file()
+    assert "name: Disabled build" in conda_build_yml.read_text()
+
+    config["provider"]["osx"] = "github_actions"
+
+    configure_feedstock.copy_feedstock_content(config, forge_dir)
+    configure_feedstock.render_azure(
+        jinja_env=jinja_env,
+        forge_config=config,
+        forge_dir=forge_dir,
+    )
+    configure_feedstock.render_github_actions(
+        jinja_env=jinja_env,
+        forge_config=config,
+        forge_dir=forge_dir,
+    )
+    assert conda_build_yml.is_file()
+    assert "name: Disabled build" not in conda_build_yml.read_text()
+    assert "name: Checkout code" in conda_build_yml.read_text()
+
+
+@pytest.mark.parametrize(
+    "label",
+    [None, "default", "hosted", "cirun-linux", "self-hosted@another-linux-runner"],
+)
+def test_github_actions_labels(py_recipe, jinja_env, label):
+    forge_dir = py_recipe.recipe
+    config = copy.deepcopy(py_recipe.config)
+    conda_build_yml = Path(forge_dir, ".github/workflows/conda-build.yml")
+    print(conda_build_yml)
+
+    config["provider"]["linux_64"] = "github_actions"
+    config["provider"]["osx"] = "azure"
+    config["provider"]["win"] = "azure"
+    if label:
+        with open(config["exclusive_config_file"], "a") as f:
+            f.write(f"\ngithub_actions_labels:\n  - {label}  # [linux64]\n")
+
+    configure_feedstock.render_github_actions(
+        jinja_env=jinja_env,
+        forge_config=config,
+        forge_dir=forge_dir,
+    )
+
+    with conda_build_yml.open() as f:
+        workflow = yaml.safe_load(f)
+    matrix = workflow["jobs"]["build"]["strategy"]["matrix"]["include"]
+
+    assert all(entry["os"] == "ubuntu" for entry in matrix)
+    if label in (None, "default", "hosted"):
+        assert all(
+            entry["runs_on"]
+            == list(
+                configure_feedstock.GITHUB_ACTIONS_RUNS_ON["linux-64"]["hosted_labels"]
+            )
+            for entry in matrix
+        )
+    elif label == "cirun-linux":
+        # cirun gets expanded with --{ stuff } for debugging purposes
+        assert all(entry["runs_on"][0].startswith("cirun-linux--") for entry in matrix)
+    elif label == "self-hosted@another-linux-runner":
+        # self-hosted@ gets "expanded" with generic self-hosted labels (e.g. Linux, x64)
+        assert all(
+            sorted(entry["runs_on"])
+            == sorted(
+                [
+                    "another-linux-runner",
+                    *configure_feedstock.GITHUB_ACTIONS_RUNS_ON["linux-64"][
+                        "self_hosted_labels"
+                    ],
+                    "self-hosted",
+                ]
+            )
+            for entry in matrix
+        )
+    else:
+        raise AssertionError("Bad label? Check test parameters.")
+
+
+@pytest.mark.parametrize("path", ["github_actions", "workflow_settings"])
+@pytest.mark.parametrize("value", [False, True])
+@pytest.mark.parametrize("add_old", [False, True])
+def test_store_build_artifacts_gha(
+    py_recipe, jinja_env, caplog, path: str, value: bool, add_old: bool
+):
+    if add_old and path == "github_actions":
+        pytest.skip("not a meaningful combination")
+    forge_dir = py_recipe.recipe
+    forge_yml = Path(forge_dir, "conda-forge.yml")
+
+    with open(forge_yml, "a") as f:
+        f.write(textwrap.dedent(f"""\
+            provider:
+              linux_64: github_actions
+              osx_64: github_actions
+              win_64: github_actions
+            {path}:
+              store_build_artifacts: {value}
+        """))
+        if add_old:
+            f.write(textwrap.dedent(f"""\
+                github_actions:
+                  store_build_artifacts: {not value}
+            """))
+
+    with caplog.at_level(logging.WARNING):
+        config = configure_feedstock._load_forge_config(
+            forge_dir, "recipe/default_config.yaml"
+        )
+        if add_old:
+            assert any(
+                "`github_actions.store_build_artifacts` is ignored" in record.message
+                for record in caplog.records
+            )
+    configure_feedstock.render_github_actions(
+        jinja_env=jinja_env,
+        forge_config=config,
+        forge_dir=forge_dir,
+    )
+
+    conda_build_yml = Path(forge_dir, ".github/workflows/conda-build.yml")
+    with conda_build_yml.open() as f:
+        workflow = yaml.safe_load(f)
+
+    matrix = workflow["jobs"]["build"]["strategy"]["matrix"]["include"]
+    assert all(entry["STORE_BUILD_ARTIFACTS"] is value for entry in matrix)
+    if value:
+        assert all(entry.get("SHORT_CONFIG") for entry in matrix)
+
+    # check that artifacts steps are output / not output
+    steps = workflow["jobs"]["build"]["steps"]
+    step_names = set(step["name"] for step in steps)
+    wf_step_names = {
+        "Store conda build environment artifacts",
+        "Store conda build artifacts",
+        "Prepare conda build artifacts",
+        "Determine build outcome",
+    }
+    if value:
+        assert step_names.issuperset(wf_step_names)
+    else:
+        assert not step_names.intersection(wf_step_names)
+
+    assert (
+        Path(forge_dir, ".scripts/create_conda_build_artifacts.bat").exists() is value
+    )
+    assert Path(forge_dir, ".scripts/create_conda_build_artifacts.sh").exists() is value
+
+
+@pytest.mark.parametrize("path", ["azure", "workflow_settings"])
+@pytest.mark.parametrize("value", [False, True])
+@pytest.mark.parametrize("add_old", [False, True])
+def test_store_build_artifacts_azure(
+    py_recipe, jinja_env, caplog, path: str, value: bool, add_old: bool
+):
+    if add_old and path == "azure":
+        pytest.skip("not a meaningful combination")
+    forge_dir = py_recipe.recipe
+    forge_yml = Path(forge_dir, "conda-forge.yml")
+
+    with open(forge_yml, "a") as f:
+        f.write(textwrap.dedent(f"""\
+            provider:
+              linux_64: azure
+              osx_64: azure
+              win_64: azure
+            {path}:
+              store_build_artifacts: {value}
+        """))
+        if add_old:
+            f.write(textwrap.dedent(f"""\
+                azure:
+                  store_build_artifacts: {not value}
+            """))
+
+    with caplog.at_level(logging.WARNING):
+        config = configure_feedstock._load_forge_config(
+            forge_dir, "recipe/default_config.yaml"
+        )
+        if add_old:
+            assert any(
+                "`azure.store_build_artifacts` is ignored" in record.message
+                for record in caplog.records
+            )
+
+    configure_feedstock.render_azure(
+        jinja_env=jinja_env,
+        forge_config=config,
+        forge_dir=forge_dir,
+    )
+
+    for os_name in ("linux", "osx", "win"):
+        workflow_yml = Path(
+            forge_dir, ".azure-pipelines", f"azure-pipelines-{os_name}.yml"
+        )
+        with workflow_yml.open() as f:
+            workflow = yaml.safe_load(f)
+
+        matrix = workflow["jobs"][0]["strategy"]["matrix"]
+        assert all(entry["store_build_artifacts"] is value for entry in matrix.values())
+        if value:
+            assert all(entry.get("SHORT_CONFIG") for entry in matrix.values())
+
+        # check that artifacts steps are output / not output
+        steps = workflow["jobs"][0]["steps"]
+        step_names = set(step["displayName"] for step in steps)
+        wf_step_names = {
+            "Store conda build environment artifacts",
+            "Store conda build artifacts",
+            "Prepare conda build artifacts",
+        }
+        if value:
+            assert step_names.issuperset(wf_step_names)
+        else:
+            assert not step_names.intersection(wf_step_names)
+
+    assert (
+        Path(forge_dir, ".scripts/create_conda_build_artifacts.bat").exists() is value
+    )
+    assert Path(forge_dir, ".scripts/create_conda_build_artifacts.sh").exists() is value
+
+
+def test_store_build_artifacts_gha_conditions(py_recipe, jinja_env):
+    forge_dir = py_recipe.recipe
+    forge_yml = Path(forge_dir, "conda-forge.yml")
+
+    with open(forge_yml, "a") as f:
+        f.write(textwrap.dedent("""\
+            provider:
+              linux_64: github_actions
+              linux_aarch64: github_actions
+              osx_64: github_actions
+              osx_arm64: github_actions
+              win_64: github_actions
+            workflow_settings:
+              store_build_artifacts:
+                - platform: linux_64
+                  value: true
+                - os: osx
+                  value: true
+        """))
+
+    config = configure_feedstock._load_forge_config(
+        forge_dir, "recipe/default_config.yaml"
+    )
+    configure_feedstock.render_github_actions(
+        jinja_env=jinja_env,
+        forge_config=config,
+        forge_dir=forge_dir,
+    )
+
+    conda_build_yml = Path(forge_dir, ".github/workflows/conda-build.yml")
+    with conda_build_yml.open() as f:
+        workflow = yaml.safe_load(f)
+
+    matrix = workflow["jobs"]["build"]["strategy"]["matrix"]["include"]
+    assert all(
+        entry["STORE_BUILD_ARTIFACTS"]
+        == entry["CONFIG"].startswith(("linux_64", "osx"))
+        for entry in matrix
+    )
+
+    # check that artifacts steps are output / not output
+    steps = workflow["jobs"]["build"]["steps"]
+    step_names = set(step["name"] for step in steps)
+    wf_step_names = {
+        "Store conda build environment artifacts",
+        "Store conda build artifacts",
+        "Prepare conda build artifacts",
+        "Determine build outcome",
+    }
+    assert step_names.issuperset(wf_step_names)
+
+    assert not Path(forge_dir, ".scripts/create_conda_build_artifacts.bat").exists()
+    assert Path(forge_dir, ".scripts/create_conda_build_artifacts.sh").exists()
+
+
+def test_store_build_artifacts_azure_conditions(py_recipe, jinja_env):
+    forge_dir = py_recipe.recipe
+    forge_yml = Path(forge_dir, "conda-forge.yml")
+
+    with open(forge_yml, "a") as f:
+        f.write(textwrap.dedent("""\
+            provider:
+              linux_64: azure
+              linux_aarch64: azure
+              osx_64: azure
+              osx_arm64: azure
+              win_64: azure
+            workflow_settings:
+              store_build_artifacts:
+                - platform: linux_64
+                  value: true
+                - os: osx
+                  value: true
+        """))
+
+    config = configure_feedstock._load_forge_config(
+        forge_dir, "recipe/default_config.yaml"
+    )
+    configure_feedstock.render_azure(
+        jinja_env=jinja_env,
+        forge_config=config,
+        forge_dir=forge_dir,
+    )
+
+    for os_name in ("linux", "osx", "win"):
+        workflow_yml = Path(
+            forge_dir, ".azure-pipelines", f"azure-pipelines-{os_name}.yml"
+        )
+        with workflow_yml.open() as f:
+            workflow = yaml.safe_load(f)
+
+        matrix = workflow["jobs"][0]["strategy"]["matrix"]
+        assert all(
+            entry["store_build_artifacts"]
+            is (True if entry["CONFIG"].startswith(("linux_64", "osx")) else None)
+            for entry in matrix.values()
+        )
+
+        # check that artifacts steps are output / not output
+        steps = workflow["jobs"][0]["steps"]
+        step_names = set(step["displayName"] for step in steps)
+        wf_step_names = {
+            "Store conda build environment artifacts",
+            "Store conda build artifacts",
+            "Prepare conda build artifacts",
+        }
+        if os_name != "win":
+            assert step_names.issuperset(wf_step_names)
+        else:
+            assert not step_names.intersection(wf_step_names)
+
+    assert not Path(forge_dir, ".scripts/create_conda_build_artifacts.bat").exists()
+    assert Path(forge_dir, ".scripts/create_conda_build_artifacts.sh").exists()
+
+
+@pytest.mark.parametrize("ci", ["azure", "github_actions"])
+def test_store_build_artifacts_overlapping_conditions(py_recipe, jinja_env, ci: str):
+    forge_dir = py_recipe.recipe
+    forge_yml = Path(forge_dir, "conda-forge.yml")
+
+    with open(forge_yml, "a") as f:
+        f.write(textwrap.dedent(f"""\
+            provider:
+              linux_64: {ci}
+              osx_64: {ci}
+              win_64: {ci}
+            workflow_settings:
+              store_build_artifacts:
+                - platform: linux_64
+                  value: true
+                - os: linux
+                  value: true
+        """))
+
+    config = configure_feedstock._load_forge_config(
+        forge_dir, "recipe/default_config.yaml"
+    )
+    with pytest.raises(
+        ValueError,
+        match=r"More than one value matched for `workflow_settings.store_build_artifacts`",
+    ):
+        if ci == "azure":
+            configure_feedstock.render_azure(
+                jinja_env=jinja_env,
+                forge_config=config,
+                forge_dir=forge_dir,
+            )
+        else:
+            configure_feedstock.render_github_actions(
+                jinja_env=jinja_env,
+                forge_config=config,
+                forge_dir=forge_dir,
+            )
+
+
+def test_store_build_artifacts_gha_and_azure_conditions(py_recipe, jinja_env):
+    forge_dir = py_recipe.recipe
+    forge_yml = Path(forge_dir, "conda-forge.yml")
+
+    with open(forge_yml, "a") as f:
+        f.write(textwrap.dedent("""\
+            provider:
+              linux_64: github_actions
+              linux_aarch64: azure
+              osx_64: azure
+              osx_arm64: github_actions
+              win_64: azure
+            workflow_settings:
+              store_build_artifacts:
+                - os: osx
+                  provider: azure
+                  value: true
+                - os: linux
+                  provider: github_actions
+                  value: true
+        """))
+
+    config = configure_feedstock._load_forge_config(
+        forge_dir, "recipe/default_config.yaml"
+    )
+    configure_feedstock.render_azure(
+        jinja_env=jinja_env,
+        forge_config=config,
+        forge_dir=forge_dir,
+    )
+    configure_feedstock.render_github_actions(
+        jinja_env=jinja_env,
+        forge_config=config,
+        forge_dir=forge_dir,
+    )
+
+    # check github_actions workflows
+    conda_build_yml = Path(forge_dir, ".github/workflows/conda-build.yml")
+    with conda_build_yml.open() as f:
+        workflow = yaml.safe_load(f)
+
+    matrix = workflow["jobs"]["build"]["strategy"]["matrix"]["include"]
+    assert all(
+        entry["STORE_BUILD_ARTIFACTS"] == entry["CONFIG"].startswith("linux_64")
+        for entry in matrix
+    )
+
+    # check that artifacts steps are output / not output
+    steps = workflow["jobs"]["build"]["steps"]
+    step_names = set(step["name"] for step in steps)
+    wf_step_names = {
+        "Store conda build environment artifacts",
+        "Store conda build artifacts",
+        "Prepare conda build artifacts",
+        "Determine build outcome",
+    }
+    assert step_names.issuperset(wf_step_names)
+
+    # check azure workflows
+    for os_name in ("linux", "osx", "win"):
+        workflow_yml = Path(
+            forge_dir, ".azure-pipelines", f"azure-pipelines-{os_name}.yml"
+        )
+        with workflow_yml.open() as f:
+            workflow = yaml.safe_load(f)
+
+        matrix = workflow["jobs"][0]["strategy"]["matrix"]
+        assert all(
+            entry["store_build_artifacts"]
+            is (True if entry["CONFIG"].startswith("osx") else None)
+            for entry in matrix.values()
+        )
+
+        # check that artifacts steps are output / not output
+        steps = workflow["jobs"][0]["steps"]
+        step_names = set(step["displayName"] for step in steps)
+        wf_step_names = {
+            "Store conda build environment artifacts",
+            "Store conda build artifacts",
+            "Prepare conda build artifacts",
+        }
+        if os_name == "osx":
+            assert step_names.issuperset(wf_step_names)
+        else:
+            assert not step_names.intersection(wf_step_names)
+
+    assert not Path(forge_dir, ".scripts/create_conda_build_artifacts.bat").exists()
+    assert Path(forge_dir, ".scripts/create_conda_build_artifacts.sh").exists()
+
+
+@pytest.mark.parametrize(
+    "label",
+    [
+        None,
+        "default",
+        "hosted",
+        "blacksmith-8vcpu-windows-2025",
+        "windows-2022",
+        "windows-2025",
+        "namespace-profile-16cpu-on-win-64",
+    ],
+)
+def test_tools_build_paths_gha(py_recipe, jinja_env, label: str):
+    forge_dir = py_recipe.recipe
+    forge_yml = Path(forge_dir, "conda-forge.yml")
+
+    with open(forge_yml, "a") as f:
+        f.write(textwrap.dedent("""\
+            provider:
+              linux_64: github_actions
+              osx_64: github_actions
+              win_arm64: github_actions
+              win_64: github_actions
+        """))
+    if label:
+        with open(py_recipe.config["exclusive_config_file"], "a") as f:
+            f.write(f"\ngithub_actions_labels:\n  - {label}  # [win64]\n")
+
+    config = configure_feedstock._load_forge_config(
+        forge_dir, "recipe/default_config.yaml"
+    )
+    configure_feedstock.render_github_actions(
+        jinja_env=jinja_env,
+        forge_config=config,
+        forge_dir=forge_dir,
+    )
+
+    conda_build_yml = Path(forge_dir, ".github/workflows/conda-build.yml")
+    with conda_build_yml.open() as f:
+        workflow = yaml.safe_load(f)
+
+    expected = {
+        "macos-15-intel": ("~/miniforge3", "~/miniforge3/conda-bld"),
+        "ubuntu-latest": ("~/miniforge3", "build_artifacts"),
+        "windows-11-arm": (r"C:\Miniforge", r"C:\\bld\\"),
+    }
+    expected_label = "windows-2022" if label in (None, "default", "hosted") else label
+    if expected_label.startswith("blacksmith"):
+        expected[expected_label] = (r"C:\Miniforge", r"C:\\bld\\")
+    else:
+        expected[expected_label] = (r"D:\Miniforge", r"D:\\bld\\")
+
+    matrix = workflow["jobs"]["build"]["strategy"]["matrix"]["include"]
+    assert {
+        " ".join(entry["runs_on"]): (
+            entry["tools_install_dir"],
+            entry["build_workspace_dir"],
+        )
+        for entry in matrix
+    } == expected
+
+
+def test_tools_build_paths_azure(py_recipe, jinja_env):
+    forge_dir = py_recipe.recipe
+    forge_yml = Path(forge_dir, "conda-forge.yml")
+
+    with open(forge_yml, "a") as f:
+        f.write(textwrap.dedent("""\
+            provider:
+              linux_64: azure
+              osx_64: azure
+              win_arm64: azure
+              win_64: azure
+        """))
+
+    config = configure_feedstock._load_forge_config(
+        forge_dir, "recipe/default_config.yaml"
+    )
+    configure_feedstock.render_azure(
+        jinja_env=jinja_env,
+        forge_config=config,
+        forge_dir=forge_dir,
+    )
+
+    expected = {
+        "linux": {
+            "linux_64": ("~/miniforge3", "build_artifacts"),
+        },
+        "osx": {
+            "osx_64": ("~/miniforge3", "~/miniforge3/conda-bld"),
+        },
+        "win": {
+            "win_64": (r"D:\Miniforge", r"D:\\bld\\"),
+            "win_arm64": (r"C:\Miniforge", r"C:\\bld\\"),
+        },
+    }
+
+    for os_name, expected_values in expected.items():
+        workflow_yml = Path(
+            forge_dir, ".azure-pipelines", f"azure-pipelines-{os_name}.yml"
+        )
+        with workflow_yml.open() as f:
+            workflow = yaml.safe_load(f)
+
+        matrix = workflow["jobs"][0]["strategy"]["matrix"]
+        assert {
+            "_".join(entry["CONFIG"].split("_", 2)[:2]): (
+                entry["tools_install_dir"],
+                entry["build_workspace_dir"],
+            )
+            for entry in matrix.values()
+        } == expected_values
+
+
+def test_tools_build_paths_azure_old_vars(py_recipe, jinja_env):
+    forge_dir = py_recipe.recipe
+    forge_yml = Path(forge_dir, "conda-forge.yml")
+
+    with open(forge_yml, "a") as f:
+        f.write(textwrap.dedent("""\
+            azure:
+              settings_win:
+                variables:
+                  MINIFORGE_HOME: C:\\foo
+                  CONDA_BLD_PATH: D:\\foo
+            provider:
+              win_arm64: azure
+              win_64: azure
+        """))
+
+    config = configure_feedstock._load_forge_config(
+        forge_dir, "recipe/default_config.yaml"
+    )
+    configure_feedstock.render_azure(
+        jinja_env=jinja_env,
+        forge_config=config,
+        forge_dir=forge_dir,
+    )
+
+    expected = {
+        "win": {
+            "win_64": (r"C:\foo", r"D:\foo"),
+            "win_arm64": (r"C:\foo", r"D:\foo"),
+        },
+    }
+
+    for os_name, expected_values in expected.items():
+        workflow_yml = Path(
+            forge_dir, ".azure-pipelines", f"azure-pipelines-{os_name}.yml"
+        )
+        with workflow_yml.open() as f:
+            workflow = yaml.safe_load(f)
+
+        matrix = workflow["jobs"][0]["strategy"]["matrix"]
+        assert {
+            "_".join(entry["CONFIG"].split("_", 2)[:2]): (
+                entry["tools_install_dir"],
+                entry["build_workspace_dir"],
+            )
+            for entry in matrix.values()
+        } == expected_values
+
+        assert "MINIFORGE_HOME" not in workflow["jobs"][0]["variables"]
+        assert "CONDA_BLD_PATH" not in workflow["jobs"][0]["variables"]
+
+
+def test_tools_build_paths_azure_old_and_new_vars(py_recipe, jinja_env, caplog):
+    forge_dir = py_recipe.recipe
+    forge_yml = Path(forge_dir, "conda-forge.yml")
+
+    with open(forge_yml, "a") as f:
+        f.write(textwrap.dedent("""\
+            azure:
+              settings_win:
+                variables:
+                  MINIFORGE_HOME: C:\\foo
+                  CONDA_BLD_PATH: D:\\foo
+            provider:
+              win_arm64: azure
+              win_64: azure
+            workflow_settings:
+              tools_install_dir:
+                - os: win
+                  value: C:\\bar
+              build_workspace_dir:
+                - os: win
+                  value: D:\\bar
+        """))
+
+    with caplog.at_level(logging.WARNING):
+        config = configure_feedstock._load_forge_config(
+            forge_dir, "recipe/default_config.yaml"
+        )
+        configure_feedstock.render_azure(
+            jinja_env=jinja_env,
+            forge_config=config,
+            forge_dir=forge_dir,
+        )
+
+        assert any(
+            "`azure.settings_win.variables.MINIFORGE_HOME`" in record.message
+            for record in caplog.records
+        )
+        assert any(
+            "`azure.settings_win.variables.CONDA_BLD_PATH`" in record.message
+            for record in caplog.records
+        )
+
+    expected = {
+        "win": {
+            "win_64": (r"C:\bar", r"D:\bar"),
+            "win_arm64": (r"C:\bar", r"D:\bar"),
+        },
+    }
+
+    for os_name, expected_values in expected.items():
+        workflow_yml = Path(
+            forge_dir, ".azure-pipelines", f"azure-pipelines-{os_name}.yml"
+        )
+        with workflow_yml.open() as f:
+            workflow = yaml.safe_load(f)
+
+        matrix = workflow["jobs"][0]["strategy"]["matrix"]
+        assert {
+            "_".join(entry["CONFIG"].split("_", 2)[:2]): (
+                entry["tools_install_dir"],
+                entry["build_workspace_dir"],
+            )
+            for entry in matrix.values()
+        } == expected_values
+
+        assert "MINIFORGE_HOME" not in workflow["jobs"][0]["variables"]
+        assert "CONDA_BLD_PATH" not in workflow["jobs"][0]["variables"]
+
+
+def test_tools_build_paths_gha_override_tools_dir(py_recipe, jinja_env):
+    forge_dir = py_recipe.recipe
+    forge_yml = Path(forge_dir, "conda-forge.yml")
+
+    with open(forge_yml, "a") as f:
+        f.write(textwrap.dedent("""\
+            provider:
+              linux_64: github_actions
+              osx_64: github_actions
+              win_arm64: github_actions
+              win_64: github_actions
+            workflow_settings:
+              tools_install_dir:
+                - os: [linux, osx]
+                  value: ~/foo
+                - os: [win]
+                  value: C:\\foo
+        """))
+
+    config = configure_feedstock._load_forge_config(
+        forge_dir, "recipe/default_config.yaml"
+    )
+    configure_feedstock.render_github_actions(
+        jinja_env=jinja_env,
+        forge_config=config,
+        forge_dir=forge_dir,
+    )
+
+    conda_build_yml = Path(forge_dir, ".github/workflows/conda-build.yml")
+    with conda_build_yml.open() as f:
+        workflow = yaml.safe_load(f)
+
+    expected = {
+        "macos-15-intel": ("~/foo", "~/foo/conda-bld"),
+        "ubuntu-latest": ("~/foo", "build_artifacts"),
+        "windows-11-arm": (r"C:\foo", r"C:\\bld\\"),
+        "windows-2022": (r"C:\foo", r"C:\\bld\\"),
+    }
+
+    matrix = workflow["jobs"]["build"]["strategy"]["matrix"]["include"]
+    assert {
+        " ".join(entry["runs_on"]): (
+            entry["tools_install_dir"],
+            entry["build_workspace_dir"],
+        )
+        for entry in matrix
+    } == expected
+
+
+def test_tools_build_paths_gha_override_both(py_recipe, jinja_env):
+    forge_dir = py_recipe.recipe
+    forge_yml = Path(forge_dir, "conda-forge.yml")
+
+    with open(forge_yml, "a") as f:
+        f.write(textwrap.dedent("""\
+            provider:
+              linux_64: github_actions
+              osx_64: github_actions
+              win_arm64: github_actions
+              win_64: github_actions
+            workflow_settings:
+              tools_install_dir:
+                - os: [linux, osx]
+                  value: ~/foo
+                - os: [win]
+                  value: C:\\foo
+              build_workspace_dir:
+                - os: [linux, osx]
+                  value: ~/bar
+                - os: [win]
+                  value: D:\\bar
+        """))
+
+    config = configure_feedstock._load_forge_config(
+        forge_dir, "recipe/default_config.yaml"
+    )
+    configure_feedstock.render_github_actions(
+        jinja_env=jinja_env,
+        forge_config=config,
+        forge_dir=forge_dir,
+    )
+
+    conda_build_yml = Path(forge_dir, ".github/workflows/conda-build.yml")
+    with conda_build_yml.open() as f:
+        workflow = yaml.safe_load(f)
+
+    expected = {
+        "macos-15-intel": ("~/foo", "~/bar"),
+        "ubuntu-latest": ("~/foo", "~/bar"),
+        "windows-11-arm": (r"C:\foo", r"D:\bar"),
+        "windows-2022": (r"C:\foo", r"D:\bar"),
+    }
+
+    matrix = workflow["jobs"]["build"]["strategy"]["matrix"]["include"]
+    assert {
+        " ".join(entry["runs_on"]): (
+            entry["tools_install_dir"],
+            entry["build_workspace_dir"],
+        )
+        for entry in matrix
+    } == expected
+
+
+@pytest.mark.parametrize(
+    "path,expected",
+    [
+        (
+            "~/foo",
+            r"specifies Unix path for Windows workflows: ~\\foo",
+        ),
+        (
+            "foo",
+            r"specifies Unix path for Windows workflows: foo",
+        ),
+        (
+            r"C:\foo",
+            r"specifies Windows path for Unix workflows: C:\foo",
+        ),
+        (
+            r"C:\\foo",
+            r"specifies Windows path for Unix workflows: C:\\foo",
+        ),
+    ],
+)
+@pytest.mark.parametrize("variable", ("tools_install_dir", "build_workspace_dir"))
+def test_tools_build_paths_gha_override_wrong(
+    py_recipe, jinja_env, path: str, expected: str, variable: str
+):
+    forge_dir = py_recipe.recipe
+    forge_yml = Path(forge_dir, "conda-forge.yml")
+
+    with open(forge_yml, "a") as f:
+        f.write(textwrap.dedent(f"""\
+            provider:
+              linux_64: github_actions
+              osx_64: github_actions
+              win_arm64: github_actions
+              win_64: github_actions
+            workflow_settings:
+              {variable}: "{path}"
+        """))
+
+    config = configure_feedstock._load_forge_config(
+        forge_dir, "recipe/default_config.yaml"
+    )
+    with pytest.raises(ValueError, match=rf"workflow_settings\.{variable} {expected}"):
+        configure_feedstock.render_github_actions(
+            jinja_env=jinja_env,
+            forge_config=config,
+            forge_dir=forge_dir,
+        )
+
+
+@pytest.mark.parametrize("gpu", (False, True))
+@pytest.mark.parametrize("run_args", (None, "--cap-add SYS_ADMIN"))
+def test_docker_run_args_gha(py_recipe, jinja_env, gpu: bool, run_args: str | None):
+    forge_dir = py_recipe.recipe
+    forge_yml = Path(forge_dir, "conda-forge.yml")
+
+    with open(forge_yml, "a") as f:
+        f.write(textwrap.dedent("""\
+            provider:
+              linux_64: github_actions
+              osx_64: github_actions
+              win_64: github_actions
+        """))
+        if run_args is not None:
+            f.write(textwrap.dedent(f"""\
+                docker:
+                  run_args: {run_args}
+            """))
+    if gpu:
+        with open(py_recipe.config["exclusive_config_file"], "a") as f:
+            f.write("\ngithub_actions_labels:\n  - gpu\n")
+
+    config = configure_feedstock._load_forge_config(
+        forge_dir, "recipe/default_config.yaml"
+    )
+    configure_feedstock.render_github_actions(
+        jinja_env=jinja_env,
+        forge_config=config,
+        forge_dir=forge_dir,
+    )
+
+    conda_build_yml = Path(forge_dir, ".github/workflows/conda-build.yml")
+    with conda_build_yml.open() as f:
+        workflow = yaml.safe_load(f)
+
+    matrix = workflow["jobs"]["build"]["strategy"]["matrix"]["include"]
+    assert {entry["os"]: entry["docker_run_args"] for entry in matrix} == {
+        "macos": None,
+        "windows": None,
+        "ubuntu": (
+            f"{run_args} --gpus all"
+            if run_args and gpu
+            else "--gpus all" if gpu else run_args
+        ),
+    }
+
+
+@pytest.mark.parametrize("old", (False, True))
+@pytest.mark.parametrize("new", (False, True))
+def test_docker_run_args_azure(
+    py_recipe,
+    jinja_env,
+    caplog,
+    old: bool,
+    new: bool,
+):
+    forge_dir = py_recipe.recipe
+    forge_yml = Path(forge_dir, "conda-forge.yml")
+
+    with open(forge_yml, "a") as f:
+        f.write(textwrap.dedent("""\
+            provider:
+              linux_64: azure
+              osx_64: azure
+              win_64: azure
+        """))
+        if old:
+            f.write(textwrap.dedent(f"""\
+                azure:
+                  settings_linux:
+                    variables:
+                      CONDA_FORGE_DOCKER_RUN_ARGS: {'--ignored' if new else '--cap-add SYS_ADMIN'}
+            """))
+        if new:
+            f.write(textwrap.dedent("""\
+                docker:
+                  run_args: --cap-add SYS_ADMIN
+            """))
+
+    with caplog.at_level(logging.WARNING):
+        config = configure_feedstock._load_forge_config(
+            forge_dir, "recipe/default_config.yaml"
+        )
+        if old and new:
+            assert any(
+                "`azure.settings_linux.variables.CONDA_FORGE_DOCKER_RUN_ARGS` is ignored"
+                in record.message
+                for record in caplog.records
+            )
+
+    configure_feedstock.render_azure(
+        jinja_env=jinja_env,
+        forge_config=config,
+        forge_dir=forge_dir,
+    )
+
+    for os_name in ("linux", "osx", "win"):
+        workflow_yml = Path(
+            forge_dir, ".azure-pipelines", f"azure-pipelines-{os_name}.yml"
+        )
+        with workflow_yml.open() as f:
+            workflow = yaml.safe_load(f)
+
+        matrix = workflow["jobs"][0]["strategy"]["matrix"]
+        assert {entry.get("docker_run_args") for entry in matrix.values()} == {
+            None if os_name != "linux" else "--cap-add SYS_ADMIN" if old or new else ""
+        }
+
+
+@pytest.mark.parametrize("path", ["none", "azure", "workflow_settings", "both"])
+@pytest.mark.parametrize("value", [0, 16])
+def test_pagefile_size_azure(py_recipe, jinja_env, caplog, path: str, value: int):
+    if path == "none" and value != 0:
+        pytest.skip("meaningless combination")
+    forge_dir = py_recipe.recipe
+    forge_yml = Path(forge_dir, "conda-forge.yml")
+
+    with open(forge_yml, "a") as f:
+        f.write(textwrap.dedent("""\
+            provider:
+              linux_64: azure
+              osx_64: azure
+              win_64: azure
+        """))
+        if path in ("azure", "both"):
+            f.write(textwrap.dedent(f"""\
+                azure:
+                  settings_linux:
+                    swapfile_size: {value}GiB
+                  settings_win:
+                    variables:
+                      SET_PAGEFILE: {'True' if value else ''}
+            """))
+        if path in ("workflow_settings", "both"):
+            f.write(textwrap.dedent(f"""\
+                workflow_settings:
+                  pagefile_size: {value}
+            """))
+
+    with caplog.at_level(logging.WARNING):
+        config = configure_feedstock._load_forge_config(
+            forge_dir, "recipe/default_config.yaml"
+        )
+        if path == "both":
+            assert any(
+                "`azure.settings_linux.swapfile_size` is ignored" in record.message
+                for record in caplog.records
+            )
+            assert any(
+                "`azure.settings_win.variables.SET_PAGEFILE` is ignored"
+                in record.message
+                for record in caplog.records
+            )
+
+    configure_feedstock.render_azure(
+        jinja_env=jinja_env,
+        forge_config=config,
+        forge_dir=forge_dir,
+    )
+
+    expected = value != 0
+    for os_name in ("linux", "win"):
+        workflow_yml = Path(
+            forge_dir, ".azure-pipelines", f"azure-pipelines-{os_name}.yml"
+        )
+        with workflow_yml.open() as f:
+            workflow = yaml.safe_load(f)
+
+        matrix = workflow["jobs"][0]["strategy"]["matrix"]
+        assert all(entry["pagefile_size"] == value for entry in matrix.values())
+
+        # check that artifacts steps are output / not output
+        steps = workflow["jobs"][0]["steps"]
+        step_names = set(step["displayName"] for step in steps)
+        assert ("Create page file" in step_names) is expected
+
+    assert Path(forge_dir, ".scripts/create_pagefile.bat").exists() is expected
+    assert Path(forge_dir, ".scripts/SetPageFileSize.ps1").exists() is expected
+    assert Path(forge_dir, ".scripts/create_pagefile.sh").exists() is expected
+
+
+@pytest.mark.parametrize("value", [None, 0, 16])
+def test_pagefile_size_gha(py_recipe, jinja_env, caplog, value: int | None):
+    forge_dir = py_recipe.recipe
+    forge_yml = Path(forge_dir, "conda-forge.yml")
+
+    with open(forge_yml, "a") as f:
+        f.write(textwrap.dedent("""\
+            provider:
+              linux_64: github_actions
+              osx_64: github_actions
+              win_64: github_actions
+        """))
+        if value is not None:
+            f.write(textwrap.dedent(f"""\
+                workflow_settings:
+                  pagefile_size: {value}
+            """))
+
+    config = configure_feedstock._load_forge_config(
+        forge_dir, "recipe/default_config.yaml"
+    )
+    configure_feedstock.render_github_actions(
+        jinja_env=jinja_env,
+        forge_config=config,
+        forge_dir=forge_dir,
+    )
+
+    conda_build_yml = Path(forge_dir, ".github/workflows/conda-build.yml")
+    with conda_build_yml.open() as f:
+        workflow = yaml.safe_load(f)
+
+    matrix = workflow["jobs"]["build"]["strategy"]["matrix"]["include"]
+    assert all(entry["pagefile_size"] == (value or 0) for entry in matrix)
+
+    # check that artifacts steps are output / not output
+    expected = (value or 0) != 0
+    assert Path(forge_dir, ".scripts/create_pagefile.bat").exists() is expected
+    assert Path(forge_dir, ".scripts/SetPageFileSize.ps1").exists() is expected
+    assert Path(forge_dir, ".scripts/create_pagefile.sh").exists() is expected

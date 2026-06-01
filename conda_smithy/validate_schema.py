@@ -17,28 +17,24 @@ CONDA_FORGE_YAML_SCHEMA_FILE = (
 )
 
 
-# this is actually not an error, therefore the naming is okay
-class DeprecatedFieldWarning(ValidationError):  # noqa: N818
-    pass
+class DeprecatedValidator:
+    def __init__(self):
+        self.hints = []
+
+    def __call__(self, validator, value, instance, schema):
+        if value and instance is not None:
+            self.hints.append(
+                f"'{schema['title']}' is deprecated.\n{schema['description']}"
+            )
 
 
-def deprecated_validator(validator, value, instance, schema):
-    if value and instance is not None:
-        yield DeprecatedFieldWarning(
-            f"'{schema['title']}' is deprecated.\n{schema['description']}"
-        )
-
-
-def get_validator_class():
+def get_validator_class(deprecated_validator):
     all_validators = dict(Draft202012Validator.VALIDATORS)
     all_validators["deprecated"] = deprecated_validator
 
     return validators.create(
         meta_schema=Draft202012Validator.META_SCHEMA, validators=all_validators
     )
-
-
-_VALIDATOR_CLASS = get_validator_class()
 
 
 def validate_json_schema(
@@ -68,14 +64,8 @@ def validate_json_schema(
             "CONDA_SMITHY_BOT_SCHEMA_URI"
         ]
 
-    validator = _VALIDATOR_CLASS(
+    deprecated_validator = DeprecatedValidator()
+    validator = get_validator_class(deprecated_validator)(
         _json_schema, registry=Registry(retrieve=_get_json_schema)
     )
-    lints = []
-    hints = []
-    for error in validator.iter_errors(config):
-        if isinstance(error, DeprecatedFieldWarning):
-            hints.append(error)
-        else:
-            lints.append(error)
-    return lints, hints
+    return list(validator.iter_errors(config)), deprecated_validator.hints

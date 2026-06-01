@@ -18,11 +18,11 @@ jobs:
     name: tests
     runs-on: "ubuntu-latest"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
       - name: Set up Conda env
-        uses: mamba-org/setup-micromamba@b09ef9b599704322748535812ca03efb2625677b
+        uses: mamba-org/setup-micromamba@d7c9bd84e824b79d2af72a2d4196c7f4300d3476
         with:
           environment-file: environment.yml
           micromamba-version: 1.5.12-0
@@ -31,8 +31,6 @@ jobs:
             python=3.11
             coverage
             coveralls
-            conda-recipe-manager>=0.4.1
-            conda-souschef
             conda-forge-tick
 
       - name: install conda-smithy
@@ -65,6 +63,17 @@ jobs:
 
           python -m pip install -v --no-build-isolation -e .
 
+      - name: test data and templates files in sdist
+        run: |
+          set -ex
+          rm -rf dist/*
+          python -m build --sdist --outdir dist/ .
+          mkdir sdist-content/
+          tar -xzf dist/*.tar.gz -C sdist-content/
+          test -f sdist-content/conda_smithy-*/conda_smithy/data/conda-forge.yml
+          test -f sdist-content/conda_smithy-*/conda_smithy/templates/github-actions.yml.tmpl
+          rm -r sdist-content/
+
       - name: run tests
         run: |
           pytest tests --cov conda_smithy --cov-report lcov --cov-report term-missing
@@ -72,7 +81,11 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: coveralls
-        uses: coverallsapp/github-action@master
+        uses: coverallsapp/github-action@main
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           path-to-lcov: ./coverage.lcov
+          # TODO: revert as soon as feasible; coveralls has an extended outage
+          #       and is recommending this work-around for the time being, see
+          #       https://status.coveralls.io/incidents/pdbt7vdzlvpj
+          fail-on-error: false

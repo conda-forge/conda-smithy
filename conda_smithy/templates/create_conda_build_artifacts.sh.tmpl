@@ -7,7 +7,7 @@
 # FEEDSTOCK_NAME
 # CONFIG (build matrix configuration string)
 # SHORT_CONFIG (uniquely-shortened configuration string)
-# CONDA_BLD_DIR (path to the conda-bld directory)
+# CONDA_BLD_PATH (path to the conda-bld directory)
 # ARTIFACT_STAGING_DIR (use working directory if unset)
 # BLD_ARTIFACT_PREFIX (prefix for the conda build artifact name, skip if unset)
 # ENV_ARTIFACT_PREFIX (prefix for the conda build environments artifact name, skip if unset)
@@ -26,7 +26,7 @@ source .scripts/logging_utils.sh
 set -e
 
 # Check that the conda-build directory exists
-if [ ! -d "$CONDA_BLD_DIR" ]; then
+if [ ! -d "$CONDA_BLD_PATH" ]; then
     echo "conda-build directory does not exist"
     exit 1
 fi
@@ -64,8 +64,8 @@ if [[ ! -z "$BLD_ARTIFACT_PREFIX" ]]; then
     ( startgroup "Archive conda build directory" ) 2> /dev/null
 
     # Try 7z and fall back to zip if it fails (for cross-platform use)
-    if ! 7z a "$BLD_ARTIFACT_PATH" "$CONDA_BLD_DIR" '-xr!.git/' '-xr!_*_env*/' '-xr!*_cache/' -bb; then
-        pushd "$CONDA_BLD_DIR"
+    if ! 7z a "$BLD_ARTIFACT_PATH" "$CONDA_BLD_PATH" '-xr!.git/' '-xr!_*_env*/' '-xr!*_cache/' -bb; then
+        pushd "$CONDA_BLD_PATH"
         zip -r -y -T "$BLD_ARTIFACT_PATH" . -x '*.git/*' '*_*_env*/*' '*_cache/*'
         popd
     fi
@@ -92,8 +92,8 @@ if [[ ! -z "$ENV_ARTIFACT_PREFIX" ]]; then
     ( startgroup "Archive conda build environments" ) 2> /dev/null
 
     # Try 7z and fall back to zip if it fails (for cross-platform use)
-    if ! 7z a "$ENV_ARTIFACT_PATH" -r "$CONDA_BLD_DIR"/'_*_env*/' -bb; then
-        pushd "$CONDA_BLD_DIR"
+    if ! 7z a "$ENV_ARTIFACT_PATH" -r "$CONDA_BLD_PATH"/'_*_env*/' -bb; then
+        pushd "$CONDA_BLD_PATH"
         zip -r -y -T "$ENV_ARTIFACT_PATH" . -i '*_*_env*/*'
         popd
     fi

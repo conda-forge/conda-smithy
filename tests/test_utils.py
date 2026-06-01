@@ -3,7 +3,9 @@ from rattler_build_conda_compat.render import MetaData as RatlerBuildMetadata
 
 from conda_smithy.utils import (
     RATTLER_BUILD,
+    ConditionalValue,
     _get_metadata_from_feedstock_dir,
+    filter_conditional_values,
     get_feedstock_name_from_meta,
 )
 
@@ -78,3 +80,87 @@ def test_get_feedstock_name_from_rattler_metadata_multiple_outputs(
     feedstock_name = get_feedstock_name_from_meta(metadata)
 
     assert feedstock_name == "mamba-split"
+
+
+def test_filter_conditional_values() -> None:
+    # direct values
+    assert filter_conditional_values(None) == []
+    assert filter_conditional_values(True) == [ConditionalValue(True)]
+    assert filter_conditional_values("foo") == [ConditionalValue("foo")]
+
+    # no filtering
+    assert filter_conditional_values([]) == []
+    assert filter_conditional_values([{"value": True}]) == [ConditionalValue(True)]
+    assert filter_conditional_values([{"os": "linux", "value": True}]) == [
+        ConditionalValue(True, os=["linux"])
+    ]
+    assert filter_conditional_values([{"os": ["linux", "win"], "value": True}]) == [
+        ConditionalValue(True, os=["linux", "win"])
+    ]
+
+    common_example_in = [
+        {
+            "os": ["linux", "win"],
+            "provider": "azure",
+            "platform": ["linux_64", "win_64"],
+            "value": True,
+        }
+    ]
+    common_example_out = [
+        ConditionalValue(
+            True,
+            os=["linux", "win"],
+            platform=["linux_64", "win_64"],
+            provider=["azure"],
+        )
+    ]
+
+    assert filter_conditional_values(common_example_in) == common_example_out
+
+    # filtering
+    assert (
+        filter_conditional_values(common_example_in, provider="azure")
+        == common_example_out
+    )
+    assert filter_conditional_values(common_example_in, provider="github_actions") == []
+    assert (
+        filter_conditional_values(common_example_in, os="linux") == common_example_out
+    )
+    assert filter_conditional_values(common_example_in, os="win") == common_example_out
+    assert filter_conditional_values(common_example_in, os="osx") == []
+    assert (
+        filter_conditional_values(
+            common_example_in, os="linux", platform="linux_64", provider="azure"
+        )
+        == common_example_out
+    )
+
+    result = filter_conditional_values(
+        [
+            # these two should be preserved, since they do not specify os
+            {
+                "provider": "azure",
+                "platform": ["linux_64", "win_64"],
+                "value": True,
+            },
+            {
+                "provider": "github_actions",
+                "value": True,
+            },
+            # this one gets filtered over os!="linux"
+            {
+                "os": "win",
+                "value": True,
+            },
+        ],
+        os="linux",
+    )
+    expected = [
+        ConditionalValue(
+            True,
+            platform=["linux_64", "win_64"],
+            provider=["azure"],
+        ),
+        ConditionalValue(True, provider=["github_actions"]),
+    ]
+    assert result == expected

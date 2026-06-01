@@ -2,11 +2,10 @@
 # update the conda-forge.yml and/or the recipe/meta.yaml.
 # -*- mode: yaml -*-
 
-{%- set platformset = [] %}
+{%- set vars = namespace(store_build_artifacts=False) %}
 {%- for data in configs %}
-  {%- set pfarchless = data.build_platform.split('-')[0] %}
-  {%- if pfarchless not in platformset %}
-    {%- do platformset.append(pfarchless) %}
+  {%- if data.store_build_artifacts %}
+    {%- set vars.store_build_artifacts = True %}
   {%- endif %}
 {%- endfor %}
 
@@ -42,7 +41,8 @@ jobs:
         include:
         {%- for data in configs %}
           - CONFIG: {{ data.config_name }}
-        {%- if github_actions.store_build_artifacts %}
+            STORE_BUILD_ARTIFACTS: {{ data.store_build_artifacts is true }}
+        {%- if data.store_build_artifacts %}
             SHORT_CONFIG: {{ data.short_config_name }}
         {%- endif %}
             UPLOAD_PACKAGES: {{ data.upload }}
@@ -50,10 +50,11 @@ jobs:
             runs_on: {{ data.gha_runs_on }}
         {%- if data.build_platform.startswith("linux") %}
             DOCKER_IMAGE: {{ data.config["docker_image"][-1] }}
-          {%- if data.gha_with_gpu %}
-            CONDA_FORGE_DOCKER_RUN_ARGS: "--gpus all"
-          {%- endif %}
         {%- endif %}
+            tools_install_dir: {{ data.tools_install_dir }}
+            build_workspace_dir: {{ data.build_workspace_dir }}
+            docker_run_args: {{ data.docker_run_args }}
+            pagefile_size: {{ data.pagefile_size }}
         {%- endfor %}
     steps:
 {%- if github_actions.free_disk_space %}
@@ -77,9 +78,10 @@ jobs:
         done
 {%- endif %}
 {%- if (github_actions.free_disk_space == true) or ('apt' in github_actions.free_disk_space) %}
-        sudo apt-get purge -y -f firefox \
-                                 google-chrome-stable \
-                                 microsoft-edge-stable
+        BROWSERS="firefox google-chrome-stable microsoft-edge-stable"
+        BROWSERS_TO_REMOVE=$(dpkg --get-selections $BROWSERS 2>/dev/null | awk '{print $1}')
+        sudo apt-get remove --purge -y $BROWSERS_TO_REMOVE
+
         sudo apt-get autoremove -y >& /dev/null
         sudo apt-get autoclean -y >& /dev/null
 {%- endif %}
@@ -90,7 +92,7 @@ jobs:
 {%- endif %}
 
     - name: Checkout code
-      uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 {%- if clone_depth is not none %}
       with:
         fetch-depth: {{ clone_depth }}
@@ -100,6 +102,8 @@ jobs:
       id: build-linux
       if: matrix.os == 'ubuntu'
       env:
+        MINIFORGE_HOME: {% raw %}${{ matrix.tools_install_dir }}{% endraw %}
+        CONDA_BLD_PATH: {% raw %}${{ matrix.build_workspace_dir }}{% endraw %}
         CONFIG: {% raw %}${{ matrix.CONFIG }}{% endraw %}
         UPLOAD_PACKAGES: {% raw %}${{ matrix.UPLOAD_PACKAGES }}{% endraw %}
         DOCKER_IMAGE: {% raw %}${{ matrix.DOCKER_IMAGE }}{% endraw %}
@@ -107,11 +111,8 @@ jobs:
 {%- if upload_on_branch %}
         UPLOAD_ON_BRANCH: {{ upload_on_branch }}
 {%- endif %}
-{%- if docker.run_args is defined %}
-        CONDA_FORGE_DOCKER_RUN_ARGS: "{{ docker.run_args }} {% raw %}${{ matrix.CONDA_FORGE_DOCKER_RUN_ARGS }}{% endraw %}"
-{%- else %}
-        CONDA_FORGE_DOCKER_RUN_ARGS: "{% raw %}${{ matrix.CONDA_FORGE_DOCKER_RUN_ARGS }}{% endraw %}"
-{%- endif %}
+        CONDA_FORGE_DOCKER_RUN_ARGS: "{% raw %}${{ matrix.docker_run_args }}{% endraw %}"
+        PAGEFILE_SIZE: {% raw %}${{ matrix.pagefile_size }}{% endraw %}
 {%- for secret in secrets %}
         {{ secret }}: {% raw %}${{{% endraw %} secrets.{{ secret }} {% raw %}}}{% endraw %}
 {%- endfor %}
@@ -131,13 +132,22 @@ jobs:
         else
           export IS_PR_BUILD="False"
         fi
+        export MINIFORGE_HOME="${MINIFORGE_HOME/#~/${HOME}}"
+        export CONDA_BLD_PATH="${CONDA_BLD_PATH/#~/${HOME}}"
         echo "::endgroup::"
+        if [[ ${PAGEFILE_SIZE} -gt 0 ]]; then
+            echo "::group::Setting up swap file"
+            .scripts/create_pagefile.sh "${PAGEFILE_SIZE}"
+            echo "::endgroup::"
+        fi
         ./.scripts/run_docker_build.sh
 
     - name: Build on macOS
       id: build-macos
       if: matrix.os == 'macos'
       env:
+        MINIFORGE_HOME: {% raw %}${{ matrix.tools_install_dir }}{% endraw %}
+        CONDA_BLD_PATH: {% raw %}${{ matrix.build_workspace_dir }}{% endraw %}
         CONFIG: {% raw %}${{ matrix.CONFIG }}{% endraw %}
         UPLOAD_PACKAGES: {% raw %}${{ matrix.UPLOAD_PACKAGES }}{% endraw %}
         CI: github_actions
@@ -159,6 +169,8 @@ jobs:
         else
           export IS_PR_BUILD="False"
         fi
+        export MINIFORGE_HOME="${MINIFORGE_HOME/#~/${HOME}}"
+        export CONDA_BLD_PATH="${CONDA_BLD_PATH/#~/${HOME}}"
         ./.scripts/run_osx_build.sh
 
 {%- for choco_pkg in choco %}
@@ -167,6 +179,33 @@ jobs:
       run: |
         choco install {{ choco_pkg }} -fdv -y --debug
 {% endfor %}
+{%- if github_actions.resize_win_partitions %}
+
+    # https://github.com/aktech/cirun-azure-resize-disk
+    - name: Resize all partitions to maximum
+      if: matrix.os == 'windows'
+      shell: pwsh
+      run: |
+        Write-Output "=== RESIZING PARTITIONS ==="
+        $disks = Get-Disk | Where-Object PartitionStyle -ne 'RAW'
+
+        foreach ($disk in $disks) {
+            $partitions = Get-Partition -DiskNumber $disk.Number
+            foreach ($partition in $partitions) {
+                try {
+                    $size = Get-PartitionSupportedSize -DiskNumber $disk.Number -PartitionNumber $partition.PartitionNumber
+                    if ($partition.Size -lt $size.SizeMax) {
+                        Write-Output "Resizing Disk $($disk.Number) Partition $($partition.PartitionNumber) from $($partition.Size) to $($size.SizeMax)"
+                        Resize-Partition -DiskNumber $disk.Number -PartitionNumber $partition.PartitionNumber -Size $size.SizeMax -Verbose
+                    } else {
+                        Write-Output "Disk $($disk.Number) Partition $($partition.PartitionNumber) already at max size ($($partition.Size))"
+                    }
+                } catch {
+                    Write-Warning "Failed resizing Disk $($disk.Number) Partition $($partition.PartitionNumber): $_"
+                }
+            }
+        }
+{%- endif %}
 
     - name: Build on windows
       id: build-windows
@@ -176,12 +215,11 @@ jobs:
         set "flow_run_id=github_%GITHUB_RUN_ID%"
         set "remote_url=https://github.com/%GITHUB_REPOSITORY%"
         set "sha=%GITHUB_SHA%"
+        call ".scripts\create_pagefile.bat" %PAGEFILE_SIZE%
         call ".scripts\run_win_build.bat"
       env:
-        # default value; make it explicit, as it needs to match with artefact
-        # generation below. Not configurable for now, can be revisited later
-        CONDA_BLD_DIR: C:\bld
-        MINIFORGE_HOME: D:\Miniforge
+        MINIFORGE_HOME: {% raw %}${{ matrix.tools_install_dir }}{% endraw %}
+        CONDA_BLD_PATH: {% raw %}${{ matrix.build_workspace_dir }}{% endraw %}
         PYTHONUNBUFFERED: 1
         CONFIG: {% raw %}${{ matrix.CONFIG }}{% endraw %}
         CI: github_actions
@@ -189,10 +227,11 @@ jobs:
 {%- if upload_on_branch %}
         UPLOAD_ON_BRANCH: {{ upload_on_branch }}
 {%- endif %}
+        PAGEFILE_SIZE: {% raw %}${{ matrix.pagefile_size }}{% endraw %}
 {%- for secret in secrets %}
         {{ secret }}: {% raw %}${{{% endraw %} secrets.{{ secret }} {% raw %}}}{% endraw %}
 {%- endfor %}
-{%- if github_actions.store_build_artifacts %}
+{%- if vars.store_build_artifacts %}
 
     - name: Determine build outcome
       # this is to merge the status of the linux/osx/win builds into
@@ -221,27 +260,22 @@ jobs:
       id: prepare-artifacts
       shell: bash
       # we do not want to trigger artefact creation if the build was cancelled
-      if: {% raw %}${{ always() && steps.determine-status.outputs.status != 'cancelled' }}{% endraw %}
+      if: {% raw %}${{ always() && steps.determine-status.outputs.status != 'cancelled' && matrix.STORE_BUILD_ARTIFACTS }}{% endraw %}
       env:
+        CONDA_BLD_PATH: {% raw %}${{ matrix.build_workspace_dir }}{% endraw %}
         CI: github_actions
         CONFIG: {% raw %}${{ matrix.CONFIG }}{% endraw %}
         SHORT_CONFIG: {% raw %}${{ matrix.SHORT_CONFIG }}{% endraw %}
         JOB_STATUS: {% raw %}${{ steps.determine-status.outputs.status }}{% endraw %}
         OS: {% raw %}${{ matrix.os }}{% endraw %}
       run: |
+        export MINIFORGE_HOME="${MINIFORGE_HOME/#~/${HOME}}"
+        export CONDA_BLD_PATH="${CONDA_BLD_PATH/#~/${HOME}}"
         export CI_RUN_ID=$GITHUB_RUN_ID
         export FEEDSTOCK_NAME="$(basename $GITHUB_REPOSITORY)"
         export ARTIFACT_STAGING_DIR="$GITHUB_WORKSPACE"
-        if [ $OS == "macos" ]; then
-          export CONDA_BLD_DIR="${MINIFORGE_HOME:-${HOME}/miniforge3}/conda-bld"
-        elif [ $OS == "windows" ]; then
-          # this needs to be consistent with build step, see above
-          export CONDA_BLD_DIR="C:\\bld"
-        else
-          export CONDA_BLD_DIR="build_artifacts"
-        fi
-        # Archive everything in CONDA_BLD_DIR except environments
-        # Archive the CONDA_BLD_DIR environments only when the job fails
+        # Archive everything in CONDA_BLD_PATH except environments
+        # Archive the CONDA_BLD_PATH environments only when the job fails
         # Use different prefix for successful and failed build artifacts
         # so random failures don't prevent rebuilds from creating artifacts.
         if [ $JOB_STATUS == "failure" ]; then
@@ -257,7 +291,7 @@ jobs:
         fi
 
     - name: Store conda build artifacts
-      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
       if: {% raw %}${{ always() && steps.prepare-artifacts.outcome == 'success' }}{% endraw %}
       with:
         name: {% raw %}${{ steps.prepare-artifacts.outputs.BLD_ARTIFACT_NAME }}{% endraw %}
@@ -266,7 +300,7 @@ jobs:
       continue-on-error: true
 
     - name: Store conda build environment artifacts
-      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
       # only relevant if build failed, see above
       if: {% raw %}${{ always() && steps.determine-status.outputs.status == 'failure' && steps.prepare-artifacts.outcome == 'success' }}{% endraw %}
       with:

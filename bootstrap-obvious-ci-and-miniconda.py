@@ -6,6 +6,7 @@ This script supports Python  3 (>=3.2+) and is
 designed to run on OSX, Linux and Windows.
 
 """
+
 import argparse
 import os
 import platform

@@ -1,3 +1,4 @@
+import asyncio
 import copy
 import glob
 import hashlib
@@ -9,10 +10,11 @@ import subprocess
 import sys
 import textwrap
 import time
-import warnings
 from collections import Counter, OrderedDict, namedtuple
+from contextlib import contextmanager
 from copy import deepcopy
-from functools import lru_cache
+from functools import cache, lru_cache
+from importlib.metadata import version as importlib_version
 from itertools import chain, product
 from os import fspath
 from pathlib import Path, PurePath
@@ -33,6 +35,7 @@ import conda_build.api
 import conda_build.render
 import conda_build.utils
 import conda_build.variants
+import rattler
 from conda.exceptions import InvalidVersionSpec
 from conda.models.match_spec import MatchSpec
 from conda.models.version import VersionOrder
@@ -54,8 +57,11 @@ from conda_smithy.feedstock_io import (
 from conda_smithy.utils import (
     RATTLER_BUILD,
     HashableDict,
+    ensure_standard_strings,
+    fill_workflow_settings_defaults,
     get_feedstock_about_from_meta,
     get_feedstock_name_from_meta,
+    get_workflow_settings,
 )
 from conda_smithy.validate_schema import (
     CONDA_FORGE_YAML_DEFAULTS_FILE,
@@ -91,12 +97,152 @@ CONDA_FORGE_PINNING_LIFETIME = int(
     os.environ.get("CONDA_FORGE_PINNING_LIFETIME", 15 * 60)
 )
 
+# platforms for which ``shellcheck`` has been built for conda-forge
+# see https://github.com/conda-forge/conda-smithy/pull/2395
+CONDA_FORGE_SHELLCHECK_PLATFORMS = [
+    "linux-64",
+    "linux-aarch64",
+    "osx-64",
+    "osx-arm64",
+    "win-64",
+]
+
+CONDA_FORGE_ALIAS_PLATFORMS = {
+    "win": {"win-64"},
+    "linux": {"linux-64", "linux-aarch64", "linux-ppc64le"},
+    "osx": {"osx-64", "osx-arm64"},
+}
+CONDA_FORGE_ALIAS_PLATFORMS["unix"] = {
+    *CONDA_FORGE_ALIAS_PLATFORMS["linux"],
+    *CONDA_FORGE_ALIAS_PLATFORMS["osx"],
+}
+
+CONDA_FORGE_PIXI_VERSION = "0.59.0"
+
+ALL_PLATFORMS = (
+    "linux_64",
+    "linux_aarch64",
+    "linux_ppc64le",
+    "linux_s390x",
+    "osx_64",
+    "osx_arm64",
+    "win_64",
+    "win_arm64",
+)
+# These are enabled by default
+DEFAULT_PLATFORMS = (
+    "linux_64",
+    "osx_64",
+    "win_64",
+)
+
+DEFAULT_PROVIDER = "github_actions"
+DEFAULT_PROVIDERS = {
+    "linux_64": "github_actions",
+    "linux_aarch64": "github_actions",  # emulated
+    "linux_ppc64le": "github_actions",  # emulated
+    "linux_s390x": "github_actions",  # emulated
+    "osx_64": "azure",
+    "osx_arm64": "azure",
+    "win_64": "azure",
+    "win_arm64": "azure",  # emulated
+}
+
+NATIVE_CI_PROVIDER = {
+    "linux_64": "github_actions",
+    "linux_aarch64": "travis",
+    "linux_ppc64le": "travis",
+    "linux_s390x": "travis",
+    "osx_64": "azure",
+    "osx_arm64": "azure",
+    "win_64": "github_actions",
+    "win_arm64": "github_actions",
+}
+
+FANCY_PLATFORM_NAMES = {
+    "linux_64": "Linux",
+    "linux_aarch64": "Arm64",
+    "linux_ppc64le": "PowerPC64",
+    "linux_s390x": "S390X",
+    "osx_64": "OSX",
+    "osx_arm64": "OSXARM",
+    "win_64": "Windows",
+    "win_arm64": "WindowsARM",
+}
+
+GITHUB_ACTIONS_RUNS_ON = {
+    "osx-64": {
+        "os": "macos",
+        # FUTURE: macos-15-intel will be deprecated in Fall 2027
+        "hosted_labels": ("macos-15-intel",),
+        "self_hosted_labels": ("macOS", "x64"),
+    },
+    "osx-arm64": {
+        "os": "macos",
+        "hosted_labels": ("macos-15",),
+        "self_hosted_labels": ("macOS", "arm64"),
+    },
+    "linux-64": {
+        "os": "ubuntu",
+        "hosted_labels": ("ubuntu-latest",),
+        "self_hosted_labels": ("linux", "x64"),
+    },
+    "linux-aarch64": {
+        "os": "ubuntu",
+        "hosted_labels": ("ubuntu-24.04-arm",),
+        "self_hosted_labels": ("linux", "ARM64"),
+    },
+    "linux-ppc64le": {
+        "os": "ubuntu",
+        "hosted_labels": ("ubuntu-latest",),
+        "self_hosted_labels": ("linux",),
+    },
+    "win-64": {
+        "os": "windows",
+        "hosted_labels": ("windows-2022",),
+        "self_hosted_labels": ("windows", "x64"),
+    },
+    "win-arm64": {
+        "os": "windows",
+        "hosted_labels": ("windows-11-arm",),
+        "self_hosted_labels": ("windows", "ARM64"),
+    },
+}
+
 
 # use lru_cache to avoid repeating warnings endlessly;
 # this keeps track of 10 different messages and then warns again
 @lru_cache(10)
 def warn_once(msg: str):
     logger.warning(msg)
+
+
+@contextmanager
+def debug_hint_on_failure():
+    try:
+        yield
+    except ValueError as e:
+        # if conda-build fails to perform some action, e.g. due to some zip_keys that have
+        # become mismatched by applying migrations, tell users how to debug this more easily
+        if os.environ.get("CONDA_SMITHY_LOGLEVEL", None) is None:
+            raise ValueError(
+                "To see debug information about the config that was handed to conda-build "
+                "(which failed), set the environment variable CONDA_SMITHY_LOGLEVEL=debug"
+            ) from e
+        raise
+
+
+@cache
+def rattler_build_version() -> str | None:
+    # rattler-build is not packaged in %CONDA_PREFIX%\Library\bin on windows,
+    # but in the same location (relative to prefix) as on unix
+    path = os.path.join(sys.prefix, "bin")
+    p = subprocess.run(
+        [f"{path}/rattler-build", "--version"], text=True, capture_output=True
+    )
+    if p.returncode == 0:
+        return p.stdout.strip().split()[-1]
+    return None
 
 
 def package_key(config, used_loop_vars, subdir):
@@ -611,17 +757,12 @@ def _collapse_subpackage_variants(
         "channel_targets",
         "docker_image",
         "build_number_decrement",
-        # The following keys are required for some of our aarch64 builds
-        # Added in https://github.com/conda-forge/conda-forge-pinning-feedstock/pull/180
-        "cdt_arch",
-        "cdt_name",
-        "BUILD",
     }
 
     if not is_noarch:
         always_keep_keys.add("target_platform")
 
-    if forge_config["github_actions"]["self_hosted"]:
+    if forge_config["github_actions"].get("enabled"):
         always_keep_keys.add("github_actions_labels")
 
     all_used_vars.update(always_keep_keys)
@@ -661,10 +802,61 @@ def _collapse_subpackage_variants(
 
     logger.debug("final used_key_values %s", pprint.pformat(used_key_values))
 
+    configs = break_up_top_level_values(top_level_loop_vars, used_key_values)
+
+    # return (configs, top_level_loop_vars)
+
     return (
-        break_up_top_level_values(top_level_loop_vars, used_key_values),
+        [
+            config
+            for config in configs
+            if not _is_config_skipped(config, top_level_loop_vars, list_of_metas)
+        ],
         top_level_loop_vars,
     )
+
+
+def _is_config_skipped(config, top_level_loop_vars, list_of_metas):
+    trimmed_config = {loop_var: config[loop_var] for loop_var in top_level_loop_vars}
+    logger.debug("checking config: %s", trimmed_config)
+    for i, meta in enumerate(list_of_metas):
+        trimmed_meta = {
+            loop_var: meta.config.variant.get(loop_var)
+            for loop_var in top_level_loop_vars
+        }
+        logger.debug("  checking in meta: %s", trimmed_meta)
+        for loop_var in top_level_loop_vars:
+            variant = meta.config.variant
+            if loop_var not in variant:
+                logger.debug(
+                    "    skipping meta because %s is not in meta variant", loop_var
+                )
+                break
+            if isinstance(variant[loop_var], (list, set)) and set(
+                config[loop_var]
+            ) - set(variant[loop_var]):
+                logger.debug(
+                    "    skipping meta because %s in meta variant is %s, but in config is %s",
+                    loop_var,
+                    variant[loop_var],
+                    config[loop_var],
+                )
+                break
+            if isinstance(variant[loop_var], (int, float, str)) and set(
+                config[loop_var]
+            ) - set([variant[loop_var]]):
+                logger.debug(
+                    "    skipping meta because %s in meta variant is %s and in config is %s",
+                    loop_var,
+                    [variant[loop_var]],
+                    config[loop_var],
+                )
+                break
+        else:
+            logger.debug("    FOUND! meta variant matches config")
+            return False
+    logger.debug("  SKIPPED!")
+    return True
 
 
 def _yaml_represent_ordereddict(yaml_representer, data):
@@ -784,6 +976,11 @@ def dump_subspace_config_files(metas, root_path, platform, arch, upload, forge_c
     yaml.add_representer(OrderedDict, _yaml_represent_ordereddict)
     yaml.add_representer(str, _yaml_represent_str)
 
+    # get feedstock name; prefer explicit config, otherwise fall back to default
+    fn = metas[0].meta.get("extra", {}).get("feedstock-name")
+    feedstock_name = fn if fn else metas[0].meta.get("package", {}).get("name")
+    repo_name = f"{feedstock_name}-feedstock"
+
     platform_arch = f"{platform}-{arch}"
 
     result = []
@@ -792,15 +989,24 @@ def dump_subspace_config_files(metas, root_path, platform, arch, upload, forge_c
             f"{platform}_{arch}",
             package_key(config, top_level_loop_vars, metas[0].config.subdir),
         )
+        # remove characters in variant values that are not legal for paths everywhere
+        config_name = re.sub(r"[<>:?*,\"\/\|\\]", "", config_name)
+
         short_config_name = config_name
         conf_hash = hashlib.sha256(config_name.encode("utf-8")).hexdigest()[:8]
         # drone has a limit of 50, see https://github.com/conda-forge/conda-smithy/issues/1188
         if len(short_config_name) >= 49:
             short_config_name = config_name[:40] + "_h" + conf_hash
-        # 200 = 190 + len("_h") + len(conf_hash)
-        if len(config_name) >= 200:
-            # Shorten file name length to avoid hitting maximum filename limits.
-            config_name = config_name[:190] + "_h" + conf_hash
+        # we need to shorten long variant files to avoid hitting maximum path limits on win.
+        # GHA is pretty much the worst offender here, as it will waste a lot of characters by
+        # duplicating the repo name in a way that cannot be overridden (see #2476), e.g.
+        #   C:/Users/runnerx/_work/pytorch-cpu-feedstock/pytorch-cpu-feedstock/<actual_content>
+        # Other providers generally have shorter folder hierarchies, so not handled explicitly
+        outer_len = len(f"C:/Users/runnerx/_work/{repo_name}/{repo_name}/.ci_support/")
+        # 260 characters is default max for total path length on win; incl. null terminator
+        if outer_len + len(f"{config_name}.yaml") > 259:
+            # config_name does not include `.yaml` extension; 15 == len(f"_h{conf_hash}.yaml")
+            config_name = config_name[: (259 - outer_len - 15)] + "_h" + conf_hash
 
         out_folder = os.path.join(root_path, ".ci_support")
         out_path = os.path.join(out_folder, config_name) + ".yaml"
@@ -942,15 +1148,18 @@ def _conda_build_api_render_for_smithy(
     from conda_build.render import finalize_metadata, render_recipe
 
     config = get_or_merge_config(config, **kwargs)
+    logger.debug(pprint.pformat(variants))
 
-    metadata_tuples = render_recipe(
-        recipe_path,
-        bypass_env_check=bypass_env_check,
-        no_download_source=config.no_download_source,
-        config=config,
-        variants=variants,
-        permit_unsatisfiable_variants=permit_unsatisfiable_variants,
-    )
+    with debug_hint_on_failure():
+        metadata_tuples = render_recipe(
+            recipe_path,
+            bypass_env_check=bypass_env_check,
+            no_download_source=config.no_download_source,
+            config=config,
+            variants=variants,
+            permit_unsatisfiable_variants=permit_unsatisfiable_variants,
+        )
+
     output_metas = []
     for meta, download, render_in_env in metadata_tuples:
         if not meta.skip() or not config.trim_skip:
@@ -1047,14 +1256,19 @@ def _render_ci_provider(
             platform=platform,
             arch=arch,
         )
+        logger.debug("merged configs: %s", pprint.pformat(config.__dict__))
+        # work-around for spurious values inserted by conda-build despite
+        # exclusive_config_file, see https://github.com/conda/conda-build/issues/5922
+        config.variant = {}
 
         # Get the combined variants from normal variant locations prior to running migrations
-        (
-            combined_variant_spec,
-            _,
-        ) = conda_build.variants.get_package_combined_spec(
-            os.path.join(forge_dir, forge_config["recipe_dir"]), config=config
-        )
+        with debug_hint_on_failure():
+            (
+                combined_variant_spec,
+                _,
+            ) = conda_build.variants.get_package_combined_spec(
+                os.path.join(forge_dir, forge_config["recipe_dir"]), config=config
+            )
 
         # If we are using new recipe
         # we also load v1 variants.yaml
@@ -1067,6 +1281,7 @@ def _render_ci_provider(
             )
             if os.path.exists(variants_path):
                 new_spec = parse_recipe_config_file(variants_path, namespace)
+                new_spec = ensure_standard_strings(new_spec)
                 specs = {
                     "combined_spec": combined_variant_spec,
                     "variants.yaml": new_spec,
@@ -1080,19 +1295,21 @@ def _render_ci_provider(
             forge_config,
         )
         for channel_target in migrated_combined_variant_spec.get("channel_targets", []):
-            if (
-                channel_target.startswith("conda-forge ")
-                and provider_name == "github_actions"
-                and not (
-                    (forge_config["github_actions"]["self_hosted"])
-                    or (os.path.basename(forge_dir) in SERVICE_FEEDSTOCKS)
-                )
-            ):
-                raise RuntimeError(
-                    "Using github_actions as the CI provider inside "
-                    "conda-forge github org is not allowed in order "
-                    "to avoid a denial of service for other infrastructure."
-                )
+            # MRB: Commented this out when github granted us a bigger runner allocation
+            #      Put this back to prevent feedstocks from using GHA
+            # if (
+            #     channel_target.startswith("conda-forge ")
+            #     and provider_name == "github_actions"
+            #     and not (
+            #         (forge_config["github_actions"]["self_hosted"])
+            #         or (os.path.basename(forge_dir) in SERVICE_FEEDSTOCKS)
+            #     )
+            # ):
+            #     raise RuntimeError(
+            #         "Using github_actions as the CI provider inside "
+            #         "conda-forge github org is not allowed in order "
+            #         "to avoid a denial of service for other infrastructure."
+            #     )
 
             # we skip travis builds for anything but aarch64, ppc64le and s390x
             # due to their current open-source policies around usage
@@ -1152,7 +1369,6 @@ def _render_ci_provider(
 
         # render returns some download & reparsing info that we don't care about
         metas = [m for m, _, _ in metas]
-
         if not keep_noarch:
             to_delete = []
             for idx, meta in enumerate(metas):
@@ -1185,13 +1401,6 @@ def _render_ci_provider(
             remove_file(each_target_fname)
     else:
         forge_config[provider_name]["enabled"] = True
-        fancy_name = {
-            "linux_64": "Linux",
-            "osx_64": "OSX",
-            "win_64": "Windows",
-            "linux_aarch64": "Arm64",
-            "linux_ppc64le": "PowerPC64",
-        }
         fancy_platforms = []
         unfancy_platforms = set()
 
@@ -1212,7 +1421,7 @@ def _render_ci_provider(
 
                 plat_arch = f"{platform}_{arch}"
                 forge_config[plat_arch]["enabled"] = True
-                fancy_platforms.append(fancy_name.get(plat_arch, plat_arch))
+                fancy_platforms.append(FANCY_PLATFORM_NAMES.get(plat_arch, plat_arch))
                 unfancy_platforms.add(plat_arch)
             elif platform in extra_platform_files:
                 for each_target_fname in extra_platform_files[platform]:
@@ -1306,46 +1515,32 @@ def _get_build_setup_line(forge_dir, platform, forge_config):
     build_setup = ""
     if os.path.exists(cfbs_fpath):
         if platform == "linux":
-            build_setup += textwrap.dedent(
-                """\
+            build_setup += textwrap.dedent("""\
                 # Overriding global run_conda_forge_build_setup_linux with local copy.
                 source ${RECIPE_ROOT}/run_conda_forge_build_setup_linux
 
-            """
-            )
+            """)
         elif platform == "win":
-            build_setup += textwrap.dedent(
-                """\
+            build_setup += textwrap.dedent("""\
                 :: Overriding global run_conda_forge_build_setup_win with local copy.
                 CALL {recipe_dir}\\run_conda_forge_build_setup_win
-            """.format(
-                    recipe_dir=forge_config["recipe_dir"]
-                )
-            )
+            """.format(recipe_dir=forge_config["recipe_dir"]))
         else:
-            build_setup += textwrap.dedent(
-                """\
+            build_setup += textwrap.dedent("""\
                 # Overriding global run_conda_forge_build_setup_osx with local copy.
                 source {recipe_dir}/run_conda_forge_build_setup_osx
-            """.format(
-                    recipe_dir=forge_config["recipe_dir"]
-                )
-            )
+            """.format(recipe_dir=forge_config["recipe_dir"]))
     else:
         if platform == "win":
-            build_setup += textwrap.dedent(
-                """\
+            build_setup += textwrap.dedent("""\
                 CALL run_conda_forge_build_setup
 
-            """
-            )
+            """)
         else:
-            build_setup += textwrap.dedent(
-                """\
+            build_setup += textwrap.dedent("""\
             source run_conda_forge_build_setup
 
-            """
-            )
+            """)
     return build_setup
 
 
@@ -1399,17 +1594,13 @@ def generate_yum_requirements(forge_config, forge_dir):
                 "yum_requirements.txt, please remove the file "
                 "or add some."
             )
-        yum_build_setup = textwrap.dedent(
-            """\
+        yum_build_setup = textwrap.dedent("""\
 
             # Install the yum requirements defined canonically in the
             # "recipe/yum_requirements.txt" file. After updating that file,
             # run "conda smithy rerender" and this line will be updated
             # automatically.
-            /usr/bin/sudo -n yum install -y {}""".format(
-                " ".join(requirements)
-            )
-        )
+            /usr/bin/sudo -n yum install -y {}""".format(" ".join(requirements)))
     return yum_build_setup
 
 
@@ -1458,12 +1649,10 @@ def _get_platforms_of_provider(provider, forge_config):
 def render_circle(jinja_env, forge_config, forge_dir, return_metadata=False):
     target_path = os.path.join(forge_dir, ".circleci", "config.yml")
     template_filename = "circle.yml.tmpl"
-    fast_finish_text = textwrap.dedent(
-        """\
+    fast_finish_text = textwrap.dedent("""\
             {get_fast_finish_script} | \\
                  python - -v --ci "circle" "${{CIRCLE_PROJECT_USERNAME}}/${{CIRCLE_PROJECT_REPONAME}}" "${{CIRCLE_BUILD_NUM}}" "${{CIRCLE_PR_NUMBER}}"
-        """  # noqa
-    )
+        """)  # noqa
     extra_platform_files = {
         "common": [
             os.path.join(forge_dir, ".circleci", "checkout_merge_commit.sh"),
@@ -1602,12 +1791,10 @@ def _appveyor_specific_setup(jinja_env, forge_config, forge_dir, platform):
 
 def render_appveyor(jinja_env, forge_config, forge_dir, return_metadata=False):
     target_path = os.path.join(forge_dir, ".appveyor.yml")
-    fast_finish_text = textwrap.dedent(
-        """\
+    fast_finish_text = textwrap.dedent("""\
             {get_fast_finish_script}
             "%CONDA_INSTALL_LOCN%\\python.exe" {fast_finish_script}.py -v --ci "appveyor" "%APPVEYOR_ACCOUNT_NAME%/%APPVEYOR_PROJECT_SLUG%" "%APPVEYOR_BUILD_NUMBER%" "%APPVEYOR_PULL_REQUEST_NUMBER%"
-        """  # noqa
-    )
+        """)  # noqa
     template_filename = "appveyor.yml.tmpl"
 
     (
@@ -1635,97 +1822,6 @@ def render_appveyor(jinja_env, forge_config, forge_dir, return_metadata=False):
 
 
 def _github_actions_specific_setup(jinja_env, forge_config, forge_dir, platform):
-    # Handle GH-hosted and self-hosted runners runs-on config
-    # Do it before the deepcopy below so these changes can be used by the
-    # .github/worfkflows/conda-build.yml template
-    runs_on = {
-        "osx-64": {
-            "os": "macos",
-            "hosted_labels": ("macos-13",),
-            "self_hosted_labels": ("macOS", "x64"),
-        },
-        "osx-arm64": {
-            "os": "macos",
-            # FUTURE: Use -latest once GHA fully migrates
-            "hosted_labels": ("macos-14",),
-            "self_hosted_labels": ("macOS", "arm64"),
-        },
-        "linux-64": {
-            "os": "ubuntu",
-            "hosted_labels": ("ubuntu-latest",),
-            "self_hosted_labels": ("linux", "x64"),
-        },
-        "linux-aarch64": {
-            "os": "ubuntu",
-            "hosted_labels": ("ubuntu-24.04-arm",),
-            "self_hosted_labels": ("linux", "ARM64"),
-        },
-        "win-64": {
-            "os": "windows",
-            "hosted_labels": ("windows-latest",),
-            "self_hosted_labels": ("windows", "x64"),
-        },
-        "win-arm64": {
-            "os": "windows",
-            "hosted_labels": ("windows-latest",),
-            "self_hosted_labels": ("windows", "ARM64"),
-        },
-    }
-    for data in forge_config["configs"]:
-        if not data["build_platform"].startswith(platform):
-            continue
-        # This Github Actions specific configs are prefixed with "gha_"
-        # because we are not deepcopying the data dict intentionally
-        # so it can be used in the general "render_github_actions" function
-        # This avoid potential collisions with other CI providers :crossed_fingers:
-        data["gha_os"] = runs_on[data["build_platform"]]["os"]
-        data["gha_with_gpu"] = False
-
-        self_hosted_default = list(
-            runs_on[data["build_platform"]]["self_hosted_labels"]
-        )
-        self_hosted_default += ["self-hosted"]
-        hosted_default = list(runs_on[data["build_platform"]]["hosted_labels"])
-
-        labels_default = (
-            ["self-hosted"]
-            if forge_config["github_actions"]["self_hosted"]
-            else ["hosted"]
-        )
-        labels = conda_build.utils.ensure_list(
-            data["config"].get("github_actions_labels", [labels_default])[0]
-        )
-
-        if len(labels) == 1 and labels[0] == "hosted":
-            labels = hosted_default
-        elif len(labels) == 1 and labels[0] in "self-hosted":
-            labels = self_hosted_default
-        else:
-            # Prepend the required ones
-            labels += self_hosted_default
-
-        if forge_config["github_actions"]["self_hosted"]:
-            data["gha_runs_on"] = []
-            # labels provided in conda-forge.yml
-            for label in labels:
-                if label.startswith("cirun-"):
-                    label += "--${{ github.run_id }}-" + data["short_config_name"]
-                if "gpu" in label.lower():
-                    data["gha_with_gpu"] = True
-                data["gha_runs_on"].append(label)
-        else:
-            data["gha_runs_on"] = hosted_default
-
-    build_setup = _get_build_setup_line(forge_dir, platform, forge_config)
-
-    if platform == "linux":
-        yum_build_setup = generate_yum_requirements(forge_config, forge_dir)
-        if yum_build_setup:
-            forge_config["yum_build_setup"] = yum_build_setup
-
-    forge_config = deepcopy(forge_config)
-    forge_config["build_setup"] = build_setup
-
     platform_templates = {
         "linux": [
             ".scripts/run_docker_build.sh",
@@ -1738,13 +1834,100 @@ def _github_actions_specific_setup(jinja_env, forge_config, forge_dir, platform)
             ".scripts/run_win_build.bat",
         ],
     }
-
     template_files = platform_templates.get(platform, [])
 
-    # Templates for all platforms
-    if forge_config["github_actions"]["store_build_artifacts"]:
-        template_files.append(".scripts/create_conda_build_artifacts.sh")
-        template_files.append(".scripts/create_conda_build_artifacts.bat")
+    # Handle GH-hosted and self-hosted runners runs-on config
+    # Do it before the deepcopy below so these changes can be used by the
+    # .github/worfkflows/conda-build.yml template
+    for data in forge_config["configs"]:
+        if not data["build_platform"].startswith(platform):
+            continue
+        # This Github Actions specific configs are prefixed with "gha_"
+        # because we are not deepcopying the data dict intentionally
+        # so it can be used in the general "render_github_actions" function
+        # This avoid potential collisions with other CI providers :crossed_fingers:
+        data["gha_os"] = GITHUB_ACTIONS_RUNS_ON[data["build_platform"]]["os"]
+
+        self_hosted_default = list(
+            GITHUB_ACTIONS_RUNS_ON[data["build_platform"]]["self_hosted_labels"]
+        )
+        self_hosted_default += ["self-hosted"]
+        hosted_default = list(
+            GITHUB_ACTIONS_RUNS_ON[data["build_platform"]]["hosted_labels"]
+        )
+
+        # labels may be overridden in conda_build_config.yaml
+        labels = data["config"].get("github_actions_labels") or ["hosted"]
+        if labels in (["hosted"], ["default"]):
+            # These two keywords (hosted, default) alias to
+            # whatever GH-hosted image we default to
+            labels = hosted_default
+        elif any(label.startswith("self-hosted@") for label in labels):
+            # If prefixed with `self-hosted@`, we add the generic self-hosted labels
+            # Some providers needs these labels, others don't care, others will fail
+            labels = list(
+                dict.fromkeys(
+                    (
+                        *[label.replace("self-hosted@", "") for label in labels],
+                        *self_hosted_default,
+                    )
+                )
+            )
+
+        data["gha_runs_on"] = []
+        with_gpu = False
+        for label in labels:
+            if label.startswith("cirun-"):
+                # Patch Cirun runners to add some extra debug info
+                label += "--${{ github.run_id }}-" + data["short_config_name"]
+            if "gpu" in label.lower():
+                # Having 'gpu' in one label name is enough to trigger
+                # the extra docker args needed on Linux
+                with_gpu = True
+            data["gha_runs_on"].append(label)
+
+        workflow_settings = get_workflow_settings(
+            forge_config["workflow_settings"], "github_actions", data["platform"]
+        )
+        on_hosted_runner = {
+            "windows-latest",
+            "windows-2022",
+            "windows-2025",
+        }.intersection(data["gha_runs_on"])
+        on_namespace = any(
+            x.startswith("namespace-profile-") for x in data["gha_runs_on"]
+        )
+        fill_workflow_settings_defaults(
+            workflow_settings,
+            "github_actions",
+            data["platform"],
+            "D:" if on_hosted_runner or on_namespace else "C:",
+        )
+        data.update(workflow_settings)
+        script_suffix = ".bat" if platform == "win" else ".sh"
+        if data["store_build_artifacts"]:
+            template_files.append(
+                f".scripts/create_conda_build_artifacts{script_suffix}"
+            )
+        if data["pagefile_size"] != 0 and platform in ("linux", "win"):
+            template_files.append(f".scripts/create_pagefile{script_suffix}")
+            if platform == "win":
+                template_files.append(".scripts/SetPageFileSize.ps1")
+
+        if platform == "linux":
+            data["docker_run_args"] = forge_config["docker"]["run_args"]
+            if with_gpu:
+                data["docker_run_args"] += " --gpus all"
+
+    build_setup = _get_build_setup_line(forge_dir, platform, forge_config)
+
+    if platform == "linux":
+        yum_build_setup = generate_yum_requirements(forge_config, forge_dir)
+        if yum_build_setup:
+            forge_config["yum_build_setup"] = yum_build_setup
+
+    forge_config = deepcopy(forge_config)
+    forge_config["build_setup"] = build_setup
 
     _render_template_exe_files(
         forge_config=forge_config,
@@ -1755,7 +1938,8 @@ def _github_actions_specific_setup(jinja_env, forge_config, forge_dir, platform)
 
 
 def render_github_actions(jinja_env, forge_config, forge_dir, return_metadata=False):
-    target_path = os.path.join(forge_dir, ".github", "workflows", "conda-build.yml")
+    rel_path = os.path.join(".github", "workflows", "conda-build.yml")
+    target_path = os.path.join(forge_dir, rel_path)
     template_filename = "github-actions.yml.tmpl"
     fast_finish_text = ""
 
@@ -1769,7 +1953,7 @@ def render_github_actions(jinja_env, forge_config, forge_dir, return_metadata=Fa
     logger.debug("github platforms retrieved")
 
     remove_file_or_dir(target_path)
-    return _render_ci_provider(
+    config = _render_ci_provider(
         "github_actions",
         jinja_env=jinja_env,
         forge_config=forge_config,
@@ -1784,18 +1968,17 @@ def render_github_actions(jinja_env, forge_config, forge_dir, return_metadata=Fa
         upload_packages=upload_packages,
         return_metadata=return_metadata,
     )
+    if not os.path.isfile(target_path):
+        # Restore dummy GHA if it was removed because platform is not enabled
+        copy_file(
+            os.path.join(conda_forge_content, "feedstock_content", rel_path),
+            target_path,
+        )
+    return config
 
 
 def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
     build_setup = _get_build_setup_line(forge_dir, platform, forge_config)
-
-    if platform == "linux":
-        yum_build_setup = generate_yum_requirements(forge_config, forge_dir)
-        if yum_build_setup:
-            forge_config["yum_build_setup"] = yum_build_setup
-
-    forge_config = deepcopy(forge_config)
-    forge_config["build_setup"] = build_setup
 
     platform_templates = {
         "linux": [
@@ -1812,11 +1995,15 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
             ".scripts/run_win_build.bat",
         ],
     }
-    if forge_config["azure"]["store_build_artifacts"]:
-        platform_templates["linux"].append(".scripts/create_conda_build_artifacts.sh")
-        platform_templates["osx"].append(".scripts/create_conda_build_artifacts.sh")
-        platform_templates["win"].append(".scripts/create_conda_build_artifacts.bat")
     template_files = platform_templates.get(platform, [])
+
+    if platform == "linux":
+        yum_build_setup = generate_yum_requirements(forge_config, forge_dir)
+        if yum_build_setup:
+            forge_config["yum_build_setup"] = yum_build_setup
+
+    forge_config = deepcopy(forge_config)
+    forge_config["build_setup"] = build_setup
 
     azure_settings = deepcopy(forge_config["azure"][f"settings_{platform}"])
     azure_settings.pop("swapfile_size", None)
@@ -1847,8 +2034,30 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
         # fmt: off
         if "docker_image" in data["config"] and platform == "linux":
             config_rendered["DOCKER_IMAGE"] = data["config"]["docker_image"][-1]
-        if forge_config["azure"]["store_build_artifacts"]:
+        if platform == "osx":
+            if data["build_platform"] == "osx-64":
+                config_rendered["VMIMAGE"] = "macOS-15"
+            elif data["build_platform"] == "osx-arm64":
+                config_rendered["VMIMAGE"] = "macOS-15-arm64"
+            else:
+                raise ValueError(f"Unknown build platform: '{data['build_platform']}'")
+
+        workflow_settings = get_workflow_settings(forge_config["workflow_settings"], "azure", data["platform"])
+        fill_workflow_settings_defaults(workflow_settings, "azure", data["platform"], "D:" if data["platform"] == "win-64" else "C:")
+        data.update(workflow_settings)
+
+        if platform == "linux":
+            config_rendered["docker_run_args"] = forge_config["docker"]["run_args"]
+
+        config_rendered.update(workflow_settings)
+        script_suffix = ".bat" if platform == "win" else ".sh"
+        if config_rendered["store_build_artifacts"]:
             config_rendered["SHORT_CONFIG"] = data["short_config_name"]
+            template_files.append(f".scripts/create_conda_build_artifacts{script_suffix}")
+        if config_rendered["pagefile_size"] != 0 and platform in ("linux", "win"):
+            template_files.append(f".scripts/create_pagefile{script_suffix}")
+            if platform == "win":
+                template_files.append(".scripts/SetPageFileSize.ps1")
         azure_settings["strategy"]["matrix"][data["config_name"]] = config_rendered
         # fmt: on
 
@@ -1873,7 +2082,7 @@ def render_azure(jinja_env, forge_config, forge_dir, return_metadata=False):
         upload_packages,
     ) = _get_platforms_of_provider("azure", forge_config)
 
-    logger.debug("azure platforms retreived")
+    logger.debug("azure platforms retrieved")
 
     remove_file_or_dir(os.path.join(forge_dir, ".azure-pipelines"))
     return _render_ci_provider(
@@ -2004,7 +2213,8 @@ def azure_build_id_from_public(forge_config):
             org=forge_config["azure"]["user_or_org"],
             project_name=forge_config["azure"]["project_name"],
             repo=forge_config["github"]["repo_name"],
-        )
+        ),
+        timeout=5,
     )
     resp.raise_for_status()
     build_def = resp.json()["value"][0]
@@ -2108,7 +2318,17 @@ def render_readme(jinja_env, forge_config, forge_dir, render_info=None):
     forge_config["package_name"] = package_name
     forge_config["variants"] = sorted(variants)
     forge_config["outputs"] = sorted(
-        list(OrderedDict((meta.name(), None) for meta in metas))
+        list(
+            OrderedDict(
+                (m.name(), None)
+                for m in metas
+                if not (
+                    hasattr(m, "meta")
+                    and "recipe" in m.meta
+                    and "name" in m.meta["recipe"]
+                )
+            )
+        )
     )
 
     maintainers = sorted(
@@ -2210,14 +2430,20 @@ def render_pixi(jinja_env, forge_config, forge_dir):
             if filename.endswith(".yaml"):
                 variant_name, _ = os.path.splitext(filename)
                 variants.append(variant_name)
-    platforms = {
-        platform.replace("_", "-")
-        for platform, service in forge_config["provider"].items()
-        if service
-    }
+
+    pixi_platforms = set()
+
+    for platform, service in forge_config["provider"].items():
+        if not service:
+            continue
+        aliased = CONDA_FORGE_ALIAS_PLATFORMS.get(platform)
+        pixi_platforms |= aliased if aliased else {platform.replace("_", "-")}
+
     new_file_contents = template.render(
         smithy_version=__version__,
-        platforms=sorted(platforms),
+        pixi_version=CONDA_FORGE_PIXI_VERSION,
+        platforms=sorted(pixi_platforms),
+        shellcheck_platforms=CONDA_FORGE_SHELLCHECK_PLATFORMS,
         variants=variants,
         **forge_config,
     )
@@ -2264,7 +2490,7 @@ def _read_forge_config(forge_dir, forge_yml=None):
 
     # Validate loaded configuration against a JSON schema.
     validate_lints, validate_hints = validate_json_schema(file_config)
-    for err in chain(validate_lints, validate_hints):
+    for err in validate_lints:
         logger.warning(
             "%s: %s = %s -> %s",
             os.path.relpath(forge_yml, forge_dir),
@@ -2273,10 +2499,124 @@ def _read_forge_config(forge_dir, forge_yml=None):
             err.message,
         )
         logger.debug("Relevant schema:\n%s", json.dumps(err.schema, indent=2))
+    for hint in validate_hints:
+        logger.warning("%s: %s", os.path.relpath(forge_yml, forge_dir), hint)
 
     # The config is just the union of the defaults, and the overridden
     # values.
     config = _update_dict_within_dict(file_config.items(), default_config)
+
+    for setting in ("store_build_artifacts",):
+        for provider in ("azure", "github_actions"):
+            if setting in file_config.get("workflow_settings", {}):
+                # Check for conflicting old keys.
+                if setting in file_config.get(provider, {}):
+                    logger.warning(
+                        "`%(provider)s.%(setting)s` is ignored when "
+                        "`workflow_settings.%(setting)s` is set",
+                        {"provider": provider, "setting": setting},
+                    )
+            else:
+                # Convert old keys to new settings.
+                config["workflow_settings"][setting].append(
+                    {
+                        "provider": provider,
+                        "value": config[provider][setting],
+                    }
+                )
+
+    path_var_mapping = {
+        "tools_install_dir": "MINIFORGE_HOME",
+        "build_workspace_dir": "CONDA_BLD_PATH",
+    }
+    for new_var, old_var in path_var_mapping.items():
+        if old_var in file_config.get("azure", {}).get("settings_win", {}).get(
+            "variables", {}
+        ):
+            if new_var in file_config.get("workflow_settings", {}):
+                logger.warning(
+                    "`azure.settings_win.variables.%(old_var)s` is ignored when "
+                    "`workflow_settings.%(new_var)s` is set",
+                    {"old_var": old_var, "new_var": new_var},
+                )
+                del config["azure"]["settings_win"]["variables"][old_var]
+            else:
+                config["workflow_settings"][new_var].append(
+                    {
+                        "provider": "azure",
+                        "os": "win",
+                        "value": config["azure"]["settings_win"]["variables"].pop(
+                            old_var
+                        ),
+                    }
+                )
+
+    if "CONDA_FORGE_DOCKER_RUN_ARGS" in file_config.get("azure", {}).get(
+        "settings_linux", {}
+    ).get("variables", {}):
+        if "run_args" in file_config.get("docker", {}):
+            logger.warning(
+                "`azure.settings_linux.variables.CONDA_FORGE_DOCKER_RUN_ARGS` is ignored when "
+                "`docker.run_args` is set",
+            )
+            del config["azure"]["settings_linux"]["variables"][
+                "CONDA_FORGE_DOCKER_RUN_ARGS"
+            ]
+        else:
+            config["docker"]["run_args"] = config["azure"]["settings_linux"][
+                "variables"
+            ].pop("CONDA_FORGE_DOCKER_RUN_ARGS")
+
+    if "swapfile_size" in file_config.get("azure", {}).get("settings_linux", {}):
+        if "pagefile_size" in file_config.get("workflow_settings", {}):
+            logger.warning(
+                "`azure.settings_linux.swapfile_size` is ignored when "
+                "`workflow_settings.pagefile_size` is set",
+            )
+            del config["azure"]["settings_linux"]["swapfile_size"]
+        else:
+            value_re = re.compile(r"(\d+)GiB")
+            if (
+                value_match := value_re.fullmatch(
+                    config["azure"]["settings_linux"]["swapfile_size"]
+                )
+            ) is not None:
+                config["workflow_settings"]["pagefile_size"].append(
+                    {
+                        "provider": "azure",
+                        "os": "linux",
+                        "value": int(value_match.group(1)),
+                    }
+                )
+            else:
+                logger.warning(
+                    "`azure.settings_linux.swapfile_size` has invalid value `%s`, "
+                    "should be `{number}GiB`",
+                    config["azure"]["settings_linux"]["swapfile_size"],
+                )
+
+    if "SET_PAGEFILE" in file_config.get("azure", {}).get("settings_win", {}).get(
+        "variables", {}
+    ):
+        if "pagefile_size" in file_config.get("workflow_settings", {}):
+            logger.warning(
+                "`azure.settings_win.variables.SET_PAGEFILE` is ignored when "
+                "`workflow_settings.pagefile_size` is set",
+            )
+            del config["azure"]["settings_win"]["variables"]["SET_PAGEFILE"]
+        else:
+            # Convert old keys to new settings.
+            config["workflow_settings"]["pagefile_size"].append(
+                {
+                    "provider": "azure",
+                    "os": "win",
+                    "value": (
+                        16
+                        if config["azure"]["settings_win"]["variables"]["SET_PAGEFILE"]
+                        else 0
+                    ),
+                }
+            )
 
     # check for conda-smithy 2.x matrix which we can't auto-migrate
     # to conda_build_config
@@ -2297,9 +2637,8 @@ def _read_forge_config(forge_dir, forge_yml=None):
         )
 
     if "build_with_mambabuild" in file_config and "conda_build_tool" not in file_config:
-        warnings.warn(
+        logger.warning(
             "build_with_mambabuild is deprecated, use conda_build_tool instead",
-            DeprecationWarning,
         )
         config["conda_build_tool"] = (
             "mambabuild" if config["build_with_mambabuild"] else "conda-build"
@@ -2412,23 +2751,15 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
     logger.debug(log)
     logger.debug("## END CONFIGURATION\n")
 
-    if config["provider"]["linux_aarch64"] == "default":
-        config["provider"]["linux_aarch64"] = ["azure"]
+    # Fallback handling set to DEFAULT_PROVIDER, for platforms that
+    # are not fully specified by this time
+    for plat in config["provider"].keys():
+        if config["provider"][plat] in {"default", "emulated"}:
+            config["provider"][plat] = DEFAULT_PROVIDERS.get(plat, DEFAULT_PROVIDER)
 
-    if config["provider"]["linux_aarch64"] == "native":
-        config["provider"]["linux_aarch64"] = ["travis"]
-
-    if config["provider"]["linux_ppc64le"] == "default":
-        config["provider"]["linux_ppc64le"] = ["azure"]
-
-    if config["provider"]["linux_ppc64le"] == "native":
-        config["provider"]["linux_ppc64le"] = ["travis"]
-
-    if config["provider"]["linux_s390x"] == "default":
-        config["provider"]["linux_s390x"] = ["azure"]
-
-    if config["provider"]["linux_s390x"] == "native":
-        config["provider"]["linux_s390x"] = ["travis"]
+    for plat, ci in NATIVE_CI_PROVIDER.items():
+        if config["provider"][plat] == "native":
+            config["provider"][plat] = ci
 
     config["remote_ci_setup"] = _sanitize_remote_ci_setup(config["remote_ci_setup"])
     if config["conda_install_tool"] == "conda":
@@ -2453,12 +2784,6 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
     # Run the legacy checks for backwards compatibility
     config = _legacy_compatibility_checks(config, forge_dir)
 
-    # Fallback handling set to azure, for platforms that are not fully specified by this time
-    for platform, providers in config["provider"].items():
-        for i, provider in enumerate(providers):
-            if provider in {"default", "emulated"}:
-                providers[i] = "azure"
-
     # Set the environment variable for the compiler stack
     os.environ["CF_COMPILER_STACK"] = config["compiler_stack"]
     # Set valid ranger for the supported platforms
@@ -2478,16 +2803,30 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
     return config
 
 
-def get_most_recent_version(name, include_broken=False):
-    request = requests.get("https://api.anaconda.org/package/conda-forge/" + name)
-    request.raise_for_status()
-    files = request.json()["files"]
-    if not include_broken:
-        files = [f for f in files if "broken" not in f.get("labels", ())]
-    pkg = max(files, key=lambda x: VersionOrder(x["version"]))
+NameVersionUrlRecord = namedtuple("PackageRecord", ["name", "version", "url"])
 
-    PackageRecord = namedtuple("PackageRecord", ["name", "version", "url"])
-    return PackageRecord(name, pkg["version"], "https:" + pkg["download_url"])
+
+@cache
+def get_most_recent_version(name, include_broken=False) -> NameVersionUrlRecord:
+    channels = ["conda-forge"]
+    if include_broken:
+        channels.append("conda-forge/label/broken")
+
+    # Then we can use the repodata shards for faster access
+    async def query():
+        gateway = rattler.Gateway(cache_dir=get_cache_dir())
+        return chain(
+            *await gateway.query(
+                sources=channels,
+                platforms=[rattler.Platform.current(), "noarch"],
+                specs=[name],
+                recursive=False,
+            )
+        )
+
+    pkgs = asyncio.run(query())
+    pkg = max(pkgs, key=lambda pkg: pkg.version)
+    return NameVersionUrlRecord(pkg.name.normalized, str(pkg.version), pkg.url)
 
 
 def check_version_uptodate(name, installed_version, error_on_warn):
@@ -2504,11 +2843,25 @@ def check_version_uptodate(name, installed_version, error_on_warn):
         logger.info(msg)
 
 
-def commit_changes(forge_file_directory, commit, cs_ver, cfp_ver, cb_ver):
+def commit_changes(
+    forge_file_directory, commit, cs_ver, cfp_ver, cb_ver, rb_ver=None, rbc_ver=None
+):
+    tools_and_versions = {
+        "conda-build": cb_ver,
+        "rattler-build": rb_ver,
+        "rattler-build-conda-compat": rbc_ver,
+    }
+    msg = f"Re-rendered with conda-smithy {cs_ver}"
     if cfp_ver:
-        msg = f"Re-rendered with conda-build {cb_ver}, conda-smithy {cs_ver}, and conda-forge-pinning {cfp_ver}"
-    else:
-        msg = f"Re-rendered with conda-build {cb_ver} and conda-smithy {cs_ver}"
+        msg += f" and conda-forge-pinning {cfp_ver}"
+    msg += "\n\nOther tools:\n"
+    msg += "\n".join(
+        [
+            f"- {tool} {version}"
+            for tool, version in tools_and_versions.items()
+            if version
+        ]
+    )
     logger.info(msg)
 
     is_git_repo = os.path.exists(os.path.join(forge_file_directory, ".git"))
@@ -2526,8 +2879,7 @@ def commit_changes(forge_file_directory, commit, cs_ver, cfp_ver, cb_ver):
                 logger.info("")
             else:
                 logger.info(
-                    "You can commit the changes with:\n\n"
-                    '    git commit -m "MNT: %s"\n',
+                    'You can commit the changes with:\n\n    git commit -m "MNT: %s"\n',
                     msg,
                 )
             logger.info("These changes need to be pushed to github!\n")
@@ -2546,9 +2898,7 @@ def get_cfp_file_path(temporary_directory):
             "Could not determine proper conda package extension for "
             f"pinning package '{pkg.url}'!"
         )
-    dest = os.path.join(
-        temporary_directory, f"conda-forge-pinning-{ pkg.version }{ext}"
-    )
+    dest = os.path.join(temporary_directory, f"conda-forge-pinning-{pkg.version}{ext}")
 
     logger.info("Downloading conda-forge-pinning-%s", pkg.version)
 
@@ -2577,7 +2927,7 @@ def get_cfp_file_path(temporary_directory):
 
 def get_cache_dir():
     if sys.platform.startswith("win"):
-        return Path(os.environ.get("TEMP"))
+        return Path(os.environ.get("TEMP", Path.home() / ".cache"))
     else:
         return Path(os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache"))
 
@@ -2630,6 +2980,9 @@ def get_common_scripts(forge_dir):
         "run_osx_build.sh",
         "create_conda_build_artifacts.bat",
         "create_conda_build_artifacts.sh",
+        "create_pagefile.bat",
+        "create_pagefile.sh",
+        "SetPageFileSize.ps1",
     ]:
         yield os.path.join(forge_dir, ".scripts", old_file)
 
@@ -2649,6 +3002,9 @@ def clear_scripts(forge_dir):
             "run_win_build.bat",
             "create_conda_build_artifacts.bat",
             "create_conda_build_artifacts.sh",
+            "create_pagefile.bat",
+            "create_pagefile.sh",
+            "SetPageFileSize.ps1",
         ]:
             remove_file(os.path.join(forge_dir, folder, old_file))
 
@@ -2668,11 +3024,11 @@ def make_jinja_env(feedstock_directory):
 def get_migrations_in_dir(migrations_root):
     """
     Given a directory, return the migrations as a mapping
-    from the timestamp to a tuple of (filename, migration_number)
+    from the (filename, timestamp) to (full_path, migration_number, use_local)
     """
     res = {}
-    for fn in glob.glob(os.path.join(migrations_root, "*.yaml")):
-        with open(fn, encoding="utf-8") as f:
+    for full_path in glob.glob(os.path.join(migrations_root, "*.yaml")):
+        with open(full_path, encoding="utf-8") as f:
             contents = f.read()
             migration_yaml = yaml.load(contents, Loader=yaml.loader.BaseLoader) or {}
             # Use a object as timestamp to not delete it
@@ -2684,7 +3040,8 @@ def get_migrations_in_dir(migrations_root):
                 migration_yaml.get("__migrator", {}).get("use_local", "false").lower()
                 == "true"
             )
-            res[ts] = (fn, migration_number, use_local)
+            fn = os.path.basename(full_path)
+            res[(fn, ts)] = (full_path, migration_number, use_local)
     return res
 
 
@@ -2720,33 +3077,42 @@ def set_migration_fns(forge_dir, forge_config):
     migrations_in_feedstock = get_migrations_in_dir(migrations_root)
 
     if not os.path.exists(cfp_migrations_dir):
-        migration_fns = [fn for fn, _, _ in migrations_in_feedstock.values()]
+        migration_fns = [fp for fp, _, _ in migrations_in_feedstock.values()]
         forge_config["migration_fns"] = migration_fns
         return
 
     migrations_in_cfp = get_migrations_in_dir(cfp_migrations_dir)
 
     result = []
-    for ts, (fn, num, use_local) in migrations_in_feedstock.items():
+    for (fn, ts), (full_path, num, use_local) in migrations_in_feedstock.items():
         if use_local or not isinstance(ts, (int, str, float)):
             # This file has a setting to use the file in the feedstock
             # or doesn't have a timestamp. Use it as it is.
-            result.append(fn)
-        elif ts in migrations_in_cfp:
+            result.append(full_path)
+        elif (fn, ts) in migrations_in_cfp:
             # Use the one from cfp if migration_numbers match
-            new_fn, new_num, _ = migrations_in_cfp[ts]
+            new_full_path, new_num, _ = migrations_in_cfp[(fn, ts)]
             if num == new_num:
                 logger.info(
                     "%s from feedstock is ignored and upstream version is used",
-                    os.path.basename(fn),
+                    fn,
                 )
-                result.append(new_fn)
+                result.append(new_full_path)
             else:
-                result.append(fn)
+                result.append(full_path)
         else:
             # Delete this as this migration is over.
-            logger.info("%s is closed now. Removing", os.path.basename(fn))
-            remove_file(fn)
+            logger.info(
+                "%s with timestamp %s does not exist in global pinning (anymore), removing it.",
+                fn,
+                ts,
+            )
+            logger.info(
+                "If it should be applied nevertheless, check that migrator_ts/migration_number match the ones in "
+                "https://github.com/conda-forge/conda-forge-pinning-feedstock/tree/main/recipe/migrations "
+                "or add `use_local: true`."
+            )
+            remove_file(full_path)
     forge_config["migration_fns"] = result
     return
 
@@ -2783,7 +3149,7 @@ def main(
         )
 
     config = _load_forge_config(forge_dir, exclusive_config_file, forge_yml)
-    config["feedstock_name"] = os.path.basename(forge_dir)
+    config["feedstock_name"] = config["github"]["repo_name"]
 
     env = make_jinja_env(forge_dir)
     logger.debug("env rendered")
@@ -2844,6 +3210,8 @@ def main(
         __version__,
         cf_pinning_ver,
         conda_build_version,
+        rattler_build_version(),
+        importlib_version("rattler_build_conda_compat"),
     )
 
 
@@ -2851,7 +3219,7 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(
-        description=("Configure a feedstock given " "a conda-forge.yml file.")
+        description=("Configure a feedstock given a conda-forge.yml file.")
     )
     parser.add_argument(
         "forge_file_directory",

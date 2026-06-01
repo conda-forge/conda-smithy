@@ -4,9 +4,9 @@
 
 {%- set platformset = [] %}
 {%- for data in configs %}
-  {%- set pfarchless = data.build_platform.split('-')[0] %}
-  {%- if pfarchless not in platformset %}
-    {%- do platformset.append(pfarchless) %}
+  {%- set os = data.build_platform.split('-')[0] %}
+  {%- if os not in platformset %}
+    {%- do platformset.append(os) %}
   {%- endif %}
 {%- endfor %}
 
@@ -15,7 +15,7 @@ stages:
   jobs:
     - job: Skip
       pool:
-        vmImage: 'ubuntu-22.04'
+        vmImage: 'ubuntu-latest'
       variables:
         DECODE_PERCENTS: 'false'
         RET: 'true'

@@ -3,6 +3,7 @@ import collections
 import os
 import shutil
 import subprocess
+from pathlib import Path
 from textwrap import dedent
 
 import pytest
@@ -61,15 +62,11 @@ def test_init_with_custom_config(py_recipe):
     # expected args object has
 
     with open(os.path.join(recipe, "recipe", "conda-forge.yml"), "w") as fp:
-        fp.write(
-            dedent(
-                """\
+        fp.write(dedent("""\
             bot:
               automerge: true
               run_deps_from_wheel: true
-            """
-            )
-        )
+            """))
 
     args = InitArgs(
         recipe_directory=os.path.join(recipe, "recipe"),
@@ -236,10 +233,6 @@ def test_init_cuda_docker_images(testing_workdir):
         else:
             docker_image = f"condaforge/linux-anvil-cuda:{v}"
         assert config["docker_image"] == [docker_image]
-        if v == "11.0":
-            assert config["cdt_name"] == ["cos7"]
-        else:
-            assert config["cdt_name"] == ["cos6"]
 
 
 def test_init_multiple_docker_images(testing_workdir):
@@ -279,7 +272,6 @@ def test_init_multiple_docker_images(testing_workdir):
     with open(fn) as fh:
         config = yaml.safe_load(fh)
     assert config["docker_image"] == ["pickme_a"]
-    assert config["cdt_name"] == ["pickme_1"]
 
 
 def test_regenerate(py_recipe, testing_workdir):
@@ -352,3 +344,69 @@ def test_render_variant_mismatches(testing_workdir):
         with open(cfg) as f:
             data = yaml.safe_load(f)
         assert data["a"] == data["b"]
+
+
+def test_render_skipped_variants(testing_workdir):
+    """
+    Regression test for https://github.com/conda-forge/conda-smithy/issues/1617
+    """
+    parser = argparse.ArgumentParser()
+    subparser = parser.add_subparsers()
+    init_obj = cli.Init(subparser)
+    regen_obj = cli.Regenerate(subparser)
+    _thisdir = os.path.abspath(os.path.dirname(__file__))
+    recipe = os.path.join(_thisdir, "recipes", "skip_rerenders_ok")
+    feedstock_dir = os.path.join(testing_workdir, "test-skipped-variants-feedstock")
+    args = InitArgs(
+        recipe_directory=recipe,
+        feedstock_directory=feedstock_dir,
+        temporary_directory=os.path.join(recipe, "temp"),
+    )
+    init_obj(args)
+    args = RegenerateArgs(
+        feedstock_directory=feedstock_dir,
+        feedstock_config=None,
+        commit=False,
+        no_check_uptodate=True,
+        exclusive_config_file="recipe/conda_build_config.yaml",
+        check=False,
+        temporary_directory=os.path.join(recipe, "temp"),
+    )
+    regen_obj(args)
+
+    # We skip one config out of the 2x2 matrix, so we expect three configs
+    configs = list(Path(feedstock_dir, ".ci_support").glob("*.yaml"))
+    assert len(configs) == 3
+
+
+def test_render_readme_with_v1_recipe_name(testing_workdir):
+    parser = argparse.ArgumentParser()
+    subparser = parser.add_subparsers()
+    init_obj = cli.Init(subparser)
+    regen_obj = cli.Regenerate(subparser)
+    recipe = os.path.join(_thisdir, "recipes", "iregi")
+    feedstock_dir = os.path.join(testing_workdir, "iregi-feedstock")
+    args = InitArgs(
+        recipe_directory=recipe,
+        feedstock_directory=feedstock_dir,
+        temporary_directory=os.path.join(recipe, "temp"),
+    )
+    init_obj(args)
+
+    args = RegenerateArgs(
+        feedstock_directory=feedstock_dir,
+        feedstock_config=None,
+        commit=False,
+        no_check_uptodate=True,
+        exclusive_config_file="recipe/conda_build_config.yaml",
+        check=False,
+        temporary_directory=os.path.join(recipe, "temp"),
+    )
+    regen_obj(args)
+    readme_path = os.path.join(feedstock_dir, "README.md")
+    assert os.path.exists(readme_path)
+
+    with open(readme_path) as readme_file:
+        readme = readme_file.read()
+        assert "recipe-iregi--split-green" not in readme
+        assert "`iregi-split, iregi-static` can be installed" not in readme

@@ -4,6 +4,737 @@ conda-smithy Change Log
 
 .. current developments
 
+v2026.5.29
+====================
+
+**Changed:**
+
+* Github Actions runner images for macOS and Windows now match Azure Pipelines defaults (15 and 2022, respectively). (#2564)
+
+**Fixed:**
+
+* Make sure writable location checks are compatible with older macOS versions. (#2549)
+* Fixed computation of path to linter messages json file so tests run OK in recipe. (#2560)
+* Updated reference to bot documentation JSON blob. (#)
+
+**Authors:**
+
+* Matthew R. Becker
+* Jaime Rodríguez-Guerra
+* Monson Shao
+
+
+
+v3.62.0
+====================
+
+**Added:**
+
+* Add ``workflow_settings.tools_install_dir`` and
+  ``workflow_settings.build_workspace_dir`` settings to ``conda-forge.yml`` that
+  provide per-platform and per-provider ability to override the paths used by
+  workflows. (#2529) (#2538)
+* Hint when dependency specifiers override pins (#2546, #2553)
+* Badges for workflows using GitHub Actions are now included in ``README.md``. (#2547)
+* Add ``docker.run_args`` to pass additional arguments to ``docker run`` on all CI providers. (#2551)
+* Hint about deprecated variables in ``azure.settings_*.variables``. (#2556)
+* Introduce deprecation machinery for the upcoming CalVer switch. (#2541)
+
+**Changed:**
+
+* Refactor linter messages as self-documenting dataclasses with automated JSON outputs. (#2478, #2548)
+* Optimized the code to avoid unnecessary loading ``conda-forge.yml`` multiple times. (#2555)
+* Update ``remote_ci_setup`` to use ``conda-build`` version ``26.3`` or newer. (#2558)
+* IMPORTANT: This will be the last release of the ``3.x`` series.
+  In the next release, we will switch from Semver to CalVer, following a ``YYYY.MM.DD`` scheme.
+  The first CalVer will be identical to the last SemVer release, except for the introduction
+  of a formal 60-day deprecation policy. (#2541)
+
+**Fixed:**
+
+* Deprecated schema fields that aren't top-level are now correctly reported as hints. (#2540)
+* Azure badges for configs that are not run on Azure are no longer included in ``README.md``. (#2547)
+* Fixed import of deprecated function ``ns_cfg`` from ``conda-build``. (#2559)
+
+**Authors:**
+
+* Matthew R. Becker
+* Jaime Rodríguez-Guerra
+* Michał Górny
+* pre-commit-ci[bot]
+* John Kirkham
+
+
+
+v3.61.2
+====================
+
+**Fixed:**
+
+* Add ``.recipe_maintainers.json`` file to the ignore in the ``.gitignore``. (#2533)
+* fix: check teams found by slug and default to a search if we do not find them (#2535)
+
+**Authors:**
+
+* Matthew R. Becker
+
+
+
+v3.61.1
+====================
+
+**Fixed:**
+
+* Always remove maintainers that do not match even if we can detect a user rename. (#2531)
+
+**Authors:**
+
+* Matthew R. Becker
+
+
+
+v3.61.0
+====================
+
+**Added:**
+
+* Add a new top-level ``workflow_settings`` configuration key for
+  ``conda-forge.yml`` that provides more fine-grained configuration for
+  workflows. Initially, it can be used to control ``store_build_artifacts``. (#2500)
+
+**Changed:**
+
+* Update Python project configuration to follow packaging and setuptools updates. (#2521)
+* Bump minimum Python version to 3.11. (#2523)
+* Update templates to use ``CONDA_BLD_PATH`` for build directory consistently. (#2528)
+* Bumped the minimum ``rattler-build-conda-compat`` version to ``1.4.12`` for ``is_staging_output`` support. (#2524)
+
+**Fixed:**
+
+* Fixed the v1 recipe linter hinting about missing tests for staging outputs, which cannot declare tests. (#2524)
+
+**Security:**
+
+* Fixed a security issue where usernames relinquished by one person, and then picked up by another
+  would cause the other person to get write access to feedstocks.
+
+**Authors:**
+
+* Matthew R. Becker
+* Michał Górny
+* Niklas Mertsch
+* Christoph Deil
+* Hofer-Julian
+
+
+
+v3.60.0
+====================
+
+**Added:**
+
+* CI registration now supports Blacksmith.sh and Namespace.so Github Actions runners. (#2514)
+
+**Removed:**
+
+* CI registration support for Cirrus Runners has been removed since the service will shut down in June. (#2514)
+
+**Fixed:**
+
+* Fixed duplicate log entries. (#2516)
+
+**Authors:**
+
+* Matthew R. Becker
+* Jaime Rodríguez-Guerra
+
+
+
+v3.59.1
+====================
+
+**Fixed:**
+
+* Fixed a bug where logging did not work with the ``conda smithy`` CLI entrypoint. (#2512)
+
+**Authors:**
+
+* Matthew R. Becker
+* pre-commit-ci[bot]
+
+
+
+v3.59.0
+====================
+
+**Added:**
+
+* Register ``conda-smithy`` as a conda subcommand via conda's plugin system. (#2506)
+
+**Fixed:**
+
+* Fix inverted logic in Cirrus Runners registration. (#2508)
+
+**Authors:**
+
+* Isuru Fernando
+* Matthew R. Becker
+* Jaime Rodríguez-Guerra
+* H. Vetinari
+* nichmor
+* Wolf Vollprecht
+* Uwe L. Korn
+* pre-commit-ci[bot]
+* Filipe Fernandes
+* Min RK
+* Michał Górny
+* John Kirkham
+* Amit Kumar
+* Marcel Bargull
+* Hadrien Mary
+* Mark Harfouche
+* Bastian Zimmermann
+* Leo Fang
+* Ryan Volz
+* Johnny Willemsen
+* Chris Burr
+* Nicholas Bollweg
+* Yannik Tausch
+* Daniel Bast
+* Daniel Ching
+* dependabot[bot]
+* Billy K. Poon
+* vinicius douglas cerutti
+* Tim Snyder
+* Mike Henry
+* Bela Stoyan
+* Aman Srivastava
+* Jan Lehnarsdt
+* Peter Williams
+* Pavel Zwerschke
+* John Blischak
+* Matthias Diener
+* Antonio S. Cofiño
+* Marius van Niekerk
+* Philippe Blain
+* Ben Mares
+* Mervin Fansler
+* David Hirschfeld
+* Finn Womack
+* M Bussonnier
+* Duncan Macleod
+* Jannis Leidel
+* Matt Fisher
+* Hugo Slepicka
+* fhoehle
+* Matthew W. Thompson
+* Nehal J Wani
+* conda-forge-admin
+* Klaus Zimmermann
+* Dominic Davis-Foster
+* Anton Tetov
+* Brandon Maier
+* Ken Odegard
+* Guillaume Fraux
+* Lucas Colley
+* Jakov Smolić
+* Mike Taves
+* Benjamin Tovar
+* Sylvain Corlay
+* Brandon Andersen
+* Vincenzo Eduardo Padulano
+* Bas Zalmstra
+* Adam Ehlers Nyholm Thomsen
+* Ralf Gommers
+* Matt Chan
+* Will Shanks
+* Bas Nijholt
+* Nils Homer
+* Alfredo Luque
+* Philipp A.
+* Andreas Poehlmann
+* James Myatt
+* Dan Yeaw
+* Mikhail Ryazanov
+* Filippo Luca Ferretti
+
+
+
+v3.58.1
+====================
+
+**Fixed:**
+
+* Ensure ``github_actions_labels`` is always considered during rerenders without having to mention it in recipe files. (#2505)
+
+**Authors:**
+
+* Jaime Rodríguez-Guerra
+
+
+
+v3.58.0
+====================
+
+**Added:**
+
+* Add Podman support and SELinux volume handling to
+  ``run_docker_build.sh`` template, enabling local builds on
+  systems where Docker is unavailable. The container runtime can
+  now be overridden using the ``DOCKER_EXECUTABLE`` environment
+  variable for one-off builds without rerendering. (#2435)
+
+**Fixed:**
+
+* Fix ``KeyError`` seen on rerenders for feedstocks configured to use ``linux-ppc64le``. (#2501 via #2502)
+
+**Authors:**
+
+* Jaime Rodríguez-Guerra
+* Aman Srivastava
+
+
+
+v3.57.0
+====================
+
+**Added:**
+
+* Support enabling or disable the Cirrus Runners app from the CLI. (#2493)
+
+**Changed:**
+
+* Re-enable Github Actions as default provider for Linux. (#2495, #2498)
+* ``github_actions_labels`` field in ``conda_build_config.yaml`` can now mix Github-hosted and self-hosted runners. If absent, defaults to Github-hosted runners; this can be explicitly set with the ``default`` value too. (#2499)
+
+**Deprecated:**
+
+* ``github_actions.self_hosted`` configuration in ``conda-forge.yml`` doesn't have an effect anymore. Use ``github_actions_labels`` in ``conda_build_config.yaml`` to configure the ``runs-on`` field for each CI job. (#2499)
+
+**Fixed:**
+
+* Fix ``runs-on`` label for native Github-hosted ``win-arm64`` runners. (#2496)
+* Fix default ``MINIFORGE_HOME`` value for native Github-hosted ``win-arm64`` runners. (#2497)
+
+**Authors:**
+
+* Jaime Rodríguez-Guerra
+
+
+
+v3.56.3
+====================
+
+**Added:**
+
+* Add dummy ``.github/workflows/conda-build.yml`` workflow to ensure that Github Actions is enabled for feedstocks. (#2494)
+
+**Authors:**
+
+* Matthew R. Becker
+* Jaime Rodríguez-Guerra
+* Uwe L. Korn
+* dependabot[bot]
+
+
+
+v3.56.2
+====================
+
+**Changed:**
+
+* Put default CI provider back to Azure. (#2488)
+
+**Authors:**
+
+* Matthew R. Becker
+
+
+
+v3.56.1
+====================
+
+**Authors:**
+
+* Isuru Fernando
+
+
+
+v3.56.0
+====================
+
+**Added:**
+
+* Add "feedstock-name must not end with -feedstock" linter (#2470)
+* New linter that checks that no unquoted floating-point number is found in a recipe. (#2453)
+* New conda-forge-specific linter rule will raise an error if custom Github Actions workflows are added to a feedstock. (#2469)
+
+**Changed:**
+
+* Changed default provider to ``github_actions`` for all feedstocks. (#2478)
+* Improve path lengths calculation to avoid hitting max paths issues on windows (#2477).
+* The long-deprecated `MACOSX_DEPLOYMENT_TARGET` will not be taken into account anymore when rerendering a recipe (#2473).
+* The linter now raises an error if `MACOSX_DEPLOYMENT_TARGET` is found in recipe configuration files (#2473).
+* The linter will now also raise issues found in `conda_build_config.yaml` for v1 recipes (#2473).
+* The linter will now raise if two different recipe configuration files are found (#2473).
+* Issues related to `c_stdlib_version` / `MACOSX_SDK_VERSION` and `MACOSX_DEPLOYMENT_TARGET` have been
+  moved to the conda-forge-specific part of the linter (c.f. `conda smithy lint --conda-forge`) (#2473).
+* Set rattler cache to `RATTLER_CACHE_DIR="${FEEDSTOCK_ROOT}/build_artifacts/pkg_cache"`
+  so that it persists across builds. We already use this directory as the pkg_cache for
+  conda-build.
+
+**Fixed:**
+
+* Derive the rerendered feedstock name from recipe metadata instead of the local checkout directory basename, so worktrees and custom checkout paths do not render names like `worktree1-feedstock`.
+* Avoid creating variant paths that cannot be checkout out on a default windows machine (#2476).
+
+**Authors:**
+
+* Matthew R. Becker
+* Jaime Rodríguez-Guerra
+* H. Vetinari
+* pre-commit-ci[bot]
+* Michał Górny
+* Daniel Ching
+* Pavel Zwerschke
+* Filippo Luca Ferretti
+
+
+
+v3.55.1
+====================
+
+**Added:**
+
+* More debugging hints for when to set CONDA_SMITHY_LOGLEVEL (#2468)
+
+**Fixed:**
+
+* Fixed broken rerender in the presence of `CONDA_*` environment variables (#2467)
+* Don't rely on `%TEMP%` environment variable to be present on windows (#2468)
+
+**Authors:**
+
+* H. Vetinari
+
+
+
+v3.55.0
+====================
+
+**Added:**
+
+* Enable support for native Apple Silicon (``osx-arm64``) runners on Azure. (#2450)
+* Provide a hint and additional logging in case of failures within conda-build, such that
+  analysing intermediate variant configurations (e.g. after applying migrations) becomes
+  more discoverable and accessible without hacking on smithy's source code. (#2464)
+
+**Changed:**
+
+* Support ``py-rattler 0.22`` new ``sources`` API. (#2463)
+* Self-hosted runners in GHA are now using `actions/checkout@v6`. (#2462)
+
+**Removed:**
+
+* Removed "All rights reserved" notice in license files, as it is a historical leftover without relevance today. (#2466)
+
+**Fixed:**
+
+* Ensure that characters that aren't legal for filepaths are stripped from file names for variant configs. (#2465)
+* Fixed a bug where feedstock team updates did not work if feedstock repo did not get added to the team on the first try. (#2460)
+
+**Authors:**
+
+* Matthew R. Becker
+* Jaime Rodríguez-Guerra
+* H. Vetinari
+* pre-commit-ci[bot]
+* dependabot[bot]
+* Pavel Zwerschke
+
+
+
+v3.54.2
+====================
+
+**Added:**
+
+* Allow `alma10` as an image tag for `os_version` (#2441)
+
+**Changed:**
+
+* Use ``ubuntu-latest`` in Azure Pipelines skip-control job. (#2449)
+* Require ``conda-recipe-manager>=0.9``. This version rejects duplicate keys in ``recipe.yaml``. (#2452)
+* Optimized ``get_most_recent_version`` for faster rerenders by using sharded repodata instead of Anaconda.org API. (#2451)
+
+**Fixed:**
+
+* Fix configuration generation by respecting additive ``skip`` statements properly. (#1617 via #2434)
+* The linter no longer flags false positives for valid templating starting partway through the `version` field of v1 recipes
+* Add ``hatchling`` bootstrap exception to python build backend hint (#2444)
+
+**Authors:**
+
+* Isuru Fernando
+* Jaime Rodríguez-Guerra
+* H. Vetinari
+* pre-commit-ci[bot]
+* Nicholas Bollweg
+* Lucas Colley
+
+
+
+v3.54.1
+====================
+
+**Fixed:**
+
+* Binary files do not have encodings. (#2440)
+
+**Authors:**
+
+* Matthew R. Becker
+* H. Vetinari
+
+
+
+v3.54.0
+====================
+
+**Changed:**
+
+* When running `operation: key_add` migrations, consider whether the variant being added exists already based on the full set of values in the `zip_keys:` involving `primary_key:`, not just based on the value of `primary_key:` itself. (#2438)
+* macOS CI setup now sets ``OSX_SDK_DIR`` to a dedicated directory where SDKs can be downloaded without altering the system (see https://github.com/conda-forge/conda-forge-ci-setup-feedstock/issues/409).
+
+**Fixed:**
+
+* Version-independent python packages will not be flagged for unconstrained python requirements. (#2433)
+
+**Authors:**
+
+* H. Vetinari
+* pre-commit-ci[bot]
+* Michał Górny
+* Nicholas Bollweg
+
+
+
+v3.53.3
+====================
+
+**Changed:**
+
+* Replace old ``{{ stdlib("c") }}`` meta issue links with doc links. ( #2429 )
+
+**Authors:**
+
+* John Kirkham
+
+
+
+v3.53.2
+====================
+
+**Added:**
+
+* Report new lint on empty ``conda_build_config.yaml`` file. (#2417, #2427)
+
+**Fixed:**
+
+* Fixed bug where linting failed on recipes with empty ``conda_build_config.yaml`` files. (#2417, #2427)
+* Fixed a bug where v1 recipes contained non-existing outputs in README (#2418)
+
+**Authors:**
+
+* Matthew R. Becker
+* H. Vetinari
+* Jakov Smolić
+
+
+
+v3.53.1
+====================
+
+**Added:**
+
+* Allow CDTs to be linted using conda-forge-pinning-feedstock linter_hints (#2419).
+
+**Fixed:**
+
+* Fixed a bug where string quoting information was not preserved when load/linting v1 recipes. (#2422)
+
+**Authors:**
+
+* Isuru Fernando
+* Matthew R. Becker
+
+
+
+v3.53.0
+====================
+
+**Added:**
+
+* ``github_actions.resize_win_partitions`` option to resize partitions
+  on Windows GHA runners to use the whole available disk space. (#2394)
+
+**Changed:**
+
+* The minimum ``pixi`` version has been raised to ``0.59.0``. (#2395)
+* In feedstocks with ``pixi`` integration, ``shellcheck`` will only be used if enabled in ``conda-forge.yml``. (#2395)
+* Use ``macos-15-intel`` runners in Github Actions workflows. (#2405)
+* Temporarily reverted ``actions/checkout`` to v4.x due to lack of NodeJS 24 on the conda-forge runners. (#2412)
+
+**Fixed:**
+
+* Fix ``pixi`` deprecation warning for `[project]` versus `[workspace]`. (#2395)
+* `free_disk_space = [apt]` now properly works on native linux-aarch64 runner
+  with GitHub Actions.
+* Fix `pixi.toml` deprecation warning. (#2409)
+* linter will ignore package versions that are jinja templated for v1 (#2402).
+
+**Authors:**
+
+* Isuru Fernando
+* Matthew R. Becker
+* Jaime Rodríguez-Guerra
+* pre-commit-ci[bot]
+* Michał Górny
+* Nicholas Bollweg
+* dependabot[bot]
+* Pavel Zwerschke
+* Guillaume Fraux
+
+
+
+v3.52.3
+====================
+
+**Changed:**
+
+* Feedstocks will use pixi installed from the docker image.
+
+**Removed:**
+
+* Remove cdt_name, cdt_arch, BUILD from being saved in every feedstock
+
+**Fixed:**
+
+* Fixed bug where variants loaded via ``parse_recipe_config_file`` had non-standard Python strings
+  that did not serialize correctly when passed through ``yaml.dump``. (#)
+
+**Authors:**
+
+* Isuru Fernando
+* Matthew R. Becker
+* Mikhail Ryazanov
+
+
+
+v3.52.2
+====================
+
+**Fixed:**
+
+* Avoid spuriously adding values for missing ``zip_keys`` for migrations using ``additional_zip_keys``.
+* Excluded `go-licenses` from the `go-licenses` lint
+
+**Authors:**
+
+* H. Vetinari
+* Nicholas Bollweg
+* dependabot[bot]
+
+
+
+v3.52.1
+====================
+
+**Changed:**
+
+* Try harder to set up swap file, and fail early if this does not succeed. (#2384)
+* Switched to `macOS-15` images for osx jobs by default, due to impending removal of `macOS-13`.
+
+**Fixed:**
+
+* Fixed issue where ``rattler-build-conda-compat`` makes global modifications to YAML
+  parsing causing the linter for ``conda-forge.yml`` files to fail. (#2387)
+* Fixed wrong lower bound on ``rattler-build-conda-compat``, increasing it to ``1.4.5``. (#358)
+* Allow conda-smithy to run in an unactivated environment. (#2381)
+
+**Authors:**
+
+* Isuru Fernando
+* Matthew R. Becker
+* H. Vetinari
+* pre-commit-ci[bot]
+
+
+
+v3.52.0
+====================
+
+**Added:**
+
+* Reformat commit messages in rerenders to show rattler-build and rattler-build-conda-compat versions. (#2359)
+* In feedstocks with Pixi integrations, ``pixi run lint`` will include ``shellcheck`` lints if enabled in ``conda-forge.yml``. (#2360)
+* Added hint to flag `bld.bat` files when using rattler-build (recipe v1). rattler-build uses `build.bat` instead of `bld.bat` for Windows builds (#2371).
+
+**Changed:**
+
+* Avoid using only timestamps to determine whether migrations should be applied. The logic for ``use_local`` and ``migration_number`` remains unchanged, but migrations now also require the name of the migrator file to match, avoiding spurious matches on timestamps between different migrations (#2374).
+
+**Fixed:**
+
+* Remove slashes from variant file names which caused problems due to being mis-handled as folders. Also remove commas, which can be similarly misinterpreted (#2366).
+
+**Authors:**
+
+* Jaime Rodríguez-Guerra
+* H. Vetinari
+* pre-commit-ci[bot]
+* Chris Burr
+
+
+
+v3.51.1
+====================
+
+**Changed:**
+
+* ``pixi.toml`` files generated in feedstocks by setting ``conda_install_tool: pixi`` are now recognised by GitHub as generated.
+
+**Fixed:**
+
+* Fix artefact generation on windows failing spuriously due to enabling logging (#2351).
+* Fix merging of variants for migrators using both `primary_key:` and `ordering:`.
+
+**Authors:**
+
+* H. Vetinari
+* pre-commit-ci[bot]
+* Lucas Colley
+
+
+
+v3.51.0
+====================
+
+**Fixed:**
+
+* Bug preventing rerender of v1 recipes with migrators that add zip keys
+* Fixed artefact creation scripts for windows when using `provider: github_actions` (#2345).
+* Avoid running artefact generation scripts (on GHA) for cancelled jobs.
+* Ensure trailing newline in rendered template files.
+
+**Authors:**
+
+* H. Vetinari
+* Min RK
+* dependabot[bot]
+
+
+
 v3.50.1
 ====================
 

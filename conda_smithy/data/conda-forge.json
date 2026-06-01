@@ -119,7 +119,7 @@
         },
         "settings_win": {
           "$ref": "#/$defs/AzureRunnerSettings",
-          "description": "Windows-specific settings for runners. Aside from overriding the `vmImage`,\nyou can also specify `install_atl: true` in case you need the ATL components\nfor MSVC; these don't get installed by default anymore, see\nhttps://github.com/actions/runner-images/issues/9873\n\nFinally, under `variables`, some important things you can set are:\n\n- `CONDA_BLD_PATH`: Location of the conda-build workspace. Defaults to `D:\\bld`\n- `MINIFORGE_HOME`: Location of the base environment installation. Defaults to\n  `D:\\Miniforge`.\n- `SET_PAGEFILE`: `\"True\"` to increase the pagefile size via conda-forge-ci-setup.\n\nIf you are running out of space in `D:`, consider changing to `C:`.\nIt's a slower drive but has more space available. We recommend you keep\nboth `CONDA_BLD_PATH` and `MINIFORGE_HOME` in the same drive for performance."
+          "description": "Windows-specific settings for runners. Aside from overriding the `vmImage`,\nyou can also specify `install_atl: true` in case you need the ATL components\nfor MSVC; these don't get installed by default anymore, see\nhttps://github.com/actions/runner-images/issues/9873\n\nFinally, under `variables`, some important things you can set are:\n\n- ~~`CONDA_BLD_PATH`~~: Location of the conda-build workspace. Deprecated, use\n  `workflow_settings.build_workspace_dir` instead.\n- ~~`MINIFORGE_HOME`~~: Location of the base environment installation. Deprecated,\n  use `workflow_settings.tools_install_dir` instead.\n- ~~`SET_PAGEFILE`~~: `\"True\"` to increase the pagefile size via conda-forge-ci-setup.\n  Deprecated, use `workflow_settings.pagefile_size` instead.\n\nIf you are running out of space in `D:`, consider changing to `C:`.\nIt's a slower drive but has more space available. We recommend you keep\nboth `CONDA_BLD_PATH` and `MINIFORGE_HOME` in the same drive for performance."
         },
         "user_or_org": {
           "anyOf": [
@@ -147,7 +147,8 @@
             }
           ],
           "default": false,
-          "description": "Store the conda build_artifacts directory as an         Azure pipeline artifact",
+          "deprecated": true,
+          "description": "Deprecated. Store the conda build_artifacts directory as an Azure pipeline artifact. Use `workflow_settings.store_build_artifacts` instead.",
           "title": "Store Build Artifacts"
         },
         "timeout_minutes": {
@@ -202,7 +203,7 @@
             }
           ],
           "default": null,
-          "description": "Swapfile size in GiB",
+          "description": "Deprecated. Swapfile size in GiB.\nUse `workflow_settings.pagefile_size` instead.",
           "title": "Swapfile Size"
         },
         "timeoutInMinutes": {
@@ -370,6 +371,19 @@
           "description": "The command to run in Docker",
           "title": "Command"
         },
+        "run_args": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "",
+          "description": "Additional arguments to pass to `docker run`.",
+          "title": "Run Args"
+        },
         "interactive": {
           "anyOf": [
             {
@@ -389,6 +403,240 @@
         }
       },
       "title": "CondaForgeDocker",
+      "type": "object"
+    },
+    "ConditionalValue__class__bool__": {
+      "properties": {
+        "os": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/PlatformsAliases"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/PlatformsAliases"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Operating systems to set environment variable on (default: all)",
+          "title": "Os"
+        },
+        "platform": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/Platforms"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/Platforms"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Platforms to set environment variable on (default: all)",
+          "title": "Platform"
+        },
+        "provider": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/CIservices"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/CIservices"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "CI providers to set environment variable on (default: all)",
+          "title": "Provider"
+        },
+        "value": {
+          "default": false,
+          "description": "Option value",
+          "title": "Value",
+          "type": "boolean"
+        }
+      },
+      "title": "ConditionalValue_<class 'bool'>",
+      "type": "object"
+    },
+    "ConditionalValue__class__int__": {
+      "properties": {
+        "os": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/PlatformsAliases"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/PlatformsAliases"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Operating systems to set environment variable on (default: all)",
+          "title": "Os"
+        },
+        "platform": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/Platforms"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/Platforms"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Platforms to set environment variable on (default: all)",
+          "title": "Platform"
+        },
+        "provider": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/CIservices"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/CIservices"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "CI providers to set environment variable on (default: all)",
+          "title": "Provider"
+        },
+        "value": {
+          "default": null,
+          "description": "Option value",
+          "title": "Value",
+          "type": "integer"
+        }
+      },
+      "title": "ConditionalValue_<class 'int'>",
+      "type": "object"
+    },
+    "ConditionalValue__class__str__": {
+      "properties": {
+        "os": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/PlatformsAliases"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/PlatformsAliases"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Operating systems to set environment variable on (default: all)",
+          "title": "Os"
+        },
+        "platform": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/Platforms"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/Platforms"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Platforms to set environment variable on (default: all)",
+          "title": "Platform"
+        },
+        "provider": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/CIservices"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/CIservices"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "CI providers to set environment variable on (default: all)",
+          "title": "Provider"
+        },
+        "value": {
+          "default": null,
+          "description": "Option value",
+          "title": "Value",
+          "type": "string"
+        }
+      },
+      "title": "ConditionalValue_<class 'str'>",
       "type": "object"
     },
     "DefaultTestPlatforms": {
@@ -468,9 +716,22 @@
               "type": "null"
             }
           ],
-          "default": null,
+          "default": 50,
           "description": "The maximum number of jobs to run in parallel",
           "title": "Max Parallel"
+        },
+        "resize_win_partitions": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": false,
+          "description": "Whether to resize partitions to use all space on Windows",
+          "title": "Resize Win Partitions"
         },
         "self_hosted": {
           "anyOf": [
@@ -482,7 +743,8 @@
             }
           ],
           "default": false,
-          "description": "Whether to use self-hosted runners",
+          "deprecated": true,
+          "description": "Deprecated. Whether to use self-hosted runners. Use `github_actions_labels` in `conda_build_config.yaml` instead.",
           "title": "Self Hosted"
         },
         "store_build_artifacts": {
@@ -495,7 +757,8 @@
             }
           ],
           "default": false,
-          "description": "Whether to store build artifacts",
+          "deprecated": true,
+          "description": "Deprecated. Whether to store build artifacts. Use `workflow_settings.store_build_artifacts` instead.",
           "title": "Store Build Artifacts"
         },
         "timeout_minutes": {
@@ -664,6 +927,15 @@
       "title": "Platforms",
       "type": "string"
     },
+    "PlatformsAliases": {
+      "enum": [
+        "linux",
+        "win",
+        "osx"
+      ],
+      "title": "PlatformsAliases",
+      "type": "string"
+    },
     "ShellCheck": {
       "additionalProperties": false,
       "properties": {
@@ -675,6 +947,100 @@
         }
       },
       "title": "ShellCheck",
+      "type": "object"
+    },
+    "WorkflowSettings": {
+      "properties": {
+        "store_build_artifacts": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "items": {
+                "$ref": "#/$defs/ConditionalValue__class__bool__"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": [],
+          "description": "Store the outputs of the build process as uploaded CI artifacts.",
+          "title": "Store Build Artifacts"
+        },
+        "tools_install_dir": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "$ref": "#/$defs/ConditionalValue__class__str__"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": [],
+          "description": "Directory to install build-time tools in.",
+          "title": "Tools Install Dir"
+        },
+        "build_workspace_dir": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "$ref": "#/$defs/ConditionalValue__class__str__"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": [],
+          "description": "Directory to build in.",
+          "title": "Build Workspace Dir"
+        },
+        "pagefile_size": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "items": {
+                "$ref": "#/$defs/ConditionalValue__class__int__"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": [],
+          "description": "Override the default paging (swap) file size, in GiB.\nFor example, 8 means 8 GiB.",
+          "title": "Pagefile Size"
+        }
+      },
+      "title": "WorkflowSettings",
       "type": "object"
     },
     "build_platform": {
@@ -887,10 +1253,12 @@
           "anyOf": [
             {
               "enum": [
-                "cos7",
-                "alma8",
+                "alma10",
+                "rocky10",
                 "alma9",
-                "ubi8"
+                "alma8",
+                "ubi8",
+                "cos7"
               ],
               "type": "string"
             },
@@ -905,10 +1273,12 @@
           "anyOf": [
             {
               "enum": [
-                "cos7",
-                "alma8",
+                "alma10",
+                "rocky10",
                 "alma9",
-                "ubi8"
+                "alma8",
+                "ubi8",
+                "cos7"
               ],
               "type": "string"
             },
@@ -923,10 +1293,12 @@
           "anyOf": [
             {
               "enum": [
-                "cos7",
-                "alma8",
+                "alma10",
+                "rocky10",
                 "alma9",
-                "ubi8"
+                "alma8",
+                "ubi8",
+                "cos7"
               ],
               "type": "string"
             },
@@ -941,10 +1313,12 @@
           "anyOf": [
             {
               "enum": [
-                "cos7",
-                "alma8",
+                "alma10",
+                "rocky10",
                 "alma9",
-                "ubi8"
+                "alma8",
+                "ubi8",
+                "cos7"
               ],
               "type": "string"
             },
@@ -959,10 +1333,12 @@
           "anyOf": [
             {
               "enum": [
-                "cos7",
-                "alma8",
+                "alma10",
+                "rocky10",
                 "alma9",
-                "ubi8"
+                "alma8",
+                "ubi8",
+                "cos7"
               ],
               "type": "string"
             },
@@ -977,10 +1353,12 @@
           "anyOf": [
             {
               "enum": [
-                "cos7",
-                "alma8",
+                "alma10",
+                "rocky10",
                 "alma9",
-                "ubi8"
+                "alma8",
+                "ubi8",
+                "cos7"
               ],
               "type": "string"
             },
@@ -995,10 +1373,12 @@
           "anyOf": [
             {
               "enum": [
-                "cos7",
-                "alma8",
+                "alma10",
+                "rocky10",
                 "alma9",
-                "ubi8"
+                "alma8",
+                "ubi8",
+                "cos7"
               ],
               "type": "string"
             },
@@ -1013,10 +1393,12 @@
           "anyOf": [
             {
               "enum": [
-                "cos7",
-                "alma8",
+                "alma10",
+                "rocky10",
                 "alma9",
-                "ubi8"
+                "alma8",
+                "ubi8",
+                "cos7"
               ],
               "type": "string"
             },
@@ -1031,10 +1413,12 @@
           "anyOf": [
             {
               "enum": [
-                "cos7",
-                "alma8",
+                "alma10",
+                "rocky10",
                 "alma9",
-                "ubi8"
+                "alma8",
+                "ubi8",
+                "cos7"
               ],
               "type": "string"
             },
@@ -1240,7 +1624,7 @@
               "type": "null"
             }
           ],
-          "default": "azure",
+          "default": "github_actions",
           "title": "Linux 64"
         },
         "linux_aarch64": {
@@ -1669,7 +2053,7 @@
       "description": "Mapping for GitHub-specific configuration options. The defaults are as follows:\n\n```yaml\ngithub:\n    user_or_org: conda-forge\n    repo_name: \"my_repo\"\n    branch_name: main\n    tooling_branch_name: main\n```"
     },
     "bot": {
-      "$ref": "https://raw.githubusercontent.com/regro/cf-scripts/refs/heads/main/conda_forge_tick/cf_tick_schema.json",
+      "$ref": "https://raw.githubusercontent.com/conda-forge/conda-forge-bot/refs/heads/main/conda_forge_tick/cf_tick_schema.json",
       "default": {},
       "title": "BotConfig"
     },
@@ -1765,7 +2149,7 @@
           "type": "null"
         }
       ],
-      "description": "This key is used to set the OS versions for `linux_*` platforms. Valid entries\nmap a linux platform and arch to either `cos7`, `alma8`, `alma9` or `ubi8`.\n\nCurrently `alma9` is the default, which should work out-of-the-box for the vast\nmajority of uses.\n\nNote that the image version does not imply a matching `glibc` requirement (which\ncan be set using `c_stdlib_version` in `recipe/conda_build_config.yaml`).\n\nIf you need to opt into older images, here's an example how to do it:\n```yaml\nos_version:\n    linux_64: cos7\n    linux_aarch64: cos7\n    linux_ppc64le: cos7\n```"
+      "description": "This key is used to set the OS versions for `linux_*` platforms. Valid entries\nmap a linux platform and arch to either `alma9`, `alma8` or `cos7`. For CUDA 11.8\nimages, a choice equivalent to `alma8` is `ubi8`.\n\nCurrently `alma9` is the default, though `alma10` is available for opt-in where\nnecessary. `rocky10` may be added in the future.\n\nNote that the image version does not imply a matching `glibc` requirement (which\ncan be set using `c_stdlib_version` in `recipe/conda_build_config.yaml`).\n\nIf you need to opt into older images, here's an example how to do it:\n```yaml\nos_version:\n    linux_64: cos7\n    linux_aarch64: cos7\n    linux_ppc64le: cos7\n```"
     },
     "provider": {
       "anyOf": [
@@ -1822,7 +2206,7 @@
           "type": "null"
         }
       ],
-      "description": "This option can be used to override the default `conda-forge-ci-setup` package.\nCan be given with `${url or channel_alias}::package_name`,\ndefaults to conda-forge channel_alias if no prefix is given.\n\n```yaml\nremote_ci_setup: [\"conda-forge-ci-setup=4\", \"conda-build>=24.1\"]\n```",
+      "description": "This option can be used to override the default `conda-forge-ci-setup` package.\nCan be given with `${url or channel_alias}::package_name`,\ndefaults to conda-forge channel_alias if no prefix is given.\n\n```yaml\nremote_ci_setup: [\"conda-forge-ci-setup=4\", \"conda-build>=26.3\"]\n```",
       "title": "Remote Ci Setup"
     },
     "shellcheck": {
@@ -2058,6 +2442,17 @@
       "default": null,
       "description": "The depth of the git clone.",
       "title": "Clone Depth"
+    },
+    "workflow_settings": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/WorkflowSettings"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Per-workflow settings.\n\n```yaml\nworkflow_settings:\n  store_build_artifacts:\n    # there can be at most one value for each workflow\n    - provider: github_actions\n      platform: linux_aarch64\n      value: true\n    - platform: [linux_64, win_64]  # OR\n      value: true\n```"
     },
     "travis": {
       "anyOf": [

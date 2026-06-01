@@ -1,0 +1,11 @@
+package:
+  name: skip-rerenders-ok
+  version: 1.0
+
+build:
+  # Only build for linux so we get up-to 4 configs (as per the conda-build-config-file)
+  skip: true  # [not linux64]
+  # With this one skip, we remove one entry from the 2x2 matrix
+  skip: true  # [mpi == "nompi" and double == "yes"]
+
+about: {}

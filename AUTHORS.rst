@@ -4,55 +4,57 @@ Authors are sorted by number of commits.
 * Isuru Fernando
 * Matthew R. Becker
 * Jaime Rodríguez-Guerra
+* H. Vetinari
 * nichmor
+* Michał Górny
 * Christopher J. Wright
 * Anthony Scopatz
 * Phil Elson
-* H. Vetinari
 * Wolf Vollprecht
 * Uwe L. Korn
-* Filipe Fernandes
 * pre-commit-ci[bot]
+* Filipe Fernandes
 * Min RK
+* John Kirkham
 * Dougal J. Sutherland
 * Amit Kumar
-* John Kirkham
 * Marcel Bargull
 * Hadrien Mary
 * shadow_walker
 * Michael Sarahan
 * Mark Harfouche
 * Bastian Zimmermann
-* Michał Górny
 * Leo Fang
 * Ryan Volz
 * Johnny Willemsen
 * Chris Burr
+* Nicholas Bollweg
 * Julian Rüth
 * Yannik Tausch
 * Daniel Bast
-* Billy K. Poon
 * Daniel Ching
+* dependabot[bot]
+* Billy K. Poon
 * vinicius douglas cerutti
 * Tim Snyder
 * Mike Henry
-* Nicholas Bollweg
 * Eric Dill
 * Natasha Pavlovikj
 * Maksim Rakitin
 * Jan Schulz
 * Josh Reichardt
 * Bela Stoyan
+* Aman Srivastava
 * Justin Calamari
 * Jason Furmanek
 * Patrick Sodré
-* dependabot[bot]
 * Jan Lehnarsdt
 * C.A.M. Gerlach
 * refraction-ray
 * Leopold Talirz
 * Peter Williams
 * Tom Pollard
+* Pavel Zwerschke
 * Gonzalo Pena-Castellanos
 * John Blischak
 * Matthias Diener
@@ -73,7 +75,6 @@ Authors are sorted by number of commits.
 * David Hirschfeld
 * Finn Womack
 * M Bussonnier
-* Pavel Zwerschke
 * Josh Barnes
 * Tobias Megies
 * Jonathan Helmus
@@ -105,6 +106,11 @@ Authors are sorted by number of commits.
 * Dominic Davis-Foster
 * Anton Tetov
 * Brandon Maier
+* Ken Odegard
+* Guillaume Fraux
+* Lucas Colley
+* Jakov Smolić
+* Niklas Mertsch
 * lorenz
 * Tom Augspurger
 * Ryan May
@@ -134,7 +140,6 @@ Authors are sorted by number of commits.
 * Ralf Gommers
 * Matt Chan
 * Will Shanks
-* Ken Odegard
 * Bas Nijholt
 * Nils Homer
 * Alfredo Luque
@@ -142,4 +147,8 @@ Authors are sorted by number of commits.
 * Andreas Poehlmann
 * James Myatt
 * Dan Yeaw
-* Guillaume Fraux
+* Mikhail Ryazanov
+* Filippo Luca Ferretti
+* Christoph Deil
+* Hofer-Julian
+* Monson Shao

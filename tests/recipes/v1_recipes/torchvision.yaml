@@ -9,7 +9,7 @@ context:
   torch_proc_type: ${{ "cuda" ~ cuda_compiler_version | version_to_buildstring if cuda_compiler_version != "None" else "cpu" }}
   # Upstream has specific compatability ranges for pytorch and python which are
   # updated every 0.x release. https://github.com/pytorch/vision#installation
-  compatible_pytorch: 2.5
+  compatible_pytorch: "2.5"
 
   tests_to_skip: >
     ${{ 'skip test_url_is_accessible instead of hitting 20+ servers per run, since' if 0 }}

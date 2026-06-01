@@ -5,9 +5,9 @@
 #}
 {%- set platformset = [] %}
 {%- for data in configs %}
-  {%- set pfarchless = data.build_platform.split('-')[0] %}
-  {%- if pfarchless not in platformset %}
-    {%- do platformset.append(pfarchless) %}
+  {%- set os = data.build_platform.split('-')[0] %}
+  {%- if os not in platformset %}
+    {%- do platformset.append(os) %}
   {%- endif %}
 {%- endfor %}
 language: shell
