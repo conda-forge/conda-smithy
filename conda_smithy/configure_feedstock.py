@@ -1913,6 +1913,8 @@ def _github_actions_specific_setup(jinja_env, forge_config, forge_dir, platform)
             template_files.append(f".scripts/create_pagefile{script_suffix}")
             if platform == "win":
                 template_files.append(".scripts/SetPageFileSize.ps1")
+        if data["free_disk_space"] and platform in ("linux",):
+            template_files.append(f".scripts/free_disk_space{script_suffix}")
 
         if platform == "linux":
             data["docker_run_args"] = forge_config["docker"]["run_args"]
@@ -2058,6 +2060,8 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
             template_files.append(f".scripts/create_pagefile{script_suffix}")
             if platform == "win":
                 template_files.append(".scripts/SetPageFileSize.ps1")
+        if config_rendered["free_disk_space"] and platform in ("linux",):
+            template_files.append(f".scripts/free_disk_space{script_suffix}")
         azure_settings["strategy"]["matrix"][data["config_name"]] = config_rendered
         # fmt: on
 
@@ -2624,6 +2628,8 @@ def _read_forge_config(forge_dir, forge_yml=None):
             item["value"] = ["apt", "cache"]
         elif item["value"] is False:
             item["value"] = []
+        # Copy the value to prevent pyyaml from creating anchors.
+        item["value"] = ",".join(item["value"])
 
     # check for conda-smithy 2.x matrix which we can't auto-migrate
     # to conda_build_config
@@ -2990,6 +2996,7 @@ def get_common_scripts(forge_dir):
         "create_pagefile.bat",
         "create_pagefile.sh",
         "SetPageFileSize.ps1",
+        "free_disk_space.sh",
     ]:
         yield os.path.join(forge_dir, ".scripts", old_file)
 
@@ -3012,6 +3019,7 @@ def clear_scripts(forge_dir):
             "create_pagefile.bat",
             "create_pagefile.sh",
             "SetPageFileSize.ps1",
+            "free_disk_space.sh",
         ]:
             remove_file(os.path.join(forge_dir, folder, old_file))
 
