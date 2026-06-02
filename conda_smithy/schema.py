@@ -546,6 +546,27 @@ class WorkflowSettings(BaseModel):
         """),
     )
 
+    free_disk_space: Optional[
+        Union[
+            bool,
+            list[Literal["apt", "cache", "docker"]],
+            list[
+                conditional_value(
+                    Union[bool, list[Literal["apt", "cache", "docker"]]], False
+                )
+            ],
+            Nullable,
+        ]
+    ] = Field(
+        default=[],
+        description=cleandoc("""
+        Free up disk space before running the Docker container for building on Linux.
+        The following components can be cleaned up: `apt`, `cache`, `docker`.
+        When set to `true`, only `apt` and `cache` are cleaned up.
+        Set it to the full list to clean up all components.
+        """),
+    )
+
 
 class ConfigModel(BaseModel):
     """

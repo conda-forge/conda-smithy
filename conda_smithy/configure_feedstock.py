@@ -2506,7 +2506,7 @@ def _read_forge_config(forge_dir, forge_yml=None):
     # values.
     config = _update_dict_within_dict(file_config.items(), default_config)
 
-    for setting in ("store_build_artifacts",):
+    for setting in ("store_build_artifacts", "free_disk_space"):
         for provider in ("azure", "github_actions"):
             if setting in file_config.get("workflow_settings", {}):
                 # Check for conflicting old keys.
@@ -2617,6 +2617,13 @@ def _read_forge_config(forge_dir, forge_yml=None):
                     ),
                 }
             )
+
+    # Convert `workflow_settings.free_disk_space` values from bools to lists.
+    for item in config["workflow_settings"]["free_disk_space"]:
+        if item["value"] is True:
+            item["value"] = ["apt", "cache"]
+        elif item["value"] is False:
+            item["value"] = []
 
     # check for conda-smithy 2.x matrix which we can't auto-migrate
     # to conda_build_config

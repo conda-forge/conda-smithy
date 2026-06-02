@@ -2,11 +2,12 @@
 # update the conda-forge.yml and/or the recipe/meta.yaml.
 # -*- mode: yaml -*-
 
-{%- set vars = namespace(store_build_artifacts=False) %}
+{%- set vars = namespace(store_build_artifacts=False, free_disk_space=[]) %}
 {%- for data in configs %}
   {%- if data.store_build_artifacts %}
     {%- set vars.store_build_artifacts = True %}
   {%- endif %}
+  {%- do vars.free_disk_space.extend(data.free_disk_space) %}
 {%- endfor %}
 
 name: Build conda package
@@ -55,38 +56,47 @@ jobs:
             build_workspace_dir: {{ data.build_workspace_dir }}
             docker_run_args: {{ data.docker_run_args }}
             pagefile_size: {{ data.pagefile_size }}
+            free_disk_space: start,{{ data.free_disk_space | join(',') }},end
         {%- endfor %}
     steps:
-{%- if github_actions.free_disk_space %}
+{%- if vars.free_disk_space %}
 
     - name: Manage disk space
       if: matrix.os == 'ubuntu'
+      env:
+        FREE_DISK_SPACE: {% raw %}${{ matrix.free_disk_space }}{% endraw %}
       run: |
-{%- if (github_actions.free_disk_space == true) or ('cache' in github_actions.free_disk_space) %}
-        sudo mkdir -p /opt/empty_dir || true
-        for d in \
-                 /opt/ghc \
-                 /opt/hostedtoolcache \
-                 /usr/lib/jvm \
-                 /usr/local/.ghcup \
-                 /usr/local/lib/android \
-                 /usr/local/share/powershell \
-                 /usr/share/dotnet \
-                 /usr/share/swift \
-                 ; do
-          sudo rsync --stats -a --delete /opt/empty_dir/ $d || true
-        done
+{%- if 'cache' in vars.free_disk_space %}
+        if [[ ${FREE_DISK_SPACE} == *,cache,* ]]; then
+          sudo mkdir -p /opt/empty_dir || true
+          for d in \
+                   /opt/ghc \
+                   /opt/hostedtoolcache \
+                   /usr/lib/jvm \
+                   /usr/local/.ghcup \
+                   /usr/local/lib/android \
+                   /usr/local/share/powershell \
+                   /usr/share/dotnet \
+                   /usr/share/swift \
+                   ; do
+            sudo rsync --stats -a --delete /opt/empty_dir/ $d || true
+          done
+        fi
 {%- endif %}
-{%- if (github_actions.free_disk_space == true) or ('apt' in github_actions.free_disk_space) %}
-        BROWSERS="firefox google-chrome-stable microsoft-edge-stable"
-        BROWSERS_TO_REMOVE=$(dpkg --get-selections $BROWSERS 2>/dev/null | awk '{print $1}')
-        sudo apt-get remove --purge -y $BROWSERS_TO_REMOVE
+{%- if 'apt' in vars.free_disk_space %}
+        if [[ ${FREE_DISK_SPACE} == *,apt,* ]]; then
+          BROWSERS="firefox google-chrome-stable microsoft-edge-stable"
+          BROWSERS_TO_REMOVE=$(dpkg --get-selections $BROWSERS 2>/dev/null | awk '{print $1}')
+          sudo apt-get remove --purge -y $BROWSERS_TO_REMOVE
 
-        sudo apt-get autoremove -y >& /dev/null
-        sudo apt-get autoclean -y >& /dev/null
+          sudo apt-get autoremove -y >& /dev/null
+          sudo apt-get autoclean -y >& /dev/null
+        fi
 {%- endif %}
-{%- if (github_actions.free_disk_space is iterable) and ('docker' in github_actions.free_disk_space) %}
-        sudo docker image prune --all --force
+{%- if 'docker' in vars.free_disk_space %}
+        if [[ ${FREE_DISK_SPACE} == *,docker,* ]]; then
+          sudo docker image prune --all --force
+        fi
 {%- endif %}
         df -h
 {%- endif %}
