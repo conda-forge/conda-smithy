@@ -1821,6 +1821,18 @@ def render_appveyor(jinja_env, forge_config, forge_dir, return_metadata=False):
     )
 
 
+def _add_template_files_from_workflow_settings(data, platform, template_files):
+    script_suffix = ".bat" if platform == "win" else ".sh"
+    if data["store_build_artifacts"]:
+        template_files.append(f".scripts/create_conda_build_artifacts{script_suffix}")
+    if data["pagefile_size"] != 0 and platform in ("linux", "win"):
+        template_files.append(f".scripts/create_pagefile{script_suffix}")
+        if platform == "win":
+            template_files.append(".scripts/SetPageFileSize.ps1")
+    if data["free_disk_space"] and platform in ("linux",):
+        template_files.append(f".scripts/free_disk_space{script_suffix}")
+
+
 def _github_actions_specific_setup(jinja_env, forge_config, forge_dir, platform):
     platform_templates = {
         "linux": [
@@ -1904,18 +1916,9 @@ def _github_actions_specific_setup(jinja_env, forge_config, forge_dir, platform)
             "D:" if on_hosted_runner or on_namespace else "C:",
         )
         data.update(workflow_settings)
-        script_suffix = ".bat" if platform == "win" else ".sh"
-        if data["store_build_artifacts"]:
-            template_files.append(
-                f".scripts/create_conda_build_artifacts{script_suffix}"
-            )
-        if data["pagefile_size"] != 0 and platform in ("linux", "win"):
-            template_files.append(f".scripts/create_pagefile{script_suffix}")
-            if platform == "win":
-                template_files.append(".scripts/SetPageFileSize.ps1")
-        if data["free_disk_space"] and platform in ("linux",):
-            template_files.append(f".scripts/free_disk_space{script_suffix}")
-
+        _add_template_files_from_workflow_settings(
+            data=data, platform=platform, template_files=template_files
+        )
         if platform == "linux":
             data["docker_run_args"] = forge_config["docker"]["run_args"]
             if with_gpu:
@@ -2052,16 +2055,9 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
             config_rendered["docker_run_args"] = forge_config["docker"]["run_args"]
 
         config_rendered.update(workflow_settings)
-        script_suffix = ".bat" if platform == "win" else ".sh"
+        _add_template_files_from_workflow_settings(data=config_rendered, platform=platform, template_files=template_files)
         if config_rendered["store_build_artifacts"]:
             config_rendered["SHORT_CONFIG"] = data["short_config_name"]
-            template_files.append(f".scripts/create_conda_build_artifacts{script_suffix}")
-        if config_rendered["pagefile_size"] != 0 and platform in ("linux", "win"):
-            template_files.append(f".scripts/create_pagefile{script_suffix}")
-            if platform == "win":
-                template_files.append(".scripts/SetPageFileSize.ps1")
-        if config_rendered["free_disk_space"] and platform in ("linux",):
-            template_files.append(f".scripts/free_disk_space{script_suffix}")
         azure_settings["strategy"]["matrix"][data["config_name"]] = config_rendered
         # fmt: on
 
