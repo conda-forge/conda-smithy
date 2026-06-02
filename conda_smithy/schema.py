@@ -138,7 +138,9 @@ class AzureConfig(BaseModel):
         Union[bool, Nullable, list[Literal["apt", "cache", "docker"]]]
     ] = Field(
         default=False,
+        deprecated=True,
         description=cleandoc("""
+            Deprecated. Use `workflow_settings.free_disk_space` instead.
             Free up disk space before running the Docker container for building on Linux.
             The following components can be cleaned up: `apt`, `cache`, `docker`.
             When set to `true`, only `apt` and `cache` are cleaned up.
@@ -280,7 +282,9 @@ class GithubActionsConfig(BaseModel):
         Union[bool, Nullable, list[Literal["apt", "cache", "docker"]]]
     ] = Field(
         default=False,
+        deprecated=True,
         description=cleandoc("""
+            Deprecated. Use `workflow_settings.free_disk_space` instead.
             Free up disk space before running the Docker container for building on Linux.
             The following components can be cleaned up: `apt`, `cache`, `docker`.
             When set to `true`, only `apt` and `cache` are cleaned up.
