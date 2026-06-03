@@ -70,32 +70,32 @@ jobs:
         call ".scripts\run_win_build.bat"
       displayName: Run Windows build
       env:
-        MINIFORGE_HOME: $(tools_install_dir)
-        CONDA_BLD_PATH: $(build_workspace_dir)
-        PYTHONUNBUFFERED: 1
-        CONFIG: $(CONFIG)
         CI: azure
-        flow_run_id: azure_$(Build.BuildNumber).$(System.JobAttempt)
-        remote_url: $(Build.Repository.Uri)
-        sha: $(Build.SourceVersion)
-        UPLOAD_PACKAGES: $(UPLOAD_PACKAGES)
-        UPLOAD_TEMP: $(UPLOAD_TEMP)
+        CONFIG: $(CONFIG)
+        CONDA_BLD_PATH: $(build_workspace_dir)
+        MINIFORGE_HOME: $(tools_install_dir)
+        PYTHONUNBUFFERED: 1
 {%- if upload_on_branch %}
         UPLOAD_ON_BRANCH: {{ upload_on_branch }}
 {%- endif %}
+        UPLOAD_PACKAGES: $(UPLOAD_PACKAGES)
+        UPLOAD_TEMP: $(UPLOAD_TEMP)
+        flow_run_id: azure_$(Build.BuildNumber).$(System.JobAttempt)
+        remote_url: $(Build.Repository.Uri)
+        sha: $(Build.SourceVersion)
 {%- for secret in secrets %}
         {{ secret }}: $({{ secret }})
 {%- endfor %}
 {%- if vars.store_build_artifacts %}
 
     - script: |
-        set MINIFORGE_HOME=$(tools_install_dir)
-        set CONDA_BLD_PATH=$(build_workspace_dir)
+        set ARTIFACT_STAGING_DIR=$(Build.ArtifactStagingDirectory
+        set BLD_ARTIFACT_PREFIX=conda_artifacts
         set CI=azure
         set CI_RUN_ID=$(build.BuildNumber).$(system.JobAttempt)
+        set CONDA_BLD_PATH=$(build_workspace_dir)
         set FEEDSTOCK_NAME=$(build.Repository.Name)
-        set ARTIFACT_STAGING_DIR=$(Build.ArtifactStagingDirectory)
-        set BLD_ARTIFACT_PREFIX=conda_artifacts
+        set MINIFORGE_HOME=$(tools_install_dir)
         if "%AGENT_JOBSTATUS%" == "Failed" (
             set ENV_ARTIFACT_PREFIX=conda_envs
         )
