@@ -2,7 +2,7 @@
 # update the conda-forge.yml and/or the recipe/meta.yaml.
 # -*- mode: yaml -*-
 
-{%- set vars = namespace(store_build_artifacts=False) %}
+{%- set vars = namespace(store_build_artifacts=False, create_pagefile=False, free_disk_space=False) %}
 {%- for data in configs %}
   {%- set os = data.build_platform.split('-')[0] %}
   {%- if os == 'win' and data.store_build_artifacts %}
@@ -10,6 +10,9 @@
   {%- endif %}
   {%- if os == 'win' and data.pagefile_size != 0 %}
     {%- set vars.create_pagefile = True %}
+  {%- endif %}
+  {%- if os == 'win' and data.free_disk_space %}
+    {%- set vars.free_disk_space = True %}
   {%- endif %}
 {%- endfor %}
 
@@ -20,6 +23,13 @@ jobs:
 {%- if clone_depth is not none %}
     - checkout: self
       fetchDepth: {{ clone_depth }}
+{%- endif %}
+{%- if vars.free_disk_space %}
+    - bash: |
+        .scripts/free_disk_space.sh ",$(free_disk_space),"
+      displayName: Manage disk space
+      env:
+        OS: windows
 {%- endif %}
 {%- for choco_pkg in choco %}
     - script: |

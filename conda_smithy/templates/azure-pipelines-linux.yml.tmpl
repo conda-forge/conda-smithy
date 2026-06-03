@@ -27,6 +27,8 @@ jobs:
 {%- if vars.free_disk_space %}
   - script: |
         .scripts/free_disk_space.sh ",$(free_disk_space),"
+    env:
+      OS: ubuntu
     displayName: Manage disk space
 {%- endif %}
 {%- if vars.create_pagefile %}

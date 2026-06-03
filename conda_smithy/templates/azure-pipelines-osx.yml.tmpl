@@ -2,11 +2,14 @@
 # update the conda-forge.yml and/or the recipe/meta.yaml.
 # -*- mode: yaml -*-
 
-{%- set vars = namespace(store_build_artifacts=False) %}
+{%- set vars = namespace(store_build_artifacts=False, free_disk_space=False) %}
 {%- for data in configs %}
   {%- set os = data.build_platform.split('-')[0] %}
   {%- if os == 'osx' and data.store_build_artifacts %}
     {%- set vars.store_build_artifacts = True %}
+  {%- endif %}
+  {%- if os == 'osx' and data.free_disk_space %}
+    {%- set vars.free_disk_space = True %}
   {%- endif %}
 {%- endfor %}
 
@@ -18,6 +21,13 @@ jobs:
 {%- if clone_depth is not none %}
   - checkout: self
     fetchDepth: {{ clone_depth }}
+{%- endif %}
+{%- if vars.free_disk_space %}
+  - script: |
+      .scripts/free_disk_space.sh ",$(free_disk_space),"
+    env:
+      OS: macos
+    displayName: Manage disk space
 {%- endif %}
   - script: |
       export MINIFORGE_HOME=$(tools_install_dir)
