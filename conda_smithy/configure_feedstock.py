@@ -2618,12 +2618,19 @@ def _read_forge_config(forge_dir, forge_yml=None):
                 }
             )
 
-    # Convert `workflow_settings.free_disk_space` values from bools to lists.
-    if isinstance(config["workflow_settings"]["free_disk_space"], bool):
-        config["workflow_settings"]["free_disk_space"] = [
-            {"value": config["workflow_settings"]["free_disk_space"]}
+    # `workflow_settings.free_disk_space` can be either:
+    # - an inline boolean value for all workflows
+    # - a list of strings for all workflows
+    # - a workflow-dict list
+    # we assume that an empty list is the last one
+    free_disk_space = config["workflow_settings"]["free_disk_space"]
+    if not isinstance(free_disk_space, list) or (
+        free_disk_space and not isinstance(free_disk_space[0], dict)
+    ):
+        free_disk_space = config["workflow_settings"]["free_disk_space"] = [
+            {"value": free_disk_space}
         ]
-    for item in config["workflow_settings"]["free_disk_space"]:
+    for item in free_disk_space:
         if item["value"] is True:
             item["value"] = ["apt", "cache"]
         elif item["value"] is False:
