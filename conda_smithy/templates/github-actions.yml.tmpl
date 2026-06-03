@@ -71,9 +71,10 @@ jobs:
 {%- if vars.free_disk_space %}
 
     - name: Manage disk space
-      if: matrix.os == 'ubuntu'
       env:
         FREE_DISK_SPACE: {% raw %}${{ matrix.free_disk_space }}{% endraw %}
+        OS: {% raw %}${{ matrix.os }}{% endraw %}
+      shell: bash
       run: |
         .scripts/free_disk_space.sh ",${FREE_DISK_SPACE},"
 {%- endif %}

@@ -1829,8 +1829,8 @@ def _add_template_files_from_workflow_settings(data, platform, template_files):
         template_files.append(f".scripts/create_pagefile{script_suffix}")
         if platform == "win":
             template_files.append(".scripts/SetPageFileSize.ps1")
-    if data["free_disk_space"] and platform in ("linux",):
-        template_files.append(f".scripts/free_disk_space{script_suffix}")
+    if data["free_disk_space"]:
+        template_files.append(".scripts/free_disk_space.sh")
 
 
 def _github_actions_specific_setup(jinja_env, forge_config, forge_dir, platform):
