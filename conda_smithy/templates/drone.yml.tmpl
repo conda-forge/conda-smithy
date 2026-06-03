@@ -6,7 +6,7 @@
 {%- set arch_drone = arch_map.get(arch_conda, arch_conda) -%}
 ---
 kind: pipeline
-name: {{ data.short_config_name }}
+name: {{ data.config_name_short }}
 
 platform:
   os: linux

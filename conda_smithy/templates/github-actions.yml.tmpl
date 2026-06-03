@@ -43,7 +43,7 @@ jobs:
           - CONFIG: {{ data.config_name }}
             STORE_BUILD_ARTIFACTS: {{ data.store_build_artifacts is true }}
         {%- if data.store_build_artifacts %}
-            SHORT_CONFIG: {{ data.short_config_name }}
+            CONFIG_SHORT: {{ data.config_name_short }}
         {%- endif %}
             UPLOAD_PACKAGES: {{ data.upload }}
             os: {{ data.gha_os }}
@@ -265,7 +265,7 @@ jobs:
         CONDA_BLD_PATH: {% raw %}${{ matrix.build_workspace_dir }}{% endraw %}
         CI: github_actions
         CONFIG: {% raw %}${{ matrix.CONFIG }}{% endraw %}
-        SHORT_CONFIG: {% raw %}${{ matrix.SHORT_CONFIG }}{% endraw %}
+        CONFIG_SHORT: {% raw %}${{ matrix.CONFIG_SHORT }}{% endraw %}
         JOB_STATUS: {% raw %}${{ steps.determine-status.outputs.status }}{% endraw %}
         OS: {% raw %}${{ matrix.os }}{% endraw %}
       run: |
