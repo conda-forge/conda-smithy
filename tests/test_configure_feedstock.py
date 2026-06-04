@@ -2487,7 +2487,7 @@ def test_store_build_artifacts_gha(
     matrix = workflow["jobs"]["build"]["strategy"]["matrix"]["include"]
     assert all(entry["STORE_BUILD_ARTIFACTS"] is value for entry in matrix)
     if value:
-        assert all(entry.get("SHORT_CONFIG") for entry in matrix)
+        assert all(entry.get("CONFIG_SHORT") for entry in matrix)
 
     # check that artifacts steps are output / not output
     steps = workflow["jobs"]["build"]["steps"]
@@ -2561,7 +2561,7 @@ def test_store_build_artifacts_azure(
         matrix = workflow["jobs"][0]["strategy"]["matrix"]
         assert all(entry["store_build_artifacts"] is value for entry in matrix.values())
         if value:
-            assert all(entry.get("SHORT_CONFIG") for entry in matrix.values())
+            assert all(entry.get("CONFIG_SHORT") for entry in matrix.values())
 
         # check that artifacts steps are output / not output
         steps = workflow["jobs"][0]["steps"]
