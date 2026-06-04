@@ -4,10 +4,11 @@
 #
 # CI (azure/github_actions/UNSET)
 # CI_RUN_ID (unique identifier for the CI job run)
-# FEEDSTOCK_NAME
-# CONFIG (build matrix configuration string)
-# SHORT_CONFIG (uniquely-shortened configuration string)
 # CONDA_BLD_PATH (path to the conda-bld directory)
+# CONFIG (build matrix configuration string)
+# CONFIG_SHORT (uniquely-shortened configuration string)
+# FEEDSTOCK_NAME
+# Optional:
 # ARTIFACT_STAGING_DIR (use working directory if unset)
 # BLD_ARTIFACT_PREFIX (prefix for the conda build artifact name, skip if unset)
 # ENV_ARTIFACT_PREFIX (prefix for the conda build environments artifact name, skip if unset)
@@ -49,7 +50,7 @@ fi
 # Set a unique ID for the artifact(s), specialized for this particular job run
 ARTIFACT_UNIQUE_ID="${CI_RUN_ID}_${CONFIG}"
 if [[ {% raw %}${#ARTIFACT_UNIQUE_ID}{% endraw %} -gt 80 ]]; then
-    ARTIFACT_UNIQUE_ID="${CI_RUN_ID}_${SHORT_CONFIG}"
+    ARTIFACT_UNIQUE_ID="${CI_RUN_ID}_${CONFIG_SHORT}"
 fi
 echo "ARTIFACT_UNIQUE_ID: $ARTIFACT_UNIQUE_ID"
 
