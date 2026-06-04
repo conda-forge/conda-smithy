@@ -640,99 +640,6 @@
       "title": "ConditionalValue_<class 'str'>",
       "type": "object"
     },
-    "ConditionalValue_bool___list_Literal__apt____cache____docker___": {
-      "properties": {
-        "os": {
-          "anyOf": [
-            {
-              "items": {
-                "$ref": "#/$defs/PlatformsAliases"
-              },
-              "type": "array"
-            },
-            {
-              "$ref": "#/$defs/PlatformsAliases"
-            },
-            {
-              "$ref": "#/$defs/Nullable"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "description": "Operating systems to set environment variable on (default: all)",
-          "title": "Os"
-        },
-        "platform": {
-          "anyOf": [
-            {
-              "items": {
-                "$ref": "#/$defs/Platforms"
-              },
-              "type": "array"
-            },
-            {
-              "$ref": "#/$defs/Platforms"
-            },
-            {
-              "$ref": "#/$defs/Nullable"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "description": "Platforms to set environment variable on (default: all)",
-          "title": "Platform"
-        },
-        "provider": {
-          "anyOf": [
-            {
-              "items": {
-                "$ref": "#/$defs/CIservices"
-              },
-              "type": "array"
-            },
-            {
-              "$ref": "#/$defs/CIservices"
-            },
-            {
-              "$ref": "#/$defs/Nullable"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "description": "CI providers to set environment variable on (default: all)",
-          "title": "Provider"
-        },
-        "value": {
-          "anyOf": [
-            {
-              "type": "boolean"
-            },
-            {
-              "items": {
-                "enum": [
-                  "apt",
-                  "cache",
-                  "docker"
-                ],
-                "type": "string"
-              },
-              "type": "array"
-            }
-          ],
-          "default": false,
-          "description": "Option value",
-          "title": "Value"
-        }
-      },
-      "title": "ConditionalValue_bool | list[typing.Literal['apt', 'cache', 'docker']]",
-      "type": "object"
-    },
     "DefaultTestPlatforms": {
       "enum": [
         "all",
@@ -1044,6 +951,99 @@
       "title": "ShellCheck",
       "type": "object"
     },
+    "Union_bool__list_Literal__apt____cache____docker____": {
+      "properties": {
+        "os": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/PlatformsAliases"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/PlatformsAliases"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Operating systems to set environment variable on (default: all)",
+          "title": "Os"
+        },
+        "platform": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/Platforms"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/Platforms"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Platforms to set environment variable on (default: all)",
+          "title": "Platform"
+        },
+        "provider": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/CIservices"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/CIservices"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "CI providers to set environment variable on (default: all)",
+          "title": "Provider"
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "items": {
+                "enum": [
+                  "apt",
+                  "cache",
+                  "docker"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            }
+          ],
+          "default": false,
+          "description": "Option value",
+          "title": "Value"
+        }
+      },
+      "title": "ConditionalValue_typing.Union[bool, list[typing.Literal['apt', 'cache', 'docker']]]",
+      "type": "object"
+    },
     "WorkflowSettings": {
       "properties": {
         "store_build_artifacts": {
@@ -1152,7 +1152,7 @@
             },
             {
               "items": {
-                "$ref": "#/$defs/ConditionalValue_bool___list_Literal__apt____cache____docker___"
+                "$ref": "#/$defs/Union_bool__list_Literal__apt____cache____docker____"
               },
               "type": "array"
             },
