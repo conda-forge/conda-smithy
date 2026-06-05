@@ -30,7 +30,7 @@ if [[ ${FREE_DISK_SPACE} == *,cache,* ]]; then
         /Users/runner/.dotnet
         /Users/runner/hostedtoolcache
       )
-      sudo rm -rf "${DIRS_TO_REMOVE[@]}" || true
+      rm -rf "${DIRS_TO_REMOVE[@]}"
       ;;
     windows)
       DIRS_TO_REMOVE=(
