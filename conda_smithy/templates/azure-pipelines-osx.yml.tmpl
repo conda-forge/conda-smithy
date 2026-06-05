@@ -24,7 +24,7 @@ jobs:
 {%- endif %}
 {%- if vars.free_disk_space %}
   - script: |
-      .scripts/free_disk_space.sh ",$(free_disk_space),"
+      .scripts/free_disk_space.sh "$(free_disk_space)"
     env:
       OS: macos
     displayName: Manage disk space

@@ -2,7 +2,9 @@
 
 set -ex
 
-FREE_DISK_SPACE=${1}
+# Commas added to facilitate poor man's list membership matching.
+# This ensures that we can match any member without accidentally matching substrings.
+FREE_DISK_SPACE=,${1},
 
 if [[ ${FREE_DISK_SPACE} == *,cache,* ]]; then
   case ${OS} in

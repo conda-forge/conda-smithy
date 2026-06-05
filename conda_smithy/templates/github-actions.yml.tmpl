@@ -76,7 +76,7 @@ jobs:
         OS: {% raw %}${{ matrix.os }}{% endraw %}
       shell: bash
       run: |
-        .scripts/free_disk_space.sh ",${FREE_DISK_SPACE},"
+        .scripts/free_disk_space.sh "${FREE_DISK_SPACE}"
 {%- endif %}
 
     - name: Build on Linux

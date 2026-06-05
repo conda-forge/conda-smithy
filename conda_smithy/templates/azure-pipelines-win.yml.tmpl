@@ -26,7 +26,7 @@ jobs:
 {%- endif %}
 {%- if vars.free_disk_space %}
     - bash: |
-        .scripts/free_disk_space.sh ",$(free_disk_space),"
+        .scripts/free_disk_space.sh "$(free_disk_space)"
       displayName: Manage disk space
       env:
         OS: windows
