@@ -42,7 +42,7 @@
           ],
           "default": false,
           "deprecated": true,
-          "description": "Deprecated. Use `workflow_settings.free_disk_space` instead.\nFree up disk space before running the Docker container for building on Linux.\nThe following components can be cleaned up: `apt`, `cache`, `docker`.\nWhen set to `true`, only `apt` and `cache` are cleaned up.\nSet it to the full list to clean up all components.",
+          "description": "Deprecated. Use `workflow_settings.free_disk_space` instead.\nFree up disk space before build.\nThe following components can be cleaned up: `apt`, `cache`, `docker`.\nWhen set to `true`, only `apt` and `cache` are cleaned up.\nSet it to the full list to clean up all components.",
           "title": "Free Disk Space"
         },
         "max_parallel": {
@@ -703,7 +703,7 @@
           ],
           "default": false,
           "deprecated": true,
-          "description": "Deprecated. Use `workflow_settings.free_disk_space` instead.\nFree up disk space before running the Docker container for building on Linux.\nThe following components can be cleaned up: `apt`, `cache`, `docker`.\nWhen set to `true`, only `apt` and `cache` are cleaned up.\nSet it to the full list to clean up all components.",
+          "description": "Deprecated. Use `workflow_settings.free_disk_space` instead.\nFree up disk space building.\nThe following components can be cleaned up: `apt`, `cache`, `docker`.\nWhen set to `true`, only `apt` and `cache` are cleaned up.\nSet it to the full list to clean up all components.",
           "title": "Free Disk Space"
         },
         "max_parallel": {
@@ -1164,7 +1164,7 @@
             }
           ],
           "default": [],
-          "description": "Free up disk space before running the Docker container for building on Linux.\nThe following components can be cleaned up: `apt`, `cache`, `docker`.\nWhen set to `true`, only `apt` and `cache` are cleaned up.\nSet it to the full list to clean up all components.",
+          "description": "Free up disk space before building.\nThe following components can be cleaned up: `apt`, `cache`, `docker`.\nWhen set to `true`, only `apt` and `cache` are cleaned up.\nSet it to the full list to clean up all components.",
           "title": "Free Disk Space"
         }
       },
