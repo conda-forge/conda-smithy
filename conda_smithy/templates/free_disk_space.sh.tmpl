@@ -6,6 +6,8 @@ set -ex
 # This ensures that we can match any member without accidentally matching substrings.
 FREE_DISK_SPACE=,${1},
 
+df -h
+
 if [[ ${FREE_DISK_SPACE} == *,cache,* ]]; then
   case ${OS} in
     ubuntu)
