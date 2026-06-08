@@ -552,22 +552,34 @@ class WorkflowSettings(BaseModel):
 
     free_disk_space: Optional[
         Union[
-            bool,
-            list[Literal["apt", "cache", "docker"]],
-            list[
-                conditional_value(
-                    Union[bool, list[Literal["apt", "cache", "docker"]]], False
-                )
-            ],
+            Literal["no", "quick", "max"],
+            list[conditional_value(Union[Literal["no", "quick", "max"]], "no")],
             Nullable,
         ]
     ] = Field(
         default=[],
-        description=cleandoc("""
+        description=cleandoc(r"""
         Free up disk space before building.
-        The following components can be cleaned up: `apt`, `cache`, `docker`.
-        When set to `true`, only `apt` and `cache` are cleaned up.
-        Set it to the full list to clean up all components.
+        Takes one of the following values:
+
+        - `no` not to clean anything (the default)
+        - `quick` to clean a subset of components that should yield
+          a quick space gain
+        - `max` for the most significant space gain
+
+        On all platforms, `quick` removes a number of unnecessary system
+        tools. On Linux, it additionally uninstall a few large system
+        packages.
+
+        The `max` option additionally prunes unnecessary Docker images
+        on Linux.
+
+        The extent of cleanup may change in the future. However, changes
+        will only propagate through rerendering.
+
+        Please note that on Windows only C:\ drive is cleaned up, so
+        using cleanup is only beneficial if this drive is used for
+        `tools_install_dir`, `build_workspace_dir` or the page file.
         """),
     )
 

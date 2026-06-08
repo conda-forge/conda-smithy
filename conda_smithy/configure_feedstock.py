@@ -1829,7 +1829,7 @@ def _add_template_files_from_workflow_settings(data, platform, template_files):
         template_files.append(f".scripts/create_pagefile{script_suffix}")
         if platform == "win":
             template_files.append(".scripts/SetPageFileSize.ps1")
-    if data["free_disk_space"]:
+    if data["free_disk_space"] != "no":
         template_files.append(".scripts/free_disk_space.sh")
 
 
@@ -2518,10 +2518,21 @@ def _read_forge_config(forge_dir, forge_yml=None):
                     )
             else:
                 # Convert old keys to new settings.
+                value = config[provider][setting]
+                if setting == "free_disk_space":
+                    # This isn't 100% accurate, but we don't really
+                    # expect anything but False, True and the full list.
+                    if isinstance(value, list) and "docker" in value:
+                        value = "max"
+                    elif value:
+                        value = "quick"
+                    else:
+                        value = "no"
+
                 config["workflow_settings"][setting].append(
                     {
                         "provider": provider,
-                        "value": config[provider][setting],
+                        "value": value,
                     }
                 )
 
@@ -2617,26 +2628,6 @@ def _read_forge_config(forge_dir, forge_yml=None):
                     ),
                 }
             )
-
-    # `workflow_settings.free_disk_space` can be either:
-    # - an inline boolean value for all workflows
-    # - a list of strings for all workflows
-    # - a workflow-dict list
-    # we assume that an empty list is the last one
-    free_disk_space = config["workflow_settings"]["free_disk_space"]
-    if not isinstance(free_disk_space, list) or (
-        free_disk_space and not isinstance(free_disk_space[0], dict)
-    ):
-        free_disk_space = config["workflow_settings"]["free_disk_space"] = [
-            {"value": free_disk_space}
-        ]
-    for item in free_disk_space:
-        if item["value"] is True:
-            item["value"] = ["apt", "cache"]
-        elif item["value"] is False:
-            item["value"] = []
-        # Copy the value to prevent pyyaml from creating anchors.
-        item["value"] = ",".join(item["value"])
 
     # check for conda-smithy 2.x matrix which we can't auto-migrate
     # to conda_build_config

@@ -898,60 +898,7 @@
       "title": "Lints",
       "type": "string"
     },
-    "Nullable": {
-      "description": "Created to avoid issue with schema validation of null values in lists or dicts.",
-      "enum": [
-        null
-      ],
-      "title": "Nullable"
-    },
-    "Platforms": {
-      "enum": [
-        "emscripten_wasm32",
-        "wasi_wasm32",
-        "freebsd_64",
-        "linux_32",
-        "linux_64",
-        "linux_aarch64",
-        "linux_armv6l",
-        "linux_armv7l",
-        "linux_ppc64",
-        "linux_ppc64le",
-        "linux_riscv64",
-        "linux_s390x",
-        "osx_64",
-        "osx_arm64",
-        "win_32",
-        "win_64",
-        "win_arm64",
-        "zos_z"
-      ],
-      "title": "Platforms",
-      "type": "string"
-    },
-    "PlatformsAliases": {
-      "enum": [
-        "linux",
-        "win",
-        "osx"
-      ],
-      "title": "PlatformsAliases",
-      "type": "string"
-    },
-    "ShellCheck": {
-      "additionalProperties": false,
-      "properties": {
-        "enabled": {
-          "default": false,
-          "description": "Whether to use shellcheck to lint shell scripts",
-          "title": "Enabled",
-          "type": "boolean"
-        }
-      },
-      "title": "ShellCheck",
-      "type": "object"
-    },
-    "Union_bool__list_Literal__apt____cache____docker____": {
+    "Literal__no____quick____max__": {
       "properties": {
         "os": {
           "anyOf": [
@@ -1020,28 +967,71 @@
           "title": "Provider"
         },
         "value": {
-          "anyOf": [
-            {
-              "type": "boolean"
-            },
-            {
-              "items": {
-                "enum": [
-                  "apt",
-                  "cache",
-                  "docker"
-                ],
-                "type": "string"
-              },
-              "type": "array"
-            }
-          ],
-          "default": false,
+          "default": "no",
           "description": "Option value",
-          "title": "Value"
+          "enum": [
+            "no",
+            "quick",
+            "max"
+          ],
+          "title": "Value",
+          "type": "string"
         }
       },
-      "title": "ConditionalValue_typing.Union[bool, list[typing.Literal['apt', 'cache', 'docker']]]",
+      "title": "ConditionalValue_typing.Literal['no', 'quick', 'max']",
+      "type": "object"
+    },
+    "Nullable": {
+      "description": "Created to avoid issue with schema validation of null values in lists or dicts.",
+      "enum": [
+        null
+      ],
+      "title": "Nullable"
+    },
+    "Platforms": {
+      "enum": [
+        "emscripten_wasm32",
+        "wasi_wasm32",
+        "freebsd_64",
+        "linux_32",
+        "linux_64",
+        "linux_aarch64",
+        "linux_armv6l",
+        "linux_armv7l",
+        "linux_ppc64",
+        "linux_ppc64le",
+        "linux_riscv64",
+        "linux_s390x",
+        "osx_64",
+        "osx_arm64",
+        "win_32",
+        "win_64",
+        "win_arm64",
+        "zos_z"
+      ],
+      "title": "Platforms",
+      "type": "string"
+    },
+    "PlatformsAliases": {
+      "enum": [
+        "linux",
+        "win",
+        "osx"
+      ],
+      "title": "PlatformsAliases",
+      "type": "string"
+    },
+    "ShellCheck": {
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "default": false,
+          "description": "Whether to use shellcheck to lint shell scripts",
+          "title": "Enabled",
+          "type": "boolean"
+        }
+      },
+      "title": "ShellCheck",
       "type": "object"
     },
     "WorkflowSettings": {
@@ -1137,22 +1127,16 @@
         "free_disk_space": {
           "anyOf": [
             {
-              "type": "boolean"
+              "enum": [
+                "no",
+                "quick",
+                "max"
+              ],
+              "type": "string"
             },
             {
               "items": {
-                "enum": [
-                  "apt",
-                  "cache",
-                  "docker"
-                ],
-                "type": "string"
-              },
-              "type": "array"
-            },
-            {
-              "items": {
-                "$ref": "#/$defs/Union_bool__list_Literal__apt____cache____docker____"
+                "$ref": "#/$defs/Literal__no____quick____max__"
               },
               "type": "array"
             },
@@ -1164,7 +1148,7 @@
             }
           ],
           "default": [],
-          "description": "Free up disk space before building.\nThe following components can be cleaned up: `apt`, `cache`, `docker`.\nWhen set to `true`, only `apt` and `cache` are cleaned up.\nSet it to the full list to clean up all components.",
+          "description": "Free up disk space before building.\nTakes one of the following values:\n\n- `no` not to clean anything (the default)\n- `quick` to clean a subset of components that should yield\n  a quick space gain\n- `max` for the most significant space gain\n\nOn all platforms, `quick` removes a number of unnecessary system\ntools. On Linux, it additionally uninstall a few large system\npackages.\n\nThe `max` option additionally prunes unnecessary Docker images\non Linux.\n\nThe extent of cleanup may change in the future. However, changes\nwill only propagate through rerendering.\n\nPlease note that on Windows only C:\\ drive is cleaned up, so\nusing cleanup is only beneficial if this drive is used for\n`tools_install_dir`, `build_workspace_dir` or the page file.",
           "title": "Free Disk Space"
         }
       },

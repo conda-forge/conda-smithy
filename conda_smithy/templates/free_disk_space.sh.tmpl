@@ -2,61 +2,61 @@
 
 set -ex
 
-# Commas added to facilitate poor man's list membership matching.
-# This ensures that we can match any member without accidentally matching substrings.
-FREE_DISK_SPACE=,${1},
+FREE_DISK_SPACE=${1}
+
+if [[ ${FREE_DISK_SPACE} == no ]]; then
+  exit 0
+fi
 
 df -h
 
-if [[ ${FREE_DISK_SPACE} == *,cache,* ]]; then
-  case ${OS} in
-    ubuntu)
-      DIRS_TO_REMOVE=(
-        /opt/ghc
-        /opt/hostedtoolcache
-        /usr/lib/jvm
-        /usr/local/.ghcup
-        /usr/local/lib/android
-        /usr/local/share/powershell
-        /usr/share/dotnet
-        /usr/share/swift
-      )
+case ${OS} in
+  ubuntu)
+    DIRS_TO_REMOVE=(
+      /opt/ghc
+      /opt/hostedtoolcache
+      /usr/lib/jvm
+      /usr/local/.ghcup
+      /usr/local/lib/android
+      /usr/local/share/powershell
+      /usr/share/dotnet
+      /usr/share/swift
+    )
 
-      sudo rm -rf "${DIRS_TO_REMOVE[@]}"
-      ;;
-    macos)
-      DIRS_TO_REMOVE=(
-        /Users/runner/Library/Android
-        /Users/runner/.dotnet
-        /Users/runner/hostedtoolcache
-      )
-      rm -rf "${DIRS_TO_REMOVE[@]}"
-      ;;
-    windows)
-      DIRS_TO_REMOVE=(
-        C:/hostedtoolcache/windows
-        C:/Android
-      )
+    sudo rm -rf "${DIRS_TO_REMOVE[@]}"
 
-      # rm is one of the fastest methods to remove files on Windows
-      rm -rf "${DIRS_TO_REMOVE[@]}"
-      ;;
-  esac
-fi
+    if type apt-get; then
+      BROWSERS="firefox google-chrome-stable microsoft-edge-stable"
+      BROWSERS_TO_REMOVE=$(dpkg --get-selections $BROWSERS 2>/dev/null | awk '{print $1}')
+      if [[ -n ${BROWSERS_TO_REMOVE} ]]; then
+        sudo apt-get remove --purge -y $BROWSERS_TO_REMOVE
+      fi
 
-if [[ ${FREE_DISK_SPACE} == *,apt,* && ${OS} == ubuntu ]] && type apt-get; then
-  BROWSERS="firefox google-chrome-stable microsoft-edge-stable"
-  BROWSERS_TO_REMOVE=$(dpkg --get-selections $BROWSERS 2>/dev/null | awk '{print $1}')
-  if [[ -n ${BROWSERS_TO_REMOVE} ]]; then
-    sudo apt-get remove --purge -y $BROWSERS_TO_REMOVE
-  fi
+      sudo apt-get autoremove -y >& /dev/null
+      sudo apt-get autoclean -y >& /dev/null
+    fi
 
-  sudo apt-get autoremove -y >& /dev/null
-  sudo apt-get autoclean -y >& /dev/null
-fi
+    if [[ ${FREE_DISK_SPACE} == max ]] && type docker; then
+      sudo docker image prune --all --force
+    fi
+    ;;
+  macos)
+    DIRS_TO_REMOVE=(
+      /Users/runner/Library/Android
+      /Users/runner/.dotnet
+      /Users/runner/hostedtoolcache
+    )
+    rm -rf "${DIRS_TO_REMOVE[@]}"
+    ;;
+  windows)
+    DIRS_TO_REMOVE=(
+      C:/hostedtoolcache/windows
+      C:/Android
+    )
 
-if [[ ${FREE_DISK_SPACE} == *,docker,* && ${OS} == ubuntu ]] && type docker; then
-  sudo docker image prune --all --force
-fi
+    # rm is one of the fastest methods to remove files on Windows
+    rm -rf "${DIRS_TO_REMOVE[@]}"
+    ;;
+esac
 
 df -h
