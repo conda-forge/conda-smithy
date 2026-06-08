@@ -1,7 +1,9 @@
 import copy
 import json
+import logging
 import os
 import sys
+import time
 from collections.abc import Mapping
 from functools import lru_cache
 from glob import glob
@@ -91,6 +93,12 @@ from conda_smithy.utils import get_yaml, render_meta_yaml
 from conda_smithy.validate_schema import validate_json_schema
 
 NEEDED_FAMILIES = ["gpl", "bsd", "mit", "apache", "psf"]
+
+LOGGER = logging.getLogger(__name__)
+
+#: HTTP statuses that indicate a transient failure (rate limit / server error)
+#: rather than a definitive answer about whether a maintainer exists.
+_TRANSIENT_STATUS = frozenset({429, 500, 502, 503, 504})
 
 
 def _get_feedstock_config(recipe_dir: Optional[str] = None) -> dict:
@@ -455,8 +463,52 @@ def _cached_gh() -> github.Github:
     return _cached_gh_with_token(os.environ["GH_TOKEN"])
 
 
-def _maintainer_exists(maintainer: str) -> bool:
-    """Check if a maintainer exists on GitHub."""
+def _head_with_retries(url: str, *, retries: int = 4) -> Optional[requests.Response]:
+    """HEAD a URL, retrying transient/rate-limit statuses with backoff.
+
+    Returns the last response received, or ``None`` if every attempt raised a
+    network error. Redirects are not followed so the status code reflects the
+    exact URL requested.
+    """
+    backoff = 1.0
+    resp = None
+    for attempt in range(retries):
+        try:
+            resp = requests.head(url, allow_redirects=False, timeout=30)
+        except requests.RequestException as exc:
+            LOGGER.warning(
+                "HEAD %s failed (attempt %d/%d): %r",
+                url,
+                attempt + 1,
+                retries,
+                exc,
+            )
+            resp = None
+        else:
+            if resp.status_code not in _TRANSIENT_STATUS:
+                return resp
+            LOGGER.warning(
+                "HEAD %s -> %d (attempt %d/%d), retrying",
+                url,
+                resp.status_code,
+                attempt + 1,
+                retries,
+            )
+        if attempt < retries - 1:
+            time.sleep(backoff)
+            backoff *= 2
+    return resp
+
+
+def _maintainer_exists(maintainer: str) -> Optional[bool]:
+    """Check if a maintainer exists on GitHub.
+
+    Returns ``True`` if the maintainer is a known GitHub user, ``False`` if they
+    are definitively absent (no such account, or the username was renamed), and
+    ``None`` if the check could not be completed due to a transient error (rate
+    limit, server error, network failure) so callers can surface a hint instead
+    of a false-positive lint.
+    """
     if "GH_TOKEN" in os.environ:
         # use a token if we have one
         gh = _cached_gh()
@@ -465,6 +517,12 @@ def _maintainer_exists(maintainer: str) -> bool:
             is_user = True
         except github.UnknownObjectException:
             is_user = False
+        except github.GithubException as exc:
+            # rate limit / server error / etc. - undetermined
+            LOGGER.warning(
+                "Could not confirm maintainer %r exists: %r", maintainer, exc
+            )
+            return None
 
         # for w/e reason, the user endpoint returns an entry for orgs
         # however the org endpoint does not return an entry for users
@@ -474,6 +532,13 @@ def _maintainer_exists(maintainer: str) -> bool:
             is_org = True
         except github.UnknownObjectException:
             is_org = False
+        except github.GithubException as exc:
+            LOGGER.warning(
+                "Could not confirm maintainer %r exists: %r", maintainer, exc
+            )
+            return None
+
+        return is_user and not is_org
     else:
         # this API request has no token and so has a restrictive rate limit
         # return (
@@ -488,18 +553,29 @@ def _maintainer_exists(maintainer: str) -> bool:
         #    orgs so we make sure it fails
         # we do not allow redirects to ensure we get the correct status code
         # for the specific URL we requested
-        req_profile = requests.head(
-            f"https://github.com/{maintainer}",
-            allow_redirects=False,
-        )
-        is_user = req_profile.status_code == 200
-        req_org = requests.head(
-            f"https://github.com/orgs/{maintainer}/teams",
-            allow_redirects=False,
-        )
+        req_profile = _head_with_retries(f"https://github.com/{maintainer}")
+        # Undetermined: network failure or a persistent rate-limit/5xx.
+        if req_profile is None or req_profile.status_code in _TRANSIENT_STATUS:
+            LOGGER.warning(
+                "Could not confirm maintainer %r exists (status=%s)",
+                maintainer,
+                None if req_profile is None else req_profile.status_code,
+            )
+            return None
+        # 200 -> exists; 404 or a 3xx redirect (renamed/invalid username) -> absent
+        if req_profile.status_code != 200:
+            return False
+        # The account exists; make sure it is a user and not an org/team.
+        req_org = _head_with_retries(f"https://github.com/orgs/{maintainer}/teams")
+        if req_org is None or req_org.status_code in _TRANSIENT_STATUS:
+            LOGGER.warning(
+                "Could not confirm maintainer %r is a user (org status=%s)",
+                maintainer,
+                None if req_org is None else req_org.status_code,
+            )
+            return None
         is_org = req_org.status_code < 400
-
-    return is_user and not is_org
+        return not is_org
 
 
 @lru_cache(maxsize=1)
@@ -512,8 +588,13 @@ def _cached_gh_team(org: str, team: str) -> github.Team.Team:
     return _cached_gh_org(org).get_team_by_slug(team)
 
 
-def _team_exists(org_team: str) -> bool:
-    """Check if a team exists on GitHub."""
+def _team_exists(org_team: str) -> Optional[bool]:
+    """Check if a team exists on GitHub.
+
+    Returns ``True`` if the team exists, ``False`` if it does not, and ``None``
+    if the check could not be completed (no token available, or a transient
+    GitHub error).
+    """
     if "GH_TOKEN" in os.environ:
         _res = org_team.split("/", 1)
         if len(_res) != 2:
@@ -523,9 +604,13 @@ def _team_exists(org_team: str) -> bool:
             _cached_gh_team(org, team)
         except github.UnknownObjectException:
             return False
+        except github.GithubException as exc:
+            LOGGER.warning("Could not confirm team %r exists: %r", org_team, exc)
+            return None
         return True
     else:
-        # we cannot check without a token
+        # we cannot check without a token, so assume it exists to avoid
+        # emitting a hint for every team on the unauthenticated linting path
         return True
 
 
@@ -569,19 +654,24 @@ def run_conda_forge_specific(
     # 2: Check that the recipe maintainers exists:
     for maintainer in maintainers:
         if "/" in maintainer:
-            if not _team_exists(maintainer):
-                lints.append(
-                    msg.cf.MaintainerMissing(
-                        maintainer=maintainer, path=recipe_fname
-                    ).as_string()
-                )
+            exists = _team_exists(maintainer)
         else:
-            if not _maintainer_exists(maintainer):
-                lints.append(
-                    msg.cf.MaintainerMissing(
-                        maintainer=maintainer, path=recipe_fname
-                    ).as_string()
-                )
+            exists = _maintainer_exists(maintainer)
+        if exists is False:
+            lints.append(
+                msg.cf.MaintainerMissing(
+                    maintainer=maintainer, path=recipe_fname
+                ).as_string()
+            )
+        elif exists is None:
+            # the existence check could not be completed (e.g. GitHub rate
+            # limit); fail the lint and ask for it to be retried rather than
+            # risk a false-positive or false-negative
+            lints.append(
+                msg.cf.InconclusiveMaintainerCheck(
+                    maintainer=maintainer, path=recipe_fname
+                ).as_string()
+            )
 
     # 3: if the recipe dir is inside the example dir
     # moved to staged-recipes directly

@@ -4867,5 +4867,135 @@ def test_deprecated_environment_variables(tmp_path):
     assert expected.issubset(hints)
 
 
+class _FakeResponse:
+    def __init__(self, status_code):
+        self.status_code = status_code
+
+
+@pytest.fixture
+def no_gh_token(monkeypatch):
+    monkeypatch.delenv("GH_TOKEN", raising=False)
+
+
+@pytest.fixture
+def _no_sleep(monkeypatch):
+    monkeypatch.setattr(linter.time, "sleep", lambda *a, **k: None)
+
+
+def _patch_head(monkeypatch, responses):
+    """Patch requests.head used by _head_with_retries.
+
+    ``responses`` maps a URL substring to either a status code (int) or an
+    exception instance to raise.
+    """
+    calls = []
+
+    def fake_head(url, **kwargs):
+        calls.append(url)
+        for key, value in responses.items():
+            if key in url:
+                if isinstance(value, Exception):
+                    raise value
+                return _FakeResponse(value)
+        raise AssertionError(f"unexpected HEAD {url}")
+
+    monkeypatch.setattr(linter.requests, "head", fake_head)
+    return calls
+
+
+def test_maintainer_exists_no_token_user_ok(monkeypatch, no_gh_token, _no_sleep):
+    _patch_head(
+        monkeypatch,
+        {"github.com/chrisburr": 200, "orgs/chrisburr/teams": 404},
+    )
+    assert linter._maintainer_exists("chrisburr") is True
+
+
+def test_maintainer_exists_no_token_missing(monkeypatch, no_gh_token, _no_sleep):
+    _patch_head(monkeypatch, {"github.com/nope": 404})
+    assert linter._maintainer_exists("nope") is False
+
+
+def test_maintainer_exists_no_token_renamed_redirect(
+    monkeypatch, no_gh_token, _no_sleep
+):
+    # a renamed account returns a 3xx redirect -> stays flagged as missing
+    _patch_head(monkeypatch, {"github.com/renamed": 301})
+    assert linter._maintainer_exists("renamed") is False
+
+
+def test_maintainer_exists_no_token_is_org(monkeypatch, no_gh_token, _no_sleep):
+    _patch_head(
+        monkeypatch,
+        {"github.com/conda-forge": 200, "orgs/conda-forge/teams": 200},
+    )
+    assert linter._maintainer_exists("conda-forge") is False
+
+
+def test_maintainer_exists_no_token_rate_limited(monkeypatch, no_gh_token, _no_sleep):
+    # a persistent 429 is undetermined -> None, and we retry
+    calls = _patch_head(monkeypatch, {"github.com/chrisburr": 429})
+    assert linter._maintainer_exists("chrisburr") is None
+    assert len(calls) > 1  # retried
+
+
+def test_maintainer_exists_no_token_network_error(monkeypatch, no_gh_token, _no_sleep):
+    _patch_head(
+        monkeypatch,
+        {"github.com/chrisburr": linter.requests.RequestException("boom")},
+    )
+    assert linter._maintainer_exists("chrisburr") is None
+
+
+def test_maintainer_exists_no_token_org_check_rate_limited(
+    monkeypatch, no_gh_token, _no_sleep
+):
+    # user resolves but the org disambiguation is rate limited -> undetermined
+    _patch_head(
+        monkeypatch,
+        {"github.com/chrisburr": 200, "orgs/chrisburr/teams": 503},
+    )
+    assert linter._maintainer_exists("chrisburr") is None
+
+
+def test_maintainer_exists_token_rate_limited(monkeypatch):
+    monkeypatch.setenv("GH_TOKEN", "x")
+
+    class _FakeGH:
+        def get_user(self, login):
+            raise linter.github.GithubException(403, {"message": "rate limit"}, None)
+
+        def get_organization(self, login):
+            raise AssertionError("should not be reached")
+
+    monkeypatch.setattr(linter, "_cached_gh", lambda: _FakeGH())
+    assert linter._maintainer_exists("chrisburr") is None
+
+
+def test_run_conda_forge_specific_routes_unverified_to_lints(monkeypatch):
+    # None from the existence check fails the lint (asking for a retry),
+    # rather than reporting the maintainer as missing
+    monkeypatch.setattr(linter, "_maintainer_exists", lambda m: None)
+    monkeypatch.setattr(linter, "load_linter_toml_metdata", lambda: {})
+    meta = {"extra": {"recipe-maintainers": ["chrisburr"]}}
+    lints, hints = [], []
+    linter.run_conda_forge_specific(meta, None, lints, hints)
+    assert not any("does not exist" in lint for lint in lints)
+    assert any(
+        'Could not verify that recipe maintainer "chrisburr" exists' in lint
+        for lint in lints
+    )
+
+
+def test_run_conda_forge_specific_routes_missing_to_lints(monkeypatch):
+    monkeypatch.setattr(linter, "_maintainer_exists", lambda m: False)
+    monkeypatch.setattr(linter, "load_linter_toml_metdata", lambda: {})
+    meta = {"extra": {"recipe-maintainers": ["nope"]}}
+    lints, hints = [], []
+    linter.run_conda_forge_specific(meta, None, lints, hints)
+    assert any('Recipe maintainer "nope" does not exist' in lint for lint in lints)
+    assert not any("Could not verify" in hint for hint in hints)
+
+
 if __name__ == "__main__":
     unittest.main()
