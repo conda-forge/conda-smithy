@@ -1,6 +1,6 @@
 **Added:**
 
-* Add support for Depot.dev Github Actions runners via ``--with-depot`` and ``--without-depot`` CLI flags.
+* Add support for Depot.dev Github Actions runners via ``--with-depot`` and ``--without-depot`` CLI flags. (#2573)
 
 **Changed:**
 
