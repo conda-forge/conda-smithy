@@ -1829,7 +1829,7 @@ def _add_template_files_from_workflow_settings(data, platform, template_files):
         template_files.append(f".scripts/create_pagefile{script_suffix}")
         if platform == "win":
             template_files.append(".scripts/SetPageFileSize.ps1")
-    if data["free_disk_space"] != "no":
+    if data["free_disk_space"] != "none":
         template_files.append(".scripts/free_disk_space.sh")
 
 
@@ -2527,7 +2527,7 @@ def _read_forge_config(forge_dir, forge_yml=None):
                     elif value:
                         value = "quick"
                     else:
-                        value = "no"
+                        value = "none"
 
                 config["workflow_settings"][setting].append(
                     {

@@ -3440,9 +3440,9 @@ def test_pagefile_size_gha(py_recipe, jinja_env, caplog, value: int | None):
 @pytest.mark.parametrize(
     "value,expected",
     [
-        (False, "no"),
+        (False, "none"),
         (True, "quick"),
-        ([], "no"),
+        ([], "none"),
         (["apt", "cache"], "quick"),
         (["apt", "cache", "docker"], "max"),
     ],
@@ -3482,12 +3482,14 @@ def test_free_disk_space_gha_old(
     # check that artifacts steps are output / not output
     steps = workflow["jobs"]["build"]["steps"]
     step_names = set(step["name"] for step in steps)
-    assert ("Manage disk space" in step_names) == (expected != "no")
+    assert ("Manage disk space" in step_names) == (expected != "none")
 
-    assert Path(forge_dir, ".scripts/free_disk_space.sh").exists() == (expected != "no")
+    assert Path(forge_dir, ".scripts/free_disk_space.sh").exists() == (
+        expected != "none"
+    )
 
 
-@pytest.mark.parametrize("value", ["no", "quick", "max"])
+@pytest.mark.parametrize("value", ["none", "quick", "max"])
 @pytest.mark.parametrize("add_old", [False, True])
 def test_free_disk_space_gha(py_recipe, jinja_env, caplog, value: bool, add_old: bool):
     forge_dir = py_recipe.recipe
@@ -3500,12 +3502,12 @@ def test_free_disk_space_gha(py_recipe, jinja_env, caplog, value: bool, add_old:
               osx_64: github_actions
               win_64: github_actions
             workflow_settings:
-              free_disk_space: '{value}'
+              free_disk_space: {value}
         """))
         if add_old:
             f.write(textwrap.dedent(f"""\
                 github_actions:
-                  free_disk_space: {value == "no"}
+                  free_disk_space: {value == "none"}
             """))
 
     with caplog.at_level(logging.WARNING):
@@ -3533,17 +3535,17 @@ def test_free_disk_space_gha(py_recipe, jinja_env, caplog, value: bool, add_old:
     # check that artifacts steps are output / not output
     steps = workflow["jobs"]["build"]["steps"]
     step_names = set(step["name"] for step in steps)
-    assert ("Manage disk space" in step_names) == (value != "no")
+    assert ("Manage disk space" in step_names) == (value != "none")
 
-    assert Path(forge_dir, ".scripts/free_disk_space.sh").exists() == (value != "no")
+    assert Path(forge_dir, ".scripts/free_disk_space.sh").exists() == (value != "none")
 
 
 @pytest.mark.parametrize(
     "value,expected",
     [
-        (False, "no"),
+        (False, "none"),
         (True, "quick"),
-        ([], "no"),
+        ([], "none"),
         (["apt", "cache"], "quick"),
         (["apt", "cache", "docker"], "max"),
     ],
@@ -3587,12 +3589,14 @@ def test_free_disk_space_azure_old(
         # check that artifacts steps are output / not output
         steps = workflow["jobs"][0]["steps"]
         step_names = set(step["displayName"] for step in steps)
-        assert ("Manage disk space" in step_names) == (expected != "no")
+        assert ("Manage disk space" in step_names) == (expected != "none")
 
-    assert Path(forge_dir, ".scripts/free_disk_space.sh").exists() == (expected != "no")
+    assert Path(forge_dir, ".scripts/free_disk_space.sh").exists() == (
+        expected != "none"
+    )
 
 
-@pytest.mark.parametrize("value", ["no", "quick", "max"])
+@pytest.mark.parametrize("value", ["none", "quick", "max"])
 @pytest.mark.parametrize("add_old", [False, True])
 def test_free_disk_space_azure(py_recipe, jinja_env, caplog, value: str, add_old: bool):
     forge_dir = py_recipe.recipe
@@ -3605,12 +3609,12 @@ def test_free_disk_space_azure(py_recipe, jinja_env, caplog, value: str, add_old
               osx_64: azure
               win_64: azure
             workflow_settings:
-              free_disk_space: '{value}'
+              free_disk_space: {value}
         """))
         if add_old:
             f.write(textwrap.dedent(f"""\
                 azure:
-                  free_disk_space: {value == "no"}
+                  free_disk_space: {value == "none"}
             """))
 
     with caplog.at_level(logging.WARNING):
@@ -3642,6 +3646,6 @@ def test_free_disk_space_azure(py_recipe, jinja_env, caplog, value: str, add_old
         # check that artifacts steps are output / not output
         steps = workflow["jobs"][0]["steps"]
         step_names = set(step["displayName"] for step in steps)
-        assert ("Manage disk space" in step_names) == (value != "no")
+        assert ("Manage disk space" in step_names) == (value != "none")
 
-    assert Path(forge_dir, ".scripts/free_disk_space.sh").exists() == (value != "no")
+    assert Path(forge_dir, ".scripts/free_disk_space.sh").exists() == (value != "none")

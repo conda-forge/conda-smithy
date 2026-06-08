@@ -7,7 +7,7 @@
   {%- if data.store_build_artifacts %}
     {%- set vars.store_build_artifacts = True %}
   {%- endif %}
-  {%- if data.free_disk_space != "no" %}
+  {%- if data.free_disk_space != "none" %}
     {%- set vars.free_disk_space = True %}
   {%- endif %}
 {%- endfor %}
@@ -54,7 +54,7 @@ jobs:
             UPLOAD_PACKAGES: {{ data.upload }}
             build_workspace_dir: {{ data.build_workspace_dir }}
             docker_run_args: {{ data.docker_run_args }}
-            free_disk_space: "{{ data.free_disk_space }}"
+            free_disk_space: {{ data.free_disk_space }}
             os: {{ data.gha_os }}
             pagefile_size: {{ data.pagefile_size }}
             runs_on: {{ data.gha_runs_on }}

@@ -552,8 +552,8 @@ class WorkflowSettings(BaseModel):
 
     free_disk_space: Optional[
         Union[
-            Literal["no", "quick", "max"],
-            list[conditional_value(Union[Literal["no", "quick", "max"]], "no")],
+            Literal["none", "quick", "max"],
+            list[conditional_value(Union[Literal["none", "quick", "max"]], "none")],
             Nullable,
         ]
     ] = Field(
