@@ -8,7 +8,7 @@
   {%- if os == 'osx' and data.store_build_artifacts %}
     {%- set vars.store_build_artifacts = True %}
   {%- endif %}
-  {%- if os == 'osx' and data.free_disk_space %}
+  {%- if os == 'osx' and data.free_disk_space != "no" %}
     {%- set vars.free_disk_space = True %}
   {%- endif %}
 {%- endfor %}
