@@ -3437,14 +3437,19 @@ def test_pagefile_size_gha(py_recipe, jinja_env, caplog, value: int | None):
     assert Path(forge_dir, ".scripts/create_pagefile.sh").exists() is expected
 
 
-@pytest.mark.parametrize("path", ["github_actions", "workflow_settings"])
-@pytest.mark.parametrize("value", [False, True, [], ["apt", "cache", "docker"]])
-@pytest.mark.parametrize("add_old", [False, True])
-def test_free_disk_space_gha(
-    py_recipe, jinja_env, caplog, path: str, value: bool, add_old: bool
+@pytest.mark.parametrize(
+    "value,expected",
+    [
+        (False, "no"),
+        (True, "quick"),
+        ([], "no"),
+        (["apt", "cache"], "quick"),
+        (["apt", "cache", "docker"], "max"),
+    ],
+)
+def test_free_disk_space_gha_old(
+    py_recipe, jinja_env, caplog, value: bool | list[str], expected: str
 ):
-    if add_old and path == "github_actions":
-        pytest.skip("not a meaningful combination")
     forge_dir = py_recipe.recipe
     forge_yml = Path(forge_dir, "conda-forge.yml")
 
@@ -3454,13 +3459,53 @@ def test_free_disk_space_gha(
               linux_64: github_actions
               osx_64: github_actions
               win_64: github_actions
-            {path}:
+            github_actions:
               free_disk_space: {value}
+        """))
+
+    config = configure_feedstock._load_forge_config(
+        forge_dir, "recipe/default_config.yaml"
+    )
+    configure_feedstock.render_github_actions(
+        jinja_env=jinja_env,
+        forge_config=config,
+        forge_dir=forge_dir,
+    )
+
+    conda_build_yml = Path(forge_dir, ".github/workflows/conda-build.yml")
+    with conda_build_yml.open() as f:
+        workflow = yaml.safe_load(f)
+
+    matrix = workflow["jobs"]["build"]["strategy"]["matrix"]["include"]
+    assert {entry["free_disk_space"] for entry in matrix} == {expected}
+
+    # check that artifacts steps are output / not output
+    steps = workflow["jobs"]["build"]["steps"]
+    step_names = set(step["name"] for step in steps)
+    assert ("Manage disk space" in step_names) == (expected != "no")
+
+    assert Path(forge_dir, ".scripts/free_disk_space.sh").exists() == (expected != "no")
+
+
+@pytest.mark.parametrize("value", ["no", "quick", "max"])
+@pytest.mark.parametrize("add_old", [False, True])
+def test_free_disk_space_gha(py_recipe, jinja_env, caplog, value: bool, add_old: bool):
+    forge_dir = py_recipe.recipe
+    forge_yml = Path(forge_dir, "conda-forge.yml")
+
+    with open(forge_yml, "a") as f:
+        f.write(textwrap.dedent(f"""\
+            provider:
+              linux_64: github_actions
+              osx_64: github_actions
+              win_64: github_actions
+            workflow_settings:
+              free_disk_space: '{value}'
         """))
         if add_old:
             f.write(textwrap.dedent(f"""\
                 github_actions:
-                  free_disk_space: {not value}
+                  free_disk_space: {value == "no"}
             """))
 
     with caplog.at_level(logging.WARNING):
@@ -3483,17 +3528,14 @@ def test_free_disk_space_gha(
         workflow = yaml.safe_load(f)
 
     matrix = workflow["jobs"]["build"]["strategy"]["matrix"]["include"]
-    expected_value = (
-        "apt,cache" if value is True else ",".join(value) if value else None
-    )
-    assert {entry["free_disk_space"] for entry in matrix} == {expected_value}
+    assert {entry["free_disk_space"] for entry in matrix} == {value}
 
     # check that artifacts steps are output / not output
     steps = workflow["jobs"]["build"]["steps"]
     step_names = set(step["name"] for step in steps)
-    assert ("Manage disk space" in step_names) == bool(value)
+    assert ("Manage disk space" in step_names) == (value != "no")
 
-    assert Path(forge_dir, ".scripts/free_disk_space.sh").exists() == bool(value)
+    assert Path(forge_dir, ".scripts/free_disk_space.sh").exists() == (value != "no")
 
 
 @pytest.mark.parametrize("path", ["azure", "workflow_settings"])
