@@ -609,7 +609,8 @@ def configure_github_app(
 
         /orgs/<YOUR-ORG>/installations
 
-    Annotate the .app_slug and .id fields.
+    The fields you need to write down are: `app_slug: str` and `id: int`. See
+    the `enable_*_app()` and `disable_*_app()` functions above for examples.
     """
     gh = github_client()
     org: github.Organization = gh.get_organization(org)
