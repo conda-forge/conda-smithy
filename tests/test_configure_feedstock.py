@@ -3538,14 +3538,19 @@ def test_free_disk_space_gha(py_recipe, jinja_env, caplog, value: bool, add_old:
     assert Path(forge_dir, ".scripts/free_disk_space.sh").exists() == (value != "no")
 
 
-@pytest.mark.parametrize("path", ["azure", "workflow_settings"])
-@pytest.mark.parametrize("value", [False, True])
-@pytest.mark.parametrize("add_old", [False, True])
-def test_free_disk_space_azure(
-    py_recipe, jinja_env, caplog, path: str, value: bool, add_old: bool
+@pytest.mark.parametrize(
+    "value,expected",
+    [
+        (False, "no"),
+        (True, "quick"),
+        ([], "no"),
+        (["apt", "cache"], "quick"),
+        (["apt", "cache", "docker"], "max"),
+    ],
+)
+def test_free_disk_space_azure_old(
+    py_recipe, jinja_env, caplog, value: bool | list[str], expected: str
 ):
-    if add_old and path == "azure":
-        pytest.skip("not a meaningful combination")
     forge_dir = py_recipe.recipe
     forge_yml = Path(forge_dir, "conda-forge.yml")
 
@@ -3555,13 +3560,57 @@ def test_free_disk_space_azure(
               linux_64: azure
               osx_64: azure
               win_64: azure
-            {path}:
+            azure:
               free_disk_space: {value}
+        """))
+
+    config = configure_feedstock._load_forge_config(
+        forge_dir, "recipe/default_config.yaml"
+    )
+
+    configure_feedstock.render_azure(
+        jinja_env=jinja_env,
+        forge_config=config,
+        forge_dir=forge_dir,
+    )
+
+    for os_name in ("linux", "osx", "win"):
+        workflow_yml = Path(
+            forge_dir, ".azure-pipelines", f"azure-pipelines-{os_name}.yml"
+        )
+        with workflow_yml.open() as f:
+            workflow = yaml.safe_load(f)
+
+        matrix = workflow["jobs"][0]["strategy"]["matrix"]
+        assert {entry["free_disk_space"] for entry in matrix.values()} == {expected}
+
+        # check that artifacts steps are output / not output
+        steps = workflow["jobs"][0]["steps"]
+        step_names = set(step["displayName"] for step in steps)
+        assert ("Manage disk space" in step_names) == (expected != "no")
+
+    assert Path(forge_dir, ".scripts/free_disk_space.sh").exists() == (expected != "no")
+
+
+@pytest.mark.parametrize("value", ["no", "quick", "max"])
+@pytest.mark.parametrize("add_old", [False, True])
+def test_free_disk_space_azure(py_recipe, jinja_env, caplog, value: str, add_old: bool):
+    forge_dir = py_recipe.recipe
+    forge_yml = Path(forge_dir, "conda-forge.yml")
+
+    with open(forge_yml, "a") as f:
+        f.write(textwrap.dedent(f"""\
+            provider:
+              linux_64: azure
+              osx_64: azure
+              win_64: azure
+            workflow_settings:
+              free_disk_space: '{value}'
         """))
         if add_old:
             f.write(textwrap.dedent(f"""\
                 azure:
-                  free_disk_space: {not value}
+                  free_disk_space: {value == "no"}
             """))
 
     with caplog.at_level(logging.WARNING):
@@ -3580,7 +3629,6 @@ def test_free_disk_space_azure(
         forge_dir=forge_dir,
     )
 
-    expected_value = "apt,cache" if value is True else ",".join(value) if value else ""
     for os_name in ("linux", "osx", "win"):
         workflow_yml = Path(
             forge_dir, ".azure-pipelines", f"azure-pipelines-{os_name}.yml"
@@ -3589,13 +3637,11 @@ def test_free_disk_space_azure(
             workflow = yaml.safe_load(f)
 
         matrix = workflow["jobs"][0]["strategy"]["matrix"]
-        assert {entry["free_disk_space"] for entry in matrix.values()} == {
-            expected_value
-        }
+        assert {entry["free_disk_space"] for entry in matrix.values()} == {value}
 
         # check that artifacts steps are output / not output
         steps = workflow["jobs"][0]["steps"]
         step_names = set(step["displayName"] for step in steps)
-        assert ("Manage disk space" in step_names) == bool(value)
+        assert ("Manage disk space" in step_names) == (value != "no")
 
-    assert Path(forge_dir, ".scripts/free_disk_space.sh").exists() == bool(value)
+    assert Path(forge_dir, ".scripts/free_disk_space.sh").exists() == (value != "no")
