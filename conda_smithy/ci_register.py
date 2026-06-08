@@ -583,6 +583,16 @@ def disable_blacksmith_app(org: str, project: str) -> None:
     github.configure_github_app(org, project, app, remove=True)
 
 
+def enable_depot_app(org: str, project: str) -> None:
+    app = 137205076 if org == "conda-forge" else "depot-managed-runners"
+    github.configure_github_app(org, project, app)
+
+
+def disable_depot_app(org: str, project: str) -> None:
+    app = 137205076 if org == "conda-forge" else "depot-managed-runners"
+    github.configure_github_app(org, project, app, remove=True)
+
+
 def get_conda_hook_info(hook_url, events):
     payload = {
         "name": "web",
