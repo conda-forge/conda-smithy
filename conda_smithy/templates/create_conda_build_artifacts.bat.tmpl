@@ -4,10 +4,11 @@ rem INPUTS (environment variables that need to be set before calling this script
 rem
 rem CI (azure/github_actions/UNSET)
 rem CI_RUN_ID (unique identifier for the CI job run)
-rem FEEDSTOCK_NAME
-rem CONFIG (build matrix configuration string)
-rem SHORT_CONFIG (uniquely-shortened configuration string)
 rem CONDA_BLD_PATH (path to the conda-bld directory)
+rem CONFIG (build matrix configuration string)
+rem CONFIG_SHORT (uniquely-shortened configuration string)
+rem FEEDSTOCK_NAME
+rem Optional:
 rem ARTIFACT_STAGING_DIR (use working directory if unset)
 rem BLD_ARTIFACT_PREFIX (prefix for the conda build artifact name, skip if unset)
 rem ENV_ARTIFACT_PREFIX (prefix for the conda build environments artifact name, skip if unset)
@@ -33,7 +34,7 @@ if not defined ARTIFACT_STAGING_DIR (
 rem Set a unique ID for the artifact(s), specialized for this particular job run
 set ARTIFACT_UNIQUE_ID=%CI_RUN_ID%_%CONFIG%
 if not "%ARTIFACT_UNIQUE_ID%" == "%ARTIFACT_UNIQUE_ID:~0,80%" (
-    set ARTIFACT_UNIQUE_ID=%CI_RUN_ID%_%SHORT_CONFIG%
+    set ARTIFACT_UNIQUE_ID=%CI_RUN_ID%_%CONFIG_SHORT%
 )
 
 rem Make the build artifact zip
