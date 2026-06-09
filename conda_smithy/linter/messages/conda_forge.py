@@ -154,3 +154,40 @@ class DeprecatedEnvironmentVariable(LinterMessage):
     message = "`${variable}` is deprecated, please use `${replacement}` instead.\n"
     variable: str
     replacement: str
+
+
+@dataclass(kw_only=True)
+class InconclusiveMaintainerCheck(LinterMessage):
+    """
+    The recipe maintainer existence check could not be completed.
+
+    This happens when GitHub cannot be reached or returns a transient error
+    (e.g. a rate limit or a server error) while checking that a maintainer
+    listed in `extra.recipe-maintainers` is a valid Github user or
+    `@conda-forge/*` team. Rather than risk a false-positive (or
+    false-negative), the lint fails and asks for the check to be retried.
+    """
+
+    kind = "lint"
+    identifier = "CF-008"
+    added_in = "2026.6"
+    message = (
+        'Could not verify that recipe maintainer ${team_or}"${maintainer}" '
+        "exists due to a transient GitHub error. Please re-run the linter by "
+        "commenting `@conda-forge-admin, please lint` on this pull request."
+    )
+    maintainer: str
+    path: str = "recipe/(meta|recipe).yaml"
+
+    def _render_attributes(self):
+        return {
+            "maintainer": self.maintainer,
+            "team_or": "team " if "/" in self.maintainer else "",
+        }
+
+    @classmethod
+    def examples(cls) -> list[Self]:
+        return [
+            cls(maintainer="some-user"),
+            cls(maintainer="@conda-forge/some-team"),
+        ]

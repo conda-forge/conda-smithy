@@ -121,6 +121,21 @@
       "path": ""
     },
     {
+      "name": "InconclusiveMaintainerCheck",
+      "identifier": "CF-008",
+      "category": "CF",
+      "kind": "lint",
+      "added_in": "2026.6",
+      "deprecated_in": "",
+      "documentation": "The recipe maintainer existence check could not be completed.\n\nThis happens when GitHub cannot be reached or returns a transient error\n(e.g. a rate limit or a server error) while checking that a maintainer\nlisted in `extra.recipe-maintainers` is a valid Github user or\n`@conda-forge/*` team. Rather than risk a false-positive (or\nfalse-negative), the lint fails and asks for the check to be retried.",
+      "message": "Could not verify that recipe maintainer ${team_or}\"${maintainer}\" exists due to a transient GitHub error. Please re-run the linter by commenting `@conda-forge-admin, please lint` on this pull request.",
+      "examples": [
+        "Could not verify that recipe maintainer \"some-user\" exists due to a transient GitHub error. Please re-run the linter by commenting `@conda-forge-admin, please lint` on this pull request.",
+        "Could not verify that recipe maintainer team \"@conda-forge/some-team\" exists due to a transient GitHub error. Please re-run the linter by commenting `@conda-forge-admin, please lint` on this pull request."
+      ],
+      "path": "recipe/(meta|recipe).yaml"
+    },
+    {
       "name": "NoDuplicateKeys",
       "identifier": "FC-001",
       "category": "FC",
