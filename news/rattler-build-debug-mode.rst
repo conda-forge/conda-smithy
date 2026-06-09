@@ -7,6 +7,7 @@
   "rattler-build currently doesn't support debug mode". This restores the
   interactive local-debugging workflow (the equivalent of ``conda debug``) that
   classic ``conda-build`` recipes already had. Requires ``rattler-build >=0.41``.
+  (#2566)
 
 **Changed:**
 
