@@ -7,7 +7,7 @@
   {%- if data.store_build_artifacts %}
     {%- set vars.store_build_artifacts = True %}
   {%- endif %}
-  {%- if data.free_disk_space != "none" %}
+  {%- if data.free_disk_space != "skip" %}
     {%- set vars.free_disk_space = True %}
   {%- endif %}
 {%- endfor %}

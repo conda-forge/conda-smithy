@@ -898,7 +898,7 @@
       "title": "Lints",
       "type": "string"
     },
-    "Literal__none____quick____max__": {
+    "Literal__skip____quick____max__": {
       "properties": {
         "os": {
           "anyOf": [
@@ -967,10 +967,10 @@
           "title": "Provider"
         },
         "value": {
-          "default": "none",
+          "default": "skip",
           "description": "Option value",
           "enum": [
-            "none",
+            "skip",
             "quick",
             "max"
           ],
@@ -978,7 +978,7 @@
           "type": "string"
         }
       },
-      "title": "ConditionalValue_typing.Literal['none', 'quick', 'max']",
+      "title": "ConditionalValue_typing.Literal['skip', 'quick', 'max']",
       "type": "object"
     },
     "Nullable": {
@@ -1128,7 +1128,7 @@
           "anyOf": [
             {
               "enum": [
-                "none",
+                "skip",
                 "quick",
                 "max"
               ],
@@ -1136,7 +1136,7 @@
             },
             {
               "items": {
-                "$ref": "#/$defs/Literal__none____quick____max__"
+                "$ref": "#/$defs/Literal__skip____quick____max__"
               },
               "type": "array"
             },

@@ -11,7 +11,7 @@
   {%- if os == 'linux' and data.pagefile_size != 0 %}
     {%- set vars.create_pagefile = True %}
   {%- endif %}
-  {%- if os == 'linux' and data.free_disk_space != "none" %}
+  {%- if os == 'linux' and data.free_disk_space != "skip" %}
     {%- set vars.free_disk_space = True %}
   {%- endif %}
 {%- endfor %}
