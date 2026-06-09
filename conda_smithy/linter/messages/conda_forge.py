@@ -170,7 +170,7 @@ class InconclusiveMaintainerCheck(LinterMessage):
 
     kind = "lint"
     identifier = "CF-008"
-    added_in = "2026.6.0"
+    added_in = "2026.6"
     message = (
         'Could not verify that recipe maintainer ${team_or}"${maintainer}" '
         "exists due to a transient GitHub error. Please re-run the linter by "
