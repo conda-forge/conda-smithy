@@ -8,7 +8,7 @@
   failure (rate limit, server error, or network error) as "maintainer does not
   exist". Such checks are now retried and, if still inconclusive, the lint fails
   with a message (``CF-008``) asking for the linter to be re-run, instead of
-  producing a false-positive "does not exist" lint.
+  producing a false-positive "does not exist" lint. (#2575)
 
 **Deprecated:**
 
@@ -21,7 +21,7 @@
 **Fixed:**
 
 * Fixed false-positive ``Recipe maintainer "..." does not exist`` lints caused
-  by unauthenticated GitHub rate limiting during linting.
+  by unauthenticated GitHub rate limiting during linting. (#2575)
 
 **Security:**
 
