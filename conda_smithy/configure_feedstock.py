@@ -1888,6 +1888,7 @@ def _github_actions_specific_setup(jinja_env, forge_config, forge_dir, platform)
 
         data["gha_runs_on"] = []
         with_gpu = False
+        on_namespace = False
         for label in labels:
             if label.startswith("cirun-"):
                 # Patch Cirun runners to add some extra debug info
@@ -1896,6 +1897,10 @@ def _github_actions_specific_setup(jinja_env, forge_config, forge_dir, platform)
                 # Having 'gpu' in one label name is enough to trigger
                 # the extra docker args needed on Linux
                 with_gpu = True
+            if label.startswith("namespace-profile-"):
+                on_namespace = True
+                if "-on-linux-" in label:
+                    label += ";container.privileged=true;container.mount-scratch=true"
             data["gha_runs_on"].append(label)
 
         workflow_settings = get_workflow_settings(
@@ -1906,9 +1911,6 @@ def _github_actions_specific_setup(jinja_env, forge_config, forge_dir, platform)
             "windows-2022",
             "windows-2025",
         }.intersection(data["gha_runs_on"])
-        on_namespace = any(
-            x.startswith("namespace-profile-") for x in data["gha_runs_on"]
-        )
         fill_workflow_settings_defaults(
             workflow_settings,
             "github_actions",
