@@ -172,7 +172,15 @@ if [[ "${BUILD_WITH_CONDA_DEBUG:-0}" == 1 ]]; then
     # Drop into an interactive shell
     /bin/bash
   {%- else %}
-    echo "rattler-build does not currently support debug mode"
+    export CONDA_BLD_PATH="${CONDA_BLD_PATH:-${FEEDSTOCK_ROOT:-$PWD}/build_artifacts}"
+    rattler-build debug setup \
+        --recipe ./{{ recipe_dir }} \
+        -m ./.ci_support/${CONFIG}.yaml \
+        --target-platform "${HOST_PLATFORM}" \
+        ${BUILD_OUTPUT_ID:+--output-name "${BUILD_OUTPUT_ID}"} \
+        ${EXTRA_CB_OPTIONS:-}
+
+    rattler-build debug shell
   {%- endif %}
 else
 {% if test in ["native", "native_and_emulated"] %}
