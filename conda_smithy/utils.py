@@ -412,3 +412,5 @@ def fill_workflow_settings_defaults(
 
     if workflow_settings.get("pagefile_size") is None:
         workflow_settings["pagefile_size"] = 0
+    if workflow_settings.get("free_disk_space") is None:
+        workflow_settings["free_disk_space"] = "skip"

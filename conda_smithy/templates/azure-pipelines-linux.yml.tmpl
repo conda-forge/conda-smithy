@@ -2,7 +2,7 @@
 # update the conda-forge.yml and/or the recipe/meta.yaml.
 # -*- mode: yaml -*-
 
-{%- set vars = namespace(store_build_artifacts=False) %}
+{%- set vars = namespace(store_build_artifacts=False, create_pagefile=False, free_disk_space=False) %}
 {%- for data in configs %}
   {%- set os = data.build_platform.split('-')[0] %}
   {%- if os == 'linux' and data.store_build_artifacts %}
@@ -10,6 +10,9 @@
   {%- endif %}
   {%- if os == 'linux' and data.pagefile_size != 0 %}
     {%- set vars.create_pagefile = True %}
+  {%- endif %}
+  {%- if os == 'linux' and data.free_disk_space != "skip" %}
+    {%- set vars.free_disk_space = True %}
   {%- endif %}
 {%- endfor %}
 
@@ -21,34 +24,11 @@ jobs:
   - checkout: self
     fetchDepth: {{ clone_depth }}
 {%- endif %}
-{%- if azure.free_disk_space %}
+{%- if vars.free_disk_space %}
   - script: |
-{%- if (azure.free_disk_space == true) or ('cache' in azure.free_disk_space) %}
-         sudo mkdir -p /opt/empty_dir || true
-         for d in \
-                  /opt/ghc \
-                  /opt/hostedtoolcache \
-                  /usr/lib/jvm \
-                  /usr/local/.ghcup \
-                  /usr/local/lib/android \
-                  /usr/local/share/powershell \
-                  /usr/share/dotnet \
-                  /usr/share/swift \
-                  ; do
-           sudo rsync --stats -a --delete /opt/empty_dir/ $d || true
-         done
-{%- endif %}
-{%- if (azure.free_disk_space == true) or ('apt' in azure.free_disk_space) %}
-         sudo apt-get purge -y -f firefox \
-                                  google-chrome-stable \
-                                  microsoft-edge-stable
-         sudo apt-get autoremove -y >& /dev/null
-         sudo apt-get autoclean -y >& /dev/null
-{%- endif %}
-{%- if (azure.free_disk_space is iterable) and ('docker' in azure.free_disk_space) %}
-         sudo docker image prune --all --force
-{%- endif %}
-         df -h
+        .scripts/free_disk_space.sh "$(free_disk_space)"
+    env:
+      OS: ubuntu
     displayName: Manage disk space
 {%- endif %}
 {%- if vars.create_pagefile %}

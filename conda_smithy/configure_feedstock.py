@@ -1821,6 +1821,18 @@ def render_appveyor(jinja_env, forge_config, forge_dir, return_metadata=False):
     )
 
 
+def _add_template_files_from_workflow_settings(data, platform, template_files):
+    script_suffix = ".bat" if platform == "win" else ".sh"
+    if data["store_build_artifacts"]:
+        template_files.append(f".scripts/create_conda_build_artifacts{script_suffix}")
+    if data["pagefile_size"] != 0 and platform in ("linux", "win"):
+        template_files.append(f".scripts/create_pagefile{script_suffix}")
+        if platform == "win":
+            template_files.append(".scripts/SetPageFileSize.ps1")
+    if data["free_disk_space"] != "skip":
+        template_files.append(".scripts/free_disk_space.sh")
+
+
 def _github_actions_specific_setup(jinja_env, forge_config, forge_dir, platform):
     platform_templates = {
         "linux": [
@@ -1904,16 +1916,9 @@ def _github_actions_specific_setup(jinja_env, forge_config, forge_dir, platform)
             "D:" if on_hosted_runner or on_namespace else "C:",
         )
         data.update(workflow_settings)
-        script_suffix = ".bat" if platform == "win" else ".sh"
-        if data["store_build_artifacts"]:
-            template_files.append(
-                f".scripts/create_conda_build_artifacts{script_suffix}"
-            )
-        if data["pagefile_size"] != 0 and platform in ("linux", "win"):
-            template_files.append(f".scripts/create_pagefile{script_suffix}")
-            if platform == "win":
-                template_files.append(".scripts/SetPageFileSize.ps1")
-
+        _add_template_files_from_workflow_settings(
+            data=data, platform=platform, template_files=template_files
+        )
         if platform == "linux":
             data["docker_run_args"] = forge_config["docker"]["run_args"]
             if with_gpu:
@@ -2050,14 +2055,9 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
             config_rendered["docker_run_args"] = forge_config["docker"]["run_args"]
 
         config_rendered.update(workflow_settings)
-        script_suffix = ".bat" if platform == "win" else ".sh"
+        _add_template_files_from_workflow_settings(data=config_rendered, platform=platform, template_files=template_files)
         if config_rendered["store_build_artifacts"]:
             config_rendered["CONFIG_SHORT"] = data["config_name_short"]
-            template_files.append(f".scripts/create_conda_build_artifacts{script_suffix}")
-        if config_rendered["pagefile_size"] != 0 and platform in ("linux", "win"):
-            template_files.append(f".scripts/create_pagefile{script_suffix}")
-            if platform == "win":
-                template_files.append(".scripts/SetPageFileSize.ps1")
         azure_settings["strategy"]["matrix"][data["config_name"]] = config_rendered
         # fmt: on
 
@@ -2506,7 +2506,7 @@ def _read_forge_config(forge_dir, forge_yml=None):
     # values.
     config = _update_dict_within_dict(file_config.items(), default_config)
 
-    for setting in ("store_build_artifacts",):
+    for setting in ("store_build_artifacts", "free_disk_space"):
         for provider in ("azure", "github_actions"):
             if setting in file_config.get("workflow_settings", {}):
                 # Check for conflicting old keys.
@@ -2518,10 +2518,21 @@ def _read_forge_config(forge_dir, forge_yml=None):
                     )
             else:
                 # Convert old keys to new settings.
+                value = config[provider][setting]
+                if setting == "free_disk_space":
+                    # This isn't 100% accurate, but we don't really
+                    # expect anything but False, True and the full list.
+                    if isinstance(value, list) and "docker" in value:
+                        value = "max"
+                    elif value:
+                        value = "quick"
+                    else:
+                        value = "skip"
+
                 config["workflow_settings"][setting].append(
                     {
                         "provider": provider,
-                        "value": config[provider][setting],
+                        "value": value,
                     }
                 )
 
@@ -2983,6 +2994,7 @@ def get_common_scripts(forge_dir):
         "create_pagefile.bat",
         "create_pagefile.sh",
         "SetPageFileSize.ps1",
+        "free_disk_space.sh",
     ]:
         yield os.path.join(forge_dir, ".scripts", old_file)
 
@@ -3005,6 +3017,7 @@ def clear_scripts(forge_dir):
             "create_pagefile.bat",
             "create_pagefile.sh",
             "SetPageFileSize.ps1",
+            "free_disk_space.sh",
         ]:
             remove_file(os.path.join(forge_dir, folder, old_file))
 

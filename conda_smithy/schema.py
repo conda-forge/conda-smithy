@@ -138,8 +138,10 @@ class AzureConfig(BaseModel):
         Union[bool, Nullable, list[Literal["apt", "cache", "docker"]]]
     ] = Field(
         default=False,
+        deprecated=True,
         description=cleandoc("""
-            Free up disk space before running the Docker container for building on Linux.
+            Deprecated. Use `workflow_settings.free_disk_space` instead.
+            Free up disk space before build.
             The following components can be cleaned up: `apt`, `cache`, `docker`.
             When set to `true`, only `apt` and `cache` are cleaned up.
             Set it to the full list to clean up all components.
@@ -280,8 +282,10 @@ class GithubActionsConfig(BaseModel):
         Union[bool, Nullable, list[Literal["apt", "cache", "docker"]]]
     ] = Field(
         default=False,
+        deprecated=True,
         description=cleandoc("""
-            Free up disk space before running the Docker container for building on Linux.
+            Deprecated. Use `workflow_settings.free_disk_space` instead.
+            Free up disk space building.
             The following components can be cleaned up: `apt`, `cache`, `docker`.
             When set to `true`, only `apt` and `cache` are cleaned up.
             Set it to the full list to clean up all components.
@@ -543,6 +547,39 @@ class WorkflowSettings(BaseModel):
         description=cleandoc("""
         Override the default paging (swap) file size, in GiB.
         For example, 8 means 8 GiB.
+        """),
+    )
+
+    free_disk_space: Optional[
+        Union[
+            Literal["skip", "quick", "max"],
+            list[conditional_value(Union[Literal["skip", "quick", "max"]], "skip")],
+            Nullable,
+        ]
+    ] = Field(
+        default=[],
+        description=cleandoc(r"""
+        Free up disk space before building.
+        Takes one of the following values:
+
+        - `no` not to clean anything (the default)
+        - `quick` to clean a subset of components that should yield
+          a quick space gain
+        - `max` for the most significant space gain
+
+        On all platforms, `quick` removes a number of unnecessary system
+        tools. On Linux, it additionally uninstall a few large system
+        packages.
+
+        The `max` option additionally prunes unnecessary Docker images
+        on Linux.
+
+        The extent of cleanup may change in the future. However, changes
+        will only propagate through rerendering.
+
+        Please note that on Windows only C:\ drive is cleaned up, so
+        using cleanup is only beneficial if this drive is used for
+        `tools_install_dir`, `build_workspace_dir` or the page file.
         """),
     )
 

@@ -41,7 +41,8 @@
             }
           ],
           "default": false,
-          "description": "Free up disk space before running the Docker container for building on Linux.\nThe following components can be cleaned up: `apt`, `cache`, `docker`.\nWhen set to `true`, only `apt` and `cache` are cleaned up.\nSet it to the full list to clean up all components.",
+          "deprecated": true,
+          "description": "Deprecated. Use `workflow_settings.free_disk_space` instead.\nFree up disk space before build.\nThe following components can be cleaned up: `apt`, `cache`, `docker`.\nWhen set to `true`, only `apt` and `cache` are cleaned up.\nSet it to the full list to clean up all components.",
           "title": "Free Disk Space"
         },
         "max_parallel": {
@@ -701,7 +702,8 @@
             }
           ],
           "default": false,
-          "description": "Free up disk space before running the Docker container for building on Linux.\nThe following components can be cleaned up: `apt`, `cache`, `docker`.\nWhen set to `true`, only `apt` and `cache` are cleaned up.\nSet it to the full list to clean up all components.",
+          "deprecated": true,
+          "description": "Deprecated. Use `workflow_settings.free_disk_space` instead.\nFree up disk space building.\nThe following components can be cleaned up: `apt`, `cache`, `docker`.\nWhen set to `true`, only `apt` and `cache` are cleaned up.\nSet it to the full list to clean up all components.",
           "title": "Free Disk Space"
         },
         "max_parallel": {
@@ -896,6 +898,89 @@
       "title": "Lints",
       "type": "string"
     },
+    "Literal__skip____quick____max__": {
+      "properties": {
+        "os": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/PlatformsAliases"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/PlatformsAliases"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Operating systems to set environment variable on (default: all)",
+          "title": "Os"
+        },
+        "platform": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/Platforms"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/Platforms"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Platforms to set environment variable on (default: all)",
+          "title": "Platform"
+        },
+        "provider": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/CIservices"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/CIservices"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "CI providers to set environment variable on (default: all)",
+          "title": "Provider"
+        },
+        "value": {
+          "default": "skip",
+          "description": "Option value",
+          "enum": [
+            "skip",
+            "quick",
+            "max"
+          ],
+          "title": "Value",
+          "type": "string"
+        }
+      },
+      "title": "ConditionalValue_typing.Literal['skip', 'quick', 'max']",
+      "type": "object"
+    },
     "Nullable": {
       "description": "Created to avoid issue with schema validation of null values in lists or dicts.",
       "enum": [
@@ -1038,6 +1123,33 @@
           "default": [],
           "description": "Override the default paging (swap) file size, in GiB.\nFor example, 8 means 8 GiB.",
           "title": "Pagefile Size"
+        },
+        "free_disk_space": {
+          "anyOf": [
+            {
+              "enum": [
+                "skip",
+                "quick",
+                "max"
+              ],
+              "type": "string"
+            },
+            {
+              "items": {
+                "$ref": "#/$defs/Literal__skip____quick____max__"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": [],
+          "description": "Free up disk space before building.\nTakes one of the following values:\n\n- `no` not to clean anything (the default)\n- `quick` to clean a subset of components that should yield\n  a quick space gain\n- `max` for the most significant space gain\n\nOn all platforms, `quick` removes a number of unnecessary system\ntools. On Linux, it additionally uninstall a few large system\npackages.\n\nThe `max` option additionally prunes unnecessary Docker images\non Linux.\n\nThe extent of cleanup may change in the future. However, changes\nwill only propagate through rerendering.\n\nPlease note that on Windows only C:\\ drive is cleaned up, so\nusing cleanup is only beneficial if this drive is used for\n`tools_install_dir`, `build_workspace_dir` or the page file.",
+          "title": "Free Disk Space"
         }
       },
       "title": "WorkflowSettings",
