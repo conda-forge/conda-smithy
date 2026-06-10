@@ -127,7 +127,7 @@ if [[ -f "${FEEDSTOCK_ROOT}/LICENSE.txt" ]]; then
 fi
 
 if [[ "${BUILD_WITH_CONDA_DEBUG:-0}" == 1 ]]; then
-    {%- if conda_build_tool != "rattler-build" %}
+    {%- if conda_build_tool.startswith("conda-build") %}
     if [[ "x${BUILD_OUTPUT_ID:-}" != "x" ]]; then
         EXTRA_CB_OPTIONS="${EXTRA_CB_OPTIONS:-} --output-id ${BUILD_OUTPUT_ID}"
     fi
@@ -137,7 +137,7 @@ if [[ "${BUILD_WITH_CONDA_DEBUG:-0}" == 1 ]]; then
 
     # Drop into an interactive shell
     /bin/bash
-    {%- else %}
+    {%- elif conda_build_tool == "rattler-build" %}
     export CONDA_BLD_PATH="${CONDA_BLD_PATH:-${FEEDSTOCK_ROOT}/build_artifacts}"
     rattler-build debug setup \
         --recipe "${RECIPE_ROOT}" \
