@@ -134,10 +134,12 @@ if [[ "${BUILD_WITH_CONDA_DEBUG:-0}" == 1 ]]; then
     #   - --clobber-file vs. none
     #   - none vs. --target-platform
     {%- if conda_build_tool.startswith("conda-build") %}
-    conda debug "${RECIPE_ROOT}" -m "${CI_SUPPORT}/${CONFIG}.yaml" \
+    conda debug \
+        "${RECIPE_ROOT}" \
+        -m "${CI_SUPPORT}/${CONFIG}.yaml" \
         ${EXTRA_CB_OPTIONS:-} \
-        --clobber-file "${CI_SUPPORT}/clobber_${CONFIG}.yaml"
         ${BUILD_OUTPUT_ID:+--output-id "${BUILD_OUTPUT_ID}"} \
+        --clobber-file "${CI_SUPPORT}/clobber_${CONFIG}.yaml"
 
     # Drop into an interactive shell
     /bin/bash
@@ -146,9 +148,9 @@ if [[ "${BUILD_WITH_CONDA_DEBUG:-0}" == 1 ]]; then
     rattler-build debug setup \
         --recipe "${RECIPE_ROOT}" \
         -m "${CI_SUPPORT}/${CONFIG}.yaml" \
-        --target-platform "${HOST_PLATFORM}" \
+        ${EXTRA_CB_OPTIONS:-} \
         ${BUILD_OUTPUT_ID:+--output-name "${BUILD_OUTPUT_ID}"} \
-        ${EXTRA_CB_OPTIONS:-}
+        --target-platform "${HOST_PLATFORM}"
 
     rattler-build debug shell
     {%- endif %}
@@ -160,20 +162,24 @@ else
     #   - none vs. --target-platform
     #   - --extra-meta a=b c=d vs. --extra-meta a=b --extra-meta c=d
     {%- if conda_build_tool != "rattler-build" %}
-    {{ BUILD_CMD }} "${RECIPE_ROOT}" -m "${CI_SUPPORT}/${CONFIG}.yaml" \
-        --suppress-variables ${EXTRA_CB_OPTIONS:-} \
+    {{ BUILD_CMD }} \
+        "${RECIPE_ROOT}" \
+        -m "${CI_SUPPORT}/${CONFIG}.yaml" \
+        ${EXTRA_CB_OPTIONS:-} \
+        --suppress-variables \
         --clobber-file "${CI_SUPPORT}/clobber_${CONFIG}.yaml" \
         --extra-meta flow_run_id="${flow_run_id:-}" remote_url="${remote_url:-}" sha="${sha:-}"
 
     {%- else %}
 
-    {{ BUILD_CMD }} --recipe "${RECIPE_ROOT}" \
-     -m "${CI_SUPPORT}/${CONFIG}.yaml" \
-     ${EXTRA_CB_OPTIONS:-} \
-     --target-platform "${HOST_PLATFORM}" \
-     --extra-meta flow_run_id="${flow_run_id:-}" \
-     --extra-meta remote_url="${remote_url:-}" \
-     --extra-meta sha="${sha:-}"
+    {{ BUILD_CMD }} \
+        --recipe "${RECIPE_ROOT}" \
+        -m "${CI_SUPPORT}/${CONFIG}.yaml" \
+        ${EXTRA_CB_OPTIONS:-} \
+        --target-platform "${HOST_PLATFORM}" \
+        --extra-meta flow_run_id="${flow_run_id:-}" \
+        --extra-meta remote_url="${remote_url:-}" \
+        --extra-meta sha="${sha:-}"
 
     {%- endif %}
     ( startgroup "Inspecting artifacts" ) 2> /dev/null
