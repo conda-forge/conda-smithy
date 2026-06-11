@@ -4216,6 +4216,106 @@ def test_lint_recipe_v1_python_min_in_python_version(text):
         )
 
 
+@pytest.mark.parametrize(
+    "recipe_name,text,global_python_min,expected_hint",
+    [
+        # v1: redefining python_min to the global default -> hint
+        (
+            "recipe.yaml",
+            """
+context:
+  python_min: "3.10"
+
+package:
+  name: mypackage
+  version: 1.0.0
+    """,
+            "3.10",
+            True,
+        ),
+        # v1: overriding to a higher floor -> no hint
+        (
+            "recipe.yaml",
+            """
+context:
+  python_min: "3.12"
+
+package:
+  name: mypackage
+  version: 1.0.0
+    """,
+            "3.10",
+            False,
+        ),
+        # v1: no python_min in context -> no hint
+        (
+            "recipe.yaml",
+            """
+package:
+  name: mypackage
+  version: 1.0.0
+    """,
+            "3.10",
+            False,
+        ),
+        # v1: pinning not fetchable -> no hint
+        (
+            "recipe.yaml",
+            """
+context:
+  python_min: "3.10"
+
+package:
+  name: mypackage
+  version: 1.0.0
+    """,
+            None,
+            False,
+        ),
+        # v0: jinja set matching the global default -> hint
+        (
+            "meta.yaml",
+            """
+{% set python_min = "3.10" %}
+
+package:
+  name: mypackage
+  version: 1.0.0
+    """,
+            "3.10",
+            True,
+        ),
+        # v0: jinja set with a higher floor -> no hint
+        (
+            "meta.yaml",
+            """
+{% set python_min = "3.12" %}
+
+package:
+  name: mypackage
+  version: 1.0.0
+    """,
+            "3.10",
+            False,
+        ),
+    ],
+    ids=(f"recipe-{i}" for i in count(1)),
+)
+def test_lint_recipe_hint_redundant_python_min(
+    recipe_name, text, global_python_min, expected_hint, monkeypatch
+):
+    monkeypatch.setattr(
+        "conda_smithy.linter.hints.get_global_pinning_python_min",
+        lambda: global_python_min,
+    )
+    with tempfile.TemporaryDirectory() as tmpdir:
+        with open(os.path.join(tmpdir, recipe_name), "w") as f:
+            f.write(text)
+        _, hints = linter.main(tmpdir, return_hints=True, conda_forge=True)
+        has_hint = any("Remove the redefinition" in h for h in hints)
+        assert has_hint == expected_hint, hints
+
+
 def test_lint_recipe_v1_comment_selectors():
     with tempfile.TemporaryDirectory() as tmpdir:
         with open(os.path.join(tmpdir, "recipe.yaml"), "w") as f:
@@ -4742,14 +4842,14 @@ tests:
 outputs:
   - package:
       name: foo
-{textwrap.indent(midpart, '    ')}\
+{textwrap.indent(midpart, "    ")}\
 """
 
     recipe = f"""\
 context:
   version: "1.0"
 
-{'recipe' if outputs else 'package'}:
+{"recipe" if outputs else "package"}:
   name: foo
   version: ${{{{ version }}}}
 

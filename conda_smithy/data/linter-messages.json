@@ -777,6 +777,18 @@
       "path": "recipe/(meta|recipe).yaml"
     },
     {
+      "name": "RedundantPythonMin",
+      "identifier": "R-051",
+      "category": "R",
+      "kind": "hint",
+      "added_in": "<3.56",
+      "deprecated_in": "",
+      "documentation": "conda-forge's global pinning already provides the `python_min` variable,\nso recipes should not redefine it to the same value. Only override\n`python_min` when the package needs a higher floor than the global\ndefault.",
+      "message": "The recipe sets `python_min` to ${value}, which is identical to the default provided by conda-forge's global pinning. Remove the redefinition; it is redundant and unintentionally overrides platforms where the global default differs. Only set `python_min` when the package needs a higher floor than the global default.",
+      "examples": [],
+      "path": "recipe/(meta|recipe).yaml"
+    },
+    {
       "name": "FormattedSelectors",
       "identifier": "R0-001",
       "category": "R0",
