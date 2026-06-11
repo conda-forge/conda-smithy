@@ -31,6 +31,7 @@ from conda_smithy.linter.hints import (
     hint_check_spdx,
     hint_dependency_pins,
     hint_deprecated_environment_variables,
+    hint_noarch_python_test_latest,
     hint_noarch_python_use_python_min,
     hint_os_version,
     hint_pip_no_build_backend,
@@ -769,6 +770,17 @@ def run_conda_forge_specific(
             requirements_section.get("host") or [],
             requirements_section.get("run") or [],
             test_reqs,
+            outputs_section,
+            noarch_value,
+            recipe_version,
+            hints,
+        )
+
+    # 10b: noarch python recipes should test the minimum AND latest python
+    if "hint_noarch_python_test_latest" not in lints_to_skip and recipe_version == 1:
+        hint_noarch_python_test_latest(
+            get_section(meta, "tests", lints, recipe_version),
+            requirements_section.get("run") or [],
             outputs_section,
             noarch_value,
             recipe_version,
