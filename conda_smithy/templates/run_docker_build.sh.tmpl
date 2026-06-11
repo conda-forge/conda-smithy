@@ -114,7 +114,6 @@ ${DOCKER_EXECUTABLE} run ${DOCKER_RUN_ARGS} \
            -e GIT_BRANCH \
            -e UPLOAD_ON_BRANCH \
            -e CI \
-           -e RATTLER_BUILD_ENABLE_GITHUB_INTEGRATION \
            -e RATTLER_BUILD_COLOR \
            -e FEEDSTOCK_NAME \
            -e CPU_COUNT \
