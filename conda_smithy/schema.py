@@ -583,6 +583,20 @@ class WorkflowSettings(BaseModel):
         """),
     )
 
+    resize_partitions: Optional[
+        Union[
+            bool,
+            list[conditional_value(bool, False)],
+            Nullable,
+        ]
+    ] = Field(
+        description=cleandoc(r"""
+        Whether to resize partitions to use all available space,
+        Currently only supported on Windows GitHub Actions.
+        """),
+        default=[],
+    )
+
 
 class ConfigModel(BaseModel):
     """

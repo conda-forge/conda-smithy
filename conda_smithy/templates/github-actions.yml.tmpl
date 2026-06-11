@@ -16,6 +16,9 @@
   {%- if data.gha_os == "windows" and data.pagefile_size > 0 %}
     {%- set vars.create_pagefile_win = True %}
   {%- endif %}
+  {%- if data.gha_os == "windows" and data.resize_partitions %}
+    {%- set vars.resize_win_partitions = True %}
+  {%- endif %}
 {%- endfor %}
 
 name: Build conda package
@@ -63,6 +66,7 @@ jobs:
             free_disk_space: {{ data.free_disk_space }}
             os: {{ data.gha_os }}
             pagefile_size: {{ data.pagefile_size }}
+            resize_partitions: {{ data.resize_partitions }}
             runs_on: {{ data.gha_runs_on }}
             tools_install_dir: {{ data.tools_install_dir }}
         {%- endfor %}
@@ -185,11 +189,11 @@ jobs:
       run: |
         choco install {{ choco_pkg }} -fdv -y --debug
 {% endfor %}
-{%- if github_actions.resize_win_partitions %}
+{%- if vars.resize_win_partitions %}
 
     # https://github.com/aktech/cirun-azure-resize-disk
     - name: Resize all partitions to maximum
-      if: matrix.os == 'windows'
+      if: matrix.os == 'windows' && matrix.resize_partitions
       shell: pwsh
       run: |
         Write-Output "=== RESIZING PARTITIONS ==="

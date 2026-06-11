@@ -1150,6 +1150,28 @@
           "default": [],
           "description": "Free up disk space before building.\nTakes one of the following values:\n\n- `no` not to clean anything (the default)\n- `quick` to clean a subset of components that should yield\n  a quick space gain\n- `max` for the most significant space gain\n\nOn all platforms, `quick` removes a number of unnecessary system\ntools. On Linux, it additionally uninstall a few large system\npackages.\n\nThe `max` option additionally prunes unnecessary Docker images\non Linux.\n\nThe extent of cleanup may change in the future. However, changes\nwill only propagate through rerendering.\n\nPlease note that on Windows only C:\\ drive is cleaned up, so\nusing cleanup is only beneficial if this drive is used for\n`tools_install_dir`, `build_workspace_dir` or the page file.",
           "title": "Free Disk Space"
+        },
+        "resize_partitions": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "items": {
+                "$ref": "#/$defs/ConditionalValue__class__bool__"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": [],
+          "description": "Whether to resize partitions to use all available space,\nCurrently only supported on Windows GitHub Actions.",
+          "title": "Resize Partitions"
         }
       },
       "title": "WorkflowSettings",
