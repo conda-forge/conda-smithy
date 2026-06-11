@@ -84,6 +84,8 @@ jobs:
       if: matrix.os == 'ubuntu'
       env:
         CI: github_actions
+        RATTLER_BUILD_ENABLE_GITHUB_INTEGRATION: 'true'
+        RATTLER_BUILD_COLOR: always
         CONDA_BLD_PATH: {% raw %}${{ matrix.build_workspace_dir }}{% endraw %}
         CONDA_FORGE_DOCKER_RUN_ARGS: {% raw %}${{ matrix.docker_run_args }}{% endraw %}
         CONFIG: {% raw %}${{ matrix.CONFIG }}{% endraw %}
@@ -128,6 +130,8 @@ jobs:
       if: matrix.os == 'macos'
       env:
         CI: github_actions
+        RATTLER_BUILD_ENABLE_GITHUB_INTEGRATION: 'true'
+        RATTLER_BUILD_COLOR: always
         CONDA_BLD_PATH: {% raw %}${{ matrix.build_workspace_dir }}{% endraw %}
         CONFIG: {% raw %}${{ matrix.CONFIG }}{% endraw %}
         MINIFORGE_HOME: {% raw %}${{ matrix.tools_install_dir }}{% endraw %}
@@ -200,6 +204,8 @@ jobs:
         call ".scripts\run_win_build.bat"
       env:
         CI: github_actions
+        RATTLER_BUILD_ENABLE_GITHUB_INTEGRATION: 'true'
+        RATTLER_BUILD_COLOR: always
         CONDA_BLD_PATH: {% raw %}${{ matrix.build_workspace_dir }}{% endraw %}
         CONFIG: {% raw %}${{ matrix.CONFIG }}{% endraw %}
         MINIFORGE_HOME: {% raw %}${{ matrix.tools_install_dir }}{% endraw %}
