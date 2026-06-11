@@ -242,6 +242,36 @@ def load_linter_toml_metdata_internal(time_salt):
     return tomllib.loads(hints_toml_str)
 
 
+def get_global_pinning_python_min():
+    # ensure we refresh the cache every hour
+    ttl = 3600
+    time_salt = int(time.time() / ttl)
+    return _get_global_pinning_python_min_internal(time_salt)
+
+
+@lru_cache(maxsize=1)
+def _get_global_pinning_python_min_internal(time_salt):
+    """The default `python_min` from conda-forge's global pinning, as a
+    string, or None if it cannot be fetched."""
+    pinning_url = "https://raw.githubusercontent.com/conda-forge/conda-forge-pinning-feedstock/main/recipe/conda_build_config.yaml"
+    try:
+        pinning_req = requests.get(pinning_url, timeout=5)
+    except requests.RequestException:
+        return None
+    if pinning_req.status_code != 200:
+        # too bad, but not important enough to throw an error;
+        # linter will rerun on the next commit anyway
+        return None
+    from conda_smithy.utils import get_yaml
+
+    python_min = get_yaml().load(pinning_req.content.decode("utf-8")).get("python_min")
+    if isinstance(python_min, Sequence) and not isinstance(python_min, str):
+        # the first entry is the default; later entries are platform
+        # exceptions gated by selector comments (e.g. win-arm64)
+        python_min = python_min[0] if python_min else None
+    return str(python_min) if python_min is not None else None
+
+
 def flatten_v1_if_else(requirements: list[str | dict] | str) -> list[str]:
     flattened_requirements = []
     for req in requirements:

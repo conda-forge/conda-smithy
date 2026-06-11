@@ -16,6 +16,7 @@ from conda_smithy.linter.utils import (
     find_local_config_file,
     flatten_v1_if_else,
     get_all_test_requirements,
+    get_global_pinning_python_min,
     is_selector_line,
 )
 from conda_smithy.utils import get_yaml
@@ -361,6 +362,25 @@ def hint_noarch_python_use_python_min(
         hints.append(msg.r.PythonMinPin(recommendations=recommendations).as_string())
 
 
+def hint_redundant_python_min(meta, recipe_text, recipe_version, hints):
+    if recipe_version == 1:
+        context = meta.get("context")
+        declared = context.get("python_min") if isinstance(context, Mapping) else None
+    else:
+        match = re.search(
+            r"""{%\s*set\s+python_min\s*=\s*["']([^"']+)["']""",
+            recipe_text or "",
+        )
+        declared = match.group(1) if match else None
+
+    if declared is None:
+        return
+
+    global_python_min = get_global_pinning_python_min()
+    if global_python_min is not None and str(declared) == global_python_min:
+        hints.append(msg.r.RedundantPythonMin(value=global_python_min).as_string())
+
+
 def hint_space_separated_specs(
     requirements_section,
     test_section,
@@ -390,9 +410,9 @@ def hint_space_separated_specs(
         }.items():
             bad_specs = [req for req in reqs if not _ensure_spec_space_separated(req)]
             if bad_specs:
-                report.setdefault(output.get("name", f"output {i}"), {})[
-                    req_type
-                ] = bad_specs
+                report.setdefault(output.get("name", f"output {i}"), {})[req_type] = (
+                    bad_specs
+                )
 
     for output, requirements in report.items():
         hints.append(

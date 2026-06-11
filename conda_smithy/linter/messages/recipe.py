@@ -1022,6 +1022,27 @@ class UsePyPIOrg(LinterMessage, _AnyRecipeMessage):
     )
 
 
+@dataclass(kw_only=True)
+class RedundantPythonMin(LinterMessage, _AnyRecipeMessage):
+    """
+    conda-forge's global pinning already provides the `python_min` variable,
+    so recipes should not redefine it to the same value. Only override
+    `python_min` when the package needs a higher floor than the global
+    default.
+    """
+
+    kind = "hint"
+    identifier = "R-051"
+    message = (
+        "The recipe sets `python_min` to ${value}, which is identical to "
+        "the default provided by conda-forge's global pinning. Remove the "
+        "redefinition; it is redundant and unintentionally overrides "
+        "platforms where the global default differs. Only set `python_min` "
+        "when the package needs a higher floor than the global default."
+    )
+    value: str
+
+
 # endregion
 # region Recipe v0
 
