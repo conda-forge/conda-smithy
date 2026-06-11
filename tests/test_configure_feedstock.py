@@ -1,5 +1,6 @@
 import copy
 import io
+import itertools
 import logging
 import os
 import re
@@ -3649,3 +3650,42 @@ def test_free_disk_space_azure(py_recipe, jinja_env, caplog, value: str, add_old
         assert ("Manage disk space" in step_names) == (value != "skip")
 
     assert Path(forge_dir, ".scripts/free_disk_space.sh").exists() == (value != "skip")
+
+
+def test_namespace_pagefile_label(py_recipe, jinja_env):
+    forge_dir = py_recipe.recipe
+    forge_yml = Path(forge_dir, "conda-forge.yml")
+    config_yml = Path(forge_dir, "recipe/default_config.yaml")
+
+    with open(forge_yml, "a") as f:
+        f.write(textwrap.dedent("""\
+            provider:
+              linux_64: github_actions
+            workflow_settings:
+              pagefile_size: 8
+        """))
+
+    with open(config_yml, "a") as f:
+        f.write(textwrap.dedent("""\
+            github_actions_labels:
+              - namespace-profile-8cpu-on-linux-64
+        """))
+
+    config = configure_feedstock._load_forge_config(
+        forge_dir, "recipe/default_config.yaml"
+    )
+    configure_feedstock.render_github_actions(
+        jinja_env=jinja_env,
+        forge_config=config,
+        forge_dir=forge_dir,
+    )
+
+    conda_build_yml = Path(forge_dir, ".github/workflows/conda-build.yml")
+    with conda_build_yml.open() as f:
+        workflow = yaml.safe_load(f)
+    matrix = workflow["jobs"]["build"]["strategy"]["matrix"]["include"]
+    labels = set(itertools.chain.from_iterable(x["runs_on"] for x in matrix))
+    assert (
+        "namespace-profile-8cpu-on-linux-64;container.privileged=true;container.mount-scratch=true"
+        in labels
+    )

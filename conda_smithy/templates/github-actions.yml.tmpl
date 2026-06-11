@@ -94,6 +94,7 @@ jobs:
 {%- endif %}
         UPLOAD_PACKAGES: {% raw %}${{ matrix.UPLOAD_PACKAGES }}{% endraw %}
         PAGEFILE_SIZE: {% raw %}${{ matrix.pagefile_size }}{% endraw %}
+        GHA_RUNS_ON: {% raw %}${{ join(matrix.runs_on, ' ') }}{% endraw %}
 {%- for secret in secrets %}
         {{ secret }}: {% raw %}${{{% endraw %} secrets.{{ secret }} {% raw %}}}{% endraw %}
 {%- endfor %}
