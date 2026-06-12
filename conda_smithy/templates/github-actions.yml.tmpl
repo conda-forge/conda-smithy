@@ -84,14 +84,6 @@ jobs:
       run: |
         .scripts/free_disk_space.sh "${FREE_DISK_SPACE}"
 {%- endif %}
-
-    - name: Configure binfmt_misc
-      if: matrix.os == 'ubuntu'
-      shell: bash
-      run: |
-        if [[ "$(uname -m)" == "x86_64" ]]; then
-          docker run --rm --privileged multiarch/qemu-user-static:register --reset --credential yes
-        fi
 {%- if vars.create_pagefile_linux %}
 
     - name: Configure page file on Linux
@@ -115,6 +107,14 @@ jobs:
         call ".scripts\create_pagefile.bat" %PAGEFILE_SIZE%
 
 {%- endif %}
+    - name: Configure binfmt_misc
+      if: matrix.os == 'ubuntu'
+      shell: bash
+      run: |
+        if [[ "$(uname -m)" == "x86_64" ]]; then
+          docker run --rm --privileged multiarch/qemu-user-static:register --reset --credential yes
+        fi
+
     - name: Build on Linux
       id: build-linux
       if: matrix.os == 'ubuntu'
