@@ -777,6 +777,18 @@
       "path": "recipe/(meta|recipe).yaml"
     },
     {
+      "name": "DuplicateRecipes",
+      "identifier": "R-051",
+      "category": "R",
+      "kind": "lint",
+      "added_in": "2026.6",
+      "deprecated_in": "",
+      "documentation": "If recipe folder contains both meta.yaml and recipe.yaml",
+      "message": "Recipe folder contains both `meta.yaml` and `recipe.yaml`. Only one recipe file at a time is allowed.",
+      "examples": [],
+      "path": "recipe/(meta|recipe).yaml"
+    },
+    {
       "name": "FormattedSelectors",
       "identifier": "R0-001",
       "category": "R0",

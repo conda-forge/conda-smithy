@@ -493,6 +493,18 @@ def test_cbc_osx_lints_variants_yaml(
             assert any(lint.startswith(exp_lint) for lint in lints)
 
 
+def test_duplicated_recipes():
+    recipe_content = "package:\n  name: foo"
+    with tmp_directory() as recipe_dir:
+        recipe_dir = Path(recipe_dir)
+        recipe_dir.joinpath("recipe.yaml").write_text(recipe_content)
+        recipe_dir.joinpath("meta.yaml").write_text(recipe_content)
+
+        # run the linter
+        lints = linter.main(recipe_dir)
+        assert any(lint.startswith("Recipe folder contains both") for lint in lints)
+
+
 @pytest.mark.parametrize("recipe_version", [0, 1])
 def test_duplicated_recipe_configs(recipe_version):
     recipe_content = "package:\n  name: foo"
