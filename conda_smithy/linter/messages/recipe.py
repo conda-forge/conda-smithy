@@ -1022,6 +1022,21 @@ class UsePyPIOrg(LinterMessage, _AnyRecipeMessage):
     )
 
 
+@dataclass(kw_only=True)
+class DuplicateRecipes(LinterMessage, _AnyRecipeMessage):
+    """
+    If recipe folder contains both meta.yaml and recipe.yaml
+    """
+
+    kind = "lint"
+    identifier = "R-051"
+    added_in = "2026.6"
+    message = (
+        "Recipe folder contains both `meta.yaml` and `recipe.yaml`. "
+        "Only one recipe file at a time is allowed."
+    )
+
+
 # endregion
 # region Recipe v0
 
