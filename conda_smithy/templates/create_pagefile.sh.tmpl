@@ -4,8 +4,6 @@ set -ex
 
 PAGEFILE_SIZE=${1}
 
-[[ ${PAGEFILE_SIZE} -le 0 ]] && exit
-
 SWAPFILE=/swapfile
 if [[ ${GHA_RUNS_ON} == *namespace-profile-* ]]; then
     SWAPFILE=/namespace/scratch/swapfile
