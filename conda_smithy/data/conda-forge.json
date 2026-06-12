@@ -732,7 +732,8 @@
             }
           ],
           "default": false,
-          "description": "Whether to resize partitions to use all space on Windows",
+          "deprecated": true,
+          "description": "Deprecated. Use `workflow_settings.resize_partitions` instead.\nWhether to resize partitions to use all space on Windows",
           "title": "Resize Win Partitions"
         },
         "self_hosted": {

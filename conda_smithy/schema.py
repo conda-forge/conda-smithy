@@ -298,8 +298,12 @@ class GithubActionsConfig(BaseModel):
     )
 
     resize_win_partitions: Optional[bool] = Field(
-        description="Whether to resize partitions to use all space on Windows",
+        description=cleandoc("""
+        Deprecated. Use `workflow_settings.resize_partitions` instead.
+        Whether to resize partitions to use all space on Windows
+        """),
         default=False,
+        deprecated=True,
     )
 
     self_hosted: Optional[bool] = Field(
