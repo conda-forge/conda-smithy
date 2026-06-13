@@ -115,20 +115,20 @@ ${DOCKER_EXECUTABLE} pull "${DOCKER_IMAGE}"
 ${DOCKER_EXECUTABLE} run ${DOCKER_RUN_ARGS} \
            -v "${RECIPE_ROOT}":/home/conda/recipe_root:rw${VOLUME_SUFFIX},delegated \
            -v "${FEEDSTOCK_ROOT}":/home/conda/feedstock_root:rw${VOLUME_SUFFIX},delegated \
-           -e CONFIG \
-           -e HOST_USER_ID \
-           -e UPLOAD_PACKAGES \
-           -e IS_PR_BUILD \
-           -e GIT_BRANCH \
-           -e UPLOAD_ON_BRANCH \
+           -e BUILD_OUTPUT_ID \
+           -e BUILD_WITH_CONDA_DEBUG \
            -e CI \
+           -e CONFIG \
+           -e CPU_COUNT \
+           -e FEEDSTOCK_NAME \
+           -e GIT_BRANCH \
            -e GITHUB_ACTIONS \
+           -e HOST_USER_ID \
+           -e IS_PR_BUILD \
            -e RATTLER_BUILD_COLOR \
            -e RATTLER_BUILD_ENABLE_GITHUB_INTEGRATION \
-           -e FEEDSTOCK_NAME \
-           -e CPU_COUNT \
-           -e BUILD_WITH_CONDA_DEBUG \
-           -e BUILD_OUTPUT_ID \
+           -e UPLOAD_ON_BRANCH \
+           -e UPLOAD_PACKAGES \
            -e flow_run_id \
            -e remote_url \
            -e sha \

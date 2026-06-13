@@ -4,7 +4,7 @@
 
 **Changed:**
 
-* Environment variables in various templates have been put in alphabetical order (#2570)
+* Environment variables in various templates have been put in alphabetical order (#2570, #2585)
 
 **Deprecated:**
 
