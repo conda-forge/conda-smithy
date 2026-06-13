@@ -2631,6 +2631,23 @@ def _read_forge_config(forge_dir, forge_yml=None):
                 }
             )
 
+    if "resize_win_partitions" in file_config.get("github_actions", {}):
+        if "resize_partitions" in file_config.get("workflow_settings", {}):
+            logger.warning(
+                "`github_actions.resize_win_partitions` is ignored when "
+                "`workflow_settings.resize_partitions` is set",
+            )
+            del config["github_actions"]["resize_win_partitions"]
+        else:
+            # Convert old keys to new settings.
+            config["workflow_settings"]["resize_partitions"].append(
+                {
+                    "provider": "github_actions",
+                    "os": "win",
+                    "value": config["github_actions"]["resize_win_partitions"],
+                }
+            )
+
     # check for conda-smithy 2.x matrix which we can't auto-migrate
     # to conda_build_config
     if file_config.get("matrix") and not os.path.exists(

@@ -372,6 +372,13 @@ def get_workflow_settings(
                 f"workflows: {win_path}"
             )
 
+    if data["resize_partitions"]:
+        if os != "win" or provider != "github_actions":
+            raise ValueError(
+                "`workflow_settings.resize_partitions` is only valid for GHA/Windows "
+                f"(enabled for {provider=} / {os=})"
+            )
+
     return data
 
 
@@ -410,7 +417,11 @@ def fill_workflow_settings_defaults(
             "win": rf"{tools_drive}\\bld\\",
         }[os]
 
-    if workflow_settings.get("pagefile_size") is None:
-        workflow_settings["pagefile_size"] = 0
-    if workflow_settings.get("free_disk_space") is None:
-        workflow_settings["free_disk_space"] = "skip"
+    simple_defaults = {
+        "pagefile_size": 0,
+        "free_disk_space": "skip",
+        "resize_partitions": False,
+    }
+    for k, v in simple_defaults.items():
+        if workflow_settings.get(k) is None:
+            workflow_settings[k] = v
