@@ -2,13 +2,19 @@
 # update the conda-forge.yml and/or the recipe/meta.yaml.
 # -*- mode: yaml -*-
 
-{%- set vars = namespace(store_build_artifacts=False, free_disk_space=False) %}
+{%- set vars = namespace(store_build_artifacts=False, free_disk_space=False, create_pagefile_linux=False, create_pagefile_win=False) %}
 {%- for data in configs %}
   {%- if data.store_build_artifacts %}
     {%- set vars.store_build_artifacts = True %}
   {%- endif %}
   {%- if data.free_disk_space != "skip" %}
     {%- set vars.free_disk_space = True %}
+  {%- endif %}
+  {%- if data.gha_os == "ubuntu" and data.pagefile_size > 0 %}
+    {%- set vars.create_pagefile_linux = True %}
+  {%- endif %}
+  {%- if data.gha_os == "windows" and data.pagefile_size > 0 %}
+    {%- set vars.create_pagefile_win = True %}
   {%- endif %}
 {%- endfor %}
 
@@ -78,6 +84,36 @@ jobs:
       run: |
         .scripts/free_disk_space.sh "${FREE_DISK_SPACE}"
 {%- endif %}
+{%- if vars.create_pagefile_linux %}
+
+    - name: Configure page file on Linux
+      if: matrix.os == 'ubuntu' && matrix.pagefile_size > 0
+      shell: bash
+      env:
+        PAGEFILE_SIZE: {% raw %}${{ matrix.pagefile_size }}{% endraw %}
+        GHA_RUNS_ON: {% raw %}${{ join(matrix.runs_on, ' ') }}{% endraw %}
+      run: |
+        .scripts/create_pagefile.sh "${PAGEFILE_SIZE}"
+
+{%- endif %}
+{%- if vars.create_pagefile_win %}
+    - name: Configure page file on Windows
+      if: matrix.os == 'windows' && matrix.pagefile_size > 0
+      shell: cmd
+      env:
+        CONDA_BLD_PATH: {% raw %}${{ matrix.build_workspace_dir }}{% endraw %}
+        PAGEFILE_SIZE: {% raw %}${{ matrix.pagefile_size }}{% endraw %}
+      run: |
+        call ".scripts\create_pagefile.bat" %PAGEFILE_SIZE%
+
+{%- endif %}
+    - name: Configure binfmt_misc
+      if: matrix.os == 'ubuntu'
+      shell: bash
+      run: |
+        if [[ "$(uname -m)" == "x86_64" ]]; then
+          docker run --rm --privileged multiarch/qemu-user-static:register --reset --credential yes
+        fi
 
     - name: Build on Linux
       id: build-linux
@@ -93,7 +129,6 @@ jobs:
         UPLOAD_ON_BRANCH: {{ upload_on_branch }}
 {%- endif %}
         UPLOAD_PACKAGES: {% raw %}${{ matrix.UPLOAD_PACKAGES }}{% endraw %}
-        PAGEFILE_SIZE: {% raw %}${{ matrix.pagefile_size }}{% endraw %}
         RATTLER_BUILD_COLOR: always
         RATTLER_BUILD_ENABLE_GITHUB_INTEGRATION: 'true'
 {%- for secret in secrets %}
@@ -101,10 +136,6 @@ jobs:
 {%- endfor %}
       shell: bash
       run: |
-        if [[ "$(uname -m)" == "x86_64" ]]; then
-          echo "::group::Configure binfmt_misc"
-          docker run --rm --privileged multiarch/qemu-user-static:register --reset --credential yes
-        fi
         export CONDA_BLD_PATH="${CONDA_BLD_PATH/#~/${HOME}}"
         export FEEDSTOCK_NAME="$(basename $GITHUB_REPOSITORY)"
         export GIT_BRANCH="$(basename $GITHUB_REF)"
@@ -116,12 +147,6 @@ jobs:
           export IS_PR_BUILD="True"
         else
           export IS_PR_BUILD="False"
-        fi
-        echo "::endgroup::"
-        if [[ ${PAGEFILE_SIZE} -gt 0 ]]; then
-            echo "::group::Setting up swap file"
-            .scripts/create_pagefile.sh "${PAGEFILE_SIZE}"
-            echo "::endgroup::"
         fi
         ./.scripts/run_docker_build.sh
 
@@ -200,14 +225,12 @@ jobs:
         set "flow_run_id=github_%GITHUB_RUN_ID%"
         set "remote_url=https://github.com/%GITHUB_REPOSITORY%"
         set "sha=%GITHUB_SHA%"
-        call ".scripts\create_pagefile.bat" %PAGEFILE_SIZE%
         call ".scripts\run_win_build.bat"
       env:
         CI: github_actions
         CONDA_BLD_PATH: {% raw %}${{ matrix.build_workspace_dir }}{% endraw %}
         CONFIG: {% raw %}${{ matrix.CONFIG }}{% endraw %}
         MINIFORGE_HOME: {% raw %}${{ matrix.tools_install_dir }}{% endraw %}
-        PAGEFILE_SIZE: {% raw %}${{ matrix.pagefile_size }}{% endraw %}
         PYTHONUNBUFFERED: 1
 {%- if upload_on_branch %}
         UPLOAD_ON_BRANCH: {{ upload_on_branch }}

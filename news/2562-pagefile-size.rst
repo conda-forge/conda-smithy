@@ -16,7 +16,7 @@
 
 **Fixed:**
 
-* <news item>
+* Swap file creation now works correctly on Namespace GHA runners. (#2577)
 
 **Security:**
 

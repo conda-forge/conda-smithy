@@ -160,10 +160,17 @@ def lintify_meta_yaml(
     feedstock_config_keys = _get_feedstock_config(recipe_dir)
     lints_to_skip = feedstock_config_keys.get("linter", {}).get("skip", [])
 
-    # If the recipe_dir exists (no guarantee within this function) , we can
-    # find the meta.yaml within it.
-    recipe_name = "meta.yaml" if recipe_version == 0 else "recipe.yaml"
-    recipe_fname = os.path.join(recipe_dir or "", recipe_name)
+    # If the recipe_dir exists (no guarantee within this function),
+    # find the recipe(s) within it.
+    recipe_dir = recipe_dir or ""
+    recipe_fname_v0 = os.path.join(recipe_dir, "meta.yaml")
+    recipe_fname_v1 = os.path.join(recipe_dir, "recipe.yaml")
+    recipe_fname = recipe_fname_v0 if recipe_version == 0 else recipe_fname_v1
+
+    # irrespective of the expected recipe_version, lint if both recipe types are present
+    if os.path.exists(recipe_fname_v0) and os.path.exists(recipe_fname_v1):
+        lints.append(msg.r.DuplicateRecipes().as_string())
+        return lints, hints
 
     if recipe_version == 1:
         schema_version = meta.get("schema_version", 1)

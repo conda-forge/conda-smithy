@@ -127,43 +127,62 @@ if [[ -f "${FEEDSTOCK_ROOT}/LICENSE.txt" ]]; then
 fi
 
 if [[ "${BUILD_WITH_CONDA_DEBUG:-0}" == 1 ]]; then
-    {%- if conda_build_tool != "rattler-build" %}
-    if [[ "x${BUILD_OUTPUT_ID:-}" != "x" ]]; then
-        EXTRA_CB_OPTIONS="${EXTRA_CB_OPTIONS:-} --output-id ${BUILD_OUTPUT_ID}"
-    fi
-    conda debug "${RECIPE_ROOT}" -m "${CI_SUPPORT}/${CONFIG}.yaml" \
+    # differences between conda-build vs. rattler-build
+    #   - 1 step (conda debug + manually open shell) vs. 2 step (rb debug {setup, shell})
+    #   - recipe is positional vs. --recipe "${RECIPE_ROOT}"
+    #   - --output-id vs. --output-name
+    #   - --clobber-file vs. none
+    #   - none vs. --target-platform
+    {%- if conda_build_tool.startswith("conda-build") %}
+    conda debug \
+        "${RECIPE_ROOT}" \
+        -m "${CI_SUPPORT}/${CONFIG}.yaml" \
         ${EXTRA_CB_OPTIONS:-} \
+        ${BUILD_OUTPUT_ID:+--output-id "${BUILD_OUTPUT_ID}"} \
         --clobber-file "${CI_SUPPORT}/clobber_${CONFIG}.yaml"
 
     # Drop into an interactive shell
     /bin/bash
-    {%- else %}
+    {%- elif conda_build_tool == "rattler-build" %}
     export CONDA_BLD_PATH="${CONDA_BLD_PATH:-${FEEDSTOCK_ROOT}/build_artifacts}"
     rattler-build debug setup \
         --recipe "${RECIPE_ROOT}" \
         -m "${CI_SUPPORT}/${CONFIG}.yaml" \
-        --target-platform "${HOST_PLATFORM}" \
+        ${EXTRA_CB_OPTIONS:-} \
         ${BUILD_OUTPUT_ID:+--output-name "${BUILD_OUTPUT_ID}"} \
-        ${EXTRA_CB_OPTIONS:-}
+        --target-platform "${HOST_PLATFORM}"
 
     rattler-build debug shell
+    {%- else %}
+    echo "Build tool {{ conda_build_tool }} is not currently supported in debug mode"
+    exit 1
     {%- endif %}
 else
+    # differences between conda-build vs. rattler-build
+    #   - recipe is positional vs. --recipe "${RECIPE_ROOT}"
+    #   - --suppress-variables vs. none
+    #   - --clobber-file vs. none
+    #   - none vs. --target-platform
+    #   - --extra-meta a=b c=d vs. --extra-meta a=b --extra-meta c=d
     {%- if conda_build_tool != "rattler-build" %}
-    {{ BUILD_CMD }} "${RECIPE_ROOT}" -m "${CI_SUPPORT}/${CONFIG}.yaml" \
-        --suppress-variables ${EXTRA_CB_OPTIONS:-} \
+    {{ BUILD_CMD }} \
+        "${RECIPE_ROOT}" \
+        -m "${CI_SUPPORT}/${CONFIG}.yaml" \
+        ${EXTRA_CB_OPTIONS:-} \
+        --suppress-variables \
         --clobber-file "${CI_SUPPORT}/clobber_${CONFIG}.yaml" \
         --extra-meta flow_run_id="${flow_run_id:-}" remote_url="${remote_url:-}" sha="${sha:-}"
 
     {%- else %}
 
-    {{ BUILD_CMD }} --recipe "${RECIPE_ROOT}" \
-     -m "${CI_SUPPORT}/${CONFIG}.yaml" \
-     ${EXTRA_CB_OPTIONS:-} \
-     --target-platform "${HOST_PLATFORM}" \
-     --extra-meta flow_run_id="${flow_run_id:-}" \
-     --extra-meta remote_url="${remote_url:-}" \
-     --extra-meta sha="${sha:-}"
+    {{ BUILD_CMD }} \
+        --recipe "${RECIPE_ROOT}" \
+        -m "${CI_SUPPORT}/${CONFIG}.yaml" \
+        ${EXTRA_CB_OPTIONS:-} \
+        --target-platform "${HOST_PLATFORM}" \
+        --extra-meta flow_run_id="${flow_run_id:-}" \
+        --extra-meta remote_url="${remote_url:-}" \
+        --extra-meta sha="${sha:-}"
 
     {%- endif %}
     ( startgroup "Inspecting artifacts" ) 2> /dev/null
