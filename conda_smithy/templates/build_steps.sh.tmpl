@@ -153,6 +153,9 @@ if [[ "${BUILD_WITH_CONDA_DEBUG:-0}" == 1 ]]; then
         --target-platform "${HOST_PLATFORM}"
 
     rattler-build debug shell
+    {%- else %}
+    echo "Build tool {{ conda_build_tool }} is not currently supported in debug mode"
+    exit 1
     {%- endif %}
 else
     # differences between conda-build vs. rattler-build
