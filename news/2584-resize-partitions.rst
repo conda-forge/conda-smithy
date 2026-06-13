@@ -8,7 +8,7 @@
 
 **Deprecated:**
 
-* <news item>
+* ``github_actions.resize_win_partitions`` was deprecated in favor of ``workflow_settings.resize_partitions``. (#2584)
 
 **Removed:**
 
