@@ -566,10 +566,10 @@ class WorkflowSettings(BaseModel):
         Free up disk space before building.
         Takes one of the following values:
 
-        - `no` not to clean anything (the default)
-        - `quick` to clean a subset of components that should yield
-          a quick space gain
-        - `max` for the most significant space gain
+        - `skip`: does not do anything (the default)
+        - `quick`: cleans a subset of components that balances space gained
+          against the time necessary to do so
+        - `max`: takes longer, but achieves more significant space gain
 
         On all platforms, `quick` removes a number of unnecessary system
         tools. On Linux, it additionally uninstall a few large system
@@ -581,7 +581,7 @@ class WorkflowSettings(BaseModel):
         The extent of cleanup may change in the future. However, changes
         will only propagate through rerendering.
 
-        Please note that on Windows only C:\ drive is cleaned up, so
+        Please note that on Windows only `C:\` drive is cleaned up, so
         using cleanup is only beneficial if this drive is used for
         `tools_install_dir`, `build_workspace_dir` or the page file.
         """),
@@ -595,8 +595,8 @@ class WorkflowSettings(BaseModel):
         ]
     ] = Field(
         description=cleandoc(r"""
-        Whether to resize partitions to use all available space,
-        Currently only supported on Windows GitHub Actions.
+        Whether to resize partitions to use all available space. Currently
+        only supported for certain providers on GitHub Actions for Windows.
         """),
         default=[],
     )
@@ -636,7 +636,7 @@ class ConfigModel(BaseModel):
     linter: Optional[LinterConfig] = Field(
         default_factory=LinterConfig,
         description=cleandoc("""
-        Settings in this block are used to control how `conda smithy` lints
+        Settings in this block are used to control how `conda smithy` lints.
         An example of the such configuration is:
 
         ```yaml

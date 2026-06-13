@@ -1149,7 +1149,7 @@
             }
           ],
           "default": [],
-          "description": "Free up disk space before building.\nTakes one of the following values:\n\n- `no` not to clean anything (the default)\n- `quick` to clean a subset of components that should yield\n  a quick space gain\n- `max` for the most significant space gain\n\nOn all platforms, `quick` removes a number of unnecessary system\ntools. On Linux, it additionally uninstall a few large system\npackages.\n\nThe `max` option additionally prunes unnecessary Docker images\non Linux.\n\nThe extent of cleanup may change in the future. However, changes\nwill only propagate through rerendering.\n\nPlease note that on Windows only C:\\ drive is cleaned up, so\nusing cleanup is only beneficial if this drive is used for\n`tools_install_dir`, `build_workspace_dir` or the page file.",
+          "description": "Free up disk space before building.\nTakes one of the following values:\n\n- `skip`: does not do anything (the default)\n- `quick`: cleans a subset of components that balances space gained\n  against the time necessary to do so\n- `max`: takes longer, but achieves more significant space gain\n\nOn all platforms, `quick` removes a number of unnecessary system\ntools. On Linux, it additionally uninstall a few large system\npackages.\n\nThe `max` option additionally prunes unnecessary Docker images\non Linux.\n\nThe extent of cleanup may change in the future. However, changes\nwill only propagate through rerendering.\n\nPlease note that on Windows only `C:\\` drive is cleaned up, so\nusing cleanup is only beneficial if this drive is used for\n`tools_install_dir`, `build_workspace_dir` or the page file.",
           "title": "Free Disk Space"
         },
         "resize_partitions": {
@@ -1171,7 +1171,7 @@
             }
           ],
           "default": [],
-          "description": "Whether to resize partitions to use all available space,\nCurrently only supported on Windows GitHub Actions.",
+          "description": "Whether to resize partitions to use all available space. Currently\nonly supported for certain providers on GitHub Actions for Windows.",
           "title": "Resize Partitions"
         }
       },
@@ -2102,7 +2102,7 @@
           "type": "null"
         }
       ],
-      "description": "Settings in this block are used to control how `conda smithy` lints\nAn example of the such configuration is:\n\n```yaml\nlinter:\n    skip:\n        - lint_noarch_selectors\n```"
+      "description": "Settings in this block are used to control how `conda smithy` lints.\nAn example of the such configuration is:\n\n```yaml\nlinter:\n    skip:\n        - lint_noarch_selectors\n```"
     },
     "conda_build_tool": {
       "anyOf": [
