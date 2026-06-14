@@ -303,7 +303,8 @@ pixi search {{ outputs[0] }} --channel {{ channel_with_label }}
 
 </details>
 
-Alternatively, `mamba repoquery` may provide more information:
+<details>
+<summary>With mamba repoquery, which may provide more information</summary>
 
 ```
 # Search all versions available on your platform:
@@ -315,6 +316,8 @@ mamba repoquery whoneeds {{ outputs[0] }} --channel {{ channel_with_label }}
 # List dependencies of `{{ outputs[0] }}`:
 mamba repoquery depends {{ outputs[0] }} --channel {{ channel_with_label }}
 ```
+
+</details>
 
 {% if channel_name == 'conda-forge' %}
 About conda-forge
