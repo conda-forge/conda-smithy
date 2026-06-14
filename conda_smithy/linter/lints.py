@@ -6,7 +6,7 @@ import os
 import re
 import tempfile
 from collections.abc import Sequence
-from typing import Any, Literal, Optional, Tuple
+from typing import Any, Literal, Optional
 
 from conda.models.version import VersionOrder
 from rattler_build_conda_compat.jinja.jinja import render_recipe_with_context
@@ -262,7 +262,7 @@ def lint_license_family_should_be_valid(
 def lint_recipe_name(
     package_section: dict[str, Any],
     lints: list[str],
-) -> Tuple[str, list[str]]:
+) -> tuple[str, list[str]]:
     recipe_name = package_section.get("name", "").strip()
     lint_msg = _lint_recipe_name(recipe_name)
     if lint_msg:
