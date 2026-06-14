@@ -5,6 +5,7 @@
 **Changed:**
 
 * Updated the testing CI configuration and dependencies to match that of the feedstock. (#2588)
+* Added a pin on ``rattler-build`` to the minor version to help avoid breakages. (#2588)
 
 **Deprecated:**
 
