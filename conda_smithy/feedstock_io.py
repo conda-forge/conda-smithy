@@ -29,8 +29,7 @@ def get_repo(path, search_parent_directories=True):
 
 
 def get_repo_root(path):
-    repo = get_repo(path)
-    if repo is None:
+    if (repo := get_repo(path)) is None:
         return None
     return repo.workdir.rstrip(os.path.sep)
 
