@@ -38,7 +38,8 @@ def get_validator_class(deprecated_validator):
 
 
 def validate_json_schema(
-    config, schema_file: str | Path | None = None,
+    config,
+    schema_file: str | Path | None = None,
 ) -> tuple[list[ValidationError], list[str]]:
     # Validate the merged configuration against a JSON schema
     if not schema_file:
