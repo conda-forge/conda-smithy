@@ -4,6 +4,64 @@ conda-smithy Change Log
 
 .. current developments
 
+v2026.6.14
+====================
+
+**Added:**
+
+* ``workflow_settings.pagefile_size`` to set page file (swap file) size consistently across CI providers, on Linux and Windows. (#2562)
+* ``workflow_settings.free_disk_space`` to control freeing disk space consistently across CI providers. (#2568)
+* ``workflow_settings.resize_partitions`` to control resizing partitions across CI providers. (#2584)
+* Add support for Depot.dev Github Actions runners via ``--with-depot`` and ``--without-depot`` CLI flags. (#2573)
+* The linter will now complain if both `meta.yaml` as well as `recipe.yaml` are found in the recipe folder (#2583)
+* ``python build-locally.py --debug`` now works for ``rattler-build`` (v1
+  ``recipe.yaml``) feedstocks. The Linux/Docker (``build_steps.sh``) and macOS
+  (``run_osx_build.sh``) build scripts now invoke ``rattler-build debug setup``
+  followed by ``rattler-build debug shell`` instead of printing
+  "rattler-build currently doesn't support debug mode". This restores the
+  interactive local-debugging workflow (the equivalent of ``conda debug``) that
+  classic ``conda-build`` recipes already had. Requires ``rattler-build >=0.41``.
+  (#2566)
+* Set ``RATTLER_BUILD_ENABLE_GITHUB_INTEGRATION: true`` and ``RATTLER_BUILD_COLOR: always``
+  environment variables in the generated GitHub Actions CI. For Linux builds, the
+  ``$GITHUB_STEP_SUMMARY`` file is mounted into the build container so that
+  rattler-build's GitHub integration can write its summary.
+
+**Changed:**
+
+* Freeing disk space now also works on Windows. (#2568)
+* Environment variables in various templates have been put in alphabetical order (#2570, #2585)
+* Split GitHub Actions setup into separate steps to ease reading output. (#2579)
+* The recipe-maintainer existence lint no longer treats a transient GitHub
+  failure (rate limit, server error, or network error) as "maintainer does not
+  exist". Such checks are now retried and, if still inconclusive, the lint fails
+  with a message (``CF-008``) asking for the linter to be re-run, instead of
+  producing a false-positive "does not exist" lint. (#2575)
+
+**Deprecated:**
+
+* ``azure.settings_linux.swapfile_size`` and ``azure.settings_win.variables.SET_PAGEFILE`` are deprecated in favor of ``workflow_settings.pagefile_size``. (#2562)
+* ``github_actions.resize_win_partitions`` was deprecated in favor of ``workflow_settings.resize_partitions``. (#2584)
+
+**Fixed:**
+
+* Swap file creation now works correctly on Namespace GHA runners. (#2577)
+* Fixed false-positive ``Recipe maintainer "..." does not exist`` lints caused
+  by unauthenticated GitHub rate limiting during linting. (#2575)
+
+**Authors:**
+
+* Jaime Rodríguez-Guerra
+* H. Vetinari
+* Michał Górny
+* pre-commit-ci[bot]
+* Mark Harfouche
+* Chris Burr
+* dependabot[bot]
+* Pavel Zwerschke
+
+
+
 v2026.5.29
 ====================
 
