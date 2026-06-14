@@ -61,7 +61,7 @@ jobs:
           popd
           pip uninstall conda-smithy --yes
 
-          python -m pip install -v --no-build-isolation -e .
+          python -m pip install -v --no-build-isolation .
 
       - name: test data and templates files in sdist
         run: |
@@ -76,6 +76,7 @@ jobs:
 
       - name: run tests
         run: |
+          rm -rf conda_smithy
           pytest tests --cov conda_smithy --cov-report lcov --cov-report term-missing
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
