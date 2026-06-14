@@ -10,6 +10,7 @@ dependencies:
   - setuptools>=80
   - setuptools_scm>=8.1
   - pre-commit
+  - pyrefly
   - mock
   - pytest
   - pytest-cov
@@ -38,6 +39,7 @@ dependencies:
   - pydantic>=2.11,<3
   - pixi>=0.59.0
   - jsonschema
+  - simplejson
   - exceptiongroup
   # py-rattler's APIs are subject to change, pin to minor versions
   - py-rattler>=0.22,<0.23

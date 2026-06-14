@@ -6,11 +6,13 @@ subcommand when this package is installed in the same environment as conda.
 
 from __future__ import annotations
 
+from argparse import Namespace
+
 from conda.plugins import hookimpl
 from conda.plugins.types import CondaSubcommand
 
 
-def _execute(args: tuple[str, ...]) -> int | None:
+def _execute(args: Namespace | tuple[str, ...]) -> int | None:
     """Dispatch plugin arguments to the smithy CLI.
 
     Lazy import to avoid import-time side effects when not using conda-smithy.
