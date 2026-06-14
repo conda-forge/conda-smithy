@@ -2223,7 +2223,7 @@ def test_github_actions_pins():
     pkg_root = Path(conda_smithy.__file__).parent
     github_actions_template = pkg_root / "templates" / "github-actions.yml.tmpl"
     dependabot_inventory = (
-        Path(__file__)
+        Path(__file__).parent
         / ".."
         / ".github"
         / "workflows"

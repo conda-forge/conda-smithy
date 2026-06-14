@@ -74,12 +74,12 @@ jobs:
           test -f sdist-content/conda_smithy-*/conda_smithy/templates/github-actions.yml.tmpl
           rm -r sdist-content/
 
+        # export CONDA_BUILD=1
+        # export CONDA_BUILD_STATE=TEST
       - name: run tests
         run: |
           rm -rf conda_smithy
-          export CONDA_BUILD=1
           export RATTLER_BUILD_ENABLE_GITHUB_INTEGRATION=true
-          export CONDA_BUILD_STATE=TEST
           export RATTLER_BUILD_COLOR=always
           pytest -vvsx tests --cov conda_smithy --cov-report lcov --cov-report term-missing
         env:
