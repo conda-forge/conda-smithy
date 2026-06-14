@@ -263,7 +263,10 @@ mamba install {{ ' '.join(outputs) }}
 <summary>With pixi</summary>
 
 ```
+# for adding to your local project
 pixi add {{ ' '.join(outputs) }}
+# for installing globally
+pixi global install {{ ' '.join(outputs) }}
 ```
 
 </details>
