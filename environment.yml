@@ -16,6 +16,7 @@ dependencies:
   # # Part of some optional lint tests
   - conda-recipe-manager>=0.9
   - conda-souschef
+  - conda-forge-tick>=2026.0
   # Runtime dependencies
   - conda>=22.11.1
   - conda-build>=26.3.0
@@ -41,4 +42,4 @@ dependencies:
   - exceptiongroup
   # py-rattler's API subject to change, pin to minor
   - py-rattler>=0.22,<0.23
-  - rattler-build-conda-compat>=1.4.12,<2.0.0a0
+  - rattler-build-conda-compat>=1.4.15,<2.0.0a0
