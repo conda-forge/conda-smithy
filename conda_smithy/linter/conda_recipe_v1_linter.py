@@ -79,6 +79,7 @@ def lint_recipe_tests(
 
     lints.extend(tests_lints)
     hints.extend(tests_hints)
+    return lints, hints
 
 
 def hint_noarch_usage(
@@ -110,6 +111,7 @@ def hint_noarch_usage(
 
         if no_arch_possible:
             hints.append(HINT_NO_ARCH)
+    return hints
 
 
 def get_recipe_name(recipe_content: RecipeWithContext) -> str:
@@ -140,13 +142,13 @@ def lint_recipe_name(
     # from conda_build_config.yaml.
     # https://github.com/conda-forge/conda-smithy/issues/2224
     if "${{" in name:
-        return None
+        return None, lints
 
     lint_msg = _lint_recipe_name(name)
     if lint_msg:
         lints.append(lint_msg)
 
-    return name
+    return name, lints
 
 
 def lint_package_version(
@@ -159,6 +161,7 @@ def lint_package_version(
 
     if lint_msg:
         lints.append(lint_msg)
+    return lints
 
 
 def lint_usage_of_selectors_for_noarch(
@@ -206,3 +209,4 @@ def lint_usage_of_selectors_for_noarch(
         lints.append(
             msg.r.NoarchSelectorsV1(noarch=noarch_value, skips=True).as_string()
         )
+    return lints
