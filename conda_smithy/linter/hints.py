@@ -29,6 +29,7 @@ def hint_pip_usage(build_section, hints):
         for script in scripts:
             if "python setup.py install" in script:
                 hints.append(msg.r.UsePip().as_string())
+    return hints
 
 
 def hint_sources_should_not_mention_pypi_io_but_pypi_org(
@@ -45,6 +46,7 @@ def hint_sources_should_not_mention_pypi_io_but_pypi_org(
         sources = [source] if isinstance(source, str) else source
         if any(s.startswith("https://pypi.io/") for s in sources):
             hints.append(msg.r.UsePyPIOrg().as_string())
+    return hints
 
 
 def hint_suggest_noarch(
@@ -90,6 +92,7 @@ def hint_suggest_noarch(
                             break
                 if no_arch_possible:
                     hints.append(msg.r.SuggestNoarch().as_string())
+    return hints
 
 
 def hint_shellcheck_usage(recipe_dir, hints, feedstock_config=None):
@@ -98,7 +101,7 @@ def hint_shellcheck_usage(recipe_dir, hints, feedstock_config=None):
     if recipe_dir:
         shell_scripts = glob(os.path.join(recipe_dir, "*.sh"))
         if not shell_scripts:
-            return
+            return hints
         if feedstock_config is None:
             forge_yaml = find_local_config_file(recipe_dir, "conda-forge.yml")
             if forge_yaml:
@@ -146,6 +149,7 @@ def hint_shellcheck_usage(recipe_dir, hints, feedstock_config=None):
             elif p.returncode != 0:
                 # Something went wrong.
                 hints.append(msg.r.ScriptShellcheckFailure().as_string())
+    return hints
 
 
 def hint_check_spdx(about_section, hints):
@@ -190,6 +194,7 @@ def hint_check_spdx(about_section, hints):
         hints.append(msg.r.LicenseSPDX().as_string())
     if set(parsed_exceptions) - expected_exceptions:
         hints.append(msg.r.InvalidLicenseException().as_string())
+    return hints
 
 
 def hint_pip_no_build_backend(host_or_build_section, package_name, hints):
@@ -202,7 +207,7 @@ def hint_pip_no_build_backend(host_or_build_section, package_name, hints):
         "pdm-backend",
         "setuptools",
     ]:
-        return
+        return hints
 
     if host_or_build_section and any(
         req.split(" ")[0] == "pip" for req in host_or_build_section
@@ -225,6 +230,7 @@ def hint_pip_no_build_backend(host_or_build_section, package_name, hints):
             hints.append(
                 msg.r.PythonBuildBackendHost(package_name=package_name).as_string()
             )
+    return hints
 
 
 def _hint_noarch_python_use_python_min_inner(
@@ -339,7 +345,8 @@ def hint_noarch_python_use_python_min(
                 _hint_noarch_python_use_python_min_inner(
                     output_host_reqs or [],
                     output_run_reqs or [],
-                    get_all_test_requirements(output, [], recipe_version),
+                    # we're ignoring possible lints (in the second argument)
+                    get_all_test_requirements(output, [], recipe_version)[0],
                     output.get("build", {}).get("noarch"),
                     recipe_version,
                     output.get("package", {}).get("name", f"<output {output_num}"),
@@ -359,6 +366,7 @@ def hint_noarch_python_use_python_min(
 
     if recommendations:
         hints.append(msg.r.PythonMinPin(recommendations=recommendations).as_string())
+    return hints
 
 
 def hint_space_separated_specs(
@@ -398,6 +406,7 @@ def hint_space_separated_specs(
         hints.append(
             msg.r.SpaceSeparatedSpecs(output=output, bad_specs=requirements).as_string()
         )
+    return hints
 
 
 def _ensure_spec_space_separated(spec: str) -> bool:
@@ -439,7 +448,7 @@ def _ensure_spec_space_separated(spec: str) -> bool:
 def hint_os_version(
     forge_yaml: dict[str, Any],
     hints: list[str],
-) -> None:
+) -> list[str]:
     default_os_version = "alma9"
     obsolete_os_versions = ("cos7", "alma8", "ubi8")
     matches = {
@@ -453,6 +462,7 @@ def hint_os_version(
                 platforms=matches, default=default_os_version
             ).as_string()
         )
+    return hints
 
 
 def hint_rattler_build_bld_bat(
@@ -466,16 +476,17 @@ def hint_rattler_build_bld_bat(
     Having bld.bat present when using rattler-build is likely a mistake.
     """
     if not recipe_dir:
-        return
+        return hints
 
     # Check if this is a recipe version 1 (rattler-build)
     if recipe_version != 1:
-        return
+        return hints
 
     # Check if bld.bat exists in the recipe directory
     bld_bat_path = os.path.join(recipe_dir, "bld.bat")
     if os.path.exists(bld_bat_path):
         hints.append(msg.r.RattlerBldBat().as_string())
+    return hints
 
 
 def _check_pin_overridden(
@@ -531,7 +542,7 @@ def hint_dependency_pins(
     """Hint for dependencies that override pinning"""
 
     if not ci_support_files:
-        return
+        return hints
 
     potential_pins = set()
     for pin_file in ci_support_files:
@@ -563,6 +574,7 @@ def hint_dependency_pins(
                 output=output, bad_specs=requirements
             ).as_string()
         )
+    return hints
 
 
 def hint_deprecated_environment_variables(
@@ -588,3 +600,4 @@ def hint_deprecated_environment_variables(
                     replacement=deprecated_variables[deprecated_variable],
                 ).as_string()
             )
+    return hints

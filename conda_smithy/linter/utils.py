@@ -77,15 +77,18 @@ VALID_PYTHON_BUILD_BACKENDS = [
 
 def get_section(parent, name, lints, recipe_version: int = 0):
     if recipe_version == 0:
+        # returns lints already
         return get_meta_section(parent, name, lints)
     elif recipe_version == 1:
-        return get_recipe_v1_section(parent, name)
+        # this function does not return any lints itself
+        return get_recipe_v1_section(parent, name), lints
     else:
         raise ValueError(f"Unknown recipe version: {recipe_version}")
 
 
 def get_meta_section(parent, name, lints):
     if name == "source":
+        # get_list_section already return lints
         return get_list_section(parent, name, lints, allow_single=True)
     elif name == "outputs":
         return get_list_section(parent, name, lints)
@@ -97,7 +100,7 @@ def get_meta_section(parent, name, lints):
             f"got a {type(section).__name__}."
         )
         section = {}
-    return section
+    return section, lints
 
 
 def get_recipe_v1_section(meta, name) -> Union[dict, list[dict]]:
@@ -115,9 +118,9 @@ def get_recipe_v1_section(meta, name) -> Union[dict, list[dict]]:
 def get_list_section(parent, name, lints, allow_single=False):
     section = parent.get(name, [])
     if allow_single and isinstance(section, Mapping):
-        return [section]
+        return [section], lints
     elif isinstance(section, Sequence) and not isinstance(section, str):
-        return section
+        return section, lints
     else:
         msg = 'The "{}" section was expected to be a {}list, but got a {}.{}.'.format(
             name,
@@ -126,7 +129,7 @@ def get_list_section(parent, name, lints, allow_single=False):
             type(section).__name__,
         )
         lints.append(msg)
-        return [{}]
+        return [{}], lints
 
 
 def find_local_config_file(recipe_dir: str, filename: str) -> Optional[str]:
@@ -265,7 +268,7 @@ def get_all_test_requirements(
     meta: dict, lints: list[str], recipe_version: int
 ) -> list[str]:
     if recipe_version == 1:
-        test_section = get_section(meta, "tests", lints, recipe_version)
+        test_section, lints = get_section(meta, "tests", lints, recipe_version)
         test_reqs = []
         for test_element in test_section:
             test_reqs += (test_element.get("requirements") or {}).get("run") or []
@@ -281,9 +284,9 @@ def get_all_test_requirements(
                 else:
                     test_reqs.append("python")
     else:
-        test_section = get_section(meta, "test", lints, recipe_version)
+        test_section, lints = get_section(meta, "test", lints, recipe_version)
         test_reqs = test_section.get("requires") or []
-    return test_reqs
+    return test_reqs, lints
 
 
 def get_version_independent(
