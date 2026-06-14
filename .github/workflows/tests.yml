@@ -30,6 +30,7 @@ jobs:
           create-args: >-
             coverage
             coveralls
+            conda-forge-tick>=2026.0
 
       - name: install conda-smithy
         run: |
