@@ -271,17 +271,37 @@ pixi global install {{ ' '.join(outputs) }}
 
 </details>
 
-It is possible to list all of the versions of `{{ outputs[0] }}` available on your platform with `conda`:
+Search package versions
+-----------------------
+
+It is possible to list all of the versions of `{{ outputs[0] }}` available on your platform:
+
+<details>
+<summary>With conda</summary>
 
 ```
 conda search {{ outputs[0] }} --channel {{ channel_with_label }}
 ```
 
-or with `mamba`:
+</details>
+
+<details>
+<summary>With mamba</summary>
 
 ```
 mamba search {{ outputs[0] }} --channel {{ channel_with_label }}
 ```
+
+</details>
+
+<details>
+<summary>With pixi</summary>
+
+```
+pixi search {{ outputs[0] }} --channel {{ channel_with_label }}
+```
+
+</details>
 
 Alternatively, `mamba repoquery` may provide more information:
 

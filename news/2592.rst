@@ -1,4 +1,4 @@
 **Changed:**
 
 * Generated feedstock READMEs now group conda, mamba, and pixi install commands
-  into foldable ``How to use`` sections.
+  and package search instructions into foldable sections.
