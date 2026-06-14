@@ -1030,7 +1030,7 @@ class DuplicateRecipes(LinterMessage, _AnyRecipeMessage):
 
     kind = "lint"
     identifier = "R-051"
-    added_in = "2026.6"
+    added_in = "2026.6.14"
     message = (
         "Recipe folder contains both `meta.yaml` and `recipe.yaml`. "
         "Only one recipe file at a time is allowed."
