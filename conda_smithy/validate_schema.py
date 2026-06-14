@@ -19,7 +19,7 @@ CONDA_FORGE_YAML_SCHEMA_FILE = (
 
 class DeprecatedValidator:
     def __init__(self):
-        self.hints = []
+        self.hints: list[str] = []
 
     def __call__(self, validator, value, instance, schema):
         if value and instance is not None:
@@ -38,8 +38,8 @@ def get_validator_class(deprecated_validator):
 
 
 def validate_json_schema(
-    config, schema_file: str = None
-) -> tuple[list[ValidationError], list[ValidationError]]:
+    config, schema_file: str | Path | None = None,
+) -> tuple[list[ValidationError], list[str]]:
     # Validate the merged configuration against a JSON schema
     if not schema_file:
         schema_file = CONDA_FORGE_YAML_SCHEMA_FILE

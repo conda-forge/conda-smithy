@@ -598,7 +598,7 @@ def configure_github_team(
 def configure_github_app(
     org: str,
     repo: str,
-    app_slug_or_installation_id: str | int = None,
+    app_slug_or_installation_id: str | int,
     remove: bool = False,
 ) -> None:
     """
