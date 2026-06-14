@@ -1040,10 +1040,14 @@ def lint_floats_quoted(
     def process_recursively(key: str, value: Any, local_lints: list[str]) -> list[str]:
         if isinstance(value, dict):
             for subkey, subvalue in value.items():
-                local_lints = process_recursively(f"{key}.{subkey}", subvalue, local_lints)
+                local_lints = process_recursively(
+                    f"{key}.{subkey}", subvalue, local_lints
+                )
         elif isinstance(value, list):
             for i, subvalue in enumerate(value):
-                local_lints = process_recursively(f"{key}[{i}]", subvalue, local_lints.copy())
+                local_lints = process_recursively(
+                    f"{key}[{i}]", subvalue, local_lints.copy()
+                )
         elif isinstance(value, float):
             local_lints.append(
                 msg.r.VersionParsedAsFloat(

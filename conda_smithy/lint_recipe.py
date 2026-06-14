@@ -180,7 +180,9 @@ def lintify_meta_yaml(
 
     sources_section, lints = get_section(meta, "source", lints, recipe_version)
     build_section, lints = get_section(meta, "build", lints, recipe_version)
-    requirements_section, lints = get_section(meta, "requirements", lints, recipe_version)
+    requirements_section, lints = get_section(
+        meta, "requirements", lints, recipe_version
+    )
     build_requirements = requirements_section.get("build", [])
     run_reqs = requirements_section.get("run", [])
     if recipe_version == 1:
@@ -361,7 +363,9 @@ def lintify_meta_yaml(
     )
 
     # 24: jinja2 variable references should be {{<one space>var<one space>}}
-    hints = lint_jinja_var_references(recipe_fname, hints, recipe_version=recipe_version)
+    hints = lint_jinja_var_references(
+        recipe_fname, hints, recipe_version=recipe_version
+    )
 
     # 25: require a lower bound on python version
     lints = lint_require_lower_bound_on_python_version(
@@ -430,7 +434,9 @@ def lintify_meta_yaml(
     )
 
     # 3: suggest fixing all recipe/*.sh shellcheck findings
-    hints = hint_shellcheck_usage(recipe_dir, hints, feedstock_config=feedstock_config_keys)
+    hints = hint_shellcheck_usage(
+        recipe_dir, hints, feedstock_config=feedstock_config_keys
+    )
 
     # 4: Check for SPDX
     hints = hint_check_spdx(about_section, hints)
@@ -634,12 +640,18 @@ def run_conda_forge_specific(
     lints_to_skip = feedstock_config.get("linter", {}).get("skip", [])
 
     # Retrieve sections from meta
-    package_section, lints = get_section(meta, "package", lints, recipe_version=recipe_version)
-    extra_section, lints = get_section(meta, "extra", lints, recipe_version=recipe_version)
+    package_section, lints = get_section(
+        meta, "package", lints, recipe_version=recipe_version
+    )
+    extra_section, lints = get_section(
+        meta, "extra", lints, recipe_version=recipe_version
+    )
     requirements_section, lints = get_section(
         meta, "requirements", lints, recipe_version=recipe_version
     )
-    outputs_section, lints = get_section(meta, "outputs", lints, recipe_version=recipe_version)
+    outputs_section, lints = get_section(
+        meta, "outputs", lints, recipe_version=recipe_version
+    )
 
     build_section, lints = get_section(meta, "build", lints, recipe_version)
     noarch_value = build_section.get("noarch")
