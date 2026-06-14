@@ -97,7 +97,7 @@ def lint_recipe_have_tests(
         return
 
     if not any(key in TEST_KEYS for key in test_section):
-        a_test_file_exists = recipe_dir is not None and any(
+        a_test_file_exists = bool(recipe_dir) and any(
             os.path.exists(os.path.join(recipe_dir, test_file))
             for test_file in TEST_FILES
         )
