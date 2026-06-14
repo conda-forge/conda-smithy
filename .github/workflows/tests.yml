@@ -74,9 +74,6 @@ jobs:
           test -f sdist-content/conda_smithy-*/conda_smithy/templates/github-actions.yml.tmpl
           rm -r sdist-content/
 
-        # export CONDA_BUILD=1
-        # export CONDA_BUILD_STATE=TEST
-        # export RATTLER_BUILD_COLOR=always
       - name: run tests
         run: |
           rm -rf conda_smithy
