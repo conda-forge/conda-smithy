@@ -76,10 +76,10 @@ jobs:
 
         # export CONDA_BUILD=1
         # export CONDA_BUILD_STATE=TEST
+        # export RATTLER_BUILD_ENABLE_GITHUB_INTEGRATION=true
       - name: run tests
         run: |
           rm -rf conda_smithy
-          export RATTLER_BUILD_ENABLE_GITHUB_INTEGRATION=true
           export RATTLER_BUILD_COLOR=always
           pytest -vvsx tests --cov conda_smithy --cov-report lcov --cov-report term-missing
         env:
