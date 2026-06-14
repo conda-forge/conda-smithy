@@ -690,6 +690,24 @@ def test_readme_has_terminating_newline(noarch_recipe, jinja_env):
         assert readme_file.read() == b"\n"
 
 
+def test_readme_installation_sections(noarch_recipe, jinja_env):
+    configure_feedstock.render_readme(
+        jinja_env=jinja_env,
+        forge_config=noarch_recipe.config,
+        forge_dir=noarch_recipe.recipe,
+    )
+    readme_path = os.path.join(noarch_recipe.recipe, "README.md")
+    with open(readme_path, encoding="utf-8") as readme_file:
+        readme = readme_file.read()
+
+    assert "<summary>With conda</summary>" in readme
+    assert "conda install python-noarch-test" in readme
+    assert "<summary>With mamba</summary>" in readme
+    assert "mamba install python-noarch-test" in readme
+    assert "<summary>With pixi</summary>" in readme
+    assert "pixi add python-noarch-test" in readme
+
+
 def test_secrets(py_recipe, jinja_env):
     py_recipe.config["provider"]["linux"] = "azure"
     configure_feedstock.render_azure(

@@ -238,17 +238,35 @@ conda config --add channels {{ channel_with_label }}
 conda config --set channel_priority strict
 ```
 
-Once the `{{ channel_with_label }}` channel has been enabled, `{{ ', '.join(outputs) }}` can be installed with `conda`:
+How to use
+----------
+
+<details>
+<summary>With conda</summary>
 
 ```
 conda install {{ ' '.join(outputs) }}
 ```
 
-or with `mamba`:
+</details>
+
+<details>
+<summary>With mamba</summary>
 
 ```
 mamba install {{ ' '.join(outputs) }}
 ```
+
+</details>
+
+<details>
+<summary>With pixi</summary>
+
+```
+pixi add {{ ' '.join(outputs) }}
+```
+
+</details>
 
 It is possible to list all of the versions of `{{ outputs[0] }}` available on your platform with `conda`:
 
