@@ -27,10 +27,12 @@ jobs:
           environment-file: environment.yml
           micromamba-version: 1.5.12-0
           cache-environment: false
+          # conda-forge-tick is not available on Windows
           create-args: >-
             python=3.11
             coverage
             coveralls
+            conda-forge-tick
 
       - name: install conda-smithy
         run: |

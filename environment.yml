@@ -20,7 +20,6 @@ dependencies:
   # Runtime dependencies
   - conda>=4.2
   - conda-build>=25.3.1
-  - conda-forge-tick
   - conda-package-handling>=1.9.0
   - jinja2
   - requests
