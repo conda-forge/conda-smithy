@@ -577,6 +577,18 @@
       "severity": "error"
     },
     {
+      "line": 2361,
+      "column": 16,
+      "stop_line": 2361,
+      "stop_column": 44,
+      "path": "conda_smithy/configure_feedstock.py",
+      "code": -2,
+      "name": "missing-attribute",
+      "description": "No attribute `JSONDecodeError` in module `simplejson.decoder`",
+      "concise_description": "No attribute `JSONDecodeError` in module `simplejson.decoder`",
+      "severity": "error"
+    },
+    {
       "line": 219,
       "column": 13,
       "stop_line": 219,
@@ -1954,6 +1966,18 @@
       "name": "bad-assignment",
       "description": "`Path` is not assignable to variable `schema_file` with type `str`",
       "concise_description": "`Path` is not assignable to variable `schema_file` with type `str`",
+      "severity": "error"
+    },
+    {
+      "line": 69,
+      "column": 41,
+      "stop_line": 69,
+      "stop_column": 49,
+      "path": "conda_smithy/validate_schema.py",
+      "code": -2,
+      "name": "unexpected-keyword",
+      "description": "Unexpected keyword argument `retrieve` in function `object.__init__`",
+      "concise_description": "Unexpected keyword argument `retrieve` in function `object.__init__`",
       "severity": "error"
     },
     {
