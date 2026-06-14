@@ -59,8 +59,7 @@ def test_schema_no_empty_properties_for_bot():
     """
     with (
         Path(conda_smithy.__file__)
-        .parents[1]
-        .joinpath("data/conda-forge.json")
+        .parent.joinpath("data/conda-forge.json")
         .open("r") as f
     ):
         schema = json.load(f)
