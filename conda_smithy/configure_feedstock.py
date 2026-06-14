@@ -68,6 +68,8 @@ from conda_smithy.validate_schema import (
     validate_json_schema,
 )
 
+JSONDecodeError = json.JSONDecodeError
+
 conda_forge_content = os.path.abspath(os.path.dirname(__file__))
 
 logger = logging.getLogger(__name__)
@@ -2358,7 +2360,7 @@ def render_readme(jinja_env, forge_config, forge_dir, render_info=None):
                 "Azure build_id can't be retrieved using the Azure token. Exception: %s",
                 err,
             )
-        except json.decoder.JSONDecodeError:
+        except JSONDecodeError:
             azure_build_id_from_token(forge_config)
 
     logger.debug("README")

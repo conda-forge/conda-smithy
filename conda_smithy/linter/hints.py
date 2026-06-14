@@ -71,6 +71,7 @@ def hint_suggest_noarch(
         else:
             with open(recipe_fname, encoding="utf-8") as fh:
                 in_runreqs = False
+                runreqs_spacing = ""
                 no_arch_possible = True
                 for line in fh:
                     line_s = line.strip()

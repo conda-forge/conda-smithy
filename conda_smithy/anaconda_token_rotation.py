@@ -62,6 +62,7 @@ def rotate_anaconda_token(
 
     anaconda_token = _get_anaconda_token()
 
+    gh = None
     if github_actions:
         gh = Github(gh_token())
 
@@ -167,6 +168,7 @@ def rotate_anaconda_token(
                             raise RuntimeError(err_msg)
 
                 if github_actions:
+                    assert gh is not None
                     try:
                         rotate_token_in_github_actions(
                             user, project, anaconda_token, token_name, gh

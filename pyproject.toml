@@ -31,6 +31,10 @@ include-package-data = true
 write_to = "conda_smithy/_version.py"
 write_to_template = "__version__ = '{version}'"
 
+[tool.pyrefly]
+project-includes = ["**/*.py"]
+search-path = [".", "tests"]
+
 [tool.black]
 # matches black's default value
 line-length = 88
