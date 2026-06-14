@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pytest
 
+import conda_smithy
 from conda_smithy.schema import ConfigModel
 from conda_smithy.utils import get_yaml
 from conda_smithy.validate_schema import (
@@ -57,9 +58,8 @@ def test_schema_no_empty_properties_for_bot():
     is not in the properties object in this case.
     """
     with (
-        Path(__file__)
-        .parents[1]
-        .joinpath("conda_smithy/data/conda-forge.json")
+        Path(conda_smithy.__file__)
+        .parent.joinpath("data/conda-forge.json")
         .open("r") as f
     ):
         schema = json.load(f)

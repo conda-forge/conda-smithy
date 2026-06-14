@@ -18,8 +18,8 @@ dependencies:
   - conda-recipe-manager>=0.9
   - conda-souschef
   # Runtime dependencies
-  - conda>=4.2
-  - conda-build>=25.3.1
+  - conda>=22.11.1
+  - conda-build>=26.3.0
   - conda-package-handling>=1.9.0
   - jinja2
   - requests
@@ -41,6 +41,6 @@ dependencies:
   - jsonschema
   - simplejson
   - exceptiongroup
-  # py-rattler's API subject to change, pin to minor
+  # py-rattler's APIs are subject to change, pin to minor versions
   - py-rattler>=0.22,<0.23
-  - rattler-build-conda-compat>=1.4.12,<2.0.0a0
+  - rattler-build-conda-compat>=1.4.15,<2.0.0a0

@@ -15,6 +15,7 @@ import yaml
 from conftest import ConfigYAML
 from rattler_build_conda_compat.loader import parse_recipe_config_file
 
+import conda_smithy
 from conda_smithy import configure_feedstock
 from conda_smithy.configure_feedstock import (
     DEFAULT_PROVIDER,
@@ -2219,12 +2220,14 @@ def test_github_actions_pins():
     If Dependabot opens a PR against the proxy, just copy the new pins to the template to
     make this pass.
     """
-    repo_root = Path(__file__).parents[1]
-    github_actions_template = (
-        repo_root / "conda_smithy" / "templates" / "github-actions.yml.tmpl"
-    )
+    pkg_root = Path(conda_smithy.__file__).parent
+    github_actions_template = pkg_root / "templates" / "github-actions.yml.tmpl"
     dependabot_inventory = (
-        repo_root / ".github" / "workflows" / "_proxy-file-for-dependabot-tests.yml"
+        Path(__file__).parent
+        / ".."
+        / ".github"
+        / "workflows"
+        / "_proxy-file-for-dependabot-tests.yml"
     )
 
     def get_uses(path):

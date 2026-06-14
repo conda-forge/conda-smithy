@@ -29,10 +29,9 @@ jobs:
           cache-environment: false
           # conda-forge-tick is not available on Windows
           create-args: >-
-            python=3.11
             coverage
             coveralls
-            conda-forge-tick
+            conda-forge-tick>=2026.0
 
       - name: install conda-smithy
         run: |
@@ -62,7 +61,7 @@ jobs:
           popd
           pip uninstall conda-smithy --yes
 
-          python -m pip install -v --no-build-isolation -e .
+          python -m pip install -v --no-build-isolation .
 
       - name: test data and templates files in sdist
         run: |
@@ -79,8 +78,15 @@ jobs:
         run: |
           pyrefly check --python-interpreter-path "$(command -v python)" --baseline .pyrefly-baseline.json --output-format github --summary=none --progress-bar no
 
+      # we remove the local package and set some env vars to emulate the smithy feedstock
+      # CI env in the hopes that we catch errors here.
       - name: run tests
         run: |
+          rm -rf conda_smithy
+          export CONDA_BUILD=1
+          export CONDA_BUILD_STATE=TEST
+          export RATTLER_BUILD_COLOR=always
+          export RATTLER_BUILD_ENABLE_GITHUB_INTEGRATION=true
           pytest tests --cov conda_smithy --cov-report lcov --cov-report term-missing
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
