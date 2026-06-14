@@ -5,24 +5,24 @@ Authors are sorted by number of commits.
 * Matthew R. Becker
 * Jaime Rodríguez-Guerra
 * H. Vetinari
-* nichmor
 * Michał Górny
+* nichmor
 * Christopher J. Wright
 * Anthony Scopatz
 * Phil Elson
 * Wolf Vollprecht
-* Uwe L. Korn
 * pre-commit-ci[bot]
+* Uwe L. Korn
 * Filipe Fernandes
 * Min RK
 * John Kirkham
 * Dougal J. Sutherland
+* Mark Harfouche
 * Amit Kumar
 * Marcel Bargull
 * Hadrien Mary
 * shadow_walker
 * Michael Sarahan
-* Mark Harfouche
 * Bastian Zimmermann
 * Leo Fang
 * Ryan Volz
@@ -31,9 +31,9 @@ Authors are sorted by number of commits.
 * Nicholas Bollweg
 * Julian Rüth
 * Yannik Tausch
+* dependabot[bot]
 * Daniel Bast
 * Daniel Ching
-* dependabot[bot]
 * Billy K. Poon
 * vinicius douglas cerutti
 * Tim Snyder
@@ -51,10 +51,10 @@ Authors are sorted by number of commits.
 * Jan Lehnarsdt
 * C.A.M. Gerlach
 * refraction-ray
+* Pavel Zwerschke
 * Leopold Talirz
 * Peter Williams
 * Tom Pollard
-* Pavel Zwerschke
 * Gonzalo Pena-Castellanos
 * John Blischak
 * Matthias Diener
