@@ -2221,11 +2221,13 @@ def test_github_actions_pins():
     make this pass.
     """
     repo_root = Path(conda_smithy.__file__).parents[1]
-    github_actions_template = (
-        repo_root / "templates" / "github-actions.yml.tmpl"
-    )
+    github_actions_template = repo_root / "templates" / "github-actions.yml.tmpl"
     dependabot_inventory = (
-        Path(__file__) / ".." / ".github" / "workflows" / "_proxy-file-for-dependabot-tests.yml"
+        Path(__file__)
+        / ".."
+        / ".github"
+        / "workflows"
+        / "_proxy-file-for-dependabot-tests.yml"
     )
 
     def get_uses(path):
