@@ -26,12 +26,11 @@ jobs:
         with:
           environment-file: environment.yml
           micromamba-version: 1.5.12-0
-          cache-environment: true
+          cache-environment: false
           create-args: >-
             python=3.11
             coverage
             coveralls
-            conda-forge-tick
 
       - name: install conda-smithy
         run: |
@@ -73,6 +72,10 @@ jobs:
           test -f sdist-content/conda_smithy-*/conda_smithy/data/conda-forge.yml
           test -f sdist-content/conda_smithy-*/conda_smithy/templates/github-actions.yml.tmpl
           rm -r sdist-content/
+
+      - name: type check
+        run: |
+          pyrefly check --python-interpreter-path "$(command -v python)" --baseline .pyrefly-baseline.json --output-format github --summary=none --progress-bar no
 
       - name: run tests
         run: |
