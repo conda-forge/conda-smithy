@@ -27,9 +27,6 @@ ALL_EXECUTABLE_FILES = EXECUTABLE_TEMPLATES + [
     ".circleci/checkout_merge_commit.sh",
     ".circleci/fast_finish_ci_pr_build.sh",
     "build-locally.py",
-    ".azure-pipelines/azure-pipelines-linux.yml",
-    ".azure-pipelines/azure-pipelines-osx.yml",
-    ".azure-pipelines/azure-pipelines-win.yml",
 ]
 
 
