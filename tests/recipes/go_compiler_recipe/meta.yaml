@@ -1,0 +1,10 @@
+package:
+  name: go-compiler
+  version: 1.26.4
+build:
+  number: 0
+about:
+  home: https://conda-forge.org
+  summary: test
+extra:
+  feedstock-name: go-compiler

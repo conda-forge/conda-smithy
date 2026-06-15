@@ -1,0 +1,15 @@
+context:
+  version: "1.26.4"
+  go_variant_str: "cgo"
+package:
+  name: go-${{ go_variant_str }}-compiler
+  version: ${{ version }}
+build:
+  number: 0
+about:
+  license: BSD-3-Clause
+  license_file: LICENSE.txt
+  summary: test
+  homepage: https://conda-forge.org
+extra:
+  feedstock-name: go-compiler
