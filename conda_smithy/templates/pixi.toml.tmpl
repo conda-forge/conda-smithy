@@ -53,12 +53,12 @@ cmd = "inspect_artifacts --recipe-dir {{ recipe_dir }} -m .ci_support/{{ variant
 description = "List contents of {{ feedstock_name }} packages built for variant {{ variant }}"
 {%- endfor %}
 
-{%- set _feature_platforms = platforms | select("in", shellcheck_platforms) -%}
-{%- if (shellcheck is defined) and shellcheck.enabled and _feature_platforms -%}
-{%- set with_shellcheck = " --with shellcheck" -%}
-{%- else -%}
-{%- set with_shellcheck = "" -%}
-{%- endif -%}
+{%- set _feature_platforms = platforms | select("in", shellcheck_platforms) %}
+{%- if (shellcheck is defined) and shellcheck.enabled and _feature_platforms %}
+{%- set with_shellcheck = " --with shellcheck" %}
+{%- else %}
+{%- set with_shellcheck = "" %}
+{%- endif %}
 
 [feature.smithy]
 [feature.smithy.tasks.build-locally]

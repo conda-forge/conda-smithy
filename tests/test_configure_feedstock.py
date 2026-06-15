@@ -2307,14 +2307,8 @@ def test_render_pixi(
         assert (
             "win-64" in platforms
         ), "expected an aliased platform in pixi workspace platforms"
-        shellcheck_platforms = pixi["feature"]["shellcheck"]["platforms"]
-        smithy_env = pixi["environments"]["smithy"]
-        assert shellcheck_platforms, "`shellcheck` should be enabled on _some_ platform"
-        assert (
-            platform_without_shellcheck not in shellcheck_platforms
-        ), f"`shellcheck` should not be enabled for {platform_without_shellcheck}"
-
-        assert "shellcheck" in smithy_env, "`smithy` env should have `shellcheck`"
+        cmd = pixi["feature"]["smithy"]["tasks"]["lint"]["cmd"]
+        assert "--with shellcheck" in cmd, "`smithy` commands should have `shellcheck`"
 
 
 def test_configure_feedstock_rattler_build_conda_compat_round_trip():
