@@ -62,13 +62,13 @@ description = "List contents of {{ feedstock_name }} packages built for variant 
 
 [feature.smithy]
 [feature.smithy.tasks.build-locally]
-cmd = "pixi exec python ./build-locally.py"
+cmd = "pixi exec --list=python python ./build-locally.py"
 description = "Build packages locally using the same setup scripts used in conda-forge's CI"
 [feature.smithy.tasks.smithy]
-cmd = "pixi exec conda-smithy"
+cmd = "pixi exec --list=conda-smithy conda-smithy"
 description = "Run conda-smithy. Pass necessary arguments."
 [feature.smithy.tasks.rerender]
-cmd = "pixi exec conda-smithy rerender"
+cmd = "pixi exec --list=conda-smithy conda-smithy rerender"
 description = "Rerender the feedstock."
 
 [feature.smithy.tasks.lint]
