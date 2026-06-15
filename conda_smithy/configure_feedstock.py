@@ -108,7 +108,7 @@ CONDA_FORGE_SHELLCHECK_PLATFORMS = [
 ]
 
 CONDA_FORGE_ALIAS_PLATFORMS = {
-    "win": {"win-64"},
+    "win": {"win-64", "win-arm64"},
     "linux": {"linux-64", "linux-aarch64", "linux-ppc64le"},
     "osx": {"osx-64", "osx-arm64"},
 }
