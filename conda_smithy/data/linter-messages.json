@@ -897,6 +897,18 @@
       "path": "recipe/recipe.yaml"
     },
     {
+      "name": "NoarchPythonTestLatest",
+      "identifier": "R1-004",
+      "category": "R1",
+      "kind": "hint",
+      "added_in": "<3.56",
+      "deprecated_in": "",
+      "documentation": "`noarch: python` packages install on every Python version at or above\n`python_min`, so tests should cover both ends of that range.",
+      "message": "`noarch: python` packages install on every Python version at or above `python_min`, but the Python test only runs against a single version. Consider testing against both the minimum and the latest supported Python:\n```yaml\ntests:\n  - python:\n      python_version:\n        - ${{ python_min }}.*\n        - \"*\"\n```",
+      "examples": [],
+      "path": "recipe/recipe.yaml"
+    },
+    {
       "name": "MacOSDeploymentTargetRename",
       "identifier": "RC-000",
       "category": "RC",
