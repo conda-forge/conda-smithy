@@ -44,6 +44,9 @@ description = "Debug {{ feedstock_name }} with variant {{ variant }} directly (w
 [feature.build.tasks."build-{{ variant }}"]
 cmd = "{{ conda_build_tool }} build --recipe {{ recipe_dir }} -m .ci_support/{{ variant }}.yaml"
 description = "Build {{ feedstock_name }} with variant {{ variant }} directly (without setup scripts)"
+[feature.build.tasks."debug-{{ variant }}"]
+cmd = "{{ conda_build_tool }} debug setup --recipe {{ recipe_dir }} -m .ci_support/{{ variant }}.yaml"
+description = "Build {{ feedstock_name }} with variant {{ variant }} directly (without setup scripts)"
 {%- endif %}
 [feature.build.tasks."inspect-{{ variant }}"]
 cmd = "inspect_artifacts --recipe-dir {{ recipe_dir }} -m .ci_support/{{ variant }}.yaml"
