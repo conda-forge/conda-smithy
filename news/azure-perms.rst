@@ -16,7 +16,7 @@
 
 **Fixed:**
 
-* Fixed bug where azure workflow files had exec permissions set. (#)
+* Fixed bug where azure workflow files had exec permissions set. (#2599)
 
 **Security:**
 
