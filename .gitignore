@@ -27,3 +27,7 @@ conda_smithy/_version.py
 
 venv
 oryx-build-commands.txt
+
+# rattler-build workspace
+output/
+
