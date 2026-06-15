@@ -150,7 +150,7 @@ DEFAULT_PROVIDERS = {
 
 NATIVE_CI_PROVIDER = {
     "linux_64": "github_actions",
-    "linux_aarch64": "travis",
+    "linux_aarch64": "github_actions",
     "linux_ppc64le": "travis",
     "linux_s390x": "travis",
     "osx_64": "azure",
