@@ -89,7 +89,7 @@ SERVICE_FEEDSTOCKS = [
     # this one is used for testing
     "cf-autotick-bot-test-package-feedstock",
     # Add more via undocumented env var
-    *os.environ.get("CONDA_SMITHY_SERVICE_FEEDSTOCKS", "").split(",")
+    *os.environ.get("CONDA_SMITHY_SERVICE_FEEDSTOCKS", "").split(","),
 ]
 
 # Cache lifetime in seconds, default 15min
