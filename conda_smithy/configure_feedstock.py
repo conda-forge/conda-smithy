@@ -210,8 +210,22 @@ GITHUB_ACTIONS_RUNS_ON = {
 }
 
 
-ALL_EXECUTABLE_FILES = [
-    ".circleci/checkout_merge_commit.sh",
+NON_EXECUTABLE_TEMPLATES = [
+    ".azure-pipelines/azure-pipelines-linux.yml",
+    ".azure-pipelines/azure-pipelines-osx.yml",
+    ".azure-pipelines/azure-pipelines-win.yml",
+    ".drone.yml",
+    ".travis.yml",
+    "README.md",
+    "appveyor.yml",
+    "azure-pipelines.yml",
+    "circle.yml",
+    "github-actions.yml",
+    "pixi.toml",
+]
+
+
+EXECUTABLE_TEMPLATES = [
     ".scripts/SetPageFileSize.ps1",
     ".scripts/build_steps.sh",
     ".scripts/create_conda_build_artifacts.bat",
@@ -219,10 +233,16 @@ ALL_EXECUTABLE_FILES = [
     ".scripts/create_pagefile.bat",
     ".scripts/create_pagefile.sh",
     ".scripts/free_disk_space.sh",
-    ".scripts/logging_utils.sh",
     ".scripts/run_docker_build.sh",
     ".scripts/run_osx_build.sh",
     ".scripts/run_win_build.bat",
+]
+
+
+ALL_EXECUTABLE_FILES = EXECUTABLE_TEMPLATES + [
+    ".circleci/checkout_merge_commit.sh",
+    ".circleci/fast_finish_ci_pr_build.sh",
+    ".scripts/logging_utils.sh",
     "build-locally.py",
 ]
 
@@ -1736,7 +1756,7 @@ def _render_template_files(forge_config, jinja_env, template_files, forge_dir):
         # ensure trailing newline
         if new_file_contents[-1] != "\n":
             new_file_contents += "\n"
-        if target_fname in get_common_scripts(forge_dir) and os.path.exists(
+        if target_fname in iter_all_templates(forge_dir) and os.path.exists(
             target_fname
         ):
             with open(target_fname, encoding="utf-8") as fh:
@@ -3035,8 +3055,8 @@ def clear_variants(forge_dir):
             remove_file(config)
 
 
-def get_common_scripts(forge_dir):
-    for file in ALL_EXECUTABLE_FILES:
+def iter_all_templates(forge_dir):
+    for file in EXECUTABLE_TEMPLATES + NON_EXECUTABLE_TEMPLATES:
         yield os.path.join(forge_dir, file)
 
 
