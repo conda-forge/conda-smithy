@@ -32,6 +32,7 @@ ALL_EXECUTABLE_FILES = EXECUTABLE_TEMPLATES + [
     ".azure-pipelines/azure-pipelines-win.yml",
 ]
 
+
 @pytest.mark.parametrize("provider", ["azure", "github_actions", "drone", "travis"])
 def test_exec_bits(py_recipe, jinja_env, provider):
     forge_dir = py_recipe.recipe
