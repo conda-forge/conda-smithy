@@ -6,6 +6,7 @@ from vsts.build.v4_1.build_client import BuildClient
 from vsts.build.v4_1.models import (
     BuildDefinition,
     BuildDefinitionReference,
+    BuildRepository,
     SourceRepositories,
     SourceRepository,
 )
@@ -133,12 +134,6 @@ def get_default_build_definition(
 ):
     import inspect
 
-    from vsts.build.v4_1.models import (
-        BuildDefinition,
-        BuildRepository,
-    )
-    from vsts.task_agent.v4_0.task_agent_client import TaskAgentClient
-
     aclient = TaskAgentClient(config.instance_base_url, config.credentials)
 
     source_repo = get_repo_reference(config, github_org, repo_name)
@@ -213,8 +208,6 @@ def get_default_build_definition(
 
 
 def register_repo(github_org, repo_name, config: AzureConfig = default_config):
-    from vsts.build.v4_1.models import BuildDefinitionReference
-
     bclient = build_client()
     build_definition = get_default_build_definition(
         github_org,
