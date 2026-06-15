@@ -357,9 +357,7 @@ def test_init_with_feedstock_name(go_compiler_recipe):
     init_obj = cli.Init(subparser)
 
     recipe = go_compiler_recipe.recipe
-    feedstock_dir_template = os.path.join(
-        recipe, "{package.name}-feedstock"
-    )
+    feedstock_dir_template = os.path.join(recipe, "{package.name}-feedstock")
     args = InitArgs(
         recipe_directory=os.path.join(recipe, "recipe"),
         feedstock_directory=feedstock_dir_template,
