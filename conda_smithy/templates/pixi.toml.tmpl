@@ -61,14 +61,15 @@ description = "List contents of {{ feedstock_name }} packages built for variant 
 {%- endif %}
 
 [feature.smithy]
+{#- --force-reinstall tries to update everything but only relinks the changed packages #}
 [feature.smithy.tasks.build-locally]
-cmd = "pixi exec --list=python python ./build-locally.py"
+cmd = "pixi exec --force-reinstall --list=python python ./build-locally.py"
 description = "Build packages locally using the same setup scripts used in conda-forge's CI"
 [feature.smithy.tasks.smithy]
-cmd = "pixi exec --list=conda-smithy conda-smithy"
+cmd = "pixi exec --force-reinstall --list=conda-smithy conda-smithy"
 description = "Run conda-smithy. Pass necessary arguments."
 [feature.smithy.tasks.rerender]
-cmd = "pixi exec --list=conda-smithy conda-smithy rerender"
+cmd = "pixi exec --force-reinstall --list=conda-smithy conda-smithy rerender"
 description = "Rerender the feedstock."
 
 [feature.smithy.tasks.lint]
