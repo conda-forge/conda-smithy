@@ -210,6 +210,23 @@ GITHUB_ACTIONS_RUNS_ON = {
 }
 
 
+ALL_EXECUTABLE_FILES = [
+    ".circleci/checkout_merge_commit.sh",
+    ".scripts/SetPageFileSize.ps1",
+    ".scripts/build_steps.sh",
+    ".scripts/create_conda_build_artifacts.bat",
+    ".scripts/create_conda_build_artifacts.sh",
+    ".scripts/create_pagefile.bat",
+    ".scripts/create_pagefile.sh",
+    ".scripts/free_disk_space.sh",
+    ".scripts/logging_utils.sh",
+    ".scripts/run_docker_build.sh",
+    ".scripts/run_osx_build.sh",
+    ".scripts/run_win_build.bat",
+    "build-locally.py",
+]
+
+
 # use lru_cache to avoid repeating warnings endlessly;
 # this keeps track of 10 different messages and then warns again
 @lru_cache(10)
@@ -1562,17 +1579,16 @@ def _circle_specific_setup(jinja_env, forge_config, forge_dir, platform):
     else:
         template_files.append(".scripts/run_osx_build.sh")
 
-    _render_template_exe_files(
+    # all template_files are also executable
+    exe_files = template_files + [".circleci/checkout_merge_commit.sh"]
+
+    _render_template_files(
         forge_config=forge_config,
         jinja_env=jinja_env,
         template_files=template_files,
         forge_dir=forge_dir,
     )
-
-    # Fix permission of other shell files.
-    target_fnames = [os.path.join(forge_dir, ".circleci", "checkout_merge_commit.sh")]
-    for target_fname in target_fnames:
-        set_exe_file(target_fname, True)
+    _add_exec_bit(exe_files=exe_files, forge_dir=forge_dir)
 
 
 def generate_yum_requirements(forge_config, forge_dir):
@@ -1702,15 +1718,17 @@ def _travis_specific_setup(jinja_env, forge_config, forge_dir, platform):
 
     forge_config["build_setup"] = build_setup
 
-    _render_template_exe_files(
+    _render_template_files(
         forge_config=forge_config,
         jinja_env=jinja_env,
         template_files=template_files,
         forge_dir=forge_dir,
     )
+    # all template files are also executable
+    _add_exec_bit(exe_files=template_files, forge_dir=forge_dir)
 
 
-def _render_template_exe_files(forge_config, jinja_env, template_files, forge_dir):
+def _render_template_files(forge_config, jinja_env, template_files, forge_dir):
     for template_file in template_files:
         template = jinja_env.get_template(os.path.basename(template_file) + ".tmpl")
         target_fname = os.path.join(forge_dir, template_file)
@@ -1742,7 +1760,13 @@ def _render_template_exe_files(forge_config, jinja_env, template_files, forge_di
                     )
         with write_file(target_fname) as fh:
             fh.write(new_file_contents)
-        # Fix permission of template shell files
+
+
+def _add_exec_bit(exe_files, forge_dir):
+    for exe_file in exe_files:
+        target_fname = os.path.join(forge_dir, exe_file)
+        # Fix permission of executable files
+        logger.debug("adding exec bit to %", target_fname)
         set_exe_file(target_fname, True)
 
 
@@ -1936,12 +1960,14 @@ def _github_actions_specific_setup(jinja_env, forge_config, forge_dir, platform)
     forge_config = deepcopy(forge_config)
     forge_config["build_setup"] = build_setup
 
-    _render_template_exe_files(
+    _render_template_files(
         forge_config=forge_config,
         jinja_env=jinja_env,
         template_files=template_files,
         forge_dir=forge_dir,
     )
+    # all template_files are also executable
+    _add_exec_bit(exe_files=template_files, forge_dir=forge_dir)
 
 
 def render_github_actions(jinja_env, forge_config, forge_dir, return_metadata=False):
@@ -1987,22 +2013,25 @@ def render_github_actions(jinja_env, forge_config, forge_dir, return_metadata=Fa
 def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
     build_setup = _get_build_setup_line(forge_dir, platform, forge_config)
 
-    platform_templates = {
+    exec_templates = {
         "linux": [
             ".scripts/run_docker_build.sh",
             ".scripts/build_steps.sh",
-            ".azure-pipelines/azure-pipelines-linux.yml",
         ],
         "osx": [
-            ".azure-pipelines/azure-pipelines-osx.yml",
             ".scripts/run_osx_build.sh",
         ],
         "win": [
-            ".azure-pipelines/azure-pipelines-win.yml",
             ".scripts/run_win_build.bat",
         ],
     }
-    template_files = platform_templates.get(platform, [])
+    non_exec_templates = {
+        "linux": [".azure-pipelines/azure-pipelines-linux.yml"],
+        "osx": [".azure-pipelines/azure-pipelines-osx.yml"],
+        "win": [".azure-pipelines/azure-pipelines-win.yml"],
+    }
+    exe_files = exec_templates.get(platform, [])
+    template_files = exe_files + non_exec_templates.get(platform, [])
 
     if platform == "linux":
         yum_build_setup = generate_yum_requirements(forge_config, forge_dir)
@@ -2064,12 +2093,13 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
         # fmt: on
 
     forge_config["azure_yaml"] = yaml.dump(azure_settings)
-    _render_template_exe_files(
+    _render_template_files(
         forge_config=forge_config,
         jinja_env=jinja_env,
         template_files=template_files,
         forge_dir=forge_dir,
     )
+    _add_exec_bit(exe_files=exe_files, forge_dir=forge_dir)
 
 
 def render_azure(jinja_env, forge_config, forge_dir, return_metadata=False):
@@ -2121,12 +2151,14 @@ def _drone_specific_setup(jinja_env, forge_config, forge_dir, platform):
 
     forge_config["build_setup"] = build_setup
 
-    _render_template_exe_files(
+    _render_template_files(
         forge_config=forge_config,
         jinja_env=jinja_env,
         template_files=template_files,
         forge_dir=forge_dir,
     )
+    # all template_files are also executable
+    _add_exec_bit(exe_files=template_files, forge_dir=forge_dir)
 
 
 def render_drone(jinja_env, forge_config, forge_dir, return_metadata=False):
@@ -3004,18 +3036,8 @@ def clear_variants(forge_dir):
 
 
 def get_common_scripts(forge_dir):
-    for old_file in [
-        "run_docker_build.sh",
-        "build_steps.sh",
-        "run_osx_build.sh",
-        "create_conda_build_artifacts.bat",
-        "create_conda_build_artifacts.sh",
-        "create_pagefile.bat",
-        "create_pagefile.sh",
-        "SetPageFileSize.ps1",
-        "free_disk_space.sh",
-    ]:
-        yield os.path.join(forge_dir, ".scripts", old_file)
+    for file in ALL_EXECUTABLE_FILES:
+        yield os.path.join(forge_dir, file)
 
 
 def clear_scripts(forge_dir):
@@ -3187,9 +3209,8 @@ def main(
     logger.debug("env rendered")
 
     copy_feedstock_content(config, forge_dir)
-
-    if os.path.exists(os.path.join(forge_dir, "build-locally.py")):
-        set_exe_file(os.path.join(forge_dir, "build-locally.py"))
+    exe_files = [".scripts/logging_utils.sh", "build-locally.py"]
+    _add_exec_bit(exe_files, forge_dir)
 
     clear_variants(forge_dir)
     clear_scripts(forge_dir)
