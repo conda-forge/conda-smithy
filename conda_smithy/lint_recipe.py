@@ -36,6 +36,7 @@ from conda_smithy.linter.hints import (
     hint_pip_no_build_backend,
     hint_pip_usage,
     hint_rattler_build_bld_bat,
+    hint_redundant_python_min,
     hint_shellcheck_usage,
     hint_sources_should_not_mention_pypi_io_but_pypi_org,
     hint_space_separated_specs,
@@ -793,6 +794,15 @@ def run_conda_forge_specific(
             hints,
             recipe_version=recipe_version,
         )
+
+        # 11b: redefining python_min to the global pinning default is redundant
+        if "hint_redundant_python_min" not in lints_to_skip:
+            hint_redundant_python_min(
+                meta,
+                recipe_text,
+                recipe_version,
+                hints,
+            )
 
         # 12: ensure is_abi3 is boolean
         lint_recipe_is_abi3_bool(
