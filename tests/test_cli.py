@@ -351,8 +351,6 @@ def test_init_with_feedstock_name(go_compiler_recipe):
     Regression test: When the package name depends on a variant but the recipe
     has a feedstock-name in extra, the Init command should use the feedstock
     name (not meta.name()) to create the feedstock directory.
-
-    See https://github.com/conda-forge/staged-recipes/recipes/go-compiler/recipe.yaml
     """
     parser = argparse.ArgumentParser()
     subparser = parser.add_subparsers()
