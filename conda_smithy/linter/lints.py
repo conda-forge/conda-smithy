@@ -9,7 +9,7 @@ from collections.abc import Sequence
 from typing import Any, Literal, Optional
 
 from conda.models.version import VersionOrder
-from rattler_build_conda_compat.jinja.jinja import render_recipe_with_context
+from rattler_build_conda_compat.jinja.jinja import resolve_recipe_metadata
 from rattler_build_conda_compat.loader import parse_recipe_config_file
 from ruamel.yaml import CommentedSeq
 
@@ -551,7 +551,7 @@ def lint_pin_subpackages(
     recipe_version: int = 0,
 ):
     if recipe_version == 1:
-        meta = render_recipe_with_context(meta)
+        meta = resolve_recipe_metadata(meta)
         # use the rendered versions here
         package_section = meta.get("package", {})
         outputs_section = meta.get("outputs", [])
