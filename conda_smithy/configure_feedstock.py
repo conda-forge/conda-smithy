@@ -144,8 +144,8 @@ DEFAULT_PROVIDERS = {
     "linux_s390x": "github_actions",  # emulated
     "osx_64": "azure",
     "osx_arm64": "azure",
-    "win_64": "azure",
-    "win_arm64": "azure",  # emulated
+    "win_64": "github_actions",
+    "win_arm64": "github_actions",
 }
 
 NATIVE_CI_PROVIDER = {
