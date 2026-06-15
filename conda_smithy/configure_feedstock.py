@@ -210,6 +210,23 @@ GITHUB_ACTIONS_RUNS_ON = {
 }
 
 
+ALL_EXECUTABLE_FILES = [
+    ".circleci/checkout_merge_commit.sh",
+    ".scripts/SetPageFileSize.ps1",
+    ".scripts/build_steps.sh",
+    ".scripts/create_conda_build_artifacts.bat",
+    ".scripts/create_conda_build_artifacts.sh",
+    ".scripts/create_pagefile.bat",
+    ".scripts/create_pagefile.sh",
+    ".scripts/free_disk_space.sh",
+    ".scripts/logging_utils.sh",
+    ".scripts/run_docker_build.sh",
+    ".scripts/run_osx_build.sh",
+    ".scripts/run_win_build.bat",
+    "build-locally.py",
+]
+
+
 # use lru_cache to avoid repeating warnings endlessly;
 # this keeps track of 10 different messages and then warns again
 @lru_cache(10)
@@ -3004,18 +3021,8 @@ def clear_variants(forge_dir):
 
 
 def get_common_scripts(forge_dir):
-    for old_file in [
-        "run_docker_build.sh",
-        "build_steps.sh",
-        "run_osx_build.sh",
-        "create_conda_build_artifacts.bat",
-        "create_conda_build_artifacts.sh",
-        "create_pagefile.bat",
-        "create_pagefile.sh",
-        "SetPageFileSize.ps1",
-        "free_disk_space.sh",
-    ]:
-        yield os.path.join(forge_dir, ".scripts", old_file)
+    for file in ALL_EXECUTABLE_FILES:
+        yield os.path.join(forge_dir, file)
 
 
 def clear_scripts(forge_dir):
