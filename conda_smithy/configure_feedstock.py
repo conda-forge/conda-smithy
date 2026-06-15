@@ -74,7 +74,7 @@ logger = logging.getLogger(__name__)
 
 # feedstocks listed here are allowed to use GHA on
 # conda-forge
-# this should solve issues where other CI proviers have too many
+# this should solve issues where other CI providers have too many
 # jobs and we need to change something via CI
 SERVICE_FEEDSTOCKS = [
     "conda-forge-pinning-feedstock",
@@ -88,9 +88,9 @@ SERVICE_FEEDSTOCKS = [
     "conda-forge-feedstock-ops-feedstock",
     # this one is used for testing
     "cf-autotick-bot-test-package-feedstock",
+    # Add more via undocumented env var
+    *os.environ.get("CONDA_SMITHY_SERVICE_FEEDSTOCKS", "").split(",")
 ]
-if "CONDA_SMITHY_SERVICE_FEEDSTOCKS" in os.environ:
-    SERVICE_FEEDSTOCKS += os.environ["CONDA_SMITHY_SERVICE_FEEDSTOCKS"].split(",")
 
 # Cache lifetime in seconds, default 15min
 CONDA_FORGE_PINNING_LIFETIME = int(
@@ -129,7 +129,7 @@ ALL_PLATFORMS = (
     "win_64",
     "win_arm64",
 )
-# These are enabled by default
+# These are enabled by default on all feedstocks
 DEFAULT_PLATFORMS = (
     "linux_64",
     "osx_64",
@@ -139,7 +139,7 @@ DEFAULT_PLATFORMS = (
 DEFAULT_PROVIDER = "github_actions"
 DEFAULT_PROVIDERS = {
     "linux_64": "github_actions",
-    "linux_aarch64": "github_actions",  # emulated
+    "linux_aarch64": "github_actions",
     "linux_ppc64le": "github_actions",  # emulated
     "linux_s390x": "github_actions",  # emulated
     "osx_64": "azure",
