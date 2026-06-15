@@ -135,13 +135,4 @@ def copy_file(src, dst):
     if repo:
         index_path = Path(dst).resolve().relative_to(repo.workdir).as_posix()
         repo.index.add(index_path)
-        try:
-            import pygit2
-
-            # ensure we add all files as non-exectuable by default
-            entry = repo.index[index_path]
-            entry.mode = pygit2.GIT_FILEMODE_BLOB  # 100644 (non-executable)
-            repo.index.add(entry)
-        except ImportError:
-            pass
         repo.index.write()
