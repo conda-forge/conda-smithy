@@ -734,6 +734,7 @@ class ConfigModel(BaseModel):
             osx_64: osx_64
             osx_arm64: osx_arm64
             win_64: win_64
+            win_arm64: win_arm64
         ```
         """),
     )
@@ -854,7 +855,9 @@ class ConfigModel(BaseModel):
 
         * `linux_64`
         * `osx_64`
+        * `osx_arm64`
         * `win_64`
+        * `win_arm64`
         * `linux_aarch64`
         * `linux_ppc64le`
         * `linux_s390x`
@@ -863,6 +866,7 @@ class ConfigModel(BaseModel):
         The following CI services are available:
 
         * `azure`
+        * `github_actions`
         * `circle`
         * `travis`
         * `appveyor`
