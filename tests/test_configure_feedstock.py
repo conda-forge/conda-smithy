@@ -2307,7 +2307,7 @@ def test_render_pixi(
         assert (
             "win-64" in platforms
         ), "expected an aliased platform in pixi workspace platforms"
-        cmd = pixi["feature"]["smithy"]["tasks"]["lint"]["cmd"]
+        cmd = pixi["tasks"]["lint"]["cmd"]
         assert "--with shellcheck" in cmd, "`smithy` commands should have `shellcheck`"
 
 
