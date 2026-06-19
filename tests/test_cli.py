@@ -346,6 +346,31 @@ def test_render_variant_mismatches(testing_workdir):
         assert data["a"] == data["b"]
 
 
+def test_init_with_feedstock_name(go_compiler_recipe):
+    """
+    Regression test: When the package name depends on a variant but the recipe
+    has a feedstock-name in extra, the Init command should use the feedstock
+    name (not meta.name()) to create the feedstock directory.
+    """
+    parser = argparse.ArgumentParser()
+    subparser = parser.add_subparsers()
+    init_obj = cli.Init(subparser)
+
+    recipe = go_compiler_recipe.recipe
+    feedstock_dir_template = os.path.join(recipe, "{package.name}-feedstock")
+    args = InitArgs(
+        recipe_directory=os.path.join(recipe, "recipe"),
+        feedstock_directory=feedstock_dir_template,
+        temporary_directory=os.path.join(recipe, "temp"),
+    )
+    init_obj(args)
+
+    # The feedstock directory should use the feedstock-name from extra,
+    # not the package name (which depends on go_variant_str)
+    destination = os.path.join(recipe, "go-compiler-feedstock")
+    assert os.path.isdir(destination)
+
+
 def test_render_skipped_variants(testing_workdir):
     """
     Regression test for https://github.com/conda-forge/conda-smithy/issues/1617
