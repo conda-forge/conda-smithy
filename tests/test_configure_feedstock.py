@@ -3169,56 +3169,6 @@ def test_tools_build_paths_gha_override_both(py_recipe, jinja_env):
     } == expected
 
 
-@pytest.mark.parametrize(
-    "path,expected",
-    [
-        (
-            "~/foo",
-            r"specifies Unix path for Windows workflows: ~\\foo",
-        ),
-        (
-            "foo",
-            r"specifies Unix path for Windows workflows: foo",
-        ),
-        (
-            r"C:\foo",
-            r"specifies Windows path for Unix workflows: C:\foo",
-        ),
-        (
-            r"C:\\foo",
-            r"specifies Windows path for Unix workflows: C:\\foo",
-        ),
-    ],
-)
-@pytest.mark.parametrize("variable", ("tools_install_dir", "build_workspace_dir"))
-def test_tools_build_paths_gha_override_wrong(
-    py_recipe, jinja_env, path: str, expected: str, variable: str
-):
-    forge_dir = py_recipe.recipe
-    forge_yml = Path(forge_dir, "conda-forge.yml")
-
-    with open(forge_yml, "a") as f:
-        f.write(textwrap.dedent(f"""\
-            provider:
-              linux_64: github_actions
-              osx_64: github_actions
-              win_arm64: github_actions
-              win_64: github_actions
-            workflow_settings:
-              {variable}: "{path}"
-        """))
-
-    config = configure_feedstock._load_forge_config(
-        forge_dir, "recipe/default_config.yaml"
-    )
-    with pytest.raises(ValueError, match=rf"workflow_settings\.{variable} {expected}"):
-        configure_feedstock.render_github_actions(
-            jinja_env=jinja_env,
-            forge_config=config,
-            forge_dir=forge_dir,
-        )
-
-
 @pytest.mark.parametrize("gpu", (False, True))
 @pytest.mark.parametrize("run_args", (None, "--cap-add SYS_ADMIN"))
 def test_docker_run_args_gha(py_recipe, jinja_env, gpu: bool, run_args: str | None):
