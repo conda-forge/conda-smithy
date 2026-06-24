@@ -194,13 +194,29 @@ class InconclusiveMaintainerCheck(LinterMessage):
 
 
 @dataclass(kw_only=True)
+class WorkflowSettingsPlatformOSMismatch(LinterMessage):
+    """
+    Lint when a value in `workflow_settings` has mismatched `os` and `platforms`.
+    """
+
+    kind = "lint"
+    identifier = "CF-009"
+    added_in = "TODO"
+    message = "`workflow_settings.${setting}[${index}]` restricts `os` to ${os} but `platform` to `${platform}`.\n"
+    setting: str
+    index: int
+    os: list[str]
+    platform: list[str]
+
+
+@dataclass(kw_only=True)
 class WorkflowSettingsNonPlatformSpecificPath(LinterMessage):
     """
     Lint when a path variable in `workflow_settings` is not correctly platform-specific.
     """
 
     kind = "lint"
-    identifier = "CF-009"
+    identifier = "CF-010"
     added_in = "TODO"
     message = "`workflow_settings.${setting}[${index}]` specifies path `${value}` without restricting it to Unix / Windows via the `os` or `platform` keys (applies to ${os}).\n"
     setting: str
@@ -216,7 +232,7 @@ class WorkflowSettingsNonSpecific(LinterMessage):
     """
 
     kind = "lint"
-    identifier = "CF-010"
+    identifier = "CF-011"
     added_in = "TODO"
     message = "`workflow_settings.${setting}[${index}]` is not restricted by ${mismatched} to applicable workflows (expected: ${restrictions}).\n"
     setting: str

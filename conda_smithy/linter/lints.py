@@ -1032,10 +1032,29 @@ def lint_invalid_workflow_settings(
 
     workflow_settings = forge_config.get("workflow_settings", {})
 
-    # check for path variables without platform differentiation
-    for path_var in ("tools_install_dir", "build_workspace_dir"):
+    # generic checks for conditions
+    for key, value in workflow_settings.items():
         # normalize the values
-        value = filter_conditional_values(workflow_settings.get(path_var, []))
+        value = filter_conditional_values(workflow_settings.get(key, []))
+        for index, wf_setting in enumerate(value):
+            platform = wf_setting.platform
+            os = wf_setting.os
+            if platform is not None and os is not None:
+                os_from_platform = {x.split("_")[0] for x in platform}
+                if os_from_platform != set(os):
+                    lints.append(
+                        msg.cf.WorkflowSettingsPlatformOSMismatch(
+                            setting=key,
+                            index=index,
+                            os=os,
+                            platform=platform,
+                        ).as_string()
+                    )
+
+    # check for path variables without platform differentiation
+    for key in ("tools_install_dir", "build_workspace_dir"):
+        # normalize the values
+        value = filter_conditional_values(workflow_settings.get(key, []))
         for index, wf_setting in enumerate(value):
             os = wf_setting.applicable_os
             unix = bool(os.intersection({"linux", "osx"}))
@@ -1043,7 +1062,7 @@ def lint_invalid_workflow_settings(
             if unix and win:
                 lints.append(
                     msg.cf.WorkflowSettingsNonPlatformSpecificPath(
-                        setting=path_var,
+                        setting=key,
                         index=index,
                         value=wf_setting.value,
                         os=sorted(os),

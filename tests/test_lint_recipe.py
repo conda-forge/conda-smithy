@@ -5022,6 +5022,19 @@ def test_invalid_workflow_settings(tmp_path):
         workflow_settings:
           # bad: a single valie
           tools_install_dir: C:\test
+          free_disk_space:
+            # [0] good: platforms are subset of os
+            - os: [linux, osx]
+              platform: [linux_64, osx_arm64]
+              value: max
+            # [1] bad: platforms do not include osx
+            - os: [linux, osx]
+              platform: [linux_64]
+              value: skip
+            # [2] bad: platform and os are completely different
+            - os: win
+              platform: osx_arm64
+              value: max
           build_workspace_dir:
             # [0] bad: no 'os' qualifier
             - provider: github_actions
@@ -5073,33 +5086,17 @@ def test_invalid_workflow_settings(tmp_path):
     lints, hints = linter.main(tmp_path, return_hints=True, conda_forge=True)
 
     expected = {
-        "`workflow_settings.build_workspace_dir[0]` specifies path `/foo` without "
-        "restricting it to Unix / Windows via the `os` or `platform` keys (applies "
-        "to ['linux', 'osx', 'win']).",
-        "`workflow_settings.build_workspace_dir[1]` specifies path `D:\\foo` "
-        "without restricting it to Unix / Windows via the `os` or `platform` keys "
-        "(applies to ['linux', 'win']).",
-        "`workflow_settings.build_workspace_dir[5]` specifies path `C:\\foo` "
-        "without restricting it to Unix / Windows via the `os` or `platform` keys "
-        "(applies to ['osx', 'win']).",
-        "`workflow_settings.tools_install_dir[0]` specifies path `C:\\test` "
-        "without restricting it to Unix / Windows via the `os` or `platform` keys "
-        "(applies to ['linux', 'osx', 'win']).",
-        "`workflow_settings.resize_partitions[0]` is not restricted by ['os'] to "
-        "applicable workflows (expected: {'os': {'win'}, 'provider': "
-        "{'github_actions'}}).",
-        "`workflow_settings.resize_partitions[1]` is not restricted by "
-        "['provider'] to applicable workflows (expected: {'os': {'win'}, "
-        "'provider': {'github_actions'}}).",
-        "`workflow_settings.resize_partitions[3]` is not restricted by ['os'] to "
-        "applicable workflows (expected: {'os': {'win'}, 'provider': "
-        "{'github_actions'}}).",
-        "`workflow_settings.resize_partitions[4]` is not restricted by "
-        "['provider'] to applicable workflows (expected: {'os': {'win'}, "
-        "'provider': {'github_actions'}}).",
-        "`workflow_settings.resize_partitions[6]` is not restricted by ['os'] to "
-        "applicable workflows (expected: {'os': {'win'}, 'provider': "
-        "{'github_actions'}}).",
+        "`workflow_settings.free_disk_space[1]` restricts `os` to ['linux', 'osx'] but `platform` to `['linux_64']`.",
+        "`workflow_settings.free_disk_space[2]` restricts `os` to ['win'] but `platform` to `['osx_arm64']`.",
+        "`workflow_settings.build_workspace_dir[0]` specifies path `/foo` without restricting it to Unix / Windows via the `os` or `platform` keys (applies to ['linux', 'osx', 'win']).",
+        "`workflow_settings.build_workspace_dir[1]` specifies path `D:\\foo` without restricting it to Unix / Windows via the `os` or `platform` keys (applies to ['linux', 'win']).",
+        "`workflow_settings.build_workspace_dir[5]` specifies path `C:\\foo` without restricting it to Unix / Windows via the `os` or `platform` keys (applies to ['osx', 'win']).",
+        "`workflow_settings.tools_install_dir[0]` specifies path `C:\\test` without restricting it to Unix / Windows via the `os` or `platform` keys (applies to ['linux', 'osx', 'win']).",
+        "`workflow_settings.resize_partitions[0]` is not restricted by ['os'] to applicable workflows (expected: {'os': {'win'}, 'provider': {'github_actions'}}).",
+        "`workflow_settings.resize_partitions[1]` is not restricted by ['provider'] to applicable workflows (expected: {'os': {'win'}, 'provider': {'github_actions'}}).",
+        "`workflow_settings.resize_partitions[3]` is not restricted by ['os'] to applicable workflows (expected: {'os': {'win'}, 'provider': {'github_actions'}}).",
+        "`workflow_settings.resize_partitions[4]` is not restricted by ['provider'] to applicable workflows (expected: {'os': {'win'}, 'provider': {'github_actions'}}).",
+        "`workflow_settings.resize_partitions[6]` is not restricted by ['os'] to applicable workflows (expected: {'os': {'win'}, 'provider': {'github_actions'}}).",
     }
 
     assert {x for x in lints if "workflow_settings" in x} == expected
