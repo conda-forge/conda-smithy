@@ -207,3 +207,19 @@ class NonPlatformSpecificWorkflowSettingPath(LinterMessage):
     index: int
     value: str
     os: list[str]
+
+
+@dataclass(kw_only=True)
+class NonSpecificWorkflowSetting(LinterMessage):
+    """
+    Lint when a variable in `workflow_settings` is not correctly restricted to applicable os, platform or provider.
+    """
+
+    kind = "lint"
+    identifier = "CF-010"
+    added_in = "TODO"
+    message = "`workflow_settings.${setting}[${index}]` is not restricted by ${mismatched} to applicable workflows (expected: ${restrictions}).\n"
+    setting: str
+    index: int
+    mismatched: list[str]
+    restrictions: dict

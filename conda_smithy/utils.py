@@ -364,13 +364,6 @@ def get_workflow_settings(
             )
         data[setting_key] = filtered[-1].value if filtered else None
 
-    if data["resize_partitions"]:
-        if os != "win" or provider != "github_actions":
-            raise ValueError(
-                "`workflow_settings.resize_partitions` is only valid for GHA/Windows "
-                f"(enabled for {provider=} / {os=})"
-            )
-
     return data
 
 

@@ -1049,3 +1049,28 @@ def lint_invalid_workflow_settings(
                         os=sorted(os),
                     ).as_string()
                 )
+
+    # check for variables that are applicable only to a subset of workflows
+    applicable = {"resize_partitions": {"os": {"win"}, "provider": {"github_actions"}}}
+    for key, restrictions in applicable.items():
+        # normalize the values
+        value = filter_conditional_values(workflow_settings.get(key, []))
+        for index, wf_setting in enumerate(value):
+            mismatched = []
+            if (os_restriction := restrictions.get("os")) is not None:
+                os = wf_setting.applicable_os
+                if os != os_restriction:
+                    mismatched.append("os")
+            if (provider_restriction := restrictions.get("provider")) is not None:
+                if set(wf_setting.provider or []) != provider_restriction:
+                    mismatched.append("provider")
+            if mismatched:
+                lints.append(
+                    msg.cf.NonSpecificWorkflowSetting(
+                        setting=key,
+                        index=index,
+                        mismatched=mismatched,
+                        restrictions=restrictions,
+                    ).as_string()
+                )
+                continue

@@ -148,6 +148,18 @@
       "path": ""
     },
     {
+      "name": "NonSpecificWorkflowSetting",
+      "identifier": "CF-010",
+      "category": "CF",
+      "kind": "lint",
+      "added_in": "TODO",
+      "deprecated_in": "",
+      "documentation": "Lint when a variable in `workflow_settings` is not correctly restricted to applicable os, platform or provider.",
+      "message": "`workflow_settings.${setting}[${index}]` is not restricted by ${mismatched} to applicable workflows (expected: ${restrictions}).\n",
+      "examples": [],
+      "path": ""
+    },
+    {
       "name": "NoDuplicateKeys",
       "identifier": "FC-001",
       "category": "FC",
