@@ -356,22 +356,6 @@ def get_workflow_settings(
             )
         data[setting_key] = filtered[-1].value if filtered else None
 
-    for path_var in ("tools_install_dir", "build_workspace_dir"):
-        if data[path_var] is None:
-            continue
-        win_path = PureWindowsPath(data[path_var])
-        if os == "win":
-            if not win_path.drive:
-                raise ValueError(
-                    f"workflow_settings.{path_var} specifies Unix path for Windows "
-                    f"workflows: {win_path}"
-                )
-        elif win_path.drive:
-            raise ValueError(
-                f"workflow_settings.{path_var} specifies Windows path for Unix "
-                f"workflows: {win_path}"
-            )
-
     if data["resize_partitions"]:
         if os != "win" or provider != "github_actions":
             raise ValueError(
