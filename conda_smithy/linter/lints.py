@@ -1018,3 +1018,33 @@ def lint_floats_quoted(
 
     for key, value in meta.items():
         process_recursively(key, value)
+
+
+def lint_invalid_workflow_settings(
+    forge_config: dict,
+    lints: list[str],
+):
+    """Lint for invalid values in `workflow_settings`"""
+
+    workflow_settings = forge_config.get("workflow_settings", {})
+
+    # check for path variables without platform differentiation
+    for path_var in ("tools_install_dir", "build_workspace_dir"):
+        value = workflow_settings.get(path_var, [])
+        if not isinstance(value, list):
+            value = [{"value": value}]
+        for index, wf_setting in enumerate(value):
+            os = wf_setting.get("os", ["linux", "osx", "win"])
+            if not isinstance(os, list):
+                os = [os]
+            unix = bool(set(os).intersection({"linux", "osx"}))
+            win = "win" in os
+            if unix and win:
+                lints.append(
+                    msg.cf.NonPlatformSpecificWorkflowSettingPath(
+                        setting=path_var,
+                        index=index,
+                        value=wf_setting["value"],
+                        os=os,
+                    ).as_string()
+                )

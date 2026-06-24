@@ -191,3 +191,19 @@ class InconclusiveMaintainerCheck(LinterMessage):
             cls(maintainer="some-user"),
             cls(maintainer="@conda-forge/some-team"),
         ]
+
+
+@dataclass(kw_only=True)
+class NonPlatformSpecificWorkflowSettingPath(LinterMessage):
+    """
+    Lint when a path variable in `workflow_settings` is not correctly platform-specific.
+    """
+
+    kind = "lint"
+    identifier = "CF-009"
+    added_in = "TODO"
+    message = "`workflow_settings.${setting}[${index}]` specifies path `${value}` without restricting it to Unix / Windows via the `os` key (applies to os=${os}).\n"
+    setting: str
+    index: int
+    value: str
+    os: list[str]
