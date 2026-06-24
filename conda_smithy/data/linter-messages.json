@@ -136,7 +136,7 @@
       "path": "recipe/(meta|recipe).yaml"
     },
     {
-      "name": "NonPlatformSpecificWorkflowSettingPath",
+      "name": "WorkflowSettingsNonPlatformSpecificPath",
       "identifier": "CF-009",
       "category": "CF",
       "kind": "lint",
@@ -148,7 +148,7 @@
       "path": ""
     },
     {
-      "name": "NonSpecificWorkflowSetting",
+      "name": "WorkflowSettingsNonSpecific",
       "identifier": "CF-010",
       "category": "CF",
       "kind": "lint",

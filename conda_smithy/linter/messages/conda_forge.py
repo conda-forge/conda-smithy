@@ -194,7 +194,7 @@ class InconclusiveMaintainerCheck(LinterMessage):
 
 
 @dataclass(kw_only=True)
-class NonPlatformSpecificWorkflowSettingPath(LinterMessage):
+class WorkflowSettingsNonPlatformSpecificPath(LinterMessage):
     """
     Lint when a path variable in `workflow_settings` is not correctly platform-specific.
     """
@@ -210,7 +210,7 @@ class NonPlatformSpecificWorkflowSettingPath(LinterMessage):
 
 
 @dataclass(kw_only=True)
-class NonSpecificWorkflowSetting(LinterMessage):
+class WorkflowSettingsNonSpecific(LinterMessage):
     """
     Lint when a variable in `workflow_settings` is not correctly restricted to applicable os, platform or provider.
     """

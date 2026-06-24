@@ -1042,7 +1042,7 @@ def lint_invalid_workflow_settings(
             win = "win" in os
             if unix and win:
                 lints.append(
-                    msg.cf.NonPlatformSpecificWorkflowSettingPath(
+                    msg.cf.WorkflowSettingsNonPlatformSpecificPath(
                         setting=path_var,
                         index=index,
                         value=wf_setting.value,
@@ -1066,11 +1066,10 @@ def lint_invalid_workflow_settings(
                     mismatched.append("provider")
             if mismatched:
                 lints.append(
-                    msg.cf.NonSpecificWorkflowSetting(
+                    msg.cf.WorkflowSettingsNonSpecific(
                         setting=key,
                         index=index,
                         mismatched=mismatched,
                         restrictions=restrictions,
                     ).as_string()
                 )
-                continue
