@@ -5086,6 +5086,11 @@ def test_invalid_workflow_settings(tmp_path):
     lints, hints = linter.main(tmp_path, return_hints=True, conda_forge=True)
 
     expected = {
+        "`workflow_settings.build_workspace_dir has overlapping entries:\n[1]={'value': 'D:\\\\foo', 'os': ['linux', 'win']}\n[2]={'value': '/bar', 'os': ['linux']}.",
+        "`workflow_settings.resize_partitions has overlapping entries:\n[5]={'value': False, 'platform': ['win_64'], 'provider': ['github_actions']}\n[6]={'value': True, 'platform': ['win_64', 'osx_64'], 'provider': ['github_actions']}.",
+        "`workflow_settings.build_workspace_dir has overlapping entries:\n[1]={'value': 'D:\\\\foo', 'os': ['linux', 'win']}\n[3]={'value': 'C:\\\\bar', 'os': ['win']}.",
+        "`workflow_settings.resize_partitions has overlapping entries:\n[2]={'value': True, 'os': ['win'], 'provider': ['github_actions']}\n[3]={'value': True, 'os': ['win', 'linux'], 'provider': ['github_actions']}\n[4]={'value': True, 'os': ['win'], 'provider': ['azure', 'github_actions']}.",
+        "`workflow_settings.free_disk_space has overlapping entries:\n[0]={'value': 'max', 'os': ['linux', 'osx'], 'platform': ['linux_64', 'osx_arm64']}\n[1]={'value': 'skip', 'os': ['linux', 'osx'], 'platform': ['linux_64']}.",
         "`workflow_settings.free_disk_space[1]` restricts `os` to ['linux', 'osx'] but `platform` to `['linux_64']`.",
         "`workflow_settings.free_disk_space[2]` restricts `os` to ['win'] but `platform` to `['osx_arm64']`.",
         "`workflow_settings.build_workspace_dir[0]` specifies path `/foo` without restricting it to Unix / Windows via the `os` or `platform` keys (applies to ['linux', 'osx', 'win']).",

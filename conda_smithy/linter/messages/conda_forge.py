@@ -210,13 +210,33 @@ class WorkflowSettingsPlatformOSMismatch(LinterMessage):
 
 
 @dataclass(kw_only=True)
+class WorkflowSettingsOverlappingEntries(LinterMessage):
+    """
+    Lint when there are overlapping entries in `workflow_settings`.
+    """
+
+    kind = "lint"
+    identifier = "CF-010"
+    added_in = "TODO"
+    message = "`workflow_settings.${setting} has overlapping entries:\n${entries}.\n"
+    setting: str
+    entries: list[tuple[str, dict[str, list[str] | None]]]
+
+    def _render_attributes(self):
+        return {
+            "setting": self.setting,
+            "entries": "\n".join(f"[{entry[0]}]={entry[1]}" for entry in self.entries),
+        }
+
+
+@dataclass(kw_only=True)
 class WorkflowSettingsNonPlatformSpecificPath(LinterMessage):
     """
     Lint when a path variable in `workflow_settings` is not correctly platform-specific.
     """
 
     kind = "lint"
-    identifier = "CF-010"
+    identifier = "CF-011"
     added_in = "TODO"
     message = "`workflow_settings.${setting}[${index}]` specifies path `${value}` without restricting it to Unix / Windows via the `os` or `platform` keys (applies to ${os}).\n"
     setting: str
@@ -232,7 +252,7 @@ class WorkflowSettingsNonSpecific(LinterMessage):
     """
 
     kind = "lint"
-    identifier = "CF-011"
+    identifier = "CF-012"
     added_in = "TODO"
     message = "`workflow_settings.${setting}[${index}]` is not restricted by ${mismatched} to applicable workflows (expected: ${restrictions}).\n"
     setting: str

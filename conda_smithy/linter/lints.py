@@ -1036,20 +1036,45 @@ def lint_invalid_workflow_settings(
     for key, value in workflow_settings.items():
         # normalize the values
         value = filter_conditional_values(workflow_settings.get(key, []))
+
+        # (os, platform, provider)
+        covered_tuples = {}
+
         for index, wf_setting in enumerate(value):
-            platform = wf_setting.platform
-            os = wf_setting.os
-            if platform is not None and os is not None:
-                os_from_platform = {x.split("_")[0] for x in platform}
-                if os_from_platform != set(os):
+            oses = wf_setting.os
+            platforms = wf_setting.platform
+            providers = wf_setting.provider
+
+            # we need to explode the lists and check every os/platform/provider combination separately
+            covered_keys = []
+            for os_val in oses or [""]:
+                for platform in platforms or [""]:
+                    for provider in providers or [""]:
+                        covered_keys.append((os_val, platform, provider))
+
+            for covered_key in covered_keys:
+                covered_tuples.setdefault(covered_key, []).append((index, wf_setting))
+
+            if platforms is not None and oses is not None:
+                oses_from_platforms = {x.split("_")[0] for x in platforms}
+                if oses_from_platforms != set(oses):
                     lints.append(
                         msg.cf.WorkflowSettingsPlatformOSMismatch(
                             setting=key,
                             index=index,
-                            os=os,
-                            platform=platform,
+                            os=oses,
+                            platform=platforms,
                         ).as_string()
                     )
+
+        for entries in covered_tuples.values():
+            if len(entries) > 1:
+                lints.append(
+                    msg.cf.WorkflowSettingsOverlappingEntries(
+                        setting=key,
+                        entries=entries,
+                    ).as_string()
+                )
 
     # check for path variables without platform differentiation
     for key in ("tools_install_dir", "build_workspace_dir"):
