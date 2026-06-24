@@ -5009,5 +5009,61 @@ def test_run_conda_forge_specific_routes_missing_to_lints(monkeypatch):
     assert not any("Could not verify" in hint for hint in hints)
 
 
+def test_invalid_workflow_settings(tmp_path):
+    cfyml = tmp_path / "conda-forge.yml"
+    recipe_dir = tmp_path / "recipe"
+    recipe_dir.mkdir()
+    (recipe_dir / "meta.yaml").write_text(textwrap.dedent("""
+        package:
+          name: foo
+        """))
+
+    cfyml.write_text(textwrap.dedent(r"""
+        workflow_settings:
+          # bad: a single valie
+          tools_install_dir: C:\test
+          build_workspace_dir:
+            # [0] bad: no 'os' qualifier
+            - provider: github_actions
+              value: /foo
+            # [1] bad: os specifies both linux and win
+            - os: [linux, win]
+              value: D:\foo
+            # [2] good: per os
+            - os: linux
+              value: /bar
+            # [3] good: per os
+            - os: win
+              value: C:\bar
+            # [4] good: platform restricts os
+            - platform: [linux_64]
+              value: /baz
+            # [5] bad: platform covers two systems
+            - platform: [osx_arm64, win_64]
+              value: C:\foo
+        """))
+
+    lints, hints = linter.main(tmp_path, return_hints=True, conda_forge=True)
+
+    expected = {
+        "`workflow_settings.build_workspace_dir[0]` specifies path `/foo` without "
+        "restricting it to Unix / Windows via the `os` or `platform` keys (applies "
+        "to {'linux', 'win', 'osx'}).",
+        "`workflow_settings.build_workspace_dir[1]` specifies path `D:\\foo` "
+        "without restricting it to Unix / Windows via the `os` or `platform` keys "
+        "(applies to {'linux', 'win'}).",
+        "`workflow_settings.build_workspace_dir[5]` specifies path `C:\\foo` "
+        "without restricting it to Unix / Windows via the `os` or `platform` keys "
+        "(applies to {'win', 'osx'}).",
+        "`workflow_settings.tools_install_dir[0]` specifies path `C:\\test` "
+        "without restricting it to Unix / Windows via the `os` or `platform` keys "
+        "(applies to {'linux', 'win', 'osx'}).",
+    }
+
+    assert {
+        x for x in lints if "without restricting it to Unix / Windows" in x
+    } == expected
+
+
 if __name__ == "__main__":
     unittest.main()
