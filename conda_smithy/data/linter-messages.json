@@ -136,8 +136,32 @@
       "path": "recipe/(meta|recipe).yaml"
     },
     {
-      "name": "WorkflowSettingsNonPlatformSpecificPath",
+      "name": "WorkflowSettingsPlatformOSMismatch",
       "identifier": "CF-009",
+      "category": "CF",
+      "kind": "lint",
+      "added_in": "TODO",
+      "deprecated_in": "",
+      "documentation": "Lint when a value in `workflow_settings` has mismatched `os` and `platforms`.",
+      "message": "`workflow_settings.${setting}[${index}]` restricts `os` to ${os} but `platform` to `${platform}`.\n",
+      "examples": [],
+      "path": ""
+    },
+    {
+      "name": "WorkflowSettingsOverlappingEntries",
+      "identifier": "CF-010",
+      "category": "CF",
+      "kind": "lint",
+      "added_in": "TODO",
+      "deprecated_in": "",
+      "documentation": "Lint when there are overlapping entries in `workflow_settings`.",
+      "message": "`workflow_settings.${setting} has overlapping entries:\n${entries}.\n",
+      "examples": [],
+      "path": ""
+    },
+    {
+      "name": "WorkflowSettingsNonPlatformSpecificPath",
+      "identifier": "CF-011",
       "category": "CF",
       "kind": "lint",
       "added_in": "TODO",
@@ -149,7 +173,7 @@
     },
     {
       "name": "WorkflowSettingsNonSpecific",
-      "identifier": "CF-010",
+      "identifier": "CF-012",
       "category": "CF",
       "kind": "lint",
       "added_in": "TODO",
