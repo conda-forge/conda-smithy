@@ -143,7 +143,7 @@
       "added_in": "TODO",
       "deprecated_in": "",
       "documentation": "Lint when a path variable in `workflow_settings` is not correctly platform-specific.",
-      "message": "`workflow_settings.${setting}[${index}]` specifies path `${value}` without restricting it to Unix / Windows via the `os` key (applies to os=${os}).\n",
+      "message": "`workflow_settings.${setting}[${index}]` specifies path `${value}` without restricting it to Unix / Windows via the `os` or `platform` keys (applies to ${os}).\n",
       "examples": [],
       "path": ""
     },

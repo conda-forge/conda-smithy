@@ -202,7 +202,7 @@ class NonPlatformSpecificWorkflowSettingPath(LinterMessage):
     kind = "lint"
     identifier = "CF-009"
     added_in = "TODO"
-    message = "`workflow_settings.${setting}[${index}]` specifies path `${value}` without restricting it to Unix / Windows via the `os` key (applies to os=${os}).\n"
+    message = "`workflow_settings.${setting}[${index}]` specifies path `${value}` without restricting it to Unix / Windows via the `os` or `platform` keys (applies to ${os}).\n"
     setting: str
     index: int
     value: str

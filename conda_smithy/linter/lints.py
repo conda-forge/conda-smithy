@@ -31,7 +31,11 @@ from conda_smithy.linter.utils import (
     jinja_lines,
     selector_lines,
 )
-from conda_smithy.utils import ensure_standard_strings, get_yaml
+from conda_smithy.utils import (
+    ensure_standard_strings,
+    filter_conditional_values,
+    get_yaml,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -1030,21 +1034,20 @@ def lint_invalid_workflow_settings(
 
     # check for path variables without platform differentiation
     for path_var in ("tools_install_dir", "build_workspace_dir"):
-        value = workflow_settings.get(path_var, [])
-        if not isinstance(value, list):
-            value = [{"value": value}]
+        # normalize the values
+        value = filter_conditional_values(workflow_settings.get(path_var, []))
         for index, wf_setting in enumerate(value):
-            os = wf_setting.get("os", ["linux", "osx", "win"])
-            if not isinstance(os, list):
-                os = [os]
-            unix = bool(set(os).intersection({"linux", "osx"}))
+            os = set(wf_setting.os or ["linux", "osx", "win"])
+            if wf_setting.platform is not None:
+                os &= {x.split("_", 1)[0] for x in wf_setting.platform}
+            unix = bool(os.intersection({"linux", "osx"}))
             win = "win" in os
             if unix and win:
                 lints.append(
                     msg.cf.NonPlatformSpecificWorkflowSettingPath(
                         setting=path_var,
                         index=index,
-                        value=wf_setting["value"],
+                        value=wf_setting.value,
                         os=os,
                     ).as_string()
                 )
