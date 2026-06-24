@@ -1037,9 +1037,7 @@ def lint_invalid_workflow_settings(
         # normalize the values
         value = filter_conditional_values(workflow_settings.get(path_var, []))
         for index, wf_setting in enumerate(value):
-            os = set(wf_setting.os or ["linux", "osx", "win"])
-            if wf_setting.platform is not None:
-                os &= {x.split("_", 1)[0] for x in wf_setting.platform}
+            os = wf_setting.applicable_os
             unix = bool(os.intersection({"linux", "osx"}))
             win = "win" in os
             if unix and win:

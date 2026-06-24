@@ -254,6 +254,14 @@ class ConditionalValue:
     platform: Optional[list[str]] = None
     provider: Optional[list[str]] = None
 
+    @property
+    def applicable_os(self) -> set[str]:
+        """A set of OS-es that this can apply to, after os+platform filtering"""
+        os = set(self.os or ["linux", "osx", "win"])
+        if self.platform is not None:
+            os &= {x.split("_", 1)[0] for x in self.platform}
+        return os
+
     def __str__(self) -> str:
         return str({k: v for k, v in dataclasses.asdict(self).items() if v is not None})
 
