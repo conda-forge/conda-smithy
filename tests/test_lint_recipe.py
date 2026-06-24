@@ -5048,16 +5048,16 @@ def test_invalid_workflow_settings(tmp_path):
     expected = {
         "`workflow_settings.build_workspace_dir[0]` specifies path `/foo` without "
         "restricting it to Unix / Windows via the `os` or `platform` keys (applies "
-        "to {'linux', 'win', 'osx'}).",
+        "to ['linux', 'osx', 'win']).",
         "`workflow_settings.build_workspace_dir[1]` specifies path `D:\\foo` "
         "without restricting it to Unix / Windows via the `os` or `platform` keys "
-        "(applies to {'linux', 'win'}).",
+        "(applies to ['linux', 'win']).",
         "`workflow_settings.build_workspace_dir[5]` specifies path `C:\\foo` "
         "without restricting it to Unix / Windows via the `os` or `platform` keys "
-        "(applies to {'win', 'osx'}).",
+        "(applies to ['osx', 'win']).",
         "`workflow_settings.tools_install_dir[0]` specifies path `C:\\test` "
         "without restricting it to Unix / Windows via the `os` or `platform` keys "
-        "(applies to {'linux', 'win', 'osx'}).",
+        "(applies to ['linux', 'osx', 'win']).",
     }
 
     assert {

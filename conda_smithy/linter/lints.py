@@ -1048,6 +1048,6 @@ def lint_invalid_workflow_settings(
                         setting=path_var,
                         index=index,
                         value=wf_setting.value,
-                        os=os,
+                        os=sorted(os),
                     ).as_string()
                 )
