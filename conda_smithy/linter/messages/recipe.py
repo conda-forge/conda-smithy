@@ -1009,7 +1009,7 @@ class UsePip(LinterMessage, _AnyRecipeMessage):
 class UsePyPIOrg(LinterMessage, _AnyRecipeMessage):
     """
     Grayskull and the conda-forge example recipe used to have pypi.io as a default,
-    but the canonical URL is now PyPI.org.
+    but the canonical URL is now files.pythonhosted.org.
 
     See https://github.com/conda-forge/staged-recipes/pull/27946.
     """
@@ -1017,7 +1017,7 @@ class UsePyPIOrg(LinterMessage, _AnyRecipeMessage):
     kind = "hint"
     identifier = "R-050"
     message = (
-        "PyPI default URL is now pypi.org, and not pypi.io."
+        "PyPI default URL is now files.pythonhosted.org, and not pypi.io."
         " You may want to update the default source url."
     )
 

@@ -40,7 +40,7 @@ def hint_sources_should_not_mention_pypi_io_but_pypi_org(
 ):
     """
     Grayskull and conda-forge default recipe used to have pypi.io as a default,
-    but cannonical url is PyPI.org.
+    but cannonical url is files.pythonhosted.org.
 
     See https://github.com/conda-forge/staged-recipes/pull/27946
     """

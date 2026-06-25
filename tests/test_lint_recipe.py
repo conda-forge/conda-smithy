@@ -2570,7 +2570,7 @@ def test_cfyml_wrong_os_version():
               script: {{ PYTHON }} -m pip install {{ name }}-{{ version }}-cp{{ CONDA_PY }}-cp{{ CONDA_PY }}-win_amd64.whl -vv  # [win]
               number: 3
             """,
-            "PyPI default URL is now pypi.org",
+            "PyPI default URL is now files.pythonhosted.org",
             id="pypi.io",
         )
     ],

@@ -440,7 +440,7 @@ def lintify_meta_yaml(
     # 4: Check for SPDX
     hint_check_spdx(about_section, hints)
 
-    # 5: hint pypi.io -> pypi.org
+    # 5: hint pypi.io -> files.pythonhosted.org
     hint_sources_should_not_mention_pypi_io_but_pypi_org(sources_section, hints)
 
     # 6: warn of `name =version=build` specs, suggest `name version build`

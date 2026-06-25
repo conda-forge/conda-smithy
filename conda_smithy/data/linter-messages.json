@@ -831,8 +831,8 @@
       "kind": "hint",
       "added_in": "<3.56",
       "deprecated_in": "",
-      "documentation": "Grayskull and the conda-forge example recipe used to have pypi.io as a default,\nbut the canonical URL is now PyPI.org.\n\nSee https://github.com/conda-forge/staged-recipes/pull/27946.",
-      "message": "PyPI default URL is now pypi.org, and not pypi.io. You may want to update the default source url.",
+      "documentation": "Grayskull and the conda-forge example recipe used to have pypi.io as a default,\nbut the canonical URL is now files.pythonhosted.org.\n\nSee https://github.com/conda-forge/staged-recipes/pull/27946.",
+      "message": "PyPI default URL is now files.pythonhosted.org, and not pypi.io. You may want to update the default source url.",
       "examples": [],
       "path": "recipe/(meta|recipe).yaml"
     },
