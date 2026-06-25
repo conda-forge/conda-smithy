@@ -218,7 +218,7 @@ class WorkflowSettingsOverlappingEntries(LinterMessage):
     kind = "lint"
     identifier = "CF-010"
     added_in = "TODO"
-    message = "`workflow_settings.${setting} has overlapping entries:\n${entries}.\n"
+    message = "`workflow_settings.${setting} has potentially overlapping entries:\n${entries}.\n"
     setting: str
     entries: list[tuple[str, dict[str, list[str] | None]]]
 

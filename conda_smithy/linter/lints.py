@@ -1052,9 +1052,11 @@ def lint_invalid_workflow_settings(
                     for provider in providers or [""]:
                         covered_keys.append((os_val, platform, provider))
 
+            # first, make a list of all the conditions that we have entries for
             for covered_key in covered_keys:
                 covered_tuples.setdefault(covered_key, []).append((index, wf_setting))
 
+            # check for mismatched platform/os combinations
             if platforms is not None and oses is not None:
                 oses_from_platforms = {x.split("_")[0] for x in platforms}
                 if oses_from_platforms != set(oses):
@@ -1067,14 +1069,34 @@ def lint_invalid_workflow_settings(
                         ).as_string()
                     )
 
-        for entries in covered_tuples.values():
-            if len(entries) > 1:
-                lints.append(
-                    msg.cf.WorkflowSettingsOverlappingEntries(
-                        setting=key,
-                        entries=entries,
-                    ).as_string()
+        # determine if any of the conditions actually overlap with any other
+        overlaps_found = []
+        for os_entry, platform, provider in covered_tuples:
+            # we're covering both direct overlap and superset
+            # (e.g. provider condition may overlap with os condition)
+            potential_overlap_keys = {
+                (a, b, c)
+                for a in (os_entry, "")
+                for b in (platform, "")
+                for c in (provider, "")
+            }
+
+            entries = sorted(
+                itertools.chain.from_iterable(
+                    covered_tuples.get(k, []) for k in potential_overlap_keys
                 )
+            )
+            # deduplicate since the same overlap can be found from different keys
+            if len(entries) > 1 and entries not in overlaps_found:
+                overlaps_found.append(entries)
+
+        for entries in overlaps_found:
+            lints.append(
+                msg.cf.WorkflowSettingsOverlappingEntries(
+                    setting=key,
+                    entries=entries,
+                ).as_string()
+            )
 
     # check for path variables without platform differentiation
     for key in ("tools_install_dir", "build_workspace_dir"):
