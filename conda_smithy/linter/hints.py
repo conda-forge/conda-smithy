@@ -377,7 +377,7 @@ def hint_redundant_python_min(meta, recipe_text, recipe_version, hints):
         return
 
     global_python_min = get_global_pinning_python_min()
-    if global_python_min is not None and str(declared) == global_python_min:
+    if global_python_min is not None and Version(str(declared)) <= Version(global_python_min):
         hints.append(msg.r.RedundantPythonMin(value=global_python_min).as_string())
 
 
