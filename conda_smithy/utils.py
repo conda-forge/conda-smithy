@@ -356,12 +356,6 @@ def get_workflow_settings(
             platform=platform,
             os=os,
         )
-        if len(filtered) > 1:
-            raise ValueError(
-                f"More than one value matched for `workflow_settings."
-                f"{setting_key}` when provider={provider} and "
-                f"platform={platform}: {filtered[0]} vs. {filtered[1]}"
-            )
         data[setting_key] = filtered[-1].value if filtered else None
 
     return data
