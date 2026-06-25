@@ -155,7 +155,7 @@
       "added_in": "TODO",
       "deprecated_in": "",
       "documentation": "Lint when there are overlapping entries in `workflow_settings`.",
-      "message": "`workflow_settings.${setting} has overlapping entries:\n${entries}.\n",
+      "message": "`workflow_settings.${setting} has potentially overlapping entries:\n${entries}.\n",
       "examples": [],
       "path": ""
     },
