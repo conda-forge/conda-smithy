@@ -31,6 +31,7 @@ from conda_smithy.linter.hints import (
     hint_check_spdx,
     hint_dependency_pins,
     hint_deprecated_environment_variables,
+    hint_legacy_pypi_url,
     hint_noarch_python_test_latest,
     hint_noarch_python_use_python_min,
     hint_os_version,
@@ -40,7 +41,6 @@ from conda_smithy.linter.hints import (
     hint_rattler_build_bld_bat,
     hint_redundant_python_min,
     hint_shellcheck_usage,
-    hint_sources_should_not_mention_pypi_io_but_pypi_org,
     hint_space_separated_specs,
     hint_suggest_noarch,
 )
@@ -441,7 +441,7 @@ def lintify_meta_yaml(
     hint_check_spdx(about_section, hints)
 
     # 5: hint pypi.io -> files.pythonhosted.org
-    hint_sources_should_not_mention_pypi_io_but_pypi_org(sources_section, hints)
+    hint_legacy_pypi_url(sources_section, hints)
 
     # 6: warn of `name =version=build` specs, suggest `name version build`
     # see https://github.com/conda/conda-build/issues/5571#issuecomment-2604505922

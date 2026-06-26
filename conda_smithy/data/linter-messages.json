@@ -825,7 +825,7 @@
       "path": "recipe/(meta|recipe).yaml"
     },
     {
-      "name": "UsePyPIOrg",
+      "name": "LegacyPyPIURL",
       "identifier": "R-050",
       "category": "R",
       "kind": "hint",

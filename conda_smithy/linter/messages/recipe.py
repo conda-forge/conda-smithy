@@ -1006,7 +1006,7 @@ class UsePip(LinterMessage, _AnyRecipeMessage):
 
 
 @dataclass(kw_only=True)
-class UsePyPIOrg(LinterMessage, _AnyRecipeMessage):
+class LegacyPyPIURL(LinterMessage, _AnyRecipeMessage):
     """
     Grayskull and the conda-forge example recipe used to have pypi.io as a default,
     but the canonical URL is now files.pythonhosted.org.
