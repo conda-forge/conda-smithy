@@ -361,6 +361,67 @@ def hint_noarch_python_use_python_min(
         hints.append(msg.r.PythonMinPin(recommendations=recommendations).as_string())
 
 
+def _noarch_python_tests_cover_latest(tests_section, run_reqs):
+    """True if every python test covers the latest Python via a "*" entry,
+    or if the run requirements cap python's upper bound (making a latest-python
+    test entry redundant)."""
+    for req in flatten_v1_if_else(run_reqs or []):
+        if isinstance(req, str) and req.strip().split()[0] == "python" and "<" in req:
+            return True
+
+    for test in tests_section or []:
+        if not isinstance(test, Mapping) or "python" not in test:
+            continue
+        python_version = (test.get("python") or {}).get("python_version")
+        if isinstance(python_version, str):
+            python_version = [python_version]
+        if not isinstance(python_version, list):
+            python_version = []
+        # The latest-Python marker is the exact entry `"*"`. We match it by
+        # equality, so the `.*` in a min-pin like `${{ python_min }}.*` (or its
+        # rendered `3.10.*`) is never mistaken for it. (The v1 parser also
+        # forbids a bare `- *`, so `"*"` is always a quoted string here.)
+        if "*" not in flatten_v1_if_else(python_version):
+            return False
+    return True
+
+
+def hint_noarch_python_test_latest(
+    tests_section,
+    run_reqs,
+    outputs_section,
+    noarch_value,
+    recipe_version,
+    hints,
+):
+    if recipe_version != 1:
+        return
+
+    scopes = []
+    if outputs_section:
+        for output in outputs_section:
+            requirements = output.get("requirements", {})
+            output_run_reqs = (
+                requirements.get("run")
+                if isinstance(requirements, Mapping)
+                else requirements
+            )
+            scopes.append(
+                (
+                    output.get("tests"),
+                    output_run_reqs,
+                    output.get("build", {}).get("noarch"),
+                )
+            )
+    else:
+        scopes.append((tests_section, run_reqs, noarch_value))
+
+    for tests, run, noarch in scopes:
+        if noarch == "python" and not _noarch_python_tests_cover_latest(tests, run):
+            hints.append(msg.r.NoarchPythonTestLatest().as_string())
+            return
+
+
 def hint_space_separated_specs(
     requirements_section,
     test_section,

@@ -1218,4 +1218,29 @@ class RattlerBldBat(LinterMessage, _RecipeYamlMessage):
     )
 
 
+@dataclass(kw_only=True)
+class NoarchPythonTestLatest(LinterMessage, _RecipeYamlMessage):
+    """
+    `noarch: python` packages install on every Python version at or above
+    `python_min`, so tests should cover both ends of that range.
+    """
+
+    kind = "hint"
+    identifier = "R1-004"
+    added_in = "2026.6"
+    message = (
+        "`noarch: python` packages install on every Python version at or "
+        "above `python_min`, but the Python test only runs against a single "
+        "version. Consider testing against both the minimum and the latest "
+        "supported Python:\n"
+        "```yaml\n"
+        "tests:\n"
+        "  - python:\n"
+        "      python_version:\n"
+        "        - ${{ python_min }}.*\n"
+        '        - "*"\n'
+        "```"
+    )
+
+
 # endregion
