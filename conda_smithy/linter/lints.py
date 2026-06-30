@@ -7,12 +7,14 @@ import re
 import tempfile
 from collections.abc import Sequence
 from typing import Any, Literal, Optional
+from urllib.parse import urlsplit
 
 from conda.models.version import VersionOrder
 from rattler_build_conda_compat.jinja.jinja import render_recipe_with_context
 from rattler_build_conda_compat.loader import parse_recipe_config_file
 from ruamel.yaml import CommentedSeq
 
+from conda_smithy.feedstock_io import get_repo
 from conda_smithy.linter import conda_recipe_v1_linter
 from conda_smithy.linter import messages as msg
 from conda_smithy.linter.utils import (
@@ -1139,3 +1141,55 @@ def lint_invalid_workflow_settings(
                         restrictions=restrictions,
                     ).as_string()
                 )
+
+
+def lint_feedstock_name(
+    meta,
+    recipe_version: int,
+    recipe_dir: str,
+    lints: list[str],
+) -> None:
+    """Lint that feedstock-name is specified when it doesn't match the recipe name"""
+
+    # v1 recipes use "recipe" or "package", v0 just "package"
+    recipe_name = (
+        meta["recipe"]
+        if recipe_version == 1 and "recipe" in meta
+        else meta.get("package", {}).get("name")
+    )
+    feedstock_name = meta.get("extra", {}).get("feedstock-name") or recipe_name
+    repo = get_repo(recipe_dir)
+    # If we have no feedstock_name (which falls back to recipe name), something
+    # is wrong.  If we have no repo, we have nothing to check against.
+    if feedstock_name is None or repo is None:
+        return
+
+    # Try upstream first, origin second, and skip check if neither is available.
+    available_remotes = list(repo.remotes.names())
+    if "upstream" in available_remotes:
+        remote = repo.remotes["upstream"]
+    elif "origin" in available_remotes:
+        remote = repo.remotes["origin"]
+    else:
+        return
+    if remote.url is None:
+        return
+
+    parsed_url = urlsplit(remote.url)
+    if not parsed_url.netloc:
+        # Maybe it's ssh-style netloc:path.
+        parsed_url = urlsplit(f"git+ssh://{remote.url.replace(':', '/')}")
+    feedstock_name_re = re.compile(r"/conda-forge/([^/]+)-feedstock(?:\.git)?/?")
+    if (
+        parsed_url.hostname != "github.com"
+        or (match := feedstock_name_re.fullmatch(parsed_url.path)) is None
+    ):
+        return
+    expected_name = match.group(1)
+
+    if feedstock_name != expected_name:
+        lints.append(
+            msg.cf.MismatchedFeedstockName(
+                current=feedstock_name, expected=expected_name
+            ).as_string()
+        )
