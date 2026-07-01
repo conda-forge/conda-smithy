@@ -172,7 +172,7 @@
       "path": ""
     },
     {
-      "name": "WorkflowSettingsNonSpecific",
+      "name": "WorkflowSettingsSpecificEntryTooLoose",
       "identifier": "CF-012",
       "category": "CF",
       "kind": "lint",

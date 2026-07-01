@@ -5020,7 +5020,7 @@ def test_invalid_workflow_settings(tmp_path):
 
     cfyml.write_text(textwrap.dedent(r"""
         workflow_settings:
-          # bad: a single valie
+          # bad: a single value
           tools_install_dir: C:\test
           free_disk_space:
             # [0] good: platforms are subset of os
