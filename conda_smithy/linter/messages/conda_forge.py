@@ -246,7 +246,7 @@ class WorkflowSettingsNonPlatformSpecificPath(LinterMessage):
 
 
 @dataclass(kw_only=True)
-class WorkflowSettingsNonSpecific(LinterMessage):
+class WorkflowSettingsSpecificEntryTooLoose(LinterMessage):
     """
     Lint when a variable in `workflow_settings` is not correctly restricted to applicable os, platform or provider.
     """

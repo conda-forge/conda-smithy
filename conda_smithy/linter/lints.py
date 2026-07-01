@@ -1132,7 +1132,7 @@ def lint_invalid_workflow_settings(
                     mismatched.append("provider")
             if mismatched:
                 lints.append(
-                    msg.cf.WorkflowSettingsNonSpecific(
+                    msg.cf.WorkflowSettingsSpecificEntryTooLoose(
                         setting=key,
                         index=index,
                         mismatched=mismatched,
