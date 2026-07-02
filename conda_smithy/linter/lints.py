@@ -1152,11 +1152,12 @@ def lint_feedstock_name(
     """Lint that feedstock-name is specified when it doesn't match the recipe name"""
 
     # v1 recipes use "recipe" or "package", v0 just "package"
-    recipe_name = (
+    recipe_section = (
         meta["recipe"]
         if recipe_version == 1 and "recipe" in meta
-        else meta.get("package", {}).get("name")
+        else meta.get("package", {})
     )
+    recipe_name = recipe_section.get("name")
     feedstock_name = meta.get("extra", {}).get("feedstock-name") or recipe_name
 
     # If we have no feedstock_name (which falls back to recipe name) or no
