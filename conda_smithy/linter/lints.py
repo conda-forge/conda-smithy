@@ -1158,10 +1158,15 @@ def lint_feedstock_name(
         else meta.get("package", {}).get("name")
     )
     feedstock_name = meta.get("extra", {}).get("feedstock-name") or recipe_name
+
+    # If we have no feedstock_name (which falls back to recipe name) or no
+    # recipe dir, something is wrong. Return early not to raise exceptions.
+    if feedstock_name is None or recipe_dir is None:
+        return
+
     repo = get_repo(recipe_dir)
-    # If we have no feedstock_name (which falls back to recipe name), something
-    # is wrong.  If we have no repo, we have nothing to check against.
-    if feedstock_name is None or repo is None:
+    # If we have no repo, we have nothing to check against.
+    if repo is None:
         return
 
     # Try upstream first, origin second, and skip check if neither is available.
