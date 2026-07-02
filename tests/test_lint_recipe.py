@@ -12,6 +12,7 @@ from collections import OrderedDict
 from contextlib import contextmanager
 from itertools import count
 from pathlib import Path
+from unittest import mock
 
 import pytest
 
@@ -5108,6 +5109,159 @@ def test_invalid_workflow_settings(tmp_path):
     }
 
     assert {x for x in lints if "workflow_settings" in x} == expected
+
+
+@pytest.mark.parametrize(
+    "remotes,feedstock_name,expected",
+    [
+        # GOOD-ish: no remotes to check against
+        ({}, None, None),
+        ({}, "bar", None),
+        # GOOD: recipe name matches repo name
+        ({"origin": "https://github.com/conda-forge/foo-feedstock"}, None, None),
+        # GOOD: feedstock-name matches repo name
+        ({"origin": "https://github.com/conda-forge/bar-feedstock"}, "bar", None),
+        # BAD: no feedstock-name
+        ({"origin": "https://github.com/conda-forge/bar-feedstock"}, None, "bar"),
+        # BAD: feedstock-name doesn't match the repository
+        ({"origin": "https://github.com/conda-forge/bar-feedstock"}, "baz", "bar"),
+        # BAD: URL variations
+        ({"origin": "https://github.com/conda-forge/bar-feedstock/"}, None, "bar"),
+        ({"origin": "https://github.com/conda-forge/bar-feedstock.git"}, None, "bar"),
+        ({"origin": "https://github.com/conda-forge/bar-feedstock.git/"}, None, "bar"),
+        ({"origin": "git+ssh://git@github.com/conda-forge/bar-feedstock"}, None, "bar"),
+        ({"origin": "git@github.com:conda-forge/bar-feedstock"}, None, "bar"),
+        # BAD: using "upstream" remote
+        ({"upstream": "https://github.com/conda-forge/bar-feedstock"}, None, "bar"),
+        # GOOD-ish: unknown remote
+        ({"foo": "https://github.com/conda-forge/bar-feedstock"}, None, None),
+        # GOOD-ish: remote isn't a conda-forge feedstock URL
+        ({"origin": "https://github.com/mgorny/bar-feedstock"}, None, None),
+        # GOOD: "upstream" takes precedence over "origin"
+        (
+            {
+                "origin": "https://github.com/conda-forge/bar-feedstock",
+                "upstream": "https://github.com/conda-forge/foo-feedstock",
+            },
+            None,
+            None,
+        ),
+    ],
+)
+@mock.patch("conda_smithy.linter.lints.get_repo")
+def test_lint_feedstock_name(
+    repo_mock,
+    tmp_path: Path,
+    remotes: dict[str, str],
+    feedstock_name: str | None,
+    expected: str | None,
+) -> None:
+    recipe = """\
+package:
+  name: foo
+  version: "1.2.3"
+
+build:
+  number: 1
+
+test:
+  commands:
+    - true
+
+about:
+  home: https://example.com
+  license: GPL-3.0-or-later
+  license_file:
+    - COPYING
+  summary: test
+
+extra:
+  recipe-maintainers:
+    - mgorny
+"""
+    if feedstock_name is not None:
+        recipe += f"""\
+  feedstock-name: {feedstock_name}
+"""
+
+    remotes_mock = repo_mock.return_value.remotes
+    remotes_mock.names.return_value = list(remotes)
+    for remote_name, remote_url in remotes.items():
+        remotes_mock[remote_name].url = remote_url
+
+    tmp_path.joinpath("meta.yaml").write_text(recipe)
+    lints = linter.main(tmp_path, conda_forge=True)
+
+    assert lints == (
+        [
+            f"Mismatched feedstock name in the recipe: {feedstock_name or 'foo'}. "
+            f"Specify `extra.feedstock_name: {expected}`."
+        ]
+        if expected is not None
+        else []
+    )
+
+
+@pytest.mark.parametrize("has_outputs", [False, True])
+@mock.patch("conda_smithy.linter.lints.get_repo")
+def test_lint_feedstock_name_v1(
+    repo_mock,
+    tmp_path: Path,
+    has_outputs: bool,
+) -> None:
+    recipe = f"""\
+schema_version: 1
+
+{'recipe' if has_outputs else 'package'}:
+  name: foo
+  version: "1.2.3"
+
+build:
+  number: 1
+"""
+
+    if not has_outputs:
+        recipe += """
+tests:
+  - script:
+      - true
+"""
+    else:
+        recipe += """
+outputs:
+  - package:
+      name: foo
+    tests:
+      - script:
+          - true
+"""
+
+    recipe += """
+about:
+  homepage: https://example.com
+  license: GPL-3.0-or-later
+  license_file:
+    - COPYING
+  summary: test
+
+extra:
+  recipe-maintainers:
+    - mgorny
+"""
+
+    remotes_mock = repo_mock.return_value.remotes
+    remotes_mock.names.return_value = ["origin"]
+    remotes_mock["origin"].url = "https://github.com/conda-forge/bar-feedstock"
+
+    tmp_path.joinpath("recipe.yaml").write_text(recipe)
+    lints = linter.main(tmp_path, conda_forge=True)
+
+    assert lints == (
+        [
+            "Mismatched feedstock name in the recipe: foo. "
+            "Specify `extra.feedstock_name: bar`."
+        ]
+    )
 
 
 if __name__ == "__main__":
