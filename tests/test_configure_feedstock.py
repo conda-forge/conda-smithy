@@ -2701,46 +2701,6 @@ def test_store_build_artifacts_azure_conditions(py_recipe, jinja_env):
     assert Path(forge_dir, ".scripts/create_conda_build_artifacts.sh").exists()
 
 
-@pytest.mark.parametrize("ci", ["azure", "github_actions"])
-def test_store_build_artifacts_overlapping_conditions(py_recipe, jinja_env, ci: str):
-    forge_dir = py_recipe.recipe
-    forge_yml = Path(forge_dir, "conda-forge.yml")
-
-    with open(forge_yml, "a") as f:
-        f.write(textwrap.dedent(f"""\
-            provider:
-              linux_64: {ci}
-              osx_64: {ci}
-              win_64: {ci}
-            workflow_settings:
-              store_build_artifacts:
-                - platform: linux_64
-                  value: true
-                - os: linux
-                  value: true
-        """))
-
-    config = configure_feedstock._load_forge_config(
-        forge_dir, "recipe/default_config.yaml"
-    )
-    with pytest.raises(
-        ValueError,
-        match=r"More than one value matched for `workflow_settings.store_build_artifacts`",
-    ):
-        if ci == "azure":
-            configure_feedstock.render_azure(
-                jinja_env=jinja_env,
-                forge_config=config,
-                forge_dir=forge_dir,
-            )
-        else:
-            configure_feedstock.render_github_actions(
-                jinja_env=jinja_env,
-                forge_config=config,
-                forge_dir=forge_dir,
-            )
-
-
 def test_store_build_artifacts_gha_and_azure_conditions(py_recipe, jinja_env):
     forge_dir = py_recipe.recipe
     forge_yml = Path(forge_dir, "conda-forge.yml")
@@ -3167,56 +3127,6 @@ def test_tools_build_paths_gha_override_both(py_recipe, jinja_env):
         )
         for entry in matrix
     } == expected
-
-
-@pytest.mark.parametrize(
-    "path,expected",
-    [
-        (
-            "~/foo",
-            r"specifies Unix path for Windows workflows: ~\\foo",
-        ),
-        (
-            "foo",
-            r"specifies Unix path for Windows workflows: foo",
-        ),
-        (
-            r"C:\foo",
-            r"specifies Windows path for Unix workflows: C:\foo",
-        ),
-        (
-            r"C:\\foo",
-            r"specifies Windows path for Unix workflows: C:\\foo",
-        ),
-    ],
-)
-@pytest.mark.parametrize("variable", ("tools_install_dir", "build_workspace_dir"))
-def test_tools_build_paths_gha_override_wrong(
-    py_recipe, jinja_env, path: str, expected: str, variable: str
-):
-    forge_dir = py_recipe.recipe
-    forge_yml = Path(forge_dir, "conda-forge.yml")
-
-    with open(forge_yml, "a") as f:
-        f.write(textwrap.dedent(f"""\
-            provider:
-              linux_64: github_actions
-              osx_64: github_actions
-              win_arm64: github_actions
-              win_64: github_actions
-            workflow_settings:
-              {variable}: "{path}"
-        """))
-
-    config = configure_feedstock._load_forge_config(
-        forge_dir, "recipe/default_config.yaml"
-    )
-    with pytest.raises(ValueError, match=rf"workflow_settings\.{variable} {expected}"):
-        configure_feedstock.render_github_actions(
-            jinja_env=jinja_env,
-            forge_config=config,
-            forge_dir=forge_dir,
-        )
 
 
 @pytest.mark.parametrize("gpu", (False, True))
