@@ -39,7 +39,6 @@ jobs:
 
       - name: install conda-smithy
         run: |
-          conda uninstall --force --yes conda-smithy
           python -m pip install -v --no-build-isolation -e .
 
       - name: install conda-forge-tick
