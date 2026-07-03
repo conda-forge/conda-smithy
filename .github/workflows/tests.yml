@@ -21,6 +21,12 @@ jobs:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
+
+      - name: Configure git user
+        run: |
+          git config --global user.email "smithy@smithy.smithy"
+          git config --global user.name "smithy"
+
       - name: Set up Conda env
         uses: mamba-org/setup-micromamba@d7c9bd84e824b79d2af72a2d4196c7f4300d3476
         with:
@@ -35,8 +41,6 @@ jobs:
         run: |
           conda uninstall --force --yes conda-smithy
           python -m pip install -v --no-build-isolation -e .
-          git config --global user.email "smithy@smithy.smithy"
-          git config --global user.name "smithy"
 
       - name: install conda-forge-tick
         run: |
