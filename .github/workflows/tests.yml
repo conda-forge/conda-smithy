@@ -30,7 +30,6 @@ jobs:
           create-args: >-
             coverage
             coveralls
-            conda-forge-tick>=2026.0
 
       - name: install conda-smithy
         run: |
@@ -38,6 +37,10 @@ jobs:
           python -m pip install -v --no-build-isolation -e .
           git config --global user.email "smithy@smithy.smithy"
           git config --global user.name "smithy"
+
+      - name: install conda-forge-tick
+        run: |
+          conda install --yes 'conda-forge-tick>=2026.0'
 
       - name: test versions
         run: |
