@@ -191,3 +191,71 @@ class InconclusiveMaintainerCheck(LinterMessage):
             cls(maintainer="some-user"),
             cls(maintainer="@conda-forge/some-team"),
         ]
+
+
+@dataclass(kw_only=True)
+class WorkflowSettingsPlatformOSMismatch(LinterMessage):
+    """
+    Lint when a value in `workflow_settings` has mismatched `os` and `platforms`.
+    """
+
+    kind = "lint"
+    identifier = "CF-009"
+    added_in = "2026.7"
+    message = "`workflow_settings.${setting}[${index}]` restricts `os` to ${os} but `platform` to `${platform}`.\n"
+    setting: str
+    index: int
+    os: list[str]
+    platform: list[str]
+
+
+@dataclass(kw_only=True)
+class WorkflowSettingsOverlappingEntries(LinterMessage):
+    """
+    Lint when there are overlapping entries in `workflow_settings`.
+    """
+
+    kind = "lint"
+    identifier = "CF-010"
+    added_in = "2026.7"
+    message = "`workflow_settings.${setting} has potentially overlapping entries:\n${entries}.\n"
+    setting: str
+    entries: list[tuple[str, dict[str, list[str] | None]]]
+
+    def _render_attributes(self):
+        return {
+            "setting": self.setting,
+            "entries": "\n".join(f"[{entry[0]}]={entry[1]}" for entry in self.entries),
+        }
+
+
+@dataclass(kw_only=True)
+class WorkflowSettingsNonPlatformSpecificPath(LinterMessage):
+    """
+    Lint when a path variable in `workflow_settings` is not correctly platform-specific.
+    """
+
+    kind = "lint"
+    identifier = "CF-011"
+    added_in = "2026.7"
+    message = "`workflow_settings.${setting}[${index}]` specifies path `${value}` without restricting it to Unix / Windows via the `os` or `platform` keys (applies to ${os}).\n"
+    setting: str
+    index: int
+    value: str
+    os: list[str]
+
+
+@dataclass(kw_only=True)
+class WorkflowSettingsSpecificEntryTooLoose(LinterMessage):
+    """
+    Lint when a variable in `workflow_settings` is not correctly restricted to applicable os, platform or provider.
+    """
+
+    kind = "lint"
+    identifier = "CF-012"
+    added_in = "2026.7"
+    message = "`workflow_settings.${setting}[${index}]` is not restricted by ${mismatched} to applicable workflows (expected: ${restrictions}).\n"
+    setting: str
+    index: int
+    mismatched: list[str]
+    restrictions: dict
