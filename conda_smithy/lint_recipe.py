@@ -708,7 +708,7 @@ def run_conda_forge_specific(
             else:
                 run_reqs += _req
 
-    specific_hints = (load_linter_toml_metdata() or {}).get("hints", [])
+    specific_hints = (load_linter_toml_metdata() or {}).get("hints", {})
     all_reqs = build_reqs + host_reqs + run_reqs
     if recipe_version == 1:
         all_reqs = flatten_v1_if_else(all_reqs)

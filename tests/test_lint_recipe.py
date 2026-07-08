@@ -5010,6 +5010,20 @@ def test_run_conda_forge_specific_routes_missing_to_lints(monkeypatch):
     assert not any("Could not verify" in hint for hint in hints)
 
 
+def test_run_conda_forge_specific_missing_linter_hints_table(monkeypatch):
+    monkeypatch.setattr(linter, "load_linter_toml_metdata", lambda: {})
+    meta = {
+        "package": {"name": "foo"},
+        "requirements": {"run": ["python"]},
+    }
+    lints, hints = [], []
+
+    linter.run_conda_forge_specific(meta, None, lints, hints)
+
+    assert lints == []
+    assert hints == []
+
+
 def test_invalid_workflow_settings(tmp_path):
     cfyml = tmp_path / "conda-forge.yml"
     recipe_dir = tmp_path / "recipe"
