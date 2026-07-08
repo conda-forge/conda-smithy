@@ -123,7 +123,8 @@ def test_m2w64_stdlib_legal():
         "go-nocgo",
     ],
 )
-def test_v1_stdlib_hint(comp_lang):
+@pytest.mark.parametrize("quote", ["'", '"'])
+def test_v1_stdlib_hint(comp_lang, quote):
     expected_message = "This recipe is using a compiler"
 
     with tmp_directory() as recipe_dir:
@@ -133,7 +134,7 @@ def test_v1_stdlib_hint(comp_lang):
                 requirements:
                   build:
                     # since we're in an f-string: double up braces (2->4)
-                    - ${{{{ compiler('{comp_lang}') }}}}
+                    - ${{{{ compiler({quote}{comp_lang}{quote}) }}}}
                 """)
         Path(recipe_dir).joinpath("conda-forge.yml").write_text(
             "conda_build_tool: rattler-build"
