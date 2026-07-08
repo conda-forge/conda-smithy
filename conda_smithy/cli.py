@@ -145,8 +145,9 @@ class Init(Subcommand):
             RATTLER_BUILD if isinstance(meta, RattlerMetaData) else None
         )
 
+        feedstock_name = get_feedstock_name_from_meta(meta)
         feedstock_directory = args.feedstock_directory.format(
-            package=argparse.Namespace(name=meta.name())
+            package=argparse.Namespace(name=feedstock_name)
         )
         msg = f"Initial feedstock commit with conda-smithy {__version__}."
 

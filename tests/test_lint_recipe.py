@@ -123,7 +123,8 @@ def test_m2w64_stdlib_legal():
         "go-nocgo",
     ],
 )
-def test_v1_stdlib_hint(comp_lang):
+@pytest.mark.parametrize("quote", ["'", '"'])
+def test_v1_stdlib_hint(comp_lang, quote):
     expected_message = "This recipe is using a compiler"
 
     with tmp_directory() as recipe_dir:
@@ -133,7 +134,7 @@ def test_v1_stdlib_hint(comp_lang):
                 requirements:
                   build:
                     # since we're in an f-string: double up braces (2->4)
-                    - ${{{{ compiler('{comp_lang}') }}}}
+                    - ${{{{ compiler({quote}{comp_lang}{quote}) }}}}
                 """)
         Path(recipe_dir).joinpath("conda-forge.yml").write_text(
             "conda_build_tool: rattler-build"
@@ -5007,6 +5008,107 @@ def test_run_conda_forge_specific_routes_missing_to_lints(monkeypatch):
     linter.run_conda_forge_specific(meta, None, lints, hints)
     assert any('Recipe maintainer "nope" does not exist' in lint for lint in lints)
     assert not any("Could not verify" in hint for hint in hints)
+
+
+def test_invalid_workflow_settings(tmp_path):
+    cfyml = tmp_path / "conda-forge.yml"
+    recipe_dir = tmp_path / "recipe"
+    recipe_dir.mkdir()
+    (recipe_dir / "meta.yaml").write_text(textwrap.dedent("""
+        package:
+          name: foo
+        """))
+
+    cfyml.write_text(textwrap.dedent(r"""
+        workflow_settings:
+          # bad: a single value
+          tools_install_dir: C:\test
+          free_disk_space:
+            # [0] good: platforms are subset of os
+            - os: [linux, osx]
+              platform: [linux_64, osx_arm64]
+              value: max
+            # [1] bad: platforms do not include osx
+            - os: [linux, osx]
+              platform: [linux_64]
+              value: skip
+            # [2] bad: platform and os are completely different
+            - os: win
+              platform: osx_arm64
+              value: max
+          build_workspace_dir:
+            # [0] bad: no 'os' qualifier
+            - provider: github_actions
+              value: /foo
+            # [1] bad: os specifies both linux and win
+            - os: [linux, win]
+              value: D:\foo
+            # [2] good: per os
+            - os: linux
+              value: /bar
+            # [3] good: per os
+            - os: win
+              value: C:\bar
+            # [4] good: platform restricts os
+            - platform: [linux_64]
+              value: /baz
+            # [5] bad: platform covers two systems
+            - platform: [osx_arm64, win_64]
+              value: C:\foo
+          resize_partitions:
+            # [0] bad: non-windows
+            - provider: github_actions
+              value: false
+            # [1] bad: non-GHA
+            - os: win
+              value: false
+            # [2] good
+            - os: win
+              provider: github_actions
+              value: true
+            # [3] bad: also non-windows
+            - os: [win, linux]
+              provider: github_actions
+              value: true
+            # [4] bad: also non-GHA
+            - os: win
+              provider: [azure, github_actions]
+              value: true
+            # [5] good: windows via platform
+            - platform: win_64
+              provider: github_actions
+              value: false
+            # [6] bad: non-windows via platform
+            - platform: [win_64, osx_64]
+              provider: github_actions
+              value: true
+        """))
+
+    lints, hints = linter.main(tmp_path, return_hints=True, conda_forge=True)
+
+    expected = {
+        "`workflow_settings.build_workspace_dir has potentially overlapping entries:\n[1]={'value': 'D:\\\\foo', 'os': ['linux', 'win']}\n[2]={'value': '/bar', 'os': ['linux']}.",
+        "`workflow_settings.build_workspace_dir has potentially overlapping entries:\n[1]={'value': 'D:\\\\foo', 'os': ['linux', 'win']}\n[3]={'value': 'C:\\\\bar', 'os': ['win']}.",
+        "`workflow_settings.free_disk_space has potentially overlapping entries:\n[0]={'value': 'max', 'os': ['linux', 'osx'], 'platform': ['linux_64', 'osx_arm64']}\n[1]={'value': 'skip', 'os': ['linux', 'osx'], 'platform': ['linux_64']}.",
+        "`workflow_settings.resize_partitions has potentially overlapping entries:\n[0]={'value': False, 'provider': ['github_actions']}\n[1]={'value': False, 'os': ['win']}\n[2]={'value': True, 'os': ['win'], 'provider': ['github_actions']}\n[3]={'value': True, 'os': ['win', 'linux'], 'provider': ['github_actions']}\n[4]={'value': True, 'os': ['win'], 'provider': ['azure', 'github_actions']}.",
+        "`workflow_settings.resize_partitions has potentially overlapping entries:\n[0]={'value': False, 'provider': ['github_actions']}\n[3]={'value': True, 'os': ['win', 'linux'], 'provider': ['github_actions']}.",
+        "`workflow_settings.resize_partitions has potentially overlapping entries:\n[0]={'value': False, 'provider': ['github_actions']}\n[5]={'value': False, 'platform': ['win_64'], 'provider': ['github_actions']}\n[6]={'value': True, 'platform': ['win_64', 'osx_64'], 'provider': ['github_actions']}.",
+        "`workflow_settings.resize_partitions has potentially overlapping entries:\n[0]={'value': False, 'provider': ['github_actions']}\n[6]={'value': True, 'platform': ['win_64', 'osx_64'], 'provider': ['github_actions']}.",
+        "`workflow_settings.resize_partitions has potentially overlapping entries:\n[1]={'value': False, 'os': ['win']}\n[4]={'value': True, 'os': ['win'], 'provider': ['azure', 'github_actions']}.",
+        "`workflow_settings.free_disk_space[1]` restricts `os` to ['linux', 'osx'] but `platform` to `['linux_64']`.",
+        "`workflow_settings.free_disk_space[2]` restricts `os` to ['win'] but `platform` to `['osx_arm64']`.",
+        "`workflow_settings.build_workspace_dir[0]` specifies path `/foo` without restricting it to Unix / Windows via the `os` or `platform` keys (applies to ['linux', 'osx', 'win']).",
+        "`workflow_settings.build_workspace_dir[1]` specifies path `D:\\foo` without restricting it to Unix / Windows via the `os` or `platform` keys (applies to ['linux', 'win']).",
+        "`workflow_settings.build_workspace_dir[5]` specifies path `C:\\foo` without restricting it to Unix / Windows via the `os` or `platform` keys (applies to ['osx', 'win']).",
+        "`workflow_settings.tools_install_dir[0]` specifies path `C:\\test` without restricting it to Unix / Windows via the `os` or `platform` keys (applies to ['linux', 'osx', 'win']).",
+        "`workflow_settings.resize_partitions[0]` is not restricted by ['os'] to applicable workflows (expected: {'os': {'win'}, 'provider': {'github_actions'}}).",
+        "`workflow_settings.resize_partitions[1]` is not restricted by ['provider'] to applicable workflows (expected: {'os': {'win'}, 'provider': {'github_actions'}}).",
+        "`workflow_settings.resize_partitions[3]` is not restricted by ['os'] to applicable workflows (expected: {'os': {'win'}, 'provider': {'github_actions'}}).",
+        "`workflow_settings.resize_partitions[4]` is not restricted by ['provider'] to applicable workflows (expected: {'os': {'win'}, 'provider': {'github_actions'}}).",
+        "`workflow_settings.resize_partitions[6]` is not restricted by ['os'] to applicable workflows (expected: {'os': {'win'}, 'provider': {'github_actions'}}).",
+    }
+
+    assert {x for x in lints if "workflow_settings" in x} == expected
 
 
 if __name__ == "__main__":

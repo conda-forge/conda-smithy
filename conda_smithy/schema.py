@@ -10,7 +10,7 @@ from inspect import cleandoc
 from typing import Annotated, Any, Literal, Optional, Union
 
 import yaml
-from conda.base.constants import KNOWN_SUBDIRS
+from conda.base.constants import PLATFORMS
 from pydantic import BaseModel, ConfigDict, Field, WithJsonSchema, create_model
 
 # use relative imports to ensure that we don't pick up the data paths from
@@ -420,7 +420,7 @@ class PlatformsAliases(StrEnum):
 
 
 def get_subdirs():
-    return [subdir.replace("-", "_") for subdir in KNOWN_SUBDIRS if "-" in subdir]
+    return [platform.replace("-", "_") for platform in PLATFORMS]
 
 
 Platforms = StrEnum("Platforms", get_subdirs())
@@ -734,6 +734,7 @@ class ConfigModel(BaseModel):
             osx_64: osx_64
             osx_arm64: osx_arm64
             win_64: win_64
+            win_arm64: win_arm64
         ```
         """),
     )
@@ -854,7 +855,9 @@ class ConfigModel(BaseModel):
 
         * `linux_64`
         * `osx_64`
+        * `osx_arm64`
         * `win_64`
+        * `win_arm64`
         * `linux_aarch64`
         * `linux_ppc64le`
         * `linux_s390x`
@@ -863,6 +866,7 @@ class ConfigModel(BaseModel):
         The following CI services are available:
 
         * `azure`
+        * `github_actions`
         * `circle`
         * `travis`
         * `appveyor`
