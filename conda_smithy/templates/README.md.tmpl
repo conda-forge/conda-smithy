@@ -238,31 +238,73 @@ conda config --add channels {{ channel_with_label }}
 conda config --set channel_priority strict
 ```
 
-Once the `{{ channel_with_label }}` channel has been enabled, `{{ ', '.join(outputs) }}` can be installed with `conda`:
+How to use
+----------
+
+<details>
+<summary>With conda</summary>
 
 ```
 conda install {{ ' '.join(outputs) }}
 ```
 
-or with `mamba`:
+</details>
+
+<details>
+<summary>With mamba</summary>
 
 ```
 mamba install {{ ' '.join(outputs) }}
 ```
 
-It is possible to list all of the versions of `{{ outputs[0] }}` available on your platform with `conda`:
+</details>
+
+<details>
+<summary>With pixi</summary>
+
+```
+# for adding to your local project
+pixi add {{ ' '.join(outputs) }}
+# for installing globally
+pixi global install {{ ' '.join(outputs) }}
+```
+
+</details>
+
+Search package versions
+-----------------------
+
+It is possible to list all of the versions of `{{ outputs[0] }}` available on your platform:
+
+<details>
+<summary>With conda</summary>
 
 ```
 conda search {{ outputs[0] }} --channel {{ channel_with_label }}
 ```
 
-or with `mamba`:
+</details>
+
+<details>
+<summary>With mamba</summary>
 
 ```
 mamba search {{ outputs[0] }} --channel {{ channel_with_label }}
 ```
 
-Alternatively, `mamba repoquery` may provide more information:
+</details>
+
+<details>
+<summary>With pixi</summary>
+
+```
+pixi search {{ outputs[0] }} --channel {{ channel_with_label }}
+```
+
+</details>
+
+<details>
+<summary>With mamba repoquery, which may provide more information</summary>
 
 ```
 # Search all versions available on your platform:
@@ -274,6 +316,8 @@ mamba repoquery whoneeds {{ outputs[0] }} --channel {{ channel_with_label }}
 # List dependencies of `{{ outputs[0] }}`:
 mamba repoquery depends {{ outputs[0] }} --channel {{ channel_with_label }}
 ```
+
+</details>
 
 {% if channel_name == 'conda-forge' %}
 About conda-forge
